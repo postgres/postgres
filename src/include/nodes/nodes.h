@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.82 2000/11/05 22:50:21 vadim Exp $
+ * $Id: nodes.h,v 1.83 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,11 +83,12 @@ typedef enum NodeTag
 	T_NestPath,
 	T_MergePath,
 	T_HashPath,
+	T_TidPath,
+	T_AppendPath,
 	T_PathKeyItem,
 	T_RestrictInfo,
 	T_JoinInfo,
 	T_Stream,
-	T_TidPath,
 	T_IndexOptInfo,
 
 	/*---------------------
@@ -95,7 +96,7 @@ typedef enum NodeTag
 	 *---------------------
 	 */
 	T_IndexInfo = 300,
-	T_RelationInfo,
+	T_ResultRelInfo,
 	T_TupleCount,
 	T_TupleTableSlot,
 	T_ExprContext,

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.131 2000/10/26 21:35:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.132 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,10 @@ static TupleDesc InitPlan(CmdType operation,
 		 Query *parseTree,
 		 Plan *plan,
 		 EState *estate);
+static void initResultRelInfo(ResultRelInfo *resultRelInfo,
+							  Index resultRelationIndex,
+							  List *rangeTable,
+							  CmdType operation);
 static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 								   CmdType operation,
@@ -310,10 +314,6 @@ ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
  * ExecCheckPlanPerms
  *		Recursively scan the plan tree to check access permissions in
  *		subplans.
- *
- * We also need to look at the local rangetables in Append plan nodes,
- * which is pretty bogus --- most likely, those tables should be mentioned
- * in the query's main rangetable.  But at the moment, they're not.
  */
 static void
 ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
@@ -365,27 +365,11 @@ ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
 				Append	   *app = (Append *) plan;
 				List	   *appendplans;
 
-				if (app->inheritrelid > 0)
+				foreach(appendplans, app->appendplans)
 				{
-					/* Append implements expansion of inheritance */
-					ExecCheckRTPerms(app->inheritrtable, operation);
-
-					foreach(appendplans, app->appendplans)
-					{
-						ExecCheckPlanPerms((Plan *) lfirst(appendplans),
-										   rangeTable,
-										   operation);
-					}
-				}
-				else
-				{
-					/* Append implements UNION, which must be a SELECT */
-					foreach(appendplans, app->appendplans)
-					{
-						ExecCheckPlanPerms((Plan *) lfirst(appendplans),
-										   rangeTable,
-										   CMD_SELECT);
-					}
+					ExecCheckPlanPerms((Plan *) lfirst(appendplans),
+									   rangeTable,
+									   operation);
 				}
 				break;
 			}
@@ -518,10 +502,8 @@ static TupleDesc
 InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 {
 	List	   *rangeTable;
-	int			resultRelation;
 	Relation	intoRelationDesc;
 	TupleDesc	tupType;
-	List	   *targetList;
 
 	/*
 	 * Do permissions checks.
@@ -532,7 +514,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 * get information from query descriptor
 	 */
 	rangeTable = parseTree->rtable;
-	resultRelation = parseTree->resultRelation;
 
 	/*
 	 * initialize the node's execution state
@@ -540,63 +521,61 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	estate->es_range_table = rangeTable;
 
 	/*
-	 * initialize result relation stuff
+	 * if there is a result relation, initialize result relation stuff
 	 */
-
-	if (resultRelation != 0 && operation != CMD_SELECT)
+	if (parseTree->resultRelation != 0 && operation != CMD_SELECT)
 	{
+		List	   *resultRelations = parseTree->resultRelations;
+		int			numResultRelations;
+		ResultRelInfo *resultRelInfos;
 
-		/*
-		 * if we have a result relation, open it and initialize the result
-		 * relation info stuff.
-		 */
-		RelationInfo *resultRelationInfo;
-		Index		resultRelationIndex;
-		Oid			resultRelationOid;
-		Relation	resultRelationDesc;
+		if (resultRelations != NIL)
+		{
+			/*
+			 * Multiple result relations (due to inheritance)
+			 * parseTree->resultRelations identifies them all
+			 */
+			ResultRelInfo *resultRelInfo;
 
-		resultRelationIndex = resultRelation;
-		resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-		resultRelationDesc = heap_open(resultRelationOid, RowExclusiveLock);
+			numResultRelations = length(resultRelations);
+			resultRelInfos = (ResultRelInfo *)
+				palloc(numResultRelations * sizeof(ResultRelInfo));
+			resultRelInfo = resultRelInfos;
+			while (resultRelations != NIL)
+			{
+				initResultRelInfo(resultRelInfo,
+								  lfirsti(resultRelations),
+								  rangeTable,
+								  operation);
+				resultRelInfo++;
+				resultRelations = lnext(resultRelations);
+			}
+		}
+		else
+		{
+			/*
+			 * Single result relation identified by parseTree->resultRelation
+			 */
+			numResultRelations = 1;
+			resultRelInfos = (ResultRelInfo *) palloc(sizeof(ResultRelInfo));
+			initResultRelInfo(resultRelInfos,
+							  parseTree->resultRelation,
+							  rangeTable,
+							  operation);
+		}
 
-		if (resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE)
-			elog(ERROR, "You can't change sequence relation %s",
-				 RelationGetRelationName(resultRelationDesc));
-
-		if (resultRelationDesc->rd_rel->relkind == RELKIND_TOASTVALUE)
-			elog(ERROR, "You can't change toast relation %s",
-				 RelationGetRelationName(resultRelationDesc));
-
-		if (resultRelationDesc->rd_rel->relkind == RELKIND_VIEW)
-			elog(ERROR, "You can't change view relation %s",
-				 RelationGetRelationName(resultRelationDesc));
-
-		resultRelationInfo = makeNode(RelationInfo);
-		resultRelationInfo->ri_RangeTableIndex = resultRelationIndex;
-		resultRelationInfo->ri_RelationDesc = resultRelationDesc;
-		resultRelationInfo->ri_NumIndices = 0;
-		resultRelationInfo->ri_IndexRelationDescs = NULL;
-		resultRelationInfo->ri_IndexRelationInfo = NULL;
-
-		/*
-		 * If there are indices on the result relation, open them and save
-		 * descriptors in the result relation info, so that we can add new
-		 * index entries for the tuples we add/update.	We need not do
-		 * this for a DELETE, however, since deletion doesn't affect
-		 * indexes.
-		 */
-		if (resultRelationDesc->rd_rel->relhasindex &&
-			operation != CMD_DELETE)
-			ExecOpenIndices(resultRelationInfo);
-
-		estate->es_result_relation_info = resultRelationInfo;
+		estate->es_result_relations = resultRelInfos;
+		estate->es_num_result_relations = numResultRelations;
+		/* Initialize to first or only result rel */
+		estate->es_result_relation_info = resultRelInfos;
 	}
 	else
 	{
-
 		/*
 		 * if no result relation, then set state appropriately
 		 */
+		estate->es_result_relations = NULL;
+		estate->es_num_result_relations = 0;
 		estate->es_result_relation_info = NULL;
 	}
 
@@ -642,19 +621,17 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	ExecInitNode(plan, estate, NULL);
 
 	/*
-	 * get the tuple descriptor describing the type of tuples to return..
+	 * Get the tuple descriptor describing the type of tuples to return.
 	 * (this is especially important if we are creating a relation with
 	 * "retrieve into")
 	 */
 	tupType = ExecGetTupType(plan);		/* tuple descriptor */
-	targetList = plan->targetlist;
 
 	/*
-	 * Now that we have the target list, initialize the junk filter if
-	 * needed. SELECT and INSERT queries need a filter if there are any
-	 * junk attrs in the tlist.  UPDATE and DELETE always need one, since
-	 * there's always a junk 'ctid' attribute present --- no need to look
-	 * first.
+	 * Initialize the junk filter if needed. SELECT and INSERT queries need
+	 * a filter if there are any junk attrs in the tlist.  UPDATE and
+	 * DELETE always need one, since there's always a junk 'ctid' attribute
+	 * present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -664,7 +641,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		{
 			case CMD_SELECT:
 			case CMD_INSERT:
-				foreach(tlist, targetList)
+				foreach(tlist, plan->targetlist)
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(tlist);
 
@@ -685,12 +662,55 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (junk_filter_needed)
 		{
-			JunkFilter *j = ExecInitJunkFilter(targetList, tupType);
+			/*
+			 * If there are multiple result relations, each one needs
+			 * its own junk filter.  Note this is only possible for
+			 * UPDATE/DELETE, so we can't be fooled by some needing
+			 * a filter and some not.
+			 */
+			if (parseTree->resultRelations != NIL)
+			{
+				List	   *subplans;
+				ResultRelInfo *resultRelInfo;
 
-			estate->es_junkFilter = j;
+				/* Top plan had better be an Append here. */
+				Assert(IsA(plan, Append));
+				Assert(((Append *) plan)->isTarget);
+				subplans = ((Append *) plan)->appendplans;
+				Assert(length(subplans) == estate->es_num_result_relations);
+				resultRelInfo = estate->es_result_relations;
+				while (subplans != NIL)
+				{
+					Plan	   *subplan = (Plan *) lfirst(subplans);
+					JunkFilter *j;
 
-			if (operation == CMD_SELECT)
-				tupType = j->jf_cleanTupType;
+					j = ExecInitJunkFilter(subplan->targetlist,
+										   ExecGetTupType(subplan));
+					resultRelInfo->ri_junkFilter = j;
+					resultRelInfo++;
+					subplans = lnext(subplans);
+				}
+				/*
+				 * Set active junkfilter too; at this point ExecInitAppend
+				 * has already selected an active result relation...
+				 */
+				estate->es_junkFilter =
+					estate->es_result_relation_info->ri_junkFilter;
+			}
+			else
+			{
+				/* Normal case with just one JunkFilter */
+				JunkFilter *j = ExecInitJunkFilter(plan->targetlist,
+												   tupType);
+
+				estate->es_junkFilter = j;
+				if (estate->es_result_relation_info)
+					estate->es_result_relation_info->ri_junkFilter = j;
+
+				/* For SELECT, want to return the cleaned tuple type */
+				if (operation == CMD_SELECT)
+					tupType = j->jf_cleanTupType;
+			}
 		}
 		else
 			estate->es_junkFilter = NULL;
@@ -762,6 +782,59 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	return tupType;
 }
 
+/*
+ * Initialize ResultRelInfo data for one result relation
+ */
+static void
+initResultRelInfo(ResultRelInfo *resultRelInfo,
+				  Index resultRelationIndex,
+				  List *rangeTable,
+				  CmdType operation)
+{
+	Oid			resultRelationOid;
+	Relation	resultRelationDesc;
+
+	resultRelationOid = getrelid(resultRelationIndex, rangeTable);
+	resultRelationDesc = heap_open(resultRelationOid, RowExclusiveLock);
+
+	switch (resultRelationDesc->rd_rel->relkind)
+	{
+		case RELKIND_SEQUENCE:
+			elog(ERROR, "You can't change sequence relation %s",
+				 RelationGetRelationName(resultRelationDesc));
+			break;
+		case RELKIND_TOASTVALUE:
+			elog(ERROR, "You can't change toast relation %s",
+				 RelationGetRelationName(resultRelationDesc));
+			break;
+		case RELKIND_VIEW:
+			elog(ERROR, "You can't change view relation %s",
+				 RelationGetRelationName(resultRelationDesc));
+			break;
+	}
+
+	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
+	resultRelInfo->type = T_ResultRelInfo;
+	resultRelInfo->ri_RangeTableIndex = resultRelationIndex;
+	resultRelInfo->ri_RelationDesc = resultRelationDesc;
+	resultRelInfo->ri_NumIndices = 0;
+	resultRelInfo->ri_IndexRelationDescs = NULL;
+	resultRelInfo->ri_IndexRelationInfo = NULL;
+	resultRelInfo->ri_ConstraintExprs = NULL;
+	resultRelInfo->ri_junkFilter = NULL;
+
+	/*
+	 * If there are indices on the result relation, open them and save
+	 * descriptors in the result relation info, so that we can add new
+	 * index entries for the tuples we add/update.	We need not do
+	 * this for a DELETE, however, since deletion doesn't affect
+	 * indexes.
+	 */
+	if (resultRelationDesc->rd_rel->relhasindex &&
+		operation != CMD_DELETE)
+		ExecOpenIndices(resultRelInfo);
+}
+
 /* ----------------------------------------------------------------
  *		EndPlan
  *
@@ -771,7 +844,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 static void
 EndPlan(Plan *plan, EState *estate)
 {
-	RelationInfo *resultRelationInfo;
+	ResultRelInfo *resultRelInfo;
+	int			i;
 	List	   *l;
 
 	/*
@@ -792,16 +866,16 @@ EndPlan(Plan *plan, EState *estate)
 	estate->es_tupleTable = NULL;
 
 	/*
-	 * close the result relation if necessary, but hold lock on it
-	 * until xact commit.  NB: must not do this till after ExecEndNode(),
-	 * see nodeAppend.c ...
+	 * close the result relation(s) if any, but hold locks
+	 * until xact commit.
 	 */
-	resultRelationInfo = estate->es_result_relation_info;
-	if (resultRelationInfo != NULL)
+	resultRelInfo = estate->es_result_relations;
+	for (i = estate->es_num_result_relations; i > 0; i--)
 	{
-		heap_close(resultRelationInfo->ri_RelationDesc, NoLock);
-		/* close indices on the result relation, too */
-		ExecCloseIndices(resultRelationInfo);
+		/* Close indices and then the relation itself */
+		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		resultRelInfo++;
 	}
 
 	/*
@@ -1116,7 +1190,7 @@ ExecAppend(TupleTableSlot *slot,
 		   EState *estate)
 {
 	HeapTuple	tuple;
-	RelationInfo *resultRelationInfo;
+	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	int			numIndices;
 	Oid			newId;
@@ -1127,10 +1201,10 @@ ExecAppend(TupleTableSlot *slot,
 	tuple = slot->val;
 
 	/*
-	 * get information on the result relation
+	 * get information on the (current) result relation
 	 */
-	resultRelationInfo = estate->es_result_relation_info;
-	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
+	resultRelInfo = estate->es_result_relation_info;
+	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelationDesc->trigdesc &&
@@ -1154,9 +1228,8 @@ ExecAppend(TupleTableSlot *slot,
 	/*
 	 * Check the constraints of the tuple
 	 */
-
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecAppend", resultRelationDesc, slot, estate);
+		ExecConstraints("ExecAppend", resultRelInfo, slot, estate);
 
 	/*
 	 * insert the tuple
@@ -1174,7 +1247,7 @@ ExecAppend(TupleTableSlot *slot,
 	 * the tupleid of the new tuple is placed in the new tuple's t_ctid
 	 * field.
 	 */
-	numIndices = resultRelationInfo->ri_NumIndices;
+	numIndices = resultRelInfo->ri_NumIndices;
 	if (numIndices > 0)
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
@@ -1195,16 +1268,16 @@ ExecDelete(TupleTableSlot *slot,
 		   ItemPointer tupleid,
 		   EState *estate)
 {
-	RelationInfo *resultRelationInfo;
+	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	ItemPointerData ctid;
 	int			result;
 
 	/*
-	 * get the result relation information
+	 * get information on the (current) result relation
 	 */
-	resultRelationInfo = estate->es_result_relation_info;
-	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
+	resultRelInfo = estate->es_result_relation_info;
+	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelationDesc->trigdesc &&
@@ -1237,7 +1310,7 @@ ldelete:;
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
-						  resultRelationInfo->ri_RangeTableIndex, &ctid);
+						  resultRelInfo->ri_RangeTableIndex, &ctid);
 
 				if (!TupIsNull(epqslot))
 				{
@@ -1287,7 +1360,7 @@ ExecReplace(TupleTableSlot *slot,
 			EState *estate)
 {
 	HeapTuple	tuple;
-	RelationInfo *resultRelationInfo;
+	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	ItemPointerData ctid;
 	int			result;
@@ -1308,10 +1381,10 @@ ExecReplace(TupleTableSlot *slot,
 	tuple = slot->val;
 
 	/*
-	 * get the result relation information
+	 * get information on the (current) result relation
 	 */
-	resultRelationInfo = estate->es_result_relation_info;
-	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
+	resultRelInfo = estate->es_result_relation_info;
+	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&
@@ -1335,9 +1408,8 @@ ExecReplace(TupleTableSlot *slot,
 	/*
 	 * Check the constraints of the tuple
 	 */
-
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecReplace", resultRelationDesc, slot, estate);
+		ExecConstraints("ExecReplace", resultRelInfo, slot, estate);
 
 	/*
 	 * replace the heap tuple
@@ -1358,7 +1430,7 @@ lreplace:;
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
-						  resultRelationInfo->ri_RangeTableIndex, &ctid);
+						  resultRelInfo->ri_RangeTableIndex, &ctid);
 
 				if (!TupIsNull(epqslot))
 				{
@@ -1396,7 +1468,7 @@ lreplace:;
 	 * there.
 	 */
 
-	numIndices = resultRelationInfo->ri_NumIndices;
+	numIndices = resultRelInfo->ri_NumIndices;
 	if (numIndices > 0)
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, true);
 
@@ -1406,14 +1478,34 @@ lreplace:;
 }
 
 static char *
-ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
+ExecRelCheck(ResultRelInfo *resultRelInfo,
+			 TupleTableSlot *slot, EState *estate)
 {
+	Relation	rel = resultRelInfo->ri_RelationDesc;
 	int			ncheck = rel->rd_att->constr->num_check;
 	ConstrCheck *check = rel->rd_att->constr->check;
 	ExprContext *econtext;
 	MemoryContext oldContext;
 	List	   *qual;
 	int			i;
+
+	/*
+	 * If first time through for this result relation, build expression
+	 * nodetrees for rel's constraint expressions.  Keep them in the
+	 * per-query memory context so they'll survive throughout the query.
+	 */
+	if (resultRelInfo->ri_ConstraintExprs == NULL)
+	{
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+		resultRelInfo->ri_ConstraintExprs =
+			(List **) palloc(ncheck * sizeof(List *));
+		for (i = 0; i < ncheck; i++)
+		{
+			qual = (List *) stringToNode(check[i].ccbin);
+			resultRelInfo->ri_ConstraintExprs[i] = qual;
+		}
+		MemoryContextSwitchTo(oldContext);
+	}
 
 	/*
 	 * We will use the EState's per-tuple context for evaluating constraint
@@ -1431,58 +1523,13 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 	else
 		ResetExprContext(econtext);
 
-	/*
-	 * If first time through for current result relation, set up econtext's
-	 * range table to refer to result rel, and build expression nodetrees
-	 * for rel's constraint expressions.  All this stuff is kept in the
-	 * per-query memory context so it will still be here next time through.
-	 *
-	 * NOTE: if there are multiple result relations (eg, due to inheritance)
-	 * then we leak storage for prior rel's expressions and rangetable.
-	 * This should not be a big problem as long as result rels are processed
-	 * sequentially within a command.
-	 */
-	if (econtext->ecxt_range_table == NIL ||
-		getrelid(1, econtext->ecxt_range_table) != RelationGetRelid(rel))
-	{
-		RangeTblEntry *rte;
-
-		/*
-		 * Make sure expressions, etc are placed in appropriate context.
-		 */
-		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-
-		rte = makeNode(RangeTblEntry);
-
-		rte->relname = RelationGetRelationName(rel);
-		rte->relid = RelationGetRelid(rel);
-		rte->eref = makeNode(Attr);
-		rte->eref->relname = rte->relname;
-		/* other fields won't be used, leave them zero */
-
-		/* Set up single-entry range table */
-		econtext->ecxt_range_table = makeList1(rte);
-
-		estate->es_result_relation_constraints =
-			(List **) palloc(ncheck * sizeof(List *));
-
-		for (i = 0; i < ncheck; i++)
-		{
-			qual = (List *) stringToNode(check[i].ccbin);
-			estate->es_result_relation_constraints[i] = qual;
-		}
-
-		/* Done with building long-lived items */
-		MemoryContextSwitchTo(oldContext);
-	}
-
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;
 
 	/* And evaluate the constraints */
 	for (i = 0; i < ncheck; i++)
 	{
-		qual = estate->es_result_relation_constraints[i];
+		qual = resultRelInfo->ri_ConstraintExprs[i];
 
 		/*
 		 * NOTE: SQL92 specifies that a NULL result from a constraint
@@ -1498,9 +1545,10 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 }
 
 void
-ExecConstraints(char *caller, Relation rel,
+ExecConstraints(char *caller, ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate)
 {
+	Relation	rel = resultRelInfo->ri_RelationDesc;
 	HeapTuple	tuple = slot->val;
 	TupleConstr *constr = rel->rd_att->constr;
 
@@ -1524,7 +1572,7 @@ ExecConstraints(char *caller, Relation rel,
 	{
 		char	   *failed;
 
-		if ((failed = ExecRelCheck(rel, slot, estate)) != NULL)
+		if ((failed = ExecRelCheck(resultRelInfo, slot, estate)) != NULL)
 			elog(ERROR, "%s: rejected due to CHECK constraint %s",
 				 caller, failed);
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.45 2000/10/26 21:38:12 tgl Exp $
+ * $Id: plannodes.h,v 1.46 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,8 +134,10 @@ typedef struct Plan
 
 
 /* ----------------
- *	 result node -
- *		returns tuples from outer plan that satisfy the qualifications
+ *	 Result node -
+ *		If no outer plan, evaluate a variable-free targetlist.
+ *		If outer plan, return tuples from outer plan that satisfy
+ *		given quals (we can also do a level of projection)
  * ----------------
  */
 typedef struct Result
@@ -146,21 +148,21 @@ typedef struct Result
 } Result;
 
 /* ----------------
- *		append node
+ *	 Append node -
+ *		Generate the concatenation of the results of sub-plans.
  *
- * Append nodes can modify the query's rtable during execution.
- * If inheritrelid > 0, then the RTE with index inheritrelid is replaced
- * by the i'th element of inheritrtable to execute the i'th subplan.
- * We assume that this RTE is not used in any other part of the
- * query plan tree, else confusion may result...
+ * Append nodes are sometimes used to switch between several result relations
+ * (when the target of an UPDATE or DELETE is an inheritance set).  Such a
+ * node will have isTarget true.  The Append executor is then responsible
+ * for updating the executor state to point at the correct target relation
+ * whenever it switches subplans.
  * ----------------
  */
 typedef struct Append
 {
 	Plan		plan;
 	List	   *appendplans;
-	Index		inheritrelid;
-	List	   *inheritrtable;
+	bool		isTarget;
 	AppendState *appendstate;
 } Append;
 

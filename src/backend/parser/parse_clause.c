@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.71 2000/11/08 22:09:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.72 2000/11/12 00:37:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,8 +151,12 @@ setTargetTable(ParseState *pstate, char *relname, bool inh, bool inJoinSet)
 		/*
 		 * Since the rel was in the rangetable already, it's being read
 		 * as well as written.  Therefore, leave checkForRead true.
+		 *
+		 * Force inh to the desired setting for the target (XXX is this
+		 * reasonable?  It's *necessary* that INSERT target not be marked
+		 * inheritable, but otherwise not too clear what to do if conflict?)
 		 */
-		/* XXX what if pre-existing entry has wrong inh setting? */
+		rte->inh = inh;
 	}
 
 	/* Mark target table as requiring write access. */

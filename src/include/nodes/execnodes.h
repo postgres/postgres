@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.52 2000/10/26 21:38:12 tgl Exp $
+ * $Id: execnodes.h,v 1.53 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,31 +53,6 @@ typedef struct IndexInfo
 } IndexInfo;
 
 /* ----------------
- *	  RelationInfo information
- *
- *		whenever we update an existing relation, we have to
- *		update indices on the relation.  The RelationInfo class
- *		is used to hold all the information on result relations,
- *		including indices.. -cim 10/15/89
- *
- *		RangeTableIndex			result relation's range table index
- *		RelationDesc			relation descriptor for result relation
- *		NumIndices				number indices existing on result relation
- *		IndexRelationDescs		array of relation descriptors for indices
- *		IndexRelationInfo		array of key/attr info for indices
- * ----------------
- */
-typedef struct RelationInfo
-{
-	NodeTag		type;
-	Index		ri_RangeTableIndex;
-	Relation	ri_RelationDesc;
-	int			ri_NumIndices;
-	RelationPtr ri_IndexRelationDescs;
-	IndexInfo **ri_IndexRelationInfo;
-} RelationInfo;
-
-/* ----------------
  *	  ExprContext
  *
  *		This class holds the "current context" information
@@ -116,8 +91,6 @@ typedef struct ExprContext
 	/* Values to substitute for Aggref nodes in expression */
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
-	/* Range table that Vars in expression refer to --- seldom needed */
-	List	   *ecxt_range_table;
 } ExprContext;
 
 /*
@@ -211,13 +184,42 @@ typedef struct JunkFilter
 } JunkFilter;
 
 /* ----------------
+ *	  ResultRelInfo information
+ *
+ *		whenever we update an existing relation, we have to
+ *		update indices on the relation.  The ResultRelInfo class
+ *		is used to hold all the information on result relations,
+ *		including indices.. -cim 10/15/89
+ *
+ *		RangeTableIndex			result relation's range table index
+ *		RelationDesc			relation descriptor for result relation
+ *		NumIndices				# of indices existing on result relation
+ *		IndexRelationDescs		array of relation descriptors for indices
+ *		IndexRelationInfo		array of key/attr info for indices
+ *		ConstraintExprs			array of constraint-checking expressions
+ *		junkFilter				for removing junk attributes from tuples
+ * ----------------
+ */
+typedef struct ResultRelInfo
+{
+	NodeTag		type;
+	Index		ri_RangeTableIndex;
+	Relation	ri_RelationDesc;
+	int			ri_NumIndices;
+	RelationPtr ri_IndexRelationDescs;
+	IndexInfo **ri_IndexRelationInfo;
+	List	  **ri_ConstraintExprs;
+	JunkFilter *ri_junkFilter;
+} ResultRelInfo;
+
+/* ----------------
  *	  EState information
  *
  *		direction						direction of the scan
  *
  *		range_table						array of scan relation information
  *
- *		result_relation_information		for update queries
+ *		result_relation information		for insert/update/delete queries
  *
  *		into_relation_descriptor		relation being retrieved "into"
  *
@@ -227,10 +229,6 @@ typedef struct JunkFilter
  *		tupleTable						this is a pointer to an array
  *										of pointers to tuples used by
  *										the executor at any given moment.
- *
- *		junkFilter						contains information used to
- *										extract junk attributes from a tuple.
- *										(see JunkFilter above)
  * ----------------
  */
 typedef struct EState
@@ -239,23 +237,24 @@ typedef struct EState
 	ScanDirection es_direction;
 	Snapshot	es_snapshot;
 	List	   *es_range_table;
-	RelationInfo *es_result_relation_info;
+	ResultRelInfo *es_result_relations;		/* array of ResultRelInfos */
+	int			es_num_result_relations;	/* length of array */
+	ResultRelInfo *es_result_relation_info;	/* currently active array elt */
+	JunkFilter *es_junkFilter;				/* currently active junk filter */
 	Relation	es_into_relation_descriptor;
 	ParamListInfo es_param_list_info;
 	ParamExecData *es_param_exec_vals;	/* this is for subselects */
 	TupleTable	es_tupleTable;
-	JunkFilter *es_junkFilter;
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */
 	MemoryContext es_query_cxt;	/* per-query context in which EState lives */
-	/* this ExprContext is for per-output-tuple operations, such as
+	/*
+	 * this ExprContext is for per-output-tuple operations, such as
 	 * constraint checks and index-value computations.  It can be reset
 	 * for each output tuple.  Note that it will be created only if needed.
 	 */
 	ExprContext *es_per_tuple_exprcontext;
-	/* this field is storage space for ExecConstraints(): */
-	List	  **es_result_relation_constraints;
 	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
 	struct Plan *es_origPlan;
 	Pointer		es_evalPlanQual;
@@ -341,15 +340,9 @@ typedef struct ResultState
 /* ----------------
  *	 AppendState information
  *
- *		append nodes have this field "unionplans" which is this
- *		list of plans to execute in sequence..	these variables
- *		keep track of things..
- *
- *		whichplan		which plan is being executed
+ *		whichplan		which plan is being executed (0 .. n-1)
  *		nplans			how many plans are in the list
  *		initialized		array of ExecInitNode() results
- *		result_relation_info_list  array of each subplan's result relation info
- *		junkFilter_list  array of each subplan's junk filter
  * ----------------
  */
 typedef struct AppendState
@@ -358,8 +351,6 @@ typedef struct AppendState
 	int			as_whichplan;
 	int			as_nplans;
 	bool	   *as_initialized;
-	List	   *as_result_relation_info_list;
-	List	   *as_junkFilter_list;
 } AppendState;
 
 /* ----------------------------------------------------------------

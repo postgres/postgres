@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.130 2000/11/05 22:50:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.131 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,8 +176,7 @@ _copyAppend(Append *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, appendplans);
-	newnode->inheritrelid = from->inheritrelid;
-	Node_Copy(from, newnode, inheritrtable);
+	newnode->isTarget = from->isTarget;
 
 	return newnode;
 }
@@ -1276,6 +1275,30 @@ _copyTidPath(TidPath *from)
 }
 
 /* ----------------
+ *				_copyAppendPath
+ * ----------------
+ */
+static AppendPath *
+_copyAppendPath(AppendPath *from)
+{
+	AppendPath    *newnode = makeNode(AppendPath);
+
+	/* ----------------
+	 *	copy the node superclass fields
+	 * ----------------
+	 */
+	CopyPathFields((Path *) from, (Path *) newnode);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	Node_Copy(from, newnode, subpaths);
+
+	return newnode;
+}
+
+/* ----------------
  *		CopyJoinPathFields
  *
  *		This function copies the fields of the JoinPath node.  It is used by
@@ -1766,6 +1789,8 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, limitCount);
 
 	Node_Copy(from, newnode, setOperations);
+
+	newnode->resultRelations = listCopy(from->resultRelations);
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
@@ -2676,6 +2701,9 @@ copyObject(void *from)
 			break;
 		case T_TidPath:
 			retval = _copyTidPath(from);
+			break;
+		case T_AppendPath:
+			retval = _copyAppendPath(from);
 			break;
 		case T_NestPath:
 			retval = _copyNestPath(from);

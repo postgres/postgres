@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.39 2000/10/26 21:35:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.40 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,6 @@ init_sql_fcache(FmgrInfo *finfo)
 		slot->ttc_descIsNew = true;
 		slot->ttc_tupleDescriptor = (TupleDesc) NULL;
 		slot->ttc_buffer = InvalidBuffer;
-		slot->ttc_whichplan = -1;
 
 		fcache->funcSlot = slot;
 	}

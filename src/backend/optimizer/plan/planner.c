@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.95 2000/11/09 02:46:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.96 2000/11/12 00:36:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,8 @@ static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
 static Node *preprocess_jointree(Query *parse, Node *jtnode);
 static Node *preprocess_expression(Query *parse, Node *expr, int kind);
 static void preprocess_qual_conditions(Query *parse, Node *jtnode);
+static Plan *inheritance_planner(Query *parse, List *inheritlist);
+static Plan *grouping_planner(Query *parse, double tuple_fraction);
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
@@ -65,7 +67,7 @@ planner(Query *parse)
 
 	/*
 	 * The planner can be called recursively (an example is when
-	 * eval_const_expressions tries to simplify an SQL function).
+	 * eval_const_expressions tries to pre-evaluate an SQL function).
 	 * So, these global state variables must be saved and restored.
 	 *
 	 * These vars cannot be moved into the Query structure since their
@@ -109,11 +111,14 @@ planner(Query *parse)
  *
  * parse is the querytree produced by the parser & rewriter.
  * tuple_fraction is the fraction of tuples we expect will be retrieved.
- * tuple_fraction is interpreted as explained for union_planner, below.
+ * tuple_fraction is interpreted as explained for grouping_planner, below.
  *
  * Basically, this routine does the stuff that should only be done once
- * per Query object.  It then calls union_planner, which may be called
- * recursively on the same Query node in order to handle inheritance.
+ * per Query object.  It then calls grouping_planner.  At one time,
+ * grouping_planner could be invoked recursively on the same Query object;
+ * that's not currently true, but we keep the separation between the two
+ * routines anyway, in case we need it again someday.
+ *
  * subquery_planner will be called recursively to handle sub-Query nodes
  * found within the query's expressions and rangetable.
  *
@@ -164,7 +169,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	}
 
 	/*
-	 * Do preprocessing on targetlist and quals.
+	 * Do expression preprocessing on targetlist and quals.
 	 */
 	parse->targetList = (List *)
 		preprocess_expression(parse, (Node *) parse->targetList,
@@ -176,17 +181,14 @@ subquery_planner(Query *parse, double tuple_fraction)
 											  EXPRKIND_HAVING);
 
 	/*
-	 * Do the main planning (potentially recursive for inheritance)
+	 * Do the main planning.  If we have an inherited target relation,
+	 * that needs special processing, else go straight to grouping_planner.
 	 */
-	plan = union_planner(parse, tuple_fraction);
-
-	/*
-	 * XXX should any more of union_planner's activity be moved here?
-	 *
-	 * That would take careful study of the interactions with prepunion.c,
-	 * but I suspect it would pay off in simplicity and avoidance of
-	 * wasted cycles.
-	 */
+	if (parse->resultRelation &&
+		(lst = expand_inherted_rtentry(parse, parse->resultRelation)) != NIL)
+		plan = inheritance_planner(parse, lst);
+	else
+		plan = grouping_planner(parse, tuple_fraction);
 
 	/*
 	 * If any subplans were generated, or if we're inside a subplan,
@@ -600,10 +602,65 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
 }
 
 /*--------------------
- * union_planner
- *	  Invokes the planner on union-type queries (both set operations and
- *	  appends produced by inheritance), recursing if necessary to get them
- *	  all, then processes normal plans.
+ * inheritance_planner
+ *	  Generate a plan in the case where the result relation is an
+ *	  inheritance set.
+ *
+ * We have to handle this case differently from cases where a source
+ * relation is an inheritance set.  Source inheritance is expanded at
+ * the bottom of the plan tree (see allpaths.c), but target inheritance
+ * has to be expanded at the top.  The reason is that for UPDATE, each
+ * target relation needs a different targetlist matching its own column
+ * set.  (This is not so critical for DELETE, but for simplicity we treat
+ * inherited DELETE the same way.)  Fortunately, the UPDATE/DELETE target
+ * can never be the nullable side of an outer join, so it's OK to generate
+ * the plan this way.
+ *
+ * parse is the querytree produced by the parser & rewriter.
+ * inheritlist is an integer list of RT indexes for the result relation set.
+ *
+ * Returns a query plan.
+ *--------------------
+ */
+static Plan *
+inheritance_planner(Query *parse, List *inheritlist)
+{
+	int			parentRTindex = parse->resultRelation;
+	Oid			parentOID = getrelid(parentRTindex, parse->rtable);
+	List	   *subplans = NIL;
+	List	   *tlist = NIL;
+	List	   *l;
+
+	foreach(l, inheritlist)
+	{
+		int		childRTindex = lfirsti(l);
+		Oid		childOID = getrelid(childRTindex, parse->rtable);
+		Query  *subquery;
+		Plan   *subplan;
+
+		/* Generate modified query with this rel as target */
+		subquery = (Query *) adjust_inherited_attrs((Node *) parse,
+													parentRTindex, parentOID,
+													childRTindex, childOID);
+		/* Generate plan */
+		subplan = grouping_planner(subquery, 0.0 /* retrieve all tuples */);
+		subplans = lappend(subplans, subplan);
+		/* Save preprocessed tlist from first rel for use in Append */
+		if (tlist == NIL)
+			tlist = subplan->targetlist;
+	}
+
+	/* Save the target-relations list for the executor, too */
+	parse->resultRelations = inheritlist;
+
+	return (Plan *) make_append(subplans, true, tlist);
+}
+
+/*--------------------
+ * grouping_planner
+ *	  Perform planning steps related to grouping, aggregation, etc.
+ *	  This primarily means adding top-level processing to the basic
+ *	  query plan produced by query_planner.
  *
  * parse is the querytree produced by the parser & rewriter.
  * tuple_fraction is the fraction of tuples we expect will be retrieved
@@ -621,18 +678,15 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
  * Returns a query plan.
  *--------------------
  */
-Plan *
-union_planner(Query *parse,
-			  double tuple_fraction)
+static Plan *
+grouping_planner(Query *parse, double tuple_fraction)
 {
 	List	   *tlist = parse->targetList;
-	Plan	   *result_plan = (Plan *) NULL;
-	AttrNumber *groupColIdx = NULL;
-	List	   *current_pathkeys = NIL;
+	Plan	   *result_plan;
+	List	   *current_pathkeys;
 	List	   *group_pathkeys;
 	List	   *sort_pathkeys;
-	Index		rt_index;
-	List	   *inheritors;
+	AttrNumber *groupColIdx = NULL;
 
 	if (parse->setOperations)
 	{
@@ -654,64 +708,17 @@ union_planner(Query *parse,
 		tlist = postprocess_setop_tlist(result_plan->targetlist, tlist);
 
 		/*
-		 * We leave current_pathkeys NIL indicating we do not know sort
+		 * We set current_pathkeys NIL indicating we do not know sort
 		 * order.  This is correct when the top set operation is UNION ALL,
 		 * since the appended-together results are unsorted even if the
 		 * subplans were sorted.  For other set operations we could be
-		 * smarter --- future improvement!
+		 * smarter --- room for future improvement!
 		 */
+		current_pathkeys = NIL;
 
 		/*
 		 * Calculate pathkeys that represent grouping/ordering
 		 * requirements (grouping should always be null, but...)
-		 */
-		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
-													   tlist);
-		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
-													  tlist);
-	}
-	else if (find_inheritable_rt_entry(parse->rtable,
-									   &rt_index, &inheritors))
-	{
-		List	   *sub_tlist;
-
-		/*
-		 * Generate appropriate target list for subplan; may be different
-		 * from tlist if grouping or aggregation is needed.
-		 */
-		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
-
-		/*
-		 * Recursively plan the subqueries needed for inheritance
-		 */
-		result_plan = plan_inherit_queries(parse, sub_tlist,
-										   rt_index, inheritors);
-
-		/*
-		 * Fix up outer target list.  NOTE: unlike the case for
-		 * non-inherited query, we pass the unfixed tlist to subplans,
-		 * which do their own fixing.  But we still want to fix the outer
-		 * target list afterwards. I *think* this is correct --- doing the
-		 * fix before recursing is definitely wrong, because
-		 * preprocess_targetlist() will do the wrong thing if invoked
-		 * twice on the same list. Maybe that is a bug? tgl 6/6/99
-		 */
-		tlist = preprocess_targetlist(tlist,
-									  parse->commandType,
-									  parse->resultRelation,
-									  parse->rtable);
-
-		if (parse->rowMarks)
-			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
-
-		/*
-		 * We leave current_pathkeys NIL indicating we do not know sort
-		 * order of the Append-ed results.
-		 */
-
-		/*
-		 * Calculate pathkeys that represent grouping/ordering
-		 * requirements
 		 */
 		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
 													   tlist);
@@ -938,10 +945,6 @@ union_planner(Query *parse,
 		current_pathkeys = parse->query_pathkeys;
 	}
 
-	/* query_planner returns NULL if it thinks plan is bogus */
-	if (!result_plan)
-		elog(ERROR, "union_planner: failed to create plan");
-
 	/*
 	 * We couldn't canonicalize group_pathkeys and sort_pathkeys before
 	 * running query_planner(), so do it now.
@@ -1057,7 +1060,7 @@ union_planner(Query *parse,
  * make_subplanTargetList
  *	  Generate appropriate target list when grouping is required.
  *
- * When union_planner inserts Aggregate and/or Group plan nodes above
+ * When grouping_planner inserts Aggregate and/or Group plan nodes above
  * the result of query_planner, we typically want to pass a different
  * target list to query_planner than the outer plan nodes should have.
  * This routine generates the correct target list for the subplan.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.47 2000/10/26 21:38:24 tgl Exp $
+ * $Id: planmain.h,v 1.48 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@ extern Plan *query_planner(Query *root, List *tlist, double tuple_fraction);
 extern Plan *create_plan(Query *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 									   Index scanrelid, Plan *subplan);
+extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort(List *tlist, Plan *lefttree, int keycount);
 extern Sort *make_sort_from_pathkeys(List *tlist, Plan *lefttree,
 									 List *pathkeys);
@@ -41,7 +42,6 @@ extern Limit *make_limit(List *tlist, Plan *lefttree,
 extern SetOp *make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 						 List *distinctList, AttrNumber flagColIdx);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
-extern void copy_plan_costsize(Plan *dest, Plan *src);
 
 /*
  * prototypes for plan/initsplan.c

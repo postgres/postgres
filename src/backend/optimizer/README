@@ -4,11 +4,11 @@ Summary
 These directories take the Query structure returned by the parser, and
 generate a plan used by the executor.  The /plan directory generates the
 actual output plan, the /path code generates all possible ways to join the
-tables, and /prep handles special cases like inheritance.  /util is utility
-stuff.  /geqo is the separate "genetic optimization" planner --- it does
-a semi-random search through the join tree space, rather than exhaustively
-considering all possible join trees.  (But each join considered by /geqo
-is given to /path to create paths for, so we consider all possible
+tables, and /prep handles various preprocessing steps for special cases.
+/util is utility stuff.  /geqo is the separate "genetic optimization" planner
+--- it does a semi-random search through the join tree space, rather than
+exhaustively considering all possible join trees.  (But each join considered
+by /geqo is given to /path to create paths for, so we consider all possible
 implementation paths for each specific join pair even in GEQO mode.)
 
 
@@ -210,10 +210,10 @@ planner()
      thereby reducing the accuracy of selectivity estimates.
  process sublinks
  convert Vars of outer query levels into Params
---union_planner()
-  handle unions and inheritance by mutual recursion with prepunion.c routines
-  preprocess target list
-  handle GROUP BY, HAVING, aggregates, ORDER BY, DISTINCT
+--grouping_planner()
+  preprocess target list for non-SELECT queries
+  handle UNION/INTERSECT/EXCEPT, GROUP BY, HAVING, aggregates,
+	ORDER BY, DISTINCT, LIMIT
 --query_planner()
    pull out constant quals, which can be used to gate execution of the
 	whole plan (if any are found, we make a top-level Result node
@@ -239,11 +239,12 @@ planner()
       Loop back if this wasn't the top join level.
    Back at query_planner:
    put back constant quals and non-simplified target list
- Back at union_planner:
+ Back at grouping_planner:
  do grouping(GROUP)
  do aggregates
  make unique(DISTINCT)
  make sort(ORDER BY)
+ make limit(LIMIT/OFFSET)
 
 
 Optimizer Data Structures

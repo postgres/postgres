@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.29 2000/09/29 18:21:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.30 2000/11/12 00:36:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ get_base_rel(Query *root, int relid)
 {
 	List	   *baserels;
 	RelOptInfo *rel;
-	Oid			relationObjectId;
 
 	foreach(baserels, root->base_rel_list)
 	{
@@ -60,7 +59,30 @@ get_base_rel(Query *root, int relid)
 	}
 
 	/* No existing RelOptInfo for this base rel, so make a new one */
-	rel = makeNode(RelOptInfo);
+	rel = make_base_rel(root, relid);
+
+	/* and add it to the list */
+	root->base_rel_list = lcons(rel, root->base_rel_list);
+
+	return rel;
+}
+
+/*
+ * make_base_rel
+ *	  Construct a base-relation RelOptInfo for the specified rangetable index.
+ *
+ * This is split out of get_base_rel so that inheritance-tree processing can
+ * construct baserel nodes for child tables.  We need a RelOptInfo so we can
+ * plan a suitable access path for each child table, but we do NOT want to
+ * enter the child nodes into base_rel_list.  In most contexts, get_base_rel
+ * should be called instead.
+ */
+RelOptInfo *
+make_base_rel(Query *root, int relid)
+{
+	RelOptInfo *rel = makeNode(RelOptInfo);
+	Oid			relationObjectId;
+
 	rel->relids = makeListi1(relid);
 	rel->rows = 0;
 	rel->width = 0;
@@ -94,8 +116,6 @@ get_base_rel(Query *root, int relid)
 		/* subquery --- mark it as such for later processing */
 		rel->issubquery = true;
 	}
-
-	root->base_rel_list = lcons(rel, root->base_rel_list);
 
 	return rel;
 }

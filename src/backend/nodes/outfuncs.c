@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.131 2000/10/31 13:59:52 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.132 2000/11/12 00:36:57 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -296,6 +296,9 @@ _outQuery(StringInfo str, Query *node)
 
 	appendStringInfo(str, " :setOperations ");
 	_outNode(str, node->setOperations);
+
+	appendStringInfo(str, " :resultRelations ");
+	_outIntList(str, node->resultRelations);
 }
 
 static void
@@ -327,17 +330,18 @@ _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 
 /*
  * print the basic stuff of all nodes that inherit from Plan
+ *
+ * NOTE: we deliberately omit the execution state (EState)
  */
 static void
 _outPlanInfo(StringInfo str, Plan *node)
 {
 	appendStringInfo(str,
-					 ":startup_cost %.2f :total_cost %.2f :rows %.0f :width %d :state %s :qptargetlist ",
+					 ":startup_cost %.2f :total_cost %.2f :rows %.0f :width %d :qptargetlist ",
 					 node->startup_cost,
 					 node->total_cost,
 					 node->plan_rows,
-					 node->plan_width,
-					 node->state ? "not-NULL" : "<>");
+					 node->plan_width);
 	_outNode(str, node->targetlist);
 
 	appendStringInfo(str, " :qpqual ");
@@ -394,9 +398,8 @@ _outAppend(StringInfo str, Append *node)
 	appendStringInfo(str, " :appendplans ");
 	_outNode(str, node->appendplans);
 
-	appendStringInfo(str, " :inheritrelid %u :inheritrtable ",
-					 node->inheritrelid);
-	_outNode(str, node->inheritrtable);
+	appendStringInfo(str, " :isTarget %s ",
+					 node->isTarget ? "true" : "false");
 }
 
 /*
@@ -946,25 +949,6 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 }
 
 /*
- *	Stuff from execnodes.h
- */
-
-/*
- *	EState is a subclass of Node.
- */
-static void
-_outEState(StringInfo str, EState *node)
-{
-	appendStringInfo(str,
-					 " ESTATE :direction %d :range_table ",
-					 node->es_direction);
-	_outNode(str, node->es_range_table);
-
-	appendStringInfo(str, " :result_relation_info @ 0x%x ",
-					 (int) (node->es_result_relation_info));
-}
-
-/*
  *	Stuff from relation.h
  */
 
@@ -1107,8 +1091,25 @@ _outTidPath(StringInfo str, TidPath *node)
 	appendStringInfo(str, " :tideval ");
 	_outNode(str, node->tideval);
 
-	appendStringInfo(str, " :un joined_relids ");
+	appendStringInfo(str, " :unjoined_relids ");
 	_outIntList(str, node->unjoined_relids);
+}
+
+/*
+ *	AppendPath is a subclass of Path.
+ */
+static void
+_outAppendPath(StringInfo str, AppendPath *node)
+{
+	appendStringInfo(str,
+					 " APPENDPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
+					 node->path.pathtype,
+					 node->path.startup_cost,
+					 node->path.total_cost);
+	_outNode(str, node->path.pathkeys);
+
+	appendStringInfo(str, " :subpaths ");
+	_outNode(str, node->subpaths);
 }
 
 /*
@@ -1632,9 +1633,6 @@ _outNode(StringInfo str, void *obj)
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
 				break;
-			case T_EState:
-				_outEState(str, obj);
-				break;
 			case T_RelOptInfo:
 				_outRelOptInfo(str, obj);
 				break;
@@ -1655,6 +1653,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_TidPath:
 				_outTidPath(str, obj);
+				break;
+			case T_AppendPath:
+				_outAppendPath(str, obj);
 				break;
 			case T_NestPath:
 				_outNestPath(str, obj);

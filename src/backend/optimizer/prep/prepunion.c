@@ -1,15 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * prepunion.c
- *	  Routines to plan set-operation and inheritance queries.  The filename
- *	  is a leftover from a time when only UNIONs were handled.
+ *	  Routines to plan set-operation queries.  The filename is a leftover
+ *	  from a time when only UNIONs were implemented.
+ *
+ * There is also some code here to support planning of queries that use
+ * inheritance (SELECT FROM foo*).  This no longer has much connection
+ * to the processing of UNION queries, but it's still here.
+ *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.55 2000/11/09 02:46:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.56 2000/11/12 00:36:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,13 +35,19 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
+/* macros borrowed from expression_tree_mutator */
+
+#define FLATCOPY(newnode, node, nodetype)  \
+	( (newnode) = makeNode(nodetype), \
+	  memcpy((newnode), (node), sizeof(nodetype)) )
+
 typedef struct
 {
-	Index		rt_index;
-	int			sublevels_up;
+	Index		old_rt_index;
+	Index		new_rt_index;
 	Oid			old_relid;
 	Oid			new_relid;
-} fix_parsetree_attnums_context;
+} adjust_inherited_attrs_context;
 
 static Plan *recurse_set_operations(Node *setOp, Query *parse,
 									List *colTypes, bool junkOK,
@@ -53,14 +64,8 @@ static List *generate_setop_tlist(List *colTypes, int flag,
 								  List *input_tlist,
 								  List *refnames_tlist);
 static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
-static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
-					  Oid new_relid, Query *parsetree);
-static bool fix_parsetree_attnums_walker(Node *node,
-							 fix_parsetree_attnums_context *context);
-static RangeTblEntry *new_rangetable_entry(Oid new_relid,
-					 RangeTblEntry *old_entry);
-static Append *make_append(List *appendplans, Index rt_index,
-						   List *inheritrtable, List *tlist);
+static Node *adjust_inherited_attrs_mutator(Node *node,
+								adjust_inherited_attrs_context *context);
 
 
 /*
@@ -69,8 +74,8 @@ static Append *make_append(List *appendplans, Index rt_index,
  *	  Plans the queries for a tree of set operations (UNION/INTERSECT/EXCEPT)
  *
  * This routine only deals with the setOperations tree of the given query.
- * Any top-level ORDER BY requested in parse->sortClause will be added on
- * back in union_planner.
+ * Any top-level ORDER BY requested in parse->sortClause will be added
+ * when we return to grouping_planner.
  */
 Plan *
 plan_set_operations(Query *parse)
@@ -142,7 +147,6 @@ recurse_set_operations(Node *setOp, Query *parse,
 							  NIL,
 							  rtr->rtindex,
 							  subplan);
-		copy_plan_costsize(plan, subplan);
 		return plan;
 	}
 	else if (IsA(setOp, SetOperationStmt))
@@ -217,8 +221,7 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 	 */
 	plan = (Plan *)
 		make_append(planlist,
-					0,
-					NIL,
+					false,
 					generate_setop_tlist(op->colTypes, -1, false,
 									((Plan *) lfirst(planlist))->targetlist,
 									refnames_tlist));
@@ -269,8 +272,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 */
 	plan = (Plan *)
 		make_append(makeList2(lplan, rplan),
-					0,
-					NIL,
+					false,
 					generate_setop_tlist(op->colTypes, 0, false,
 										 lplan->targetlist,
 										 refnames_tlist));
@@ -457,132 +459,6 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 
 
 /*
- * plan_inherit_queries
- *	  Plans the queries for an inheritance tree rooted at a parent relation.
- *
- * Inputs:
- *	root = parent parse tree
- *	tlist = target list for inheritance subqueries (not same as parent's!)
- *	rt_index = rangetable index for current inheritance item
- *	inheritors = list of OIDs of the target rel plus all its descendants
- *
- * Returns an APPEND node that forms the result of performing the given
- * query for each member relation of the inheritance group.
- *
- * If grouping, aggregation, or sorting is specified in the parent plan,
- * the subplans should not do any of those steps --- we must do those
- * operations just once above the APPEND node.	The given tlist has been
- * modified appropriately to remove group/aggregate expressions, but the
- * Query node still has the relevant fields set.  We remove them in the
- * copies used for subplans.
- *
- * NOTE: this can be invoked recursively if more than one inheritance wildcard
- * is present.	At each level of recursion, the first wildcard remaining in
- * the rangetable is expanded.
- *
- * NOTE: don't bother optimizing this routine for the case that the target
- * rel has no children.  We won't get here unless find_inheritable_rt_entry
- * found at least two members in the inheritance group, so an APPEND is
- * certainly necessary.
- */
-Plan *
-plan_inherit_queries(Query *root, List *tlist,
-					 Index rt_index, List *inheritors)
-{
-	RangeTblEntry *rt_entry = rt_fetch(rt_index, root->rtable);
-	List	   *union_plans = NIL;
-	List	   *union_rtentries = NIL;
-	List	   *save_tlist = root->targetList;
-	double		tuple_fraction;
-	List	   *i;
-
-	/*
-	 * Avoid making copies of the root's tlist, which we aren't going to
-	 * use anyway (we are going to make copies of the passed tlist,
-	 * instead).  This is purely a space-saving hack.  Note we restore
-	 * the root's tlist before exiting.
-	 */
-	root->targetList = NIL;
-
-	/*
-	 * If we are going to need sorting or grouping at the top level, force
-	 * lower-level planners to assume that all tuples will be retrieved.
-	 */
-	if (root->distinctClause || root->sortClause ||
-		root->groupClause || root->hasAggs)
-		tuple_fraction = 0.0;	/* will need all tuples from each subplan */
-	else
-		tuple_fraction = -1.0;	/* default behavior is OK (I think) */
-
-	foreach(i, inheritors)
-	{
-		Oid			relid = lfirsti(i);
-
-		/*
-		 * Make a modifiable copy of the original query, and replace the
-		 * target rangetable entry in it with a new one identifying this
-		 * child table.  The new rtentry is marked inh = false --- this
-		 * is essential to prevent infinite recursion when the subquery
-		 * is rescanned by find_inheritable_rt_entry!
-		 */
-		Query	   *new_root = copyObject(root);
-		RangeTblEntry *new_rt_entry = new_rangetable_entry(relid,
-														   rt_entry);
-
-		new_rt_entry->inh = false;
-		rt_store(rt_index, new_root->rtable, new_rt_entry);
-
-		/*
-		 * Insert (a modifiable copy of) the desired simplified tlist into
-		 * the subquery
-		 */
-		new_root->targetList = copyObject(tlist);
-
-		/*
-		 * Clear the sorting and grouping qualifications in the subquery,
-		 * so that sorting will only be done once after append
-		 */
-		new_root->distinctClause = NIL;
-		new_root->sortClause = NIL;
-		new_root->groupClause = NIL;
-		new_root->havingQual = NULL;
-		new_root->limitOffset = NULL;	/* LIMIT's probably unsafe too */
-		new_root->limitCount = NULL;
-		new_root->hasAggs = false;		/* shouldn't be any left ... */
-
-		/*
-		 * Update attribute numbers in case child has different ordering
-		 * of columns than parent (as can happen after ALTER TABLE).
-		 *
-		 * XXX This is a crock, and it doesn't really work.  It'd be better
-		 * to fix ALTER TABLE to preserve consistency of attribute
-		 * numbering.
-		 */
-		fix_parsetree_attnums(rt_index,
-							  rt_entry->relid,
-							  relid,
-							  new_root);
-
-		/*
-		 * Plan the subquery by recursively calling union_planner().
-		 * Add plan and child rtentry to lists for APPEND.
-		 */
-		union_plans = lappend(union_plans,
-							  union_planner(new_root, tuple_fraction));
-		union_rtentries = lappend(union_rtentries, new_rt_entry);
-	}
-
-	/* Restore root's tlist */
-	root->targetList = save_tlist;
-
-	/* Construct the finished Append plan. */
-	return (Plan *) make_append(union_plans,
-								rt_index,
-								union_rtentries,
-								((Plan *) lfirst(union_plans))->targetlist);
-}
-
-/*
  * find_all_inheritors -
  *		Returns an integer list of relids including the given rel plus
  *		all relations that inherit from it, directly or indirectly.
@@ -622,200 +498,181 @@ find_all_inheritors(Oid parentrel)
 }
 
 /*
- * find_inheritable_rt_entry -
- *		Given a rangetable, find the first rangetable entry that represents
- *		an inheritance set.
+ * expand_inherted_rtentry
+ *		Check whether a rangetable entry represents an inheritance set.
+ *		If so, add entries for all the child tables to the query's
+ *		rangetable, and return an integer list of RT indexes for the
+ *		whole inheritance set (parent and children).
+ *		If not, return NIL.
  *
- *		If successful, set *rt_index to the index (1..n) of the entry,
- *		set *inheritors to a list of the relation OIDs of the set,
- *		and return TRUE.
+ * A childless table is never considered to be an inheritance set; therefore
+ * the result will never be a one-element list.  It'll be either empty
+ * or have two or more elements.
  *
- *		If there is no entry that requires inheritance processing,
- *		return FALSE.
- *
- * NOTE: We return the inheritors list so that plan_inherit_queries doesn't
- * have to compute it again.
- *
- * NOTE: We clear the inh flag in any entries that have it set but turn
- * out not to have any actual inheritance children.  This is an efficiency
- * hack to avoid having to repeat the inheritance checks if the list is
- * scanned again (as will happen during expansion of any subsequent entry
- * that does have inheritance children).  Although modifying the input
- * rangetable in-place may seem uncool, there's no reason not to do it,
- * since any re-examination of the entry would just come to the same
- * conclusion that the table has no children.
+ * NOTE: after this routine executes, the specified RTE will always have
+ * its inh flag cleared, whether or not there were any children.  This
+ * ensures we won't expand the same RTE twice, which would otherwise occur
+ * for the case of an inherited UPDATE/DELETE target relation.
  */
-bool
-find_inheritable_rt_entry(List *rangetable,
-						  Index *rt_index,
-						  List **inheritors)
+List *
+expand_inherted_rtentry(Query *parse, Index rti)
 {
-	Index		count = 0;
-	List	   *temp;
+	RangeTblEntry *rte = rt_fetch(rti, parse->rtable);
+	Oid			parentOID = rte->relid;
+	List	   *inhOIDs;
+	List	   *inhRTIs;
+	List	   *l;
 
-	foreach(temp, rangetable)
+	/* Does RT entry allow inheritance? */
+	if (! rte->inh)
+		return NIL;
+	Assert(parentOID != InvalidOid && rte->subquery == NULL);
+	/* Always clear the parent's inh flag, see above comments */
+	rte->inh = false;
+	/* Fast path for common case of childless table */
+	if (! has_subclass(parentOID))
+		return NIL;
+	/* Scan for all members of inheritance set */
+	inhOIDs = find_all_inheritors(parentOID);
+	/*
+	 * Check that there's at least one descendant, else treat as
+	 * no-child case.  This could happen despite above has_subclass()
+	 * check, if table once had a child but no longer does.
+	 */
+	if (lnext(inhOIDs) == NIL)
+		return NIL;
+	/* OK, it's an inheritance set; expand it */
+	inhRTIs = makeListi1(rti);
+	foreach(l, inhOIDs)
 	{
-		RangeTblEntry  *rt_entry = (RangeTblEntry *) lfirst(temp);
-		List		   *inhs;
+		Oid		childOID = (Oid) lfirsti(l);
+		RangeTblEntry *childrte;
+		Index	childRTindex;
 
-		count++;
-		/* Ignore non-inheritable RT entries */
-		if (! rt_entry->inh)
+		/* parent will be in the list too, so ignore it */
+		if (childOID == parentOID)
 			continue;
-		/* Fast path for common case of childless table */
-		if (! has_subclass(rt_entry->relid))
-		{
-			rt_entry->inh = false;
-			continue;
-		}
-		/* Scan for all members of inheritance set */
-		inhs = find_all_inheritors(rt_entry->relid);
+
 		/*
-		 * Check that there's at least one descendant, else treat as
-		 * no-child case.  This could happen despite above has_subclass()
-		 * check, if table once had a child but no longer does.
+		 * Build an RTE for the child, and attach to query's rangetable list.
+		 * We copy most fields of the parent's RTE, but replace relation
+		 * real name and OID.  Note that inh will be false at this point.
 		 */
-		if (lnext(inhs) == NIL)
-		{
-			rt_entry->inh = false;
-			continue;
-		}
-		/* OK, found our boy */
-		*rt_index = count;
-		*inheritors = inhs;
-		return true;
+		childrte = copyObject(rte);
+		childrte->relname = get_rel_name(childOID);
+		childrte->relid = childOID;
+		parse->rtable = lappend(parse->rtable, childrte);
+		childRTindex = length(parse->rtable);
+
+		inhRTIs = lappendi(inhRTIs, childRTindex);
+	}
+	return inhRTIs;
+}
+
+/*
+ * adjust_inherited_attrs
+ *	  Copy the specified query or expression and translate Vars referring
+ *	  to old_rt_index to refer to new_rt_index.
+ *
+ * We also adjust varattno to match the new table by column name, rather
+ * than column number.  This hack makes it possible for child tables to have
+ * different column positions for the "same" attribute as a parent, which
+ * helps ALTER TABLE ADD COLUMN.  Unfortunately this isn't nearly enough to
+ * make it work transparently; there are other places where things fall down
+ * if children and parents don't have the same column numbers for inherited
+ * attributes.  It'd be better to rip this code out and fix ALTER TABLE...
+ */
+Node *
+adjust_inherited_attrs(Node *node,
+					   Index old_rt_index, Oid old_relid,
+					   Index new_rt_index, Oid new_relid)
+{
+	adjust_inherited_attrs_context context;
+
+	/* Handle simple case simply... */
+	if (old_rt_index == new_rt_index)
+	{
+		Assert(old_relid == new_relid);
+		return copyObject(node);
 	}
 
-	return false;
-}
-
-/*
- * new_rangetable_entry -
- *		Replaces the name and relid of 'old_entry' with the values for
- *		'new_relid'.
- *
- *		Returns a copy of 'old_entry' with the parameters substituted.
- */
-static RangeTblEntry *
-new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
-{
-	RangeTblEntry *new_entry = copyObject(old_entry);
-
-	/* Replace relation real name and OID, but not the reference name */
-	new_entry->relname = get_rel_name(new_relid);
-	new_entry->relid = new_relid;
-	return new_entry;
-}
-
-/*
- * fix_parsetree_attnums
- *	  Replaces attribute numbers from the relation represented by
- *	  'old_relid' in 'parsetree' with the attribute numbers from
- *	  'new_relid'.
- *
- * The parsetree is MODIFIED IN PLACE.	This is OK only because
- * plan_inherit_queries made a copy of the tree for us to hack upon.
- */
-static void
-fix_parsetree_attnums(Index rt_index,
-					  Oid old_relid,
-					  Oid new_relid,
-					  Query *parsetree)
-{
-	fix_parsetree_attnums_context context;
-
-	if (old_relid == new_relid)
-		return;					/* no work needed for parent rel itself */
-
-	context.rt_index = rt_index;
+	context.old_rt_index = old_rt_index;
+	context.new_rt_index = new_rt_index;
 	context.old_relid = old_relid;
 	context.new_relid = new_relid;
-	context.sublevels_up = 0;
 
-	query_tree_walker(parsetree,
-					  fix_parsetree_attnums_walker,
-					  (void *) &context,
-					  true);
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree.
+	 */
+	if (node && IsA(node, Query))
+	{
+		Query	   *query = (Query *) node;
+		Query	   *newnode;
+
+		FLATCOPY(newnode, query, Query);
+		if (newnode->resultRelation == old_rt_index)
+			newnode->resultRelation = new_rt_index;
+		query_tree_mutator(newnode, adjust_inherited_attrs_mutator,
+						   (void *) &context, false);
+		return (Node *) newnode;
+	}
+	else
+		return adjust_inherited_attrs_mutator(node, &context);
 }
 
-/*
- * Adjust varnos for child tables.	This routine makes it possible for
- * child tables to have different column positions for the "same" attribute
- * as a parent, which helps ALTER TABLE ADD COLUMN.  Unfortunately this isn't
- * nearly enough to make it work transparently; there are other places where
- * things fall down if children and parents don't have the same column numbers
- * for inherited attributes.  It'd be better to rip this code out and fix
- * ALTER TABLE...
- */
-static bool
-fix_parsetree_attnums_walker(Node *node,
-							 fix_parsetree_attnums_context *context)
+static Node *
+adjust_inherited_attrs_mutator(Node *node,
+							   adjust_inherited_attrs_context *context)
 {
 	if (node == NULL)
-		return false;
+		return NULL;
 	if (IsA(node, Var))
 	{
-		Var		   *var = (Var *) node;
+		Var		   *var = (Var *) copyObject(node);
 
-		if (var->varlevelsup == context->sublevels_up &&
-			var->varno == context->rt_index &&
-			var->varattno > 0)
+		if (var->varlevelsup == 0 &&
+			var->varno == context->old_rt_index)
 		{
-			var->varattno = get_attnum(context->new_relid,
-									   get_attname(context->old_relid,
-												   var->varattno));
+			var->varno = context->new_rt_index;
+			if (var->varattno > 0)
+				var->varattno = get_attnum(context->new_relid,
+										   get_attname(context->old_relid,
+													   var->varattno));
 		}
-		return false;
+		return (Node *) var;
 	}
-	if (IsA(node, Query))
+	if (IsA(node, RangeTblRef))
 	{
-		/* Recurse into subselects */
-		bool		result;
+		RangeTblRef	   *rtr = (RangeTblRef *) copyObject(node);
 
-		context->sublevels_up++;
-		result = query_tree_walker((Query *) node,
-								   fix_parsetree_attnums_walker,
-								   (void *) context,
-								   true);
-		context->sublevels_up--;
-		return result;
+		if (rtr->rtindex == context->old_rt_index)
+			rtr->rtindex = context->new_rt_index;
+		return (Node *) rtr;
 	}
-	return expression_tree_walker(node, fix_parsetree_attnums_walker,
+	/*
+	 * We have to process RestrictInfo nodes specially: we do NOT want to
+	 * copy the original subclauseindices list, since the new rel may have
+	 * different indices.  The list will be rebuilt during planning anyway.
+	 */
+	if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo   *oldinfo = (RestrictInfo *) node;
+		RestrictInfo   *newinfo = makeNode(RestrictInfo);
+
+		/* Copy all flat-copiable fields */
+		memcpy(newinfo, oldinfo, sizeof(RestrictInfo));
+
+		newinfo->clause = (Expr *)
+			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
+
+		newinfo->subclauseindices = NIL;
+
+		return (Node *) newinfo;
+	}
+	/*
+	 * NOTE: we do not need to recurse into sublinks, because they should
+	 * already have been converted to subplans before we see them.
+	 */
+	return expression_tree_mutator(node, adjust_inherited_attrs_mutator,
 								  (void *) context);
-}
-
-static Append *
-make_append(List *appendplans,
-			Index rt_index,
-			List *inheritrtable,
-			List *tlist)
-{
-	Append	   *node = makeNode(Append);
-	List	   *subnode;
-
-	node->appendplans = appendplans;
-	node->inheritrelid = rt_index;
-	node->inheritrtable = inheritrtable;
-	node->plan.startup_cost = 0;
-	node->plan.total_cost = 0;
-	node->plan.plan_rows = 0;
-	node->plan.plan_width = 0;
-	foreach(subnode, appendplans)
-	{
-		Plan	   *subplan = (Plan *) lfirst(subnode);
-
-		if (subnode == appendplans)		/* first node? */
-			node->plan.startup_cost = subplan->startup_cost;
-		node->plan.total_cost += subplan->total_cost;
-		node->plan.plan_rows += subplan->plan_rows;
-		if (node->plan.plan_width < subplan->plan_width)
-			node->plan.plan_width = subplan->plan_width;
-	}
-	node->plan.state = (EState *) NULL;
-	node->plan.targetlist = tlist;
-	node->plan.qual = NIL;
-	node->plan.lefttree = (Plan *) NULL;
-	node->plan.righttree = (Plan *) NULL;
-
-	return node;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.30 2000/10/05 19:48:33 momjian Exp $
+ * $Id: pathnode.h,v 1.31 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
 				  List *restriction_clauses,
 				  ScanDirection indexscandir);
 extern TidPath *create_tidscan_path(RelOptInfo *rel, List *tideval);
+extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
 extern Path *create_subqueryscan_path(RelOptInfo *rel);
 
 extern NestPath *create_nestloop_path(RelOptInfo *joinrel,
@@ -63,6 +64,7 @@ extern HashPath *create_hashjoin_path(RelOptInfo *joinrel,
  * prototypes for relnode.c
  */
 extern RelOptInfo *get_base_rel(Query *root, int relid);
+extern RelOptInfo *make_base_rel(Query *root, int relid);
 extern RelOptInfo *get_join_rel(Query *root, RelOptInfo *outer_rel,
 			 RelOptInfo *inner_rel,
 			 List **restrictlist_ptr);

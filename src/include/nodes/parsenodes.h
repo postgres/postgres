@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.119 2000/11/05 22:50:21 vadim Exp $
+ * $Id: parsenodes.h,v 1.120 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,16 @@ typedef struct Query
 
 	Node	   *setOperations;	/* set-operation tree if this is top level
 								 * of a UNION/INTERSECT/EXCEPT query */
+
+	/*
+	 * If the resultRelation turns out to be the parent of an inheritance
+	 * tree, the planner will add all the child tables to the rtable and
+	 * store a list of the rtindexes of all the result relations here.
+	 * This is done at plan time, not parse time, since we don't want to
+	 * commit to the exact set of child tables at parse time.  This field
+	 * ought to go in some sort of TopPlan plan node, not in the Query.
+	 */
+	List	   *resultRelations; /* integer list of RT indexes, or NIL */
 
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.80 2000/11/05 22:50:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.81 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,6 +436,16 @@ _equalTidPath(TidPath *a, TidPath *b)
 }
 
 static bool
+_equalAppendPath(AppendPath *a, AppendPath *b)
+{
+	if (!_equalPath((Path *) a, (Path *) b))
+		return false;
+	if (!equal(a->subpaths, b->subpaths))
+		return false;
+	return true;
+}
+
+static bool
 _equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
@@ -556,28 +566,6 @@ _equalStream(Stream *a, Stream *b)
 }
 
 /*
- *	Stuff from execnodes.h
- */
-
-/*
- *	EState is a subclass of Node.
- */
-static bool
-_equalEState(EState *a, EState *b)
-{
-	if (a->es_direction != b->es_direction)
-		return false;
-
-	if (!equal(a->es_range_table, b->es_range_table))
-		return false;
-
-	if (a->es_result_relation_info != b->es_result_relation_info)
-		return false;
-
-	return true;
-}
-
-/*
  * Stuff from parsenodes.h
  */
 
@@ -623,6 +611,8 @@ _equalQuery(Query *a, Query *b)
 	if (!equal(a->limitCount, b->limitCount))
 		return false;
 	if (!equal(a->setOperations, b->setOperations))
+		return false;
+	if (!equali(a->resultRelations, b->resultRelations))
 		return false;
 
 	/*
@@ -1851,12 +1841,11 @@ equal(void *a, void *b)
 		case T_TidPath:
 			retval = _equalTidPath(a, b);
 			break;
+		case T_AppendPath:
+			retval = _equalAppendPath(a, b);
+			break;
 		case T_IndexOptInfo:
 			retval = _equalIndexOptInfo(a, b);
-			break;
-
-		case T_EState:
-			retval = _equalEState(a, b);
 			break;
 
 		case T_List:

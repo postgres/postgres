@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.42 2000/10/26 21:35:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.43 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,6 @@ ExecAllocTableSlot(TupleTable table)
 	slot->ttc_descIsNew = true;
 	slot->ttc_tupleDescriptor = (TupleDesc) NULL;
 	slot->ttc_buffer = InvalidBuffer;
-	slot->ttc_whichplan = -1;
 
 	return slot;
 }
@@ -675,20 +674,11 @@ NodeGetResultTupleSlot(Plan *node)
 
 		case T_Append:
 			{
-				Append	   *n = (Append *) node;
-				AppendState *appendstate;
-				List	   *appendplans;
-				int			whichplan;
-				Plan	   *subplan;
+				AppendState *appendstate = ((Append *) node)->appendstate;
 
-				appendstate = n->appendstate;
-				appendplans = n->appendplans;
-				whichplan = appendstate->as_whichplan;
-
-				subplan = (Plan *) nth(whichplan, appendplans);
-				slot = NodeGetResultTupleSlot(subplan);
-				break;
+				slot = appendstate->cstate.cs_ResultTupleSlot;
 			}
+			break;
 
 		case T_IndexScan:
 			{

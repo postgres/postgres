@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.67 2000/10/05 19:48:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.68 2000/11/12 00:36:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,6 +386,37 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
 	 * divide selectivity for each clause to get an equal selectivity as
 	 * IndexScan does OK ?
 	 */
+
+	return pathnode;
+}
+
+/*
+ * create_append_path
+ *	  Creates a path corresponding to an Append plan, returning the
+ *	  pathnode.
+ *
+ */
+AppendPath *
+create_append_path(RelOptInfo *rel, List *subpaths)
+{
+	AppendPath *pathnode = makeNode(AppendPath);
+	List	   *l;
+
+	pathnode->path.pathtype = T_Append;
+	pathnode->path.parent = rel;
+	pathnode->path.pathkeys = NIL; /* result is always considered unsorted */
+	pathnode->subpaths = subpaths;
+
+	pathnode->path.startup_cost = 0;
+	pathnode->path.total_cost = 0;
+	foreach(l, subpaths)
+	{
+		Path   *subpath = (Path *) lfirst(l);
+
+		if (l == subpaths)		/* first node? */
+			pathnode->path.startup_cost = subpath->startup_cost;
+		pathnode->path.total_cost += subpath->total_cost;
+	}
 
 	return pathnode;
 }

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.61 2000/10/26 21:34:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.62 2000/11/12 00:36:56 tgl Exp $
  *
  */
 
@@ -327,32 +327,18 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	if (IsA(plan, Append))
 	{
 		Append	   *appendplan = (Append *) plan;
-		List	   *saved_rtable = es->rtable;
-		int			whichplan = 0;
 		List	   *lst;
 
 		foreach(lst, appendplan->appendplans)
 		{
 			Plan	   *subnode = (Plan *) lfirst(lst);
 
-			if (appendplan->inheritrelid > 0)
-			{
-				RangeTblEntry *rtentry;
-
-				rtentry = nth(whichplan, appendplan->inheritrtable);
-				Assert(rtentry != NULL);
-				rt_store(appendplan->inheritrelid, es->rtable, rtentry);
-			}
-
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "  ->  ");
 
 			explain_outNode(str, subnode, indent + 3, es);
-
-			whichplan++;
 		}
-		es->rtable = saved_rtable;
 	}
 
 	if (IsA(plan, SubqueryScan))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.66 2000/10/05 19:11:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.67 2000/11/12 00:36:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
+#include "optimizer/prep.h"
 #include "parser/parsetree.h"
 
 
@@ -28,7 +29,12 @@ bool		enable_geqo = true;
 int			geqo_rels = DEFAULT_GEQO_RELS;
 
 
-static void set_base_rel_pathlist(Query *root);
+static void set_base_rel_pathlists(Query *root);
+static void set_plain_rel_pathlist(Query *root, RelOptInfo *rel,
+								   RangeTblEntry *rte);
+static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
+									   RangeTblEntry *rte,
+									   List *inheritlist);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 										 List *initial_rels);
 
@@ -51,7 +57,7 @@ make_one_rel(Query *root)
 	/*
 	 * Generate access paths for the base rels.
 	 */
-	set_base_rel_pathlist(root);
+	set_base_rel_pathlists(root);
 
 	/*
 	 * Generate access paths for the entire join tree.
@@ -69,23 +75,26 @@ make_one_rel(Query *root)
 }
 
 /*
- * set_base_rel_pathlist
+ * set_base_rel_pathlists
  *	  Finds all paths available for scanning each base-relation entry.
  *	  Sequential scan and any available indices are considered.
  *	  Each useful path is attached to its relation's 'pathlist' field.
  */
 static void
-set_base_rel_pathlist(Query *root)
+set_base_rel_pathlists(Query *root)
 {
 	List	   *rellist;
 
 	foreach(rellist, root->base_rel_list)
 	{
 		RelOptInfo *rel = (RelOptInfo *) lfirst(rellist);
+		Index		rti;
 		RangeTblEntry *rte;
+		List	   *inheritlist;
 
 		Assert(length(rel->relids) == 1); /* better be base rel */
-		rte = rt_fetch(lfirsti(rel->relids), root->rtable);
+		rti = lfirsti(rel->relids);
+		rte = rt_fetch(rti, root->rtable);
 
 		if (rel->issubquery)
 		{
@@ -109,46 +118,162 @@ set_base_rel_pathlist(Query *root)
 
 			/* Generate appropriate path */
 			add_path(rel, create_subqueryscan_path(rel));
+
+			/* Select cheapest path (pretty easy in this case...) */
+			set_cheapest(rel);
+		}
+		else if ((inheritlist = expand_inherted_rtentry(root, rti)) != NIL)
+		{
+			/* Relation is root of an inheritance tree, process specially */
+			set_inherited_rel_pathlist(root, rel, rte, inheritlist);
 		}
 		else
 		{
 			/* Plain relation */
-			List	   *indices = find_secondary_indexes(rte->relid);
-
-			/* Mark rel with estimated output rows, width, etc */
-			set_baserel_size_estimates(root, rel);
-
-			/*
-			 * Generate paths and add them to the rel's pathlist.
-			 *
-			 * Note: add_path() will discard any paths that are dominated by
-			 * another available path, keeping only those paths that are
-			 * superior along at least one dimension of cost or sortedness.
-			 */
-
-			/* Consider sequential scan */
-			add_path(rel, create_seqscan_path(rel));
-
-			/* Consider TID scans */
-			create_tidscan_paths(root, rel);
-
-			/* Consider index paths for both simple and OR index clauses */
-			create_index_paths(root, rel, indices,
-							   rel->baserestrictinfo,
-							   rel->joininfo);
-
-			/*
-			 * Note: create_or_index_paths depends on create_index_paths to
-			 * have marked OR restriction clauses with relevant indices; this
-			 * is why it doesn't need to be given the list of indices.
-			 */
-			create_or_index_paths(root, rel, rel->baserestrictinfo);
+			set_plain_rel_pathlist(root, rel, rte);
 		}
-
-		/* Now find the cheapest of the paths for this rel */
-		set_cheapest(rel);
 	}
 }
+
+/*
+ * set_plain_rel_pathlist
+ *	  Build access paths for a plain relation (no subquery, no inheritance)
+ */
+static void
+set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
+	List	   *indices = find_secondary_indexes(rte->relid);
+
+	/* Mark rel with estimated output rows, width, etc */
+	set_baserel_size_estimates(root, rel);
+
+	/*
+	 * Generate paths and add them to the rel's pathlist.
+	 *
+	 * Note: add_path() will discard any paths that are dominated by
+	 * another available path, keeping only those paths that are
+	 * superior along at least one dimension of cost or sortedness.
+	 */
+
+	/* Consider sequential scan */
+	add_path(rel, create_seqscan_path(rel));
+
+	/* Consider TID scans */
+	create_tidscan_paths(root, rel);
+
+	/* Consider index paths for both simple and OR index clauses */
+	create_index_paths(root, rel, indices,
+					   rel->baserestrictinfo,
+					   rel->joininfo);
+
+	/*
+	 * Note: create_or_index_paths depends on create_index_paths to
+	 * have marked OR restriction clauses with relevant indices; this
+	 * is why it doesn't need to be given the list of indices.
+	 */
+	create_or_index_paths(root, rel, rel->baserestrictinfo);
+
+	/* Now find the cheapest of the paths for this rel */
+	set_cheapest(rel);
+}
+
+/*
+ * set_inherited_rel_pathlist
+ *	  Build access paths for a inheritance tree rooted at rel
+ *
+ * inheritlist is a list of RT indexes of all tables in the inheritance tree,
+ * including the parent itself.  Note we will not come here unless there's
+ * at least one child in addition to the parent.
+ */
+static void
+set_inherited_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte,
+						   List *inheritlist)
+{
+	int			parentRTindex = lfirsti(rel->relids);
+	Oid			parentOID = rte->relid;
+	List	   *subpaths = NIL;
+	List	   *il;
+
+	/*
+	 * XXX for now, can't handle inherited expansion of FOR UPDATE;
+	 * can we do better?
+	 */
+	if (intMember(parentRTindex, root->rowMarks))
+		elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
+
+	/*
+	 * Recompute size estimates for whole inheritance tree
+	 */
+	rel->rows = 0;
+	rel->width = 0;
+
+	/*
+	 * Generate access paths for each table in the tree (parent AND children),
+	 * and pick the cheapest path for each table.
+	 */
+	foreach(il, inheritlist)
+	{
+		int		childRTindex = lfirsti(il);
+		RangeTblEntry *childrte;
+		Oid		childOID;
+		RelOptInfo *childrel;
+
+		childrte = rt_fetch(childRTindex, root->rtable);
+		childOID = childrte->relid;
+
+		/*
+		 * Make a RelOptInfo for the child so we can do planning.  Do NOT
+		 * attach the RelOptInfo to the query's base_rel_list, however.
+		 *
+		 * NOTE: when childRTindex == parentRTindex, we create a second
+		 * RelOptInfo for the same relation.  This RelOptInfo will represent
+		 * the parent table alone, whereas the original RelOptInfo represents
+		 * the union of the inheritance tree members.
+		 */
+		childrel = make_base_rel(root, childRTindex);
+
+		/*
+		 * Copy the parent's targetlist and restriction quals to the child,
+		 * with attribute-number adjustment if needed.  We don't bother
+		 * to copy the join quals, since we can't do any joining here.
+		 */
+		childrel->targetlist = (List *)
+			adjust_inherited_attrs((Node *) rel->targetlist,
+								   parentRTindex,
+								   parentOID,
+								   childRTindex,
+								   childOID);
+		childrel->baserestrictinfo = (List *)
+			adjust_inherited_attrs((Node *) rel->baserestrictinfo,
+								   parentRTindex,
+								   parentOID,
+								   childRTindex,
+								   childOID);
+		childrel->baserestrictcost = rel->baserestrictcost;
+
+		/*
+		 * Now compute child access paths, and save the cheapest.
+		 */
+		set_plain_rel_pathlist(root, childrel, childrte);
+
+		subpaths = lappend(subpaths, childrel->cheapest_total_path);
+
+		/* Also update total size estimates */
+		rel->rows += childrel->rows;
+		if (childrel->width > rel->width)
+			rel->width = childrel->width;
+	}
+
+	/*
+	 * Finally, build Append path and install it as the only access
+	 * path for the parent rel.
+	 */
+	add_path(rel, (Path *) create_append_path(rel, subpaths));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
+
 
 /*
  * make_fromexpr_rel

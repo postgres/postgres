@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.61 2000/10/05 19:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.62 2000/11/12 00:36:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,8 @@ static Plan *subplanner(Query *root, List *flat_tlist,
  *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
  *		expected to be retrieved (ie, a LIMIT specification)
  * Note that while this routine and its subroutines treat a negative
- * tuple_fraction the same as 0, union_planner has a different interpretation.
+ * tuple_fraction the same as 0, grouping_planner has a different
+ * interpretation.
  *
  * Returns a query plan.
  *--------------------
@@ -125,9 +126,16 @@ query_planner(Query *root,
 	subplan = subplanner(root, var_only_tlist, tuple_fraction);
 
 	/*
-	 * Build a result node to control the plan if we have constant quals.
+	 * Build a result node to control the plan if we have constant quals,
+	 * or if the top-level plan node is one that cannot do expression
+	 * evaluation (it won't be able to evaluate the requested tlist).
+	 * Currently, the only plan node we might see here that falls into
+	 * that category is Append.
+	 *
+	 * XXX future improvement: if the given tlist is flat anyway, we don't
+	 * really need a Result node.
 	 */
-	if (constant_quals)
+	if (constant_quals || IsA(subplan, Append))
 	{
 
 		/*
@@ -325,8 +333,8 @@ subplanner(Query *root,
 
 	/*
 	 * Nothing for it but to sort the cheapest-total-cost path --- but we
-	 * let the caller do that.	union_planner has to be able to add a sort
-	 * node anyway, so no need for extra code here.  (Furthermore, the
+	 * let the caller do that.	grouping_planner has to be able to add a
+	 * sort node anyway, so no need for extra code here.  (Furthermore, the
 	 * given pathkeys might involve something we can't compute here, such
 	 * as an aggregate function...)
 	 */

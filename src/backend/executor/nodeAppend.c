@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.37 2000/11/09 18:12:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.38 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@
  *			  nil	nil		 ...	...    ...
  *								 subplans
  *
- *		Append nodes are currently used for unions, and to support inheritance
- *		queries, where several relations need to be scanned.
+ *		Append nodes are currently used for unions, and to support
+ *		inheritance queries, where several relations need to be scanned.
  *		For example, in our standard person/student/employee/student-emp
  *		example, where student and employee inherit from person
  *		and student-emp inherits from student and employee, the
@@ -54,8 +54,8 @@
  *							  |		  |		   |		|
  *							person employee student student-emp
  */
-#include "postgres.h"
 
+#include "postgres.h"
 
 #include "access/heapam.h"
 #include "executor/execdebug.h"
@@ -78,12 +78,8 @@ exec_append_initialize_next(Append *node)
 {
 	EState	   *estate;
 	AppendState *appendstate;
-	TupleTableSlot *result_slot;
-	List	   *rangeTable;
 	int			whichplan;
 	int			nplans;
-	List	   *inheritrtable;
-	RangeTblEntry *rtentry;
 
 	/* ----------------
 	 *	get information from the append node
@@ -91,12 +87,8 @@ exec_append_initialize_next(Append *node)
 	 */
 	estate = node->plan.state;
 	appendstate = node->appendstate;
-	result_slot = appendstate->cstate.cs_ResultTupleSlot;
-	rangeTable = estate->es_range_table;
-
 	whichplan = appendstate->as_whichplan;
 	nplans = appendstate->as_nplans;
-	inheritrtable = node->inheritrtable;
 
 	if (whichplan < 0)
 	{
@@ -110,7 +102,6 @@ exec_append_initialize_next(Append *node)
 		 */
 		appendstate->as_whichplan = 0;
 		return FALSE;
-
 	}
 	else if (whichplan >= nplans)
 	{
@@ -121,36 +112,24 @@ exec_append_initialize_next(Append *node)
 		 */
 		appendstate->as_whichplan = nplans - 1;
 		return FALSE;
-
 	}
 	else
 	{
 		/* ----------------
 		 *		initialize the scan
-		 *		(and update the range table appropriately)
 		 *
-		 *		(doesn't this leave the range table hosed for anybody upstream
-		 *		 of the Append node??? - jolly )
+		 * If we are controlling the target relation, select the proper
+		 * active ResultRelInfo and junk filter for this target.
 		 * ----------------
 		 */
-		if (node->inheritrelid > 0)
+		if (node->isTarget)
 		{
-			rtentry = nth(whichplan, inheritrtable);
-			Assert(rtentry != NULL);
-			rt_store(node->inheritrelid, rangeTable, rtentry);
+			Assert(whichplan < estate->es_num_result_relations);
+			estate->es_result_relation_info =
+				estate->es_result_relations + whichplan;
+			estate->es_junkFilter =
+				estate->es_result_relation_info->ri_junkFilter;
 		}
-
-		if (appendstate->as_junkFilter_list)
-		{
-			estate->es_junkFilter = (JunkFilter *) nth(whichplan,
-										appendstate->as_junkFilter_list);
-		}
-		if (appendstate->as_result_relation_info_list)
-		{
-			estate->es_result_relation_info = (RelationInfo *) nth(whichplan,
-							  appendstate->as_result_relation_info_list);
-		}
-		result_slot->ttc_whichplan = whichplan;
 
 		return TRUE;
 	}
@@ -176,14 +155,10 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 {
 	AppendState *appendstate;
 	int			nplans;
-	List	   *inheritrtable;
 	List	   *appendplans;
 	bool	   *initialized;
 	int			i;
 	Plan	   *initNode;
-	List	   *junkList;
-	RelationInfo *es_rri = estate->es_result_relation_info;
-	bool		inherited_result_rel = false;
 
 	CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
 
@@ -196,7 +171,6 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 	appendplans = node->appendplans;
 	nplans = length(appendplans);
-	inheritrtable = node->inheritrtable;
 
 	initialized = (bool *) palloc(nplans * sizeof(bool));
 	MemSet(initialized, 0, nplans * sizeof(bool));
@@ -228,119 +202,25 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	 */
 	ExecInitResultTupleSlot(estate, &appendstate->cstate);
 
-	/*
-	 * If the inherits rtentry is the result relation, we have to make a
-	 * result relation info list for all inheritors so we can update their
-	 * indices and put the result tuples in the right place etc.
-	 *
-	 * e.g. replace p (age = p.age + 1) from p in person*
-	 */
-	if ((es_rri != (RelationInfo *) NULL) &&
-		(node->inheritrelid == es_rri->ri_RangeTableIndex))
-	{
-		List	   *resultList = NIL;
-		Oid			initial_reloid = RelationGetRelid(es_rri->ri_RelationDesc);
-		List	   *rtentryP;
-
-		inherited_result_rel = true;
-
-		foreach(rtentryP, inheritrtable)
-		{
-			RangeTblEntry *rtentry = lfirst(rtentryP);
-			Oid			reloid = rtentry->relid;
-			RelationInfo *rri;
-
-			/*
-			 * We must recycle the RelationInfo already opened by InitPlan()
-			 * for the parent rel, else we will leak the associated relcache
-			 * refcount. 
-			 */
-			if (reloid == initial_reloid)
-			{
-				Assert(es_rri != NULL);	/* check we didn't use it already */
-				rri = es_rri;
-				es_rri = NULL;
-			}
-			else
-			{
-				rri = makeNode(RelationInfo);
-				rri->ri_RangeTableIndex = node->inheritrelid;
-				rri->ri_RelationDesc = heap_open(reloid, RowExclusiveLock);
-				rri->ri_NumIndices = 0;
-				rri->ri_IndexRelationDescs = NULL;	/* index descs */
-				rri->ri_IndexRelationInfo = NULL;	/* index key info */
-
-				/*
-				 * XXX if the operation is a DELETE then we need not open
-				 * indices, but how to tell that here?
-				 */
-				if (rri->ri_RelationDesc->rd_rel->relhasindex)
-					ExecOpenIndices(rri);
-			}
-
-			/*
-			 * NB: the as_result_relation_info_list must be in the same
-			 * order as the rtentry list otherwise update or delete on
-			 * inheritance hierarchies won't work.
-			 */
-			resultList = lappend(resultList, rri);
-		}
-
-		appendstate->as_result_relation_info_list = resultList;
-		/* Check that we recycled InitPlan()'s RelationInfo */
-		Assert(es_rri == NULL);
-		/* Just for paranoia's sake, clear link until we set it properly */
-		estate->es_result_relation_info = NULL;
-	}
-
 	/* ----------------
 	 *	call ExecInitNode on each of the plans in our list
 	 *	and save the results into the array "initialized"
 	 * ----------------
 	 */
-	junkList = NIL;
-
 	for (i = 0; i < nplans; i++)
 	{
-		/* ----------------
-		 *	NOTE: we first modify range table in
-		 *		  exec_append_initialize_next() and
-		 *		  then initialize the subnode,
-		 *		  since it may use the range table.
-		 * ----------------
-		 */
 		appendstate->as_whichplan = i;
 		exec_append_initialize_next(node);
 
 		initNode = (Plan *) nth(i, appendplans);
 		initialized[i] = ExecInitNode(initNode, estate, (Plan *) node);
-
-		/* ---------------
-		 *	Each targetlist in the subplan may need its own junk filter
-		 *
-		 *	This is true only when the reln being replaced/deleted is
-		 *	the one that we're looking at the subclasses of
-		 * ---------------
-		 */
-		if (inherited_result_rel)
-		{
-			JunkFilter *j = ExecInitJunkFilter(initNode->targetlist,
-											   ExecGetTupType(initNode));
-
-			junkList = lappend(junkList, j);
-		}
-
 	}
-	appendstate->as_junkFilter_list = junkList;
-	if (junkList != NIL)
-		estate->es_junkFilter = (JunkFilter *) lfirst(junkList);
 
 	/* ----------------
-	 *	initialize the return type from the appropriate subplan.
+	 *	initialize tuple type
 	 * ----------------
 	 */
-	initNode = (Plan *) nth(0, appendplans);
-	ExecAssignResultType(&appendstate->cstate, ExecGetTupType(initNode));
+	ExecAssignResultTypeFromTL((Plan *) node, &appendstate->cstate);
 	appendstate->cstate.cs_ProjInfo = NULL;
 
 	/* ----------------
@@ -357,10 +237,9 @@ int
 ExecCountSlotsAppend(Append *node)
 {
 	List	   *plan;
-	List	   *appendplans = node->appendplans;
 	int			nSlots = 0;
 
-	foreach(plan, appendplans)
+	foreach(plan, node->appendplans)
 		nSlots += ExecCountSlotsNode((Plan *) lfirst(plan));
 	return nSlots + APPEND_NSLOTS;
 }
@@ -430,16 +309,14 @@ ExecProcAppend(Append *node)
 		 *	direction and try processing again (recursively)
 		 * ----------------
 		 */
-		whichplan = appendstate->as_whichplan;
-
 		if (ScanDirectionIsForward(direction))
-			appendstate->as_whichplan = whichplan + 1;
+			appendstate->as_whichplan++;
 		else
-			appendstate->as_whichplan = whichplan - 1;
+			appendstate->as_whichplan--;
 
 		/* ----------------
 		 *	return something from next node or an empty slot
-		 *	all of our subplans have been exhausted.
+		 *	if all of our subplans have been exhausted.
 		 * ----------------
 		 */
 		if (exec_append_initialize_next(node))
@@ -469,7 +346,6 @@ ExecEndAppend(Append *node)
 	List	   *appendplans;
 	bool	   *initialized;
 	int			i;
-	List	   *resultRelationInfoList;
 
 	/* ----------------
 	 *	get information from the node
@@ -490,40 +366,8 @@ ExecEndAppend(Append *node)
 		if (initialized[i])
 			ExecEndNode((Plan *) nth(i, appendplans), (Plan *) node);
 	}
-
-	/* ----------------
-	 *	close out the different result relations
-	 *
-	 *	NB: this must agree with what EndPlan() does to close a result rel
-	 * ----------------
-	 */
-	resultRelationInfoList = appendstate->as_result_relation_info_list;
-	while (resultRelationInfoList != NIL)
-	{
-		RelationInfo *resultRelationInfo;
-
-		resultRelationInfo = (RelationInfo *) lfirst(resultRelationInfoList);
-
-		heap_close(resultRelationInfo->ri_RelationDesc, NoLock);
-		/* close indices on the result relation, too */
-		ExecCloseIndices(resultRelationInfo);
-
-		/*
-		 * estate may (or may not) be pointing at one of my result relations.
-		 * If so, make sure EndPlan() doesn't try to close it again!
-		 */
-		if (estate->es_result_relation_info == resultRelationInfo)
-			estate->es_result_relation_info = NULL;
-
-		pfree(resultRelationInfo);
-		resultRelationInfoList = lnext(resultRelationInfoList);
-	}
-	appendstate->as_result_relation_info_list = NIL;
-
-	/*
-	 * XXX should free appendstate->as_junkfilter_list here
-	 */
 }
+
 void
 ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.80 2000/08/24 23:34:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.81 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,7 +341,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		tempSlot->ttc_descIsNew = true;
 		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL;
 		tempSlot->ttc_buffer = InvalidBuffer;
-		tempSlot->ttc_whichplan = -1;
 
 		tup = heap_copytuple(heapTuple);
 		td = CreateTupleDescCopy(tuple_type);

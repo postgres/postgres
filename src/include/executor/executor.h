@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.52 2000/10/26 21:38:03 tgl Exp $
+ * $Id: executor.h,v 1.53 2000/11/12 00:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate,
 								   int feature, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
-extern void ExecConstraints(char *caller, Relation rel,
+extern void ExecConstraints(char *caller, ResultRelInfo *resultRelInfo,
 							TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 									ItemPointer tid);
@@ -153,8 +153,8 @@ extern void FreeExprContext(ExprContext *econtext);
 #define ResetExprContext(econtext) \
 	MemoryContextReset((econtext)->ecxt_per_tuple_memory)
 
-extern void ExecOpenIndices(RelationInfo *resultRelationInfo);
-extern void ExecCloseIndices(RelationInfo *resultRelationInfo);
+extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
+extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 					  EState *estate, bool is_update);
 

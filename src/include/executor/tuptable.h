@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.15 2000/01/26 05:58:06 momjian Exp $
+ * $Id: tuptable.h,v 1.16 2000/11/12 00:37:01 tgl Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -56,7 +56,6 @@ typedef struct TupleTableSlot
 	bool		ttc_descIsNew;
 	TupleDesc	ttc_tupleDescriptor;
 	Buffer		ttc_buffer;
-	int			ttc_whichplan;
 } TupleTableSlot;
 
 /* ----------------

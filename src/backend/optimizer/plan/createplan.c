@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.99 2000/10/26 21:36:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.100 2000/11/12 00:36:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,35 +32,38 @@
 #include "utils/syscache.h"
 
 
-static List *switch_outer(List *clauses);
-static Scan *create_scan_node(Query *root, Path *best_path, List *tlist);
-static Join *create_join_node(Query *root, JoinPath *best_path, List *tlist);
-static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
+static Scan *create_scan_plan(Query *root, Path *best_path);
+static Join *create_join_plan(Query *root, JoinPath *best_path);
+static Append *create_append_plan(Query *root, AppendPath *best_path);
+static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
 					List *scan_clauses);
-static IndexScan *create_indexscan_node(Query *root, IndexPath *best_path,
+static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses);
-static TidScan *create_tidscan_node(TidPath *best_path, List *tlist,
+static TidScan *create_tidscan_plan(TidPath *best_path, List *tlist,
 					List *scan_clauses);
-static SubqueryScan *create_subqueryscan_node(Path *best_path,
+static SubqueryScan *create_subqueryscan_plan(Path *best_path,
 					  List *tlist, List *scan_clauses);
-static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
+static NestLoop *create_nestloop_plan(NestPath *best_path, List *tlist,
 									  List *joinclauses, List *otherclauses,
-									  Plan *outer_node, List *outer_tlist,
-									  Plan *inner_node, List *inner_tlist);
-static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
+									  Plan *outer_plan, List *outer_tlist,
+									  Plan *inner_plan, List *inner_tlist);
+static MergeJoin *create_mergejoin_plan(MergePath *best_path, List *tlist,
 										List *joinclauses, List *otherclauses,
-										Plan *outer_node, List *outer_tlist,
-										Plan *inner_node, List *inner_tlist);
-static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
+										Plan *outer_plan, List *outer_tlist,
+										Plan *inner_plan, List *inner_tlist);
+static HashJoin *create_hashjoin_plan(HashPath *best_path, List *tlist,
 									  List *joinclauses, List *otherclauses,
-									  Plan *outer_node, List *outer_tlist,
-									  Plan *inner_node, List *inner_tlist);
+									  Plan *outer_plan, List *outer_tlist,
+									  Plan *inner_plan, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
 static List *fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 					 Form_pg_index index);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 Form_pg_index index,
 					 Oid *opclass);
+static List *switch_outer(List *clauses);
+static void copy_path_costsize(Plan *dest, Path *src);
+static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual,
@@ -83,7 +86,6 @@ static MergeJoin *make_mergejoin(List *tlist,
 								 List *mergeclauses,
 								 Plan *lefttree, Plan *righttree,
 								 JoinType jointype);
-static void copy_path_costsize(Plan *dest, Path *src);
 
 /*
  * create_plan
@@ -98,13 +100,12 @@ static void copy_path_costsize(Plan *dest, Path *src);
  *
  *	  best_path is the best access path
  *
- *	  Returns the access plan.
+ *	  Returns a Plan tree.
  */
 Plan *
 create_plan(Query *root, Path *best_path)
 {
-	List	   *tlist = best_path->parent->targetlist;
-	Plan	   *plan_node = (Plan *) NULL;
+	Plan	   *plan;
 
 	switch (best_path->pathtype)
 	{
@@ -112,18 +113,22 @@ create_plan(Query *root, Path *best_path)
 		case T_SeqScan:
 		case T_TidScan:
 		case T_SubqueryScan:
-			plan_node = (Plan *) create_scan_node(root, best_path, tlist);
+			plan = (Plan *) create_scan_plan(root, best_path);
 			break;
 		case T_HashJoin:
 		case T_MergeJoin:
 		case T_NestLoop:
-			plan_node = (Plan *) create_join_node(root,
-												  (JoinPath *) best_path,
-												  tlist);
+			plan = (Plan *) create_join_plan(root,
+											 (JoinPath *) best_path);
+			break;
+		case T_Append:
+			plan = (Plan *) create_append_plan(root,
+											   (AppendPath *) best_path);
 			break;
 		default:
 			elog(ERROR, "create_plan: unknown pathtype %d",
 				 best_path->pathtype);
+			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
 
@@ -131,30 +136,29 @@ create_plan(Query *root, Path *best_path)
 	/* sort clauses by cost/(1-selectivity) -- JMH 2/26/92 */
 	if (XfuncMode != XFUNC_OFF)
 	{
-		set_qpqual((Plan) plan_node,
-				   lisp_qsort(get_qpqual((Plan) plan_node),
+		set_qpqual((Plan) plan,
+				   lisp_qsort(get_qpqual((Plan) plan),
 							  xfunc_clause_compare));
 		if (XfuncMode != XFUNC_NOR)
 			/* sort the disjuncts within each clause by cost -- JMH 3/4/92 */
-			xfunc_disjunct_sort(plan_node->qpqual);
+			xfunc_disjunct_sort(plan->qpqual);
 	}
 #endif
 
-	return plan_node;
+	return plan;
 }
 
 /*
- * create_scan_node
- *	 Create a scan path for the parent relation of 'best_path'.
+ * create_scan_plan
+ *	 Create a scan plan for the parent relation of 'best_path'.
  *
- *	 tlist is the targetlist for the base relation scanned by 'best_path'
- *
- *	 Returns the scan node.
+ *	 Returns a Plan node.
  */
 static Scan *
-create_scan_node(Query *root, Path *best_path, List *tlist)
+create_scan_plan(Query *root, Path *best_path)
 {
-	Scan	   *node = NULL;
+	Scan	   *plan;
+	List	   *tlist = best_path->parent->targetlist;
 	List	   *scan_clauses;
 
 	/*
@@ -166,65 +170,64 @@ create_scan_node(Query *root, Path *best_path, List *tlist)
 	switch (best_path->pathtype)
 	{
 		case T_SeqScan:
-			node = (Scan *) create_seqscan_node(best_path,
+			plan = (Scan *) create_seqscan_plan(best_path,
 												tlist,
 												scan_clauses);
 			break;
 
 		case T_IndexScan:
-			node = (Scan *) create_indexscan_node(root,
+			plan = (Scan *) create_indexscan_plan(root,
 												  (IndexPath *) best_path,
 												  tlist,
 												  scan_clauses);
 			break;
 
 		case T_TidScan:
-			node = (Scan *) create_tidscan_node((TidPath *) best_path,
+			plan = (Scan *) create_tidscan_plan((TidPath *) best_path,
 												tlist,
 												scan_clauses);
 			break;
 
 		case T_SubqueryScan:
-			node = (Scan *) create_subqueryscan_node(best_path,
+			plan = (Scan *) create_subqueryscan_plan(best_path,
 													 tlist,
 													 scan_clauses);
 			break;
 
 		default:
-			elog(ERROR, "create_scan_node: unknown node type: %d",
+			elog(ERROR, "create_scan_plan: unknown node type: %d",
 				 best_path->pathtype);
+			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
 
-	return node;
+	return plan;
 }
 
 /*
- * create_join_node
- *	  Create a join path for 'best_path' and(recursively) paths for its
+ * create_join_plan
+ *	  Create a join plan for 'best_path' and (recursively) plans for its
  *	  inner and outer paths.
  *
- *	  'tlist' is the targetlist for the join relation corresponding to
- *		'best_path'
- *
- *	  Returns the join node.
+ *	  Returns a Plan node.
  */
 static Join *
-create_join_node(Query *root, JoinPath *best_path, List *tlist)
+create_join_plan(Query *root, JoinPath *best_path)
 {
-	Plan	   *outer_node;
+	List	   *join_tlist = best_path->path.parent->targetlist;
+	Plan	   *outer_plan;
 	List	   *outer_tlist;
-	Plan	   *inner_node;
+	Plan	   *inner_plan;
 	List	   *inner_tlist;
 	List	   *joinclauses;
 	List	   *otherclauses;
-	Join	   *retval = NULL;
+	Join	   *plan;
 
-	outer_node = create_plan(root, best_path->outerjoinpath);
-	outer_tlist = outer_node->targetlist;
+	outer_plan = create_plan(root, best_path->outerjoinpath);
+	outer_tlist = outer_plan->targetlist;
 
-	inner_node = create_plan(root, best_path->innerjoinpath);
-	inner_tlist = inner_node->targetlist;
+	inner_plan = create_plan(root, best_path->innerjoinpath);
+	inner_tlist = inner_plan->targetlist;
 
 	if (IS_OUTER_JOIN(best_path->jointype))
 	{
@@ -241,38 +244,40 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 	switch (best_path->path.pathtype)
 	{
 		case T_MergeJoin:
-			retval = (Join *) create_mergejoin_node((MergePath *) best_path,
-													tlist,
-													joinclauses,
-													otherclauses,
-													outer_node,
-													outer_tlist,
-													inner_node,
-													inner_tlist);
+			plan = (Join *) create_mergejoin_plan((MergePath *) best_path,
+												  join_tlist,
+												  joinclauses,
+												  otherclauses,
+												  outer_plan,
+												  outer_tlist,
+												  inner_plan,
+												  inner_tlist);
 			break;
 		case T_HashJoin:
-			retval = (Join *) create_hashjoin_node((HashPath *) best_path,
-												   tlist,
-												   joinclauses,
-												   otherclauses,
-												   outer_node,
-												   outer_tlist,
-												   inner_node,
-												   inner_tlist);
+			plan = (Join *) create_hashjoin_plan((HashPath *) best_path,
+												 join_tlist,
+												 joinclauses,
+												 otherclauses,
+												 outer_plan,
+												 outer_tlist,
+												 inner_plan,
+												 inner_tlist);
 			break;
 		case T_NestLoop:
-			retval = (Join *) create_nestloop_node((NestPath *) best_path,
-												   tlist,
-												   joinclauses,
-												   otherclauses,
-												   outer_node,
-												   outer_tlist,
-												   inner_node,
-												   inner_tlist);
+			plan = (Join *) create_nestloop_plan((NestPath *) best_path,
+												 join_tlist,
+												 joinclauses,
+												 otherclauses,
+												 outer_plan,
+												 outer_tlist,
+												 inner_plan,
+												 inner_tlist);
 			break;
 		default:
-			elog(ERROR, "create_join_node: unknown node type: %d",
+			elog(ERROR, "create_join_plan: unknown node type: %d",
 				 best_path->path.pathtype);
+			plan = NULL;		/* keep compiler quiet */
+			break;
 	}
 
 #ifdef NOT_USED
@@ -283,13 +288,41 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 	 * JMH, 6/15/92
 	 */
 	if (get_loc_restrictinfo(best_path) != NIL)
-		set_qpqual((Plan) retval,
-				   nconc(get_qpqual((Plan) retval),
+		set_qpqual((Plan) plan,
+				   nconc(get_qpqual((Plan) plan),
 				   get_actual_clauses(get_loc_restrictinfo(best_path))));
 #endif
 
-	return retval;
+	return plan;
 }
+
+/*
+ * create_append_plan
+ *	  Create an Append plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ *
+ *	  Returns a Plan node.
+ */
+static Append *
+create_append_plan(Query *root, AppendPath *best_path)
+{
+	Append	   *plan;
+	List	   *tlist = best_path->path.parent->targetlist;
+	List	   *subplans = NIL;
+	List	   *subpaths;
+
+	foreach(subpaths, best_path->subpaths)
+	{
+		Path   *subpath = (Path *) lfirst(subpaths);
+		
+		subplans = lappend(subplans, create_plan(root, subpath));
+	}
+
+	plan = make_append(subplans, false, tlist);
+
+	return plan;
+}
+
 
 /*****************************************************************************
  *
@@ -299,14 +332,14 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 
 
 /*
- * create_seqscan_node
- *	 Returns a seqscan node for the base relation scanned by 'best_path'
+ * create_seqscan_plan
+ *	 Returns a seqscan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SeqScan *
-create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
+create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 {
-	SeqScan    *scan_node;
+	SeqScan    *scan_plan;
 	Index		scan_relid;
 
 	/* there should be exactly one base rel involved... */
@@ -315,18 +348,18 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 
 	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
-	scan_node = make_seqscan(tlist,
+	scan_plan = make_seqscan(tlist,
 							 scan_clauses,
 							 scan_relid);
 
-	copy_path_costsize(&scan_node->plan, best_path);
+	copy_path_costsize(&scan_plan->plan, best_path);
 
-	return scan_node;
+	return scan_plan;
 }
 
 /*
- * create_indexscan_node
- *	  Returns a indexscan node for the base relation scanned by 'best_path'
+ * create_indexscan_plan
+ *	  Returns a indexscan plan for the base relation scanned by 'best_path'
  *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  *
  * The indexqual of the path contains a sublist of implicitly-ANDed qual
@@ -338,7 +371,7 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
  * scan.
  */
 static IndexScan *
-create_indexscan_node(Query *root,
+create_indexscan_plan(Query *root,
 					  IndexPath *best_path,
 					  List *tlist,
 					  List *scan_clauses)
@@ -348,7 +381,7 @@ create_indexscan_node(Query *root,
 	List	   *qpqual;
 	List	   *fixed_indxqual;
 	List	   *ixid;
-	IndexScan  *scan_node;
+	IndexScan  *scan_plan;
 	bool		lossy = false;
 
 	/* there should be exactly one base rel involved... */
@@ -433,7 +466,7 @@ create_indexscan_node(Query *root,
 	 */
 	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
 
-	scan_node = make_indexscan(tlist,
+	scan_plan = make_indexscan(tlist,
 							   qpqual,
 							   baserelid,
 							   best_path->indexid,
@@ -441,22 +474,22 @@ create_indexscan_node(Query *root,
 							   indxqual,
 							   best_path->indexscandir);
 
-	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
+	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 	/* use the indexscan-specific rows estimate, not the parent rel's */
-	scan_node->scan.plan.plan_rows = best_path->rows;
+	scan_plan->scan.plan.plan_rows = best_path->rows;
 
-	return scan_node;
+	return scan_plan;
 }
 
 /*
- * create_tidscan_node
- *	 Returns a tidscan node for the base relation scanned by 'best_path'
+ * create_tidscan_plan
+ *	 Returns a tidscan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static TidScan *
-create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
+create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
 {
-	TidScan    *scan_node;
+	TidScan    *scan_plan;
 	Index		scan_relid;
 
 	/* there should be exactly one base rel involved... */
@@ -465,28 +498,28 @@ create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 
 	scan_relid = (Index) lfirsti(best_path->path.parent->relids);
 
-	scan_node = make_tidscan(tlist,
+	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
 							 scan_relid,
 							 best_path->tideval);
 
 	if (best_path->unjoined_relids)
-		scan_node->needRescan = true;
+		scan_plan->needRescan = true;
 
-	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
+	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 
-	return scan_node;
+	return scan_plan;
 }
 
 /*
- * create_subqueryscan_node
- *	 Returns a subqueryscan node for the base relation scanned by 'best_path'
+ * create_subqueryscan_plan
+ *	 Returns a subqueryscan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SubqueryScan *
-create_subqueryscan_node(Path *best_path, List *tlist, List *scan_clauses)
+create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 {
-	SubqueryScan *scan_node;
+	SubqueryScan *scan_plan;
 	Index		scan_relid;
 
 	/* there should be exactly one base rel involved... */
@@ -496,14 +529,12 @@ create_subqueryscan_node(Path *best_path, List *tlist, List *scan_clauses)
 
 	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
-	scan_node = make_subqueryscan(tlist,
+	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan);
 
-	copy_path_costsize(&scan_node->scan.plan, best_path);
-
-	return scan_node;
+	return scan_plan;
 }
 
 /*****************************************************************************
@@ -528,18 +559,18 @@ create_subqueryscan_node(Path *best_path, List *tlist, List *scan_clauses)
  *****************************************************************************/
 
 static NestLoop *
-create_nestloop_node(NestPath *best_path,
+create_nestloop_plan(NestPath *best_path,
 					 List *tlist,
 					 List *joinclauses,
 					 List *otherclauses,
-					 Plan *outer_node,
+					 Plan *outer_plan,
 					 List *outer_tlist,
-					 Plan *inner_node,
+					 Plan *inner_plan,
 					 List *inner_tlist)
 {
-	NestLoop   *join_node;
+	NestLoop   *join_plan;
 
-	if (IsA(inner_node, IndexScan))
+	if (IsA(inner_plan, IndexScan))
 	{
 
 		/*
@@ -563,7 +594,7 @@ create_nestloop_node(NestPath *best_path,
 		 * and therefore has not itself done join_references renumbering
 		 * of the vars in its quals.
 		 */
-		IndexScan  *innerscan = (IndexScan *) inner_node;
+		IndexScan  *innerscan = (IndexScan *) inner_plan;
 		List	   *indxqualorig = innerscan->indxqualorig;
 
 		/* No work needed if indxqual refers only to its own relation... */
@@ -591,23 +622,23 @@ create_nestloop_node(NestPath *best_path,
 												  NIL,
 												  innerrel);
 			/* fix the inner qpqual too, if it has join clauses */
-			if (NumRelids((Node *) inner_node->qual) > 1)
-				inner_node->qual = join_references(inner_node->qual,
+			if (NumRelids((Node *) inner_plan->qual) > 1)
+				inner_plan->qual = join_references(inner_plan->qual,
 												   outer_tlist,
 												   NIL,
 												   innerrel);
 		}
 	}
-	else if (IsA(inner_node, TidScan))
+	else if (IsA(inner_plan, TidScan))
 	{
-		TidScan    *innerscan = (TidScan *) inner_node;
+		TidScan    *innerscan = (TidScan *) inner_plan;
 
 		innerscan->tideval = join_references(innerscan->tideval,
 											 outer_tlist,
 											 inner_tlist,
 											 innerscan->scan.scanrelid);
 	}
-	else if (IsA_Join(inner_node))
+	else if (IsA_Join(inner_plan))
 	{
 
 		/*
@@ -617,8 +648,8 @@ create_nestloop_node(NestPath *best_path,
 		 * join --- how can we estimate whether this is a good thing to
 		 * do?
 		 */
-		inner_node = (Plan *) make_material(inner_tlist,
-											inner_node);
+		inner_plan = (Plan *) make_material(inner_tlist,
+											inner_plan);
 	}
 
 	/*
@@ -633,30 +664,30 @@ create_nestloop_node(NestPath *best_path,
 								   inner_tlist,
 								   (Index) 0);
 
-	join_node = make_nestloop(tlist,
+	join_plan = make_nestloop(tlist,
 							  joinclauses,
 							  otherclauses,
-							  outer_node,
-							  inner_node,
+							  outer_plan,
+							  inner_plan,
 							  best_path->jointype);
 
-	copy_path_costsize(&join_node->join.plan, &best_path->path);
+	copy_path_costsize(&join_plan->join.plan, &best_path->path);
 
-	return join_node;
+	return join_plan;
 }
 
 static MergeJoin *
-create_mergejoin_node(MergePath *best_path,
+create_mergejoin_plan(MergePath *best_path,
 					  List *tlist,
 					  List *joinclauses,
 					  List *otherclauses,
-					  Plan *outer_node,
+					  Plan *outer_plan,
 					  List *outer_tlist,
-					  Plan *inner_node,
+					  Plan *inner_plan,
 					  List *inner_tlist)
 {
 	List	   *mergeclauses;
-	MergeJoin  *join_node;
+	MergeJoin  *join_plan;
 
 	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
 
@@ -692,15 +723,15 @@ create_mergejoin_node(MergePath *best_path,
 	 * necessary.  The sort cost was already accounted for in the path.
 	 */
 	if (best_path->outersortkeys)
-		outer_node = (Plan *)
+		outer_plan = (Plan *)
 			make_sort_from_pathkeys(outer_tlist,
-									outer_node,
+									outer_plan,
 									best_path->outersortkeys);
 
 	if (best_path->innersortkeys)
-		inner_node = (Plan *)
+		inner_plan = (Plan *)
 			make_sort_from_pathkeys(inner_tlist,
-									inner_node,
+									inner_plan,
 									best_path->innersortkeys);
 
 	/*
@@ -723,7 +754,7 @@ create_mergejoin_node(MergePath *best_path,
 	 * This check must agree with ExecMarkPos/ExecRestrPos in
 	 * executor/execAmi.c!
 	 */
-	switch (nodeTag(inner_node))
+	switch (nodeTag(inner_plan))
 	{
 		case T_SeqScan:
 		case T_IndexScan:
@@ -734,40 +765,40 @@ create_mergejoin_node(MergePath *best_path,
 
 		default:
 			/* Ooops, need to materialize the inner plan */
-			inner_node = (Plan *) make_material(inner_tlist,
-												inner_node);
+			inner_plan = (Plan *) make_material(inner_tlist,
+												inner_plan);
 			break;
 	}
 
 	/*
 	 * Now we can build the mergejoin node.
 	 */
-	join_node = make_mergejoin(tlist,
+	join_plan = make_mergejoin(tlist,
 							   joinclauses,
 							   otherclauses,
 							   mergeclauses,
-							   outer_node,
-							   inner_node,
+							   outer_plan,
+							   inner_plan,
 							   best_path->jpath.jointype);
 
-	copy_path_costsize(&join_node->join.plan, &best_path->jpath.path);
+	copy_path_costsize(&join_plan->join.plan, &best_path->jpath.path);
 
-	return join_node;
+	return join_plan;
 }
 
 static HashJoin *
-create_hashjoin_node(HashPath *best_path,
+create_hashjoin_plan(HashPath *best_path,
 					 List *tlist,
 					 List *joinclauses,
 					 List *otherclauses,
-					 Plan *outer_node,
+					 Plan *outer_plan,
 					 List *outer_tlist,
-					 Plan *inner_node,
+					 Plan *inner_plan,
 					 List *inner_tlist)
 {
 	List	   *hashclauses;
-	HashJoin   *join_node;
-	Hash	   *hash_node;
+	HashJoin   *join_plan;
+	Hash	   *hash_plan;
 	Node	   *innerhashkey;
 
 	/*
@@ -811,18 +842,18 @@ create_hashjoin_node(HashPath *best_path,
 	/*
 	 * Build the hash node and hash join node.
 	 */
-	hash_node = make_hash(inner_tlist, innerhashkey, inner_node);
-	join_node = make_hashjoin(tlist,
+	hash_plan = make_hash(inner_tlist, innerhashkey, inner_plan);
+	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,
 							  hashclauses,
-							  outer_node,
-							  (Plan *) hash_node,
+							  outer_plan,
+							  (Plan *) hash_plan,
 							  best_path->jpath.jointype);
 
-	copy_path_costsize(&join_node->join.plan, &best_path->jpath.path);
+	copy_path_costsize(&join_plan->join.plan, &best_path->jpath.path);
 
-	return join_node;
+	return join_plan;
 }
 
 
@@ -1106,7 +1137,7 @@ copy_path_costsize(Plan *dest, Path *src)
  * but it helps produce more reasonable-looking EXPLAIN output.
  * (Some callers alter the info after copying it.)
  */
-void
+static void
 copy_plan_costsize(Plan *dest, Plan *src)
 {
 	if (src)
@@ -1128,6 +1159,10 @@ copy_plan_costsize(Plan *dest, Plan *src)
 
 /*****************************************************************************
  *
+ *	PLAN NODE BUILDING ROUTINES
+ *
+ * Some of these are exported because they are called to build plan nodes
+ * in contexts where we're not deriving the plan node from a path node.
  *
  *****************************************************************************/
 
@@ -1212,7 +1247,7 @@ make_subqueryscan(List *qptlist,
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
+	copy_plan_costsize(plan, subplan);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1225,6 +1260,39 @@ make_subqueryscan(List *qptlist,
 	return node;
 }
 
+Append *
+make_append(List *appendplans, bool isTarget, List *tlist)
+{
+	Append	   *node = makeNode(Append);
+	Plan	   *plan = &node->plan;
+	List	   *subnode;
+
+	/* compute costs from subplan costs */
+	plan->startup_cost = 0;
+	plan->total_cost = 0;
+	plan->plan_rows = 0;
+	plan->plan_width = 0;
+	foreach(subnode, appendplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(subnode);
+
+		if (subnode == appendplans)		/* first node? */
+			plan->startup_cost = subplan->startup_cost;
+		plan->total_cost += subplan->total_cost;
+		plan->plan_rows += subplan->plan_rows;
+		if (plan->plan_width < subplan->plan_width)
+			plan->plan_width = subplan->plan_width;
+	}
+	plan->state = (EState *) NULL;
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->appendplans = appendplans;
+	node->isTarget = isTarget;
+
+	return node;
+}
 
 static NestLoop *
 make_nestloop(List *tlist,

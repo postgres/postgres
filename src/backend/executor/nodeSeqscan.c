@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.24 2000/07/12 02:37:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.25 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,6 @@ InitScanRelation(SeqScan *node, EState *estate,
 	ScanDirection direction;
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
-	RelationInfo *resultRelationInfo;
 
 	/* ----------------
 	 * get the relation object id from the relid'th entry
@@ -169,7 +168,6 @@ InitScanRelation(SeqScan *node, EState *estate,
 	rtentry = rt_fetch(relid, rangeTable);
 	reloid = rtentry->relid;
 	direction = estate->es_direction;
-	resultRelationInfo = estate->es_result_relation_info;
 
 	ExecOpenScanR(reloid,		/* relation */
 				  0,			/* nkeys */

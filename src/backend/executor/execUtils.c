@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.67 2000/10/05 19:48:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.68 2000/11/12 00:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,6 @@ ExecAssignExprContext(EState *estate, CommonState *commonstate)
 	econtext->ecxt_param_list_info = estate->es_param_list_info;
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
-	econtext->ecxt_range_table = estate->es_range_table;
 
 	commonstate->cs_ExprContext = econtext;
 }
@@ -215,7 +214,6 @@ MakeExprContext(TupleTableSlot *slot,
 	econtext->ecxt_param_list_info = NULL;
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
-	econtext->ecxt_range_table = NIL;
 
 	return econtext;
 }
@@ -649,10 +647,10 @@ QueryDescGetTypeInfo(QueryDesc *queryDesc)
  *		ExecOpenIndices
  *
  *		Find the indices associated with a result relation, open them,
- *		and save information about them in the result RelationInfo.
+ *		and save information about them in the result ResultRelInfo.
  *
  *		At entry, caller has already opened and locked
- *		resultRelationInfo->ri_RelationDesc.
+ *		resultRelInfo->ri_RelationDesc.
  *
  *		This used to be horribly ugly code, and slow too because it
  *		did a sequential scan of pg_index.  Now we rely on the relcache
@@ -662,9 +660,9 @@ QueryDescGetTypeInfo(QueryDesc *queryDesc)
  * ----------------------------------------------------------------
  */
 void
-ExecOpenIndices(RelationInfo *resultRelationInfo)
+ExecOpenIndices(ResultRelInfo *resultRelInfo)
 {
-	Relation	resultRelation = resultRelationInfo->ri_RelationDesc;
+	Relation	resultRelation = resultRelInfo->ri_RelationDesc;
 	List	   *indexoidlist,
 			   *indexoidscan;
 	int			len,
@@ -672,7 +670,7 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 	RelationPtr relationDescs;
 	IndexInfo **indexInfoArray;
 
-	resultRelationInfo->ri_NumIndices = 0;
+	resultRelInfo->ri_NumIndices = 0;
 
 	/* checks for disabled indexes */
 	if (! RelationGetForm(resultRelation)->relhasindex)
@@ -697,9 +695,9 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 	relationDescs = (RelationPtr) palloc(len * sizeof(Relation));
 	indexInfoArray = (IndexInfo **) palloc(len * sizeof(IndexInfo *));
 
-	resultRelationInfo->ri_NumIndices = len;
-	resultRelationInfo->ri_IndexRelationDescs = relationDescs;
-	resultRelationInfo->ri_IndexRelationInfo = indexInfoArray;
+	resultRelInfo->ri_NumIndices = len;
+	resultRelInfo->ri_IndexRelationDescs = relationDescs;
+	resultRelInfo->ri_IndexRelationInfo = indexInfoArray;
 
 	/* ----------------
 	 *	 For each index, open the index relation and save pg_index info.
@@ -765,18 +763,18 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 /* ----------------------------------------------------------------
  *		ExecCloseIndices
  *
- *		Close the index relations stored in resultRelationInfo
+ *		Close the index relations stored in resultRelInfo
  * ----------------------------------------------------------------
  */
 void
-ExecCloseIndices(RelationInfo *resultRelationInfo)
+ExecCloseIndices(ResultRelInfo *resultRelInfo)
 {
 	int			i;
 	int			numIndices;
 	RelationPtr relationDescs;
 
-	numIndices = resultRelationInfo->ri_NumIndices;
-	relationDescs = resultRelationInfo->ri_IndexRelationDescs;
+	numIndices = resultRelInfo->ri_NumIndices;
+	relationDescs = resultRelInfo->ri_IndexRelationDescs;
 
 	for (i = 0; i < numIndices; i++)
 	{
@@ -817,7 +815,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					  bool is_update)
 {
 	HeapTuple	heapTuple;
-	RelationInfo *resultRelationInfo;
+	ResultRelInfo *resultRelInfo;
 	int			i;
 	int			numIndices;
 	RelationPtr relationDescs;
@@ -833,11 +831,11 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	/*
 	 * Get information from the result relation info structure.
 	 */
-	resultRelationInfo = estate->es_result_relation_info;
-	numIndices = resultRelationInfo->ri_NumIndices;
-	relationDescs = resultRelationInfo->ri_IndexRelationDescs;
-	indexInfoArray = resultRelationInfo->ri_IndexRelationInfo;
-	heapRelation = resultRelationInfo->ri_RelationDesc;
+	resultRelInfo = estate->es_result_relation_info;
+	numIndices = resultRelInfo->ri_NumIndices;
+	relationDescs = resultRelInfo->ri_IndexRelationDescs;
+	indexInfoArray = resultRelInfo->ri_IndexRelationInfo;
+	heapRelation = resultRelInfo->ri_RelationDesc;
 	heapDescriptor = RelationGetDescr(heapRelation);
 
 	/*

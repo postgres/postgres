@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.122 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.123 2000/11/12 00:36:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,7 +597,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	int32		ntuples,
 				tuples_read = 0;
 	bool		reading_to_eof = true;
-	RelationInfo *relationInfo;
+	ResultRelInfo *resultRelInfo;
 	EState	   *estate = CreateExecutorState();	/* for ExecConstraints() */
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
@@ -609,20 +609,19 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	attr_count = tupDesc->natts;
 
 	/*
-	 * We need a RelationInfo so we can use the regular executor's
+	 * We need a ResultRelInfo so we can use the regular executor's
 	 * index-entry-making machinery.  (There used to be a huge amount
 	 * of code here that basically duplicated execUtils.c ...)
 	 */
-	relationInfo = makeNode(RelationInfo);
-	relationInfo->ri_RangeTableIndex = 1; /* dummy */
-	relationInfo->ri_RelationDesc = rel;
-	relationInfo->ri_NumIndices = 0;
-	relationInfo->ri_IndexRelationDescs = NULL;
-	relationInfo->ri_IndexRelationInfo = NULL;
+	resultRelInfo = makeNode(ResultRelInfo);
+	resultRelInfo->ri_RangeTableIndex = 1; /* dummy */
+	resultRelInfo->ri_RelationDesc = rel;
 
-	ExecOpenIndices(relationInfo);
+	ExecOpenIndices(resultRelInfo);
 
-	estate->es_result_relation_info = relationInfo;
+	estate->es_result_relations = resultRelInfo;
+	estate->es_num_result_relations = 1;
+	estate->es_result_relation_info = resultRelInfo;
 
 	/* Set up a dummy tuple table too */
 	tupleTable = ExecCreateTupleTable(1);
@@ -830,7 +829,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
 			if (rel->rd_att->constr)
-				ExecConstraints("CopyFrom", rel, slot, estate);
+				ExecConstraints("CopyFrom", resultRelInfo, slot, estate);
 
 			/* ----------------
 			 * OK, store the tuple and create index entries for it
@@ -838,7 +837,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			 */
 			heap_insert(rel, tuple);
 
-			if (relationInfo->ri_NumIndices > 0)
+			if (resultRelInfo->ri_NumIndices > 0)
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 			/* AFTER ROW INSERT Triggers */
@@ -886,7 +885,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 	ExecDropTupleTable(tupleTable, true);
 
-	ExecCloseIndices(relationInfo);
+	ExecCloseIndices(resultRelInfo);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.99 2000/10/22 22:14:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.100 2000/11/12 00:36:57 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -150,6 +150,9 @@ _readQuery(void)
 	token = lsptok(NULL, &length);		/* skip :setOperations */
 	local_node->setOperations = nodeRead(true);
 
+	token = lsptok(NULL, &length);		/* skip :resultRelations */
+	local_node->resultRelations = toIntList(nodeRead(true));
+
 	return local_node;
 }
 
@@ -260,17 +263,6 @@ _getPlan(Plan *node)
 	token = lsptok(NULL, &length);		/* get the plan_width */
 	node->plan_width = atoi(token);
 
-	token = lsptok(NULL, &length);		/* eat the :state stuff */
-	token = lsptok(NULL, &length);		/* now get the state */
-
-	if (length == 0)
-		node->state = (EState *) NULL;
-	else
-	{							/* Disgusting hack until I figure out what
-								 * to do here */
-		node->state = (EState *) !NULL;
-	}
-
 	token = lsptok(NULL, &length);		/* eat :qptargetlist */
 	node->targetlist = nodeRead(true);
 
@@ -282,6 +274,8 @@ _getPlan(Plan *node)
 
 	token = lsptok(NULL, &length);		/* eat :righttree */
 	node->righttree = (Plan *) nodeRead(true);
+
+	node->state = (EState *) NULL;		/* never read in */
 
 	return;
 }
@@ -348,12 +342,9 @@ _readAppend(void)
 	token = lsptok(NULL, &length);		/* eat :appendplans */
 	local_node->appendplans = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :inheritrelid */
-	token = lsptok(NULL, &length);		/* get inheritrelid */
-	local_node->inheritrelid = strtoul(token, NULL, 10);
-
-	token = lsptok(NULL, &length);		/* eat :inheritrtable */
-	local_node->inheritrtable = nodeRead(true); /* now read it */
+	token = lsptok(NULL, &length);		/* eat :isTarget */
+	token = lsptok(NULL, &length);		/* get isTarget */
+	local_node->isTarget = (token[0] == 't') ? true : false;
 
 	return local_node;
 }
@@ -1298,43 +1289,6 @@ _readJoinExpr(void)
 }
 
 /*
- *	Stuff from execnodes.h
- */
-
-/* ----------------
- *		_readEState
- *
- *	EState is a subclass of Node.
- * ----------------
- */
-static EState *
-_readEState(void)
-{
-	EState	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(EState);
-
-	token = lsptok(NULL, &length);		/* get :direction */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->es_direction = atoi(token);
-
-	token = lsptok(NULL, &length);		/* get :range_table */
-
-	local_node->es_range_table = nodeRead(true);		/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :result_relation_info */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	sscanf(token, "%x", (unsigned int *) &local_node->es_result_relation_info);
-
-	return local_node;
-}
-
-/*
  *	Stuff from relation.h
  */
 
@@ -1635,6 +1589,42 @@ _readTidPath(void)
 
 	token = lsptok(NULL, &length);		/* get :unjoined_relids */
 	local_node->unjoined_relids = toIntList(nodeRead(true));
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readAppendPath
+ *
+ *	AppendPath is a subclass of Path.
+ * ----------------
+ */
+static AppendPath *
+_readAppendPath(void)
+{
+	AppendPath *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(AppendPath);
+
+	token = lsptok(NULL, &length);		/* get :pathtype */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.pathtype = atol(token);
+
+	token = lsptok(NULL, &length);		/* get :startup_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.startup_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.total_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :pathkeys */
+	local_node->path.pathkeys = nodeRead(true); /* now read it */
+
+	token = lsptok(NULL, &length);		/* get :subpaths */
+	local_node->subpaths = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
@@ -1984,8 +1974,6 @@ parsePlanString(void)
 		return_value = _readOper();
 	else if (length == 5 && strncmp(token, "PARAM", length) == 0)
 		return_value = _readParam();
-	else if (length == 6 && strncmp(token, "ESTATE", length) == 0)
-		return_value = _readEState();
 	else if (length == 10 && strncmp(token, "RELOPTINFO", length) == 0)
 		return_value = _readRelOptInfo();
 	else if (length == 11 && strncmp(token, "TARGETENTRY", length) == 0)
@@ -1998,6 +1986,8 @@ parsePlanString(void)
 		return_value = _readIndexPath();
 	else if (length == 7 && strncmp(token, "TIDPATH", length) == 0)
 		return_value = _readTidPath();
+	else if (length == 10 && strncmp(token, "APPENDPATH", length) == 0)
+		return_value = _readAppendPath();
 	else if (length == 8 && strncmp(token, "NESTPATH", length) == 0)
 		return_value = _readNestPath();
 	else if (length == 9 && strncmp(token, "MERGEPATH", length) == 0)
