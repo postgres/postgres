@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.19 2000/11/21 04:01:09 inoue Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.20 2000/12/22 18:35:09 tgl Exp $
  *
  * ----------
  */
@@ -232,10 +232,10 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 
 			/* ----------
 			 * The query string built is
-			 *	SELECT oid FROM <pktable>
+			 *	SELECT oid FROM ONLY <pktable>
 			 * ----------
 			 */
-			sprintf(querystr, "SELECT oid FROM \"%s\" FOR UPDATE OF \"%s\"",
+			sprintf(querystr, "SELECT oid FROM ONLY \"%s\" FOR UPDATE OF \"%s\"",
 					tgargs[RI_PK_RELNAME_ARGNO],
 					tgargs[RI_PK_RELNAME_ARGNO]);
 
@@ -381,14 +381,14 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 
 		/* ----------
 		 * The query string built is
-		 *	SELECT oid FROM <pktable> WHERE pkatt1 = $1 [AND ...]
+		 *	SELECT oid FROM ONLY <pktable> WHERE pkatt1 = $1 [AND ...]
 		 * The type id's for the $ parameters are those of the
 		 * corresponding FK attributes. Thus, SPI_prepare could
 		 * eventually fail if the parser cannot identify some way
 		 * how to compare these two types by '='.
 		 * ----------
 		 */
-		sprintf(querystr, "SELECT oid FROM \"%s\"",
+		sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
 				tgargs[RI_PK_RELNAME_ARGNO]);
 		querysep = "WHERE";
 		for (i = 0; i < qkey.nkeypairs; i++)
@@ -623,14 +623,14 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM \"%s\"",
+				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -847,14 +847,14 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM \"%s\"",
+				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -1055,14 +1055,14 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	DELETE FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	DELETE FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "DELETE FROM \"%s\"",
+				sprintf(querystr, "DELETE FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -1263,7 +1263,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE <fktable> SET fkatt1 = $1 [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = $1 [, ...]
 				 *			WHERE fkatt1 = $n [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
@@ -1271,7 +1271,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "UPDATE \"%s\" SET",
+				sprintf(querystr, "UPDATE ONLY \"%s\" SET",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				qualstr[0] = '\0';
 				querysep = "";
@@ -1483,14 +1483,14 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM \"%s\"",
+				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -1708,14 +1708,14 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM \"%s\"",
+				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -1919,7 +1919,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE <fktable> SET fkatt1 = NULL [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
@@ -1927,7 +1927,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "UPDATE \"%s\" SET",
+				sprintf(querystr, "UPDATE ONLY \"%s\" SET",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				qualstr[0] = '\0';
 				querysep = "";
@@ -2157,7 +2157,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE <fktable> SET fkatt1 = NULL [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
@@ -2165,7 +2165,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "UPDATE \"%s\" SET",
+				sprintf(querystr, "UPDATE ONLY \"%s\" SET",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				qualstr[0] = '\0';
 				querysep = "";
@@ -2385,7 +2385,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE <fktable> SET fkatt1 = NULL [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
@@ -2393,7 +2393,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "UPDATE \"%s\" SET",
+				sprintf(querystr, "UPDATE ONLY \"%s\" SET",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				qualstr[0] = '\0';
 				querysep = "";
@@ -2651,7 +2651,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE <fktable> SET fkatt1 = NULL [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
@@ -2659,7 +2659,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "UPDATE \"%s\" SET",
+				sprintf(querystr, "UPDATE ONLY \"%s\" SET",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				qualstr[0] = '\0';
 				querysep = "";
