@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.52 2005/01/12 16:19:51 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53 2005/01/15 04:15:51 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -192,11 +192,10 @@ esac
 
 
 # ----------
-# When on QNX or BeOS, don't use Unix sockets.
+# On some platforms we can't use Unix sockets.
 # ----------
-
 case $host_platform in
-    *-*-qnx* | *beos*)
+    *-*-cygwin* | *-*-mingw32* | *-*-qnx* | *beos*)
         unix_sockets=no;;
     *)
         unix_sockets=yes;;
@@ -309,7 +308,7 @@ then
         case $host_platform in
           *-*-mingw32*)
                 pkglibdir="`pwd -W`/$temp_install/install/$pkglibdir"
-        	  temp_install="`pwd`/$temp_install"
+                temp_install="`pwd`/$temp_install"
                 ;;
           *)
                 temp_install="`pwd`/$temp_install"
@@ -418,9 +417,9 @@ then
     message "starting postmaster"
     [ "$debug" = yes ] && postmaster_options="$postmaster_options -d 5"
     if [ "$unix_sockets" = no ]; then
-	postmaster_options="$postmaster_options -c listen_addresses=$hostname"
+        postmaster_options="$postmaster_options -c listen_addresses=$hostname"
     else
-	postmaster_options="$postmaster_options -c listen_addresses=''"
+        postmaster_options="$postmaster_options -c listen_addresses=''"
     fi
     "$bindir/postmaster" -D "$PGDATA" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
     postmaster_pid=$!
@@ -470,13 +469,6 @@ else # not temp-install
             ;;
     esac
 
-    # If Unix sockets are not available, use the local host by default.
-    if [ "$unix_sockets" = no ]; then
-        PGHOST=$hostname
-        export PGHOST
-        unset PGHOSTADDR
-    fi
-
     if [ -n "$PGPORT" ]; then
         port_info="port $PGPORT"
     else
@@ -486,15 +478,13 @@ else # not temp-install
     if [ -n "$PGHOST" ]; then
         echo "(using postmaster on $PGHOST, $port_info)"
     else
-        case $host_platform in
-            *-*-mingw32*)
-                echo "(using postmaster on localhost socket, $port_info)"
-                ;;
-            *)
-                echo "(using postmaster on Unix socket, $port_info)"
-                ;;
-        esac
+        if [ "$unix_sockets" = no ]; then
+            echo "(using postmaster on localhost, $port_info)"
+        else
+            echo "(using postmaster on Unix socket, $port_info)"
+        fi
     fi
+
     message "dropping database \"$dbname\""
     "$bindir/dropdb" $psql_options "$dbname"
     # errors can be ignored
@@ -634,7 +624,7 @@ do
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
         $ECHO_N "test $formatted ... $ECHO_C"
         ( $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1 )&
-	wait
+        wait
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): $ECHO_C"
