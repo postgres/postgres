@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.3 2000/10/08 19:37:54 momjian Exp $
+ * $Id: Connection.java,v 1.4 2000/10/09 16:48:17 momjian Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -138,9 +138,9 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     if (this.autoCommit == autoCommit)
       return;
     if (autoCommit)
-      ExecSQL(null, "end");
+      ExecSQL("end");
     else
-      ExecSQL(null, "begin");
+      ExecSQL("begin");
     this.autoCommit = autoCommit;
   }
   
@@ -170,9 +170,9 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     if (autoCommit)
       return;
-    ExecSQL(null, "commit");
+    ExecSQL("commit");
     autoCommit = true;
-    ExecSQL(null, "begin");
+    ExecSQL("begin");
     autoCommit = false;
   }
   
@@ -188,9 +188,9 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     if (autoCommit)
       return;
-    ExecSQL(null, "rollback");
+    ExecSQL("rollback");
     autoCommit = true;
-    ExecSQL(null, "begin");
+    ExecSQL("begin");
     autoCommit = false;
   }
   
@@ -316,11 +316,11 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       switch(level) {
 	  
       case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-	  ExecSQL(null, q + " READ COMMITTED");
+	  ExecSQL(q + " READ COMMITTED");
 	  return;
 	  
       case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-	  ExecSQL(null, q + " SERIALIZABLE");
+	  ExecSQL(q + " SERIALIZABLE");
 	  return;
 	  
       default:
@@ -336,7 +336,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
    */
   public int getTransactionIsolation() throws SQLException
   {
-      ExecSQL(null, "show xactisolevel");
+      ExecSQL("show xactisolevel");
       
       SQLWarning w = getWarnings();
       if (w != null) {

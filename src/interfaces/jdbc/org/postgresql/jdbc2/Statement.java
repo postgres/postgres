@@ -8,7 +8,6 @@ package org.postgresql.jdbc2;
 import java.sql.*;
 import java.util.Vector;
 import org.postgresql.util.*;
-import org.postgresql.PGStatement;
 
 /**
  * A Statement object is used for executing a static SQL statement and
@@ -23,8 +22,9 @@ import org.postgresql.PGStatement;
  * @see java.sql.Statement
  * @see ResultSet
  */
-public class Statement extends PGStatement implements java.sql.Statement
+public class Statement implements java.sql.Statement
 {
+    Connection connection;		// The connection who created us
     java.sql.ResultSet result = null;	// The current results
     SQLWarning warnings = null;	// The warnings chain.
     int timeout = 0;		// The timeout for a query (not used)
@@ -39,7 +39,7 @@ public class Statement extends PGStatement implements java.sql.Statement
 	 */
 	public Statement (Connection c)
 	{
-	    super(c);
+		connection = c;
 	}
 
 	/**
@@ -90,8 +90,7 @@ public class Statement extends PGStatement implements java.sql.Statement
 	 */
 	public void close() throws SQLException
 	{
-	    super.close();
-	    result = null;
+		result = null;
 	}
 
 	/**
@@ -270,8 +269,8 @@ public class Statement extends PGStatement implements java.sql.Statement
     {
 	if(escapeProcessing)
 	    sql=connection.EscapeSQL(sql);
-	deallocate();
-	result = connection.ExecSQL(this, sql);
+	
+	result = connection.ExecSQL(sql);
 	return (result != null && ((org.postgresql.ResultSet)result).reallyResultSet());
     }
     
