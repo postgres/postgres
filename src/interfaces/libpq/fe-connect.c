@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.195 2002/08/27 14:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.196 2002/08/27 15:02:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1078,7 +1078,7 @@ connectDBComplete(PGconn *conn)
 		rp = &remains;
 	}
 
-	while (rp == NULL || remains.tv_sec > 0 || (remains.tv_sec == 0 && remains.tv_usec > 0))
+	while (rp == NULL || remains.tv_sec > 0 || remains.tv_usec > 0)
 	{
 		/*
 		 * If connecting timeout is set, get current time.
@@ -1111,7 +1111,7 @@ connectDBComplete(PGconn *conn)
 				break;
 
 			case PGRES_POLLING_WRITING:
-                              if (pqWaitTimed(0, 1, conn, rp))
+				if (pqWaitTimed(0, 1, conn, rp))
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1347,7 +1347,7 @@ keep_going:						/* We will come back to here until there
 
 				if (pqGetc(&beresp, conn))
 				{
-					/* We'll come back when there are more data */
+					/* We'll come back when there is more data */
 					return PGRES_POLLING_READING;
 				}
 
