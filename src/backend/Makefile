@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.16 1996/11/18 02:23:41 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.17 1996/11/23 09:51:57 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -53,7 +53,13 @@ ifdef TIOGA
 OBJS += tioga/SUBSYS.o
 endif
 
-all: postgres global1.bki.source local1_template1.bki.source
+ifeq ($(MAKE_EXPORTS), true)
+EXP = postgres$(EXPSUFF)
+else
+EXP =
+endif
+
+all: postgres $(EXP) global1.bki.source local1_template1.bki.source
 
 postgres: postgres_group1 postgres_group2 postgres_group3 postgres_group4 
 	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LDADD)
@@ -88,6 +94,11 @@ endif
 global1.bki.source local1_template1.bki.source: 
 	$(MAKE) -C catalog $@
 	cp catalog/$@ .
+
+# The postgres.o target is needed by the rule in Makefile.global that
+# creates the exports file when MAKE_EXPORTS = true.
+postgres.o: $(OBJS)
+	$(CC) $(LDFLAGS) -r -o postgres.o $(OBJS) $(LDADD)
 
 
 ############################################################################
@@ -168,25 +179,25 @@ endif
 # and (2) the parameters of a database system should be set at initdb time,
 # not at postgres build time.
 
-D_LIBDIR = $(DESTDIR)$(LIBDIR)
-D_BINDIR = $(DESTDIR)$(BINDIR)
-
-install: $(D_LIBDIR) $(D_BINDIR) $(HEADERDIR) postgres fmgr.h\
+install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(EXP) fmgr.h\
          global1.bki.source local1_template1.bki.source \
-         libpq/pg_hba.conf.sample
+         libpq/pg_hba.conf.sample 
 	
-	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(D_BINDIR)/postgres
-	@rm -f $(D_BINDIR)/postmaster
-	cd $(D_BINDIR); ln -s postgres postmaster
+	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(BINDIR)/postgres
+ifeq ($(MAKE_EXPORTS), true)
+	$(INSTALL) $(INSTLOPTS) postgres$(EXPSUFF) $(LIBDIR)/postgres$(EXPSUFF)
+endif
+	@rm -f $(BINDIR)/postmaster
+	cd $(BINDIR); ln -s postgres postmaster
 	$(INSTALL) $(INSTLOPTS) fmgr.h $(HEADERDIR)/fmgr.h
 	$(INSTALL) $(INSTLOPTS) global1.bki.source \
-	  $(D_LIBDIR)/global1.bki.source
+	  $(LIBDIR)/global1.bki.source
 	$(INSTALL) $(INSTLOPTS) local1_template1.bki.source \
-	  $(D_LIBDIR)/local1_template1.bki.source
+	  $(LIBDIR)/local1_template1.bki.source
 	$(INSTALL) $(INSTLOPTS) libpq/pg_hba.conf.sample \
-	  $(D_LIBDIR)/pg_hba.conf.sample
+	  $(LIBDIR)/pg_hba.conf.sample
 
-$(D_BINDIR) $(D_LIBDIR) $(HEADERDIR): 
+$(BINDIR) $(LIBDIR) $(HEADERDIR): 
 	mkdir $@
 
 #############################################################################
