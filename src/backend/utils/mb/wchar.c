@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.11 2000/04/12 17:16:06 momjian Exp $
+ * $Id: wchar.c,v 1.11.2.1 2000/05/28 04:57:06 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -166,7 +166,11 @@ pg_euccn_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s & 0x80)
+	/* if the first byte > 0x80, then second byte must be > 0x80, also,
+	 * according to the EUC-CN standard. But in reality there are
+	 * so many broken EUC-CN data violating the rule. Sigh.
+	 */
+	if ((*s & 0x80) && (*(s+1) & 0x80))
 		len = 2;
 	else
 		len = 1;
