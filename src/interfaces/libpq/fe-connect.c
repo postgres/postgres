@@ -7,34 +7,30 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.78 1998/08/09 02:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.79 1998/08/17 03:50:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "fe-auth.h"
+#include "postgres.h"
+
 #include <stdlib.h>
-#include <sys/types.h>
 #ifdef WIN32
 #include "win32.h"
 #else
-#include <sys/socket.h>
+#if !defined(NO_UNISTD_H)
 #include <unistd.h>
+#endif
 #include <netdb.h>
-#include <sys/un.h>
-#include <netinet/in.h>
 #include <netinet/tcp.h>
 #endif
 #include <fcntl.h>
-#include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>				/* for isspace() */
-
-#include "postgres.h"
-#include "fe-auth.h"
-#include "fe-connect.h"
-#include "libpq-fe.h"
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -113,7 +109,7 @@ static PQconninfoOption PQconninfoOptions[] = {
 	NULL, NULL, 0}
 };
 
-struct EnvironmentOptions
+static struct EnvironmentOptions
 {
 	const char *envName,
 			   *pgName;
@@ -496,7 +492,7 @@ connectDB(PGconn *conn)
 	struct hostent *hp;
 	StartupPacket sp;
 	AuthRequest areq;
-	int			laddrlen = sizeof(SockAddr);
+	int			laddrlen;
 	int			portno,
 				family;
 	char		beresp;
@@ -514,7 +510,7 @@ connectDB(PGconn *conn)
 
 	MemSet((char *) &sp, 0, sizeof(StartupPacket));
 
-	sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LATEST);
+	sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LIBPQ);
 
 	strncpy(sp.user, conn->pguser, SM_USER);
 	strncpy(sp.database, conn->dbName, SM_DATABASE);
@@ -626,6 +622,7 @@ connectDB(PGconn *conn)
 	}
 
 	/* Fill in the client address */
+	laddrlen = sizeof(conn->laddr);
 	if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
@@ -640,7 +637,7 @@ connectDB(PGconn *conn)
 
 	/* Send the startup packet. */
 
-	if (packetSend(conn, (char *) &sp, sizeof(StartupPacket)) != STATUS_OK)
+	if (pqPacketSend(conn, (char *) &sp, sizeof(StartupPacket)) != STATUS_OK)
 	{
 		sprintf(conn->errorMessage,
 				"connectDB() --  couldn't send startup packet: errno=%d\n%s\n",
@@ -786,7 +783,7 @@ PQsetenv(PGconn *conn)
 	char		setQuery[80];	/* mjl: size okay? XXX */
 #ifdef MULTIBYTE
 	char	*envname = "PGCLIENTENCODING";
-	char	envbuf[64];
+	static char	envbuf[64];		/* big enough? */
 	char	*env;
 	char	*encoding = 0;
 	PGresult   *rtn;
@@ -875,7 +872,7 @@ freePGconn(PGconn *conn)
 {
 	if (!conn)
 		return;
-	PQclearAsyncResult(conn);	/* deallocate result and curTuple */
+	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
 	if (conn->sock >= 0)
 #ifdef WIN32
 		closesocket(conn->sock);
@@ -919,19 +916,13 @@ closePGconn(PGconn *conn)
 	{
 		/*
 		 * Try to send "close connection" message to backend.
-		 * BUT: backend might have already closed connection.
-		 * To avoid being killed by SIGPIPE, we need to detect this before
-		 * writing.  Check for "read ready" condition which indicates EOF.
+		 * Ignore any error.
+		 * Note: this routine used to go to substantial lengths to avoid
+		 * getting SIGPIPE'd if the connection were already closed.
+		 * Now we rely on pqFlush to avoid the signal.
 		 */
-		while (pqReadReady(conn)) {
-			if (pqReadData(conn) < 0)
-				break;
-		}
-		if (conn->sock >= 0) {
-			/* Should be safe now... */
-			(void) pqPuts("X", conn);
-			(void) pqFlush(conn);
-		}
+		(void) pqPuts("X", conn);
+		(void) pqFlush(conn);
 	}
 
 	/*
@@ -947,7 +938,7 @@ closePGconn(PGconn *conn)
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
 										 * absent */
 	conn->asyncStatus = PGASYNC_IDLE;
-	PQclearAsyncResult(conn);	/* deallocate result and curTuple */
+	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
@@ -1080,14 +1071,14 @@ cancel_errReturn:
 
 
 /*
- * PacketSend() -- send a single-packet message.
+ * pqPacketSend() -- send a single-packet message.
  * this is like PacketSend(), defined in backend/libpq/pqpacket.c
  *
  * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
  * SIDE_EFFECTS: may block.
 */
 int
-packetSend(PGconn *conn, const char *buf, size_t len)
+pqPacketSend(PGconn *conn, const char *buf, size_t len)
 {
 	/* Send the total packet size. */
 

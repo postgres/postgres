@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.37 1998/08/09 02:59:31 momjian Exp $
+ * $Id: libpq-fe.h,v 1.38 1998/08/17 03:50:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,15 @@ extern		"C"
 #endif
 
 #include <stdio.h>
+/* these wouldn't need to be included if PGSockAddr weren't exported: */
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <netinet/in.h>
 /* ----------------
  *		include stuff common to fe and be
  * ----------------
  */
 #include "postgres_ext.h"
-#include "libpq/pqcomm.h"
 #include "lib/dllist.h"
 
 /* Application-visible enum types */
@@ -53,7 +56,7 @@ extern		"C"
 	} ExecStatusType;
 
 /* string descriptions of the ExecStatusTypes */
-	extern const char *pgresStatus[];
+	extern const char * const pgresStatus[];
 
 /*
  * POSTGRES backend dependent Constants.
@@ -61,9 +64,6 @@ extern		"C"
 
 /* ERROR_MSG_LENGTH should really be the same as ELOG_MAXLEN in utils/elog.h*/
 #define ERROR_MSG_LENGTH 4096
-#define COMMAND_LENGTH 20
-#define REMARK_LENGTH 80
-#define PORTAL_NAME_LENGTH 16
 #define CMDSTATUS_LEN 40
 
 /* PGresult and the subsidiary types PGresAttDesc, PGresAttValue
@@ -85,7 +85,8 @@ extern		"C"
    ASCII tuples are guaranteed to be null-terminated
    For binary tuples, the first four bytes of the value is the size,
    and the bytes afterwards are the value.	The binary value is
-   not guaranteed to be null-terminated.  In fact, it can have embedded nulls*/
+   not guaranteed to be null-terminated.  In fact, it can have embedded nulls
+ */
 
 #define NULL_LEN		(-1)	/* pg_result len for NULL value */
 
@@ -134,6 +135,15 @@ extern		"C"
 		PGASYNC_COPY_OUT		/* Copy Out data transfer in progress */
 	} PGAsyncStatusType;
 
+/* generic socket address type for PGconn connection information.
+ * Really shouldn't be visible to users */
+	typedef union PGSockAddr
+	{
+		struct sockaddr sa;
+		struct sockaddr_in in;
+		struct sockaddr_un un;
+	} PGSockAddr;
+
 /* large-object-access data ... allocated only if large-object code is used.
  * Really shouldn't be visible to users */
 	typedef struct pgLobjfuncs
@@ -150,7 +160,9 @@ extern		"C"
 	} PGlobjfuncs;
 
 /* PGconn encapsulates a connection to the backend.
- * XXX contents of this struct really shouldn't be visible to applications
+ * XXX contents of this struct really shouldn't be visible to applications,
+ * but we might break some existing applications if we tried to make it
+ * completely opaque.
  */
 	typedef struct pg_conn
 	{
@@ -179,8 +191,8 @@ extern		"C"
 
 		/* Connection data */
 		int			sock;		/* Unix FD for socket, -1 if not connected */
-		SockAddr	laddr;		/* Local address */
-		SockAddr	raddr;		/* Remote address */
+		PGSockAddr	laddr;		/* Local address */
+		PGSockAddr	raddr;		/* Remote address */
 		int			raddr_len;	/* Length of remote address */
 
 		/* Miscellaneous stuff */
@@ -213,13 +225,13 @@ extern		"C"
 		char		asyncErrorMessage[ERROR_MSG_LENGTH];
 	} PGconn;
 
-	typedef char pqbool;
-
 	/*
 	 * We can't use the conventional "bool", because we are designed to be
 	 * included in a user's program, and user may already have that type
 	 * defined.  Pqbool, on the other hand, is unlikely to be used.
 	 */
+
+	typedef char pqbool;
 
 /* Print options for PQprint() */
 
@@ -255,7 +267,7 @@ extern		"C"
 	} PQArgBlock;
 
 /* ----------------
- * Structure for the conninfo parameter definitions of PQconnectdb()
+ * Structure for the conninfo parameter definitions returned by PQconndefaults
  * ----------------
  */
 	typedef struct _PQconninfoOption
@@ -274,23 +286,35 @@ extern		"C"
 		int			dispsize;	/* Field size in characters for dialog	*/
 	} PQconninfoOption;
 
+/* ----------------
+ * Exported functions of libpq
+ * ----------------
+ */
+
 /* ===	in fe-connect.c === */
+
 	/* make a new client connection to the backend */
 	extern PGconn *PQconnectdb(const char *conninfo);
+	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
+								const char *pgoptions, const char *pgtty,
+								const char *dbName,
+								const char *login, const char *pwd);
+#define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
+	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
+
+	/* get info about connection options known to PQconnectdb */
 	extern PQconninfoOption *PQconndefaults(void);
-	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
-											const char *pgtty, const char *dbName, const char *login, const char *pwd);
-#define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)   PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
+
 	/* close the current connection and free the PGconn data structure */
 	extern void PQfinish(PGconn *conn);
-	/* issue a cancel request */
-	extern int	PQrequestCancel(PGconn *conn);
-
 	/*
 	 * close the current connection and restablish a new one with the same
 	 * parameters
 	 */
 	extern void PQreset(PGconn *conn);
+
+	/* issue a cancel request */
+	extern int	PQrequestCancel(PGconn *conn);
 
 	/* Accessor functions for PGconn objects */
 	extern char *PQdb(PGconn *conn);
@@ -313,28 +337,33 @@ extern		"C"
 									  void *arg);
 
 /* === in fe-exec.c === */
+
 	/* Simple synchronous query */
 	extern PGresult *PQexec(PGconn *conn, const char *query);
 	extern PGnotify *PQnotifies(PGconn *conn);
+
 	/* Interface for multiple-result or asynchronous queries */
 	extern int  PQsendQuery(PGconn *conn, const char *query);
 	extern PGresult *PQgetResult(PGconn *conn);
+
 	/* Routines for managing an asychronous query */
 	extern int	PQisBusy(PGconn *conn);
 	extern void PQconsumeInput(PGconn *conn);
+
 	/* Routines for copy in/out */
 	extern int	PQgetline(PGconn *conn, char *string, int length);
 	extern void PQputline(PGconn *conn, const char *string);
+	extern void PQputnbytes(PGconn *conn, const char *buffer, int nbytes);
 	extern int	PQendcopy(PGconn *conn);
-	/* Not really meant for application use: */
+
+	/* "Fast path" interface --- not really recommended for application use */
 	extern PGresult *PQfn(PGconn *conn,
-									  int fnid,
-									  int *result_buf,
-									  int *result_len,
-									  int result_is_int,
-									  PQArgBlock *args,
-									  int nargs);
-	extern void PQclearAsyncResult(PGconn *conn);
+						  int fnid,
+						  int *result_buf,
+						  int *result_len,
+						  int result_is_int,
+						  PQArgBlock *args,
+						  int nargs);
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(PGresult *res);
@@ -351,14 +380,16 @@ extern		"C"
 	extern char *PQgetvalue(PGresult *res, int tup_num, int field_num);
 	extern int	PQgetlength(PGresult *res, int tup_num, int field_num);
 	extern int	PQgetisnull(PGresult *res, int tup_num, int field_num);
+
 	/* Delete a PGresult */
 	extern void PQclear(PGresult *res);
 
 /* === in fe-print.c === */
+
 	extern void PQprint(FILE *fout,		/* output stream */
 						PGresult *res,
-						PQprintOpt *ps /* option structure */
-		);
+						PQprintOpt *ps); /* option structure */
+
 	/* PQdisplayTuples() is a better version of PQprintTuples(),
 	 * but both are obsoleted by PQprint().
 	 */
@@ -376,37 +407,16 @@ extern		"C"
 													 * or not */
 							  int terseOutput,		/* delimiter bars or
 													 * not? */
-							  int width		/* width of column, if
+							  int width);	/* width of column, if
 											 * 0, use variable width */
-		);
 
 #ifdef MULTIBYTE
 	extern int PQmblen(unsigned char *s);
 #endif
 
-/* === in fe-auth.c === */
-	extern MsgType fe_getauthsvc(char *PQerrormsg);
-	extern void fe_setauthsvc(const char *name, char *PQerrormsg);
-	extern char *fe_getauthname(char *PQerrormsg);
-
-/* === in fe-misc.c === */
-	/* "Get" and "Put" routines return 0 if successful, EOF if not.
-	 * Note that for Get, EOF merely means the buffer is exhausted,
-	 * not that there is necessarily any error.
-	 */
-	extern int	pqGetc(char *result, PGconn *conn);
-	extern int	pqGets(char *s, int maxlen, PGconn *conn);
-	extern int	pqPuts(const char *s, PGconn *conn);
-	extern int	pqGetnchar(char *s, int len, PGconn *conn);
-	extern int	pqPutnchar(const char *s, int len, PGconn *conn);
-	extern int	pqGetInt(int *result, int bytes, PGconn *conn);
-	extern int	pqPutInt(int value, int bytes, PGconn *conn);
-	extern int	pqReadData(PGconn *conn);
-	extern int	pqReadReady(PGconn *conn);
-	extern int	pqFlush(PGconn *conn);
-	extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-
 /* === in fe-lobj.c === */
+
+	/* Large-object access routines */
 	extern int	lo_open(PGconn *conn, Oid lobjId, int mode);
 	extern int	lo_close(PGconn *conn, int fd);
 	extern int	lo_read(PGconn *conn, int fd, char *buf, int len);
@@ -418,36 +428,8 @@ extern		"C"
 	extern Oid	lo_import(PGconn *conn, char *filename);
 	extern int	lo_export(PGconn *conn, Oid lobjId, char *filename);
 
-/* max length of message to send  */
-#define MAX_MESSAGE_LEN 8193
-
-/* maximum number of fields in a tuple */
-#define MAX_FIELDS 512
-
-/* bits in a byte */
-#define BYTELEN 8
-
-/* fall back options if they are not specified by arguments or defined
-   by environment variables */
-#define DefaultHost		"localhost"
-#define DefaultTty		""
-#define DefaultOption	""
-#define DefaultAuthtype		  ""
-#define DefaultPassword		  ""
-
-
-	typedef void *TUPLE;
-#define palloc malloc
-#define pfree free
-
-#if defined(sun) && defined(sparc) && !defined(__SVR4)
-	extern char *sys_errlist[];
-#define strerror(A) (sys_errlist[(A)])
-#endif							/* sunos4 */
-
 #ifdef __cplusplus
 };
-
 #endif
 
 #endif							/* LIBPQ_FE_H */

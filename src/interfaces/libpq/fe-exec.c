@@ -7,24 +7,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.61 1998/08/09 02:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.62 1998/08/17 03:50:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "postgres.h"
+
 #ifdef WIN32
 #include "win32.h"
-#endif
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <ctype.h>
+#else
 #if !defined(NO_UNISTD_H)
 #include <unistd.h>
 #endif
-#include "postgres.h"
-#include "libpq/pqcomm.h"
-#include "libpq-fe.h"
+#endif
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <ctype.h>
 
 
 /* the rows array in a PGresGroup  has to grow to accommodate the rows */
@@ -32,7 +33,7 @@
 #define TUPARR_GROW_BY 100
 
 /* keep this in same order as ExecStatusType in libpq-fe.h */
-const char *pgresStatus[] = {
+const char * const pgresStatus[] = {
 	"PGRES_EMPTY_QUERY",
 	"PGRES_COMMAND_OK",
 	"PGRES_TUPLES_OK",
@@ -144,7 +145,7 @@ freeTuple(PGresAttValue *tuple, int numAttributes)
  */
 
 void
-PQclearAsyncResult(PGconn *conn)
+pqClearAsyncResult(PGconn *conn)
 {
 	/* Get rid of incomplete result and any not-yet-added tuple */
 	if (conn->result)
@@ -210,30 +211,18 @@ PQsendQuery(PGconn *conn, const char *query)
 		return 0;
 	}
 
-	if (conn->asyncStatus != PGASYNC_IDLE)
-	{
-		sprintf(conn->errorMessage,
-				"PQsendQuery() -- another query already in progress.");
-		return 0;
-	}
-
-	/* Check for pending input (asynchronous Notice or Notify messages);
-	 * also detect the case that the backend just closed the connection.
-	 * Note: we have to loop if the first call to pqReadData successfully
-	 * reads some data, since in that case pqReadData won't notice whether
-	 * the connection is now closed.
-	 */
-	while (pqReadReady(conn)) {
-		if (pqReadData(conn) < 0)
-			return 0;			/* errorMessage already set */
-		parseInput(conn);		/* deal with Notice or Notify, if any */
-	}
-
 	/* Don't try to send if we know there's no live connection. */
 	if (conn->status != CONNECTION_OK)
 	{
 		sprintf(conn->errorMessage, "PQsendQuery() -- There is no connection "
 				"to the backend.\n");
+		return 0;
+	}
+	/* Can't send while already busy, either. */
+	if (conn->asyncStatus != PGASYNC_IDLE)
+	{
+		sprintf(conn->errorMessage,
+				"PQsendQuery() -- another query already in progress.");
 		return 0;
 	}
 
@@ -361,7 +350,7 @@ parseInput(PGconn *conn)
 					if (pqGets(conn->asyncErrorMessage,ERROR_MSG_LENGTH,conn))
 						return;
 					/* delete any partially constructed result */
-					PQclearAsyncResult(conn);
+					pqClearAsyncResult(conn);
 					/* we leave result NULL while setting asyncStatus=READY;
 					 * this signals an error condition to PQgetResult.
 					 */
@@ -468,7 +457,7 @@ parseInput(PGconn *conn)
 					/* Discard the unexpected message; good idea?? */
 					conn->inStart = conn->inEnd;
 					/* delete any partially constructed result */
-					PQclearAsyncResult(conn);
+					pqClearAsyncResult(conn);
 					conn->asyncStatus = PGASYNC_READY;
 					return;
 			}					/* switch on protocol character */
@@ -583,7 +572,7 @@ getAnotherTuple(PGconn *conn, int binary)
 	{
 		sprintf(conn->asyncErrorMessage,
 				"getAnotherTuple() -- null-values bitmap is too large\n");
-		PQclearAsyncResult(conn);
+		pqClearAsyncResult(conn);
 		conn->asyncStatus = PGASYNC_READY;
 		/* Discard the broken message */
 		conn->inStart = conn->inEnd;
@@ -688,7 +677,7 @@ PQgetResult(PGconn *conn)
 		if (pqWait(TRUE, FALSE, conn) ||
 			pqReadData(conn) < 0)
 		{
-			PQclearAsyncResult(conn);
+			pqClearAsyncResult(conn);
 			conn->asyncStatus = PGASYNC_IDLE;
 			/* conn->errorMessage has been set by pqWait or pqReadData. */
 			return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
@@ -940,6 +929,16 @@ PQputline(PGconn *conn, const char *s)
 }
 
 /*
+ * PQputnbytes -- like PQputline, but buffer need not be null-terminated.
+ */
+void
+PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
+{
+	if (conn && conn->sock >= 0)
+		(void) pqPutnchar(buffer, nbytes, conn);
+}
+
+/*
  * PQendcopy
  *		After completing the data transfer portion of a copy in/out,
  *		the application must call this routine to finish the command protocol.
@@ -968,6 +967,7 @@ PQendcopy(PGconn *conn)
 
 	/* Return to active duty */
 	conn->asyncStatus = PGASYNC_BUSY;
+	conn->errorMessage[0] = '\0';
 
 	/* Wait for the completion response */
 	result = PQgetResult(conn);
@@ -986,8 +986,10 @@ PQendcopy(PGconn *conn)
 	 */
 	PQclear(result);
 
-	sprintf(conn->errorMessage, "PQendcopy: resetting connection\n");
-	DONOTICE(conn, conn->errorMessage);
+	if (conn->errorMessage[0])
+		DONOTICE(conn, conn->errorMessage);
+
+	DONOTICE(conn, "PQendcopy: resetting connection\n");
 
 	PQreset(conn);
 
@@ -1344,23 +1346,40 @@ PQcmdStatus(PGresult *res)
 const char *
 PQoidStatus(PGresult *res)
 {
-	static char oidStatus[32] = {0};
+	char	*p, *e, *scan;
+	int		slen, olen;
 
 	if (!res)
 		return "";
 
-	oidStatus[0] = 0;
+	if (strncmp(res->cmdStatus, "INSERT ", 7) != 0)
+		return "";
 
-	if (strncmp(res->cmdStatus, "INSERT ", 7) == 0)
-	{
-		char	   *p = res->cmdStatus + 7;
-		char	   *e;
+	/* The cmdStatus string looks like
+	 *     INSERT oid count\0
+	 * In order to be able to return an ordinary C string without
+	 * damaging the result for PQcmdStatus or PQcmdTuples, we copy
+	 * the oid part of the string to just after the null, so that
+	 * cmdStatus looks like
+	 *     INSERT oid count\0oid\0
+	 *                       ^ our return value points here
+	 * Pretty klugy eh?  This routine should've just returned an Oid value.
+	 */
 
-		for (e = p; *e != ' ' && *e;)
-			e++;
-		sprintf(oidStatus, "%.*s", e - p, p);
-	}
-	return oidStatus;
+	slen = strlen(res->cmdStatus);
+	p = res->cmdStatus + 7;			/* where oid is now */
+	e = res->cmdStatus + slen + 1; 	/* where to put the oid string */
+
+	for (scan = p; *scan && *scan != ' '; )
+		scan++;
+	olen = scan - p;
+	if (slen + olen + 2 > sizeof(res->cmdStatus))
+		return "";				/* something very wrong if it doesn't fit */
+
+	strncpy(e, p, olen);
+	e[olen] = '\0';
+
+	return e;
 }
 
 /*

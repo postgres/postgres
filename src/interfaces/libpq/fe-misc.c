@@ -24,15 +24,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.17 1998/08/09 02:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.18 1998/08/17 03:50:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "postgres.h"
+#include "pqsignal.h"
+
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
 #include <time.h>
 #ifdef WIN32
 #include "win32.h"
@@ -42,13 +47,11 @@
 #include <unistd.h>
 #endif
 #endif /* WIN32 */
-#include <sys/types.h>			/* for fd_set stuff */
+
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 
-#include "postgres.h"
-#include "libpq-fe.h"
 
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
@@ -273,7 +276,7 @@ pqPutInt(int value, int bytes, PGconn *conn)
 /* --------------------------------------------------------------------- */
 /* pqReadReady: is select() saying the file is ready to read?
  */
-int
+static int
 pqReadReady(PGconn *conn)
 {
 	fd_set			input_mask;
@@ -451,7 +454,17 @@ pqFlush(PGconn *conn)
 
 	while (len > 0)
 	{
+		/* Prevent being SIGPIPEd if backend has closed the connection. */
+#ifndef WIN32
+		pqsigfunc oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
+#endif
+
 		int sent = send(conn->sock, ptr, len, 0);
+
+#ifndef WIN32
+		pqsignal(SIGPIPE, oldsighandler);
+#endif
+
 		if (sent < 0)
 		{
 			/* Anything except EAGAIN or EWOULDBLOCK is trouble */

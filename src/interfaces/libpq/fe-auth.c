@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.21 1998/08/09 02:59:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.22 1998/08/17 03:50:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,27 +24,25 @@
  *
  *
  */
+
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "fe-auth.h"
+#include "postgres.h"
+
 #ifdef WIN32
 #include "win32.h"
 #else
-#include <stdio.h>
 #include <string.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
-#include <sys/types.h>
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
+#if !defined(NO_UNISTD_H)
 #include <unistd.h>
+#endif
 #include <pwd.h>
 #endif /* WIN32 */
-
-#include "postgres.h"
-
-#include "libpq/pqcomm.h"
-
-#include "libpq-fe.h"
-#include "fe-auth.h"
-#include "fe-connect.h"
 
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
@@ -469,7 +467,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 	if (areq == AUTH_REQ_CRYPT)
 		password = crypt(password, conn->salt);
 
-	return packetSend(conn, password, strlen(password) + 1);
+	return pqPacketSend(conn, password, strlen(password) + 1);
 }
 
 /*

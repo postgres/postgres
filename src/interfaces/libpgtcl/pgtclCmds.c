@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.28 1998/07/09 03:32:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.29 1998/08/17 03:50:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,9 +485,8 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     char *opt;
     int i;
     int tupno;
-    char prearrayInd[MAX_MESSAGE_LEN];
-    char arrayInd[MAX_MESSAGE_LEN];
     char *arrVar;
+    char nameBuffer[256];
 
     if (argc < 3 || argc > 5) {
 	Tcl_AppendResult(interp, "Wrong # of arguments\n",0);
@@ -522,6 +521,10 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	sprintf(interp->result, "%d", PQntuples(result));
 	return TCL_OK;
     }
+    else if (strcmp(opt, "-numAttrs") == 0) {
+	sprintf(interp->result, "%d", PQnfields(result));
+	return TCL_OK;
+    }
     else if (strcmp(opt, "-assign") == 0) {
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "-assign option must be followed by a variable name",0);
@@ -530,17 +533,21 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	arrVar = argv[3];
 	/* this assignment assigns the table of result tuples into a giant
 	   array with the name given in the argument,
-	   the indices of the array or (tupno,attrName)*/
+	   the indices of the array or (tupno,attrName).
+	   Note we expect field names not to exceed a few dozen characters,
+	   so truncating to prevent buffer overflow shouldn't be a problem.
+	   */
 	for (tupno = 0; tupno<PQntuples(result); tupno++) {
 	    for (i=0;i<PQnfields(result);i++) {
-		sprintf(arrayInd, "%d,%s", tupno, PQfname(result,i));
-		Tcl_SetVar2(interp, arrVar, arrayInd, 
+		sprintf(nameBuffer, "%d,%.200s", tupno, PQfname(result,i));
+		if (Tcl_SetVar2(interp, arrVar, nameBuffer, 
 #ifdef TCL_ARRAYS
-			    tcl_value(PQgetvalue(result,tupno,i)),
+				tcl_value(PQgetvalue(result,tupno,i)),
 #else
-			    PQgetvalue(result,tupno,i),
+				PQgetvalue(result,tupno,i),
 #endif
-			    TCL_LEAVE_ERR_MSG);
+				TCL_LEAVE_ERR_MSG) == NULL)
+		  return TCL_ERROR;
 	    }
 	}
 	Tcl_AppendResult(interp, arrVar, 0);
@@ -554,15 +561,23 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
       arrVar = argv[3];
       /* this assignment assigns the table of result tuples into a giant
          array with the name given in the argument,
-         the indices of the array or (tupno,attrName)*/
+         the indices of the array or (tupno,attrName).
+	 Here, we still assume PQfname won't exceed 200 characters,
+	 but we dare not make the same assumption about the data in field 0.
+	 */
       for (tupno = 0; tupno<PQntuples(result); tupno++) {
-          sprintf(prearrayInd,"%s",PQgetvalue(result,tupno,0));
+	  const char *field0 = PQgetvalue(result,tupno,0);
+	  char * workspace = malloc(strlen(field0) + 210);
           for (i=1;i<PQnfields(result);i++) {
-              sprintf(arrayInd, "%s,%s", prearrayInd, PQfname(result,i));
-              Tcl_SetVar2(interp, arrVar, arrayInd,
-                          PQgetvalue(result,tupno,i),
-                          TCL_LEAVE_ERR_MSG);
+              sprintf(workspace, "%s,%.200s", field0, PQfname(result,i));
+              if (Tcl_SetVar2(interp, arrVar, workspace,
+			      PQgetvalue(result,tupno,i),
+			      TCL_LEAVE_ERR_MSG) == NULL) {
+		free(workspace);
+		return TCL_ERROR;
+	      }
           }
+	  free(workspace);
       }
       Tcl_AppendResult(interp, arrVar, 0);
       return TCL_OK;
@@ -573,25 +588,13 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	    return TCL_ERROR;
 	}
 	tupno = atoi(argv[3]);
-	
-	if (tupno >= PQntuples(result)) {
+	if (tupno < 0 || tupno >= PQntuples(result)) {
 	    Tcl_AppendResult(interp, "argument to getTuple cannot exceed number of tuples - 1",0);
 	    return TCL_ERROR;
 	}
-
-#ifdef TCL_ARRAYS
 	for (i=0; i<PQnfields(result); i++) {
-	    Tcl_AppendElement(interp, tcl_value(PQgetvalue(result,tupno,i)));
+	    Tcl_AppendElement(interp, PQgetvalue(result,tupno,i));
 	}
-#else
-/*	Tcl_AppendResult(interp, PQgetvalue(result,tupno,0),NULL); */
-        Tcl_AppendElement(interp, PQgetvalue(result,tupno,0));
-	for (i=1;i<PQnfields(result);i++) {
-/*	  Tcl_AppendResult(interp, " ", PQgetvalue(result,tupno,i),NULL);*/
-         Tcl_AppendElement(interp, PQgetvalue(result,tupno,i));
-	}
-#endif
-
 	return TCL_OK;
     }
     else if (strcmp(opt, "-tupleArray") == 0) {
@@ -600,39 +603,40 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	    return TCL_ERROR;
 	}
 	tupno = atoi(argv[3]);
-	
-	if (tupno >= PQntuples(result)) {
+	if (tupno < 0 || tupno >= PQntuples(result)) {
 	    Tcl_AppendResult(interp, "argument to tupleArray cannot exceed number of tuples - 1",0);
 	    return TCL_ERROR;
 	}
-
 	for ( i = 0; i < PQnfields(result); i++) {
-	   if (Tcl_SetVar2(interp, argv[4], PQfname(result, i), PQgetvalue(result, tupno, i), TCL_LEAVE_ERR_MSG) == NULL) {
+	   if (Tcl_SetVar2(interp, argv[4], PQfname(result, i),
+			   PQgetvalue(result, tupno, i),
+			   TCL_LEAVE_ERR_MSG) == NULL) {
 	       return TCL_ERROR;
 	   }
 	}
 	return TCL_OK;
     }
     else if (strcmp(opt, "-attributes") == 0) {
-      Tcl_AppendResult(interp, PQfname(result,0),NULL);
-      for (i=1;i<PQnfields(result);i++) {
-	Tcl_AppendResult(interp, " ", PQfname(result,i), NULL);
+      for (i=0;i<PQnfields(result);i++) {
+	Tcl_AppendElement(interp, PQfname(result,i));
       }
       return TCL_OK;
     }
     else if (strcmp(opt, "-lAttributes") == 0) {
-      char buf[512];
-      Tcl_ResetResult(interp);
       for (i = 0; i < PQnfields(result); i++) {
-          sprintf(buf, "{%s} %ld %d", PQfname(result, i),
-	  			      (long) PQftype(result, i),
-				      PQfsize(result, i));
-          Tcl_AppendElement(interp, buf);
+	/* start a sublist */
+	if (i > 0)
+	  Tcl_AppendResult(interp, " {", 0);
+	else
+	  Tcl_AppendResult(interp, "{", 0);
+	Tcl_AppendElement(interp, PQfname(result, i));
+	sprintf(nameBuffer, "%ld", (long) PQftype(result, i));
+	Tcl_AppendElement(interp, nameBuffer);
+	sprintf(nameBuffer, "%ld", (long) PQfsize(result, i));
+	Tcl_AppendElement(interp, nameBuffer);
+	/* end the sublist */
+	Tcl_AppendResult(interp, "}", 0);
       }
-      return TCL_OK;
-    }
-    else if (strcmp(opt, "-numAttrs") == 0) {
-      sprintf(interp->result, "%d", PQnfields(result));
       return TCL_OK;
     }
     else   { 
@@ -649,9 +653,9 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 		     "\t-assign arrayVarName\n",
 		     "\t-assignbyidx arrayVarName\n",
 		     "\t-numTuples\n",
+		     "\t-numAttrs\n"
 		     "\t-attributes\n"
 		     "\t-lAttributes\n"
-		     "\t-numAttrs\n"
 		     "\t-getTuple tupleNumber\n",
 		     "\t-tupleArray tupleNumber arrayVarName\n",
 		     "\t-clear\n",

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.153 1998/08/10 20:31:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.154 1998/08/17 03:50:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,8 +121,8 @@ struct winsize
 /* declarations for functions in this file */
 static void usage(char *progname);
 static void slashUsage();
-static void handleCopyOut(PGresult *res, FILE *copystream);
-static void
+static bool handleCopyOut(PGresult *res, FILE *copystream);
+static bool
 handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
 static int
@@ -1103,23 +1103,23 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 					printf("%s\n", PQcmdStatus(results));
 				break;
 			case PGRES_COPY_OUT:
-				*success_p = true;
 				if (copy_out)
-					handleCopyOut(results, copystream);
+					*success_p = handleCopyOut(results, copystream);
 				else
 				{
 					if (!pset->quiet)
 						printf("Copy command returns...\n");
 
-					handleCopyOut(results, stdout);
+					*success_p = handleCopyOut(results, stdout);
 				}
 				break;
 			case PGRES_COPY_IN:
-				*success_p = true;
 				if (copy_in)
-					handleCopyIn(results, false, copystream);
+					*success_p = handleCopyIn(results, false, copystream);
 				else
-					handleCopyIn(results, !pset->quiet && !pset->notty, stdin);
+					*success_p = handleCopyIn(results,
+											  !pset->quiet && !pset->notty,
+											  stdin);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
@@ -2646,7 +2646,6 @@ main(int argc, char **argv)
 	char	   *host = NULL;
 	char	   *port = NULL;
 	char	   *qfilename = NULL;
-	char		errbuf[ERROR_MSG_LENGTH];
 
 	PsqlSettings settings;
 
@@ -2692,7 +2691,9 @@ main(int argc, char **argv)
 				settings.opt.align = 0;
 				break;
 			case 'a':
+#if 0				/* this no longer does anything */
 				fe_setauthsvc(optarg, errbuf);
+#endif
 				break;
 			case 'c':
 				singleQuery = strdup(optarg);
@@ -2875,7 +2876,7 @@ main(int argc, char **argv)
 
 #define COPYBUFSIZ	8192
 
-static void
+static bool
 handleCopyOut(PGresult *res, FILE *copystream)
 {
 	bool		copydone;
@@ -2911,12 +2912,12 @@ handleCopyOut(PGresult *res, FILE *copystream)
 		}
 	}
 	fflush(copystream);
-	PQendcopy(res->conn);
+	return ! PQendcopy(res->conn);
 }
 
 
 
-static void
+static bool
 handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 {
 	bool		copydone = false;
@@ -2967,7 +2968,7 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 		}
 		PQputline(res->conn, "\n");
 	}
-	PQendcopy(res->conn);
+	return ! PQendcopy(res->conn);
 }
 
 

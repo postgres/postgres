@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.11 1998/06/16 04:10:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.12 1998/08/17 03:50:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,10 @@ static int PgEndCopy(Pg_ConnectionId *connid, int *errorCodePtr)
 }
 
 /*
- *  Called when reading data (via gets) for a copy <rel> to stdout
+ *  Called when reading data (via gets) for a copy <rel> to stdout.
+ *
+ *  NOTE: this routine knows way more than it ought to about libpq's
+ *  internal buffering mechanisms.
  */
 int PgInputProc(DRIVER_INPUT_PROTO)
 {
@@ -62,10 +65,10 @@ int PgInputProc(DRIVER_INPUT_PROTO)
     }
 
     /* Try to load any newly arrived data */
-    errno = 0;
-
-    if (pqReadData(conn) < 0) {
-	*errorCodePtr = errno ? errno : EIO;
+    conn->errorMessage[0] = '\0';
+    PQconsumeInput(conn);
+    if (conn->errorMessage[0]) {
+	*errorCodePtr = EIO;
 	return -1;
     }
 
@@ -80,8 +83,8 @@ int PgInputProc(DRIVER_INPUT_PROTO)
     conn->inCursor = conn->inStart;
 
     avail = bufSize;
-    while (avail > 0 &&
-	   pqGetc(&c, conn) == 0) {
+    while (avail > 0 && conn->inCursor < conn->inEnd) {
+	c = conn->inBuffer[conn->inCursor++];
 	*buf++ = c;
 	--avail;
 	if (c == '\n') {
@@ -130,10 +133,12 @@ int PgOutputProc(DRIVER_OUTPUT_PROTO)
 	return -1;
     }
 
-    errno = 0;
+    conn->errorMessage[0] = '\0';
 
-    if (pqPutnchar(buf, bufSize, conn)) {
-	*errorCodePtr = errno ? errno : EIO;
+    PQputnbytes(conn, buf, bufSize);
+
+    if (conn->errorMessage[0]) {
+	*errorCodePtr = EIO;
 	return -1;
     }
 
@@ -141,7 +146,6 @@ int PgOutputProc(DRIVER_OUTPUT_PROTO)
      * in a single operation; maybe not such a good assumption?
      */
     if (bufSize >= 3 && strncmp(&buf[bufSize-3], "\\.\n", 3) == 0) {
-	(void) pqFlush(conn);
 	if (PgEndCopy(connid, errorCodePtr) == -1)
 	    return -1;
     }
@@ -423,7 +427,7 @@ PgGetConnByResultId(Tcl_Interp *interp, char *resid_c)
     *mark = '\0';
     conn_chan = Tcl_GetChannel(interp, resid_c, 0);
     *mark = '.';
-    if(conn_chan && Tcl_GetChannelType(conn_chan) != &Pg_ConnType) {
+    if(conn_chan && Tcl_GetChannelType(conn_chan) == &Pg_ConnType) {
 	Tcl_SetResult(interp, Tcl_GetChannelName(conn_chan), TCL_VOLATILE);
 	return TCL_OK;
     }
