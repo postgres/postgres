@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.28 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.29 2003/08/26 18:35:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -187,7 +187,8 @@ initializeInput(int flags)
 		initialize_readline();
 
 		useHistory = true;
-		SetVariable(pset.vars, "HISTSIZE", "500");
+		if (GetVariable(pset.vars, "HISTSIZE") == NULL)
+			SetVariable(pset.vars, "HISTSIZE", "500");
 		using_history();
 		home = getenv("HOME");
 		if (home)
