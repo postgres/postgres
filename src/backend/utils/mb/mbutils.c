@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.8 1999/07/17 20:18:10 momjian Exp $ */
+ * $Id: mbutils.c,v 1.9 1999/09/11 22:28:00 tgl Exp $ */
 
 
 #include "postgres.h"
@@ -93,59 +93,81 @@ pg_get_client_encoding()
 }
 
 /*
- * convert client encoding to server encoding. if server_encoding ==
- * client_encoding or no conversion function exists,
- * returns s. So be careful.
+ * convert client encoding to server encoding.
+ *
+ * CASE 1: if no conversion is required, then the given pointer s is returned.
+ *
+ * CASE 2: if conversion is required, a palloc'd string is returned.
+ *
+ * Callers must check whether return value differs from passed value
+ * to determine whether to pfree the result or not!
+ *
+ * Note: we assume that conversion cannot cause more than a 4-to-1 growth
+ * in the length of the string --- is this enough?
  */
 unsigned char *
 pg_client_to_server(unsigned char *s, int len)
 {
-	static unsigned char b1[MAX_PARSE_BUFFER * 4];		/* is this enough? */
-	static unsigned char b2[MAX_PARSE_BUFFER * 4];		/* is this enough? */
-	unsigned char *p = s;
+	unsigned char *result = s;
+	unsigned char *buf;
 
 	if (client_encoding == GetDatabaseEncoding())
-		return (p);
+		return result;
 	if (client_to_mic)
 	{
-		(*client_to_mic) (s, b1, len);
-		len = strlen(b1);
-		p = b1;
+		buf = (unsigned char *) palloc(len * 4 + 1);
+		(*client_to_mic) (result, buf, len);
+		result = buf;
+		len = strlen(result);
 	}
 	if (server_from_mic)
 	{
-		(*server_from_mic) (p, b2, len);
-		p = b2;
+		buf = (unsigned char *) palloc(len * 4 + 1);
+		(*server_from_mic) (result, buf, len);
+		if (result != s)
+			pfree(result);		/* release first buffer */
+		result = buf;
 	}
-	return (p);
+	return result;
 }
 
 /*
- * convert server encoding to client encoding. if server_encoding ==
- * client_encoding or no conversion function exists,
- * returns s. So be careful.
+ * convert server encoding to client encoding.
+ *
+ * CASE 1: if no conversion is required, then the given pointer s is returned.
+ *
+ * CASE 2: if conversion is required, a palloc'd string is returned.
+ *
+ * Callers must check whether return value differs from passed value
+ * to determine whether to pfree the result or not!
+ *
+ * Note: we assume that conversion cannot cause more than a 4-to-1 growth
+ * in the length of the string --- is this enough?
  */
 unsigned char *
 pg_server_to_client(unsigned char *s, int len)
 {
-	static unsigned char b1[MAX_PARSE_BUFFER * 4];		/* is this enough? */
-	static unsigned char b2[MAX_PARSE_BUFFER * 4];		/* is this enough? */
-	unsigned char *p = s;
+	unsigned char *result = s;
+	unsigned char *buf;
 
 	if (client_encoding == GetDatabaseEncoding())
-		return (p);
+		return result;
 	if (server_to_mic)
 	{
-		(*server_to_mic) (s, b1, len);
-		len = strlen(b1);
-		p = b1;
+		buf = (unsigned char *) palloc(len * 4 + 1);
+		(*server_to_mic) (result, buf, len);
+		result = buf;
+		len = strlen(result);
 	}
 	if (client_from_mic)
 	{
-		(*client_from_mic) (p, b2, len);
-		p = b2;
+		buf = (unsigned char *) palloc(len * 4 + 1);
+		(*client_from_mic) (result, buf, len);
+		if (result != s)
+			pfree(result);		/* release first buffer */
+		result = buf;
 	}
-	return (p);
+	return result;
 }
 
 /* convert a multi-byte string to a wchar */

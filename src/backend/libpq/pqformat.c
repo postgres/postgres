@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.8 1999/08/31 04:26:37 tgl Exp $
+ *	$Id: pqformat.c,v 1.9 1999/09/11 22:28:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,13 +125,16 @@ void
 pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 {
 #ifdef MULTIBYTE
-	const char *p;
+	char	   *p;
 
-	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
+	p = (char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
-		str = p;
-		slen = strlen(str);
+		slen = strlen(p);
+		pq_sendint(buf, slen + 4, 4);
+		appendBinaryStringInfo(buf, p, slen);
+		pfree(p);
+		return;
 	}
 #endif
 	pq_sendint(buf, slen + 4, 4);
@@ -149,15 +152,16 @@ void
 pq_sendstring(StringInfo buf, const char *str)
 {
 	int			slen = strlen(str);
-
 #ifdef MULTIBYTE
-	const char *p;
+	char	   *p;
 
-	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
+	p = (char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
-		str = p;
-		slen = strlen(str);
+		slen = strlen(p);
+		appendBinaryStringInfo(buf, p, slen + 1);
+		pfree(p);
+		return;
 	}
 #endif
 	appendBinaryStringInfo(buf, str, slen + 1);
@@ -229,15 +233,15 @@ int
 pq_puttextmessage(char msgtype, const char *str)
 {
 	int			slen = strlen(str);
-
 #ifdef MULTIBYTE
-	const char *p;
+	char	   *p;
 
-	p = (const char *) pg_server_to_client((unsigned char *) str, slen);
+	p = (char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
-		str = p;
-		slen = strlen(str);
+		int result = pq_putmessage(msgtype, p, strlen(p) + 1);
+		pfree(p);
+		return result;
 	}
 #endif
 	return pq_putmessage(msgtype, str, slen + 1);
@@ -299,12 +303,12 @@ pq_getint(int *result, int b)
 int
 pq_getstr(StringInfo s)
 {
-	int			c;
+	int			result;
 #ifdef MULTIBYTE
 	char	   *p;
 #endif
 
-	c = pq_getstring(s);
+	result = pq_getstring(s);
 
 #ifdef MULTIBYTE
 	p = (char *) pg_client_to_server((unsigned char *) s->data, s->len);
@@ -314,8 +318,9 @@ pq_getstr(StringInfo s)
 		s->len = 0;
 		s->data[0] = '\0';
 		appendBinaryStringInfo(s, p, strlen(p));
+		pfree(p);
 	}
 #endif
 
-	return c;
+	return result;
 }

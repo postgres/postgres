@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.86 1999/07/22 02:40:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.87 1999/09/11 22:28:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "commands/copy.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+#include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
@@ -51,14 +52,10 @@ static void GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation **index_rels);
 
-#ifdef COPY_PATCH
 static void CopyReadNewline(FILE *fp, int *newline);
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline);
-#else
-static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
-#endif
 
-static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
+static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int	CountTuples(Relation relation);
 
 /*
@@ -431,7 +428,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					string = (char *) (*fmgr_faddr(&out_functions[i]))
 						(value, elements[i], typmod[i]);
-					CopyAttributeOut(fp, string, delim, attr[i]->attnelems);
+					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
 				else
@@ -691,18 +688,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		if (!binary)
 		{
-#ifdef COPY_PATCH
 			int			newline = 0;
 
-#endif
 			lineno++;
 			if (oids)
 			{
-#ifdef COPY_PATCH
 				string = CopyReadAttribute(fp, &isnull, delim, &newline);
-#else
-				string = CopyReadAttribute(fp, &isnull, delim);
-#endif
 				if (string == NULL)
 					done = 1;
 				else
@@ -710,19 +701,18 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					loaded_oid = oidin(string);
 					if (loaded_oid < BootstrapObjectIdData)
 						elog(ERROR, "COPY TEXT: Invalid Oid. line: %d", lineno);
+					pfree(string);
 				}
 			}
 			for (i = 0; i < attr_count && !done; i++)
 			{
-#ifdef COPY_PATCH
 				string = CopyReadAttribute(fp, &isnull, delim, &newline);
-#else
-				string = CopyReadAttribute(fp, &isnull, delim);
-#endif
 				if (isnull)
 				{
 					values[i] = PointerGetDatum(NULL);
 					nulls[i] = 'n';
+					if (string)
+						pfree(string);
 				}
 				else if (string == NULL)
 					done = 1;
@@ -739,12 +729,11 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					if (!PointerIsValid(values[i]) &&
 						!(rel->rd_att->attrs[i]->attbyval))
 						elog(ERROR, "copy from line %d: Bad file format", lineno);
+					pfree(string);
 				}
 			}
-#ifdef COPY_PATCH
 			if (!done)
 				CopyReadNewline(fp, &newline);
-#endif
 		}
 		else
 		{						/* binary */
@@ -812,11 +801,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		if (done)
 			continue;
 
-		/*
-		 * Does it have any sence ? - vadim 12/14/96
-		 *
-		 * tupDesc = CreateTupleDesc(attr_count, attr);
-		 */
 		tuple = heap_formtuple(tupDesc, values, nulls);
 		if (oids)
 			tuple->t_data->t_oid = loaded_oid;
@@ -1086,30 +1070,18 @@ GetIndexRelations(Oid main_relation_oid,
 	}
 }
 
-#define EXT_ATTLEN	(5 * BLCKSZ)
 
 /*
-   returns 1 is c is in s
+   returns 1 if c is in s
 */
 static bool
 inString(char c, char *s)
 {
-	int			i;
-
-	if (s)
-	{
-		i = 0;
-		while (s[i] != '\0')
-		{
-			if (s[i] == c)
-				return 1;
-			i++;
-		}
-	}
+	if (s && c)
+		return strchr(s, c) != NULL;
 	return 0;
 }
 
-#ifdef COPY_PATCH
 /*
  * Reads input from fp until an end of line is seen.
  */
@@ -1125,64 +1097,57 @@ CopyReadNewline(FILE *fp, int *newline)
 	*newline = 0;
 }
 
-#endif
-
 /*
- * Reads input from fp until eof is seen.  If we are reading from standard
- * input, AND we see a dot on a line by itself (a dot followed immediately
- * by a newline), we exit as if we saw eof.  This is so that copy pipelines
- * can be used as standard input.
+ * Read the value of a single attribute.
+ *
+ * Result is either a palloc'd string, or NULL (if EOF or a null attribute).
+ * *isnull is set true if a null attribute, else false.
+ *
+ * delim is the string of acceptable delimiter characters(s).
+ * *newline remembers whether we've seen a newline ending this tuple.
  */
 
 static char *
-#ifdef COPY_PATCH
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
-#else
-CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
-#endif
 {
-	static char attribute[EXT_ATTLEN];
+	StringInfoData	attribute_buf;
 	char		c;
-	int			done = 0;
-	int			i = 0;
-
 #ifdef MULTIBYTE
 	int			mblen;
 	int			encoding;
 	unsigned char s[2];
+	char	   *cvt;
 	int			j;
 
-#endif
-
-#ifdef MULTIBYTE
 	encoding = pg_get_client_encoding();
 	s[1] = 0;
 #endif
 
-#ifdef COPY_PATCH
 	/* if last delimiter was a newline return a NULL attribute */
 	if (*newline)
 	{
 		*isnull = (bool) true;
 		return NULL;
 	}
-#endif
 
 	*isnull = (bool) false;		/* set default */
-	if (CopyGetEof(fp))
-		return NULL;
 
-	while (!done)
+	initStringInfo(&attribute_buf);
+
+	if (CopyGetEof(fp))
+		goto endOfFile;
+
+	for (;;)
 	{
 		c = CopyGetChar(fp);
-
 		if (CopyGetEof(fp))
-			return NULL;
-		else if (c == '\\')
+			goto endOfFile;
+
+		if (c == '\\')
 		{
 			c = CopyGetChar(fp);
 			if (CopyGetEof(fp))
-				return NULL;
+				goto endOfFile;
 			switch (c)
 			{
 				case '0':
@@ -1212,14 +1177,14 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 							else
 							{
 								if (CopyGetEof(fp))
-									return NULL;
+									goto endOfFile;
 								CopyDonePeek(fp, c, 0); /* Return to stream! */
 							}
 						}
 						else
 						{
 							if (CopyGetEof(fp))
-								return NULL;
+								goto endOfFile;
 							CopyDonePeek(fp, c, 0);		/* Return to stream! */
 						}
 						c = val & 0377;
@@ -1244,66 +1209,70 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 					c = '\v';
 					break;
 				case 'N':
-					attribute[0] = '\0';		/* just to be safe */
 					*isnull = (bool) true;
 					break;
 				case '.':
 					c = CopyGetChar(fp);
 					if (c != '\n')
 						elog(ERROR, "CopyReadAttribute - end of record marker corrupted. line: %d", lineno);
-					return NULL;
+					goto endOfFile;
 					break;
 			}
 		}
-		else if (inString(c, delim) || c == '\n')
+		else if (c == '\n' || inString(c, delim))
 		{
-#ifdef COPY_PATCH
 			if (c == '\n')
 				*newline = 1;
-#endif
-			done = 1;
+			break;
 		}
-		if (!done)
-			attribute[i++] = c;
+		appendStringInfoChar(&attribute_buf, c);
 #ifdef MULTIBYTE
+		/* get additional bytes of the char, if any */
 		s[0] = c;
 		mblen = pg_encoding_mblen(encoding, s);
-		mblen--;
-		for (j = 0; j < mblen; j++)
+		for (j = 1; j < mblen; j++)
 		{
 			c = CopyGetChar(fp);
 			if (CopyGetEof(fp))
-				return NULL;
-			attribute[i++] = c;
+				goto endOfFile;
+			appendStringInfoChar(&attribute_buf, c);
 		}
 #endif
-		if (i == EXT_ATTLEN - 1)
-			elog(ERROR, "CopyReadAttribute - attribute length too long. line: %d", lineno);
 	}
-	attribute[i] = '\0';
+
 #ifdef MULTIBYTE
-	return (pg_client_to_server((unsigned char *) attribute, strlen(attribute)));
-#else
-	return &attribute[0];
+	cvt = (char *) pg_client_to_server((unsigned char *) attribute_buf.data,
+									   attribute_buf.len);
+	if (cvt != attribute_buf.data)
+	{
+		pfree(attribute_buf.data);
+		return cvt;
+	}
 #endif
+	return attribute_buf.data;
+
+endOfFile:
+	pfree(attribute_buf.data);
+	return NULL;
 }
 
 static void
-CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
+CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 {
 	char	   *string;
 	char		c;
-
 #ifdef MULTIBYTE
-	int			mblen;
+	char	   *string_start;
 	int			encoding;
+	int			mblen;
 	int			i;
-
 #endif
 
 #ifdef MULTIBYTE
-	string = pg_server_to_client(server_string, strlen(server_string));
 	encoding = pg_get_client_encoding();
+	string = (char *) pg_server_to_client((unsigned char *) server_string,
+										  strlen(server_string));
+	string_start = string;
 #else
 	string = server_string;
 #endif
@@ -1315,33 +1284,20 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
 	for (; (c = *string) != '\0'; string++)
 #endif
 	{
-		if (c == delim[0] || c == '\n' ||
-			(c == '\\' && !is_array))
+		if (c == delim[0] || c == '\n' || c == '\\')
 			CopySendChar('\\', fp);
-		else if (c == '\\' && is_array)
-		{
-			if (*(string + 1) == '\\')
-			{
-				/* translate \\ to \\\\ */
-				CopySendChar('\\', fp);
-				CopySendChar('\\', fp);
-				CopySendChar('\\', fp);
-				string++;
-			}
-			else if (*(string + 1) == '"')
-			{
-				/* translate \" to \\\" */
-				CopySendChar('\\', fp);
-				CopySendChar('\\', fp);
-			}
-		}
 #ifdef MULTIBYTE
 		for (i = 0; i < mblen; i++)
 			CopySendChar(*(string + i), fp);
 #else
-		CopySendChar(*string, fp);
+		CopySendChar(c, fp);
 #endif
 	}
+
+#ifdef MULTIBYTE
+	if (string_start != server_string)
+		pfree(string_start);	/* pfree pg_server_to_client result */
+#endif
 }
 
 /*

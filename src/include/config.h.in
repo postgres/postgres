@@ -124,14 +124,6 @@
 /* #define TCL_ARRAYS */
 
 /*
- * The following flag allows copying tables from files with number of columns
- * different than the number of attributes setting missing attributes to NULL
- * and ignoring extra columns.  This also avoids the shift of the attributes
- * of the rest of the file if one line has a wrong column count.
- */
-#define COPY_PATCH
-
-/*
  * User locks are handled totally on the application side as long term
  * cooperative locks which extend beyond the normal transaction boundaries.
  * Their purpose is to indicate to an application that someone is `working'
