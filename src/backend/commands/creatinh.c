@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.75 2001/03/30 20:50:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.76 2001/04/02 18:30:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,6 +276,20 @@ TruncateRelation(char *name)
  *
  *	   If the same attribute name appears multiple times, then it appears
  *	   in the result table in the proper location for its first appearance.
+ *
+ *	   Constraints (including NOT NULL constraints) for the child table
+ *	   are the union of all relevant constraints, from both the child schema
+ *	   and parent tables.
+ *
+ *	   The default value for a child column is defined as:
+ *		(1) If the child schema specifies a default, that value is used.
+ *		(2) If neither the child nor any parent specifies a default, then
+ *			the column will not have a default.
+ *		(3) If conflicting defaults are inherited from different parents
+ *			(and not overridden by the child), an error is raised.
+ *		(4) Otherwise the inherited default is used.
+ *		Rule (3) is new in Postgres 7.1; in earlier releases you got a
+ *		rather arbitrary choice of which parent default to use.
  *----------
  */
 static List *
@@ -286,6 +300,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	List	   *inhSchema = NIL;
 	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
+	bool		have_bogus_defaults = false;
+	char	   *bogus_marker = "Bogus!"; /* marks conflicting defaults */
 	int			child_attno;
 
 	/*
@@ -305,10 +321,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			ColumnDef  *restdef = lfirst(rest);
 
 			if (strcmp(coldef->colname, restdef->colname) == 0)
-			{
 				elog(ERROR, "CREATE TABLE: attribute \"%s\" duplicated",
 					 coldef->colname);
-			}
 		}
 	}
 	/*
@@ -321,10 +335,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		foreach(rest, lnext(entry))
 		{
 			if (strcmp(strVal(lfirst(entry)), strVal(lfirst(rest))) == 0)
-			{
 				elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
 					 strVal(lfirst(entry)));
-			}
 		}
 	}
 
@@ -436,31 +448,44 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				newattno[parent_attno - 1] = ++child_attno;
 			}
 			/*
-			 * Copy default if any, overriding any default from earlier parent
+			 * Copy default if any
 			 */
 			if (attribute->atthasdef)
 			{
+				char	   *this_default = NULL;
 				AttrDefault *attrdef;
 				int			i;
 
-				def->raw_default = NULL;
-				def->cooked_default = NULL;
-
+				/* Find default in constraint structure */
 				Assert(constr != NULL);
 				attrdef = constr->defval;
 				for (i = 0; i < constr->num_defval; i++)
 				{
 					if (attrdef[i].adnum == parent_attno)
 					{
-						/*
-						 * if default expr could contain any vars, we'd
-						 * need to fix 'em, but it can't ...
-						 */
-						def->cooked_default = pstrdup(attrdef[i].adbin);
+						this_default = attrdef[i].adbin;
 						break;
 					}
 				}
-				Assert(def->cooked_default != NULL);
+				Assert(this_default != NULL);
+				/*
+				 * If default expr could contain any vars, we'd need to fix
+				 * 'em, but it can't; so default is ready to apply to child.
+				 *
+				 * If we already had a default from some prior parent,
+				 * check to see if they are the same.  If so, no problem;
+				 * if not, mark the column as having a bogus default.
+				 * Below, we will complain if the bogus default isn't
+				 * overridden by the child schema.
+				 */
+				Assert(def->raw_default == NULL);
+				if (def->cooked_default == NULL)
+					def->cooked_default = pstrdup(this_default);
+				else if (strcmp(def->cooked_default, this_default) != 0)
+				{
+					def->cooked_default = bogus_marker;
+					have_bogus_defaults = true;
+				}
 			}
 		}
 		/*
@@ -553,6 +578,23 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		}
 
 		schema = inhSchema;
+	}
+
+	/*
+	 * If we found any conflicting parent default values, check to make
+	 * sure they were overridden by the child.
+	 */
+	if (have_bogus_defaults)
+	{
+		foreach(entry, schema)
+		{
+			ColumnDef  *def = lfirst(entry);
+
+			if (def->cooked_default == bogus_marker)
+				elog(ERROR, "CREATE TABLE: attribute \"%s\" inherits conflicting default values"
+					 "\n\tTo resolve the conflict, specify a default explicitly",
+					 def->colname);
+		}
 	}
 
 	*supOids = parentOids;
