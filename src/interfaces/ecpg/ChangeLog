@@ -29,3 +29,12 @@ Mon Feb 16 16:17:21 CET 1998
 
 	- enable initialisation in declare section.
 	- connect call accepts a variable as well. 
+
+Wed Feb 18 21:41:30 CET 1998
+
+	- added whenever statement
+
+Thu Feb 19 12:48:14 CET 1998
+
+	- added do option to whenever statement
+

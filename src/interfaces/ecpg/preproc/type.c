@@ -18,6 +18,20 @@ void *mm_alloc(size_t size)
         return (ptr);
 }
 
+/* realloc + error check */
+void *mm_realloc(void * ptr, size_t size)
+{
+        ptr = realloc(ptr, size);
+
+        if (ptr == NULL)
+        {
+                fprintf(stderr, "Out of memory\n");
+                exit(1);
+        }
+
+        return (ptr);
+}
+
 /* Constructors
    Yes, I mostly write c++-code
  */

@@ -54,8 +54,9 @@ main(int argc, char *const argv[])
 		for (fnr = optind; fnr < argc; fnr++)
 		{
 			char	   *filename, *ptr2ext;
+			int	   ext = 0;
 
-			filename = mm_alloc(strlen(argv[fnr]) + 2);
+			filename = mm_alloc(strlen(argv[fnr]) + 4);
 
 			strcpy(filename, argv[fnr]);
 
@@ -63,6 +64,8 @@ main(int argc, char *const argv[])
 			/* no extension or extension not equal .pgc */
 			if (ptr2ext == NULL || strcmp(ptr2ext, ".pgc") != 0)
 			{ 
+				if (ptr2ext == NULL)
+					ext = 1; /* we need this information a while later */
 				ptr2ext = filename + strlen(filename);
 				ptr2ext[0] = '.';
 			}
@@ -82,7 +85,19 @@ main(int argc, char *const argv[])
 				}
 			}
 
-			yyin = fopen(input_filename = argv[fnr], "r");
+			if (ext == 1) 
+			{
+				/* no extension => add .pgc */
+				ptr2ext = strrchr(filename, '.');
+				ptr2ext[1] = 'p';
+				ptr2ext[2] = 'g';
+				ptr2ext[3] = 'c';
+				ptr2ext[4] = '\0';
+				input_filename = filename;
+			}
+			else
+				input_filename = argv[fnr];
+			yyin = fopen(input_filename, "r");
 			if (yyin == NULL)
 				perror(argv[fnr]);
 			else

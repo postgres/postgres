@@ -15,25 +15,35 @@ letter	[A-Za-z_]
 digit	[0-9]
 length	{digit}+
 symbol	{letter}({letter}|{digit})*
+label	({letter}|{digit})*
 string	'[^']*'
 
+begin	[bB][eE][gG][iI][nN]
+break   [bB][rR][eE][aA][kK]
+commit  [cC][oO][mM][mM][iI][tT]
+connect [cC][oO][nN][nN][eE][cC][tT]
+continue [cC][oO][nN][tT][iI][nN][uU][eE]
+declare [dD][eE][cC][lL][aA][rR][eE]
+do      [dD][oO]
+end	[eE][nN][dD]
 exec	[eE][xX][eE][cC]
 execute	[eE][xX][eE][cC][uU][tT][eE]
-sql	[sS][qQ][lL]
-varchar	[vV][aA][rR][cC][hH][aA][rR]
-varchar2	[vV][aA][rR][cC][hH][aA][rR]2
-into	[iI][nN][tT][oO]
-begin	[bB][eE][gG][iI][nN]
-end	[eE][nN][dD]
-declare [dD][eE][cC][lL][aA][rR][eE]
-section	[sS][eE][cC][tT][iI][oO][nN]
-include [iI][nN][cC][lL][uU][dD][eE]
-connect [cC][oO][nN][nN][eE][cC][tT]
-open	[oO][pP][eE][nN]
-commit  [cC][oO][mM][mM][iI][tT]
+found	[fF][oO][uU][nN][dD]
+goto    [gG][oO][tT][oO]
 immediate [iI][mM][mM][eE][dD][iI][aA][tT][eE]
+include [iI][nN][cC][lL][uU][dD][eE]
+into	[iI][nN][tT][oO]
+not	[nN][oO][tT]
+open	[oO][pP][eE][nN]
 release [rR][eE][lL][eE][aA][sS][eE]
 rollback [rR][oO][lL][lL][bB][aA][cC][kK]
+section	[sS][eE][cC][tT][iI][oO][nN]
+sql	[sS][qQ][lL]
+sqlerror [sS][qQ][lL][eE][rR][rR][oO][rR]
+sqlprint [sS][qQ][lL][pP][rR][iI][nN][tT]
+varchar	[vV][aA][rR][cC][hH][aA][rR]
+varchar2	[vV][aA][rR][cC][hH][aA][rR]2
+whenever [wW][hH][eE][nN][eE][vV][eE][rR]
 work    [wW][oO][rR][kK]
 %%
 <C>{exec}{ws}{sql}	{ BEGIN SQL; dbg(SQL_START); return SQL_START; }
@@ -51,8 +61,15 @@ work    [wW][oO][rR][kK]
 <SQL>{release}		{ dbg(SQL_RELEASE); return SQL_RELEASE; }
 <SQL>{work}		{ dbg(SQL_WORK); return SQL_WORK; }
 <SQL>{rollback}		{ dbg(SQL_ROLLBACK); return SQL_ROLLBACK; }
-
+<SQL>{whenever}		{ dbg(SQL_WHENEVER); return SQL_WHENEVER; }
+<SQL>{sqlerror}		{ dbg(SQL_SQLERROR); return SQL_SQLERROR; }
+<SQL>{sqlprint}		{ dbg(SQL_SQLPRINT); return SQL_SQLPRINT; }
+<SQL>{not}{ws}{found}	{ dbg(SQL_NOT_FOUND); return SQL_NOT_FOUND; }
+<SQL>{break}		{ dbg(SQL_BREAK); return SQL_BREAK; }
+<SQL>{continue}		{ dbg(SQL_CONTINUE); return SQL_CONTINUE; }
 <SQL>{into}		{ dbg(SQL_INTO); return SQL_INTO; }
+<SQL>{goto}		{ dbg(SQL_GOTO); return SQL_GOTO; }
+<SQL>{do}		{ dbg(SQL_DO); return SQL_DO; }
 			  
 {length}		{ dbg(S_LENGTH); return S_LENGTH; }
 			  
@@ -67,6 +84,7 @@ double			{ dbg(S_DOUBLE); return S_DOUBLE; }
 bool                    { dbg(S_BOOL); return S_BOOL; }
 
 static			{ dbg(S_STATIC); return S_STATIC; }
+signed			{ dbg(S_SIGNED); return S_SIGNED; }
 extern			{ dbg(S_EXTERN); return S_EXTERN; }
 auto			{ dbg(S_AUTO); return S_AUTO; }
 const			{ dbg(S_CONST); return S_CONST; }
@@ -77,6 +95,7 @@ struct			{ dbg(S_STRUCT); return S_STRUCT; }
 {string}		{ dbg(SQL_STRING); return SQL_STRING; }
 <SQL>{ws}		; 
 {symbol}		{ dbg(S_SYMBOL); return S_SYMBOL; }
+{label}			{ dbg(S_LABEL); return S_LABEL; }
 
 <SQL>"!<"		{ dbg(S_SYMBOL); return S_SYMBOL; }
 <SQL>"!>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
@@ -114,8 +133,10 @@ struct			{ dbg(S_STRUCT); return S_STRUCT; }
 ";"			{ dbg(;); return ';'; }
 "="			{ dbg(=); return '='; }
 ","			{ dbg(komma); return ','; }
+\(			{ dbg(braceopen); return '('; }
+\)			{ dbg(braceclose); return ')'; }
 \{			{ dbg(blockstart); return '{'; }
-\}			{ dbg(blockend); return'}'; }
+\}			{ dbg(blockend); return '}'; }
 \*			{ dbg(*); return('*'); }
 
 <SQL>":"		{ dbg(:); return ':'; }

@@ -24,4 +24,9 @@ struct ECPGgeneric_varchar {
     char arr[1];
 };
 
+/* print an error message */
+void sqlprint(void);
 
+/* define this for simplicity as well as compatibility */
+
+#define       SQLCODE    sqlca.sqlcode

@@ -2,9 +2,10 @@
 
 exec sql include sqlca;
 
-#define       SQLCODE    sqlca.sqlcode
-
 extern void ECPGdebug(int n, FILE *dbgs);
+
+exec sql whenever not found sqlprint;
+exec sql whenever sqlerror db_error(msg);
 
 void
 db_error (char *msg)
@@ -24,37 +25,32 @@ exec sql begin declare section;
 							    } birth;
 				} personal;
 exec sql end declare section;
+	char msg[128];
 	FILE *dbgs;
 
 	if ((dbgs = fopen("log", "w")) != NULL)
 		ECPGdebug(1, dbgs);
 
+	strcpy(msg, "connect");
 	exec sql connect 'mm';
-	if (SQLCODE)
-		db_error ("connect");
 
+	strcpy(msg, "declare");
 	exec sql declare cur cursor for 
 		select name, born, age from meskes;
-	if (SQLCODE) db_error ("declare");
 
 	exec sql open cur;
-	if (SQLCODE)
-		db_error ("open");
 
 	while (1) {
+		strcpy(msg, "fetch");
 		exec sql fetch in cur into :personal;
-		if (SQLCODE)
-			break;
 		printf ("%8.8s was born %d (age = %d)\n", personal.name.arr, personal.birth.born, personal.birth.age);
 	}
 
-	if (SQLCODE < 0)
-		db_error ("fetch");
-
+	strcpy(msg, "close");
 	exec sql close cur;
-	if (SQLCODE) db_error ("close");
+
+	strcpy(msg, "commit");
 	exec sql commit;
-	if (SQLCODE) db_error ("commit");
 
 	if (dbgs != NULL)
 		fclose(dbgs);

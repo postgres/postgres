@@ -14,6 +14,8 @@ static void yyerror(char *);
  */
 int	debugging = 0;
 static int	struct_level = 0;
+static char	*do_str = NULL;
+static int	do_length = 0;
 
 /* temporarily store record members while creating the data structure */
 struct ECPGrecord_member *record_member_list[128] = { NULL };
@@ -23,11 +25,52 @@ struct ECPGrecord_member *record_member_list[128] = { NULL };
  */
 char * input_filename = NULL;
 
-void
+static void
 output_line_number()
 {
     if (input_filename)
        fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
+}
+
+/*
+ * store the whenever action here
+ */
+static struct when when_error, when_nf;
+
+static void
+print_action(struct when *w)
+{
+	switch (w->code)
+	{
+		case W_CONTINUE: fprintf(yyout, "continue;");
+				 break;
+		case W_BREAK:	 fprintf(yyout, "break;");
+                                 break;
+		case W_SQLPRINT: fprintf(yyout, "sqlprint();");
+                                 break;
+		case W_GOTO:	 fprintf(yyout, "goto %s;", w->str);
+				 break;
+		case W_DO:	 fprintf(yyout, "%s;", w->str);
+				 break;
+		default:	 fprintf(yyout, "{/* not implemented yet */}");
+				 break;
+	}
+}
+
+static void
+whenever_action()
+{
+	if (when_nf.code != W_NOTHING)
+	{
+		fprintf(yyout, "\nif (SQLCODE > 0) ");
+		print_action(&when_nf);
+	}
+	if (when_error.code != W_NOTHING)
+        {
+                fprintf(yyout, "\nif (SQLCODE < 0) ");
+		print_action(&when_error);
+        }
+	output_line_number();
 }
 
 /*
@@ -176,27 +219,30 @@ dump_variables(struct arguments * list)
     char *			symbolname;
     int				indexsize;
     enum ECPGttype		type_enum;
+    struct when			action;
 }
 
 %token <tagname> SQL_START SQL_SEMI SQL_STRING SQL_INTO
 %token <tagname> SQL_BEGIN SQL_END SQL_DECLARE SQL_SECTION SQL_INCLUDE 
 %token <tagname> SQL_CONNECT SQL_OPEN SQL_EXECUTE SQL_IMMEDIATE
-%token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK
+%token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK SQL_WHENEVER
+%token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_BREAK SQL_CONTINUE
+%token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT
 
-%token <tagname> S_SYMBOL S_LENGTH S_ANYTHING
+%token <tagname> S_SYMBOL S_LENGTH S_ANYTHING S_LABEL
 %token <tagname> S_VARCHAR S_VARCHAR2
-%token <tagname> S_EXTERN S_STATIC S_AUTO S_CONST S_REGISTER S_STRUCT
+%token <tagname> S_EXTERN S_STATIC S_AUTO S_CONST S_REGISTER S_STRUCT S_SIGNED
 %token <tagname> S_UNSIGNED S_SIGNED
 %token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE S_BOOL
-%token <tagname> '[' ']' ';' ',' '{' '}' '=' '*'
+%token <tagname> '[' ']' ';' ',' '{' '}' '=' '*' '(' ')'
 
 %type <type> type type_detailed varchar_type simple_type array_type struct_type
-%type <symbolname> symbol
+%type <symbolname> symbol label
 %type <tagname> maybe_storage_clause varchar_tag db_name
 %type <type_enum> simple_tag
 %type <indexsize> index length
+%type <action> action
 %type <tagname> canything sqlanything both_anything vartext commit_release
-
 
 %%
 prog : statements;
@@ -211,6 +257,7 @@ statement : sqldeclaration
 	  | sqlcommit
 	  | sqlrollback
 	  | sqlexecute
+	  | sqlwhenever
 	  | sqlstatement
 	  | cthing
 	  | blockstart
@@ -247,8 +294,18 @@ variable_declaration : type initializer ';'	{
 initializer : /*empty */
 	    | '=' {fwrite(yytext, yyleng, 1, yyout);} vartext;
 
-vartext : both_anything {fwrite(yytext, yyleng, 1, yyout);}
-	| vartext both_anything {fwrite(yytext, yyleng, 1, yyout);}
+vartext : /* empty */ {}
+	| vartext both_anything {
+	if (do_length == 0)
+		fwrite(yytext, yyleng, 1, yyout);
+	else
+	{
+		if (strlen(do_str) + yyleng + 1 >= do_length)
+			do_str = mm_realloc(do_str, do_length += yyleng);
+
+		strcat(do_str, yytext);
+	}
+}
 
 symbol : S_SYMBOL { 
     char * name = (char *)malloc(yyleng + 1);
@@ -351,6 +408,7 @@ simple_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
 
 maybe_storage_clause : S_EXTERN { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_STATIC { fwrite(yytext, yyleng, 1, yyout); }
+		       | S_SIGNED { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_CONST { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_REGISTER { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_AUTO { fwrite(yytext, yyleng, 1, yyout); }
@@ -369,7 +427,7 @@ filename : cthing
 
 sqlconnect : SQL_START SQL_CONNECT { fprintf(yyout, "ECPGconnect("); }
 	     db_name
-	     SQL_SEMI { fprintf(yyout, ");"); output_line_number();}
+	     SQL_SEMI { fprintf(yyout, ");"); whenever_action();}
 
 db_name : SQL_STRING { fprintf(yyout, "\""); fwrite(yytext + 1, yyleng - 2, 1, yyout); fprintf(yyout, "\""); }
 	| ':' symbol { /* check if we have a char variabnle */
@@ -395,7 +453,7 @@ sqlgarbage : /* Empty */
 
 sqlcommit : SQL_START commit_release SQL_SEMI {
     fprintf(yyout, "ECPGcommit(__LINE__);"); 
-    output_line_number();
+    whenever_action();
 }
 
 commit_release : SQL_COMMIT
@@ -404,7 +462,7 @@ commit_release : SQL_COMMIT
 
 sqlrollback : SQL_START SQL_ROLLBACK SQL_SEMI {
     fprintf(yyout, "ECPGrollback(__LINE__);");
-    output_line_number();
+    whenever_action();
 };
 
 sqlexecute : SQL_START { /* Reset stack */
@@ -415,10 +473,58 @@ sqlexecute : SQL_START { /* Reset stack */
     fprintf(yyout, "\", ");		   
     dump_variables(argsinsert);
     fprintf(yyout, "ECPGt_EOIT, ");
-    dump_variables(argsresult);
+    /* dump_variables(argsresult); output variables must not exist here */
     fprintf(yyout, "ECPGt_EORT );");
-    output_line_number();
+    whenever_action();
 };
+
+sqlwhenever : SQL_START SQL_WHENEVER SQL_SQLERROR action SQL_SEMI{
+	when_error = $<action>4;
+}
+	| SQL_START SQL_WHENEVER SQL_NOT_FOUND action SQL_SEMI{
+	when_nf = $<action>4;
+}
+
+action : SQL_BREAK {
+	$<action>$.code = W_BREAK;
+	$<action>$.str = NULL;
+}
+       | SQL_CONTINUE {
+	$<action>$.code = W_CONTINUE;
+	$<action>$.str = NULL;
+}
+       | SQL_SQLPRINT {
+	$<action>$.code = W_SQLPRINT;
+	$<action>$.str = NULL;
+}
+       | SQL_GOTO label {
+	$<action>$.code = W_GOTO;
+	$<action>$.str = $<symbolname>2;
+}
+	| SQL_GOTO symbol {
+        $<action>$.code = W_GOTO;
+        $<action>$.str = $<symbolname>2;
+}
+       | SQL_DO symbol '(' {
+	do_str = (char *) mm_alloc(do_length = strlen($<symbolname>2) + 4);
+	sprintf(do_str, "%s (", $<symbolname>2);
+} vartext ')' {
+	do_str[strlen(do_str)+1]='\0';
+	do_str[strlen(do_str)]=')';
+	$<action>$.code = W_DO;
+	$<action>$.str = do_str;
+	do_str = NULL;
+	do_length = 0;
+}
+
+label : S_LABEL {
+    char * name = (char *)malloc(yyleng + 1);
+
+    strncpy(name, yytext, yyleng);
+    name[yyleng] = '\0';
+
+    $<symbolname>$ = name;
+}
 
 sqlstatement : SQL_START { /* Reset stack */
     reset_variables();
@@ -430,7 +536,7 @@ sqlstatement : SQL_START { /* Reset stack */
     fprintf(yyout, "ECPGt_EOIT, ");
     dump_variables(argsresult);
     fprintf(yyout, "ECPGt_EORT );");
-    output_line_number();
+    whenever_action();
 };
 
 sqlstatement_words : sqlstatement_word
@@ -478,9 +584,9 @@ both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2
 	  | SQL_BEGIN | SQL_END 
 	  | SQL_DECLARE | SQL_SECTION 
 	  | SQL_INCLUDE 
-	  | S_SYMBOL
+	  | S_SYMBOL | S_LABEL
 	  | S_STATIC | S_EXTERN | S_AUTO | S_CONST | S_REGISTER | S_STRUCT
-	  | '[' | ']' | ',' | '=' | '*'
+	  | '[' | ']' | ',' | '=' | '*' | '(' | ')'
 	  | S_ANYTHING;
 
 blockstart : '{' {
@@ -495,6 +601,6 @@ blockend : '}' {
 %%
 static void yyerror(char * error)
 {
-    fprintf(stderr, "%s\n", error);
+    fprintf(stderr, "%s in line %d\n", error, yylineno);
     exit(1);
 }

@@ -3,7 +3,7 @@ This list is still from Linus. MM
 The variables should be static.
     
 Preprocessor cannot do syntax checking on your SQL statements Whatever you
-write is copied more or less exactly to the postgres95 and you will not be
+write is copied more or less exactly to the PostgreSQL and you will not be
 able to locate your errors until run-time.
     
 No restriction to strings only The PQ interface, and most of all the PQexec
@@ -42,4 +42,6 @@ Now comes my list (MM):
 
 What do we do with enum data types?
 
-'signed' isn't understood so far
+The cursor is opened when the declare statement is issued. 
+
+The is no exec sql prepare statement.

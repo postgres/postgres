@@ -232,7 +232,7 @@ ECPGdo(int lineno, char *query,...)
 		return false;
 	}
 
-	/* Now then request is built. */
+	/* Now the request is built. */
 
 	if (committed)
 	{
@@ -645,4 +645,11 @@ ECPGlog(const char *format,...)
 
 		free(f);
 	}
+}
+
+/* print out an error message */
+void sqlprint(void)
+{
+	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
+	printf ("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
 }

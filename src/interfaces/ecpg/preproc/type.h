@@ -51,3 +51,19 @@ struct ECPGtemp_type {
 };
 
 extern const char * ECPGtype_name(enum ECPGttype typ);
+
+/* some stuff for whenever statements */
+enum WHEN {
+        W_NOTHING,
+        W_CONTINUE,
+        W_BREAK,
+        W_SQLPRINT,
+        W_GOTO,
+        W_DO
+};
+
+struct when
+{ 
+        enum WHEN   code;
+        char *      str;
+};
