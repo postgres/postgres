@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Nov 29 22:52:57 EST 2004
+Last updated:		Mon Nov 29 23:33:09 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -159,6 +159,7 @@ Data Types
 
 * Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
+* Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
 
 
 * ARRAYS
