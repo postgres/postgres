@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.90 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.91 2003/12/20 15:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,12 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 
 		/* Ugh. Somebody ought to write a table driven version -- mjl */
 
-		if (strcasecmp(tok, "ISO") == 0)
+		if (strcasecmp(tok, "ISO8601BASIC") == 0)
+		{
+			newDateStyle = USE_ISO8601BASIC_DATES;
+			scnt++;
+		}
+		else if (strcasecmp(tok, "ISO") == 0)
 		{
 			newDateStyle = USE_ISO_DATES;
 			scnt++;
@@ -197,6 +202,9 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 	{
 		case USE_ISO_DATES:
 			strcpy(result, "ISO");
+			break;
+		case USE_ISO8601BASIC_DATES:
+			strcpy(result, "ISO8601BASIC");
 			break;
 		case USE_SQL_DATES:
 			strcpy(result, "SQL");

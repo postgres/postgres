@@ -21,6 +21,7 @@ typedef double fsec_t;
 #define USE_ISO_DATES					1
 #define USE_SQL_DATES					2
 #define USE_GERMAN_DATES				3
+#define USE_ISO8601BASIC_DATES			4
 
 #define DAGO			"ago"
 #define EPOCH			"epoch"

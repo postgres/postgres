@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.135 2003/12/01 22:07:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.136 2003/12/20 15:32:54 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1785,6 +1785,57 @@ January 8 04:05:06 1999 PST
       <replaceable>p</replaceable> should be between 0 and 6, and
       defaults to the precision of the input literal.
      </para>
+
+
+     <para>
+      Alternatively, <type>interval</type> values can be written as 
+      ISO 8601 time intervals, using the "Format with time-unit designators".
+      This format always starts with the character <literal>'P'</>, followed 
+      by a string of values followed by single character time-unit designators.
+      A <literal>'T'</> separates the date and time parts of the interval.
+     </para>
+
+     <para>
+       Format:  PnYnMnDTnHnMnS
+     </para>
+     <para>
+       In this format, <literal>'n'</> gets replaced by a number, and 
+       <literal>Y</> represents years, 
+       <literal>M</> (in the date part) months,
+       <literal>D</> months,
+       <literal>H</> hours,
+       <literal>M</> (in the time part) minutes,
+       and <literal>S</> seconds.
+     </para>
+      
+
+     <table id="interval-example-table">
+	   <title>Interval Example</title>
+	   <tgroup cols="2">
+		<thead>
+		 <row>
+		  <entry>Traditional</entry>
+		  <entry>ISO-8601 time-interval</entry>
+		 </row>
+		</thead>
+		<tbody>
+		 <row>
+		  <entry>1 month</entry>
+		  <entry>P1M</entry>
+		 </row>
+		 <row>
+		  <entry>1 hour 30 minutes</entry>
+		  <entry>PT1H30M</entry>
+		 </row>
+		 <row>
+		  <entry>2 years 10 months 15 days 10 hours 30 minutes 20 seconds</entry>
+		  <entry>P2Y10M15DT10H30M20S</entry>
+		 </row>
+		</tbody>
+	   </thead>
+	  </table>
+	  
+     </para>
     </sect3>
 
     <sect3>
@@ -1941,6 +1992,11 @@ January 8 04:05:06 1999 PST
          <entry>regional style</entry>
          <entry>17.12.1997 07:37:16.00 PST</entry>
         </row>
+	<row>
+	 <entry>ISO8601basic</entry>
+	 <entry>ISO 8601 basic format</entry>
+	 <entry>19971217T073716-08</entry>
+	</row>
        </tbody>
       </tgroup>
      </table>
@@ -1995,6 +2051,11 @@ January 8 04:05:06 1999 PST
 <programlisting>
 <optional> <replaceable>quantity</> <replaceable>unit</> <optional> ... </> </> <optional> <replaceable>days</> </> <optional> <replaceable>hours</>:<replaceable>minutes</>:<replaceable>sekunden</> </optional>
 </programlisting>
+    </para>
+
+    <para>
+	 If the <varname>datestyle</> is set to iso8601basic, the interval
+	 output is a ISO-8601 time interval with time-unit designator (like P1Y6M or PT23H59M59S).
     </para>
 
     <para>

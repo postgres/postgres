@@ -704,6 +704,16 @@ EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
 					  -(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
 			break;
 
+		case USE_ISO8601BASIC_DATES:
+			/* compatible with ISO date formats */
+			if (tm->tm_year > 0)
+				sprintf(str, "%04d%02d%02d",
+						tm->tm_year, tm->tm_mon, tm->tm_mday);
+			else
+				sprintf(str, "%04d%02d%02d %s",
+					  -(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
+			break;
+
 		case USE_SQL_DATES:
 			/* compatible with Oracle/Ingres date formats */
 			if (EuroDates)
@@ -802,6 +812,51 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			}
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
+
+			if (tm->tm_year <= 0)
+				sprintf((str + strlen(str)), " BC");
+
+			/*
+			 * tzp == NULL indicates that we don't want *any* time zone
+			 * info in the output string. *tzn != NULL indicates that we
+			 * have alpha time zone info available. tm_isdst != -1
+			 * indicates that we have a valid time zone translation.
+			 */
+			if ((tzp != NULL) && (tm->tm_isdst >= 0))
+			{
+				hour = -(*tzp / 3600);
+				min = ((abs(*tzp) / 60) % 60);
+				sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+			}
+			break;
+
+		case USE_ISO8601BASIC_DATES:
+			/* Compatible with ISO-8601 date formats */
+
+			sprintf(str, "%04d%02d%02dT%02d%02d",
+				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
+					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+
+			/*
+			 * Print fractional seconds if any.  The field widths here
+			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
+			 *
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
+			 */
+#ifdef HAVE_INT64_TIMESTAMP
+			if (fsec != 0)
+			{
+				sprintf((str + strlen(str)), "%02d.%06d", tm->tm_sec, fsec);
+#else
+			if ((fsec != 0) && (tm->tm_year > 0))
+			{
+				sprintf((str + strlen(str)), "%09.6f", tm->tm_sec + fsec);
+#endif
+				TrimTrailingZeros(str);
+			}
+			else
+				sprintf((str + strlen(str)), "%02d", tm->tm_sec);
 
 			if (tm->tm_year <= 0)
 				sprintf((str + strlen(str)), " BC");
