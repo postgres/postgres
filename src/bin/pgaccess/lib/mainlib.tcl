@@ -295,19 +295,17 @@ catch {
 }
 
 proc {cmd_Views} {} {
-global CurrentDB
+global CurrentDB PgAcVar
 setCursor CLOCK
 .pgaw:Main.lb delete 0 end
 catch {
-	wpg_select $CurrentDB "select c.relname,count(c.relname) from pg_class C, pg_rewrite R where (relname !~ '^pg_') and (r.ev_class = C.oid) and (r.ev_type = '1') group by relname" rec {
-		if {$rec(count)!=0} {
-			set itsaview($rec(relname)) 1
-		}
+	if {! $PgAcVar(pref,systemtables)} {
+		set sysconstraint "where (viewname !~ '^pg_') and (viewname !~ '^pga_')"
+	} else {
+		set sysconstraint ""
 	}
-	wpg_select $CurrentDB "select relname from pg_class where (relname !~ '^pg_') and (relkind='r') and (relhasrules) order by relname" rec {
-		if {[info exists itsaview($rec(relname))]} {
-			.pgaw:Main.lb insert end $rec(relname)
-		}
+	wpg_select $CurrentDB "select viewname from pg_views $sysconstraint order by viewname" rec {
+		.pgaw:Main.lb insert end $rec(viewname)
 	}
 }
 setCursor DEFAULT

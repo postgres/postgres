@@ -4,24 +4,21 @@ proc {getTablesList} {} {
 global CurrentDB PgAcVar
 	set tlist {}
 	if {[catch {
-		wpg_select $CurrentDB "select c.relname,count(c.relname) from pg_class C, pg_rewrite R where (r.ev_class = C.oid) and (r.ev_type = '1') group by relname" rec {
-			if {$rec(count)!=0} {
-				set itsaview($rec(relname)) 1
-			}
+		# As of Postgres 7.1, testing for view-ness is not needed
+		# because relkind = 'r' eliminates views.  But we should
+		# leave the code in for awhile yet, so as not to fail when
+		# running against older releases.
+		wpg_select $CurrentDB "select viewname from pg_views" rec {
+			set itsaview($rec(viewname)) 1
 		}
 		if {! $PgAcVar(pref,systemtables)} {
-			wpg_select $CurrentDB "select relname from pg_class where (relname !~ '^pg_') and (relkind='r') order by relname" rec {
-				if {![regexp "^pga_" $rec(relname)]} then {
-					if {![info exists itsaview($rec(relname))]} {
-						lappend tlist $rec(relname)
-					}
-				}
-			}
+			set sysconstraint "and (relname !~ '^pg_') and (relname !~ '^pga_')"
 		} else {
-			wpg_select $CurrentDB "select relname from pg_class where (relkind='r') order by relname" rec {
-				if {![info exists itsaview($rec(relname))]} {
-					lappend tlist $rec(relname)
-				}
+			set sysconstraint ""
+		}
+		wpg_select $CurrentDB "select relname from pg_class where (relkind='r') $sysconstraint order by relname" rec {
+			if {![info exists itsaview($rec(relname))]} {
+				lappend tlist $rec(relname)
 			}
 		}
 	} gterrmsg]} {
