@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135 2002/10/22 22:44:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.1 2002/11/18 01:17:50 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1495,6 +1495,50 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 		/* translator: %s represents an SQL statement name */
 		elog(NOTICE, "%s will be committed automatically", stmtType);
 	}
+}
+
+/* --------------------------------
+ *	RequireTransactionChain
+ *
+ *	This routine is to be called by statements that must run inside
+ *	a transaction block, because they have no effects that persist past
+ *	transaction end (and so calling them outside a transaction block
+ *	is presumably an error).  DECLARE CURSOR is an example.
+ *
+ *	If we appear to be running inside a user-defined function, we do not
+ *	issue an error, since the function could issue more commands that make
+ *	use of the current statement's results.  Thus this is an inverse for
+ *	PreventTransactionChain.
+ *
+ *	stmtNode: pointer to parameter block for statement; this is used in
+ *	a very klugy way to determine whether we are inside a function.
+ *	stmtType: statement type name for error messages.
+ * --------------------------------
+ */
+void
+RequireTransactionChain(void *stmtNode, const char *stmtType)
+{
+	/*
+	 * xact block already started?
+	 */
+	if (IsTransactionBlock())
+		return;
+	/*
+	 * Are we inside a function call?  If the statement's parameter block
+	 * was allocated in QueryContext, assume it is an interactive command.
+	 * Otherwise assume it is coming from a function.
+	 */
+	if (!MemoryContextContains(QueryContext, stmtNode))
+		return;
+	/*
+	 * If we are in autocommit-off mode then it's okay, because this
+	 * statement will itself start a transaction block.
+	 */
+	if (!autocommit && !suppressChain)
+		return;
+	/* translator: %s represents an SQL statement name */
+	elog(ERROR, "%s may only be used in begin/end transaction blocks",
+		 stmtType);
 }
 
 
