@@ -37,7 +37,7 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-odbc              build ODBC driver package "
 ac_help="$ac_help
-   --with-odbcinst=dir    change default directory for odbcinst.ini"
+  --with-odbcinst=dir    change default directory for odbcinst.ini"
 ac_help="$ac_help
   --enable-cassert        enable assertion checks (debugging) "
 ac_help="$ac_help
