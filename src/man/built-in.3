@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/built-in.3,v 1.7 1997/05/16 07:13:46 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/built-in.3,v 1.8 1997/07/02 14:13:14 thomas Exp $
 .TH BUILT-INS INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -82,7 +82,11 @@ several possibilities for formats, such as date and time types.
 Some date and time types share code for data input. For those types (currently
 .IR datetime
 and
-.IR abstime )
+.IR abstime
+, and
+.IR timespan
+and
+.IR reltime )
 the input can have any of a wide variety of styles. For numeric date representations,
 European and US conventions can differ, and the proper interpretation is obtained
 by using the
@@ -129,22 +133,22 @@ offsets to GMT (e.g. "-08" or "-08:00" when in Pacific Standard Time).
 Dates are stored internally in Greenwich Mean Time. Input and output routines 
 translate time to the local time zone of the server.
 .PP
-All special values allowed for
-.IR "absolute time"
-are also allowed for
-.IR "datetime".
-The special values \*(lqcurrent\*(rq,
-\*(lqinfinity\*(rq and \*(lq-infinity\*(rq are provided.
-\*(lqinfinity\*(rq specifies a time later than any valid time, and
-\*(lq-infinity\*(rq specifies a time earlier than any valid time.
-\*(lqcurrent\*(rq indicates that the current time should be
+The special values `current',
+`infinity' and `-infinity' are provided.
+`infinity' specifies a time later than any valid time, and
+`-infinity' specifies a time earlier than any valid time.
+`current' indicates that the current time should be
 substituted whenever this value appears in a computation.
 .PP
-The strings \*(lqnow\*(rq and \*(lqepoch\*(rq can be used to specify
-time values.  \*(lqnow\*(rq means the current time, and differs from
-\*(lqcurrent\*(rq in that the current time is immediately substituted
-for it.  \*(lqepoch\*(rq means Jan 1 00:00:00 1970 GMT.
-
+The strings
+`now',
+`today',
+`yesterday',
+`tomorrow',
+and `epoch' can be used to specify
+time values.  `now' means the current time, and differs from
+`current' in that the current time is immediately substituted
+for it.  `epoch' means Jan 1 00:00:00 1970 GMT.
 
 .SH "TIMESPAN"
 General-use time span is input using a wide range of
@@ -165,10 +169,10 @@ Time span is specified with the following syntax:
 @ Quantity Unit [Direction]
 .sp
 where 	
-	Quantity is ..., '-1', '0', `1', `2', ...
+	Quantity is ..., `-1', `0', `1', `2', ...
 	Unit is `second', `minute', `hour', `day', `week', `month', `year',
 	or abbreviations or plurals of these units.
-	Direction is ``ago''
+	Direction is `ago'.
 .fi
 .SH "ABSOLUTE TIME"
 Absolute time (abstime) is a limited-range (+/- 68 years) and limited-precision (1 sec)
@@ -196,17 +200,10 @@ Valid dates are from Dec 13 20:45:53 1901 GMT to Jan 19 03:14:04
 using Greenwich Mean Time; the input and output routines default to
 the local time zone.
 .PP
-The special absolute time values \*(lqcurrent\*(rq,
-\*(lqinfinity\*(rq and \*(lq-infinity\*(rq are also provided.
-\*(lqinfinity\*(rq specifies a time later than any valid time, and
-\*(lq-infinity\*(rq specifies a time earlier than any valid time.
-\*(lqcurrent\*(rq indicates that the current time should be
-substituted whenever this value appears in a computation.
-.PP
-The strings \*(lqnow\*(rq and \*(lqepoch\*(rq can be used to specify
-time values.  \*(lqnow\*(rq means the current time, and differs from
-\*(lqcurrent\*(rq in that the current time is immediately substituted
-for it.  \*(lqepoch\*(rq means Jan 1 00:00:00 1970 GMT.
+All special values allowed for
+.IR "datetime"
+are also allowed for
+.IR "absolute time".
 
 .SH "RELATIVE TIME"
 Relative time (reltime) is a limited-range (+/- 68 years) and limited-precision (1 sec)
@@ -506,50 +503,62 @@ tinterval
 .SH "FUNCTIONS"
 Many data types have functions available for conversion to other related types.
 In addition, there are some type-specific functions.
+.PP
+For the
+date_part() and date_trunc()
+functions, arguments can be
+`year', `month', `day', `hour', `minute', and `second',
+as well as the more specialized quantities
+`decade', `century', `millenium', `millisecond', and `microsecond'.
+date_part() also allows
+`dow'
+to return day of week and `epoch' to return seconds since 1970.
 
 .nf
 Functions:
 
 abstime
-	datetime datetime(abstime)        convert to datetime
-	bool     isfinite(abstime)        TRUE if this is a finite time
+	datetime datetime(abstime)         convert to datetime
+	bool     isfinite(abstime)         TRUE if this is a finite time
 
 date
-	datetime datetime(date)           convert to datetime
-	datetime datetime(date,time)      convert to datetime
+	datetime datetime(date)            convert to datetime
+	datetime datetime(date,time)       convert to datetime
 
 datetime
-	abstime  abstime(datetime)        convert to abstime
-	float8   date_part(text,datetime) specified portion of date field
-	bool     isfinite(datetime)       TRUE if this is a finite time
+	abstime  abstime(datetime)         convert to abstime
+	float8   date_part(text,datetime)  specified portion of date field
+	datetime date_trunc(text,datetime) truncate date at specified units
+	bool     isfinite(datetime)        TRUE if this is a finite time
 
 reltime
-	timespan timespan(reltime)        convert to timespan
+	timespan timespan(reltime)         convert to timespan
 
 time
-	datetime datetime(date,time)      convert to datetime
+	datetime datetime(date,time)       convert to datetime
 
 timespan
-	float8   date_part(text,timespan) specified portion of time field
-	bool     isfinite(timespan)       TRUE if this is a finite time
-	reltime  reltime(timespan)        convert to reltime
+	float8   date_part(text,timespan)  specified portion of time field
+	bool     isfinite(timespan)        TRUE if this is a finite time
+	reltime  reltime(timespan)         convert to reltime
 
 box
-	box      box(point,point)         convert points to box
-	float8   area(box)                area of box
+	box      box(point,point)          convert points to box
+	float8   area(box)                 area of box
 
 path
-	bool     isopen(path)             TRUE if this is an open path
-	bool     isclosed(path)           TRUE if this is a closed path
+	bool     isopen(path)              TRUE if this is an open path
+	bool     isclosed(path)            TRUE if this is a closed path
 
 circle
-	circle   circle(point,float8)     convert to circle
-	polygon  polygon(npts,circle)     convert to polygon with npts points
-	float8   center(circle)           radius of circle
-	float8   radius(circle)           radius of circle
-	float8   diameter(circle)         diameter of circle
-	float8   area(circle)             area of circle
+	circle   circle(point,float8)      convert to circle
+	polygon  polygon(npts,circle)      convert to polygon with npts points
+	float8   center(circle)            radius of circle
+	float8   radius(circle)            radius of circle
+	float8   diameter(circle)          diameter of circle
+	float8   area(circle)              area of circle
 .fi
+
 .SH "BINARY OPERATORS"
 This list was generated from the Postgres system catalogs with the
 query:
