@@ -1,11 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.9 1998/09/30 05:41:49 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.10 1998/10/21 05:31:52 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.10  1998/10/21 05:31:52  thomas
+Include new information from Massimo. Rearrange ODBC docs.
+
 Revision 1.9  1998/09/30 05:41:49  thomas
 Clean up pages. Add information for operator precedence.
 Split introduction sections into separate files to allow the legal notice
@@ -57,14 +60,15 @@ Include new chapters.
 %allfiles;
 
 <!-- administrator's guide -->
-<!entity intro-ag SYSTEM "intro-ag.sgml">
-<!entity start-ag SYSTEM "start-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
+<!entity intro-ag SYSTEM "intro-ag.sgml">
+<!entity options  SYSTEM "pg_options.sgml">
+<!entity ports    SYSTEM "ports.sgml">
 <!entity runtime  SYSTEM "runtime.sgml">
 <!entity recovery SYSTEM "recovery.sgml">
 <!entity regress  SYSTEM "regress.sgml">
-<!entity ports    SYSTEM "ports.sgml">
 <!entity release  SYSTEM "release.sgml">
+<!entity start-ag SYSTEM "start-ag.sgml">
 
 <!-- programmer's guide -->
 <!entity intro-pg SYSTEM "intro-pg.sgml">
@@ -87,17 +91,19 @@ Include new chapters.
 <!entity ecpg     SYSTEM "ecpg.sgml">
 <!entity odbc     SYSTEM "odbc.sgml">
 <!entity jdbc     SYSTEM "jdbc.sgml">
+<!entity xplang   SYSTEM "xplang.sgml">
 
 <!-- developer's guide -->
 <!entity arch-dev SYSTEM "arch-dev.sgml">
-<!entity geqo     SYSTEM "geqo.sgml">
-<!entity protocol SYSTEM "protocol.sgml">
-<!entity compiler SYSTEM "compiler.sgml">
-<!entity page     SYSTEM "page.sgml">
-<!entity bki      SYSTEM "bki.sgml">
-<!entity docguide SYSTEM "docguide.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
+<!entity bki      SYSTEM "bki.sgml">
+<!entity compiler SYSTEM "compiler.sgml">
 <!entity contacts SYSTEM "contacts.sgml">
+<!entity docguide SYSTEM "docguide.sgml">
+<!entity geqo     SYSTEM "geqo.sgml">
+<!entity page     SYSTEM "page.sgml">
+<!entity protocol SYSTEM "protocol.sgml">
+<!entity signals  SYSTEM "signals.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 <Book Id="postgres">
@@ -215,6 +221,7 @@ Installation and maintenance information.
 &intro-ag;
 &ports;
 &install;
+&options;
 &start-ag;
 &recovery;
 &regress;
@@ -241,6 +248,7 @@ Information for extending <ProductName>Postgres</ProductName>.
 &dfunc;
 &trigger;
 &spi;
+&xplang;
 <!-- &libpq; -->
 </Part>
 
@@ -264,13 +272,14 @@ User and programmer interfaces.
 <Title>Developer's Guide</Title>
 <PartIntro>
 <Para>
-The Developer's Guide includes discussion of design decisions and suggestions for
-future development.
+The Developer's Guide includes discussion of design decisions and 
+suggestions for future development.
 </Para>
 </PartIntro>
 &arch-dev;
 &geqo;
 &protocol;
+&signals;
 &compiler;
 &bki;
 &page;

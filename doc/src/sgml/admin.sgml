@@ -19,6 +19,7 @@ $log$
 
 <!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
+<!entity options  SYSTEM "pg_options.sgml">
 <!entity ports    SYSTEM "ports.sgml">
 <!entity recovery SYSTEM "recovery.sgml">
 <!entity regress  SYSTEM "regress.sgml">
@@ -102,6 +103,7 @@ It provides SQL92/SQL3 language support,
 &ports;
 &install;
 &runtime;
+&options;
 &start-ag;
 &recovery;
 &regress;
