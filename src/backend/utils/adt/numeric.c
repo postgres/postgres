@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.21 2000/01/05 18:23:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.22 2000/01/15 23:42:49 tgl Exp $
  *
  * ----------
  */
@@ -49,6 +49,16 @@
 
 /* ----------
  * Local data types
+ *
+ * Note: the first digit of a NumericVar's value is assumed to be multiplied
+ * by 10 ** weight.  Another way to say it is that there are weight+1 digits
+ * before the decimal point.  It is possible to have weight < 0.
+ *
+ * The value represented by a NumericVar is determined by the sign, weight,
+ * ndigits, and digits[] array.  The rscale and dscale are carried along,
+ * but they are just auxiliary information until rounding is done before
+ * final storage or display.  (Scales are the number of digits wanted
+ * *after* the decimal point.  Scales are always >= 0.)
  * ----------
  */
 typedef unsigned char NumericDigit;
@@ -62,13 +72,13 @@ typedef struct NumericDigitBuf
 
 typedef struct NumericVar
 {
-	int			ndigits;
-	int			weight;
-	int			rscale;
-	int			dscale;
-	int			sign;
+	int			ndigits;		/* number of digits in digits[] - can be 0! */
+	int			weight;			/* weight of first digit */
+	int			rscale;			/* result scale */
+	int			dscale;			/* display scale */
+	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
 	NumericDigitBuf *buf;
-	NumericDigit *digits;
+	NumericDigit *digits;		/* decimal digits */
 } NumericVar;
 
 
@@ -225,35 +235,63 @@ numeric_out(Numeric num)
 	 * ----------
 	 */
 	if (num == NULL)
-	{
-		str = palloc(5);
-		strcpy(str, "NULL");
-		return str;
-	}
+		return pstrdup("NULL");
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-	{
-		str = palloc(4);
-		strcpy(str, "NaN");
-		return str;
-	}
+		return pstrdup("NaN");
 
 	/* ----------
-	 * Get the number in the variable format
+	 * Get the number in the variable format.
+	 *
+	 * Even if we didn't need to change format, we'd still need to copy
+	 * the value to have a modifiable copy for rounding.  set_var_from_num()
+	 * also guarantees there is extra digit space in case we produce a
+	 * carry out from rounding.
 	 * ----------
 	 */
 	init_var(&x);
 	set_var_from_num(num, &x);
 
 	/* ----------
+	 * Check if we must round up before printing the value and
+	 * do so.
+	 * ----------
+	 */
+	i = x.dscale + x.weight + 1;
+	if (i >= 0 && x.ndigits > i)
+	{
+		int		carry = (x.digits[i] > 4) ? 1 : 0;
+
+		x.ndigits = i;
+
+		while (carry)
+		{
+			carry += x.digits[--i];
+			x.digits[i] = carry % 10;
+			carry /= 10;
+		}
+
+		if (i < 0)
+		{
+			Assert(i == -1);	/* better not have added more than 1 digit */
+			Assert(x.digits > (NumericDigit *) (x.buf + 1));
+			x.digits--;
+			x.ndigits++;
+			x.weight++;
+		}
+	}
+	else
+		x.ndigits = MAX(0, MIN(i, x.ndigits));
+
+	/* ----------
 	 * Allocate space for the result
 	 * ----------
 	 */
-	str = palloc(x.dscale + MAX(0, x.weight) + 5);
+	str = palloc(MAX(0, x.dscale) + MAX(0, x.weight) + 4);
 	cp = str;
 
 	/* ----------
@@ -262,33 +300,6 @@ numeric_out(Numeric num)
 	 */
 	if (x.sign == NUMERIC_NEG)
 		*cp++ = '-';
-
-	/* ----------
-	 * Check if we must round up before printing the value and
-	 * do so.
-	 * ----------
-	 */
-	if (x.dscale < x.rscale && (x.dscale + x.weight + 1) < x.ndigits)
-	{
-		int			j;
-		int			carry;
-
-		j = x.dscale + x.weight + 1;
-		carry = (x.digits[j] > 4) ? 1 : 0;
-
-		while (carry)
-		{
-			j--;
-			carry += x.digits[j];
-			x.digits[j] = carry % 10;
-			carry /= 10;
-		}
-		if (j < 0)
-		{
-			x.digits--;
-			x.weight++;
-		}
-	}
 
 	/* ----------
 	 * Output all digits before the decimal point
@@ -390,8 +401,8 @@ numeric(Numeric num, int32 typmod)
 
 	/* ----------
 	 * If the number is in bounds and due to the present result scale
-	 * no rounding could be necessary, make a copy of the input and
-	 * modify its header fields.
+	 * no rounding could be necessary, just make a copy of the input
+	 * and modify its scale fields.
 	 * ----------
 	 */
 	if (num->n_weight < maxweight && scale >= num->n_rscale)
@@ -400,7 +411,7 @@ numeric(Numeric num, int32 typmod)
 		memcpy(new, num, num->varlen);
 		new->n_rscale = scale;
 		new->n_sign_dscale = NUMERIC_SIGN(new) |
-			((uint16) scale & ~NUMERIC_SIGN_MASK);
+			((uint16) scale & NUMERIC_DSCALE_MASK);
 		return new;
 	}
 
@@ -485,7 +496,7 @@ numeric_sign(Numeric num)
 
 	/* ----------
 	 * The packed format is known to be totally zero digit trimmed
-	 * allways. So we can identify a ZERO by the fact that there
+	 * always. So we can identify a ZERO by the fact that there
 	 * are no digits at all.
 	 * ----------
 	 */
@@ -604,8 +615,6 @@ numeric_trunc(Numeric num, int32 scale)
 	arg.dscale = scale;
 
 	arg.ndigits = MIN(arg.ndigits, MAX(0, arg.weight + scale + 1));
-	while (arg.ndigits > 0 && arg.digits[arg.ndigits - 1] == 0)
-		arg.ndigits--;
 
 	/* ----------
 	 * Return the truncated result
@@ -684,7 +693,7 @@ numeric_floor(Numeric num)
 
 /* ----------------------------------------------------------------------
  *
- * Comparision functions
+ * Comparison functions
  *
  * ----------------------------------------------------------------------
  */
@@ -1106,7 +1115,7 @@ numeric_div(Numeric num1, Numeric num2)
 	 * The minimum and maximum scales are compile time options from
 	 * numeric.h):
 	 *
-	 *	DR = MIN(MAX(D1 + D2, MIN_DISPLAY_SCALE))
+	 *	DR = MIN(MAX(D1 + D2, MIN_DISPLAY_SCALE), MAX_DISPLAY_SCALE)
 	 *	SR = MIN(MAX(MAX(S1 + S2, MIN_RESULT_SCALE), DR + 4), MAX_RESULT_SCALE)
 	 *
 	 * By default, any result is computed with a minimum of 34 digits
@@ -2240,7 +2249,8 @@ set_var_from_str(char *str, NumericVar *dest)
 
 	if (*cp == 'e' || *cp == 'E')
 	{
-		/* Handle ...Ennn */
+		/* XXX Should handle ...Ennn */
+		elog(ERROR, "Bad numeric input format '%s'", str);
 	}
 
 	while (dest->ndigits > 0 && *(dest->digits) == 0)
@@ -2267,14 +2277,17 @@ set_var_from_num(Numeric num, NumericVar *dest)
 	int			i;
 	int			n;
 
-	n = num->varlen - NUMERIC_HDRSZ;
+	n = num->varlen - NUMERIC_HDRSZ; /* number of digit-pairs in packed fmt */
 
 	digitbuf_free(dest->buf);
 	dest->buf = digitbuf_alloc(n * 2 + 2);
 
 	digit = ((NumericDigit *) (dest->buf)) + sizeof(NumericDigitBuf);
+
+	/* We always leave an extra high-order digit pair for carry! */
 	*digit++ = 0;
 	*digit++ = 0;
+
 	dest->digits = digit;
 	dest->ndigits = n * 2;
 
@@ -2285,8 +2298,9 @@ set_var_from_num(Numeric num, NumericVar *dest)
 
 	for (i = 0; i < n; i++)
 	{
-		*digit++ = (num->n_data[i] >> 4) & 0x0f;
-		*digit++ = num->n_data[i] & 0x0f;
+		unsigned char digitpair = num->n_data[i];
+		*digit++ = (digitpair >> 4) & 0x0f;
+		*digit++ = digitpair & 0x0f;
 	}
 }
 
@@ -2303,6 +2317,8 @@ set_var_from_var(NumericVar *value, NumericVar *dest)
 	NumericDigitBuf *newbuf;
 	NumericDigit *newdigits;
 
+	/* XXX shouldn't we provide a spare digit for rounding here? */
+
 	newbuf = digitbuf_alloc(value->ndigits);
 	newdigits = ((NumericDigit *) newbuf) + sizeof(NumericDigitBuf);
 	memcpy(newdigits, value->digits, value->ndigits);
@@ -2318,7 +2334,7 @@ set_var_from_var(NumericVar *value, NumericVar *dest)
  * make_result() -
  *
  *	Create the packed db numeric format in palloc()'d memory from
- *	a variable.
+ *	a variable.  The var's rscale determines the number of digits kept.
  * ----------
  */
 static Numeric
@@ -2326,9 +2342,9 @@ make_result(NumericVar *var)
 {
 	Numeric		result;
 	NumericDigit *digit = var->digits;
-	int			n;
 	int			weight = var->weight;
 	int			sign = var->sign;
+	int			n;
 	int			i,
 				j;
 
@@ -2347,15 +2363,18 @@ make_result(NumericVar *var)
 
 	n = MAX(0, MIN(var->ndigits, var->weight + var->rscale + 1));
 
+	/* truncate leading zeroes */
 	while (n > 0 && *digit == 0)
 	{
 		digit++;
 		weight--;
 		n--;
 	}
+	/* truncate trailing zeroes */
 	while (n > 0 && digit[n - 1] == 0)
 		n--;
 
+	/* If zero result, force to weight=0 and positive sign */
 	if (n == 0)
 	{
 		weight = 0;
@@ -2366,16 +2385,17 @@ make_result(NumericVar *var)
 	result->varlen = NUMERIC_HDRSZ + (n + 1) / 2;
 	result->n_weight = weight;
 	result->n_rscale = var->rscale;
-	result->n_sign_dscale = sign | ((uint16) (var->dscale) & ~NUMERIC_SIGN_MASK);
+	result->n_sign_dscale = sign |
+		((uint16) var->dscale & NUMERIC_DSCALE_MASK);
 
 	i = 0;
 	j = 0;
 	while (j < n)
 	{
-		result->n_data[i] = digit[j++] << 4;
+		unsigned char digitpair = digit[j++] << 4;
 		if (j < n)
-			result->n_data[i] |= digit[j++];
-		i++;
+			digitpair |= digit[j++];
+		result->n_data[i++] = digitpair;
 	}
 
 	dump_numeric("make_result()", result);
@@ -2398,6 +2418,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 	int			maxweight;
 	int			i;
 
+	/* Do nothing if we have a default typmod (-1) */
 	if (typmod < (int32) (VARHDRSZ))
 		return;
 
@@ -2406,20 +2427,14 @@ apply_typmod(NumericVar *var, int32 typmod)
 	scale = typmod & 0xffff;
 	maxweight = precision - scale;
 
-	if (var->weight >= maxweight)
-	{
-		free_allvars();
-		elog(ERROR, "overflow on numeric "
-			 "ABS(value) >= 10^%d for field with precision %d scale %d",
-			 var->weight, precision, scale);
-	}
-
+	/* Round to target scale */
 	i = scale + var->weight + 1;
 	if (i >= 0 && var->ndigits > i)
 	{
-		long		carry = (var->digits[i] > 4) ? 1 : 0;
+		int		carry = (var->digits[i] > 4) ? 1 : 0;
 
 		var->ndigits = i;
+
 		while (carry)
 		{
 			carry += var->digits[--i];
@@ -2429,6 +2444,8 @@ apply_typmod(NumericVar *var, int32 typmod)
 
 		if (i < 0)
 		{
+			Assert(i == -1);	/* better not have added more than 1 digit */
+			Assert(var->digits > (NumericDigit *) (var->buf + 1));
 			var->digits--;
 			var->ndigits++;
 			var->weight++;
@@ -2438,16 +2455,33 @@ apply_typmod(NumericVar *var, int32 typmod)
 		var->ndigits = MAX(0, MIN(i, var->ndigits));
 
 	/* ----------
-	 * Check for overflow again - rounding could have raised the
-	 * weight.
+	 * Check for overflow - note we can't do this before rounding,
+	 * because rounding could raise the weight.  Also note that the
+	 * var's weight could be inflated by leading zeroes, which will
+	 * be stripped before storage but perhaps might not have been yet.
+	 * In any case, we must recognize a true zero, whose weight doesn't
+	 * mean anything.
 	 * ----------
 	 */
 	if (var->weight >= maxweight)
 	{
-		free_allvars();
-		elog(ERROR, "overflow on numeric "
-			 "ABS(value) >= 10^%d for field with precision %d scale %d",
-			 var->weight, precision, scale);
+		/* Determine true weight; and check for all-zero result */
+		int		tweight = var->weight;
+
+		for (i = 0; i < var->ndigits; i++)
+		{
+			if (var->digits[i])
+				break;
+			tweight--;
+		}
+		
+		if (tweight >= maxweight && i < var->ndigits)
+		{
+			free_allvars();
+			elog(ERROR, "overflow on numeric "
+				 "ABS(value) >= 10^%d for field with precision %d scale %d",
+				 tweight, precision, scale);
+		}
 	}
 
 	var->rscale = scale;
@@ -3028,7 +3062,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	result->ndigits = ri + 1;
 	if (ri == res_ndigits + 1)
 	{
-		long		carry = (res_digits[ri] > 4) ? 1 : 0;
+		int		carry = (res_digits[ri] > 4) ? 1 : 0;
 
 		result->ndigits = ri;
 		res_digits[ri] = 0;
