@@ -19,8 +19,7 @@ nextstep*) PORTNAME='nextstep';;
   ultrix*) PORTNAME='ultrix4';;
     irix*) PORTNAME='irix5';;
     hpux*) PORTNAME='hpux';;
-     osf*) PORTNAME='alpha'
-           TR="trbsd";;
+     osf*) PORTNAME='alpha';;
  sysv4.2*) 
        case "$host_vendor" in
                univel) PORTNAME='univel';;
@@ -235,7 +234,6 @@ AC_PROG_CPP
 AC_LINK_FILES(include/port/${PORTNAME}.h, include/os.h)
 AC_LINK_FILES(makefiles/Makefile.${PORTNAME}, Makefile.port)
 AC_SUBST(PORTNAME)
-AC_SUBST(TR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(AROPT)
@@ -310,9 +308,9 @@ AC_PATH_PROG(tar, tar)
 AC_PATH_PROG(split, split)
 AC_PATH_PROG(etags, etags)
 AC_PATH_PROG(xargs, xargs)
-AC_PATH_PROG(tr, tr)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
+AC_PATH_PROGS(TR, tr trbsd, NOT_FOUND)
 
 dnl Changes to look for YACC.  We have three choices (in order of pref.)
 dnl (1) We specify in YACC and YFLAGS what we want
