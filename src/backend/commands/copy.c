@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.147 2002/02/24 02:32:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.148 2002/02/24 02:33:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,20 +326,22 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		}
 		else
 		{
-      struct stat st;
+			struct stat st;
+
 			fp = AllocateFile(filename, PG_BINARY_R);
-			
-      if (fp == NULL)
+
+			if (fp == NULL)
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
 					 "reading.  Errno = %s (%d).",
 					 (int) geteuid(), filename, strerror(errno), errno);
-      
-      fstat(fileno(fp),&st);
-      if( S_ISDIR(st.st_mode) ){
-		FreeFile(fp);
-        elog(ERROR,"COPY: %s is a directory.",filename);
-      }
+
+			fstat(fileno(fp), &st);
+			if (S_ISDIR(st.st_mode))
+			{
+				FreeFile(fp);
+				elog(ERROR, "COPY: %s is a directory.", filename);
+			}
 		}
 		CopyFrom(rel, binary, oids, fp, delim, null_print);
 	}
@@ -368,7 +370,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		else
 		{
 			mode_t		oumask; /* Pre-existing umask value */
-      struct stat st;
+			struct stat st;
 
 			/*
 			 * Prevent write to relative path ... too easy to shoot
@@ -387,11 +389,12 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 					 "effective uid %d, could not open file '%s' for "
 					 "writing.  Errno = %s (%d).",
 					 (int) geteuid(), filename, strerror(errno), errno);
-      fstat(fileno(fp),&st);
-      if( S_ISDIR(st.st_mode) ){
-		FreeFile(fp);
-        elog(ERROR,"COPY: %s is a directory.",filename);
-      }
+			fstat(fileno(fp), &st);
+			if (S_ISDIR(st.st_mode))
+			{
+				FreeFile(fp);
+				elog(ERROR, "COPY: %s is a directory.", filename);
+			}
 		}
 		CopyTo(rel, binary, oids, fp, delim, null_print);
 	}
@@ -1097,25 +1100,25 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 						if (ISOCTAL(c))
 						{
 							val = (val << 3) + OCTVALUE(c);
-							CopyDonePeek(fp, c, true /*pick up*/);
+							CopyDonePeek(fp, c, true /* pick up */ );
 							c = CopyPeekChar(fp);
 							if (ISOCTAL(c))
 							{
 								val = (val << 3) + OCTVALUE(c);
-								CopyDonePeek(fp, c, true /*pick up*/);
+								CopyDonePeek(fp, c, true /* pick up */ );
 							}
 							else
 							{
 								if (c == EOF)
 									goto endOfFile;
-								CopyDonePeek(fp, c, false /*put back*/);
+								CopyDonePeek(fp, c, false /* put back */ );
 							}
 						}
 						else
 						{
 							if (c == EOF)
 								goto endOfFile;
-							CopyDonePeek(fp, c, false /*put back*/);
+							CopyDonePeek(fp, c, false /* put back */ );
 						}
 						c = val & 0377;
 					}
