@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.75 2001/03/22 06:16:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.76 2001/04/15 03:14:18 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -120,6 +120,9 @@ static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context, bool toplevel);
 static bool simple_distinct(List *distinctClause, List *targetList);
+static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
+									 bool force_colno,
+									 deparse_context *context);
 static void get_names_for_var(Var *var, deparse_context *context,
 				  char **refname, char **attname);
 static bool get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
@@ -925,7 +928,7 @@ static void
 get_select_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	bool		shortform_orderby;
+	bool		force_colno;
 	char	   *sep;
 	List	   *l;
 
@@ -938,12 +941,12 @@ get_select_query_def(Query *query, deparse_context *context)
 	{
 		get_setop_query(query->setOperations, query, context, true);
 		/* ORDER BY clauses must be simple in this case */
-		shortform_orderby = true;
+		force_colno = true;
 	}
 	else
 	{
 		get_basic_select_query(query, context);
-		shortform_orderby = false;
+		force_colno = false;
 	}
 
 	/* Add the ORDER BY clause if given */
@@ -954,16 +957,11 @@ get_select_query_def(Query *query, deparse_context *context)
 		foreach(l, query->sortClause)
 		{
 			SortClause *srt = (SortClause *) lfirst(l);
-			TargetEntry *sorttle;
 			char	   *opname;
 
-			sorttle = get_sortgroupclause_tle(srt,
-											  query->targetList);
 			appendStringInfo(buf, sep);
-			if (shortform_orderby)
-				appendStringInfo(buf, "%d", sorttle->resdom->resno);
-			else
-				get_rule_expr(sorttle->expr, context);
+			get_rule_sortgroupclause(srt, query->targetList,
+									 force_colno, context);
 			opname = get_opname(srt->sortop);
 			if (strcmp(opname, "<") != 0)
 			{
@@ -1017,12 +1015,10 @@ get_basic_select_query(Query *query, deparse_context *context)
 			foreach(l, query->distinctClause)
 			{
 				SortClause *srt = (SortClause *) lfirst(l);
-				Node	   *sortexpr;
 
-				sortexpr = get_sortgroupclause_expr(srt,
-													query->targetList);
 				appendStringInfo(buf, sep);
-				get_rule_expr(sortexpr, context);
+				get_rule_sortgroupclause(srt, query->targetList,
+										 false, context);
 				sep = ", ";
 			}
 			appendStringInfo(buf, ")");
@@ -1082,12 +1078,10 @@ get_basic_select_query(Query *query, deparse_context *context)
 		foreach(l, query->groupClause)
 		{
 			GroupClause *grp = (GroupClause *) lfirst(l);
-			Node	   *groupexpr;
 
-			groupexpr = get_sortgroupclause_expr(grp,
-												 query->targetList);
 			appendStringInfo(buf, sep);
-			get_rule_expr(groupexpr, context);
+			get_rule_sortgroupclause(grp, query->targetList,
+									 false, context);
 			sep = ", ";
 		}
 	}
@@ -1182,6 +1176,32 @@ simple_distinct(List *distinctClause, List *targetList)
 	return true;
 }
 
+/*
+ * Display a sort/group clause.
+ */
+static void
+get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
+						 deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	TargetEntry *tle;
+	Node	   *expr;
+
+	tle = get_sortgroupclause_tle(srt, tlist);
+	expr = tle->expr;
+	/*
+	 * Use column-number form if requested by caller or if expression is a
+	 * constant --- a constant is ambiguous (and will be misinterpreted
+	 * by findTargetlistEntry()) if we dump it explicitly.
+	 */
+	if (force_colno || (expr && IsA(expr, Const)))
+	{
+		Assert(!tle->resdom->resjunk);
+		appendStringInfo(buf, "%d", tle->resdom->resno);
+	}
+	else
+		get_rule_expr(expr, context);
+}
 
 /* ----------
  * get_insert_query_def			- Parse back an INSERT parsetree
