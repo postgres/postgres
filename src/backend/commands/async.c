@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.115 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.116 2004/09/06 23:32:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,6 +630,9 @@ AtSubStart_Notify(void)
 
 	upperPendingNotifies = lcons(pendingNotifies, upperPendingNotifies);
 
+	Assert(list_length(upperPendingNotifies) ==
+		   GetCurrentTransactionNestLevel() - 1);
+
 	pendingNotifies = NIL;
 
 	MemoryContextSwitchTo(old_cxt);
@@ -648,6 +651,9 @@ AtSubCommit_Notify(void)
 	parentPendingNotifies = (List *) linitial(upperPendingNotifies);
 	upperPendingNotifies = list_delete_first(upperPendingNotifies);
 
+	Assert(list_length(upperPendingNotifies) ==
+		   GetCurrentTransactionNestLevel() - 2);
+
 	/*
 	 * We could try to eliminate duplicates here, but it seems not
 	 * worthwhile.
@@ -661,13 +667,23 @@ AtSubCommit_Notify(void)
 void
 AtSubAbort_Notify(void)
 {
+	int			my_level = GetCurrentTransactionNestLevel();
+
 	/*
 	 * All we have to do is pop the stack --- the notifies made in this
 	 * subxact are no longer interesting, and the space will be freed when
 	 * CurTransactionContext is recycled.
+	 *
+	 * This routine could be called more than once at a given nesting level
+	 * if there is trouble during subxact abort.  Avoid dumping core by
+	 * using GetCurrentTransactionNestLevel as the indicator of how far
+	 * we need to prune the list.
 	 */
-	pendingNotifies = (List *) linitial(upperPendingNotifies);
-	upperPendingNotifies = list_delete_first(upperPendingNotifies);
+	while (list_length(upperPendingNotifies) > my_level - 2)
+	{
+		pendingNotifies = (List *) linitial(upperPendingNotifies);
+		upperPendingNotifies = list_delete_first(upperPendingNotifies);
+	}
 }
 
 /*

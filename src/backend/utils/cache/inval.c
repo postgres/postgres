@@ -80,12 +80,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.66 2004/08/29 05:06:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.67 2004/09/06 23:33:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
@@ -138,6 +139,9 @@ typedef struct TransInvalidationInfo
 {
 	/* Back link to parent transaction's info */
 	struct TransInvalidationInfo *parent;
+
+	/* Subtransaction nesting depth */
+	int		my_level;
 
 	/* head of current-command event list */
 	InvalidationListHeader CurrentCmdInvalidMsgs;
@@ -603,6 +607,7 @@ AtStart_Inval(void)
 	transInvalInfo = (TransInvalidationInfo *)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(TransInvalidationInfo));
+	transInvalInfo->my_level = GetCurrentTransactionNestLevel();
 }
 
 /*
@@ -619,6 +624,7 @@ AtSubStart_Inval(void)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(TransInvalidationInfo));
 	myInfo->parent = transInvalInfo;
+	myInfo->my_level = GetCurrentTransactionNestLevel();
 	transInvalInfo = myInfo;
 }
 
@@ -649,11 +655,11 @@ AtSubStart_Inval(void)
 void
 AtEOXact_Inval(bool isCommit)
 {
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
-
 	if (isCommit)
 	{
+		/* Must be at top of stack */
+		Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+
 		/*
 		 * Relcache init file invalidation requires processing both before
 		 * and after we send the SI messages.  However, we need not do
@@ -671,8 +677,11 @@ AtEOXact_Inval(bool isCommit)
 		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(false);
 	}
-	else
+	else if (transInvalInfo != NULL)
 	{
+		/* Must be at top of stack */
+		Assert(transInvalInfo->parent == NULL);
+
 		ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 									LocalExecuteInvalidationMessage);
 	}
@@ -696,18 +705,21 @@ AtEOXact_Inval(bool isCommit)
  *
  * In any case, pop the transaction stack.	We need not physically free memory
  * here, since CurTransactionContext is about to be emptied anyway
- * (if aborting).
+ * (if aborting).  Beware of the possibility of aborting the same nesting
+ * level twice, though.
  */
 void
 AtEOSubXact_Inval(bool isCommit)
 {
+	int			my_level = GetCurrentTransactionNestLevel();
 	TransInvalidationInfo *myInfo = transInvalInfo;
-
-	/* Must be at non-top of stack */
-	Assert(myInfo != NULL && myInfo->parent != NULL);
 
 	if (isCommit)
 	{
+		/* Must be at non-top of stack */
+		Assert(myInfo != NULL && myInfo->parent != NULL);
+		Assert(myInfo->my_level == my_level);
+
 		/* If CurrentCmdInvalidMsgs still has anything, fix it */
 		CommandEndInvalidationMessages();
 
@@ -718,18 +730,27 @@ AtEOSubXact_Inval(bool isCommit)
 		/* Pending relcache inval becomes parent's problem too */
 		if (myInfo->RelcacheInitFileInval)
 			myInfo->parent->RelcacheInitFileInval = true;
+
+		/* Pop the transaction state stack */
+		transInvalInfo = myInfo->parent;
+
+		/* Need not free anything else explicitly */
+		pfree(myInfo);
 	}
-	else
+	else if (myInfo != NULL && myInfo->my_level == my_level)
 	{
+		/* Must be at non-top of stack */
+		Assert(myInfo->parent != NULL);
+
 		ProcessInvalidationMessages(&myInfo->PriorCmdInvalidMsgs,
 									LocalExecuteInvalidationMessage);
+
+		/* Pop the transaction state stack */
+		transInvalInfo = myInfo->parent;
+
+		/* Need not free anything else explicitly */
+		pfree(myInfo);
 	}
-
-	/* Pop the transaction state stack */
-	transInvalInfo = myInfo->parent;
-
-	/* Need not free anything else explicitly */
-	pfree(myInfo);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.168 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.169 2004/09/06 23:32:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1669,8 +1669,11 @@ ltrmark:;
  * state data; each subtransaction level that modifies that state first
  * saves a copy, which we use to restore the state if we abort.
  *
- * numpushed and numalloc keep control of allocation and storage in the above
- * stacks.	numpushed is essentially the current subtransaction nesting depth.
+ * We use GetCurrentTransactionNestLevel() to determine the correct array
+ * index in these stacks.  numalloc is the number of allocated entries in
+ * each stack.  (By not keeping our own stack pointer, we can avoid trouble
+ * in cases where errors during subxact abort cause multiple invocations
+ * of DeferredTriggerEndSubXact() at the same nesting depth.)
  *
  * XXX We need to be able to save the per-event data in a file if it grows too
  * large.
@@ -1742,7 +1745,6 @@ typedef struct DeferredTriggersData
 	DeferredTriggerEvent *tail_stack;
 	DeferredTriggerEvent *imm_stack;
 	DeferredTriggerState *state_stack;
-	int			numpushed;
 	int			numalloc;
 } DeferredTriggersData;
 
@@ -2165,7 +2167,6 @@ DeferredTriggerBeginXact(void)
 	deferredTriggers->imm_stack = NULL;
 	deferredTriggers->state_stack = NULL;
 	deferredTriggers->numalloc = 0;
-	deferredTriggers->numpushed = 0;
 }
 
 
@@ -2251,6 +2252,8 @@ DeferredTriggerAbortXact(void)
 void
 DeferredTriggerBeginSubXact(void)
 {
+	int			my_level = GetCurrentTransactionNestLevel();
+
 	/*
 	 * Ignore call if the transaction is in aborted state.
 	 */
@@ -2260,7 +2263,7 @@ DeferredTriggerBeginSubXact(void)
 	/*
 	 * Allocate more space in the stacks if needed.
 	 */
-	if (deferredTriggers->numpushed == deferredTriggers->numalloc)
+	while (my_level >= deferredTriggers->numalloc)
 	{
 		if (deferredTriggers->numalloc == 0)
 		{
@@ -2282,32 +2285,28 @@ DeferredTriggerBeginSubXact(void)
 		else
 		{
 			/* repalloc will keep the stacks in the same context */
-			deferredTriggers->numalloc *= 2;
+			int		new_alloc = deferredTriggers->numalloc * 2;
 
 			deferredTriggers->tail_stack = (DeferredTriggerEvent *)
 				repalloc(deferredTriggers->tail_stack,
-			  deferredTriggers->numalloc * sizeof(DeferredTriggerEvent));
+						 new_alloc * sizeof(DeferredTriggerEvent));
 			deferredTriggers->imm_stack = (DeferredTriggerEvent *)
 				repalloc(deferredTriggers->imm_stack,
-			  deferredTriggers->numalloc * sizeof(DeferredTriggerEvent));
+						 new_alloc * sizeof(DeferredTriggerEvent));
 			deferredTriggers->state_stack = (DeferredTriggerState *)
 				repalloc(deferredTriggers->state_stack,
-			  deferredTriggers->numalloc * sizeof(DeferredTriggerState));
+						 new_alloc * sizeof(DeferredTriggerState));
+			deferredTriggers->numalloc = new_alloc;
 		}
 	}
 
 	/*
-	 * Push the current list position into the stack and reset the
-	 * pointer.
+	 * Push the current information into the stack.
 	 */
-	deferredTriggers->tail_stack[deferredTriggers->numpushed] =
-		deferredTriggers->tail_thisxact;
-	deferredTriggers->imm_stack[deferredTriggers->numpushed] =
-		deferredTriggers->events_imm;
+	deferredTriggers->tail_stack[my_level] = deferredTriggers->tail_thisxact;
+	deferredTriggers->imm_stack[my_level] = deferredTriggers->events_imm;
 	/* State is not saved until/unless changed */
-	deferredTriggers->state_stack[deferredTriggers->numpushed] = NULL;
-
-	deferredTriggers->numpushed++;
+	deferredTriggers->state_stack[my_level] = NULL;
 }
 
 /*
@@ -2318,6 +2317,7 @@ DeferredTriggerBeginSubXact(void)
 void
 DeferredTriggerEndSubXact(bool isCommit)
 {
+	int			my_level = GetCurrentTransactionNestLevel();
 	DeferredTriggerState state;
 
 	/*
@@ -2327,18 +2327,18 @@ DeferredTriggerEndSubXact(bool isCommit)
 		return;
 
 	/*
-	 * Move back the "top of the stack."
+	 * Pop the prior state if needed.
 	 */
-	Assert(deferredTriggers->numpushed > 0);
-
-	deferredTriggers->numpushed--;
+	Assert(my_level < deferredTriggers->numalloc);
 
 	if (isCommit)
 	{
 		/* If we saved a prior state, we don't need it anymore */
-		state = deferredTriggers->state_stack[deferredTriggers->numpushed];
+		state = deferredTriggers->state_stack[my_level];
 		if (state != NULL)
 			pfree(state);
+		/* this avoids double pfree if error later: */
+		deferredTriggers->state_stack[my_level] = NULL;
 	}
 	else
 	{
@@ -2346,9 +2346,9 @@ DeferredTriggerEndSubXact(bool isCommit)
 		 * Aborting --- restore the pointers from the stacks.
 		 */
 		deferredTriggers->tail_thisxact =
-			deferredTriggers->tail_stack[deferredTriggers->numpushed];
+			deferredTriggers->tail_stack[my_level];
 		deferredTriggers->events_imm =
-			deferredTriggers->imm_stack[deferredTriggers->numpushed];
+			deferredTriggers->imm_stack[my_level];
 
 		/*
 		 * Cleanup the head and the tail of the list.
@@ -2367,12 +2367,14 @@ DeferredTriggerEndSubXact(bool isCommit)
 		 * Restore the trigger state.  If the saved state is NULL, then
 		 * this subxact didn't save it, so it doesn't need restoring.
 		 */
-		state = deferredTriggers->state_stack[deferredTriggers->numpushed];
+		state = deferredTriggers->state_stack[my_level];
 		if (state != NULL)
 		{
 			pfree(deferredTriggers->state);
 			deferredTriggers->state = state;
 		}
+		/* this avoids double pfree if error later: */
+		deferredTriggers->state_stack[my_level] = NULL;
 	}
 }
 
@@ -2457,6 +2459,8 @@ DeferredTriggerStateAddItem(DeferredTriggerState state,
 void
 DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 {
+	int			my_level = GetCurrentTransactionNestLevel();
+
 	/*
 	 * Ignore call if we aren't in a transaction.
 	 */
@@ -2468,10 +2472,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * already, save it so it can be restored if the subtransaction
 	 * aborts.
 	 */
-	if (deferredTriggers->numpushed > 0 &&
-		deferredTriggers->state_stack[deferredTriggers->numpushed - 1] == NULL)
+	if (my_level > 1 &&
+		deferredTriggers->state_stack[my_level] == NULL)
 	{
-		deferredTriggers->state_stack[deferredTriggers->numpushed - 1] =
+		deferredTriggers->state_stack[my_level] =
 			DeferredTriggerStateCopy(deferredTriggers->state);
 	}
 
