@@ -209,8 +209,8 @@ add_mem(void *ptr, int lineno)
 	auto_allocs = am;
 }
 
-/* This function returns a newly malloced string that has the ' and \
-   in the argument quoted with \.
+/* This function returns a newly malloced string that has the  \
+   in the argument quoted with \ and the ' quote with ' as SQL92 says.
  */
 static
 char *
@@ -228,8 +228,11 @@ quote_postgres(char *arg, int lineno)
 		switch (arg[i])
 		{
 			case '\'':
+				res[ri++] = '\'';
+				break;
 			case '\\':
 				res[ri++] = '\\';
+				break;
 			default:
 				;
 		}

@@ -13,8 +13,6 @@ support for dynamic SQL with unknown number of variables with DESCRIPTORS
 
 The line numbering is not exact.
 
-Inside an SQL statement quoting only works with SQL92 style double quotes: ''. 
-
 Missing statements:
  - exec sql allocate
  - exec sql deallocate
