@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.121 1999/10/06 21:58:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.122 1999/10/06 22:44:25 vadim Exp $
  *
  * NOTES
  *
@@ -1232,12 +1232,16 @@ pmdie(SIGNAL_ARGS)
 				return;
 			if (DLGetHead(BackendList))			/* let reaper() handle this */
 			{
+				Shutdown = FastShutdown;
 				if (!FatalError)
 					SignalChildren(SIGTERM);
 				return;
 			}
 			if (Shutdown > NoShutdown)
+			{
+				Shutdown = FastShutdown;
 				return;
+			}
 			Shutdown = FastShutdown;
 			/*
 			 * No children left. Shutdown data base system.
@@ -1247,7 +1251,7 @@ pmdie(SIGNAL_ARGS)
 			if (ShutdownPID > 0)
 				abort();
 
-			ShutdownPID = ShutdownDataBase();	/* flag for reaper() */
+			ShutdownPID = ShutdownDataBase();
 			return;
 
 		case SIGQUIT:
