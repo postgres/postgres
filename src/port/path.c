@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.18 2004/06/08 13:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.19 2004/06/10 22:26:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,15 @@
 
 
 #ifndef WIN32
-#define	ISSEP(ch)	((ch) == '/')
+#define	IS_DIR_SEP(ch)	((ch) == '/')
 #else
-#define	ISSEP(ch)	((ch) == '/' || (ch) == '\\')
+#define	IS_DIR_SEP(ch)	((ch) == '/' || (ch) == '\\')
+#endif
+
+#ifndef WIN32
+#define	IS_PATH_SEP(ch)	((ch) == ':')
+#else
+#define	IS_PATH_SEP(ch)	((ch) == ';')
 #endif
 
 const static char *relative_path(const char *bin_path, const char *other_path);
@@ -33,7 +39,7 @@ static void trim_trailing_separator(char *path);
 /* Move to last of consecutive separators or to null byte */
 #define MOVE_TO_SEP_END(p) \
 { \
-	while (ISSEP((p)[0]) && (ISSEP((p)[1]) || !(p)[1])) \
+	while (IS_DIR_SEP((p)[0]) && (IS_DIR_SEP((p)[1]) || !(p)[1])) \
 		(p)++; \
 }
 
@@ -47,6 +53,20 @@ do { \
 } while (0)
 
 /*
+ *	first_dir_separator
+ */
+char *
+first_dir_separator(const char *filename)
+{
+	char	   *p;
+
+	for (p = (char *)filename; *p; p++)
+		if (IS_DIR_SEP(*p))
+			return p;
+	return NULL;
+}
+
+/*
  *	first_path_separator
  */
 char *
@@ -55,22 +75,21 @@ first_path_separator(const char *filename)
 	char	   *p;
 
 	for (p = (char *)filename; *p; p++)
-		if (ISSEP(*p))
+		if (IS_PATH_SEP(*p))
 			return p;
 	return NULL;
 }
 
-
 /*
- *	last_path_separator
+ *	last_dir_separator
  */
 char *
-last_path_separator(const char *filename)
+last_dir_separator(const char *filename)
 {
 	char	   *p, *ret = NULL;
 
 	for (p = (char *)filename; *p; p++)
-		if (ISSEP(*p))
+		if (IS_DIR_SEP(*p))
 			ret = p;
 	return ret;
 }
@@ -108,10 +127,10 @@ canonicalize_path(char *path)
 const char *
 get_progname(const char *argv0)
 {
-	if (!last_path_separator(argv0))
+	if (!last_dir_separator(argv0))
 		return argv0;
 	else
-		return last_path_separator(argv0) + 1;
+		return last_dir_separator(argv0) + 1;
 }
 
 
@@ -307,7 +326,7 @@ relative_path(const char *bin_path, const char *other_path)
 			break;
 
 		/* Win32 filesystem is case insensitive */
-		if ((!ISSEP(*bin_path) || !ISSEP(*other_path)) &&
+		if ((!IS_DIR_SEP(*bin_path) || !IS_DIR_SEP(*other_path)) &&
 #ifndef WIN32
 			*bin_path != *other_path)
 #else
@@ -315,7 +334,7 @@ relative_path(const char *bin_path, const char *other_path)
 #endif
 				break;
 
-		if (ISSEP(*other_path))
+		if (IS_DIR_SEP(*other_path))
 			other_sep = other_path + 1;		/* past separator */
 			
 		bin_path++;
@@ -327,7 +346,7 @@ relative_path(const char *bin_path, const char *other_path)
 		return NULL;
 
 	/* advance past directory name */	
-	while (!ISSEP(*bin_path) && *bin_path)
+	while (!IS_DIR_SEP(*bin_path) && *bin_path)
 		bin_path++;
 
 	MOVE_TO_SEP_END(bin_path);
@@ -353,9 +372,9 @@ trim_directory(char *path)
 	if (path[0] == '\0')
 		return;
 
-	for (p = path + strlen(path) - 1; ISSEP(*p) && p > path; p--)
+	for (p = path + strlen(path) - 1; IS_DIR_SEP(*p) && p > path; p--)
 		;
-	for (; !ISSEP(*p) && p > path; p--)
+	for (; !IS_DIR_SEP(*p) && p > path; p--)
 		;
 	*p = '\0';
 	return;
@@ -373,6 +392,6 @@ trim_trailing_separator(char *path)
 	
 	/* trim off trailing slashes */
 	if (p > path)
-		for (p--; p >= path && ISSEP(*p); p--)
+		for (p--; p >= path && IS_DIR_SEP(*p); p--)
 			*p = '\0';
 }

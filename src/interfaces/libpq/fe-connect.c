@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.273 2004/06/08 13:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.274 2004/06/10 22:26:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -679,7 +679,7 @@ update_db_info(PGconn *conn)
 				*tmp = '\0';
 			}
 
-			tmp = last_path_separator(conn->dbName + offset);
+			tmp = last_dir_separator(conn->dbName + offset);
 			if (tmp != NULL)	/* database name given */
 			{
 				if (conn->dbName)

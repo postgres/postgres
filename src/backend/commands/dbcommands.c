@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.134 2004/05/26 13:56:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.135 2004/06/10 22:26:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,7 +941,7 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 	if (dbpath == NULL || dbpath[0] == '\0')
 		return NULL;
 
-	if (first_path_separator(dbpath))
+	if (first_dir_separator(dbpath))
 	{
 		if (!is_absolute_path(dbpath))
 			ereport(ERROR,

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.41 2004/06/10 16:35:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.42 2004/06/10 22:26:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,22 @@
 bool set_noblock(int sock);
 
 /* Portable path handling for Unix/Win32 */
+
+/* Find the location of the first directory separator, return
+ * NULL if not found.
+ */
+extern char *first_dir_separator(const char *filename);
+
+/* Find the location of the last directory separator, return
+ * NULL if not found.
+ */
+extern char *last_dir_separator(const char *filename);
+
+/* Find the location of the first path separator (i.e. ':' on
+ * Unix, ';' on Windows), return NULL if not found.
+ */
 extern char *first_path_separator(const char *filename);
-extern char *last_path_separator(const char *filename);
+
 extern void canonicalize_path(char *path);
 extern const char *get_progname(const char *argv0);
 extern void get_share_path(const char *my_exec_path, char *ret_path);

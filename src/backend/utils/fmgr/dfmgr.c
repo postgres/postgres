@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.73 2004/05/26 18:35:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.74 2004/06/10 22:26:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ expand_dynamic_library_name(const char *name)
 
 	AssertArg(name);
 
-	have_slash = (first_path_separator(name) != NULL);
+	have_slash = (first_dir_separator(name) != NULL);
 
 	if (!have_slash)
 	{
@@ -343,7 +343,7 @@ substitute_libpath_macro(const char *name)
 	if (name[0] != '$')
 		return pstrdup(name);
 
-	if ((sep_ptr = first_path_separator(name)) == NULL)
+	if ((sep_ptr = first_dir_separator(name)) == NULL)
 		sep_ptr = name + strlen(name);
 		
 	if (strlen("$libdir") != sep_ptr - name ||
@@ -374,7 +374,7 @@ find_in_dynamic_libpath(const char *basename)
 	size_t		baselen;
 
 	AssertArg(basename != NULL);
-	AssertArg(first_path_separator(basename) == NULL);
+	AssertArg(first_dir_separator(basename) == NULL);
 	AssertState(Dynamic_library_path != NULL);
 
 	p = Dynamic_library_path;
@@ -390,12 +390,16 @@ find_in_dynamic_libpath(const char *basename)
 		char	   *mangled;
 		char	   *full;
 
-		len = strcspn(p, ":");
-
-		if (len == 0)
+		piece = first_path_separator(p);
+		if(piece == p)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
 			   errmsg("zero-length component in parameter \"dynamic_library_path\"")));
+
+		if(piece == 0)
+		   len = strlen(p);
+		else
+		   len = piece - p;
 
 		piece = palloc(len + 1);
 		strncpy(piece, p, len);
