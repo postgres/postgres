@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.294 2004/08/11 22:50:35 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.295 2004/08/28 18:04:51 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -5379,6 +5379,7 @@ ECPGGetDescHeaderItem: cvariable '=' desc_header_item
 
 ECPGSetDescriptorHeader: SET SQL_DESCRIPTOR quoted_ident_stringvar ECPGSetDescHeaderItems
 			{ $$ = $3; }
+		;
 
 ECPGSetDescHeaderItems: ECPGSetDescHeaderItem
 		| ECPGSetDescHeaderItems ',' ECPGSetDescHeaderItem
