@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.338 2003/07/25 21:02:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.339 2003/07/27 03:47:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3432,12 +3432,12 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 		attname = PQgetvalue(res, i, i_attname);
 		atttypdefn = PQgetvalue(res, i, i_atttypdefn);
 
-		if (i > 0)
-			appendPQExpBuffer(q, ",\n\t");
-		appendPQExpBuffer(q, "%s %s", fmtId(attname), atttypdefn);
+		appendPQExpBuffer(q, "\n\t%s %s", fmtId(attname), atttypdefn);
+		if (i < ntups - 1)
+			appendPQExpBuffer(q, ",");
 	}
-	appendPQExpBuffer(q, ");\n");
-
+	appendPQExpBuffer(q, "\n);\n");
+	
 	/*
 	 * DROP must be fully qualified in case same name appears in
 	 * pg_catalog
