@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.215 2001/07/17 00:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.216 2001/07/29 22:12:23 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3808,6 +3808,7 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 			   *tok,
 			   *eqpos,
 			   *priv;
+	char	   *objoid;
 	char	   *sql;
 	char		tmp[1024];
 	int			sSize = 4096;
@@ -3888,7 +3889,12 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 
 	free(aclbuf);
 
-	ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "ACL", NULL, sql, "", "", "", NULL, NULL);
+	if (tbinfo.viewdef != NULL)
+		objoid = tbinfo.viewoid;
+	else
+		objoid = tbinfo.oid;
+
+	ArchiveEntry(fout, objoid, tbinfo.relname, "ACL", NULL, sql, "", "", "", NULL, NULL);
 
 }
 
