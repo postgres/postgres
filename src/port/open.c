@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.4 2004/08/29 05:07:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.5 2004/10/17 23:53:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ win32_open(const char *fileName, int fileFlags,...)
 	/* cannot use O_RDONLY, as it == 0 */
 				  (fileFlags & O_RDWR) ? (GENERIC_WRITE | GENERIC_READ) :
 				 ((fileFlags & O_WRONLY) ? GENERIC_WRITE : GENERIC_READ),
+				/* These flags allow concurrent rename/unlink */
 				(FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE),
 						&sa,
 						openFlagsToCreateFileFlags(fileFlags),
