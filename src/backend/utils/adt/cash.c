@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.33 2000/01/15 02:59:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.34 2000/03/19 22:10:52 tgl Exp $
  */
 
 #include <limits.h>
@@ -723,7 +723,7 @@ cash_words_out(Cash *value)
 	/* make a text type for output */
 	result = (text *) palloc(strlen(buf) + VARHDRSZ);
 	VARSIZE(result) = strlen(buf) + VARHDRSZ;
-	StrNCpy(VARDATA(result), buf, strlen(buf));
+	memcpy(VARDATA(result), buf, strlen(buf));
 
 	return result;
 }	/* cash_words_out() */
