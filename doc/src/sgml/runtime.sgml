@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.232 2004/01/23 23:54:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.233 2004/01/25 00:36:18 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1822,8 +1822,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Causes each SQL statement to be logged. The default is off.
-        Only superusers can turn off this option if it is enabled by
-        the administrator.
+        <command>EXECUTE</> only displays the plan name, not the
+        prepared query. Server-side languages like
+        <application>PL/pgSQL</> that store functions in a cache only
+        display their queries on first function call. superusers can
+        turn off this option if it is enabled by the administrator.
        </para>
       </listitem>
      </varlistentry>
