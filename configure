@@ -19278,7 +19278,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
 for FILE in $CONFIG_LINKS
  do
 	# test -e works for symlinks in the MinGW console
-	test -e `expr "$FILE" : '\(^:*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE - please fix by hand" >&5
+	test -e `expr "$FILE" : '\([^:]*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE - please fix by hand" >&5
 echo "$as_me: WARNING: *** link for $FILE - please fix by hand" >&2;}
  done
  ;;
