@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.87 2004/09/13 20:07:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.88 2004/10/04 21:52:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,12 +491,14 @@ PortalRun(Portal portal, long count,
 		  char *completionTag)
 {
 	bool		result;
+	ResourceOwner saveTopTransactionResourceOwner;
+	MemoryContext saveTopTransactionContext;
 	Portal		saveActivePortal;
 	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
-	MemoryContext oldContext;
+	MemoryContext saveMemoryContext;
 
 	AssertArg(PortalIsValid(portal));
 
@@ -523,12 +525,26 @@ PortalRun(Portal portal, long count,
 
 	/*
 	 * Set up global portal context pointers.
+	 *
+	 * We have to play a special game here to support utility commands like
+	 * VACUUM and CLUSTER, which internally start and commit transactions.
+	 * When we are called to execute such a command, CurrentResourceOwner
+	 * will be pointing to the TopTransactionResourceOwner --- which will
+	 * be destroyed and replaced in the course of the internal commit and
+	 * restart.  So we need to be prepared to restore it as pointing to
+	 * the exit-time TopTransactionResourceOwner.  (Ain't that ugly?  This
+	 * idea of internally starting whole new transactions is not good.)
+	 * CurrentMemoryContext has a similar problem, but the other pointers
+	 * we save here will be NULL or pointing to longer-lived objects.
 	 */
+	saveTopTransactionResourceOwner = TopTransactionResourceOwner;
+	saveTopTransactionContext = TopTransactionContext;
 	saveActivePortal = ActivePortal;
 	saveActiveSnapshot = ActiveSnapshot;
 	saveResourceOwner = CurrentResourceOwner;
 	savePortalContext = PortalContext;
 	saveQueryContext = QueryContext;
+	saveMemoryContext = CurrentMemoryContext;
 	PG_TRY();
 	{
 		ActivePortal = portal;
@@ -537,7 +553,7 @@ PortalRun(Portal portal, long count,
 		PortalContext = PortalGetHeapMemory(portal);
 		QueryContext = portal->queryContext;
 
-		oldContext = MemoryContextSwitchTo(PortalContext);
+		MemoryContextSwitchTo(PortalContext);
 
 		switch (portal->strategy)
 		{
@@ -620,9 +636,16 @@ PortalRun(Portal portal, long count,
 		portal->status = PORTAL_FAILED;
 
 		/* Restore global vars and propagate error */
+		if (saveMemoryContext == saveTopTransactionContext)
+			MemoryContextSwitchTo(TopTransactionContext);
+		else
+			MemoryContextSwitchTo(saveMemoryContext);
 		ActivePortal = saveActivePortal;
 		ActiveSnapshot = saveActiveSnapshot;
-		CurrentResourceOwner = saveResourceOwner;
+		if (saveResourceOwner == saveTopTransactionResourceOwner)
+			CurrentResourceOwner = TopTransactionResourceOwner;
+		else
+			CurrentResourceOwner = saveResourceOwner;
 		PortalContext = savePortalContext;
 		QueryContext = saveQueryContext;
 
@@ -630,11 +653,16 @@ PortalRun(Portal portal, long count,
 	}
 	PG_END_TRY();
 
-	MemoryContextSwitchTo(oldContext);
-
+	if (saveMemoryContext == saveTopTransactionContext)
+		MemoryContextSwitchTo(TopTransactionContext);
+	else
+		MemoryContextSwitchTo(saveMemoryContext);
 	ActivePortal = saveActivePortal;
 	ActiveSnapshot = saveActiveSnapshot;
-	CurrentResourceOwner = saveResourceOwner;
+	if (saveResourceOwner == saveTopTransactionResourceOwner)
+		CurrentResourceOwner = TopTransactionResourceOwner;
+	else
+		CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.190 2004/09/16 20:17:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.191 2004/10/04 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,6 +205,7 @@ static void AssignSubTransactionId(TransactionState s);
 static void AbortTransaction(void);
 static void AtAbort_Memory(void);
 static void AtCleanup_Memory(void);
+static void AtAbort_ResourceOwner(void);
 static void AtCommit_LocalCache(void);
 static void AtCommit_Memory(void);
 static void AtStart_Cache(void);
@@ -229,6 +230,7 @@ static void PopTransaction(void);
 
 static void AtSubAbort_Memory(void);
 static void AtSubCleanup_Memory(void);
+static void AtSubAbort_ResourceOwner(void);
 static void AtSubCommit_Memory(void);
 static void AtSubStart_Memory(void);
 static void AtSubStart_ResourceOwner(void);
@@ -1103,7 +1105,6 @@ AtAbort_Memory(void)
 		MemoryContextSwitchTo(TopMemoryContext);
 }
 
-
 /*
  * AtSubAbort_Memory
  */
@@ -1114,6 +1115,33 @@ AtSubAbort_Memory(void)
 
 	MemoryContextSwitchTo(TopTransactionContext);
 }
+
+
+/*
+ *	AtAbort_ResourceOwner
+ */
+static void
+AtAbort_ResourceOwner(void)
+{
+	/*
+	 * Make sure we have a valid ResourceOwner, if possible (else it
+	 * will be NULL, which is OK)
+	 */
+	CurrentResourceOwner = TopTransactionResourceOwner;
+}
+
+/*
+ * AtSubAbort_ResourceOwner
+ */
+static void
+AtSubAbort_ResourceOwner(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	/* Make sure we have a valid ResourceOwner */
+	CurrentResourceOwner = s->curTransactionOwner;
+}
+
 
 /*
  * AtSubAbort_childXids
@@ -1598,8 +1626,9 @@ AbortTransaction(void)
 	 */
 	s->state = TRANS_ABORT;
 
-	/* Make sure we are in a valid memory context */
+	/* Make sure we have a valid memory context and resource owner */
 	AtAbort_Memory();
+	AtAbort_ResourceOwner();
 
 	/*
 	 * Reset user id which might have been changed transiently.  We cannot
@@ -3338,6 +3367,7 @@ AbortSubTransaction(void)
 	 * do abort processing
 	 */
 	AtSubAbort_Memory();
+	AtSubAbort_ResourceOwner();
 
 	/*
 	 * We can skip all this stuff if the subxact failed before creating
