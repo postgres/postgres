@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.63 2003/06/12 01:42:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.64 2003/06/25 01:08:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,11 +76,12 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
-			if (!TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (!TransactionIdIsInProgress(xvac))
 			{
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
 					return false;
@@ -90,11 +91,12 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdIsInProgress(xvac))
 					return false;
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 				else
 				{
@@ -152,11 +154,14 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 	}
 
 	/* xmax transaction committed */
-	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
 	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+	{
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
 		return true;
+	}
 
+	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 	return false;
 }
 
@@ -212,11 +217,12 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
-			if (!TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (!TransactionIdIsInProgress(xvac))
 			{
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
 					return false;
@@ -226,11 +232,12 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdIsInProgress(xvac))
 					return false;
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 				else
 				{
@@ -297,11 +304,14 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 	}
 
 	/* xmax transaction committed */
-	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
 	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+	{
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
 		return true;
+	}
 
+	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 	return false;
 }
 
@@ -329,11 +339,12 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
-			if (!TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (!TransactionIdIsInProgress(xvac))
 			{
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
 					return false;
@@ -343,11 +354,12 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdIsInProgress(xvac))
 					return false;
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 				else
 				{
@@ -382,11 +394,12 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return HeapTupleInvisible;
-			if (!TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (!TransactionIdIsInProgress(xvac))
 			{
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
 					return HeapTupleInvisible;
@@ -396,11 +409,12 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdIsInProgress(xvac))
 					return HeapTupleInvisible;
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 				else
 				{
@@ -475,11 +489,14 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 	}
 
 	/* xmax transaction committed */
-	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
 	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+	{
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
 		return HeapTupleMayBeUpdated;
+	}
 
+	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 	return HeapTupleUpdated;	/* updated by other */
 }
 
@@ -513,11 +530,12 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
-			if (!TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (!TransactionIdIsInProgress(xvac))
 			{
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
 					return false;
@@ -527,11 +545,12 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdIsInProgress(xvac))
 					return false;
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 				else
 				{
@@ -600,11 +619,14 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 	}
 
 	/* xmax transaction committed */
-	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
 	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+	{
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
 		return true;
+	}
 
+	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 	SnapshotDirty->tid = tuple->t_ctid;
 	return false;				/* updated by other */
 }
@@ -644,11 +666,12 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
-			if (!TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (!TransactionIdIsInProgress(xvac))
 			{
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 				{
 					tuple->t_infomask |= HEAP_XMIN_INVALID;
 					return false;
@@ -658,11 +681,12 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdIsInProgress(xvac))
 					return false;
-				if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+				if (TransactionIdDidCommit(xvac))
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 				else
 				{
@@ -802,11 +826,12 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 			return HEAPTUPLE_DEAD;
 		else if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return HEAPTUPLE_DELETE_IN_PROGRESS;
-			if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (TransactionIdIsInProgress(xvac))
 				return HEAPTUPLE_DELETE_IN_PROGRESS;
-			if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+			if (TransactionIdDidCommit(xvac))
 			{
 				tuple->t_infomask |= HEAP_XMIN_INVALID;
 				return HEAPTUPLE_DEAD;
@@ -815,11 +840,12 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXvac(tuple)))
+			TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+			if (TransactionIdIsCurrentTransactionId(xvac))
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
-			if (TransactionIdIsInProgress(HeapTupleHeaderGetXvac(tuple)))
+			if (TransactionIdIsInProgress(xvac))
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
-			if (TransactionIdDidCommit(HeapTupleHeaderGetXvac(tuple)))
+			if (TransactionIdDidCommit(xvac))
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 			else
 			{
@@ -831,16 +857,10 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 			return HEAPTUPLE_INSERT_IN_PROGRESS;
 		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
 			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-		else if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-		{
-			tuple->t_infomask |= HEAP_XMIN_INVALID;
-			return HEAPTUPLE_DEAD;
-		}
 		else
 		{
 			/*
-			 * Not in Progress, Not Committed, Not Aborted - so it's from
-			 * crashed process. - vadim 11/26/96
+			 * Not in Progress, Not Committed, so either Aborted or crashed
 			 */
 			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return HEAPTUPLE_DEAD;
@@ -868,11 +888,12 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		{
 			if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
 				return HEAPTUPLE_LIVE;
-			if (TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
-				tuple->t_infomask |= HEAP_XMAX_COMMITTED;
-			else
-/* it's either aborted or crashed */
-				tuple->t_infomask |= HEAP_XMAX_INVALID;
+			/*
+			 * We don't really care whether xmax did commit, abort or crash.
+			 * We know that xmax did mark the tuple for update, but it did not
+			 * and will never actually update it.
+			 */
+			tuple->t_infomask |= HEAP_XMAX_INVALID;
 		}
 		return HEAPTUPLE_LIVE;
 	}
@@ -883,16 +904,10 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 			return HEAPTUPLE_DELETE_IN_PROGRESS;
 		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 			tuple->t_infomask |= HEAP_XMAX_COMMITTED;
-		else if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
-		{
-			tuple->t_infomask |= HEAP_XMAX_INVALID;
-			return HEAPTUPLE_LIVE;
-		}
 		else
 		{
 			/*
-			 * Not in Progress, Not Committed, Not Aborted - so it's from
-			 * crashed process. - vadim 06/02/97
+			 * Not in Progress, Not Committed, so either Aborted or crashed
 			 */
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
 			return HEAPTUPLE_LIVE;
