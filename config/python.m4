@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.7 2003/11/29 19:51:17 pgsql Exp $
+# $PostgreSQL: pgsql/config/python.m4,v 1.8 2004/09/16 23:30:30 joe Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -21,11 +21,19 @@ fi
 # Determine the name of various directory of a given Python installation.
 AC_DEFUN([_PGAC_CHECK_PYTHON_DIRS],
 [AC_REQUIRE([PGAC_PATH_PYTHON])
+AC_MSG_CHECKING([for Python distutils module])
+if "${PYTHON}" 2>&- -c 'import distutils'
+then
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([distutils module not found])
+fi
 AC_MSG_CHECKING([Python installation directories])
 python_version=`${PYTHON} -c "import sys; print sys.version[[:3]]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
-python_configdir="${python_execprefix}/lib/python${python_version}/config"
+python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
 python_includespec="-I${python_prefix}/include/python${python_version}"
 if test "$python_prefix" != "$python_execprefix"; then
   python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"

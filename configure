@@ -4221,12 +4221,25 @@ echo "$as_me: error: Python not found" >&2;}
 fi
 
 
+echo "$as_me:$LINENO: checking for Python distutils module" >&5
+echo $ECHO_N "checking for Python distutils module... $ECHO_C" >&6
+if "${PYTHON}" 2>&- -c 'import distutils'
+then
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    { { echo "$as_me:$LINENO: error: distutils module not found" >&5
+echo "$as_me: error: distutils module not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 echo "$as_me:$LINENO: checking Python installation directories" >&5
 echo $ECHO_N "checking Python installation directories... $ECHO_C" >&6
 python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
-python_configdir="${python_execprefix}/lib/python${python_version}/config"
+python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
 python_includespec="-I${python_prefix}/include/python${python_version}"
 if test "$python_prefix" != "$python_execprefix"; then
   python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"
