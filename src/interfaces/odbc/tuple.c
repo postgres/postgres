@@ -22,7 +22,7 @@
 void set_tuplefield_null(TupleField *tuple_field)
 {
 	tuple_field->len = 0;
-	tuple_field->value = NULL;  /* strdup(""); */
+	tuple_field->value = NULL;  // strdup("");
 }
 
 void set_tuplefield_string(TupleField *tuple_field, char *string)

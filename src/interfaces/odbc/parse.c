@@ -56,7 +56,7 @@ char qc, in_escape = FALSE;
 
 	/* skip leading delimiters */
 	while (isspace(s[i]) || s[i] == ',') {
-		/* mylog("skipping '%c'\n", s[i]); */
+		// mylog("skipping '%c'\n", s[i]);
 		i++;
 	}
 
@@ -128,7 +128,7 @@ char qc, in_escape = FALSE;
 		i++;
 	}
 
-	/* mylog("done -- s[%d] = '%c'\n", i, s[i]); */
+	// mylog("done -- s[%d] = '%c'\n", i, s[i]);
 
 	token[out] = '\0';
 
@@ -156,7 +156,7 @@ char qc, in_escape = FALSE;
 }
 
 
-#if 0
+/*
 QR_set_num_fields(stmt->result, 14);
 QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
 QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
@@ -170,10 +170,10 @@ QR_set_field_info(stmt->result, 8, "SCALE", PG_TYPE_INT2, 2);
 QR_set_field_info(stmt->result, 9, "RADIX", PG_TYPE_INT2, 2);
 QR_set_field_info(stmt->result, 10, "NULLABLE", PG_TYPE_INT2, 2);
 QR_set_field_info(stmt->result, 11, "REMARKS", PG_TYPE_TEXT, 254);
-/*	User defined fields */
+//	User defined fields
 QR_set_field_info(stmt->result, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
 QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
-#endif
+*/
 
 void
 getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
@@ -676,7 +676,7 @@ RETCODE result;
 			total_cols--;		/* makes up for the star  */
 
 			/*	Allocate some more field pointers if necessary */
-			/*------------------------------------------------------------- */
+			//-------------------------------------------------------------
 			old_size = (stmt->nfld / FLD_INCR * FLD_INCR + FLD_INCR);
 			need = total_cols - (old_size - stmt->nfld);
 
@@ -692,22 +692,22 @@ RETCODE result;
 				}
 			}
 
-			/*------------------------------------------------------------- */
-			/*	copy any other fields (if there are any) up past the expansion */
+			//-------------------------------------------------------------
+			//	copy any other fields (if there are any) up past the expansion
 			for (j = stmt->nfld - 1; j > i; j--) {
 				mylog("copying field %d to %d\n", j, total_cols + j);
 				fi[total_cols + j] = fi[j];
 			}
 			mylog("done copying fields\n");
 
-			/*------------------------------------------------------------- */
-			/*	Set the new number of fields */
+			//-------------------------------------------------------------
+			//	Set the new number of fields
 			stmt->nfld += total_cols;
 			mylog("stmt->nfld now at %d\n", stmt->nfld);
 
 
-			/*------------------------------------------------------------- */
-			/*	copy the new field info */
+			//-------------------------------------------------------------
+			//	copy the new field info
 
 
 			do_all_tables = (fi[i]->ti ? FALSE : TRUE);
@@ -720,7 +720,7 @@ RETCODE result;
 
 				for (n = 0; n < cols; n++) {
 					mylog("creating field info: n=%d\n", n);
-					/* skip malloc (already did it for the Star) */
+					// skip malloc (already did it for the Star)
 					if (k > 0 || n > 0) {
 						mylog("allocating field info at %d\n", n + i);
 						fi[n + i] = (FIELD_INFO *) malloc( sizeof(FIELD_INFO));
@@ -744,7 +744,7 @@ RETCODE result;
 				mylog("i now at %d\n", i);
 			}
 
-			/*------------------------------------------------------------- */
+			//-------------------------------------------------------------
 		}
 
 		/*	We either know which table the field was in because it was qualified 

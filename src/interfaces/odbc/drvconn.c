@@ -103,15 +103,15 @@ int len = 0;
 
 	ci = &(conn->connInfo);
 
-	/*	Parse the connect string and fill in conninfo for this hdbc. */
+	//	Parse the connect string and fill in conninfo for this hdbc.
 	dconn_get_connect_attributes(connStrIn, ci);
 
-	/*	If the ConnInfo in the hdbc is missing anything, */
-	/*	this function will fill them in from the registry (assuming */
-	/*	of course there is a DSN given -- if not, it does nothing!) */
+	//	If the ConnInfo in the hdbc is missing anything,
+	//	this function will fill them in from the registry (assuming
+	//	of course there is a DSN given -- if not, it does nothing!)
 	getDSNinfo(ci, CONN_DONT_OVERWRITE);
 
-	/*	Fill in any default parameters if they are not there. */
+	//	Fill in any default parameters if they are not there.
 	getDSNdefaults(ci);
 
 #ifdef WIN32
@@ -164,13 +164,13 @@ dialog:
 		ci->server[0] == '\0' ||
 		ci->database[0] == '\0' || 
 		ci->port[0] == '\0') {
-/*		(password_required && ci->password[0] == '\0')) */
+//		(password_required && ci->password[0] == '\0'))
 
 		return SQL_NO_DATA_FOUND;
 	}
 
 
-	/* do the actual connect */
+	// do the actual connect
 	retval = CC_connect(conn, password_required);
 	if (retval < 0) {		/* need a password */
 		if (fDriverCompletion == SQL_DRIVER_NOPROMPT) {
@@ -187,7 +187,7 @@ dialog:
 		}
 	}
 	else if (retval == 0) {
-		/*	error msg filled in above */
+		//	error msg filled in above
 		CC_log_error(func, "Error from CC_Connect", conn);
 		return SQL_ERROR;
 	}
@@ -273,7 +273,7 @@ ConnInfo *ci;
 		ShowWindow(GetDlgItem(hdlg, IDC_DESCTEXT), SW_HIDE);
 		ShowWindow(GetDlgItem(hdlg, IDC_DESC), SW_HIDE);
 
-		SetWindowLong(hdlg, DWL_USER, lParam);/* Save the ConnInfo for the "OK" */
+		SetWindowLong(hdlg, DWL_USER, lParam);// Save the ConnInfo for the "OK"
 
 		SetDlgStuff(hdlg, ci);
 
@@ -354,15 +354,15 @@ char *strtok_arg;
 			continue;
 
 		*equals = '\0';
-		attribute = pair;		/*	ex. DSN */
-		value = equals + 1;		/*	ex. 'CEO co1' */
+		attribute = pair;		//	ex. DSN
+		value = equals + 1;		//	ex. 'CEO co1'
 
 		mylog("attribute = '%s', value = '%s'\n", attribute, value);
 
 		if( !attribute || !value)
 			continue;          
 
-		/*	Copy the appropriate value to the conninfo  */
+		//	Copy the appropriate value to the conninfo 
 		copyAttributes(ci, attribute, value);
 
 	}

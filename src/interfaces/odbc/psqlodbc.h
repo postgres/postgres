@@ -83,7 +83,7 @@ typedef UInt4 Oid;
 /*	Info limits */
 #define MAX_INFO_STRING		128
 #define MAX_KEYPARTS		20
-#define MAX_KEYLEN			512			/*	max key of the form "date+outlet+invoice" */
+#define MAX_KEYLEN			512			//	max key of the form "date+outlet+invoice"
 #define MAX_STATEMENT_LEN	MAX_MESSAGE_LEN
 
 

@@ -110,8 +110,8 @@ char changed = FALSE;
 			else {
 				if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC) {
 
-					if (conn) conn->stmtOptions.cursor_type = vParam;		/* valid type */
-					if (stmt) stmt->options.cursor_type = vParam;		/* valid type */
+					if (conn) conn->stmtOptions.cursor_type = vParam;		// valid type
+					if (stmt) stmt->options.cursor_type = vParam;		// valid type
 				}
 				else {
 
@@ -161,7 +161,7 @@ char changed = FALSE;
 
 	case SQL_QUERY_TIMEOUT: /* ignored */
 		mylog("SetStmtOption: SQL_QUERY_TIMEOUT, vParam = %d\n", vParam);
-		/*	"0" returned in SQLGetStmtOption */
+		//	"0" returned in SQLGetStmtOption
 		break;
 
 	case SQL_RETRIEVE_DATA: /* ignored, but saved */
@@ -390,7 +390,7 @@ int i;
 		return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 /* This function just can tell you whether you are in Autcommit mode or not */
 RETCODE SQL_API SQLGetConnectOption(
@@ -465,7 +465,7 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 RETCODE SQL_API SQLSetStmtOption(
         HSTMT   hstmt,
@@ -477,9 +477,9 @@ StatementClass *stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering...\n", func);
 
-	/* thought we could fake Access out by just returning SQL_SUCCESS */
-	/* all the time, but it tries to set a huge value for SQL_MAX_LENGTH */
-	/* and expects the driver to reduce it to the real value */
+    // thought we could fake Access out by just returning SQL_SUCCESS
+    // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
+    // and expects the driver to reduce it to the real value
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -490,7 +490,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 }
 
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 RETCODE SQL_API SQLGetStmtOption(
         HSTMT   hstmt,
@@ -503,9 +503,9 @@ QResultClass *res;
 
 	mylog("%s: entering...\n", func);
 
-	/* thought we could fake Access out by just returning SQL_SUCCESS */
-	/* all the time, but it tries to set a huge value for SQL_MAX_LENGTH */
-	/* and expects the driver to reduce it to the real value */
+    // thought we could fake Access out by just returning SQL_SUCCESS
+    // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
+    // and expects the driver to reduce it to the real value
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -519,7 +519,7 @@ QResultClass *res;
 		res = stmt->result;
 
 		if ( stmt->manual_result || ! globals.use_declarefetch) {
-			/* make sure we're positioned on a valid row */
+			// make sure we're positioned on a valid row
 			if((stmt->currTuple < 0) ||
 			   (stmt->currTuple >= QR_get_num_tuples(res))) {
 				stmt->errormsg = "Not positioned on a valid row.";
@@ -618,4 +618,4 @@ QResultClass *res;
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -

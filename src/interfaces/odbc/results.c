@@ -78,7 +78,7 @@ char *msg, *ptr;
 		if (res && pcrow) {
 			msg = QR_get_command(res);
 			mylog("*** msg = '%s'\n", msg);
-			trim(msg);	/*	get rid of trailing spaces */
+			trim(msg);	//	get rid of trailing spaces
 			ptr = strrchr(msg, ' ');
 			if (ptr) {
 				*pcrow = atoi(ptr+1);
@@ -99,8 +99,8 @@ char *msg, *ptr;
 }
 
 
-/*      This returns the number of columns associated with the database */
-/*      attached to "hstmt". */
+//      This returns the number of columns associated with the database
+//      attached to "hstmt".
 
 
 RETCODE SQL_API SQLNumResultCols(
@@ -155,12 +155,12 @@ char parse_ok;
 }
 
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 
 
-/*      Return information about the database column the user wants */
-/*      information about. */
+//      Return information about the database column the user wants
+//      information about.
 RETCODE SQL_API SQLDescribeCol(
         HSTMT      hstmt,
         UWORD      icol,
@@ -264,7 +264,7 @@ RETCODE result;
 		col_name = QR_get_fieldname(res, icol);
         fieldtype = QR_get_field_type(res, icol);
 
-		precision = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);  /* atoi(ci->unknown_sizes) */
+		precision = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);  // atoi(ci->unknown_sizes)
 	}
 
 	mylog("describeCol: col %d fieldname = '%s'\n", icol, col_name);
@@ -308,7 +308,7 @@ RETCODE result;
     if (pcbColDef) {
 
 		if ( precision < 0)
-			precision = 0;		/* "I dont know" */
+			precision = 0;		// "I dont know"
 
 		*pcbColDef = precision;
 
@@ -339,7 +339,7 @@ RETCODE result;
     return result;
 }
 
-/*      Returns result column descriptor information for a result set. */
+//      Returns result column descriptor information for a result set.
 
 RETCODE SQL_API SQLColAttributes(
         HSTMT      hstmt,
@@ -377,8 +377,8 @@ int len = 0, value = 0;
 
 	icol--;
 
-	unknown_sizes = globals.unknown_sizes;          /* atoi(ci->unknown_sizes); */
-	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)		/* not appropriate for SQLColAttributes() */
+	unknown_sizes = globals.unknown_sizes;          // atoi(ci->unknown_sizes);
+	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)		// not appropriate for SQLColAttributes()
 		unknown_sizes = UNKNOWNS_AS_MAX;
 
 	parse_ok = FALSE;
@@ -483,7 +483,7 @@ int len = 0, value = 0;
 			mylog("SQLColAttr: COLUMN_LABEL = '%s'\n", p);
 			break;
 
-		}	/* otherwise same as column name -- FALL THROUGH!!! */
+		}	// otherwise same as column name -- FALL THROUGH!!!
 
 	case SQL_COLUMN_NAME:
 
@@ -593,7 +593,7 @@ int len = 0, value = 0;
     return result;
 }
 
-/*      Returns result data for a single column in the current row. */
+//      Returns result data for a single column in the current row.
 
 RETCODE SQL_API SQLGetData(
         HSTMT      hstmt,
@@ -657,10 +657,10 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 
 	else {
 
-		/* use zero-based column numbers */
+		// use zero-based column numbers
 		icol--;
 
-		/* make sure the column number is valid */
+		// make sure the column number is valid
 		num_cols = QR_NumResultCols(res);
 		if (icol >= num_cols) {
 			stmt->errormsg = "Invalid column number.";
@@ -671,7 +671,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 	}
 
 	if ( stmt->manual_result || ! globals.use_declarefetch) {
-		/* make sure we're positioned on a valid row */
+		// make sure we're positioned on a valid row
 		num_rows = QR_get_num_tuples(res);
 		if((stmt->currTuple < 0) ||
 		   (stmt->currTuple >= num_rows)) {
@@ -765,8 +765,8 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 
 
 
-/*      Returns data for bound columns in the current row ("hstmt->iCursor"), */
-/*      advances the cursor. */
+//      Returns data for bound columns in the current row ("hstmt->iCursor"),
+//      advances the cursor.
 
 RETCODE SQL_API SQLFetch(
         HSTMT   hstmt)
@@ -815,8 +815,8 @@ mylog("SQLFetch: stmt = %u, stmt->result= %u\n", stmt, stmt->result);
 	}
 
 	if (stmt->bindings == NULL) {
-		/* just to avoid a crash if the user insists on calling this */
-		/* function even if SQL_ExecDirect has reported an Error */
+		// just to avoid a crash if the user insists on calling this
+		// function even if SQL_ExecDirect has reported an Error
 		stmt->errormsg = "Bindings were not allocated properly.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		SC_log_error(func, "", stmt);
@@ -829,7 +829,7 @@ mylog("SQLFetch: stmt = %u, stmt->result= %u\n", stmt, stmt->result);
 	return SC_fetch(stmt);
 }
 
-/*      This fetchs a block of data (rowset). */
+//      This fetchs a block of data (rowset).
 
 RETCODE SQL_API SQLExtendedFetch(
         HSTMT      hstmt,
@@ -892,8 +892,8 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 	}
 
 	if (stmt->bindings == NULL) {
-		/* just to avoid a crash if the user insists on calling this */
-		/* function even if SQL_ExecDirect has reported an Error */
+		// just to avoid a crash if the user insists on calling this
+		// function even if SQL_ExecDirect has reported an Error
 		stmt->errormsg = "Bindings were not allocated properly.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		SC_log_error(func, "", stmt);
@@ -1050,7 +1050,7 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 	truncated = error = FALSE;
 	for (i = 0; i < stmt->options.rowset_size; i++) {
 
-		stmt->bind_row = i;		/* set the binding location */
+		stmt->bind_row = i;		// set the binding location
 		result = SC_fetch(stmt);
 
 		/*	Determine Function status */
@@ -1100,8 +1100,8 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 }
 
 
-/*      This determines whether there are more results sets available for */
-/*      the "hstmt". */
+//      This determines whether there are more results sets available for
+//      the "hstmt".
 
 /* CC: return SQL_NO_DATA_FOUND since we do not support multiple result sets */
 RETCODE SQL_API SQLMoreResults(
@@ -1110,8 +1110,8 @@ RETCODE SQL_API SQLMoreResults(
 	return SQL_NO_DATA_FOUND;
 }
 
-/*     This positions the cursor within a rowset, that was positioned using SQLExtendedFetch. */
-/*	   This will be useful (so far) only when using SQLGetData after SQLExtendedFetch.	 */
+//     This positions the cursor within a rowset, that was positioned using SQLExtendedFetch.
+//	   This will be useful (so far) only when using SQLGetData after SQLExtendedFetch.	
 RETCODE SQL_API SQLSetPos(
         HSTMT   hstmt,
         UWORD   irow,
@@ -1172,7 +1172,7 @@ BindInfoClass *bindings = stmt->bindings;
 
 }
 
-/*      Sets options that control the behavior of cursors. */
+//      Sets options that control the behavior of cursors.
 
 RETCODE SQL_API SQLSetScrollOptions(
         HSTMT      hstmt,
@@ -1187,7 +1187,7 @@ static char *func = "SQLSetScrollOptions";
 }
 
 
-/*      Set the cursor name on a statement handle */
+//      Set the cursor name on a statement handle
 
 RETCODE SQL_API SQLSetCursorName(
         HSTMT     hstmt,
@@ -1218,7 +1218,7 @@ mylog("SQLSetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d\n", hstmt, szCurs
 	return SQL_SUCCESS;
 }
 
-/*      Return the cursor name for a statement handle */
+//      Return the cursor name for a statement handle
 
 RETCODE SQL_API SQLGetCursorName(
         HSTMT     hstmt,

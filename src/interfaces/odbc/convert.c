@@ -65,66 +65,66 @@ extern GLOBAL_VALUES globals;
  * - thomas 2000-04-03
  */
 char *mapFuncs[][2] = {
-/*	{ "ASCII",       "ascii"      }, */
+//	{ "ASCII",       "ascii"      },
 	{ "CHAR",        "ichar"      },
 	{ "CONCAT",      "textcat"    },
-/*	{ "DIFFERENCE",  "difference" }, */
-/*	{ "INSERT",      "insert"     }, */
+//	{ "DIFFERENCE",  "difference" },
+//	{ "INSERT",      "insert"     },
 	{ "LCASE",       "lower"      },
 	{ "LEFT",        "ltrunc"     },
 	{ "LOCATE",      "strpos"     },
 	{ "LENGTH",      "char_length"},
-/*	{ "LTRIM",       "ltrim"      }, */
+//	{ "LTRIM",       "ltrim"      },
 	{ "RIGHT",       "rtrunc"     },
-/*	{ "REPEAT",      "repeat"     }, */
-/*	{ "REPLACE",     "replace"    }, */
-/*	{ "RTRIM",       "rtrim"      }, */
-/*	{ "SOUNDEX",     "soundex"    }, */
+//	{ "REPEAT",      "repeat"     },
+//	{ "REPLACE",     "replace"    },
+//	{ "RTRIM",       "rtrim"      },
+//	{ "SOUNDEX",     "soundex"    },
 	{ "SUBSTRING",   "substr"     },
 	{ "UCASE",       "upper"      },
 
-/*	{ "ABS",         "abs"        }, */
-/*	{ "ACOS",        "acos"       }, */
-/*	{ "ASIN",        "asin"       }, */
-/*	{ "ATAN",        "atan"       }, */
-/*	{ "ATAN2",       "atan2"      }, */
+//	{ "ABS",         "abs"        },
+//	{ "ACOS",        "acos"       },
+//	{ "ASIN",        "asin"       },
+//	{ "ATAN",        "atan"       },
+//	{ "ATAN2",       "atan2"      },
 	{ "CEILING",     "ceil"       },
-/*	{ "COS",         "cos"        }, */
-/*	{ "COT",         "cot"        }, */
-/*	{ "DEGREES",     "degrees"    }, */
-/*	{ "EXP",         "exp"        }, */
-/*	{ "FLOOR",       "floor"      }, */
+//	{ "COS",         "cos"        },
+//	{ "COT",         "cot"        },
+//	{ "DEGREES",     "degrees"    },
+//	{ "EXP",         "exp"        },
+//	{ "FLOOR",       "floor"      },
 	{ "LOG",         "ln"         },
 	{ "LOG10",       "log"        },
-/*	{ "MOD",         "mod"        }, */
-/*	{ "PI",          "pi"         }, */
+//	{ "MOD",         "mod"        },
+//	{ "PI",          "pi"         },
 	{ "POWER",       "pow"        },
-/*	{ "RADIANS",     "radians"    }, */
+//	{ "RADIANS",     "radians"    },
 	{ "RAND",        "random"     },
-/*	{ "ROUND",       "round"      }, */
-/*	{ "SIGN",        "sign"       }, */
-/*	{ "SIN",         "sin"        }, */
-/*	{ "SQRT",        "sqrt"       }, */
-/*	{ "TAN",         "tan"        }, */
+//	{ "ROUND",       "round"      },
+//	{ "SIGN",        "sign"       },
+//	{ "SIN",         "sin"        },
+//	{ "SQRT",        "sqrt"       },
+//	{ "TAN",         "tan"        },
 	{ "TRUNCATE",    "trunc"      },
 
-/*	{ "CURDATE",     "curdate"    }, */
-/*	{ "CURTIME",     "curtime"    }, */
-/*	{ "DAYNAME",     "dayname"    }, */
-/*	{ "DAYOFMONTH",  "dayofmonth" }, */
-/*	{ "DAYOFWEEK",   "dayofweek"  }, */
-/*	{ "DAYOFYEAR",   "dayofyear"  }, */
-/*	{ "HOUR",        "hour"       }, */
-/*	{ "MINUTE",      "minute"     }, */
-/*	{ "MONTH",       "month"      }, */
-/*	{ "MONTHNAME",   "monthname"  }, */
-/*	{ "NOW",         "now"        }, */
-/*	{ "QUARTER",     "quarter"    }, */
-/*	{ "SECOND",      "second"     }, */
-/*	{ "WEEK",        "week"       }, */
-/*	{ "YEAR",        "year"       }, */
+//	{ "CURDATE",     "curdate"    },
+//	{ "CURTIME",     "curtime"    },
+//	{ "DAYNAME",     "dayname"    },
+//	{ "DAYOFMONTH",  "dayofmonth" },
+//	{ "DAYOFWEEK",   "dayofweek"  },
+//	{ "DAYOFYEAR",   "dayofyear"  },
+//	{ "HOUR",        "hour"       },
+//	{ "MINUTE",      "minute"     },
+//	{ "MONTH",       "month"      },
+//	{ "MONTHNAME",   "monthname"  },
+//	{ "NOW",         "now"        },
+//	{ "QUARTER",     "quarter"    },
+//	{ "SECOND",      "second"     },
+//	{ "WEEK",        "week"       },
+//	{ "YEAR",        "year"       },
 
-/*	{ "DATABASE",    "database"   }, */
+//	{ "DATABASE",    "database"   },
 	{ "IFNULL",      "coalesce"   },
 	{ "USER",        "odbc_user"  },
 	{    0,             0         }
@@ -270,7 +270,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	case PG_TYPE_INT2VECTOR: {
 		int nval, i;
 		char *vp;
-		/* this is an array of eight integers */
+		// this is an array of eight integers
 		short *short_array = (short *) ( (char *) rgbValue + rgbValueOffset);
 
 		len = 16;
@@ -381,7 +381,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			and all that stuff since there is essentially no limit on the large
 			object used to store those.
 		*/
-		case PG_TYPE_BYTEA:		/* convert binary data to hex strings (i.e, 255 = "FF") */
+		case PG_TYPE_BYTEA:		// convert binary data to hex strings (i.e, 255 = "FF")
 			len = convert_pgbinary_to_char(value, rgbValueBindRow, cbValueMax);
 
 			/***** THIS IS NOT PROPERLY IMPLEMENTED *****/
@@ -495,7 +495,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			} else {
 				*((UCHAR *)rgbValue + bind_row) = atoi(value);
 			}
-			/* mylog("SQL_C_BIT: val = %d, cb = %d, rgb=%d\n", atoi(value), cbValueMax, *((UCHAR *)rgbValue)); */
+			// mylog("SQL_C_BIT: val = %d, cb = %d, rgb=%d\n", atoi(value), cbValueMax, *((UCHAR *)rgbValue));
 			break;
 
 		case SQL_C_STINYINT:
@@ -575,8 +575,8 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 		case SQL_C_BINARY:	
 
-			/*	truncate if necessary */
-			/*	convert octal escapes to bytes */
+			//	truncate if necessary
+			//	convert octal escapes to bytes
 
 			len = convert_from_pgbinary(value, tempBuf, sizeof(tempBuf));
 			ptr = tempBuf;
@@ -623,7 +623,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		}
 	}
 
-    /* store the length of what was copied, if there's a place for it */
+    // store the length of what was copied, if there's a place for it
     if(pcbValue) {
         *(SDWORD *) ((char *)pcbValue + pcbValueOffset) = len;
 	}
@@ -674,7 +674,7 @@ int lobj_fd, retval;
 	if ( stmt->cursor_name[0] == '\0')
 		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
 
-	/*	For selects, prepend a declare cursor to the statement */
+	//	For selects, prepend a declare cursor to the statement
 	if (stmt->statement_type == STMT_TYPE_SELECT && globals.use_declarefetch) {
 		sprintf(new_statement, "declare %s cursor for ", stmt->cursor_name);
 		npos = strlen(new_statement);
@@ -690,13 +690,13 @@ int lobj_fd, retval;
 
     for (opos = 0; opos < oldstmtlen; opos++) {
 
-		/*	Squeeze carriage-return/linefeed pairs to linefeed only */
+		//	Squeeze carriage-return/linefeed pairs to linefeed only
 		if (old_statement[opos] == '\r' && opos+1 < oldstmtlen &&
 			old_statement[opos+1] == '\n') {
 			continue;
 		}
 
-		/*	Handle literals (date, time, timestamp) and ODBC scalar functions */
+		//	Handle literals (date, time, timestamp) and ODBC scalar functions
 		else if (old_statement[opos] == '{') {
 			char *esc;
 			char *begin = &old_statement[opos + 1];
@@ -779,7 +779,7 @@ int lobj_fd, retval;
 		
 		mylog("copy_statement_with_params: from(fcType)=%d, to(fSqlType)=%d\n", param_ctype, param_sqltype);
 		
-		/* replace DEFAULT with something we can use */
+		// replace DEFAULT with something we can use
 		if(param_ctype == SQL_C_DEFAULT)
 			param_ctype = sqltype_to_default_ctype(param_sqltype);
 
@@ -878,10 +878,10 @@ int lobj_fd, retval;
 
 							  }
 		default:
-			/* error */
+			// error
 			stmt->errormsg = "Unrecognized C_parameter type in copy_statement_with_parameters";
 			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-			new_statement[npos] = '\0';   /* just in case */
+			new_statement[npos] = '\0';   // just in case
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
@@ -1062,8 +1062,8 @@ int lobj_fd, retval;
 
 			break;
 
-			/*	because of no conversion operator for bool and int4, SQL_BIT */
-			/*	must be quoted (0 or 1 is ok to use inside the quotes) */
+		//	because of no conversion operator for bool and int4, SQL_BIT
+		//	must be quoted (0 or 1 is ok to use inside the quotes)
 
 		default:		/* a numeric type or SQL_BIT */
 			if (param_sqltype == SQL_BIT)
@@ -1087,7 +1087,7 @@ int lobj_fd, retval;
 
 	}	/* end, for */
 
-	/* make sure new_statement is always null-terminated */
+	// make sure new_statement is always null-terminated
 	new_statement[npos] = '\0';
 
 
@@ -1194,7 +1194,7 @@ size_t i = 0, out = 0;
 
 	for (i = 0; i < strlen(s); i++) {
 		if (s[i] == '$' || s[i] == ',' || s[i] == ')')
-			; /* skip these characters */
+			; // skip these characters
 		else if (s[i] == '(')
 			s[out++] = '-';
 		else
@@ -1358,7 +1358,7 @@ int i, y=0, val;
 	return y;
 }
 
-/*	convert octal escapes to bytes */
+//	convert octal escapes to bytes
 int
 convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax)
 {
@@ -1378,7 +1378,7 @@ int o=0;
 		o++;
 	}
 
-	rgbValue[o] = '\0';	/* extra protection */
+	rgbValue[o] = '\0';	// extra protection
 
 	return o;
 }
@@ -1402,7 +1402,7 @@ static char x[6];
 	return x;
 }
 
-/*	convert non-ascii bytes to octal escape sequences */
+//	convert non-ascii bytes to octal escape sequences
 int
 convert_to_pgbinary(unsigned char *in, char *out, int len)
 {

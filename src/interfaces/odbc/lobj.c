@@ -27,7 +27,7 @@ int retval, result_len;
 	argv[0].u.integer = mode;
 
 	if ( ! CC_send_function(conn, LO_CREAT, &retval, &result_len, 1, argv, 1))
-		return 0;	/* invalid oid */
+		return 0;	// invalid oid
 	else
 		return retval;
 

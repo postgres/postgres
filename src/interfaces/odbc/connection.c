@@ -70,7 +70,7 @@ static char *func="SQLAllocConnect";
 }
 
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 RETCODE SQL_API SQLConnect(
                            HDBC      hdbc,
@@ -111,7 +111,7 @@ static char *func = "SQLConnect";
 	qlog("conn = %u, %s(DSN='%s', UID='%s', PWD='%s')\n", conn, func, ci->dsn, ci->username, ci->password);
 
 	if ( CC_connect(conn, FALSE) <= 0) {
-		/*	Error messages are filled in */
+		//	Error messages are filled in
 		CC_log_error(func, "Error on CC_connect", conn);
 		return SQL_ERROR;
 	}
@@ -121,7 +121,7 @@ static char *func = "SQLConnect";
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 RETCODE SQL_API SQLBrowseConnect(
         HDBC      hdbc,
@@ -138,7 +138,7 @@ static char *func="SQLBrowseConnect";
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 /* Drop any hstmts open on hdbc and disconnect from database */
 RETCODE SQL_API SQLDisconnect(
@@ -176,7 +176,7 @@ static char *func = "SQLDisconnect";
 }
 
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
 RETCODE SQL_API SQLFreeConnect(
         HDBC      hdbc)
@@ -229,7 +229,7 @@ ConnectionClass *rv;
 		rv->errormsg_created = FALSE;
 
         rv->status = CONN_NOT_CONNECTED;
-        rv->transact_status = CONN_IN_AUTOCOMMIT; /* autocommit by default */
+        rv->transact_status = CONN_IN_AUTOCOMMIT; // autocommit by default
 
 		memset(&rv->connInfo, 0, sizeof(ConnInfo));
 
@@ -334,8 +334,8 @@ CC_clear_error(ConnectionClass *self)
 	self->errormsg_created = FALSE;
 }
 
-/*	Used to cancel a transaction */
-/*	We are almost always in the middle of a transaction. */
+//	Used to cancel a transaction
+//	We are almost always in the middle of a transaction.
 char
 CC_abort(ConnectionClass *self)
 {
@@ -371,9 +371,9 @@ StatementClass *stmt;
 
 	mylog("in CC_Cleanup, self=%u\n", self);
 
-	/* Cancel an ongoing transaction */
-	/* We are always in the middle of a transaction, */
-	/* even if we are in auto commit. */
+	// Cancel an ongoing transaction
+	// We are always in the middle of a transaction,
+	// even if we are in auto commit.
 	if (self->sock)
 		CC_abort(self);
 
@@ -549,7 +549,7 @@ static char *func="CC_connect";
 
 			mylog("sizeof startup packet = %d\n", sizeof(StartupPacket));
 
-			/* Send length of Authentication Block */
+			// Send length of Authentication Block
 			SOCK_put_int(sock, 4+sizeof(StartupPacket), 4); 
 
 			if ( PROTOCOL_63(ci))
@@ -579,9 +579,9 @@ static char *func="CC_connect";
 	mylog("gonna do authentication\n");
 
 
-	/* *************************************************** */
-	/*	Now get the authentication request from backend */
-	/* *************************************************** */
+	// ***************************************************
+	//	Now get the authentication request from backend
+	// ***************************************************
 
 	if ( ! PROTOCOL_62(ci))	do {
 
@@ -790,7 +790,7 @@ int rv;
 
 	mylog("enter CC_get_error\n");
 
-	/*	Create a very informative errormsg if it hasn't been done yet. */
+	//	Create a very informative errormsg if it hasn't been done yet.
 	if ( ! self->errormsg_created) {
 		self->errormsg = CC_create_errormsg(self);
 		self->errormsg_created = TRUE;
@@ -802,7 +802,7 @@ int rv;
 	}
 	rv = (self->errornumber != 0);
 
-	self->errornumber = 0;		/* clear the error */
+	self->errornumber = 0;		// clear the error
 
 	mylog("exit CC_get_error\n");
 
@@ -826,13 +826,13 @@ char swallow;
 int id;
 SocketClass *sock = self->sock;
 static char msgbuffer[MAX_MESSAGE_LEN+1];
-char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont need static */
+char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont need static
 
 
 	mylog("send_query(): conn=%u, query='%s'\n", self, query);
 	qlog("conn=%u, query='%s'\n", self, query);
 
-	/* Indicate that we are sending a query to the backend */
+	// Indicate that we are sending a query to the backend
 	if(strlen(query) > MAX_MESSAGE_LEN-2) {
 		self->errornumber = CONNECTION_MSG_TOO_LONG;
 		self->errormsg = "Query string is too long";
@@ -971,7 +971,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 			mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
 			qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
 
-			continue;		/* dont return a result -- continue reading */
+			continue;		// dont return a result -- continue reading
 
 		case 'I' : /* The server sends an empty query */
 				/* There is a closing '\0' following the 'I', so we eat it */
@@ -1034,7 +1034,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 					return NULL;
 				}
 			}
-			else {  /* next fetch, so reuse an existing result */
+			else {  // next fetch, so reuse an existing result
 				if ( ! QR_fetch_tuples(result_in, NULL, NULL)) {
 					self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 					self->errormsg = QR_get_message(result_in);
@@ -1186,7 +1186,7 @@ int i;
 			mylog("send_function(G): 'N' - %s\n", msgbuffer);
 			qlog("NOTICE from backend during send_function: '%s'\n", msgbuffer);
 
-			continue;		/* dont return a result -- continue reading */
+			continue;		// dont return a result -- continue reading
 
 		case '0':	/* empty result */
 			return TRUE;
@@ -1206,9 +1206,9 @@ int i;
 char
 CC_send_settings(ConnectionClass *self)
 {
-  /* char ini_query[MAX_MESSAGE_LEN]; */
+// char ini_query[MAX_MESSAGE_LEN];
 ConnInfo *ci = &(self->connInfo);
-/* QResultClass *res; */
+// QResultClass *res;
 HSTMT hstmt;
 StatementClass *stmt;
 RETCODE result;

@@ -34,7 +34,7 @@
 #include <sqlext.h>
 #endif
 
-/*      Bind parameters on a statement handle */
+//      Bind parameters on a statement handle
 
 RETCODE SQL_API SQLBindParameter(
         HSTMT      hstmt,
@@ -75,18 +75,18 @@ static char *func="SQLBindParameter";
 
 		stmt->parameters_allocated = ipar;
 
-		/* copy the old parameters over */
+		// copy the old parameters over
 		for(i = 0; i < old_parameters_allocated; i++) {
-			/* a structure copy should work */
+		// a structure copy should work
 			stmt->parameters[i] = old_parameters[i];
 		}
 
-		/* get rid of the old parameters, if there were any */
+		// get rid of the old parameters, if there were any
 		if(old_parameters)
 			free(old_parameters);
 
-		/* zero out the newly allocated parameters (in case they skipped some, */
-		/* so we don't accidentally try to use them later) */
+		// zero out the newly allocated parameters (in case they skipped some,
+		// so we don't accidentally try to use them later)
 		for(; i < stmt->parameters_allocated; i++) {
 			stmt->parameters[i].buflen = 0;
 			stmt->parameters[i].buffer = 0;
@@ -105,7 +105,7 @@ static char *func="SQLBindParameter";
 
 	ipar--;		/* use zero based column numbers for the below part */
 
-	/* store the given info */
+	// store the given info
 	stmt->parameters[ipar].buflen = cbValueMax;
 	stmt->parameters[ipar].buffer = rgbValue;
 	stmt->parameters[ipar].used = pcbValue;
@@ -140,9 +140,9 @@ static char *func="SQLBindParameter";
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
-/*      Associate a user-supplied buffer with a database column. */
+//      Associate a user-supplied buffer with a database column.
 RETCODE SQL_API SQLBindCol(
         HSTMT      hstmt,
         UWORD      icol,
@@ -195,14 +195,14 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 		return SQL_SUCCESS;
 	}
 
-	/*	allocate enough bindings if not already done */
-	/*	Most likely, execution of a statement would have setup the  */
-	/*	necessary bindings. But some apps call BindCol before any */
-	/*	statement is executed. */
+	//	allocate enough bindings if not already done
+	//	Most likely, execution of a statement would have setup the 
+	//	necessary bindings. But some apps call BindCol before any
+	//	statement is executed.
 	if ( icol > stmt->bindings_allocated)
 		extend_bindings(stmt, icol);
 
-	/*	check to see if the bindings were allocated */
+	//	check to see if the bindings were allocated
 	if ( ! stmt->bindings) {
 		stmt->errormsg = "Could not allocate memory for bindings.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -234,14 +234,14 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
-/*  Returns the description of a parameter marker. */
-/*	This function is listed as not being supported by SQLGetFunctions() because it is  */
-/*	used to describe "parameter markers" (not bound parameters), in which case,  */
-/*	the dbms should return info on the markers.  Since Postgres doesn't support that, */
-/*	it is best to say this function is not supported and let the application assume a  */
-/*	data type (most likely varchar). */
+//  Returns the description of a parameter marker.
+//	This function is listed as not being supported by SQLGetFunctions() because it is 
+//	used to describe "parameter markers" (not bound parameters), in which case, 
+//	the dbms should return info on the markers.  Since Postgres doesn't support that,
+//	it is best to say this function is not supported and let the application assume a 
+//	data type (most likely varchar).
 
 RETCODE SQL_API SQLDescribeParam(
         HSTMT      hstmt,
@@ -270,8 +270,8 @@ static char *func = "SQLDescribeParam";
 
 	ipar--;
 
-	/*	This implementation is not very good, since it is supposed to describe */
-	/*	parameter markers, not bound parameters.  */
+	//	This implementation is not very good, since it is supposed to describe
+	//	parameter markers, not bound parameters. 
 	if(pfSqlType)
 		*pfSqlType = stmt->parameters[ipar].SQLType;
 
@@ -287,9 +287,9 @@ static char *func = "SQLDescribeParam";
 	return SQL_SUCCESS;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
-/*      Sets multiple values (arrays) for the set of parameter markers. */
+//      Sets multiple values (arrays) for the set of parameter markers.
 
 RETCODE SQL_API SQLParamOptions(
         HSTMT      hstmt,
@@ -304,15 +304,15 @@ static char *func = "SQLParamOptions";
 	return SQL_ERROR;
 }
 
-/*      -       -       -       -       -       -       -       -       - */
+//      -       -       -       -       -       -       -       -       -
 
-/*	This function should really talk to the dbms to determine the number of  */
-/*	"parameter markers" (not bound parameters) in the statement.  But, since */
-/*	Postgres doesn't support that, the driver should just count the number of markers */
-/*	and return that.  The reason the driver just can't say this function is unsupported */
-/*	like it does for SQLDescribeParam is that some applications don't care and try  */
-/*	to call it anyway. */
-/*	If the statement does not have parameters, it should just return 0. */
+//	This function should really talk to the dbms to determine the number of 
+//	"parameter markers" (not bound parameters) in the statement.  But, since
+//	Postgres doesn't support that, the driver should just count the number of markers
+//	and return that.  The reason the driver just can't say this function is unsupported
+//	like it does for SQLDescribeParam is that some applications don't care and try 
+//	to call it anyway.
+//	If the statement does not have parameters, it should just return 0.
 RETCODE SQL_API SQLNumParams(
         HSTMT      hstmt,
         SWORD  FAR *pcpar)
@@ -338,7 +338,7 @@ static char *func = "SQLNumParams";
 
 
 	if(!stmt->statement) {
-		/* no statement has been allocated */
+		// no statement has been allocated
 		stmt->errormsg = "SQLNumParams called with no statement ready.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		SC_log_error(func, "", stmt);
@@ -419,13 +419,13 @@ mylog("%s: entering ... stmt=%u, bindings_allocated=%d, num_columns=%d\n", func,
 		stmt->bindings_allocated = num_columns;
 
     } 
-	/*	There is no reason to zero out extra bindings if there are */
-	/*	more than needed.  If an app has allocated extra bindings,  */
-	/*	let it worry about it by unbinding those columns. */
+	//	There is no reason to zero out extra bindings if there are
+	//	more than needed.  If an app has allocated extra bindings, 
+	//	let it worry about it by unbinding those columns.
 
-	/*	SQLBindCol(1..) ... SQLBindCol(10...)	# got 10 bindings */
-	/*	SQLExecDirect(...)  # returns 5 cols */
-	/*	SQLExecDirect(...)	# returns 10 cols  (now OK) */
+	//	SQLBindCol(1..) ... SQLBindCol(10...)	# got 10 bindings
+	//	SQLExecDirect(...)  # returns 5 cols
+	//	SQLExecDirect(...)	# returns 10 cols  (now OK)
 
 	mylog("exit extend_bindings\n");
 }

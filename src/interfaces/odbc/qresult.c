@@ -125,14 +125,14 @@ QR_Destructor(QResultClass *self)
 	if (self->manual_tuples)
 		TL_Destructor(self->manual_tuples);
 
-	/*	If conn is defined, then we may have used "backend_tuples", */
-	/*	so in case we need to, free it up.  Also, close the cursor. */
+	//	If conn is defined, then we may have used "backend_tuples",
+	//	so in case we need to, free it up.  Also, close the cursor.
 	if (self->conn && self->conn->sock && CC_is_in_trans(self->conn))
-		QR_close(self);			/* close the cursor if there is one */
+		QR_close(self);			// close the cursor if there is one
 
-	QR_free_memory(self);	/* safe to call anyway */
+	QR_free_memory(self);	// safe to call anyway
 
-	/*	Should have been freed in the close() but just in case... */
+	//	Should have been freed in the close() but just in case...
 	if (self->cursor)
 		free(self->cursor);
 
@@ -192,7 +192,7 @@ int num_fields = self->num_fields;
 					free(tuple[lf].value);
 				}
 			}
-			tuple += num_fields;  /* next row */
+			tuple += num_fields;  // next row
 		}
 
 		free(self->backend_tuples);
@@ -204,17 +204,17 @@ int num_fields = self->num_fields;
 	mylog("QResult: free memory out\n");
 }
 
-/*	This function is called by send_query() */
+//	This function is called by send_query()
 char
 QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 {
 int tuple_size;
 
-	/*	If called from send_query the first time (conn != NULL),  */
-	/*	then set the inTuples state, */
-	/*	and read the tuples.  If conn is NULL, */
-	/*	it implies that we are being called from next_tuple(), */
-	/*	like to get more rows so don't call next_tuple again! */
+	//	If called from send_query the first time (conn != NULL), 
+	//	then set the inTuples state,
+	//	and read the tuples.  If conn is NULL,
+	//	it implies that we are being called from next_tuple(),
+	//	like to get more rows so don't call next_tuple again!
 	if (conn != NULL) {
 		self->conn = conn;
 
@@ -232,8 +232,8 @@ int tuple_size;
 			self->cursor = strdup(cursor);
 		}
  
-		/*	Read the field attributes. */
-		/*	$$$$ Should do some error control HERE! $$$$ */
+		//	Read the field attributes.
+		//	$$$$ Should do some error control HERE! $$$$
 		if ( CI_read_fields(self->fields, self->conn)) {
 			self->status = PGRES_FIELDS_OK;
 			self->num_fields = CI_get_num_fields(self->fields);
@@ -272,8 +272,8 @@ int tuple_size;
 	}
 	else {
 
-		/*	Always have to read the field attributes. */
-		/*	But we dont have to reallocate memory for them! */
+		//	Always have to read the field attributes.
+		//	But we dont have to reallocate memory for them!
 
 		if ( ! CI_read_fields(NULL, self->conn)) {
 			self->status = PGRES_BAD_RESPONSE;
@@ -284,8 +284,8 @@ int tuple_size;
 	}
 }
 
-/*	Close the cursor and end the transaction (if no cursors left) */
-/*	We only close cursor/end the transaction if a cursor was used. */
+//	Close the cursor and end the transaction (if no cursors left)
+//	We only close cursor/end the transaction if a cursor was used.
 int
 QR_close(QResultClass *self)
 {
@@ -331,7 +331,7 @@ QResultClass *res;
 	return TRUE;
 }
 
-/*	This function is called by fetch_tuples() AND SQLFetch() */
+//	This function is called by fetch_tuples() AND SQLFetch()
 int
 QR_next_tuple(QResultClass *self)
 {
@@ -346,7 +346,7 @@ int end_tuple = self->rowset_size + self->base;
 char corrected = FALSE;
 TupleField *the_tuples = self->backend_tuples;
 static char msgbuffer[MAX_MESSAGE_LEN+1];
-char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont need static */
+char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont need static
 char fetch[128];
 QueryInfo qi;
 
@@ -357,7 +357,7 @@ QueryInfo qi;
 		return TRUE;
 	}
 	else if (self->fcount < self->cache_size) {   /* last row from cache */
-		  /*	We are done because we didn't even get CACHE_SIZE tuples */
+			//	We are done because we didn't even get CACHE_SIZE tuples
 		  mylog("next_tuple: fcount < CACHE_SIZE: fcount = %d, fetch_count = %d\n", fcount, fetch_count);
 		  self->tupleField = NULL;
 		  self->status = PGRES_END_TUPLES;
@@ -417,7 +417,7 @@ QueryInfo qi;
 
 			mylog("next_tuple: sending actual fetch (%d) query '%s'\n", fetch_size, fetch);
 
-			/*	don't read ahead for the next tuple (self) ! */
+			//	don't read ahead for the next tuple (self) !
 			qi.row_size = self->cache_size;
 			qi.result_in = self;
 			qi.cursor = NULL;
@@ -479,7 +479,7 @@ QueryInfo qi;
 			}
 			
 			self->fcount++;
-			break;	/* continue reading */
+			break;	// continue reading
 
 
 		case 'C': /* End of tuple list */
@@ -498,7 +498,7 @@ QueryInfo qi;
 				self->tupleField = self->backend_tuples + (offset * self->num_fields);
 				return TRUE;
 			} 
-			else { /*	We are surely done here (we read 0 tuples) */
+			else { //	We are surely done here (we read 0 tuples)
 				qlog("    [ fetched 0 rows ]\n");
 				mylog("_next_tuple: 'C': DONE (fcount == 0)\n");
 				return -1;	/* end of tuples */
@@ -546,7 +546,7 @@ Int2 bitmap_pos;
 Int2 bitcnt;
 Int4 len;
 char *buffer;
-int num_fields = self->num_fields;	/* speed up access */
+int num_fields = self->num_fields;	// speed up access
 SocketClass *sock = CC_get_socket(self->conn);
 ColumnInfoClass *flds;
 
