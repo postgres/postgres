@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.100 2004/11/06 19:36:01 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.101 2005/01/11 05:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static char *modulename = gettext_noop("archiver");
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
-static char *_getObjectFromDropStmt(const char *dropStmt, const char *type);
+static void _getObjectDescription(PQExpBuffer buf, TocEntry *te);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 
 
@@ -2363,64 +2363,78 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 	destroyPQExpBuffer(qry);
 }
 
-/**
- * Parses the dropStmt part of a TOC entry and returns
- * a newly allocated string that is the object identifier
- * The caller must free the result.
+/*
+ * Extract an object description for a TOC entry, and append it to buf.
+ *
+ * This is not quite as general as it may seem, since it really only
+ * handles constructing the right thing to put into ALTER ... OWNER TO.
+ *
+ * The whole thing is pretty grotty, but we are kind of stuck since the
+ * information used is all that's available in older dump files.
  */
-static char *
-_getObjectFromDropStmt(const char *dropStmt, const char *type)
+static void
+_getObjectDescription(PQExpBuffer buf, TocEntry *te)
 {
-	/* Chop "DROP" off the front and make a copy */
-	char	   *first = strdup(dropStmt + 5);
-	char	   *last = first + strlen(first) - 1;		/* Points to the last
-														 * real char in extract */
-	char	   *buf = NULL;
+	const char *type = te->desc;
+
+	/* Use ALTER TABLE for views and sequences */
+	if (strcmp(type, "VIEW") == 0 ||
+		strcmp(type, "SEQUENCE") == 0)
+		type = "TABLE";
+
+	/* We assume CONSTRAINTs are always pkey/unique indexes */
+	if (strcmp(type, "CONSTRAINT") == 0)
+		type = "INDEX";
+
+	/* objects named by a schema and name */
+	if (strcmp(type, "CONVERSION") == 0 ||
+		strcmp(type, "DOMAIN") == 0 ||
+		strcmp(type, "INDEX") == 0 ||
+		strcmp(type, "TABLE") == 0 ||
+		strcmp(type, "TYPE") == 0)
+	{
+		appendPQExpBuffer(buf, "%s %s", type, fmtId(te->namespace));
+		appendPQExpBuffer(buf, ".%s", fmtId(te->tag));
+		return;
+	}
+
+	/* objects named by just a name */
+	if (strcmp(type, "DATABASE") == 0 ||
+		strcmp(type, "SCHEMA") == 0)
+	{
+		appendPQExpBuffer(buf, "%s %s", type, fmtId(te->tag));
+		return;
+	}
 
 	/*
-	 * Loop from the end of the string until last char is no longer '\n'
-	 * or ';'
+	 * These object types require additional decoration.  Fortunately,
+	 * the information needed is exactly what's in the DROP command.
 	 */
-	while (last >= first && (*last == '\n' || *last == ';'))
-		last--;
-
-	/* Insert end of string one place after last */
-	*(last + 1) = '\0';
-
-	/*
-	 * Take off CASCADE if necessary.  Only TYPEs seem to have this, but
-	 * may as well check for all
-	 */
-	if ((last - first) >= 8)
+	if (strcmp(type, "AGGREGATE") == 0 ||
+		strcmp(type, "FUNCTION") == 0 ||
+		strcmp(type, "OPERATOR") == 0 ||
+		strcmp(type, "OPERATOR CLASS") == 0)
 	{
-		if (strcmp(last - 7, " CASCADE") == 0)
-			last -= 8;
-	}
+		/* Chop "DROP " off the front and make a modifiable copy */
+		char	   *first = strdup(te->dropStmt + 5);
+		char	   *last;
 
-	/* Insert end of string one place after last */
-	*(last + 1) = '\0';
+		/* point to last character in string */
+		last = first + strlen(first) - 1;
 
-	/* Special case VIEWs and SEQUENCEs.  They must use ALTER TABLE. */
-	if (strcmp(type, "VIEW") == 0 && (last - first) >= 5)
-	{
-		int			len = 6 + strlen(first + 5) + 1;
+		/* Strip off any ';' or '\n' at the end */
+		while (last >= first && (*last == '\n' || *last == ';'))
+			last--;
+		*(last + 1) = '\0';
 
-		buf = malloc(len);
-		snprintf(buf, len, "TABLE %s", first + 5);
+		appendPQExpBufferStr(buf, first);
+
 		free(first);
+		return;
 	}
-	else if (strcmp(type, "SEQUENCE") == 0 && (last - first) >= 9)
-	{
-		int			len = 6 + strlen(first + 9) + 1;
 
-		buf = malloc(len);
-		snprintf(buf, len, "TABLE %s", first + 9);
-		free(first);
-	}
-	else
-		buf = first;
-
-	return buf;
+	write_msg(modulename, "WARNING: don't know how to set owner for object type %s\n",
+			  type);
 }
 
 static void
@@ -2497,13 +2511,14 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	/*
 	 * Actually print the definition.
 	 *
-	 * Really crude hack for suppressing AUTHORIZATION clause of CREATE
-	 * SCHEMA when --no-owner mode is selected.  This is ugly, but I see
+	 * Really crude hack for suppressing AUTHORIZATION clause that old
+	 * pg_dump versions put into CREATE SCHEMA.  We have to do this when
+	 * --no-owner mode is selected.  This is ugly, but I see
 	 * no other good way ...
 	 */
-	if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
+	if (ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
 	{
-		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
+		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", fmtId(te->tag));
 	}
 	else
 	{
@@ -2513,29 +2528,51 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 
 	/*
 	 * If we aren't using SET SESSION AUTH to determine ownership, we must
-	 * instead issue an ALTER OWNER command.  Ugly, since we have to cons
-	 * one up based on the dropStmt.  We don't need this for schemas
-	 * (since we use CREATE SCHEMA AUTHORIZATION instead), nor for some
-	 * other object types.
+	 * instead issue an ALTER OWNER command.  We assume that anything without
+	 * a DROP command is not a separately ownable object.  All the categories
+	 * with DROP commands must appear in one list or the other.
 	 */
 	if (!ropt->noOwner && !ropt->use_setsessauth &&
-		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 &&
-		(strcmp(te->desc, "AGGREGATE") == 0 ||
-		 strcmp(te->desc, "CONVERSION") == 0 ||
-		 strcmp(te->desc, "DATABASE") == 0 ||
-		 strcmp(te->desc, "DOMAIN") == 0 ||
-		 strcmp(te->desc, "FUNCTION") == 0 ||
-		 strcmp(te->desc, "OPERATOR") == 0 ||
-		 strcmp(te->desc, "OPERATOR CLASS") == 0 ||
-		 strcmp(te->desc, "TABLE") == 0 ||
-		 strcmp(te->desc, "TYPE") == 0 ||
-		 strcmp(te->desc, "VIEW") == 0 ||
-		 strcmp(te->desc, "SEQUENCE") == 0))
+		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0)
 	{
-		char	   *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
+		if (strcmp(te->desc, "AGGREGATE") == 0 ||
+			strcmp(te->desc, "CONSTRAINT") == 0 ||
+			strcmp(te->desc, "CONVERSION") == 0 ||
+			strcmp(te->desc, "DATABASE") == 0 ||
+			strcmp(te->desc, "DOMAIN") == 0 ||
+			strcmp(te->desc, "FUNCTION") == 0 ||
+			strcmp(te->desc, "INDEX") == 0 ||
+			strcmp(te->desc, "OPERATOR") == 0 ||
+			strcmp(te->desc, "OPERATOR CLASS") == 0 ||
+			strcmp(te->desc, "SCHEMA") == 0 ||
+			strcmp(te->desc, "TABLE") == 0 ||
+			strcmp(te->desc, "TYPE") == 0 ||
+			strcmp(te->desc, "VIEW") == 0 ||
+			strcmp(te->desc, "SEQUENCE") == 0)
+		{
+			PQExpBuffer temp = createPQExpBuffer();
 
-		ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
-		free(temp);
+			appendPQExpBuffer(temp, "ALTER ");
+			_getObjectDescription(temp, te);
+			appendPQExpBuffer(temp, " OWNER TO %s;", fmtId(te->owner));
+			ahprintf(AH, "%s\n\n", temp->data);
+			destroyPQExpBuffer(temp);
+		}
+		else if (strcmp(te->desc, "CAST") == 0 ||
+				 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
+				 strcmp(te->desc, "DEFAULT") == 0 ||
+				 strcmp(te->desc, "FK CONSTRAINT") == 0 ||
+				 strcmp(te->desc, "PROCEDURAL LANGUAGE") == 0 ||
+				 strcmp(te->desc, "RULE") == 0 ||
+				 strcmp(te->desc, "TRIGGER") == 0)
+		{
+			/* these object types don't have separate owners */
+		}
+		else
+		{
+			write_msg(modulename, "WARNING: don't know how to set owner for object type %s\n",
+					  te->desc);
+		}
 	}
 
 	/*

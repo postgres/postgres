@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.398 2005/01/04 22:27:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.399 2005/01/11 05:14:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4428,23 +4428,14 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 
 	qnspname = strdup(fmtId(nspinfo->dobj.name));
 
-	/*
-	 * Note that ownership is shown in the AUTHORIZATION clause, while the
-	 * archive entry is listed with empty owner (causing it to be emitted
-	 * with SET SESSION AUTHORIZATION DEFAULT). This seems the best way of
-	 * dealing with schemas owned by users without CREATE SCHEMA
-	 * privilege.  Further hacking has to be applied for --no-owner mode,
-	 * though!
-	 */
 	appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
 
-	appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s;\n",
-					  qnspname, fmtId(nspinfo->usename));
+	appendPQExpBuffer(q, "CREATE SCHEMA %s;\n", qnspname);
 
 	ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
 				 nspinfo->dobj.name,
 				 NULL, NULL, 
-				 strcmp(nspinfo->dobj.name, "public") == 0 ? nspinfo->usename : "",
+				 nspinfo->usename,
 				 false, "SCHEMA", q->data, delq->data, NULL,
 				 nspinfo->dobj.dependencies, nspinfo->dobj.nDeps,
 				 NULL, NULL);
