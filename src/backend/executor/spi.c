@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.62 2001/11/10 23:51:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.63 2001/11/21 18:30:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -729,6 +729,9 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 		elog(ERROR, "plan in SPI_cursor_open() must NOT be a DECLARE already");
 	else if (queryTree->into != NULL)
 		elog(ERROR, "plan in SPI_cursor_open() must NOT be a SELECT INTO");
+
+	/* Increment CommandCounter to see changes made by now */
+	CommandCounterIncrement();
 
 	/* Reset SPI result */
 	SPI_processed = 0;
