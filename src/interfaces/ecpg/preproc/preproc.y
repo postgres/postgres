@@ -263,16 +263,16 @@ make_name(void)
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
+%left           POSTFIXOP              		/* dummy for postfix Op rules */    
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
-%nonassoc	NULL_P
-%nonassoc	IS
+%nonassoc	IS NULL_P TRUE_P FALSE_P 
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
 /* Unary Operators */
-%left           AT
+%left           AT ZONE
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
@@ -3300,7 +3300,7 @@ a_expr:  c_expr
 				{	$$ = cat_str(3, $1, $2, $3); }
 		| Op a_expr
 				{	$$ = cat2_str($1, $2); }
-		| a_expr Op
+		| a_expr Op		%prec POSTFIXOP
 				{	$$ = cat2_str($1, $2); }
 		| a_expr AND a_expr
 				{	$$ = cat_str(3, $1, make_str("and"), $3); }
@@ -3345,11 +3345,11 @@ a_expr:  c_expr
 				{	$$ = cat2_str($1, make_str("is false")); }
 		| a_expr IS NOT TRUE_P
 				{	$$ = cat2_str($1, make_str("is not true")); }
-		| a_expr BETWEEN b_expr AND b_expr
+		| a_expr BETWEEN b_expr AND b_expr	%prec BETWEEN
 				{
 					$$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); 
 				}
-		| a_expr NOT BETWEEN b_expr AND b_expr
+		| a_expr NOT BETWEEN b_expr AND b_expr	%prec BETWEEN
 				{
 					$$ = cat_str(5, $1, make_str("not between"), $4, make_str("and"), $6); 
 				}
@@ -3361,7 +3361,7 @@ a_expr:  c_expr
 				{
 					$$ = cat_str(3, $1, make_str(" not in "), $4); 
 				}
-		| a_expr all_Op sub_type select_with_parens
+		| a_expr all_Op sub_type select_with_parens	%prec Op
 				{
 					$$ = cat_str(4, $1, $2, $3, $4); 
 				}
@@ -3417,7 +3417,7 @@ b_expr:  c_expr
 				{	$$ = cat_str(3, $1, $2, $3); }
 		| Op b_expr
 				{	$$ = cat2_str($1, $2); }
-		| b_expr Op
+		| b_expr Op		%prec POSTFIXOP
 				{	$$ = cat2_str($1, $2); }
 		;
 

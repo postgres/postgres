@@ -1043,5 +1043,9 @@ Mon Jan 22 17:56:02 CET 2001
 Tue Jan 23 08:54:14 CET 2001
 
 	- Moved database name handling to libecpg.
+
+Thu Jan 25 21:14:38 CET 2001
+
+	- Synced gram.y and preproc.y.     
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
