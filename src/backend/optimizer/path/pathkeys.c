@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.4 1999/02/20 18:01:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.5 1999/02/20 19:02:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,19 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  *	{ {tab1.col1, tab2.col1} }.  This allows future joins to use either Var
  *	as a pre-sorted key to prevent Mergejoins from having to re-sort the Path.
  *	They are equal, so they are both primary sort keys.  This is why pathkeys
- *	is a List of Lists.  -- bjm
+ *	is a List of Lists.
+ *
+ *	For multi-key sorts, if the outer is sorted by a multi-key index, the
+ *	multi-key index remains after the join.  If the inner has a multi-key
+ *	sort, only the primary key of the inner is added to the result.
+ *	Mergejoins only join on the primary key.  Currently, non-primary keys
+ *	in the pathkeys List are of limited value.
+ *
+ *	HashJoin has similar functionality.  NestJoin does not perform sorting,
+ *	and allows non-equajoins, so it does not allow useful pathkeys.
+ *
+ *	-- bjm
+ *	
  */
  
 /****************************************************************************
@@ -92,10 +104,10 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  */
 List *
 order_joinkeys_by_pathkeys(List *pathkeys,
-						List *joinkeys,
-						List *joinclauses,
-						int outer_or_inner,
-						List **matchedJoinClausesPtr)
+							List *joinkeys,
+							List *joinclauses,
+							int outer_or_inner,
+							List **matchedJoinClausesPtr)
 {
 	List	   *matched_joinkeys = NIL;
 	List	   *matched_joinclauses = NIL;
@@ -103,6 +115,10 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 	List	   *i = NIL;
 	int			matched_joinkey_index = -1;
 
+	/*
+	 *	Reorder the joinkeys by picking out one that matches each pathkey,
+	 *	and create a new joinkey/joinclause list in pathkey order
+	 */
 	foreach(i, pathkeys)
 	{
 		pathkey = lfirst(i);
@@ -118,10 +134,18 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 			matched_joinclauses = lappend(matched_joinclauses, joinclause);
 		}
 		else
-		{
+			/*	A pathkey could not be matched. */
+			break;
+	}
+
+	/*
+	 *	Did we fail to match all the joinkeys?
+	 *	Extra pathkeys are no problem.
+	 */
+	if (length(joinkeys) != length(matched_joinkeys))
+	{
 			*matchedJoinClausesPtr = NIL;
 			return NIL;
-		}
 	}
 
 	*matchedJoinClausesPtr = matched_joinclauses;
@@ -133,6 +157,8 @@ order_joinkeys_by_pathkeys(List *pathkeys,
  * match_pathkey_joinkeys
  *	  Returns the 0-based index into 'joinkeys' of the first joinkey whose
  *	  outer or inner subkey matches any subkey of 'pathkey'.
+ *
+ *	All these keys are equivalent, so any of them can match.  See above.
  */
 static int
 match_pathkey_joinkeys(List *pathkey,
@@ -141,8 +167,7 @@ match_pathkey_joinkeys(List *pathkey,
 {
 	Var		   *path_subkey;
 	int			pos;
-	List	   *i = NIL;
-	List	   *x = NIL;
+	List	   *i, *x;
 	JoinKey    *jk;
 
 	foreach(i, pathkey)
@@ -152,8 +177,7 @@ match_pathkey_joinkeys(List *pathkey,
 		foreach(x, joinkeys)
 		{
 			jk = (JoinKey *) lfirst(x);
-			if (var_equal(path_subkey,
-						  extract_join_key(jk, outer_or_inner)))
+			if (var_equal(path_subkey, extract_join_key(jk, outer_or_inner)))
 				return pos;
 			pos++;
 		}

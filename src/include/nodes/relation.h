@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.27 1999/02/20 16:28:20 momjian Exp $
+ * $Id: relation.h,v 1.28 1999/02/20 19:02:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,7 @@ typedef struct Path
 
 	PathOrder	*pathorder;
 
-	List	    *pathkeys;	/*
-							 * This is a List of List of Var nodes.
+	List	    *pathkeys;	/* This is a List of List of Var nodes.
 							 * See the top of optimizer/path/pathkeys.c
 							 * for more information.
 							 */							   
