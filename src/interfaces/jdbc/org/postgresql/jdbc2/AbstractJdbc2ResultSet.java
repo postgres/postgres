@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.5 2002/08/23 20:45:49 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.6 2002/09/01 23:40:36 davec Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -191,10 +191,12 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
   }
 
 
-  public boolean first() throws SQLException {
+  public boolean first() throws SQLException
+  {
     if (rows.size() <= 0)
       return false;
 
+    onInsertRow = false;
     current_row = 0;
     this_row = (byte[][]) rows.elementAt(current_row);
 
@@ -449,8 +451,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
   }
 
 
-  public synchronized void cancelRowUpdates() throws SQLException {
-    if (doingUpdates) {
+  public synchronized void cancelRowUpdates() throws SQLException
+  {
+    if (doingUpdates)
+    {
       doingUpdates = false;
 
       clearRowBuffer();
@@ -458,7 +462,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
   }
 
 
-  public synchronized void deleteRow() throws SQLException {
+  public synchronized void deleteRow() throws SQLException
+  {
     if ( !isUpdateable() ) {
       throw new PSQLException( "postgresql.updateable.notupdateable" );
     }
@@ -593,12 +598,15 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
   }
 
 
-  public synchronized void  moveToInsertRow() throws SQLException {
-    if (!updateable) {
+  public synchronized void  moveToInsertRow() throws SQLException
+  {
+    if ( !isUpdateable() )
+    {
       throw new PSQLException( "postgresql.updateable.notupdateable" );
     }
 
-    if (insertStatement != null) {
+    if (insertStatement != null)
+    {
       insertStatement = null;
     }
 
@@ -612,7 +620,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
   }
 
 
-  private synchronized void clearRowBuffer() throws SQLException {
+  private synchronized void clearRowBuffer() throws SQLException
+  {
     // rowBuffer is the temporary storage for the row
     rowBuffer = new byte[fields.length][];
 
@@ -1180,7 +1189,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
    * Is this ResultSet updateable?
    */
 
-  boolean isUpdateable() throws SQLException {
+  boolean isUpdateable() throws SQLException
+  {
 
     if (updateable) return true;
 
