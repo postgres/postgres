@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.155 2002/08/27 04:55:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.156 2002/08/30 19:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1747,6 +1747,8 @@ _equalColumnDef(ColumnDef *a, ColumnDef *b)
 	if (!equalstr(a->colname, b->colname))
 		return false;
 	if (!equal(a->typename, b->typename))
+		return false;
+	if (a->is_inherited != b->is_inherited)
 		return false;
 	if (a->is_not_null != b->is_not_null)
 		return false;

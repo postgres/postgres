@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.170 2002/08/29 00:17:04 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.171 2002/08/30 19:23:19 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -176,7 +176,8 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	_outToken(str, node->colname);
 	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
-	appendStringInfo(str, " :is_not_null %s :raw_default ",
+	appendStringInfo(str, " :is_inherited %s :is_not_null %s :raw_default ",
+					 booltostr(node->is_inherited),
 					 booltostr(node->is_not_null));
 	_outNode(str, node->raw_default);
 	appendStringInfo(str, " :cooked_default ");

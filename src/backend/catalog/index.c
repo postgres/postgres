@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.191 2002/08/29 15:56:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.192 2002/08/30 19:23:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -259,6 +259,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		to->attcacheoff = -1;
 		to->attnotnull = false;
 		to->atthasdef = false;
+		to->attisinherited = false;
 
 		/*
 		 * We do not yet have the correct relation OID for the index, so

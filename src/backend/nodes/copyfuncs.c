@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.207 2002/08/27 04:55:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.208 2002/08/30 19:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1729,6 +1729,7 @@ _copyColumnDef(ColumnDef *from)
 	if (from->colname)
 		newnode->colname = pstrdup(from->colname);
 	Node_Copy(from, newnode, typename);
+	newnode->is_inherited = from->is_inherited;
 	newnode->is_not_null = from->is_not_null;
 	Node_Copy(from, newnode, raw_default);
 	if (from->cooked_default)

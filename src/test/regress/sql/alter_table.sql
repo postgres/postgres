@@ -731,3 +731,36 @@ copy test(b,c) from stdin;
 select * from test;
 drop table test;
 
+-- test inheritance
+
+create table dropColumn (a int, b int, e int);
+create table dropColumnChild (c int) inherits (dropColumn);
+create table dropColumnAnother (d int) inherits (dropColumnChild);
+
+-- these two should fail
+alter table dropColumnchild drop column a;
+alter table only dropColumnChild drop column b;
+
+-- these three should work
+alter table only dropColumn drop column e;
+alter table dropColumnChild drop column c;
+alter table dropColumn drop column a;
+
+create table renameColumn (a int);
+create table renameColumnChild (b int) inherits (renameColumn);
+create table renameColumnAnother (c int) inherits (renameColumnChild);
+
+-- these three should fail
+alter table renameColumnChild rename column a to d;
+alter table only renameColumnChild rename column a to d;
+alter table only renameColumn rename column a to d;
+
+-- these should work
+alter table renameColumn rename column a to d;
+alter table renameColumnChild rename column b to a;
+
+-- this should work
+alter table renameColumn add column w int;
+
+-- this should fail
+alter table only renameColumn add column x int;

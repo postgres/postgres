@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.67 2002/07/16 22:12:19 tgl Exp $
+ *	$Id: view.c,v 1.68 2002/08/30 19:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist)
 			typename->typmod = res->restypmod;
 			def->typename = typename;
 
+			def->is_inherited = false;
 			def->is_not_null = false;
 			def->raw_default = NULL;
 			def->cooked_default = NULL;

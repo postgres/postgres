@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.86 2002/08/29 00:17:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.87 2002/08/30 19:23:18 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -231,6 +231,9 @@ FreeTupleDesc(TupleDesc tupdesc)
 
 }
 
+/*
+ * Compare two TupleDesc structures for logical equality
+ */
 bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 {
@@ -264,7 +267,11 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attnotnull != attr2->attnotnull)
 			return false;
+		if (attr1->atthasdef != attr2->atthasdef)
+			return false;
 		if (attr1->attisdropped != attr2->attisdropped)
+			return false;
+		if (attr1->attisinherited != attr2->attisinherited)
 			return false;
 	}
 	if (tupdesc1->constr != NULL)
@@ -389,6 +396,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attnotnull = false;
 	att->atthasdef = false;
 	att->attisdropped = false;
+	att->attisinherited = false;
 
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(oidtypeid),
@@ -514,7 +522,7 @@ BuildDescForRelation(List *schema)
 						   typenameTypeId(entry->typename),
 						   atttypmod, attdim, attisset);
 
-		/* This is for constraints */
+		/* Fill in additional stuff not handled by TupleDescInitEntry */
 		if (entry->is_not_null)
 			constr->has_not_null = true;
 		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
@@ -533,7 +541,9 @@ BuildDescForRelation(List *schema)
 			desc->attrs[attnum - 1]->atthasdef = true;
 		}
 
+		desc->attrs[attnum - 1]->attisinherited = entry->is_inherited;
 	}
+
 	if (constr->has_not_null || ndef > 0)
 	{
 		desc->constr = constr;

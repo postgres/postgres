@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.36 2002/08/29 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.37 2002/08/30 19:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/gramparse.h"
@@ -614,6 +615,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				typename->typeid = attribute->atttypid;
 				typename->typmod = attribute->atttypmod;
 				def->typename = typename;
+				def->is_inherited = true;
 				def->is_not_null = attribute->attnotnull;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
@@ -1049,14 +1051,16 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
  *		delete original attribute from attribute catalog
  */
 void
-renameatt(Oid relid,
+renameatt(Oid myrelid,
 		  const char *oldattname,
 		  const char *newattname,
-		  bool recurse)
+		  bool recurse,
+		  bool recursing)
 {
 	Relation	targetrelation;
 	Relation	attrelation;
 	HeapTuple	atttup;
+	Form_pg_attribute attform;
 	List	   *indexoidlist;
 	List	   *indexoidscan;
 
@@ -1064,7 +1068,7 @@ renameatt(Oid relid,
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	targetrelation = relation_open(relid, AccessExclusiveLock);
+	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -1076,7 +1080,7 @@ renameatt(Oid relid,
 		&& IsSystemRelation(targetrelation))
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 RelationGetRelationName(targetrelation));
-	if (!pg_class_ownercheck(relid, GetUserId()))
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER,
 					   RelationGetRelationName(targetrelation));
 
@@ -1095,7 +1099,7 @@ renameatt(Oid relid,
 				   *children;
 
 		/* this routine is actually in the planner */
-		children = find_all_inheritors(relid);
+		children = find_all_inheritors(myrelid);
 
 		/*
 		 * find_all_inheritors does the recursive search of the
@@ -1106,34 +1110,53 @@ renameatt(Oid relid,
 		{
 			Oid			childrelid = lfirsti(child);
 
-			if (childrelid == relid)
+			if (childrelid == myrelid)
 				continue;
 			/* note we need not recurse again! */
-			renameatt(childrelid, oldattname, newattname, false);
+			renameatt(childrelid, oldattname, newattname, false, true);
 		}
+	}
+	else
+	{
+		/*
+		 * If we are told not to recurse, there had better not be any
+		 * child tables; else the rename would put them out of step.
+		 */
+		if (!recursing &&
+			find_inheritance_children(myrelid) != NIL)
+			elog(ERROR, "Inherited attribute \"%s\" must be renamed in child tables too",
+				 oldattname);
 	}
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	atttup = SearchSysCacheCopyAttName(relid, oldattname);
+	atttup = SearchSysCacheCopyAttName(myrelid, oldattname);
 	if (!HeapTupleIsValid(atttup))
 		elog(ERROR, "renameatt: attribute \"%s\" does not exist",
 			 oldattname);
+	attform = (Form_pg_attribute) GETSTRUCT(atttup);
 
-	if (((Form_pg_attribute) GETSTRUCT(atttup))->attnum < 0)
+	if (attform->attnum < 0)
 		elog(ERROR, "renameatt: system attribute \"%s\" may not be renamed",
+			 oldattname);
+
+	/*
+	 * if the attribute is inherited, forbid the renaming, unless we
+	 * are already inside a recursive rename.
+	 */
+	if (attform->attisinherited && !recursing)
+		elog(ERROR, "renameatt: inherited attribute \"%s\" may not be renamed",
 			 oldattname);
 
 	/* should not already exist */
 	/* this test is deliberately not attisdropped-aware */
 	if (SearchSysCacheExists(ATTNAME,
-							 ObjectIdGetDatum(relid),
+							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(newattname),
 							 0, 0))
 		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
 
-	namestrcpy(&(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
-			   newattname);
+	namestrcpy(&(attform->attname), newattname);
 
 	simple_heap_update(attrelation, &atttup->t_self, atttup);
 
@@ -1223,7 +1246,7 @@ renameatt(Oid relid,
  *			  sequence, AFAIK there's no need for it to be there.
  */
 void
-renamerel(Oid relid, const char *newrelname)
+renamerel(Oid myrelid, const char *newrelname)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
@@ -1237,7 +1260,7 @@ renamerel(Oid relid, const char *newrelname)
 	 * Grab an exclusive lock on the target table or index, which we will
 	 * NOT release until end of transaction.
 	 */
-	targetrelation = relation_open(relid, AccessExclusiveLock);
+	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
 	oldrelname = pstrdup(RelationGetRelationName(targetrelation));
 	namespaceId = RelationGetNamespace(targetrelation);
@@ -1258,7 +1281,7 @@ renamerel(Oid relid, const char *newrelname)
 	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy(RELOID,
-								PointerGetDatum(relid),
+								PointerGetDatum(myrelid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "renamerel: relation \"%s\" does not exist",
@@ -1293,12 +1316,12 @@ renamerel(Oid relid, const char *newrelname)
 	if (relhastriggers)
 	{
 		/* update tgargs where relname is primary key */
-		update_ri_trigger_args(relid,
+		update_ri_trigger_args(myrelid,
 							   oldrelname,
 							   newrelname,
 							   false, true);
 		/* update tgargs where relname is foreign key */
-		update_ri_trigger_args(relid,
+		update_ri_trigger_args(myrelid,
 							   oldrelname,
 							   newrelname,
 							   true, true);
@@ -1532,35 +1555,12 @@ update_ri_trigger_args(Oid relid,
  *		(formerly known as PerformAddAttribute)
  *
  *		adds an additional attribute to a relation
- *
- *		Adds attribute field(s) to a relation.	Each new attribute
- *		is given attnums in sequential order and is added to the
- *		ATTRIBUTE relation.  If the AMI fails, defunct tuples will
- *		remain in the ATTRIBUTE relation for later vacuuming.
- *		Later, there may be some reserved attribute names???
- *
- *		(If needed, can instead use elog to handle exceptions.)
- *
- *		Note:
- *				Initial idea of ordering the tuple attributes so that all
- *		the variable length domains occured last was scratched.  Doing
- *		so would not speed access too much (in general) and would create
- *		many complications in formtuple, heap_getattr, and addattribute.
- *
- *		scan attribute catalog for name conflict (within rel)
- *		scan type catalog for absence of data type (if not arg)
- *		create attnum magically???
- *		create attribute tuple
- *		insert attribute in attribute catalog
- *		modify reldesc
- *		create new relation tuple
- *		insert new relation in relation catalog
- *		delete original relation from relation catalog
  * ----------------
  */
 void
 AlterTableAddColumn(Oid myrelid,
-					bool inherits,
+					bool recurse,
+					bool recursing,
 					ColumnDef *colDef)
 {
 	Relation	rel,
@@ -1610,10 +1610,13 @@ AlterTableAddColumn(Oid myrelid,
 	 * whole transaction to abort, which is what we want -- all or
 	 * nothing.
 	 */
-	if (inherits)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;
+		ColumnDef  *colDefChild = copyObject(colDef);
+
+		colDefChild->is_inherited = true;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(myrelid);
@@ -1630,8 +1633,18 @@ AlterTableAddColumn(Oid myrelid,
 			if (childrelid == myrelid)
 				continue;
 
-			AlterTableAddColumn(childrelid, false, colDef);
+			AlterTableAddColumn(childrelid, false, true, colDefChild);
 		}
+	}
+	else
+	{
+		/*
+		 * If we are told not to recurse, there had better not be any
+		 * child tables; else the addition would put them out of step.
+		 */
+		if (!recursing &&
+			find_inheritance_children(myrelid) != NIL)
+			elog(ERROR, "Attribute must be added to child tables too");
 	}
 
 	/*
@@ -1716,6 +1729,7 @@ AlterTableAddColumn(Oid myrelid,
 	attribute->atthasdef = (colDef->raw_default != NULL ||
 							colDef->cooked_default != NULL);
 	attribute->attisdropped = false;
+	attribute->attisinherited = colDef->is_inherited;
 
 	ReleaseSysCache(typeTuple);
 
@@ -1786,8 +1800,8 @@ AlterTableAddColumn(Oid myrelid,
  * ALTER TABLE ALTER COLUMN DROP NOT NULL
  */
 void
-AlterTableAlterColumnDropNotNull(Oid myrelid,
-								 bool inh, const char *colName)
+AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
+								 const char *colName)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -1813,7 +1827,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 	/*
 	 * Propagate to children if desired
 	 */
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;
@@ -1920,8 +1934,8 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
  * ALTER TABLE ALTER COLUMN SET NOT NULL
  */
 void
-AlterTableAlterColumnSetNotNull(Oid myrelid,
-								bool inh, const char *colName)
+AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
+								const char *colName)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -1947,7 +1961,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 	/*
 	 * Propagate to children if desired
 	 */
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;
@@ -2035,8 +2049,8 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
  * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
  */
 void
-AlterTableAlterColumnDefault(Oid myrelid,
-							 bool inh, const char *colName,
+AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
+							 const char *colName,
 							 Node *newDefault)
 {
 	Relation	rel;
@@ -2065,7 +2079,7 @@ AlterTableAlterColumnDefault(Oid myrelid,
 	/*
 	 * Propagate to children if desired
 	 */
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;
@@ -2134,8 +2148,8 @@ AlterTableAlterColumnDefault(Oid myrelid,
  * ALTER TABLE ALTER COLUMN SET STATISTICS / STORAGE
  */
 void
-AlterTableAlterColumnFlags(Oid myrelid,
-						   bool inh, const char *colName,
+AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
+						   const char *colName,
 						   Node *flagValue, const char *flagType)
 {
 	Relation	rel;
@@ -2213,7 +2227,7 @@ AlterTableAlterColumnFlags(Oid myrelid,
 	/*
 	 * Propagate to children if desired
 	 */
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;
@@ -2284,8 +2298,8 @@ AlterTableAlterColumnFlags(Oid myrelid,
  * ALTER TABLE DROP COLUMN
  */
 void
-AlterTableDropColumn(Oid myrelid,
-					 bool inh, const char *colName,
+AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
+					 const char *colName,
 					 DropBehavior behavior)
 {
 	Relation	rel;
@@ -2344,10 +2358,54 @@ AlterTableDropColumn(Oid myrelid,
 		elog(ERROR, "ALTER TABLE: Cannot drop last column from table \"%s\"",
 			RelationGetRelationName(rel));
 
+	/* Don't drop inherited columns */
+	if (tupleDesc->attrs[attnum - 1]->attisinherited && !recursing)
+		elog(ERROR, "ALTER TABLE: Cannot drop inherited column \"%s\"",
+			 colName);
+
+	/*
+	 * If we are asked to drop ONLY in this table (no recursion),
+	 * we need to mark the inheritors' attribute as non-inherited.
+	 */
+	if (!recurse && !recursing)
+	{
+		Relation	attr_rel;
+		List	   *child,
+				   *children;
+
+		/* We only want direct inheritors in this case */
+		children = find_inheritance_children(myrelid);
+
+		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+		foreach(child, children)
+		{
+			Oid		childrelid = lfirsti(child);
+			Relation childrel;
+			HeapTuple	tuple;
+
+			childrel = heap_open(childrelid, AccessExclusiveLock);
+
+			tuple = SearchSysCacheCopyAttName(childrelid, colName);
+			if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+				elog(ERROR, "ALTER TABLE: relation %u has no column \"%s\"",
+					 childrelid, colName);
+
+			((Form_pg_attribute) GETSTRUCT(tuple))->attisinherited = false;
+
+			simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+			/* keep the system catalog indexes current */
+			CatalogUpdateIndexes(attr_rel, tuple);
+
+			heap_close(childrel, NoLock);
+		}
+		heap_close(attr_rel, RowExclusiveLock);
+	}
+
 	/*
 	 * Propagate to children if desired
 	 */
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 			   *children;
@@ -2366,8 +2424,7 @@ AlterTableDropColumn(Oid myrelid,
 
 			if (childrelid == myrelid)
 				continue;
-			AlterTableDropColumn(childrelid,
-								false, colName, behavior);
+			AlterTableDropColumn(childrelid, false, true, colName, behavior);
 		}
 	}
 
@@ -2388,8 +2445,8 @@ AlterTableDropColumn(Oid myrelid,
  * ALTER TABLE ADD CONSTRAINT
  */
 void
-AlterTableAddConstraint(Oid myrelid,
-						bool inh, List *newConstraints)
+AlterTableAddConstraint(Oid myrelid, bool recurse,
+						List *newConstraints)
 {
 	Relation	rel;
 	List	   *listptr;
@@ -2413,7 +2470,7 @@ AlterTableAddConstraint(Oid myrelid,
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;
@@ -3092,8 +3149,8 @@ fkMatchTypeToString(char match_type)
  * ALTER TABLE DROP CONSTRAINT
  */
 void
-AlterTableDropConstraint(Oid myrelid,
-						 bool inh, const char *constrName,
+AlterTableDropConstraint(Oid myrelid, bool recurse,
+						 const char *constrName,
 						 DropBehavior behavior)
 {
 	Relation	rel;
@@ -3121,7 +3178,7 @@ AlterTableDropConstraint(Oid myrelid,
 	/*
 	 * Process child tables if requested.
 	 */
-	if (inh)
+	if (recurse)
 	{
 		List	   *child,
 				   *children;

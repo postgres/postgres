@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.5 2002/07/01 15:27:56 tgl Exp $
+ * $Id: tablecmds.h,v 1.6 2002/08/30 19:23:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,31 +16,31 @@
 
 #include "nodes/parsenodes.h"
 
-extern void AlterTableAddColumn(Oid myrelid, bool inherits,
+extern void AlterTableAddColumn(Oid myrelid, bool recurse, bool recursing,
 								ColumnDef *colDef);
 
-extern void AlterTableAlterColumnDefault(Oid myrelid, bool inh,
+extern void AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
+											 const char *colName);
+
+extern void AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
+											const char *colName);
+
+extern void AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 										 const char *colName,
 										 Node *newDefault);
 
-extern void AlterTableAlterColumnDropNotNull(Oid myrelid, bool inh,
-											 const char *colName);
-
-extern void AlterTableAlterColumnSetNotNull(Oid myrelid, bool inh,
-											const char *colName);
-
-extern void AlterTableAlterColumnFlags(Oid myrelid, bool inh,
+extern void AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 									   const char *colName,
 									   Node *flagValue, const char *flagType);
 
-extern void AlterTableDropColumn(Oid myrelid, bool inh,
+extern void AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 					 			 const char *colName,
 								 DropBehavior behavior);
 
-extern void AlterTableAddConstraint(Oid myrelid, bool inh,
+extern void AlterTableAddConstraint(Oid myrelid, bool recurse,
 									List *newConstraints);
 
-extern void AlterTableDropConstraint(Oid myrelid, bool inh,
+extern void AlterTableDropConstraint(Oid myrelid, bool recurse,
 									 const char *constrName,
 									 DropBehavior behavior);
 
@@ -54,12 +54,13 @@ extern void RemoveRelation(const RangeVar *relation, DropBehavior behavior);
 
 extern void TruncateRelation(const RangeVar *relation);
 
-extern void renameatt(Oid relid,
+extern void renameatt(Oid myrelid,
 		  const char *oldattname,
 		  const char *newattname,
-		  bool recurse);
+		  bool recurse,
+		  bool recursing);
 
-extern void renamerel(Oid relid,
+extern void renamerel(Oid myrelid,
 		  const char *newrelname);
 
 #endif   /* TABLECMDS_H */
