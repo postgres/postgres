@@ -9,7 +9,7 @@ import org.postgresql.jdbc2.optional.BaseDataSource;
  * Minimal tests for pooling DataSource.  Needs many more.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class PoolingDataSourceTest extends BaseDataSourceTest
 {
@@ -40,16 +40,9 @@ public class PoolingDataSourceTest extends BaseDataSourceTest
         if (bds == null)
         {
             bds = new PoolingDataSource();
-            String db = TestUtil.getURL();
-            if (db.indexOf('/') > -1)
-            {
-                db = db.substring(db.lastIndexOf('/') + 1);
-            }
-            else if (db.indexOf(':') > -1)
-            {
-                db = db.substring(db.lastIndexOf(':') + 1);
-            }
-            bds.setDatabaseName(db);
+            bds.setServerName(TestUtil.getServer());
+            bds.setPortNumber(TestUtil.getPort());
+            bds.setDatabaseName(TestUtil.getDatabase());
             bds.setUser(TestUtil.getUser());
             bds.setPassword(TestUtil.getPassword());
             ((PoolingDataSource) bds).setDataSourceName(DS_NAME);

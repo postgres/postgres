@@ -12,7 +12,7 @@ import javax.sql.PooledConnection;
  * Tests JDBC3 implementation of ConnectionPoolDataSource.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class Jdbc3ConnectionPoolTest extends ConnectionPoolTest
 {
@@ -29,16 +29,9 @@ public class Jdbc3ConnectionPoolTest extends ConnectionPoolTest
         if (bds == null)
         {
             bds = new Jdbc3ConnectionPool();
-            String db = TestUtil.getURL();
-            if (db.indexOf('/') > -1)
-            {
-                db = db.substring(db.lastIndexOf('/') + 1);
-            }
-            else if (db.indexOf(':') > -1)
-            {
-                db = db.substring(db.lastIndexOf(':') + 1);
-            }
-            bds.setDatabaseName(db);
+            bds.setServerName(TestUtil.getServer());
+            bds.setPortNumber(TestUtil.getPort());
+            bds.setDatabaseName(TestUtil.getDatabase());
             bds.setUser(TestUtil.getUser());
             bds.setPassword(TestUtil.getPassword());
         }

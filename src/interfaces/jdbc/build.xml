@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.36 2003/08/24 22:10:09 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.37 2003/11/03 15:28:26 davec Exp $
 
 -->
 
@@ -305,7 +305,9 @@
   <!-- This compiles and executes the JUnit tests -->
 
   <!-- defaults for the tests - override these if required -->
-  <property name="database" value="jdbc:postgresql:test" />
+  <property name="server" value="localhost" />
+  <property name="port" value="${def_pgport}" />
+  <property name="database" value="test" />
   <property name="username" value="test" />
   <!-- Password must be something.  Doesn't matter if trust is used! -->
   <property name="password" value="password" />
@@ -337,6 +339,8 @@
     <junit>
       <formatter type="brief" usefile="false"/>
 
+      <sysproperty key="server" value="${server}" />
+      <sysproperty key="port" value="${port}" />
       <sysproperty key="database" value="${database}" />
       <sysproperty key="username" value="${username}" />
       <sysproperty key="password" value="${password}" />

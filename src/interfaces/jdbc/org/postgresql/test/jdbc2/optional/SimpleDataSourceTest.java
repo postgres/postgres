@@ -8,7 +8,7 @@ import org.postgresql.jdbc2.optional.SimpleDataSource;
  * configuration logic.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class SimpleDataSourceTest extends BaseDataSourceTest
 {
@@ -28,16 +28,9 @@ public class SimpleDataSourceTest extends BaseDataSourceTest
 		if (bds == null)
 		{
 			bds = new SimpleDataSource();
-			String db = TestUtil.getURL();
-			if (db.indexOf('/') > -1)
-			{
-				db = db.substring(db.lastIndexOf('/') + 1);
-			}
-			else if (db.indexOf(':') > -1)
-			{
-				db = db.substring(db.lastIndexOf(':') + 1);
-			}
-			bds.setDatabaseName(db);
+			bds.setServerName(TestUtil.getServer());
+			bds.setPortNumber(TestUtil.getPort());
+			bds.setDatabaseName(TestUtil.getDatabase());
 			bds.setUser(TestUtil.getUser());
 			bds.setPassword(TestUtil.getPassword());
 		}
