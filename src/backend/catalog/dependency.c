@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.13 2002/11/30 21:25:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.14 2002/12/04 20:00:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,6 +789,11 @@ find_expr_references_walker(Node *node,
 		else if (rte->rtekind == RTE_JOIN)
 		{
 			/* Scan join output column to add references to join inputs */
+			List   *save_rtables;
+
+			/* We must make the context appropriate for join's level */
+			save_rtables = context->rtables;
+			context->rtables = rtables;
 			if (var->varattno <= 0 ||
 				var->varattno > length(rte->joinaliasvars))
 				elog(ERROR, "find_expr_references_walker: bogus varattno %d",
@@ -796,6 +801,7 @@ find_expr_references_walker(Node *node,
 			find_expr_references_walker((Node *) nth(var->varattno - 1,
 													 rte->joinaliasvars),
 										context);
+			context->rtables = save_rtables;
 		}
 		return false;
 	}
