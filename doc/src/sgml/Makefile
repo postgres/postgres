@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.4 1998/07/29 06:29:04 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.5 1998/09/25 13:41:25 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ PDSL=$(PSTYLE)/docbook.dsl
 
 # Options for DocBook style sheets
 
-DBOPTS= -D ref
+DBOPTS= -D ref -D ../graphics
 #DBOPTS+= -V %no-split-output% -V %no-make-index%
 # use-id-as-filename picks up the "Id=" fields to use as file names.
 # If this is omitted then file names are generic "c01.htm"
