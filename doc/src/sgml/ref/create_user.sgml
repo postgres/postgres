@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.11 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.12 1999/12/04 05:03:49 momjian Exp $
 Postgres documentation
 -->
 
@@ -60,6 +60,13 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
         that is being created. It is not at all necessary that those
         match the <acronym>UNIX</acronym> user ids, but some people
         choose to keep the numbers the same.
+       </para>
+       <para>
+	If you still want the
+	OS user id and the <filename>usesysid</filename> to match
+	for any given user,
+	use the <application>createuser</application> script provided with
+	the <productname>Postgres</productname> distribution.
        </para>
        <para>
         If this is not specified, the highest assigned user id plus one
