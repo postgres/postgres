@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.61 2001/01/01 21:35:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.62 2001/01/10 01:12:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,10 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
-static Oid copy_heap(Oid OIDOldHeap, char *NewName);
+
+static Oid copy_heap(Oid OIDOldHeap, char *NewName, bool istemp);
 static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName);
 static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
@@ -60,6 +62,7 @@ cluster(char *oldrelname, char *oldindexname)
 	Relation	OldHeap,
 				OldIndex;
 	HeapTuple	tuple;
+	bool		istemp;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
 	char		saveoldrelname[NAMEDATALEN];
@@ -81,6 +84,8 @@ cluster(char *oldrelname, char *oldindexname)
 	OldIndex = index_openr(saveoldindexname);
 	LockRelation(OldIndex, AccessExclusiveLock);
 	OIDOldIndex = RelationGetRelid(OldIndex);
+
+	istemp = is_temp_rel_name(saveoldrelname);
 
 	/*
 	 * Check that index is in fact an index on the given relation
@@ -105,7 +110,7 @@ cluster(char *oldrelname, char *oldindexname)
 	 */
 	snprintf(NewHeapName, NAMEDATALEN, "temp_%u", OIDOldHeap);
 
-	OIDNewHeap = copy_heap(OIDOldHeap, NewHeapName);
+	OIDNewHeap = copy_heap(OIDOldHeap, NewHeapName, istemp);
 
 	/* We do not need CommandCounterIncrement() because copy_heap did it. */
 
@@ -138,7 +143,7 @@ cluster(char *oldrelname, char *oldindexname)
 }
 
 static Oid
-copy_heap(Oid OIDOldHeap, char *NewName)
+copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 {
 	TupleDesc	OldHeapDesc,
 				tupdesc;
@@ -155,7 +160,7 @@ copy_heap(Oid OIDOldHeap, char *NewName)
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
 	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc,
-										  RELKIND_RELATION, false,
+										  RELKIND_RELATION, istemp,
 										  allowSystemTableMods);
 
 	/*
@@ -192,9 +197,13 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 	OldIndex = index_open(OIDOldIndex);
 
 	/*
-	 * Create a new (temporary) index like the one that's already here.
-	 * To do this I get the info from pg_index, and add a new index with
-	 * a temporary name.
+	 * Create a new index like the old one.  To do this I get the info
+	 * from pg_index, and add a new index with a temporary name (that
+	 * will be changed later).
+	 *
+	 * NOTE: index_create will cause the new index to be a temp relation
+	 * if its parent table is, so we don't need to do anything special
+	 * for the temp-table case here.
 	 */
 	Old_pg_index_Tuple = SearchSysCache(INDEXRELID,
 										ObjectIdGetDatum(OIDOldIndex),
