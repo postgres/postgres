@@ -555,9 +555,9 @@ COPY bt_f8_heap FROM '_CWD_/data/hash.data';
 INSERT INTO arrtest (a[5], b[2][1][2], c, d)
    VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}');
 
--- UPDATE arrtest SET e[0] = '1.1';
+UPDATE arrtest SET e[0] = '1.1';
 
--- UPDATE arrtest SET e[1] = '2.2';
+UPDATE arrtest SET e[1] = '2.2';
 
 INSERT INTO arrtest (a, b[2][2][1], c, d, e)
    VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 

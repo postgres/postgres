@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.1.1.1 1996/07/09 06:22:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.2 1996/07/20 07:58:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,7 +877,11 @@ array_set(ArrayType *array,
          * fixed length arrays -- these are assumed to be 1-d
          */
         if (indx[0]*elmlen > arraylen) 
+#ifdef ARRAY_PATCH
             elog(WARN, "array_ref: array bound exceeded");
+#else
+            elog(WARN, "array_set: array bound exceeded");
+#endif
         pos = (char *)array + indx[0]*elmlen;
         ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
         return((char *)array);
@@ -888,7 +892,14 @@ array_set(ArrayType *array,
     nbytes = (* (int32 *) array) - ARR_OVERHEAD(ndim);
     
     if (!SanityCheckInput(ndim, n,  dim, lb, indx)) 
+#ifdef ARRAY_PATCH
+    {
+	elog(WARN, "array_set: array bound exceeded");
         return((char *)array);
+    }
+#else
+        return((char *)array);
+#endif
     offset = GetOffset( n, dim, lb, indx);
     
     if (ARR_IS_LO(array)) {
@@ -924,7 +935,41 @@ array_set(ArrayType *array,
         if (nbytes - offset < 1) return((char *)array);
         pos = ARR_DATA_PTR (array) + offset;
     } else {
+#ifdef ARRAY_PATCH
+	ArrayType *newarray;
+	char *elt_ptr;
+	int oldsize, newsize, oldlen, newlen, lth0, lth1, lth2;
+
+	elt_ptr = array_seek(ARR_DATA_PTR(array), -1, offset);
+	oldlen = INTALIGN(*(int32 *)elt_ptr);
+	newlen = INTALIGN(*(int32 *)dataPtr);
+
+	if (oldlen == newlen) {
+	    /* new element with same size, overwrite old data */
+	    ArrayCastAndSet(dataPtr, (bool)reftype, elmlen, elt_ptr);
+	    return((char *)array);
+	}
+
+	/* new element with different size, reallocate the array */
+	oldsize = array->size;
+	lth0 = ARR_OVERHEAD(n);
+	lth1 = (int)(elt_ptr - ARR_DATA_PTR(array));
+	lth2 = (int)(oldsize - lth0 - lth1 - oldlen);
+	newsize = lth0 + lth1 + newlen + lth2;
+
+	newarray = (ArrayType *)palloc(newsize);
+	memmove((char *)newarray, (char *)array, lth0+lth1);
+	newarray->size = newsize;
+	newlen = ArrayCastAndSet(dataPtr, (bool)reftype, elmlen,
+				 (char *)newarray+lth0+lth1);
+	memmove((char *)newarray+lth0+lth1+newlen,
+		(char *)array+lth0+lth1+oldlen, lth2);
+
+	/* ??? who should free this storage ??? */
+	return((char *)newarray);
+#else
         elog(WARN, "array_set: update of variable length fields not supported");
+#endif
     } 
     ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
     return((char *)array);
