@@ -1,7 +1,16 @@
 AROPT = crs
-export_dynamic = -Wl,-Bexport
+ifeq ($(with_gnu_ld), yes)
+	export_dynamic = -Wl,-E
+else
+	export_dynamic = -Wl,-Bexport
+endif
+
 ifeq ($(ld_R_works), yes)
-rpath = -Wl,-R$(libdir)
+ifeq ($(with_gnu_ld), yes)
+	rpath = -Wl,-rpath,$(libdir)
+else
+	rpath = -Wl,-R$(libdir)
+endif
 endif
 shlib_symbolic = -Wl,-Bsymbolic
 

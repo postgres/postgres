@@ -8,11 +8,11 @@ AROPT = crs
 
 DLSUFFIX = .so
 ifneq ($(GCC), yes)
-  ifeq ($(host_os), aix3.2.5)
-    LDFLAGS_SL = -e _nostart
-  else
-    LDFLAGS_SL = -bnoentry
-  endif
+ifeq ($(host_os), aix3.2.5)
+	LDFLAGS_SL = -e _nostart
+else
+	LDFLAGS_SL = -bnoentry
+endif
 endif
 
 
@@ -28,11 +28,11 @@ $(POSTGRES_IMP):
 ifeq ($(host_os), aix3.2.5)
 	$(MKLDEXPORT) postgres $(bindir) > $@
 else
-  ifneq (,$(findstring aix4.1, $(host_os)))
+ifneq (,$(findstring aix4.1, $(host_os)))
 	$(MKLDEXPORT) postgres $(bindir) > $@
-  else
+else
 	$(MKLDEXPORT) postgres . > $@
-  endif
+endif
 endif
 	$(CC) -Wl,-bE:$(top_builddir)/src/backend/$@ -o postgres $(OBJS) $(LDFLAGS) $(LIBS)
 
