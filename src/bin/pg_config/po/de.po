@@ -1,0 +1,132 @@
+# German message translation file for pg_config
+# Peter Eisentraut <peter_e@gmx.net>, 2004.
+#
+# $PostgreSQL: pgsql/src/bin/pg_config/po/de.po,v 1.1 2004/10/18 22:19:15 petere Exp $
+#
+# Use these quotes: »%s«
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.0\n"
+"POT-Creation-Date: 2004-10-18 21:34+0200\n"
+"PO-Revision-Date: 2004-10-18 21:35+0200\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_config.c:36
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s gibt Informationen über die installierte Version von PostgreSQL.\n"
+"\n"
+
+#: pg_config.c:37
+msgid "Usage:\n"
+msgstr "Benutzung:\n"
+
+#: pg_config.c:38
+#, c-format
+msgid ""
+"  %s OPTION...\n"
+"\n"
+msgstr ""
+"  %s OPTION...\n"
+"\n"
+
+#: pg_config.c:39
+msgid "Options:\n"
+msgstr "Optionen:\n"
+
+#: pg_config.c:40
+msgid "  --bindir              show location of user executables\n"
+msgstr ""
+"  --bindir              zeige Installationsverzeichnis der "
+"Benutzerprogramme\n"
+
+#: pg_config.c:41
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr ""
+"  --includedir          zeige Installationsverzeichnis der Headerdateien "
+"der\n"
+"                        Client-Schnittstellen\n"
+
+#: pg_config.c:43
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
+msgstr ""
+"  --includedir-server   zeige Installationsverzeichnis der Headerdateien "
+"des\n"
+"                        Servers\n"
+
+#: pg_config.c:44
+msgid "  --libdir              show location of object code libraries\n"
+msgstr ""
+"  --libdir              zeige Installationsverzeichnis der "
+"Objektbibliotheken\n"
+
+#: pg_config.c:45
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr ""
+"  --pkglibdir           zeige Installationsverzeichnis der dynamisch\n"
+"                        ladbaren Module\n"
+
+#: pg_config.c:46
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs                zeige Ort der Erweiterungs-Makefile\n"
+
+#: pg_config.c:47
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           zeige Optionen des »configure«-Skriptes beim Bauen\n"
+"                        von PostgreSQL\n"
+
+#: pg_config.c:49
+msgid "  --version             show the PostgreSQL version, then exit\n"
+msgstr "  --version             zeige PostgreSQL-Version und beende\n"
+
+#: pg_config.c:50
+msgid ""
+"  --help                show this help, then exit\n"
+"\n"
+msgstr ""
+"  --help                diese Hilfe anzeigen, dann beenden\n"
+"\n"
+
+#: pg_config.c:51
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_config.c:57
+#, c-format
+msgid ""
+"\n"
+"Try \"%s --help\" for more information\n"
+msgstr ""
+"\n"
+"Versuchen Sie »%s --help« für weitere Informationen.\n"
+
+#: pg_config.c:75
+#, c-format
+msgid "%s: argument required\n"
+msgstr "%s: benötigt Argumente\n"
+
+#: pg_config.c:104
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: ungültiges Argument: %s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s: konnte eigene Programmdatei nicht finden\n"
