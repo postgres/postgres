@@ -2255,12 +2255,15 @@ char tables_query[MAX_STATEMENT_LEN];
 char trig_deferrable[2];
 char trig_initdeferred[2];
 char trig_args[1024];
-char upd_rule[MAX_NAME_LEN], del_rule[MAX_NAME_LEN];
+char upd_rule[MAX_TABLE_LEN], del_rule[MAX_TABLE_LEN];
 char pk_table_needed[MAX_TABLE_LEN + 1];
 char fk_table_needed[MAX_TABLE_LEN + 1];
 char *pkey_ptr, *fkey_ptr, *pk_table, *fk_table;
 int i, j, k, num_keys;
-SWORD trig_nargs, upd_rule_type, del_rule_type, defer_type;
+SWORD trig_nargs, upd_rule_type=0, del_rule_type=0;
+#if (ODBCVER >= 0x0300)
+SWORD defer_type;
+#endif
 char pkey[MAX_INFO_STRING];
 Int2 result_cols;
 
@@ -2814,7 +2817,7 @@ Int2 result_cols;
 				set_tuplefield_string(&row->tuple[13], trig_args);
 
 #if (ODBCVER >= 0x0300)
-				mylog("defer_type = '%s', defer_type);
+				mylog("defer_type = '%s'", defer_type);
 				set_tuplefield_int2(&row->tuple[14], defer_type);
 #endif /* ODBCVER >= 0x0300 */
 

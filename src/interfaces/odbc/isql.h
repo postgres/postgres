@@ -24,7 +24,9 @@ typedef signed short		RETCODE;
 #   define SQL_API			EXPORT CALLBACK
 # endif
 
+#ifndef ODBCVER
 # define ODBCVER			0x0200
+#endif
 
 # define SQL_MAX_MESSAGE_LENGTH		512
 # define SQL_MAX_DSN_LENGTH		32
