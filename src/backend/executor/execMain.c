@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.180.2.1 2003/01/23 05:10:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.180.2.2 2003/03/27 14:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1295,7 +1295,8 @@ ExecDelete(TupleTableSlot *slot,
 	{
 		bool		dodelete;
 
-		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid);
+		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid,
+										estate->es_snapshot->curcid);
 
 		if (!dodelete)			/* "do nothing" */
 			return;
@@ -1406,7 +1407,8 @@ ExecUpdate(TupleTableSlot *slot,
 		HeapTuple	newtuple;
 
 		newtuple = ExecBRUpdateTriggers(estate, resultRelInfo,
-										tupleid, tuple);
+										tupleid, tuple,
+										estate->es_snapshot->curcid);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
