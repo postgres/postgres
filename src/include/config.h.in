@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.116 2000/06/04 15:06:32 petere Exp $
+ * $Id: config.h.in,v 1.117 2000/06/09 16:03:07 momjian Exp $
  */
 
 #ifndef CONFIG_H
@@ -304,6 +304,9 @@
 /*
  * Block of parameters for the ODBC code.
  */
+
+/* are we building against a libodbcinst */
+#undef HAVE_SQLGETPRIVATEPROFILESTRING
 
 /* Set to 1 if you have <pwd.h> */
 #undef HAVE_PWD_H

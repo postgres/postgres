@@ -63,7 +63,7 @@ URGENT
 
 ADMIN
 
-* More access control over who can create tables and access the database
+* -More access control over who can create tables and use locks(Karal)
 * Test syslog functionality
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes

@@ -23,8 +23,10 @@
 #ifndef WIN32
 #include <string.h>
 #include "gpps.h"
+#ifndef HAVE_SQLGETPRIVATEPROFILESTRING
 #define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
 #define SQLWritePrivateProfileString(a,b,c,d) WritePrivateProfileString(a,b,c,d)
+#endif
 #ifndef HAVE_STRICMP
 #define stricmp(s1,s2)	strcasecmp(s1,s2)
 #define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
