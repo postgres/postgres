@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.28 2003/01/08 21:40:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.29 2003/01/08 22:06:23 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1622,11 +1622,6 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 		elog(ERROR, "cannot use subselect in CHECK constraint expression");
 	if (contain_agg_clause(expr))
 		elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
-
-	/*
-	 * Might as well try to reduce any constant expressions.
-	 */
-	expr = eval_const_expressions(expr);
 
 	/*
 	 * Convert to string form for storage.

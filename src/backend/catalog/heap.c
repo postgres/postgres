@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.238 2002/12/16 18:39:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.239 2003/01/08 22:06:20 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1605,11 +1605,6 @@ AddRelationRawConstraints(Relation rel,
 			elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
 
 		/*
-		 * Might as well try to reduce any constant expressions.
-		 */
-		expr = eval_const_expressions(expr);
-
-		/*
 		 * Constraints are evaluated with execQual, which expects an
 		 * implicit-AND list, so convert expression to implicit-AND form.
 		 * (We could go so far as to convert to CNF, but that's probably
@@ -1733,7 +1728,7 @@ cookDefault(ParseState *pstate,
 	 * column's type.  We store the expression without coercion, however,
 	 * to avoid premature coercion in cases like
 	 *
-	 * CREATE TABLE tbl (fld timestamp DEFAULT 'now'::text);
+	 * CREATE TABLE tbl (fld timestamp DEFAULT 'now');
 	 *
 	 * NB: this should match the code in rewrite/rewriteHandler.c that will
 	 * actually do the coercion, to ensure we don't accept an unusable
@@ -1754,11 +1749,6 @@ cookDefault(ParseState *pstate,
 				 format_type_be(atttypid),
 				 format_type_be(type_id));
 	}
-
-	/*
-	 * Might as well try to reduce any constant expressions.
-	 */
-	expr = eval_const_expressions(expr);
 
 	return (expr);
 }
