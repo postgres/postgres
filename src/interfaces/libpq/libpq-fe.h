@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.36 1998/07/18 18:34:34 momjian Exp $
+ * $Id: libpq-fe.h,v 1.37 1998/08/09 02:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,9 @@ extern		"C"
 		int			be_pid;		/* process id of backend */
 	} PGnotify;
 
+/* PQnoticeProcessor is a typedef for a callback function type */
+	typedef void (*PQnoticeProcessor) (void * arg, const char * message);
+
 /* PGAsyncStatusType is private to libpq, really shouldn't be seen by users */
 	typedef enum
 	{
@@ -164,6 +167,10 @@ extern		"C"
 
 		/* Optional file to write trace info to */
 		FILE	   *Pfdebug;
+
+		/* Callback procedure for notice/error message processing */
+		PQnoticeProcessor	noticeHook;
+		void	   *noticeArg;
 
 		/* Status indicators */
 		ConnStatusType		status;
@@ -300,6 +307,11 @@ extern		"C"
 	extern void PQtrace(PGconn *conn, FILE *debug_port);
 	extern void PQuntrace(PGconn *conn);
 
+	/* Override default notice processor */
+	extern void PQsetNoticeProcessor (PGconn *conn,
+									  PQnoticeProcessor proc,
+									  void *arg);
+
 /* === in fe-exec.c === */
 	/* Simple synchronous query */
 	extern PGresult *PQexec(PGconn *conn, const char *query);
@@ -390,6 +402,7 @@ extern		"C"
 	extern int	pqGetInt(int *result, int bytes, PGconn *conn);
 	extern int	pqPutInt(int value, int bytes, PGconn *conn);
 	extern int	pqReadData(PGconn *conn);
+	extern int	pqReadReady(PGconn *conn);
 	extern int	pqFlush(PGconn *conn);
 	extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 

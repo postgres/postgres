@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.60 1998/07/14 02:41:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.61 1998/08/09 02:59:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,10 @@ const char *pgresStatus[] = {
 	"PGRES_NONFATAL_ERROR",
 	"PGRES_FATAL_ERROR"
 };
+
+
+#define DONOTICE(conn,message) \
+	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
 
 static PGresult *makeEmptyPGresult(PGconn *conn, ExecStatusType status);
@@ -198,10 +202,38 @@ PQsendQuery(PGconn *conn, const char *query)
 		sprintf(conn->errorMessage, "PQsendQuery() -- query pointer is null.");
 		return 0;
 	}
+	/* check to see if the query string is too long */
+	if (strlen(query) > MAX_MESSAGE_LEN-2)
+	{
+		sprintf(conn->errorMessage, "PQsendQuery() -- query is too long.  "
+				"Maximum length is %d\n", MAX_MESSAGE_LEN - 2);
+		return 0;
+	}
+
 	if (conn->asyncStatus != PGASYNC_IDLE)
 	{
 		sprintf(conn->errorMessage,
 				"PQsendQuery() -- another query already in progress.");
+		return 0;
+	}
+
+	/* Check for pending input (asynchronous Notice or Notify messages);
+	 * also detect the case that the backend just closed the connection.
+	 * Note: we have to loop if the first call to pqReadData successfully
+	 * reads some data, since in that case pqReadData won't notice whether
+	 * the connection is now closed.
+	 */
+	while (pqReadReady(conn)) {
+		if (pqReadData(conn) < 0)
+			return 0;			/* errorMessage already set */
+		parseInput(conn);		/* deal with Notice or Notify, if any */
+	}
+
+	/* Don't try to send if we know there's no live connection. */
+	if (conn->status != CONNECTION_OK)
+	{
+		sprintf(conn->errorMessage, "PQsendQuery() -- There is no connection "
+				"to the backend.\n");
 		return 0;
 	}
 
@@ -212,22 +244,6 @@ PQsendQuery(PGconn *conn, const char *query)
 	conn->result = NULL;
 	conn->curTuple = NULL;
 	conn->asyncErrorMessage[0] = '\0';
-
-	/* check to see if the query string is too long */
-	if (strlen(query) > MAX_MESSAGE_LEN-2)
-	{
-		sprintf(conn->errorMessage, "PQsendQuery() -- query is too long.  "
-				"Maximum length is %d\n", MAX_MESSAGE_LEN - 2);
-		return 0;
-	}
-
-	/* Don't try to send if we know there's no live connection. */
-	if (conn->status != CONNECTION_OK)
-	{
-		sprintf(conn->errorMessage, "PQsendQuery() -- There is no connection "
-				"to the backend.\n");
-		return 0;
-	}
 
 	/* send the query to the backend; */
 	/* the frontend-backend protocol uses 'Q' to designate queries */
@@ -297,13 +313,17 @@ parseInput(PGconn *conn)
 		if (pqGetc(&id, conn))
 			return;
 		/*
-		 * NOTIFY messages can happen in any state besides COPY OUT;
+		 * NOTIFY and NOTICE messages can happen in any state besides COPY OUT;
 		 * always process them right away.
 		 */
 		if (id == 'A')
 		{
-			/* Notify responses can happen at any time */
 			if (getNotify(conn))
+				return;
+		}
+		else if (id == 'N')
+		{
+			if (getNotice(conn))
 				return;
 		}
 		else
@@ -318,9 +338,10 @@ parseInput(PGconn *conn)
 			{
 				if (conn->asyncStatus == PGASYNC_IDLE)
 				{
-					fprintf(stderr,
+					sprintf(conn->errorMessage,
 							"Backend message type 0x%02x arrived while idle\n",
 							id);
+					DONOTICE(conn, conn->errorMessage);
 					/* Discard the unexpected message; good idea?? */
 					conn->inStart = conn->inEnd;
 				}
@@ -354,8 +375,11 @@ parseInput(PGconn *conn)
 					if (pqGetc(&id, conn))
 						return;
 					if (id != '\0')
-						fprintf(stderr,
+					{
+						sprintf(conn->errorMessage,
 								"unexpected character %c following 'I'\n", id);
+						DONOTICE(conn, conn->errorMessage);
+					}
 					if (conn->result == NULL)
 						conn->result = makeEmptyPGresult(conn,
 														 PGRES_EMPTY_QUERY);
@@ -369,10 +393,6 @@ parseInput(PGconn *conn)
 					if (pqGetInt(&(conn->be_pid), 4, conn))
 						return;
 					if (pqGetInt(&(conn->be_key), 4, conn))
-						return;
-					break;
-				case 'N':		/* notices from the backend */
-					if (getNotice(conn))
 						return;
 					break;
 				case 'P':		/* synchronous (normal) portal */
@@ -408,8 +428,9 @@ parseInput(PGconn *conn)
 					}
 					else
 					{
-						fprintf(stderr,
+						sprintf(conn->errorMessage,
 								"Backend sent D message without prior T\n");
+						DONOTICE(conn, conn->errorMessage);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
 						return;
@@ -424,8 +445,9 @@ parseInput(PGconn *conn)
 					}
 					else
 					{
-						fprintf(stderr,
+						sprintf(conn->errorMessage,
 								"Backend sent B message without prior T\n");
+						DONOTICE(conn, conn->errorMessage);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
 						return;
@@ -783,14 +805,7 @@ getNotice(PGconn *conn)
 {
 	if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, conn))
 		return EOF;
-	/*
-	 * Should we really be doing this?	These notices
-	 * are not important enough for us to presume to
-	 * put them on stderr.	Maybe the caller should
-	 * decide whether to put them on stderr or not.
-	 * BJH 96.12.27
-	 */
-	fprintf(stderr, "%s", conn->errorMessage);
+	DONOTICE(conn, conn->errorMessage);
 	return 0;
 }
 
@@ -970,7 +985,10 @@ PQendcopy(PGconn *conn)
 	 * To recover, reset the connection (talk about using a sledgehammer...)
 	 */
 	PQclear(result);
-	fprintf(stderr, "PQendcopy: resetting connection\n");
+
+	sprintf(conn->errorMessage, "PQendcopy: resetting connection\n");
+	DONOTICE(conn, conn->errorMessage);
+
 	PQreset(conn);
 
 	return 1;
@@ -1156,11 +1174,7 @@ ExecStatusType
 PQresultStatus(PGresult *res)
 {
 	if (!res)
-	{
-		fprintf(stderr, "PQresultStatus() -- pointer to PQresult is null\n");
 		return PGRES_NONFATAL_ERROR;
-	}
-
 	return res->resultStatus;
 }
 
@@ -1168,10 +1182,7 @@ int
 PQntuples(PGresult *res)
 {
 	if (!res)
-	{
-		fprintf(stderr, "PQntuples() -- pointer to PQresult is null\n");
 		return 0;
-	}
 	return res->ntups;
 }
 
@@ -1179,11 +1190,54 @@ int
 PQnfields(PGresult *res)
 {
 	if (!res)
-	{
-		fprintf(stderr, "PQnfields() -- pointer to PQresult is null\n");
 		return 0;
-	}
 	return res->numAttributes;
+}
+
+/*
+ * Helper routines to range-check field numbers and tuple numbers.
+ * Return TRUE if OK, FALSE if not
+ */
+
+static int
+check_field_number(const char *routineName, PGresult *res, int field_num)
+{
+	if (!res)
+		return FALSE;			/* no way to display error message... */
+	if (field_num < 0 || field_num >= res->numAttributes)
+	{
+		sprintf(res->conn->errorMessage,
+				"%s: ERROR! field number %d is out of range 0..%d\n",
+				routineName, field_num, res->numAttributes - 1);
+		DONOTICE(res->conn, res->conn->errorMessage);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static int
+check_tuple_field_number(const char *routineName, PGresult *res,
+						 int tup_num, int field_num)
+{
+	if (!res)
+		return FALSE;			/* no way to display error message... */
+	if (tup_num < 0 || tup_num >= res->ntups)
+	{
+		sprintf(res->conn->errorMessage,
+				"%s: ERROR! tuple number %d is out of range 0..%d\n",
+				routineName, tup_num, res->ntups - 1);
+		DONOTICE(res->conn, res->conn->errorMessage);
+		return FALSE;
+	}
+	if (field_num < 0 || field_num >= res->numAttributes)
+	{
+		sprintf(res->conn->errorMessage,
+				"%s: ERROR! field number %d is out of range 0..%d\n",
+				routineName, field_num, res->numAttributes - 1);
+		DONOTICE(res->conn, res->conn->errorMessage);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 /*
@@ -1192,19 +1246,8 @@ PQnfields(PGresult *res)
 char *
 PQfname(PGresult *res, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQfname() -- pointer to PQresult is null\n");
+	if (! check_field_number("PQfname", res, field_num))
 		return NULL;
-	}
-
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQfname: ERROR! field number %d is out of range 0..%d\n",
-				field_num, res->numAttributes - 1);
-		return NULL;
-	}
 	if (res->attDescs)
 		return res->attDescs[field_num].name;
 	else
@@ -1221,10 +1264,7 @@ PQfnumber(PGresult *res, const char *field_name)
 	char	   *field_case;
 
 	if (!res)
-	{
-		fprintf(stderr, "PQfnumber() -- pointer to PQresult is null\n");
 		return -1;
-	}
 
 	if (field_name == NULL ||
 		field_name[0] == '\0' ||
@@ -1258,19 +1298,8 @@ PQfnumber(PGresult *res, const char *field_name)
 Oid
 PQftype(PGresult *res, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQftype() -- pointer to PQresult is null\n");
+	if (! check_field_number("PQftype", res, field_num))
 		return InvalidOid;
-	}
-
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQftype: ERROR! field number %d is out of range 0..%d\n",
-				field_num, res->numAttributes - 1);
-		return InvalidOid;
-	}
 	if (res->attDescs)
 		return res->attDescs[field_num].typid;
 	else
@@ -1280,19 +1309,8 @@ PQftype(PGresult *res, int field_num)
 short
 PQfsize(PGresult *res, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQfsize() -- pointer to PQresult is null\n");
+	if (! check_field_number("PQfsize", res, field_num))
 		return 0;
-	}
-
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQfsize: ERROR! field number %d is out of range 0..%d\n",
-				field_num, res->numAttributes - 1);
-		return 0;
-	}
 	if (res->attDescs)
 		return res->attDescs[field_num].typlen;
 	else
@@ -1302,19 +1320,8 @@ PQfsize(PGresult *res, int field_num)
 int
 PQfmod(PGresult *res, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQfmod() -- pointer to PQresult is null\n");
+	if (! check_field_number("PQfmod", res, field_num))
 		return 0;
-	}
-
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQfmod: ERROR! field number %d is out of range 0..%d\n",
-				field_num, res->numAttributes - 1);
-		return 0;
-	}
 	if (res->attDescs)
 		return res->attDescs[field_num].atttypmod;
 	else
@@ -1325,10 +1332,7 @@ char *
 PQcmdStatus(PGresult *res)
 {
 	if (!res)
-	{
-		fprintf(stderr, "PQcmdStatus() -- pointer to PQresult is null\n");
 		return NULL;
-	}
 	return res->cmdStatus;
 }
 
@@ -1343,10 +1347,7 @@ PQoidStatus(PGresult *res)
 	static char oidStatus[32] = {0};
 
 	if (!res)
-	{
-		fprintf(stderr, "PQoidStatus () -- pointer to PQresult is null\n");
-		return NULL;
-	}
+		return "";
 
 	oidStatus[0] = 0;
 
@@ -1371,10 +1372,7 @@ const char *
 PQcmdTuples(PGresult *res)
 {
 	if (!res)
-	{
-		fprintf(stderr, "PQcmdTuples () -- pointer to PQresult is null\n");
-		return NULL;
-	}
+		return "";
 
 	if (strncmp(res->cmdStatus, "INSERT", 6) == 0 ||
 		strncmp(res->cmdStatus, "DELETE", 6) == 0 ||
@@ -1384,9 +1382,11 @@ PQcmdTuples(PGresult *res)
 
 		if (*p == 0)
 		{
-			fprintf(stderr, "PQcmdTuples (%s) -- bad input from server\n",
+			sprintf(res->conn->errorMessage,
+					"PQcmdTuples (%s) -- bad input from server\n",
 					res->cmdStatus);
-			return NULL;
+			DONOTICE(res->conn, res->conn->errorMessage);
+			return "";
 		}
 		p++;
 		if (*(res->cmdStatus) != 'I')	/* UPDATE/DELETE */
@@ -1395,8 +1395,10 @@ PQcmdTuples(PGresult *res)
 			p++;				/* INSERT: skip oid */
 		if (*p == 0)
 		{
-			fprintf(stderr, "PQcmdTuples (INSERT) -- there's no # of tuples\n");
-			return NULL;
+			sprintf(res->conn->errorMessage,
+					"PQcmdTuples (INSERT) -- there's no # of tuples\n");
+			DONOTICE(res->conn, res->conn->errorMessage);
+			return "";
 		}
 		p++;
 		return (p);
@@ -1417,28 +1419,8 @@ PQcmdTuples(PGresult *res)
 char *
 PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQgetvalue: pointer to PQresult is null\n");
+	if (! check_tuple_field_number("PQgetvalue", res, tup_num, field_num))
 		return NULL;
-	}
-	if (tup_num < 0 || tup_num >= res->ntups)
-	{
-		fprintf(stderr,
-				"PQgetvalue: There is no row %d in the query results.  "
-				"The highest numbered row is %d.\n",
-				tup_num, res->ntups - 1);
-		return NULL;
-	}
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQgetvalue: There is no field %d in the query results.  "
-				"The highest numbered field is %d.\n",
-				field_num, res->numAttributes - 1);
-		return NULL;
-	}
-
 	return res->tuples[tup_num][field_num].value;
 }
 
@@ -1450,29 +1432,8 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 int
 PQgetlength(PGresult *res, int tup_num, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQgetlength() -- pointer to PQresult is null\n");
+	if (! check_tuple_field_number("PQgetlength", res, tup_num, field_num))
 		return 0;
-	}
-
-	if (tup_num < 0 || tup_num >= res->ntups)
-	{
-		fprintf(stderr,
-				"PQgetlength: There is no row %d in the query results.  "
-				"The highest numbered row is %d.\n",
-				tup_num, res->ntups - 1);
-		return 0;
-	}
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQgetlength: There is no field %d in the query results.  "
-				"The highest numbered field is %d.\n",
-				field_num, res->numAttributes - 1);
-		return 0;
-	}
-
 	if (res->tuples[tup_num][field_num].len != NULL_LEN)
 		return res->tuples[tup_num][field_num].len;
 	else
@@ -1485,28 +1446,8 @@ PQgetlength(PGresult *res, int tup_num, int field_num)
 int
 PQgetisnull(PGresult *res, int tup_num, int field_num)
 {
-	if (!res)
-	{
-		fprintf(stderr, "PQgetisnull() -- pointer to PQresult is null\n");
+	if (! check_tuple_field_number("PQgetisnull", res, tup_num, field_num))
 		return 1;				/* pretend it is null */
-	}
-	if (tup_num < 0 || tup_num >= res->ntups)
-	{
-		fprintf(stderr,
-				"PQgetisnull: There is no row %d in the query results.  "
-				"The highest numbered row is %d.\n",
-				tup_num, res->ntups - 1);
-		return 1;				/* pretend it is null */
-	}
-	if (field_num < 0 || field_num >= res->numAttributes)
-	{
-		fprintf(stderr,
-				"PQgetisnull: There is no field %d in the query results.  "
-				"The highest numbered field is %d.\n",
-				field_num, res->numAttributes - 1);
-		return 1;				/* pretend it is null */
-	}
-
 	if (res->tuples[tup_num][field_num].len == NULL_LEN)
 		return 1;
 	else

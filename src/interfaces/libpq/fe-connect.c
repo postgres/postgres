@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.77 1998/07/26 04:31:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.78 1998/08/09 02:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
 #include <ctype.h>				/* for isspace() */
 
 #include "postgres.h"
@@ -55,6 +54,7 @@ static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
+static void defaultNoticeProcessor(void * arg, const char * message);
 /* XXX Why is this not static? */
 void		PQsetenv(PGconn *conn);
 
@@ -181,11 +181,7 @@ PQconnectdb(const char *conninfo)
 	 */
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
-	{
-		fprintf(stderr,
-		   "FATAL: PQconnectdb() -- unable to allocate memory for a PGconn");
 		return (PGconn *) NULL;
-	}
 
 	/* ----------
 	 * Parse the conninfo string and save settings in conn structure
@@ -297,11 +293,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
-	{
-		fprintf(stderr,
-		   "FATAL: PQsetdbLogin() -- unable to allocate memory for a PGconn");
 		return (PGconn *) NULL;
-	}
 
 	if ((pghost == NULL) || pghost[0] == '\0')
 	{
@@ -856,6 +848,7 @@ makeEmptyPGconn(void)
 	/* Zero all pointers */
 	MemSet((char *) conn, 0, sizeof(PGconn));
 
+	conn->noticeHook = defaultNoticeProcessor;
 	conn->status = CONNECTION_BAD;
 	conn->asyncStatus = PGASYNC_IDLE;
 	conn->notifyList = DLNewList();
@@ -925,35 +918,20 @@ closePGconn(PGconn *conn)
 	if (conn->sock >= 0)
 	{
 		/*
-		 * Try to send close message.
-		 * If connection is already gone, that's cool.  No reason for kernel
-		 * to kill us when we try to write to it.  So ignore SIGPIPE signals.
+		 * Try to send "close connection" message to backend.
+		 * BUT: backend might have already closed connection.
+		 * To avoid being killed by SIGPIPE, we need to detect this before
+		 * writing.  Check for "read ready" condition which indicates EOF.
 		 */
-#ifndef WIN32
-#if defined(USE_POSIX_SIGNALS)
-		struct sigaction ignore_action;
-		struct sigaction oldaction;
-
-		ignore_action.sa_handler = SIG_IGN;
-		sigemptyset(&ignore_action.sa_mask);
-		ignore_action.sa_flags = 0;
-		sigaction(SIGPIPE, (struct sigaction *) & ignore_action, &oldaction);
-
-		(void) pqPuts("X", conn);
-		(void) pqFlush(conn);
-
-		sigaction(SIGPIPE, &oldaction, NULL);
-#else
-		void (*oldsignal)(int);
-
-		oldsignal = signal(SIGPIPE, SIG_IGN);
-
-		(void) pqPuts("X", conn);
-		(void) pqFlush(conn);
-
-		signal(SIGPIPE, oldsignal);
-#endif
-#endif /* Win32 uses no signals at all */
+		while (pqReadReady(conn)) {
+			if (pqReadData(conn) < 0)
+				break;
+		}
+		if (conn->sock >= 0) {
+			/* Should be safe now... */
+			(void) pqPuts("X", conn);
+			(void) pqFlush(conn);
+		}
 	}
 
 	/*
@@ -987,9 +965,7 @@ closePGconn(PGconn *conn)
 void
 PQfinish(PGconn *conn)
 {
-	if (!conn)
-		fprintf(stderr, "PQfinish() -- pointer to PGconn is null\n");
-	else
+	if (conn)
 	{
 		closePGconn(conn);
 		freePGconn(conn);
@@ -1003,9 +979,7 @@ PQfinish(PGconn *conn)
 void
 PQreset(PGconn *conn)
 {
-	if (!conn)
-		fprintf(stderr, "PQreset() -- pointer to PGconn is null\n");
-	else
+	if (conn)
 	{
 		closePGconn(conn);
 		conn->status = connectDB(conn);
@@ -1383,10 +1357,7 @@ char *
 PQdb(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQdb() -- pointer to PGconn is null\n");
 		return (char *) NULL;
-	}
 	return conn->dbName;
 }
 
@@ -1394,10 +1365,7 @@ char *
 PQuser(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQuser() -- pointer to PGconn is null\n");
 		return (char *) NULL;
-	}
 	return conn->pguser;
 }
 
@@ -1405,11 +1373,7 @@ char *
 PQhost(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQhost() -- pointer to PGconn is null\n");
 		return (char *) NULL;
-	}
-
 	return conn->pghost;
 }
 
@@ -1417,10 +1381,7 @@ char *
 PQoptions(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQoptions() -- pointer to PGconn is null\n");
 		return (char *) NULL;
-	}
 	return conn->pgoptions;
 }
 
@@ -1428,10 +1389,7 @@ char *
 PQtty(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQtty() -- pointer to PGconn is null\n");
 		return (char *) NULL;
-	}
 	return conn->pgtty;
 }
 
@@ -1439,10 +1397,7 @@ char *
 PQport(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQport() -- pointer to PGconn is null\n");
 		return (char *) NULL;
-	}
 	return conn->pgport;
 }
 
@@ -1450,21 +1405,16 @@ ConnStatusType
 PQstatus(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQstatus() -- pointer to PGconn is null\n");
 		return CONNECTION_BAD;
-	}
 	return conn->status;
 }
 
 char *
 PQerrorMessage(PGconn *conn)
 {
+	static char noConn[] = "PQerrorMessage: conn pointer is NULL\n";
 	if (!conn)
-	{
-		fprintf(stderr, "PQerrorMessage() -- pointer to PGconn is null\n");
-		return (char *) NULL;
-	}
+		return noConn;
 	return conn->errorMessage;
 }
 
@@ -1472,10 +1422,7 @@ int
 PQsocket(PGconn *conn)
 {
 	if (!conn)
-	{
-		fprintf(stderr, "PQsocket() -- pointer to PGconn is null\n");
 		return -1;
-	}
 	return conn->sock;
 }
 
@@ -1500,4 +1447,27 @@ PQuntrace(PGconn *conn)
 		fflush(conn->Pfdebug);
 		conn->Pfdebug = NULL;
 	}
+}
+
+void
+PQsetNoticeProcessor (PGconn *conn, PQnoticeProcessor proc, void *arg)
+{
+	if (conn == NULL)
+		return;
+	conn->noticeHook = proc;
+	conn->noticeArg = arg;
+}
+
+/*
+ * The default notice/error message processor just prints the
+ * message on stderr.  Applications can override this if they
+ * want the messages to go elsewhere (a window, for example).
+ * Note that simply discarding notices is probably a bad idea.
+ */
+
+static void
+defaultNoticeProcessor(void * arg, const char * message)
+{
+	/* Note: we expect the supplied string to end with a newline already. */
+	fprintf(stderr, "%s", message);
 }

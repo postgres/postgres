@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.20 1998/07/20 16:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.21 1998/08/09 02:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,8 +445,6 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 			(void) sprintf(PQerrormsg,
 				  "pg_krb5_sendauth: authentication rejected: \"%*s\"\n",
 						   error->text.length, error->text.data);
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
 		}
 		else
 		{
