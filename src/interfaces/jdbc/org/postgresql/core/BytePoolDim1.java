@@ -21,7 +21,7 @@ public class BytePoolDim1 {
     /**
      *
      */
-    byte binit[][] = new byte[maxsize][0];
+    byte binit[][] = new byte[maxsize+1][0];
 
     /**
      * Construct a new pool
