@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.55 2004/10/16 03:26:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.56 2004/11/20 00:18:18 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -267,6 +267,11 @@ pqsecure_open_client(PGconn *conn)
 			close_SSL(conn);
 			return PGRES_POLLING_FAILED;
 		}
+		/*
+		 * Initialize errorMessage to empty.  This allows open_client_SSL()
+		 * to detect whether client_cert_cb() has stored a message.
+		 */
+		resetPQExpBuffer(&conn->errorMessage);
 	}
 	/* Begin or continue the actual handshake */
 	return open_client_SSL(conn);
@@ -797,7 +802,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("certificate present, but not private key file \"%s\"\n"),
 						  fnbuf);
-		X509_free(*x509);
 		return 0;
 	}
 	if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
@@ -806,7 +810,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("private key file \"%s\" has wrong permissions\n"),
 						  fnbuf);
-		X509_free(*x509);
 		return 0;
 	}
 	if ((fp = fopen(fnbuf, "r")) == NULL)
@@ -814,7 +817,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		printfPQExpBuffer(&conn->errorMessage,
 			 libpq_gettext("could not open private key file \"%s\": %s\n"),
 						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
-		X509_free(*x509);
 		return 0;
 	}
 	if (fstat(fileno(fp), &buf2) == -1 ||
@@ -822,7 +824,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
-		X509_free(*x509);
 		return 0;
 	}
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
@@ -833,7 +834,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 				  libpq_gettext("could not read private key file \"%s\": %s\n"),
 						  fnbuf, err);
 		SSLerrfree(err);
-		X509_free(*x509);
 		fclose(fp);
 		return 0;
 	}
@@ -848,8 +848,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 			libpq_gettext("certificate does not match private key file \"%s\": %s\n"),
 						  fnbuf, err);
 		SSLerrfree(err);
-		X509_free(*x509);
-		EVP_PKEY_free(*pkey);
 		return 0;
 	}
 
@@ -1045,11 +1043,23 @@ open_client_SSL(PGconn *conn)
 				}
 			case SSL_ERROR_SSL:
 				{
-					char	   *err = SSLerrmessage();
+					/*
+					 * If there are problems with the local certificate files,
+					 * these will be detected by client_cert_cb() which is
+					 * called from SSL_connect().  We want to return that
+					 * error message and not the rather unhelpful error that
+					 * OpenSSL itself returns.  So check to see if an error
+					 * message was already stored.
+					 */
+					if (conn->errorMessage.len == 0)
+					{
+						char	   *err = SSLerrmessage();
 
-					printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("SSL error: %s\n"), err);
-					SSLerrfree(err);
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("SSL error: %s\n"),
+										  err);
+						SSLerrfree(err);
+					}
 					close_SSL(conn);
 					return PGRES_POLLING_FAILED;
 				}
