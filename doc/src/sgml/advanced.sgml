@@ -273,6 +273,7 @@ On UNIX systems, this is always  midnight,  January  1, 1970 GMT.
 </Note>
 </Para>
 
+<Para>
      If  you  have  executed all of the examples so
      far, then the above query returns:
      

@@ -12,13 +12,13 @@
 
 <Para>
 <Note>
-<Title>Caveat</Title>
+<Title>Author</Title>
 <Para>
 This extraction from an e-mail sent by 
 <ULink url="mailto:selkovjr@mcs.anl.gov">Eugene Selkov Jr.</ULink>
 contains good information
 on GiST. Hopefully we will learn more in the future and update this information.
-- thomas
+- thomas 1998-03-01
 </Para>
 </Note>
 
@@ -39,8 +39,8 @@ to check that. Other examples also worked, except polygons: I got an
 error doing
 
 <ProgramListing>
-test=> create index pix on polytmp using gist (p:box gist_poly_ops) with
-(islossy);
+test=> create index pix on polytmp
+test-> using gist (p:box gist_poly_ops) with (islossy);
 ERROR:  cannot open pix
 
 (PostgreSQL 6.3               Sun Feb  1 14:57:30 EST 1998)
@@ -59,8 +59,7 @@ A few notes on the sources:
 
 <Para>
 1. I failed to make use of the original (HPUX) Makefile and rearranged
-   the Makefile from the ancient postgres95 tutorial to do the job. I
-tried
+   the Makefile from the ancient postgres95 tutorial to do the job. I tried
    to keep it generic, but I am a very poor makefile writer -- just did
    some monkey work. Sorry about that, but I guess it is now a little
    more portable that the original makefile.

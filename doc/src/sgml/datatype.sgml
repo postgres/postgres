@@ -275,6 +275,8 @@ have fully implemented syntax but currently (<ProductName>Postgres</ProductName>
 
 <Para>
 The <Type>money</Type> type supports US-style currency with fixed decimal point representation.
+If <ProductName>Postgres</ProductName> is compiled with USE_LOCALE then the money type
+should use the monetary conventions defined for locale(7).
 
 <Para>
 <TABLE TOCENTRY="1">
@@ -302,9 +304,11 @@ The <Type>money</Type> type supports US-style currency with fixed decimal point 
 </Para>
 
 <Para>
-The <FirstTerm>exact numerics</FirstTerm> <Type>decimal</Type> and <Type>numeric</Type>
-have fully implemented syntax but currently (<ProductName>Postgres</ProductName> v6.3)
- support only a small range of precision and/or range values.
+The <FirstTerm>numeric</FirstTerm>
+should eventually replace the money type. It has a
+fully implemented syntax but currently (<ProductName>Postgres</ProductName> v6.3)
+ support only a small range of precision and/or range values and cannot substitute for
+the money type.
 </Para>
 
 </Sect1>
