@@ -1,29 +1,48 @@
 /*-------------------------------------------------------------------------
  *
- * initdb
+ * initdb --- initialize a PostgreSQL installation
  *
- * author: Andrew Dunstan	   mailto:andrew@dunslane.net
+ * initdb creates (initializes) a PostgreSQL database cluster (site,
+ * instance, installation, whatever).  A database cluster is a
+ * collection of PostgreSQL databases all managed by the same postmaster.
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
+ * To create the database cluster, we create the directory that contains
+ * all its data, create the files that hold the global tables, create
+ * a few other control files for it, and create two databases: the
+ * template0 and template1 databases.
  *
- * This code is released under the terms of the PostgreSQL License.
+ * The template databases are ordinary PostgreSQL databases.  template0
+ * is never supposed to change after initdb, whereas template1 can be
+ * changed to add site-local standard data.  Either one can be copied
+ * to produce a new database.
  *
- * This is a C implementation of the previous shell script for setting up a
- * PostgreSQL cluster location, and should be highly compatible with it.
+ * To create template1, we run the postgres (backend) program in bootstrap
+ * mode and feed it data from the postgres.bki library file.  After this
+ * initial bootstrap phase, some additional stuff is created by normal
+ * SQL commands fed to a standalone backend.  Some of those commands are
+ * just embedded into this program (yeah, it's ugly), but larger chunks
+ * are taken from script files.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.6 2003/11/13 20:12:47 momjian Exp $
+ * template0 is made just by copying the completed template1.
+ *
  *
  * TODO:
  *	 - clean up find_postgres code and return values
  *
  * Note:
  *	 The program has some memory leakage - it isn't worth cleaning it up.
- *	 Even before the code was put in to free most of the dynamic memory
- *	 used it ran around 500Kb used + malloc overhead. It should now use
- *	 far less than that (around 240Kb - the size of the BKI file).
- *	 If we can't load this much data into memory how will we ever run
- *	 postgres anyway?
+ *
+ *
+ * This is a C implementation of the previous shell script for setting up a
+ * PostgreSQL cluster location, and should be highly compatible with it.
+ * author of C translation: Andrew Dunstan	   mailto:andrew@dunslane.net
+ *
+ * This code is released under the terms of the PostgreSQL License.
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.7 2003/11/13 23:46:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +67,12 @@ int			optreset;
 /* version string we expect back from postgres */
 #define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
-/* values passed in by makefile define */
-
+/*
+ * these values are passed in by makefile defines
+ *
+ * Note that "datadir" is not the directory we're going to initialize,
+ * it's merely how Autoconf names PREFIX/share.
+ */
 char	   *bindir = PGBINDIR;
 char	   *datadir = PGDATADIR;
 
@@ -96,6 +119,16 @@ bool		not_ok = false;
 int			n_connections = 10;
 int			n_buffers = 50;
 
+/*
+ * Centralized knowledge of switches to pass to backend
+ *
+ * Note: in the shell-script version, we also passed PGDATA as a -D switch,
+ * but here it is more convenient to pass it as an environment variable
+ * (no quoting to worry about).
+ */
+static const char *boot_options = "-F";
+static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on_error=true";
+
 
 /* platform specific path stuff */
 #if defined(__CYGWIN__) || defined(WIN32)
@@ -119,14 +152,11 @@ char	   *pgpath;
 static bool rmtree(char *, bool);
 static void exit_nicely(void);
 static void canonicalize_path(char *);
-
 #ifdef WIN32
 static char *expanded_path(char *);
-
 #else
 #define expanded_path(x) (x)
 #endif
-
 static char **readfile(char *);
 static void writefile(char *, char **);
 static char *get_id(void);
@@ -181,7 +211,7 @@ do { \
 
 #define PG_CMD_CLOSE \
 do { \
-		 if(pclose(pg) >> 8 & 0xff) \
+		 if ((pclose(pg) >> 8) & 0xff) \
 			exit_nicely(); \
 } while (0)
 
@@ -200,9 +230,9 @@ do { \
 
 /*
  * routines to check mem allocations and fail noisily.
+ *
  * Note that we can't call exit_nicely() on a memory failure, as it calls
  * rmtree() which needs memory allocation. So we just exit with a bang.
- *
  */
 static void *
 xmalloc(size_t size)
@@ -237,7 +267,6 @@ xstrdup(const char *s)
  * assumes path points to a valid directory
  * deletes everything under path
  * if rmtopdir is true deletes the directory too
- *
  */
 static bool
 rmtree(char *path, bool rmtopdir)
@@ -260,10 +289,11 @@ rmtree(char *path, bool rmtopdir)
 /*
  * make all paths look like unix, with forward slashes
  * also strip any trailing slash.
+ *
  * The Windows command processor will accept suitably quoted paths
  * with forward slashes, but barfs badly with mixed forward and back
  * slashes. Removing the trailing slash on a path means we never get
- * ugly double slashes.
+ * ugly double slashes.  Don't remove a leading slash, though.
  */
 static void
 canonicalize_path(char *path)
@@ -277,13 +307,14 @@ canonicalize_path(char *path)
 			*p = '/';
 #endif
 	}
-	if (p != path && *--p == '/')
+	if (p > path+1 && *--p == '/')
 		*p = '\0';
 }
 
 /*
  * make a copy of the array of lines, with token replaced by replacement
  * the first time it occurs on each line.
+ *
  * This does most of what sed was used for in the shell script, but
  * doesn't need any regexp stuff.
  */
@@ -342,7 +373,6 @@ replace_token(char **lines, char *token, char *replacement)
 
 /*
  * get the lines from a text file
- *
  */
 static char **
 readfile(char *path)
@@ -405,7 +435,6 @@ readfile(char *path)
 
 /*
  * write an array of lines to a file
- *
  */
 static void
 writefile(char *path, char **lines)
@@ -435,7 +464,6 @@ writefile(char *path, char **lines)
  * this tries to build all the elements of a path to a directory a la mkdir -p
  * we assume the path is in canonical form, i.e. uses / as the separator
  * we also assume it isn't null.
- *
  */
 static int
 mkdir_p(char *path, mode_t omode)
@@ -540,7 +568,6 @@ mkdir_p(char *path, mode_t omode)
 /*
  * clean up any files we created on failure
  * if we created the data directory remove it too
- *
  */
 static void
 exit_nicely(void)
@@ -565,13 +592,19 @@ exit_nicely(void)
 				fprintf(stderr, "%s: failed\n", progname);
 		}
 	}
+	else
+	{
+        fprintf(stderr,
+				"%s: data directory \"%s\" not removed at user's request\n",
+				progname, pg_data);
+	}
 	exit(1);
 }
 
 /*
  * find the current user using code lifted from pg_id.c
- * on unix make sure it isn't really root
  *
+ * on unix make sure it isn't really root
  */
 static char *
 get_id(void)
@@ -588,8 +621,9 @@ get_id(void)
 	{
 		fprintf(stderr,
 				"%s: cannot be run as root\n"
-			 "Please log in (using, e.g., \"su\") as the (unprivileged) "
-				"user that will\n" "own the server process.\n",
+				"Please log in (using, e.g., \"su\") as the "
+				"(unprivileged) user that will\n"
+				"own the server process.\n",
 				progname);
 		exit(1);
 	}
@@ -614,7 +648,6 @@ get_id(void)
 
 /*
  * get the encoding id for a given encoding name
- *
  */
 static char *
 get_encoding_id(char *encoding_name)
@@ -638,7 +671,6 @@ get_encoding_id(char *encoding_name)
 
 /*
  * get short version of VERSION
- *
  */
 static char *
 get_short_version(void)
@@ -675,7 +707,6 @@ get_short_version(void)
 
 /*
  * make sure the data directory either doesn't exist or is empty
- *
  */
 static bool
 check_data_dir(void)
@@ -710,7 +741,6 @@ check_data_dir(void)
 
 /*
  * make the data directory (or one of its subdirectories if subdir is not NULL)
- *
  */
 static bool
 mkdatadir(char *subdir)
@@ -738,7 +768,6 @@ mkdatadir(char *subdir)
 
 /*
  * set name of given input file variable under data directory
- *
  */
 static void
 set_input(char **dest, char *filename)
@@ -749,7 +778,6 @@ set_input(char **dest, char *filename)
 
 /*
  * check that given input file exists
- *
  */
 static void
 check_input(char *path)
@@ -771,7 +799,6 @@ check_input(char *path)
 /*
  * TODO - clean this up and handle the errors properly
  * don't overkill
- *
  */
 #define FIND_SUCCESS 0
 #define FIND_NOT_FOUND 1
@@ -784,7 +811,6 @@ check_input(char *path)
 /*
  * see if there is a postgres executable in the given path, and giving the
  * right version number
- *
  */
 static int
 find_postgres(char *path)
@@ -801,10 +827,10 @@ find_postgres(char *path)
 	FILE	   *pgver;
 	int			plen = strlen(path);
 
-	if (path[plen - 1] != '/')
-		snprintf(fn, MAXPGPATH, "%s/postgres%s", path, EXE);
+	if (plen > 0 && path[plen - 1] != '/')
+		snprintf(fn, sizeof(fn), "%s/postgres%s", path, EXE);
 	else
-		snprintf(fn, MAXPGPATH, "%spostgres%s", path, EXE);
+		snprintf(fn, sizeof(fn), "%spostgres%s", path, EXE);
 
 	if (stat(fn, &statbuf) != 0)
 	{
@@ -826,7 +852,7 @@ find_postgres(char *path)
 		return FIND_BAD_PERM;
 #endif
 
-	snprintf(cmd, MAXPGPATH, "\"%s/postgres\" -V 2>%s", path, DEVNULL);
+	snprintf(cmd, sizeof(cmd), "\"%s/postgres\" -V 2>%s", path, DEVNULL);
 
 	if ((pgver = popen(cmd, "r")) == NULL)
 		return FIND_EXEC_ERR;
@@ -845,7 +871,6 @@ find_postgres(char *path)
 /*
  * Windows doesn't like relative paths to executables (other things work fine)
  * so we call its builtin function to expand them. Elsewhere this is a NOOP
- *
  */
 #ifdef WIN32
 static char *
@@ -853,7 +878,7 @@ expanded_path(char *path)
 {
 	char		abspath[MAXPGPATH];
 
-	if (_fullpath(abspath, path, MAXPGPATH) == NULL)
+	if (_fullpath(abspath, path, sizeof(abspath)) == NULL)
 	{
 		perror("expanded path");
 		return path;
@@ -865,16 +890,21 @@ expanded_path(char *path)
 
 /*
  * set the paths pointing to postgres
+ *
  * look for it in the same place we found this program, or in the environment
  * path, or in the configured bindir.
+ * We do it in this order because during upgrades users might move
+ * their trees to backup places, so the hard-wired bindir might be inaccurate.
  *
+ * XXX this needs work, as its error handling is vastly inferior to the
+ * shell-script version, in particular the case where a postgres executable
+ * is failing
  */
 static int
 set_paths(void)
 {
 	if (testpath && !self_path)
 	{
-
 		char	   *path,
 				   *cursor;
 		int			pathlen,
@@ -916,7 +946,7 @@ set_paths(void)
 
 		for (i = 0; i < pathsegs; i++)
 		{
-			snprintf(buf, MAXPGPATH, "%s/%s%s", pathbits[i], progname, EXE);
+			snprintf(buf, sizeof(buf), "%s/%s%s", pathbits[i], progname, EXE);
 			if (stat(buf, &statbuf) == 0 && S_ISREG(statbuf.st_mode))
 			{
 				self_path = pathbits[i];
@@ -952,7 +982,6 @@ set_paths(void)
 /*
  * write out the PG_VERSION file in the data dir, or its subdirectory
  * if extrapath is not NULL
- *
  */
 static void
 set_short_version(char *short_version, char *extrapath)
@@ -977,7 +1006,6 @@ set_short_version(char *short_version, char *extrapath)
 
 /*
  * set up an empty config file so we can check buffers and connections
- *
  */
 static void
 set_null_conf(void)
@@ -993,17 +1021,13 @@ set_null_conf(void)
 
 /*
  * check how many connections we can sustain
- *
  */
 static void
 test_connections(void)
 {
-	char	   *format =
-	"\"%s/postgres\" -boot -x 0 -F "
-	"-c shared_buffers=%d -c max_connections=%d template1 <%s >%s 2>&1";
 	char		cmd[MAXPGPATH];
-	int			conns[] = {100, 50, 40, 30, 20, 10};
-	int			len = sizeof(conns) / sizeof(int);
+	static const int conns[] = {100, 50, 40, 30, 20, 10};
+	static const int len = sizeof(conns) / sizeof(int);
 	int			i,
 				status;
 
@@ -1012,8 +1036,13 @@ test_connections(void)
 
 	for (i = 0; i < len; i++)
 	{
-		snprintf(cmd, sizeof(cmd), format,
-				 pgpath, conns[i] * 5, conns[i], DEVNULL, DEVNULL);
+		snprintf(cmd, sizeof(cmd),
+				 "\"%s/postgres\" -boot -x0 %s "
+				 "-c shared_buffers=%d -c max_connections=%d template1 "
+				 "<%s >%s 2>&1",
+				 pgpath, boot_options,
+				 conns[i] * 5, conns[i],
+				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
 			break;
@@ -1027,17 +1056,14 @@ test_connections(void)
 
 /*
  * check how many buffers we can run with
- *
  */
 static void
 test_buffers(void)
 {
-	char	   *format =
-	"\"%s/postgres\"  -boot -x 0 -F "
-	"-c shared_buffers=%d -c max_connections=%d template1 <%s >%s 2>&1";
 	char		cmd[MAXPGPATH];
-	int			bufs[] = {1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 50};
-	int			len = sizeof(bufs) / sizeof(int);
+	static const int bufs[] = {1000, 900, 800, 700, 600, 500,
+							   400, 300, 200, 100, 50};
+	static const int len = sizeof(bufs) / sizeof(int);
 	int			i,
 				status;
 
@@ -1046,7 +1072,12 @@ test_buffers(void)
 
 	for (i = 0; i < len; i++)
 	{
-		snprintf(cmd, sizeof(cmd), format, pgpath, bufs[i], n_connections,
+		snprintf(cmd, sizeof(cmd),
+				 "\"%s/postgres\" -boot -x0 %s "
+				 "-c shared_buffers=%d -c max_connections=%d template1 "
+				 "<%s >%s 2>&1",
+				 pgpath, boot_options,
+				 bufs[i], n_connections,
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
@@ -1061,12 +1092,10 @@ test_buffers(void)
 
 /*
  * set up all the config files
- *
  */
 static void
 setup_config(void)
 {
-
 	char	  **conflines;
 	char		repltok[100];
 	char		path[MAXPGPATH];
@@ -1097,7 +1126,7 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "lc_time = '%s'", lc_time);
 	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
-	snprintf(path, MAXPGPATH, "%s/postgresql.conf", pg_data);
+	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
 	chmod(path, 0600);
@@ -1115,7 +1144,7 @@ setup_config(void)
 							  "#host    all         all         ::1");
 #endif
 
-	snprintf(path, MAXPGPATH, "%s/pg_hba.conf", pg_data);
+	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
 	writefile(path, conflines);
 	chmod(path, 0600);
@@ -1126,7 +1155,7 @@ setup_config(void)
 
 	conflines = readfile(ident_file);
 
-	snprintf(path, MAXPGPATH, "%s/pg_ident.conf", pg_data);
+	snprintf(path, sizeof(path), "%s/pg_ident.conf", pg_data);
 
 	writefile(path, conflines);
 	chmod(path, 0600);
@@ -1138,8 +1167,7 @@ setup_config(void)
 
 
 /*
- * run the bootstrap code
- *
+ * run the BKI script in bootstrap mode to create template1
  */
 static void
 bootstrap_template1(char *short_version)
@@ -1158,7 +1186,10 @@ bootstrap_template1(char *short_version)
 
 	bki_lines = readfile(bki_file);
 
-	snprintf(headerline, MAXPGPATH, "# PostgreSQL %s\n", short_version);
+	/* Check that bki file appears to be of the right version */
+
+	snprintf(headerline, sizeof(headerline), "# PostgreSQL %s\n",
+			 short_version);
 
 	if (strcmp(headerline, *bki_lines) != 0)
 	{
@@ -1176,21 +1207,22 @@ bootstrap_template1(char *short_version)
 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
 
 	/*
-	 * we could save the old environment here, and restore it afterwards,
-	 * but there doesn't seem to be any point, especially as we have
-	 * already called setlocale().
+	 * Pass correct LC_xxx environment to bootstrap.
 	 *
+	 * The shell script arranged to restore the LC settings afterwards,
+	 * but there doesn't seem to be any compelling reason to do that.
 	 */
-	snprintf(cmd, MAXPGPATH, "LC_COLLATE=%s", lc_collate);
+	snprintf(cmd, sizeof(cmd), "LC_COLLATE=%s", lc_collate);
 	putenv(xstrdup(cmd));
 
-	snprintf(cmd, MAXPGPATH, "LC_CTYPE=%s", lc_ctype);
+	snprintf(cmd, sizeof(cmd), "LC_CTYPE=%s", lc_ctype);
 	putenv(xstrdup(cmd));
 
 	putenv("LC_ALL");
 
-	snprintf(cmd, MAXPGPATH,
-		" \"%s/postgres\"  -boot -x1 -F %s template1", pgpath, talkargs);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" -boot -x1 %s %s template1",
+			 pgpath, boot_options, talkargs);
 
 	PG_CMD_OPEN;
 
@@ -1209,12 +1241,10 @@ bootstrap_template1(char *short_version)
 
 /*
  * set up the shadow password table
- *
  */
 static void
 setup_shadow(void)
 {
-
 	char	   *pg_shadow_setup[] = {
 		/*
 		 * Create a trigger so that direct updates to pg_shadow will be
@@ -1240,10 +1270,10 @@ setup_shadow(void)
 	fputs("initializing pg_shadow ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1257,7 +1287,6 @@ setup_shadow(void)
 
 /*
  * get the superuser password if required, and call postgres to set it
- *
  */
 static void
 get_set_pwd(void)
@@ -1278,12 +1307,13 @@ get_set_pwd(void)
 	}
 	free(pwd2);
 
-	printf("storing the password ... ");
+	printf("setting password ... ");
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s", pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1297,12 +1327,12 @@ get_set_pwd(void)
 
 	PG_CMD_CLOSE;
 
-	snprintf(pwdpath, MAXPGPATH, "%s/global/pg_pwd", pg_data);
+	snprintf(pwdpath, sizeof(pwdpath), "%s/global/pg_pwd", pg_data);
 	if (stat(pwdpath, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
-				"%s: The password file was not generated - "
-				"please report this problem\n",
+				"%s: The password file was not generated. "
+				"Please report this problem.\n",
 				progname);
 		exit_nicely();
 	}
@@ -1312,7 +1342,6 @@ get_set_pwd(void)
 
 /*
  * toast sys tables
- *
  */
 static void
 unlimit_systables(void)
@@ -1335,9 +1364,10 @@ unlimit_systables(void)
 	fputs("enabling unlimited row size for system tables ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s", pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1351,7 +1381,6 @@ unlimit_systables(void)
 
 /*
  * set up pg_depend
- *
  */
 static void
 setup_depend(void)
@@ -1362,10 +1391,13 @@ setup_depend(void)
 		 * the tables that the dependency code handles.  This is overkill
 		 * (the system doesn't really depend on having every last weird
 		 * datatype, for instance) but generating only the minimum
-		 * required set of dependencies seems hard. Note that we
-		 * deliberately do not pin the system views. First delete any
-		 * already-made entries; PINs override all else, and must be the
-		 * only entries for their objects.
+		 * required set of dependencies seems hard.
+		 *
+		 * Note that we deliberately do not pin the system views, which
+		 * haven't been created yet.
+		 *
+		 * First delete any already-made entries; PINs override all else, and
+		 * must be the only entries for their objects.
 		 */
 		"DELETE FROM pg_depend;\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
@@ -1405,10 +1437,10 @@ setup_depend(void)
 	fputs("initializing pg_depend ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1422,7 +1454,6 @@ setup_depend(void)
 
 /*
  * set up system views
- *
  */
 static void
 setup_sysviews(void)
@@ -1436,10 +1467,13 @@ setup_sysviews(void)
 
 	sysviews_setup = readfile(system_views_file);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -N -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	/*
+	 * We use -N here to avoid backslashing stuff in system_views.sql
+	 */
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s -N template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1458,60 +1492,45 @@ setup_sysviews(void)
 
 /*
  * load description data
- *
  */
 static void
 setup_description(void)
 {
-	char	   *pg_description_setup1[] = {
-		"CREATE TEMP TABLE tmp_pg_description ( "
-		"	objoid oid, "
-		"	classname name, "
-		"	objsubid int4, "
-		"	description text) WITHOUT OIDS;\n",
-		"COPY tmp_pg_description FROM STDIN;\n",
-		NULL
-	};
-
-	char	   *pg_description_setup2[] = {
-		"\\.\n",
-		"INSERT INTO pg_description "
-		" SELECT t.objoid, c.oid, t.objsubid, t.description "
-		"  FROM tmp_pg_description t, pg_class c "
-		"    WHERE c.relname = t.classname;\n",
-		NULL
-	};
-
-
-	PG_CMD_DECL;
-
-	char	  **desc_lines;
+	PG_CMD_DECL_NOLINE;
+	int			fres;
 
 	fputs("loading pg_description ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
-	for (line = pg_description_setup1; *line != NULL; line++)
-		PG_CMD_PUTLINE;
+	fres = fprintf(pg,
+				   "CREATE TEMP TABLE tmp_pg_description ( "
+				   "	objoid oid, "
+				   "	classname name, "
+				   "	objsubid int4, "
+				   "	description text) WITHOUT OIDS;\n");
+	if (fres < 0)
+		exit_nicely();
 
-	desc_lines = readfile(desc_file);
-	for (line = desc_lines; *line != NULL; line++)
-	{
-		PG_CMD_PUTLINE;
-		free(*line);
-	}
+	fres = fprintf(pg,
+				   "COPY tmp_pg_description FROM '%s';\n",
+				   desc_file);
+	if (fres < 0)
+		exit_nicely();
 
-	free(desc_lines);
-
-
-	for (line = pg_description_setup2; *line != NULL; line++)
-		PG_CMD_PUTLINE;
+	fres = fprintf(pg,
+				   "INSERT INTO pg_description "
+				   " SELECT t.objoid, c.oid, t.objsubid, t.description "
+				   "  FROM tmp_pg_description t, pg_class c "
+				   "    WHERE c.relname = t.classname;\n");
+	if (fres < 0)
+		exit_nicely();
 
 	PG_CMD_CLOSE;
 
@@ -1520,7 +1539,6 @@ setup_description(void)
 
 /*
  * load conversion functions
- *
  */
 static void
 setup_conversion(void)
@@ -1532,10 +1550,10 @@ setup_conversion(void)
 	fputs("creating conversions ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1556,8 +1574,12 @@ setup_conversion(void)
 }
 
 /*
- * run privileges script
+ * Set up privileges
  *
+ * We set most system catalogs and built-in functions as world-accessible.
+ * Some objects may require different permissions by default, so we
+ * make sure we don't overwrite privilege sets that have already been
+ * set (NOT NULL).
  */
 static void
 setup_privileges(void)
@@ -1584,10 +1606,10 @@ setup_privileges(void)
 	fputs("setting privileges on built-in objects ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1602,8 +1624,8 @@ setup_privileges(void)
 }
 
 /*
- * extract the strange version of version required for info schema
- *
+ * extract the strange version of version required for information schema
+ * (09.08.0007abc)
  */
 static void
 set_info_version(void)
@@ -1631,14 +1653,11 @@ set_info_version(void)
 
 /*
  * load info schema and populate from features file
- *
  */
 static void
 setup_schema(void)
 {
-
 	PG_CMD_DECL;
-
 	char	  **lines;
 	int			fres;
 
@@ -1648,13 +1667,12 @@ setup_schema(void)
 	lines = readfile(info_schema_file);
 
 	/*
-	 * note that here we don't run in single line mode, unlike other
-	 * places
+	 * We use -N here to avoid backslashing stuff in information_schema.sql
 	 */
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true -N template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s -N template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1668,20 +1686,10 @@ setup_schema(void)
 
 	PG_CMD_CLOSE;
 
-	lines = readfile(features_file);
-
-	/*
-	 * strip CR before NL this is the only place we do this  (following
-	 * the shell script) - we could do it universally in readfile() if
-	 * necessary
-	 *
-	 */
-	lines = replace_token(lines, "\r\n", "\n");
-
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1690,30 +1698,17 @@ setup_schema(void)
 				   "  SET character_value = '%s' "
 				   "  WHERE implementation_info_name = 'DBMS VERSION';\n",
 				   infoversion);
-
 	if (fres < 0)
 		exit_nicely();
 
-	fres = fputs("COPY information_schema.sql_features "
-				 "  (feature_id, feature_name, sub_feature_id, "
-				 "  sub_feature_name, is_supported, comments) "
-				 "FROM STDIN;\n",
-				 pg);
-
+	fres = fprintf(pg,
+				   "COPY information_schema.sql_features "
+				   "  (feature_id, feature_name, sub_feature_id, "
+				   "  sub_feature_name, is_supported, comments) "
+				   " FROM '%s';\n",
+				   features_file);
 	if (fres < 0)
 		exit_nicely();
-
-	for (line = lines; *line != NULL; line++)
-	{
-		PG_CMD_PUTLINE;
-		free(*line);
-	}
-
-	free(lines);
-
-	if (fputs("\\.\n", pg) < 0)
-		exit_nicely();
-	fflush(pg);
 
 	PG_CMD_CLOSE;
 
@@ -1722,7 +1717,6 @@ setup_schema(void)
 
 /*
  * clean everything up in template1
- *
  */
 static void
 vacuum_db(void)
@@ -1732,26 +1726,24 @@ vacuum_db(void)
 	fputs("vacuuming database template1 ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
-	if (fputs("ANALYSE;\nVACUUM FULL FREEZE;\n", pg) < 0)
+	if (fputs("ANALYZE;\nVACUUM FULL FREEZE;\n", pg) < 0)
 		exit_nicely();
 	fflush(pg);
 
 	PG_CMD_CLOSE;
 
 	check_ok();
-
 }
 
 /*
  * copy template1 to template0
- *
  */
 static void
 make_template0(void)
@@ -1765,7 +1757,6 @@ make_template0(void)
 
 		/*
 		 * We use the OID of template0 to determine lastsysoid
-		 *
 		 */
 		"UPDATE pg_database SET datlastsysoid = "
 		"    (SELECT oid::int4 - 1 FROM pg_database "
@@ -1791,10 +1782,10 @@ make_template0(void)
 	fputs("copying template1 to template0 ... ", stdout);
 	fflush(stdout);
 
-	snprintf(cmd, MAXPGPATH,
-			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
-			 "-c exit_on_error=true template1 >%s",
-			 pgpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s/postgres\" %s template1 >%s",
+			 pgpath, backend_options,
+			 DEVNULL);
 
 	PG_CMD_OPEN;
 
@@ -1828,7 +1819,6 @@ make_template0(void)
  *
  * I have no idea how to handle this. (Strange they call UNIX an application!)
  * So this will need some testing on Windows.
- *
  */
 static void
 trapsig(int signum)
@@ -1840,26 +1830,25 @@ trapsig(int signum)
 
 /*
  * call exit_nicely() if we got a signal, or else output "ok".
- *
  */
 static void
 check_ok()
 {
 	if (not_ok)
 	{
-		puts("Caught Signal.");
+		printf("Caught Signal.\n");
 		exit_nicely();
 	}
 	else
 	{
 		/* no signal caught */
-		puts("ok");
+		printf("ok\n");
 	}
 }
 
 
 /*
- * check if given string is a valid locle specifier
+ * check if given string is a valid locale specifier
  * based on some code given to me by Peter Eisentraut
  * (but I take responsibility for it :-)
  */
@@ -1890,8 +1879,8 @@ chklocale(const char *locale)
 
 /*
  * set up the locale variables
- * assumes we have called setlocale(LC_ALL,"")
  *
+ * assumes we have called setlocale(LC_ALL,"")
  */
 static void
 setlocales(void)
@@ -1947,6 +1936,7 @@ setlocales(void)
 /*
  * help text data
  *
+ * Note: $CMDNAME is replaced by the right thing in usage()
  */
 char	   *usage_text[] = {
 	"$CMDNAME initializes a PostgreSQL database cluster.\n",
@@ -1983,15 +1973,12 @@ char	   *usage_text[] = {
 };
 
 
-
 /*
  * print help text
- *
  */
 static void
 usage(void)
 {
-
 	int			i;
 	char	  **newtext;
 
@@ -2001,13 +1988,13 @@ usage(void)
 		fputs(newtext[i], stdout);		/* faster than printf */
 }
 
+
 int
 main(int argc, char *argv[])
 {
 	/*
 	 * options with no short version return a low integer, the rest return
 	 * their short version value
-	 *
 	 */
 	static struct option long_options[] = {
 		{"pgdata", required_argument, NULL, 'D'},
@@ -2038,19 +2025,15 @@ main(int argc, char *argv[])
 								 * environment */
 	char	   *subdirs[] =
 	{"global", "pg_xlog", "pg_clog", "base", "base/1"};
-
 	char	   *lastsep;
-
-	/* parse argv[0] - detect explicit path if there was one */
-
 	char	   *carg0;
-
 #if defined(__CYGWIN__) || defined(WIN32)
 	char	   *exe;			/* location of exe suffix in progname */
 #endif
 
 	setlocale(LC_ALL, "");
 
+	/* parse argv[0] - detect explicit path if there was one */
 	carg0 = xstrdup(argv[0]);
 	canonicalize_path(carg0);
 
@@ -2078,7 +2061,7 @@ main(int argc, char *argv[])
 		self_path = NULL;
 	}
 
-	/* process options */
+	/* process command-line options */
 
 	while (1)
 	{
@@ -2108,9 +2091,11 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				debug = true;
+                printf("Running in debug mode.\n");
 				break;
 			case 'n':
 				noclean = true;
+				printf("Running in noclean mode.  Mistakes will not be cleaned up.\n");
 				break;
 			case 'L':
 				datadir = xstrdup(optarg);
@@ -2155,46 +2140,12 @@ main(int argc, char *argv[])
 
 	}
 
+	/* Non-option argument specifies data directory */
 	if (optind < argc)
 	{
 		pg_data = xstrdup(argv[optind]);
 		optind++;
 	}
-
-	set_info_version();
-
-	if (strlen(pg_data) == 0 && !(show_help || show_setting))
-	{
-		pgdenv = getenv("PGDATA");
-		if (pgdenv && strlen(pgdenv))
-		{
-			/* PGDATA found */
-			pg_data = xstrdup(pgdenv);
-		}
-		else
-		{
-			fprintf(stderr,
-					"%s: no data directory specified\n"
-			   "You must identify the directory where the data for this "
-					"database system\n"
-			   "will reside.  Do this with either the invocation option "
-					"-D or the\n" "environment variable PGDATA.\n",
-					progname);
-		}
-	}
-
-	canonicalize_path(pg_data);
-
-	/*
-	 * we have to set PGDATA for postgres rather than pass it on the
-	 * commnd line to avoid dumb quoting problems on Windows, and we would
-	 * expecially need quotes otherwise on Windows because paths there are
-	 * most likely to have embedded spaces.
-	 *
-	 */
-	pgdenv = xmalloc(8 + strlen(pg_data));
-	sprintf(pgdenv, "PGDATA=%s", pg_data);
-	putenv(pgdenv);
 
 	if (optind < argc)
 		show_help = true;
@@ -2212,6 +2163,40 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
+	if (strlen(pg_data) == 0)
+	{
+		pgdenv = getenv("PGDATA");
+		if (pgdenv && strlen(pgdenv))
+		{
+			/* PGDATA found */
+			pg_data = xstrdup(pgdenv);
+		}
+		else
+		{
+			fprintf(stderr,
+					"%s: no data directory specified\n"
+					"You must identify the directory where the data "
+					"for this database system\n"
+					"will reside.  Do this with either the invocation "
+					"option -D or the\n"
+					"environment variable PGDATA.\n",
+					progname);
+			exit(1);
+		}
+	}
+
+	canonicalize_path(pg_data);
+
+	/*
+	 * we have to set PGDATA for postgres rather than pass it on the
+	 * commnd line to avoid dumb quoting problems on Windows, and we would
+	 * expecially need quotes otherwise on Windows because paths there are
+	 * most likely to have embedded spaces.
+	 */
+	pgdenv = xmalloc(8 + strlen(pg_data));
+	sprintf(pgdenv, "PGDATA=%s", pg_data);
+	putenv(pgdenv);
+
 	if (set_paths() != 0)
 	{
 		fprintf(stderr,
@@ -2220,9 +2205,7 @@ main(int argc, char *argv[])
 				"the directory \"%s\". Check your installation.\n",
 				progname, bindir);
 		exit(1);
-
 	}
-
 
 	if ((short_version = get_short_version()) == NULL)
 	{
@@ -2247,6 +2230,8 @@ main(int argc, char *argv[])
 	set_input(&features_file, "sql_features.txt");
 	set_input(&system_views_file, "system_views.sql");
 
+	set_info_version();
+
 	if (show_setting || debug)
 	{
 		fprintf(stderr,
@@ -2262,10 +2247,9 @@ main(int argc, char *argv[])
 				username, bki_file,
 				desc_file, conf_file,
 				hba_file, ident_file);
+		if (show_setting)
+			exit(0);
 	}
-
-	if (show_setting)
-		exit(0);
 
 	check_input(bki_file);
 	check_input(desc_file);
@@ -2338,12 +2322,10 @@ main(int argc, char *argv[])
 	{
 		fprintf(stderr,
 				"%s: directory \"%s\" exists but is not empty\n"
-				"If you want to create a new database system, either "
-				"remove or empty\n"
-				"the directory \"$PGDATA\" or run $CMDNAME with an "
-				"argument other than\n"
-				"\"%s\".\n",
-				progname, pg_data, pg_data);
+				"If you want to create a new database system, either remove or empty\n"
+				"the directory \"%s\" or run %s\n"
+				"with an argument other than \"%s\".\n",
+				progname, pg_data, pg_data, progname, pg_data);
 		exit(1);
 	}
 
@@ -2364,6 +2346,8 @@ main(int argc, char *argv[])
 		made_new_pgdata = true;
 	}
 
+	/* Create required subdirectories */
+
 	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
 	{
 		printf("creating directory %s/%s ... ", pg_data, subdirs[i]);
@@ -2375,19 +2359,32 @@ main(int argc, char *argv[])
 			check_ok();
 	}
 
+	/* Top level PG_VERSION is checked by bootstrapper, so make it first */
 	set_short_version(short_version, NULL);
+
+	/*
+	 * Determine platform-specific config settings
+	 *
+	 * Use reasonable values if kernel will let us, else scale back.  Probe for
+	 * max_connections first since it is subject to more constraints than
+	 * shared_buffers.
+	 */
 
 	set_null_conf();
 
-	/* test connections first because it has more constraints */
 	test_connections();
 	test_buffers();
 
+	/* Now create all the text config files */
 	setup_config();
 
+	/* Bootstrap template1 */
 	bootstrap_template1(short_version);
 
+	/* Make the per-database PGVERSION for template1 only after init'ing it */
 	set_short_version(short_version, "base/1");
+
+	/* Create the stuff we don't need to use bootstrap mode for */
 
 	setup_shadow();
 	if (pwprompt)
