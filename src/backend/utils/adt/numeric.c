@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.33 2000/07/29 03:26:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.34 2000/08/01 18:29:35 tgl Exp $
  *
  * ----------
  */
@@ -1766,17 +1766,19 @@ numeric_float8(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	char	   *tmp;
-	float64		result;
+	Datum		result;
 
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_FLOAT8(NAN);
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
-	result = float8in(tmp);
+
+	result = DirectFunctionCall1(float8in, CStringGetDatum(tmp));
+
 	pfree(tmp);
 
-	PG_RETURN_POINTER(result);
+	PG_RETURN_DATUM(result);
 }
 
 
@@ -1809,17 +1811,19 @@ numeric_float4(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	char	   *tmp;
-	float32		result;
+	Datum		result;
 
 	if (NUMERIC_IS_NAN(num))
-		PG_RETURN_FLOAT4(NAN);
+		PG_RETURN_FLOAT4((float4) NAN);
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
-	result = float4in(tmp);
+
+	result = DirectFunctionCall1(float4in, CStringGetDatum(tmp));
+
 	pfree(tmp);
 
-	PG_RETURN_POINTER(result);
+	PG_RETURN_DATUM(result);
 }
 
 

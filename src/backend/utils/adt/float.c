@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.66 2000/07/28 02:13:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.67 2000/08/01 18:29:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@
 #include "postgres.h"
 
 #include <limits.h>
-
 /* for finite() on Solaris */
 #ifdef HAVE_IEEEFP_H
 # include <ieeefp.h>
@@ -64,24 +63,6 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 
-static void CheckFloat8Val(double val);
-
-#ifndef NAN
-#define NAN		(0.0/0.0)
-#endif
-
-#ifndef SHRT_MAX
-#define SHRT_MAX 32767
-#endif
-#ifndef SHRT_MIN
-#define SHRT_MIN (-32768)
-#endif
-
-#define FORMAT			'g'		/* use "g" output format as standard
-								 * format */
-/* not sure what the following should be, but better to make it over-sufficient */
-#define MAXFLOATWIDTH	64
-#define MAXDOUBLEWIDTH	128
 
 #if !(NeXT && NX_CURRENT_COMPILER_RELEASE > NX_COMPILER_RELEASE_3_2)
  /* NS3.3 has conflicting declarations of these in <math.h> */
@@ -109,6 +90,32 @@ extern double rint(double x);
 #endif /* HAVE_RINT */
 
 #endif /* NeXT check */
+
+
+static void CheckFloat4Val(double val);
+static void CheckFloat8Val(double val);
+
+#ifndef M_PI
+/* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef NAN
+#define NAN		(0.0/0.0)
+#endif
+
+#ifndef SHRT_MAX
+#define SHRT_MAX 32767
+#endif
+#ifndef SHRT_MIN
+#define SHRT_MIN (-32768)
+#endif
+
+#define FORMAT			'g'		/* use "g" output format as standard
+								 * format */
+/* not sure what the following should be, but better to make it over-sufficient */
+#define MAXFLOATWIDTH	64
+#define MAXDOUBLEWIDTH	128
 
 /* ========== USER I/O ROUTINES ========== */
 
@@ -176,10 +183,10 @@ CheckFloat8Val(double val)
  *						  where <sp> is a space, digit is 0-9,
  *						  <exp> is "e" or "E" followed by an integer.
  */
-float32
-float4in(char *num)
+Datum
+float4in(PG_FUNCTION_ARGS)
 {
-	float32		result = (float32) palloc(sizeof(float32data));
+	char	   *num = PG_GETARG_CSTRING(0);
 	double		val;
 	char	   *endptr;
 
@@ -200,29 +207,24 @@ float4in(char *num)
 	 * if we get here, we have a legal double, still need to check to see
 	 * if it's a legal float
 	 */
-
 	CheckFloat4Val(val);
 
-	*result = val;
-	return result;
+	PG_RETURN_FLOAT4((float4) val);
 }
 
 /*
  *		float4out		- converts a float4 number to a string
  *						  using a standard output format
  */
-char *
-float4out(float32 num)
+Datum
+float4out(PG_FUNCTION_ARGS)
 {
+	float4		num = PG_GETARG_FLOAT4(0);
 	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
 
-	if (!num)
-		return strcpy(ascii, "(null)");
-
-	sprintf(ascii, "%.*g", FLT_DIG, *num);
-	return ascii;
+	sprintf(ascii, "%.*g", FLT_DIG, num);
+	PG_RETURN_CSTRING(ascii);
 }
-
 
 /*
  *		float8in		- converts "num" to float8
@@ -231,10 +233,10 @@ float4out(float32 num)
  *						  where <sp> is a space, digit is 0-9,
  *						  <exp> is "e" or "E" followed by an integer.
  */
-float64
-float8in(char *num)
+Datum
+float8in(PG_FUNCTION_ARGS)
 {
-	float64		result = (float64) palloc(sizeof(float64data));
+	char	   *num = PG_GETARG_CSTRING(0);
 	double		val;
 	char	   *endptr;
 
@@ -257,8 +259,7 @@ float8in(char *num)
 
 	CheckFloat8Val(val);
 
-	*result = val;
-	return result;
+	PG_RETURN_FLOAT8(val);
 }
 
 
@@ -266,21 +267,19 @@ float8in(char *num)
  *		float8out		- converts float8 number to a string
  *						  using a standard output format
  */
-char *
-float8out(float64 num)
+Datum
+float8out(PG_FUNCTION_ARGS)
 {
+	float8		num = PG_GETARG_FLOAT8(0);
 	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
 
-	if (!num)
-		return strcpy(ascii, "(null)");
+	if (isnan(num))
+		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
+	if (isinf(num))
+		PG_RETURN_CSTRING(strcpy(ascii, "Infinity"));
 
-	if (isnan(*num))
-		return strcpy(ascii, "NaN");
-	if (isinf(*num))
-		return strcpy(ascii, "Infinity");
-
-	sprintf(ascii, "%.*g", DBL_DIG, *num);
-	return ascii;
+	sprintf(ascii, "%.*g", DBL_DIG, num);
+	PG_RETURN_CSTRING(ascii);
 }
 
 /* ========== PUBLIC ROUTINES ========== */
@@ -293,72 +292,47 @@ float8out(float64 num)
  */
 
 /*
- *		float4abs		- returns a pointer to |arg1| (absolute value)
+ *		float4abs		- returns |arg1| (absolute value)
  */
-float32
-float4abs(float32 arg1)
+Datum
+float4abs(PG_FUNCTION_ARGS)
 {
-	float32		result;
-	double		val;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
 
-	if (!arg1)
-		return (float32) NULL;
-
-	val = fabs(*arg1);
-
-	CheckFloat4Val(val);
-
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-	return result;
+	PG_RETURN_FLOAT4((float4) fabs(arg1));
 }
 
 /*
- *		float4um		- returns a pointer to -arg1 (unary minus)
+ *		float4um		- returns -arg1 (unary minus)
  */
-float32
-float4um(float32 arg1)
+Datum
+float4um(PG_FUNCTION_ARGS)
 {
-	float32		result;
-	double		val;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
 
-	if (!arg1)
-		return (float32) NULL;
-
-	val = ((*arg1 != 0) ? -(*arg1) : *arg1);
-	CheckFloat4Val(val);
-
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-	return result;
+	PG_RETURN_FLOAT4((float4) -arg1);
 }
 
-float32
-float4larger(float32 arg1, float32 arg2)
+Datum
+float4larger(PG_FUNCTION_ARGS)
 {
-	float32		result;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	float4		result;
 
-	if (!arg1 || !arg2)
-		return (float32) NULL;
-
-	result = (float32) palloc(sizeof(float32data));
-
-	*result = ((*arg1 > *arg2) ? *arg1 : *arg2);
-	return result;
+	result = ((arg1 > arg2) ? arg1 : arg2);
+	PG_RETURN_FLOAT4(result);
 }
 
-float32
-float4smaller(float32 arg1, float32 arg2)
+Datum
+float4smaller(PG_FUNCTION_ARGS)
 {
-	float32		result;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	float4		result;
 
-	if (!arg1 || !arg2)
-		return (float32) NULL;
-
-	result = (float32) palloc(sizeof(float32data));
-
-	*result = ((*arg1 > *arg2) ? *arg2 : *arg1);
-	return result;
+	result = ((arg1 < arg2) ? arg1 : arg2);
+	PG_RETURN_FLOAT4(result);
 }
 
 /*
@@ -368,72 +342,58 @@ float4smaller(float32 arg1, float32 arg2)
  */
 
 /*
- *		float8abs		- returns a pointer to |arg1| (absolute value)
+ *		float8abs		- returns |arg1| (absolute value)
  */
-float64
-float8abs(float64 arg1)
+Datum
+float8abs(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		val;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
+	result = fabs(arg1);
 
-	result = (float64) palloc(sizeof(float64data));
-
-	val = fabs(*arg1);
-	CheckFloat8Val(val);
-	*result = val;
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		float8um		- returns a pointer to -arg1 (unary minus)
+ *		float8um		- returns -arg1 (unary minus)
  */
-float64
-float8um(float64 arg1)
+Datum
+float8um(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		val;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
+	result = ((arg1 != 0) ? -(arg1) : arg1);
 
-	val = ((*arg1 != 0) ? -(*arg1) : *arg1);
-
-	CheckFloat8Val(val);
-	result = (float64) palloc(sizeof(float64data));
-	*result = val;
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float8larger(float64 arg1, float64 arg2)
+Datum
+float8larger(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = ((arg1 > arg2) ? arg1 : arg2);
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = ((*arg1 > *arg2) ? *arg1 : *arg2);
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float8smaller(float64 arg1, float64 arg2)
+Datum
+float8smaller(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = ((arg1 < arg2) ? arg1 : arg2);
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = ((*arg1 > *arg2) ? *arg2 : *arg1);
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 
@@ -444,158 +404,123 @@ float8smaller(float64 arg1, float64 arg2)
  */
 
 /*
- *		float4pl		- returns a pointer to arg1 + arg2
- *		float4mi		- returns a pointer to arg1 - arg2
- *		float4mul		- returns a pointer to arg1 * arg2
- *		float4div		- returns a pointer to arg1 / arg2
+ *		float4pl		- returns arg1 + arg2
+ *		float4mi		- returns arg1 - arg2
+ *		float4mul		- returns arg1 * arg2
+ *		float4div		- returns arg1 / arg2
  */
-float32
-float4pl(float32 arg1, float32 arg2)
+Datum
+float4pl(PG_FUNCTION_ARGS)
 {
-	float32		result;
-	double		val;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	double		result;
 
-	if (!arg1 || !arg2)
-		return (float32) NULL;
-
-	val = *arg1 + *arg2;
-	CheckFloat4Val(val);
-
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-
-	return result;
+	result = arg1 + arg2;
+	CheckFloat4Val(result);
+	PG_RETURN_FLOAT4((float4) result);
 }
 
-float32
-float4mi(float32 arg1, float32 arg2)
+Datum
+float4mi(PG_FUNCTION_ARGS)
 {
-	float32		result;
-	double		val;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	double		result;
 
-	if (!arg1 || !arg2)
-		return (float32) NULL;
-
-	val = *arg1 - *arg2;
-
-	CheckFloat4Val(val);
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-	return result;
+	result = arg1 - arg2;
+	CheckFloat4Val(result);
+	PG_RETURN_FLOAT4((float4) result);
 }
 
-float32
-float4mul(float32 arg1, float32 arg2)
+Datum
+float4mul(PG_FUNCTION_ARGS)
 {
-	float32		result;
-	double		val;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	double		result;
 
-	if (!arg1 || !arg2)
-		return (float32) NULL;
-
-	val = *arg1 * *arg2;
-
-	CheckFloat4Val(val);
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-	return result;
+	result = arg1 * arg2;
+	CheckFloat4Val(result);
+	PG_RETURN_FLOAT4((float4) result);
 }
 
-float32
-float4div(float32 arg1, float32 arg2)
+Datum
+float4div(PG_FUNCTION_ARGS)
 {
-	float32		result;
-	double		val;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	double		result;
 
-	if (!arg1 || !arg2)
-		return (float32) NULL;
-
-	if (*arg2 == 0.0)
+	if (arg2 == 0.0)
 		elog(ERROR, "float4div: divide by zero error");
 
-	val = *arg1 / *arg2;
+	/* Do division in float8, then check for overflow */
+	result = (float8) arg1 / (float8) arg2;
 
-	CheckFloat4Val(val);
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-	return result;
+	CheckFloat4Val(result);
+	PG_RETURN_FLOAT4((float4) result);
 }
 
 /*
- *		float8pl		- returns a pointer to arg1 + arg2
- *		float8mi		- returns a pointer to arg1 - arg2
- *		float8mul		- returns a pointer to arg1 * arg2
- *		float8div		- returns a pointer to arg1 / arg2
+ *		float8pl		- returns arg1 + arg2
+ *		float8mi		- returns arg1 - arg2
+ *		float8mul		- returns arg1 * arg2
+ *		float8div		- returns arg1 / arg2
  */
-float64
-float8pl(float64 arg1, float64 arg2)
+Datum
+float8pl(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		val;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = arg1 + arg2;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	val = *arg1 + *arg2;
-	CheckFloat8Val(val);
-	*result = val;
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float8mi(float64 arg1, float64 arg2)
+Datum
+float8mi(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		val;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = arg1 - arg2;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	val = *arg1 - *arg2;
-	CheckFloat8Val(val);
-	*result = val;
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float8mul(float64 arg1, float64 arg2)
+Datum
+float8mul(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		val;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = arg1 * arg2;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	val = *arg1 * *arg2;
-	CheckFloat8Val(val);
-	*result = val;
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float8div(float64 arg1, float64 arg2)
+Datum
+float8div(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		val;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	if (*arg2 == 0.0)
+	if (arg2 == 0.0)
 		elog(ERROR, "float8div: divide by zero error");
 
-	val = *arg1 / *arg2;
-	CheckFloat8Val(val);
-	*result = val;
-	return result;
+	result = arg1 / arg2;
+
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 
@@ -608,115 +533,115 @@ float8div(float64 arg1, float64 arg2)
 /*
  *		float4{eq,ne,lt,le,gt,ge}		- float4/float4 comparison operations
  */
-bool
-float4eq(float32 arg1, float32 arg2)
+Datum
+float4eq(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 == *arg2;
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-float4ne(float32 arg1, float32 arg2)
+Datum
+float4ne(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 != *arg2;
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-float4lt(float32 arg1, float32 arg2)
+Datum
+float4lt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 < *arg2;
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-float4le(float32 arg1, float32 arg2)
+Datum
+float4le(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 <= *arg2;
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-float4gt(float32 arg1, float32 arg2)
+Datum
+float4gt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 > *arg2;
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-float4ge(float32 arg1, float32 arg2)
+Datum
+float4ge(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 >= *arg2;
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 /*
  *		float8{eq,ne,lt,le,gt,ge}		- float8/float8 comparison operations
  */
-bool
-float8eq(float64 arg1, float64 arg2)
+Datum
+float8eq(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 == *arg2;
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-float8ne(float64 arg1, float64 arg2)
+Datum
+float8ne(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 != *arg2;
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-float8lt(float64 arg1, float64 arg2)
+Datum
+float8lt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 < *arg2;
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-float8le(float64 arg1, float64 arg2)
+Datum
+float8le(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 <= *arg2;
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-float8gt(float64 arg1, float64 arg2)
+Datum
+float8gt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 > *arg2;
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-float8ge(float64 arg1, float64 arg2)
+Datum
+float8ge(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 >= *arg2;
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 
@@ -729,57 +654,43 @@ float8ge(float64 arg1, float64 arg2)
 /*
  *		ftod			- converts a float4 number to a float8 number
  */
-float64
-ftod(float32 num)
+Datum
+ftod(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float4		num = PG_GETARG_FLOAT4(0);
 
-	if (!num)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *num;
-	return result;
+	PG_RETURN_FLOAT8((float8) num);
 }
 
 
 /*
  *		dtof			- converts a float8 number to a float4 number
  */
-float32
-dtof(float64 num)
+Datum
+dtof(PG_FUNCTION_ARGS)
 {
-	float32		result;
+	float8		num = PG_GETARG_FLOAT8(0);
 
-	if (!num)
-		return (float32) NULL;
+	CheckFloat4Val(num);
 
-	CheckFloat4Val(*num);
-
-	result = (float32) palloc(sizeof(float32data));
-
-	*result = *num;
-	return result;
+	PG_RETURN_FLOAT4((float4) num);
 }
 
 
 /*
  *		dtoi4			- converts a float8 number to an int4 number
  */
-int32
-dtoi4(float64 num)
+Datum
+dtoi4(PG_FUNCTION_ARGS)
 {
+	float8		num = PG_GETARG_FLOAT8(0);
 	int32		result;
 
-	if (!num)
-		return 0;				/* fmgr will return NULL anyway */
-
-	if ((*num < INT_MIN) || (*num > INT_MAX))
+	if ((num < INT_MIN) || (num > INT_MAX))
 		elog(ERROR, "dtoi4: integer out of range");
 
-	result = rint(*num);
-	return result;
+	result = (int32) rint(num);
+	PG_RETURN_INT32(result);
 }
 
 
@@ -829,21 +740,19 @@ i2tod(PG_FUNCTION_ARGS)
 
 
 /*
- *		ftoi4			- converts a float8 number to an int4 number
+ *		ftoi4			- converts a float4 number to an int4 number
  */
-int32
-ftoi4(float32 num)
+Datum
+ftoi4(PG_FUNCTION_ARGS)
 {
+	float4		num = PG_GETARG_FLOAT4(0);
 	int32		result;
 
-	if (!num)
-		return 0;				/* fmgr will return NULL anyway */
-
-	if ((*num < INT_MIN) || (*num > INT_MAX))
+	if ((num < INT_MIN) || (num > INT_MAX))
 		elog(ERROR, "ftoi4: integer out of range");
 
-	result = rint(*num);
-	return result;
+	result = (int32) rint(num);
+	PG_RETURN_INT32(result);
 }
 
 
@@ -903,7 +812,9 @@ float8_text(PG_FUNCTION_ARGS)
 	int			len;
 	char	   *str;
 
-	str = float8out(&num);		/* XXX temporary hack */
+	str = DatumGetCString(DirectFunctionCall1(float8out,
+											  Float8GetDatum(num)));
+
 	len = strlen(str) + VARHDRSZ;
 
 	result = (text *) palloc(len);
@@ -924,7 +835,7 @@ Datum
 text_float8(PG_FUNCTION_ARGS)
 {
 	text	   *string = PG_GETARG_TEXT_P(0);
-	float64		result;
+	Datum		result;
 	int			len;
 	char	   *str;
 
@@ -933,11 +844,11 @@ text_float8(PG_FUNCTION_ARGS)
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = float8in(str);
+	result = DirectFunctionCall1(float8in, CStringGetDatum(str));
 
 	pfree(str);
 
-	return PointerGetDatum(result);
+	PG_RETURN_DATUM(result);
 }
 
 
@@ -952,7 +863,9 @@ float4_text(PG_FUNCTION_ARGS)
 	int			len;
 	char	   *str;
 
-	str = float4out(&num);		/* XXX temporary hack */
+	str = DatumGetCString(DirectFunctionCall1(float4out,
+											  Float4GetDatum(num)));
+
 	len = strlen(str) + VARHDRSZ;
 
 	result = (text *) palloc(len);
@@ -973,7 +886,7 @@ Datum
 text_float4(PG_FUNCTION_ARGS)
 {
 	text	   *string = PG_GETARG_TEXT_P(0);
-	float32		result;
+	Datum		result;
 	int			len;
 	char	   *str;
 
@@ -982,11 +895,11 @@ text_float4(PG_FUNCTION_ARGS)
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = float4in(str);
+	result = DirectFunctionCall1(float4in, CStringGetDatum(str));
 
 	pfree(str);
 
-	return PointerGetDatum(result);
+	PG_RETURN_DATUM(result);
 }
 
 
@@ -997,143 +910,111 @@ text_float4(PG_FUNCTION_ARGS)
  */
 
 /*
- *		dround			- returns a pointer to	ROUND(arg1)
+ *		dround			- returns	ROUND(arg1)
  */
-float64
-dround(float64 arg1)
+Datum
+dround(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
+	result = rint(arg1);
 
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
-	*result = (float64data) rint(tmp);
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		dtrunc			- returns a pointer to	truncation of arg1,
- *						  arg1 >= 0 ... the greatest integer as float8 less
+ *		dtrunc			- returns truncation-towards-zero of arg1,
+ *						  arg1 >= 0 ... the greatest integer less
  *										than or equal to arg1
- *						  arg1 < 0	... the greatest integer as float8 greater
+ *						  arg1 < 0	... the least integer greater
  *										than or equal to arg1
  */
-float64
-dtrunc(float64 arg1)
+Datum
+dtrunc(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
-	if (*arg1 >= 0)
-		*result = (float64data) floor(tmp);
+	if (arg1 >= 0)
+		result = floor(arg1);
 	else
-		*result = (float64data) -(floor(-tmp));
-	return result;
+		result = -floor(-arg1);
+
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		dsqrt			- returns a pointer to square root of arg1
+ *		dsqrt			- returns square root of arg1
  */
-float64
-dsqrt(float64 arg1)
+Datum
+dsqrt(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
+	if (arg1 < 0)
+		elog(ERROR, "can't take sqrt of a negative number");
 
-	result = (float64) palloc(sizeof(float64data));
+	result = sqrt(arg1);
 
-	tmp = *arg1;
-	*result = (float64data) sqrt(tmp);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		dcbrt			- returns a pointer to cube root of arg1
+ *		dcbrt			- returns cube root of arg1
  */
-float64
-dcbrt(float64 arg1)
+Datum
+dcbrt(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
-	*result = (float64data) cbrt(tmp);
-	return result;
+	result = cbrt(arg1);
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		dpow			- returns a pointer to pow(arg1,arg2)
+ *		dpow			- returns pow(arg1,arg2)
  */
-float64
-dpow(float64 arg1, float64 arg2)
+Datum
+dpow(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp1,
-				tmp2;
-
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp1 = *arg1;
-	tmp2 = *arg2;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
 	/*
 	 * We must check both for errno getting set and for a NaN result, in
 	 * order to deal with the vagaries of different platforms...
 	 */
 	errno = 0;
-	*result = (float64data) pow(tmp1, tmp2);
+	result = pow(arg1, arg2);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
 		elog(ERROR, "pow() result is out of range");
 
-	CheckFloat8Val(*result);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		dexp			- returns a pointer to the exponential function of arg1
+ *		dexp			- returns the exponential function of arg1
  */
-float64
-dexp(float64 arg1)
+Datum
+dexp(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
-
-	if (!arg1)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
 	/*
 	 * We must check both for errno getting set and for a NaN result, in
@@ -1141,395 +1022,318 @@ dexp(float64 arg1)
 	 * zero result implies unreported underflow.
 	 */
 	errno = 0;
-	*result = (float64data) exp(tmp);
-	if (errno != 0 || *result == 0.0
+	result = exp(arg1);
+	if (errno != 0 || result == 0.0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
 		elog(ERROR, "exp() result is out of range");
 
-	CheckFloat8Val(*result);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 
 /*
- *		dlog1			- returns a pointer to the natural logarithm of arg1
+ *		dlog1			- returns the natural logarithm of arg1
  *						  ("dlog" is already a logging routine...)
  */
-float64
-dlog1(float64 arg1)
+Datum
+dlog1(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
-	if (tmp == 0.0)
+	if (arg1 == 0.0)
 		elog(ERROR, "can't take log of zero");
-	if (tmp < 0)
+	if (arg1 < 0)
 		elog(ERROR, "can't take log of a negative number");
-	*result = (float64data) log(tmp);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dlog1() */
+	result = log(arg1);
+
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dlog10			- returns a pointer to the base 10 logarithm of arg1
+ *		dlog10			- returns the base 10 logarithm of arg1
  */
-float64
-dlog10(float64 arg1)
+Datum
+dlog10(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
-	if (tmp == 0.0)
+	if (arg1 == 0.0)
 		elog(ERROR, "can't take log of zero");
-	if (tmp < 0)
+	if (arg1 < 0)
 		elog(ERROR, "can't take log of a negative number");
-	*result = (float64data) log10(tmp);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dlog10() */
+	result = log10(arg1);
+
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dacos			- returns a pointer to the arccos of arg1 (radians)
+ *		dacos			- returns the arccos of arg1 (radians)
  */
-float64
-dacos(float64 arg1)
+Datum
+dacos(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) acos(tmp);
+	result = acos(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "dacos(%f) input is out of range", *arg1);
+		elog(ERROR, "acos(%f) input is out of range", arg1);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dacos() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dasin			- returns a pointer to the arcsin of arg1 (radians)
+ *		dasin			- returns the arcsin of arg1 (radians)
  */
-float64
-dasin(float64 arg1)
+Datum
+dasin(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) asin(tmp);
+	result = asin(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "dasin(%f) input is out of range", *arg1);
+		elog(ERROR, "asin(%f) input is out of range", arg1);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dasin() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		datan			- returns a pointer to the arctan of arg1 (radians)
+ *		datan			- returns the arctan of arg1 (radians)
  */
-float64
-datan(float64 arg1)
+Datum
+datan(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) atan(tmp);
+	result = atan(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "atan(%f) input is out of range", *arg1);
+		elog(ERROR, "atan(%f) input is out of range", arg1);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* datan() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		atan2			- returns a pointer to the arctan2 of arg1 (radians)
+ *		atan2			- returns the arctan2 of arg1 (radians)
  */
-float64
-datan2(float64 arg1, float64 arg2)
+Datum
+datan2(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
 	errno = 0;
-	*result = (float64data) atan2(*arg1, *arg2);
+	result = atan2(arg1, arg2);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "atan2(%f,%f) input is out of range", *arg1, *arg2);
+		elog(ERROR, "atan2(%f,%f) input is out of range", arg1, arg2);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* datan2() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dcos			- returns a pointer to the cosine of arg1 (radians)
+ *		dcos			- returns the cosine of arg1 (radians)
  */
-float64
-dcos(float64 arg1)
+Datum
+dcos(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) cos(tmp);
+	result = cos(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "dcos(%f) input is out of range", *arg1);
+		elog(ERROR, "cos(%f) input is out of range", arg1);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dcos() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dcot			- returns a pointer to the cotangent of arg1 (radians)
+ *		dcot			- returns the cotangent of arg1 (radians)
  */
-float64
-dcot(float64 arg1)
+Datum
+dcot(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) tan(tmp);
-	if ((errno != 0) || (*result == 0.0)
+	result = tan(arg1);
+	if (errno != 0 || result == 0.0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "dcot(%f) input is out of range", *arg1);
+		elog(ERROR, "cot(%f) input is out of range", arg1);
 
-	*result = 1.0 / (*result);
-	CheckFloat8Val(*result);
-	return result;
-}	/* dcot() */
+	result = 1.0 / result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dsin			- returns a pointer to the sine of arg1 (radians)
+ *		dsin			- returns the sine of arg1 (radians)
  */
-float64
-dsin(float64 arg1)
+Datum
+dsin(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) sin(tmp);
+	result = sin(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "dsin(%f) input is out of range", *arg1);
+		elog(ERROR, "sin(%f) input is out of range", arg1);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dsin() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dtan			- returns a pointer to the tangent of arg1 (radians)
+ *		dtan			- returns the tangent of arg1 (radians)
  */
-float64
-dtan(float64 arg1)
+Datum
+dtan(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	double		tmp;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!PointerIsValid(arg1))
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	tmp = *arg1;
 	errno = 0;
-	*result = (float64data) tan(tmp);
+	result = tan(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
-		|| !finite(*result)
+		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "dtan(%f) input is out of range", *arg1);
+		elog(ERROR, "tan(%f) input is out of range", arg1);
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* dtan() */
-
-
-#ifndef M_PI
-/* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
-#define M_PI 3.14159265358979323846
-#endif
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		degrees		- returns a pointer to degrees converted from radians
+ *		degrees		- returns degrees converted from radians
  */
-float64
-degrees(float64 arg1)
+Datum
+degrees(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
+	result = arg1 * (180.0 / M_PI);
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = ((*arg1) * (180.0 / M_PI));
-
-	CheckFloat8Val(*result);
-	return result;
-}	/* degrees() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
- *		dpi				- returns a pointer to degrees converted to radians
+ *		dpi				- returns the constant PI
  */
-float64
-dpi(void)
+Datum
+dpi(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = (M_PI);
-
-	return result;
-}	/* dpi() */
+	PG_RETURN_FLOAT8(M_PI);
+}
 
 
 /*
- *		radians		- returns a pointer to radians converted from degrees
+ *		radians		- returns radians converted from degrees
  */
-float64
-radians(float64 arg1)
+Datum
+radians(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
 
-	if (!arg1)
-		return (float64) NULL;
+	result = arg1 * (M_PI / 180.0);
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = ((*arg1) * (M_PI / 180.0));
-
-	CheckFloat8Val(*result);
-	return result;
-}	/* radians() */
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
  *		drandom		- returns a random number
  */
-float64
-drandom(void)
+Datum
+drandom(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
+	float8		result;
 
 	/* result 0.0-1.0 */
-	*result = (((double) random()) / RAND_MAX);
+	result = ((double) random()) / RAND_MAX;
 
-	CheckFloat8Val(*result);
-	return result;
-}	/* drandom() */
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /*
  *		setseed		- set seed for the random number generator
  */
-int32
-setseed(float64 seed)
+Datum
+setseed(PG_FUNCTION_ARGS)
 {
-	int			iseed = ((*seed) * RAND_MAX);
+	float8		seed = PG_GETARG_FLOAT8(0);
+	int			iseed = (seed * RAND_MAX);
 
-	srandom((unsigned int) ((*seed) * RAND_MAX));
+	srandom((unsigned int) iseed);
 
-	return iseed;
-}	/* setseed() */
+	PG_RETURN_INT32(iseed);
+}
 
 
 
@@ -1710,142 +1514,121 @@ float8_stddev(PG_FUNCTION_ARGS)
  */
 
 /*
- *		float48pl		- returns a pointer to arg1 + arg2
- *		float48mi		- returns a pointer to arg1 - arg2
- *		float48mul		- returns a pointer to arg1 * arg2
- *		float48div		- returns a pointer to arg1 / arg2
+ *		float48pl		- returns arg1 + arg2
+ *		float48mi		- returns arg1 - arg2
+ *		float48mul		- returns arg1 * arg2
+ *		float48div		- returns arg1 / arg2
  */
-float64
-float48pl(float32 arg1, float64 arg2)
+Datum
+float48pl(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *arg1 + *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	result = arg1 + arg2;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float48mi(float32 arg1, float64 arg2)
+Datum
+float48mi(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *arg1 - *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	result = arg1 - arg2;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float48mul(float32 arg1, float64 arg2)
+Datum
+float48mul(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *arg1 * *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	result = arg1 * arg2;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float48div(float32 arg1, float64 arg2)
+Datum
+float48div(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	if (*arg2 == 0.0)
+	if (arg2 == 0.0)
 		elog(ERROR, "float48div: divide by zero");
 
-	*result = *arg1 / *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	result = arg1 / arg2;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
- *		float84pl		- returns a pointer to arg1 + arg2
- *		float84mi		- returns a pointer to arg1 - arg2
- *		float84mul		- returns a pointer to arg1 * arg2
- *		float84div		- returns a pointer to arg1 / arg2
+ *		float84pl		- returns arg1 + arg2
+ *		float84mi		- returns arg1 - arg2
+ *		float84mul		- returns arg1 * arg2
+ *		float84div		- returns arg1 / arg2
  */
-float64
-float84pl(float64 arg1, float32 arg2)
+Datum
+float84pl(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = arg1 + arg2;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *arg1 + *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float84mi(float64 arg1, float32 arg2)
+Datum
+float84mi(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	result = arg1 - arg2;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *arg1 - *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float84mul(float64 arg1, float32 arg2)
+Datum
+float84mul(PG_FUNCTION_ARGS)
 {
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	float8		result;
 
-	float64		result;
+	result = arg1 * arg2;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
-
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = *arg1 * *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
-float64
-float84div(float64 arg1, float32 arg2)
+Datum
+float84div(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+	float8		result;
 
-	if (!arg1 || !arg2)
-		return (float64) NULL;
+	if (arg2 == 0.0)
+		elog(ERROR, "float84div: divide by zero");
 
-	result = (float64) palloc(sizeof(float64data));
+	result = arg1 / arg2;
 
-	if (*arg2 == 0.0)
-		elog(ERROR, "float48div: divide by zero");
-
-	*result = *arg1 / *arg2;
-	CheckFloat8Val(*result);
-	return result;
+	CheckFloat8Val(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
@@ -1857,115 +1640,115 @@ float84div(float64 arg1, float32 arg2)
 /*
  *		float48{eq,ne,lt,le,gt,ge}		- float4/float8 comparison operations
  */
-bool
-float48eq(float32 arg1, float64 arg2)
+Datum
+float48eq(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 == *arg2;
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-float48ne(float32 arg1, float64 arg2)
+Datum
+float48ne(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 != *arg2;
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-float48lt(float32 arg1, float64 arg2)
+Datum
+float48lt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 < *arg2;
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-float48le(float32 arg1, float64 arg2)
+Datum
+float48le(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 <= *arg2;
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-float48gt(float32 arg1, float64 arg2)
+Datum
+float48gt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 > *arg2;
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-float48ge(float32 arg1, float64 arg2)
+Datum
+float48ge(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	return *arg1 >= *arg2;
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 /*
- *		float84{eq,ne,lt,le,gt,ge}		- float4/float8 comparison operations
+ *		float84{eq,ne,lt,le,gt,ge}		- float8/float4 comparison operations
  */
-bool
-float84eq(float64 arg1, float32 arg2)
+Datum
+float84eq(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 == *arg2;
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-float84ne(float64 arg1, float32 arg2)
+Datum
+float84ne(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 != *arg2;
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-float84lt(float64 arg1, float32 arg2)
+Datum
+float84lt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 < *arg2;
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-float84le(float64 arg1, float32 arg2)
+Datum
+float84le(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 <= *arg2;
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-float84gt(float64 arg1, float32 arg2)
+Datum
+float84gt(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 > *arg2;
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-float84ge(float64 arg1, float32 arg2)
+Datum
+float84ge(PG_FUNCTION_ARGS)
 {
-	if (!arg1 || !arg2)
-		return 0;
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	return *arg1 >= *arg2;
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 /* ========== PRIVATE ROUTINES ========== */
@@ -1996,26 +1779,14 @@ float84ge(float64 arg1, float32 arg2)
  *		Inexact flag raised if x not equal to rint(x).
  */
 
-#ifdef __STDC__
-static const double
-#else
-static double
-#endif
-			one = 1.0,
+static const double one = 1.0,
 			TWO52[2] = {
 	4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
 	-4.50359962737049600000e+15,/* 0xC3300000, 0x00000000 */
 };
 
-#ifdef __STDC__
 static double
 rint(double x)
-#else
-static double
-rint(x)
-double		x;
-
-#endif
 {
 	int			i0,
 				n0,
@@ -2088,10 +1859,8 @@ double		x;
 
 #ifndef HAVE_CBRT
 
-static
-double
-cbrt(x)
-double		x;
+static double
+cbrt(double x)
 {
 	int			isneg = (x < 0.0);
 	double		tmpres = pow(fabs(x), (double) 1.0 / (double) 3.0);

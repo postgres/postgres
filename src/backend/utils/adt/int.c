@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.41 2000/07/17 03:05:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.42 2000/08/01 18:29:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ int2out(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	char	   *result = (char *) palloc(7); /* sign, 5 digits, '\0' */
 
-	itoa((int) arg1, result);
+	pg_itoa(arg1, result);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -123,7 +123,7 @@ int2vectorout(PG_FUNCTION_ARGS)
 	{
 		if (num != 0)
 			*rp++ = ' ';
-		ltoa(int2Array[num], rp);
+		pg_itoa(int2Array[num], rp);
 		while (*++rp != '\0')
 			;
 	}
@@ -187,7 +187,7 @@ int44out(PG_FUNCTION_ARGS)
 	walk = result;
 	for (i = 0; i < 4; i++)
 	{
-		itoa(an_array[i], walk);
+		pg_ltoa(an_array[i], walk);
 		while (*++walk != '\0')
 			;
 		*walk++ = ' ';
@@ -221,7 +221,7 @@ int4out(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	char	   *result = (char *) palloc(12); /* sign, 10 digits, '\0' */
 
-	ltoa(arg1, result);
+	pg_ltoa(arg1, result);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -259,7 +259,7 @@ int2_text(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	text	   *result = (text *) palloc(7+VARHDRSZ); /* sign,5 digits, '\0' */
 
-	itoa((int) arg1, VARDATA(result));
+	pg_itoa(arg1, VARDATA(result));
 	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	PG_RETURN_TEXT_P(result);
 }
@@ -290,7 +290,7 @@ int4_text(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	text	   *result = (text *) palloc(12+VARHDRSZ); /* sign,10 digits,'\0' */
 
-	ltoa(arg1, VARDATA(result));
+	pg_ltoa(arg1, VARDATA(result));
 	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	PG_RETURN_TEXT_P(result);
 }

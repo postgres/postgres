@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.37 2000/07/03 23:09:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.38 2000/08/01 18:29:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ oidvectorout(PG_FUNCTION_ARGS)
 	{
 		if (num != 0)
 			*rp++ = ' ';
-		ltoa(oidArray[num], rp);
+		pg_ltoa((int32) oidArray[num], rp);
 		while (*++rp != '\0')
 			;
 	}

@@ -25,13 +25,13 @@ extern bool cash_ge(Cash *c1, Cash *c2);
 extern Cash *cash_pl(Cash *c1, Cash *c2);
 extern Cash *cash_mi(Cash *c1, Cash *c2);
 
-extern Cash *cash_mul_flt8(Cash *c, float8 *f);
-extern Cash *cash_div_flt8(Cash *c, float8 *f);
-extern Cash *flt8_mul_cash(float8 *f, Cash *c);
+extern Datum cash_mul_flt8(PG_FUNCTION_ARGS);
+extern Datum cash_div_flt8(PG_FUNCTION_ARGS);
+extern Datum flt8_mul_cash(PG_FUNCTION_ARGS);
 
-extern Cash *cash_mul_flt4(Cash *c, float4 *f);
-extern Cash *cash_div_flt4(Cash *c, float4 *f);
-extern Cash *flt4_mul_cash(float4 *f, Cash *c);
+extern Datum cash_mul_flt4(PG_FUNCTION_ARGS);
+extern Datum cash_div_flt4(PG_FUNCTION_ARGS);
+extern Datum flt4_mul_cash(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_int4(PG_FUNCTION_ARGS);
 extern Datum cash_div_int4(PG_FUNCTION_ARGS);

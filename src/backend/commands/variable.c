@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.39 2000/07/14 15:35:44 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.40 2000/08/01 18:29:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,7 +566,7 @@ parse_random_seed(char *value)
 	else
 	{
 		sscanf(value, "%lf", &seed);
-		setseed(&seed);
+		DirectFunctionCall1(setseed, Float8GetDatum(seed));
 	}
 	return (TRUE);
 }
@@ -583,7 +583,7 @@ reset_random_seed(void)
 {
 	double		seed = 0.5;
 
-	setseed(&seed);
+	DirectFunctionCall1(setseed, Float8GetDatum(seed));
 	return (TRUE);
 }
 

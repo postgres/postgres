@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.127 2000/07/30 22:14:04 tgl Exp $
+ * $Id: builtins.h,v 1.128 2000/08/01 18:29:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,19 +141,9 @@ extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
 
 /* numutils.c */
-/* XXX hack.  HP-UX has a ltoa (with different arguments) already. */
-#ifdef __hpux
-#define ltoa pg_ltoa
-#endif	 /* hpux */
 extern int32 pg_atoi(char *s, int size, int c);
-
-/* XXX hack.  QNX has itoa and ltoa (with different arguments) already. */
-#ifdef __QNX__
-#define itoa pg_itoa
-#define ltoa pg_ltoa
-#endif	 /* QNX */
-extern void itoa(int i, char *a);
-extern void ltoa(int32 l, char *a);
+extern void pg_itoa(int16 i, char *a);
+extern void pg_ltoa(int32 l, char *a);
 
 /*
  *		Per-opclass comparison functions for new btrees.  These are
@@ -172,105 +162,99 @@ extern Datum btcharcmp(PG_FUNCTION_ARGS);
 extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
 
-/* filename.c */
-extern char *filename_in(char *file);
-extern char *filename_out(char *s);
-
 /* float.c */
-extern float32 float4in(char *num);
-extern char *float4out(float32 num);
-extern float64 float8in(char *num);
-extern char *float8out(float64 num);
-extern float32 float4abs(float32 arg1);
-extern float32 float4um(float32 arg1);
-extern float32 float4larger(float32 arg1, float32 arg2);
-extern float32 float4smaller(float32 arg1, float32 arg2);
-extern float64 float8abs(float64 arg1);
-extern float64 float8um(float64 arg1);
-extern float64 float8larger(float64 arg1, float64 arg2);
-extern float64 float8smaller(float64 arg1, float64 arg2);
-extern float32 float4pl(float32 arg1, float32 arg2);
-extern float32 float4mi(float32 arg1, float32 arg2);
-extern float32 float4mul(float32 arg1, float32 arg2);
-extern float32 float4div(float32 arg1, float32 arg2);
-extern float64 float8pl(float64 arg1, float64 arg2);
-extern float64 float8mi(float64 arg1, float64 arg2);
-extern float64 float8mul(float64 arg1, float64 arg2);
-extern float64 float8div(float64 arg1, float64 arg2);
-extern bool float4eq(float32 arg1, float32 arg2);
-extern bool float4ne(float32 arg1, float32 arg2);
-extern bool float4lt(float32 arg1, float32 arg2);
-extern bool float4le(float32 arg1, float32 arg2);
-extern bool float4gt(float32 arg1, float32 arg2);
-extern bool float4ge(float32 arg1, float32 arg2);
-extern bool float8eq(float64 arg1, float64 arg2);
-extern bool float8ne(float64 arg1, float64 arg2);
-extern bool float8lt(float64 arg1, float64 arg2);
-extern bool float8le(float64 arg1, float64 arg2);
-extern bool float8gt(float64 arg1, float64 arg2);
-extern bool float8ge(float64 arg1, float64 arg2);
-extern float64 ftod(float32 num);
+extern Datum float4in(PG_FUNCTION_ARGS);
+extern Datum float4out(PG_FUNCTION_ARGS);
+extern Datum float8in(PG_FUNCTION_ARGS);
+extern Datum float8out(PG_FUNCTION_ARGS);
+extern Datum float4abs(PG_FUNCTION_ARGS);
+extern Datum float4um(PG_FUNCTION_ARGS);
+extern Datum float4larger(PG_FUNCTION_ARGS);
+extern Datum float4smaller(PG_FUNCTION_ARGS);
+extern Datum float8abs(PG_FUNCTION_ARGS);
+extern Datum float8um(PG_FUNCTION_ARGS);
+extern Datum float8larger(PG_FUNCTION_ARGS);
+extern Datum float8smaller(PG_FUNCTION_ARGS);
+extern Datum float4pl(PG_FUNCTION_ARGS);
+extern Datum float4mi(PG_FUNCTION_ARGS);
+extern Datum float4mul(PG_FUNCTION_ARGS);
+extern Datum float4div(PG_FUNCTION_ARGS);
+extern Datum float8pl(PG_FUNCTION_ARGS);
+extern Datum float8mi(PG_FUNCTION_ARGS);
+extern Datum float8mul(PG_FUNCTION_ARGS);
+extern Datum float8div(PG_FUNCTION_ARGS);
+extern Datum float4eq(PG_FUNCTION_ARGS);
+extern Datum float4ne(PG_FUNCTION_ARGS);
+extern Datum float4lt(PG_FUNCTION_ARGS);
+extern Datum float4le(PG_FUNCTION_ARGS);
+extern Datum float4gt(PG_FUNCTION_ARGS);
+extern Datum float4ge(PG_FUNCTION_ARGS);
+extern Datum float8eq(PG_FUNCTION_ARGS);
+extern Datum float8ne(PG_FUNCTION_ARGS);
+extern Datum float8lt(PG_FUNCTION_ARGS);
+extern Datum float8le(PG_FUNCTION_ARGS);
+extern Datum float8gt(PG_FUNCTION_ARGS);
+extern Datum float8ge(PG_FUNCTION_ARGS);
+extern Datum ftod(PG_FUNCTION_ARGS);
 extern Datum i4tod(PG_FUNCTION_ARGS);
 extern Datum i2tod(PG_FUNCTION_ARGS);
-extern float32 dtof(float64 num);
-extern int32 dtoi4(float64 num);
+extern Datum dtof(PG_FUNCTION_ARGS);
+extern Datum dtoi4(PG_FUNCTION_ARGS);
 extern Datum dtoi2(PG_FUNCTION_ARGS);
 extern Datum i4tof(PG_FUNCTION_ARGS);
 extern Datum i2tof(PG_FUNCTION_ARGS);
-extern int32 ftoi4(float32 num);
+extern Datum ftoi4(PG_FUNCTION_ARGS);
 extern Datum ftoi2(PG_FUNCTION_ARGS);
 extern Datum text_float8(PG_FUNCTION_ARGS);
 extern Datum text_float4(PG_FUNCTION_ARGS);
 extern Datum float8_text(PG_FUNCTION_ARGS);
 extern Datum float4_text(PG_FUNCTION_ARGS);
-extern float64 dround(float64 arg1);
-extern float64 dtrunc(float64 arg1);
-extern float64 dsqrt(float64 arg1);
-extern float64 dcbrt(float64 arg1);
-extern float64 dpow(float64 arg1, float64 arg2);
-extern float64 dexp(float64 arg1);
-extern float64 dlog1(float64 arg1);
-extern float64 dlog10(float64 arg1);
-extern float64 dacos(float64 arg1);
-extern float64 dasin(float64 arg1);
-extern float64 datan(float64 arg1);
-extern float64 datan2(float64 arg1, float64 arg2);
-extern float64 dcos(float64 arg1);
-extern float64 dcot(float64 arg1);
-extern float64 dsin(float64 arg1);
-extern float64 dtan(float64 arg1);
-extern float64 degrees(float64 arg1);
-extern float64 dpi(void);
-extern float64 radians(float64 arg1);
-extern float64 dtan(float64 arg1);
-extern float64 drandom(void);
-extern int32 setseed(float64 seed);
+extern Datum dround(PG_FUNCTION_ARGS);
+extern Datum dtrunc(PG_FUNCTION_ARGS);
+extern Datum dsqrt(PG_FUNCTION_ARGS);
+extern Datum dcbrt(PG_FUNCTION_ARGS);
+extern Datum dpow(PG_FUNCTION_ARGS);
+extern Datum dexp(PG_FUNCTION_ARGS);
+extern Datum dlog1(PG_FUNCTION_ARGS);
+extern Datum dlog10(PG_FUNCTION_ARGS);
+extern Datum dacos(PG_FUNCTION_ARGS);
+extern Datum dasin(PG_FUNCTION_ARGS);
+extern Datum datan(PG_FUNCTION_ARGS);
+extern Datum datan2(PG_FUNCTION_ARGS);
+extern Datum dcos(PG_FUNCTION_ARGS);
+extern Datum dcot(PG_FUNCTION_ARGS);
+extern Datum dsin(PG_FUNCTION_ARGS);
+extern Datum dtan(PG_FUNCTION_ARGS);
+extern Datum degrees(PG_FUNCTION_ARGS);
+extern Datum dpi(PG_FUNCTION_ARGS);
+extern Datum radians(PG_FUNCTION_ARGS);
+extern Datum drandom(PG_FUNCTION_ARGS);
+extern Datum setseed(PG_FUNCTION_ARGS);
 extern Datum float8_accum(PG_FUNCTION_ARGS);
 extern Datum float4_accum(PG_FUNCTION_ARGS);
 extern Datum float8_avg(PG_FUNCTION_ARGS);
 extern Datum float8_variance(PG_FUNCTION_ARGS);
 extern Datum float8_stddev(PG_FUNCTION_ARGS);
-
-extern float64 float48pl(float32 arg1, float64 arg2);
-extern float64 float48mi(float32 arg1, float64 arg2);
-extern float64 float48mul(float32 arg1, float64 arg2);
-extern float64 float48div(float32 arg1, float64 arg2);
-extern float64 float84pl(float64 arg1, float32 arg2);
-extern float64 float84mi(float64 arg1, float32 arg2);
-extern float64 float84mul(float64 arg1, float32 arg2);
-extern float64 float84div(float64 arg1, float32 arg2);
-extern bool float48eq(float32 arg1, float64 arg2);
-extern bool float48ne(float32 arg1, float64 arg2);
-extern bool float48lt(float32 arg1, float64 arg2);
-extern bool float48le(float32 arg1, float64 arg2);
-extern bool float48gt(float32 arg1, float64 arg2);
-extern bool float48ge(float32 arg1, float64 arg2);
-extern bool float84eq(float64 arg1, float32 arg2);
-extern bool float84ne(float64 arg1, float32 arg2);
-extern bool float84lt(float64 arg1, float32 arg2);
-extern bool float84le(float64 arg1, float32 arg2);
-extern bool float84gt(float64 arg1, float32 arg2);
-extern bool float84ge(float64 arg1, float32 arg2);
+extern Datum float48pl(PG_FUNCTION_ARGS);
+extern Datum float48mi(PG_FUNCTION_ARGS);
+extern Datum float48mul(PG_FUNCTION_ARGS);
+extern Datum float48div(PG_FUNCTION_ARGS);
+extern Datum float84pl(PG_FUNCTION_ARGS);
+extern Datum float84mi(PG_FUNCTION_ARGS);
+extern Datum float84mul(PG_FUNCTION_ARGS);
+extern Datum float84div(PG_FUNCTION_ARGS);
+extern Datum float48eq(PG_FUNCTION_ARGS);
+extern Datum float48ne(PG_FUNCTION_ARGS);
+extern Datum float48lt(PG_FUNCTION_ARGS);
+extern Datum float48le(PG_FUNCTION_ARGS);
+extern Datum float48gt(PG_FUNCTION_ARGS);
+extern Datum float48ge(PG_FUNCTION_ARGS);
+extern Datum float84eq(PG_FUNCTION_ARGS);
+extern Datum float84ne(PG_FUNCTION_ARGS);
+extern Datum float84lt(PG_FUNCTION_ARGS);
+extern Datum float84le(PG_FUNCTION_ARGS);
+extern Datum float84gt(PG_FUNCTION_ARGS);
+extern Datum float84ge(PG_FUNCTION_ARGS);
 
 /* misc.c */
 extern Datum nullvalue(PG_FUNCTION_ARGS);
