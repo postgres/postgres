@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.55 1998/08/24 01:14:24 momjian Exp $
+ * $Id: parsenodes.h,v 1.56 1998/08/25 15:09:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -708,6 +708,7 @@ typedef struct ColumnDef
 	char	   *colname;		/* name of column */
 	TypeName   *typename;		/* type of column */
 	bool		is_not_null;	/* flag to NOT NULL constraint */
+	bool		is_sequence;	/* is a sequence? */
 	char	   *defval;			/* default value of column */
 	List	   *constraints;	/* constraints on column */
 } ColumnDef;
