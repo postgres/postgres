@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.8 1996/11/08 05:59:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.9 1996/11/25 06:33:51 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <unistd.h>
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
+#include <fcntl.h>      /* for open() flags */
 #include <sys/file.h>
 
 #include "postgres.h"
