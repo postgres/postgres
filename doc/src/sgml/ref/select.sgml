@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.45 2001/09/13 15:55:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.46 2001/09/14 10:28:09 ishii Exp $
 Postgres documentation
 -->
 
@@ -903,7 +903,7 @@ SELECT distributors.name
 UNION
 SELECT actors.name
     FROM   actors
-    WHERE  actors.name LIKE 'W%'
+    WHERE  actors.name LIKE 'W%';
 
       name
 ----------------
