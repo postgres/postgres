@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.233 2002/12/14 00:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.234 2003/01/09 20:50:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,7 +809,8 @@ _copySubLink(SubLink *from)
 	SubLink    *newnode = makeNode(SubLink);
 
 	COPY_SCALAR_FIELD(subLinkType);
-	COPY_SCALAR_FIELD(useor);
+	COPY_SCALAR_FIELD(operIsEquals);
+	COPY_SCALAR_FIELD(useOr);
 	COPY_NODE_FIELD(lefthand);
 	COPY_NODE_FIELD(oper);
 	COPY_NODE_FIELD(subselect);
@@ -826,7 +827,7 @@ _copySubPlan(SubPlan *from)
 	SubPlan    *newnode = makeNode(SubPlan);
 
 	COPY_SCALAR_FIELD(subLinkType);
-	COPY_SCALAR_FIELD(useor);
+	COPY_SCALAR_FIELD(useOr);
 	COPY_NODE_FIELD(oper);
 	COPY_NODE_FIELD(plan);
 	COPY_SCALAR_FIELD(plan_id);

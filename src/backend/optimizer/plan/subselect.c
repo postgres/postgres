@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.61 2002/12/14 00:17:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.62 2003/01/09 20:50:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ make_subplan(SubLink *slink, List *lefthand)
 	 * Fill in other fields of the SubPlan node.
 	 */
 	node->subLinkType = slink->subLinkType;
-	node->useor = slink->useor;
+	node->useOr = slink->useOr;
 	node->oper = NIL;
 	node->setParam = NIL;
 	node->parParam = NIL;
@@ -283,7 +283,7 @@ make_subplan(SubLink *slink, List *lefthand)
 									 &node->setParam);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		if (length(oper) > 1)
-			result = (Node *) (node->useor ? make_orclause(oper) :
+			result = (Node *) (node->useOr ? make_orclause(oper) :
 							   make_andclause(oper));
 		else
 			result = (Node *) lfirst(oper);

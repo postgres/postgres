@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.75 2002/12/14 00:17:59 tgl Exp $
+ * $Id: primnodes.h,v 1.76 2003/01/09 20:50:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ typedef struct BoolExpr
  * MULTIEXPR and EXPR require the subselect to deliver only one row.
  * ALL, ANY, and MULTIEXPR require the combining operators to deliver boolean
  * results.  These are reduced to one result per row using OR or AND semantics
- * depending on the "useor" flag.  ALL and ANY combine the per-row results
+ * depending on the "useOr" flag.  ALL and ANY combine the per-row results
  * using AND and OR semantics respectively.
  *
  * SubLink is classed as an Expr node, but it is not actually executable;
@@ -395,7 +395,11 @@ typedef struct BoolExpr
  * rewriter.
  *
  * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
- * always NIL.	useor is not significant either for these sublink types.
+ * always NIL.	useOr is not significant either for these sublink types.
+ *
+ * The operIsEquals field is TRUE when the combining operator was written as
+ * "=" --- if the subLinkType is ANY_SUBLINK, this means the operation is
+ * equivalent to "IN".  This case allows special optimizations to be used.
  * ----------------
  */
 typedef enum SubLinkType
@@ -408,7 +412,8 @@ typedef struct SubLink
 {
 	Expr		xpr;
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useor;			/* TRUE to combine column results with
+	bool		operIsEquals;	/* TRUE if combining operator is "=" */
+	bool		useOr;			/* TRUE to combine column results with
 								 * "OR" not "AND" */
 	List	   *lefthand;		/* list of outer-query expressions on the
 								 * left */
@@ -446,7 +451,7 @@ typedef struct SubPlan
 	Expr		xpr;
 	/* Fields copied from original SubLink: */
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useor;			/* TRUE to combine column results with
+	bool		useOr;			/* TRUE to combine column results with
 								 * "OR" not "AND" */
 	List	   *oper;			/* list of executable expressions for
 								 * combining operators (with arguments) */

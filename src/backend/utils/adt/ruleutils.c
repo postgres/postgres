@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.130 2003/01/08 22:54:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.131 2003/01/09 20:50:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2660,8 +2660,16 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case ANY_SUBLINK:
-			oper = (OpExpr *) lfirst(sublink->oper);
-			appendStringInfo(buf, "%s ANY ", get_opname(oper->opno));
+			if (sublink->operIsEquals)
+			{
+				/* Represent it as IN */
+				appendStringInfo(buf, "IN ");
+			}
+			else
+			{
+				oper = (OpExpr *) lfirst(sublink->oper);
+				appendStringInfo(buf, "%s ANY ", get_opname(oper->opno));
+			}
 			break;
 
 		case ALL_SUBLINK:

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.391 2003/01/08 00:22:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.392 2003/01/09 20:50:51 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5420,28 +5420,30 @@ opt_interval:
 
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
- *	with singleton expressions. Use SQL99's ROW keyword to allow rows of
- *  one element.
+ * with singleton expressions. Use SQL99's ROW keyword to allow rows of
+ * one element.
  */
 r_expr:  row IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $1;
 					n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
-					n->useor = FALSE;
 					n->subLinkType = ANY_SUBLINK;
+					/* operIsEquals and useOr will be set later */
 					n->subselect = $3;
 					$$ = (Node *)n;
 				}
 			| row NOT IN_P select_with_parens
 				{
+					/* Make an IN node */
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $1;
-					n->oper = (List *) makeSimpleA_Expr(OP, "<>", NULL, NULL);
-					n->useor = TRUE;
-					n->subLinkType = ALL_SUBLINK;
+					n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
+					n->subLinkType = ANY_SUBLINK;
+					/* operIsEquals and useOr will be set later */
 					n->subselect = $4;
-					$$ = (Node *)n;
+					/* Stick a NOT on top */
+					$$ = (Node *) makeA_Expr(NOT, NIL, NULL, (Node *) n);
 				}
 			| row qual_all_Op sub_type select_with_parens
 			%prec Op
@@ -5449,11 +5451,8 @@ r_expr:  row IN_P select_with_parens
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $1;
 					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
-					if (strcmp(strVal(llast($2)), "<>") == 0)
-						n->useor = TRUE;
-					else
-						n->useor = FALSE;
 					n->subLinkType = $3;
+					/* operIsEquals and useOr will be set later */
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
@@ -5463,11 +5462,8 @@ r_expr:  row IN_P select_with_parens
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $1;
 					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
-					if (strcmp(strVal(llast($2)), "<>") == 0)
-						n->useor = TRUE;
-					else
-						n->useor = FALSE;
 					n->subLinkType = MULTIEXPR_SUBLINK;
+					/* operIsEquals and useOr will be set later */
 					n->subselect = $3;
 					$$ = (Node *)n;
 				}
@@ -5850,8 +5846,8 @@ a_expr:		c_expr									{ $$ = $1; }
 							SubLink *n = (SubLink *)$3;
 							n->lefthand = makeList1($1);
 							n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
-							n->useor = FALSE;
 							n->subLinkType = ANY_SUBLINK;
+							/* operIsEquals and useOr will be set later */
 							$$ = (Node *)n;
 					}
 					else
@@ -5875,12 +5871,14 @@ a_expr:		c_expr									{ $$ = $1; }
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA($4, SubLink))
 					{
+						/* Make an IN node */
 						SubLink *n = (SubLink *)$4;
 						n->lefthand = makeList1($1);
-						n->oper = (List *) makeSimpleA_Expr(OP, "<>", NULL, NULL);
-						n->useor = FALSE;
-						n->subLinkType = ALL_SUBLINK;
-						$$ = (Node *)n;
+						n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
+						n->subLinkType = ANY_SUBLINK;
+						/* operIsEquals and useOr will be set later */
+						/* Stick a NOT on top */
+						$$ = (Node *) makeA_Expr(NOT, NIL, NULL, (Node *) n);
 					}
 					else
 					{
@@ -5903,8 +5901,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
 					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
-					n->useor = FALSE; /* doesn't matter since only one col */
 					n->subLinkType = $3;
+					/* operIsEquals and useOr will be set later */
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
@@ -6447,7 +6445,6 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
 					n->oper = NIL;
-					n->useor = FALSE;
 					n->subLinkType = EXPR_SUBLINK;
 					n->subselect = $1;
 					$$ = (Node *)n;
@@ -6457,7 +6454,6 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
 					n->oper = NIL;
-					n->useor = FALSE;
 					n->subLinkType = EXISTS_SUBLINK;
 					n->subselect = $2;
 					$$ = (Node *)n;

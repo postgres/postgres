@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.40 2002/12/26 22:37:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.41 2003/01/09 20:50:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ ExecSubPlan(SubPlanState *node,
 	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
 	SubLinkType subLinkType = subplan->subLinkType;
-	bool		useor = subplan->useor;
+	bool		useOr = subplan->useOr;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
@@ -84,7 +84,7 @@ ExecSubPlan(SubPlanState *node,
 	 * For all sublink types except EXPR_SUBLINK, the result is boolean as
 	 * are the results of the combining operators.	We combine results
 	 * within a tuple (if there are multiple columns) using OR semantics
-	 * if "useor" is true, AND semantics if not.  We then combine results
+	 * if "useOr" is true, AND semantics if not.  We then combine results
 	 * across tuples (if the subplan produces more than one) using OR
 	 * semantics for ANY_SUBLINK or AND semantics for ALL_SUBLINK.
 	 * (MULTIEXPR_SUBLINK doesn't allow multiple tuples from the subplan.)
@@ -107,7 +107,7 @@ ExecSubPlan(SubPlanState *node,
 	{
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
-		Datum		rowresult = BoolGetDatum(!useor);
+		Datum		rowresult = BoolGetDatum(!useOr);
 		bool		rownull = false;
 		int			col = 1;
 
@@ -212,7 +212,7 @@ ExecSubPlan(SubPlanState *node,
 				rowresult = expresult;
 				rownull = expnull;
 			}
-			else if (useor)
+			else if (useOr)
 			{
 				/* combine within row per OR semantics */
 				if (expnull)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.190 2002/12/14 00:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.191 2003/01/09 20:50:50 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -658,7 +658,8 @@ _outSubLink(StringInfo str, SubLink *node)
 	WRITE_NODE_TYPE("SUBLINK");
 
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
-	WRITE_BOOL_FIELD(useor);
+	WRITE_BOOL_FIELD(operIsEquals);
+	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(lefthand);
 	WRITE_NODE_FIELD(oper);
 	WRITE_NODE_FIELD(subselect);
@@ -670,7 +671,7 @@ _outSubPlan(StringInfo str, SubPlan *node)
 	WRITE_NODE_TYPE("SUBPLAN");
 
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
-	WRITE_BOOL_FIELD(useor);
+	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(oper);
 	WRITE_NODE_FIELD(plan);
 	WRITE_INT_FIELD(plan_id);

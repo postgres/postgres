@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.138 2002/12/27 20:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.139 2003/01/09 20:50:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,6 +367,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					 */
 					sublink->lefthand = NIL;
 					sublink->oper = NIL;
+					sublink->operIsEquals = FALSE;
+					sublink->useOr = FALSE;
 				}
 				else if (sublink->subLinkType == EXPR_SUBLINK)
 				{
@@ -391,27 +393,60 @@ transformExpr(ParseState *pstate, Node *expr)
 					 */
 					sublink->lefthand = NIL;
 					sublink->oper = NIL;
+					sublink->operIsEquals = FALSE;
+					sublink->useOr = FALSE;
 				}
 				else
 				{
 					/* ALL, ANY, or MULTIEXPR: generate operator list */
 					List	   *left_list = sublink->lefthand;
 					List	   *right_list = qtree->targetList;
+					int			row_length = length(left_list);
+					bool		needNot = false;
 					List	   *op;
 					char	   *opname;
 					List	   *elist;
 
+					/* transform lefthand expressions */
 					foreach(elist, left_list)
 						lfirst(elist) = transformExpr(pstate, lfirst(elist));
 
+					/* get the combining-operator name */
 					Assert(IsA(sublink->oper, A_Expr));
 					op = ((A_Expr *) sublink->oper)->name;
 					opname = strVal(llast(op));
 					sublink->oper = NIL;
 
+					/*
+					 * If the expression is "<> ALL" (with unqualified opname)
+					 * then convert it to "NOT IN".  This is a hack to improve
+					 * efficiency of expressions output by pre-7.4 Postgres.
+					 */
+					if (sublink->subLinkType == ALL_SUBLINK &&
+						length(op) == 1 && strcmp(opname, "<>") == 0)
+					{
+						sublink->subLinkType = ANY_SUBLINK;
+						opname = pstrdup("=");
+						op = makeList1(makeString(opname));
+						needNot = true;
+					}
+
+					/* Set operIsEquals if op is unqualified "=" */
+					if (length(op) == 1 && strcmp(opname, "=") == 0)
+						sublink->operIsEquals = TRUE;
+					else
+						sublink->operIsEquals = FALSE;
+
+					/* Set useOr if op is "<>" (possibly qualified) */
+					if (strcmp(opname, "<>") == 0)
+						sublink->useOr = TRUE;
+					else
+						sublink->useOr = FALSE;
+
 					/* Combining operators other than =/<> is dubious... */
-					if (length(left_list) != 1 &&
-					strcmp(opname, "=") != 0 && strcmp(opname, "<>") != 0)
+					if (row_length != 1 &&
+						strcmp(opname, "=") != 0 &&
+						strcmp(opname, "<>") != 0)
 						elog(ERROR, "Row comparison cannot use operator %s",
 							 opname);
 
@@ -474,6 +509,13 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 					if (left_list != NIL)
 						elog(ERROR, "Subselect has too few fields");
+
+					if (needNot)
+					{
+						expr = coerce_to_boolean(expr, "NOT");
+						expr = (Node *) makeBoolExpr(NOT_EXPR,
+													 makeList1(expr));
+					}
 				}
 				result = (Node *) expr;
 				break;
