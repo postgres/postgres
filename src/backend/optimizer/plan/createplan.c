@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.136 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.137 2003/02/16 06:06:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 
 static Scan *create_scan_plan(Query *root, Path *best_path);
 static bool use_physical_tlist(RelOptInfo *rel);
+static void disuse_physical_tlist(Plan *plan, Path *path);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
 static Result *create_result_plan(Query *root, ResultPath *best_path);
@@ -311,6 +312,33 @@ use_physical_tlist(RelOptInfo *rel)
 }
 
 /*
+ * disuse_physical_tlist
+ *		Switch a plan node back to emitting only Vars actually referenced.
+ *
+ * If the plan node immediately above a scan would prefer to get only
+ * needed Vars and not a physical tlist, it must call this routine to
+ * undo the decision made by use_physical_tlist().  Currently, Hash, Sort,
+ * and Material nodes want this, so they don't have to store useless columns.
+ */
+static void
+disuse_physical_tlist(Plan *plan, Path *path)
+{
+	/* Only need to undo it for path types handled by create_scan_plan() */
+	switch (path->pathtype)
+	{
+		case T_IndexScan:
+		case T_SeqScan:
+		case T_TidScan:
+		case T_SubqueryScan:
+		case T_FunctionScan:
+			plan->targetlist = path->parent->targetlist;
+			break;
+		default:
+			break;
+	}
+}
+
+/*
  * create_join_plan
  *	  Create a join plan for 'best_path' and (recursively) plans for its
  *	  inner and outer paths.
@@ -467,6 +495,9 @@ create_material_plan(Query *root, MaterialPath *best_path)
 	Plan	   *subplan;
 
 	subplan = create_plan(root, best_path->subpath);
+
+	/* We don't want any excess columns in the materialized tuples */
+	disuse_physical_tlist(subplan, best_path->subpath);
 
 	plan = make_material(subplan->targetlist, subplan);
 
@@ -906,20 +937,27 @@ create_mergejoin_plan(Query *root,
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
 	 * necessary.  The sort cost was already accounted for in the path.
+	 * Make sure there are no excess columns in the inputs if sorting.
 	 */
 	if (best_path->outersortkeys)
+	{
+		disuse_physical_tlist(outer_plan, best_path->jpath.outerjoinpath);
 		outer_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									outer_plan,
 									best_path->jpath.outerjoinpath->parent->relids,
 									best_path->outersortkeys);
+	}
 
 	if (best_path->innersortkeys)
+	{
+		disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
 		inner_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									inner_plan,
 									best_path->jpath.innerjoinpath->parent->relids,
 									best_path->innersortkeys);
+	}
 
 	/*
 	 * Now we can build the mergejoin node.
@@ -975,6 +1013,9 @@ create_hashjoin_plan(Query *root,
 	{
 		innerhashkeys = lappend(innerhashkeys, get_rightop(lfirst(hcl)));
 	}
+
+	/* We don't want any excess columns in the hashed tuples */
+	disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
 
 	/*
 	 * Build the hash node and hash join node.
