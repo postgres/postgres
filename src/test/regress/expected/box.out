@@ -167,4 +167,12 @@ one|f1         |f1
    |(3,3),(1,1)|(3,3),(3,3)
 (1 row)
 
-QUERY: DROP TABLE  BOX_TBL;
+QUERY: SELECT '' AS four, height(f1), width(f1) FROM BOX_TBL;
+four|height|width
+----+------+-----
+    |     2|    2
+    |     2|    2
+    |     1|    0
+    |     0|    0
+(4 rows)
+

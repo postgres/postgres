@@ -204,4 +204,3 @@ five|    f1|     x
     |-32767|-16383
 (5 rows)
 
-QUERY: DROP TABLE  INT2_TBL;

@@ -80,8 +80,8 @@ SELECT '' AS three, ABSTIME_TBL.*
    WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime)    -- -(-3) years
         < 'Jan 14 14:00:00 1977'::abstime;
 
-
-SELECT '' AS ten, ABSTIME_TBL.*, RELTIME_TBL.*
+SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
    WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
-	< 'Jan 14 14:00:00 1971'::abstime;
+	< 'Jan 14 14:00:00 1971'::abstime
+   ORDER BY abstime, reltime;
 

@@ -139,4 +139,3 @@ true
 t   
 (1 row)
 
-QUERY: DROP TABLE  POLYGON_TBL;

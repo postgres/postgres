@@ -63,26 +63,33 @@ SELECT '' AS three, t1.*
    WHERE t1.f1 &&
         '["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]'::tinterval;
 
-SELECT '' AS five, t1.*, t2.*
-   FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
-   WHERE t1.f1 && t2.f1 and
-         t1.f1 = t2.f1;
+SET geqo TO 'off';
 
-SELECT '' AS fourteen, t1.*, t2.*
+SELECT '' AS five, t1.f1, t2.f1
    FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
    WHERE t1.f1 && t2.f1 and
-        not t1.f1 = t2.f1;
+         t1.f1 = t2.f1
+   ORDER BY t1.f1, t2.f1;
+
+SELECT '' AS fourteen, t1.f1 AS interval1, t2.f1 AS interval2
+   FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
+   WHERE t1.f1 && t2.f1 and not t1.f1 = t2.f1
+   ORDER BY interval1, interval2;
 
 -- contains
-SELECT '' AS five, t1.*
+SELECT '' AS five, t1.f1
    FROM TINTERVAL_TBL t1
    WHERE not t1.f1 << 
-        '["Aug 15 14:23:19 1980" "Sep 16 14:23:19 1990"]'::tinterval;
+        '["Aug 15 14:23:19 1980" "Sep 16 14:23:19 1990"]'::tinterval
+   ORDER BY t1.f1;
 
 -- make time interval
-SELECT '' AS three, t1.*
+SELECT '' AS three, t1.f1
    FROM TINTERVAL_TBL t1
    WHERE t1.f1 &&
         ('Aug 15 14:23:19 1983'::abstime <#>
-         'Sep 16 14:23:19 1983'::abstime);
+         'Sep 16 14:23:19 1983'::abstime)
+   ORDER BY t1.f1;
+
+RESET geqo;
 

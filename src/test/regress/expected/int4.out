@@ -276,4 +276,3 @@ three
     3
 (1 row)
 
-QUERY: DROP TABLE  INT4_TBL;

@@ -1,0 +1,91 @@
+--
+-- horology.sql
+--
+
+--
+-- datetime, timespan arithmetic
+--
+
+CREATE TABLE TEMP_DATETIME (f1 datetime);
+
+-- get some candidate input values
+
+INSERT INTO TEMP_DATETIME (f1)
+  SELECT d1 FROM DATETIME_TBL
+  WHERE d1 BETWEEN '13-jun-1957' AND '1-jan-1997'
+   OR d1 BETWEEN '1-jan-1999' AND '1-jan-2010';
+
+SELECT '' AS ten, f1 AS datetime
+  FROM TEMP_DATETIME
+  ORDER BY datetime;
+
+SELECT '' AS hundred, d.f1 AS datetime, t.f1 AS timespan, d.f1 + t.f1 AS plus
+  FROM TEMP_DATETIME d, TIMESPAN_TBL t
+  ORDER BY plus;
+
+SELECT '' AS hundred, d.f1 AS datetime, t.f1 AS timespan, d.f1 - t.f1 AS minus
+  FROM TEMP_DATETIME d, TIMESPAN_TBL t
+  WHERE isfinite(d.f1)
+  ORDER BY minus;
+
+SELECT '' AS ten, d.f1 AS datetime, '1980-01-06 00:00 GMT'::datetime AS gpstime_zero,
+   d.f1 - '1980-01-06 00:00 GMT'::datetime AS difference
+  FROM TEMP_DATETIME d
+  ORDER BY difference;
+
+SELECT '' AS hundred, d1.f1 AS datetime1, d2.f1 AS datetime2, d1.f1 - d2.f1 AS difference
+  FROM TEMP_DATETIME d1, TEMP_DATETIME d2
+  ORDER BY datetime1, datetime2, difference;
+
+SELECT '' as fifty, d1 as datetime,
+  date_part('year', d1) AS year, date_part('month', d1) AS month,
+  date_part('day',d1) AS day, date_part('hour', d1) AS hour,
+  date_part('minute', d1) AS minute, date_part('second', d1) AS second
+  FROM DATETIME_TBL
+  WHERE isfinite(d1) and d1 >= '1-jan-1900 GMT'
+  ORDER BY datetime;
+
+--
+-- abstime, reltime arithmetic
+--
+
+SELECT '' AS four, f1 AS abstime,
+  date_part('year', f1) AS year, date_part('month', f1) AS month,
+  date_part('day',f1) AS day, date_part('hour', f1) AS hour,
+  date_part('minute', f1) AS minute, date_part('second', f1) AS second
+  FROM ABSTIME_TBL
+  WHERE isfinite(f1) and f1 <> 'current'::abstime
+  ORDER BY abstime;
+
+--
+-- conversions
+--
+
+SELECT '' AS ten, f1 AS datetime, date( f1) AS date
+  FROM TEMP_DATETIME
+  WHERE f1 <> 'current'::datetime
+  ORDER BY date;
+
+SELECT '' AS ten, f1 AS datetime, abstime( f1) AS abstime
+  FROM TEMP_DATETIME
+  ORDER BY abstime;
+
+SELECT '' AS five, f1 AS abstime, date( f1) AS date
+  FROM ABSTIME_TBL
+  WHERE isfinite(f1) AND f1 <> 'current'::abstime
+  ORDER BY date;
+
+SELECT '' AS five, d1 AS datetime, abstime(d1) AS abstime
+  FROM DATETIME_TBL WHERE NOT isfinite(d1);
+
+SELECT '' AS three, f1 as abstime, datetime(f1) AS datetime
+  FROM ABSTIME_TBL WHERE NOT isfinite(f1);
+
+SELECT '' AS ten, f1 AS timespan, reltime( f1) AS reltime
+  FROM TIMESPAN_TBL;
+
+SELECT '' AS six, f1 as reltime, timespan( f1) AS timespan
+  FROM RELTIME_TBL;
+
+DROP TABLE TEMP_DATETIME;
+

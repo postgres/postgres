@@ -112,6 +112,7 @@ QUERY: INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 2001');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 -0097');
 WARN:Bad datetime external representation Feb 16 17:32:01 -0097
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 5097 BC');
+WARN:Datetime out of range Feb 16 17:32:01 5097 BC
 QUERY: SELECT '' AS sixtythree, d1 FROM DATETIME_TBL;
 sixtythree|d1                             
 ----------+-------------------------------
@@ -177,8 +178,7 @@ sixtythree|d1
           |Sat Jan 01 17:32:01.00 2000 PST
           |Sun Dec 31 17:32:01.00 2000 PST
           |Mon Jan 01 17:32:01.00 2001 PST
-          |invalid                        
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS fortythree, d1 FROM DATETIME_TBL
    WHERE d1 > '1997-01-02'::datetime and d1 != 'current'::datetime;
@@ -458,8 +458,7 @@ sixtythree|one_year
           |Mon Jan 01 17:32:01.00 2001 PST
           |Mon Dec 31 17:32:01.00 2001 PST
           |Tue Jan 01 17:32:01.00 2002 PST
-          |invalid                        
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS sixtythree, d1 - '1 year'::timespan AS one_year FROM DATETIME_TBL;
 sixtythree|one_year                       
@@ -526,8 +525,7 @@ sixtythree|one_year
           |Fri Jan 01 17:32:01.00 1999 PST
           |Fri Dec 31 17:32:01.00 1999 PST
           |Sat Jan 01 17:32:01.00 2000 PST
-          |invalid                        
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS fifty, d1 - '1997-01-02'::datetime AS diff
    FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';

@@ -101,4 +101,3 @@ SELECT |/'64'::float8 AS eight;
 
 SELECT ||/'27'::float8 AS three;
 
-DROP TABLE  INT4_TBL;

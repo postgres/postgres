@@ -73,4 +73,3 @@ SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT2_TBL i;
 
 SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT2_TBL i;
 
-DROP TABLE  INT2_TBL;

@@ -101,4 +101,3 @@ SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
-DROP TABLE  FLOAT8_TBL;
