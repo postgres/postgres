@@ -8,11 +8,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.8 1998/04/27 14:41:50 scrappy Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.9 1998/05/29 13:14:25 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
-PGDOCS= /home/projects/pgsql/ftp/www/html/docs2
+PGDOCS= $(POSTGRESDIR)/doc
 SRCDIR= ../src
 
 TAR= tar
