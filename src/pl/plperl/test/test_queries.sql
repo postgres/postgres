@@ -134,3 +134,80 @@ $$  LANGUAGE plperl;
 SELECT perl_record_set();
 SELECT * FROM perl_record_set();
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
+
+--
+-- Check behavior with erroneous return values
+--
+
+CREATE TYPE footype AS (x INTEGER, y INTEGER);
+
+CREATE OR REPLACE FUNCTION foo_good() RETURNS SETOF footype AS $$
+return [
+    {x => 1, y => 2},
+    {x => 3, y => 4}
+];
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_good();
+
+CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
+    return {y => 3, z => 4};
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_bad();
+
+CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
+return 42;
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_bad();
+
+CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
+return [
+    [1, 2],
+    [3, 4]
+];
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_bad();
+
+CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
+    return 42;
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_set_bad();
+
+CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
+    return {y => 3, z => 4};
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_set_bad();
+
+CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
+return [
+    [1, 2],
+    [3, 4]
+];
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_set_bad();
+
+CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
+return [
+    {y => 3, z => 4}
+];
+$$ LANGUAGE plperl;
+
+SELECT * FROM foo_set_bad();
+
+--
+-- Check passing a tuple argument
+--
+
+CREATE OR REPLACE FUNCTION perl_get_field(footype, text) RETURNS integer AS $$
+    return $_[0]->{$_[1]};
+$$ LANGUAGE plperl;
+
+SELECT perl_get_field((11,12), 'x');
+SELECT perl_get_field((11,12), 'y');
+SELECT perl_get_field((11,12), 'z');
