@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.38 2000/12/01 05:16:45 tgl Exp $
+ * $Id: memutils.h,v 1.39 2001/01/11 23:28:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ extern MemoryContext PostmasterContext;
 extern MemoryContext CacheMemoryContext;
 extern MemoryContext QueryContext;
 extern MemoryContext TopTransactionContext;
-extern MemoryContext TransactionCommandContext;
+extern DLLIMPORT MemoryContext TransactionCommandContext;
 
 
 /*
