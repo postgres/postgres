@@ -7,61 +7,27 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.6 1996/10/31 08:52:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.7 1996/11/03 22:58:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <string.h>
-#include <time.h>
 
 #include "postgres.h"
  
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
+#include "storage/bufmgr.h"
+#include "access/genam.h"
  
-#include "storage/block.h" 
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "utils/nabstime.h"
 #include "utils/palloc.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
-#include "storage/buf.h"
-#include <sys/types.h>
-#include "storage/ipc.h"
-#include "storage/spin.h"
-#include "utils/hsearch.h" 
-#include "storage/shmem.h"
-#include "storage/lock.h"
 #include "storage/lmgr.h"
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/page.h"
 #include "storage/bufpage.h"
 #include <stdio.h>
-#include "storage/bufmgr.h"
-#include "access/relscan.h"
 
 #include "access/rtree.h"
 #include "access/rtstrat.h"
  
-#include "access/itup.h"
-#include "access/funcindex.h"
-#include "access/sdir.h"  
-#include "access/genam.h"
-
 /* routines defined and used here */
 static void rtregscan(IndexScanDesc s);
 static void rtdropscan(IndexScanDesc s);

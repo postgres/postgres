@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Id: hio.c,v 1.7 1996/11/03 12:34:52 scrappy Exp $
+ *    $Id: hio.c,v 1.8 1996/11/03 22:57:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "access/relscan.h"
 #include "access/heapam.h"

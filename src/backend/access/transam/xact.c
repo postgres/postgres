@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.2 1996/10/21 07:15:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.3 1996/11/03 22:58:25 scrappy Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -138,37 +138,18 @@
 
 #include "postgres.h"
 
-#include <time.h>
-#include "utils/nabstime.h"
 #include "access/xact.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"  
 #include "access/tupdesc.h"
-#include "storage/fd.h"  
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
 #include "utils/rel.h"  
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
 #include "access/htup.h"    
 #include "utils/inval.h"
 
 #include "nodes/memnodes.h"
-#include "utils/tqual.h"
-#include "nodes/primnodes.h" 
 #include "nodes/parsenodes.h" 
 #include "nodes/params.h"
 #include "access/sdir.h"
 #include "executor/hashjoin.h"
-#include "nodes/primnodes.h"
-#include "nodes/memnodes.h"
 #include "storage/buf.h"
 #include "executor/tuptable.h"
 #include "access/funcindex.h"
@@ -180,15 +161,8 @@
 #include "executor/execdesc.h"
 #include "utils/portal.h"
 
-#include <stdio.h>
-#include "storage/ipc.h"
-#include "storage/bufmgr.h"
 #include "access/transam.h" 
 
-#include "storage/spin.h" 
-#include "utils/hsearch.h"
-#include "storage/shmem.h"
-#include "storage/lock.h"
 #include "storage/proc.h"
 
 #include "utils/mcxt.h"

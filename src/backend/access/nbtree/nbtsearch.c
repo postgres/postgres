@@ -7,46 +7,21 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.6 1996/11/03 12:35:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.7 1996/11/03 22:57:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <time.h>
-
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
 #include "utils/rel.h"
+#include "access/genam.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "access/itup.h"
-#include "access/funcindex.h"
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "storage/bufmgr.h"
-#include "utils/nabstime.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "utils/palloc.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
 #include "access/nbtree.h"
-#include "access/genam.h"
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"

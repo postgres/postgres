@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.3 1996/10/21 07:15:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.4 1996/11/03 22:58:18 scrappy Exp $
  *
  * NOTES
  *    This file contains the high level access-method interface to the
@@ -18,37 +18,13 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
 #include "utils/rel.h"
-
-#include <stdio.h>
-#include "storage/ipc.h" 
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include <time.h>
-#include "utils/nabstime.h"
 #include "access/transam.h"
-
 #include "access/xact.h"
 
 #include "nodes/memnodes.h"
 
-#include "storage/off.h"
-#include "storage/itemptr.h"  
 #include "access/htup.h"
-#include "utils/tqual.h"
-#include "access/relscan.h"
 #include "access/heapam.h"
 
 #include "utils/mcxt.h"

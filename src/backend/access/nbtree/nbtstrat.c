@@ -7,39 +7,19 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.2 1996/10/20 10:53:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.3 1996/11/03 22:57:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
 #include "utils/rel.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
 #include "access/itup.h"
 #include "access/funcindex.h"
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/buf.h"
 #include "storage/bufpage.h"
-#include <time.h>
-#include "utils/nabstime.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/nbtree.h"

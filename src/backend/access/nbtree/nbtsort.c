@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.6 1996/11/03 12:35:22 scrappy Exp $
+ *    $Id: nbtsort.c,v 1.7 1996/11/03 22:57:57 scrappy Exp $
  *
  * NOTES
  *
@@ -48,25 +48,16 @@
  */
 
 #include <stdio.h>
-#include <time.h>
 #include <fcntl.h>
 
 #include "postgres.h"
 
 #include "utils/rel.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
 #include "access/itup.h"
 #include "access/funcindex.h"
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/buf.h"
 #include "storage/bufpage.h"
-#include "utils/nabstime.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "utils/palloc.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
@@ -78,7 +69,6 @@
 # include <string.h>
 #endif
 
-#include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
 #ifdef FASTBUILD

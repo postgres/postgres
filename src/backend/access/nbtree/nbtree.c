@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.7 1996/11/03 12:35:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.8 1996/11/03 22:57:54 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -21,30 +21,17 @@
 #include "postgres.h"
 
 #include "utils/rel.h"
+#include "access/genam.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "access/itup.h"
-#include "access/funcindex.h"
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "storage/bufmgr.h"
-#include "utils/nabstime.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "utils/palloc.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
 #include "access/nbtree.h"
 
 #include "executor/executor.h"
 
 #include "access/heapam.h"
-
-#include "access/genam.h"
 
 #include "catalog/index.h"
 

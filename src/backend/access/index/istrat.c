@@ -8,38 +8,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.5 1996/10/31 08:32:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.6 1996/11/03 22:57:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
  
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"  
-#include "utils/rel.h"
- 
-#include "storage/block.h" 
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include <time.h>
-#include "utils/nabstime.h"
-#include "access/htup.h"
-#include "utils/tqual.h"
-#include "storage/buf.h"
 #include "access/relscan.h"
 
-#include "tcop/dest.h"
 #include "catalog/pg_proc.h"
 
 #include "catalog/pg_operator.h"

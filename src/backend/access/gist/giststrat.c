@@ -14,7 +14,6 @@
 
 #include "postgres.h"
  
-#include "utils/rel.h"
 #include "access/gist.h"
 #include "access/istrat.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.3 1996/10/23 07:38:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.4 1996/11/03 22:57:48 scrappy Exp $
  *
  *  NOTES
  *	These functions are stored in pg_amproc.  For each operator class
@@ -21,7 +21,6 @@
  */
 
 #include <string.h>
-#include <time.h>
 
 #include "postgres.h"
 #include "utils/nabstime.h"

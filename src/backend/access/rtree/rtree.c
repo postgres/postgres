@@ -7,30 +7,25 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.7 1996/11/03 12:35:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.8 1996/11/03 22:58:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdio.h>
-#include <time.h>
 
 #include "postgres.h"
+#include "access/genam.h"
 
 #include "utils/palloc.h"
 #include "catalog/index.h"
 
-#include "access/relscan.h"  
 #include "access/rtscan.h"
 
 #include "storage/lmgr.h"
 
-#include "access/genam.h"
-
 #include "access/rtree.h"
-#include "access/funcindex.h"
  
-#include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
 #include "utils/geo-decls.h"

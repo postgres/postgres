@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.2 1996/10/21 07:15:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.3 1996/11/03 22:58:26 scrappy Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -19,12 +19,11 @@
  *
  *-------------------------------------------------------------------------
  */
+#include <stdio.h>
 
 #include "postgres.h"
-
 #include "utils/palloc.h"
 
-#include <stdio.h>
 
 extern TransactionId NullTransactionId;
 extern TransactionId DisabledTransactionId;
