@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.28 1998/02/26 04:43:58 momjian Exp $
+ * $Id: dt.h,v 1.29 1998/05/09 22:43:50 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,8 +165,11 @@ typedef struct
 #define DTK_MILLENIUM	28
 #define DTK_MILLISEC	29
 #define DTK_MICROSEC	30
-#define DTK_DOW			31
-#define DTK_DOY			32
+
+#define DTK_DOW			32
+#define DTK_DOY			33
+#define DTK_TZ_HOUR		34
+#define DTK_TZ_MINUTE	35
 
 /*
  * Bit mask definitions for time parsing.
