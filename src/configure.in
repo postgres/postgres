@@ -354,12 +354,12 @@ AC_ARG_WITH(CXX,
     [   AC_PROG_CXX])
 AC_SUBST(HAVECXX)
 
-INSTALLPATH="`echo /usr/ucb:$PATH:\`pwd\` | sed 's/:/ /g'`"
-AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install install-sh, NONE, $INSTALLPATH )
+INSTALLPATH="`echo /usr/ucb:$PATH | sed 's/:/ /g'`"
+AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, $INSTALLPATH )
 if test "$INSTALL" = "NONE"
 then
-	echo "- No Install Script found - aborting."
-	exit 0
+	# fall back on our own script
+	INSTALL=`pwd`/install-sh
 fi
 
 INSTLOPTS="-m 444"
