@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.80 2000/11/02 23:52:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.81 2001/01/21 03:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,9 @@ inv_create(int flags)
 	Oid			file_oid;
 	LargeObjectDesc *retval;
 
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_create: Not in transaction. BLOBs should be used inside transaction.");
+
 	/*
 	 * Allocate an OID to be the LO's identifier.
 	 */
@@ -117,6 +120,9 @@ inv_open(Oid lobjId, int flags)
 {
 	LargeObjectDesc *retval;
 
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_open: Not in transaction. BLOBs should be used inside transaction.");
+
 	if (! LargeObjectExists(lobjId))
 		elog(ERROR, "inv_open: large object %u not found", lobjId);
 	
@@ -145,6 +151,9 @@ inv_open(Oid lobjId, int flags)
 void
 inv_close(LargeObjectDesc *obj_desc)
 {
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_close: Not in transaction. BLOBs should be used inside transaction.");
+
 	Assert(PointerIsValid(obj_desc));
 
 	if (obj_desc->flags & IFS_WRLOCK)
@@ -164,6 +173,9 @@ inv_close(LargeObjectDesc *obj_desc)
 int
 inv_drop(Oid lobjId)
 {
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_drop: Not in transaction. BLOBs should be used inside transaction.");
+
 	LargeObjectDrop(lobjId);
 
 	/*
@@ -248,6 +260,9 @@ inv_getsize(LargeObjectDesc *obj_desc)
 int
 inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 {
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_seek: Not in transaction. BLOBs should be used inside transaction.");
+
 	Assert(PointerIsValid(obj_desc));
 
 	switch (whence)
@@ -280,6 +295,9 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 int
 inv_tell(LargeObjectDesc *obj_desc)
 {
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_tell: Not in transaction. BLOBs should be used inside transaction.");
+
 	Assert(PointerIsValid(obj_desc));
 
 	return obj_desc->offset;
@@ -302,6 +320,9 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	Form_pg_largeobject	data;
 	bytea		   *datafield;
 	bool			pfreeit;
+
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_read: Not in transaction. BLOBs should be used inside transaction.");
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -414,6 +435,9 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	char			replace[Natts_pg_largeobject];
 	bool			write_indices;
 	Relation		idescs[Num_pg_largeobject_indices];
+
+	if (!IsTransactionBlock())
+		elog(ERROR, "inv_write: Not in transaction. BLOBs should be used inside transaction.");
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
