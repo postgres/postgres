@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Dec  5 16:06:32 EST 2001
+Last updated:		Wed Dec  5 16:23:39 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -236,6 +236,7 @@ CLIENTS
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Add PGPASSWORDFILE password file capability to libpq and psql flag, remove
   PGPASSWORD because it is insecure
+* Allow secure single-user use without passwords using Unix socket permissions
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
