@@ -12,8 +12,7 @@
    <productname>Postgres</productname> has a rich set of native data 
    types available to users.
    Users may add new types to <productname>Postgres</productname> using the
-   <command>DEFINE TYPE</command>
-   command described elsewhere.
+   <command>DEFINE TYPE</command> command.
   </para>
 
   <para>
@@ -80,14 +79,14 @@
        <entry>exact numeric for p <= 9, s = 0</entry>
       </row>
       <row>
-       <entry>float4/8</entry>
-       <entry>float(p)</entry>
-       <entry>floating-point number with precision p</entry>
+       <entry>float4</entry>
+       <entry>float(<replaceable>p</replaceable>), <replaceable>p</replaceable> < 7</entry>
+       <entry>floating-point number with precision <replaceable>p</replaceable></entry>
       </row>
       <row>
        <entry>float8</entry>
-       <entry>real, double precision</entry>
-       <entry>double-precision floating-point number</entry>
+       <entry>float(<replaceable>p</replaceable>), 7 <= <replaceable>p</replaceable> < 16</entry>
+       <entry>floating-point number with precision <replaceable>p</replaceable></entry>
       </row>
       <row>
        <entry>inet</entry>
@@ -108,6 +107,11 @@
        <entry>int8</entry>
        <entry></entry>
        <entry>signed 8-byte integer</entry>
+      </row>
+      <row>
+       <entry>interval</entry>
+       <entry>interval</entry>
+       <entry>general-use time span</entry>
       </row>
       <row>
        <entry>line</entry>
@@ -155,9 +159,9 @@
        <entry>time of day</entry>
       </row>
       <row>
-       <entry>timespan</entry>
-       <entry>interval</entry>
-       <entry>general-use time span</entry>
+       <entry>timetz</entry>
+       <entry>time with time zone</entry>
+       <entry>time of day, including time zone</entry>
       </row>
       <row>
        <entry>timestamp</entry>
@@ -179,8 +183,11 @@
     <para>
      The <type>cidr</type> and <type>inet</type> types are designed to handle any IP type 
      but only ipv4 is handled in the current implementation.  
-     Everything here that talks about ipv4 will apply to ipv6 in a future release.</para>
-   </note></para>
+     Everything here that talks about ipv4 will apply to ipv6 in a
+     future release.
+    </para>
+   </note>
+  </para>
 
   <para>
    <table tocentry="1">
@@ -230,7 +237,8 @@
    which are ill considered and which should not live through subsequent standards.
    <productname>Postgres</productname> will not make great efforts to 
    conform to these features; however, these tend to apply in little-used 
-   or obsure cases, and a typical user is not likely to run into them.</para>
+   or obsure cases, and a typical user is not likely to run into them.
+  </para>
 
   <para>
    Most of the input and output functions corresponding to the
@@ -244,7 +252,7 @@
   </para>
 
   <para>
-   Note that some of the input and output functions are not invertible.  That is,
+   Some of the input and output functions are not invertible.  That is,
    the result of an output function may lose precision when compared to
    the original input.
 
@@ -256,7 +264,8 @@
      most of the intrinsic precision of the type (typically 15 digits for doubles, 
      6 digits for 4-byte floats). 
      Other types with underlying floating point fields (e.g. geometric
-     types) carry similar precision.</para>
+     types) carry similar precision.
+    </para>
    </note>
   </para>
 
@@ -390,7 +399,6 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      <command>DROP SEQUENCE</command>.
     </para>
    </sect2>
-
   </sect1>
 
   <sect1>
@@ -399,8 +407,9 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    <note>
     <title>Obsolete Type</title>
     <para>
-     The <type>money</type> is now obsolete. Use <type>numeric</type>
-     or <type>decimal</type> instead.
+     The <type>money</type> is now deprecated. Use <type>numeric</type>
+     or <type>decimal</type> instead. The money type may become a
+     locale-aware layer over the numeric type in a future release.
     </para>
    </note>
 
@@ -453,8 +462,8 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     <productname>Postgres</productname> supports these types, in
     addition to the more general <type>text</type> type, 
     which unlike <type>varchar</type>
-    does not require an upper
-    limit to be declared on the size of the field.
+    does not require an explicit declared upper
+    limit on the size of the field.
    </para>
 
    <para>
@@ -501,15 +510,15 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </para>
 
    <para>
-    There is one other fixed-length character type. 
+    There is one other fixed-length character type in <productname>Postgres</productname>. 
     The <type>name</type> type
-    only has one purpose and that is to provide 
-    <productname>Postgres</productname> with a
-    special type to use for internal names.  
+    only has one purpose and that is for storage of internal catalog
+    names.
     It is not intended for use by the general user.
-    It's length is currently defined as 32 chars 
+    Its length is currently defined as 32 bytes (31 characters plus terminator) 
     but should be reference using NAMEDATALEN.
-    This is set at compile time and may change in a future release.
+    The length is set at compile time (and is therefore adjustable for
+    special uses); the default maximum length may change in a future release.
    </para>
 
    <para>
@@ -528,7 +537,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        <row>
 	<entry>name</entry>
 	<entry>32 bytes</entry>
-	<entry>Thirty-two character internal type</entry>
+	<entry>Thirty-one character internal type</entry>
        </row>
       </tbody>
      </tgroup>
@@ -570,6 +579,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>1 microsec / 14 digits</entry>
        </row>
        <row>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>date and time including time zone</entry>
+        <entry>8 bytes</entry>
+        <entry>1903 AD</entry>
+        <entry>2037 AD</entry>
+        <entry>1 microsec / 14 digits</entry>
+       </row>
+       <row>
         <entry><type>interval</type></entry>
         <entry>for time intervals</entry>
         <entry>12 bytes</entry>
@@ -593,6 +610,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>23:59:59.99</entry>
         <entry>1 microsecond</entry>
        </row>
+       <row>
+        <entry><type>time with time zone</type></entry>
+        <entry>times of the day</entry>
+        <entry>4 bytes</entry>
+        <entry>00:00:00.00+12</entry>
+        <entry>23:59:59.99-12</entry>
+        <entry>1 microsecond</entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
@@ -603,8 +628,9 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       we also continue to provide <type>datetime</type> (equivalent to <type>timestamp</type>) and
       <type>timespan</type> (equivalent to <type>interval</type>). The types <type>abstime</type>
       and <type>reltime</type> are lower precision types which are used internally.
-      You are discouraged from using any of these types in new applications and move any old
-      ones over when appropriate. Any or all of these type might disappear in a future release.
+      You are discouraged from using any of these types in new
+      applications and are encouraged to move any old
+      ones over when appropriate. Any or all of these types might disappear in a future release.
      </para>
     </note>
    </para>
@@ -615,18 +641,19 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      Date and time input is accepted in almost any reasonable format, including
-     <acronym>ISO</acronym>-compatible, <acronym>SQL</acronym>-compatible, 
+     <acronym>ISO-8601</acronym>, <acronym>SQL</acronym>-compatible, 
      traditional <productname>Postgres</productname>, and others.
      The ordering of month and day in date input can be ambiguous, therefore a setting
-     exists, to specify how it should be interpreted. The command
+     exists to specify how it should be interpreted. The command
      <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
      specifies the variant <quote>month before day</quote>, the command
      <literal>SET DateStyle TO 'European'</literal> sets the variant
-     <quote>day before month</quote>. The former is the default.
+     <quote>day before month</quote>. The <literal>US</literal> style
+     is the default but this default can be changed at compile time or at run time.
     </para>
 
     <para>
-     See <xref linkend="datetime-appendix-title" endterm="datetime-appendix-title">
+     See <xref endterm="datetime-appendix-title" linkend="datetime-appendix-title">
      for the exact parsing rules of date/time input and for the recognized time zones.
     </para>
 
@@ -639,6 +666,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     <title>date</title>
     <para>
      The following are possible inputs for the <type>date</type> type.
+
      <table tocentry="1">
       <title><productname>PostgreSQL</productname> Date Input</title>
       <titleabbrev>Date Inputs</titleabbrev>
@@ -813,13 +841,84 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     </sect3>
 
     <sect3>
-    <title>time</title>
-    <para>
-     The following are valid <type>time</type> inputs.
-     <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Time Input</title>
-      <titleabbrev>Time Inputs</titleabbrev>
-      <tgroup cols="2">
+     <title>time</title>
+     <para>
+      The following are valid <type>time</type> inputs.
+
+      <table tocentry="1">
+       <title><productname>PostgreSQL</productname> Time Input</title>
+       <titleabbrev>Time Inputs</titleabbrev>
+       <tgroup cols="2">
+	<thead>
+	 <row>
+	  <entry>Example</entry>
+	  <entry>Description</entry>
+	 </row>
+	</thead>
+	<tbody>
+	 <row>
+	  <entry>04:05:06.789</entry>
+	  <entry>ISO-8601</entry>
+	 </row>
+	 <row>
+	  <entry>04:05:06</entry>
+	  <entry>ISO-8601</entry>
+	 </row>
+	 <row>
+	  <entry>04:05</entry>
+	  <entry>ISO-8601</entry>
+	 </row>
+	 <row>
+	  <entry>040506</entry>
+	  <entry>ISO-8601</entry>
+	 </row>
+	 <row>
+	  <entry>04:05 AM</entry>
+	  <entry>Same as 04:05; AM does not affect value</entry>
+	 </row>
+	 <row>
+	  <entry>04:05 PM</entry>
+	  <entry>Same as 16:05; input hour must be <= 12</entry>
+	 </row>
+	 <row>
+	  <entry>z</entry>
+	  <entry>Same as 00:00:00</entry>
+	 </row>
+	 <row>
+	  <entry>zulu</entry>
+	  <entry>Same as 00:00:00</entry>
+	 </row>
+	 <row>
+	  <entry>allballs</entry>
+	  <entry>Same as 00:00:00</entry>
+	 </row>
+	</tbody>
+       </tgroup>
+      </table>
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>time with time zone</title>
+     <para>
+      This type is defined by SQL92, but the definition exhibits
+      fundamental deficiencies which renders the type near useless. In
+      most cases, a combination of <type>date</type>,
+      <type>time</type>, and <type>timestamp with time zone</type>
+      should provide a complete range of date/time functionality
+      required by an application.
+     </para>
+
+     <para>
+      <type>time with time zone</type> accepts all input also legal
+      for the <type>time</type> type, appended with a legal time zone,
+      as follows:
+
+      <table tocentry="1">
+       <title><productname>PostgreSQL</productname> Time With Time
+	Zone Input</title>
+       <titleabbrev>Time With Time Zone Inputs</titleabbrev>
+       <tgroup cols="2">
        <thead>
 	<row>
 	 <entry>Example</entry>
@@ -828,45 +927,30 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </thead>
        <tbody>
 	<row>
-	 <entry>04:05:06.789</entry>
+	 <entry>04:05:06.789-8</entry>
 	 <entry>ISO-8601</entry>
 	</row>
 	<row>
-	 <entry>04:05:06</entry>
+	 <entry>04:05:06-08:00</entry>
 	 <entry>ISO-8601</entry>
 	</row>
 	<row>
-	 <entry>04:05</entry>
+	 <entry>04:05-08:00</entry>
 	 <entry>ISO-8601</entry>
 	</row>
 	<row>
-	 <entry>040506</entry>
+	 <entry>040506-08/entry>
 	 <entry>ISO-8601</entry>
-	</row>
-	<row>
-	 <entry>04:05 AM</entry>
-	 <entry>Same as 04:05; AM does not affect value</entry>
-	</row>
-	<row>
-	 <entry>04:05 PM</entry>
-	 <entry>Same as 16:05; input hour must be <= 12</entry>
-	</row>
-	<row>
-	 <entry>z</entry>
-	 <entry>Same as 00:00:00</entry>
-	</row>
-	<row>
-	 <entry>zulu</entry>
-	 <entry>Same as 00:00:00</entry>
-	</row>
-	<row>
-	 <entry>allballs</entry>
-	 <entry>Same as 00:00:00</entry>
 	</row>
        </tbody>
       </tgroup>
      </table>
     </para>
+
+     <para>
+      Refer to <xref endterm="timezone-title" linkend="timezone"> for
+      more examples of time zones.
+     </para>
     </sect3>
 
     <sect3>
@@ -888,8 +972,8 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     <table tocentry="1">
-      <title><productname>PostgreSQL</productname> Time Zone Input</title>
+     <table tocentry="1" id="timezone">
+      <title id="timezone-title"><productname>PostgreSQL</productname> Time Zone Input</title>
       <titleabbrev>Time Zone Inputs</titleabbrev>
       <tgroup cols="2">
        <thead>
