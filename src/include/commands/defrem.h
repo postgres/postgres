@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.39 2002/06/20 20:29:49 momjian Exp $
+ * $Id: defrem.h,v 1.40 2002/07/01 15:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool primary,
 			Expr *predicate,
 			List *rangetable);
-extern void RemoveIndex(RangeVar *relation);
+extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
 extern void ReindexIndex(RangeVar *indexRelation, bool force);
 extern void ReindexTable(RangeVar *relation, bool force);
 extern void ReindexDatabase(const char *databaseName, bool force, bool all);
@@ -42,16 +42,15 @@ extern void CreateFunction(CreateFunctionStmt *stmt);
 extern void RemoveFunction(List *functionName, List *argTypes);
 
 extern void DefineOperator(List *names, List *parameters);
-extern void RemoveOperator(List *operatorName,
-						   TypeName *typeName1, TypeName *typeName2);
+extern void RemoveOperator(RemoveOperStmt *stmt);
 
 extern void DefineAggregate(List *names, List *parameters);
 extern void RemoveAggregate(List *aggName, TypeName *aggType);
 
 extern void DefineType(List *names, List *parameters);
-extern void RemoveType(List *names);
+extern void RemoveType(List *names, DropBehavior behavior);
 extern void DefineDomain(CreateDomainStmt *stmt);
-extern void RemoveDomain(List *names, int behavior);
+extern void RemoveDomain(List *names, DropBehavior behavior);
 
 
 /* support routines in commands/define.c */

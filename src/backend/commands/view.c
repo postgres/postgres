@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.64 2002/06/20 20:29:27 momjian Exp $
+ *	$Id: view.c,v 1.65 2002/07/01 15:27:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,14 +248,13 @@ DefineView(const RangeVar *view, Query *viewParse)
 	DefineViewRules(view, viewParse);
 }
 
-/*------------------------------------------------------------------
+/*
  * RemoveView
  *
  * Remove a view given its name
- *------------------------------------------------------------------
  */
 void
-RemoveView(const RangeVar *view)
+RemoveView(const RangeVar *view, DropBehavior behavior)
 {
 	Oid			viewOid;
 

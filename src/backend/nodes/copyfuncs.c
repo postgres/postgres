@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.191 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.192 2002/07/01 15:27:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2115,6 +2115,7 @@ _copyRemoveAggrStmt(RemoveAggrStmt *from)
 
 	Node_Copy(from, newnode, aggname);
 	Node_Copy(from, newnode, aggtype);
+	newnode->behavior = from->behavior;
 
 	return newnode;
 }
@@ -2126,6 +2127,7 @@ _copyRemoveFuncStmt(RemoveFuncStmt *from)
 
 	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, args);
+	newnode->behavior = from->behavior;
 
 	return newnode;
 }
@@ -2137,6 +2139,7 @@ _copyRemoveOperStmt(RemoveOperStmt *from)
 
 	Node_Copy(from, newnode, opname);
 	Node_Copy(from, newnode, args);
+	newnode->behavior = from->behavior;
 
 	return newnode;
 }
@@ -2395,6 +2398,7 @@ _copyDropPropertyStmt(DropPropertyStmt *from)
 	if (from->property)
 		newnode->property = pstrdup(from->property);
 	newnode->removeType = from->removeType;
+	newnode->behavior = from->behavior;
 
 	return newnode;
 }
@@ -2422,6 +2426,7 @@ _copyDropPLangStmt(DropPLangStmt *from)
 
 	if (from->plname)
 		newnode->plname = pstrdup(from->plname);
+	newnode->behavior = from->behavior;
 
 	return newnode;
 }

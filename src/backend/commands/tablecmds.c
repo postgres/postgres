@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.17 2002/06/17 14:31:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.18 2002/07/01 15:27:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
-#include "parser/parse.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -280,7 +279,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
  * themselves will be destroyed, too.
  */
 void
-RemoveRelation(const RangeVar *relation)
+RemoveRelation(const RangeVar *relation, DropBehavior behavior)
 {
 	Oid			relOid;
 
@@ -2336,7 +2335,7 @@ AlterTableAlterColumnFlags(Oid myrelid,
 void
 AlterTableDropColumn(Oid myrelid,
 					 bool inh, const char *colName,
-					 int behavior)
+					 DropBehavior behavior)
 {
 	elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
 }
@@ -2669,7 +2668,7 @@ AlterTableAddConstraint(Oid myrelid,
 void
 AlterTableDropConstraint(Oid myrelid,
 						 bool inh, const char *constrName,
-						 int behavior)
+						 DropBehavior behavior)
 {
 	Relation	rel;
 	int			deleted;
@@ -2678,7 +2677,7 @@ AlterTableDropConstraint(Oid myrelid,
 	 * We don't support CASCADE yet  - in fact, RESTRICT doesn't work to
 	 * the spec either!
 	 */
-	if (behavior == CASCADE)
+	if (behavior == DROP_CASCADE)
 		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT does not support the CASCADE keyword");
 
 	/*

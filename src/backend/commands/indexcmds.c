@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.75 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.76 2002/07/01 15:27:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,14 +560,9 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 /*
  * RemoveIndex
  *		Deletes an index.
- *
- * Exceptions:
- *		BadArg if name is invalid.
- *		"ERROR" if index nonexistent.
- *		...
  */
 void
-RemoveIndex(RangeVar *relation)
+RemoveIndex(RangeVar *relation, DropBehavior behavior)
 {
 	Oid			indOid;
 	HeapTuple	tuple;

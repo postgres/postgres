@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.4 2002/04/30 01:24:52 tgl Exp $
+ * $Id: tablecmds.h,v 1.5 2002/07/01 15:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,15 @@ extern void AlterTableAlterColumnFlags(Oid myrelid, bool inh,
 									   Node *flagValue, const char *flagType);
 
 extern void AlterTableDropColumn(Oid myrelid, bool inh,
-					 			 const char *colName, int behavior);
+					 			 const char *colName,
+								 DropBehavior behavior);
 
 extern void AlterTableAddConstraint(Oid myrelid, bool inh,
 									List *newConstraints);
 
 extern void AlterTableDropConstraint(Oid myrelid, bool inh,
-									 const char *constrName, int behavior);
+									 const char *constrName,
+									 DropBehavior behavior);
 
 extern void AlterTableCreateToastTable(Oid relOid, bool silent);
 
@@ -48,7 +50,7 @@ extern void AlterTableOwner(Oid relationOid, int32 newOwnerSysId);
 
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind);
 
-extern void RemoveRelation(const RangeVar *relation);
+extern void RemoveRelation(const RangeVar *relation, DropBehavior behavior);
 
 extern void TruncateRelation(const RangeVar *relation);
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.334 2002/06/22 02:04:45 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.335 2002/07/01 15:27:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -112,6 +112,7 @@ static void doNegateFloat(Value *v);
 	const char			*keyword;
 	bool				boolean;
 	JoinType			jtype;
+	DropBehavior		dbehavior;
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -158,7 +159,9 @@ static void doNegateFloat(Value *v);
 				simple_select
 
 %type <node>	alter_column_default
-%type <ival>	add_drop, drop_behavior, opt_drop_behavior
+%type <ival>	add_drop
+
+%type <dbehavior>	opt_drop_behavior
 
 %type <list>	createdb_opt_list, copy_opt_list
 %type <defelt>	createdb_opt_item, copy_opt_item
@@ -594,7 +597,9 @@ AlterUserSetStmt:
  *
  * Drop a postgresql DBMS user
  *
- *
+ * XXX Ideally this would have CASCADE/RESTRICT options, but since a user
+ * might own objects in multiple databases, there is presently no way to
+ * implement either cascading or restricting.  Caveat DBA.
  *****************************************************************************/
 
 DropUserStmt:
@@ -727,7 +732,7 @@ add_drop:	ADD										{ $$ = +1; }
  *
  * Drop a postgresql group
  *
- *
+ * XXX see above notes about cascading DROP USER; groups have same problem.
  *****************************************************************************/
 
 DropGroupStmt:
@@ -779,7 +784,7 @@ AlterSchemaStmt:
 		;
 
 DropSchemaStmt:
-			DROP SCHEMA ColId
+			DROP SCHEMA ColId opt_drop_behavior
 				{
 					elog(ERROR, "DROP SCHEMA not yet supported");
 				}
@@ -1166,8 +1171,8 @@ AlterTableStmt:
 					n->def = (Node *) makeString($9);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
-			| ALTER TABLE relation_expr DROP opt_column ColId drop_behavior
+			/* ALTER TABLE <relation> DROP [COLUMN] <colname> [RESTRICT|CASCADE] */
+			| ALTER TABLE relation_expr DROP opt_column ColId opt_drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'D';
@@ -1185,8 +1190,8 @@ AlterTableStmt:
 					n->def = $5;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP CONSTRAINT <name> {RESTRICT|CASCADE} */
-			| ALTER TABLE relation_expr DROP CONSTRAINT name drop_behavior
+			/* ALTER TABLE <relation> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
+			| ALTER TABLE relation_expr DROP CONSTRAINT name opt_drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'X';
@@ -1228,15 +1233,10 @@ alter_column_default:
 			| DROP DEFAULT					{ $$ = NULL; }
 		;
 
-drop_behavior:
-			CASCADE							{ $$ = CASCADE; }
-			| RESTRICT						{ $$ = RESTRICT; }
-		;
-
 opt_drop_behavior:
-			CASCADE							{ $$ = CASCADE; }
-			| RESTRICT						{ $$ = RESTRICT; }
-			| /* EMPTY */					{ $$ = RESTRICT; /* default */ }
+			CASCADE						{ $$ = DROP_CASCADE; }
+			| RESTRICT					{ $$ = DROP_RESTRICT; }
+			| /* EMPTY */				{ $$ = DROP_RESTRICT; /* default */ }
 		;
 
 
@@ -1969,10 +1969,11 @@ opt_validator:
 		;
 
 DropPLangStmt:
-			DROP opt_procedural LANGUAGE ColId_or_Sconst
+			DROP opt_procedural LANGUAGE ColId_or_Sconst opt_drop_behavior
 				{
 					DropPLangStmt *n = makeNode(DropPLangStmt);
 					n->plname = $4;
+					n->behavior = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -2153,11 +2154,12 @@ ConstraintTimeSpec:
 
 
 DropTrigStmt:
-			DROP TRIGGER name ON qualified_name
+			DROP TRIGGER name ON qualified_name opt_drop_behavior
 				{
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
 					n->relation = $5;
 					n->property = $3;
+					n->behavior = $6;
 					n->removeType = DROP_TRIGGER;
 					$$ = (Node *) n;
 				}
@@ -2190,12 +2192,13 @@ CreateAssertStmt:
 		;
 
 DropAssertStmt:
-			DROP ASSERTION name
+			DROP ASSERTION name opt_drop_behavior
 				{
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
 					n->relation = NULL;
 					n->property = $3;
-					n->removeType = DROP_TRIGGER;
+					n->behavior = $4;
+					n->removeType = DROP_TRIGGER; /* XXX */
 					elog(ERROR, "DROP ASSERTION is not yet supported");
 					$$ = (Node *) n;
 				}
@@ -2273,7 +2276,7 @@ def_arg:	func_return						{ $$ = (Node *)$1; }
  *
  *		QUERY:
  *
- *		DROP itemtype itemname [, itemname ...]
+ *		DROP itemtype itemname [, itemname ...] [ RESTRICT | CASCADE ]
  *
  *****************************************************************************/
 
@@ -3111,9 +3114,9 @@ opt_assignment:  AS ASSIGNMENT					{}
  *
  *		QUERY:
  *
- *		DROP FUNCTION funcname (arg1, arg2, ...)
- *		DROP AGGREGATE aggname (aggtype)
- *		DROP OPERATOR opname (leftoperand_typ rightoperand_typ)
+ *		DROP FUNCTION funcname (arg1, arg2, ...) [ RESTRICT | CASCADE ]
+ *		DROP AGGREGATE aggname (aggtype) [ RESTRICT | CASCADE ]
+ *		DROP OPERATOR opname (leftoperand_typ, rightoperand_typ) [ RESTRICT | CASCADE ]
  *
  *****************************************************************************/
 
@@ -3123,8 +3126,7 @@ RemoveFuncStmt:
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->funcname = $3;
 					n->args = $4;
-					if ($5 != RESTRICT)
-						elog(ERROR, "DROP FUNCTION/CASCADE not supported");
+					n->behavior = $5;
 					$$ = (Node *)n;
 				}
 		| DROP CAST '(' func_type AS func_type ')' opt_drop_behavior
@@ -3132,18 +3134,18 @@ RemoveFuncStmt:
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->funcname = $6->names;
 					n->args = makeList1($4);
-					if ($8 != RESTRICT)
-						elog(ERROR, "DROP CAST/CASCADE not supported");
+					n->behavior = $8;
 					$$ = (Node *)n;
 				}
 		;
 
 RemoveAggrStmt:
-			DROP AGGREGATE func_name '(' aggr_argtype ')'
+			DROP AGGREGATE func_name '(' aggr_argtype ')' opt_drop_behavior
 				{
 						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
 						n->aggname = $3;
 						n->aggtype = $5;
+						n->behavior = $7;
 						$$ = (Node *)n;
 				}
 		;
@@ -3154,11 +3156,12 @@ aggr_argtype:
 		;
 
 RemoveOperStmt:
-			DROP OPERATOR any_operator '(' oper_argtypes ')'
+			DROP OPERATOR any_operator '(' oper_argtypes ')' opt_drop_behavior
 				{
 					RemoveOperStmt *n = makeNode(RemoveOperStmt);
 					n->opname = $3;
 					n->args = $5;
+					n->behavior = $7;
 					$$ = (Node *)n;
 				}
 		;
@@ -3335,11 +3338,12 @@ opt_instead:
 
 
 DropRuleStmt:
-			DROP RULE name ON qualified_name
+			DROP RULE name ON qualified_name opt_drop_behavior
 				{
 					DropPropertyStmt *n = makeNode(DropPropertyStmt);
 					n->relation = $5;
 					n->property = $3;
+					n->behavior = $6;
 					n->removeType = DROP_RULE;
 					$$ = (Node *) n;
 				}
@@ -3628,6 +3632,7 @@ AlterDatabaseSetStmt:
  *
  *		DROP DATABASE
  *
+ * This is implicitly CASCADE, no need for drop behavior
  *****************************************************************************/
 
 DropdbStmt: DROP DATABASE database_name

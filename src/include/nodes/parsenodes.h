@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.182 2002/06/20 20:29:51 momjian Exp $
+ * $Id: parsenodes.h,v 1.183 2002/07/01 15:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,6 +737,12 @@ typedef struct CreateSchemaStmt
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
 } CreateSchemaStmt;
 
+typedef enum DropBehavior
+{
+	DROP_RESTRICT,				/* drop fails if any dependent objects */
+	DROP_CASCADE				/* remove dependent objects too */
+} DropBehavior;
+
 /* ----------------------
  *	Alter Table
  *
@@ -765,7 +771,7 @@ typedef struct AlterTableStmt
 	char	   *name;			/* column or constraint name to act on, or
 								 * new owner */
 	Node	   *def;			/* definition of new column or constraint */
-	int			behavior;		/* CASCADE or RESTRICT drop behavior */
+	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 } AlterTableStmt;
 
 /* ----------------------
@@ -996,6 +1002,7 @@ typedef struct DropPLangStmt
 {
 	NodeTag		type;
 	char	   *plname;			/* PL name */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } DropPLangStmt;
 
 /* ----------------------
@@ -1107,8 +1114,8 @@ typedef struct DropStmt
 {
 	NodeTag		type;
 	List	   *objects;		/* list of sublists of names (as Values) */
-	int			removeType;
-	int	   		behavior;		/* CASCADE or RESTRICT drop behavior */
+	int			removeType;		/* see #defines above */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } DropStmt;
 
 /* ----------------------
@@ -1127,7 +1134,8 @@ typedef struct DropPropertyStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* owning relation */
 	char	   *property;		/* name of rule, trigger, etc */
-	int			removeType;
+	int			removeType;		/* see #defines above */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } DropPropertyStmt;
 
 /* ----------------------
@@ -1218,6 +1226,7 @@ typedef struct RemoveAggrStmt
 	NodeTag		type;
 	List	   *aggname;		/* aggregate to drop */
 	TypeName   *aggtype;		/* TypeName for input datatype, or NULL */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } RemoveAggrStmt;
 
 /* ----------------------
@@ -1229,6 +1238,7 @@ typedef struct RemoveFuncStmt
 	NodeTag		type;
 	List	   *funcname;		/* function to drop */
 	List	   *args;			/* types of the arguments */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } RemoveFuncStmt;
 
 /* ----------------------
@@ -1240,6 +1250,7 @@ typedef struct RemoveOperStmt
 	NodeTag		type;
 	List	   *opname;			/* operator to drop */
 	List	   *args;			/* types of the arguments */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } RemoveOperStmt;
 
 /* ----------------------
