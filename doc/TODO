@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 17 23:51:40 EDT 2004
+Last updated:		Wed Aug 18 00:00:34 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -490,7 +490,6 @@ Clients
 * Consistently display privilege information for all objects in psql
 
 * pg_dump
-	o Allow pg_dumpall to use non-text output formats
 	o Have pg_dump use multi-statement transactions for INSERT dumps
 	o -Allow pg_dump to dump CREATE CONVERSION (Christopher)
 	o -Make pg_restore continue after errors, so it acts more like pg_dump
