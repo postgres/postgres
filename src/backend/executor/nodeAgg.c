@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.102 2003/01/10 23:54:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.103 2003/02/04 00:48:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1159,20 +1159,42 @@ ExecInitAgg(Agg *node, EState *estate)
 
 	/*
 	 * Perform lookups of aggregate function info, and initialize the
-	 * unchanging fields of the per-agg data
+	 * unchanging fields of the per-agg data.  We also detect duplicate
+	 * aggregates (for example, "SELECT sum(x) ... HAVING sum(x) > 0").
+	 * When duplicates are detected, we only make an AggStatePerAgg struct
+	 * for the first one.  The clones are simply pointed at the same result
+	 * entry by giving them duplicate aggno values.
 	 */
 	aggno = -1;
 	foreach(alist, aggstate->aggs)
 	{
 		AggrefExprState *aggrefstate = (AggrefExprState *) lfirst(alist);
 		Aggref	   *aggref = (Aggref *) aggrefstate->xprstate.expr;
-		AggStatePerAgg peraggstate = &peragg[++aggno];
+		AggStatePerAgg peraggstate;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
 		Datum		textInitVal;
+		int			i;
+
+		/* Look for a previous duplicate aggregate */
+		for (i = 0; i <= aggno; i++)
+		{
+			if (equal(aggref, peragg[i].aggref) &&
+				!contain_volatile_functions((Node *) aggref))
+				break;
+		}
+		if (i <= aggno)
+		{
+			/* Found a match to an existing entry, so just mark it */
+			aggrefstate->aggno = i;
+			continue;
+		}
+
+		/* Nope, so assign a new PerAgg record */
+		peraggstate = &peragg[++aggno];
 
 		/* Mark Aggref state node with assigned index in the result array */
 		aggrefstate->aggno = aggno;
@@ -1270,6 +1292,9 @@ ExecInitAgg(Agg *node, EState *estate)
 
 		ReleaseSysCache(aggTuple);
 	}
+
+	/* Update numaggs to match number of unique aggregates found */
+	aggstate->numaggs = aggno + 1;
 
 	return aggstate;
 }
