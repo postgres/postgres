@@ -125,18 +125,21 @@
 #		not store encrypted passwords if you use this option.
 #
 #   ident:	For TCP/IP connections, authentication is done by contacting
-#		the ident server on the client host.  (CAUTION: this is only
-#		as secure as the client machine!)  On machines that support
-#		SO_PEERCRED or SCM_CREDS socket requests, this method also
-#		works for local Unix-domain connections.  AUTH_ARGUMENT is 
-#		required: it determines how to map remote user names to
-#		Postgres user names.  The AUTH_ARGUMENT is a map name found
-#		in the $PGDATA/pg_ident.conf file. The connection is accepted
-#		if that file contains an entry for this map name with the
-#		ident-supplied username and the requested Postgres username.
-#		The special map name "sameuser" indicates an implied map
-#		(not in pg_ident.conf) that maps each ident username to the
-#		identical PostgreSQL username.
+#		the ident server on the client host. (CAUTION: this is
+#		only as secure as the client machine!) On machines that
+#		support unix-domain socket credentials (currently Linux,
+#		FreeBSD, NetBSD, and BSD/OS), this method also works for
+#		"local" connections.
+#
+#		AUTH_ARGUMENT is required: it determines how to map
+#		remote user names to Postgres user names. The
+#		AUTH_ARGUMENT is a map name found in the
+#		$PGDATA/pg_ident.conf file. The connection is accepted
+#		if that file contains an entry for this map name with
+#		the ident-supplied username and the requested Postgres
+#		username. The special map name "sameuser" indicates an
+#		implied map (not in pg_ident.conf) that maps each ident
+#		username to the identical PostgreSQL username.
 # 
 #   krb4:	Kerberos V4 authentication is used.  Allowed only for
 #		TCP/IP connections, not for local UNIX-domain sockets.

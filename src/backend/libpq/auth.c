@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.67 2001/09/21 20:31:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.68 2001/09/26 19:54:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,7 +520,7 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaIdent:
-#if !defined(SO_PEERCRED) && (defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED))
+#if !defined(SO_PEERCRED) && (defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)))
 			/*
 			 *	If we are doing ident on unix-domain sockets,
 			 *	use SCM_CREDS only if it is defined and SO_PEERCRED isn't.
