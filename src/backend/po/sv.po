@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-01-11 20:39+0100\n"
-"PO-Revision-Date: 2004-01-11 20:39+0100\n"
+"PO-Revision-Date: 2004-01-21 08:21+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1086,7 +1086,7 @@ msgstr "bara tabell \"%s\" kan refereras i check-villkoret"
 
 #: catalog/heap.c:1647 commands/tablecmds.c:2946 commands/typecmds.c:1814
 msgid "cannot use subquery in check constraint"
-msgstr "kan inte använda subselect i check-villkor"
+msgstr "kan inte använda subfråga i check-villkor"
 
 #: catalog/heap.c:1651 commands/tablecmds.c:2950
 msgid "cannot use aggregate function in check constraint"
@@ -1183,24 +1183,24 @@ msgstr "rättighet saknas för att skapa temporära tabeller i databasen \"%s\""
 
 #: catalog/pg_aggregate.c:80
 msgid "cannot determine transition data type"
-msgstr ""
+msgstr "kan inte lista ut övergångsdatatyp"
 
 #: catalog/pg_aggregate.c:81
 msgid ""
 "An aggregate using \"anyarray\" or \"anyelement\" as transition type must "
 "have one of them as its base type."
-msgstr ""
+msgstr "En aggregatfunktion som använder \"anyarray\" eller \"anyelement\" som övergångstyp måste ha en av dem som bastyp."
 
 #: catalog/pg_aggregate.c:110
 #, c-format
 msgid "return type of transition function %s is not %s"
-msgstr ""
+msgstr "returtyp från övergångsfunktion %s är inte %s"
 
 #: catalog/pg_aggregate.c:132
 msgid ""
 "must not omit initial value when transition function is strict and "
 "transition type is not compatible with input type"
-msgstr ""
+msgstr "får inte utelämna startvärdet när övergångsfunktionen är strikt oh övergångstypen inte är kompatibel med indatatypen"
 
 #: catalog/pg_aggregate.c:165 catalog/pg_proc.c:121 catalog/pg_proc.c:587
 msgid "cannot determine result data type"
@@ -1210,7 +1210,7 @@ msgstr "kan inte lista ut resultatdatatypen"
 msgid ""
 "An aggregate returning \"anyarray\" or \"anyelement\" must have one of them "
 "as its base type."
-msgstr ""
+msgstr "En aggregatfunktion som returnerar \"anyarray\" eller \"anyelement\" måste ha en av dem som sin bastyp."
 
 #: catalog/pg_aggregate.c:281 commands/typecmds.c:896 commands/typecmds.c:966
 #: commands/typecmds.c:998 commands/typecmds.c:1030 parser/parse_func.c:319
@@ -1227,7 +1227,7 @@ msgstr "funktionen %s returnerar en mängd"
 #: catalog/pg_aggregate.c:317 catalog/pg_aggregate.c:326
 #, c-format
 msgid "function %s requires run-time type coercion"
-msgstr ""
+msgstr "funktionen %s kräver en typomvandling under körning"
 
 #: catalog/pg_conversion.c:66
 #, c-format
@@ -1237,7 +1237,7 @@ msgstr "konvertering \"%s\" finns redan"
 #: catalog/pg_conversion.c:79
 #, c-format
 msgid "default conversion for %s to %s already exists"
-msgstr ""
+msgstr "standardkonvertering från %s till %s finns redan"
 
 #: catalog/pg_conversion.c:307 commands/comment.c:957
 #: commands/conversioncmds.c:109 commands/conversioncmds.c:133
@@ -1263,7 +1263,7 @@ msgstr "\"%s\" är inte ett giltigt operatornamn"
 
 #: catalog/pg_operator.c:412
 msgid "at least one of leftarg or rightarg must be specified"
-msgstr ""
+msgstr "minst en av vänsterargument eller högerargument måste anges"
 
 #: catalog/pg_operator.c:420
 msgid "only binary operators can have commutators"
@@ -1275,11 +1275,11 @@ msgstr "bara binära operatorer kan ha \"join selectivity\""
 
 #: catalog/pg_operator.c:428
 msgid "only binary operators can hash"
-msgstr ""
+msgstr "bara binära operatorer kan hasha"
 
 #: catalog/pg_operator.c:432
 msgid "only binary operators can merge join"
-msgstr ""
+msgstr "bara binära operatorer kan \"merge join\":a"
 
 #: catalog/pg_operator.c:444
 #, c-format
@@ -1288,7 +1288,7 @@ msgstr "operator %s existerar redan"
 
 #: catalog/pg_operator.c:726
 msgid "operator cannot be its own negator or sort operator"
-msgstr ""
+msgstr "operator kan inte vara sin egen negerare eller sorteringsoperator"
 
 #: catalog/pg_proc.c:97 commands/functioncmds.c:154 parser/parse_func.c:1515
 #, c-format
@@ -1299,7 +1299,7 @@ msgstr "funktioner kan inte ha mer än %d argument"
 msgid ""
 "A function returning \"anyarray\" or \"anyelement\" must have at least one "
 "argument of either type."
-msgstr ""
+msgstr "En funktion som returnerar \"anyarray\" eller \"anyelement\" måste ha minst ett argument med sådan typ."
 
 #: catalog/pg_proc.c:180
 #, c-format
@@ -1334,7 +1334,7 @@ msgstr "funktionen \"%s\" är inte en aggregatfunktion"
 #: catalog/pg_proc.c:546 catalog/pg_proc.c:566
 #, c-format
 msgid "return type mismatch in function declared to return %s"
-msgstr ""
+msgstr "returtypen stämmer inte i funktion deklarerad att returnera %s"
 
 #: catalog/pg_proc.c:421 catalog/pg_proc.c:452
 msgid "Function's final statement must be a SELECT."
@@ -1412,34 +1412,34 @@ msgstr "typen \"%s\" existerar inte"
 #: commands/aggregatecmds.c:97
 #, c-format
 msgid "aggregate attribute \"%s\" not recognized"
-msgstr ""
+msgstr "aggregatattributet \"%s\" känns inte igen"
 
 #: commands/aggregatecmds.c:107
 msgid "aggregate basetype must be specified"
-msgstr ""
+msgstr "aggregatfunkionens bastyp måste anges"
 
 #: commands/aggregatecmds.c:111
 msgid "aggregate stype must be specified"
-msgstr ""
+msgstr "aggregatfunktionens stype måste anges"
 
 #: commands/aggregatecmds.c:115
 msgid "aggregate sfunc must be specified"
-msgstr ""
+msgstr "aggregatfunktionens sfunc måste anges"
 
 #: commands/aggregatecmds.c:138
 #, c-format
 msgid "aggregate transition data type cannot be %s"
-msgstr ""
+msgstr "aggregatfunktionens övergångsdatatyp kan inte vara %s"
 
 #: commands/aggregatecmds.c:259
 #, c-format
 msgid "function %s(*) already exists in schema \"%s\""
-msgstr ""
+msgstr "funktionen %s(*) finns redan i schema \"%s\""
 
 #: commands/aggregatecmds.c:265 commands/functioncmds.c:698
 #, c-format
 msgid "function %s already exists in schema \"%s\""
-msgstr ""
+msgstr "funktionen %s finns redan i schema \"%s\""
 
 #: commands/analyze.c:200
 #, c-format
@@ -1469,7 +1469,7 @@ msgstr ""
 #: commands/cluster.c:150
 #, c-format
 msgid "there is no previously clustered index for table \"%s\""
-msgstr ""
+msgstr "det finns inget tidigare klustrat index för tabell \"%s\""
 
 #: commands/cluster.c:164 commands/tablecmds.c:3937
 #, c-format
@@ -1483,22 +1483,22 @@ msgstr "\"%s\" är inte ett index för tabell \"%s\""
 
 #: commands/cluster.c:334
 msgid "cannot cluster on partial index"
-msgstr ""
+msgstr "kan inte klustra ett partiellt index"
 
 #: commands/cluster.c:352
 msgid "cannot cluster when index access method does not handle null values"
-msgstr ""
+msgstr "kan inte klustra när indexets accessmetod inte kan hantera null-värden"
 
 #: commands/cluster.c:353
 #, c-format
 msgid "You may be able to work around this by marking column \"%s\" NOT NULL."
-msgstr ""
+msgstr "Du kan gå förbi detta genom att markera kolumn \"%s\" som NOT NULL."
 
 #: commands/cluster.c:365
 msgid ""
 "cannot cluster on expressional index when index access method does not "
 "handle null values"
-msgstr ""
+msgstr "kan inte klusta ett uttrycksindex när indexets accessmetod inte kan hantera null-värden"
 
 #: commands/cluster.c:379
 #, c-format
@@ -1545,7 +1545,7 @@ msgstr "databasnamn får inte vara kvalificerade"
 
 #: commands/comment.c:467
 msgid "database comments may only be applied to the current database"
-msgstr ""
+msgstr "databaskommentarer kan bara appliceras på den aktuella databasen"
 
 #: commands/comment.c:499 commands/schemacmds.c:172
 msgid "schema name may not be qualified"
@@ -1563,7 +1563,7 @@ msgstr "det finns flera regler med namn \"%s\""
 
 #: commands/comment.c:590
 msgid "Specify a relation name as well as a rule name."
-msgstr ""
+msgstr "Ange ett relationsnamn samt ett regelnamn."
 
 #: commands/comment.c:618 rewrite/rewriteDefine.c:568
 #: rewrite/rewriteRemove.c:59
@@ -2306,18 +2306,18 @@ msgstr "ogiltigt procedurnummer %d, måste vara mellan 1 och %d"
 
 #: commands/opclasscmds.c:226
 msgid "storage type specified more than once"
-msgstr ""
+msgstr "lagringstyp angiven mer än en gång"
 
 #: commands/opclasscmds.c:253
 #, c-format
 msgid ""
 "storage type may not be different from data type for access method \"%s\""
-msgstr ""
+msgstr "lagringstypen får inte vara någon annan än för datatypen till accessmetoden \"%s\""
 
 #: commands/opclasscmds.c:271
 #, c-format
 msgid "operator class \"%s\" for access method \"%s\" already exists"
-msgstr ""
+msgstr "operatorklass \"%s\" för accessmetoden \"%s\" finns redan"
 
 #: commands/opclasscmds.c:300
 #, c-format
@@ -6414,12 +6414,12 @@ msgstr ""
 
 #: utils/adt/acl.c:102 utils/adt/name.c:90
 msgid "identifier too long"
-msgstr ""
+msgstr "identifieraren för lång"
 
 #: utils/adt/acl.c:103 utils/adt/name.c:91
 #, c-format
 msgid "Identifier must be less than %d characters."
-msgstr ""
+msgstr "Identifierare måste vara mindre än %d tecken."
 
 #: utils/adt/acl.c:190
 #, fuzzy, c-format
@@ -6428,7 +6428,7 @@ msgstr "okänd SSL-felkod"
 
 #: utils/adt/acl.c:191
 msgid "ACL key word must be \"group\" or \"user\"."
-msgstr ""
+msgstr "ACL-nyckelord måste vara \"group\" eller \"user\"."
 
 #: utils/adt/acl.c:196
 msgid "missing name"
@@ -6436,7 +6436,7 @@ msgstr "namn saknas"
 
 #: utils/adt/acl.c:197
 msgid "A name must follow the \"group\" or \"user\" key word."
-msgstr ""
+msgstr "Ett namn måste följa efter nyckelorden \"group\" resp. \"user\"."
 
 #: utils/adt/acl.c:205
 msgid "missing \"=\" sign"
@@ -6470,7 +6470,7 @@ msgstr ""
 
 #: utils/adt/acl.c:851
 msgid "cannot specify both user and group"
-msgstr ""
+msgstr "kan inte ange både användare och grupp"
 
 #: utils/adt/acl.c:912 utils/adt/acl.c:1137 utils/adt/acl.c:1349
 #: utils/adt/acl.c:1553 utils/adt/acl.c:1757 utils/adt/acl.c:1966
@@ -6568,11 +6568,11 @@ msgstr ""
 
 #: utils/adt/arrayfuncs.c:902
 msgid "invalid array flags"
-msgstr ""
+msgstr "ogiltiga array-flaggor"
 
 #: utils/adt/arrayfuncs.c:910
 msgid "wrong element type"
-msgstr ""
+msgstr "fel elementtyp"
 
 #: utils/adt/arrayfuncs.c:953 utils/cache/lsyscache.c:1702
 #, c-format
@@ -6629,7 +6629,7 @@ msgstr ""
 
 #: utils/adt/arrayfuncs.c:2923
 msgid "target type is not an array"
-msgstr ""
+msgstr "måltypen är inte en array"
 
 #: utils/adt/arrayfuncs.c:2935
 msgid "array coercion to domain type elements not currently supported"
@@ -6719,7 +6719,7 @@ msgstr "typattribut \"%s\" känns inte igen"
 #: utils/adt/timestamp.c:3731
 #, c-format
 msgid "time zone \"%s\" not recognized"
-msgstr ""
+msgstr "tidszone \"%s\" känna inte igen"
 
 #: utils/adt/date.c:2244
 #, c-format
@@ -6730,7 +6730,7 @@ msgstr ""
 #: utils/adt/formatting.c:3176
 #, c-format
 msgid "inconsistent use of year %04d and \"BC\""
-msgstr ""
+msgstr "ej konsekvent användning av år %04d och \"BC\""
 
 #: utils/adt/datetime.c:3289 utils/adt/datetime.c:3296
 #, c-format
@@ -6739,7 +6739,7 @@ msgstr ""
 
 #: utils/adt/datetime.c:3298
 msgid "Perhaps you need a different \"datestyle\" setting."
-msgstr ""
+msgstr "Du kanske behöver en annan inställning av variabeln \"datestyle\"."
 
 #: utils/adt/datetime.c:3303
 #, fuzzy, c-format
@@ -6777,7 +6777,7 @@ msgstr ""
 
 #: utils/adt/encode.c:295
 msgid "unexpected \"=\""
-msgstr ""
+msgstr "oväntat \"=\""
 
 #: utils/adt/encode.c:307
 msgid "invalid symbol"
@@ -6839,7 +6839,7 @@ msgstr ""
 
 #: utils/adt/float.c:1228 utils/adt/numeric.c:4074
 msgid "cannot take square root of a negative number"
-msgstr ""
+msgstr "kan inte ta kvadratroten av ett negativt tal"
 
 #: utils/adt/float.c:1274 utils/adt/float.c:1304
 msgid "result is out of range"
@@ -7040,7 +7040,7 @@ msgstr ""
 
 #: utils/adt/int.c:126
 msgid "int2vector has too many elements"
-msgstr ""
+msgstr "int2vector har för många element"
 
 #: utils/adt/int8.c:88 utils/adt/int8.c:116
 #, fuzzy, c-format
@@ -7543,7 +7543,7 @@ msgstr ""
 #: utils/adt/varbit.c:131 utils/adt/varbit.c:370
 #, c-format
 msgid "\"%c\" is not a valid binary digit"
-msgstr ""
+msgstr "\"%c\" är inte en giltig binär siffra"
 
 #: utils/adt/varbit.c:156 utils/adt/varbit.c:395
 #, fuzzy, c-format
@@ -7692,7 +7692,7 @@ msgstr "kunde inte återöppna filen \"%s\" som stdout: %m"
 
 #: utils/error/elog.c:1058 utils/error/elog.c:1204 utils/error/elog.c:1267
 msgid "missing error text"
-msgstr ""
+msgstr "saknar feltext"
 
 #: utils/error/elog.c:1061 utils/error/elog.c:1270
 #, c-format
@@ -8369,9 +8369,8 @@ msgid "By default, newly-created tables should have OIDs"
 msgstr ""
 
 #: utils/misc/guc.c:854
-#, fuzzy
 msgid "Datetimes are integer based"
-msgstr "%s kräver ett heltalsvärde"
+msgstr ""
 
 #: utils/misc/guc.c:869
 msgid "Emit WAL-related debugging output."
@@ -8435,7 +8434,7 @@ msgstr ""
 
 #: utils/misc/guc.c:964
 msgid "Uses syslog for logging."
-msgstr ""
+msgstr "Använder syslog för loggning."
 
 #: utils/misc/guc.c:965
 msgid ""
@@ -8445,9 +8444,8 @@ msgid ""
 msgstr ""
 
 #: utils/misc/guc.c:984
-#, fuzzy
 msgid "Sets the maximum number of concurrent connections."
-msgstr "Maximalt antal samtidiga anslutningar"
+msgstr "Sätter maximalt antal samtidiga anslutningar."
 
 #: utils/misc/guc.c:993
 msgid "Sets the number of connection slots reserved for superusers."
@@ -8459,7 +8457,7 @@ msgstr ""
 
 #: utils/misc/guc.c:1011
 msgid "Sets the TCP port the server listens on."
-msgstr ""
+msgstr "Sätter TCP-porten som servern lyssnar på."
 
 #: utils/misc/guc.c:1020
 msgid "Sets the access permissions of the Unix-domain socket."
