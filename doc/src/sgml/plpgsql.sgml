@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.31 2003/11/30 04:47:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.32 2003/11/30 05:45:22 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -957,11 +957,8 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>select_expressions</r
     </para>
 
     <para>
-     At present, the <literal>INTO</> clause can appear almost anywhere in the <command>SELECT</command>
-     statement, but it is recommended to place it immediately after the <literal>SELECT</literal>
-     key word as depicted above.  Future versions of
-     <application>PL/pgSQL</application> may be less forgiving about
-     placement of the <literal>INTO</literal> clause.
+     The <literal>INTO</> clause can appear almost anywhere in the <command>SELECT</command>
+     statement.
     </para>
 
     <para>
