@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.162 2003/07/30 22:56:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.163 2003/07/31 22:17:11 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6847,11 +6847,12 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <function>pg_get_indexdef</function>,
    <function>pg_get_triggerdef</function>, and
    <function>pg_get_constraintdef</function> respectively
-   reconstruct the creating command for a view, rule, index, or
+   reconstruct the creating command for a view, rule, index, trigger, or
    constraint.  (Note that this is a decompiled reconstruction, not
    the original text of the command.)  Most of these come in two
    variants, one of which can optionally <quote>pretty-print</> the result.
-   The pretty-printed form is more readable but is less likely to be
+   The pretty-printed format is more readable, but the default format is more
+   likely to be
    interpreted the same way by future versions of <productname>PostgreSQL</>;
    avoid using pretty-printed output for dump purposes.
    Passing <literal>false</> for the pretty-print parameter yields the
