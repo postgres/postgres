@@ -30,6 +30,7 @@ Fix permissions on lo_export()(Bruce)
 Fix unitialized reads of memory(Kurt)
 Fixed ALTER TABLE ... char(3) bug(Bruce)
 Fixed a few small memory leaks
+Fixed EXPLAIN handling of options and changed full_path option name
 Fixed output of group acl permissions
 Memory leaks (hunt and destroy with tools like Purify(Kurt)
 Minor improvements to rules system
@@ -43,12 +44,14 @@ Properly report errors when insert column names were not correct
 Psql \g filename now works(Bruce)
 Psql fixed problem with multiple statements on one line with multiple outputs
 Removed duplicate system oid's
+SELECT * INTO TABLE . GROUP/ORDER BY gives unlink error if table exists(Bruce)
 Several fixes for queries that crashed the backend
 Starting quote in insert string errors(Bruce)
 Submiting an empty query now returns empty status, not just " " query(Bruce)
 
 Enhancements
 ------------
+Add EXPLAIN manual page(Bruce)
 Add UNIQUE index capability(Dan)
 Add hostname/user level access control rather than just hostname and user
 Add synonym of != for <>(Bruce)
@@ -115,7 +118,6 @@ Removed many os-specific #define's
 Restructured object file generation/location(Bryan, Marc)
 Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
-
 
 
 Postgres95 1.02                 Thu Aug  1 18:00:00 EDT 1996

@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Thu Dec 26 23:45:50 EST 1996
+last updated:		Thu Jan  2 11:19:41 EST 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -21,6 +21,7 @@ Developers who have claimed items are:
 	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
 	Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
  	Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
+	Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
 	Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 	Vivek is Vivek Khera <khera@kci.kciLink.com>
 
@@ -34,13 +35,11 @@ Fix all NULL features
 	allow psql to print nulls meaningfully
 Fix compile and security of Kerberos V code
 Dropping a table twice causes corruption, drop/create not rollback-able
-SUM aggregate on no rows or null value should return NULL, not zero
+-SUM aggregate on no rows or null value should return NULL, not zero(Thomas)
 SELECT on two tables where zero or one table in WHERE and target
 	clause returns no rows
 fix system to use oid index using constant without cast to oid
 COUNT on VIEW always returns zero (maybe because there is no oid for views?)
-SELECT ... INTO TABLE ... GROUP BY ... generates unlink error
-	if done three times with same INTO TABLE name (failure cleanup problem?)
 CREATE VIEW requires super-user priviledge
 
 ENHANCEMENTS
@@ -117,6 +116,7 @@ Add STDDEV/VARIANCE() function for standard deviation computation/variance
 Add upper/lower functions
 -Add table/column/function discription table indexed by oid
 -make all identifiers case-insensitive(Bruce)
+add pg_type attribute to identify types that need length (bpchar, varchar)
 
 PERFORMANCE
 -----------
@@ -138,6 +138,7 @@ Add FILLFACTOR to index creation
 Allow indexes to be used with OR clauses
 -Add column optimization statistics to vacuum(Bruce)
 -Change pg_attribute.attnvals name to attdispursion and change type float4
+	update pg_statistic table to remove operator column
 
 DOCUMENTATION
 -------------
@@ -145,7 +146,6 @@ Update usermanual source
 remove time-travel in documentation(Bruce)
 added features used in grammer but not in docs, like :: and CAST
 add DECLARE manual pages
-add EXPLAIN manual page
 
 PORTABILITY
 -----------
@@ -173,6 +173,7 @@ Fix permissions on lo_export()(Bruce)
 Fix unitialized reads of memory(Kurt)
 Fixed ALTER TABLE ... char(3) bug(Bruce)
 Fixed a few small memory leaks
+Fixed EXPLAIN handling of options and changed full_path option name
 Fixed output of group acl permissions
 Memory leaks (hunt and destroy with tools like Purify(Kurt)
 Minor improvements to rules system
@@ -186,12 +187,14 @@ Properly report errors when insert column names were not correct
 Psql \g filename now works(Bruce)
 Psql fixed problem with multiple statements on one line with multiple outputs
 Removed duplicate system oid's
+SELECT * INTO TABLE . GROUP/ORDER BY gives unlink error if table exists(Bruce)
 Several fixes for queries that crashed the backend
 Starting quote in insert string errors(Bruce)
 Submiting an empty query now returns empty status, not just " " query(Bruce)
 
 Enhancements
 ------------
+Add EXPLAIN manual page(Bruce)
 Add UNIQUE index capability(Dan)
 Add hostname/user level access control rather than just hostname and user
 Add synonym of != for <>(Bruce)
