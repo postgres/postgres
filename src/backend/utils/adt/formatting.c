@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.31 2001/01/24 19:43:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.32 2001/02/12 12:52:02 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -977,7 +977,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_DECIMAL(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): not unique decimal poit.");
+				elog(ERROR, "to_char/to_number(): not unique decimal point.");
 			}
 			if (IS_MULTI(num))
 			{
