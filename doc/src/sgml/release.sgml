@@ -782,7 +782,7 @@ Changes in this release
 -----------------------
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
-new psql \connect option allows changing usernames without chaning databases
+new psql \connect option allows changing usernames without changing databases
 fix for initdb --debug option(Yoshihiko Ichikawa))
 lextest cleanup(Bruce)
 hash fixes(Vadim)
