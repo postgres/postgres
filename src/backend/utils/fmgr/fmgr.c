@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.62 2002/09/04 20:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.63 2002/10/04 17:19:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -689,6 +689,14 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 /*-------------------------------------------------------------------------
  *		Support routines for callers of fmgr-compatible functions
+ *
+ * NOTE: the simplest way to reliably initialize a FunctionCallInfoData
+ * is to MemSet it to zeroes and then fill in the fields that should be
+ * nonzero.  However, in a few of the most heavily used paths, we instead
+ * just zero the fields that must be zero.  This saves a fair number of
+ * cycles so it's worth the extra maintenance effort.  Also see inlined
+ * version of FunctionCall2 in utils/sort/tuplesort.c if you need to change
+ * these routines!
  *-------------------------------------------------------------------------
  */
 
@@ -703,9 +711,15 @@ DirectFunctionCall1(PGFunction func, Datum arg1)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
+	fcinfo.flinfo = NULL;
+	fcinfo.context = NULL;
+	fcinfo.resultinfo = NULL;
+	fcinfo.isnull = false;
+
 	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
+	fcinfo.argnull[0] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -723,10 +737,17 @@ DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
+	fcinfo.flinfo = NULL;
+	fcinfo.context = NULL;
+	fcinfo.resultinfo = NULL;
+	fcinfo.isnull = false;
+
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -936,10 +957,15 @@ FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
+	fcinfo.context = NULL;
+	fcinfo.resultinfo = NULL;
+	fcinfo.isnull = false;
+
 	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
+	fcinfo.argnull[0] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -957,11 +983,17 @@ FunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
+	fcinfo.context = NULL;
+	fcinfo.resultinfo = NULL;
+	fcinfo.isnull = false;
+
 	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 

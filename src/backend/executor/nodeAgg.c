@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.88 2002/09/28 20:00:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.89 2002/10/04 17:19:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,8 +275,18 @@ advance_transition_function(AggStatePerAgg peraggstate,
 		}
 	}
 
-	/* OK to call the transition function */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	/*
+	 * OK to call the transition function
+	 *
+	 * This is heavily-used code, so manually zero just the necessary fields
+	 * instead of using MemSet().  Compare FunctionCall2().
+	 */
+
+	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
+	fcinfo.context = NULL;
+	fcinfo.resultinfo = NULL;
+	fcinfo.isnull = false;
+
 	fcinfo.flinfo = &peraggstate->transfn;
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = peraggstate->transValue;

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.27 2002/09/04 20:31:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.28 2002/10/04 17:19:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1695,6 +1695,216 @@ qsort_comparetup(const void *a, const void *b)
 
 
 /*
+ * This routine selects an appropriate sorting function to implement
+ * a sort operator as efficiently as possible.	The straightforward
+ * method is to use the operator's implementation proc --- ie, "<"
+ * comparison.	However, that way often requires two calls of the function
+ * per comparison.	If we can find a btree three-way comparator function
+ * associated with the operator, we can use it to do the comparisons
+ * more efficiently.  We also support the possibility that the operator
+ * is ">" (descending sort), in which case we have to reverse the output
+ * of the btree comparator.
+ *
+ * Possibly this should live somewhere else (backend/catalog/, maybe?).
+ */
+void
+SelectSortFunction(Oid sortOperator,
+				   RegProcedure *sortFunction,
+				   SortFunctionKind *kind)
+{
+	Relation	relation;
+	HeapScanDesc scan;
+	ScanKeyData skey[1];
+	HeapTuple	tuple;
+	Form_pg_operator optup;
+	Oid			opclass = InvalidOid;
+
+	/*
+	 * Scan pg_amop to see if the target operator is registered as the "<"
+	 * or ">" operator of any btree opclass.  It's possible that it might
+	 * be registered both ways (eg, if someone were to build a "reverse
+	 * sort" opclass for some reason); prefer the "<" case if so. If the
+	 * operator is registered the same way in multiple opclasses, assume
+	 * we can use the associated comparator function from any one.
+	 */
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   Anum_pg_amop_amopopr,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(sortOperator));
+
+	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
+	scan = heap_beginscan(relation, SnapshotNow, 1, skey);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		if (!opclass_is_btree(aform->amopclaid))
+			continue;
+		if (aform->amopstrategy == BTLessStrategyNumber)
+		{
+			opclass = aform->amopclaid;
+			*kind = SORTFUNC_CMP;
+			break;				/* done looking */
+		}
+		else if (aform->amopstrategy == BTGreaterStrategyNumber)
+		{
+			opclass = aform->amopclaid;
+			*kind = SORTFUNC_REVCMP;
+			/* keep scanning in hopes of finding a BTLess entry */
+		}
+	}
+
+	heap_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	if (OidIsValid(opclass))
+	{
+		/* Found a suitable opclass, get its comparator support function */
+		tuple = SearchSysCache(AMPROCNUM,
+							   ObjectIdGetDatum(opclass),
+							   Int16GetDatum(BTORDER_PROC),
+							   0, 0);
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
+
+			*sortFunction = aform->amproc;
+			ReleaseSysCache(tuple);
+			Assert(RegProcedureIsValid(*sortFunction));
+			return;
+		}
+	}
+
+	/*
+	 * Can't find a comparator, so use the operator as-is.  Decide whether
+	 * it is forward or reverse sort by looking at its name (grotty, but
+	 * this only matters for deciding which end NULLs should get sorted
+	 * to).
+	 */
+	tuple = SearchSysCache(OPEROID,
+						   ObjectIdGetDatum(sortOperator),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "SelectSortFunction: cache lookup failed for operator %u",
+			 sortOperator);
+	optup = (Form_pg_operator) GETSTRUCT(tuple);
+	if (strcmp(NameStr(optup->oprname), ">") == 0)
+		*kind = SORTFUNC_REVLT;
+	else
+		*kind = SORTFUNC_LT;
+	*sortFunction = optup->oprcode;
+	ReleaseSysCache(tuple);
+
+	Assert(RegProcedureIsValid(*sortFunction));
+}
+
+/*
+ * Inline-able copy of FunctionCall2() to save some cycles in sorting.
+ */
+static inline Datum
+myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
+{
+	FunctionCallInfoData fcinfo;
+	Datum		result;
+
+	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
+	fcinfo.context = NULL;
+	fcinfo.resultinfo = NULL;
+	fcinfo.isnull = false;
+
+	fcinfo.flinfo = flinfo;
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = arg1;
+	fcinfo.arg[1] = arg2;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+
+	result = FunctionCallInvoke(&fcinfo);
+
+	/* Check for null result, since caller is clearly not expecting one */
+	if (fcinfo.isnull)
+		elog(ERROR, "FunctionCall2: function %u returned NULL",
+			 fcinfo.flinfo->fn_oid);
+
+	return result;
+}
+
+/*
+ * Apply a sort function (by now converted to fmgr lookup form)
+ * and return a 3-way comparison result.  This takes care of handling
+ * NULLs and sort ordering direction properly.
+ */
+inline int32
+ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
+				  Datum datum1, bool isNull1,
+				  Datum datum2, bool isNull2)
+{
+	switch (kind)
+	{
+		case SORTFUNC_LT:
+			if (isNull1)
+			{
+				if (isNull2)
+					return 0;
+				return 1;		/* NULL sorts after non-NULL */
+			}
+			if (isNull2)
+				return -1;
+			if (DatumGetBool(myFunctionCall2(sortFunction, datum1, datum2)))
+				return -1;		/* a < b */
+			if (DatumGetBool(myFunctionCall2(sortFunction, datum2, datum1)))
+				return 1;		/* a > b */
+			return 0;
+
+		case SORTFUNC_REVLT:
+			/* We reverse the ordering of NULLs, but not the operator */
+			if (isNull1)
+			{
+				if (isNull2)
+					return 0;
+				return -1;		/* NULL sorts before non-NULL */
+			}
+			if (isNull2)
+				return 1;
+			if (DatumGetBool(myFunctionCall2(sortFunction, datum1, datum2)))
+				return -1;		/* a < b */
+			if (DatumGetBool(myFunctionCall2(sortFunction, datum2, datum1)))
+				return 1;		/* a > b */
+			return 0;
+
+		case SORTFUNC_CMP:
+			if (isNull1)
+			{
+				if (isNull2)
+					return 0;
+				return 1;		/* NULL sorts after non-NULL */
+			}
+			if (isNull2)
+				return -1;
+			return DatumGetInt32(myFunctionCall2(sortFunction,
+												 datum1, datum2));
+
+		case SORTFUNC_REVCMP:
+			if (isNull1)
+			{
+				if (isNull2)
+					return 0;
+				return -1;		/* NULL sorts before non-NULL */
+			}
+			if (isNull2)
+				return 1;
+			return -DatumGetInt32(myFunctionCall2(sortFunction,
+												  datum1, datum2));
+
+		default:
+			elog(ERROR, "Invalid SortFunctionKind %d", (int) kind);
+			return 0;			/* can't get here, but keep compiler quiet */
+	}
+}
+
+
+/*
  * Routines specialized for HeapTuple case
  */
 
@@ -1990,183 +2200,4 @@ readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 		tuple->val = PointerGetDatum(((char *) tuple) +
 									 MAXALIGN(sizeof(DatumTuple)));
 	return (void *) tuple;
-}
-
-
-/*
- * This routine selects an appropriate sorting function to implement
- * a sort operator as efficiently as possible.	The straightforward
- * method is to use the operator's implementation proc --- ie, "<"
- * comparison.	However, that way often requires two calls of the function
- * per comparison.	If we can find a btree three-way comparator function
- * associated with the operator, we can use it to do the comparisons
- * more efficiently.  We also support the possibility that the operator
- * is ">" (descending sort), in which case we have to reverse the output
- * of the btree comparator.
- *
- * Possibly this should live somewhere else (backend/catalog/, maybe?).
- */
-void
-SelectSortFunction(Oid sortOperator,
-				   RegProcedure *sortFunction,
-				   SortFunctionKind *kind)
-{
-	Relation	relation;
-	HeapScanDesc scan;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-	Form_pg_operator optup;
-	Oid			opclass = InvalidOid;
-
-	/*
-	 * Scan pg_amop to see if the target operator is registered as the "<"
-	 * or ">" operator of any btree opclass.  It's possible that it might
-	 * be registered both ways (eg, if someone were to build a "reverse
-	 * sort" opclass for some reason); prefer the "<" case if so. If the
-	 * operator is registered the same way in multiple opclasses, assume
-	 * we can use the associated comparator function from any one.
-	 */
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_amop_amopopr,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(sortOperator));
-
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, SnapshotNow, 1, skey);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
-
-		if (!opclass_is_btree(aform->amopclaid))
-			continue;
-		if (aform->amopstrategy == BTLessStrategyNumber)
-		{
-			opclass = aform->amopclaid;
-			*kind = SORTFUNC_CMP;
-			break;				/* done looking */
-		}
-		else if (aform->amopstrategy == BTGreaterStrategyNumber)
-		{
-			opclass = aform->amopclaid;
-			*kind = SORTFUNC_REVCMP;
-			/* keep scanning in hopes of finding a BTLess entry */
-		}
-	}
-
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-
-	if (OidIsValid(opclass))
-	{
-		/* Found a suitable opclass, get its comparator support function */
-		tuple = SearchSysCache(AMPROCNUM,
-							   ObjectIdGetDatum(opclass),
-							   Int16GetDatum(BTORDER_PROC),
-							   0, 0);
-		if (HeapTupleIsValid(tuple))
-		{
-			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
-
-			*sortFunction = aform->amproc;
-			ReleaseSysCache(tuple);
-			Assert(RegProcedureIsValid(*sortFunction));
-			return;
-		}
-	}
-
-	/*
-	 * Can't find a comparator, so use the operator as-is.  Decide whether
-	 * it is forward or reverse sort by looking at its name (grotty, but
-	 * this only matters for deciding which end NULLs should get sorted
-	 * to).
-	 */
-	tuple = SearchSysCache(OPEROID,
-						   ObjectIdGetDatum(sortOperator),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "SelectSortFunction: cache lookup failed for operator %u",
-			 sortOperator);
-	optup = (Form_pg_operator) GETSTRUCT(tuple);
-	if (strcmp(NameStr(optup->oprname), ">") == 0)
-		*kind = SORTFUNC_REVLT;
-	else
-		*kind = SORTFUNC_LT;
-	*sortFunction = optup->oprcode;
-	ReleaseSysCache(tuple);
-
-	Assert(RegProcedureIsValid(*sortFunction));
-}
-
-/*
- * Apply a sort function (by now converted to fmgr lookup form)
- * and return a 3-way comparison result.  This takes care of handling
- * NULLs and sort ordering direction properly.
- */
-int32
-ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
-				  Datum datum1, bool isNull1,
-				  Datum datum2, bool isNull2)
-{
-	switch (kind)
-	{
-		case SORTFUNC_LT:
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return 1;		/* NULL sorts after non-NULL */
-			}
-			if (isNull2)
-				return -1;
-			if (DatumGetBool(FunctionCall2(sortFunction, datum1, datum2)))
-				return -1;		/* a < b */
-			if (DatumGetBool(FunctionCall2(sortFunction, datum2, datum1)))
-				return 1;		/* a > b */
-			return 0;
-
-		case SORTFUNC_REVLT:
-			/* We reverse the ordering of NULLs, but not the operator */
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return -1;		/* NULL sorts before non-NULL */
-			}
-			if (isNull2)
-				return 1;
-			if (DatumGetBool(FunctionCall2(sortFunction, datum1, datum2)))
-				return -1;		/* a < b */
-			if (DatumGetBool(FunctionCall2(sortFunction, datum2, datum1)))
-				return 1;		/* a > b */
-			return 0;
-
-		case SORTFUNC_CMP:
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return 1;		/* NULL sorts after non-NULL */
-			}
-			if (isNull2)
-				return -1;
-			return DatumGetInt32(FunctionCall2(sortFunction,
-											   datum1, datum2));
-
-		case SORTFUNC_REVCMP:
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return -1;		/* NULL sorts before non-NULL */
-			}
-			if (isNull2)
-				return 1;
-			return -DatumGetInt32(FunctionCall2(sortFunction,
-												datum1, datum2));
-
-		default:
-			elog(ERROR, "Invalid SortFunctionKind %d", (int) kind);
-			return 0;			/* can't get here, but keep compiler quiet */
-	}
 }
