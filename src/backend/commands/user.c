@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.64 2000/07/17 03:04:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.65 2000/07/22 04:16:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,8 +734,8 @@ CreateGroup(CreateGroupStmt *stmt)
 		int			i;
 
 		userarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
-		ARR_SIZE(userarray) = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
-		ARR_FLAGS(userarray) = 0x0;
+		userarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
+		userarray->flags = 0;
 		ARR_NDIM(userarray) = 1;/* one dimensional array */
 		ARR_LBOUND(userarray)[0] = 1;	/* axis starts at one */
 		ARR_DIMS(userarray)[0] = length(newlist);		/* axis is this long */
@@ -905,8 +905,8 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		}
 
 		newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
-		ARR_SIZE(newarray) = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
-		ARR_FLAGS(newarray) = 0x0;
+		newarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
+		newarray->flags = 0;
 		ARR_NDIM(newarray) = 1; /* one dimensional array */
 		ARR_LBOUND(newarray)[0] = 1;	/* axis starts at one */
 		ARR_DIMS(newarray)[0] = length(newlist);		/* axis is this long */
@@ -1013,8 +1013,8 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			}
 
 			newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
-			ARR_SIZE(newarray) = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
-			ARR_FLAGS(newarray) = 0x0;
+			newarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
+			newarray->flags = 0;
 			ARR_NDIM(newarray) = 1;		/* one dimensional array */
 			ARR_LBOUND(newarray)[0] = 1;		/* axis starts at one */
 			ARR_DIMS(newarray)[0] = length(newlist);	/* axis is this long */
