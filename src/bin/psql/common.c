@@ -364,34 +364,43 @@ PSQLexec(PsqlSettings *pset, const char *query)
 
 	pqsignal(SIGINT, SIG_DFL);	/* now control-C is back to normal */
 
-	if (PQstatus(pset->db) == CONNECTION_BAD)
+	if (PQstatus(pset->db) == CONNECTION_OK)
 	{
-		fputs("The connection to the server was lost. Attempting reset: ", stderr);
-		PQreset(pset->db);
-		if (PQstatus(pset->db) == CONNECTION_BAD)
-		{
-			fputs("Failed.\n", stderr);
-			PQfinish(pset->db);
-			PQclear(res);
-			pset->db = NULL;
-			return NULL;
-		}
-		else
-			fputs("Succeeded.\n", stderr);
-	}
-
-	if (res && (PQresultStatus(res) == PGRES_COMMAND_OK ||
-				PQresultStatus(res) == PGRES_TUPLES_OK ||
-				PQresultStatus(res) == PGRES_COPY_IN ||
-				PQresultStatus(res) == PGRES_COPY_OUT)
-		)
-		return res;
-	else
-	{
+		if (res && (PQresultStatus(res) == PGRES_COMMAND_OK ||
+					PQresultStatus(res) == PGRES_TUPLES_OK ||
+					PQresultStatus(res) == PGRES_COPY_IN ||
+					PQresultStatus(res) == PGRES_COPY_OUT)
+			)
+			return res;			/* Normal success case... */
+		/* Normal failure case --- display error and return NULL */
 		fputs(PQerrorMessage(pset->db), pset->queryFout);
 		PQclear(res);
 		return NULL;
 	}
+
+	/* Lost connection.  Report whatever libpq has to say,
+	 * then consider recovery.
+	 */
+	fputs(PQerrorMessage(pset->db), pset->queryFout);
+	PQclear(res);
+	if (!pset->cur_cmd_interactive)
+	{
+		fprintf(stderr, "%s: connection to server was lost\n",
+				pset->progname);
+		exit(EXIT_BADCONN);
+	}
+	fputs("The connection to the server was lost. Attempting reset: ", stderr);
+	fflush(stderr);
+	PQreset(pset->db);
+	if (PQstatus(pset->db) == CONNECTION_BAD)
+	{
+		fputs("Failed.\n", stderr);
+		PQfinish(pset->db);
+		pset->db = NULL;
+	}
+	else
+		fputs("Succeeded.\n", stderr);
+	return NULL;
 }
 
 
@@ -517,17 +526,19 @@ SendQuery(PsqlSettings *pset, const char *query)
 		{
             if (!pset->cur_cmd_interactive)
             {
-                fprintf(stderr, "%s: connection to server was lost", pset->progname);
+                fprintf(stderr, "%s: connection to server was lost\n",
+						pset->progname);
                 exit(EXIT_BADCONN);
             }
 			fputs("The connection to the server was lost. Attempting reset: ", stderr);
+			fflush(stderr);
 			PQreset(pset->db);
 			if (PQstatus(pset->db) == CONNECTION_BAD)
 			{
 				fputs("Failed.\n", stderr);
 				PQfinish(pset->db);
-				PQclear(results);
 				pset->db = NULL;
+				PQclear(results);
 				return false;
 			}
 			else
