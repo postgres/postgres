@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan  3 12:29:05 EST 2002
+Last updated:		Thu Jan  3 12:30:27 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -152,6 +152,7 @@ INDEXES
 * -Use indexes with CIDR '<<' (contains) operator
 * Improve concurrency in GIST
 * Add FILLFACTOR to index creation
+* Allow only owner to create indexes
 
 SYSTEM TABLES
 
