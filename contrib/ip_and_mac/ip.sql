@@ -1,6 +1,8 @@
 --
 --	PostgreSQL code for IP addresses.
 --
+--	$Id: ip.sql,v 1.2 1998/02/14 17:58:04 scrappy Exp $
+--
 
 load '/usr/local/pgsql/modules/ip.so';
 
@@ -19,7 +21,7 @@ create function ipaddr_out(opaque)
 	language 'c';
 
 create type ipaddr (
-	internallength = 8,
+	internallength = 6,
 	externallength = variable,
 	input = ipaddr_in,
 	output = ipaddr_out
@@ -59,8 +61,18 @@ create function ipaddr_ne(ipaddr, ipaddr)
 	as '/usr/local/pgsql/modules/ip.so'
 	language 'c';
 
-create function ipaddr_like(ipaddr, ipaddr)
+create function ipaddr_in_net(ipaddr, ipaddr)
 	returns bool
+	as '/usr/local/pgsql/modules/ip.so'
+	language 'c';
+
+create function ipaddr_mask(ipaddr)
+	returns ipaddr
+	as '/usr/local/pgsql/modules/ip.so'
+	language 'c';
+
+create function ipaddr_bcast(ipaddr)
+	returns ipaddr
 	as '/usr/local/pgsql/modules/ip.so'
 	language 'c';
 
@@ -71,20 +83,18 @@ create function ipaddr_like(ipaddr, ipaddr)
 --	will be implicitly defined when those are, further down.
 --
 
-create operator <= (
-	leftarg = ipaddr,
-	rightarg = ipaddr,
---	commutator = >,
---	negator = >,
-	procedure = ipaddr_le
-);
-
 create operator < (
 	leftarg = ipaddr,
 	rightarg = ipaddr,
---	commutator = >=,
 --	negator = >=,
 	procedure = ipaddr_lt
+);
+
+create operator <= (
+	leftarg = ipaddr,
+	rightarg = ipaddr,
+--	negator = >,
+	procedure = ipaddr_le
 );
 
 create operator = (
@@ -98,7 +108,6 @@ create operator = (
 create operator >= (
 	leftarg = ipaddr,
 	rightarg = ipaddr,
-	commutator = <,
 	negator = <,
 	procedure = ipaddr_ge
 );
@@ -106,7 +115,6 @@ create operator >= (
 create operator > (
 	leftarg = ipaddr,
 	rightarg = ipaddr,
-	commutator = <=,
 	negator = <=,
 	procedure = ipaddr_gt
 );
@@ -114,16 +122,8 @@ create operator > (
 create operator <> (
 	leftarg = ipaddr,
 	rightarg = ipaddr,
-	commutator = <>,
 	negator = =,
 	procedure = ipaddr_ne
-);
-
-create operator ~~ (
-	leftarg = ipaddr,
-	rightarg = ipaddr,
-	commutator = ~~,
-	procedure = ipaddr_like
 );
 
 --

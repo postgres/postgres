@@ -1,5 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
+ *
+ *	$Id: mac.c,v 1.2 1998/02/14 17:58:05 scrappy Exp $
  */
 
 #include <stdio.h>
@@ -20,7 +22,6 @@ typedef struct macaddr {
   unsigned char d;
   unsigned char e;
   unsigned char f;
-  short pad;
 } macaddr;
 
 /*
@@ -30,21 +31,26 @@ typedef struct macaddr {
 macaddr *macaddr_in(char *str);
 char *macaddr_out(macaddr *addr);
 
+bool macaddr_lt(macaddr *a1, macaddr *a2);
+bool macaddr_le(macaddr *a1, macaddr *a2);
 bool macaddr_eq(macaddr *a1, macaddr *a2);
+bool macaddr_ge(macaddr *a1, macaddr *a2);
+bool macaddr_gt(macaddr *a1, macaddr *a2);
+
 bool macaddr_ne(macaddr *a1, macaddr *a2);
 
 int4 macaddr_cmp(macaddr *a1, macaddr *a2);
-bool macaddr_like(macaddr *a1, macaddr *a2);
+
 text *macaddr_manuf(macaddr *addr);
 
 /*
  *	Utility macros used for sorting and comparing:
  */
 
-#define MagM(addr) \
+#define hibits(addr) \
   ((unsigned long)((addr->a<<16)|(addr->b<<8)|(addr->c)))
 
-#define MagH(addr) \
+#define lobits(addr) \
   ((unsigned long)((addr->c<<16)|(addr->e<<8)|(addr->f)))
 
 /*
@@ -107,7 +113,7 @@ char *macaddr_out(macaddr *addr) {
 
   result = (char *)palloc(32);
 
-  if ((MagM(addr) > 0) || (MagH(addr) > 0)) {
+  if ((hibits(addr) > 0) || (lobits(addr) > 0)) {
     sprintf(result, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    addr->a, addr->b, addr->c, addr->d, addr->e, addr->f);
   } else {
@@ -120,16 +126,32 @@ char *macaddr_out(macaddr *addr) {
  *	Boolean tests.
  */
 
+bool macaddr_lt(macaddr *a1, macaddr *a2) {
+  return((hibits(a1) < hibits(a2)) ||
+	 ((hibits(a1) == hibits(a2)) && lobits(a1) < lobits(a2)));
+};
+
+bool macaddr_le(macaddr *a1, macaddr *a2) {
+  return((hibits(a1) < hibits(a2)) ||
+	 ((hibits(a1) == hibits(a2)) && lobits(a1) <= lobits(a2)));
+};
+
 bool macaddr_eq(macaddr *a1, macaddr *a2) {
-  return((a1->a == a2->a) && (a1->b == a2->b) &&
-	 (a1->c == a2->c) && (a1->d == a2->d) &&
-	 (a1->e == a2->e) && (a1->f == a2->f));
+  return ((hibits(a1) == hibits(a2)) && (lobits(a1) == lobits(a2)));
+};
+
+bool macaddr_ge(macaddr *a1, macaddr *a2) {
+  return((hibits(a1) > hibits(a2)) ||
+	 ((hibits(a1) == hibits(a2)) && lobits(a1) >= lobits(a2)));
+};
+
+bool macaddr_gt(macaddr *a1, macaddr *a2) {
+  return((hibits(a1) > hibits(a2)) ||
+	 ((hibits(a1) == hibits(a2)) && lobits(a1) > lobits(a2)));
 };
 
 bool macaddr_ne(macaddr *a1, macaddr *a2) {
-  return((a1->a != a2->a) || (a1->b != a2->b) ||
-	 (a1->c != a2->c) || (a1->d != a2->d) ||
-	 (a1->e != a2->e) || (a1->f != a2->f));
+  return ((hibits(a1) != hibits(a2)) || (lobits(a1) != lobits(a2)));
 };
 
 /*
@@ -137,35 +159,16 @@ bool macaddr_ne(macaddr *a1, macaddr *a2) {
  */
 
 int4 macaddr_cmp(macaddr *a1, macaddr *a2) {
-  unsigned long a1magm, a1magh, a2magm, a2magh;
-  a1magm = MagM(a1);
-  a1magh = MagH(a1);
-  a2magm = MagM(a2);
-  a2magh = MagH(a2);
-  if (a1magm < a2magm)
+  if (hibits(a1) < hibits(a2))
     return -1;
-  else if (a1magm > a2magm)
+  else if (hibits(a1) > hibits(a2))
     return 1;
-  else if (a1magh < a2magh)
+  else if (lobits(a1) < lobits(a2))
     return -1;
-  else if (a1magh > a2magh)
+  else if (lobits(a1) > lobits(a2))
     return 1;
   else
     return 0;
-}
-
-/*
- *	Similarity means having the same manufacurer, which means
- *	having the same first three bytes of address:
- */
-
-bool macaddr_like(macaddr *a1, macaddr *a2) {
-  unsigned long a1magm, a2magm;
-  a1magm = MagM(a1);
-  a2magm = MagM(a2);
-  if ((a1magm == 0) || (a2magm == 0))
-    return FALSE;
-  return (a1magm == a2magm);
 }
 
 /*

@@ -1,4 +1,7 @@
-#	PostgreSQL type definitions for IP and MAC addresses.
+#
+#	PostgreSQL types for IP and MAC addresses
+#
+#	$Id: Makefile,v 1.2 1998/02/14 17:58:02 scrappy Exp $
 
 all: ip.so mac.so
 
@@ -17,4 +20,6 @@ mac.o: mac.c mac.h
 install: ip.so mac.so
 	install -c ip.so mac.so /usr/local/pgsql/modules
 
+#
 #	eof
+#

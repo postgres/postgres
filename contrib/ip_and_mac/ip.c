@@ -1,5 +1,7 @@
 /*
  *	PostgreSQL type definitions for IP addresses.
+ *
+ *	$Id: ip.c,v 1.2 1998/02/14 17:58:03 scrappy Exp $
  */
 
 #include <stdio.h>
@@ -12,13 +14,8 @@
  */
 
 typedef struct ipaddr {
-  unsigned char a;
-  unsigned char b;
-  unsigned char c;
-  unsigned char d;
-  unsigned char w;
-  unsigned char pad1;
-  short pad2;
+  uint32 address;
+  int16 width;
 } ipaddr;
 
 /*
@@ -35,15 +32,24 @@ bool ipaddr_ge(ipaddr *a1, ipaddr *a2);
 bool ipaddr_gt(ipaddr *a1, ipaddr *a2);
 
 bool ipaddr_ne(ipaddr *a1, ipaddr *a2);
+
 int4 ipaddr_cmp(ipaddr *a1, ipaddr *a2);
-bool ipaddr_like(ipaddr *a1, ipaddr *a2);
+
+bool ipaddr_in_net(ipaddr *a1, ipaddr *a2);
+ipaddr *ipaddr_mask(ipaddr *a);
+ipaddr *ipaddr_bcast(ipaddr *a);
 
 /*
- *	A utility macro used for sorting addresses numerically:
+ *	Build a mask of a given width:
  */
 
-#define Mag(addr) \
-  ((unsigned long)((addr->a<<24)|(addr->b<<16)|(addr->c<<8)|(addr->d)))
+unsigned long build_mask(unsigned char bits) {
+  unsigned long mask = 0;
+  int i;
+  for (i = 0; i < bits; i++)
+    mask = (mask >> 1) | 0x80000000;
+  return mask;
+}
 
 /*
  *	IP address reader.  Note how the count returned by sscanf()
@@ -79,11 +85,9 @@ ipaddr *ipaddr_in(char *str) {
 
   result = (ipaddr *)palloc(sizeof(ipaddr));
 
-  result->a = a;
-  result->b = b;
-  result->c = c;
-  result->d = d;
-  result->w = w;
+  result->address = (uint32) ((a<<24)|(b<<16)|(c<<8)|d);
+  result->address &= build_mask(w);
+  result->width = w;
 
   return(result);
 }
@@ -101,13 +105,20 @@ char *ipaddr_out(ipaddr *addr) {
 
   result = (char *)palloc(32);
 
-  if (Mag(addr) > 0) {
-    if (addr->w == 32)
+  if (addr->address > 0) {
+    if (addr->width == 32)
       sprintf(result, "%d.%d.%d.%d",
-	      addr->a, addr->b, addr->c, addr->d);
+	      (addr->address >> 24) & 0xff,
+	      (addr->address >> 16) & 0xff,
+	      (addr->address >> 8) & 0xff,
+	      addr->address & 0xff);
     else
       sprintf(result, "%d.%d.%d.%d/%d",
-	      addr->a, addr->b, addr->c, addr->d, addr->w);
+	      (addr->address >> 24) & 0xff,
+	      (addr->address >> 16) & 0xff,
+	      (addr->address >> 8) & 0xff,
+	      addr->address & 0xff,
+	      addr->width);
   } else {
     result[0] = 0;		/* special case for missing address */
   }
@@ -115,49 +126,31 @@ char *ipaddr_out(ipaddr *addr) {
 }
 
 /*
- *	Boolean tests.  The Mag() macro was defined above.
+ *	Boolean tests for magnitude.
  */
 
 bool ipaddr_lt(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag, a2mag;
-  a1mag = Mag(a1);
-  a2mag = Mag(a2);
-  return (a1mag < a2mag);
+  return (a1->address < a2->address);
 };
 
 bool ipaddr_le(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag, a2mag;
-  a1mag = Mag(a1);
-  a2mag = Mag(a2);
-  return (a1mag <= a2mag);
+  return (a1->address <= a2->address);
 };
 
 bool ipaddr_eq(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag, a2mag;
-  a1mag = Mag(a1);
-  a2mag = Mag(a2);
-  return ((a1mag == a2mag) && (a1->w == a2->w));
+  return (a1->address == a2->address);
 };
 
 bool ipaddr_ge(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag, a2mag;
-  a1mag = Mag(a1);
-  a2mag = Mag(a2);
-  return (a1mag >= a2mag);
+  return (a1->address >= a2->address);
 };
 
 bool ipaddr_gt(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag, a2mag;
-  a1mag = Mag(a1);
-  a2mag = Mag(a2);
-  return (a1mag > a2mag);
+  return (a1->address > a2->address);
 };
 
 bool ipaddr_ne(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag, a2mag;
-  a1mag = Mag(a1);
-  a2mag = Mag(a2);
-  return ((a1mag != a2mag) || (a1->w != a2->w));
+  return (a1->address != a2->address);
 };
 
 /*
@@ -165,46 +158,57 @@ bool ipaddr_ne(ipaddr *a1, ipaddr *a2) {
  */
 
 int4 ipaddr_cmp(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1mag = Mag(a1), a2mag = Mag(a2);
-  if (a1mag < a2mag)
+  if (a1->address < a2->address)
     return -1;
-  else if (a1mag > a2mag)
+  else if (a1->address > a2->address)
     return 1;
   else
     return 0;
 }
 
 /*
- *	Our "similarity" operator checks whether two addresses are
- *	either the same node address, or, failing that, whether one
- *	of them contains the other.  This will be true if they have
- *	the same high bits down as far as the shortest mask reaches.
+ *	Test whether an address is within a given subnet:
  */
 
-unsigned long build_mask(unsigned char bits) {
-  unsigned long mask = 0;
-  int i;
-  for (i = 0; i < bits; i++)
-    mask = (mask >> 1) | 0x80000000;
-  return mask;
+bool ipaddr_in_net(ipaddr *a1, ipaddr *a2) {
+  uint32 maskbits;
+  if (a1->width < a2->width)
+    return FALSE;
+  if ((a1->width == 32) && (a2->width == 32))
+    return ipaddr_eq(a1, a2);
+  maskbits = build_mask(a2->width);
+  if ((a1->address & maskbits) == (a2->address & maskbits))
+    return TRUE;
+  return FALSE;
 }
 
-bool ipaddr_like(ipaddr *a1, ipaddr *a2) {
-  unsigned long a1bits, a2bits, maskbits;
-  if ((a1->w == 0) || (a2->w == 0))
-    return FALSE;
-  if ((a1->w == 32) && (a2->w == 32))
-    return ipaddr_eq(a1, a2);
-  a1bits = Mag(a1);
-  a2bits = Mag(a2);
-  if (a1->w > a2->w) {
-    maskbits = build_mask(a2->w);
-    return ((a1bits & maskbits) == (a2bits & maskbits));
-  } else {
-    maskbits = build_mask(a1->w);
-    return ((a2bits & maskbits) == (a1bits & maskbits));
-  }
-  return FALSE;
+/*
+ *	Pick out just the mask of a network:
+ */
+
+ipaddr *ipaddr_mask(ipaddr *a) {
+  ipaddr *result;
+
+  result = (ipaddr *)palloc(sizeof(ipaddr));
+  result->address = build_mask(a->width);
+  result->width = 32;
+
+  return result;
+}
+
+/*
+ *	Return the broadcast address of a network:
+ */
+
+ipaddr *ipaddr_bcast(ipaddr *a) {
+  ipaddr *result;
+
+  result = (ipaddr *)palloc(sizeof(ipaddr));
+  result->address = a->address;
+  result->address |= (build_mask(32 - a->width) >> a->width);
+  result->width = 32;
+
+  return result;
 }
 
 /*

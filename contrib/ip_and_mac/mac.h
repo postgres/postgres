@@ -1,5 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
+ *
+ *	$Id: mac.h,v 1.2 1998/02/14 17:58:07 scrappy Exp $
  */
 
 typedef struct manufacturer {
