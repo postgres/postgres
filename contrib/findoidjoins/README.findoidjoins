@@ -9,10 +9,10 @@ it on anything but an empty database, such as template1.
 Uses pgeasy library.
 
 Run on an empty database, it returns the system join relationships (shown
-below for 7.0).  Note that unexpected matches may indicate bogus entries
+below for 7.1).  Note that unexpected matches may indicate bogus entries
 in system tables --- don't accept a peculiar match without question.
 In particular, a field shown as joining to more than one target table is
-probably messed up.  In 7.0, the *only* field that should join to more
+probably messed up.  In 7.1, the *only* field that should join to more
 than one target is pg_description.objoid.  (Running make_oidjoins_check
 is an easy way to spot fields joining to more than one table, BTW.)
 
@@ -27,14 +27,17 @@ revision in the patterns of cross-links between system tables.
 (Ideally we'd just regenerate the script as part of the regression
 tests themselves, but that seems too slow...)
 
+NOTE: in 7.1, make_oidjoins_check produces two bogus join checks, one for
+pg_database.datlastsysoid => pg_description.oid and one for
+pg_class.relfilenode => pg_class.oid.  These are artifacts and should not
+be added to the oidjoins regress test.
+
 ---------------------------------------------------------------------------
 
-Join pg_aggregate.aggtransfn1 => pg_proc.oid
-Join pg_aggregate.aggtransfn2 => pg_proc.oid
+Join pg_aggregate.aggtransfn => pg_proc.oid
 Join pg_aggregate.aggfinalfn => pg_proc.oid
 Join pg_aggregate.aggbasetype => pg_type.oid
-Join pg_aggregate.aggtranstype1 => pg_type.oid
-Join pg_aggregate.aggtranstype2 => pg_type.oid
+Join pg_aggregate.aggtranstype => pg_type.oid
 Join pg_aggregate.aggfinaltype => pg_type.oid
 Join pg_am.amgettuple => pg_proc.oid
 Join pg_am.aminsert => pg_proc.oid
@@ -56,8 +59,8 @@ Join pg_attribute.attrelid => pg_class.oid
 Join pg_attribute.atttypid => pg_type.oid
 Join pg_class.reltype => pg_type.oid
 Join pg_class.relam => pg_am.oid
-Join pg_description.objoid => pg_proc.oid
-Join pg_description.objoid => pg_type.oid
+Join pg_class.reltoastrelid => pg_class.oid
+Join pg_class.reltoastidxid => pg_class.oid
 Join pg_index.indexrelid => pg_class.oid
 Join pg_index.indrelid => pg_class.oid
 Join pg_opclass.opcdeftype => pg_type.oid
