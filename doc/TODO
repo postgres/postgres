@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Sep  4 17:07:18 EDT 2002
+Last updated:		Wed Sep  4 18:09:28 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -70,6 +70,7 @@ Administration
 * -Reserve last few process slots for super-user if max_connections reached
 * -Add GUC parameter to print queries that generate errors
 
+
 Data Types
 ==========
 
@@ -119,7 +120,9 @@ Multi-Language Support
 * Make octet_length_client the same as octet_length() (?)
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
+* Remove Cyrillic recode support
 
+ 
 Views / Rules
 =============
 
@@ -395,6 +398,7 @@ Vacuum
   lock and truncate table [vacuum]
 * Provide automatic running of vacuum in the background (Tom)
 * Allow free space map to be auto-sized or warn when it is too small
+
 
 Locking
 =======
