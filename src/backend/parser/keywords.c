@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.54 1999/02/13 23:17:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.55 1999/03/07 03:34:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"procedure", PROCEDURE},
 	{"public", PUBLIC},
 	{"read", READ},
-	{"recipe", RECIPE},
 	{"references", REFERENCES},
 	{"relative", RELATIVE},
 	{"rename", RENAME},

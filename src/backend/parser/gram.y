@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.57 1999/02/23 07:42:41 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.58 1999/03/07 03:34:10 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -127,7 +127,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
-		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
+		ProcedureStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
@@ -150,7 +150,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, def_name,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, func_name, file_name, recipe_name, aggr_argtype
+		class, index_name, name, func_name, file_name, aggr_argtype
 
 %type <str>		opt_id, opt_portal_name,
 		all_Op, MathOp, opt_name, opt_unique,
@@ -397,7 +397,6 @@ stmt :	  AddAttrStmt
 		| UnlistenStmt
 		| LockStmt
 		| ProcedureStmt
-		| RecipeStmt
 		| RemoveAggrStmt
 		| RemoveOperStmt
 		| RemoveFuncStmt
@@ -1850,7 +1849,6 @@ ExtendStmt:  EXTEND INDEX index_name where_clause
 				}
 		;
 
-
 /*****************************************************************************
  *
  *		QUERY:
@@ -1858,6 +1856,7 @@ ExtendStmt:  EXTEND INDEX index_name where_clause
  *
  *****************************************************************************/
 
+/* NOT USED
 RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
 					RecipeStmt *n;
@@ -1869,7 +1868,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 					$$ = (Node *)n;
 				}
 		;
-
+*/
 
 /*****************************************************************************
  *
@@ -5024,7 +5023,7 @@ name:					ColId			{ $$ = $1; };
 func_name:				ColId			{ $$ = xlateSqlFunc($1); };
 
 file_name:				Sconst			{ $$ = $1; };
-recipe_name:			IDENT			{ $$ = $1; };
+/* NOT USED recipe_name:			IDENT			{ $$ = $1; };*/
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -5162,7 +5161,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| PROCEDURAL					{ $$ = "procedural"; }
 		| READ							{ $$ = "read"; }
-		| RECIPE						{ $$ = "recipe"; }
 		| RELATIVE						{ $$ = "relative"; }
 		| RENAME						{ $$ = "rename"; }
 		| RETURNS						{ $$ = "returns"; }
