@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.7 1997/05/30 15:02:48 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.8 1997/06/03 13:56:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ date_datetime(DateADT dateVal)
 
 #ifdef DATEDEBUG
 printf( "date_datetime- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
-printf( "date_datetime- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
+printf( "date_datetime- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #endif
 
     if (tm2datetime( tm, fsec, &tz, result) != 0)
@@ -394,7 +394,7 @@ date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn)
 #ifdef DATEDEBUG
 #ifdef HAVE_INT_TIMEZONE
 printf( "date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
- tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
+ tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, (double) tm->tm_sec,
  tzname[0], tzname[1], tx->tm_isdst);
 #endif
 #endif
