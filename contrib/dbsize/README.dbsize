@@ -1,15 +1,54 @@
-This module contains two functions that report the size of a given
-database or relation.  E.g.,
+This module contains several functions that report the size of a given
+database object:
 
-SELECT database_size('template1');
-SELECT relation_size('pg_class');
+	int8 database_size(name)
+	int8 relation_size(text)
 
-These functions report the actual file system space.  Thus, users can
-avoid digging through the details of the database directories.
+	int8 pg_database_size(oid)
+	int8 pg_tablespace_size(oid)
+	int8 pg_relation_size(oid)
 
-Copy this directory to contrib/dbsize in your PostgreSQL source tree.
-Then just run make; make install.  Finally, load the functions into any
-database using dbsize.sql.
+	text pg_size_pretty(int8)
 
-When computing the size of a table, it does not include TOAST or index
-disk space.
+The first two functions:
+
+	SELECT database_size('template1');
+	SELECT relation_size('pg_class');
+
+take the name of the object, and support databases and tables. Please
+note that relation_size() only reports table file usage and not the
+space used by indexes and toast tables.
+
+Functions using oids are:
+	
+	SELECT pg_database_size(1);         -- template1 database
+	SELECT pg_tablespace_size(1663);    -- pg_default tablespace
+	SELECT pg_relation_size(1259);      -- pg_class table size
+
+pg_relation_size() will report the size of the table, index and toast
+table OIDs, but they must be requested individually. To obtain the total
+size of a table including all helper files you'd have to do something
+like:
+
+XXX This query does not work, syntax error XXX
+	
+	SELECT pg_relation_size(cl.oid) AS tablesize,
+	       CASE WHEN reltoastrelid=0 THEN 0
+	            ELSE pg_relation_size(reltoastrelid) END AS toastsize,
+	       SUM(pg_relation_size(indexrelid)) AS indexsize,
+	       pg_size_pretty(pg_relation_size(cl.oid)
+	                    + pg_relation_size(reltoastrelid)
+	                    + SUM(pg_relation_size(indexrelid))::int8) 
+								AS totalsize
+	  FROM pg_class cl
+	  JOIN pg_index ON cl.oid=indrelid
+	 WHERE relname = 'pg_rewrite'
+	 GROUP BY 1,2
+
+This sample query utilizes the helper function pg_size_pretty(int8),
+which formats the number of bytes into a convenient string using KB, MB,
+GB.  It is also contained in this module.
+
+To install, just run make; make install.  Finally, load the functions
+into any database using dbsize.sql.
+
