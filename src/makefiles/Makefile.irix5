@@ -3,5 +3,6 @@
 RANLIB= touch
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $@ $< $(LDFLAGS)
+	$(LD) -G -Bdynamic -shared -o $@ $< $(
+
 
