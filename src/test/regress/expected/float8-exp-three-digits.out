@@ -149,13 +149,46 @@ SELECT '' AS five, f.f1, f.f1 % AS round_f1
       | 1.2345678901234e-200 |                    0
 (5 rows)
 
+-- ceil
+select ceil(f1) as ceil_f1 from float8_tbl f;
+       ceil_f1        
+----------------------
+                    0
+                 1005
+                  -34
+ 1.2345678901234e+200
+                    1
+(5 rows)
+
+-- floor
+select floor(f1) as floor_f1 from float8_tbl f;
+       floor_f1       
+----------------------
+                    0
+                 1004
+                  -35
+ 1.2345678901234e+200
+                    0
+(5 rows)
+
+-- sign
+select sign(f1) as sign_f1 from float8_tbl f;
+ sign_f1 
+---------
+       0
+       1
+      -1
+       1
+       1
+(5 rows)
+
+-- square root 
 SELECT sqrt(float8 '64') AS eight;
  eight 
 -------
      8
 (1 row)
 
--- square root 
 SELECT |/ float8 '64' AS eight;
  eight 
 -------
