@@ -10,9 +10,6 @@
  */
 
 #include "postgres.h"
-
-#ifdef XLOG
-
 #include "access/xlog.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -397,5 +394,3 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 
 	return(&(res->reldata));
 }
-
-#endif

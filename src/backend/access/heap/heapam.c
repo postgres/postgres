@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.96 2000/11/21 21:15:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.97 2000/11/30 08:46:20 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -86,7 +86,6 @@
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
-#ifdef XLOG
 #include "access/xlogutils.h"
 
 XLogRecPtr	log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup);
@@ -98,8 +97,6 @@ static XLogRecPtr log_heap_update(Relation reln, ItemPointerData from,
 									HeapTuple newtup, bool move);
 
 static void HeapPageCleanup(Buffer buffer);
-
-#endif
 
 
 /* ----------------------------------------------------------------
@@ -1370,7 +1367,6 @@ heap_insert(Relation relation, HeapTuple tup)
 	/* NO ELOG(ERROR) from here till changes are logged */
 	RelationPutHeapTuple(relation, buffer, tup);
 
-#ifdef XLOG
 	/* XLOG stuff */
 	{
 		xl_heap_insert	xlrec;
@@ -1392,7 +1388,6 @@ heap_insert(Relation relation, HeapTuple tup)
 		PageSetLSN(BufferGetPage(buffer), recptr);
 		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
 	}
-#endif
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
@@ -1485,7 +1480,6 @@ l1:
 		return result;
 	}
 
-#ifdef XLOG
 	/* XLOG stuff */
 	{
 		xl_heap_delete	xlrec;
@@ -1500,7 +1494,6 @@ l1:
 		PageSetLSN(dp, recptr);
 		PageSetSUI(dp, ThisStartUpID);
 	}
-#endif
 
 	/* store transaction information of xact deleting the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));
@@ -1638,7 +1631,6 @@ l2:
 		newbuf = buffer;
 	else
 	{
-#ifdef XLOG
 		/* 
 		 * We have to unlock old tuple buffer before extending table
 		 * file but have to keep lock on the old tuple. To avoid second
@@ -1650,7 +1642,7 @@ l2:
 		_locked_tuple_.node = relation->rd_node;
 		_locked_tuple_.tid = *otid;
 		XactPushRollback(_heap_unlock_tuple, (void*) &_locked_tuple_);
-#endif
+
 		TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
 		oldtup.t_data->t_cmax = GetCurrentCommandId();
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
@@ -1677,15 +1669,12 @@ l2:
 	else
 	{
 		oldtup.t_data->t_infomask &= ~HEAP_XMAX_UNLOGGED;
-#ifdef XLOG
 		XactPopRollback();
-#endif
 	}
 
 	/* record address of new tuple in t_ctid of old one */
 	oldtup.t_data->t_ctid = newtup->t_self;
 
-#ifdef XLOG
 	/* XLOG stuff */
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, 
@@ -1699,7 +1688,6 @@ l2:
 		PageSetLSN(BufferGetPage(buffer), recptr);
 		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
 	}
-#endif
 
 	if (newbuf != buffer)
 	{
@@ -1791,13 +1779,11 @@ l3:
 		return result;
 	}
 
-#ifdef XLOG
 	/*
 	 * XLOG stuff: no logging is required as long as we have no
 	 * savepoints. For savepoints private log could be used...
 	 */
 	((PageHeader) BufferGetPage(*buffer))->pd_sui = ThisStartUpID;
-#endif
 
 	/* store transaction information of xact marking the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tuple->t_data->t_xmax));
@@ -1983,8 +1969,6 @@ heap_restrpos(HeapScanDesc scan)
 				   (ScanKey) NULL);
 	}
 }
-
-#ifdef XLOG
 
 static XLogRecPtr
 log_heap_update(Relation reln, ItemPointerData from, 
@@ -2634,5 +2618,3 @@ heap_desc(char *buf, uint8 xl_info, char* rec)
 	else
 		strcat(buf, "UNKNOWN");
 }
-
-#endif	/* XLOG */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.40 2000/11/30 01:47:32 vadim Exp $
+ * $Id: htup.h,v 1.41 2000/11/30 08:46:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,11 +62,6 @@ typedef struct HeapTupleHeaderData
 } HeapTupleHeaderData;
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
-
-
-#ifdef XLOG
-
-/* XLOG stuff */
 
 /*
  * XLOG allows to store some information in high 4 bits of log
@@ -127,11 +122,6 @@ typedef struct xl_heap_update
 
 #define SizeOfHeapUpdate	(offsetof(xl_heap_update, mask) + sizeof(uint8))
 
-/* end of XLOG stuff */
-
-#endif	/* XLOG */
-
-
 /*
  * MaxTupleSize is the maximum allowed size of a tuple, including header and
  * MAXALIGN alignment padding.  Basically it's BLCKSZ minus the other stuff
@@ -146,7 +136,6 @@ typedef struct xl_heap_update
 
 #define MaxTupleSize	\
 	(BLCKSZ - MAXALIGN(sizeof(PageHeaderData) + MaxSpecialSpace))
-
 
 /*
  * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.36 2000/11/20 21:12:26 vadim Exp $
+ * $Id: bufpage.h,v 1.37 2000/11/30 08:46:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,13 +118,13 @@ typedef OpaqueData *Opaque;
  */
 typedef struct PageHeaderData
 {
-#ifdef XLOG						/* XXX LSN is member of *any* block, not */
+								/* XXX LSN is member of *any* block, not */
 								/* only page-organized - 'll change later */
 	XLogRecPtr	pd_lsn;			/* LSN: next byte after last byte of xlog */
 								/* record for last change of this page */
 	StartUpID	pd_sui;			/* SUI of last changes (currently it's */
 								/* used by heap AM only) */
-#endif
+
 	LocationIndex pd_lower;		/* offset to start of free space */
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
@@ -298,8 +298,6 @@ typedef enum
 			 (sizeof(PageHeaderData) - sizeof(ItemIdData)))) \
 	 / ((int) sizeof(ItemIdData)))
 
-#ifdef XLOG
-
 #define PageGetLSN(page) \
 	(((PageHeader) (page))->pd_lsn)
 #define PageSetLSN(page, lsn) \
@@ -309,8 +307,6 @@ typedef enum
 	(((PageHeader) (page))->pd_sui)
 #define PageSetSUI(page, sui) \
 	(((PageHeader) (page))->pd_sui = (StartUpID) (sui))
-
-#endif
 
 /* ----------------------------------------------------------------
  *		extern declarations

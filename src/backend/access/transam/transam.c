@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.37 2000/11/21 21:15:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.38 2000/11/30 08:46:22 vadim Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -424,23 +424,12 @@ InitializeTransactionLog(void)
 	SpinAcquire(OidGenLockId);
 	if (!TransactionIdDidCommit(AmiTransactionId))
 	{
-
-		/* ----------------
-		 *	SOMEDAY initialize the information stored in
-		 *			the headers of the log/variable relations.
-		 * ----------------
-		 */
 		TransactionLogUpdate(AmiTransactionId, XID_COMMIT);
 		TransactionIdStore(AmiTransactionId, &cachedTestXid);
 		cachedTestXidStatus = XID_COMMIT;
-#ifdef XLOG
 		Assert(!IsUnderPostmaster && 
 				ShmemVariableCache->nextXid <= FirstTransactionId);
 		ShmemVariableCache->nextXid = FirstTransactionId;
-#else
-		VariableRelationPutNextXid(FirstTransactionId);
-#endif
-
 	}
 	else if (RecoveryCheckingEnabled())
 	{

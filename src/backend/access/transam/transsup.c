@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.26 2000/10/28 16:20:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.27 2000/11/30 08:46:22 vadim Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -186,9 +186,7 @@ TransBlockGetXidStatus(Block tblock,
 	bits8		bit2;
 	BitIndex	offset;
 
-#ifdef XLOG
 	tblock = (Block) ((char*) tblock + sizeof(XLogRecPtr));
-#endif
 
 	/* ----------------
 	 *	calculate the index into the transaction data where
@@ -231,9 +229,7 @@ TransBlockSetXidStatus(Block tblock,
 	Index		index;
 	BitIndex	offset;
 
-#ifdef XLOG
 	tblock = (Block) ((char*) tblock + sizeof(XLogRecPtr));
-#endif
 
 	/* ----------------
 	 *	calculate the index into the transaction data where

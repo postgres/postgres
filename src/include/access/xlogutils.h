@@ -1,5 +1,5 @@
-
 #ifndef XLOG_UTILS_H
+#define	XLOG_UTILS_H
 
 #include "access/rmgr.h"
 #include "utils/rel.h"

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.67 2000/11/23 01:08:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.68 2000/11/30 08:46:23 vadim Exp $
  *
  * NOTES:
  *
@@ -191,20 +191,6 @@ static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 static long pg_nofile(void);
-
-#ifndef XLOG
-/*
- * pg_fsync --- same as fsync except does nothing if -F switch was given
- */
-int
-pg_fsync(int fd)
-{
-	if (enableFsync)
-		return fsync(fd);
-	else
-		return 0;
-}
-#endif
 
 /*
  * BasicOpenFile --- same as open(2) except can free other FDs if needed
@@ -665,7 +651,6 @@ fileNameOpenFile(FileName fileName,
 	vfdP->fileFlags = fileFlags & ~(O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
 	vfdP->seekPos = 0;
-#ifdef XLOG
 	/*
 	 * Have to fsync file on commit. Alternative way - log
 	 * file creation and fsync log before actual file creation.
@@ -673,7 +658,6 @@ fileNameOpenFile(FileName fileName,
 	if (fileFlags & O_CREAT)
 		vfdP->fdstate = FD_DIRTY;
 	else
-#endif
 		vfdP->fdstate = 0x0;
 
 	return file;
@@ -832,13 +816,7 @@ FileWrite(File file, char *buffer, int amount)
 	FileAccess(file);
 	returnCode = write(VfdCache[file].fd, buffer, amount);
 	if (returnCode > 0)
-	{
 		VfdCache[file].seekPos += returnCode;
-#ifndef XLOG
-		/* mark the file as needing fsync */
-		VfdCache[file].fdstate |= FD_DIRTY;
-#endif
-	}
 	else
 		VfdCache[file].seekPos = FileUnknownPos;
 

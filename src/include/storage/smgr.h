@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.25 2000/11/21 21:16:05 petere Exp $
+ * $Id: smgr.h,v 1.26 2000/11/30 08:46:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,14 +47,11 @@ extern int	smgrtruncate(int16 which, Relation reln, int nblocks);
 extern int	smgrDoPendingDeletes(bool isCommit);
 extern int	smgrcommit(void);
 extern int	smgrabort(void);
-
-#ifdef XLOG
 extern int	smgrsync(void);
 
 extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void smgr_undo(XLogRecPtr lsn, XLogRecord *record);
 extern void smgr_desc(char *buf, uint8 xl_info, char* rec);
-#endif
 
 
 /* internals: move me elsewhere -- ay 7/94 */
@@ -77,10 +74,7 @@ extern int	mdnblocks(Relation reln);
 extern int	mdtruncate(Relation reln, int nblocks);
 extern int	mdcommit(void);
 extern int	mdabort(void);
-
-#ifdef XLOG
 extern int	mdsync(void);
-#endif
 
 /* mm.c */
 extern SPINLOCK MMCacheLock;

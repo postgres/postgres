@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.73 2000/11/28 23:27:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.74 2000/11/30 08:46:25 vadim Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -177,11 +177,6 @@ InitPostgres(const char *dbname, const char *username)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
 
-#ifndef XLOG
-	if (!TransactionFlushEnabled())
-		on_shmem_exit(FlushBufferPool, 0);
-#endif
-
 	SetDatabaseName(dbname);
 	/* ----------------
 	 *	initialize the database id used for system caches and lock tables
@@ -190,11 +185,7 @@ InitPostgres(const char *dbname, const char *username)
 	if (bootstrap)
 	{
 		MyDatabaseId = TemplateDbOid;
-#ifdef OLD_FILE_NAMING
-		SetDatabasePath(ExpandDatabasePath(dbname));
-#else
 		SetDatabasePath(GetDatabasePath(MyDatabaseId));
-#endif
 		LockDisable(true);
 	}
 	else
@@ -228,13 +219,7 @@ InitPostgres(const char *dbname, const char *username)
 				 "Database \"%s\" does not exist in the system catalog.",
 				 dbname);
 
-#ifdef OLD_FILE_NAMING
-		fullpath = ExpandDatabasePath(datpath);
-		if (!fullpath)
-			elog(FATAL, "Database path could not be resolved.");
-#else
 		fullpath = GetDatabasePath(MyDatabaseId);
-#endif
 
 		/* Verify the database path */
 

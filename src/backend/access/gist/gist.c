@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.66 2000/11/21 21:15:53 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.67 2000/11/30 08:46:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,7 @@
 #include "miscadmin.h"
 #include "utils/syscache.h"
 
-#ifdef XLOG
 #include "access/xlogutils.h"
-#endif
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
@@ -1348,7 +1346,6 @@ int_range_out(INTRANGE *r)
 
 #endif	 /* defined GISTDEBUG */
 
-#ifdef XLOG
 void
 gist_redo(XLogRecPtr lsn, XLogRecord *record)
 {
@@ -1365,4 +1362,3 @@ void
 gist_desc(char *buf, uint8 xl_info, char* rec)
 {
 }
-#endif

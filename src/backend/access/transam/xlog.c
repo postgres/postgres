@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.37 2000/11/30 01:47:31 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.38 2000/11/30 08:46:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1443,12 +1443,10 @@ void
 BootStrapXLOG()
 {
 	CheckPoint	checkPoint;
-#ifdef XLOG
 	char		buffer[BLCKSZ];
 	bool        usexistent = false;
 	XLogPageHeader page = (XLogPageHeader) buffer;
 	XLogRecord *record;
-#endif
 
 	checkPoint.redo.xlogid = 0;
 	checkPoint.redo.xrecoff = SizeOfXLogPHD;
@@ -1461,8 +1459,6 @@ BootStrapXLOG()
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
-
-#ifdef XLOG
 
 	memset(buffer, 0, BLCKSZ);
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -1488,8 +1484,6 @@ BootStrapXLOG()
 	close(logFile);
 	logFile = -1;
 
-#endif
-
 	memset(ControlFile, 0, sizeof(ControlFileData));
 	ControlFile->logId = 0;
 	ControlFile->logSeg = 1;
@@ -1513,14 +1507,12 @@ str_time(time_t tnow)
 	return buf;
 }
 
-
 /*
  * This func must be called ONCE on system startup
  */
 void
 StartupXLOG()
 {
-#ifdef XLOG
 	XLogCtlInsert *Insert;
 	CheckPoint	checkPoint;
 	XLogRecPtr	RecPtr,
@@ -1528,8 +1520,6 @@ StartupXLOG()
 	XLogRecord *record;
 	char		buffer[MAXLOGRECSZ + SizeOfXLogRecord];
 	bool		sie_saved = false;
-
-#endif
 
 	elog(LOG, "starting up");
 
@@ -1580,8 +1570,6 @@ StartupXLOG()
 		elog(LOG, "database system was interrupted at %s",
 			 str_time(ControlFile->time));
 
-#ifdef XLOG
-
 	LastRec = RecPtr = ControlFile->checkPoint;
 	if (!XRecOffIsValid(RecPtr.xrecoff))
 		elog(STOP, "Invalid checkPoint in control file");
@@ -1602,12 +1590,7 @@ StartupXLOG()
 		 checkPoint.nextXid, checkPoint.nextOid);
 	if (checkPoint.nextXid < FirstTransactionId ||
 		checkPoint.nextOid < BootstrapObjectIdData)
-
-#ifdef XLOG_2
 		elog(STOP, "Invalid NextTransactionId/NextOid");
-#else
-		elog(LOG, "Invalid NextTransactionId/NextOid");
-#endif
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -1751,8 +1734,6 @@ StartupXLOG()
 	}
 	InRecovery = false;
 
-#endif	 /* XLOG */
-
 	ControlFile->state = DB_IN_PRODUCTION;
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
@@ -1783,9 +1764,7 @@ ShutdownXLOG()
 {
 	elog(LOG, "shutting down");
 
-#ifdef XLOG
 	CreateDummyCaches();
-#endif
 	CreateCheckPoint(true);
 
 	elog(LOG, "database system is shut down");
@@ -1796,7 +1775,6 @@ extern XLogRecPtr	GetUndoRecPtr(void);
 void
 CreateCheckPoint(bool shutdown)
 {
-#ifdef XLOG
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -1880,12 +1858,9 @@ CreateCheckPoint(bool shutdown)
 
 	XLogFlush(recptr);
 
-#endif	 /* XLOG */
-
 	SpinAcquire(ControlFileLockId);
 	if (shutdown)
 		ControlFile->state = DB_SHUTDOWNED;
-#ifdef XLOG
 	else	/* create new log file */
 	{
 		if (recptr.xrecoff % XLogSegSize >= 
@@ -1914,16 +1889,10 @@ CreateCheckPoint(bool shutdown)
 	_logSeg = ControlFile->logSeg - 1;
 	strcpy(archdir, ControlFile->archdir);
 
-#else
-	ControlFile->checkPoint.xlogid = 0;
-	ControlFile->checkPoint.xrecoff = SizeOfXLogPHD;
-#endif
-
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 	SpinRelease(ControlFileLockId);
 
-#ifdef XLOG
 	/*
 	 * Delete offline log files. Get oldest online
 	 * log file from undo rec if it's valid.
@@ -1948,7 +1917,6 @@ CreateCheckPoint(bool shutdown)
 	S_UNLOCK(&(XLogCtl->chkp_lck));
 
 	MyLastRecPtr.xrecoff = 0;	/* to avoid commit record */
-#endif
 
 	return;
 }

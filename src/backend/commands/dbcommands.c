@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.69 2000/11/18 03:36:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.70 2000/11/30 08:46:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,13 +153,11 @@ createdb(const char *dbname, const char *dbpath,
 		elog(ERROR, "database path may not contain single quotes");
 	/* ... otherwise we'd be open to shell exploits below */
 
-#ifdef XLOG
 	/* Force dirty buffers out to disk, to ensure source database is
 	 * up-to-date for the copy.  (We really only need to flush buffers
 	 * for the source database...)
 	 */
 	BufferSync();
-#endif
 
 	/*
 	 * Close virtual file descriptors so the kernel has more available for
@@ -255,13 +253,11 @@ createdb(const char *dbname, const char *dbpath,
 	/* Close pg_database, but keep lock till commit */
 	heap_close(pg_database_rel, NoLock);
 
-#ifdef XLOG
 	/* Force dirty buffers out to disk, so that newly-connecting backends
 	 * will see the new database in pg_database right away.  (They'll see
 	 * an uncommitted tuple, but they don't care; see GetRawDatabaseInfo.)
 	 */
 	BufferSync();
-#endif
 }
 
 

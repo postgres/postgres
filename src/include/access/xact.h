@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.30 2000/11/21 21:16:05 petere Exp $
+ * $Id: xact.h,v 1.31 2000/11/30 08:46:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,6 @@ typedef TransactionStateData *TransactionState;
 #define StoreInvalidTransactionId(dest) \
 	(*((TransactionId*) (dest)) = NullTransactionId)
 
-
-#ifdef XLOG
-
 /*
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
@@ -105,8 +102,6 @@ typedef struct xl_xact_abort
 } xl_xact_abort;
 
 #define SizeOfXactAbort	((offsetof(xl_xact_abort, xtime) + sizeof(time_t)))
-
-#endif
 
 /* ----------------
  *		extern definitions

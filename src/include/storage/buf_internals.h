@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.45 2000/11/30 01:39:08 tgl Exp $
+ * $Id: buf_internals.h,v 1.46 2000/11/30 08:46:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "storage/lmgr.h"
 #include "storage/s_lock.h"
 
-
 /* Buf Mgr constants */
 /* in bufmgr.c */
 extern int	Data_Descriptors;
@@ -27,7 +26,6 @@ extern int	Lookup_List_Descriptor;
 extern int	Num_Descriptors;
 
 extern int	ShowPinTrace;
-
 
 /*
  * Flags for buffer descriptors
@@ -105,9 +103,7 @@ typedef struct sbufdesc
 	bool		ri_lock;		/* read-intent lock */
 	bool		w_lock;			/* context exclusively locked */
 
-#ifdef XLOG
 	bool		cntxDirty;		/* new way to mark block as dirty */
-#endif
 
 	BufferBlindId blind;		/* was used to support blind write */
 

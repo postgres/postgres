@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.41 2000/11/30 01:39:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.42 2000/11/30 08:46:21 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -170,7 +170,6 @@ _bt_getroot(Relation rel, int access)
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 			rootopaque->btpo_flags |= (BTP_LEAF | BTP_ROOT);
 
-#ifdef XLOG
 			/* XLOG stuff */
 			{
 				xl_btree_newroot	xlrec;
@@ -187,7 +186,6 @@ _bt_getroot(Relation rel, int access)
 				PageSetLSN(metapg, recptr);
 				PageSetSUI(metapg, ThisStartUpID);
 			}
-#endif
 
 			metad->btm_root = rootblkno;
 			metad->btm_level = 1;
@@ -403,7 +401,6 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 	buf = _bt_getbuf(rel, blkno, BT_WRITE);
 	page = BufferGetPage(buf);
 
-#ifdef XLOG
 	/* XLOG stuff */
 	{
 		xl_btree_delete	xlrec;
@@ -417,7 +414,6 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
-#endif
 
 	PageIndexTupleDelete(page, offno);
 

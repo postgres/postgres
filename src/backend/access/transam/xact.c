@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.85 2000/11/30 01:47:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.86 2000/11/30 08:46:22 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -219,15 +219,12 @@ TransactionState CurrentTransactionState = &CurrentTransactionStateData;
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
 
-#ifdef XLOG
 #include "access/xlogutils.h"
 
 int			CommitDelay = 5;	/* 1/200000 sec */
 
 static void (*_RollbackFunc)(void*) = NULL;
 static void *_RollbackData = NULL;
-
-#endif
 
 /* ----------------
  *		info returned when the system is disabled
@@ -662,19 +659,10 @@ RecordTransactionCommit()
 	TransactionId xid;
 	int			leak;
 
-	/* ----------------
-	 *	get the current transaction id
-	 * ----------------
-	 */
 	xid = GetCurrentTransactionId();
 
-	/*
-	 * flush the buffer manager pages.	Note: if we have stable main
-	 * memory, dirty shared buffers are not flushed plai 8/7/90
-	 */
 	leak = BufferPoolCheckLeak();
 
-#ifdef XLOG
 	if (MyLastRecPtr.xrecoff != 0)
 	{
 		xl_xact_commit	xlrec;
@@ -685,7 +673,7 @@ RecordTransactionCommit()
 
 		xlrec.xtime = time(NULL);
 		/*
-		 * MUST SAVE ARRAY OF RELFILENODE-s TO DROP
+		 * SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
 		 */
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT,
 			(char*) &xlrec, SizeOfXactCommit, NULL, 0);
@@ -704,30 +692,6 @@ RecordTransactionCommit()
 
 		MyProc->logRec.xrecoff = 0;
 	}
-#else
-	/*
-	 * If no one shared buffer was changed by this transaction then we
-	 * don't flush shared buffers and don't record commit status.
-	 */
-	if (SharedBufferChanged)
-	{
-		FlushBufferPool();
-		if (leak)
-			ResetBufferPool(true);
-
-		/*
-		 * have the transaction access methods record the status of this
-		 * transaction id in the pg_log relation.
-		 */
-		TransactionIdCommit(xid);
-
-		/*
-		 * Now write the log info to the disk too.
-		 */
-		leak = BufferPoolCheckLeak();
-		FlushBufferPool();
-	}
-#endif
 
 	if (leak)
 		ResetBufferPool(true);
@@ -815,23 +779,8 @@ AtCommit_Memory(void)
 static void
 RecordTransactionAbort(void)
 {
-	TransactionId xid;
+	TransactionId xid = GetCurrentTransactionId();
 
-	/* ----------------
-	 *	get the current transaction id
-	 * ----------------
-	 */
-	xid = GetCurrentTransactionId();
-
-	/*
-	 * Have the transaction access methods record the status of this
-	 * transaction id in the pg_log relation. We skip it if no one shared
-	 * buffer was changed by this transaction.
-	 */
-	if (SharedBufferChanged && !TransactionIdDidCommit(xid))
-		TransactionIdAbort(xid);
-
-#ifdef XLOG
 	if (MyLastRecPtr.xrecoff != 0)
 	{
 		xl_xact_abort	xlrec;
@@ -841,9 +790,9 @@ RecordTransactionAbort(void)
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT,
 			(char*) &xlrec, SizeOfXactAbort, NULL, 0);
 
+		TransactionIdAbort(xid);
 		MyProc->logRec.xrecoff = 0;
 	}
-#endif
 
 	/*
 	 * Tell bufmgr and smgr to release resources.
@@ -1748,8 +1697,6 @@ IsTransactionBlock(void)
 	return false;
 }
 
-#ifdef XLOG
-
 void
 xact_redo(XLogRecPtr lsn, XLogRecord *record)
 {
@@ -1760,7 +1707,7 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 		xl_xact_commit	*xlrec = (xl_xact_commit*) XLogRecGetData(record);
 
 		TransactionIdCommit(record->xl_xid);
-		/* MUST REMOVE FILES OF ALL DROPPED RELATIONS */
+		/* SHOULD REMOVE FILES OF ALL DROPPED RELATIONS */
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
@@ -1825,5 +1772,3 @@ XactPopRollback(void)
 {
 	_RollbackFunc = NULL;
 }
-
-#endif

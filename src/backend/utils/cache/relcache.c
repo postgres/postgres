@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.116 2000/11/10 00:33:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.117 2000/11/30 08:46:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2027,8 +2027,7 @@ RelationCacheInitializePhase2(void)
 	}
 }
 
-#ifdef XLOG		/* used by XLogInitCache */
-
+/* used by XLogInitCache */
 void CreateDummyCaches(void);
 void DestroyDummyCaches(void);
 
@@ -2081,8 +2080,6 @@ DestroyDummyCaches(void)
 
 	MemoryContextSwitchTo(oldcxt);
 }
-
-#endif	/* XLOG */
 
 static void
 AttrDefaultFetch(Relation relation)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.173 2000/11/16 22:30:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.174 2000/11/30 08:46:22 vadim Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -47,11 +47,9 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef XLOG
 #include "access/xlog.h"
-XLogRecPtr	log_heap_move(Relation reln, 
-				ItemPointerData from, HeapTuple newtup);
-#endif
+extern XLogRecPtr	log_heap_move(Relation reln, 
+						ItemPointerData from, HeapTuple newtup);
 
 static MemoryContext vac_context = NULL;
 
@@ -1492,7 +1490,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
 					ItemPointerSet(&(newtup.t_self), destvacpage->blkno, newoff);
 
-#ifdef XLOG
 					{
 						XLogRecPtr	recptr = 
 							log_heap_move(onerel, tuple.t_self, &newtup);
@@ -1505,7 +1502,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						PageSetLSN(ToPage, recptr);
 						PageSetSUI(ToPage, ThisStartUpID);
 					}
-#endif
 
 					if (((int) destvacpage->blkno) > last_move_dest_block)
 						last_move_dest_block = destvacpage->blkno;
@@ -1655,7 +1651,6 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 
-#ifdef XLOG
 			{
 				XLogRecPtr	recptr = 
 					log_heap_move(onerel, tuple.t_self, &newtup);
@@ -1665,7 +1660,6 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 				PageSetLSN(ToPage, recptr);
 				PageSetSUI(ToPage, ThisStartUpID);
 			}
-#endif
 
 			cur_page->offsets_used++;
 			num_moved++;
@@ -1786,19 +1780,12 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 	if (num_moved > 0)
 	{
-#ifdef XLOG
-		RecordTransactionCommit();
-#else
 		/*
 		 * We have to commit our tuple' movings before we'll truncate
 		 * relation, but we shouldn't lose our locks. And so - quick hack:
-		 * flush buffers and record status of current transaction as
-		 * committed, and continue. - vadim 11/13/96
+		 * record status of current transaction as committed, and continue.
 		 */
-		FlushBufferPool();
-		TransactionIdCommit(myXID);
-		FlushBufferPool();
-#endif
+		RecordTransactionCommit();
 	}
 
 	/*

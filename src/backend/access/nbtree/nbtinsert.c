@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.68 2000/11/16 05:50:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.69 2000/11/30 08:46:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,7 @@ static void _bt_pgaddtup(Relation rel, Page page,
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 						int keysz, ScanKey scankey);
 
-#ifdef XLOG
 static Relation		_xlheapRel;	/* temporary hack */
-#endif
 
 /*
  *	_bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -123,9 +121,7 @@ top:
 		}
 	}
 
-#ifdef XLOG
 	_xlheapRel = heapRel;	/* temporary hack */
-#endif
 
 	/* do the insertion */
 	res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem, 0);
@@ -522,7 +518,6 @@ _bt_insertonpg(Relation rel,
 	}
 	else
 	{
-#ifdef XLOG
 		/* XLOG stuff */
 		{
 			char				xlbuf[sizeof(xl_btree_insert) + 
@@ -562,7 +557,7 @@ _bt_insertonpg(Relation rel,
 			PageSetLSN(page, recptr);
 			PageSetSUI(page, ThisStartUpID);
 		}
-#endif
+
 		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
 		itup_off = newitemoff;
 		itup_blkno = BufferGetBlockNumber(buf);
@@ -612,10 +607,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 				rightoff;
 	OffsetNumber maxoff;
 	OffsetNumber i;
-
-#ifdef XLOG
 	BTItem		lhikey;
-#endif
 
 	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	origpage = BufferGetPage(buf);
@@ -685,9 +677,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		itemsz = ItemIdGetLength(itemid);
 		item = (BTItem) PageGetItem(origpage, itemid);
 	}
-#ifdef XLOG
 	lhikey = item;
-#endif
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 					LP_USED) == InvalidOffsetNumber)
 		elog(STOP, "btree: failed to add hikey to the left sibling");
@@ -775,7 +765,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		spage = BufferGetPage(sbuf);
 	}
 
-#ifdef XLOG
 	/*
 	 * Right sibling is locked, new siblings are prepared, but original
 	 * page is not updated yet. Log changes before continuing.
@@ -860,7 +849,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			PageSetSUI(spage, ThisStartUpID);
 		}
 	}
-#endif
 
 	/*
 	 * By here, the original data page has been split into two new halves,
@@ -1165,19 +1153,13 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	BTItem		item;
 	Size		itemsz;
 	BTItem		new_item;
-
-#ifdef XLOG
 	Buffer		metabuf;
-#endif
 
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
 	rootblknum = BufferGetBlockNumber(rootbuf);
-
-#ifdef XLOG
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE,BT_WRITE);
-#endif
 
 	/* NO ELOG(ERROR) from here till newroot op is logged */
 
@@ -1237,7 +1219,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		elog(STOP, "btree: failed to add rightkey to new root page");
 	pfree(new_item);
 
-#ifdef XLOG
 	/* XLOG stuff */
 	{
 		xl_btree_newroot	xlrec;
@@ -1267,15 +1248,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 		_bt_wrtbuf(rel, metabuf);
 	}
-#endif
 
 	/* write and let go of the new root buffer */
 	_bt_wrtbuf(rel, rootbuf);
-
-#ifndef XLOG
-	/* update metadata page with new root block number */
-	_bt_metaproot(rel, rootblknum, 0);
-#endif
 
 	/* update and release new sibling, and finally the old root */
 	_bt_wrtbuf(rel, rbuf);

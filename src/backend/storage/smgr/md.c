@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.79 2000/11/10 03:53:45 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.80 2000/11/30 08:46:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,14 +569,6 @@ mdblindwrt(RelFileNode rnode,
 		elog(DEBUG, "mdblindwrt: write() failed: %m");
 		status = SM_FAIL;
 	}
-#ifndef XLOG
-	else if (dofsync &&
-			 pg_fsync(fd) < 0)
-	{
-		elog(DEBUG, "mdblindwrt: fsync() failed: %m");
-		status = SM_FAIL;
-	}
-#endif
 
 	if (close(fd) < 0)
 	{
@@ -840,7 +832,6 @@ mdabort()
 	return SM_SUCCESS;
 }
 
-#ifdef XLOG
 /*
  *	mdsync() -- Sync storage.
  *
@@ -854,7 +845,6 @@ mdsync()
 	sync();
 	return SM_SUCCESS;
 }
-#endif
 
 /*
  *	_fdvec_alloc () -- grab a free (or new) md file descriptor vector.

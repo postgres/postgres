@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.45 2000/11/30 01:39:08 tgl Exp $
+ * $Id: bufmgr.h,v 1.46 2000/11/30 08:46:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,10 +192,8 @@ extern void AbortBufferIO(void);
 extern bool BufferIsUpdatable(Buffer buffer);
 extern void MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer));
 
-#ifdef XLOG
 extern void BufmgrCommit(void);
 extern void BufferSync(void);
-#endif
 
 extern void InitLocalBuffer(void);
 

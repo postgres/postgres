@@ -27,4 +27,3 @@ RmgrData   RmgrTable[] = {
 {"Gist", gist_redo, gist_undo, gist_desc},
 {"Sequence", seq_redo, seq_undo, seq_desc}
 };
-
