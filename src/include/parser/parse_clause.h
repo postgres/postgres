@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * parse_clause.h
- *
+ *	  handle clauses in parser
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.29 2002/06/20 20:29:51 momjian Exp $
+ * $Id: parse_clause.h,v 1.30 2003/03/22 01:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,5 +30,6 @@ extern List *transformDistinctClause(ParseState *pstate, List *distinctlist,
 
 extern List *addAllTargetsToSortList(List *sortlist, List *targetlist);
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
+extern bool targetIsInSortList(TargetEntry *tle, List *sortList);
 
 #endif   /* PARSE_CLAUSE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.99 2003/03/10 03:53:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.100 2003/03/22 01:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,9 @@
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
+#include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "parser/parse_clause.h"
 #include "rewrite/rewriteManip.h"
 
 
@@ -49,6 +51,7 @@ static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery);
 static bool recurse_pushdown_safe(Node *setOp, Query *topquery);
+static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual);
 static void subquery_push_qual(Query *subquery, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  Index rti, Node *qual);
@@ -305,16 +308,14 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 *
 	 * There are several cases where we cannot push down clauses.
 	 * Restrictions involving the subquery are checked by
-	 * subquery_is_pushdown_safe().  Also, we do not push down clauses
-	 * that contain subselects, mainly because I'm not sure it will work
-	 * correctly (the subplan hasn't yet transformed sublinks to
-	 * subselects).
+	 * subquery_is_pushdown_safe().  Restrictions on individual clauses are
+	 * checked by qual_is_pushdown_safe().
 	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
 	 *
 	 * XXX Are there any cases where we want to make a policy decision not to
-	 * push down, because it'd result in a worse plan?
+	 * push down a pushable qual, because it'd result in a worse plan?
 	 */
 	if (rel->baserestrictinfo != NIL &&
 		subquery_is_pushdown_safe(subquery, subquery))
@@ -328,15 +329,15 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lst);
 			Node	   *clause = (Node *) rinfo->clause;
 
-			if (contain_subplans(clause))
-			{
-				/* Keep it in the upper query */
-				upperrestrictlist = lappend(upperrestrictlist, rinfo);
-			}
-			else
+			if (qual_is_pushdown_safe(subquery, rti, clause))
 			{
 				/* Push it down */
 				subquery_push_qual(subquery, rti, clause);
+			}
+			else
+			{
+				/* Keep it in the upper query */
+				upperrestrictlist = lappend(upperrestrictlist, rinfo);
 			}
 		}
 		rel->baserestrictinfo = upperrestrictlist;
@@ -527,21 +528,10 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
  *
  * Conditions checked here:
  *
- * 1. If the subquery has a LIMIT clause or a DISTINCT ON clause, we must
- * not push down any quals, since that could change the set of rows
- * returned.  (Actually, we could push down quals into a DISTINCT ON
- * subquery if they refer only to DISTINCT-ed output columns, but
- * checking that seems more work than it's worth.  In any case, a
- * plain DISTINCT is safe to push down past.)
+ * 1. If the subquery has a LIMIT clause, we must not push down any quals,
+ * since that could change the set of rows returned.
  *
- * 2. If the subquery has any functions returning sets in its target list,
- * we do not push down any quals, since the quals
- * might refer to those tlist items, which would mean we'd introduce
- * functions-returning-sets into the subquery's WHERE/HAVING quals.
- * (It'd be sufficient to not push down quals that refer to those
- * particular tlist items, but that's much clumsier to check.)
- *
- * 3. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
+ * 2. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
  * quals into it, because that would change the results.  For subqueries
  * using UNION/UNION ALL/INTERSECT/INTERSECT ALL, we can push the quals
  * into each component query, so long as all the component queries share
@@ -554,11 +544,8 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery)
 {
 	SetOperationStmt *topop;
 
-	/* Check points 1 and 2 */
-	if (subquery->limitOffset != NULL ||
-		subquery->limitCount != NULL ||
-		has_distinct_on_clause(subquery) ||
-		expression_returns_set((Node *) subquery->targetList))
+	/* Check point 1 */
+	if (subquery->limitOffset != NULL || subquery->limitCount != NULL)
 		return false;
 
 	/* Are we at top level, or looking at a setop component? */
@@ -620,6 +607,89 @@ recurse_pushdown_safe(Node *setOp, Query *topquery)
 			 (int) nodeTag(setOp));
 	}
 	return true;
+}
+
+/*
+ * qual_is_pushdown_safe - is a particular qual safe to push down?
+ *
+ * qual is a restriction clause applying to the given subquery (whose RTE
+ * has index rti in the parent query).
+ *
+ * Conditions checked here:
+ *
+ * 1. The qual must not contain any subselects (mainly because I'm not sure
+ * it will work correctly: sublinks will already have been transformed into
+ * subplans in the qual, but not in the subquery).
+ *
+ * 2. If the subquery uses DISTINCT ON, we must not push down any quals that
+ * refer to non-DISTINCT output columns, because that could change the set
+ * of rows returned.  This condition is vacuous for DISTINCT, because then
+ * there are no non-DISTINCT output columns, but unfortunately it's fairly
+ * expensive to tell the difference between DISTINCT and DISTINCT ON in the
+ * parsetree representation.  It's cheaper to just make sure all the Vars
+ * in the qual refer to DISTINCT columns.
+ *
+ * 3. We must not push down any quals that refer to subselect outputs that
+ * return sets, else we'd introduce functions-returning-sets into the
+ * subquery's WHERE/HAVING quals.
+ */
+static bool
+qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
+{
+	bool		safe = true;
+	List	   *vars;
+	List	   *l;
+	Bitmapset  *tested = NULL;
+
+	/* Refuse subselects (point 1) */
+	if (contain_subplans(qual))
+		return false;
+
+	/*
+	 * Examine all Vars used in clause; since it's a restriction clause,
+	 * all such Vars must refer to subselect output columns.
+	 */
+	vars = pull_var_clause(qual, false);
+	foreach(l, vars)
+	{
+		Var	   *var = (Var *) lfirst(l);
+		TargetEntry *tle;
+
+		Assert(var->varno == rti);
+		/*
+		 * We use a bitmapset to avoid testing the same attno more than
+		 * once.  (NB: this only works because subquery outputs can't
+		 * have negative attnos.)
+		 */
+		if (bms_is_member(var->varattno, tested))
+			continue;
+		tested = bms_add_member(tested, var->varattno);
+
+		tle = (TargetEntry *) nth(var->varattno-1, subquery->targetList);
+		Assert(tle->resdom->resno == var->varattno);
+		Assert(!tle->resdom->resjunk);
+
+		/* If subquery uses DISTINCT or DISTINCT ON, check point 2 */
+		if (subquery->distinctClause != NIL &&
+			!targetIsInSortList(tle, subquery->distinctClause))
+		{
+			/* non-DISTINCT column, so fail */
+			safe = false;
+			break;
+		}
+
+		/* Refuse functions returning sets (point 3) */
+		if (expression_returns_set((Node *) tle->expr))
+		{
+			safe = false;
+			break;
+		}
+	}
+
+	freeList(vars);
+	bms_free(tested);
+
+	return safe;
 }
 
 /*

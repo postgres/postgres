@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.132 2003/03/14 00:55:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.133 2003/03/22 01:49:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -29,6 +29,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
+#include "parser/parse_clause.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -814,28 +815,6 @@ pull_constant_clauses(List *quals, List **constantQual)
  *****************************************************************************/
 
 /*
- * Test whether a sort/group reference value appears in the given list of
- * SortClause (or GroupClause) nodes.
- *
- * Because GroupClause is typedef'd as SortClause, either kind of
- * node list can be passed without casting.
- */
-static bool
-sortgroupref_is_present(Index sortgroupref, List *clauselist)
-{
-	List	   *clause;
-
-	foreach(clause, clauselist)
-	{
-		SortClause *scl = (SortClause *) lfirst(clause);
-
-		if (scl->tleSortGroupRef == sortgroupref)
-			return true;
-	}
-	return false;
-}
-
-/*
  * Test whether a query uses DISTINCT ON, ie, has a distinct-list that is
  * not the same as the set of output columns.
  */
@@ -864,15 +843,14 @@ has_distinct_on_clause(Query *query)
 	foreach(targetList, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
-		Index		ressortgroupref = tle->resdom->ressortgroupref;
 
-		if (ressortgroupref == 0)
+		if (tle->resdom->ressortgroupref == 0)
 		{
 			if (tle->resdom->resjunk)
 				continue;		/* we can ignore unsorted junk cols */
 			return true;		/* definitely not in DISTINCT list */
 		}
-		if (sortgroupref_is_present(ressortgroupref, query->distinctClause))
+		if (targetIsInSortList(tle, query->distinctClause))
 		{
 			if (tle->resdom->resjunk)
 				return true;	/* junk TLE in DISTINCT means DISTINCT ON */
@@ -883,7 +861,7 @@ has_distinct_on_clause(Query *query)
 			/* This TLE is not in DISTINCT list */
 			if (!tle->resdom->resjunk)
 				return true;	/* non-junk, non-DISTINCT, so DISTINCT ON */
-			if (sortgroupref_is_present(ressortgroupref, query->sortClause))
+			if (targetIsInSortList(tle, query->sortClause))
 				return true;	/* sorted, non-distinct junk */
 			/* unsorted junk is okay, keep looking */
 		}

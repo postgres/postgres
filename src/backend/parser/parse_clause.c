@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.111 2003/03/10 03:53:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.112 2003/03/22 01:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,6 @@ static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
 					List *targetlist, List *opname);
-static bool targetIsInSortList(TargetEntry *tle, List *sortList);
 
 
 /*
@@ -1386,7 +1385,7 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
  * reason we need this routine (and not just a quick test for nonzeroness
  * of ressortgroupref) is that a TLE might be in only one of the lists.
  */
-static bool
+bool
 targetIsInSortList(TargetEntry *tle, List *sortList)
 {
 	Index		ref = tle->resdom->ressortgroupref;
