@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Dec  1 16:27:51 EST 2002
+Last updated:		Mon Dec  2 00:42:30 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -256,6 +256,11 @@ Clients
 	o Fix nested C comments
 	o Add SQLSTATE
 	o fix handling of DB attributes that are arrays
+
+* Python
+	o Allow users to register their own types with _pg
+	o Allow SELECT to return a dictionary of dictionaries
+	o Allow COPY BINARY FROM
 
 
 Referential Integrity
