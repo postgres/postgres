@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.28 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.29 2001/11/26 05:57:57 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -377,9 +377,11 @@ db.close();
 
    <para>
     Any time you want to issue <acronym>SQL</acronym> statements to
-    the database, you require a <classname>Statement</classname>
-    instance. Once you have a <classname>Statement</classname>, you
-    can use the <function>executeQuery()</function> method to issue a
+    the database, you require a <classname>Statement</classname> or 
+    <classname>PreparedStatement</classname> instance. Once you have 
+    a <classname>Statement</classname> or <classname>PreparedStatement
+    </classname>, you
+    can use issue a
     query. This will return a <classname>ResultSet</classname>
     instance, which contains the entire result.  <xref
     linkend="jdbc-query-example"> illustrates this process.
@@ -389,11 +391,29 @@ db.close();
     <title>Processing a Simple Query in <acronym>JDCB</acronym></title>
 
     <para>
-     This example with issue a simple query and print out the first
-     column of each row.
+     This example will issue a simple query and print out the first
+     column of each row using a <classname>Statement</classname>.
 <programlisting>
 Statement st = db.createStatement();
-ResultSet rs = st.executeQuery("SELECT * FROM mytable");
+ResultSet rs = st.executeQuery("SELECT * FROM mytable where columnfoo = 500");
+while(rs.next()) {
+    System.out.print("Column 1 returned ");
+    System.out.println(rs.getString(1));
+}
+rs.close();
+st.close();
+</programlisting>
+    </para>
+
+    <para>
+     This example will issues the same query as before using 
+     a <classname>PreparedStatement</classname>
+     and a bind value in the query.
+<programlisting>
+int foovalue = 500;
+PreparedStatement st = db.prepareStatement("SELECT * FROM mytable where columnfoo = ?");
+st.setInt(1, foovalue);
+ResultSet rs = st.executeQuery();
 while(rs.next()) {
     System.out.print("Column 1 returned ");
     System.out.println(rs.getString(1));
@@ -405,7 +425,8 @@ st.close();
    </example>
 
    <sect2>
-    <title>Using the <classname>Statement</classname> Interface</title>
+    <title>Using the <classname>Statement</classname> or <classname>
+    PreparedStatement</classname> Interface</title>
 
     <para>
      The following must be considered when using the
@@ -419,7 +440,7 @@ st.close();
         open the connection and use it for the connection's
         lifetime. But you have to remember that only one
         <classname>ResultSet</classname> can exist per
-        <classname>Statement</classname>.
+        <classname>Statement</classname> at a given time.
        </para>
       </listitem>
 
@@ -437,6 +458,13 @@ st.close();
         you must use a separate <classname>Statement</classname> for
         each thread. Refer to <xref linkend="jdbc-thread"> if you are
         thinking of using threads, as it covers some important points.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        When you are done using the <classname>Statement</classname>
+        you should close the <classname>Statement</classname>.
        </para>
       </listitem>
      </itemizedlist>
@@ -495,73 +523,141 @@ st.close();
    <title>Performing Updates</title>
 
    <para>
-    To perform an update (or any other <acronym>SQL</acronym>
-    statement that does not return a result), you simply use the
-    <function>executeUpdate()</function> method:
+    To change data (perform an insert, update, or delete) 
+    you use the <function>executeUpdate()</function> method.
+    <function>executeUpdate()</function> is similar to the
+    <function>executeQuery()</function> used to issue a select,
+    however it doesn't return a <classname>ResultSet</classname>,
+    instead it returns the number of records affected by the insert,
+    update, or delete statement.
+   </para>
 
+   <para>
+     This example will issue a simple delete and print out the number
+     of rows deleted.
 <programlisting>
-st.executeUpdate("CREATE TABLE basic (a int, b int)");
+int foovalue = 500;
+PreparedStatement st = db.prepareStatement("DELETE FROM mytable where columnfoo = ?");
+st.setInt(1, foovalue);
+int rowsDeleted = st.executeUpdate();
+System.out.println(rowsDeleted + " rows deleted");
+st.close();
 </programlisting>
    </para>
   </sect1>
 
- <sect1 id="jdbc-lo">
-  <title>Using Large Objects</title>
+  <sect1 id="jdbc-ddl">
+   <title>Creating and Modifying Database Objects</title>
+
+   <para>
+    To create, modify or drop a database object like a table or view
+    you use the <function>execute()</function> method.
+    <function>execute</function> is similar to the
+    <function>executeQuery()</function> used to issue a select,
+    however it doesn't return a result.
+   </para>
+
+   <para>
+     This example will drop a table.
+<programlisting>
+Statement st = db.createStatement();
+ResultSet rs = st.executeQuery("DROP TABLE mytable");
+st.close();
+</programlisting>
+   </para>
+  </sect1>
+
+ <sect1 id="jdbc-binary-data">
+  <title>Storing Binary Data</title>
 
   <para>
-   In <application>PostgreSQL</application>, <firstterm>Large
-   Objects</firstterm> (also known as <acronym>BLOB</acronym>s) are
-   used to hold data in the database that cannot be stored in a normal
-   SQL table. They are stored in a separate table in a special format,
-   and are referred to from your own tables by an OID value.
+    <application>PostgreSQL</application> provides two distinct way to 
+    store binary data.  Binary data can be stored in a table using 
+    <applicaiton>PostgreSQL's</application> binary datatype 
+    <type>bytea</type>, or by using the <firstterm>Large Object</firstterm>
+    feature which stores the binary data in a separate table in a special 
+    format, and refers to from your own tables by an <type>OID</type> value.
+  </para>
+
+  <para>
+    In order to determine which method is appropriate you 
+    need to understand the limitations of each method.  The 
+    <type>bytea</type> datatype is not well suited for storing very 
+    large amounts of binary data.  While a column of type 
+    <type>bytea</bytea> can hold upto 1Gig of binary data, it would 
+    require a huge amount of memory (<acronym>RAM</acronym>) to 
+    process such a large value.  The Large Object method for 
+    storing binary data is better suited to storing very large values, 
+    but it has its own limitations.  Specifically deleting a row 
+    that contains a Large Object does not delete the Large Object.
+    Deleting the Large Object is a separate operation that needs to
+    be performed.  Large Objects also have some security
+    issues since anyone connected to the database case view 
+    and/or modify any Large Object, even if they don't have 
+    permissions to view/update the row containing the Large Object.
+  </para>
+
+  <para>
+    7.2 is the first release that the <acronym>JDBC</acronym> Driver 
+    supports the <type>bytea</type> datatype.  The introduction of 
+    this functionality in 7.2 has introduced a change in behavior 
+    as compared to previous releases.  In 7.2 the methods 
+    <function>getBytes()</function>, <function>setBytes()</function>, 
+    <function>getBinaryStream()</function>, and 
+    <function>setBinaryStream()</function> operate on 
+    the <type>bytea</type> datatype.  In 7.1 these methods operated 
+    on the <type>OID</type> datatype associated with Large Objects.  
+    It is possible to revert the driver back to the old 7.1 behavior 
+    by setting the <parameter>compatible</parameter> property on 
+    the <classname>Connection</classname> to a value of 
+    <literal>7.1</literal>
+  </para>
+
+  <para>
+    To use the <type>bytea</type> datatype you should simply use 
+    the <function>getBytes()</function>, <function>setBytes()</function>,
+    <function>getBinaryStream()</function>, or 
+    <function>setBinaryStream()</function> methods.
+  </para>
+
+  <para>
+    To use the Large Object functionality you can use either the 
+    <classname>LargeObject</classname> <acronym>API</acronym>
+    provided by the <application>PostgreSQL</applicaiton> 
+    <acronym>JDBC</acronym> Driver, or by using the 
+    <function>getBLOB()</function> and <function>setBLOB()</function>
+    methods.
   </para>
 
   <important>
    <para>
-    For <productname>PostgreSQL</productname>, you must access Large
+    For <application>PostgreSQL</application>, you must access Large
     Objects within an <acronym>SQL</acronym> transaction.  You would
     open a transaction by using the
     <function>setAutoCommit()</function> method with an input
-    parameter of <literal>false</literal>:
-<programlisting>
-Connection mycon;
-...
-mycon.setAutoCommit(false);
-... // now use Large Objects
-</programlisting>
+    parameter of <literal>false</literal>.
    </para>
   </important>
 
-   <para>
-    There are two methods of using Large Objects. The first is the
-    standard <acronym>JDBC</acronym> way, and is documented here. The
-    other, uses <productname>PostgreSQL</productname> extensions to
-    the <acronym>API</acronym>, which presents the <application>libpq</application> large object
-    <acronym>API</acronym> to Java, providing even better access to
-    large objects than the standard. Internally, the driver uses the
-    extension to provide large object support.
-   </para>
+  <note><para>In a future release of the
+      <acronym>JDBC</acronym> Driver, the <function>getBLOB()</function>
+      and <function>setBLOB()</function> methods may no longer 
+      interact with Large Objects and will instead work on 
+      <type>bytea</type> datatypes.  So it is recommended that you 
+      use the <classname>LargeObject</classname> <acronyn>API</acronym> 
+      if you intend to use Large Objects.
+  </para></note>
 
-   <para>
-    In <acronym>JDBC</acronym>, the standard way to access Large
-    Objects is using the <function>getBinaryStream()</function> method
-    in <classname>ResultSet</classname>, and
-    <function>setBinaryStream()</function> method in
-    <classname>PreparedStatement</classname>. These methods make the
-    large object appear as a Java stream, allowing you to use the
-    <literal>java.io</literal> package, and others, to manipulate the
-    object.  <xref linkend="jdbc-lo-example"> illustrates the usage of
-    this approach.
-   </para>
 
-  <example id="jdbc-lo-example">
-   <title>Using the <acronym>JDBC</acronym> Large Object Interface</title>
+  <example id="jdbc-binary-data-example">
+   <title>Binary Data Examples</title>
 
    <para>
     For example, suppose you have a table containing the file name of
-    an image and you have a large object containing that image:
+    an image and you also want to store the image in a <type>bytea</type>
+    column:
 <programlisting>
-CREATE TABLE images (imgname text, imgoid oid);
+CREATE TABLE images (imgname text, img bytea);
 </programlisting>
    </para>
 
@@ -570,26 +666,19 @@ CREATE TABLE images (imgname text, imgoid oid);
 <programlisting>
 File file = new File("myimage.gif");
 FileInputStream fis = new FileInputStream(file);
-PreparedStatement ps = conn.prepareStatement("INSERT INTO images VALUES (?, ?)"); <co id="co.jdbc-qmark">
+PreparedStatement ps = conn.prepareStatement("INSERT INTO images VALUES (?, ?)");
 ps.setString(1, file.getName());
 ps.setBinaryStream(2, fis, file.length());
 ps.executeUpdate();
 ps.close();
 fis.close();
 </programlisting>
-    <calloutlist>
-     <callout arearefs="co.jdbc-qmark">
-      <para>
-       The question marks must appear literally.  The actual data is
-       substituted by the next lines.
-      </para>
-     </callout>
-    </calloutlist>
-    Here, <function>setBinaryStream</function> transfers a set number
-    of bytes from a stream into a Large Object, and stores the OID
-    into the field holding a reference to it.  Notice that the
-    creation of the Large Object itself in the database happens
-    transparently.
+
+    Here, <function>setBinaryStream()</function> transfers a set number
+    of bytes from a stream into the column of type <type>bytea</type>.
+    This also could have been done using the <function>setBytes()</function>
+    method if the contents of the image was already in a 
+    <classname>byte[]</classname>. 
    </para>
 
    <para>
@@ -598,14 +687,13 @@ fis.close();
     <classname>Statement</classname> class can equally be used.)
 
 <programlisting>
-PreparedStatement ps = con.prepareStatement("SELECT imgoid FROM images WHERE imgname=?");
+PreparedStatement ps = con.prepareStatement("SELECT img FROM images WHERE imgname=?");
 ps.setString(1, "myimage.gif");
 ResultSet rs = ps.executeQuery();
 if (rs != null) {
     while(rs.next()) {
-        InputStream is = rs.getBinaryStream(1);
+        byte[] imgBytes = rs.getBytes(1);
         // use the stream in some way here
-        is.close();
     }
     rs.close();
 }
@@ -615,13 +703,88 @@ ps.close();
 
    <para>
     Here you can see how the Large Object is retrieved as an
-    <classname>InputStream</classname>.  You will also notice that we
-    close the stream before processing the next row in the
-    result. This is part of the <acronym>JDBC</acronym> specification,
-    which states that any <classname>InputStream</classname> returned
-    is closed when <function>ResultSet.next()</function> or
-    <function>ResultSet.close()</function> is called.
+    <classname>byte[]</classname>.  You could have used a 
+    <classname>InputStream</classname> object instead.  
    </para>
+
+   <para>
+    Alternativly you could be storing a very large file and want to use
+    the <classname>LargeObject</classname> <acronym>API</acronym> to 
+    store the file:
+<programlisting>
+CREATE TABLE imagesLO (imgname text, imgOID OID);
+</programlisting>
+   </para>
+
+   <para>
+    To insert an image, you would use:
+<programlisting>
+// All LargeObject API calls must be within a transaction
+conn.setAutoCommit(false);
+LargeObjectManager lobj = ((org.postgresql.Connection)conn).getLargeObjectAPI();
+
+//create a new large object
+int oid = lobj.create(LargeObjectManager.READ | LargeObjectManager.WRITE);
+
+//open the large object for write
+LargeObject obj = lobj.open(oid, LargeObjectManager.WRITE);
+
+// Now open the file
+File file = new File("myimage.gif");
+FileInputStream fis = new FileInputStream(file);
+
+// copy the data from the file to the large object
+byte buf[] = new byte[2048];
+int s, tl = 0;
+while ((s = fis.read(buf, 0, 2048)) > 0)
+{
+	obj.write(buf, 0, s);
+	tl += s;
+}
+
+// Close the large object
+obj.close();
+
+//Now insert the row into imagesLO
+PreparedStatement ps = conn.prepareStatement("INSERT INTO imagesLO VALUES (?, ?)");
+ps.setString(1, file.getName());
+ps.setInt(2, oid);
+ps.executeUpdate();
+ps.close();
+fis.close();
+</programlisting>
+
+   <para>
+    Retrieving the image from the Large Object:
+
+<programlisting>
+// All LargeObject API calls must be within a transaction
+conn.setAutoCommit(false);
+LargeObjectManager lobj = ((org.postgresql.Connection)conn).getLargeObjectAPI();
+
+PreparedStatement ps = con.prepareStatement("SELECT imgOID FROM imagesLO WHERE imgname=?");
+ps.setString(1, "myimage.gif");
+ResultSet rs = ps.executeQuery();
+if (rs != null) {
+    while(rs.next()) {
+	//open the large object for reading
+	int oid = rs.getInt(1);
+	LargeObject obj = lobj.open(oid, LargeObjectManager.READ);
+
+	//read the data
+	byte buf[] = new byte[obj.size()];
+	obj.read(buf, 0, obj.size());
+	//do something with the data read here
+	}
+	// Close the object
+	obj.close();
+    }
+    rs.close();
+}
+ps.close();
+</programlisting>
+   </para>
+
   </example>
  </sect1>
 
@@ -1932,15 +2095,13 @@ java.lang.Object
     </para>
 
     <para>
-     Normally, client code would use the getAsciiStream,
-     getBinaryStream, or getUnicodeStream methods in <classname>ResultSet</classname>, or
-     setAsciiStream, setBinaryStream, or setUnicodeStream methods in
-     <classname>PreparedStatement</classname> to access Large Objects.
+     Normally, client code would use the methods in 
+     <classname>BLOB</classname> to access large objects.
     </para>
 
     <para>
-     However, sometimes lower level access to Large Objects are
-     required, that are not supported by the <acronym>JDBC</acronym>
+     However, sometimes lower level access to Large Objects is
+     required, that is not supported by the <acronym>JDBC</acronym>
      specification.
     </para>
 
@@ -2208,11 +2369,9 @@ lobj = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
     </para>
 
     <para>
-     Normally, client code would use the getAsciiStream,
-     getBinaryStream, or getUnicodeStream methods in ResultSet, or
-     setAsciiStream, setBinaryStream, or setUnicodeStream methods in
-     PreparedStatement to access Large Objects.  However, sometimes
-     lower level access to Large Objects are required, that are not
+     Normally, client code would use the <classname>BLOB</classname>
+     methods to access large objects.  However, sometimes
+     lower level access to Large Objects is required, that is not
      supported by the <acronym>JDBC</acronym> specification.
     </para>
 
@@ -2318,622 +2477,8 @@ public void unlink(int oid) throws SQLException
    </sect3>
   </sect2>
 
-
-  <sect2>
-   <title>Object Serialization</title>
-
-   <para>
-    <productname>PostgreSQL</productname> is not a normal
-    <acronym>SQL</acronym> database.  It is more extensible than most
-    other databases, and does support object oriented features that
-    are unique to it.
-   </para>
-
-   <para>
-    One of the consequences of this, is that you can have one table
-    refer to a row in another table.  For example:
-<screen>
-test=> CREATE TABLE users (username NAME,fullname TEXT);
-CREATE
-test=> CREATE TABLE server (servername NAME,adminuser users);
-CREATE
-test=> INSERT INTO users VALUES ('peter','Peter Mount');
-INSERT 2610132 1
-test=> INSERT INTO server VALUES ('maidast',2610132::users);
-INSERT 2610133 1
-test=> SELECT * FROM users;
-username|fullname      
---------+--------------
-peter   |Peter Mount   
-(1 row)
-
-test=> SELECT * FROM server;
-servername|adminuser
-----------+---------
-maidast   |  2610132
-(1 row)
-</screen>
-    Okay, the above example shows that we can use a table name as a
-    field, and the row's oid value is stored in that field.
-   </para>
-
-   <para>
-    What does this have to do with Java?
-   </para>
-
-   <para>
-    In Java, you can store an object to a Stream as long as it's class
-    implements the java.io.Serializable interface. This process, known
-    as Object Serialization, can be used to store complex objects into
-    the database.
-   </para>
-
-   <para>
-    Now, under <acronym>JDBC</acronym>, you would have to use a
-    Large Object to store them.  However, you cannot perform queries on
-    those objects.
-   </para>
-
-   <para>
-    What the org.postgresql.util.Serialize class does, is provide a
-    means of storing an object as a table, and to retrieve that object
-    from a table. In most cases, you would not need to access this
-    class direct, but you would use the PreparedStatement.setObject()
-    and ResultSet.getObject() methods. Those methods will check the
-    objects class name against the table's in the database. If a match
-    is found, it assumes that the object is a Serialized object, and
-    retrieves it from that table. As it does so, if the object
-    contains other serialized objects, then it recurses down the tree.
-   </para>
-
-   <para>
-    Sound's complicated? In fact, it's simpler than what I wrote -
-    it's just difficult to explain.
-   </para>
-
-   <para>
-    The only time you would access this class, is to use the create()
-    methods. These are not used by the driver, but issue one or more
-    <command>CREATE TABLE</command> statements to the database, based on a Java Object
-    or Class that you want to serialize.
-   </para>
-
-   <para>
-    Oh, one last thing. If your object contains a line like:
-<programlisting>
-public int oid;
-</programlisting>
-    then, when the object is retrieved from the table, it is set to
-    the oid within the table. Then, if the object is modified, and re-
-    serialized, the existing entry is updated.
-   </para>
-
-   <para>
-    If the oid variable is not present, then when the object is
-    serialized, it is always inserted into the table, and any existing
-    entry in the table is preserved.
-   </para>
-
-   <para>
-    Setting oid to 0 before serialization, will also cause the object
-    to be inserted. This enables an object to be duplicated in the
-    database.
-   </para>
-
-<programlisting>
-Class org.postgresql.util.Serialize
-
-java.lang.Object
-   |
-   +----org.postgresql.util.Serialize
-
-   public class Serialize extends Object
-
-   This class uses <productname>PostgreSQL</productname>'s object oriented features to store Java 
-Objects. It does this by mapping a Java Class name to a table in the 
-database. Each entry in this new table then represents a Serialized 
-instance of this class. As each entry has an OID (Object IDentifier), 
-this OID can be included in another table. This is too complex to show 
-here, and will be documented in the main documents in more detail.
-
-Constructors
-
- public Serialize(org.postgresql.Connection c,
-                  String type) throws SQLException
-
-          This creates an instance that can be used to serialize 
-or deserialize a Java object from a <productname>PostgreSQL</productname> table.
-
-Methods
-
- public Object fetch(int oid) throws SQLException
-
-          This fetches an object from a table, given it's OID
-
-        Parameters:
-                oid - The oid of the object
-
-        Returns:
-                Object relating to oid
-
-        Throws: SQLException
-                on error
-
- public int store(Object o) throws SQLException
-
-          This stores an object into a table, returning it's OID.
-
-          If the object has an int called OID, and it is > 0, then 
-that value is used for the OID, and the table will be updated. If the 
-value of OID is 0, then a new row will be created, and the value of 
-OID will be set in the object. This enables an object's value in the 
-database to be updateable. If the object has no int called OID, then 
-the object is stored. However if the object is later retrieved, 
-amended and stored again, it's new state will be appended to the 
-table, and will not overwrite the old entries.
-
-        Parameters:
-                o - Object to store (must implement Serializable)
-
-        Returns:
-                oid of stored object
-
-        Throws: SQLException
-                on error
- 
- public static void create(org.postgresql.Connection con,
-                           Object o) throws SQLException
-
-          This method is not used by the driver, but it creates a 
-table, given a Serializable Java Object. It should be used before 
-serializing any objects.
-
-        Parameters:
-                c - Connection to database
-                o - Object to base table on
-
-        Throws: SQLException
-                on error
-
- public static void create(org.postgresql.Connection con,
-                           Class c) throws SQLException
-
-          This method is not used by the driver, but it creates a 
-table, given a Serializable Java Object. It should be used before 
-serializing any objects.
-
-        Parameters:
-                c - Connection to database
-                o - Class to base table on
-
-        Throws: SQLException
-                on error
-
- public static String toPostgreSQL(String name) throws SQLException
-          
-          This converts a Java Class name to a <productname>PostgreSQL</productname> table, by
-          replacing . with _
-
-          Because of this, a Class name may not have _ in the name.
-
-          Another limitation, is that the entire class name (including
-          packages) cannot be longer than 31 characters (a limit 
-forced by <productname>PostgreSQL</productname>).
-
-        Parameters:
-                name - Class name
-
-        Returns:
-                <productname>PostgreSQL</productname> table name
-
-        Throws: SQLException
-                on error
-          
- public static String toClassName(String name) throws SQLException
-
-          This converts a <productname>PostgreSQL</productname> table to a Java Class name, by
-          replacing _ with .
-
-        Parameters:
-                name - <productname>PostgreSQL</productname> table name
-  
-        Returns:
-                Class name
-
-        Throws: SQLException
-                on error
-<!-- **************************************************************** -->
-Utility Classes
-
-The org.postgresql.util package contains classes used by the internals of 
-the main driver, and the other extensions.
-
-Class org.postgresql.util.PGmoney
-                                
-java.lang.Object
-   |
-   +----org.postgresql.util.PGobject
-           |
-           +----org.postgresql.util.PGmoney
-
-   public class PGmoney extends PGobject implements Serializable, 
-Cloneable
-               
-   This implements a class that handles the <productname>PostgreSQL</productname> money type
-
-Variables
-
- public double val
-                                
-          The value of the field
-
-Constructors
-           
- public PGmoney(double value)
-   
-        Parameters:
-                value - of field
-               
- public PGmoney(String value) throws SQLException
-   
-          Create a money.
-
-        Parameters:
-                value - Definition of this money in <productname>PostgreSQL</productname>'s 
-syntax
-
- public PGmoney()
-
-          Required by the driver
-
-Methods
-
- public void setValue(String s) throws SQLException
-
-        Parameters:
-                s - Definition of this money in <productname>PostgreSQL</productname>'s syntax
-
-        Throws: SQLException
-                on conversion failure
-
-        Overrides:
-                setValue in class PGobject
-
- public boolean equals(Object obj)
-
-        Parameters:
-                obj - Object to compare with
-                                
-        Returns:
-                true if the two moneys are identical
-
-        Overrides:
-                equals in class PGobject
-
- public Object clone()
-                
-          This must be overridden to allow the object to be cloned
-
-        Overrides:
-                clone in class PGobject
-
- public String getValue()
-
-        Returns:
-                the PGmoney in the syntax expected by <productname>PostgreSQL</productname>
-
-        Overrides:
-                getValue in class PGobject
-
-<!-- **************************************************************** -->
-Class org.postgresql.util.PGobject
-
-java.lang.Object
-   |
-   +----org.postgresql.util.PGobject
-
-   public class PGobject extends Object implements Serializable, 
-Cloneable
-               
-   This class is used to describe data types that are unknown by
-     <acronym>JDBC</acronym> 
-Standard.
-    A call to org.postgresql.Connection permits a class that extends this 
-class to be associated with a named type. This is how the 
-org.postgresql.geometric package operates.
-    ResultSet.getObject() will return this class for any type that is 
-not recognized on having it's own handler. Because of this, any 
-<productname>PostgreSQL</productname> data type is supported.
-
-Constructors
-
- public PGobject()
-
-          This is called by org.postgresql.Connection.getObject() to 
-create the object.
-
-Methods
-
- public final void setType(String type)
-
-          This method sets the type of this object.
-
-          It should not be extended by subclasses, hence its final
-
-        Parameters:
-                type - a string describing the type of the object
-
- public void setValue(String value) throws SQLException
-
-          This method sets the value of this object. It must be 
-overridden.
-
-        Parameters:
-                value - a string representation of the value of the
-                object
-
-        Throws: SQLException
-                thrown if value is invalid for this type
-    
- public final String getType()
-
-          As this cannot change during the life of the object, it's 
-final.
-
-        Returns:
-                the type name of this object
-
- public String getValue()
-
-          This must be overridden, to return the value of the object, 
-in the form required by <productname>PostgreSQL</productname>.
-
-        Returns:
-                the value of this object
-
- public boolean equals(Object obj)
-
-          This must be overridden to allow comparisons of objects
-
-        Parameters:
-                obj - Object to compare with
-
-        Returns:
-                true if the two objects are identical
-
-        Overrides:
-                equals in class Object
-
- public Object clone()
-
-          This must be overridden to allow the object to be cloned
-
-        Overrides:
-                clone in class Object
-
- public String toString()
-
-          This is defined here, so user code need not override it.
-          
-        Returns:
-                the value of this object, in the syntax expected by 
-<productname>PostgreSQL</productname>
-
-        Overrides:
-                toString in class Object
-
-<!-- **************************************************************** -->
-Class org.postgresql.util.PGtokenizer
-
-java.lang.Object
-   |
-   +----org.postgresql.util.PGtokenizer
-
-   public class PGtokenizer extends Object
-
-   This class is used to tokenize the text output of <productname>PostgreSQL</productname>.
-
-   We could have used StringTokenizer to do this, however, we needed 
-to handle nesting of '(' ')' '[' ']' '<' and '>' as these are used by 
-the geometric data types.
-
-   It's mainly used by the geometric classes, but is useful in parsing 
-any output from custom data types output from <productname>PostgreSQL</productname>.
-                 
-   See Also:
-          PGbox, PGcircle, PGlseg, PGpath, PGpoint, PGpolygon
-          
-Constructors
-
- public PGtokenizer(String string,
-                    char delim)
-
-          Create a tokenizer.
-
-        Parameters:
-                string - containing tokens
-                delim - single character to split the tokens
-
-Methods
-        
- public int tokenize(String string,
-                     char delim)
-
-          This resets this tokenizer with a new string and/or 
-delimiter.
-
-        Parameters:
-                string - containing tokens
-                delim - single character to split the tokens
-
- public int getSize()
-
-        Returns:
-                the number of tokens available
-
- public String getToken(int n)
-
-        Parameters:
-                n - Token number ( 0 ... getSize()-1 )
-
-        Returns:
-                The token value
-
- public PGtokenizer tokenizeToken(int n,
-                                  char delim)
-
-          This returns a new tokenizer based on one of our tokens. The 
-geometric data types use this to process nested tokens (usually 
-PGpoint).
-
-        Parameters:
-                n - Token number ( 0 ... getSize()-1 )
-                delim - The delimiter to use
-
-        Returns:
-                A new instance of PGtokenizer based on the token
-
- public static String remove(String s,
-                             String l,
-                             String t)
-
-          This removes the lead/trailing strings from a string
-
-        Parameters:
-                s - Source string
-                l - Leading string to remove
-                t - Trailing string to remove
-                
-        Returns:
-                String without the lead/trailing strings
-
- public void remove(String l,
-                    String t)
-
-          This removes the lead/trailing strings from all tokens
-
-        Parameters:
-                l - Leading string to remove
-                t - Trailing string to remove
-
- public static String removePara(String s)
-
-          Removes ( and ) from the beginning and end of a string
-
-        Parameters:
-                s - String to remove from
-
-        Returns:
-                String without the ( or )
-
- public void removePara()
-
-          Removes ( and ) from the beginning and end of all tokens
-
- public static String removeBox(String s)
-   
-          Removes [ and ] from the beginning and end of a string
-
-        Parameters:
-                s - String to remove from
-   
-        Returns:
-                String without the [ or ]
-
- public void removeBox()
-
-          Removes [ and ] from the beginning and end of all tokens
-
- public static String removeAngle(String s)
-
-          Removes < and > from the beginning and end of a string
-
-        Parameters:
-                s - String to remove from
-
-        Returns:
-                String without the < or >
-
- public void removeAngle()
-
-          Removes < and > from the beginning and end of all tokens
-
-<!-- **************************************************************** -->
-Class org.postgresql.util.Serialize
-
-This was documented earlier under Object Serialization.
-
-Class org.postgresql.util.UnixCrypt
-              
-java.lang.Object
-   |
-   +----org.postgresql.util.UnixCrypt
-
-   public class UnixCrypt extends Object
-
-   This class provides us with the ability to encrypt passwords when 
-sent over the network stream
-
-   Contains static methods to encrypt and compare passwords with Unix 
-encrypted passwords.
-
-   See John Dumas's Java Crypt page for the original source.  
-
-   (Invalid URL) http://www.zeh.com/local/jfd/crypt.html
-
-Methods
-
- public static final String crypt(String salt,
-                                  String original)
-
-          Encrypt a password given the clear-text password and a 
-<quote>salt</quote>.
-   
-        Parameters:
-                salt - A two-character string representing the salt 
-used
-                to iterate the encryption engine in lots of different
-                ways. If you are generating a new encryption then this
-                value should be randomized.
-                original - The password to be encrypted.
-
-        Returns:
-                A string consisting of the 2-character salt followed 
-by
-                the encrypted password.
-              
- public static final String crypt(String original)
-
-          Encrypt a password given the clear-text password. This method 
-generates a random salt using the 'java.util.Random' class.
-
-        Parameters:
-                original - The password to be encrypted.
-   
-        Returns: 
-                A string consisting of the 2-character salt followed 
-by
-                the encrypted password.
-               
- public static final boolean matches(String encryptedPassword,
-                                     String enteredPassword)
-                 
-          Check that enteredPassword encrypts to encryptedPassword.
-               
-        Parameters:
-                encryptedPassword - The encryptedPassword. The first 
-two characters are assumed to be the salt. This string would be the 
-same as one found in a Unix /etc/passwd file.
-                enteredPassword - The password as entered by the user 
-(or otherwise acquired).
-
-        Returns:
-                true if the password should be considered correct.
-</programlisting>
-  </sect2>
-
  </sect1>
-<!-- **************************************************************** -->
+
 
  <sect1 id="jdbc-thread">
   <title>Using the driver in a multi-threaded or a servlet environment</title>
@@ -2947,9 +2492,8 @@ same as one found in a Unix /etc/passwd file.
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> 6.4 brought thread safety to
-   the entire driver.  (Standard <acronym>JDBC</acronym> was thread
-   safe in 6.3, but the Fastpath <acronym>API</acronym> was not.)
+   The <productname>PostgreSQL</productname> <acronyn>JDBC</acronym> Driver
+   is thread safe.
    Consequently, if your application uses multiple threads then you do
    not have to worry about complex algorithms to ensure that only one
    uses the database at any time.
