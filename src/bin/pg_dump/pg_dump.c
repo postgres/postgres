@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.311 2002/12/12 21:03:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.312 2002/12/21 22:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,7 +762,8 @@ selectDumpableNamespace(NamespaceInfo *nsinfo)
 	 */
 	if (selectTablename != NULL)
 		nsinfo->dump = false;
-	else if (strncmp(nsinfo->nspname, "pg_", 3) == 0)
+	else if (strncmp(nsinfo->nspname, "pg_", 3) == 0 ||
+			 strcmp(nsinfo->nspname, "information_schema") == 0)
 		nsinfo->dump = false;
 	else
 		nsinfo->dump = true;
@@ -1219,7 +1220,8 @@ dumpDatabase(Archive *AH)
 
 	/* Get the database owner and parameters from pg_database */
 	appendPQExpBuffer(dbQry, "select (select usename from pg_user where usesysid = datdba) as dba,"
-					  " encoding, datpath from pg_database"
+					  " pg_encoding_to_char(encoding) as encoding,"
+					  " datpath from pg_database"
 					  " where datname = ");
 	appendStringLiteral(dbQry, datname, true);
 
@@ -1258,10 +1260,16 @@ dumpDatabase(Archive *AH)
 
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
 					  fmtId(datname));
-	if (strlen(encoding) > 0)
-		appendPQExpBuffer(creaQry, " ENCODING = %s", encoding);
 	if (strlen(datpath) > 0)
-		appendPQExpBuffer(creaQry, " LOCATION = '%s'", datpath);
+	{
+		appendPQExpBuffer(creaQry, " LOCATION = ");
+		appendStringLiteral(creaQry, datpath, true);
+	}
+	if (strlen(encoding) > 0)
+	{
+		appendPQExpBuffer(creaQry, " ENCODING = ");
+		appendStringLiteral(creaQry, encoding, true);
+	}
 	appendPQExpBuffer(creaQry, ";\n");
 
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
