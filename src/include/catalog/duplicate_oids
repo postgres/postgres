@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# duplicate_oids
+#
+# finds oids that are duplicated in the system tables.
+#
+
+egrep '^DATA' pg_*.h | \
+	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
+	sort -n >/tmp/alloids.$$
+uniq /tmp/alloids.$$ >/tmp/uniqoids.$$
+diff -u /tmp/alloids.$$ /tmp/uniqoids.$$ | \
+	grep -v '/tmp/' | \
+	grep '^-' | \
+	sed -e 's/^-//' | \
+	grep -v '^0$' | \
+	uniq
+rm /tmp/alloids.$$
+rm /tmp/uniqoids.$$
+

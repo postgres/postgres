@@ -1,0 +1,41 @@
+#!/bin/sh
+# unused_oids
+#
+# $Header: /cvsroot/pgsql/src/include/catalog/unused_oids,v 1.1 1997/03/15 06:03:08 scrappy Exp $
+#
+#	finds blocks of oids that have not already been claimed by 
+#	post_hackers for internal purposes.  primarily useful for
+#	finding valid oids for new internal function oids.  the numbers
+#	printed are inclusive ranges of valid (unused) oids.
+#
+#	before using a large empty block, make sure you aren't about
+#	to take over what was intended as expansion space for something
+#	else.  also, before using a number, do a "grepsrc" to make sure 
+#	that someone isn't using a literal numeric constant somewhere..
+#
+#	non-berkeley post_hackers should probably not try to use oids 
+#	less than the highest one that comes with the distributed source.
+#
+#	run this script in src/backend/catalog.
+#
+egrep '^DATA' pg_*.h | \
+	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
+	sort -n | \
+	uniq | \
+	awk '
+BEGIN {
+	last = 0;
+}
+/^[0-9]/ {
+	if ($1 > last + 1) {
+		if ($1 > last + 2) {
+			print last + 1, "-", $1 - 1;
+		} else {
+			print last + 1;
+		}
+	}
+	last = $1;
+}
+END {
+	print last + 1, "-";
+}'
