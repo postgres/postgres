@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/gist.sgml,v 1.12 2003/09/29 18:18:35 momjian Exp $
+-->
+
 <Chapter Id="gist">
 <DocInfo>
 <AuthorGroup>

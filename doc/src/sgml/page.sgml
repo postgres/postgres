@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/page.sgml,v 1.14 2003/09/29 18:18:35 momjian Exp $
+-->
+
 <chapter id="page">
 
 <title>Page Files</title>

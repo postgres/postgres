@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.23 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.24 2003/09/29 18:18:35 momjian Exp $
 Genetic Optimizer
 -->
 
@@ -28,7 +28,7 @@ Genetic Optimizer
    <date>1997-10-02</date>
   </docinfo>
 
-  <title>Genetic Query Optimization</title>
+  <title id="geqo-title">Genetic Query Optimizer</title>
 
   <para>
    <note>
@@ -44,24 +44,29 @@ Genetic Optimizer
    <title>Query Handling as a Complex Optimization Problem</title>
 
    <para>
-    Among all relational operators the most difficult one to process and
-    optimize is the <firstterm>join</firstterm>. The number of alternative plans to answer a query
-    grows exponentially with the number of joins included in it. Further
-    optimization effort is caused by the support of a variety of
-    <firstterm>join methods</firstterm>
-    (e.g., nested loop, hash join, merge join in <productname>PostgreSQL</productname>) to
-    process individual joins and a diversity of
-    <firstterm>indexes</firstterm> (e.g., R-tree,
-    B-tree, hash in <productname>PostgreSQL</productname>) as access paths for relations.
+    Among all relational operators the most difficult one to process
+    and optimize is the <firstterm>join</firstterm>. The number of
+    alternative plans to answer a query grows exponentially with the
+    number of joins included in it. Further optimization effort is
+    caused by the support of a variety of <firstterm>join
+    methods</firstterm> (e.g., nested loop, hash join, merge join in
+    <productname>PostgreSQL</productname>) to process individual joins
+    and a diversity of <firstterm>indexes</firstterm> (e.g., R-tree,
+    B-tree, hash in <productname>PostgreSQL</productname>) as access
+    paths for relations.
    </para>
 
    <para>
     The current <productname>PostgreSQL</productname> optimizer
-    implementation performs a <firstterm>near-exhaustive search</firstterm>
-    over the space of alternative strategies. This query 
-    optimization technique is inadequate to support database application
-    domains that involve the need for extensive queries, such as artificial
-    intelligence.
+    implementation performs a <firstterm>near-exhaustive
+    search</firstterm> over the space of alternative strategies. This
+    algorithm, first introduced in the <quote>System R</quote>
+    database, produces a near-optimal join order, but can take an
+    enormous amount of time and memory space when the number of joins
+    in the query grows large. This makes the ordinary
+    <productname>PostgreSQL</productname> query optimizer
+    inappropriate for database application domains that involve the
+    need for extensive queries, such as artificial intelligence.
    </para>
 
    <para>
@@ -75,12 +80,14 @@ Genetic Optimizer
 
    <para>
     Performance difficulties in exploring the space of possible query
-    plans created the demand for a new optimization technique being developed.
+    plans created the demand for a new optimization technique to be developed.
    </para>
 
    <para>
-    In the following we propose the implementation of a <firstterm>Genetic Algorithm</firstterm>
-    as an option for the database query optimization problem.
+    In the following we describe the implementation of a
+    <firstterm>Genetic Algorithm</firstterm> to solve the join
+    ordering problem in a manner that is efficient for queries
+    involving large numbers of joins.
    </para>
   </sect1>
 
@@ -208,10 +215,10 @@ Genetic Optimizer
 
      <listitem>
       <para>
-       Usage of <firstterm>edge recombination crossover</firstterm> which is
-       especially suited
-       to keep edge losses low for the solution of the
-       <acronym>TSP</acronym> by means of a <acronym>GA</acronym>;
+       Usage of <firstterm>edge recombination crossover</firstterm>
+       which is especially suited to keep edge losses low for the
+       solution of the <acronym>TSP</acronym> by means of a
+       <acronym>GA</acronym>;
       </para>
      </listitem>
 

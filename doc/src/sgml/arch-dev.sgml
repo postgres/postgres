@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.22 2003/09/29 18:18:35 momjian Exp $
 -->
 
  <chapter id="overview">
@@ -25,7 +25,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
    very extensive. Rather, this chapter is intended to help the reader
    understand the general sequence of operations that occur within the
    backend from the point at which a query is received, to the point
-   when the results are returned to the client.
+   at which the results are returned to the client.
   </para>
 
   <sect1 id="query-path">
@@ -79,7 +79,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
     <step>
      <para>
       The <firstterm>planner/optimizer</firstterm> takes
-      the (rewritten) querytree and creates a 
+      the (rewritten) query tree and creates a 
       <firstterm>query plan</firstterm> that will be the input to the
       <firstterm>executor</firstterm>.
      </para>
@@ -183,12 +183,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
     <title>Parser</title>
 
     <para>
-     The parser has to check the query string (which arrives as
-     plain ASCII text) for valid syntax. If the syntax is correct a
-     <firstterm>parse tree</firstterm> is built up and handed back otherwise an error is
-     returned. For the implementation the well known Unix
-     tools <application>lex</application> and <application>yacc</application>
-     are used.
+     The parser has to check the query string (which arrives as plain
+     ASCII text) for valid syntax. If the syntax is correct a
+     <firstterm>parse tree</firstterm> is built up and handed back;
+     otherwise an error is returned. The parser and lexer are
+     implemented using the well-known Unix tools <application>yacc</>
+     and <application>lex</>.
     </para>
 
     <para>
@@ -201,23 +201,22 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
     </para>
 
     <para>
-     The parser is defined in the file <filename>gram.y</filename> and consists of a
-     set of <firstterm>grammar rules</firstterm> and <firstterm>actions</firstterm>
-     that are executed
-     whenever a rule is fired. The code of the actions (which
-     is actually C-code) is used to build up the parse tree.
+     The parser is defined in the file <filename>gram.y</filename> and
+     consists of a set of <firstterm>grammar rules</firstterm> and
+     <firstterm>actions</firstterm> that are executed whenever a rule
+     is fired. The code of the actions (which is actually C code) is
+     used to build up the parse tree.
     </para>
 
     <para>
-     The file <filename>scan.l</filename> is transformed to
-     the C-source file <filename>scan.c</filename>
-     using the program <application>lex</application>
-     and <filename>gram.y</filename> is transformed to
-     <filename>gram.c</filename> using <application>yacc</application>.
-     After these transformations have taken
-     place a normal C-compiler can be used to create the
-     parser. Never make any changes to the generated C-files as they will
-     be overwritten the next time <application>lex</application>
+     The file <filename>scan.l</filename> is transformed to the C
+     source file <filename>scan.c</filename> using the program
+     <application>lex</application> and <filename>gram.y</filename> is
+     transformed to <filename>gram.c</filename> using
+     <application>yacc</application>.  After these transformations
+     have taken place a normal C compiler can be used to create the
+     parser. Never make any changes to the generated C files as they
+     will be overwritten the next time <application>lex</application>
      or <application>yacc</application> is called.
 
      <note>
@@ -334,14 +333,26 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
    <title>Planner/Optimizer</title>
 
    <para>
-    The task of the <firstterm>planner/optimizer</firstterm> is to create an optimal
-    execution plan. It first considers all possible ways of
-    <firstterm>scanning</firstterm> and <firstterm>joining</firstterm>
-    the relations that appear in a
-    query. All the created paths lead to the same result and it's the
-    task of the optimizer to estimate the cost of executing each path and
-    find out which one is the cheapest.
+    The task of the <firstterm>planner/optimizer</firstterm> is to
+    create an optimal execution plan. A given SQL query (and hence, a
+    query tree) can be actually executed in a wide variety of
+    different ways, each of which will produce the same set of
+    results.  If it is computationally feasible, the query optimizer
+    will examine each of these possible execution plans, ultimately
+    selecting the execution plan that will run the fastest.
    </para>
+
+   <note>
+    <para>
+     In some situations, examining each possible way in which a query
+     may be executed would take an excessive amount of time and memory
+     space. In particular, this occurs when executing queries
+     involving large numbers of join operations. In order to determine
+     a reasonable (not optimal) query plan in a reasonable amount of
+     time, <productname>PostgreSQL</productname> uses a <xref
+     linkend="geqo" endterm="geqo-title">.
+    </para>
+   </note>
 
    <para>
     After the cheapest path is determined, a <firstterm>plan tree</>
@@ -373,7 +384,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
      After all feasible plans have been found for scanning single relations,
      plans for joining relations are created. The planner/optimizer
      preferentially considers joins between any two relations for which there
-     exist a corresponding join clause in the WHERE qualification (i.e. for
+     exist a corresponding join clause in the <literal>WHERE</literal> qualification (i.e. for
      which a restriction like <literal>where rel1.attr1=rel2.attr2</literal>
      exists). Join pairs with no join clause are considered only when there
      is no other choice, that is, a particular relation has no available
@@ -416,17 +427,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tg
     </para>
 
     <para>
-     The finished plan tree consists of sequential or index scans of the
-     base relations, plus nestloop, merge, or hash join nodes as needed,
-     plus any auxiliary steps needed, such as sort nodes or aggregate-function
-     calculation nodes.  Most of these plan node types have the additional
-     ability to do <firstterm>selection</> (discarding rows that do
-     not meet a specified boolean condition) and <firstterm>projection</>
-     (computation of a derived column set based on given column values,
-     that is, evaluation of scalar expressions where needed).  One of
-     the responsibilities of the planner is to attach selection conditions
-     from the WHERE clause and computation of required output expressions
-     to the most appropriate nodes of the plan tree.
+     The finished plan tree consists of sequential or index scans of
+     the base relations, plus nestloop, merge, or hash join nodes as
+     needed, plus any auxiliary steps needed, such as sort nodes or
+     aggregate-function calculation nodes.  Most of these plan node
+     types have the additional ability to do <firstterm>selection</>
+     (discarding rows that do not meet a specified boolean condition)
+     and <firstterm>projection</> (computation of a derived column set
+     based on given column values, that is, evaluation of scalar
+     expressions where needed).  One of the responsibilities of the
+     planner is to attach selection conditions from the
+     <literal>WHERE</literal> clause and computation of required
+     output expressions to the most appropriate nodes of the plan
+     tree.
     </para>
    </sect2>
   </sect1>

@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.12 2003/09/29 18:18:35 momjian Exp $
+-->
+
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
 
