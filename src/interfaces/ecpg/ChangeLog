@@ -1736,3 +1736,8 @@ Mon Jan 26 21:57:14 CET 2004
 	- Fixed parsing of nested structures.
 	- Added option to parse header files.
 
+Sun Feb 15 14:44:14 CET 2004
+
+	- Added missing braces to array parsing.
+	- Set ecpg version to 3.1.1.
+
