@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 20 16:07:04 EDT 2004
+Last updated:		Mon Aug 23 17:56:39 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -737,7 +737,8 @@ Write-Ahead Log
 
   Currently, to protect against partial disk page writes, we write the
   full page images to WAL before they are modified so we can correct any
-  partial page writes during recovery.
+  partial page writes during recovery.  These pages can also be
+  eliminated from point-in-time archive files.
 
 * Reduce WAL traffic so only modified values are written rather than
   entire rows (?)
