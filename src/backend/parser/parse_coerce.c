@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.75 2002/07/06 20:16:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.76 2002/07/09 05:21:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 {
 	Oid			baseTypeId;
 	Oid			funcId;
-	int32		domainTypMod = NULL;
+	int32		domainTypMod = 0;
 
 	/* If given type is a domain, use base type instead */
 	baseTypeId = getBaseTypeTypeMod(targetTypeId, &domainTypMod);
