@@ -120,7 +120,7 @@ create function trig_pkey1_before() returns trigger as '
 	#
         spi_execp -count 1 $GD(plan_pkey1) [list $NEW(key1) $NEW(key2)]
 	if {$ret == "t"} {
-	    elog WARN \\
+	    elog ERROR \\
 	        "duplicate key ''$NEW(key1)'', ''$NEW(key2)'' for T_pkey1"
 	}
     }
@@ -131,7 +131,7 @@ create function trig_pkey1_before() returns trigger as '
 	#
         set n [spi_execp -count 1 $GD(plan_dta1) [list $OLD(key1) $OLD(key2)]]
 	if {$n > 0} {
-	    elog WARN \\
+	    elog ERROR \\
 	        "key ''$OLD(key1)'', ''$OLD(key2)'' referenced by T_dta1"
 	}
     }
@@ -173,7 +173,7 @@ create function trig_pkey2_before() returns trigger as '
     #
     set n [spi_execp -count 1 $GD(plan_pkey2) [list $NEW(key1) $NEW(key2)]]
     if {$n > 0} {
-	elog WARN \\
+	elog ERROR \\
 	    "duplicate key ''$NEW(key1)'', ''$NEW(key2)'' for T_pkey2"
     }
 
@@ -325,7 +325,7 @@ create function check_primkey() returns trigger as '
 		  and A.attname  = ''[quote $key]''		\\
 		  and A.atttypid = T.oid"]
 	    if {$n != 1} {
-	        elog WARN "table $keyrel doesn''t have a field named $key"
+	        elog ERROR "table $keyrel doesn''t have a field named $key"
 	    }
 
 	    #
@@ -362,7 +362,7 @@ create function check_primkey() returns trigger as '
     #
     set n [spi_execp -count 1 $GD($plankey) $arglist]
     if {$n <= 0} {
-        elog WARN "key for $GD($planrel) not in $keyrel"
+        elog ERROR "key for $GD($planrel) not in $keyrel"
     }
 
     #
