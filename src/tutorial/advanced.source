@@ -6,13 +6,13 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: advanced.source,v 1.4 2001/09/02 23:27:50 petere Exp $
+-- $Id: advanced.source,v 1.5 2002/04/11 21:18:50 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
 -----------------------------
 -- Inheritance:
---	S table can inherit from zero or more tables.  A query can reference
+--	A table can inherit from zero or more tables.  A query can reference
 --	either all rows of a table or all rows of a table plus all of its
 --	descendants.
 -----------------------------
@@ -41,18 +41,18 @@ INSERT INTO capitals VALUES ('Madison', 1.913E+5, 845, 'WI');
 SELECT * FROM cities;
 SELECT * FROM capitals;
 
--- like before, a regular query references rows of the base table only
-
-SELECT name, altitude
-FROM cities
-WHERE altitude > 500;
-
--- on the other hand, you can find all cities, including capitals, that
--- are located at an altitude of 500 'ft or higher by:
+-- You can find all cities, including capitals, that
+-- are located at an altitude of 500 ft or higher by:
 
 SELECT c.name, c.altitude
-FROM cities* c
+FROM cities c
 WHERE c.altitude > 500;
+
+-- To scan rows of the parent table only, use ONLY:
+
+SELECT name, altitude
+FROM ONLY cities
+WHERE altitude > 500;
 
 
 -- clean up (you must remove the children first)
