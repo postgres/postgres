@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.9 1997/03/12 21:17:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.10 1997/03/18 21:46:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,10 +438,15 @@ be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo* sp)
        what used to be the only choice, but installation may choose "hba"
        instead.
        */
-    if (msgtype_arg == STARTUP_MSG && useHostBasedAuth)
-        msgtype = STARTUP_HBA_MSG;
-    else
-        msgtype = msgtype_arg;
+    if (msgtype_arg != STARTUP_KRB4_MSG && msgtype_arg != STARTUP_KRB5_MSG) {
+        if (msgtype_arg == STARTUP_MSG && useHostBasedAuth)
+            msgtype = STARTUP_HBA_MSG;
+        else 
+            msgtype = STARTUP_UNAUTH_MSG;
+    } else {
+            msgtype = msgtype_arg;
+    }
+
 
     if (!username) {
         (void) sprintf(PQerrormsg,
