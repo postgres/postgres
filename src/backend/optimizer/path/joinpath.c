@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.14 1999/02/04 03:19:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.15 1999/02/08 04:29:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ match_unsorted_outer(RelOptInfo * joinrel,
 
 		outerpath = (Path *) lfirst(i);
 
-		outerpath_ordering = &outerpath->p_ordering;
+		outerpath_ordering = &outerpath->path_order;
 
 		if (outerpath_ordering)
 		{
@@ -471,7 +471,7 @@ match_unsorted_inner(RelOptInfo * joinrel,
 
 		innerpath = (Path *) lfirst(i);
 
-		innerpath_ordering = &innerpath->p_ordering;
+		innerpath_ordering = &innerpath->path_order;
 
 		if (innerpath_ordering)
 		{

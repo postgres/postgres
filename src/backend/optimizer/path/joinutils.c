@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.10 1999/02/06 17:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.11 1999/02/08 04:29:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ match_paths_joinkeys(List *joinkeys,
 		key_match = every_func(joinkeys, path->keys, which_subkey);
 
 		if (equal_path_ordering(ordering,
-								&path->p_ordering) &&
+								&path->path_order) &&
 			length(joinkeys) == length(path->keys) &&
 			key_match)
 		{

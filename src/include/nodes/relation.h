@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.15 1999/02/05 19:59:31 momjian Exp $
+ * $Id: relation.h,v 1.16 1999/02/08 04:29:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ typedef struct Path
 
 	NodeTag		pathtype;
 
-	PathOrder	p_ordering;
+	PathOrder	path_order;
 
 	List	   *keys;
 	Cost		outerjoincost;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.25 1999/02/07 00:52:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.26 1999/02/08 04:29:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,33 +337,33 @@ _equalPath(Path *a, Path *b)
 	/*
 	 * if (a->path_cost != b->path_cost) return(false);
 	 */
-	if (a->p_ordering.ordtype == SORTOP_ORDER)
+	if (a->path_order.ordtype == SORTOP_ORDER)
 	{
 		int			i = 0;
 
-		if (a->p_ordering.ord.sortop == NULL ||
-			b->p_ordering.ord.sortop == NULL)
+		if (a->path_order.ord.sortop == NULL ||
+			b->path_order.ord.sortop == NULL)
 		{
-			if (a->p_ordering.ord.sortop != b->p_ordering.ord.sortop)
+			if (a->path_order.ord.sortop != b->path_order.ord.sortop)
 				return false;
 		}
 		else
 		{
-			while (a->p_ordering.ord.sortop[i] != 0 &&
-				   b->p_ordering.ord.sortop[i] != 0)
+			while (a->path_order.ord.sortop[i] != 0 &&
+				   b->path_order.ord.sortop[i] != 0)
 			{
-				if (a->p_ordering.ord.sortop[i] != b->p_ordering.ord.sortop[i])
+				if (a->path_order.ord.sortop[i] != b->path_order.ord.sortop[i])
 					return false;
 				i++;
 			}
-			if (a->p_ordering.ord.sortop[i] != 0 ||
-				b->p_ordering.ord.sortop[i] != 0)
+			if (a->path_order.ord.sortop[i] != 0 ||
+				b->path_order.ord.sortop[i] != 0)
 				return false;
 		}
 	}
 	else
 	{
-		if (!equal(a->p_ordering.ord.merge, b->p_ordering.ord.merge))
+		if (!equal(a->path_order.ord.merge, b->path_order.ord.merge))
 			return false;
 	}
 	if (!equal(a->keys, b->keys))

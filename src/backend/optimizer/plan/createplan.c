@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.37 1999/02/05 19:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.38 1999/02/08 04:29:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,14 +529,14 @@ create_mergejoin_node(MergePath *best_path,
 												outer_tlist,
 												inner_tlist));
 
-	opcode = get_opcode((best_path->jpath.path.p_ordering.ord.merge)->join_operator);
+	opcode = get_opcode((best_path->jpath.path.path_order.ord.merge)->join_operator);
 
 	outer_order = (Oid *) palloc(sizeof(Oid) * 2);
-	outer_order[0] = (best_path->jpath.path.p_ordering.ord.merge)->left_operator;
+	outer_order[0] = (best_path->jpath.path.path_order.ord.merge)->left_operator;
 	outer_order[1] = 0;
 
 	inner_order = (Oid *) palloc(sizeof(Oid) * 2);
-	inner_order[0] = (best_path->jpath.path.p_ordering.ord.merge)->right_operator;
+	inner_order[0] = (best_path->jpath.path.path_order.ord.merge)->right_operator;
 	inner_order[1] = 0;
 
 	/*

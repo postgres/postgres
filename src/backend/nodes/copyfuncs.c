@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.62 1999/02/05 19:59:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.63 1999/02/08 04:29:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1093,25 +1093,25 @@ CopyPathFields(Path *from, Path *newnode)
 
 	newnode->path_cost = from->path_cost;
 
-	newnode->p_ordering.ordtype = from->p_ordering.ordtype;
-	if (from->p_ordering.ordtype == SORTOP_ORDER)
+	newnode->path_order.ordtype = from->path_order.ordtype;
+	if (from->path_order.ordtype == SORTOP_ORDER)
 	{
 		int			len,
 					i;
-		Oid		   *ordering = from->p_ordering.ord.sortop;
+		Oid		   *ordering = from->path_order.ord.sortop;
 
 		if (ordering)
 		{
 			for (len = 0; ordering[len] != 0; len++)
 				;
-			newnode->p_ordering.ord.sortop = (Oid *) palloc(sizeof(Oid) * (len + 1));
+			newnode->path_order.ord.sortop = (Oid *) palloc(sizeof(Oid) * (len + 1));
 			for (i = 0; i < len; i++)
-				newnode->p_ordering.ord.sortop[i] = ordering[i];
-			newnode->p_ordering.ord.sortop[len] = 0;
+				newnode->path_order.ord.sortop[i] = ordering[i];
+			newnode->path_order.ord.sortop[len] = 0;
 		}
 	}
 	else
-		Node_Copy(from, newnode, p_ordering.ord.merge);
+		Node_Copy(from, newnode, path_order.ord.merge);
 
 	Node_Copy(from, newnode, keys);
 

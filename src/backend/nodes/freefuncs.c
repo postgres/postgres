@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.1 1999/02/06 16:50:25 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.2 1999/02/08 04:29:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,13 +756,13 @@ _freeRelOptInfo(RelOptInfo * node)
 static void
 FreePathFields(Path *node)
 {
-	if (node->p_ordering.ordtype == SORTOP_ORDER)
+	if (node->path_order.ordtype == SORTOP_ORDER)
 	{
-		if (node->p_ordering.ord.sortop)
-			pfree(node->p_ordering.ord.sortop);
+		if (node->path_order.ord.sortop)
+			pfree(node->path_order.ord.sortop);
 	}
 	else
-		freeObject(node->p_ordering.ord.merge);
+		freeObject(node->path_order.ord.merge);
 
 	freeObject(node->keys);
 

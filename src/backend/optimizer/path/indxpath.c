@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.38 1999/02/05 19:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.39 1999/02/08 04:29:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1290,8 +1290,8 @@ index_innerjoin(Query *root, RelOptInfo * rel, List *clausegroup_list,
 
 		pathnode->path.pathtype = T_IndexScan;
 		pathnode->path.parent = rel;
-	    pathnode->path.p_ordering.ordtype = SORTOP_ORDER;
-	    pathnode->path.p_ordering.ord.sortop = index->ordering;
+	    pathnode->path.path_order.ordtype = SORTOP_ORDER;
+	    pathnode->path.path_order.ord.sortop = index->ordering;
 	    pathnode->path.keys = NIL;	/* not sure about this, bjm 1998/09/21 */
 
 		pathnode->indexid = index->relids;

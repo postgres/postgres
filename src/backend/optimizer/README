@@ -1,3 +1,11 @@
+The optimizer generates optimial query plans by doing several steps:
+
+Take each relation in a query, and make a RelOptInfo structure for it. 
+Find each way of accessing the relation, called a Path, including
+sequential and index scans, and add it to the RelOptInfo.path_order
+list.
+
+
 Optimizer Functions
 -------------------
 
