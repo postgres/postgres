@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.36 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.37 2003/04/04 15:48:38 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -283,13 +283,11 @@ print_aligned_text(const char *title, const char *const * headers,
 	/* print title */
 	if (title && !opt_barebones)
 	{
-		int			tlen;
-
-		tlen = pg_wcswidth((unsigned char *) title, strlen(title), encoding);
-		if (tlen >= (int) total_w)
+		tmp = pg_wcswidth((unsigned char *) title, strlen(title), encoding);
+		if (tmp >= total_w)
 			fprintf(fout, "%s\n", title);
 		else
-			fprintf(fout, "%-*s%s\n", ((int) total_w - tlen) / 2, "", title);
+			fprintf(fout, "%-*s%s\n", (total_w - tmp) / 2, "", title);
 	}
 
 	/* print headers */
@@ -305,7 +303,7 @@ print_aligned_text(const char *title, const char *const * headers,
 
 		for (i = 0; i < col_count; i++)
 		{
-			int			nbspace;
+			unsigned int		nbspace;
 
 			nbspace = widths[i] - head_w[i];
 
@@ -420,18 +418,27 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	/* count headers and find longest one */
 	for (ptr = headers; *ptr; ptr++)
 		col_count++;
-	head_w = calloc(col_count, sizeof(*head_w));
-	if (!head_w)
+	if (col_count > 0)
 	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
+		head_w = calloc(col_count, sizeof(*head_w));
+		if (!head_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
 	}
+	else
+		head_w = NULL;
+
 	for (i = 0; i < col_count; i++)
 	{
-		if ((tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]), encoding)) > hwidth)
+		tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]), encoding);
+		if (tmp > hwidth)
 			hwidth = tmp;
 		head_w[i] = tmp;
 	}
+
+	/* Count cells, find their lengths */
 	for (ptr = cells; *ptr; ptr++)
 		cell_count++;
 
@@ -445,12 +452,13 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		}
 	}
 	else
-		cell_w = 0;
+		cell_w = NULL;
 
 	/* find longest data cell */
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		if ((tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding)) > dwidth)
+		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding);
+		if (tmp > dwidth)
 			dwidth = tmp;
 		cell_w[i] = tmp;
 	}
@@ -479,7 +487,6 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		strcat(divider, opt_border > 0 ? "-" : " ");
 	if (opt_border == 2)
 		strcat(divider, "-+");
-
 
 	/* print records */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
@@ -543,7 +550,6 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 	if (opt_border == 2)
 		fprintf(fout, "%s\n", divider);
-
 
 	/* print footers */
 
