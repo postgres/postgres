@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.164 2000/08/24 03:29:08 tgl Exp $
+ * $Id: pg_proc.h,v 1.165 2000/09/05 20:25:13 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2408,6 +2408,11 @@ DATA(insert OID = 1778 ( to_timestamp		PGUID 12 f t f t 2 f	1184 "25 25" 100 0 0
 DESCR("convert text to timestamp");
 DATA(insert OID = 1780 ( to_date			PGUID 12 f t f t 2 f	1082 "25 25" 100 0 0 100  to_date - ));
 DESCR("convert text to date");
+
+DATA(insert OID =  1282 ( quote_ident	   PGUID 12 f t t t 1 f 25 "25" 100 0 0 100 quote_ident - ));
+DESCR("quote an identifier for usage in a querystring");
+DATA(insert OID =  1283 ( quote_literal	   PGUID 12 f t t t 1 f 25 "25" 100 0 0 100 quote_literal - ));
+DESCR("quote a literal for usage in a querystring");
 
 DATA(insert OID = 1798 (  oidin			   PGUID 12 f t t t 1 f 26 "0" 100 0 0 100  oidin - ));
 DESCR("(internal)");
