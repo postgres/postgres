@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.105 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.106 2003/07/27 19:39:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,8 +685,15 @@ GetUserNameFromId(AclId userid)
 static void
 UnlinkLockFile(int status, Datum filename)
 {
-	unlink((char *) DatumGetPointer(filename));
-	/* Should we complain if the unlink fails? */
+  char *fname = (char *)DatumGetPointer(filename);
+  if( fname != NULL )
+    {
+      if( unlink(fname) != 0 )
+	{
+	  /* Should we complain if the unlink fails? */
+	}
+      free(fname);
+    }
 }
 
 /*
