@@ -231,8 +231,8 @@
 				# %r=remote host and port
 				# %p=PID %t=timestamp %i=command tag
 				# %c=session id %l=session line number
-				# %s=session start timestamp
-				# %x=stop here in non-session processes
+				# %s=session start timestamp %x=transaction id
+				# %q=stop here in non-session processes
 				# %%='%'
 #log_statement = 'none'		# none, mod, ddl, all
 #log_hostname = false
