@@ -7,17 +7,33 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.2 1996/11/11 13:41:08 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-PROG=	pg_id
-
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
+SRCDIR= ../..
 include ../Makefile.global
+include ../../Makefile.global
 
-SRCS=	pg_id.c
+OBJS= pg_id.o
 
-include $(MKDIR)/postgres.prog.mk
+all: pg_id
 
+pg_id: $(OBJS) $(LIBPQDIR)/libpq.a
+	$(CC) $(LDFLAGS) -o pg_id -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+
+$(LIBPQDIR)/libpq.a:
+	$(MAKE) -C $(LIBPQDIR) libpq.a
+
+install:
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_id $(DESTDIR)$(BINDIR)/pg_id
+
+depend dep:
+	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+
+clean: 
+	rm -f pg_id $(OBJS) 
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif

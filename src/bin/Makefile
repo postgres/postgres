@@ -7,12 +7,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.4 1996/08/13 07:48:15 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.5 1996/11/11 13:39:09 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-MKDIR=../mk
--include $(MKDIR)/../Makefile.global
+SRCDIR=..
+include $(SRCDIR)/Makefile.global
 
 .DEFAULT all:
 #

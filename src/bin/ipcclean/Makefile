@@ -7,15 +7,23 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:13 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.2 1996/11/11 13:40:39 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-SHPROG=	ipcclean
+SRCDIR= ../..
+include ../../Makefile.global
 
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
-include ../Makefile.global
+SEDSCRIPT= \
+    -e "s^_fUnKy_IPCCLEANPATH_sTuFf_^$(IPCSDIR)^g" 
 
-include $(MKDIR)/postgres.shell.mk
+all: ipcclean
 
+ipcclean:
+	sed $(SEDSCRIPT) <ipcclean.sh >ipcclean
+
+install: ipcclean
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+
+clean:
+	rm -f ipcclean

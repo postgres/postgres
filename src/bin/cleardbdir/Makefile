@@ -7,15 +7,18 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/Makefile,v 1.2 1996/11/11 13:39:31 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-SHPROG=	cleardbdir
+all: cleardbdir
 
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
-include ../Makefile.global
+cleardbdir:
+	cp cleardbdir.sh cleardbdir
 
-include $(MKDIR)/postgres.shell.mk
+install: cleardbdir
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+
+clean: 
+	rm -f cleardbdir
 

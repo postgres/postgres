@@ -7,40 +7,33 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.3 1996/11/04 05:14:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.4 1996/11/11 13:41:25 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
+SRCDIR= ../..
+include ../../Makefile.global
 include ../Makefile.global
 
-CFLAGS+=  -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(X11_INCDIR) -I$(srcdir)/libpgtcl
+CFLAGS+=  -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(X11_INCDIR) -I$(SRCDIR)/libpgtcl
 
 # try to find libpgtcl.a in either directory
-LIBPGTCL= -L$(srcdir)/libpgtcl/$(objdir) -L$(LIBDIR) -lpgtcl
+LIBPGTCL= -L$(SRCDIR)/libpgtcl -L$(LIBDIR) -lpgtcl
 
-pgtclsh: $(objdir)/pgtclAppInit.o
-	$(CC) $(CFLAGS) -o $(objdir)/$(@F) $(objdir)/pgtclAppInit.o\
-	$(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) $(TCL_LIB) -lm $(LD_ADD)
+all: pgtclsh pgtksh
 
-pgtksh: $(objdir)/pgtkAppInit.o
-	$(CC) $(CFLAGS) -o $(objdir)/$(@F) $(objdir)/pgtkAppInit.o \
-	$(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) -L$(TK_LIBDIR) -L$(X11_LIBDIR) \
-	$(TK_LIB) $(TCL_LIB) -lX11 -lm $(LD_ADD)
+pgtclsh: pgtclAppInit.o
+	$(CC) $(CFLAGS) -o $@ pgtclAppInit.o \
+	  $(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) $(TCL_LIB) -lm $(LD_ADD)
 
-install::	localobj pgtclsh pgtksh
-	$(INSTALL) $(INSTL_EXE_OPTS) $(objdir)/pgtclsh $(DESTDIR)$(BINDIR)/pgtclsh
-	$(INSTALL) $(INSTL_EXE_OPTS) $(objdir)/pgtksh $(DESTDIR)$(BINDIR)/pgtksh
+pgtksh: pgtkAppInit.o
+	$(CC) $(CFLAGS) -o $@ pgtkAppInit.o \
+	  $(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) -L$(TK_LIBDIR) -L$(X11_LIBDIR) \
+	  $(TK_LIB) $(TCL_LIB) -lX11 -lm $(LD_ADD)
 
-CLEANFILES = pgtclAppInit.o pgtkAppInit.o pgtclsh pgtksh
+install: pgtclsh pgtksh
+	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(DESTDIR)$(BINDIR)/pgtclsh
+	$(INSTALL) $(INSTL_EXE_OPTS) pgtksh $(DESTDIR)$(BINDIR)/pgtksh
 
-PROG=pgtclsh
-
-all:: pgtclsh pgtksh
-
-# don't use the default template for generating executables since we have
-# two executable targets
-# include $(MKDIR)/postgres.prog.mk
-
-
+clean:
+	rm -f pgtclAppInit.o pgtkAppInit.o pgtclsh pgtksh
