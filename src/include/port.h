@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.38 2004/05/25 01:00:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.39 2004/05/27 14:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,12 @@ extern off_t ftello(FILE *stream);
 extern int pgpipe(int handles[2]);
 extern int piperead(int s, char* buf, int len);
 #define pipewrite(a,b,c)	send(a,b,c,0)
+
+#define PG_SIGNAL_COUNT 32
+#define kill(pid,sig)   pgkill(pid,sig)
+extern int pgkill(int pid, int sig);
 #endif
+
 extern int pclose_check(FILE *stream);
 
 #if defined(__MINGW32__) || defined(__CYGWIN__)

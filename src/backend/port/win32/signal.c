@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.2 2004/05/27 13:08:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.3 2004/05/27 14:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 static CRITICAL_SECTION pg_signal_crit_sec;
 static int	pg_signal_queue;
 
-#define PG_SIGNAL_COUNT 32
 static pqsigfunc pg_signal_array[PG_SIGNAL_COUNT];
 static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 static int	pg_signal_mask;
