@@ -617,3 +617,8 @@ Mon Jul 19 07:53:20 CEST 1999
 	- Fixed quoting bug in ecpglib.c
 	- Set ecpg version to 2.6.1
 	- Set library version to 3.0.1
+
+Sun Aug  1 13:31:19 CEST 1999
+
+	- Synced preproc.y with gram.y.
+	- Set ecpg version to 2.6.2

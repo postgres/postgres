@@ -777,10 +777,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
 %type  <str>    file_name AexprConst ParamNo TypeId
-%type  <str>	in_expr_nodes not_in_expr_nodes a_expr b_expr
+%type  <str>	in_expr_nodes a_expr b_expr
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from
-%type  <str>	trim_list in_expr substr_for not_in_expr attr attrs
+%type  <str>	trim_list in_expr substr_for attr attrs
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
@@ -3687,7 +3687,7 @@ a_expr:  attr
 				{
 					$$ = make4_str($1, make1_str(" in ("), $4, make1_str(")")); 
 				}
-		| a_expr NOT IN '(' not_in_expr ')'
+		| a_expr NOT IN '(' in_expr ')'
 				{
 					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
 				}
@@ -4020,23 +4020,9 @@ in_expr:  SubSelect
 				{	$$ = $1; }
 		;
 
-in_expr_nodes:  AexprConst
+in_expr_nodes:  a_expr
 				{	$$ = $1; }
-		| in_expr_nodes ',' AexprConst
-				{	$$ = cat3_str($1, make1_str(","), $3);}
-		;
-
-not_in_expr:  SubSelect
-				{
-					$$ = $1; 
-				}
-		| not_in_expr_nodes
-				{	$$ = $1; }
-		;
-
-not_in_expr_nodes:  AexprConst
-				{	$$ = $1; }
-		| not_in_expr_nodes ',' AexprConst
+		| in_expr_nodes ',' a_expr
 				{	$$ = cat3_str($1, make1_str(","), $3);}
 		;
 
@@ -5647,7 +5633,7 @@ ecpg_expr:  attr
 				{
 					$$ = make4_str($1, make1_str(" in ("), $4, make1_str(")")); 
 				}
-		| a_expr NOT IN '(' not_in_expr ')'
+		| a_expr NOT IN '(' in_expr ')'
 				{
 					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
 				}
