@@ -473,14 +473,6 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 <returnvalue>SET VARIABLE</returnvalue>
 </TERM>
 <LISTITEM>
@@ -494,8 +486,7 @@ Outputs
 <LISTITEM>
 <PARA>
           If the command fails to set variable.
-</VARLISTENTRY>
-</VARIABLELIST>
+
 </VARIABLELIST>
 
 </REFSECT2>

@@ -61,15 +61,8 @@ DROP TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ON <REPLACEABLE C
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       <VARIABLELIST>
+
+<VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
 	  <ReturnValue>DROP</ReturnValue>
@@ -87,13 +80,8 @@ DROP TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ON <REPLACEABLE C
 	 <LISTITEM>
 	  <PARA>
           This message occurs if the trigger specified does not exist.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+
+</VARIABLELIST>
    
   </REFSECT2>
  </REFSYNOPSISDIV>

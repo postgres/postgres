@@ -57,25 +57,12 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 NOTIFY
 </TERM>
 <LISTITEM>
 <PARA>
 Acknowledgement that notify command has executed.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</variablelist>
-</LISTITEM>
-</VARLISTENTRY>
+
 <VARLISTENTRY>
 <TERM>
 Notify events

@@ -41,14 +41,7 @@ BEGIN [ WORK | TRANSACTION ]
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-      <replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -68,13 +61,7 @@ BEGIN [ WORK | TRANSACTION ]
 	  <PARA>
 	   This indicates that a transaction was already in progress.
 The current transaction is not affected.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-      </para>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

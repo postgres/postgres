@@ -18,8 +18,8 @@
    <DATE>1998-09-09</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-CREATE OPERATOR <replaceable>name</replaceable>
-    ( PROCEDURE    = <replaceable class="parameter">func_name</replaceable>
+CREATE OPERATOR <replaceable>name</replaceable> (
+        PROCEDURE  = <replaceable class="parameter">func_name</replaceable>
      [, LEFTARG    = <replaceable class="parameter">type1</replaceable> ]
      [, RIGHTARG   = <replaceable class="parameter">type2</replaceable> ]
      [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ]
@@ -155,14 +155,6 @@ Operator to use for sorting.
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -171,12 +163,7 @@ Operator to use for sorting.
 	 <LISTITEM>
 	  <PARA>
 	   Message returned if the operator is successfully created.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

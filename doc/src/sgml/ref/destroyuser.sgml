@@ -190,7 +190,7 @@ and
 <envar>PGREALM</envar>
 environment variables will be passed on to
 <application>psql</application>
-and processed as described in <xref linkend="app-psql" endterm="app-psql">.
+and processed as described in <xref linkend="app-psql" endterm="psql-ref">.
 
 <para>
 Once invoked, <application>destroyuser</application>

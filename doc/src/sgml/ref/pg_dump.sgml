@@ -1,12 +1,12 @@
 <REFENTRY ID="APP-PG-DUMP">
 <REFMETA>
-<REFENTRYTITLE>
+<REFENTRYTITLE id="pg-dump">
 <application>pg_dump</application>
 </REFENTRYTITLE>
 <REFMISCINFO>Application</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
-<REFNAME id="pg-dump">
+<REFNAME>
 <application>pg_dump</application>
 </REFNAME>
 <REFPURPOSE>

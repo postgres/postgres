@@ -116,13 +116,7 @@ Specifies that output goes to a pipe or terminal.
     Outputs
    </TITLE>
    <PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-	  <Replaceable>status</Replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -141,12 +135,7 @@ Specifies that output goes to a pipe or terminal.
 	 <LISTITEM>
 	  <PARA>
 	   The copy failed for the reason stated in the error message.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

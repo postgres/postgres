@@ -84,14 +84,6 @@ CREATE TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> { BEFORE | AFTE
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -100,12 +92,7 @@ CREATE TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> { BEFORE | AFTE
 	 <LISTITEM>
 	  <PARA>
 	   This message is returned if the trigger is successfully created.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

@@ -70,13 +70,6 @@ NOTICE:  QUERY PLAN:
 <PARA>
 Explicit query plan from the <productname>Postgres</productname> backend.
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
 <VARLISTENTRY>
 <TERM>
 EXPLAIN
@@ -85,7 +78,6 @@ EXPLAIN
 <PARA>
 Flag sent after query plan is shown.
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>

@@ -76,13 +76,7 @@ A valid query. Refer to the SELECT statement for a further description
 Outputs
 </TITLE>
 <PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -104,7 +98,6 @@ Message returned if more than one rows were inserted.
 <ReturnValue><replaceable>#</replaceable></ReturnValue>
  is the number of rows inserted.
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>

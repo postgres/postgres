@@ -1,12 +1,12 @@
 <REFENTRY ID="APP-PSQL">
 <REFMETA>
-<REFENTRYTITLE>
+<REFENTRYTITLE id="psql-ref">
 <application>psql</application>
 </REFENTRYTITLE>
 <REFMISCINFO>Application</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
-<REFNAME id="psql-ref">
+<REFNAME>
 <application>psql</application>
 </REFNAME>
 <REFPURPOSE>
@@ -68,7 +68,7 @@ A single query to run. <application>psql</application> will exit on completion.
 </variablelist>
 
 <para>
-The full set of command-line arguments and meta-commands are described in a following
+The full set of command-line arguments and meta-commands are described in a subsequent
 section.
 
 <para>
@@ -106,6 +106,8 @@ to be used, rather than the default local Unix domain sockets.
 </TERM>
 <LISTITEM>
 <PARA>
+The port number on which a <productname>Postgres</productname> server is listening.
+Defaults to <literal>5432</literal>.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -116,6 +118,8 @@ to be used, rather than the default local Unix domain sockets.
 </TERM>
 <LISTITEM>
 <PARA>
+The target for display of messages from the client support library.
+Not required.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -128,7 +132,7 @@ to be used, rather than the default local Unix domain sockets.
 <PARA>
 If <envar>PGOPTION</envar>
 is specified, then the options it contains are parsed
-.BR before
+<emphasis>before</emphasis>
 any command-line options.
 </PARA>
 </LISTITEM>

@@ -104,14 +104,6 @@ superuser privilege can use
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -133,12 +125,6 @@ superuser privilege can use
            This error is returned if the function
 	   <replaceable class="parameter">funcname</replaceable>()
 	   is not found.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

@@ -68,14 +68,6 @@
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -90,12 +82,7 @@
 	  <PARA>
 	   If <replaceable class="parameter">count</replaceable> is 0,
 	   no rows were deleted.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
 </REFSYNOPSISDIV>

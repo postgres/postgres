@@ -165,13 +165,6 @@ SELECT am.amname AS acc_name,
    </TITLE>
    <PARA>
 
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -191,12 +184,7 @@ SELECT am.amname AS acc_name,
 	 <LISTITEM>
 	  <PARA>
 	   This error occurs if it is impossible to create the index.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
 
   </REFSECT2>

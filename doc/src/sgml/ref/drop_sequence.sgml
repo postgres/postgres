@@ -51,14 +51,7 @@ DROP SEQUENCE <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE> [, ...]
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -77,12 +70,6 @@ DROP SEQUENCE <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE> [, ...]
 	 <LISTITEM>
 	  <PARA>
 	   This message occurs if the specified sequence does not exist.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

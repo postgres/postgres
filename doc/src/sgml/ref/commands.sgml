@@ -63,6 +63,10 @@ commands supported by <productname>Postgres</productname>.
 
 </Chapter>
 
+<!--
+Disable this chapter until we have more functions documented.
+- thomas 1998-10-27
+
 <chapter Id="sql-functions">
 <title>SQL Functions</title>
 
@@ -77,6 +81,8 @@ functions supported by <productname>Postgres</productname>.
 &currentUser;
 
 </chapter>
+
+-->
 
 <chapter Id="utilities">
 <title>Utility Applications</title>

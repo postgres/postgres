@@ -18,12 +18,9 @@
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
 CREATE TYPE <replaceable class="parameter">typename</replaceable> (
-<comment>
-Why are parentheses required around the length parameters?
-</comment>
-    INPUT             = <replaceable class="parameter">input_function</replaceable>
-    , OUTPUT          = <replaceable class="parameter">output_function</replaceable>
-    , INTERNALLENGTH  = (<replaceable class="parameter">internallength</replaceable> | VARIABLE)
+        INPUT          = <replaceable class="parameter">input_function</replaceable>
+      , OUTPUT         = <replaceable class="parameter">output_function</replaceable>
+      , INTERNALLENGTH = (<replaceable class="parameter">internallength</replaceable> | VARIABLE)
     [ , EXTERNALLENGTH = (<replaceable class="parameter">externallength</replaceable> | VARIABLE) ]
     [ , ELEMENT        = <replaceable class="parameter">element</replaceable> ]
     [ , DELIMITER      = <replaceable class="parameter">delimiter</replaceable> ]
@@ -169,14 +166,7 @@ EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -185,12 +175,7 @@ EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
 	 <LISTITEM>
 	  <PARA>
 	   Message returned if the type is successfully created.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
    
   </REFSECT2>

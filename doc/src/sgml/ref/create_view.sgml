@@ -65,14 +65,6 @@ An SQL query which will provide the columns and rows of the view.
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -112,12 +104,7 @@ An SQL query which will provide the columns and rows of the view.
 	   <programlisting>
 	    CREATE VIEW vista AS SELECT 'Hello World'::text
 	   </programlisting>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

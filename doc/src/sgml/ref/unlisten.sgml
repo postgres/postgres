@@ -63,24 +63,12 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 <returnvalue>UNLISTEN</returnvalue>
 </TERM>
 <LISTITEM>
 <PARA>
 Acknowledgement that statement has executed.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</variablelist>
-</LISTITEM>
-</VARLISTENTRY>
+
 </VARIABLELIST>
 </REFSECT2>
 </REFSYNOPSISDIV>
@@ -102,7 +90,7 @@ The special condition wildcard "*" cancels all listener registrations
 for the current session.
 
 <para>
-<xref linkend="sql-notify-ref" endterm="sql-notify-ref">
+<xref linkend="sql-notify" endterm="sql-notify-ref">
 contains a more extensive
 discussion of the use of <command>LISTEN</command> and
 <command>NOTIFY</command>.

@@ -1,13 +1,13 @@
 <refentry id="SQL-SELECT">
  <refmeta>
   <refentrytitle>
-   SELECT
+SELECT
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-   SELECT
+SELECT
   </refname>
   <refpurpose>
    Retrieve rows from a table or view.
@@ -172,23 +172,11 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     
     <varlistentry>
      <term>
-      <replaceable>status</replaceable>
-     </term>
-     <listitem>
-      <para>
-
-   <variablelist>
-    <varlistentry>
-     <term>
       <returnvalue><replaceable>count</replaceable></returnvalue>
      </term>
      <listitem>
       <para>
        The count of rows returned by the query.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
    </variablelist>
    
   </refsect2>
@@ -569,16 +557,16 @@ SELECT actors.name
 <refentry id="SQL-SELECTINTO">
  <refmeta>
   <refentrytitle>
-   SELECT INTO
+SELECT INTO
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-   SELECT INTO
+SELECT INTO
   </refname>
   <refpurpose>
-   Create a new table from an existing table or view
+Create a new table from an existing table or view
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>

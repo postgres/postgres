@@ -163,14 +163,7 @@ requires the <REPLACEABLE CLASS="PARAMETER">column_constraint_clause</REPLACEABL
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-      <ReturnValue>status</ReturnValue>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -208,14 +201,7 @@ amcreate: "<replaceable class="parameter">table</replaceable>" relation already 
 	  <PARA>
 	   if data type of default value doesn't match the
 	   column definition's data type.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
 
-       </VARIABLELIST>
-      </PARA>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>
@@ -1675,13 +1661,13 @@ affect a column or a table.
 <REFENTRY ID="SQL-CREATETABLEAS">
  <REFMETA>
   <REFENTRYTITLE>
-   CREATE TABLE
+   CREATE TABLE AS
   </REFENTRYTITLE>
   <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
  </REFMETA>
  <REFNAMEDIV>
   <REFNAME>
-   CREATE TABLE
+   CREATE TABLE AS
   </REFNAME>
   <REFPURPOSE>
    Creates a new table

@@ -208,12 +208,14 @@ Usage
 <PARA>
 To create the database <literal>demo</literal>
  using the postmaster on the local host, port 5432:
+
 <programlisting>
 createdb demo
 </programlisting>
 
 To create the database <literal>demo</literal>
  using the postmaster on host eden, port 5000:
+
 <programlisting>
 createdb -p 5000 -h eden demo
 </programlisting>

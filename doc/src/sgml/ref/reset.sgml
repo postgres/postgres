@@ -55,14 +55,6 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 RESET VARIABLE
 </TERM>
 <LISTITEM>
@@ -71,7 +63,6 @@ RESET VARIABLE
 <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is successfully reset
 to its default value..
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>

@@ -65,14 +65,6 @@ DROP AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> <REPLACEABLE CL
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -92,12 +84,7 @@ DROP AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> <REPLACEABLE CL
 	  <PARA>
           This message occurs if the aggregate function specified does not
 	   exist in the database.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

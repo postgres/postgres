@@ -54,14 +54,6 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 DELETE 0
 </TERM>
 <LISTITEM>
@@ -80,7 +72,6 @@ ERROR <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>: Table does not exist.
 Message returned if <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
  does not exist.
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>

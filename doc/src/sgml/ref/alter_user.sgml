@@ -92,14 +92,6 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
       Outputs
      </TITLE>
      <PARA>
-     </PARA>
-     <VARIABLELIST>
-      <VARLISTENTRY>
-       <TERM>
-	<replaceable>status</replaceable>
-       </TERM>
-       <LISTITEM>
-	<PARA>
 	 <VARIABLELIST>
 	  <VARLISTENTRY>
 	   <TERM>
@@ -120,13 +112,7 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
 	    <PARA>
 	     Error message returned if the user specified doesn't
 	     exist.
-	    </PARA>
-	   </LISTITEM>
-	  </VARLISTENTRY>
-	 </VARIABLELIST>
-	</para>
-       </listitem>
-      </varlistentry>
+
      </variablelist>
     </REFSECT2>
    </REFSYNOPSISDIV>

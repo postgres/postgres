@@ -104,16 +104,24 @@ Grant all privileges.
 <PARA>
 The name of an object to which to grant access.
           The possible objects are:
-<simplelist>
-<member>
-              table 
-<member>
-              view 
-<member>
-              sequence 
-<member>
-              index
-</simplelist>
+
+<itemizedlist mark="bullet" spacing="compact">
+<listitem>
+<para>
+table 
+
+<listitem>
+<para>
+view 
+
+<listitem>
+<para>
+sequence
+
+<listitem>
+<para>
+index
+</itemizedlist>
 
 <VARLISTENTRY>
 <TERM>
@@ -157,14 +165,6 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 CHANGE
 </TERM>
 <LISTITEM>
@@ -182,7 +182,6 @@ Message returned if the specified object is not available or
 if it is impossible
           to give privileges to the specified group or users.
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>

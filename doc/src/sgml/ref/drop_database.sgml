@@ -51,14 +51,7 @@ DROP DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -87,12 +80,7 @@ DROP DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
 	 <LISTITEM>
 	  <PARA>
 	   This message occurs if the specified database does not exist.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

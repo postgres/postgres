@@ -51,14 +51,6 @@ DROP TYPE <REPLACEABLE CLASS="PARAMETER">typename</REPLACEABLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -77,12 +69,7 @@ DROP TYPE <REPLACEABLE CLASS="PARAMETER">typename</REPLACEABLE>
 	 <LISTITEM>
 	  <PARA>
            This message occurs if the specified type is not found.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

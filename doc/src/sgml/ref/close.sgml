@@ -51,16 +51,6 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-	  <replaceable>
-	   status
-	  </replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -81,12 +71,7 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 	   This warning is given if
 	   <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> is not
 	   declared or has already been closed.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
    
   </REFSECT2>

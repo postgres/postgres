@@ -100,14 +100,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -116,12 +109,6 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	 <LISTITEM>
 	  <PARA>
 	   This is returned if the command completes successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

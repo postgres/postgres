@@ -102,14 +102,6 @@ CREATE RULE <replaceable class="parameter">name</replaceable>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -118,11 +110,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable>
 	 <LISTITEM>
 	  <PARA>
 	   Message returned if the rule is successfully created.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
+
     </VARLISTENTRY>
    </VARIABLELIST>
    
@@ -204,6 +192,7 @@ Without
     of the following two rule definitions are accepted by
  <productname>Postgres</productname>, the
     retrieve command will cause <productname>Postgres</productname> to crash:
+
     <example>
      <title>Example of a circular rewrite rule combination.</title>
      <programlisting>
@@ -222,6 +211,7 @@ create rule bad_rule_combination_2 is
 select * from EMP
       </programlisting></para>
     </example>
+
    </para>
    <para>
     You must have rule definition access to a class in order

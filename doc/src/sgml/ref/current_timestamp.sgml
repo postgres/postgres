@@ -7,7 +7,7 @@
  </REFMETA>
  <REFNAMEDIV>
   <REFNAME>
-   SQL_CURRENT_TIMESTAMP
+   CURRENT_TIMESTAMP
   </REFNAME>
   <REFPURPOSE>
    Returns the current date and time
@@ -30,27 +30,8 @@
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>None</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </VARIABLELIST>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+None.
+
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CURRENT-TIMESTAMP-2">
@@ -61,26 +42,15 @@
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>Returns "<replaceable class="parameter">today</replaceable>" and "<replaceable class="parameter">now</replaceable>".</ReturnValue>
-	 </TERM>
+<replaceable>timestamp</replaceable>
+
 	 <LISTITEM>
 	  <PARA>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </VARIABLELIST>
-     </LISTITEM>
-    </VARLISTENTRY>
+	  Returns "<replaceable class="parameter">today</replaceable>" and "<replaceable class="parameter">now</replaceable>".
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

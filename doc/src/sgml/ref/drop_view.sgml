@@ -51,42 +51,28 @@ DROP VIEW <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>DROP</ReturnValue>
+</TERM>
+<LISTITEM>
 	  <PARA>
 	   The message returned if the command is successful.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>
-	   ERROR: RewriteGetRuleEventRel: rule "_RET<REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>" not found</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This message occurs if the specified view does not exist in
-	   the database.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </variablelist>
-  </REFSECT2>
+
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>
+ERROR: RewriteGetRuleEventRel: rule "_RET<REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>" not found</ReturnValue>
+</TERM>
+<LISTITEM>
+<PARA>
+This message occurs if the specified view does not exist in
+the database.
+</variablelist>
+
+</REFSECT2>
  </REFSYNOPSISDIV>
  
  <REFSECT1 ID="R1-SQL-DROPVIEW-1">

@@ -52,14 +52,6 @@ DROP USER <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -81,10 +73,7 @@ DROP USER <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+      </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

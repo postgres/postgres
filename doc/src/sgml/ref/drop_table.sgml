@@ -52,14 +52,6 @@ DROP TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [, ...]
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -78,12 +70,6 @@ DROP TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [, ...]
 	 <LISTITEM>
 	  <PARA>
 	   If the specified table or view does not exist in the database.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

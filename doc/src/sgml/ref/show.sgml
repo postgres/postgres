@@ -55,14 +55,6 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<REPLACEABLE>status</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 <returnvalue>NOTICE: <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is <replaceable>value</replaceable></ReturnValue>
 SHOW VARIABLE
 </TERM>
@@ -91,7 +83,6 @@ SHOW VARIABLE
 <PARA>
    If the TZ environment variable is not set.
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>

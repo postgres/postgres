@@ -93,8 +93,9 @@ Or just let it default to you (the Unix user who runs
 
 <note>
 <para>
-Only the Unix superuser can create a database system with a
-different user as <productname>Postgres</productname> superuser.
+Only the Unix superuser (<literal>root</literal>)
+ can create a database system with an owner
+different from the <productname>Postgres</productname> superuser.
 </note>
 
 </variablelist>

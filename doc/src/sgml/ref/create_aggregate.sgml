@@ -163,14 +163,7 @@ The initial value for the second transition function argument.
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -179,12 +172,6 @@ The initial value for the second transition function argument.
 	 <LISTITEM>
 	  <PARA>
           Message returned if the command completes successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </VARIABLELIST>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
 
   </REFSECT2>

@@ -63,14 +63,7 @@ DROP OPERATOR <REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE> ( <REPLACEABLE CLA
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-<replaceable>status</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -111,12 +104,7 @@ DROP OPERATOR <REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE> ( <REPLACEABLE CLA
 	  <PARA>
           This message occurs if the specified right unary operator
  specified does not exist.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
+
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>

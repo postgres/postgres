@@ -57,14 +57,6 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<replaceable>status</replaceable>
-</TERM>
-<LISTITEM>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
 <returnvalue>LOAD</returnvalue>
 </TERM>
 <LISTITEM>
@@ -81,7 +73,6 @@ Message returned if the specified file is not found. The file must be visible
 <emphasis>to the <productname>Postgres</productname> backend</emphasis>,
 with the appropriate full path name specified, to avoid this message.
 
-</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>
