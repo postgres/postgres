@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.37 2000/07/11 14:30:37 momjian Exp $
+ * $Id: memutils.h,v 1.38 2000/12/01 05:16:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,11 @@
  */
 typedef struct StandardChunkHeader
 {
-	MemoryContext context;			/* owning context */
-	Size size;						/* size of data space allocated in chunk */
+	MemoryContext	context;	/* owning context */
+	Size		size;			/* size of data space allocated in chunk */
 #ifdef MEMORY_CONTEXT_CHECKING
-	Size data_size;				/* real data size  (without align) */
+	/* when debugging memory usage, also store actual requested size */
+	Size		requested_size;
 #endif
 } StandardChunkHeader;
 
