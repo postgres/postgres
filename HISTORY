@@ -48,7 +48,7 @@ Migration to 7.2
 
 
 
-AS OF 2001-10-25
+AS OF 2001-11-19
 
 Bug Fixes
 ---------
@@ -74,6 +74,8 @@ ECPG fixes (Michael, Christof Petig)
 PL/PgSQL trailing semicolon optional (Tom)
 Fix path_inter, path_distance, path_length, dist_ppath to handle closed
   paths (Curtis Barrett, Tom)
+ALTER TABLE RENAME update foreign-key trigger arguments correctly (Brent Verner)
+Long value compression improvement (Tom)
 
 Enhancements
 ------------
@@ -153,6 +155,7 @@ Prompt for psql password from /dev/tty if possible
 Allow SPI column functions to work for system columns (Tom)
 Dynahash portability improvements (Tom)
 Remove OID's from some system tables (Tom)
+Remove 'triggered data change violation' error check (Tom)
 
 Types
 -----
@@ -186,6 +189,7 @@ New /contrib/tsearch full text indexing (Oleg, Teodor Sigaev)
 Allow better selectivity with Nan and infinities in NUMERIC (Tom)
 Add INTERVAL argument for SET TIME ZONE (Thomas)
 Add INTERVAL() YEAR TO MONTH (etc) syntax (Thomas)
+Optimize length() functions when using single-byte encodings (Tatsuo)
 
 Performance
 -----------
@@ -233,6 +237,9 @@ JDBC
 	JDBC date/time test suite fixes (Liam Stewart)
 	Fix for SELECT 'id' AS xxx FROM table (Dave Cramer)
 	DatabaseMetaData patch to show precision properly (Mark Lillywhite)
+	New getImported/getExported keys (Jason Davies)
+	MD5 password encryption support (Jeremy Wohl)
+
 ODBC
 	Remove query size limit (Hiroshi)
 	Remove text field size limit (Hiroshi)
@@ -242,6 +249,8 @@ ODBC
 	Most configure options on setable via DSN (Hiroshi)
 	Multibyte, performance fixes (Hiroshi)
 	Allow driver to be used with iODBC or unixODBC (Peter E)
+	MD5 password encryption support (Bruce)
+
 ECPG
 	EXECUTE ... INTO ...    implemented
 	multiple row descriptor support (e.g. CARDINALITY)
@@ -291,6 +300,9 @@ Replace strcasecmp() with strcmp() where appropriate (Peter E)
 Make PL/PgSQL use the backends type coersion code (Tom)
 pgindent fixes, new pgjindent for java (Bruce, Tom)
 Remove configure --enable-unicode-conversion, now enabled by multibyte (Tatsuo)
+AIX fixes (Tatsuo, Andreas)
+Allow parellel makes (Peter E)
+
 
   ------------------------------------------------------------------------
                                 Release 7.1.3
@@ -594,7 +606,7 @@ New BeOS port (David Reid, Cyril Velter)
 Add proofreader's changes to docs (Addison-Wesley, Bruce)
 New Alpha spinlock code (Adriaan Joubert, Compaq)
 Unixware port overhaul (Peter E)
-New Darwin/Mac OSX port (Peter Bierman, Bruce Hartzler)
+New Darwin/Mac OSX port (Peter Bierman, Bruce Hartzler, Tom)
 New FreeBSD Alpha port (Alfred)
 Overhaul shared memory segments (Tom)
 Add IBM S/390 support (Neale Ferguson)
