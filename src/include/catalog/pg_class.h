@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.35 2000/06/09 01:44:23 momjian Exp $
+ * $Id: pg_class.h,v 1.36 2000/06/09 15:51:00 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -139,7 +139,7 @@ DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 0 0 0 f f r 17 0 0 0 0 0 f f f _
 DESCR("");
 DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 0 0 0 f f r 20 0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 0 0 0 f t r 8  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 0 0 0 f t r 10  0 0 0 0 0 f f f _null_ ));
 DESCR("");
 DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 0 0 0 f t r 3  0 0 0 0 0 f f f _null_ ));
 DESCR("");

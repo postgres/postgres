@@ -9,9 +9,9 @@
  *
  * IDENTIFICATION
 <<<<<<< creatinh.c
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.59 2000/06/09 01:44:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.60 2000/06/09 15:50:43 momjian Exp $
 =======
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.59 2000/06/09 01:44:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.60 2000/06/09 15:50:43 momjian Exp $
 >>>>>>> 1.58
  *
  *-------------------------------------------------------------------------
@@ -26,8 +26,10 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_shadow.h"
 #include "commands/creatinh.h"
 #include "utils/syscache.h"
+#include "miscadmin.h"
 
 /* ----------------
  *		local stuff
@@ -63,6 +65,22 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	int			i;
 	AttrNumber	attnum;
 
+	if (!stmt->istemp) {
+		HeapTuple       tup;
+	
+		/* ----------
+		 * Check pg_shadow for global createTable setting 
+		 * ----------
+		 */
+		tup = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(GetPgUserName()), 0, 0, 0);
+	
+		if (!HeapTupleIsValid(tup))
+	 		elog(ERROR, "CREATE TABLE: look at pg_shadow failed"); 
+	
+	 	if (!((Form_pg_shadow) GETSTRUCT(tup))->usecreatetable)
+	 		elog(ERROR, "CREATE TABLE: permission denied");	
+	}
+	
 	if (strlen(stmt->relname) >= NAMEDATALEN)
 		elog(ERROR, "the relation name %s is >= %d characters long",
 			 stmt->relname, NAMEDATALEN);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.32 2000/06/04 22:08:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.33 2000/06/09 15:50:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 #include "executor/executor.h"
 #include "tcop/pquery.h"
 #include "utils/ps_status.h"
+#include "catalog/pg_shadow.h"
+#include "miscadmin.h"
+#include "utils/syscache.h"
 
 static char *CreateOperationTag(int operationType);
 static void ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset,
@@ -250,6 +253,23 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 		else if (parseTree->into != NULL)
 		{
 			/* select into table */
+			
+			if (!parseTree->isTemp) {
+				HeapTuple       tup;
+	
+				/* ----------
+				 * Check pg_shadow for global createTable setting 
+				 * ----------
+				 */
+				tup = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(GetPgUserName()), 0, 0, 0);
+	
+				if (!HeapTupleIsValid(tup))
+	 				elog(ERROR, "ProcessQueryDesc: look at pg_shadow failed"); 
+	
+	 			if (!((Form_pg_shadow) GETSTRUCT(tup))->usecreatetable)
+	 				elog(ERROR, "SELECT INTO TABLE: permission denied");	
+			}
+			
 			isRetrieveIntoRelation = true;
 		}
 

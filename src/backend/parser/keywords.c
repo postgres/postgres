@@ -9,9 +9,9 @@
  *
  * IDENTIFICATION
 <<<<<<< keywords.c
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.74 2000/06/09 01:44:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.75 2000/06/09 15:50:45 momjian Exp $
 =======
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.74 2000/06/09 01:44:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.75 2000/06/09 15:50:45 momjian Exp $
 >>>>>>> 1.73
  *
  *-------------------------------------------------------------------------
@@ -75,6 +75,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},
+	{"createtable", CREATETABLE},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
 	{"current_date", CURRENT_DATE},
@@ -155,6 +156,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"local", LOCAL},
 	{"location", LOCATION},
 	{"lock", LOCK_P},
+	{"locktable", LOCKTABLE},
 	{"match", MATCH},
 	{"maxvalue", MAXVALUE},
 	{"minute", MINUTE_P},
@@ -170,7 +172,9 @@ static ScanKeyword ScanKeywords[] = {
 	{"next", NEXT},
 	{"no", NO},
 	{"nocreatedb", NOCREATEDB},
+	{"nocreatetable", NOCREATETABLE},
 	{"nocreateuser", NOCREATEUSER},
+	{"nolocktable", NOLOCKTABLE},
 	{"none", NONE},
 	{"not", NOT},
 	{"nothing", NOTHING},

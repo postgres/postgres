@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.170 2000/06/09 01:44:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.171 2000/06/09 15:50:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -145,7 +145,8 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_lmode, opt_force
 
-%type <ival>    user_createdb_clause, user_createuser_clause
+%type <ival>    user_createdb_clause, user_createuser_clause, user_createtable_clause,
+		user_locktable_clause
 %type <str>		user_passwd_clause
 %type <ival>            sysid_clause
 %type <str>		user_valid_clause
@@ -339,14 +340,14 @@ static void doNegateFloat(Value *v);
  */
 %token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, BIT,
-		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
+		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATETABLE, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
 		FORCE, FORWARD, FUNCTION, HANDLER,
 		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
+		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P, LOCKTABLE,
 		MAXVALUE, MINVALUE, MODE, MOVE,
-		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
+		NEW, NOCREATEDB, NOCREATETABLE, NOCREATEUSER, NOLOCKTABLE, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
@@ -473,32 +474,37 @@ stmt :	AlterTableStmt
  *
  *****************************************************************************/
 
-CreateUserStmt:  CREATE USER UserId
-                 user_createdb_clause user_createuser_clause user_group_clause
+CreateUserStmt:  CREATE USER UserId user_createdb_clause user_createuser_clause 
+                 user_createtable_clause user_locktable_clause user_group_clause
                  user_valid_clause
 				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
-                    n->sysid = -1;
+					n->sysid = -1;
 					n->password = NULL;
 					n->createdb = $4 == +1 ? true : false;
 					n->createuser = $5 == +1 ? true : false;
-					n->groupElts = $6;
-					n->validUntil = $7;
+					n->createtable = $6 == +1 ? true : false;
+					n->locktable = $7 == +1 ? true : false;
+					n->groupElts = $8;
+					n->validUntil = $9;
 					$$ = (Node *)n;
 				}
                 | CREATE USER UserId WITH sysid_clause user_passwd_clause
-                user_createdb_clause user_createuser_clause user_group_clause
+                user_createdb_clause user_createuser_clause 
+                user_createtable_clause user_locktable_clause user_group_clause
                 user_valid_clause
                {
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
-                    n->sysid = $5;
+   					n->sysid = $5;
 					n->password = $6;
 					n->createdb = $7 == +1 ? true : false;
 					n->createuser = $8 == +1 ? true : false;
-					n->groupElts = $9;
-					n->validUntil = $10;
+					n->createtable = $9 == +1 ? true : false;
+					n->locktable = $10 == +1 ? true : false;					
+					n->groupElts = $11;
+					n->validUntil = $12;
 					$$ = (Node *)n;
                }                   
 		;
@@ -510,27 +516,32 @@ CreateUserStmt:  CREATE USER UserId
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER UserId user_createdb_clause
-				user_createuser_clause user_valid_clause
+AlterUserStmt:  ALTER USER UserId user_createdb_clause user_createuser_clause 
+		user_createtable_clause user_locktable_clause user_valid_clause
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
 					n->password = NULL;
 					n->createdb = $4;
 					n->createuser = $5;
-					n->validUntil = $6;
+					n->createtable = $6;
+					n->locktable = $7;
+					n->validUntil = $8;
 					$$ = (Node *)n;
 				}
 			| ALTER USER UserId WITH PASSWORD Sconst
-			  user_createdb_clause
-			  user_createuser_clause user_valid_clause
+			  user_createdb_clause user_createuser_clause 
+			  user_createtable_clause user_locktable_clause
+			  user_valid_clause
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
 					n->password = $6;
 					n->createdb = $7;
 					n->createuser = $8;
-					n->validUntil = $9;
+					n->createtable = $9;
+					n->locktable = $10;
+					n->validUntil = $11;
 					$$ = (Node *)n;
 				}
 		;
@@ -571,6 +582,22 @@ user_createdb_clause:  CREATEDB					{ $$ = +1; }
 user_createuser_clause:  CREATEUSER				{ $$ = +1; }
 			| NOCREATEUSER						{ $$ = -1; }
 			| /*EMPTY*/							{ $$ = 0; }
+		;
+
+user_createtable_clause:  CREATETABLE				{ $$ = +1; }
+			| NOCREATETABLE				{ $$ = -1; }
+			| /*EMPTY*/		{ 
+						/* EMPTY is default = CREATETABLE */
+							$$ = +1; 
+						}				
+		;
+
+user_locktable_clause:  LOCKTABLE				{ $$ = +1; }
+			| NOLOCKTABLE				{ $$ = -1; }
+			| /*EMPTY*/		{ 
+						/* EMPTY is default = LOCKTABLE */
+							$$ = +1; 
+						}
 		;
 
 user_list:  user_list ',' UserId

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.93 2000/06/04 01:44:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.94 2000/06/09 15:50:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -523,6 +523,8 @@ echo "CREATE VIEW pg_user AS \
             usename, \
             usesysid, \
             usecreatedb, \
+            usecreatetable, \            
+            uselocktable, \
             usetrace, \
             usesuper, \
             usecatupd, \

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.9 2000/03/25 14:36:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.10 2000/06/09 15:50:53 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -21,6 +21,8 @@ NewUser=
 SysID=
 CanAddUser=
 CanCreateDb=
+CanCreateTab=
+CanLockTab=
 PwPrompt=
 Password=
 PSQLOPT=
@@ -90,6 +92,18 @@ do
         --no-createdb|-D)
 		CanCreateDb=f
 		;;
+        --createtable|-t)
+		CanCreateTab=t
+		;;
+        --no-createtable|-T)
+		CanCreateTab=f
+		;;	
+        --locktable|-l)
+		CanLockTab=t
+		;;
+        --no-locktable|-L)
+		CanLockTab=f
+		;;			
         --adduser|-a)
 		CanAddUser=t
 		;;
@@ -129,6 +143,10 @@ if [ "$usage" ]; then
 	echo "Options:"
 	echo "  -d, --createdb                  User can create new databases"
 	echo "  -D, --no-createdb               User cannot create databases"
+	echo "  -t, --createtable               User can create new tables"
+	echo "  -T, --no-createtable            User cannot create tables"	
+	echo "  -l, --locktable                 User can lock tables"
+	echo "  -L, --no-locktable              User cannot lock tables"	
 	echo "  -a, --adduser                   User can add new users"
 	echo "  -A, --no-adduser                User cannot add new users"
 	echo "  -i, --sysid=SYSID               Select sysid for new user"     
@@ -204,6 +222,27 @@ if [ -z "$CanAddUser" ]; then
 	fi
 fi
 
+if [ -z "$CanCreateTab" ]; then
+	$ECHO_N "Shall the new user be allowed to create tables? (y/n) "$ECHO_C
+	read REPLY
+	[ $? -ne 0 ] && exit 1
+	if [ $REPLY = "y" -o $REPLY = "Y" ]; then
+		CanCreateTab=t
+	else
+		CanCreateTab=f
+	fi
+fi
+
+if [ -z "$CanLockTab" ]; then
+	$ECHO_N "Shall the new user be allowed to lock tables? (y/n) "$ECHO_C
+	read REPLY
+	[ $? -ne 0 ] && exit 1
+	if [ $REPLY = "y" -o $REPLY = "Y" ]; then
+		CanLockTab=t
+	else
+		CanLockTab=f
+	fi
+fi
 
 #
 # build SQL command
@@ -222,6 +261,11 @@ SUBQUERY=
 [ "$CanCreateDb" = f ] && QUERY="$QUERY NOCREATEDB"
 [ "$CanAddUser" = t ] &&  QUERY="$QUERY CREATEUSER"
 [ "$CanAddUser" = f ] &&  QUERY="$QUERY NOCREATEUSER"
+[ "$CanCreateTab" = t ] && QUERY="$QUERY CREATETABLE"
+[ "$CanCreateTab" = f ] && QUERY="$QUERY NOCREATETABLE"
+[ "$CanLockTab" = t ] && QUERY="$QUERY LOCKTABLE"
+[ "$CanLockTab" = f ] && QUERY="$QUERY NOLOCKTABLE"
+
 
 ${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
 if [ $? -ne 0 ]; then
