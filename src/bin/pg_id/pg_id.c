@@ -9,13 +9,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.2 1996/09/16 06:34:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 
 int
 main(int argc, char **argv)
