@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.21 2004/07/01 00:49:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.22 2004/07/03 02:55:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 	int			byteno = TransactionIdToByte(xid);
 	int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
 	char	   *byteptr;
+	char		byteval;
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
 		   status == TRANSACTION_STATUS_ABORTED ||
@@ -107,7 +108,11 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 		   ((*byteptr >> bshift) & CLOG_XACT_BITMASK) == TRANSACTION_STATUS_SUB_COMMITTED ||
 		   ((*byteptr >> bshift) & CLOG_XACT_BITMASK) == status);
 
-	*byteptr |= (status << bshift);
+	/* note this assumes exclusive access to the clog page */
+	byteval = *byteptr;
+	byteval &= ~(((1 << CLOG_BITS_PER_XACT) - 1) << bshift);
+	byteval |= (status << bshift);
+	*byteptr = byteval;
 
 	/* ...->page_status[slotno] = SLRU_PAGE_DIRTY; already done */
 
