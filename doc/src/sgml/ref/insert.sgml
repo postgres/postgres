@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.17 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.18 2002/04/24 02:31:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,9 +22,9 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
-    { DEFAULT VALUES | VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) | SELECT <replaceable class="PARAMETER">query</replaceable> }
+    { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) | SELECT <replaceable class="PARAMETER">query</replaceable> }
   </synopsis>
-  
+
   <refsect2 id="R2-SQL-INSERT-1">
    <title>
     Inputs
@@ -72,6 +72,16 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="PARAMETER">DEFAULT</replaceable></term>
+      <listitem>
+       <para>
+	This column will be filled in by the column DEFAULT clause, or NULL if
+	a default is not available.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="PARAMETER">query</replaceable></term>
       <listitem>
        <para>
@@ -83,7 +93,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
     </variablelist>
    </para>
   </refsect2>
-  
+
   <refsect2 id="R2-SQL-INSERT-2">
    <title>
     Outputs
@@ -133,7 +143,7 @@ INSERT 0 <replaceable>#</replaceable>
   </para>
 
   <para>
-   Each column not present in the target list will be inserted 
+   Each column not present in the target list will be inserted
    using a default value, either a declared DEFAULT value
    or NULL. <productname>PostgreSQL</productname> will reject the new
    column if a NULL is inserted into a column declared NOT NULL.
@@ -176,6 +186,18 @@ INSERT INTO films (code, title, did, date_prod, kind)
   </para>
 
   <para>
+   In the third example, we use the DEFAULT values for the date columns
+   rather than specifying an entry.
+
+   <programlisting>
+INSERT INTO films VALUES
+    ('UA502','Bananas',105,DEFAULT,'Comedy',INTERVAL '82 minute');
+INSERT INTO films (code, title, did, date_prod, kind)
+    VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');
+   </programlisting>
+  </para>
+
+  <para>
    Insert a single row into table distributors; note that
    only column <literal>name</literal> is specified, so the omitted
    column <literal>did</literal> will be assigned its default value:
@@ -197,7 +219,7 @@ INSERT INTO films SELECT * FROM tmp;
    Insert into arrays (refer to the
    <citetitle>PostgreSQL User's Guide</citetitle> for further
    information about arrays):
-		
+
    <programlisting>
 -- Create an empty 3x3 gameboard for noughts-and-crosses
 -- (all of these queries create the same board attribute)
@@ -215,14 +237,14 @@ INSERT INTO tictactoe (game, board)
   <title>
    Compatibility
   </title>
-	
+
   <refsect2 id="R2-SQL-INSERT-4">
    <title>
     SQL92
    </title>
    <para>
     <command>INSERT</command> is fully compatible with <acronym>SQL92</acronym>.
-    Possible limitations in features of the 
+    Possible limitations in features of the
     <replaceable class="PARAMETER">query</replaceable>
     clause are documented for
     <xref linkend="sql-select" endterm="sql-select-title">.
