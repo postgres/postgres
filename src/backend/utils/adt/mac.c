@@ -1,14 +1,16 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.27 2002/10/13 15:39:17 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.28 2003/05/13 18:03:07 tgl Exp $
  */
 
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
+
 
 /*
  *	Utility macros used for sorting and comparing:
@@ -94,6 +96,49 @@ macaddr_out(PG_FUNCTION_ARGS)
 
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		macaddr_recv			- converts external binary format to macaddr
+ *
+ * The external representation is just the six bytes, MSB first.
+ */
+Datum
+macaddr_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	macaddr	   *addr;
+
+	addr = (macaddr *) palloc(sizeof(macaddr));
+
+	addr->a = pq_getmsgbyte(buf);
+	addr->b = pq_getmsgbyte(buf);
+	addr->c = pq_getmsgbyte(buf);
+	addr->d = pq_getmsgbyte(buf);
+	addr->e = pq_getmsgbyte(buf);
+	addr->f = pq_getmsgbyte(buf);
+
+	PG_RETURN_MACADDR_P(addr);
+}
+
+/*
+ *		macaddr_send			- converts macaddr to binary format
+ */
+Datum
+macaddr_send(PG_FUNCTION_ARGS)
+{
+	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendbyte(&buf, addr->a);
+	pq_sendbyte(&buf, addr->b);
+	pq_sendbyte(&buf, addr->c);
+	pq_sendbyte(&buf, addr->d);
+	pq_sendbyte(&buf, addr->e);
+	pq_sendbyte(&buf, addr->f);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /*
  * Convert macaddr to text data type.

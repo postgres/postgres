@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.39 2003/05/09 21:19:50 tgl Exp $
+ * $Id: geo_decls.h,v 1.40 2003/05/13 18:03:08 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -213,6 +213,8 @@ extern double point_sl(Point *pt1, Point *pt2);
 /* public lseg routines */
 extern Datum lseg_in(PG_FUNCTION_ARGS);
 extern Datum lseg_out(PG_FUNCTION_ARGS);
+extern Datum lseg_recv(PG_FUNCTION_ARGS);
+extern Datum lseg_send(PG_FUNCTION_ARGS);
 extern Datum lseg_intersect(PG_FUNCTION_ARGS);
 extern Datum lseg_parallel(PG_FUNCTION_ARGS);
 extern Datum lseg_perp(PG_FUNCTION_ARGS);
@@ -257,6 +259,8 @@ extern Datum inter_lb(PG_FUNCTION_ARGS);
 /* public line routines */
 extern Datum line_in(PG_FUNCTION_ARGS);
 extern Datum line_out(PG_FUNCTION_ARGS);
+extern Datum line_recv(PG_FUNCTION_ARGS);
+extern Datum line_send(PG_FUNCTION_ARGS);
 extern Datum line_interpt(PG_FUNCTION_ARGS);
 extern Datum line_distance(PG_FUNCTION_ARGS);
 extern Datum line_construct_pp(PG_FUNCTION_ARGS);
@@ -270,6 +274,8 @@ extern Datum line_eq(PG_FUNCTION_ARGS);
 /* public box routines */
 extern Datum box_in(PG_FUNCTION_ARGS);
 extern Datum box_out(PG_FUNCTION_ARGS);
+extern Datum box_recv(PG_FUNCTION_ARGS);
+extern Datum box_send(PG_FUNCTION_ARGS);
 extern Datum box_same(PG_FUNCTION_ARGS);
 extern Datum box_overlap(PG_FUNCTION_ARGS);
 extern Datum box_overleft(PG_FUNCTION_ARGS);
@@ -301,6 +307,8 @@ extern Datum box_div(PG_FUNCTION_ARGS);
 /* public path routines */
 extern Datum path_in(PG_FUNCTION_ARGS);
 extern Datum path_out(PG_FUNCTION_ARGS);
+extern Datum path_recv(PG_FUNCTION_ARGS);
+extern Datum path_send(PG_FUNCTION_ARGS);
 extern Datum path_n_lt(PG_FUNCTION_ARGS);
 extern Datum path_n_gt(PG_FUNCTION_ARGS);
 extern Datum path_n_eq(PG_FUNCTION_ARGS);
@@ -328,6 +336,8 @@ extern Datum path_poly(PG_FUNCTION_ARGS);
 /* public polygon routines */
 extern Datum poly_in(PG_FUNCTION_ARGS);
 extern Datum poly_out(PG_FUNCTION_ARGS);
+extern Datum poly_recv(PG_FUNCTION_ARGS);
+extern Datum poly_send(PG_FUNCTION_ARGS);
 extern Datum poly_left(PG_FUNCTION_ARGS);
 extern Datum poly_overleft(PG_FUNCTION_ARGS);
 extern Datum poly_right(PG_FUNCTION_ARGS);
@@ -348,6 +358,8 @@ extern Datum box_poly(PG_FUNCTION_ARGS);
 /* public circle routines */
 extern Datum circle_in(PG_FUNCTION_ARGS);
 extern Datum circle_out(PG_FUNCTION_ARGS);
+extern Datum circle_recv(PG_FUNCTION_ARGS);
+extern Datum circle_send(PG_FUNCTION_ARGS);
 extern Datum circle_same(PG_FUNCTION_ARGS);
 extern Datum circle_overlap(PG_FUNCTION_ARGS);
 extern Datum circle_overleft(PG_FUNCTION_ARGS);

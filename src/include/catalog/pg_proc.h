@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.298 2003/05/12 23:08:51 tgl Exp $
+ * $Id: pg_proc.h,v 1.299 2003/05/13 18:03:07 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3312,6 +3312,54 @@ DESCR("I/O");
 DATA(insert OID = 2478 (  interval_recv		   PGNSP PGUID 12 f f t f i 1 1186 "2281"  interval_recv - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2479 (  interval_send		   PGNSP PGUID 12 f f t f i 1 17 "1186"  interval_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2480 (  lseg_recv			   PGNSP PGUID 12 f f t f i 1 601 "2281"  lseg_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2481 (  lseg_send			   PGNSP PGUID 12 f f t f i 1 17 "601"  lseg_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2482 (  path_recv			   PGNSP PGUID 12 f f t f i 1 602 "2281"  path_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2483 (  path_send			   PGNSP PGUID 12 f f t f i 1 17 "602"  path_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2484 (  box_recv			   PGNSP PGUID 12 f f t f i 1 603 "2281"  box_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2485 (  box_send			   PGNSP PGUID 12 f f t f i 1 17 "603"  box_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2486 (  poly_recv			   PGNSP PGUID 12 f f t f i 1 604 "2281"  poly_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2487 (  poly_send			   PGNSP PGUID 12 f f t f i 1 17 "604"  poly_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2488 (  line_recv			   PGNSP PGUID 12 f f t f i 1 628 "2281"  line_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2489 (  line_send			   PGNSP PGUID 12 f f t f i 1 17 "628"  line_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2490 (  circle_recv		   PGNSP PGUID 12 f f t f i 1 718 "2281"  circle_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2491 (  circle_send		   PGNSP PGUID 12 f f t f i 1 17 "718"  circle_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2492 (  cash_recv			   PGNSP PGUID 12 f f t f i 1 790 "2281"  cash_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2493 (  cash_send			   PGNSP PGUID 12 f f t f i 1 17 "790"  cash_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2494 (  macaddr_recv		   PGNSP PGUID 12 f f t f i 1 829 "2281"  macaddr_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2495 (  macaddr_send		   PGNSP PGUID 12 f f t f i 1 17 "829"  macaddr_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2496 (  inet_recv			   PGNSP PGUID 12 f f t f i 1 869 "2281"  inet_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2497 (  inet_send			   PGNSP PGUID 12 f f t f i 1 17 "869"  inet_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2498 (  cidr_recv			   PGNSP PGUID 12 f f t f i 1 650 "2281"  cidr_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2499 (  cidr_send			   PGNSP PGUID 12 f f t f i 1 17 "650"  cidr_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2500 (  cstring_recv		   PGNSP PGUID 12 f f t f s 1 2275 "2281"  cstring_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2501 (  cstring_send		   PGNSP PGUID 12 f f t f s 1 17 "2275"  cstring_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2502 (  anyarray_recv		   PGNSP PGUID 12 f f t f s 1 2277 "2281"  anyarray_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2503 (  anyarray_send		   PGNSP PGUID 12 f f t f s 1 17 "2277"  anyarray_send - _null_ ));
 DESCR("I/O");
 
 

@@ -14,6 +14,8 @@ typedef int32 Cash;
 
 extern Datum cash_in(PG_FUNCTION_ARGS);
 extern Datum cash_out(PG_FUNCTION_ARGS);
+extern Datum cash_recv(PG_FUNCTION_ARGS);
+extern Datum cash_send(PG_FUNCTION_ARGS);
 
 extern Datum cash_eq(PG_FUNCTION_ARGS);
 extern Datum cash_ne(PG_FUNCTION_ARGS);

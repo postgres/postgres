@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.76 2003/05/09 21:19:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.77 2003/05/13 18:03:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,6 +407,58 @@ box_out(PG_FUNCTION_ARGS)
 	BOX		   *box = PG_GETARG_BOX_P(0);
 
 	PG_RETURN_CSTRING(path_encode(-1, 2, &(box->high)));
+}
+
+/*
+ *		box_recv			- converts external binary format to box
+ */
+Datum
+box_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	BOX		   *box;
+	double		x,
+				y;
+
+	box = (BOX *) palloc(sizeof(BOX));
+
+	box->high.x = pq_getmsgfloat8(buf);
+	box->high.y = pq_getmsgfloat8(buf);
+	box->low.x = pq_getmsgfloat8(buf);
+	box->low.y = pq_getmsgfloat8(buf);
+
+	/* reorder corners if necessary... */
+	if (box->high.x < box->low.x)
+	{
+		x = box->high.x;
+		box->high.x = box->low.x;
+		box->low.x = x;
+	}
+	if (box->high.y < box->low.y)
+	{
+		y = box->high.y;
+		box->high.y = box->low.y;
+		box->low.y = y;
+	}
+
+	PG_RETURN_BOX_P(box);
+}
+
+/*
+ *		box_send			- converts box to binary format
+ */
+Datum
+box_send(PG_FUNCTION_ARGS)
+{
+	BOX		   *box = PG_GETARG_BOX_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, box->high.x);
+	pq_sendfloat8(&buf, box->high.y);
+	pq_sendfloat8(&buf, box->low.x);
+	pq_sendfloat8(&buf, box->low.y);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -915,6 +967,26 @@ line_out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		line_recv			- converts external binary format to line
+ */
+Datum
+line_recv(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "line not yet implemented");
+	return 0;
+}
+
+/*
+ *		line_send			- converts line to binary format
+ */
+Datum
+line_send(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "line not yet implemented");
+	return 0;
+}
+
 
 /*----------------------------------------------------------
  *	Conversion routines from one line formula to internal.
@@ -1269,6 +1341,64 @@ path_out(PG_FUNCTION_ARGS)
 	PATH	   *path = PG_GETARG_PATH_P(0);
 
 	PG_RETURN_CSTRING(path_encode(path->closed, path->npts, path->p));
+}
+
+/*
+ *		path_recv			- converts external binary format to path
+ *
+ * External representation is closed flag (a boolean byte), int32 number
+ * of points, and the points.
+ */
+Datum
+path_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	PATH	   *path;
+	int			closed;
+	int32		npts;
+	int32		i;
+	int			size;
+
+	closed = pq_getmsgbyte(buf);
+	npts = pq_getmsgint(buf, sizeof(int32));
+	if (npts < 0 || npts >= (int32) (INT_MAX / sizeof(Point)))
+		elog(ERROR, "Invalid number of points in external path");
+
+	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
+	path = (PATH *) palloc(size);
+
+	path->size = size;
+	path->npts = npts;
+	path->closed = (closed ? 1 : 0);
+
+	for (i = 0; i < npts; i++)
+	{
+		path->p[i].x = pq_getmsgfloat8(buf);
+		path->p[i].y = pq_getmsgfloat8(buf);
+	}
+
+	PG_RETURN_PATH_P(path);
+}
+
+/*
+ *		path_send			- converts path to binary format
+ */
+Datum
+path_send(PG_FUNCTION_ARGS)
+{
+	PATH	   *path = PG_GETARG_PATH_P(0);
+	StringInfoData buf;
+	int32		i;
+
+	pq_begintypsend(&buf);
+	pq_sendbyte(&buf, path->closed ? 1 : 0);
+	pq_sendint(&buf, path->npts, sizeof(int32));
+	for (i = 0; i < path->npts; i++)
+	{
+		pq_sendfloat8(&buf, path->p[i].x);
+		pq_sendfloat8(&buf, path->p[i].y);
+	}
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -1813,6 +1943,46 @@ lseg_out(PG_FUNCTION_ARGS)
 	LSEG	   *ls = PG_GETARG_LSEG_P(0);
 
 	PG_RETURN_CSTRING(path_encode(FALSE, 2, (Point *) &(ls->p[0])));
+}
+
+/*
+ *		lseg_recv			- converts external binary format to lseg
+ */
+Datum
+lseg_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	LSEG	   *lseg;
+
+	lseg = (LSEG *) palloc(sizeof(LSEG));
+
+	lseg->p[0].x = pq_getmsgfloat8(buf);
+	lseg->p[0].y = pq_getmsgfloat8(buf);
+	lseg->p[1].x = pq_getmsgfloat8(buf);
+	lseg->p[1].y = pq_getmsgfloat8(buf);
+
+#ifdef NOT_USED
+	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
+#endif
+
+	PG_RETURN_LSEG_P(lseg);
+}
+
+/*
+ *		lseg_send			- converts lseg to binary format
+ */
+Datum
+lseg_send(PG_FUNCTION_ARGS)
+{
+	LSEG	   *ls = PG_GETARG_LSEG_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, ls->p[0].x);
+	pq_sendfloat8(&buf, ls->p[0].y);
+	pq_sendfloat8(&buf, ls->p[1].x);
+	pq_sendfloat8(&buf, ls->p[1].y);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -3186,6 +3356,64 @@ poly_out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(path_encode(TRUE, poly->npts, poly->p));
 }
 
+/*
+ *		poly_recv			- converts external binary format to polygon
+ *
+ * External representation is int32 number of points, and the points.
+ * We recompute the bounding box on read, instead of trusting it to
+ * be valid.  (Checking it would take just as long, so may as well
+ * omit it from external representation.)
+ */
+Datum
+poly_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	POLYGON	   *poly;
+	int32		npts;
+	int32		i;
+	int			size;
+
+	npts = pq_getmsgint(buf, sizeof(int32));
+	if (npts < 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p[0])) / sizeof(Point)))
+		elog(ERROR, "Invalid number of points in external polygon");
+
+	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
+	poly = (POLYGON *) palloc0(size);	/* zero any holes */
+
+	poly->size = size;
+	poly->npts = npts;
+
+	for (i = 0; i < npts; i++)
+	{
+		poly->p[i].x = pq_getmsgfloat8(buf);
+		poly->p[i].y = pq_getmsgfloat8(buf);
+	}
+
+	make_bound_box(poly);
+
+	PG_RETURN_POLYGON_P(poly);
+}
+
+/*
+ *		poly_send			- converts polygon to binary format
+ */
+Datum
+poly_send(PG_FUNCTION_ARGS)
+{
+	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	StringInfoData buf;
+	int32		i;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, poly->npts, sizeof(int32));
+	for (i = 0; i < poly->npts; i++)
+	{
+		pq_sendfloat8(&buf, poly->p[i].x);
+		pq_sendfloat8(&buf, poly->p[i].y);
+	}
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /*-------------------------------------------------------
  * Is polygon A strictly left of polygon B? i.e. is
@@ -3999,6 +4227,43 @@ circle_out(PG_FUNCTION_ARGS)
 	*cp = '\0';
 
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		circle_recv			- converts external binary format to circle
+ */
+Datum
+circle_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	CIRCLE	   *circle;
+
+	circle = (CIRCLE *) palloc(sizeof(CIRCLE));
+
+	circle->center.x = pq_getmsgfloat8(buf);
+	circle->center.y = pq_getmsgfloat8(buf);
+	circle->radius = pq_getmsgfloat8(buf);
+
+	if (circle->radius < 0)
+		elog(ERROR, "Invalid radius in external circle");
+
+	PG_RETURN_CIRCLE_P(circle);
+}
+
+/*
+ *		circle_send			- converts circle to binary format
+ */
+Datum
+circle_send(PG_FUNCTION_ARGS)
+{
+	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, circle->center.x);
+	pq_sendfloat8(&buf, circle->center.y);
+	pq_sendfloat8(&buf, circle->radius);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

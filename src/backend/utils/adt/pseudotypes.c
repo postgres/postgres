@@ -16,12 +16,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.6 2003/05/08 22:19:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.7 2003/05/13 18:03:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -54,7 +55,7 @@ record_out(PG_FUNCTION_ARGS)
 Datum
 record_recv(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "RECORD");
+	elog(ERROR, "Cannot accept a value of type %s", "RECORD");
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -96,6 +97,34 @@ cstring_out(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 
 	PG_RETURN_CSTRING(pstrdup(str));
+}
+
+/*
+ * cstring_recv		- binary input routine for pseudo-type CSTRING.
+ */
+Datum
+cstring_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	char	   *str;
+	int			nbytes;
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	PG_RETURN_CSTRING(str);
+}
+
+/*
+ * cstring_send		- binary output routine for pseudo-type CSTRING.
+ */
+Datum
+cstring_send(PG_FUNCTION_ARGS)
+{
+	char	   *str = PG_GETARG_CSTRING(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendtext(&buf, str, strlen(str));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -142,6 +171,32 @@ Datum
 anyarray_out(PG_FUNCTION_ARGS)
 {
 	return array_out(fcinfo);
+}
+
+/*
+ * anyarray_recv		- binary input routine for pseudo-type ANYARRAY.
+ *
+ * XXX this could actually be made to work, since the incoming array
+ * data will contain the element type OID.  Need to think through
+ * type-safety issues before allowing it, however.
+ */
+Datum
+anyarray_recv(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a value of type %s", "ANYARRAY");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anyarray_send		- binary output routine for pseudo-type ANYARRAY.
+ *
+ * We may as well allow this, since array_send will in fact work.
+ */
+Datum
+anyarray_send(PG_FUNCTION_ARGS)
+{
+	return array_send(fcinfo);
 }
 
 

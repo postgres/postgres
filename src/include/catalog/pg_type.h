@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.144 2003/05/12 23:08:51 tgl Exp $
+ * $Id: pg_type.h,v 1.145 2003/05/13 18:03:08 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -326,20 +326,20 @@ DESCR("storage manager");
 DATA(insert OID = 600 (  point	   PGNSP PGUID 16 f b t \054 0 701 point_in point_out point_recv point_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("geometric point '(x, y)'");
 #define POINTOID		600
-DATA(insert OID = 601 (  lseg	   PGNSP PGUID 32 f b t \054 0 600 lseg_in lseg_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 601 (  lseg	   PGNSP PGUID 32 f b t \054 0 600 lseg_in lseg_out lseg_recv lseg_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("geometric line segment '(pt1,pt2)'");
 #define LSEGOID			601
-DATA(insert OID = 602 (  path	   PGNSP PGUID -1 f b t \054 0 0 path_in path_out - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 602 (  path	   PGNSP PGUID -1 f b t \054 0 0 path_in path_out path_recv path_send d x f 0 -1 0 _null_ _null_ ));
 DESCR("geometric path '(pt1,...)'");
 #define PATHOID			602
-DATA(insert OID = 603 (  box	   PGNSP PGUID 32 f b t \073 0 600 box_in box_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 603 (  box	   PGNSP PGUID 32 f b t \073 0 600 box_in box_out box_recv box_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("geometric box '(lower left,upper right)'");
 #define BOXOID			603
-DATA(insert OID = 604 (  polygon   PGNSP PGUID -1 f b t \054 0	 0 poly_in poly_out - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 604 (  polygon   PGNSP PGUID -1 f b t \054 0	 0 poly_in poly_out poly_recv poly_send d x f 0 -1 0 _null_ _null_ ));
 DESCR("geometric polygon '(pt1,...)'");
 #define POLYGONOID		604
 
-DATA(insert OID = 628 (  line	   PGNSP PGUID 32 f b t \054 0 701 line_in line_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 628 (  line	   PGNSP PGUID 32 f b t \054 0 701 line_in line_out line_recv line_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("geometric line (not implemented)'");
 #define LINEOID			628
 DATA(insert OID = 629 (  _line	   PGNSP PGUID	-1 f b t \054 0 628 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
@@ -366,23 +366,23 @@ DATA(insert OID = 705 (  unknown   PGNSP PGUID -1 f b t \054 0	 0 unknownin unkn
 DESCR("");
 #define UNKNOWNOID		705
 
-DATA(insert OID = 718 (  circle    PGNSP PGUID	24 f b t \054 0 0 circle_in circle_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 718 (  circle    PGNSP PGUID	24 f b t \054 0 0 circle_in circle_out circle_recv circle_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("geometric circle '(center,radius)'");
 #define CIRCLEOID		718
 DATA(insert OID = 719 (  _circle   PGNSP PGUID	-1 f b t \054 0  718 array_in array_out array_recv array_send d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 790 (  money	   PGNSP PGUID	 4 f b t \054 0 0 cash_in cash_out - - i p f 0 -1 0 _null_ _null_ ));
-DESCR("$d,ddd.cc, money");
+DATA(insert OID = 790 (  money	   PGNSP PGUID	 4 f b t \054 0 0 cash_in cash_out cash_recv cash_send i p f 0 -1 0 _null_ _null_ ));
+DESCR("monetary amounts, $d,ddd.cc");
 #define CASHOID 790
 DATA(insert OID = 791 (  _money    PGNSP PGUID	-1 f b t \054 0  790 array_in array_out array_recv array_send i x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 800 - 899 */
-DATA(insert OID = 829 ( macaddr    PGNSP PGUID	6 f b t \054 0 0 macaddr_in macaddr_out - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 829 ( macaddr    PGNSP PGUID	6 f b t \054 0 0 macaddr_in macaddr_out macaddr_recv macaddr_send i p f 0 -1 0 _null_ _null_ ));
 DESCR("XX:XX:XX:XX:XX:XX, MAC address");
 #define MACADDROID 829
-DATA(insert OID = 869 ( inet	   PGNSP PGUID	-1 f b t \054 0 0 inet_in inet_out - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 869 ( inet	   PGNSP PGUID	-1 f b t \054 0 0 inet_in inet_out inet_recv inet_send i p f 0 -1 0 _null_ _null_ ));
 DESCR("IP address/netmask, host address, netmask optional");
 #define INETOID 869
-DATA(insert OID = 650 ( cidr	   PGNSP PGUID	-1 f b t \054 0 0 cidr_in cidr_out - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 650 ( cidr	   PGNSP PGUID	-1 f b t \054 0 0 cidr_in cidr_out cidr_recv cidr_send i p f 0 -1 0 _null_ _null_ ));
 DESCR("network IP address/netmask, network address");
 #define CIDROID 650
 
@@ -521,11 +521,11 @@ DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b t \054 0 2206 array_in a
  */
 DATA(insert OID = 2249 ( record			PGNSP PGUID  4 t p t \054 0 0 record_in record_out record_recv record_send	i p f 0 -1 0 _null_ _null_ ));
 #define RECORDOID		2249
-DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 cstring_in cstring_out - -	c p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 cstring_in cstring_out cstring_recv cstring_send	c p f 0 -1 0 _null_ _null_ ));
 #define CSTRINGOID		2275
 DATA(insert OID = 2276 ( any			PGNSP PGUID  4 t p t \054 0 0 any_in any_out - -	i p f 0 -1 0 _null_ _null_ ));
 #define ANYOID			2276
-DATA(insert OID = 2277 ( anyarray		PGNSP PGUID -1 f p t \054 0 0 anyarray_in anyarray_out - -	i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2277 ( anyarray		PGNSP PGUID -1 f p t \054 0 0 anyarray_in anyarray_out anyarray_recv anyarray_send	i x f 0 -1 0 _null_ _null_ ));
 #define ANYARRAYOID		2277
 DATA(insert OID = 2278 ( void			PGNSP PGUID  4 t p t \054 0 0 void_in void_out - -	i p f 0 -1 0 _null_ _null_ ));
 #define VOIDOID			2278

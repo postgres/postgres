@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.40 2003/03/21 23:18:52 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.41 2003/05/13 18:03:07 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
 
@@ -145,6 +146,101 @@ Datum
 cidr_out(PG_FUNCTION_ARGS)
 {
 	return inet_out(fcinfo);
+}
+
+
+/*
+ *		inet_recv			- converts external binary format to inet
+ *
+ * The external representation is (one byte apiece for)
+ * family, bits, type, address length, address in network byte order.
+ */
+Datum
+inet_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	inet	   *addr;
+	char	   *addrptr;
+	int			bits;
+	int			nb,
+				i;
+
+	/* make sure any unused bits in a CIDR value are zeroed */
+	addr = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+
+	ip_family(addr) = pq_getmsgbyte(buf);
+	if (ip_family(addr) != AF_INET)
+		elog(ERROR, "Invalid family in external inet");
+	bits = pq_getmsgbyte(buf);
+	if (bits < 0 || bits > 32)
+		elog(ERROR, "Invalid bits in external inet");
+	ip_bits(addr) = bits;
+	ip_type(addr) = pq_getmsgbyte(buf);
+	if (ip_type(addr) != 0 && ip_type(addr) != 1)
+		elog(ERROR, "Invalid type in external inet");
+	nb = pq_getmsgbyte(buf);
+	if (nb != ip_addrsize(addr))
+		elog(ERROR, "Invalid length in external inet");
+
+	VARATT_SIZEP(addr) = VARHDRSZ
+		+ ((char *) &ip_v4addr(addr) - (char *) VARDATA(addr))
+		+ ip_addrsize(addr);
+
+	addrptr = (char *) &ip_v4addr(addr);
+	for (i = 0; i < nb; i++)
+		addrptr[i] = pq_getmsgbyte(buf);
+
+	/*
+	 * Error check: CIDR values must not have any bits set beyond the
+	 * masklen. XXX this code is not IPV6 ready.
+	 */
+	if (ip_type(addr))
+	{
+		if (!v4addressOK(ip_v4addr(addr), bits))
+			elog(ERROR, "invalid external CIDR value: has bits set to right of mask");
+	}
+
+	PG_RETURN_INET_P(addr);
+}
+
+/* share code with INET case */
+Datum
+cidr_recv(PG_FUNCTION_ARGS)
+{
+	return inet_recv(fcinfo);
+}
+
+/*
+ *		inet_send			- converts inet to binary format
+ */
+Datum
+inet_send(PG_FUNCTION_ARGS)
+{
+	inet	   *addr = PG_GETARG_INET_P(0);
+	StringInfoData buf;
+	char	   *addrptr;
+	int			nb,
+				i;
+
+	pq_begintypsend(&buf);
+	pq_sendbyte(&buf, ip_family(addr));
+	pq_sendbyte(&buf, ip_bits(addr));
+	pq_sendbyte(&buf, ip_type(addr));
+	nb = ip_addrsize(addr);
+	if (nb < 0)
+		nb = 0;
+	pq_sendbyte(&buf, nb);
+	addrptr = (char *) &ip_v4addr(addr);
+	for (i = 0; i < nb; i++)
+		pq_sendbyte(&buf, addrptr[i]);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/* share code with INET case */
+Datum
+cidr_send(PG_FUNCTION_ARGS)
+{
+	return inet_send(fcinfo);
 }
 
 
