@@ -16,7 +16,7 @@ typedef union
 	DefElem				*defelt;
 	ParamString			*param;
 	SortGroupBy			*sortgroupby;
-	JoinUsing			*joinusing;
+	JoinExpr			*joinexpr;
 	IndexElem			*ielem;
 	RangeVar			*range;
 	RelExpr				*relexp;
