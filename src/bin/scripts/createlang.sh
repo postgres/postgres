@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.33 2002/02/18 05:48:44 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.34 2002/02/18 23:11:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -289,4 +289,15 @@ if [ "$?" -ne 0 ]; then
 	exit 1
 fi
 
+if test -n "$trusted"; then
+    sqlcmd="GRANT USAGE ON LANGUAGE \"$langname\" TO PUBLIC;"
+    if [ "$showsql" = yes ]; then
+        echo "$sqlcmd"
+    fi
+    $PSQL "$sqlcmd"
+    if [ "$?" -ne 0 ]; then
+        echo "$CMDNAME: language installation failed" 1>&2
+        exit 1
+    fi
+fi
 exit 0

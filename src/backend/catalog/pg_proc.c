@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.63 2001/11/05 17:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.64 2002/02/18 23:11:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ ProcedureCreate(char *procedureName,
 				bool replace,
 				bool returnsSet,
 				char *returnTypeName,
-				char *languageName,
+				Oid languageObjectId,
 				char *prosrc,
 				char *probin,
 				bool trusted,
@@ -65,7 +65,6 @@ ProcedureCreate(char *procedureName,
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
-	Oid			languageObjectId;
 	Oid			typeObjectId;
 	List	   *x;
 	List	   *querytree_list;
@@ -81,12 +80,6 @@ ProcedureCreate(char *procedureName,
 	 */
 	Assert(PointerIsValid(prosrc));
 	Assert(PointerIsValid(probin));
-
-	languageObjectId = GetSysCacheOid(LANGNAME,
-									  PointerGetDatum(languageName),
-									  0, 0, 0);
-	if (!OidIsValid(languageObjectId))
-		elog(ERROR, "language '%s' does not exist", languageName);
 
 	parameterCount = 0;
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -320,6 +313,9 @@ ProcedureCreate(char *procedureName,
 			elog(ERROR, "ProcedureCreate: cannot change return type of existing function."
 				 "\n\tUse DROP FUNCTION first.");
 
+		/* do not change existing permissions */
+		replaces[Anum_pg_proc_proacl-1] = ' ';
+
 		/* Okay, do it... */
 		tup = heap_modifytuple(oldtup, rel, values, nulls, replaces);
 		simple_heap_update(rel, &tup->t_self, tup);
@@ -329,6 +325,10 @@ ProcedureCreate(char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
+
+		/* start out with empty permissions */
+		nulls[Anum_pg_proc_proacl-1] = 'n';
+
 		tup = heap_formtuple(tupDesc, values, nulls);
 		heap_insert(rel, tup);
 	}

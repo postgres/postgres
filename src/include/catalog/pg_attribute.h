@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.79 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_attribute.h,v 1.80 2002/02/18 23:11:33 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -310,7 +310,8 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1255, {"propercall_cpu"},		23, 0,	4, 14, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"prooutin_ratio"},		23, 0,	4, 15, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"prosrc"},				25, 0, -1, 16, 0, -1, -1, false, 'x', false, 'i', false, false }, \
-{ 1255, {"probin"},				17, 0, -1, 17, 0, -1, -1, false, 'x', false, 'i', false, false }
+{ 1255, {"probin"},				17, 0, -1, 17, 0, -1, -1, false, 'x', false, 'i', false, false }, \
+{ 1255, {"proacl"},			  1034, 0, -1, 18, 0, -1, -1, false, 'x', false, 'i', false, false }
 
 DATA(insert ( 1255 proname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1255 proowner			23 0  4   2 0 -1 -1 t p f i f f));
@@ -329,6 +330,7 @@ DATA(insert ( 1255 propercall_cpu	23 0  4  14 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 prooutin_ratio	23 0  4  15 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 prosrc			25 0 -1  16 0 -1 -1 f x f i f f));
 DATA(insert ( 1255 probin			17 0 -1  17 0 -1 -1 f x f i f f));
+DATA(insert ( 1255 proacl		  1034 0 -1  18 0 -1 -1 f x f i f f));
 DATA(insert ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

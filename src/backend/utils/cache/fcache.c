@@ -8,12 +8,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.41 2001/10/06 23:21:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.42 2002/02/18 23:11:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
+#include "utils/acl.h"
 #include "utils/fcache.h"
 
 
@@ -39,6 +41,8 @@ init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 
 	/* Initialize additional info */
 	retval->setArgsValid = false;
+
+	retval->permission_ok = pg_proc_aclcheck(foid, GetUserId()) == ACLCHECK_OK;
 
 	return retval;
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.19 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.20 2002/02/18 23:11:03 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,6 +18,14 @@ PostgreSQL documentation
 <synopsis>
 REVOKE { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">object</replaceable> [, ...]
+    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+REVOKE { EXECUTE | ALL [ PRIVILEGES ] }
+    ON FUNCTION <replaceable>funcname</replaceable> ([<replaceable>type</replaceable>, ...]) [, ...]
+    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+REVOKE { USAGE | ALL [ PRIVILEGES ] }
+    ON LANGUAGE <replaceable>langname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
 </synopsis>
  </refsynopsisdiv>

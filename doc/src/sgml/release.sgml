@@ -1,9 +1,34 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115 2002/01/31 21:20:03 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.116 2002/02/18 23:11:00 petere Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+ <sect1 id="release-devel">
+  <title>&version; Development Branch</title>
+
+  <para>
+   Below is a subset of the changes that have gone into the
+   development branch of PostgreSQL since version 7.2.  For a complete
+   list of changes, consult the CVS logs.
+  </para>
+
+<!--
+Developers: When you add a feature, mention it here.  This avoids
+lossiness when digging out the information from the CVS logs, and
+furthermore it advertises your feature to external parties at the
+earliest possible moment.
+ 
+CDATA means the content is "SGML-free", so you can write without
+worries about funny characters.
+-->
+<literallayout><![CDATA[
+Access privileges on functions
+Access privileges on procedural languages
+]]></literallayout>
+
+ </sect1>
 
  <sect1 id="release-7-2">
   <title>Release 7.2</title>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.19 2002/01/20 22:19:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.20 2002/02/18 23:11:02 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -19,6 +19,14 @@ PostgreSQL documentation
 GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">objectname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+GRANT { EXECUTE | ALL [ PRIVILEGES ] }
+    ON FUNCTION <replaceable>funcname</replaceable> ([<replaceable>type</replaceable>, ...]) [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON LANGUAGE <replaceable>langname</replaceable> [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -27,8 +35,9 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
 
   <para>
    The <command>GRANT</command> command gives specific permissions on
-   an object (table, view, sequence) to one or more users or groups of users.
-   These permissions are added to those already granted, if any.
+   an object (table, view, sequence, function, procedural language) to
+   one or more users or groups of users.  These permissions are added
+   to those already granted, if any.
   </para>
 
   <para>
@@ -135,13 +144,35 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
     </varlistentry>
 
     <varlistentry>
+     <term>EXECUTE</term>
+     <listitem>
+      <para>
+       Allows the use of the specified function and the use of any
+       operators that are implemented on top of the function.  This is
+       the only type of privilege that is applicable to functions.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>USAGE</term>
+     <listitem>
+      <para>
+       Allows the use of the specified procedural language for the
+       creation of functions in that language.  This is the only type
+       of privilege that is applicable to procedural languages.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term>ALL PRIVILEGES</term>
      <listitem>
       <para>
-       Grant all of the above privileges at once.  The
-       <literal>PRIVILEGES</literal> key word is optional in
-       <productname>PostgreSQL</productname>, though it is
-       required by strict SQL.
+       Grant all of the privileges applicable to the object at once.
+       The <literal>PRIVILEGES</literal> key word is optional in
+       <productname>PostgreSQL</productname>, though it is required by
+       strict SQL.
       </para>
      </listitem>
     </varlistentry>

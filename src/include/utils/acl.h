@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.39 2001/11/05 17:46:36 momjian Exp $
+ * $Id: acl.h,v 1.40 2002/02/18 23:11:45 petere Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -171,7 +171,7 @@ extern char *aclcheck_error_strings[];
 /*
  * routines used internally
  */
-extern Acl *acldefault(const char *relname, AclId ownerid);
+extern Acl *acldefault(AclId ownerid);
 extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg);
 
 /*
@@ -207,5 +207,8 @@ extern bool pg_func_ownercheck(Oid userid, char *funcname,
 				   int nargs, Oid *arglist);
 extern bool pg_aggr_ownercheck(Oid userid, char *aggname,
 				   Oid basetypeID);
+
+extern int32 pg_proc_aclcheck(Oid proc_oid, Oid userid);
+extern int32 pg_language_aclcheck(Oid lang_oid, Oid userid);
 
 #endif   /* ACL_H */

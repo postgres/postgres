@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.142 2001/11/25 22:19:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.143 2002/02/18 23:11:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -828,6 +828,24 @@ EOF
     INSERT INTO pg_description SELECT \
 	t.objoid, c.oid, t.objsubid, t.description \
     FROM tmp_pg_description t, pg_class c WHERE c.relname = t.classname;
+EOF
+) \
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ok"
+
+# Set most system catalogs and built-in functions as world-accessible.
+# Some objects may require different permissions by default, so we
+# make sure we don't overwrite privilege sets that have already been
+# set (NOT NULL).
+$ECHO_N "setting privileges on built-in objects... "$ECHO_C
+(
+  cat <<EOF
+    UPDATE pg_class SET relacl = '{"=r"}' \
+        WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;
+    UPDATE pg_proc SET proacl = '{"=r"}' \
+        WHERE proacl IS NULL;
+    UPDATE pg_language SET lanacl = '{"=r"}' \
+        WHERE lanpltrusted;
 EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely

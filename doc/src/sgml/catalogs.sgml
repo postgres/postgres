@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.29 2001/11/21 05:53:40 thomas Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.30 2002/02/18 23:10:59 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -1261,6 +1261,13 @@
       <entry></entry>
       <entry>not currently used</entry>
      </row>
+
+     <row>
+      <entry>lanacl</entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>Access permissions</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -1698,6 +1705,13 @@
       <entry>Additional information about how to invoke the function.
       Again, the interpretation is language-specific.
       </entry>
+     </row>
+
+     <row>
+      <entry>proacl</entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>Access permissions</entry>
      </row>
     </tbody>
    </tgroup>

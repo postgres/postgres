@@ -126,6 +126,42 @@ SELECT * FROM atestv1; -- ok
 SELECT * FROM atestv3; -- ok
 
 
+-- privileges on functions, languages
+
+-- switch to superuser
+\c -
+REVOKE ALL PRIVILEGES ON LANGUAGE sql FROM PUBLIC;
+GRANT USAGE ON LANGUAGE sql TO regressuser1; -- ok
+GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
+
+SET SESSION AUTHORIZATION regressuser1;
+GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
+CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
+CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regressuser2;
+GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
+GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
+GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
+
+SET SESSION AUTHORIZATION regressuser2;
+SELECT testfunc1(5), testfunc2(5); -- ok
+CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
+
+SET SESSION AUTHORIZATION regressuser3;
+SELECT testfunc1(5); -- fail
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT testfunc1(5); -- ok
+
+DROP FUNCTION testfunc1(int); -- fail
+
+\c -
+DROP FUNCTION testfunc1(int); -- ok
+-- restore to sanity
+GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
+
+
 -- has_table_privilege function
 
 -- bad-input checks
@@ -137,7 +173,7 @@ select has_table_privilege(-999999,'pg_shadow','update');
 select has_table_privilege(1,'rule');
 
 -- superuser
-\c regression
+\c -
 select has_table_privilege(current_user,'pg_shadow','select');
 select has_table_privilege(current_user,'pg_shadow','insert');
 

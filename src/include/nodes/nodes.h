@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.96 2001/11/05 17:46:34 momjian Exp $
+ * $Id: nodes.h,v 1.97 2002/02/18 23:11:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,8 @@ typedef enum NodeTag
 	T_CaseWhen,
 	T_FkConstraint,
 	T_PrivGrantee,
+	T_FuncWithArgs,
+	T_PrivTarget,
 
 	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)

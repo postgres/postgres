@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.19 2001/09/08 15:24:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.20 2002/02/18 23:11:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,22 @@
 bool
 superuser(void)
 {
+	return superuser_arg(GetUserId());
+}
+
+
+bool
+superuser_arg(Oid userid)
+{
 	bool		result = false;
 	HeapTuple	utup;
 
 	/* Special escape path in case you deleted all your users. */
-	if (!IsUnderPostmaster && GetUserId() == BOOTSTRAP_USESYSID)
+	if (!IsUnderPostmaster && userid == BOOTSTRAP_USESYSID)
 		return true;
 
 	utup = SearchSysCache(SHADOWSYSID,
-						  ObjectIdGetDatum(GetUserId()),
+						  ObjectIdGetDatum(userid),
 						  0, 0, 0);
 	if (HeapTupleIsValid(utup))
 	{
@@ -48,6 +55,7 @@ superuser(void)
 	}
 	return result;
 }
+
 
 /*
  * The Postgres user running this command is the owner of the specified

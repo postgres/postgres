@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.98 2002/01/01 23:16:22 tgl Exp $
+ * $Id: miscadmin.h,v 1.99 2002/02/18 23:11:31 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -227,6 +227,7 @@ extern char *convertstr(unsigned char *buff, int len, int dest);
 
 /* in utils/misc/superuser.c */
 extern bool superuser(void);	/* current user is superuser */
+extern bool superuser_arg(Oid userid);	/* given user is superuser */
 extern bool is_dbadmin(Oid dbid);		/* current user is owner of
 										 * database */
 

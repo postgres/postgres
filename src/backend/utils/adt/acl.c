@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.66 2001/11/16 23:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.67 2002/02/18 23:11:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ aclitemgt(const AclItem *a1, const AclItem *a2)
  * newly-created tables (or any table with a NULL acl entry in pg_class)
  */
 Acl *
-acldefault(const char *relname, AclId ownerid)
+acldefault(AclId ownerid)
 {
 	Acl		   *acl;
 	AclItem    *aip;
@@ -381,16 +381,18 @@ acldefault(const char *relname, AclId ownerid)
 #define ACL_WORLD_DEFAULT		(ACL_NO)
 #define ACL_OWNER_DEFAULT		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_RULE|ACL_REFERENCES|ACL_TRIGGER)
 
-	acl = makeacl(2);
+	acl = makeacl(ownerid ? 2 : 1);
 	aip = ACL_DAT(acl);
 	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
 	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = (IsSystemRelationName(relname) &&
-					  !IsToastRelationName(relname)) ? ACL_SELECT
-		: ACL_WORLD_DEFAULT;
-	aip[1].ai_idtype = ACL_IDTYPE_UID;
-	aip[1].ai_id = ownerid;
-	aip[1].ai_mode = ACL_OWNER_DEFAULT;
+	aip[0].ai_mode = ACL_WORLD_DEFAULT;
+	/* FIXME: The owner's default should vary with the object type. */
+	if (ownerid)
+	{
+		aip[1].ai_idtype = ACL_IDTYPE_UID;
+		aip[1].ai_id = ownerid;
+		aip[1].ai_mode = ACL_OWNER_DEFAULT;
+	}
 	return acl;
 }
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.277 2002/02/18 06:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.278 2002/02/18 23:11:17 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -56,7 +56,6 @@
 #include "nodes/parsenodes.h"
 #include "parser/gramparse.h"
 #include "storage/lmgr.h"
-#include "utils/acl.h"
 #include "utils/numeric.h"
 #include "utils/datetime.h"
 
@@ -122,6 +121,7 @@ static void doNegateFloat(Value *v);
 	A_Indices			*aind;
 	ResTarget			*target;
 	ParamNo				*paramno;
+	PrivTarget			*privtarget;
 
 	VersionStmt			*vstmt;
 	DefineStmt			*dstmt;
@@ -182,10 +182,14 @@ static void doNegateFloat(Value *v);
 		OptUseOp, opt_class, SpecialRuleRelation
 
 %type <str>		opt_level, opt_encoding
-%type <str>		privileges, operation_commalist
 %type <node>	grantee
 %type <list>	grantee_list
-%type <chr>		operation, TriggerOneEvent
+%type <ival>	privilege
+%type <list>	privileges, privilege_list
+%type <privtarget> privilege_target
+%type <node>	function_with_argtypes
+%type <list>	function_with_argtypes_list
+%type <chr>	TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
 		into_clause, OptTempTableName, relation_name_list,
@@ -323,7 +327,7 @@ static void doNegateFloat(Value *v);
 		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP,
 		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
-		UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
+		UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USAGE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
@@ -2327,73 +2331,94 @@ from_in:  IN
 
 /*****************************************************************************
  *
- * GRANT privileges ON [TABLE] relation_name_list TO [GROUP] grantee, ...
+ * GRANT and REVOKE statements
  *
  *****************************************************************************/
 
-GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee_list opt_with_grant
+GrantStmt:  GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_option
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
-					n->relnames = $5;
 					n->privileges = $2;
-					n->grantees = $7;
+					n->objtype = ($4)->objtype;
+					n->objects = ($4)->objs;
+					n->grantees = $6;
 					$$ = (Node*)n;
 				}
 		;
 
-privileges:  ALL PRIVILEGES
+RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list
 				{
-				 $$ = aclmakepriv(ACL_MODE_STR,0);
-				}
-		| ALL
-				{
-				 $$ = aclmakepriv(ACL_MODE_STR,0);
-				}
-		| operation_commalist
-				{
-				 $$ = $1;
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = false;
+					n->privileges = $3;
+					n->objtype = ($5)->objtype;
+					n->objects = ($5)->objs;
+					n->grantees = $7;
+					$$ = (Node *)n;
 				}
 		;
 
-operation_commalist:  operation
+
+/* either ALL [PRIVILEGES] or a list of individual privileges */
+privileges: privilege_list { $$ = $1; }
+		| ALL { $$ = makeListi1(ALL); }
+		| ALL PRIVILEGES { $$ = makeListi1(ALL); }
+		;
+
+privilege_list: privilege { $$ = makeListi1($1); }
+		| privilege_list ',' privilege { $$ = lappendi($1, $3); }
+		;
+
+/* Not all of these privilege types apply to all objects, but that
+   gets sorted out later. */
+privilege: SELECT    { $$ = SELECT; }
+		| INSERT     { $$ = INSERT; }
+		| UPDATE     { $$ = UPDATE; }
+		| DELETE     { $$ = DELETE; }
+		| RULE       { $$ = RULE; }
+		| REFERENCES { $$ = REFERENCES; }
+		| TRIGGER    { $$ = TRIGGER; }
+		| EXECUTE    { $$ = EXECUTE; }
+		| USAGE      { $$ = USAGE; }
+		;
+
+
+/* Don't bother trying to fold the first two rules into one using
+   opt_table.  You're going to get conflicts. */
+privilege_target: relation_name_list
 				{
-						$$ = aclmakepriv("",$1);
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = TABLE;
+					n->objs = $1;
+					$$ = n;
 				}
-		| operation_commalist ',' operation
+			| TABLE relation_name_list
 				{
-						$$ = aclmakepriv($1,$3);
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = TABLE;
+					n->objs = $2;
+					$$ = n;
+				}
+			| FUNCTION function_with_argtypes_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = FUNCTION;
+					n->objs = $2;
+					$$ = n;
+				}
+			| LANGUAGE name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = LANGUAGE;
+					n->objs = $2;
+					$$ = n;
 				}
 		;
 
-operation:  SELECT
-				{
-						$$ = ACL_MODE_SELECT_CHR;
-				}
-		| INSERT
-				{
-						$$ = ACL_MODE_INSERT_CHR;
-				}
-		| UPDATE
-				{
-						$$ = ACL_MODE_UPDATE_CHR;
-				}
-		| DELETE
-				{
-						$$ = ACL_MODE_DELETE_CHR;
-				}
-		| RULE
-				{
-						$$ = ACL_MODE_RULE_CHR;
-				}
-		| REFERENCES
-				{
-						$$ = ACL_MODE_REFERENCES_CHR;
-				}
-		| TRIGGER
-				{
-						$$ = ACL_MODE_TRIGGER_CHR;
-				}
+
+grantee_list: grantee					{ $$ = makeList1($1); }
+		| grantee_list ',' grantee		{ $$ = lappend($1, $3); }
 		;
 
 grantee:  PUBLIC
@@ -2419,31 +2444,33 @@ grantee:  PUBLIC
 				}
 		;
 
-grantee_list: grantee					{ $$ = makeList1($1); }
-		| grantee_list ',' grantee		{ $$ = lappend($1, $3); }
 
-
-opt_with_grant:  WITH GRANT OPTION
+opt_grant_grant_option: WITH GRANT OPTION
 				{
-					elog(ERROR,"WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
-				 }
+					elog(ERROR, "grant options are not implemented");
+				}
+		| /*EMPTY*/
+		;
+
+opt_revoke_grant_option: GRANT OPTION FOR
+				{
+					elog(ERROR, "grant options are not implemented");
+				}
 		| /*EMPTY*/
 		;
 
 
-/*****************************************************************************
- *
- * REVOKE privileges ON [TABLE] relation_name_list FROM user, ...
- *
- *****************************************************************************/
+function_with_argtypes_list: function_with_argtypes
+				{ $$ = makeList1($1); }
+		| function_with_argtypes_list ',' function_with_argtypes
+				{ $$ = lappend($1, $3); }
+		;
 
-RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
+function_with_argtypes: func_name func_args
 				{
-					GrantStmt *n = makeNode(GrantStmt);
-					n->is_grant = false;
-					n->relnames = $5;
-					n->privileges = $2;
-					n->grantees = $7;
+					FuncWithArgs *n = makeNode(FuncWithArgs);
+					n->funcname = $1;
+					n->funcargs = $2;
 					$$ = (Node *)n;
 				}
 		;
@@ -5876,6 +5903,7 @@ unreserved_keyword:
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }
+		| USAGE							{ $$ = "usage"; }
 		| VACUUM						{ $$ = "vacuum"; }
 		| VALID							{ $$ = "valid"; }
 		| VALUES						{ $$ = "values"; }

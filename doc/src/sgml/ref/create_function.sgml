@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.30 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.31 2002/02/18 23:11:02 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -270,6 +270,17 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     definition without breaking objects that refer to the function.
    </para>
 
+  <para>
+   To be able to define a function, the user must have the
+   <literal>USAGE</literal> privilege on the language.
+  </para>
+
+  <para>
+   By default, only the owner (creator) of the function has the right
+   to execute it.  Other users must be granted the
+   <literal>EXECUTE</literal> privilege on the function to be able to
+   use it.
+  </para>
  </refsect1>
 
   
@@ -369,7 +380,9 @@ Point * complex_to_point (Complex *z)
 
   <para>
    <xref linkend="sql-dropfunction">,
+   <xref linkend="sql-grant">,
    <xref linkend="sql-load">,
+   <xref linkend="sql-revoke">,
    <citetitle>PostgreSQL Programmer's Guide</citetitle>
   </para>
  </refsect1>

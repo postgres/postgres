@@ -188,6 +188,49 @@ SELECT * FROM atestv3; -- ok
 -----+-----+-------
 (0 rows)
 
+-- privileges on functions, languages
+-- switch to superuser
+\c -
+REVOKE ALL PRIVILEGES ON LANGUAGE sql FROM PUBLIC;
+GRANT USAGE ON LANGUAGE sql TO regressuser1; -- ok
+GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
+ERROR:  language "c" is not trusted
+SET SESSION AUTHORIZATION regressuser1;
+GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
+ERROR:  permission denied
+CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
+CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regressuser2;
+GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
+ERROR:  invalid privilege type USAGE for function object
+GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
+GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
+ERROR:  Function 'testfunc_nosuch(int4)' does not exist
+SET SESSION AUTHORIZATION regressuser2;
+SELECT testfunc1(5), testfunc2(5); -- ok
+ testfunc1 | testfunc2 
+-----------+-----------
+        10 |        15
+(1 row)
+
+CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
+ERROR:  permission denied
+SET SESSION AUTHORIZATION regressuser3;
+SELECT testfunc1(5); -- fail
+ERROR:  permission denied
+SET SESSION AUTHORIZATION regressuser4;
+SELECT testfunc1(5); -- ok
+ testfunc1 
+-----------
+        10
+(1 row)
+
+DROP FUNCTION testfunc1(int); -- fail
+ERROR:  RemoveFunction: function 'testfunc1': permission denied
+\c -
+DROP FUNCTION testfunc1(int); -- ok
+-- restore to sanity
+GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 -- has_table_privilege function
 -- bad-input checks
 select has_table_privilege(NULL,'pg_shadow','select');
@@ -207,7 +250,7 @@ ERROR:  pg_aclcheck: invalid user id 4293967297
 select has_table_privilege(1,'rule');
 ERROR:  has_table_privilege: invalid relation oid 1
 -- superuser
-\c regression
+\c -
 select has_table_privilege(current_user,'pg_shadow','select');
  has_table_privilege 
 ---------------------

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.64 2001/10/28 06:25:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.65 2002/02/18 23:11:10 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -50,6 +50,7 @@
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "parser/parse_expr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -60,22 +61,18 @@ static int	defGetTypeLength(DefElem *def);
 #define DEFAULT_TYPDELIM		','
 
 
+/*
+ * Translate the input language name to lower case.
+ */
 static void
 case_translate_language_name(const char *input, char *output)
 {
-/*
- *	Translate the input language name to lower case, except if it's "C",
- * translate to upper case.
- */
 	int			i;
 
 	for (i = 0; i < NAMEDATALEN - 1 && input[i]; ++i)
 		output[i] = tolower((unsigned char) input[i]);
 
 	output[i] = '\0';
-
-	if (strcmp(output, "c") == 0)
-		output[0] = 'C';
 }
 
 
@@ -175,12 +172,12 @@ compute_full_attributes(List *parameters,
  */
 
 static void
-interpret_AS_clause(const char *languageName, const List *as,
+interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
 					char **prosrc_str_p, char **probin_str_p)
 {
 	Assert(as != NIL);
 
-	if (strcmp(languageName, "C") == 0)
+	if (languageOid == ClanguageId)
 	{
 		/*
 		 * For "C" language, store the file name in probin and, when
@@ -213,29 +210,16 @@ interpret_AS_clause(const char *languageName, const List *as,
 void
 CreateFunction(ProcedureStmt *stmt)
 {
-	char	   *probin_str;
-
 	/* pathname of executable file that executes this function, if any */
-
-	char	   *prosrc_str;
-
+	char	   *probin_str;
 	/* SQL that executes this function, if any */
-
-	char	   *prorettype;
-
+	char	   *prosrc_str;
 	/* Type of return value (or member of set of values) from function */
-
+	char	   *prorettype;
+	/* name of language of function, with case adjusted */
 	char		languageName[NAMEDATALEN];
-
-	/*
-	 * name of language of function, with case adjusted: "C", "internal",
-	 * "sql", etc.
-	 */
-
-	bool		returnsSet;
-
 	/* The function returns a set of values, as opposed to a singleton. */
-
+	bool		returnsSet;
 	/*
 	 * The following are optional user-supplied attributes of the
 	 * function.
@@ -247,62 +231,28 @@ CreateFunction(ProcedureStmt *stmt)
 	bool		canCache,
 				isStrict;
 
+	HeapTuple	languageTuple;
+	Form_pg_language languageStruct;
+	Oid languageOid;
+
 	/* Convert language name to canonical case */
 	case_translate_language_name(stmt->language, languageName);
 
-	/*
-	 * Apply appropriate security checks depending on language.
-	 */
-	if (strcmp(languageName, "C") == 0 ||
-		strcmp(languageName, "internal") == 0)
-	{
-		if (!superuser())
-			elog(ERROR,
-				 "Only users with Postgres superuser privilege are "
-			   "permitted to create a function in the '%s' language.\n\t"
-				 "Others may use the 'sql' language "
-				 "or the created procedural languages.",
-				 languageName);
-	}
-	else if (strcmp(languageName, "sql") == 0)
-	{
-		/* No security check needed for SQL functions */
-	}
-	else
-	{
-		HeapTuple	languageTuple;
-		Form_pg_language languageStruct;
+	languageTuple = SearchSysCache(LANGNAME,
+								   PointerGetDatum(languageName),
+								   0, 0, 0);
+	if (!HeapTupleIsValid(languageTuple))
+		elog(ERROR, "language \"%s\" does not exist", languageName);
 
-		/* Lookup the language in the system cache */
-		languageTuple = SearchSysCache(LANGNAME,
-									   PointerGetDatum(languageName),
-									   0, 0, 0);
-		if (!HeapTupleIsValid(languageTuple))
-			elog(ERROR,
-				 "Unrecognized language specified in a CREATE FUNCTION: "
-				 "'%s'.\n\tPre-installed languages are SQL, C, and "
-				 "internal.\n\tAdditional languages may be installed "
-				 "using 'createlang'.",
-				 languageName);
+	languageOid = languageTuple->t_data->t_oid;
+	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 
-		/* Check that this language is a PL */
-		languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
-		if (!languageStruct->lanispl)
-			elog(ERROR,
-				 "Language '%s' isn't defined as PL", languageName);
+	if (!((languageStruct->lanpltrusted
+		   && pg_language_aclcheck(languageOid, GetUserId()) == ACLCHECK_OK)
+		  || superuser()))
+		elog(ERROR, "permission denied");
 
-		/*
-		 * Functions in untrusted procedural languages are restricted to
-		 * be defined by postgres superusers only
-		 */
-		if (!languageStruct->lanpltrusted && !superuser())
-			elog(ERROR, "Only users with Postgres superuser privilege "
-				 "are permitted to create a function in the '%s' "
-				 "language.",
-				 languageName);
-
-		ReleaseSysCache(languageTuple);
-	}
+	ReleaseSysCache(languageTuple);
 
 	/*
 	 * Convert remaining parameters of CREATE to form wanted by
@@ -316,7 +266,7 @@ CreateFunction(ProcedureStmt *stmt)
 							&byte_pct, &perbyte_cpu, &percall_cpu,
 							&outin_ratio, &canCache, &isStrict);
 
-	interpret_AS_clause(languageName, stmt->as, &prosrc_str, &probin_str);
+	interpret_AS_clause(languageOid, languageName, stmt->as, &prosrc_str, &probin_str);
 
 	/*
 	 * And now that we have all the parameters, and know we're permitted
@@ -326,7 +276,7 @@ CreateFunction(ProcedureStmt *stmt)
 					stmt->replace,
 					returnsSet,
 					prorettype,
-					languageName,
+					languageOid,
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
 					true,		/* (obsolete "trusted") */

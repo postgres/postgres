@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.151 2001/11/05 17:46:34 momjian Exp $
+ * $Id: parsenodes.h,v 1.152 2002/02/18 23:11:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,8 +145,9 @@ typedef struct GrantStmt
 {
 	NodeTag		type;
 	bool		is_grant;		/* not revoke */
-	List	   *relnames;
-	char	   *privileges;
+	int			objtype;
+	List	   *objects;
+	List	   *privileges;
 	List	   *grantees;
 } GrantStmt;
 
@@ -157,6 +158,23 @@ typedef struct PrivGrantee
 	char	   *username;		/* if both are NULL then PUBLIC */
 	char	   *groupname;
 } PrivGrantee;
+
+
+typedef struct FuncWithArgs
+{
+	NodeTag		type;
+	char	   *funcname;
+	List	   *funcargs;
+} FuncWithArgs;
+
+
+/* This is only used internally in gram.y. */
+typedef struct PrivTarget
+{
+	NodeTag		type;
+	int			objtype;
+	List	   *objs;
+} PrivTarget;
 
 
 /* ----------------------
