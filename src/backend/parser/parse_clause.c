@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.20 1998/07/09 14:34:05 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.21 1998/07/14 03:51:42 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,7 +472,25 @@ transformUnionClause(List *unionClause, List *targetlist)
 				Oid   otype;
 				otype = ((TargetEntry *)lfirst(prev_target))->resdom->restype;
 				itype = ((TargetEntry *)lfirst(next_target))->resdom->restype;
-				if (itype != otype)
+
+#ifdef PARSEDEBUG
+printf("transformUnionClause: types are %d -> %d\n", itype, otype);
+#endif
+
+				/* one or both is a NULL column? then don't convert... */
+				if (otype == InvalidOid)
+				{
+					/* propagate a known type forward, if available */
+					if (itype != InvalidOid)
+					{
+						((TargetEntry *)lfirst(prev_target))->resdom->restype = itype;
+					}
+				}
+				else if (itype == InvalidOid)
+				{
+				}
+				/* they don't match in type? then convert... */
+				else if (itype != otype)
 				{
 					Node *expr;
 
@@ -488,6 +506,7 @@ transformUnionClause(List *unionClause, List *targetlist)
 					((TargetEntry *)lfirst(next_target))->expr = expr;
 					((TargetEntry *)lfirst(next_target))->resdom->restype = otype;
 				}
+
 				/* both are UNKNOWN? then evaluate as text... */
 				else if (itype == UNKNOWNOID)
 				{
