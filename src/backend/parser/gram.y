@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.53 1997/09/29 05:58:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.54 1997/10/09 05:00:54 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2308,9 +2308,8 @@ nest_array_bounds:	'[' ']' nest_array_bounds
 /*
  * typname handles types without trailing parens for size specification.
  * Typename uses either typname or explicit txname(size).
- * So, must handle float in both places. - thomas 1997-09-20
+ * So, must handle FLOAT in both places. - thomas 1997-09-20
  */
-
 typname:  txname
 				{
 					char *tname;
@@ -2352,7 +2351,16 @@ typname:  txname
 				}
 		;
 
+/* Type names
+ * Allow the following parsing categories:
+ *  - strings which are not keywords (Id)
+ *  - some explicit SQL/92 data types (e.g. DOUBLE PRECISION)
+ *  - TIME as an SQL/92 non-reserved word, but parser keyword
+ *  - other date/time strings (e.g. YEAR)
+ * - thomas 1997-10-08
+ */
 txname:  Id								{ $$ = $1; }
+		| DateTime						{ $$ = $1; }
 		| TIME							{ $$ = xlateSqlType("time"); }
 		| INTERVAL interval_opts		{ $$ = xlateSqlType("interval"); }
 		| CHARACTER char_type			{ $$ = $2; }
@@ -3131,6 +3139,7 @@ class:					Id				{ $$ = $1; };
 index_name:				Id				{ $$ = $1; };
 
 name:  Id								{ $$ = $1; }
+		| DateTime						{ $$ = $1; }
 		| TIME							{ $$ = xlateSqlType("time"); }
 		;
 
@@ -3179,8 +3188,14 @@ Sconst:  SCONST							{ $$ = $1; };
 
 Id:  IDENT								{ $$ = $1; };
 
+/* Column identifier (also used for table identifier)
+ * Allow date/time names ("year", etc.) (SQL/92 extension).
+ * Allow TIME (SQL/92 non-reserved word).
+ * - thomas 1997-10-08
+ */
 ColId:	Id								{ $$ = $1; }
 		| DateTime						{ $$ = $1; }
+		| TIME							{ $$ = "time"; }
 		;
 
 SpecialRuleRelation:  CURRENT
