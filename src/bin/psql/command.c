@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.136 2004/11/30 19:01:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.137 2004/11/30 20:00:34 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -648,6 +648,8 @@ exec_command(const char *cmd,
 
 		if (success && !quiet && fname)
 			printf(gettext("Wrote history to file \"%s\".\n"), fname);
+		if (!fname)
+			putchar('\n');
 		free(fname);
 	}
 
