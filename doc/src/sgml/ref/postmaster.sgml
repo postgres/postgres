@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.30 2002/06/15 19:52:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.31 2002/07/28 15:22:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -338,10 +338,82 @@ PostgreSQL documentation
    </para>
   </refsect2>
 
-  <refsect2 id="R2-APP-POSTMASTER-2">
-   <title>
-    Outputs
-   </title>
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGCLIENTENCODING</envar></term>
+
+    <listitem>
+     <para>
+      Default character encoding used by clients.  (The clients may
+      override this invidiually.)  This value can also be set in the
+      configuration file.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PGDATA</envar></term>
+
+    <listitem>
+     <para>
+      Default data direction location
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PGDATASTYLE</envar></term>
+
+    <listitem>
+     <para>
+      Default value of the <literal>datestyle</literal> run-time
+      parameter.  (The use of this environment variable is deprecated.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PGPORT</envar></term>
+
+    <listitem>
+     <para>
+      Default port (preferrably set in the configuration file)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>TZ</envar></term>
+
+    <listitem>
+     <para>
+      Server time zone
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>others</term>
+
+    <listitem>
+     <para>
+      Other environment variables may be used to designate alternative
+      data storage locations.  See the <citetitle>Administrator's
+      Guide</citetitle> for more information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+   <title>Diagnostics</title>
    <para>
 
     <variablelist>
@@ -417,7 +489,6 @@ StreamServerPort: cannot bind to port
      </varlistentry>
     </variablelist>
    </para>
-  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -457,8 +528,8 @@ StreamServerPort: cannot bind to port
 
  </refsect1>
 
- <refsect1 id="app-postmaster-usage">
-  <title>Usage</title>
+ <refsect1 id="app-postmaster-examples">
+  <title>Examples</title>
   <para>
    To start <application>postmaster</application> in the background
    using default values, type:

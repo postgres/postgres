@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.18 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.19 2002/07/28 15:22:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,12 +21,38 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>options</replaceable></arg>
    <arg><replaceable>username</replaceable></arg>
   </cmdsynopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-APP-DROPUSER-1">
-   <title>
-    Inputs
-   </title>
-   <para>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <application>dropuser</application> removes an existing
+   <productname>PostgreSQL</productname> user
+   <emphasis>and</emphasis> the databases which that user owned.
+   Only users with <literal>usesuper</literal> set in
+   the <literal>pg_shadow</literal> table can destroy 
+   <productname>PostgreSQL</productname> users.
+  </para>
+
+  <para>
+   <application>dropuser</application> is a shell script wrapper around the
+   <acronym>SQL</acronym> command
+   <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title"> via
+   the <productname>PostgreSQL</productname> interactive terminal
+   <xref linkend="APP-PSQL">. Thus, there is nothing
+   special about removing users via this or other methods. This means
+   that the <application>psql</application> must be found by the script and that
+   a database server is running at the targeted host. Also, any default
+   settings and environment variables available to <application>psql</application>
+   and the <application>libpq</application> front-end library do apply.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Options</title>
 
     <variablelist>
      <varlistentry>
@@ -91,7 +117,6 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
     </variablelist>
-    </para>
 
     <para>
     The options <literal>-h</literal>, <literal>-p</literal>, and <literal>-e</literal>,
@@ -99,14 +124,31 @@ PostgreSQL documentation
     <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
     are available as well, but they can be confusing in this context.
    </para>
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-APP-DROPUSER-2">
-   <title>
-    Outputs
-   </title>
 
-   <para>
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+   <title>Diagnostics</title>
+
     <variablelist>
      <varlistentry>
       <term><computeroutput>DROP USER</computeroutput></term>
@@ -128,43 +170,16 @@ PostgreSQL documentation
 
     </variablelist>
 
+   <para>
     If there is an error condition, the backend error message will be displayed.
     See <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title">
     and <xref linkend="APP-PSQL"> for possibilities.
    </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-APP-DROPUSER-1">
-  <title>
-   Description
-  </title>
-  <para>
-   <application>dropuser</application> removes an existing
-   <productname>PostgreSQL</productname> user
-   <emphasis>and</emphasis> the databases which that user owned.
-   Only users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> table can destroy 
-   <productname>PostgreSQL</productname> users.
-  </para>
-
-  <para>
-   <application>dropuser</application> is a shell script wrapper around the
-   <acronym>SQL</acronym> command
-   <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
-   <xref linkend="APP-PSQL">. Thus, there is nothing
-   special about removing users via this or other methods. This means
-   that the <application>psql</application> must be found by the script and that
-   a database server is running at the targeted host. Also, any default
-   settings and environment variables available to <application>psql</application>
-   and the <application>libpq</application> front-end library do apply.
-  </para>
-
  </refsect1>
 
- <refsect1 id="R1-APP-DROPUSER-2">
-  <title>Usage</title>
+
+ <refsect1>
+  <title>Examples</title>
 
   <informalexample>
    <para>
@@ -191,6 +206,16 @@ DROP USER</computeroutput>
 </screen>
    </para>
   </informalexample>
+ </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-createuser"></member>
+   <member><xref linkend="sql-dropuser" endterm="sql-dropuser-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

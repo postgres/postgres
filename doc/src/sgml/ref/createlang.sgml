@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.24 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.25 2002/07/28 15:22:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
  </refmeta>
 
  <refnamediv>
-  <refname id="createlang">createlang</refname>
+  <refname>createlang</refname>
   <refpurpose>define a new <productname>PostgreSQL</productname> procedural language</refpurpose>
  </refnamediv>
 
@@ -27,11 +27,33 @@ PostgreSQL documentation
    <group choice="plain"><arg>--list</arg><arg>-l</arg></group>
    <arg choice="plain"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-APP-CREATELANG-1">
-   <title>
-    Inputs
-   </title>
+ 
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <application>createlang</application> is a utility for adding a new 
+   programming language to a <productname>PostgreSQL</productname> database.
+   <application>createlang</application> can handle all the languages
+   supplied in the default <productname>PostgreSQL</> distribution, but
+   not languages provided by other parties.
+  </para>
+  <para>
+   Although backend programming languages can be added directly using
+   several <acronym>SQL</acronym> commands, it is recommended to use
+   <application>createlang</application> because it performs a number
+   of checks and is much easier to use. See
+   <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
+   for more.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Options</title>
+
    <para>
     <application>createlang</application> accepts the following command line arguments:
     
@@ -138,12 +160,31 @@ PostgreSQL documentation
 
     </variablelist>
    </para>
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-APP-CREATELANG-2">
-   <title>
-    Outputs
-   </title>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Diagnostics</title>
+
    <para>
     Most error messages are self-explanatory. If not, run
     <application>createlang</application> with the <option>--echo</option>
@@ -151,35 +192,12 @@ PostgreSQL documentation
     for details. Check also under <xref linkend="APP-PSQL">
     for more possibilities.
    </para>
-  </refsect2>
- </refsynopsisdiv>
- 
- <refsect1 id="R1-APP-CREATELANG-1">
-  <title>
-   Description
-  </title>
-
-  <para>
-   <application>createlang</application> is a utility for adding a new 
-   programming language to a <productname>PostgreSQL</productname> database.
-   <application>createlang</application> can handle all the languages
-   supplied in the default <productname>PostgreSQL</> distribution, but
-   not languages provided by other parties.
-  </para>
-  <para>
-   Although backend programming languages can be added directly using
-   several <acronym>SQL</acronym> commands, it is recommended to use
-   <application>createlang</application> because it performs a number
-   of checks and is much easier to use. See
-   <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
-   for more.
-  </para>
  </refsect1>
 
- <refsect1 id="R1-APP-CREATELANG-2">
-  <title>
-   Notes
-  </title>
+
+ <refsect1>
+  <title>Notes</title>
+
   <para>
    Use <xref linkend="app-droplang"> to remove a language.
   </para>
@@ -192,8 +210,9 @@ PostgreSQL documentation
   </para>
  </refsect1>
  
- <refsect1 id="R1-APP-CREATELANG-3">
-  <title>Usage</title>
+
+ <refsect1>
+  <title>Examples</title>
 
   <informalexample>
    <para>
@@ -205,6 +224,16 @@ PostgreSQL documentation
    </para>
   </informalexample>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-droplang"></member>
+   <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

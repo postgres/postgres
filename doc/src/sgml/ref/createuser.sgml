@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.25 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.26 2002/07/28 15:22:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,12 +21,46 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>options</replaceable></arg>
    <arg><replaceable>username</replaceable></arg>
   </cmdsynopsis>
+ </refsynopsisdiv>
+  
 
-  <refsect2 id="R2-APP-CREATEUSER-1">
-   <title>
-    Inputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Description</title>
+  <para>
+   <application>createuser</application> creates a 
+   new <productname>PostgreSQL</productname> user.  
+   Only superusers (users with <literal>usesuper</literal> set in
+   the <literal>pg_shadow</literal> table) can create 
+   new <productname>PostgreSQL</productname> users,
+   so <application>createuser</application> must be
+   invoked by someone who is a <productname>PostgreSQL</productname>
+   superuser.
+  </para>
+
+  <para>
+   Being a superuser also implies the ability to bypass access permission
+   checks within the database, so superuser-dom should not be granted lightly.
+  </para>
+
+  <para>
+   <application>createuser</application> is a shell script wrapper around the
+   <acronym>SQL</acronym> command
+   <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title"> via
+   the <productname>PostgreSQL</productname> interactive terminal
+   <xref linkend="APP-PSQL">. Thus, there is nothing
+   special about creating users via this or other methods. This means
+   that the <application>psql</application> application must be found by the
+   script and that 
+   a database server must be running at the targeted host. Also, any default
+   settings and environment variables used by <application>psql</application>
+   and the <application>libpq</application> front-end library will apply.
+  </para>
+
+ </refsect1>
+
+
+ <refsect1>
+  <title>Options</title>
 
     <variablelist>
      <varlistentry>
@@ -162,6 +196,7 @@ PostgreSQL documentation
      </varlistentry>  
     </variablelist>
 
+   <para>
     You will be prompted for a name and other missing information if it is not
     specified on the command line.
     </para>
@@ -172,13 +207,31 @@ PostgreSQL documentation
     <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
     are available as well, but their use can be confusing in this context.
    </para>
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-APP-CREATEUSER-2">
-   <title>
-    Outputs
-   </title>
-   <para>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Diagnostics</title>
+
     <variablelist>
      <varlistentry>
       <term><computeroutput>CREATE USER</computeroutput></term>
@@ -200,52 +253,16 @@ PostgreSQL documentation
 
     </variablelist>
 
+   <para>
     If there is an error condition, the backend error message will be displayed.
     See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
     and <xref linkend="APP-PSQL"> for possibilities.
    </para>
-  </refsect2>
- </refsynopsisdiv>
-  
- <refsect1 id="R1-APP-CREATEUSER-1">
-  <title>
-   Description
-  </title>
-  <para>
-   <application>createuser</application> creates a 
-   new <productname>PostgreSQL</productname> user.  
-   Only superusers (users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> table) can create 
-   new <productname>PostgreSQL</productname> users,
-   so <application>createuser</application> must be
-   invoked by someone who is a <productname>PostgreSQL</productname>
-   superuser.
-  </para>
-
-  <para>
-   Being a superuser also implies the ability to bypass access permission
-   checks within the database, so superuser-dom should not be granted lightly.
-  </para>
-
-  <para>
-   <application>createuser</application> is a shell script wrapper around the
-   <acronym>SQL</acronym> command
-   <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
-   <xref linkend="APP-PSQL">. Thus, there is nothing
-   special about creating users via this or other methods. This means
-   that the <application>psql</application> application must be found by the
-   script and that 
-   a database server must be running at the targeted host. Also, any default
-   settings and environment variables used by <application>psql</application>
-   and the <application>libpq</application> front-end library will apply.
-  </para>
-
  </refsect1>
 
 
- <refsect1 id="R1-APP-CREATEUSER-2">
-  <title>Usage</title>
+ <refsect1>
+  <title>Examples</title>
 
   <informalexample>
    <para>
@@ -272,6 +289,16 @@ PostgreSQL documentation
 </screen>
    </para>
   </informalexample>
+ </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-dropuser"></member>
+   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

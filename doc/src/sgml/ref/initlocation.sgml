@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.15 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.16 2002/07/28 15:22:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -39,7 +39,7 @@ PostgreSQL documentation
  </refsect1>
 
  <refsect1 id="R1-APP-INITLOCATION-2">
-  <title>Usage</title>
+  <title>Examples</title>
 
   <informalexample>
    <para>
@@ -68,6 +68,15 @@ PostgreSQL documentation
    </para>
   </informalexample>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

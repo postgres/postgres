@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.26 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.27 2002/07/28 15:22:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,12 +22,42 @@ PostgreSQL documentation
    <arg><replaceable>dbname</replaceable></arg>
    <arg><replaceable>description</replaceable></arg>
   </cmdsynopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-APP-CREATEDB-1">
-   <title>
-    Inputs
-   </title>
-   <para>
+
+ <refsect1 id="R1-APP-CREATEDB-1">
+  <title>
+   Description
+  </title>
+  <para>
+   <application>createdb</application> creates a new <productname>PostgreSQL</productname>
+   database.
+  </para>
+
+  <para>
+   Normally, the database user who executes this command becomes the owner of
+   the new database.
+   However a different owner can be specified via the <option>-O</option>
+   option, if the executing user has appropriate privileges.
+  </para>
+
+  <para>
+   <application>createdb</application> is a shell script wrapper around the
+   <acronym>SQL</acronym> command
+   <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
+   the <productname>PostgreSQL</productname> interactive terminal
+   <xref linkend="APP-PSQL">. Thus, there is nothing
+   special about creating databases via this or other methods. This means
+   that the <application>psql</application> program must be found by the script and that
+   a database server must be running at the targeted port. Also, any default
+   settings and environment variables available to <application>psql</application>
+   and the <application>libpq</application> front-end library will apply.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Options</title>
 
     <variablelist>
      <varlistentry>
@@ -149,6 +179,7 @@ PostgreSQL documentation
 
     </variablelist>
 
+   <para>
     The options <option>-h</option>, <option>-p</option>, <option>-U</option>,
     <option>-W</option>, and <option>-e</option> are passed on literally to
     <xref linkend="app-psql">.
@@ -160,13 +191,12 @@ PostgreSQL documentation
     endterm="SQL-CREATEDATABASE-title">; see there for more information
     about them.
    </para>
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-APP-CREATEDB-2">
-   <title>
-    Outputs
-   </title>
-   <para>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
     <variablelist>
      <varlistentry>
       <term><computeroutput>CREATE DATABASE</computeroutput></term>
@@ -195,45 +225,37 @@ PostgreSQL documentation
      </varlistentry>
     </variablelist>
 
+   <para>
     If there is an error condition, the backend error message will be displayed.
     See <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-TITLE">
     and <xref linkend="APP-PSQL"> for possibilities.
    </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-APP-CREATEDB-1">
-  <title>
-   Description
-  </title>
-  <para>
-   <application>createdb</application> creates a new <productname>PostgreSQL</productname>
-   database.
-  </para>
-
-  <para>
-   Normally, the database user who executes this command becomes the owner of
-   the new database.
-   However a different owner can be specified via the <option>-O</option>
-   option, if the executing user has appropriate privileges.
-  </para>
-
-  <para>
-   <application>createdb</application> is a shell script wrapper around the
-   <acronym>SQL</acronym> command
-   <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
-   <xref linkend="APP-PSQL">. Thus, there is nothing
-   special about creating databases via this or other methods. This means
-   that the <application>psql</application> program must be found by the script and that
-   a database server must be running at the targeted port. Also, any default
-   settings and environment variables available to <application>psql</application>
-   and the <application>libpq</application> front-end library will apply.
-  </para>
  </refsect1>
 
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters.  <envar>PGUSER</envar> also
+      determines the name of the database to create, if it is not
+      specified in the command line.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+
  <refsect1 id="R1-APP-CREATEDB-2">
-  <title>Usage</title>
+  <title>Examples</title>
 
   <informalexample>
    <para>
@@ -262,6 +284,17 @@ PostgreSQL documentation
    </para>
   </informalexample>
  </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-dropdb"></member>
+   <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.41 2002/03/22 19:20:08 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.42 2002/07/28 15:22:20 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -1254,6 +1254,196 @@ End:
 
  </sect1>
 
+
+ <sect1 id="doc-style">
+  <title>Style Guide</title>
+
+  <sect2>
+   <title>Reference Pages</title>
+
+   <para>
+    Reference pages should follow a standard layout.  This allows
+    users to find the desired information more quickly, and it also
+    encourages writers to document all relevant aspects of a command.
+    Consistency is not only desired among
+    <productname>PostgreSQL</productname> reference pages, but also
+    with reference pages provided by the operating system and other
+    packages.  Hence the following guidelines have been developed.
+    They are for the most part consistent with similar guidelines
+    established by various operating systems.
+   </para>
+
+   <para>
+    Reference pages that describe executable commands should contain
+    the following sections, in this order.  Sections that do not apply
+    may be omitted.  Additional top-level sections should only be used
+    in special circumstances; often that information belongs in the
+    <quote>Usage</quote> section.
+
+    <variablelist>
+     <varlistentry>
+      <term>Name</term>
+      <listitem>
+       <para>
+        This section is generated automatically.  It contains the
+        command name and a half-sentence summary of its functionality.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Synopsis</term>
+      <listitem>
+       <para>
+        This section contains the syntax diagram of the command.  The
+        synopsis should normally not list each command-line option;
+        that is done below.  Instead, list the major components of the
+        command line, such as where input and output files go.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Description</term>
+      <listitem>
+       <para>
+        Several paragraphs explaining what the command does.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Options</term>
+      <listitem>
+       <para>
+        A list describing each command-line option.  If there are a
+        lot of options, subsections may be used.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Exit Status</term>
+      <listitem>
+       <para>
+        If the program uses 0 for success and non-zero for failure,
+        then you don't need to document it.  If there is a meaning
+        behind the different non-zero exit codes, list them here.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Usage</term>
+      <listitem>
+       <para>
+        Describe any sublanguage or run-time interface of the program.
+        If the program is not interactive, this section can usually be
+        omitted.  Otherwise, this section is a catch-all for
+        describing run-time features.  Use subsections if appropriate.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Environment</term>
+      <listitem>
+       <para>
+        List all environment variables that the program might use.
+        Try to be complete; even seemingly trivial variables like
+        <envar>SHELL</envar> might be of interest to the user.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Files</term>
+      <listitem>
+       <para>
+        List any files that the program might access implicitly.  That
+        is, do not list input and output files that were specified on
+        the command line, but list configuration files, etc.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Diagnostics</term>
+      <listitem>
+       <para>
+        Explain any unusual output that the program might create.
+        Refrain from listing every possible error message.  This is a
+        lot of work and has little use in practice.  But if, say, the
+        error messages have a standard format that the user can parse,
+        this would be the place to explain it.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Notes</term>
+      <listitem>
+       <para>
+        Anything that doesn't fit elsewhere, but in particular bugs,
+        implementation flaws, security considerations, compatibility
+        issues.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>Examples</term>
+      <listitem>
+       <para>
+        Examples
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>History</term>
+      <listitem>
+       <para>
+        If there were some major milestones in the history of the
+        program, they might be listed here.  Usually, this section can
+        be omitted.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>See Also</term>
+      <listitem>
+       <para>
+        Cross-references, listed in the following order: other
+        <productname>PostgreSQL</productname> command reference pages,
+        <productname>PostgreSQL</productname> SQL command reference
+        pages, citation of <productname>PostgreSQL</productname>
+        manuals, other reference pages (e.g., operating system, other
+        packages), other documentation.  Items in the same group are
+        listed alphabetically.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+   <para>
+    Reference pages describing SQL commands should contain the
+    following sections: Name, Synopsis, Description, Parameters,
+    Usage, Diagnostics, Notes, Examples, Compatibility, History, See
+    Also.  The Parameters section is like the Options section, but
+    there is more freedom about which clauses of the command can be
+    listed.  The Compatibility section should explain to what extent
+    this command conforms to the SQL standard(s), or to which other
+    database system it is compatible.  The See Also section of SQL
+    commands should list SQL commands before cross-references to
+    programs.
+   </para>
+  </sect2>
+
+ </sect1>
 </appendix>
 
 <!-- Keep this comment at the end of the file
