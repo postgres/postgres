@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.69 1999/10/18 14:07:49 momjian Exp $
+ * $Id: pg_type.h,v 1.70 1999/10/18 14:14:04 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -359,7 +359,7 @@ DESCR("varchar(length), non-blank-padded string, variable storage length");
 #define VARCHAROID		1043
 
 DATA(insert OID = 1082 ( date		 PGUID	4  10 t b t \054 0	0 date_in date_out date_in date_out i _null_ ));
-DESCR("yyyy-mm-dd, ANSI SQL date");
+DESCR("ANSI SQL date");
 #define DATEOID			1082
 DATA(insert OID = 1083 ( time		 PGUID	8  16 f b t \054 0	0 time_in time_out time_in time_out d _null_ ));
 DESCR("hh:mm:ss, ANSI SQL time");
@@ -369,7 +369,7 @@ DESCR("hh:mm:ss, ANSI SQL time");
 DATA(insert OID = 1182 ( _date		 PGUID	-1 -1 f b t \054 0	1082 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1183 ( _time		 PGUID	-1 -1 f b t \054 0	1083 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1184 ( datetime	 PGUID	8  47 f b t \054 0	0 datetime_in datetime_out datetime_in datetime_out d _null_ ));
-DESCR("date and time 'yyyy-mm-dd hh:mm:ss'");
+DESCR("date and time");
 #define DATETIMEOID		1184
 DATA(insert OID = 1185 ( _datetime	 PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1186 ( timespan	 PGUID 12  47 f b t \054 0	0 timespan_in timespan_out timespan_in timespan_out d _null_ ));
