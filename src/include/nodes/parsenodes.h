@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.37 1997/12/04 23:55:52 thomas Exp $
+ * $Id: parsenodes.h,v 1.38 1997/12/23 19:58:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -632,7 +632,7 @@ typedef struct RetrieveStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
-	List	   *selectClause;	/* subselect parameters */
+	List	   *unionClause;	/* union subselect parameters */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
 } RetrieveStmt;
 
@@ -648,6 +648,7 @@ typedef struct SubSelect
 {
 	NodeTag		type;
 	char	   *unique;			/* NULL, '*', or unique attribute name */
+	int			unionall;		/* union without unique sort */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
 	Node	   *whereClause;	/* qualifications */
