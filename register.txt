@@ -20,6 +20,6 @@ following registration URL:
 	http://www.postgresql.org/register.shtml
 
 
-Thank you for choosing PostgreSQL, a leading-edge freeware product.
+Thank you for choosing PostgreSQL, the most advanced freeware database engine.
 
 
