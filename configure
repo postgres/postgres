@@ -14236,9 +14236,9 @@ echo "${ECHO_T}${flag}" >&6
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
-# Not a common AIX compiler so we don't support it and adding a specific
-# compiler usage for every thread compile is ugly
-# AIX threading requires gcc
+# Supporting cc_r would require a special CC in all places that
+# use libpq, and that is ugly, so we don't do it.  Users can still
+# define their compiler as cc_r to do thread builds of everything.
         # More AIX lossage: must compile with cc_r
         # Extract the first word of "cc_r", so it can be a program name with args.
 set dummy cc_r; ac_word=$2
