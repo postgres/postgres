@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.50 1999/07/16 04:58:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.51 1999/07/16 22:17:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,6 @@
 
 static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey,
 			Buffer *bufP, BTStack stack_in);
-static OffsetNumber _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page,
-			Size keysz, ScanKey scankey, OffsetNumber offnum);
 static int _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
 			int keysz, ScanKey scankey, OffsetNumber offnum);
 static bool
@@ -368,7 +366,9 @@ _bt_skeycmp(Relation rel,
  *		comparison for every key in the scankey.  _bt_binsrch() returns
  *		the OffsetNumber of the first matching key on the page, or the
  *		OffsetNumber at which the matching key would appear if it were
- *		on this page.
+ *		on this page.  (NOTE: in particular, this means it is possible to
+ *		return a value 1 greater than the number of keys on the page, if
+ *		the scankey is > all keys on the page.)
  *
  *		By the time this procedure is called, we're sure we're looking
  *		at the right page -- don't need to walk right.  _bt_binsrch() has
@@ -385,8 +385,8 @@ _bt_binsrch(Relation rel,
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber low,
-				mid,
 				high;
+	bool		haveEq;
 	int			natts = rel->rd_rel->relnatts;
 	int			result;
 
@@ -395,148 +395,112 @@ _bt_binsrch(Relation rel,
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/* by convention, item 1 on any non-rightmost page is the high key */
-	low = mid = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+	low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 
 	high = PageGetMaxOffsetNumber(page);
 
 	/*
-	 * Since for non-rightmost pages, the first item on the page is the
-	 * high key, there are two notions of emptiness.  One is if nothing
-	 * appears on the page.  The other is if nothing but the high key
-	 * does. The reason we test high <= low, rather than high == low, is
-	 * that after vacuuming there may be nothing *but* the high key on a
-	 * page. In that case, given the scheme above, low = 2 and high = 1.
+	 * If there are no keys on the page, return the first available slot.
+	 * Note this covers two cases: the page is really empty (no keys),
+	 * or it contains only a high key.  The latter case is possible after
+	 * vacuuming.
 	 */
-
-	if (PageIsEmpty(page))
+	if (high < low)
 		return low;
-	if ((!P_RIGHTMOST(opaque) && high <= low))
-	{
-		if (high < low ||
-			(srchtype == BT_DESCENT && !(opaque->btpo_flags & BTP_LEAF)))
-			return low;
-		/* It's insertion and high == low == 2 */
-		result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
-		if (result > 0)
-			return OffsetNumberNext(low);
-		return low;
-	}
 
-	while ((high - low) > 1)
+	/*
+	 * Binary search to find the first key on the page >= scan key.
+	 * Loop invariant: all slots before 'low' are < scan key, all slots
+	 * at or after 'high' are >= scan key.  Also, haveEq is true if the
+	 * tuple at 'high' is == scan key.
+	 * We can fall out when high == low.
+	 */
+	high++;						/* establish the loop invariant for high */
+	haveEq = false;
+
+	while (high > low)
 	{
-		mid = low + ((high - low) / 2);
+		OffsetNumber	mid = low + ((high - low) / 2);
+		/* We have low <= mid < high, so mid points at a real slot */
+
 		result = _bt_compare(rel, itupdesc, page, keysz, scankey, mid);
 
 		if (result > 0)
-			low = mid;
-		else if (result < 0)
-			high = mid - 1;
+			low = mid + 1;
 		else
 		{
-			mid = _bt_firsteq(rel, itupdesc, page, keysz, scankey, mid);
-
-			/*
-			 * NOTE for multi-column indices: we may do scan using keys
-			 * not for all attrs. But we handle duplicates using all attrs
-			 * in _bt_insert/_bt_spool code. And so while searching on
-			 * internal pages having number of attrs > keysize we want to
-			 * point at the last item < the scankey, not at the first item
-			 * = the scankey (!!!), and let _bt_moveright decide later
-			 * whether to move right or not (see comments and example
-			 * there). Note also that INSERTions are not affected by this
-			 * code (natts == keysz).		   - vadim 04/15/97
-			 */
-			if (natts == keysz || opaque->btpo_flags & BTP_LEAF)
-				return mid;
-			low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-			if (mid == low)
-				return mid;
-			return OffsetNumberPrev(mid);
+			high = mid;
+			haveEq = (result == 0);
 		}
 	}
 
-	/*
-	 * We terminated because the endpoints got too close together.	There
-	 * are two cases to take care of.
+	/*--------------------
+	 * At this point we have high == low, but be careful: they could point
+	 * past the last slot on the page.  We also know that haveEq is true
+	 * if and only if there is an equal key (in which case high&low point
+	 * at the first equal key).
 	 *
-	 * For non-insertion searches on internal pages, we want to point at the
-	 * last key <, or first key =, the scankey on the page.  This
-	 * guarantees that we'll descend the tree correctly. (NOTE comments
-	 * above for multi-column indices).
-	 *
-	 * For all other cases, we want to point at the first key >= the scankey
-	 * on the page.  This guarantees that scans and insertions will happen
-	 * correctly.
+	 * On a leaf page, we always return the first key >= scan key
+	 * (which could be the last slot + 1).
+	 *--------------------
 	 */
 
-	if (!(opaque->btpo_flags & BTP_LEAF) && srchtype == BT_DESCENT)
-	{							/* We want the last key <, or first key
-								 * ==, the scan key. */
-		result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
+	if (opaque->btpo_flags & BTP_LEAF)
+		return low;
 
-		if (result == 0)
-		{
-			mid = _bt_firsteq(rel, itupdesc, page, keysz, scankey, high);
+	/*--------------------
+	 * On a non-leaf page, there are special cases:
+	 *
+	 * For an insertion (srchtype != BT_DESCENT and natts == keysz)
+	 * always return first key >= scan key (which could be off the end).
+	 *
+	 * For a standard search (srchtype == BT_DESCENT and natts == keysz)
+	 * return the first equal key if one exists, else the last lesser key
+	 * if one exists, else the first slot on the page.
+	 *
+	 * For a partial-match search (srchtype == BT_DESCENT and natts < keysz)
+	 * return the last lesser key if one exists, else the first slot.
+	 *
+	 * Old comments:
+	 *	For multi-column indices, we may scan using keys
+	 *	not for all attrs. But we handle duplicates using all attrs
+	 *	in _bt_insert/_bt_spool code. And so while searching on
+	 *	internal pages having number of attrs > keysize we want to
+	 *	point at the last item < the scankey, not at the first item
+	 *	= the scankey (!!!), and let _bt_moveright decide later
+	 *	whether to move right or not (see comments and example
+	 *	there). Note also that INSERTions are not affected by this
+	 *	code (since natts == keysz for inserts).		   - vadim 04/15/97
+	 *--------------------
+	 */
 
-			/*
-			 * If natts > keysz we want last item < the scan key. See
-			 * comments above for multi-column indices.
-			 */
-			if (natts == keysz)
-				return mid;
-			low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-			if (mid == low)
-				return mid;
-			return OffsetNumberPrev(mid);
-		}
-		else if (result > 0)
-			return high;
-		else
-			return low;
+	if (haveEq)
+	{
+		/*
+		 * There is an equal key.  We return either the first equal key
+		 * (which we just found), or the last lesser key.
+		 *
+		 * We need not check srchtype != BT_DESCENT here, since if that
+		 * is true then natts == keysz by assumption.
+		 */
+		if (natts == keysz)
+			return low;			/* return first equal key */
 	}
 	else
-/* we want the first key >= the scan key */
 	{
-		result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
-		if (result <= 0)
-			return low;
-		else
-		{
-			if (low == high)
-				return OffsetNumberNext(low);
-
-			result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
-			if (result <= 0)
-				return high;
-			else
-				return OffsetNumberNext(high);
-		}
+		/*
+		 * There is no equal key.  We return either the first greater key
+		 * (which we just found), or the last lesser key.
+		 */
+		if (srchtype != BT_DESCENT)
+			return low;			/* return first greater key */
 	}
-}
 
-static OffsetNumber
-_bt_firsteq(Relation rel,
-			TupleDesc itupdesc,
-			Page page,
-			Size keysz,
-			ScanKey scankey,
-			OffsetNumber offnum)
-{
-	BTPageOpaque opaque;
-	OffsetNumber limit;
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	if (low == (P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY))
+		return low;				/* there is no prior item */
 
-	/* skip the high key, if any */
-	limit = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-
-	/* walk backwards looking for the first key in the chain of duplicates */
-	while (offnum > limit
-		   && _bt_compare(rel, itupdesc, page,
-						  keysz, scankey, OffsetNumberPrev(offnum)) == 0)
-		offnum = OffsetNumberPrev(offnum);
-
-	return offnum;
+	return OffsetNumberPrev(low);
 }
 
 /*
@@ -571,7 +535,6 @@ _bt_compare(Relation rel,
 {
 	Datum		datum;
 	BTItem		btitem;
-	ItemId		itemid;
 	IndexTuple	itup;
 	BTPageOpaque opaque;
 	ScanKey		entry;
@@ -589,12 +552,11 @@ _bt_compare(Relation rel,
 	 */
 
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 	if (!(opaque->btpo_flags & BTP_LEAF)
 		&& P_LEFTMOST(opaque)
 		&& offnum == P_HIKEY)
 	{
-		itemid = PageGetItemId(page, offnum);
-
 		/*
 		 * we just have to believe that this will only be called with
 		 * offnum == P_HIKEY when P_HIKEY is the OffsetNumber of the first
@@ -621,7 +583,7 @@ _bt_compare(Relation rel,
 		 * on the page is greater than anything.
 		 */
 
-		if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
+		if (_bt_skeycmp(rel, keysz, scankey, page, PageGetItemId(page, offnum),
 						BTEqualStrategyNumber))
 			return 0;
 		return 1;
