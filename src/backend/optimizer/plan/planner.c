@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.171 2004/05/30 23:40:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.172 2004/06/11 01:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,9 @@
 #include "utils/syscache.h"
 
 
+ParamListInfo PlannerBoundParamList = NULL;	/* current boundParams */
+
+
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL	0
 #define EXPRKIND_TARGET 1
@@ -71,20 +74,24 @@ static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
  *
  *****************************************************************************/
 Plan *
-planner(Query *parse, bool isCursor, int cursorOptions)
+planner(Query *parse, bool isCursor, int cursorOptions,
+		ParamListInfo boundParams)
 {
 	double		tuple_fraction;
 	Plan	   *result_plan;
 	Index		save_PlannerQueryLevel;
 	List	   *save_PlannerParamList;
+	ParamListInfo save_PlannerBoundParamList;
 
 	/*
 	 * The planner can be called recursively (an example is when
 	 * eval_const_expressions tries to pre-evaluate an SQL function). So,
 	 * these global state variables must be saved and restored.
 	 *
-	 * These vars cannot be moved into the Query structure since their whole
-	 * purpose is communication across multiple sub-Queries.
+	 * Query level and the param list cannot be moved into the Query structure
+	 * since their whole purpose is communication across multiple sub-Queries.
+	 * Also, boundParams is explicitly info from outside the Query, and so
+	 * is likewise better handled as a global variable.
 	 *
 	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
 	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for
@@ -93,10 +100,12 @@ planner(Query *parse, bool isCursor, int cursorOptions)
 	 */
 	save_PlannerQueryLevel = PlannerQueryLevel;
 	save_PlannerParamList = PlannerParamList;
+	save_PlannerBoundParamList = PlannerBoundParamList;
 
 	/* Initialize state for handling outer-level references and params */
 	PlannerQueryLevel = 0;		/* will be 1 in top-level subquery_planner */
 	PlannerParamList = NIL;
+	PlannerBoundParamList = boundParams;
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (isCursor)
@@ -139,6 +148,7 @@ planner(Query *parse, bool isCursor, int cursorOptions)
 	/* restore state for outer planner, if any */
 	PlannerQueryLevel = save_PlannerQueryLevel;
 	PlannerParamList = save_PlannerParamList;
+	PlannerBoundParamList = save_PlannerBoundParamList;
 
 	return result_plan;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.175 2004/06/09 19:08:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.176 2004/06/11 01:08:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -28,6 +28,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
@@ -40,6 +41,12 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
+
+typedef struct
+{
+	List	   *active_fns;
+	bool		estimate;
+} eval_const_expressions_context;
 
 typedef struct
 {
@@ -57,17 +64,20 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool set_coercionform_dontcare_walker(Node *node, void *context);
-static Node *eval_const_expressions_mutator(Node *node, List *active_fns);
+static Node *eval_const_expressions_mutator(Node *node,
+									eval_const_expressions_context *context);
 static List *simplify_or_arguments(List *args,
 								   bool *haveNull, bool *forceTrue);
 static List *simplify_and_arguments(List *args,
 									bool *haveNull, bool *forceFalse);
 static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
-				  bool allow_inline, List *active_fns);
+							   bool allow_inline,
+							   eval_const_expressions_context *context);
 static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
 				  HeapTuple func_tuple);
 static Expr *inline_function(Oid funcid, Oid result_type, List *args,
-				HeapTuple func_tuple, List *active_fns);
+							 HeapTuple func_tuple,
+							 eval_const_expressions_context *context);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 							 int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
@@ -1070,18 +1080,101 @@ set_coercionform_dontcare_walker(Node *node, void *context)
 Node *
 eval_const_expressions(Node *node)
 {
-	/*
-	 * The context for the mutator is a list of SQL functions being
-	 * recursively simplified, so we start with an empty list.
-	 */
-	return eval_const_expressions_mutator(node, NIL);
+	eval_const_expressions_context context;
+
+	context.active_fns = NIL;	/* nothing being recursively simplified */
+	context.estimate = false;	/* safe transformations only */
+	return eval_const_expressions_mutator(node, &context);
+}
+
+/*
+ * estimate_expression_value
+ *
+ * This function attempts to estimate the value of an expression for
+ * planning purposes.  It is in essence a more aggressive version of
+ * eval_const_expressions(): we will perform constant reductions that are
+ * not necessarily 100% safe, but are reasonable for estimation purposes.
+ *
+ * Currently the only such transform is to substitute values for Params,
+ * when a bound Param value has been made available by the caller of planner().
+ * In future we might consider other things, such as reducing now() to current
+ * time.  (XXX seems like there could be a lot of scope for ideas here...
+ * but we might need more volatility classifications ...)
+ */
+Node *
+estimate_expression_value(Node *node)
+{
+	eval_const_expressions_context context;
+
+	context.active_fns = NIL;	/* nothing being recursively simplified */
+	context.estimate = true;	/* unsafe transformations OK */
+	return eval_const_expressions_mutator(node, &context);
 }
 
 static Node *
-eval_const_expressions_mutator(Node *node, List *active_fns)
+eval_const_expressions_mutator(Node *node,
+							   eval_const_expressions_context *context)
 {
 	if (node == NULL)
 		return NULL;
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+		int			thisParamKind = param->paramkind;
+
+		/* OK to try to substitute value? */
+		if (context->estimate && thisParamKind != PARAM_EXEC &&
+			PlannerBoundParamList != NULL)
+		{
+			ParamListInfo paramList = PlannerBoundParamList;
+			bool		matchFound = false;
+
+			/* Search to see if we've been given a value for this Param */
+			while (paramList->kind != PARAM_INVALID && !matchFound)
+			{
+				if (thisParamKind == paramList->kind)
+				{
+					switch (thisParamKind)
+					{
+						case PARAM_NAMED:
+							if (strcmp(paramList->name, param->paramname) == 0)
+								matchFound = true;
+							break;
+						case PARAM_NUM:
+							if (paramList->id == param->paramid)
+								matchFound = true;
+							break;
+						default:
+							elog(ERROR, "unrecognized paramkind: %d",
+								 thisParamKind);
+					}
+				}
+				if (!matchFound)
+					paramList++;
+			}
+			if (matchFound)
+			{
+				/*
+				 * Found it, so return a Const representing the param value.
+				 * Note that we don't copy pass-by-ref datatypes, so the
+				 * Const will only be valid as long as the bound parameter
+				 * list exists. This is okay for intended uses of
+				 * estimate_expression_value().
+				 */
+				int16		typLen;
+				bool		typByVal;
+
+				get_typlenbyval(param->paramtype, &typLen, &typByVal);
+				return (Node *) makeConst(param->paramtype,
+										  (int) typLen,
+										  paramList->value,
+										  paramList->isnull,
+										  typByVal);
+			}
+		}
+		/* Not replaceable, so just copy the Param (no need to recurse) */
+		return (Node *) copyObject(param);
+	}
 	if (IsA(node, FuncExpr))
 	{
 		FuncExpr   *expr = (FuncExpr *) node;
@@ -1096,14 +1189,14 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
-												(void *) active_fns);
+												(void *) context);
 
 		/*
 		 * Code for op/func reduction is pretty bulky, so split it out as
 		 * a separate function.
 		 */
 		simple = simplify_function(expr->funcid, expr->funcresulttype, args,
-								   true, active_fns);
+								   true, context);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
 
@@ -1134,7 +1227,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
-												(void *) active_fns);
+												(void *) context);
 
 		/*
 		 * Need to get OID of underlying function.	Okay to scribble on
@@ -1147,7 +1240,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * a separate function.
 		 */
 		simple = simplify_function(expr->opfuncid, expr->opresulttype, args,
-								   true, active_fns);
+								   true, context);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
 
@@ -1182,7 +1275,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
-												(void *) active_fns);
+												(void *) context);
 
 		/*
 		 * We must do our own check for NULLs because DistinctExpr has
@@ -1226,7 +1319,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			 * as a separate function.
 			 */
 			simple = simplify_function(expr->opfuncid, expr->opresulttype,
-									   args, false, active_fns);
+									   args, false, context);
 			if (simple)			/* successfully simplified it */
 			{
 				/*
@@ -1267,7 +1360,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
-												(void *) active_fns);
+												(void *) context);
 
 		switch (expr->boolop)
 		{
@@ -1360,7 +1453,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		Node	   *arg;
 
 		arg = eval_const_expressions_mutator((Node *) relabel->arg,
-											 active_fns);
+											 context);
 
 		/*
 		 * If we find stacked RelabelTypes (eg, from foo :: int :: oid) we
@@ -1424,7 +1517,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 
 		/* Simplify the test expression, if any */
 		newarg = eval_const_expressions_mutator((Node *) caseexpr->arg,
-												active_fns);
+												context);
 
 		/* Simplify the WHEN clauses */
 		newargs = NIL;
@@ -1434,7 +1527,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			CaseWhen   *casewhen = (CaseWhen *)
 			expression_tree_mutator((Node *) lfirst(arg),
 									eval_const_expressions_mutator,
-									(void *) active_fns);
+									(void *) context);
 
 			Assert(IsA(casewhen, CaseWhen));
 			if (casewhen->expr == NULL ||
@@ -1464,7 +1557,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 
 		/* Simplify the default result */
 		defresult = eval_const_expressions_mutator((Node *) caseexpr->defresult,
-												   active_fns);
+												   context);
 
 		/*
 		 * If no non-FALSE alternatives, CASE reduces to the default
@@ -1494,7 +1587,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			Node	   *e;
 
 			e = eval_const_expressions_mutator((Node *) lfirst(element),
-											   active_fns);
+											   context);
 			if (!IsA(e, Const))
 				all_const = false;
 			newelems = lappend(newelems, e);
@@ -1525,7 +1618,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			Node	   *e;
 
 			e = eval_const_expressions_mutator((Node *) lfirst(arg),
-											   active_fns);
+											   context);
 
 			/*
 			 * We can remove null constants from the list. For a non-null
@@ -1561,7 +1654,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		Node	   *arg;
 
 		arg = eval_const_expressions_mutator((Node *) fselect->arg,
-											 active_fns);
+											 context);
 		if (arg && IsA(arg, Var) &&
 			((Var *) arg)->varattno == InvalidAttrNumber)
 		{
@@ -1595,7 +1688,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	 * simplify constant expressions in its subscripts.
 	 */
 	return expression_tree_mutator(node, eval_const_expressions_mutator,
-								   (void *) active_fns);
+								   (void *) context);
 }
 
 /*
@@ -1726,14 +1819,15 @@ simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
  *
  * Inputs are the function OID, actual result type OID (which is needed for
  * polymorphic functions), and the pre-simplified argument list;
- * also a list of already-active inline function expansions.
+ * also the context data for eval_const_expressions.
  *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function call.
  */
 static Expr *
 simplify_function(Oid funcid, Oid result_type, List *args,
-				  bool allow_inline, List *active_fns)
+				  bool allow_inline,
+				  eval_const_expressions_context *context)
 {
 	HeapTuple	func_tuple;
 	Expr	   *newexpr;
@@ -1756,7 +1850,7 @@ simplify_function(Oid funcid, Oid result_type, List *args,
 
 	if (!newexpr && allow_inline)
 		newexpr = inline_function(funcid, result_type, args,
-								  func_tuple, active_fns);
+								  func_tuple, context);
 
 	ReleaseSysCache(func_tuple);
 
@@ -1860,7 +1954,8 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
  */
 static Expr *
 inline_function(Oid funcid, Oid result_type, List *args,
-				HeapTuple func_tuple, List *active_fns)
+				HeapTuple func_tuple,
+				eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	bool		polymorphic = false;
@@ -1890,7 +1985,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		return NULL;
 
 	/* Check for recursive function, and give up trying to expand if so */
-	if (list_member_oid(active_fns, funcid))
+	if (list_member_oid(context->active_fns, funcid))
 		return NULL;
 
 	/* Check permission to call function (fail later, if not) */
@@ -2083,8 +2178,9 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * Recursively try to simplify the modified expression.  Here we must
 	 * add the current function to the context list of active functions.
 	 */
-	newexpr = eval_const_expressions_mutator(newexpr,
-											 lcons_oid(funcid, active_fns));
+	context->active_fns = lcons_oid(funcid, context->active_fns);
+	newexpr = eval_const_expressions_mutator(newexpr, context);
+	context->active_fns = list_delete_first(context->active_fns);
 
 	error_context_stack = sqlerrcontext.previous;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.66 2004/05/29 22:48:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.67 2004/06/11 01:09:22 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -22,6 +22,7 @@
 #include <setjmp.h>
 
 #include "executor/execdesc.h"
+#include "nodes/params.h"
 #include "tcop/dest.h"
 #include "utils/guc.h"
 
@@ -55,8 +56,9 @@ extern List *pg_parse_query(const char *query_string);
 extern List *pg_analyze_and_rewrite(Node *parsetree,
 					   Oid *paramTypes, int numParams);
 extern List *pg_rewrite_queries(List *querytree_list);
-extern Plan *pg_plan_query(Query *querytree);
-extern List *pg_plan_queries(List *querytrees, bool needSnapshot);
+extern Plan *pg_plan_query(Query *querytree, ParamListInfo boundParams);
+extern List *pg_plan_queries(List *querytrees, ParamListInfo boundParams,
+							 bool needSnapshot);
 
 extern bool assign_max_stack_depth(int newval, bool doit, GucSource source);
 

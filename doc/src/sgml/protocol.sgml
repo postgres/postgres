@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.51 2004/03/21 22:29:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.52 2004/06/11 01:08:33 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -681,6 +681,46 @@
      codes given in Bind, regardless of the SQL command involved.  The
      <literal>BINARY</> attribute in cursor declarations is irrelevant when
      using extended query protocol.
+    </para>
+   </note>
+
+   <para>
+    Query planning for named prepared-statement objects occurs when the Parse
+    message is received. If a query will be repeatedly executed with
+    different parameters, it may be beneficial to send a single Parse message
+    containing a parameterized query, followed by multiple Bind
+    and Execute messages. This will avoid replanning the query on each
+    execution.
+   </para>
+
+   <para>
+    The unnamed prepared statement is likewise planned during Parse processing
+    if the Parse message defines no parameters.  But if there are parameters,
+    query planning is delayed until the first Bind message for the statement
+    is received. The planner will consider the actual values of the parameters
+    provided in the Bind message when planning the query.
+   </para>
+
+   <note>
+    <para>
+     Query plans generated from a parameterized query may be less
+     efficient than query plans generated from an equivalent query with actual
+     parameter values substituted. The query planner cannot make decisions
+     based on actual parameter values (for example, index selectivity) when
+     planning a parameterized query assigned to a named prepared-statement
+     object.  This possible penalty is avoided when using the unnamed
+     statement, since it is not planned until actual parameter values are
+     available.
+    </para>
+
+    <para>
+     If a second or subsequent Bind referencing the unnamed prepared-statement
+     object is received without an intervening Parse, the query is
+     not replanned. The parameter values used in the first Bind message may
+     produce a query plan that is only efficient for a subset of possible
+     parameter values. To force replanning of the query for a fresh set of
+     parameters, send another Parse message to replace the unnamed
+     prepared-statement object. 
     </para>
    </note>
 

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.27 2004/05/26 04:41:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.28 2004/06/11 01:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 				 errmsg("DECLARE CURSOR ... FOR UPDATE is not supported"),
 				 errdetail("Cursors must be READ ONLY.")));
 
-	plan = planner(query, true, stmt->options);
+	plan = planner(query, true, stmt->options, NULL);
 
 	/*
 	 * Create a portal and copy the query and plan into its memory

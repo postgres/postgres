@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.121 2004/05/26 04:41:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.122 2004/06/11 01:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	}
 
 	/* plan the query */
-	plan = planner(query, isCursor, cursorOptions);
+	plan = planner(query, isCursor, cursorOptions, NULL);
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(query, plan, None_Receiver, NULL,

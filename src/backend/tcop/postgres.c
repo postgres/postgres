@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.419 2004/06/06 00:41:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.420 2004/06/11 01:09:00 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -630,7 +630,7 @@ pg_rewrite_queries(List *querytree_list)
 
 /* Generate a plan for a single already-rewritten query. */
 Plan *
-pg_plan_query(Query *querytree)
+pg_plan_query(Query *querytree, ParamListInfo boundParams)
 {
 	Plan	   *plan;
 
@@ -642,7 +642,7 @@ pg_plan_query(Query *querytree)
 		ResetUsage();
 
 	/* call the optimizer */
-	plan = planner(querytree, false, 0);
+	plan = planner(querytree, false, 0, boundParams);
 
 	if (log_planner_stats)
 		ShowUsage("PLANNER STATISTICS");
@@ -687,7 +687,8 @@ pg_plan_query(Query *querytree)
  * statements in the rewriter's output.)
  */
 List *
-pg_plan_queries(List *querytrees, bool needSnapshot)
+pg_plan_queries(List *querytrees, ParamListInfo boundParams,
+				bool needSnapshot)
 {
 	List	   *plan_list = NIL;
 	ListCell   *query_list;
@@ -709,7 +710,7 @@ pg_plan_queries(List *querytrees, bool needSnapshot)
 				SetQuerySnapshot();
 				needSnapshot = false;
 			}
-			plan = pg_plan_query(query);
+			plan = pg_plan_query(query, boundParams);
 		}
 
 		plan_list = lappend(plan_list, plan);
@@ -867,7 +868,7 @@ exec_simple_query(const char *query_string)
 
 		querytree_list = pg_analyze_and_rewrite(parsetree, NULL, 0);
 
-		plantree_list = pg_plan_queries(querytree_list, true);
+		plantree_list = pg_plan_queries(querytree_list, NULL, true);
 
 		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
@@ -1205,7 +1206,14 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 		querytree_list = pg_rewrite_queries(querytree_list);
 
-		plantree_list = pg_plan_queries(querytree_list, true);
+		/*
+		 * If this is the unnamed statement and it has parameters, defer
+		 * query planning until Bind.  Otherwise do it now.
+		 */
+		if (!is_named && numParams > 0)
+			plantree_list = NIL;
+		else
+			plantree_list = pg_plan_queries(querytree_list, NULL, true);
 	}
 	else
 	{
@@ -1291,6 +1299,7 @@ exec_bind_message(StringInfo input_message)
 	PreparedStatement *pstmt;
 	Portal		portal;
 	ParamListInfo params;
+	bool		isaborted = IsAbortedTransactionBlockState();
 
 	pgstat_report_activity("<BIND>");
 
@@ -1356,13 +1365,6 @@ exec_bind_message(StringInfo input_message)
 	else
 		portal = CreatePortal(portal_name, false, false);
 
-	PortalDefineQuery(portal,
-					  pstmt->query_string,
-					  pstmt->commandTag,
-					  pstmt->query_list,
-					  pstmt->plan_list,
-					  pstmt->context);
-
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
 	 *
@@ -1372,7 +1374,6 @@ exec_bind_message(StringInfo input_message)
 	 */
 	if (numParams > 0)
 	{
-		bool		isaborted = IsAbortedTransactionBlockState();
 		ListCell   *l;
 		MemoryContext oldContext;
 
@@ -1516,8 +1517,32 @@ exec_bind_message(StringInfo input_message)
 	pq_getmsgend(input_message);
 
 	/*
-	 * Start portal execution.
+	 * If we didn't plan the query before, do it now.  This allows the
+	 * planner to make use of the concrete parameter values we now have.
+	 *
+	 * This happens only for unnamed statements, and so switching into
+	 * the statement context for planning is correct (see notes in
+	 * exec_parse_message).
 	 */
+	if (pstmt->plan_list == NIL && pstmt->query_list != NIL &&
+		!isaborted)
+	{
+		MemoryContext oldContext = MemoryContextSwitchTo(pstmt->context);
+
+		pstmt->plan_list = pg_plan_queries(pstmt->query_list, params, true);
+		MemoryContextSwitchTo(oldContext);
+	}
+
+	/*
+	 * Define portal and start execution.
+	 */
+	PortalDefineQuery(portal,
+					  pstmt->query_string,
+					  pstmt->commandTag,
+					  pstmt->query_list,
+					  pstmt->plan_list,
+					  pstmt->context);
+
 	PortalStart(portal, params);
 
 	/*

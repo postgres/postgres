@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.160 2004/05/30 23:40:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.161 2004/06/11 01:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2823,7 +2823,8 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
  *
  * Outputs: (these are valid only if TRUE is returned)
  *	*vardata: gets information about variable (see examine_variable)
- *	*other: gets other clause argument, stripped of binary relabeling
+ *	*other: gets other clause argument, stripped of binary relabeling,
+ *		and aggressively reduced to a constant
  *	*varonleft: set TRUE if variable is on the left, FALSE if on the right
  *
  * Returns TRUE if a variable is identified, otherwise FALSE.
@@ -2860,7 +2861,7 @@ get_restriction_variable(Query *root, List *args, int varRelid,
 	if (vardata->rel && rdata.rel == NULL)
 	{
 		*varonleft = true;
-		*other = rdata.var;
+		*other = estimate_expression_value(rdata.var);
 		/* Assume we need no ReleaseVariableStats(rdata) here */
 		return true;
 	}
@@ -2868,7 +2869,7 @@ get_restriction_variable(Query *root, List *args, int varRelid,
 	if (vardata->rel == NULL && rdata.rel)
 	{
 		*varonleft = false;
-		*other = vardata->var;
+		*other = estimate_expression_value(vardata->var);
 		/* Assume we need no ReleaseVariableStats(*vardata) here */
 		*vardata = rdata;
 		return true;
