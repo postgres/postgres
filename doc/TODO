@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr  2 11:10:06 EDT 2001
+Last updated:		Mon Apr  2 12:26:57 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -109,7 +109,7 @@ TYPES
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
-* Functions returning sets don't really work right[function]
+* Functions returning sets do not totally work
 * -Add hash for int8 (Tom)
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
 * -Get BIT type working
