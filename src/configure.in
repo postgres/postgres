@@ -262,12 +262,11 @@ Or do not specify an argument to the option to use the default.])
     AC_MSG_RESULT("disabled")
 )
 
-AC_ARG_WITH(mb,
-    [  --with-mb=<encoding>    this option is obsoleted ], 
-    [
-	    AC_MSG_ERROR([*** --with-mb is not supported anymore. Use --enable-multibyte instead.])
-    ]
-)
+dnl Old option variant
+if test "${with_mb}"; then                                   
+  AC_MSG_ERROR([--with-mb is not supported anymore. Use --enable-multibyte instead.])
+fi                                                                                
+
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.	If
 dnl we over-ride it with --with-pgport=port then we bypass this piece
@@ -850,7 +849,8 @@ AC_SUBST(HAVE_RL_COMPLETION_APPEND_CHARACTER)
 dnl Check for GNU style long options support (getopt_long)
 AC_CHECK_FUNCS(getopt_long)
 
-AC_MSG_CHECKING(for finite() macro or function)
+dnl Cannot use AC_CHECK_FUNC because finite may be a macro
+AC_MSG_CHECKING(for finite)
 AC_TRY_LINK([#include <math.h>],
 	[int dummy=finite(1.0);],
 	[AC_DEFINE(HAVE_FINITE) AC_MSG_RESULT(yes)],
