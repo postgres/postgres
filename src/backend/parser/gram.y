@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.159 2000/03/18 04:32:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.160 2000/03/20 00:24:37 inoue Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5220,6 +5220,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| EACH							{ $$ = "each"; }
 		| ENCODING						{ $$ = "encoding"; }
 		| EXCLUSIVE						{ $$ = "exclusive"; }
+		| FORCE							{ $$ = "force"; }
 		| FORWARD						{ $$ = "forward"; }
 		| FUNCTION						{ $$ = "function"; }
 		| HANDLER						{ $$ = "handler"; }
