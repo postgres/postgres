@@ -6,10 +6,11 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.11 2000/03/07 23:49:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.12 2000/03/20 07:25:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -75,6 +76,13 @@ typedef struct XLogCtlWrite
 	XLgwrResult		LgwrResult;
 	uint16			curridx;	/* index of next block to write */
 } XLogCtlWrite;
+
+
+#ifndef HAS_TEST_AND_SET
+#define	TAS(lck)		0
+#define	S_UNLOCK(lck)
+#define	S_INIT_LOCK(lck)
+#endif
 
 typedef struct XLogCtlData
 {
@@ -1153,9 +1161,12 @@ BootStrapXLOG()
 {
 	int				fd;
 	char			buffer[BLCKSZ];
-	XLogPageHeader	page = (XLogPageHeader)buffer;
 	CheckPoint		checkPoint;
+
+#ifdef NOT_USED
+	XLogPageHeader	page = (XLogPageHeader)buffer;
 	XLogRecord	   *record;
+#endif
 
 #ifndef __CYGWIN__
 	fd = open(ControlFilePath, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
@@ -1166,13 +1177,13 @@ BootStrapXLOG()
 		elog(STOP, "BootStrapXLOG failed to create control file (%s): %d", 
 					ControlFilePath, errno);
 
-	logFile = XLogFileInit(0, 0);
-
 	checkPoint.redo.xlogid = 0;
 	checkPoint.redo.xrecoff = SizeOfXLogPHD;
 	checkPoint.undo = checkPoint.redo;
 	checkPoint.nextXid = FirstTransactionId;
 	checkPoint.nextOid =  BootstrapObjectIdData;
+
+#ifdef NOT_USED
 
 	memset(buffer, 0, BLCKSZ);
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -1186,6 +1197,8 @@ BootStrapXLOG()
 	record->xl_rmid = RM_XLOG_ID;
 	memcpy((char*)record + SizeOfXLogRecord, &checkPoint, sizeof(checkPoint));
 
+	logFile = XLogFileInit(0, 0);
+
 	if (write(logFile, buffer, BLCKSZ) != BLCKSZ)
 		elog(STOP, "BootStrapXLOG failed to write logfile: %d", errno);
 
@@ -1194,6 +1207,8 @@ BootStrapXLOG()
 
 	close(logFile);
 	logFile = -1;
+
+#endif
 
 	memset(buffer, 0, BLCKSZ);
 	ControlFile = (ControlFileData*) buffer;
@@ -1233,15 +1248,17 @@ str_time(time_t tnow)
 void
 StartupXLOG()
 {
+#ifdef NOT_USED
 	XLogCtlInsert	   *Insert;
 	CheckPoint			checkPoint;
 	XLogRecPtr			RecPtr,
 						LastRec;
 	XLogRecord		   *record;
 	char				buffer[MAXLOGRECSZ+SizeOfXLogRecord];
-	int					fd;
 	int					recovery = 0;
 	bool				sie_saved = false;
+#endif
+	int					fd;
 
 	elog(LOG, "Data Base System is starting up at %s", str_time(time(NULL)));
 
@@ -1320,6 +1337,8 @@ tryAgain:
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		elog(LOG, "Data Base System was interrupted being in production at %s",
 					str_time(ControlFile->time));
+
+#ifdef NOT_USED
 
 	LastRec = RecPtr = ControlFile->checkPoint;
 	if (!XRecOffIsValid(RecPtr.xrecoff))
@@ -1460,6 +1479,8 @@ tryAgain:
 		StopIfError = sie_saved;
 	}
 
+#endif	/* NOT_USED */
+
 	ControlFile->state = DB_IN_PRODUCTION;
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
@@ -1486,6 +1507,7 @@ ShutdownXLOG()
 void
 CreateCheckPoint(bool shutdown)
 {
+#ifdef NOT_USED
 	CheckPoint			checkPoint;
 	XLogRecPtr			recptr;
 	XLogCtlInsert	   *Insert = &XLogCtl->Insert;
@@ -1548,10 +1570,19 @@ CreateCheckPoint(bool shutdown)
 
 	XLogFlush(recptr);
 
+#endif	/* NOT_USED */
+
 	SpinAcquire(ControlFileLockId);
 	if (shutdown)
 		ControlFile->state = DB_SHUTDOWNED;
+
+#ifdef NOT_USED
 	ControlFile->checkPoint = MyLastRecPtr;
+#else
+	ControlFile->checkPoint.xlogid = 0;
+	ControlFile->checkPoint.xrecoff = SizeOfXLogPHD;
+#endif
+
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 	SpinRelease(ControlFileLockId);
