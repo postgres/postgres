@@ -183,7 +183,7 @@ string -
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 tablefunc -
-	Examples of tables returning functions
+	Examples of functions returning tables
 	by Joe Conway <mail@joeconway.com>
 
 tips/apache_logging -
