@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.297 2004/12/02 19:28:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.298 2004/12/23 22:42:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2553,6 +2553,7 @@ move_chain_tuple(Relation rel,
 	{
 		ExecStoreTuple(&newtup, ec->slot, InvalidBuffer, false);
 		ExecInsertIndexTuples(ec->slot, &(newtup.t_self), ec->estate, true);
+		ResetPerTupleExprContext(ec->estate);
 	}
 }
 
@@ -2662,6 +2663,7 @@ move_plain_tuple(Relation rel,
 	{
 		ExecStoreTuple(&newtup, ec->slot, InvalidBuffer, false);
 		ExecInsertIndexTuples(ec->slot, &(newtup.t_self), ec->estate, true);
+		ResetPerTupleExprContext(ec->estate);
 	}
 }
 
