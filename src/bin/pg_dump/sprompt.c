@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/sprompt.c,v 1.3 2002/09/11 17:32:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/sprompt.c,v 1.4 2003/03/18 22:09:37 petere Exp $
  */
 
 /*
@@ -45,7 +45,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 				t;
 #endif
 
-	destination = (char *) malloc(maxlen + 2);
+	destination = (char *) malloc(maxlen + 1);
 	if (!destination)
 		return NULL;
 
@@ -83,7 +83,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		fflush(termout);
 	}
 
-	if (fgets(destination, maxlen, termin) == NULL)
+	if (fgets(destination, maxlen + 1, termin) == NULL)
 		destination[0] = '\0';
 
 	length = strlen(destination);
