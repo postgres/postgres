@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.260 2004/05/22 09:48:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.261 2004/05/22 11:06:55 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1688,8 +1688,8 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      New function <function>pg_get_triggerdef(prettyprint)</function>
-      and <function>pg_constraint_is_visible()</function>
+      New functions <function>pg_get_triggerdef(prettyprint)</function>
+      and <function>pg_conversion_is_visible()</function> (Christopher)
      </para>
     </listitem>
 
@@ -1706,7 +1706,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Make <function>pg_get_constraintdef</function> to support
+      Make <function>pg_get_constraintdef</function> support
       unique, primary-key, and check constraints (Christopher)
      </para>
     </listitem>
@@ -1744,7 +1744,7 @@ DROP SCHEMA information_schema CASCADE;
      <para>
       The Python language no longer supports a restricted execution
       environment, so the trusted version of PL/Python was removed. If
-      this situation changes, a version of PL/python that can be used
+      this situation changes, a version of PL/Python that can be used
       by non-superusers will be readded.
      </para>
     </listitem>
