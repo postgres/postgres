@@ -1,5 +1,5 @@
 AROPT:crs
-BACKEND:-I$(SRCDIR)/backend/port/svr4
+CFLAGS:-I$(SRCDIR)/backend/port/svr4
 SHARED_LIB:
 ALL:+W0
 SRCH_INC:

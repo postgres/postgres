@@ -1,5 +1,5 @@
 AROPT:crs
-BACKEND:-qchars=signed -qmaxmem=4000
+CFLAGS:-qchars=signed -qmaxmem=4000
 SHARED_LIB:
 ALL:
 SRCH_INC:
