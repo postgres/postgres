@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.76 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.77 2003/07/29 22:18:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,13 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		BlockNumber par_blkno;
 		BTStack		new_stack;
 
+		/*
+		 * Race -- the page we just grabbed may have split since we read
+		 * its pointer in the parent (or metapage).  If it has, we may need
+		 * to move right to its new sibling.  Do that.
+		 */
+		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
+
 		/* if this is a leaf page, we're done */
 		page = BufferGetPage(*bufP);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -98,13 +105,6 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		/* drop the read lock on the parent page, acquire one on the child */
 		_bt_relbuf(rel, *bufP);
 		*bufP = _bt_getbuf(rel, blkno, BT_READ);
-
-		/*
-		 * Race -- the page we just grabbed may have split since we read
-		 * its pointer in the parent.  If it has, we may need to move
-		 * right to its new sibling.  Do that.
-		 */
-		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
 
 		/* okay, all set to move down a level */
 		stack_in = new_stack;
@@ -599,8 +599,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/*
 	 * At this point we are positioned at the first item >= scan key, or
 	 * possibly at the end of a page on which all the existing items are
-	 * greater than the scan key and we know that everything on later
-	 * pages is less than or equal to scan key.
+	 * less than the scan key and we know that everything on later
+	 * pages is greater than or equal to scan key.
 	 *
 	 * We could step forward in the latter case, but that'd be a waste of
 	 * time if we want to scan backwards.  So, it's now time to examine
