@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.10 1998/10/06 05:44:05 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.11 1998/10/20 23:14:35 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ clean::
 distclean::
 	$(MAKE) clean
 
-man:
+man::
 	$(MAKE) -C $(SRCDIR) install-man
 
 #
