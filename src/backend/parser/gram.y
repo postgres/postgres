@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.37 1997/08/20 01:12:02 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.38 1997/08/21 01:34:44 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -84,6 +84,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
     Attr		*attr;
 
     ColumnDef		*coldef;
+    ConstaintDef	*constrdef;
     TypeName		*typnam;
     DefElem		*defelt;
     ParamString		*param;
@@ -118,7 +119,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
 	class, index_name, name, file_name, recipe_name,
-	var_name, aggr_argtype, OptDefault, CheckElem
+	var_name, aggr_argtype, OptDefault
+
+%type <constrdef>	ConstraintElem, ConstraintDef
 
 %type <str>	opt_id, opt_portal_name,
 	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
@@ -130,7 +133,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 
 %type <list>	stmtblock, stmtmulti,
 	relation_name_list, OptTableElementList, tableElementList, 
-	OptInherit, OptCheck, CheckList, definition,
+	OptInherit, OptConstraint, ConstraintList, definition,
 	opt_with, def_args, def_name_list, func_argtypes,
 	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 	opt_column_list, columnList, opt_va_list, va_list,
@@ -161,7 +164,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 		a_expr, a_expr_or_null, AexprConst,
 		default_expr, default_expr_or_null,
 		in_expr_nodes, not_in_expr_nodes,
-		having_clause, default_expr
+		having_clause
 %type <value>	NumConst
 %type <attr>	event_object, attr
 %type <sortgroupby>	groupby
@@ -188,8 +191,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, ANALYZE, 
 	AND, APPEND, ARCHIVE, ARCH_STORE, AS, ASC, 
 	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BY, 
-	CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE,
-	CURRENT, CURSOR, DATABASE, DECLARE, DEFAULT, DELETE, 
+	CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN, COMMIT, CONSTRAINT, 
+	COPY, CREATE, CURRENT, CURSOR, DATABASE, DECLARE, DEFAULT, DELETE, 
 	DELIMITERS, DESC, DISTINCT, DO, DROP, END_TRANS,
 	EXTEND, FETCH, FOR, FORWARD, FROM, FUNCTION, GRANT, GROUP, 
 	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, IS,
@@ -534,14 +537,14 @@ copy_delimiter: USING DELIMITERS Sconst { $$ = $3;}
  *****************************************************************************/
 
 CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
-		OptInherit OptCheck OptArchiveType OptLocation 
+		OptInherit OptConstraint OptArchiveType OptLocation 
 		OptArchiveLocation
 		{
 		    CreateStmt *n = makeNode(CreateStmt);
 		    n->relname = $3;
 		    n->tableElts = $5;
 		    n->inhRelnames = $7;
-		    n->check = $8;
+		    n->constraints = $8;
 		    n->archiveType = $9;
 		    n->location = $10;
 		    n->archiveLoc = $11;
@@ -586,18 +589,28 @@ OptInherit:  INHERITS '(' relation_name_list ')'	{ $$ = $3; }
 	|  /*EMPTY*/					{ $$ = NIL; }
 	;
 
-OptCheck:  CheckList		{ $$ = $1; }
+OptConstraint:  ConstraintList		{ $$ = $1; }
 	| 		{ $$ = NULL; }
 	;
 
-CheckList :
-	  CheckList ',' CheckElem
+ConstraintList :
+	  ConstraintList ',' ConstraintElem
 		{ $$ = lappend($1, $3); }
-	| CheckElem
+	| ConstraintElem
 		{ $$ = lcons($1, NIL); }
 	;
 
-CheckElem:  CHECK a_expr	{ 
+ConstraintElem:	
+	CONSTRAINT name ConstraintDef
+		{
+			$3->name = $2;
+			$$ = $3;
+		}
+	| ConstraintDef		{ $$ = $1; }
+	;
+
+ConstraintDef:  CHECK a_expr	{ 
+				    ConstaintDef *constr = palloc (sizeof(ConstaintDef));
 				    int chklen = CurScanPosition() - CheckStartPosition;
 				    char *check;
 				    
@@ -606,7 +619,10 @@ CheckElem:  CHECK a_expr	{
 				    		parseString + CheckStartPosition, 
 				    		chklen);
 				    check[chklen] = 0;
-				    $$ = check;
+				    constr->type = CONSTR_CHECK;
+				    constr->name = NULL;
+				    constr->expr = check;
+				    $$ = constr;
 				}
 	;
 
