@@ -4,12 +4,12 @@
 #    Makefile for doc directory to install man pages
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/man/Attic/Makefile,v 1.2 1997/01/08 07:32:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/man/Attic/Makefile,v 1.3 1997/09/16 18:47:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
-include ../../Makefile.global
+SRCDIR= ../../..
+include ../../../Makefile.global
 
 install: 
 	-mkdir -p $(POSTMANDIR)

@@ -2,8 +2,8 @@
 # Makefile for example programs
 #
 
-SRCDIR= ../..
-include ../../Makefile.global
+SRCDIR= ../../..
+include ../../../Makefile.global
 
 LIBNAME= libpq++
 
@@ -15,8 +15,8 @@ CXXFLAGS= $(CFLAGS) -Wno-error
 
 INCLUDE_OPT= \
              -I.. \
-             -I../../backend \
-             -I../../include \
+             -I../../../backend \
+             -I../../../include \
              -I$(LIBPQDIR) \
              -I$(HEADERDIR)
 CXXFLAGS+= $(INCLUDE_OPT)

@@ -7,13 +7,13 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.8 1997/04/04 10:42:43 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.9 1997/09/16 18:47:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ..
-include ../Makefile.global
-SRCHEADERDIR = ../include
+SRCDIR= ../..
+include $(SRCDIR)/Makefile.global
+SRCHEADERDIR = $(SRCDIR)/include
 LIBPQHEADERDIR = $(SRCHEADERDIR)/libpq
 
 LIBNAME= libpq++
@@ -25,7 +25,7 @@ LIBNAME= libpq++
 CXXFLAGS= $(CFLAGS) -Wno-error
 
 INCLUDE_OPT= \
-             -I../backend \
+             -I$(SRCDIR)/backend \
              -I$(SRCHEADERDIR) \
              -I$(LIBPQDIR)
 

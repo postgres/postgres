@@ -7,16 +7,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.13 1997/09/14 23:34:13 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.14 1997/09/16 18:47:19 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
+:nclude $(SRCDIR)/Makefile.global
 
 INCLUDE_OPT= \
-             -I../../backend \
-             -I../../include \
+             -I$(SRCDIR)/backend \
+             -I$(SRCDIR)/include \
              -I$(LIBPQDIR) \
              -I$(TCL_INCDIR)
 
