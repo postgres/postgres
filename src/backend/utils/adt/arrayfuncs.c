@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.35 1999/01/17 06:18:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.36 1999/01/17 21:12:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,8 +699,10 @@ array_out(ArrayType *v, Oid element_type)
 		for (tmp = values[i]; *tmp; tmp++)
 		{
 			overall_length += 1;
+#ifndef TCL_ARRAYS
 			if (*tmp == '"')
 				overall_length += 1;
+#endif
 		}
 		overall_length += 1;
 	}
@@ -729,6 +731,7 @@ array_out(ArrayType *v, Oid element_type)
 		if (!typbyval)
 		{
 			strcat(p, "\"");
+#ifndef TCL_ARRAYS
 			l = strlen(p);
 			for (tmp = values[k]; *tmp; tmp++)
 			{
@@ -737,6 +740,9 @@ array_out(ArrayType *v, Oid element_type)
 				p[l++] = *tmp;
 			}
 			p[l] = '\0';
+#else
+			strcat(p, values[k]);
+#endif
 			strcat(p, "\"");
 		}
 		else

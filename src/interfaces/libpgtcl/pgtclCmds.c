@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.38 1998/10/14 15:17:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.39 1999/01/17 21:12:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,39 +472,50 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  get information about the results of a query
 
  syntax:
- pg_result result ?option?
+
+ 	pg_result result ?option?
 
  the options are:
- -status
- the status of the result
- -error
- the error message, if the status indicates error; otherwise an empty string
- -conn
- the connection that produced the result
- -oid
- if command was an INSERT, the OID of the inserted tuple
- -numTuples
- the number of tuples in the query
- -numAttrs
- returns the number of attributes returned by the query
- -assign arrayName
- assign the results to an array, using subscripts of the form
- (tupno,attributeName)
- -assignbyidx arrayName ?appendstr?
- assign the results to an array using the first field's value as a key.
- All but the first field of each tuple are stored, using subscripts of the form
- (field0value,attributeNameappendstr)
- -getTuple tupleNumber
- returns the values of the tuple in a list
- -tupleArray tupleNumber arrayName
- stores the values of the tuple in array arrayName, indexed
- by the attributes returned
- -attributes
- returns a list of the name/type pairs of the tuple attributes
- -lAttributes
- returns a list of the {name type len} entries of the tuple attributes
- -clear
- clear the result buffer. Do not reuse after this
+
+ 	-status		the status of the result
+
+	-error		the error message, if the status indicates error; otherwise
+				an empty string
+
+	-conn		the connection that produced the result
+
+	-oid		if command was an INSERT, the OID of the inserted tuple
+
+	-numTuples	the number of tuples in the query
+
+	-numAttrs	returns the number of attributes returned by the query
+
+	-assign arrayName
+ 				assign the results to an array, using subscripts of the form
+ 				(tupno,attributeName)
+
+	-assignbyidx arrayName ?appendstr?
+ 				assign the results to an array using the first field's value
+				as a key.
+				All but the first field of each tuple are stored, using
+				subscripts of the form (field0value,attributeNameappendstr)
+
+	-getTuple tupleNumber
+				returns the values of the tuple in a list
+
+	-tupleArray tupleNumber arrayName
+ 				stores the values of the tuple in array arrayName, indexed
+				by the attributes returned
+
+	-attributes
+ 				returns a list of the name/type pairs of the tuple attributes
+
+	-lAttributes
+ 				returns a list of the {name type len} entries of the tuple
+				attributes
+
+    -clear		clear the result buffer. Do not reuse after this
+
  **********************************/
 int
 Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
@@ -621,15 +632,24 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		 */
 		for (tupno = 0; tupno < PQntuples(result); tupno++)
 		{
-			const char *field0 = PQgetvalue(result, tupno, 0);
-			char * workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
+			const char *field0 = 
+#ifdef TCL_ARRAYS
+								 tcl_value(PQgetvalue(result, tupno, 0));
+#else
+								 PQgetvalue(result, tupno, 0);
+#endif
+			char *workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
 
 			for (i = 1; i < PQnfields(result); i++)
 			{
 				sprintf(workspace, "%s,%.200s%s", field0, PQfname(result,i),
 						appendstr);
 				if (Tcl_SetVar2(interp, arrVar, workspace,
+#ifdef TCL_ARRAYS
+								tcl_value(PQgetvalue(result, tupno, i)),
+#else
 								PQgetvalue(result, tupno, i),
+#endif
 								TCL_LEAVE_ERR_MSG) == NULL)
 				{
 					free(workspace);
@@ -654,8 +674,15 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 			Tcl_AppendResult(interp, "argument to getTuple cannot exceed number of tuples - 1", 0);
 			return TCL_ERROR;
 		}
+#ifdef TCL_ARRAYS
+		for (i = 0; i < PQnfields(result); i++)
+		{
+			Tcl_AppendElement(interp, tcl_value(PQgetvalue(result, tupno, i)));
+		}
+#else
 		for (i = 0; i < PQnfields(result); i++)
 			Tcl_AppendElement(interp, PQgetvalue(result, tupno, i));
+#endif
 		return TCL_OK;
 	}
 	else if (strcmp(opt, "-tupleArray") == 0)
@@ -674,7 +701,11 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		for (i = 0; i < PQnfields(result); i++)
 		{
 			if (Tcl_SetVar2(interp, argv[4], PQfname(result, i),
+#ifdef TCL_ARRAYS
+							tcl_value(PQgetvalue(result, tupno, i)),
+#else
 							PQgetvalue(result, tupno, i),
+#endif
 							TCL_LEAVE_ERR_MSG) == NULL)
 				return TCL_ERROR;
 		}
@@ -1302,7 +1333,13 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 		Tcl_SetVar2(interp, argv[3], ".tupno", buffer, 0);
 
 		for (column = 0; column < ncols; column++)
-			Tcl_SetVar2(interp, argv[3], info[column].cname, PQgetvalue(result, tupno, column), 0);
+			Tcl_SetVar2(interp, argv[3], info[column].cname,
+#ifdef TCL_ARRAYS
+						tcl_value(PQgetvalue(result, tupno, column)),
+#else
+						PQgetvalue(result, tupno, column),
+#endif
+						0);
 
 		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
 
