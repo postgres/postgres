@@ -6,6 +6,7 @@ i386-next-nextstep3=nextstep
 i386-pc-bsdi2.0=bsdi_2.0
 i386-pc-bsdi2.1=bsdi_2.1
 i386-pc-bsdi3.0=bsdi_2.1
+i386-pc-bsdi3.1=bsdi_2.1
 i386-pc-bsdi4.0=bsdi_4.0
 i386-pc-linux-gnu=linux_i386
 i386-pc-solaris2.6=solaris_i386_gcc

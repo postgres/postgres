@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.88 1998/10/12 00:53:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.89 1998/10/23 01:02:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1875,12 +1875,11 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 		heap_close(sd);
 	}
 
-	/* XXX -- after write, should invalidate relcache in other backends */
-	WriteNoReleaseBuffer(ItemPointerGetBlockNumber(&rtup->t_ctid));
-
 	RelationInvalidateHeapTuple(rd, rtup);
 
-	ReleaseBuffer(buffer);
+	/* XXX -- after write, should invalidate relcache in other backends */
+	WriteBuffer(ItemPointerGetBlockNumber(&rtup->t_ctid));
+
 	heap_close(rd);
 }
 
