@@ -6,14 +6,10 @@ QUERY: UPDATE tmp
    SET stringu1 = reverse_name(onek.stringu1)
    WHERE onek.stringu1 = 'JBAAAA' and
 	  onek.stringu1 = tmp.stringu1;
-NOTICE:  Non-functional update, only first update is performed
-NOTICE:  Non-functional update, only first update is performed
 QUERY: UPDATE tmp
    SET stringu1 = reverse_name(onek2.stringu1)
    WHERE onek2.stringu1 = 'JCAAAA' and
 	  onek2.stringu1 = tmp.stringu1;
-NOTICE:  Non-functional update, only first update is performed
-NOTICE:  Non-functional update, only first update is performed
 QUERY: DROP TABLE tmp;
 QUERY: COPY onek TO '_OBJWD_/results/onek.data';
 QUERY: DELETE FROM onek;
