@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 28 00:23:30 EST 2001
+Last updated:		Fri Dec 28 13:30:32 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -421,7 +421,7 @@ SOURCE CODE
 * Remove USING clause from pg_get_indexdef() if index is btree (Bruce)
 * Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
 * Add OpenBSD's getpeereid() call for local socket authentication (Bruce)
-
+* Improve access-permissions check on data directory in CYGWIN (Tom)
 
 ---------------------------------------------------------------------------
 
