@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.34 2003/12/18 22:49:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.35 2004/01/09 02:02:43 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -106,6 +106,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifdef ENABLE_THREAD_SAFETY
+#include <pthread.h>
+#endif
+
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
@@ -140,6 +144,11 @@ static const char *SSLerrmessage(void);
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
+#endif
+
+#ifdef ENABLE_THREAD_SAFETY
+static void sigpipe_handler_ignore_send(int signo);
+pthread_key_t thread_in_send;
 #endif
 
 /* ------------------------------------------------------------ */
@@ -347,8 +356,12 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
 
+#ifdef ENABLE_THREAD_SAFETY
+	pthread_setspecific(thread_in_send, "t");
+#else
 #ifndef WIN32
 	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
+#endif
 #endif
 
 #ifdef USE_SSL
@@ -407,8 +420,12 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #endif
 		n = send(conn->sock, ptr, len, 0);
 
+#ifdef ENABLE_THREAD_SAFETY
+	pthread_setspecific(thread_in_send, "f");
+#else
 #ifndef WIN32
 	pqsignal(SIGPIPE, oldsighandler);
+#endif
 #endif
 
 	return n;
@@ -1048,3 +1065,59 @@ PQgetssl(PGconn *conn)
 }
 
 #endif   /* USE_SSL */
+
+
+#ifdef ENABLE_THREAD_SAFETY
+/*
+ *	Check SIGPIPE handler and perhaps install our own.
+ */
+void
+check_sigpipe_handler(void)
+{
+	pqsigfunc pipehandler;
+
+	/*
+	 *	If the app hasn't set a SIGPIPE handler, define our own
+	 *	that ignores SIGPIPE on libpq send() and does SIG_DFL
+	 *	for other SIGPIPE cases.
+	 */
+	pipehandler = pqsignalinquire(SIGPIPE);
+	if (pipehandler == SIG_DFL)	/* not set by application */
+	{
+		/*
+		 *	Create key first because the signal handler might be called
+		 *	right after being installed.
+		 */
+		pthread_key_create(&thread_in_send, NULL);	
+		pqsignal(SIGPIPE, sigpipe_handler_ignore_send);
+	}
+}
+
+/*
+ *	Threaded SIGPIPE signal handler
+ */
+void
+sigpipe_handler_ignore_send(int signo)
+{
+	/* If we have gotten a SIGPIPE outside send(), exit */
+	if (!PQinSend())
+		exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
+}
+#endif
+ 
+/*
+ *	Indicates whether the current thread is in send()
+ *	For use by SIGPIPE signal handlers;  they should
+ *	ignore SIGPIPE when libpq is in send().  This means
+ *	that the backend has died unexpectedly.
+ */
+pqbool
+PQinSend(void)
+{
+#ifdef ENABLE_THREAD_SAFETY
+	return (pthread_getspecific(thread_in_send) /* has it been set? */ &&
+			*(char *)pthread_getspecific(thread_in_send) == 't') ? true : false;
+#else
+	return false;	/* No threading, so we can't be in send() */
+#endif
+}

@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.49 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.50 2004/01/09 02:02:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,10 @@ PQprint(FILE *fout,
 		int			fs_len = strlen(po->fieldSep);
 		int			total_line_length = 0;
 		int			usePipe = 0;
-		pqsigfunc	oldsigpipehandler = NULL;
 		char	   *pagerenv;
+#if !defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
+		pqsigfunc	oldsigpipehandler = NULL;
+#endif
 
 #ifdef TIOCGWINSZ
 		struct winsize screen_size;
@@ -189,8 +191,12 @@ PQprint(FILE *fout,
 				if (fout)
 				{
 					usePipe = 1;
+#ifdef ENABLE_THREAD_SAFETY
+					pthread_setspecific(thread_in_send, "t");
+#else
 #ifndef WIN32
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
+#endif
 #endif
 				}
 				else
@@ -306,7 +312,13 @@ PQprint(FILE *fout,
 			_pclose(fout);
 #else
 			pclose(fout);
+#endif
+#ifdef ENABLE_THREAD_SAFETY
+			pthread_setspecific(thread_in_send, "f");
+#else
+#ifndef WIN32
 			pqsignal(SIGPIPE, oldsigpipehandler);
+#endif
 #endif
 		}
 		if (po->html3 && !po->expanded)

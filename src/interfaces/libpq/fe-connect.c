@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.266 2004/01/07 18:56:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.267 2004/01/09 02:02:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifdef ENABLE_THREAD_SAFETY
+#include <pthread.h>
+#endif
+
 #include "libpq/ip.h"
 #include "mb/pg_wchar.h"
 
@@ -65,7 +69,6 @@ long		ioctlsocket_ret=1;
 #else
 #define DefaultSSLMode	"disable"
 #endif
-
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -197,6 +200,7 @@ static int parseServiceInfo(PQconninfoOption *options,
 static char *pwdfMatchesString(char *buf, char *token);
 static char *PasswordFromFile(char *hostname, char *port, char *dbname,
 				 char *username);
+
 
 /*
  *		Connecting to a Database
@@ -881,6 +885,12 @@ connectDBStart(PGconn *conn)
 	struct addrinfo hint;
 	const char *node = NULL;
 	int			ret;
+#ifdef ENABLE_THREAD_SAFETY
+	static pthread_once_t check_sigpipe_once = PTHREAD_ONCE_INIT;
+
+	/* Check only on first connection request */
+	pthread_once(&check_sigpipe_once, check_sigpipe_handler);
+#endif
 
 	if (!conn)
 		return 0;
@@ -3158,3 +3168,4 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 
 #undef LINELEN
 }
+

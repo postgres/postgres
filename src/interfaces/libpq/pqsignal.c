@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/pqsignal.c,v 1.18 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/pqsignal.c,v 1.19 2004/01/09 02:02:43 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -37,6 +37,28 @@ pqsignal(int signo, pqsigfunc func)
 		act.sa_flags |= SA_RESTART;
 	if (sigaction(signo, &act, &oact) < 0)
 		return SIG_ERR;
+	return oact.sa_handler;
+#endif   /* !HAVE_POSIX_SIGNALS */
+}
+
+pqsigfunc
+pqsignalinquire(int signo)
+{
+#if !defined(HAVE_POSIX_SIGNALS)
+	pqsigfunc old_sigfunc;
+	int		old_sigmask;
+
+	/* Prevent signal handler calls during test */
+	old_sigmask = sigblock(sigmask(signo));
+ 	old_sigfunc = signal(signo, SIG_DFL);
+	signal(signo, old_sigfunc);
+	sigblock(old_sigmask);
+	return old_sigfunc;
+#else
+	struct sigaction oact;
+
+	if (sigaction(signo, NULL, &oact) < 0)
+       return SIG_ERR;
 	return oact.sa_handler;
 #endif   /* !HAVE_POSIX_SIGNALS */
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.101 2003/11/29 22:41:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.102 2004/01/09 02:02:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,6 +449,14 @@ extern int	PQmblen(const unsigned char *s, int encoding);
 
 /* Get encoding id from environment variable PGCLIENTENCODING */
 extern int	PQenv2encoding(void);
+
+/* === in fe-secure.c === */
+
+/*
+ *	Indicates whether the libpq thread is in send().
+ *	Used to ignore SIGPIPE if thread is in send().
+ */
+pqbool PQinSend(void);
 
 #ifdef __cplusplus
 }

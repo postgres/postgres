@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.83 2003/11/29 22:41:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.84 2004/01/09 02:02:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,9 @@
 #include <sys/time.h>
 #endif
 
+#ifdef ENABLE_THREAD_SAFETY
+#include <pthread.h>
+#endif
 
 #if defined(WIN32) && (!defined(ssize_t))
 typedef int ssize_t;			/* ssize_t doesn't exist in VC (at least
@@ -442,6 +445,10 @@ extern PostgresPollingStatusType pqsecure_open_client(PGconn *);
 extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
+#ifdef ENABLE_THREAD_SAFETY
+extern void check_sigpipe_handler(void);
+extern pthread_key_t thread_in_send;
+#endif
 
 /*
  * this is so that we can check if a connection is non-blocking internally
