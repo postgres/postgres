@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.41 2000/10/21 15:43:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.42 2000/10/28 16:20:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,27 +36,17 @@ typedef struct f_smgr
 										   char *buffer);
 	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
 										   char *buffer);
-#ifdef OLD_FILE_NAMING
-	int			(*smgr_blindwrt) (char *dbname, char *relname,
-											  Oid dbid, Oid relid,
-										 BlockNumber blkno, char *buffer,
-											  bool dofsync);
-#else
 	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno, 
 										char *buffer, bool dofsync);
-#endif
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
-#ifdef OLD_FILE_NAMING
-	int			(*smgr_blindmarkdirty) (char *dbname, char *relname,
-													Oid dbid, Oid relid,
-													BlockNumber blkno);
-#else
 	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
-#endif
 	int			(*smgr_nblocks) (Relation reln);
 	int			(*smgr_truncate) (Relation reln, int nblocks);
 	int			(*smgr_commit) (void);	/* may be NULL */
 	int			(*smgr_abort) (void);	/* may be NULL */
+#ifdef XLOG
+	int			(*smgr_sync) (void);
+#endif
 } f_smgr;
 
 /*
@@ -69,7 +59,11 @@ static f_smgr smgrsw[] = {
 	/* magnetic disk */
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
 		mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
+#ifdef XLOG
+	mdnblocks, mdtruncate, mdcommit, mdabort, mdsync},
+#else
 	mdnblocks, mdtruncate, mdcommit, mdabort},
+#endif
 
 #ifdef STABLE_MEMORY_STORAGE
 	/* main memory */
@@ -310,40 +304,6 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *		this page down to stable storage in this circumstance.	The
  *		write should be synchronous if dofsync is true.
  */
-#ifdef OLD_FILE_NAMING
-int
-smgrblindwrt(int16 which,
-			 char *dbname,
-			 char *relname,
-			 Oid dbid,
-			 Oid relid,
-			 BlockNumber blkno,
-			 char *buffer,
-			 bool dofsync)
-{
-	char	   *dbstr;
-	char	   *relstr;
-	int			status;
-
-	/* strdup here is probably redundant */
-	dbstr = pstrdup(dbname);
-	relstr = pstrdup(relname);
-
-	status = (*(smgrsw[which].smgr_blindwrt)) (dbstr, relstr, dbid, relid,
-											   blkno, buffer, dofsync);
-
-	if (status == SM_FAIL)
-		elog(ERROR, "cannot write block %d of %s [%s] blind: %m",
-			 blkno, relstr, dbstr);
-
-	pfree(dbstr);
-	pfree(relstr);
-
-	return status;
-}
-
-#else
-
 int
 smgrblindwrt(int16 which,
 			 RelFileNode rnode,
@@ -361,7 +321,6 @@ smgrblindwrt(int16 which,
 
 	return status;
 }
-#endif
 
 /*
  *	smgrmarkdirty() -- Mark a page dirty (needs fsync).
@@ -394,39 +353,6 @@ smgrmarkdirty(int16 which,
  *
  *		Just like smgrmarkdirty, except we don't have a reldesc.
  */
-#ifdef OLD_FILE_NAMING
-int
-smgrblindmarkdirty(int16 which,
-				   char *dbname,
-				   char *relname,
-				   Oid dbid,
-				   Oid relid,
-				   BlockNumber blkno)
-{
-	char	   *dbstr;
-	char	   *relstr;
-	int			status;
-
-	/* strdup here is probably redundant */
-	dbstr = pstrdup(dbname);
-	relstr = pstrdup(relname);
-
-	status = (*(smgrsw[which].smgr_blindmarkdirty)) (dbstr, relstr,
-													 dbid, relid,
-													 blkno);
-
-	if (status == SM_FAIL)
-		elog(ERROR, "cannot mark block %d of %s [%s] blind: %m",
-			 blkno, relstr, dbstr);
-
-	pfree(dbstr);
-	pfree(relstr);
-
-	return status;
-}
-
-#else
-
 int
 smgrblindmarkdirty(int16 which,
 				   RelFileNode rnode,
@@ -442,7 +368,6 @@ smgrblindmarkdirty(int16 which,
 
 	return status;
 }
-#endif
 
 /*
  *	smgrnblocks() -- Calculate the number of POSTGRES blocks in the
@@ -527,6 +452,27 @@ smgrabort()
 
 	return SM_SUCCESS;
 }
+
+#ifdef XLOG
+int
+smgrsync()
+{
+	int			i;
+
+	for (i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_sync)
+		{
+			if ((*(smgrsw[i].smgr_sync)) () == SM_FAIL)
+				elog(STOP, "storage sync failed on %s: %m",
+					 DatumGetCString(DirectFunctionCall1(smgrout,
+														 Int16GetDatum(i))));
+		}
+	}
+
+	return SM_SUCCESS;
+}
+#endif
 
 #ifdef NOT_USED
 bool

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.21 2000/10/24 09:56:09 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.22 2000/10/28 16:20:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,6 +219,8 @@ static uint32 readSeg = 0;
 static uint32 readOff = 0;
 static char readBuf[BLCKSZ];
 static XLogRecord *nextRecord = NULL;
+
+static bool InRedo = false;
 
 XLogRecPtr
 XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
@@ -481,6 +483,19 @@ XLogFlush(XLogRecPtr record)
 	unsigned	i = 0;
 	bool		force_lgwr = false;
 
+	if (XLOG_DEBUG)
+	{
+		fprintf(stderr, "XLogFlush%s%s: rqst %u/%u; wrt %u/%u; flsh %u/%u\n",
+			(IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
+			(InRedo) ? "(redo)" : "",
+			record.xlogid, record.xrecoff,
+			LgwrResult.Write.xlogid, LgwrResult.Write.xrecoff,
+			LgwrResult.Flush.xlogid, LgwrResult.Flush.xrecoff);
+		fflush(stderr);
+	}
+
+	if (IsBootstrapProcessingMode() || InRedo)
+		return;
 	if (XLByteLE(record, LgwrResult.Flush))
 		return;
 	WriteRqst = LgwrRqst.Write;
@@ -894,7 +909,7 @@ ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 	record = (XLogRecord *) ((char *) readBuf + RecPtr->xrecoff % BLCKSZ);
 
 got_record:;
-	if (record->xl_len == 0 || record->xl_len >
+	if (record->xl_len >
 		(BLCKSZ - RecPtr->xrecoff % BLCKSZ - SizeOfXLogRecord))
 	{
 		elog(emode, "ReadRecord: invalid record len %u in (%u, %u)",
@@ -1259,7 +1274,6 @@ StartupXLOG()
 				LastRec;
 	XLogRecord *record;
 	char		buffer[MAXLOGRECSZ + SizeOfXLogRecord];
-	int			recovery = 0;
 	bool		sie_saved = false;
 
 #endif
@@ -1380,16 +1394,15 @@ StartupXLOG()
 			elog(STOP, "Invalid Redo/Undo record in shutdown checkpoint");
 		if (ControlFile->state == DB_SHUTDOWNED)
 			elog(STOP, "Invalid Redo/Undo record in Shutdowned state");
-		recovery = 1;
+		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
 	{
-		if (checkPoint.Shutdown)
-			elog(STOP, "Invalid state in control file");
-		recovery = 1;
+		InRecovery = true;
 	}
 
-	if (recovery)
+	/* REDO */
+	if (InRecovery)
 	{
 		elog(LOG, "The DataBase system was not properly shut down\n"
 			 "\tAutomatic recovery is in progress...");
@@ -1401,6 +1414,7 @@ StartupXLOG()
 		StopIfError = true;
 
 		XLogOpenLogRelation();	/* open pg_log */
+		XLogInitRelationCache();
 
 		/* Is REDO required ? */
 		if (XLByteLT(checkPoint.redo, RecPtr))
@@ -1409,9 +1423,9 @@ StartupXLOG()
 /* read past CheckPoint record */
 			record = ReadRecord(NULL, buffer);
 
-		/* REDO */
 		if (record->xl_len != 0)
 		{
+			InRedo = true;
 			elog(LOG, "Redo starts at (%u, %u)",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
@@ -1441,12 +1455,40 @@ StartupXLOG()
 			elog(LOG, "Redo done at (%u, %u)",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			LastRec = ReadRecPtr;
+			InRedo = false;
 		}
 		else
 			elog(LOG, "Redo is not required");
+	}
+
+	/* Init xlog buffer cache */
+	record = ReadRecord(&LastRec, buffer);
+	logId = EndRecPtr.xlogid;
+	logSeg = (EndRecPtr.xrecoff - 1) / XLogSegSize;
+	logOff = 0;
+	logFile = XLogFileOpen(logId, logSeg, false);
+	XLogCtl->xlblocks[0].xlogid = logId;
+	XLogCtl->xlblocks[0].xrecoff =
+		((EndRecPtr.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
+	Insert = &XLogCtl->Insert;
+	memcpy((char *) (Insert->currpage), readBuf, BLCKSZ);
+	Insert->currpos = ((char *) Insert->currpage) +
+		(EndRecPtr.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
+	Insert->PrevRecord = LastRec;
+
+	LgwrRqst.Write = LgwrRqst.Flush =
+	LgwrResult.Write = LgwrResult.Flush = EndRecPtr;
+
+	XLogCtl->Write.LgwrResult = LgwrResult;
+	Insert->LgwrResult = LgwrResult;
+
+	XLogCtl->LgwrRqst = LgwrRqst;
+	XLogCtl->LgwrResult = LgwrResult;
 
 #ifdef NOT_USED
-		/* UNDO */
+	/* UNDO */
+	if (InRecovery)
+	{
 		RecPtr = ReadRecPtr;
 		if (XLByteLT(checkPoint.undo, RecPtr))
 		{
@@ -1465,29 +1507,16 @@ StartupXLOG()
 		}
 		else
 			elog(LOG, "Undo is not required");
-#endif
 	}
+#endif
 
-	/* Init xlog buffer cache */
-	record = ReadRecord(&LastRec, buffer);
-	logId = EndRecPtr.xlogid;
-	logSeg = (EndRecPtr.xrecoff - 1) / XLogSegSize;
-	logOff = 0;
-	logFile = XLogFileOpen(logId, logSeg, false);
-	XLogCtl->xlblocks[0].xlogid = logId;
-	XLogCtl->xlblocks[0].xrecoff =
-		((EndRecPtr.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
-	Insert = &XLogCtl->Insert;
-	memcpy((char *) (Insert->currpage), readBuf, BLCKSZ);
-	Insert->currpos = ((char *) Insert->currpage) +
-		(EndRecPtr.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
-	Insert->PrevRecord = ControlFile->checkPoint;
-
-	if (recovery)
+	if (InRecovery)
 	{
 		CreateCheckPoint(true);
 		StopIfError = sie_saved;
+		XLogCloseRelationCache();
 	}
+	InRecovery = false;
 
 #endif	 /* XLOG */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.170 2000/10/24 09:56:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.171 2000/10/28 16:20:54 vadim Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -1787,7 +1787,9 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 
 	if (num_moved > 0)
 	{
-
+#ifdef XLOG
+		RecordTransactionCommit();
+#else
 		/*
 		 * We have to commit our tuple' movings before we'll truncate
 		 * relation, but we shouldn't lose our locks. And so - quick hack:
@@ -1797,6 +1799,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		FlushBufferPool();
 		TransactionIdCommit(myXID);
 		FlushBufferPool();
+#endif
 	}
 
 	/*

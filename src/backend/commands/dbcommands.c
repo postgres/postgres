@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.62 2000/10/22 17:55:36 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.63 2000/10/28 16:20:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,9 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 			elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
 	}
 
+#ifdef XLOG
+	BufferSync();
+#endif
 }
 
 

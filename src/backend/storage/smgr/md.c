@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.76 2000/10/20 11:01:11 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.77 2000/10/28 16:20:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,12 +76,7 @@ static int	_mdfd_getrelnfd(Relation reln);
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
 static MdfdVec *_mdfd_getseg(Relation reln, int blkno);
 
-#ifdef OLD_FILE_NAMING
-static int _mdfd_blind_getseg(char *dbname, char *relname,
-				   Oid dbid, Oid relid, int blkno);
-#else
 static int _mdfd_blind_getseg(RelFileNode rnode, int blkno);
-#endif
 
 static int	_fdvec_alloc(void);
 static void _fdvec_free(int);
@@ -134,11 +129,7 @@ mdcreate(Relation reln)
 
 	Assert(reln->rd_unlinked && reln->rd_fd < 0);
 
-#ifdef OLD_FILE_NAMING
-	path = relpath(RelationGetPhysicalRelationName(reln));
-#else
 	path = relpath(reln->rd_node);
-#endif
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 
 	/*
@@ -336,11 +327,7 @@ mdopen(Relation reln)
 	int			vfd;
 
 	Assert(reln->rd_fd < 0);
-#ifdef OLD_FILE_NAMING
-	path = relpath(RelationGetPhysicalRelationName(reln));
-#else
 	path = relpath(reln->rd_node);
-#endif
 
 	fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 	if (fd < 0)
@@ -579,30 +566,16 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
  *		the file, making it more like mdflush().
  */
 int
-#ifdef OLD_FILE_NAMING
-mdblindwrt(char *dbname,
-		   char *relname,
-		   Oid dbid,
-		   Oid relid,
-		   BlockNumber blkno,
-		   char *buffer,
-		   bool dofsync)
-#else
 mdblindwrt(RelFileNode rnode,
 		   BlockNumber blkno,
 		   char *buffer,
 		   bool dofsync)
-#endif
 {
 	int			status;
 	long		seekpos;
 	int			fd;
 
-#ifdef OLD_FILE_NAMING
-	fd = _mdfd_blind_getseg(dbname, relname, dbid, relid, blkno);
-#else
 	fd = _mdfd_blind_getseg(rnode, blkno);
-#endif
 
 	if (fd < 0)
 		return SM_FAIL;
@@ -676,25 +649,13 @@ mdmarkdirty(Relation reln, BlockNumber blkno)
  *		rather than building md/fd datastructures to postpone it till later.
  */
 int
-#ifdef OLD_FILE_NAMING
-mdblindmarkdirty(char *dbname,
-				 char *relname,
-				 Oid dbid,
-				 Oid relid,
-				 BlockNumber blkno)
-#else
 mdblindmarkdirty(RelFileNode rnode,
 				 BlockNumber blkno)
-#endif
 {
 	int			status;
 	int			fd;
 
-#ifdef OLD_FILE_NAMING
-	fd = _mdfd_blind_getseg(dbname, relname, dbid, relid, blkno);
-#else
 	fd = _mdfd_blind_getseg(rnode, blkno);
-#endif
 
 	if (fd < 0)
 		return SM_FAIL;
@@ -915,6 +876,22 @@ mdabort()
 	return SM_SUCCESS;
 }
 
+#ifdef XLOG
+/*
+ *	mdsync() -- Sync storage.
+ *
+ */
+int
+mdsync()
+{
+	sync();
+	if (IsUnderPostmaster)
+		sleep(2);
+	sync();
+	return SM_SUCCESS;
+}
+#endif
+
 /*
  *	_fdvec_alloc () -- grab a free (or new) md file descriptor vector.
  *
@@ -996,11 +973,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 			   *fullpath;
 
 	/* be sure we have enough space for the '.segno', if any */
-#ifdef OLD_FILE_NAMING
-	path = relpath(RelationGetPhysicalRelationName(reln));
-#else
 	path = relpath(reln->rd_node);
-#endif
 
 	if (segno > 0)
 	{
@@ -1115,12 +1088,7 @@ _mdfd_getseg(Relation reln, int blkno)
  */
 
 static int
-#ifdef OLD_FILE_NAMING
-_mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
-				   int blkno)
-#else
 _mdfd_blind_getseg(RelFileNode rnode, int blkno)
-#endif
 {
 	char	   *path;
 	int			fd;
@@ -1130,12 +1098,7 @@ _mdfd_blind_getseg(RelFileNode rnode, int blkno)
 
 #endif
 
-#ifdef OLD_FILE_NAMING
-	/* construct the path to the relation */
-	path = relpath_blind(dbname, relname, dbid, relid);
-#else
 	path = relpath(rnode);
-#endif
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	/* append the '.segno', if needed */

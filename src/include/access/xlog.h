@@ -10,12 +10,7 @@
 
 #include "access/rmgr.h"
 #include "access/transam.h"
-
-typedef struct XLogRecPtr
-{
-	uint32		xlogid;			/* log file #, 0 based */
-	uint32		xrecoff;		/* offset of record in log file */
-} XLogRecPtr;
+#include "access/xlogdefs.h"
 
 typedef struct XLogRecord
 {
@@ -83,12 +78,7 @@ typedef XLogPageHeaderData *XLogPageHeader;
 #define XLByteEQ(left, right)		\
 			(right.xlogid == left.xlogid && right.xrecoff ==  left.xrecoff)
 
-/*
- * StartUpID (SUI) - system startups counter.
- * It's to allow removing pg_log after shutdown.
- */
-typedef	uint32		StartUpID;
-extern	StartUpID	ThisStartUpID;
+extern	StartUpID	ThisStartUpID;	/* current SUI */
 extern	bool		InRecovery;
 extern	XLogRecPtr	MyLastRecPtr;
 

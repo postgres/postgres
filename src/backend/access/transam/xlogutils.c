@@ -22,6 +22,7 @@
 #include "access/htup.h"
 #include "access/xlogutils.h"
 #include "catalog/pg_database.h"
+#include "lib/hasht.h"
 
 /*
  * ---------------------------------------------------------------
@@ -240,32 +241,10 @@ static int					_xlcnt = 0;
 #define	_XLOG_INITRELCACHESIZE	32
 #define	_XLOG_MAXRELCACHESIZE	512
 
-void
-XLogCloseRelationCache(void)
-{
-	int i;
-
-	if (!_xlrelarr)
-		return;
-
-	for (i = 1; i < _xlast; i++)
-	{
-		Relation	reln = &(_xlrelarr[i].reldata);
-		if (reln->rd_fd >= 0)
-			smgrclose(DEFAULT_SMGR, reln);
-	}
-
-	free(_xlrelarr);
-	free(_xlpgcarr);
-
-	hash_destroy(_xlrelcache);
-	_xlrelarr = NULL;
-}
-
 static void
 _xl_init_rel_cache(void)
 {
-	HASHCTL	ctl;
+	HASHCTL			ctl;
 
 	_xlcnt = _XLOG_INITRELCACHESIZE;
 	_xlast = 0;
@@ -284,6 +263,35 @@ _xl_init_rel_cache(void)
 
 	_xlrelcache = hash_create(_XLOG_INITRELCACHESIZE, &ctl,
 								HASH_ELEM | HASH_FUNCTION);
+}
+
+static void
+_xl_remove_hash_entry(XLogRelDesc **edata, int dummy)
+{
+	XLogRelCacheEntry	   *hentry;
+	bool					found;
+	XLogRelDesc			   *rdesc = *edata;
+	Form_pg_class			tpgc = rdesc->reldata.rd_rel;
+
+	rdesc->lessRecently->moreRecently = rdesc->moreRecently;
+	rdesc->moreRecently->lessRecently = rdesc->lessRecently;
+
+	hentry = (XLogRelCacheEntry*) hash_search(_xlrelcache, 
+		(char*)&(rdesc->reldata.rd_node), HASH_REMOVE, &found);
+
+	if (hentry == NULL)
+		elog(STOP, "_xl_remove_hash_entry: can't delete from cache");
+	if (!found)
+		elog(STOP, "_xl_remove_hash_entry: file was not found in cache");
+
+	if (rdesc->reldata.rd_fd >= 0)
+		smgrclose(DEFAULT_SMGR, &(rdesc->reldata));
+
+	memset(rdesc, 0, sizeof(XLogRelDesc));
+	memset(tpgc, 0, sizeof(FormData_pg_class));
+	rdesc->reldata.rd_rel = tpgc;
+
+	return;
 }
 
 static XLogRelDesc*
@@ -310,32 +318,41 @@ _xl_new_reldesc(void)
 	}
 	else /* reuse */
 	{
-		XLogRelCacheEntry	   *hentry;
-		bool					found;
-		XLogRelDesc			   *res = _xlrelarr[0].moreRecently;
-		Form_pg_class			tpgc = res->reldata.rd_rel;
+		XLogRelDesc	   *res = _xlrelarr[0].moreRecently;
 
-		res->lessRecently->moreRecently = res->moreRecently;
-		res->moreRecently->lessRecently = res->lessRecently;
-
-		hentry = (XLogRelCacheEntry*) hash_search(_xlrelcache, 
-			(char*)&(res->reldata.rd_node), HASH_REMOVE, &found);
-
-		if (hentry == NULL)
-			elog(STOP, "XLogOpenRelation: can't delete from cache");
-		if (!found)
-			elog(STOP, "XLogOpenRelation: file was not found in cache");
-
-		if (res->reldata.rd_fd >= 0)
-			smgrclose(DEFAULT_SMGR, &(res->reldata));
-
-		memset(res, 0, sizeof(XLogRelDesc));
-		memset(tpgc, 0, sizeof(FormData_pg_class));
-		res->reldata.rd_rel = tpgc;
+		_xl_remove_hash_entry(&res, 0);
 
 		_xlast--;
 		return(res);
 	}
+}
+
+extern void CreateDummyCaches(void);
+extern void DestroyDummyCaches(void);
+
+void
+XLogInitRelationCache(void)
+{
+	CreateDummyCaches();
+	_xl_init_rel_cache();
+}
+
+void
+XLogCloseRelationCache(void)
+{
+
+	DestroyDummyCaches();
+
+	if (!_xlrelarr)
+		return;
+
+	HashTableWalk(_xlrelcache, (HashtFunc)_xl_remove_hash_entry, 0);
+	hash_destroy(_xlrelcache);
+
+	free(_xlrelarr);
+	free(_xlpgcarr);
+
+	_xlrelarr = NULL;
 }
 
 Relation
@@ -344,9 +361,6 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 	XLogRelDesc			   *res;
 	XLogRelCacheEntry	   *hentry;
 	bool					found;
-
-	if (!_xlrelarr)
-		_xl_init_rel_cache();
 
 	hentry = (XLogRelCacheEntry*) 
 			hash_search(_xlrelcache, (char*)&rnode, HASH_FIND, &found);

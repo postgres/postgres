@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.29 2000/07/25 20:18:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.30 2000/10/28 16:20:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,11 @@ VariableRelationPutNextXid(TransactionId xid)
 
 	TransactionIdStore(xid, &(var->nextXidData));
 
+#ifdef XLOG
+	WriteBuffer(buf);	/* temp */
+#else
 	FlushBuffer(buf, TRUE);
+#endif
 }
 
 /* --------------------------------

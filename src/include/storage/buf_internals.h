@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.41 2000/10/23 04:10:14 vadim Exp $
+ * $Id: buf_internals.h,v 1.42 2000/10/28 16:21:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,10 @@ typedef struct sbufdesc
 	unsigned	r_locks;		/* # of shared locks */
 	bool		ri_lock;		/* read-intent lock */
 	bool		w_lock;			/* context exclusively locked */
+
+#ifdef XLOG
+	bool		cntxDirty;		/* new way to mark block as dirty */
+#endif
 
 	BufferBlindId blind;		/* was used to support blind write */
 

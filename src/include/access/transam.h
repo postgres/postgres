@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.24 2000/01/26 05:57:51 momjian Exp $
+ * $Id: transam.h,v 1.25 2000/10/28 16:20:59 vadim Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -67,7 +67,11 @@ typedef unsigned char XidStatus;/* (2 bits) */
  *		transaction page definitions
  * ----------------
  */
+#ifdef XLOG
+#define TP_DataSize				(BLCKSZ - sizeof(XLogRecPtr))
+#else
 #define TP_DataSize				BLCKSZ
+#endif
 #define TP_NumXidStatusPerBlock (TP_DataSize * 4)
 
 /* ----------------
@@ -84,6 +88,10 @@ typedef unsigned char XidStatus;/* (2 bits) */
  */
 typedef struct LogRelationContentsData
 {
+#ifdef XLOG
+	XLogRecPtr	LSN;		/* temp hack: LSN is member of any block */
+							/* so should be described in bufmgr */
+#endif
 	int			TransSystemVersion;
 } LogRelationContentsData;
 
@@ -107,6 +115,9 @@ typedef LogRelationContentsData *LogRelationContents;
  */
 typedef struct VariableRelationContentsData
 {
+#ifdef XLOG
+	XLogRecPtr	LSN;
+#endif
 	int			TransSystemVersion;
 	TransactionId nextXidData;
 	TransactionId lastXidData;	/* unused */

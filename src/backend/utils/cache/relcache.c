@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.113 2000/10/23 04:10:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.114 2000/10/28 16:20:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2064,7 +2064,62 @@ RelationCacheInitializePhase2(void)
 	}
 }
 
+#ifdef XLOG		/* used by XLogInitCache */
 
+void CreateDummyCaches(void);
+void DestroyDummyCaches(void);
+
+void
+CreateDummyCaches(void)
+{
+	MemoryContext	oldcxt;
+	HASHCTL			ctl;
+
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+	MemSet(&ctl, 0, (int) sizeof(ctl));
+	ctl.keysize = sizeof(NameData);
+	ctl.datasize = sizeof(Relation);
+	RelationNameCache = hash_create(INITRELCACHESIZE, &ctl, HASH_ELEM);
+
+	ctl.keysize = sizeof(Oid);
+	ctl.hash = tag_hash;
+	RelationIdCache = hash_create(INITRELCACHESIZE, &ctl,
+								  HASH_ELEM | HASH_FUNCTION);
+
+	ctl.keysize = sizeof(RelFileNode);
+	ctl.hash = tag_hash;
+	RelationNodeCache = hash_create(INITRELCACHESIZE, &ctl,
+								  HASH_ELEM | HASH_FUNCTION);
+	MemoryContextSwitchTo(oldcxt);
+}
+
+void
+DestroyDummyCaches(void)
+{
+	MemoryContext	oldcxt;
+
+	if (!CacheMemoryContext)
+		return;
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+	if (RelationNameCache)
+		hash_destroy(RelationNameCache);
+	if (RelationIdCache)
+		hash_destroy(RelationIdCache);
+	if (RelationNodeCache)
+		hash_destroy(RelationNodeCache);
+
+	RelationNameCache = RelationIdCache = RelationNodeCache = NULL;
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+#endif	/* XLOG */
 
 static void
 AttrDefaultFetch(Relation relation)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.41 2000/10/20 11:01:21 vadim Exp $
+ * $Id: bufmgr.h,v 1.42 2000/10/28 16:21:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #define BUFMGR_H
 
 #include "storage/buf_internals.h"
-
+#include "access/xlogdefs.h"
 
 typedef void *Block;
 
@@ -176,5 +176,10 @@ extern void AbortBufferIO(void);
 
 extern bool BufferIsUpdatable(Buffer buffer);
 extern void MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer));
+
+#ifdef XLOG
+extern void BufmgrCommit(void);
+extern void BufferSync(void);
+#endif
 
 #endif

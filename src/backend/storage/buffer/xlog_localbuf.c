@@ -16,17 +16,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.33 2000/10/28 16:20:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_localbuf.c,v 1.1 2000/10/28 16:20:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
-   
-#ifdef XLOG
-
-#include "xlog_localbuf.c"
-
-#else
-
 #include <sys/types.h>
 #include <sys/file.h>
 #include <math.h>
@@ -108,7 +101,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 * transaction to touch it doesn't need its contents but has not
 	 * flushed it).  if that's the case, write it out before reusing it!
 	 */
-	if (bufHdr->flags & BM_DIRTY)
+	if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
 	{
 		Relation	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
 
@@ -135,6 +128,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	bufHdr->tag.rnode = reln->rd_node;
 	bufHdr->tag.blockNum = blockNum;
 	bufHdr->flags &= ~BM_DIRTY;
+	bufHdr->cntxDirty = false;
 
 	/*
 	 * lazy memory allocation. (see MAKE_PTR for why we need to do
@@ -168,45 +162,6 @@ WriteLocalBuffer(Buffer buffer, bool release)
 
 	bufid = -(buffer + 1);
 	LocalBufferDescriptors[bufid].flags |= BM_DIRTY;
-
-	if (release)
-	{
-		Assert(LocalRefCount[bufid] > 0);
-		LocalRefCount[bufid]--;
-	}
-
-	return true;
-}
-
-/*
- * FlushLocalBuffer -
- *	  flushes a local buffer
- */
-int
-FlushLocalBuffer(Buffer buffer, bool release)
-{
-	int			bufid;
-	Relation	bufrel;
-	BufferDesc *bufHdr;
-
-	Assert(BufferIsLocal(buffer));
-
-#ifdef LBDEBUG
-	fprintf(stderr, "LB FLUSH %d\n", buffer);
-#endif
-
-	bufid = -(buffer + 1);
-	bufHdr = &LocalBufferDescriptors[bufid];
-	bufHdr->flags &= ~BM_DIRTY;
-	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
-
-	Assert(bufrel != NULL);
-	smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
-			  (char *) MAKE_PTR(bufHdr->data));
-	LocalBufferFlushCount++;
-
-	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
-	RelationDecrementReferenceCount(bufrel);
 
 	if (release)
 	{
@@ -259,6 +214,9 @@ InitLocalBuffer(void)
  * Flush all dirty buffers in the local buffer cache at commit time.
  * Since the buffer cache is only used for keeping relations visible
  * during a transaction, we will not need these buffers again.
+ *
+ * Note that we have to *flush* local buffers because of them are not
+ * visible to checkpoint makers. But we can skip XLOG flush check.
  */
 void
 LocalBufferSync(void)
@@ -270,7 +228,7 @@ LocalBufferSync(void)
 		BufferDesc *buf = &LocalBufferDescriptors[i];
 		Relation	bufrel;
 
-		if (buf->flags & BM_DIRTY)
+		if (buf->flags & BM_DIRTY || buf->cntxDirty)
 		{
 #ifdef LBDEBUG
 			fprintf(stderr, "LB SYNC %d\n", -i - 1);
@@ -280,13 +238,15 @@ LocalBufferSync(void)
 			Assert(bufrel != NULL);
 
 			smgrwrite(DEFAULT_SMGR, bufrel, buf->tag.blockNum,
-					  (char *) MAKE_PTR(buf->data));
+						(char *) MAKE_PTR(buf->data));
+			smgrmarkdirty(DEFAULT_SMGR, bufrel, buf->tag.blockNum);
 			LocalBufferFlushCount++;
 
 			/* drop relcache refcount from RelationIdCacheGetRelation */
 			RelationDecrementReferenceCount(bufrel);
 
 			buf->flags &= ~BM_DIRTY;
+			buf->cntxDirty = false;
 		}
 	}
 
@@ -305,11 +265,10 @@ ResetLocalBufferPool(void)
 
 		buf->tag.rnode.relNode = InvalidOid;
 		buf->flags &= ~BM_DIRTY;
+		buf->cntxDirty = false;
 		buf->buf_id = -i - 2;
 	}
 
 	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 	nextFreeLocalBuf = 0;
 }
-
-#endif	/* XLOG */

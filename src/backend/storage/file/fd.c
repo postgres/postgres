@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.64 2000/10/02 19:42:47 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.65 2000/10/28 16:20:56 vadim Exp $
  *
  * NOTES:
  *
@@ -823,8 +823,10 @@ FileWrite(File file, char *buffer, int amount)
 	if (returnCode > 0)
 	{
 		VfdCache[file].seekPos += returnCode;
+#ifndef XLOG
 		/* mark the file as needing fsync */
 		VfdCache[file].fdstate |= FD_DIRTY;
+#endif
 	}
 	else
 		VfdCache[file].seekPos = FileUnknownPos;
