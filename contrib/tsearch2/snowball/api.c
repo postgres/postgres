@@ -6,31 +6,55 @@ extern struct SN_env *
 SN_create_env(int S_size, int I_size, int B_size)
 {
 	struct SN_env *z = (struct SN_env *) calloc(1, sizeof(struct SN_env));
+	struct SN_env *z2 = z;
+
+	if (!z)
+		return z;
 
 	z->p = create_s();
-	if (S_size)
+	if (!z->p)
+		z = NULL;
+
+	if (z && S_size)
 	{
-		z->S = (symbol * *) calloc(S_size, sizeof(symbol *));
+		if ((z->S = (symbol * *) calloc(S_size, sizeof(symbol *))))
 		{
 			int			i;
 
 			for (i = 0; i < S_size; i++)
-				z->S[i] = create_s();
+			{
+				if (!(z->S[i] = create_s()))
+				{
+					z = NULL;
+					break;
+				}
+			}
+			z2->S_size = i;
 		}
-		z->S_size = S_size;
+		else
+			z = NULL;
 	}
 
-	if (I_size)
+	if (z && I_size)
 	{
 		z->I = (int *) calloc(I_size, sizeof(int));
-		z->I_size = I_size;
+		if (z->I)
+			z->I_size = I_size;
+		else
+			z = NULL;
 	}
 
-	if (B_size)
+	if (z && B_size)
 	{
 		z->B = (symbol *) calloc(B_size, sizeof(symbol));
-		z->B_size = B_size;
+		if (z->B)
+			z->B_size = B_size;
+		else
+			z = NULL;
 	}
+
+	if (!z)
+		SN_close_env(z2);
 
 	return z;
 }
@@ -38,7 +62,7 @@ SN_create_env(int S_size, int I_size, int B_size)
 extern void
 SN_close_env(struct SN_env * z)
 {
-	if (z->S_size)
+	if (z->S && z->S_size)
 	{
 		{
 			int			i;

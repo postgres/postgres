@@ -14,6 +14,8 @@ create_s(void)
 {
 	symbol	   *p = (symbol *) (HEAD + (char *) malloc(HEAD + (CREATE_SIZE + 1) * sizeof(symbol)));
 
+	if (p == (symbol *) (HEAD))
+		return NULL;
 	CAPACITY(p) = CREATE_SIZE;
 	SET_SIZE(p, CREATE_SIZE);
 	return p;

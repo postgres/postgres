@@ -112,6 +112,9 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 
 		cfg->map[lexid].len = ARRNELEMS(a);
 		cfg->map[lexid].dict_id = (Datum *) malloc(sizeof(Datum) * cfg->map[lexid].len);
+		if (!cfg->map[lexid].dict_id)
+				ts_error(ERROR, "No memory");
+
 		memset(cfg->map[lexid].dict_id, 0, sizeof(Datum) * cfg->map[lexid].len);
 		ptr = (text *) ARR_DATA_PTR(a);
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
