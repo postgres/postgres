@@ -47,6 +47,11 @@ fulltextindex -
 	Full text indexing using triggers
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
+intarray -
+	Index support for arrays of int4, using GiST
+	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
+	<oleg@sai.msu.su>.
+
 isbn_issn -
 	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
 	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
