@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar 23 01:35:33 EST 2000
+Last updated:		Fri Apr 14 16:07:41 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -309,6 +309,7 @@ SOURCE CODE
 * Remove SET KSQO option if OR processing is improved(Tom)
 * -Pre-generate lex and yacc output so not required for install(Peter E)
 * Use macros to define NT open() file parameters, remove NT-specific defines
+* Change CURRENT to OLD internally for rules
 
 ---------------------------------------------------------------------------
 

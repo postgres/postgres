@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.22 2000/04/13 07:19:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.23 2000/04/14 21:44:21 momjian Exp $
 Postgres documentation
 -->
 
@@ -97,15 +97,16 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
       <term><replaceable>column_constraint_clause</replaceable></term>
       <listitem>
        <para>
-	The optional column constraint clauses specify a list of integrity 
-	constraints or tests which new or updated entries must satisfy for
-	an insert or update operation to succeed. Each constraint
-	must evaluate to a boolean expression. Although <acronym>SQL92</acronym>
-	requires the <replaceable class="PARAMETER">column_constraint_clause</replaceable>
-	to refer to that column only, <productname>Postgres</productname>
-	allows multiple columns
-	to be referenced within a single column constraint.
-	See the column constraint clause for more information.
+	The optional column constraint clauses specify a list of
+	integrity constraints or tests which new or updated entries must
+	satisfy for an insert or update operation to succeed. Each
+	constraint must evaluate to a boolean expression. Although
+	<acronym>SQL92</acronym> requires the <replaceable
+	class="PARAMETER">column_constraint_clause</replaceable> to
+	refer to that column only, <productname>Postgres</productname>
+	allows multiple columns to be referenced within a single column
+	constraint. See the column constraint clause for more
+	information.
        </para>
       </listitem>
      </varlistentry>
@@ -114,16 +115,16 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
       <term><replaceable>table_constraint_clause</replaceable></term>
       <listitem>
        <para>
-	The optional table CONSTRAINT clause specifies a list of integrity 
-	constraints which new or updated entries must satisfy for
-	an insert or update operation to succeed. Each constraint
-	must evaluate to a boolean expression. Multiple columns
-	may be referenced within a single constraint.
-	Only one PRIMARY KEY clause may be specified for a table;
-	PRIMARY KEY <replaceable>column</replaceable>
-	(a table constraint) and PRIMARY KEY (a column constraint) are
-	mutually exclusive..
-	See the table constraint clause for more information.
+	The optional table CONSTRAINT clause specifies a
+	list of integrity constraints which new or updated entries must
+	satisfy for an insert or update operation to succeed. Each
+	constraint must evaluate to a boolean expression. Multiple
+	columns may be referenced within a single constraint. Only one
+	PRIMARY KEY clause may be specified for a table;
+	PRIMARY KEY <replaceable>column</replaceable> (a table
+	constraint) and PRIMARY KEY (a column constraint)
+	are mutually exclusive.. See the table constraint clause for
+	more information.
        </para>
       </listitem>
      </varlistentry>
@@ -140,13 +141,6 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
 	<productname>Postgres</productname> automatically allows the created
 	table to inherit functions on tables above it in the inheritance
 	hierarchy.
-	<note>
-	 <title>Aside</title>
-	 <para>
-	  Inheritance of functions is done according
-	  to the conventions of the Common Lisp Object System (CLOS).
-	 </para>
-	</note>
        </para>
       </listitem>
      </varlistentry>
@@ -227,7 +221,7 @@ ERROR:  DEFAULT: type mismatched
   <para>
    <note>
     <para>
-     As of Postgres version 6.0, consistant array dimensions within an
+     As of Postgres version 6.0, consistent array dimensions within an
      attribute are not enforced. This will likely change in a future
      release.
     </para>
@@ -353,13 +347,13 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
 	<varlistentry>
 	 <term>SESSION_USER</term>
 	 <listitem>
-	  <simpara>not yet supported</simpara>
+	  <simpara>See CURRENT_USER function</simpara>
 	 </listitem>
 	</varlistentry>
 	<varlistentry>
 	 <term>SYSTEM_USER</term>
 	 <listitem>
-	  <simpara>not yet supported</simpara>
+	  <simpara>See CURRENT_USER function</simpara>
 	 </listitem>
 	</varlistentry>
        </variablelist>
@@ -502,9 +496,9 @@ CREATE TABLE distributors (
       <listitem>
        <para>
 	This column is a primary key, which implies that uniqueness is
-	enforced by the system and that other tables may rely on this column
-	as a unique identifier for rows.
-	See PRIMARY KEY for more information.
+	enforced by the system and that other tables may rely on this
+	column as a unique identifier for rows. See PRIMARY KEY for more
+	information.
        </para>
       </listitem>
      </varlistentry>
@@ -529,13 +523,12 @@ CREATE TABLE distributors (
    </title>
 
    <para>
-    The optional constraint
-    clauses specify constraints or tests which new or updated entries
-    must satisfy for an insert or update operation to succeed. Each constraint
-    must evaluate to a boolean expression. Multiple attributes may be referenced within
-    a single constraint.  The use of PRIMARY KEY
-    as a table constraint
-    is mutually incompatible with PRIMARY KEY as a column constraint.
+    The optional constraint clauses specify constraints or tests which
+    new or updated entries must satisfy for an insert or update
+    operation to succeed. Each constraint must evaluate to a boolean
+    expression. Multiple attributes may be referenced within a single
+    constraint. The use of PRIMARY KEY as a table constraint is mutually
+    incompatible with PRIMARY KEY as a column constraint.
    </para>
 
    <para>
@@ -550,10 +543,9 @@ CREATE TABLE distributors (
    </para>
 
    <para>
-    A column constraint is an integrity constraint defined as part
-    of a column definition, and logically becomes a table
-    constraint as soon as it is created. The column
-    constraints available are:
+    A column constraint is an integrity constraint defined as part of a
+    column definition, and logically becomes a table constraint as soon
+    as it is created. The column constraints available are:
 
     <simplelist columns="1">
      <member>PRIMARY KEY</member>
@@ -563,14 +555,6 @@ CREATE TABLE distributors (
      <member>NOT NULL</member>
     </simplelist>
    </para>
-
-   <note>
-    <para>
-     <productname>Postgres</productname> now
-     (new for v7.0) supports
-     REFERENCES integrity constraints.
-    </para>
-   </note>
   </refsect2>
    
   <refsect2 id="R2-SQL-NOTNULL-1">
@@ -710,11 +694,11 @@ ERROR: Cannot insert a duplicate key into a unique index.
     <para>
      The column definitions of the specified columns do not have to
      include a NOT NULL constraint to be included in a UNIQUE
-     constraint.  Having more than one null value in a column without a
-     NOT NULL constraint, does not violate a UNIQUE constraint.
-     (This deviates from the <acronym>SQL92</acronym> definition, but
-     is a more sensible convention. See the section on compatibility
-     for more details.).
+     constraint. Having more than one null value in a column without a
+     NOT NULL constraint, does not violate a UNIQUE constraint. (This
+     deviates from the <acronym>SQL92</acronym> definition, but is a
+     more sensible convention. See the section on compatibility for more
+     details.).
     </para>
     <para>
      Each UNIQUE column constraint must name a column that is
@@ -827,14 +811,13 @@ ERROR:  ExecAppend: rejected due to CHECK constraint "<replaceable class="parame
     <title>Description</title>
     <para>
      The CHECK constraint specifies a restriction on allowed values
-     within a column.
-     The CHECK constraint is also allowed as a table constraint.
+     within a column. The CHECK constraint is also allowed as a table
+     constraint.
     </para>
     <para>
      The SQL92 CHECK column constraints can only be defined on, and
-     refer to, one column of the table. <productname>Postgres</productname>
-     does not have
-     this restriction.
+     refer to, one column of the table.
+     <productname>Postgres</productname> does not have this restriction.
     </para>
    </refsect3>
   </refsect2>
@@ -883,11 +866,11 @@ ERROR: Cannot insert a duplicate key into a unique index.
    <refsect3>
     <title>Description</title>
     <para>
-     The PRIMARY KEY column constraint specifies that a column of a table
-     may contain only unique
-     (non-duplicate), non-NULL values. The definition of
-     the specified column does not have to include an explicit NOT NULL
-     constraint to be included in a PRIMARY KEY constraint. 
+     The PRIMARY KEY column constraint specifies that a column of a
+     table may contain only unique (non-duplicate), non-NULL values. The
+     definition of the specified column does not have to include an
+     explicit NOT NULL constraint to be included in a PRIMARY KEY
+     constraint.
     </para>
     <para>
      Only one PRIMARY KEY can be specified for a table.
@@ -974,9 +957,11 @@ ERROR: Cannot insert a duplicate key into a unique index.
        <term>MATCH <replaceable class="parameter">matchtype</replaceable></term>
        <listitem>
         <para>
-         The type of comparison to do between the table data.  There are three
-         types of matching, MATCH FULL, MATCH PARTIAL, and the unspecified match type
-         used if no match type is specified.
+         The type of comparison to do between the table data. There are
+         three types of matching, MATCH FULL, MATCH PARTIAL, and the
+         unspecified match type used if no match type is specified.
+         MATCH PARTIAL is not
+         currently supported.
         </para>
        </listitem>
       </varlistentry>
@@ -988,10 +973,10 @@ ERROR: Cannot insert a duplicate key into a unique index.
          deleted.  There are the following actions.
          <variablelist>
           <varlistentry>
-           <term>CASCADE</term>
+           <term>NO ACTION</term>
            <listitem>
             <para>
-             Delete any rows referencing the deleted row.
+             Produce error if foreign key violated.  This is the default.
             </para>
            </listitem>
           </varlistentry>
@@ -999,7 +984,15 @@ ERROR: Cannot insert a duplicate key into a unique index.
            <term>RESTRICT</term>
            <listitem>
             <para>
-             Disallow deletion of rows being referenced.
+             Same as NO ACTION.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Delete any rows referencing the deleted row.
             </para>
            </listitem>
           </varlistentry>
@@ -1016,14 +1009,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
            <listitem>
             <para>
              Set the referencing column values to their default value.
-            </para>
-           </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term>NO ACTION</term>
-           <listitem>
-            <para>
-             Do nothing.
             </para>
            </listitem>
           </varlistentry>
@@ -1035,16 +1020,16 @@ ERROR: Cannot insert a duplicate key into a unique index.
        <term>ON UPDATE <replaceable class="parameter">action</replaceable></term>
        <listitem>
         <para>
-	 The action to do when a referenced column in the referenced table is being
-         updated to a new value.  If the row is updated, but the referenced column
-         is not changed, no action is done.  There are the following actions.
+	 The action to do when a referenced column in the referenced
+	 table is being updated to a new value. If the row is updated,
+	 but the referenced column is not changed, no action is done.
+	 There are the following actions.
          <variablelist>
           <varlistentry>
-           <term>CASCADE</term>
+           <term>NO ACTION</term>
            <listitem>
             <para>
-             Update the value of the referencing column to the new value of the
-             referenced column.
+             Produce error if foreign key violated.  This is the default.
             </para>
            </listitem>
           </varlistentry>
@@ -1052,7 +1037,16 @@ ERROR: Cannot insert a duplicate key into a unique index.
            <term>RESTRICT</term>
            <listitem>
             <para>
-             Disallow update of row being referenced.
+             Same as NO ACTION.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Update the value of the referencing column to the new value of the
+             referenced column.
             </para>
            </listitem>
           </varlistentry>
@@ -1069,14 +1063,6 @@ ERROR: Cannot insert a duplicate key into a unique index.
            <listitem>
             <para>
              Set the referencing column values to their default value.
-            </para>
-           </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term>NO ACTION</term>
-           <listitem>
-            <para>
-             Do nothing.
             </para>
            </listitem>
           </varlistentry>
@@ -1089,8 +1075,10 @@ ERROR: Cannot insert a duplicate key into a unique index.
        <term> [ NOT ] DEFERRABLE </term>
        <listitem>
         <para>
-         Tells the trigger manager whether this constraint may be 
-         deferred to the end of transaction.
+         This controls whether the constraint can be deferred to the end
+         of the transaction. If DEFERRABLE, SET CONSTRAINTS ALL DEFERRED
+         will cause the foreign key to be checked only at the end of the
+         transaction. NOT DEFERRABLE is the default.
         </para>
        </listitem>
       </varlistentry>
@@ -1101,22 +1089,20 @@ ERROR: Cannot insert a duplicate key into a unique index.
         <para>
          <replaceable class="parameter">checktime</replaceable> has two possible values 
          which specify the default time to check the constraint.
-
          <variablelist>
           <varlistentry>
            <term>DEFERRED</term>
 	   <listitem>
 	    <para>
-	     Check this constraint at the end of the transaction.
+	     Check constraint only at the end of the transaction.
 	    </para>
 	   </listitem>
           </varlistentry>
-
           <varlistentry>
            <term>IMMEDIATE</term>
 	   <listitem>
 	    <para>
-	     Check this constraint after each statement.
+	     Check constraint after each statement. This is the default.
 	    </para>
 	   </listitem>
 	  </varlistentry>
@@ -1167,16 +1153,15 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
    <refsect3 id="R3-SQL-REFERENCES-3">
     <title>Description</title>
     <para>
-     The REFERENCES column constraint specifies that a column of a
-     table must only contain values which match against values
-     in a referenced column of a referenced table.
+     The REFERENCES column constraint specifies that a
+     column of a table must only contain values which match against
+     values in a referenced column of a referenced table.
     </para>
     <para>
-     A value added to this column are matched against the
-     values of the referenced table and referenced column using
-     the given match type.
-     In addition, when the referenced column data is changed,
-     actions are run upon this column's matching data.
+     A value added to this column are matched against the values of the
+     referenced table and referenced column using the given match type.
+     In addition, when the referenced column data is changed, actions
+     are run upon this column's matching data.
     </para>
    </refsect3>
 
@@ -1188,12 +1173,11 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
      Notes
     </title>
     <para>
-     Currently <productname>Postgres</productname> only supports
-     MATCH FULL and an unspecified match type.
-     In addition, the referenced columns are supposed to be
-     the columns of a UNIQUE constraint in the referenced table,
-     however <productname>Postgres</productname> does not
-     enforce this.
+     Currently <productname>Postgres</productname> only supports MATCH
+     FULL and an unspecified match type. In addition, the referenced
+     columns are supposed to be the columns of a UNIQUE constraint in
+     the referenced table, however <productname>Postgres</productname>
+     does not enforce this.
     </para>
    </refsect3>
   </refsect2>
@@ -1281,14 +1265,6 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
      <member>FOREIGN KEY</member>
     </simplelist>
    </para>
-
-   <note>
-    <para>
-     <productname>Postgres</productname> now
-     supports FOREIGN KEY
-     integrity constraints
-    </para>
-   </note>
   </refsect2>
  
   <refsect2 id="R2-SQL-UNIQUECLAUSE-4">
@@ -1354,10 +1330,11 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
     </title>
     
     <para>
-     The UNIQUE constraint specifies a rule that a group of one or
-     more distinct columns of a table may contain only unique values.
-     The behavior of the UNIQUE table constraint is the same as that for column
-     constraints, with the additional capability to span multiple columns.
+     The UNIQUE constraint specifies a rule that a group of one or more
+     distinct columns of a table may contain only unique values. The
+     behavior of the UNIQUE table constraint is the same as that for
+     column constraints, with the additional capability to span multiple
+     columns.
     </para>
     <para>
      See the section on the UNIQUE column constraint for more details.
@@ -1428,8 +1405,8 @@ CREATE TABLE distributors (
 	  <term>ERROR: Cannot insert a duplicate key into a unique index.</term>
 	  <listitem>
 	   <para>
-	    This occurs at run-time if one tries to insert a duplicate value into
-	    a column subject to a PRIMARY KEY constraint.
+	    This occurs at run-time if one tries to insert a duplicate
+	    value into a column subject to a PRIMARY KEY constraint.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -1475,14 +1452,13 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
 [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
 [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
 [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
-[ [ NOT ] DEFERRABLE ] 
+[ [ NOT ] DEFERRABLE ]
 [ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
    </synopsis>
    <para>
-    The REFERENCES constraint specifies a rule that a column
-    value is checked against the values of another column.
-    REFERENCES can also be specified as part of
-    a FOREIGN KEY table constraint.
+    The REFERENCES constraint specifies a rule that a column value is
+    checked against the values of another column. REFERENCES can also be
+    specified as part of a FOREIGN KEY table constraint.
    </para>
 
    <refsect3 id="R3-SQL-REFERENCES-5">
@@ -1527,9 +1503,10 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        <term>MATCH <replaceable class="parameter">matchtype</replaceable></term>
        <listitem>
         <para>
-         The type of comparison to do between the table data.  There are three
-         types of matching, MATCH FULL, MATCH PARTIAL, and the unspecified match type
-         used if no match type is specified. 
+         The type of comparison to do between the table data. There are
+         three types of matching, MATCH FULL, MATCH PARTIAL, and the
+         unspecified match type used if no match type is specified.
+         MATCH PARTIAL is not currently supported.
         </para>
        </listitem>
       </varlistentry>
@@ -1541,10 +1518,10 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
          deleted.  There are the following actions.
          <variablelist>
           <varlistentry>
-           <term>CASCADE</term>
+           <term>NO ACTION</term>
            <listitem>
             <para>
-             Delete any rows referencing the deleted row.
+             Produce error if foreign key violated.  This is the default.
             </para>
            </listitem>
           </varlistentry>
@@ -1552,7 +1529,15 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
            <term>RESTRICT</term>
            <listitem>
             <para>
-             Disallow deletion of rows being referenced.
+             Same as NO ACTION.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Delete any rows referencing the deleted row.
             </para>
            </listitem>
           </varlistentry>
@@ -1572,14 +1557,6 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
             </para>
            </listitem>
           </varlistentry>
-          <varlistentry>
-           <term>NO ACTION</term>
-           <listitem>
-            <para>
-             Do nothing.
-            </para>
-           </listitem>
-          </varlistentry>
          </variablelist>
         </para>
        </listitem>
@@ -1588,16 +1565,16 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        <term>ON UPDATE <replaceable class="parameter">action</replaceable></term>
        <listitem>
         <para>
-	 The action to do when a referenced column in the referenced table is being
-         updated to a new value.  If the row is updated, but the referenced column
-         is not changed, no action is done.  There are the following actions.
+	 The action to do when a referenced column in the referenced
+	 table is being updated to a new value. If the row is updated,
+	 but the referenced column is not changed, no action is done.
+	 There are the following actions.
          <variablelist>
           <varlistentry>
-           <term>CASCADE</term>
+           <term>NO ACTION</term>
            <listitem>
             <para>
-             Update the value of the referencing column to the new value of the
-             referenced column.
+             Produce error if foreign key violated.  This is the default.
             </para>
            </listitem>
           </varlistentry>
@@ -1610,6 +1587,15 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
            </listitem>
           </varlistentry>
           <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Update the value of the referencing column to the new value
+             of the referenced column.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
            <term>SET NULL</term>
            <listitem>
             <para>
@@ -1625,14 +1611,6 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
             </para>
            </listitem>
           </varlistentry>
-          <varlistentry>
-           <term>NO ACTION</term>
-           <listitem>
-            <para>
-             Do nothing.
-            </para>
-           </listitem>
-          </varlistentry>
          </variablelist>
         </para>
        </listitem>
@@ -1641,8 +1619,10 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        <term> [ NOT ] DEFERRABLE </term>
        <listitem>
         <para>
-         Tells the trigger manager whether this constraint may be 
-         deferred to the end of transaction.
+         This controls whether the constraint can be deferred to the end
+         of the transaction. If DEFERRABLE, SET CONSTRAINTS ALL DEFERRED
+         will cause the foreign key to be checked only at the end of the
+         transaction. NOT DEFERRABLE is the default.
         </para>
        </listitem>
       </varlistentry>
@@ -1650,22 +1630,23 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        <term>INITIALLY <replaceable class="parameter">checktime</replaceable></term>
        <listitem>
         <para>
-         <replaceable class="parameter">checktime</replaceable> has two possible values 
-         which specify the default time to check the constraint.
+         <replaceable class="parameter">checktime</replaceable> has two
+         possible values which specify the default time to check the
+         constraint.
          <variablelist>
-          <varlistentry>
-           <term>DEFERRED</term>
-	   <listitem>
-	    <para>
-	     Check this constraint at the end of the transaction.
-	    </para>
-	   </listitem>
-          </varlistentry>
           <varlistentry>
            <term>IMMEDIATE</term>
 	   <listitem>
 	    <para>
-	     Check this constraint after each statement.
+	     Check constraint after each statement. This is the default.
+	    </para>
+	   </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>DEFERRED</term>
+	   <listitem>
+	    <para>
+	     Check constraint only at the end of the transaction.
 	    </para>
 	   </listitem>
           </varlistentry>
@@ -1719,8 +1700,9 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
     </para>
 
     <para>
-     The FOREIGN KEY table constraint is similar to that for column constraints,
-     with the additional capability of encompassing multiple columns.
+     The FOREIGN KEY table constraint is similar to that for column
+     constraints, with the additional capability of encompassing
+     multiple columns.
     </para>
     <para>
      Refer to the section on the FOREIGN KEY column constraint for more
@@ -1886,10 +1868,10 @@ CREATE GLOBAL TEMPORARY TABLE <replaceable class="parameter">table</replaceable>
     constraints. 
    </para>
    <para>
-    The optional ON COMMIT clause of CREATE TEMPORARY TABLE
-    specifies whether or not the temporary table should be emptied of
-    rows whenever COMMIT is executed. If the ON COMMIT clause is
-    omitted, the default option, ON COMMIT DELETE ROWS, is assumed. 
+    The optional ON COMMIT clause of CREATE TEMPORARY TABLE specifies
+    whether or not the temporary table should be emptied of rows
+    whenever COMMIT is executed. If the ON COMMIT clause is omitted, the
+    default option, ON COMMIT DELETE ROWS, is assumed.
    </para>
    <para>
     To create a temporary table:
@@ -1936,10 +1918,10 @@ CREATE TEMPORARY TABLE actors (
      NULL clause
     </title>
     <para>
-	The NULL "constraint" (actually a non-constraint)
-	is a <productname>Postgres</productname> extension to SQL92
-	is included for symmetry with the NOT NULL clause. Since it is the default
-	for any column, its presence is simply noise.
+	The NULL "constraint" (actually a non-constraint) is a
+	<productname>Postgres</productname> extension to SQL92 is
+	included for symmetry with the NOT NULL clause. Since it is the
+	default for any column, its presence is simply noise.
      <synopsis>
 [ CONSTRAINT name ] NULL 
      </synopsis>
@@ -2001,11 +1983,10 @@ the column. Not our problem...
     </para>
     <para>
      An assertion is a special type of integrity constraint and share
-     the same namespace as other constraints.
-     However, an assertion is not necessarily dependent on one
-     particular base table as constraints are, so SQL-92 provides the
-     CREATE ASSERTION statement as an alternate method for defining a
-     constraint:
+     the same namespace as other constraints. However, an assertion is
+     not necessarily dependent on one particular base table as
+     constraints are, so SQL-92 provides the CREATE ASSERTION statement
+     as an alternate method for defining a constraint:
     </para>
     <synopsis>
 CREATE ASSERTION name CHECK ( condition )
@@ -2053,8 +2034,9 @@ CREATE ASSERTION name CHECK ( condition )
        <term>NOT DEFERRABLE</term>
        <listitem>
 	<para>
-	 means that the Constraint must be checked for
-	 violation of its rule after the execution of every SQL statement.
+         The constraint must be checked at the end of each statement.
+         SET CONSTRAINTS ALL DEFERRED will have no effect on this type
+         of constraint.
 	</para>
        </listitem>
       </varlistentry>
@@ -2062,9 +2044,11 @@ CREATE ASSERTION name CHECK ( condition )
        <term>DEFERRABLE</term>
        <listitem>
 	<para>
-	 means that checking of the Constraint may be deferred
-	 until some later time, but no later than the end of the current
-	 transaction.
+         This controls whether the constraint can be deferred to the end
+         of the transaction. If SET CONSTRAINTS ALL DEFERRED is used or
+         the constraint is set to INITIALLY DEFERRED, this will cause
+         the foreign key to be checked only at the end of the
+         transaction.
 	</para>
        </listitem>
       </varlistentry>
@@ -2079,9 +2063,8 @@ CREATE ASSERTION name CHECK ( condition )
        <term>INITIALLY IMMEDIATE</term>
        <listitem>
 	<para>
-	 means that, as of the start of the transaction,
-	 the Constraint must be checked for violation of its rule after the
-	 execution of every SQL statement.
+	     Check constraint only at the end of the transaction. This
+	     is the default
 	</para>
        </listitem>
       </varlistentry>
@@ -2089,9 +2072,8 @@ CREATE ASSERTION name CHECK ( condition )
        <term>INITIALLY DEFERRED</term>
        <listitem>
 	<para>
-	 means that, as of the start of the transaction,
-	 checking of the Constraint may be deferred until some later time,
-	 but no later than the end of the current transaction.</para>
+	     Check constraint after each statement.
+	</para>
        </listitem>
       </varlistentry>
      </variablelist>
