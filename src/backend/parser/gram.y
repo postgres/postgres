@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.139 2000/02/04 18:49:33 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.140 2000/02/07 18:12:49 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1278,7 +1278,6 @@ key_match:  MATCH FULL
 			}
 		| /*EMPTY*/
 			{
-				elog(ERROR, "FOREIGN KEY match type UNSPECIFIED not implemented yet");
 				$$ = "UNSPECIFIED";
 			}
 		;
