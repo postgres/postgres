@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 16 20:08:28 EDT 2001
+Last updated:		Wed May 16 20:09:52 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -22,7 +22,7 @@ PARSER
 * ALTER TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
 * UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
-  [inheritance] 
+  [inheritance]
 
 MISC
 
@@ -47,7 +47,7 @@ URGENT
 ADMIN
 
 * More access control over who can  (Karel)
-* Improve control over user privileges, including table creation and 
+* Improve control over user privileges, including table creation and
   lock use [privileges]
 * Permission to DELETE table also allows UPDATE
 * Allow elog() to return error codes, module name, file name, line
@@ -133,10 +133,10 @@ SYSTEM TABLES
 COMMANDS
 
 * ALTER
-	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place 
+	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 	  [inheritance]
 	* Add ALTER TABLE DROP COLUMN feature [drop]
-	* Add ALTER FUNCTION 
+	* Add ALTER FUNCTION
 	* Add ALTER TABLE DROP CONSTRAINT
 * CLUSTER
 	* cluster all tables at once
@@ -160,7 +160,7 @@ COMMANDS
 	* Disallow missing columns in INSERT ... VALUES, per ANSI
 	* Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate 
+* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate
   SERIAL type
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow RULE recompilation
@@ -199,7 +199,7 @@ REFERENTIAL INTEGRITY
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
 * Enforce referential integrity for system tables
-* INSERT & UPDATE/DELETE in transaction of primary key fails with 
+* INSERT & UPDATE/DELETE in transaction of primary key fails with
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
 * Make constraints clearer in dump file
 * Change foreign key constraint for array -> element to mean element
@@ -221,7 +221,7 @@ EXOTIC FEATURES
 * Allow SQL92 schemas (Tom)
 * Allow queries across multiple databases
 * Add pre-parsing phase that converts non-ANSI features to supported features
-* SQL*Net listener that makes PostgreSQL appear as an Oracle database 
+* SQL*Net listener that makes PostgreSQL appear as an Oracle database
   to clients
 
 MISCELLANEOUS
@@ -318,7 +318,7 @@ Developers who have claimed items are:
 	* Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 	* Karel is Karel Zak <zakkr@zf.jcu.cz>
 	* Jan is Jan Wieck <wieck@sapserv.debis.de>
- 	* Marc is Marc Fournier <scrappy@hub.org>
+	* Marc is Marc Fournier <scrappy@hub.org>
 	* Mark is Mark Hollomon <mhh@mindspring.com>
 	* Michael is Michael Meskes <meskes@postgresql.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
@@ -327,9 +327,9 @@ Developers who have claimed items are:
 	* Philip is Philip Warner <pjw@rhyme.com.au>
 	* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
 	* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
- 	* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
+	* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
 	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
 	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
 	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
 	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
-	* Vadim is Vadim B. Mikheev <vadim4o@email.com>  
+	* Vadim is Vadim B. Mikheev <vadim4o@email.com>
