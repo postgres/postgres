@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.143 2000/10/30 10:31:46 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.144 2000/11/04 02:27:56 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2712,6 +2712,7 @@ static PQ_encoding_conv_tbl pq_conv_tbl[] = {
 		{EUC_JP, "EUC_JP"},
 		{EUC_CN, "EUC_CN"},
 		{EUC_KR, "EUC_KR"},
+		{EUC_TW, "EUC_TW"},
 		{UNICODE, "UNICODE"},
 		{MULE_INTERNAL, "MULE_INTERNAL"},
 		{LATIN1, "LATIN1"},
