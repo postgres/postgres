@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.16 1998/02/05 17:22:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.17 1998/02/06 16:46:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,11 +243,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				SubLink			*sublink = (SubLink *) expr;
 				QueryTreeList	*qtree;
 				List			*llist;
-				
+
+				pstate->p_hasSubLinks = true;
+
 				qtree = parse_analyze(lcons(sublink->subselect,NIL), pstate);
 				Assert(qtree->len == 1);
 				sublink->subselect = (Node *) qtree->qtrees[0];
-
+				
 				foreach(llist, sublink->lefthand)
 					lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
 			
@@ -267,7 +269,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					{
 						Node	   *lexpr = lfirst(elist);
 						Node	   *rexpr = lfirst(right_expr);
-					TargetEntry *tent = (TargetEntry *)rexpr;
+						TargetEntry *tent = (TargetEntry *)rexpr;
 						Expr	   *op_expr;						
 
 						op_expr = make_op(op, lexpr, tent->expr);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.68 1998/01/20 22:11:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.69 1998/02/06 16:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
-
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+	
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
@@ -317,7 +318,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
-
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+	
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
@@ -664,18 +666,20 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 static Query *
 transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 {
-	Query	   *q;
+	Query	   *qry;
 
-	q = makeNode(Query);
-	q->commandType = CMD_UTILITY;
+	qry = makeNode(Query);
+	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+	
 	stmt->rangetable = pstate->p_rtable;
 
-	q->utilityStmt = (Node *) stmt;
+	qry->utilityStmt = (Node *) stmt;
 
-	return q;
+	return qry;
 }
 
 /*
@@ -686,17 +690,19 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 static Query *
 transformExtendStmt(ParseState *pstate, ExtendStmt *stmt)
 {
-	Query	   *q;
+	Query	   *qry;
 
-	q = makeNode(Query);
-	q->commandType = CMD_UTILITY;
+	qry = makeNode(Query);
+	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+
 	stmt->rangetable = pstate->p_rtable;
 
-	q->utilityStmt = (Node *) stmt;
-	return q;
+	qry->utilityStmt = (Node *) stmt;
+	return qry;
 }
 
 /*
@@ -707,11 +713,11 @@ transformExtendStmt(ParseState *pstate, ExtendStmt *stmt)
 static Query *
 transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 {
-	Query	   *q;
+	Query	   *qry;
 	List	   *actions;
 
-	q = makeNode(Query);
-	q->commandType = CMD_UTILITY;
+	qry = makeNode(Query);
+	qry->commandType = CMD_UTILITY;
 
 	actions = stmt->actions;
 
@@ -740,9 +746,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 	/* take care of the where clause */
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	qry->hasSubLinks = pstate->p_hasSubLinks;
 
-	q->utilityStmt = (Node *) stmt;
-	return q;
+	qry->utilityStmt = (Node *) stmt;
+	return qry;
 }
 
 
@@ -769,6 +776,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
@@ -813,6 +821,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->rtable = pstate->p_rtable;
 
