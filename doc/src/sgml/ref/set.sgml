@@ -6,7 +6,7 @@
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname>
+  <refname id="SQL-SET-TITLE">
    SET
   </refname>
   <refpurpose>
