@@ -128,8 +128,6 @@
 #log_timestamp = false
 #log_pid = false
 
-#debug_level = 0		# range 0-16
-
 #debug_print_query = false
 #debug_print_parse = false
 #debug_print_rewritten = false
