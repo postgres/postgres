@@ -1,0 +1,38 @@
+Installing PostgreSQL on Windows NT or Windows 2000
+===================================================
+$Date: 2000/09/27 15:17:53 $
+
+1.  Install the Cygwin package.
+
+    The Cygwin package provides a UNIX-like API on top of the Win32
+    API.  It is available at <http://sources.redhat.com/cygwin/>.
+    The 1.1.x series is recommended (1.1.4 was the latest at the time
+    of this writing); using 1.0 or B20 might require extra efforts.
+    For B20 you also need to download the separate crypt library at the
+    same location.
+
+2.  Install the cygipc package, available at
+    <http://cygutils.netpedia.net/V1.1/cygipc/>.  Do not use versions
+    prior to 1.04, they will not work.
+
+3.  Optional:  The "Andy Piper Tools" at <http://www.xemacs.freeserve.co.uk/>
+    are a collection of pre-compiled libraries and utilities that you
+    might find useful -- especially on Cygwin B20.
+
+4.  The Cygwin bin directory has to be placed in the path before the
+    Windows program directories, because the sort.exe has to be taken
+    from Cygwin, not Windows.
+
+5.  Start `ipc-daemon &' (background process) from the cygipc package.
+    This program needs to be running anytime you start the PostgreSQL
+    server (postmaster).
+
+6.  Proceed according to the INSTALL file.  (./configure; make; etc.)
+
+NOTE:  By default, PostgreSQL clients like psql communicate using Unix
+domain sockets, which do not work on Windows.  Start the postmaster
+with -i, and when connecting to the database from a client, set the
+PGHOST environment variable to `localhost' or supply the hostname on
+the command line.
+
+Problem reports can be sent to <pgsql-ports@postgresql.org>.

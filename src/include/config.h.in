@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.134 2000/08/29 09:36:49 petere Exp $
+ * $Id: config.h.in,v 1.135 2000/09/27 15:17:55 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -330,6 +330,9 @@
 /* Set to 1 if you have <ieeefp.h> */
 #undef HAVE_IEEEFP_H
 
+/* Set to 1 if you have <netinet/tcp.h> */
+#undef HAVE_NETINET_TCP_H
+
 /* Set to 1 if you have <readline.h> */
 #undef HAVE_READLINE_H
 
@@ -341,6 +344,9 @@
 
 /* Set to 1 if  you have <sys/select.h> */
 #undef HAVE_SYS_SELECT_H
+
+/* Set to 1 if  you have <sys/un.h> */
+#undef HAVE_SYS_UN_H
 
 /* Set to 1 if you have <termios.h> */
 #undef HAVE_TERMIOS_H
@@ -534,6 +540,9 @@ extern void srandom(unsigned int seed);
 
 /* Set to 1 if you have union semun */
 #undef HAVE_UNION_SEMUN
+
+/* Set to 1 if you have struct sockaddr_un */
+#undef HAVE_STRUCT_SOCKADDR_UN
 
 /* Set to 1 if you have F_SETLK option for fcntl() */
 #undef HAVE_FCNTL_SETLK

@@ -8,17 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.133 2000/08/30 14:54:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.134 2000/09/27 15:17:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres.h"
 
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
 
-#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
@@ -30,7 +31,9 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 #include <arpa/inet.h>
 #endif
 

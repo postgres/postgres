@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.100 2000/07/08 03:04:40 tgl Exp $
+ *	$Id: pqcomm.c,v 1.101 2000/09/27 15:17:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,8 @@
  *
  *------------------------
  */
+#include "postgres.h"
+
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -67,11 +69,11 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 #include <arpa/inet.h>
 #include <sys/file.h>
-
-#include "postgres.h"
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"

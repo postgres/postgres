@@ -1,9 +1,7 @@
-CFLAGS+= -I/usr/local/include
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 DLLLIBS=-L/usr/local/lib -L$(libdir) -L$(top_builddir)/src/backend -lpostgres -lcygipc -lcygwin -lcrypt -lkernel32
-X=.exe
 MK_NO_LORDER=true
 MAKE_DLL=true
 #MAKE_DLL=false
@@ -16,5 +14,5 @@ SHLIB_LINK=$(DLLLIBS)
 
 curdir:=$(shell pwd)
 ifeq ($(findstring backend,$(curdir)), backend)
-CFLAGS+= -DBUILDING_DLL=1
+CPPFLAGS+= -DBUILDING_DLL=1
 endif

@@ -243,6 +243,7 @@ AC_PROG_CC
 echo "using CFLAGS=$CFLAGS"
 # Check if the compiler still works with the template settings
 AC_PROG_CC_WORKS
+AC_EXEEXT
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
 
@@ -658,7 +659,7 @@ fi
 ## Header files
 ##
 dnl sys/socket.h and sys/types.h are required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/pstat.h sys/select.h sys/socket.h sys/types.h termios.h])
+AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/pstat.h sys/select.h sys/socket.h sys/types.h sys/un.h termios.h])
 
 AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
 AC_CHECK_HEADERS([readline/history.h history.h], [break])
@@ -688,7 +689,7 @@ PGAC_C_SIGNED
 PGAC_C_VOLATILE
 AC_STRUCT_TIMEZONE
 PGAC_UNION_SEMUN
-
+PGAC_STRUCT_SOCKADDR_UN
 
 ##
 ## Functions, global variables

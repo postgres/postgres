@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.41 2000/01/26 05:58:12 momjian Exp $
+ * $Id: pqcomm.h,v 1.42 2000/09/27 15:17:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,22 @@
 
 #include <sys/types.h>
 #ifdef WIN32
-#include "winsock.h"
-#else
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
+# include "winsock.h"
+#else /* not WIN32 */
+# include <sys/socket.h>
+# ifdef HAVE_SYS_UN_H
+#  include <sys/un.h>
+# endif
+# include <netinet/in.h>
+#endif /* not WIN32 */
+
+
+#ifndef HAVE_STRUCT_SOCKADDR_UN
+struct sockaddr_un
+{
+	short int	sun_family;		/* AF_UNIX */
+	char		sun_path[108];  /* path name (gag) */
+};
 #endif
 
 /* Define a generic socket address type. */
@@ -33,9 +44,7 @@ typedef union SockAddr
 {
 	struct sockaddr sa;
 	struct sockaddr_in in;
-#ifndef WIN32
 	struct sockaddr_un un;
-#endif
 } SockAddr;
 
 

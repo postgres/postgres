@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.19 2000/09/25 22:52:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.20 2000/09/27 15:17:53 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -92,6 +92,15 @@ su - postgres
       definitely not work.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      To build on <productname>Windows NT</> or <productname>Windows
+      2000</> you need the <productname>Cygwin</> and
+      <productname>cygipc</> packages. See the file
+      <filename>doc/INSTALL_WIN</> for details.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
  
@@ -100,7 +109,7 @@ su - postgres
    it at your local <acronym>GNU</acronym> mirror site (see <ulink
    url="http://www.gnu.org/order/ftp.html">http://www.gnu.org/order/ftp.html</>
    for a list) or at <ulink
-   url="ftp://ftp.gnu.org/gnu/make">ftp://ftp.gnu.org/gnu/make</ulink>.
+   url="ftp://ftp.gnu.org/gnu/">ftp://ftp.gnu.org/gnu/</ulink>.
   </para>
 
   <para>

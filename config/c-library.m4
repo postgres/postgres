@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.1 2000/06/11 11:39:46 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.2 2000/09/27 15:17:52 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -49,8 +49,26 @@ AC_DEFUN([PGAC_UNION_SEMUN],
   [pgac_cv_union_semun=yes],
   [pgac_cv_union_semun=no])])
 if test x"$pgac_cv_union_semun" = xyes ; then
-  AC_DEFINE(HAVE_UNION_SEMUN,, [Set to 1 if you have `union semun'])
+  AC_DEFINE(HAVE_UNION_SEMUN, 1, [Set to 1 if you have `union semun'])
 fi])# PGAC_UNION_SEMUN
+
+
+# PGAC_STRUCT_SOCKADDR_UN
+# -----------------------
+# If `struct sockaddr_un' exists, define HAVE_STRUCT_SOCKADDR_UN. If
+# it is missing then one could define it as { short int sun_family;
+# char sun_path[108]; }. (Requires test for <sys/un.h>!)
+AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
+[AC_CACHE_CHECK([for struct sockaddr_un], pgac_cv_struct_sockaddr_un,
+[AC_TRY_COMPILE([#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif],
+                [struct sockaddr_un un;],
+                [pgac_cv_struct_sockaddr_un=yes],
+                [pgac_cv_struct_sockaddr_un=no])])
+if test x"$pgac_cv_struct_sockaddr_un" = xyes; then
+  AC_DEFINE(HAVE_STRUCT_SOCKADDR_UN, 1, [Set to 1 if you have `struct sockaddr_un'])
+fi])# PGAC_STRUCT_SOCKADDR_UN
 
 
 # PGAC_FUNC_POSIX_SIGNALS
