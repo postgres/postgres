@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.96 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.97 2002/06/22 02:04:45 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,8 +107,8 @@ unsigned char unescape_single_char(unsigned char c);
 
 /* Bit string
  */
-xbstart		[bB]{quote}
-xbstop		{quote}
+xbstart			[bB]{quote}
+xbstop			{quote}
 xbinside		[^']*
 xbcat			{quote}{whitespace_with_newline}{quote}
 
@@ -118,6 +118,10 @@ xhstart			[xX]{quote}
 xhstop			{quote}
 xhinside		[^']+
 xhcat			{quote}{whitespace_with_newline}{quote}
+
+/* National character
+ */
+xnstart			[nN]{quote}
 
 /* Extended quote
  * xqdouble implements SQL92 embedded quote
@@ -286,6 +290,10 @@ other			.
 <xc><<EOF>>		{ yyerror("unterminated /* comment"); }
 
 {xbstart}		{
+					/* Binary bit type.
+					 * Should be passing the type forward into the parser
+					 * rather than trying to embed it into the string.
+					 */
 					token_start = yytext;
 					BEGIN(xb);
 					startlit();
@@ -309,6 +317,10 @@ other			.
 <xb><<EOF>>		{ yyerror("unterminated bit string literal"); }
 
 {xhstart}		{
+					/* Hexadecimal bit type.
+					 * Should be passing the type forward into the parser
+					 * rather than trying to embed it into the string.
+					 */
 					token_start = yytext;
 					BEGIN(xh);
 					startlit();
@@ -331,6 +343,17 @@ other			.
 					return ICONST;
 				}
 <xh><<EOF>>		{ yyerror("unterminated hexadecimal integer"); }
+
+{xnstart}		{
+					/* National character.
+					 * Need to remember type info to flow it forward into the parser.
+					 * Not yet implemented. - thomas 2002-06-17
+					 */
+					token_start = yytext;
+					BEGIN(xq);
+					startlit();
+				}
+
 
 {xqstart}		{
 					token_start = yytext;

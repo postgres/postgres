@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.116 2002/06/20 20:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.117 2002/06/22 02:04:45 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"as", AS},
 	{"asc", ASC},
 	{"assertion", ASSERTION},
+	{"assignment", ASSIGNMENT},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -258,6 +259,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"share", SHARE},
 	{"show", SHOW},
 	{"similar", SIMILAR},
+	{"simple", SIMPLE},
 	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"stable", STABLE},
@@ -312,6 +314,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"with", WITH},
 	{"without", WITHOUT},
 	{"work", WORK},
+	{"write", WRITE},
 	{"year", YEAR_P},
 	{"zone", ZONE},
 };

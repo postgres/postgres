@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.333 2002/06/20 20:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.334 2002/06/22 02:04:45 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -90,6 +90,7 @@ static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
 static Node *makeAConst(Value *v);
 static Node *makeRowExpr(List *opr, List *largs, List *rargs);
+static DefElem *makeDefElem(char *name, Node *arg);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *forUpdate,
@@ -163,7 +164,7 @@ static void doNegateFloat(Value *v);
 %type <defelt>	createdb_opt_item, copy_opt_item
 
 %type <ival>	opt_lock, lock_type
-%type <boolean> opt_force, opt_or_replace
+%type <boolean>	opt_force, opt_or_replace
 
 %type <list>	user_list
 
@@ -226,7 +227,7 @@ static void doNegateFloat(Value *v);
 %type <boolean> opt_arg, TriggerForType, OptTemp, OptWithOids
 
 %type <list>	for_update_clause, opt_for_update_clause, update_list
-%type <boolean> opt_all
+%type <boolean>	opt_all
 
 %type <node>	join_outer, join_qual
 %type <jtype>	join_type
@@ -299,7 +300,7 @@ static void doNegateFloat(Value *v);
 %type <keyword> unreserved_keyword, func_name_keyword
 %type <keyword> col_name_keyword, reserved_keyword
 
-%type <node>	TableConstraint
+%type <node>	TableConstraint, TableLikeClause
 %type <list>	ColQualList
 %type <node>	ColConstraint, ColConstraintElem, ConstraintAttr
 %type <ival>	key_actions, key_delete, key_update, key_reference
@@ -320,7 +321,7 @@ static void doNegateFloat(Value *v);
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_TRANS, ABSOLUTE, ACCESS, ACTION, ADD, AFTER,
 	AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC,
-	ASSERTION, AT, AUTHORIZATION,
+	ASSERTION, ASSIGNMENT, AT, AUTHORIZATION,
 
 	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
 	BOOLEAN, BY,
@@ -377,7 +378,7 @@ static void doNegateFloat(Value *v);
 
 	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE,
 	SERIALIZABLE, SESSION, SESSION_USER, SET, SETOF, SHARE,
-	SHOW, SIMILAR, SMALLINT, SOME, STABLE, START, STATEMENT,
+	SHOW, SIMILAR, SIMPLE, SMALLINT, SOME, STABLE, START, STATEMENT,
 	STATISTICS, STDIN, STDOUT, STORAGE, STRICT, SUBSTRING,
 	SYSID,
 
@@ -391,7 +392,7 @@ static void doNegateFloat(Value *v);
 	VACUUM, VALID, VALIDATOR, VALUES, VARCHAR, VARYING,
 	VERBOSE, VERSION, VIEW, VOLATILE,
 
-	WHEN, WHERE, WITH, WITHOUT, WORK,
+	WHEN, WHERE, WITH, WITHOUT, WORK, WRITE,
 
 	YEAR_P,
 
@@ -616,63 +617,43 @@ OptUserList:
 OptUserElem:
 			PASSWORD Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "password";
-					$$->arg = (Node *)makeString($2);
+					$$ = makeDefElem("password", (Node *)makeString($2));
 				}
 			| ENCRYPTED PASSWORD Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "encryptedPassword";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("encryptedPassword", (Node *)makeString($3));
 				}
 			| UNENCRYPTED PASSWORD Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "unencryptedPassword";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("unencryptedPassword", (Node *)makeString($3));
 				}
 			| SYSID Iconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "sysid";
-					$$->arg = (Node *)makeInteger($2);
+					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
 				}
 			| CREATEDB
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "createdb";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
 				}
 			| NOCREATEDB
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "createdb";
-					$$->arg = (Node *)makeInteger(FALSE);
+					$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
 				}
 			| CREATEUSER
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "createuser";
-					$$->arg = (Node *)makeInteger(TRUE);
+				{ 
+					$$ = makeDefElem("createuser", (Node *)makeInteger(TRUE));
 				}
 			| NOCREATEUSER
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "createuser";
-					$$->arg = (Node *)makeInteger(FALSE);
+				{ 
+					$$ = makeDefElem("createuser", (Node *)makeInteger(FALSE));
 				}
 			| IN_P GROUP_P user_list
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "groupElts";
-					$$->arg = (Node *)$3;
+				{ 
+					$$ = makeDefElem("groupElts", (Node *)$3);
 				}
 			| VALID UNTIL Sconst
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "validUntil";
-					$$->arg = (Node *)makeString($3);
+				{ 
+					$$ = makeDefElem("validUntil", (Node *)makeString($3));
 				}
 		;
 
@@ -709,16 +690,12 @@ OptGroupList:
 
 OptGroupElem:
 			USER user_list
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "userElts";
-					$$->arg = (Node *)$2;
+				{ 
+					$$ = makeDefElem("userElts", (Node *)$2);
 				}
 			| SYSID Iconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "sysid";
-					$$->arg = (Node *)makeInteger($2);
+					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
 				}
 		;
 
@@ -881,7 +858,7 @@ set_rest:  ColId TO var_list_or_default
 						n->args = makeList1($3);
 					$$ = n;
 				}
-			| TRANSACTION ISOLATION LEVEL opt_level
+			| TRANSACTION ISOLATION LEVEL opt_level opt_mode
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "TRANSACTION ISOLATION LEVEL";
@@ -938,6 +915,16 @@ var_value:	opt_boolean
 
 opt_level:	READ COMMITTED							{ $$ = "read committed"; }
 			| SERIALIZABLE							{ $$ = "serializable"; }
+		;
+
+opt_mode:  READ WRITE
+				{}
+		| READ ONLY
+				{
+					elog(ERROR, "SET TRANSACTION/READ ONLY not yet supported");
+				}
+		| /*EMPTY*/
+				{}
 		;
 
 opt_boolean:
@@ -1130,11 +1117,8 @@ AlterTableStmt:
 					n->def = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
-			 * {SET DEFAULT <expr>|DROP DEFAULT}
-			 */
-			| ALTER TABLE relation_expr ALTER opt_column
-			ColId alter_column_default
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+			| ALTER TABLE relation_expr ALTER opt_column ColId alter_column_default
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'T';
@@ -1143,11 +1127,8 @@ AlterTableStmt:
 					n->def = $7;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
-			 * DROP NOT NULL
-			 */
-			| ALTER TABLE relation_expr ALTER opt_column
-			ColId DROP NOT NULL_P
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> DROP NOT NULL */
+			| ALTER TABLE relation_expr ALTER opt_column ColId DROP NOT NULL_P
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'N';
@@ -1155,11 +1136,8 @@ AlterTableStmt:
 					n->name = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
-			 * SET NOT NULL
-			 */
-			| ALTER TABLE relation_expr ALTER opt_column ColId
-			SET NOT NULL_P
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET NOT NULL */
+			| ALTER TABLE relation_expr ALTER opt_column ColId SET NOT NULL_P
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'O';
@@ -1167,11 +1145,8 @@ AlterTableStmt:
 					n->name = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
-			 * SET STATISTICS <Iconst>
-			 */
-			| ALTER TABLE relation_expr ALTER opt_column ColId
-			SET STATISTICS Iconst
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <Iconst> */
+			| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS Iconst
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'S';
@@ -1180,9 +1155,7 @@ AlterTableStmt:
 					n->def = (Node *) makeInteger($9);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ALTER [COLUMN] <colname>
-			 * SET STORAGE <storagemode>
-			 */
+			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
 			| ALTER TABLE relation_expr ALTER opt_column ColId
 			SET STORAGE ColId
 				{
@@ -1193,9 +1166,7 @@ AlterTableStmt:
 					n->def = (Node *) makeString($9);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP [COLUMN] <colname>
-			 * {RESTRICT|CASCADE}
-			 */
+			/* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
 			| ALTER TABLE relation_expr DROP opt_column ColId drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -1214,9 +1185,7 @@ AlterTableStmt:
 					n->def = $5;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> DROP CONSTRAINT <name>
-			 * {RESTRICT|CASCADE}
-			 */
+			/* ALTER TABLE <relation> DROP CONSTRAINT <name> {RESTRICT|CASCADE} */
 			| ALTER TABLE relation_expr DROP CONSTRAINT name drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -1479,6 +1448,7 @@ OptTableElementList:
 
 OptTableElement:
 			columnDef							{ $$ = $1; }
+			| TableLikeClause					{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
 		;
 
@@ -1667,6 +1637,19 @@ ConstraintAttr:
 		;
 
 
+/* SQL99 supports wholesale borrowing of a table definition via the LIKE clause.
+ * This seems to be a poor man's inheritance capability, with the resulting
+ * tables completely decoupled except for the original commonality in definitions.
+ * Seems to have much in common with CREATE TABLE AS. - thomas 2002-06-19
+ */
+TableLikeClause:  LIKE any_name
+				{
+					elog(ERROR, "LIKE in table definitions not yet supported");
+					$$ = NULL;
+				}
+		;
+
+
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *	a column definition. ColConstraintElem specifies the embedded form.
  * - thomas 1997-12-03
@@ -1761,16 +1744,23 @@ columnElem: ColId
 				}
 		;
 
-key_match:	MATCH FULL								{ $$ = "FULL"; }
-			| MATCH PARTIAL
-				{
-					elog(ERROR, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
-					$$ = "PARTIAL";
-				}
-			| /*EMPTY*/
-				{
-					$$ = "UNSPECIFIED";
-				}
+key_match:  MATCH FULL
+			{
+				$$ = "FULL";
+			}
+		| MATCH PARTIAL
+			{
+				elog(ERROR, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
+				$$ = "PARTIAL";
+			}
+		| MATCH SIMPLE
+			{
+				$$ = "UNSPECIFIED";
+			}
+		| /*EMPTY*/
+			{
+				$$ = "UNSPECIFIED";
+			}
 		;
 
 key_actions:
@@ -1882,39 +1872,27 @@ OptSeqList: OptSeqList OptSeqElem					{ $$ = lappend($1, $2); }
 
 OptSeqElem: CACHE NumericOnly
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "cache";
-					$$->arg = (Node *)$2;
+					$$ = makeDefElem("cache", (Node *)$2);
 				}
 			| CYCLE
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "cycle";
-					$$->arg = (Node *)NULL;
+					$$ = makeDefElem("cycle", (Node *)NULL);
 				}
 			| INCREMENT NumericOnly
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "increment";
-					$$->arg = (Node *)$2;
+					$$ = makeDefElem("increment", (Node *)$2);
 				}
 			| MAXVALUE NumericOnly
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "maxvalue";
-					$$->arg = (Node *)$2;
+					$$ = makeDefElem("maxvalue", (Node *)$2);
 				}
 			| MINVALUE NumericOnly
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "minvalue";
-					$$->arg = (Node *)$2;
+					$$ = makeDefElem("minvalue", (Node *)$2);
 				}
 			| START NumericOnly
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "start";
-					$$->arg = (Node *)$2;
+					$$ = makeDefElem("start", (Node *)$2);
 				}
 		;
 
@@ -2275,15 +2253,11 @@ def_list:  	def_elem								{ $$ = makeList1($1); }
 
 def_elem:  ColLabel '=' def_arg
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = $1;
-					$$->arg = (Node *)$3;
+					$$ = makeDefElem($1, (Node *)$3);
 				}
 			| ColLabel
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = $1;
-					$$->arg = (Node *)NULL;
+					$$ = makeDefElem($1, (Node *)NULL);
 				}
 		;
 
@@ -2906,6 +2880,15 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *						as <filename or code in language as appropriate>
  *						language <lang> [with parameters]
  *
+ * CAST() form allowing all options from the CREATE FUNCTION form:
+ *				create [or replace] cast (<type> as <type>)
+ *						as <filename or code in language as appropriate>
+ *						language <lang> [with parameters]
+ *
+ * SQL99 CAST() form (requires a function to be previously defined):
+ *				create [or replace] cast (<type> as <type>)
+ *						with function fname (<type>) [as assignment]
+ *
  *****************************************************************************/
 
 CreateFunctionStmt:
@@ -2919,6 +2902,63 @@ CreateFunctionStmt:
 					n->returnType = $7;
 					n->options = $8;
 					n->withClause = $9;
+					$$ = (Node *)n;
+				}
+		/* CREATE CAST SQL99 standard form */
+		| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
+			WITH FUNCTION func_name func_args opt_assignment opt_definition
+				{
+					CreateFunctionStmt *n;
+					char buf[256];
+					n = makeNode(CreateFunctionStmt);
+					n->replace = $2;
+					n->funcname = $7->names;
+					n->argTypes = makeList1($5);
+					n->returnType = $7;
+					/* expand this into a string of SQL language */
+					strcpy(buf, "select ");
+					strcat(buf, ((Value *)lfirst($11))->val.str);
+					strcat(buf, "($1)");
+					n->options = lappend($14, makeDefElem("as", (Node *)makeList1(makeString(pstrdup(buf)))));
+					/* make sure that this will allow implicit casting */
+					n->options = lappend(n->options,
+										 makeDefElem("implicit", (Node *)makeInteger(TRUE)));
+					/* and mention that this is SQL language */
+					n->options = lappend(n->options,
+										 makeDefElem("language", (Node *)makeString(pstrdup("sql"))));
+					$$ = (Node *)n;
+				}
+		/* CREATE CAST SQL99 minimally variant form */
+		| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
+			WITH FUNCTION func_name func_args AS Sconst opt_definition
+				{
+					CreateFunctionStmt *n;
+					n = makeNode(CreateFunctionStmt);
+					n->replace = $2;
+					n->funcname = $7->names;
+					n->argTypes = makeList1($5);
+					n->returnType = $7;
+					n->options = lappend($15, makeDefElem("as", (Node *)lcons(makeList1(makeString($14)), $11)));
+					/* make sure that this will allow implicit casting */
+					n->options = lappend(n->options,
+										 makeDefElem("implicit", (Node *)makeInteger(TRUE)));
+					n->options = lappend(n->options,
+										 makeDefElem("language", (Node *)makeString(pstrdup("c"))));
+					$$ = (Node *)n;
+				}
+		/* CREATE CAST with mostly CREATE FUNCTION clauses */
+		| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
+			createfunc_opt_list opt_definition
+				{
+					CreateFunctionStmt *n;
+					n = makeNode(CreateFunctionStmt);
+					n->replace = $2;
+					n->funcname = $7->names;
+					n->argTypes = makeList1($5);
+					n->returnType = $7;
+					/* make sure that this will allow implicit casting */
+					n->options = lappend($9, makeDefElem("implicit", (Node *)makeInteger(TRUE)));
+					n->withClause = $10;
 					$$ = (Node *)n;
 				}
 		;
@@ -2998,81 +3038,55 @@ createfunc_opt_list:
 createfunc_opt_item:
 			AS func_as
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "as";
-					$$->arg = (Node *)$2;
+					$$ = makeDefElem("as", (Node *)$2);
 				}
 			| LANGUAGE ColId_or_Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "language";
-					$$->arg = (Node *)makeString($2);
+					$$ = makeDefElem("language", (Node *)makeString($2));
 				}
 			| IMMUTABLE
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "volatility";
-					$$->arg = (Node *)makeString("immutable");
+					$$ = makeDefElem("volatility", (Node *)makeString("immutable"));
 				}
 			| STABLE
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "volatility";
-					$$->arg = (Node *)makeString("stable");
+					$$ = makeDefElem("volatility", (Node *)makeString("stable"));
 				}
 			| VOLATILE
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "volatility";
-					$$->arg = (Node *)makeString("volatile");
+					$$ = makeDefElem("volatility", (Node *)makeString("volatile"));
 				}
 			| CALLED ON NULL_P INPUT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "strict";
-					$$->arg = (Node *)makeInteger(FALSE);
+					$$ = makeDefElem("strict", (Node *)makeInteger(FALSE));
 				}
 			| RETURNS NULL_P ON NULL_P INPUT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "strict";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
 			| STRICT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "strict";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
 			| EXTERNAL SECURITY DEFINER
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "security";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("security", (Node *)makeInteger(TRUE));
 				}
 			| EXTERNAL SECURITY INVOKER
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "security";
-					$$->arg = (Node *)makeInteger(FALSE);
+					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
 				}
 			| SECURITY DEFINER
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "security";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("security", (Node *)makeInteger(TRUE));
 				}
 			| SECURITY INVOKER
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "security";
-					$$->arg = (Node *)makeInteger(FALSE);
+					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
 				}
 			| IMPLICIT CAST
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "implicit";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("implicit", (Node *)makeInteger(TRUE));
 				}
 		;
 
@@ -3088,6 +3102,10 @@ opt_definition:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
+opt_assignment:  AS ASSIGNMENT					{}
+		| /*EMPTY*/								{}
+		;
+
 
 /*****************************************************************************
  *
@@ -3100,11 +3118,22 @@ opt_definition:
  *****************************************************************************/
 
 RemoveFuncStmt:
-			DROP FUNCTION func_name func_args
+			DROP FUNCTION func_name func_args opt_drop_behavior
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->funcname = $3;
 					n->args = $4;
+					if ($5 != RESTRICT)
+						elog(ERROR, "DROP FUNCTION/CASCADE not supported");
+					$$ = (Node *)n;
+				}
+		| DROP CAST '(' func_type AS func_type ')' opt_drop_behavior
+				{
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->funcname = $6->names;
+					n->args = makeList1($4);
+					if ($8 != RESTRICT)
+						elog(ERROR, "DROP CAST/CASCADE not supported");
 					$$ = (Node *)n;
 				}
 		;
@@ -3425,7 +3454,7 @@ opt_chain:	AND NO CHAIN							{}
 					 * if they don't support it. So we can't just ignore it.
 					 * - thomas 2000-08-06
 					 */
-					elog(ERROR, "COMMIT / CHAIN not yet supported");
+					elog(ERROR, "COMMIT/AND CHAIN not yet supported");
 				}
 		;
 
@@ -4146,6 +4175,7 @@ opt_table:	TABLE									{}
 		;
 
 opt_all:	ALL										{ $$ = TRUE; }
+			| DISTINCT								{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
@@ -6560,6 +6590,7 @@ unreserved_keyword:
 			| AGGREGATE
 			| ALTER
 			| ASSERTION
+			| ASSIGNMENT
 			| AT
 			| BACKWARD
 			| BEFORE
@@ -6683,6 +6714,7 @@ unreserved_keyword:
 			| SET
 			| SHARE
 			| SHOW
+			| SIMPLE
 			| STABLE
 			| START
 			| STATEMENT
@@ -6717,6 +6749,7 @@ unreserved_keyword:
 			| VOLATILE
 			| WITH
 			| WITHOUT
+			| WRITE
 			| WORK
 			| YEAR_P
 			| ZONE
@@ -6975,6 +7008,19 @@ makeAConst(Value *v)
 	}
 
 	return n;
+}
+
+/* makeDefElem()
+ * Create a DefElem node and set contents.
+ * Could be moved to nodes/makefuncs.c if this is useful elsewhere.
+ */
+static DefElem *
+makeDefElem(char *name, Node *arg)
+{
+	DefElem *f = makeNode(DefElem);
+	f->defname = name;
+	f->arg = arg;
+	return f;
 }
 
 /* makeRowExpr()
