@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.4 1996/11/03 04:57:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.5 1996/11/08 05:58:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
  */
 #include <sys/file.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <signal.h>
 
@@ -69,6 +70,7 @@
 #include "utils/hsearch.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/relcache.h"
 #include "executor/execdebug.h"	/* for NDirectFileRead */
 #include "catalog/catalog.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.2 1996/11/03 06:54:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.3 1996/11/08 06:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,6 +465,7 @@ AtEOXact_portals()
  *	PortalDump
  * ----------------
  */
+#ifdef NOT_USED
 static void
 PortalDump(Portal *thisP)
 {
@@ -473,11 +474,13 @@ PortalDump(Portal *thisP)
     PortalVariableMemoryDump(PortalGetVariableMemory(*thisP));
     PortalHeapMemoryDump(PortalGetHeapMemory(*thisP));
 }
+#endif
 
 /* ----------------
  *	DumpPortals
  * ----------------
  */
+#ifdef NOT_USED
 static void
 DumpPortals()
 {
@@ -485,7 +488,8 @@ DumpPortals()
     
     HashTableWalk(PortalHashTable, PortalDump, 0);
 }
-
+#endif
+ 
 /* ----------------------------------------------------------------
  *		   public portal interface functions
  * ----------------------------------------------------------------

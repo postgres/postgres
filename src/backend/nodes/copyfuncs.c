@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.2 1996/08/19 13:32:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.3 1996/11/08 05:56:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ List *
 listCopy(List *list)
 {
     List *newlist=NIL;
-    List *l, *nl;
+    List *l, *nl=NIL;
 
     foreach(l, list) {
 	if (newlist==NIL) {
@@ -1653,7 +1653,7 @@ copyObject(void *from)
     case T_List:
 	{
 	    List *list=from, *l;
-	    List *newlist = NIL, *nl;
+	    List *newlist = NIL, *nl=NIL;
 	    foreach(l, list) {
 		if (newlist==NIL) {
 		    newlist = nl = lcons(copyObject(lfirst(l)),NIL);

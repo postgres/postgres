@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.2 1996/11/03 05:07:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.3 1996/11/08 05:58:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "storage/lmgr.h"
 
 #include "utils/palloc.h"
+#include "utils/mcxt.h"
 #include "utils/rel.h"
 
 #include "catalog/catname.h"

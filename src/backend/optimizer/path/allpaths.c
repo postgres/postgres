@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.2 1996/11/06 09:29:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.3 1996/11/08 05:56:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,7 @@ print_path(Query *root, Path *path, int indent)
 {
     char *ptype = NULL;
     JoinPath *jp;
-    bool join;
+    bool join = false;
     int i;
 
     for(i=0; i < indent; i++)

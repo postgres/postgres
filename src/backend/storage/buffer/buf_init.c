@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.2 1996/11/03 04:56:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.3 1996/11/08 05:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "executor/execdebug.h"	/* for NDirectFileRead */

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.2 1996/11/06 06:49:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.3 1996/11/08 05:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
 {
     
     struct varlena *s;
-    Size size;
+    Size size = 0;
     
     if (byVal) {
 	if (len >= 0 && len <= sizeof(Datum)) {

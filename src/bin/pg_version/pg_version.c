@@ -7,10 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.3 1996/09/19 19:58:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.4 1996/11/08 06:01:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <stdlib.h>
 #include <stdio.h>
 
 int Noversion = 0;

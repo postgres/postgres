@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.4 1996/11/06 10:30:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.5 1996/11/08 05:59:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ char *
 filename_in(char *file)
 {
     char *str, *getenv();
-    int ind;
+    int ind = 0;
     
     /*
      * XXX - HACK CITY --- REDO

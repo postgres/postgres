@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.1.1.1 1996/07/09 06:21:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.2 1996/11/08 05:57:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ check_permissions(char *command,
 {
     Relation dbrel;
     HeapTuple dbtup, utup;
-    Oid dbowner;
+    Oid dbowner = (Oid)0;
     char use_createdb;
     bool dbfound;
     bool use_super;

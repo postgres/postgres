@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.12 1996/11/04 04:00:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.13 1996/11/08 06:01:03 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1557,7 +1557,6 @@ dumpTuples(PGresult *res, FILE *fout, int* attrmap)
 void
 setMaxOid(FILE *fout)
 {
-    char query[255];
     PGresult *res;
     Oid max_oid;
     
@@ -1592,7 +1591,7 @@ setMaxOid(FILE *fout)
     	    g_comment_start,  max_oid, g_comment_end);
     fprintf(fout, "CREATE TABLE pgdump_oid (dummy int4);\n");
     fprintf(fout, "COPY pgdump_oid WITH OIDS FROM stdin;\n");
-    fprintf(fout, "%-ld\t0\n", max_oid);
+    fprintf(fout, "%-d\t0\n", max_oid);
     fprintf(fout, "\\.\n");
     fprintf(fout, "DROP TABLE pgdump_oid;\n");
 }    	

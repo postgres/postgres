@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.2 1996/11/08 06:00:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,8 +77,9 @@ static Pointer GlobalMemoryRealloc(GlobalMemory this, Pointer pointer,
 				   Size size);
 static char *GlobalMemoryGetName(GlobalMemory this);
 static void GlobalMemoryDump(GlobalMemory this);
+#ifdef NOT_USED
 static void DumpGlobalMemories(void);
-
+#endif
 
 /*
  * Global Memory Methods
@@ -493,6 +494,7 @@ GlobalMemoryDump(GlobalMemory this)
  * Exceptions:
  *	???
  */
+#ifdef NOT_USED
 static void
 DumpGlobalMemories()
 {
@@ -507,4 +509,4 @@ DumpGlobalMemories()
 							&context->elemData);
     }
 }
-
+#endif

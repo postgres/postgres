@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.9 1996/11/06 10:30:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.10 1996/11/08 05:59:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,15 +47,19 @@ static char *_ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
 			   func_ptr inputproc, Oid typelem, char typdelim,
 			   int typlen, bool typbyval, char typalign,
 			   int *nbytes);
+#ifdef LOARRAY
 static char *_ReadLOArray(char *str, int *nbytes, int *fd, bool *chunkFlag,
 			  int ndim, int dim[], int baseSize);
+#endif
 static void _CopyArrayEls(char **values, char *p, int nitems, int typlen,
 			  char typalign, bool typbyval);
 static void system_cache_lookup(Oid element_type, bool input, int *typlen,
 		bool *typbyval, char *typdelim, Oid *typelem, Oid *proc,
 		char *typalign);
 static Datum _ArrayCast(char *value, bool byval, int len);
+#ifdef LOARRAY
 static char *_AdvanceBy1word(char *str, char **word);
+#endif
 static void _ArrayRange(int st[], int endp[], int bsize, char *destPtr,
 			ArrayType *array, int from);
 static int _ArrayClipCount(int stI[], int endpI[], ArrayType *array);
@@ -63,8 +67,6 @@ static void _LOArrayRange(int st[], int endp[], int bsize, int srcfd,
 	  int destfd, ArrayType *array, int isSrcLO, bool *isNull);
 static void _ReadArray (int st[], int endp[], int bsize, int srcfd, int destfd,
 		       ArrayType *array, int isDestLO, bool *isNull);
-static char *_array_set(ArrayType *array, struct varlena *indx_str,
-			struct varlena *dataPtr);
 static ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
 
 
@@ -90,7 +92,7 @@ array_in(char *string,		/* input array in external form */
     int i, nitems, dummy;
     int32 nbytes;
     char *dataPtr;
-    ArrayType *retval;
+    ArrayType *retval = NULL;
     int ndim, dim[MAXDIM], lBound[MAXDIM];
     char typalign;
     
@@ -407,6 +409,7 @@ _ReadArrayStr(char *arrayStr,
  * Read data about an array to be stored as a large object                    
  *----------------------------------------------------------------------------
  */
+#ifdef LOARRAY
 static char *
 _ReadLOArray(char *str,
 	     int *nbytes,
@@ -460,6 +463,7 @@ _ReadLOArray(char *str,
     }    
     return(retStr);
 }
+#endif
 
 static void
 _CopyArrayEls(char **values, 
@@ -659,8 +663,8 @@ array_ref(ArrayType *array,
 	  bool *isNull)
 {
     int i, ndim, *dim, *lb, offset, nbytes;
-    struct varlena *v;
-    char *retval;
+    struct varlena *v = NULL;
+    char *retval = NULL;
     
     if (array == (ArrayType *) NULL) RETURN_NULL;
     if (arraylen > 0) {
@@ -684,7 +688,7 @@ array_ref(ArrayType *array,
     
     if (ARR_IS_LO(array)) {
         char * lo_name;
-        int fd;
+        int fd = 0;
 	
         /* We are assuming fixed element lengths here */
         offset *= elmlen;
@@ -786,8 +790,8 @@ array_clip(ArrayType *array,
 #ifdef LOARRAY
         char * lo_name;
 #endif
-	char * newname;
-        int fd, newfd, isDestLO = true, rsize;
+	char *newname = NULL;
+        int fd = 0, newfd = 0, isDestLO = true, rsize;
 	
         if (len < 0) 
             elog(WARN, "array_clip: array of variable length objects not supported");  
@@ -863,7 +867,7 @@ array_clip(ArrayType *array,
 }
 
 /*-----------------------------------------------------------------------------
- * array_set :
+ * array_set  :
  *        This routine sets the value of an array location (specified by an index array)
  *        to a new value specified by "dataPtr".
  * result :
@@ -908,7 +912,7 @@ array_set(ArrayType *array,
     offset = GetOffset( n, dim, lb, indx);
     
     if (ARR_IS_LO(array)) {
-        int fd;
+        int fd = 0;
         struct varlena *v;
 	
         /* We are assuming fixed element lengths here */
@@ -1017,7 +1021,7 @@ array_assgn(ArrayType *array,
             elog(WARN, "lowerIndex larger than upperIndx"); 
     
     if (ARR_IS_LO(array)) {
-        int fd, newfd;
+        int fd = 0, newfd = 0;
 	
 #ifdef LOARRAY
         char * lo_name;
@@ -1156,6 +1160,7 @@ ArrayCastAndSet(char *src,
     return(inc);
 } 
 
+#ifdef LOARRAY
 static char *
 _AdvanceBy1word(char *str, char **word)
 {
@@ -1173,6 +1178,7 @@ _AdvanceBy1word(char *str, char **word)
         retstr = NULL;
     return retstr;
 }
+#endif
 
 int
 SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[])
@@ -1371,7 +1377,7 @@ _LOtransfer(char **destfd,
 {
 #define MAX_READ (512 * 1024)
 #define min(a, b) (a < b ? a : b)
-    struct varlena *v;
+    struct varlena *v = NULL;
     int tmp, inc, resid;
     
     inc = nitems*size; 

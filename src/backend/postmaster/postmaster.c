@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.20 1996/11/03 04:48:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.21 1996/11/08 05:57:41 momjian Exp $
  *
  * NOTES
  *
@@ -32,10 +32,16 @@
  *
  *-------------------------------------------------------------------------
  */
+				/* moved here to prevent double define */
+#include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
+#ifndef MAXHOSTNAMELEN
+#include <netdb.h>		/* for MAXHOSTNAMELEN on some */
+#endif
+
 #include "postgres.h"
 
+#include <signal.h>		/* for other stuff */
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
-
 #include <string.h>
 #include <stdlib.h>
 
@@ -47,10 +53,6 @@
 #include <sys/types.h>		/* for fd_set stuff */
 #include <sys/stat.h>		/* for umask */
 #include <sys/time.h>
-#include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
-#ifndef MAXHOSTNAMELEN
-#include <netdb.h>		/* for MAXHOSTNAMELEN on some */
-#endif
 #include <sys/socket.h>
 #if defined(USE_LIMITS_H)
 # include <machine/limits.h>
@@ -1098,8 +1100,8 @@ DoExec(StartupInfo *packet, int portFd)
     av[ac] = (char *) NULL;
     
     if (DebugLvl > 1) {
-	fprintf(stderr, "%s child[%d]: execv(",
-		progname, getpid());
+	fprintf(stderr, "%s child[%ld]: execv(",
+		progname, (long)getpid());
 	for (i = 0; i < ac; ++i)
 	    fprintf(stderr, "%s, ", av[i]);
 	fprintf(stderr, ")\n");
@@ -1166,10 +1168,10 @@ dumpstatus(SIGNAL_ARGS)
 	Port *port = DLE_VAL(curr);
 	
 	fprintf(stderr, "%s: dumpstatus:\n", progname);
-	fprintf(stderr, "\tsock %d: nBytes=%d, laddr=0x%x, raddr=0x%x\n",
+	fprintf(stderr, "\tsock %d: nBytes=%d, laddr=0x%lx, raddr=0x%lx\n",
 		port->sock, port->nBytes, 
-		port->laddr, 
-		port->raddr);
+		port->laddr.sin_addr.s_addr, 
+		port->raddr.sin_addr.s_addr);
 	curr = DLGetSucc(curr);
     }
 }

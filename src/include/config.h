@@ -178,7 +178,8 @@
 /* found in function aclparse() in src/backend/utils/adt/acl.c */
 /* #define ACLDEBUG */
 
-/* found in src/backend/utils/adt/arrayfuncs.c */
+/* found in src/backend/utils/adt/arrayfuncs.c
+   code seems broken without it, Bruce Momjian */
 /* #define LOARRAY */
 
 /* This is the time, in seconds, at which a given backend server

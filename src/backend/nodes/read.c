@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.1.1.1 1996/07/09 06:21:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.2 1996/11/08 05:56:48 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -64,7 +64,7 @@ stringToNode(char *str)
 static NodeTag
 nodeTokenType(char *token, int length)
 {
-    NodeTag retval;
+    NodeTag retval = 0;
     
     /*
      * Check if the token is a number (decimal or integer,
@@ -168,7 +168,7 @@ nodeRead(bool read_car_only)
 {
     char *token;
     NodeTag type;
-    Node *this_value, *return_value;
+    Node *this_value = NULL, *return_value = NULL;
     int tok_len;
     char tmp;
     bool make_dotted_pair_cell = false;

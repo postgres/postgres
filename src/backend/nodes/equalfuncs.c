@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.2 1996/08/26 06:30:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.3 1996/11/08 05:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,7 +570,7 @@ _equalValue(Value *a, Value *b)
 bool
 equal(void *a, void *b)
 {
-    bool retval;
+    bool retval=false;
     
     if (a == b)
 	return(true);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.2 1996/11/06 06:49:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.3 1996/11/08 05:59:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ int32 regprocin(char *proname)
     HeapScanDesc	procscan;
     HeapTuple	proctup;
     ScanKeyData	       key;		
-    RegProcedure	result;
+    RegProcedure	result = (Oid)0;
     bool		isnull;
     
     if (proname == NULL)

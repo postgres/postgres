@@ -47,6 +47,7 @@ static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #include <ctype.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <regex/regex.h>   
 #include <regex/utils.h>
@@ -284,8 +285,8 @@ register struct parse *p;
 int stop;			/* character this ERE should end at */
 {
 	register char c;
-	register sopno prevback;
-	register sopno prevfwd;
+	register sopno prevback = 0;
+	register sopno prevfwd = 0;
 	register sopno conc;
 	register int first = 1;		/* is this the first alternative? */
 
@@ -1592,8 +1593,8 @@ struct parse *p;
 register struct re_guts *g;
 {
 	register sop *scan;
-	sop *start;
-	register sop *newstart;
+	sop *start = 0;
+	register sop *newstart = 0;
 	register sopno newlen;
 	register sop s;
 	register char *cp;

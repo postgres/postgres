@@ -15,12 +15,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.2 1996/11/03 04:57:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.3 1996/11/08 05:58:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/file.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <signal.h>
 
@@ -41,6 +42,7 @@
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
+#include "utils/relcache.h"
 #include "executor/execdebug.h"	/* for NDirectFileRead */
 #include "catalog/catalog.h"
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.7 1996/11/06 06:48:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.8 1996/11/08 05:57:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1423,7 +1423,7 @@ FindDelimiter(char *typename)
 void
 op_error(char *op, int arg1, int arg2)
 {
-    Type tp1, tp2;
+    Type tp1 = NULL, tp2 = NULL;
 
     if (check_typeid(arg1)) {
 	tp1 = get_id_type(arg1);

@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.3 1996/11/03 06:52:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.4 1996/11/08 05:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
+
 #include "postgres.h"
 
 #include "tcop/tcopdebug.h"
@@ -209,7 +211,7 @@ ProcessQueryDesc(QueryDesc *queryDesc)
     
     bool	isRetrieveIntoPortal;
     bool	isRetrieveIntoRelation;
-    char*	intoName;
+    char*	intoName = NULL;
     CommandDest dest;
     
     /* ----------------

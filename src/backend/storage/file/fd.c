@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.8 1996/11/06 06:48:51 scrappy Exp $
+ *    $Id: fd.c,v 1.9 1996/11/08 05:58:21 momjian Exp $
  *
  * NOTES:
  *
@@ -47,9 +47,10 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "c.h"
+#include "postgres.h"
 #include "miscadmin.h"	/* for DataDir */
 #include "utils/palloc.h"
+#include "storage/fd.h"
 
 #ifdef sparc
 /*
@@ -200,7 +201,7 @@ static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 
 int
-pg_fsync(fd)
+pg_fsync(int fd)
 {
     extern int fsyncOff;
     return fsyncOff ? 0 : fsync(fd);

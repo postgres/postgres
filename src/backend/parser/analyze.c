@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.12 1996/11/06 06:48:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.13 1996/11/08 05:57:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,6 @@ static Query *
 transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
 {
     Query *qry = makeNode(Query);	/* make a new query tree */
-    List *targetlist;
 
     qry->commandType = CMD_INSERT;
     pstate->p_is_insert = true;
@@ -531,7 +530,7 @@ transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
 static Node *
 transformExpr(ParseState *pstate, Node *expr)
 {
-    Node *result;
+    Node *result = NULL;
 
     if (expr==NULL)
 	return NULL;
@@ -809,7 +808,7 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 Oid
 exprType(Node *expr)
 {
-    Oid type;
+    Oid type = (Oid)0;
     
     switch(nodeTag(expr)) {
     case T_Func:
@@ -1426,7 +1425,7 @@ static Resdom *
 find_tl_elt(ParseState *pstate, char *refname, char *colname, List *tlist)
 {
     List *i;
-    int real_rtable_pos;
+    int real_rtable_pos = 0;
 
     if(refname)
 	real_rtable_pos = refnameRangeTablePosn(pstate->p_rtable, refname);
@@ -1471,7 +1470,7 @@ any_ordering_op(int restype)
 static List *
 transformGroupClause(ParseState *pstate, List *grouplist)
 {
-    List *glist = NIL, *gl;
+    List *glist = NIL, *gl = NIL;
 
     while (grouplist != NIL) {
 	GroupClause *grpcl = makeNode(GroupClause);
@@ -1505,7 +1504,7 @@ transformSortClause(ParseState *pstate,
 		    char* uniqueFlag)
 {
     List *sortlist = NIL;
-    List *s, *i;
+    List *s = NIL, *i;
 
     while(orderlist != NIL) {
 	SortBy *sortby = lfirst(orderlist);
@@ -1555,7 +1554,7 @@ transformSortClause(ParseState *pstate,
 	  }
       }
       else {
-	TargetEntry *tlelt;
+	TargetEntry *tlelt = NULL;
 	char* uniqueAttrName = uniqueFlag;
 
 	  /* only create sort clause with the specified unique attribute */
@@ -1873,12 +1872,12 @@ static Node *
 ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 {
     Oid rettype = (Oid)0;
-    Oid argrelid;
+    Oid argrelid = (Oid)0;
     Oid funcid = (Oid)0;
     List *i = NIL;
     Node *first_arg= NULL;
-    char *relname;
-    char *refname;
+    char *relname = NULL;
+    char *refname = NULL;
     Relation rd;
     Oid relid;
     int nargs;
@@ -1889,7 +1888,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
     bool retset;
     bool exists;
     bool attisset = false;
-    Oid toid;
+    Oid toid = (Oid)0;
     Expr *expr;
 
     if (fargs) {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.6 1996/11/06 06:49:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.7 1996/11/08 05:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,8 +589,9 @@ qmktime(struct tm *tp)
      * correction
      */
     if (day > nmdays[mon])
-	if (mon != 2 || year % 4 == 0 &&
-	    (year % 100 != 0 || year % 400 == 0) && day > 29)
+	if (mon != 2 ||
+	    (year % 4 == 0 &&
+	    ((year % 100 != 0 || year % 400 == 0)) && day > 29))
 	    return -1;	/* day too large for month */
     
     /* split year into century and year-of-century */

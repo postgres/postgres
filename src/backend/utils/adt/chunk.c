@@ -6,11 +6,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.3 1996/11/06 10:30:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.4 1996/11/08 05:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
+#include <sys/types.h>
+#include <fcntl.h>
+
 #include "postgres.h"
 
 #include <libpq/be-fsstubs.h>
@@ -46,12 +49,14 @@ static int _FindBestChunk(int size, int dmax[], int dbest[], int dim,
 			  int A[MAXPAT][MAXDIM+1], int N);
 static int get_next(int d[], int k, int C, int dmax[]);
 static void initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[]);
+#ifdef LOARRAY
 static void _ConvertToChunkFile(int n, int baseSize, int dim[],	int C[],
 				int srcfd, int destfd);
 static void read_chunk(int chunk_no[], int C[], char a_chunk[], int srcfd,
 		       int n, int baseSize, int PX[], int dist[]);
 static int write_chunk(struct varlena * a_chunk, int ofile);
 static int seek_and_read(int pos, int size, char buff[], int fp, int from);
+#endif
 
 /*------------------------------------------------------------------------
  * _ChunkArray ---
@@ -71,7 +76,9 @@ _ChunkArray(int fd,
 	    int *nbytes,
 	    char *chunkfile)
 {
-    int cfd;
+#ifdef LOARRAY
+int cfd = 0;
+#endif
     int chunk[MAXDIM], csize;
     bool reorgFlag;
     
@@ -86,17 +93,20 @@ _ChunkArray(int fd,
 	chunkfile = _array_newLO( &cfd, fileFlag );
     else 
 	cfd = LOopen(chunkfile, O_RDONLY); 
-#endif
     if (cfd < 0)
-	elog(WARN, "Enable to open chunk file");
+	elog(WARN, "Unable to open chunk file");
+#endif
+
     strcpy (cInfo.lo_name, chunkfile);
     
     /* find chunk size */
     csize = GetChunkSize(afd, ndim, dim, baseSize, chunk);
     
+#ifdef LOARRAY
     if (reorgFlag)
 	/* copy data from input file to chunked file */
 	_ConvertToChunkFile(ndim, baseSize, dim, chunk, fd, cfd);
+#endif
     
     initialize_info(&cInfo, ndim, dim, chunk);
     *nbytes = sizeof(CHUNK_INFO);
@@ -231,8 +241,10 @@ get_next(int d[], int k, int C, int dmax[])
     return(1);
 }
 
+#ifdef LOARRAY
 static char a_chunk[_PAGE_SIZE_ + 4];	 /* 4 since a_chunk is in 
 					    varlena format */
+#endif
 
 static void
 initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[])
@@ -254,6 +266,7 @@ initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[])
  *
  *-------------------------------------------------------------------------
  */
+#ifdef LOARRAY
 static void
 _ConvertToChunkFile(int n,
 		    int baseSize,
@@ -337,7 +350,7 @@ read_chunk(int chunk_no[],
 static int
 write_chunk(struct varlena * a_chunk, int ofile)
 {
-    int     got_n;
+    int     got_n = 0;
 #ifdef LOARRAY
     got_n = LOwrite (ofile, a_chunk);
 #endif
@@ -354,7 +367,7 @@ write_chunk(struct varlena * a_chunk, int ofile)
 static int
 seek_and_read(int pos, int size, char buff[], int fp, int from)
 {
-    struct varlena *v;
+    struct varlena *v = NULL;
     
     /* Assuming only one file */
     if ( lo_lseek(fp, pos, from ) < 0)
@@ -369,6 +382,7 @@ seek_and_read(int pos, int size, char buff[], int fp, int from)
     return(1);
     
 }
+#endif /* LOARRAY */
 
 /*----------------------------------------------------------------------------
  * _ReadChunkArray --
@@ -453,7 +467,7 @@ _ReadChunkArray(int st[],
         for (i = 0; i < n; range[i++] = 0);
         j = n-1; bptr *= bsize;
         if (isDestLO) { 
-            if (lo_lseek(destfp, bptr, SEEK_SET) < 0)
+            if (lo_lseek((int)destfp, bptr, SEEK_SET) < 0)
 		RETURN_NULL;
         }
         else 
@@ -480,7 +494,7 @@ _ReadChunkArray(int st[],
             block_seek += cdist[j];
             bptr += adist[j]*bsize;
             if (isDestLO) { 
-                if (lo_lseek(destfp, bptr, SEEK_SET) < 0)
+                if (lo_lseek((int)destfp, bptr, SEEK_SET) < 0)
 		    RETURN_NULL;
             }
             else 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.4 1996/11/04 07:45:53 scrappy Exp $
+ * $Id: fd.h,v 1.5 1996/11/08 06:02:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,5 +85,6 @@ extern void AllocateFile(void);
 extern void FreeFile(void);
 extern void closeAllVfds(void);
 extern void closeOneVfd(void);
+extern int pg_fsync(int fd);
 
 #endif	/* FD_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.1.1.1 1996/07/09 06:21:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.2 1996/11/08 05:56:43 momjian Exp $
  *
  * NOTES
  *    Every (plan) node in POSTGRES has an associated "out" routine which
@@ -548,7 +548,7 @@ static void
 _outExpr(StringInfo str, Expr *node)
 {
     char buf[500];
-    char *opstr;
+    char *opstr = NULL;
     
     sprintf(buf, "EXPR");
     appendStringInfo(str,buf);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.2 1996/09/16 06:34:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.3 1996/11/08 06:01:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,9 @@ main(int argc, char **argv)
 	    printf("NOUSER\n");
 	    exit(1);
 	}
-	printf("%d\n", pw->pw_uid);
+	printf("%ld\n", (long)pw->pw_uid);
     } else {
-	printf("%d\n", getuid());
+	printf("%ld\n", (long)getuid());
     }
 
     exit(0);

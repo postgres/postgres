@@ -7,10 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.3 1996/11/06 06:49:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.4 1996/11/08 05:58:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+
 #include "postgres.h"
 
 #include "storage/ipc.h"
@@ -21,11 +25,6 @@
 #include "storage/smgr.h"
 #include "storage/lock.h"
 #include "miscadmin.h"		/* for DebugLvl */
-
-#if defined(sparc_solaris)
-#include <string.h>
-#include <sys/ipc.h>
-#endif
 
 /*
  * SystemPortAddressCreateMemoryKey --

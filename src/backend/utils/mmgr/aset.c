@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.2 1996/11/06 10:32:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.3 1996/11/08 06:00:48 momjian Exp $
  *
  * NOTE
  *    XXX This is a preliminary implementation which lacks fail-fast
@@ -368,7 +368,7 @@ AllocPointerGetNext(AllocPointer pointer)
 void
 AllocPointerDump(AllocPointer pointer)
 {
-    printf("\t%-10d@ %0#x\n", ((long*)pointer)[-1], pointer); /* XXX */
+    printf("\t%-10ld@ %0#lx\n", ((long*)pointer)[-1], (long)pointer); /* XXX */
 }
 
 /*

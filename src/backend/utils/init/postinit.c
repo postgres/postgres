@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.4 1996/11/06 10:31:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.5 1996/11/08 06:00:33 momjian Exp $
  *
  * NOTES
  *	InitPostgres() is the function called from PostgresMain
@@ -325,7 +325,7 @@ InitCommunication()
     char *getenv();	/* XXX style */
     char *postid;
     char *postport;
-    IPCKey	key;
+    IPCKey	key = 0;
     
     /* ----------------
      *	try and get the backend tag from POSTID

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.3 1996/11/03 05:08:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.4 1996/11/08 05:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@ int
 smgrinit()
 {
     int i;
-    extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
 	if (smgrsw[i].smgr_init) {
@@ -102,7 +101,6 @@ void
 smgrshutdown(int dummy)
 {
     int i;
-    extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
 	if (smgrsw[i].smgr_shutdown) {
@@ -331,7 +329,6 @@ int
 smgrcommit()
 {
     int i;
-    extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
 	if (smgrsw[i].smgr_commit) {
@@ -347,7 +344,6 @@ int
 smgrabort()
 {
     int i;
-    extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
 	if (smgrsw[i].smgr_abort) {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.1.1.1 1996/07/09 06:22:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.2 1996/11/08 06:00:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ fmgr_c(func_ptr user_fn,
 void
 fmgr_info(Oid procedureId, func_ptr *function, int *nargs)
 {
-    func_ptr		user_fn;
+    func_ptr		user_fn = NULL;
     FmgrCall		*fcp;
     HeapTuple		procedureTuple;
     FormData_pg_proc	*procedureStruct;

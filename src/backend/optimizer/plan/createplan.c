@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.5 1996/11/06 09:29:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.6 1996/11/08 05:57:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ static Scan *
 create_scan_node(Path *best_path, List *tlist)
 {
 
-    Scan *node;
+    Scan *node = NULL ;
     List *scan_clauses;
 
     /*
@@ -208,7 +208,7 @@ create_join_node(JoinPath *best_path, List *tlist)
     Plan 	*inner_node;
     List 	*inner_tlist;
     List 	*clauses;
-    Join 	*retval;
+    Join 	*retval = NULL;
 
     outer_node = create_plan((Path*)best_path->outerjoinpath);
     outer_tlist  = outer_node->targetlist;
@@ -803,7 +803,7 @@ make_temp(List *tlist,
 	  int temptype)
 {
     List *temp_tlist;
-    Temp *retval;
+    Temp *retval = NULL;
 
     /*    Create a new target list for the temporary, with keys set. */
     temp_tlist = set_temp_tlist_operators(new_unsorted_tlist(tlist),

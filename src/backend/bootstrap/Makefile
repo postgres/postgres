@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.1 1996/10/27 09:46:59 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.2 1996/11/08 05:55:46 momjian Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -26,7 +26,7 @@ INCLUDE_OPT = -I.. \
               -I../include \
               -I../../include
 
-CFLAGS += $(INCLUDE_OPT)
+CFLAGS += $(INCLUDE_OPT) -Wno-error
 
 BOOTYACCS = bootstrap_tokens.h bootparse.c
 

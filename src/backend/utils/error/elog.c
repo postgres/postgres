@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.8 1996/11/06 10:31:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.9 1996/11/08 05:59:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,10 @@ elog(int lev, const char *fmt, ... )
 #ifndef PG_STANDALONE
     extern	FILE	*Pfout;
 #endif /* !PG_STANDALONE */
-    time_t		tim, time();
+    time_t	time();
+#ifdef ELOG_TIMESTAMPS
+    time_t	tim;
+#endif
     int		len;
     int		i = 0;
     
@@ -231,7 +234,7 @@ DebugFileOpen()
     fd = fileno(stderr);
     if (fcntl(fd, F_GETFD, 0) < 0) {
 	sprintf(OutputFileName, "%s/pg.errors.%d",
-		GetPGData(), getpid());
+		GetPGData(), (int)getpid());
 	fd = open(OutputFileName, O_CREAT|O_APPEND|O_WRONLY, 0666);
     }
 #endif /* WIN32 */    

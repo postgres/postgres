@@ -6,13 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.3 1996/11/06 10:29:30 scrappy Exp $
+ * $Id: async.h,v 1.4 1996/11/08 06:01:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ASYNC_H
 #define	ASYNC_H
 
+#include <nodes/memnodes.h>
 
 extern void Async_NotifyHandler(SIGNAL_ARGS);
 extern void Async_Notify(char *relname);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.3 1996/11/06 10:31:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.4 1996/11/08 06:00:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 # include	<sys/types.h>
 # include	<string.h>
 # include	"postgres.h"
+# include	"utils/dynahash.h"
 # include	"utils/hsearch.h"
 #ifndef FRONTEND
 # include	"utils/mcxt.h"
@@ -65,7 +66,6 @@
  */
 static long *DynaHashAlloc(unsigned int size);
 static void DynaHashFree(Pointer ptr);
-static int hash_clear(HTAB *hashp);
 static uint32 call_hash(HTAB *hashp, char *k, int len);
 static SEG_OFFSET seg_alloc(HTAB *hashp);
 static int bucket_alloc(HTAB *hashp);
@@ -351,14 +351,6 @@ init_htab (HTAB *hashp, int nelem)
 }
 
 /********************** DESTROY ROUTINES ************************/
-
-static int
-hash_clear(HTAB *hashp)
-{
-    elog(NOTICE,"hash_clear not implemented\n");
-    return 0;
-}
-
 
 void
 hash_destroy (HTAB	*hashp)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.2 1996/10/31 10:12:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.3 1996/11/08 05:56:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,9 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "executor/nodeSeqscan.h"
+#include "access/heapam.h"
 #include "parser/parsetree.h"
 
 /* ----------------------------------------------------------------

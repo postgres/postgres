@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.2 1996/07/31 02:18:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.3 1996/11/08 05:56:49 momjian Exp $
  *
  * NOTES
  *    Most of the read functions for plan nodes are tested. (In fact, they
@@ -1047,7 +1047,7 @@ _readEState()
     token = lsptok(NULL, &length);      /* get @ */
     token = lsptok(NULL, &length);      /* now read it */
     
-    sscanf(token, "%x", &local_node->es_result_relation_info);
+    sscanf(token, "%x",(unsigned int *)&local_node->es_result_relation_info);
     
     return(local_node);
 }
@@ -1117,13 +1117,13 @@ _readRel()
     token = lsptok(NULL, &length);      /* get @ */
     token = lsptok(NULL, &length);      /* now read it */
     
-    sscanf(token, "%x", &local_node->unorderedpath);
+    sscanf(token, "%x", (unsigned int *)&local_node->unorderedpath);
     
     token = lsptok(NULL, &length);      /* get :cheapestpath */
     token = lsptok(NULL, &length);      /* get @ */
     token = lsptok(NULL, &length);      /* now read it */
     
-    sscanf(token, "%x", &local_node->cheapestpath);
+    sscanf(token, "%x", (unsigned int *)&local_node->cheapestpath);
     
     
     token = lsptok(NULL, &length);      /* get :clauseinfo */
@@ -1792,7 +1792,7 @@ parsePlanString()
 {
     char *token;
     int length;
-    void *return_value;
+    void *return_value = NULL;
     
     token = lsptok(NULL, &length);
     

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.5 1996/11/06 06:48:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.6 1996/11/08 05:57:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,12 +37,18 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h" 
 
+void init_io(); /* from scan.l */
+void parser_init(Oid *typev, int nargs); /* from gram.y */
+int yyparse(); /* from gram.c */
+
 char *parseString; /* the char* which holds the string to be parsed */
 char *parseCh;     /* a pointer used during parsing to walk down ParseString*/
 
 List *parsetree = NIL;
 
+#ifdef SETS_FIXED
 static void fixupsets();
+#endif
 static void define_sets();
 /*
  * parser-- returns a list of parse trees
@@ -99,6 +105,7 @@ parser(char *str, Oid *typev, int nargs)
     return queryList;
 }
 
+#ifdef SETS_FIXED
 static void
 fixupsets(Query *parse)
 {
@@ -110,6 +117,7 @@ fixupsets(Query *parse)
 	return;
     define_sets(parse);
 }
+#endif
 
 /* Recursively find all of the Consts in the parsetree.  Some of
  * these may represent a set.  The value of the Const will be the
@@ -180,7 +188,7 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
     char type_string[16];
     int32 len;
     char *cp = NULL;
-    char *const_string; 
+    char *const_string = NULL; 
     bool string_palloced = false;
 
     switch(nodeTag(expr)) {
@@ -297,7 +305,7 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
     int32 len = tlen(tp);
     char *cp = NULL;
     
-    char *const_string; 
+    char *const_string = NULL; 
     bool string_palloced = false;
 
     Assert(IsA(expr,Const));

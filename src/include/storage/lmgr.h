@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.3 1996/11/05 06:10:59 scrappy Exp $
+ * $Id: lmgr.h,v 1.4 1996/11/08 06:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,5 +77,8 @@ extern void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
 extern bool SingleLockReln(LockInfo linfo, LOCKT lockt, int action);
 extern bool SingleLockPage(LockInfo linfo, ItemPointer tidPtr,
 			   LOCKT lockt, int action);
+
+/* proc.c */
+extern void InitProcGlobal(IPCKey key);
 
 #endif	/* LMGR_H */

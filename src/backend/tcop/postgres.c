@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.14 1996/11/04 04:53:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.15 1996/11/08 05:59:31 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -16,16 +16,21 @@
  *-------------------------------------------------------------------------
  */
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
+
 #if defined(linux)
 #ifndef __USE_POSIX
 #define __USE_POSIX
 #endif
 #endif /* defined(linux) */
-#include <setjmp.h>
+
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <setjmp.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
 #ifndef MAXHOSTNAMELEN
 #include <netdb.h>		/* for MAXHOSTNAMELEN on some */
@@ -279,7 +284,7 @@ static char
 SocketBackend(char *inBuf, int multiplexedBackend)
 {
     char qtype[2];
-    char result;
+    char result = '\0';
     
     /* ----------------
      *	get input from the frontend
@@ -782,7 +787,7 @@ PostgresMain(int argc, char *argv[])
     int	   flagE;
     int	   flag;
     
-    char   *DBName; 
+    char   *DBName = NULL; 
     int    errs = 0;
     
     char   firstchar;
@@ -793,11 +798,11 @@ PostgresMain(int argc, char *argv[])
     char*  hostName;                /* the host name of the backend server */
     char   hostbuf[MAXHOSTNAMELEN];
     int    serverSock;
-    int    serverPortnum;
+    int    serverPortnum = 0;
     int    nSelected; /* number of descriptors ready from select(); */
-    int    maxFd; /* max file descriptor + 1 */
+    int    maxFd = 0; /* max file descriptor + 1 */
     fd_set rmask, basemask;
-    FrontEnd *newFE, *currentFE;
+    FrontEnd *newFE, *currentFE = NULL;
     int    numFE = 0; /* keep track of number of active frontends */
     Port   *newPort;
     int    newFd;
@@ -1157,7 +1162,8 @@ PostgresMain(int argc, char *argv[])
 #endif /* WIN32 */
     
     if (multiplexedBackend) {
-      if (StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
+      if (serverPortnum == 0 ||
+	  StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
 	{
 	  fprintf(stderr, "Postgres: cannot create stream port %d\n", serverPortnum);
 	  exit(1);
@@ -1250,7 +1256,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.14 $ $Date: 1996/11/04 04:53:31 $");
+	puts("$Revision: 1.15 $ $Date: 1996/11/08 05:59:31 $");
     }
     
     /* ----------------
@@ -1503,7 +1509,7 @@ ShowUsage()
     
     fprintf(StatFp, "! system usage stats:\n");
     fprintf(StatFp, 
-	    "!\t%d.%06d elapsed %d.%06d user %d.%06d system sec\n",
+	    "!\t%ld.%06ld elapsed %ld.%06ld user %ld.%06ld system sec\n",
 	    elapse_t.tv_sec - Save_t.tv_sec,
 	    elapse_t.tv_usec - Save_t.tv_usec,
 	    r.ru_utime.tv_sec - Save_r.ru_utime.tv_sec,
@@ -1511,7 +1517,7 @@ ShowUsage()
 	    r.ru_stime.tv_sec - Save_r.ru_stime.tv_sec,
 	    r.ru_stime.tv_usec - Save_r.ru_stime.tv_usec);
     fprintf(StatFp,
-	    "!\t[%d.%06d user %d.%06d sys total]\n",
+	    "!\t[%ld.%06ld user %ld.%06ld sys total]\n",
 	    user.tv_sec, user.tv_usec, sys.tv_sec, sys.tv_usec);
 #ifndef NEED_RUSAGE
     fprintf(StatFp, 

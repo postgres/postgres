@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.2 1996/10/11 03:25:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.3 1996/11/08 05:58:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
  *     given a rule oid, look it up and return the rule-event-qual and
  *     list of parsetrees for the rule (in parseTrees)
  */
+#ifdef NOT_USED
 static Node *
 RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 {
@@ -84,6 +85,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
     *parseTrees = ruleparse;
     return rule_evqual;
 }
+#endif
 
 int
 IsDefinedRewriteRule(char *ruleName)

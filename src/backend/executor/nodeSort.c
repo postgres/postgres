@@ -7,17 +7,20 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.3 1996/10/31 10:12:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.4 1996/11/08 05:56:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "executor/nodeSort.h"
+#include "access/heapam.h"
 #include "utils/palloc.h"
 #include "utils/psort.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "storage/bufmgr.h"
 #include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
 

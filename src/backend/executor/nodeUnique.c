@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.3 1996/10/31 10:12:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.4 1996/11/08 05:56:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@
 #include "executor/executor.h"
 #include "executor/nodeUnique.h"
 #include "optimizer/clauses.h"
+#include "access/heapam.h"
+#include "access/heaptuple.h"
 #include "access/printtup.h" /* for typtoout() */
 #include "utils/builtins.h"  /* for namecpy()*/
 
@@ -127,6 +129,10 @@ ExecUnique(Unique *node)
     if (uniqueAttr) {
       tupDesc = ExecGetResultType(uniquestate);
       typoutput = typtoout((Oid)tupDesc->attrs[uniqueAttrNum-1]->atttypid);
+    }
+    else { /* keep compiler quiet */
+      tupDesc = NULL;
+      typoutput = 0;
     }
       
     /* ----------------

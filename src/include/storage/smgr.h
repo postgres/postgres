@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.2 1996/11/05 06:11:07 scrappy Exp $
+ * $Id: smgr.h,v 1.3 1996/11/08 06:02:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,5 +81,8 @@ extern int mmnblocks(Relation reln);
 extern int mmcommit(void);
 extern int mmabort(void);
 extern int MMShmemSize(void);
+
+/* smgrtype.c */
+char *smgrout(int2 i);
 
 #endif	/* SMGR_H */

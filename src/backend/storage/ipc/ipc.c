@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.7 1996/11/06 06:49:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.8 1996/11/08 05:58:30 momjian Exp $
  *
  * NOTES
  *
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 /* XXX - the following  dependency should be moved into the defaults.mk file */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.1.1.1 1996/07/09 06:21:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.2 1996/11/08 05:57:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ prune_rel_paths(List *rel_list)
 {
     List *x = NIL;
     List *y = NIL;
-    Path *path;
+    Path *path = NULL;
     Rel *rel = (Rel*)NULL;
     JoinPath *cheapest = (JoinPath*)NULL;
     

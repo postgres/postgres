@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.6 1996/11/06 08:21:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.7 1996/11/08 05:55:49 momjian Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -136,8 +136,9 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
             */
             *byte_pct_p = atoi(param->val);
         } else if (strcasecmp(param->name, "perbyte_cpu") == 0) {
+			count = 0;
             if (sscanf(param->val, "%d", perbyte_cpu_p) == 0) {
-                for (count = 0, ptr = param->val; *ptr != '\0'; ptr++) 
+                for (ptr = param->val; *ptr != '\0'; ptr++) 
                     if (*ptr == '!') count++;
             }
             *perbyte_cpu_p = (int) pow(10.0, (double) count);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.7 1996/11/06 06:50:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.8 1996/11/08 05:59:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ byteaout(struct varlena	*vlena)
     vp = vlena->vl_dat;
     for (i = vlena->vl_len - sizeof(int32); i != 0; i--)	/* varlena? */
 	if (*vp == '\\') {
-	    *vp++;
+	    vp++;
 	    *rp++ = '\\';
 	    *rp++ = '\\';
 	} else if (isascii(*vp) && isprint(*vp))

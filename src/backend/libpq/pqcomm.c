@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.5 1996/11/06 08:48:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.6 1996/11/08 05:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ pq_flush()
 int
 pq_getstr(char *s, int maxlen)
 {
-    int	c;
+    int	c = '\0';
     
     if (Pfin == (FILE *) NULL) {
 /*	elog(DEBUG, "Input descriptor is null"); */
@@ -266,7 +266,7 @@ PQputline(char *s)
 int
 pq_getnchar(char *s, int off, int maxlen)
 {
-    int	c;
+    int	c = '\0';
     
     if (Pfin == (FILE *) NULL) {
 /*	elog(DEBUG, "Input descriptor is null"); */

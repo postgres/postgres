@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.3 1996/11/03 05:06:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.4 1996/11/08 05:58:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,7 +425,7 @@ ShmemPIDDestroy(int pid)
 {
     BindingEnt *	result,item;
     bool	found;
-    SHMEM_OFFSET  location;
+    SHMEM_OFFSET  location = 0;
     
     Assert(BindingTable);
     

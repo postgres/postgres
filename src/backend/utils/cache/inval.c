@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.2 1996/11/06 10:31:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.3 1996/11/08 05:59:55 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -449,7 +449,7 @@ RelationInvalidateRelationCache(Relation relation,
 				void (*function)())
 {
     Oid	relationId;
-    Oid	objectId;
+    Oid	objectId = (Oid)0;
     
     /* ----------------
      *	get the relation object id

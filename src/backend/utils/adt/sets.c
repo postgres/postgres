@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.2 1996/11/06 06:50:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.3 1996/11/08 05:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ SetDefine(char *querystr, char *typename)
     char *procname = GENERICSETNAME;
     char *fileName = "-";
     char realprocname[16];
-    HeapTuple tup, newtup;
+    HeapTuple tup, newtup = NULL;
     Form_pg_proc proc;
     Relation procrel;
     int i;
