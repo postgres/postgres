@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.62 2001/03/22 03:59:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.63 2001/04/15 00:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,20 +290,34 @@ match_unsorted_outer(Query *root,
 					 JoinType jointype)
 {
 	bool		nestjoinOK;
+	bool		useallclauses;
 	Path	   *bestinnerjoin;
 	List	   *i;
 
 	/*
-	 * Nestloop only supports inner and left joins.
+	 * Nestloop only supports inner and left joins.  Also, if we are doing
+	 * a right or full join, we must use *all* the mergeclauses as join
+	 * clauses, else we will not have a valid plan.  (Although these two flags
+	 * are currently inverses, keep them separate for clarity and possible
+	 * future changes.)
 	 */
 	switch (jointype)
 	{
 		case JOIN_INNER:
 		case JOIN_LEFT:
 			nestjoinOK = true;
+			useallclauses = false;
+			break;
+		case JOIN_RIGHT:
+		case JOIN_FULL:
+			nestjoinOK = false;
+			useallclauses = true;
 			break;
 		default:
-			nestjoinOK = false;
+			elog(ERROR, "match_unsorted_outer: unexpected join type %d",
+				 (int) jointype);
+			nestjoinOK = false;	/* keep compiler quiet */
+			useallclauses = false;
 			break;
 	}
 
@@ -339,8 +353,8 @@ match_unsorted_outer(Query *root,
 
 			/*
 			 * Always consider a nestloop join with this outer and
-			 * cheapest- total-cost inner.	Consider nestloops using the
-			 * cheapest- startup-cost inner as well, and the best
+			 * cheapest-total-cost inner.	Consider nestloops using the
+			 * cheapest-startup-cost inner as well, and the best
 			 * innerjoin indexpath.
 			 */
 			add_path(joinrel, (Path *)
@@ -377,6 +391,8 @@ match_unsorted_outer(Query *root,
 		/* Done with this outer path if no chance for a mergejoin */
 		if (mergeclauses == NIL)
 			continue;
+		if (useallclauses && length(mergeclauses) != length(mergeclause_list))
+			continue;
 
 		/* Compute the required ordering of the inner path */
 		innersortkeys = make_pathkeys_for_mergeclauses(root,
@@ -402,13 +418,14 @@ match_unsorted_outer(Query *root,
 
 		/*
 		 * Look for presorted inner paths that satisfy the innersortkey
-		 * list or any truncation thereof.	Here, we consider both cheap
-		 * startup cost and cheap total cost.  Ignore
+		 * list --- or any truncation thereof, if we are allowed to build
+		 * a mergejoin using a subset of the merge clauses.  Here, we
+		 * consider both cheap startup cost and cheap total cost.  Ignore
 		 * innerrel->cheapest_total_path, since we already made a path
 		 * with it.
 		 */
 		num_sortkeys = length(innersortkeys);
-		if (num_sortkeys > 1)
+		if (num_sortkeys > 1 && !useallclauses)
 			trialsortkeys = listCopy(innersortkeys);	/* need modifiable copy */
 		else
 			trialsortkeys = innersortkeys;		/* won't really truncate */
@@ -503,6 +520,11 @@ match_unsorted_outer(Query *root,
 				}
 				cheapest_startup_inner = innerpath;
 			}
+			/*
+			 * Don't consider truncated sortkeys if we need all clauses.
+			 */
+			if (useallclauses)
+				break;
 		}
 	}
 }
@@ -532,7 +554,25 @@ match_unsorted_inner(Query *root,
 					 List *mergeclause_list,
 					 JoinType jointype)
 {
+	bool		useallclauses;
 	List	   *i;
+
+	switch (jointype)
+	{
+		case JOIN_INNER:
+		case JOIN_LEFT:
+			useallclauses = false;
+			break;
+		case JOIN_RIGHT:
+		case JOIN_FULL:
+			useallclauses = true;
+			break;
+		default:
+			elog(ERROR, "match_unsorted_inner: unexpected join type %d",
+				 (int) jointype);
+			useallclauses = false; /* keep compiler quiet */
+			break;
+	}
 
 	foreach(i, innerrel->pathlist)
 	{
@@ -547,7 +587,11 @@ match_unsorted_inner(Query *root,
 		mergeclauses = find_mergeclauses_for_pathkeys(root,
 													  innerpath->pathkeys,
 													  mergeclause_list);
+
+		/* Done with this inner path if no chance for a mergejoin */
 		if (mergeclauses == NIL)
+			continue;
+		if (useallclauses && length(mergeclauses) != length(mergeclause_list))
 			continue;
 
 		/* Compute the required ordering of the outer path */
