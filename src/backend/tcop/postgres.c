@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.173 2000/08/29 09:36:47 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.174 2000/08/30 20:30:06 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1404,14 +1404,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.173 $ $Date: 2000/08/29 09:36:47 $\n");
+		puts("$Revision: 1.174 $ $Date: 2000/08/30 20:30:06 $\n");
 	}
 
 	/*
 	 * Initialize the deferred trigger manager
 	 */
 	if (DeferredTriggerInit() != 0)
-		proc_exit(0);
+		goto normalexit;
 
 	SetProcessingMode(NormalProcessing);
 
@@ -1451,10 +1451,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		AbortCurrentTransaction();
 
 		if (ExitAfterAbort)
-		{
-			ProcReleaseLocks(); /* Just to be sure... */
-			proc_exit(0);
-		}
+			goto errorexit;
+
 		/*
 		 * If we recovered successfully, return to normal top-level context
 		 * and clear ErrorContext for next time.
@@ -1547,8 +1545,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				if (HandleFunctionRequest() == EOF)
 				{
 					/* lost frontend connection during F message input */
-					pq_close();
-					proc_exit(0);
+					goto normalexit;
 				}
 				break;
 
@@ -1607,11 +1604,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 			case 'X':
 			case EOF:
-				if (!IsUnderPostmaster)
-					ShutdownXLOG();
-				pq_close();
-				proc_exit(0);
-				break;
+				goto normalexit;
 
 			default:
 				elog(ERROR, "unknown frontend message was received");
@@ -1649,10 +1642,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 */
 		MemoryContextCheck(TopMemoryContext);	
 #endif
-	}							/* infinite for-loop */
+	}							/* end of main loop */
 
-	proc_exit(0);				/* shouldn't get here... */
-	return 1;
+normalexit:
+	ExitAfterAbort = true;		/* ensure we will exit if elog during abort */
+	AbortOutOfAnyTransaction();
+	if (!IsUnderPostmaster)
+		ShutdownXLOG();
+
+errorexit:
+	pq_close();
+	ProcReleaseLocks();			/* Just to be sure... */
+	proc_exit(0);
+
+	return 1;					/* keep compiler quiet */
 }
 
 #ifndef HAVE_GETRUSAGE
