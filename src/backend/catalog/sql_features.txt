@@ -227,13 +227,13 @@ F461	Named character sets			NO
 F471	Scalar subquery values			YES	
 F481	Expanded NULL predicate			YES	
 F491	Constraint management			YES	
-F501	Features and conformance views			NO	
+F501	Features and conformance views			YES	
 F501	Features and conformance views	01	SQL_FEATURES view	YES	
-F501	Features and conformance views	02	SQL_SIZING view	NO	
+F501	Features and conformance views	02	SQL_SIZING view	YES	
 F501	Features and conformance views	03	SQL_LANGUAGES view	YES	
-F502	Enhanced documentation tables			NO	
-F502	Enhanced documentation tables	01	SQL_SIZING_PROFILES view	NO	
-F502	Enhanced documentation tables	02	SQL_IMPLEMENTATION_INFO view	NO	
+F502	Enhanced documentation tables			YES	
+F502	Enhanced documentation tables	01	SQL_SIZING_PROFILES view	YES	
+F502	Enhanced documentation tables	02	SQL_IMPLEMENTATION_INFO view	YES	
 F502	Enhanced documentation tables	03	SQL_PACKAGES view	YES	
 F511	BIT data type			YES	
 F521	Assertions			NO	

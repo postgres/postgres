@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.2 2003/01/14 23:19:34 petere Exp $
+ * $Id: information_schema.sql,v 1.3 2003/01/15 23:37:27 petere Exp $
  */
 
 
@@ -323,6 +323,38 @@ GRANT SELECT ON sql_features TO PUBLIC;
 
 
 /*
+ * 20.48
+ * SQL_IMPLEMENTATION_INFO table
+ */
+
+-- Note: Implementation information items are defined in ISO 9075-3:1999,
+-- clause 7.1.
+
+CREATE TABLE sql_implementation_info (
+    implementation_info_id      character_data,
+    implementation_info_name    character_data,
+    integer_value               cardinal_number,
+    character_value             character_data,
+    comments                    character_data
+) WITHOUT OIDS;
+
+INSERT INTO sql_implementation_info VALUES ('10003', 'CATALOG NAME', NULL, 'Y', NULL);
+INSERT INTO sql_implementation_info VALUES ('10004', 'COLLATING SEQUENCE', NULL, '', 'not supported');
+INSERT INTO sql_implementation_info VALUES ('23',    'CURSOR COMMIT BEHAVIOR', 1, NULL, 'close cursors and retain prepared statements');
+INSERT INTO sql_implementation_info VALUES ('2',     'DATA SOURCE NAME', NULL, '', NULL);
+INSERT INTO sql_implementation_info VALUES ('17',    'DBMS NAME', NULL, (select trim(trailing ' ' from substring(version() from '^[^0-9]*'))), NULL);
+INSERT INTO sql_implementation_info VALUES ('18',    'DBMS VERSION', NULL, '???', NULL); -- filled by initdb
+INSERT INTO sql_implementation_info VALUES ('26',    'DEFAULT TRANSACTION ISOLATION', 2, NULL, 'READ COMMITED; user-settable');
+INSERT INTO sql_implementation_info VALUES ('28',    'IDENTIFIER CASE', 3, NULL, 'stored in mixed case - case sensitive');
+INSERT INTO sql_implementation_info VALUES ('85',    'NULL COLLATION', 0, NULL, 'nulls higher than non-nulls');
+INSERT INTO sql_implementation_info VALUES ('13',    'SERVER NAME', NULL, '', NULL);
+INSERT INTO sql_implementation_info VALUES ('94',    'SPECIAL CHARACTERS', NULL, '', 'all non-ASCII characters allowed');
+INSERT INTO sql_implementation_info VALUES ('46',    'TRANSACTION CAPABLE', 2, NULL, 'both DML and DDL');
+
+GRANT SELECT ON sql_implementation_info TO PUBLIC;
+
+
+/*
  * 20.49
  * SQL_LANGUAGES table
  */
@@ -368,6 +400,72 @@ INSERT INTO sql_packages VALUES ('PKG008', 'Active database', 'NO', NULL, '');
 INSERT INTO sql_packages VALUES ('PKG009', 'SQL/MM support', 'NO', NULL, '');
 
 GRANT SELECT ON sql_packages TO PUBLIC;
+
+
+/*
+ * 20.51
+ * SQL_SIZING table
+ */
+
+-- Note: Sizing items are defined in ISO 9075-3:1999, clause 7.2.
+
+CREATE TABLE sql_sizing (
+    sizing_id       cardinal_number,
+    sizing_name     character_data,
+    supported_value cardinal_number,
+    comments        character_data
+) WITHOUT OIDS;
+
+INSERT INTO sql_sizing VALUES (34,    'MAXIMUM CATALOG NAME LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (30,    'MAXIMUM COLUMN NAME LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (97,    'MAXIMUM COLUMNS IN GROUP BY', 0, NULL);
+INSERT INTO sql_sizing VALUES (99,    'MAXIMUM COLUMNS IN ORDER BY', 0, NULL);
+INSERT INTO sql_sizing VALUES (100,   'MAXIMUM COLUMNS IN SELECT', 0, NULL);
+INSERT INTO sql_sizing VALUES (101,   'MAXIMUM COLUMNS IN TABLE', 1600, NULL); -- match MaxHeapAttributeNumber
+INSERT INTO sql_sizing VALUES (1,     'MAXIMUM CONCURRENT ACTIVITIES', 0, NULL);
+INSERT INTO sql_sizing VALUES (31,    'MAXIMUM CURSOR NAME LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (0,     'MAXIMUM DRIVER CONNECTIONS', NULL, NULL);
+INSERT INTO sql_sizing VALUES (10005, 'MAXIMUM IDENTIFIER LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (32,    'MAXIMUM SCHEMA NAME LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (20000, 'MAXIMUM STATEMENT OCTETS', 0, NULL);
+INSERT INTO sql_sizing VALUES (20001, 'MAXIMUM STATEMENT OCTETS DATA', 0, NULL);
+INSERT INTO sql_sizing VALUES (20002, 'MAXIMUM STATEMENT OCTETS SCHEMA', 0, NULL);
+INSERT INTO sql_sizing VALUES (35,    'MAXIMUM TABLE NAME LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (106,   'MAXIMUM TABLES IN SELECT', 0, NULL);
+INSERT INTO sql_sizing VALUES (107,   'MAXIMUM USER NAME LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (25000, 'MAXIMUM CURRENT DEFAULT TRANSFORM GROUP LENGTH', NULL, NULL);
+INSERT INTO sql_sizing VALUES (25001, 'MAXIMUM CURRENT TRANSFORM GROUP LENGTH', NULL, NULL);
+INSERT INTO sql_sizing VALUES (25002, 'MAXIMUM CURRENT PATH LENGTH', 0, NULL);
+INSERT INTO sql_sizing VALUES (25003, 'MAXIMUM CURRENT ROLE LENGTH', NULL, NULL);
+INSERT INTO sql_sizing VALUES (25004, 'MAXIMUM SESSION USER LENGTH', 63, NULL);
+INSERT INTO sql_sizing VALUES (25005, 'MAXIMUM SYSTEM USER LENGTH', 63, NULL);
+
+UPDATE sql_sizing
+    SET supported_value = (SELECT typlen-1 FROM pg_catalog.pg_type WHERE typname = 'name'),
+        comments = 'Might be less, depending on character set.'
+    WHERE supported_value = 63;
+
+GRANT SELECT ON sql_sizing TO PUBLIC;
+
+
+/*
+ * 20.52
+ * SQL_SIZING_PROFILES table
+ */
+
+-- The data in this table are defined by various profiles of SQL.
+-- Since we don't have any information about such profiles, we provide
+-- an empty table.
+
+CREATE TABLE sql_sizing_profiles (
+    sizing_id       cardinal_number,
+    sizing_name     character_data,
+    profile_id      character_data,
+    required_value  cardinal_number,
+    comments        character_data
+) WITHOUT OIDS;
+
+GRANT SELECT ON sql_sizing_profiles TO PUBLIC;
 
 
 /*
