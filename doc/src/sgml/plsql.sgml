@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.57 2002/04/09 03:08:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.58 2002/05/03 04:11:07 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2744,7 +2744,7 @@ show errors
     package would become something like this:
  
 <programlisting>
-CREATE FUNCTION acs__add_user(INTEGER,INTEGER,VARCHAR,DATETIME,INTEGER,INTEGER,...)
+CREATE FUNCTION acs__add_user(INTEGER,INTEGER,VARCHAR,TIMESTAMP,INTEGER,INTEGER,...)
 RETURNS INTEGER AS '
 DECLARE
     user_id ALIAS FOR $1;

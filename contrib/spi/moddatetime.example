@@ -3,7 +3,7 @@ DROP TABLE mdt;
 CREATE TABLE mdt (
 	id		int4,
 	idesc		text,
-	moddate datetime DEFAULT datetime(CURRENT_TIMESTAMP) NOT NULL
+	moddate timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TRIGGER mdt_moddatetime

@@ -69,7 +69,7 @@ not as a finished idea.
 --- apachelog.sql : ---
 
 drop table access;
-CREATE TABLE access (host char(200), ident char(200), authuser char(200), accdate datetime, request char(500), ttime int2, status int2, bytes int4) archive = none;
+CREATE TABLE access (host char(200), ident char(200), authuser char(200), accdate timestamp, request char(500), ttime int2, status int2, bytes int4) archive = none;
 grant all on access to nobody;
 
 --- httpconf.txt: ---

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.91 2002/04/25 20:14:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.92 2002/05/03 04:11:07 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1341,23 +1341,9 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    To ensure an upgrade path from versions of
-    <productname>PostgreSQL</productname> earlier than 7.0,
-    we recognize <type>datetime</type>
-    (equivalent to <type>timestamp</type>) and
-    <type>timespan</type> (equivalent to <type>interval</type>).
-    These types are
-    now restricted to having an
-    implicit translation to <type>timestamp</type> and
-    <type>interval</type>, and 
-    support for these will be removed in the next release of
-    <productname>PostgreSQL</productname> (likely named 7.3).
-   </para>
-
-   <para>
     The types <type>abstime</type>
     and <type>reltime</type> are lower precision types which are used internally.
-    You are discouraged from using any of these types in new
+    You are discouraged from using these types in new
     applications and are encouraged to move any old
     ones over when appropriate. Any or all of these internal types
     might disappear in a future release.

@@ -415,7 +415,7 @@ MONEY = pgdbType('money')
 
 # this may be problematic as type are quite different ... I hope it won't hurt
 DATETIME = pgdbType(
-	'abstime', 'reltime', 'tinterval', 'date', 'time', 'timespan', 'timestamp'
+	'abstime', 'reltime', 'tinterval', 'date', 'time', 'timespan', 'timestamp', 'timestamptz', 'interval'
 )
 
 # OIDs are used for everything (types, tables, BLOBs, rows, ...). This may cause

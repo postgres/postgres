@@ -1290,8 +1290,8 @@ sub _sql_type
                 'VARCHAR2' => 'varchar',
                 'NVARCHAR2' => 'varchar',
 		# The DATE data type is used to store the date and time information.
-		# Pg type datetime should match all needs
-                'DATE' => 'datetime',
+		# Pg type timestamp should match all needs
+                'DATE' => 'timestamp',
 		# Type LONG is like VARCHAR2 but with up to 2Gb.
 		# PG type text should match all needs or if you want you could use blob
                 'LONG' => 'text', # Character data of variable length

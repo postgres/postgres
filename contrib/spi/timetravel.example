@@ -18,7 +18,7 @@ insert into tttest(price_id, price_val) values (2, 2);
 insert into tttest(price_id, price_val,price_off) values (3, 3, 'infinity');
 
 insert into tttest(price_id, price_val,price_off) values (3, 3, 
-	datetime_abstime(datetime_mi_span('now', '100')));
+	abstime('now'::timestamp - '100 days'::interval));
 insert into tttest(price_id, price_val,price_on) values (3, 3, 'infinity');
 
 select * from tttest;

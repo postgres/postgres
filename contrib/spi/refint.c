@@ -450,7 +450,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 						if ((strcmp(type, "text") && strcmp(type, "varchar") &&
 						strcmp(type, "char") && strcmp(type, "bpchar") &&
-							 strcmp(type, "date") && strcmp(type, "datetime")) == 0)
+							 strcmp(type, "date") && strcmp(type, "timestamp")) == 0)
 							is_char_type = 1;
 #ifdef	DEBUG_QUERY
 						elog(DEBUG3, "Check_foreign_key Debug value %s type %s %d",
