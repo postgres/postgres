@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.48 1999/09/04 18:42:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.49 1999/09/04 19:55:48 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -151,6 +151,7 @@
 #include "commands/vacuum.h"
 #include "libpq/be-fsstubs.h"
 #include "storage/proc.h"
+#include "utils/temprel.h"
 #include "utils/inval.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
@@ -1022,6 +1023,7 @@ AbortTransaction()
 	RecordTransactionAbort();
 	RelationPurgeLocalRelation(false);
 	DestroyNoNameRels();
+	invalidate_temp_relations();
 	AtEOXact_nbtree();
 	AtAbort_Cache();
 	AtAbort_Locks();
