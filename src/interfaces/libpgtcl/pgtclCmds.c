@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.12 1997/01/23 19:47:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.13 1997/04/02 18:16:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,8 +437,10 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
  the connection that produced the result
  -assign arrayName
  assign the results to an array
- -assignbyidx arrayName
+ -assignbyidx arrayName ?appendstr?
  assign the results to an array using the first field as a key
+ optional appendstr append that string to the key name. Usefull for
+ creating pseudo-multi dimentional arrays in tcl.
  -numTuples
  the number of tuples in the query
  -attributes
@@ -462,9 +464,10 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     int tupno;
     char prearrayInd[MAX_MESSAGE_LEN];
     char arrayInd[MAX_MESSAGE_LEN];
+    char *appendstr;
     char *arrVar;
 
-    if (argc != 3 && argc != 4) {
+    if (argc != 3 && argc != 4 && argc != 5) {
 	Tcl_AppendResult(interp, "Wrong # of arguments\n",0);
 	goto Pg_result_errReturn;
     }
@@ -523,18 +526,24 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	return TCL_OK;
     }
     else if (strcmp(opt, "-assignbyidx") == 0) {
-      if (argc != 4) {
-          Tcl_AppendResult(interp, "-assignbyidx option must be followed by a variable name",0);
+      if (argc !=4 && argc != 5) {
+          Tcl_AppendResult(interp, "-assignbyidx requires the array name and takes one optional argument as an append string",0);
           return TCL_ERROR;
       }
       arrVar = argv[3];
       /* this assignment assigns the table of result tuples into a giant
          array with the name given in the argument,
          the indices of the array or (tupno,attrName)*/
+      if (argc == 5) {
+	appendstr = argv[4];
+      } else {
+	appendstr = "";
+      }
       for (tupno = 0; tupno<PQntuples(result); tupno++) {
           sprintf(prearrayInd,"%s",PQgetvalue(result,tupno,0));
           for (i=1;i<PQnfields(result);i++) {
-              sprintf(arrayInd, "%s,%s", prearrayInd, PQfname(result,i));
+              sprintf(arrayInd, "%s,%s%s", prearrayInd, PQfname(result,i),
+                    appendstr);
               Tcl_SetVar2(interp, arrVar, arrayInd,
                           PQgetvalue(result,tupno,i),
                           TCL_LEAVE_ERR_MSG);
@@ -604,7 +613,7 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 		     "\t-status\n",
 		     "\t-conn\n",
 		     "\t-assign arrayVarName\n",
-		     "\t-assignbyidx arrayVarName\n",
+		     "\t-assignbyidx arrayVarName ?appendstr?\n",
 		     "\t-numTuples\n",
 		     "\t-attributes\n"
 		     "\t-lAttributes\n"
