@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.1 1996/08/27 21:50:14 scrappy Exp $
+ * $Id: htup.h,v 1.2 1996/10/19 04:02:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HTUP_H
 #define HTUP_H
 
-#include "access/attnum.h"
-#include "storage/bufpage.h"  		/* just to reduce levels of #include */
 #include "storage/itemptr.h"
 #include "utils/nabstime.h"
 
