@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.369 2004/02/25 19:41:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.370 2004/03/05 01:11:04 momjian Exp $
  *
  * NOTES
  *
@@ -3525,29 +3525,29 @@ pid_t win32_forkexec(const char* path, char *argv[])
 	si.cb = sizeof(si);
 	if (!CreateProcess(NULL,cmdLine,NULL,NULL,TRUE,0,NULL,NULL,&si,&pi))
 	{
-		elog(ERROR,"CreateProcess call failed (%d): %m",GetLastError());
+		elog(ERROR,"CreateProcess call failed (%i): %m",(int)GetLastError());
 		return -1;
 	}
 
 	if (!IsUnderPostmaster)
 		/* We are the Postmaster creating a child... */
 		win32_AddChild(pi.dwProcessId,pi.hProcess);
-	
+
 	if (!DuplicateHandle(GetCurrentProcess(),
 						 pi.hProcess,
 						 GetCurrentProcess(),
 						 &childHandleCopy,
 						 0,
 						 FALSE,
-						 DUPLICATE_SAME_ACCESS)) 
+						 DUPLICATE_SAME_ACCESS))
 		ereport(FATAL,
-				(errmsg_internal("failed to duplicate child handle: %i",GetLastError())));
+				(errmsg_internal("failed to duplicate child handle: %i",(int)GetLastError())));
 	waiterThread = CreateThread(NULL, 64*1024, win32_sigchld_waiter, (LPVOID)childHandleCopy, 0, NULL);
 	if (!waiterThread)
 		ereport(FATAL,
-				(errmsg_internal("failed to create sigchld waiter thread: %i",GetLastError())));
-	CloseHandle(waiterThread);	
-	
+				(errmsg_internal("failed to create sigchld waiter thread: %i",(int)GetLastError())));
+	CloseHandle(waiterThread);
+
 	if (IsUnderPostmaster)
 		CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
@@ -3600,14 +3600,14 @@ static void win32_RemoveChild(pid_t pid)
 
 	/* Something stronger than WARNING here? */
 	ereport(WARNING,
-			(errmsg_internal("unable to find child entry with pid %d",
+			(errmsg_internal("unable to find child entry with pid %lu",
 							 pid)));
 }
 
 static pid_t win32_waitpid(int *exitstatus)
 {
 	Assert(win32_childPIDArray && win32_childHNDArray);
-	elog(DEBUG3,"waiting on %d children",win32_numChildren);
+	elog(DEBUG3,"waiting on %lu children",win32_numChildren);
 
 	if (win32_numChildren > 0)
 	{
@@ -3623,8 +3623,8 @@ static pid_t win32_waitpid(int *exitstatus)
 		{
 			case WAIT_FAILED:
 				ereport(ERROR,
-						(errmsg_internal("failed to wait on %d children: %i",
-										 win32_numChildren,GetLastError())));
+						(errmsg_internal("failed to wait on %lu children: %i",
+										 win32_numChildren,(int)GetLastError())));
 				/* Fall through to WAIT_TIMEOUTs return */
 
 			case WAIT_TIMEOUT:
@@ -3641,7 +3641,7 @@ static pid_t win32_waitpid(int *exitstatus)
 					 * No choice other than to assume a catastrophic failure.
 					 */
 					ereport(FATAL,
-							(errmsg_internal("failed to get exit code for child %d",
+							(errmsg_internal("failed to get exit code for child %lu",
 											 win32_childPIDArray[index])));
 				*exitstatus = (int)exitCode;
 				return win32_childPIDArray[index];
@@ -3661,7 +3661,7 @@ static DWORD WINAPI win32_sigchld_waiter(LPVOID param) {
 	if (r == WAIT_OBJECT_0)
 		pg_queue_signal(SIGCHLD);
 	else
-		fprintf(stderr,"ERROR: Failed to wait on child process handle: %i\n",GetLastError());
+		fprintf(stderr,"ERROR: Failed to wait on child process handle: %i\n",(int)GetLastError());
 	CloseHandle(procHandle);
 	return 0;
 }
