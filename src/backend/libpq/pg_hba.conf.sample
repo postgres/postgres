@@ -12,8 +12,9 @@
 # connection to a database.
 # 
 # Each line is a new record. Records cannot be continued across multiple
-# lines. Lines beginning with # (comments) and blank lines are ignored. A
-# record consists of tokens separated by multiple spaces or tabs.
+# lines. Comments begin with # and continue to the end of the line. 
+# Blank lines are ignored. A record consists of tokens separated by 
+# multiple spaces or tabs.
 # 
 # The first token of a record indicates its type. The remainder of the
 # record is interpreted based on its type.
