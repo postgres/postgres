@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.220 2003/10/29 22:54:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.221 2003/10/29 23:28:59 momjian Exp $
 -->
 
 <appendix id="release">
@@ -301,19 +301,67 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Fix SSL to handle errors cleanly (Nathan Mueller)
    <footnote>
    <para>
-    In prior releases, 
+    In prior releases, certain rare SSL API error reports were not
+    handled correctly.  This release fixes those problems.
+    gracefully.
    </para>
    </footnote>
    </para></listitem>
-<listitem><para>SSL protocol security and performance improvements (Sean Chittenden)</para></listitem>
-<listitem><para>Print lock information when a deadlock is detected (Tom)</para></listitem>
-<listitem><para>Update <filename>/tmp</filename> socket mod. times regularly to avoid their removal (Tom)</para></listitem>
+<listitem><para>SSL protocol security and performance improvements (Sean Chittenden)
+   <footnote>
+   <para>
+    SSL key renegotiation was happening too frequently, causing poor SSL
+    performance.  Also, initial key handling was improved.
+   </para>
+   </footnote>
+   </para></listitem>
+<listitem><para>Print lock information when a deadlock is detected (Tom)
+   <footnote>
+   <para>
+    This allows easier debugging of deadlock situations.
+   </para>
+   </footnote>
+   </para></listitem>
+<listitem><para>Update <filename>/tmp</filename> socket mod. times regularly to avoid their removal (Tom)
+   <footnote>
+   <para>
+    This should help prevent <filename>/tmp</filename> directory cleaner
+    administration scripts from removing server socket files.
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>Enable PAM for MAC OS X (Aaron Hillegass)</para></listitem>
-<listitem><para>Make btree indexes fully WAL-safe (Tom)</para></listitem>
+<listitem><para>Make btree indexes fully WAL-safe (Tom)
+   <footnote>
+   <para>
+    In prior releases, under certain rare cases, a server crash could
+    cause btree indexes to become corrupt. This release removes those
+    last few rare cases.
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>Allow btree index compaction and empty page reuse (Tom)</para></listitem>
-<listitem><para>Fix inconsistent index lookups during split of first root page (Tom)</para></listitem>
+<listitem><para>Fix inconsistent index lookups during split of first root page (Tom)
+   <footnote>
+   <para>
+    In prior releases, when a single-page index split into two page,
+    there was a brief period when another database session would miss
+    seeing an index entry. This failure was possible primarly on
+    multi-cpu machines.  This release fixes that rare failure case.
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>Improve free space map allocation logic (Tom)</para></listitem>
-<listitem><para>Preserve free space information between postmaster restarts (Tom)</para></listitem>
+<listitem><para>Preserve free space information between postmaster restarts (Tom)
+   <footnote>
+   <para>
+    In prior releases, the free space map was not saved when the
+    postmaster was stopped, so newly started servers has no free space
+    information. This release saves the free space map, which is loaded
+    when the server is restarted.
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>Set proper schema permissions in initdb (Peter)</para></listitem>
 <listitem><para>Add start time to pg_stat_activity (Neil)</para></listitem>
 <listitem><para>New code to detect corrupt disk pages; erase with zero_damaged_pages (Tom)</para></listitem>
@@ -334,12 +382,36 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Allow multi-key hash joins (Tom)</para></listitem>
 <listitem><para>Improve constant folding (Tom)</para></listitem>
 <listitem><para>Add ability to inline simple SQL functions (Tom)</para></listitem>
-<listitem><para>Reduce memory usage for queries using complex functions (Tom)</para></listitem>
-<listitem><para>Improve GEQO optimizer performance (Tom)</para></listitem>
+<listitem><para>Reduce memory usage for queries using complex functions (Tom)
+   <footnote>
+   <para>
+    In prior releases, functions returning allocated memory would
+    not free it until the query completed. This release allows the
+    freeing of function-allocated memory when the function call
+    completes, reducing the total memory used by functions.
+   </para>
+   </footnote>
+   </para></listitem>
+<listitem><para>Improve GEQO optimizer performance (Tom)
+   <footnote>
+   <para>
+    There were several inefficiencies in the way the GEQO optimizer
+    managed potential query paths.  This release fixes this.
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>Allow IN/NOT IN to be handled via hash tables (Tom)</para></listitem>
 <listitem><para>Improve NOT IN (subquery) performance (Tom)</para></listitem>
 <listitem><para>Allow most IN subqueries to be processed as joins (Tom)</para></listitem>
-<listitem><para>Allow the postmaster to preload libraries using preload_libraries (Joe)</para></listitem>
+<listitem><para>Allow the postmaster to preload libraries using preload_libraries (Joe)
+   <footnote>
+   <para>
+    For shared libraries that require a long time to load, this option
+    is available so the library can be pre-loaded in the postmaster and
+    inherited by all database sessions.
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>Improve optimizer cost computations, particularly for subqueries (Tom)</para></listitem>
 <listitem><para>Avoid sort when subquery ORDER BY matches upper query (Tom)</para></listitem>
 <listitem><para>Assume WHERE a.x = b.y and b.y = 42 also means a.x = 42 (Tom)</para></listitem>
@@ -353,15 +425,44 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Improve trigger/constraint performance (Stephan)</para></listitem>
 <listitem><para>Improve speed of col IN (const, const, const, ...) (Tom)</para></listitem>
 <listitem><para>Fix hash indexes which were broken in rare cases (Tom)</para></listitem>
-<listitem><para>Improve hash index concurrency and speed (Tom)</para></listitem>
-<listitem><para>Align shared buffers on 32-byte boundary for copy speed improvement (Manfred Spraul)</para></listitem>
-<listitem><para>The NUMERIC datatype has been reimplemented for better performance (Tom)</para></listitem>
+<listitem><para>Improve hash index concurrency and speed (Tom)
+   <footnote>
+   <para>
+    Prior releases suffered from poor hash index performance,
+    particularly for high concurrency situations. This release fixes
+    that, and the development group is interested in reports comparing
+    btree and hash index performance.
+   </para>
+   </footnote>
+   </para></listitem>
+<listitem><para>Align shared buffers on 32-byte boundary for copy speed improvement (Manfred Spraul)
+   <footnote>
+   <para>
+    Certain CPU's perform faster data copies when addresses are 32-bit
+    aligned.
+   </para>
+   </footnote>
+   </para></listitem>
+<listitem><para>The NUMERIC datatype has been reimplemented for better performance (Tom)
+   <footnote>
+   <para>
+    NUMERIC used to be stored in base-100. The new code uses base-10000,
+    for significantly better performance.
+   </para>
+   </footnote>
+   </para></listitem>
 </itemizedlist></sect3>
 
 <sect3><title>Server Configuration</title>
 
 <itemizedlist>
 <listitem><para>Rename server parameter server_min_messages to log_min_messages (Bruce)</para></listitem>
+   <footnote>
+   <para>
+    This was done so most parameters that control the server logs being
+    with <literal>log_>/>.
+   </para>
+   </footnote>
 <listitem><para>Rename show_*_stats to log_*_stats (Bruce)</para></listitem>
 <listitem><para>Rename show_source_port to log_source_port (Bruce)</para></listitem>
 <listitem><para>Rename hostname_lookup to log_hostname (Bruce)</para></listitem>
