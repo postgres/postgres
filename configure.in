@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.357 2004/05/21 20:56:47 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.358 2004/05/22 00:34:49 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -670,7 +670,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h poll.h pwd.h sys/ipc.h sys/poll.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h utime.h kernel/OS.h kernel/image.h SupportDefs.h])
+AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h poll.h pwd.h sys/ipc.h sys/poll.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
 
 # At least on IRIX, cpp test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
@@ -795,7 +795,7 @@ PGAC_FUNC_GETTIMEOFDAY_1ARG
 # SunOS doesn't handle negative byte comparisons properly with +/- return
 AC_FUNC_MEMCMP
 
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproctitle setsid sigprocmask symlink sysconf utime utimes waitpid])
+AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 
@@ -1201,59 +1201,6 @@ AC_TRY_RUN([#include "$srcdir/src/tools/thread/thread_test.c"],
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
 fi
-
-# Adjust installation directories.
-#
-# These are initially set by the equivalent --xxxdir configure options.
-# We append "postgresql" to some of them, if the string does not already
-# contain "pgsql" or "postgres", in order to avoid directory clutter.
-
-if echo "$libexecdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
-then
-  :
-else
-  libexecdir="$libexecdir/postgresql"
-fi
-
-if echo "$datadir" | egrep 'pgsql|postgres' >/dev/null 2>&1
-then
-  :
-else
-  datadir="$datadir/postgresql"
-fi
-
-if echo "$sysconfdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
-then
-  :
-else
-  sysconfdir="$sysconfdir/postgresql"
-fi
-
-pkglibdir="$libdir"
-if echo "$pkglibdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
-then
-  :
-else
-  pkglibdir="$pkglibdir/postgresql"
-fi
-AC_SUBST(pkglibdir)
-
-pkgincludedir="$includedir"
-if echo "$pkgincludedir" | egrep 'pgsql|postgres' >/dev/null 2>&1
-then
-  :
-else
-  pkgincludedir="$pkgincludedir/postgresql"
-fi
-AC_SUBST(pkgincludedir)
-
-if echo "$docdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
-then
-  :
-else
-  docdir="$docdir/postgresql"
-fi
-
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

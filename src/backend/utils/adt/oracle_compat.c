@@ -9,21 +9,142 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.50 2004/02/27 03:59:23 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.51 2004/05/22 00:34:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+/*
+ * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
+ * declare them in <wchar.h>.
+ */
 #include <ctype.h>
+#ifdef HAVE_WCHAR_H
+#include <wchar.h>
+#endif
+#ifdef HAVE_WCTYPE_H
+#include <wctype.h>
+#endif
 
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
 
 
+/*
+ * If the system provides the needed functions for wide-character manipulation
+ * (which are all standardized by C99), then we implement upper/lower/initcap
+ * using wide-character functions.  Otherwise we use the traditional <ctype.h>
+ * functions, which of course will not work as desired in multibyte character
+ * sets.  Note that in either case we are effectively assuming that the
+ * database character encoding matches the encoding implied by LC_CTYPE.
+ *
+ * We assume if we have these two functions, we have their friends too, and
+ * can use the wide-character method.
+ */
+#if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
+#define USE_WIDE_UPPER_LOWER
+#endif
+
 static text *dotrim(const char *string, int stringlen,
 	   const char *set, int setlen,
 	   bool doltrim, bool dortrim);
+
+
+#ifdef USE_WIDE_UPPER_LOWER
+
+/*
+ * Convert a TEXT value into a palloc'd wchar string.
+ */
+static wchar_t *
+texttowcs(const text *txt)
+{
+	int			nbytes = VARSIZE(txt) - VARHDRSZ;
+	char	   *workstr;
+	wchar_t	   *result;
+	size_t		ncodes;
+
+	/* Overflow paranoia */
+	if (nbytes < 0 ||
+		nbytes > (int) (INT_MAX / sizeof(wchar_t)) - 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	/* Need a null-terminated version of the input */
+	workstr = (char *) palloc(nbytes + 1);
+	memcpy(workstr, VARDATA(txt), nbytes);
+	workstr[nbytes] = '\0';
+
+	/* Output workspace cannot have more codes than input bytes */
+	result = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
+
+	/* Do the conversion */
+	ncodes = mbstowcs(result, workstr, nbytes + 1);
+
+	if (ncodes == (size_t) -1)
+	{
+		/*
+		 * Invalid multibyte character encountered.  We try to give a useful
+		 * error message by letting pg_verifymbstr check the string.  But
+		 * it's possible that the string is OK to us, and not OK to mbstowcs
+		 * --- this suggests that the LC_CTYPE locale is different from the
+		 * database encoding.  Give a generic error message if verifymbstr
+		 * can't find anything wrong.
+		 */
+		pg_verifymbstr(workstr, nbytes, false);
+		ereport(ERROR,
+				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+				 errmsg("invalid multibyte character for locale")));
+	}
+
+	Assert(ncodes <= (size_t) nbytes);
+
+	return result;
+}
+
+
+/*
+ * Convert a wchar string into a palloc'd TEXT value.  The wchar string
+ * must be zero-terminated, but we also require the caller to pass the string
+ * length, since it will know it anyway in current uses.
+ */
+static text *
+wcstotext(const wchar_t *str, int ncodes)
+{
+	text	   *result;
+	size_t		nbytes;
+
+	/* Overflow paranoia */
+	if (ncodes < 0 ||
+		ncodes > (int) ((INT_MAX - VARHDRSZ) / MB_CUR_MAX) - 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	/* Make workspace certainly large enough for result */
+	result = (text *) palloc((ncodes + 1) * MB_CUR_MAX + VARHDRSZ);
+
+	/* Do the conversion */
+	nbytes = wcstombs((char *) VARDATA(result), str,
+					  (ncodes + 1) * MB_CUR_MAX);
+
+	if (nbytes == (size_t) -1)
+	{
+		/* Invalid multibyte character encountered ... shouldn't happen */
+		ereport(ERROR,
+				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+				 errmsg("invalid multibyte character for locale")));
+	}
+
+	Assert(nbytes <= (size_t) (ncodes * MB_CUR_MAX));
+
+	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+
+	return result;
+}
+
+#endif /* USE_WIDE_UPPER_LOWER */
 
 
 /********************************************************************
@@ -43,6 +164,25 @@ static text *dotrim(const char *string, int stringlen,
 Datum
 lower(PG_FUNCTION_ARGS)
 {
+#ifdef USE_WIDE_UPPER_LOWER
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *result;
+	wchar_t	   *workspace;
+	int			i;
+
+	workspace = texttowcs(string);
+
+	for (i = 0; workspace[i] != 0; i++)
+		workspace[i] = towlower(workspace[i]);
+
+	result = wcstotext(workspace, i);
+
+	pfree(workspace);
+
+	PG_RETURN_TEXT_P(result);
+
+#else /* !USE_WIDE_UPPER_LOWER */
+
 	text	   *string = PG_GETARG_TEXT_P_COPY(0);
 	char	   *ptr;
 	int			m;
@@ -58,6 +198,7 @@ lower(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(string);
+#endif /* USE_WIDE_UPPER_LOWER */
 }
 
 
@@ -78,6 +219,25 @@ lower(PG_FUNCTION_ARGS)
 Datum
 upper(PG_FUNCTION_ARGS)
 {
+#ifdef USE_WIDE_UPPER_LOWER
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *result;
+	wchar_t	   *workspace;
+	int			i;
+
+	workspace = texttowcs(string);
+
+	for (i = 0; workspace[i] != 0; i++)
+		workspace[i] = towupper(workspace[i]);
+
+	result = wcstotext(workspace, i);
+
+	pfree(workspace);
+
+	PG_RETURN_TEXT_P(result);
+
+#else /* !USE_WIDE_UPPER_LOWER */
+
 	text	   *string = PG_GETARG_TEXT_P_COPY(0);
 	char	   *ptr;
 	int			m;
@@ -93,6 +253,7 @@ upper(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(string);
+#endif /* USE_WIDE_UPPER_LOWER */
 }
 
 
@@ -116,6 +277,32 @@ upper(PG_FUNCTION_ARGS)
 Datum
 initcap(PG_FUNCTION_ARGS)
 {
+#ifdef USE_WIDE_UPPER_LOWER
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *result;
+	wchar_t	   *workspace;
+	int			wasalnum = 0;
+	int			i;
+
+	workspace = texttowcs(string);
+
+	for (i = 0; workspace[i] != 0; i++)
+	{
+		if (wasalnum)
+			workspace[i] = towlower(workspace[i]);
+		else
+			workspace[i] = towupper(workspace[i]);
+		wasalnum = iswalnum(workspace[i]);
+	}
+
+	result = wcstotext(workspace, i);
+
+	pfree(workspace);
+
+	PG_RETURN_TEXT_P(result);
+
+#else /* !USE_WIDE_UPPER_LOWER */
+
 	text	   *string = PG_GETARG_TEXT_P_COPY(0);
 	char	   *ptr;
 	int			m;
@@ -142,6 +329,7 @@ initcap(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(string);
+#endif /* USE_WIDE_UPPER_LOWER */
 }
 
 

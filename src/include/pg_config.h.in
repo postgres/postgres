@@ -509,6 +509,9 @@
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
 #undef HAVE_TM_ZONE
 
+/* Define to 1 if you have the `towlower' function. */
+#undef HAVE_TOWLOWER
+
 /* Define to 1 if you have the external array `tzname'. */
 #undef HAVE_TZNAME
 
@@ -544,6 +547,15 @@
 
 /* Define to 1 if you have the `waitpid' function. */
 #undef HAVE_WAITPID
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the `wcstombs' function. */
+#undef HAVE_WCSTOMBS
+
+/* Define to 1 if you have the <wctype.h> header file. */
+#undef HAVE_WCTYPE_H
 
 /* Define to the appropriate snprintf format for 64-bit ints, if any. */
 #undef INT64_FORMAT
