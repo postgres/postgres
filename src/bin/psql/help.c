@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.26 2000/04/24 22:41:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.27 2000/05/09 19:08:36 momjian Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -208,30 +208,30 @@ slashUsage(void)
 	fprintf(fout, " \\df            list functions\n");
 	fprintf(fout, " \\do            list operators\n");
 	fprintf(fout, " \\dT            list data types\n");
-	fprintf(fout, " \\e [fname]     edit the current query buffer or <fname> with external editor\n");
+	fprintf(fout, " \\e [file]      edit the current query buffer or [file] with external editor\n");
 	fprintf(fout, " \\echo <text>   write text to stdout\n");
 	fprintf(fout, " \\encoding <encoding>  set client encoding\n");
 	fprintf(fout, " \\f <sep>       change field separator\n");
-	fprintf(fout, " \\g [fname]     send query to backend (and results in <fname> or |pipe)\n");
+	fprintf(fout, " \\g [file]      send query to backend (and results in [file] or |pipe)\n");
 	fprintf(fout, " \\h [cmd]       help on syntax of sql commands, * for all commands\n");
 	fprintf(fout, " \\H             toggle HTML mode (currently %s)\n",
 			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(fout, " \\i <fname>     read and execute queries from filename\n");
+	fprintf(fout, " \\i <file>      read and execute queries from <file>\n");
 	fprintf(fout, " \\l             list all databases\n");
 	fprintf(fout, " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
 			"                  large object operations\n");
-	fprintf(fout, " \\o [fname]     send all query results to <fname>, or |pipe\n");
+	fprintf(fout, " \\o [file]      send all query results to [file], or |pipe\n");
 	fprintf(fout, " \\p             show the content of the current query buffer\n");
 	fprintf(fout, " \\pset {format|border|expanded|fieldsep|recordsep|tuples_only|title|tableattr\n"
 			"     |pager}    set table output options\n");
 	fprintf(fout, " \\q             quit psql\n");
 	fprintf(fout, " \\qecho <text>  write text to query output stream (see \\o)\n");
 	fprintf(fout, " \\r             reset (clear) the query buffer\n");
-	fprintf(fout, " \\s [fname]     print history or save it in <fname>\n");
+	fprintf(fout, " \\s [file]      print history or save it in [file]\n");
 	fprintf(fout, " \\set <var> <value>  set internal variable\n");
 	fprintf(fout, " \\t             don't show table headers or footers (currently %s)\n", ON(pset.popt.topt.tuples_only));
 	fprintf(fout, " \\unset <var>   unset (delete) internal variable\n");
-	fprintf(fout, " \\w <fname>     write current query buffer to a file\n");
+	fprintf(fout, " \\w <file>      write current query buffer to a <file>\n");
 	fprintf(fout, " \\x             toggle expanded output (currently %s)\n", ON(pset.popt.topt.expanded));
 	fprintf(fout, " \\z             list table access permissions\n");
 	fprintf(fout, " \\! [cmd]       shell escape or command\n");
