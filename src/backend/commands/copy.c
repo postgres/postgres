@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.173 2002/09/20 15:29:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.174 2002/09/20 15:43:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1127,7 +1127,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 				/* Process constraints */
 				node = coerce_type_constraints((Node *) con, attr[m]->atttypid,
-												COERCE_DONTCARE);
+												COERCE_IMPLICIT_CAST);
 
 				values[m] = ExecEvalExpr(node, econtext,
 										 &isNull, NULL);
