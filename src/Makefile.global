@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.62 1996/11/11 13:24:43 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.63 1996/11/12 11:41:27 bryanh Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -345,14 +345,14 @@ SLSUFF=	.so
 endif
 
 %.so: %.o
-	$(LD) -x -r -o $(objdir)/$(<F).obj $(objdir)/$(<F)
-	@echo building shared object $(objdir)/$(@F)
-	@rm -f $(objdir)/$(@F).pic
-	@${AR} cq $(objdir)/$(@F).pic `lorder $(objdir)/$(<F).obj | tsort`
-	${RANLIB} $(objdir)/$(@F).pic
-	@rm -f $(objdir)/$(@F)
+	$(LD) -x -r -o $<.obj $<
+	@echo building shared object $@
+	@rm -f $@.pic
+	@${AR} cq $@.pic `lorder $<.obj | tsort`
+	${RANLIB} $@.pic
+	@rm -f $@
 	$(LD) -x -Bshareable -Bforcearchive \
-	  -o $(objdir)/$(@F) $(objdir)/$(@F).pic
+	  -o $@ $@.pic
 endif
 
 #--------------------------------------------------------------------------
@@ -394,11 +394,11 @@ SLSUFF=	.so
 MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 
 %$(EXPSUFF):  %.o
-	$(MKLDEXPORT) $(objdir)/$(<F) `pwd` > $(objdir)/$(@F)
+	$(MKLDEXPORT) $< `pwd` > $@
 
 %.so: %.o %$(EXPSUFF)
 	@echo The link stage here:
-	$(LD) -H512 -T512 -o $(objdir)/$(@F) -e _nostart \
+	$(LD) -H512 -T512 -o $@ -e _nostart \
 	  -bI:$(LIBDIR)/postgres$(EXPSUFF) -bE:$*$(EXPSUFF) \
 	  $*.o -lm -lc 2>/dev/null
 endif
@@ -432,9 +432,8 @@ USE_REGEX= 1
 #
 SLSUFF= .so
 
-# cd into objdir so that so_locations is also in obj
 %.so:  %.o
-	cd $(objdir); $(LD) -shared -expect_unresolved '*' -o $(@F) $(<F)
+	$(LD) -shared -expect_unresolved '*' -o $@ $<
 
 CLEANFILES+= so_locations
 
@@ -491,7 +490,7 @@ SLSUFF=	.so
 
 CFLAGS_SL= -fpic
 %.so: %.o
-	cd $(objdir); $(CC) -shared -o $(@F) $(<F)
+	$(CC) -shared -o $@ $<
 
 #
 # for postgres.mk
@@ -555,7 +554,7 @@ CFLAGS_SL= +z
 SLSUFF= .sl
 
 %.sl: %.o
-	$(LD) -b -o $(objdir)/$(@F) $(objdir)/$(<F)
+	$(LD) -b -o $@ $<
 
 DASH_N= ''
 BACKSLASH_C= '\\\\c'
@@ -602,7 +601,7 @@ endif
 SLSUFF=	.so
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
+	$(LD) -G -Bdynamic -o $@ $<
 
 DASH_N=''
 BACKSLASH_C='\\\\c'
@@ -641,7 +640,7 @@ LD_ADD+= $(LDADD_BE)
 SLSUFF= .so
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
+	$(LD) -G -Bdynamic -o $@ $<
 
 DASH_N=''
 BACKSLASH_C='\\\\c'
@@ -669,7 +668,7 @@ USE_REGEX= 1
 #
 CFLAGS_SL= -fpic
 %.so: %.o
-	cd $(objdir); $(CC) -shared -o $(@F) $(<F)
+	$(CC) -shared -o $@ $<
 
 #
 # for postgres.mk
@@ -707,7 +706,7 @@ endif
 SLSUFF= .so
 
 %.so: %.o
-	$(LD) -dc -dp -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
+	$(LD) -dc -dp -Bdynamic -o $@ $<
 endif
 
 #----------------------------------------------------------------------------
@@ -750,7 +749,7 @@ endif
 SLSUFF= .so
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
+	$(LD) -G -Bdynamic -o $@ $<
 
 DASH_N= ''
 BACKSLASH_C= '\\\\c'
@@ -801,10 +800,8 @@ endif
 
 SLSUFF= .so
 
-#%.so: %.o
-#	$(LD) -G $(LDFLAGS) -o $(objdir)/$(@F) $(objdir)/$(<F)
 %.so: %.o
-	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
+	$(LD) -G -Bdynamic -o $@ $<
 
 DASH_N= ''
 BACKSLASH_C= '\\\\c'
