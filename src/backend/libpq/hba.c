@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.133 2004/10/12 21:54:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.134 2004/11/17 19:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,7 @@ next_token_expand(FILE *file)
 	char	   *comma_str = pstrdup("");
 	bool		trailing_comma;
 	char	   *incbuf;
+	int			needed;
 
 	do
 	{
@@ -239,16 +240,14 @@ next_token_expand(FILE *file)
 		else
 			incbuf = pstrdup(buf);
 
-		comma_str = repalloc(comma_str,
-							 strlen(comma_str) + strlen(incbuf) + 1);
-		strcat(comma_str, incbuf);
-		pfree(incbuf);
-
+		needed = strlen(comma_str) + strlen(incbuf) + 1;
 		if (trailing_comma)
-		{
-			comma_str = repalloc(comma_str, strlen(comma_str) + 1 + 1);
+			needed++;
+		comma_str = repalloc(comma_str, needed);
+		strcat(comma_str, incbuf);
+		if (trailing_comma)
 			strcat(comma_str, MULTI_VALUE_SEP);
-		}
+		pfree(incbuf);
 	} while (trailing_comma);
 
 	return comma_str;
@@ -327,7 +326,7 @@ tokenize_inc_file(const char *inc_filename)
 		pfree(inc_fullname);
 
 		/* return empty string, it matches nothing */
-		return pstrdup("");
+		return comma_str;
 	}
 	pfree(inc_fullname);
 
@@ -335,7 +334,7 @@ tokenize_inc_file(const char *inc_filename)
 	tokenize_file(inc_file, &inc_lines, &inc_line_nums);
 	FreeFile(inc_file);
 
-	/* Create comma-separate string from List */
+	/* Create comma-separated string from List */
 	foreach(line, inc_lines)
 	{
 		List	   *token_list = (List *) lfirst(line);
@@ -343,13 +342,15 @@ tokenize_inc_file(const char *inc_filename)
 
 		foreach(token, token_list)
 		{
-			if (strlen(comma_str))
-			{
-				comma_str = repalloc(comma_str, strlen(comma_str) + 1);
+			int		oldlen = strlen(comma_str);
+			int		needed;
+
+			needed = oldlen + strlen(lfirst(token)) + 1;
+			if (oldlen > 0)
+				needed++;
+			comma_str = repalloc(comma_str, needed);
+			if (oldlen > 0)
 				strcat(comma_str, MULTI_VALUE_SEP);
-			}
-			comma_str = repalloc(comma_str,
-						  strlen(comma_str) + strlen(lfirst(token)) + 1);
 			strcat(comma_str, lfirst(token));
 		}
 	}
