@@ -9,11 +9,15 @@
  *
  * This module is essentially the same as the backend's StringInfo data type,
  * but it is intended for use in frontend libpq and client applications.
- * Thus, it does not rely on palloc(), elog(), nor vsnprintf().
+ * Thus, it does not rely on palloc() nor elog().
+ *
+ * It does rely on vsnprintf(); if configure finds that libc doesn't provide
+ * a usable vsnprintf(), then a copy of our own implementation of it will
+ * be linked into libpq.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqexpbuffer.h,v 1.1 1999/08/31 01:37:37 tgl Exp $
+ * $Id: pqexpbuffer.h,v 1.2 2000/01/17 02:59:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,14 +120,6 @@ extern int enlargePQExpBuffer(PQExpBuffer str, int needed);
  * and insert it into str.  More space is allocated to str if necessary.
  * This is a convenience routine that does the same thing as
  * resetPQExpBuffer() followed by appendPQExpBuffer().
- *
- * CAUTION: the frontend version of this routine WILL FAIL if the result of
- * the sprintf formatting operation exceeds 1KB of data (but the size of the
- * pre-existing string in the buffer doesn't matter).  We could make it
- * support larger strings, but that requires vsnprintf() which is not
- * universally available.  Currently there is no need for long strings to be
- * formatted in the frontend.  We could support it, if necessary, by
- * conditionally including a vsnprintf emulation.
  */
 extern void printfPQExpBuffer(PQExpBuffer str, const char *fmt,...);
 
@@ -133,14 +129,6 @@ extern void printfPQExpBuffer(PQExpBuffer str, const char *fmt,...);
  * and append it to whatever is already in str.  More space is allocated
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
- *
- * CAUTION: the frontend version of this routine WILL FAIL if the result of
- * the sprintf formatting operation exceeds 1KB of data (but the size of the
- * pre-existing string in the buffer doesn't matter).  We could make it
- * support larger strings, but that requires vsnprintf() which is not
- * universally available.  Currently there is no need for long strings to be
- * formatted in the frontend.  We could support it, if necessary, by
- * conditionally including a vsnprintf emulation.
  */
 extern void appendPQExpBuffer(PQExpBuffer str, const char *fmt,...);
 

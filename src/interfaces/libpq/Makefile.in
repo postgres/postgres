@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.51 2000/01/10 15:41:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.52 2000/01/17 02:59:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-      pqexpbuffer.o dllist.o pqsignal.o
+      pqexpbuffer.o dllist.o pqsignal.o @SNPRINTF@
 
 ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o big5.o
@@ -42,14 +42,19 @@ SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
 include $(SRCDIR)/Makefile.shlib
 
 
-# We need to compile this with special options for shared libs,
-# so we can't use the object in $(SRCDIR)/backend
+# We use several backend modules verbatim, but since we need to compile
+# with appropriate options to build a shared lib, we can't necessarily
+# use the same object files as the backend uses.  Instead, symlink the
+# source files in here and build our own object file.
+
 dllist.c:	$(SRCDIR)/backend/lib/dllist.c
 	-$(LN_S) $(SRCDIR)/backend/lib/dllist.c .
 
+# this only gets done if configure finds system doesn't have snprintf()
+snprintf.c:	$(SRCDIR)/backend/port/snprintf.c
+	-$(LN_S) $(SRCDIR)/backend/port/snprintf.c .
+
 ifdef MULTIBYTE
-# We need to compile this with special options for shared libs,
-# so we can't use the object in $(SRCDIR)/backend
 common.c: $(SRCDIR)/backend/utils/mb/common.c
 	-$(LN_S) $(SRCDIR)/backend/utils/mb/common.c .
 
@@ -62,6 +67,7 @@ conv.c: $(SRCDIR)/backend/utils/mb/conv.c
 big5.c: $(SRCDIR)/backend/utils/mb/big5.c
 	-$(LN_S) $(SRCDIR)/backend/utils/mb/big5.c .
 endif
+
 
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they
@@ -87,7 +93,7 @@ install-headers: libpq-fe.h libpq-int.h
 
 clean: clean-shlib
 	rm -f lib$(NAME).a $(OBJS)
-	rm -f dllist.c common.c wchar.c conv.c big5.c
+	rm -f dllist.c snprintf.c common.c wchar.c conv.c big5.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
