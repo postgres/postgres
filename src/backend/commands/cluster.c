@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.60 2000/11/16 22:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.61 2001/01/01 21:35:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "commands/cluster.h"
+#include "commands/command.h"
 #include "commands/rename.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
@@ -106,8 +107,7 @@ cluster(char *oldrelname, char *oldindexname)
 
 	OIDNewHeap = copy_heap(OIDOldHeap, NewHeapName);
 
-	/* To make the new heap visible (which is until now empty). */
-	CommandCounterIncrement();
+	/* We do not need CommandCounterIncrement() because copy_heap did it. */
 
 	/*
 	 * Copy the heap data into the new table in the desired order.
@@ -150,7 +150,7 @@ copy_heap(Oid OIDOldHeap, char *NewName)
 
 	/*
 	 * Need to make a copy of the tuple descriptor,
-	 * heap_create_with_catalog modifies it.
+	 * since heap_create_with_catalog modifies it.
 	 */
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
@@ -158,8 +158,19 @@ copy_heap(Oid OIDOldHeap, char *NewName)
 										  RELKIND_RELATION, false,
 										  allowSystemTableMods);
 
-	if (!OidIsValid(OIDNewHeap))
-		elog(ERROR, "copy_heap: cannot create temporary heap relation");
+	/*
+	 * Advance command counter so that the newly-created
+	 * relation's catalog tuples will be visible to heap_open.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * If necessary, create a TOAST table for the new relation.
+	 * Note that AlterTableCreateToastTable ends with
+	 * CommandCounterIncrement(), so that the TOAST table will
+	 * be visible for insertion.
+	 */
+	AlterTableCreateToastTable(NewName, true);
 
 	heap_close(OldHeap, NoLock);
 
