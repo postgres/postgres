@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.76 2001/11/19 09:05:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.77 2001/11/19 18:21:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,20 +256,13 @@ textlen(PG_FUNCTION_ARGS)
  * textoctetlen -
  *	  returns the physical length of a text*
  *	   (which is less than the VARSIZE of the text*)
- *
- * XXX is it actually appropriate to return the compressed length
- * when the value is compressed?  It's not at all clear to me that
- * this is what SQL92 has in mind ...
  */
 Datum
 textoctetlen(PG_FUNCTION_ARGS)
 {
-	struct varattrib *t = (struct varattrib *) PG_GETARG_RAW_VARLENA_P(0);
+	text    *arg = PG_GETARG_VARCHAR_P(0);
 
-	if (!VARATT_IS_EXTERNAL(t))
-		PG_RETURN_INT32(VARATT_SIZE(t) - VARHDRSZ);
-
-	PG_RETURN_INT32(t->va_content.va_external.va_extsize);
+	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 }
 
 /*
