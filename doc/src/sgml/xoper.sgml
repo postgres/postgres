@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.21 2003/01/06 01:20:40 tgl Exp $
 -->
 
  <Chapter Id="xoper">
@@ -471,6 +471,17 @@ table1.column1 OP table2.column2
       </listitem>
      </itemizedlist>
     </para>
+
+    <note>
+    <para>
+     <literal>GROUP BY</> and <literal>DISTINCT</> operations require each
+     datatype being grouped or compared to have a mergejoinable
+     equality operator named <literal>=</>.  The equality operator and its
+     associated <literal>SORT1</> operator are used to implement these
+     operations.  Also, the associated <literal>SORT1</> operator is the
+     default ordering operator for <literal>ORDER BY</>.
+    </para>
+    </note>
 
     <note>
     <para>
