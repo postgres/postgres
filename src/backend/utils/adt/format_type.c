@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.28 2002/03/20 19:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.29 2002/05/01 23:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,13 @@
 
 #include <ctype.h>
 
-#include "fmgr.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/numeric.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -47,7 +49,7 @@ __attribute__((format(printf, 2, 3)));
  * pg_attribute.atttypmod. This function will get the type name and
  * format it and the modifier to canonical SQL format, if the type is
  * a standard type. Otherwise you just get pg_type.typname back,
- * double quoted if it contains funny characters.
+ * double quoted if it contains funny characters or matches a keyword.
  *
  * If typemod is NULL then we are formatting a type name in a context where
  * no typemod is available, eg a function argument or result type.  This
@@ -121,11 +123,9 @@ format_type_internal(Oid type_oid, int32 typemod,
 {
 	bool		with_typemod = typemod_given && (typemod >= 0);
 	HeapTuple	tuple;
+	Form_pg_type typeform;
 	Oid			array_base_type;
-	int16		typlen;
-	char		typtype;
 	bool		is_array;
-	char	   *name;
 	char	   *buf;
 
 	if (type_oid == InvalidOid && allow_invalid)
@@ -142,17 +142,18 @@ format_type_internal(Oid type_oid, int32 typemod,
 			elog(ERROR, "could not locate data type with oid %u in catalog",
 				 type_oid);
 	}
+	typeform = (Form_pg_type) GETSTRUCT(tuple);
 
 	/*
 	 * Check if it's an array (and not a domain --- we don't want to show
 	 * the substructure of a domain type).  Fixed-length array types such
 	 * as "name" shouldn't get deconstructed either.
 	 */
-	array_base_type = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
-	typlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
-	typtype = ((Form_pg_type) GETSTRUCT(tuple))->typtype;
+	array_base_type = typeform->typelem;
 
-	if (array_base_type != InvalidOid && typlen < 0 && typtype != 'd')
+	if (array_base_type != InvalidOid &&
+		typeform->typlen < 0 &&
+		typeform->typtype != 'd')
 	{
 		/* Switch our attention to the array element type */
 		ReleaseSysCache(tuple);
@@ -167,11 +168,25 @@ format_type_internal(Oid type_oid, int32 typemod,
 				elog(ERROR, "could not locate data type with oid %u in catalog",
 					 type_oid);
 		}
-		is_array = true;
+		typeform = (Form_pg_type) GETSTRUCT(tuple);
 		type_oid = array_base_type;
+		is_array = true;
 	}
 	else
 		is_array = false;
+
+	/*
+	 * See if we want to special-case the output for certain built-in types.
+	 * Note that these special cases should all correspond to special
+	 * productions in gram.y, to ensure that the type name will be taken as
+	 * a system type, not a user type of the same name.
+	 *
+	 * If we do not provide a special-case output here, the type name will
+	 * be handled the same way as a user type name --- in particular, it
+	 * will be double-quoted if it matches any lexer keyword.  This behavior
+	 * is essential for some cases, such as types "bit" and "char".
+	 */
+	buf = NULL;					/* flag for no special case */
 
 	switch (type_oid)
 	{
@@ -186,7 +201,6 @@ format_type_internal(Oid type_oid, int32 typemod,
 				 * BIT(1) per SQL spec.  Report it as the quoted typename
 				 * so that parser will not assign a bogus typmod.
 				 */
-				buf = pstrdup("\"bit\"");
 			}
 			else
 				buf = pstrdup("bit");
@@ -207,18 +221,9 @@ format_type_internal(Oid type_oid, int32 typemod,
 				 * which means CHARACTER(1) per SQL spec.  Report it as
 				 * bpchar so that parser will not assign a bogus typmod.
 				 */
-				buf = pstrdup("bpchar");
 			}
 			else
 				buf = pstrdup("character");
-			break;
-
-		case CHAROID:
-			/*
-			 * This char type is the single-byte version. You have to
-			 * double-quote it to get at it in the parser.
-			 */
-			buf = pstrdup("\"char\"");
 			break;
 
 		case FLOAT4OID:
@@ -365,19 +370,27 @@ format_type_internal(Oid type_oid, int32 typemod,
 			else
 				buf = pstrdup("character varying");
 			break;
+	}
 
-		default:
-			name = NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname);
-			/*
-			 * Double-quote the name if it's not a standard identifier.
-			 * Note this is *necessary* for ruleutils.c's use.
-			 */
-			if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name)
-				|| isdigit((unsigned char) name[0]))
-				buf = psnprintf(strlen(name) + 3, "\"%s\"", name);
-			else
-				buf = pstrdup(name);
-			break;
+	if (buf == NULL)
+	{
+		/*
+		 * Default handling: report the name as it appears in the catalog.
+		 * Here, we must qualify the name if it is not visible in the search
+		 * path, and we must double-quote it if it's not a standard identifier
+		 * or if it matches any keyword.
+		 */
+		char	   *nspname;
+		char	   *typname;
+
+		if (TypeIsVisible(type_oid))
+			nspname = NULL;
+		else
+			nspname = get_namespace_name(typeform->typnamespace);
+
+		typname = NameStr(typeform->typname);
+
+		buf = quote_qualified_identifier(nspname, typname);
 	}
 
 	if (is_array)

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.16 2002/04/30 01:26:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.17 2002/05/01 23:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -297,6 +298,56 @@ RelnameGetRelid(const char *relname)
 }
 
 /*
+ * RelationIsVisible
+ *		Determine whether a relation (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified relation name".
+ */
+bool
+RelationIsVisible(Oid relid)
+{
+	HeapTuple	reltup;
+	Form_pg_class relform;
+	Oid			relnamespace;
+	bool		visible;
+
+	recomputeNamespacePath();
+
+	reltup = SearchSysCache(RELOID,
+							ObjectIdGetDatum(relid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "Cache lookup failed for relation %u", relid);
+	relform = (Form_pg_class) GETSTRUCT(reltup);
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible.
+	 */
+	relnamespace = relform->relnamespace;
+	if (relnamespace != myTempNamespace &&
+		relnamespace != PG_CATALOG_NAMESPACE &&
+		!intMember(relnamespace, namespaceSearchPath))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another relation of the same name earlier in the path.
+		 * So we must do a slow check to see if this rel would be found by
+		 * RelnameGetRelid.
+		 */
+		char	   *relname = NameStr(relform->relname);
+
+		visible = (RelnameGetRelid(relname) == relid);
+	}
+
+	ReleaseSysCache(reltup);
+
+	return visible;
+}
+
+
+/*
  * TypenameGetTypid
  *		Try to resolve an unqualified datatype name.
  *		Returns OID if type found in search path, else InvalidOid.
@@ -346,54 +397,53 @@ TypenameGetTypid(const char *typname)
 }
 
 /*
- * OpclassnameGetOpcid
- *		Try to resolve an unqualified index opclass name.
- *		Returns OID if opclass found in search path, else InvalidOid.
- *
- * This is essentially the same as TypenameGetTypid, but we have to have
- * an extra argument for the index AM OID.
+ * TypeIsVisible
+ *		Determine whether a type (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified type name".
  */
-Oid
-OpclassnameGetOpcid(Oid amid, const char *opcname)
+bool
+TypeIsVisible(Oid typid)
 {
-	Oid			opcid;
-	List	   *lptr;
+	HeapTuple	typtup;
+	Form_pg_type typform;
+	Oid			typnamespace;
+	bool		visible;
 
 	recomputeNamespacePath();
 
-	/*
-	 * If system namespace is not in path, implicitly search it before path
-	 */
-	if (!pathContainsSystemNamespace)
-	{
-		opcid = GetSysCacheOid(CLAAMNAMENSP,
-							   ObjectIdGetDatum(amid),
-							   PointerGetDatum(opcname),
-							   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
-							   0);
-		if (OidIsValid(opcid))
-			return opcid;
-	}
+	typtup = SearchSysCache(TYPEOID,
+							ObjectIdGetDatum(typid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(typtup))
+		elog(ERROR, "Cache lookup failed for type %u", typid);
+	typform = (Form_pg_type) GETSTRUCT(typtup);
 
 	/*
-	 * Else search the path
+	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 */
-	foreach(lptr, namespaceSearchPath)
+	typnamespace = typform->typnamespace;
+	if (typnamespace != PG_CATALOG_NAMESPACE &&
+		!intMember(typnamespace, namespaceSearchPath))
+		visible = false;
+	else
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another type of the same name earlier in the path.
+		 * So we must do a slow check to see if this type would be found by
+		 * TypenameGetTypid.
+		 */
+		char	   *typname = NameStr(typform->typname);
 
-		opcid = GetSysCacheOid(CLAAMNAMENSP,
-							   ObjectIdGetDatum(amid),
-							   PointerGetDatum(opcname),
-							   ObjectIdGetDatum(namespaceId),
-							   0);
-		if (OidIsValid(opcid))
-			return opcid;
+		visible = (TypenameGetTypid(typname) == typid);
 	}
 
-	/* Not found in path */
-	return InvalidOid;
+	ReleaseSysCache(typtup);
+
+	return visible;
 }
+
 
 /*
  * FuncnameGetCandidates
@@ -583,6 +633,70 @@ FuncnameGetCandidates(List *names, int nargs)
 }
 
 /*
+ * FunctionIsVisible
+ *		Determine whether a function (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified function name with exact argument matches".
+ */
+bool
+FunctionIsVisible(Oid funcid)
+{
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+	Oid			pronamespace;
+	bool		visible;
+
+	recomputeNamespacePath();
+
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "Cache lookup failed for procedure %u", funcid);
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible.
+	 */
+	pronamespace = procform->pronamespace;
+	if (pronamespace != PG_CATALOG_NAMESPACE &&
+		!intMember(pronamespace, namespaceSearchPath))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another proc of the same name and arguments earlier
+		 * in the path.  So we must do a slow check to see if this is the
+		 * same proc that would be found by FuncnameGetCandidates.
+		 */
+		char	   *proname = NameStr(procform->proname);
+		int			nargs = procform->pronargs;
+		FuncCandidateList clist;
+
+		visible = false;
+
+		clist = FuncnameGetCandidates(makeList1(makeString(proname)), nargs);
+
+		for (; clist; clist = clist->next)
+		{
+			if (memcmp(clist->args, procform->proargtypes,
+					   nargs * sizeof(Oid)) == 0)
+			{
+				/* Found the expected entry; is it the right proc? */
+				visible = (clist->oid == funcid);
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(proctup);
+
+	return visible;
+}
+
+
+/*
  * OpernameGetCandidates
  *		Given a possibly-qualified operator name and operator kind,
  *		retrieve a list of the possible matches.
@@ -766,6 +880,70 @@ OpernameGetCandidates(List *names, char oprkind)
 }
 
 /*
+ * OperatorIsVisible
+ *		Determine whether an operator (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified operator name with exact argument matches".
+ */
+bool
+OperatorIsVisible(Oid oprid)
+{
+	HeapTuple	oprtup;
+	Form_pg_operator oprform;
+	Oid			oprnamespace;
+	bool		visible;
+
+	recomputeNamespacePath();
+
+	oprtup = SearchSysCache(OPEROID,
+							ObjectIdGetDatum(oprid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(oprtup))
+		elog(ERROR, "Cache lookup failed for operator %u", oprid);
+	oprform = (Form_pg_operator) GETSTRUCT(oprtup);
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible.
+	 */
+	oprnamespace = oprform->oprnamespace;
+	if (oprnamespace != PG_CATALOG_NAMESPACE &&
+		!intMember(oprnamespace, namespaceSearchPath))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another operator of the same name and arguments earlier
+		 * in the path.  So we must do a slow check to see if this is the
+		 * same operator that would be found by OpernameGetCandidates.
+		 */
+		char	   *oprname = NameStr(oprform->oprname);
+		FuncCandidateList clist;
+
+		visible = false;
+
+		clist = OpernameGetCandidates(makeList1(makeString(oprname)),
+									  oprform->oprkind);
+
+		for (; clist; clist = clist->next)
+		{
+			if (clist->args[0] == oprform->oprleft &&
+				clist->args[1] == oprform->oprright)
+			{
+				/* Found the expected entry; is it the right op? */
+				visible = (clist->oid == oprid);
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(oprtup);
+
+	return visible;
+}
+
+
+/*
  * OpclassGetCandidates
  *		Given an index access method OID, retrieve a list of all the
  *		opclasses for that AM that are visible in the search path.
@@ -881,6 +1059,104 @@ OpclassGetCandidates(Oid amid)
 	ReleaseSysCacheList(catlist);
 
 	return resultList;
+}
+
+/*
+ * OpclassnameGetOpcid
+ *		Try to resolve an unqualified index opclass name.
+ *		Returns OID if opclass found in search path, else InvalidOid.
+ *
+ * This is essentially the same as TypenameGetTypid, but we have to have
+ * an extra argument for the index AM OID.
+ */
+Oid
+OpclassnameGetOpcid(Oid amid, const char *opcname)
+{
+	Oid			opcid;
+	List	   *lptr;
+
+	recomputeNamespacePath();
+
+	/*
+	 * If system namespace is not in path, implicitly search it before path
+	 */
+	if (!pathContainsSystemNamespace)
+	{
+		opcid = GetSysCacheOid(CLAAMNAMENSP,
+							   ObjectIdGetDatum(amid),
+							   PointerGetDatum(opcname),
+							   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
+							   0);
+		if (OidIsValid(opcid))
+			return opcid;
+	}
+
+	/*
+	 * Else search the path
+	 */
+	foreach(lptr, namespaceSearchPath)
+	{
+		Oid			namespaceId = (Oid) lfirsti(lptr);
+
+		opcid = GetSysCacheOid(CLAAMNAMENSP,
+							   ObjectIdGetDatum(amid),
+							   PointerGetDatum(opcname),
+							   ObjectIdGetDatum(namespaceId),
+							   0);
+		if (OidIsValid(opcid))
+			return opcid;
+	}
+
+	/* Not found in path */
+	return InvalidOid;
+}
+
+/*
+ * OpclassIsVisible
+ *		Determine whether an opclass (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified opclass name".
+ */
+bool
+OpclassIsVisible(Oid opcid)
+{
+	HeapTuple	opctup;
+	Form_pg_opclass opcform;
+	Oid			opcnamespace;
+	bool		visible;
+
+	recomputeNamespacePath();
+
+	opctup = SearchSysCache(CLAOID,
+							ObjectIdGetDatum(opcid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(opctup))
+		elog(ERROR, "Cache lookup failed for opclass %u", opcid);
+	opcform = (Form_pg_opclass) GETSTRUCT(opctup);
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible.
+	 */
+	opcnamespace = opcform->opcnamespace;
+	if (opcnamespace != PG_CATALOG_NAMESPACE &&
+		!intMember(opcnamespace, namespaceSearchPath))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another opclass of the same name earlier in the path.
+		 * So we must do a slow check to see if this opclass would be found by
+		 * OpclassnameGetOpcid.
+		 */
+		char	   *opcname = NameStr(opcform->opcname);
+
+		visible = (OpclassnameGetOpcid(opcform->opcamid, opcname) == opcid);
+	}
+
+	ReleaseSysCache(opctup);
+
+	return visible;
 }
 
 
@@ -1015,6 +1291,7 @@ isTempNamespace(Oid namespaceId)
 		return true;
 	return false;
 }
+
 
 /*
  * recomputeNamespacePath - recompute path derived variables if needed.
@@ -1452,6 +1729,7 @@ RemoveTempRelationsCallback(void)
 		CommitTransactionCommand();
 	}
 }
+
 
 /*
  * Routines for handling the GUC variable 'search_path'.

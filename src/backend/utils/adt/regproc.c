@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.66 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.67 2002/05/01 23:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,30 +307,20 @@ regprocedureout(PG_FUNCTION_ARGS)
 		int			nargs = procform->pronargs;
 		int			i;
 		char	   *nspname;
-		FuncCandidateList clist;
 		StringInfoData buf;
 
 		/* XXX no support here for bootstrap mode */
+
+		initStringInfo(&buf);
 
 		/*
 		 * Would this proc be found (given the right args) by regprocedurein?
 		 * If not, we need to qualify it.
 		 */
-		clist = FuncnameGetCandidates(makeList1(makeString(proname)), nargs);
-
-		for (; clist; clist = clist->next)
-		{
-			if (memcmp(clist->args, procform->proargtypes,
-					   nargs * sizeof(Oid)) == 0)
-				break;
-		}
-
-		if (clist != NULL && clist->oid == proid)
+		if (FunctionIsVisible(proid))
 			nspname = NULL;
 		else
 			nspname = get_namespace_name(procform->pronamespace);
-
-		initStringInfo(&buf);
 
 		appendStringInfo(&buf, "%s(",
 						 quote_qualified_identifier(nspname, proname));
@@ -632,28 +622,17 @@ regoperatorout(PG_FUNCTION_ARGS)
 		Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
 		char	   *oprname = NameStr(operform->oprname);
 		char	   *nspname;
-		FuncCandidateList clist;
 		StringInfoData buf;
 
 		/* XXX no support here for bootstrap mode */
+
+		initStringInfo(&buf);
 
 		/*
 		 * Would this oper be found (given the right args) by regoperatorin?
 		 * If not, we need to qualify it.
 		 */
-		clist = OpernameGetCandidates(makeList1(makeString(oprname)),
-									  operform->oprkind);
-
-		for (; clist; clist = clist->next)
-		{
-			if (clist->args[0] == operform->oprleft &&
-				clist->args[1] == operform->oprright)
-				break;
-		}
-
-		initStringInfo(&buf);
-
-		if (clist == NULL || clist->oid != oprid)
+		if (!OperatorIsVisible(oprid))
 		{
 			nspname = get_namespace_name(operform->oprnamespace);
 			appendStringInfo(&buf, "%s.",
@@ -815,7 +794,7 @@ regclassout(PG_FUNCTION_ARGS)
 			 * Would this class be found by regclassin?
 			 * If not, qualify it.
 			 */
-			if (RelnameGetRelid(classname) == classid)
+			if (RelationIsVisible(classid))
 				nspname = NULL;
 			else
 				nspname = get_namespace_name(classform->relnamespace);
@@ -947,7 +926,6 @@ regtypeout(PG_FUNCTION_ARGS)
 	if (HeapTupleIsValid(typetup))
 	{
 		Form_pg_type typeform = (Form_pg_type) GETSTRUCT(typetup);
-		char	   *typname = NameStr(typeform->typname);
 
 		/*
 		 * In bootstrap mode, skip the fancy namespace stuff and just
@@ -956,24 +934,13 @@ regtypeout(PG_FUNCTION_ARGS)
 		 */
 		if (IsBootstrapProcessingMode())
 		{
+			char	   *typname = NameStr(typeform->typname);
+
 			result = pstrdup(typname);
 		}
 		else
 		{
-			char	   *nspname;
-
-			/*
-			 * Would this type be found by regtypein?
-			 * If not, qualify it.
-			 *
-			 * XXX shouldn't we use format_type instead?
-			 */
-			if (TypenameGetTypid(typname) == typid)
-				nspname = NULL;
-			else
-				nspname = get_namespace_name(typeform->typnamespace);
-
-			result = quote_qualified_identifier(nspname, typname);
+			result = format_type_be(typid);
 		}
 
 		ReleaseSysCache(typetup);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.11 2002/04/26 01:24:08 tgl Exp $
+ * $Id: namespace.h,v 1.12 2002/05/01 23:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,25 +49,25 @@ typedef struct _OpclassCandidateList
 
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
-
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
-
 extern Oid	RelnameGetRelid(const char *relname);
+extern bool RelationIsVisible(Oid relid);
 
 extern Oid	TypenameGetTypid(const char *typname);
-
-extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);
+extern bool TypeIsVisible(Oid typid);
 
 extern FuncCandidateList FuncnameGetCandidates(List *names, int nargs);
+extern bool FunctionIsVisible(Oid funcid);
 
 extern FuncCandidateList OpernameGetCandidates(List *names, char oprkind);
+extern bool OperatorIsVisible(Oid oprid);
 
 extern OpclassCandidateList OpclassGetCandidates(Oid amid);
+extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);
+extern bool OpclassIsVisible(Oid opcid);
 
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
-
 extern RangeVar *makeRangeVarFromNameList(List *names);
-
 extern char *NameListToString(List *names);
 
 extern bool isTempNamespace(Oid namespaceId);
