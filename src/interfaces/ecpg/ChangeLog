@@ -1739,5 +1739,6 @@ Mon Jan 26 21:57:14 CET 2004
 Sun Feb 15 14:44:14 CET 2004
 
 	- Added missing braces to array parsing.
+	- Allowed some C keywords to be used as SQL column names.
 	- Set ecpg version to 3.1.1.
 

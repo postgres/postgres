@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.272 2004/02/15 13:48:54 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.273 2004/02/15 15:38:20 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -528,7 +528,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
-%type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords 
+%type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords ECPGCKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>	struct_union_type s_struct_union vt_declarations execute_rest
@@ -5747,6 +5747,7 @@ ColId:	ident						{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
 		| col_name_keyword			{ $$ = $1; }
 		| ECPGKeywords				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
 		| CHAR_P				{ $$ = make_str("char"); }
 		;
 
@@ -5756,6 +5757,7 @@ type_name:	ident					{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
 		| ECPGKeywords				{ $$ = $1; }
 		| ECPGTypeName				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
 		;
 
 /* Function identifier --- names that can be function names.
@@ -5764,6 +5766,7 @@ function_name:	ident					{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
 		| func_name_keyword			{ $$ = $1; }
 		| ECPGKeywords				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
 		;
 
 /* Column label --- allowed labels in "AS" clauses.
@@ -5775,6 +5778,7 @@ ColLabel:  ECPGColLabel				{ $$ = $1; }
 		| INPUT_P			{ $$ = make_str("input"); }
 		| INT_P				{ $$ = make_str("int"); }
 		| UNION				{ $$ = make_str("union"); }
+		| ECPGCKeywords			{ $$ = $1; }
 		;
 
 ECPGColLabelCommon:  ident                              { $$ = $1; }
@@ -5789,6 +5793,14 @@ ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
 		| ECPGKeywords_rest			{ $$ = $1; }
 		;
 
+ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
+		| S_CONST			{ $$ = make_str("const"); }
+		| S_EXTERN			{ $$ = make_str("extern"); }
+		| S_REGISTER			{ $$ = make_str("register"); }
+		| S_STATIC			{ $$ = make_str("static"); }
+		| S_TYPEDEF			{ $$ = make_str("typedef"); }
+		;
+		
 /*
  * Keyword classification lists.  Generally, every keyword present in
  * the Postgres grammar should appear in exactly one of these lists.
