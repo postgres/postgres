@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.60 2002/06/24 23:12:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.1 2002/07/30 19:36:10 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -978,13 +978,15 @@ EXECUTE <replaceable class="command">query-string</replaceable>;
 
     <para>
      An example:
-<synopsis>
+<informalexample>
+<programlisting>
 EXECUTE ''UPDATE tbl SET ''
         || quote_ident(fieldname)
         || '' = ''
         || quote_literal(newvalue)
         || '' WHERE ...'';
-</synopsis>
+</programlisting>
+</informalexample>
     </para>
 
     <para>
@@ -1058,6 +1060,13 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
      the OID of the last row inserted by the most recent
      <acronym>SQL</acronym> query.  Note that <varname>RESULT_OID</>
      is only useful after an INSERT query.
+    </para>
+    <para>
+<informalexample>
+<programlisting>
+      GET DIAGNOSTICS var_integer = ROW_COUNT;
+</programlisting>
+</informalexample>
     </para>
    </sect2>
   </sect1>
