@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.267 2003/12/17 15:23:45 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.268 2003/12/24 22:04:09 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -3017,7 +3017,7 @@ table_ref:	relation_expr
 		| func_table AS '(' TableFuncElementList ')'
 			{ $$=cat_str(4, $1, make_str("as ("), $4, make_str(")")); }
 		| func_table AS ColId '(' TableFuncElementList ')'
-			{ $$=cat_str(6, $1, make_str("as"), $3, make_str("("), $5, make_str(")")); }
+			{ $$=cat_str(6, $1, make_str("as"), $3, make_str("("), $5, make_str(")"));}
 		| func_table ColId '(' TableFuncElementList ')'
 			{ $$=cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
 		| select_with_parens
@@ -3120,7 +3120,7 @@ where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
 TableFuncElementList: TableFuncElement
                         { $$ = $1; }
 		| TableFuncElementList ',' TableFuncElement
-			{ $$ = cat_str(3, $1, ',', $3); }
+			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 TableFuncElement:	ColId Typename	{ $$ = cat2_str($1, $2); }
