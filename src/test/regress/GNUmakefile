@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.2 1997/04/05 21:24:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.3 1997/04/05 21:33:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ DLOBJS= regress$(DLSUFFIX)
 #
 # INFILES is the files the regression test uses for input.
 INFILES= $(DLOBJS) \
-         create.sql queries.sql errors.sql destroy.sql security.sql \
+         queries.sql errors.sql destroy.sql security.sql \
          expected.out
 #
 # plus exports files
