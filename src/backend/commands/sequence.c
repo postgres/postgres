@@ -204,6 +204,7 @@ nextval (struct varlena * seqin)
 
     /* open and WIntentLock sequence */
     elm = init_sequence ("nextval", seqname);
+    pfree (seqname);
     
     if ( elm->last != elm->cached )		/* some numbers were cached */
     {
@@ -237,7 +238,7 @@ nextval (struct varlena * seqin)
     	    	    break;		/* stop caching */
     	    	if ( seq->is_cycled != 't' )
     	    	    elog (WARN, "%s.nextval: got MAXVALUE (%d)", 
-    						seqname, maxv);
+    						elm->name, maxv);
 	    	next = minv;
 	    }
 	    else
@@ -252,7 +253,7 @@ nextval (struct varlena * seqin)
     	    	    break;		/* stop caching */
     	    	if ( seq->is_cycled != 't' )
     	    	    elog (WARN, "%s.nextval: got MINVALUE (%d)", 
-    						seqname, minv);
+    						elm->name, minv);
 	    	next = maxv;
 	    }
 	    else
@@ -287,34 +288,19 @@ currval (struct varlena * seqin)
 {
     char *seqname = textout(seqin);
     SeqTable elm;
-    Buffer buf;
-    SequenceTupleForm seq;
-    ItemPointerData iptr;
     int4 result;
 
     /* open and WIntentLock sequence */
     elm = init_sequence ("currval", seqname);
+    pfree (seqname);
     
-    if ( elm->last != elm->cached )	/* some numbers were cached */
+    if ( elm->increment == 0 )	/* nextval/read_info were not called */
     {
-    	return (elm->last);		/* return last returned by nextval */
+    	elog (WARN, "%s.currval is not yet defined in this session", elm->name);
     }
     
-    seq = read_info ("currval", elm, &buf);
-
-    if ( seq->is_called != 't' )
-    {
-    	elog (WARN, "%s.currval: yet undefined (%s.nextval never called)",
-    			seqname, seqname);
-    }
-    result = seq->last_value;
+    result = elm->last;
     
-    if ( ReleaseBuffer (buf) == STATUS_ERROR )
-    	elog (WARN, "%s.currval: ReleaseBuffer failed", seqname);
-
-    ItemPointerSet(&iptr, 0, FirstOffsetNumber);
-    RelationUnsetSingleWLockPage (elm->rel, &iptr);
-
     return (result);
     
 }
