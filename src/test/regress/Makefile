@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.5 1996/07/26 20:15:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.6 1996/08/06 16:51:17 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,8 +58,9 @@ expected.out: expected.input
 	rm -f $(objdir)/expected.out; \
 	C="`pwd`"; \
 	sed -e "s:_CWD_:$$C:g" \
-	   -e "s:_OBJWD_:$$C/$(objdir):g" \
-	   -e "s/_USER_/$$USER/g" < expected.input > $(objdir)/expected.out
+	    -e "s:_OBJWD_:$$C/$(objdir):g" \
+            -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s/_USER_/$$USER/g" < expected.input > $(objdir)/expected.out
 
 #
 # prepare to run the test (including clean-up after the last run)
