@@ -2,10 +2,10 @@
 The PostgreSQL contrib tree
 ---------------------------
 
-This subtree contains utilities, conversion tools, and features that are
-not part of the core PostgreSQL system, mainly because they address a
-limited audience or are too experimental to be part of the main source
-tree.  This does not preclude their usefulness.
+This subtree contains porting tools, analysis utilities, and plug-in
+features that are not part of the core PostgreSQL system, mainly because
+they address a limited audience or are too experimental to be part of
+the main source tree.  This does not preclude their usefulness.
 
 Each subdirectory contains a README file with information about the
 module.  Most items can be built with `gmake all' and installed with
