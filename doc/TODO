@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun 10 15:04:47 EDT 2004
+Last updated:		Sun Jun 13 19:39:29 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -50,6 +50,8 @@ Administration
 * Have SHOW ALL and pg_settings show descriptions for server-side variables(Joe)
 * Allow external interfaces to extend the GUC variable set
 * Allow GRANT/REVOKE permissions to be given to all schema objects with one command
+* Remove unreferenced table files and temp tables during database vacuum
+  or postmaster startup (Bruce)
 
 
 Data Types
