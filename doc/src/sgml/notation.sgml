@@ -63,7 +63,7 @@ site.
 <title>Notation</title>
 
 <para>
-<quote>...</quote> or <filename>/usr/local/pgsql/<filename> 
+<quote>...</quote> or <filename>/usr/local/pgsql/</filename> 
 at the front of a file name is used to represent the
 path to the <Productname>Postgres</Productname> superuser's home directory.
 
@@ -81,9 +81,12 @@ expressions.  <quote>|</quote> is the boolean operator OR.
 <para>
 Examples will show commands executed from various accounts and programs.
 Commands executed from the root account will be preceeded with <quote>&gt;</quote>.
-Commands executed from the superuser account will be preceeded with <quote>$</quote>.
+Commands executed from the <Productname>Postgres</Productname>
+superuser account will be preceeded with <quote>%</quote>, while commands
+executed from an unprivileged user's account will be preceeded with
+<quote>$</quote>.
 <acronym>SQL</acronym> commands will be preceeded with <quote>=&gt;</quote>
-or will have no leading prompt.
+or will have no leading prompt, depending on the context.
 
 <note>
 <para>
