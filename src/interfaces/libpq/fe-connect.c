@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.222 2003/01/30 19:49:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.223 2003/02/14 01:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,7 +800,6 @@ static int
 connectDBStart(PGconn *conn)
 {
 	int			portnum;
-	int			sockfd;
 	char		portstr[64];
 #ifdef USE_SSL
 	StartupPacket np;			/* Used to negotiate SSL connection */
@@ -837,19 +836,17 @@ connectDBStart(PGconn *conn)
 	conn->outCount = 0;
 
 	/*
-	 * Set up the connection to postmaster/backend. Note that this
-	 * supports IPv4 and UDP only.
-	 */
-
-	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
-
-	/*
+	 * Set up the connection to postmaster/backend.
+	 *
 	 *	This code is confusing because IPv6 creates a hint structure
 	 *	that is passed to getaddrinfo2(), which returns a list of address
 	 *	structures that are looped through, while IPv4 creates an address
 	 *	structure directly.
 	 */
 
+	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
+
+	/* Set port number */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
 		portnum = atoi(conn->pgport);
 	else
@@ -875,8 +872,8 @@ connectDBStart(PGconn *conn)
 
 		family = AF_INET;
 
-		memmove((char *) &(conn->raddr.in.sin_addr),
-				(char *) &addr, sizeof(addr));
+		memcpy((char *) &(conn->raddr.in.sin_addr),
+			   (char *) &addr, sizeof(addr));
 #endif
 	}
 	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
@@ -892,9 +889,9 @@ connectDBStart(PGconn *conn)
 		family = AF_INET;
 #endif
 	}
-#ifdef HAVE_UNIX_SOCKETS
 	else
 	{
+#ifdef HAVE_UNIX_SOCKETS
 #ifdef HAVE_IPV6
 		node = unix_node;
 		hint.ai_family = AF_UNIX;
@@ -902,16 +899,19 @@ connectDBStart(PGconn *conn)
 		/* pghostaddr and pghost are NULL, so use Unix domain socket */
 		family = AF_UNIX;
 #endif
-	}
 #endif   /* HAVE_UNIX_SOCKETS */
+	}
 
 #ifndef HAVE_IPV6
+	/* Set family */
 	conn->raddr.sa.sa_family = family;
 #endif
 
 #ifdef HAVE_IPV6
 	if (hint.ai_family == AF_UNSPEC)
-	{/* do nothing*/}
+	{
+		/* do nothing */
+	}
 #else
 	if (family == AF_INET)
 	{
@@ -919,9 +919,9 @@ connectDBStart(PGconn *conn)
 		conn->raddr_len = sizeof(struct sockaddr_in);
 	}
 #endif
-#ifdef HAVE_UNIX_SOCKETS
 	else
 	{
+#ifdef HAVE_UNIX_SOCKETS
 		UNIXSOCK_PATH(conn->raddr.un, portnum, conn->pgunixsocket);
 		conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
 		StrNCpy(portstr, conn->raddr.un.sun_path, sizeof(portstr));
@@ -930,10 +930,11 @@ connectDBStart(PGconn *conn)
 		conn->allow_ssl_try = false;
 		conn->require_ssl = false;
 #endif
-	}
 #endif   /* HAVE_UNIX_SOCKETS */
+	}
 
-#if HAVE_IPV6
+#ifdef HAVE_IPV6
+	/* Use getaddrinfo2() to resolve the address */
 	ret = getaddrinfo2(node, portstr, &hint, &addrs);
 	if (ret || addrs == NULL)
 	{
@@ -942,21 +943,52 @@ connectDBStart(PGconn *conn)
 						  gai_strerror(ret));
 		goto connect_errReturn;
 	}
-	addr_cur = addrs;
 #endif
 
-	do
-	{
+	/*
+	 * For IPV6 we loop over the possible addresses returned by
+	 * getaddrinfo2(), and fail only when they all fail (reporting the
+	 * error returned for the *last* alternative, which may not be what
+	 * users expect :-().  Otherwise, there is no true loop here.
+	 *
+	 * In either case, we never actually fall out of the loop; the
+	 * only exits are via "break" or "goto connect_errReturn".  Thus,
+	 * there is no exit test in the for().
+	 */
+	for (
 #ifdef HAVE_IPV6
-		sockfd = socket(addr_cur->ai_family, SOCK_STREAM,
-						addr_cur->ai_protocol);
+		addr_cur = addrs; ; addr_cur = addr_cur->ai_next
 #else
-		sockfd = socket(family, SOCK_STREAM, 0);
+			;;
 #endif
-		if (sockfd < 0)
-			continue;
+		)
+	{
+		/* Open a socket */
+#ifdef HAVE_IPV6
+		conn->sock = socket(addr_cur->ai_family, SOCK_STREAM,
+							addr_cur->ai_protocol);
+#else
+		conn->sock = socket(family, SOCK_STREAM, 0);
+#endif
+		if (conn->sock < 0)
+		{
+#ifdef HAVE_IPV6
+			/* ignore socket() failure if we have more addrs to try */
+			if (addr_cur->ai_next != NULL)
+				continue;
+#endif
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not create socket: %s\n"),
+							  SOCK_STRERROR(SOCK_ERRNO));
+			goto connect_errReturn;
+		}
 
-		conn->sock = sockfd;
+		/*
+		 * Set the right options. Normally, we need nonblocking I/O, and we
+		 * don't want delay of outgoing data for AF_INET sockets.  If we are
+		 * using SSL, then we need the blocking I/O (XXX Can this be fixed?).
+		 */
+
 #ifdef HAVE_IPV6
 		if (isAF_INETx(addr_cur->ai_family))
 #else
@@ -966,6 +998,7 @@ connectDBStart(PGconn *conn)
 			if (!connectNoDelay(conn))
 				goto connect_errReturn;
 		}
+
 #if !defined(USE_SSL)
 		if (connectMakeNonblocking(conn) == 0)
 			goto connect_errReturn;
@@ -982,16 +1015,10 @@ connectDBStart(PGconn *conn)
 		 */
 retry1:
 #ifdef HAVE_IPV6
-		if (connect(sockfd, addr_cur->ai_addr, addr_cur->ai_addrlen) == 0)
+		if (connect(conn->sock, addr_cur->ai_addr, addr_cur->ai_addrlen) < 0)
 #else
-		if (connect(sockfd, &conn->raddr.sa, conn->raddr_len) == 0)
+		if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 #endif
-		{
-			/* We're connected already */
-			conn->status = CONNECTION_MADE;
-			break;
-		}
-		else
 		{
 			if (SOCK_ERRNO == EINTR)
 				/* Interrupted system call - we'll just try again */
@@ -1006,30 +1033,39 @@ retry1:
 				conn->status = CONNECTION_STARTED;
 				break;
 			}
+			/* otherwise, trouble */
 		}
-		close(sockfd);
+		else
+		{
+			/* We're connected already */
+			conn->status = CONNECTION_MADE;
+			break;
+		}
+		/*
+		 * This connection failed.  We need to close the socket,
+		 * and either loop to try the next address or report an error.
+		 */
 #ifdef HAVE_IPV6
-	} while ((addr_cur = addr_cur->ai_next) != NULL);
-	if (addr_cur == NULL)
-#else
-	} while (0);
-	if (sockfd < 0)
+		/* ignore connect() failure if we have more addrs to try */
+		if (addr_cur->ai_next != NULL)
+		{
+			close(conn->sock);
+			conn->sock = -1;
+			continue;
+		}
 #endif
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not create socket: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
+		connectFailureMessage(conn, SOCK_ERRNO);
 		goto connect_errReturn;
-	}
-	else
-	{
+	} /* loop over addrs */
+
 #ifdef HAVE_IPV6
-		memmove(&conn->raddr, addr_cur->ai_addr, addr_cur->ai_addrlen);
-		conn->raddr_len = addr_cur->ai_addrlen;
-		FREEADDRINFO2(hint.ai_family, addrs);
-		addrs = NULL;
+	/* Remember the successfully opened address alternative */
+	memcpy(&conn->raddr, addr_cur->ai_addr, addr_cur->ai_addrlen);
+	conn->raddr_len = addr_cur->ai_addrlen;
+	/* and release the address list */
+	FREEADDRINFO2(hint.ai_family, addrs);
+	addrs = NULL;
 #endif
-	}
 
 #ifdef USE_SSL
 	/* Attempt to negotiate SSL usage */
