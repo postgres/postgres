@@ -11,12 +11,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.38 2000/08/06 18:05:41 thomas Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.39 2000/08/07 01:45:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
+#include <ctype.h>
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
@@ -307,59 +307,51 @@ MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 			if ((plen <= 0) || (*t != *p))
 				return LIKE_FALSE;
 		}
-		else
+		else if (*p == '%')
 		{
-			switch (*p)
+			/* %% is the same as % according to the SQL standard */
+			/* Advance past all %'s */
+			while ((plen > 0) && (*p == '%'))
+				NextChar(p, plen);
+			/* Trailing percent matches everything. */
+			if (plen <= 0)
+				return LIKE_TRUE;
+
+			/*
+			 * Otherwise, scan for a text position at which we can
+			 * match the rest of the pattern.
+			 */
+			while (tlen > 0)
 			{
-				case '\\':
-					/* Literal match with following character. */
-					NextChar(p, plen);
-					/* FALLTHROUGH */
-				default:
-					if (*t != *p)
-						return LIKE_FALSE;
-					break;
-				case '_':
-					/* Match any single character. */
-					break;
-				case '%':
-					/* %% is the same as % according to the SQL standard */
-					/* Advance past all %'s */
-					while ((plen > 0) && (*p == '%'))
-						NextChar(p, plen);
-					/* Trailing percent matches everything. */
-					if (plen <= 0)
-						return LIKE_TRUE;
+				/*
+				 * Optimization to prevent most recursion: don't
+				 * recurse unless first pattern char might match this
+				 * text char.
+				 */
+				if ((*t == *p) || (*p == '_')
+					|| ((e != NULL) && (*p == *e)))
+				{
+					int matched = MatchText(t, tlen, p, plen, e);
 
-					/*
-					 * Otherwise, scan for a text position at which we can
-					 * match the rest of the pattern.
-					 */
-					while (tlen > 0)
-					{
-						/*
-						 * Optimization to prevent most recursion: don't
-						 * recurse unless first pattern char might match this
-						 * text char.
-						 */
-						if ((*t == *p) || (*p == '\\') || (*p == '_')
-							|| ((e != NULL) && (*p == *e)))
-						{
-							int matched = MatchText(t, tlen, p, plen, e);
+					if (matched != LIKE_FALSE)
+						return matched;		/* TRUE or ABORT */
+				}
 
-							if (matched != LIKE_FALSE)
-								return matched;		/* TRUE or ABORT */
-						}
-
-						NextChar(t, tlen);
-					}
-
-					/*
-					 * End of text with no match, so no point in trying later
-					 * places to start matching this pattern.
-					 */
-					return LIKE_ABORT;
+				NextChar(t, tlen);
 			}
+
+			/*
+			 * End of text with no match, so no point in trying later
+			 * places to start matching this pattern.
+			 */
+			return LIKE_ABORT;
+		}
+		else if ((*p != '_') && (*t != *p))
+		{
+			/* Not the single-character wildcard and no explicit match?
+			 * Then time to quit...
+			 */
+			return LIKE_FALSE;
 		}
 
 		NextChar(t, tlen);
@@ -404,59 +396,48 @@ MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 			if ((plen <= 0) || (tolower(*t) != tolower(*p)))
 				return LIKE_FALSE;
 		}
-		else
+		else if (*p == '%')
 		{
-			switch (*p)
+			/* %% is the same as % according to the SQL standard */
+			/* Advance past all %'s */
+			while ((plen > 0) && (*p == '%'))
+				NextChar(p, plen);
+			/* Trailing percent matches everything. */
+			if (plen <= 0)
+				return LIKE_TRUE;
+
+			/*
+			 * Otherwise, scan for a text position at which we can
+			 * match the rest of the pattern.
+			 */
+			while (tlen > 0)
 			{
-				case '\\':
-					/* Literal match with following character. */
-					NextChar(p, plen);
-					/* FALLTHROUGH */
-				default:
-					if (tolower(*t) != tolower(*p))
-						return LIKE_FALSE;
-					break;
-				case '_':
-					/* Match any single character. */
-					break;
-				case '%':
-					/* %% is the same as % according to the SQL standard */
-					/* Advance past all %'s */
-					while ((plen > 0) && (*p == '%'))
-						NextChar(p, plen);
-					/* Trailing percent matches everything. */
-					if (plen <= 0)
-						return LIKE_TRUE;
+				/*
+				 * Optimization to prevent most recursion: don't
+				 * recurse unless first pattern char might match this
+				 * text char.
+				 */
+				if ((tolower(*t) == tolower(*p)) || (*p == '_')
+					|| ((e != NULL) && (tolower(*p) == tolower(*e))))
+				{
+					int matched = MatchText(t, tlen, p, plen, e);
 
-					/*
-					 * Otherwise, scan for a text position at which we can
-					 * match the rest of the pattern.
-					 */
-					while (tlen > 0)
-					{
-						/*
-						 * Optimization to prevent most recursion: don't
-						 * recurse unless first pattern char might match this
-						 * text char.
-						 */
-						if ((tolower(*t) == tolower(*p)) || (*p == '\\') || (*p == '_')
-							|| ((e != NULL) && (tolower(*p) == tolower(*e))))
-						{
-							int matched = MatchText(t, tlen, p, plen, e);
+					if (matched != LIKE_FALSE)
+						return matched;		/* TRUE or ABORT */
+				}
 
-							if (matched != LIKE_FALSE)
-								return matched;		/* TRUE or ABORT */
-						}
-
-						NextChar(t, tlen);
-					}
-
-					/*
-					 * End of text with no match, so no point in trying later
-					 * places to start matching this pattern.
-					 */
-					return LIKE_ABORT;
+				NextChar(t, tlen);
 			}
+
+			/*
+			 * End of text with no match, so no point in trying later
+			 * places to start matching this pattern.
+			 */
+			return LIKE_ABORT;
+		}
+		else if ((*p != '_') && (tolower(*t) != tolower(*p)))
+		{
+			return LIKE_FALSE;
 		}
 
 		NextChar(t, tlen);
