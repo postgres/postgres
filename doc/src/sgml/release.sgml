@@ -1,9 +1,57 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.262 2004/05/24 04:54:22 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.263 2004/06/12 03:54:51 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-4-3">
+   <title>Release 7.4.3</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-06-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.2.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.3</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<para>
+</para>
+<itemizedlist>
+<listitem><para>Fix temporary memory leak when using hashed aggregates (Tom)</para></listitem>
+<listitem><para>Ecpg fixes, including those for Informix compatibility (Michael)</para></listitem>
+<listitem><para>Fixes for compiling with thread-safety, particularly Solaris (Bruce)</para></listitem>
+<listitem><para>Fix error in termination of COPY IN mode when using old protocol (Tom)</para></listitem>
+<listitem><para>Several pg_autovacuum fixes, including fixes for large oids, stability, temp tables, and debug fixes (Matthew T. O'Connor)</para></listitem>
+<listitem><para>Fix problem with reading tar pg_dump's on NetBSD and BSD/OS (Bruce)</para></listitem>
+<listitem><para>Several JDBC fixes</para></listitem>
+<listitem><para>Fix for ALTER SEQUENCE RESTART where last_value was equals restart value (Tom)</para></listitem>
+<listitem><para>Support FULL JOIN with no join clauses, such as X FULL JOIN Y ON TRUE (Tom)</para></listitem>
+<listitem><para>Fix a zero-column bug (Tom)</para></listitem>
+<listitem><para>Improve handling of non-qualitified identifiers in GROUP BY clauses (Tom)</para></listitem>
+<listitem><para>Do not allow NATURAL CROSS JOIN (Tom)</para></listitem>
+<listitem><para>Add missing check for invalid protocol packet length in binary COPY (Tom)</para></listitem>
+<para>
+  This fixes a difficult-to-exploit security hole.
+</para>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-4-2">
    <title>Release 7.4.2</title>
