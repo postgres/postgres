@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 22 19:02:19 EST 2001
+Last updated:		Mon Jan 22 19:49:03 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -227,7 +227,6 @@ MISCELLANEOUS
   database is idle, finding superceeded rows, gathering stats and vacuuming
 * Add UNIQUE capability to non-btree indexes
 * Certain indexes will not shrink, i.e. oid indexes with many inserts (Vadim)
-* Move OID retrieval into shared memory to prevent lose of unused oids
 * Have UPDATE/DELETE clean out indexes
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
