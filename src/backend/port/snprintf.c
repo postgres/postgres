@@ -74,7 +74,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.28 2000/12/03 20:45:34 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.29 2000/12/30 19:17:47 tgl Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -192,12 +192,12 @@ dopr(char *buffer, const char *format, va_list args)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, long_long);
+								value = va_arg(args, ulong_long);
 							else
-								value = va_arg(args, long);
+								value = va_arg(args, unsigned long);
 						}
 						else
-							value = va_arg(args, int);
+							value = va_arg(args, unsigned int);
 						fmtnum(value, 10, 0, ljust, len, zpad);
 						break;
 					case 'o':
@@ -206,12 +206,12 @@ dopr(char *buffer, const char *format, va_list args)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, long_long);
+								value = va_arg(args, ulong_long);
 							else
-								value = va_arg(args, long);
+								value = va_arg(args, unsigned long);
 						}
 						else
-							value = va_arg(args, int);
+							value = va_arg(args, unsigned int);
 						fmtnum(value, 8, 0, ljust, len, zpad);
 						break;
 					case 'd':
@@ -225,31 +225,30 @@ dopr(char *buffer, const char *format, va_list args)
 						}
 						else
 							value = va_arg(args, int);
-
 						fmtnum(value, 10, 1, ljust, len, zpad);
 						break;
 					case 'x':
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, long_long);
+								value = va_arg(args, ulong_long);
 							else
-								value = va_arg(args, long);
+								value = va_arg(args, unsigned long);
 						}
 						else
-							value = va_arg(args, int);
+							value = va_arg(args, unsigned int);
 						fmtnum(value, 16, 0, ljust, len, zpad);
 						break;
 					case 'X':
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, long_long);
+								value = va_arg(args, ulong_long);
 							else
-								value = va_arg(args, long);
+								value = va_arg(args, unsigned long);
 						}
 						else
-							value = va_arg(args, int);
+							value = va_arg(args, unsigned int);
 						fmtnum(value, -16, 0, ljust, len, zpad);
 						break;
 					case 's':
