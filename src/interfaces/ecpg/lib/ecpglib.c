@@ -140,12 +140,25 @@ get_connection(const char *connection_name)
 		return NULL;
 }
 
+static bool
+ecpg_init(const struct connection *con, const char * connection_name, const int lineno)
+{
+	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
+	if (con == NULL)
+	{
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name ? connection_name : "NULL", lineno);
+		return (false);
+	}
+	
+	return (true);
+}
+
 static void
-ECPGfinish(struct connection * act)
+ecpg_finish(struct connection * act)
 {
 	if (act != NULL)
 	{
-		ECPGlog("ECPGfinish: finishing %s.\n", act->name);
+		ECPGlog("ecpg_finish: finishing %s.\n", act->name);
 		PQfinish(act->connection);
 		/* remove act from the list */
 		if (act == all_connections)
@@ -166,7 +179,7 @@ ECPGfinish(struct connection * act)
 		free(act);
 	}
 	else
-		ECPGlog("ECPGfinish: called an extra time.\n");
+		ECPGlog("ecpg_finish: called an extra time.\n");
 }
 
 static char *
@@ -382,8 +395,6 @@ ECPGexecute(struct statement * stmt)
 	PGresult   *results;
 	PGnotify   *notify;
 	struct variable *var;
-
-	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
 
 	copiedquery = ecpg_strdup(stmt->command, stmt->lineno);
 
@@ -1029,11 +1040,8 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	struct connection *con = get_connection(connection_name);
 	bool		status;
 
-	if (con == NULL)
-	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name ? connection_name : "NULL", lineno);
-		return (false);
-	}
+	if (!ecpg_init(con, connection_name, lineno))
+		return(false);
 
 	va_start(args, query);
 	if (create_statement(lineno, con, &stmt, query, args) == false)
@@ -1058,11 +1066,8 @@ ECPGstatus(int lineno, const char *connection_name)
 {
 	struct connection *con = get_connection(connection_name);
 
-	if (con == NULL)
-	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
-		return (false);
-	}
+	if (!ecpg_init(con, connection_name, lineno))
+		return(false);
 
 	/* are we connected? */
 	if (con->connection == NULL)
@@ -1081,11 +1086,8 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	PGresult   *res;
 	struct connection *con = get_connection(connection_name);
 
-	if (con == NULL)
-	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
-		return (false);
-	}
+	if (!ecpg_init(con, connection_name, lineno))
+		return(false);
 
 	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con->name);
 
@@ -1124,41 +1126,36 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	struct connection *con = get_connection(connection_name);
 	PGresult   *results;
 
-	if (con)
+	if (!ecpg_init(con, connection_name, lineno))
+		return(false);
+
+	if (con->autocommit == true && strncmp(mode, "OFF", strlen("OFF")) == 0)
 	{
-		if (con->autocommit == true && strncmp(mode, "OFF", strlen("OFF")) == 0)
+		if (con->committed)
 		{
-			if (con->committed)
+			if ((results = PQexec(con->connection, "begin transaction")) == NULL)
 			{
-				if ((results = PQexec(con->connection, "begin transaction")) == NULL)
-				{
-					register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
-					return false;
-				}
-				PQclear(results);
-				con->committed = false;
+				register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+				return false;
 			}
-			con->autocommit = false;
+			PQclear(results);
+			con->committed = false;
 		}
-		else if (con->autocommit == false && strncmp(mode, "ON", strlen("ON")) == 0)
-		{
-			if (!con->committed)
-			{
-				if ((results = PQexec(con->connection, "commit")) == NULL)
-				{
-					register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
-					return false;
-				}
-				PQclear(results);
-				con->committed = true;
-			}
-			con->autocommit = true;
-		}
+		con->autocommit = false;
 	}
-	else
+	else if (con->autocommit == false && strncmp(mode, "ON", strlen("ON")) == 0)
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
-		return false;
+		if (!con->committed)
+		{
+			if ((results = PQexec(con->connection, "commit")) == NULL)
+			{
+				register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
+				return false;
+			}
+			PQclear(results);
+			con->committed = true;
+		}
+		con->autocommit = true;
 	}
 
 	return true;
@@ -1169,24 +1166,22 @@ ECPGsetconn(int lineno, const char *connection_name)
 {
 	struct connection *con = get_connection(connection_name);
 
-	if (con)
-	{
-		actual_connection = con;
-		return true;
-	}
-	else
-	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
-		return false;
-	}
+	if (!ecpg_init(con, connection_name, lineno))
+		return(false);
+
+	actual_connection = con;
+	return true;
 }
 
 bool
 ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name, int autocommit)
 {
-	struct connection *this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno);
+	struct connection *this;
 
-	if (!this)
+
+	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
+	
+	if ((this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
 
 	if (dbname == NULL && connection_name == NULL)
@@ -1213,7 +1208,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
-		ECPGfinish(this);
+		ecpg_finish(this);
 		ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "", lineno);
 		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "<DEFAULT>");
 		return false;
@@ -1237,21 +1232,17 @@ ECPGdisconnect(int lineno, const char *connection_name)
 			struct connection *f = con;
 
 			con = con->next;
-			ECPGfinish(f);
+			ecpg_finish(f);
 		}
 	}
 	else
 	{
 		con = get_connection(connection_name);
 
-		if (con == NULL)
-		{
-			ECPGlog("disconnect: not connected to connection %s\n", connection_name ? connection_name : "NULL");
-			register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name ? connection_name : "NULL", lineno);
-			return false;
-		}
+		if (!ecpg_init(con, connection_name, lineno))
+		        return(false);
 		else
-			ECPGfinish(con);
+			ecpg_finish(con);
 	}
 
 	return true;

@@ -117,8 +117,8 @@ exec sql end declare section;
 	exec sql commit;
 
 	strcpy(msg, "disconnect"); 
-
 	exec sql disconnect;
+
 	if (dbgs != NULL)
                 fclose(dbgs);
 
