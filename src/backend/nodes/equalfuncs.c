@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * equalfuncs.c
- *	  equal functions to compare the nodes
+ *	  equality functions to compare node trees
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.44 1999/07/24 23:21:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.45 1999/07/29 02:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,13 +20,11 @@
 
 static bool equali(List *a, List *b);
 
+
 /*
  *	Stuff from primnodes.h
  */
 
-/*
- *	Resdom is a subclass of Node.
- */
 static bool
 _equalResdom(Resdom *a, Resdom *b)
 {
@@ -40,10 +38,11 @@ _equalResdom(Resdom *a, Resdom *b)
 		return false;
 	if (a->reskey != b->reskey)
 		return false;
-	if (a->resgroupref != b->resgroupref)
-		return false;
 	if (a->reskeyop != b->reskeyop)
 		return false;
+	if (a->resgroupref != b->resgroupref)
+		return false;
+	/* we ignore resjunk flag ... is this correct? */
 
 	return true;
 }
@@ -69,12 +68,13 @@ _equalFjoin(Fjoin *a, Fjoin *b)
 	return true;
 }
 
-/*
- *	Expr is a subclass of Node.
- */
 static bool
 _equalExpr(Expr *a, Expr *b)
 {
+	/* We do not examine typeOid, since the optimizer often doesn't
+	 * bother to set it in created nodes, and it is logically a
+	 * derivative of the oper field anyway.
+	 */
 	if (a->opType != b->opType)
 		return false;
 	if (!equal(a->oper, b->oper))
@@ -85,35 +85,6 @@ _equalExpr(Expr *a, Expr *b)
 	return true;
 }
 
-static bool
-_equalIter(Iter *a, Iter *b)
-{
-	return equal(a->iterexpr, b->iterexpr);
-}
-
-static bool
-_equalStream(Stream *a, Stream *b)
-{
-	if (a->clausetype != b->clausetype)
-		return false;
-	if (a->groupup != b->groupup)
-		return false;
-	if (a->groupcost != b->groupcost)
-		return false;
-	if (a->groupsel != b->groupsel)
-		return false;
-	if (!equal(a->pathptr, b->pathptr))
-		return false;
-	if (!equal(a->cinfo, b->cinfo))
-		return false;
-	if (!equal(a->upstream, b->upstream))
-		return false;
-	return equal(a->downstream, b->downstream);
-}
-
-/*
- *	Var is a subclass of Expr.
- */
 static bool
 _equalVar(Var *a, Var *b)
 {
@@ -136,66 +107,25 @@ _equalVar(Var *a, Var *b)
 }
 
 static bool
-_equalArray(Array *a, Array *b)
-{
-	if (a->arrayelemtype != b->arrayelemtype)
-		return false;
-	if (a->arrayndim != b->arrayndim)
-		return false;
-	if (a->arraylow.indx[0] != b->arraylow.indx[0])
-		return false;
-	if (a->arrayhigh.indx[0] != b->arrayhigh.indx[0])
-		return false;
-	if (a->arraylen != b->arraylen)
-		return false;
-	return TRUE;
-}
-
-static bool
-_equalArrayRef(ArrayRef *a, ArrayRef *b)
-{
-	if (a->refelemtype != b->refelemtype)
-		return false;
-	if (a->refattrlength != b->refattrlength)
-		return false;
-	if (a->refelemlength != b->refelemlength)
-		return false;
-	if (a->refelembyval != b->refelembyval)
-		return false;
-	if (!equal(a->refupperindexpr, b->refupperindexpr))
-		return false;
-	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
-		return false;
-	if (!equal(a->refexpr, b->refexpr))
-		return false;
-	return equal(a->refassgnexpr, b->refassgnexpr);
-}
-
-/*
- *	Oper is a subclass of Expr.
- */
-static bool
 _equalOper(Oper *a, Oper *b)
 {
 	if (a->opno != b->opno)
 		return false;
 	if (a->opresulttype != b->opresulttype)
 		return false;
+	/* We do not examine opid, opsize, or op_fcache, since these are
+	 * logically derived from opno, and they may not be set yet depending
+	 * on how far along the node is in the parse/plan pipeline.
+	 *
+	 * It's probably not really necessary to check opresulttype either...
+	 */
 
 	return true;
 }
 
-/*
- *	Const is a subclass of Expr.
- */
 static bool
 _equalConst(Const *a, Const *b)
 {
-
-	/*
-	 * * this function used to do a pointer compare on a and b.  That's *
-	 * ridiculous.	-- JMH, 7/11/92
-	 */
 	if (a->consttype != b->consttype)
 		return false;
 	if (a->constlen != b->constlen)
@@ -204,13 +134,11 @@ _equalConst(Const *a, Const *b)
 		return false;
 	if (a->constbyval != b->constbyval)
 		return false;
+	/* XXX What about constisset and constiscast? */
 	return (datumIsEqual(a->constvalue, b->constvalue,
 						 a->consttype, a->constbyval, a->constlen));
 }
 
-/*
- *	Param is a subclass of Expr.
- */
 static bool
 _equalParam(Param *a, Param *b)
 {
@@ -249,9 +177,26 @@ _equalParam(Param *a, Param *b)
 	return true;
 }
 
-/*
- *	Aggref is a subclass of Expr.
- */
+static bool
+_equalFunc(Func *a, Func *b)
+{
+	if (a->funcid != b->funcid)
+		return false;
+	if (a->functype != b->functype)
+		return false;
+	if (a->funcisindex != b->funcisindex)
+		return false;
+	if (a->funcsize != b->funcsize)
+		return false;
+	/* Note we do not look at func_fcache */
+	if (!equal(a->func_tlist, b->func_tlist))
+		return false;
+	if (!equal(a->func_planlist, b->func_planlist))
+		return false;
+
+	return true;
+}
+
 static bool
 _equalAggref(Aggref *a, Aggref *b)
 {
@@ -270,68 +215,61 @@ _equalAggref(Aggref *a, Aggref *b)
 	return true;
 }
 
-/*
- *	Func is a subclass of Expr.
- */
 static bool
-_equalFunc(Func *a, Func *b)
+_equalArray(Array *a, Array *b)
 {
-	if (a->funcid != b->funcid)
+	if (a->arrayelemtype != b->arrayelemtype)
 		return false;
-	if (a->functype != b->functype)
+	/* We need not check arrayelemlength, arrayelembyval if types match */
+	if (a->arrayndim != b->arrayndim)
 		return false;
-	if (a->funcisindex != b->funcisindex)
+	/* XXX shouldn't we be checking all indices??? */
+	if (a->arraylow.indx[0] != b->arraylow.indx[0])
 		return false;
-	if (a->funcsize != b->funcsize)
+	if (a->arrayhigh.indx[0] != b->arrayhigh.indx[0])
 		return false;
-	if (!equal(a->func_tlist, b->func_tlist))
-		return false;
-	if (!equal(a->func_planlist, b->func_planlist))
+	if (a->arraylen != b->arraylen)
 		return false;
 
 	return true;
 }
 
-/*
- * RestrictInfo is a subclass of Node.
- */
 static bool
-_equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
+_equalArrayRef(ArrayRef *a, ArrayRef *b)
 {
-	Assert(IsA(a, RestrictInfo));
-	Assert(IsA(b, RestrictInfo));
-
-	if (!equal(a->clause, b->clause))
+	if (a->refelemtype != b->refelemtype)
 		return false;
-	if (a->selectivity != b->selectivity)
+	if (a->refattrlength != b->refattrlength)
 		return false;
-#ifdef EqualMergeOrderExists
-	if (!EqualMergeOrder(a->mergejoinorder, b->mergejoinorder))
+	if (a->refelemlength != b->refelemlength)
 		return false;
-#endif
-	if (a->hashjoinoperator != b->hashjoinoperator)
+	if (a->refelembyval != b->refelembyval)
 		return false;
-	return equal(a->indexids, b->indexids);
+	if (!equal(a->refupperindexpr, b->refupperindexpr))
+		return false;
+	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
+		return false;
+	if (!equal(a->refexpr, b->refexpr))
+		return false;
+	return equal(a->refassgnexpr, b->refassgnexpr);
 }
 
 /*
- * RelOptInfo is a subclass of Node.
+ * Stuff from relation.h
  */
+
 static bool
 _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 {
-	Assert(IsA(a, RelOptInfo));
-	Assert(IsA(b, RelOptInfo));
-
+	/* We treat RelOptInfos as equal if they refer to the same base rels
+	 * joined in the same order.  Is this sufficient?
+	 */
 	return equal(a->relids, b->relids);
 }
 
 static bool
 _equalJoinMethod(JoinMethod *a, JoinMethod *b)
 {
-	Assert(IsA(a, JoinMethod));
-	Assert(IsA(b, JoinMethod));
-
 	if (!equal(a->jmkeys, b->jmkeys))
 		return false;
 	if (!equal(a->clauses, b->clauses))
@@ -344,16 +282,17 @@ _equalPath(Path *a, Path *b)
 {
 	if (a->pathtype != b->pathtype)
 		return false;
-	if (a->parent != b->parent)
+	if (a->parent != b->parent)	/* should this use equal() ? */
 		return false;
-
-	/*
-	 * if (a->path_cost != b->path_cost) return(false);
+	/* do not check path_cost, since it may not be set yet, and being
+	 * a float there are roundoff error issues anyway...
 	 */
+
+	/* XXX this should probably be in an _equalPathOrder function... */
+	if (a->pathorder->ordtype != b->pathorder->ordtype)
+		return false;
 	if (a->pathorder->ordtype == SORTOP_ORDER)
 	{
-		int			i = 0;
-
 		if (a->pathorder->ord.sortop == NULL ||
 			b->pathorder->ord.sortop == NULL)
 		{
@@ -362,15 +301,15 @@ _equalPath(Path *a, Path *b)
 		}
 		else
 		{
-			while (a->pathorder->ord.sortop[i] != 0 &&
-				   b->pathorder->ord.sortop[i] != 0)
+			int			i = 0;
+
+			while (a->pathorder->ord.sortop[i] != 0)
 			{
 				if (a->pathorder->ord.sortop[i] != b->pathorder->ord.sortop[i])
 					return false;
 				i++;
 			}
-			if (a->pathorder->ord.sortop[i] != 0 ||
-				b->pathorder->ord.sortop[i] != 0)
+			if (b->pathorder->ord.sortop[i] != 0)
 				return false;
 		}
 	}
@@ -379,12 +318,10 @@ _equalPath(Path *a, Path *b)
 		if (!equal(a->pathorder->ord.merge, b->pathorder->ord.merge))
 			return false;
 	}
+
 	if (!equal(a->pathkeys, b->pathkeys))
 		return false;
-
-	/*
-	 * if (a->outerjoincost != b->outerjoincost) return(false);
-	 */
+	/* do not check outerjoincost either */
 	if (!equali(a->joinid, b->joinid))
 		return false;
 	return true;
@@ -399,15 +336,13 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 		return false;
 	if (!equal(a->indexqual, b->indexqual))
 		return false;
+	/* We do not need to check indexkeys */
 	return true;
 }
 
 static bool
 _equalNestPath(NestPath *a, NestPath *b)
 {
-	Assert(IsA_JoinPath(a));
-	Assert(IsA_JoinPath(b));
-
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
 	if (!equal(a->pathinfo, b->pathinfo))
@@ -422,9 +357,6 @@ _equalNestPath(NestPath *a, NestPath *b)
 static bool
 _equalMergePath(MergePath *a, MergePath *b)
 {
-	Assert(IsA(a, MergePath));
-	Assert(IsA(b, MergePath));
-
 	if (!_equalNestPath((NestPath *) a, (NestPath *) b))
 		return false;
 	if (!equal(a->path_mergeclauses, b->path_mergeclauses))
@@ -439,12 +371,9 @@ _equalMergePath(MergePath *a, MergePath *b)
 static bool
 _equalHashPath(HashPath *a, HashPath *b)
 {
-	Assert(IsA(a, HashPath));
-	Assert(IsA(b, HashPath));
-
 	if (!_equalNestPath((NestPath *) a, (NestPath *) b))
 		return false;
-	if (!equal((a->path_hashclauses), (b->path_hashclauses)))
+	if (!equal(a->path_hashclauses, b->path_hashclauses))
 		return false;
 	if (!equal(a->outerhashkeys, b->outerhashkeys))
 		return false;
@@ -456,9 +385,6 @@ _equalHashPath(HashPath *a, HashPath *b)
 static bool
 _equalJoinKey(JoinKey *a, JoinKey *b)
 {
-	Assert(IsA(a, JoinKey));
-	Assert(IsA(b, JoinKey));
-
 	if (!equal(a->outer, b->outer))
 		return false;
 	if (!equal(a->inner, b->inner))
@@ -469,11 +395,6 @@ _equalJoinKey(JoinKey *a, JoinKey *b)
 static bool
 _equalMergeOrder(MergeOrder *a, MergeOrder *b)
 {
-	if (a == (MergeOrder *) NULL && b == (MergeOrder *) NULL)
-		return true;
-	Assert(IsA(a, MergeOrder));
-	Assert(IsA(b, MergeOrder));
-
 	if (a->join_operator != b->join_operator)
 		return false;
 	if (a->left_operator != b->left_operator)
@@ -490,9 +411,8 @@ _equalMergeOrder(MergeOrder *a, MergeOrder *b)
 static bool
 _equalHashInfo(HashInfo *a, HashInfo *b)
 {
-	Assert(IsA(a, HashInfo));
-	Assert(IsA(b, HashInfo));
-
+	if (!_equalJoinMethod((JoinMethod *) a, (JoinMethod *) b))
+		return false;
 	if (a->hashop != b->hashop)
 		return false;
 	return true;
@@ -500,13 +420,13 @@ _equalHashInfo(HashInfo *a, HashInfo *b)
 
 /* XXX	This equality function is a quick hack, should be
  *		fixed to compare all fields.
+ *
+ * XXX  Why is this even here?  We don't have equal() funcs for
+ *      any other kinds of Plan nodes... likely this is dead code...
  */
 static bool
 _equalIndexScan(IndexScan *a, IndexScan *b)
 {
-	Assert(IsA(a, IndexScan));
-	Assert(IsA(b, IndexScan));
-
 	/*
 	 * if(a->scan.plan.cost != b->scan.plan.cost) return(false);
 	 */
@@ -537,8 +457,6 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 static bool
 _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
-	Assert(IsA(a, JoinInfo));
-	Assert(IsA(b, JoinInfo));
 	if (!equal(a->unjoined_relids, b->unjoined_relids))
 		return false;
 	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
@@ -548,6 +466,45 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 	if (a->hashjoinable != b->hashjoinable)
 		return false;
 	return true;
+}
+
+static bool
+_equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
+{
+	if (!equal(a->clause, b->clause))
+		return false;
+	/* do not check selectivity because of roundoff error worries */
+	if (!equal(a->mergejoinorder, b->mergejoinorder))
+		return false;
+	if (a->hashjoinoperator != b->hashjoinoperator)
+		return false;
+	return equal(a->indexids, b->indexids);
+}
+
+static bool
+_equalIter(Iter *a, Iter *b)
+{
+	return equal(a->iterexpr, b->iterexpr);
+}
+
+static bool
+_equalStream(Stream *a, Stream *b)
+{
+	if (a->clausetype != b->clausetype)
+		return false;
+	if (a->groupup != b->groupup)
+		return false;
+	if (a->groupcost != b->groupcost)
+		return false;
+	if (a->groupsel != b->groupsel)
+		return false;
+	if (!equal(a->pathptr, b->pathptr))
+		return false;
+	if (!equal(a->cinfo, b->cinfo))
+		return false;
+	if (!equal(a->upstream, b->upstream))
+		return false;
+	return equal(a->downstream, b->downstream);
 }
 
 /*
@@ -691,6 +648,32 @@ _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 	if (!equal(a->fjoin, b->fjoin))
 		return false;
 	if (!equal(a->expr, b->expr))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCaseExpr(CaseExpr *a, CaseExpr *b)
+{
+	if (a->casetype != b->casetype)
+		return false;
+	if (!equal(a->arg, b->arg))
+		return false;
+	if (!equal(a->args, b->args))
+		return false;
+	if (!equal(a->defresult, b->defresult))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCaseWhen(CaseWhen *a, CaseWhen *b)
+{
+	if (!equal(a->expr, b->expr))
+		return false;
+	if (!equal(a->result, b->result))
 		return false;
 
 	return true;
@@ -842,9 +825,10 @@ equal(void *a, void *b)
 				List	   *lb = (List *) b;
 				List	   *l;
 
-				if (a == NULL && b == NULL)
-					return true;
-				if (length(a) != length(b))
+				/* Try to reject by length check before we grovel through
+				 * all the elements...
+				 */
+				if (length(la) != length(lb))
 					return false;
 				foreach(l, la)
 				{
@@ -864,6 +848,12 @@ equal(void *a, void *b)
 		case T_TargetEntry:
 			retval = _equalTargetEntry(a, b);
 			break;
+		case T_CaseExpr:
+			retval = _equalCaseExpr(a, b);
+			break;
+		case T_CaseWhen:
+			retval = _equalCaseWhen(a, b);
+			break;
 		default:
 			elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
 				 nodeTag(a));
@@ -876,25 +866,21 @@ equal(void *a, void *b)
 /*
  * equali
  *	  compares two lists of integers
- *
- * XXX temp hack. needs something like T_IntList
  */
 static bool
 equali(List *a, List *b)
 {
-	List	   *la = (List *) a;
-	List	   *lb = (List *) b;
 	List	   *l;
 
-	if (a == NULL && b == NULL)
-		return true;
-	if (length(a) != length(b))
-		return false;
-	foreach(l, la)
+	foreach(l, a)
 	{
-		if (lfirsti(l) != lfirsti(lb))
+		if (b == NIL)
 			return false;
-		lb = lnext(lb);
+		if (lfirsti(l) != lfirsti(b))
+			return false;
+		b = lnext(b);
 	}
+	if (b != NIL)
+		return false;
 	return true;
 }
