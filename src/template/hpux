@@ -4,3 +4,8 @@ if test "$GCC" != yes ; then
   CC="$CC -Ae"
   CFLAGS="+O2"
 fi
+
+# Pick right test-and-set (TAS) code.
+case $host in
+  hppa*-*-hpux*)        need_tas=yes; tas_file=hpux_hppa.s ;;
+esac

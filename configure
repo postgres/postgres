@@ -1448,22 +1448,11 @@ echo "${ECHO_T}$template" >&6
 PORTNAME=$template
 
 
-# Pick right test-and-set (TAS) code.  Most platforms have inline
-# assembler code in src/include/storage/s_lock.h, so we just use
-# a dummy file here.
-case $host in
-  hppa*-*-hpux*)        need_tas=yes; tas_file=hpux_hppa.s ;;
-  sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
-  i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
-  *)                need_tas=no;  tas_file=dummy.s ;;
-esac
-ac_config_links="$ac_config_links src/backend/port/tas.s:src/backend/port/tas/${tas_file}"
-
-
-if test "$need_tas" = yes ; then
-  TAS=tas.o
-fi
-
+# Initialize default assumption that we do not need separate assembly code
+# for TAS (test-and-set).  This can be overridden by the template file
+# when it's executed.
+need_tas=no
+tas_file=dummy.s
 
 
 
@@ -2821,6 +2810,21 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define PG_VERSION_STR "PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string"
 _ACEOF
+
+
+
+#
+# Set up TAS assembly code if needed; the template file has now had its
+# chance to request this.
+#
+ac_config_links="$ac_config_links src/backend/port/tas.s:src/backend/port/tas/${tas_file}"
+
+
+if test "$need_tas" = yes ; then
+  TAS=tas.o
+else
+  TAS=""
+fi
 
 
 
@@ -18223,7 +18227,6 @@ s,@host_cpu@,$host_cpu,;t t
 s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
 s,@PORTNAME@,$PORTNAME,;t t
-s,@TAS@,$TAS,;t t
 s,@docdir@,$docdir,;t t
 s,@enable_nls@,$enable_nls,;t t
 s,@WANTED_LANGUAGES@,$WANTED_LANGUAGES,;t t
@@ -18240,6 +18243,7 @@ s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
 s,@CPP@,$CPP,;t t
 s,@GCC@,$GCC,;t t
+s,@TAS@,$TAS,;t t
 s,@autodepend@,$autodepend,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@enable_thread_safety@,$enable_thread_safety,;t t

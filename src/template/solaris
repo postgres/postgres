@@ -3,6 +3,12 @@ if test "$GCC" != yes ; then
   CFLAGS="-O -v"		# -v is like gcc -Wall
 fi
 
+# Pick right test-and-set (TAS) code.
+case $host in
+  sparc-*-solaris*)  need_tas=yes; tas_file=solaris_sparc.s ;;
+  i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
+esac
+
 THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=yes	# 5.6 2003-09-13
 THREAD_LIBS="-pthread"

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.308 2003/11/29 19:51:16 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.309 2003/12/23 18:40:52 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -97,21 +97,11 @@ AC_MSG_RESULT([$template])
 PORTNAME=$template
 AC_SUBST(PORTNAME)
 
-# Pick right test-and-set (TAS) code.  Most platforms have inline
-# assembler code in src/include/storage/s_lock.h, so we just use
-# a dummy file here.
-case $host in
-  hppa*-*-hpux*)        need_tas=yes; tas_file=hpux_hppa.s ;;
-  sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
-  i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
-  *)                need_tas=no;  tas_file=dummy.s ;;
-esac
-AC_CONFIG_LINKS([src/backend/port/tas.s:src/backend/port/tas/${tas_file}])
-
-if test "$need_tas" = yes ; then
-  TAS=tas.o
-fi
-AC_SUBST(TAS)
+# Initialize default assumption that we do not need separate assembly code
+# for TAS (test-and-set).  This can be overridden by the template file
+# when it's executed.
+need_tas=no
+tas_file=dummy.s
 
 
 
@@ -300,6 +290,20 @@ fi
 AC_DEFINE_UNQUOTED(PG_VERSION_STR,
                    ["PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string"],
                    [A string containing the version number, platform, and C compiler])
+
+
+#
+# Set up TAS assembly code if needed; the template file has now had its
+# chance to request this.
+#
+AC_CONFIG_LINKS([src/backend/port/tas.s:src/backend/port/tas/${tas_file}])
+
+if test "$need_tas" = yes ; then
+  TAS=tas.o
+else
+  TAS=""
+fi
+AC_SUBST(TAS)
 
 
 #
