@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Apr 29 22:35:31 EDT 2001
+Last updated:		Mon Apr 30 11:56:47 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -53,7 +53,7 @@ ADMIN
   number, not just messages [elog]
 * Allow international error message support and add error codes [elog]
 * Remove unused files during database vacuum or postmaster startup
-* Add tablename symlinks for numeric file names
+* Add table name mapping for numeric file names
 
 TYPES
 
