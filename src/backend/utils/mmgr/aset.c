@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.54 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.55 2004/05/26 19:44:15 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -85,7 +85,7 @@
  * CAUTION: ALLOC_MINBITS must be large enough so that
  * 1<<ALLOC_MINBITS is at least MAXALIGN,
  * or we may fail to align the smallest chunks adequately.
- * 16-byte alignment is enough on all currently known machines.
+ * 8-byte alignment is enough on all currently known machines.
  *
  * With the current parameters, request sizes up to 8K are treated as chunks,
  * larger requests go into dedicated blocks.  Change ALLOCSET_NUM_FREELISTS
@@ -93,8 +93,8 @@
  *--------------------
  */
 
-#define ALLOC_MINBITS		4	/* smallest chunk size is 16 bytes */
-#define ALLOCSET_NUM_FREELISTS	10
+#define ALLOC_MINBITS		3	/* smallest chunk size is 8 bytes */
+#define ALLOCSET_NUM_FREELISTS	11
 #define ALLOC_CHUNK_LIMIT	(1 << (ALLOCSET_NUM_FREELISTS-1+ALLOC_MINBITS))
 /* Size of largest chunk that we use a fixed size for */
 
