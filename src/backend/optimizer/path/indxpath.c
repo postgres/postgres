@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.73 1999/11/22 17:56:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.74 1999/12/31 03:41:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,24 +44,30 @@ typedef enum {
 	Prefix_None, Prefix_Partial, Prefix_Exact
 } Prefix_Status;
 
-static void match_index_orclauses(RelOptInfo *rel, RelOptInfo *index, int indexkey,
-					  int xclass, List *restrictinfo_list);
-static List *match_index_orclause(RelOptInfo *rel, RelOptInfo *index, int indexkey,
-			 int xclass, List *or_clauses, List *other_matching_indices);
+static void match_index_orclauses(RelOptInfo *rel, RelOptInfo *index,
+								  int indexkey, Oid opclass,
+								  List *restrictinfo_list);
+static List *match_index_orclause(RelOptInfo *rel, RelOptInfo *index,
+								  int indexkey, Oid opclass,
+								  List *or_clauses,
+								  List *other_matching_indices);
 static bool match_or_subclause_to_indexkey(RelOptInfo *rel, RelOptInfo *index,
-										   int indexkey, int xclass,
+										   int indexkey, Oid opclass,
 										   Expr *clause);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, RelOptInfo *index,
-				  int *indexkeys, Oid *classes, List *restrictinfo_list);
+									   int *indexkeys, Oid *classes,
+									   List *restrictinfo_list);
 static List *group_clauses_by_ikey_for_joins(RelOptInfo *rel, RelOptInfo *index,
-								int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
+											 int *indexkeys, Oid *classes,
+											 List *join_cinfo_list,
+											 List *restr_cinfo_list);
 static bool match_clause_to_indexkey(RelOptInfo *rel, RelOptInfo *index,
-									 int indexkey, int xclass,
+									 int indexkey, Oid opclass,
 									 Expr *clause, bool join);
-static bool indexable_operator(Expr *clause, int xclass, Oid relam,
+static bool indexable_operator(Expr *clause, Oid opclass, Oid relam,
 							   bool indexkey_on_left);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
-		  List *joininfo_list);
+					  List *joininfo_list);
 static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
 static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
 static bool one_pred_clause_test(Expr *predicate, Node *clause);
@@ -77,13 +83,16 @@ static bool useful_for_ordering(Query *root, RelOptInfo *rel,
 								RelOptInfo *index);
 static bool match_index_to_operand(int indexkey, Var *operand,
 								   RelOptInfo *rel, RelOptInfo *index);
-static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
-static bool match_special_index_operator(Expr *clause, bool indexkey_on_left);
+static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
+								   RelOptInfo *index);
+static bool match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
+										 bool indexkey_on_left);
 static Prefix_Status like_fixed_prefix(char *patt, char **prefix);
 static Prefix_Status regex_fixed_prefix(char *patt, bool case_insensitive,
 										char **prefix);
 static List *prefix_quals(Var *leftop, Oid expr_op,
 						  char *prefix, Prefix_Status pstatus);
+static Oid find_operator(const char * opname, Oid datatype);
 
 
 /*
@@ -255,7 +264,7 @@ static void
 match_index_orclauses(RelOptInfo *rel,
 					  RelOptInfo *index,
 					  int indexkey,
-					  int xclass,
+					  Oid opclass,
 					  List *restrictinfo_list)
 {
 	List	   *i;
@@ -272,7 +281,7 @@ match_index_orclauses(RelOptInfo *rel,
 			 */
 			restrictinfo->subclauseindices =
 				match_index_orclause(rel, index,
-									 indexkey, xclass,
+									 indexkey, opclass,
 									 restrictinfo->clause->args,
 									 restrictinfo->subclauseindices);
 		}
@@ -304,7 +313,7 @@ static List *
 match_index_orclause(RelOptInfo *rel,
 					 RelOptInfo *index,
 					 int indexkey,
-					 int xclass,
+					 Oid opclass,
 					 List *or_clauses,
 					 List *other_matching_indices)
 {
@@ -330,7 +339,7 @@ match_index_orclause(RelOptInfo *rel,
 	{
 		Expr	   *clause = lfirst(clist);
 
-		if (match_or_subclause_to_indexkey(rel, index, indexkey, xclass,
+		if (match_or_subclause_to_indexkey(rel, index, indexkey, opclass,
 										   clause))
 		{
 			/* OK to add this index to sublist for this subclause */
@@ -355,7 +364,7 @@ static bool
 match_or_subclause_to_indexkey(RelOptInfo *rel,
 							   RelOptInfo *index,
 							   int indexkey,
-							   int xclass,
+							   Oid opclass,
 							   Expr *clause)
 {
 	if (and_clause((Node *) clause))
@@ -364,14 +373,14 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
 
 		foreach(item, clause->args)
 		{
-			if (! match_clause_to_indexkey(rel, index, indexkey, xclass,
+			if (! match_clause_to_indexkey(rel, index, indexkey, opclass,
 										   lfirst(item), false))
 				return false;
 		}
 		return true;
 	}
 	else
-		return match_clause_to_indexkey(rel, index, indexkey, xclass,
+		return match_clause_to_indexkey(rel, index, indexkey, opclass,
 										clause, false);
 }
 
@@ -588,7 +597,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  * 'rel' is the relation of interest.
  * 'index' is an index on 'rel'.
  * 'indexkey' is a key of 'index'.
- * 'xclass' is the corresponding operator class.
+ * 'opclass' is the corresponding operator class.
  * 'clause' is the clause to be tested.
  * 'join' is true if we are considering this clause for joins.
  *
@@ -601,7 +610,7 @@ static bool
 match_clause_to_indexkey(RelOptInfo *rel,
 						 RelOptInfo *index,
 						 int indexkey,
-						 int xclass,
+						 Oid opclass,
 						 Expr *clause,
 						 bool join)
 {
@@ -627,26 +636,28 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		if ((IsA(rightop, Const) || IsA(rightop, Param)) &&
 			match_index_to_operand(indexkey, leftop, rel, index))
 		{
-			if (indexable_operator(clause, xclass, index->relam, true))
+			if (indexable_operator(clause, opclass, index->relam, true))
 				return true;
 			/*
 			 * If we didn't find a member of the index's opclass,
 			 * see whether it is a "special" indexable operator.
 			 */
-			if (match_special_index_operator(clause, true))
+			if (match_special_index_operator(clause, opclass, index->relam,
+											 true))
 				return true;
 			return false;
 		}
 		if ((IsA(leftop, Const) || IsA(leftop, Param)) &&
 			match_index_to_operand(indexkey, rightop, rel, index))
 		{
-			if (indexable_operator(clause, xclass, index->relam, false))
+			if (indexable_operator(clause, opclass, index->relam, false))
 				return true;
 			/*
 			 * If we didn't find a member of the index's opclass,
 			 * see whether it is a "special" indexable operator.
 			 */
-			if (match_special_index_operator(clause, false))
+			if (match_special_index_operator(clause, opclass, index->relam,
+											 false))
 				return true;
 			return false;
 		}
@@ -666,7 +677,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			isIndexable = ! intMember(lfirsti(rel->relids), othervarnos);
 			freeList(othervarnos);
 			if (isIndexable &&
-				indexable_operator(clause, xclass, index->relam, true))
+				indexable_operator(clause, opclass, index->relam, true))
 				return true;
 		}
 		else if (match_index_to_operand(indexkey, rightop, rel, index))
@@ -677,7 +688,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			isIndexable = ! intMember(lfirsti(rel->relids), othervarnos);
 			freeList(othervarnos);
 			if (isIndexable &&
-				indexable_operator(clause, xclass, index->relam, false))
+				indexable_operator(clause, opclass, index->relam, false))
 				return true;
 		}
 	}
@@ -706,7 +717,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
  * a tad ugly...
  */
 static bool
-indexable_operator(Expr *clause, int xclass, Oid relam,
+indexable_operator(Expr *clause, Oid opclass, Oid relam,
 				   bool indexkey_on_left)
 {
 	Oid			expr_op = ((Oper *) clause->oper)->opno;
@@ -723,7 +734,7 @@ indexable_operator(Expr *clause, int xclass, Oid relam,
 		return false;
 
 	/* Done if the (commuted) operator is a member of the index's AM */
-	if (op_class(commuted_op, xclass, relam))
+	if (op_class(commuted_op, opclass, relam))
 		return true;
 
 	/*
@@ -766,7 +777,7 @@ indexable_operator(Expr *clause, int xclass, Oid relam,
 				if (commuted_op == InvalidOid)
 					return false;
 
-				if (op_class(commuted_op, xclass, relam))
+				if (op_class(commuted_op, opclass, relam))
 				{
 					/*
 					 * Success!  Change the opclause to use the
@@ -1561,7 +1572,8 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
  * Return 'true' if we can do something with it anyway.
  */
 static bool
-match_special_index_operator(Expr *clause, bool indexkey_on_left)
+match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
+							 bool indexkey_on_left)
 {
 	bool		isIndexable = false;
 	Var		   *leftop,
@@ -1622,6 +1634,51 @@ match_special_index_operator(Expr *clause, bool indexkey_on_left)
 			isIndexable = regex_fixed_prefix(patt, true, &prefix) != Prefix_None;
 			if (prefix) pfree(prefix);
 			pfree(patt);
+			break;
+	}
+
+	/* done if the expression doesn't look indexable */
+	if (! isIndexable)
+		return false;
+
+	/*
+	 * Must also check that index's opclass supports the operators we will
+	 * want to apply.  (A hash index, for example, will not support ">=".)
+	 * We cheat a little by not checking for availability of "=" ... any
+	 * index type should support "=", methinks.
+	 */
+	switch (expr_op)
+	{
+		case OID_TEXT_LIKE_OP:
+		case OID_TEXT_REGEXEQ_OP:
+		case OID_TEXT_ICREGEXEQ_OP:
+			if (! op_class(find_operator(">=", TEXTOID), opclass, relam) ||
+				! op_class(find_operator("<=", TEXTOID), opclass, relam))
+				isIndexable = false;
+			break;
+
+		case OID_BPCHAR_LIKE_OP:
+		case OID_BPCHAR_REGEXEQ_OP:
+		case OID_BPCHAR_ICREGEXEQ_OP:
+			if (! op_class(find_operator(">=", BPCHAROID), opclass, relam) ||
+				! op_class(find_operator("<=", BPCHAROID), opclass, relam))
+				isIndexable = false;
+			break;
+
+		case OID_VARCHAR_LIKE_OP:
+		case OID_VARCHAR_REGEXEQ_OP:
+		case OID_VARCHAR_ICREGEXEQ_OP:
+			if (! op_class(find_operator(">=", VARCHAROID), opclass, relam) ||
+				! op_class(find_operator("<=", VARCHAROID), opclass, relam))
+				isIndexable = false;
+			break;
+
+		case OID_NAME_LIKE_OP:
+		case OID_NAME_REGEXEQ_OP:
+		case OID_NAME_ICREGEXEQ_OP:
+			if (! op_class(find_operator(">=", NAMEOID), opclass, relam) ||
+				! op_class(find_operator("<=", NAMEOID), opclass, relam))
+				isIndexable = false;
 			break;
 	}
 
@@ -1848,7 +1905,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 {
 	List	   *result;
 	Oid			datatype;
-	HeapTuple	optup;
+	Oid			oproid;
 	void	   *conval;
 	Const	   *con;
 	Oper	   *op;
@@ -1893,12 +1950,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 	 */
 	if (pstatus == Prefix_Exact)
 	{
-		optup = SearchSysCacheTuple(OPERNAME,
-									PointerGetDatum("="),
-									ObjectIdGetDatum(datatype),
-									ObjectIdGetDatum(datatype),
-									CharGetDatum('b'));
-		if (!HeapTupleIsValid(optup))
+		oproid = find_operator("=", datatype);
+		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no = operator for type %u", datatype);
 		/* Note: we cheat a little by assuming that textin() will do for
 		 * bpchar and varchar constants too...
@@ -1908,7 +1961,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 		con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
 						PointerGetDatum(conval),
 						false, false, false, false);
-		op = makeOper(optup->t_data->t_oid, InvalidOid, BOOLOID, 0, NULL);
+		op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
 		expr = make_opclause(op, leftop, (Var *) con);
 		result = lcons(expr, NIL);
 		return result;
@@ -1919,19 +1972,15 @@ prefix_quals(Var *leftop, Oid expr_op,
 	 *
 	 * We can always say "x >= prefix".
 	 */
-	optup = SearchSysCacheTuple(OPERNAME,
-								PointerGetDatum(">="),
-								ObjectIdGetDatum(datatype),
-								ObjectIdGetDatum(datatype),
-								CharGetDatum('b'));
-	if (!HeapTupleIsValid(optup))
+	oproid = find_operator(">=", datatype);
+	if (oproid == InvalidOid)
 		elog(ERROR, "prefix_quals: no >= operator for type %u", datatype);
 	conval = (datatype == NAMEOID) ?
 		(void*) namein(prefix) : (void*) textin(prefix);
 	con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
 					PointerGetDatum(conval),
 					false, false, false, false);
-	op = makeOper(optup->t_data->t_oid, InvalidOid, BOOLOID, 0, NULL);
+	op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
 	expr = make_opclause(op, leftop, (Var *) con);
 	result = lcons(expr, NIL);
 
@@ -1947,22 +1996,34 @@ prefix_quals(Var *leftop, Oid expr_op,
 	prefix[prefixlen] = '\377';
 	prefix[prefixlen+1] = '\0';
 
-	optup = SearchSysCacheTuple(OPERNAME,
-								PointerGetDatum("<="),
-								ObjectIdGetDatum(datatype),
-								ObjectIdGetDatum(datatype),
-								CharGetDatum('b'));
-	if (!HeapTupleIsValid(optup))
+	oproid = find_operator("<=", datatype);
+	if (oproid == InvalidOid)
 		elog(ERROR, "prefix_quals: no <= operator for type %u", datatype);
 	conval = (datatype == NAMEOID) ?
 		(void*) namein(prefix) : (void*) textin(prefix);
 	con = makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
 					PointerGetDatum(conval),
 					false, false, false, false);
-	op = makeOper(optup->t_data->t_oid, InvalidOid, BOOLOID, 0, NULL);
+	op = makeOper(oproid, InvalidOid, BOOLOID, 0, NULL);
 	expr = make_opclause(op, leftop, (Var *) con);
 	result = lappend(result, expr);
 #endif
 
 	return result;
+}
+
+/* See if there is a binary op of the given name for the given datatype */
+static Oid
+find_operator(const char * opname, Oid datatype)
+{
+	HeapTuple	optup;
+
+	optup = SearchSysCacheTuple(OPERNAME,
+								PointerGetDatum(opname),
+								ObjectIdGetDatum(datatype),
+								ObjectIdGetDatum(datatype),
+								CharGetDatum('b'));
+	if (!HeapTupleIsValid(optup))
+		return InvalidOid;
+	return optup->t_data->t_oid;
 }
