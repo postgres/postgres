@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.97 2002/10/02 16:27:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.98 2002/10/31 21:34:17 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -56,7 +56,6 @@
 extern bool Log_connections;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
-extern int	StatementTimeout;
 extern int	CheckPointTimeout;
 extern bool autocommit;
 extern int	CommitDelay;

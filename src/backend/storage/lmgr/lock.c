@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.116 2002/09/26 05:18:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.117 2002/10/31 21:34:16 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -882,7 +882,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	/*
 	 * NOTE: Think not to put any shared-state cleanup after the call to
 	 * ProcSleep, in either the normal or failure path.  The lock state
-	 * must be fully set by the lock grantor, or by HandleDeadLock if we
+	 * must be fully set by the lock grantor, or by CheckDeadLock if we
 	 * give up waiting for the lock.  This is necessary because of the
 	 * possibility that a cancel/die interrupt will interrupt ProcSleep
 	 * after someone else grants us the lock, but before we've noticed it.
@@ -899,7 +899,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 				  holder) != STATUS_OK)
 	{
 		/*
-		 * We failed as a result of a deadlock, see HandleDeadLock(). Quit
+		 * We failed as a result of a deadlock, see CheckDeadLock(). Quit
 		 * now.  Removal of the holder and lock objects, if no longer
 		 * needed, will happen in xact cleanup (see above for motivation).
 		 */

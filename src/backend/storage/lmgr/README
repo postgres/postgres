@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.11 2002/07/19 00:17:40 momjian Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.12 2002/10/31 21:34:16 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -392,7 +392,7 @@ Miscellaneous notes:
 asynchronous invocation of deadlock checking.  A deadlock cycle in the WFG
 is formed when the last edge in the cycle is added; therefore the last
 process in the cycle to wait (the one from which that edge is outgoing) is
-certain to detect and resolve the cycle when it later runs HandleDeadLock.
+certain to detect and resolve the cycle when it later runs CheckDeadLock.
 This holds even if that edge addition created multiple cycles; the process
 may indeed abort without ever noticing those additional cycles, but we
 don't particularly care.  The only other possible creation of deadlocks is
@@ -402,7 +402,7 @@ it attempts to actually execute any rearrangement.
 
 2. It is not certain that a deadlock will be resolved by aborting the
 last-to-wait process.  If earlier waiters in the cycle have not yet run
-HandleDeadLock, then the first one to do so will be the victim.
+CheckDeadLock, then the first one to do so will be the victim.
 
 3. No live (wakable) process can be missed by ProcLockWakeup, since it
 examines every member of the wait queue (this was not true in the 7.0

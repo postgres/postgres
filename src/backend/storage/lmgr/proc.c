@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.126 2002/09/25 20:31:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.127 2002/10/31 21:34:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,11 +52,11 @@
 #include "storage/sinval.h"
 #include "storage/spin.h"
 
+/* GUC variables */
 int			DeadlockTimeout = 1000;
 int			StatementTimeout = 0;
-int			RemainingStatementTimeout = 0;
-bool		alarm_is_statement_timeout = false;
 
+/* Pointer to this process's PGPROC struct, if any */
 PGPROC	   *MyProc = NULL;
 
 /*
@@ -75,8 +75,16 @@ static PGPROC *DummyProc = NULL;
 static bool waitingForLock = false;
 static bool waitingForSignal = false;
 
+/* Mark these volatile because they can be changed by signal handler */
+static volatile bool statement_timeout_active = false;
+static volatile bool deadlock_timeout_active = false;
+/* statement_fin_time is valid only if statement_timeout_active is true */
+static struct timeval statement_fin_time;
+
+
 static void ProcKill(void);
 static void DummyProcKill(void);
+static bool CheckStatementTimeout(void);
 
 
 /*
@@ -796,14 +804,12 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
  * and signal an error to ProcSleep.
  * --------------------
  */
-void
+static void
 CheckDeadLock(void)
 {
-	int			save_errno = errno;
-
 	/*
-	 * Acquire locktable lock.	Note that the SIGALRM interrupt had better
-	 * not be enabled anywhere that this process itself holds the
+	 * Acquire locktable lock.	Note that the deadlock check interrupt had
+	 * better not be enabled anywhere that this process itself holds the
 	 * locktable lock, else this will wait forever.  Also note that
 	 * LWLockAcquire creates a critical section, so that this routine
 	 * cannot be interrupted by cancel/die interrupts.
@@ -821,13 +827,11 @@ CheckDeadLock(void)
 	 * This is quicker than checking our semaphore's state, since no
 	 * kernel call is needed, and it is safe because we hold the locktable
 	 * lock.
-	 *
 	 */
 	if (MyProc->links.prev == INVALID_OFFSET ||
 		MyProc->links.next == INVALID_OFFSET)
 	{
 		LWLockRelease(LockMgrLock);
-		errno = save_errno;
 		return;
 	}
 
@@ -840,7 +844,6 @@ CheckDeadLock(void)
 	{
 		/* No deadlock, so keep waiting */
 		LWLockRelease(LockMgrLock);
-		errno = save_errno;
 		return;
 	}
 
@@ -853,7 +856,7 @@ CheckDeadLock(void)
 
 	/*
 	 * Set MyProc->errType to STATUS_ERROR so that ProcSleep will report
-	 * an error after we return from this signal handler.
+	 * an error after we return from the signal handler.
 	 */
 	MyProc->errType = STATUS_ERROR;
 
@@ -874,7 +877,6 @@ CheckDeadLock(void)
 	 * RemoveFromWaitQueue took care of waking up any such processes.
 	 */
 	LWLockRelease(LockMgrLock);
-	errno = save_errno;
 }
 
 
@@ -933,188 +935,218 @@ ProcSendSignal(BackendId procId)
  * Delay is given in milliseconds.	Caller should be sure a SIGALRM
  * signal handler is installed before this is called.
  *
- * This code properly handles multiple alarms when the statement_timeout
- * alarm is specified first.
+ * This code properly handles nesting of deadlock timeout alarms within
+ * statement timeout alarms.
  *
  * Returns TRUE if okay, FALSE on failure.
  */
 bool
 enable_sig_alarm(int delayms, bool is_statement_timeout)
 {
+	struct timeval fin_time;
 #ifndef __BEOS__
-	struct itimerval timeval,
-				remaining;
-
+	struct itimerval timeval;
 #else
-	bigtime_t	time_interval,
-				remaining;
+	bigtime_t	time_interval;
 #endif
 
-	/*
-	 * Don't set timer if the statement timeout scheduled before next
-	 * alarm.
-	 */
-	if (alarm_is_statement_timeout &&
-		!is_statement_timeout &&
-		RemainingStatementTimeout <= delayms)
-		return true;
-
-#ifndef __BEOS__
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = delayms / 1000;
-	timeval.it_value.tv_usec = (delayms % 1000) * 1000;
-	if (setitimer(ITIMER_REAL, &timeval, &remaining))
-		return false;
-#else
-	/* BeOS doesn't have setitimer, but has set_alarm */
-	time_interval = delayms * 1000;		/* usecs */
-	if ((remaining = set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM)) < 0)
-		return false;
-#endif
-
-	if (is_statement_timeout)
-		RemainingStatementTimeout = StatementTimeout;
-	else
+	/* Compute target timeout time if we will need it */
+	if (is_statement_timeout || statement_timeout_active)
 	{
-		/* Switching to non-statement-timeout alarm, get remaining time */
-		if (alarm_is_statement_timeout)
+		gettimeofday(&fin_time, NULL);
+		fin_time.tv_sec += delayms / 1000;
+		fin_time.tv_usec += (delayms % 1000) * 1000;
+		if (fin_time.tv_usec >= 1000000)
 		{
-#ifndef __BEOS__
-			/* We lose precision here because we convert to milliseconds */
-			RemainingStatementTimeout = remaining.it_value.tv_sec * 1000 +
-				remaining.it_value.tv_usec / 1000;
-#else
-			RemainingStatementTimeout = remaining / 1000;
-#endif
-			/* Rounding could cause a zero */
-			if (RemainingStatementTimeout == 0)
-				RemainingStatementTimeout = 1;
-		}
-
-		if (RemainingStatementTimeout)
-		{
-			/* Remaining timeout alarm < delayms? */
-			if (RemainingStatementTimeout <= delayms)
-			{
-				/* reinstall statement timeout alarm */
-				alarm_is_statement_timeout = true;
-#ifndef __BEOS__
-				remaining.it_value.tv_sec = RemainingStatementTimeout / 1000;
-				remaining.it_value.tv_usec = (RemainingStatementTimeout % 1000) * 1000;
-				if (setitimer(ITIMER_REAL, &remaining, &timeval))
-					return false;
-				else
-					return true;
-#else
-				remaining = RemainingStatementTimeout * 1000;
-				if ((timeval = set_alarm(remaining, B_ONE_SHOT_RELATIVE_ALARM)) < 0)
-					return false;
-				else
-					return true;
-#endif
-			}
-			else
-				RemainingStatementTimeout -= delayms;
+			fin_time.tv_sec++;
+			fin_time.tv_usec -= 1000000;
 		}
 	}
 
 	if (is_statement_timeout)
-		alarm_is_statement_timeout = true;
+	{
+		/* Begin statement-level timeout */
+		Assert(!deadlock_timeout_active);
+		statement_fin_time = fin_time;
+		statement_timeout_active = true;
+	}
+	else if (statement_timeout_active)
+	{
+		/*
+		 * Begin deadlock timeout with statement-level timeout active
+		 *
+		 * Here, we want to interrupt at the closer of the two timeout
+		 * times.  If fin_time >= statement_fin_time then we need not
+		 * touch the existing timer setting; else set up to interrupt
+		 * at the deadlock timeout time.
+		 *
+		 * NOTE: in this case it is possible that this routine will be
+		 * interrupted by the previously-set timer alarm.  This is okay
+		 * because the signal handler will do only what it should do according
+		 * to the state variables.  The deadlock checker may get run earlier
+		 * than normal, but that does no harm.
+		 */
+		deadlock_timeout_active = true;
+		if (fin_time.tv_sec > statement_fin_time.tv_sec ||
+			(fin_time.tv_sec == statement_fin_time.tv_sec &&
+			 fin_time.tv_usec >= statement_fin_time.tv_usec))
+			return true;
+	}
 	else
-		alarm_is_statement_timeout = false;
+	{
+		/* Begin deadlock timeout with no statement-level timeout */
+		deadlock_timeout_active = true;
+	}
+
+	/* If we reach here, okay to set the timer interrupt */
+#ifndef __BEOS__
+	MemSet(&timeval, 0, sizeof(struct itimerval));
+	timeval.it_value.tv_sec = delayms / 1000;
+	timeval.it_value.tv_usec = (delayms % 1000) * 1000;
+	if (setitimer(ITIMER_REAL, &timeval, NULL))
+		return false;
+#else
+	/* BeOS doesn't have setitimer, but has set_alarm */
+	time_interval = delayms * 1000;		/* usecs */
+	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
+		return false;
+#endif
 
 	return true;
 }
 
 /*
- * Cancel the SIGALRM timer.
- *
- * This is also called if the timer has fired to reschedule
- * the statement_timeout timer.
+ * Cancel the SIGALRM timer, either for a deadlock timeout or a statement
+ * timeout.  If a deadlock timeout is canceled, any active statement timeout
+ * remains in force.
  *
  * Returns TRUE if okay, FALSE on failure.
  */
 bool
 disable_sig_alarm(bool is_statement_timeout)
 {
-#ifndef __BEOS__
-	struct itimerval timeval,
-				remaining;
-
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-#else
-	bigtime_t	time_interval = 0;
-#endif
-
-	if (!is_statement_timeout && RemainingStatementTimeout)
+	/*
+	 * Always disable the interrupt if it is active; this avoids being
+	 * interrupted by the signal handler and thereby possibly getting
+	 * confused.
+	 *
+	 * We will re-enable the interrupt if necessary in CheckStatementTimeout.
+	 */
+	if (statement_timeout_active || deadlock_timeout_active)
 	{
 #ifndef __BEOS__
-		/* turn off timer and get remaining time, if any */
-		if (setitimer(ITIMER_REAL, &timeval, &remaining))
+		struct itimerval timeval;
+
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		if (setitimer(ITIMER_REAL, &timeval, NULL))
+		{
+			statement_timeout_active = deadlock_timeout_active = false;
 			return false;
-		/* Add remaining time back because the timer didn't complete */
-		RemainingStatementTimeout += remaining.it_value.tv_sec * 1000 +
-			remaining.it_value.tv_usec / 1000;
-		/* Prepare to set timer */
-		timeval.it_value.tv_sec = RemainingStatementTimeout / 1000;
-		timeval.it_value.tv_usec = (RemainingStatementTimeout % 1000) * 1000;
+		}
 #else
 		/* BeOS doesn't have setitimer, but has set_alarm */
-		if ((time_interval = set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM)) < 0)
-			return false;
-		RemainingStatementTimeout += time_interval / 1000;
-		time_interval = RemainingStatementTimeout * 1000;
-#endif
-		/* Restore remaining statement timeout value */
-		alarm_is_statement_timeout = true;
-	}
-
-	/*
-	 * Optimization: is_statement_timeout && RemainingStatementTimeout ==
-	 * 0 does nothing.	This is for cases where no timeout was set.
-	 */
-	if (!is_statement_timeout || RemainingStatementTimeout)
-	{
-#ifndef __BEOS__
-		if (setitimer(ITIMER_REAL, &timeval, &remaining))
-			return false;
-#else
-		if (time_interval)
+		if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
 		{
-			if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
-				return false;
-		}
-		else
-		{
-			if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
-				return false;
+			statement_timeout_active = deadlock_timeout_active = false;
+			return false;
 		}
 #endif
 	}
 
+	/* Always cancel deadlock timeout, in case this is error cleanup */
+	deadlock_timeout_active = false;
+
+	/* Cancel or reschedule statement timeout */
 	if (is_statement_timeout)
-		RemainingStatementTimeout = 0;
+		statement_timeout_active = false;
+	else if (statement_timeout_active)
+	{
+		if (!CheckStatementTimeout())
+			return false;
+	}
 
 	return true;
 }
 
 
 /*
- * Call alarm handler, either StatementCancel or Deadlock checker.
+ * Check for statement timeout.  If the timeout time has come,
+ * trigger a query-cancel interrupt; if not, reschedule the SIGALRM
+ * interrupt to occur at the right time.
+ *
+ * Returns true if okay, false if failed to set the interrupt.
  */
-void
-handle_sig_alarm(SIGNAL_ARGS)
+static bool
+CheckStatementTimeout(void)
 {
-	if (alarm_is_statement_timeout)
+	struct timeval now;
+
+	if (!statement_timeout_active)
+		return true;			/* do nothing if not active */
+
+	gettimeofday(&now, NULL);
+
+	if (now.tv_sec > statement_fin_time.tv_sec ||
+		(now.tv_sec == statement_fin_time.tv_sec &&
+		 now.tv_usec >= statement_fin_time.tv_usec))
 	{
-		RemainingStatementTimeout = 0;
-		alarm_is_statement_timeout = false;
+		/* Time to die */
+		statement_timeout_active = false;
 		kill(MyProcPid, SIGINT);
 	}
 	else
 	{
-		CheckDeadLock();
-		/* Reactivate any statement_timeout alarm. */
-		disable_sig_alarm(false);
+		/* Not time yet, so (re)schedule the interrupt */
+#ifndef __BEOS__
+		struct itimerval timeval;
+
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		timeval.it_value.tv_sec = statement_fin_time.tv_sec - now.tv_sec;
+		timeval.it_value.tv_usec = statement_fin_time.tv_usec - now.tv_usec;
+		if (timeval.it_value.tv_usec < 0)
+		{
+			timeval.it_value.tv_sec--;
+			timeval.it_value.tv_usec += 1000000;
+		}
+		if (setitimer(ITIMER_REAL, &timeval, NULL))
+			return false;
+#else
+		/* BeOS doesn't have setitimer, but has set_alarm */
+		bigtime_t	time_interval;
+
+		time_interval =
+			(statement_fin_time.tv_sec - now.tv_sec) * 1000000 +
+			(statement_fin_time.tv_usec - now.tv_usec);
+		if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
+			return false;
+#endif
 	}
+
+	return true;
+}
+
+
+/*
+ * Signal handler for SIGALRM
+ *
+ * Process deadlock check and/or statement timeout check, as needed.
+ * To avoid various edge cases, we must be careful to do nothing
+ * when there is nothing to be done.  We also need to be able to
+ * reschedule the timer interrupt if called before end of statement.
+ */
+void
+handle_sig_alarm(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	if (deadlock_timeout_active)
+	{
+		deadlock_timeout_active = false;
+		CheckDeadLock();
+	}
+
+	if (statement_timeout_active)
+		(void) CheckStatementTimeout();
+
+	errno = save_errno;
 }

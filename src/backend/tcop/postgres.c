@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.306 2002/10/24 23:19:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.307 2002/10/31 21:34:16 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -74,8 +74,6 @@ char	   *debug_query_string; /* for pgmonitor and
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
-
-extern int	StatementTimeout;
 
 static bool dontExecute = false;
 
@@ -582,9 +580,6 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 	start_xact_command();
 	xact_started = true;
 
-	if (StatementTimeout)
-		enable_sig_alarm(StatementTimeout, true);
-
 	/*
 	 * parse_context *must* be different from the execution memory
 	 * context, else the context reset at the bottom of the loop will
@@ -931,8 +926,6 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		EndCommand(commandTag, dest);
 	}							/* end loop over parsetrees */
 
-	disable_sig_alarm(true);
-
 	/*
 	 * Close down transaction statement, if one is open. (Note that this
 	 * will only happen if the querystring was empty.)
@@ -964,6 +957,10 @@ start_xact_command(void)
 {
 	elog(DEBUG1, "StartTransactionCommand");
 	StartTransactionCommand(false);
+
+	/* Set statement timeout running, if any */
+	if (StatementTimeout > 0)
+		enable_sig_alarm(StatementTimeout, true);
 }
 
 static void
@@ -971,6 +968,9 @@ finish_xact_command(bool forceCommit)
 {
 	/* Invoke IMMEDIATE constraint triggers */
 	DeferredTriggerEndQuery();
+
+	/* Cancel any active statement timeout before committing */
+	disable_sig_alarm(true);
 
 	/* Now commit the command */
 	elog(DEBUG1, "CommitTransactionCommand");
@@ -1047,7 +1047,7 @@ die(SIGNAL_ARGS)
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
 			DisableNotifyInterrupt();
-			/* Make sure HandleDeadLock won't run while shutting down... */
+			/* Make sure CheckDeadLock won't run while shutting down... */
 			LockWaitCancel();
 			InterruptHoldoffCount--;
 			ProcessInterrupts();
@@ -1648,8 +1648,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
 	pqsignal(SIGQUIT, quickdie);	/* hard crash time */
-	pqsignal(SIGALRM, handle_sig_alarm);		/* check for deadlock
-												 * after timeout */
+	pqsignal(SIGALRM, handle_sig_alarm);	/* timeout conditions */
 
 	/*
 	 * Ignore failure to write to frontend. Note: if frontend closes
@@ -1782,7 +1781,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.306 $ $Date: 2002/10/24 23:19:13 $\n");
+		puts("$Revision: 1.307 $ $Date: 2002/10/31 21:34:16 $\n");
 	}
 
 	/*
@@ -1829,6 +1828,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		QueryCancelPending = false;
 		InterruptHoldoffCount = 1;
 		CritSectionCount = 0;	/* should be unnecessary, but... */
+		disable_sig_alarm(true);
+		QueryCancelPending = false;	/* again in case timeout occurred */
 		DisableNotifyInterrupt();
 		debug_query_string = NULL;
 
@@ -1914,9 +1915,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		QueryCancelPending = false;		/* forget any earlier CANCEL
 										 * signal */
-
-		/* Stop any statement timer */
-		disable_sig_alarm(true);
 
 		EnableNotifyInterrupt();
 
