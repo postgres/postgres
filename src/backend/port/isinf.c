@@ -1,18 +1,12 @@
-/* $Id: isinf.c,v 1.10 1999/07/18 17:38:23 momjian Exp $ */
+/* $Id: isinf.c,v 1.11 1999/07/18 20:43:12 momjian Exp $ */
 
 #include <math.h>
-
 #include "config.h"
 
-#ifdef NOT_USED
-
+#if HAVE_FPCLASS
 #if HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
-#if HAVE_FP_CLASS_H
-#include <fp_class.h>
-#endif
-
 int
 isinf(double d)
 {
@@ -29,6 +23,12 @@ isinf(double d)
 	return 0;
 }
 
+#else
+
+#if defined(HAVE_FP_CLASS) || defined(HAVE_FP_CLASS_D)
+#if HAVE_FP_CLASS_H
+#include <fp_class.h>
+#endif
 int
 isinf(x)
 double		x;
@@ -44,6 +44,22 @@ double		x;
 	if (fpclass == FP_POS_INF)
 		return 1;
 	if (fpclass == FP_NEG_INF)
+		return -1;
+	return 0;
+}
+
+#endif
+#endif
+
+#if defined(HAVE_CLASS)
+int
+isinf(double x)
+{
+	int			fpclass = class(x);
+
+	if (fpclass == FP_PLUS_INF)
+		return 1;
+	if (fpclass == FP_MINUS_INF)
 		return -1;
 	return 0;
 }

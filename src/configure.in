@@ -581,6 +581,7 @@ AC_CHECK_HEADERS(crypt.h)
 AC_CHECK_HEADERS(dld.h)
 AC_CHECK_HEADERS(endian.h)
 AC_CHECK_HEADERS(float.h)
+AC_CHECK_HEADERS(fp_class.h)
 AC_CHECK_HEADERS(history.h)
 AC_CHECK_HEADERS(ieeefp.h)
 AC_CHECK_HEADERS(limits.h)
@@ -665,6 +666,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(memmove sigsetjmp sysconf)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+AC_CHECK_FUNCS(fpclass fp_class fp_class_d class)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
 dnl is missing.  Yes, there are machines that have only one.
 dnl We may also decide to use snprintf.c if snprintf() is present but does
@@ -714,6 +716,11 @@ AC_CHECK_FUNC(inet_aton,
 	      AC_DEFINE(HAVE_INET_ATON),
 	      INET_ATON='inet_aton.o')
 AC_SUBST(INET_ATON)
+AC_CHECK_FUNC(strerror,
+	      AC_DEFINE(HAVE_STRERROR),
+	      [STRERROR='strerror.o' STRERROR2='../../backend/port/strerror.o'])
+AC_SUBST(STRERROR)
+AC_SUBST(STRERROR2)
 AC_CHECK_FUNC(strdup,
 	      AC_DEFINE(HAVE_STRDUP),
 	      STRDUP='../../utils/strdup.o')

@@ -303,10 +303,21 @@
 /* Set to 1 if you have snprintf() */
 #undef HAVE_SNPRINTF
 
+/* Set to 1 if you have strerror() */
+#undef HAVE_STRERROR
+
 /* Set to 1 if you have vsnprintf() */
 #undef HAVE_VSNPRINTF
 
-/* Set to 1 if you have isinf() */
+/*
+ *	Set to 1 if you have isinf().
+ *	These are all realated to port/isinf.c 
+ */
+#undef HAVE_FPCLASS
+#undef HAVE_FP_CLASS
+#undef HAVE_FP_CLASS_H
+#undef HAVE_FP_CLASS_D
+#undef HAVE_CLASS
 #undef HAVE_ISINF
 #ifndef HAVE_ISINF
 int isinf(double x);
