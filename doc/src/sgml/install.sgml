@@ -4,7 +4,7 @@
   <Abstract>
    <Para>
     Installation instructions for 
-    <ProductName>PostgreSQL</ProductName> 7.0.0.
+    <ProductName>PostgreSQL</ProductName> 7.0.
    </Para>
   </Abstract>
 
@@ -21,9 +21,9 @@
    get it from <ULink url="ftp://ftp.postgresql.org">ftp.postgresql.org</ULink>,
    then unpack it:
 <ProgramListing>
-$ gunzip postgresql-7.0.0.tar.gz
-$ tar -xf postgresql-7.0.0.tar
-$ mv postgresql-7.0.0 /usr/src
+$ gunzip postgresql-7.0.tar.gz
+$ tar -xf postgresql-7.0.tar
+$ mv postgresql-7.0 /usr/src
 </ProgramListing>
    Again, these commands might differ on your system.
   </Para>
@@ -417,7 +417,7 @@ and <filename>initdb</filename>.
 You probably want to install the <application>man</application> and
 <acronym>HTML</acronym> documentation. Type
 <ProgramListing>
-$ cd /usr/src/pgsql/postgresql-7.0.0/doc
+$ cd /usr/src/pgsql/postgresql-7.0/doc
 $ gmake install
 </ProgramListing>
 This will install files under <filename>/usr/local/pgsql/doc</filename>.
@@ -534,7 +534,7 @@ Then make a softlink to this file from
 Run the regression tests. The regression tests are a test suite to verify that
 PostgreSQL runs on your machine in the way the developers expected it to.
 You should definitely do this before putting a server into production use.
-The file <filename>/usr/src/pgsql/postgresql-7.0.0/src/test/regress/README</filename>
+The file <filename>/usr/src/pgsql/postgresql-7.0/src/test/regress/README</filename>
 has detailed
 instructions for running and interpreting the regression tests.
 </Para>

@@ -4,7 +4,7 @@ Table of Contents
 Before you start
 Installation Procedure
 
-     Installation instructions for PostgreSQL 7.0.0.
+     Installation instructions for PostgreSQL 7.0.
 
 Commands were tested on RedHat Linux version 5.2 using the bash shell.
 Except where noted, they will probably work on most systems. Commands like
@@ -14,9 +14,9 @@ Use common sense before typing in these commands.
 If you haven't gotten the PostgreSQL distribution, get it from
 ftp.postgresql.org, then unpack it:
 
-$ gunzip postgresql-7.0.0.tar.gz
-$ tar -xf postgresql-7.0.0.tar
-$ mv postgresql-7.0.0 /usr/src
+$ gunzip postgresql-7.0.tar.gz
+$ tar -xf postgresql-7.0.tar
+$ mv postgresql-7.0 /usr/src
 
 Again, these commands might differ on your system.
 
@@ -267,7 +267,7 @@ suggestions.
 
    * You probably want to install the man and HTML documentation. Type
 
-     $ cd /usr/src/pgsql/postgresql-7.0.0/doc
+     $ cd /usr/src/pgsql/postgresql-7.0/doc
      $ gmake install
 
      This will install files under /usr/local/pgsql/doc.
@@ -346,5 +346,5 @@ suggestions.
      verify that PostgreSQL runs on your machine in the way the developers
      expected it to. You should definitely do this before putting a server
      into production use. The file
-     /usr/src/pgsql/postgresql-7.0.0/src/test/regress/README has detailed
+     /usr/src/pgsql/postgresql-7.0/src/test/regress/README has detailed
      instructions for running and interpreting the regression tests.
