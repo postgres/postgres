@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.38 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.39 2004/01/15 16:14:26 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,53 +32,12 @@
 #include "storage/proc.h"
 #include "access/xact.h"
 
-#define STRAT_LIST_UNUSED	-1
-#define STRAT_LIST_B1		0
-#define STRAT_LIST_T1		1
-#define STRAT_LIST_T2		2
-#define STRAT_LIST_B2		3
-#define STRAT_NUM_LISTS		4
-
 #ifndef MAX
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
-
-/*
- * The Cache Directory Block (CDB) of the Adaptive Replacement Cache (ARC)
- */
-typedef struct bufstratcdb
-{
-	int				prev;		/* links in the queue */
-	int				next;
-	int				list;		/* current list */
-	BufferTag		buf_tag;	/* buffer key */
-	Buffer			buf_id;		/* currently assigned data buffer */
-	TransactionId	t1_xid;		/* the xid this entry went onto T1 */
-} BufferStrategyCDB;
-
-/*
- * The shared ARC control information.
- */
-typedef struct bufstratcontrol
-{
-
-	int		target_T1_size;				/* What T1 size are we aiming for */
-	int		listUnusedCDB;				/* All unused StrategyCDB */
-	int		listHead[STRAT_NUM_LISTS];	/* ARC lists B1, T1, T2 and B2 */
-	int		listTail[STRAT_NUM_LISTS];
-	int		listSize[STRAT_NUM_LISTS];
-	Buffer	listFreeBuffers;			/* List of unused buffers */
-
-	long	num_lookup;					/* Some hit statistics */
-	long	num_hit[STRAT_NUM_LISTS];
-	time_t	stat_report;
-
-	BufferStrategyCDB	cdb[1];			/* The cache directory */
-} BufferStrategyControl;
- 
 
 static BufferStrategyControl	*StrategyControl = NULL;
 static BufferStrategyCDB		*StrategyCDB = NULL;

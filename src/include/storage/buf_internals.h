@@ -1,13 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * buf_internals.h
- *	  Internal definitions for buffer manager.
+ *	  Internal definitions for buffer manager and the buffer replacement
+ *    strategy.
  *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.66 2003/12/14 00:34:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.67 2004/01/15 16:14:26 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +136,49 @@ typedef struct
 	Buffer		id;
 } BufferLookupEnt;
 
+/*
+ * Definitions for the buffer replacement strategy
+ */
+#define STRAT_LIST_UNUSED	-1
+#define STRAT_LIST_B1		0
+#define STRAT_LIST_T1		1
+#define STRAT_LIST_T2		2
+#define STRAT_LIST_B2		3
+#define STRAT_NUM_LISTS		4
+
+/*
+ * The Cache Directory Block (CDB) of the Adaptive Replacement Cache (ARC)
+ */
+typedef struct
+{
+	int				prev;		/* links in the queue */
+	int				next;
+	int				list;		/* current list */
+	BufferTag		buf_tag;	/* buffer key */
+	Buffer			buf_id;		/* currently assigned data buffer */
+	TransactionId	t1_xid;		/* the xid this entry went onto T1 */
+} BufferStrategyCDB;
+
+/*
+ * The shared ARC control information.
+ */
+typedef struct
+{
+
+	int		target_T1_size;				/* What T1 size are we aiming for */
+	int		listUnusedCDB;				/* All unused StrategyCDB */
+	int		listHead[STRAT_NUM_LISTS];	/* ARC lists B1, T1, T2 and B2 */
+	int		listTail[STRAT_NUM_LISTS];
+	int		listSize[STRAT_NUM_LISTS];
+	Buffer	listFreeBuffers;			/* List of unused buffers */
+
+	long	num_lookup;					/* Some hit statistics */
+	long	num_hit[STRAT_NUM_LISTS];
+	time_t	stat_report;
+
+	BufferStrategyCDB	cdb[1];			/* The cache directory */
+} BufferStrategyControl;
+ 
 /* counters in buf_init.c */
 extern long int ReadBufferCount;
 extern long int ReadLocalBufferCount;
