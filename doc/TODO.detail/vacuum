@@ -1403,7 +1403,7 @@ From owner-pgsql-hackers@hub.org Sat Jan 22 02:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA06743
 	for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id DAA07529 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:25:13 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id DAA07529 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:25:13 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id DAA31900;
 	Sat, 22 Jan 2000 03:19:53 -0500 (EST)
@@ -1475,7 +1475,7 @@ From tgl@sss.pgh.pa.us Sat Jan 22 10:31:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA20882
 	for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:31:00 -0500 (EST)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA26612 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:12:44 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA26612 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:12:44 -0500 (EST)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA20569;
 	Sat, 22 Jan 2000 11:11:26 -0500 (EST)
@@ -1538,4 +1538,333 @@ How long does it take to create the index on your setup --- ie,
 if vacuum did a drop/create index, would it be competitive?
 
 			regards, tom lane
+
+From pgsql-hackers-owner+M5909@hub.org Thu Aug 17 20:15:33 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA00644
+	for <pgman@candle.pha.pa.us>; Thu, 17 Aug 2000 20:15:32 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7I0APm69660;
+	Thu, 17 Aug 2000 20:10:25 -0400 (EDT)
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7I01Jm68072
+	for <pgsql-hackers@postgresql.org>; Thu, 17 Aug 2000 20:01:19 -0400 (EDT)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id e7I01IA20820
+	for pgsql-hackers@postgresql.org; Thu, 17 Aug 2000 17:01:18 -0700 (PDT)
+Date: Thu, 17 Aug 2000 17:01:18 -0700
+From: Alfred Perlstein <bright@wintelcom.net>
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] VACUUM optimization ideas.
+Message-ID: <20000817170118.K4854@fw.wintelcom.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.4i
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+Here's two ideas I had for optimizing vacuum, I apologize in advance
+if the ideas presented here are niave and don't take into account
+the actual code that makes up postgresql.
+
+================
+
+#1
+
+Reducing the time vacuum must hold an exlusive lock on a table:
+
+The idea is that since rows are marked deleted it's ok for the
+vacuum to fill them with data from the tail of the table as
+long as no transaction is in progress that has started before
+the row was deleted.
+
+This may allow the vacuum process to copyback all the data without
+a lock, when all the copying is done it then aquires an exlusive lock
+and does this:
+
+Aquire an exclusive lock.
+Walk all the deleted data marking it as current.
+Truncate the table.
+Release the lock.
+
+Since the data is still marked invalid (right?) even if valid data
+is copied into the space it should be ignored as long as there's no
+transaction occurring that started before the data was invalidated.
+
+================
+
+#2
+
+Reducing the amount of scanning a vaccum must do:
+
+It would make sense that if a value of the earliest deleted chunk
+was kept in a table then vacuum would not have to scan the entire
+table in order to work, it would only need to start at the 'earliest'
+invalidated row.
+
+The utility of this (at least for us) is that we have several tables
+that will grow to hundreds of megabytes, however changes will only
+happen at the tail end (recently added rows).  If we could reduce the
+amount of time spent in a vacuum state it would help us a lot.
+
+================
+
+I'm wondering if these ideas make sense and may help at all.
+
+thanks,
+--
+-Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+
+From pgsql-hackers-owner+M5912@hub.org Fri Aug 18 01:36:14 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA07787
+	for <pgman@candle.pha.pa.us>; Fri, 18 Aug 2000 01:36:12 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7I5Q2m38759;
+	Fri, 18 Aug 2000 01:26:04 -0400 (EDT)
+Received: from courier02.adinet.com.uy (courier02.adinet.com.uy [206.99.44.245])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7I5Bam35785
+	for <pgsql-hackers@postgresql.org>; Fri, 18 Aug 2000 01:11:37 -0400 (EDT)
+Received: from adinet.com.uy (haroldo@r207-50-240-116.adinet.com.uy [207.50.240.116])
+	by courier02.adinet.com.uy (8.9.3/8.9.3) with ESMTP id CAA17259;
+	Fri, 18 Aug 2000 02:10:49 -0300 (GMT)
+Message-ID: <399CC739.B9B13D18@adinet.com.uy>
+Date: Fri, 18 Aug 2000 02:18:49 -0300
+From: hstenger@adinet.com.uy
+Reply-To: hstenger@ieee.org
+Organization: PRISMA, Servicio y Desarrollo
+X-Mailer: Mozilla 4.72 [en] (X11; I; Linux 2.2.14 i586)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Alfred Perlstein <bright@wintelcom.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] VACUUM optimization ideas.
+References: <20000817170118.K4854@fw.wintelcom.net>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+Alfred Perlstein wrote:
+> #1
+> 
+> Reducing the time vacuum must hold an exlusive lock on a table:
+> 
+> The idea is that since rows are marked deleted it's ok for the
+> vacuum to fill them with data from the tail of the table as
+> long as no transaction is in progress that has started before
+> the row was deleted.
+> 
+> This may allow the vacuum process to copyback all the data without
+> a lock, when all the copying is done it then aquires an exlusive lock
+> and does this:
+> 
+> Aquire an exclusive lock.
+> Walk all the deleted data marking it as current.
+> Truncate the table.
+> Release the lock.
+> 
+> Since the data is still marked invalid (right?) even if valid data
+> is copied into the space it should be ignored as long as there's no
+> transaction occurring that started before the data was invalidated.
+
+Yes, but nothing prevents newer transactions from modifying the _origin_ side of
+the copied data _after_ it was copied, but before the Lock-Walk-Truncate-Unlock
+cycle takes place, and so it seems unsafe. Maybe locking each record before
+copying it up ...
+
+Regards,
+Haroldo.
+
+-- 
+----------------------+------------------------
+ Haroldo Stenger      | hstenger@ieee.org
+ Montevideo, Uruguay. | hstenger@adinet.com.uy
+----------------------+------------------------
+ Visit UYLUG Web Site: http://www.linux.org.uy
+-----------------------------------------------
+
+From pgsql-hackers-owner+M5917@hub.org Fri Aug 18 09:41:33 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA05170
+	for <pgman@candle.pha.pa.us>; Fri, 18 Aug 2000 09:41:33 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7IDVjm75143;
+	Fri, 18 Aug 2000 09:31:46 -0400 (EDT)
+Received: from andie.ip23.net (andie.ip23.net [212.83.32.23])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7IDPIm73296
+	for <pgsql-hackers@postgresql.org>; Fri, 18 Aug 2000 09:25:18 -0400 (EDT)
+Received: from imap1.ip23.net (imap1.ip23.net [212.83.32.35])
+	by andie.ip23.net (8.9.3/8.9.3) with ESMTP id PAA58387;
+	Fri, 18 Aug 2000 15:25:12 +0200 (CEST)
+Received: from ip23.net (spc.ip23.net [212.83.32.122])
+	by imap1.ip23.net (8.9.3/8.9.3) with ESMTP id PAA59177;
+	Fri, 18 Aug 2000 15:41:28 +0200 (CEST)
+Message-ID: <399D3938.582FDB49@ip23.net>
+Date: Fri, 18 Aug 2000 15:25:12 +0200
+From: Sevo Stille <sevo@ip23.net>
+Organization: IP23
+X-Mailer: Mozilla 4.61 [en] (X11; I; Linux 2.2.10 i686)
+X-Accept-Language: en, de
+MIME-Version: 1.0
+To: Alfred Perlstein <bright@wintelcom.net>
+CC: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] VACUUM optimization ideas.
+References: <20000817170118.K4854@fw.wintelcom.net>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Alfred Perlstein wrote:
+
+> The idea is that since rows are marked deleted it's ok for the
+> vacuum to fill them with data from the tail of the table as
+> long as no transaction is in progress that has started before
+> the row was deleted.
+
+Well, isn't one of the advantages of vacuuming in the reordering it
+does? With a "fill deleted chunks" logic, we'd have far less order in
+the databases. 
+
+> This may allow the vacuum process to copyback all the data without
+> a lock, 
+
+Nope. Another process might update the values in between move and mark,
+if the record is not locked. We'd either have to write-lock the entire
+table for that period, write lock every item as it is moved, or lock,
+move and mark on a per-record base. The latter would be slow, but it
+could be done in a permanent low priority background process, utilizing
+empty CPU cycles. Besides, it probably could not only be done simply
+filling from the tail, but also moving up the records in a sorted
+fashion. 
+
+> #2
+> 
+> Reducing the amount of scanning a vaccum must do:
+> 
+> It would make sense that if a value of the earliest deleted chunk
+> was kept in a table then vacuum would not have to scan the entire
+> table in order to work, it would only need to start at the 'earliest'
+> invalidated row.
+
+Trivial to do. But of course #1 may imply that the physical ordering is
+even less likely to be related to the logical ordering in a way where
+this helps. 
+
+> The utility of this (at least for us) is that we have several tables
+> that will grow to hundreds of megabytes, however changes will only
+> happen at the tail end (recently added rows). 
+
+The tail is a relative position - except for the case where you add
+temporary records to a constant default set, everything in the tail will
+move, at least relatively, to the head after some time.
+
+> If we could reduce the
+> amount of time spent in a vacuum state it would help us a lot.
+
+Rather: If we can reduce the time spent in a locked state while
+vacuuming, it would help a lot. Being in a vacuum is not the issue -
+even permanent vacuuming need not be an issue, if the locks it uses are
+suitably  short-time. 
+
+Sevo
+
+-- 
+sevo@ip23.net
+
+From pgsql-hackers-owner+M5911@hub.org Thu Aug 17 21:11:20 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA01882
+	for <pgman@candle.pha.pa.us>; Thu, 17 Aug 2000 21:11:20 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7I119m80626;
+	Thu, 17 Aug 2000 21:01:09 -0400 (EDT)
+Received: from acheron.rime.com.au (root@albatr.lnk.telstra.net [139.130.54.222])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7I0wMm79870
+	for <pgsql-hackers@postgresql.org>; Thu, 17 Aug 2000 20:58:22 -0400 (EDT)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id KAA03215;
+	Fri, 18 Aug 2000 10:58:25 +1000
+Message-Id: <3.0.5.32.20000818105835.0280ade0@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Fri, 18 Aug 2000 10:58:35 +1000
+To: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>,
+        Ben Adida <ben@openforce.net>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] Inserting a select statement result into another
+  table
+Cc: Andrew Selle <aselle@upl.cs.wisc.edu>, pgsql-hackers@postgresql.org
+In-Reply-To: <399C7689.2DDDAD1D@nimrod.itg.telecom.com.au>
+References: <20000817130517.A10909@upl.cs.wisc.edu>
+	<399BF555.43FB70C8@openforce.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: O
+
+At 09:34 18/08/00 +1000, Chris Bitmead wrote:
+>
+>He does ask a legitimate question though. If you are going to have a
+>LIMIT feature (which of course is not pure SQL), there seems no reason
+>you shouldn't be able to insert the result into a table.
+
+This feature is supported by two commercial DBs: Dec/RDB and SQL/Server. I
+have no idea if Oracle supports it, but it is such a *useful* feature that
+I would be very surprised if it didn't.
+
+
+>Ben Adida wrote:
+>> 
+>> What is the purpose you're trying to accomplish with this order by? No
+matter what, all the
+>> rows where done='f' will be inserted, and you will not be left with any
+indication of that
+>> order once the rows are in the todolist table.
+
+I don't know what his *purpose* was, but the query should only insert the
+first two rows from the select bacause of the limit).
+
+>> Andrew Selle wrote:
+>> 
+>> > Alright.  My situation is this.  I have a list of things that need to
+be done
+>> > in a table called tasks.  I have a list of users who will complete
+these tasks.
+>> > I want these users to be able to come in and "claim" the top 2 most
+recent tasks
+>> > that have been added.  These tasks then get stored in a table called
+todolist
+>> > which stores who claimed the task, the taskid, and when the task was
+claimed.
+>> > For each time someone wants to claim some number of tasks, I want to
+do something
+>> > like
+>> >
+>> > INSERT INTO todolist
+>> >         SELECT taskid,'1',now()
+>> >         FROM tasks
+>> >         WHERE done='f'
+>> >         ORDER BY submit DESC
+>> >         LIMIT 2;
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
 
