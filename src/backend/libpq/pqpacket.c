@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.2 1996/11/06 08:48:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.3 1997/02/13 08:06:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,22 @@ PacketReceive(Port *port,	/* receive port */
 		return(STATUS_NOT_DONE);
 	    }
 	} else {
+	    /*
+	     * This is an attempt to shield the Postmaster
+	     * from mallicious attacks by placing tighter
+	     * restrictions on the reported packet length. 
+	     *
+	     * Check for negative packet length
+	     */
+	     if ((buf->len) <= 0) {
+		return(STATUS_INVALID);
+	     }
+	    /*
+	     * Check for oversize packet
+	     */
+	     if ((ntohl(buf->len)) > max_size) {
+		return(STATUS_INVALID);
+	     }
 	    /*
 	     * great. got the header. now get the true length (including
 	     * header size).
