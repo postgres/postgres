@@ -577,7 +577,7 @@ static void step_2(struct english_stemmer * z)
         case 'g':
             if (ends(z, "logi", 4))
             {   z->j++;                /*-NEW-*/ /*(Barry Wilkins)*/
-                r(z, "og", 3); break;
+                r(z, "og", 2); break;
             } /*-DEPARTURE-*/
 
      /* To match the published algorithm, delete this line */
@@ -683,7 +683,10 @@ static const char * english_stem(void * z_, const char * q, int i0, int i1)
 
 
     {   const char * t = search_pool(z->irregulars, z->k + 1, z->p);
-        if (t != 0) return t;
+        if (t != 0)  {
+		z->k = strlen(t) - 1;	
+		return t;
+	}
     }
 
     if (z->k > 1) /*-DEPARTURE-*/
