@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 24 15:08:42 EDT 2000
+Last updated:		Thu Oct 26 07:41:27 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -225,10 +225,10 @@ MISC
 PERFORMANCE
 -----------
 
-FSYNC
+-FSYNC
 
-* Allow transaction commits with rollback with no-fsync performance
-  [fsync] (Vadim)
+* -Allow transaction commits with rollback with no-fsync performance
+  (Vadim)
 
 INDEXES
 
