@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.45 1997/04/24 20:27:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.46 1997/05/25 15:37:15 scrappy Exp $
  *
  * NOTES
  *
@@ -244,7 +244,7 @@ PostmasterMain(int argc, char *argv[])
     DataDir = getenv("PGDATA");  /* default value */
     
     opterr = 0;
-    while ((opt = getopt(argc, argv, "a:B:b:D:dmM:no:p:Ss")) != EOF) {
+    while ((opt = getopt(argc, argv, "a:B:b:D:dm:Mno:p:Ss")) != EOF) {
         switch (opt) {
         case 'a': 
             /* Set the authentication system. */
