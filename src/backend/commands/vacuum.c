@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.299 2004/12/31 21:59:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.300 2005/02/15 03:50:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1703,20 +1703,25 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			tuple_len = tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
-			/*
+			/* ---
 			 * VACUUM FULL has an exclusive lock on the relation.  So
 			 * normally no other transaction can have pending INSERTs or
-			 * DELETEs in this relation.  A tuple is either (a) a tuple in
-			 * a system catalog, inserted or deleted by a not yet
-			 * committed transaction or (b) dead (XMIN_INVALID or
-			 * XMAX_COMMITTED) or (c) inserted by a committed xact
-			 * (XMIN_COMMITTED) or (d) moved by the currently running
-			 * VACUUM. In case (a) we wouldn't be in repair_frag() at all.
+			 * DELETEs in this relation.  A tuple is either:
+			 *		(a) a tuple in a system catalog, inserted or deleted
+			 *			by a not yet committed transaction
+			 *		(b) known dead (XMIN_INVALID, or XMAX_COMMITTED and xmax
+			 *			is visible to all active transactions)
+			 *		(c) inserted by a committed xact (XMIN_COMMITTED)
+			 *		(d) moved by the currently running VACUUM.
+			 *		(e) deleted (XMAX_COMMITTED) but at least one active
+			 *			transaction does not see the deleting transaction
+			 * In case (a) we wouldn't be in repair_frag() at all.
 			 * In case (b) we cannot be here, because scan_heap() has
 			 * already marked the item as unused, see continue above. Case
 			 * (c) is what normally is to be expected. Case (d) is only
 			 * possible, if a whole tuple chain has been moved while
 			 * processing this or a higher numbered block.
+			 * ---
 			 */
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
