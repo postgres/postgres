@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.111 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.112 2001/07/03 16:52:48 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -2052,7 +2052,11 @@ readDatum(bool typbyval)
 	token = pg_strtok(&tokenLength);
 	length = atoui(token);
 
-	token = pg_strtok(&tokenLength);	/* skip the '[' */
+	token = pg_strtok(&tokenLength);	/* read the '[' */
+	if (token == NULL || token[0] != '[')
+		elog(ERROR, "readDatum: expected '%s', got '%s'; length = %lu",
+			 "[", token ? (const char *) token : "[NULL]",
+			 (unsigned long) length);
 
 	if (typbyval)
 	{
@@ -2080,9 +2084,10 @@ readDatum(bool typbyval)
 		res = PointerGetDatum(s);
 	}
 
-	token = pg_strtok(&tokenLength);	/* skip the ']' */
+	token = pg_strtok(&tokenLength);	/* read the ']' */
 	if (token == NULL || token[0] != ']')
-		elog(ERROR, "readDatum: ']' expected, length = %lu",
+		elog(ERROR, "readDatum: expected '%s', got '%s'; length = %lu",
+			 "]", token ? (const char *) token : "[NULL]",
 			 (unsigned long) length);
 
 	return res;
