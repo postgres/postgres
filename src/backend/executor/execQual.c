@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.10 1997/01/10 20:17:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.11 1997/04/22 03:32:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,6 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
     int 	*lIndex;
     char *dataPtr;
     
-    execConstByVal = arrayRef->refelembyval;
     *isNull       =	false; 
     array_scanner =	(ArrayType*)ExecEvalExpr(arrayRef->refexpr,
 					     econtext,
@@ -138,6 +137,8 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				      assgnexpr, econtext,
 				      isNull, &dummy);
 	if (*isNull) return (Datum)NULL;
+    	execConstByVal = arrayRef->refelembyval;
+    	execConstLen = arrayRef->refelemlength;
 	if (lIndex == NULL)
 	    return (Datum) array_set(array_scanner, i, upper.indx, dataPtr, 
 				     arrayRef->refelembyval,
@@ -149,6 +150,8 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				   arrayRef->refelembyval,
 				   arrayRef->refelemlength, isNull);
     }
+    execConstByVal = arrayRef->refelembyval;
+    execConstLen = arrayRef->refelemlength;
     if (lIndex == NULL) 
 	return (Datum) array_ref(array_scanner, i, upper.indx,
 				 arrayRef->refelembyval,
