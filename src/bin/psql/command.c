@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.64 2002/01/18 16:14:54 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.64.2.1 2002/02/25 21:37:47 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -54,11 +54,17 @@ static backslashResult exec_command(const char *cmd,
 			 const char **continue_parse,
 			 PQExpBuffer query_buf);
 
+/* different ways for scan_option to handle parameter words */
 enum option_type
 {
-	OT_NORMAL, OT_SQLID, OT_FILEPIPE
+	OT_NORMAL,					/* normal case */
+	OT_SQLID,					/* treat as SQL identifier */
+	OT_SQLIDHACK,				/* SQL identifier, but don't downcase */
+	OT_FILEPIPE					/* it's a file or pipe */
 };
-static char *scan_option(char **string, enum option_type type, char *quote, bool semicolon);
+
+static char *scan_option(char **string, enum option_type type,
+						 char *quote, bool semicolon);
 static char *unescape(const unsigned char *source, size_t len);
 
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
@@ -243,8 +249,17 @@ exec_command(const char *cmd,
 		char		opt1q,
 					opt2q;
 
-		opt1 = scan_option(&string, OT_SQLID, &opt1q, true);
-		opt2 = scan_option(&string, OT_SQLID, &opt2q, true);
+		/*
+		 * Ideally we should treat the arguments as SQL identifiers.  But for
+		 * backwards compatibility with 7.2 and older pg_dump files, we have
+		 * to take unquoted arguments verbatim (don't downcase them).
+		 * For now, double-quoted arguments may be stripped of double quotes
+		 * (as if SQL identifiers).  By 7.4 or so, pg_dump files can be
+		 * expected to double-quote all mixed-case \connect arguments,
+		 * and then we can get rid of OT_SQLIDHACK.
+		 */
+		opt1 = scan_option(&string, OT_SQLIDHACK, &opt1q, true);
+		opt2 = scan_option(&string, OT_SQLIDHACK, &opt2q, true);
 
 		if (opt2)
 			/* gave username */
@@ -909,7 +924,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				 * then we strip out the double quotes
 				 */
 
-				if (type == OT_SQLID)
+				if (type == OT_SQLID || type == OT_SQLIDHACK)
 				{
 					unsigned int k,
 								cc;
@@ -930,7 +945,6 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 					}
 					return_val[cc] = '\0';
 				}
-
 				else
 				{
 					strncpy(return_val, &options_string[pos], jj - pos + 1);
@@ -1286,12 +1300,11 @@ do_connect(const char *new_dbname, const char *new_user)
 
 	/* need to prompt for password? */
 	if (pset.getPassword)
-		pwparam = prompted_password = simple_prompt("Password: ", 100, false);	/* need to save for
-																				 * free() */
+		pwparam = prompted_password = simple_prompt("Password: ", 100, false);
 
 	/*
-	 * Use old password if no new one given (if you didn't have an old
-	 * one, fine)
+	 * Use old password (if any) if no new one given and we are
+	 * reconnecting as same user
 	 */
 	if (!pwparam && oldconn && PQuser(oldconn) && userparam &&
 		strcmp(PQuser(oldconn), userparam) == 0)
