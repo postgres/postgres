@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.2 1996/10/31 09:47:04 scrappy Exp $
+ * $Id: pg_aggregate.h,v 1.3 1996/11/14 21:39:07 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -101,11 +101,13 @@ DATA(insert OID = 0 ( max   PGUID int4larger   - -  23  23  0  23  _null_ _null_
 DATA(insert OID = 0 ( max   PGUID int2larger   - -  21  21  0  21  _null_ _null_ ));
 DATA(insert OID = 0 ( max PGUID float4larger - - 700  700 0  700  _null_ _null_ ));
 DATA(insert OID = 0 ( max PGUID float8larger - - 701  701 0  701  _null_ _null_ ));
+DATA(insert OID = 0 ( max PGUID date_larger  - - 1082 1082 0 1082 _null_ _null_ ));
 
 DATA(insert OID = 0 ( min   PGUID int4smaller   - -  23  23  0  23  _null_ _null_ ));
 DATA(insert OID = 0 ( min   PGUID int2smaller   - -  21  21  0  21    _null_ _null_ ));
 DATA(insert OID = 0 ( min PGUID float4smaller - - 700  700 0  700   _null_ _null_ ));
 DATA(insert OID = 0 ( min PGUID float8smaller - - 701  701 0  701  _null_ _null_ ));
+DATA(insert OID = 0 ( min PGUID date_smaller  - - 1082 1082 0 1082 _null_ _null_ ));
 
 DATA(insert OID = 0 ( count     PGUID - int4inc - 0 0 23 23  _null_ 0 ));
 

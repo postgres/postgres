@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.6 1996/11/10 03:03:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.7 1996/11/14 21:38:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,104 @@ date_cmp(int4 dateVal1, int4 dateVal2)
     if (date1->day!=date2->day)
 	return ((date1->day<date2->day) ? -1 : 1);
     return 0;
+}
+
+int4
+date_larger(int4 dateVal1, int4 dateVal2)
+{
+  return (date_gt (dateVal1, dateVal2) ? dateVal1 : dateVal2);
+}
+
+int4
+date_smaller(int4 dateVal1, int4 dateVal2)
+{
+  return (date_lt (dateVal1, dateVal2) ? dateVal1 : dateVal2);
+}
+
+/* Compute difference between two dates in days.  */
+int32
+date_mi(int4 dateVal1, int4 dateVal2)
+{
+  DateADT *date1, *date2;
+  int32 days = 0;
+  int i;
+
+  date1 = (DateADT *) &dateVal1;
+  date2 = (DateADT *) &dateVal2;
+
+  /* Sum number of days in each full year between date1 and date2.  */
+  for (i = date1->year + 1; i < date2->year; ++i)
+    days += isleap (i) ? 366 : 365;
+
+  /* Add in number of days in each full month from date1 to end of
+     year.  */
+  for (i = date1->month + 1; i <= 12; ++i)
+    days += day_tab[isleap (date1->year)][i - 1];
+
+  /* Add in number of days in each full month from start of year to
+     date2.  */
+  for (i = 1; i < date2->month; ++i)
+    days += day_tab[isleap (date2->year)][i - 1];
+
+  /* Add in number of days left in month for date1.  */
+  days += day_tab[isleap (date1->year)][date1->month - 1] - date1->day;
+
+  /* Add in day of month of date2.  */
+  days += date2->day;
+
+  return (days);
+}
+
+/* Add a number of days to a date, giving a new date.
+   Must handle both positive and negative numbers of days.  */
+int4
+date_pli(int4 dateVal, int32 days)
+{
+  DateADT *date1 = (DateADT *) &dateVal;
+  /* Use separate day variable because date1->day is a narrow type.  */
+  int32 day = date1->day + days;
+
+  if (days > 0)
+    {
+      /* Loop as long as day has wrapped around end of month.  */
+      while (day > day_tab[isleap (date1->year)][date1->month - 1])
+	{
+	  day -= day_tab[isleap (date1->year)][date1->month - 1];
+	  if (++date1->month > 12)
+	    {
+	      /* Month wrapped around.  */
+	      date1->month = 1;
+	      ++date1->year;
+	    }
+	}
+    }
+  else
+    {
+      /* Loop as long as day has wrapped around beginning of month.  */
+      while (day < 1)
+	{
+	  /* Decrement month first, because a negative day number
+	     should be held as relative to the previous month's end.  */
+	  if (--date1->month < 1)
+	    {
+	      /* Month wrapped around.  */
+	      date1->month = 12;
+	      --date1->year;
+	    }
+
+	  day += day_tab[isleap (date1->year)][date1->month - 1];
+	}
+    }
+  date1->day = day;
+
+  return (dateVal);
+}
+
+/* Subtract a number of days from a date, giving a new date.  */
+int4
+date_mii(int4 dateVal, int32 days)
+{
+  return (date_pli (dateVal, -days));
 }
 
 /*****************************************************************************
