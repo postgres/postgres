@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.16 1997/11/07 20:51:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.17 1997/11/10 15:15:40 thomas Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -167,6 +167,8 @@ VerifySystemDatabase()
 	/* Failure reason returned by some function.  NULL if no failure */
 	int			fd;
 	char		errormsg[1000];
+
+	errormsg[0] = '\0';
 
 	if ((fd = open(DataDir, O_RDONLY, 0)) == -1)
 		sprintf(errormsg, "Database system does not exist.  "
