@@ -162,6 +162,17 @@ if test "$INCLUDE_DIRS"; then
 	done
 fi
 
+AC_ARG_WITH(libs,
+    [  --with-libs=DIR         site library directories for tk/tcl, etc in DIR],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-libs option.])
+	  ;;
+	esac
+	LIBRARY_DIRS="$withval"
+    ])
+
 AC_ARG_WITH(libraries,
     [  --with-libraries=DIR    site library directories for tk/tcl, etc in DIR],
     [
