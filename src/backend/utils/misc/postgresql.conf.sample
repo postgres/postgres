@@ -141,7 +141,6 @@
 #
 #	Syslog
 #
-# requires ENABLE_SYSLOG
 #syslog = 0			# range 0-2
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
