@@ -7,65 +7,50 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-10 09:28+0100\n"
-"PO-Revision-Date: 2004-01-10 10:05+0100\n"
+"POT-Creation-Date: 2004-06-25 00:18+0200\n"
+"PO-Revision-Date: 2004-06-25 00:20+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: initdb.c:252 initdb.c:266
+#: initdb.c:219 initdb.c:233
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: slut på minnet\n"
 
-#: initdb.c:397
+#: initdb.c:339
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: kunde inte öppna filen \"%s\" för läsning: %s\n"
 
-#: initdb.c:456
+#: initdb.c:397
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: kunde inte öppna filen \"%s\" för skrivning: %s\n"
 
-#: initdb.c:488
-#, c-format
-msgid "%s: child process exited with exit code %d\n"
-msgstr "%s: barnprocess avslutade med felkod %d\n"
-
-#: initdb.c:493
-#, c-format
-msgid "%s: child process was terminated by signal %d\n"
-msgstr "%s: barnprocess avslutades av signal %d\n"
-
-#: initdb.c:498
-#, c-format
-msgid "%s: child process exited with unrecognized status %d\n"
-msgstr "%s: barnprocess avslutade med okänd status %d\n"
-
-#: initdb.c:619 initdb.c:628 initdb.c:636
+#: initdb.c:525 initdb.c:534 initdb.c:542
 #, c-format
 msgid "%s: failed\n"
 msgstr "%s: misslyckades\n"
 
-#: initdb.c:625
+#: initdb.c:531
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: tar bort datakatalog \"%s\"\n"
 
-#: initdb.c:633
+#: initdb.c:539
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: tar bort innehållet i datakatalog \"%s\"\n"
 
-#: initdb.c:644
+#: initdb.c:550
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: datakatalog \"%s\" ej borttagen på användarens begäran\n"
 
-#: initdb.c:670
+#: initdb.c:576
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -76,12 +61,12 @@ msgstr ""
 "Logga in (dvs. använd \"su\") som den (ickepriviligerade) användaren som\n"
 "skall äga serverprocessen.\n"
 
-#: initdb.c:714
+#: initdb.c:620
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" är inte ett giltigt kodningsnamn för servern\n"
 
-#: initdb.c:838
+#: initdb.c:744
 #, c-format
 msgid ""
 "%s: file \"%s\" does not exist\n"
@@ -92,24 +77,26 @@ msgstr ""
 "Det betyder att du har en korrupt installation eller att du angivit\n"
 "fel katalog till flaggan -L\n"
 
-#: initdb.c:1086
+#: initdb.c:809
+#, c-format
 msgid "selecting default max_connections ... "
 msgstr "väljer initialt värde för max_connections ... "
 
-#: initdb.c:1122
+#: initdb.c:845
+#, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "väljer initialt värde för shared_buffers ... "
 
-#: initdb.c:1155
+#: initdb.c:878
 msgid "creating configuration files ... "
 msgstr "skapar konfigurationsfiler ..."
 
-#: initdb.c:1233
+#: initdb.c:956
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "skapar databasen template1 i %s/base/1 ... "
 
-#: initdb.c:1249
+#: initdb.c:972
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -119,120 +106,136 @@ msgstr ""
 "Kontrollera din installation eller ange den korrekta katalogen\n"
 "med hjälp av flaggan -L.\n"
 
-#: initdb.c:1322
+#: initdb.c:1048
 msgid "initializing pg_shadow ... "
 msgstr "initierar pg_shadow ... "
 
-#: initdb.c:1353
+#: initdb.c:1079
 msgid "Enter new superuser password: "
 msgstr "Mata in ett nytt lösenord för superanvändaren: "
 
-#: initdb.c:1354
+#: initdb.c:1080
 msgid "Enter it again: "
 msgstr "Mata in det igen: "
 
-#: initdb.c:1357
+#: initdb.c:1083
+#, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Lösenorden stämde inte överens.\n"
 
-#: initdb.c:1362
+#: initdb.c:1088
+#, c-format
 msgid "setting password ... "
 msgstr "sparar lösenord ... "
 
-#: initdb.c:1386
+#: initdb.c:1112
 #, c-format
 msgid "%s: The password file was not generated. Please report this problem.\n"
-msgstr "%s: Lösenordsfilen skapades inte. Var vänlig och rapportera detta felet.\n"
+msgstr ""
+"%s: Lösenordsfilen skapades inte. Var vänlig och rapportera detta felet.\n"
 
-#: initdb.c:1416
+#: initdb.c:1142
 msgid "enabling unlimited row size for system tables ... "
 msgstr "slår på obegränsad radstorlek för systemtabeller ... "
 
-#: initdb.c:1489
+#: initdb.c:1215
 msgid "initializing pg_depend ... "
 msgstr "initierar pg_depend ... "
 
-#: initdb.c:1517
+#: initdb.c:1243
 msgid "creating system views ... "
 msgstr "skapar systemvyer ... "
 
-#: initdb.c:1554
+#: initdb.c:1280
 msgid "loading pg_description ... "
 msgstr "laddar pg_description ... "
 
-#: initdb.c:1602
+#: initdb.c:1328
 msgid "creating conversions ... "
 msgstr "skapar konverteringar ... "
 
-#: initdb.c:1658
+#: initdb.c:1384
 msgid "setting privileges on built-in objects ... "
 msgstr "sätter rättigheter för inbyggda objekt ... "
 
-#: initdb.c:1716
+#: initdb.c:1442
 msgid "creating information schema ... "
 msgstr "skapar informationsschema ... "
 
-#: initdb.c:1778
+#: initdb.c:1504
 msgid "vacuuming database template1 ... "
 msgstr "kör vacuum på databasen template1 ... "
 
-#: initdb.c:1834
+#: initdb.c:1560
 msgid "copying template1 to template0 ... "
 msgstr "kopierar template1 till template0 ... "
 
-#: initdb.c:1891
+#: initdb.c:1617
+#, c-format
 msgid "caught signal\n"
 msgstr "fångade signal\n"
 
-#: initdb.c:1896
+#: initdb.c:1622
+#, c-format
 msgid "could not write to child process\n"
 msgstr "kunde inte skriva till barnprocess\n"
 
-#: initdb.c:1902
+#: initdb.c:1628
+#, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:1932
+#: initdb.c:1658
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: okänt lokalnamn \"%s\"\n"
 
-#: initdb.c:1999
+#: initdb.c:1725
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
 "\n"
-msgstr "%s initierar ett PostgreSQL databaskluster.\n\n"
+msgstr ""
+"%s initierar ett PostgreSQL databaskluster.\n"
+"\n"
 
-#: initdb.c:2000
+#: initdb.c:1726
+#, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: initdb.c:2001
+#: initdb.c:1727
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [FLAGGA]... [DATAKATALOG]\n"
 
-#: initdb.c:2002
+#: initdb.c:1728
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
-msgstr "\nFlaggor:\n"
+msgstr ""
+"\n"
+"Flaggor:\n"
 
-#: initdb.c:2003
+#: initdb.c:1729
+#, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATAKATALOG plats för detta databaskluster\n"
 
-#: initdb.c:2004
+#: initdb.c:1730
+#, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=KODNING    sätt standardkodning för nya databaser\n"
 
-#: initdb.c:2005
+#: initdb.c:1731
+#, c-format
 msgid ""
 "  --locale=LOCALE           initialize database cluster with given locale\n"
 msgstr "  --locale=LOKAL            initiera databasklustret med given lokal\n"
 
-#: initdb.c:2006
+#: initdb.c:1732
+#, c-format
 msgid ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
@@ -246,81 +249,103 @@ msgstr ""
 "                            i respektive kategori (standard tagen från\n"
 "                            omgivningen)\n"
 
-#: initdb.c:2011
+#: initdb.c:1737
+#, c-format
 msgid "  --no-locale               equivalent to --locale=C\n"
 msgstr "  --no-locale               samma som --locale=C\n"
 
-#: initdb.c:2012
+#: initdb.c:1738
+#, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAMN       databasens superanvändarnamn\n"
 
-#: initdb.c:2013
+#: initdb.c:1739
+#, c-format
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
-msgstr "  -W, --pwprompt            fråga efter lösenord för den nya superanvändaren\n"
+msgstr ""
+"  -W, --pwprompt            fråga efter lösenord för den nya "
+"superanvändaren\n"
 
-#: initdb.c:2014
+#: initdb.c:1740
+#, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa den här hjälpen, avsluta sedan\n"
 
-#: initdb.c:2015
+#: initdb.c:1741
+#, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
 
-#: initdb.c:2016
+#: initdb.c:1742
+#, c-format
 msgid ""
 "\n"
 "Less commonly used options:\n"
-msgstr "\nMindre vanliga flaggor:\n"
+msgstr ""
+"\n"
+"Mindre vanliga flaggor:\n"
 
-#: initdb.c:2017
+#: initdb.c:1743
+#, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               generera massor med debugutskrifter\n"
 
-#: initdb.c:2018
+#: initdb.c:1744
+#, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                visa interna inställningar\n"
 
-#: initdb.c:2019
+#: initdb.c:1745
+#, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L KATALOG                var indatafilerna kan hittas\n"
 
-#: initdb.c:2020
+#: initdb.c:1746
+#, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean             städa inte upp efter fel\n"
 
-#: initdb.c:2021
+#: initdb.c:1747
+#, c-format
 msgid ""
 "\n"
 "If the data directory is not specified, the environment variable PGDATA\n"
 "is used.\n"
-msgstr "\nOn datakatalogen inte anges så tas den från omgivningsvaribeln PGDATA.\n"
+msgstr ""
+"\n"
+"On datakatalogen inte anges så tas den från omgivningsvaribeln PGDATA.\n"
 
-#: initdb.c:2023
+#: initdb.c:1749
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "\nRapportera buggar till<pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Rapportera buggar till<pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2146
+#: initdb.c:1827
+#, c-format
 msgid "Running in debug mode.\n"
 msgstr "Kör i debug-läge.\n"
 
-#: initdb.c:2150
+#: initdb.c:1831
+#, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Kör i noclean-läge. Misstag kommer inte städas upp.\n"
 
-#: initdb.c:2183 initdb.c:2200
+#: initdb.c:1864 initdb.c:1881
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: initdb.c:2198
+#: initdb.c:1879
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
 
-#: initdb.c:2215
+#: initdb.c:1896
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -333,21 +358,32 @@ msgstr ""
 "lagras. Gör detta antingen med flaggan -D eller genom att sätta\n"
 "omgivningsvariabeln PGDATA.\n"
 
-#: initdb.c:2239
+#: initdb.c:1922
 #, c-format
 msgid ""
-"The program \"postgres\" is needed by %s but was not found in \n"
-"the directory \"%s\". Check your installation.\n"
+"The program \"postgres\" is needed by %s but was not found in the same "
+"directory as \"%s\".\n"
+"Check your installation.\n"
 msgstr ""
-"Programmet \"postgres\" behövs av %s men kunde inte hittas i\n"
-"katalogen \"%s\". Kontrollera din installation.\n"
+"Programmet \"postgres\" behövs av %s men kunde inte hittas i samma\n"
+"katalog som \"%s\". Kontrollera din installation.\n"
 
-#: initdb.c:2248
+#: initdb.c:1928
+#, c-format
+msgid ""
+"The program \"postgres\" was found by %s but was not the same version as \"%s"
+"\".\n"
+"Check your installation.\n"
+msgstr ""
+"Programmet \"postgres\" hittades av %s men hade inte samma version som \"%s\".\n"
+"Kontrollera din installation.\n"
+
+#: initdb.c:1949
 #, c-format
 msgid "%s: could not determine valid short version string\n"
 msgstr "%s: kunde inte fastställa en giltig kort versionssträng\n"
 
-#: initdb.c:2300
+#: initdb.c:2001
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -358,14 +394,16 @@ msgstr ""
 "Denna användare måste också köra server-processen.\n"
 "\n"
 
-#: initdb.c:2313
+#: initdb.c:2014
 #, c-format
 msgid ""
 "The database cluster will be initialized with locale %s.\n"
 "\n"
-msgstr "Databasklustret kommer initieras med lokalen %s.\n\n"
+msgstr ""
+"Databasklustret kommer initieras med lokalen %s.\n"
+"\n"
 
-#: initdb.c:2318
+#: initdb.c:2019
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -386,17 +424,17 @@ msgstr ""
 "  TIME:     %s\n"
 "\n"
 
-#: initdb.c:2363
+#: initdb.c:2064
 #, c-format
 msgid "creating directory %s ... "
 msgstr "skapar katalog %s ... "
 
-#: initdb.c:2377
+#: initdb.c:2078
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "sätter rättigheter på existerande katalog %s ... "
 
-#: initdb.c:2395
+#: initdb.c:2096
 #, c-format
 msgid ""
 "%s: directory \"%s\" exists but is not empty\n"
@@ -410,12 +448,12 @@ msgstr ""
 "än \"%s\".\n"
 "\n"
 
-#: initdb.c:2412
+#: initdb.c:2113
 #, c-format
 msgid "creating directory %s/%s ... "
 msgstr "skapar katalog %s/%s ... "
 
-#: initdb.c:2470
+#: initdb.c:2171
 #, c-format
 msgid ""
 "\n"
@@ -433,3 +471,12 @@ msgstr ""
 "eller\n"
 "    %s%s%s/pg_ctl -D %s%s%s -l logfil start\n"
 "\n"
+
+#~ msgid "%s: child process exited with exit code %d\n"
+#~ msgstr "%s: barnprocess avslutade med felkod %d\n"
+
+#~ msgid "%s: child process was terminated by signal %d\n"
+#~ msgstr "%s: barnprocess avslutades av signal %d\n"
+
+#~ msgid "%s: child process exited with unrecognized status %d\n"
+#~ msgstr "%s: barnprocess avslutade med okänd status %d\n"
