@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.17 2000/05/19 03:22:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.18 2000/10/18 05:50:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,8 @@ BufTableDelete(BufferDesc *buf)
 	 * sequential searches through the buffer table won't think the
 	 * buffer is still valid for its old page.
 	 */
-	buf->tag.relId.relId = InvalidOid;
-	buf->tag.relId.dbId = InvalidOid;
+	buf->tag.rnode.relNode = InvalidOid;
+	buf->tag.rnode.tblNode = InvalidOid;
 
 	return TRUE;
 }

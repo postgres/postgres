@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.30 2000/04/12 17:15:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.31 2000/10/18 05:50:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/* a low tech search for now -- not optimized for scans */
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		if (LocalBufferDescriptors[i].tag.relId.relId == RelationGetRelid(reln) &&
+		if (LocalBufferDescriptors[i].tag.rnode.relNode == 
+			reln->rd_node.relNode &&
 			LocalBufferDescriptors[i].tag.blockNum == blockNum)
 		{
 
@@ -102,7 +103,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
-		Relation	bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
+		Relation	bufrel = RelationIdCacheGetRelation(bufHdr->relId.relId);
 
 		Assert(bufrel != NULL);
 
@@ -120,9 +121,13 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 	/*
 	 * it's all ours now.
+	 *
+	 * We need not in tblNode currently but will in future I think,
+	 * when we'll give up rel->rd_fd to fmgr cache.
 	 */
-	bufHdr->tag.relId.relId = RelationGetRelid(reln);
+	bufHdr->tag.rnode = reln->rd_node;
 	bufHdr->tag.blockNum = blockNum;
+	bufHdr->relId = reln->rd_lockInfo.lockRelId;
 	bufHdr->flags &= ~BM_DIRTY;
 
 	/*
@@ -187,7 +192,7 @@ FlushLocalBuffer(Buffer buffer, bool release)
 	bufid = -(buffer + 1);
 	bufHdr = &LocalBufferDescriptors[bufid];
 	bufHdr->flags &= ~BM_DIRTY;
-	bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
+	bufrel = RelationIdCacheGetRelation(bufHdr->relId.relId);
 
 	Assert(bufrel != NULL);
 	smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
@@ -263,7 +268,7 @@ LocalBufferSync(void)
 #ifdef LBDEBUG
 			fprintf(stderr, "LB SYNC %d\n", -i - 1);
 #endif
-			bufrel = RelationIdCacheGetRelation(buf->tag.relId.relId);
+			bufrel = RelationIdCacheGetRelation(buf->relId.relId);
 
 			Assert(bufrel != NULL);
 
@@ -274,7 +279,7 @@ LocalBufferSync(void)
 			/* drop relcache refcount from RelationIdCacheGetRelation */
 			RelationDecrementReferenceCount(bufrel);
 
-			buf->tag.relId.relId = InvalidOid;
+			buf->relId.relId = InvalidOid;
 			buf->flags &= ~BM_DIRTY;
 		}
 	}
@@ -292,7 +297,7 @@ ResetLocalBufferPool(void)
 	{
 		BufferDesc *buf = &LocalBufferDescriptors[i];
 
-		buf->tag.relId.relId = InvalidOid;
+		buf->tag.rnode.relNode = InvalidOid;
 		buf->flags &= ~BM_DIRTY;
 		buf->buf_id = -i - 2;
 	}

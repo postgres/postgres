@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.38 2000/10/16 14:52:28 vadim Exp $
+ * $Id: buf_internals.h,v 1.39 2000/10/18 05:50:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,44 +44,33 @@ typedef long **BufferBlock;
 
 typedef struct buftag
 {
-	LockRelId	relId;
+	RelFileNode	rnode;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
 
 #define CLEAR_BUFFERTAG(a) \
 ( \
-	(a)->relId.dbId = InvalidOid, \
-	(a)->relId.relId = InvalidOid, \
+	(a)->rnode.tblNode = InvalidOid, \
+	(a)->rnode.relNode = InvalidOid, \
 	(a)->blockNum = InvalidBlockNumber \
 )
 
 #define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
 ( \
 	(a)->blockNum = (xx_blockNum), \
-	(a)->relId = (xx_reln)->rd_lockInfo.lockRelId \
+	(a)->rnode = (xx_reln)->rd_node \
 )
 
-#ifdef OLD_FILE_NAMING
-/* If we have to write a buffer "blind" (without a relcache entry),
- * the BufferTag is not enough information.  BufferBlindId carries the
- * additional information needed.
+/*
+ * We don't need in this data any more but it allows more user
+ * friendly error messages. Feel free to get rid of it
+ * (and change a lot of places -:))
  */
 typedef struct bufblindid
 {
 	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
 	char		relname[NAMEDATALEN];	/* name of reln */
 }			BufferBlindId;
-
-#else
-
-typedef struct bufblindid
-{
-	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
-	char		relname[NAMEDATALEN];	/* name of reln */
-	RelFileNode	rnode;
-} BufferBlindId;
-
-#endif
 
 #define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
 #define INVALID_DESCRIPTOR (-3)
@@ -120,7 +109,22 @@ typedef struct sbufdesc
 	bool		ri_lock;		/* read-intent lock */
 	bool		w_lock;			/* context exclusively locked */
 
-	BufferBlindId blind;		/* extra info to support blind write */
+	/* 
+	 * This is logical information about relation.
+	 * IT MUST CORRESPOND TO BUFFER TAG!
+	 * If you're going to play with relation file node (ie change relation
+	 * file) then you have to exclusively lock relation, create new one
+	 * (with new relID), make data transformation, flush from pool buffers
+	 * of both files (old and new), flush old relation from cache,
+	 * update relfilenode in pg_class, flush new relation version from
+	 * cache, open it - now you can use relation with new file.
+	 *
+	 * Why we keep relId here? To re-use file descriptors. On rollback
+	 * WAL uses dummy relId - bad (more blind writes - open/close calls),
+	 * but allowable. Obviously we should have another cache in file manager.
+	 */
+	LockRelId	relId;
+	BufferBlindId blind;		/* was used to support blind write */
 } BufferDesc;
 
 /*
@@ -187,6 +191,7 @@ extern long *PrivateRefCount;
 extern bits8 *BufferLocks;
 extern BufferTag *BufferTagLastDirtied;
 extern BufferBlindId *BufferBlindLastDirtied;
+extern LockRelId *BufferRelidLastDirtied;
 extern bool *BufferDirtiedByMe;
 extern SPINLOCK BufMgrLock;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.35 2000/05/31 00:28:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.36 2000/10/18 05:50:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,8 +67,9 @@ long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
 BufferTag  *BufferTagLastDirtied;		/* tag buffer had when last
 										 * dirtied by me */
-BufferBlindId *BufferBlindLastDirtied;	/* and its BlindId too */
-bool	   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
+BufferBlindId  *BufferBlindLastDirtied;
+LockRelId	   *BufferRelidLastDirtied;
+bool		   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
 
 
 /*
@@ -251,6 +252,7 @@ InitBufferPool(IPCKey key)
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
 	BufferTagLastDirtied = (BufferTag *) calloc(NBuffers, sizeof(BufferTag));
 	BufferBlindLastDirtied = (BufferBlindId *) calloc(NBuffers, sizeof(BufferBlindId));
+	BufferRelidLastDirtied = (LockRelId *) calloc(NBuffers, sizeof(LockRelId));
 	BufferDirtiedByMe = (bool *) calloc(NBuffers, sizeof(bool));
 }
 
