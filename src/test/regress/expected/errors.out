@@ -31,19 +31,19 @@ select from pg_database;
 ERROR:  syntax error at or near "from" at character 8
 -- bad name in target list
 select nonesuch from pg_database;
-ERROR:  Attribute "nonesuch" not found
+ERROR:  attribute "nonesuch" not found
 -- bad attribute name on lhs of operator
 select * from pg_database where nonesuch = pg_database.datname;
-ERROR:  Attribute "nonesuch" not found
+ERROR:  attribute "nonesuch" not found
 -- bad attribute name on rhs of operator
 select * from pg_database where pg_database.datname = nonesuch;
-ERROR:  Attribute "nonesuch" not found
+ERROR:  attribute "nonesuch" not found
 -- bad select distinct on syntax, distinct attribute missing
 select distinct on (foobar) from pg_database;
 ERROR:  syntax error at or near "from" at character 29
 -- bad select distinct on syntax, distinct attribute not in target list
 select distinct on (foobar) * from pg_database;
-ERROR:  Attribute "foobar" not found
+ERROR:  attribute "foobar" not found
 --
 -- DELETE
  
@@ -143,7 +143,7 @@ drop aggregate 314159 (int);
 ERROR:  syntax error at or near "314159" at character 16
 -- bad aggregate type
 drop aggregate newcnt (nonesuch);
-ERROR:  Type "nonesuch" does not exist
+ERROR:  type "nonesuch" does not exist
 -- no such aggregate 
 drop aggregate nonesuch (int4);
 ERROR:  aggregate nonesuch(integer) does not exist
@@ -197,13 +197,13 @@ drop operator === ();
 ERROR:  syntax error at or near ")" at character 20
 -- no such operator 
 drop operator === (int4);
-ERROR:  parser: argument type missing (use NONE for unary operators)
+ERROR:  argument type missing (use NONE for unary operators)
 -- no such operator by that name 
 drop operator === (int4, int4);
 ERROR:  operator does not exist: integer === integer
 -- no such type1 
 drop operator = (nonesuch);
-ERROR:  parser: argument type missing (use NONE for unary operators)
+ERROR:  argument type missing (use NONE for unary operators)
 -- no such type1 
 drop operator = ( , int4);
 ERROR:  syntax error at or near "," at character 19

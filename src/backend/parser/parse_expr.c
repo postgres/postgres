@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.156 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.157 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static Node *transformIndirection(ParseState *pstate, Node *basenode,
  * Initialize for parsing a new query.
  *
  * We reset the expression depth counter here, in case it was left nonzero
- * due to elog()'ing out of the last parsing operation.
+ * due to ereport()'ing out of the last parsing operation.
  */
 void
 parse_expr_init(void)
@@ -100,8 +100,11 @@ transformExpr(ParseState *pstate, Node *expr)
 	 * to be able to crash the backend quite that easily...
 	 */
 	if (++expr_depth_counter > max_expr_depth)
-		elog(ERROR, "Expression too complex: nesting depth exceeds max_expr_depth = %d",
-			 max_expr_depth);
+		ereport(ERROR,
+				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
+				 errmsg("expression too complex"),
+				 errdetail("Nesting depth exceeds MAX_EXPR_DEPTH = %d.",
+						   max_expr_depth)));
 
 	switch (nodeTag(expr))
 	{
@@ -343,7 +346,9 @@ transformExpr(ParseState *pstate, Node *expr)
 													  lexpr,
 													  rexpr);
 							if (((OpExpr *) result)->opresulttype != BOOLOID)
-								elog(ERROR, "IS DISTINCT FROM requires = operator to yield boolean");
+								ereport(ERROR,
+										(errcode(ERRCODE_DATATYPE_MISMATCH),
+										 errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
 							/*
 							 * We rely on DistinctExpr and OpExpr being same struct
 							 */
@@ -362,7 +367,9 @@ transformExpr(ParseState *pstate, Node *expr)
 													  lexpr,
 													  rexpr);
 							if (((OpExpr *) result)->opresulttype != BOOLOID)
-								elog(ERROR, "NULLIF requires = operator to yield boolean");
+								ereport(ERROR,
+										(errcode(ERRCODE_DATATYPE_MISMATCH),
+										 errmsg("NULLIF requires = operator to yield boolean")));
 							/*
 							 * We rely on NullIfExpr and OpExpr being same struct
 							 */
@@ -451,11 +458,11 @@ transformExpr(ParseState *pstate, Node *expr)
 				pstate->p_hasSubLinks = true;
 				qtrees = parse_sub_analyze(sublink->subselect, pstate);
 				if (length(qtrees) != 1)
-					elog(ERROR, "Bad query in subselect");
+					elog(ERROR, "bad query in sub-select");
 				qtree = (Query *) lfirst(qtrees);
 				if (qtree->commandType != CMD_SELECT ||
 					qtree->resultRelation != 0)
-					elog(ERROR, "Bad query in subselect");
+					elog(ERROR, "bad query in sub-select");
 				sublink->subselect = (Node *) qtree;
 
 				if (sublink->subLinkType == EXISTS_SUBLINK)
@@ -480,11 +487,15 @@ transformExpr(ParseState *pstate, Node *expr)
 					 */
 					if (tlist == NIL ||
 						((TargetEntry *) lfirst(tlist))->resdom->resjunk)
-						elog(ERROR, "Subselect must have a field");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("sub-select must return a column")));
 					while ((tlist = lnext(tlist)) != NIL)
 					{
 						if (!((TargetEntry *) lfirst(tlist))->resdom->resjunk)
-							elog(ERROR, "Subselect must have only one field");
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("sub-select must return only one column")));
 					}
 
 					/*
@@ -536,8 +547,10 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (row_length != 1 &&
 						strcmp(opname, "=") != 0 &&
 						strcmp(opname, "<>") != 0)
-						elog(ERROR, "Row comparison cannot use operator %s",
-							 opname);
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("row comparison cannot use operator %s",
+										opname)));
 
 					/*
 					 * To build the list of combining operator OIDs, we must
@@ -561,7 +574,9 @@ transformExpr(ParseState *pstate, Node *expr)
 							continue;
 
 						if (left_list == NIL)
-							elog(ERROR, "Subselect has too many fields");
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("sub-select has too many columns")));
 						lexpr = lfirst(left_list);
 						left_list = lnext(left_list);
 
@@ -577,15 +592,19 @@ transformExpr(ParseState *pstate, Node *expr)
 						opform = (Form_pg_operator) GETSTRUCT(optup);
 
 						if (opform->oprresult != BOOLOID)
-							elog(ERROR, "%s has result type of %s, but must return %s"
-								 " to be used with quantified predicate subquery",
-							   opname, format_type_be(opform->oprresult),
-								 format_type_be(BOOLOID));
+							ereport(ERROR,
+									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									 errmsg("operator %s must return boolean, not type %s",
+											opname,
+											format_type_be(opform->oprresult)),
+									 errhint("The operator of a quantified predicate subquery must return boolean.")));
 
 						if (get_func_retset(opform->oprcode))
-							elog(ERROR, "%s must not return a set"
-								 " to be used with quantified predicate subquery",
-								 opname);
+							ereport(ERROR,
+									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									 errmsg("operator %s must not return a set",
+											opname),
+									 errhint("The operator of a quantified predicate subquery must return boolean.")));
 
 						sublink->operOids = lappendo(sublink->operOids,
 													 oprid(optup));
@@ -593,7 +612,9 @@ transformExpr(ParseState *pstate, Node *expr)
 						ReleaseSysCache(optup);
 					}
 					if (left_list != NIL)
-						elog(ERROR, "Subselect has too few fields");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("sub-select has too few columns")));
 
 					if (needNot)
 					{
@@ -762,8 +783,10 @@ transformExpr(ParseState *pstate, Node *expr)
 					array_type = element_type;
 					element_type = get_element_type(array_type);
 					if (!OidIsValid(element_type))
-						elog(ERROR, "Cannot find array type for datatype %s",
-							 format_type_be(array_type));
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_OBJECT),
+								 errmsg("cannot find array type for datatype %s",
+										format_type_be(array_type))));
 
 					/*
 					 * make sure the element expressions all have the same
@@ -775,15 +798,19 @@ transformExpr(ParseState *pstate, Node *expr)
 						ArrayExpr  *e = (ArrayExpr *) lfirst(element);
 
 						if (!IsA(e, ArrayExpr))
-							elog(ERROR, "Multidimensional ARRAY[] must be built from nested array expressions");
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("multidimensional ARRAY[] must be built from nested array expressions")));
 						if (ndims == 0)
 							ndims = e->ndims;
 						else if (e->ndims != ndims)
-							elog(ERROR, "Nested array expressions must have "
-								 "common number of dimensions");
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("nested array expressions must have common number of dimensions")));
 						if (e->element_typeid != element_type)
-							elog(ERROR, "Nested array expressions must have "
-								 "common element type");
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("nested array expressions must have common element type")));
 
 					}
 					/* increment the number of dimensions */
@@ -791,9 +818,10 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					/* make sure we don't have too many dimensions now */
 					if (ndims > MAXDIM)
-						elog(ERROR, "Number of array dimensions, %d, "
-							 "exceeds the maximum allowed %d",
-							 ndims, MAXDIM);
+						ereport(ERROR,
+								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+								 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+										MAXDIM)));
 				}
 
 				newa->array_typeid = array_type;
@@ -879,7 +907,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						clausename = "IS NOT UNKNOWN";
 						break;
 					default:
-						elog(ERROR, "transformExpr: unexpected booltesttype %d",
+						elog(ERROR, "unrecognized booltesttype: %d",
 							 (int) b->booltesttype);
 						clausename = NULL;		/* keep compiler quiet */
 				}
@@ -925,8 +953,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		default:
 			/* should not reach here */
-			elog(ERROR, "transformExpr: does not know how to transform node %d"
-				 " (internal error)", nodeTag(expr));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			break;
 	}
 
@@ -1030,7 +1057,9 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 						node = (Node *) rv;
 					}
 					else
-						elog(ERROR, "Attribute \"%s\" not found", name);
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("attribute \"%s\" not found", name)));
 				}
 				break;
 			}
@@ -1112,7 +1141,9 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				 * We check the catalog name and then ignore it.
 				 */
 				if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
-					elog(ERROR, "Cross-database references are not implemented");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cross-database references are not implemented")));
 
 				/* Whole-row reference? */
 				if (strcmp(name4, "*") == 0)
@@ -1142,7 +1173,10 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				break;
 			}
 		default:
-			elog(ERROR, "Invalid qualified name syntax (too many names)");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("improper qualified name (too many dotted names): %s",
+							NameListToString(cref->fields))));
 			node = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -1206,7 +1240,7 @@ exprType(Node *expr)
 					TargetEntry *tent;
 
 					if (!qtree || !IsA(qtree, Query))
-						elog(ERROR, "exprType: Cannot get type for untransformed sublink");
+						elog(ERROR, "cannot get type for untransformed sublink");
 					tent = (TargetEntry *) lfirst(qtree->targetList);
 					Assert(IsA(tent, TargetEntry));
 					Assert(!tent->resdom->resjunk);
@@ -1216,8 +1250,10 @@ exprType(Node *expr)
 					{
 						type = get_array_type(tent->resdom->restype);
 						if (!OidIsValid(type))
-							elog(ERROR, "Cannot find array type for datatype %s",
-								 format_type_be(tent->resdom->restype));
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+									 errmsg("cannot find array type for datatype %s",
+											format_type_be(tent->resdom->restype))));
 					}
 				}
 				else
@@ -1251,8 +1287,10 @@ exprType(Node *expr)
 					{
 						type = get_array_type(tent->resdom->restype);
 						if (!OidIsValid(type))
-							elog(ERROR, "Cannot find array type for datatype %s",
-								 format_type_be(tent->resdom->restype));
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+									 errmsg("cannot find array type for datatype %s",
+											format_type_be(tent->resdom->restype))));
 					}
 				}
 				else
@@ -1304,13 +1342,14 @@ exprType(Node *expr)
 			 * we will likely first notice a problem here (see comments in
 			 * transformColumnRef()).  Issue an appropriate error message.
 			 */
-			elog(ERROR, "Relation reference \"%s\" cannot be used in an expression",
-				 ((RangeVar *) expr)->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("relation reference \"%s\" cannot be used in an expression",
+							((RangeVar *) expr)->relname)));
 			type = InvalidOid;	/* keep compiler quiet */
 			break;
 		default:
-			elog(ERROR, "exprType: Do not know how to get type for %d node",
-				 nodeTag(expr));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			type = InvalidOid;	/* keep compiler quiet */
 			break;
 	}
@@ -1511,9 +1550,11 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 								 COERCION_EXPLICIT,
 								 COERCE_EXPLICIT_CAST);
 	if (expr == NULL)
-		elog(ERROR, "Cannot cast type %s to %s",
-			 format_type_be(inputType),
-			 format_type_be(targetType));
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast type %s to %s",
+						format_type_be(inputType),
+						format_type_be(targetType))));
 
 	return expr;
 }

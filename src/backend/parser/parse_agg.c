@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.54 2003/07/01 19:10:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.55 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,9 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 	if (min_varlevel == 0)
 	{
 		if (checkExprHasAggs((Node *) agg->target))
-			elog(ERROR, "aggregate function calls may not be nested");
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("aggregate function calls may not be nested")));
 	}
 
 	if (min_varlevel < 0)
@@ -113,9 +115,13 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * problem is in WHERE.)
 	 */
 	if (checkExprHasAggs(qry->jointree->quals))
-		elog(ERROR, "Aggregates not allowed in WHERE clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("aggregates not allowed in WHERE clause")));
 	if (checkExprHasAggs((Node *) qry->jointree->fromlist))
-		elog(ERROR, "Aggregates not allowed in JOIN conditions");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("aggregates not allowed in JOIN conditions")));
 
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.
@@ -134,7 +140,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		if (expr == NULL)
 			continue;			/* probably cannot happen */
 		if (checkExprHasAggs(expr))
-			elog(ERROR, "Aggregates not allowed in GROUP BY clause");
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("aggregates not allowed in GROUP BY clause")));
 		groupClauses = lcons(expr, groupClauses);
 		if (!IsA(expr, Var))
 			have_non_var_grouping = true;
@@ -291,11 +299,15 @@ check_ungrouped_columns_walker(Node *node,
 		rte = rt_fetch(var->varno, context->pstate->p_rtable);
 		attname = get_rte_attribute_name(rte, var->varattno);
 		if (context->sublevels_up == 0)
-			elog(ERROR, "Attribute %s.%s must be GROUPed or used in an aggregate function",
-				 rte->eref->aliasname, attname);
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("attribute \"%s.%s\" must be GROUPed or used in an aggregate function",
+							rte->eref->aliasname, attname)));
 		else
-			elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
-				 rte->eref->aliasname, attname);
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("sub-select uses un-GROUPed attribute \"%s.%s\" from outer query",
+							rte->eref->aliasname, attname)));
 
 	}
 

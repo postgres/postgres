@@ -336,7 +336,7 @@ SELECT '' AS "xxx", *
 -- ambiguous column
 SELECT '' AS "xxx", i, k, t
   FROM J1_TBL CROSS JOIN J2_TBL;
-ERROR:  Column reference "i" is ambiguous
+ERROR:  column reference "i" is ambiguous
 -- resolve previous ambiguity by specifying the table name
 SELECT '' AS "xxx", t1.i, k, t
   FROM J1_TBL t1 CROSS JOIN J2_TBL t2;

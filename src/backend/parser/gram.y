@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.426 2003/07/03 19:07:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.427 2003/07/19 20:20:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -956,9 +956,9 @@ zone_value:
 					if ($3 != INTERVAL_FULL_RANGE)
 					{
 						if (($3 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
-							elog(ERROR,
-								 "Time zone interval"
-								 " must be HOUR or HOUR TO MINUTE");
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
 						n->typename->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $3);
 					}
 					$$ = (Node *)n;
@@ -967,22 +967,24 @@ zone_value:
 				{
 					A_Const *n = (A_Const *) makeStringConst($5, $1);
 					if ($3 < 0)
-						elog(ERROR,
-							 "INTERVAL(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("INTERVAL(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_INTERVAL_PRECISION)
 					{
-						elog(NOTICE,
-							 "INTERVAL(%d) precision reduced to maximum allowed, %d",
-							 $3, MAX_INTERVAL_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_INTERVAL_PRECISION)));
 						$3 = MAX_INTERVAL_PRECISION;
 					}
 
 					if (($6 != INTERVAL_FULL_RANGE)
 						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
-						elog(ERROR,
-							 "Time zone interval"
-							 " must be HOUR or HOUR TO MINUTE");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
 
 					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
 
@@ -1467,9 +1469,9 @@ columnDef:	ColId Typename ColQualList opt_collate
 					n->is_local = true;
 
 					if ($4 != NULL)
-						elog(NOTICE,
-							 "CREATE TABLE / COLLATE %s not yet implemented; "
-							 "clause ignored", $4);
+						ereport(NOTICE,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE TABLE / COLLATE is not yet implemented; clause ignored")));
 
 					$$ = (Node *)n;
 				}
@@ -1769,7 +1771,9 @@ key_match:  MATCH FULL
 			}
 		| MATCH PARTIAL
 			{
-				elog(ERROR, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("FOREIGN KEY/MATCH PARTIAL is not yet implemented")));
 				$$ = FKCONSTR_MATCH_PARTIAL;
 			}
 		| MATCH SIMPLE
@@ -1849,7 +1853,9 @@ CreateAsStmt:
 					 */
 					SelectStmt *n = findLeftmostSelect((SelectStmt *) $7);
 					if (n->into != NULL)
-						elog(ERROR, "CREATE TABLE AS may not specify INTO");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("CREATE TABLE AS may not specify INTO")));
 					$4->istemp = $2;
 					n->into = $4;
 					n->intoColNames = $5;
@@ -2188,8 +2194,9 @@ ConstraintAttributeSpec:
 			| ConstraintDeferrabilitySpec ConstraintTimeSpec
 				{
 					if ($1 == 0 && $2 != 0)
-						elog(ERROR,
-						"INITIALLY DEFERRED constraint must be DEFERRABLE");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
 					$$ = $1 | $2;
 				}
 			| ConstraintTimeSpec
@@ -2202,8 +2209,9 @@ ConstraintAttributeSpec:
 			| ConstraintTimeSpec ConstraintDeferrabilitySpec
 				{
 					if ($2 == 0 && $1 != 0)
-						elog(ERROR,
-						"INITIALLY DEFERRED constraint must be DEFERRABLE");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
 					$$ = $1 | $2;
 				}
 			| /*EMPTY*/
@@ -2253,7 +2261,9 @@ CreateAssertStmt:
 					n->deferrable = ($8 & 1) != 0;
 					n->initdeferred = ($8 & 2) != 0;
 
-					elog(ERROR, "CREATE ASSERTION is not yet supported");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("CREATE ASSERTION is not yet implemented")));
 
 					$$ = (Node *)n;
 				}
@@ -2267,7 +2277,9 @@ DropAssertStmt:
 					n->property = $3;
 					n->behavior = $4;
 					n->removeType = OBJECT_TRIGGER; /* XXX */
-					elog(ERROR, "DROP ASSERTION is not yet supported");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("DROP ASSERTION is not yet implemented")));
 					$$ = (Node *) n;
 				}
 		;
@@ -2329,9 +2341,10 @@ DefineStmt:
 							r->relname = strVal(lthird($3));
 							break;
 						default:
-							elog(ERROR,
-								 "Improper qualified name (too many dotted names): %s",
-								 NameListToString($3));
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("improper qualified name (too many dotted names): %s",
+											NameListToString($3))));
 							break;
 					}
 					n->typevar = r;
@@ -3074,14 +3087,16 @@ func_arg:	opt_arg func_type
 opt_arg:	IN_P									{ $$ = FALSE; }
 			| OUT_P
 				{
-					elog(ERROR,
-					"CREATE FUNCTION / OUT parameters are not supported");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("CREATE FUNCTION / OUT parameters are not implemented")));
 					$$ = TRUE;
 				}
 			| INOUT
 				{
-					elog(ERROR,
-					"CREATE FUNCTION / INOUT parameters are not supported");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("CREATE FUNCTION / INOUT parameters are not implemented")));
 					$$ = FALSE;
 				}
 		;
@@ -3233,7 +3248,9 @@ RemoveOperStmt:
 oper_argtypes:
 			Typename
 				{
-				   elog(ERROR, "parser: argument type missing (use NONE for unary operators)");
+				   ereport(ERROR,
+						   (errcode(ERRCODE_SYNTAX_ERROR),
+							errmsg("argument type missing (use NONE for unary operators)")));
 				}
 			| Typename ',' Typename
 					{ $$ = makeList2($1, $3); }
@@ -3833,8 +3850,9 @@ CreateDomainStmt:
 					n->constraints = $6;
 
 					if ($7 != NULL)
-						elog(NOTICE,"CREATE DOMAIN / COLLATE %s not yet "
-							 "implemented; clause ignored", $7);
+						ereport(NOTICE,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE DOMAIN / COLLATE is not yet implemented; clause ignored")));
 					$$ = (Node *)n;
 				}
 		;
@@ -4137,7 +4155,9 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					$4->istemp = $2;
 					n->into = $4;
 					if ($5)
-						elog(ERROR, "column name list not allowed in CREATE TABLE / AS EXECUTE");
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("column name list not allowed in CREATE TABLE / AS EXECUTE")));
 					/* ... because it's not implemented, but it could be */
 					$$ = (Node *) n;
 				}
@@ -4587,8 +4607,10 @@ select_limit:
 			| LIMIT select_limit_value ',' select_offset_value
 				{
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
-					elog(ERROR,
-						 "LIMIT #,# syntax not supported.\n\tUse separate LIMIT and OFFSET clauses.");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("LIMIT #,# syntax is not supported"),
+							 errhint("Use separate LIMIT and OFFSET clauses.")));
 				}
 		;
 
@@ -4735,8 +4757,10 @@ table_ref:	relation_expr
 					 * However, it does seem like a good idea to emit
 					 * an error message that's better than "syntax error".
 					 */
-					elog(ERROR, "sub-SELECT in FROM must have an alias"
-						 "\n\tFor example, FROM (SELECT ...) [AS] foo");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("sub-select in FROM must have an alias"),
+							 errhint("For example, FROM (SELECT ...) [AS] foo.")));
 					$$ = NULL;
 				}
 			| select_with_parens alias_clause
@@ -5058,14 +5082,16 @@ SimpleTypename:
 				{
 					$$ = $1;
 					if ($3 < 0)
-						elog(ERROR,
-							 "INTERVAL(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("INTERVAL(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_INTERVAL_PRECISION)
 					{
-						elog(NOTICE,
-							 "INTERVAL(%d) precision reduced to maximum allowed, %d",
-							 $3, MAX_INTERVAL_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_INTERVAL_PRECISION)));
 						$3 = MAX_INTERVAL_PRECISION;
 					}
 					$$->typmod = INTERVAL_TYPMOD($3, $5);
@@ -5159,15 +5185,17 @@ Numeric:	INT_P
 opt_float:	'(' Iconst ')'
 				{
 					if ($2 < 1)
-						elog(ERROR,
-							"precision for FLOAT must be at least 1 bit");
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("precision for FLOAT must be at least 1 bit")));
 					else if ($2 <= 24)
 						$$ = SystemTypeName("float4");
 					else if ($2 <= 53)
 						$$ = SystemTypeName("float8");
 					else
-						elog(ERROR,
-							"precision for FLOAT must be less than 54 bits");
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("precision for FLOAT must be less than 54 bits")));
 				}
 			| /*EMPTY*/
 				{
@@ -5179,22 +5207,25 @@ opt_numeric:
 			'(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,
-							"NUMERIC precision %d must be between 1 and %d",
-							 $2, NUMERIC_MAX_PRECISION);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("NUMERIC precision %d must be between 1 and %d",
+										$2, NUMERIC_MAX_PRECISION)));
 					if ($4 < 0 || $4 > $2)
-						elog(ERROR,
-						"NUMERIC scale %d must be between 0 and precision %d",
-							 $4,$2);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("NUMERIC scale %d must be between 0 and precision %d",
+										$4, $2)));
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
 				}
 			| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,
-							"NUMERIC precision %d must be between 1 and %d",
-							 $2, NUMERIC_MAX_PRECISION);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("NUMERIC precision %d must be between 1 and %d",
+										$2, NUMERIC_MAX_PRECISION)));
 
 					$$ = ($2 << 16) + VARHDRSZ;
 				}
@@ -5209,22 +5240,25 @@ opt_decimal:
 			'(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,
-							"DECIMAL precision %d must be between 1 and %d",
-									$2, NUMERIC_MAX_PRECISION);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("DECIMAL precision %d must be between 1 and %d",
+										$2, NUMERIC_MAX_PRECISION)));
 					if ($4 < 0 || $4 > $2)
-						elog(ERROR,
-							"DECIMAL scale %d must be between 0 and precision %d",
-									$4,$2);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("DECIMAL scale %d must be between 0 and precision %d",
+										$4, $2)));
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
 				}
 			| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,
-							"DECIMAL precision %d must be between 1 and %d",
-									$2, NUMERIC_MAX_PRECISION);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("DECIMAL precision %d must be between 1 and %d",
+										$2, NUMERIC_MAX_PRECISION)));
 
 					$$ = ($2 << 16) + VARHDRSZ;
 				}
@@ -5271,11 +5305,15 @@ BitWithLength:
 					typname = $2 ? "varbit" : "bit";
 					$$ = SystemTypeName(typname);
 					if ($4 < 1)
-						elog(ERROR, "length for type '%s' must be at least 1",
-							 typname);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("length for type %s must be at least 1",
+										typname)));
 					else if ($4 > (MaxAttrSize * BITS_PER_BYTE))
-						elog(ERROR, "length for type '%s' cannot exceed %d",
-							 typname, (MaxAttrSize * BITS_PER_BYTE));
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("length for type %s cannot exceed %d",
+										typname, MaxAttrSize * BITS_PER_BYTE)));
 					$$->typmod = $4;
 				}
 		;
@@ -5345,11 +5383,15 @@ CharacterWithLength:  character '(' Iconst ')' opt_charset
 					$$ = SystemTypeName($1);
 
 					if ($3 < 1)
-						elog(ERROR, "length for type '%s' must be at least 1",
-							 $1);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("length for type %s must be at least 1",
+										$1)));
 					else if ($3 > MaxAttrSize)
-						elog(ERROR, "length for type '%s' cannot exceed %d",
-							 $1, MaxAttrSize);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("length for type %s cannot exceed %d",
+										$1, MaxAttrSize)));
 
 					/* we actually implement these like a varlen, so
 					 * the first 4 bytes is the length. (the difference
@@ -5424,15 +5466,17 @@ ConstDatetime:
 					 */
 					$$->timezone = $5;
 					if ($3 < 0)
-						elog(ERROR,
-							 "TIMESTAMP(%d)%s precision must not be negative",
-							 $3, ($5 ? " WITH TIME ZONE": ""));
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("TIMESTAMP(%d)%s precision must not be negative",
+										$3, ($5 ? " WITH TIME ZONE": ""))));
 					if ($3 > MAX_TIMESTAMP_PRECISION)
 					{
-						elog(NOTICE,
-							 "TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""),
-							 MAX_TIMESTAMP_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
+										$3, ($5 ? " WITH TIME ZONE": ""),
+										MAX_TIMESTAMP_PRECISION)));
 						$3 = MAX_TIMESTAMP_PRECISION;
 					}
 					$$->typmod = $3;
@@ -5463,15 +5507,17 @@ ConstDatetime:
 					else
 						$$ = SystemTypeName("time");
 					if ($3 < 0)
-						elog(ERROR,
-							 "TIME(%d)%s precision must not be negative",
-							 $3, ($5 ? " WITH TIME ZONE": ""));
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("TIME(%d)%s precision must not be negative",
+										$3, ($5 ? " WITH TIME ZONE": ""))));
 					if ($3 > MAX_TIME_PRECISION)
 					{
-						elog(NOTICE,
-							 "TIME(%d)%s precision reduced to maximum allowed, %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""),
-							 MAX_TIME_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("TIME(%d)%s precision reduced to maximum allowed, %d",
+										$3, ($5 ? " WITH TIME ZONE": ""),
+										MAX_TIME_PRECISION)));
 						$3 = MAX_TIME_PRECISION;
 					}
 					$$->typmod = $3;
@@ -5613,7 +5659,9 @@ r_expr:  row IN_P select_with_parens
 					/* lengths don't match? then complain */
 					if (length(largs) != length(rargs))
 					{
-						elog(ERROR, "Unequal number of entries in row expression");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("unequal number of entries in row expression")));
 					}
 					/* both are zero-length rows? then they are not distinct */
 					else if (length(largs) <= 0)
@@ -6033,7 +6081,9 @@ a_expr:		c_expr									{ $$ = $1; }
 					 * entire result equal to one.
 					 * But, will probably implement a separate node in the executor.
 					 */
-					elog(ERROR, "UNIQUE predicate is not yet implemented");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("UNIQUE predicate is not yet implemented")));
 				}
 			| r_expr
 				{ $$ = $1; }
@@ -6273,14 +6323,16 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("timetz");
 					if ($3 < 0)
-						elog(ERROR,
-							 "CURRENT_TIME(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("CURRENT_TIME(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_TIME_PRECISION)
 					{
-						elog(NOTICE,
-							 "CURRENT_TIME(%d) precision reduced to maximum allowed, %d",
-							 $3, MAX_TIME_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("CURRENT_TIME(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_TIME_PRECISION)));
 						$3 = MAX_TIME_PRECISION;
 					}
 					d->typmod = $3;
@@ -6325,14 +6377,16 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 
 					d = SystemTypeName("timestamptz");
 					if ($3 < 0)
-						elog(ERROR,
-							 "CURRENT_TIMESTAMP(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("CURRENT_TIMESTAMP(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_TIMESTAMP_PRECISION)
 					{
-						elog(NOTICE,
-							 "CURRENT_TIMESTAMP(%d) precision reduced to maximum allowed, %d",
-							 $3, MAX_TIMESTAMP_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("CURRENT_TIMESTAMP(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_TIMESTAMP_PRECISION)));
 						$3 = MAX_TIMESTAMP_PRECISION;
 					}
 					d->typmod = $3;
@@ -6376,14 +6430,16 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("time");
 					if ($3 < 0)
-						elog(ERROR,
-							 "LOCALTIME(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("LOCALTIME(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_TIME_PRECISION)
 					{
-						elog(NOTICE,
-							 "LOCALTIME(%d) precision reduced to maximum allowed, %d",
-							 $3, MAX_TIME_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("LOCALTIME(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_TIME_PRECISION)));
 						$3 = MAX_TIME_PRECISION;
 					}
 					d->typmod = $3;
@@ -6428,14 +6484,16 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 
 					d = SystemTypeName("timestamp");
 					if ($3 < 0)
-						elog(ERROR,
-							 "LOCALTIMESTAMP(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("LOCALTIMESTAMP(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_TIMESTAMP_PRECISION)
 					{
-						elog(NOTICE,
-							 "LOCALTIMESTAMP(%d) precision reduced to maximum allowed, %d",
-							 $3, MAX_TIMESTAMP_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("LOCALTIMESTAMP(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_TIMESTAMP_PRECISION)));
 						$3 = MAX_TIMESTAMP_PRECISION;
 					}
 					d->typmod = $3;
@@ -7020,10 +7078,10 @@ qualified_name:
 							$$->relname = strVal(lthird($1));
 							break;
 						default:
-							elog(ERROR,
-								 "Improper qualified name "
-								 "(too many dotted names): %s",
-								 NameListToString($1));
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("improper qualified name (too many dotted names): %s",
+											NameListToString($1))));
 							break;
 					}
 				}
@@ -7126,14 +7184,16 @@ AexprConst: Iconst
 					n->val.val.str = $5;
 					/* precision specified, and fields may be... */
 					if ($3 < 0)
-						elog(ERROR,
-							 "INTERVAL(%d) precision must not be negative",
-							 $3);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("INTERVAL(%d) precision must not be negative",
+										$3)));
 					if ($3 > MAX_INTERVAL_PRECISION)
 					{
-						elog(NOTICE,
-							"INTERVAL(%d) precision reduced to maximum allowed, %d",
-							$3, MAX_INTERVAL_PRECISION);
+						ereport(NOTICE,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
+										$3, MAX_INTERVAL_PRECISION)));
 						$3 = MAX_INTERVAL_PRECISION;
 					}
 					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
@@ -7571,14 +7631,18 @@ SpecialRuleRelation:
 					if (QueryIsRule)
 						$$ = "*OLD*";
 					else
-						elog(ERROR, "OLD used in non-rule query");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("OLD used in non-rule query")));
 				}
 			| NEW
 				{
 					if (QueryIsRule)
 						$$ = "*NEW*";
 					else
-						elog(ERROR, "NEW used in non-rule query");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("NEW used in non-rule query")));
 				}
 		;
 
@@ -7698,7 +7762,9 @@ makeRowExpr(List *opr, List *largs, List *rargs)
 	char *oprname;
 
 	if (length(largs) != length(rargs))
-		elog(ERROR, "Unequal number of entries in row expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unequal number of entries in row expression")));
 
 	if (lnext(largs) != NIL)
 		expr = makeRowExpr(opr, lnext(largs), lnext(rargs));
@@ -7732,8 +7798,10 @@ makeRowExpr(List *opr, List *largs, List *rargs)
 	}
 	else
 	{
-		elog(ERROR, "Operator '%s' not implemented for row expressions",
-			 oprname);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("operator %s is not supported for row expressions",
+						oprname)));
 	}
 
 	return expr;
@@ -7750,7 +7818,9 @@ makeDistinctExpr(List *largs, List *rargs)
 	Node *larg, *rarg;
 
 	if (length(largs) != length(rargs))
-		elog(ERROR, "Unequal number of entries in row expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unequal number of entries in row expression")));
 
 	if (lnext(largs) != NIL)
 		expr = makeDistinctExpr(lnext(largs), lnext(rargs));
@@ -7805,13 +7875,15 @@ makeOverlaps(List *largs, List *rargs)
 	if (length(largs) == 1)
 		largs = lappend(largs, largs);
 	else if (length(largs) != 2)
-		elog(ERROR, "Wrong number of parameters"
-			 " on left side of OVERLAPS expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("wrong number of parameters on left side of OVERLAPS expression")));
 	if (length(rargs) == 1)
 		rargs = lappend(rargs, rargs);
 	else if (length(rargs) != 2)
-		elog(ERROR, "Wrong number of parameters"
-			 " on right side of OVERLAPS expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("wrong number of parameters on right side of OVERLAPS expression")));
 	n->args = nconc(largs, rargs);
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
@@ -7847,25 +7919,33 @@ insertSelectOptions(SelectStmt *stmt,
 	if (sortClause)
 	{
 		if (stmt->sortClause)
-			elog(ERROR, "Multiple ORDER BY clauses not allowed");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("multiple ORDER BY clauses not allowed")));
 		stmt->sortClause = sortClause;
 	}
 	if (forUpdate)
 	{
 		if (stmt->forUpdate)
-			elog(ERROR, "Multiple FOR UPDATE clauses not allowed");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("multiple FOR UPDATE clauses not allowed")));
 		stmt->forUpdate = forUpdate;
 	}
 	if (limitOffset)
 	{
 		if (stmt->limitOffset)
-			elog(ERROR, "Multiple OFFSET clauses not allowed");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("multiple OFFSET clauses not allowed")));
 		stmt->limitOffset = limitOffset;
 	}
 	if (limitCount)
 	{
 		if (stmt->limitCount)
-			elog(ERROR, "Multiple LIMIT clauses not allowed");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("multiple LIMIT clauses not allowed")));
 		stmt->limitCount = limitCount;
 	}
 }

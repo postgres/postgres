@@ -18,7 +18,7 @@ INSERT INTO foo2 VALUES(1, 111);
 CREATE FUNCTION foot(int) returns setof foo2 as 'SELECT * FROM foo2 WHERE fooid = $1;' LANGUAGE SQL;
 -- supposed to fail with ERROR
 select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
-ERROR:  FROM function expression may not refer to other relations of same query level
+ERROR:  function expression in FROM may not refer to other relations of same query level
 -- function in subselect
 select * from foo2 where f2 in (select f2 from foot(foo2.fooid) z where z.fooid = foo2.fooid) ORDER BY 1,2;
  fooid | f2  
@@ -53,7 +53,7 @@ select foot.fooid, foot.f2 from foot(sin(pi()/2)::int) ORDER BY 1,2;
 (2 rows)
 
 CREATE TABLE foo (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'foo_pkey' for table 'foo'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"
 INSERT INTO foo VALUES(1,1,'Joe');
 INSERT INTO foo VALUES(1,2,'Ed');
 INSERT INTO foo VALUES(2,1,'Mary');
@@ -225,7 +225,7 @@ DROP TABLE foo2;
 DROP TABLE foo;
 -- Rescan tests --
 CREATE TABLE foorescan (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'foorescan_pkey' for table 'foorescan'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foorescan_pkey" for table "foorescan"
 INSERT INTO foorescan values(5000,1,'abc.5000.1');
 INSERT INTO foorescan values(5001,1,'abc.5001.1');
 INSERT INTO foorescan values(5002,1,'abc.5002.1');
@@ -311,7 +311,7 @@ SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM vw_foorescan) ORDE
 (10 rows)
 
 CREATE TABLE barrescan (fooid int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'barrescan_pkey' for table 'barrescan'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "barrescan_pkey" for table "barrescan"
 INSERT INTO barrescan values(5003);
 INSERT INTO barrescan values(5004);
 INSERT INTO barrescan values(5005);

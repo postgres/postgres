@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.78 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.79 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,14 +114,15 @@ transformArraySubscripts(ParseState *pstate,
 									  ObjectIdGetDatum(arrayType),
 									  0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple_array))
-		elog(ERROR, "transformArraySubscripts: Cache lookup failed for array type %u",
-			 arrayType);
+		elog(ERROR, "cache lookup failed for type %u", arrayType);
 	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);
 
 	elementType = type_struct_array->typelem;
 	if (elementType == InvalidOid)
-		elog(ERROR, "transformArraySubscripts: type %s is not an array",
-			 NameStr(type_struct_array->typname));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot subscript type %s because it is not an array",
+						format_type_be(arrayType))));
 
 	/*
 	 * A list containing only single subscripts refers to a single array
@@ -177,7 +178,9 @@ transformArraySubscripts(ParseState *pstate,
 												COERCION_ASSIGNMENT,
 												COERCE_IMPLICIT_CAST);
 				if (subexpr == NULL)
-					elog(ERROR, "array index expressions must be integers");
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("array subscript must have type integer")));
 			}
 			else
 			{
@@ -198,7 +201,9 @@ transformArraySubscripts(ParseState *pstate,
 										COERCION_ASSIGNMENT,
 										COERCE_IMPLICIT_CAST);
 		if (subexpr == NULL)
-			elog(ERROR, "array index expressions must be integers");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("array subscript must have type integer")));
 		upperIndexpr = lappend(upperIndexpr, subexpr);
 	}
 
@@ -218,11 +223,13 @@ transformArraySubscripts(ParseState *pstate,
 											   COERCION_ASSIGNMENT,
 											   COERCE_IMPLICIT_CAST);
 			if (assignFrom == NULL)
-				elog(ERROR, "Array assignment requires type %s"
-					 " but expression is of type %s"
-					 "\n\tYou will need to rewrite or cast the expression",
-					 format_type_be(typeneeded),
-					 format_type_be(typesource));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("array assignment requires type %s"
+								" but expression is of type %s",
+								format_type_be(typeneeded),
+								format_type_be(typesource)),
+						 errhint("You will need to rewrite or cast the expression.")));
 		}
 	}
 
@@ -323,18 +330,18 @@ make_const(Value *value)
 			typebyval = false;
 			break;
 
-		default:
-			elog(WARNING, "make_const: unknown type %d", nodeTag(value));
-			/* FALLTHROUGH */
-
 		case T_Null:
 			/* return a null const */
 			con = makeConst(UNKNOWNOID,
 							-1,
-							(Datum) NULL,
+							(Datum) 0,
 							true,
 							false);
 			return con;
+
+		default:
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(value));
+			return NULL;		/* keep compiler quiet */
 	}
 
 	con = makeConst(typeid,

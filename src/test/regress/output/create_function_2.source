@@ -13,8 +13,8 @@ CREATE FUNCTION hobbies_by_name(hobbies_r.name%TYPE)
    RETURNS hobbies_r.person%TYPE
    AS 'select person from hobbies_r where name = $1'
    LANGUAGE 'sql';
-NOTICE:  hobbies_r.person%TYPE converted to text
-NOTICE:  hobbies_r.name%TYPE converted to text
+NOTICE:  type reference hobbies_r.person%TYPE converted to text
+NOTICE:  type reference hobbies_r.name%TYPE converted to text
 CREATE FUNCTION equipment(hobbies_r)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where hobby = $1.name'

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.280 2003/07/18 23:20:32 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.281 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,7 +357,9 @@ transformStmt(ParseState *pstate, Node *parseTree,
 					}
 
 					if (aliaslist != NIL)
-						elog(ERROR, "CREATE VIEW specifies more column names than columns");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("CREATE VIEW specifies more column names than columns")));
 				}
 				result = makeNode(Query);
 				result->commandType = CMD_UTILITY;
@@ -565,7 +567,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		Assert(IsA(selectQuery, Query));
 		Assert(selectQuery->commandType == CMD_SELECT);
 		if (selectQuery->into)
-			elog(ERROR, "INSERT ... SELECT may not specify INTO");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("INSERT ... SELECT may not specify INTO")));
 
 		/*
 		 * Make the source be a subquery in the INSERT's rangetable, and
@@ -655,7 +659,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		tl = lnext(tl);
 
 		if (icolumns == NIL || attnos == NIL)
-			elog(ERROR, "INSERT has more expressions than target columns");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("INSERT has more expressions than target columns")));
 
 		col = (ResTarget *) lfirst(icolumns);
 		Assert(IsA(col, ResTarget));
@@ -675,7 +681,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * statements.
 	 */
 	if (stmt->cols != NIL && (icolumns != NIL || attnos != NIL))
-		elog(ERROR, "INSERT has more target columns than expressions");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("INSERT has more target columns than expressions")));
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
@@ -876,7 +884,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 				break;
 
 			default:
-				elog(ERROR, "parser: unrecognized node (internal error)");
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(element));
+				break;
 		}
 	}
 
@@ -958,8 +968,10 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		sname = makeObjectName(cxt->relation->relname, column->colname, "seq");
 		snamespace = get_namespace_name(RangeVarGetCreationNamespace(cxt->relation));
 
-		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
-		  cxt->stmtType, sname, cxt->relation->relname, column->colname);
+		ereport(NOTICE,
+				(errmsg("%s will create implicit sequence \"%s\" for SERIAL column \"%s.%s\"",
+						cxt->stmtType, sname,
+						cxt->relation->relname, column->colname)));
 
 		/*
 		 * Build a CREATE SEQUENCE command to create the sequence object,
@@ -1039,24 +1051,30 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		{
 			case CONSTR_NULL:
 				if (saw_nullable && column->is_not_null)
-					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
-						 cxt->stmtType, cxt->relation->relname, column->colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("conflicting NULL/NOT NULL declarations for \"%s.%s\"",
+									cxt->relation->relname, column->colname)));
 				column->is_not_null = FALSE;
 				saw_nullable = true;
 				break;
 
 			case CONSTR_NOTNULL:
 				if (saw_nullable && !column->is_not_null)
-					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
-						 cxt->stmtType, cxt->relation->relname, column->colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("conflicting NULL/NOT NULL declarations for \"%s.%s\"",
+									cxt->relation->relname, column->colname)));
 				column->is_not_null = TRUE;
 				saw_nullable = true;
 				break;
 
 			case CONSTR_DEFAULT:
 				if (column->raw_default != NULL)
-					elog(ERROR, "%s/DEFAULT multiple values specified for '%s.%s'",
-						 cxt->stmtType, cxt->relation->relname, column->colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("multiple DEFAULT values specified for \"%s.%s\"",
+									cxt->relation->relname, column->colname)));
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
 				break;
@@ -1097,7 +1115,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				break;
 
 			default:
-				elog(ERROR, "parser: unrecognized constraint (internal error)");
+				elog(ERROR, "unrecognized constraint type: %d",
+					 constraint->contype);
 				break;
 		}
 	}
@@ -1132,11 +1151,13 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
 		case CONSTR_ATTR_NOT_DEFERRABLE:
 		case CONSTR_ATTR_DEFERRED:
 		case CONSTR_ATTR_IMMEDIATE:
-			elog(ERROR, "parser: illegal context for constraint (internal error)");
+			elog(ERROR, "illegal context for constraint type %d",
+				 constraint->contype);
 			break;
 
 		default:
-			elog(ERROR, "parser: unrecognized constraint (internal error)");
+			elog(ERROR, "unrecognized constraint type: %d",
+				 constraint->contype);
 			break;
 	}
 }
@@ -1161,8 +1182,10 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	relation = heap_openrv(inhRelation->relation, AccessShareLock);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table",
-			 inhRelation->relation->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("inherited relation \"%s\" is not a table",
+						inhRelation->relation->relname)));
 
 	/*
 	 * Check for SELECT privilages 
@@ -1293,9 +1316,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			if (cxt->pkey != NULL ||
 				(OidIsValid(cxt->relOid) &&
 				 relationHasPrimaryKey(cxt->relOid)))
-				elog(ERROR, "%s / PRIMARY KEY multiple primary keys"
-					 " for table '%s' are not allowed",
-					 cxt->stmtType, cxt->relation->relname);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("multiple primary keys for table \"%s\" are not allowed",
+								cxt->relation->relname)));
 			cxt->pkey = index;
 		}
 		index->isconstraint = true;
@@ -1363,8 +1387,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					Assert(IsA(inh, RangeVar));
 					rel = heap_openrv(inh, AccessShareLock);
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
-						elog(ERROR, "inherited table \"%s\" is not a relation",
-							 inh->relname);
+						ereport(ERROR,
+								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+								 errmsg("inherited table \"%s\" is not a relation",
+										inh->relname)));
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
 						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
@@ -1407,17 +1433,22 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			}
 
 			if (!found)
-				elog(ERROR, "%s: column \"%s\" named in key does not exist",
-					 cxt->stmtType, key);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" named in key does not exist",
+								key)));
 
 			/* Check for PRIMARY KEY(foo, foo) */
 			foreach(columns, index->indexParams)
 			{
 				iparam = (IndexElem *) lfirst(columns);
 				if (iparam->name && strcmp(key, iparam->name) == 0)
-					elog(ERROR, "%s: column \"%s\" appears twice in %s constraint",
-						 cxt->stmtType, key,
-						 index->primary ? "PRIMARY KEY" : "UNIQUE");
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_COLUMN),
+							 /* translator: second %s is PRIMARY KEY or UNIQUE */
+							 errmsg("column \"%s\" appears twice in %s constraint",
+									key,
+									index->primary ? "PRIMARY KEY" : "UNIQUE")));
 			}
 
 			/* OK, add it to the index definition */
@@ -1506,14 +1537,14 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 											 cxt->alist);
 		}
 		if (index->idxname == NULL)		/* should not happen */
-			elog(ERROR, "%s: failed to make implicit index name",
-				 cxt->stmtType);
+			elog(ERROR, "failed to make implicit index name");
 
-		elog(NOTICE, "%s / %s%s will create implicit index '%s' for table '%s'",
-			 cxt->stmtType,
-			 (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
-			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
-			 index->idxname, cxt->relation->relname);
+		ereport(NOTICE,
+				(errmsg("%s / %s%s will create implicit index \"%s\" for table \"%s\"",
+						cxt->stmtType,
+						(strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
+						(index->primary ? "PRIMARY KEY" : "UNIQUE"),
+						index->idxname, cxt->relation->relname)));
 	}
 }
 
@@ -1524,8 +1555,9 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 	if (cxt->fkconstraints == NIL)
 		return;
 
-	elog(NOTICE, "%s will create implicit trigger(s) for FOREIGN KEY check(s)",
-		 cxt->stmtType);
+	ereport(NOTICE,
+			(errmsg("%s will create implicit trigger(s) for FOREIGN KEY check(s)",
+					cxt->stmtType)));
 
 	/*
 	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE or
@@ -1614,7 +1646,9 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 			 * the predicate.  DefineIndex() will make more checks.
 			 */
 			if (expression_returns_set(ielem->expr))
-				elog(ERROR, "index expression may not return a set");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("index expression may not return a set")));
 		}
 	}
 
@@ -1694,7 +1728,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			addRTEtoQuery(pstate, oldrte, false, true);
 			break;
 		default:
-			elog(ERROR, "transformRuleStmt: unexpected event type %d",
+			elog(ERROR, "unrecognized event type: %d",
 				 (int) stmt->event);
 			break;
 	}
@@ -1704,11 +1738,15 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 											 "WHERE");
 
 	if (length(pstate->p_rtable) != 2)	/* naughty, naughty... */
-		elog(ERROR, "Rule WHERE condition may not contain references to other relations");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("rule WHERE condition may not contain references to other relations")));
 
 	/* aggregates not allowed (but subselects are okay) */
 	if (pstate->p_hasAggs)
-		elog(ERROR, "Rule WHERE condition may not contain aggregate functions");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("rule WHERE condition may not contain aggregate functions")));
 
 	/* save info about sublinks in where clause */
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -1777,7 +1815,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 */
 			if (top_subqry->commandType == CMD_UTILITY &&
 				stmt->whereClause != NULL)
-				elog(ERROR, "Rules with WHERE conditions may only have SELECT, INSERT, UPDATE, or DELETE actions");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("rules with WHERE conditions may only have SELECT, INSERT, UPDATE, or DELETE actions")));
 
 			/*
 			 * If the action is INSERT...SELECT, OLD/NEW have been pushed
@@ -1794,7 +1834,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 * such a rule immediately.
 			 */
 			if (sub_qry->setOperations != NULL && stmt->whereClause != NULL)
-				elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 
 			/*
 			 * Validate action's use of OLD/NEW, qual too
@@ -1810,23 +1852,31 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			{
 				case CMD_SELECT:
 					if (has_old)
-						elog(ERROR, "ON SELECT rule may not use OLD");
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("ON SELECT rule may not use OLD")));
 					if (has_new)
-						elog(ERROR, "ON SELECT rule may not use NEW");
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("ON SELECT rule may not use NEW")));
 					break;
 				case CMD_UPDATE:
 					/* both are OK */
 					break;
 				case CMD_INSERT:
 					if (has_old)
-						elog(ERROR, "ON INSERT rule may not use OLD");
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("ON INSERT rule may not use OLD")));
 					break;
 				case CMD_DELETE:
 					if (has_new)
-						elog(ERROR, "ON DELETE rule may not use NEW");
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("ON DELETE rule may not use NEW")));
 					break;
 				default:
-					elog(ERROR, "transformRuleStmt: unexpected event type %d",
+					elog(ERROR, "unrecognized event type: %d",
 						 (int) stmt->event);
 					break;
 			}
@@ -1856,7 +1906,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 				 * should be a can't-happen case because of prior tests.)
 				 */
 				if (sub_qry->setOperations != NULL)
-					elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 				/* hack so we can use addRTEtoQuery() */
 				sub_pstate->p_rtable = sub_qry->rtable;
 				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;
@@ -2026,7 +2078,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/* We don't support forUpdate with set ops at the moment. */
 	if (forUpdate)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 	/*
 	 * Recursively transform the components of the tree.
@@ -2143,7 +2197,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	pstate->p_rtable = sv_rtable;
 
 	if (tllen != length(qry->targetList))
-		elog(ERROR, "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns")));
 
 	qry->limitOffset = transformLimitClause(pstate, limitOffset,
 											"OFFSET");
@@ -2179,10 +2235,14 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	 * Validity-check both leaf and internal SELECTs for disallowed ops.
 	 */
 	if (stmt->into)
-		elog(ERROR, "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT")));
 	/* We don't support forUpdate with set ops at the moment. */
 	if (stmt->forUpdate)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 	/*
 	 * If an internal node of a set-op tree has ORDER BY, UPDATE, or LIMIT
@@ -2236,13 +2296,16 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		if (pstate->p_namespace)
 		{
 			if (contain_vars_of_level((Node *) selectQuery, 1))
-				elog(ERROR, "UNION/INTERSECT/EXCEPT member statement may not refer to other relations of same query level");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg("UNION/INTERSECT/EXCEPT member statement may not refer to other relations of same query level")));
 		}
 
 		/*
 		 * Make the leaf query be a subquery in the top-level rangetable.
 		 */
-		snprintf(selectName, sizeof(selectName), "*SELECT* %d", length(pstate->p_rtable) + 1);
+		snprintf(selectName, sizeof(selectName), "*SELECT* %d",
+				 length(pstate->p_rtable) + 1);
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
 											makeAlias(selectName, NIL),
@@ -2286,8 +2349,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		lcoltypes = getSetColTypes(pstate, op->larg);
 		rcoltypes = getSetColTypes(pstate, op->rarg);
 		if (length(lcoltypes) != length(rcoltypes))
-			elog(ERROR, "Each %s query must have the same number of columns",
-				 context);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("each %s query must have the same number of columns",
+							context)));
 		op->colTypes = NIL;
 		while (lcoltypes != NIL)
 		{
@@ -2344,8 +2409,7 @@ getSetColTypes(ParseState *pstate, Node *node)
 	}
 	else
 	{
-		elog(ERROR, "getSetColTypes: unexpected node %d",
-			 (int) nodeTag(node));
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 		return NIL;				/* keep compiler quiet */
 	}
 }
@@ -2355,7 +2419,9 @@ static void
 applyColumnNames(List *dst, List *src)
 {
 	if (length(src) > length(dst))
-		elog(ERROR, "CREATE TABLE AS specifies too many column names");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("CREATE TABLE AS specifies too many column names")));
 
 	while (src != NIL && dst != NIL)
 	{
@@ -2535,7 +2601,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			else if (IsA(stmt->def, FkConstraint))
 				cxt.fkconstraints = lappend(cxt.fkconstraints, stmt->def);
 			else
-				elog(ERROR, "Unexpected node type in ALTER TABLE ADD CONSTRAINT");
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(stmt->def));
 
 			transformIndexConstraints(pstate, &cxt);
 			transformFKConstraints(pstate, &cxt, true);
@@ -2584,14 +2651,16 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 	 */
 	if ((stmt->options & CURSOR_OPT_SCROLL) &&
 		(stmt->options & CURSOR_OPT_NO_SCROLL))
-		elog(ERROR, "Cannot specify both SCROLL and NO SCROLL");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("cannot specify both SCROLL and NO SCROLL")));
 
 	stmt->query = (Node *) transformStmt(pstate, stmt->query,
 										 &extras_before, &extras_after);
 
 	/* Shouldn't get any extras, since grammar only allows SelectStmt */
 	if (extras_before || extras_after)
-		elog(ERROR, "transformDeclareCursorStmt: internal error");
+		elog(ERROR, "unexpected extra stuff in cursor statement");
 
 	return result;
 }
@@ -2642,7 +2711,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	 * OptimizableStmt
 	 */
 	if (length(queries) != 1)
-		elog(ERROR, "transformPrepareStmt: internal error");
+		elog(ERROR, "unexpected extra stuff in prepared statement");
 
 	stmt->query = lfirst(queries);
 
@@ -2668,8 +2737,12 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 		int			i = 1;
 
 		if (nparams != nexpected)
-			elog(ERROR, "Wrong number of parameters, expected %d but got %d",
-				 nexpected, nparams);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("wrong number of parameters for prepared statement \"%s\"",
+							stmt->name),
+					 errdetail("Expected %d parameters but got %d.",
+							   nexpected, nparams)));
 
 		foreach(l, stmt->params)
 		{
@@ -2681,9 +2754,13 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 			/* Cannot contain subselects or aggregates */
 			if (pstate->p_hasSubLinks)
-				elog(ERROR, "Cannot use subselects in EXECUTE parameters");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot use sub-selects in EXECUTE parameters")));
 			if (pstate->p_hasAggs)
-				elog(ERROR, "Cannot use aggregates in EXECUTE parameters");
+				ereport(ERROR,
+						(errcode(ERRCODE_GROUPING_ERROR),
+						 errmsg("cannot use aggregates in EXECUTE parameters")));
 
 			given_type_id = exprType(expr);
 			expected_type_id = lfirsto(paramtypes);
@@ -2694,11 +2771,13 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 										 COERCE_IMPLICIT_CAST);
 
 			if (expr == NULL)
-				elog(ERROR, "Parameter $%d of type %s cannot be coerced into the expected type %s"
-					 "\n\tYou will need to rewrite or cast the expression",
-					 i,
-					 format_type_be(given_type_id),
-					 format_type_be(expected_type_id));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("parameter $%d of type %s cannot be coerced to the expected type %s",
+								i,
+								format_type_be(given_type_id),
+								format_type_be(expected_type_id)),
+						 errhint("You will need to rewrite or cast the expression.")));
 
 			lfirst(l) = expr;
 
@@ -2715,13 +2794,21 @@ void
 CheckSelectForUpdate(Query *qry)
 {
 	if (qry->setOperations)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
 	if (qry->distinctClause != NIL)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not allowed with DISTINCT clause")));
 	if (qry->groupClause != NIL)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not allowed with GROUP BY clause")));
 	if (qry->hasAggs)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with AGGREGATE");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not allowed with AGGREGATE")));
 }
 
 static void
@@ -2786,8 +2873,10 @@ transformForUpdate(Query *qry, List *forUpdate)
 				}
 			}
 			if (rt == NIL)
-				elog(ERROR, "FOR UPDATE: relation \"%s\" not found in FROM clause",
-					 relname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_TABLE),
+						 errmsg("relation \"%s\" in FOR UPDATE clause not found in FROM clause",
+								relname)));
 		}
 	}
 
@@ -2825,9 +2914,8 @@ relationHasPrimaryKey(Oid relationOid)
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "relationHasPrimaryKey: index %u not found",
-				 indexoid);
+		if (!HeapTupleIsValid(indexTuple)) /* should not happen */
+			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
 		ReleaseSysCache(indexTuple);
 		if (result)
@@ -2877,30 +2965,44 @@ transformConstraintAttrs(List *constraintList)
 				case CONSTR_ATTR_DEFERRABLE:
 					if (lastprimarynode == NULL ||
 						!IsA(lastprimarynode, FkConstraint))
-						elog(ERROR, "Misplaced DEFERRABLE clause");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("misplaced DEFERRABLE clause")));
 					if (saw_deferrability)
-						elog(ERROR, "Multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed")));
 					saw_deferrability = true;
 					((FkConstraint *) lastprimarynode)->deferrable = true;
 					break;
 				case CONSTR_ATTR_NOT_DEFERRABLE:
 					if (lastprimarynode == NULL ||
 						!IsA(lastprimarynode, FkConstraint))
-						elog(ERROR, "Misplaced NOT DEFERRABLE clause");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("misplaced NOT DEFERRABLE clause")));
 					if (saw_deferrability)
-						elog(ERROR, "Multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed")));
 					saw_deferrability = true;
 					((FkConstraint *) lastprimarynode)->deferrable = false;
 					if (saw_initially &&
 						((FkConstraint *) lastprimarynode)->initdeferred)
-						elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
 					break;
 				case CONSTR_ATTR_DEFERRED:
 					if (lastprimarynode == NULL ||
 						!IsA(lastprimarynode, FkConstraint))
-						elog(ERROR, "Misplaced INITIALLY DEFERRED clause");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("misplaced INITIALLY DEFERRED clause")));
 					if (saw_initially)
-						elog(ERROR, "Multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed")));
 					saw_initially = true;
 					((FkConstraint *) lastprimarynode)->initdeferred = true;
 
@@ -2911,14 +3013,20 @@ transformConstraintAttrs(List *constraintList)
 					if (!saw_deferrability)
 						((FkConstraint *) lastprimarynode)->deferrable = true;
 					else if (!((FkConstraint *) lastprimarynode)->deferrable)
-						elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
 					break;
 				case CONSTR_ATTR_IMMEDIATE:
 					if (lastprimarynode == NULL ||
 						!IsA(lastprimarynode, FkConstraint))
-						elog(ERROR, "Misplaced INITIALLY IMMEDIATE clause");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("misplaced INITIALLY IMMEDIATE clause")));
 					if (saw_initially)
-						elog(ERROR, "Multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed")));
 					saw_initially = true;
 					((FkConstraint *) lastprimarynode)->initdeferred = false;
 					break;
@@ -3025,9 +3133,11 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 					if (elp->relation->schemaname == NULL)
 						elp->relation->schemaname = cxt.schemaname;
 					else if (strcmp(cxt.schemaname, elp->relation->schemaname) != 0)
-						elog(ERROR, "New table specifies a schema (%s)"
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+								 errmsg("CREATE specifies a schema (%s)"
 							 " different from the one being created (%s)",
-							 elp->relation->schemaname, cxt.schemaname);
+							 elp->relation->schemaname, cxt.schemaname)));
 
 					/*
 					 * XXX todo: deal with constraints
@@ -3044,9 +3154,11 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 					if (elp->view->schemaname == NULL)
 						elp->view->schemaname = cxt.schemaname;
 					else if (strcmp(cxt.schemaname, elp->view->schemaname) != 0)
-						elog(ERROR, "New view specifies a schema (%s)"
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+								 errmsg("CREATE specifies a schema (%s)"
 							 " different from the one being created (%s)",
-							 elp->view->schemaname, cxt.schemaname);
+							 elp->view->schemaname, cxt.schemaname)));
 
 					/*
 					 * XXX todo: deal with references between views
@@ -3061,7 +3173,8 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 				break;
 
 			default:
-				elog(ERROR, "parser: unsupported schema node (internal error)");
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(element));
 		}
 	}
 

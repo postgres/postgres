@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.83 2003/06/15 17:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.84 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,8 @@ static void warnAutoRange(ParseState *pstate, RangeVar *relation);
  * An unqualified refname (schemaname == NULL) can match any RTE with matching
  * alias, or matching unqualified relname in the case of alias-less relation
  * RTEs.  It is possible that such a refname matches multiple RTEs in the
- * nearest nesting level that has a match; if so, we report an error via elog.
+ * nearest nesting level that has a match; if so, we report an error via
+ * ereport().
  *
  * A qualified refname (schemaname != NULL) can only match a relation RTE
  * that (a) has no alias and (b) is for the same relation identified by
@@ -168,7 +169,10 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 		if (!result)
 			result = newresult;
 		else if (newresult)
-			elog(ERROR, "Table reference \"%s\" is ambiguous", refname);
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_ALIAS),
+					 errmsg("table reference \"%s\" is ambiguous",
+							refname)));
 	}
 	else if (IsA(nsnode, List))
 	{
@@ -180,12 +184,14 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 			if (!result)
 				result = newresult;
 			else if (newresult)
-				elog(ERROR, "Table reference \"%s\" is ambiguous", refname);
+				ereport(ERROR,
+						(errcode(ERRCODE_AMBIGUOUS_ALIAS),
+						 errmsg("table reference \"%s\" is ambiguous",
+								refname)));
 		}
 	}
 	else
-		elog(ERROR, "scanNameSpaceForRefname: unexpected node type %d",
-			 nodeTag(nsnode));
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(nsnode));
 	return result;
 }
 
@@ -238,7 +244,10 @@ scanNameSpaceForRelid(ParseState *pstate, Node *nsnode, Oid relid)
 		if (!result)
 			result = newresult;
 		else if (newresult)
-			elog(ERROR, "Table reference %u is ambiguous", relid);
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_ALIAS),
+					 errmsg("table reference %u is ambiguous",
+							relid)));
 	}
 	else if (IsA(nsnode, List))
 	{
@@ -250,12 +259,14 @@ scanNameSpaceForRelid(ParseState *pstate, Node *nsnode, Oid relid)
 			if (!result)
 				result = newresult;
 			else if (newresult)
-				elog(ERROR, "Table reference %u is ambiguous", relid);
+				ereport(ERROR,
+						(errcode(ERRCODE_AMBIGUOUS_ALIAS),
+						 errmsg("table reference %u is ambiguous",
+								relid)));
 		}
 	}
 	else
-		elog(ERROR, "scanNameSpaceForRelid: unexpected node type %d",
-			 nodeTag(nsnode));
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(nsnode));
 	return result;
 }
 
@@ -318,8 +329,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 			checkNameSpaceConflicts(pstate, lfirst(l), namespace2);
 	}
 	else
-		elog(ERROR, "checkNameSpaceConflicts: unexpected node type %d",
-			 nodeTag(namespace1));
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(namespace1));
 }
 
 /*
@@ -341,8 +351,10 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 		if (rte->rtekind == RTE_RELATION && rte->alias == NULL &&
 			rte1 != NULL && rte->relid != rte1->relid)
 			return;				/* no conflict per SQL92 rule */
-		elog(ERROR, "Table name \"%s\" specified more than once",
-			 aliasname1);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_ALIAS),
+				 errmsg("table name \"%s\" specified more than once",
+						aliasname1)));
 	}
 	else if (IsA(nsnode, JoinExpr))
 	{
@@ -351,8 +363,10 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 		if (j->alias)
 		{
 			if (strcmp(j->alias->aliasname, aliasname1) == 0)
-				elog(ERROR, "Table name \"%s\" specified more than once",
-					 aliasname1);
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_ALIAS),
+						 errmsg("table name \"%s\" specified more than once",
+								aliasname1)));
 
 			/*
 			 * Tables within an aliased join are invisible from outside
@@ -372,8 +386,7 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 			scanNameSpaceForConflict(pstate, lfirst(l), rte1, aliasname1);
 	}
 	else
-		elog(ERROR, "scanNameSpaceForConflict: unexpected node type %d",
-			 nodeTag(nsnode));
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(nsnode));
 }
 
 /*
@@ -407,7 +420,7 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
 			break;
 	}
 
-	elog(ERROR, "RTERangeTablePosn: RTE not found (internal error)");
+	elog(ERROR, "RTE not found (internal error)");
 	return 0;					/* keep compiler quiet */
 }
 
@@ -459,7 +472,10 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 				get_rte_attribute_is_dropped(rte, attnum))
 				continue;
 			if (result)
-				elog(ERROR, "Column reference \"%s\" is ambiguous", colname);
+				ereport(ERROR,
+						(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+						 errmsg("column reference \"%s\" is ambiguous",
+								colname)));
 			result = (Node *) make_var(pstate, rte, attnum);
 			rte->checkForRead = true;
 		}
@@ -546,14 +562,16 @@ colnameToVar(ParseState *pstate, char *colname)
 				newresult = scanRTEForColumn(orig_pstate, rte, colname);
 			}
 			else
-				elog(ERROR, "colnameToVar: unexpected node type %d",
-					 nodeTag(nsnode));
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(nsnode));
 
 			if (newresult)
 			{
 				if (result)
-					elog(ERROR, "Column reference \"%s\" is ambiguous",
-						 colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+							 errmsg("column reference \"%s\" is ambiguous",
+									colname)));
 				result = newresult;
 			}
 		}
@@ -645,8 +663,10 @@ addRangeTableEntry(ParseState *pstate,
 	 */
 	maxattrs = RelationGetNumberOfAttributes(rel);
 	if (maxattrs < numaliases)
-		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
-			 RelationGetRelationName(rel), maxattrs, numaliases);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("table \"%s\" has %d columns available but %d columns specified",
+						RelationGetRelationName(rel), maxattrs, numaliases)));
 
 	/* fill in any unspecified alias columns using actual column names */
 	for (varattno = numaliases; varattno < maxattrs; varattno++)
@@ -738,8 +758,10 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	 */
 	maxattrs = RelationGetNumberOfAttributes(rel);
 	if (maxattrs < numaliases)
-		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
-			 RelationGetRelationName(rel), maxattrs, numaliases);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("table \"%s\" has %d columns available but %d columns specified",
+						RelationGetRelationName(rel), maxattrs, numaliases)));
 
 	/* fill in any unspecified alias columns using actual column names */
 	for (varattno = numaliases; varattno < maxattrs; varattno++)
@@ -831,8 +853,10 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 		}
 	}
 	if (varattno < numaliases)
-		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
-			 refname, varattno, numaliases);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("table \"%s\" has %d columns available but %d columns specified",
+						refname, varattno, numaliases)));
 
 	rte->eref = eref;
 
@@ -906,7 +930,9 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 * pseudo-type
 		 */
 		if (funcrettype != RECORDOID)
-			elog(ERROR, "A column definition list is only allowed for functions returning RECORD");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("a column definition list is only allowed for functions returning RECORD")));
 	}
 	else
 	{
@@ -915,7 +941,9 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 * RECORD pseudo-type
 		 */
 		if (funcrettype == RECORDOID)
-			elog(ERROR, "A column definition list is required for functions returning RECORD");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("a column definition list is required for functions returning RECORD")));
 	}
 
 	functyptype = get_typtype(funcrettype);
@@ -929,9 +957,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		Relation	rel;
 		int			maxattrs;
 
-		if (!OidIsValid(funcrelid))
-			elog(ERROR, "Invalid typrelid for complex type %u",
-				 funcrettype);
+		if (!OidIsValid(funcrelid))	/* shouldn't happen if typtype is 'c' */
+			elog(ERROR, "invalid typrelid for complex type %u", funcrettype);
 
 		/*
 		 * Get the rel's relcache entry.  This access ensures that we have
@@ -945,8 +972,11 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 */
 		maxattrs = RelationGetNumberOfAttributes(rel);
 		if (maxattrs < numaliases)
-			elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
-				 RelationGetRelationName(rel), maxattrs, numaliases);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("table \"%s\" has %d columns available but %d columns specified",
+							RelationGetRelationName(rel),
+							maxattrs, numaliases)));
 
 		/* fill in alias columns using actual column names */
 		for (varattno = numaliases; varattno < maxattrs; varattno++)
@@ -971,8 +1001,10 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 * column named for the function.
 		 */
 		if (numaliases > 1)
-			elog(ERROR, "Too many column aliases specified for function %s",
-				 funcname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("too many column aliases specified for function %s",
+							funcname)));
 		if (numaliases == 0)
 			eref->colnames = makeList1(makeString(eref->aliasname));
 	}
@@ -992,8 +1024,10 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		}
 	}
 	else
-		elog(ERROR, "function %s() in FROM has unsupported return type",
-			 funcname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function \"%s\" in FROM has unsupported return type",
+						funcname)));
 
 	/*----------
 	 * Flags:
@@ -1284,8 +1318,8 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					int			maxattrs;
 					int			numaliases;
 
-					if (!OidIsValid(funcrelid))
-						elog(ERROR, "Invalid typrelid for complex type %u",
+					if (!OidIsValid(funcrelid))	/* shouldn't happen */
+						elog(ERROR, "invalid typrelid for complex type %u",
 							 funcrettype);
 
 					rel = relation_open(funcrelid, AccessShareLock);
@@ -1382,7 +1416,9 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					}
 				}
 				else
-					elog(ERROR, "function in FROM has unsupported return type");
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("function in FROM has unsupported return type")));
 			}
 			break;
 		case RTE_JOIN:
@@ -1424,8 +1460,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 			}
 			break;
 		default:
-			elog(ERROR, "expandRTE: unsupported RTE kind %d",
-				 (int) rte->rtekind);
+			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 	}
 }
 
@@ -1502,7 +1537,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	{
 		attname = get_attname(rte->relid, attnum);
 		if (attname == NULL)
-			elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 				 attnum, rte->relid);
 		return attname;
 	}
@@ -1514,7 +1549,8 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	if (attnum > 0 && attnum <= length(rte->eref->colnames))
 		return strVal(nth(attnum - 1, rte->eref->colnames));
 
-	elog(ERROR, "Invalid attnum %d for rangetable entry %s",
+	/* else caller gave us a bogus attnum */
+	elog(ERROR, "invalid attnum %d for rangetable entry %s",
 		 attnum, rte->eref->aliasname);
 	return NULL;				/* keep compiler quiet */
 }
@@ -1539,10 +1575,9 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 									ObjectIdGetDatum(rte->relid),
 									Int16GetDatum(attnum),
 									0, 0);
-				/* this shouldn't happen... */
-				if (!HeapTupleIsValid(tp))
-					elog(ERROR, "Relation \"%s\" does not have attribute %d",
-						 get_rel_name(rte->relid), attnum);
+				if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+						 attnum, rte->relid);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 
 				/*
@@ -1550,8 +1585,11 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				 * in scanRTEForColumn.
 				 */
 				if (att_tup->attisdropped)
-					elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-					get_rel_name(rte->relid), NameStr(att_tup->attname));
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("relation \"%s\" has no column \"%s\"",
+									get_rel_name(rte->relid),
+									NameStr(att_tup->attname))));
 				*vartype = att_tup->atttypid;
 				*vartypmod = att_tup->atttypmod;
 				ReleaseSysCache(tp);
@@ -1573,7 +1611,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					return;
 				}
 				/* falling off end of list shouldn't happen... */
-				elog(ERROR, "Subquery %s does not have attribute %d",
+				elog(ERROR, "subquery %s does not have attribute %d",
 					 rte->eref->aliasname, attnum);
 			}
 			break;
@@ -1594,18 +1632,17 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					HeapTuple	tp;
 					Form_pg_attribute att_tup;
 
-					if (!OidIsValid(funcrelid))
-						elog(ERROR, "Invalid typrelid for complex type %u",
+					if (!OidIsValid(funcrelid))	/* shouldn't happen */
+						elog(ERROR, "invalid typrelid for complex type %u",
 							 funcrettype);
 
 					tp = SearchSysCache(ATTNUM,
 										ObjectIdGetDatum(funcrelid),
 										Int16GetDatum(attnum),
 										0, 0);
-					/* this shouldn't happen... */
-					if (!HeapTupleIsValid(tp))
-						elog(ERROR, "Relation \"%s\" does not have attribute %d",
-							 get_rel_name(funcrelid), attnum);
+					if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+						elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+							 attnum, funcrelid);
 					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 
 					/*
@@ -1613,9 +1650,11 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					 * notes in scanRTEForColumn.
 					 */
 					if (att_tup->attisdropped)
-						elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-							 get_rel_name(funcrelid),
-							 NameStr(att_tup->attname));
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("relation \"%s\" has no column \"%s\"",
+										get_rel_name(funcrelid),
+										NameStr(att_tup->attname))));
 					*vartype = att_tup->atttypid;
 					*vartypmod = att_tup->atttypmod;
 					ReleaseSysCache(tp);
@@ -1636,7 +1675,9 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					*vartypmod = -1;
 				}
 				else
-					elog(ERROR, "function in FROM has unsupported return type");
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("function in FROM has unsupported return type")));
 			}
 			break;
 		case RTE_JOIN:
@@ -1654,8 +1695,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 			}
 			break;
 		default:
-			elog(ERROR, "get_rte_attribute_type: unsupported RTE kind %d",
-				 (int) rte->rtekind);
+			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 	}
 }
 
@@ -1680,10 +1720,9 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 									ObjectIdGetDatum(rte->relid),
 									Int16GetDatum(attnum),
 									0, 0);
-				/* this shouldn't happen... */
-				if (!HeapTupleIsValid(tp))
-					elog(ERROR, "Relation \"%s\" does not have attribute %d",
-						 get_rel_name(rte->relid), attnum);
+				if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+						 attnum, rte->relid);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 				result = att_tup->attisdropped;
 				ReleaseSysCache(tp);
@@ -1713,10 +1752,9 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 										ObjectIdGetDatum(funcrelid),
 										Int16GetDatum(attnum),
 										0, 0);
-					/* this shouldn't happen... */
-					if (!HeapTupleIsValid(tp))
-						elog(ERROR, "Relation %s does not have attribute %d",
-							 get_rel_name(funcrelid), attnum);
+					if (!HeapTupleIsValid(tp)) /* shouldn't happen */
+						elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+							 attnum, funcrelid);
 					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 					result = att_tup->attisdropped;
 					ReleaseSysCache(tp);
@@ -1731,8 +1769,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 			}
 			break;
 		default:
-			elog(ERROR, "get_rte_attribute_is_dropped: unsupported RTE kind %d",
-				 (int) rte->rtekind);
+			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 			result = false;		/* keep compiler quiet */
 	}
 
@@ -1769,9 +1806,11 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 	}
 
 	/* on failure */
-	elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-		 RelationGetRelationName(rd), attname);
-	return InvalidAttrNumber;	/* lint */
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_COLUMN),
+			 errmsg("relation \"%s\" has no column \"%s\"",
+					RelationGetRelationName(rd), attname)));
+	return InvalidAttrNumber;	/* keep compiler quiet */
 }
 
 /* specialAttNum()
@@ -1814,7 +1853,7 @@ attnumAttName(Relation rd, int attid)
 		return &sysatt->attname;
 	}
 	if (attid > rd->rd_att->natts)
-		elog(ERROR, "attnumAttName: invalid attribute number %d", attid);
+		elog(ERROR, "invalid attribute number %d", attid);
 	return &rd->rd_att->attrs[attid - 1]->attname;
 }
 
@@ -1836,14 +1875,16 @@ attnumTypeId(Relation rd, int attid)
 		return sysatt->atttypid;
 	}
 	if (attid > rd->rd_att->natts)
-		elog(ERROR, "attnumTypeId: invalid attribute number %d", attid);
+		elog(ERROR, "invalid attribute number %d", attid);
 	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
 
 /*
- * Generate a warning about an implicit RTE, if appropriate.
+ * Generate a warning or error about an implicit RTE, if appropriate.
  *
- * Our current theory on this is that we should allow "SELECT foo.*"
+ * If ADD_MISSING_FROM is not enabled, raise an error.
+ *
+ * Our current theory on warnings is that we should allow "SELECT foo.*"
  * but warn about a mixture of explicit and implicit RTEs.
  */
 static void
@@ -1851,6 +1892,20 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 {
 	bool		foundInFromCl = false;
 	List	   *temp;
+
+	if (!add_missing_from)
+	{
+		if (pstate->parentParseState != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
+							relation->relname)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("missing FROM-clause entry for table \"%s\"",
+							relation->relname)));
+	}
 
 	foreach(temp, pstate->p_rtable)
 	{
@@ -1864,13 +1919,15 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 	}
 	if (foundInFromCl)
 	{
-		if (add_missing_from)
-			elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
-				 pstate->parentParseState != NULL ? " in subquery" : "",
-				 relation->relname);
+		if (pstate->parentParseState != NULL)
+			ereport(NOTICE,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("adding missing FROM-clause entry in subquery for table \"%s\"",
+							relation->relname)));
 		else
-			elog(ERROR, "Missing FROM-clause entry%s for table \"%s\"",
-				 pstate->parentParseState != NULL ? " in subquery" : "",
-				 relation->relname);
+			ereport(NOTICE,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("adding missing FROM-clause entry for table \"%s\"",
+							relation->relname)));
 	}
 }

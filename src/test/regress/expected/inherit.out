@@ -536,7 +536,7 @@ SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
 
 -- Confirm PRIMARY KEY adds NOT NULL constraint to child table
 CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'z_pkey' for table 'z'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "z_pkey" for table "z"
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
 ERROR:  ExecInsert: Fail to add null value in not null attribute aa
 -- Check UPDATE with inherited target and an inherited source table

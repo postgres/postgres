@@ -174,7 +174,7 @@ create table defaulttest
             , col7 ddef4 DEFAULT 8000
             , col8 ddef5
             );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'defaulttest_pkey' for table 'defaulttest'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "defaulttest_pkey" for table "defaulttest"
 insert into defaulttest default values;
 insert into defaulttest default values;
 insert into defaulttest default values;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.104 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.105 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static Node *coerce_type_typmod(Node *node,
  * cases (eg, when the conversion is expected to succeed).
  *
  * Returns the possibly-transformed expression tree, or NULL if the type
- * conversion is not possible.  (We do this, rather than elog'ing directly,
+ * conversion is not possible.  (We do this, rather than ereport'ing directly,
  * so that callers can generate custom error messages indicating context.)
  *
  * pstate - parse state (can be NULL, see coerce_type)
@@ -248,7 +248,7 @@ coerce_type(ParseState *pstate, Node *node,
 					(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
 					 errmsg("inconsistent types deduced for parameter $%d",
 							paramno),
-					 errdetail("Could be either %s or %s.",
+					 errdetail("%s versus %s",
 							   format_type_be(toppstate->p_paramtypes[paramno-1]),
 							   format_type_be(targetTypeId))));
 		}
@@ -330,7 +330,7 @@ coerce_type(ParseState *pstate, Node *node,
 										cformat);
 	}
 	/* If we get here, caller blew it */
-	elog(ERROR, "coerce_type: no conversion function from %s to %s",
+	elog(ERROR, "failed to find conversion function from %s to %s",
 		 format_type_be(inputTypeId), format_type_be(targetTypeId));
 	return NULL;				/* keep compiler quiet */
 }
@@ -566,19 +566,19 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 									 COERCION_ASSIGNMENT,
 									 COERCE_IMPLICIT_CAST);
 		if (node == NULL)
-		{
-			/* translator: first %s is name of a SQL construct, eg WHERE */
-			elog(ERROR, "argument of %s must be type boolean, not type %s",
-				 constructName, format_type_be(inputTypeId));
-		}
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 /* translator: first %s is name of a SQL construct, eg WHERE */
+					 errmsg("argument of %s must be type boolean, not type %s",
+							constructName, format_type_be(inputTypeId))));
 	}
 
 	if (expression_returns_set(node))
-	{
-		/* translator: %s is name of a SQL construct, eg WHERE */
-		elog(ERROR, "argument of %s must not be a set function",
-			 constructName);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 /* translator: %s is name of a SQL construct, eg WHERE */
+				 errmsg("argument of %s must not return a set",
+						constructName)));
 
 	return node;
 }
@@ -605,19 +605,19 @@ coerce_to_integer(ParseState *pstate, Node *node,
 									 COERCION_ASSIGNMENT,
 									 COERCE_IMPLICIT_CAST);
 		if (node == NULL)
-		{
-			/* translator: first %s is name of a SQL construct, eg LIMIT */
-			elog(ERROR, "argument of %s must be type integer, not type %s",
-				 constructName, format_type_be(inputTypeId));
-		}
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 /* translator: first %s is name of a SQL construct, eg LIMIT */
+					 errmsg("argument of %s must be type integer, not type %s",
+							constructName, format_type_be(inputTypeId))));
 	}
 
 	if (expression_returns_set(node))
-	{
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-		elog(ERROR, "argument of %s must not be a set function",
-			 constructName);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 /* translator: %s is name of a SQL construct, eg LIMIT */
+				 errmsg("argument of %s must not return a set",
+						constructName)));
 
 	return node;
 }
@@ -662,8 +662,13 @@ select_common_type(List *typeids, const char *context)
 				 * both types in different categories? then not much
 				 * hope...
 				 */
-				elog(ERROR, "%s types '%s' and '%s' not matched",
-				  context, format_type_be(ptype), format_type_be(ntype));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 /* translator: first %s is name of a SQL construct, eg CASE */
+						 errmsg("%s types %s and %s cannot be matched",
+								context,
+								format_type_be(ptype),
+								format_type_be(ntype))));
 			}
 			else if (!IsPreferredType(pcategory, ptype) &&
 					 can_coerce_type(1, &ptype, &ntype, COERCION_IMPLICIT) &&
@@ -718,8 +723,13 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 		node = coerce_type(pstate, node, inputTypeId, targetTypeId,
 						   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else
-		elog(ERROR, "%s unable to convert to type %s",
-			 context, format_type_be(targetTypeId));
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 /* translator: first %s is name of a SQL construct, eg CASE */
+				 errmsg("%s unable to convert type %s to %s",
+						context,
+						format_type_be(inputTypeId),
+						format_type_be(targetTypeId))));
 	return node;
 }
 
@@ -740,7 +750,7 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  * If we have UNKNOWN input (ie, an untyped literal) for any ANYELEMENT
  * or ANYARRAY argument, assume it is okay.
  *
- * We do not elog here, but just return FALSE if a rule is violated.
+ * We do not ereport here, but just return FALSE if a rule is violated.
  */
 bool
 check_generic_type_consistency(Oid *actual_arg_types,
@@ -870,9 +880,12 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				continue;
 			}
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
-				elog(ERROR, "Arguments declared ANYELEMENT are not all alike: %s vs %s",
-					 format_type_be(elem_typeid),
-					 format_type_be(actual_type));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("arguments declared ANYELEMENT are not all alike"),
+						 errdetail("%s versus %s",
+								   format_type_be(elem_typeid),
+								   format_type_be(actual_type))));
 			elem_typeid = actual_type;
 		}
 		else if (declared_arg_types[j] == ANYARRAYOID)
@@ -884,9 +897,12 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				continue;
 			}
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
-				elog(ERROR, "Arguments declared ANYARRAY are not all alike: %s vs %s",
-					 format_type_be(array_typeid),
-					 format_type_be(actual_type));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("arguments declared ANYARRAY are not all alike"),
+						 errdetail("%s versus %s",
+								   format_type_be(array_typeid),
+								   format_type_be(actual_type))));
 			array_typeid = actual_type;
 		}
 	}
@@ -903,8 +919,10 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	{
 		array_typelem = get_element_type(array_typeid);
 		if (!OidIsValid(array_typelem))
-			elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
-				 format_type_be(array_typeid));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("argument declared ANYARRAY is not an array but %s",
+							format_type_be(array_typeid))));
 
 		if (!OidIsValid(elem_typeid))
 		{
@@ -914,16 +932,20 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		else if (array_typelem != elem_typeid)
 		{
 			/* otherwise, they better match */
-			elog(ERROR, "Argument declared ANYARRAY is not consistent with "
-				 "argument declared ANYELEMENT: %s vs %s",
-				 format_type_be(array_typeid),
-				 format_type_be(elem_typeid));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("argument declared ANYARRAY is not consistent with argument declared ANYELEMENT"),
+					 errdetail("%s versus %s",
+							   format_type_be(array_typeid),
+							   format_type_be(elem_typeid))));
 		}
 	}
 	else if (!OidIsValid(elem_typeid))
 	{
 		/* Only way to get here is if all the generic args are UNKNOWN */
-		elog(ERROR, "Cannot determine ANYARRAY/ANYELEMENT type because input is UNKNOWN");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot determine ANYARRAY/ANYELEMENT type because input is UNKNOWN")));
 	}
 
 	/*
@@ -948,8 +970,10 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				{
 					array_typeid = get_array_type(elem_typeid);
 					if (!OidIsValid(array_typeid))
-						elog(ERROR, "Cannot find array type for datatype %s",
-							 format_type_be(elem_typeid));
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_OBJECT),
+								 errmsg("cannot find array type for datatype %s",
+										format_type_be(elem_typeid))));
 				}
 				declared_arg_types[j] = array_typeid;
 			}
@@ -963,8 +987,10 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		{
 			array_typeid = get_array_type(elem_typeid);
 			if (!OidIsValid(array_typeid))
-				elog(ERROR, "Cannot find array type for datatype %s",
-					 format_type_be(elem_typeid));
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("cannot find array type for datatype %s",
+								format_type_be(elem_typeid))));
 		}
 		return array_typeid;
 	}
@@ -1003,8 +1029,10 @@ resolve_generic_type(Oid declared_type,
 			Oid		array_typelem = get_element_type(context_actual_type);
 
 			if (!OidIsValid(array_typelem))
-				elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
-					 format_type_be(context_actual_type));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared ANYARRAY is not an array but %s",
+								format_type_be(context_actual_type))));
 			return context_actual_type;
 		}
 		else if (context_declared_type == ANYELEMENTOID)
@@ -1013,8 +1041,10 @@ resolve_generic_type(Oid declared_type,
 			Oid		array_typeid = get_array_type(context_actual_type);
 
 			if (!OidIsValid(array_typeid))
-				elog(ERROR, "Cannot find array type for datatype %s",
-					 format_type_be(context_actual_type));
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("cannot find array type for datatype %s",
+								format_type_be(context_actual_type))));
 			return array_typeid;
 		}
 	}
@@ -1026,8 +1056,10 @@ resolve_generic_type(Oid declared_type,
 			Oid		array_typelem = get_element_type(context_actual_type);
 
 			if (!OidIsValid(array_typelem))
-				elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
-					 format_type_be(context_actual_type));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared ANYARRAY is not an array but %s",
+								format_type_be(context_actual_type))));
 			return array_typelem;
 		}
 		else if (context_declared_type == ANYELEMENTOID)
@@ -1043,7 +1075,7 @@ resolve_generic_type(Oid declared_type,
 	}
 	/* If we get here, declared_type is polymorphic and context isn't */
 	/* NB: this is a calling-code logic error, not a user error */
-	elog(ERROR, "Cannot determine ANYARRAY/ANYELEMENT type because context isn't polymorphic");
+	elog(ERROR, "cannot determine ANYARRAY/ANYELEMENT type because context isn't polymorphic");
 	return InvalidOid;			/* keep compiler quiet */
 }
 
@@ -1234,7 +1266,7 @@ IsPreferredType(CATEGORY category, Oid type)
 			break;
 
 		default:
-			elog(ERROR, "IsPreferredType: unknown category");
+			elog(ERROR, "unrecognized type category: %d", (int) category);
 			preftype = UNKNOWNOID;
 			break;
 	}
@@ -1365,8 +1397,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 				castcontext = COERCION_EXPLICIT;
 				break;
 			default:
-				elog(ERROR, "find_coercion_pathway: bogus castcontext %c",
-					 castForm->castcontext);
+				elog(ERROR, "unrecognized castcontext: %d",
+					 (int) castForm->castcontext);
 				castcontext = 0;	/* keep compiler quiet */
 				break;
 		}

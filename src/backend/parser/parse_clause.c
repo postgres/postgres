@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.117 2003/07/03 19:07:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.118 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ interpretInhOption(InhOption inhOpt)
 		case INH_DEFAULT:
 			return SQL_inheritance;
 	}
-	elog(ERROR, "Bogus InhOption value");
+	elog(ERROR, "bogus InhOption value");
 	return false;				/* keep compiler quiet */
 }
 
@@ -334,8 +334,10 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	{
 		if (!intMember(varno, containedRels))
 		{
-			elog(ERROR, "JOIN/ON clause refers to \"%s\", which is not part of JOIN",
-				 rt_fetch(varno, pstate->p_rtable)->eref->aliasname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
+							rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
 		}
 	}
 	bms_free(clause_varnos);
@@ -392,7 +394,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * an unlabeled subselect.
 	 */
 	if (r->alias == NULL)
-		elog(ERROR, "sub-select in FROM must have an alias");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("sub-select in FROM must have an alias")));
 
 	/*
 	 * Analyze and transform the subquery.
@@ -400,20 +404,22 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	parsetrees = parse_sub_analyze(r->subquery, pstate);
 
 	/*
-	 * Check that we got something reasonable.	Some of these conditions
+	 * Check that we got something reasonable.	Most of these conditions
 	 * are probably impossible given restrictions of the grammar, but
 	 * check 'em anyway.
 	 */
 	if (length(parsetrees) != 1)
-		elog(ERROR, "Unexpected parse analysis result for subselect in FROM");
+		elog(ERROR, "unexpected parse analysis result for sub-select in FROM");
 	query = (Query *) lfirst(parsetrees);
 	if (query == NULL || !IsA(query, Query))
-		elog(ERROR, "Unexpected parse analysis result for subselect in FROM");
+		elog(ERROR, "unexpected parse analysis result for sub-select in FROM");
 
 	if (query->commandType != CMD_SELECT)
-		elog(ERROR, "Expected SELECT query from subselect in FROM");
+		elog(ERROR, "expected SELECT query from sub-select in FROM");
 	if (query->resultRelation != 0 || query->into != NULL)
-		elog(ERROR, "Subselect in FROM may not have SELECT INTO");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("sub-select in FROM may not have SELECT INTO")));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -431,7 +437,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	if (pstate->p_namespace)
 	{
 		if (contain_vars_of_level((Node *) query, 1))
-			elog(ERROR, "Subselect in FROM may not refer to other relations of same query level");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("sub-select in FROM may not refer to other relations of same query level")));
 	}
 
 	/*
@@ -484,7 +492,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	if (pstate->p_namespace)
 	{
 		if (contain_vars_of_level(funcexpr, 0))
-			elog(ERROR, "FROM function expression may not refer to other relations of same query level");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("function expression in FROM may not refer to other relations of same query level")));
 	}
 
 	/*
@@ -494,7 +504,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	if (pstate->p_hasAggs)
 	{
 		if (checkExprHasAggs(funcexpr))
-			elog(ERROR, "cannot use aggregate function in FROM function expression");
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("cannot use aggregate function in function expression in FROM")));
 	}
 
 	/*
@@ -617,7 +629,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			leftrti = ((JoinExpr *) j->larg)->rtindex;
 		else
 		{
-			elog(ERROR, "transformFromClauseItem: unexpected subtree type");
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(j->larg));
 			leftrti = 0;		/* keep compiler quiet */
 		}
 		rte = rt_fetch(leftrti, pstate->p_rtable);
@@ -629,7 +641,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			rightrti = ((JoinExpr *) j->rarg)->rtindex;
 		else
 		{
-			elog(ERROR, "transformFromClauseItem: unexpected subtree type");
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(j->rarg));
 			rightrti = 0;		/* keep compiler quiet */
 		}
 		rte = rt_fetch(rightrti, pstate->p_rtable);
@@ -712,7 +724,10 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 					char	   *res_colname = strVal(lfirst(col));
 
 					if (strcmp(res_colname, u_colname) == 0)
-						elog(ERROR, "USING column name \"%s\" appears more than once", u_colname);
+						ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_COLUMN),
+								 errmsg("USING column name \"%s\" appears more than once",
+										u_colname)));
 				}
 
 				/* Find it in left input */
@@ -724,14 +739,19 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 					if (strcmp(l_colname, u_colname) == 0)
 					{
 						if (l_index >= 0)
-							elog(ERROR, "Common column name \"%s\" appears more than once in left table", u_colname);
+							ereport(ERROR,
+									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+									 errmsg("common column name \"%s\" appears more than once in left table",
+											u_colname)));
 						l_index = ndx;
 					}
 					ndx++;
 				}
 				if (l_index < 0)
-					elog(ERROR, "JOIN/USING column \"%s\" not found in left table",
-						 u_colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("JOIN/USING column \"%s\" not found in left table",
+									u_colname)));
 
 				/* Find it in right input */
 				ndx = 0;
@@ -742,14 +762,19 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 					if (strcmp(r_colname, u_colname) == 0)
 					{
 						if (r_index >= 0)
-							elog(ERROR, "Common column name \"%s\" appears more than once in right table", u_colname);
+							ereport(ERROR,
+									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+									 errmsg("common column name \"%s\" appears more than once in right table",
+											u_colname)));
 						r_index = ndx;
 					}
 					ndx++;
 				}
 				if (r_index < 0)
-					elog(ERROR, "JOIN/USING column \"%s\" not found in right table",
-						 u_colname);
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("JOIN/USING column \"%s\" not found in right table",
+									u_colname)));
 
 				l_colvar = nth(l_index, l_colvars);
 				l_usingvars = lappend(l_usingvars, l_colvar);
@@ -798,8 +823,10 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			if (j->alias->colnames != NIL)
 			{
 				if (length(j->alias->colnames) > length(res_colnames))
-					elog(ERROR, "Column alias list for \"%s\" has too many entries",
-						 j->alias->aliasname);
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("column alias list for \"%s\" has too many entries",
+									j->alias->aliasname)));
 			}
 		}
 
@@ -825,10 +852,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		return (Node *) j;
 	}
 	else
-		elog(ERROR, "transformFromClauseItem: unexpected node (internal error)"
-			 "\n\t%s", nodeToString(n));
-	return NULL;				/* can't get here, just keep compiler
-								 * quiet */
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
+	return NULL;				/* can't get here, keep compiler quiet */
 }
 
 /*
@@ -930,8 +955,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				break;
 			}
 		default:
-			elog(ERROR, "buildMergedJoinVar: unexpected jointype %d",
-				 (int) jointype);
+			elog(ERROR, "unrecognized join type: %d", (int) jointype);
 			res_node = NULL;	/* keep compiler quiet */
 			break;
 	}
@@ -991,21 +1015,27 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	 */
 	if (contain_vars_of_level(qual, 0))
 	{
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-		elog(ERROR, "argument of %s must not contain variables",
-			 constructName);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 /* translator: %s is name of a SQL construct, eg LIMIT */
+				 errmsg("argument of %s must not contain variables",
+						constructName)));
 	}
 	if (checkExprHasAggs(qual))
 	{
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-		elog(ERROR, "argument of %s must not contain aggregates",
-			 constructName);
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 /* translator: %s is name of a SQL construct, eg LIMIT */
+				 errmsg("argument of %s must not contain aggregates",
+						constructName)));
 	}
 	if (contain_subplans(qual))
 	{
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-		elog(ERROR, "argument of %s must not contain subselects",
-			 constructName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 /* translator: %s is name of a SQL construct, eg LIMIT */
+				 errmsg("argument of %s must not contain sub-selects",
+						constructName)));
 	}
 
 	return qual;
@@ -1083,7 +1113,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 			 * is a matching column.  If so, fall through to let
 			 * transformExpr() do the rest.  NOTE: if name could refer
 			 * ambiguously to more than one column name exposed by FROM,
-			 * colnameToVar will elog(ERROR).  That's just what we want
+			 * colnameToVar will ereport(ERROR).  That's just what we want
 			 * here.
 			 */
 			if (colnameToVar(pstate, name) != NULL)
@@ -1103,8 +1133,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 					if (target_result != NULL)
 					{
 						if (!equal(target_result->expr, tle->expr))
-							elog(ERROR, "%s '%s' is ambiguous",
-								 clauseText[clause], name);
+							ereport(ERROR,
+									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+									 /* translator: first %s is name of a SQL construct, eg ORDER BY */
+									 errmsg("%s \"%s\" is ambiguous",
+											clauseText[clause], name)));
 					}
 					else
 						target_result = tle;
@@ -1122,7 +1155,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 		int			target_pos;
 
 		if (!IsA(val, Integer))
-			elog(ERROR, "Non-integer constant in %s", clauseText[clause]);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 /* translator: %s is name of a SQL construct, eg ORDER BY */
+					 errmsg("non-integer constant in %s",
+							clauseText[clause])));
 		target_pos = intVal(val);
 		foreach(tl, tlist)
 		{
@@ -1135,8 +1172,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 					return tle; /* return the unique match */
 			}
 		}
-		elog(ERROR, "%s position %d is not in target list",
-			 clauseText[clause], target_pos);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 /* translator: %s is name of a SQL construct, eg ORDER BY */
+				 errmsg("%s position %d is not in target list",
+						clauseText[clause], target_pos)));
 	}
 
 	/*
@@ -1316,7 +1356,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			TargetEntry *tle = get_sortgroupclause_tle(scl, targetlist);
 
 			if (tle->resdom->resjunk)
-				elog(ERROR, "For SELECT DISTINCT, ORDER BY expressions must appear in target list");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in target list")));
 			else
 				result = lappend(result, copyObject(scl));
 		}
@@ -1354,7 +1396,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 				SortClause *scl = (SortClause *) lfirst(nextsortlist);
 
 				if (tle->resdom->ressortgroupref != scl->tleSortGroupRef)
-					elog(ERROR, "SELECT DISTINCT ON expressions must match initial ORDER BY expressions");
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
 				result = lappend(result, copyObject(scl));
 				nextsortlist = lnext(nextsortlist);
 			}
@@ -1378,8 +1422,8 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 						break;
 					}
 				}
-				if (slitem == NIL)
-					elog(ERROR, "transformDistinctClause: failed to add DISTINCT ON clause to target list");
+				if (slitem == NIL) /* should not happen */
+					elog(ERROR, "failed to add DISTINCT ON clause to target list");
 			}
 		}
 	}

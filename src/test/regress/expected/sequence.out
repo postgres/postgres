@@ -3,7 +3,7 @@
 ---
  
 CREATE TABLE serialTest (f1 text, f2 serial);
-NOTICE:  CREATE TABLE will create implicit sequence 'serialtest_f2_seq' for SERIAL column 'serialtest.f2'
+NOTICE:  CREATE TABLE will create implicit sequence "serialtest_f2_seq" for SERIAL column "serialtest.f2"
  
 INSERT INTO serialTest VALUES ('foo');
 INSERT INTO serialTest VALUES ('bar');

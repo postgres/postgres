@@ -69,17 +69,19 @@ EXECUTE q3('AAAAxx', 5::smallint, 10.5::float, false, 500::oid, 4::bigint);
 
 -- too few params
 EXECUTE q3('bool');
-ERROR:  Wrong number of parameters, expected 6 but got 1
+ERROR:  wrong number of parameters for prepared statement "q3"
+DETAIL:  Expected 6 parameters but got 1.
 -- too many params
 EXECUTE q3('bytea', 5::smallint, 10.5::float, false, 500::oid, 4::bigint, true);
-ERROR:  Wrong number of parameters, expected 6 but got 7
+ERROR:  wrong number of parameters for prepared statement "q3"
+DETAIL:  Expected 6 parameters but got 7.
 -- wrong param types
 EXECUTE q3(5::smallint, 10.5::float, false, 500::oid, 4::bigint, 'bytea');
-ERROR:  Parameter $3 of type boolean cannot be coerced into the expected type double precision
-	You will need to rewrite or cast the expression
+ERROR:  parameter $3 of type boolean cannot be coerced to the expected type double precision
+HINT:  You will need to rewrite or cast the expression.
 -- invalid type
 PREPARE q4(nonexistenttype) AS SELECT $1;
-ERROR:  Type "nonexistenttype" does not exist
+ERROR:  type "nonexistenttype" does not exist
 -- create table as execute
 PREPARE q5(int, text) AS
 	SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2;

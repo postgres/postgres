@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.154 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.155 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				case RTE_RELATION:
 					toid = get_rel_type_id(rte->relid);
 					if (!OidIsValid(toid))
-						elog(ERROR, "cannot find type OID for relation %u",
+						elog(ERROR, "could not find type OID for relation %u",
 							 rte->relid);
 					/* replace RangeVar in the arg list */
 					lfirst(i) = makeVar(vnum,

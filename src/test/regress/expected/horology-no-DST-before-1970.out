@@ -806,9 +806,9 @@ SELECT interval '04:30' - time '01:02' AS "20:32:00";
 (1 row)
 
 SELECT CAST(time with time zone '01:02-08' AS interval) AS "+00:01";
-ERROR:  Cannot cast type time with time zone to interval
+ERROR:  cannot cast type time with time zone to interval
 SELECT CAST(interval '02:03' AS time with time zone) AS "02:03:00-08";
-ERROR:  Cannot cast type interval to time with time zone
+ERROR:  cannot cast type interval to time with time zone
 SELECT time with time zone '01:30-08' - interval '02:01' AS "23:29:00-08";
  23:29:00-08 
 -------------

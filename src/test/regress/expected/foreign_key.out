@@ -6,7 +6,7 @@
 -- First test, check and cascade
 --
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE, ftest2 int );
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- Insert test data into PKTABLE
@@ -61,7 +61,7 @@ DROP TABLE PKTABLE;
 -- check set NULL and table constraint on multiple columns
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2) 
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET NULL ON UPDATE SET NULL);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -144,7 +144,7 @@ DROP TABLE FKTABLE;
 -- check set default and table constraint on multiple columns
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT -1, ftest2 int DEFAULT -2, ftest3 int, CONSTRAINT constrname2 FOREIGN KEY(ftest1, ftest2) 
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -234,7 +234,7 @@ DROP TABLE FKTABLE;
 -- First test, check with no on delete or on update
 --
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL, ftest2 int );
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- Insert test data into PKTABLE
@@ -307,7 +307,7 @@ DROP TABLE PKTABLE;
 -- MATCH unspecified
 -- Base test restricting update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -369,7 +369,7 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- cascade update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE CASCADE ON UPDATE CASCADE);
@@ -466,7 +466,7 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- set null update / set default delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET DEFAULT ON UPDATE SET NULL);
@@ -570,7 +570,7 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- set default update / set null delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int DEFAULT -1, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET NULL ON UPDATE SET DEFAULT);
@@ -686,7 +686,7 @@ SELECT * from FKTABLE;
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  CREATE TABLE: column "ftest2" referenced in foreign key constraint does not exist
@@ -700,7 +700,7 @@ ERROR:  table "fktable_fail2" does not exist
 DROP TABLE PKTABLE;
 -- Test for referencing column number smaller than referenced constraint
 CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'pktable_ptest1_key' for table 'pktable'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_ptest1_key" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  UNIQUE constraint matching given keys for referenced table "pktable" not found
@@ -712,7 +712,7 @@ DROP TABLE PKTABLE;
 --
 -- Basic one column, two table setup 
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This next should fail, because inet=int does not exist
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -736,7 +736,7 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Two columns, two tables
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This should fail, because we just chose really odd types
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -775,33 +775,33 @@ DROP TABLE PKTABLE;
 -- Make sure this still works...
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE PKTABLE;
 -- And this, 
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE PKTABLE;
 -- This shouldn't (mixed up columns)
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest2, ptest1));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: integer = inet
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 -- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 -- Not this one either... Same as the last one except we didn't defined the columns being referenced.
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
@@ -810,8 +810,8 @@ HINT:  No operator matches the given name and argument type(s). You may need to 
 -- Basic 2 table case: 1 column of matching types.
 create table pktable_base (base1 int not null);
 create table pktable (ptest1 int, primary key(base1), unique(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'pktable_base1_key' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_base1_key" for table "pktable"
 create table fktable (ftest1 int references pktable(base1));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- now some ins, upd, del
@@ -868,7 +868,7 @@ drop table pktable_base;
 create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 int, ptest2 int, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 1, 1, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 1, 1, 1);
@@ -891,7 +891,7 @@ drop table pktable_base;
 -- 2 columns (2 tables), mismatched types
 create table pktable_base(base1 int not null);
 create table pktable(ptest1 inet, primary key(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- just generally bad types (with and without column references on the referenced table)
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -920,25 +920,25 @@ drop table pktable_base;
 create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 inet, ptest2 inet[], primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: inet[] = inet
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(ptest1, base1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: integer = inet
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  operator does not exist: inet = integer
 HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
@@ -954,12 +954,12 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'fktable_pkey' for table 'fktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- default to immediate: should fail
 INSERT INTO fktable VALUES (5, 10);
@@ -976,12 +976,12 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'fktable_pkey' for table 'fktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- default to deferred, should succeed
 BEGIN;
@@ -1004,12 +1004,12 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'fktable_pkey' for table 'fktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 BEGIN;
 SET CONSTRAINTS ALL DEFERRED;

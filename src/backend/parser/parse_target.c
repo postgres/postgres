@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.106 2003/07/03 16:34:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.107 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,12 @@ transformTargetEntry(ParseState *pstate,
 		expr = transformExpr(pstate, node);
 
 	if (IsA(expr, RangeVar))
-		elog(ERROR, "You can't use relation names alone in the target list, try relation.*.");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("relation reference \"%s\" cannot be used as a targetlist entry",
+						((RangeVar *) expr)->relname),
+				 errhint("Write \"%s\".* to denote all the columns of the relation.",
+						((RangeVar *) expr)->relname)));
 
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);
@@ -146,13 +151,18 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							 * it.
 							 */
 							if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
-								elog(ERROR, "Cross-database references are not implemented");
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("cross-database references are not implemented")));
 							schemaname = strVal(lsecond(fields));
 							relname = strVal(lthird(fields));
 							break;
 						}
 					default:
-						elog(ERROR, "Invalid qualified name syntax (too many names)");
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("improper qualified name (too many dotted names): %s",
+										NameListToString(fields))));
 						schemaname = NULL;		/* keep compiler quiet */
 						relname = NULL;
 						break;
@@ -269,7 +279,7 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var)
 				}
 				/* falling off end of list shouldn't happen... */
 				if (subtl == NIL)
-					elog(ERROR, "Subquery %s does not have attribute %d",
+					elog(ERROR, "subquery %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
 			}
 			break;
@@ -320,7 +330,10 @@ updateTargetListEntry(ParseState *pstate,
 
 	Assert(rd != NULL);
 	if (attrno <= 0)
-		elog(ERROR, "Cannot assign to system attribute '%s'", colname);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot assign to system attribute \"%s\"",
+						colname)));
 	attrtype = attnumTypeId(rd, attrno);
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
 
@@ -339,7 +352,9 @@ updateTargetListEntry(ParseState *pstate,
 		def->typeId = attrtype;
 		def->typeMod = attrtypmod;
 		if (indirection)
-			elog(ERROR, "cannot set an array element to DEFAULT");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot set an array element to DEFAULT")));
 	}
 
 	/* Now we can use exprType() safely. */
@@ -404,12 +419,14 @@ updateTargetListEntry(ParseState *pstate,
 									  COERCION_ASSIGNMENT,
 									  COERCE_IMPLICIT_CAST);
 			if (tle->expr == NULL)
-				elog(ERROR, "column \"%s\" is of type %s"
-					 " but expression is of type %s"
-					 "\n\tYou will need to rewrite or cast the expression",
-					 colname,
-					 format_type_be(attrtype),
-					 format_type_be(type_id));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("column \"%s\" is of type %s"
+								" but expression is of type %s",
+								colname,
+								format_type_be(attrtype),
+								format_type_be(type_id)),
+						 errhint("You will need to rewrite or cast the expression.")));
 		}
 	}
 
@@ -473,11 +490,14 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			char	   *name = ((ResTarget *) lfirst(tl))->name;
 			int			attrno;
 
-			/* Lookup column name, elog on failure */
+			/* Lookup column name, ereport on failure */
 			attrno = attnameAttNum(pstate->p_target_relation, name, false);
 			/* Check for duplicates */
 			if (intMember(attrno, *attrnos))
-				elog(ERROR, "Attribute '%s' specified more than once", name);
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("attribute \"%s\" specified more than once in INSERT list",
+								name)));
 			*attrnos = lappendi(*attrnos, attrno);
 		}
 	}
@@ -512,8 +532,7 @@ ExpandAllTables(ParseState *pstate)
 						   pstate->p_rtable);
 		else
 		{
-			elog(ERROR, "ExpandAllTables: unexpected node (internal error)"
-				 "\n\t%s", nodeToString(n));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
 			rte = NULL;			/* keep compiler quiet */
 		}
 
@@ -530,7 +549,9 @@ ExpandAllTables(ParseState *pstate)
 
 	/* Check for SELECT *; */
 	if (!found_table)
-		elog(ERROR, "Wildcard with no tables specified not allowed");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("SELECT * with no tables specified is not valid")));
 
 	return target;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.57 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.58 2003/07/19 20:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,10 @@ LookupTypeName(const TypeName *typename)
 		switch (length(typename->names))
 		{
 			case 1:
-				elog(ERROR, "Improper %%TYPE reference (too few dotted names): %s",
-					 NameListToString(typename->names));
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("improper %%TYPE reference (too few dotted names): %s",
+								NameListToString(typename->names))));
 				break;
 			case 2:
 				rel->relname = strVal(lfirst(typename->names));
@@ -76,8 +78,10 @@ LookupTypeName(const TypeName *typename)
 				field = strVal(lfourth(typename->names));
 				break;
 			default:
-				elog(ERROR, "Improper %%TYPE reference (too many dotted names): %s",
-					 NameListToString(typename->names));
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("improper %%TYPE reference (too many dotted names): %s",
+								NameListToString(typename->names))));
 				break;
 		}
 
@@ -85,16 +89,20 @@ LookupTypeName(const TypeName *typename)
 		relid = RangeVarGetRelid(rel, false);
 		attnum = get_attnum(relid, field);
 		if (attnum == InvalidAttrNumber)
-			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-				 rel->relname, field);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("relation \"%s\" has no column \"%s\"",
+							rel->relname, field)));
 		restype = get_atttype(relid, attnum);
 
 		/* this construct should never have an array indicator */
 		Assert(typename->arrayBounds == NIL);
 
-		/* emit nuisance warning */
-		elog(NOTICE, "%s converted to %s",
-			 TypeNameToString(typename), format_type_be(restype));
+		/* emit nuisance notice */
+		ereport(NOTICE,
+				(errmsg("type reference %s converted to %s",
+						TypeNameToString(typename),
+						format_type_be(restype))));
 	}
 	else
 	{
@@ -188,11 +196,15 @@ typenameTypeId(const TypeName *typename)
 
 	typoid = LookupTypeName(typename);
 	if (!OidIsValid(typoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 	if (!get_typisdefined(typoid))
-		elog(ERROR, "Type \"%s\" is only a shell",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" is only a shell",
+						TypeNameToString(typename))));
 	return typoid;
 }
 
@@ -210,17 +222,20 @@ typenameType(const TypeName *typename)
 
 	typoid = LookupTypeName(typename);
 	if (!OidIsValid(typoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typoid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "cache lookup failed for type %u", typoid);
 	if (!((Form_pg_type) GETSTRUCT(tup))->typisdefined)
-		elog(ERROR, "Type \"%s\" is only a shell",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" is only a shell",
+						TypeNameToString(typename))));
 	return (Type) tup;
 }
 
@@ -244,7 +259,7 @@ typeidType(Oid id)
 						 ObjectIdGetDatum(id),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Unable to locate type oid %u in catalog", id);
+		elog(ERROR, "cache lookup failed for type %u", id);
 	return (Type) tup;
 }
 
@@ -252,7 +267,7 @@ typeidType(Oid id)
 Oid
 typeTypeId(Type tp)
 {
-	if (tp == NULL)
+	if (tp == NULL)				/* probably useless */
 		elog(ERROR, "typeTypeId() called with NULL type struct");
 	return HeapTupleGetOid(tp);
 }
@@ -386,7 +401,7 @@ typeidOutfunc(Oid type_id)
 							   ObjectIdGetDatum(type_id),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidOutfunc: Invalid type - oid = %u", type_id);
+		elog(ERROR, "cache lookup failed for type %u", type_id);
 
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	outfunc = type->typoutput;
@@ -407,7 +422,7 @@ typeidTypeRelid(Oid type_id)
 							   ObjectIdGetDatum(type_id),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidTypeRelid: Invalid type - oid = %u", type_id);
+		elog(ERROR, "cache lookup failed for type %u", type_id);
 
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	result = type->typrelid;
@@ -444,7 +459,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	 * paranoia is justified since the string might contain anything.
 	 */
 	if (length(raw_parsetree_list) != 1)
-		elog(ERROR, "Invalid type name '%s'", str);
+		goto fail;
 	stmt = (SelectStmt *) lfirst(raw_parsetree_list);
 	if (stmt == NULL ||
 		!IsA(stmt, SelectStmt) ||
@@ -459,28 +474,35 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		stmt->limitCount != NULL ||
 		stmt->forUpdate != NIL ||
 		stmt->op != SETOP_NONE)
-		elog(ERROR, "Invalid type name '%s'", str);
+		goto fail;
 	if (length(stmt->targetList) != 1)
-		elog(ERROR, "Invalid type name '%s'", str);
+		goto fail;
 	restarget = (ResTarget *) lfirst(stmt->targetList);
 	if (restarget == NULL ||
 		!IsA(restarget, ResTarget) ||
 		restarget->name != NULL ||
 		restarget->indirection != NIL)
-		elog(ERROR, "Invalid type name '%s'", str);
+		goto fail;
 	typecast = (TypeCast *) restarget->val;
 	if (typecast == NULL ||
 		!IsA(typecast, TypeCast) ||
 		typecast->arg == NULL ||
 		!IsA(typecast->arg, A_Const))
-		elog(ERROR, "Invalid type name '%s'", str);
+		goto fail;
 	typename = typecast->typename;
 	if (typename == NULL ||
 		!IsA(typename, TypeName))
-		elog(ERROR, "Invalid type name '%s'", str);
+		goto fail;
 
 	*type_id = typenameTypeId(typename);
 	*typmod = typename->typmod;
 
 	pfree(buf.data);
+
+	return;
+
+fail:
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("invalid type name \"%s\"", str)));
 }

@@ -5,7 +5,7 @@ CREATE TABLE x (
 	d text not null,
 	e text
 );
-NOTICE:  CREATE TABLE will create implicit sequence 'x_a_seq' for SERIAL column 'x.a'
+NOTICE:  CREATE TABLE will create implicit sequence "x_a_seq" for SERIAL column "x.a"
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
 		NEW.e := ''before trigger fired''::text;
@@ -28,7 +28,7 @@ COPY x (b, d) from stdin;
 COPY x (a, b, c, d, e) from stdin;
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
-ERROR:  Relation "x" has no column "xyz"
+ERROR:  relation "x" has no column "xyz"
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  Attribute "d" specified more than once

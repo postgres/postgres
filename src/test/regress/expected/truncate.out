@@ -1,6 +1,6 @@
 -- Test basic TRUNCATE functionality.
 CREATE TABLE truncate_a (col1 integer primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'truncate_a_pkey' for table 'truncate_a'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "truncate_a_pkey" for table "truncate_a"
 INSERT INTO truncate_a VALUES (1);
 INSERT INTO truncate_a VALUES (2);
 SELECT * FROM truncate_a;

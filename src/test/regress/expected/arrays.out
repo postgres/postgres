@@ -358,7 +358,7 @@ select 33 * any (44);
 ERROR:  op ANY/ALL (array) requires array on right side
 -- test indexes on arrays
 create temp table arr_tbl (f1 int[] unique);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'arr_tbl_f1_key' for table 'arr_tbl'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "arr_tbl_f1_key" for table "arr_tbl"
 insert into arr_tbl values ('{1,2,3}');
 insert into arr_tbl values ('{1,2}');
 -- failure expected:

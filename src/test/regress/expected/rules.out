@@ -1180,7 +1180,7 @@ drop rule foorule on foo;
 -- this should fail because f1 is not exposed for unqualified reference:
 create rule foorule as on insert to foo where f1 < 100
 do instead insert into foo2 values (f1);
-ERROR:  Attribute "f1" not found
+ERROR:  attribute "f1" not found
 -- this is the correct way:
 create rule foorule as on insert to foo where f1 < 100
 do instead insert into foo2 values (new.f1);
