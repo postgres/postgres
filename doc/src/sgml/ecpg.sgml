@@ -45,15 +45,12 @@ queries. It takes care of all the tedious moving of information to and
 from variables in your <Acronym>C</Acronym> program. Many <Acronym>RDBMS</Acronym> packages
 support this embedded language.
 
-<Para>
-There is an ANSI-standard describing how the embedded language should
-work. Most embedded <Acronym>SQL</Acronym> preprocessors I have seen and heard of make
-extensions so it is difficult to obtain portability between them
-anyway. I have not read the standard but I hope that my implementation
-does not deviate too much and that it would be possible to port programs
-with embedded <Acronym>SQL</Acronym> written for other <Acronym>RDBMS</Acronym> packages 
-to <ProductName>Postgres</ProductName> and thus
-promoting the spirit of free software.
+<Para> There is an ANSI-standard describing how the embedded language should
+work. <Application>ecpg</Application> was designed to meet this standard as much as possible. So it is
+possible to port programs with embedded <Acronym>SQL</Acronym> written for
+other <Acronym>RDBMS</Acronym> packages to
+<ProductName>Postgres</ProductName> and thus promoting the spirit of free
+software.
 
 <Sect1>
 <Title>The Concept</Title>
@@ -432,25 +429,6 @@ This version the preprocessor has some flaws:
 
 <VariableList>
 <VarListEntry>
-<Term>Preprocessor output</Term>
-<ListItem>
-<Para>
-The variables should be static.
-</Para>
-</ListItem>
-</VarListEntry>
-
-<VarListEntry>
-<Term>Preprocessor cannot do syntax checking on your <Acronym>SQL</Acronym> statements</Term>
-<ListItem>
-<Para>
-Whatever you write is copied more or less exactly to the <ProductName>Postgres</ProductName> and
-you will not be able to locate your errors until run-time.
-</Para>
-</ListItem>
-</VarListEntry>
-
-<VarListEntry>
 <Term>no restriction to strings only</Term>
 <ListItem>
 <Para>
@@ -485,51 +463,59 @@ to_date et al.
 <Term>records</Term>
 <ListItem>
 <Para>
-Possibility to define records or structures in the declare section
-in a way that the record can be filled from one row in the database.
+Records or structures have to be defined in the declare section.
 
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>missing statements</Term>
+<ListItem>
 <Para>
-This is a simpler way to handle an entire row at a time.
+The following statements are not implemented thus far:
+<VariableList>
+<VarListEntry>
+<Term> exec sql type</Term>
+</VarListEntry>
+<VarListEntry>
+<Term> exec sql prepare</Term>
+</VarListEntry>
+<VarListEntry>
+<Term> exec sql allocate</Term>
+</VarListEntry>
+<VarListEntry>
+<Term> exec sql free</Term>
+</VarListEntry>
+<VarListEntry>
+<Term> exec sql whenever sqlwarning</Term>
+</VarListEntry>
+<VarListEntry>
+<Term> SQLSTATE</Term>
+</VarListEntry>
+</VariableList>
 </Para>
 </ListItem>
 </VarListEntry>
 
 <VarListEntry>
-<Term>array operations</Term>
+<Term>message ´no data found´</Term>
 <ListItem>
 <Para>
-Oracle has array operations that enhances speed. When implementing it in
-<Application>ecpg</Application> it is done for compatibility reasons only. For them to
-improve speed would require a lot more insight in the <ProductName>Postgres</ProductName> internal
-mechanisms than I possess.
+The error message for "no data" in an exec sql insert select from statement
+has to be 100.
 </Para>
 </ListItem>
 </VarListEntry>
 
 <VarListEntry>
-<Term>indicator variables</Term>
+<Term>sqlwanr[6]</Term>
 <ListItem>
 <Para>
-Oracle has indicator variables that tell if a value is <Type>null</Type> or if
-it is empty. This largely simplifies array operations and provides for a
-way to hack around some design flaws in the handling of <Type>VARCHAR2</Type>
-(like that an empty string isn't distinguishable from a
-<Type>null</Type> value). I am not sure if this is an Oracle extension or part
-of the ANSI standard.
+sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified in a SET
+DESCRIPTOR statement will be ignored.
 </Para>
 </ListItem>
 </VarListEntry>
-
-<VarListEntry>
-<Term>typedefs</Term>
-<ListItem>
-<Para>
-As well as complex types like records and arrays, typedefs would be
-a good thing to take care of.
-</Para>
-</ListItem>
-</VarListEntry>
-
 <VarListEntry>
 <Term>conversion of scripts</Term>
 <ListItem>
