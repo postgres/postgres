@@ -618,7 +618,7 @@ case "$host_os" in
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
- freebsd3*) os=freebsd need_tas=no elf=yes ;;
+ freebsd3*|freebsd4*) os=freebsd need_tas=no elf=yes ;;
  freebsd1*|freebsd2*) os=freebsd need_tas=no ;;
   netbsd*|openbsd*) os=bsd need_tas=no ;;
     dgux*) os=dgux need_tas=no ;;
@@ -665,6 +665,8 @@ then
 fi
 
 PORTNAME=${os}
+
+
 
 
 
@@ -1547,11 +1549,11 @@ esac
 
 ECHO_N_OUT=`echo -n "" | wc -c`
 ECHO_C_OUT=`echo "\c" | wc -c`
-if test $ECHO_N_OUT -eq 0; then
+if test "$ECHO_N_OUT" -eq 0; then
 	DASH_N='-n'
 	BACKSLASH_C=
 else
-	if test $ECHO_C_OUT -eq 0; then
+	if test "ECHO_C_OUT" -eq 0; then
 		DASH_N=
 		BACKSLASH_C='\\\\c'
 	else
