@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.49 2001/06/22 00:04:59 tgl Exp $
+ * $Id: lock.h,v 1.50 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@ typedef struct proc PROC;
 
 extern SPINLOCK LockMgrLock;
 
+extern int	max_locks_per_xact;
+
 #ifdef LOCK_DEBUG
 extern int	Trace_lock_oidmin;
 extern bool Trace_locks;
@@ -40,19 +42,6 @@ extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
 #endif	 /* LOCK_DEBUG */
 
-
-/* ----------------------
- * The following defines are used to estimate how much shared
- * memory the lock manager is going to require.
- * See LockShmemSize() in lock.c.
- *
- * NLOCKS_PER_XACT - The number of unique objects locked in a transaction
- *					 (this should be configurable!)
- * NLOCKENTS - The maximum number of lock entries in the lock table.
- * ----------------------
- */
-#define NLOCKS_PER_XACT			64
-#define NLOCKENTS(maxBackends)	(NLOCKS_PER_XACT*(maxBackends))
 
 typedef int LOCKMASK;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.30 2001/03/07 21:20:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.31 2001/06/27 23:31:37 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -70,18 +70,15 @@ _hash_metapinit(Relation rel)
 	int			nbuckets;
 	uint32		nelem;			/* number elements */
 	uint32		lg2nelem;		/* _hash_log2(nelem)   */
-	uint32		nblocks;
 	uint16		i;
 
 	/* can't be sharing this with anyone, now... */
 	if (USELOCKING)
 		LockRelation(rel, AccessExclusiveLock);
 
-	if ((nblocks = RelationGetNumberOfBlocks(rel)) != 0)
-	{
+	if (RelationGetNumberOfBlocks(rel) != 0)
 		elog(ERROR, "Cannot initialize non-empty hash table %s",
 			 RelationGetRelationName(rel));
-	}
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	pg = BufferGetPage(metabuf);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.85 2001/06/06 17:07:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.86 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,10 +72,10 @@ static MemoryContext MdCxt;		/* context for all my allocations */
 /* routines declared here */
 static void mdclose_fd(int fd);
 static int	_mdfd_getrelnfd(Relation reln);
-static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
-static MdfdVec *_mdfd_getseg(Relation reln, int blkno);
+static MdfdVec *_mdfd_openseg(Relation reln, BlockNumber segno, int oflags);
+static MdfdVec *_mdfd_getseg(Relation reln, BlockNumber blkno);
 
-static int	_mdfd_blind_getseg(RelFileNode rnode, int blkno);
+static int	_mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno);
 
 static int	_fdvec_alloc(void);
 static void _fdvec_free(int);
@@ -93,7 +93,7 @@ static BlockNumber _mdnblocks(File file, Size blcksz);
  *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
 int
-mdinit()
+mdinit(void)
 {
 	int			i;
 
@@ -194,11 +194,11 @@ mdunlink(RelFileNode rnode)
 	if (status == SM_SUCCESS)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
-		int			segno;
+		BlockNumber	segno;
 
 		for (segno = 1;; segno++)
 		{
-			sprintf(segpath, "%s.%d", path, segno);
+			sprintf(segpath, "%s.%u", path, segno);
 			if (unlink(segpath) < 0)
 			{
 				/* ENOENT is expected after the last segment... */
@@ -246,7 +246,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
+	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
@@ -283,7 +283,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 #ifdef DIAGNOSTIC
-	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE)
+	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
 		elog(FATAL, "segment too big!");
 #endif
 #endif
@@ -338,7 +338,7 @@ mdopen(Relation reln)
 	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
 
 #ifdef DIAGNOSTIC
-	if (_mdnblocks(fd, BLCKSZ) > RELSEG_SIZE)
+	if (_mdnblocks(fd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
 		elog(FATAL, "segment too big on relopen!");
 #endif
 #endif
@@ -438,7 +438,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
+	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
 
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
@@ -482,7 +482,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
+	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
@@ -516,7 +516,7 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
+	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
@@ -561,7 +561,7 @@ mdblindwrt(RelFileNode rnode,
 		return SM_FAIL;
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blkno % RELSEG_SIZE));
+	seekpos = (long) (BLCKSZ * (blkno % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
@@ -659,16 +659,14 @@ mdblindmarkdirty(RelFileNode rnode,
  *
  *		Returns # of blocks, elog's on error.
  */
-int
+BlockNumber
 mdnblocks(Relation reln)
 {
 	int			fd;
 	MdfdVec    *v;
-
 #ifndef LET_OS_MANAGE_FILESIZE
-	int			nblocks;
-	int			segno;
-
+	BlockNumber	nblocks;
+	BlockNumber	segno;
 #endif
 
 	fd = _mdfd_getrelnfd(reln);
@@ -679,10 +677,10 @@ mdnblocks(Relation reln)
 	for (;;)
 	{
 		nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ);
-		if (nblocks > RELSEG_SIZE)
+		if (nblocks > ((BlockNumber) RELSEG_SIZE))
 			elog(FATAL, "segment too big in mdnblocks!");
-		if (nblocks < RELSEG_SIZE)
-			return (segno * RELSEG_SIZE) + nblocks;
+		if (nblocks < ((BlockNumber) RELSEG_SIZE))
+			return (segno * ((BlockNumber) RELSEG_SIZE)) + nblocks;
 		/*
 		 * If segment is exactly RELSEG_SIZE, advance to next one.
 		 */
@@ -713,18 +711,16 @@ mdnblocks(Relation reln)
 /*
  *	mdtruncate() -- Truncate relation to specified number of blocks.
  *
- *		Returns # of blocks or -1 on error.
+ *		Returns # of blocks or InvalidBlockNumber on error.
  */
-int
-mdtruncate(Relation reln, int nblocks)
+BlockNumber
+mdtruncate(Relation reln, BlockNumber nblocks)
 {
-	int			curnblk;
 	int			fd;
 	MdfdVec    *v;
-
+	BlockNumber	curnblk;
 #ifndef LET_OS_MANAGE_FILESIZE
-	int			priorblocks;
-
+	BlockNumber	priorblocks;
 #endif
 
 	/*
@@ -732,8 +728,8 @@ mdtruncate(Relation reln, int nblocks)
 	 * that truncate/delete loop will get them all!
 	 */
 	curnblk = mdnblocks(reln);
-	if (nblocks < 0 || nblocks > curnblk)
-		return -1;				/* bogus request */
+	if (nblocks > curnblk)
+		return InvalidBlockNumber; /* bogus request */
 	if (nblocks == curnblk)
 		return nblocks;			/* no work */
 
@@ -748,7 +744,6 @@ mdtruncate(Relation reln, int nblocks)
 
 		if (priorblocks > nblocks)
 		{
-
 			/*
 			 * This segment is no longer wanted at all (and has already
 			 * been unlinked from the mdfd_chain). We truncate the file
@@ -763,27 +758,25 @@ mdtruncate(Relation reln, int nblocks)
 												 * segment */
 			pfree(ov);
 		}
-		else if (priorblocks + RELSEG_SIZE > nblocks)
+		else if (priorblocks + ((BlockNumber) RELSEG_SIZE) > nblocks)
 		{
-
 			/*
 			 * This is the last segment we want to keep. Truncate the file
 			 * to the right length, and clear chain link that points to
 			 * any remaining segments (which we shall zap). NOTE: if
 			 * nblocks is exactly a multiple K of RELSEG_SIZE, we will
 			 * truncate the K+1st segment to 0 length but keep it. This is
-			 * mainly so that the right thing happens if nblocks=0.
+			 * mainly so that the right thing happens if nblocks==0.
 			 */
-			int			lastsegblocks = nblocks - priorblocks;
+			BlockNumber		lastsegblocks = nblocks - priorblocks;
 
 			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
-				return -1;
+				return InvalidBlockNumber;
 			v = v->mdfd_chain;
 			ov->mdfd_chain = (MdfdVec *) NULL;
 		}
 		else
 		{
-
 			/*
 			 * We still need this segment and 0 or more blocks beyond it,
 			 * so nothing to do here.
@@ -794,7 +787,7 @@ mdtruncate(Relation reln, int nblocks)
 	}
 #else
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
-		return -1;
+		return InvalidBlockNumber;
 #endif
 
 	return nblocks;
@@ -940,7 +933,7 @@ _fdvec_free(int fdvec)
 }
 
 static MdfdVec *
-_mdfd_openseg(Relation reln, int segno, int oflags)
+_mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 {
 	MdfdVec    *v;
 	int			fd;
@@ -953,7 +946,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 	if (segno > 0)
 	{
 		fullpath = (char *) palloc(strlen(path) + 12);
-		sprintf(fullpath, "%s.%d", path, segno);
+		sprintf(fullpath, "%s.%u", path, segno);
 		pfree(path);
 	}
 	else
@@ -977,7 +970,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 	v->mdfd_chain = (MdfdVec *) NULL;
 
 #ifdef DIAGNOSTIC
-	if (_mdnblocks(fd, BLCKSZ) > RELSEG_SIZE)
+	if (_mdnblocks(fd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
 		elog(FATAL, "segment too big on openseg!");
 #endif
 #endif
@@ -1007,17 +1000,19 @@ _mdfd_getrelnfd(Relation reln)
 /* Find the segment of the relation holding the specified block */
 
 static MdfdVec *
-_mdfd_getseg(Relation reln, int blkno)
+_mdfd_getseg(Relation reln, BlockNumber blkno)
 {
 	MdfdVec    *v;
-	int			segno;
 	int			fd;
-	int			i;
+#ifndef LET_OS_MANAGE_FILESIZE
+	BlockNumber	segno;
+	BlockNumber	i;
+#endif
 
 	fd = _mdfd_getrelnfd(reln);
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	for (v = &Md_fdvec[fd], segno = blkno / RELSEG_SIZE, i = 1;
+	for (v = &Md_fdvec[fd], segno = blkno / ((BlockNumber) RELSEG_SIZE), i = 1;
 		 segno > 0;
 		 i++, segno--)
 	{
@@ -1038,7 +1033,7 @@ _mdfd_getseg(Relation reln, int blkno)
 			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "cannot open segment %d of relation %s (target block %d): %m",
+				elog(ERROR, "cannot open segment %u of relation %s (target block %u): %m",
 					 i, RelationGetRelationName(reln), blkno);
 		}
 		v = v->mdfd_chain;
@@ -1064,26 +1059,24 @@ _mdfd_getseg(Relation reln, int blkno)
  */
 
 static int
-_mdfd_blind_getseg(RelFileNode rnode, int blkno)
+_mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno)
 {
 	char	   *path;
 	int			fd;
-
 #ifndef LET_OS_MANAGE_FILESIZE
-	int			segno;
-
+	BlockNumber	segno;
 #endif
 
 	path = relpath(rnode);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	/* append the '.segno', if needed */
-	segno = blkno / RELSEG_SIZE;
+	segno = blkno / ((BlockNumber) RELSEG_SIZE);
 	if (segno > 0)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 
-		sprintf(segpath, "%s.%d", path, segno);
+		sprintf(segpath, "%s.%u", path, segno);
 		pfree(path);
 		path = segpath;
 	}

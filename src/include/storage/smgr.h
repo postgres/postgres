@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.29 2001/05/10 20:38:49 tgl Exp $
+ * $Id: smgr.h,v 1.30 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,9 @@ extern int smgrblindwrt(int16 which, RelFileNode rnode,
 extern int smgrblindmarkdirty(int16 which, RelFileNode rnode,
 				   BlockNumber blkno);
 extern int	smgrmarkdirty(int16 which, Relation reln, BlockNumber blkno);
-extern int	smgrnblocks(int16 which, Relation reln);
-extern int	smgrtruncate(int16 which, Relation reln, int nblocks);
+extern BlockNumber smgrnblocks(int16 which, Relation reln);
+extern BlockNumber smgrtruncate(int16 which, Relation reln,
+								BlockNumber nblocks);
 extern int	smgrDoPendingDeletes(bool isCommit);
 extern int	smgrcommit(void);
 extern int	smgrabort(void);
@@ -71,8 +72,8 @@ extern int	mdmarkdirty(Relation reln, BlockNumber blkno);
 extern int mdblindwrt(RelFileNode rnode, BlockNumber blkno,
 		   char *buffer, bool dofsync);
 extern int	mdblindmarkdirty(RelFileNode rnode, BlockNumber blkno);
-extern int	mdnblocks(Relation reln);
-extern int	mdtruncate(Relation reln, int nblocks);
+extern BlockNumber mdnblocks(Relation reln);
+extern BlockNumber mdtruncate(Relation reln, BlockNumber nblocks);
 extern int	mdcommit(void);
 extern int	mdabort(void);
 extern int	mdsync(void);
@@ -95,8 +96,8 @@ extern int mmblindwrt(char *dbname, char *relname, Oid dbid, Oid relid,
 extern int	mmmarkdirty(Relation reln, BlockNumber blkno);
 extern int mmblindmarkdirty(char *dbname, char *relname, Oid dbid, Oid relid,
 				 BlockNumber blkno);
-extern int	mmnblocks(Relation reln);
-extern int	mmtruncate(Relation reln, int nblocks);
+extern BlockNumber mmnblocks(Relation reln);
+extern BlockNumber mmtruncate(Relation reln, BlockNumber nblocks);
 extern int	mmcommit(void);
 extern int	mmabort(void);
 

@@ -45,10 +45,18 @@
 
 
 #
+#	Shared Memory Size
+#
+#shared_buffers = 64        # 2*max_connections, min 16
+#max_fsm_relations = 100    # min 10
+#max_fsm_pages = 10000      # min 1000
+#max_locks_per_xact = 64    # min 10
+#wal_buffers = 8            # min 4
+
+#
 #	Performance
 #
 #sort_mem = 512
-#shared_buffers = 64	# 2*max_connections, min 16
 #fsync = true
 
 
@@ -78,7 +86,7 @@
 #	GEQO Optimizer Parameters
 #
 #geqo_threshold = 11
-#geqo_pool_size = 0  #default based in tables, range 128-1024
+#geqo_pool_size = 0  #default based on #tables in query, range 128-1024
 #geqo_effort = 1
 #geqo_generations = 0
 #geqo_random_seed = -1 # auto-compute seed
@@ -87,7 +95,6 @@
 #
 #	Write-ahead log (WAL)
 #
-#wal_buffers = 8 # min 4
 #wal_files = 0 # range 0-64
 #wal_sync_method = fsync # fsync or fdatasync or open_sync or open_datasync
 # Note: default wal_sync_method varies across platforms

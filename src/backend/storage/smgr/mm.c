@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.23 2001/05/10 20:38:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.24 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,15 +489,15 @@ mmblindwrt(char *dbstr,
 /*
  *	mmnblocks() -- Get the number of blocks stored in a relation.
  *
- *		Returns # of blocks or -1 on error.
+ *		Returns # of blocks or InvalidBlockNumber on error.
  */
-int
+BlockNumber
 mmnblocks(Relation reln)
 {
 	MMRelTag	rtag;
 	MMRelHashEntry *rentry;
 	bool		found;
-	int			nblocks;
+	BlockNumber	nblocks;
 
 	if (reln->rd_rel->relisshared)
 		rtag.mmrt_dbid = (Oid) 0;
@@ -520,7 +520,7 @@ mmnblocks(Relation reln)
 	if (found)
 		nblocks = rentry->mmrhe_nblocks;
 	else
-		nblocks = -1;
+		nblocks = InvalidBlockNumber;
 
 	SpinRelease(MMCacheLock);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.40 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.41 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "miscadmin.h"
 #include "access/xlog.h"
 #include "storage/bufmgr.h"
+#include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
@@ -47,8 +48,12 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	 * moderately-accurate estimates for the big hogs, plus 100K for the
 	 * stuff that's too small to bother with estimating.
 	 */
-	size = BufferShmemSize() + LockShmemSize(maxBackends) +
-		XLOGShmemSize() + SLockShmemSize() + SInvalShmemSize(maxBackends);
+	size = BufferShmemSize();
+	size += LockShmemSize(maxBackends);
+	size += XLOGShmemSize();
+	size += SLockShmemSize();
+	size += SInvalShmemSize(maxBackends);
+	size += FreeSpaceShmemSize();
 #ifdef STABLE_MEMORY_STORAGE
 	size += MMShmemSize();
 #endif
@@ -96,4 +101,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	 * Set up shared-inval messaging
 	 */
 	CreateSharedInvalidationState(maxBackends);
+
+	/*
+	 * Set up free-space map
+	 */
+	InitFreeSpaceMap();
 }

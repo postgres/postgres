@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.154 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.155 2001/06/27 23:31:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1456,7 +1456,7 @@ UpdateStats(Oid relid, double reltuples)
 	Relation	pg_class;
 	HeapTuple	tuple;
 	HeapTuple	newtup;
-	long		relpages;
+	BlockNumber	relpages;
 	int			i;
 	Form_pg_class rd_rel;
 	Relation	idescs[Num_pg_class_indices];
@@ -1558,7 +1558,7 @@ UpdateStats(Oid relid, double reltuples)
 			reltuples = 1000;
 		}
 		else
-			reltuples = relpages * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
+			reltuples = (double) relpages * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
 	}
 
 	/*
@@ -1566,7 +1566,7 @@ UpdateStats(Oid relid, double reltuples)
 	 * place with the new values so that the cache contains the latest
 	 * copy.
 	 */
-	whichRel->rd_rel->relpages = relpages;
+	whichRel->rd_rel->relpages = (int32) relpages;
 	whichRel->rd_rel->reltuples = reltuples;
 
 	/*
@@ -1581,7 +1581,7 @@ UpdateStats(Oid relid, double reltuples)
 		 */
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-		rd_rel->relpages = relpages;
+		rd_rel->relpages = (int32) relpages;
 		rd_rel->reltuples = reltuples;
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
@@ -1600,7 +1600,7 @@ UpdateStats(Oid relid, double reltuples)
 		}
 
 		replace[Anum_pg_class_relpages - 1] = 'r';
-		values[Anum_pg_class_relpages - 1] = Int32GetDatum(relpages);
+		values[Anum_pg_class_relpages - 1] = Int32GetDatum((int32) relpages);
 		replace[Anum_pg_class_reltuples - 1] = 'r';
 		values[Anum_pg_class_reltuples - 1] = Float4GetDatum((float4) reltuples);
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
@@ -1962,6 +1962,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 		/* Now truncate the actual data and set blocks to zero */
 		smgrtruncate(DEFAULT_SMGR, iRel, 0);
 		iRel->rd_nblocks = 0;
+		iRel->rd_targblock = InvalidBlockNumber;
 	}
 
 	/* Initialize the index and rebuild */

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.32 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.33 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,19 +31,18 @@
 
 
 /* Probably should move these to an appropriate header file */
-extern SPINLOCK ShmemLock;
-extern SPINLOCK ShmemIndexLock;
 extern SPINLOCK BufMgrLock;
-extern SPINLOCK LockMgrLock;
-extern SPINLOCK ProcStructLock;
-extern SPINLOCK SInvalLock;
 extern SPINLOCK OidGenLockId;
 extern SPINLOCK XidGenLockId;
 extern SPINLOCK ControlFileLockId;
-
+extern SPINLOCK ShmemLock;
+extern SPINLOCK ShmemIndexLock;
+extern SPINLOCK LockMgrLock;
+extern SPINLOCK SInvalLock;
+extern SPINLOCK ProcStructLock;
+extern SPINLOCK FreeSpaceLock;
 #ifdef STABLE_MEMORY_STORAGE
 extern SPINLOCK MMCacheLock;
-
 #endif
 
 
@@ -57,16 +56,16 @@ extern SPINLOCK MMCacheLock;
 static void
 InitSpinLockIDs(void)
 {
-	ShmemLock = (SPINLOCK) SHMEMLOCKID;
-	ShmemIndexLock = (SPINLOCK) SHMEMINDEXLOCKID;
 	BufMgrLock = (SPINLOCK) BUFMGRLOCKID;
-	LockMgrLock = (SPINLOCK) LOCKMGRLOCKID;
-	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
-	SInvalLock = (SPINLOCK) SINVALLOCKID;
 	OidGenLockId = (SPINLOCK) OIDGENLOCKID;
 	XidGenLockId = (SPINLOCK) XIDGENLOCKID;
 	ControlFileLockId = (SPINLOCK) CNTLFILELOCKID;
-
+	ShmemLock = (SPINLOCK) SHMEMLOCKID;
+	ShmemIndexLock = (SPINLOCK) SHMEMINDEXLOCKID;
+	LockMgrLock = (SPINLOCK) LOCKMGRLOCKID;
+	SInvalLock = (SPINLOCK) SINVALLOCKID;
+	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
+	FreeSpaceLock = (SPINLOCK) FREESPACELOCKID;
 #ifdef STABLE_MEMORY_STORAGE
 	MMCacheLock = (SPINLOCK) MMCACHELOCKID;
 #endif

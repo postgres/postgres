@@ -11,13 +11,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.49 2001/05/10 20:38:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.50 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "storage/bufmgr.h"
+#include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
 
@@ -44,8 +45,8 @@ typedef struct f_smgr
 								  char *buffer, bool dofsync);
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
 	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
-	int			(*smgr_nblocks) (Relation reln);
-	int			(*smgr_truncate) (Relation reln, int nblocks);
+	BlockNumber	(*smgr_nblocks) (Relation reln);
+	BlockNumber	(*smgr_truncate) (Relation reln, BlockNumber nblocks);
 	int			(*smgr_commit) (void);	/* may be NULL */
 	int			(*smgr_abort) (void);	/* may be NULL */
 	int			(*smgr_sync) (void);
@@ -433,16 +434,10 @@ smgrblindmarkdirty(int16 which,
  *		Returns the number of blocks on success, aborts the current
  *		transaction on failure.
  */
-int
+BlockNumber
 smgrnblocks(int16 which, Relation reln)
 {
-	int			nblocks;
-
-	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
-		elog(ERROR, "cannot count blocks for %s: %m",
-			 RelationGetRelationName(reln));
-
-	return nblocks;
+	return (*(smgrsw[which].smgr_nblocks)) (reln);
 }
 
 /*
@@ -452,16 +447,24 @@ smgrnblocks(int16 which, Relation reln)
  *		Returns the number of blocks on success, aborts the current
  *		transaction on failure.
  */
-int
-smgrtruncate(int16 which, Relation reln, int nblocks)
+BlockNumber
+smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 {
-	int			newblks;
+	BlockNumber		newblks;
 
 	newblks = nblocks;
 	if (smgrsw[which].smgr_truncate)
 	{
-		if ((newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks)) < 0)
-			elog(ERROR, "cannot truncate %s to %d blocks: %m",
+		/*
+		 * Tell the free space map to forget this relation, so that it
+		 * stops caching info about the deleted blocks.  XXX perhaps
+		 * tell it to forget only info about blocks beyond nblocks?
+		 */
+		FreeSpaceMapForgetRel(&reln->rd_node);
+
+		newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks);
+		if (newblks == InvalidBlockNumber)
+			elog(ERROR, "cannot truncate %s to %u blocks: %m",
 				 RelationGetRelationName(reln), nblocks);
 	}
 
@@ -481,13 +484,19 @@ smgrDoPendingDeletes(bool isCommit)
 		pendingDeletes = pending->next;
 		if (pending->atCommit == isCommit)
 		{
-
 			/*
 			 * Get rid of any leftover buffers for the rel (shouldn't be
 			 * any in the commit case, but there can be in the abort
 			 * case).
 			 */
 			DropRelFileNodeBuffers(pending->relnode);
+
+			/*
+			 * Tell the free space map to forget this relation.  It won't
+			 * be accessed any more anyway, but we may as well recycle the
+			 * map space quickly.
+			 */
+			FreeSpaceMapForgetRel(&pending->relnode);
 
 			/*
 			 * And delete the physical files.

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.42 2001/06/23 22:23:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.43 2001/06/27 23:31:39 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -31,6 +31,8 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
+#include "storage/freespace.h"
+#include "storage/lock.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/datetime.h"
@@ -270,10 +272,15 @@ static struct config_int
 	 */
 	{"max_connections", PGC_POSTMASTER, &MaxBackends,
 	DEF_MAXBACKENDS, 1, MAXBACKENDS, NULL, NULL},
+
 	{"shared_buffers", PGC_POSTMASTER, &NBuffers,
 	DEF_NBUFFERS, 16, INT_MAX, NULL, NULL},
+
 	{"port", PGC_POSTMASTER, &PostPortNumber,
 	DEF_PGPORT, 1, 65535, NULL, NULL},
+
+	{"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
+	0777, 0000, 0777, NULL, NULL},
 
 	{"sort_mem", PGC_USERSET, &SortMem,
 	512, 4*BLCKSZ/1024, INT_MAX, NULL, NULL},
@@ -290,8 +297,13 @@ static struct config_int
 	{"max_expr_depth", PGC_USERSET, &max_expr_depth,
 	DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL},
 
-	{"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
-	0777, 0000, 0777, NULL, NULL},
+	{"max_fsm_relations", PGC_POSTMASTER, &MaxFSMRelations,
+	 100, 10, INT_MAX, NULL, NULL},
+	{"max_fsm_pages", PGC_POSTMASTER, &MaxFSMPages,
+	 10000, 1000, INT_MAX, NULL, NULL},
+
+	{"max_locks_per_xact", PGC_POSTMASTER, &max_locks_per_xact,
+	 64, 10, INT_MAX, NULL, NULL},
 
 	{"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
 	3, 1, INT_MAX, NULL, NULL},

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.51 2001/03/22 03:59:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.52 2001/06/27 23:31:38 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -55,7 +55,6 @@ _bt_metapinit(Relation rel)
 {
 	Buffer		buf;
 	Page		pg;
-	int			nblocks;
 	BTMetaPageData metad;
 	BTPageOpaque op;
 
@@ -63,11 +62,9 @@ _bt_metapinit(Relation rel)
 	if (USELOCKING)
 		LockRelation(rel, AccessExclusiveLock);
 
-	if ((nblocks = RelationGetNumberOfBlocks(rel)) != 0)
-	{
+	if (RelationGetNumberOfBlocks(rel) != 0)
 		elog(ERROR, "Cannot initialize non-empty btree %s",
 			 RelationGetRelationName(rel));
-	}
 
 	buf = ReadBuffer(rel, P_NEW);
 	pg = BufferGetPage(buf);

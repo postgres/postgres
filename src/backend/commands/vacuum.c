@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.197 2001/06/22 19:16:21 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.198 2001/06/27 23:31:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,8 +107,8 @@ typedef VTupleMoveData *VTupleMove;
 typedef struct VRelStats
 {
 	Oid			relid;
-	long		num_pages;
-	long		num_tuples;
+	BlockNumber	rel_pages;
+	double		rel_tuples;
 	Size		min_tlen;
 	Size		max_tlen;
 	bool		hasindex;
@@ -143,8 +143,8 @@ static void vacuum_heap(VRelStats *vacrelstats, Relation onerel,
 						VacPageList vacpagelist);
 static void vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage);
 static void vacuum_index(VacPageList vacpagelist, Relation indrel,
-						 long num_tuples, int keep_tuples);
-static void scan_index(Relation indrel, long num_tuples);
+						 double num_tuples, int keep_tuples);
+static void scan_index(Relation indrel, double num_tuples);
 static VacPage tid_reaped(ItemPointer itemptr, VacPageList vacpagelist);
 static void reap_page(VacPageList vacpagelist, VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
@@ -487,8 +487,8 @@ vacuum_rel(Oid relid)
 	 */
 	vacrelstats = (VRelStats *) palloc(sizeof(VRelStats));
 	vacrelstats->relid = relid;
-	vacrelstats->num_pages = 0;
-	vacrelstats->num_tuples = 0;
+	vacrelstats->rel_pages = 0;
+	vacrelstats->rel_tuples = 0;
 	vacrelstats->hasindex = false;
 
 	GetXmaxRecent(&XmaxRecent);
@@ -535,13 +535,13 @@ vacuum_rel(Oid relid)
 		{
 			for (i = 0; i < nindices; i++)
 				vacuum_index(&vacuum_pages, Irel[i],
-							 vacrelstats->num_tuples, 0);
+							 vacrelstats->rel_tuples, 0);
 		}
 		else
 		{
 			/* just scan indices to update statistic */
 			for (i = 0; i < nindices; i++)
-				scan_index(Irel[i], vacrelstats->num_tuples);
+				scan_index(Irel[i], vacrelstats->rel_tuples);
 		}
 	}
 
@@ -562,14 +562,13 @@ vacuum_rel(Oid relid)
 		}
 		else
 		{
-
 			/*
 			 * Flush dirty pages out to disk.  We must do this even if we
 			 * didn't do anything else, because we want to ensure that all
 			 * tuples have correct on-row commit status on disk (see
 			 * bufmgr.c's comments for FlushRelationBuffers()).
 			 */
-			i = FlushRelationBuffers(onerel, vacrelstats->num_pages);
+			i = FlushRelationBuffers(onerel, vacrelstats->rel_pages);
 			if (i < 0)
 				elog(ERROR, "VACUUM (vacuum_rel): FlushRelationBuffers returned %d",
 					 i);
@@ -584,8 +583,8 @@ vacuum_rel(Oid relid)
 	heap_close(onerel, NoLock);
 
 	/* update statistics in pg_class */
-	vac_update_relstats(vacrelstats->relid, vacrelstats->num_pages,
-						vacrelstats->num_tuples, vacrelstats->hasindex);
+	vac_update_relstats(vacrelstats->relid, vacrelstats->rel_pages,
+						vacrelstats->rel_tuples, vacrelstats->hasindex);
 
 	/*
 	 * Complete the transaction and free all temporary memory used.
@@ -637,7 +636,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	char	   *relname;
 	VacPage		vacpage,
 				vp;
-	long		num_tuples;
+	double		num_tuples;
 	uint32		tups_vacuumed,
 				nkeep,
 				nunused,
@@ -662,8 +661,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	relname = RelationGetRelationName(onerel);
 	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
 
-	tups_vacuumed = num_tuples = nkeep = nunused = ncrash = empty_pages =
+	tups_vacuumed = nkeep = nunused = ncrash = empty_pages =
 		new_pages = changed_pages = empty_end_pages = 0;
+	num_tuples = 0;
 	free_size = usable_free_size = 0;
 
 	nblocks = RelationGetNumberOfBlocks(onerel);
@@ -922,7 +922,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			}
 			else
 			{
-				num_tuples++;
+				num_tuples += 1;
 				notup = false;
 				if (tuple.t_len < min_tlen)
 					min_tlen = tuple.t_len;
@@ -966,8 +966,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	pfree(vacpage);
 
 	/* save stats in the rel list for use later */
-	vacrelstats->num_tuples = num_tuples;
-	vacrelstats->num_pages = nblocks;
+	vacrelstats->rel_tuples = num_tuples;
+	vacrelstats->rel_pages = nblocks;
 	if (num_tuples == 0)
 		min_tlen = max_tlen = 0;
 	vacrelstats->min_tlen = min_tlen;
@@ -1014,7 +1014,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	}
 
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
-Tup %lu: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %lu, MaxLen %lu; \
+Tup %.0f: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %lu, MaxLen %lu; \
 Re-using: Free/Avail. Space %lu/%lu; EndEmpty/Avail. Pages %u/%u. %s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
@@ -1048,6 +1048,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				cur_buffer;
 	int			nblocks,
 				blkno;
+	BlockNumber	last_move_dest_block = 0,
+				last_vacuum_block;
 	Page		page,
 				ToPage = NULL;
 	OffsetNumber offnum,
@@ -1069,9 +1071,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				vacpage,
 			   *curpage;
 	int			cur_item = 0;
-	int			last_move_dest_block = -1,
-				last_vacuum_block,
-				i = 0;
+	int			i;
 	Size		tuple_len;
 	int			num_moved,
 				num_fraged_pages,
@@ -1117,7 +1117,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	 * NB: this code depends on the vacuum_pages and fraged_pages lists being
 	 * in order, and on fraged_pages being a subset of vacuum_pages.
 	 */
-	nblocks = vacrelstats->num_pages;
+	nblocks = vacrelstats->rel_pages;
 	for (blkno = nblocks - vacuum_pages->empty_end_pages - 1;
 		 blkno > last_move_dest_block;
 		 blkno--)
@@ -1152,11 +1152,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			else
 			{
 				last_vacuum_page = NULL;
-				last_vacuum_block = -1;
+				last_vacuum_block = InvalidBlockNumber;
 			}
 			if (num_fraged_pages > 0 &&
-				fraged_pages->pagedesc[num_fraged_pages - 1]->blkno ==
-				(BlockNumber) blkno)
+				fraged_pages->pagedesc[num_fraged_pages - 1]->blkno == blkno)
 			{
 				/* page is in fraged_pages too; remove it */
 				--num_fraged_pages;
@@ -1577,7 +1576,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					}
 					END_CRIT_SECTION();
 
-					if (((int) destvacpage->blkno) > last_move_dest_block)
+					if (destvacpage->blkno > last_move_dest_block)
 						last_move_dest_block = destvacpage->blkno;
 
 					/*
@@ -1710,9 +1709,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 								 InvalidOffsetNumber, LP_USED);
 			if (newoff == InvalidOffsetNumber)
 			{
-				elog(STOP, "\
-failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
-					 (unsigned long) tuple_len, cur_page->blkno, (unsigned long) cur_page->free,
+				elog(STOP, "failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
+					 (unsigned long) tuple_len,
+					 cur_page->blkno, (unsigned long) cur_page->free,
 					 cur_page->offsets_used, cur_page->offsets_free);
 			}
 			newitemid = PageGetItemId(ToPage, newoff);
@@ -1746,7 +1745,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			cur_page->offsets_used++;
 			num_moved++;
 			cur_page->free = ((PageHeader) ToPage)->pd_upper - ((PageHeader) ToPage)->pd_lower;
-			if (((int) cur_page->blkno) > last_move_dest_block)
+			if (cur_page->blkno > last_move_dest_block)
 				last_move_dest_block = cur_page->blkno;
 
 			vacpage->offsets[vacpage->offsets_free++] = offnum;
@@ -1882,7 +1881,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 	checked_moved = 0;
 	for (i = 0, curpage = vacuum_pages->pagedesc; i < vacuumed_pages; i++, curpage++)
 	{
-		Assert((*curpage)->blkno < (BlockNumber) blkno);
+		Assert((*curpage)->blkno < blkno);
 		buf = ReadBuffer(onerel, (*curpage)->blkno);
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		page = BufferGetPage(buf);
@@ -1959,11 +1958,11 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			Assert(keep_tuples >= 0);
 			for (i = 0; i < nindices; i++)
 				vacuum_index(&Nvacpagelist, Irel[i],
-							 vacrelstats->num_tuples, keep_tuples);
+							 vacrelstats->rel_tuples, keep_tuples);
 		}
 
 		/* clean moved tuples from last page in Nvacpagelist list */
-		if (vacpage->blkno == (BlockNumber) (blkno - 1) &&
+		if (vacpage->blkno == (blkno - 1) &&
 			vacpage->offsets_free > 0)
 		{
 			OffsetNumber unbuf[BLCKSZ/sizeof(OffsetNumber)];
@@ -2037,8 +2036,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 	if (blkno < nblocks)
 	{
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
-		Assert(blkno >= 0);
-		vacrelstats->num_pages = blkno; /* set new number of blocks */
+		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
 
 	if (Irel != (Relation *) NULL)		/* pfree index' allocations */
@@ -2063,7 +2061,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 {
 	Buffer		buf;
 	VacPage    *vacpage;
-	long		nblocks;
+	BlockNumber	relblocks;
+	int			nblocks;
 	int			i;
 
 	nblocks = vacuum_pages->num_pages;
@@ -2087,10 +2086,10 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 	 * tuples have correct on-row commit status on disk (see bufmgr.c's
 	 * comments for FlushRelationBuffers()).
 	 */
-	Assert(vacrelstats->num_pages >= vacuum_pages->empty_end_pages);
-	nblocks = vacrelstats->num_pages - vacuum_pages->empty_end_pages;
+	Assert(vacrelstats->rel_pages >= (BlockNumber) vacuum_pages->empty_end_pages);
+	relblocks = vacrelstats->rel_pages - vacuum_pages->empty_end_pages;
 
-	i = FlushRelationBuffers(onerel, nblocks);
+	i = FlushRelationBuffers(onerel, relblocks);
 	if (i < 0)
 		elog(ERROR, "VACUUM (vacuum_heap): FlushRelationBuffers returned %d",
 			 i);
@@ -2098,12 +2097,11 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)
 	{
-		elog(MESSAGE_LEVEL, "Rel %s: Pages: %lu --> %lu.",
+		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
 			 RelationGetRelationName(onerel),
-			 vacrelstats->num_pages, nblocks);
-		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
-		Assert(nblocks >= 0);
-		vacrelstats->num_pages = nblocks;		/* set new number of
+			 vacrelstats->rel_pages, relblocks);
+		relblocks = smgrtruncate(DEFAULT_SMGR, onerel, relblocks);
+		vacrelstats->rel_pages = relblocks;		/* set new number of
 												 * blocks */
 	}
 }
@@ -2148,12 +2146,12 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
  *
  */
 static void
-scan_index(Relation indrel, long num_tuples)
+scan_index(Relation indrel, double num_tuples)
 {
 	RetrieveIndexResult res;
 	IndexScanDesc iscan;
-	long		nitups;
-	int			nipages;
+	BlockNumber	nipages;
+	double		nitups;
 	VacRUsage	ru0;
 
 	init_rusage(&ru0);
@@ -2165,7 +2163,7 @@ scan_index(Relation indrel, long num_tuples)
 	while ((res = index_getnext(iscan, ForwardScanDirection))
 		   != (RetrieveIndexResult) NULL)
 	{
-		nitups++;
+		nitups += 1;
 		pfree(res);
 	}
 
@@ -2175,12 +2173,12 @@ scan_index(Relation indrel, long num_tuples)
 	nipages = RelationGetNumberOfBlocks(indrel);
 	vac_update_relstats(RelationGetRelid(indrel), nipages, nitups, false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %lu. %s",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f. %s",
 		 RelationGetRelationName(indrel), nipages, nitups,
 		 show_rusage(&ru0));
 
 	if (nitups != num_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%lu) IS NOT THE SAME AS HEAP' (%lu).\
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
 			 RelationGetRelationName(indrel), nitups, num_tuples);
 
@@ -2200,14 +2198,14 @@ scan_index(Relation indrel, long num_tuples)
  */
 static void
 vacuum_index(VacPageList vacpagelist, Relation indrel,
-			 long num_tuples, int keep_tuples)
+			 double num_tuples, int keep_tuples)
 {
 	RetrieveIndexResult res;
 	IndexScanDesc iscan;
 	ItemPointer heapptr;
 	int			tups_vacuumed;
-	long		num_index_tuples;
-	int			num_pages;
+	BlockNumber	num_pages;
+	double		num_index_tuples;
 	VacPage		vp;
 	VacRUsage	ru0;
 
@@ -2242,7 +2240,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 			index_delete(indrel, &res->index_iptr);
 		}
 		else
-			num_index_tuples++;
+			num_index_tuples += 1;
 
 		pfree(res);
 	}
@@ -2254,13 +2252,13 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	vac_update_relstats(RelationGetRelid(indrel),
 						num_pages, num_index_tuples, false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %lu: Deleted %u. %s",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %u. %s",
 		 RelationGetRelationName(indrel), num_pages,
 		 num_index_tuples - keep_tuples, tups_vacuumed,
 		 show_rusage(&ru0));
 
 	if (num_index_tuples != num_tuples + keep_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%lu) IS NOT THE SAME AS HEAP' (%lu).\
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
 		  RelationGetRelationName(indrel), num_index_tuples, num_tuples);
 
@@ -2333,7 +2331,7 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
  *		these are.
  */
 void
-vac_update_relstats(Oid relid, long num_pages, double num_tuples,
+vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 					bool hasindex)
 {
 	Relation	rd;
@@ -2361,8 +2359,8 @@ vac_update_relstats(Oid relid, long num_pages, double num_tuples,
 
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
+	pgcform->relpages = (int32) num_pages;
 	pgcform->reltuples = num_tuples;
-	pgcform->relpages = num_pages;
 	pgcform->relhasindex = hasindex;
 
 	/* invalidate the tuple in the cache and write the buffer */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.119 2001/06/22 19:16:20 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.120 2001/06/27 23:31:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -121,8 +121,8 @@ heapgettup(Relation relation,
 {
 	ItemId		lpp;
 	Page		dp;
-	int			page;
-	int			pages;
+	BlockNumber	page;
+	BlockNumber	pages;
 	int			lines;
 	OffsetNumber lineoff;
 	int			linesleft;
@@ -172,7 +172,7 @@ heapgettup(Relation relation,
 	/*
 	 * return null immediately if relation is empty
 	 */
-	if (!(pages = relation->rd_nblocks))
+	if ((pages = relation->rd_nblocks) == 0)
 	{
 		if (BufferIsValid(*buffer))
 			ReleaseBuffer(*buffer);
@@ -233,15 +233,8 @@ heapgettup(Relation relation,
 		{
 			page = ItemPointerGetBlockNumber(tid);		/* current page */
 		}
-		if (page < 0)
-		{
-			if (BufferIsValid(*buffer))
-				ReleaseBuffer(*buffer);
-			*buffer = InvalidBuffer;
-			tuple->t_datamcxt = NULL;
-			tuple->t_data = NULL;
-			return;
-		}
+
+		Assert(page < pages);
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
@@ -283,15 +276,7 @@ heapgettup(Relation relation,
 				OffsetNumberNext(ItemPointerGetOffsetNumber(tid));
 		}
 
-		if (page >= pages)
-		{
-			if (BufferIsValid(*buffer))
-				ReleaseBuffer(*buffer);
-			*buffer = InvalidBuffer;
-			tuple->t_datamcxt = NULL;
-			tuple->t_data = NULL;
-			return;
-		}
+		Assert(page < pages);
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
@@ -369,12 +354,11 @@ heapgettup(Relation relation,
 		 * and it's time to move to the next.
 		 */
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
-		page = (dir < 0) ? (page - 1) : (page + 1);
 
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if (page < 0 || page >= pages)
+		if ((dir < 0) ? (page == 0) : (page+1 >= pages))
 		{
 			if (BufferIsValid(*buffer))
 				ReleaseBuffer(*buffer);
@@ -383,6 +367,10 @@ heapgettup(Relation relation,
 			tuple->t_data = NULL;
 			return;
 		}
+
+		page = (dir < 0) ? (page - 1) : (page + 1);
+
+		Assert(page < pages);
 
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,

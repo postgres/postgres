@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.89 2001/06/22 00:04:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.90 2001/06/27 23:31:39 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -39,6 +39,13 @@
 #include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+
+
+/* This configuration variable is used to set the lock table size */
+int		max_locks_per_xact;		/* set by guc.c */
+
+#define NLOCKENTS(maxBackends)	(max_locks_per_xact * (maxBackends))
+
 
 static int WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		   LOCK *lock, HOLDER *holder);
@@ -1388,6 +1395,7 @@ int
 LockShmemSize(int maxBackends)
 {
 	int			size = 0;
+	long		max_table_size = NLOCKENTS(maxBackends);
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 	size += maxBackends * MAXALIGN(sizeof(PROC));		/* each MyProc */
@@ -1395,12 +1403,12 @@ LockShmemSize(int maxBackends)
 																 * lockMethodTable->ctl */
 
 	/* lockHash table */
-	size += hash_estimate_size(NLOCKENTS(maxBackends),
+	size += hash_estimate_size(max_table_size,
 							   SHMEM_LOCKTAB_KEYSIZE,
 							   SHMEM_LOCKTAB_DATASIZE);
 
 	/* holderHash table */
-	size += hash_estimate_size(NLOCKENTS(maxBackends),
+	size += hash_estimate_size(max_table_size,
 							   SHMEM_HOLDERTAB_KEYSIZE,
 							   SHMEM_HOLDERTAB_DATASIZE);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.50 2001/06/22 19:16:24 wieck Exp $
+ * $Id: rel.h,v 1.51 2001/06/27 23:31:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,9 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
 #include "rewrite/prs2lock.h"
-#include "storage/relfilenode.h"
+#include "storage/block.h"
 #include "storage/fd.h"
+#include "storage/relfilenode.h"
 
 /* added to prevent circular dependency.  bjm 1999/11/15 */
 extern char *get_temp_rel_by_physicalname(const char *relname);
@@ -105,9 +106,11 @@ typedef struct	PgStat_Info
 typedef struct RelationData
 {
 	File		rd_fd;			/* open file descriptor, or -1 if none */
-	RelFileNode rd_node;		/* relation file node */
-	int			rd_nblocks;		/* number of blocks in rel */
-	uint16		rd_refcnt;		/* reference count */
+	RelFileNode rd_node;		/* file node (physical identifier) */
+	BlockNumber	rd_nblocks;		/* number of blocks in rel */
+	BlockNumber	rd_targblock;	/* current insertion target block,
+								 * or InvalidBlockNumber */
+	int			rd_refcnt;		/* reference count */
 	bool		rd_myxactonly;	/* rel uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_indexfound;	/* true if rd_indexlist is valid */

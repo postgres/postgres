@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.139 2001/06/22 19:16:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.140 2001/06/27 23:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
  * NOTES
  *		The following code contains many undocumented hacks.  Please be
  *		careful....
- *
  */
 #include "postgres.h"
 
@@ -63,7 +62,6 @@
 
 /*
  *		hardcoded tuple descriptors.  see lib/backend/catalog/pg_attribute.h
- *
  */
 static FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
 static FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
@@ -76,7 +74,6 @@ static FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
  *
  *		Relations are looked up two ways, by name and by id,
  *		thus there are two hash tables for referencing them.
- *
  */
 static HTAB *RelationNameCache;
 static HTAB *RelationIdCache;
@@ -105,7 +102,6 @@ static bool criticalRelcachesBuilt = false;
 /*
  *		RelationBuildDescInfo exists so code can be shared
  *		between RelationIdGetRelation() and RelationNameGetRelation()
- *
  */
 typedef struct RelationBuildDescInfo
 {
@@ -139,7 +135,6 @@ typedef struct relnodecacheent
 
 /*
  *		macros to manipulate name cache and id cache
- *
  */
 #define RelationCacheInsert(RELATION)	\
 do { \
@@ -285,7 +280,6 @@ static List *insert_ordered_oid(List *list, Oid datum);
 /*
  *		RelationIdGetRelation() and RelationNameGetRelation()
  *						support functions
- *
  */
 
 
@@ -298,7 +292,6 @@ static List *insert_ordered_oid(List *list, Oid datum);
  *
  *		NB: the returned tuple has been copied into palloc'd storage
  *		and must eventually be freed with heap_freetuple.
- *
  */
 static HeapTuple
 ScanPgRelation(RelationBuildDescInfo buildinfo)
@@ -327,7 +320,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 
 	/*
 	 * form a scan key
-	 *
 	 */
 	switch (buildinfo.infotype)
 	{
@@ -352,7 +344,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 
 	/*
 	 * open pg_class and fetch a tuple
-	 *
 	 */
 	pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
 	pg_class_scan = heap_beginscan(pg_class_desc, 0, SnapshotNow, 1, &key);
@@ -360,7 +351,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 
 	/*
 	 * get set to return tuple
-	 *
 	 */
 	if (!HeapTupleIsValid(pg_class_tuple))
 		return_tuple = pg_class_tuple;
@@ -372,7 +362,6 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 		 * returned here without having the corresponding buffer pinned.
 		 * so when the buffer gets replaced, all hell breaks loose. this
 		 * bug is discovered and killed by wei on 9/27/91.
-		 *
 		 */
 		return_tuple = heap_copytuple(pg_class_tuple);
 	}
@@ -435,7 +424,6 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
  *		If 'relation' is NULL, allocate a new RelationData object.
  *		If not, reuse the given object (that path is taken only when
  *		we have to rebuild a relcache entry during RelationClearRelation).
- *
  */
 static Relation
 AllocateRelationDesc(Relation relation, Form_pg_class relp)
@@ -448,16 +436,15 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 
 	/*
 	 * allocate space for new relation descriptor, if needed
-	 *
 	 */
 	if (relation == NULL)
 		relation = (Relation) palloc(sizeof(RelationData));
 
 	/*
 	 * clear all fields of reldesc
-	 *
 	 */
 	MemSet((char *) relation, 0, sizeof(RelationData));
+	relation->rd_targblock = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_fd = -1;
@@ -471,7 +458,6 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	 * wouldn't know if the value is valid ... bottom line is that relacl
 	 * *cannot* be retrieved from the relcache.  Get it from the syscache
 	 * if you need it.
-	 *
 	 */
 	relationForm = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 
@@ -493,7 +479,6 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
  *
  *		Form the relation's tuple descriptor from information in
  *		the pg_attribute, pg_attrdef & pg_relcheck system cataloges.
- *
  */
 static void
 RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
@@ -574,7 +559,6 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * form a scan key
-	 *
 	 */
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_attribute_attrelid,
@@ -583,14 +567,12 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * open pg_attribute and begin a scan
-	 *
 	 */
 	pg_attribute_desc = heap_openr(AttributeRelationName, AccessShareLock);
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc, 0, SnapshotNow, 1, &key);
 
 	/*
 	 * add attribute data to relation->rd_att
-	 *
 	 */
 	need = relation->rd_rel->relnatts;
 
@@ -639,7 +621,6 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * end the scan and close the attribute relation
-	 *
 	 */
 	heap_endscan(pg_attribute_scan);
 	heap_close(pg_attribute_desc, AccessShareLock);
@@ -648,7 +629,6 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 * The attcacheoff values we read from pg_attribute should all be -1
 	 * ("unknown").  Verify this if assert checking is on.	They will be
 	 * computed when and if needed during tuple access.
-	 *
 	 */
 #ifdef USE_ASSERT_CHECKING
 	{
@@ -664,7 +644,6 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 * attribute: it must be zero.	This eliminates the need for special
 	 * cases for attnum=1 that used to exist in fastgetattr() and
 	 * index_getattr().
-	 *
 	 */
 	relation->rd_att->attrs[0]->attcacheoff = 0;
 
@@ -758,7 +737,6 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	 * The attcacheoff values we read from pg_attribute should all be -1
 	 * ("unknown").  Verify this if assert checking is on.	They will be
 	 * computed when and if needed during tuple access.
-	 *
 	 */
 #ifdef USE_ASSERT_CHECKING
 	for (i = 0; i < relation->rd_rel->relnatts; i++)
@@ -770,7 +748,6 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	 * attribute: it must be zero.	This eliminates the need for special
 	 * cases for attnum=1 that used to exist in fastgetattr() and
 	 * index_getattr().
-	 *
 	 */
 	relation->rd_att->attrs[0]->attcacheoff = 0;
 
@@ -791,7 +768,6 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
  * entry, because that keeps the update logic in RelationClearRelation()
  * manageable.	The other subsidiary data structures are simple enough
  * to be easy to free explicitly, anyway.
- *
  */
 static void
 RelationBuildRuleLock(Relation relation)
@@ -814,7 +790,7 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	rulescxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 0, /* minsize */
+									 0,			/* minsize */
 									 1024,		/* initsize */
 									 1024);		/* maxsize */
 	relation->rd_rulescxt = rulescxt;
@@ -822,7 +798,6 @@ RelationBuildRuleLock(Relation relation)
 	/*
 	 * form an array to hold the rewrite rules (the array is extended if
 	 * necessary)
-	 *
 	 */
 	maxlocks = 4;
 	rules = (RewriteRule **)
@@ -831,7 +806,6 @@ RelationBuildRuleLock(Relation relation)
 
 	/*
 	 * form a scan key
-	 *
 	 */
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_rewrite_ev_class,
@@ -840,7 +814,6 @@ RelationBuildRuleLock(Relation relation)
 
 	/*
 	 * open pg_rewrite and begin a scan
-	 *
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
 	pg_rewrite_scan = heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
@@ -908,14 +881,12 @@ RelationBuildRuleLock(Relation relation)
 
 	/*
 	 * end the scan and close the attribute relation
-	 *
 	 */
 	heap_endscan(pg_rewrite_scan);
 	heap_close(pg_rewrite_desc, AccessShareLock);
 
 	/*
 	 * form a RuleLock and insert into relation
-	 *
 	 */
 	rulelock = (RuleLock *) MemoryContextAlloc(rulescxt, sizeof(RuleLock));
 	rulelock->numLocks = numlocks;
@@ -930,7 +901,6 @@ RelationBuildRuleLock(Relation relation)
  *		Determine whether two RuleLocks are equivalent
  *
  *		Probably this should be in the rules code someplace...
- *
  */
 static bool
 equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
@@ -994,9 +964,9 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
  *		fields:
  *
  *	File				   rd_fd;		 open file descriptor
- *	int					   rd_nblocks;	 number of blocks in rel
+ *	BlockNumber			   rd_nblocks;	 number of blocks in rel
  *										 it will be set in ambeginscan()
- *	uint16				   rd_refcnt;	 reference count
+ *	int					   rd_refcnt;	 reference count
  *	Form_pg_am			   rd_am;		 AM tuple
  *	Form_pg_class		   rd_rel;		 RELATION tuple
  *	Oid					   rd_id;		 relation's object id
@@ -1022,20 +992,17 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * find the tuple in pg_class corresponding to the given relation id
-	 *
 	 */
 	pg_class_tuple = ScanPgRelation(buildinfo);
 
 	/*
 	 * if no such tuple exists, return NULL
-	 *
 	 */
 	if (!HeapTupleIsValid(pg_class_tuple))
 		return NULL;
 
 	/*
 	 * get information from the pg_class_tuple
-	 *
 	 */
 	relid = pg_class_tuple->t_data->t_oid;
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
@@ -1043,37 +1010,31 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/*
 	 * allocate storage for the relation descriptor, and copy
 	 * pg_class_tuple to relation->rd_rel.
-	 *
 	 */
 	relation = AllocateRelationDesc(oldrelation, relp);
 
 	/*
 	 * now we can free the memory allocated for pg_class_tuple
-	 *
 	 */
 	heap_freetuple(pg_class_tuple);
 
 	/*
 	 * initialize the relation's relation id (relation->rd_id)
-	 *
 	 */
 	RelationGetRelid(relation) = relid;
 
 	/*
 	 * initialize relation->rd_refcnt
-	 *
 	 */
 	RelationSetReferenceCount(relation, 1);
 
 	/*
 	 * normal relations are not nailed into the cache
-	 *
 	 */
 	relation->rd_isnailed = false;
 
 	/*
 	 * initialize the access method information (relation->rd_am)
-	 *
 	 */
 	relam = relation->rd_rel->relam;
 	if (OidIsValid(relam))
@@ -1082,13 +1043,11 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
-	 *
 	 */
 	RelationBuildTupleDesc(buildinfo, relation);
 
 	/*
 	 * Fetch rules and triggers that affect this relation
-	 *
 	 */
 	if (relation->rd_rel->relhasrules)
 		RelationBuildRuleLock(relation);
@@ -1105,14 +1064,12 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * initialize index strategy and support information for this relation
-	 *
 	 */
 	if (OidIsValid(relam))
 		IndexedAccessMethodInitialize(relation);
 
 	/*
 	 * initialize the relation lock manager information
-	 *
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
@@ -1144,7 +1101,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/*
 	 * insert newly created relation into proper relcaches, restore memory
 	 * context and return the new reldesc.
-	 *
 	 */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	RelationCacheInsert(relation);
@@ -1214,11 +1170,14 @@ formrdesc(char *relationName,
 	 * allocate new relation desc
 	 */
 	relation = (Relation) palloc(sizeof(RelationData));
-	MemSet((char *) relation, 0, sizeof(RelationData));
 
 	/*
-	 * don't open the unix file yet..
+	 * clear all fields of reldesc
 	 */
+	MemSet((char *) relation, 0, sizeof(RelationData));
+	relation->rd_targblock = InvalidBlockNumber;
+
+	/* make sure relation is marked as having no open file yet */
 	relation->rd_fd = -1;
 
 	/*
@@ -1329,7 +1288,6 @@ fixrdesc(char *relationName)
 
 	/*
 	 * find the tuple in pg_class corresponding to the given relation name
-	 *
 	 */
 	buildinfo.infotype = INFO_RELNAME;
 	buildinfo.i.info_name = relationName;
@@ -1343,7 +1301,6 @@ fixrdesc(char *relationName)
 
 	/*
 	 * find the pre-made relcache entry (better be there!)
-	 *
 	 */
 	relation = RelationNameCacheGetRelation(relationName);
 	if (!RelationIsValid(relation))
@@ -1353,7 +1310,6 @@ fixrdesc(char *relationName)
 	/*
 	 * and copy pg_class_tuple to relation->rd_rel. (See notes in
 	 * AllocateRelationDesc())
-	 *
 	 */
 	Assert(relation->rd_rel != NULL);
 	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
@@ -1378,7 +1334,6 @@ fixrdesc(char *relationName)
  *		NB: relation ref count is incremented if successful.
  *		Caller should eventually decrement count.  (Usually,
  *		that happens by calling RelationClose().)
- *
  */
 Relation
 RelationIdCacheGetRelation(Oid relationId)
@@ -1403,7 +1358,6 @@ RelationIdCacheGetRelation(Oid relationId)
  *		RelationNameCacheGetRelation
  *
  *		As above, but lookup by name.
- *
  */
 static Relation
 RelationNameCacheGetRelation(const char *relationName)
@@ -1457,7 +1411,6 @@ RelationNodeCacheGetRelation(RelFileNode rnode)
  *		NB: relation ref count is incremented, or set to 1 if new entry.
  *		Caller should eventually decrement count.  (Usually,
  *		that happens by calling RelationClose().)
- *
  */
 Relation
 RelationIdGetRelation(Oid relationId)
@@ -1467,14 +1420,12 @@ RelationIdGetRelation(Oid relationId)
 
 	/*
 	 * increment access statistics
-	 *
 	 */
 	IncrHeapAccessStat(local_RelationIdGetRelation);
 	IncrHeapAccessStat(global_RelationIdGetRelation);
 
 	/*
 	 * first try and get a reldesc from the cache
-	 *
 	 */
 	rd = RelationIdCacheGetRelation(relationId);
 	if (RelationIsValid(rd))
@@ -1483,7 +1434,6 @@ RelationIdGetRelation(Oid relationId)
 	/*
 	 * no reldesc in the cache, so have RelationBuildDesc() build one and
 	 * add it.
-	 *
 	 */
 	buildinfo.infotype = INFO_RELID;
 	buildinfo.i.info_id = relationId;
@@ -1496,7 +1446,6 @@ RelationIdGetRelation(Oid relationId)
  *		RelationNameGetRelation
  *
  *		As above, but lookup by name.
- *
  */
 Relation
 RelationNameGetRelation(const char *relationName)
@@ -1507,7 +1456,6 @@ RelationNameGetRelation(const char *relationName)
 
 	/*
 	 * increment access statistics
-	 *
 	 */
 	IncrHeapAccessStat(local_RelationNameGetRelation);
 	IncrHeapAccessStat(global_RelationNameGetRelation);
@@ -1515,7 +1463,6 @@ RelationNameGetRelation(const char *relationName)
 	/*
 	 * if caller is looking for a temp relation, substitute its real name;
 	 * we only index temp rels by their real names.
-	 *
 	 */
 	temprelname = get_temp_rel_by_username(relationName);
 	if (temprelname != NULL)
@@ -1523,7 +1470,6 @@ RelationNameGetRelation(const char *relationName)
 
 	/*
 	 * first try and get a reldesc from the cache
-	 *
 	 */
 	rd = RelationNameCacheGetRelation(relationName);
 	if (RelationIsValid(rd))
@@ -1532,7 +1478,6 @@ RelationNameGetRelation(const char *relationName)
 	/*
 	 * no reldesc in the cache, so have RelationBuildDesc() build one and
 	 * add it.
-	 *
 	 */
 	buildinfo.infotype = INFO_RELNAME;
 	buildinfo.i.info_name = (char *) relationName;
@@ -1556,7 +1501,6 @@ RelationNameGetRelation(const char *relationName)
  *	with aset.c's CLOBBER_FREED_MEMORY option, this provides a good test
  *	to catch references to already-released relcache entries.  It slows
  *	things down quite a bit, however.
- *
  */
 void
 RelationClose(Relation relation)
@@ -1577,7 +1521,6 @@ RelationClose(Relation relation)
  *	This function is especially for nailed relations.
  *	relhasindex/relfilenode could be changed even for
  *	nailed relations.
- *
  */
 static void
 RelationReloadClassinfo(Relation relation)
@@ -1616,7 +1559,6 @@ RelationReloadClassinfo(Relation relation)
  *	 usually used when we are notified of a change to an open relation
  *	 (one with refcount > 0).  However, this routine just does whichever
  *	 it's told to do; callers must determine which they want.
- *
  */
 static void
 RelationClearRelation(Relation relation, bool rebuildIt)
@@ -1631,7 +1573,10 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	 * a vacuum truncation.
 	 */
 	if (relation->rd_fd >= 0)
+	{
 		smgrclose(DEFAULT_SMGR, relation);
+		relation->rd_fd = -1;
+	}
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
@@ -1702,13 +1647,13 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		 * we save/restore rd_nblocks (in case it is a local relation)
 		 * *and* call RelationGetNumberOfBlocks (in case it isn't).
 		 */
-		uint16		old_refcnt = relation->rd_refcnt;
+		int			old_refcnt = relation->rd_refcnt;
 		bool		old_myxactonly = relation->rd_myxactonly;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
 		TriggerDesc *old_trigdesc = relation->trigdesc;
-		int			old_nblocks = relation->rd_nblocks;
+		BlockNumber	old_nblocks = relation->rd_nblocks;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1767,7 +1712,6 @@ RelationClearRelation(Relation relation, bool rebuildIt)
  * RelationFlushRelation
  *
  *	 Rebuild the relation if it is open (refcount > 0), else blow it away.
- *
  */
 static void
 RelationFlushRelation(Relation relation)
@@ -1801,7 +1745,6 @@ RelationFlushRelation(Relation relation)
  *		   RelationClearRelation + if the relation is myxactonly then
  *		   remove the relation descriptor from the newly created
  *		   relation list.
- *
  */
 void
 RelationForgetRelation(Oid rid)
@@ -1851,7 +1794,6 @@ RelationForgetRelation(Oid rid)
  *		safer to process them, so that our *own* SI update messages will
  *		have the same effects during CommandCounterIncrement for both
  *		local and nonlocal relations.
- *
  */
 void
 RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
@@ -1989,7 +1931,6 @@ RelationCacheAbortWalker(Relation *relationPtr, Datum dummy)
  *		RelationRegisterRelation -
  *		   register the Relation descriptor of a newly created relation
  *		   with the relation descriptor Cache.
- *
  */
 void
 RelationRegisterRelation(Relation relation)
@@ -2048,7 +1989,6 @@ RelationPurgeLocalRelation(bool xactCommitted)
  *		RelationCacheInitialize
  *
  *		This initializes the relation descriptor cache.
- *
  */
 
 #define INITRELCACHESIZE		400
@@ -2061,7 +2001,6 @@ RelationCacheInitialize(void)
 
 	/*
 	 * switch to cache memory context
-	 *
 	 */
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
@@ -2070,7 +2009,6 @@ RelationCacheInitialize(void)
 
 	/*
 	 * create global caches
-	 *
 	 */
 	MemSet(&ctl, 0, (int) sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
@@ -2093,7 +2031,6 @@ RelationCacheInitialize(void)
 	 * be in the cache.
 	 *
 	 * NB: see also the list in RelationCacheInitializePhase2().
-	 *
 	 */
 	formrdesc(RelationRelationName, Natts_pg_class, Desc_pg_class);
 	formrdesc(AttributeRelationName, Natts_pg_attribute, Desc_pg_attribute);
@@ -2115,7 +2052,6 @@ RelationCacheInitialize(void)
  *
  *		This completes initialization of the relcache after catcache
  *		is functional and we are able to actually load data from pg_class.
- *
  */
 void
 RelationCacheInitializePhase2(void)
@@ -2658,7 +2594,8 @@ init_irels(void)
 			return;
 		}
 
-		/* the file descriptor is not yet opened */
+		/* reset transient fields */
+		ird->rd_targblock = InvalidBlockNumber;
 		ird->rd_fd = -1;
 
 		ird->rd_node.tblNode = MyDatabaseId;

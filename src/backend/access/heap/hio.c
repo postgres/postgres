@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.39 2001/05/16 22:35:12 tgl Exp $
+ *	  $Id: hio.c,v 1.40 2001/06/27 23:31:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 */
 	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
-	if ((BlockNumber) relation->rd_nblocks > oldnblocks)
+	if (relation->rd_nblocks > oldnblocks)
 	{
 		/*
 		 * Someone else has indeed extended the relation recently.
