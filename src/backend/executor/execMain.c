@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.143 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.144 2001/06/22 19:16:22 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1671,7 +1671,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	{
 		Buffer		buffer;
 
-		heap_fetch(relation, SnapshotDirty, &tuple, &buffer);
+		heap_fetch(relation, SnapshotDirty, &tuple, &buffer, NULL);
 		if (tuple.t_data != NULL)
 		{
 			TransactionId xwait = SnapshotDirty->xmax;

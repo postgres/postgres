@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.80 2001/06/19 19:42:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.81 2001/06/22 19:16:23 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -980,7 +980,7 @@ SearchCatCache(CatCache *cache,
 		while ((indexRes = index_getnext(isd, ForwardScanDirection)))
 		{
 			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(relation, SnapshotNow, &tuple, &buffer);
+			heap_fetch(relation, SnapshotNow, &tuple, &buffer, isd);
 			pfree(indexRes);
 			if (tuple.t_data != NULL)
 			{

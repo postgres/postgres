@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.196 2001/06/13 21:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.197 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
+
+#include "pgstat.h"
 
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   char *unused, int unlen);
@@ -184,6 +186,11 @@ vacuum(VacuumStmt *vacstmt)
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "%s cannot run inside a BEGIN/END block", stmttype);
+
+	/*
+	 * Send info about dead objects to the statistics collector
+	 */
+	pgstat_vacuum_tabstat();
 
 	if (vacstmt->verbose)
 		MESSAGE_LEVEL = NOTICE;
@@ -2350,7 +2357,7 @@ vac_update_relstats(Oid relid, long num_pages, double num_tuples,
 	/* get the buffer cache tuple */
 	rtup.t_self = ctup->t_self;
 	ReleaseSysCache(ctup);
-	heap_fetch(rd, SnapshotNow, &rtup, &buffer);
+	heap_fetch(rd, SnapshotNow, &rtup, &buffer, NULL);
 
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.223 2001/06/20 18:07:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.224 2001/06/22 19:16:23 wieck Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -66,6 +66,7 @@
 #include "mb/pg_wchar.h"
 #endif
 
+#include "pgstat.h"
 
 /* ----------------
  *		global variables
@@ -1710,7 +1711,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.223 $ $Date: 2001/06/20 18:07:55 $\n");
+		puts("$Revision: 1.224 $ $Date: 2001/06/22 19:16:23 $\n");
 	}
 
 	/*
@@ -1726,6 +1727,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 										 ALLOCSET_DEFAULT_MINSIZE,
 										 ALLOCSET_DEFAULT_INITSIZE,
 										 ALLOCSET_DEFAULT_MAXSIZE);
+
+	/* ----------
+	 * Tell the statistics collector that we're alive and
+	 * to which database we belong.
+	 * ----------
+	 */
+	pgstat_bestart();
 
 	/*
 	 * POSTGRES main processing loop begins here
@@ -1812,10 +1820,23 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		 */
 		ReadyForQuery(whereToSendOutput);
 
+		/* ----------
+		 * Tell the statistics collector what we've collected
+		 * so far.
+		 * ----------
+		 */
+		pgstat_report_tabstat();
+
 		if (IsTransactionBlock())
+		{
 			set_ps_display("idle in transaction");
+			pgstat_report_activity("<IDLE> in transaction");
+		}
 		else
+		{
 			set_ps_display("idle");
+			pgstat_report_activity("<IDLE>");
+		}
 
 		/*
 		 * (2) deal with pending asynchronous NOTIFY from other backends,
@@ -1866,6 +1887,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				 * 'F' indicates a fastpath call.
 				 */
 			case 'F':
+				/* ----------
+				 * Tell the collector what we're doing
+				 * ----------
+				 */
+				pgstat_report_activity("<FASTPATH> function call");
+
 				/* start an xact for this function invocation */
 				start_xact_command();
 
@@ -1905,6 +1932,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 					 */
 					if (Show_query_stats)
 						ResetUsage();
+
+					pgstat_report_activity(parser_input->data);
 
 					pg_exec_query_string(parser_input->data,
 										 whereToSendOutput,

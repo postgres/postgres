@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.225 2001/06/21 16:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.226 2001/06/22 19:16:22 wieck Exp $
  *
  * NOTES
  *
@@ -104,6 +104,8 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "bootstrap/bootstrap.h"
+
+#include "pgstat.h"
 
 #define INVALID_SOCK	(-1)
 #define ARGV_SIZE	64
@@ -572,6 +574,14 @@ PostmasterMain(int argc, char *argv[])
 		postmaster_error("The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.");
 		ExitPostmaster(1);
 	}
+
+	/*
+	 * Initialize and startup the statistics collector process
+	 */
+	if (pgstat_init() < 0)
+		ExitPostmaster(1);
+	if (pgstat_start() < 0)
+		ExitPostmaster(1);
 
 	if (DebugLvl > 2)
 	{
@@ -1465,6 +1475,18 @@ reaper(SIGNAL_ARGS)
 	{
 		exitstatus = status.w_status;
 #endif
+		/*
+		 * Check if this child was the statistics collector. If
+		 * so, start a new one. 
+		 */
+		if (pgstat_ispgstat(pid))
+		{
+			fprintf(stderr, "%s: Performance collector exited with status %d\n",
+					progname, exitstatus);
+			pgstat_start();
+			continue;
+		}
+
 		if (ShutdownPID > 0)
 		{
 			if (pid != ShutdownPID)
@@ -1511,6 +1533,7 @@ reaper(SIGNAL_ARGS)
 			errno = save_errno;
 			return;
 		}
+
 		CleanupProc(pid, exitstatus);
 	}
 
@@ -1609,6 +1632,8 @@ CleanupProc(int pid,
 				GetRedoRecPtr();
 			}
 		}
+		else
+			pgstat_beterm(pid);
 
 		return;
 	}
@@ -1664,6 +1689,13 @@ CleanupProc(int pid,
 	{
 		CheckPointPID = 0;
 		checkpointed = 0;
+	}
+	else
+	{
+		/*
+		 * Tell the collector about backend termination
+		 */
+		pgstat_beterm(pid);
 	}
 
 	FatalError = true;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.61 2001/03/22 03:59:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.62 2001/06/22 19:16:23 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,8 @@ regprocin(PG_FUNCTION_ARGS)
 				tuple.t_self = indexRes->heap_iptr;
 				heap_fetch(hdesc, SnapshotNow,
 						   &tuple,
-						   &buffer);
+						   &buffer,
+						   sd);
 				pfree(indexRes);
 				if (tuple.t_data != NULL)
 				{

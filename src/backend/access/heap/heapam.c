@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.118 2001/06/09 18:16:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.119 2001/06/22 19:16:20 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,6 +45,7 @@
 #include "miscadmin.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
+#include "pgstat.h"
 
 
 XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
@@ -531,6 +532,10 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
 
+	pgstat_initstats(&r->pgstat_info, r);
+
+	pgstat_initstats(&r->pgstat_info, r);
+
 	return r;
 }
 
@@ -590,6 +595,12 @@ heap_openr_nofail(const char *relationName)
 	/* Under no circumstances will we return an index as a relation. */
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
+
+	if (RelationIsValid(r))
+		pgstat_initstats(&r->pgstat_info, r);
+
+	if (RelationIsValid(r))
+		pgstat_initstats(&r->pgstat_info, r);
 
 	return r;
 }
@@ -668,6 +679,8 @@ heap_beginscan(Relation relation,
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = (short) nkeys;
 
+	pgstat_initstats(&scan->rs_pgstat_info, relation);
+
 	/*
 	 * we do this here instead of in initscan() because heap_rescan also
 	 * calls initscan() and we don't want to allocate memory again
@@ -707,6 +720,8 @@ heap_rescan(HeapScanDesc scan,
 	 * reinitialize scan descriptor
 	 */
 	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
+
+	pgstat_reset_heap_scan(&scan->rs_pgstat_info);
 }
 
 /* ----------------
@@ -828,12 +843,17 @@ heap_getnext(HeapScanDesc scan, int backw)
 		}
 	}
 
+	pgstat_count_heap_scan(&scan->rs_pgstat_info);
+
 	/*
 	 * if we get here it means we have a new current scan tuple, so point
 	 * to the proper return buffer and return the tuple.
 	 */
 
 	HEAPDEBUG_3;				/* heap_getnext returning tuple */
+
+	if (scan->rs_ctup.t_data != NULL)
+		pgstat_count_heap_getnext(&scan->rs_pgstat_info);
 
 	return ((scan->rs_ctup.t_data == NULL) ? NULL : &(scan->rs_ctup));
 }
@@ -855,7 +875,8 @@ void
 heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
-		   Buffer *userbuf)
+		   Buffer *userbuf,
+		   IndexScanDesc iscan)
 {
 	ItemId		lp;
 	Buffer		buffer;
@@ -930,6 +951,11 @@ heap_fetch(Relation relation,
 		 * responsible for releasing the buffer.
 		 */
 		*userbuf = buffer;
+
+		if (iscan != NULL)
+			pgstat_count_heap_fetch(&iscan->xs_pgstat_info);
+		else
+			pgstat_count_heap_fetch(&relation->pgstat_info);
 	}
 }
 
@@ -1080,6 +1106,8 @@ heap_insert(Relation relation, HeapTuple tup)
 	/* NO ELOG(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 	RelationPutHeapTuple(relation, buffer, tup);
+
+	pgstat_count_heap_insert(&relation->pgstat_info);
 
 	/* XLOG stuff */
 	{
@@ -1268,6 +1296,8 @@ l1:
 	if (HeapTupleHasExtended(&tp))
 		heap_tuple_toast_attrs(relation, NULL, &(tp));
 #endif
+
+	pgstat_count_heap_delete(&relation->pgstat_info);
 
 	/*
 	 * Mark tuple for invalidation from system caches at next command
@@ -1527,6 +1557,8 @@ l2:
 		already_marked = false;
 		newbuf = buffer;
 	}
+
+	pgstat_count_heap_update(&relation->pgstat_info);
 
 	/*
 	 * At this point newbuf and buffer are both pinned and locked,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.17 2001/05/27 20:42:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.18 2001/06/22 19:16:22 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ TidNext(TidScan *node)
 		if (itemptr)
 		{
 			tuple->t_self = *(itemptr);
-			heap_fetch(heapRelation, snapshot, tuple, &buffer);
+			heap_fetch(heapRelation, snapshot, tuple, &buffer, NULL);
 		}
 		if (tuple->t_data != NULL)
 		{

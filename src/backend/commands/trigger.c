@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.92 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.93 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,7 +551,7 @@ RelationBuildTriggers(Relation relation)
 				break;
 
 			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(tgrel, SnapshotNow, &tuple, &buffer);
+			heap_fetch(tgrel, SnapshotNow, &tuple, &buffer, sd);
 			pfree(indexRes);
 			if (!tuple.t_data)
 				continue;
@@ -1394,7 +1394,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	if (ItemPointerIsValid(&(event->dte_oldctid)))
 	{
 		ItemPointerCopy(&(event->dte_oldctid), &(oldtuple.t_self));
-		heap_fetch(rel, SnapshotAny, &oldtuple, &oldbuffer);
+		heap_fetch(rel, SnapshotAny, &oldtuple, &oldbuffer, NULL);
 		if (!oldtuple.t_data)
 			elog(ERROR, "DeferredTriggerExecute: failed to fetch old tuple");
 	}
@@ -1402,7 +1402,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	if (ItemPointerIsValid(&(event->dte_newctid)))
 	{
 		ItemPointerCopy(&(event->dte_newctid), &(newtuple.t_self));
-		heap_fetch(rel, SnapshotAny, &newtuple, &newbuffer);
+		heap_fetch(rel, SnapshotAny, &newtuple, &newbuffer, NULL);
 		if (!newtuple.t_data)
 			elog(ERROR, "DeferredTriggerExecute: failed to fetch new tuple");
 	}
@@ -1861,7 +1861,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 					break;
 
 				tuple.t_self = indexRes->heap_iptr;
-				heap_fetch(tgrel, SnapshotNow, &tuple, &buffer);
+				heap_fetch(tgrel, SnapshotNow, &tuple, &buffer, sd);
 				pfree(indexRes);
 				if (!tuple.t_data)
 					continue;

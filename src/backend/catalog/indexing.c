@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.79 2001/06/16 18:59:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.80 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{
 		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer);
+		heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer, sd);
 		pfree(indexRes);
 		if (tuple.t_data != NULL)
 			break;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.19 2001/03/22 04:01:12 momjian Exp $
+ * $Id: hsearch.h,v 1.20 2001/06/22 19:16:24 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ typedef struct htab
 								 * pointer values */
 	SEG_OFFSET *dir;			/* 'directory' of segm starts */
 	void	   *(*alloc) (Size);/* memory allocator */
+	MemoryContext hcxt;			/* memory context if default allocator used */
 } HTAB;
 
 typedef struct hashctl
@@ -102,6 +103,7 @@ typedef struct hashctl
 	long	   *dir;			/* directory if allocated already */
 	long	   *hctl;			/* location of header information in shd
 								 * mem */
+	MemoryContext hcxt;			/* memory context to use for all allocations */
 } HASHCTL;
 
 /* Flags to indicate action for hctl */
@@ -113,6 +115,7 @@ typedef struct hashctl
 #define HASH_SHARED_MEM 0x040	/* Setting shared mem const */
 #define HASH_ATTACH		0x080	/* Do not initialize hctl */
 #define HASH_ALLOC		0x100	/* Setting memory allocator */
+#define HASH_CONTEXT	0x200	/* Setting explicit memory context */
 
 
 /* seg_alloc assumes that INVALID_INDEX is 0 */

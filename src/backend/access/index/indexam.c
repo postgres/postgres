@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.50 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.51 2001/06/22 19:16:21 wieck Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -70,6 +70,7 @@
 #include "access/heapam.h"
 #include "utils/relcache.h"
 
+#include "pgstat.h"
 
 /* ----------------------------------------------------------------
  *					macros used in index_ routines
@@ -135,6 +136,8 @@ index_open(Oid relationId)
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		elog(ERROR, "%s is not an index relation", RelationGetRelationName(r));
 
+	pgstat_initstats(&r->pgstat_info, r);
+
 	return r;
 }
 
@@ -156,6 +159,8 @@ index_openr(char *relationName)
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		elog(ERROR, "%s is not an index relation", RelationGetRelationName(r));
+
+	pgstat_initstats(&r->pgstat_info, r);
 
 	return r;
 }
@@ -256,6 +261,8 @@ index_beginscan(Relation relation,
 										 UInt16GetDatum(numberOfKeys),
 										 PointerGetDatum(key)));
 
+	pgstat_initstats(&scan->xs_pgstat_info, relation);
+
 	/*
 	 * We want to look up the amgettuple procedure just once per scan,
 	 * not once per index_getnext call.  So do it here and save
@@ -283,6 +290,8 @@ index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
 					 PointerGetDatum(scan),
 					 BoolGetDatum(scanFromEnd),
 					 PointerGetDatum(key));
+
+	pgstat_reset_index_scan(&scan->xs_pgstat_info);
 }
 
 /* ----------------
@@ -353,6 +362,8 @@ index_getnext(IndexScanDesc scan,
 
 	SCAN_CHECKS;
 
+	pgstat_count_index_scan(&scan->xs_pgstat_info);
+
 	/*
 	 * have the am's gettuple proc do all the work.
 	 * index_beginscan already set up fn_getnext.
@@ -362,6 +373,8 @@ index_getnext(IndexScanDesc scan,
 									  PointerGetDatum(scan),
 									  Int32GetDatum(direction)));
 
+	if (result != NULL)
+		pgstat_count_index_getnext(&scan->xs_pgstat_info);
 	return result;
 }
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.65 2001/03/22 03:59:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.66 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,8 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		LocalHeapTuple.t_self = ScanResult->heap_iptr;
 		LocalHeapTuple.t_datamcxt = NULL;
 		LocalHeapTuple.t_data = NULL;
-		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer);
+		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer,
+						ScanDesc);
 		if (LocalHeapTuple.t_data != NULL)
 		{
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.27 2001/06/09 18:16:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.28 2001/06/22 19:16:21 wieck Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -48,6 +48,7 @@
 #include "postgres.h"
 #include "access/genam.h"
 
+#include "pgstat.h"
 
 /* ----------------------------------------------------------------
  *		general access method routines
@@ -109,6 +110,8 @@ RelationGetIndexScan(Relation relation,
 
 	ItemPointerSetInvalid(&scan->currentItemData);
 	ItemPointerSetInvalid(&scan->currentMarkData);
+
+	pgstat_initstats(&scan->xs_pgstat_info, relation);
 
 	/*
 	 * mark cached function lookup data invalid; it will be set on first

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.103 2001/06/19 19:42:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.104 2001/06/22 19:16:21 wieck Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -175,6 +175,8 @@
 #include "utils/catcache.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"
+
+#include "pgstat.h"
 
 extern bool SharedBufferChanged;
 
@@ -1083,6 +1085,9 @@ CommitTransaction(void)
 
 	SharedBufferChanged = false;/* safest place to do it */
 
+	/* Count transaction commit in statistics collector */
+	pgstat_count_xact_commit();
+
 	/*
 	 * done with commit processing, set current transaction state back to
 	 * default
@@ -1162,6 +1167,9 @@ AbortTransaction(void)
 	CloseSequences();
 	AtEOXact_portals();
 	RecordTransactionAbort();
+
+	/* Count transaction abort in statistics collector */
+	pgstat_count_xact_rollback();
 
 	RelationPurgeLocalRelation(false);
 	AtEOXact_temp_relations(false);

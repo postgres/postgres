@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.60 2001/05/27 20:42:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.61 2001/06/22 19:16:22 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ IndexNext(IndexScan *node)
 		while ((result = index_getnext(scandesc, direction)) != NULL)
 		{
 			tuple->t_self = result->heap_iptr;
-			heap_fetch(heapRelation, snapshot, tuple, &buffer);
+			heap_fetch(heapRelation, snapshot, tuple, &buffer, scandesc);
 			pfree(result);
 
 			if (tuple->t_data != NULL)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.35 2001/03/22 03:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.36 2001/06/22 19:16:23 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,18 +82,13 @@ static int	init_htab(HTAB *hashp, int nelem);
  * ----------------
  */
 static MemoryContext DynaHashCxt = NULL;
+static MemoryContext CurrentDynaHashCxt = NULL;
 
 static void *
 DynaHashAlloc(Size size)
 {
-	if (!DynaHashCxt)
-		DynaHashCxt = AllocSetContextCreate(TopMemoryContext,
-											"DynaHash",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-
-	return MemoryContextAlloc(DynaHashCxt, size);
+	Assert(MemoryContextIsValid(CurrentDynaHashCxt));
+	return MemoryContextAlloc(CurrentDynaHashCxt, size);
 }
 
 #define MEM_ALLOC		DynaHashAlloc
@@ -133,6 +128,17 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	HHDR	   *hctl;
 	HTAB	   *hashp;
 
+	if (!DynaHashCxt)
+		DynaHashCxt = AllocSetContextCreate(TopMemoryContext,
+											"DynaHash",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+
+	if (flags & HASH_CONTEXT)
+		CurrentDynaHashCxt = info->hcxt;
+	else
+		CurrentDynaHashCxt = DynaHashCxt;
 
 	hashp = (HTAB *) MEM_ALLOC(sizeof(HTAB));
 	MemSet(hashp, 0, sizeof(HTAB));
@@ -157,6 +163,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		hashp->segbase = (char *) info->segbase;
 		hashp->alloc = info->alloc;
 		hashp->dir = (SEG_OFFSET *) info->dir;
+		hashp->hcxt = NULL;
 
 		/* hash table already exists, we're just attaching to it */
 		if (flags & HASH_ATTACH)
@@ -171,12 +178,13 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		hashp->alloc = MEM_ALLOC;
 		hashp->dir = NULL;
 		hashp->segbase = NULL;
+		hashp->hcxt = DynaHashCxt;
 
 	}
 
 	if (!hashp->hctl)
 	{
-		hashp->hctl = (HHDR *) hashp->alloc(sizeof(HHDR));
+			hashp->hctl = (HHDR *) hashp->alloc(sizeof(HHDR));
 		if (!hashp->hctl)
 			return 0;
 	}
@@ -218,6 +226,28 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	}
 	if (flags & HASH_ALLOC)
 		hashp->alloc = info->alloc;
+	else
+	{
+		if (flags & HASH_CONTEXT)
+		{
+			CurrentDynaHashCxt = AllocSetContextCreate(info->hcxt,
+											"DynaHashTable",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+			
+			hashp->hcxt = CurrentDynaHashCxt;
+		}
+		else
+		{
+			CurrentDynaHashCxt = AllocSetContextCreate(DynaHashCxt,
+											"DynaHashTable",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+			hashp->hcxt = CurrentDynaHashCxt;
+		}
+	}
 
 	if (init_htab(hashp, nelem))
 	{
@@ -305,6 +335,7 @@ init_htab(HTAB *hashp, int nelem)
 	/* Allocate a directory */
 	if (!(hashp->dir))
 	{
+		CurrentDynaHashCxt = hashp->hcxt;
 		hashp->dir = (SEG_OFFSET *)
 			hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
 		if (!hashp->dir)
@@ -414,6 +445,14 @@ hash_select_dirsize(long num_entries)
  * allocated individually, see bucket_alloc!!  Why doesn't it crash?
  * ANSWER: it probably does crash, but is never invoked in normal
  * operations...
+ *
+ * Thomas is right, it does crash. Therefore I changed the code
+ * to use a separate memory context which is a child of the DynaHashCxt
+ * by default. And the HASHCTL structure got extended with a hcxt
+ * field, where someone can specify an explicit context (giving new
+ * flag HASH_CONTEXT) and forget about hash_destroy() completely.
+ * The shmem operations aren't changed, but in shmem mode a destroy
+ * doesn't work anyway. Jan Wieck 03/2001.
  */
 
 void
@@ -421,6 +460,7 @@ hash_destroy(HTAB *hashp)
 {
 	if (hashp != NULL)
 	{
+#if 0
 		SEG_OFFSET	segNum;
 		SEGMENT		segp;
 		int			nsegs = hashp->hctl->nsegs;
@@ -429,14 +469,27 @@ hash_destroy(HTAB *hashp)
 					p,
 					q;
 		ELEMENT    *curr;
+#endif
 
 		/* cannot destroy a shared memory hash table */
 		Assert(!hashp->segbase);
 		/* allocation method must be one we know how to free, too */
 		Assert(hashp->alloc == MEM_ALLOC);
+		/* so this hashtable must have it's own context */
+		Assert(hashp->hcxt != NULL);
 
 		hash_stats("destroy", hashp);
 
+		/*
+		 * Free buckets, dir etc. by destroying the hash tables
+		 * memory context.
+		 */
+		MemoryContextDelete(hashp->hcxt);
+
+#if 0
+		/*
+		 * Dead code - replaced by MemoryContextDelete() above
+		 */
 		for (segNum = 0; nsegs > 0; nsegs--, segNum++)
 		{
 
@@ -453,6 +506,13 @@ hash_destroy(HTAB *hashp)
 			MEM_FREE((char *) segp);
 		}
 		MEM_FREE((char *) hashp->dir);
+#endif
+
+		/*
+		 * Free the HTAB and control structure, which are allocated
+		 * in the parent context (DynaHashCxt or the context given
+		 * by the caller of hash_create().
+		 */
 		MEM_FREE((char *) hashp->hctl);
 		MEM_FREE((char *) hashp);
 	}
@@ -876,6 +936,7 @@ dir_realloc(HTAB *hashp)
 	old_dirsize = hashp->hctl->dsize * sizeof(SEG_OFFSET);
 	new_dirsize = new_dsize * sizeof(SEG_OFFSET);
 
+	CurrentDynaHashCxt = hashp->hcxt;
 	old_p = (char *) hashp->dir;
 	p = (char *) hashp->alloc((Size) new_dirsize);
 
@@ -898,6 +959,7 @@ seg_alloc(HTAB *hashp)
 	SEGMENT		segp;
 	SEG_OFFSET	segOffset;
 
+	CurrentDynaHashCxt = hashp->hcxt;
 	segp = (SEGMENT) hashp->alloc(sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
 
 	if (!segp)
@@ -928,6 +990,7 @@ bucket_alloc(HTAB *hashp)
 	/* make sure its aligned correctly */
 	bucketSize = MAXALIGN(bucketSize);
 
+	CurrentDynaHashCxt = hashp->hcxt;
 	tmpBucket = (ELEMENT *) hashp->alloc(BUCKET_ALLOC_INCR * bucketSize);
 
 	if (!tmpBucket)

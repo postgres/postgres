@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.82 2001/03/22 03:59:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.83 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			if (chtup)
 			{
 				htup.t_self = btitem->bti_itup.t_tid;
-				heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
+				heap_fetch(heapRel, SnapshotDirty, &htup, &buffer, NULL);
 				if (htup.t_data == NULL)		/* YES! */
 					break;
 				/* Live tuple is being inserted, so continue checking */
@@ -219,7 +219,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 
 			cbti = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 			htup.t_self = cbti->bti_itup.t_tid;
-			heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
+			heap_fetch(heapRel, SnapshotDirty, &htup, &buffer, NULL);
 			if (htup.t_data != NULL)	/* it is a duplicate */
 			{
 				TransactionId xwait =

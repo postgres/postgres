@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.22 2001/05/07 00:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.23 2001/06/22 19:16:20 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -936,7 +936,7 @@ toast_delete_datum(Relation rel, Datum value)
 	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
 		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer);
+		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer, toastscan);
 		pfree(indexRes);
 
 		if (!toasttup.t_data)
@@ -1029,7 +1029,7 @@ toast_fetch_datum(varattrib *attr)
 	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
 		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer);
+		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer, toastscan);
 		pfree(indexRes);
 
 		if (toasttup.t_data == NULL)

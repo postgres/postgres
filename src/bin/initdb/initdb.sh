@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.127 2001/06/14 19:47:25 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.128 2001/06/22 19:16:23 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -641,6 +641,170 @@ echo "CREATE VIEW pg_stats AS \
 
 echo "REVOKE ALL on pg_statistic FROM public" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_all_tables AS \
+		SELECT \
+			C.oid AS relid, \
+			C.relname AS relname, \
+			pg_stat_get_numscans(C.oid) AS seq_scan, \
+			pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, \
+			sum(pg_stat_get_numscans(I.indexrelid)) AS idx_scan, \
+			sum(pg_stat_get_tuples_fetched(I.indexrelid)) AS idx_tup_fetch, \
+			pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, \
+			pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, \
+			pg_stat_get_tuples_deleted(C.oid) AS n_tup_del \
+		FROM pg_class C FULL OUTER JOIN \
+		     pg_index I ON C.oid = I.indrelid \
+		WHERE C.relkind = 'r' \
+		GROUP BY C.oid, C.relname;" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_sys_tables AS \
+		SELECT * FROM pg_stat_all_tables \
+		WHERE relname ~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_user_tables AS \
+		SELECT * FROM pg_stat_all_tables \
+		WHERE relname !~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_all_tables AS \
+		SELECT \
+			C.oid AS relid, \
+			C.relname AS relname, \
+			pg_stat_get_blocks_fetched(C.oid) - \
+				pg_stat_get_blocks_hit(C.oid) AS heap_blks_read, \
+			pg_stat_get_blocks_hit(C.oid) AS heap_blks_hit, \
+			sum(pg_stat_get_blocks_fetched(I.indexrelid) - \
+				pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_read, \
+			sum(pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_hit, \
+			pg_stat_get_blocks_fetched(T.oid) - \
+				pg_stat_get_blocks_hit(T.oid) AS toast_blks_read, \
+			pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit, \
+			pg_stat_get_blocks_fetched(X.oid) - \
+				pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read, \
+			pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit \
+		FROM pg_class C FULL OUTER JOIN \
+			pg_index I ON C.oid = I.indrelid FULL OUTER JOIN \
+			pg_class T ON C.reltoastrelid = T.oid FULL OUTER JOIN \
+			pg_class X ON C.reltoastidxid = X.oid \
+		WHERE C.relkind = 'r' \
+		GROUP BY C.oid, C.relname, T.oid, X.oid;" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_sys_tables AS \
+		SELECT * FROM pg_statio_all_tables \
+		WHERE relname ~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_user_tables AS \
+		SELECT * FROM pg_statio_all_tables \
+		WHERE relname !~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_all_indexes AS \
+		SELECT \
+			C.oid AS relid, \
+			I.oid AS indexrelid, \
+			C.relname AS relname, \
+			I.relname AS indexrelname, \
+			pg_stat_get_numscans(I.oid) AS idx_scan, \
+			pg_stat_get_tuples_returned(I.oid) AS idx_tup_read, \
+			pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch \
+		FROM pg_class C, \
+			pg_class I, \
+			pg_index X \
+		WHERE C.relkind = 'r' AND \
+			X.indrelid = C.oid AND \
+			X.indexrelid = I.oid;" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_sys_indexes AS \
+		SELECT * FROM pg_stat_all_indexes \
+		WHERE relname ~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_user_indexes AS \
+		SELECT * FROM pg_stat_all_indexes \
+		WHERE relname !~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_all_indexes AS \
+		SELECT \
+			C.oid AS relid, \
+			I.oid AS indexrelid, \
+			C.relname AS relname, \
+			I.relname AS indexrelname, \
+			pg_stat_get_blocks_fetched(I.oid) - \
+				pg_stat_get_blocks_hit(I.oid) AS idx_blks_read, \
+			pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit \
+		FROM pg_class C, \
+			pg_class I, \
+			pg_index X \
+		WHERE C.relkind = 'r' AND \
+			X.indrelid = C.oid AND \
+			X.indexrelid = I.oid;" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_sys_indexes AS \
+		SELECT * FROM pg_statio_all_indexes \
+		WHERE relname ~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_user_indexes AS \
+		SELECT * FROM pg_statio_all_indexes \
+		WHERE relname !~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_all_sequences AS \
+		SELECT \
+			C.oid AS relid, \
+			C.relname AS relname, \
+			pg_stat_get_blocks_fetched(C.oid) - \
+				pg_stat_get_blocks_hit(C.oid) AS blks_read, \
+			pg_stat_get_blocks_hit(C.oid) AS blks_hit \
+		FROM pg_class C \
+		WHERE C.relkind = 'S';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_sys_sequences AS \
+		SELECT * FROM pg_statio_all_sequences \
+		WHERE relname ~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_statio_user_sequences AS \
+		SELECT * FROM pg_statio_all_sequences \
+		WHERE relname !~ '^pg_';" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_activity AS \
+		SELECT \
+			D.oid AS datid, \
+			D.datname AS datname, \
+			pg_stat_get_backend_pid(S.backendid) AS procpid, \
+			pg_stat_get_backend_userid(S.backendid) AS usesysid, \
+			U.usename AS usename, \
+			pg_stat_get_backend_activity(S.backendid) AS current_query \
+		FROM pg_database D, \
+			(SELECT pg_stat_get_backend_idset() AS backendid) AS S, \
+			pg_shadow U \
+		WHERE pg_stat_get_backend_dbid(S.backendid) = D.oid AND \
+			pg_stat_get_backend_userid(S.backendid) = U.usesysid;" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "CREATE VIEW pg_stat_database AS \
+		SELECT \
+			D.oid AS datid, \
+			D.datname AS datname, \
+			pg_stat_get_db_numbackends(D.oid) AS numbackends, \
+			pg_stat_get_db_xact_commit(D.oid) AS xact_commit, \
+			pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback, \
+			pg_stat_get_db_blocks_fetched(D.oid) - \
+				pg_stat_get_db_blocks_hit(D.oid) AS blks_read, \
+			pg_stat_get_db_blocks_hit(D.oid) AS blks_hit \
+		FROM pg_database D;" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Loading pg_description."
 echo "COPY pg_description FROM STDIN" > $TEMPFILE

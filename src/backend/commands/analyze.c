@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.20 2001/06/13 21:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.21 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,7 +609,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 				goto pageloop;
 			}
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
-			heap_fetch(onerel, SnapshotNow, &targtuple, &targbuffer);
+			heap_fetch(onerel, SnapshotNow, &targtuple, &targbuffer, NULL);
 			if (targtuple.t_data != NULL)
 			{
 				/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.138 2001/06/18 03:35:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.139 2001/06/22 19:16:23 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2257,7 +2257,7 @@ AttrDefaultFetch(Relation relation)
 				break;
 
 			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(adrel, SnapshotNow, &tuple, &buffer);
+			heap_fetch(adrel, SnapshotNow, &tuple, &buffer, sd);
 			pfree(indexRes);
 			if (tuple.t_data == NULL)
 				continue;
@@ -2364,7 +2364,7 @@ RelCheckFetch(Relation relation)
 				break;
 
 			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(rcrel, SnapshotNow, &tuple, &buffer);
+			heap_fetch(rcrel, SnapshotNow, &tuple, &buffer, sd);
 			pfree(indexRes);
 			if (tuple.t_data == NULL)
 				continue;
@@ -2502,7 +2502,7 @@ RelationGetIndexList(Relation relation)
 			tuple.t_self = indexRes->heap_iptr;
 			tuple.t_datamcxt = NULL;
 			tuple.t_data = NULL;
-			heap_fetch(indrel, SnapshotNow, &tuple, &buffer);
+			heap_fetch(indrel, SnapshotNow, &tuple, &buffer, sd);
 			pfree(indexRes);
 			if (tuple.t_data == NULL)
 				continue;

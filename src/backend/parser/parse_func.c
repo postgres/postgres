@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.108 2001/05/19 01:57:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.109 2001/06/22 19:16:22 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,7 +752,7 @@ func_get_candidates(char *funcname, int nargs)
 			tuple.t_datamcxt = NULL;
 			tuple.t_data = NULL;
 			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer);
+			heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer, sd);
 			pfree(indexRes);
 			if (tuple.t_data != NULL)
 			{

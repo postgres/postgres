@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.8 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.9 2001/06/22 19:16:21 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ LargeObjectDrop(Oid loid)
 	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{
 		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(pg_largeobject, SnapshotNow, &tuple, &buffer);
+		heap_fetch(pg_largeobject, SnapshotNow, &tuple, &buffer, sd);
 		pfree(indexRes);
 		if (tuple.t_data != NULL)
 		{
@@ -165,7 +165,7 @@ LargeObjectExists(Oid loid)
 	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{
 		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(pg_largeobject, SnapshotNow, &tuple, &buffer);
+		heap_fetch(pg_largeobject, SnapshotNow, &tuple, &buffer, sd);
 		pfree(indexRes);
 		if (tuple.t_data != NULL)
 		{

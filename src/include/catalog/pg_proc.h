@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.194 2001/06/14 01:09:22 tgl Exp $
+ * $Id: pg_proc.h,v 1.195 2001/06/22 19:16:24 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2646,6 +2646,43 @@ DESCR("current user privilege on relation by relname");
 DATA(insert OID = 1927 (  has_table_privilege		   PGUID 12 f t f t 2 f 16 "26 25" 100 0 0 100	has_table_privilege_id - ));
 DESCR("current user privilege on relation by rel oid");
 
+
+DATA(insert OID = 1928 (  pg_stat_get_numscans			PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_numscans - ));
+DESCR("Statistics: Number of scans done for table/index");
+DATA(insert OID = 1929 (  pg_stat_get_tuples_returned	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_tuples_returned - ));
+DESCR("Statistics: Number of tuples read by seqscan");
+DATA(insert OID = 1930 (  pg_stat_get_tuples_fetched	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_tuples_fetched - ));
+DESCR("Statistics: Number of tuples fetched by idxscan");
+DATA(insert OID = 1931 (  pg_stat_get_tuples_inserted	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_tuples_inserted - ));
+DESCR("Statistics: Number of tuples inserted");
+DATA(insert OID = 1932 (  pg_stat_get_tuples_updated	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_tuples_updated - ));
+DESCR("Statistics: Number of tuples updated");
+DATA(insert OID = 1933 (  pg_stat_get_tuples_deleted	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_tuples_deleted - ));
+DESCR("Statistics: Number of tuples deleted");
+DATA(insert OID = 1934 (  pg_stat_get_blocks_fetched	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_blocks_fetched - ));
+DESCR("Statistics: Number of blocks fetched");
+DATA(insert OID = 1935 (  pg_stat_get_blocks_hit		PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_blocks_hit - ));
+DESCR("Statistics: Number of blocks found in cache");
+DATA(insert OID = 1936 (  pg_stat_get_backend_idset		PGUID 12 f t t t 0 t 23 "" 100 0 0 100	pg_stat_get_backend_idset - ));
+DESCR("Statistics: Currently active backend IDs");
+DATA(insert OID = 1937 (  pg_stat_get_backend_pid		PGUID 12 f t t t 1 f 23 "23" 100 0 0 100	pg_stat_get_backend_pid - ));
+DESCR("Statistics: PID of backend");
+DATA(insert OID = 1938 (  pg_stat_get_backend_dbid		PGUID 12 f t t t 1 f 26 "23" 100 0 0 100	pg_stat_get_backend_dbid - ));
+DESCR("Statistics: Database ID of backend");
+DATA(insert OID = 1939 (  pg_stat_get_backend_userid	PGUID 12 f t t t 1 f 26 "23" 100 0 0 100	pg_stat_get_backend_userid - ));
+DESCR("Statistics: User ID of backend");
+DATA(insert OID = 1940 (  pg_stat_get_backend_activity	PGUID 12 f t t t 1 f 25 "23" 100 0 0 100	pg_stat_get_backend_activity - ));
+DESCR("Statistics: Current query of backend");
+DATA(insert OID = 1941 (  pg_stat_get_db_numbackends	PGUID 12 f t t t 1 f 23 "26" 100 0 0 100	pg_stat_get_db_numbackends - ));
+DESCR("Statistics: Number of backends in database");
+DATA(insert OID = 1942 (  pg_stat_get_db_xact_commit	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_db_xact_commit - ));
+DESCR("Statistics: Transactions committed");
+DATA(insert OID = 1943 (  pg_stat_get_db_xact_rollback	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_db_xact_rollback - ));
+DESCR("Statistics: Transactions rolled back");
+DATA(insert OID = 1944 (  pg_stat_get_db_blocks_fetched	PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_db_blocks_fetched - ));
+DESCR("Statistics: Blocks fetched for database");
+DATA(insert OID = 1945 (  pg_stat_get_db_blocks_hit		PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_db_blocks_hit - ));
+DESCR("Statistics: Block found in cache for database");
 
 /*
  * prototypes for functions pg_proc.c

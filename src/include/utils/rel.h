@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.49 2001/06/19 21:28:41 tgl Exp $
+ * $Id: rel.h,v 1.50 2001/06/22 19:16:24 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,19 @@ typedef struct TriggerDesc
 	int			numtriggers;
 } TriggerDesc;
 
+
+/* ----------
+ * Same for the statistics collector data in Relation and scan data.
+ * ----------
+ */
+typedef struct	PgStat_Info
+{
+	void			   *tabentry;
+	bool				no_stats;
+	bool				heap_scan_counted;
+	bool				index_scan_counted;
+} PgStat_Info;
+
 /*
  * Here are the contents of a relation cache entry.
  */
@@ -110,6 +123,8 @@ typedef struct RelationData
 	IndexStrategy rd_istrat;	/* info needed if rel is an index */
 	RegProcedure *rd_support;
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
+
+	PgStat_Info	pgstat_info;
 } RelationData;
 
 typedef RelationData *Relation;
