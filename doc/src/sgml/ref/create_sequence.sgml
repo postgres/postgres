@@ -18,34 +18,28 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
-        [INCREMENT <replaceable class="parameter">increment</replaceable>]
-        [MINVALUE  <replaceable class="parameter">minvalue</replaceable>]
-        [MAXVALUE  <replaceable class="parameter">maxvalue</replaceable>]
-        [START     <replaceable class="parameter">start</replaceable>]
-        [CACHE     <replaceable class="parameter">cache</replaceable>]
-        [CYCLE]
+CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
+    [ INCREMENT <replaceable class="parameter">increment</replaceable> ]
+    [ MINVALUE  <replaceable class="parameter">minvalue</replaceable> ]
+    [ MAXVALUE  <replaceable class="parameter">maxvalue</replaceable> ]
+    [ START     <replaceable class="parameter">start</replaceable> ]
+    [ CACHE     <replaceable class="parameter">cache</replaceable> ]
+    [ CYCLE ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">seqname</replaceable></ReturnValue>
+	 <replaceable class="parameter">seqname</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -55,19 +49,19 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">increment</replaceable></ReturnValue>
+	 <replaceable class="parameter">increment</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
 	   The <option>INCREMENT <replaceable class="parameter">increment</replaceable></option> clause is optional. A positive value will make an
-	    ascending sequence, a negative one a descending sequence. The default value
-	    is 1.
+	    ascending sequence, a negative one a descending sequence.
+ The default value is one (1).
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">minvalue</replaceable></ReturnValue>
+	 <replaceable class="parameter">minvalue</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -81,7 +75,7 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">maxvalue</replaceable></ReturnValue>
+	 <replaceable class="parameter">maxvalue</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -95,7 +89,7 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">start</replaceable></ReturnValue>
+	 <replaceable class="parameter">start</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -107,15 +101,12 @@
 	   for ascending sequences and
 	   <replaceable class="parameter">maxvalue</replaceable>
 	   for descending ones.
-	   <comment>
-	    What happens if the user specifies start outside the range?
-	   </comment>
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">cache</replaceable></ReturnValue>
+	 <replaceable class="parameter">cache</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -128,7 +119,7 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>CYCLE</ReturnValue>
+	 CYCLE
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -146,14 +137,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </variablelist>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -163,6 +151,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -179,11 +168,41 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>ERROR:  amcreate: '<replaceable class="parameter">       seqname</replaceable>' relation already exists</ReturnValue>
+<ReturnValue>ERROR:  amcreate: '<replaceable class="parameter">seqname</replaceable>' relation already exists</ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
 	   If the sequence specified already exists.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+<ReturnValue>ERROR:  DefineSequence: START value (<replaceable class="parameter">start</replaceable>) can't be > MAXVALUE (<replaceable class="parameter">maxvalue</replaceable>)</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   If the specified starting value is out of range.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+<ReturnValue>ERROR:  DefineSequence: START value (<replaceable class="parameter">start</replaceable>) can't be < MINVALUE (<replaceable class="parameter">minvalue</replaceable>)</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   If the specified starting value is out of range.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+<ReturnValue>ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">minvalue</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">maxvalue</replaceable>)</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   If the minimum and maximum values are inconsistant.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -196,7 +215,7 @@
  
  <REFSECT1 ID="R1-SQL-CREATESEQUENCE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-11</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -210,18 +229,20 @@
   </PARA>
   <para>
    After the sequence is created, you may use the function
-   <function>nextval()</function> with the
-   sequence name as the argument to get a new number from the sequence.
-   The function <function>currval('<replaceable class="parameter">sequence_name</replaceable>')</function> may be used
+<function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
+to get a new number from the sequence.
+The function
+<function>currval('<replaceable class="parameter">seqname</replaceable>')</function>
+ may be used
    to determine the number returned by the last call to
-   <function>nextval()</function> for the
-   specified sequence in the current session.
+<function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
+ for the specified sequence in the current session.
   </para>
   
   <para>
    Use a query like
    <programlisting>
-    SELECT * FROM sequence_name;
+SELECT * FROM sequence_name;
    </programlisting>
    to get the parameters of a sequence.
   </para>
@@ -232,7 +253,7 @@
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
@@ -243,7 +264,7 @@
    <para>
     Each backend uses its own cache to store allocated numbers.
     Numbers that are cached but not used in the current session will be
-    lost.
+    lost, resulting in "holes" in the sequence.
    </para>
   </REFSECT2>
  </refsect1>
@@ -253,25 +274,25 @@
    Usage
   </TITLE>
   <PARA>
-   Create an ascending sequence called serial, starting at 101:
+   Create an ascending sequence called <literal>serial</literal>, starting at 101:
   </PARA>
   <ProgramListing>
-   CREATE SEQUENCE serial START 101;
+CREATE SEQUENCE serial START 101;
   </ProgramListing>
   <para>
    Select the next number from this sequence
    <programlisting>
-    SELECT NEXTVAL ('serial');
+SELECT NEXTVAL ('serial');
     
-    nextval
-    -------
-        114
+nextval
+-------
+    114
    </programlisting>
   </para>
   <para>
    Use this sequence in an INSERT:
    <programlisting>
-    INSERT INTO distributors VALUES (NEXTVAL ('serial'),'nothing');
+INSERT INTO distributors VALUES (NEXTVAL('serial'),'nothing');
    </programlisting>
   </para>
  </REFSECT1>
@@ -281,18 +302,20 @@
    Compatibility
   </TITLE>
   <PARA>
-   CREATE SEQUENCE statement is a PostgreSQL language extension.
+   <command>CREATE SEQUENCE</command> is a <productname>Postgres</productname>
+ language extension.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no CREATE SEQUENCE statement on SQL92.
+    There is no <command>CREATE SEQUENCE</command> statement
+ in <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

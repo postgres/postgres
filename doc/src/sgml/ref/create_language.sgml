@@ -15,29 +15,22 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-09</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE [TRUSTED] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname</replaceable>'
-        HANDLER <replaceable class="parameter">call_handler</replaceable>
-        LANCOMPILER '<replaceable class="parameter">comment</replaceable>'
+CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+    HANDLER <replaceable class="parameter">call_handler</replaceable>
+    LANCOMPILER '<replaceable class="parameter">comment</replaceable>'
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -99,14 +92,12 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -116,6 +107,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -152,22 +144,25 @@
  
  <REFSECT1 ID="R1-SQL-CREATELANGUAGE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-09</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   Using <command>CREATE LANGUAGE</command>, a PostgreSQL user can register
-   a new language with PostgreSQL. Subsequently, functions and
+   Using <command>CREATE LANGUAGE</command>, a 
+<productname>Postgres</productname> user can register
+   a new language with <productname>Postgres</productname>. 
+Subsequently, functions and
    trigger procedures can be defined in this new language.
-   The user must have the PostgreSQL superuser privilege to
+   The user must have the <productname>Postgres</productname>
+ superuser privilege to
    register a new language.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Writing PL handlers
@@ -175,9 +170,9 @@
    <PARA>
     The call handler for a procedural language must be written
     in a compiler language such as 'C' and registered with
-    PostgreSQL as a function taking no arguments and returning
-    opaque type.
-    <comment>What does `opaque type' mean?</comment>
+    <productname>Postgres</productname> as a function taking
+ no arguments and returning the
+    <type>opaque</type> type, a placeholder for unspecified or undefined types..
     This prevents the call handler from being
     called directly as a function from queries.
    </para>
@@ -214,11 +209,11 @@
     It's up to the call handler to fetch the
     <filename>pg_proc</filename> entry and
     to analyze the argument and return types of the called
-    procedure. The <function>AS</function> clause from the
+    procedure. The AS clause from the
     <command>CREATE FUNCTION</command> of
     the procedure will be found in the <literal>prosrc</literal>
     attribute of the
-    <filename>pg_proc</filename> entry. This may be the
+    <filename>pg_proc</filename> table entry. This may be the
     source text in the procedural
     language itself (like for PL/Tcl), a pathname to a
     file or anything else that tells the call handler what to
@@ -227,43 +222,40 @@
    
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    Use <citerefentry>
-     <refentrytitle>CREATE FUNCTION</refentrytitle>
-    </citerefentry>
+    Use <command>CREATE FUNCTION</command>
     to create a function.
    </para>
    <para>
-    Use <citerefentry>
-     <refentrytitle>DROP LANGUAGE</refentrytitle>
-    </citerefentry>  to drop procedural languages.
+    Use <command>DROP LANGUAGE</command>  to drop procedural languages.
    </para>
    <para>
     Refer to the table <filename>pg_language</filename>
     for further information:
-    <programlisting>
-     <computeroutput>
-     Table    = pg_language
-     +--------------------------+--------------------------+-------+
-     |          Field           |          Type            | Length|
-     +--------------------------+--------------------------+-------+
-     | lanname                  | name                     |    32 |
-     | lancompiler              | text                     |   var |
-     +--------------------------+--------------------------+-------+
+<programlisting>
+<computeroutput>
+Table    = pg_language
++--------------------------+--------------------------+-------+
+|          Field           |          Type            | Length|
++--------------------------+--------------------------+-------+
+| lanname                  | name                     |    32 |
+| lancompiler              | text                     |   var |
++--------------------------+--------------------------+-------+
 
-     lanname |lancompiler   
-     --------+--------------
-     internal|n/a           
-     lisp    |/usr/ucb/liszt
-     C       |/bin/cc       
-     sql     |postgres
-     </computeroutput>
-    </programlisting>
+lanname |lancompiler   
+--------+--------------
+internal|n/a           
+lisp    |/usr/ucb/liszt
+C       |/bin/cc       
+sql     |postgres
+</computeroutput>
+</programlisting>
+
    </para>
   </refsect2>
  </refsect1>
@@ -274,11 +266,9 @@
   </TITLE>
   <PARA>
    Since the call handler for a procedural language must be
-   registered with PostgreSQL in the 'C' language, it inherits
-   all the restrictions of 'C' functions.
-   <comment>
-    What are these restrictions?
-   </comment>
+   registered with <productname>Postgres</productname> in the 'C' language,
+ it inherits
+   all the capabilities and restrictions of 'C' functions.
   </para>
  </refsect1>
  <REFSECT1 ID="R1-SQL-CREATELANGUAGE-5">
@@ -340,22 +330,21 @@
   </ProgramListing>
   <para>
    Only a few thousand lines of code have to be added instead
-   of the dots to complete the PL call handler. See <citerefentry>
-    <refentrytitle>CREATE FUNCTION</refentrytitle>
-   </citerefentry> for information on how to compile
+   of the dots to complete the PL call handler. 
+See <command>CREATE FUNCTION</command> for information on how to compile
    it into a loadable module
 .</para>
   <para>
    The following commands then register the sample procedural
-   language.</para>
+   language:
   <programlisting>
-   CREATE FUNCTION plsample_call_handler () RETURNS opaque
-        AS '/usr/local/pgsql/lib/plsample.so'
-        LANGUAGE 'C';
+CREATE FUNCTION plsample_call_handler () RETURNS opaque
+    AS '/usr/local/pgsql/lib/plsample.so'
+    LANGUAGE 'C';
         
-   CREATE PROCEDURAL LANGUAGE 'plsample'
-        HANDLER plsample_call_handler
-        LANCOMPILER 'PL/Sample';
+CREATE PROCEDURAL LANGUAGE 'plsample'
+    HANDLER plsample_call_handler
+    LANCOMPILER 'PL/Sample';
   </programlisting>
  </REFSECT1>
  
@@ -364,18 +353,18 @@
    Compatibility
   </TITLE>
   <PARA>
-   CREATE LANGUAGE is a PostgreSQL extension.
+   CREATE LANGUAGE is a <productname>Postgres</productname> extension.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-5">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no CREATE LANGUAGE statement in SQL92.
+    There is no <command>CREATE LANGUAGE</command> statement in SQL92.
    </PARA>
   </refsect2>
  </refsect1>

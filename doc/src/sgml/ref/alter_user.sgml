@@ -14,26 +14,26 @@
     </REFPURPOSE>
    <REFSYNOPSISDIV>
     <REFSYNOPSISDIVINFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-08</DATE>
     </REFSYNOPSISDIVINFO>
     <synopsis>
-     ALTER USER <replaceable class="PARAMETER">username</replaceable>
-     [WITH PASSWORD <replaceable class="PARAMETER">password</replaceable>]
-     [CREATEDB | NOCREATEDB]
-     [CREATEUSER | NOCREATEUSER]
-     [IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
-     [VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>']
+ALTER USER <replaceable class="PARAMETER">username</replaceable>
+    [ WITH PASSWORD <replaceable class="PARAMETER">password</replaceable> ]
+    [ CREATEDB | NOCREATEDB ]
+    [ CREATEUSER | NOCREATEUSER ]
+    [ IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
+    [ VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' ]
     </synopsis>
     
     <REFSECT2 ID="R2-SQL-ALTERUSER-1">
      <REFSECT2INFO>
-      <DATE>1998-04-15</DATE>
+      <DATE>1998-09-08</DATE>
      </REFSECT2INFO>
      <TITLE>
       Inputs
      </TITLE>
      <PARA>
-      Refer to CREATE USER statement for a detailed description of each
+      Refer to <command>CREATE USER</command> for a detailed description of each
       clause.
      </para>
       <VARIABLELIST>
@@ -47,6 +47,7 @@
 	 </PARA>
 	</LISTITEM>
        </VARLISTENTRY>
+
        <VARLISTENTRY>
 	<TERM>
 	 <REPLACEABLE CLASS="PARAMETER"> password </REPLACEABLE>
@@ -57,6 +58,7 @@
 	 </PARA>
 	</LISTITEM>
        </VARLISTENTRY>
+
        <VARLISTENTRY>
 	<TERM>
 	 <REPLACEABLE CLASS="PARAMETER"> groupname </REPLACEABLE>
@@ -67,13 +69,15 @@
 	 </PARA>
 	</LISTITEM>
        </VARLISTENTRY>
+
        <VARLISTENTRY>
 	<TERM>
 	 <REPLACEABLE CLASS="PARAMETER"> abstime </REPLACEABLE>
 	</TERM>
 	<LISTITEM>
 	 <PARA>
-	  The date (and, optionally, the time) at which this user's access is to be terminated.
+	  The date (and, optionally, the time)
+ at which this user's access is to be terminated.
 	 </PARA>
 	</LISTITEM>
        </VARLISTENTRY>
@@ -82,7 +86,7 @@
     
     <REFSECT2 ID="R2-SQL-ALTERUSER-2">
      <REFSECT2INFO>
-      <DATE>1998-04-15</DATE>
+      <DATE>1998-09-08</DATE>
      </REFSECT2INFO>
      <TITLE>
       Outputs
@@ -92,14 +96,14 @@
      <VARIABLELIST>
       <VARLISTENTRY>
        <TERM>
-	<ReturnValue>status</ReturnValue>
+	<replaceable>status</replaceable>
        </TERM>
        <LISTITEM>
 	<PARA>
 	 <VARIABLELIST>
 	  <VARLISTENTRY>
 	   <TERM>
-	    <ReturnValue>ALTER USER</ReturnValue>
+	    <returnvalue>ALTER USER</returnvalue>
 	   </TERM>
 	   <LISTITEM>
 	    <PARA>
@@ -110,7 +114,7 @@
 	  
 	  <VARLISTENTRY>
 	   <TERM>
-	    <ReturnValue>ERROR: alterUser: user "username" does not exist</ReturnValue>
+	    <returnvalue>ERROR: alterUser: user "username" does not exist</returnvalue>
 	   </TERM>
 	   <LISTITEM>
 	    <PARA>
@@ -129,16 +133,18 @@
    
    <REFSECT1 ID="R1-SQL-ALTERUSER-1">
     <REFSECT1INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-08</DATE>
     </REFSECT1INFO>
     <TITLE>
      Description
     </TITLE>
     <PARA>
-     ALTER USER is used to change the attributes of a user's
-     PostgreSQL account. Please note that it is not possible
+     <command>ALTER USER</command> is used to change the attributes of a user's
+     <productname>Postgres</productname> account.
+ Please note that it is not possible
      to alter a user's "usesysid" via the alter user
-     statement. Also, it is only possible for the PostgreSQL
+     statement. Also, it is only possible for the
+ <productname>Postgres</productname>
      user or any user with read and modify permissions on
      "pg_shadow" to alter user passwords.
     </PARA>
@@ -150,21 +156,24 @@
     
     <REFSECT2 ID="R2-SQL-ALTERUSER-3">
      <REFSECT2INFO>
-      <DATE>1998-04-15</DATE>
+      <DATE>1998-09-08</DATE>
      </REFSECT2INFO>
      <TITLE>
       Notes
      </TITLE>
      <PARA>
-      ALTER USER statement is a PostgreSQL language extension.
+      <command>ALTER USER</command> statement
+ is a <productname>Postgres</productname>
+ language extension.
      </para>
      <para>
-      Refer to CREATE/DROP USER statements to create/remove an user
+      Refer to <command>CREATE/DROP USER</command>
+  to create or remove a user
       account.
      </para>
      <para>
-      At the current release (6.3.2), the IN GROUP clause is parsed
-      but has no effect.  When it is fully implemented, it is
+      In the current release (v6.4), the IN GROUP clause is parsed
+      but has no affect.  When it is fully implemented, it is
       intended to modify the pg_group relation.
      </para>
     </REFSECT2>
@@ -178,13 +187,13 @@
      Change a user password
     </PARA>
     <ProgramListing>
-     ALTER USER davide WITH PASSWORD hu8jmn3;
+ALTER USER davide WITH PASSWORD hu8jmn3;
     </ProgramListing>
     <para>
      Change a user's valid until date
     </para>
     <ProgramListing>
-     ALTER USER manuel VALID UNTIL 'Jan 31 2030';
+ALTER USER manuel VALID UNTIL 'Jan 31 2030';
     </ProgramListing>
     <para>
      Change a user's valid until date, specifying that his
@@ -192,19 +201,19 @@ authorisation should expire at midday on 4th May 1998 using
 the time zone which is one hour ahead of UTC
     </para>
     <ProgramListing>
-     ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
+ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
     </ProgramListing>
     <para>
      Give a user the ability to create other users and new databases.
     </para>
     <programlisting>
-     ALTER USER miriam CREATEUSER CREATEDB;
+ALTER USER miriam CREATEUSER CREATEDB;
     </programlisting>
     <para>
      Place a user in two groups
     </para>
     <programlisting>
-     ALTER USER miriam IN GROUP sales, payroll;
+ALTER USER miriam IN GROUP sales, payroll;
     </programlisting>
    </REFSECT1>
    
@@ -217,13 +226,15 @@ the time zone which is one hour ahead of UTC
     
     <REFSECT2 ID="R2-SQL-ALTERUSER-4">
      <REFSECT2INFO>
-      <DATE>1998-04-15</DATE>
+      <DATE>1998-09-08</DATE>
      </REFSECT2INFO>
      <TITLE>
       SQL92
      </TITLE>
      <PARA>
-      There is no ALTER USER statement in SQL92.  The standard leaves
+      There is no <command>ALTER USER</command> statement in
+ <acronym>SQL92</acronym>.
+  The standard leaves
       the definition of users to the implementation.
      </PARA>
    </refsect1>

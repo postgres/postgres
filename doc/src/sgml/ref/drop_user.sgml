@@ -158,7 +158,7 @@
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>DROP USER</command> statement on SQL92.
+    There is no <command>DROP USER</command> statement in SQL92.
    </PARA>
   </refsect2>
  </refsect1>

@@ -84,8 +84,8 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   This message occurs if it is impossible to drop the index
-	   because it does not exist.
+	   This message occurs if "<REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>"
+ is not an index in the database.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -121,7 +121,7 @@
    </PARA>
    <PARA>
     Refer to the <command>CREATE INDEX</command> statement for 
-    inforamtion on how to create indexes.
+    information on how to create indices.
    </PARA>
   </REFSECT2>
   
@@ -152,7 +152,9 @@
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>DROP INDEX</command> statement on SQL92.
+SQL92 defines commands by which to access a generic relational database.
+Indices are an implementation-dependent feature and hence
+there is no <command>DROP INDEX</command> statement in SQL92.
    </PARA>
   </refsect2>
  </refsect1>

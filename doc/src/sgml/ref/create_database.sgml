@@ -17,7 +17,7 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [WITH LOCATION = '<replaceable class="parameter">dbpath</replaceable>']
+CREATE DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [ WITH LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATEDATABASE-1">
@@ -28,13 +28,6 @@
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -62,9 +55,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </VARIABLELIST>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
 
   <REFSECT2 ID="R2-SQL-CREATEDATABASE-2">
@@ -79,6 +69,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+	  <replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -142,10 +133,11 @@ There was a problem with creating the required directory; this operation will
     Notes
    </TITLE>
    <PARA>
-    <command>CREATE DATABASE</command> statement is a Postgres language extension.
+    <command>CREATE DATABASE</command> is a <productname>Postgres</productname>
+ language extension.
    </PARA>
    <para>
-    Refer to <command>DROP DATABASE</command> statement to remove a database.
+    Use <command>DROP DATABASE</command> to remove a database.
    </para>
   </REFSECT2>
   
@@ -157,26 +149,26 @@ There was a problem with creating the required directory; this operation will
    To create a new database:
   </PARA>
   <ProgramListing>
-   <prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
+<prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
   </ProgramListing>
   <PARA>
    To create a new database in an alternate area <filename>~/private_db</filename>:
   </PARA>
   <ProgramListing>
-   <prompt>$</prompt> <userinput>mkdir private_db</userinput>
-   <prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
-   <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
+<prompt>$</prompt> <userinput>mkdir private_db</userinput>
+<prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
+<computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
 
-   <prompt>$</prompt> <userinput>psql olly</userinput>
-   <computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
-     Please read the file COPYRIGHT for copyright terms of POSTGRESQL
+<prompt>$</prompt> <userinput>psql olly</userinput>
+<computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
+  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
 
-      type \? for help on slash commands
-      type \q to quit
-      type \g or terminate with semicolon to execute query
-    You are currently connected to the database: template1
+   type \? for help on slash commands
+   type \q to quit
+   type \g or terminate with semicolon to execute query
+ You are currently connected to the database: template1
 
-    <prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
+<prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
     <computeroutput>CREATEDB</computeroutput>
   </ProgramListing>
  </REFSECT1>
@@ -186,8 +178,12 @@ There was a problem with creating the required directory; this operation will
    Bugs
   </TITLE>
   <PARA>
-   There are security and data integrity issues involved with using alternate database locations
-   specified with absolute path names. See the Administrator's Guide for more information.
+   There are security and data integrity issues
+ involved with using alternate database locations
+   specified with absolute path names, and by default
+only an environment variable known to the backend may be
+specified for an alternate location.
+ See the Administrator's Guide for more information.
   </PARA>
  </refsect1>
 
@@ -207,7 +203,6 @@ Not sure if the dump/reload would guarantee that the alternate data area gets re
    Compatibility
   </TITLE>
   <PARA>
-  </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATEDATABASE-4">
    <REFSECT2INFO>
@@ -217,7 +212,7 @@ Not sure if the dump/reload would guarantee that the alternate data area gets re
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>CREATE DATABASE</command> statement on SQL92.
+    There is no <command>CREATE DATABASE</command> statement in SQL92.
    </PARA>
    <para>
     The equivalent command in standard SQL is <command>CREATE SCHEMA</command>.

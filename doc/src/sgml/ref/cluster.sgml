@@ -15,15 +15,15 @@
  
  <REFSYNOPSISDIV>
  <REFSYNOPSISDIVINFO>
-  <DATE>1998-04-15</DATE>
+  <DATE>1998-09-08</DATE>
  </REFSYNOPSISDIVINFO>
  <SYNOPSIS>
-  CLUSTER <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+CLUSTER <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
  </SYNOPSIS>
  
  <REFSECT2 ID="R2-SQL-CLUSTER-1">
   <REFSECT2INFO>
-  <DATE>1998-04-15</DATE>
+  <DATE>1998-09-08</DATE>
   </REFSECT2INFO>
   <TITLE>
   Inputs
@@ -33,9 +33,7 @@
   <VARIABLELIST>
   <VARLISTENTRY>
    <TERM>
-   <ReturnValue>
     <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE>
-   </ReturnValue>
    </TERM>
    <LISTITEM>
    <PARA>
@@ -45,9 +43,7 @@
   </VARLISTENTRY>
   <VARLISTENTRY>
    <TERM>
-   <ReturnValue>
     <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-   </ReturnValue>
    </TERM>
    <LISTITEM>
    <PARA>
@@ -60,7 +56,7 @@
  
  <REFSECT2 ID="R2-SQL-CLUSTER-2">
   <REFSECT2INFO>
-  <DATE>1998-04-15</DATE>
+  <DATE>1998-09-08</DATE>
   </REFSECT2INFO>
   <TITLE>
   Outputs
@@ -70,13 +66,14 @@
   <VARIABLELIST>
   <VARLISTENTRY>
    <TERM>
+<replaceable>status</replaceable>
    </TERM>
    <LISTITEM>
    <PARA>
     <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	 <ReturnValue>CLUSTER</ReturnValue>
+	 <returnvalue>CLUSTER</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	 <PARA>
@@ -86,11 +83,11 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	 <ReturnValue>ERROR: relation &lt;<REPLACEABLE CLASS="PARAMETER">tablerelation_number</REPLACEABLE>&gt; inherits "invoice"</ReturnValue>
+<returnvalue>ERROR: relation &lt;<REPLACEABLE CLASS="PARAMETER">tablerelation_number</REPLACEABLE>&gt; inherits "invoice"</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	 <PARA>
-	  ???
+
 	  <comment>
 	  This is not documented anywhere. It seems not to be possible to
 	  cluster a table that is inherited.
@@ -100,11 +97,11 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	 <ReturnValue>ERROR: Relation x does not exist!</ReturnValue>
+	 <returnvalue>ERROR: Relation x does not exist!</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	 <PARA>
-	  ???
+
 	  <comment>
 	  The relation complained of was not shown in the error message,
 	  which contained a random string instead of the relation name.
@@ -122,27 +119,37 @@
  
  <REFSECT1 ID="R1-SQL-CLUSTER-1">
  <REFSECT1INFO>
-  <DATE>1998-04-15</DATE>
+  <DATE>1998-09-08</DATE>
  </REFSECT1INFO>
  <TITLE>
   Description
  </TITLE>
  <PARA>
-  This command instructs PostgreSQL to cluster the class specified
+  <command>CLUSTER</command> instructs <productname>Postgres</productname> 
+to cluster the class specified
   by <replaceable class="parameter">classname</replaceable> approximately
   based on the index specified by
   <replaceable class="parameter">indexname</replaceable>. The index must
-  already have been defined on <replaceable class="parameter">classname</replaceable>.
+  already have been defined on 
+<replaceable class="parameter">classname</replaceable>.
  </PARA>
  <para>
   When a class is clustered, it is physically reordered
   based on the index information. The clustering is static.
   In other words, as the class is updated, the changes are
   not clustered. No attempt is made to keep new instances or
-  updated tuples clustered.  If he wishes, the user can
+  updated tuples clustered.  If one wishes, one can
   recluster manually by issuing the command again.
  </para>
  
+ <REFSECT2 ID="R2-SQL-CLUSTER-3">
+  <REFSECT2INFO>
+  <DATE>1998-09-08</DATE>
+  </REFSECT2INFO>
+  <TITLE>
+  Notes
+  </TITLE>
+  <PARA>
  <para>
   The table is actually copied to a temporary table in index
   order, then renamed back to the original name.  For this
@@ -155,16 +162,15 @@
   within a table, the actual order of the data in the heap
   table is unimportant. However, if you tend to access some
   data more than others, and there is an index that groups
-  them together, you will benefit from using the CLUSTER
-  command.
+  them together, you will benefit from using <command>CLUSTER</command>.
  </para>
  
  <para> 
-  Another place CLUSTER is good is in cases where you use an
+  Another place <command>CLUSTER</command> is helpful is in cases where you use an
   index to pull out several rows from a table. If you are
   requesting a range of indexed values from a table, or a
   single indexed value that has multiple rows that match,
-  CLUSTER will help because once the index identifies the
+  <command>CLUSTER</command> will help because once the index identifies the
   heap page for the first row that matches, all other rows
   that match are probably already on the same heap page,
   saving disk accesses and speeding up the query.
@@ -172,25 +178,27 @@
  
  <para>
   There are two ways to cluster data. The first is with the
-  CLUSTER command, which reorders the original table with
+  <command>CLUSTER</command> command, which reorders the original table with
   the ordering of the index you specify. This can be slow
   on large tables because the rows are fetched from the heap
   in index order, and if the heap table is unordered, the
   entries are on random pages, so there is one disk page
-  retrieved for every row moved. PostgreSQL has a cache,
+  retrieved for every row moved. <productname>Postgres</productname> has a cache,
   but the majority of a big table will not fit in the cache.
  </para>
  
  <para> 
-  Another way is to use
-  <programlisting>SELECT ... INTO TABLE temp FROM ... ORDER BY ...</programlisting>
-  This uses the PostgreSQL sorting code in
+  Another way to cluster data is to use
+<programlisting>
+SELECT ... INTO TABLE <replaceable class="parameter">temp</replaceable> FROM ... ORDER BY ...
+</programlisting>
+  This uses the <productname>Postgres</productname> sorting code in
   ORDER BY to match the index, and is much faster for
   unordered data. You then drop the old table, use
-<programlisting>ALTER TABLE RENAME</programlisting>
- to rename 'temp' to the old name, and
-  recreate the b bindexes. The only problem is that oids
-  will not be preserved. From then on, CLUSTER should be
+<command>ALTER TABLE/RENAME</command>
+ to rename <replaceable class="parameter">temp</replaceable> to the old name, and
+  recreate any indexes. The only problem is that <acronym>OID</acronym>s
+  will not be preserved. From then on, <command>CLUSTER</command> should be
   fast because most of the heap data has already been
   ordered, and the existing index is used.
  </para>
@@ -204,7 +212,7 @@
   Cluster the employees relation on the basis of its salary attribute
  </PARA>
  <ProgramListing>
-  CLUSTER emp_ind ON emp
+CLUSTER emp_ind ON emp
  </ProgramListing>
  </REFSECT1>
  
@@ -217,13 +225,13 @@
  
  <REFSECT2 ID="R2-SQL-CLUSTER-4">
   <REFSECT2INFO>
-  <DATE>1998-04-15</DATE>
+  <DATE>1998-09-08</DATE>
   </REFSECT2INFO>
   <TITLE>
   SQL92
   </TITLE>
   <PARA>
-  There is no CLUSTER statement in SQL92.
+  There is no <command>CLUSTER</command> statement in SQL92.
   </PARA>
  </refsect2>
  </refsect1>

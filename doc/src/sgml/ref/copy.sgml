@@ -14,69 +14,112 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   COPY [BINARY] <replaceable class="parameter">table</replaceable> [WITH OIDS]
-         TO|FROM '<replaceable class="parameter">filename</replaceable>'|stdin|stdout
-         [USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>']
+COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+    FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
+    [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+    TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
+    [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-COPY-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">table</replaceable></ReturnValue>
+BINARY
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   The name of a table.
+   Changes the behavior of field formatting, forcing all data to be
+   stored or read as binary objects rather than as text.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">delimiter</replaceable></ReturnValue>
+<replaceable class="parameter">table</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   A character that delimits fields.
+The name of an existing table.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+WITH OIDS
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+Copies the internal unique object id (OID) for each row.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+<replaceable class="parameter">filename</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+The absolute Unix pathname of the input or output file.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+<filename>stdin</filename>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+Specifies that input comes from a pipe or terminal.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+<filename>stdout</filename>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+Specifies that output goes to a pipe or terminal.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <replaceable class="parameter">delimiter</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   A character that delimits the input or output fields.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-COPY-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
-      Status
+	  <Replaceable>status</Replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -110,84 +153,82 @@
  
  <REFSECT1 ID="R1-SQL-COPY-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   <command>COPY</command> moves data between PostgreSQL tables and
-   standard Unix files. The keyword <function>BINARY</function>
-   changes the behavior of field formatting, as described
-   below. <replaceable class="parameter">Table</replaceable> is the
-   name of an existing table.  The keyword <function>WITH
-   OIDS</function> copies the internal unique object id (OID) for each
-   row.  <replaceable class="parameter">Filename</replaceable> is the
-   absolute Unix pathname of the file.  In place of a filename, the
-   keywords <function>stdin</function> and <function>stdout</function>
-   can be used, so that input to <command>COPY</command> can be written
-   by a libpq application and output from <command>COPY</command> can
-   be read by a libpq application.
-  </para>
-  <para>
-   The <function>BINARY</function> keyword will force all data to be
-   stored/read as binary objects rather than as ASCII text.  It is
-   somewhat faster than the normal copy command, but is not
-   generally portable, and the files generated are somewhat larger,
-   although this factor is highly dependent on the data itself.  By
-   default, an ASCII copy uses a tab (\t) character as a delimiter.
-   The delimiter may also be changed to any other single character
-   with the keyword <function>USING DELIMITERS</function>.  Characters
-   in data fields which happen to match the delimiter character will
-   be quoted.
-  </para>
+   <command>COPY</command> moves data between
+ <productname>Postgres</productname> tables and
+   standard Unix files. 
+
+<para>
+<command>COPY</command> instructs
+ the <productname>Postgres</productname> backend
+to directly read from or write to a file. The file must be directly visible to
+the backend and the name must be specified from the viewpoint of the backend.
+If <filename>stdin</filename> or <filename>stdout</filename> are specified, data flows through the client frontend to 
+the backend.
 
   <REFSECT2 ID="R2-SQL-COPY-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
+  <para>
+   The BINARY keyword will force all data to be
+   stored/read as binary objects rather than as text.  It is
+   somewhat faster than the normal copy command, but is not
+   generally portable, and the files generated are somewhat larger,
+   although this factor is highly dependent on the data itself.  By
+   default, a text copy uses a tab ("\t") character as a delimiter.
+   The delimiter may also be changed to any other single character
+   with the keyword phrase USING DELIMITERS.  Characters
+   in data fields which happen to match the delimiter character will
+   be quoted.
+  </para>
+
   <para>
     You must have select access on any table whose values are read by
     <command>COPY</command>, and either insert or update access to a
     table into which values are being inserted by <command>COPY</command>.
     The backend also needs appropriate Unix permissions for any file read
     or written by <command>COPY</command>.
-<comment>
-Is this right? The man page talked of read, write and append access, which
-is neither SQL nor Unix terminology.
-</comment>
   </para>
   <para>
-    The keyword <function>USING DELIMITERS</function> is inaptly
-    named, since only a single character may be specified.  (If a
-    group of characters is specified, only the first character is
-    used.)
-   </para>
-   <para>
-    WARNING: do not confuse <command>COPY</command> with the
-    <command>psql</command> instruction <command>\copy</command>.
-   </para>
+    The keyword phrase USING DELIMITERS specifies a single character
+to be used for all delimiters between columns. If multiple characters
+are specified in the delimiter string,  only the first character is
+    used.
+
+   <tip>
+<para>
+    Do not confuse <command>COPY</command> with the
+    <application>psql</application> instruction <command>\copy</command>.
+</tip>
+
   </REFSECT2>
  </refsect1>
+
  <refsect1 ID="R1-SQL-COPY-2">
   <refsect1info>
    <date>1998-05-04</date>
   </refsect1info>
-  <title>Format of output files</title>
+  <title>File Formats</title>
   <refsect2>
    <refsect2info>
     <date>1998-05-04</date>
    </refsect2info>
-   <title>ASCII copy format</title>
+   <title>Text Format</title>
    <para>
-    When <command>COPY</command> is used without <function>BINARY</function>,
-    the file generated will have each instance on a single line, with each
-    attribute separated by the delimiter character.  Embedded
+    When <command>COPY TO</command> is used without the BINARY option,
+    the file generated will have each row (instance) on a single line, with each
+    column (attribute) separated by the delimiter character.  Embedded
     delimiter characters will be preceded by a backslash character
-    (\).  The attribute values themselves are strings generated by the
+    ("\").  The attribute values themselves are strings generated by the
     output function associated with each attribute type.  The output
     function for a type should not try to generate the backslash
     character; this will be handled by <command>COPY</command> itself.
@@ -195,29 +236,31 @@ is neither SQL nor Unix terminology.
    <para>
     The actual format for each instance is
     <programlisting>
-     &lt;attr1&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr2&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;...&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr<replaceable class="parameter">n</replaceable>&gt;&lt;newline&gt;</programlisting>
+&lt;attr1&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr2&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;...&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr<replaceable class="parameter">n</replaceable>&gt;&lt;newline&gt;
+</programlisting>
     The oid is placed on the beginning of the line
-     if <function>WITH OIDS</function> is specified.
+     if WITH OIDS is specified.
    </para>
    <para>
     If <command>COPY</command> is sending its output to standard
-    output instead of a file, it will send a backslash(\) and a period
-    (.)  followed immediately by a newline, on a separate line,
+    output instead of a file, it will send a backslash("\") and a period
+    (".")  followed immediately by a newline, on a separate line,
     when it is done.  Similarly, if <command>COPY</command> is reading
-    from standard input, it will expect a backslash (\) and a period
-    (.) followed by a newline, as the first three characters on a
-    line, to denote end-of-file.  However, <command>COPY</command>
+    from standard input, it will expect a backslash ("\") and a period
+    (".") followed by a newline, as the first three characters on a
+    line to denote end-of-file.  However, <command>COPY</command>
     will terminate (followed by the backend itself) if a true EOF is
-    encountered.
+    encountered before this special end-of-file pattern is found.
    </para>
    <para>
-    The backslash character has special meaning.  NULL attributes are
-    output as \N.  A literal backslash character is output as two
-    consecutive backslashes.  A literal tab character is represented
+    The backslash character has other special meanings.  NULL attributes are
+    output as "\N".  A literal backslash character is output as two
+    consecutive backslashes ("\\").  A literal tab character is represented
     as a backslash and a tab.  A literal newline character is
-    represented as a backslash and a newline.  When loading ASCII data
-    not generated by PostgreSQL, you will need to convert backslash
-    characters (\) to double-backslashes (\\) to ensure that they are loaded
+    represented as a backslash and a newline.  When loading text data
+    not generated by <acronym>Postgres</acronym>,
+ you will need to convert backslash
+    characters ("\") to double-backslashes ("\\") to ensure that they are loaded
     properly.
    </para>
   </refsect2>
@@ -225,7 +268,7 @@ is neither SQL nor Unix terminology.
    <refsect2info>
     <date>1998-05-04</date>
    </refsect2info>
-   <title>Binary copy format</title>
+   <title>Binary Format</title>
    <para>
     In the case of <command>COPY BINARY</command>, the first four
     bytes in the file will be the number of instances in the file.  If
@@ -270,16 +313,8 @@ is neither SQL nor Unix terminology.
        <entry>number of null attributes</entry>
       </row>
       <row>
-       <entry>[uint32</entry>
-       <entry>attribute number of first null attribute, counting from 0</entry>
-      </row>
-      <row>
-       <entry>...</entry>
-       <entry>...</entry>
-      </row>
-      <row>
-       <entry>uint32</entry>
-       <entry>attribute number of last null attribute]</entry>
+       <entry>[uint32,...,uint32]</entry>
+       <entry>attribute numbers of attributes, counting from 0</entry>
       </row>
       <row>
        <entry>-</entry>
@@ -294,12 +329,12 @@ is neither SQL nor Unix terminology.
    <refsect2info>
     <date>1998-05-04</date>
    </refsect2info>
-   <title>Alignment of binary data</title>
+   <title>Alignment of Binary Data</title>
    <para>
     On Sun-3s, 2-byte attributes are aligned on two-byte boundaries,
     and all larger attributes are aligned on four-byte boundaries.
     Character attributes are aligned on single-byte boundaries.  On
-    other machines, all attributes larger than 1 byte are aligned on
+    most other machines, all attributes larger than 1 byte are aligned on
     four-byte boundaries.  Note that variable length attributes are
     preceded by the attribute's length; arrays are simply contiguous
     streams of the array element type.
@@ -313,19 +348,22 @@ is neither SQL nor Unix terminology.
    Usage
   </TITLE>
   <PARA>
-To copy a table to standard output, using | as a delimiter
+The following example copies a table to standard output,
+ using a vertical bar ("|") as the field
+ delimiter:
   </PARA>
   <ProgramListing>
- COPY country TO stdout USING DELIMITERS '|';
+COPY country TO <filename>stdout</filename> USING DELIMITERS '|';
   </ProgramListing>
   <PARA>
-   To copy data from a Unix file into a table:
+   To copy data from a Unix file into a table "country":
   </PARA>
   <ProgramListing>
-   COPY country FROM '/usr1/proj/bray/sql/country_data';
+COPY country FROM '/usr1/proj/bray/sql/country_data';
   </ProgramListing>
   <PARA>
-   A sample of data suitable for copying into a table from <filename>stdin</filename> (so it
+   Here is a sample of data suitable for copying into a table
+ from <filename>stdin</filename> (so it
 has the termination sequence on the last line):
   </PARA>
   <ProgramListing>
@@ -338,10 +376,13 @@ has the termination sequence on the last line):
    \.
   </ProgramListing>
   <PARA>
-   The same data, output in binary format on a Linux Intel machine.
-   The data is shown after filtering through the Unix utility <command>od -c</command>. The table has
-   three fields; the first is <classname>char(2)</classname> and the second is <classname>text</classname>. All the
-   rows have a null value in the third field).  Notice how the <classname>char(2)</classname>
+   The same data, output in binary format on a Linux/i586 machine.
+   The data is shown after filtering through
+ the Unix utility <command>od -c</command>. The table has
+   three fields; the first is <classname>char(2)</classname>
+ and the second is <classname>text</classname>. All the
+   rows have a null value in the third field.
+  Notice how the <classname>char(2)</classname>
    field is padded with nulls to four bytes and the text field is
    preceded by its length:
   </PARA>
@@ -359,32 +400,32 @@ has the termination sequence on the last line):
   </ProgramListing>
  </refsect1>
  
- <refsect1 ID="R1-SQL-COPY-4">
-  <title>See also</title>
-  <para>
-   insert(l), create table(l), vacuum(l), libpq.
-  </para>
- </refsect1>
-
  <refsect1 ID="R1-SQL-COPY-5">
   <title>Bugs</title>
   <para>
    <command>COPY</command> stops operation at the first error.  This
-   should not lead to problems in the event of a copy from, but the
-   target relation will, of course, be partially modified in a copy
-   to.  The <command>VACUUM</command> query should be used to clean up
+   should not lead to problems in the event of
+ a <command>COPY FROM</command>, but the
+   target relation will, of course, be partially modified in a
+<command>COPY TO</command>.
+  The <command>VACUUM</command> query should be used to clean up
    after a failed copy.
   </para>
   <para>
-   Because Postgres' current directory is not the same as the user's
-   working directory, the result of copying to a file "foo" (without
+   Because the Postgres backend's current working directory
+ is not usually the same as the user's
+   working directory, the result of copying to a file
+ "<filename>foo</filename>" (without
    additional path information) may yield unexpected results for the
-   naive user.  In this case, "foo" will wind up in $PGDATA/foo.  In
-   general, the full pathname should be used when specifying files to
+   naive user.  In this case, <filename>foo</filename>
+ will wind up in <filename>$PGDATA/foo</filename>.  In
+   general, the full pathname as it would appear to the backend server machine
+should be used when specifying files to
    be copied.
   </para>
   <para>
-   Files used as arguments to the copy command must reside on or be
+   Files used as arguments to <command>COPY</command>
+must reside on or be
    accessible to the database server machine by being either on
    local disks or on a networked file system.
   </para>
@@ -405,13 +446,13 @@ has the termination sequence on the last line):
   
   <REFSECT2 ID="R2-SQL-COPY-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no COPY statement in SQL92.
+    There is no <command>COPY</command> statement in SQL92.
    </PARA>
   </refsect2>
  </refsect1>

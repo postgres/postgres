@@ -18,9 +18,9 @@ Modifies table properties
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    [*] ADD [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
+    [ * ] ADD [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
 ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    [*] RENAME [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> TO <REPLACEABLE CLASS="PARAMETER">newcolumn</REPLACEABLE>
+    [ * ] RENAME [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> TO <REPLACEABLE CLASS="PARAMETER">newcolumn</REPLACEABLE>
 ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
     RENAME TO <REPLACEABLE CLASS="PARAMETER">newtable</REPLACEABLE>
 </SYNOPSIS>
@@ -103,14 +103,14 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<ReturnValue>status</ReturnValue>
+<replaceable>status</replaceable>
 </TERM>
 <LISTITEM>
 <PARA>
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<ReturnValue>ALTER</ReturnValue>
+<returnvalue>ALTER</returnvalue>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -121,7 +121,7 @@ Outputs
 
 <VARLISTENTRY>
 <TERM>
-<ReturnValue>NEW</ReturnValue>
+<returnvalue>NEW</returnvalue>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -156,9 +156,9 @@ Outputs
 Description
 </TITLE>
 <PARA>
-   ALTER TABLE changes the definition of an existing table.
+   <command>ALTER TABLE</command> changes the definition of an existing table.
    The new columns and their types are specified in the same style
-   and with the the same restrictions as in CREATE TABLE.
+   and with the the same restrictions as in <command>CREATE TABLE</command>.
    The RENAME clause causes the name of a table or column
    to change without changing any of the data contained in
    the affected table. Thus, the table or column will
@@ -179,17 +179,14 @@ Notes
 The keyword COLUMN is noise and can be omitted.
 
 <PARA>
-ALTER TABLE/RENAME is a PostgreSQL language extension.
-
-<PARA>
 <Quote>[*]</Quote> following a name of a table indicates that statement
      should be run over that table and all tables below it in the
      inheritance hierarchy.
-     Refer to PostgreSQL User's Guide for further
+    The PostgreSQL User's Guide has further
      information on inheritance.
 
 <PARA>
-   Refer to the CREATE TABLE reference for further description
+   Refer to CREATE TABLE for a further description
      of valid arguments.
 
 </REFSECT2>
@@ -232,23 +229,30 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-   SQL92 specifies some additional capabilities for ALTER TABLE
-   statement which are not yet directly supported by <ProductName>Postgres</ProductName>:
+<command>ALTER TABLE/RENAME</command>
+ is a <productname>Postgres</productname> language extension.
+
+<PARA>
+   SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
+   statement which are not yet directly supported by
+ <ProductName>Postgres</ProductName>:
 
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
 <Synopsis>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
     SET DEFAULT <REPLACEABLE CLASS="PARAMETER">default</REPLACEABLE>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
-    ADD [CONSTRAINT <REPLACEABLE CLASS="PARAMETER">constraint</REPLACEABLE>] <REPLACEABLE CLASS="PARAMETER">table-constraint</REPLACEABLE>
+
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
+    ADD [ CONSTRAINT <REPLACEABLE CLASS="PARAMETER">constraint</REPLACEABLE> ] <REPLACEABLE CLASS="PARAMETER">table-constraint</REPLACEABLE>
 </Synopsis>
 </TERM>
 <LISTITEM>
 <PARA>
           Puts the default value or constraint specified into the
-          definition of column in the table. See CREATE TABLE for the
+          definition of column in the table.
+ See <command>CREATE TABLE</command> for the
           syntax of the default and table-constraint clauses.
           If a default clause already exists, it will be replaced by
           the new definition. If any constraints on this column already
@@ -307,7 +311,7 @@ DROP TABLE temp;
 <TERM>
 <Synopsis>
 ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    DROP [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> { RESTRICT | CASCADE }
+    DROP [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> { RESTRICT | CASCADE }
 </Synopsis>
 </TERM>
 <LISTITEM>
@@ -335,23 +339,3 @@ DROP TABLE temp;
 </PARA>
 </VARIABLELIST>
 </REFENTRY>
-
-<!--
-<REPLACEABLE CLASS="PARAMETER">
-</REPLACEABLE>
-<ReturnValue></ReturnValue>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
-</PARA>
--->

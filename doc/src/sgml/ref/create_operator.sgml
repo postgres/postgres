@@ -15,37 +15,31 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-09</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE OPERATOR <replaceable>name</replaceable>
-                   ([  LEFTARG    = <replaceable class="parameter">type1</replaceable> ]
-                    [, RIGHTARG   = <replaceable class="parameter">type2</replaceable> ]
-                     , PROCEDURE  = <replaceable class="parameter">func_name</replaceable>
-                    [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ]
-                    [, NEGATOR    = <replaceable class="parameter">neg_op</replaceable> ]
-                    [, RESTRICT   = <replaceable class="parameter">res_proc</replaceable> ]
-                    [, HASHES ]
-                    [, JOIN       = <replaceable class="parameter">join_proc</replaceable> ]
-                    [, SORT       = <replaceable class="parameter">sort_op</replaceable> [, ...] ]
-                   )
+CREATE OPERATOR <replaceable>name</replaceable>
+    ( PROCEDURE    = <replaceable class="parameter">func_name</replaceable>
+     [, LEFTARG    = <replaceable class="parameter">type1</replaceable> ]
+     [, RIGHTARG   = <replaceable class="parameter">type2</replaceable> ]
+     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ]
+     [, NEGATOR    = <replaceable class="parameter">neg_op</replaceable> ]
+     [, RESTRICT   = <replaceable class="parameter">res_proc</replaceable> ]
+     [, HASHES ]
+     [, JOIN       = <replaceable class="parameter">join_proc</replaceable> ]
+     [, SORT       = <replaceable class="parameter">sort_op</replaceable> [, ...] ]
+    )
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -53,25 +47,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   The name of an existing aggregate function.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type1</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type2</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
+	   The operator to be defined. See below for allowable characters.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -81,6 +57,29 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
+The function used to implement this operator.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <replaceable class="parameter">type1</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+The type for the left-hand side of the operator, if any. This option would be
+omitted for a right-unary operator.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <replaceable class="parameter">type2</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+The type for the right-hand side of the operator, if any. This option would be
+omitted for a left-unary operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -90,6 +89,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
+The corresponding commutative operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -99,6 +99,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
+The corresponding negation operator.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -108,6 +109,17 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
+The corresponding restriction operator.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+HASHES
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+This operator can support a hash-join algorithm.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -117,6 +129,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
+Procedure supporting table joins.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -126,18 +139,17 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
+Operator to use for sorting.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -147,6 +159,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -170,59 +183,62 @@
  
  <REFSECT1 ID="R1-SQL-CREATEOPERATOR-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-09</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-    This  command  defines a new user operator, operator_name.
+<command>CREATE OPERATOR</command>  defines a new operator,
+ <replaceable class="parameter">name</replaceable>.
     The user who defines an operator becomes its owner.
    </para>
    <para>
-    The operator_name is a sequence of up to sixteen  punctua
-    tion  characters.   The following characters are valid for
-    single-character operator names:<literallayout>
+    The operator <replaceable class="parameter">name</replaceable>
+ is a sequence of up to thirty two (32) characters in any combination
+from the following:
+<literallayout>
+            + - * / &lt; &gt; = ~ ! @ # % ^ & | ` ? $ : 
+</literallayout>
+<note>
+<para>
+No  alphabetic characters are allowed in an operator name.
+This enables <productname>Postgres</productname> to parse SQL input
+into tokens without requiring spaces between each token.
+</note>
 
-              ~ ! @ # % ^ & ` ? </literallayout>
-   </para>
-   <para>
-    If the operator name is more than one character  long,  it
-    may  consist of any combination of the above characters or
-    the following additional characters:<literallayout>
-
-              | $ : + - * / &lt; &gt; =</literallayout>
    </para>
   <para>
-   The operator "!=" is mapped to "&lt;&gt;" on input, and they are
+   The operator "!=" is mapped to "&lt;&gt;" on input, so they are
    therefore equivalent.
   </para>
   <para>
-   At least one of leftarg and rightarg must be defined.  For
+   At least one of LEFTARG and RIGHTARG must be defined.  For
    binary operators, both should be defined. For right  unary
-   operators,  only  arg1  should  be defined, while for left
-   unary operators only arg2 should be defined.
+   operators,  only  LEFTARG  should  be defined, while for left
+   unary operators only RIGHTARG should be defined.
   </para>
   <para>
-   The name of the operator, operator_name, can  be  composed
-   of  symbols only.  Also, the func_name procedure must have
-   been previously defined using create function(l) and  must
-   have one or two arguments.
+Also, the
+ <replaceable class="parameter">func_name</replaceable> procedure must have
+   been previously defined using <command>CREATE FUNCTION</command> and  must
+   be defined to accept the correct number of arguments
+ (either  one or two).
   </para>
   <para>
-   The  commutator  operator  is present so that Postgres can
-   reverse the order of the operands if it wishes.  For exam
-   ple, the operator area-less-than, >>>, would have a commu
-   tator operator, area-greater-than, <<<.  Suppose  that  an
-   operator,  area-equal, ===, exists, as well as an area not
-   equal, !==.  Hence, the query optimizer could freely  con
-   vert:
+   The  commutator  operator  is present so that
+ <productname>Postgres</productname> can
+   reverse the order of the operands if it wishes.
+  For example, the operator area-less-than, &lt;&lt;&lt;,
+ would have a commutator
+ operator, area-greater-than, &gt;&gt;&gt;.
+  Hence, the query optimizer could freely  convert:
    <programlisting>
-    "0,0,1,1"::box >>> MYBOXES.description
+"0,0,1,1"::box  &gt;&gt;&gt; MYBOXES.description
    </programlisting>
    to
    <programlisting>
-    MYBOXES.description <<< "0,0,1,1"::box</programlisting>
+MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box</programlisting>
   </para>
   <para>
    This  allows  the  execution code to always use the latter
@@ -230,17 +246,21 @@
    what.
   </para>
   <para>
+  Suppose  that  an
+   operator,  area-equal, ===, exists, as well as an area not
+   equal, !==.
    The negator operator allows the query optimizer to convert
    <programlisting>
-    NOT MYBOXES.description === "0,0,1,1"::box
+NOT MYBOXES.description === "0,0,1,1"::box
    </programlisting>
    to
    <programlisting>
-    MYBOXES.description !== "0,0,1,1"::box
+MYBOXES.description !== "0,0,1,1"::box
    </programlisting>
   </para>
   <para>
-   If  a  commutator  operator  name  is  supplied,  Postgres
+   If  a  commutator  operator  name  is  supplied,  
+<productname>Postgres</productname>
    searches  for  it  in  the catalog.  If it is found and it
    does not yet have a commutator itself, then  the  commutator's
    entry is updated to have the current (new) operator
@@ -256,22 +276,25 @@
   </para>
   <para>
    The next two specifications are  present  to  support  the
-   query  optimizer in performing joins.  Postgres can always
+   query  optimizer in performing joins.  
+<productname>Postgres</productname> can always
    evaluate a join (i.e., processing a clause with two  tuple
    variables separated by an operator that returns a boolean)
-   by iterative substitution [WONG76].  In addition, Postgres
+   by iterative substitution [WONG76].  
+In addition, <productname>Postgres</productname>
    is  planning  on  implementing a hash-join algorithm along
    the lines of [SHAP86]; however, it must know whether  this
-   strategy  is  applicable.   For example, a hash-join
+   strategy  is  applicable.   
+For example, a hash-join
    algorithm is usable for a clause of the form:
    <programlisting>
-    MYBOXES.description === MYBOXES2.description
+MYBOXES.description === MYBOXES2.description
    </programlisting>
    but not for a clause of the form:
    <programlisting>
-    MYBOXES.description <<< MYBOXES2.description.
+MYBOXES.description &lt;&lt;&lt; MYBOXES2.description.
    </programlisting>
-   The hashes flag gives the needed information to the  query
+   The HASHES flag gives the needed information to the  query
    optimizer  concerning  whether  a  hash  join  strategy is
    usable for the operator in question.</para>
   <para>
@@ -279,15 +302,16 @@
    optimizer whether merge-sort is a usable join strategy and
    what operators should be used  to  sort  the  two  operand
    classes.   For  the  ===  clause above, the optimizer must
-   sort both relations using the operator, <<<.  On the other
+   sort both relations using the operator, &lt;&lt;&lt;.  On the other
    hand, merge-sort is not usable with the clause:
    <programlisting>
-    MYBOXES.description <<< MYBOXES2.description
+MYBOXES.description &lt;&lt;&lt; MYBOXES2.description
    </programlisting>
   </para>
   <para>
-   If  other join strategies are found to be practical, Post
-   gres will change the optimizer and run-time system to  use
+   If  other join strategies are found to be practical,
+<productname>Postgres</productname>
+ will change the optimizer and run-time system to  use
    them  and  will  require  additional specification when an
    operator is defined.  Fortunately, the research  community
    invents  new  join  strategies infrequently, and the added
@@ -299,12 +323,14 @@
    the query optimizer  can  estimate  result  sizes.   If  a
    clause of the form:
    <programlisting>
-    MYBOXES.description <<< "0,0,1,1"::box
+MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    </programlisting>
-   is present in the qualification, then Postgres may have to
+   is present in the qualification,
+ then <productname>Postgres</productname> may have to
    estimate the fraction of the  instances  in  MYBOXES  that
-   satisfy  the clause.  The function res_proc must be a reg
-   istered function (meaning  it  is  already  defined  using
+   satisfy  the clause.  The function
+ <replaceable class="parameter">res_proc</replaceable>
+ must be a registered function (meaning  it  is  already  defined  using
    define function(l)) which accepts one argument of the correct
    data type and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
@@ -322,13 +348,14 @@
   <para>
    The difference between the function
    <programlisting>
-    my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
+my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
    </programlisting>
    and the operator
    <programlisting>
-    MYBOXES.description === "0,0,1,1"::box
+MYBOXES.description === "0,0,1,1"::box
    </programlisting>
-   is  that  Postgres  attempts to optimize operators and can
+   is  that  <productname>Postgres</productname>
+  attempts to optimize operators and can
    decide to use an index to restrict the search  space  when
    operators  are  involved.  However, there is no attempt to
    optimize functions, and they are performed by brute force.
@@ -338,18 +365,17 @@
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    Refer to <citetitle>PostgreSQL User's Guide</citetitle> chapter 5
-    <comment>
-     This reference must be corrected.
-    </comment>
+    Refer to the chapter on operators in the
+<citetitle>PostgreSQL User's Guide</citetitle>
     for further information.
-    Refer to DROP OPERATOR statement to drop operators.
+    Refer to <command>DROP OPERATOR</command> to delete
+user-defined operators from a database.
     
   </REFSECT2>
   
@@ -361,16 +387,16 @@
    area-equality, for the BOX data type.
   </PARA>
   <ProgramListing>
-   CREATE OPERATOR === (
-          LEFTARG = box,
-          RIGHTARG = box,
-          PROCEDURE = area_equal_procedure,
-          COMMUTATOR = ===,
-          NEGATOR = !==,
-          RESTRICT = area_restriction_procedure,
-          HASHES,
-          JOIN = area-join-procedure,
-          SORT = <<<, <<<)
+CREATE OPERATOR === (
+    LEFTARG = box,
+    RIGHTARG = box,
+    PROCEDURE = area_equal_procedure,
+    COMMUTATOR = ===,
+    NEGATOR = !==,
+    RESTRICT = area_restriction_procedure,
+    HASHES,
+    JOIN = area-join-procedure,
+    SORT = <<<, <<<)
   </ProgramListing>
   
   
@@ -381,18 +407,18 @@
    Compatibility
   </TITLE>
   <PARA>
-   CREATE OPERATOR is a PostgreSQL extension of SQL.
+   CREATE OPERATOR is a <productname>Postgres</productname> extension.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATEOPERATOR-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no CREATE OPERATOR statement on SQL92.
+    There is no CREATE OPERATOR statement in <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

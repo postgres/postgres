@@ -14,35 +14,28 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-11</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE RULE <replaceable class="parameter">name</replaceable>
-       AS ON <replaceable class="parameter">event</replaceable>
-       TO <replaceable class="parameter">object</replaceable> [WHERE <replaceable class="parameter">condition</replaceable>]
-       DO [INSTEAD]
-       [<replaceable class="parameter">action</replaceable> | NOTHING ]
+CREATE RULE <replaceable class="parameter">name</replaceable>
+    AS ON <replaceable class="parameter">event</replaceable>
+    TO <replaceable class="parameter">object</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
+    DO [ INSTEAD ] [ <replaceable class="parameter">action</replaceable> | NOTHING ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATERULE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">name</replaceable></ReturnValue>
+<replaceable class="parameter">name</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -52,31 +45,34 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">event</replaceable></ReturnValue>
+<replaceable class="parameter">event</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   Event is one of <literal>select</literal>, <literal>update</literal>, <literal>delete</literal> or <literal>insert</literal>.
+	   Event is one of <literal>select</literal>,
+ <literal>update</literal>, <literal>delete</literal>
+ or <literal>insert</literal>.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">object</replaceable></ReturnValue>
+<replaceable class="parameter">object</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   Object is either <replaceable class="parameter">table</replaceable> or <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable>.
+	   Object is either <replaceable class="parameter">table</replaceable>
+ or <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable>.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">condition</replaceable></ReturnValue>
+<replaceable class="parameter">condition</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   Any SQL <literal>where</literal> clause. <literal>new</literal> or
+	   Any SQL WHERE clause. <literal>new</literal> or
 	   <literal>current</literal> can appear instead of an instance
 	   variable whenever an instance variable is permissible in SQL.
 	  </PARA>
@@ -84,25 +80,23 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">action</replaceable></ReturnValue>
+<replaceable class="parameter">action</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   Any SQL-statement. <literal>new</literal> or
+	   Any SQL statement. <literal>new</literal> or
 	   <literal>current</literal> can appear instead of an instance
 	   variable whenever an instance variable is permissible in SQL.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
        </VARIABLELIST>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATERULE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -112,6 +106,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -136,7 +131,7 @@
  
  <REFSECT1 ID="R1-SQL-CREATERULE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-11</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -146,13 +141,13 @@
    accessed, updated, inserted or deleted, there is a current instance (for
    retrieves, updates and deletes) and a new instance (for updates and
    appends).  If the <replaceable class="parameter">event</replaceable>
-   specified in the <literal>on</literal> clause and the
+   specified in the ON clause and the
    <replaceable class="parameter">condition</replaceable> specified in the
-   <literal>where</literal> clause are true for the current instance, the
+   WHERE clause are true for the current instance, the
    <replaceable class="parameter">action</replaceable> part of the rule is
    executed. First, however, values from fields in the current instance
    and/or the new instance are substituted for
-   <literal> current.</literal><replaceable class="parameter">attribute-name</replaceable>
+   <literal>current.</literal><replaceable class="parameter">attribute-name</replaceable>
    and <literal>new.</literal><replaceable class="parameter">attribute-name</replaceable>.
   </para>
   <para>
@@ -163,13 +158,13 @@
   
   <REFSECT2 ID="R2-SQL-CREATERULE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <para>
-    A note of caution about SQL rules is in  order.  If the same class name
+    A caution about SQL rules is in  order.  If the same class name
     or instance variable appears in the
     <replaceable class="parameter">event</replaceable>, the
     <replaceable class="parameter">condition</replaceable> and the
@@ -179,13 +174,14 @@
     variables that are shared between these clauses. For example, the following
     two rules have the same semantics:
     <programlisting>
-     on update to EMP.salary where EMP.name = "Joe"
-	  do update EMP ( ... ) where ...
+on update to EMP.salary where EMP.name = "Joe"
+    do update EMP ( ... ) where ...
 
-     on update to EMP-1.salary where EMP-2.name = "Joe"
-	  do update EMP-3 ( ... ) where ...
+on update to EMP-1.salary where EMP-2.name = "Joe"
+    do update EMP-3 ( ... ) where ...
     </programlisting>
-    Each rule can have the optional tag <literal>instead</literal>. Without
+    Each rule can have the optional tag INSTEAD.
+Without
     this tag, <replaceable class="parameter">action</replaceable> will be
     performed in addition to the user command when the
     <replaceable class="parameter">event</replaceable> in the
@@ -194,7 +190,7 @@
     <replaceable class="parameter">action</replaceable> part will be done
     instead of the user command. In this later case, the
     <replaceable class="parameter">action</replaceable> can be the keyword
-    <literal>nothing</literal>.
+    NOTHING.
    </para>
    <para>
     When choosing between the rewrite and instance rule systems for a
@@ -205,32 +201,33 @@
    <para>
     It is very important to note that the rewrite rule system
     will neither detect nor process circular rules. For example, though each
-    of the following two rule definitions are accepted by Postgres, the
-    retrieve command will cause Postgres to crash:
+    of the following two rule definitions are accepted by
+ <productname>Postgres</productname>, the
+    retrieve command will cause <productname>Postgres</productname> to crash:
     <example>
      <title>Example of a circular rewrite rule combination.</title>
      <programlisting>
-	  create rule bad_rule_combination_1 is
-		  on select to EMP
-		  do instead select to TOYEMP
+create rule bad_rule_combination_1 is
+    on select to EMP
+    do instead select to TOYEMP
 
-	  create rule bad_rule_combination_2 is
-		  on select to TOYEMP
-		  do instead select to EMP
+create rule bad_rule_combination_2 is
+    on select to TOYEMP
+    do instead select to EMP
      </programlisting>
      <para>	 
-      This attempt to retrieve from EMP will cause Postgres to crash.
+      This attempt to retrieve from EMP will cause
+ <productname>Postgres</productname> to crash.
       <programlisting>
-	  select * from EMP
+select * from EMP
       </programlisting></para>
     </example>
    </para>
    <para>
     You must have rule definition access to a class in order
-    to define a rule on it (see change acl(l)).
-    <comment>
-     There is no manpage change or change_acl.  What is intended?
-    </comment>
+    to define a rule on it. Use <command>GRANT</command>
+and <command>REVOKE</command> to change permissions.
+
    </PARA>
   </REFSECT2>
  </refsect1>
@@ -240,13 +237,13 @@
    Usage
   </TITLE>
   <PARA>
-   Make Sam get the same salary adjustment as Joe
+   Make Sam get the same salary adjustment as Joe:
    
    <programlisting>
-	  create rule example_1 is
-		 on update EMP.salary where current.name = "Joe"
-		 do update EMP (salary = new.salary)
-		  where EMP.name = "Sam"
+create rule example_1 is
+    on update EMP.salary where current.name = "Joe"
+    do update EMP (salary = new.salary)
+    where EMP.name = "Sam"
    </programlisting>
    
    At the time Joe receives a salary adjustment, the event
@@ -257,44 +254,45 @@
    Joe's salary on to Sam.
   </para>
   <para>
-   Make Bill get Joe's salary when it is accessed
+   Make Bill get Joe's salary when it is accessed:
    <programlisting>
-	  create rule example_2 is
-
-		 on select to EMP.salary
-			where current.name = "Bill"
-		 do instead
-		  select (EMP.salary) from EMP where EMP.name = "Joe"
+create rule example_2 is
+    on select to EMP.salary
+    where current.name = "Bill"
+    do instead
+    select (EMP.salary) from EMP
+        where EMP.name = "Joe"
    </programlisting>
   </para>
   <para>
    Deny Joe access to the salary of employees in the shoe
-   department. (<function>pg_username()</function> returns the name of
-   the current user)
+   department (<function>current_user</function> returns the name of
+   the current user):
    <programlisting>  
-	  create rule example_3 is
-		 on select to EMP.salary
-		 where current.dept = "shoe" and pg_username() = "Joe"
-		 do instead nothing
+create rule example_3 is
+    on select to EMP.salary
+    where current.dept = "shoe" and current_user = "Joe"
+    do instead nothing
    </programlisting>
   </para>
   <para>
    Create a view of the employees working in the toy department.
    <programlisting>
-	  create TOYEMP(name = char16, salary = int4)
+create TOYEMP(name = char16, salary = int4)
 
-	  create rule example_4 is
-		 on select to TOYEMP
-		 do instead select (EMP.name, EMP.salary) from EMP
-		 where EMP.dept = "toy"
+create rule example_4 is
+    on select to TOYEMP
+    do instead
+    select (EMP.name, EMP.salary) from EMP
+        where EMP.dept = "toy"
    </programlisting>
   </para>
   <para>
    All new employees must make 5,000 or less
    <programlisting>
-	  create rule example_5 is
-		  on insert to EMP where new.salary > 5000
-		  do update newset salary = 5000
+create rule example_5 is
+    on insert to EMP where new.salary > 5000
+    do update newset salary = 5000
    </programlisting>
   </PARA>
  </REFSECT1>
@@ -303,9 +301,6 @@
   <TITLE>
    Bugs
   </TITLE>
-  <PARA>
-   <literal>instead</literal> rules do not work properly.
-  </para>
   <para>
    The object in a SQL rule cannot be an array reference and
    cannot have parameters.
@@ -328,18 +323,19 @@
    Compatibility
   </TITLE>
   <PARA>
-   CREATE RULE statement is a PostgreSQL language extension.
+   CREATE RULE statement is a <productname>Postgres</productname>
+ language extension.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATERULE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <para>
-    There is no CREATE RULE statement in SQL92.
+    There is no CREATE RULE statement in <acronym>SQL92</acronym>.
    </para>
   </refsect2>
  </refsect1>

@@ -14,41 +14,33 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-09</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE [UNIQUE] INDEX <replaceable class="parameter">index_name</replaceable>
-          ON <replaceable class="parameter">table</replaceable> [USING <replaceable class="parameter">acc_name</replaceable> ]
-          ( <replaceable class="parameter">column</replaceable> [<replaceable class="parameter">ops_name</replaceable>] [, ...] )
-        
-   CREATE [UNIQUE] INDEX <replaceable class="parameter">index_name</replaceable>
-          ON <replaceable class="parameter">table</replaceable> [USING <replaceable class="parameter">acc_name</replaceable> ]
-          ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">column</replaceable> [, ... ]) <replaceable class="parameter">ops_name</replaceable> )
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
+    ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">acc_name</replaceable> ]
+    ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable>] [, ...] )
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
+    ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">acc_name</replaceable> ]
+    ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">column</replaceable> [, ... ]) <replaceable class="parameter">ops_name</replaceable> )
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATEINDEX-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <function>UNIQUE</function>
+	  UNIQUE
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   <function>UNIQUE</function> causes the system to check for
+	   Causes the system to check for
 	   duplicate values when the index is created (if data
 	   already exist) and each time data is added. Attempts to
 	   insert or update non-duplicate data will generate an
@@ -134,17 +126,18 @@
 	   An associated operator class.
 	   The following select list returns all ops_names:
 	   
-	   <programlisting>
-       SELECT am.amname AS acc_name,
-              opc.opcname AS ops_name,
-              opr.oprname AS ops_comp
-         FROM pg_am am, pg_amop amop,
-              pg_opclass opc, pg_operator opr
-         WHERE amop.amopid = am.oid AND
-               amop.amopclaid = opc.oid AND
-               amop.amopopr = opr.oid
-         ORDER BY acc_name, ops_name, ops_comp
-	   </programlisting>
+<programlisting>
+SELECT am.amname AS acc_name,
+       opc.opcname AS ops_name,
+       opr.oprname AS ops_comp
+    FROM pg_am am, pg_amop amop,
+         pg_opclass opc, pg_operator opr
+    WHERE amop.amopid = am.oid AND
+          amop.amopclaid = opc.oid AND
+          amop.amopopr = opr.oid
+    ORDER BY acc_name, ops_name, ops_comp
+</programlisting>
+
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -160,14 +153,12 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEINDEX-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -177,6 +168,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -210,14 +202,23 @@
  
  <REFSECT1 ID="R1-SQL-CREATEINDEX-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-09</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   This command constructs an index called <replaceable class="parameter">index_name</replaceable>.
-  </PARA>
+   This command constructs an index 
+ <replaceable class="parameter">index_name</replaceable>.
+on the specified
+<replaceable class="parameter">table</replaceable>.
+
+<tip>
+<para>
+Indices are primarily used to enhance database performance.
+But inappropriate use will result in slower performance.
+</tip>
+
   <para>
    In the first syntax shown above, the key fields for the
    index are specified as column names; a column may also have
@@ -242,7 +243,7 @@
   
   <REFSECT2 ID="R2-SQL-CREATEINDEX-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
@@ -252,10 +253,8 @@
     indices. Up to 7 keys may be specified.
    </PARA>
    <para>
-    Use the <citerefentry>
-     <refentrytitle>DROP INDEX</refentrytitle>
-    </citerefentry>
-    statement to remove indexes.
+    Use <command>DROP INDEX</command>
+    to remove an index.
    </para>
   </REFSECT2>
   
@@ -267,24 +266,27 @@
    in the table <literal>films</literal>:
   </PARA>
   <ProgramListing>
-   CREATE UNIQUE INDEX title_idx
-          ON films (title);
+CREATE UNIQUE INDEX title_idx
+    ON films (title);
   </ProgramListing>
+
+<!--
+<comment>
+Is this example correct?
+</comment>
   <para>
    To create a rtree index on a point attribute so that we
    can efficiently use box operators on the result of the
    conversion function:
   </para>
   <programlisting>
-   CREATE INDEX pointloc
-          ON points USING RTREE (point2box(location) box_ops);
-
-   SELECT * FROM points
-          WHERE point2box(points.pointloc) = boxes.box;
-<comment>
-Is this example correct?
-</comment>
+CREATE INDEX pointloc
+    ON points USING RTREE (point2box(location) box_ops);
+SELECT * FROM points
+    WHERE point2box(points.pointloc) = boxes.box;
   </programlisting>
+-->
+
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CREATEINDEX-3">
@@ -296,16 +298,16 @@ Is this example correct?
   
   <REFSECT2 ID="R2-SQL-CREATEINDEX-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    CREATE INDEX is a PostgreSQL language extension.
+    CREATE INDEX is a <productname>Postgres</productname> language extension.
    </PARA>
    <para>
-    There is no CREATE INDEX command in SQL92.
+    There is no <command>CREATE INDEX</command> command in SQL92.
    </para>
   </refsect2>
  </refsect1>

@@ -172,7 +172,7 @@
     SQL92
    </TITLE>
    <PARA>
-    There is no DROP PROCEDURAL LANGUAGE statement on SQL92.
+    There is no DROP PROCEDURAL LANGUAGE statement in SQL92.
    </PARA>
   </refsect2>
  </refsect1>

@@ -16,63 +16,43 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   COMMIT [ WORK ]
+COMMIT [ WORK | TRANSACTION ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-COMMIT-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>None</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
+None
    
   </REFSECT2>
    
   <REFSECT2 ID="R2-SQL-COMMIT-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>END</ReturnValue>
+	  <returnvalue>END</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -82,8 +62,7 @@ Message returned if the transaction is successfully committed.
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>NOTICE EndTransactionBlock and not inprogress/abort state
-</ReturnValue>
+	  <returnvalue>NOTICE EndTransactionBlock and not inprogress/abort state</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -100,29 +79,29 @@ If there is no transaction in progress.
   
  <REFSECT1 ID="R1-SQL-COMMIT-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   COMMIT commits the current transaction. All
+   <command>COMMIT</command> commits the current transaction. All
    changes made by the transaction become visible to others
    and are guaranteed to be durable if a crash occurs.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-COMMIT-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    The keyword WORK is noise and can be omitted.
+    The keywords WORK and TRANSACTION are noise and can be omitted.
    </PARA>
    <para>
-    Refer to ROLLBACK statements to abort a transaction.
+    Use the <command>ROLLBACK</command> statement to abort a transaction.
    </para>
   </REFSECT2>
  </refsect1>
@@ -135,7 +114,7 @@ If there is no transaction in progress.
 To make all changes permanent:
   </PARA>
   <ProgramListing>
- COMMIT WORK;
+COMMIT WORK;
   </ProgramListing>
  </REFSECT1>
  
@@ -148,7 +127,7 @@ To make all changes permanent:
   
   <REFSECT2 ID="R2-SQL-COMMIT-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92

@@ -15,7 +15,7 @@
 
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
 CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
@@ -23,25 +23,16 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
   
   <REFSECT2 ID="R2-SQL-CLOSE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
-	  </ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -50,14 +41,11 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CLOSE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -67,15 +55,16 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+	  <replaceable>
+	   status
+	  </replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   CLOSE
-	  </ReturnValue>
+<ReturnValue>CLOSE</ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -85,9 +74,7 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   NOTICE PerformPortalClose: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>" not found
-	  </ReturnValue>
+<ReturnValue>NOTICE PerformPortalClose: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>" not found</ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -107,33 +94,35 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
  
  <REFSECT1 ID="R1-SQL-CLOSE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   CLOSE frees the resources associated with an open cursor.
+   <command>CLOSE</command> frees the resources associated with an open cursor.
    After the cursor is closed, no subsequent operations
    are allowed on it. A cursor should be closed when it is
    no longer needed.
   </PARA>
   <PARA>
    An implicit close is executed for every open cursor when a
-   transaction is terminated by COMMIT or ROLLBACK.
+   transaction is terminated by <command>COMMIT</command>
+ or <command>ROLLBACK</command>.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CLOSE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    PostgreSQL does not have an explicit OPEN cursor statement;
-    a cursor is considered open when it is DECLAREd. 
-    Use DECLARE to declare a cursor.
+<productname>Postgres</productname> does not have
+ an explicit <command>OPEN</command> cursor statement;
+    a cursor is considered open when it is declared.
+    Use the <command>DECLARE</command> statement to declare a cursor.
    </PARA>
   </REFSECT2>
  </refsect1>
@@ -146,7 +135,7 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
    Close the cursor liahona:
   </PARA>
   <ProgramListing>
-   CLOSE liahona;
+CLOSE liahona;
   </ProgramListing>
  </REFSECT1>
  
@@ -159,13 +148,13 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
   
   <REFSECT2 ID="R2-SQL-CLOSE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    CLOSE is fully compatibile with SQL92.
+    <command>CLOSE</command> is fully compatible with SQL92.
    </PARA>
   </refsect2>
  </refsect1>

@@ -16,38 +16,26 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>  
-   BEGIN { WORK | TRANSACTION }
+BEGIN [ WORK | TRANSACTION ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-BEGINWORK-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-      <ReturnValue>
        None
-      </ReturnValue>
-     </TERM>
-     <LISTITEM>
-      <para></para>
-     </LISTITEM>
-    </varlistentry>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-BEGINWORK-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -57,14 +45,14 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
-      status
+      <replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>BEGIN</ReturnValue>
+	  <returnvalue>BEGIN</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -74,18 +62,12 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   NOTICE:  BeginTransactionBlock and not in default state
-	  </ReturnValue>
+	   <returnvalue>NOTICE:  BeginTransactionBlock and not in default state</returnvalue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
 	   This indicates that a transaction was already in progress.
-	   <comment>
-	    What happens to command queries already run
-	    in the transaction?  Does this have no effect, or does
-	    it restart the transaction?
-	   </comment>
+The current transaction is not affected.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -99,17 +81,20 @@
  
  <REFSECT1 ID="R1-SQL-BEGINWORK-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-08</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <para>
-   BEGIN begins a user transaction which PostgreSQL will
-   guarantee is serialisable with respect to all concurrently
-   executing transactions. PostgreSQL uses two-phase locking
+   <command>BEGIN</command> initiates a user transaction
+ which <productname>Postgres</productname> will
+   guarantee is serializable with respect to all concurrently
+   executing transactions. <productname>Postgres</productname> uses two-phase
+ locking
    to perform this task. If the transaction is committed,
-   PostgreSQL will ensure either that all updates are done orelse
+   <productname>Postgres</productname> will ensure either that all updates are
+ done or else
    that none of
    them are done. Transactions have the standard ACID
    (atomic, consistent, isolatable, and durable) property.
@@ -117,7 +102,7 @@
   
   <REFSECT2 ID="R2-SQL-BEGINWORK-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
@@ -126,18 +111,15 @@
     The keyword TRANSACTION is just a cosmetic alternative to WORK.
     Neither keyword need be specified.
    </PARA>
-   
+
    <PARA>
-    BEGIN statement is a PostgreSQL language extension.
+    Refer to the <command>LOCK</command> statement for further information
+ about locking tables inside a transaction.
    </PARA>
    
    <PARA>
-    Refer to the LOCK statement for further information about locking
-    tables inside a transaction.
-   </PARA>
-   
-   <PARA>
-    Use COMMIT or ROLLBACK to terminate a transaction.
+    Use <command>COMMIT</command> or <command>ROLLBACK</command>
+ to terminate a transaction.
    </PARA>
   </REFSECT2>
   
@@ -146,9 +128,9 @@
    Usage
   </TITLE>
   <PARA>To begin a user transaction:
-  </PARA>
+
   <ProgramListing>
-   BEGIN WORK;
+BEGIN WORK;
   </ProgramListing>
  </REFSECT1>
  
@@ -157,17 +139,19 @@
    Compatibility
   </TITLE>
   <PARA>
-  </PARA>
+    <command>BEGIN</command>
+ is a <productname>Postgres</productname> language extension.
   
   <REFSECT2 ID="R2-SQL-BEGINWORK-4">
      <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-08</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA> 
-    There is no explicit "BEGIN WORK" in SQL92; transaction initiation
+    There is no explicit BEGIN WORK command in <acronym>SQL92</acronym>;
+ transaction initiation
     is always implicit and it terminates either with a COMMIT or with
     a ROLLBACK statement.
    </PARA>
