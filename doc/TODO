@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug  4 18:59:37 EDT 2004
+Last updated:		Fri Aug  6 11:08:49 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -79,6 +79,7 @@ Administration
   though the postmaster has paniced and shared memory might not be
   cleaned up properly.  A new signal is needed for safe termination.
 
+* Remove comments on postgresql.conf variables
 * Allow point-in-time recovery to archive partially filled write-ahead 
   logs
 
