@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.84 2000/02/08 15:58:54 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.85 2000/02/09 00:21:49 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -237,7 +237,6 @@ if [ "$usage" ]; then
         echo "  -L, --pglib <libdir>        Where to find the input files"
         echo "  -t, --template              Re-initialize template database only"
         echo "  -d, --debug                 Generate lots of debugging output"
-        echo "  -s, --show                  Do not action, show the initdb setting only" 
         echo "  -n, --noclean               Do not clean up after errors"
  	echo
         echo "Report bugs to <pgsql-bugs@postgresql.org>."
@@ -324,7 +323,7 @@ GLOBAL_DESCR="$PGLIB"/global1.description
 PG_GEQO_SAMPLE="$PGLIB"/pg_geqo.sample
 PG_POSTMASTER_OPTS_DEFAULT_SAMPLE="$PGLIB"/postmaster.opts.default.sample
 
-if [ "$show_setting" ]
+if [ "$show_setting" -eq 1 ]
 then
 	echo
 	echo "The initdb setting:"
