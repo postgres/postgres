@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.13 1997/09/08 21:44:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.14 1997/12/21 05:18:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ int32		_use_geqo_rels_ = GEQO_RELS;
 
 
 static void find_rel_paths(Query *root, List *rels);
-static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
+static List *find_join_paths(Query *root, List *outer_rels, int levels_needed);
 
 /*
  * find-paths--
@@ -56,14 +56,14 @@ static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
 List	   *
 find_paths(Query *root, List *rels)
 {
-	int			levels_left;
+	int			levels_needed;
 
 	/*
 	 * Set the number of join (not nesting) levels yet to be processed.
 	 */
-	levels_left = length(rels);
+	levels_needed = length(rels);
 
-	if (levels_left <= 0)
+	if (levels_needed <= 0)
 		return NIL;
 
 	/*
@@ -71,13 +71,13 @@ find_paths(Query *root, List *rels)
 	 */
 	find_rel_paths(root, rels);
 
-	if (levels_left <= 1)
+	if (levels_needed <= 1)
 	{
 
 		/*
 		 * Unsorted single relation, no more processing is required.
 		 */
-		return (rels);
+		return rels;
 	}
 	else
 	{
@@ -88,7 +88,7 @@ find_paths(Query *root, List *rels)
 		 */
 		set_rest_relselec(root, rels);
 
-		return (find_join_paths(root, rels, levels_left - 1));
+		return find_join_paths(root, rels, levels_needed);
 	}
 }
 
@@ -165,17 +165,16 @@ find_rel_paths(Query *root, List *rels)
  * 'outer-rels' is the current list of relations for which join paths
  *				are to be found, i.e., he current list of relations that
  *				have already been derived.
- * 'levels-left' is the current join level being processed, where '1' is
- *				the "last" level
+ * 'levels-needed' is the number of iterations needed
  *
  * Returns the final level of join relations, i.e., the relation that is
- * the result of joining all the original relations togehter.
+ * the result of joining all the original relations together.
  */
 static List *
-find_join_paths(Query *root, List *outer_rels, int levels_left)
+find_join_paths(Query *root, List *outer_rels, int levels_needed)
 {
 	List	   *x;
-	List	   *new_rels;
+	List	   *new_rels = NIL;
 	Rel		   *rel;
 
 	/*******************************************
@@ -190,89 +189,84 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
 	 * rest will be deprecated in case of GEQO *
 	 *******************************************/
 
-	/*
-	 * Determine all possible pairs of relations to be joined at this
-	 * level. Determine paths for joining these relation pairs and modify
-	 * 'new-rels' accordingly, then eliminate redundant join relations.
-	 */
-	new_rels = find_join_rels(root, outer_rels);
-
-	find_all_join_paths(root, new_rels);
-
-	new_rels = prune_joinrels(new_rels);
-
+	 while (--levels_needed)
+	 {
+		/*
+		 * Determine all possible pairs of relations to be joined at this
+		 * level. Determine paths for joining these relation pairs and modify
+		 * 'new-rels' accordingly, then eliminate redundant join relations.
+		 */
+		new_rels = find_join_rels(root, outer_rels);
+	
+		find_all_join_paths(root, new_rels);
+	
+		prune_joinrels(new_rels);
+	
 #if 0
-
-	/*
-	 * * for each expensive predicate in each path in each distinct rel, *
-	 * consider doing pullup  -- JMH
-	 */
-	if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
+	
+		/*
+		 * * for each expensive predicate in each path in each distinct rel, *
+		 * consider doing pullup  -- JMH
+		 */
+		if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
+			foreach(x, new_rels)
+				xfunc_trypullup((Rel *) lfirst(x));
+#endif
+	
+		prune_rel_paths(new_rels);
+	
+		if (BushyPlanFlag)
+		{
+	
+			/*
+			 * In case of bushy trees if there is still a join between a join
+			 * relation and another relation, add a new joininfo that involves
+			 * the join relation to the joininfo list of the other relation
+			 */
+			add_new_joininfos(root, new_rels, outer_rels);
+		}
+	
 		foreach(x, new_rels)
-			xfunc_trypullup((Rel *) lfirst(x));
-#endif
-
-	prune_rel_paths(new_rels);
-
-	if (BushyPlanFlag)
-	{
-
-		/*
-		 * In case of bushy trees if there is still a join between a join
-		 * relation and another relation, add a new joininfo that involves
-		 * the join relation to the joininfo list of the other relation
-		 */
-		add_new_joininfos(root, new_rels, outer_rels);
-	}
-
-	foreach(x, new_rels)
-	{
-		rel = (Rel *) lfirst(x);
-		if (rel->size <= 0)
-			rel->size = compute_rel_size(rel);
-		rel->width = compute_rel_width(rel);
-
-/*#define OPTIMIZER_DEBUG*/
+		{
+			rel = (Rel *) lfirst(x);
+			if (rel->size <= 0)
+				rel->size = compute_rel_size(rel);
+			rel->width = compute_rel_width(rel);
+	
+	/*#define OPTIMIZER_DEBUG*/
 #ifdef OPTIMIZER_DEBUG
-		printf("levels left: %d\n", levels_left);
-		debug_print_rel(root, rel);
+			printf("levels left: %d\n", levels_left);
+			debug_print_rel(root, rel);
 #endif
+		}
+	
+		if (BushyPlanFlag)
+		{
+	
+			/*
+			 * prune rels that have been completely incorporated into new join
+			 * rels
+			 */
+			outer_rels = prune_oldrels(outer_rels);
+	
+			/*
+			 * merge join rels if then contain the same list of base rels
+			 */
+			outer_rels = merge_joinrels(new_rels, outer_rels);
+			root->join_relation_list_ = outer_rels;
+		}
+		else
+		{
+			root->join_relation_list_ = new_rels;
+		}
+		if (!BushyPlanFlag)
+			outer_rels = new_rels;
 	}
 
 	if (BushyPlanFlag)
-	{
-
-		/*
-		 * prune rels that have been completely incorporated into new join
-		 * rels
-		 */
-		outer_rels = prune_oldrels(outer_rels);
-
-		/*
-		 * merge join rels if then contain the same list of base rels
-		 */
-		outer_rels = merge_joinrels(new_rels, outer_rels);
-		root->join_relation_list_ = outer_rels;
-	}
+		return final_join_rels(outer_rels);
 	else
-	{
-		root->join_relation_list_ = new_rels;
-	}
-
-	if (levels_left == 1)
-	{
-		if (BushyPlanFlag)
-			return (final_join_rels(outer_rels));
-		else
-			return (new_rels);
-	}
-	else
-	{
-		if (BushyPlanFlag)
-			return (find_join_paths(root, outer_rels, levels_left - 1));
-		else
-			return (find_join_paths(root, new_rels, levels_left - 1));
-	}
+		return new_rels;
 }
 
 /*****************************************************************************

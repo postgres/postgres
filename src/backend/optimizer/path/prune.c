@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.6 1997/09/08 21:45:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.7 1997/12/21 05:18:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,23 +29,21 @@ static List *prune_joinrel(Rel *rel, List *other_rels);
 /*
  * prune-joinrels--
  *	  Removes any redundant relation entries from a list of rel nodes
- *	  'rel-list'.
+ *	  'rel-list'.  Obviosly, the first relation can't be a duplicate.
  *
  * Returns the resulting list.
  *
  */
-List	   *
+void
 prune_joinrels(List *rel_list)
 {
-	List	   *temp_list = NIL;
+	List	   *i;
 
-	if (rel_list != NIL)
-	{
-		temp_list = lcons(lfirst(rel_list),
-				   prune_joinrels(prune_joinrel((Rel *) lfirst(rel_list),
-												lnext(rel_list))));
-	}
-	return (temp_list);
+	/*
+	 *	rel_list can shorten while running as duplicate relations are deleted
+	 */
+	foreach(i, rel_list)
+		lnext(i) = prune_joinrel((Rel *) lfirst(i), lnext(i));
 }
 
 /*
@@ -62,28 +60,39 @@ prune_joinrels(List *rel_list)
 static List *
 prune_joinrel(Rel *rel, List *other_rels)
 {
-	List	   *i = NIL;
-	List	   *t_list = NIL;
-	List	   *temp_node = NIL;
-	Rel		   *other_rel = (Rel *) NULL;
+	List	*cur = NIL;
+	List	*return_list = NIL;
 
-	foreach(i, other_rels)
+	/* find first relation that doesn't match */
+	foreach(cur, other_rels)
 	{
-		other_rel = (Rel *) lfirst(i);
-		if (same(rel->relids, other_rel->relids))
+		Rel	*other_rel = (Rel *) lfirst(cur);
+
+		if (!same(rel->relids, other_rel->relids))
+			break;
+	}
+
+	/* we now know cur doesn't match, or is NIL */
+	return_list = cur;
+	
+	/* remove relations that do match, we use lnext so we can remove easily */
+	if (cur != NIL)
+	{
+		while (lnext(cur) != NIL)
 		{
-			rel->pathlist = add_pathlist(rel,
-										 rel->pathlist,
-										 other_rel->pathlist);
-			t_list = nconc(t_list, NIL);		/* XXX is this right ? */
-		}
-		else
-		{
-			temp_node = lcons(other_rel, NIL);
-			t_list = nconc(t_list, temp_node);
+			Rel	*other_rel = (Rel *) lfirst(lnext(cur));
+
+			if (same(rel->relids, other_rel->relids))
+			{
+				rel->pathlist = add_pathlist(rel,
+											 rel->pathlist,
+											 other_rel->pathlist);
+				lnext(cur) = lnext(lnext(cur)); /* delete it */
+			}
+			cur = lnext(cur);
 		}
 	}
-	return (t_list);
+	return return_list;
 }
 
 /*

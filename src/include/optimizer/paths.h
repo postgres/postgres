@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.5 1997/11/26 01:13:47 momjian Exp $
+ * $Id: paths.h,v 1.6 1997/12/21 05:18:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ extern List *final_join_rels(List *join_rel_list);
 /*
  * prototypes for path/prune.c
  */
-extern List *prune_joinrels(List *rel_list);
+extern void prune_joinrels(List *rel_list);
 extern void prune_rel_paths(List *rel_list);
 extern Path *prune_rel_path(Rel *rel, Path *unorderedpath);
 extern List *merge_joinrels(List *rel_list1, List *rel_list2);
