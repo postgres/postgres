@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.30 1997/11/20 23:22:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.31 1997/11/30 23:05:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,37 +60,55 @@ int llen;
 char literal[MAX_PARSE_BUFFER];
 
 %}
-	/* OK, here is a short description of lex/flex rules behavior.
-	 * The longest pattern which matches an input string is always chosen.
-	 * For equal-length patterns, the first occurring in the rules list is chosen.
-	 * INITIAL is the starting condition, to which all non-conditional rules apply.
-	 * When in an exclusive condition, only those rules defined for that condition apply.
-	 *
-	 * Exclusive states change parsing rules while the state is active.
-	 * There are exclusive states for quoted strings, extended comments,
-	 *  and to eliminate parsing troubles for numeric strings.
-	 * Exclusive states:
-	 *  <xb> binary numeric string - thomas 1997-11-16
-	 *  <xh> hexadecimal numeric string - thomas 1997-11-16
-	 *  <xc> extended C-style comments - tgl 1997-07-12
-	 *  <xq> quoted strings - tgl 1997-07-30
-	 *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
-	 *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
-	 *
-	 * The "extended comment" syntax closely resembles allowable operator syntax.
-	 * So, when in condition <xc>, only strings which would terminate the
-	 *  "extended comment" trigger any action other than "ignore".
-	 * Be sure to match _any_ candidate comment, including those with appended
-	 *	operator-like symbols. - thomas 1997-07-14
-	 */
+/* OK, here is a short description of lex/flex rules behavior.
+ * The longest pattern which matches an input string is always chosen.
+ * For equal-length patterns, the first occurring in the rules list is chosen.
+ * INITIAL is the starting condition, to which all non-conditional rules apply.
+ * When in an exclusive condition, only those rules defined for that condition apply.
+ *
+ * Exclusive states change parsing rules while the state is active.
+ * There are exclusive states for quoted strings, extended comments,
+ *  and to eliminate parsing troubles for numeric strings.
+ * Exclusive states:
+ *  <xb> binary numeric string - thomas 1997-11-16
+ *  <xc> extended C-style comments - tgl 1997-07-12
+ *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
+ *  <xh> hexadecimal numeric string - thomas 1997-11-16
+ *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
+ *  <xq> quoted strings - tgl 1997-07-30
+ *
+ * The "extended comment" syntax closely resembles allowable operator syntax.
+ * So, when in condition <xc>, only strings which would terminate the
+ *  "extended comment" trigger any action other than "ignore".
+ * Be sure to match _any_ candidate comment, including those with appended
+ *	operator-like symbols. - thomas 1997-07-14
+ */
 
 %x xb
 %x xc
 %x xd
 %x xh
-%x xq
 %x xm
+%x xq
 
+/* Binary number
+ */
+xbstart			[bB]{quote}
+xbstop			{quote}
+xbinside		[^']*
+xbcat			{quote}{space}*\n{space}*{quote}
+
+/* Hexadecimal number
+ */
+xhstart			[xX]{quote}
+xhstop			{quote}
+xhinside		[^']*
+xhcat			{quote}{space}*\n{space}*{quote}
+
+/* Extended quote
+ * xqdouble implements SQL92 embedded quote
+ * xqcat allows strings to cross input lines
+ */
 quote			'
 xqstart			{quote}
 xqstop			{quote}
@@ -100,21 +118,17 @@ xqembedded		"\\'"
 xqliteral		[\\](.|\n)
 xqcat			{quote}{space}*\n{space}*{quote}
 
-xbstart			[bB]{quote}
-xbstop			{quote}
-xbinside		[^']*
-xbcat			{quote}{space}*\n{space}*{quote}
-
-xhstart			[xX]{quote}
-xhstop			{quote}
-xhinside		[^']*
-xhcat			{quote}{space}*\n{space}*{quote}
-
+/* Delimited quote
+ * Allows embedded spaces and other special characters into identifiers.
+ */
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
 xdinside		[^"]*
 
+/* Comments
+ * Ignored by the scanner and parser.
+ */
 xcline			[\/][\*].*[\*][\/]{space}*\n*
 xcstart			[\/][\*]{op_and_self}*
 xcstop			{op_and_self}*[\*][\/]({space}*|\n)
