@@ -40,7 +40,7 @@ Detailed Change List
 Bug Fixes
 ---------
 Prevent function calls with more than maximum number of arguments (Tom)
-Many fixes for CASE  (Tom)
+Improve CASE construct (Tom)
 Fix SELECT coalesce(f1,0) FROM int4_tbl GROUP BY f1 (Tom)
 Fix SELECT sentence.words[0] FROM sentence GROUP BY sentence.words[0] (Tom)
 Fix GROUP BY scan bug (Tom)
@@ -51,8 +51,7 @@ Fix for subselects in INSERT ... SELECT (Tom)
 Prevent INSERT ... SELECT ... ORDER BY (Tom)
 Fixes for relations greater than 2GB, including vacuum
 Improve communication of system table changes to other running backends (Tom)
-Improve communication of user table modifications to other running backends (To
-m)
+Improve communication of user table modifications to other running backends (Tom)
 Fix handling of temp tables in complex situations (Bruce, Tom)
 Allow table locking when tables opened, improving concurrent reliability (Tom)
 Properly quote sequence names in pg_dump (Ross J. Reedstrom)
@@ -60,8 +59,7 @@ Prevent DESTROY DATABASE while others accessing
 Prevent any rows from being returned by GROUP BY if no rows processed (Tom)
 Fix SELECT COUNT(1) FROM table WHERE ...' if no rows matching WHERE (Tom)
 Fix pg_upgrade so it works for MVCC(Tom)
-Fix for SELECT ... WHERE x IN (SELECT ... HAVING SUM(x) > 1) (Tom)
-Make TABLE optional keyword in LOCK TABLE (Bruce)
+Fix for SELECT ... WHERE x IN (SELECT ... HAVING SUM(x) &gt; 1) (Tom)
 Fix for "f1 datetime DEFAULT 'now'"  (Tom)
 Fix problems with CURRENT_DATE used in DEFAULT (Tom)
 Allow comment-only lines, and ;;; lines too. (Tom)
@@ -99,37 +97,14 @@ Fix to allow SELECT 'a' LIKE 'a' (Tom)
 Fix for SELECT 1 + NULL (Tom)
 Fixes to CHAR
 Fix log() on numeric type (Tom)
-Depricate ':' and ';' operators
-Add TRUNCATE command to quickly truncate relation (Mike Mascari)
-Fix for views with tables/columns containing spaces  (Tom)
-Prevent permissions on indexes (Peter E)
-Fix for spinlock stuck problem when error is generated (Hiroshi)
-Fix ipcclean on Linux
-Fix handling of NULL constraint conditions (Tom)
-Fix memory leak in odbc driver (Nick Gorham)
-Fix for permission check on UNION tables (Tom)
-Fix to allow SELECT 'a' LIKE 'a' (Tom)
-Fix for SELECT 1 + NULL (Tom)
-Fixes to CHAR
-Fix log() on numeriRemove ':' and ';' operators
-Add TRUNCATE command to quickly truncate relation (Mike Mascari)
-Fix for views with tables/columns containing spaces  (Tom)
-Prevent permissions on indexes (Peter E)
-Fix for spinlock stuck problem when error is generated (Hiroshi)
-Fix ipcclean on Linux
-Fix handling of NULL constraint conditions (Tom)
-Fix memory leak in odbc driver (Nick Gorham)
-Fix for permission check on UNION tables (Tom)
-Fix to allow SELECT 'a' LIKE 'a' (Tom)
-Fix for SELECT 1 + NULL (Tom)
-Fixes to CHAR
-Fix log() on numeriRemove ':' and ';' operators
+Deprecate ':' and ';' operators
+Allow vacuum of temporary tables
 
 Enhancements
 ------------
 New CLI interface include file sqlcli.h, based on SQL3/SQL98
 Remove all limits on query length, row length limit still exists (Tom)
-Update jdbc protocol to 2.0 (Jens Glaser jens@jens.de)
+Update jdbc protocol to 2.0 (<ulink url="mailto:jens@jens.de">Jens Glaser</ulink>)
 Add TRUNCATE command to quickly truncate relation (Mike Mascari)
 Fix to give super user and createdb user proper update catalog rights (Peter E)
 Allow ecpg bool variables to have NULL values (Christof)
@@ -137,22 +112,21 @@ Issue ecpg error if NULL value is returned to variable with no NULL
 indicator (Christof)
 Allow ^C to cancel COPY command (Massimo)
 Add SET FSYNC and SHOW PG_OPTIONS commands(Massimo)
-Improve CREATE FUNCTION to allow type conversion specification
-        (Bernie Frankpitt)
+Function name overloading for dynamically-loaded C functions (Frankpitt)
 Add CmdTuples() to libpq++(Vince)
 New CREATE CONSTRAINT TRIGGER and SET CONSTRAINTS commands(Jan)
-Allow CREATE FUNCTION WITH clause to be used for all language types
+Allow CREATE FUNCTION/WITH clause to be used for all language types
 configure --enable-debug adds -g (Peter E)
 configure --disable-debug removes -g (Peter E)
 Allow more complex default expressions (Tom)
 First real FOREIGN KEY constraint trigger functionality (Jan)
 Add FOREIGN KEY ... MATCH FULL ... ON DELETE CASCADE (Jan)
-Add FOREIGN KEY ... MATCH  referential actions (Don Baccus)
+Add FOREIGN KEY ... MATCH &lt;unspecified&gt; referential actions (Don Baccus)
 Allow WHERE restriction on ctid (physical heap location) (Hiroshi)
 Move pginterface from contrib to interface directory, rename to pgeasy (Bruce)
-Add DEC and SESSION_USER as reserved words
+Add DEC and SESSION_USER as reserved words (Thomas)
 Require SELECT DISTINCT target list to have all ORDER BY columns (Tom)
-Add Oracle's COMMENT ON command (Mike Mascari yahoo.
+Add Oracle's COMMENT ON command (<ulink url="mailto:mascarim@yahoo">Mike Mascari</ulink>)
 libpq's PQsetNoticeProcessor function now returns previous hook(Peter E)
 Prevent PQsetNoticeProcessor from being set to NULL (Peter E)
 Make USING in COPY optional (Bruce)
@@ -165,8 +139,8 @@ Added psql LASTOID variable to return last inserted oid (Peter E)
 Allow concurrent vacuum and remove pg_vlock vacuum lock file (Tom)
 Add permissions check so only Postgres superuser or table owner can
 vacuum (Peter E)
-New libpq functions to allow asynchronous connections: PQconnectStart(),
-   PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(),
+New libpq functions to allow asynchronous connections: PQconnectStart(), 
+   PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(), 
    PQsetenvPoll(), PQsetenvAbort (Ewan Mellor)
 New libpq PQsetenv() function (Ewan Mellor)
 create/alter user extension (Peter E)
@@ -184,25 +158,22 @@ Add CREATE/ALTER/DROP GROUP (Peter E)
 All administration scripts now support --long options (Peter E, Karel)
 Vacuumdb script now supports --all option (Peter E)
 ecpg new portable FETCH syntax
-Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF
-        and EXEC SQL ENDIF directives
+Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF 
+	and EXEC SQL ENDIF directives
 Add pg_ctl script to control backend startup (Tatsuo)
 Add postmaster.opts.default file to store startup flags (Tatsuo)
 Allow --with-mb=SQL_ASCII
 Increase maximum number of index keys to 16 (Bruce)
 Increase maximum number of function arguments to 16 (Bruce)
-Allow user configuration of maximum number of index keys and arguments
-(Bruce)
+Allow configuration of maximum number of index keys and arguments (Bruce)
 Allow unprivileged users to change their passwords (Peter E)
-With password authentication enabled, new users without passwords can't
-connect (Peter E)
+Password authentication enabled; required for new users (Peter E)
 Disallow dropping a user who owns a database (Peter E)
 Change initdb option --with-mb to --enable-multibyte
 Add option for initdb to prompts for superuser password (Peter E)
 Allow complex type casts like col::numeric(9,2) and col::int2::float8 (Tom)
-Updated user interfaces on initdb, initlocation, pg_dump, ipcclean
-(Peter E)
-New pg_char_to_encoding() and pg_encoding_to_char() functions (Tatsuo
+Updated user interfaces on initdb, initlocation, pg_dump, ipcclean (Peter E)
+New pg_char_to_encoding() and pg_encoding_to_char() functions (Tatsuo)
 Libpq non-blocking mode (Alfred Perlstein)
 Improve conversion of types in casts that don't specify a length
 New plperl internal programming language (Mark Hollomon)
@@ -210,7 +181,7 @@ Allow COPY IN to read file that do not end with a newline (Tom)
 Indicate when long identifiers are truncated (Tom)
 Allow aggregates to use type equivalency (Peter E)
 Add Oracle's to_char(), to_date(), to_datetime(), to_timestamp(), to_number()
-        conversion functions (Karel Zak zf.jcu.cz>)
+	conversion functions (Karel Zak &lt;zakkr@zf.jcu.cz&gt;)
 Add SELECT DISTINCT ON (expr [, expr ...]) targetlist ... (Tom)
 Check to be sure ORDER BY is compatible with the DISTINCT operation (Tom)
 Add NUMERIC and int8 types to ODBC
@@ -218,13 +189,12 @@ Improve EXPLAIN results for Append, Group, Agg, Unique (Tom)
 Add ALTER TABLE ... ADD FOREIGN KEY (Stephan Szabo)
 Allow SELECT .. FOR UPDATE in PL/pgSQL (Hiroshi)
 Enable backward sequential scan even after reaching EOF (Hiroshi)
-Add btree indexing of boolean values, >= and <= (Don Baccus)
+Add btree indexing of boolean values, &gt;= and &lt;= (Don Baccus)
 Print current line number when COPY FROM fails (Massimo)
 Recognize special case of POSIX time zone: "GMT+8" and "GMT-8" (Thomas)
 Add DEC as synonym for "DECIMAL (Thomas)
 Add SESSION_USER as SQL92 keyword, same as CURRENT_USER (Thomas)
-Implement column aliases (aka correlation names) and more join syntax
-(Thomas)
+Implement column aliases (aka correlation names) and join syntax (Thomas)
 Allow queries like SELECT a FROM t1 tx (a) (Thomas)
 Allow queries like SELECT * FROM t1 NATURAL JOIN t2 (Thomas)
 Make INTERVAL reserved word allowed as a column identifier (Thomas)
@@ -241,10 +211,15 @@ New libpq functions PQsetClientEncoding(), PQclientEncoding() (Tatsuo)
 Add support for SJIS user defined characters (Tatsuo)
 Larger views/rules supported
 Make libpq's PQconndefaults() thread-safe (Tom)
-Disable // as comment to be ANSI conforming, should use --
+Disable // as comment to be ANSI conforming, should use -- (Tom)
 Allow column aliases on views CREATE VIEW name (collist)
 Fixes for views with subqueries (Tom)
 Allow UPDATE table SET fld = (SELECT ...) (Tom)
+SET command options no longer require quotes
+Update pgaccess to 0.98.5
+New SET SEED command
+New pg_options.sample file
+New SET FSYNC command (Massimo)
 
 Types
 -----
@@ -253,10 +228,10 @@ Allow bare column names to be subscripted as arrays (Tom)
 Improve type casting of int and float constants (Tom)
 Cleanups for int8 inputs, range checking, and type conversion (Tom)
 Fix for SELECT timespan('21:11:26'::time) (Tom)
-Fix for netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0
-        (Oleg Sharoiko)
+Fix for netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0 
+	(Oleg Sharoiko)
 Add btree index on NUMERIC(Jan)
-Perl fix for large objects containing NUL characters (Douglas Thomson)
+Perl fix for large objects containing NUL characters (Douglas Thomson) 
 ODBC fix for for large objects (free)
 Fix indexing of cidr data type
 Fix for Ethernet MAC addresses (macaddr type) comparisons
@@ -269,8 +244,8 @@ Make char_length()/octet_length including trailing blanks (Tom)
 Made abstime/reltime use int4 instead of time_t (Peter E)
 New lztext data type for compressed text fields
 Revise code to handle coercion of int and float constants (Tom)
-New C-routines to implement a BIT and BIT VARYING type in /contrib
-        (Adriaan Joubert)
+New C-routines to implement a BIT and BIT VARYING type in /contrib 
+	(Adriaan Joubert)
 NUMERIC now accepts scientific notation (Tom)
 NUMERIC to int4 rounds (Tom)
 Convert float4/8 to NUMERIC properly (Tom)
@@ -287,7 +262,7 @@ Improved TRANSLATE() function
 Allow X=-Y operators  (Tom)
 Add exp() and ln() as NUMERIC types
 Allow SELECT float8(COUNT(*)) / (SELECT COUNT(*) FROM int4_tbl) FROM int4_tbl
-        GROUP BY f1; (Tom)
+	GROUP BY f1; (Tom)
 
 Performance
 -----------
@@ -318,8 +293,7 @@ Improve pg_statistics management for VACUUM speed improvement (Tom)
 Flush backend cache less frequently (Tom, Hiroshi)
 COPY now reuses previous memory allocation, improving performance (Tom)
 Improve optimization cost estimation (Tom)
-Improve optimizer estimate of range queries x > lowbound AND x < highbound (Tom
-)
+Improve optimizer estimate of range queries x &gt; lowbound AND x &lt; highbound (Tom)
 Use DNF instead of CNF where appropriate (Tom, Taral)
 Further cleanup for OR-of-AND WHERE-clauses (Tom)
 Make use of index in OR clauses (x = 1 AND y = 2) OR (x = 2 AND y = 4) (Tom)
@@ -328,29 +302,30 @@ New SET variable to control optimizer costs (Tom)
 Optimizer queries based on LIMIT, OFFSET, and EXISTS qualifications (Tom)
 Reduce optimizer internal housekeeping of join paths for speedup (Tom)
 Major subquery speedup (Tom)
+Fewer fsync writes when fsync is not disabled(Tom)
+Improved LIKE optimizer estimates(Tom)
 
 Source Tree Changes
 -------------------
 Fix for linux PPC compile
 New generic expression-tree-walker subroutine (Tom)
 Change form() to varargform() to prevent portability problems.
-Improved range checking for large integers on Alpha's
+Improved range checking for large integers on Alphas
 Clean up #include in /include directory (Bruce)
 Add scripts for checking includes (Bruce)
 Remove un-needed #include's from *.c files (Bruce)
-Change #include's to use
-and "" as appropriate (Bruce)
+Change #include's to use &lt;&gt; and "" as appropriate (Bruce)
 Enable WIN32 compilation of libpq
-Alpha spinlock fix from Uncle George voicenet.com>
+Alpha spinlock fix from <ulink url="mailto:gatgul@voicenet.com">Uncle George</ulink>
 Overhaul of optimizer data structures (Tom)
 Fix to cygipc library (Yutaka Tanida)
 Allow pgsql to work on newer Cygwin snapshots(Dan)
 New catalog version number (Tom)
 Add Linux ARM.
 Rename heap_replace to heap_update
-Update for QNX (Kardos, Dr. Andreas)
+Update for QNX (Dr. Andreas Kardos)
 New platform-specific regression handling (Tom)
-Rename oid8 -> oidvector and int28 -> int2vector (Bruce)
+Rename oid8 -&gt; oidvector and int28 -&gt; int2vector (Bruce)
 Included all yacc and lex files into the distribution (Peter E.)
 Remove lextest, no longer needed (Peter E)
 Fix for libpq and psql on Win32 (Magnus)
@@ -359,7 +334,7 @@ Fix for plpgsql on BSDI
 Add SQL_ASCII test case to the regression test (Tatsuo)
 configure --with-mb now deprecated (Tatsuo)
 NT fixes
-NetBSD fixes Johnny C. Lam stat.cmu.edu>
+NetBSD fixes <ulink url="mailto:lamj@stat.cmu.edu">Johnny C. Lam</ulink>
 Fixes for Alpha compiles
 New multibyte encodings
 

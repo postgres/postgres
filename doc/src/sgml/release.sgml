@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.42 2000/04/08 23:11:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.43 2000/04/18 14:55:27 momjian Exp $
 -->
 
  <chapter id="release">
@@ -173,6 +173,7 @@ Fix for SELECT 1 + NULL (Tom)
 Fixes to CHAR
 Fix log() on numeric type (Tom)
 Deprecate ':' and ';' operators
+Allow vacuum of temporary tables
 
 Enhancements
 ------------
@@ -289,6 +290,11 @@ Disable // as comment to be ANSI conforming, should use -- (Tom)
 Allow column aliases on views CREATE VIEW name (collist)
 Fixes for views with subqueries (Tom)
 Allow UPDATE table SET fld = (SELECT ...) (Tom)
+SET command options no longer require quotes
+Update pgaccess to 0.98.5
+New SET SEED command
+New pg_options.sample file
+New SET FSYNC command (Massimo)
 
 Types
 -----
@@ -371,6 +377,8 @@ New SET variable to control optimizer costs (Tom)
 Optimizer queries based on LIMIT, OFFSET, and EXISTS qualifications (Tom)
 Reduce optimizer internal housekeeping of join paths for speedup (Tom)
 Major subquery speedup (Tom)
+Fewer fsync writes when fsync is not disabled(Tom)
+Improved LIKE optimizer estimates(Tom)
 
 Source Tree Changes
 -------------------
