@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.142 2002/12/15 21:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.143 2003/01/08 22:28:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1456,7 +1456,9 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 	LocTriggerData.type = T_TriggerData;
-	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
+							  TRIGGER_EVENT_ROW |
+							  TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	for (i = 0; i < ntrigs; i++)
 	{
@@ -2323,6 +2325,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	int			new_size;
 	int			i;
 	int			ntriggers;
+	int			n_enabled_triggers = 0;
 	int		   *tgindx;
 	ItemPointerData oldctid;
 	ItemPointerData newctid;
@@ -2359,8 +2362,28 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 		tgindx = trigdesc->tg_after_statement[event];
 	}
 
+	/*
+	 * Count the number of triggers that are actually enabled. Since we
+	 * only add enabled triggers to the queue, we only need allocate
+	 * enough space to hold them (and not any disabled triggers that may
+	 * be associated with the relation).
+	 */
+	for (i = 0; i < ntriggers; i++)
+	{
+		Trigger *trigger = &trigdesc->triggers[tgindx[i]];
+
+		if (trigger->tgenabled)
+			n_enabled_triggers++;
+	}
+
+	/*
+	 * If all the triggers on this relation are disabled, we're done.
+	 */
+	if (n_enabled_triggers == 0)
+		return;
+
 	new_size = offsetof(DeferredTriggerEventData, dte_item[0]) +
-		ntriggers * sizeof(DeferredTriggerEventItem);
+		n_enabled_triggers * sizeof(DeferredTriggerEventItem);
 
 	new_event = (DeferredTriggerEvent) palloc(new_size);
 	new_event->dte_next = NULL;
@@ -2373,9 +2396,13 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	new_event->dte_n_items = ntriggers;
 	for (i = 0; i < ntriggers; i++)
 	{
+		DeferredTriggerEventItem *ev_item;
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
-		DeferredTriggerEventItem *ev_item = &(new_event->dte_item[i]);
 
+		if (!trigger->tgenabled)
+			continue;
+
+		ev_item = &(new_event->dte_item[i]);
 		ev_item->dti_tgoid = trigger->tgoid;
 		ev_item->dti_state = 
 			((trigger->tgdeferrable) ?
