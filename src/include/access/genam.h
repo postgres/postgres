@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.3 1996/11/03 12:12:22 scrappy Exp $
+ * $Id: genam.h,v 1.4 1996/11/05 08:18:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	GENAM_H
 #define GENAM_H
 
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/funcindex.h"
+#include <access/sdir.h>
+#include <access/funcindex.h>
+#include <access/relscan.h>
+#include <access/itup.h>
 
 /* ----------------
  *	generalized index_ interface routines

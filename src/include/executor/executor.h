@@ -6,32 +6,22 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.3 1996/11/03 12:12:39 scrappy Exp $
+ * $Id: executor.h,v 1.4 1996/11/05 08:18:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
+#include <catalog/pg_index.h>
+#include <access/itup.h>
+#include <stdio.h>
+#include <executor/execdesc.h>
+
 /* ----------------------------------------------------------------
- *     #includes
  * ----------------------------------------------------------------
  */
 
-#include <stdio.h>
-
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/skey.h"
-#include "access/sdir.h"
-#include "catalog/pg_index.h"
-#include "executor/execdesc.h"
-
-#ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
-#else
-# include <string.h>
-#endif
 
 /*
  * prototypes from functions in execAmi.c

@@ -11,9 +11,9 @@
  */
 #ifndef GISTSCAN_H
 
-#include "utils/rel.h"
-#include "storage/block.h"
-#include "storage/off.h"
+#include <storage/off.h>
+#include <storage/block.h>
+#include <utils/rel.h>
 
 void gistadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum);
 

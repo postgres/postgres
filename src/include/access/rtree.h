@@ -6,12 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.1 1996/08/27 21:50:21 scrappy Exp $
+ * $Id: rtree.h,v 1.2 1996/11/05 08:18:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RTREE_H
 #define RTREE_H
+
+#include <access/skey.h>
+#include <storage/block.h>
+#include <storage/off.h>
 
 /* see rtstrat.c for what all this is about */
 #define RTNStrategies			8

@@ -6,18 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.2 1996/11/03 12:12:28 scrappy Exp $
+ * $Id: index.h,v 1.3 1996/11/05 08:18:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	INDEX_H 
 #define INDEX_H
 
-#include "nodes/execnodes.h"
-#include "access/htup.h"
-#include "access/itup.h"
-#include "nodes/parsenodes.h"
-#include "storage/buf.h"
+#include <nodes/execnodes.h>
+#include <nodes/parsenodes.h>
+#include <access/itup.h>
+#include <access/funcindex.h>
 
 extern Form_pg_am
 AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId);

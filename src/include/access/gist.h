@@ -12,10 +12,10 @@
 #ifndef GIST_H
 #define GIST_H
 
-#include "storage/off.h"
-#include "utils/rel.h"
-#include "storage/block.h"
-#include "storage/page.h"
+#include <storage/page.h>
+#include <storage/block.h>
+#include <utils/rel.h>
+#include <storage/off.h>
 
 /* 
 ** You can have as many strategies as you please in GiSTs, as

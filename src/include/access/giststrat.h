@@ -12,6 +12,9 @@
 #ifndef GISTSTRAT_H
 #define GISTSTRAT_H
 
+#include <access/strat.h>
+#include <utils/rel.h>
+
 StrategyNumber
 RelationGetGISTStrategy(Relation r, AttrNumber attnum, RegProcedure proc);
 
