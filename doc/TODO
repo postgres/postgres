@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug 18 22:35:48 EDT 2004
+Last updated:		Thu Aug 19 18:25:05 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -83,6 +83,8 @@ Administration
 
   By not showing commented-out variables, we discourage people from 
   thinking that re-commenting a variable returns it to its default.
+  Another option is to allow commented values to return to their
+  default values.
 
 * Allow point-in-time recovery to archive partially filled write-ahead 
   logs
