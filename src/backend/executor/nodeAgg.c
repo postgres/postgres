@@ -296,7 +296,7 @@ ExecAgg(Agg *node)
 					tagnode = ((Expr *) aggregates[i]->target)->oper;
 					econtext->ecxt_scantuple = outerslot;
 					newVal = ExecEvalExpr(aggregates[i]->target, econtext,
-										  &isNull, NULL);
+										  &isNull, &isDone);
 					break;
 				default:
 					elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
