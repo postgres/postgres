@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.99 2002/08/17 13:06:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.100 2002/08/18 03:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,12 +582,13 @@ other			.
 void
 yyerror(const char *message)
 {
-      if(yyleng == 1 && *yytext == YY_END_OF_BUFFER_CHAR)
-              elog(ERROR, "parser: %s at end of input",message);
-      else
-              elog(ERROR, "parser: %s at or near \"%s\" at character %i",
-                      message,token_start ? token_start : yytext,
-                      (unsigned int)(yytext - scanbuf + 1));
+	const char *loc = token_start ? token_start : yytext;
+
+	if (*loc == YY_END_OF_BUFFER_CHAR)
+		elog(ERROR, "parser: %s at end of input", message);
+	else
+		elog(ERROR, "parser: %s at or near \"%s\" at character %d",
+			 message, loc, (loc - scanbuf + 1));
 }
 
 
