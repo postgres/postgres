@@ -12,7 +12,7 @@
  * This is a C implementation of the previous shell script for setting up a
  * PostgreSQL cluster location, and should be highly compatible with it.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.2 2003/11/10 22:52:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.3 2003/11/13 01:09:24 tgl Exp $
  *
  * TODO:
  *	 - clean up find_postgres code and return values
@@ -30,16 +30,19 @@
 
 #include "postgres_fe.h"
 
-#include "getopt_long.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <locale.h>
-
 #include <signal.h>
 
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
+#include "getopt_long.h"
+
+#ifndef HAVE_OPTRESET
+int			optreset;
+#endif
 
 
 /* version string we expect back from postgres */
