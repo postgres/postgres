@@ -54,7 +54,7 @@ If the transaction has been sent to all know slave hosts (All entries
 in the MirrorHost table) then all records of it are purged from the
 Pending tables.
 
-Requirments:
+Requirements:
 ---------------------------------
 -PostgreSQL-7.4 (Older versions are no longer supported)
 -Perl 5.6 or 5.8 (Other versions might work)
@@ -92,9 +92,9 @@ time a row inside of a table being mirrored changes.
 
 To build the trigger run  make on the "Makefile" in the DBMirror directory.
 
-PostgreSQL-7.4  Make Instructions:
+PostgreSQL-8.0  Make Instructions:
 
-  If you have already run "configure" in the pgsql-server directory 
+  If you have already run "configure" in the top (pgsql) directory 
   then run "make" in the dbmirror directory to compile the trigger.
 
 
