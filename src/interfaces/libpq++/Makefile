@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.29 2001/05/11 01:46:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.30 2001/05/22 11:24:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 NAME= pq++
-SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 2
+SO_MAJOR_VERSION= 4
+SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
