@@ -23,7 +23,8 @@ typedef struct {
 static TagStorage ts={0,0,NULL};
 
 static void
-addTag() {
+addTag(void)
+{
 	while( ts.clen+tsearch2_yyleng+1 > ts.tlen ) {
 		ts.tlen*=2;
 		ts.str=realloc(ts.str,ts.tlen);
@@ -38,7 +39,8 @@ addTag() {
 }
 
 static void
-startTag() {
+startTag(void)
+{
 	if ( ts.str==NULL ) {
 		ts.tlen=tsearch2_yyleng+1;
 		ts.str=malloc(ts.tlen);
@@ -319,17 +321,25 @@ ftp"://"        {
 %%
 
 /* clearing after parsing from string */
-void tsearch2_end_parse() {
-	if (s) { free(s); s=NULL; } 
+void
+tsearch2_end_parse(void)
+{
+	if (s)
+	{
+		free(s);
+		s = NULL;
+	} 
 	tsearch2_yy_delete_buffer( buf );
 	buf = NULL;
 } 
 
 /* start parse from string */
-void tsearch2_start_parse_str(char* str, int limit) {
-	if (buf) tsearch2_end_parse();
+void
+tsearch2_start_parse_str(char* str, int limit)
+{
+	if (buf)
+		tsearch2_end_parse();
 	buf = tsearch2_yy_scan_bytes( str, limit );
 	tsearch2_yy_switch_to_buffer( buf );
 	BEGIN INITIAL;
 }
-

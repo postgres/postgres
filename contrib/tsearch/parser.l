@@ -274,18 +274,25 @@ ftp"://"        {
 %%
 
 /* clearing after parsing from string */
-void end_parse() {
-	if (s) { free(s); s=NULL; } 
+void
+end_parse(void)
+{
+	if (s)
+	{
+		free(s);
+		s = NULL;
+	} 
 	tsearch_yy_delete_buffer( buf );
 	buf = NULL;
 } 
 
 /* start parse from string */
-void start_parse_str(char* str, int limit) {
-	if (buf) end_parse();
+void
+start_parse_str(char* str, int limit)
+{
+	if (buf)
+		end_parse();
 	buf = tsearch_yy_scan_bytes( str, limit );
 	tsearch_yy_switch_to_buffer( buf );
 	BEGIN INITIAL;
 }
-
-
