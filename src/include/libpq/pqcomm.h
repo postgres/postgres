@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.1 1996/08/28 07:23:02 scrappy Exp $
+ * $Id: pqcomm.h,v 1.2 1996/10/11 09:12:18 bryanh Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -31,6 +31,16 @@
 #define PATH_SIZE	64
 #define ARGV_SIZE	64
 
+/* The various kinds of startup messages are for the various kinds of 
+   user authentication systems.  In the beginning, there was only
+   STARTUP_MSG and all connections were unauthenticated.  Now, there are
+   several choices of authentication method (the client picks one, but 
+   the server needn't necessarily accept it).  So now, the STARTUP_MSG
+   message means to start either an unauthenticated or a host-based
+   authenticated connection, depending on what the server prefers.  This
+   is possible because the protocol between server and client is the same
+   in both cases (basically, no negotiation is required at all).
+   */
 
 typedef enum _MsgType {
     ACK_MSG = 0,		/* acknowledge a message */
@@ -45,7 +55,8 @@ typedef enum _MsgType {
     INVALID_MSG=9,		/* for some control functions */
     STARTUP_KRB4_MSG=10,	/* krb4 session follows startup packet */
     STARTUP_KRB5_MSG=11,      	/* krb5 session follows startup packet */
-    STARTUP_HBA_MSG=12         /* use host-based authentication */
+    STARTUP_HBA_MSG=12,         /* use host-based authentication */
+    STARTUP_UNAUTH_MSG=13       /* use unauthenticated connection */
     /* insert new values here -- DO NOT REORDER OR DELETE ENTRIES */
 } MsgType;
 
