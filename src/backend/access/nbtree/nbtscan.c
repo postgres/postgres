@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.12 1998/01/07 21:01:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.13 1998/02/28 13:53:18 vadim Exp $
  *
  *
  * NOTES
@@ -170,6 +170,9 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		tmp = *current;
 		*current = scan->currentItemData;
 		scan->currentItemData = tmp;
+		so->btso_curbuf = so->btso_mrkbuf;
+		so->btso_mrkbuf = buf;
+		buf = so->btso_curbuf;
 		switch (op)
 		{
 			case BT_INSERT:
@@ -182,6 +185,7 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 				elog(ERROR, "_bt_scandel: bad operation '%d'", op);
 				/* NOTREACHED */
 		}
+		so->btso_curbuf = so->btso_mrkbuf;
 		so->btso_mrkbuf = buf;
 		tmp = *current;
 		*current = scan->currentItemData;
