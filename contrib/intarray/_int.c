@@ -1741,33 +1741,29 @@ makepol(WORKSTATE *state) {
 typedef struct {
 	int4 *arrb;
 	int4 *arre;
-	int4 *ptr;
 } CHKVAL;
 
 /*
  * is there value 'val' in array or not ?
- */ 
+ */
 static bool
 checkcondition_arr( void *checkval, int4 val ) {
-#ifdef BS_DEBUG
-	elog(NOTICE,"OPERAND %d", val);
-#endif
-	if ( val > *(((CHKVAL*)checkval)->ptr) ) {
-		while ( ((CHKVAL*)checkval)->ptr < ((CHKVAL*)checkval)->arre ) {
-			((CHKVAL*)checkval)->ptr++;
-			if ( *(((CHKVAL*)checkval)->ptr) == val ) return true;
-			if ( val < *(((CHKVAL*)checkval)->ptr) ) return false;
-		}
-	} else if ( val < *(((CHKVAL*)checkval)->ptr) ) { 
-		while ( ((CHKVAL*)checkval)->ptr > ((CHKVAL*)checkval)->arrb ) {
-			((CHKVAL*)checkval)->ptr--;
-			if ( *(((CHKVAL*)checkval)->ptr) == val ) return true;
-			if ( val > *(((CHKVAL*)checkval)->ptr) ) return false;
-		}
-	} else {
-		return true;
+	int4      *StopLow = ((CHKVAL*)checkval)->arrb;
+	int4      *StopHigh = ((CHKVAL*)checkval)->arre;
+	int4      *StopMiddle;
+
+	/* Loop invariant: StopLow <= val < StopHigh */
+
+	while (StopLow < StopHigh) {
+		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
+		if (*StopMiddle == val)
+			return (true);
+		else if (*StopMiddle < val )
+			StopLow = StopMiddle + 1;
+		else
+			StopHigh = StopMiddle;
 	}
-	return false;	
+	return false;
 }
 
 static bool
@@ -1818,8 +1814,7 @@ execconsistent( QUERYTYPE *query, ArrayType *array, bool calcnot ) {
 	CHKVAL  chkval;
 
 	chkval.arrb = ARRPTR(array);
-	chkval.arre = chkval.arrb + ARRNELEMS(array) - 1;
-	chkval.ptr  = chkval.arrb + ARRNELEMS(array)/2;
+	chkval.arre = chkval.arrb + ARRNELEMS(array);
 	return execute( 
 		GETQUERY(query) + query->size-1 , 
 		(void*)&chkval, calcnot, 
@@ -1854,8 +1849,7 @@ boolop(PG_FUNCTION_ARGS) {
 
 	PREPAREARR(val);
 	chkval.arrb = ARRPTR(val);
-	chkval.arre = chkval.arrb + ARRNELEMS(val) - 1;
-	chkval.ptr  = chkval.arrb + ARRNELEMS(val)/2;
+	chkval.arre = chkval.arrb + ARRNELEMS(val);
 	result = execute( 
 		GETQUERY(query) + query->size-1 , 
 		&chkval, true, 

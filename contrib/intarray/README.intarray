@@ -12,6 +12,8 @@ for additional information.
 
 CHANGES:
 
+October 1, 2001
+   1. Change search method in array to binary
 September 28, 2001
    1. gist__int_ops now is without lossy
    2. add sort entry in picksplit
