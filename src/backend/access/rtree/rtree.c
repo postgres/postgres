@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.77 2003/02/24 00:57:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.78 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ rtbuild(PG_FUNCTION_ARGS)
 	 * that's not the case, big trouble's what we have.
 	 */
 	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "%s already contains data",
+		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
 	/* initialize the root page */
@@ -328,7 +328,7 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 						LP_USED);
 	}
 	if (l == InvalidOffsetNumber)
-		elog(ERROR, "rtdoinsert: failed to add index item to %s",
+		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(r));
 
 	WriteBuffer(buffer);
@@ -520,7 +520,7 @@ rtdosplit(Relation r,
 
 		if (PageAddItem(left, (Item) item, IndexTupleSize(item),
 						leftoff, LP_USED) == InvalidOffsetNumber)
-			elog(ERROR, "rtdosplit: failed to add index item to %s",
+			elog(ERROR, "failed to add index item to \"%s\"",
 				 RelationGetRelationName(r));
 		leftoff = OffsetNumberNext(leftoff);
 
@@ -544,7 +544,7 @@ rtdosplit(Relation r,
 
 		if (PageAddItem(right, (Item) item, IndexTupleSize(item),
 						rightoff, LP_USED) == InvalidOffsetNumber)
-			elog(ERROR, "rtdosplit: failed to add index item to %s",
+			elog(ERROR, "failed to add index item to \"%s\"",
 				 RelationGetRelationName(r));
 		rightoff = OffsetNumberNext(rightoff);
 
@@ -640,7 +640,9 @@ rtintinsert(Relation r,
 	 */
 
 	if (IndexTupleSize(old) != IndexTupleSize(ltup))
-		elog(ERROR, "Variable-length rtree keys are not supported.");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("variable-length rtree keys are not supported")));
 
 	/* install pointer to left child */
 	memmove(old, ltup, IndexTupleSize(ltup));
@@ -660,7 +662,7 @@ rtintinsert(Relation r,
 		if (PageAddItem(p, (Item) rtup, IndexTupleSize(rtup),
 						PageGetMaxOffsetNumber(p),
 						LP_USED) == InvalidOffsetNumber)
-			elog(ERROR, "rtintinsert: failed to add index item to %s",
+			elog(ERROR, "failed to add index item to \"%s\"",
 				 RelationGetRelationName(r));
 		WriteBuffer(b);
 		ldatum = IndexTupleGetDatum(ltup);
@@ -686,12 +688,12 @@ rtnewroot(Relation r, IndexTuple lt, IndexTuple rt)
 	if (PageAddItem(p, (Item) lt, IndexTupleSize(lt),
 					FirstOffsetNumber,
 					LP_USED) == InvalidOffsetNumber)
-		elog(ERROR, "rtnewroot: failed to add index item to %s",
+		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(r));
 	if (PageAddItem(p, (Item) rt, IndexTupleSize(rt),
 					OffsetNumberNext(FirstOffsetNumber),
 					LP_USED) == InvalidOffsetNumber)
-		elog(ERROR, "rtnewroot: failed to add index item to %s",
+		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(r));
 	WriteBuffer(b);
 }
@@ -778,8 +780,11 @@ rtpicksplit(Relation r,
 	 */
 	newitemsz = IndexTupleTotalSize(itup);
 	if (newitemsz > RTPageAvailSpace)
-		elog(ERROR, "rtree: index item size %lu exceeds maximum %lu",
-			 (unsigned long) newitemsz, (unsigned long) RTPageAvailSpace);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("index tuple size %lu exceeds rtree maximum, %lu",
+						(unsigned long) newitemsz,
+						(unsigned long) RTPageAvailSpace)));
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	newitemoff = OffsetNumberNext(maxoff);		/* phony index for new
@@ -1065,7 +1070,7 @@ rtpicksplit(Relation r,
 			choose_left = false;
 		else
 		{
-			elog(ERROR, "rtpicksplit: failed to find a workable page split");
+			elog(ERROR, "failed to find a workable rtree page split");
 			choose_left = false;	/* keep compiler quiet */
 		}
 

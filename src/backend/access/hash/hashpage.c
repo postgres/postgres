@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.36 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.37 2003/07/21 20:29:38 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -90,7 +90,7 @@ _hash_metapinit(Relation rel)
 		LockRelation(rel, AccessExclusiveLock);
 
 	if (RelationGetNumberOfBlocks(rel) != 0)
-		elog(ERROR, "Cannot initialize non-empty hash table %s",
+		elog(ERROR, "cannot initialize non-empty hash index \"%s\"",
 			 RelationGetRelationName(rel));
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
@@ -148,7 +148,7 @@ _hash_metapinit(Relation rel)
 	 * created the first two buckets above.
 	 */
 	if (_hash_initbitmap(rel, metap, OADDR_OF(lg2nelem, 1), lg2nelem + 1, 0))
-		elog(ERROR, "Problem with _hash_initbitmap.");
+		elog(ERROR, "_hash_initbitmap failed");
 
 	/* all done */
 	_hash_wrtnorelbuf(metabuf);
@@ -193,7 +193,7 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 	Buffer		buf;
 
 	if (blkno == P_NEW)
-		elog(ERROR, "_hash_getbuf: internal error: hash AM does not use P_NEW");
+		elog(ERROR, "hash AM does not use P_NEW");
 	switch (access)
 	{
 		case HASH_WRITE:
@@ -201,8 +201,7 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 			_hash_setpagelock(rel, blkno, access);
 			break;
 		default:
-			elog(ERROR, "_hash_getbuf: invalid access (%d) on new blk: %s",
-				 access, RelationGetRelationName(rel));
+			elog(ERROR, "unrecognized hash access code: %d", access);
 			break;
 	}
 	buf = ReadBuffer(rel, blkno);
@@ -228,8 +227,8 @@ _hash_relbuf(Relation rel, Buffer buf, int access)
 			_hash_unsetpagelock(rel, blkno, access);
 			break;
 		default:
-			elog(ERROR, "_hash_relbuf: invalid access (%d) on blk %x: %s",
-				 access, blkno, RelationGetRelationName(rel));
+			elog(ERROR, "unrecognized hash access code: %d", access);
+			break;
 	}
 
 	ReleaseBuffer(buf);
@@ -287,8 +286,7 @@ _hash_chgbufaccess(Relation rel,
 			_hash_relbuf(rel, *bufp, from_access);
 			break;
 		default:
-			elog(ERROR, "_hash_chgbufaccess: invalid access (%d) on blk %x: %s",
-				 from_access, blkno, RelationGetRelationName(rel));
+			elog(ERROR, "unrecognized hash access code: %d", from_access);
 			break;
 	}
 	*bufp = _hash_getbuf(rel, blkno, to_access);
@@ -322,8 +320,7 @@ _hash_setpagelock(Relation rel,
 				LockPage(rel, blkno, ShareLock);
 				break;
 			default:
-				elog(ERROR, "_hash_setpagelock: invalid access (%d) on blk %x: %s",
-					 access, blkno, RelationGetRelationName(rel));
+				elog(ERROR, "unrecognized hash access code: %d", access);
 				break;
 		}
 	}
@@ -346,8 +343,7 @@ _hash_unsetpagelock(Relation rel,
 				UnlockPage(rel, blkno, ShareLock);
 				break;
 			default:
-				elog(ERROR, "_hash_unsetpagelock: invalid access (%d) on blk %x: %s",
-					 access, blkno, RelationGetRelationName(rel));
+				elog(ERROR, "unrecognized hash access code: %d", access);
 				break;
 		}
 	}
@@ -408,8 +404,6 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	Bucket		old_bucket;
 	Bucket		new_bucket;
 	uint32		spare_ndx;
-
-/*	  elog(DEBUG, "_hash_expandtable: expanding..."); */
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
@@ -483,9 +477,6 @@ _hash_splitpage(Relation rel,
 	Page		npage;
 	TupleDesc	itupdesc;
 
-/*	  elog(DEBUG, "_hash_splitpage: splitting %d into %d,%d",
-		 obucket, obucket, nbucket);
-*/
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
 
@@ -534,7 +525,7 @@ _hash_splitpage(Relation rel,
 		opage = BufferGetPage(obuf);
 		_hash_checkpage(opage, LH_OVERFLOW_PAGE);
 		if (PageIsEmpty(opage))
-			elog(ERROR, "_hash_splitpage: empty overflow page %d", oblkno);
+			elog(ERROR, "empty hash overflow page %u", oblkno);
 		oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 	}
 
@@ -569,13 +560,9 @@ _hash_splitpage(Relation rel,
 				opage = BufferGetPage(obuf);
 				_hash_checkpage(opage, LH_OVERFLOW_PAGE);
 				oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
-
 				/* we're guaranteed that an ovfl page has at least 1 tuple */
 				if (PageIsEmpty(opage))
-				{
-					elog(ERROR, "_hash_splitpage: empty ovfl page %d!",
-						 oblkno);
-				}
+					elog(ERROR, "empty hash overflow page %u", oblkno);
 				ooffnum = FirstOffsetNumber;
 				omaxoffnum = PageGetMaxOffsetNumber(opage);
 			}
@@ -626,7 +613,7 @@ _hash_splitpage(Relation rel,
 			noffnum = OffsetNumberNext(PageGetMaxOffsetNumber(npage));
 			if (PageAddItem(npage, (Item) hitem, itemsz, noffnum, LP_USED)
 				== InvalidOffsetNumber)
-				elog(ERROR, "_hash_splitpage: failed to add index item to %s",
+				elog(ERROR, "failed to add index item to \"%s\"",
 					 RelationGetRelationName(rel));
 			_hash_wrtnorelbuf(nbuf);
 
@@ -670,10 +657,7 @@ _hash_splitpage(Relation rel,
 				oblkno = BufferGetBlockNumber(obuf);
 				oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 				if (PageIsEmpty(opage))
-				{
-					elog(ERROR, "_hash_splitpage: empty overflow page %d",
-						 oblkno);
-				}
+					elog(ERROR, "empty hash overflow page %u", oblkno);
 				ooffnum = FirstOffsetNumber;
 				omaxoffnum = PageGetMaxOffsetNumber(opage);
 			}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.151 2003/02/23 20:32:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.152 2003/07/21 20:29:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -134,19 +134,16 @@ heapgettup(Relation relation,
 	 */
 #ifdef	HEAPDEBUGALL
 	if (ItemPointerIsValid(tid))
-	{
-		elog(LOG, "heapgettup(%s, tid=0x%x[%d,%d], dir=%d, ...)",
+		elog(DEBUG2, "heapgettup(%s, tid=0x%x[%d,%d], dir=%d, ...)",
 			 RelationGetRelationName(relation), tid, tid->ip_blkid,
 			 tid->ip_posid, dir);
-	}
 	else
-	{
-		elog(LOG, "heapgettup(%s, tid=0x%x, dir=%d, ...)",
+		elog(DEBUG2, "heapgettup(%s, tid=0x%x, dir=%d, ...)",
 			 RelationGetRelationName(relation), tid, dir);
-	}
-	elog(LOG, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", buffer, nkeys, key);
 
-	elog(LOG, "heapgettup: relation(%c)=`%s', %p",
+	elog(DEBUG2, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", buffer, nkeys, key);
+
+	elog(DEBUG2, "heapgettup: relation(%c)=`%s', %p",
 		 relation->rd_rel->relkind, RelationGetRelationName(relation),
 		 snapshot);
 #endif   /* !defined(HEAPLOGALL) */
@@ -194,7 +191,7 @@ heapgettup(Relation relation,
 									   relation,
 									   ItemPointerGetBlockNumber(tid));
 		if (!BufferIsValid(*buffer))
-			elog(ERROR, "heapgettup: failed ReadBuffer");
+			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 
@@ -229,7 +226,7 @@ heapgettup(Relation relation,
 									   relation,
 									   page);
 		if (!BufferIsValid(*buffer))
-			elog(ERROR, "heapgettup: failed ReadBuffer");
+			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 
@@ -269,7 +266,7 @@ heapgettup(Relation relation,
 									   relation,
 									   page);
 		if (!BufferIsValid(*buffer))
-			elog(ERROR, "heapgettup: failed ReadBuffer");
+			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 
@@ -363,7 +360,7 @@ heapgettup(Relation relation,
 									   relation,
 									   page);
 		if (!BufferIsValid(*buffer))
-			elog(ERROR, "heapgettup: failed ReadBuffer");
+			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 		dp = (Page) BufferGetPage(*buffer);
@@ -459,7 +456,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "Relation %u does not exist", relationId);
+		elog(ERROR, "could not open relation with OID %u", relationId);
 
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
@@ -532,7 +529,7 @@ relation_openr(const char *sysRelationName, LOCKMODE lockmode)
 	r = RelationSysNameGetRelation(sysRelationName);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "Relation \"%s\" does not exist", sysRelationName);
+		elog(ERROR, "could not open relation \"%s\"", sysRelationName);
 
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
@@ -578,14 +575,20 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 	r = relation_open(relationId, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an index relation",
+						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
-		elog(ERROR, "%s is a special relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a special relation",
+						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		elog(ERROR, "%s is a composite type",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a composite type",
+						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -607,14 +610,20 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	r = relation_openrv(relation, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an index relation",
+						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
-		elog(ERROR, "%s is a special relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a special relation",
+						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		elog(ERROR, "%s is a composite type",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a composite type",
+						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -636,14 +645,20 @@ heap_openr(const char *sysRelationName, LOCKMODE lockmode)
 	r = relation_openr(sysRelationName, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an index relation",
+						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
-		elog(ERROR, "%s is a special relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a special relation",
+						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		elog(ERROR, "%s is a composite type",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a composite type",
+						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -660,12 +675,6 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
 	HeapScanDesc scan;
-
-	/*
-	 * sanity checks
-	 */
-	if (!RelationIsValid(relation))
-		elog(ERROR, "heap_beginscan: !RelationIsValid(relation)");
 
 	/*
 	 * increment relation ref count while scanning relation
@@ -767,14 +776,12 @@ heap_endscan(HeapScanDesc scan)
 
 #ifdef HEAPDEBUGALL
 #define HEAPDEBUG_1 \
-	elog(LOG, "heap_getnext([%s,nkeys=%d],dir=%d) called", \
+	elog(DEBUG2, "heap_getnext([%s,nkeys=%d],dir=%d) called", \
 		 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, (int) direction)
-
 #define HEAPDEBUG_2 \
-	 elog(LOG, "heap_getnext returning EOS")
-
+	elog(DEBUG2, "heap_getnext returning EOS")
 #define HEAPDEBUG_3 \
-	 elog(LOG, "heap_getnext returning tuple")
+	elog(DEBUG2, "heap_getnext returning tuple")
 #else
 #define HEAPDEBUG_1
 #define HEAPDEBUG_2
@@ -786,12 +793,6 @@ HeapTuple
 heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
 	/* Note: no locking manipulations needed */
-
-	/*
-	 * argument checks
-	 */
-	if (scan == NULL)
-		elog(ERROR, "heap_getnext: NULL relscan");
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
@@ -847,7 +848,7 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
  * the tuple); when keep_buf = false, the pin is released and *userbuf is set
  * to InvalidBuffer.
  *
- * It is somewhat inconsistent that we elog() on invalid block number but
+ * It is somewhat inconsistent that we ereport() on invalid block number but
  * return false on invalid item number.  This is historical.  The only
  * justification I can see is that the caller can relatively easily check the
  * block number for validity, but cannot check the item number without reading
@@ -875,7 +876,7 @@ heap_fetch(Relation relation,
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "heap_fetch: ReadBuffer(%s, %lu) failed",
+		elog(ERROR, "ReadBuffer(\"%s\", %lu) failed",
 			 RelationGetRelationName(relation),
 			 (unsigned long) ItemPointerGetBlockNumber(tid));
 
@@ -985,8 +986,9 @@ heap_get_latest_tid(Relation relation,
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "heap_get_latest_tid: %s relation: ReadBuffer(%lx) failed",
-			 RelationGetRelationName(relation), (long) tid);
+		elog(ERROR, "ReadBuffer(\"%s\", %lu) failed",
+			 RelationGetRelationName(relation),
+			 (unsigned long) ItemPointerGetBlockNumber(tid));
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
@@ -1103,7 +1105,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	/* Find buffer to insert this tuple into */
 	buffer = RelationGetBufferForTuple(relation, tup->t_len, InvalidBuffer);
 
-	/* NO ELOG(ERROR) from here till changes are logged */
+	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
 	RelationPutHeapTuple(relation, buffer, tup);
@@ -1219,7 +1221,7 @@ heap_delete(Relation relation, ItemPointer tid,
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "heap_delete: failed ReadBuffer");
+		elog(ERROR, "ReadBuffer failed");
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
@@ -1238,7 +1240,7 @@ l1:
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
-		elog(ERROR, "heap_delete: (am)invalid tid");
+		elog(ERROR, "attempted to delete invisible tuple");
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
@@ -1358,7 +1360,7 @@ l1:
  * This routine may be used to delete a tuple when concurrent updates of
  * the target tuple are not expected (for example, because we have a lock
  * on the relation associated with the tuple).	Any failure is reported
- * via elog().
+ * via ereport().
  */
 void
 simple_heap_delete(Relation relation, ItemPointer tid)
@@ -1371,7 +1373,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 	{
 		case HeapTupleSelfUpdated:
 			/* Tuple was already updated in current command? */
-			elog(ERROR, "simple_heap_delete: tuple already updated by self");
+			elog(ERROR, "tuple already updated by self");
 			break;
 
 		case HeapTupleMayBeUpdated:
@@ -1379,11 +1381,11 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 			break;
 
 		case HeapTupleUpdated:
-			elog(ERROR, "simple_heap_delete: tuple concurrently updated");
+			elog(ERROR, "tuple concurrently updated");
 			break;
 
 		default:
-			elog(ERROR, "Unknown status %u from heap_delete", result);
+			elog(ERROR, "unrecognized heap_delete status: %u", result);
 			break;
 	}
 }
@@ -1413,7 +1415,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(otid));
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "heap_update: failed ReadBuffer");
+		elog(ERROR, "ReadBuffer failed");
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	dp = (PageHeader) BufferGetPage(buffer);
@@ -1438,7 +1440,7 @@ l2:
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
-		elog(ERROR, "heap_update: (am)invalid tid");
+		elog(ERROR, "attempted to update invisible tuple");
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
@@ -1611,7 +1613,7 @@ l2:
 	 * buffer, only one pin is held.
 	 */
 
-	/* NO ELOG(ERROR) from here till changes are logged */
+	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
 	RelationPutHeapTuple(relation, newbuf, newtup);		/* insert new tuple */
@@ -1688,7 +1690,7 @@ l2:
  * This routine may be used to update a tuple when concurrent updates of
  * the target tuple are not expected (for example, because we have a lock
  * on the relation associated with the tuple).	Any failure is reported
- * via elog().
+ * via ereport().
  */
 void
 simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
@@ -1701,7 +1703,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 	{
 		case HeapTupleSelfUpdated:
 			/* Tuple was already updated in current command? */
-			elog(ERROR, "simple_heap_update: tuple already updated by self");
+			elog(ERROR, "tuple already updated by self");
 			break;
 
 		case HeapTupleMayBeUpdated:
@@ -1709,11 +1711,11 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 			break;
 
 		case HeapTupleUpdated:
-			elog(ERROR, "simple_heap_update: tuple concurrently updated");
+			elog(ERROR, "tuple concurrently updated");
 			break;
 
 		default:
-			elog(ERROR, "Unknown status %u from heap_update", result);
+			elog(ERROR, "unrecognized heap_update status: %u", result);
 			break;
 	}
 }
@@ -1733,7 +1735,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	*buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(*buffer))
-		elog(ERROR, "heap_mark4update: failed ReadBuffer");
+		elog(ERROR, "ReadBuffer failed");
 
 	LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 
@@ -1750,7 +1752,7 @@ l3:
 	{
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(*buffer);
-		elog(ERROR, "heap_mark4update: (am)invalid tid");
+		elog(ERROR, "attempted to mark4update invisible tuple");
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{

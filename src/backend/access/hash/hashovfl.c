@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.34 2003/03/10 22:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.35 2003/07/21 20:29:38 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -58,7 +58,7 @@ _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf)
 	/* allocate an empty overflow page */
 	oaddr = _hash_getovfladdr(rel, metabufp);
 	if (oaddr == InvalidOvflAddress)
-		elog(ERROR, "_hash_addovflpage: problem with _hash_getovfladdr.");
+		elog(ERROR, "_hash_getovfladdr failed");
 	ovflblkno = OADDR_TO_BLKNO(OADDR_OF(SPLITNUM(oaddr), OPAGENUM(oaddr)));
 	Assert(BlockNumberIsValid(ovflblkno));
 	ovflbuf = _hash_getbuf(rel, ovflblkno, HASH_WRITE);
@@ -158,12 +158,13 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	offset = metap->hashm_spares[splitnum] -
 		(splitnum ? metap->hashm_spares[splitnum - 1] : 0);
 
-#define OVMSG	"HASH: Out of overflow pages.  Out of luck.\n"
-
 	if (offset > SPLITMASK)
 	{
 		if (++splitnum >= NCACHED)
-			elog(ERROR, OVMSG);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("out of overflow pages in hash index \"%s\"",
+							RelationGetRelationName(rel))));
 		metap->hashm_ovflpoint = splitnum;
 		metap->hashm_spares[splitnum] = metap->hashm_spares[splitnum - 1];
 		metap->hashm_spares[splitnum - 1]--;
@@ -179,7 +180,10 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 
 		free_page++;
 		if (free_page >= NCACHED)
-			elog(ERROR, OVMSG);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("out of overflow pages in hash index \"%s\"",
+							RelationGetRelationName(rel))));
 
 		/*
 		 * This is tricky.	The 1 indicates that you want the new page
@@ -193,13 +197,16 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 		 */
 		if (_hash_initbitmap(rel, metap, OADDR_OF(splitnum, offset),
 							 1, free_page))
-			elog(ERROR, "overflow_page: problem with _hash_initbitmap.");
+			elog(ERROR, "_hash_initbitmap failed");
 		metap->hashm_spares[splitnum]++;
 		offset++;
 		if (offset > SPLITMASK)
 		{
 			if (++splitnum >= NCACHED)
-				elog(ERROR, OVMSG);
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("out of overflow pages in hash index \"%s\"",
+								RelationGetRelationName(rel))));
 			metap->hashm_ovflpoint = splitnum;
 			metap->hashm_spares[splitnum] = metap->hashm_spares[splitnum - 1];
 			metap->hashm_spares[splitnum - 1]--;
@@ -242,7 +249,10 @@ found:
 		;
 	offset = (i ? bit - metap->hashm_spares[i - 1] : bit);
 	if (offset >= SPLITMASK)
-		elog(ERROR, OVMSG);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of overflow pages in hash index \"%s\"",
+						RelationGetRelationName(rel))));
 
 	/* initialize this page */
 	oaddr = OADDR_OF(i, offset);
@@ -479,8 +489,6 @@ _hash_squeezebucket(Relation rel,
 	HashItem	hitem;
 	Size		itemsz;
 
-/*	  elog(DEBUG, "_hash_squeezebucket: squeezing bucket %d", bucket); */
-
 	/*
 	 * start squeezing into the base bucket page.
 	 */
@@ -565,7 +573,7 @@ _hash_squeezebucket(Relation rel,
 		woffnum = OffsetNumberNext(PageGetMaxOffsetNumber(wpage));
 		if (PageAddItem(wpage, (Item) hitem, itemsz, woffnum, LP_USED)
 			== InvalidOffsetNumber)
-			elog(ERROR, "_hash_squeezebucket: failed to add index item to %s",
+			elog(ERROR, "failed to add index item to \"%s\"",
 				 RelationGetRelationName(rel));
 
 		/*

@@ -363,7 +363,7 @@ insert into arr_tbl values ('{1,2,3}');
 insert into arr_tbl values ('{1,2}');
 -- failure expected:
 insert into arr_tbl values ('{1,2,3}');
-ERROR:  Cannot insert a duplicate key into unique index arr_tbl_f1_key
+ERROR:  duplicate key violates UNIQUE constraint "arr_tbl_f1_key"
 insert into arr_tbl values ('{2,3,4}');
 insert into arr_tbl values ('{1,5,3}');
 insert into arr_tbl values ('{1,2,10}');

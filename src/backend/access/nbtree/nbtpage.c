@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.65 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.66 2003/07/21 20:29:39 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -44,7 +44,7 @@ _bt_metapinit(Relation rel)
 	BTPageOpaque op;
 
 	if (RelationGetNumberOfBlocks(rel) != 0)
-		elog(ERROR, "Cannot initialize non-empty btree %s",
+		elog(ERROR, "cannot initialize non-empty btree index \"%s\"",
 			 RelationGetRelationName(rel));
 
 	buf = ReadBuffer(rel, P_NEW);
@@ -145,13 +145,17 @@ _bt_getroot(Relation rel, int access)
 	/* sanity-check the metapage */
 	if (!(metaopaque->btpo_flags & BTP_META) ||
 		metad->btm_magic != BTREE_MAGIC)
-		elog(ERROR, "Index %s is not a btree",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" is not a btree",
+						RelationGetRelationName(rel))));
 
 	if (metad->btm_version != BTREE_VERSION)
-		elog(ERROR, "Version mismatch on %s: version %d file, version %d code",
-			 RelationGetRelationName(rel),
-			 metad->btm_version, BTREE_VERSION);
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("version mismatch in \"%s\": file version %d, code version %d",
+						RelationGetRelationName(rel),
+						metad->btm_version, BTREE_VERSION)));
 
 	/* if no root page initialized yet, do it */
 	if (metad->btm_root == P_NONE)
@@ -265,7 +269,7 @@ _bt_getroot(Relation rel, int access)
 
 			/* it's dead, Jim.  step right one page */
 			if (P_RIGHTMOST(rootopaque))
-				elog(ERROR, "No live root page found in %s",
+				elog(ERROR, "no live root page found in \"%s\"",
 					 RelationGetRelationName(rel));
 			rootblkno = rootopaque->btpo_next;
 
@@ -274,7 +278,7 @@ _bt_getroot(Relation rel, int access)
 
 		/* Note: can't check btpo.level on deleted pages */
 		if (rootopaque->btpo.level != rootlevel)
-			elog(ERROR, "Root page %u of %s has level %u, expected %u",
+			elog(ERROR, "root page %u of \"%s\" has level %u, expected %u",
 				 rootblkno, RelationGetRelationName(rel),
 				 rootopaque->btpo.level, rootlevel);
 	}
@@ -320,13 +324,17 @@ _bt_gettrueroot(Relation rel)
 
 	if (!(metaopaque->btpo_flags & BTP_META) ||
 		metad->btm_magic != BTREE_MAGIC)
-		elog(ERROR, "Index %s is not a btree",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" is not a btree",
+						RelationGetRelationName(rel))));
 
 	if (metad->btm_version != BTREE_VERSION)
-		elog(ERROR, "Version mismatch on %s: version %d file, version %d code",
-			 RelationGetRelationName(rel),
-			 metad->btm_version, BTREE_VERSION);
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("version mismatch in \"%s\": file version %d, code version %d",
+						RelationGetRelationName(rel),
+						metad->btm_version, BTREE_VERSION)));
 
 	/* if no root page initialized yet, fail */
 	if (metad->btm_root == P_NONE)
@@ -351,7 +359,7 @@ _bt_gettrueroot(Relation rel)
 
 		/* it's dead, Jim.  step right one page */
 		if (P_RIGHTMOST(rootopaque))
-			elog(ERROR, "No live root page found in %s",
+			elog(ERROR, "no live root page found in \"%s\"",
 				 RelationGetRelationName(rel));
 		rootblkno = rootopaque->btpo_next;
 
@@ -360,7 +368,7 @@ _bt_gettrueroot(Relation rel)
 
 	/* Note: can't check btpo.level on deleted pages */
 	if (rootopaque->btpo.level != rootlevel)
-		elog(ERROR, "Root page %u of %s has level %u, expected %u",
+		elog(ERROR, "root page %u of \"%s\" has level %u, expected %u",
 			 rootblkno, RelationGetRelationName(rel),
 			 rootopaque->btpo.level, rootlevel);
 
@@ -416,7 +424,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 				_bt_pageinit(page, BufferGetPageSize(buf));
 				return buf;
 			}
-			elog(DEBUG2, "_bt_getbuf: FSM returned nonrecyclable page");
+			elog(DEBUG2, "FSM returned nonrecyclable page");
 			_bt_relbuf(rel, buf);
 		}
 
@@ -630,7 +638,7 @@ _bt_delitems(Relation rel, Buffer buf,
 	Page		page = BufferGetPage(buf);
 	int			i;
 
-	/* No elog(ERROR) until changes are logged */
+	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
 	/*
@@ -775,7 +783,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	for (;;)
 	{
 		if (stack == NULL)
-			elog(ERROR, "_bt_pagedel: not enough stack items");
+			elog(ERROR, "not enough stack items");
 		if (ilevel == targetlevel)
 			break;
 		stack = stack->bts_parent;
@@ -805,7 +813,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 			_bt_relbuf(rel, lbuf);
 			if (leftsib == P_NONE)
 			{
-				elog(LOG, "_bt_pagedel: no left sibling (concurrent deletion?)");
+				elog(LOG, "no left sibling (concurrent deletion?)");
 				return 0;
 			}
 			lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
@@ -837,7 +845,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		return 0;
 	}
 	if (opaque->btpo_prev != leftsib)
-		elog(ERROR, "_bt_pagedel: left link changed unexpectedly");
+		elog(ERROR, "left link changed unexpectedly");
 	/*
 	 * And next write-lock the (current) right sibling.
 	 */
@@ -851,8 +859,8 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 				   target, P_HIKEY);
 	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
-		elog(ERROR, "_bt_getstackbuf: my bits moved right off the end of the world!"
-			 "\n\tRecreate index %s.", RelationGetRelationName(rel));
+		elog(ERROR, "failed to re-find parent key in \"%s\"",
+			 RelationGetRelationName(rel));
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
 	/*
@@ -924,7 +932,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	 * Here we begin doing the deletion.
 	 */
 
-	/* No elog(ERROR) until changes are logged */
+	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
 	/*
@@ -954,7 +962,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		itemid = PageGetItemId(page, nextoffset);
 		btitem = (BTItem) PageGetItem(page, itemid);
 		if (ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid)) != rightsib)
-			elog(PANIC, "_bt_pagedel: right sibling is not next child");
+			elog(PANIC, "right sibling is not next child");
 
 		PageIndexTupleDelete(page, nextoffset);
 	}

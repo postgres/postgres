@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.63 2003/03/23 23:01:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.64 2003/07/21 20:29:38 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -69,7 +69,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	 * that's not the case, big trouble's what we have.
 	 */
 	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "%s already contains data",
+		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
 	/* initialize the hash index metadata page */

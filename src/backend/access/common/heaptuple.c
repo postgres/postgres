@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.83 2002/09/27 15:04:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.84 2003/07/21 20:29:37 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -173,13 +173,11 @@ heap_attisnull(HeapTuple tup, int attnum)
 			case MinCommandIdAttributeNumber:
 			case MaxTransactionIdAttributeNumber:
 			case MaxCommandIdAttributeNumber:
+				/* these are never null */
 				break;
 
-			case 0:
-				elog(ERROR, "heap_attisnull: zero attnum disallowed");
-
 			default:
-				elog(ERROR, "heap_attisnull: undefined negative attnum");
+				elog(ERROR, "invalid attnum: %d", attnum);
 		}
 
 	return 0;
@@ -457,7 +455,7 @@ heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
 			result = ObjectIdGetDatum(tup->t_tableOid);
 			break;
 		default:
-			elog(ERROR, "heap_getsysattr: invalid attnum %d", attnum);
+			elog(ERROR, "invalid attnum: %d", attnum);
 			result = 0;			/* keep compiler quiet */
 			break;
 	}
@@ -581,8 +579,10 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	int			numberOfAttributes = tupleDescriptor->natts;
 
 	if (numberOfAttributes > MaxTupleAttributeNumber)
-		elog(ERROR, "heap_formtuple: numberOfAttributes %d exceeds limit %d",
-			 numberOfAttributes, MaxTupleAttributeNumber);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("number of attributes %d exceeds limit, %d",
+						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	for (i = 0; i < numberOfAttributes; i++)
 	{
@@ -666,14 +666,11 @@ heap_modifytuple(HeapTuple tuple,
 	 * allocate and fill *value and *nulls arrays from either the tuple or
 	 * the repl information, as appropriate.
 	 */
-	value = (Datum *) palloc(numberOfAttributes * sizeof *value);
-	nulls = (char *) palloc(numberOfAttributes * sizeof *nulls);
+	value = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
+	nulls = (char *) palloc(numberOfAttributes * sizeof(char));
 
-	for (attoff = 0;
-		 attoff < numberOfAttributes;
-		 attoff += 1)
+	for (attoff = 0; attoff < numberOfAttributes; attoff++)
 	{
-
 		if (repl[attoff] == ' ')
 		{
 			value[attoff] = heap_getattr(tuple,
@@ -683,13 +680,13 @@ heap_modifytuple(HeapTuple tuple,
 			nulls[attoff] = (isNull) ? 'n' : ' ';
 
 		}
-		else if (repl[attoff] != 'r')
-			elog(ERROR, "heap_modifytuple: repl is \\%3d", repl[attoff]);
-		else
-		{						/* == 'r' */
+		else if (repl[attoff] == 'r')
+		{
 			value[attoff] = replValue[attoff];
 			nulls[attoff] = replNull[attoff];
 		}
+		else
+			elog(ERROR, "unrecognized replace flag: %d", (int) repl[attoff]);
 	}
 
 	/*
@@ -698,6 +695,9 @@ heap_modifytuple(HeapTuple tuple,
 	newTuple = heap_formtuple(RelationGetDescr(relation),
 							  value,
 							  nulls);
+
+	pfree(value);
+	pfree(nulls);
 
 	/*
 	 * copy the identification info of the old tuple: t_ctid, t_self, and

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.74 2003/05/26 17:51:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.75 2003/07/21 20:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,9 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 			fmgr_info(thisState->typsend, &thisState->finfo);
 		}
 		else
-			elog(ERROR, "Unsupported format code %d", format);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unsupported format code: %d", format)));
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.100 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.101 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ top:
  *
  * Returns InvalidTransactionId if there is no conflict, else an xact ID
  * we must wait for to see if it commits a conflicting tuple.	If an actual
- * conflict is detected, no return --- just elog().
+ * conflict is detected, no return --- just ereport().
  */
 static TransactionId
 _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
@@ -237,8 +237,10 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					/*
 					 * Otherwise we have a definite conflict.
 					 */
-					elog(ERROR, "Cannot insert a duplicate key into unique index %s",
-						 RelationGetRelationName(rel));
+					ereport(ERROR,
+							(errcode(ERRCODE_UNIQUE_VIOLATION),
+							 errmsg("duplicate key violates UNIQUE constraint \"%s\"",
+									RelationGetRelationName(rel))));
 				}
 				else if (htup.t_data != NULL)
 				{
@@ -291,7 +293,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 				if (!P_IGNORE(opaque))
 					break;
 				if (P_RIGHTMOST(opaque))
-					elog(ERROR, "_bt_check_unique: fell off the end of %s",
+					elog(ERROR, "fell off the end of \"%s\"",
 						 RelationGetRelationName(rel));
 			}
 			maxoff = PageGetMaxOffsetNumber(page);
@@ -387,8 +389,11 @@ _bt_insertonpg(Relation rel,
 	 * itemsz doesn't include the ItemId.
 	 */
 	if (itemsz > BTMaxItemSize(page))
-		elog(ERROR, "btree: index item size %lu exceeds maximum %lu",
-			 (unsigned long) itemsz, BTMaxItemSize(page));
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("index tuple size %lu exceeds btree maximum, %lu",
+						(unsigned long) itemsz,
+						(unsigned long) BTMaxItemSize(page))));
 
 	/*
 	 * Determine exactly where new item will go.
@@ -445,7 +450,7 @@ _bt_insertonpg(Relation rel,
 				if (!P_IGNORE(lpageop))
 					break;
 				if (P_RIGHTMOST(lpageop))
-					elog(ERROR, "_bt_insertonpg: fell off the end of %s",
+					elog(ERROR, "fell off the end of \"%s\"",
 						 RelationGetRelationName(rel));
 			}
 			_bt_relbuf(rel, buf);
@@ -536,7 +541,7 @@ _bt_insertonpg(Relation rel,
 			}
 		}
 
-		/* Do the actual update.  No elog(ERROR) until changes are logged */
+		/* Do the update.  No ereport(ERROR) until changes are logged */
 		START_CRIT_SECTION();
 
 		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
@@ -705,7 +710,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		item = (BTItem) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
 						LP_USED) == InvalidOffsetNumber)
-			elog(PANIC, "btree: failed to add hikey to the right sibling");
+			elog(PANIC, "failed to add hikey to the right sibling");
 		rightoff = OffsetNumberNext(rightoff);
 	}
 
@@ -730,7 +735,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 					LP_USED) == InvalidOffsetNumber)
-		elog(PANIC, "btree: failed to add hikey to the left sibling");
+		elog(PANIC, "failed to add hikey to the left sibling");
 	leftoff = OffsetNumberNext(leftoff);
 
 	/*
@@ -815,14 +820,14 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		spage = BufferGetPage(sbuf);
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 		if (sopaque->btpo_prev != ropaque->btpo_prev)
-			elog(PANIC, "btree: right sibling's left-link doesn't match");
+			elog(PANIC, "right sibling's left-link doesn't match");
 	}
 
 	/*
 	 * Right sibling is locked, new siblings are prepared, but original
 	 * page is not updated yet. Log changes before continuing.
 	 *
-	 * NO ELOG(ERROR) till right sibling is updated.
+	 * NO EREPORT(ERROR) till right sibling is updated.
 	 */
 	START_CRIT_SECTION();
 
@@ -1059,7 +1064,7 @@ _bt_findsplitloc(Relation rel,
 	 * just in case ...
 	 */
 	if (!state.have_split)
-		elog(FATAL, "_bt_findsplitloc: can't find a feasible split point for %s",
+		elog(ERROR, "cannot find a feasible split point for \"%s\"",
 			 RelationGetRelationName(rel));
 
 	*newitemonleft = state.newitemonleft;
@@ -1193,7 +1198,7 @@ _bt_insert_parent(Relation rel,
 			BTPageOpaque lpageop;
 
 			if (!InRecovery)
-				elog(DEBUG2, "_bt_insert_parent: concurrent ROOT page split");
+				elog(DEBUG2, "concurrent ROOT page split");
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			/* Find the leftmost page at the next level up */
 			pbuf = _bt_get_endpoint(rel, lpageop->btpo.level + 1, false);
@@ -1232,8 +1237,8 @@ _bt_insert_parent(Relation rel,
 
 		/* Check for error only after writing children */
 		if (pbuf == InvalidBuffer)
-			elog(ERROR, "_bt_getstackbuf: my bits moved right off the end of the world!"
-				 "\n\tRecreate index %s.", RelationGetRelationName(rel));
+			elog(ERROR, "failed to re-find parent key in \"%s\"",
+				 RelationGetRelationName(rel));
 
 		/* Recursively update the parent */
 		newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
@@ -1399,7 +1404,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
-	/* NO ELOG(ERROR) from here till newroot op is logged */
+	/* NO EREPORT(ERROR) from here till newroot op is logged */
 	START_CRIT_SECTION();
 
 	/* set btree special data */
@@ -1431,7 +1436,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * the two items will go into positions P_HIKEY and P_FIRSTKEY.
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
-		elog(PANIC, "btree: failed to add leftkey to new root page");
+		elog(PANIC, "failed to add leftkey to new root page");
 	pfree(new_item);
 
 	/*
@@ -1448,7 +1453,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * insert the right page pointer into the new root page.
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber)
-		elog(PANIC, "btree: failed to add rightkey to new root page");
+		elog(PANIC, "failed to add rightkey to new root page");
 	pfree(new_item);
 
 	/* XLOG stuff */
@@ -1533,7 +1538,7 @@ _bt_pgaddtup(Relation rel,
 
 	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
 					LP_USED) == InvalidOffsetNumber)
-		elog(PANIC, "btree: failed to add item to the %s for %s",
+		elog(PANIC, "failed to add item to the %s for \"%s\"",
 			 where, RelationGetRelationName(rel));
 }
 

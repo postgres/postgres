@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.58 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.59 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ StrategyTermEvaluate(StrategyTerm term,
 				break;
 
 			default:
-				elog(ERROR, "StrategyTermEvaluate: impossible case %d",
+				elog(ERROR, "impossible strategy case: %d",
 					 operator->flags ^ entry->sk_flags);
 		}
 		if (!result)
@@ -310,13 +310,14 @@ RelationGetStrategy(Relation relation,
 			break;
 
 		default:
-			elog(FATAL, "RelationGetStrategy: impossible case %d", entry->sk_flags);
+			elog(ERROR, "impossible strategy case: %d",
+				 entry->sk_flags);
 	}
 
 	if (!StrategyNumberIsInBounds(strategy, evaluation->maxStrategy))
 	{
 		if (!StrategyNumberIsValid(strategy))
-			elog(ERROR, "RelationGetStrategy: corrupted evaluation");
+			elog(ERROR, "corrupted strategy evaluation");
 	}
 
 	return strategy;
@@ -435,8 +436,7 @@ RelationInvokeStrategy(Relation relation,
 		}
 	}
 
-	elog(ERROR, "RelationInvokeStrategy: cannot evaluate strategy %d",
-		 strategy);
+	elog(ERROR, "cannot evaluate strategy %d", strategy);
 
 	/* not reached, just to make compiler happy */
 	return FALSE;

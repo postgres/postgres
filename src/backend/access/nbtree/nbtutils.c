@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.51 2002/09/04 20:31:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.52 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ _bt_orderkeys(IndexScanDesc scan)
 	cur = &key[0];
 	/* check input keys are correctly ordered */
 	if (cur->sk_attno != 1)
-		elog(ERROR, "_bt_orderkeys: key(s) for attribute 1 missed");
+		elog(ERROR, "key(s) for attribute 1 missed");
 
 	/* We can short-circuit most of the work if there's just one key */
 	if (numberOfKeys == 1)
@@ -305,8 +305,7 @@ _bt_orderkeys(IndexScanDesc scan)
 
 			/* check input keys are correctly ordered */
 			if (i < numberOfKeys && cur->sk_attno != attno + 1)
-				elog(ERROR, "_bt_orderkeys: key(s) for attribute %d missed",
-					 attno + 1);
+				elog(ERROR, "key(s) for attribute %d missed", attno + 1);
 
 			/*
 			 * If = has been specified, no other key will be used. In case
@@ -462,8 +461,7 @@ _bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map)
 		if (sk_procedure == map->entry[j].sk_procedure)
 			return j;
 	}
-	elog(ERROR, "_bt_getstrategynumber: unable to identify operator %u",
-		 sk_procedure);
+	elog(ERROR, "unable to identify operator %u", sk_procedure);
 	return -1;					/* keep compiler quiet */
 }
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.52 2003/07/21 17:05:11 tgl Exp $
+ * $Id: elog.h,v 1.53 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,6 +177,7 @@
 #define ERRCODE_NO_ACTIVE_SQL_TRANSACTION_FOR_BRANCH_TRANSACTION	MAKE_SQLSTATE('2','5', '0','0','5')
 #define ERRCODE_READ_ONLY_SQL_TRANSACTION	MAKE_SQLSTATE('2','5', '0','0','6')
 #define ERRCODE_SCHEMA_AND_DATA_STATEMENT_MIXING_NOT_SUPPORTED	MAKE_SQLSTATE('2','5', '0','0','7')
+#define ERRCODE_NO_ACTIVE_SQL_TRANSACTION	MAKE_SQLSTATE('2','5', 'P','0','1')
 
 /* Class 26 - Invalid SQL Statement Name */
 /* (we take this to mean prepared statements) */
@@ -308,6 +309,7 @@
 #define ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE	MAKE_SQLSTATE('5','5', '0','0','0')
 #define ERRCODE_OBJECT_IN_USE				MAKE_SQLSTATE('5','5', '0','0','6')
 #define ERRCODE_INDEXES_DEACTIVATED			MAKE_SQLSTATE('5','5', 'P','0','1')
+#define ERRCODE_INDEX_CORRUPTED				MAKE_SQLSTATE('5','5', 'P','0','2')
 
 /* Class 57 - Operator Intervention (class borrowed from DB2) */
 #define ERRCODE_OPERATOR_INTERVENTION		MAKE_SQLSTATE('5','7', '0','0','0')

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.102 2003/03/23 23:01:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.103 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ btbuild(PG_FUNCTION_ARGS)
 	 * that's not the case, big trouble's what we have.
 	 */
 	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "%s already contains data",
+		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
 	/* initialize the btree index metadata page */
@@ -816,8 +816,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			 */
 			i = FlushRelationBuffers(rel, new_pages);
 			if (i < 0)
-				elog(ERROR, "btvacuumcleanup: FlushRelationBuffers returned %d",
-					 i);
+				elog(ERROR, "FlushRelationBuffers returned %d", i);
 
 			/*
 			 * Do the physical truncation.
@@ -929,8 +928,8 @@ _bt_restscan(IndexScanDesc scan)
 		 * we can find it again.
 		 */
 		if (P_RIGHTMOST(opaque))
-			elog(ERROR, "_bt_restscan: my bits moved right off the end of the world!"
-				 "\n\tRecreate index %s.", RelationGetRelationName(rel));
+			elog(ERROR, "failed to re-find previous key in \"%s\"",
+				 RelationGetRelationName(rel));
 		/* Advance to next non-dead page --- there must be one */
 		nextbuf = InvalidBuffer;
 		for (;;)
@@ -944,7 +943,7 @@ _bt_restscan(IndexScanDesc scan)
 			if (!P_IGNORE(opaque))
 				break;
 			if (P_RIGHTMOST(opaque))
-				elog(ERROR, "_bt_restscan: fell off the end of %s",
+				elog(ERROR, "fell off the end of \"%s\"",
 					 RelationGetRelationName(rel));
 		}
 		_bt_relbuf(rel, buf);

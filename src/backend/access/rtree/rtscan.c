@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.43 2003/03/23 23:01:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.44 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,7 +384,7 @@ adjustiptr(IndexScanDesc s,
 					break;
 
 				default:
-					elog(ERROR, "Bad operation in rtree scan adjust: %d", op);
+					elog(ERROR, "unrecognized operation in rtree scan adjust: %d", op);
 			}
 		}
 	}

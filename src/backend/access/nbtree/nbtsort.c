@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.72 2003/02/22 00:45:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.73 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ _bt_sortaddtup(Page page,
 
 	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
 					LP_USED) == InvalidOffsetNumber)
-		elog(ERROR, "btree: failed to add item to the page in _bt_sort");
+		elog(ERROR, "failed to add item to the index page");
 }
 
 /*----------
@@ -397,8 +397,11 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	 * during creation of an index, we don't go through there.
 	 */
 	if (btisz > BTMaxItemSize(npage))
-		elog(ERROR, "btree: index item size %lu exceeds maximum %ld",
-			 (unsigned long) btisz, BTMaxItemSize(npage));
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("index tuple size %lu exceeds btree maximum, %lu",
+						(unsigned long) btisz,
+						(unsigned long) BTMaxItemSize(npage))));
 
 	if (pgspc < btisz || pgspc < state->btps_full)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.95 2003/06/15 17:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.96 2003/07/21 20:29:38 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -417,7 +417,7 @@ TupleDescInitEntry(TupleDesc desc,
 						   ObjectIdGetDatum(oidtypeid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Unable to look up type id %u", oidtypeid);
+		elog(ERROR, "cache lookup failed for type %u", oidtypeid);
 
 	/*
 	 * type info exists so we initialize our attribute information from
@@ -643,7 +643,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		int			natts;
 
 		if (!OidIsValid(relid))
-			elog(ERROR, "Invalid typrelid for complex type %u", typeoid);
+			elog(ERROR, "invalid typrelid for complex type %u", typeoid);
 
 		rel = relation_open(relid, AccessShareLock);
 		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
@@ -657,7 +657,9 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 
 			/* does the list length match the number of attributes? */
 			if (length(colaliases) != natts)
-				elog(ERROR, "TypeGetTupleDesc: number of aliases does not match number of attributes");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("number of aliases does not match number of attributes")));
 
 			/* OK, use the aliases instead */
 			for (varattno = 0; varattno < natts; varattno++)
@@ -676,11 +678,15 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 
 		/* the alias list is required for base types */
 		if (colaliases == NIL)
-			elog(ERROR, "TypeGetTupleDesc: no column alias was provided");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("no column alias was provided")));
 
 		/* the alias list length must be 1 */
 		if (length(colaliases) != 1)
-			elog(ERROR, "TypeGetTupleDesc: number of aliases does not match number of attributes");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("number of aliases does not match number of attributes")));
 
 		/* OK, get the column alias */
 		attname = strVal(lfirst(colaliases));
@@ -695,7 +701,9 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 						   false);
 	}
 	else if (functyptype == 'p' && typeoid == RECORDOID)
-		elog(ERROR, "Unable to determine tuple description for function returning \"record\"");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("unable to determine tuple description for function returning record")));
 	else
 	{
 		/* crummy error message, but parser should have caught this */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.36 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.37 2003/07/21 20:29:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -896,7 +896,7 @@ toast_save_datum(Relation rel, Datum value)
 		memcpy(VARATT_DATA(&chunk_data), data_p, chunk_size);
 		toasttup = heap_formtuple(toasttupDesc, t_values, t_nulls);
 		if (!HeapTupleIsValid(toasttup))
-			elog(ERROR, "Failed to build TOAST tuple");
+			elog(ERROR, "failed to build TOAST tuple");
 
 		simple_heap_insert(toastrel, toasttup);
 
@@ -912,7 +912,7 @@ toast_save_datum(Relation rel, Datum value)
 							  &(toasttup->t_self),
 							  toastrel, toastidx->rd_index->indisunique);
 		if (idxres == NULL)
-			elog(ERROR, "Failed to insert index entry for TOAST tuple");
+			elog(ERROR, "failed to insert index entry for TOAST tuple");
 
 		/*
 		 * Free memory

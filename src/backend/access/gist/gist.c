@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.103 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.104 2003/07/21 20:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	 * that's not the case, big trouble's what we have.
 	 */
 	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "%s already contains data",
+		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
 	/* initialize the root page */
@@ -396,7 +396,7 @@ gistPageAddItem(GISTSTATE *giststate,
 	retval = PageAddItem(page, (Item) *newtup, IndexTupleSize(*newtup),
 						 offsetNumber, flags);
 	if (retval == InvalidOffsetNumber)
-		elog(ERROR, "gist: failed to add index item to %s",
+		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(r));
 	/* be tidy */
 	if (DatumGetPointer(tmpcentry.key) != NULL &&
@@ -603,7 +603,7 @@ gistwritebuffer(Relation r, Page page, IndexTuple *itup,
 		l = PageAddItem(page, (Item) itup[i], IndexTupleSize(itup[i]),
 						off, LP_USED);
 		if (l == InvalidOffsetNumber)
-			elog(ERROR, "gist: failed to add index item to %s",
+			elog(ERROR, "failed to add index item to \"%s\"",
 				 RelationGetRelationName(r));
 #endif
 	}
@@ -1663,7 +1663,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	int			i;
 
 	if (index->rd_att->natts > INDEX_MAX_KEYS)
-		elog(ERROR, "initGISTstate: numberOfAttributes %d > %d",
+		elog(ERROR, "numberOfAttributes %d > %d",
 			 index->rd_att->natts, INDEX_MAX_KEYS);
 
 	giststate->tupdesc = index->rd_att;

@@ -99,10 +99,10 @@ ERROR:  attribute "oid" of relation "stud_emp" already exists
  
 -- not in a xact 
 abort;
-WARNING:  ROLLBACK: no transaction in progress
+WARNING:  there is no transaction in progress
 -- not in a xact 
 end;
-WARNING:  COMMIT: no transaction in progress
+WARNING:  there is no transaction in progress
 --
 -- CREATE AGGREGATE
 -- sfunc/finalfunc type disagreement 

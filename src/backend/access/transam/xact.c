@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.148 2003/05/14 03:26:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.149 2003/07/21 20:29:39 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -400,7 +400,9 @@ CommandCounterIncrement(void)
 
 	s->commandId += 1;
 	if (s->commandId == FirstCommandId) /* check for overflow */
-		elog(ERROR, "You may only have 2^32-1 commands per transaction");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("cannot have more than 2^32-1 commands in a transaction")));
 
 	/* Propagate new command ID into query snapshots, if set */
 	if (QuerySnapshot)
@@ -672,8 +674,7 @@ RecordTransactionAbort(void)
 		 * RecordTransactionCommit ...
 		 */
 		if (TransactionIdDidCommit(xid))
-			elog(PANIC, "RecordTransactionAbort: xact %u already committed",
-				 xid);
+			elog(PANIC, "cannot abort transaction %u, it was already committed", xid);
 
 		START_CRIT_SECTION();
 
@@ -1367,23 +1368,24 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 	 * xact block already started?
 	 */
 	if (IsTransactionBlock())
-	{
-		/* translator: %s represents an SQL statement name */
-		elog(ERROR, "%s cannot run inside a transaction block", stmtType);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 /* translator: %s represents an SQL statement name */
+				 errmsg("%s cannot run inside a transaction block",
+						stmtType)));
 	/*
 	 * Are we inside a function call?  If the statement's parameter block
 	 * was allocated in QueryContext, assume it is an interactive command.
 	 * Otherwise assume it is coming from a function.
 	 */
 	if (!MemoryContextContains(QueryContext, stmtNode))
-	{
-		/* translator: %s represents an SQL statement name */
-		elog(ERROR, "%s cannot be executed from a function", stmtType);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 /* translator: %s represents an SQL statement name */
+				 errmsg("%s cannot be executed from a function", stmtType)));
 	/* If we got past IsTransactionBlock test, should be in default state */
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT)
-		elog(ERROR, "PreventTransactionChain: can't prevent chain");
+		elog(ERROR, "cannot prevent transaction chain");
 	/* all okay */
 }
 
@@ -1419,9 +1421,11 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 	 */
 	if (!MemoryContextContains(QueryContext, stmtNode))
 		return;
-	/* translator: %s represents an SQL statement name */
-	elog(ERROR, "%s may only be used in begin/end transaction blocks",
-		 stmtType);
+	ereport(ERROR,
+			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+			 /* translator: %s represents an SQL statement name */
+			 errmsg("%s may only be used in BEGIN/END transaction blocks",
+					stmtType)));
 }
 
 
@@ -1441,7 +1445,9 @@ BeginTransactionBlock(void)
 	 * check the current transaction state
 	 */
 	if (s->blockState != TBLOCK_DEFAULT)
-		elog(WARNING, "BEGIN: already a transaction in progress");
+		ereport(WARNING,
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("there is already a transaction in progress")));
 
 	/*
 	 * set the current transaction block state information appropriately
@@ -1501,7 +1507,9 @@ EndTransactionBlock(void)
 	 * CommitTransactionCommand() will then put us back into the default
 	 * state.
 	 */
-	elog(WARNING, "COMMIT: no transaction in progress");
+	ereport(WARNING,
+			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+			 errmsg("there is no transaction in progress")));
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
@@ -1537,7 +1545,9 @@ AbortTransactionBlock(void)
 	 * CommitTransactionCommand() will then put us back into the default
 	 * state.
 	 */
-	elog(WARNING, "ROLLBACK: no transaction in progress");
+	ereport(WARNING,
+			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+			 errmsg("there is no transaction in progress")));
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
@@ -1583,7 +1593,9 @@ UserAbortTransactionBlock(void)
 	 * CommitTransactionCommand() will then put us back into the default
 	 * state.
 	 */
-	elog(WARNING, "ROLLBACK: no transaction in progress");
+	ereport(WARNING,
+			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+			 errmsg("there is no transaction in progress")));
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
@@ -1663,7 +1675,8 @@ TransactionBlockStatusCode(void)
 	}
 
 	/* should never get here */
-	elog(ERROR, "bogus transaction block state");
+	elog(ERROR, "invalid transaction block state: %d",
+		 (int) s->blockState);
 	return 0;					/* keep compiler quiet */
 }
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.74 2003/02/22 00:45:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.75 2003/07/21 20:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ _bt_moveright(Relation rel,
 	}
 
 	if (P_IGNORE(opaque))
-		elog(ERROR, "_bt_moveright: fell off the end of %s",
+		elog(ERROR, "fell off the end of \"%s\"",
 			 RelationGetRelationName(rel));
 
 	return buf;
@@ -552,7 +552,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		{
 			pfree(nKeyIs);
 			pfree(scankeys);
-			elog(ERROR, "_bt_first: btree doesn't support is(not)null, yet");
+			elog(ERROR, "btree doesn't support is(not)null, yet");
 			return false;
 		}
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
@@ -700,7 +700,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					result = _bt_compare(rel, keysCount, scankeys, page, offnum);
 				} while (result == 0);
 				if (!_bt_step(scan, &buf, BackwardScanDirection))
-					elog(ERROR, "_bt_first: equal items disappeared?");
+					elog(ERROR, "equal items disappeared?");
 			}
 			break;
 
@@ -991,7 +991,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 			for (;;)
 			{
 				if (P_RIGHTMOST(opaque))
-					elog(ERROR, "_bt_walk_left: fell off the end of %s",
+					elog(ERROR, "fell off the end of \"%s\"",
 						 RelationGetRelationName(rel));
 				blkno = opaque->btpo_next;
 				_bt_relbuf(rel, buf);
@@ -1015,7 +1015,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 			 * if there's anything wrong.
 			 */
 			if (opaque->btpo_prev == lblkno)
-				elog(ERROR, "_bt_walk_left: can't find left sibling in %s",
+				elog(ERROR, "cannot find left sibling in \"%s\"",
 					 RelationGetRelationName(rel));
 			/* Okay to try again with new lblkno value */
 		}
@@ -1028,7 +1028,7 @@ _bt_walk_left(Relation rel, Buffer buf)
  * _bt_get_endpoint() -- Find the first or last page on a given tree level
  *
  * If the index is empty, we will return InvalidBuffer; any other failure
- * condition causes elog().  We will not return a dead page.
+ * condition causes ereport().  We will not return a dead page.
  *
  * The returned buffer is pinned and read-locked.
  */
@@ -1075,7 +1075,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		{
 			blkno = opaque->btpo_next;
 			if (blkno == P_NONE)
-				elog(ERROR, "_bt_get_endpoint: fell off the end of %s",
+				elog(ERROR, "fell off the end of \"%s\"",
 					 RelationGetRelationName(rel));
 			_bt_relbuf(rel, buf);
 			buf = _bt_getbuf(rel, blkno, BT_READ);
@@ -1087,7 +1087,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		if (opaque->btpo.level == level)
 			break;
 		if (opaque->btpo.level < level)
-			elog(ERROR, "_bt_get_endpoint: btree level %u not found", level);
+			elog(ERROR, "btree level %u not found", level);
 
 		/* Descend to leftmost or rightmost child page */
 		if (rightmost)
@@ -1176,7 +1176,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	}
 	else
 	{
-		elog(ERROR, "Illegal scan direction %d", dir);
+		elog(ERROR, "invalid scan direction: %d", (int) dir);
 		start = 0;				/* keep compiler quiet */
 	}
 

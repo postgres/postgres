@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.66 2003/03/24 21:42:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.67 2003/07/21 20:29:39 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -90,7 +90,7 @@
 	procedure = indexRelation->rd_am->y, \
 	(!RegProcedureIsValid(procedure)) ? \
 		elog(ERROR, "index_%s: invalid %s regproc", \
-			CppAsString(x), CppAsString(y)) \
+			 CppAsString(x), CppAsString(y)) \
 	: (void)NULL \
 )
 
@@ -99,7 +99,7 @@
 	procedure = scan->indexRelation->rd_am->y, \
 	(!RegProcedureIsValid(procedure)) ? \
 		elog(ERROR, "index_%s: invalid %s regproc", \
-			CppAsString(x), CppAsString(y)) \
+			 CppAsString(x), CppAsString(y)) \
 	: (void)NULL \
 )
 
@@ -129,8 +129,10 @@ index_open(Oid relationId)
 	r = relation_open(relationId, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not an index relation",
+						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -152,8 +154,10 @@ index_openrv(const RangeVar *relation)
 	r = relation_openrv(relation, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not an index relation",
+						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -175,8 +179,10 @@ index_openr(const char *sysRelationName)
 	r = relation_openr(sysRelationName, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
-		elog(ERROR, "%s is not an index relation",
-			 RelationGetRelationName(r));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not an index relation",
+						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -753,7 +759,7 @@ index_getprocinfo(Relation irel,
 		 * use index_getprocid.)
 		 */
 		if (!RegProcedureIsValid(procId))
-			elog(ERROR, "Missing support function %d for attribute %d of index %s",
+			elog(ERROR, "missing support function %d for attribute %d of index \"%s\"",
 				 procnum, attnum, RelationGetRelationName(irel));
 
 		fmgr_info_cxt(procId, locinfo, irel->rd_indexcxt);

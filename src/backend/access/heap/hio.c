@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.47 2003/02/13 05:35:11 momjian Exp $
+ *	  $Id: hio.c,v 1.48 2003/07/21 20:29:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 /*
  * RelationPutHeapTuple - place tuple at specified page
  *
- * !!! ELOG(ERROR) IS DISALLOWED HERE !!!
+ * !!! EREPORT(ERROR) IS DISALLOWED HERE !!!  Must PANIC on failure!!!
  *
  * Note - caller must hold BUFFER_LOCK_EXCLUSIVE on the buffer.
  */
@@ -44,7 +44,7 @@ RelationPutHeapTuple(Relation relation,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
 
 	if (offnum == InvalidOffsetNumber)
-		elog(PANIC, "RelationPutHeapTuple: failed to add tuple");
+		elog(PANIC, "failed to add tuple to page");
 
 	/* Update tuple->t_self to the actual position where it was stored */
 	ItemPointerSet(&(tuple->t_self), BufferGetBlockNumber(buffer), offnum);
@@ -84,7 +84,7 @@ RelationPutHeapTuple(Relation relation,
  *	for indices only. Alternatively, we could define pseudo-table as
  *	we do for transactions with XactLockTable.
  *
- *	ELOG(ERROR) is allowed here, so this routine *must* be called
+ *	ereport(ERROR) is allowed here, so this routine *must* be called
  *	before any (unlogged) changes are made in buffer pool.
  */
 Buffer
@@ -104,8 +104,11 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * If we're gonna fail for oversize tuple, do it right away
 	 */
 	if (len > MaxTupleSize)
-		elog(ERROR, "Tuple is too big: size %lu, max size %ld",
-			 (unsigned long) len, MaxTupleSize);
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("tuple is too big: size %lu, maximum size %lu",
+						(unsigned long) len,
+						(unsigned long) MaxTupleSize)));
 
 	if (otherBuffer != InvalidBuffer)
 		otherBlock = BufferGetBlockNumber(otherBuffer);
@@ -268,7 +271,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	if (len > PageGetFreeSpace(pageHeader))
 	{
 		/* We should not get here given the test at the top */
-		elog(PANIC, "Tuple is too big: size %lu", (unsigned long) len);
+		elog(PANIC, "tuple is too big: size %lu", (unsigned long) len);
 	}
 
 	/*
