@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.54 1997/01/25 23:54:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.55 1997/01/26 17:27:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,7 @@
 #include "strdup.h"
 #endif
 
-#ifndef HAVE_LIBREADLINE
-# include "rlstubs.h"
-#else
+#ifdef HAVE_LIBREADLINE
 # ifdef HAVE_READLINE_H
 #  include <readline.h>
 #  if defined(HAVE_HISTORY) || defined(HAVE_LIBHISTORY)
