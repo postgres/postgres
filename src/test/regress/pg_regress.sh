@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.23 2002/01/03 21:52:05 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.24 2002/04/24 01:56:20 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -173,7 +173,7 @@ esac
 # ----------
 
 case $host_platform in
-    *-*-qnx*)
+    *-*-qnx* | *-*-sco3.2v5*)
         DIFFFLAGS=-b;;
     *)
         DIFFFLAGS=-w;;

@@ -2720,7 +2720,7 @@ conv_from_octal(const unsigned char *s)
 				y = 0;
 
 	for (i = 1; i <= 3; i++)
-		y += (s[i] - 48) * (int) pow(8, 3 - i);
+		y += (s[i] - '0') << (3  * (3 - i));
 
 	return y;
 
@@ -2743,7 +2743,7 @@ conv_from_hex(const unsigned char *s)
 		else
 			val = s[i] - '0';
 
-		y += val * (int) pow(16, 2 - i);
+		y += val << (4 * (2 - i));
 	}
 
 	return y;
@@ -2798,7 +2798,7 @@ conv_to_octal(unsigned char val)
 
 	for (i = 4; i > 1; i--)
 	{
-		x[i] = (val & 7) + 48;
+		x[i] = (val & 7) + '0';
 		val >>= 3;
 	}
 
