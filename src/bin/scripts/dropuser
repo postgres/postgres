@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.19 2002/10/16 03:24:09 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.20 2002/10/16 03:44:28 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -148,7 +148,7 @@ fi
 
 DelUser=`echo "$DelUser" | sed 's/\"/\\\"/g'`
 
-${PATHNAME}psql $PSQLOPT -d template1 -c "SET autocommit = 'on';DROP USER \"$DelUser\""
+${PATHNAME}psql $PSQLOPT -d template1 -c "SET autocommit TO 'on';DROP USER \"$DelUser\""
 
 if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: deletion of user \"$DelUser\" failed" 1>&2
