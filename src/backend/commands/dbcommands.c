@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.121 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.122 2003/09/10 20:24:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,19 +354,40 @@ createdb(const CreatedbStmt *stmt)
 							nominal_loc, alt_loc)));
 	}
 
-	/* Copy the template database to the new location */
+	/*
+	 * Copy the template database to the new location
+	 *
+	 * XXX use of cp really makes this code pretty grotty, particularly
+	 * with respect to lack of ability to report errors well.  Someday
+	 * rewrite to do it for ourselves.
+	 */
 #ifndef WIN32
 	snprintf(buf, sizeof(buf), "cp -r '%s' '%s'", src_loc, target_dir);
 	if (system(buf) != 0)
-#else
-	if (copydir(src_loc, target_dir) != 0)
-#endif
 	{
 		if (remove_dbdirs(nominal_loc, alt_loc))
-			elog(ERROR, "could not initialize database directory");
+			ereport(ERROR,
+					(errmsg("could not initialize database directory"),
+					 errdetail("Failing system command was: %s", buf),
+					 errhint("Look in the postmaster's stderr log for more information.")));
 		else
-			elog(ERROR, "could not initialize database directory; delete failed as well");
+			ereport(ERROR,
+					(errmsg("could not initialize database directory; delete failed as well"),
+					 errdetail("Failing system command was: %s", buf),
+					 errhint("Look in the postmaster's stderr log for more information.")));
 	}
+#else	/* WIN32 */
+	if (copydir(src_loc, target_dir) != 0)
+	{
+		/* copydir should already have given details of its troubles */
+		if (remove_dbdirs(nominal_loc, alt_loc))
+			ereport(ERROR,
+					(errmsg("could not initialize database directory")));
+		else
+			ereport(ERROR,
+					(errmsg("could not initialize database directory; delete failed as well")));
+	}
+#endif	/* WIN32 */
 
 	/*
 	 * Now OK to grab exclusive lock on pg_database.
@@ -935,9 +956,10 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 	if (system(buf) != 0)
 	{
 		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not remove database directory \"%s\": %m",
-						target_dir)));
+				(errmsg("could not remove database directory \"%s\"",
+						target_dir),
+				 errdetail("Failing system command was: %s", buf),
+				 errhint("Look in the postmaster's stderr log for more information.")));
 		success = false;
 	}
 
