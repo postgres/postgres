@@ -17,7 +17,7 @@ static char sccsid[] = "@(#) tclAppInit.c 1.11 94/12/17 16:14:03";
 
 #include "tcl.h"
 
-#include "libpgtcl.h"
+#include <libpgtcl.h>
 
 /*
  * The following variable is a special hack that is needed in order for
