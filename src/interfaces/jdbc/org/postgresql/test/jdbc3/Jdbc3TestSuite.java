@@ -14,7 +14,6 @@ public class Jdbc3TestSuite extends TestSuite
 	public static TestSuite suite()
 	{
         TestSuite suite = new TestSuite();
-		suite.addTest(org.postgresql.test.jdbc2.Jdbc2TestSuite.suite());
         suite.addTestSuite(Jdbc3SimpleDataSourceTest.class);
         suite.addTestSuite(Jdbc3ConnectionPoolTest.class);
         suite.addTestSuite(Jdbc3PoolingDataSourceTest.class);

@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.34 2003/08/11 21:27:52 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.35 2003/08/11 23:42:04 barry Exp $
 
 -->
 
@@ -48,16 +48,23 @@
     </condition>
     <available property="datasource" classname="javax.sql.DataSource"/>
     <available property="ssl" classname="javax.net.ssl.SSLSocketFactory"/>
-    <available property="junit" classname="junit.framework.Test" />
+    <available property="junit" classname="junit.framework.Test"/>
+    <available property="junit.task" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"/>
     <condition property="jdbc2tests">
       <and>
-        <isset property="jdbc2"/>
+        <or>
+          <isset property="jdbc2"/>
+          <isset property="jdbc3"/>
+        </or>
         <isset property="junit"/>
       </and>
     </condition>
     <condition property="jdbc2optionaltests">
       <and>
-        <isset property="jdbc2"/>
+        <or>
+          <isset property="jdbc2"/>
+          <isset property="jdbc3"/>
+        </or>
         <isset property="datasource"/>
         <isset property="junit"/>
       </and>
@@ -82,7 +89,6 @@
     <jar jarfile="${jardir}/postgresql.jar">
       <fileset dir="${builddir}">
         <include name="${package}/**/*.class" />
-        <exclude name="${package}/test/**" />
       </fileset>
 
       <fileset dir="${srcdir}">
@@ -277,62 +283,51 @@
   <property name="username" value="test" />
   <!-- Password must be something.  Doesn't matter if trust is used! -->
   <property name="password" value="password" />
-  <!-- junit.ui is one of textui, awtui, or swingui -->
-  <property name="junit.ui" value="textui" />
 
+  <!-- The tests now build to a separate directory and jarfile from the
+       driver build, to ensure we're really testing against the jar we just
+       built, and not whatever happens to be in builddir. -->
 
-  <target name="test" depends="testjdbc2,testjdbc2optional,testjdbc3">
-   </target>
+  <!-- This compiles and builds the test jarfile. -->  
+  <target name="testjar" depends="jar" if="junit">
+    <mkdir dir="${builddir}/tests"/>
+    <javac srcdir="${srcdir}" destdir="${builddir}/tests" debug="${debug}">
+      <include name="${package}/test/**" />
 
-  <target name="testjdbc2" depends="jar" if="jdbc2tests">
-    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
-      <include name="${package}/test/jdbc2/*" />
+      <exclude name="${package}/test/jdbc2/**" unless="jdbc2tests"/>
+      <exclude name="${package}/test/jdbc2/optional/**" unless="jdbc2optionaltests" />
+      <exclude name="${package}/test/jdbc3/**" unless="jdbc3tests" />
+      <exclude name="${package}/test/util/**" unless="jdbc2optionaltests"/>
+
+      <classpath>
+        <pathelement location="${jardir}/postgresql.jar"/>
+      </classpath>
     </javac>
-   <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
-      <arg value="org.postgresql.test.jdbc2.Jdbc2TestSuite" />
+    <jar jarfile="${jardir}/postgresql-tests.jar" basedir="${builddir}/tests"/>
+  </target>
+    
+  <!-- This actually runs the tests -->
+  <target name="runtest" depends="testjar" if="junit.task">
+    <junit>
+      <formatter type="brief" usefile="false"/>
+
       <sysproperty key="database" value="${database}" />
       <sysproperty key="username" value="${username}" />
       <sysproperty key="password" value="${password}" />
+
       <classpath>
-        <pathelement location="${builddir}" />
+        <pathelement location="${jardir}/postgresql.jar" />
+        <pathelement location="${jardir}/postgresql-tests.jar" />
         <pathelement path="${java.class.path}" />
       </classpath>
-    </java>
-  </target>
 
-  <target name="testjdbc2optional" depends="jar" if="jdbc2optionaltests">
-    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
-      <include name="${package}/test/jdbc2/optional/**" />
-      <include name="${package}/test/util/**" />
-    </javac>
-    <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
-      <arg value="org.postgresql.test.jdbc2.optional.OptionalTestSuite" />
-      <sysproperty key="database" value="${database}" />
-      <sysproperty key="username" value="${username}" />
-      <sysproperty key="password" value="${password}" />
-      <classpath>
-        <pathelement location="${builddir}" />
-        <pathelement path="${java.class.path}" />
-      </classpath>
-    </java>
+      <test name="org.postgresql.test.jdbc2.Jdbc2TestSuite" if="jdbc2tests"/>
+      <test name="org.postgresql.test.jdbc2.optional.OptionalTestSuite" if="jdbc2optionaltests"/>
+      <test name="org.postgresql.test.jdbc3.Jdbc3TestSuite" if="jdbc3tests"/>
+    </junit>
   </target>
-
-  <target name="testjdbc3" depends="jar" if="jdbc3tests">
-    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
-      <include name="${package}/test/jdbc3/*" />
-      <include name="${package}/test/util/*" />
-    </javac>
-    <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
-      <arg value="org.postgresql.test.jdbc3.Jdbc3TestSuite" />
-      <sysproperty key="database" value="${database}" />
-      <sysproperty key="username" value="${username}" />
-      <sysproperty key="password" value="${password}" />
-      <classpath>
-        <pathelement location="${builddir}" />
-        <pathelement path="${java.class.path}" />
-      </classpath>
-    </java>
-  </target>
-
+  
+  <!-- This is the target invoked by the Makefile -->
+  <target name="test" depends="testjar,runtest"/>
 
 </project>
