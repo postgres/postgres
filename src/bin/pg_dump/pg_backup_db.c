@@ -640,10 +640,7 @@ void CreateBlobXrefTable(ArchiveHandle* AH)
 
 	ahlog(AH, 1, "Creating table for BLOBS xrefs\n");
 
-/*
 	appendPQExpBuffer(qry, "Create Temporary Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
-*/
-	appendPQExpBuffer(qry, "Create Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
 
 	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create BLOB xref table '" BLOB_XREF_TABLE "'");
 
