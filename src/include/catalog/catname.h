@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.3 1997/08/21 04:33:20 vadim Exp $
+ * $Id: catname.h,v 1.4 1997/09/01 08:09:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 #define  VersionRelationName "pg_version"
 #define  AttrDefaultRelationName "pg_attrdef"
 #define  RelCheckRelationName "pg_relcheck"
+#define  TriggerRelationName "pg_trigger"
 
 extern char *SharedSystemRelationNames[];
 
