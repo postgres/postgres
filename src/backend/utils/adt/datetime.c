@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.2 2003/12/17 21:45:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.3 2004/06/13 17:17:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1208,7 +1208,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * 86400000000),
+								dt2time((time * INT64CONST(86400000000)),
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 								dt2time((time * 86400),
@@ -1948,7 +1948,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * 86400000000),
+								dt2time((time * INT64CONST(86400000000)),
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 								dt2time((time * 86400),

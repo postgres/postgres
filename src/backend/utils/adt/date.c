@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.93 2003/09/26 15:27:36 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.93.2.1 2004/06/13 17:17:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1111,7 +1111,7 @@ interval_time(PG_FUNCTION_ARGS)
 	}
 	else if (result < 0)
 	{
-		days = (-result + INT64CONST(86400000000 - 1)) / INT64CONST(86400000000);
+		days = (-result + INT64CONST(86400000000) - 1) / INT64CONST(86400000000);
 		result += days * INT64CONST(86400000000);
 	}
 #else
