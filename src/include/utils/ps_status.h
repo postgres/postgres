@@ -75,7 +75,7 @@ const char **ps_status = NULL
 #define PS_STATUS (ps_status ? *ps_status : "")
 #endif
 
-#ifdef DONT_HAVE_PS_STATUS
+#ifdef NO_PS_STATUS
 #define PS_DEFINE_BUFFER
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname)
 #define PS_CLEAR_STATUS()

@@ -660,17 +660,6 @@ AC_TRY_LINK([#include <fcntl.h>],
 	    [AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
 	    AC_MSG_RESULT(no))
 
-AC_MSG_CHECKING(for good DBL_MIN)
-AC_TRY_RUN([#include <stdlib.h>
-#include <math.h>
-#ifdef HAVE_FLOAT_H
-# include <float.h>
-#endif
-main() { double d = DBL_MIN; if (d != DBL_MIN) exit(-1); else exit(0); }],
-	AC_MSG_RESULT(yes),
-	[AC_DEFINE(HAVE_DBL_MIN_PROBLEM) AC_MSG_RESULT(no)],
-	AC_MSG_RESULT(assuming ok on target machine))
-
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
