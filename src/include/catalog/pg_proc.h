@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.284 2003/02/22 00:45:05 tgl Exp $
+ * $Id: pg_proc.h,v 1.285 2003/03/03 03:30:46 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -281,11 +281,11 @@ DESCR("is right of");
 DATA(insert OID = 134 (  point_below	   PGNSP PGUID 12 f f t f i 2 16 "600 600"	point_below - _null_ ));
 DESCR("is below");
 DATA(insert OID = 135 (  point_eq		   PGNSP PGUID 12 f f t f i 2 16 "600 600"	point_eq - _null_ ));
-DESCR("same as");
+DESCR("same as?");
 DATA(insert OID = 136 (  on_pb			   PGNSP PGUID 12 f f t f i 2 16 "600 603"	on_pb - _null_ ));
-DESCR("point is inside");
+DESCR("point inside box?");
 DATA(insert OID = 137 (  on_ppath		   PGNSP PGUID 12 f f t f i 2 16 "600 602"	on_ppath - _null_ ));
-DESCR("contained in");
+DESCR("point within closed path, or point on open path");
 DATA(insert OID = 138 (  box_center		   PGNSP PGUID 12 f f t f i 1 600 "603"  box_center - _null_ ));
 DESCR("center of");
 DATA(insert OID = 139 (  areasel		   PGNSP PGUID 12 f f t f s 4 701 "2281 26 2281 23"  areasel - _null_ ));
@@ -381,19 +381,19 @@ DESCR("equal");
 DATA(insert OID = 185 (  oidne			   PGNSP PGUID 12 f f t f i 2 16 "26 26"	oidne - _null_ ));
 DESCR("not equal");
 DATA(insert OID = 186 (  box_same		   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_same - _null_ ));
-DESCR("same as");
+DESCR("same as?");
 DATA(insert OID = 187 (  box_contain	   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_contain - _null_ ));
-DESCR("contains");
+DESCR("contains?");
 DATA(insert OID = 188 (  box_left		   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_left - _null_ ));
 DESCR("is left of");
 DATA(insert OID = 189 (  box_overleft	   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_overleft - _null_ ));
-DESCR("overlaps, but does not extend to right of");
+DESCR("overlaps or is left of");
 DATA(insert OID = 190 (  box_overright	   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_overright - _null_ ));
-DESCR("overlaps, but does not extend to left of");
+DESCR("overlaps or is right of");
 DATA(insert OID = 191 (  box_right		   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_right - _null_ ));
 DESCR("is right of");
 DATA(insert OID = 192 (  box_contained	   PGNSP PGUID 12 f f t f i 2 16 "603 603"	box_contained - _null_ ));
-DESCR("contained in");
+DESCR("contained in?");
 DATA(insert OID = 193 (  rt_box_union	   PGNSP PGUID 12 f f t f i 2 603 "603 603"  rt_box_union - _null_ ));
 DESCR("r-tree");
 DATA(insert OID = 194 (  rt_box_inter	   PGNSP PGUID 12 f f t f i 2 2278 "603 603"  rt_box_inter - _null_ ));
@@ -519,7 +519,7 @@ DESCR("(internal)");
 DATA(insert OID = 248 (  intinterval	   PGNSP PGUID 12 f f t f i 2 16 "702 704"	intinterval - _null_ ));
 DESCR("abstime in tinterval");
 DATA(insert OID = 249 (  tintervalrel	   PGNSP PGUID 12 f f t f i 1 703 "704"  tintervalrel - _null_ ));
-DESCR("");
+DESCR("tinterval to reltime");
 DATA(insert OID = 250 (  timenow		   PGNSP PGUID 12 f f t f s 0 702 ""  timenow - _null_ ));
 DESCR("Current date and time (abstime)");
 DATA(insert OID = 251 (  abstimeeq		   PGNSP PGUID 12 f f t f i 2 16 "702 702"	abstimeeq - _null_ ));
@@ -547,7 +547,7 @@ DESCR("less-than-or-equal");
 DATA(insert OID = 262 (  reltimege		   PGNSP PGUID 12 f f t f i 2 16 "703 703"	reltimege - _null_ ));
 DESCR("greater-than-or-equal");
 DATA(insert OID = 263 (  tintervalsame	   PGNSP PGUID 12 f f t f i 2 16 "704 704"	tintervalsame - _null_ ));
-DESCR("same as");
+DESCR("same as?");
 DATA(insert OID = 264 (  tintervalct	   PGNSP PGUID 12 f f t f i 2 16 "704 704"	tintervalct - _null_ ));
 DESCR("less-than");
 DATA(insert OID = 265 (  tintervalov	   PGNSP PGUID 12 f f t f i 2 16 "704 704"	tintervalov - _null_ ));
@@ -567,19 +567,19 @@ DESCR("length greater-than-or-equal");
 DATA(insert OID = 272 (  tintervalstart    PGNSP PGUID 12 f f t f i 1 702 "704"  tintervalstart - _null_ ));
 DESCR("start of interval");
 DATA(insert OID = 273 (  tintervalend	   PGNSP PGUID 12 f f t f i 1 702 "704"  tintervalend - _null_ ));
-DESCR("");
+DESCR("end of interval");
 DATA(insert OID = 274 (  timeofday		   PGNSP PGUID 12 f f t f v 0 25 "" timeofday - _null_ ));
 DESCR("Current date and time - increments during transactions");
 DATA(insert OID = 275 (  isfinite		   PGNSP PGUID 12 f f t f i 1 16 "702"	abstime_finite - _null_ ));
-DESCR("");
+DESCR("finite abstime?");
 
 DATA(insert OID = 276 (  int2fac		   PGNSP PGUID 12 f f t f i 1 23 "21"  int2fac - _null_ ));
 DESCR("factorial");
 
 DATA(insert OID = 277 (  inter_sl		   PGNSP PGUID 12 f f t f i 2 16 "601 628"	inter_sl - _null_ ));
-DESCR("");
+DESCR("intersect?");
 DATA(insert OID = 278 (  inter_lb		   PGNSP PGUID 12 f f t f i 2 16 "628 603"	inter_lb - _null_ ));
-DESCR("");
+DESCR("intersect?");
 
 DATA(insert OID = 279 (  float48mul		   PGNSP PGUID 12 f f t f i 2 701 "700 701"  float48mul - _null_ ));
 DESCR("multiply");
@@ -716,19 +716,19 @@ DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 f f t f v 8 2278 "2281
 DESCR("btree(internal)");
 
 DATA(insert OID = 339 (  poly_same		   PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_same - _null_ ));
-DESCR("same as");
+DESCR("same as?");
 DATA(insert OID = 340 (  poly_contain	   PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_contain - _null_ ));
-DESCR("contains");
+DESCR("contains?");
 DATA(insert OID = 341 (  poly_left		   PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_left - _null_ ));
 DESCR("is left of");
 DATA(insert OID = 342 (  poly_overleft	   PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_overleft - _null_ ));
-DESCR("overlaps, but does not extend to right of");
+DESCR("overlaps or is left of");
 DATA(insert OID = 343 (  poly_overright    PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_overright - _null_ ));
-DESCR("overlaps, but does not extend to left of");
+DESCR("overlaps or is right of");
 DATA(insert OID = 344 (  poly_right		   PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_right - _null_ ));
 DESCR("is right of");
 DATA(insert OID = 345 (  poly_contained    PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_contained - _null_ ));
-DESCR("contained in");
+DESCR("contained in?");
 DATA(insert OID = 346 (  poly_overlap	   PGNSP PGUID 12 f f t f i 2 16 "604 604"	poly_overlap - _null_ ));
 DESCR("overlaps");
 DATA(insert OID = 347 (  poly_in		   PGNSP PGUID 12 f f t f i 1 604 "2275"  poly_in - _null_ ));
@@ -762,7 +762,7 @@ DESCR("btree less-equal-greater");
 DATA(insert OID = 361 (  lseg_distance	   PGNSP PGUID 12 f f t f i 2 701 "601 601"  lseg_distance - _null_ ));
 DESCR("distance between");
 DATA(insert OID = 362 (  lseg_interpt	   PGNSP PGUID 12 f f t f i 2 600 "601 601"  lseg_interpt - _null_ ));
-DESCR("");
+DESCR("intersection point");
 DATA(insert OID = 363 (  dist_ps		   PGNSP PGUID 12 f f t f i 2 701 "600 601"  dist_ps - _null_ ));
 DESCR("distance between");
 DATA(insert OID = 364 (  dist_pb		   PGNSP PGUID 12 f f t f i 2 701 "600 603"  dist_pb - _null_ ));
@@ -776,15 +776,15 @@ DESCR("closest point on box");
 DATA(insert OID = 368 (  close_sb		   PGNSP PGUID 12 f f t f i 2 600 "601 603"  close_sb - _null_ ));
 DESCR("closest point to line segment on box");
 DATA(insert OID = 369 (  on_ps			   PGNSP PGUID 12 f f t f i 2 16 "600 601"	on_ps - _null_ ));
-DESCR("point contained in segment");
+DESCR("point contained in segment?");
 DATA(insert OID = 370 (  path_distance	   PGNSP PGUID 12 f f t f i 2 701 "602 602"  path_distance - _null_ ));
 DESCR("distance between paths");
 DATA(insert OID = 371 (  dist_ppath		   PGNSP PGUID 12 f f t f i 2 701 "600 602"  dist_ppath - _null_ ));
 DESCR("distance between point and path");
 DATA(insert OID = 372 (  on_sb			   PGNSP PGUID 12 f f t f i 2 16 "601 603"	on_sb - _null_ ));
-DESCR("contained in");
+DESCR("lseg contained in box?");
 DATA(insert OID = 373 (  inter_sb		   PGNSP PGUID 12 f f t f i 2 16 "601 603"	inter_sb - _null_ ));
-DESCR("intersects?");
+DESCR("intersect?");
 
 /* OIDS 400 - 499 */
 
@@ -1218,7 +1218,7 @@ DATA(insert OID = 964 (  lo_unlink		   PGNSP PGUID 12 f f t f v 1  23 "26"	lo_un
 DESCR("large object unlink(delete)");
 
 DATA(insert OID = 973 (  path_inter		   PGNSP PGUID 12 f f t f i 2  16 "602 602"  path_inter - _null_ ));
-DESCR("paths intersect?");
+DESCR("intersect?");
 DATA(insert OID = 975 (  area			   PGNSP PGUID 12 f f t f i 1 701 "603"  box_area - _null_ ));
 DESCR("box area");
 DATA(insert OID = 976 (  width			   PGNSP PGUID 12 f f t f i 1 701 "603"  box_width - _null_ ));
@@ -1242,7 +1242,7 @@ DESCR("less-than-or-equal");
 DATA(insert OID = 986 (  path_n_ge		   PGNSP PGUID 12 f f t f i 2 16 "602 602"	path_n_ge - _null_ ));
 DESCR("greater-than-or-equal");
 DATA(insert OID = 987 (  path_length	   PGNSP PGUID 12 f f t f i 1 701 "602"  path_length - _null_ ));
-DESCR("sum of path segments");
+DESCR("sum of path segment lengths");
 DATA(insert OID = 988 (  point_ne		   PGNSP PGUID 12 f f t f i 2 16 "600 600"	point_ne - _null_ ));
 DESCR("not equal");
 DATA(insert OID = 989 (  point_vert		   PGNSP PGUID 12 f f t f i 2 16 "600 600"	point_vert - _null_ ));
@@ -1733,9 +1733,9 @@ DATA(insert OID = 1388 (  timetz	   PGNSP PGUID 12 f f t f s 1 1266 "1184"  time
 DESCR("convert timestamptz to timetz");
 
 DATA(insert OID = 1389 (  isfinite	   PGNSP PGUID 12 f f t f i 1 16 "1184"  timestamp_finite - _null_ ));
-DESCR("boolean test");
+DESCR("finite timestamp?");
 DATA(insert OID = 1390 (  isfinite	   PGNSP PGUID 12 f f t f i 1 16 "1186"  interval_finite - _null_ ));
-DESCR("boolean test");
+DESCR("finite interval?");
 
 
 DATA(insert OID = 1391 (  factorial		   PGNSP PGUID 12 f f t f i 1 23 "21"  int2fac - _null_ ));
@@ -1785,13 +1785,13 @@ DESCR("vertical?");
 DATA(insert OID = 1411 (  ishorizontal		PGNSP PGUID 12 f f t f i 1	16 "601"  lseg_horizontal - _null_ ));
 DESCR("horizontal?");
 DATA(insert OID = 1412 (  isparallel		PGNSP PGUID 12 f f t f i 2	16 "628 628"  line_parallel - _null_ ));
-DESCR("lines parallel?");
+DESCR("parallel?");
 DATA(insert OID = 1413 (  isperp			PGNSP PGUID 12 f f t f i 2	16 "628 628"  line_perp - _null_ ));
-DESCR("lines perpendicular?");
+DESCR("perpendicular?");
 DATA(insert OID = 1414 (  isvertical		PGNSP PGUID 12 f f t f i 1	16 "628"  line_vertical - _null_ ));
-DESCR("lines vertical?");
+DESCR("vertical?");
 DATA(insert OID = 1415 (  ishorizontal		PGNSP PGUID 12 f f t f i 1	16 "628"  line_horizontal - _null_ ));
-DESCR("lines horizontal?");
+DESCR("horizontal?");
 DATA(insert OID = 1416 (  point				PGNSP PGUID 12 f f t f i 1 600 "718"	circle_center - _null_ ));
 DESCR("center of");
 
@@ -1818,14 +1818,14 @@ DESCR("path contains point?");
 DATA(insert OID = 1428 (  poly_contain_pt	PGNSP PGUID 12 f f t f i 2	16 "604 600"  poly_contain_pt - _null_ ));
 DESCR("polygon contains point?");
 DATA(insert OID = 1429 (  pt_contained_poly PGNSP PGUID 12 f f t f i 2	16 "600 604"  pt_contained_poly - _null_ ));
-DESCR("point contained by polygon?");
+DESCR("point contained in polygon?");
 
 DATA(insert OID = 1430 (  isclosed			PGNSP PGUID 12 f f t f i 1	16 "602"  path_isclosed - _null_ ));
 DESCR("path closed?");
 DATA(insert OID = 1431 (  isopen			PGNSP PGUID 12 f f t f i 1	16 "602"  path_isopen - _null_ ));
 DESCR("path open?");
 DATA(insert OID = 1432 (  path_npoints		PGNSP PGUID 12 f f t f i 1	23 "602"  path_npoints - _null_ ));
-DESCR("# points in path");
+DESCR("number of points in path");
 
 /* pclose and popen might better be named close and open, but that crashes initdb.
  * - thomas 97/04/20
@@ -1873,19 +1873,19 @@ DESCR("(internal)");
 DATA(insert OID = 1451 (  circle_out		PGNSP PGUID 12 f f t f i 1 2275 "718"  circle_out - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 1452 (  circle_same		PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_same - _null_ ));
-DESCR("same as");
+DESCR("same as?");
 DATA(insert OID = 1453 (  circle_contain	PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_contain - _null_ ));
-DESCR("contains");
+DESCR("contains?");
 DATA(insert OID = 1454 (  circle_left		PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_left - _null_ ));
 DESCR("is left of");
 DATA(insert OID = 1455 (  circle_overleft	PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_overleft - _null_ ));
-DESCR("overlaps, but does not extend to right of");
+DESCR("overlaps or is left of");
 DATA(insert OID = 1456 (  circle_overright	PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_overright - _null_ ));
-DESCR("");
+DESCR("overlaps or is right of");
 DATA(insert OID = 1457 (  circle_right		PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_right - _null_ ));
 DESCR("is right of");
 DATA(insert OID = 1458 (  circle_contained	PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_contained - _null_ ));
-DESCR("");
+DESCR("contained in?");
 DATA(insert OID = 1459 (  circle_overlap	PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_overlap - _null_ ));
 DESCR("overlaps");
 DATA(insert OID = 1460 (  circle_below		PGNSP PGUID 12 f f t f i 2	16 "718 718"  circle_below - _null_ ));
@@ -1961,15 +1961,15 @@ DESCR("line from points");
 DATA(insert OID = 1494 (  line_interpt		PGNSP PGUID 12 f f t f i 2 600 "628 628"	line_interpt - _null_ ));
 DESCR("intersection point");
 DATA(insert OID = 1495 (  line_intersect	PGNSP PGUID 12 f f t f i 2	16 "628 628"  line_intersect - _null_ ));
-DESCR("lines intersect?");
+DESCR("intersect?");
 DATA(insert OID = 1496 (  line_parallel		PGNSP PGUID 12 f f t f i 2	16 "628 628"  line_parallel - _null_ ));
-DESCR("lines parallel?");
+DESCR("parallel?");
 DATA(insert OID = 1497 (  line_perp			PGNSP PGUID 12 f f t f i 2	16 "628 628"  line_perp - _null_ ));
-DESCR("lines perpendicular?");
+DESCR("perpendicular?");
 DATA(insert OID = 1498 (  line_vertical		PGNSP PGUID 12 f f t f i 1	16 "628"  line_vertical - _null_ ));
-DESCR("lines vertical?");
+DESCR("vertical?");
 DATA(insert OID = 1499 (  line_horizontal	PGNSP PGUID 12 f f t f i 1	16 "628"  line_horizontal - _null_ ));
-DESCR("lines horizontal?");
+DESCR("horizontal?");
 
 /* OIDS 1500 - 1599 */
 
@@ -1996,7 +1996,7 @@ DESCR("center of");
 DATA(insert OID = 1544 (  polygon			PGNSP PGUID 14 f f t f i 1 604 "718"	"select polygon(12, $1)" - _null_ ));
 DESCR("convert circle to 12-vertex polygon");
 DATA(insert OID = 1545 (  npoints			PGNSP PGUID 12 f f t f i 1	23 "602"  path_npoints - _null_ ));
-DESCR("# points in path");
+DESCR("number of points in path");
 DATA(insert OID = 1556 (  npoints			PGNSP PGUID 12 f f t f i 1	23 "604"  poly_npoints - _null_ ));
 DESCR("number of points in polygon");
 
@@ -2867,7 +2867,7 @@ DESCR("convert time with time zone to time");
 DATA(insert OID = 2047 (  timetz			PGNSP PGUID 12 f f t f s 1 1266 "1083"	time_timetz - _null_ ));
 DESCR("convert time to timetz");
 DATA(insert OID = 2048 (  isfinite			PGNSP PGUID 12 f f t f i 1	 16 "1114"	timestamp_finite - _null_ ));
-DESCR("boolean test");
+DESCR("finite timestamp?");
 DATA(insert OID = 2049 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "1114 25"  timestamp_to_char - _null_ ));
 DESCR("format timestamp to text");
 DATA(insert OID = 2050 ( interval_mi_time	PGNSP PGUID 14 f f t f i 2 1083 "1186 1083"  "select $2 - $1" - _null_ ));
