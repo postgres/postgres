@@ -299,7 +299,7 @@ o set client_encoding コマンドを使う方法
   PostgreSQLのCONVERTと機能はほとんど同じですが，呼び出し形式が異りま
   す．
 
-  SELECT convert(text using euc_jp_to_utf_8) FROM unicode_tbl;
+  SELECT convert(text using euc_jp_to_utf8) FROM unicode_tbl;
 
   "using" の後の引数は「コンバージョン名」です．この例では，EUC_JP か
   ら UTF-8 に変換するコンバージョンを指定しています．定義済のコンバー

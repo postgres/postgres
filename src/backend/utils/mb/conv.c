@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.51 2004/12/31 22:01:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.52 2005/03/07 04:30:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ mic2latin_with_table(
 
 /*
  * comparison routine for bsearch()
- * this routine is intended for UTF-8 -> local code
+ * this routine is intended for UTF8 -> local code
  */
 static int
 compare1(const void *p1, const void *p2)
@@ -318,7 +318,7 @@ compare1(const void *p1, const void *p2)
 
 /*
  * comparison routine for bsearch()
- * this routine is intended for local code -> UTF-8
+ * this routine is intended for local code -> UTF8
  */
 static int
 compare2(const void *p1, const void *p2)
@@ -332,9 +332,9 @@ compare2(const void *p1, const void *p2)
 }
 
 /*
- * UTF-8 ---> local code
+ * UTF8 ---> local code
  *
- * utf: input UTF-8 string. Its length is limited by "len" parameter
+ * utf: input UTF8 string. Its length is limited by "len" parameter
  *		or a null terminator.
  * iso: pointer to the output.
  * map: the conversion map.
@@ -373,7 +373,7 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				  errmsg("ignoring unconvertible UTF-8 character 0x%04x",
+				  errmsg("ignoring unconvertible UTF8 character 0x%04x",
 						 iutf)));
 			continue;
 		}
@@ -390,7 +390,7 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 }
 
 /*
- * local code ---> UTF-8
+ * local code ---> UTF8
  */
 void
 LocalToUtf(unsigned char *iso, unsigned char *utf,

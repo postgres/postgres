@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.56 2004/12/04 18:19:33 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.57 2005/03/07 04:30:55 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -155,7 +155,7 @@ typedef enum pg_enc
 	PG_EUC_KR,					/* EUC for Korean */
 	PG_EUC_TW,					/* EUC for Taiwan */
 	PG_JOHAB,					/* EUC for Korean JOHAB */
-	PG_UTF8,					/* Unicode UTF-8 */
+	PG_UTF8,					/* Unicode UTF8 */
 	PG_MULE_INTERNAL,			/* Mule internal code */
 	PG_LATIN1,					/* ISO-8859-1 Latin 1 */
 	PG_LATIN2,					/* ISO-8859-2 Latin 2 */
@@ -168,11 +168,11 @@ typedef enum pg_enc
 	PG_LATIN9,					/* ISO-8859-15 Latin9 */
 	PG_LATIN10,					/* ISO-8859-16 Latin10 */
 	PG_WIN1256,					/* windows-1256 */
-	PG_TCVN,					/* TCVN (Windows-1258) */
+	PG_WIN1258,					/* Windows-1258 */
+	PG_WIN866,					/* (MS-DOS CP866) */
 	PG_WIN874,					/* windows-874 */
 	PG_KOI8R,					/* KOI8-R */
 	PG_WIN1251,					/* windows-1251 (was: WIN) */
-	PG_ALT,						/* (MS-DOS CP866) */
 	PG_ISO_8859_5,				/* ISO-8859-5 */
 	PG_ISO_8859_6,				/* ISO-8859-6 */
 	PG_ISO_8859_7,				/* ISO-8859-7 */
@@ -263,21 +263,21 @@ typedef struct
 extern pg_wchar_tbl pg_wchar_table[];
 
 /*
- * UTF-8 to local code conversion map
+ * UTF8 to local code conversion map
  */
 typedef struct
 {
-	unsigned int utf;			/* UTF-8 */
+	unsigned int utf;			/* UTF8 */
 	unsigned int code;			/* local code */
 } pg_utf_to_local;
 
 /*
- * local code to UTF-8 conversion map
+ * local code to UTF8 conversion map
  */
 typedef struct
 {
 	unsigned int code;			/* local code */
-	unsigned int utf;			/* UTF-8 */
+	unsigned int utf;			/* UTF8 */
 } pg_local_to_utf;
 
 extern int	pg_mb2wchar(const unsigned char *from, pg_wchar *to);

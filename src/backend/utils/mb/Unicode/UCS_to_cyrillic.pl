@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_cyrillic.pl,v 1.6 2005/01/01 20:44:18 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_cyrillic.pl,v 1.7 2005/03/07 04:30:52 momjian Exp $
 #
 # Generate UTF-8 <--> ISO8859 code conversion tables from
 # map files provided by Unicode organization.
@@ -17,8 +17,8 @@
 require "ucs2utf.pl";
 %filename = ('KOI8R'=>'koi8-r.txt',
              'WIN1251'=>'cp1251.txt',
-             'ALT'=>'cp866.txt');
-@charsets = ('KOI8R','ALT','WIN1251');
+             'WIN866'=>'cp866.txt');
+@charsets = ('KOI8R','WIN866','WIN1251');
 foreach $charset (@charsets) {
 
 #
@@ -41,7 +41,7 @@ foreach $charset (@charsets) {
 		if( $code >= 0x80){
 			$utf = &ucs2utf($ucs);
 			if( $array{ $utf } ne "" ){
-				printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
+				printf STDERR "Warning: duplicate UTF8: %04x\n",$ucs;
 				next;
 			}
 			$count++;
@@ -85,7 +85,7 @@ foreach $charset (@charsets) {
 		if($code >= 0x80){
 			$utf = &ucs2utf($ucs);
 			if( $array{ $utf } ne "" ){
-				printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
+				printf STDERR "Warning: duplicate UTF8: %04x\n",$ucs;
 				next;
 			}
 			$count++;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.172 2005/03/06 22:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.173 2005/03/07 04:30:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4035,7 +4035,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  *
  * NOTE: at present this assumes we are in the C locale, so that simple
  * bytewise comparison applies.  However, we might be in a multibyte
- * encoding such as UTF-8, so we do have to watch out for generating
+ * encoding such as UTF8, so we do have to watch out for generating
  * invalid encoding sequences.
  */
 Const *

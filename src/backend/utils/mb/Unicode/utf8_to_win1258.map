@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapTCVN[ 120 ] = {
+static pg_utf_to_local ULmapWIN1258[ 120 ] = {
   {0x0000, 0x0081},
   {0xc2a0, 0x00a0},
   {0xc2a1, 0x00a1},

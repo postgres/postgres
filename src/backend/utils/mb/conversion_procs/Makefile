@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.11 2004/01/21 19:22:19 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.12 2005/03/07 04:30:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ DIRS = \
 	utf8_and_ascii utf8_and_big5 utf8_and_cyrillic utf8_and_euc_cn \
 	utf8_and_euc_jp utf8_and_euc_kr utf8_and_euc_tw utf8_and_gb18030 \
 	utf8_and_gbk utf8_and_iso8859 utf8_and_iso8859_1 utf8_and_johab \
-	utf8_and_sjis utf8_and_tcvn utf8_and_uhc utf8_and_win1250 \
+	utf8_and_sjis utf8_and_win1258 utf8_and_uhc utf8_and_win1250 \
 	utf8_and_win1256 utf8_and_win874
 
 # conversion_name source_encoding destination_encoding function object
@@ -36,20 +36,20 @@ CONVERSIONS = \
 		mic_to_iso_8859_5	MULE_INTERNAL ISO-8859-5 mic_to_iso cyrillic_and_mic \
 		windows_1251_to_mic	WIN1251 MULE_INTERNAL win1251_to_mic cyrillic_and_mic \
 		mic_to_windows_1251	MULE_INTERNAL WIN1251 mic_to_win1251 cyrillic_and_mic \
-		windows_866_to_mic	ALT MULE_INTERNAL alt_to_mic cyrillic_and_mic \
-		mic_to_windows_866	MULE_INTERNAL ALT mic_to_alt cyrillic_and_mic \
+		windows_866_to_mic	WIN866 MULE_INTERNAL win866_to_mic cyrillic_and_mic \
+		mic_to_windows_866	MULE_INTERNAL WIN866 mic_to_win866 cyrillic_and_mic \
 		koi8_r_to_windows_1251   KOI8R WIN1251 koi8r_to_win1251 cyrillic_and_mic \
 		windows_1251_to_koi8_r   WIN1251 KOI8R win1251_to_koi8r cyrillic_and_mic \
-		koi8_r_to_windows_866	KOI8R ALT koi8r_to_alt cyrillic_and_mic \
-		windows_866_to_koi8_r	ALT KOI8R alt_to_koi8r cyrillic_and_mic \
-		windows_866_to_windows_1251	ALT WIN1251 alt_to_win1251 cyrillic_and_mic \
-		windows_1251_to_windows_866	WIN1251	ALT win1251_to_alt cyrillic_and_mic \
+		koi8_r_to_windows_866	KOI8R WIN866 koi8r_to_win866 cyrillic_and_mic \
+		windows_866_to_koi8_r	WIN866 KOI8R win866_to_koi8r cyrillic_and_mic \
+		windows_866_to_windows_1251	WIN866 WIN1251 win866_to_win1251 cyrillic_and_mic \
+		windows_1251_to_windows_866	WIN1251	WIN866 win1251_to_win866 cyrillic_and_mic \
 		iso_8859_5_to_koi8_r	ISO-8859-5 KOI8R iso_to_koi8r cyrillic_and_mic \
 		koi8_r_to_iso_8859_5	KOI8R ISO-8859-5 koi8r_to_iso cyrillic_and_mic \
 		iso_8859_5_to_windows_1251	ISO-8859-5 WIN1251 iso_to_win1251 cyrillic_and_mic \
 		windows_1251_to_iso_8859_5	WIN1251 ISO-8859-5 win1251_to_iso cyrillic_and_mic \
-		iso_8859_5_to_windows_866	ISO-8859-5 ALT iso_to_alt cyrillic_and_mic \
-		windows_866_to_iso_8859_5	ALT ISO-8859-5 alt_to_iso cyrillic_and_mic \
+		iso_8859_5_to_windows_866	ISO-8859-5 WIN866 iso_to_win866 cyrillic_and_mic \
+		windows_866_to_iso_8859_5	WIN866 ISO-8859-5 win866_to_iso cyrillic_and_mic \
 		euc_cn_to_mic	EUC_CN MULE_INTERNAL euc_cn_to_mic euc_cn_and_mic \
 		mic_to_euc_cn	MULE_INTERNAL EUC_CN mic_to_euc_cn euc_cn_and_mic \
 		euc_jp_to_sjis	EUC_JP SJIS euc_jp_to_sjis euc_jp_and_sjis \
@@ -78,70 +78,70 @@ CONVERSIONS = \
 		mic_to_iso_8859_3	MULE_INTERNAL LATIN3 mic_to_latin3 latin_and_mic \
 		iso_8859_4_to_mic	LATIN4 MULE_INTERNAL latin4_to_mic latin_and_mic \
 		mic_to_iso_8859_4	MULE_INTERNAL LATIN4 mic_to_latin4 latin_and_mic \
-		ascii_to_utf_8 SQL_ASCII UNICODE ascii_to_utf8 utf8_and_ascii \
-		utf_8_to_ascii UNICODE SQL_ASCII utf8_to_ascii utf8_and_ascii \
-		big5_to_utf_8 BIG5 UNICODE big5_to_utf8 utf8_and_big5 \
-		utf_8_to_big5 UNICODE BIG5 utf8_to_big5 utf8_and_big5 \
-		utf_8_to_koi8_r	UNICODE KOI8R utf8_to_koi8r utf8_and_cyrillic \
-		koi8_r_to_utf_8	KOI8R UNICODE koi8r_to_utf8 utf8_and_cyrillic \
-		utf_8_to_windows_1251	UNICODE WIN1251 utf8_to_win1251 utf8_and_cyrillic \
-		windows_1251_to_utf_8	WIN1251 UNICODE win1251_to_utf8 utf8_and_cyrillic \
-		utf_8_to_windows_866	UNICODE ALT utf8_to_alt utf8_and_cyrillic \
-		windows_866_to_utf_8	ALT UNICODE alt_to_utf8 utf8_and_cyrillic \
-		euc_cn_to_utf_8 EUC_CN UNICODE euc_cn_to_utf8 utf8_and_euc_cn \
-		utf_8_to_euc_cn UNICODE EUC_CN utf8_to_euc_cn utf8_and_euc_cn \
-		euc_jp_to_utf_8 EUC_JP UNICODE euc_jp_to_utf8 utf8_and_euc_jp \
-		utf_8_to_euc_jp UNICODE EUC_JP utf8_to_euc_jp utf8_and_euc_jp \
-		euc_kr_to_utf_8 EUC_KR UNICODE euc_kr_to_utf8 utf8_and_euc_kr \
-		utf_8_to_euc_kr UNICODE EUC_KR utf8_to_euc_kr utf8_and_euc_kr \
-		euc_tw_to_utf_8 EUC_TW UNICODE euc_tw_to_utf8 utf8_and_euc_tw \
-		utf_8_to_euc_tw UNICODE EUC_TW utf8_to_euc_tw utf8_and_euc_tw \
-		gb18030_to_utf_8 GB18030 UNICODE gb18030_to_utf8 utf8_and_gb18030 \
-		utf_8_to_gb18030 UNICODE GB18030 utf8_to_gb18030 utf8_and_gb18030 \
-		gbk_to_utf_8 GBK UNICODE gbk_to_utf8 utf8_and_gbk \
-		utf_8_to_gbk UNICODE GBK utf8_to_gbk utf8_and_gbk \
-		utf_8_to_iso_8859_2 UNICODE LATIN2 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_2_to_utf_8 LATIN2 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_3 UNICODE LATIN3 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_3_to_utf_8 LATIN3 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_4 UNICODE LATIN4 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_4_to_utf_8 LATIN4 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_9 UNICODE LATIN5 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_9_to_utf_8 LATIN5 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_10 UNICODE LATIN6 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_10_to_utf_8 LATIN6 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_13 UNICODE LATIN7 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_13_to_utf_8 LATIN7 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_14 UNICODE LATIN8 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_14_to_utf_8 LATIN8 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_15 UNICODE LATIN9 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_15_to_utf_8 LATIN9 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_16 UNICODE LATIN10 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_16_to_utf_8 LATIN10 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_5 UNICODE ISO-8859-5 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_5_to_utf_8 ISO-8859-5 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_6 UNICODE ISO-8859-6 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_6_to_utf_8 ISO-8859-6 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_7 UNICODE ISO-8859-7 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_7_to_utf_8 ISO-8859-7 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		utf_8_to_iso_8859_8 UNICODE ISO-8859-8 utf8_to_iso8859 utf8_and_iso8859 \
-		iso_8859_8_to_utf_8 ISO-8859-8 UNICODE iso8859_to_utf8 utf8_and_iso8859 \
-		iso_8859_1_to_utf_8 LATIN1 UNICODE iso8859_1_to_utf8 utf8_and_iso8859_1 \
-		utf_8_to_iso_8859_1 UNICODE LATIN1 utf8_to_iso8859_1 utf8_and_iso8859_1 \
-		johab_to_utf_8 JOHAB UNICODE johab_to_utf8 utf8_and_johab \
-		utf_8_to_johab UNICODE JOHAB utf8_to_johab utf8_and_johab \
-		sjis_to_utf_8 SJIS UNICODE sjis_to_utf8 utf8_and_sjis \
-		utf_8_to_sjis UNICODE SJIS utf8_to_sjis utf8_and_sjis \
-		tcvn_to_utf_8 TCVN UNICODE tcvn_to_utf8 utf8_and_tcvn \
-		utf_8_to_tcvn UNICODE TCVN utf8_to_tcvn utf8_and_tcvn \
-		uhc_to_utf_8 UHC UNICODE uhc_to_utf8 utf8_and_uhc \
-		utf_8_to_uhc UNICODE UHC utf8_to_uhc utf8_and_uhc \
-		utf_8_to_windows_1250  UNICODE WIN1250 utf_to_win1250 utf8_and_win1250 \
-		windows_1250_to_utf_8  WIN1250 UNICODE win1250_to_utf utf8_and_win1250 \
-		utf_8_to_windows_1256  UNICODE WIN1256 utf_to_win1256 utf8_and_win1256 \
-		windows_1256_to_utf_8  WIN1256 UNICODE win1256_to_utf utf8_and_win1256 \
-		utf_8_to_windows_874  UNICODE WIN874 utf_to_win874 utf8_and_win874 \
-		windows_874_to_utf_8  WIN874 UNICODE win874_to_utf utf8_and_win874
+		ascii_to_utf8 SQL_ASCII UTF8 ascii_to_utf8 utf8_and_ascii \
+		utf8_to_ascii UTF8 SQL_ASCII utf8_to_ascii utf8_and_ascii \
+		big5_to_utf8 BIG5 UTF8 big5_to_utf8 utf8_and_big5 \
+		utf8_to_big5 UTF8 BIG5 utf8_to_big5 utf8_and_big5 \
+		utf8_to_koi8_r	UTF8 KOI8R utf8_to_koi8r utf8_and_cyrillic \
+		koi8_r_to_utf8	KOI8R UTF8 koi8r_to_utf8 utf8_and_cyrillic \
+		utf8_to_windows_1251	UTF8 WIN1251 utf8_to_win1251 utf8_and_cyrillic \
+		windows_1251_to_utf8	WIN1251 UTF8 win1251_to_utf8 utf8_and_cyrillic \
+		utf8_to_windows_866	UTF8 WIN866 utf8_to_win866 utf8_and_cyrillic \
+		windows_866_to_utf8	WIN866 UTF8 win866_to_utf8 utf8_and_cyrillic \
+		euc_cn_to_utf8 EUC_CN UTF8 euc_cn_to_utf8 utf8_and_euc_cn \
+		utf8_to_euc_cn UTF8 EUC_CN utf8_to_euc_cn utf8_and_euc_cn \
+		euc_jp_to_utf8 EUC_JP UTF8 euc_jp_to_utf8 utf8_and_euc_jp \
+		utf8_to_euc_jp UTF8 EUC_JP utf8_to_euc_jp utf8_and_euc_jp \
+		euc_kr_to_utf8 EUC_KR UTF8 euc_kr_to_utf8 utf8_and_euc_kr \
+		utf8_to_euc_kr UTF8 EUC_KR utf8_to_euc_kr utf8_and_euc_kr \
+		euc_tw_to_utf8 EUC_TW UTF8 euc_tw_to_utf8 utf8_and_euc_tw \
+		utf8_to_euc_tw UTF8 EUC_TW utf8_to_euc_tw utf8_and_euc_tw \
+		gb18030_to_utf8 GB18030 UTF8 gb18030_to_utf8 utf8_and_gb18030 \
+		utf8_to_gb18030 UTF8 GB18030 utf8_to_gb18030 utf8_and_gb18030 \
+		gbk_to_utf8 GBK UTF8 gbk_to_utf8 utf8_and_gbk \
+		utf8_to_gbk UTF8 GBK utf8_to_gbk utf8_and_gbk \
+		utf8_to_iso_8859_2 UTF8 LATIN2 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_2_to_utf8 LATIN2 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_3 UTF8 LATIN3 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_3_to_utf8 LATIN3 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_4 UTF8 LATIN4 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_4_to_utf8 LATIN4 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_9 UTF8 LATIN5 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_9_to_utf8 LATIN5 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_10 UTF8 LATIN6 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_10_to_utf8 LATIN6 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_13 UTF8 LATIN7 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_13_to_utf8 LATIN7 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_14 UTF8 LATIN8 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_14_to_utf8 LATIN8 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_15 UTF8 LATIN9 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_15_to_utf8 LATIN9 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_16 UTF8 LATIN10 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_16_to_utf8 LATIN10 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_5 UTF8 ISO-8859-5 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_5_to_utf8 ISO-8859-5 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_6 UTF8 ISO-8859-6 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_6_to_utf8 ISO-8859-6 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_7 UTF8 ISO-8859-7 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_7_to_utf8 ISO-8859-7 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		utf8_to_iso_8859_8 UTF8 ISO-8859-8 utf8_to_iso8859 utf8_and_iso8859 \
+		iso_8859_8_to_utf8 ISO-8859-8 UTF8 iso8859_to_utf8 utf8_and_iso8859 \
+		iso_8859_1_to_utf8 LATIN1 UTF8 iso8859_1_to_utf8 utf8_and_iso8859_1 \
+		utf8_to_iso_8859_1 UTF8 LATIN1 utf8_to_iso8859_1 utf8_and_iso8859_1 \
+		johab_to_utf8 JOHAB UTF8 johab_to_utf8 utf8_and_johab \
+		utf8_to_johab UTF8 JOHAB utf8_to_johab utf8_and_johab \
+		sjis_to_utf8 SJIS UTF8 sjis_to_utf8 utf8_and_sjis \
+		utf8_to_sjis UTF8 SJIS utf8_to_sjis utf8_and_sjis \
+		win1258_to_utf8 WIN1258 UTF8 win1258_to_utf8 utf8_and_win1258 \
+		utf8_to_win1258 UTF8 WIN1258 utf8_to_win1258 utf8_and_win1258 \
+		uhc_to_utf8 UHC UTF8 uhc_to_utf8 utf8_and_uhc \
+		utf8_to_uhc UTF8 UHC utf8_to_uhc utf8_and_uhc \
+		utf8_to_windows_1250  UTF8 WIN1250 utf_to_win1250 utf8_and_win1250 \
+		windows_1250_to_utf8  WIN1250 UTF8 win1250_to_utf utf8_and_win1250 \
+		utf8_to_windows_1256  UTF8 WIN1256 utf_to_win1256 utf8_and_win1256 \
+		windows_1256_to_utf8  WIN1256 UTF8 win1256_to_utf utf8_and_win1256 \
+		utf8_to_windows_874  UTF8 WIN874 utf_to_win874 utf8_and_win874 \
+		windows_874_to_utf8  WIN874 UTF8 win874_to_utf utf8_and_win874
 
 all: $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done

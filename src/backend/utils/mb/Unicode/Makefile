@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.8 2005/01/01 20:44:18 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.9 2005/03/07 04:30:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,8 +18,8 @@ ISO8859MAPS=iso8859_2_to_utf8.map iso8859_3_to_utf8.map \
 	utf8_to_iso8859_4.map utf8_to_iso8859_5.map 
 
 
-CYRILLICMAPS=koi8r_to_utf8.map win1251_to_utf8.map alt_to_utf8.map\
-             utf8_to_koi8r.map  utf8_to_win1251.map utf8_to_alt.map
+CYRILLICMAPS=koi8r_to_utf8.map win1251_to_utf8.map win866_to_utf8.map\
+             utf8_to_koi8r.map  utf8_to_win1251.map utf8_to_win866.map
 
 MAPS= $(ISO8859MAPS) $(CYRILLICMAPS)\
 	big5_to_utf8.map euc_cn_to_utf8.map euc_jp_to_utf8.map \

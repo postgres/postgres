@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.26 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.27 2005/03/07 04:30:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -195,7 +195,7 @@ COMMENT ON TABLE mytable IS NULL;
 COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
 COMMENT ON CAST (text AS int4) IS 'Allow casts from text to int4';
 COMMENT ON COLUMN my_table.my_column IS 'Employee ID number';
-COMMENT ON CONVERSION my_conv IS 'Conversion to Unicode';
+COMMENT ON CONVERSION my_conv IS 'Conversion to UTF8';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
 COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';

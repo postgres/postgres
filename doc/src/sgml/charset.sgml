@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.48 2005/01/04 00:05:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.49 2005/03/07 04:30:48 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -285,7 +285,7 @@ initdb --locale=sv_SE
    allows you to store text in a variety of character sets, including
    single-byte character sets such as the ISO 8859 series and
    multiple-byte character sets such as <acronym>EUC</> (Extended Unix
-   Code), Unicode, and Mule internal code.  All character sets can be
+   Code), UTF8, and Mule internal code.  All character sets can be
    used transparently throughout the server.  (If you use extension
    functions from other sources, it depends on whether they wrote
    their code correctly.)  The default character set is selected while
@@ -339,8 +339,8 @@ initdb --locale=sv_SE
          <entry>Taiwan <acronym>EUC</acronym></entry>
         </row>
         <row>
-         <entry><literal>UNICODE</literal></entry>
-         <entry>Unicode (<acronym>UTF</acronym>-8)</entry>
+         <entry><literal>UTF8</literal></entry>
+         <entry>UTF-8 (Unicode, 8-bit)</entry>
         </row>
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
@@ -407,7 +407,7 @@ initdb --locale=sv_SE
          <entry><acronym>KOI</acronym>8-R(U)</entry>
         </row>
         <row>
-         <entry><literal>ALT</literal></entry>
+         <entry><literal>WIN866</literal></entry>
          <entry>Windows CP866</entry>
         </row>
         <row>
@@ -419,7 +419,7 @@ initdb --locale=sv_SE
          <entry>Windows CP1250</entry>
         </row>
         <row>
-         <entry><literal>WIN</literal></entry>
+         <entry><literal>WIN1251</literal></entry>
          <entry>Windows CP1251</entry>
         </row>
         <row>
@@ -427,8 +427,8 @@ initdb --locale=sv_SE
          <entry>Windows CP1256 (Arabic)</entry>
         </row>
         <row>
-         <entry><literal>TCVN</literal></entry>
-         <entry><acronym>TCVN</>-5712/Windows CP1258 (Vietnamese)</entry>
+         <entry><literal>WIN1258</literal></entry>
+         <entry>Windows CP1258 (Vietnamese)/<acronym>TCVN</>-5712</entry>
         </row>
        </tbody>
       </tgroup>
@@ -504,7 +504,7 @@ $ <userinput>psql -l</userinput>
  regression    | t-ishii | SQL_ASCII
  template1     | t-ishii | EUC_JP
  test          | t-ishii | EUC_JP
- unicode       | t-ishii | UNICODE
+ utf8          | t-ishii | UTF8
 (9 rows)
 </screen>
     </para>
@@ -561,126 +561,126 @@ $ <userinput>psql -l</userinput>
        <tbody>
         <row>
          <entry><literal>SQL_ASCII</literal></entry>
-         <entry><literal>SQL_ASCII</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <entry><literal>SQL_ASCII</literal>, <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_JP</literal></entry>
          <entry><literal>EUC_JP</literal>, <literal>SJIS</literal>,
-         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_CN</literal></entry>
-         <entry><literal>EUC_CN</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <entry><literal>EUC_CN</literal>, <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_KR</literal></entry>
-         <entry><literal>EUC_KR</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <entry><literal>EUC_KR</literal>, <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
-         <entry><literal>JOHAB</literal>, <literal>UNICODE</literal>
+         <entry><literal>JOHAB</literal>, <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_TW</literal></entry>
          <entry><literal>EUC_TW</literal>, <literal>BIG5</literal>,
-         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN1</literal></entry>
-         <entry><literal>LATIN1</literal>, <literal>UNICODE</literal>
+         <entry><literal>LATIN1</literal>, <literal>UTF8</literal>
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN2</literal></entry>
          <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
-         <literal>UNICODE</literal>,
+         <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN3</literal></entry>
-         <entry><literal>LATIN3</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN3</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN4</literal></entry>
-         <entry><literal>LATIN4</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN4</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN5</literal></entry>
-         <entry><literal>LATIN5</literal>, <literal>UNICODE</literal>
+         <entry><literal>LATIN5</literal>, <literal>UTF8</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN6</literal></entry>
-         <entry><literal>LATIN6</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN6</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN7</literal></entry>
-         <entry><literal>LATIN7</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN7</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN8</literal></entry>
-         <entry><literal>LATIN8</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN8</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN9</literal></entry>
-         <entry><literal>LATIN9</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN9</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>  
          <entry><literal>LATIN10</literal></entry>
-         <entry><literal>LATIN10</literal>, <literal>UNICODE</literal>,
+         <entry><literal>LATIN10</literal>, <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
          <entry><literal>ISO_8859_5</literal>,
-         <literal>UNICODE</literal>,
+         <literal>UTF8</literal>,
          <literal>MULE_INTERNAL</literal>,
-         <literal>WIN</literal>,
-         <literal>ALT</literal>,
+         <literal>WIN1251</literal>,
+         <literal>WIN866</literal>,
          <literal>KOI8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_6</literal></entry>
          <entry><literal>ISO_8859_6</literal>,
-         <literal>UNICODE</literal>
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_7</literal></entry>
          <entry><literal>ISO_8859_7</literal>,
-         <literal>UNICODE</literal>
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_8</literal></entry>
          <entry><literal>ISO_8859_8</literal>,
-         <literal>UNICODE</literal>
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
-         <entry><literal>UNICODE</literal></entry>
+         <entry><literal>UTF8</literal></entry>
          <entry>
          <literal>EUC_JP</literal>, <literal>SJIS</literal>, 
          <literal>EUC_KR</literal>, <literal>UHC</literal>, <literal>JOHAB</literal>,
@@ -691,10 +691,10 @@ $ <userinput>psql -l</userinput>
          <literal>ISO_8859_6</literal>,
          <literal>ISO_8859_7</literal>, 
          <literal>ISO_8859_8</literal>, 
-         <literal>WIN</literal>, <literal>ALT</literal>, 
+         <literal>WIN1251</literal>, <literal>WIN866</literal>, 
          <literal>KOI8</literal>, 
          <literal>WIN1256</literal>,
-         <literal>TCVN</literal>,
+         <literal>WIN1258</literal>,
          <literal>WIN874</literal>,
          <literal>GB18030</literal>,
          <literal>WIN1250</literal>
@@ -704,53 +704,53 @@ $ <userinput>psql -l</userinput>
          <entry><literal>MULE_INTERNAL</literal></entry>
          <entry><literal>EUC_JP</literal>, <literal>SJIS</literal>, <literal>EUC_KR</literal>, <literal>EUC_CN</literal>, 
           <literal>EUC_TW</literal>, <literal>BIG5</literal>, <literal>LATIN1</literal> to <literal>LATIN5</literal>, 
-          <literal>WIN</literal>, <literal>ALT</literal>,
+          <literal>WIN1251</literal>, <literal>WIN866</literal>,
          <literal>WIN1250</literal>,
           <literal>BIG5</literal>, <literal>ISO_8859_5</literal>, <literal>KOI8</literal></entry>
         </row>
         <row>
          <entry><literal>KOI8</literal></entry>
-         <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
-         <literal>ALT</literal>, <literal>KOI8</literal>,
-         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <entry><literal>ISO_8859_5</literal>, <literal>WIN1251</literal>, 
+         <literal>WIN866</literal>, <literal>KOI8</literal>,
+         <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
-         <entry><literal>ALT</literal></entry>
-         <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
-         <literal>ALT</literal>, <literal>KOI8</literal>,
-         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <entry><literal>WIN866</literal></entry>
+         <entry><literal>ISO_8859_5</literal>, <literal>WIN1251</literal>, 
+         <literal>WIN866</literal>, <literal>KOI8</literal>,
+         <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>WIN874</literal></entry>
          <entry><literal>WIN874</literal>,
-         <literal>UNICODE</literal>
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>WIN1250</literal></entry>
          <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
-         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
-         <entry><literal>WIN</literal></entry>
-         <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
-         <literal>ALT</literal>, <literal>KOI8</literal>,
-         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         <entry><literal>WIN1251</literal></entry>
+         <entry><literal>ISO_8859_5</literal>, <literal>WIN1251</literal>, 
+         <literal>WIN866</literal>, <literal>KOI8</literal>,
+         <literal>UTF8</literal>, <literal>MULE_INTERNAL</literal>
          </entry>
         </row>
         <row>
          <entry><literal>WIN1256</literal></entry>
          <entry><literal>WIN1256</literal>,
-         <literal>UNICODE</literal>
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
-         <entry><literal>TCVN</literal></entry>
-         <entry><literal>TCVN</literal>,
-         <literal>UNICODE</literal>
+         <entry><literal>WIN1258</literal></entry>
+         <entry><literal>WIN1258</literal>,
+         <literal>UTF8</literal>
          </entry>
         </row>
        </tbody>

@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.48 2004/10/13 01:25:12 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.49 2005/03/07 04:30:52 momjian Exp $
  */
 #include "postgres.h"
 
@@ -222,7 +222,7 @@ pg_get_client_encoding_name(void)
  *
  * XXX We assume that storage for converted result is 4-to-1 growth in
  * the worst case. The rate for currently supported encoding pares are within 3
- * (SJIS JIS X0201 half width kanna -> UTF-8 is the worst case).
+ * (SJIS JIS X0201 half width kanna -> UTF8 is the worst case).
  * So "4" should be enough for the moment.
  */
 unsigned char *

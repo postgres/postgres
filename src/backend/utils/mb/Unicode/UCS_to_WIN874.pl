@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_WIN874.pl,v 1.5 2005/01/01 20:44:18 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_WIN874.pl,v 1.6 2005/03/07 04:30:52 momjian Exp $
 #
 # Generate UTF-8 <--> WIN874 code conversion tables from
 # map files provided by Unicode organization.
@@ -35,7 +35,7 @@ while( <FILE> ){
 	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $utf } ne "" ){
-			printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
+			printf STDERR "Warning: duplicate UTF8: %04x\n",$ucs;
 			next;
 		}
 		$count++;

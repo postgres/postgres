@@ -215,7 +215,7 @@ Multi-Language Support
 
 * Optimize locale to have minimal performance impact when not used
 * Support multiple simultaneous character sets, per SQL92
-* Improve Unicode combined character handling (?)
+* Improve UTF8 combined character handling (?)
 * Add octet_length_server() and octet_length_client()
 * Make octet_length_client() the same as octet_length()?
 

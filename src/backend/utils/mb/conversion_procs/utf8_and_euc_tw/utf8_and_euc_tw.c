@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- *	  EUC_TW <--> UTF-8
+ *	  EUC_TW <--> UTF8
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_tw/utf8_and_euc_tw.c,v 1.9 2004/12/31 22:02:20 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_tw/utf8_and_euc_tw.c,v 1.10 2005/03/07 04:30:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

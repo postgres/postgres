@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_SJIS.pl,v 1.7 2005/01/01 20:44:18 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_SJIS.pl,v 1.8 2005/03/07 04:30:52 momjian Exp $
 #
 # Generate UTF-8 <--> SJIS code conversion tables from
 # map files provided by Unicode organization.
@@ -52,7 +52,7 @@ while( <FILE> ){
        || (( $code >= 0x879a )
 	   && ( $code <= 0x879c )))
       {
-	printf STDERR "Warning: duplicate unicode : UCS=0x%04x  SJIS=0x%04x\n",$ucs,$code;
+	printf STDERR "Warning: duplicate UTF8 : UCS=0x%04x  SJIS=0x%04x\n",$ucs,$code;
 	next;
       }
     $count++;

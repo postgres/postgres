@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- *	  ISO 8859 2-16 <--> UTF-8
+ *	  ISO 8859 2-16 <--> UTF8
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.11 2004/12/31 22:02:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.12 2005/03/07 04:30:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,8 @@ extern Datum utf8_to_iso8859(PG_FUNCTION_ARGS);
 typedef struct
 {
 	pg_enc		encoding;
-	pg_local_to_utf *map1;		/* to UTF-8 map name */
-	pg_utf_to_local *map2;		/* from UTF-8 map name */
+	pg_local_to_utf *map1;		/* to UTF8 map name */
+	pg_utf_to_local *map2;		/* from UTF8 map name */
 	int			size1;			/* size of map1 */
 	int			size2;			/* size of map2 */
 } pg_conv_map;
@@ -74,7 +74,7 @@ static pg_conv_map maps[] = {
 	{PG_EUC_KR},				/* EUC for Korean */
 	{PG_EUC_TW},				/* EUC for Taiwan */
 	{PG_JOHAB},					/* EUC for Korean JOHAB */
-	{PG_UTF8},					/* Unicode UTF-8 */
+	{PG_UTF8},					/* Unicode UTF8 */
 	{PG_MULE_INTERNAL},			/* Mule internal code */
 	{PG_LATIN1},				/* ISO-8859-1 Latin 1 */
 	{PG_LATIN2, LUmapISO8859_2, ULmapISO8859_2,
@@ -105,11 +105,11 @@ static pg_conv_map maps[] = {
 		sizeof(LUmapISO8859_16) / sizeof(pg_local_to_utf),
 	sizeof(ULmapISO8859_16) / sizeof(pg_utf_to_local)}, /* ISO-8859-16 Latin 10 */
 	{PG_WIN1256},				/* windows-1256 */
-	{PG_TCVN},					/* TCVN (Windows-1258) */
+	{PG_WIN1258},				/* Windows-1258 */
 	{PG_WIN874},				/* windows-874 */
 	{PG_KOI8R},					/* KOI8-R */
 	{PG_WIN1251},				/* windows-1251 (was: WIN) */
-	{PG_ALT},					/* (MS-DOS CP866) */
+	{PG_WIN866},				/* (MS-DOS CP866) */
 	{PG_ISO_8859_5, LUmapISO8859_5, ULmapISO8859_5,
 		sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf),
 	sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local)},	/* ISO-8859-5 */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.14 2003/11/29 19:51:38 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.15 2005/03/07 04:30:51 momjian Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -136,10 +136,10 @@ conv_proc(
   <title>Examples</title>
 
   <para>
-   To create a conversion from encoding <literal>UNICODE</literal> to
+   To create a conversion from encoding <literal>UTF8</literal> to
    <literal>LATIN1</literal> using <function>myfunc</>:
 <programlisting>
-CREATE CONVERSION myconv FOR 'UNICODE' TO 'LATIN1' FROM myfunc;
+CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
 </programlisting>
   </para>
  </refsect1>

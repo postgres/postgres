@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.22 2004/12/04 18:19:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.23 2005/03/07 04:30:52 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -27,7 +27,7 @@
  * isalnum() chars only. It means ISO-8859-1, iso_8859-1 and Iso8859_1
  * are always converted to 'iso88591'. All must be lower case.
  *
- * The table doesn't contain 'cs' aliases (like csISOLatin1). It's needful?
+ * The table doesn't contain 'cs' aliases (like csISOLatin1). It's needed?
  *
  * Karel Zak, Aug 2001
  * ----------
@@ -35,10 +35,10 @@
 pg_encname	pg_encname_tbl[] =
 {
 	{
-		"abc", PG_TCVN
-	},							/* alias for TCVN */
+		"abc", PG_WIN1258
+	},							/* alias for WIN1258 */
 	{
-		"alt", PG_ALT
+		"alt", PG_WIN866
 	},							/* IBM866 */
 	{
 		"big5", PG_BIG5
@@ -166,23 +166,26 @@ pg_encname	pg_encname_tbl[] =
 		"sqlascii", PG_SQL_ASCII
 	},
 	{
-		"tcvn", PG_TCVN
-	},							/* TCVN; Vietnamese TCVN-5712 */
+		"tcvn", PG_WIN1258
+	},							/* alias for WIN1258 */
 	{
-		"tcvn5712", PG_TCVN
-	},							/* alias for TCVN */
+		"tcvn5712", PG_WIN1258
+	},							/* alias for WIN1258 */
 	{
 		"uhc", PG_UHC
 	},							/* UHC; Korean Windows CodePage 949 */
 	{
 		"unicode", PG_UTF8
-	},							/* alias for UTF-8 */
+	},							/* alias for UTF8 */
+	{
+		"utf-8", PG_UTF8
+	},							/* UTF8; RFC2279 */
 	{
 		"utf8", PG_UTF8
-	},							/* UTF-8; RFC2279 */
+	},							/* alias for UTF8 */
 	{
-		"vscii", PG_TCVN
-	},							/* alias for TCVN */
+		"vscii", PG_WIN1258
+	},							/* alias for WIN1258 */
 	{
 		"win", PG_WIN1251
 	},							/* _dirty_ alias for windows-1251
@@ -197,8 +200,11 @@ pg_encname	pg_encname_tbl[] =
 		"win1256", PG_WIN1256
 	},							/* alias for Windows-1256 */
 	{
-		"win1258", PG_TCVN
+		"win1258", PG_WIN1258
 	},							/* alias for Windows-1258 */
+	{
+		"win866", PG_WIN866
+	},							/* IBM866 */
 	{
 		"win874", PG_WIN874
 	},							/* alias for Windows-874 */
@@ -224,8 +230,11 @@ pg_encname	pg_encname_tbl[] =
 		"windows1256", PG_WIN1256
 	},							/* Windows-1256; Microsoft */
 	{
-		"windows1258", PG_TCVN
+		"windows1258", PG_WIN1258
 	},							/* Windows-1258; Microsoft */
+	{
+		"windows866", PG_WIN866
+	},							/* IBM866 */
 	{
 		"windows874", PG_WIN874
 	},							/* Windows-874; Microsoft */
@@ -275,7 +284,7 @@ pg_enc2name pg_enc2name_tbl[] =
 		"JOHAB", PG_JOHAB
 	},
 	{
-		"UNICODE", PG_UTF8
+		"UTF8", PG_UTF8
 	},
 	{
 		"MULE_INTERNAL", PG_MULE_INTERNAL
@@ -314,7 +323,10 @@ pg_enc2name pg_enc2name_tbl[] =
 		"WIN1256", PG_WIN1256
 	},
 	{
-		"TCVN", PG_TCVN
+		"WIN1258", PG_WIN1258
+	},
+	{
+		"WIN866", PG_WIN866
 	},
 	{
 		"WIN874", PG_WIN874
@@ -323,10 +335,7 @@ pg_enc2name pg_enc2name_tbl[] =
 		"KOI8", PG_KOI8R
 	},
 	{
-		"WIN", PG_WIN1251
-	},
-	{
-		"ALT", PG_ALT
+		"WIN1251", PG_WIN1251
 	},
 	{
 		"ISO_8859_5", PG_ISO_8859_5

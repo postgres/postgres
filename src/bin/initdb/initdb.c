@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.76 2005/02/26 18:43:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.77 2005/03/07 04:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,7 +723,7 @@ struct encoding_match encoding_match_list[] = {
 	{PG_JOHAB, "???"},
 #endif
 
-	{PG_UTF8, "UTF-8"},
+	{PG_UTF8, "UTF8"},
 	{PG_UTF8, "utf8"},
 
 	{PG_LATIN1, "ISO-8859-1"},
@@ -767,13 +767,13 @@ struct encoding_match encoding_match_list[] = {
 	{PG_LATIN10, "iso885916"},
 
 	{PG_WIN1256, "CP1256"},
-	{PG_TCVN, "CP1258"},
+	{PG_WIN1258, "CP1258"},
 #ifdef NOT_VERIFIED
 	{PG_WIN874, "???"},
 #endif
 	{PG_KOI8R, "KOI8-R"},
 	{PG_WIN1251, "CP1251"},
-	{PG_ALT, "CP866"},
+	{PG_WIN866, "CP866"},
 
 	{PG_ISO_8859_5, "ISO-8859-5"},
 	{PG_ISO_8859_5, "ISO8859-5"},

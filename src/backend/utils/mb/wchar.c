@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.40 2004/12/03 01:20:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.41 2005/03/07 04:30:52 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -344,7 +344,7 @@ pg_johab_dsplen(const unsigned char *s)
 }
 
 /*
- * convert UTF-8 string to pg_wchar (UCS-2)
+ * convert UTF8 string to pg_wchar (UCS-2)
  * caller should allocate enough space for "to"
  * len: length of from.
  * "from" not necessarily null terminated.
@@ -395,7 +395,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 }
 
 /*
- * returns the byte length of a UTF-8 word pointed to by s
+ * returns the byte length of a UTF8 word pointed to by s
  */
 int
 pg_utf_mblen(const unsigned char *s)
@@ -721,8 +721,8 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, 3},		/* 3; PG_EUC_KR */
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, 3},		/* 4; PG_EUC_TW */
 	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, 3},		/* 5; PG_JOHAB */
-	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, 3},	/* 6; PG_UNICODE */
-	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, 3}, /* 7; PG_MULE_INTERNAL */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, 3},			/* 6; PG_UTF8 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, 3}, 		/* 7; PG_MULE_INTERNAL */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 8; PG_LATIN1 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 9; PG_LATIN2 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 10; PG_LATIN3 */
@@ -822,7 +822,7 @@ pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
 
 	while (len > 0 && *mbstr)
 	{
-		/* special UTF-8 check */
+		/* special UTF8 check */
 		if (encoding == PG_UTF8 && (*mbstr & 0xf8) == 0xf0)
 		{
 			if (noError)

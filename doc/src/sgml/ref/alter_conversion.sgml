@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.6 2005/03/07 04:30:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -72,18 +72,18 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
   <title>Examples</title>
 
   <para>
-   To rename the conversion <literal>iso_8859_1_to_utf_8</literal> to
+   To rename the conversion <literal>iso_8859_1_to_utf8</literal> to
    <literal>latin1_to_unicode</literal>:
 <programlisting>
-ALTER CONVERSION iso_8859_1_to_utf_8 RENAME TO latin1_to_unicode;
+ALTER CONVERSION iso_8859_1_to_utf8 RENAME TO latin1_to_unicode;
 </programlisting>
   </para>
 
   <para>
-   To change the owner of the conversion <literal>iso_8859_1_to_utf_8</literal> to
+   To change the owner of the conversion <literal>iso_8859_1_to_utf8</literal> to
    <literal>joe</literal>:
 <programlisting>
-ALTER CONVERSION iso_8859_1_to_utf_8 OWNER TO joe;
+ALTER CONVERSION iso_8859_1_to_utf8 OWNER TO joe;
 </programlisting>
   </para>
  </refsect1>

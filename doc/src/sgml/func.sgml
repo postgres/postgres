@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.239 2005/02/28 03:45:20 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.240 2005/03/07 04:30:49 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -933,8 +933,8 @@ PostgreSQL documentation
         linkend="conversion-names"> for available conversion
         names.
        </entry>
-       <entry><literal>convert('PostgreSQL' using iso_8859_1_to_utf_8)</literal></entry>
-       <entry><literal>'PostgreSQL'</literal> in Unicode (UTF-8) encoding</entry>
+       <entry><literal>convert('PostgreSQL' using iso_8859_1_to_utf8)</literal></entry>
+       <entry><literal>'PostgreSQL'</literal> in UTF8 (Unicode, 8-bit) encoding</entry>
       </row>
 
       <row>
@@ -1105,8 +1105,8 @@ PostgreSQL documentation
         <parameter>src_encoding</parameter> is omitted, database
         encoding is assumed.
        </entry>
-       <entry><literal>convert( 'text_in_unicode', 'UNICODE', 'LATIN1')</literal></entry>
-       <entry><literal>text_in_unicode</literal> represented in ISO 8859-1 encoding</entry>
+       <entry><literal>convert( 'text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
+       <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>
       </row>
 
       <row>
@@ -1421,9 +1421,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>ascii_to_utf_8</literal></entry>
+       <entry><literal>ascii_to_utf8</literal></entry>
        <entry><literal>SQL_ASCII</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1439,9 +1439,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>big5_to_utf_8</literal></entry>
+       <entry><literal>big5_to_utf8</literal></entry>
        <entry><literal>BIG5</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1451,9 +1451,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>euc_cn_to_utf_8</literal></entry>
+       <entry><literal>euc_cn_to_utf8</literal></entry>
        <entry><literal>EUC_CN</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1469,9 +1469,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>euc_jp_to_utf_8</literal></entry>
+       <entry><literal>euc_jp_to_utf8</literal></entry>
        <entry><literal>EUC_JP</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1481,9 +1481,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>euc_kr_to_utf_8</literal></entry>
+       <entry><literal>euc_kr_to_utf8</literal></entry>
        <entry><literal>EUC_KR</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1499,51 +1499,51 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>euc_tw_to_utf_8</literal></entry>
+       <entry><literal>euc_tw_to_utf8</literal></entry>
        <entry><literal>EUC_TW</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>gb18030_to_utf_8</literal></entry>
+       <entry><literal>gb18030_to_utf8</literal></entry>
        <entry><literal>GB18030</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>gbk_to_utf_8</literal></entry>
+       <entry><literal>gbk_to_utf8</literal></entry>
        <entry><literal>GBK</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_10_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_10_to_utf8</literal></entry>
        <entry><literal>LATIN6</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_13_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_13_to_utf8</literal></entry>
        <entry><literal>LATIN7</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_14_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_14_to_utf8</literal></entry>
        <entry><literal>LATIN8</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_15_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_15_to_utf8</literal></entry>
        <entry><literal>LATIN9</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_16_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_16_to_utf8</literal></entry>
        <entry><literal>LATIN10</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1553,9 +1553,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_1_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_1_to_utf8</literal></entry>
        <entry><literal>LATIN1</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1565,9 +1565,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_2_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_2_to_utf8</literal></entry>
        <entry><literal>LATIN2</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1583,9 +1583,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_3_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_3_to_utf8</literal></entry>
        <entry><literal>LATIN3</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1595,9 +1595,9 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_4_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_4_to_utf8</literal></entry>
        <entry><literal>LATIN4</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1613,51 +1613,51 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_5_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_5_to_utf8</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>iso_8859_5_to_windows_1251</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
       </row>
 
       <row>
        <entry><literal>iso_8859_5_to_windows_866</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_6_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_6_to_utf8</literal></entry>
        <entry><literal>ISO_8859_6</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_7_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_7_to_utf8</literal></entry>
        <entry><literal>ISO_8859_7</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_8_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_8_to_utf8</literal></entry>
        <entry><literal>ISO_8859_8</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_9_to_utf_8</literal></entry>
+       <entry><literal>iso_8859_9_to_utf8</literal></entry>
        <entry><literal>LATIN5</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>johab_to_utf_8</literal></entry>
+       <entry><literal>johab_to_utf8</literal></entry>
        <entry><literal>JOHAB</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -1673,21 +1673,21 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>koi8_r_to_utf_8</literal></entry>
+       <entry><literal>koi8_r_to_utf8</literal></entry>
        <entry><literal>KOI8</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>koi8_r_to_windows_1251</literal></entry>
        <entry><literal>KOI8</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
       </row>
 
       <row>
        <entry><literal>koi8_r_to_windows_866</literal></entry>
        <entry><literal>KOI8</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
       </row>
 
       <row>
@@ -1777,13 +1777,13 @@ PostgreSQL documentation
       <row>
        <entry><literal>mic_to_windows_1251</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
       </row>
 
       <row>
        <entry><literal>mic_to_windows_866</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
       </row>
 
       <row>
@@ -1799,212 +1799,212 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>sjis_to_utf_8</literal></entry>
+       <entry><literal>sjis_to_utf8</literal></entry>
        <entry><literal>SJIS</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>tcvn_to_utf_8</literal></entry>
-       <entry><literal>TCVN</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>tcvn_to_utf8</literal></entry>
+       <entry><literal>WIN1258</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>uhc_to_utf_8</literal></entry>
+       <entry><literal>uhc_to_utf8</literal></entry>
        <entry><literal>UHC</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_ascii</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_ascii</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>SQL_ASCII</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_big5</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_big5</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>BIG5</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_euc_cn</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_euc_cn</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>EUC_CN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_euc_jp</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_euc_jp</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>EUC_JP</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_euc_kr</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_euc_kr</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>EUC_KR</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_euc_tw</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_euc_tw</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>EUC_TW</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_gb18030</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_gb18030</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>GB18030</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_gbk</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_gbk</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>GBK</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_1</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_1</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN1</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_10</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_10</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN6</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_13</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_13</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN7</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_14</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_14</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_15</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_15</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN9</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_16</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_16</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN10</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_2</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_2</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN2</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_3</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_3</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN3</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_4</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_4</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN4</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_5</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_5</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_6</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_6</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>ISO_8859_6</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_7</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_7</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>ISO_8859_7</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_8</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_8</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>ISO_8859_8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_iso_8859_9</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_iso_8859_9</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>LATIN5</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_johab</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_johab</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>JOHAB</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_koi8_r</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_koi8_r</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_sjis</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_sjis</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>SJIS</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_tcvn</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
-       <entry><literal>TCVN</literal></entry>
+       <entry><literal>utf8_to_tcvn</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>WIN1258</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_uhc</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_uhc</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>UHC</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_windows_1250</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_windows_1250</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>WIN1250</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_windows_1251</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>utf8_to_windows_1251</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_windows_1256</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_windows_1256</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>WIN1256</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_windows_866</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>utf8_to_windows_866</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>WIN866</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_windows_874</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>utf8_to_windows_874</literal></entry>
+       <entry><literal>UTF8</literal></entry>
        <entry><literal>WIN874</literal></entry>
       </row>
 
@@ -2021,81 +2021,81 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>windows_1250_to_utf_8</literal></entry>
+       <entry><literal>windows_1250_to_utf8</literal></entry>
        <entry><literal>WIN1250</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_1251_to_iso_8859_5</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_1251_to_koi8_r</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_1251_to_mic</literal></entry>
-       <entry><literal>WIN</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry><literal>windows_1251_to_utf_8</literal></entry>
-       <entry><literal>WIN</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>windows_1251_to_utf8</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_1251_to_windows_866</literal></entry>
-       <entry><literal>WIN</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN1251</literal></entry>
+       <entry><literal>WIN866</literal></entry>
       </row>
 
       <row>
-       <entry><literal>windows_1256_to_utf_8</literal></entry>
+       <entry><literal>windows_1256_to_utf8</literal></entry>
        <entry><literal>WIN1256</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_866_to_iso_8859_5</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_866_to_koi8_r</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_866_to_mic</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry><literal>windows_866_to_utf_8</literal></entry>
-       <entry><literal>ALT</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>windows_866_to_utf8</literal></entry>
+       <entry><literal>WIN866</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>windows_866_to_windows_1251</literal></entry>
-       <entry><literal>ALT</literal></entry>
+       <entry><literal>WIN866</literal></entry>
        <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>windows_874_to_utf_8</literal></entry>
+       <entry><literal>windows_874_to_utf8</literal></entry>
        <entry><literal>WIN874</literal></entry>
-       <entry><literal>UNICODE</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
      </tbody>
@@ -3372,7 +3372,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        <row>
        <entry> <literal>\u</><replaceable>wxyz</> </entry>
        <entry> (where <replaceable>wxyz</> is exactly four hexadecimal digits)
-       the Unicode character <literal>U+</><replaceable>wxyz</>
+       the UTF16 (Unicode, 16-bit) character <literal>U+</><replaceable>wxyz</>
        in the local byte ordering </entry>
        </row>
 
