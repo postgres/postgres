@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.110 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.111 2004/09/27 23:24:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include <signal.h>
 #include <time.h>
 
-#if !defined(_MSC_VER) && !defined(__BORLANDC__)
+#ifndef WIN32_CLIENT_ONLY
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif

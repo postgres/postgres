@@ -12,7 +12,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.12 2003/11/29 19:52:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.13 2004/09/27 23:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 /* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
 
-#if !defined(_MSC_VER) && !defined(__BORLANDC__)
+#ifndef WIN32_CLIENT_ONLY
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.6 2003/11/29 22:41:31 pgsql Exp $
+/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.7 2004/09/27 23:24:45 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -44,7 +44,7 @@
 
 #include "c.h"
 
-#if !defined(_MSC_VER) && !defined(__BORLANDC__)
+#ifndef WIN32_CLIENT_ONLY
 #include <netinet/in.h>
 #include <ctype.h>
 #endif
