@@ -14809,6 +14809,68 @@ fi
 # snprintfs that use %lld, %qd, or %I64d as the format.  If none of these
 # work, fall back to our own snprintf emulation (which we know uses %lld).
 
+# Also force use of our snprintf if system's doesn't do arg control
+if test $pgac_need_repl_snprintf = no; then
+  echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
+echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
+if test "${pgac_cv_printf_arg_control+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$cross_compiling" = yes; then
+  pgac_cv_printf_arg_control=cross
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+  char buf[100];
+
+  /* can it swap arguments? */
+  snprintf(buf, 100, "%2\$d %1\$d", 3, 4);
+  if (strcmp(buf, "4 3") != 0)
+    return 1;
+  return 0;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_printf_arg_control=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+pgac_cv_printf_arg_control=no
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_printf_arg_control" >&5
+echo "${ECHO_T}$pgac_cv_printf_arg_control" >&6
+
+  if test $pgac_cv_printf_arg_control != yes ; then
+    pgac_need_repl_snprintf=yes
+  fi
+fi
+
+if test $pgac_need_repl_snprintf = yes; then
+  LIBOBJS="$LIBOBJS snprintf.$ac_objext"
+fi
+
 if test "$HAVE_LONG_LONG_INT_64" = yes ; then
   if test $pgac_need_repl_snprintf = no; then
     echo "$as_me:$LINENO: checking snprintf format for long long int" >&5
@@ -14910,68 +14972,6 @@ cat >>confdefs.h <<_ACEOF
 #define UINT64_FORMAT $UINT64_FORMAT
 _ACEOF
 
-
-# Also force use of our snprintf if system's doesn't do arg control
-if test $pgac_need_repl_snprintf = no; then
-  echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
-echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
-if test "${pgac_cv_printf_arg_control+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "$cross_compiling" = yes; then
-  pgac_cv_printf_arg_control=cross
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <stdio.h>
-#include <string.h>
-
-int main()
-{
-  char buf[100];
-
-  /* can it swap arguments? */
-  snprintf(buf, 100, "%2\$d %1\$d", 3, 4);
-  if (strcmp(buf, "4 3") != 0)
-    return 1;
-  return 0;
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  pgac_cv_printf_arg_control=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-pgac_cv_printf_arg_control=no
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-fi
-echo "$as_me:$LINENO: result: $pgac_cv_printf_arg_control" >&5
-echo "${ECHO_T}$pgac_cv_printf_arg_control" >&6
-
-  if test $pgac_cv_printf_arg_control != yes ; then
-    pgac_need_repl_snprintf=yes
-  fi
-fi
-
-if test $pgac_need_repl_snprintf = yes; then
-  LIBOBJS="$LIBOBJS snprintf.$ac_objext"
-fi
 
 # Need a #define for the size of Datum (unsigned long)
 echo "$as_me:$LINENO: checking for unsigned long" >&5
