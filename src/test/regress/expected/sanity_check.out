@@ -16,10 +16,12 @@ hash_name_heap|t
 hash_txt_heap |t          
 ihighway      |t          
 onek          |t          
+pg_amop       |t          
 pg_attrdef    |t          
 pg_attribute  |t          
 pg_class      |t          
 pg_description|t          
+pg_index      |t          
 pg_proc       |t          
 pg_relcheck   |t          
 pg_trigger    |t          
@@ -28,5 +30,5 @@ road          |t
 shighway      |t          
 tenk1         |t          
 tenk2         |t          
-(23 rows)
+(25 rows)
 
