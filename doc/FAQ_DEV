@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 7 18:01:59 EDT 2004
+   Last updated: Wed Apr 7 19:32:25 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -512,8 +512,8 @@
    standard must be purchased from ANSI at
    http://webstore.ansi.org/ansidocstore/default.asp. The main standards
    documents are ANSI X3.135-1992 for SQL92 and ANSI/ISO/IEC 9075-2-1999
-   for SQL99. The SQL 200X standards are at
-   ftp://sqlstandards.org/SC32/WG3/Progression_Documents/FCD
+   for SQL99. The SQL 2003 standards are at
+   http://www.wiscorp.com/sql/sql_2003_standard.zip
    
    A summary of these standards is at
    http://dbs.uni-leipzig.de/en/lokal/standards.pdf.
