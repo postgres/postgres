@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.133 2004/10/01 18:30:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.134 2004/10/04 14:55:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,10 +538,17 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * then all but the immediate parent shell will be root-owned processes
 		 * and so the kill test will fail with EPERM.
 		 *
+		 * Windows hasn't got getppid(), but doesn't need it since it's not
+		 * using real kill() either...
+		 *
 		 * Normally kill() will fail with ESRCH if the given PID doesn't
 		 * exist.  BeOS returns EINVAL for some silly reason, however.
 		 */
-		if (other_pid != my_pid && other_pid != getppid())
+		if (other_pid != my_pid
+#ifndef WIN32
+			&& other_pid != getppid()
+#endif
+			)
 		{
 			if (kill(other_pid, 0) == 0 ||
 				(errno != ESRCH
