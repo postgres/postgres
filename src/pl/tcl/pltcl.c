@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.64 2002/09/26 05:39:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.65 2002/10/14 04:20:52 momjian Exp $
  *
  **********************************************************************/
 
@@ -39,12 +39,8 @@
 
 #include <tcl.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 #include <setjmp.h>
 
 #include "access/heapam.h"
@@ -308,6 +304,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 ************************************************************/
 	spi_rc = SPI_exec("select 1 from pg_class "
 					  "where relname = 'pltcl_modules'", 1);
+	SPI_freetuptable(SPI_tuptable);
 	if (spi_rc != SPI_OK_SELECT)
 		elog(ERROR, "pltcl_init_load_unknown(): select from pg_class failed");
 	if (SPI_processed == 0)
@@ -334,6 +331,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	if (SPI_processed == 0)
 	{
 		Tcl_DStringFree(&unknown_src);
+		SPI_freetuptable(SPI_tuptable);
 		elog(WARNING, "pltcl: Module unknown not found in pltcl_modules");
 		return;
 	}
@@ -359,6 +357,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	}
 	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&unknown_src));
 	Tcl_DStringFree(&unknown_src);
+	SPI_freetuptable(SPI_tuptable);
 }
 
 
@@ -955,9 +954,11 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 	 * Build our internal proc name from the functions Oid
 	 ************************************************************/
 	if (!is_trigger)
-		sprintf(internal_proname, "__PLTcl_proc_%u", fn_oid);
+		snprintf(internal_proname, sizeof(internal_proname),
+				 "__PLTcl_proc_%u", fn_oid);
 	else
-		sprintf(internal_proname, "__PLTcl_proc_%u_trigger", fn_oid);
+		snprintf(internal_proname, sizeof(internal_proname),
+				 "__PLTcl_proc_%u_trigger", fn_oid);
 
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
@@ -1127,7 +1128,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 					prodesc->arg_is_rel[i] = 1;
 					if (i > 0)
 						strcat(proc_internal_args, " ");
-					sprintf(buf, "__PLTcl_Tup_%d", i + 1);
+					snprintf(buf, sizeof(buf), "__PLTcl_Tup_%d", i + 1);
 					strcat(proc_internal_args, buf);
 					ReleaseSysCache(typeTup);
 					continue;
@@ -1140,7 +1141,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 
 				if (i > 0)
 					strcat(proc_internal_args, " ");
-				sprintf(buf, "%d", i + 1);
+				snprintf(buf, sizeof(buf), "%d", i + 1);
 				strcat(proc_internal_args, buf);
 
 				ReleaseSysCache(typeTup);
@@ -1177,7 +1178,8 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			{
 				if (!prodesc->arg_is_rel[i])
 					continue;
-				sprintf(buf, "array set %d $__PLTcl_Tup_%d\n", i + 1, i + 1);
+				snprintf(buf, sizeof(buf), "array set %d $__PLTcl_Tup_%d\n",
+						 i + 1, i + 1);
 				Tcl_DStringAppend(&proc_internal_body, buf, -1);
 			}
 		}
@@ -1475,6 +1477,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	int			ntuples;
 	HeapTuple  *volatile tuples;
 	volatile TupleDesc tupdesc = NULL;
+	SPITupleTable *tuptable;
 	sigjmp_buf	save_restart;
 
 	char	   *usage = "syntax error - 'SPI_exec "
@@ -1557,14 +1560,16 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	{
 		case SPI_OK_UTILITY:
 			Tcl_SetResult(interp, "0", TCL_VOLATILE);
+			SPI_freetuptable(SPI_tuptable);
 			return TCL_OK;
 
 		case SPI_OK_SELINTO:
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
-			sprintf(buf, "%d", SPI_processed);
+			snprintf(buf, sizeof(buf), "%d", SPI_processed);
 			Tcl_SetResult(interp, buf, TCL_VOLATILE);
+			SPI_freetuptable(SPI_tuptable);
 			return TCL_OK;
 
 		case SPI_OK_SELECT:
@@ -1607,7 +1612,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			return TCL_ERROR;
 
 		default:
-			sprintf(buf, "%d", spi_rc);
+			snprintf(buf, sizeof(buf), "%d", spi_rc);
 			Tcl_AppendResult(interp, "pltcl: SPI_exec() failed - ",
 							 "unknown RC ", buf, NULL);
 			return TCL_ERROR;
@@ -1645,11 +1650,14 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	{
 		if (ntuples > 0)
 			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
-		sprintf(buf, "%d", ntuples);
+		snprintf(buf, sizeof(buf), "%d", ntuples);
 		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+		SPI_freetuptable(SPI_tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		return TCL_OK;
 	}
+
+	tuptable = SPI_tuptable;
 
 	/************************************************************
 	 * There is a loop body - process all tuples and evaluate
@@ -1668,20 +1676,24 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			continue;
 		if (loop_rc == TCL_RETURN)
 		{
+			SPI_freetuptable(tuptable);
 			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 			return TCL_RETURN;
 		}
 		if (loop_rc == TCL_BREAK)
 			break;
+		SPI_freetuptable(tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		return TCL_ERROR;
 	}
+
+	SPI_freetuptable(tuptable);
 
 	/************************************************************
 	 * Finally return the number of tuples
 	 ************************************************************/
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	sprintf(buf, "%d", ntuples);
+	snprintf(buf, sizeof(buf), "%d", ntuples);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_OK;
 }
@@ -1690,7 +1702,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 /**********************************************************************
  * pltcl_SPI_prepare()		- Builtin support for prepared plans
  *				  The Tcl command SPI_prepare
- *				  allways saves the plan using
+ *				  always saves the plan using
  *				  SPI_saveplan and returns a key for
  *				  access. There is no chance to prepare
  *				  and not save the plan currently.
@@ -1736,7 +1748,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 * Allocate the new querydesc structure
 	 ************************************************************/
 	qdesc = (pltcl_query_desc *) malloc(sizeof(pltcl_query_desc));
-	sprintf(qdesc->qname, "%lx", (long) qdesc);
+	snprintf(qdesc->qname, sizeof(qdesc->qname), "%lx", (long) qdesc);
 	qdesc->nargs = nargs;
 	qdesc->argtypes = (Oid *) malloc(nargs * sizeof(Oid));
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));
@@ -1815,7 +1827,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				break;
 
 			default:
-				sprintf(buf, "unknown RC %d", SPI_result);
+				snprintf(buf, sizeof(buf), "unknown RC %d", SPI_result);
 				reason = buf;
 				break;
 
@@ -1846,7 +1858,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				break;
 
 			default:
-				sprintf(buf, "unknown RC %d", SPI_result);
+				snprintf(buf, sizeof(buf), "unknown RC %d", SPI_result);
 				reason = buf;
 				break;
 
@@ -1897,6 +1909,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	int			ntuples;
 	HeapTuple  *volatile tuples = NULL;
 	volatile TupleDesc tupdesc = NULL;
+	SPITupleTable *tuptable;
 	sigjmp_buf	save_restart;
 	Tcl_HashTable *query_hash;
 
@@ -2116,14 +2129,16 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	{
 		case SPI_OK_UTILITY:
 			Tcl_SetResult(interp, "0", TCL_VOLATILE);
+			SPI_freetuptable(SPI_tuptable);
 			return TCL_OK;
 
 		case SPI_OK_SELINTO:
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
-			sprintf(buf, "%d", SPI_processed);
+			snprintf(buf, sizeof(buf), "%d", SPI_processed);
 			Tcl_SetResult(interp, buf, TCL_VOLATILE);
+			SPI_freetuptable(SPI_tuptable);
 			return TCL_OK;
 
 		case SPI_OK_SELECT:
@@ -2166,7 +2181,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 			return TCL_ERROR;
 
 		default:
-			sprintf(buf, "%d", spi_rc);
+			snprintf(buf, sizeof(buf), "%d", spi_rc);
 			Tcl_AppendResult(interp, "pltcl: SPI_exec() failed - ",
 							 "unknown RC ", buf, NULL);
 			return TCL_ERROR;
@@ -2208,10 +2223,13 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		if (ntuples > 0)
 			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		sprintf(buf, "%d", ntuples);
+		snprintf(buf, sizeof(buf), "%d", ntuples);
 		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+		SPI_freetuptable(SPI_tuptable);
 		return TCL_OK;
 	}
+
+	tuptable = SPI_tuptable;
 
 	/************************************************************
 	 * There is a loop body - process all tuples and evaluate
@@ -2229,20 +2247,24 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 			continue;
 		if (loop_rc == TCL_RETURN)
 		{
+			SPI_freetuptable(tuptable);
 			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 			return TCL_RETURN;
 		}
 		if (loop_rc == TCL_BREAK)
 			break;
+		SPI_freetuptable(tuptable);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		return TCL_ERROR;
 	}
+
+	SPI_freetuptable(tuptable);
 
 	/************************************************************
 	 * Finally return the number of tuples
 	 ************************************************************/
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	sprintf(buf, "%d", ntuples);
+	snprintf(buf, sizeof(buf), "%d", ntuples);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_OK;
 }
@@ -2258,7 +2280,7 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 {
 	char		buf[64];
 
-	sprintf(buf, "%u", SPI_lastoid);
+	snprintf(buf, sizeof(buf), "%u", SPI_lastoid);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_OK;
 }
@@ -2300,7 +2322,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 	{
 		arrptr = &arrayname;
 		nameptr = &attname;
-		sprintf(buf, "%d", tupno);
+		snprintf(buf, sizeof(buf), "%d", tupno);
 		Tcl_SetVar2(interp, arrayname, ".tupno", buf, 0);
 	}
 

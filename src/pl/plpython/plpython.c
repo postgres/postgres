@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.24 2002/09/26 05:39:03 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.25 2002/10/14 04:20:52 momjian Exp $
  *
  *********************************************************************
  */
@@ -408,7 +408,9 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		else
 			PLy_restart_in_progress += 1;
 		if (proc)
+		{
 			Py_DECREF(proc->me);
+		}
 		RERAISE_EXC();
 	}
 
@@ -1841,7 +1843,14 @@ PLy_plan_dealloc(PyObject * arg)
 		 *
 		 * FIXME -- leaks saved plan on object destruction.  can this be
 		 * avoided?
+		 * I think so. A function prepares and then execp's a statement.
+		 * When we come to deallocate the 'statement' object we obviously
+		 * no long need the plan. Even if we did, without the object
+		 * we're never going to be able to use it again.
+		 * In the against arguments: SPI_saveplan has stuck this under
+		 * the top context so there must be a reason for doing that.
 		 */
+		pfree(ob->plan);
 	}
 	if (ob->types)
 		PLy_free(ob->types);
@@ -2374,6 +2383,8 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 				PyList_SetItem(result->rows, i, row);
 			}
 			PLy_typeinfo_dealloc(&args);
+
+			SPI_freetuptable(tuptable);
 		}
 		RESTORE_EXC();
 	}
