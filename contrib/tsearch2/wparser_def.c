@@ -229,7 +229,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 		if (min_words >= max_words)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords must be less than MaxWords")));
+					 errmsg("MinWords should be less than MaxWords")));
 		if (min_words <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -237,7 +237,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 		if (shortword < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("ShortWord hould be = 0")));
+					 errmsg("ShortWord should be >= 0")));
 	}
 
 	while (hlCover(prs, query, &p, &q))
