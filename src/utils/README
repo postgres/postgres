@@ -1,0 +1,6 @@
+The utils directory contains components that are used by multiple subsystems
+in the Postgres source tree.  We don't want subsystems reaching into other
+subsystems' directories and messing with the modularity of the system, so
+we gather any cross-subsystem utilities here.
+
+In particular, programs that form an interface between subsystems go here.

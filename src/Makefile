@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.9 1996/10/21 06:56:55 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.10 1996/11/11 13:51:20 bryanh Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -31,6 +31,7 @@ XARGS = xargs
 	       you can build Postgres. ;\
 	  false ;\
 	fi
+	$(MAKE) -C utils $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C libpq $@
 ifeq ($(HAVE_Cplusplus), true)
