@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.171 2002/12/05 15:50:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.172 2002/12/06 03:28:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,6 +518,18 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 {
 	COMPARE_SCALAR_FIELD(subtype);
 	COMPARE_NODE_FIELD(relation);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(def);
+	COMPARE_SCALAR_FIELD(behavior);
+
+	return true;
+}
+
+static bool
+_equalAlterDomainStmt(AlterDomainStmt *a, AlterDomainStmt *b)
+{
+	COMPARE_SCALAR_FIELD(subtype);
+	COMPARE_NODE_FIELD(typename);
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(def);
 	COMPARE_SCALAR_FIELD(behavior);
@@ -1620,6 +1632,9 @@ equal(void *a, void *b)
 			break;
 		case T_AlterTableStmt:
 			retval = _equalAlterTableStmt(a, b);
+			break;
+		case T_AlterDomainStmt:
+			retval = _equalAlterDomainStmt(a, b);
 			break;
 		case T_GrantStmt:
 			retval = _equalGrantStmt(a, b);

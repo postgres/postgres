@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.8 2002/11/15 02:50:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.9 2002/12/06 03:28:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,7 @@ CreateConstraintEntry(const char *constraintName,
 
 		domobject.classId = RelOid_pg_type;
 		domobject.objectId = domainId;
+		domobject.objectSubId = 0;
 
 		recordDependencyOn(&conobject, &domobject, DEPENDENCY_AUTO);
 	}
@@ -496,15 +497,16 @@ RemoveConstraintById(Oid conId)
 		HeapTuple	typTup;
 		ScanKeyData typKey[1];
 		SysScanDesc typScan;
+		int			nkeys = 0;
 
 		typRel = heap_openr(TypeRelationName, RowExclusiveLock);
 
-		ScanKeyEntryInitialize(&typKey[0], 0x0,
-							   Anum_pg_constraint_contypid, F_OIDEQ,
+		ScanKeyEntryInitialize(&typKey[nkeys++], 0x0,
+							   ObjectIdAttributeNumber, F_OIDEQ,
 							   ObjectIdGetDatum(con->contypid));
 
 		typScan = systable_beginscan(typRel, TypeOidIndex, true,
-									 SnapshotNow, 1, typKey);
+									 SnapshotNow, nkeys, typKey);
 
 		typTup = systable_getnext(typScan);
 
@@ -516,6 +518,11 @@ RemoveConstraintById(Oid conId)
 
 		/* Keep lock on domain type until end of xact */
 		heap_close(typRel, NoLock);
+	}
+	else
+	{
+		elog(ERROR, "RemoveConstraintById: Constraint %u is not a known type",
+			 conId);
 	}
 
 	/* Fry the constraint itself */

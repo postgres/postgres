@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.218 2002/11/25 03:36:50 tgl Exp $
+ * $Id: parsenodes.h,v 1.219 2002/12/06 03:28:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,6 +826,33 @@ typedef struct AlterTableStmt
 	Node	   *def;			/* definition of new column or constraint */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 } AlterTableStmt;
+
+/* ----------------------
+ *	Alter Domain
+ *
+ * The fields are used in different ways by the different variants of
+ * this command. Subtypes should match AlterTable subtypes
+ * ----------------------
+ */
+typedef struct AlterDomainStmt
+{
+	NodeTag		type;
+	char		subtype;		/*------------
+								 *	T = alter column default
+								 *	N = alter column drop not null
+								 *	O = alter column set not null
+								 *	C = add constraint
+								 *	X = drop constraint
+								 *	U = change owner
+								 *------------
+								 */
+	List	   *typename;		/* table to work on */
+	char	   *name;			/* column or constraint name to act on, or
+								 * new owner */
+	Node	   *def;			/* definition of default or constraint */
+	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
+} AlterDomainStmt;
+
 
 /* ----------------------
  *		Grant|Revoke Statement
