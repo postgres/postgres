@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.6 2003/05/25 09:36:09 petere Exp $
+ * $Id: information_schema.sql,v 1.7 2003/06/05 16:08:47 petere Exp $
  */
 
 
@@ -272,7 +272,7 @@ CREATE VIEW columns AS
            CAST(null AS sql_identifier) AS scope_name,
 
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(CAST(t.oid AS varchar) AS sql_identifier) AS dtd_identifier,
+           CAST(t.oid AS sql_identifier) AS dtd_identifier,
            CAST('NO' AS character_data) AS is_self_referencing
 
     FROM (pg_attribute LEFT JOIN pg_attrdef ON attrelid = adrelid AND attnum = adnum) AS a,
@@ -474,7 +474,7 @@ CREATE VIEW domains AS
            CAST(null AS sql_identifier) AS scope_name,
 
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(CAST(t.oid AS varchar) AS sql_identifier) AS dtd_identifier
+           CAST(t.oid AS sql_identifier) AS dtd_identifier
 
     FROM pg_type t, pg_namespace nt,
          pg_type bt, pg_namespace nbt
@@ -485,6 +485,65 @@ CREATE VIEW domains AS
           AND t.typtype = 'd';
 
 GRANT SELECT ON domains TO PUBLIC;
+
+
+/*
+ * 20.33
+ * PARAMETERS view
+ */
+
+CREATE VIEW parameters AS
+    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(n.nspname AS sql_identifier) AS specific_schema,
+           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(n + 1 AS cardinal_number) AS ordinal_position,
+           CAST('IN' AS character_data) AS parameter_mode,
+           CAST('NO' AS character_data) AS is_result,
+           CAST('NO' AS character_data) AS as_locator,
+           CAST(null AS sql_identifier) AS parameter_name,
+           CAST(
+             CASE WHEN nt.nspname = 'pg_catalog' 
+                  THEN format_type(t.oid, null)
+                  ELSE 'USER-DEFINED' END AS character_data)
+             AS data_type,
+           CAST(null AS cardinal_number) AS character_maximum_length,
+           CAST(null AS cardinal_number) AS character_octet_length,
+           CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(null AS sql_identifier) AS character_set_name,
+           CAST(null AS sql_identifier) AS collation_catalog,
+           CAST(null AS sql_identifier) AS collation_schema,
+           CAST(null AS sql_identifier) AS collation_name,
+           CAST(null AS cardinal_number) AS numeric_precision,
+           CAST(null AS cardinal_number) AS numeric_precision_radix,
+           CAST(null AS cardinal_number) AS numeric_scale,
+           CAST(null AS cardinal_number) AS datetime_precision,
+           CAST(null AS character_data) AS interval_type,
+           CAST(null AS character_data) AS interval_precision,
+           CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(nt.nspname AS sql_identifier) AS udt_schema,
+           CAST(t.typname AS sql_identifier) AS udt_name,
+           CAST(null AS sql_identifier) AS scope_catalog,
+           CAST(null AS sql_identifier) AS scope_schema,
+           CAST(null AS sql_identifier) AS scope_name,
+           CAST(null AS cardinal_number) AS maximum_cardinality,
+           CAST(t.oid AS sql_identifier) AS dtd_identifier
+
+    FROM pg_namespace n, pg_proc p, pg_type t, pg_namespace nt, pg_user u,
+         (select 0 union select 1 union select 2 union select 3 union select 4 union
+          select 5 union select 6 union select 7 union select 8 union select 9 union
+          select 10 union select 11 union select 12 union select 13 union select 14 union
+          select 15 union select 16 union select 17 union select 18 union select 19 union
+          select 20 union select 21 union select 22 union select 23 union select 24 union
+          select 25 union select 26 union select 27 union select 28 union select 29 union
+          select 30 union select 31) AS pos(n)
+
+    WHERE n.oid = p.pronamespace AND p.pronargs > pos.n
+          AND p.proargtypes[n] = t.oid AND t.typnamespace = nt.oid
+          AND p.proowner = u.usesysid
+          AND (u.usename = current_user OR has_function_privilege(p.oid, 'EXECUTE'));
+
+GRANT SELECT ON parameters TO PUBLIC;
 
 
 /*
@@ -537,6 +596,119 @@ CREATE VIEW referential_constraints AS
           AND u.usename = current_user;
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
+
+
+/*
+ * 20.43
+ * ROUTINE_PRIVILEGES view
+ */
+
+CREATE VIEW routine_privileges AS
+    SELECT CAST(u_owner.usename AS sql_identifier) AS grantor,
+           CAST(u_grantee.usename AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(n.nspname AS sql_identifier) AS specific_schema,
+           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(n.nspname AS sql_identifier) AS routine_schema,
+           CAST(p.proname AS sql_identifier) AS routine_name,
+           CAST('EXECUTE' AS character_data) AS privilege_type,
+           CAST('NO' AS character_data) AS is_grantable
+
+    FROM pg_user u_owner,
+         pg_user u_grantee,
+         pg_namespace n,
+         pg_proc p
+
+    WHERE u_owner.usesysid = p.proowner
+          AND p.pronamespace = n.oid
+          AND has_function_privilege(u_grantee.usename, p.oid, 'EXECUTE')
+          AND (u_owner.usename = current_user OR u_grantee.usename = current_user);
+
+GRANT SELECT ON routine_privileges TO PUBLIC;
+
+
+/*
+ * 20.45
+ * ROUTINES view
+ */
+
+CREATE VIEW routines AS
+    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(n.nspname AS sql_identifier) AS specific_schema,
+           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(n.nspname AS sql_identifier) AS routine_schema,
+           CAST(p.proname AS sql_identifier) AS routine_name,
+           CAST('FUNCTION' AS character_data) AS routine_type,
+           CAST(null AS sql_identifier) AS module_catalog,
+           CAST(null AS sql_identifier) AS module_schema,
+           CAST(null AS sql_identifier) AS module_name,
+           CAST(null AS sql_identifier) AS udt_catalog,
+           CAST(null AS sql_identifier) AS udt_schema,
+           CAST(null AS sql_identifier) AS udt_name,
+
+           CAST(
+             CASE WHEN nt.nspname = 'pg_catalog' 
+                  THEN format_type(t.oid, null)
+                  ELSE 'USER-DEFINED' END AS character_data)
+             AS data_type,
+           CAST(null AS cardinal_number) AS character_maximum_length,
+           CAST(null AS cardinal_number) AS character_octet_length,
+           CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(null AS sql_identifier) AS character_set_name,
+           CAST(null AS sql_identifier) AS collation_catalog,
+           CAST(null AS sql_identifier) AS collation_schema,
+           CAST(null AS sql_identifier) AS collation_name,
+           CAST(null AS cardinal_number) AS numeric_precision,
+           CAST(null AS cardinal_number) AS numeric_precision_radix,
+           CAST(null AS cardinal_number) AS numeric_scale,
+           CAST(null AS cardinal_number) AS datetime_precision,
+           CAST(null AS character_data) AS interval_type,
+           CAST(null AS character_data) AS interval_precision,
+           CAST(current_database() AS sql_identifier) AS type_udt_catalog,
+           CAST(nt.nspname AS sql_identifier) AS type_udt_schema,
+           CAST(t.typname AS sql_identifier) AS type_udt_name,
+           CAST(null AS sql_identifier) AS scope_catalog,
+           CAST(null AS sql_identifier) AS scope_schema,
+           CAST(null AS sql_identifier) AS scope_name,
+           CAST(null AS cardinal_number) AS maximum_cardinality,
+           CAST(t.oid AS sql_identifier) AS dtd_identifier,
+
+           CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' ELSE 'EXTERNAL' END AS character_data)
+             AS routine_body,
+           CAST(
+             CASE WHEN u.usename = current_user THEN p.prosrc ELSE null END
+             AS character_data) AS routine_definition,
+           CAST(
+             CASE WHEN l.lanname = 'c' THEN p.prosrc ELSE null END
+             AS character_data) AS external_name,
+           CAST(upper(l.lanname) AS character_data) AS external_language,
+
+           CAST('GENERAL' AS character_data) AS parameter_style,
+           CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS character_data) AS is_deterministic,
+           CAST('MODIFIES' AS character_data) AS sql_data_access,
+           CAST(CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END AS character_data) AS is_null_call,
+           CAST(null AS character_data) AS sql_path,
+           CAST('YES' AS character_data) AS schema_level_routine,
+           CAST(0 AS cardinal_number) AS max_dynamic_result_sets,
+           CAST(null AS character_data) AS is_user_defined_cast,
+           CAST(null AS character_data) AS is_implicitly_invocable,
+           CAST(CASE WHEN p.prosecdef THEN 'DEFINER' ELSE 'INVOKER' END AS character_data) AS security_type,
+           CAST(null AS sql_identifier) AS to_sql_specific_catalog,
+           CAST(null AS sql_identifier) AS to_sql_specific_schema,
+           CAST(null AS sql_identifier) AS to_sql_specific_name,
+           CAST('NO' AS character_data) AS as_locator
+
+    FROM pg_namespace n, pg_proc p, pg_language l, pg_user u,
+         pg_type t, pg_namespace nt
+
+    WHERE n.oid = p.pronamespace AND p.prolang = l.oid AND p.proowner = u.usesysid
+          AND p.prorettype = t.oid AND t.typnamespace = nt.oid
+          AND (u.usename = current_user OR has_function_privilege(p.oid, 'EXECUTE'));
+
+GRANT SELECT ON routines TO PUBLIC;
 
 
 /*

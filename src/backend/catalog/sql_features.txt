@@ -335,8 +335,8 @@ T321	Basic SQL-invoked routines	02	User-defined stored procedures with no overlo
 T321	Basic SQL-invoked routines	03	Function invocation	YES	
 T321	Basic SQL-invoked routines	04	CALL statement	NO	
 T321	Basic SQL-invoked routines	05	RETURN statement	NO	
-T321	Basic SQL-invoked routines	06	ROUTINES view	NO	
-T321	Basic SQL-invoked routines	07	PARAMETERS view	NO	
+T321	Basic SQL-invoked routines	06	ROUTINES view	YES	
+T321	Basic SQL-invoked routines	07	PARAMETERS view	YES	
 T322	Overloading of SQL-invoked functions and procedures			YES	
 T323	Explicit security for external routines			YES	
 T331	Basic roles			NO	

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.2 2003/05/25 09:36:09 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.3 2003/06/05 16:08:47 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -956,7 +956,245 @@
      <row>
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
+      <entry>
+       A unique identifier of the data type of the domain (The
+       specific format of the identifier is not defined and not
+       guaranteed to remain the same in future versions.)
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-parameters">
+  <title><literal>parameters</literal></title>
+
+  <para>
+   The view <literal>parameters</literal> contains information about
+   the parameters (arguments) all functions in the current database.
+   Only those functions are shown that the current user has access to
+   (by way of being the owner or having some privilege).
+  </para>
+
+  <table>
+   <title><literal>parameters</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  See <xref
+       linkend="infoschema-routines"> for more information.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>ordinal_position</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Ordinal position of the parameter in the argument list of the
+       function (count starts at 1)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>parameter_mode</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always <literal>IN</literal>, meaning input parameter (In the
+       future there might be other parameter modes.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_result</literal></entry>
+      <entry><type>character_data</type></entry>
       <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>as_locator</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>parameter_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Always null, since PostgreSQL does not support named parameters</entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Data type of the parameter</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null, since this information is not applied to parameter data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that the data type of the parameter is
+       defined in (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that the data type of the parameter is
+       defined in
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the data type of the parameter
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       A unique identifier of the data type of the parameter (The
+       specific format of the identifier is not defined and not
+       guaranteed to remain the same in future versions.)
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -1061,6 +1299,508 @@
        <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
        <literal>NO ACTION</literal>.
       </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-routine-privileges">
+  <title><literal>routine_privileges</literal></title>
+
+  <para>
+   The view <literal>routine_privileges</literal> identifies all
+   privileges granted on functions to the current user or by the
+   current user.  There is one row for each combination of function,
+   grantor, and grantee.
+  </para>
+
+  <table>
+   <title><literal>routine_privileges</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that granted the privileges</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  See <xref
+       linkend="infoschema-routines"> for more information.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the function (may be duplicated in case of overloading)</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>EXECUTE</literal> (the only privilege type for functions)</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-routines">
+  <title><literal>routines</literal></title>
+
+  <para>
+   The view <literal>routines</literal> contains all functions in the
+   current database.  Only those functions are shown that the current
+   user has access to (by way of being the owner or having some
+   privilege).
+  </para>
+
+  <table>
+   <title><literal>routines</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  This is a
+       name that uniquely identifies the function in the schema, even
+       if the real name of the function is overloaded.  The format of
+       the specific name is not defined, it should only be used to
+       compare it to other instances of specific routine names.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the function (may be duplicated in case of overloading)</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always <literal>FUNCTION</literal> (In the future there might
+       be other types of routines.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>module_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>module_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>module_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Return data type of the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null, since this information is not applied to return data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>type_udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that the return data type of the function
+       is defined in (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>type_udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that the return data type of the function is
+       defined in
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>type_udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the return data type of the function
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       A unique identifier of the return data type of the function
+       (The specific format of the identifier is not defined and not
+       guaranteed to remain the same in future versions.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_body</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       If the function is an SQL function, then
+       <literal>SQL</literal>, else <literal>EXTERNAL</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_definition</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The source text of the function (null if the current user is
+       not the owner of the function).  (According to the SQL
+       standard, this column is only applicable if
+       <literal>routine_body</literal> is <literal>SQL</literal>, but
+       in PostgreSQL it will contain whatever source text was
+       specified when the function was created.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>external_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       If this function is a C function, then the external name (link
+       symbol) of the function; else null.  (This works out to be the
+       same value that is shown in
+       <literal>routine_definition</literal>.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>external_language</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>The language the function is written in</entry>
+     </row>
+
+     <row>
+      <entry><literal>parameter_style</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always <literal>GENERAL</literal> (The SQL standard defines
+       other parameter styles, which are not available in PostgreSQL.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_deterministic</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       If the function is declared immutable (called deterministic in
+       the SQL standard), then <literal>YES</literal>, else
+       <literal>NO</literal>.  (You cannot query the other volatility
+       levels available in PostgreSQL through the information schema.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_data_access</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always <literal>MODIFIES</literal>, meaning that the function
+       possibly modifies SQL data.  This information is not useful for
+       PostgreSQL.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_null_call</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       If the function automatically returns null if any of its
+       arguments are null, then <literal>YES</literal>, else
+       <literal>NO</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_path</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>schema_level_routine</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always <literal>YES</literal> (The opposite would be a method
+       of a user-defined type, which is a feature not available in
+       PostgreSQL.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>max_dynamic_result_sets</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_user_defined_cast</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_implicitly_invocable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>security_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       If the function runs with the privileges of the current user,
+       then <literal>INVOKER</literal>, if the function runs with the
+       privileges of the user who defined it, then
+       <literal>DEFINER</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>to_sql_specific_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>to_sql_specific_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>to_sql_specific_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>as_locator</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
      </row>
     </tbody>
    </tgroup>
