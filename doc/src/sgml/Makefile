@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.31 2001/02/13 21:27:05 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.32 2001/02/13 21:51:17 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ ALLBOOKS = admin developer programmer reference tutorial user
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml)
 
 
-catalog: Makefile $(top_builddir)/src/Makefile.global $(top_builddir)/src/Makefile.custom
+catalog: Makefile $(top_builddir)/src/Makefile.global
 	(echo "PUBLIC \"-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN\" \"$(DOCBOOKSTYLE)/html/docbook.dsl\""; \
 	echo "PUBLIC \"-//Norman Walsh//DOCUMENT DocBook Print Stylesheet//EN\" \"$(DOCBOOKSTYLE)/print/docbook.dsl\"") > $@
 
