@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.7 1997/09/08 21:48:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.8 1998/06/18 16:32:51 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -54,6 +54,7 @@ ExceptionalCondition(char *conditionName,
 	}
 
 #ifdef ABORT_ON_ASSERT
+	sleep(99999);
 	abort();
 #endif
 
