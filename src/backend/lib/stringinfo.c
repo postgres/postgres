@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.21 1999/08/31 01:28:25 tgl Exp $
+ *	  $Id: stringinfo.c,v 1.22 1999/09/08 16:31:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,12 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 			nprinted = vsnprintf(str->data + str->len, avail,
 								 fmt, args);
 			va_end(args);
-			if (nprinted < avail-1)
+			/*
+			 * Note: some versions of vsnprintf return the number of chars
+			 * actually stored, but at least one returns -1 on failure.
+			 * Be conservative about believing whether the print worked.
+			 */
+			if (nprinted >= 0 && nprinted < avail-1)
 			{
 				/* Success.  Note nprinted does not include trailing null. */
 				str->len += nprinted;
