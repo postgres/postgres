@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.192 2004/08/15 00:41:51 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.193 2004/08/20 20:13:10 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -291,8 +291,15 @@ endif
 #
 # Some variables needed to find some client interfaces
 
+ifdef PGXS
+# some contribs assumes headers and libs are in the source tree...
+libpq_srcdir = $(includedir)
+libpq_builddir = $(libdir)
+else
 libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
+endif
+
 libpq = -L$(libpq_builddir) -lpq
 
 submake-libpq:
@@ -351,7 +358,12 @@ LIBOBJS = @LIBOBJS@ dirmod.o exec.o noblock.o path.o pipe.o pgsleep.o pgstrcasec
 
 ifneq (,$(LIBOBJS))
 LIBS := -lpgport $(LIBS)
+ifdef PGXS
+# where libpgport.a is installed
+LDFLAGS := -L$(pkglibdir) $(LDFLAGS)
+else
 LDFLAGS := -L$(top_builddir)/src/port $(LDFLAGS)
+endif
 endif
 
 # to make ws2_32.lib the last library

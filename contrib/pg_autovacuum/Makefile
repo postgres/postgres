@@ -1,8 +1,3 @@
-
-subdir = contrib/pg_autovacuum
-top_builddir = ../..
-include $(top_builddir)/src/Makefile.global
-
 PROGRAM = pg_autovacuum
 OBJS	= pg_autovacuum.o
 
@@ -11,4 +6,12 @@ PG_LIBS = $(libpq)
 
 DOCS = README.pg_autovacuum
 
+ifdef USE_PGXS
+PGXS = $(shell pg_config --pgxs)
+include $(PGXS)
+else
+subdir = contrib/pg_autovacuum
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
+endif

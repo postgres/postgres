@@ -1,10 +1,6 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.10 2003/11/29 19:51:35 pgsql Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.11 2004/08/20 20:13:06 momjian Exp $
 #
-
-subdir = contrib/pgcrypto
-top_builddir = ../..
-include $(top_builddir)/src/Makefile.global
 
 # either 'builtin', 'mhash', 'openssl'
 cryptolib = builtin
@@ -60,25 +56,35 @@ ifeq ($(random), silly)
 CRYPTO_CFLAGS += -DRAND_SILLY
 endif
 
-MODULE_big	:= pgcrypto
 SRCS		+= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c \
 			crypt-gensalt.c random.c
-OBJS		:= $(SRCS:.c=.o)
-DOCS		:= README.pgcrypto
-DATA_built	:= pgcrypto.sql
-EXTRA_CLEAN	:= gen-rtab
 
-PG_CPPFLAGS	:= $(CRYPTO_CFLAGS) -I$(srcdir) 
-SHLIB_LINK 	:= $(CRYPTO_LDFLAGS)
+MODULE_big	= pgcrypto
+OBJS		= $(SRCS:.c=.o)
+DOCS		= README.pgcrypto
+DATA_built	= pgcrypto.sql
+EXTRA_CLEAN	= gen-rtab
 
-REGRESS := init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
+PG_CPPFLAGS	= $(CRYPTO_CFLAGS) -I$(srcdir) 
+SHLIB_LINK 	= $(CRYPTO_LDFLAGS)
+
+REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
 		crypt-des crypt-md5 crypt-blowfish crypt-xdes 
 
+
+ifdef USE_PGXS
+PGXS = $(shell pg_config --pgxs)
+include $(PGXS)
+else
+subdir = contrib/pgcrypto
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
+endif
+
 
 rijndael.o: rijndael.tbl
 
 rijndael.tbl:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DPRINT_TABS rijndael.c -o gen-rtab
 	./gen-rtab > rijndael.tbl
-

@@ -1,7 +1,4 @@
 # This makefile will build the new XML and XSLT routines.
-subdir = contrib/xml2
-top_builddir = ../../
-include $(top_builddir)/src/Makefile.global
 
 MODULE_big = pgxml
 
@@ -14,5 +11,14 @@ SHLIB_LINK = -lxml2 -lxslt
 DATA_built = pgxml.sql
 DOCS = README.xml2
 
-include $(top_builddir)contrib/contrib-global.mk
+
+ifdef USE_PGXS
+PGXS = $(shell pg_config --pgxs)
+include $(PGXS)
+else
+subdir = contrib/xml2
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
 

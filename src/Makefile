@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.33 2004/07/30 12:26:40 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.34 2004/08/20 20:13:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,6 +35,7 @@ install-local: installdirs-local
 
 install-all-headers:
 	$(MAKE) -C include $@
+	$(MAKE) -C port $@
 
 installdirs: installdirs-local
 
