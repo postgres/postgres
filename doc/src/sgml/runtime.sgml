@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.175 2003/03/28 20:17:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.176 2003/04/03 23:32:47 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1477,6 +1477,25 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>read-only transaction</primary>
+      </indexterm>
+
+      <term><varname>DEFAULT_TRANSACTION_READ_ONLY</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        A read-only SQL transaction cannot alter non-temporary tables.
+        This parameter controls the default read-only status of each new
+        transaction. The default is false (read/write).
+       </para>
+
+       <para>
+        Consult <xref linkend="sql-set-transaction"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>DYNAMIC_LIBRARY_PATH</varname> (<type>string</type>)</term>
       <indexterm><primary>dynamic_library_path</></>
       <indexterm><primary>dynamic loading</></>
@@ -2182,11 +2201,13 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         <productname>PostgreSQL</> to report an error, aborting the current
 	transaction.  Setting <varname>zero_damaged_pages</> to true causes
 	the system to instead report a warning, zero out the damaged page,
-	and continue processing.  This behavior <emphasis>will lose data</>,
+	and continue processing.  This behavior <emphasis>will destroy data</>,
 	namely all the rows on the damaged page.  But it allows you to get
 	past the error and retrieve rows from any undamaged pages that may
 	be present in the table.  So it is useful for recovering data if
-	corruption has occurred due to hardware or software error.  The
+	corruption has occurred due to hardware or software error.  You should
+	generally not set this true until you have given up hope of recovering
+	data from the damaged page(s) of a table.  The
 	default setting is off, and it can only be changed by a superuser.
        </para>
       </listitem>

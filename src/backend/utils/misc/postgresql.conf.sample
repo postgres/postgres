@@ -205,6 +205,7 @@
 #authentication_timeout = 60	# 1-600, in seconds
 #deadlock_timeout = 1000	# in milliseconds
 #default_transaction_isolation = 'read committed'
+#default_transaction_read_only = false
 #extra_float_digits = 0		# min -15, max 2
 #max_expr_depth = 10000		# min 10
 #max_files_per_process = 1000	# min 25
@@ -213,6 +214,5 @@
 #sql_inheritance = true
 #transform_null_equals = false
 #statement_timeout = 0		# 0 is disabled, in milliseconds
-#zero_damaged_pages = false     # set this true only for disaster recovery
 #db_user_namespace = false
 #preload_libraries = ''
