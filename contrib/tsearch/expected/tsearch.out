@@ -3,6 +3,14 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
+psql:tsearch.sql:11: WARNING:  ProcedureCreate: type txtidx is not yet defined
+psql:tsearch.sql:16: WARNING:  Argument type "txtidx" is only a shell
+psql:tsearch.sql:40: WARNING:  ProcedureCreate: type query_txt is not yet defined
+psql:tsearch.sql:45: WARNING:  Argument type "query_txt" is only a shell
+psql:tsearch.sql:57: WARNING:  ProcedureCreate: type mquery_txt is not yet defined
+psql:tsearch.sql:63: WARNING:  Argument type "mquery_txt" is only a shell
+psql:tsearch.sql:133: WARNING:  ProcedureCreate: type gtxtidx is not yet defined
+psql:tsearch.sql:138: WARNING:  Argument type "gtxtidx" is only a shell
 --txtidx
 select '1'::txtidx;
  txtidx 
