@@ -120,6 +120,9 @@ Execute the SQL code in AddTrigger.sql once for each table that should
 be mirrored.   Replace MyTableName with the name of the table that should
 be mirrored.
 
+NOTE: DBMirror requires that every table being mirrored have a primary key
+defined.
+
 5)  Create the slave database.
 
 The DBMirror system keeps the contents of mirrored tables identical on the

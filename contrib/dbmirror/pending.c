@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.4 2002/09/05 00:43:06 tgl Exp $
+ * $Id: pending.c,v 1.5 2002/09/26 05:24:30 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -225,6 +225,11 @@ storeKeyInfo(char *cpTableName, HeapTuple tTupleData,
 
 	/* pplan = SPI_saveplan(pplan); */
 	cpKeyData = packageData(tTupleData, tTupleDesc, tpTrigData, PRIMARY);
+	if (cpKeyData == NULL)
+	{
+		elog(ERROR,"Could not determine primary key data");
+		return -1;
+	}
 #if defined DEBUG_OUTPUT
 	elog(NOTICE, cpKeyData);
 #endif
