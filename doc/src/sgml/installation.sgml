@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.57 2001/09/21 18:37:05 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.58 2001/09/21 23:20:02 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1074,6 +1074,29 @@ psql: error in loading shared libraries
 libpq.so.2.1: cannot open shared object file: No such file or directory
 </screen>
     then this step was necessary.  Simply take care of it then.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>ldconfig</primary>
+    </indexterm>
+    If you are on <systemitem class="osname">BSD/OS</>, <systemitem
+    class="osname">Linux</>, or <systemitem class="osname">SunOS 4</>
+    and you have root access you can run
+<programlisting>
+/sbin/ldconfig /usr/local/pgsql/lib
+</programlisting>
+    (or equivalent directory) after installation to enable the
+    run-time linker to find the shared libraries faster.  Refer to the
+    manual page of <command>ldconfig</> for more information.  On
+    <systemitem class="osname">FreeBSD</>, <systemitem
+    class="osname">NetBSD</>, and <systemitem
+    class="osname">OpenBSD</> the command is
+<programlisting>
+/sbin/ldconfig -m /usr/local/pgsql/lib
+</programlisting>
+    instead.  Other systems are not known to have an equivalent
+    command.
    </para>
   </sect2>
 
