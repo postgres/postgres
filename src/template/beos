@@ -1,7 +1,4 @@
 AROPT=crs
 SHARED_LIB='-fpic -DPIC'
 CFLAGS='-O2'
-LDFLAGS='-lbind'
-SRCH_INC='/boot/apps/GeekGadgets/include'
-SRCH_LIB='/boot/apps/GeekGadgets/lib'
 DLSUFFIX=.so
