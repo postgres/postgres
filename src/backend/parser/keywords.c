@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.39 1998/08/24 01:37:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.40 1998/08/24 01:39:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"null", NULL_P},
 	{"numeric", NUMERIC},
 	{"oids", OIDS},
-	{"old", OLD},
+	{"old", CURRENT},
 	{"on", ON},
 	{"operator", OPERATOR},
 	{"option", OPTION},
