@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.49 2005/01/04 03:58:16 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.50 2005/01/23 00:30:31 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -230,8 +230,8 @@
       <term><option>--use-list=<replaceable class="parameter">list-file</replaceable></option></term>
       <listitem>
        <para>
-        Restore elements in <REPLACEABLE
-        CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
+        Restore elements in <replaceable class="PARAMETER">
+        list-file</replaceable> only, and in the
         order they appear in the file. Lines can be moved and may also
         be commented out by placing a <literal>;</literal> at the
         start of the line.  (See below for examples.)

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.57 2004/12/20 18:15:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.58 2005/01/23 00:30:18 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -210,7 +210,7 @@
   </para>
 
   <sect2>
-   <title>Start-Up</Title>
+   <title>Start-Up</title>
 
    <para>
     To begin a session, a frontend opens a connection to the server and sends
@@ -265,7 +265,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term>AuthenticationKerberosV4</Term>
+      <term>AuthenticationKerberosV4</term>
       <listitem>
        <para>
         The frontend must now take part in a Kerberos V4
@@ -278,60 +278,60 @@
      </varlistentry>
 
      <varlistentry>
-      <Term>AuthenticationKerberosV5</Term>
-      <ListItem>
-       <Para>
+      <term>AuthenticationKerberosV5</term>
+      <listitem>
+       <para>
         The frontend must now take part in a Kerberos V5
         authentication dialog (not described here, part of the
         Kerberos specification) with the server.  If this is
         successful, the server responds with an AuthenticationOk,
         otherwise it responds with an ErrorResponse.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>AuthenticationCleartextPassword</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>AuthenticationCleartextPassword</term>
+      <listitem>
+       <para>
         The frontend must now send a PasswordMessage containing the
 	password in clear-text form.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>AuthenticationCryptPassword</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>AuthenticationCryptPassword</term>
+      <listitem>
+       <para>
         The frontend must now send a PasswordMessage containing the
 	password encrypted via crypt(3), using the 2-character salt
 	specified in the AuthenticationCryptPassword message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>AuthenticationMD5Password</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>AuthenticationMD5Password</term>
+      <listitem>
+       <para>
         The frontend must now send a PasswordMessage containing the
 	password encrypted via MD5, using the 4-character salt
 	specified in the AuthenticationMD5Password message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>AuthenticationSCMCredential</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>AuthenticationSCMCredential</term>
+      <listitem>
+       <para>
         This response is only possible for local Unix-domain connections
 	on platforms that support SCM credential messages.  The frontend
 	must issue an SCM credential message and then send a single data
@@ -340,12 +340,12 @@
 	the credential message.)  If the credential is acceptable,
 	the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    </VariableList>
-   </Para>
+    </variablelist>
+   </para>
 
    <para>
     If the frontend does not support the authentication method
@@ -372,23 +372,23 @@
    <para>
     The possible messages from the backend in this phase are:
 
-    <VariableList>
-     <VarListEntry>
-      <Term>BackendKeyData</Term>
-      <ListItem>
-       <Para>
+    <variablelist>
+     <varlistentry>
+      <term>BackendKeyData</term>
+      <listitem>
+       <para>
         This message provides secret-key data that the frontend must
         save if it wants to be able to issue cancel requests later.
         The frontend should not respond to this message, but should
         continue listening for a ReadyForQuery message.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>ParameterStatus</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>ParameterStatus</term>
+      <listitem>
+       <para>
         This message informs the frontend about the current (initial)
          setting of backend parameters, such as <xref
           linkend="guc-client-encoding"> or <xref linkend="guc-datestyle">.
@@ -397,41 +397,41 @@
          more details.  The frontend should not respond to this
          message, but should continue listening for a ReadyForQuery
          message.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>ReadyForQuery</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>ReadyForQuery</term>
+      <listitem>
+       <para>
         Start-up is completed.  The frontend may now issue commands.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>ErrorResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>ErrorResponse</term>
+      <listitem>
+       <para>
         Start-up failed.  The connection is closed after sending this
         message.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>NoticeResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>NoticeResponse</term>
+      <listitem>
+       <para>
         A warning message has been issued.  The frontend should
         display the message but continue listening for ReadyForQuery
         or ErrorResponse.
-       </Para>
-      </ListItem>
-     </VarListEntry>
-    </VariableList>
-   </Para>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
 
    <para>
     The ReadyForQuery message is the same one that the backend will
@@ -442,10 +442,10 @@
    </para>
   </sect2>
 
-  <Sect2>
-   <Title>Simple Query</Title>
+  <sect2>
+   <title>Simple Query</title>
 
-   <Para>
+   <para>
     A simple query cycle is initiated by the frontend sending a Query message
     to the backend.  The message includes an SQL command (or commands)
     expressed as a text string.
@@ -459,109 +459,109 @@
     command fails and already-issued later commands succeed.)
    </para>
 
-   <Para>
+   <para>
     The possible response messages from the backend are:
 
-    <VariableList>
-     <VarListEntry>
-      <Term>CommandComplete</Term>
-      <ListItem>
-       <Para>
+    <variablelist>
+     <varlistentry>
+      <term>CommandComplete</term>
+      <listitem>
+       <para>
         An SQL command completed normally.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>CopyInResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>CopyInResponse</term>
+      <listitem>
+       <para>
         The backend is ready to copy data from the frontend to a
         table; see <xref linkend="protocol-copy">.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>CopyOutResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>CopyOutResponse</term>
+      <listitem>
+       <para>
         The backend is ready to copy data from a table to the
         frontend; see <xref linkend="protocol-copy">.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>RowDescription</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>RowDescription</term>
+      <listitem>
+       <para>
         Indicates that rows are about to be returned in response to
 	a <command>SELECT</command>, <command>FETCH</command>, etc query.
 	The contents of this message describe the column layout of the rows.
 	This will be followed by a DataRow message for each row being returned
         to the frontend.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>DataRow</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>DataRow</term>
+      <listitem>
+       <para>
         One of the set of rows returned by
 	a <command>SELECT</command>, <command>FETCH</command>, etc query.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>EmptyQueryResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>EmptyQueryResponse</term>
+      <listitem>
+       <para>
         An empty query string was recognized.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>ErrorResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>ErrorResponse</term>
+      <listitem>
+       <para>
         An error has occurred.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>ReadyForQuery</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>ReadyForQuery</term>
+      <listitem>
+       <para>
         Processing of the query string is complete.  A separate
         message is sent to indicate this because the query string may
         contain multiple SQL commands.  (CommandComplete marks the
         end of processing one SQL command, not the whole string.)
         ReadyForQuery will always be sent, whether processing
         terminates successfully or with an error.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>NoticeResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>NoticeResponse</term>
+      <listitem>
+       <para>
         A warning message has been issued in relation to the query.
         Notices are in addition to other responses, i.e., the backend
         will continue processing the command.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    </VariableList>
-   </Para>
+    </variablelist>
+   </para>
 
-   <Para>
+   <para>
     The response to a <command>SELECT</> query (or other queries that
     return row sets, such as <command>EXPLAIN</> or <command>SHOW</>)
     normally consists of RowDescription, zero or more
@@ -570,28 +570,28 @@
     as described in <xref linkend="protocol-copy">.
     All other query types normally produce only
     a CommandComplete message.
-   </Para>
+   </para>
 
-   <Para>
+   <para>
     Since a query string could contain several queries (separated by
     semicolons), there might be several such response sequences before the
     backend finishes processing the query string.  ReadyForQuery is issued
     when the entire string has been processed and the backend is ready to
     accept a new query string.
-   </Para>
+   </para>
 
-   <Para>
+   <para>
     If a completely empty (no contents other than whitespace) query string
     is received, the response is EmptyQueryResponse followed by ReadyForQuery.
-   </Para>
+   </para>
 
-   <Para>
+   <para>
     In the event of an error, ErrorResponse is issued followed by
     ReadyForQuery.  All further processing of the query string is aborted by
     ErrorResponse (even if more queries remained in it).  Note that this
     may occur partway through the sequence of messages generated by an
     individual query.
-   </Para>
+   </para>
 
    <para>
     In simple Query mode, the format of retrieved values is always text,
@@ -615,8 +615,8 @@
    </para>
   </sect2>
 
-  <Sect2>
-   <Title>Extended Query</Title>
+  <sect2>
+   <title>Extended Query</title>
 
    <para>
     The extended query protocol breaks down the above-described simple
@@ -854,8 +854,8 @@
    </note>
   </sect2>
 
-  <Sect2>
-   <Title>Function Call</Title>
+  <sect2>
+   <title>Function Call</title>
 
    <para>
     The Function Call sub-protocol allows the client to request a direct
@@ -885,51 +885,51 @@
    <para>
     The possible response messages from the backend are:
 
-    <VariableList>
-     <VarListEntry>
-      <Term>ErrorResponse</Term>
-      <ListItem>
-       <Para>
+    <variablelist>
+     <varlistentry>
+      <term>ErrorResponse</term>
+      <listitem>
+       <para>
         An error has occurred.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>FunctionCallResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>FunctionCallResponse</term>
+      <listitem>
+       <para>
         The function call was completed and returned the result given
 	in the message.
 	(Note that the Function Call protocol can only handle a single
 	scalar result, not a row type or set of results.)
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>ReadyForQuery</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>ReadyForQuery</term>
+      <listitem>
+       <para>
         Processing of the function call is complete.  ReadyForQuery
         will always be sent, whether processing terminates
         successfully or with an error.
-       </Para>
-      </ListItem>
-     </VarListEntry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VarListEntry>
-      <Term>NoticeResponse</Term>
-      <ListItem>
-       <Para>
+     <varlistentry>
+      <term>NoticeResponse</term>
+      <listitem>
+       <para>
         A warning message has been issued in relation to the function
         call.  Notices are in addition to other responses, i.e., the
         backend will continue processing the command.
-       </Para>
-      </ListItem>
-     </VarListEntry>
-    </VariableList>
-   </Para>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </sect2>
 
   <sect2 id="protocol-copy">
@@ -1086,10 +1086,10 @@
    </note>
   </sect2>
 
-  <Sect2>
-   <Title>Cancelling Requests in Progress</Title>
+  <sect2>
+   <title>Cancelling Requests in Progress</title>
 
-   <Para>
+   <para>
     During the processing of a query, the frontend may request
     cancellation of the query.  The cancel request is not sent
     directly on the open connection to the backend for reasons of
@@ -1100,7 +1100,7 @@
     the normal case.
    </para>
 
-   <Para>
+   <para>
     To issue a cancel request, the frontend opens a new connection to
     the server and sends a CancelRequest message, rather than the
     StartupMessage message that would ordinarily be sent across a new
@@ -1109,7 +1109,7 @@
     the cancel request message.
    </para>
 
-   <Para>
+   <para>
     A CancelRequest message will be ignored unless it contains the
     same key data (PID and secret key) passed to the frontend during
     connection start-up.  If the request matches the PID and secret
@@ -1119,7 +1119,7 @@
     processing the query.)
    </para>
 
-   <Para>
+   <para>
     The cancellation signal may or may not have any effect &mdash; for
     example, if it arrives after the backend has finished processing
     the query, then it will have no effect.  If the cancellation is
@@ -1127,7 +1127,7 @@
     early with an error message.
    </para>
 
-   <Para>
+   <para>
     The upshot of all this is that for reasons of both security and
     efficiency, the frontend has no direct way to tell whether a
     cancel request has succeeded.  It must continue to wait for the
@@ -1137,7 +1137,7 @@
     succeeding.
    </para>
 
-   <Para>
+   <para>
     Since the cancel request is sent across a new connection to the
     server and not across the regular frontend/backend communication
     link, it is possible for the cancel request to be issued by any
@@ -1150,8 +1150,8 @@
    </para>
   </sect2>
 
-  <Sect2>
-   <Title>Termination</Title>
+  <sect2>
+   <title>Termination</title>
 
    <para>
     The normal, graceful termination procedure is that the frontend
@@ -1190,10 +1190,10 @@
    </para>
   </sect2>
 
-  <Sect2>
-   <Title><acronym>SSL</acronym> Session Encryption</Title>
+  <sect2>
+   <title><acronym>SSL</acronym> Session Encryption</title>
 
-   <Para>
+   <para>
     If <productname>PostgreSQL</> was built with
     <acronym>SSL</acronym> support, frontend/backend communications
     can be encrypted using <acronym>SSL</acronym>.  This provides
@@ -1244,92 +1244,92 @@
   </sect2>
  </sect1>
 
-<Sect1 id="protocol-message-types">
-<Title>Message Data Types</Title>
+<sect1 id="protocol-message-types">
+<title>Message Data Types</title>
 
-<Para>
+<para>
 This section describes the base data types used in messages.
 
-<VariableList>
+<variablelist>
 
-<VarListEntry>
-<Term>
-        Int<Replaceable>n</Replaceable>(<Replaceable>i</Replaceable>)
-</Term>
-<ListItem>
-<Para>
-                An <Replaceable>n</Replaceable>-bit integer in network byte
+<varlistentry>
+<term>
+        Int<replaceable>n</replaceable>(<replaceable>i</replaceable>)
+</term>
+<listitem>
+<para>
+                An <replaceable>n</replaceable>-bit integer in network byte
 		order (most significant byte first).
-                If <Replaceable>i</Replaceable> is specified it
+                If <replaceable>i</replaceable> is specified it
                 is the exact value that will appear, otherwise the value
 		is variable.  Eg. Int16, Int32(42).
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-        Int<Replaceable>n</Replaceable>[<Replaceable>k</Replaceable>]
-</Term>
-<ListItem>
-<Para>
-		An array of <Replaceable>k</Replaceable>
-                <Replaceable>n</Replaceable>-bit integers, each in network
-		byte order.  The array length <Replaceable>k</Replaceable>
+<varlistentry>
+<term>
+        Int<replaceable>n</replaceable>[<replaceable>k</replaceable>]
+</term>
+<listitem>
+<para>
+		An array of <replaceable>k</replaceable>
+                <replaceable>n</replaceable>-bit integers, each in network
+		byte order.  The array length <replaceable>k</replaceable>
 		is always determined by an earlier field in the message.
 		Eg. Int16[M].
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-        String(<Replaceable>s</Replaceable>)
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+        String(<replaceable>s</replaceable>)
+</term>
+<listitem>
+<para>
                 A null-terminated string (C-style string).  There is no
 		specific length limitation on strings.
-                If <Replaceable>s</Replaceable> is specified it is the exact
+                If <replaceable>s</replaceable> is specified it is the exact
 		value that will appear, otherwise the value is variable.
                 Eg. String, String("user").
-</Para>
+</para>
                 
-<Note>
-<Para>
-<Emphasis>There is no predefined limit</Emphasis> on the length of a string
+<note>
+<para>
+<emphasis>There is no predefined limit</emphasis> on the length of a string
 that can be returned by the backend.  Good coding strategy for a frontend
 is to use an expandable buffer so that anything that fits in memory can be
 accepted.  If that's not feasible, read the full string and discard trailing
 characters that don't fit into your fixed-size buffer.
-</Para>
-</Note>
-</ListItem>
-</VarListEntry>
+</para>
+</note>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>(<Replaceable>c</Replaceable>)
-</Term>
-<ListItem>
-<Para>
-                Exactly <Replaceable>n</Replaceable> bytes.  If the field
-		width <Replaceable>n</Replaceable> is not a constant, it is
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>(<replaceable>c</replaceable>)
+</term>
+<listitem>
+<para>
+                Exactly <replaceable>n</replaceable> bytes.  If the field
+		width <replaceable>n</replaceable> is not a constant, it is
 		always determinable from an earlier field in the message.
-                If <Replaceable>c</Replaceable> is specified it is the exact
+                If <replaceable>c</replaceable> is specified it is the exact
                 value.  Eg. Byte2, Byte1('\n').
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
-</Para>
+</variablelist>
+</para>
 </sect1>
 
-<Sect1 id="protocol-message-formats">
-<Title>Message Formats</Title>
+<sect1 id="protocol-message-formats">
+<title>Message Formats</title>
 
-<Para>
+<para>
 This section describes the detailed format of each message.  Each is marked to
 indicate that it may be sent by a frontend (F), a backend (B), or both
 (F &amp; B).
@@ -1340,454 +1340,454 @@ message is an exception, because it forms part of a data stream; the contents
 of any individual CopyData message may not be interpretable on their own.)
 </para>
 
-<VariableList>
+<variablelist>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationOk (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(8)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(0)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that the authentication was successful.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationKerberosV4 (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(8)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(1)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that Kerberos V4 authentication is required.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationKerberosV5 (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(8)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(2)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that Kerberos V5 authentication is required.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationCleartextPassword (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(8)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(3)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that a clear-text password is required.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationCryptPassword (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(10)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that a crypt()-encrypted password is required.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Byte2
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The salt to use when encrypting the password.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationMD5Password (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(12)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(5)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that an MD5-encrypted password is required.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Byte4
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The salt to use when encrypting the password.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 AuthenticationSCMCredential (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('R')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an authentication request.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(8)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(6)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies that an SCM credentials message is required.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 BackendKeyData (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('K')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as cancellation key data.
                 The frontend must save these values if it wishes to be
                 able to issue CancelRequest messages later.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(12)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The process ID of this backend.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The secret key of this backend.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Bind (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('B')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Bind command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the destination portal
 		(an empty string selects the unnamed portal).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the source prepared statement
 		(an empty string selects the unnamed prepared statement).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 		The number of parameter format codes that follow
 		(denoted <replaceable>C</> below).
 		This can be zero to indicate that there are no parameters
@@ -1795,68 +1795,68 @@ Bind (F)
 		or one, in which case the specified format code is applied
 		to all parameters; or it can equal the actual number of
 		parameters.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16[<replaceable>C</>]
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The parameter format codes.  Each must presently be
 		zero (text) or one (binary).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The number of parameter values that follow (possibly zero).
 		This must match the number of parameters needed by the query.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         Next, the following pair of fields appear for each parameter:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The length of the parameter value, in bytes (this count
 		does not include itself).  Can be zero.
 		As a special case, -1 indicates a NULL parameter value.
 		No value bytes follow in the NULL case.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
                 The value of the parameter, in the format indicated by the
 		associated format code.
-                <Replaceable>n</Replaceable> is the above length.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+                <replaceable>n</replaceable> is the above length.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         After the last parameter, the following fields appear:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 		The number of result-column format codes that follow
 		(denoted <replaceable>R</> below).
 		This can be zero to indicate that there are no result columns
@@ -1865,271 +1865,271 @@ Bind (F)
 		or one, in which case the specified format code is applied
 		to all result columns (if any); or it can equal the actual
 		number of result columns of the query.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16[<replaceable>R</>]
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The result-column format codes.  Each must presently be
 		zero (text) or one (binary).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 BindComplete (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('2')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Bind-complete indicator.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CancelRequest (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32(16)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(80877102)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The cancel request code.  The value is chosen to contain
                 <literal>1234</> in the most significant 16 bits, and <literal>5678</> in the
                 least 16 significant bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The process ID of the target backend.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The secret key for the target backend.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Close (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('C')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Close command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Byte1
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 '<literal>S</>' to close a prepared statement; or
                 '<literal>P</>' to close a portal.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the prepared statement or portal to close
 		(an empty string selects the unnamed prepared statement
 		or portal).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CloseComplete (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('3')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Close-complete indicator.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CommandComplete (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('C')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a command-completed response.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         The command tag.  This is usually a single
         word that identifies which SQL command was completed.
-       </Para>
+       </para>
 
-       <Para>
+       <para>
         For an <command>INSERT</command> command, the tag is
         <literal>INSERT <replaceable>oid</replaceable>
         <replaceable>rows</replaceable></literal>, where
         <replaceable>rows</replaceable> is the number of rows
         inserted. <replaceable>oid</replaceable> is the object ID
-        of the inserted row if <Replaceable>rows</Replaceable> is 1
+        of the inserted row if <replaceable>rows</replaceable> is 1
 	and the target table has OIDs;
-	otherwise <Replaceable>oid</Replaceable> is 0.
-       </Para>
+	otherwise <replaceable>oid</replaceable> is 0.
+       </para>
 
-       <Para>
+       <para>
         For a <command>DELETE</command> command, the tag is
-	<literal>DELETE <Replaceable>rows</Replaceable></literal> where
-        <Replaceable>rows</Replaceable> is the number of rows deleted.
-       </Para>
+	<literal>DELETE <replaceable>rows</replaceable></literal> where
+        <replaceable>rows</replaceable> is the number of rows deleted.
+       </para>
 
-       <Para>
+       <para>
         For an <command>UPDATE</command> command, the tag is
-	<literal>UPDATE <Replaceable>rows</Replaceable></literal> where
-        <Replaceable>rows</Replaceable> is the number of rows updated.
-       </Para>
+	<literal>UPDATE <replaceable>rows</replaceable></literal> where
+        <replaceable>rows</replaceable> is the number of rows updated.
+       </para>
 
        <para>
         For a <command>MOVE</command> command, the tag is
@@ -2143,178 +2143,178 @@ CommandComplete (B)
         <literal>FETCH <replaceable>rows</replaceable></literal> where
         <replaceable>rows</replaceable> is the number of rows that
         have been retrieved from the cursor.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CopyData (F &amp; B)
-</Term>
-<ListItem>
-<Para>
-<VariableList>
-<VarListEntry>
-<Term>
+</term>
+<listitem>
+<para>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('d')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as <command>COPY</command> data.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
                 Data that forms part of a <command>COPY</command> data stream.  Messages sent
 		from the backend will always correspond to single data rows,
 		but messages sent by frontends may divide the data stream
 		arbitrarily.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CopyDone (F &amp; B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('c')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a <command>COPY</command>-complete indicator.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CopyFail (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('f')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a <command>COPY</command>-failure indicator.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 An error message to report as the cause of failure.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CopyInResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('G')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Start Copy In response.
                 The frontend must now send copy-in data (if not
 		prepared to do so, send a CopyFail message).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int8
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 0 indicates the overall <command>COPY</command> format is textual (rows
 		separated by newlines, columns separated by separator
 		characters, etc).
@@ -2322,317 +2322,317 @@ CopyInResponse (B)
 		to DataRow format).
 		See <xref linkend="sql-copy" endterm="sql-copy-title">
 		for more information.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 		The number of columns in the data to be copied
 		(denoted <replaceable>N</> below).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16[<replaceable>N</>]
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The format codes to be used for each column.
 		Each must presently be zero (text) or one (binary).
 		All must be zero if the overall copy format is textual.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 CopyOutResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('H')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Start Copy Out response.
                 This message will be followed by copy-out data.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int8
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 0 indicates the overall <command>COPY</command> format
                 is textual (rows separated by newlines, columns
                 separated by separator characters, etc). 1 indicates
                 the overall copy format is binary (similar to DataRow
                 format). See <xref linkend="sql-copy"
                 endterm="sql-copy-title"> for more information. 
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 		The number of columns in the data to be copied
 		(denoted <replaceable>N</> below).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16[<replaceable>N</>]
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The format codes to be used for each column.
 		Each must presently be zero (text) or one (binary).
 		All must be zero if the overall copy format is textual.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 DataRow (B)
-</Term>
-<ListItem>
-<Para>
-<VariableList>
-<VarListEntry>
-<Term>
+</term>
+<listitem>
+<para>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('D')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a data row.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The number of column values that follow (possibly zero).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         Next, the following pair of fields appear for each column:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The length of the column value, in bytes (this count
 		does not include itself).  Can be zero.
 		As a special case, -1 indicates a NULL column value.
 		No value bytes follow in the NULL case.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
                 The value of the column, in the format indicated by the
 		associated format code.
-                <Replaceable>n</Replaceable> is the above length.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+                <replaceable>n</replaceable> is the above length.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Describe (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('D')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Describe command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Byte1
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 '<literal>S</>' to describe a prepared statement; or
                 '<literal>P</>' to describe a portal.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the prepared statement or portal to describe
 		(an empty string selects the unnamed prepared statement
 		or portal).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 EmptyQueryResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('I')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a response to an empty query string.
 		(This substitutes for CommandComplete.)
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 ErrorResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('E')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an error.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         The message body consists of one or more identified fields,
 	followed by a zero byte as a terminator.  Fields may appear in
 	any order.  For each field there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 A code identifying the field type; if zero, this is
 		the message terminator and no string follows.
 		The presently defined field types are listed in
@@ -2640,162 +2640,162 @@ ErrorResponse (B)
 		Since more field types may be added in future,
 		frontends should silently ignore fields of unrecognized
 		type.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The field value.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Execute (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('E')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as an Execute command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the portal to execute
 		(an empty string selects the unnamed portal).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Maximum number of rows to return, if portal contains
 		a query that returns rows (ignored otherwise).  Zero
 		denotes <quote>no limit</>.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Flush (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('H')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Flush command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 FunctionCall (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('F')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a function call.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies the object ID of the function to call.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 		The number of argument format codes that follow
 		(denoted <replaceable>C</> below).
 		This can be zero to indicate that there are no arguments
@@ -2803,214 +2803,214 @@ FunctionCall (F)
 		or one, in which case the specified format code is applied
 		to all arguments; or it can equal the actual number of
 		arguments.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16[<replaceable>C</>]
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The argument format codes.  Each must presently be
 		zero (text) or one (binary).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies the number of arguments being supplied to the
                 function.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         Next, the following pair of fields appear for each argument:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The length of the argument value, in bytes (this count
 		does not include itself).  Can be zero.
 		As a special case, -1 indicates a NULL argument value.
 		No value bytes follow in the NULL case.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
                 The value of the argument, in the format indicated by the
 		associated format code.
-                <Replaceable>n</Replaceable> is the above length.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+                <replaceable>n</replaceable> is the above length.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         After the last argument, the following field appears:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The format code for the function result. Must presently be
 		zero (text) or one (binary).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 FunctionCallResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('V')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a function call result.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The length of the function result value, in bytes (this count
 		does not include itself).  Can be zero.
 		As a special case, -1 indicates a NULL function result.
 		No value bytes follow in the NULL case.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Byte<replaceable>n</replaceable>
+</term>
+<listitem>
+<para>
                 The value of the function result, in the format indicated by
 		the associated format code.
-                <Replaceable>n</Replaceable> is the above length.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+                <replaceable>n</replaceable> is the above length.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 NoData (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('n')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a no-data indicator.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 NoticeResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('N')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a notice.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         The message body consists of one or more identified fields,
 	followed by a zero byte as a terminator.  Fields may appear in
 	any order.  For each field there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 A code identifying the field type; if zero, this is
 		the message terminator and no string follows.
 		The presently defined field types are listed in
@@ -3018,848 +3018,848 @@ NoticeResponse (B)
 		Since more field types may be added in future,
 		frontends should silently ignore fields of unrecognized
 		type.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The field value.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 NotificationResponse (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('A')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a notification response.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The process ID of the notifying backend process.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the condition that the notify has been raised on.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Additional information passed from the notifying process.
 		(Currently, this feature is unimplemented so the field
 		is always an empty string.)
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 ParameterDescription (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('t')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a parameter description.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The number of parameters used by the statement
 		(may be zero).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         Then, for each parameter, there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies the object ID of the parameter data type.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 ParameterStatus (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('S')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a run-time parameter status report.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the run-time parameter being reported.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The current value of the parameter.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Parse (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('P')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Parse command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The name of the destination prepared statement
 		(an empty string selects the unnamed prepared statement).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The query string to be parsed.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The number of parameter data types specified
 		(may be zero).  Note that this is not an indication of
 		the number of parameters that might appear in the
 		query string, only the number that the frontend wants to
 		prespecify types for.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         Then, for each parameter, there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies the object ID of the parameter data type.
 		Placing a zero here is equivalent to leaving the type
 		unspecified.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 ParseComplete (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('1')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Parse-complete indicator.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 PasswordMessage (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('p')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a password response.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The password (encrypted, if requested).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 PortalSuspended (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('s')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a portal-suspended indicator.
 		Note this only appears if an Execute message's row-count limit
 		was reached.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Query (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('Q')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a simple query.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The query string itself.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 ReadyForQuery (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('Z')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message type.  ReadyForQuery is sent
                 whenever the backend is ready for a new query cycle.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(5)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Byte1
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Current backend transaction status indicator.
 		Possible values are '<literal>I</>' if idle (not in
 		a transaction block); '<literal>T</>' if in a transaction
 		block; or '<literal>E</>' if in a failed transaction
 		block (queries will be rejected until block is ended).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 RowDescription (B)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('T')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a row description.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Specifies the number of fields in a row (may be zero).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         Then, for each field, there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The field name.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 If the field can be identified as a column of a specific
 		table, the object ID of the table; otherwise zero.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 If the field can be identified as a column of a specific
 		table, the attribute number of the column; otherwise zero.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The object ID of the field's data type.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The data type size (see <varname>pg_type.typlen</>).
 		Note that negative values denote variable-width types.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The type modifier (see <varname>pg_attribute.atttypmod</>).
 		The meaning of the modifier is type-specific.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int16
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The format code being used for the field.  Currently will
 		be zero (text) or one (binary).  In a RowDescription
 		returned from the statement variant of Describe, the
 		format code is not yet known and will always be zero.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 SSLRequest (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32(8)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(80877103)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The <acronym>SSL</acronym> request code.  The value is chosen to contain
                 <literal>1234</> in the most significant 16 bits, and <literal>5679</> in the
                 least 16 significant bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 StartupMessage (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Int32
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(196608)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The protocol version number.  The most significant 16 bits are
                 the major version number (3 for the protocol described here).
 		The least significant 16 bits are the minor version number
 		(0 for the protocol described here).
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
         The protocol version number is followed by one or more pairs of
 	parameter name and value strings.  A zero byte is required as a
 	terminator after the last name/value pair.
 	Parameters can appear in any
 	order.  <literal>user</> is required, others are optional.
 	Each parameter is specified as:
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The parameter name.  Currently recognized names are:
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
                 <literal>user</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                         The database user name to connect as.  Required;
 			there is no default.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
                 <literal>database</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                         The database to connect to.  Defaults to the user name.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
                 <literal>options</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                         Command-line arguments for the backend.  (This is
 			deprecated in favor of setting individual run-time
 			parameters.)
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
                 In addition to the above, any run-time parameter that can be
 		set at backend start time may be listed.  Such settings
 		will be applied during backend start (after parsing the
 		command-line options if any).  The values will act as
 		session defaults.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         String
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 The parameter value.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Sync (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('S')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a Sync command.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Terminate (F)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
 
-<VariableList>
-<VarListEntry>
-<Term>
+<variablelist>
+<varlistentry>
+<term>
         Byte1('X')
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Identifies the message as a termination.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
         Int32(4)
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
 
-</VariableList>
+</variablelist>
 
 </sect1>
 
 
-<Sect1 id="protocol-error-fields">
-<Title>Error and Notice Message Fields</Title>
+<sect1 id="protocol-error-fields">
+<title>Error and Notice Message Fields</title>
 
 <para>
 This section describes the fields that may appear in ErrorResponse and
@@ -3868,165 +3868,165 @@ token.  Note that any given field type should appear at most once per
 message.
 </para>
 
-<VariableList>
+<variablelist>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>S</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Severity: the field contents are
         <literal>ERROR</>, <literal>FATAL</>, or
         <literal>PANIC</> (in an error message), or
 	<literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
 	<literal>INFO</>, or <literal>LOG</> (in a notice message),
 	or a localized translation of one of these.  Always present.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>C</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Code: the SQLSTATE code for the error (see <xref
 	linkend="errcodes-appendix">).  Not localizable.  Always present.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>M</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Message: the primary human-readable error message.
         This should be accurate but terse (typically one line).
         Always present.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>D</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Detail: an optional secondary error message carrying more
         detail about the problem.  May run to multiple lines.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>H</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Hint: an optional suggestion what to do about the problem.
 	This is intended to differ from Detail in that it offers advice
 	(potentially inappropriate) rather than hard facts.
 	May run to multiple lines.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>P</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Position: the field value is a decimal ASCII integer, indicating
 	an error cursor position as an index into the original query string.
 	The first character has index 1, and positions are measured in
 	characters not bytes.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>p</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Internal position: this is defined the same as the <literal>P</>
         field, but it is used when the cursor position refers to an internally
         generated command rather than the one submitted by the client.
         The <literal>q</> field will always appear when this field appears.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>q</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Internal query: the text of a failed internally-generated command.
         This could be, for example, a SQL query issued by a PL/pgSQL function.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>W</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Where: an indication of the context in which the error occurred.
         Presently this includes a call stack traceback of active
         procedural language functions and internally-generated queries.
         The trace is one entry per line, most recent first.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>F</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         File: the file name of the source-code location where the error
 	was reported.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>L</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Line: the line number of the source-code location where the error
 	was reported.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 <literal>R</>
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
         Routine: the name of the source-code routine reporting the error.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
+</variablelist>
 
 <para>
 The client is responsible for formatting displayed information to meet its
@@ -4038,8 +4038,8 @@ not line breaks.
 </sect1>
 
 
-<Sect1 id="protocol-changes">
-<Title>Summary of Changes since Protocol 2.0</Title>
+<sect1 id="protocol-changes">
+<title>Summary of Changes since Protocol 2.0</title>
 
 <para>
 This section provides a quick checklist of changes, for the benefit of
@@ -4143,4 +4143,4 @@ string parameter; this has been removed.
 </sect1>
 
 
-</Chapter>
+</chapter>

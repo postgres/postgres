@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.70 2004/12/27 19:19:23 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.71 2005/01/23 00:30:18 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -892,9 +892,9 @@ omicron       bryanh            guest1
    </para>
 
    <para>
-<ProgramListing>
+<programlisting>
 FATAL:  no pg_hba.conf entry for host "123.123.123.123", user "andym", database "testdb"
-</ProgramListing>
+</programlisting>
     This is what you are most likely to get if you succeed in contacting
     the server, but it does not want to talk to you. As the message
     suggests, the server refused the connection request because it found
@@ -903,9 +903,9 @@ FATAL:  no pg_hba.conf entry for host "123.123.123.123", user "andym", database 
    </para>
 
    <para>
-<ProgramListing>
+<programlisting>
 FATAL:  Password authentication failed for user "andym"
-</ProgramListing>
+</programlisting>
     Messages like this indicate that you contacted the server, and it is
     willing to talk to you, but not until you pass the authorization
     method specified in the <filename>pg_hba.conf</filename> file. Check
@@ -915,16 +915,16 @@ FATAL:  Password authentication failed for user "andym"
    </para>
 
    <para>
-<ProgramListing>
+<programlisting>
 FATAL:  user "andym" does not exist
-</ProgramListing>
+</programlisting>
     The indicated user name was not found.
    </para>
 
    <para>
-<ProgramListing>
+<programlisting>
 FATAL:  database "testdb" does not exist
-</ProgramListing>
+</programlisting>
     The database you are trying to connect to does not exist. Note that
     if you do not specify a database name, it defaults to the database
     user name, which may or may not be the right thing.

@@ -1,0 +1,2 @@
+grep  '[^]a-z0-9"/!-]>' *.sgml ref/*.sgml
+grep  '<[^]a-z0-9"/!-]' *.sgml ref/*.sgml

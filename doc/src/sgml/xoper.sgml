@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.32 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.33 2005/01/23 00:30:18 momjian Exp $
 -->
 
  <sect1 id="xoper">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.32 2004/11/15 06:32:14 neilc Exp 
    <secondary>user-defined</secondary>
   </indexterm>
 
-  <Para>
+  <para>
    Every operator is <quote>syntactic sugar</quote> for a call to an
    underlying function that does the real work; so you must
    first create the underlying function before you can create
@@ -19,9 +19,9 @@ $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.32 2004/11/15 06:32:14 neilc Exp 
    that helps the query planner optimize queries that use the
    operator.  The next section will be devoted to explaining
    that additional information.
-  </Para>
+  </para>
 
-  <Para>
+  <para>
    <productname>PostgreSQL</productname> supports left unary, right
    unary, and binary operators.  Operators can be
    overloaded;<indexterm><primary>overloading</primary><secondary>operators</secondary></indexterm>
@@ -29,15 +29,15 @@ $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.32 2004/11/15 06:32:14 neilc Exp 
    that have different numbers and types of operands.  When a query is
    executed, the system determines the operator to call from the
    number and types of the provided operands.
-  </Para>
+  </para>
 
-  <Para>
+  <para>
    Here is an example of creating an operator for adding two complex
    numbers.  We assume we've already created the definition of type
    <type>complex</type> (see <xref linkend="xtypes">).  First we need a
    function that does the work, then we can define the operator:
 
-<ProgramListing>
+<programlisting>
 CREATE FUNCTION complex_add(complex, complex)
     RETURNS complex
     AS '<replaceable>filename</replaceable>', 'complex_add'
@@ -49,10 +49,10 @@ CREATE OPERATOR + (
     procedure = complex_add,
     commutator = +
 );
-</ProgramListing>
-  </Para>
+</programlisting>
+  </para>
 
-  <Para>
+  <para>
    Now we could execute a query like this:
      
 <screen>
@@ -63,9 +63,9 @@ SELECT (a + b) AS c FROM test_complex;
  (5.2,6.05)
  (133.42,144.95)
 </screen>
-  </Para>
+  </para>
 
-  <Para>
+  <para>
    We've shown how to create a binary operator here.  To create unary
    operators, just omit one of <literal>leftarg</> (for left unary) or
    <literal>rightarg</> (for right unary).  The <literal>procedure</>
@@ -74,14 +74,14 @@ SELECT (a + b) AS c FROM test_complex;
    clause shown in the example is an optional hint to the query
    optimizer.  Further details about <literal>commutator</> and other
    optimizer hints appear in the next section.
-  </Para>
+  </para>
  </sect1>
 
   <sect1 id="xoper-optimization">
    <title>Operator Optimization Information</title>
 
    <para>
-    A <ProductName>PostgreSQL</ProductName> operator definition can include
+    A <productname>PostgreSQL</productname> operator definition can include
     several optional clauses that tell the system useful things about how
     the operator behaves.  These clauses should be provided whenever
     appropriate, because they can make for considerable speedups in execution
@@ -95,7 +95,7 @@ SELECT (a + b) AS c FROM test_complex;
 
    <para>
     Additional optimization clauses might be added in future versions of
-    <ProductName>PostgreSQL</ProductName>.  The ones described here are all
+    <productname>PostgreSQL</productname>.  The ones described here are all
     the ones that release &version; understands.
    </para>
 
@@ -115,7 +115,7 @@ SELECT (a + b) AS c FROM test_complex;
     <para>
      The left operand type of a commutable operator is the same as the
      right operand type of its commutator, and vice versa.  So the name of
-     the commutator operator is all that <ProductName>PostgreSQL</ProductName>
+     the commutator operator is all that <productname>PostgreSQL</productname>
      needs to be given to look up the commutator, and that's all that needs to
      be provided in the <literal>COMMUTATOR</> clause.
     </para>
@@ -131,7 +131,7 @@ SELECT (a + b) AS c FROM test_complex;
      index scan unless it can determine how to flip the clause around to
      <literal>tab2.y = tab1.x</>, because the index-scan machinery expects
      to see the indexed column on the left of the operator it is given.
-     <ProductName>PostgreSQL</ProductName> will <emphasis>not</> simply
+     <productname>PostgreSQL</productname> will <emphasis>not</> simply
      assume that this is a valid transformation &mdash; the creator of the
      <literal>=</> operator must specify that it is valid, by marking the
      operator with commutator information.
@@ -149,7 +149,7 @@ SELECT (a + b) AS c FROM test_complex;
        <para>
 	One way is to omit the <literal>COMMUTATOR</> clause in the first operator that
 	you define, and then provide one in the second operator's definition.
-	Since <ProductName>PostgreSQL</ProductName> knows that commutative
+	Since <productname>PostgreSQL</productname> knows that commutative
 	operators come in pairs, when it sees the second definition it will
 	automatically go back and fill in the missing <literal>COMMUTATOR</> clause in
 	the first definition.
@@ -159,12 +159,12 @@ SELECT (a + b) AS c FROM test_complex;
       <listitem>
        <para>
 	The other, more straightforward way is just to include <literal>COMMUTATOR</> clauses
-	in both definitions.  When <ProductName>PostgreSQL</ProductName> processes
+	in both definitions.  When <productname>PostgreSQL</productname> processes
 	the first definition and realizes that <literal>COMMUTATOR</> refers to a nonexistent
 	operator, the system will make a dummy entry for that operator in the
 	system catalog.  This dummy entry will have valid data only
 	for the operator name, left and right operand types, and result type,
-	since that's all that <ProductName>PostgreSQL</ProductName> can deduce
+	since that's all that <productname>PostgreSQL</productname> can deduce
 	at this point.  The first operator's catalog entry will link to this
 	dummy entry.  Later, when you define the second operator, the system
 	updates the dummy entry with the additional information from the second
@@ -225,9 +225,9 @@ SELECT (a + b) AS c FROM test_complex;
     binary operators that return <type>boolean</>.  The idea behind a restriction
     selectivity estimator is to guess what fraction of the rows in a
     table will satisfy a <literal>WHERE</literal>-clause condition of the form
-<ProgramListing>
+<programlisting>
 column OP constant
-</ProgramListing>
+</programlisting>
     for the current operator and a particular constant value.
     This assists the optimizer by
     giving it some idea of how many rows will be eliminated by <literal>WHERE</>
@@ -297,9 +297,9 @@ column OP constant
      binary operators that return <type>boolean</type>.  The idea behind a join
      selectivity estimator is to guess what fraction of the rows in a
      pair of tables will satisfy a <literal>WHERE</>-clause condition of the form
-<ProgramListing>
+<programlisting>
 table1.column1 OP table2.column2
-</ProgramListing>
+</programlisting>
      for the current operator.  As with the <literal>RESTRICT</literal> clause, this helps
      the optimizer very substantially by letting it figure out which
      of several possible join sequences is likely to take the least work.
@@ -496,7 +496,7 @@ table1.column1 OP table2.column2
 
     <note>
     <para>
-     In <ProductName>PostgreSQL</ProductName> versions before 7.3,
+     In <productname>PostgreSQL</productname> versions before 7.3,
      the <literal>MERGES</> shorthand was not available: to make a
      merge-joinable operator one had to write both <literal>SORT1</> and
      <literal>SORT2</> explicitly.  Also, the <literal>LTCMP</> and

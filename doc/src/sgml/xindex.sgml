@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.37 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.38 2005/01/23 00:30:18 momjian Exp $
 -->
 
 <sect1 id="xindex">
@@ -700,7 +700,7 @@ DEFAULT FOR TYPE int8 USING btree AS
 
    <note>
     <para>
-     In <ProductName>PostgreSQL</ProductName> versions before 7.4,
+     In <productname>PostgreSQL</productname> versions before 7.4,
      sorting and grouping operations would implicitly use operators named
      <literal>=</>, <literal>&lt;</>, and <literal>&gt;</>.  The new
      behavior of relying on default operator classes avoids having to make

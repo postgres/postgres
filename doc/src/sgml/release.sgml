@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.323 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.324 2005/01/23 00:30:18 momjian Exp $
 -->
 
 <appendix id="release">
@@ -9777,31 +9777,31 @@ New Ports
 </para>
 <!--
 Contributors (appologies to any missed)
- * Kurt J. Lidl <lidl@va.pubnix.com> 
+ * Kurt J. Lidl &lt;lidl@va.pubnix.com&gt; 
         (missed in first run, but no less important)
- * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
- * Jason Wright <jason@shiloh.vnet.net>
- * Cees de Groot <C.deGroot@inter.NL.net>
+ * Erich Stamberger &lt;eberger@gewi.kfunigraz.ac.at&gt;
+ * Jason Wright &lt;jason@shiloh.vnet.net&gt;
+ * Cees de Groot &lt;C.deGroot@inter.NL.net&gt;
  * ernst.molitor@uni-bonn.de
  * michael.siebenborn@ae3.Hypo.DE (Michael Siebenborn (6929))
- * Brian E. Gallew <geek+@cmu.edu>
- * Vadim B. Mikheev <vadim@sable.krasnoyarsk.su>
- * Adam Sussman <myddryn@vidya.com>
- * Chris Dunlop <chris@onthe.net.au>
- * Marc G. Fournier <scrappy@ki.net>
- * Dan McGuirk <mcguirk@indirect.com>
- * Dr_George_D_Detlefsen <drgeorge@ilt.com>
- * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
- * Massimo Dal Zotto <dz@cs.unitn.it>
- * Randy Kunkee <kunkee@Starbase.NeoSoft.COM>
- * Rick Weldon <rick@wisetech.com>
- * Thomas van Reimersdahl <reimersd@dali.techinfo.rwth-aachen.de>
- * david bennett <dave@bensoft.com>
+ * Brian E. Gallew &lt;geek+@cmu.edu&gt;
+ * Vadim B. Mikheev &lt;vadim@sable.krasnoyarsk.su&gt;
+ * Adam Sussman &lt;myddryn@vidya.com&gt;
+ * Chris Dunlop &lt;chris@onthe.net.au&gt;
+ * Marc G. Fournier &lt;scrappy@ki.net&gt;
+ * Dan McGuirk &lt;mcguirk@indirect.com&gt;
+ * Dr_George_D_Detlefsen &lt;drgeorge@ilt.com&gt;
+ * Erich Stamberger &lt;eberger@gewi.kfunigraz.ac.at&gt;
+ * Massimo Dal Zotto &lt;dz@cs.unitn.it&gt;
+ * Randy Kunkee &lt;kunkee@Starbase.NeoSoft.COM&gt;
+ * Rick Weldon &lt;rick@wisetech.com&gt;
+ * Thomas van Reimersdahl &lt;reimersd@dali.techinfo.rwth-aachen.de&gt;
+ * david bennett &lt;dave@bensoft.com&gt;
  * ernst.molitor@uni-bonn.de
- * Julian Assange <proff@suburbia.net>
- * Bruce Momjian <pgman@candle.pha.pa.us>
- * Paul "Shag" Walmsley <ccshag@cclabs.missouri.edu>
- * "Alistair G. Crooks" <azcb0@sde.uts.amdahl.com>
+ * Julian Assange &lt;proff@suburbia.net&gt;
+ * Bruce Momjian &lt;pgman@candle.pha.pa.us&gt;
+ * Paul "Shag" Walmsley &lt;ccshag@cclabs.missouri.edu&gt;
+ * "Alistair G. Crooks" &lt;azcb0@sde.uts.amdahl.com&gt;
 -->
 </sect2>
 </sect1>
