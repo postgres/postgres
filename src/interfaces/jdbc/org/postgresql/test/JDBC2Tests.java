@@ -2,9 +2,11 @@ package org.postgresql.test;
 
 import junit.framework.TestSuite;
 import junit.framework.TestCase;
+import junit.framework.Test;
 
 import org.postgresql.test.jdbc2.*;
 import java.sql.*;
+import java.lang.reflect.Method;
 
 /*
  * Executes all known tests for JDBC2 and includes some utility methods.
@@ -229,6 +231,16 @@ public class JDBC2Tests extends TestSuite
 		suite.addTestSuite( UpdateableResultTest.class );
 
 		suite.addTestSuite( CallableStmtTest.class );
+		
+		// try to load the optional test classes
+		try {
+		    Class cls = Class.forName("org.postgresql.test.jdbc2.optional.OptionalTestSuite");
+		    Method meth = cls.getMethod("suite", new Class[0]);
+		    suite.addTest((Test)meth.invoke(null, new Object[0]));
+		} catch (Exception e) {
+		    System.err.println("Excluding JDBC 2 Optional Package (DataSource) tests");
+		}
+
 		// That's all folks
 		return suite;
 	}

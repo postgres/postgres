@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.25 2002/07/23 03:59:54 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.26 2002/07/30 11:38:13 davec Exp $
 
 -->
 
@@ -21,8 +21,8 @@
   <property name="jardir"  value="jars" />
   <property name="builddir" value="build" />
   <property name="package" value="org/postgresql" />
-  <property name="debug" value="off" />
-  
+  <property name="debug" value="on" />
+
   <!--
     This is a simpler method than utils.CheckVersion
     It defaults to jdbc1, but builds jdbc2 if the java.lang.Byte class is
@@ -40,10 +40,10 @@
         <equals arg1="${ant.java.version}" arg2="1.2"/>
         <equals arg1="${ant.java.version}" arg2="1.3"/>
       </or>
-    </condition> 
+    </condition>
     <condition property="jdbc3">
         <equals arg1="${ant.java.version}" arg2="1.4"/>
-    </condition> 
+    </condition>
     <available property="datasource" classname="javax.sql.DataSource"/>
     <available property="junit" classname="junit.framework.Test" />
   </target>
@@ -88,15 +88,18 @@
       <exclude name="${package}/jdbc1/**" unless="jdbc1"/>
       <exclude name="${package}/jdbc2/**" unless="jdbc2"/>
       <exclude name="${package}/jdbc3/**" unless="jdbc3"/>
- 
+
       <exclude name="${package}/largeobject/PGblob.java" if="jdbc1" />
       <exclude name="${package}/largeobject/PGclob.java" if="jdbc1" />
 
-      <exclude name="${package}/PostgresqlDataSource.java" unless="datasource" />
-      <exclude name="${package}/xa/**" unless="datasource" />
+      <exclude name="${package}/jdbc2/optional/**" unless="datasource" />
+
+      <exclude name="${package}/PostgresqlDataSource.java" />
+      <exclude name="${package}/xa/**" />
 
       <exclude name="${package}/test/**" unless="junit" />
       <exclude name="${package}/test/jdbc2/**" if="jdbc1" />
+      <exclude name="${package}/test/jdbc2/optional/**" unless="datasource" />
       <exclude name="${package}/test/JDBC2Tests.java" if="jdbc1" />
     </javac>
   </target>
@@ -115,7 +118,7 @@
         <equals arg1="${jdbc2}" arg2="true"/>
     </condition>
     <condition property="edition" value="JDBC3">
-        <equals arg1="${jdbc3}" arg2="true"/> 
+        <equals arg1="${jdbc3}" arg2="true"/>
     </condition>
     <condition property="edition" value="JDBC2 Enterprise">
       <and>
@@ -212,7 +215,7 @@
 
   <!-- defaults for the tests - override these if required -->
   <property name="database" value="jdbc:postgresql:test" />
-  <property name="username" value="test" />
+  <property name="username" value="postgres" />
   <!-- Password must be something.  Doesn't matter if trust is used! -->
   <property name="password" value="password" />
   <!-- junit.ui is one of textui, awtui, or swingui -->
