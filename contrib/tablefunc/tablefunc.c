@@ -79,6 +79,7 @@ static Tuplestorestate *build_tuplestore_recursively(char *key_fld,
 							 MemoryContext per_query_ctx,
 							 AttInMetadata *attinmeta,
 							 Tuplestorestate *tupstore);
+static char *quote_literal_cstr(char *rawstr);
 
 typedef struct
 {
@@ -1319,23 +1320,23 @@ build_tuplestore_recursively(char *key_fld,
 	/* Build initial sql statement */
 	if (!show_serial)
 	{
-		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL AND %s <> %s",
+		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = %s AND %s IS NOT NULL AND %s <> %s",
 						 key_fld,
 						 parent_key_fld,
 						 relname,
 						 parent_key_fld,
-						 start_with,
+						 quote_literal_cstr(start_with),
 						 key_fld, key_fld, parent_key_fld);
 		serial_column = 0;
 	}
 	else
 	{
-		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL AND %s <> %s ORDER BY %s",
+		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = %s AND %s IS NOT NULL AND %s <> %s ORDER BY %s",
 						 key_fld,
 						 parent_key_fld,
 						 relname,
 						 parent_key_fld,
-						 start_with,
+						 quote_literal_cstr(start_with),
 						 key_fld, key_fld, parent_key_fld,
 						 orderby_fld);
 		serial_column = 1;
@@ -1690,4 +1691,22 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_categories)
 	}
 
 	return tupdesc;
+}
+
+/*
+ * Return a properly quoted literal value.
+ * Uses quote_literal in quote.c
+ */
+static char *
+quote_literal_cstr(char *rawstr)
+{
+	text	   *rawstr_text;
+	text	   *result_text;
+	char	   *result;
+
+	rawstr_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(rawstr)));
+	result_text = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(rawstr_text)));
+	result = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(result_text)));
+
+	return result;
 }
