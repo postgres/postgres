@@ -237,14 +237,14 @@
    has received around 30k of messages.
    
    The bugs mailing list is available. To subscribe to this list, send
-   email to bugs-request@postgreSQL.org with a BODY of:
+   email to bugs-request@postgreSQL.org with a body of:
    
         subscribe
         end
 
    There is also a developers discussion mailing list available. To
    subscribe to this list, send email to hackers-request@postgreSQL.org
-   with a BODY of:
+   with a body of:
    
         subscribe
         end
