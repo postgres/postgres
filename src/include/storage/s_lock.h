@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.3 1997/09/22 15:49:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.4 1997/09/22 15:59:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,6 @@ static int	tas(slock_t *lock);
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
-#ifdef NOT_USED
 static int
 tas_dummy()
 {
@@ -226,7 +225,6 @@ tas_dummy()
 	asm("	rts");
 	asm("	.data");
 }
-#endif
 
 #endif							/* sun3 */
 
@@ -243,7 +241,6 @@ tas_dummy()
 
 static int	tas(slock_t *lock);
 
-#ifdef NOT_USED
 static int
 tas_dummy()
 {
@@ -276,7 +273,6 @@ tas_dummy()
 	asm("retl");
 	asm("nop");
 }
-#endif
 
 #define	S_LOCK(addr)	do \
 						{ \
@@ -366,7 +362,6 @@ tas_dummy()
 
 #if defined(linux) && defined(PPC)
 
-#ifdef NOT_USED
 static int
 tas_dummy()
 {
@@ -385,7 +380,6 @@ success:		\n\
         blr		\n\
 	");
 }
-#endif
 
 #define	S_LOCK(lock)	do \ 
 						{ \
