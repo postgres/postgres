@@ -1,0 +1,795 @@
+From pgsql-hackers-owner@postgresql.org Thu Apr 19 15:15:30 2001
+Received: from mailout02.sul.t-online.com (mailout02.sul.t-online.com [194.25.134.17])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3JId1301805
+	for <pgsql-hackers@postgresql.org>; Thu, 19 Apr 2001 14:39:02 -0400 (EDT)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd03.sul.t-online.com 
+	by mailout02.sul.t-online.com with smtp 
+	id 14qGe9-0005Ng-05; Thu, 19 Apr 2001 17:47:05 +0200
+Received: from peter.localdomain (520083510237-0001@[217.80.146.53]) by fmrl03.sul.t-online.com
+	with esmtp id 14qGe4-2H8UKWC; Thu, 19 Apr 2001 17:47:00 +0200
+Date: Thu, 19 Apr 2001 17:58:12 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: System catalog representation of access privileges
+Message-ID: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+X-Archive-Number: 200104/704
+X-Sequence-Number: 7734
+Status: OR
+
+Oldtimers might recall the last thread about enhancements of the access
+privilege system.  See
+
+http://www.postgresql.org/mhonarc/pgsql-hackers/2000-05/msg01220.html
+
+to catch up.
+
+It was more or less agreed that privilege descriptors should be split out
+into a separate table for better flexibility and ease of processing.  The
+dispute was that the old proposal wanted to store only one privilege per
+row.  I have devised something more efficient:
+
+pg_privilege (
+    priobj oid,			-- oid of table, column, function, etc.
+    prigrantor oid,		-- user who granted the privilege
+    prigrantee oid,		-- user who owns the privilege
+
+    priselect char,		-- specific privileges follow...
+    prihierarchy char,
+    priinsert char,
+    priupdate char,
+    pridelete char,
+    prireferences char,
+    priunder char,
+    pritrigger char,
+    prirule char
+    /* obvious extension mechanism... */
+)
+
+The various "char" fields would be NULL for not granted, some character
+for granted, and some other character for granted with grant option (a
+poor man's enum, if you will).  Votes on the particular characters are
+being taken.  ;-)  Since NULLs are stored specially, sparse pg_privilege
+rows wouldn't take extra space.
+
+"Usage" privileges on types and other non-table objects could probably be
+lumped under "priselect" (purely for internal purposes).
+
+For access we define system caches on these indexes:
+
+index ( priobj, prigrantee, priselect )
+index ( priobj, prigrantee, prihierarchy )
+index ( priobj, prigrantee, priinsert )
+index ( priobj, prigrantee, priupdate )
+index ( priobj, prigrantee, pridelete )
+
+These are the privileges you usually need quickly during query processing,
+the others are only needed during table creation.  These indexes are not
+unique (more than one grantor can grant the same privilege), but AFAICS
+the syscache interface should work okay with this, since in normal
+operation we don't care who granted the privilege, only whether you have
+at least one.
+
+How does that look?
+
+-- 
+Peter Eisentraut   peter_e@gmx.net   http://funkturm.homeip.net/~peter
+
+
+From pgsql-hackers-owner+M7738@postgresql.org Thu Apr 19 16:28:19 2001
+Return-path: <pgsql-hackers-owner+M7738@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3JKSJL13468
+	for <pgman@candle.pha.pa.us>; Thu, 19 Apr 2001 16:28:19 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3JKRH336850;
+	Thu, 19 Apr 2001 16:27:17 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7738@postgresql.org)
+Received: from wallace.ece.rice.edu (wallace.ece.rice.edu [128.42.12.154])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3JJbq325185
+	for <pgsql-hackers@postgresql.org>; Thu, 19 Apr 2001 15:37:52 -0400 (EDT)
+	(envelope-from reedstrm@rice.edu)
+Received: by rice.edu
+	via sendmail from stdin
+	id <m14qKFQ-000LGUC@wallace.ece.rice.edu> (Debian Smail3.2.0.102)
+	for pgsql-hackers@postgresql.org; Thu, 19 Apr 2001 14:37:48 -0500 (CDT) 
+Date: Thu, 19 Apr 2001 14:37:48 -0500
+From: "Ross J. Reedstrom" <reedstrm@rice.edu>
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges
+Message-ID: <20010419143748.A3815@rice.edu>
+Mail-Followup-To: Peter Eisentraut <peter_e@gmx.net>,
+	PostgreSQL Development <pgsql-hackers@postgresql.org>
+References: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0i
+In-Reply-To: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain>; from peter_e@gmx.net on Thu, Apr 19, 2001 at 05:58:12PM +0200
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+So, this will remove the relacl field from pg_class, making pg_class
+a fixed tuple-length table: that might actually speed access: there
+are shortcircuits in place to speed pointer math when this is true.
+
+The implementation looks fine to me, as well. How are group privileges
+going to be handled with this system?
+
+Ross
+
+On Thu, Apr 19, 2001 at 05:58:12PM +0200, Peter Eisentraut wrote:
+> Oldtimers might recall the last thread about enhancements of the access
+> privilege system.  See
+> 
+> http://www.postgresql.org/mhonarc/pgsql-hackers/2000-05/msg01220.html
+> 
+> to catch up.
+> 
+> It was more or less agreed that privilege descriptors should be split out
+> into a separate table for better flexibility and ease of processing.  The
+> dispute was that the old proposal wanted to store only one privilege per
+> row.  I have devised something more efficient:
+> 
+> pg_privilege (
+
+<snip>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M7737@postgresql.org Thu Apr 19 16:22:45 2001
+Return-path: <pgsql-hackers-owner+M7737@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3JKMiL12982
+	for <pgman@candle.pha.pa.us>; Thu, 19 Apr 2001 16:22:45 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3JKME335538;
+	Thu, 19 Apr 2001 16:22:14 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7737@postgresql.org)
+Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3JKJK334679
+	for <pgsql-hackers@postgresql.org>; Thu, 19 Apr 2001 16:19:20 -0400 (EDT)
+	(envelope-from mascarm@mascari.com)
+Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id QAA25251;
+	Thu, 19 Apr 2001 16:12:11 -0400
+Message-ID: <3ADF47F0.82BD3A63@mascari.com>
+Date: Thu, 19 Apr 2001 16:17:52 -0400
+From: Mike Mascari <mascarm@mascari.com>
+Organization: Mascari Development Inc.
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.14-5.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges
+References: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut wrote:
+
+> I have devised something more efficient:
+> 
+> pg_privilege (
+>     priobj oid,                 -- oid of table, column, etc.
+>     prigrantor oid,             -- user who granted the privilege
+>     prigrantee oid,             -- user who owns the privilege
+> 
+>     priselect char,             -- specific privileges follow...
+>     prihierarchy char,
+>     priinsert char,
+>     priupdate char,
+>     pridelete char,
+>     prireferences char,
+>     priunder char,
+>     pritrigger char,
+>     prirule char
+>     /* obvious extension mechanism... */
+> )
+>
+> "Usage" privileges on types and other non-table objects could probably be
+> lumped under "priselect" (purely for internal purposes).
+> 
+
+That looks quite nice. I do have 3 quick questions though. First, I
+assume that the prigrantee could also be a group id? Or would this
+system table represent the effective privileges granted to user via
+groups? Second, one nice feature of Oracle is the ability to GRANT roles
+(our groups) to other roles. So I could do:
+
+CREATE ROLE clerk;
+GRANT SELECT on mascarm.deposits TO clerk;
+GRANT UPDATE (mascarm.deposits.amount) ON mascarm.deposits TO clerk;
+
+CREATE ROLE banker;
+GRANT clerk TO banker;
+
+Would any part of your design prohibit such functionality in the future?
+
+Finally, I'm wondering if "Usage" or "System" privileges should be
+another system table. For example, one day I would like to (as in
+Oracle):
+
+GRANT SELECT ANY TABLE TO foo WITH ADMIN;
+GRANT CREATE PUBLIC SYNONYM TO foo;
+GRANT DROP ANY TABLE TO foo;
+
+Presumably, in your design, the above would be represented by 3 records
+with something like the following values:
+
+This would be a "SELECT ANY TABLE" privilege (w/Admin):
+
+NULL, grantor_oid, grantee_oid, 'S', NULL, NULL, NULL, NULL, ...
+
+This would be a "CREATE PUBLIC SYNONYM" privilege:
+
+NULL, grantor_oid, grantee_oid, 'c', NULL, NULL, NULL, NULL, ...
+
+That means that the system would need an index as:
+
+index ( prigrantee, priselect )
+
+While I'm not arguing it won't work, it just doesn't "seem" clean to
+shoe-horn the system privileges into the same table as the object
+privileges.
+
+I've been wrong before though :-)
+
+Mike Mascari
+mascarm@mascari.com
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M7740@postgresql.org Thu Apr 19 17:17:08 2001
+Return-path: <pgsql-hackers-owner+M7740@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3JLH6L23163
+	for <pgman@candle.pha.pa.us>; Thu, 19 Apr 2001 17:17:07 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3JLGL348132;
+	Thu, 19 Apr 2001 17:16:21 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7740@postgresql.org)
+Received: from mailout04.sul.t-online.com (mailout04.sul.t-online.com [194.25.134.18])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3JLDx347396
+	for <pgsql-hackers@postgresql.org>; Thu, 19 Apr 2001 17:13:59 -0400 (EDT)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd03.sul.t-online.com 
+	by mailout04.sul.t-online.com with smtp 
+	id 14qLkP-0001K0-04; Thu, 19 Apr 2001 23:13:53 +0200
+Received: from peter.localdomain (520083510237-0001@[217.80.146.53]) by fmrl03.sul.t-online.com
+	with esmtp id 14qLk8-0Y7RFAC; Thu, 19 Apr 2001 23:13:36 +0200
+Date: Thu, 19 Apr 2001 23:24:51 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Mike Mascari <mascarm@mascari.com>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges
+In-Reply-To: <3ADF47F0.82BD3A63@mascari.com>
+Message-ID: <Pine.LNX.4.30.0104192252550.762-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Mike Mascari writes:
+
+> That looks quite nice. I do have 3 quick questions though. First, I
+> assume that the prigrantee could also be a group id?
+
+Yes.  It was also suggested making two different grantee columns for users
+and groups, but I'm not yet convinced of that.  It's an option though.
+
+> Second, one nice feature of Oracle is the ability to GRANT roles
+> (our groups) to other roles.
+
+Roles are not part of this deal, although I agree that they would be nice
+to have eventually.  I'm not sure yet whether role grants would get a
+different system table, but I'm leaning there.
+
+> Would any part of your design prohibit such functionality in the future?
+
+Not that I can see.
+
+> Finally, I'm wondering if "Usage" or "System" privileges should be
+> another system table. For example, one day I would like to (as in
+> Oracle):
+>
+> GRANT SELECT ANY TABLE TO foo WITH ADMIN;
+
+ANY TABLE probably implies "any table in this schema/database", no?  In
+that case the grant record would refer to the oid of the schema/database.
+Is there any use distinguishing between ANY TABLE and ANY VIEW?  That
+would make it a bit trickier.
+
+> GRANT CREATE PUBLIC SYNONYM TO foo;
+
+I'm not familiar with that above command.
+
+> GRANT DROP ANY TABLE TO foo;
+
+I'm not sold on a DROP privilege, but a CREATE privilege would be another
+column.  I didn't include it here because it's not in SQL.
+
+> While I'm not arguing it won't work, it just doesn't "seem" clean to
+> shoe-horn the system privileges into the same table as the object
+> privileges.
+
+It would make sense to split privileges on tables from privileges on
+schemas/databases from privileges on, say, functions, etc.  E.g.,
+
+pg_privtable	-- like proposed
+
+pg_privschema (
+    priobj oid, prigrantor oid, prigrantee oid,
+    char pritarget,	-- 't' = any table, 'v' = any view, ...
+    char priselect,
+    char priupdate,
+    /* etc */
+)
+
+But this would mean that a check like "can I select from this table"
+would possibly require lookups in two tables.  Not sure how much of a
+tradeoff that is, but the "shoehorn factor" would be lower.
+
+Comments on this?
+
+-- 
+Peter Eisentraut   peter_e@gmx.net   http://funkturm.homeip.net/~peter
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M7741@postgresql.org Thu Apr 19 18:12:56 2001
+Return-path: <pgsql-hackers-owner+M7741@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3JMCtL28468
+	for <pgman@candle.pha.pa.us>; Thu, 19 Apr 2001 18:12:55 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3JMCF359250;
+	Thu, 19 Apr 2001 18:12:15 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7741@postgresql.org)
+Received: from sss.pgh.pa.us ([216.151.103.158])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3JLrW355044
+	for <pgsql-hackers@postgresql.org>; Thu, 19 Apr 2001 17:53:32 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f3JLrQR22762;
+	Thu, 19 Apr 2001 17:53:26 -0400 (EDT)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges 
+In-Reply-To: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Thu, 19 Apr 2001 17:58:12 +0200"
+Date: Thu, 19 Apr 2001 17:53:26 -0400
+Message-ID: <22759.987717206@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> pg_privilege (
+>     priobj oid,			-- oid of table, column, function, etc.
+>     prigrantor oid,		-- user who granted the privilege
+>     prigrantee oid,		-- user who owns the privilege
+
+What about groups?  What about wildcards?  We already allow
+"grant <priv> to PUBLIC (all)", and it would be nice to be able to do
+something like "grant <on everything I own> to joeblow"
+
+> Since NULLs are stored specially, sparse pg_privilege
+> rows wouldn't take extra space.
+
+Unless there get to be a very large number of privilege bits, it'd
+probably be better to handle these columns as NOT NULL, so that a fixed
+C struct record could be mapped onto the tuples.  You'll notice that
+most of the other system tables are done that way.
+
+Alternatively, since you really only need two bits per privilege,
+perhaps a pair of BIT (VARYING?) fields would be a more effective
+approach.  BIT VARYING would have the nice property that adding a new
+privilege type doesn't force initdb.
+
+> For access we define system caches on these indexes:
+
+> index ( priobj, prigrantee, priselect )
+> index ( priobj, prigrantee, prihierarchy )
+> index ( priobj, prigrantee, priinsert )
+> index ( priobj, prigrantee, priupdate )
+> index ( priobj, prigrantee, pridelete )
+
+Using the privilege bits as part of the index won't work if you intend
+to allow them to be null.  Another objection is that this would end up
+caching multiple copies of the same tuple.  A third is that you can't
+readily tell lack of an entry (implying you should use a default ACL
+setting, which might allow the access) from presence of an entry denying
+the access.  A fourth is it doesn't work for groups or wildcards.
+
+> These indexes are not
+> unique (more than one grantor can grant the same privilege), but AFAICS
+> the syscache interface should work okay with this,
+
+Unfortunately not.  The syscache stuff needs unique indexes, because it
+can only return one tuple for any given request.
+
+I don't really believe this indexing scheme is workable.  Need to think
+some more.  Possibly the syscache mechanism will not do, and we need a
+specially indexed privilege cache instead.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M7743@postgresql.org Thu Apr 19 18:47:11 2001
+Return-path: <pgsql-hackers-owner+M7743@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3JMlAL29690
+	for <pgman@candle.pha.pa.us>; Thu, 19 Apr 2001 18:47:10 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3JMkg366031;
+	Thu, 19 Apr 2001 18:46:42 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7743@postgresql.org)
+Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3JMZf364328
+	for <pgsql-hackers@postgresql.org>; Thu, 19 Apr 2001 18:35:41 -0400 (EDT)
+	(envelope-from mascarm@mascari.com)
+Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id SAA25665;
+	Thu, 19 Apr 2001 18:28:30 -0400
+Message-ID: <3ADF67E3.8367B467@mascari.com>
+Date: Thu, 19 Apr 2001 18:34:11 -0400
+From: Mike Mascari <mascarm@mascari.com>
+Organization: Mascari Development Inc.
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.14-5.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges
+References: <Pine.LNX.4.30.0104192252550.762-100000@peter.localdomain>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+First, let me say that just because Oracle does it this way doesn't make
+it better but...
+
+Oracle divides privileges into 2 categories:
+
+Object privileges
+System privileges
+
+The Object privileges are the ones you describe. And I agree
+fundamentally with your design. Although I would have (a) used a bitmask
+for the privileges and (b) have an additional bitmask which determines
+whether or not the Grantee could turn around and grant the same
+permission to someone else:
+
+pg_objprivs {
+	priobj oid,
+	prigrantor oid,
+	prigrantee oid,
+	priprivileges int4,
+	priadmin int4
+};
+
+Where priprivileges is a bitmask for:
+
+0 ALTER - tables, sequences
+1 DELETE - tables, views	
+2 EXECUTE - procedures, functions
+3 INDEX - tables
+4 INSERT - tables, views
+5 REFERENCES - tables
+6 SELECT - tables, views, sequences
+7 UPDATE - tables, views
+8 HIERARCHY - tables
+9 UNDER - tables
+
+And the priadmin is a bitmask to determine whether or not the Grantee
+could grant the same privilege to another user. Since these are Object
+privileges, 32 bits should be enough (and also 640K RAM ;-)).
+
+The System privileges are privileges granted to a user or role (a.k.a
+group) which are not associated with any particular object. This is one
+area where I think PostgreSQL needs a lot of work and thought,
+particularly with schemas coming down the road. Some example Oracle
+System privileges are:
+
+Typical User Privileges:
+-----------------------
+
+CREATE SESSION - Allows the user to connect 
+CREATE SEQUENCE - Allows the user to create sequences in his schema
+CREATE SYNONYM - Allows the user to create private synonyms
+CREATE TABLE - Allows the user to create a table in his schema
+CREATE TRIGGER - Allows the user to create triggers on tables in his
+schema
+CREATE VIEW - Allows the user to create views in his schema
+
+Typical Power-User Privileges:
+-----------------------------
+
+ALTER ANY INDEX - Allows user to alter an index in *any* schema
+ALTER ANY PROCEDURE - Allows user to alter a procedure in *any* schema
+ALTER ANY TABLE - Allows user to alter a table in *any* schema
+...
+CREATE ANY TABLE - Allows user to create a table in *any* schema
+COMMENT ANY TABLE - Allows user to document any table in *any* schema
+...
+
+Typical DBA-Only Privileges:
+---------------------------
+
+ALTER USER - Allows user to change password, quotas, etc. for *any* user
+CREATE USER - Allows user to create a new user
+DROP USER - Allows user to drop a new user
+GRANT ANY PRIVILEGE - Allows user to grant any privilege to any user
+ANALYZE ANY - Allows user to analyze any table in *any* schema
+
+There are, in fact, many, many more System Privileges that Oracle
+defines. You may want someone to connect to a database and query one
+table and that's it. Or you may want someone to have no other abilities
+except to document the database design via the great COMMENT ON command
+;-), etc. 
+
+So for System Privileges, I would have something like:
+
+pg_sysprivs {
+	prigrantee oid,
+	priprivilege oid,
+	prigroup bool,
+	priadmin bool
+};
+
+So each System privilege granted to a user (or group) would be its own
+record. The priprivilege would be the OID of one of the many System
+privileges defined in the same way types are defined, if prigroup is
+false. If prigroup is true, however, then priprivilege is not a System
+privilege, but a group id. And then PostgreSQL will have to examine the
+privileges recursively for that group. Of course, you might not want to
+allow for the GRANTing of group privileges to other groups initially,
+which simplifies the implementation tremendously. But its a neat (if not
+complicated) Oracle-ism.
+
+Unfortunately, this means that the permission might require > 2 lookups.
+But these lookups are only if the previous lookup failed:
+
+SELECT * FROM employees.foo;
+
+1. Am I a member of the employees schema? Yes -> Done
+2. Have I been GRANTed the Object Privilege of:
+   SELECT on employees.foo? Yes -> Done
+3. Have I been GRANTed the System Privilege of:
+   SELECT ANY TABLE? Yes -> Done
+
+So the number of lookups does potentially increase, but only for those
+users that have been granted access through greater and greater layers
+of authority. 
+
+I just think that each new feature added to PostgreSQL opens up a very
+large can of worms. Schemas are such a feature and the security system
+should be prepared for it.
+
+FWIW,
+
+Mike Mascari
+mascarm@mascari.com
+
+
+Peter Eisentraut wrote:
+> 
+> 
+> It would make sense to split privileges on tables from privileges on
+> schemas/databases from privileges on, say, functions, etc.  E.g.,
+> 
+> pg_privtable    -- like proposed
+> 
+> pg_privschema (
+>     priobj oid, prigrantor oid, prigrantee oid,
+>     char pritarget,     -- 't' = any table, 'v' = any view, ...
+>     char priselect,
+>     char priupdate,
+>     /* etc */
+> )
+> 
+> But this would mean that a check like "can I select from this table"
+> would possibly require lookups in two tables.  Not sure how much of a
+> tradeoff that is, but the "shoehorn factor" would be lower.
+> 
+> Comments on this?
+> 
+> --
+> Peter Eisentraut   peter_e@gmx.net   http://funkturm.homeip.net/~peter
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M7759@postgresql.org Fri Apr 20 11:25:24 2001
+Return-path: <pgsql-hackers-owner+M7759@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3KFPNs14733
+	for <pgman@candle.pha.pa.us>; Fri, 20 Apr 2001 11:25:23 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3KFNa389638;
+	Fri, 20 Apr 2001 11:23:36 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7759@postgresql.org)
+Received: from mailout00.sul.t-online.com (mailout00.sul.t-online.com [194.25.134.16])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3KFLL388804
+	for <pgsql-hackers@postgresql.org>; Fri, 20 Apr 2001 11:21:21 -0400 (EDT)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd04.sul.t-online.com 
+	by mailout00.sul.t-online.com with smtp 
+	id 14qchk-0001xH-01; Fri, 20 Apr 2001 17:20:16 +0200
+Received: from peter.localdomain (520083510237-0001@[212.185.245.11]) by fmrl04.sul.t-online.com
+	with esmtp id 14qchV-2L4flAC; Fri, 20 Apr 2001 17:20:01 +0200
+Date: Fri, 20 Apr 2001 17:31:16 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges 
+In-Reply-To: <22759.987717206@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.30.0104201717010.758-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane writes:
+
+> Peter Eisentraut <peter_e@gmx.net> writes:
+> > pg_privilege (
+> >     priobj oid,			-- oid of table, column, function, etc.
+> >     prigrantor oid,		-- user who granted the privilege
+> >     prigrantee oid,		-- user who owns the privilege
+>
+> What about groups?
+
+Either integrated into prigrantee or another column prigroupgrantee.  One
+of these would always be zero or null, that's why I'm not sure if this
+isn't a waste of space.
+
+> What about wildcards?  We already allow
+> "grant <priv> to PUBLIC (all)", and it would be nice to be able to do
+> something like "grant <on everything I own> to joeblow"
+
+Public would be prigrantee == 0.  About <everything I own>, how is this
+defined?  If it is "everything I own and will ever own" then I suppose
+priobj == 0.  Although I admit I have never seen this kind of privilege
+before.  It's probably better to set up a group for that.
+
+> Alternatively, since you really only need two bits per privilege,
+> perhaps a pair of BIT (VARYING?) fields would be a more effective
+> approach.  BIT VARYING would have the nice property that adding a new
+> privilege type doesn't force initdb.
+
+This would be tricky to index, I think.
+
+> I don't really believe this indexing scheme is workable.  Need to think
+> some more.  Possibly the syscache mechanism will not do, and we need a
+> specially indexed privilege cache instead.
+
+Maybe just an index on (object, grantee) and walk through that with an
+index scan.  This is done in some other places as well (triggers, I
+recall), but the performance is probably not too exciting.
+
+However, last I looked at the syscache I figured that it would be
+perfectly capable of handling non-unique indexes if there only was an API
+to retrieve those values.  Storing and finding the entries didn't seem to
+be the problem.  Need to look there, probably.
+
+-- 
+Peter Eisentraut   peter_e@gmx.net   http://funkturm.homeip.net/~peter
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M7763@postgresql.org Fri Apr 20 13:05:45 2001
+Return-path: <pgsql-hackers-owner+M7763@postgresql.org>
+Received: from west.navpoint.com (root@west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f3KH5jE01810
+	for <pgman@candle.pha.pa.us>; Fri, 20 Apr 2001 13:05:45 -0400 (EDT)
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by west.navpoint.com (8.11.3/8.10.1) with ESMTP id f3KGc8129062
+	for <pgman@candle.pha.pa.us>; Fri, 20 Apr 2001 12:38:08 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f3KGbY311283;
+	Fri, 20 Apr 2001 12:37:34 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M7763@postgresql.org)
+Received: from sss.pgh.pa.us ([216.151.103.158])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f3KGZp310688
+	for <pgsql-hackers@postgresql.org>; Fri, 20 Apr 2001 12:35:51 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f3KGZlR26837;
+	Fri, 20 Apr 2001 12:35:47 -0400 (EDT)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] System catalog representation of access privileges 
+In-Reply-To: <Pine.LNX.4.30.0104201717010.758-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0104201717010.758-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Fri, 20 Apr 2001 17:31:16 +0200"
+Date: Fri, 20 Apr 2001 12:35:46 -0400
+Message-ID: <26834.987784546@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+>> Alternatively, since you really only need two bits per privilege,
+>> perhaps a pair of BIT (VARYING?) fields would be a more effective
+>> approach.  BIT VARYING would have the nice property that adding a new
+>> privilege type doesn't force initdb.
+
+> This would be tricky to index, I think.
+
+True, but I don't believe that making the privilege value part of the
+index is useful.
+
+> Maybe just an index on (object, grantee) and walk through that with an
+> index scan.  This is done in some other places as well (triggers, I
+> recall), but the performance is probably not too exciting.
+
+I agree, that'd be slower than we'd like.  It needs to be cached somehow.
+
+The major problem is that you'd need multiple index scans: after failing
+to find anything for (table, currentuser) you'd also need to try
+(table, 0) for PUBLIC and (table, G) for every group G that contains the
+current user.  Not to mention the scan to find out which groups those are.
+
+It gets rapidly worse if you want to allow any wildcarding on the object
+--- for example, if a privilege record attached to a schema can allow
+access to the tables therein, which I think should be possible.  You'd
+have to repeat the above for each possible priobject that might relate
+to the target object.
+
+I think this might be tolerable for getting the info in the first place,
+but the final results really need to be cached.  That's why I was
+wondering about a special "privilege cache".
+
+> However, last I looked at the syscache I figured that it would be
+> perfectly capable of handling non-unique indexes if there only was an API
+> to retrieve those values.
+
+Yes, it's an API problem more than anything else.  Invent away, if that
+seems like a needed component.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.26 2001/05/08 00:09:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.27 2001/05/08 00:30:41 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1306,14 +1306,15 @@ END LOOP;
     <productname>Postgres</productname> elog mechanism.
 
 <synopsis>
-RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">string</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
+RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
 </synopsis>
 
-    Inside the format, <literal>%</literal> is used as a placeholder for the
-    subsequent comma-separated identifiers. Possible levels are
-    DEBUG (silently suppressed in production running databases), NOTICE 
-    (written into the database log and forwarded to the client application)
-    and EXCEPTION (written into the database log and aborting the transaction).
+    Inside the format, <literal>%</literal> is replaced by the next argument's
+    external representation. Double %'s are left unchanged for internal
+    reasons.  Possible levels are DEBUG (silently suppressed in production
+    running databases), NOTICE (written into the database log and forwarded to
+    the client application) and EXCEPTION (written into the database log and
+    aborting the transaction).
    </para>
 
    <para>
