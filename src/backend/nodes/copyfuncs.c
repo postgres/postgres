@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.34 1998/01/20 05:03:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.35 1998/01/20 22:10:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,6 +671,7 @@ _copyVar(Var *from)
 	newnode->varno = from->varno;
 	newnode->varattno = from->varattno;
 	newnode->vartype = from->vartype;
+	newnode->varlevelsup = from->varlevelsup;
 
 	newnode->varnoold = from->varnoold;
 	newnode->varoattno = from->varoattno;

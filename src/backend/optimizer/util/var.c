@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.7 1997/12/22 05:42:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.8 1998/01/20 22:11:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,7 @@ var_equal(Var *var1, Var *var2)
 	if (IsA(var1, Var) &&IsA(var2, Var) &&
 		(((Var *) var1)->varno == ((Var *) var2)->varno) &&
 		(((Var *) var1)->vartype == ((Var *) var2)->vartype) &&
+		(((Var *) var1)->varlevelsup == ((Var *) var2)->varlevelsup) &&
 		(((Var *) var1)->varattno == ((Var *) var2)->varattno))
 	{
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.10 1998/01/20 05:04:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.11 1998/01/20 22:11:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,16 +39,15 @@ void
 makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 {
 	RangeTblEntry *rte;
-
+	
 	parseFromClause(pstate, frmList);
 
 	if (relname == NULL)
 		return;
 
-	if (refnameRangeTablePosn(pstate->p_rtable, relname) < 1)
-		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
-	else
-		rte = refnameRangeTableEntry(pstate->p_rtable, relname);
+	Assert(pstate->p_rtable == NULL);
+
+	rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
 
 	pstate->p_target_rangetblentry = rte;
 	Assert(pstate->p_target_relation == NULL);
@@ -137,8 +136,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 	TargetEntry *target_result = NULL;
 
 	if (sortgroupby->range)
-		real_rtable_pos = refnameRangeTablePosn(pstate->p_rtable,
-												sortgroupby->range);
+		real_rtable_pos = refnameRangeTablePosn(pstate,	sortgroupby->range, NULL);
 
 	foreach(i, tlist)
 	{

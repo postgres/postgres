@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.15 1998/01/19 18:11:10 momjian Exp $
+ * $Id: primnodes.h,v 1.16 1998/01/20 22:12:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@ typedef struct Expr
  *						  (could be INNER or OUTER)
  *		varattno		- attribute number of this var, or zero for all
  *		vartype			- pg_type tuple oid for the type of this var
+ *		varlevelsup		- for subquery variables referencing outer relations
  *		varnoold		- keep varno around in case it got changed to INNER/
  *						  OUTER (see match_varid)
  *		varoattno		- attribute number of this var
@@ -122,6 +123,7 @@ typedef struct Var
 	Index		varno;
 	AttrNumber	varattno;
 	Oid			vartype;
+	Index		varlevelsup;	/* erased by upper optimizer */
 	Index		varnoold;		/* only used by optimizer */
 	AttrNumber	varoattno;		/* only used by optimizer */
 } Var;

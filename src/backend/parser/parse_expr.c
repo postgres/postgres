@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.11 1998/01/20 05:04:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.12 1998/01/20 22:11:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,6 +304,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 	{
 		Attr	   *att = makeNode(Attr);
 
+		/* we add the relation name for them */
 		att->relname = rte->refname;
 		att->attrs = lcons(makeString(ident->name), NIL);
 		column_result =
@@ -312,7 +313,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 	}
 
 	/* try to find the ident as a relation */
-	if (refnameRangeTableEntry(pstate->p_rtable, ident->name) != NULL)
+	if (refnameRangeTableEntry(pstate, ident->name) != NULL)
 	{
 		ident->isRel = TRUE;
 		relation_result = (Node *) ident;

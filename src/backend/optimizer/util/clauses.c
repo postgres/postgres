@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.13 1997/12/22 05:42:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.14 1998/01/20 22:11:39 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -377,7 +377,8 @@ clause_relids_vars(Node *clause, List **relids, List **vars)
 			Var		   *in_list = (Var *) lfirst(vi);
 
 			if (in_list->varno == var->varno &&
-				in_list->varattno == var->varattno)
+				in_list->varattno == var->varattno &&
+				in_list->varlevelsup == var->varlevelsup)
 				break;
 		}
 		if (vi == NIL)

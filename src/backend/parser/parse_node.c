@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.9 1998/01/20 05:04:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.10 1998/01/20 22:11:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,27 +239,24 @@ make_op(char *opname, Node *ltree, Node *rtree)
 }
 
 Var		   *
-make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
+make_var(ParseState *pstate, Oid relid, char *refname,
+				char *attrname, Oid *type_id)
 {
 	Var		   *varnode;
 	int			vnum,
 				attid;
 	Oid			vartypeid;
-	RangeTblEntry *rte;
+	int			sublevels_up;
 
-	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
-	if (rte == NULL)
-		rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE);
+	vnum = refnameRangeTablePosn(pstate, refname, &sublevels_up);
 
-	vnum = refnameRangeTablePosn(pstate->p_rtable, refname);
-
-	attid = get_attnum(rte->relid, attrname);
+	attid = get_attnum(relid, attrname);
 	if (attid == InvalidAttrNumber)
 		elog(ERROR, "Relation %s does not have attribute %s",
-			 rte->relname, attrname);
-	vartypeid = get_atttype(rte->relid, attid);
+			 refname, attrname);
+	vartypeid = get_atttype(relid, attid);
 
-	varnode = makeVar(vnum, attid, vartypeid, vnum, attid);
+	varnode = makeVar(vnum, attid, vartypeid, sublevels_up, vnum, attid);
 	*type_id = vartypeid;
 
 	return varnode;

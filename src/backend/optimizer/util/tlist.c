@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.8 1997/11/25 22:00:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.9 1998/01/20 22:11:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,7 @@ add_tl_element(Rel *rel, Var *var)
 		Var		   *newvar = makeVar(var->varno,
 									 var->varattno,
 									 var->vartype,
+									 var->varlevelsup,
 									 var->varno,
 									 var->varoattno);
 
@@ -287,7 +288,8 @@ match_varid(Var *test_var, List *tlist)
 		 * changed to INNER/OUTER.
 		 */
 		if (tlvar->varnoold == test_var->varnoold &&
-			tlvar->varoattno == test_var->varoattno)
+			tlvar->varoattno == test_var->varoattno &&
+			tlvar->varlevelsup == test_var->varlevelsup)
 		{
 
 			if (tlvar->vartype == type_var)

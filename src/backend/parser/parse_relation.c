@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.7 1998/01/20 05:04:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.8 1998/01/20 22:12:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,35 +67,57 @@ static char *attnum_type[SPECIALS] = {
 
 /* given refname, return a pointer to the range table entry */
 RangeTblEntry *
-refnameRangeTableEntry(List *rtable, char *refname)
+refnameRangeTableEntry(ParseState *pstate, char *refname)
 {
 	List	   *temp;
 
-	foreach(temp, rtable)
+	while (pstate != NULL)
 	{
-		RangeTblEntry *rte = lfirst(temp);
-
-		if (!strcmp(rte->refname, refname))
-			return rte;
+		foreach(temp, pstate->p_rtable)
+		{
+			RangeTblEntry *rte = lfirst(temp);
+	
+			if (!strcmp(rte->refname, refname))
+				return rte;
+		}
+		/* only allow correlated columns in WHERE clause */
+		if (pstate->p_in_where_clause)
+			pstate = pstate->parentParseState;
+		else	break;
 	}
 	return NULL;
 }
 
 /* given refname, return id of variable; position starts with 1 */
 int
-refnameRangeTablePosn(List *rtable, char *refname)
+refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 {
 	int			index;
 	List	   *temp;
 
-	index = 1;
-	foreach(temp, rtable)
-	{
-		RangeTblEntry *rte = lfirst(temp);
+	
+	if (sublevels_up)
+		*sublevels_up = 0;
 
-		if (!strcmp(rte->refname, refname))
-			return index;
-		index++;
+	while (pstate != NULL)
+	{
+		index = 1;
+		foreach(temp, pstate->p_rtable)
+		{
+			RangeTblEntry *rte = lfirst(temp);
+	
+			if (!strcmp(rte->refname, refname))
+				return index;
+			index++;
+		}
+		/* only allow correlated columns in WHERE clause */
+		if (pstate->p_in_where_clause)
+		{
+			pstate = pstate->parentParseState;
+			if (sublevels_up)
+				(*sublevels_up)++;
+		}
+		else	break;
 	}
 	return 0;
 }
@@ -110,31 +132,38 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 	List	   *rtable;
 	RangeTblEntry *rte_result;
 
-	if (pstate->p_is_rule)
-		rtable = lnext(lnext(pstate->p_rtable));
-	else
-		rtable = pstate->p_rtable;
-
 	rte_result = NULL;
-	foreach(et, rtable)
+	while (pstate != NULL)
 	{
-		RangeTblEntry *rte = lfirst(et);
+		if (pstate->p_is_rule)
+			rtable = lnext(lnext(pstate->p_rtable));
+		else
+			rtable = pstate->p_rtable;
 
-		/* only entries on outer(non-function?) scope */
-		if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
-			continue;
-
-		if (get_attnum(rte->relid, colname) != InvalidAttrNumber)
+		foreach(et, rtable)
 		{
-			if (rte_result != NULL)
+			RangeTblEntry *rte = lfirst(et);
+	
+			/* only entries on outer(non-function?) scope */
+			if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
+				continue;
+	
+			if (get_attnum(rte->relid, colname) != InvalidAttrNumber)
 			{
-				if (!pstate->p_is_insert ||
-					rte != pstate->p_target_rangetblentry)
-					elog(ERROR, "Column %s is ambiguous", colname);
+				if (rte_result != NULL)
+				{
+					if (!pstate->p_is_insert ||
+						rte != pstate->p_target_rangetblentry)
+						elog(ERROR, "Column %s is ambiguous", colname);
+				}
+				else
+					rte_result = rte;
 			}
-			else
-				rte_result = rte;
 		}
+		/* only allow correlated columns in WHERE clause */
+		if (pstate->p_in_where_clause && rte_result == NULL)
+			pstate = pstate->parentParseState;
+		else	break;
 	}
 	return rte_result;
 }
@@ -152,11 +181,15 @@ addRangeTableEntry(ParseState *pstate,
 {
 	Relation	relation;
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	int	sublevels_up;
 
-	if (pstate != NULL &&
-		refnameRangeTableEntry(pstate->p_rtable, refname) != NULL)
-		elog(ERROR, "Table name %s specified more than once", refname);
-
+	if (pstate != NULL)
+	{
+		if (refnameRangeTablePosn(pstate, refname, &sublevels_up) != 0 &&
+		   (!inFromCl || sublevels_up == 0))
+			elog(ERROR, "Table name %s specified more than once", refname);
+	}
+	
 	rte->relname = pstrdup(relname);
 	rte->refname = pstrdup(refname);
 
@@ -191,7 +224,6 @@ addRangeTableEntry(ParseState *pstate,
 /*
  * expandAll -
  *	  makes a list of attributes
- *	  assumes reldesc caching works
  */
 List	   *
 expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
@@ -206,7 +238,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	int			type_len;
 	RangeTblEntry *rte;
 
-	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
+	rte = refnameRangeTableEntry(pstate, refname);
 	if (rte == NULL)
 		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
 
@@ -225,7 +257,8 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 		TargetEntry *te = makeNode(TargetEntry);
 
 		attrname = pstrdup((rdesc->rd_att->attrs[varattno]->attname).data);
-		varnode = (Var *) make_var(pstate, refname, attrname, &type_id);
+		varnode = (Var *) make_var(pstate, rte->relid, refname,
+													attrname, &type_id);
 		type_len = (int) typeLen(typeidType(type_id));
 
 		handleTargetColname(pstate, &resname, refname, attrname);
@@ -381,7 +414,7 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 		return;
 
 	if (refname != NULL)
-		rte = refnameRangeTableEntry(pstate->p_rtable, refname);
+		rte = refnameRangeTableEntry(pstate, refname);
 	else
 	{
 		rte = colnameRangeTableEntry(pstate, colname);

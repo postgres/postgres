@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.7 1998/01/20 05:04:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.8 1998/01/20 22:11:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,13 +174,12 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		{
 			RangeTblEntry *rte;
 			Ident	   *ident = (Ident *) first_arg;
-
 			/*
 			 * first arg is a relation. This could be a projection.
 			 */
 			refname = ident->name;
 
-			rte = refnameRangeTableEntry(pstate->p_rtable, refname);
+			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
 				rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE);
 
@@ -196,6 +195,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				Oid			dummyTypeId;
 
 				return ((Node *) make_var(pstate,
+									   relid,
 									   refname,
 									   funcname,
 									   &dummyTypeId));
@@ -288,19 +288,18 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		if (nodeTag(pair) == T_Ident && ((Ident *) pair)->isRel)
 		{
-
 			/*
 			 * a relation
 			 */
 			refname = ((Ident *) pair)->name;
 
-			rte = refnameRangeTableEntry(pstate->p_rtable, refname);
+			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
 				rte = addRangeTableEntry(pstate, refname, refname,
 										 FALSE, FALSE);
 			relname = rte->relname;
 
-			vnum = refnameRangeTablePosn(pstate->p_rtable, rte->refname);
+			vnum = refnameRangeTablePosn(pstate, rte->refname, NULL);
 
 			/*
 			 * for func(relname), the param to the function is the tuple
@@ -312,7 +311,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			toid = typeTypeId(typenameType(relname));
 			/* replace it in the arg list */
 			lfirst(fargs) =
-				makeVar(vnum, 0, toid, vnum, 0);
+				makeVar(vnum, 0, toid, 0, vnum, 0);
 		}
 		else if (!attisset)
 		{						/* set functions don't have parameters */
@@ -1074,7 +1073,7 @@ setup_tlist(char *attname, Oid relid)
 						 0,
 						 (Oid) 0,
 						 0);
-	varnode = makeVar(-1, attno, typeid, -1, attno);
+	varnode = makeVar(-1, attno, typeid, 0, -1, attno);
 
 	tle = makeNode(TargetEntry);
 	tle->resdom = resnode;
@@ -1101,7 +1100,7 @@ setup_base_tlist(Oid typeid)
 						 0,
 						 (Oid) 0,
 						 0);
-	varnode = makeVar(-1, 1, typeid, -1, 1);
+	varnode = makeVar(-1, 1, typeid, 0, -1, 1);
 	tle = makeNode(TargetEntry);
 	tle->resdom = resnode;
 	tle->expr = (Node *) varnode;

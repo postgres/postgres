@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.7 1998/01/16 23:20:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.8 1998/01/20 22:11:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ preprocess_targetlist(List *tlist,
 							0,
 							1);
 
-		var = makeVar(result_relation, -1, 27, result_relation, -1);
+		var = makeVar(result_relation, -1, 27, 0, result_relation, -1);
 
 		ctid = makeNode(TargetEntry);
 		ctid->resdom = resdom;
@@ -322,7 +322,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 					TargetEntry *temp_list = NULL;
 
 					temp_var =
-						makeVar(rt_index, attno, atttype, rt_index, attno);
+						makeVar(rt_index, attno, atttype, 0, rt_index, attno);
 
 					temp_list = MakeTLE(makeResdom(attno,
 												   atttype,

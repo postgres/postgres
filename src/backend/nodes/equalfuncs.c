@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.12 1998/01/07 21:03:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.13 1998/01/20 22:11:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,8 @@ _equalVar(Var *a, Var *b)
 	if (a->varattno != b->varattno)
 		return (false);
 	if (a->vartype != b->vartype)
+		return (false);
+	if (a->varlevelsup != b->varlevelsup)
 		return (false);
 	if (a->varnoold != b->varnoold)
 		return (false);

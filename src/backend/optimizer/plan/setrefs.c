@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.15 1998/01/15 18:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.16 1998/01/20 22:11:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,6 +440,7 @@ replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
 		return (makeVar(OUTER,
 						outer_resdom->resno,
 						var->vartype,
+						0,
 						var->varnoold,
 						var->varoattno));
 	}
@@ -453,6 +454,7 @@ replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
 			return (makeVar(INNER,
 							inner_resdom->resno,
 							var->vartype,
+							0,
 							var->varnoold,
 							var->varoattno));
 		}
@@ -497,6 +499,7 @@ tlist_temp_references(Oid tempid,
 					   (Node *) makeVar(tempid,
 										xtl->resdom->resno,
 										xtl->resdom->restype,
+										0,
 										tempid,
 										oattno));
 

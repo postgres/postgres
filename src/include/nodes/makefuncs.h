@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.5 1997/09/08 02:37:15 momjian Exp $
+ * $Id: makefuncs.h,v 1.6 1998/01/20 22:12:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@ extern Var *
 makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
+		Index varlevelsup,
 		Index varnoold,
 		AttrNumber varoattno);
 

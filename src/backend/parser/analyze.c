@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.67 1998/01/20 05:04:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.68 1998/01/20 22:11:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	qry->rtable = pstate->p_rtable;
-	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
+	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
@@ -320,7 +320,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
-	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
+	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
@@ -816,7 +816,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qry->rtable = pstate->p_rtable;
 
-	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
+	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.17 1998/01/05 16:38:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.18 1998/01/20 22:10:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -494,6 +494,7 @@ tg_replaceNumberedParam(Node *expression,
 							newVar = makeVar(rt_ind,
 											 0, /* the whole tuple */
 										   TypeGet(teeRelName, &defined),
+										     0,
 											 rt_ind,
 											 0);
 							return (Node *) newVar;
@@ -503,6 +504,7 @@ tg_replaceNumberedParam(Node *expression,
 											 1, /* just the first field,
 												 * which is 'result' */
 										   TypeGet(teeRelName, &defined),
+										     0,
 											 rt_ind,
 											 0);
 						return (Node *) newVar;
