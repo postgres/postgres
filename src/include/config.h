@@ -9,7 +9,7 @@
 #define BLCKSZ	8192
 
 /* Define to enable readline/history support in psql */
-#define HAVE_LIBREADLINE 
+/* #undef HAVE_LIBREADLINE */
 
 /* These two defines are not used until HAVE_LIBREADLINE
  * are also defined
@@ -17,6 +17,11 @@
  * Define if <readline.h> vs <readline/readline.h> 
  */
 /* #undef HAVE_READLINE_H */
+
+/* Define one for either <history.h> or <readline/history.h> 
+ */
+/* #undef HAVE_HISTORY_H */
+/* #undef HAVE_READLINE_HISTORY_H */
 
 
 #define HAVE_SYS_SELECT_H
@@ -50,7 +55,6 @@
 #  define USE_POSIX_SIGNALS
 #  define DISABLE_XOPEN_NLS 
 #  define HAS_LONG_LONG
-#  define NEED_ISINF
 #  define NEED_UNION_SEMUN 
 #  define HAS_TEST_AND_SET
 #  include <sys/mman.h>  /* for msemaphore */
