@@ -4,37 +4,38 @@
 -	- thomas 1998-02-24
 -->
 
- <Chapter Id="newuser">
-  <Title>Adding and Deleting Users</Title>
+ <chapter id="newuser">
+  <title>Adding and Deleting Users</title>
 
-  <Para>
-   <Application>createuser</Application> enables specific users to access
-   <ProductName>Postgres</ProductName>.  
-   <Application>destroyuser</Application> removes  users  and
-   prevents them from accessing <ProductName>Postgres</ProductName>.  
-   Note that these
-   commands only affect users with  respect  to  
-   <ProductName>Postgres</ProductName>;
-   they  have  no  effect on users other privileges or status with regards
-   to the underlying 
-   operating system.
-  </Para>
- </Chapter>
+  <para>
+   <application>createuser</application> enables specific users to access
+   <productname>Postgres</productname>.  
+   <application>destroyuser</application> removes  users  and
+   prevents them from accessing <productname>Postgres</productname>.
+  </para>
 
- <Chapter Id="disk">
-  <Title>Disk Management</Title>
+  <para>
+   These commands only affect users with  respect  to  
+   <productname>Postgres</productname>;
+   they  have  no effect on a user's other privileges or status with regards
+   to the underlying  operating system.
+  </para>
+ </chapter>
 
-  <Sect1>
-   <Title>Alternate Locations</Title>
+ <chapter id="disk">
+  <title>Disk Management</title>
 
-   <Para>
+  <sect1>
+   <title>Alternate Locations</title>
+
+   <para>
     It is possible to create a database in a location other than the default
     location for the installation. Remember that all database access actually
     occurs through the database backend, so that any location specified must
     be accessible by the backend.
    </para>
 
-   <Para>
+   <para>
     Alternate database locations are created and referenced by an environment variable
     which gives the absolute path to the intended storage location.
     This environment variable must have been defined before the backend was started
@@ -44,45 +45,45 @@
     to avoid confusion and conflict with other variables.
    </para>
 
-   <Note>
-    <Para>
-     In previous versions of <ProductName>Postgres</ProductName>, 
+   <note>
+    <para>
+     In previous versions of <productname>Postgres</productname>, 
      it was also permissable to use an absolute path name
      to specify an alternate storage location.
      The environment variable style of specification
      is to be preferred since it allows the site administrator more flexibility in
      managing disk storage.
      If you prefer using absolute paths, you may do so by defining 
-     "ALLOW_ABSOLUTE_DBPATHS" and recompiling <ProductName>Postgres</ProductName>
+     "ALLOW_ABSOLUTE_DBPATHS" and recompiling <productname>Postgres</productname>
      To do this, either add this line
 
-     <ProgramListing>
+     <programlisting>
 #define ALLOW_ABSOLUTE_DBPATHS 1
-     </ProgramListing>
+     </programlisting>
 
      to the file <filename>src/include/config.h</filename>, or by specifying
 
-     <ProgramListing>
+     <programlisting>
  CFLAGS+= -DALLOW_ABSOLUTE_DBPATHS
-     </ProgramListing>
+     </programlisting>
 
      in your <filename>Makefile.custom</filename>.
-    </Para>
-   </Note>
+    </para>
+   </note>
 
-   <Para>
+   <para>
     Remember that database creation is actually performed by the database backend.
     Therefore, any environment variable specifying an alternate location must have
     been defined before the backend was started. To define an alternate location
     PGDATA2 pointing to <filename>/home/postgres/data</filename>, first type
 
-    <ProgramListing>
+    <programlisting>
 % setenv PGDATA2 /home/postgres/data
-    </ProgramListing>
+    </programlisting>
 
     to define the environment variable to be used with subsequent commands.
     Usually, you will want to define this variable in the 
-    <ProductName>Postgres</ProductName> superuser's
+    <productname>Postgres</productname> superuser's
     <filename>.profile</filename>
     or
     <filename>.cshrc</filename>
@@ -93,187 +94,33 @@
     overwriting other variables.
    </para>
 
-   <Para>
+   <para>
     To create a data storage area in PGDATA2, ensure
     that <filename>/home/postgres</filename> already exists and is writable 
     by the postgres administrator.
     Then from the command line, type
 
-    <ProgramListing>
+    <programlisting>
 % setenv PGDATA2 /home/postgres/data
 % initlocation $PGDATA2
 Creating Postgres database system directory /home/postgres/data
 
 Creating Postgres database system directory /home/postgres/data/base
 
-    </ProgramListing>
+    </programlisting>
 
    </para>
-   <Para>
-    To test the new location, create a database <Database>test</Database> by typing
+   <para>
+    To test the new location, create a database <database>test</database> by typing
 
-    <ProgramListing>
+    <programlisting>
 % createdb -D PGDATA2 test
 % destroydb test
-    </ProgramListing>
+    </programlisting>
 
    </para>
-  </Sect1>
- </Chapter>
-
- <Chapter Id="manage-ag">
-  <Title>Managing a Database</Title>
-
-  <Para>
-   Now that <ProductName>Postgres</ProductName> is up and running we can create
-   some databases  to  experiment  with.  Here, we describe the
-   basic commands for managing a database.
-  </Para>
-
-  <Sect1>
-   <Title>Creating a Database</Title>
-
-   <Para>
-    Let's say you want to create  a  database  named  mydb.
-    You can do this with the following command:
-
-    <ProgramListing>
-% createdb mydb
-    </ProgramListing>
-
-    <ProductName>Postgres</ProductName>  allows  you to create 
-    any number of databases
-    at a  given  site  and  you  automatically  become  the
-    database  administrator  of  the database you just created.  
-    Database names must  have  an  alphabetic  first
-    character and are limited to 16 characters in length.
-    Not  every  user has authorization to become a database
-    administrator.  If <ProductName>Postgres</ProductName> 
-    refuses to create databases
-    for you, then the site administrator needs to grant you
-    permission to  create  databases.   Consult  your  site
-    administrator if this occurs.
-   </Para>
-  </Sect1>
-
-  <Sect1>
-   <Title>Accessing a Database</Title>
-
-   <Para>
-    Once you have constructed a database, you can access it
-    by:
-
-    <ItemizedList Mark="bullet" Spacing="compact">
-     <ListItem>
-      <Para>
-       running the <ProductName>Postgres</ProductName>  terminal  monitor  program 
-       (<Application>psql</Application>) which allows you to interactively
-       enter, edit, and execute <Acronym>SQL</Acronym> commands.
-      </Para>
-     </ListItem>
-     <ListItem>
-      <Para>
-       writing a  C  program  using  the  <literal>libpq</literal>  subroutine
-       library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
-       from C and get answers and status messages  back  to
-       your  program.   This interface is discussed further
-       in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
-      </Para>
-     </ListItem>
-    </ItemizedList>
-
-    You might want to start up <Application>psql</Application>, 
-    to try out  the  examples  in  this manual. It can be activated for the mydb
-    database by typing the command:
-
-    <ProgramListing>
-% psql mydb
-    </ProgramListing>
-
-    You will be greeted with the following message:
-    <ProgramListing>
-Welcome to the Postgres interactive sql monitor:
-
-  type \? for help on slash commands
-  type \q to quit
-  type \g or terminate with semicolon to execute query
-You are currently connected to the database: mydb
-
-mydb=>
-    </ProgramListing>
-   </Para>
-
-   <Para>
-    This prompt indicates that the terminal monitor is listening  
-    to you and that you can type <Acronym>SQL</Acronym> queries into a
-    workspace maintained by the terminal monitor.
-    The <Application>psql</Application> program responds to escape
-    codes  that  begin
-    with  the  backslash  character, "\".  For example, you
-    can get help on the syntax of various 
-    <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> commands by typing:
-
-    <ProgramListing>
-mydb=> \h
-    </ProgramListing>
-
-    Once  you  have finished entering your queries into the
-    workspace, you can pass the contents of  the  workspace
-    to the <ProductName>Postgres</ProductName> server by typing:
-
-    <ProgramListing>
-mydb=> \g
-    </ProgramListing>
-
-    This  tells  the  server  to process the query.  If you
-    terminate your query with a semicolon, the  backslash-g is  not
-    necessary.   <Application>psql</Application> will automatically 
-    process semicolon terminated queries.
-    To read queries from a file,  say  myFile,  instead  of
-    entering them interactively, type:
-
-    <ProgramListing>
-mydb=> \i fileName
-    </ProgramListing>
-
-    To get out of <Application>psql</Application> and return to UNIX, type
-
-    <ProgramListing>
-mydb=> \q
-    </ProgramListing>
-
-    and  <Application>psql</Application>  will  quit  and  return  
-    you to your command
-    shell. (For more escape codes, type backslash-h at  the  monitor
-    prompt.)
-    White  space  (i.e.,  spaces, tabs and newlines) may be
-    used freely in <Acronym>SQL</Acronym> queries.  
-    Single-line comments  are  denoted  by two dashes
-    (<Quote>--</Quote>).   Everything  after the dashes up to the end of the
-    line is ignored. Multiple-line comments, and comments within a line,
-    are denoted by <Quote>/* ... */</Quote>, a convention borrowed
-    from <productname>Ingres</productname>.
-   </Para>
-  </Sect1>
-     
-  <Sect1>
-   <Title>Destroying a Database</Title>
-
-   <Para>
-    If you are the database administrator for the  database
-    mydb,  you can destroy it using the following UNIX command:
-
-    <ProgramListing>
-% destroydb mydb
-    </ProgramListing>
-
-    This action physically removes all of  the  UNIX  files
-    associated  with  the database and cannot be undone, so
-    this should only be done with a  great  deal  of  forethought.
-   </Para>
-  </Sect1>
-
- </Chapter>
+  </sect1>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

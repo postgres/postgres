@@ -1,0 +1,297 @@
+ <chapter id="manage-ag">
+  <title>Managing a Database</title>
+
+  <para>
+   If the <productname>Postgres</productname>
+   <application>postmaster</application> is up and running we can create
+   some databases  to  experiment  with.  Here, we describe the
+   basic commands for managing a database.
+  </para>
+
+  <sect1>
+   <title>Creating a Database</title>
+
+   <para>
+    Let's say you want to create  a  database  named  mydb.
+    You can do this with the following command:
+
+    <programlisting>
+% createdb <replaceable class="parameter">dbname</replaceable>
+    </programlisting>
+
+    <productname>Postgres</productname>  allows  you to create 
+    any number of databases
+    at a  given  site  and  you  automatically  become  the
+    database  administrator  of  the database you just created.  
+    Database names must  have  an  alphabetic  first
+    character and are limited to 16 characters in length.
+    Not  every  user has authorization to become a database
+    administrator.  If <productname>Postgres</productname> 
+    refuses to create databases
+    for you, then the site administrator needs to grant you
+    permission to  create  databases.   Consult  your  site
+    administrator if this occurs.
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Accessing a Database</title>
+
+   <para>
+    Once you have constructed a database, you can access it
+    by:
+
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       running the <productname>Postgres</productname>  terminal  monitor  program 
+       (<application>psql</application>) which allows you to interactively
+       enter, edit, and execute <acronym>SQL</acronym> commands.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       writing a  C  program  using  the  <literal>libpq</literal>  subroutine
+       library.   This  allows  you  to submit <acronym>SQL</acronym> commands
+       from C and get answers and status messages  back  to
+       your  program.   This interface is discussed further
+       in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    You might want to start up <application>psql</application>, 
+    to try out  the  examples  in  this manual. It can be activated for the
+    <replaceable class="parameter">dbname</replaceable> database by typing the command:
+
+    <programlisting>
+% psql <replaceable class="parameter">dbname</replaceable>
+    </programlisting>
+
+    You will be greeted with the following message:
+
+    <programlisting>
+Welcome to the Postgres interactive sql monitor:
+
+  type \? for help on slash commands
+  type \q to quit
+  type \g or terminate with semicolon to execute query
+You are currently connected to the database: <replaceable>dbname</replaceable>
+
+<replaceable>dbname</replaceable>=&gt;
+    </programlisting>
+   </para>
+
+   <para>
+    This prompt indicates that the terminal monitor is listening  
+    to you and that you can type <acronym>SQL</acronym> queries into a
+    workspace maintained by the terminal monitor.
+    The <application>psql</application> program responds to escape
+    codes  that  begin
+    with  the  backslash  character, "\".  For example, you
+    can get help on the syntax of various 
+    <productname>Postgres</productname> <acronym>SQL</acronym> commands by typing:
+
+    <programlisting>
+<replaceable>dbname</replaceable>=> \h
+    </programlisting>
+
+    Once  you  have finished entering your queries into the
+    workspace, you can pass the contents of  the  workspace
+    to the <productname>Postgres</productname> server by typing:
+
+    <programlisting>
+<replaceable>dbname</replaceable>=> \g
+    </programlisting>
+
+    This  tells  the  server  to process the query.  If you
+    terminate your query with a semicolon, the  backslash-g is  not
+    necessary.   <application>psql</application> will automatically 
+    process semicolon terminated queries.
+    To read queries from a file,  instead  of
+    entering them interactively, type:
+
+    <programlisting>
+<replaceable>dbname</replaceable>=> \i <replaceable class="parameter">filename</replaceable>
+    </programlisting>
+
+    To get out of <application>psql</application> and return to UNIX, type
+
+    <programlisting>
+<replaceable>dbname</replaceable>=&gt; \q
+    </programlisting>
+
+    and  <application>psql</application>  will  quit  and  return  
+    you to your command shell. (For more escape codes, type
+    backslash-h at  the  monitor prompt.)
+    White  space  (i.e.,  spaces, tabs and newlines) may be
+    used freely in <acronym>SQL</acronym> queries.  
+    Single-line comments  are  denoted  by two dashes
+    (<quote>--</quote>).   Everything  after the dashes up to the end of the
+    line is ignored. Multiple-line comments, and comments within a line,
+    are denoted by <quote>/* ... */</quote>, a convention borrowed
+    from <productname>Ingres</productname>.
+   </para>
+  </sect1>
+     
+  <sect1>
+   <title>Destroying a Database</title>
+
+   <para>
+    If you are the database administrator for the  database
+    mydb,  you can destroy it using the following UNIX command:
+
+    <programlisting>
+% destroydb <replaceable class="parameter">dbname</replaceable>
+    </programlisting>
+
+    This action physically removes all of  the  UNIX  files
+    associated  with  the database and cannot be undone, so
+    this should only be done with a  great  deal  of  forethought.
+   </para>
+
+   <para>
+    It is also possible to destroy a database from within an
+    <acronym>SQL</acronym> session by using
+
+    <programlisting>
+&gt; drop database <replaceable class="parameter">dbname</replaceable>
+    </programlisting>
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Backup and Restore</title>
+
+   <caution>
+    <para>
+     Every database should be backed up on a regular basis. Since
+     <productname>Postgres</productname> manages it's own files in the
+     file system, it is <emphasis>not advisable</emphasis> to rely on
+     system backups of your file system for your database backups;
+     there is no guarantee that the files will be in a usable,
+     consistant state after restoration.
+    </para>
+   </caution>
+
+   <para>
+    <productname>Postgres</productname> provides two utilities to
+    backup your system: <application>pg_dump</application> to backup
+    individual databases and
+    <application>pg_dumpall</application> to backup your installation
+    in one step.
+   </para>
+
+   <para>
+    An individual database can be backed up using the following
+    command:
+
+    <programlisting>
+% pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">dbname</replaceable>.pgdump
+    </programlisting>
+
+    and can be restored using
+
+    <programlisting>
+cat <replaceable class="parameter">dbname</replaceable>.pgdump | psql <replaceable class="parameter">dbname</replaceable>
+    </programlisting>
+   </para>
+
+   <para>
+    This technique can be used to move databases to new
+    locations, and to rename existing databases.
+   </para>
+
+   <sect2>
+    <title>Large Databases</title>
+
+    <note>
+     <title>Author</title>
+     <para>
+      Written by <ulink url="hannu@trust.ee">Hannu Krosing</ulink> on
+      1999-06-19.
+     </para>
+    </note>
+
+    <para>
+     Since <productname>Postgres</productname> allows tables larger
+     than the maximum file size on your system, it can be problematic
+     to dump the table to a file, since the resulting file will likely 
+     be larger than the maximum size allowed by your system.</para>
+
+    <para>
+     As <application>pg_dump</application> writes to stdout,
+     you can just use standard *nix tools 
+     to work around this possible problem:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	Use compressed dumps:
+
+	<programlisting>
+% pg_dump <replaceable class="parameter">dbname</replaceable> | gzip > <replaceable class="parameter">filename</replaceable>.dump.gz
+	</programlisting>
+
+	reload with
+
+	<programlisting>
+% createdb <replaceable class="parameter">dbname</replaceable>
+% gunzip -c <replaceable class="parameter">filename</replaceable>.dump.gz | psql <replaceable class="parameter">dbname</replaceable>
+	</programlisting>
+
+or
+
+	<programlisting>
+% cat <replaceable class="parameter">filename</replaceable>.dump.gz | gunzip | psql <replaceable class="parameter">dbname</replaceable>
+	</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Use split:
+
+	<programlisting>
+% pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <replaceable class="parameter">filename</replaceable>.dump.
+	</programlisting>
+
+reload with
+
+	<programlisting>
+% createdb <replaceable class="parameter">dbname</replaceable>
+% cat <replaceable class="parameter">filename</replaceable>.dump.* | pgsql <replaceable class="parameter">dbname</replaceable>
+	</programlisting>
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     Of course, the name of the file
+     (<replaceable class="parameter">filename</replaceable>) and the
+     content of the <application>pg_dump</application> output need not 
+     match the name of the database. Also, the restored database can
+     have an arbitrary new name, so this mechanism is also suitable
+     for renaming databases.
+   </sect2>
+  </sect1>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->

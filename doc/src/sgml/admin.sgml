@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.15 1999/06/03 04:21:47 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.16 1999/06/23 06:15:13 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
 
 $Log: admin.sgml,v $
+Revision 1.16  1999/06/23 06:15:13  thomas
+Add backup/restore info to Admin Guide.
+Split management chapter from start-ag.sgml to manage-ag.sgml.
+
 Revision 1.15  1999/06/03 04:21:47  thomas
 Markup changes for v6.5 release.
 Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
@@ -54,28 +58,29 @@ Bigger updates to the installation instructions (install and config).
 
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 
-<!entity about    SYSTEM "about.sgml">
-<!entity history  SYSTEM "history.sgml">
-<!entity info     SYSTEM "info.sgml">
-<!entity legal    SYSTEM "legal.sgml">
-<!entity notation SYSTEM "notation.sgml">
-<!entity y2k      SYSTEM "y2k.sgml">
+<!entity about     SYSTEM "about.sgml">
+<!entity history   SYSTEM "history.sgml">
+<!entity info      SYSTEM "info.sgml">
+<!entity legal     SYSTEM "legal.sgml">
+<!entity notation  SYSTEM "notation.sgml">
+<!entity y2k       SYSTEM "y2k.sgml">
 
-<!entity config   SYSTEM "config.sgml">
-<!entity intro-ag SYSTEM "intro-ag.sgml">
-<!entity install  SYSTEM "install.sgml">
-<!entity installw SYSTEM "install-win32.sgml">
-<!entity layout   SYSTEM "layout.sgml">
-<!entity ports    SYSTEM "ports.sgml">
-<!entity recovery SYSTEM "recovery.sgml">
-<!entity regress  SYSTEM "regress.sgml">
-<!entity release  SYSTEM "release.sgml">
-<!entity runtime  SYSTEM "runtime.sgml">
-<!entity security SYSTEM "security.sgml">
-<!entity start-ag SYSTEM "start-ag.sgml">
-<!entity trouble  SYSTEM "trouble.sgml">
+<!entity config    SYSTEM "config.sgml">
+<!entity intro-ag  SYSTEM "intro-ag.sgml">
+<!entity install   SYSTEM "install.sgml">
+<!entity installw  SYSTEM "install-win32.sgml">
+<!entity layout    SYSTEM "layout.sgml">
+<!entity manage-ag SYSTEM "manage-ag.sgml">
+<!entity ports     SYSTEM "ports.sgml">
+<!entity recovery  SYSTEM "recovery.sgml">
+<!entity regress   SYSTEM "regress.sgml">
+<!entity release   SYSTEM "release.sgml">
+<!entity runtime   SYSTEM "runtime.sgml">
+<!entity security  SYSTEM "security.sgml">
+<!entity start-ag  SYSTEM "start-ag.sgml">
+<!entity trouble   SYSTEM "trouble.sgml">
 
-<!entity biblio   SYSTEM "biblio.sgml">
+<!entity biblio    SYSTEM "biblio.sgml">
 ]>
 
 <Book Id="admin">
@@ -157,6 +162,7 @@ Your name here...
   &runtime;
   &security;
   &start-ag;
+  &manage-ag;
   &trouble;
   &recovery;
   &regress;

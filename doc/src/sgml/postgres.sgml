@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.27 1999/06/03 04:21:49 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.28 1999/06/23 06:15:12 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.28  1999/06/23 06:15:12  thomas
+Add backup/restore info to Admin Guide.
+Split management chapter from start-ag.sgml to manage-ag.sgml.
+
 Revision 1.27  1999/06/03 04:21:49  thomas
 Markup changes for v6.5 release.
 Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
@@ -136,19 +140,20 @@ Move SQL reference pages up into the User's Guide.
 %allfiles;
 
 <!-- administrator's guide -->
-<!entity config   SYSTEM "config.sgml">
-<!entity install  SYSTEM "install.sgml">
-<!entity installw SYSTEM "install-win32.sgml">
-<!entity intro-ag SYSTEM "intro-ag.sgml">
-<!entity layout   SYSTEM "layout.sgml">
-<!entity ports    SYSTEM "ports.sgml">
-<!entity runtime  SYSTEM "runtime.sgml">
-<!entity recovery SYSTEM "recovery.sgml">
-<!entity regress  SYSTEM "regress.sgml">
-<!entity release  SYSTEM "release.sgml">
-<!entity security SYSTEM "security.sgml">
-<!entity start-ag SYSTEM "start-ag.sgml">
-<!entity trouble  SYSTEM "trouble.sgml">
+<!entity config    SYSTEM "config.sgml">
+<!entity intro-ag  SYSTEM "intro-ag.sgml">
+<!entity install   SYSTEM "install.sgml">
+<!entity installw  SYSTEM "install-win32.sgml">
+<!entity layout    SYSTEM "layout.sgml">
+<!entity manage-ag SYSTEM "manage-ag.sgml">
+<!entity ports     SYSTEM "ports.sgml">
+<!entity recovery  SYSTEM "recovery.sgml">
+<!entity regress   SYSTEM "regress.sgml">
+<!entity release   SYSTEM "release.sgml">
+<!entity runtime   SYSTEM "runtime.sgml">
+<!entity security  SYSTEM "security.sgml">
+<!entity start-ag  SYSTEM "start-ag.sgml">
+<!entity trouble   SYSTEM "trouble.sgml">
 
 <!-- programmer's guide -->
 <!entity intro-pg SYSTEM "intro-pg.sgml">
@@ -266,6 +271,7 @@ Your name here...
    </Para>
   </PartIntro>
 
+  &intro;
   &syntax;
   &datatype;
   &oper;
@@ -302,6 +308,7 @@ Your name here...
    &runtime;
    &security;
    &start-ag;
+   &manage-ag;
    &trouble;
    &recovery;
    &regress;
@@ -379,7 +386,6 @@ Your name here...
     Introduction for new users.
    </Para>
   </PartIntro>
-   &intro;
    &sql;
    &arch;
    &start;
