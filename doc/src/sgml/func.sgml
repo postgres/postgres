@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.65 2001/08/14 22:21:58 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.66 2001/08/15 07:10:12 ishii Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -927,6 +927,20 @@
       <entry>Returns the character with the given <acronym>ASCII</acronym> code.</entry>
       <entry>chr(65)</entry>
       <entry>A</entry>
+     </row>
+
+     <row>
+      <entry>convert(<parameter>string</parameter> <type>text</type>,
+      [<parameter>src_encoding</parameter> <type>name</type>,]
+      <parameter>dest_encoding</parameter> <type>name</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Converts string using <parameter>dest_encoding</parameter>.
+      The original encoding is specified by <parameter>src_encoding</parameter>.
+      If <parameter>src_encoding</parameter> is omitted, database encoding
+      is assumed.
+      </entry>
+      <entry>convert('text_in_unicode','UNICODE','LATIN1')</entry>
+      <entry>text_in_unicode (represented in ISO-8859-1)</entry>
      </row>
 
      <row>
