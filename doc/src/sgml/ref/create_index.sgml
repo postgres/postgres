@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.48 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.49 2004/07/12 01:22:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -251,6 +251,15 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
    the table <literal>films</literal>:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title);
+</programlisting>
+  </para>
+
+  <para>
+   To create an index on the column <literal>code</> in the table
+   <literal>films</> and have the index reside in the tablespace
+   <literal>indexspace</>:
+<programlisting>
+CREATE INDEX code_idx ON films(code) TABLESPACE indexspace;
 </programlisting>
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.82 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.83 2004/07/12 01:22:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -821,6 +821,18 @@ CREATE TABLE distributors (
     name    varchar(40),
     UNIQUE(name)
 );
+</programlisting>
+  </para>
+
+  <para>
+   Create table <structname>cinemas</> in tablespace <structname>diskvol1</>:
+
+<programlisting>
+CREATE TABLE cinemas (
+	id serial,
+	name text,
+	location text
+) TABLESPACE diskvol1;
 </programlisting>
   </para>
 

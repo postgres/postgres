@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.39 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.40 2004/07/12 01:22:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -169,6 +169,26 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
 <programlisting>
 CREATE DATABASE lusiadas;
+</programlisting>
+  </para>
+
+  <para>
+
+  <para>
+   To create a database <literal>sales</> owned by user <literal>salesapp</>>
+   with a default tablespace of <literal>salesspace</>:
+
+<programlisting>
+CREATE DATABASE sales OWNER salesapp TABLESPACE salesspace;
+</programlisting>
+  </para>
+
+  <para>
+   To create a database <literal>music</> which supports the ISO-8859-1 
+   character set:
+
+<programlisting>
+CREATE DATABASE music ENCODING 'LATIN1';
 </programlisting>
   </para>
  </refsect1>

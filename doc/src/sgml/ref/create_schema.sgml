@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.13 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.14 2004/07/12 01:22:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -160,6 +160,16 @@ CREATE VIEW hollywood.winners AS
     SELECT title, release FROM hollywood.films WHERE awards IS NOT NULL;
 </programlisting>
   </para>
+
+  <para>
+   Create a schema <literal>sales</> whose tables, indexes and sequences
+   will be stored in the tablespace <literal>mirrorspace</> by default:
+
+<programlisting>
+CREATE SCHEMA sales TABLESPACE mirrorspace;
+</programlisting>
+  </para>
+
  </refsect1>
 
  <refsect1>
