@@ -1,4 +1,4 @@
-<BIBLIOGRAPHY>
+<BIBLIOGRAPHY Id="biblio">
 <Title><Acronym>SQL</Acronym> References</Title>
 
 <Para>
@@ -167,7 +167,7 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
-<BOOKBIBLIO ID="REFERENCE">
+<BOOKBIBLIO ID="POSTGRES-REFERENCE">
 -->
 <TITLE>The <ProductName>PostgreSQL</ProductName> Reference Manual</TITLE>
 <Editor>
@@ -205,7 +205,7 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="REFERENCE">
+<BIBLIOENTRY ID="POSTGRES-USERS">
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 

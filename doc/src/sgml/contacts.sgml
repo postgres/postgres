@@ -1,13 +1,25 @@
-<Appendix label="B">
+<Appendix Label="B" Id="contacts">
 <Title>Contacts</Title>
 
-<Sect1>
-<Title>Introduction</Title>
+<!--
 <Para>
+Support for <productname>Postgres</productname> comes primarily from
+this printed documentation, the web-based mailing list archives,
+and the mailing lists themselves.
 </Para>
 
-<Sect1>
+<Sect1 id="mailing-list">
+<Title>Mailing Lists</Title>
+
+<Para>
+Refer to the introduction in this manual or to the
+<ulink url="postgresql.org"><productname>Postgres</productname> web page</ulink>
+ for subscription information to the no-cost mailing lists.
+</Para>
+
+<Sect1 id="people">
 <Title>People</Title>
+-->
 
 <Para>
 <ItemizedList Mark="bullet" Spacing="compact">

@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="pgtcl">
 <Title>pgtcl</Title>
 
 <Para>
@@ -516,6 +516,8 @@ parameter, the request is established, or the command string of an already
 existing request is replaced.  With no callbackCommand parameter, a prior
 request is canceled.
 </PARA>
+
+<para>
 After a <PARA><FUNCTION>pg_listen</FUNCTION> request is established,
 the specified command string is executed whenever a NOTIFY message bearing
 the given name arrives from the backend.  This occurs when any

@@ -73,7 +73,7 @@
 <!entity contacts SYSTEM "contacts.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
-<Book>
+<Book Id="postgres">
 
 <!-- Title information -->
 

@@ -13,7 +13,7 @@
 <!entity biblio     SYSTEM "biblio.sgml">
 <!entity contacts   SYSTEM "contacts.sgml">
 ]>
-<Book>
+<Book Id="reference">
 
 <!-- Title information -->
 
@@ -80,7 +80,7 @@ Your name here...
 </Dedication>
 -->
 
-<Preface>
+<Preface Id="preface">
 <Title>Summary</Title>
 
 <Para>
@@ -104,7 +104,8 @@ It provides SQL92/SQL3 language support,
 &contacts;
 &biblio;
 
-<INDEX> </INDEX>
+<index Id="index">
+</index>
 
 </Book>
 

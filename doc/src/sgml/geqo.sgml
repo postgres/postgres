@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="geqo">
 <DocInfo>
 <Author>
 <FirstName>Martin</FirstName>
@@ -274,7 +274,7 @@ Suggestions are welcome :-(
 Enable bushy query tree processing within <ProductName>Postgres</ProductName>;
 that may improve the quality of query plans.
 
-<BIBLIOGRAPHY>
+<BIBLIOGRAPHY Id="geqo-references">
 <TITLE>
 References
 </TITLE>

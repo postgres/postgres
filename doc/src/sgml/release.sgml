@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="release">
 <Title>Release Notes</Title>
 
 <Para>
@@ -228,7 +228,7 @@ Old-style <quote>time travel</quote> has been removed. Performance has been impr
 <note>
 <para>
 Bruce Momjian wrote the following notes to introduce the new release.
-<note>
+</note>
 
 <para>
 There are some general 6.3 issues that I want to mention.  These are

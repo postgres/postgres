@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="ports">
 <Title>Ports</Title>
 
 <Sect1>
@@ -6,7 +6,7 @@
 
 <Para>
      <ProductName>Postgres</ProductName>  is  available  free  of charge. This manual
-     describes version 6.3 of <ProductName>Postgres</ProductName>.  The authors  have
+     describes version 6.4 of <ProductName>Postgres</ProductName>.  The authors  have
      compiled  and  tested <ProductName>Postgres</ProductName> on the following 
      platforms:
 
@@ -53,6 +53,13 @@
     <ENTRY>v6.3</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
     <ENTRY>(<ULink url="mailto:brook@trillium.NMSU.Edu">Brook Milligan</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD 1.3</ENTRY>
+    <ENTRY>NS32532</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-07-20</ENTRY>
+    <ENTRY>(<ULink url="mailto:phil@steelhead.cs.wwu.edu">Phil Nelson</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>NetBSD 1.3</ENTRY>
