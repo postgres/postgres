@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.269 2004/07/11 00:18:40 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.270 2004/07/24 19:51:22 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1769,12 +1769,13 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
 	<productname>PostgreSQL</productname> supports several methods
-	 for loggning, including <systemitem>stderr</systemitem> and
+	 for logging server messages, including
+	 <systemitem>stderr</systemitem> and
 	 <systemitem>syslog</systemitem>. On Windows, 
 	 <systemitem>eventlog</systemitem> is also supported. Set this
-	 option to a list of desired log destinations separated by a
-	 comma. The default is to log to <systemitem>stderr</systemitem> 
-	 only. This option must be set at server start.
+	 option to a list of desired log destinations separated by
+	 commas. The default is to log to <systemitem>stderr</systemitem> 
+	 only.
        </para>
       </listitem>
      </varlistentry>
@@ -1783,15 +1784,16 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>syslog_facility</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-          This option determines the <application>syslog</application>
-          <quote>facility</quote> to be used when logging via
-          <application>syslog</application> is enabled. You may choose
+          If logging to <application>syslog</> is enabled, this option
+          determines the <application>syslog</application>
+          <quote>facility</quote> to be used.  You may choose
           from <literal>LOCAL0</>, <literal>LOCAL1</>,
           <literal>LOCAL2</>, <literal>LOCAL3</>, <literal>LOCAL4</>,
           <literal>LOCAL5</>, <literal>LOCAL6</>, <literal>LOCAL7</>;
           the default is <literal>LOCAL0</>. See also the
           documentation of your system's
-          <application>syslog</application>.
+          <application>syslog</application> daemon.
+	  This option can only be set at server start.
         </para>
        </listitem>
      </varlistentry>
@@ -1803,8 +1805,9 @@ SET ENABLE_SEQSCAN TO OFF;
          If logging to <application>syslog</> is enabled, this option
          determines the program name used to identify
          <productname>PostgreSQL</productname> messages in
-         <application>syslog</application> log messages. The default is
+         <application>syslog</application> logs. The default is
          <literal>postgres</literal>.
+	  This option can only be set at server start.
         </para>
        </listitem>
       </varlistentry>

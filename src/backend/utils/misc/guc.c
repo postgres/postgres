@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.223 2004/07/21 20:34:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.224 2004/07/24 19:51:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1625,8 +1625,8 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_destination", PGC_POSTMASTER, LOGGING_WHERE,
-		 gettext_noop("Sets the target for log output."),
+		{"log_destination", PGC_SIGHUP, LOGGING_WHERE,
+		 gettext_noop("Sets the destination for server log output."),
 		 gettext_noop("Valid values are combinations of stderr, syslog "
 					  "and eventlog, depending on platform."),
 		 GUC_LIST_INPUT
@@ -5099,14 +5099,11 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 		}
 	}
 
+	if (doit)
+		Log_destination = newlogdest;
+
 	pfree(rawstring);
 	list_free(elemlist);
-
-	/* If we aren't going to do the assignment, just return OK indicator. */
-	if (!doit)
-		return value;
-
-	Log_destination = newlogdest;
 
 	return value;
 }
