@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.h,v 1.9 2000/01/26 05:58:20 momjian Exp $
+ * $Id: geqo_pool.h,v 1.10 2000/09/19 18:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@
 extern Pool *alloc_pool(int pool_size, int string_length);
 extern void free_pool(Pool *pool);
 
-extern void random_init_pool(Query *root, Pool *pool, int strt, int stop);
+extern void random_init_pool(Query *root, List *initial_rels,
+							 Pool *pool, int strt, int stop);
 extern Chromosome *alloc_chromo(int string_length);
 extern void free_chromo(Chromosome *chromo);
 

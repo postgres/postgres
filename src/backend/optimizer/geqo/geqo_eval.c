@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.54 2000/09/12 21:06:50 tgl Exp $
+ * $Id: geqo_eval.c,v 1.55 2000/09/19 18:42:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
  * Returns cost of a query tree as an individual of the population.
  */
 Cost
-geqo_eval(Query *root, Gene *tour, int num_gene)
+geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 {
 	MemoryContext mycontext;
 	MemoryContext oldcxt;
@@ -64,7 +64,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 	savelist = root->join_rel_list;
 
 	/* construct the best path for the given combination of relations */
-	joinrel = gimme_tree(root, tour, 0, num_gene, NULL);
+	joinrel = gimme_tree(root, initial_rels, tour, num_gene, 0, NULL);
 
 	/*
 	 * compute fitness
@@ -86,35 +86,42 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 
 /*
  * gimme_tree
- *	  this program presumes that only LEFT-SIDED TREES are considered!
+ *	  this routine considers only LEFT-SIDED TREES!
  *
- * 'old_rel' is the preceding join
+ *	 'root' is the Query
+ *	 'initial_rels' is the list of initial relations (FROM-list items)
+ *	 'tour' is the proposed join order, of length 'num_gene'
+ *	 'rel_count' is number of initial_rels items already joined (initially 0)
+ *	 'old_rel' is the preceding join (initially NULL)
  *
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
 RelOptInfo *
-gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene,
-		   RelOptInfo *old_rel)
+gimme_tree(Query *root, List *initial_rels,
+		   Gene *tour, int num_gene,
+		   int rel_count, RelOptInfo *old_rel)
 {
 	RelOptInfo *inner_rel;		/* current relation */
-	int			base_rel_index;
+	int			init_rel_index;
 
 	if (rel_count < num_gene)
-	{							/* tree not yet finished */
+	{
+		/* tree not yet finished */
+		init_rel_index = (int) tour[rel_count];
 
-		/* tour[0] = 3; tour[1] = 1; tour[2] = 2 */
-		base_rel_index = (int) tour[rel_count];
-
-		inner_rel = (RelOptInfo *) nth(base_rel_index - 1, root->base_rel_list);
+		inner_rel = (RelOptInfo *) nth(init_rel_index - 1, initial_rels);
 
 		if (rel_count == 0)
-		{						/* processing first join with
-								 * base_rel_index = (int) tour[0] */
+		{
+			/* processing first join with init_rel_index = (int) tour[0] */
 			rel_count++;
-			return gimme_tree(root, tour, rel_count, num_gene, inner_rel);
+			return gimme_tree(root, initial_rels,
+							  tour, num_gene,
+							  rel_count, inner_rel);
 		}
 		else
-		{						/* tree main part */
+		{
+			/* tree main part */
 			List	   *acceptable_rels = lcons(inner_rel, NIL);
 			List	   *new_rels;
 			RelOptInfo *new_rel;
@@ -133,13 +140,14 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene,
 			}
 			new_rel = (RelOptInfo *) lfirst(new_rels);
 
-			rel_count++;
-			Assert(length(new_rel->relids) == rel_count);
-
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(new_rel);
 
-			return gimme_tree(root, tour, rel_count, num_gene, new_rel);
+			/* and recurse... */
+			rel_count++;
+			return gimme_tree(root, initial_rels,
+							  tour, num_gene,
+							  rel_count, new_rel);
 		}
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.23 2000/08/07 00:51:23 tgl Exp $
+ * $Id: geqo_main.c,v 1.24 2000/09/19 18:42:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,13 +65,12 @@ static int	gimme_number_generations(int pool_size, int effort);
  */
 
 RelOptInfo *
-geqo(Query *root)
+geqo(Query *root, int number_of_rels, List *initial_rels)
 {
 	int			generation;
 	Chromosome *momma;
 	Chromosome *daddy;
 	Chromosome *kid;
-	int			number_of_rels;
 	Pool	   *pool;
 	int			pool_size,
 				number_generations,
@@ -95,9 +94,6 @@ geqo(Query *root)
 
 #endif
 
-/* set tour size */
-	number_of_rels = length(root->base_rel_list);
-
 /* set GA parameters */
 	pool_size = gimme_pool_size(number_of_rels);
 	number_generations = gimme_number_generations(pool_size, Geqo_effort);
@@ -114,7 +110,7 @@ geqo(Query *root)
 	pool = alloc_pool(pool_size, number_of_rels);
 
 /* random initialization of the pool */
-	random_init_pool(root, pool, 0, pool->size);
+	random_init_pool(root, initial_rels, pool, 0, pool->size);
 
 /* sort the pool according to cheapest path as fitness */
 	sort_pool(pool);			/* we have to do it only one time, since
@@ -204,7 +200,8 @@ geqo(Query *root)
 
 
 		/* EVALUATE FITNESS */
-		kid->worth = geqo_eval(root, kid->string, pool->string_length);
+		kid->worth = geqo_eval(root, initial_rels,
+							   kid->string, pool->string_length);
 
 		/* push the kid into the wilderness of life according to its worth */
 		spread_chromo(kid, pool);
@@ -247,9 +244,10 @@ geqo(Query *root)
 
 	best_tour = (Gene *) pool->data[0].string;
 
-/* root->join_relation_list_ will be modified during this ! */
-	best_rel = (RelOptInfo *) gimme_tree(root, best_tour, 0,
-										 pool->string_length, NULL);
+/* root->join_rel_list will be modified during this ! */
+	best_rel = (RelOptInfo *) gimme_tree(root, initial_rels,
+										 best_tour, pool->string_length,
+										 0, NULL);
 
 /* DBG: show the query plan
 print_plan(best_plan, root);

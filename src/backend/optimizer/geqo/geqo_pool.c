@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.17 2000/01/26 05:56:33 momjian Exp $
+ * $Id: geqo_pool.c,v 1.18 2000/09/19 18:42:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,18 +84,18 @@ free_pool(Pool *pool)
  *		initialize genetic pool
  */
 void
-random_init_pool(Query *root, Pool *pool, int strt, int stp)
+random_init_pool(Query *root, List *initial_rels,
+				 Pool *pool, int strt, int stp)
 {
 	Chromosome *chromo = (Chromosome *) pool->data;
 	int			i;
 
 	for (i = strt; i < stp; i++)
 	{
-		init_tour(chromo[i].string, pool->string_length);		/* from
-																 * "geqo_recombination.c"
-																 * */
-
-		pool->data[i].worth = geqo_eval(root, chromo[i].string, pool->string_length);	/* "from geqo_eval.c" */
+		init_tour(chromo[i].string, pool->string_length);
+		pool->data[i].worth = geqo_eval(root, initial_rels,
+										chromo[i].string,
+										pool->string_length);
 	}
 }
 
