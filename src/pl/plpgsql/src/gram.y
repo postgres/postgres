@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.52 2004/03/24 23:38:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.53 2004/04/15 13:01:45 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1136,8 +1136,12 @@ stmt_return		: K_RETURN lno
 						new->retrecno	= -1;
 						new->retrowno	= -1;
 
-						if (plpgsql_curr_compile->fn_retistuple &&
-							!plpgsql_curr_compile->fn_retset)
+						if (plpgsql_curr_compile->fn_retset)
+						{
+							if (yylex() != ';')
+								yyerror("RETURN cannot have a parameter in function returning set; use RETURN NEXT");
+						}
+						else if (plpgsql_curr_compile->fn_retistuple)
 						{
 							switch (yylex())
 							{
@@ -1153,14 +1157,17 @@ stmt_return		: K_RETURN lno
 									break;
 
 								default:
-									yyerror("return type mismatch in function returning tuple");
+									yyerror("RETURN must specify a record or row variable in function returning tuple");
 									break;
 							}
 							if (yylex() != ';')
-								yyerror("expected \";\"");
+								yyerror("RETURN must specify a record or row variable in function returning tuple");
 						}
 						else
+						{
+							/* ordinary expression case */
 							new->expr = plpgsql_read_expression(';', ";");
+						}
 
 						new->cmd_type = PLPGSQL_STMT_RETURN;
 						new->lineno   = $2;
@@ -1172,6 +1179,9 @@ stmt_return		: K_RETURN lno
 stmt_return_next: K_RETURN_NEXT lno
 					{
 						PLpgSQL_stmt_return_next *new;
+
+						if (!plpgsql_curr_compile->fn_retset)
+							yyerror("cannot use RETURN NEXT in a non-SETOF function");
 
 						new = malloc(sizeof(PLpgSQL_stmt_return_next));
 						memset(new, 0, sizeof(PLpgSQL_stmt_return_next));
@@ -1188,10 +1198,10 @@ stmt_return_next: K_RETURN_NEXT lno
 							else if (tok == T_ROW)
 								new->row = yylval.row;
 							else
-								yyerror("incorrect argument to RETURN NEXT");
+								yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
 
 							if (yylex() != ';')
-								yyerror("expected \";\"");
+								yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
 						}
 						else
 							new->expr = plpgsql_read_expression(';', ";");
