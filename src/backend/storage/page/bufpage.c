@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.3 1996/11/08 05:59:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.4 1996/11/13 20:49:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,9 +105,13 @@ PageGetItem(Page page, ItemId itemId)
     Item	item;
     
     Assert(PageIsValid(page));
-    Assert((*itemId).lp_flags & LP_USED);
+/*    Assert(itemId->lp_flags & LP_USED); */
+    if(!(itemId->lp_flags & LP_USED)) {
+	elog(NOTICE, "LP_USED assertion failed.  dumping core.");
+	abort();
+    }
     
-    item = (Item)(((char *)page) + (*itemId).lp_off);
+    item = (Item)(((char *)page) + itemId->lp_off);
     
     return (item);
 }

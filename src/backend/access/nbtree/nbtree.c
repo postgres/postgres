@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.9 1996/11/05 10:35:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.10 1996/11/13 20:47:18 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -74,12 +74,16 @@ btbuild(Relation heap,
     Oid hrelid, irelid;
     Node *pred, *oldPred;
     void *spool;
+    bool isunique;
     
     /* note that this is a new btree */
     BuildingBtree = true;
     
     pred = predInfo->pred;
     oldPred = predInfo->oldPred;
+
+    /* see if index is unique */
+    isunique = IndexIsUniqueNoCache(RelationGetRelationId(index));
 
     /* initialize the btree index metadata page (if this is a new index) */
     if (oldPred == NULL)
@@ -218,7 +222,7 @@ btbuild(Relation heap,
 	if (FastBuild) {
 	    _bt_spool(index, btitem, spool);
 	} else {
-	    res = _bt_doinsert(index, btitem);
+	    res = _bt_doinsert(index, btitem, isunique, false);
 	}
 
 	pfree(btitem);
@@ -289,7 +293,7 @@ btbuild(Relation heap,
  *	return an InsertIndexResult to the caller.
  */
 InsertIndexResult
-btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid)
+btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, bool is_update)
 {
     BTItem btitem;
     IndexTuple itup;
@@ -304,7 +308,9 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid)
     
     btitem = _bt_formitem(itup);
     
-    res = _bt_doinsert(rel, btitem);
+    res = _bt_doinsert(rel, btitem, 
+		       IndexIsUnique(RelationGetRelationId(rel)), is_update);
+
     pfree(btitem);
     pfree(itup);
     

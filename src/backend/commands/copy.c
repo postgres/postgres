@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.16 1996/11/10 02:59:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.17 1996/11/13 20:48:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,7 +578,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
                                index_nulls,
                                finfoP[i]);
                 indexRes = index_insert(index_rels[i], &idatum, index_nulls,
-                                        &(tuple->t_ctid));
+                                        &(tuple->t_ctid), false);
                 if (indexRes) pfree(indexRes);
             }
         }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.6 1996/11/05 10:35:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.7 1996/11/13 20:47:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,10 @@ static OffsetNumber _bt_findsplitloc(Relation rel, Page page, OffsetNumber start
 static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
+
+#if 0
 static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BTItem newItem);
+#endif
 
 /*
  *  _bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -41,7 +44,7 @@ static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BT
  *	(xid, seqno) pair.
  */
 InsertIndexResult
-_bt_doinsert(Relation rel, BTItem btitem)
+_bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, bool is_update)
 {
     ScanKey itup_scankey;
     IndexTuple itup;
@@ -59,6 +62,31 @@ _bt_doinsert(Relation rel, BTItem btitem)
     
     /* find the page containing this key */
     stack = _bt_search(rel, natts, itup_scankey, &buf);
+
+    /* if we're not allowing duplicates, make sure the key isn't */
+    /* already in the node */
+    if(index_is_unique && !is_update) {
+	OffsetNumber offset;
+	TupleDesc itupdesc;
+	Page page;
+
+	itupdesc = RelationGetTupleDescriptor(rel);
+	page = BufferGetPage(buf);
+
+	offset = _bt_binsrch(rel, buf, natts, itup_scankey, BT_DESCENT);
+
+	/* make sure the offset we're given points to an actual */
+	/* key on the page before trying to compare it */
+	if(!PageIsEmpty(page) &&
+	   offset <= PageGetMaxOffsetNumber(page)) {
+	    if(!_bt_compare(rel, itupdesc, page, 
+			    natts, itup_scankey, offset)) {
+		/* it is a duplicate */
+		elog(WARN, "Cannot insert a duplicate key into a unique index.");
+	    }
+	}
+    }
+
     blkno = BufferGetBlockNumber(buf);
     
     /* trade in our read lock for a write lock */
@@ -137,6 +165,10 @@ _bt_insertonpg(Relation rel,
     InsertIndexResult newres;
     BTItem new_item = (BTItem) NULL;
     BTItem lowLeftItem;
+    OffsetNumber leftmost_offset;
+    Page ppage;
+    BTPageOpaque ppageop;
+    BlockNumber bknum;
     
     page = BufferGetPage(buf);
     itemsz = IndexTupleDSize(btitem->bti_itup)
@@ -236,14 +268,67 @@ _bt_insertonpg(Relation rel,
 		lowLeftItem =
 		    (BTItem) PageGetItem(page,
 					 PageGetItemId(page, P_FIRSTKEY));
-		/* page must have right pointer after split */
-		_bt_updateitem(rel, keysz, pbuf, stack->bts_btitem->bti_oid,
-		               lowLeftItem);
+		
+		/* this method does not work--_bt_updateitem tries to     */
+		/* overwrite an entry with another entry that might be    */
+		/* bigger.  if lowLeftItem is bigger, it corrupts the     */
+		/* parent page.  instead, we have to delete the original  */
+		/* leftmost item from the parent, and insert the new one  */
+		/* with a regular _bt_insertonpg (it could cause a split  */
+		/* because it's bigger than what was there before).       */
+                /*                                  --djm 8/21/96         */
+
+		/* _bt_updateitem(rel, keysz, pbuf, stack->bts_btitem->bti_oid,
+		               lowLeftItem); */
+		
+		/* get the parent page */
+		ppage = BufferGetPage(pbuf);
+		ppageop = (BTPageOpaque) PageGetSpecialPointer(ppage);
+
+		/* figure out which key is leftmost (if the parent page   */
+		/* is rightmost, too, it must be the root)                */
+		if(P_RIGHTMOST(ppageop)) {
+		    leftmost_offset = P_HIKEY;
+		} else {
+		    leftmost_offset = P_FIRSTKEY;
 	    }
+       		PageIndexTupleDelete(ppage, leftmost_offset);
+		
+		/* don't write anything out yet--we still have the write  */
+		/* lock, and now we call another _bt_insertonpg to        */
+		/* insert the correct leftmost key                        */
+
+		/* make a new leftmost item, using the tuple data from    */
+		/* lowLeftItem.  point it to the left child.              */
+		/* update it on the stack at the same time.               */
+		bknum = BufferGetBlockNumber(buf);
+		pfree(stack->bts_btitem);
+		stack->bts_btitem = _bt_formitem(&(lowLeftItem->bti_itup));
+		ItemPointerSet(&(stack->bts_btitem->bti_itup.t_tid), 
+			       bknum, P_HIKEY);
+		
+		/* unlock the children before doing this */
+		_bt_relbuf(rel, buf, BT_WRITE);
+		_bt_relbuf(rel, rbuf, BT_WRITE);
+		
+		/* a regular _bt_binsrch should find the right place to   */
+		/* put the new entry, since it should be lower than any   */
+		/* other key on the page, therefore set afteritem to NULL */
+		newskey = _bt_mkscankey(rel, &(stack->bts_btitem->bti_itup));
+		newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
+					keysz, newskey, stack->bts_btitem,
+					NULL);
+
+		pfree(newres);
+		pfree(newskey);
 	    
-	    /* don't need the children anymore */
+		/* we have now lost our lock on the parent buffer, and    */
+		/* need to get it back.                                   */
+		pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
+	    } else {
 	    _bt_relbuf(rel, buf, BT_WRITE);
 	    _bt_relbuf(rel, rbuf, BT_WRITE);
+	    }
 	    
 	    newskey = _bt_mkscankey(rel, &(new_item->bti_itup));
 	    newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
@@ -787,6 +872,8 @@ _bt_itemcmp(Relation rel,
     return (true);
 }
 
+#if 0
+/* gone since updating in place doesn't work in general --djm 11/13/96 */
 /*
  *	_bt_updateitem() -- updates the key of the item identified by the
  *			    oid with the key of newItem (done in place if
@@ -804,9 +891,9 @@ _bt_updateitem(Relation rel,
     OffsetNumber maxoff;
     OffsetNumber i;
     ItemPointerData itemPtrData;
-    BTItem item, itemCopy;
+    BTItem item;
     IndexTuple oldIndexTuple, newIndexTuple;
-    int newSize, oldSize, first;
+    int first;
     
     page = BufferGetPage(buf);
     maxoff = PageGetMaxOffsetNumber(page);
@@ -825,48 +912,18 @@ _bt_updateitem(Relation rel,
 	elog(FATAL, "_bt_getstackbuf was lying!!");
     }
     
+    if(IndexTupleDSize(newItem->bti_itup) >
+       IndexTupleDSize(item->bti_itup)) {
+	elog(NOTICE, "trying to overwrite a smaller value with a bigger one in _bt_updateitem");
+	elog(WARN, "this is not good.");
+    }
+
     oldIndexTuple = &(item->bti_itup);
     newIndexTuple = &(newItem->bti_itup);
-    oldSize = DOUBLEALIGN(IndexTupleSize(oldIndexTuple));
-    newSize = DOUBLEALIGN(IndexTupleSize(newIndexTuple));
-#ifdef NBTINSERT_PATCH_DEBUG
-    printf("_bt_updateitem: newSize=%d, oldSize=%d\n", newSize, oldSize);
-#endif    
 
-    /*
-     * If new and old item have the same size do the update in place
-     * and return.
-     */ 
-    if (oldSize == newSize) {
 	/* keep the original item pointer */
 	ItemPointerCopy(&(oldIndexTuple->t_tid), &itemPtrData);
 	CopyIndexTuple(newIndexTuple, &oldIndexTuple);
 	ItemPointerCopy(&itemPtrData, &(oldIndexTuple->t_tid));
-	return;
-    }
-
-    /* 
-     * If new and old items have different size the update in place
-     * is not possible. In this case the old item is deleted and the
-     * new one is inserted.
-     * The new insertion should be done using _bt_insertonpg which
-     * would also takes care of the page splitting if needed, but
-     * unfortunately it doesn't work, so PageAddItem is used instead.
-     * There is the possibility that there is not enough space in the
-     * page and the item is not inserted.
-     */
-    itemCopy = palloc(newSize);
-    memmove((char *) itemCopy, (char *) newItem, newSize);
-    itemCopy->bti_oid = item->bti_oid;
-    newIndexTuple = &(itemCopy->bti_itup);
-    ItemPointerCopy(&(oldIndexTuple->t_tid), &(newIndexTuple->t_tid));
-
-    /*
-     * Get the offset number of the item then delete it and insert
-     * the new item in the same place.
-     */
-    i = OffsetNumberPrev(i);
-    PageIndexTupleDelete(page, i);
-    PageAddItem(page, (Item) itemCopy, newSize, i, LP_USED);
-    pfree(itemCopy);
 }
+#endif

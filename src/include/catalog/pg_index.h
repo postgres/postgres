@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.2 1996/10/31 09:47:31 scrappy Exp $
+ * $Id: pg_index.h,v 1.3 1996/11/13 20:50:57 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -32,6 +32,13 @@
  *	in indrelid.
  * ----------------
  */ 
+
+/* 
+ * it seems that all variable length fields should go at the _end_,
+ * because the system cache routines only copy the fields up to the
+ * first variable length field.  so I moved indislossy, indhaskeytype,
+ * and indisunique before indpred.  --djm 8/20/96
+ */
 CATALOG(pg_index) {
     Oid 	indexrelid;
     Oid 	indrelid;
@@ -40,9 +47,10 @@ CATALOG(pg_index) {
     oid8 	indclass;
     bool 	indisclustered;
     bool 	indisarchived;
-    text	indpred;	/* query plan for partial index predicate */
     bool	indislossy; /* do we fetch false tuples (lossy compression)? */
     bool	indhaskeytype; /* does key type != attribute type? */
+    bool        indisunique; /* is this a unique index? */
+    text	indpred;	/* query plan for partial index predicate */
 } FormData_pg_index;
 
 #define INDEX_MAX_KEYS 8  /* maximum number of keys in an index definition */
@@ -58,7 +66,7 @@ typedef FormData_pg_index	*IndexTupleForm;
  *	compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index			10
+#define Natts_pg_index			11
 #define Anum_pg_index_indexrelid	1
 #define Anum_pg_index_indrelid		2
 #define Anum_pg_index_indproc		3
@@ -66,9 +74,9 @@ typedef FormData_pg_index	*IndexTupleForm;
 #define Anum_pg_index_indclass		5
 #define Anum_pg_index_indisclustered	6
 #define Anum_pg_index_indisarchived	7
-#define Anum_pg_index_indpred		8
-#define Anum_pg_index_indislossy	9
-#define Anum_pg_index_indhaskeytype	10
-
+#define Anum_pg_index_indislossy	8
+#define Anum_pg_index_indhaskeytype	9
+#define Anum_pg_index_indisunique       10
+#define Anum_pg_index_indpred		11
 
 #endif /* PG_INDEX_H */

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.9 1996/11/10 03:01:23 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.10 1996/11/13 20:48:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,9 @@ typedef struct _CandidateList {
 static Oid **argtype_inherit(int nargs, Oid *oid_array);
 static Oid **genxprod(InhPaths *arginh, int nargs);
 static int findsupers(Oid relid, Oid **supervec);
+
+static bool is_lowercase(char *string);
+static void make_lowercase(char *string);
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling 
@@ -1010,6 +1013,30 @@ func_select_candidate(int nargs,
     return (NULL);
 }
 
+static bool is_lowercase(char *string)
+{
+    int i;
+
+    for(i = 0; i < strlen(string); i++) {
+	if(string[i] >= 'A' && string[i] <= 'Z') {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+static void make_lowercase(char *string)
+{
+    int i;
+
+    for(i = 0; i < strlen(string); i++) {
+	if(string[i] >= 'A' && string[i] <= 'Z') {
+	    string[i] = (string[i] - 'A') + 'a';
+	}
+    }
+}
+
 bool
 func_get_detail(char *funcname,
 		int nargs,
@@ -1105,6 +1132,24 @@ func_get_detail(char *funcname,
     if (!HeapTupleIsValid(ftup)) {
 	Type tp;
 
+	/*
+	 * everything else has failed--try converting the function
+	 * name to lowercase, and do everything one more time
+	 * (if it's not already lowercase).  so ODBC applications
+	 * that expect uppercase names to work can work.  --djm 8/17/96
+	 */
+	if(!is_lowercase(funcname)) {
+	    char *lowercase_funcname = strdup(funcname);
+	    bool result;
+
+	    make_lowercase(lowercase_funcname);
+	    result = func_get_detail(lowercase_funcname, nargs, oid_array,
+				     funcid, rettype, retset,	
+				     true_typeids);
+	    
+	    free(lowercase_funcname);
+	    return result;
+	} else {
 	if (nargs == 1) {
 	    tp = get_id_type(oid_array[0]);
 	    if (typetypetype(tp) == 'c')
@@ -1112,6 +1157,7 @@ func_get_detail(char *funcname,
 		     funcname);
 	}
 	func_error("func_get_detail", funcname, nargs, (int*)oid_array);
+	}
     } else {
 	pform = (Form_pg_proc) GETSTRUCT(ftup);
 	*funcid = ftup->t_oid;

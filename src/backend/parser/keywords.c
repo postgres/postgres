@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.3 1996/08/24 20:48:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.4 1996/11/13 20:49:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "to",			TO		},
 	{ "transaction",	TRANSACTION	},
 	{ "type",		P_TYPE		},
+	{ "unique",             UNIQUE          },
 	{ "update",		UPDATE		},
 	{ "using",		USING		},
 	{ "vacuum",		VACUUM		},

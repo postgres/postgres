@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.5 1996/11/08 01:08:37 scrappy Exp $
+ * $Id: pg_proc.h,v 1.6 1996/11/13 20:51:01 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -92,11 +92,11 @@ typedef FormData_pg_proc	*Form_pg_proc;
 /* keep the following ordered by OID so that later changes can be made easier*/
 
 /* OIDS 1 - 99 */
-DATA(insert OID =  28 (  boolin            PGUID 11 f t f 1 f 16 "0" 100 0 0  100  foo bar ));
-DATA(insert OID =  29 (  boolout           PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID =  30 (  byteain           PGUID 11 f t f 1 f 17 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1242 (  boolin            PGUID 11 f t f 1 f 16 "0" 100 0 0  100  foo bar ));
+DATA(insert OID = 1243 (  boolout           PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1244 (  byteain           PGUID 11 f t f 1 f 17 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  31 (  byteaout          PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID =  32 (  charin            PGUID 11 f t f 1 f 18 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1245 (  charin            PGUID 11 f t f 1 f 18 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  33 (  charout           PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  34 (  namein          PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  35 (  nameout         PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
@@ -143,31 +143,31 @@ DATA(insert OID =  67 (  texteq            PGUID 11 f t f 2 f 16 "25 25" 100 0 0
 DATA(insert OID =  68 (  xideq             PGUID 11 f t f 2 f 16 "28 28" 100 0 0 100  foo bar ));
 DATA(insert OID =  69 (  cideq             PGUID 11 f t f 2 f 16 "29 29" 100 0 0 100  foo bar ));
 DATA(insert OID =  70 (  charne            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
-DATA(insert OID =  71 (  charlt            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
+DATA(insert OID = 1246 (  charlt            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
 DATA(insert OID =  72 (  charle            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
 DATA(insert OID =  73 (  chargt            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
 DATA(insert OID =  74 (  charge            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
-DATA(insert OID =  75 (  charpl            PGUID 11 f t f 2 f 18 "18 18" 100 0 0 100  foo bar ));
-DATA(insert OID =  76 (  charmi            PGUID 11 f t f 2 f 18 "18 18" 100 0 0 100  foo bar ));
+DATA(insert OID = 1248 (  charpl            PGUID 11 f t f 2 f 18 "18 18" 100 0 0 100  foo bar ));
+DATA(insert OID = 1250 (  charmi            PGUID 11 f t f 2 f 18 "18 18" 100 0 0 100  foo bar ));
 DATA(insert OID =  77 (  charmul           PGUID 11 f t f 2 f 18 "18 18" 100 0 0 100  foo bar ));
 DATA(insert OID =  78 (  chardiv           PGUID 11 f t f 2 f 18 "18 18" 100 0 0 100  foo bar ));
 
 DATA(insert OID =  79 (  nameregexeq     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  80 (  nameregexne     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  81 (  textregexeq       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));
-DATA(insert OID =  82 (  textregexne       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));
-DATA(insert OID =  83 (  textcat           PGUID 11 f t f 2 f 25 "25 25" 100 0 1 0  foo bar ));
+DATA(insert OID = 1252 (  nameregexne     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+DATA(insert OID = 1254 (  textregexeq       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));
+DATA(insert OID = 1256 (  textregexne       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));
+DATA(insert OID = 1258 (  textcat           PGUID 11 f t f 2 f 25 "25 25" 100 0 1 0  foo bar ));
 DATA(insert OID =  84 (  boolne            PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
 
-DATA(insert OID =  97 (  rtsel             PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
-DATA(insert OID =  98 (  rtnpage           PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
-DATA(insert OID =  99 (  btreesel          PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
+DATA(insert OID = 1265 (  rtsel             PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
+DATA(insert OID = 1266 (  rtnpage           PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
+DATA(insert OID = 1268 (  btreesel          PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 100 (  btreenpage        PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
-DATA(insert OID = 101 (  eqsel             PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
-#define EqualSelectivityProcedure 101
+DATA(insert OID = 1270 (  btreenpage        PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
+DATA(insert OID = 1272 (  eqsel             PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
+#define EqualSelectivityProcedure 1272
 
 DATA(insert OID = 102 (  neqsel            PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 103 (  intltsel          PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
@@ -384,7 +384,7 @@ DATA(insert OID = 313 (  i2toi4            PGUID 11 f t f 2 f 23 "21" 100 0 0 10
 DATA(insert OID = 314 (  i4toi2            PGUID 11 f t f 2 f 21 "23" 100 0 0 100  foo bar ));
 DATA(insert OID = 315 (  keyfirsteq        PGUID 11 f t f 2 f 16 "0 21" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 320 (  rtinsert          PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 320 (  rtinsert          PGUID 11 f t f 5 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 321 (  rtdelete          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 322 (  rtgettuple        PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 323 (  rtbuild           PGUID 11 f t f 9 f 23 "0" 100 0 0 100  foo bar ));
@@ -395,7 +395,7 @@ DATA(insert OID = 327 (  rtrestrpos        PGUID 11 f t f 1 f 23 "0" 100 0 0 100
 DATA(insert OID = 328 (  rtrescan          PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 330 (  btgettuple        PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID = 331 (  btinsert          PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 331 (  btinsert          PGUID 11 f t f 5 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 332 (  btdelete          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 333 (  btbeginscan       PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 334 (  btrescan          PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
@@ -439,7 +439,7 @@ DATA(insert OID = 370 (  path_distance     PGUID 11 f t f 2 f 701 "602 602" 100 
 DATA(insert OID = 371 (  dist_ppth         PGUID 11 f t f 2 f 701 "600 602" 100 0 1 0 foo bar ));
 DATA(insert OID = 372 (  on_sb             PGUID 11 f t f 2 f 16 "601 603" 100 0 0 100  foo bar ));
 DATA(insert OID = 373 (  inter_sb          PGUID 11 f t f 2 f 16 "601 603" 100 0 0 100  foo bar ));
-DATA(insert OID = 374 (  btchar16cmp       PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1274 (  btchar16cmp       PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
 
 /* OIDS 400 - 499 */
 
@@ -447,7 +447,7 @@ DATA(insert OID =  438 (  hashsel          PGUID 11 f t t 7 f 701 "26 26 21 0 23
 DATA(insert OID =  439 (  hashnpage        PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 440 (  hashgettuple     PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID = 441 (  hashinsert       PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 441 (  hashinsert       PGUID 11 f t f 5 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 442 (  hashdelete       PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 443 (  hashbeginscan    PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 444 (  hashrescan       PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
@@ -482,23 +482,23 @@ DATA(insert OID = 481 (  char2gt          PGUID 11 f t f 2 f 16 "409 409" 100 0 
 DATA(insert OID = 482 (  char4gt          PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100  foo bar ));
 DATA(insert OID = 483 (  char8gt          PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100  foo bar ));
 DATA(insert OID = 484 (  char2ge          PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100  foo bar ));
-DATA(insert OID =  490 (  char16eq          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-#define Character16EqualRegProcedure	490
-DATA(insert OID = 492 (  char16lt          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DATA(insert OID = 493 (  char16le          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DATA(insert OID = 494 (  char16gt          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DATA(insert OID = 495 (  char16ge          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DATA(insert OID = 496 (  char16ne          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1275 (  char16eq          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
+#define Character16EqualRegProcedure	1275
+DATA(insert OID = 1276 (  char16lt          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1277 (  char16le          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1278 (  char16gt          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1279 (  char16ge          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1280 (  char16ne          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 499 (  hashchar16       PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 1281 (  hashchar16       PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
 
 /* OIDS 500 - 599 */
 
 /* OIDS 600 - 699 */
 
-DATA(insert OID = 650 (  int4notin         PGUID 11 f t f 2 f 16 "21 0" 100 0 0 100  foo bar ));
-DATA(insert OID = 651 (  oidnotin          PGUID 11 f t f 2 f 16 "26 0" 100 0 0 100  foo bar ));
-DATA(insert OID = 652 (  int44in           PGUID 11 f t f 1 f 22 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1285 (  int4notin         PGUID 11 f t f 2 f 16 "21 0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1286 (  oidnotin          PGUID 11 f t f 2 f 16 "26 0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1287 (  int44in           PGUID 11 f t f 1 f 22 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 653 (  int44out          PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 655 (  namelt          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
 DATA(insert OID = 656 (  namele          PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
@@ -523,8 +523,8 @@ DATA(insert OID =  696 (  char8regexne     PGUID 11 f t f 2 f 16 "411 25" 100 0 
 DATA(insert OID =  699 (  char2regexeq     PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
 
 /* OIDS 700 - 799 */
-DATA(insert OID =  700 (  char16regexeq     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  701 (  char16regexne     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+DATA(insert OID = 1288 (  char16regexeq     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+DATA(insert OID = 1289 (  char16regexne     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 710 (  GetPgUserName       PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 711 (  userfntest        PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
@@ -576,7 +576,7 @@ DATA(insert OID = 771 (  int2smaller       PGUID 11 f t f 2 f 21 "21 21" 100 0 0
 DATA(insert OID =  772 (  gistsel          PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DATA(insert OID =  773 (  gistnpage        PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DATA(insert OID = 774 (  gistgettuple     PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID = 775 (  gistinsert       PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 775 (  gistinsert       PGUID 11 f t f 5 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 776 (  gistdelete       PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 777 (  gistbeginscan    PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 778 (  gistrescan       PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
@@ -741,12 +741,12 @@ DATA(insert OID = 1106 (  time_ne          PGUID 11 f t f 2 f 16 "1083 1083" 100
 DATA(insert OID = 1107 (  time_cmp         PGUID 11 f t f 2 f 23 "1083 1083" 100 0 0 100  foo bar ));
 DATA(insert OID = 1200 (  int42reltime      PGUID 11 f t f 1 f 703 "21" 100 0 0 100  foo bar ));
 
-DATA(insert OID =  1230 (  char2icregexeq     PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  1231 (  char2icregexne     PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  1232 (  char4icregexeq     PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  1233 (  char4icregexne     PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  1234 (  char8icregexeq     PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  1235 (  char8icregexne     PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1290 (  char2icregexeq     PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1291 (  char2icregexne     PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1292 (  char4icregexeq     PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1293 (  char4icregexne     PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1294 (  char8icregexeq     PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1295 (  char8icregexne     PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  1236 (  char16icregexeq     PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  1237 (  char16icregexne     PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  1238 (  texticregexeq       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.3 1996/11/10 03:04:39 momjian Exp $
+ * $Id: rtree.h,v 1.4 1996/11/13 20:50:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
  *	Defined in access/index-rtree/
  */
 extern InsertIndexResult rtinsert(Relation r, Datum *datum, char *nulls,
-			ItemPointer ht_ctid);
+			ItemPointer ht_ctid, bool is_update);
 extern char *rtdelete(Relation r, ItemPointer tid);
 
 extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);

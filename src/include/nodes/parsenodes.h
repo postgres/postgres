@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.6 1996/11/04 07:18:17 scrappy Exp $
+ * $Id: parsenodes.h,v 1.7 1996/11/13 20:56:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,6 +217,7 @@ typedef struct IndexStmt {
     List		*rangetable;	/* range table, filled in
 					   by transformStmt() */
     bool                *lossy;         /* is index lossy? */
+    bool                unique;         /* is index unique? */
 } IndexStmt;
 
 /* ----------------------
@@ -594,7 +595,7 @@ typedef struct ResTarget {
     char		*name;		/* name of the result column */
     List		*indirection;	/* array references */
     Node		*val;		/* the value of the result
-					   (A_Expr or Attr) */
+					   (A_Expr or Attr) (or A_Const) */
 } ResTarget;
 
 /*

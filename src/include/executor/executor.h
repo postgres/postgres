@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.5 1996/11/10 03:04:59 momjian Exp $
+ * $Id: executor.h,v 1.6 1996/11/13 20:51:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ extern void ExecCloseIndices(RelationInfo *resultRelationInfo);
 extern IndexTuple ExecFormIndexTuple(HeapTuple heapTuple,
 	Relation heapRelation, Relation indexRelation, IndexInfo *indexInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
-				      EState *estate);
+				      EState *estate, bool is_update);
 
 
 /* ----------------------------------------------------------------

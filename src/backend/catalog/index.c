@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.8 1996/11/08 00:44:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.9 1996/11/13 20:47:53 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -81,7 +81,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 	FuncIndexInfo *funcInfo, int natts,
 	AttrNumber attNums[], Oid classOids[], Node *predicate,
-	TypeName *indexKeyType, bool islossy);
+	TypeName *indexKeyType, bool islossy, bool unique);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 	int numberOfAttributes, AttrNumber attributeNumber[],
 	IndexStrategy indexStrategy, uint16 parameterCount,
@@ -742,7 +742,8 @@ UpdateIndexRelation(Oid indexoid,
 		    Oid classOids[],
 		    Node *predicate,
 		    TypeName *indexKeyType,
-		    bool islossy)
+		    bool islossy,
+		    bool unique)
 {
     IndexTupleForm	indexForm;
     char		*predString;
@@ -779,6 +780,7 @@ UpdateIndexRelation(Oid indexoid,
     indexForm->indproc = (PointerIsValid(funcInfo)) ?
 	FIgetProcOid(funcInfo) : InvalidOid;
     indexForm->indislossy = islossy;
+    indexForm->indisunique = unique;
     if (indexKeyType != NULL)
         indexForm->indhaskeytype = 1;
     else
@@ -1008,7 +1010,8 @@ index_create(char *heapRelationName,
 	     uint16 parameterCount,
 	     Datum *parameter,
 	     Node *predicate,
- 	     bool islossy)
+ 	     bool islossy,
+	     bool unique)
 {
     Relation		heapRelation;
     Relation		indexRelation;
@@ -1122,7 +1125,7 @@ index_create(char *heapRelationName,
      */
     UpdateIndexRelation(indexoid, heapoid, funcInfo,
 			numatts, attNums, classObjectId, predicate,
-			IndexKeyType, islossy);
+			IndexKeyType, islossy, unique);
     
     predInfo = (PredInfo*)palloc(sizeof(PredInfo));
     predInfo->pred = predicate;
@@ -1594,7 +1597,7 @@ DefaultBuild(Relation heapRelation,
 	indexTuple->t_tid = heapTuple->t_ctid;
 	
 	insertResult = index_insert(indexRelation, datum, nullv, 
-				    &(heapTuple->t_ctid));
+				    &(heapTuple->t_ctid), false);
 
 	if (insertResult) pfree(insertResult);
 	pfree(indexTuple);
@@ -1678,4 +1681,70 @@ index_build(Relation heapRelation,
 		     predInfo);
 }
 
+/*
+ * IndexIsUnique: given an index's relation OID, see if it
+ * is unique using the system cache.
+ */
+bool
+IndexIsUnique(Oid indexId)
+{
+    HeapTuple tuple;
+    IndexTupleForm index;
 
+    tuple = SearchSysCacheTuple(INDEXRELID,
+				ObjectIdGetDatum(indexId),
+				0,0,0);
+    if(!HeapTupleIsValid(tuple)) {
+	elog(WARN, "Can't find index id %d in IndexIsUnique",
+	     indexId);
+    }
+    index = (IndexTupleForm)GETSTRUCT(tuple);
+    Assert(index->indexrelid == indexId);
+
+    return index->indisunique;
+}
+
+/*
+ * IndexIsUniqueNoCache: same as above function, but don't use the
+ * system cache.  if we are called from btbuild, the transaction
+ * that is adding the entry to pg_index has not been committed yet.
+ * the system cache functions will do a heap scan, but only with
+ * NowTimeQual, not SelfTimeQual, so it won't find tuples added
+ * by the current transaction (which is good, because if the transaction
+ * is aborted, you don't want the tuples sitting around in the cache).
+ * so anyway, we have to do our own scan with SelfTimeQual.
+ * this is only called when a new index is created, so it's OK
+ * if it's slow.
+ */
+bool
+IndexIsUniqueNoCache(Oid indexId)
+{
+    Relation pg_index;
+    ScanKeyData skey[1];
+    HeapScanDesc scandesc;
+    HeapTuple tuple;
+    Buffer b;
+    IndexTupleForm index;
+    bool isunique;
+
+    pg_index = heap_openr(IndexRelationName);
+
+    ScanKeyEntryInitialize(&skey[0], (bits16)0x0,
+                           Anum_pg_index_indexrelid,
+                           (RegProcedure)ObjectIdEqualRegProcedure,
+                           ObjectIdGetDatum(indexId));
+
+    scandesc = heap_beginscan(pg_index, 0, SelfTimeQual, 1, skey);
+    
+    tuple = heap_getnext(scandesc, 0, &b);
+    if(!HeapTupleIsValid(tuple)) {
+	elog(WARN, "Can't find index id %d in IndexIsUniqueNoCache",
+	     indexId);
+    }
+    index = (IndexTupleForm)GETSTRUCT(tuple);
+    Assert(index->indexrelid == indexId);
+    isunique = index->indisunique;
+
+    ReleaseBuffer(b);
+    return isunique;
+}

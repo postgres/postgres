@@ -4,10 +4,11 @@
  *    definition of the system "parg" relation (pg_parg)
  *    along with the relation's initial contents.
  *
+ * [whatever this relation was, it doesn't seem to be used anymore --djm]
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_parg.h,v 1.2 1996/10/31 09:47:51 scrappy Exp $
+ * $Id: pg_parg.h,v 1.3 1996/11/13 20:51:00 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -59,11 +60,11 @@ typedef FormData_pg_parg	*Form_pg_parg;
  * ----------------
  */
 
-DATA(insert OID = 0 (  28 1 - 23 ));
-DATA(insert OID = 0 (  29 1 - 16 ));
-DATA(insert OID = 0 (  30 1 - 23 ));
+DATA(insert OID = 0 (  1242 1 - 23 ));
+DATA(insert OID = 0 (  1243 1 - 16 ));
+DATA(insert OID = 0 (  1244 1 - 23 ));
 DATA(insert OID = 0 (  31 1 - 17 ));
-DATA(insert OID = 0 (  32 1 - 23 ));
+DATA(insert OID = 0 (  1245 1 - 23 ));
 DATA(insert OID = 0 (  33 1 - 18 ));
 DATA(insert OID = 0 (  34 1 - 23 ));
 DATA(insert OID = 0 (  35 1 - 19 ));

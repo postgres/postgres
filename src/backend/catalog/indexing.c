@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.5 1996/11/11 14:02:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.6 1996/11/13 20:47:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ CatalogIndexInsert(Relation *idescs,
 			   finfoP);
 	    
 	    indexRes = index_insert(idescs[i], &datum, nulls, 
-				    &(heapTuple->t_ctid));
+				    &(heapTuple->t_ctid), false);
 	    if (indexRes) pfree(indexRes);
 	}
 }

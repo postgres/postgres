@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.15 1996/11/11 12:14:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.16 1996/11/13 20:49:00 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -114,7 +114,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 	class, index_name, var_name, name, file_name, recipe_name
 
 %type <str>	opt_id, opt_portal_name,
-	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique
+	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
 	result, OptUseOp, opt_class, opt_range_start, opt_range_end,
 	SpecialRuleRelation
 
@@ -123,14 +123,14 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 
 %type <list>	queryblock, relation_name_list, OptTableElementList,
 	tableElementList, OptInherit, definition,
-	opt_with_func, def_args, def_name_list, func_argtypes, 
+	opt_with, def_args, def_name_list, func_argtypes, 
 	oper_argtypes, OptStmtList, OptStmtBlock, opt_column_list, columnList,
 	sort_clause, sortby_list, index_params, 
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, attrs, res_target_list, res_target_list2, def_list,
 	opt_indirection, group_clause, groupby_list, explain_options
 
-%type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy
+%type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy, index_opt_unique
 
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation, 
 	def_type, opt_direction, remove_type, opt_column, event
@@ -658,17 +658,18 @@ opt_portal_name: IN name			{ $$ = $2;}
  *  [where <qual>] is not supported anymore
  *****************************************************************************/
 
-IndexStmt:  CREATE INDEX index_name ON relation_name
-	    access_method_clause '(' index_params ')' opt_with_func
+IndexStmt:  CREATE index_opt_unique INDEX index_name ON relation_name
+	    access_method_clause '(' index_params ')' opt_with
 		{
 		    /* should check that access_method is valid,
 		       etc ... but doesn't */
 		    IndexStmt *n = makeNode(IndexStmt);
-		    n->idxname = $3;
-		    n->relname = $5;
-		    n->accessMethod = $6;
-		    n->indexParams = $8;
-		    n->withClause = $10;
+		    n->unique = $2;
+		    n->idxname = $4;
+		    n->relname = $6;
+		    n->accessMethod = $7;
+		    n->indexParams = $9;
+		    n->withClause = $11;
 		    n->whereClause = NULL;
 		    $$ = (Node *)n;
 		}
@@ -677,6 +678,11 @@ IndexStmt:  CREATE INDEX index_name ON relation_name
 access_method_clause:   USING access_method      { $$ = $2; }
 		      | /* empty -- 'btree' is default access method */
 						 { $$ = "btree"; }
+	;
+
+index_opt_unique: UNIQUE				 { $$ = TRUE; }
+		  | /*empty*/                            { $$ = FALSE; }
+	;
 
 /*****************************************************************************
  *
@@ -731,7 +737,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:  CREATE FUNCTION def_name def_args 
-		   RETURNS def_arg opt_with_func AS Sconst LANGUAGE Sconst
+		   RETURNS def_arg opt_with AS Sconst LANGUAGE Sconst
                 {
 		    ProcedureStmt *n = makeNode(ProcedureStmt);
 		    n->funcname = $3;
@@ -743,7 +749,7 @@ ProcedureStmt:  CREATE FUNCTION def_name def_args
 		    $$ = (Node *)n;
 		};
 
-opt_with_func:  WITH definition			{ $$ = $2; }
+opt_with:  WITH definition			{ $$ = $2; }
 	|  /* EMPTY */				{ $$ = NIL; }
 	;
 

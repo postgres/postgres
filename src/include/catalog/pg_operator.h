@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.2 1996/10/31 09:47:49 scrappy Exp $
+ * $Id: pg_operator.h,v 1.3 1996/11/13 20:50:58 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -98,7 +98,7 @@ DATA(insert OID = 95 (  "<"        PGUID 0 b t f  21  21  16 520 524 0 0 int2lt 
 DATA(insert OID = 96 (  "="        PGUID 0 b t t  23  23  16  96 518 97 97 int4eq eqsel eqjoinsel ));
 DATA(insert OID = 97 (  "<"        PGUID 0 b t f  23  23  16 521 525 0 0 int4lt intltsel intltjoinsel ));
 DATA(insert OID = 98 (  "="        PGUID 0 b t t  25  25  16  98 531 664 664 texteq eqsel eqjoinsel ));
-DATA(insert OID = 99 (  "="        PGUID 0 b t t  20  20  16  99 644 645 645 char16eq eqsel eqjoinsel ));
+DATA(insert OID = 1267 (  "="        PGUID 0 b t t  20  20  16  1267 644 645 645 char16eq eqsel eqjoinsel ));
 DATA(insert OID = 329 (  "="       PGUID 0 b t t  1000  1000  16  329 0  0  0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 349 (  "="       PGUID 0 b t t  1001  1001  16  349 0  0  0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 374 (  "="       PGUID 0 b t t  1002  1002  16  374 0  0  0 array_eq eqsel eqjoinsel ));
@@ -268,9 +268,9 @@ DATA(insert OID = 596 (  "|/"      PGUID 0 l t f   0 701 701   0   0   0   0 dsq
 DATA(insert OID = 597 (  "||/"     PGUID 0 l t f   0 701 701   0   0   0   0 dcbrt - - ));
 DATA(insert OID = 598 (  "%"       PGUID 0 l t f   0 701 701   0   0   0   0 dtrunc - - ));
 DATA(insert OID = 599 (  "%"       PGUID 0 r t f 701   0 701   0   0   0   0 dround - - ));
-DATA(insert OID = 601 (  ":"       PGUID 0 l t f   0 701 701   0   0   0   0 dexp - - ));
-DATA(insert OID = 602 (  ";"       PGUID 0 l t f   0 701 701   0   0   0   0 dlog1 - - ));
-DATA(insert OID = 603 (  "|"       PGUID 0 l t f   0 704 702   0   0   0   0 intervalstart - - ));
+DATA(insert OID = 1282 (  ":"       PGUID 0 l t f   0 701 701   0   0   0   0 dexp - - ));
+DATA(insert OID = 1283 (  ";"       PGUID 0 l t f   0 701 701   0   0   0   0 dlog1 - - ));
+DATA(insert OID = 1284 (  "|"       PGUID 0 l t f   0 704 702   0   0   0   0 intervalstart - - ));
 DATA(insert OID = 606 (  "<#>"      PGUID 0 b t f 702 702 704   0   0   0   0 mktinterval - - ));
 DATA(insert OID = 607 (  "="       PGUID 0 b t t  26  26  16 607 608 97 97 oideq eqsel eqjoinsel ));
 #define	OIDEqualOperator 607	/* XXX planner/prep/semanopt.c crock */
@@ -305,7 +305,7 @@ DATA(insert OID = 640 (  "!~"      PGUID 0 b t f  19  25  16 0 639  0 0 namerege
 DATA(insert OID = 641 (  "~"       PGUID 0 b t f  25  25  16 0 642  0 0 textregexeq eqsel eqjoinsel ));
 DATA(insert OID = 642 (  "!~"      PGUID 0 b t f  25  25  16 0 641  0 0 textregexne eqsel eqjoinsel ));
 DATA(insert OID = 643 (  "<>"      PGUID 0 b t f  19  19  16 643 93 0 0 namene neqsel neqjoinsel ));
-DATA(insert OID = 644 (  "<>"      PGUID 0 b t f  20  20  16 644 99 0 0 char16ne neqsel neqjoinsel ));
+DATA(insert OID = 644 (  "<>"      PGUID 0 b t f  20  20  16 644 1267 0 0 char16ne neqsel neqjoinsel ));
 DATA(insert OID = 645 (  "<"       PGUID 0 b t f  20  20  16 647 648  0 0 char16lt intltsel intltjoinsel ));
 DATA(insert OID = 646 (  "<="       PGUID 0 b t f  20  20  16 648 647  0 0 char16le intltsel intltjoinsel ));
 DATA(insert OID = 647 (  ">"       PGUID 0 b t f  20  20  16 645 646  0 0 char16gt intltsel intltjoinsel ));

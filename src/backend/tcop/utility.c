@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.8 1996/11/11 04:54:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.9 1996/11/13 20:49:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,6 +372,7 @@ ProcessUtility(Node *parsetree,
 			stmt->accessMethod, /* am name */
 			stmt->indexParams, /* parameters */
 			stmt->withClause,
+			stmt->unique,
 			(Expr*)stmt->whereClause,
 			stmt->rangetable);
 	}

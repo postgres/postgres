@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.10 1996/11/05 09:40:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.11 1996/11/13 20:46:48 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -257,7 +257,7 @@ hashbuild(Relation heap,
  *  to the caller. 
  */
 InsertIndexResult
-hashinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid)
+hashinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, bool is_update)
 {
     HashItem hitem;
     IndexTuple itup;

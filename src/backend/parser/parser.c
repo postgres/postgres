@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.10 1996/11/10 03:30:46 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.11 1996/11/13 20:49:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,36 +216,36 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
     
 #if 0 /* fix me */
     switch ( CInteger(lfirst(expr)) ) {
-    case 23: /* int4 */
+    case INT4OID: /* int4 */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%d", ((Const*)lnext(expr))->constvalue);
 	break;
 	
-    case 19: /* char16 */
+    case NAMEOID: /* char16 */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%s", ((Const*)lnext(expr))->constvalue);
 	break;
 	
-    case 18: /* char */
+    case CHAROID: /* char */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%c", ((Const)lnext(expr))->constvalue);
 	break;
 	
-    case 701:/* float8 */
+    case FLOAT8OID:/* float8 */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%f", ((Const)lnext(expr))->constvalue);
 	break;
 	
-    case 25: /* text */
+    case TEXTOID: /* text */
 	const_string = DatumGetPointer(((Const)lnext(expr))->constvalue);
 	const_string = (char *) textout((struct varlena *)const_string);
 	break;
 	
-    case 705: /* unknown */
+    case UNKNOWNOID: /* unknown */
         const_string = DatumGetPointer(((Const)lnext(expr))->constvalue);
         const_string = (char *) textout((struct varlena *)const_string);
         break;
@@ -312,25 +312,25 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
     switch (exprType) {
       case 0: /* NULL */
 	break;
-    case 23: /* int4 */
+    case INT4OID: /* int4 */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%d",
 		(int) ((Const*)expr)->constvalue);
 	break;
-    case 19: /* char16 */
+    case NAMEOID: /* char16 */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%s",
 		(char*) ((Const*)expr)->constvalue);
 	break;
-    case 18: /* char */
+    case CHAROID: /* char */
 	const_string = (char *) palloc(256);
 	string_palloced = true;
 	sprintf(const_string,"%c",
 		(char) ((Const*)expr)->constvalue);
 	break;
-    case 700:	/* float4 */
+    case FLOAT4OID:	/* float4 */
 	{
 	    float32 floatVal = 
 		DatumGetFloat32(((Const*)expr)->constvalue);
@@ -339,7 +339,7 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
 	    sprintf(const_string,"%f", *floatVal);
 	    break;
 	}
-    case 701:/* float8 */
+    case FLOAT8OID:/* float8 */
 	{
 	    float64 floatVal = 
 		DatumGetFloat64(((Const*)expr)->constvalue);
@@ -348,12 +348,12 @@ parser_typecast2(Node *expr, int exprType, Type tp, int typlen)
 	    sprintf(const_string,"%f", *floatVal);
 	    break;
 	}
-    case 25: /* text */
+    case TEXTOID: /* text */
 	const_string = 
 	    DatumGetPointer(((Const*)expr)->constvalue );
 	const_string = (char *) textout((struct varlena *)const_string);
 	break;
-    case 705: /* unknown */
+    case UNKNOWNOID: /* unknown */
         const_string =
 	    DatumGetPointer(((Const*)expr)->constvalue );
 	const_string = (char *) textout((struct varlena *)const_string);

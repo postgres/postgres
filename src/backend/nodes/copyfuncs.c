@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.3 1996/11/08 05:56:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.4 1996/11/13 20:48:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1407,6 +1407,34 @@ _copySortClause(SortClause *from)
     return newnode;
 }
 
+static A_Const *
+_copyAConst(A_Const *from)
+{
+    A_Const *newnode = makeNode(A_Const);
+
+    newnode->val = *((Value *)(copyObject(&(from->val))));
+    Node_Copy(from, newnode, typename);
+
+    return newnode;
+}
+
+static TypeName *
+_copyTypeName(TypeName *from)
+{
+    TypeName *newnode = makeNode(TypeName);
+
+    if(from->name) {
+	newnode->name = pstrdup(from->name);
+    } else {
+	from->name = (char *)0;
+    }
+    newnode->setof = from->setof;
+    Node_Copy(from, newnode, arrayBounds);
+    newnode->typlen = from->typlen;
+
+    return newnode;
+}
+
 static Query *
 _copyQuery(Query *from)
 {
@@ -1414,7 +1442,13 @@ _copyQuery(Query *from)
 
     newnode->commandType = from->commandType;
     newnode->resultRelation = from->resultRelation;
-    newnode->into = from->into;
+    /* probably should dup this string instead of just pointing */
+    /* to the old one  --djm */
+    if(from->into) {
+	newnode->into = pstrdup(from->into);
+    } else {
+	newnode->into = (char *)0;
+    }
     newnode->isPortal = from->isPortal;
     Node_Copy(from, newnode, rtable);
     if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt) {
@@ -1642,6 +1676,12 @@ copyObject(void *from)
 	break;
     case T_SortClause:
 	retval = _copySortClause(from);
+	break;
+    case T_A_Const:
+	retval = _copyAConst(from);
+	break;
+    case T_TypeName:
+	retval = _copyTypeName(from);
 	break;
 	
 	/*

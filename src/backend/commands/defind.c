@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.8 1996/11/06 08:21:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.9 1996/11/13 20:48:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@ DefineIndex(char *heapRelationName,
 	    char *accessMethodName,
 	    List *attributeList,
 	    List *parameterList,
+	    bool unique,
 	    Expr *predicate,
 	    List *rangetable)
 {
@@ -176,7 +177,7 @@ DefineIndex(char *heapRelationName,
 		     &fInfo, NULL, accessMethodId, 
 		     numberOfAttributes, attributeNumberA,
 		     classObjectId, parameterCount, parameterA, (Node*)cnfPred,
-		     lossy);
+		     lossy, unique);
     }else {
 	attributeNumberA =
 	    (AttrNumber *)palloc(numberOfAttributes *
@@ -192,7 +193,7 @@ DefineIndex(char *heapRelationName,
 		     ((IndexElem*)lfirst(attributeList))->tname,
 		     accessMethodId, numberOfAttributes, attributeNumberA,
 		     classObjectId, parameterCount, parameterA, (Node*)cnfPred,
-		     lossy);
+		     lossy, unique);
     }
 }
 

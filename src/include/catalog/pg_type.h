@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.3 1996/11/04 12:12:42 scrappy Exp $
+ * $Id: pg_type.h,v 1.4 1996/11/13 20:51:06 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -135,8 +135,11 @@ DATA(insert OID = 16 (  bool       PGUID  1   1 t b t \054 0   0 boolin boolout 
 
 DATA(insert OID = 17 (  bytea      PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i _null_ ));
 DATA(insert OID = 18 (  char       PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
+#define CHAROID 18
 
-DATA(insert OID = 19 (  name      PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0  18 namein nameout namein nameout i _null_ ));
+DATA(insert OID = 19 (  name      PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0  18 namein nameout namein nameout d _null_ ));
+#define NAMEOID 19
+
 DATA(insert OID = 20 (  char16     PGUID 16  16 f b t \054 0  18 char16in char16out char16in char16out i _null_ ));
 /*DATA(insert OID = 20 (  dt         PGUID  4  10 t b t \054 0   0 dtin dtout dtin dtout i _null_ )); */
 DATA(insert OID = 21 (  int2       PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
@@ -162,6 +165,8 @@ DATA(insert OID = 23 (  int4       PGUID  4  10 t b t \054 0   0 int4in int4out 
 
 DATA(insert OID = 24 (  regproc    PGUID  4  16 t b t \054 0   0 regprocin regprocout regprocin regprocout i _null_ ));
 DATA(insert OID = 25 (  text       PGUID -1  -1 f b t \054 0  18 textin textout textin textout i _null_ ));
+#define TEXTOID 25
+
 DATA(insert OID = 26 (  oid        PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
 
 #define OIDOID		26
@@ -172,24 +177,24 @@ DATA(insert OID = 29 (  cid        PGUID  2   3 t b t \054 0   0 cidin cidout ci
 DATA(insert OID = 30 (  oid8       PGUID 32  89 f b t \054 0  26 oid8in oid8out oid8in oid8out i _null_ ));
 DATA(insert OID = 32 (  SET        PGUID -1  -1 f r t \054 0  -1 textin textout textin textout i _null_ ));
 
-DATA(insert OID = 71 ( pg_type PGUID 1 1 t b t \054 71 0 foo bar foo bar c _null_));
-DATA(insert OID = 75 ( pg_attribute PGUID 1 1 t b t \054 75 0 foo bar foo bar c _null_));
-DATA(insert OID = 76 ( pg_demon PGUID 1 1 t b t \054 76 0 foo bar foo bar c _null_));
-DATA(insert OID = 80 ( pg_magic PGUID 1 1 t b t \054 80 0 foo bar foo bar c _null_));
-DATA(insert OID = 81 ( pg_proc PGUID 1 1 t b t \054 81 0 foo bar foo bar c _null_));
-DATA(insert OID = 82 ( pg_server PGUID 1 1 t b t \054 82 0 foo bar foo bar c _null_));
-DATA(insert OID = 83 ( pg_class PGUID 1 1 t b t \054 83 0 foo bar foo bar c _null_));
-DATA(insert OID = 86 ( pg_user PGUID 1 1 t b t \054 86 0 foo bar foo bar c _null_));
-DATA(insert OID = 87 ( pg_group PGUID 1 1 t b t \054 87 0 foo bar foo bar c _null_));
-DATA(insert OID = 88 ( pg_database PGUID 1 1 t b t \054 88 0 foo bar foo bar c _null_));
-DATA(insert OID = 89 ( pg_defaults PGUID 1 1 t b t \054 89 0 foo bar foo bar c _null_));
-DATA(insert OID = 90 ( pg_variable PGUID 1 1 t b t \054 90 0 foo bar foo bar c _null_));
-DATA(insert OID = 99 ( pg_log PGUID 1 1 t b t \054 99 0 foo bar foo bar c _null_));
+DATA(insert OID = 71 ( pg_type PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _null_));
+DATA(insert OID = 75 ( pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
+DATA(insert OID = 76 ( pg_demon PGUID 1 1 t b t \054 1251 0 foo bar foo bar c _null_));
+DATA(insert OID = 80 ( pg_magic PGUID 1 1 t b t \054 1253 0 foo bar foo bar c _null_));
+DATA(insert OID = 81 ( pg_proc PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
+DATA(insert OID = 82 ( pg_server PGUID 1 1 t b t \054 1257 0 foo bar foo bar c _null_));
+DATA(insert OID = 83 ( pg_class PGUID 1 1 t b t \054 1259 0 foo bar foo bar c _null_));
+DATA(insert OID = 86 ( pg_user PGUID 1 1 t b t \054 1260 0 foo bar foo bar c _null_));
+DATA(insert OID = 87 ( pg_group PGUID 1 1 t b t \054 1261 0 foo bar foo bar c _null_));
+DATA(insert OID = 88 ( pg_database PGUID 1 1 t b t \054 1262 0 foo bar foo bar c _null_));
+DATA(insert OID = 89 ( pg_defaults PGUID 1 1 t b t \054 1263 0 foo bar foo bar c _null_));
+DATA(insert OID = 90 ( pg_variable PGUID 1 1 t b t \054 1264 0 foo bar foo bar c _null_));
+DATA(insert OID = 99 ( pg_log PGUID 1 1 t b t \054 1269 0 foo bar foo bar c _null_));
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 100 ( pg_time PGUID 1 1 t b t \054 100 0 foo bar foo bar c _null_));
-DATA(insert OID = 101 ( pg_time PGUID 1 1 t b t \054 101 0 foo bar foo bar c _null_));
+DATA(insert OID = 100 ( pg_time PGUID 1 1 t b t \054 1271 0 foo bar foo bar c _null_));
+DATA(insert OID = 101 ( pg_hosts PGUID 1 1 t b t \054 1273 0 foo bar foo bar c _null_));
 
 /* OIDS 200 - 299 */
 

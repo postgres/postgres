@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.8 1996/11/06 06:47:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.9 1996/11/13 20:48:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -918,7 +918,7 @@ ExecAppend(TupleTableSlot *slot,
      */
     numIndices = resultRelationInfo->ri_NumIndices;
     if (numIndices > 0) {
-	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate);
+	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, false);
     }
 }
 
@@ -1056,8 +1056,9 @@ ExecReplace(TupleTableSlot *slot,
      *  the new tupleid stored there.
      * ----------------
      */
+
     numIndices = resultRelationInfo->ri_NumIndices;
     if (numIndices > 0) {
-	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate);
+	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, true);
     }
 }

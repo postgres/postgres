@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.2 1996/10/31 09:47:17 scrappy Exp $
+ * $Id: pg_amproc.h,v 1.3 1996/11/13 20:50:52 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -82,7 +82,7 @@ DATA(insert OID = 0 (403 406 689 1));
 DATA(insert OID = 0 (403 407 690 1));
 DATA(insert OID = 0 (403 408 691 1));
 DATA(insert OID = 0 (403 1181 359 1));
-DATA(insert OID = 0 (403 430 374 1));
+DATA(insert OID = 0 (403 430 1274 1));
 DATA(insert OID = 0 (403 431 360 1));
 DATA(insert OID = 0 (403 432 357 1));
 DATA(insert OID = 0 (403 435 928 1));
@@ -108,7 +108,7 @@ DATA(insert OID = 0 (404 406 689 1));
 DATA(insert OID = 0 (404 407 690 1));
 DATA(insert OID = 0 (404 408 691 1));
 DATA(insert OID = 0 (404 1181 359 1));
-DATA(insert OID = 0 (404 430 374 1));
+DATA(insert OID = 0 (404 430 1274 1));
 DATA(insert OID = 0 (404 431 360 1));
 DATA(insert OID = 0 (404 432 357 1));
 BKI_BEGIN
@@ -125,7 +125,7 @@ DATA(insert OID = 0 (405 406 692 1));
 DATA(insert OID = 0 (405 407 693 1));
 DATA(insert OID = 0 (405 408 694 1));
 DATA(insert OID = 0 (405 1181 455 1));
-DATA(insert OID = 0 (405 430 499 1));
+DATA(insert OID = 0 (405 430 1281 1));
 DATA(insert OID = 0 (405 431 456 1));
 DATA(insert OID = 0 (405 1076 1080 1));
 DATA(insert OID = 0 (405 1077 1081 1));

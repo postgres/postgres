@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.3 1996/11/05 10:37:08 scrappy Exp $
+ * $Id: nbtree.h,v 1.4 1996/11/13 20:50:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,10 @@ typedef BTStackData	*BTStack;
 /*
  * prototypes for functions in nbtinsert.c
  */
-extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem);
+extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem,
+				      bool index_is_unique, bool is_update);
+
+				/* default is to allow duplicates */
 extern bool _bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
 			StrategyNumber strat);
 
@@ -200,7 +203,7 @@ extern void btbuild(Relation heap, Relation index, int natts,
 	AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 	Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
 extern InsertIndexResult btinsert(Relation rel, Datum *datum, char *nulls,
-				  ItemPointer ht_ctid);
+				  ItemPointer ht_ctid, bool is_update);
 extern char *btgettuple(IndexScanDesc scan, ScanDirection dir);
 extern char *btbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			 ScanKey scankey);
@@ -237,6 +240,7 @@ extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
+extern int _bt_compare(Relation rel, TupleDesc itupdesc, Page page, int keysz, ScanKey scankey, OffsetNumber offnum);
 
 /*
  * prototypes for functions in nbtstrat.c

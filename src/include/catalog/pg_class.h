@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.3 1996/11/01 09:30:46 scrappy Exp $
+ * $Id: pg_class.h,v 1.4 1996/11/13 20:50:56 scrappy Exp $
  *
  * NOTES
  *    ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -122,39 +122,40 @@ typedef FormData_pg_class	*Form_pg_class;
  * ----------------
  */
 
-DATA(insert OID =  71 (  pg_type 71          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID =  75 (  pg_attribute 75      PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID =  76 (  pg_demon 76          PGUID 0 0 0 0 0 f t r n 4 0 - - f _null_ ));
-DATA(insert OID =  80 (  pg_magic 80         PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
-DATA(insert OID =  81 (  pg_proc 81          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID =  82 (  pg_server 82         PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID =  83 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 18 0 - - f _null_ ));    
-DATA(insert OID =  86 (  pg_user 86          PGUID 0 0 0 0 0 f t r n 6 0 - - f _null_ ));
-DATA(insert OID =  87 (  pg_group 87          PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
-DATA(insert OID =  88 (  pg_database 88      PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID =  89 (  pg_defaults 89       PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
-DATA(insert OID =  90 (  pg_variable 90        PGUID 0 0 0 0 0 f t s n 2 0 - - f _null_ ));
-DATA(insert OID =  99 (  pg_log  99           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
-DATA(insert OID = 100 (  pg_time 100           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
-DATA(insert OID = 101 (  pg_hosts 101           PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
+DATA(insert OID = 1247 (  pg_type 71          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute 75      PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
+DATA(insert OID = 1251 (  pg_demon 76          PGUID 0 0 0 0 0 f t r n 4 0 - - f _null_ ));
+DATA(insert OID = 1253 (  pg_magic 80         PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
+DATA(insert OID = 1255 (  pg_proc 81          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
+DATA(insert OID = 1257 (  pg_server 82         PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
+DATA(insert OID = 1259 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 18 0 - - f _null_ ));    
+DATA(insert OID = 1260 (  pg_user 86          PGUID 0 0 0 0 0 f t r n 6 0 - - f _null_ ));
+DATA(insert OID = 1261 (  pg_group 87          PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
+DATA(insert OID = 1262 (  pg_database 88      PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
+DATA(insert OID = 1263 (  pg_defaults 89       PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
+DATA(insert OID = 1264 (  pg_variable 90        PGUID 0 0 0 0 0 f t s n 2 0 - - f _null_ ));
+DATA(insert OID = 1269 (  pg_log  99           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
+DATA(insert OID = 1271 (  pg_time 100           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
+DATA(insert OID = 1273 (  pg_hosts 101           PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
 
-#define RelOid_pg_type		71
-#define RelOid_pg_demon       	76   
-#define RelOid_pg_attribute  	75   
-#define RelOid_pg_magic   	80      
-#define RelOid_pg_proc       	81   
-#define RelOid_pg_server     	82   
-#define RelOid_pg_class   	83   
-#define RelOid_pg_user       	86   
-#define RelOid_pg_group       	87
-#define RelOid_pg_database    	88   
-#define RelOid_pg_defaults  	89    
-#define RelOid_pg_variable   	90   
-#define RelOid_pg_log   	99       
-#define RelOid_pg_time   	100      
-#define RelOid_pg_hosts   	101      
+#define RelOid_pg_type		1247
+#define RelOid_pg_demon       	1251
+#define RelOid_pg_attribute  	1249   
+#define RelOid_pg_magic   	1253      
+#define RelOid_pg_proc       	1255
+#define RelOid_pg_server     	1257   
+#define RelOid_pg_class   	1259   
+#define RelOid_pg_user       	1260   
+#define RelOid_pg_group       	1261
+#define RelOid_pg_database    	1262   
+#define RelOid_pg_defaults  	1263    
+#define RelOid_pg_variable   	1264   
+#define RelOid_pg_log   	1269
+#define RelOid_pg_time   	1271      
+#define RelOid_pg_hosts   	1273      
     
-#define MAX_SYSTEM_RELOID       101
+#define MAX_SYSTEM_RELOID       1273    /* this does not seem to be used */
+                                        /* anywhere                      */
 
 #define       RELKIND_INDEX           'i'     /* secondary index */
 #define       RELKIND_RELATION        'r'     /* cataloged heap */

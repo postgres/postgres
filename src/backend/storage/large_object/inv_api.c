@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.6 1996/11/10 03:02:36 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.7 1996/11/13 20:49:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ inv_create(int flags)
     classObjectId[0] = INT4_OPS_OID;
     index_create(objname, indname, NULL, NULL, BTREE_AM_OID,
 		 1, &attNums[0], &classObjectId[0],
-		 0, (Datum) NULL, NULL, FALSE);
+		 0, (Datum) NULL, NULL, FALSE, FALSE);
 
     /* make the index visible in this transaction */
     CommandCounterIncrement();
@@ -1008,7 +1008,7 @@ inv_indextup(LargeObjectDesc *obj_desc, HeapTuple htup)
 
     n[0] = ' ';
     v[0] = Int32GetDatum(obj_desc->highbyte);
-    res = index_insert(obj_desc->index_r, &v[0], &n[0], &(htup->t_ctid));
+    res = index_insert(obj_desc->index_r, &v[0], &n[0], &(htup->t_ctid), false);
 
     if (res)
 	pfree(res);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.14 1996/11/10 03:01:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.15 1996/11/13 20:48:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,9 @@ static void make_arguments(int nargs, List *fargs, Oid *input_typeids,
 static void AddAggToParseState(ParseState *pstate, Aggreg *aggreg);
 static void finalizeAggregates(ParseState *pstate, Query *qry);
 static void parseCheckAggregates(ParseState *pstate, Query *qry);
+
+static bool is_lowercase(char *string);
+static void make_lowercase(char *string);
 
 /*****************************************************************************
  *
@@ -1869,6 +1872,30 @@ ParseComplexProjection(ParseState *pstate,
     return NULL;
 }
 		       
+static bool is_lowercase(char *string)
+{
+    int i;
+
+    for(i = 0; i < strlen(string); i++) {
+	if(string[i] >= 'A' && string[i] <= 'Z') {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+static void make_lowercase(char *string)
+{
+    int i;
+
+    for(i = 0; i < strlen(string); i++) {
+	if(string[i] >= 'A' && string[i] <= 'Z') {
+	    string[i] = (string[i] - 'A') + 'a';
+	}
+    }
+}
+		       
 static Node *
 ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 {
@@ -1987,6 +2014,27 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 
 		AddAggToParseState(pstate, aggreg);
 		return (Node*)aggreg;
+	    } else {
+		/* try one more time with lowercase --djm 8/17/96 */
+		if(!is_lowercase(funcname)) {
+		    char *lowercase_funcname = strdup(funcname);
+
+		    make_lowercase(lowercase_funcname);
+		    if (strcmp(lowercase_funcname, "count") == 0)
+		      basetype = 0;
+		    else
+		      basetype = exprType(lfirst(fargs));
+		    if (SearchSysCacheTuple(AGGNAME, 
+					    PointerGetDatum(lowercase_funcname), 
+					    ObjectIdGetDatum(basetype),
+					    0, 0)) {
+			Aggreg *aggreg = ParseAgg(lowercase_funcname, 
+						  basetype, lfirst(fargs));
+
+			AddAggToParseState(pstate, aggreg);
+			return (Node*)aggreg;
+		    }
+		}
 	    }
 	}
     }
