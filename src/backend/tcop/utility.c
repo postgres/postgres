@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.56 1999/02/24 17:29:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.57 1999/02/25 17:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "commands/view.h"
 #include "commands/version.h"
 #include "commands/vacuum.h"
-#include "commands/recipe.h"
 #include "commands/explain.h"
 #include "commands/trigger.h"
 #include "commands/proclang.h"
