@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 21 12:58:25 EDT 1999
+Last updated:		Fri Oct 22 07:49:36 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -52,7 +52,7 @@ PARSER
 * prevent primary key of nine columns [primary]
 * SELECT COUNT('asdf') FROM pg_class WHERE oid=12 crashes
 * SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken [distinct]
-* require SELECT DISTINCT target list to have all ORDER BY columns
+* -require SELECT DISTINCT target list to have all ORDER BY columns
 * -When using aggregates + GROUP BY, no rows in should yield no rows out(Tom)
 * -Allow HAVING to use comparisons that have no aggregates(Tom)
 
