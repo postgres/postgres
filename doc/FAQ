@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 26 00:33:17 EST 2004
+   Last updated: Sat Feb 7 22:09:05 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -114,7 +114,8 @@
                                       
     1.1) What is PostgreSQL? How is it pronounced?
     
-   PostgreSQL is pronounced Post-Gres-Q-L.
+   PostgreSQL is pronounced Post-Gres-Q-L. The name "Postgres" is also
+   used in conversation.
    
    PostgreSQL is an enhancement of the POSTGRES database management
    system, a next-generation DBMS research prototype. While PostgreSQL
@@ -126,7 +127,8 @@
    subscribe to the PostgreSQL development mailing list. The current
    coordinator is Marc G. Fournier (scrappy@PostgreSQL.org). (See section
    1.6 on how to join). This team is now responsible for all development
-   of PostgreSQL.
+   of PostgreSQL. It is a community project and is not controlled by any
+   company.
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
    others have contributed to the porting, testing, debugging, and
