@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.17 2002/10/18 18:41:22 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.18 2002/10/18 19:35:28 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,10 +18,11 @@ SCRIPTS := createdb dropdb createuser dropuser createlang droplang vacuumdb \
 
 all: $(SCRIPTS)
 
-# we don't need this now, but we may need it some day, bjm  2002-01-03
-#createlang: createlang.sh
-#	cp $< $@
-#	chmod a+x $@
+# we don't really need to edit createlang.sh at the moment,
+# but keep the old generation procedure in case we need it again.
+createlang: createlang.sh
+	cp $< $@
+	chmod a+x $@
 
 install: all installdirs
 	for i in $(filter-out createlang, $(SCRIPTS)); do \
