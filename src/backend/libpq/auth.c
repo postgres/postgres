@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.61 2001/08/17 15:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.62 2001/08/17 15:44:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,9 +419,9 @@ auth_failed(Port *port)
 		case uaIdent:
 			authmethod = "IDENT";
 			break;
-		case uaPassword:
 		case uaMD5:
 		case uaCrypt:
+		case uaPassword:
 			authmethod = "Password";
 			break;
 	}
@@ -496,11 +496,6 @@ ClientAuthentication(Port *port)
 			status = authident(port);
 			break;
 
-		case uaPassword:
-			sendAuthRequest(port, AUTH_REQ_PASSWORD);
-			status = recv_and_check_password_packet(port);
-			break;
-
 		case uaMD5:
 			sendAuthRequest(port, AUTH_REQ_MD5);
 			status = recv_and_check_password_packet(port);
@@ -508,6 +503,11 @@ ClientAuthentication(Port *port)
 
 		case uaCrypt:
 			sendAuthRequest(port, AUTH_REQ_CRYPT);
+			status = recv_and_check_password_packet(port);
+			break;
+
+		case uaPassword:
+			sendAuthRequest(port, AUTH_REQ_PASSWORD);
 			status = recv_and_check_password_packet(port);
 			break;
 
