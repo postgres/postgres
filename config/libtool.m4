@@ -117,7 +117,3 @@ with_gnu_ld=$ac_cv_prog_gnu_ld
 ])
 
 # ... more stuff removed ...
-
-# ... added:
-AC_SUBST(LD)
-AC_SUBST(with_gnu_ld)
