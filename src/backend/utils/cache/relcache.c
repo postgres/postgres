@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.149 2001/11/05 17:46:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.150 2002/01/15 22:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2978,5 +2978,12 @@ write_irels(void)
 	 * previously-existing init file.
 	 */
 	if (rename(tempfilename, finalfilename) < 0)
+	{
 		elog(NOTICE, "Cannot rename init file %s to %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename, finalfilename);
+		/*
+		 * If we fail, try to clean up the useless temp file; don't bother
+		 * to complain if this fails too.
+		 */
+		unlink(tempfilename);
+	}
 }
