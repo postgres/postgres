@@ -356,19 +356,19 @@ AC_SUBST(HAVECXX)
 
 AC_PATH_PROGS(INSTALL, ginstall, NONE, "/usr/ucb:$PATH:`pwd`")
 if test "$INSTALL" = "NONE"
-AC_PATH_PROGS(INSTALL, installbsd, NONE, "/usr/ucb:$PATH:`pwd`")
+then	AC_PATH_PROGS(INSTALL, installbsd, NONE, "/usr/ucb:$PATH:`pwd`")
 fi
 if test "$INSTALL" = "NONE"
-AC_PATH_PROGS(INSTALL, bsdinst, NONE, "/usr/ucb:$PATH:`pwd`")
+then	AC_PATH_PROGS(INSTALL, bsdinst, NONE, "/usr/ucb:$PATH:`pwd`")
 fi
 if test "$INSTALL" = "NONE"
-AC_PATH_PROGS(INSTALL, scoinst, NONE, "/usr/ucb:$PATH:`pwd`")
+then	AC_PATH_PROGS(INSTALL, scoinst, NONE, "/usr/ucb:$PATH:`pwd`")
 fi
 if test "$INSTALL" = "NONE"
-AC_PATH_PROGS(INSTALL, install, NONE, "/usr/ucb:$PATH:`pwd`")
+then	AC_PATH_PROGS(INSTALL, install, NONE, "/usr/ucb:$PATH:`pwd`")
 fi
 if test "$INSTALL" = "NONE"
-AC_PATH_PROGS(INSTALL, install-sh, NONE, "/usr/ucb:$PATH:`pwd`")
+then	AC_PATH_PROGS(INSTALL, install-sh, NONE, "/usr/ucb:$PATH:`pwd`")
 fi
 if test "$INSTALL" = "NONE"
 then
