@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.125 1999/11/22 17:56:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.126 1999/11/25 00:15:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -2446,6 +2447,13 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 					 */
 					heap_insert(sd, stup);
 
+					{
+						Relation	irelations[Num_pg_statistic_indices];
+						CatalogOpenIndices(Num_pg_statistic_indices, Name_pg_statistic_indices, irelations);
+						CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
+						CatalogCloseIndices(Num_pg_statistic_indices, irelations);
+					}
+					
 					/* release allocated space */
 					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval-1]));
 					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval-1]));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.52 1999/11/24 16:52:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.53 1999/11/25 00:15:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,8 @@ char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
 		 	{RewriteOidIndex, RewriteRulenameIndex};
 char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =
 		 	{ShadowNameIndex, ShadowSysidIndex};
+char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =
+		 	{StatisticRelidAttnumOpIndex};
 char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] =
 		 	{TriggerRelidIndex,	TriggerConstrNameIndex, TriggerConstrRelidIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] =

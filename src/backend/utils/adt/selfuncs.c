@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.42 1999/11/22 17:56:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.43 1999/11/25 00:15:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,11 +588,6 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid typid, int32 typmod,
 				 Datum *hival)
 {
 	Relation	rel;
-	HeapScanDesc scan;
-	static ScanKeyData key[2] = {
-		{0, Anum_pg_statistic_starelid, F_OIDEQ, {0, 0, F_OIDEQ}},
-		{0, Anum_pg_statistic_staattnum, F_INT2EQ, {0, 0, F_INT2EQ}}
-	};
 	bool		isnull;
 	HeapTuple	tuple;
 	HeapTuple	typeTuple;
@@ -600,15 +595,13 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid typid, int32 typmod,
 
 	rel = heap_openr(StatisticRelationName, AccessShareLock);
 
-	key[0].sk_argument = ObjectIdGetDatum(relid);
-	key[1].sk_argument = Int16GetDatum((int16) attnum);
-
-	scan = heap_beginscan(rel, 0, SnapshotNow, 2, key);
-	tuple = heap_getnext(scan, 0);
+	tuple = SearchSysCacheTuple(STATRELID,
+									ObjectIdGetDatum(relid),
+									Int16GetDatum((int16) attnum),
+									0, 0); /* staop is currently 0 */
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* no such stats entry */
-		heap_endscan(scan);
 		heap_close(rel, AccessShareLock);
 		return false;
 	}
@@ -693,7 +686,6 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid typid, int32 typmod,
 		}
 	}
 
-	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
 	return true;
 }

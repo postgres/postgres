@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.36 1999/11/24 00:44:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.37 1999/11/25 00:15:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,6 @@ renameatt(char *relname,
 	HeapTuple	reltup,
 				oldatttup,
 				newatttup;
-	Relation	irelations[Num_pg_attr_indices];
 	Oid			relid;
 
 	/*
@@ -159,10 +158,13 @@ renameatt(char *relname,
 	heap_update(attrelation, &oldatttup->t_self, oldatttup, NULL);
 
 	/* keep system catalog indices current */
-	CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-	CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, oldatttup);
-	CatalogCloseIndices(Num_pg_attr_indices, irelations);
-
+	{
+		Relation	irelations[Num_pg_attr_indices];
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, oldatttup);
+		CatalogCloseIndices(Num_pg_attr_indices, irelations);
+	}
+	
 	pfree(oldatttup);
 	heap_close(attrelation, RowExclusiveLock);
 }
