@@ -646,6 +646,18 @@ assign the results to an array
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
+-assignbyidx arrayName ?appendstr?
+</TERM>
+<LISTITEM>
+<PARA>
+assign the results to an array using the first field as a key
+and optionally append appendstr to the key name. Useful for
+creating pseudo-multi dimensional arrays in tcl.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
 -numTuples
 </TERM>
 <LISTITEM>
