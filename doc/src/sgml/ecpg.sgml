@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.56 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.57 2003/12/01 22:36:40 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -353,6 +353,13 @@ EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
 </programlisting>
    This option is particularly suitable if the application needs to
    use several connections in mixed order.
+      </para>
+
+      <para>
+      If your application uses multiple threads of execution, they cannot share a
+      connection concurrently. You must either explicitly control access to the connection
+      (using mutexes) or use a connection for each thread. If each thread uses its own connection,
+      you will need to use the AT clause to specify which connection the thread will use.
   </para>
 
   <para>
