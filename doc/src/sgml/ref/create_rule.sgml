@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.19 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.20 2000/12/12 16:47:52 momjian Exp $
 Postgres documentation
 -->
 
@@ -208,14 +208,14 @@ ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
 CREATE RULE bad_rule_combination_1 AS
     ON SELECT TO emp
     DO INSTEAD 
-	SELECT TO toyemp;
+	SELECT * FROM toyemp;
      </programlisting>
 
      <programlisting>
 CREATE RULE bad_rule_combination_2 AS
     ON SELECT TO toyemp
     DO INSTEAD 
-	SELECT TO emp;
+	SELECT * FROM emp;
      </programlisting>
      <para>
       This attempt to select from EMP will cause

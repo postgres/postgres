@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.14 2000/12/12 16:47:52 momjian Exp $
 -->
 
  <chapter id="query">
@@ -273,8 +273,8 @@ SELECT * INTO TABLE temp FROM weather;
     As an example, say we wish to find all the records that
     are in the  temperature  range  of  other  records.  In
     effect,  we  need  to  compare  the temp_lo and temp_hi
-    attributes of each EMP  instance  to  the  temp_lo  and
-    temp_hi  attributes of all other EMP instances.
+    attributes of each WEATHER  instance  to  the  temp_lo  and
+    temp_hi  attributes of all other WEATHER instances.
     <note>
      <para>
       This  is only a conceptual model.  The actual join may
