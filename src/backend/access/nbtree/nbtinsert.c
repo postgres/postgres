@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.77 2001/01/26 01:24:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.78 2001/01/29 07:28:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,10 @@ typedef struct
 	int		best_delta;			/* best size delta so far */
 } FindSplitData;
 
+extern bool FixBTree;
+
 Buffer _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release);
+static void _bt_fixtree(Relation rel, BlockNumber blkno, BTStack stack);
 
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 
@@ -477,10 +480,55 @@ _bt_insertonpg(Relation rel,
 			BTItem		ritem;
 			Buffer		pbuf;
 
-			/* Set up a phony stack entry if we haven't got a real one */
+			/* If root page was splitted */
 			if (stack == (BTStack) NULL)
 			{
 				elog(DEBUG, "btree: concurrent ROOT page split");
+				/*
+				 * If root page splitter failed to create new root page
+				 * then old root' btpo_parent still points to metapage.
+				 * We have to fix root page in this case.
+				 */
+				if (lpageop->btpo_parent == BTREE_METAPAGE)
+				{
+					if (!FixBTree)
+						elog(ERROR, "bt_insertonpg: no root page found");
+					_bt_wrtbuf(rel, rbuf);
+					_bt_wrtnorelbuf(rel, buf);
+					while(! P_LEFTMOST(lpageop))
+					{
+						BlockNumber		blkno = lpageop->btpo_prev;
+						LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+						ReleaseBuffer(buf);
+						buf = _bt_getbuf(rel, blkno, BT_WRITE);
+						page = BufferGetPage(buf);
+						lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+						/*
+						 * If someone else already created parent pages
+						 * then it's time for _bt_fixtree() to check upper
+						 * levels and fix them, if required.
+						 */
+						if (lpageop->btpo_parent != BTREE_METAPAGE)
+						{
+							blkno = lpageop->btpo_parent;
+							_bt_relbuf(rel, buf, BT_WRITE);
+							_bt_fixtree(rel, blkno, NULL);
+							goto formres;
+						}
+					}
+					/*
+					 * Ok, we are on the leftmost page, it's write locked
+					 * by us and its btpo_parent points to meta page - time
+					 * for _bt_fixroot().
+					 */
+					 buf = _bt_fixroot(rel, buf, true);
+					 _bt_relbuf(rel, buf, BT_WRITE);
+					goto formres;
+				}
+
+				/*
+				 * Set up a phony stack entry if we haven't got a real one
+				 */
 				stack = &fakestack;
 				stack->bts_blkno = lpageop->btpo_parent;
 				stack->bts_offset = InvalidOffsetNumber;
@@ -537,6 +585,7 @@ _bt_insertonpg(Relation rel,
 		_bt_wrtbuf(rel, buf);
 	}
 
+formres:;
 	/* by here, the new tuple is inserted at itup_blkno/itup_off */
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 	ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
@@ -1414,8 +1463,7 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	 * created with _bt_newroot() - rootbuf, - and buf we've used
 	 * for last insert ops - buf. If rootbuf != buf then we have to
 	 * create at least one more level. And if "release" is TRUE
-	 * (ie we've already created some levels) then we give up
-	 * oldrootbuf.
+	 * then we give up oldrootbuf.
 	 */
 	if (release)
 		_bt_relbuf(rel, oldrootbuf, BT_WRITE);
@@ -1427,6 +1475,12 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	}
 
 	return(rootbuf);
+}
+
+static void
+_bt_fixtree(Relation rel, BlockNumber blkno, BTStack stack)
+{
+	elog(ERROR, "bt_fixtree: unimplemented , yet");
 }
 
 /*

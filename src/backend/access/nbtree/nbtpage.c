@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.48 2001/01/26 01:24:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.49 2001/01/29 07:28:17 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -257,6 +257,7 @@ check_parent:;
 				/* handle concurrent fix of root page */
 				if (rootopaque->btpo_parent == BTREE_METAPAGE)	/* unupdated! */
 				{
+					elog(NOTICE, "bt_getroot: fixing root page");
 					newrootbuf = _bt_fixroot(rel, rootbuf, true);
 					LockBuffer(newrootbuf, BUFFER_LOCK_UNLOCK);
 					LockBuffer(newrootbuf, BT_READ);
