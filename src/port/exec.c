@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.11 2004/05/20 15:35:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.12 2004/05/20 15:38:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ validate_exec(char *path)
  * non-threaded binaries, not in library routines.
  */
 int
-find_my_exec(const char *argv0, char *full_path)
+find_my_exec(const char *argv0, char *retpath)
 {
 	char		cwd[MAXPGPATH];
 	char	   *p;
@@ -210,19 +210,19 @@ find_my_exec(const char *argv0, char *full_path)
 		}
 
 		if (is_absolute_path(argv0))
-			StrNCpy(full_path, argv0, MAXPGPATH);
+			StrNCpy(retpath, argv0, MAXPGPATH);
 		else
-			snprintf(full_path, MAXPGPATH, "%s/%s", cwd, argv0);
+			snprintf(retpath, MAXPGPATH, "%s/%s", cwd, argv0);
 		
-		canonicalize_path(full_path);
-		if (validate_exec(full_path) == 0)
+		canonicalize_path(retpath);
+		if (validate_exec(retpath) == 0)
 		{
-			win32_make_absolute(full_path);
+			win32_make_absolute(retpath);
 			return 0;
 		}
 		else
 		{
-			log_error("invalid binary \"%s\"", full_path);
+			log_error("invalid binary \"%s\"", retpath);
 			return -1;
 		}
 	}
@@ -231,8 +231,8 @@ find_my_exec(const char *argv0, char *full_path)
 	/* Win32 checks the current directory first for names without slashes */
 	if (validate_exec(argv0) == 0)
 	{
-		snprintf(full_path, MAXPGPATH, "%s/%s", cwd, argv0);
-		win32_make_absolute(full_path);
+		snprintf(retpath, MAXPGPATH, "%s/%s", cwd, argv0);
+		win32_make_absolute(retpath);
 		return 0;
 	}
 #endif
@@ -254,21 +254,21 @@ find_my_exec(const char *argv0, char *full_path)
 				*endp = '\0';
 
 			if (is_absolute_path(startp))
-				snprintf(full_path, MAXPGPATH, "%s/%s", startp, argv0);
+				snprintf(retpath, MAXPGPATH, "%s/%s", startp, argv0);
 			else
-				snprintf(full_path, MAXPGPATH, "%s/%s/%s", cwd, startp, argv0);
+				snprintf(retpath, MAXPGPATH, "%s/%s/%s", cwd, startp, argv0);
 
-			canonicalize_path(full_path);
-			switch (validate_exec(full_path))
+			canonicalize_path(retpath);
+			switch (validate_exec(retpath))
 			{
 				case 0: /* found ok */
-					win32_make_absolute(full_path);
+					win32_make_absolute(retpath);
 					free(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					log_error("could not read binary \"%s\"", full_path);
+					log_error("could not read binary \"%s\"", retpath);
 					free(path);
 					return -1;
 			}
@@ -286,7 +286,7 @@ find_my_exec(const char *argv0, char *full_path)
 	 *	Win32 has a native way to find the executable name, but the above
 	 *	method works too.
 	 */
-	if (GetModuleFileName(NULL,full_path,MAXPGPATH) == 0)
+	if (GetModuleFileName(NULL, retpath, MAXPGPATH) == 0)
 		log_error("GetModuleFileName failed (%i)",(int)GetLastError());
 #endif
 }

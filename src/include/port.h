@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.34 2004/05/20 01:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.35 2004/05/20 15:38:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ extern void get_pkglib_path(const char *my_exec_path, char *ret_path);
 
 
 /* Portable way to find binaries */
-extern int find_my_exec(const char *argv0, char *full_path);
+extern int find_my_exec(const char *argv0, char *retpath);
 extern int find_other_exec(const char *argv0, char const *target,
 						   const char *versionstr, char *retpath);
 #if defined(__CYGWIN__) || defined(WIN32)
