@@ -652,7 +652,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %token		SQL_FOUND SQL_FREE SQL_GO SQL_GOTO
 %token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_INT SQL_LONG
 %token		SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
-%token		SQL_SECTION SQL_SEMI SQL_SHORT SQL_SIGNED SQL_SQLERROR SQL_SQLPRINT
+%token		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQLERROR SQL_SQLPRINT
 %token		SQL_SQLWARNING SQL_START SQL_STOP SQL_STRUCT SQL_UNSIGNED
 %token		SQL_VAR SQL_WHENEVER
 
@@ -710,7 +710,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
                 LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
                 NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
-                RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
+                RENAME, RESET, RETURNS, ROW, RULE,
                 SERIAL, SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
@@ -734,6 +734,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
+%nonassoc	NULL_P
 %nonassoc	IS
 %left		'+' '-'
 %left		'*' '/' '%'
@@ -839,8 +840,8 @@ prog: statements;
 statements: /* empty */
 	| statements statement
 
-statement: ecpgstart opt_at stmt SQL_SEMI { connection = NULL; }
-	| ecpgstart stmt SQL_SEMI
+statement: ecpgstart opt_at stmt ';' { connection = NULL; }
+	| ecpgstart stmt ';'
 	| ECPGDeclaration
 	| c_thing 			{ fprintf(yyout, "%s", $1); free($1); }
 	| cpp_line			{ fprintf(yyout, "%s", $1); free($1); }
@@ -3587,6 +3588,8 @@ a_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str(">"), $3); }
 		| a_expr '=' NULL_P
                                 {       $$ = cat2_str($1, make1_str("= NULL")); }
+		| NULL_P '=' a_expr
+                                {       $$ = cat2_str(make1_str("= NULL"), $3); }
 		| a_expr '=' a_expr
 				{	$$ = cat3_str($1, make1_str("="), $3); }
 /* not possible in embedded sql		| ':' a_expr
@@ -4798,9 +4801,9 @@ ECPGDeclaration: sql_startdeclare
 		output_line_number();
 	}
 
-sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION SQL_SEMI {}
+sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {}
 
-sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION SQL_SEMI {}
+sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {}
 
 variable_declarations: /* empty */
 	{
@@ -5389,7 +5392,7 @@ sql_declaration: ctype
 		actual_type[struct_level].type_dimension = $1.type_dimension;
 		actual_type[struct_level].type_index = $1.type_index;
 	}
-	sql_variable_list SQL_SEMI
+	sql_variable_list ';'
 	{
 		$$ = cat3_str($1.type_str, $3, make1_str(";"));
 	}

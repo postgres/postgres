@@ -23,8 +23,6 @@
 #define ECPG_CONVERT_BOOL	-207
 #define ECPG_EMPTY		-208
 
-#define ECPG_UNDECLARED_CURSOR	-210
-
 #define ECPG_NO_CONN		-220
 #define ECPG_NOT_CONN		-221
 

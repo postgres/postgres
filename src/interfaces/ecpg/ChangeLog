@@ -519,5 +519,21 @@ Thu Mar 18 18:57:31 CET 1999
 
 	- Synced preproc.y with gram.y.
 	- Added '%' operator.
+
+Thu Mar 18 19:44:10 CET 1999
+
+	- Added ECPGstatus() function.
+	- Cleaned up some error messages.
+
+Fri Mar 19 08:49:32 CET 1999
+
+	- Synced preproc.y with gram.y.
+	- Synced keywords.c.
+	- Synced pgc.l with scan.l.
+
+Sat Mar 20 19:57:42 CET 1999
+
+	- Synced preproc.y with gram.y.
+	- Fixed handling of ';' character.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0

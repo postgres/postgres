@@ -183,7 +183,7 @@ ecpg_alloc(long size, int lineno)
 	if (!new)
 	{
 		ECPGlog("out of memory\n");
-		register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+		register_error(ECPG_OUT_OF_MEMORY, "Out of memory in line %d", lineno);
 		return NULL;
 	}
 	
@@ -199,7 +199,7 @@ ecpg_strdup(const char *string, int lineno)
 	if (!new)
 	{
 		ECPGlog("out of memory\n");
-		register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+		register_error(ECPG_OUT_OF_MEMORY, "Out of memory in line %d", lineno);
 		return NULL;
 	}
 
@@ -336,7 +336,7 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 			if (var->pointer == NULL)
 			{
 				ECPGlog("create_statement: invalid statement name\n");
-				register_error(ECPG_INVALID_STMT, "Invalid statement name in line %d", lineno);
+				register_error(ECPG_INVALID_STMT, "Invalid statement name in line %d.", lineno);
 				free(var);
 				return false;
 			}
@@ -387,7 +387,7 @@ next_insert(char *text)
 static bool
 ECPGexecute(struct statement * stmt)
 {
-	bool		status = false;
+	bool	    status = false;
 	char	   *copiedquery;
 	PGresult   *results;
 	PGnotify   *notify;
@@ -637,7 +637,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
-			register_error(ECPG_TRANS, "Error starting transaction line %d.", stmt->lineno);
+			register_error(ECPG_TRANS, "Error in transaction processing line %d.", stmt->lineno);
 			return false;
 		}
 		PQclear(results);
@@ -708,7 +708,7 @@ ECPGexecute(struct statement * stmt)
 					/*
 					 * allocate memory for NULL pointers
 					 */					 
-					if (var->arrsize == 0 || var->varcharsize == 0)
+					if ((var->arrsize == 0 || var->varcharsize == 0) && var->value == NULL)
 					{
 					    int len = 0;
 					    
@@ -716,34 +716,28 @@ ECPGexecute(struct statement * stmt)
 					    {
 						case ECPGt_char:
 						case ECPGt_unsigned_char:
-							if (var->value == NULL)
+							var->varcharsize = 0;
+							/* check strlen for each tuple */
+							for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 							{
-								var->varcharsize = 0;
-								/* check strlen for each tuple */
-								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-								{
-									int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-									
-									if (len > var->varcharsize)
-										var->varcharsize = len;
-								}
-								var->offset *= var->varcharsize;
-								len = var->offset * ntuples;
+								int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+								
+								if (len > var->varcharsize)
+									var->varcharsize = len;
 							}
+							var->offset *= var->varcharsize;
+							len = var->offset * ntuples;
 							break;
 						case ECPGt_varchar:
-							if (var->value == NULL)
-								len = ntuples * (var->varcharsize + sizeof (int));
+							len = ntuples * (var->varcharsize + sizeof (int));
 							break;							                    
 						default:
-							if (var->value == NULL)
-								len = var->offset * ntuples;
+							len = var->offset * ntuples;
 							break;
 					    }
-					    
-					    var->pointer = (void *) ecpg_alloc(len, stmt->lineno);
-					    var->value = (void **) var->pointer;
-					    add_mem((void *) var->value, stmt->lineno);
+					    var->value = (void *) ecpg_alloc(len, stmt->lineno);
+                                            *((void **) var->pointer) = var->value;
+                                            add_mem(var->value, stmt->lineno);
 					}
 									
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
@@ -1004,7 +998,7 @@ ECPGexecute(struct statement * stmt)
 			case PGRES_BAD_RESPONSE:
 				ECPGlog("ECPGexecute line %d: Error: %s",
 						stmt->lineno, PQerrorMessage(stmt->connection->connection));
-				register_error(ECPG_PGSQL, "Error: %s line %d.",
+				register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
 							   PQerrorMessage(stmt->connection->connection), stmt->lineno);
 				status = false;
 				break;
@@ -1019,7 +1013,8 @@ ECPGexecute(struct statement * stmt)
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
 						stmt->lineno);
-				register_error(ECPG_PGSQL, "Postgres error line %d.", stmt->lineno);
+				register_error(ECPG_PGSQL, "Postgres error: %s line %d.", 
+							   PQerrorMessage(stmt->connection->connection), stmt->lineno);
 				status = false;
 				break;
 		}
@@ -1046,7 +1041,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 
 	if (con == NULL)
 	{
-		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d.", connection_name, lineno);
 		return (false);
 	}
 		
@@ -1059,13 +1054,34 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	if (con == NULL || con->connection == NULL)
 	{
 		ECPGlog("ECPGdo: not connected to %s\n", con->name);
-		register_error(ECPG_NOT_CONN, "Not connected in line %d", lineno);
+		register_error(ECPG_NOT_CONN, "Not connected in line %d.", lineno);
 		return false;
 	}
 
 	return (ECPGexecute(stmt));
 }
 
+bool
+ECPGstatus(int lineno, const char *connection_name)
+{
+	struct connection *con = get_connection(connection_name);
+
+	if (con == NULL)
+	{
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		return (false);
+	}
+		
+	/* are we connected? */
+	if (con->connection == NULL)
+	{
+		ECPGlog("ECPGdo: not connected to %s\n", con->name);
+		register_error(ECPG_NOT_CONN, "Not connected in line %d", lineno);
+		return false;
+	}
+
+	return (true);
+}
 
 bool
 ECPGtrans(int lineno, const char *connection_name, const char *transaction)

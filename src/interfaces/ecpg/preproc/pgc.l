@@ -134,8 +134,8 @@ identifier		{letter}{letter_or_digit}*
 
 typecast		"::"
 
-self			[,()\[\].$\:\+\-\*\/\<\>\=\|]
-op_and_self		[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
+self			[,()\[\].;$\:\+\-\*\/\%\<\>\=\|]
+op_and_self		[\~\!\@\#\^\&\|\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
 xmstop			-
@@ -299,7 +299,15 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					BEGIN(xm);
 					return yytext[0];
 				}
-<SQL>{self}				{ 	return yytext[0]; }
+<SQL>{self}			{ /* 
+				   * We may find a ';' inside a structure
+				   * definition in a TYPE or VAR statement.
+				   * This is not an EOL marker.
+				   */
+				  if (yytext[0] == ';' && struct_level == 0)
+					 BEGIN C;
+				  return yytext[0];
+				}
 <SQL>{operator}/-[\.0-9]	{
 					yylval.str = mm_strdup((char*)yytext);
 					return Op;
@@ -510,14 +518,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					}
 				}
 <SQL>{space}			{ /* ignore */ }
-<SQL>";"	                { /* 
-				   * We may find a ';' inside a structure
-				   * definition in a TYPE or VAR statement.
-				   * This is not a EOL marker.
-				   */
-				  if (struct_level == 0)
-					 BEGIN C;
-				  return SQL_SEMI; }
 <SQL>{other}			{ return yytext[0]; }
 <C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
