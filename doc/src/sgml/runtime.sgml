@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.57 2001/03/16 05:44:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.58 2001/03/24 00:24:26 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -165,7 +165,7 @@ NOTICE:  Initializing database with en_US collation order.
   </para>
 
   <para>
-   This shells syntax can get tedious quickly.  Therefore the shell
+   This shell syntax can get tedious quickly.  Therefore the shell
    script wrapper <application>pg_ctl</application> is provided that
    encapsulates some of the tasks.  E.g.,
 <programlisting>
@@ -266,10 +266,10 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
   </para>
 
    <para>
-    While the <application>postmaster</application> is running, it's
+    While the <application>postmaster</application> is running, its
     PID is in the file <filename>postmaster.pid</filename> in the data
-    directory. This is used as in interlock against multiple running
-    postmaster on the same data directory and can also be used for
+    directory. This is used as an interlock against multiple postmasters
+    running in the same data directory, and can also be used for
     shutting down the postmaster.
    </para>
 
@@ -364,8 +364,9 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
 
     <para>
 <screen>
-connectDB() -- connect() failed: Connection refused
-Is the postmaster running (with -i) at 'server.joe.com' and accepting connections on TCP/IP port 5432?
+PQconnectPoll() -- connect() failed: Connection refused
+	Is the postmaster running (with -i) at 'server.joe.com'
+	and accepting connections on TCP/IP port 5432?
 </screen>
      This is the generic <quote>I couldn't find a server to talk
      to</quote> failure. It looks like the above when TCP/IP
@@ -378,8 +379,9 @@ Is the postmaster running (with -i) at 'server.joe.com' and accepting connection
      Alternatively, you'll get this when attempting
      Unix-socket communication to a local postmaster:
 <screen>
-connectDB() -- connect() failed: No such file or directory
-Is the postmaster running locally and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
+connectDBstart() -- connect() failed: No such file or directory
+	Is the postmaster running locally
+	and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
 </screen>
     </para>
 
@@ -454,6 +456,8 @@ syslog = 2
 postmaster -c log_connections=yes -c syslog=2
 </programlisting>
     which would have the same effect as the previous example.
+    Command-line options override any conflicting settings in
+    <filename>postgresql.conf</filename>.
    </para>
 
    <para>
@@ -1066,7 +1070,9 @@ env PGOPTIONS='-c geqo=off' psql
 	that for a complex query, several sorts and/or hashes might be
 	running in parallel, and each one will be allowed to use as
 	much memory as this value specifies before it starts to put
-	data into temporary files.
+	data into temporary files.  And don't forget that each running
+	backend could be doing one or more sorts.  So the total memory
+	space needed could be many times the value of SORT_MEM.
        </para>
       </listitem>
      </varlistentry>
@@ -1396,7 +1402,7 @@ env PGOPTIONS='-c geqo=off' psql
     not relevant for <productname>Postgres</>). Almost all modern
     operating systems provide these features, but not all of them have
     them turned on or sufficiently sized by default, especially
-    systems with BSD heritage. (For the QNX port,
+    systems with BSD heritage. (For the QNX and BeOS ports,
     <productname>Postgres</> provides its own replacement
     implementation of these facilities.)
    </para>
@@ -1510,7 +1516,7 @@ env PGOPTIONS='-c geqo=off' psql
     estimate the required segment size as the number of buffers times
     the block size (8192 kB by default) plus ample overhead (at least
     half a megabyte). Any error message you might get will contain the
-    size of the failed allocation.
+    size of the failed allocation request.
    </para>
 
    <para>
@@ -1533,7 +1539,7 @@ env PGOPTIONS='-c geqo=off' psql
     is set by <varname>SEMMNS</>, which consequently must be at least
     as high as the connection setting plus one extra for each 16
     allowed connections (see the formula in <xref
-    linkend="sysvipc-parameters">.  The parameter <varname>SEMMNI</>
+    linkend="sysvipc-parameters">).  The parameter <varname>SEMMNI</>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
     least <literal>ceil(max_connections / 16)</>. Lowering the number
@@ -1588,7 +1594,7 @@ env PGOPTIONS='-c geqo=off' psql
 #define SHMALL		/* max amount of shared memory (pages) */
 </programlisting>
 
-	 To increase the number of buffers supported by the postmaseter, add the
+	 To increase the number of buffers supported by the postmaster, add the
 	 following to your kernel config file.  A <varname>SHMALL</> value of 1024 
 	 represents 4MB of shared memory.  Increase it accordingly:
 <programlisting>
@@ -1621,9 +1627,8 @@ options "SYSPTSIZE=13"
         <title>Semaphores</>
         <para>
          You may need to increase the number of semaphores. By
-         default, <productname>Postgres</> allocates 32 semaphores,
-         one for each backend connection. This is just over half the
-         default system total of 60.
+         default, <productname>Postgres</> allocates 34 semaphores,
+	 which is over half the default system total of 60.
         </para>
        </formalpara>
 
@@ -1845,7 +1850,7 @@ set semsys:seminfo_semmsl=32
     counts but it can be changed by the user up to the hard limit.
     The hard limit can only be changed by the root user.  The system
     call <function>setrlimit</function> is responsible for setting
-    these parameters.  The shell the built-in command
+    these parameters.  The shell's built-in command
     <command>ulimit</command> (Bourne shells) or
     <command>limit</command> (csh) is used to control the resource
     limits from the command line.  On BSD-derived systems the file
@@ -1922,8 +1927,9 @@ default:\
      <listitem>
       <para>
        After receiving SIGTERM, the postmaster disallows new
-       connections but lets active backend end their work and shuts
-       down only after all of them terminated (by client request).
+       connections, but lets existing backends end their work normally.
+       It shuts down only after all of the backends terminate by client
+       request.
        This is the <firstterm>Smart Shutdown</firstterm>.
       </para>
      </listitem>
@@ -1933,10 +1939,11 @@ default:\
      <term>SIGINT</term>
      <listitem>
       <para>
-       The postmaster disallows new connections, sends all active
-       backends SIGTERM (which will cause them to abort immediately),
-       waits for children to exit and shuts down the data base. This
-       is the <firstterm>Fast Shutdown</firstterm>.
+       The postmaster disallows new connections and sends all existing
+       backends SIGTERM, which will cause them to abort their current
+       transactions and exit promptly.  It then waits for the backends to exit
+       and finally shuts down the data base.
+       This is the <firstterm>Fast Shutdown</firstterm>.
       </para>
      </listitem>
     </varlistentry>
@@ -1948,8 +1955,9 @@ default:\
        This is the <firstterm>Immediate Shutdown</firstterm> which
        will cause the postmaster to send a SIGQUIT to all backends and
        exit immediately (without properly shutting down the database
-       system). When WAL is implemented, this will lead to recovery on
-       start-up. Right now it's not recommendable to use this option.
+       system).  The backends likewise exit immediately upon receiving
+       SIGQUIT. This will lead to recovery (by replaying the WAL log)
+       upon next start-up.  This is recommended only in emergencies.
       </para>
      </listitem>
     </varlistentry>
@@ -1957,10 +1965,9 @@ default:\
 
    <caution>
     <para>
-     If at all possible, do not use SIGKILL to shut down the
-     postmaster. This can cause data corruption and will prevent the
-     cleaning up of shared memory resources, which you will have to
-     do yourself in that case.
+     It is best not to use SIGKILL to shut down the postmaster. This
+     will prevent the postmaster from releasing shared memory and
+     semaphores, which you may then have to do by hand.
     </para>
    </caution>
 
@@ -1969,12 +1976,13 @@ default:\
    <filename>postmaster.pid</filename> in the data directory. So for
    example, to do a fast shutdown:
 <screen>
-&gt; <userinput>kill -INT `cat /usr/local/pgsql/data/postmaster.pid`</userinput>
+&gt; <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput>
 </screen>
   </para>
   <para>
    The program <application>pg_ctl</application> is a shell script
-   wrapper that provides a convenient interface to these functions.
+   that provides a more convenient interface for shutting down the
+   postmaster.
   </para>
  </sect1>
 
