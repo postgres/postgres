@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.50 1998/04/07 18:12:25 momjian Exp $
+ * $Id: pg_proc.h,v 1.51 1998/04/08 06:40:09 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -500,12 +500,12 @@ DATA(insert OID = 230 (  dsqrt			   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  fo
 DESCR("square root");
 DATA(insert OID = 231 (  dcbrt			   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  foo bar ));
 DESCR("cube root");
-DATA(insert OID = 232 (  dpow			   PGUID 11 f t f 2 f 701 "701" 100 0 0 100  foo bar ));
+DATA(insert OID = 232 (  dpow			   PGUID 11 f t f 2 f 701 "701 701" 100 0 0 100  foo bar ));
 DESCR("exponentiation");
 DATA(insert OID = 233 (  dexp			   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  foo bar ));
 DESCR("exponential");
 DATA(insert OID = 234 (  dlog1			   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  foo bar ));
-DESCR("natural logarith (in psql, protect with ()");
+DESCR("natural logarithm (in psql, protect with ()");
 
 DATA(insert OID = 235 (  i2tod			   PGUID 11 f t f 1 f 701  "21" 100 0 0 100  foo bar ));
 DESCR("convert");
