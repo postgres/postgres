@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb  6 23:50:38 EST 2001
+Last updated:		Fri Feb  9 10:15:00 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -123,6 +123,7 @@ TYPES
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
 * Make binary/file in/out interface for TOAST columns
+* Do not decompress untouched TOAST values on UPDATE
 * SELECT cash_out(2) crashes because of opaque
 * Add SQL standard function bit_length()
 
