@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.137 2000/10/03 19:16:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.138 2000/10/14 23:56:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,9 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#ifdef HAVE_XTI_H
+# include <xti.h>
+#endif
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
 #endif
