@@ -892,10 +892,9 @@
 
      <listitem>
       <para>
-	<entry>9</entry>
-	<entry>value with the specified number of digits, and if digit is
-	 not available use blank space</entry>
-       </row>
+       <literal>9</literal> specifies a value with the same number of 
+       digits as there are <literal>9</literal>s. If a digit is
+       not available use blank space.
       </para>
      </listitem>
 

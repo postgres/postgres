@@ -162,7 +162,7 @@ For a complete list of options, type:
     installed into the usual place for Perl modules (typically under
     <filename>/usr/lib/perl</filename>), so you must have root access
     to perform the installation step.  (It is often easiest to leave out
-    <term>--with-perl</term> initially, and then build and install the
+    <option>--with-perl</option> initially, and then build and install the
     Perl interface after completing the installation of PostgreSQL
     itself.)
    </para>

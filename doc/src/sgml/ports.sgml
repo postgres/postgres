@@ -44,14 +44,6 @@
 	<entry>(<ulink url="mailto:maillist@candle.pha.pa.us">Bruce Momjian</ulink></entry>
        </row>
        <row>
-	<entry>FreeBSD 2.2.x-4.0</entry>
-	<entry>x86</entry>
-	<entry>v6.5</entry>
-	<entry>1999-05-25</entry>
-	<entry>(<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>,
-	 <ulink url="mailto:scrappy@hub.org">Marc Fournier</ulink>)</entry>
-       </row>
-       <row>
 	<entry>DGUX 5.4R4.11</entry>
 	<entry>m88k</entry>
 	<entry>v6.3</entry>
@@ -66,6 +58,14 @@
 	<entry>1999-11-04</entry>
 	<entry>
 	 (<ulink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ulink>)</entry>
+       </row>
+       <row>
+	<entry>FreeBSD 2.2.x-4.0</entry>
+	<entry>x86</entry>
+	<entry>v6.5</entry>
+	<entry>1999-05-25</entry>
+	<entry>(<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>,
+	 <ulink url="mailto:scrappy@hub.org">Marc Fournier</ulink>)</entry>
        </row>
        <row>
 	<entry>HPUX</entry>
@@ -91,7 +91,7 @@
 	-->
        </row>
        <row>
-	<entry>linux 2.0.x</entry>
+	<entry>Linux 2.0.x</entry>
 	<entry>Alpha</entry>
 	<entry>v6.5.3</entry>
 	<entry>1999-11-05</entry>
@@ -99,7 +99,7 @@
 	 (<ulink url="mailto:pgsql@rkirkpat.net">Ryan Kirkpatrick</ulink>)</entry>
        </row>
        <row>
-	<entry>linux 2.2.x</entry>
+	<entry>Linux 2.2.x</entry>
 	<entry>arm41</entry>
 	<entry>v6.5.3</entry>
 	<entry>1999-11-05</entry>
@@ -112,7 +112,7 @@
        separately.
        - thomas 1999-11-06
        <row>
-	<entry>linux 2.0.x/libc5</entry>
+	<entry>Linux 2.0.x/libc5</entry>
 	<entry>x86</entry>
 	<entry>v6.4</entry>
 	<entry>1998-10-27</entry>
@@ -121,14 +121,14 @@
        -->
 
        <row>
-	<entry>linux 2.2.x/glibc2</entry>
+	<entry>Linux 2.2.x/glibc2</entry>
 	<entry>x86</entry>
-	<entry>v6.5.3</entry>
-	<entry>1999-11-05</entry>
+	<entry>v7.0</entry>
+	<entry>2000-03-26</entry>
 	<entry>(<ulink url="mailto:lamar.owen@wgcr.org">Lamar Owens</ulink>)</entry>
        </row>
        <row>
-	<entry>linux 2.0.x</entry>
+	<entry>Linux 2.0.x</entry>
 	<entry>MIPS</entry>
 	<entry>v6.4</entry>
 	<entry>1998-12-16</entry>
@@ -136,26 +136,18 @@
 	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
        <row>
-	<entry>linux 2.0.x</entry>
+	<entry>Linux 2.0.x</entry>
 	<entry>Sparc</entry>
 	<entry>v6.4</entry>
 	<entry>1998-10-25</entry>
 	<entry>(<ulink url="mailto:szybist@boxhill.com">Tom Szybist</ulink>)</entry>
        </row>
        <row>
-	<entry>linuxPPC 2.1.24</entry>
+	<entry>LinuxPPC R4 2.2.1/libc5</entry>
 	<entry>PPC603e</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-26</entry>
+	<entry>v7.0</entry>
+	<entry>2000-03-26</entry>
 	<entry>Powerbook 2400c
-	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
-       </row>
-       <row>
-	<entry>mklinux DR3</entry>
-	<entry>PPC750</entry>
-	<entry>v6.4</entry>
-	<entry>1998-09-16</entry>
-	<entry>PowerMac 7600
 	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
        <row>
@@ -166,11 +158,12 @@
 	<entry>(<ulink url="mailto:a.mcmurry1@physics.oxford.ac.uk">Andrew McMurry</ulink>)</entry>
        </row>
        <row>
-	<entry>NetBSD 1.3.2</entry>
+	<entry>NetBSD 1.4U</entry>
 	<entry>x86</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-25</entry>
-	<entry>(<ulink url="mailto:brook@trillium.NMSU.Edu">Brook Milligan</ulink>)</entry>
+	<entry>v7.0</entry>
+	<entry>2000-03-26</entry>
+	<entry>(<ulink url="mailto:prlw1@newn.cam.ac.uk">Patrick
+	  Welche</ulink>)</entry>
        </row>
        <row>
 	<entry>NetBSD</entry>
@@ -204,7 +197,7 @@
 	<entry>(<ulink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ulink>)</entry>
        </row>
        <row>
-	<entry>QNX-4.25</entry>
+	<entry>QNX 4.25</entry>
 	<entry>x86</entry>
 	<entry>v6.5.2</entry>
 	<entry>1999-11-08</entry>
@@ -277,11 +270,6 @@
     </table>
    </para>
 
-   <para>
-    Platforms listed for v6.3.x and v6.4.x should also work with v6.5,
-    but we did not receive explicit confirmation of such at the time this
-    list was compiled.
-   </para>
    <note>
     <para>
      For <productname>Windows NT</productname>, 
@@ -295,12 +283,54 @@
    <title>Unsupported Platforms</title>
 
    <para>
+    Platforms listed for v6.3.x-v6.5.x should also work with v7.0,
+    but we did not receive explicit confirmation of such at the time this
+    list was compiled.
+   </para>
+
+   <para>
+    At the time of publication, the following platforms have been tested:
+
+    <table tocentry="1">
+     <title>Obsolete Platforms</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry><acronym>OS</acronym></entry>
+	<entry>Processor</entry>
+	<entry>Version</entry>
+	<entry>Reported</entry>
+	<entry>Remarks</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>mklinux DR3</entry>
+	<entry>PPC750</entry>
+	<entry>v6.4</entry>
+	<entry>1998-09-16</entry>
+	<entry>PowerMac 7600; mklinux merged with LinuxPPC
+	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
+       </row>
+       <row>
+	<entry>Ultrix</entry>
+	<entry>MIPS,VAX?</entry>
+	<entry>v6.x</entry>
+	<entry>1998-03-01</entry>
+	<entry>No recent reports; obsolete?</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
     There are a few platforms which have been attempted and which have been
     reported to not work with the standard distribution.
     Others listed here do not provide sufficient library support for an attempt.
 
     <table tocentry="1">
-     <title>Possibly Incompatible Platforms</title>
+     <title>Incompatible Platforms</title>
      <titleabbrev>Incompatibles</titleabbrev>
      <tgroup cols="4">
       <thead>
@@ -336,16 +366,6 @@
 	<entry>Confirmed with patching; v6.4.x will need TAS spinlock code
 	 (<ulink url="mailto:dlw@seavme.xroads.com">Doug Winterburn</ulink>)</entry>
        </row>
-<!--
-Obsolete afaik. Let's stop mentioning it. - thomas 1999-11-06
-       <row>
-	<entry>Ultrix</entry>
-	<entry>MIPS,VAX?</entry>
-	<entry>v6.x</entry>
-	<entry>1998-03-01</entry>
-	<entry>No recent reports; obsolete?</entry>
-       </row>
--->
       </tbody>
      </tgroup>
     </table>
@@ -357,7 +377,7 @@ Obsolete afaik. Let's stop mentioning it. - thomas 1999-11-06
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -367,7 +387,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

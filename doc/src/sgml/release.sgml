@@ -1,31 +1,28 @@
  <chapter id="release">
   <title>Release Notes</title>
 
-<sect1>
-<title>Release 7.0</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>2000-04-01</date>
-</docinfo>
--->
-
-
-
+  <sect1>
+   <title>Release 7.0</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>2000-04-01</date>
+  </docinfo>
+   -->
    <para>
-	This release shows the continued growth of PostgreSQL.  There are more
-	changes in 7.0 than in any previous release.  Don't be concerned this is
-	a dot-zero release. We do our best to put out only solid releases, and
-	this one is no exception.
+    This release shows the continued growth of PostgreSQL.  There are more
+    changes in 7.0 than in any previous release.  Don't be concerned this is
+    a dot-zero release. We do our best to put out only solid releases, and
+    this one is no exception.
    </para>
 
    <para>
-	Major changes in this release:
+    Major changes in this release:
 
     <variablelist>
      <varlistentry>
@@ -43,7 +40,7 @@
 
      <varlistentry>
       <term>
-	Optimizer Overhaul
+       Optimizer Overhaul
       </term>
       <listitem>
        <para>
@@ -56,7 +53,7 @@
 
      <varlistentry>
       <term>
-	Updated psql
+       Updated psql
       </term>
       <listitem>
        <para>
@@ -68,7 +65,21 @@
 
      <varlistentry>
       <term>
-	Upcoming Features
+       Join Syntax
+      </term>
+      <listitem>
+       <para>
+	SQL92 join syntax is now supported, though only as INNER JOINs 
+	for this release. JOIN, NATURAL JOIN, JOIN/USING, JOIN/ON are
+	available, as are column correlation names.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term>
+       Upcoming Features
       </term>
       <listitem>
        <para>
@@ -91,7 +102,7 @@
      <application>pg_upgrade</application> to upgrade to this
      release.
     </para>
-    </sect2>
+   </sect2>
 
    <sect2>
     <title>Detailed Change List</title>
@@ -100,7 +111,7 @@
 Bug Fixes
 ---------
 Prevent function calls with more than maximum number of arguments (Tom)
-Many fixes for CASE  (Tom)
+Improve CASE construct (Tom)
 Fix SELECT coalesce(f1,0) FROM int4_tbl GROUP BY f1 (Tom)
 Fix SELECT sentence.words[0] FROM sentence GROUP BY sentence.words[0] (Tom)
 Fix GROUP BY scan bug (Tom)
@@ -119,8 +130,7 @@ Prevent DESTROY DATABASE while others accessing
 Prevent any rows from being returned by GROUP BY if no rows processed (Tom)
 Fix SELECT COUNT(1) FROM table WHERE ...' if no rows matching WHERE (Tom)
 Fix pg_upgrade so it works for MVCC(Tom)
-Fix for SELECT ... WHERE x IN (SELECT ... HAVING SUM(x) > 1) (Tom)
-Make TABLE optional keyword in LOCK TABLE (Bruce)
+Fix for SELECT ... WHERE x IN (SELECT ... HAVING SUM(x) &gt; 1) (Tom)
 Fix for "f1 datetime DEFAULT 'now'"  (Tom)
 Fix problems with CURRENT_DATE used in DEFAULT (Tom)
 Allow comment-only lines, and ;;; lines too. (Tom)
@@ -164,7 +174,7 @@ Enhancements
 ------------
 New CLI interface include file sqlcli.h, based on SQL3/SQL98
 Remove all limits on query length, row length limit still exists (Tom)
-Update jdbc protocol to 2.0 (Jens Glaser jens@jens.de)
+Update jdbc protocol to 2.0 (<ulink url="mailto:jens@jens.de">Jens Glaser</ulink>)
 Add TRUNCATE command to quickly truncate relation (Mike Mascari)
 Fix to give super user and createdb user proper update catalog rights (Peter E)
 Allow ecpg bool variables to have NULL values (Christof)
@@ -172,22 +182,21 @@ Issue ecpg error if NULL value is returned to variable with no NULL
 indicator (Christof)
 Allow ^C to cancel COPY command (Massimo)
 Add SET FSYNC and SHOW PG_OPTIONS commands(Massimo)
-Improve CREATE FUNCTION to allow type conversion specification 
-	(Bernie Frankpitt)
+Improve CREATE FUNCTION to allow type conversion (Bernie Frankpitt)
 Add CmdTuples() to libpq++(Vince)
 New CREATE CONSTRAINT TRIGGER and SET CONSTRAINTS commands(Jan)
-Allow CREATE FUNCTION WITH clause to be used for all language types
+Allow CREATE FUNCTION/WITH clause to be used for all language types
 configure --enable-debug adds -g (Peter E)
 configure --disable-debug removes -g (Peter E)
 Allow more complex default expressions (Tom)
 First real FOREIGN KEY constraint trigger functionality (Jan)
 Add FOREIGN KEY ... MATCH FULL ... ON DELETE CASCADE (Jan)
-Add FOREIGN KEY ... MATCH <unspecified> referential actions (Don Baccus)
+Add FOREIGN KEY ... MATCH &lt;unspecified&gt; referential actions (Don Baccus)
 Allow WHERE restriction on ctid (physical heap location) (Hiroshi)
 Move pginterface from contrib to interface directory, rename to pgeasy (Bruce)
-Add DEC and SESSION_USER as reserved words
+Add DEC and SESSION_USER as reserved words (Thomas)
 Require SELECT DISTINCT target list to have all ORDER BY columns (Tom)
-Add Oracle's COMMENT ON command (Mike Mascari <mascarim@yahoo.
+Add Oracle's COMMENT ON command (<ulink url="mailto:mascarim@yahoo">Mike Mascari</ulink>)
 libpq's PQsetNoticeProcessor function now returns previous hook(Peter E)
 Prevent PQsetNoticeProcessor from being set to NULL (Peter E)
 Make USING in COPY optional (Bruce)
@@ -226,18 +235,15 @@ Add postmaster.opts.default file to store startup flags (Tatsuo)
 Allow --with-mb=SQL_ASCII
 Increase maximum number of index keys to 16 (Bruce)
 Increase maximum number of function arguments to 16 (Bruce)
-Allow user configuration of maximum number of index keys and arguments
-(Bruce)
+Allow configuration of maximum number of index keys and arguments (Bruce)
 Allow unprivileged users to change their passwords (Peter E)
-With password authentication enabled, new users without passwords can't
-connect (Peter E)
+Password authentication enabled; required for new users (Peter E)
 Disallow dropping a user who owns a database (Peter E)
 Change initdb option --with-mb to --enable-multibyte
 Add option for initdb to prompts for superuser password (Peter E)
 Allow complex type casts like col::numeric(9,2) and col::int2::float8 (Tom)
-Updated user interfaces on initdb, initlocation, pg_dump, ipcclean
-(Peter E)
-New pg_char_to_encoding() and pg_encoding_to_char() functions (Tatsuo
+Updated user interfaces on initdb, initlocation, pg_dump, ipcclean (Peter E)
+New pg_char_to_encoding() and pg_encoding_to_char() functions (Tatsuo)
 Libpq non-blocking mode (Alfred Perlstein)
 Improve conversion of types in casts that don't specify a length
 New plperl internal programming language (Mark Hollomon)
@@ -245,7 +251,7 @@ Allow COPY IN to read file that do not end with a newline (Tom)
 Indicate when long identifiers are truncated (Tom)
 Allow aggregates to use type equivalency (Peter E)
 Add Oracle's to_char(), to_date(), to_datetime(), to_timestamp(), to_number()
-	conversion functions (Karel Zak <zakkr@zf.jcu.cz>)
+	conversion functions (Karel Zak &lt;zakkr@zf.jcu.cz&gt;)
 Add SELECT DISTINCT ON (expr [, expr ...]) targetlist ... (Tom)
 Check to be sure ORDER BY is compatible with the DISTINCT operation (Tom)
 Add NUMERIC and int8 types to ODBC
@@ -253,13 +259,12 @@ Improve EXPLAIN results for Append, Group, Agg, Unique (Tom)
 Add ALTER TABLE ... ADD FOREIGN KEY (Stephan Szabo)
 Allow SELECT .. FOR UPDATE in PL/pgSQL (Hiroshi)
 Enable backward sequential scan even after reaching EOF (Hiroshi)
-Add btree indexing of boolean values, >= and <= (Don Baccus)
+Add btree indexing of boolean values, &gt;= and &lt;= (Don Baccus)
 Print current line number when COPY FROM fails (Massimo)
 Recognize special case of POSIX time zone: "GMT+8" and "GMT-8" (Thomas)
 Add DEC as synonym for "DECIMAL (Thomas)
 Add SESSION_USER as SQL92 keyword, same as CURRENT_USER (Thomas)
-Implement column aliases (aka correlation names) and more join syntax
-(Thomas)
+Implement column aliases (aka correlation names) and join syntax (Thomas)
 Allow queries like SELECT a FROM t1 tx (a) (Thomas)
 Allow queries like SELECT * FROM t1 NATURAL JOIN t2 (Thomas)
 Make INTERVAL reserved word allowed as a column identifier (Thomas)
@@ -276,7 +281,7 @@ New libpq functions PQsetClientEncoding(), PQclientEncoding() (Tatsuo)
 Add support for SJIS user defined characters (Tatsuo)
 Larger views/rules supported
 Make libpq's PQconndefaults() thread-safe (Tom)
-Disable // as comment to be ANSI conforming, should use --
+Disable // as comment to be ANSI conforming, should use -- (Tom)
 Allow column aliases on views CREATE VIEW name (collist)
 Fixes for views with subqueries (Tom)
 Allow UPDATE table SET fld = (SELECT ...) (Tom)
@@ -353,7 +358,7 @@ Improve pg_statistics management for VACUUM speed improvement (Tom)
 Flush backend cache less frequently (Tom, Hiroshi)
 COPY now reuses previous memory allocation, improving performance (Tom)
 Improve optimization cost estimation (Tom)
-Improve optimizer estimate of range queries x > lowbound AND x < highbound (Tom)
+Improve optimizer estimate of range queries x &gt; lowbound AND x &lt; highbound (Tom)
 Use DNF instead of CNF where appropriate (Tom, Taral)
 Further cleanup for OR-of-AND WHERE-clauses (Tom)
 Make use of index in OR clauses (x = 1 AND y = 2) OR (x = 2 AND y = 4) (Tom)
@@ -368,22 +373,22 @@ Source Tree Changes
 Fix for linux PPC compile
 New generic expression-tree-walker subroutine (Tom)
 Change form() to varargform() to prevent portability problems.
-Improved range checking for large integers on Alpha's
+Improved range checking for large integers on Alphas
 Clean up #include in /include directory (Bruce)
 Add scripts for checking includes (Bruce)
 Remove un-needed #include's from *.c files (Bruce)
-Change #include's to use <> and "" as appropriate (Bruce)
+Change #include's to use &lt;&gt; and "" as appropriate (Bruce)
 Enable WIN32 compilation of libpq
-Alpha spinlock fix from Uncle George <gatgul@voicenet.com>
+Alpha spinlock fix from <ulink url="mailto:gatgul@voicenet.com">Uncle George</ulink>
 Overhaul of optimizer data structures (Tom)
 Fix to cygipc library (Yutaka Tanida)
 Allow pgsql to work on newer Cygwin snapshots(Dan)
 New catalog version number (Tom)
 Add Linux ARM.
 Rename heap_replace to heap_update
-Update for QNX (Kardos, Dr. Andreas)
+Update for QNX (Dr. Andreas Kardos)
 New platform-specific regression handling (Tom)
-Rename oid8 -> oidvector and int28 -> int2vector (Bruce)
+Rename oid8 -&gt; oidvector and int28 -&gt; int2vector (Bruce)
 Included all yacc and lex files into the distribution (Peter E.)
 Remove lextest, no longer needed (Peter E)
 Fix for libpq and psql on Win32 (Magnus)
@@ -392,7 +397,7 @@ Fix for plpgsql on BSDI
 Add SQL_ASCII test case to the regression test (Tatsuo)
 configure --with-mb now deprecated (Tatsuo)
 NT fixes
-NetBSD fixes Johnny C. Lam <lamj@stat.cmu.edu>
+NetBSD fixes <ulink url="mailto:lamj@stat.cmu.edu">Johnny C. Lam</ulink>
 Fixes for Alpha compiles
 New multibyte encodings
      </programlisting>
