@@ -75,7 +75,7 @@ global PgAcVar CurrentDB
 		}
 	}
 	set PgAcVar(tblinfo,indexlist) {}
-	wpg_select $CurrentDB "select oid,indexrelid from pg_index where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
+	wpg_select $CurrentDB "select pg_index.oid,indexrelid from pg_index, pg_class where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
 		lappend PgAcVar(tblinfo,indexlist) $rec(oid)
 		wpg_select $CurrentDB "select relname from pg_class where oid=$rec(indexrelid)" rec1 {
 			.pgaw:TableInfo.f2.fl.ilb insert end $rec1(relname)
@@ -1881,11 +1881,6 @@ if {[set PgAcVar(tblinfo,col_id) [.pgaw:TableInfo.f1.lb curselection]]==""} then
 	grid $base.f0.fi.l8 \
 		-in .pgaw:TableInfo.f0.fi -column 1 -row 3 -columnspan 1 -rowspan 1 -padx 2 \
 		-pady 2 
-	grid $base.f0.fi.l9 \
-		-in .pgaw:TableInfo.f0.fi -column 0 -row 4 -columnspan 1 -rowspan 1 -sticky w 
-	grid $base.f0.fi.l10 \
-		-in .pgaw:TableInfo.f0.fi -column 1 -row 4 -columnspan 1 -rowspan 1 -padx 2 \
-		-pady 2 
 	grid $base.f0.fi.l11 \
 		-in .pgaw:TableInfo.f0.fi -column 0 -row 5 -columnspan 1 -rowspan 1 -sticky w 
 	grid $base.f0.fi.l12 \
@@ -2163,7 +2158,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 #
 # This file contains Tcl procedures used to input Japanese text.
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.8 2001/05/30 14:44:00 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.9 2001/05/30 15:37:38 momjian Exp $
 #
 # Copyright (c) 1993  Software Research Associates, Inc.
 #
