@@ -129,7 +129,7 @@ For a fresh install or upgrading from previous releases of
 Read any last minute information and platform specific porting
      notes.  There are some platform specific notes at the end of this
      file for Ultrix4.x, Linux, BSD/OS and NeXT.  There are other
-     files in directory <FileName>/usr/src/pgsql/doc</FileName>, including files FAQ-Irix
+     files in directory <FileName>/usr/src/pgsql/postgresql-6.5.3/doc</FileName>, including files FAQ-Irix
      and FAQ-Linux.  Also look in directory
 <ULink url="ftp://ftp.postgresql.org/pub">ftp://ftp.postgresql.org/pub</ULink>.
      If there is a file called INSTALL in this directory then this
@@ -276,10 +276,10 @@ from the new distribution:
 <ProgramListing>
 $ cd
 $ gunzip -c postgresql-6.5.3.tar.gz \
-    | tar xvf - src/bin/pg_dump/pg_dumpall
-$ chmod a+x src/bin/pg_dump/pg_dumpall
-$ src/bin/pg_dump/pg_dumpall > db.out
-$ rm -rf src
+    | tar xvf - postgresql-6.5.3/src/bin/pg_dump/pg_dumpall
+$ chmod a+x postgresql-6.5.3/src/bin/pg_dump/pg_dumpall
+$ postgresql-6.5.3/src/bin/pg_dump/pg_dumpall > db.out
+$ rm -rf postgresql-6.5.3
 </ProgramListing>
 </Para>
 
@@ -368,9 +368,9 @@ If you are upgrading an existing system then move the old directories
 <programlisting>
 $ su -
 $ cd /usr/src
-$ mv pgsql pgsql_6_0
+$ mv pgsql pgsql.old
 $ cd /usr/local
-$ mv pgsql pgsql_6_0
+$ mv pgsql pgsql.old
 $ exit
 </programlisting>
 </Para>
@@ -429,7 +429,7 @@ $ gunzip -c ~/postgresql-6.5.3.tar.gz | tar xvf -
      you can specify your actual installation path for
      the build process (see the --prefix option below).  Type
 <ProgramListing>
-$ cd /usr/src/pgsql/src
+$ cd /usr/src/pgsql/postgresql-6.5.3/src
 $ ./configure [ <replaceable>options</replaceable> ]
 </ProgramListing>
 </Para>
@@ -531,7 +531,7 @@ Install the <application>man</application> and
 <acronym>HTML</acronym> documentation. Type
 
 <ProgramListing>
-$ cd /usr/src/pgsql/doc
+$ cd /usr/src/pgsql/postgresql-6.5.3/doc
 $ gmake install
 </ProgramListing>
 </para>
@@ -545,7 +545,7 @@ ending with <filename>.ps.gz</filename> in the same directory.
 Compile the program.  Type
 
 <ProgramListing>
-$ cd /usr/src/pgsql/src
+$ cd /usr/src/pgsql/postgresql-6.5.3/src
 $ gmake all > make.log 2>&1 &
 $ tail -f make.log
 </ProgramListing>
@@ -600,7 +600,7 @@ $ gmake COPT="-g" all > make.log 2>&1 &
 <Para>
  Install the program.  Type
 <ProgramListing>
-$ cd /usr/src/pgsql/src
+$ cd /usr/src/pgsql/postgresql-6.5.3/src
 $ gmake install > make.install.log 2>&1 &
 $ tail -f make.install.log
 </ProgramListing>
@@ -609,7 +609,8 @@ $ tail -f make.install.log
 <Para>
      The last line displayed will be 
 <programlisting>
-gmake[1]: Leaving directory `/usr/src/pgsql/src/man'
+Thank you for choosing PostgreSQL, the most advanced open source
+database engine.
 </programlisting>
 At this point, or earlier if you wish,
      type control-C to get out of tail.
@@ -678,7 +679,7 @@ pg_id: can't load library 'libpq.so'
      complete its installation, either now or later, by becoming the user that
      does own the Perl library (often root) (via <command>su</command>) and doing
      <ProgramListing>
-      $ cd /usr/src/pgsql/src/interfaces/perl5
+      $ cd /usr/src/pgsql/postgresql-6.5.3/src/interfaces/perl5
       $ gmake install
      </ProgramListing>
     </Para>
@@ -952,7 +953,7 @@ pg:2345:respawn:/bin/su - postgres -c
 <Step Performance="required">
 <Para>
      Run the regression tests.
-     The file <filename>/usr/src/pgsql/src/test/regress/README</filename> has detailed
+     The file <filename>/usr/src/pgsql/postgresql-6.5.3/src/test/regress/README</filename> has detailed
      instructions for running and interpreting the regression tests.
      A short version follows here:
 </Para>
@@ -963,7 +964,7 @@ pg:2345:respawn:/bin/su - postgres -c
 <Para>
     Type
 <ProgramListing>
-$ cd /usr/src/pgsql/src/test/regress
+$ cd /usr/src/pgsql/postgresql-6.5.3/src/test/regress
 $ gmake clean
 $ gmake all runtest
 </ProgramListing>
@@ -1028,7 +1029,7 @@ For example,
 
 <ProgramListing>
 $ destroydb regression
-$ cd /usr/src/pgsql/src/test/regress
+$ cd /usr/src/pgsql/postgresql-6.5.3/src/test/regress
 $ gmake clean
 </ProgramListing>
 
@@ -1111,11 +1112,10 @@ VACUUM;
 <Para>
  Clean up after yourself.  Type
 <ProgramListing>
-$ rm -rf /usr/src/pgsql_6_5
-$ rm -rf /usr/local/pgsql_6_5
-# Also delete old database directory tree if it is not in
-#  /usr/local/pgsql_6_5/data
-$ rm ~/postgresql-6.5.3.tar.gz
+$ rm -rf /usr/src/pgsql
+$ rm -rf /usr/src/pgsql.old
+# Also delete the old database directory tree if desired.
+$ rm -rf /usr/local/pgsql.old
 </ProgramListing>
 </Para>
 </Step>
@@ -1295,13 +1295,13 @@ And so on.  You get the idea.
 
 <Para>
 Questions? Bugs? Feedback?
-First, read the files in directory <filename>/usr/src/pgsql/doc/</filename>.  
+First, read the files in directory <filename>/usr/src/pgsql/postgresql-6.5.3/doc/</filename>.  
 The FAQ in this directory may be particularly useful.
 </Para>
 
 <Para>
 If <ProductName>Postgres</ProductName> failed to compile on your computer 
-then fill out the form in file <filename>/usr/src/pgsql/doc/bug.template</filename>
+then fill out the form in file <filename>/usr/src/pgsql/postgresql-6.5.3/doc/bug.template</filename>
  and mail it to the location indicated at the top of the form.
 </Para>
 
