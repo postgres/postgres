@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.4 1996/11/06 09:29:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.5 1996/11/30 17:48:52 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -520,6 +520,9 @@ fix_opid(Node *clause)
 	replace_opid((Oper*)((Expr*)clause)->oper);
 	fix_opid((Node*)get_leftop((Expr*)clause));
 	fix_opid((Node*)get_rightop((Expr*)clause));
+    }
+    else if (agg_clause (clause)) {
+    	fix_opid (((Aggreg*)clause)->target);
     }
 
 }

@@ -259,16 +259,33 @@ ExecAgg(Agg *node)
 	    Datum newVal;
 	    AggFuncInfo *aggfns = &aggFuncInfo[i];
 	    Datum args[2];
-
-	    newVal = aggGetAttr(outerslot,
+	    Node *tagnode;
+	    
+	    switch(nodeTag(aggregates[i]->target))
+	    {
+	    	case T_Var:
+	    		tagnode = NULL;
+			newVal = aggGetAttr(outerslot,
 				aggregates[i],
 				&isNull);
+			break;
+		case T_Expr:
+			tagnode = ((Expr*)aggregates[i]->target)->oper;
+			econtext->ecxt_scantuple = outerslot;
+			newVal = ExecEvalExpr (aggregates[i]->target, econtext,
+					&isNull, NULL);
+			break;
+		default:
+			elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
+	    }
 
 	    if (isNull)
 		continue;	/* ignore this tuple for this agg */
 
 	    if (aggfns->xfn1) {
 		if (noInitValue[i]) {
+		    int byVal;
+		    
 		    /*
 		     * value1 and value2 has not been initialized. This
 		     * is the first non-NULL value. We use it as the
@@ -278,17 +295,32 @@ ExecAgg(Agg *node)
 			to make a copy of it since the tuple from which
 			it came will be freed on the next iteration 
 			of the scan */
-		    attnum = ((Var*)aggregates[i]->target)->varattno;
-		    attlen = outerslot->ttc_tupleDescriptor->attrs[attnum-1]->attlen;
+		    if ( tagnode != NULL )
+		    {
+		    	FunctionCachePtr fcache_ptr;
+		    	
+		    	if ( nodeTag(tagnode) == T_Func )
+		    	    fcache_ptr = ((Func*)tagnode)->func_fcache;
+		    	else
+		    	    fcache_ptr = ((Oper*)tagnode)->op_fcache;
+		    	attlen = fcache_ptr->typlen;
+		    	byVal = fcache_ptr->typbyval;
+		    }
+		    else
+		    {
+		    	attnum = ((Var*)aggregates[i]->target)->varattno;
+		    	attlen = outerslot->ttc_tupleDescriptor->attrs[attnum-1]->attlen;
+		    	byVal = outerslot->ttc_tupleDescriptor->attrs[attnum-1]->attbyval;
+		    }
 		    if (attlen == -1)  {
-			/* variable length */
+		    /* variable length */
 			attlen = VARSIZE((struct varlena*) newVal);
 		    }
 		    value1[i] = (Datum)palloc(attlen);
-                 if (outerslot->ttc_tupleDescriptor->attrs[attnum-1]->attbyval)
-                        value1[i] = newVal;
-                    else
-                        memmove((char*) (value1[i]), (char*) (newVal), attlen);
+		    if ( byVal )
+		    	value1[i] = newVal;
+		    else
+		        memmove((char*)(value1[i]), (char*)newVal, attlen);
 		    /* value1[i] = newVal; */
 		    noInitValue[i] = 0;
 		    nulls[i] = 0;

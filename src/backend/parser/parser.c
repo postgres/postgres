@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.12 1996/11/25 03:03:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.13 1996/11/30 17:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,13 +434,16 @@ ParseAgg(char *aggname, Oid basetype, Node *target)
     fintype = aggform->aggfinaltype;
     xfn1 = aggform->aggtransfn1;
     
-    if (nodeTag(target) != T_Var)
-	elog(WARN, "parser: aggregate can only be applied on an attribute");
+    if (nodeTag(target) != T_Var && nodeTag(target) != T_Expr)
+	elog(WARN, "parser: aggregate can only be applied on an attribute or expression");
 
     /* only aggregates with transfn1 need a base type */
     if (OidIsValid(xfn1)) {	
 	basetype = aggform->aggbasetype;
-	vartype = ((Var*)target)->vartype;
+	if (nodeTag(target) == T_Var)
+	    vartype = ((Var*)target)->vartype;
+	else
+	    vartype = ((Expr*)target)->typeOid;
 
 	if (basetype != vartype) {
 	    Type tp1, tp2, get_id_type();
