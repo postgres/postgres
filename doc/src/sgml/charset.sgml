@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.35 2003/04/15 13:26:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.36 2003/05/15 15:50:18 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -213,23 +213,13 @@ initdb --locale=sv_SE
        The <function>to_char</> family of functions
       </para>
      </listitem>
-
-     <listitem>
-      <para>
-       The <literal>LIKE</> and <literal>~</> operators for pattern
-       matching
-      </para>
-     </listitem>
     </itemizedlist>
    </para>
 
    <para>
     The only severe drawback of using the locale support in
-    <productname>PostgreSQL</> is its speed.  So use locales only if you
-    actually need it.  It should be noted in particular that selecting
-    a non-C locale disables index optimizations for <literal>LIKE</> and
-    <literal>~</> operators, which can make a huge difference in the
-    speed of searches that use those operators.
+    <productname>PostgreSQL</> is its speed.  So use locales only if
+    you actually need them.
    </para>
   </sect2>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.216 2003/05/13 18:03:08 tgl Exp $
+ * $Id: builtins.h,v 1.217 2003/05/15 15:50:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,6 +190,12 @@ extern Datum namelt(PG_FUNCTION_ARGS);
 extern Datum namele(PG_FUNCTION_ARGS);
 extern Datum namegt(PG_FUNCTION_ARGS);
 extern Datum namege(PG_FUNCTION_ARGS);
+extern Datum name_pattern_eq(PG_FUNCTION_ARGS);
+extern Datum name_pattern_ne(PG_FUNCTION_ARGS);
+extern Datum name_pattern_lt(PG_FUNCTION_ARGS);
+extern Datum name_pattern_le(PG_FUNCTION_ARGS);
+extern Datum name_pattern_gt(PG_FUNCTION_ARGS);
+extern Datum name_pattern_ge(PG_FUNCTION_ARGS);
 extern int	namecpy(Name n1, Name n2);
 extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
@@ -219,6 +225,8 @@ extern Datum btabstimecmp(PG_FUNCTION_ARGS);
 extern Datum btcharcmp(PG_FUNCTION_ARGS);
 extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
+extern Datum btname_pattern_cmp(PG_FUNCTION_ARGS);
+extern Datum bttext_pattern_cmp(PG_FUNCTION_ARGS);
 
 /* float.c */
 extern int	extra_float_digits;
@@ -512,6 +520,12 @@ extern Datum text_gt(PG_FUNCTION_ARGS);
 extern Datum text_ge(PG_FUNCTION_ARGS);
 extern Datum text_larger(PG_FUNCTION_ARGS);
 extern Datum text_smaller(PG_FUNCTION_ARGS);
+extern Datum text_pattern_eq(PG_FUNCTION_ARGS);
+extern Datum text_pattern_ne(PG_FUNCTION_ARGS);
+extern Datum text_pattern_lt(PG_FUNCTION_ARGS);
+extern Datum text_pattern_le(PG_FUNCTION_ARGS);
+extern Datum text_pattern_gt(PG_FUNCTION_ARGS);
+extern Datum text_pattern_ge(PG_FUNCTION_ARGS);
 extern Datum textlen(PG_FUNCTION_ARGS);
 extern Datum textoctetlen(PG_FUNCTION_ARGS);
 extern Datum textpos(PG_FUNCTION_ARGS);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.137 2003/05/13 04:38:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.138 2003/05/15 15:50:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1797,14 +1797,13 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_VARCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
-			if (locale_is_like_safe())
-				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-								  &prefix, &rest) != Pattern_Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_BYTEA_LIKE_OP:
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-								  &prefix, &rest) != Pattern_Prefix_None;
+											   &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
@@ -1812,9 +1811,8 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_VARCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
-			if (locale_is_like_safe())
-				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-								  &prefix, &rest) != Pattern_Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
@@ -1822,9 +1820,8 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-			if (locale_is_like_safe())
-				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-								  &prefix, &rest) != Pattern_Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
@@ -1832,9 +1829,8 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_VARCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-			if (locale_is_like_safe())
-				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-								  &prefix, &rest) != Pattern_Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_INET_SUB_OP:
@@ -1867,42 +1863,53 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_TEXT_ICLIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
-			if (!op_in_opclass(find_operator(">=", TEXTOID), opclass) ||
-				!op_in_opclass(find_operator("<", TEXTOID), opclass))
-				isIndexable = false;
+			if (lc_collate_is_c())
+				isIndexable = (op_in_opclass(find_operator(">=", TEXTOID), opclass)
+							   && op_in_opclass(find_operator("<", TEXTOID), opclass));
+			else
+				isIndexable = (op_in_opclass(find_operator("~>=~", TEXTOID), opclass)
+							   && op_in_opclass(find_operator("~<~", TEXTOID), opclass));
 			break;
 
 		case OID_BYTEA_LIKE_OP:
-			if (!op_in_opclass(find_operator(">=", BYTEAOID), opclass) ||
-				!op_in_opclass(find_operator("<", BYTEAOID), opclass))
-				isIndexable = false;
+			isIndexable = (op_in_opclass(find_operator(">=", BYTEAOID), opclass)
+						   && op_in_opclass(find_operator("<", BYTEAOID), opclass));
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
-			if (!op_in_opclass(find_operator(">=", BPCHAROID), opclass) ||
-				!op_in_opclass(find_operator("<", BPCHAROID), opclass))
-				isIndexable = false;
+			if (lc_collate_is_c())
+				isIndexable = (op_in_opclass(find_operator(">=", BPCHAROID), opclass)
+							   && op_in_opclass(find_operator("<", BPCHAROID), opclass));
+			else
+				isIndexable = (op_in_opclass(find_operator("~>=~", BPCHAROID), opclass)
+							   && op_in_opclass(find_operator("~<~", BPCHAROID), opclass));
 			break;
 
 		case OID_VARCHAR_LIKE_OP:
 		case OID_VARCHAR_ICLIKE_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
-			if (!op_in_opclass(find_operator(">=", VARCHAROID), opclass) ||
-				!op_in_opclass(find_operator("<", VARCHAROID), opclass))
-				isIndexable = false;
+			if (lc_collate_is_c())
+				isIndexable = (op_in_opclass(find_operator(">=", VARCHAROID), opclass)
+							   && op_in_opclass(find_operator("<", VARCHAROID), opclass));
+			else
+				isIndexable = (op_in_opclass(find_operator("~>=~", VARCHAROID), opclass)
+							   && op_in_opclass(find_operator("~<~", VARCHAROID), opclass));
 			break;
 
 		case OID_NAME_LIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			if (!op_in_opclass(find_operator(">=", NAMEOID), opclass) ||
-				!op_in_opclass(find_operator("<", NAMEOID), opclass))
-				isIndexable = false;
+			if (lc_collate_is_c())
+				isIndexable = (op_in_opclass(find_operator(">=", NAMEOID), opclass)
+							   && op_in_opclass(find_operator("<", NAMEOID), opclass));
+			else
+				isIndexable = (op_in_opclass(find_operator("~>=~", NAMEOID), opclass)
+							   && op_in_opclass(find_operator("~<~", NAMEOID), opclass));
 			break;
 
 		case OID_INET_SUB_OP:
@@ -2039,6 +2046,7 @@ prefix_quals(Node *leftop, Oid expr_op,
 	List	   *result;
 	Oid			datatype;
 	Oid			oproid;
+	const char *oprname;
 	char	   *prefix;
 	Const	   *con;
 	Expr	   *expr;
@@ -2098,9 +2106,10 @@ prefix_quals(Node *leftop, Oid expr_op,
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
-		oproid = find_operator("=", datatype);
+		oprname = (datatype == BYTEAOID || lc_collate_is_c() ? "=" : "~=~");
+		oproid = find_operator(oprname, datatype);
 		if (oproid == InvalidOid)
-			elog(ERROR, "prefix_quals: no = operator for type %u", datatype);
+			elog(ERROR, "prefix_quals: no operator %s for type %u", oprname, datatype);
 		con = string_to_const(prefix, datatype);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) con);
@@ -2113,9 +2122,10 @@ prefix_quals(Node *leftop, Oid expr_op,
 	 *
 	 * We can always say "x >= prefix".
 	 */
-	oproid = find_operator(">=", datatype);
+	oprname = (datatype == BYTEAOID || lc_collate_is_c() ? ">=" : "~>=~");
+	oproid = find_operator(oprname, datatype);
 	if (oproid == InvalidOid)
-		elog(ERROR, "prefix_quals: no >= operator for type %u", datatype);
+		elog(ERROR, "prefix_quals: no operator %s for type %u", oprname, datatype);
 	con = string_to_const(prefix, datatype);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) con);
@@ -2129,9 +2139,10 @@ prefix_quals(Node *leftop, Oid expr_op,
 	greaterstr = make_greater_string(con);
 	if (greaterstr)
 	{
-		oproid = find_operator("<", datatype);
+		oprname = (datatype == BYTEAOID || lc_collate_is_c() ? "<" : "~<~");
+		oproid = find_operator(oprname, datatype);
 		if (oproid == InvalidOid)
-			elog(ERROR, "prefix_quals: no < operator for type %u", datatype);
+			elog(ERROR, "prefix_quals: no operator %s for type %u", oprname, datatype);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
 		result = lappend(result, expr);

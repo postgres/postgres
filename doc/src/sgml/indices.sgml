@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.40 2003/03/25 16:15:36 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.41 2003/05/15 15:50:18 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -130,6 +130,19 @@ CREATE INDEX test1_id_index ON test1 (id);
     <member><literal>&gt;=</literal></member>
     <member><literal>&gt;</literal></member>
    </simplelist>
+  </para>
+
+  <para>
+   The optimizer can also use a B-tree index for queries involving the
+   pattern matching operators <literal>LIKE</>,
+   <literal>ILIKE</literal>, <literal>~</literal>, and
+   <literal>~*</literal>, <emphasis>if</emphasis> the pattern is
+   anchored to the beginning of the string, e.g., <literal>col LIKE
+   'foo%'</literal> or <literal>col ~ '^foo'</literal>, but not
+   <literal>col LIKE '%bar'</literal>.  However, if your server does
+   not use the C locale you will need to create the index with a
+   special operator class.  See <xref linkend="indexes-opclass">
+   below.
   </para>
 
   <para>
@@ -403,6 +416,36 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
       coordinates.  If the field on which your rectangles lie is about
       20 000 square units or larger, you should use
       <literal>bigbox_ops</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The operator classes <literal>text_pattern_ops</literal>,
+      <literal>varchar_pattern_ops</literal>,
+      <literal>bpchar_pattern_ops</literal>, and
+      <literal>name_pattern_ops</literal> support B-tree indexes on
+      the types <type>text</type>, <type>varchar</type>,
+      <type>char</type>, and <type>name</type>, respectively.  The
+      difference to the ordinary operator classes is that the values
+      are compared strictly character by character rather than
+      according to the locale-specific collation rules.  This makes
+      these operator classes suitable for use by queries involving
+      pattern matching expressions (<literal>LIKE</literal> or POSIX
+      regular expressions) if the server does not use the standard
+      <quote>C</quote> locale.  As an example, to index a
+      <type>varchar</type> column like this:
+<programlisting>
+CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
+</programlisting>
+      If you do use the C locale, you should instead create an index
+      with the default operator class.  Also note that you should
+      create an index with the default operator class if you want
+      queries involving ordinary comparisons to use an index.  Such
+      queries cannot use the
+      <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
+      operator classes.  It is possible, however, to create multiple
+      indexes on the same column with different operator classes.
      </para>
     </listitem>
    </itemizedlist>

@@ -276,7 +276,7 @@ WHERE p1.oprnegate = p2.oid AND
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprlsortop = p2.oid AND
-    (p1.oprname != '=' OR p2.oprname != '<' OR
+    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('<', '~<~') OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprleft != p2.oprleft OR
      p1.oprleft != p2.oprright OR
@@ -286,7 +286,7 @@ WHERE p1.oprlsortop = p2.oid AND
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprrsortop = p2.oid AND
-    (p1.oprname != '=' OR p2.oprname != '<' OR
+    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('<', '~<~') OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprright != p2.oprleft OR
      p1.oprright != p2.oprright OR
@@ -296,7 +296,7 @@ WHERE p1.oprrsortop = p2.oid AND
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprltcmpop = p2.oid AND
-    (p1.oprname != '=' OR p2.oprname != '<' OR
+    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('<', '~<~') OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprleft != p2.oprleft OR
      p1.oprright != p2.oprright OR
@@ -306,7 +306,7 @@ WHERE p1.oprltcmpop = p2.oid AND
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprgtcmpop = p2.oid AND
-    (p1.oprname != '=' OR p2.oprname != '>' OR
+    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('>', '~>~') OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprleft != p2.oprleft OR
      p1.oprright != p2.oprright OR
@@ -355,7 +355,7 @@ SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
 WHERE p1.oprcanhash AND NOT
     (p1.oprkind = 'b' AND p1.oprresult = 'bool'::regtype AND
-     p1.oprleft = p1.oprright AND p1.oprname = '=' AND p1.oprcom = p1.oid);
+     p1.oprleft = p1.oprright AND p1.oprname IN ('=', '~=~') AND p1.oprcom = p1.oid);
 
 -- In 6.5 we accepted hashable array equality operators when the array element
 -- type is hashable.  However, what we actually need to make hashjoin work on

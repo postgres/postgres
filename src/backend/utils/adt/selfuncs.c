@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.136 2003/04/16 04:37:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.137 2003/05/15 15:50:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,8 +180,6 @@ static void get_join_vars(List *args, Var **var1, Var **var2);
 static Selectivity prefix_selectivity(Query *root, Var *var, Oid vartype,
 									  Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
-static bool string_lessthan(const char *str1, const char *str2,
-				Oid datatype);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -3619,51 +3617,21 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
 
 
 /*
- * We want to test whether the database's LC_COLLATE setting is safe for
- * LIKE/regexp index optimization.
+ * Try to generate a string greater than the given string or any
+ * string it is a prefix of.  If successful, return a palloc'd string;
+ * else return NULL.
  *
  * The key requirement here is that given a prefix string, say "foo",
  * we must be able to generate another string "fop" that is greater
- * than all strings "foobar" starting with "foo".  Unfortunately, a
- * non-C locale may have arbitrary collation rules in which "fop" >
- * "foo" is not sufficient to ensure "fop" > "foobar".	Until we can
- * come up with a more bulletproof way of generating the upper-bound
- * string, the optimization is disabled in all non-C locales.
+ * than all strings "foobar" starting with "foo".
  *
- * (In theory, locales other than C may be LIKE-safe so this function
- * could be different from lc_collate_is_c(), but in a different
- * theory, non-C locales are completely unpredictable so it's unlikely
- * to happen.)
+ * If we max out the righthand byte, truncate off the last character
+ * and start incrementing the next.  For example, if "z" were the last
+ * character in the sort order, then we could produce "foo" as a
+ * string greater than "fonz".
  *
- * Be sure to maintain the correspondence with the code in initdb.
- */
-bool
-locale_is_like_safe(void)
-{
-	return lc_collate_is_c();
-}
-
-/*
- * Try to generate a string greater than the given string or any string it is
- * a prefix of.  If successful, return a palloc'd string; else return NULL.
- *
- * To work correctly in non-ASCII locales with weird collation orders,
- * we cannot simply increment "foo" to "fop" --- we have to check whether
- * we actually produced a string greater than the given one.  If not,
- * increment the righthand byte again and repeat.  If we max out the righthand
- * byte, truncate off the last character and start incrementing the next.
- * For example, if "z" were the last character in the sort order, then we
- * could produce "foo" as a string greater than "fonz".
- *
- * This could be rather slow in the worst case, but in most cases we won't
- * have to try more than one or two strings before succeeding.
- *
- * XXX this is actually not sufficient, since it only copes with the case
- * where individual characters collate in an order different from their
- * numeric code assignments.  It does not handle cases where there are
- * cross-character effects, such as specially sorted digraphs, multiple
- * sort passes, etc.  For now, we just shut down the whole thing in locales
- * that do such things :-(
+ * This could be rather slow in the worst case, but in most cases we
+ * won't have to try more than one or two strings before succeeding.
  */
 Const *
 make_greater_string(const Const *str_const)
@@ -3699,18 +3667,16 @@ make_greater_string(const Const *str_const)
 		/*
 		 * Try to generate a larger string by incrementing the last byte.
 		 */
-		while (*lastchar < (unsigned char) 255)
+		if (*lastchar < (unsigned char) 255)
 		{
-			(*lastchar)++;
-			if (string_lessthan(str, workstr, datatype))
-			{
-				/* Success! */
-				Const	   *workstr_const = string_to_const(workstr, datatype);
+			Const	   *workstr_const;
 
-				pfree(str);
-				pfree(workstr);
-				return workstr_const;
-			}
+			(*lastchar)++;
+			workstr_const = string_to_const(workstr, datatype);
+
+			pfree(str);
+			pfree(workstr);
+			return workstr_const;
 		}
 
 		/* restore last byte so we don't confuse pg_mbcliplen */
@@ -3734,57 +3700,6 @@ make_greater_string(const Const *str_const)
 	pfree(workstr);
 
 	return (Const *) NULL;
-}
-
-/*
- * Test whether two strings are "<" according to the rules of the given
- * datatype.  We do this the hard way, ie, actually calling the type's
- * "<" operator function, to ensure we get the right result...
- */
-static bool
-string_lessthan(const char *str1, const char *str2, Oid datatype)
-{
-	Datum		datum1 = string_to_datum(str1, datatype);
-	Datum		datum2 = string_to_datum(str2, datatype);
-	bool		result;
-
-	switch (datatype)
-	{
-		case TEXTOID:
-			result = DatumGetBool(DirectFunctionCall2(text_lt,
-													  datum1, datum2));
-			break;
-
-		case BPCHAROID:
-			result = DatumGetBool(DirectFunctionCall2(bpcharlt,
-													  datum1, datum2));
-			break;
-
-		case VARCHAROID:
-			result = DatumGetBool(DirectFunctionCall2(varcharlt,
-													  datum1, datum2));
-			break;
-
-		case NAMEOID:
-			result = DatumGetBool(DirectFunctionCall2(namelt,
-													  datum1, datum2));
-			break;
-
-		case BYTEAOID:
-			result = DatumGetBool(DirectFunctionCall2(bytealt,
-													  datum1, datum2));
-			break;
-
-		default:
-			elog(ERROR, "string_lessthan: unexpected datatype %u", datatype);
-			result = false;
-			break;
-	}
-
-	pfree(DatumGetPointer(datum1));
-	pfree(DatumGetPointer(datum2));
-
-	return result;
 }
 
 /* See if there is a binary op of the given name for the given datatype */

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.188 2003/04/04 03:03:53 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.189 2003/05/15 15:50:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -477,13 +477,6 @@ else
     echo "The database cluster will be initialized with locales:"
     echo "    COLLATE:  `pg_getlocale COLLATE`${TAB}CTYPE:   `pg_getlocale CTYPE`${TAB}MESSAGES: `pg_getlocale MESSAGES`"
     echo "    MONETARY: `pg_getlocale MONETARY`${TAB}NUMERIC: `pg_getlocale NUMERIC`${TAB}TIME:     `pg_getlocale TIME`"
-fi
-
-# (Be sure to maintain the correspondence with locale_is_like_safe() in selfuncs.c.)
-if test x`pg_getlocale COLLATE` != xC && test x`pg_getlocale COLLATE` != xPOSIX; then
-    echo "This locale setting will prevent the use of indexes for pattern matching"
-    echo "operations.  If that is a concern, rerun $CMDNAME with the collation order"
-    echo "set to \"C\".  For more information see the documentation."
 fi
 echo
 

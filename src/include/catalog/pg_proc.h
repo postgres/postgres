@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.299 2003/05/13 18:03:07 tgl Exp $
+ * $Id: pg_proc.h,v 1.300 2003/05/15 15:50:19 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3023,6 +3023,39 @@ DATA(insert OID = 2156 (  stddev			PGNSP PGUID 12 t f f f i 1 1700 "21"  aggrega
 DATA(insert OID = 2157 (  stddev			PGNSP PGUID 12 t f f f i 1 701 "700"  aggregate_dummy - _null_ ));
 DATA(insert OID = 2158 (  stddev			PGNSP PGUID 12 t f f f i 1 701 "701"  aggregate_dummy - _null_ ));
 DATA(insert OID = 2159 (  stddev			PGNSP PGUID 12 t f f f i 1 1700 "1700"	aggregate_dummy - _null_ ));
+
+DATA(insert OID = 2160 ( text_pattern_lt     PGNSP PGUID 12 f f t f i 2 16 "25 25" text_pattern_lt - _null_ ));
+DATA(insert OID = 2161 ( text_pattern_le     PGNSP PGUID 12 f f t f i 2 16 "25 25" text_pattern_le - _null_ ));
+DATA(insert OID = 2162 ( text_pattern_eq     PGNSP PGUID 12 f f t f i 2 16 "25 25" text_pattern_eq - _null_ ));
+DATA(insert OID = 2163 ( text_pattern_ge     PGNSP PGUID 12 f f t f i 2 16 "25 25" text_pattern_ge - _null_ ));
+DATA(insert OID = 2164 ( text_pattern_gt     PGNSP PGUID 12 f f t f i 2 16 "25 25" text_pattern_gt - _null_ ));
+DATA(insert OID = 2165 ( text_pattern_ne     PGNSP PGUID 12 f f t f i 2 16 "25 25" text_pattern_ne - _null_ ));
+DATA(insert OID = 2166 ( bttext_pattern_cmp  PGNSP PGUID 12 f f t f i 2 23 "25 25" bttext_pattern_cmp - _null_ ));
+
+/* We use the same procedures here as above since the types are binary compatible. */
+DATA(insert OID = 2167 ( varchar_pattern_lt    PGNSP PGUID 12 f f t f i 2 16 "1043 1043" text_pattern_lt - _null_ ));
+DATA(insert OID = 2168 ( varchar_pattern_le    PGNSP PGUID 12 f f t f i 2 16 "1043 1043" text_pattern_le - _null_ ));
+DATA(insert OID = 2169 ( varchar_pattern_eq    PGNSP PGUID 12 f f t f i 2 16 "1043 1043" text_pattern_eq - _null_ ));
+DATA(insert OID = 2170 ( varchar_pattern_ge    PGNSP PGUID 12 f f t f i 2 16 "1043 1043" text_pattern_ge - _null_ ));
+DATA(insert OID = 2171 ( varchar_pattern_gt    PGNSP PGUID 12 f f t f i 2 16 "1043 1043" text_pattern_gt - _null_ ));
+DATA(insert OID = 2172 ( varchar_pattern_ne    PGNSP PGUID 12 f f t f i 2 16 "1043 1043" text_pattern_ne - _null_ ));
+DATA(insert OID = 2173 ( btvarchar_pattern_cmp PGNSP PGUID 12 f f t f i 2 23 "1043 1043" bttext_pattern_cmp - _null_ ));
+
+DATA(insert OID = 2174 ( bpchar_pattern_lt    PGNSP PGUID 12 f f t f i 2 16 "1042 1042" text_pattern_lt - _null_ ));
+DATA(insert OID = 2175 ( bpchar_pattern_le    PGNSP PGUID 12 f f t f i 2 16 "1042 1042" text_pattern_le - _null_ ));
+DATA(insert OID = 2176 ( bpchar_pattern_eq    PGNSP PGUID 12 f f t f i 2 16 "1042 1042" text_pattern_eq - _null_ ));
+DATA(insert OID = 2177 ( bpchar_pattern_ge    PGNSP PGUID 12 f f t f i 2 16 "1042 1042" text_pattern_ge - _null_ ));
+DATA(insert OID = 2178 ( bpchar_pattern_gt    PGNSP PGUID 12 f f t f i 2 16 "1042 1042" text_pattern_gt - _null_ ));
+DATA(insert OID = 2179 ( bpchar_pattern_ne    PGNSP PGUID 12 f f t f i 2 16 "1042 1042" text_pattern_ne - _null_ ));
+DATA(insert OID = 2180 ( btbpchar_pattern_cmp PGNSP PGUID 12 f f t f i 2 23 "1042 1042" bttext_pattern_cmp - _null_ ));
+
+DATA(insert OID = 2181 ( name_pattern_lt    PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_lt - _null_ ));
+DATA(insert OID = 2182 ( name_pattern_le    PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_le - _null_ ));
+DATA(insert OID = 2183 ( name_pattern_eq    PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_eq - _null_ ));
+DATA(insert OID = 2184 ( name_pattern_ge    PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_ge - _null_ ));
+DATA(insert OID = 2185 ( name_pattern_gt    PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_gt - _null_ ));
+DATA(insert OID = 2186 ( name_pattern_ne    PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_ne - _null_ ));
+DATA(insert OID = 2187 ( btname_pattern_cmp PGNSP PGUID 12 f f t f i 2 23 "19 19" btname_pattern_cmp - _null_ ));
 
 
 DATA(insert OID = 2212 (  regprocedurein	PGNSP PGUID 12 f f t f s 1 2202 "2275"	regprocedurein - _null_ ));

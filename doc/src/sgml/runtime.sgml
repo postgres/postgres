@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.179 2003/05/14 03:26:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.180 2003/05/15 15:50:18 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -133,26 +133,13 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   </para>
 
   <para>
-   <command>initdb</command> also initializes the default locale<indexterm><primary>locale</></> for
-   the database cluster.  Normally, it will just take the locale
-   settings in the environment and apply them to the initialized
-   database.  It is possible to specify a different locale for the
-   database; more information about that can be found in <xref
-   linkend="locale">.  One surprise you might encounter while running
-   <command>initdb</command> is a notice similar to this:
-<screen>
-The database cluster will be initialized with locale de_DE.
-This locale setting will prevent the use of indexes for pattern matching
-operations.  If that is a concern, rerun initdb with the collation order
-set to "C".  For more information see the documentation.
-</screen>
-   This is intended to warn you that the currently selected locale
-   will cause indexes to be sorted in an order that prevents them from
-   being used for <literal>LIKE</> and regular-expression searches. If you need
-   good performance in such searches, you should set your current
-   locale to <literal>C</> and re-run <command>initdb</command>, e.g.,
-   by running <literal>initdb --lc-collate=C</literal>. The sort
-   order used within a particular database cluster is set by
+   <command>initdb</command> also initializes the default
+   locale<indexterm><primary>locale</></> for the database cluster.
+   Normally, it will just take the locale settings in the environment
+   and apply them to the initialized database.  It is possible to
+   specify a different locale for the database; more information about
+   that can be found in <xref linkend="locale">.  The sort order used
+   within a particular database cluster is set by
    <command>initdb</command> and cannot be changed later, short of
    dumping all data, rerunning <command>initdb</command>, and
    reloading the data. So it's important to make this choice correctly

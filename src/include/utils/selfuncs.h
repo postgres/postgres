@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: selfuncs.h,v 1.12 2003/01/28 22:13:41 tgl Exp $
+ * $Id: selfuncs.h,v 1.13 2003/05/15 15:50:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
 					 Const **prefix,
 					 Const **rest);
-extern bool locale_is_like_safe(void);
 extern Const *make_greater_string(const Const *str_const);
 
 extern Datum eqsel(PG_FUNCTION_ARGS);
