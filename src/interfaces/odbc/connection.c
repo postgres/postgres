@@ -259,12 +259,10 @@ ConnectionClass *rv;
 		rv->pg_version_major = 0;
 		rv->pg_version_minor = 0;
 
-
 		/*	Initialize statement options to defaults */
 		/*	Statements under this conn will inherit these options */
 
 		InitializeStatementOptions(&rv->stmtOptions);
-
 
     } 
     return rv;
@@ -302,7 +300,6 @@ CC_Destructor(ConnectionClass *self)
 		}
 		free(self->col_info);
 	}
-
 
 	free(self);
 
@@ -396,11 +393,8 @@ StatementClass *stmt;
 	for (i = 0; i < self->num_stmts; i++) {
 		stmt = self->stmts[i];
 		if (stmt) {
-
 			stmt->hdbc = NULL;	/* prevent any more dbase interactions */
-
 			SC_Destructor(stmt);
-
 			self->stmts[i] = NULL;
 		}
 	}
@@ -461,7 +455,6 @@ char
 CC_connect(ConnectionClass *self, char do_password)
 {
 StartupPacket sp;
-StartupPacket6_2 sp62;
 QResultClass *res;
 SocketClass *sock;
 ConnInfo *ci = &(self->connInfo);
@@ -538,36 +531,20 @@ static char *func="CC_connect";
 		}
 		mylog("connection to the server socket succeeded.\n");
 
-		if ( PROTOCOL_62(ci)) {
-			sock->reverse = TRUE;		/* make put_int and get_int work for 6.2 */
+		memset(&sp, 0, sizeof(StartupPacket));
 
-			memset(&sp62, 0, sizeof(StartupPacket6_2));
-			SOCK_put_int(sock, htonl(4+sizeof(StartupPacket6_2)), 4);
-			sp62.authtype = htonl(NO_AUTHENTICATION);
-			strncpy(sp62.database, ci->database, PATH_SIZE);
-			strncpy(sp62.user, ci->username, NAMEDATALEN);
-			SOCK_put_n_char(sock, (char *) &sp62, sizeof(StartupPacket6_2));
-			SOCK_flush_output(sock);
-		}
-		else {
-			memset(&sp, 0, sizeof(StartupPacket));
+		mylog("sizeof startup packet = %d\n", sizeof(StartupPacket));
 
-			mylog("sizeof startup packet = %d\n", sizeof(StartupPacket));
+		/* Send length of Authentication Block */
+		SOCK_put_int(sock, 4+sizeof(StartupPacket), 4); 
 
-			/* Send length of Authentication Block */
-			SOCK_put_int(sock, 4+sizeof(StartupPacket), 4); 
+		sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LATEST);
 
-			if ( PROTOCOL_63(ci))
-				sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_63);
-			else
-				sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LATEST);
+		strncpy(sp.database, ci->database, SM_DATABASE);
+		strncpy(sp.user, ci->username, SM_USER);
 
-			strncpy(sp.database, ci->database, SM_DATABASE);
-			strncpy(sp.user, ci->username, SM_USER);
-
-			SOCK_put_n_char(sock, (char *) &sp, sizeof(StartupPacket));
-			SOCK_flush_output(sock);
-		}
+		SOCK_put_n_char(sock, (char *) &sp, sizeof(StartupPacket));
+		SOCK_flush_output(sock);
 
 		mylog("sent the authentication block.\n");
 
@@ -580,7 +557,6 @@ static char *func="CC_connect";
 		mylog("sent the authentication block successfully.\n");
 	}
 
-
 	mylog("gonna do authentication\n");
 
 
@@ -588,7 +564,7 @@ static char *func="CC_connect";
 	/*	Now get the authentication request from backend */
 	/* *************************************************** */
 
-	if ( ! PROTOCOL_62(ci))	do {
+	do {
 
 		if (do_password)
 			beresp = 'R';
@@ -670,7 +646,6 @@ static char *func="CC_connect";
 		}
 
 	} while (areq != AUTH_REQ_OK);		
-
 
 	CC_clear_error(self);	/* clear any password error */
 
@@ -929,7 +904,6 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 					until an 'I' is received
 				*/
 
-
 				SOCK_put_string(sock, "Q ");
 				SOCK_flush_output(sock);
 
@@ -1115,7 +1089,6 @@ int i;
 	SOCK_put_int(sock, fnid, 4); 
 	SOCK_put_int(sock, nargs, 4); 
 
-
 	mylog("send_function: done sending function\n");
 
 	for (i = 0; i < nargs; ++i) {
@@ -1127,8 +1100,6 @@ int i;
 			SOCK_put_int(sock, args[i].u.integer, 4);
 		else
 			SOCK_put_n_char(sock, (char *) args[i].u.ptr, args[i].len);
-
-
 	}
 
 	mylog("    done sending args\n");
@@ -1378,19 +1349,9 @@ void
 CC_initialize_pg_version(ConnectionClass *self) 
 {
 	strcpy(self->pg_version, self->connInfo.protocol); 
-	if (PROTOCOL_62(&self->connInfo)) {
-		self->pg_version_number = (float) 6.2;
-		self->pg_version_major = 6;
-		self->pg_version_minor = 2;
-	} else if (PROTOCOL_63(&self->connInfo)) {
-		self->pg_version_number = (float) 6.3;
-		self->pg_version_major = 6;
-		self->pg_version_minor = 3;
-	} else {
-		self->pg_version_number = (float) 6.4;
-		self->pg_version_major = 6;
-		self->pg_version_minor = 4;
-	}
+	self->pg_version_number = (float) 6.4;
+	self->pg_version_major = 6;
+	self->pg_version_minor = 4;
 }
 /*	This function gets the version of PostgreSQL that we're connected to.
     This is used to return the correct info in SQLGetInfo

@@ -106,10 +106,8 @@ typedef unsigned int ProtocolVersion;
 
 #define PG_PROTOCOL(major, minor)	(((major) << 16) | (minor))
 #define PG_PROTOCOL_LATEST		PG_PROTOCOL(2, 0)
-#define PG_PROTOCOL_63			PG_PROTOCOL(1, 0)
-#define PG_PROTOCOL_62			PG_PROTOCOL(0, 0)
 
-/*	This startup packet is to support latest Postgres protocol (6.4, 6.3) */
+/*	This startup packet is to support latest Postgres protocol */
 typedef struct _StartupPacket
 {
 	ProtocolVersion	protoVersion;
@@ -119,18 +117,6 @@ typedef struct _StartupPacket
 	char			unused[SM_UNUSED];
 	char			tty[SM_TTY];
 } StartupPacket;
-
-
-/*	This startup packet is to support pre-Postgres 6.3 protocol */
-typedef struct _StartupPacket6_2
-{
-	unsigned int	authtype;
-	char			database[PATH_SIZE];
-	char			user[NAMEDATALEN];
-	char			options[ARGV_SIZE];
-	char			execfile[ARGV_SIZE];
-	char			tty[PATH_SIZE];
-} StartupPacket6_2;
 
 
 /*	Structure to hold all the connection attributes for a specific
@@ -156,12 +142,6 @@ typedef struct {
 	char    translation_option[SMALL_REGISTRY_LEN];
 	char	focus_password;
 } ConnInfo;
-
-/*	Macro to determine is the connection using 6.2 protocol? */
-#define PROTOCOL_62(conninfo_)		(strncmp((conninfo_)->protocol, PG62, strlen(PG62)) == 0)
-
-/*	Macro to determine is the connection using 6.3 protocol? */
-#define PROTOCOL_63(conninfo_)		(strncmp((conninfo_)->protocol, PG63, strlen(PG63)) == 0)
 
 /*
  *	Macros to compare the server's version with a specified version

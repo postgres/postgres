@@ -243,12 +243,7 @@ char buf[128];
 		CheckDlgButton(hdlg, DS_READONLY, atoi(ci->onlyread));
 
 		/*	Protocol */
-		if (strncmp(ci->protocol, PG62, strlen(PG62)) == 0)
-			CheckDlgButton(hdlg, DS_PG62, 1);
-		else if (strncmp(ci->protocol, PG63, strlen(PG63)) == 0)
-			CheckDlgButton(hdlg, DS_PG63, 1);
-		else /* latest */
-			CheckDlgButton(hdlg, DS_PG64, 1);
+		CheckDlgButton(hdlg, DS_PG64, 1);
 
 
 
@@ -281,12 +276,7 @@ char buf[128];
 			sprintf(ci->onlyread, "%d", IsDlgButtonChecked(hdlg, DS_READONLY));
 
 			/*	Protocol */
-			if ( IsDlgButtonChecked(hdlg, DS_PG62))
-				strcpy(ci->protocol, PG62);
-			else if ( IsDlgButtonChecked(hdlg, DS_PG63))
-				strcpy(ci->protocol, PG63);
-			else	/* latest */
-				strcpy(ci->protocol, PG64);
+			strcpy(ci->protocol, PG64);
 
 			sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
 

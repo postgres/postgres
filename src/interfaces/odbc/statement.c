@@ -789,8 +789,6 @@ QueryInfo qi;
 			CC_set_in_trans(conn);
 	}
 
-
-
 	oldstatus = conn->status;
 	conn->status = CONN_EXECUTING;
 	self->status = STMT_EXECUTING;
@@ -829,11 +827,7 @@ QueryInfo qi;
 
 			self->result = CC_send_query( conn, fetch, &qi);
 		}
-
 		mylog("     done sending the query:\n");
-
-
-
 	}
 	else  { /* not a SELECT statement so don't use a cursor */
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
@@ -850,7 +844,6 @@ QueryInfo qi;
 			QR_Destructor(res);
 			CC_set_no_trans(conn);
 		} 
-	
 	}
 
 	conn->status = oldstatus;
