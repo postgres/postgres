@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.112 2003/03/13 01:30:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.113 2003/03/20 06:23:30 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -342,9 +342,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
   </para>
   <para>
    If <function>PQconnectStart</> succeeds, the next stage is to poll <application>libpq</> so that it may
-   proceed with the connection sequence.  Loop thus: Consider a connection
-   <quote>inactive</quote> by default. If <function>PQconnectPoll</function> last returned <symbol>PGRES_POLLING_ACTIVE</>,
-   consider it <quote>active</quote> instead. If <function>PQconnectPoll(conn)</function> last returned
+   proceed with the connection sequence.  Loop thus: If <function>PQconnectPoll(conn)</function> last returned
    <symbol>PGRES_POLLING_READING</symbol>, perform a <function>select()</> for reading on the socket determined using <function>PQsocket(conn)</function>. If
    it last returned <symbol>PGRES_POLLING_WRITING</symbol>, perform a <function>select()</> for writing on
    that same socket. If you have yet to call <function>PQconnectPoll</function>, i.e., after the call

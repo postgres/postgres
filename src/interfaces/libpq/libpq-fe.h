@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.88 2003/03/10 22:28:22 tgl Exp $
+ * $Id: libpq-fe.h,v 1.89 2003/03/20 06:23:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,8 @@ typedef enum
 	PGRES_POLLING_READING,		/* These two indicate that one may	  */
 	PGRES_POLLING_WRITING,		/* use select before polling again.   */
 	PGRES_POLLING_OK,
-	PGRES_POLLING_ACTIVE		/* Can call poll function immediately. */
+	PGRES_POLLING_ACTIVE		/*  unused; keep for awhile for
+                                 *  backwards compatibility */
 } PostgresPollingStatusType;
 
 typedef enum

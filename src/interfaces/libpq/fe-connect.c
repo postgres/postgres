@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.227 2003/03/18 22:11:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.228 2003/03/20 06:23:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1206,9 +1206,6 @@ connectDBComplete(PGconn *conn)
 		 */
 		switch (flag)
 		{
-			case PGRES_POLLING_ACTIVE:
-				break;
-
 			case PGRES_POLLING_OK:
 				return 1;		/* success! */
 
@@ -1926,9 +1923,6 @@ PQsetenv(PGconn *conn)
 		 */
 		switch (flag)
 		{
-			case PGRES_POLLING_ACTIVE:
-				break;
-
 			case PGRES_POLLING_OK:
 				return true;	/* success! */
 
