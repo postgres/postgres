@@ -11574,84 +11574,6 @@ fi
 
 
 
-# SunOS doesn't handle negative byte comparisons properly with +/- return
-echo "$as_me:$LINENO: checking for working memcmp" >&5
-echo $ECHO_N "checking for working memcmp... $ECHO_C" >&6
-if test "${ac_cv_func_memcmp_working+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "$cross_compiling" = yes; then
-  ac_cv_func_memcmp_working=no
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-
-  /* Some versions of memcmp are not 8-bit clean.  */
-  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
-  if (memcmp(&c0, &c2, 1) >= 0 || memcmp(&c1, &c2, 1) >= 0)
-    exit (1);
-
-  /* The Next x86 OpenStep bug shows up only when comparing 16 bytes
-     or more and with at least one buffer not starting on a 4-byte boundary.
-     William Lewis provided this test program.   */
-  {
-    char foo[21];
-    char bar[21];
-    int i;
-    for (i = 0; i < 4; i++)
-      {
-        char *a = foo + i;
-        char *b = bar + i;
-        strcpy (a, "--------01111111");
-        strcpy (b, "--------10000000");
-        if (memcmp (a, b, 16) >= 0)
-          exit (1);
-      }
-    exit (0);
-  }
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_func_memcmp_working=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-ac_cv_func_memcmp_working=no
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_func_memcmp_working" >&5
-echo "${ECHO_T}$ac_cv_func_memcmp_working" >&6
-test $ac_cv_func_memcmp_working = no && LIBOBJS="$LIBOBJS memcmp.$ac_objext"
-
-
 
 
 
@@ -12002,7 +11924,7 @@ fi
 # We use our snprintf.c emulation if either snprintf() or vsnprintf()
 # is missing.  Yes, there are machines that have only one.  We may
 # also decide to use snprintf.c if snprintf() is present but does not
-# have working "long long int" support -- see below.
+# have all the features we need --- see below.
 
 pgac_need_repl_snprintf=no
 
@@ -12162,61 +12084,6 @@ fi
 done
 
 
-echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
-echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
-if test "${pgac_cv_printf_arg_control+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "$cross_compiling" = yes; then
-  pgac_cv_printf_arg_control=cross
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <stdio.h>
-#include <string.h>
-
-int main()
-{
-  char buf[100];
-
-  /* can it swap arguments? */
-  snprintf(buf, 100, "%2\$d %1\$d", 3, 4);
-  if (strcmp(buf, "4 3") != 0)
-    return 1;
-  return 0;
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  pgac_cv_printf_arg_control=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-pgac_cv_printf_arg_control=no
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-fi
-echo "$as_me:$LINENO: result: $pgac_cv_printf_arg_control" >&5
-echo "${ECHO_T}$pgac_cv_printf_arg_control" >&6
-
-# cross compiler should use our snprintf too
-if test $pgac_cv_printf_arg_control != yes ; then
-  pgac_need_repl_snprintf=yes
-fi
 
 # Check whether <stdio.h> declares snprintf() and vsnprintf(); if not,
 # include/c.h will provide declarations.  Note this is a separate test
@@ -15043,6 +14910,64 @@ cat >>confdefs.h <<_ACEOF
 #define UINT64_FORMAT $UINT64_FORMAT
 _ACEOF
 
+
+# Also force use of our snprintf if system's doesn't do arg control
+if test $pgac_need_repl_snprintf = no; then
+  echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
+echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
+if test "${pgac_cv_printf_arg_control+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$cross_compiling" = yes; then
+  pgac_cv_printf_arg_control=cross
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+  char buf[100];
+
+  /* can it swap arguments? */
+  snprintf(buf, 100, "%2\$d %1\$d", 3, 4);
+  if (strcmp(buf, "4 3") != 0)
+    return 1;
+  return 0;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_printf_arg_control=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+pgac_cv_printf_arg_control=no
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_printf_arg_control" >&5
+echo "${ECHO_T}$pgac_cv_printf_arg_control" >&6
+
+  if test $pgac_cv_printf_arg_control != yes ; then
+    pgac_need_repl_snprintf=yes
+  fi
+fi
 
 if test $pgac_need_repl_snprintf = yes; then
   LIBOBJS="$LIBOBJS snprintf.$ac_objext"
@@ -17946,6 +17871,84 @@ rm -f conftest*
 fi
 
 fi
+
+# SunOS doesn't handle negative byte comparisons properly with +/- return
+echo "$as_me:$LINENO: checking for working memcmp" >&5
+echo $ECHO_N "checking for working memcmp... $ECHO_C" >&6
+if test "${ac_cv_func_memcmp_working+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$cross_compiling" = yes; then
+  ac_cv_func_memcmp_working=no
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  /* Some versions of memcmp are not 8-bit clean.  */
+  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
+  if (memcmp(&c0, &c2, 1) >= 0 || memcmp(&c1, &c2, 1) >= 0)
+    exit (1);
+
+  /* The Next x86 OpenStep bug shows up only when comparing 16 bytes
+     or more and with at least one buffer not starting on a 4-byte boundary.
+     William Lewis provided this test program.   */
+  {
+    char foo[21];
+    char bar[21];
+    int i;
+    for (i = 0; i < 4; i++)
+      {
+        char *a = foo + i;
+        char *b = bar + i;
+        strcpy (a, "--------01111111");
+        strcpy (b, "--------10000000");
+        if (memcmp (a, b, 16) >= 0)
+          exit (1);
+      }
+    exit (0);
+  }
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_memcmp_working=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+ac_cv_func_memcmp_working=no
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_memcmp_working" >&5
+echo "${ECHO_T}$ac_cv_func_memcmp_working" >&6
+test $ac_cv_func_memcmp_working = no && LIBOBJS="$LIBOBJS memcmp.$ac_objext"
+
 
 
 # Select semaphore implementation type.
