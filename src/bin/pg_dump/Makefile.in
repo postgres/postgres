@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.12 2000/03/08 01:58:19 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.13 2000/05/11 17:46:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ endif
 all: submake pg_dump
 
 pg_dump: $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) -o pg_dump $(OBJS) $(LIBPQ) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o pg_dump $(OBJS) $(LIBPQ) $(LDFLAGS)
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o

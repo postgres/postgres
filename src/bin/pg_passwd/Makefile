@@ -12,7 +12,7 @@ OBJS= pg_passwd.o
 all: pg_passwd
 
 pg_passwd: $(OBJS)
-	$(CC) -o pg_passwd $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o pg_passwd $(OBJS) $(LDFLAGS)
 
 install: pg_passwd
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_passwd$(X) $(BINDIR)/pg_passwd$(X)

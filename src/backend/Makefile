@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.46 2000/04/08 19:38:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.47 2000/05/11 17:46:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -80,7 +80,7 @@ all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
 
 ifneq ($(PORTNAME), win)
 postgres: fmgr.h $(OBJS) $(VERSIONOBJ)
-	$(CC) -o postgres $(OBJS) $(OBJS1) $(VERSIONOBJ) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o postgres $(OBJS) $(OBJS1) $(VERSIONOBJ) $(LDFLAGS)
 else
 postgres: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def

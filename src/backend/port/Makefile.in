@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.20 1999/12/16 01:25:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.21 2000/05/11 17:46:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,6 +37,9 @@ qnx4/SUBSYS.o: qnx4.dir
 
 qnx4.dir:
 	$(MAKE) -C qnx4 all
+
+tas.o: tas.s
+	$(CC) $(CFLAGS) -c tas.o tas.s $(LDFLAGS)
 
 .PHONY: clean dep
 

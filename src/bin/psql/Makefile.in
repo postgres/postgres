@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.23 2000/04/16 18:07:22 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.24 2000/05/11 17:46:35 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ endif
 # End of hacks for picking up backend 'port' modules
 
 psql: $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) -o psql $(OBJS) $(LIBPQ) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o psql $(OBJS) $(LIBPQ) $(LDFLAGS)
 
 help.o: sql_help.h
 
