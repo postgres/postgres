@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.259 2004/04/15 04:46:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.260 2004/04/20 16:56:19 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -490,7 +490,9 @@ search_path = '$user, public'
     also propagates this signal to all currently running server
     processes so that existing sessions also get the new
     value. Alternatively, you can send the signal to a single server
-    process directly.
+    process directly.  Some parameters can only be set at server start;
+    any changes to their entries in the configuration file will be ignored
+    until the server is restarted.
    </para>
 
    <para>
