@@ -1,7 +1,7 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.9 2002/10/14 19:04:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.10 2002/11/19 17:21:39 momjian Exp $
 #
 # Changelog:
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -9578,7 +9578,7 @@ msgid "This connection has been terminated by the administrator."
 msgstr ""
 
 #: tcop/postgres.c:1114
-msgid "Query was cancelled."
+msgid "Query was canceled."
 msgstr ""
 
 #: tcop/postgres.c:1259

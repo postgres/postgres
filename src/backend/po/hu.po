@@ -2,7 +2,7 @@
 # Zoltan Kovacs <kovzol@math.u-szeged.hu>, 2001.
 # Robert Zana <zerobert@freemail.hu>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/hu.po,v 1.4 2002/01/18 21:25:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/hu.po,v 1.5 2002/11/19 17:21:38 momjian Exp $
 #
 msgid ""
 msgstr ""
@@ -8647,7 +8647,7 @@ msgid "This connection has been terminated by the administrator."
 msgstr "Az adminisztrátor megszüntette ezt a kapcsolatot."
 
 #: ../tcop/postgres.c:1034
-msgid "Query was cancelled."
+msgid "Query was canceled."
 msgstr "A lekérdezés visszavonva."
 
 #: ../tcop/postgres.c:1175

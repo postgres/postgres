@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.309 2002/11/15 00:47:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.310 2002/11/19 17:21:40 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1158,7 +1158,7 @@ ProcessInterrupts(void)
 		QueryCancelPending = false;
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
-		elog(ERROR, "Query was cancelled.");
+		elog(ERROR, "Query was canceled.");
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
 }
@@ -1781,7 +1781,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.309 $ $Date: 2002/11/15 00:47:22 $\n");
+		puts("$Revision: 1.310 $ $Date: 2002/11/19 17:21:40 $\n");
 	}
 
 	/*

@@ -1,7 +1,7 @@
 # simplified Chinese translation file for PostgreSQL server
 # Weiping He <laser@zhengmai.com.cn>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/zh_CN.po,v 1.4 2001/12/03 18:43:20 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/zh_CN.po,v 1.5 2002/11/19 17:21:39 momjian Exp $
 #
 msgid ""
 msgstr ""
@@ -250,7 +250,7 @@ msgid "This connection has been terminated by the administrator."
 msgstr "这个联接已被管理员终止."
 
 #: ../tcop/postgres.c:1068
-msgid "Query was cancelled."
+msgid "Query was canceled."
 msgstr "查询已被取消."
 
 #: ../tcop/postgres.c:1216

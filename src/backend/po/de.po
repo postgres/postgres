@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.6 2001/11/30 18:04:23 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.7 2002/11/19 17:21:37 momjian Exp $
 #
 # Use these quotes: »%s«
 #
@@ -8651,7 +8651,7 @@ msgid "This connection has been terminated by the administrator."
 msgstr "Diese Verbindung wurde vom Administrator abgebrochen."
 
 #: ../tcop/postgres.c:1035
-msgid "Query was cancelled."
+msgid "Query was canceled."
 msgstr "Abfrage wurde storniert."
 
 #: ../tcop/postgres.c:1176

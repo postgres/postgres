@@ -8581,7 +8581,7 @@ msgid "This connection has been terminated by the administrator."
 msgstr ""
 
 #: ../tcop/postgres.c:1112
-msgid "Query was cancelled."
+msgid "Query was canceled."
 msgstr ""
 
 #: ../tcop/postgres.c:1253
