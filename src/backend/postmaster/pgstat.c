@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.59 2004/03/09 05:11:52 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.60 2004/03/10 21:12:46 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -327,7 +327,7 @@ pgstat_init(void)
 	 * messages will be discarded; backends won't block waiting to send
 	 * messages to the collector.
 	 */
-	if (FCNTL_NONBLOCK(pgStatSock) < 0)
+	if (!set_noblock(pgStatSock))
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
@@ -1819,7 +1819,7 @@ pgstat_recvbuffer(void)
 	 * Set the write pipe to nonblock mode, so that we cannot block when
 	 * the collector falls behind.
 	 */
-	if (FCNTL_NONBLOCK(writePipe) < 0)
+	if (!set_noblock(writePipe))
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.267 2004/01/09 02:02:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.268 2004/03/10 21:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,11 +49,6 @@
 
 #include "libpq/ip.h"
 #include "mb/pg_wchar.h"
-
-/* For FNCTL_NONBLOCK */
-#if defined(WIN32) || defined(__BEOS__)
-long		ioctlsocket_ret=1;
-#endif
 
 #define PGPASSFILE ".pgpass"
 
@@ -779,7 +774,7 @@ update_db_info(PGconn *conn)
 static int
 connectMakeNonblocking(PGconn *conn)
 {
-	if (FCNTL_NONBLOCK(conn->sock) < 0)
+	if (!set_noblock(conn->sock))
 	{
 		char		sebuf[256];
 

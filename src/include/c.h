@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.159 2004/01/10 23:39:51 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.160 2004/03/10 21:12:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -687,20 +687,6 @@ typedef NameData *Name;
 #define PG_BINARY	0
 #define PG_BINARY_R "r"
 #define PG_BINARY_W "w"
-#endif
-
-#if !defined(WIN32) && !defined(__BEOS__)
-#define FCNTL_NONBLOCK(sock)	fcntl(sock, F_SETFL, O_NONBLOCK)
-#else
-extern long ioctlsocket_ret;
-
-/* Returns non-0 on failure, while fcntl() returns -1 on failure */
-#ifdef WIN32
-#define FCNTL_NONBLOCK(sock)	((ioctlsocket(sock, FIONBIO, &ioctlsocket_ret) == 0) ? 0 : -1)
-#endif
-#ifdef __BEOS__
-#define FCNTL_NONBLOCK(sock)	((ioctl(sock, FIONBIO, &ioctlsocket_ret) == 0) ? 0 : -1)
-#endif
 #endif
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.372 2004/03/09 05:11:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.373 2004/03/10 21:12:46 momjian Exp $
  *
  * NOTES
  *
@@ -218,11 +218,6 @@ bool		Log_connections = false;
 bool		Db_user_namespace = false;
 
 char	   *rendezvous_name;
-
-/* For FNCTL_NONBLOCK */
-#if defined(WIN32) || defined(__BEOS__)
-long		ioctlsocket_ret=1;
-#endif
 
 /* list of library:init-function to be preloaded */
 char	   *preload_libraries_string = NULL;
@@ -2365,7 +2360,7 @@ report_fork_failure_to_client(Port *port, int errnum)
 			 strerror(errnum));
 
 	/* Set port to non-blocking.  Don't do send() if this fails */
-	if (FCNTL_NONBLOCK(port->sock) < 0)
+	if (!set_noblock(port->sock))
 		return;
 
 	send(port->sock, buffer, strlen(buffer) + 1, 0);
