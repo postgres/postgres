@@ -4,7 +4,7 @@ ltree - is a PostgreSQL contrib module which contains implementation of data
 types, indexed access methods and queries for data organized as a tree-like
 structures.
 This module will works for PostgreSQL version 7.3.
-(patch for 7.2 version is provided, see INSTALLATION)
+(version for 7.2 version is available from http://www.sai.msu.su/~megera/postgres/gist/ltree/ltree-7.2.tar.gz)
 -------------------------------------------------------------------------------
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist for
@@ -184,9 +184,21 @@ int4 nlevel
         nlevel 
         --------
           3
-
-Note, that arguments start, end, OFFSET, LEN have meaning of level of the node
-!
+    Note, that arguments start, end, OFFSET, LEN have meaning of level of the
+    node !
+   
+ltree lca(ltree,ltree,...) (up to 8 arguments)
+    ltree lca(ltree[])
+    Returns Lowest Common Ancestor (lca)
+         # select lca('1.2.2.3','1.2.3.4.5.6');
+         lca 
+         -----
+          1.2
+         # select lca('{la.2.3,1.2.3.4.5.6}') is null;
+         ?column? 
+         ----------
+            f
+         
 
 INSTALLATION
 
@@ -194,8 +206,6 @@ INSTALLATION
   make
   make install
   make installcheck
-
-for 7.2 one needs to apply patch ( patch < patch.72) before installation !
 
 EXAMPLE OF USAGE
 
@@ -416,6 +426,11 @@ appreciate your input. So far, below some (rather obvious) results:
 
 CHANGES
 
+July 31, 2002
+   Now works on 64-bit platforms.
+   Added function lca - lowest common ancestor
+   Version for 7.2 is distributed as separate package - 
+   http://www.sai.msu.su/~megera/postgres/gist/ltree/ltree-7.2.tar.gz
 July 13, 2002
    Initial release.
 

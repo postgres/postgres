@@ -12,7 +12,7 @@ typedef struct {
 } ltree_level;
 
 #define LEVEL_HDRSIZE   (sizeof(uint8))
-#define LEVEL_NEXT(x)	( (ltree_level*)( ((char*)(x)) + ((ltree_level*)(x))->len + LEVEL_HDRSIZE ) )
+#define LEVEL_NEXT(x)	( (ltree_level*)( ((char*)(x)) + MAXALIGN(((ltree_level*)(x))->len + LEVEL_HDRSIZE) ) )
 
 typedef struct {
 	int32	len;
@@ -20,8 +20,8 @@ typedef struct {
 	char	data[1];
 } ltree;
 
-#define LTREE_HDRSIZE	( sizeof(int32) + sizeof(uint16) )
-#define LTREE_FIRST(x)	( (ltree_level*)( ((ltree*)(x))->data ) )
+#define LTREE_HDRSIZE	MAXALIGN( sizeof(int32) + sizeof(uint16) )
+#define LTREE_FIRST(x)	( (ltree_level*)( ((char*)(x))+LTREE_HDRSIZE ) )
 
 
 /* lquery */
@@ -33,8 +33,8 @@ typedef struct {
 	char	name[1];
 } lquery_variant;
 
-#define LVAR_HDRSIZE   (sizeof(uint8)*2 + sizeof(int4))
-#define LVAR_NEXT(x)	( (lquery_variant*)( ((char*)(x)) + ((lquery_variant*)(x))->len + LVAR_HDRSIZE ) )
+#define LVAR_HDRSIZE   MAXALIGN(sizeof(uint8)*2 + sizeof(int4))
+#define LVAR_NEXT(x)	( (lquery_variant*)( ((char*)(x)) + MAXALIGN(((lquery_variant*)(x))->len) + LVAR_HDRSIZE ) )
 
 #define LVAR_ANYEND	0x01
 #define LVAR_INCASE	0x02
@@ -49,9 +49,9 @@ typedef struct {
 	char	variants[1];
 } lquery_level;
 
-#define LQL_HDRSIZE	( sizeof(uint16)*5 )
-#define LQL_NEXT(x)	( (lquery_level*)( ((char*)(x)) + ((lquery_level*)(x))->totallen ) )
-#define LQL_FIRST(x)	( (lquery_variant*)( ((lquery_level*)(x))->variants ) )
+#define LQL_HDRSIZE	MAXALIGN( sizeof(uint16)*5 )
+#define LQL_NEXT(x)	( (lquery_level*)( ((char*)(x)) + MAXALIGN(((lquery_level*)(x))->totallen) ) )
+#define LQL_FIRST(x)	( (lquery_variant*)( ((char*)(x))+LQL_HDRSIZE ) )
 
 #define LQL_NOT		0x10
 #ifdef LOWER_NODE
@@ -69,8 +69,8 @@ typedef struct {
 	char    data[1];
 } lquery; 
 
-#define LQUERY_HDRSIZE   ( sizeof(int32) + 3*sizeof(uint16) )
-#define LQUERY_FIRST(x)   ( (lquery_level*)( ((lquery*)(x))->data ) )
+#define LQUERY_HDRSIZE   MAXALIGN( sizeof(int32) + 3*sizeof(uint16) )
+#define LQUERY_FIRST(x)   ( (lquery_level*)( ((char*)(x))+LQUERY_HDRSIZE ) )
 
 #define LQUERY_HASNOT		0x01
 
@@ -113,7 +113,7 @@ typedef struct
         char            data[1];
 }       ltxtquery;
 
-#define HDRSIZEQT       ( 2*sizeof(int4) )
+#define HDRSIZEQT       MAXALIGN( 2*sizeof(int4) )
 #define COMPUTESIZE(size,lenofoperand)  ( HDRSIZEQT + size * sizeof(ITEM) + lenofoperand )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 #define GETOPERAND(x)   ( (char*)GETQUERY(x) + ((ltxtquery*)x)->size * sizeof(ITEM) )
@@ -159,6 +159,7 @@ int ltree_compare(const ltree *a, const ltree *b);
 bool inner_isparent(const ltree *c, const ltree *p);
 bool compare_subnode( ltree_level *t, char *q, int len, 
 	int (*cmpptr)(const char *,const char *,size_t), bool anyend );
+ltree* lca_inner(ltree** a, int len);
 
 #define PG_GETARG_LTREE(x)  ((ltree*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
 #define PG_GETARG_LQUERY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
@@ -212,14 +213,14 @@ typedef struct {
 #define	LTG_ALLTRUE	0x02
 #define	LTG_NORIGHT	0x04
 
-#define LTG_HDRSIZE	( sizeof(int4) + sizeof(uint32) )
-#define LTG_SIGN(x)	( (BITVECP)( ((ltree_gist*)(x))->data ) ) 
-#define LTG_NODE(x)	( (ltree*)( ((ltree_gist*)(x))->data ) )
+#define LTG_HDRSIZE	MAXALIGN( sizeof(int4) + sizeof(uint32) )
+#define LTG_SIGN(x)	( (BITVECP)( ((char*)(x))+LTG_HDRSIZE ) ) 
+#define LTG_NODE(x)	( (ltree*)( ((char*)(x))+LTG_HDRSIZE ) )
 #define LTG_ISONENODE(x) ( ((ltree_gist*)(x))->flag & LTG_ONENODE ) 
 #define LTG_ISALLTRUE(x) ( ((ltree_gist*)(x))->flag & LTG_ALLTRUE ) 
 #define LTG_ISNORIGHT(x) ( ((ltree_gist*)(x))->flag & LTG_NORIGHT ) 
-#define LTG_LNODE(x)	( (ltree*)( ( (char*)( ((ltree_gist*)(x))->data ) ) + ( LTG_ISALLTRUE(x) ? 0 : SIGLEN ) ) )
-#define LTG_RENODE(x)	( (ltree*)( ((char*)LTG_LNODE(x)) + LTG_LNODE(x)->len ) )
+#define LTG_LNODE(x)	( (ltree*)( ( ((char*)(x))+LTG_HDRSIZE ) + ( LTG_ISALLTRUE(x) ? 0 : SIGLEN ) ) )
+#define LTG_RENODE(x)	( (ltree*)( ((char*)LTG_LNODE(x)) + LTG_LNODE(x)->len) )
 #define LTG_RNODE(x)	( LTG_ISNORIGHT(x) ? LTG_LNODE(x) : LTG_RENODE(x) )
 
 #define LTG_GETLNODE(x)	( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_LNODE(x) ) 

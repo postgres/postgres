@@ -28,6 +28,8 @@ Datum _ltree_extract_risparent(PG_FUNCTION_ARGS);
 Datum _ltq_extract_regex(PG_FUNCTION_ARGS);
 Datum _ltxtq_extract_exec(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(_lca);
+Datum _lca(PG_FUNCTION_ARGS);
 
 typedef Datum (*PGCALL2)(PG_FUNCTION_ARGS);
 #define NEXTVAL(x) ( (ltree*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
@@ -208,5 +210,29 @@ _ltxtq_extract_exec(PG_FUNCTION_ARGS) {
 	PG_FREE_IF_COPY(la,0);
 	PG_FREE_IF_COPY(query,1);
 	PG_RETURN_POINTER(item);
+}
+
+Datum
+_lca(PG_FUNCTION_ARGS) {
+	ArrayType       *la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	int num=ArrayGetNItems( ARR_NDIM(la), ARR_DIMS(la));
+	ltree	*item = (ltree*)ARR_DATA_PTR(la);
+        ltree **a,*res;
+
+        a=(ltree**)palloc( sizeof(ltree*) * num );
+	while( num>0 ) {
+		num--;
+		a[num] = item;
+		item = NEXTVAL(item);
+	}
+        res = lca_inner(a, ArrayGetNItems( ARR_NDIM(la), ARR_DIMS(la)));
+	pfree(a);
+
+	PG_FREE_IF_COPY(la,0);
+
+        if ( res )
+                PG_RETURN_POINTER(res);
+        else
+                PG_RETURN_NULL();
 }
 

@@ -61,7 +61,7 @@ ltree_in(PG_FUNCTION_ARGS) {
 				if ( lptr->len > 255 ) 
 					elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
 						lptr->len, lptr->start - buf);
-				totallen += lptr->len + LEVEL_HDRSIZE;
+				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 				lptr++;
 				state = LTPRS_WAITNAME;
 			} else if ( !ISALNUM(*ptr) )
@@ -76,7 +76,7 @@ ltree_in(PG_FUNCTION_ARGS) {
 		if ( lptr->len > 255 ) 
 			elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
 				lptr->len, lptr->start - buf);
-		totallen += lptr->len + LEVEL_HDRSIZE;
+		totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 		lptr++;
 	} else if ( ! (state == LTPRS_WAITNAME && lptr == list) )
 		elog(ERROR,"Unexpected end of line");
@@ -94,7 +94,6 @@ ltree_in(PG_FUNCTION_ARGS) {
 	}
 
 	pfree(list);
-
 	PG_RETURN_POINTER(result);
 }
 
@@ -134,7 +133,9 @@ ltree_out(PG_FUNCTION_ARGS) {
 #define LQPRS_WAITVAR	8
 
 
-#define GETVAR(x) ( *((nodeitem**)LQL_FIRST(x)) )  
+#define GETVAR(x) ( *((nodeitem**)LQL_FIRST(x)) ) 
+#define ITEMSIZE	MAXALIGN(LQL_HDRSIZE+sizeof(nodeitem*)) 
+#define NEXTLEV(x) ( (lquery_level*)( ((char*)(x)) + ITEMSIZE) ) 
 
 Datum 
 lquery_in(PG_FUNCTION_ARGS) {
@@ -159,8 +160,8 @@ lquery_in(PG_FUNCTION_ARGS) {
 	}
 	
 	num++;
-	curqlevel = tmpql = (lquery_level*) palloc( ( LQL_HDRSIZE+sizeof(nodeitem*) )*(num) );
-	memset((void*)tmpql,0, ( LQL_HDRSIZE+sizeof(nodeitem*) )*(num) );
+	curqlevel = tmpql = (lquery_level*) palloc( ITEMSIZE*num );
+	memset((void*)tmpql,0, ITEMSIZE*num );
 	ptr=buf;
 	while( *ptr ) {
 		if ( state==LQPRS_WAITLEVEL ) {
@@ -224,7 +225,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 					elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
 						lptr->len, lptr->start - buf);
 				state = LQPRS_WAITLEVEL;
-				curqlevel++;
+				curqlevel = NEXTLEV(curqlevel);
 			} else if ( ISALNUM(*ptr) ) {
 				if ( lptr->flag )
 					UNCHAR;
@@ -236,7 +237,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 			} else if ( *ptr == '.' ) {
 				curqlevel->low=0;
 				curqlevel->high=0xffff;
-				curqlevel++;
+				curqlevel = NEXTLEV(curqlevel);
 				state = LQPRS_WAITLEVEL;
 			} else
 				UNCHAR;
@@ -273,7 +274,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 		} else if ( state == LQPRS_WAITEND ) {
 			if ( *ptr == '.' ) {
 				state = LQPRS_WAITLEVEL;
-				curqlevel++;
+				curqlevel = NEXTLEV(curqlevel);
 			} else
 				UNCHAR;
 		} else
@@ -300,19 +301,19 @@ lquery_in(PG_FUNCTION_ARGS) {
 		 
 	curqlevel = tmpql;
 	totallen = LQUERY_HDRSIZE; 
-	while( curqlevel-tmpql < num ) {
+	while( (char*)curqlevel-(char*)tmpql < num*ITEMSIZE ) {
 		totallen += LQL_HDRSIZE; 
 		if ( curqlevel->numvar ) {
 			lptr = GETVAR(curqlevel);
 			while( lptr-GETVAR(curqlevel) < curqlevel->numvar ) {
-				totallen += LVAR_HDRSIZE + lptr->len;
+				totallen += MAXALIGN(LVAR_HDRSIZE + lptr->len);
 				lptr++;
 			}
 		} else if ( curqlevel->low > curqlevel->high )
 			elog(ERROR,"Low limit(%d) is greater than upper(%d)",curqlevel->low,curqlevel->high ); 
-		curqlevel++;
+		curqlevel = NEXTLEV(curqlevel);
 	}
-	
+
 	result = (lquery*)palloc( totallen );
 	result->len = totallen;
 	result->numlevel = num;
@@ -322,14 +323,14 @@ lquery_in(PG_FUNCTION_ARGS) {
 		result->flag |= LQUERY_HASNOT;
 	cur = LQUERY_FIRST(result);
 	curqlevel = tmpql;
-	while( curqlevel-tmpql < num ) {
+	while( (char*)curqlevel-(char*)tmpql < num*ITEMSIZE ) {
 		memcpy(cur,curqlevel,LQL_HDRSIZE);
 		cur->totallen=LQL_HDRSIZE;
 		if ( curqlevel->numvar ) {
 			lrptr = LQL_FIRST(cur);
 			lptr = GETVAR(curqlevel);
 			while( lptr-GETVAR(curqlevel) < curqlevel->numvar ) {
-				cur->totallen += LVAR_HDRSIZE + lptr->len;
+				cur->totallen += MAXALIGN(LVAR_HDRSIZE + lptr->len);
 				lrptr->len  = lptr->len;
 				lrptr->flag = lptr->flag;
 				lrptr->val = crc32_sz((uint8 *) lptr->start, lptr->len);
@@ -344,7 +345,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 				(result->firstgood)++;   
 		} else
 			wasbad=true;
-		curqlevel++;
+		curqlevel = NEXTLEV(curqlevel);
 		cur = LQL_NEXT(cur);
 	}
 

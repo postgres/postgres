@@ -22,6 +22,7 @@ PG_FUNCTION_INFO_V1(subpath);
 PG_FUNCTION_INFO_V1(ltree_addltree);
 PG_FUNCTION_INFO_V1(ltree_addtext);
 PG_FUNCTION_INFO_V1(ltree_textadd);
+PG_FUNCTION_INFO_V1(lca);
 Datum   ltree_cmp(PG_FUNCTION_ARGS);
 Datum   ltree_lt(PG_FUNCTION_ARGS);
 Datum   ltree_le(PG_FUNCTION_ARGS);
@@ -35,6 +36,7 @@ Datum   subpath(PG_FUNCTION_ARGS);
 Datum   ltree_addltree(PG_FUNCTION_ARGS);
 Datum   ltree_addtext(PG_FUNCTION_ARGS);
 Datum   ltree_textadd(PG_FUNCTION_ARGS);
+Datum   lca(PG_FUNCTION_ARGS);
 
 int
 ltree_compare(const ltree *a, const ltree *b) {
@@ -308,3 +310,79 @@ ltree_textadd(PG_FUNCTION_ARGS) {
         PG_FREE_IF_COPY(b,0);
         PG_RETURN_POINTER(r);
 }
+
+ltree*
+lca_inner(ltree** a, int len) {
+	int tmp,num=( (*a)->numlevel ) ? (*a)->numlevel-1 : 0;
+	ltree **ptr=a+1;
+	int i,reslen=LTREE_HDRSIZE;
+	ltree_level *l1, *l2;
+	ltree *res;
+	
+
+	if ( (*a)->numlevel == 0 )
+		return NULL;
+
+	while( ptr-a < len ) {
+		if ( (*ptr)->numlevel == 0 )
+			return NULL;
+		else if ( (*ptr)->numlevel == 1 )
+			num=0;
+		else {
+			l1 = LTREE_FIRST(*a);
+			l2 = LTREE_FIRST(*ptr);
+			tmp=num; num=0;
+			for(i=0;i<min(tmp, (*ptr)->numlevel-1); i++) {
+				if ( l1->len == l2->len && strncmp(l1->name,l2->name,l1->len) == 0 )
+					num=i+1;
+				else
+					break;
+				l1=LEVEL_NEXT(l1);
+				l2=LEVEL_NEXT(l2);
+			}
+		}
+		ptr++;
+	}
+
+	l1 = LTREE_FIRST(*a);
+	for(i=0;i<num;i++) {
+		reslen += MAXALIGN(l1->len + LEVEL_HDRSIZE);
+		l1=LEVEL_NEXT(l1);
+	}
+
+	res=(ltree*)palloc( reslen );
+	res->len = reslen;
+	res->numlevel = num;
+
+	l1 = LTREE_FIRST(*a);
+	l2 = LTREE_FIRST(res);
+
+	for(i=0;i<num;i++) {
+		memcpy(l2,l1, MAXALIGN(l1->len + LEVEL_HDRSIZE));
+		l1=LEVEL_NEXT(l1);
+		l2=LEVEL_NEXT(l2);
+	}	
+
+	return res;
+}
+
+Datum
+lca(PG_FUNCTION_ARGS) {
+	int i;
+	ltree **a,*res;
+
+	a=(ltree**)palloc( sizeof(ltree*) * fcinfo->nargs );
+	for(i=0;i<fcinfo->nargs;i++)
+		a[i] = PG_GETARG_LTREE(i);
+	res = lca_inner(a, (int) fcinfo->nargs); 
+	for(i=0;i<fcinfo->nargs;i++)
+		PG_FREE_IF_COPY(a[i],i);
+	pfree(a);
+		 
+	if ( res )
+		PG_RETURN_POINTER(res);
+	else
+		PG_RETURN_NULL();
+}
+
+

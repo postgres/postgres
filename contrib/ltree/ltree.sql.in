@@ -117,6 +117,46 @@ RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict,iscachable);
 
+CREATE FUNCTION lca(_ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME','_lca'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree,ltree)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
 CREATE FUNCTION ltree_isparent(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
