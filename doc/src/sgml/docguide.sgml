@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.19 1999/10/04 15:18:53 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.20 1999/10/04 17:05:51 momjian Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -1320,11 +1320,17 @@ and <acronym>RTF</acronym>.
 </para>
 
 <para>
-These instructions do not cover new <application>jade</application>/DocBook
-support in the 
-<ulink url="http://www.sgmltools.org/"><productname>sgml-tools</productname></ulink>
-package. The authors have not tried this package since it adopted DocBook, 
-but it is almost certainly a good candidate for use.
+The easiest way is to fetch the SGML and DocBook tools is to get
+<application>sgmltools</application> from <ulink
+url="http://www.sgmltools.org/"><productname>sgmltools</productname></u
+link>. <productname>sgmltools</productname> requires the GNU version of
+<productname>m4</productname>.
+<programlisting>gnum4 --version</programlisting> will show you if your
+m4 is the GNU version.  After the install, you will have
+<productname>sgmltools</productname>,
+<productname>jade</productname>, and <productname>DocBook</productname>
+style sheets. The instructions below are for installing these tools
+separately.
 </para>
 
 <sect3><title>Prerequisites</title>
