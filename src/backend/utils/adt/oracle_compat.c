@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.21 2000/03/14 23:06:37 thomas Exp $
+ *	$Id: oracle_compat.c,v 1.22 2000/03/15 17:24:18 tgl Exp $
  *
  */
 
@@ -500,64 +500,76 @@ substr(text *string, int4 m, int4 n)
  *
  * Purpose:
  *
- *	 Returns string after replacing all occurences of from with
- *	 the corresponding character in to. TRANSLATE will not remove
- *	  characters.
- *	 Modified to work with strings rather than single character
- *	  for the substitution arguments.
- *	 Modifications from Edwin Ramirez <ramirez@doc.mssm.edu>.
+ *	 Returns string after replacing all occurrences of characters in from
+ *	 with the corresponding character in to.  If from is longer than to,
+ *	 occurrences of the extra characters in from are deleted.
+ *	 Improved by Edwin Ramirez <ramirez@doc.mssm.edu>.
  *
  ********************************************************************/
 
 text *
 translate(text *string, text *from, text *to)
 {
-	text   *ret;
-	char   *ptr_ret, *from_ptr, *to_ptr;
-	char   *source, *target, *temp, rep;
+	text   *result;
+	char   *from_ptr, *to_ptr;
+	char   *source, *target;
 	int		m, fromlen, tolen, retlen, i;
 
-	if ((string == (text *) NULL) ||
-		((m = VARSIZE(string) - VARHDRSZ) <= 0))
-		return string;
+	if (string == (text *) NULL ||
+		from == (text *) NULL ||
+		to == (text *) NULL)
+		return (text *) NULL;
 
-	target   = (char *) palloc(VARSIZE(string) - VARHDRSZ);
-	source   = VARDATA(string);
-	temp     = target;
+	if ((m = VARSIZE(string) - VARHDRSZ) <= 0)
+		return string;
 
 	fromlen = VARSIZE(from) - VARHDRSZ;
 	from_ptr = VARDATA(from);
 	tolen = VARSIZE(to) - VARHDRSZ;
-	to_ptr   = VARDATA(to);
+	to_ptr = VARDATA(to);
+
+	result = (text *) palloc(VARSIZE(string));
+
+	source = VARDATA(string);
+	target = VARDATA(result);
 	retlen = 0;
-	while (m--)
+
+	while (m-- > 0)
 	{
-		rep = *source;
-		for(i=0;i<fromlen;i++) {
-            if(from_ptr[i] == *source)  {
-				if(i < tolen) {
-					rep = to_ptr[i];
-				} else {
-					rep = 0;
-				}
+		char	rep = *source++;
+
+		for (i = 0; i < fromlen; i++)
+		{
+            if (from_ptr[i] == rep)
 				break;
-            }
 		}
-		if(rep != 0) {
-            *target++ = rep;
-            retlen++;
+		if (i < fromlen)
+		{
+			if (i < tolen)
+			{
+				/* substitute */
+				*target++ = to_ptr[i];
+				retlen++;
+			}
+			else
+			{
+				/* discard */
+			}
 		}
-		source++;
+		else
+		{
+			/* no match, so copy */
+			*target++ = rep;
+			retlen++;
+		}
 	}
 
-	ret = (text *) palloc(retlen + VARHDRSZ);
-	VARSIZE(ret) = retlen + VARHDRSZ;
-	ptr_ret = VARDATA(ret);
-	for(i=0;i<retlen;i++) {
-		*ptr_ret++ = temp[i];
-	}
-	pfree(target);
-	return ret;
+	VARSIZE(result) = retlen + VARHDRSZ;
+	/*
+	 * There may be some wasted space in the result if deletions occurred,
+	 * but it's not worth reallocating it; the function result probably
+	 * won't live long anyway.
+	 */
+
+	return result;
 }
-
-/* EOF */
