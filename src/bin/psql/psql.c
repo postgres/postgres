@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.166 1999/01/17 06:19:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.167 1999/01/27 01:18:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1509,7 +1509,8 @@ do_connect(const char *new_dbname,
 		   PGCLIENTENCODING value. -- 1998/12/12 Tatsuo Ishii */
 		   
 		if (!has_client_encoding) {
-			unsetenv("PGCLIENTENCODING");
+		        static const char ev[] = "PGCLIENTENCODING=";
+			putenv(ev);
 		}
 #endif
 

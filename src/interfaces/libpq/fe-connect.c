@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.88 1999/01/17 06:19:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.89 1999/01/27 01:18:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -816,7 +816,7 @@ PQsetenv(PGconn *conn)
 #ifdef MULTIBYTE
 	/* query server encoding */
 	env = getenv(envname);
-	if (!env)
+	if (!env || *env == NULL)
 	{
 		rtn = PQexec(conn, "select getdatabaseencoding()");
 		if (rtn && PQresultStatus(rtn) == PGRES_TUPLES_OK)

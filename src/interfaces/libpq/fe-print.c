@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.15 1998/10/06 14:16:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.16 1999/01/27 01:18:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,7 +506,7 @@ PQmblen(unsigned char *s)
 	int			encoding = -1;
 
 	str = getenv("PGCLIENTENCODING");
-	if (str)
+	if (str && *str != NULL)
 		encoding = pg_char_to_encoding(str);
 	if (encoding < 0)
 		encoding = MULTIBYTE;
