@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.47 2004/09/24 18:54:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.48 2004/10/04 05:42:18 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -437,7 +437,8 @@ END;
 
     <para>
      Each declaration and each statement within a block is terminated
-     by a semicolon.
+     by a semicolon, although the final <literal>END</literal> that
+     concludes a function body does not require one.
     </para>
 
     <para>
