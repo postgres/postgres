@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.62 2003/03/25 02:44:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.63 2003/06/12 07:52:51 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -525,7 +525,18 @@ PrintQueryResults(PGresult *results,
 					success = true;
 					sprintf(buf, "%u", (unsigned int) PQoidValue(results));
 					if (!QUIET())
-						fprintf(pset.queryFout, "%s\n", PQcmdStatus(results));
+						{
+							if (pset.popt.topt.format == PRINT_HTML)
+							{
+								fputs("<p>", pset.queryFout);
+								html_escaped_print(PQcmdStatus(results), pset.queryFout);
+								fputs("</p>\n", pset.queryFout);
+							}
+							else
+							{
+								fprintf(pset.queryFout, "%s\n", PQcmdStatus(results));
+							}
+						}
 					SetVariable(pset.vars, "LASTOID", buf);
 					break;
 				}

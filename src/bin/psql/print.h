@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.16 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.17 2003/06/12 07:52:51 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -13,6 +13,7 @@
 
 extern FILE *PageOutput(int lines, unsigned short int pager);
 
+extern void html_escaped_print(const char *in, FILE *fout);
 
 enum printFormat
 {
