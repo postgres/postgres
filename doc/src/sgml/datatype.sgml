@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.139 2003/12/21 04:34:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.140 2004/01/20 22:46:06 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -436,28 +436,6 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.139 2003/12/21 04:34:35 momjia
      <type>int8</type> are extensions, which are shared with various
      other <acronym>SQL</acronym> database systems.
     </para>
-
-    <note>
-     <para>
-      If you have a column of type <type>smallint</type> or
-      <type>bigint</type> with an index, you may encounter problems
-      getting the system to use that index.  For instance, a clause of
-      the form
-<programlisting>
-... WHERE smallint_column = 42
-</programlisting>
-      will not use an index, because the system assigns type
-      <type>integer</type> to the constant 42, and
-      <productname>PostgreSQL</productname> currently
-      cannot use an index when two different data types are involved.  A
-      workaround is to single-quote the constant, thus:
-<programlisting>
-... WHERE smallint_column = '42'
-</programlisting>
-      This will cause the system to delay type resolution and will
-      assign the right type to the constant.
-     </para>
-    </note>
 
    </sect2>
 
