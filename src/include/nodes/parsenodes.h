@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.132 2001/06/19 22:39:12 tgl Exp $
+ * $Id: parsenodes.h,v 1.133 2001/06/23 00:07:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,6 +402,7 @@ typedef struct CreateSeqStmt
 {
 	NodeTag		type;
 	char	   *seqname;		/* the relation to create */
+  	bool		istemp;			/* is this a temp sequence? */
 	List	   *options;
 } CreateSeqStmt;
 

@@ -1289,9 +1289,9 @@ CreateAsElement:  ColId { $$ = $1; }
  *
  *****************************************************************************/
 
-CreateSeqStmt:  CREATE SEQUENCE relation_name OptSeqList
+CreateSeqStmt:  CREATE OptTemp SEQUENCE relation_name OptSeqList
 				{
-					$$ = cat_str(3, make_str("create sequence"), $3, $4);
+					$$ = cat_str(4, make_str("create sequence"), $2, $4, $5);
 				}
 		;
 

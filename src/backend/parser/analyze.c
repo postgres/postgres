@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.189 2001/06/04 23:27:23 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.190 2001/06/23 00:07:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,6 +779,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(sname);
+					sequence->istemp = stmt->istemp;
 					sequence->options = NIL;
 
 					elog(NOTICE, "CREATE TABLE will create implicit sequence '%s' for SERIAL column '%s.%s'",
@@ -2716,7 +2717,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 	return qry;
 }
 
-/* 
+/*
  * Transform uses of %TYPE in a statement.
  */
 static Node *

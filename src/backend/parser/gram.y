@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.231 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.232 2001/06/23 00:07:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1574,11 +1574,12 @@ CreateAsElement:  ColId
  *
  *****************************************************************************/
 
-CreateSeqStmt:  CREATE SEQUENCE relation_name OptSeqList
+CreateSeqStmt:  CREATE OptTemp SEQUENCE relation_name OptSeqList
 				{
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
-					n->seqname = $3;
-					n->options = $4;
+					n->istemp = $2;
+					n->seqname = $4;
+					n->options = $5;
 					$$ = (Node *)n;
 				}
 		;

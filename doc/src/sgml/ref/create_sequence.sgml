@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.15 2000/12/08 20:06:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.16 2001/06/23 00:07:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT <replaceable class="parameter">increment</replaceable> ]
+CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> ]
     [ START <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ CYCLE ]
   </synopsis>
@@ -36,6 +36,19 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT
     Inputs
    </title>
    <para>
+
+    <variablelist>
+     <varlistentry>
+      <term>TEMPORARY or TEMP</term>
+      <listitem>
+       <para>
+	If specified, the sequence is created only for this session, and is
+	automatically dropped on session exit.
+	Existing permanent sequences with the same name are not visible
+	(in this session) while the temporary sequence exists.
+       </para>
+      </listitem>
+     </varlistentry>
 
     <variablelist>
      <varlistentry>
