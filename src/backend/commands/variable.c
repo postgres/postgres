@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.95 2004/05/21 05:07:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.96 2004/05/23 23:12:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,9 +329,13 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 * Otherwise assume it is a timezone name.
 			 *
 			 * We have to actually apply the change before we can have any
-			 * hope of checking it.  So, save the old value in case we
-			 * have to back out.  We have to copy since pg_get_current_timezone
+			 * hope of checking it.  So, save the old value in case we have
+			 * to back out.  We have to copy since pg_get_current_timezone
 			 * returns a pointer to its static state.
+			 *
+			 * This would all get a lot simpler if the TZ library had a better
+			 * API that would let us look up and test a timezone name without
+			 * making it the default.
 			 */
 			const char *cur_tz;
 			char	   *save_tz;
@@ -361,8 +365,31 @@ assign_timezone(const char *value, bool doit, GucSource source)
 				 */
 				if (save_tz)
 					pg_tzset(save_tz);
-				else			/* TZ library not initialized yet */
-					select_default_timezone();
+				else
+				{
+					/*
+					 * TZ library wasn't initialized yet.  Annoyingly, we will
+					 * come here during startup because guc-file.l checks
+					 * the value with doit = false before actually applying.
+					 * The best approach seems to be as follows:
+					 *
+					 * 1. known && acceptable: leave the setting in place,
+					 * since we'll apply it soon anyway.  This is mainly
+					 * so that any log messages printed during this interval
+					 * are timestamped with the user's requested timezone.
+					 *
+					 * 2. known && !acceptable: revert to GMT for lack of
+					 * any better idea.  (select_default_timezone() may get
+					 * called later to undo this.)
+					 *
+					 * 3. !known: no need to do anything since TZ library
+					 * did not change its state.
+					 *
+					 * Again, this should all go away sometime soon.
+					 */
+					if (known && !acceptable)
+						pg_tzset("GMT");
+				}
 				/* Complain if it was bad */
 				if (!known)
 				{
