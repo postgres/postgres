@@ -22,7 +22,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 ---------------------------------------------------------------------------
 
 
-PGACCESS 0.96 9 March 1999
+PGACCESS 0.98 29 August 1999
 ================================
 I dedicate this program to my little daughters Ana-Maria and Emilia and to my
 wife for their understanding. I hope they will forgive me for spending so many
@@ -30,130 +30,45 @@ time far from them.
 
 
 
-1.Why PgAccess ?
+1. How to INSTALL ?
 
-First of all because PostgreSQL lacks a graphical interface where you
-can manage your tables, edit them, define queries, sequences and
-functions.
+You will need a Tcl/Tk package, at least Tcl 7.6 and Tk 4.2, recommended
+Tcl/Tk 8.x
 
+For Unix users, unpack the pgaccess-xxx.tar.gz archieve in you preferred
+directory (usually /usr/local).
 
+Check where your "wish" program is and modify (if needed) the file
+/usr/local/pgaccess/pgaccess and set variables PGACCESS_HOME and 
+PATH_TO_WISH to the appropriate directories.
 
-2.How to INSTALL ?
+Include the /usr/local/pgaccess directory into your PATH or make a
+symbolic link to it wherever you want (in PATH directories).
+Example:
 
-You will need Tcl/Tk package, I am using now Tcl 7.6 and Tk 4.2.
-PgAccess is running fine also on Tcl/Tk 8.0
+$ ln -s /usr/local/pgaccess/pgaccess /usr/bin/pgaccess
 
-Also, you will need the PostgreSQL to Tcl interface library, lined as a
-Tcl/Tk 'load'-able module.  It is called libpgtcl and the source is
-located in the PostgreSQL directory /src/interfaces/libpgtcl. 
-Specifically, you will need a libpgtcl library that is 'load'-able from
-Tcl/Tk.  This is technically different from an ordinary PostgreSQL
-loadable object file, because libpgtcl is a collection of object files.
-
-Under Linux, this is called libpgtcl.so.  You will find a pre-compiled
-copy of it for Linux i386 systems at : http://www.flex.ro/pgaccess. 
-Just copy libpgtcl.so into your system library directory /usr/lib or
-/lib and go for it.
-
-Under Windows, copy libpgtcl.dll and libpq.dll into C:\WINDOWS\SYSTEM directory.
-Make sure you have Tcl/Tk at least version 8.0.0 for Microsoft Windows 95 & NT.
-PgAccess has been checked with Tcl/Tk 8.0.4 version on Windows95 and Windows98
-platforms.
-
-Tcl/Tk 8.0.4 for Windows95 & NT can be downloaded from 
-ftp://ftp.scriptics.com/pub/tcl/tcl8_0/tcl804.exe
-It is 1833712 bytes long.
+You will find also some documentation and FAQ in the doc directory.
 
 
-3.How to run it?
+
+2. Usage
 
 You run it with the command:
 
-        wish -f pgaccess.tcl [database]
+        pgaccess [database]
 
 [database] is optional.
 
-Another way of loading the PostgreSQL library is running it with pgwish.
-It's a wish compiled with libpgtcl library so it could understand the
-commands for working with PostgreSQL. For this, remove the line "load
-libpgtcl.so" from the source.  If your operating system has a different
-library name or location, change the 'load libpgtcl.so' line in the
-pgaccess.tcl file.
 
 
-4.What does it now ?
+3. Bug reporting
 
-- Opens any database on a specified host at the specified port, username and password
-- Perform vacuum command.
-- Saves preferences in ~/.pgaccessrc file
-
-Tables
-- opening multiple tables for viewing, max n records (configurable)
-- column resizing by dragging the vertical grid lines
-- text will wrap in cells now
-- dynamic row height when editing
-- table layout saved for every table
-- import/export to external files (SDF,CSV)
-- filter capabilities ,enter filter like price>3.14
-- sort order capabilities ,enter manually the sort field(s)
-- editing in place, double click the text you want to change
-- record deleting , point the record, press Del key
-- adding new records ,save new row with right-button-click on table for the moment
-- table generator assistant
-- table renaming and deleting (dropping)
-- table information retrieving : owner, field information, indexes
-
-Queries
-- define, edit and store "user defined queries"
-- save view layout
-- can store queries as views
-- execution of queries  with optional user input parameters ( select * from invoices where year=[parameter "Year of selection"] )
-- viewing of select type queries result
-- running action queries (insert, update, delete)
-- visual query builder with drag & drop support, table aliasing
-
-Sequences
-- define
-- inspect
-- delete
-
-Views
-- defining them saving queries as views
-- view them , with filtering and sorting capabilities
-- design views
-- delete them
-
-Functions
-- define , inspect , delete
-
-Reports
-- simple reports from a table (beta stage)
-- change font,size and style of fields and labels
-- load and save reports from the database
-- table previews, sample postscript print
-
-Forms
-- open user defined forms
-- form design module available
-- query widget allowing access to a record set
-
-Scripts
-- define, modify and call user defined scripts
-
-5.What it should do in the future ?
-
-- sequence and function renaming
-- more powerful report generator and viewer
-- help on line
-
-
-
-6. How you should report the errors?
 First of all : operating system, PostgreSQL version,Tcl/Tk version.
-A more detailed story of what have you done when error had occurred.
+A more detailed story of what have you done when error occurred.
 Tcl/Tk stops usually with a error message and there is a button there
 "Stack Trace" and if you press it, you will see a detailed information
-about the place where it stuck. Please send it to me.
+about the procedure containing the error. Please send it to me.
 Some information about table structure, no. of fields, records would
 be also good.
 
