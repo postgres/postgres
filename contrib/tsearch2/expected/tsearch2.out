@@ -2056,11 +2056,11 @@ An hour of storm to place
 The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('granite&sea'));
-                                           headline                                           
-----------------------------------------------------------------------------------------------
- <b>sea</b> an hour one night
-An hour of storm to place
-The sculpture of these <b>granite</b>
+                                             headline                                             
+--------------------------------------------------------------------------------------------------
+ <b>sea</b> a thousand years,
+A thousand years to trace
+The <b>granite</b> features of this cliff
 (1 row)
 
  

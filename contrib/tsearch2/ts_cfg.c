@@ -360,7 +360,7 @@ hlfinditem(HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int buflen)
 {
 	int			i;
 	ITEM	   *item = GETQUERY(query);
-	HLWORD	   *word = &(prs->words[prs->curwords - 1]);
+	HLWORD	   *word;
 
 	while (prs->curwords + query->size >= prs->lenwords)
 	{
@@ -368,6 +368,7 @@ hlfinditem(HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int buflen)
 		prs->words = (HLWORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(HLWORD));
 	}
 
+	word = &(prs->words[prs->curwords - 1]);
 	for (i = 0; i < query->size; i++)
 	{
 		if (item->type == VAL && item->length == buflen && strncmp(GETOPERAND(query) + item->distance, buf, buflen) == 0)
