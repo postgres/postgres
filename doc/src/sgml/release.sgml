@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.275 2004/08/01 05:22:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.276 2004/08/03 01:14:57 momjian Exp $
 -->
 
 <appendix id="release">
@@ -1521,7 +1521,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.275 2004/08/01 05:22:26 momjian
     <listitem>
      <para>
       Remove alternate database locations using initlocation (Tom)
-      (fix dbsize and oidname)
      </para>
     </listitem>
 
