@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.19 1998/07/26 04:30:31 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.20 1998/08/04 17:37:48 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2094,7 +2094,8 @@ CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 						n->encoding = GetTemplateEncoding();
 					}
 #else
-					elog(ERROR, "WITH ENCODING is not supported");
+					if ($6 != NULL)
+						elog(ERROR, "WITH ENCODING is not supported");
 #endif
 					$$ = (Node *)n;
 				}
