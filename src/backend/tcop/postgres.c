@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.278 2002/08/04 06:26:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.279 2002/08/04 23:56:01 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1547,7 +1547,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		SetXLogDir(potential_XLogDir);
 	}
 	Assert(DataDir);
-	Assert(strlen(XLogDir) > 0);
 
 	/*
 	 * Set up signal handlers and masks.
@@ -1702,7 +1701,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.278 $ $Date: 2002/08/04 06:26:33 $\n");
+		puts("$Revision: 1.279 $ $Date: 2002/08/04 23:56:01 $\n");
 	}
 
 	/*
