@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr 17 12:34:31 EDT 2000
+Last updated:		Sat Apr 22 16:33:07 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -29,7 +29,6 @@ PARSER
 * redesign INSERT ... SELECT to have two levels of target list
 * have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
 * SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken [distinct]
-* SELECT 'x'::varchar(10) INTO newtable; fails
 * SELECT col::DECIMAL(12,10); fails
 
 VIEWS
