@@ -6,7 +6,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.2 1998/07/26 04:31:18 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.3 1999/06/05 10:27:31 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ pg_encoding: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) -o pg_encoding $(OBJS) -L$(LIBPQDIR) -lpq $(LDFLAGS)
 
 install: pg_encoding
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_encoding $(BINDIR)/pg_encoding
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_encoding$(X) $(BINDIR)/pg_encoding$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
