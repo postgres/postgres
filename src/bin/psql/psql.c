@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.130 1998/01/25 20:23:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.131 1998/01/28 20:44:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1771,7 +1771,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					SELECT	t.typname as return_type, \
 							p.proname as function, \
 							substr(oid8types(p.proargtypes),1,20) as arguments, \
-							substr(obj_description(p.oid),1,23) \
+							substr(obj_description(p.oid),1,28) \
 					FROM 	pg_proc p, pg_type t \
 					WHERE 	p.prorettype = t.oid and \
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.2 1998/01/27 15:35:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.3 1998/01/28 20:44:42 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 lock - exclusive lock a table
@@ -22,7 +22,9 @@ Another example of deadlock is where one user locks one table, and
 another user locks a second table.  While both keep their existing
 locks, the first user tries to lock the second user's table, and the
 second user tries to lock the first user's table. Both users deadlock
-waiting for the tables to become available.
+waiting for the tables to become available.  The only solution to this
+is for both users to lock tables in the same order, so user's lock
+aquisitions and requests to not form a deadlock.
 .SH EXAMPLES
 .nf
 --
