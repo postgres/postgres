@@ -103,7 +103,6 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
 
-AC_CHECK_LIB(tk41,     main)
 AC_CHECK_LIB(readline, main)
 AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
 AC_CHECK_LIB(history,  main)
