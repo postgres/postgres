@@ -25,10 +25,11 @@ import org.postgresql.util.*;
 
 public class Array implements java.sql.Array
 {
-	private org.postgresql.Connection      conn   = null;
-	private org.postgresql.Field           field  = null;
-	private org.postgresql.jdbc2.ResultSet rs     = null;
-	private int                            idx    = 0;
+	private org.postgresql.Connection      conn      = null;
+	private org.postgresql.Field           field     = null;
+	private org.postgresql.jdbc2.ResultSet rs        = null;
+	private int                            idx       = 0;
+	private String                         rawString = null;
 
     /**
      * Create a new Array 
@@ -38,11 +39,14 @@ public class Array implements java.sql.Array
      * @param field the Field descriptor for the field to load into this Array
      * @param rs the ResultSet from which to get the data for this Array
      */
-	public Array( org.postgresql.Connection conn, int idx, Field field, org.postgresql.jdbc2.ResultSet rs ) { 
+	public Array( org.postgresql.Connection conn, int idx, Field field, org.postgresql.jdbc2.ResultSet rs ) 
+		throws SQLException
+	{ 
 		this.conn = conn;
 		this.field = field; 
 		this.rs = rs;
 		this.idx = idx;
+		this.rawString = rs.getFixedString(idx);
 	}
 
 	public Object getArray() throws SQLException {
@@ -66,9 +70,8 @@ public class Array implements java.sql.Array
 		Object retVal = null;
 
 		ArrayList array = new ArrayList();
-		String raw = rs.getFixedString(idx);
-		if( raw != null ) {
-			char[] chars = raw.toCharArray();
+		if( rawString != null ) {
+			char[] chars = rawString.toCharArray();
 			StringBuffer sbuf = new StringBuffer();
 			boolean foundOpen = false;
 			boolean insideString = false;
@@ -200,8 +203,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("bool"), 1);
 				for( int i=0; i<booleanArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = (booleanArray[i]?"YES":"NO").getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( (booleanArray[i]?"YES":"NO") ); // Value 
 					rows.addElement(tuple);
 				}
 			case Types.SMALLINT:
@@ -212,8 +215,8 @@ public class Array implements java.sql.Array
 					fields[1] = new Field(conn, "VALUE", field.getOID("int4"), 4);
 				for( int i=0; i<intArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = Integer.toString(intArray[i]).getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( Integer.toString(intArray[i]) ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -222,8 +225,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("int8"), 8);
 				for( int i=0; i<longArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = Long.toString(longArray[i]).getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( Long.toString(longArray[i]) ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -232,8 +235,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("numeric"), -1);
 				for( int i=0; i<bdArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = bdArray[i].toString().getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( bdArray[i].toString() ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -242,8 +245,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("float4"), 4);
 				for( int i=0; i<floatArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = Float.toString(floatArray[i]).getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( Float.toString(floatArray[i]) ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -252,8 +255,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("float8"), 8);
 				for( int i=0; i<doubleArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = Double.toString(doubleArray[i]).getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( Double.toString(doubleArray[i]) ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -265,8 +268,8 @@ public class Array implements java.sql.Array
 					fields[1] = new Field(conn, "VALUE", field.getOID("varchar"), -1);
 				for( int i=0; i<strArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = strArray[i].getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( strArray[i] ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -275,8 +278,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("date"), 4);
 				for( int i=0; i<dateArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = dateArray[i].toString().getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( dateArray[i].toString() ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -285,8 +288,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("time"), 8);
 				for( int i=0; i<timeArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = timeArray[i].toString().getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( timeArray[i].toString() ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -295,8 +298,8 @@ public class Array implements java.sql.Array
 				fields[1] = new Field(conn, "VALUE", field.getOID("timestamp"), 8);
 				for( int i=0; i<timestampArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
-	  				tuple[0] = Integer.toString((int)index+i).getBytes(); // Index 
-	  				tuple[1] = timestampArray[i].toString().getBytes(); // Value
+	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
+	  				tuple[1] = conn.getEncoding().encode( timestampArray[i].toString() ); // Value 
 					rows.addElement(tuple);
 				}
 				break;
@@ -308,5 +311,7 @@ public class Array implements java.sql.Array
 		}
 		return new ResultSet((org.postgresql.jdbc2.Connection)conn, fields, rows, "OK", 1 ); 
 	}
+
+	public String toString() { return rawString; }
 }
 

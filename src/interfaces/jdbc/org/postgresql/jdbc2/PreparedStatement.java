@@ -698,9 +698,9 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
       return null;
     }
 
-    public void setArray(int i,Array x) throws SQLException
+    public void setArray(int i, java.sql.Array x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	setString(i, x.toString());
     }
 
     /**

@@ -308,7 +308,7 @@ public int getInt(int parameterIndex) throws SQLException {
 
     // ** JDBC 2 Extensions **
 
-    public Array getArray(int i) throws SQLException
+    public java.sql.Array getArray(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
