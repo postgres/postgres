@@ -8,7 +8,7 @@ Overview
 
    Major changes in this release:
 
-   SCHEMA SUPPORT
+   Schemas
 
            Schemas allow users to create objects in their own namespace
            so two people or applications can have tables with the same
@@ -16,7 +16,7 @@ Overview
            Table/index creation can be restricted by removing
            permissions on the public schema.
 
-   DROP COLUMN
+   Drop Column
 
            PostgreSQL now support ALTER TABLE ... DROP COLUMN functionality.
 
@@ -25,15 +25,6 @@ Overview
            Functions can now return sets, with multiple rows
            and multiple columns.  You specify these functions in
            the SELECT FROM clause, similar to a table or view.
-
-   Privileges
-
-           Functions and procedural languages now have privileges, and
-           people running them can take on the privileges of their creators.
-
-   Logging
-
-           A variety of logging options have been enhanced.
 
    Prepared Queries
 
@@ -44,9 +35,18 @@ Overview
            PostgreSQL now records object dependencies, which allows
            improvements in many areas.
 
+   Privileges
+
+           Functions and procedural languages now have privileges, and
+           people running them can take on the privileges of their creators.
+
    Multibyte/Locale
 
            Both multibyte and locale are now enabled by default.
+
+   Logging
+
+           A variety of logging options have been enhanced.
 
    Interfaces
 
