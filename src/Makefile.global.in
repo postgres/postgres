@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.212 2005/03/25 18:17:12 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.213 2005/03/25 23:22:53 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -232,9 +232,11 @@ BZIP2	= bzip2
 
 INSTALL	= $(SHELL) $(top_srcdir)/config/install-sh -c
 
+INSTALL_SCRIPT_MODE	= 755
+INSTALL_DATA_MODE	= 644
 INSTALL_PROGRAM	= $(INSTALL_PROGRAM_ENV) $(INSTALL) $(INSTALL_STRIP_FLAG)
-INSTALL_SCRIPT	= $(INSTALL) -m 755
-INSTALL_DATA	= $(INSTALL) -m 644
+INSTALL_SCRIPT	= $(INSTALL) -m $(INSTALL_SCRIPT_MODE)
+INSTALL_DATA	= $(INSTALL) -m $(INSTALL_DATA_MODE)
 INSTALL_STLIB	= $(INSTALL_STLIB_ENV) $(INSTALL_DATA) $(INSTALL_STRIP_FLAG)
 INSTALL_SHLIB	= $(INSTALL_SHLIB_ENV) $(INSTALL) $(INSTALL_SHLIB_OPTS) $(INSTALL_STRIP_FLAG)
 # Override in Makefile.port if necessary
