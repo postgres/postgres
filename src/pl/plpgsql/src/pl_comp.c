@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.51 2002/09/04 20:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.52 2002/09/12 00:24:09 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1092,6 +1092,126 @@ plpgsql_parse_dblwordtype(char *word)
 	return T_DTYPE;
 }
 
+/* ----------
+ * plpgsql_parse_tripwordtype		Same lookup for word.word.word%TYPE
+ * ----------
+ */
+#define TYPE_JUNK_LEN	5
+
+int
+plpgsql_parse_tripwordtype(char *word)
+{
+	Oid			classOid;
+	HeapTuple	classtup;
+	Form_pg_class classStruct;
+	HeapTuple	attrtup;
+	Form_pg_attribute attrStruct;
+	HeapTuple	typetup;
+	Form_pg_type typeStruct;
+	PLpgSQL_type *typ;
+	char	   *cp[2];
+	int			qualified_att_len;
+	int			numdots = 0;
+	int			i;
+	RangeVar   *relvar;
+
+	/* Do case conversion and word separation */
+	qualified_att_len = strlen(word) - TYPE_JUNK_LEN;
+	Assert(word[qualified_att_len] == '%');
+
+	for (i = 0; i < qualified_att_len; i++)
+	{
+		if (word[i] == '.' && ++numdots == 2)
+		{
+			cp[0] = (char *) palloc((i + 1) * sizeof(char));
+			memset(cp[0], 0, (i + 1) * sizeof(char));
+			memcpy(cp[0], word, i * sizeof(char));
+
+			/* qualified_att_len - one based position + 1 (null terminator) */
+			cp[1] = (char *) palloc((qualified_att_len - i) * sizeof(char));
+			memset(cp[1], 0, (qualified_att_len - i) * sizeof(char));
+			memcpy(cp[1], &word[i + 1], (qualified_att_len - i - 1) * sizeof(char));
+
+			break;
+		}
+	}
+
+	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp[0], "plpgsql_parse_dblwordtype"));
+	classOid = RangeVarGetRelid(relvar, true);
+	if (!OidIsValid(classOid))
+	{
+		pfree(cp[0]);
+		pfree(cp[1]);
+		return T_ERROR;
+	}
+	classtup = SearchSysCache(RELOID,
+							  ObjectIdGetDatum(classOid),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(classtup))
+	{
+		pfree(cp[0]);
+		pfree(cp[1]);
+		return T_ERROR;
+	}
+
+	/*
+	 * It must be a relation, sequence, view, or type
+	 */
+	classStruct = (Form_pg_class) GETSTRUCT(classtup);
+	if (classStruct->relkind != RELKIND_RELATION &&
+		classStruct->relkind != RELKIND_SEQUENCE &&
+		classStruct->relkind != RELKIND_VIEW &&
+		classStruct->relkind != RELKIND_COMPOSITE_TYPE)
+	{
+		ReleaseSysCache(classtup);
+		pfree(cp[0]);
+		pfree(cp[1]);
+		return T_ERROR;
+	}
+
+	/*
+	 * Fetch the named table field and it's type
+	 */
+	attrtup = SearchSysCacheAttName(classOid, cp[1]);
+	if (!HeapTupleIsValid(attrtup))
+	{
+		ReleaseSysCache(classtup);
+		pfree(cp[0]);
+		pfree(cp[1]);
+		return T_ERROR;
+	}
+	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
+	typetup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(attrStruct->atttypid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(typetup))
+		elog(ERROR, "cache lookup for type %u of %s.%s failed",
+			 attrStruct->atttypid, cp[0], cp[1]);
+	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+
+	/*
+	 * Found that - build a compiler type struct and return it
+	 */
+	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
+
+	typ->typname = strdup(NameStr(typeStruct->typname));
+	typ->typoid = attrStruct->atttypid;
+	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
+	typ->typelem = typeStruct->typelem;
+	typ->typbyval = typeStruct->typbyval;
+	typ->typlen = typeStruct->typlen;
+	typ->atttypmod = attrStruct->atttypmod;
+
+	plpgsql_yylval.dtype = typ;
+
+	ReleaseSysCache(classtup);
+	ReleaseSysCache(attrtup);
+	ReleaseSysCache(typetup);
+	pfree(cp[0]);
+	pfree(cp[1]);
+	return T_DTYPE;
+}
 
 /* ----------
  * plpgsql_parse_wordrowtype		Scanner found word%ROWTYPE.
@@ -1125,6 +1245,46 @@ plpgsql_parse_wordrowtype(char *word)
 
 	pfree(cp[0]);
 	pfree(cp[1]);
+
+	return T_ROW;
+}
+
+/* ----------
+ * plpgsql_parse_dblwordrowtype		Scanner found word.word%ROWTYPE.
+ *			So word must be namespace qualified a table name.
+ * ----------
+ */
+#define ROWTYPE_JUNK_LEN	8
+
+int
+plpgsql_parse_dblwordrowtype(char *word)
+{
+	Oid			classOid;
+	char	   *cp;
+	int			i;
+	RangeVar   *relvar;
+
+	/* Do case conversion and word separation */
+	/* We convert %rowtype to .rowtype momentarily to keep converter happy */
+	i = strlen(word) - ROWTYPE_JUNK_LEN;
+	Assert(word[i] == '%');
+
+	cp = (char *) palloc((i + 1) * sizeof(char));
+	memset(cp, 0, (i + 1) * sizeof(char));
+	memcpy(cp, word, i * sizeof(char));
+
+	/* Lookup the relation */
+	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp, "plpgsql_parse_dblwordtype"));
+	classOid = RangeVarGetRelid(relvar, true);
+	if (!OidIsValid(classOid))
+		elog(ERROR, "%s: no such class", cp);
+
+	/*
+	 * Build and return the complete row definition
+	 */
+	plpgsql_yylval.row = build_rowtype(classOid);
+
+	pfree(cp);
 
 	return T_ROW;
 }

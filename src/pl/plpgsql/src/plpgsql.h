@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.27 2002/09/04 20:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.28 2002/09/12 00:24:09 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -568,7 +568,9 @@ extern int	plpgsql_parse_dblword(char *word);
 extern int	plpgsql_parse_tripword(char *word);
 extern int	plpgsql_parse_wordtype(char *word);
 extern int	plpgsql_parse_dblwordtype(char *word);
+extern int	plpgsql_parse_tripwordtype(char *word);
 extern int	plpgsql_parse_wordrowtype(char *word);
+extern int	plpgsql_parse_dblwordrowtype(char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);

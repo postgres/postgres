@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.22 2002/08/30 00:28:41 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.23 2002/09/12 00:24:09 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -170,14 +170,18 @@ dump			{ return O_DUMP;			}
 {identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_tripword(yytext); }
 {identifier}{space}*%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
 {identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
+{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_tripwordtype(yytext); }
 {identifier}{space}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
+{identifier}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{ return plpgsql_parse_dblwordrowtype(yytext);	}
 
 \${digit}+						{ return plpgsql_parse_word(yytext);	}
 \${digit}+{space}*\.{space}*{identifier}	{ return plpgsql_parse_dblword(yytext);	}
 \${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_tripword(yytext); }
 \${digit}+{space}*%TYPE			{ return plpgsql_parse_wordtype(yytext);	}
 \${digit}+{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
+\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_tripwordtype(yytext); }
 \${digit}+{space}*%ROWTYPE		{ return plpgsql_parse_wordrowtype(yytext);	}
+\${digit}+{space}*\.{space}*{identifier}{space}*%ROWTYPE	{ return plpgsql_parse_dblwordrowtype(yytext);	}
 
 {digit}+		{ return T_NUMBER;			}
 
