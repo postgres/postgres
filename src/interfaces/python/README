@@ -441,7 +441,7 @@ used as parameters for methods calls. You should refer to PostgreSQL user
 manual for more information about them. These constants are:
 
   - large objects access modes, used by (pgobject.)locreate and 
-    (pglarge.)open: (pg.)INV_READ, (pg.)INV_WRITE, (pg.)INV_ARCHIVE
+    (pglarge.)open: (pg.)INV_READ, (pg.)INV_WRITE
   - positional flags, used by (pglarge.)seek: (pg.)SEEK_SET, 
     (pg.)SEEK_CUR, (pg.)SEEK_END.
   - version and __version__ constants that give the current version.
