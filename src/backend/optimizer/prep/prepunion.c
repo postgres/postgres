@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.10 1997/12/18 03:03:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.11 1997/12/20 07:59:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,21 +33,16 @@
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 
-static List *
-plan_union_query(List *relids, Index rt_index,
+static List *plan_union_query(List *relids, Index rt_index,
 				 RangeTblEntry *rt_entry, Query *parse, UnionFlag flag,
 				 List **union_rtentriesPtr);
-static RangeTblEntry *
-new_rangetable_entry(Oid new_relid,
+static RangeTblEntry *new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
-static Query *
-subst_rangetable(Query *root, Index index,
+static Query *subst_rangetable(Query *root, Index index,
 				 RangeTblEntry *new_entry);
-static void
-fix_parsetree_attnums(Index rt_index, Oid old_relid,
+static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
-static Append *
-make_append(List *unionplans, Index rt_index,
+static Append *make_append(List *unionplans, Index rt_index,
 			List *union_rt_entries, List *tlist);
 
 
@@ -238,12 +233,12 @@ plan_union_query(List *relids,
 		 * reset the uniqueflag and sortclause in parse tree root, so that
 		 * sorting will only be done once after append
 		 */
-/*		new_root->uniqueFlag = false; */
 		new_root->uniqueFlag = NULL;
 		new_root->sortClause = NULL;
 		new_root->groupClause = NULL;
 		new_root->qry_numAgg = 0;
 		new_root->qry_aggs = NULL;
+		del_agg_tlist_references(new_root->targetList);
 		fix_parsetree_attnums(rt_index,
 							  rt_entry->relid,
 							  relid,

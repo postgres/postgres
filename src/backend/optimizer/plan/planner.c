@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.13 1997/12/18 19:41:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.14 1997/12/20 07:59:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 #include "executor/executor.h"
 
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
+extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
+			   List *groupClause, Plan *subplan);
 
 /*****************************************************************************
  *
@@ -72,13 +74,13 @@ planner(Query *parse)
 	List	   *rangetable = parse->rtable;
 	char	   *uniqueflag = parse->uniqueFlag;
 	List	   *sortclause = parse->sortClause;
-	Plan	   *special_plans = (Plan *) NULL;
+	Agg		   *aggplan = NULL;
 
 	Plan	   *result_plan = (Plan *) NULL;
 
-	List	   *preprocessed_tlist = NIL;
 	List	   *primary_qual;
 	int			rt_index;
+	
 
 	/*
 	 * plan inheritance
@@ -86,28 +88,96 @@ planner(Query *parse)
 	rt_index = first_matching_rt_entry(rangetable, INHERITS_FLAG);
 	if (rt_index != -1)
 	{
-		special_plans = (Plan *) plan_union_queries((Index) rt_index,
+		result_plan = (Plan *) plan_union_queries((Index) rt_index,
 													parse,
 													INHERITS_FLAG);
+		/* XXX do we need to do this? bjm 12/19/97 */
+		tlist = preprocess_targetlist(tlist,
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 	}
-
-	if (special_plans)
-		result_plan = special_plans;
 	else
 	{
-		preprocessed_tlist = preprocess_targetlist(tlist,
-												  parse->commandType,
-					 							  parse->resultRelation,
-												  parse->rtable);
+		tlist = preprocess_targetlist(tlist,
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 
 		primary_qual = cnfify((Expr *) parse->qual, true);
 
 		result_plan = query_planner(parse,
 									  parse->commandType,
-									  preprocessed_tlist,
+									  tlist,
 									  primary_qual);
 	}
 	
+	/*
+	 * If we have a GROUP BY clause, insert a group node (with the
+	 * appropriate sort node.)
+	 */
+	if (parse->groupClause != NULL)
+	{
+		bool		tuplePerGroup;
+
+		/*
+		 * decide whether how many tuples per group the Group node needs
+		 * to return. (Needs only one tuple per group if no aggregate is
+		 * present. Otherwise, need every tuple from the group to do the
+		 * aggregation.)
+		 */
+		tuplePerGroup = (parse->qry_aggs) ? TRUE : FALSE;
+
+		result_plan =
+			make_groupPlan( &tlist,
+							tuplePerGroup,
+							parse->groupClause,
+							result_plan);
+
+	}
+
+	/*
+	 * If aggregate is present, insert the agg node
+	 */
+	if (parse->qry_aggs)
+	{
+		aggplan = make_agg(tlist,
+							parse->qry_numAgg,
+							parse->qry_aggs,
+							result_plan);
+
+		/*
+		 * set the varno/attno entries to the appropriate references to
+		 * the result tuple of the subplans. (We need to set those in the
+		 * array of aggreg's in the Agg node also. Even though they're
+		 * pointers, after a few dozen's of copying, they're not the same
+		 * as those in the target list.)
+		 */
+		set_agg_tlist_references(aggplan);
+		set_agg_agglist_references(aggplan);
+
+		result_plan = (Plan *) aggplan;
+	}
+
+	/*
+	 * fix up the flattened target list of the plan root node so that
+	 * expressions are evaluated.  this forces expression evaluations that
+	 * may involve expensive function calls to be delayed to the very last
+	 * stage of query execution.  this could be bad. but it is joey's
+	 * responsibility to optimally push these expressions down the plan
+	 * tree.  -- Wei
+	 *
+	 * But now nothing to do if there are GroupBy and/or Aggregates: 1.
+	 * make_groupPlan fixes tlist; 2. flatten_tlist_vars does nothing with
+	 * aggregates fixing only other entries (i.e. - GroupBy-ed and so
+	 * fixed by make_groupPlan).	 - vadim 04/05/97
+	 */
+	if (parse->groupClause == NULL && aggplan == NULL)
+	{
+		result_plan->targetlist = flatten_tlist_vars(tlist,
+												 result_plan->targetlist);
+	}
+
 	/*
 	 * For now, before we hand back the plan, check to see if there is a
 	 * user-specified sort that needs to be done.  Eventually, this will

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.8 1997/12/18 12:54:45 momjian Exp $
+ * $Id: prep.h,v 1.9 1997/12/20 07:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,7 @@ extern List *cnfify(Expr *qual, bool removeAndFlag);
 /*
  * prototypes for preptlist.h
  */
-extern List *
-preprocess_targetlist(List *tlist, int command_type,
+extern List *preprocess_targetlist(List *tlist, int command_type,
 					  Index result_relation, List *range_table);
 
 /*
@@ -36,12 +35,10 @@ typedef enum UnionFlag
 	INHERITS_FLAG, VERSION_FLAG
 } UnionFlag;
 
-extern List *
-find_all_inheritors(List *unexamined_relids,
+extern List *find_all_inheritors(List *unexamined_relids,
 					List *examined_relids);
 extern int	first_matching_rt_entry(List *rangetable, UnionFlag flag);
-extern Append *
-plan_union_queries(Index rt_index, Query *parse,
+extern Append *plan_union_queries(Index rt_index, Query *parse,
 				   UnionFlag flag);
 
 #endif							/* PREP_H */

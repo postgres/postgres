@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.11 1997/12/18 12:54:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.12 1997/12/20 07:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
-static Plan *
+extern Plan *
 make_groupPlan(List **tlist, bool tuplePerGroup,
 			   List *groupClause, Plan *subplan);
 
@@ -72,7 +72,6 @@ query_planner(Query *root,
 	List	   *flattened_tlist = NIL;
 	List	   *level_tlist = NIL;
 	Plan	   *subplan = (Plan *) NULL;
-	Agg		   *aggplan = NULL;
 
 	/*
 	 * A command without a target list or qualification is an error,
@@ -175,49 +174,6 @@ query_planner(Query *root,
 	set_tlist_references(subplan);
 
 	/*
-	 * If we have a GROUP BY clause, insert a group node (with the
-	 * appropriate sort node.)
-	 */
-	if (root->groupClause != NULL)
-	{
-		bool		tuplePerGroup;
-
-		/*
-		 * decide whether how many tuples per group the Group node needs
-		 * to return. (Needs only one tuple per group if no aggregate is
-		 * present. Otherwise, need every tuple from the group to do the
-		 * aggregation.)
-		 */
-		tuplePerGroup = (root->qry_aggs) ? TRUE : FALSE;
-
-		subplan =
-			make_groupPlan(&tlist, tuplePerGroup, root->groupClause, subplan);
-
-	}
-
-	/*
-	 * If aggregate is present, insert the agg node
-	 */
-	if (root->qry_aggs)
-	{
-		aggplan = make_agg(tlist, root->qry_numAgg, root->qry_aggs, subplan);
-
-		/*
-		 * set the varno/attno entries to the appropriate references to
-		 * the result tuple of the subplans. (We need to set those in the
-		 * array of aggreg's in the Agg node also. Even though they're
-		 * pointers, after a few dozen's of copying, they're not the same
-		 * as those in the target list.)
-		 */
-		set_agg_tlist_references(aggplan);
-		set_agg_agglist_references(aggplan);
-
-		subplan = (Plan *) aggplan;
-
-		tlist = aggplan->plan.targetlist;
-	}
-
-	/*
 	 * Build a result node linking the plan if we have constant quals
 	 */
 	if (constant_qual)
@@ -234,25 +190,6 @@ query_planner(Query *root,
 		set_result_tlist_references((Result *) plan);
 
 		return (plan);
-	}
-
-	/*
-	 * fix up the flattened target list of the plan root node so that
-	 * expressions are evaluated.  this forces expression evaluations that
-	 * may involve expensive function calls to be delayed to the very last
-	 * stage of query execution.  this could be bad. but it is joey's
-	 * responsibility to optimally push these expressions down the plan
-	 * tree.  -- Wei
-	 *
-	 * But now nothing to do if there are GroupBy and/or Aggregates: 1.
-	 * make_groupPlan fixes tlist; 2. flatten_tlist_vars does nothing with
-	 * aggregates fixing only other entries (i.e. - GroupBy-ed and so
-	 * fixed by make_groupPlan).	 - vadim 04/05/97
-	 */
-	if (root->groupClause == NULL && aggplan == NULL)
-	{
-		subplan->targetlist = flatten_tlist_vars(tlist,
-												 subplan->targetlist);
 	}
 
 	/*
@@ -380,7 +317,7 @@ make_result(List *tlist,
  *
  *****************************************************************************/
 
-static Plan *
+Plan *
 make_groupPlan(List **tlist,
 			   bool tuplePerGroup,
 			   List *groupClause,
