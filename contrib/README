@@ -175,6 +175,11 @@ tools -
 	Assorted developer tools
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
+tsearch -
+	Full-text-index support using GiST
+	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
+	<oleg@sai.msu.su>.
+
 userlock -
 	User locks
 	by Massimo Dal Zotto <dz@cs.unitn.it>

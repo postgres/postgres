@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.29 2001/10/01 01:52:38 ishii Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.30 2001/10/12 23:19:09 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -34,8 +34,13 @@ WANTED_DIRS = \
 		spi		\
 		string		\
 		tips		\
+		tsearch		\
 		userlock	\
 		vacuumlo
+
+ifeq ($(with_java),yes)
+WANTED_DIRS += retep
+endif
 
 # Missing:
 #		ipc_check	\ (does not have a makefile)
@@ -46,10 +51,6 @@ WANTED_DIRS = \
 #		start-scripts	\ (does not have a makefile)
 #		tools		\ (does not have a makefile)
 #		xml		\ (non-standard makefile)
-
-ifeq ($(with_java),yes)
-WANTED_DIRS += retep
-endif
 
 
 all install installdirs uninstall clean distclean maintainer-clean check installcheck:
