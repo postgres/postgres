@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.76 2002/06/20 20:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.77 2002/08/17 12:33:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -776,9 +776,18 @@ pqFlush(PGconn *conn)
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
+      return pqWaitTimed( forRead, forWrite, conn, (const struct timeval *) NULL);
+}
+
+int
+pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval *timeout)
+{
 	fd_set		input_mask;
 	fd_set		output_mask;
 	fd_set		except_mask;
+
+      struct timeval  tmp_timeout;
+      struct timeval  *ptmp_timeout = NULL;
 
 	if (conn->sock < 0)
 	{
@@ -807,9 +816,18 @@ retry5:
 		if (forWrite)
 			FD_SET(conn->sock, &output_mask);
 		FD_SET(conn->sock, &except_mask);
-		if (select(conn->sock + 1, &input_mask, &output_mask, &except_mask,
-				   (struct timeval *) NULL) < 0)
+
+              if (NULL != timeout)
 		{
+              /*
+               * select may modify timeout argument on some platforms use copy
+               */
+                      tmp_timeout = *timeout;
+                      ptmp_timeout = &tmp_timeout;
+              }
+              if (select(conn->sock + 1, &input_mask, &output_mask,
+                            &except_mask, ptmp_timeout) < 0)
+              {
 			if (SOCK_ERRNO == EINTR)
 				goto retry5;
 			printfPQExpBuffer(&conn->errorMessage,

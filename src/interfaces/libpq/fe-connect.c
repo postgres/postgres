@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.191 2002/08/15 02:56:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.192 2002/08/17 12:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"password", "PGPASSWORD", DefaultPassword, NULL,
 	"Database-Password", "*", 20},
+
+        {"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
+        "Connect-timeout", "", 10}, /* strlen( INT32_MAX) == 10 */
 
 	{"dbname", "PGDATABASE", NULL, NULL,
 	"Database-Name", "", 20},
@@ -302,6 +305,8 @@ PQconnectStart(const char *conninfo)
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
+      tmp = conninfo_getval(connOptions, "connect_timeout");
+      conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
 	tmp = conninfo_getval(connOptions, "requiressl");
 	if (tmp && tmp[0] == '1')
@@ -1052,12 +1057,39 @@ connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
+      struct timeval remains, *rp = NULL, finish_time, start_time;
+
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
-	for (;;)
+      /*
+       * Prepare to time calculations, if connect_timeout isn't zero.
+       */
+      if (conn->connect_timeout != NULL)
 	{
+              remains.tv_sec = atoi(conn->connect_timeout);
+              if (!remains.tv_sec)
+              {
+                      conn->status = CONNECTION_BAD;
+                      return 0;
+              }
+              remains.tv_usec = 0;
+              rp = &remains;
+      }
+
+
+      while (NULL == rp || remains.tv_sec > 0 || remains.tv_sec == 0 && remains.tv_usec > 0)
+      {
 		/*
+               * If connecting timeout is set, get current time.
+               */
+              if ( NULL != rp && -1 == gettimeofday(&start_time, NULL))
+              {
+                      conn->status = CONNECTION_BAD;
+                      return 0;
+              }
+
+              /*
 		 * Wait, if necessary.	Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for
 		 * writing.
@@ -1071,7 +1103,7 @@ connectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
-				if (pqWait(1, 0, conn))
+                              if (pqWaitTimed(1, 0, conn, rp))
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1079,7 +1111,7 @@ connectDBComplete(PGconn *conn)
 				break;
 
 			case PGRES_POLLING_WRITING:
-				if (pqWait(0, 1, conn))
+                              if (pqWaitTimed(0, 1, conn, rp))
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1096,7 +1128,31 @@ connectDBComplete(PGconn *conn)
 		 * Now try to advance the state machine.
 		 */
 		flag = PQconnectPoll(conn);
+
+              /*
+               * If connecting timeout is set, calculate remain time.
+               */
+              if (NULL != rp) {
+                      if (-1 == gettimeofday(&finish_time, NULL))
+                      {
+                              conn->status = CONNECTION_BAD;
+                              return 0;
+                      }
+                      if (0 > (finish_time.tv_usec -= start_time.tv_usec))
+                      {
+                              remains.tv_sec++;
+                              finish_time.tv_usec += 1000000;
+                      }
+                      if (0 > (remains.tv_usec -= finish_time.tv_usec))
+                      {
+                              remains.tv_sec--;
+                              remains.tv_usec += 1000000;
+                      }
+                      remains.tv_sec -= finish_time.tv_sec - start_time.tv_sec;
+              }
 	}
+      conn->status = CONNECTION_BAD;
+      return 0;
 }
 
 /* ----------------
@@ -1928,6 +1984,8 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
+      if (conn->connect_timeout)
+              free(conn->connect_timeout);
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.92 2002/08/15 03:00:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.93 2002/08/17 12:33:17 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -167,6 +167,15 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       Password to be used if the server demands password authentication.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>connect_timeout</literal></term>
+     <listitem>
+     <para>
+      Time space in seconds given to connect routine. Zero or not set means infinite.
      </para>
      </listitem>
     </varlistentry>
