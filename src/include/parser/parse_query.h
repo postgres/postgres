@@ -1,4 +1,4 @@
-/*-------------------------------------------------------------------------
+ /*-------------------------------------------------------------------------
  *
  * parse_query.h--
  *    prototypes for parse_query.c.
@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.1 1996/08/28 07:23:55 scrappy Exp $
+ * $Id: parse_query.h,v 1.2 1996/10/31 05:57:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,16 @@ typedef struct QueryTreeList {
   Query** qtrees;
 } QueryTreeList;
 
-extern int RangeTablePosn(List *rtable, char *rangevar);
-extern char *VarnoGetRelname(ParseState *pstate, int vnum);
-extern RangeTblEntry *makeRangeTableEntry(char *relname, bool inh,
-					  TimeRange *timeRange, char *refname);
-extern List *expandAll(ParseState *pstate, char *relname, int *this_resno);
+extern RangeTblEntry *refnameRangeTableEntry(List *rtable, char *refname);
+extern RangeTblEntry *colnameRangeTableEntry(ParseState *pstate, char *colname);
+extern RangeTblEntry *findRangeTableEntry(List *rtable, char *refname);
+extern int refnameRangeTablePosn(List *rtable, char *refname);
+extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
+					  char *relname, char *refname,
+					  bool inh, bool inFromCl,
+					  TimeRange *timeRange);
+extern List *expandAll(ParseState *pstate, char *relname, char *refname,
+							int *this_resno);
 extern TimeQual makeTimeRange(char *datestring1, char *datestring2,
 			      int timecode);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
@@ -48,6 +53,10 @@ extern QueryTreeList *parser(char *str, Oid *typev, int nargs);
 extern Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
 extern Node *parser_typecast2(Node *expr, int exprType, Type tp, int typlen);
 extern Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
+extern void handleTargetColumnName(ParseState *pstate, ResTarget *res,
+					char *refname, char *colname);
+extern void checkTargetTypes(ParseState *pstate, char *target_colname,
+					char *refname, char *colname);
 
 /*
  * analyze.c
