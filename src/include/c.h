@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.155 2003/10/14 19:08:00 momjian Exp $
+ * $Id: c.h,v 1.156 2003/10/21 15:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,9 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#if defined(__CYGWIN__) || defined(WIN32)
 #include <fcntl.h>				/* ensure O_BINARY is available */
+#endif
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
 #endif
