@@ -5,7 +5,7 @@
  *
  * Classes:			n/a
  *
- * API functions:	SQLColAttributeW, SQLGetStmtW, SQLSetStmtW,
+ * API functions:	SQLColAttributeW, SQLGetStmtAttrW, SQLSetStmtAttrW,
  			SQLSetConnectAttrW, SQLGetConnectAttrW,
 			SQLGetDescFieldW, SQLGetDescRecW, SQLGetDiagFieldW,
 			SQLGetDiagRecW,
@@ -75,6 +75,48 @@ RETCODE SQL_API	SQLSetConnectAttrW(HDBC hdbc,
 	return ret;
 }
 
+/*      new function */
+RETCODE  SQL_API
+SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber,
+				SQLSMALLINT FieldIdentifier, PTR Value, 
+				SQLINTEGER BufferLength)
+{
+	RETCODE	ret;
+	UInt4	vallen;
+        char    *uval = NULL;
+	BOOL	val_alloced = FALSE;
+
+	mylog("[SQLSetDescFieldW]");
+	if (BufferLength > 0)
+	{
+		uval = ucs2_to_utf8(Value, BufferLength / 2, &vallen);
+		val_alloced = TRUE;
+	}
+	else
+	{
+		uval = Value;
+		vallen = BufferLength;
+	}
+	ret = PGAPI_SetDescField(DescriptorHandle, RecNumber, FieldIdentifier,
+				uval, vallen);
+	if (val_alloced)
+		free(uval);
+	return ret;
+}
+RETCODE SQL_API
+SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField,
+				PTR rgbValue, SQLINTEGER cbValueMax,
+    				SQLINTEGER *pcbValue)
+{
+	RETCODE	ret;
+        char    *qstr = NULL, *mtxt = NULL;
+
+	mylog("[SQLGetDescFieldW]");
+	ret = PGAPI_GetDescField(hdesc, iRecord, iField, rgbValue,
+				cbValueMax, pcbValue);
+	return ret;
+}
+
 RETCODE SQL_API	SQLGetDiagRecW(SWORD fHandleType,
 		SQLHANDLE	handle,
 		SQLSMALLINT	iRecord,
@@ -131,7 +173,25 @@ RETCODE SQL_API SQLColAttributeW(
 	RETCODE	ret;
 
 	mylog("[SQLColAttributeW]");
+	switch (fDescType)
+	{ 
+		case SQL_DESC_BASE_COLUMN_NAME:
+		case SQL_DESC_BASE_TABLE_NAME:
+		case SQL_DESC_CATALOG_NAME:
+		case SQL_DESC_LABEL:
+		case SQL_DESC_LITERAL_PREFIX:
+		case SQL_DESC_LITERAL_SUFFIX:
+		case SQL_DESC_LOCAL_TYPE_NAME:
+		case SQL_DESC_NAME:
+		case SQL_DESC_SCHEMA_NAME:
+		case SQL_DESC_TABLE_NAME:
+		case SQL_DESC_TYPE_NAME:
+		case SQL_COLUMN_NAME:
+                	break;
+	}
+
 	ret = PGAPI_ColAttributes(hstmt, icol, fDescType, rgbDesc,
 		cbDescMax, pcbDesc, pfDesc);
+
 	return ret;
 }

@@ -204,8 +204,9 @@ SQLFetch(HSTMT StatementHandle)
 
 	if (conn->driver_version >= 0x0300)
 	{
-		SQLUSMALLINT *rowStatusArray = stmt->options.rowStatusArray;
-		SQLINTEGER *pcRow = stmt->options.rowsFetched;
+		IRDFields	*irdopts = SC_get_IRD(stmt);
+		SQLUSMALLINT *rowStatusArray = irdopts->rowStatusArray;
+		SQLINTEGER *pcRow = irdopts->rowsFetched;
 
 		mylog("[[%s]]", func);
 		return PGAPI_ExtendedFetch(StatementHandle, SQL_FETCH_NEXT, 0,

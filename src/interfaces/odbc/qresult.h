@@ -73,8 +73,9 @@ struct QResultClass_
 								 * progress? */
 	char		aborted;		/* was aborted? */
 	char		haskeyset;		/* this result contains keyset ? */
-	KeySet		*keyset;	
-	
+	KeySet		*keyset;
+	UInt4		rb_count;	/* count of rollback info */	
+	Rollback	*rollback;	
 };
 
 #define QR_get_fields(self)					(self->fields)

@@ -12,6 +12,7 @@
 #include "psqlodbc.h"
 
 #include "bind.h"
+#include "descriptor.h"
 
 
 #ifndef FALSE
@@ -77,6 +78,7 @@ typedef enum
 #define STMT_INVALID_OPTION_IDENTIFIER					28
 #define STMT_RETURN_NULL_WITHOUT_INDICATOR				29
 #define STMT_ERROR_IN_ROW						30
+#define STMT_INVALID_DESCRIPTOR_IDENTIFIER				31
 
 /* statement types */
 enum
@@ -115,33 +117,6 @@ enum
 	STMT_FETCH_EXTENDED,
 };
 
-typedef struct
-{
-	COL_INFO   *col_info;		/* cached SQLColumns info for this table */
-	char		name[MAX_TABLE_LEN + 1];
-	char		alias[MAX_TABLE_LEN + 1];
-} TABLE_INFO;
-
-typedef struct
-{
-	TABLE_INFO *ti;				/* resolve to explicit table names */
-	int			precision;
-	int			scale;
-	int			display_size;
-	int			length;
-	int			type;
-	char		nullable;
-	char		func;
-	char		expr;
-	char		quote;
-	char		dquote;
-	char		numeric;
-	char		updatable;
-	char		dot[MAX_TABLE_LEN + 1];
-	char		name[MAX_COLUMN_LEN + 1];
-	char		alias[MAX_COLUMN_LEN + 1];
-} FIELD_INFO;
-
 
 /********	Statement Handle	***********/
 struct StatementClass_
@@ -152,19 +127,23 @@ struct StatementClass_
 	QResultClass *curres;		/* the current result in the chain */
 	HSTMT FAR  *phstmt;
 	StatementOptions options;
+	ARDFields ardopts;
+	IRDFields irdopts;
+	APDFields apdopts;
+	IPDFields ipdopts;
 
 	STMT_Status status;
 	char	   *errormsg;
 	int			errornumber;
 
 	/* information on bindings */
-	BindInfoClass *bindings;	/* array to store the binding information */
-	BindInfoClass bookmark;
-	int			bindings_allocated;
+	/*** BindInfoClass *bindings; ***/	/* array to store the binding information */
+	/*** BindInfoClass bookmark;
+	int			bindings_allocated; ***/
 
 	/* information on statement parameters */
-	int			parameters_allocated;
-	ParameterInfoClass *parameters;
+	/*** int			parameters_allocated;
+	ParameterInfoClass *parameters; ***/
 
 	Int4		currTuple;		/* current absolute row number (GetData,
 								 * SetPos, SQLFetch) */
@@ -184,8 +163,6 @@ struct StatementClass_
 								 * statement that has been executed */
 
 	TABLE_INFO **ti;
-	FIELD_INFO **fi;
-	int			nfld;
 	int			ntab;
 
 	int			parse_status;
@@ -219,6 +196,7 @@ struct StatementClass_
 	char		inaccurate_result;		/* Current status is PREMATURE but
 										 * result is inaccurate */
 	char		miscinfo;
+	char		updatable;
 	SWORD		errorpos;
 	SWORD		error_recsize;
 	char		*load_statement; /* to (re)load updatable individual rows */
@@ -231,6 +209,10 @@ struct StatementClass_
 #define SC_get_Result(a)  (a->result)
 #define SC_set_Curres(a, b)  (a->curres = b)
 #define SC_get_Curres(a)  (a->curres)
+#define SC_get_ARD(a)  (&(a->ardopts))
+#define SC_get_APD(a)  (&(a->apdopts))
+#define SC_get_IRD(a)  (&(a->irdopts))
+#define SC_get_IPD(a)  (&(a->ipdopts))
 
 /*	options for SC_free_params() */
 #define STMT_FREE_PARAMS_ALL				0
@@ -262,5 +244,9 @@ RETCODE		SC_fetch(StatementClass *self);
 void		SC_free_params(StatementClass *self, char option);
 void		SC_log_error(const char *func, const char *desc, const StatementClass *self);
 unsigned long SC_get_bookmark(StatementClass *self);
+RETCODE		SC_pos_update(StatementClass *self, UWORD irow, UDWORD index);
+RETCODE		SC_pos_delete(StatementClass *self, UWORD irow, UDWORD index);
+RETCODE		SC_pos_refresh(StatementClass *self, UWORD irow, UDWORD index);
+RETCODE		SC_pos_add(StatementClass *self, UWORD irow);
 
 #endif

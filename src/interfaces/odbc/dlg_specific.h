@@ -169,11 +169,11 @@ void		SetDlgStuff(HWND hdlg, const ConnInfo *ci);
 void		GetDlgStuff(HWND hdlg, ConnInfo *ci);
 
 int CALLBACK driver_optionsProc(HWND hdlg,
-				   WORD wMsg,
+				   UINT wMsg,
 				   WPARAM wParam,
 				   LPARAM lParam);
 int CALLBACK ds_optionsProc(HWND hdlg,
-			   WORD wMsg,
+			   UINT wMsg,
 			   WPARAM wParam,
 			   LPARAM lParam);
 #endif   /* WIN32 */

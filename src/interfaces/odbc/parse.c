@@ -236,19 +236,25 @@ void
 getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 {
 	char	   *str;
+	Int2	reserved_cols;
 
+#if (ODBCVER >= 0x0300)
+	reserved_cols = 18;
+#else
+	reserved_cols = 12;
+#endif /* ODBCVER */
 	if (fi->name[0] == '\0')
 		strcpy(fi->name, QR_get_value_manual(col_info->result, k, 3));
 
-	fi->type = atoi(QR_get_value_manual(col_info->result, k, 13));
-	fi->precision = atoi(QR_get_value_manual(col_info->result, k, 6));
+	fi->type = atoi(QR_get_value_manual(col_info->result, k, (Int2)(reserved_cols + 1)));
+	fi->column_size = atoi(QR_get_value_manual(col_info->result, k, 6));
 	fi->length = atoi(QR_get_value_manual(col_info->result, k, 7));
 	if (str = QR_get_value_manual(col_info->result, k, 8), str)
-		fi->scale = atoi(str);
+		fi->decimal_digits = atoi(str);
 	else
-		fi->scale = -1;
+		fi->decimal_digits = -1;
 	fi->nullable = atoi(QR_get_value_manual(col_info->result, k, 10));
-	fi->display_size = atoi(QR_get_value_manual(col_info->result, k, 12));
+	fi->display_size = atoi(QR_get_value_manual(col_info->result, k, reserved_cols));
 }
 
 
@@ -315,16 +321,17 @@ parse_statement(StatementClass *stmt)
 	ConnectionClass *conn = stmt->hdbc;
 	HSTMT		hcol_stmt;
 	StatementClass *col_stmt;
+	IRDFields	*irdflds = SC_get_IRD(stmt);
 	RETCODE		result;
 	BOOL		updatable = TRUE;
 
 	mylog("%s: entering...\n", func);
 
 	ptr = stmt->statement;
-	fi = stmt->fi;
+	fi = irdflds->fi;
 	ti = stmt->ti;
 
-	stmt->nfld = 0;
+	irdflds->nfields = 0;
 	stmt->ntab = 0;
 	stmt->from_pos = -1;
 	stmt->where_pos = -1;
@@ -371,7 +378,7 @@ parse_statement(StatementClass *stmt)
 				mylog("FROM\n");
 				continue;
 			}
-		}
+		} /* in_select && unquoted && blevel == 0 */
 		if (unquoted && blevel == 0)
 		{
 			if ((!stricmp(token, "where") ||
@@ -386,18 +393,18 @@ parse_statement(StatementClass *stmt)
 				in_from = FALSE;
 				in_where = TRUE;
 
-				if (!stricmp(token, "where"))
+				if (stmt->where_pos < 0)
+					stmt->where_pos = pptr - stmt->statement;
+				mylog("%s...\n", token);
+				if (stricmp(token, "where") &&
+				    stricmp(token, "order"))
 				{
-					if (stmt->where_pos < 0)
-						stmt->where_pos = pptr - stmt->statement;
-				}
-				else if (stricmp(token, "order"))
 					updatable = FALSE;
-
-				mylog("WHERE...\n");
-				break;
+					break;
+				}
+				continue;
 			}
-		}
+		} /* unquoted && blevel == 0 */
 		if (in_select && (in_expr || in_func))
 		{
 			/* just eat the expression */
@@ -435,7 +442,7 @@ parse_statement(StatementClass *stmt)
 				}
 			}
 			continue;
-		}
+		} /* in_select && (in_expr || in_func) */
 
 		if (unquoted && !stricmp(token, "select"))
 		{
@@ -464,81 +471,81 @@ parse_statement(StatementClass *stmt)
 				}
 				mylog("done distinct\n");
 				in_distinct = FALSE;
-			}
+			} /* in_distinct */
 
 			if (!in_field)
 			{
 				if (!token[0])
 					continue;
 
-				if (!(stmt->nfld % FLD_INCR))
+				if (!(irdflds->nfields % FLD_INCR))
 				{
-					mylog("reallocing at nfld=%d\n", stmt->nfld);
-					fi = (FIELD_INFO **) realloc(fi, (stmt->nfld + FLD_INCR) * sizeof(FIELD_INFO *));
+					mylog("reallocing at nfld=%d\n", irdflds->nfields);
+					fi = (FIELD_INFO **) realloc(fi, (irdflds->nfields + FLD_INCR) * sizeof(FIELD_INFO *));
 					if (!fi)
 					{
 						stmt->parse_status = STMT_PARSE_FATAL;
 						return FALSE;
 					}
-					stmt->fi = fi;
+					irdflds->fi = fi;
 				}
 
-				fi[stmt->nfld] = (FIELD_INFO *) malloc(sizeof(FIELD_INFO));
-				if (fi[stmt->nfld] == NULL)
+				fi[irdflds->nfields] = (FIELD_INFO *) malloc(sizeof(FIELD_INFO));
+				if (fi[irdflds->nfields] == NULL)
 				{
 					stmt->parse_status = STMT_PARSE_FATAL;
 					return FALSE;
 				}
 
 				/* Initialize the field info */
-				memset(fi[stmt->nfld], 0, sizeof(FIELD_INFO));
+				memset(fi[irdflds->nfields], 0, sizeof(FIELD_INFO));
 
 				/* double quotes are for qualifiers */
 				if (dquote)
-					fi[stmt->nfld]->dquote = TRUE;
+					fi[irdflds->nfields]->dquote = TRUE;
 
 				if (quote)
 				{
-					fi[stmt->nfld]->quote = TRUE;
-					fi[stmt->nfld]->precision = strlen(token);
+					fi[irdflds->nfields]->quote = TRUE;
+					fi[irdflds->nfields]->column_size = strlen(token);
 				}
 				else if (numeric)
 				{
-					mylog("**** got numeric: nfld = %d\n", stmt->nfld);
-					fi[stmt->nfld]->numeric = TRUE;
+					mylog("**** got numeric: nfld = %d\n", irdflds->nfields);
+					fi[irdflds->nfields]->numeric = TRUE;
 				}
 				else if (token[0] == '(')
 				{				/* expression */
 					mylog("got EXPRESSION\n");
-					fi[stmt->nfld++]->expr = TRUE;
+					fi[irdflds->nfields++]->expr = TRUE;
 					in_expr = TRUE;
 					blevel = 1;
 					continue;
 				}
 				else
 				{
-					strcpy(fi[stmt->nfld]->name, token);
-					fi[stmt->nfld]->dot[0] = '\0';
+					strcpy(fi[irdflds->nfields]->name, token);
+					fi[irdflds->nfields]->dot[0] = '\0';
 				}
-				mylog("got field='%s', dot='%s'\n", fi[stmt->nfld]->name, fi[stmt->nfld]->dot);
+				mylog("got field='%s', dot='%s'\n", fi[irdflds->nfields]->name, fi[irdflds->nfields]->dot);
 
 				if (delim == ',')
 					mylog("comma (1)\n");
 				else
 					in_field = TRUE;
-				stmt->nfld++;
+				irdflds->nfields++;
 				continue;
-			}
+			} /* !in_field */
 
 			/*
 			 * We are in a field now
 			 */
 			if (in_dot)
 			{
-				stmt->nfld--;
-				strcpy(fi[stmt->nfld]->dot, fi[stmt->nfld]->name);
-				strcpy(fi[stmt->nfld]->name, token);
-				stmt->nfld++;
+				irdflds->nfields--;
+				strcpy(fi[irdflds->nfields]->dot, fi[irdflds->nfields]->name);
+				strcpy(fi[irdflds->nfields]->name, token);
+				irdflds->nfields++;
 				in_dot = FALSE;
 
 				if (delim == ',')
@@ -551,13 +558,13 @@ parse_statement(StatementClass *stmt)
 
 			if (in_as)
 			{
-				stmt->nfld--;
-				strcpy(fi[stmt->nfld]->alias, token);
-				mylog("alias for field '%s' is '%s'\n", fi[stmt->nfld]->name, fi[stmt->nfld]->alias);
+				irdflds->nfields--;
+				strcpy(fi[irdflds->nfields]->alias, token);
+				mylog("alias for field '%s' is '%s'\n", fi[irdflds->nfields]->name, fi[irdflds->nfields]->alias);
 				in_as = FALSE;
 				in_field = FALSE;
 
-				stmt->nfld++;
+				irdflds->nfields++;
 
 				if (delim == ',')
 					mylog("comma(2)\n");
@@ -569,13 +576,13 @@ parse_statement(StatementClass *stmt)
 			{
 				in_func = TRUE;
 				blevel = 1;
-				fi[stmt->nfld - 1]->func = TRUE;
+				fi[irdflds->nfields - 1]->func = TRUE;
 
 				/*
 				 * name will have the function name -- maybe useful some
 				 * day
 				 */
-				mylog("**** got function = '%s'\n", fi[stmt->nfld - 1]->name);
+				mylog("**** got function = '%s'\n", fi[irdflds->nfields - 1]->name);
 				continue;
 			}
 
@@ -595,11 +602,11 @@ parse_statement(StatementClass *stmt)
 
 			/* otherwise, it's probably an expression */
 			in_expr = TRUE;
-			fi[stmt->nfld - 1]->expr = TRUE;
-			fi[stmt->nfld - 1]->name[0] = '\0';
-			fi[stmt->nfld - 1]->precision = 0;
+			fi[irdflds->nfields - 1]->expr = TRUE;
+			fi[irdflds->nfields - 1]->name[0] = '\0';
+			fi[irdflds->nfields - 1]->column_size = 0;
 			mylog("*** setting expression\n");
-		}
+		} /* in_select end */
 
 		if (in_from)
 		{
@@ -607,6 +614,8 @@ parse_statement(StatementClass *stmt)
 			{
 				if (!token[0])
 					continue;
+				if (token[0] == ';')
+					break;
 
 				if (!(stmt->ntab % TAB_INCR))
 				{
@@ -658,12 +667,17 @@ parse_statement(StatementClass *stmt)
 				continue;
 			}
 
-			strcpy(ti[stmt->ntab - 1]->alias, token);
-			mylog("alias for table '%s' is '%s'\n", ti[stmt->ntab - 1]->name, ti[stmt->ntab - 1]->alias);
-			in_table = FALSE;
-			if (delim == ',')
-				mylog("more than 1 tables\n");
-		}
+			if (token[0] == ';')
+				break;
+			if (stricmp(token, "as"))
+			{
+				strcpy(ti[stmt->ntab - 1]->alias, token);
+				mylog("alias for table '%s' is '%s'\n", ti[stmt->ntab - 1]->name, ti[stmt->ntab - 1]->alias);
+				in_table = FALSE;
+				if (delim == ',')
+					mylog("more than 1 tables\n");
+			}
+		} /* in_from */
 	}
 
 	/*
@@ -673,7 +687,7 @@ parse_statement(StatementClass *stmt)
 	parse = TRUE;
 
 	/* Resolve field names with tables */
-	for (i = 0; i < stmt->nfld; i++)
+	for (i = 0; i < (int) irdflds->nfields; i++)
 	{
 		if (fi[i]->func || fi[i]->expr || fi[i]->numeric)
 		{
@@ -687,16 +701,16 @@ parse_statement(StatementClass *stmt)
 			fi[i]->ti = NULL;
 
 			/*
-			 * fi[i]->type = PG_TYPE_TEXT; fi[i]->precision = 0; the
+			 * fi[i]->type = PG_TYPE_TEXT; fi[i]->column_size = 0; the
 			 * following may be better
 			 */
 			fi[i]->type = PG_TYPE_UNKNOWN;
-			if (fi[i]->precision == 0)
+			if (fi[i]->column_size == 0)
 			{
 				fi[i]->type = PG_TYPE_VARCHAR;
-				fi[i]->precision = 254;
+				fi[i]->column_size = 254;
 			}
-			fi[i]->length = fi[i]->precision;
+			fi[i]->length = fi[i]->column_size;
 			continue;
 		}
 		/* it's a dot, resolve to table or alias */
@@ -721,9 +735,9 @@ parse_statement(StatementClass *stmt)
 	}
 
 	mylog("--------------------------------------------\n");
-	mylog("nfld=%d, ntab=%d\n", stmt->nfld, stmt->ntab);
+	mylog("nfld=%d, ntab=%d\n", irdflds->nfields, stmt->ntab);
 
-	for (i = 0; i < stmt->nfld; i++)
+	for (i = 0; i < (int) irdflds->nfields; i++)
 	{
 		mylog("Field %d:  expr=%d, func=%d, quote=%d, dquote=%d, numeric=%d, name='%s', alias='%s', dot='%s'\n", i, fi[i]->expr, fi[i]->func, fi[i]->quote, fi[i]->dquote, fi[i]->numeric, fi[i]->name, fi[i]->alias, fi[i]->dot);
 		if (fi[i]->ti)
@@ -836,7 +850,7 @@ parse_statement(StatementClass *stmt)
 	/*
 	 * Now resolve the fields to point to column info
 	 */
-	for (i = 0; i < stmt->nfld;)
+	for (i = 0; i < (int) irdflds->nfields;)
 	{
 		fi[i]->updatable = updatable;
 		/* Dont worry about functions or quotes */
@@ -875,8 +889,8 @@ parse_statement(StatementClass *stmt)
 			increased_cols = total_cols - 1;
 
 			/* Allocate some more field pointers if necessary */
-			old_alloc = ((stmt->nfld - 1) / FLD_INCR + 1) * FLD_INCR;
-			new_size = stmt->nfld + increased_cols;
+			old_alloc = ((irdflds->nfields - 1) / FLD_INCR + 1) * FLD_INCR;
+			new_size = irdflds->nfields + increased_cols;
 
 			mylog("k=%d, increased_cols=%d, old_alloc=%d, new_size=%d\n", k, increased_cols, old_alloc, new_size);
 
@@ -891,14 +905,14 @@ parse_statement(StatementClass *stmt)
 					stmt->parse_status = STMT_PARSE_FATAL;
 					return FALSE;
 				}
-				stmt->fi = fi;
+				irdflds->fi = fi;
 			}
 
 			/*
 			 * copy any other fields (if there are any) up past the
 			 * expansion
 			 */
-			for (j = stmt->nfld - 1; j > i; j--)
+			for (j = irdflds->nfields - 1; j > i; j--)
 			{
 				mylog("copying field %d to %d\n", j, increased_cols + j);
 				fi[increased_cols + j] = fi[j];
@@ -906,8 +920,8 @@ parse_statement(StatementClass *stmt)
 			mylog("done copying fields\n");
 
 			/* Set the new number of fields */
-			stmt->nfld += increased_cols;
-			mylog("stmt->nfld now at %d\n", stmt->nfld);
+			irdflds->nfields += increased_cols;
+			mylog("irdflds->nfields now at %d\n", irdflds->nfields);
 
 
 			/* copy the new field info */
@@ -990,6 +1004,7 @@ parse_statement(StatementClass *stmt)
 	else
 		stmt->parse_status = STMT_PARSE_COMPLETE;
 
+	stmt->updatable = updatable;
 	mylog("done parse_statement: parse=%d, parse_status=%d\n", parse, stmt->parse_status);
 	return parse;
 }

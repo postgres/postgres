@@ -115,6 +115,11 @@ mylog(char *fmt,...)
 		va_end(args);
 	}
 }
+#else
+void
+MyLog(char *fmt,...)
+{
+}
 #endif
 
 

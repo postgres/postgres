@@ -138,7 +138,7 @@ BEGIN
                     BS_NOTIFY | WS_TABSTOP,247,205,40,10
 END
 
-DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 176
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 196
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 10, "Terminal"
@@ -155,23 +155,25 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,45,43,92,10
     CONTROL         "True is -1",DS_TRUEISMINUS1,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,149,43,86,10
-    GROUPBOX        "Protocol",IDC_STATIC,43,59,180,25
+    CONTROL         "(Trial) Updatable cursors",DS_UPDATABLECURSORS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,45,58,112,10
+    GROUPBOX        "Protocol",IDC_STATIC,43,74,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,53,69,47,10
+                    WS_GROUP,53,84,47,10
     CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    131,69,26,10
+                    131,84,26,10
     CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    187,69,26,10
-    GROUPBOX        "OID Options",IDC_STATIC,43,89,180,25
+                    187,84,26,10
+    GROUPBOX        "OID Options",IDC_STATIC,43,104,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,53,100,59,10
+                    WS_GROUP | WS_TABSTOP,53,115,59,10
     CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,161,100,55,10
-    LTEXT           "Connect &Settings:",IDC_STATIC,10,120,35,25
-    EDITTEXT        DS_CONNSETTINGS,50,120,200,20,ES_MULTILINE | 
+                    WS_GROUP | WS_TABSTOP,161,115,55,10
+    LTEXT           "Connect &Settings:",IDC_STATIC,10,135,35,25
+    EDITTEXT        DS_CONNSETTINGS,50,135,200,20,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "OK",IDOK,71,150,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,146,150,50,14
+    DEFPUSHBUTTON   "OK",IDOK,71,165,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,146,165,50,14
 END
 #else
 DLG_CONFIG DIALOG DISCARDABLE  65, 43, 292, 116
@@ -259,7 +261,7 @@ BEGIN
                     BS_NOTIFY | WS_TABSTOP,233,224,40,10
 END
 
-DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 176
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 186
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 8, "MS Sans Serif"
@@ -273,26 +275,28 @@ BEGIN
     CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,25,85,10
     CONTROL         "LF <-> CR/LF convert",DS_LFCONVERSION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,45,40,92,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,25,40,92,10
     CONTROL         "True is -1",DS_TRUEISMINUS1,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,149,40,86,10
-    GROUPBOX        "Protocol",IDC_STATIC,15,55,180,25
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,40,86,10
+    CONTROL         "(Trial) Updatable Cursors",DS_UPDATABLECURSORS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,25,55,102,10
+    GROUPBOX        "Protocol",IDC_STATIC,15,70,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_GROUP,25,
-                    65,35,10
+                    80,35,10
     CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    75,65,26,10
+                    75,80,26,10
     CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    130,65,26,10
-    GROUPBOX        "OID Options",IDC_STATIC,15,86,180,25
+                    130,80,26,10
+    GROUPBOX        "OID Options",IDC_STATIC,15,101,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,25,96,59,10
+                    WS_GROUP | WS_TABSTOP,25,111,59,10
     CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,115,96,51,10
-    RTEXT           "Connect &Settings:",IDC_STATIC,10,120,35,25
-    EDITTEXT        DS_CONNSETTINGS,50,120,200,20,ES_MULTILINE | 
+                    WS_GROUP | WS_TABSTOP,115,111,51,10
+    RTEXT           "Connect &Settings:",IDC_STATIC,10,135,35,25
+    EDITTEXT        DS_CONNSETTINGS,50,135,200,20,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "OK",IDOK,71,150,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,146,150,50,14
+    DEFPUSHBUTTON   "OK",IDOK,71,165,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,146,165,50,14
 END
 #endif
 

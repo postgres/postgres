@@ -1,7 +1,7 @@
 #
 # File:			win32_30w.mak
 #
-# Description:		psqlodbc30 Unicode version Makefile for Win32.
+# Description:		psqlodbc30w Unicode version Makefile for Win32.
 #
 # Configurations:	Unicode30Debug, Unicode30
 # Build Types:		ALL, CLEAN
@@ -45,7 +45,7 @@ OUTDIR=.\Unicode30
 OUTDIRBIN=.\Unicode30
 INTDIR=.\Unicode30
 
-ALL : "$(OUTDIRBIN)\psqlodbc30.dll"
+ALL : "$(OUTDIRBIN)\psqlodbc30w.dll"
 
 
 CLEAN :
@@ -82,7 +82,7 @@ CLEAN :
 	-@erase "$(INTDIR)\odbcapi.obj"
 	-@erase "$(INTDIR)\odbcapi30.obj"
 	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\psqlodbc30.dll"
+	-@erase "$(OUTDIR)\psqlodbc30w.dll"
 	-@erase "$(OUTDIR)\psqlodbc.exp"
 	-@erase "$(OUTDIR)\psqlodbc.lib"
 
@@ -131,7 +131,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\psqlodbc.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\psqlodbc.pdb" /machine:I386 /def:"psqlodbc_api30w.def" /out:"$(OUTDIRBIN)\psqlodbc30.dll" /implib:"$(OUTDIR)\psqlodbc.lib" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\psqlodbc.pdb" /machine:I386 /def:"psqlodbc_api30w.def" /out:"$(OUTDIRBIN)\psqlodbc30w.dll" /implib:"$(OUTDIR)\psqlodbc.lib" 
 DEF_FILE= "psqlodbc_api30w.def"
 LINK32_OBJS= \
 	"$(INTDIR)\bind.obj" \
@@ -167,14 +167,14 @@ LINK32_OBJS= \
 	"$(INTDIR)\odbcapi30.obj" \
 	"$(INTDIR)\psqlodbc.res"
 
-"$(OUTDIRBIN)\psqlodbc30.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+"$(OUTDIRBIN)\psqlodbc30w.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
 !ELSEIF  "$(CFG)" == "Unicode30Debug"
 
-ALL : "$(OUTDIR)\psqlodbc30.dll"
+ALL : "$(OUTDIR)\psqlodbc30w.dll"
 
 
 CLEAN :
@@ -212,7 +212,7 @@ CLEAN :
 	-@erase "$(INTDIR)\odbcapi30.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(OUTDIR)\psqlodbc30.dll"
+	-@erase "$(OUTDIR)\psqlodbc30w.dll"
 	-@erase "$(OUTDIR)\psqlodbc.exp"
 	-@erase "$(OUTDIR)\psqlodbc.ilk"
 	-@erase "$(OUTDIR)\psqlodbc.lib"
@@ -263,7 +263,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\psqlodbc.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\psqlodbc.pdb" /debug /machine:I386 /def:"psqlodbc_api30w.def" /out:"$(OUTDIR)\psqlodbc30.dll" /implib:"$(OUTDIR)\psqlodbc.lib" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\psqlodbc.pdb" /debug /machine:I386 /def:"psqlodbc_api30w.def" /out:"$(OUTDIR)\psqlodbc30w.dll" /implib:"$(OUTDIR)\psqlodbc.lib" /pdbtype:sept 
 DEF_FILE= "psqlodbc_api30w.def"
 LINK32_OBJS= \
 	"$(INTDIR)\bind.obj" \
@@ -299,7 +299,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\odbcapi30.obj" \
 	"$(INTDIR)\psqlodbc.res"
 
-"$(OUTDIR)\psqlodbc30.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+"$(OUTDIR)\psqlodbc30w.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<

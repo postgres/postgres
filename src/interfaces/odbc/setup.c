@@ -56,7 +56,7 @@ typedef struct tagSETUPDLG
 
 /* Prototypes */
 void INTFUNC CenterDialog(HWND hdlg);
-int CALLBACK ConfigDlgProc(HWND hdlg, WORD wMsg, WPARAM wParam, LPARAM lParam);
+int CALLBACK ConfigDlgProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 void INTFUNC ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg);
 BOOL INTFUNC SetDSNAttributes(HWND hwnd, LPSETUPDLG lpsetupdlg);
 
@@ -211,7 +211,7 @@ CenterDialog(HWND hdlg)
  */
 int			CALLBACK
 ConfigDlgProc(HWND hdlg,
-			  WORD wMsg,
+			  UINT wMsg,
 			  WPARAM wParam,
 			  LPARAM lParam)
 {

@@ -50,6 +50,9 @@ struct ParameterInfoClass_
 };
 
 BindInfoClass *create_empty_bindings(int num_columns);
-void		extend_bindings(StatementClass *stmt, int num_columns);
+void	extend_column_bindings(ARDFields *opts, int num_columns);
+void	reset_a_column_binding(ARDFields *opts, int icol);
+void	extend_parameter_bindings(APDFields *opts, int num_columns);
+void	reset_a_parameter_binding(APDFields *opts, int ipar);
 
 #endif

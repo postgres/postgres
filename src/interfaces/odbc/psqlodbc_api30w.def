@@ -1,4 +1,4 @@
-LIBRARY psqlodbc30
+LIBRARY psqlodbc30w
 EXPORTS
 SQLAllocConnect @1
 SQLAllocEnv @2
@@ -71,6 +71,7 @@ SQLSetDescField @96
 SQLSetDescRec @97
 SQLSetEnvAttr @98
 SQLSetStmtAttr @99
+SQLBulkOperations @100
 
 SQLDummyOrdinal @199
 dconn_FDriverConnectProc @200

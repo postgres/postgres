@@ -107,7 +107,7 @@ PGAPI_GetInfo(
 		case SQL_BOOKMARK_PERSISTENCE:	/* ODBC 2.0 */
 			/* very simple bookmark support */
 			len = 4;
-			value = ci->drivers.use_declarefetch ? 0 : (SQL_BP_SCROLL);
+			value = ci->drivers.use_declarefetch ? 0 : (SQL_BP_SCROLL | SQL_BP_DELETE | SQL_BP_UPDATE | SQL_BP_TRANSACTION);
 			break;
 
 		case SQL_COLUMN_ALIAS:	/* ODBC 2.0 */
@@ -495,8 +495,10 @@ PGAPI_GetInfo(
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
+#ifdef	DRIVER_CURSOR_IMPLEMENT
 			if (ci->updatable_cursors)
 				value |= (SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD);
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_POSITIONED_STATEMENTS: /* ODBC 2.0 */
@@ -554,8 +556,10 @@ PGAPI_GetInfo(
 									   SQL_SCCO_OPT_ROWVER |
 									   SQL_SCCO_OPT_VALUES) :
 				(SQL_SCCO_READ_ONLY);
+#ifdef	DRIVER_CURSOR_IMPLEMENT
 			if (ci->updatable_cursors)
 				value |= SQL_SCCO_OPT_ROWVER;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_SCROLL_OPTIONS:		/* ODBC 1.0 */
@@ -588,8 +592,10 @@ PGAPI_GetInfo(
 		case SQL_STATIC_SENSITIVITY:	/* ODBC 2.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
 			if (ci->updatable_cursors)
 				value |= (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES);
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_STRING_FUNCTIONS:		/* ODBC 1.0 */
@@ -753,7 +759,11 @@ PGAPI_GetTypeInfo(
 	}
 	SC_set_Result(stmt, res);
 
-	extend_bindings(stmt, 15);
+#if (ODBCVER >= 0x0399)
+	extend_column_bindings(SC_get_ARD(stmt), 19);
+#else
+	extend_column_bindings(SC_get_ARD(stmt), 15);
+#endif /* ODBCVER */
 
 	QR_set_num_fields(res, 15);
 	QR_set_field_info(res, 0, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
@@ -771,6 +781,12 @@ PGAPI_GetTypeInfo(
 	QR_set_field_info(res, 12, "LOCAL_TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 	QR_set_field_info(res, 13, "MINIMUM_SCALE", PG_TYPE_INT2, 2);
 	QR_set_field_info(res, 14, "MAXIMUM_SCALE", PG_TYPE_INT2, 2);
+#if (ODBCVER >=0x0399)
+	QR_set_field_info(res, 15, "SQL_DATA_TYPE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 16, "SQL_DATATIME_SUB", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 17, "NUM_PREC_RADIX", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, 18, "INTERVAL_PRECISION", PG_TYPE_INT2, 2);
+#endif /* ODBCVER */
 
 	for (i = 0, sqlType = sqlTypes[0]; sqlType; sqlType = sqlTypes[++i])
 	{
@@ -795,7 +811,7 @@ PGAPI_GetTypeInfo(
 			set_tuplefield_null(&row->tuple[12]);
 
 			/* These values can be NULL */
-			set_nullfield_int4(&row->tuple[2], pgtype_precision(stmt, pgType, PG_STATIC, PG_STATIC));
+			set_nullfield_int4(&row->tuple[2], pgtype_column_size(stmt, pgType, PG_STATIC, PG_STATIC));
 			set_nullfield_string(&row->tuple[3], pgtype_literal_prefix(stmt, pgType));
 			set_nullfield_string(&row->tuple[4], pgtype_literal_suffix(stmt, pgType));
 			set_nullfield_string(&row->tuple[5], pgtype_create_params(stmt, pgType));
@@ -803,6 +819,12 @@ PGAPI_GetTypeInfo(
 			set_nullfield_int2(&row->tuple[11], pgtype_auto_increment(stmt, pgType));
 			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, pgType, PG_STATIC));
 			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, pgType, PG_STATIC));
+#if (ODBCVER >=0x0399)
+			set_nullfield_int2(&row->tuple[15], pgtype_sqldesctype(stmt, pgType));
+			set_nullfield_int2(&row->tuple[16], pgtype_datetime_sub(stmt, pgType));
+			set_nullfield_int4(&row->tuple[17], pgtype_radix(stmt, pgType));
+			set_nullfield_int4(&row->tuple[18], 0);
+#endif /* ODBCVER */
 
 			QR_add_tuple(res, row);
 		}
@@ -1317,7 +1339,7 @@ PGAPI_Tables(
 	 * a statement is actually executed, so we'll have to do this
 	 * ourselves.
 	 */
-	extend_bindings(stmt, 5);
+	extend_column_bindings(SC_get_ARD(stmt), 5);
 
 	/* set the field names */
 	QR_set_num_fields(res, 5);
@@ -1523,13 +1545,15 @@ PGAPI_Columns(
 				field_name[MAX_INFO_STRING],
 				field_type_name[MAX_INFO_STRING];
 	Int2		field_number, sqltype,
+				reserved_cols,
 				result_cols,
-				scale;
+				decimal_digits;
 	Int4		field_type,
 				the_type,
 				field_length,
 				mod_length,
-				precision;
+				column_size,
+				ordinal;
 	char		useStaticPrecision;
 	char		not_null[MAX_INFO_STRING],
 				relhasrules[MAX_INFO_STRING];
@@ -1735,11 +1759,12 @@ PGAPI_Columns(
 	 * ourselves.
 	 */
 #if (ODBCVER >= 0x0300)
-	result_cols = 18;
+	reserved_cols = 18;
 #else
-	result_cols = 14;
+	reserved_cols = 12;
 #endif /* ODBCVER */
-	extend_bindings(stmt, result_cols);
+	result_cols = reserved_cols + 2;
+	extend_column_bindings(SC_get_ARD(stmt), result_cols);
 
 	/* set the field names */
 	QR_set_num_fields(res, result_cols);
@@ -1749,9 +1774,9 @@ PGAPI_Columns(
 	QR_set_field_info(res, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 	QR_set_field_info(res, 4, "DATA_TYPE", PG_TYPE_INT2, 2);
 	QR_set_field_info(res, 5, "TYPE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(res, 6, "PRECISION", PG_TYPE_INT4, 4);
-	QR_set_field_info(res, 7, "LENGTH", PG_TYPE_INT4, 4);
-	QR_set_field_info(res, 8, "SCALE", PG_TYPE_INT2, 2);
+	QR_set_field_info(res, 6, "PRECISION", PG_TYPE_INT4, 4); /* COLUMN_SIZE */
+	QR_set_field_info(res, 7, "LENGTH", PG_TYPE_INT4, 4); /* BUFFER_LENGTH */
+	QR_set_field_info(res, 8, "SCALE", PG_TYPE_INT2, 2); /* DECIMAL_DIGITS ***/
 	QR_set_field_info(res, 9, "RADIX", PG_TYPE_INT2, 2);
 	QR_set_field_info(res, 10, "NULLABLE", PG_TYPE_INT2, 2);
 	QR_set_field_info(res, 11, "REMARKS", PG_TYPE_TEXT, 254);
@@ -1764,11 +1789,11 @@ PGAPI_Columns(
 	QR_set_field_info(res, 15, "CHAR_OCTET_LENGTH", PG_TYPE_INT4, 4);
 	QR_set_field_info(res, 16, "ORDINAL_POSITION", PG_TYPE_INT4, 4);
 	QR_set_field_info(res, 17, "IS_NULLABLE", PG_TYPE_TEXT, 254);
-#else
-	QR_set_field_info(res, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
-	QR_set_field_info(res, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 #endif /* ODBCVER */
+	QR_set_field_info(res, reserved_cols, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
+	QR_set_field_info(res, reserved_cols + 1, "FIELD_TYPE", PG_TYPE_INT4, 4);
 
+	ordinal = 1;
 	result = PGAPI_Fetch(hcol_stmt);
 
 	/*
@@ -1794,14 +1819,13 @@ PGAPI_Columns(
 			set_tuplefield_string(&row->tuple[1], "");
 			set_tuplefield_string(&row->tuple[2], table_name);
 			set_tuplefield_string(&row->tuple[3], "oid");
-			sqltype = pgtype_to_sqltype(stmt, the_type);
+			sqltype = pgtype_to_concise_type(stmt, the_type);
 			set_tuplefield_int2(&row->tuple[4], sqltype);
 			set_tuplefield_string(&row->tuple[5], "OID");
 
-			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
-
-			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[6], pgtype_column_size(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[7], pgtype_buffer_length(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_nullfield_int2(&row->tuple[8], pgtype_decimal_digits(stmt, the_type, PG_STATIC));
 			set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 			set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 			set_tuplefield_string(&row->tuple[11], "");
@@ -1810,15 +1834,15 @@ PGAPI_Columns(
 			set_tuplefield_null(&row->tuple[12]);
 			set_tuplefield_int2(&row->tuple[13], sqltype);
 			set_tuplefield_null(&row->tuple[14]);
-			set_tuplefield_int4(&row->tuple[15], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[16], 0);
+			set_tuplefield_int4(&row->tuple[15], pgtype_transfer_octet_length(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[16], ordinal);
 			set_tuplefield_string(&row->tuple[17], "No");
-#else
-			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[13], the_type);
 #endif /* ODBCVER */
+			set_tuplefield_int4(&row->tuple[reserved_cols], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[reserved_cols + 1], the_type);
 
 			QR_add_tuple(res, row);
+			ordinal++;
 		}
 	}
 
@@ -1834,7 +1858,7 @@ PGAPI_Columns(
 		set_tuplefield_string(&row->tuple[1], "");
 		set_tuplefield_string(&row->tuple[2], table_name);
 		set_tuplefield_string(&row->tuple[3], field_name);
-		sqltype = pgtype_to_sqltype(stmt, field_type);
+		sqltype = pgtype_to_concise_type(stmt, field_type);
 		set_tuplefield_int2(&row->tuple[4], sqltype);
 		set_tuplefield_string(&row->tuple[5], field_type_name);
 
@@ -1845,15 +1869,15 @@ PGAPI_Columns(
 		 * VARCHAR - the length is stored in the pg_attribute.atttypmod field
 		 * BPCHAR  - the length is also stored as varchar is
 		 *
-		 * NUMERIC - the scale is stored in atttypmod as follows:
+		 * NUMERIC - the decimal_digits is stored in atttypmod as follows:
 		 *
-		 *	precision =((atttypmod - VARHDRSZ) >> 16) & 0xffff
-		 *	scale	 = (atttypmod - VARHDRSZ) & 0xffff
+		 *	column_size =((atttypmod - VARHDRSZ) >> 16) & 0xffff
+		 *	decimal_digits	 = (atttypmod - VARHDRSZ) & 0xffff
 		 *
 		 *----------
 		 */
-		qlog("PGAPI_Columns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
-			 table_name, field_name, field_type, pgtype_to_sqltype, field_type_name);
+		qlog("PGAPI_Columns: table='%s',field_name='%s',type=%d,name='%s'\n",
+			 table_name, field_name, field_type, field_type_name);
 
 		useStaticPrecision = TRUE;
 
@@ -1866,15 +1890,18 @@ PGAPI_Columns(
 			{
 				useStaticPrecision = FALSE;
 
-				precision = (mod_length >> 16) & 0xffff;
-				scale = mod_length & 0xffff;
+				column_size = (mod_length >> 16) & 0xffff;
+				decimal_digits = mod_length & 0xffff;
 
-				mylog("%s: field type is NUMERIC: field_type = %d, mod_length=%d, precision=%d, scale=%d\n", func, field_type, mod_length, precision, scale);
+				mylog("%s: field type is NUMERIC: field_type = %d, mod_length=%d, precision=%d, scale=%d\n", func, field_type, mod_length, column_size, decimal_digits);
 
-				set_tuplefield_int4(&row->tuple[7], precision + 2);		/* sign+dec.point */
-				set_tuplefield_int4(&row->tuple[6], precision);
-				set_tuplefield_int4(&row->tuple[12], precision + 2);	/* sign+dec.point */
-				set_nullfield_int2(&row->tuple[8], scale);
+				set_tuplefield_int4(&row->tuple[6], column_size);
+				set_tuplefield_int4(&row->tuple[7], column_size + 2);		/* sign+dec.point */
+				set_nullfield_int2(&row->tuple[8], decimal_digits);
+#if (ODBCVER >= 0x0300)
+				set_tuplefield_null(&row->tuple[15]);
+#endif /* ODBCVER */
+				set_tuplefield_int4(&row->tuple[reserved_cols], column_size + 2);	/* sign+dec.point */
 			}
 		}
 
@@ -1891,54 +1918,42 @@ PGAPI_Columns(
 
 			mylog("%s: field type is VARCHAR,BPCHAR: field_type = %d, mod_length = %d\n", func, field_type, mod_length);
 
-			set_tuplefield_int4(&row->tuple[7], mod_length);
 			set_tuplefield_int4(&row->tuple[6], mod_length);
-			set_tuplefield_int4(&row->tuple[12], mod_length);
-			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[7], mod_length);
+			set_nullfield_int2(&row->tuple[8], pgtype_decimal_digits(stmt, field_type, PG_STATIC));
+#if (ODBCVER >= 0x0300)
+			set_tuplefield_int4(&row->tuple[15], pgtype_transfer_octet_length(stmt, field_type, PG_STATIC, PG_STATIC));
+#endif /* ODBCVER */
+			set_tuplefield_int4(&row->tuple[reserved_cols], mod_length);
 		}
 
 		if (useStaticPrecision)
 		{
-			mylog("%s: field type is OTHER: field_type = %d, pgtype_length = %d\n", func, field_type, pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
+			mylog("%s: field type is OTHER: field_type = %d, pgtype_length = %d\n", func, field_type, pgtype_buffer_length(stmt, field_type, PG_STATIC, PG_STATIC));
 
-			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, field_type, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, field_type, PG_STATIC, PG_STATIC));
-			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[6], pgtype_column_size(stmt, field_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[7], pgtype_buffer_length(stmt, field_type, PG_STATIC, PG_STATIC));
+			set_nullfield_int2(&row->tuple[8], pgtype_decimal_digits(stmt, field_type, PG_STATIC));
+#if (ODBCVER >= 0x0300)
+			set_tuplefield_null(&row->tuple[15]);
+#endif /* ODBCVER */
+			set_tuplefield_int4(&row->tuple[reserved_cols], pgtype_display_size(stmt, field_type, PG_STATIC, PG_STATIC));
 		}
 
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, field_type));
 		set_tuplefield_int2(&row->tuple[10], (Int2) (not_null[0] == '1' ? SQL_NO_NULLS : pgtype_nullable(stmt, field_type)));
 		set_tuplefield_string(&row->tuple[11], "");
 #if (ODBCVER >= 0x0300)
-		switch (sqltype)
-		{
-			case SQL_TYPE_DATE:
-				set_tuplefield_int2(&row->tuple[13], SQL_DATETIME);
-				set_tuplefield_int2(&row->tuple[14], SQL_CODE_DATE);
-				break;
-			case SQL_TYPE_TIME:
-				set_tuplefield_int2(&row->tuple[13], SQL_DATETIME);
-				set_tuplefield_int2(&row->tuple[14], SQL_CODE_TIME);
-				break;
-			case SQL_TYPE_TIMESTAMP:
-				set_tuplefield_int2(&row->tuple[13], SQL_DATETIME);
-				set_tuplefield_int2(&row->tuple[14], SQL_CODE_TIMESTAMP);
-				break;
-			default:
-				set_tuplefield_int2(&row->tuple[13], sqltype);
-				set_tuplefield_null(&row->tuple[14]);
-				break;
-		}
-		set_tuplefield_int4(&row->tuple[15], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
-		set_tuplefield_int4(&row->tuple[16], field_number);
+		set_tuplefield_null(&row->tuple[12]);
+		set_tuplefield_int2(&row->tuple[13], pgtype_to_sqldesctype(stmt, field_type));
+		set_nullfield_int2(&row->tuple[14], pgtype_to_datetime_sub(stmt, field_type));
+		set_tuplefield_int4(&row->tuple[16], ordinal);
 		set_tuplefield_null(&row->tuple[17]);
-#else
-		set_tuplefield_int4(&row->tuple[13], field_type);
 #endif /* ODBCVER */
+		set_tuplefield_int4(&row->tuple[reserved_cols + 1], field_type);
 
 		QR_add_tuple(res, row);
-
+		ordinal++;
 
 		result = PGAPI_Fetch(hcol_stmt);
 
@@ -1968,12 +1983,12 @@ PGAPI_Columns(
 		set_tuplefield_string(&row->tuple[1], "");
 		set_tuplefield_string(&row->tuple[2], table_name);
 		set_tuplefield_string(&row->tuple[3], "xmin");
-		sqltype = pgtype_to_sqltype(stmt, the_type);
+		sqltype = pgtype_to_concise_type(stmt, the_type);
 		set_tuplefield_int2(&row->tuple[4], sqltype);
 		set_tuplefield_string(&row->tuple[5], pgtype_to_name(stmt, the_type));
-		set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
-		set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[6], pgtype_column_size(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[7], pgtype_buffer_length(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_nullfield_int2(&row->tuple[8], pgtype_decimal_digits(stmt, the_type, PG_STATIC));
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 		set_tuplefield_string(&row->tuple[11], "");
@@ -1981,15 +1996,15 @@ PGAPI_Columns(
 		set_tuplefield_null(&row->tuple[12]);
 		set_tuplefield_int2(&row->tuple[13], sqltype);
 		set_tuplefield_null(&row->tuple[14]);
-		set_tuplefield_int4(&row->tuple[15], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-		set_tuplefield_int4(&row->tuple[16], 0);
+		set_tuplefield_int4(&row->tuple[15], pgtype_transfer_octet_length(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[16], ordinal);
 		set_tuplefield_string(&row->tuple[17], "No");
-#else
-		set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
-		set_tuplefield_int4(&row->tuple[13], the_type);
 #endif /* ODBCVER */
+		set_tuplefield_int4(&row->tuple[reserved_cols], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[reserved_cols + 1], the_type);
 
 		QR_add_tuple(res, row);
+		ordinal++;
 	}
 
 	/*
@@ -2096,7 +2111,7 @@ PGAPI_SpecialColumns(
 
 	res = QR_Constructor();
 	SC_set_Result(stmt, res);
-	extend_bindings(stmt, 8);
+	extend_column_bindings(SC_get_ARD(stmt), 8);
 
 	QR_set_num_fields(res, 8);
 	QR_set_field_info(res, 0, "SCOPE", PG_TYPE_INT2, 2);
@@ -2117,11 +2132,11 @@ PGAPI_SpecialColumns(
 
 			set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
 			set_tuplefield_string(&row->tuple[1], "oid");
-			set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, PG_TYPE_OID));
+			set_tuplefield_int2(&row->tuple[2], pgtype_to_concise_type(stmt, PG_TYPE_OID));
 			set_tuplefield_string(&row->tuple[3], "OID");
-			set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
-			set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
-			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[4], pgtype_column_size(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[5], pgtype_buffer_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[6], pgtype_decimal_digits(stmt, PG_TYPE_OID, PG_STATIC));
 			set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
 			QR_add_tuple(res, row);
@@ -2137,11 +2152,11 @@ PGAPI_SpecialColumns(
 
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "xmin");
-				set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, the_type));
+				set_tuplefield_int2(&row->tuple[2], pgtype_to_concise_type(stmt, the_type));
 				set_tuplefield_string(&row->tuple[3], pgtype_to_name(stmt, the_type));
-				set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
-				set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-				set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type, PG_STATIC));
+				set_tuplefield_int4(&row->tuple[4], pgtype_column_size(stmt, the_type, PG_STATIC, PG_STATIC));
+				set_tuplefield_int4(&row->tuple[5], pgtype_buffer_length(stmt, the_type, PG_STATIC, PG_STATIC));
+				set_tuplefield_int2(&row->tuple[6], pgtype_decimal_digits(stmt, the_type, PG_STATIC));
 				set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
 				QR_add_tuple(res, row);
@@ -2227,7 +2242,7 @@ PGAPI_Statistics(
 	 * a statement is actually executed, so we'll have to do this
 	 * ourselves.
 	 */
-	extend_bindings(stmt, 13);
+	extend_column_bindings(SC_get_ARD(stmt), 13);
 
 	/* set the field names */
 	QR_set_num_fields(res, 13);
@@ -2671,7 +2686,7 @@ PGAPI_PrimaryKeys(
 	 * ourselves.
 	 */
 	result_cols = 6;
-	extend_bindings(stmt, result_cols);
+	extend_column_bindings(SC_get_ARD(stmt), result_cols);
 
 	/* set the field names */
 	QR_set_num_fields(res, result_cols);
@@ -3067,7 +3082,7 @@ PGAPI_ForeignKeys(
 	 * ourselves.
 	 */
 	result_cols = 14;
-	extend_bindings(stmt, result_cols);
+	extend_column_bindings(SC_get_ARD(stmt), result_cols);
 
 	/* set the field names */
 	QR_set_num_fields(res, result_cols);
@@ -3803,7 +3818,7 @@ PGAPI_Procedures(
 	 * results can be retrieved.
 	 */
 	stmt->status = STMT_FINISHED;
-	extend_bindings(stmt, 8);
+	extend_column_bindings(SC_get_ARD(stmt), 8);
 	/* set up the current tuple pointer for SQLFetch */
 	stmt->currTuple = -1;
 	stmt->rowset_start = -1;
@@ -3891,7 +3906,7 @@ PGAPI_TablePrivileges(
 	 * ourselves.
 	 */
 	result_cols = 7;
-	extend_bindings(stmt, result_cols);
+	extend_column_bindings(SC_get_ARD(stmt), result_cols);
 
 	/* set the field names */
 	stmt->manual_result = TRUE;
@@ -3983,7 +3998,7 @@ PGAPI_TablePrivileges(
 				char	*grolist, *uid, *delm;
 
 				snprintf(proc_query, sizeof(proc_query) - 1, "select grolist from pg_group where groname = '%s'", user);
-				if ((gres = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT)))
+				if (gres = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT), gres != NULL)
 				{
 					grolist = QR_get_value_backend_row(gres, 0, 0);
 					if (grolist && grolist[0] == '{')

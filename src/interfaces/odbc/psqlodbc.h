@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.60 2002/03/14 05:42:03 inoue Exp $
+ * $Id: psqlodbc.h,v 1.61 2002/03/28 08:08:06 inoue Exp $
  *
  */
 
@@ -91,7 +91,11 @@ typedef UInt4 Oid;
 
 #ifdef WIN32
 #if (ODBCVER >= 0x0300)
+#ifdef	UNICODE_SUPPORT
+#define DRIVER_FILE_NAME			"PSQLODBC30W.DLL"
+#else
 #define DRIVER_FILE_NAME			"PSQLODBC30.DLL"
+#endif   /* UNICODE_SUPPORT */
 #else
 #define DRIVER_FILE_NAME			"PSQLODBC.DLL"
 #endif   /* ODBCVER */
@@ -167,6 +171,11 @@ typedef struct EnvironmentClass_ EnvironmentClass;
 typedef struct TupleNode_ TupleNode;
 typedef struct TupleField_ TupleField;
 typedef struct KeySet_ KeySet;
+typedef struct Rollback_ Rollback;
+typedef struct ARDFields_ ARDFields;
+typedef struct APDFields_ APDFields;
+typedef struct IRDFields_ IRDFields;
+typedef struct IPDFields_ IPDFields;
 
 typedef struct col_info COL_INFO;
 typedef struct lo_arg LO_ARG;
@@ -201,25 +210,12 @@ typedef struct StatementOptions_
 {
 	int			maxRows;
 	int			maxLength;
-	int			rowset_size;
 	int			keyset_size;
 	int			cursor_type;
 	int			scroll_concurrency;
 	int			retrieve_data;
-	int			bind_size;		/* size of each structure if using Row
-								 * Binding */
 	int			use_bookmarks;
-	UInt4	   *rowsFetched;
-	UInt2	   *rowStatusArray;
-	void	   *bookmark_ptr;
-	UInt2	   *row_operation_ptr;
-	UInt4	   *row_offset_ptr;
-	UInt4		paramset_size;
-	UInt4		param_bind_type;
-	UInt4	   *param_processed_ptr;
-	UInt2	   *param_status_ptr;
-	UInt2	   *param_operation_ptr;
-	UInt4	   *param_offset_ptr;
+	void			*bookmark_ptr;
 } StatementOptions;
 
 /*	Used to pass extra query info to send_query */
@@ -260,6 +256,7 @@ UInt4	ucs2strlen(const SQLWCHAR *ucs2str);
 char	*ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen);
 UInt4	utf8_to_ucs2(const char * utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 buflen);
 #endif /* UNICODE_SUPPORT */
+/*#define	_MEMORY_DEBUG_ */
 #ifdef	_MEMORY_DEBUG_
 void	   *debug_alloc(size_t);
 void	   *debug_realloc(void *, size_t);

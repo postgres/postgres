@@ -54,6 +54,7 @@
 #define DS_DISALLOWPREMATURE		1061
 #define DS_LFCONVERSION			1062
 #define DS_TRUEISMINUS1			1063
+#define DS_UPDATABLECURSORS		1064
 
 /*	Next default values for new objects */
 /* */
@@ -61,7 +62,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE		105
 #define _APS_NEXT_COMMAND_VALUE			40001
-#define _APS_NEXT_CONTROL_VALUE			1062
+#define _APS_NEXT_CONTROL_VALUE			1065
 #define _APS_NEXT_SYMED_VALUE			101
 #endif   /* */
 

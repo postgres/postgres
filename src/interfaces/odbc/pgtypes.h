@@ -72,16 +72,22 @@ extern Int2 sqlTypes[];
 
 Int4		sqltype_to_pgtype(StatementClass *stmt, Int2 fSqlType);
 
-Int2		pgtype_to_sqltype(StatementClass *stmt, Int4 type);
+Int2		pgtype_to_concise_type(StatementClass *stmt, Int4 type);
+Int2		pgtype_to_sqldesctype(StatementClass *stmt, Int4 type);
+Int2		pgtype_to_datetime_sub(StatementClass *stmt, Int4 type);
 Int2		pgtype_to_ctype(StatementClass *stmt, Int4 type);
 char	   *pgtype_to_name(StatementClass *stmt, Int4 type);
 
 /*	These functions can use static numbers or result sets(col parameter) */
-Int4		pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		pgtype_column_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as); /* corresponds to "precision" in ODBC 2.x */
+Int4		pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as); /* "precsion in ODBC 3.x */ 
 Int4		pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
-Int4		pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		pgtype_buffer_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		pgtype_desclength(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		pgtype_transfer_octet_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
-Int2		pgtype_scale(StatementClass *stmt, Int4 type, int col);
+Int2		pgtype_decimal_digits(StatementClass *stmt, Int4 type, int col); /* corresponds to "scale" in ODBC 2.x */
+Int2		pgtype_scale(StatementClass *stmt, Int4 type, int col); /* ODBC 3.x " */
 Int2		pgtype_radix(StatementClass *stmt, Int4 type);
 Int2		pgtype_nullable(StatementClass *stmt, Int4 type);
 Int2		pgtype_auto_increment(StatementClass *stmt, Int4 type);

@@ -26,7 +26,7 @@
 
 
 
-Int4		getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4		getCharColumnSize(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
 /*
  * these are the types we support.	all of the pgtype_ functions should
@@ -230,13 +230,13 @@ sqltype_to_pgtype(StatementClass *stmt, SWORD fSqlType)
  *	types that are unknown.  All other pg routines in here return a suitable default.
  */
 Int2
-pgtype_to_sqltype(StatementClass *stmt, Int4 type)
+pgtype_to_concise_type(StatementClass *stmt, Int4 type)
 {
 	ConnectionClass	*conn = SC_get_conn(stmt);
 	ConnInfo	*ci = &(conn->connInfo);
 #if (ODBCVER >= 0x0300)
 	EnvironmentClass *env = (EnvironmentClass *) (conn->henv);
-#endif
+#endif /* ODBCVER */
 
 	switch (type)
 	{
@@ -289,7 +289,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 			if (!conn->ms_jet)
 				return SQL_BIGINT;
 #endif /* ODBCVER */
-			return SQL_CHAR;
+			return SQL_VARCHAR;
 
 		case PG_TYPE_NUMERIC:
 			return SQL_NUMERIC;
@@ -338,6 +338,40 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	}
 }
 
+Int2
+pgtype_to_sqldesctype(StatementClass *stmt, Int4 type)
+{
+	Int2	rettype;
+
+	switch (rettype = pgtype_to_concise_type(stmt, type))
+	{
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_DATE:
+		case SQL_TYPE_TIME:
+		case SQL_TYPE_TIMESTAMP:
+			return SQL_DATETIME;
+#endif /* ODBCVER */
+	}
+	return rettype;
+}
+
+Int2
+pgtype_to_datetime_sub(StatementClass *stmt, Int4 type)
+{
+	switch (pgtype_to_concise_type(stmt, type))
+	{
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_DATE:
+			return SQL_CODE_DATE;
+		case SQL_TYPE_TIME:
+			return SQL_CODE_TIME;
+		case SQL_TYPE_TIMESTAMP:
+			return SQL_CODE_TIMESTAMP;
+#endif /* ODBCVER */
+	}
+	return -1;
+}
+
 
 Int2
 pgtype_to_ctype(StatementClass *stmt, Int4 type)
@@ -346,7 +380,7 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 	ConnInfo	*ci = &(conn->connInfo);
 #if (ODBCVER >= 0x0300)
 	EnvironmentClass *env = (EnvironmentClass *) (conn->henv);
-#endif
+#endif /* ODBCVER */
 
 	switch (type)
 	{
@@ -484,13 +518,13 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 
 
 static Int2
-getNumericScale(StatementClass *stmt, Int4 type, int col)
+getNumericDecimalDigits(StatementClass *stmt, Int4 type, int col)
 {
 	Int4		atttypmod = -1;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
-	mylog("getNumericScale: type=%d, col=%d\n", type, col);
+	mylog("getNumericDecimalDigits: type=%d, col=%d\n", type, col);
 
 	if (col < 0)
 		return PG_NUMERIC_MAX_SCALE;
@@ -525,13 +559,13 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 
 
 static Int4
-getNumericPrecision(StatementClass *stmt, Int4 type, int col)
+getNumericColumnSize(StatementClass *stmt, Int4 type, int col)
 {
 	Int4		atttypmod = -1;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
-	mylog("getNumericPrecision: type=%d, col=%d\n", type, col);
+	mylog("getNumericColumnSize: type=%d, col=%d\n", type, col);
 
 	if (col < 0)
 		return PG_NUMERIC_MAX_PRECISION;
@@ -566,15 +600,15 @@ getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 
 
 Int4
-getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+getCharColumnSize(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
-	int			p = -1,
+	int			p = -1, attlen = -1,
 				maxsize;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
 
-	mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type, col, handle_unknown_size_as);
+	mylog("getCharColumnSize: type=%d, col=%d, unknown = %d\n", type, col, handle_unknown_size_as);
 
 	/* Assign Maximum size based on parameters */
 	switch (type)
@@ -607,7 +641,7 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			maxsize = TEXT_FIELD_SIZE;
 	}
 	/*
-	 * Static Precision (i.e., the Maximum Precision of the datatype) This
+	 * Static ColumnSize (i.e., the Maximum ColumnSize of the datatype) This
 	 * has nothing to do with a result set.
 	 */
 	if (col < 0)
@@ -628,35 +662,37 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			return maxsize;
 	}
 
+	p = QR_get_display_size(result, col); /* longest */
+	attlen = QR_get_atttypmod(result, col);
 	/* Size is unknown -- handle according to parameter */
-	if (QR_get_atttypmod(result, col) > -1)
-		return QR_get_atttypmod(result, col);
+	if (attlen > p)		/* maybe the length is known */
+		return attlen;
 
 	/* The type is really unknown */
 	if (type == PG_TYPE_BPCHAR || handle_unknown_size_as == UNKNOWNS_AS_LONGEST)
 	{
-		p = QR_get_display_size(result, col);
-		mylog("getCharPrecision: LONGEST: p = %d\n", p);
+		mylog("getCharColumnSize: LONGEST: p = %d\n", p);
 		if (p >= 0)
 			return p;
 	}
 
+	if (p > maxsize)
+		maxsize = p;
 	if (handle_unknown_size_as == UNKNOWNS_AS_MAX)
 		return maxsize;
 	else /* handle_unknown_size_as == DONT_KNOW */
 		return -1;
-	
 }
 
 static Int2
-getTimestampScale(StatementClass *stmt, Int4 type, int col)
+getTimestampDecimalDigits(StatementClass *stmt, Int4 type, int col)
 {
 	ConnectionClass *conn = SC_get_conn(stmt);
 	Int4		atttypmod;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
-	mylog("getTimestampScale: type=%d, col=%d\n", type, col);
+	mylog("getTimestampDecimalDigits: type=%d, col=%d\n", type, col);
 
 	if (col < 0)
 		return 0;
@@ -685,12 +721,12 @@ getTimestampScale(StatementClass *stmt, Int4 type, int col)
 
 
 static Int4
-getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
+getTimestampColumnSize(StatementClass *stmt, Int4 type, int col)
 {
 	Int4		fixed,
 				scale;
 
-	mylog("getTimestampPrecision: type=%d, col=%d\n", type, col);
+	mylog("getTimestampColumnSize: type=%d, col=%d\n", type, col);
 
 	switch (type)
 	{
@@ -710,11 +746,13 @@ getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
 				fixed = 19;
 			break;
 	}
-	scale = getTimestampScale(stmt, type, col);
+	scale = getTimestampDecimalDigits(stmt, type, col);
 	return (scale > 0) ? fixed + 1 + scale : fixed;
 }
 
 /*
+ *	This corresponds to "precision" in ODBC 2.x.
+ *
  *	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, PG_TYPE_NUMERIC, SQLColumns will
  *	override this length with the atttypmod length from pg_attribute .
  *
@@ -722,7 +760,7 @@ getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
  *	This is used for functions SQLDescribeCol and SQLColAttributes.
  */
 Int4
-pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_column_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	switch (type)
 	{
@@ -750,7 +788,7 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			return 19;			/* signed */
 
 		case PG_TYPE_NUMERIC:
-			return getNumericPrecision(stmt, type, col);
+			return getNumericColumnSize(stmt, type, col);
 
 		case PG_TYPE_FLOAT4:
 		case PG_TYPE_MONEY:
@@ -769,7 +807,7 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			return 22;
 		case PG_TYPE_DATETIME:
 			/* return 22; */
-			return getTimestampPrecision(stmt, type, col);
+			return getTimestampColumnSize(stmt, type, col);
 
 		case PG_TYPE_BOOL:
 		{
@@ -787,8 +825,24 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 				return SQL_NO_TOTAL;
 
 			/* Handle Character types and unknown types */
-			return getCharPrecision(stmt, type, col, handle_unknown_size_as);
+			return getCharColumnSize(stmt, type, col, handle_unknown_size_as);
 	}
+}
+
+/*
+ *	"precision in ODBC 3.x.
+ */
+Int4
+pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+{
+	switch (type)
+	{
+		case PG_TYPE_NUMERIC:
+			return getNumericColumnSize(stmt, type, col);
+		case PG_TYPE_DATETIME:
+			return getTimestampDecimalDigits(stmt, type, col);
+	}
+	return -1;
 }
 
 
@@ -813,7 +867,7 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
 			return 20;			/* signed: 19 digits + sign */
 
 		case PG_TYPE_NUMERIC:
-			dsize = getNumericPrecision(stmt, type, col);
+			dsize = getNumericColumnSize(stmt, type, col);
 			return dsize < 0 ? dsize : dsize + 2;
 
 		case PG_TYPE_MONEY:
@@ -827,20 +881,88 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
 
 			/* Character types use regular precision */
 		default:
-			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
+			return pgtype_column_size(stmt, type, col, handle_unknown_size_as);
 	}
 }
 
 
 /*
- *	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, SQLColumns will
- *	override this length with the atttypmod length from pg_attribute
+ *	The length in bytes of data transferred on an SQLGetData, SQLFetch,
+ *	or SQLFetchScroll operation if SQL_C_DEFAULT is specified.
  */
 Int4
-pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+pgtype_buffer_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
 	ConnectionClass	*conn = SC_get_conn(stmt);
 
+	switch (type)
+	{
+		case PG_TYPE_INT2:
+			return 2; /* sizeof(SQLSMALLINT) */
+
+		case PG_TYPE_OID:
+		case PG_TYPE_XID:
+		case PG_TYPE_INT4:
+			return 4; /* sizeof(SQLINTEGER) */
+
+		case PG_TYPE_INT8:
+			if (SQL_C_CHAR == pgtype_to_ctype(stmt, type))
+				return 20;			/* signed: 19 digits + sign */
+			return 8; /* sizeof(SQLSBININT) */
+
+		case PG_TYPE_NUMERIC:
+			return getNumericColumnSize(stmt, type, col) + 2;
+
+		case PG_TYPE_FLOAT4:
+		case PG_TYPE_MONEY:
+			return 4; /* sizeof(SQLREAL) */
+
+		case PG_TYPE_FLOAT8:
+			return 8; /* sizeof(SQLFLOAT) */
+
+		case PG_TYPE_DATE:
+		case PG_TYPE_TIME:
+			return 6;		/* sizeof(DATE(TIME)_STRUCT) */
+
+		case PG_TYPE_ABSTIME:
+		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP:
+			return 16;		/* sizeof(TIMESTAMP_STRUCT) */
+
+			/* Character types use the default precision */
+		case PG_TYPE_VARCHAR:
+		case PG_TYPE_BPCHAR:
+			{
+			int	coef = 1;
+			Int4	prec = pgtype_column_size(stmt, type, col, handle_unknown_size_as), maxvarc;
+			if (conn->unicode)
+				return prec * 2;
+#ifdef MULTIBYTE
+			/* after 7.2 */
+			if (PG_VERSION_GE(conn, 7.2))
+				coef = 3;
+			else
+#endif   /* MULTIBYTE */
+			if ((conn->connInfo).lf_conversion)
+				/* CR -> CR/LF */
+				coef = 2;
+			if (coef == 1)
+				return prec;
+			maxvarc = conn->connInfo.drivers.max_varchar_size;
+			if (prec <= maxvarc && prec * coef > maxvarc)
+				return maxvarc;
+			return coef * prec;
+			}
+		default:
+			return pgtype_column_size(stmt, type, col, handle_unknown_size_as);
+	}
+}
+
+/*
+ */
+Int4
+pgtype_desclength(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+{
 	switch (type)
 	{
 		case PG_TYPE_INT2:
@@ -855,7 +977,7 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 			return 20;			/* signed: 19 digits + sign */
 
 		case PG_TYPE_NUMERIC:
-			return getNumericPrecision(stmt, type, col) + 2;
+			return getNumericColumnSize(stmt, type, col) + 2;
 
 		case PG_TYPE_FLOAT4:
 		case PG_TYPE_MONEY:
@@ -866,21 +988,33 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 
 		case PG_TYPE_DATE:
 		case PG_TYPE_TIME:
-			return 6;			/* sizeof(DATE(TIME)_STRUCT) */
-
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
-			return 16;			/* sizeof(TIMESTAMP_STRUCT) */
-
-			/* Character types (and NUMERIC) use the default precision */
 		case PG_TYPE_VARCHAR:
 		case PG_TYPE_BPCHAR:
-			{
-			int	coef = 1;
-			Int4	prec = pgtype_precision(stmt, type, col, handle_unknown_size_as), maxvarc;
+			return pgtype_column_size(stmt, type, col, handle_unknown_size_as);
+		default:
+			return pgtype_column_size(stmt, type, col, handle_unknown_size_as);
+	}
+}
+
+/*
+ *	Transfer octet length.
+ */
+Int4
+pgtype_transfer_octet_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
+{
+	ConnectionClass	*conn = SC_get_conn(stmt);
+
+	int	coef = 1;
+	Int4	prec = pgtype_column_size(stmt, type, col, handle_unknown_size_as), maxvarc;
+	switch (type)
+	{
+		case PG_TYPE_VARCHAR:
+		case PG_TYPE_BPCHAR:
 			if (conn->unicode)
-				return (prec + 1) * 2;
+				return prec * 2;
 #ifdef MULTIBYTE
 			/* after 7.2 */
 			if (PG_VERSION_GE(conn, 7.2))
@@ -891,20 +1025,22 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 				/* CR -> CR/LF */
 				coef = 2;
 			if (coef == 1)
-				return prec + 1;
+				return prec;
 			maxvarc = conn->connInfo.drivers.max_varchar_size;
 			if (prec <= maxvarc && prec * coef > maxvarc)
 				return maxvarc;
 			return coef * prec;
-			}
-		default:
-			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
+		case PG_TYPE_BYTEA:
+			return prec;
 	}
+	return -1;
 }
 
-
+/*
+ *	corrsponds to "scale" in ODBC 2.x.
+ */
 Int2
-pgtype_scale(StatementClass *stmt, Int4 type, int col)
+pgtype_decimal_digits(StatementClass *stmt, Int4 type, int col)
 {
 	switch (type)
 	{
@@ -927,14 +1063,28 @@ pgtype_scale(StatementClass *stmt, Int4 type, int col)
 			return 0;
 		case PG_TYPE_DATETIME:
 			/* return 0; */
-			return getTimestampScale(stmt, type, col);
+			return getTimestampDecimalDigits(stmt, type, col);
 
 		case PG_TYPE_NUMERIC:
-			return getNumericScale(stmt, type, col);
+			return getNumericDecimalDigits(stmt, type, col);
 
 		default:
 			return -1;
 	}
+}
+
+/*
+ *	"scale" in ODBC 3.x.
+ */
+Int2
+pgtype_scale(StatementClass *stmt, Int4 type, int col)
+{
+	switch (type)
+	{
+		case PG_TYPE_NUMERIC:
+			return getNumericDecimalDigits(stmt, type, col);
+	}
+	return -1;
 }
 
 

@@ -123,6 +123,8 @@ QR_Constructor()
 		rv->rowset_size = 1;
 		rv->haskeyset = 0;
 		rv->keyset = NULL;
+		rv->rb_count = 0;
+		rv->rollback = NULL;
 	}
 
 	mylog("exit QR_Constructor\n");
@@ -228,6 +230,12 @@ QR_free_memory(QResultClass *self)
 		free(self->keyset);
 		self->keyset = NULL;
 	}
+	if (self->rollback)
+	{
+		free(self->rollback);
+		self->rb_count = 0;
+		self->rollback = NULL;
+	}
 
 	self->fcount = 0;
 
@@ -280,6 +288,8 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		{
 			self->status = PGRES_FIELDS_OK;
 			self->num_fields = CI_get_num_fields(self->fields);
+			if (self->haskeyset)
+				self->num_fields -= 2;
 		}
 		else
 		{
@@ -302,15 +312,18 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		/* allocate memory for the tuple cache */
 		mylog("MALLOC: tuple_size = %d, size = %d\n", tuple_size, self->num_fields * sizeof(TupleField) * tuple_size);
 		self->count_allocated = 0;
-		self->backend_tuples = (TupleField *) malloc(self->num_fields * sizeof(TupleField) * tuple_size);
+		if (self->num_fields > 0)
+		{
+			self->backend_tuples = (TupleField *) malloc(self->num_fields * sizeof(TupleField) * tuple_size);
+			if (!self->backend_tuples)
+			{
+				self->status = PGRES_FATAL_ERROR;
+				QR_set_message(self, "Could not get memory for tuple cache.");
+				return FALSE;
+			}
+		}
 		if (self->haskeyset)
 			self->keyset = (KeySet *) calloc(sizeof(KeySet), tuple_size);
-		if (!self->backend_tuples)
-		{
-			self->status = PGRES_FATAL_ERROR;
-			QR_set_message(self, "Could not get memory for tuple cache.");
-			return FALSE;
-		}
 		self->count_allocated = tuple_size;
 
 		self->inTuples = TRUE;
@@ -415,6 +428,7 @@ QR_next_tuple(QResultClass *self)
 	char		fetch[128];
 	QueryInfo	qi;
 	ConnInfo   *ci = NULL;
+	BOOL		set_no_trans;
 
 	if (fetch_count < fcount)
 	{
@@ -484,12 +498,16 @@ QR_next_tuple(QResultClass *self)
 			if (!self->backend_tuples || self->cache_size > self->count_allocated)
 			{
 				self->count_allocated = 0;
-				self->backend_tuples = (TupleField *) realloc(self->backend_tuples, self->num_fields * sizeof(TupleField) * self->cache_size);
-				if (!self->backend_tuples)
+				if (self->num_fields > 0)
 				{
-					self->status = PGRES_FATAL_ERROR;
-					QR_set_message(self, "Out of memory while reading tuples.");
-					return FALSE;
+					self->backend_tuples = (TupleField *) realloc(self->backend_tuples,
+						self->num_fields * sizeof(TupleField) * self->cache_size);
+					if (!self->backend_tuples)
+					{
+						self->status = PGRES_FATAL_ERROR;
+						QR_set_message(self, "Out of memory while reading tuples.");
+						return FALSE;
+					}
 				}
 				if (self->haskeyset)
 					self->keyset = (KeySet *) realloc(self->keyset, sizeof(KeySet) * self->cache_size); 
@@ -555,13 +573,16 @@ QR_next_tuple(QResultClass *self)
 
 					mylog("REALLOC: old_count = %d, size = %d\n", tuple_size, self->num_fields * sizeof(TupleField) * tuple_size);
 					tuple_size *= 2;
-					self->backend_tuples = (TupleField *) realloc(self->backend_tuples,
-					 tuple_size * self->num_fields * sizeof(TupleField));
-					if (!self->backend_tuples)
+					if (self->num_fields > 0)
 					{
-						self->status = PGRES_FATAL_ERROR;
-						QR_set_message(self, "Out of memory while reading tuples.");
-						return FALSE;
+						self->backend_tuples = (TupleField *) realloc(self->backend_tuples,
+					 		tuple_size * self->num_fields * sizeof(TupleField));
+						if (!self->backend_tuples)
+						{
+							self->status = PGRES_FATAL_ERROR;
+							QR_set_message(self, "Out of memory while reading tuples.");
+							return FALSE;
+						}
 					}
 					if (self->haskeyset)
 						self->keyset = (KeySet *) realloc(self->keyset, sizeof(KeySet) * tuple_size);
@@ -606,8 +627,10 @@ QR_next_tuple(QResultClass *self)
 				QR_set_message(self, msgbuffer);
 				self->status = PGRES_FATAL_ERROR;
 
+				set_no_trans = FALSE;
 				if (!strncmp(msgbuffer, "FATAL", 5))
-					CC_set_no_trans(self->conn);
+					set_no_trans = TRUE;
+				CC_on_abort(self->conn, set_no_trans);
 
 				qlog("ERROR from backend in next_tuple: '%s'\n", msgbuffer);
 
@@ -626,7 +649,7 @@ QR_next_tuple(QResultClass *self)
 				qlog("QR_next_tuple: Unexpected result from backend: id = '%c' (%d)\n", id, id);
 				QR_set_message(self, "Unexpected result from backend. It probably crashed");
 				self->status = PGRES_FATAL_ERROR;
-				CC_set_no_trans(self->conn);
+				CC_on_abort(self->conn, TRUE);
 				return FALSE;
 		}
 	}
@@ -647,16 +670,21 @@ QR_read_tuple(QResultClass *self, char binary)
 	Int2		bitcnt;
 	Int4		len;
 	char	   *buffer;
-	int			num_fields = self->num_fields;	/* speed up access */
+	int		ci_num_fields = QR_NumResultCols(self);	/* speed up access */
+	int		num_fields = self->num_fields;	/* speed up access */
 	SocketClass *sock = CC_get_socket(self->conn);
 	ColumnInfoClass *flds;
+	int		effective_cols;
+	char		tidoidbuf[32];
 
 	/* set the current row to read the fields into */
+	effective_cols = ci_num_fields;
 	this_tuplefield = self->backend_tuples + (self->fcount * num_fields);
 	if (self->haskeyset)
 	{
 		this_keyset = self->keyset + self->fcount;
 		this_keyset->status = 0;
+		effective_cols -= 2;
 	}
 
 	bitmaplen = (Int2) num_fields / BYTELEN;
@@ -672,8 +700,9 @@ QR_read_tuple(QResultClass *self, char binary)
 	bitmap_pos = 0;
 	bitcnt = 0;
 	bmp = bitmap[bitmap_pos];
+	flds = self->fields;
 
-	for (field_lf = 0; field_lf < num_fields; field_lf++)
+	for (field_lf = 0; field_lf < ci_num_fields; field_lf++)
 	{
 		/* Check if the current field is NULL */
 		if (!(bmp & 0200))
@@ -692,14 +721,27 @@ QR_read_tuple(QResultClass *self, char binary)
 			if (!binary)
 				len -= VARHDRSZ;
 
-			buffer = (char *) malloc(len + 1);
+			if (field_lf >= effective_cols)
+				buffer = tidoidbuf;
+			else
+				buffer = (char *) malloc(len + 1);
 			SOCK_get_n_char(sock, buffer, len);
 			buffer[len] = '\0';
 
 			mylog("qresult: len=%d, buffer='%s'\n", len, buffer);
 
-			this_tuplefield[field_lf].len = len;
-			this_tuplefield[field_lf].value = buffer;
+			if (field_lf >= effective_cols)
+			{
+				if (field_lf == effective_cols)
+					sscanf(buffer, "(%lu,%hu)",
+						&this_keyset->blocknum, &this_keyset->offset);
+				else
+					this_keyset->oid = strtoul(buffer, NULL, 10);
+			}
+			else
+			{
+				this_tuplefield[field_lf].len = len;
+				this_tuplefield[field_lf].value = buffer;
 
 			/*
 			 * This can be used to set the longest length of the column
@@ -710,9 +752,9 @@ QR_read_tuple(QResultClass *self, char binary)
 			 * row!
 			 */
 
-			flds = self->fields;
-			if (flds && flds->display_size && flds->display_size[field_lf] < len)
-				flds->display_size[field_lf] = len;
+				if (flds && flds->display_size && flds->display_size[field_lf] < len)
+					flds->display_size[field_lf] = len;
+			}
 		}
 
 		/*
@@ -727,15 +769,6 @@ QR_read_tuple(QResultClass *self, char binary)
 		}
 		else
 			bmp <<= 1;
-	}
-	if (this_keyset)
-	{
-		if (this_tuplefield[num_fields - 2].value)
-			sscanf(this_tuplefield[num_fields - 2].value, "(%lu,%hu)",
-				&this_keyset->blocknum, &this_keyset->offset);
-		if (this_tuplefield[num_fields - 1].value)
-			sscanf(this_tuplefield[num_fields - 1].value, "%lu",
-				&this_keyset->oid);
 	}
 	self->currTuple++;
 	return TRUE;

@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "descriptor.h"
 
 
 typedef enum
@@ -242,6 +243,8 @@ struct ConnectionClass_
 	HENV		henv;			/* environment this connection was created
 								 * on */
 	StatementOptions stmtOptions;
+	ARDFields	ardOptions;
+	APDFields	apdOptions;
 	char	   *errormsg;
 	int			errornumber;
 	CONN_Status status;
@@ -315,8 +318,11 @@ void		CC_lookup_pg_version(ConnectionClass *conn);
 void		CC_initialize_pg_version(ConnectionClass *conn);
 void		CC_log_error(const char *func, const char *desc, const ConnectionClass *self);
 int			CC_get_max_query_len(const ConnectionClass *self);
+void		CC_on_commit(ConnectionClass *conn, BOOL set_no_trans);
+void		CC_on_abort(ConnectionClass *conn, BOOL set_no_trans);
 
 /* CC_send_query_options */
 #define	CLEAR_RESULT_ON_ABORT	1L
 #define	CREATE_KEYSET		(1L << 1) /* create keyset for updatable curosrs */
+#define	GO_INTO_TRANSACTION	(1L << 2) /* issue begin in advance */
 #endif

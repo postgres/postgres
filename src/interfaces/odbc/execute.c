@@ -206,9 +206,12 @@ PGAPI_Execute(
 {
 	static char *func = "PGAPI_Execute";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	APDFields	*opts;
+	IPDFields	*ipdopts;
 	ConnectionClass *conn;
 	int			i,
 				retval, start_row, end_row;
+	int	cursor_type, scroll_concurrency;
 
 	mylog("%s: entering...\n", func);
 
@@ -219,6 +222,9 @@ PGAPI_Execute(
 		return SQL_INVALID_HANDLE;
 	}
 
+	opts = SC_get_APD(stmt);
+	cursor_type = stmt->options.cursor_type;
+	scroll_concurrency = stmt->options.scroll_concurrency;
 	/*
 	 * If the statement is premature, it means we already executed it from
 	 * an SQLPrepare/SQLDescribeCol type of scenario.  So just return
@@ -297,24 +303,25 @@ PGAPI_Execute(
 	if (start_row = stmt->exec_start_row, start_row < 0)
 		start_row = 0; 
 	if (end_row = stmt->exec_end_row, end_row < 0)
-		end_row = stmt->options.paramset_size - 1; 
+		end_row = opts->paramset_size - 1; 
 	if (stmt->exec_current_row < 0)
 		stmt->exec_current_row = start_row;
+	ipdopts = SC_get_IPD(stmt);
 	if (stmt->exec_current_row == start_row)
 	{
-		if (stmt->options.param_processed_ptr)
-			*stmt->options.param_processed_ptr = 0;
+		if (ipdopts->param_processed_ptr)
+			*ipdopts->param_processed_ptr = 0;
 		SC_recycle_statement(stmt);
 	}
 
 next_param_row:
 #if (ODBCVER >= 0x0300)
-	if (stmt->options.param_operation_ptr)
+	if (opts->param_operation_ptr)
 	{
-		while (stmt->options.param_operation_ptr[stmt->exec_current_row] == SQL_PARAM_IGNORE)
+		while (opts->param_operation_ptr[stmt->exec_current_row] == SQL_PARAM_IGNORE)
 		{
-			if (stmt->options.param_status_ptr)
-				stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_UNUSED;
+			if (ipdopts->param_status_ptr)
+				ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_UNUSED;
 			if (stmt->exec_current_row >= end_row)
 			{
 				stmt->exec_current_row = -1;
@@ -335,16 +342,16 @@ next_param_row:
 		 * execute of this statement?  Therefore check for params and
 		 * re-copy.
 		 */
-		UInt4	offset = stmt->options.param_offset_ptr ? *stmt->options.param_offset_ptr : 0;
-		Int4	bind_size = stmt->options.param_bind_type;
+		UInt4	offset = opts->param_offset_ptr ? *opts->param_offset_ptr : 0;
+		Int4	bind_size = opts->param_bind_type;
 		Int4	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
 
 		stmt->data_at_exec = -1;
-		for (i = 0; i < stmt->parameters_allocated; i++)
+		for (i = 0; i < opts->allocated; i++)
 		{
-			Int4	   *pcVal = stmt->parameters[i].used;
+			Int4	   *pcVal = opts->parameters[i].used;
 
-			stmt->parameters[i].data_at_exec = FALSE;
+			opts->parameters[i].data_at_exec = FALSE;
 			if (pcVal)
 			{
 				if (bind_size > 0)
@@ -352,10 +359,10 @@ next_param_row:
 				else
 					pcVal = (Int4 *)((char *)pcVal + offset + sizeof(SDWORD) * current_row);
 				if (*pcVal == SQL_DATA_AT_EXEC || *pcVal <= SQL_LEN_DATA_AT_EXEC_OFFSET)
-					stmt->parameters[i].data_at_exec = TRUE;
+					opts->parameters[i].data_at_exec = TRUE;
 			}
 			/* Check for data at execution parameters */
-			if (stmt->parameters[i].data_at_exec)
+			if (opts->parameters[i].data_at_exec)
 			{
 				if (stmt->data_at_exec < 0)
 					stmt->data_at_exec = 1;
@@ -394,22 +401,22 @@ next_param_row:
 		retval = SC_execute(stmt);
 		if (retval != SQL_ERROR)
 		{
-			if (stmt->options.param_processed_ptr)
-				(*stmt->options.param_processed_ptr)++;
+			if (ipdopts->param_processed_ptr)
+				(*ipdopts->param_processed_ptr)++;
 		}
 #if (ODBCVER >= 0x0300)
-		if (stmt->options.param_status_ptr)
+		if (ipdopts->param_status_ptr)
 		{
 			switch (retval)
 			{
 				case SQL_SUCCESS: 
-					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS;
+					ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS;
 					break;
 				case SQL_SUCCESS_WITH_INFO: 
-					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS_WITH_INFO;
+					ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS_WITH_INFO;
 					break;
 				default: 
-					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_ERROR;
+					ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_ERROR;
 					break;
 			}
 		}
@@ -447,7 +454,6 @@ next_param_row:
 			}
 		}
 		/* we are now in a transaction */
-		CC_set_in_trans(conn);
 		res = CC_send_query(conn, stmt->stmt_with_params, NULL, CLEAR_RESULT_ON_ABORT);
 		if (!res)
 		{
@@ -464,13 +470,18 @@ next_param_row:
 		{
 			if (issued_begin)
 				CC_commit(conn);
-			else if (!in_trans && begin_included)
-				CC_set_no_trans(conn);
 		}
 		stmt->status = STMT_FINISHED;
 		return SQL_SUCCESS;
 	}
-	else
+	else if (stmt->options.cursor_type != cursor_type ||
+		 stmt->options.scroll_concurrency != scroll_concurrency)
+	{
+		stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
+		stmt->errormsg = "cursor updatability changed";
+		return SQL_SUCCESS_WITH_INFO;
+	}
+	else 
 		return SQL_SUCCESS;
 }
 
@@ -534,11 +545,10 @@ PGAPI_Transact(
 		mylog("PGAPI_Transact: sending on conn %d '%s'\n", conn, stmt_string);
 
 		res = CC_send_query(conn, stmt_string, NULL, CLEAR_RESULT_ON_ABORT);
-		CC_set_no_trans(conn);
-
 		if (!res)
 		{
 			/* error msg will be in the connection */
+			CC_on_abort(conn, TRUE);
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
@@ -548,6 +558,7 @@ PGAPI_Transact(
 
 		if (!ok)
 		{
+			CC_on_abort(conn, TRUE);
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
@@ -697,6 +708,8 @@ PGAPI_ParamData(
 {
 	static char *func = "PGAPI_ParamData";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	APDFields	*opts;
+	IPDFields	*ipdopts;
 	int			i,
 				retval;
 	ConnInfo   *ci;
@@ -709,8 +722,9 @@ PGAPI_ParamData(
 		return SQL_INVALID_HANDLE;
 	}
 	ci = &(SC_get_conn(stmt)->connInfo);
+	opts = SC_get_APD(stmt);
 
-	mylog("%s: data_at_exec=%d, params_alloc=%d\n", func, stmt->data_at_exec, stmt->parameters_allocated);
+	mylog("%s: data_at_exec=%d, params_alloc=%d\n", func, stmt->data_at_exec, opts->allocated);
 
 	if (stmt->data_at_exec < 0)
 	{
@@ -720,7 +734,7 @@ PGAPI_ParamData(
 		return SQL_ERROR;
 	}
 
-	if (stmt->data_at_exec > stmt->parameters_allocated)
+	if (stmt->data_at_exec > opts->allocated)
 	{
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		stmt->errormsg = "Too many execution-time parameters were present";
@@ -748,6 +762,7 @@ PGAPI_ParamData(
 	}
 
 	/* Done, now copy the params and then execute the statement */
+	ipdopts = SC_get_IPD(stmt);
 	if (stmt->data_at_exec == 0)
 	{
 		int	end_row;
@@ -761,28 +776,29 @@ PGAPI_ParamData(
 		retval = SC_execute(stmt);
 		if (retval != SQL_ERROR)
 		{
-			if (stmt->options.param_processed_ptr)
-				(*stmt->options.param_processed_ptr)++;
+			if (ipdopts->param_processed_ptr)
+				(*ipdopts->param_processed_ptr)++;
 		}
 #if (ODBCVER >= 0x0300)
-		if (stmt->options.param_status_ptr)
+		if (ipdopts->param_status_ptr)
 		{
 			switch (retval)
 			{
 				case SQL_SUCCESS: 
-					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS;
+					ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS;
 					break;
 				case SQL_SUCCESS_WITH_INFO: 
-					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS_WITH_INFO;
+					ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS_WITH_INFO;
 					break;
 				default: 
-					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_ERROR;
+					ipdopts->param_status_ptr[stmt->exec_current_row] = SQL_PARAM_ERROR;
 					break;
 			}
 		}
 #endif /* ODBCVER */
-		if (stmt->exec_end_row < 0)
-			end_row = stmt->options.paramset_size - 1;
+		end_row = stmt->exec_end_row;
+		if (end_row < 0)
+			end_row = opts->paramset_size - 1;
 		if (retval == SQL_ERROR ||
 		    stmt->exec_current_row >= end_row)
 		{
@@ -800,14 +816,14 @@ PGAPI_ParamData(
 	i = stmt->current_exec_param >= 0 ? stmt->current_exec_param + 1 : 0;
 
 	/* At least 1 data at execution parameter, so Fill in the token value */
-	for (; i < stmt->parameters_allocated; i++)
+	for (; i < opts->allocated; i++)
 	{
-		if (stmt->parameters[i].data_at_exec)
+		if (opts->parameters[i].data_at_exec)
 		{
 			stmt->data_at_exec--;
 			stmt->current_exec_param = i;
 			stmt->put_data = FALSE;
-			*prgbValue = stmt->parameters[i].buffer;	/* token */
+			*prgbValue = opts->parameters[i].buffer;	/* token */
 			break;
 		}
 	}
@@ -828,6 +844,7 @@ PGAPI_PutData(
 {
 	static char *func = "PGAPI_PutData";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	APDFields	*opts;
 	int			old_pos,
 				retval;
 	ParameterInfoClass *current_param;
@@ -841,6 +858,7 @@ PGAPI_PutData(
 		return SQL_INVALID_HANDLE;
 	}
 
+	opts = SC_get_APD(stmt);
 	if (stmt->current_exec_param < 0)
 	{
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -849,7 +867,7 @@ PGAPI_PutData(
 		return SQL_ERROR;
 	}
 
-	current_param = &(stmt->parameters[stmt->current_exec_param]);
+	current_param = &(opts->parameters[stmt->current_exec_param]);
 
 	if (!stmt->put_data)
 	{							/* first call */

@@ -53,9 +53,9 @@ set_statement_option(ConnectionClass *conn,
 		case SQL_BIND_TYPE:
 			/* now support multi-column and multi-row binding */
 			if (conn)
-				conn->stmtOptions.bind_size = vParam;
+				conn->ardOptions.bind_size = vParam;
 			if (stmt)
-				stmt->options.bind_size = vParam;
+				SC_get_ARD(stmt)->bind_size = vParam;
 			break;
 
 		case SQL_CONCURRENCY:
@@ -173,7 +173,7 @@ set_statement_option(ConnectionClass *conn,
 			 */
 
 			if (stmt && stmt->save_rowset_size <= 0 && stmt->last_fetch_count > 0)
-				stmt->save_rowset_size = stmt->options.rowset_size;
+				stmt->save_rowset_size = SC_get_ARD(stmt)->rowset_size;
 
 			if (vParam < 1)
 			{
@@ -182,9 +182,9 @@ set_statement_option(ConnectionClass *conn,
 			}
 
 			if (conn)
-				conn->stmtOptions.rowset_size = vParam;
+				conn->ardOptions.rowset_size = vParam;
 			if (stmt)
-				stmt->options.rowset_size = vParam;
+				SC_get_ARD(stmt)->rowset_size = vParam;
 			break;
 
 		case SQL_SIMULATE_CURSOR:		/* NOT SUPPORTED */
@@ -590,16 +590,16 @@ PGAPI_GetStmtOption(
 			break;
 
 		case SQL_BIND_TYPE:
-			*((SDWORD *) pvParam) = stmt->options.bind_size;
+			*((SDWORD *) pvParam) = SC_get_ARD(stmt)->bind_size;
 			break;
 
 		case SQL_CONCURRENCY:	/* NOT REALLY SUPPORTED */
-			mylog("GetStmtOption(): SQL_CONCURRENCY\n");
+			mylog("GetStmtOption(): SQL_CONCURRENCY %d\n", stmt->options.scroll_concurrency);
 			*((SDWORD *) pvParam) = stmt->options.scroll_concurrency;
 			break;
 
 		case SQL_CURSOR_TYPE:	/* PARTIAL SUPPORT */
-			mylog("GetStmtOption(): SQL_CURSOR_TYPE\n");
+			mylog("GetStmtOption(): SQL_CURSOR_TYPE %d\n", stmt->options.cursor_type);
 			*((SDWORD *) pvParam) = stmt->options.cursor_type;
 			break;
 
@@ -630,7 +630,7 @@ PGAPI_GetStmtOption(
 			break;
 
 		case SQL_ROWSET_SIZE:
-			*((SDWORD *) pvParam) = stmt->options.rowset_size;
+			*((SDWORD *) pvParam) = SC_get_ARD(stmt)->rowset_size;
 			break;
 
 		case SQL_SIMULATE_CURSOR:		/* NOT SUPPORTED */

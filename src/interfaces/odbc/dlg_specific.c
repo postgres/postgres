@@ -120,6 +120,9 @@ driver_optionsDraw(HWND hdlg, const ConnInfo *ci, int src, BOOL enable)
 	}
 
 	CheckDlgButton(hdlg, DRV_COMMLOG, comval->commlog);
+#ifndef Q_LOG
+	EnableWindow(GetDlgItem(hdlg, DRV_COMMLOG), FALSE);
+#endif /* Q_LOG */
 	CheckDlgButton(hdlg, DRV_OPTIMIZER, comval->disable_optimizer);
 	CheckDlgButton(hdlg, DRV_KSQO, comval->ksqo);
 	CheckDlgButton(hdlg, DRV_UNIQUEINDEX, comval->unique_index);
@@ -153,6 +156,9 @@ driver_optionsDraw(HWND hdlg, const ConnInfo *ci, int src, BOOL enable)
 	CheckDlgButton(hdlg, DRV_PARSE, comval->parse);
 	CheckDlgButton(hdlg, DRV_CANCELASFREESTMT, comval->cancel_as_freestmt);
 	CheckDlgButton(hdlg, DRV_DEBUG, comval->debug);
+#ifndef MY_LOG
+	EnableWindow(GetDlgItem(hdlg, DRV_DEBUG), FALSE);
+#endif /* MY_LOG */
 	SetDlgItemInt(hdlg, DRV_CACHE_SIZE, comval->fetch_max, FALSE);
 	SetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, comval->max_varchar_size, FALSE);
 	SetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, comval->max_longvarchar_size, TRUE);
@@ -221,7 +227,7 @@ driver_options_update(HWND hdlg, ConnInfo *ci, BOOL updateProfile)
 
 int			CALLBACK
 driver_optionsProc(HWND hdlg,
-				   WORD wMsg,
+				   UINT wMsg,
 				   WPARAM wParam,
 				   LPARAM lParam)
 {
@@ -293,7 +299,7 @@ driver_optionsProc(HWND hdlg,
 
 int			CALLBACK
 ds_optionsProc(HWND hdlg,
-			   WORD wMsg,
+			   UINT wMsg,
 			   WPARAM wParam,
 			   LPARAM lParam)
 {
@@ -334,6 +340,10 @@ ds_optionsProc(HWND hdlg,
 			CheckDlgButton(hdlg, DS_DISALLOWPREMATURE, ci->disallow_premature);
 			CheckDlgButton(hdlg, DS_LFCONVERSION, ci->lf_conversion);
 			CheckDlgButton(hdlg, DS_TRUEISMINUS1, ci->true_is_minus1);
+			CheckDlgButton(hdlg, DS_UPDATABLECURSORS, ci->updatable_cursors);
+#ifndef DRIVER_CURSOR_IMPLEMENT
+			EnableWindow(GetDlgItem(hdlg, DS_UPDATABLECURSORS), FALSE);
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 
 			EnableWindow(GetDlgItem(hdlg, DS_FAKEOIDINDEX), atoi(ci->show_oid_column));
 
@@ -371,6 +381,9 @@ ds_optionsProc(HWND hdlg,
 					ci->disallow_premature = IsDlgButtonChecked(hdlg, DS_DISALLOWPREMATURE);
 					ci->lf_conversion = IsDlgButtonChecked(hdlg, DS_LFCONVERSION);
 					ci->true_is_minus1 = IsDlgButtonChecked(hdlg, DS_TRUEISMINUS1);
+#ifdef DRIVER_CURSOR_IMPLEMENT
+					ci->updatable_cursors = IsDlgButtonChecked(hdlg, DS_UPDATABLECURSORS);
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 
 					/* OID Options */
 					sprintf(ci->fake_oid_index, "%d", IsDlgButtonChecked(hdlg, DS_FAKEOIDINDEX));

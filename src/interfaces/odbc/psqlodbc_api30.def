@@ -74,9 +74,9 @@ SQLSetDescField @96
 SQLSetDescRec @97
 SQLSetEnvAttr @98
 SQLSetStmtAttr @99
+SQLBulkOperations @100
 
 SQLDummyOrdinal @199
 dconn_FDriverConnectProc @200
 DllMain @201
 ConfigDSN @202
-

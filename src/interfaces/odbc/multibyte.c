@@ -59,7 +59,7 @@ pg_CS CS_Table[] =
 	{ "OTHER", OTHER }
 };
 
-int
+static int
 pg_ismb(int characterset_code)
 {
 	int i=0,MB_CHARACTERSET[]={EUC_JP,EUC_CN,EUC_KR,EUC_TW,UTF8,MULE_INTERNAL,SJIS,BIG5,GBK,UHC,JOHAB};
@@ -228,8 +228,8 @@ pg_CS_stat(int stat,unsigned int character,int characterset_code)
 					character > 0xa0)
 					stat = 3;
 				else if (stat == 3 ||
-					(stat < 2 &&
-					character > 0xa0))
+					stat < 2 &&
+					character > 0xa0)
 					stat = 2;
 				else if (stat == 2)
 					stat = 1;

@@ -94,7 +94,7 @@ PGAPI_StmtError(	HSTMT hstmt,
 	StatementClass *stmt = (StatementClass *) hstmt;
 	char		*msg;
 	int		status;
-	BOOL	partial_ok = ((flag & PODBC_ALLOW_PARTIAL_EXTRACT) != 0),
+	BOOL		partial_ok = ((flag & PODBC_ALLOW_PARTIAL_EXTRACT) != 0),
 			clear_str = ((flag & PODBC_ERROR_CLEAR) != 0);
 	SWORD		msglen, stapos, wrtlen, pcblen;
 
@@ -275,6 +275,9 @@ PGAPI_StmtError(	HSTMT hstmt,
 			case STMT_OPERATION_INVALID:
 				strcpy(szSqlState, "S1011");
 				break;
+			case STMT_INVALID_DESCRIPTOR_IDENTIFIER:
+				strcpy(szSqlState, "HY091");
+				break;
 			case STMT_INVALID_OPTION_IDENTIFIER:
 				strcpy(szSqlState, "HY092");
 				break;
@@ -313,6 +316,7 @@ PGAPI_ConnectError(	HDBC hdbc,
 	BOOL	once_again = FALSE;
 	SWORD		msglen;
 
+	mylog("**** PGAPI_ConnectError: hdbc=%u <%d>\n", hdbc, cbErrorMsgMax);
 	if (RecNumber != 1)
 		return SQL_NO_DATA_FOUND;
 	if (cbErrorMsgMax < 0)
@@ -361,6 +365,7 @@ PGAPI_ConnectError(	HDBC hdbc,
 				strcpy(szSqlState, "IM002");
 				/* data source not found */
 				break;
+			case CONNECTION_SERVER_NOT_REACHED:
 			case CONN_OPENDB_ERROR:
 				strcpy(szSqlState, "08001");
 				/* unable to connect to data source */
@@ -413,6 +418,7 @@ PGAPI_ConnectError(	HDBC hdbc,
 				break;
 		}
 
+	mylog("	     szSqlState = '%s',len=%d, szError='%s'\n", szSqlState, msglen, szErrorMsg);
 	if (once_again)
 	{
 		conn->errornumber = status;
@@ -436,6 +442,7 @@ PGAPI_EnvError(		HENV henv,
 	char		*msg;
 	int		status;
 
+	mylog("**** PGAPI_EnvError: henv=%u <%d>\n", henv, cbErrorMsgMax);
 	if (RecNumber != 1)
 		return SQL_NO_DATA_FOUND;
 	if (cbErrorMsgMax < 0)
@@ -567,7 +574,7 @@ EN_Destructor(EnvironmentClass *self)
 
 	mylog("exit EN_Destructor: rv = %d\n", rv);
 #ifdef	_MEMORY_DEBUG_
-	debug_memory_inouecheck();
+	debug_memory_check();
 #endif   /* _MEMORY_DEBUG_ */
 	return rv;
 }

@@ -280,5 +280,8 @@ RETCODE SQL_API PGAPI_SetStmtAttr(HSTMT StatementHandle,
 RETCODE SQL_API PGAPI_SetDescField(SQLHDESC DescriptorHandle,
 			SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
 			PTR Value, SQLINTEGER BufferLength);
+RETCODE SQL_API PGAPI_GetDescField(SQLHDESC DescriptorHandle,
+			SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
+			PTR Value, SQLINTEGER BufferLength, SQLINTEGER *StringLength);
 #endif /* ODBCVER */
 #endif   /* define_PG_API_FUNC_H__ */

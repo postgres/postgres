@@ -36,17 +36,18 @@
 #define MYLOGDIR			"/tmp"
 #else
 #define MYLOGDIR			"c:"
-#endif
+#endif /* WIN32 */
 extern void mylog(char *fmt,...);
-#define	inolog	mylog	/* for really temporary debug */
 
 #else
 #ifndef WIN32
 #define mylog(args...)			/* GNU convention for variable arguments */
 #else
-#define mylog					/* mylog */
-#endif
-#endif
+extern void MyLog(char *fmt,...);
+#define mylog	if (0) MyLog		/* mylog */
+#endif /* WIN32 */
+#endif /* MY_LOG */
+#define	inolog	mylog	/* for really temporary debug */
 
 #ifdef Q_LOG
 #define QLOGFILE			"psqlodbc_"
@@ -64,6 +65,7 @@ extern void qlog(char *fmt,...);
 #define qlog					/* qlog */
 #endif
 #endif
+#define	inoqlog	qlog
 
 #ifndef WIN32
 #define DIRSEPARATOR		"/"

@@ -38,10 +38,21 @@ struct KeySet_
 	UDWORD	blocknum;
 	UDWORD	oid;
 };
-#define	KEYSET_INFO_PUBLIC	0x0f
-#define	DRV_SELF_ADDED		(1L << 4)
-#define	DRV_SELF_DELETED	(1L << 5)
-#define	DRV_SELF_UPDATED	(1L << 6)
+/*	Rollback(index + original TID) info */
+struct Rollback_
+{
+	UDWORD	index;
+	UDWORD	blocknum;
+	UWORD	offset;
+};
+#define	KEYSET_INFO_PUBLIC	0x07
+#define	CURS_SELF_ADDING	(1L << 3)
+#define	CURS_SELF_DELETING	(1L << 4)
+#define	CURS_SELF_UPDATING	(1L << 5)
+#define	CURS_SELF_ADDED		(1L << 6)
+#define	CURS_SELF_DELETED	(1L << 7)
+#define	CURS_SELF_UPDATED	(1L << 8)
+#define	CURS_NEEDS_REREAD	(1L << 9)
 
 /*	These macros are wrappers for the corresponding set_tuplefield functions
 	but these handle automatic NULL determination and call set_tuplefield_null()

@@ -107,7 +107,7 @@ char	   *mapFuncs[][2] = {
 	{"DAYNAME",	 "to_char($1, 'Day')" },
 	{"DAYOFMONTH",  "cast(extract(day from $1) as integer)" },
 	{"DAYOFWEEK",	 "(cast(extract(dow from $1) as integer) + 1)" },
-	{"DAYOFYEAR",	 "cast(extract(doy from $1) as integer)" },
+	{"DAYOFYEAR",	 "cast(extract(doy from $1) as integer)" }, 
 	{"HOUR",	 "cast(extract(hour from $1) as integer)" },
 	{"MINUTE",	"cast(extract(minute from $1) as integer)" },
 	{"MONTH",	"cast(extract(month from $1) as integer)" },
@@ -311,8 +311,9 @@ stime2timestamp(const SIMPLE_TIME *st, char *str, BOOL bZone, BOOL precision)
 int
 copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
 {
-	BindInfoClass *bic = &(stmt->bindings[col]);
-	UInt4	offset = stmt->options.row_offset_ptr ? *stmt->options.row_offset_ptr : 0;
+	ARDFields *opts = SC_get_ARD(stmt);
+	BindInfoClass *bic = &(opts->bindings[col]);
+	UInt4	offset = opts->row_offset_ptr ? *opts->row_offset_ptr : 0;
 
 	return copy_and_convert_field(stmt, field_type, value, (Int2) bic->returntype, (PTR) (bic->buffer + offset),
 							 (SDWORD) bic->buflen, (SDWORD *) (bic->used + (offset >> 2)));
@@ -325,6 +326,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
 {
 	static char *func = "copy_and_convert_field";
+	ARDFields	*opts = SC_get_ARD(stmt);
 	Int4		len = 0,
 				copy_len = 0;
 	SIMPLE_TIME st;
@@ -335,7 +337,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	char	   *rgbValueBindRow;
 	const char *ptr;
 	int			bind_row = stmt->bind_row;
-	int			bind_size = stmt->options.bind_size;
+	int			bind_size = opts->bind_size;
 	int			result = COPY_OK;
 	BOOL		changed, true_is_minus1 = FALSE;
 	const char *neut_str = value;
@@ -349,7 +351,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 	if (stmt->current_col >= 0)
 	{
-		pbic = &stmt->bindings[stmt->current_col];
+		pbic = &opts->bindings[stmt->current_col];
 		if (pbic->data_left == -2)
 			pbic->data_left = (cbValueMax > 0) ? 0 : -1; /* This seems to be *
 						 * needed for ADO ? */
@@ -404,7 +406,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		else
 		{
 			stmt->errornumber = STMT_RETURN_NULL_WITHOUT_INDICATOR;
-			stmt->errormsg = "StrLen_or_IndPtr was a null pointer and NULL data was retrieved";
+			stmt->errormsg = "StrLen_or_IndPtr was a null pointer and NULL data was retrieved";	
 			SC_log_error(func, "", stmt);
 			return	SQL_ERROR;
 		}
@@ -651,7 +653,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					pbic->data_left = -1;
 				}
 				else
-					pbic = &stmt->bindings[stmt->current_col];
+					pbic = &opts->bindings[stmt->current_col];
 				if (pbic->data_left < 0)
 				{
 					BOOL lf_conv = SC_get_conn(stmt)->connInfo.lf_conversion;
@@ -759,7 +761,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				if (cbValueMax < 2 * (SDWORD) ucount)
 					result = COPY_RESULT_TRUNCATED;
 				len = ucount * 2;
-				free(str);
+				free(str); 
 			}
 			else
 			{
@@ -923,6 +925,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 			case SQL_C_ULONG:
 				len = 4;
+inolog("rgb=%x + %d, pcb=%x, set %s\n", rgbValue, bind_row * bind_size, pcbValue, neut_str);
 				if (bind_size > 0)
 					*(UDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(neut_str);
 				else
@@ -960,7 +963,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					pbic->data_left = -1;
 				}
 				else
-					pbic = &stmt->bindings[stmt->current_col];
+					pbic = &opts->bindings[stmt->current_col];
 				if (!pbic->ttlbuf)
 					pbic->ttlbuflen = 0;
 				if (len = strlen(neut_str), len >= (int) pbic->ttlbuflen)
@@ -1026,7 +1029,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = len;
 
 	if (result == COPY_OK && stmt->current_col >= 0)
-		stmt->bindings[stmt->current_col].data_left = 0;
+		opts->bindings[stmt->current_col].data_left = 0;
 	return result;
 
 }
@@ -1283,16 +1286,14 @@ copy_statement_with_parameters(StatementClass *stmt)
 	char		token_save[64];
 	int			token_len;
 	BOOL		prev_token_end;
-	UInt4	offset = stmt->options.param_offset_ptr ? *stmt->options.param_offset_ptr : 0;
+	APDFields	*opts = SC_get_APD(stmt);
+	UInt4	offset = opts->param_offset_ptr ? *opts->param_offset_ptr : 0;
 	UInt4	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
 	BOOL	lf_conv = ci->lf_conversion;
 #ifdef MULTIBYTE
 	encoded_str	encstr;
 #endif   /* MULTIBYTE */
 
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-	BOOL		search_from_pos = FALSE;
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	Int4	from_pos = -1, where_pos = -1;
 
 	if (ci->disallow_premature)
@@ -1324,17 +1325,20 @@ copy_statement_with_parameters(StatementClass *stmt)
 	{
 		if (stmt->parse_status == STMT_PARSE_NONE)
 			parse_statement(stmt);
-		if (stmt->parse_status != STMT_PARSE_COMPLETE)
+		/*if (stmt->parse_status != STMT_PARSE_COMPLETE)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-		else if (!stmt->ti || stmt->ntab != 1)
+		else*/ if (!stmt->updatable)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else
 		{
-			/** search_from_pos = TRUE; **/
 			from_pos = stmt->from_pos;
 			where_pos = stmt->where_pos;
 		}
 	}
+#else
+	stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	if (stmt->options.cursor_type == SQL_CURSOR_KEYSET_DRIVEN)
+		stmt->options.cursor_type = SQL_CURSOR_FORWARD_ONLY;
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 
 	/* If the application hasn't set a cursor name, then generate one */
@@ -1433,8 +1437,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 */
 		else if (oldchar == '{')
 		{
-			char	   *begin = &old_statement[opos];
-			const char *end;
+			const char	*begin = &old_statement[opos], *end;
 
 			/* procedure calls */
 			if (stmt->statement_type == STMT_TYPE_PROCCALL)
@@ -1466,8 +1469,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 					proc_no_param = FALSE;
 				continue;
 			}
-			if (convert_escape(begin, stmt, &npos, &new_stsize, &end) !=
-				CONVERT_ESCAPE_OK)
+			if (convert_escape(begin, stmt, &npos, &new_stsize, &end
+) != CONVERT_ESCAPE_OK)
 			{
 				stmt->errormsg = "ODBC escape convert error";
 				stmt->errornumber = STMT_EXEC_ERROR;
@@ -1522,15 +1525,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 								memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
 								npos -= declare_pos;
 							}
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-							else if (search_from_pos && /* where's from clause */
-									 strnicmp(token_save, "from", 4) == 0)
-							{
-								search_from_pos = FALSE;
-								npos -= 5;
-								CVT_APPEND_STR(", CTID, OID from");
-							}
-#endif   /* DRIVER_CURSOR_IMPLEMENT */
 						}
 						if (token_len == 3)
 						{
@@ -1574,7 +1568,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 */
 		param_number++;
 
-		if (param_number >= stmt->parameters_allocated)
+		if (param_number >= opts->allocated)
 		{
 			if (stmt->pre_executing)
 			{
@@ -1590,34 +1584,34 @@ copy_statement_with_parameters(StatementClass *stmt)
 		}
 
 		/* Assign correct buffers based on data at exec param or not */
-		if (stmt->parameters[param_number].data_at_exec)
+		if (opts->parameters[param_number].data_at_exec)
 		{
-			used = stmt->parameters[param_number].EXEC_used ? *stmt->parameters[param_number].EXEC_used : SQL_NTS;
-			buffer = stmt->parameters[param_number].EXEC_buffer;
+			used = opts->parameters[param_number].EXEC_used ? *opts->parameters[param_number].EXEC_used : SQL_NTS;
+			buffer = opts->parameters[param_number].EXEC_buffer;
 		}
 		else
 		{
-			UInt4	bind_size = stmt->options.param_bind_type;
+			UInt4	bind_size = opts->param_bind_type;
 			UInt4	ctypelen;
 
-			buffer = stmt->parameters[param_number].buffer + offset;
+			buffer = opts->parameters[param_number].buffer + offset;
 			if (current_row > 0)
 			{
 				if (bind_size > 0)
 					buffer += (bind_size * current_row);
-				else if (ctypelen = ctype_length(stmt->parameters[param_number].CType), ctypelen > 0)
+				else if (ctypelen = ctype_length(opts->parameters[param_number].CType), ctypelen > 0)
 					buffer += current_row * ctypelen;
-				else
-					buffer += current_row * stmt->parameters[param_number].buflen;
+				else 
+					buffer += current_row * opts->parameters[param_number].buflen;
 			}
-			if (stmt->parameters[param_number].used)
+			if (opts->parameters[param_number].used)
 			{
 				UInt4	p_offset = offset;
 				if (bind_size > 0)
 					p_offset = offset + bind_size * current_row;
 				else
 					p_offset = offset + sizeof(SDWORD) * current_row;
-				used = *(SDWORD *)((char *)stmt->parameters[param_number].used + p_offset);
+				used = *(SDWORD *)((char *)opts->parameters[param_number].used + p_offset);
 			}
 			else
 				used = SQL_NTS;
@@ -1649,8 +1643,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 			}
 		}
 
-		param_ctype = stmt->parameters[param_number].CType;
-		param_sqltype = stmt->parameters[param_number].SQLType;
+		param_ctype = opts->parameters[param_number].CType;
+		param_sqltype = opts->parameters[param_number].SQLType;
 
 		mylog("copy_statement_with_params: from(fcType)=%d, to(fSqlType)=%d\n", param_ctype, param_sqltype);
 
@@ -1907,8 +1901,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_LONGVARBINARY:
 
-				if (stmt->parameters[param_number].data_at_exec)
-					lobj_oid = stmt->parameters[param_number].lobj_oid;
+				if (opts->parameters[param_number].data_at_exec)
+					lobj_oid = opts->parameters[param_number].lobj_oid;
 				else
 				{
 					/* begin transaction if needed */
@@ -2048,13 +2042,14 @@ copy_statement_with_parameters(StatementClass *stmt)
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	if (search_from_pos)
-		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 	if (!stmt->load_statement && from_pos >=0)
 	{
 		stmt->load_statement = malloc(npos + 1);
 		memcpy(stmt->load_statement, new_statement, npos);
-		stmt->load_statement[npos] = '\0';
+		if (stmt->load_statement[npos - 1] == ';')
+			stmt->load_statement[npos - 1] = '\0';
+		else
+			stmt->load_statement[npos] = '\0';
 	}
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
@@ -2083,7 +2078,7 @@ mapFunction(const char *func, int param_count)
 		if (mapFuncs[i][0][0] == '%')
 		{
 			if (mapFuncs[i][0][1] - '0' == param_count &&
-				!stricmp(mapFuncs[i][0] + 2, func))
+			    !stricmp(mapFuncs[i][0] + 2, func))
 				return mapFuncs[i][1];
 		}
 		else if (!stricmp(mapFuncs[i][0], func))
@@ -2101,7 +2096,7 @@ static int processParameters(const ConnectionClass *conn, const char *value, cha
  * inner_convert_escape()
  * work with embedded escapes sequences
  */
-
+     
 static
 int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		char *result, UInt4 maxLen, const char **input_resume,
@@ -2114,7 +2109,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	const char *valptr;
 	UInt4	vlen, prtlen, input_consumed, param_consumed, extra_len;
 	Int4	param_pos[16][2];
-
+ 
 	valptr = value;
 	if (*valptr == '{') /* skip the first { */
 		valptr++;
@@ -2126,7 +2121,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		valptr++;
 	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
 		valptr++;
-
+     
 	if (end = my_strchr(conn, valptr, '}'), NULL == end)
 	{
 		mylog("%s couldn't find the ending }\n",func);
@@ -2138,7 +2133,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	valnts[vlen] = '\0';
 	*input_resume = valptr + vlen; /* resume from the last } */
 	mylog("%s: key='%s', val='%s'\n", func, key, valnts);
-
+     
 	extra_len = 0;
 	if (isalnum(result[-1])) /* Avoid the concatenation of the function name with the previous word. Aceto */
 	{
@@ -2175,7 +2170,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	{
 		/* Literal; return the escape part as-is */
 		strncpy(result, valnts, maxLen);
-		prtlen = vlen;
+		prtlen = vlen; 
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
@@ -2186,7 +2181,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		char	*funcEnd = valnts;
 		char     svchar;
 		const char	*mapExpr;
-
+     
 		params[sizeof(params)-1] = '\0';
 
 		while ((*funcEnd != '\0') && (*funcEnd != '(') &&
@@ -2200,7 +2195,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 			funcEnd++;
 
 		/*
-		 * We expect left parenthesis here, else return fn body as-is
+ 		 * We expect left parenthesis here, else return fn body as-is
 		 * since it is one of those "function constants".
 		 */
 		if (*funcEnd != '(')
@@ -2216,7 +2211,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		 */
 
 		valptr += (UInt4)(funcEnd - valnts);
-		if (subret = processParameters(conn, valptr, params, sizeof(params) - 1, &input_consumed, &param_consumed, param_pos), CONVERT_ESCAPE_OK != subret)
+		if (subret = processParameters(conn, valptr, params, sizeof(params) - 1, &input_consumed, &param_consumed, param_pos), CONVERT_ESCAPE_OK != subret) 
 			return CONVERT_ESCAPE_ERROR;
 
 		for (param_count = 0;; param_count++)
@@ -2225,9 +2220,9 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 				break;
 		}
 		if (param_count == 1 &&
-			param_pos[0][1] < param_pos[0][0])
+		    param_pos[0][1] < param_pos[0][0])
 			param_count = 0;
-
+		
 		mapExpr = mapFunction(key, param_count);
 		if (mapExpr == NULL)
 			prtlen = snprintf(result, maxLen, "%s%s", key, params);
@@ -2259,7 +2254,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 				{
 					pidx = *mapptr - '0' - 1;
 					if (pidx < 0 ||
-						param_pos[pidx][0] <0)
+					    param_pos[pidx][0] < 0)
 					{
 						qlog("%s %dth param not found for the expression %s\n", pidx + 1, mapExpr);
 						return CONVERT_ESCAPE_ERROR;
@@ -2294,7 +2289,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		/* Bogus key, leave untranslated */
 		return CONVERT_ESCAPE_ERROR;
 	}
-
+     
 	if (count)
 		*count = prtlen + extra_len;
 	if (prtlen < 0 || prtlen >= maxLen) /* buffer overflow */
@@ -2304,12 +2299,12 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	}
 	return CONVERT_ESCAPE_OK;
 }
-
+     
 /*
  * processParameters()
  * Process function parameters and work with embedded escapes sequences.
  */
-
+     
 static
 int processParameters(const ConnectionClass *conn, const char *value,
 		char *result, UInt4 maxLen, UInt4 *input_consumed,
@@ -2324,7 +2319,7 @@ int processParameters(const ConnectionClass *conn, const char *value,
 #ifdef MULTIBYTE
 	encoded_str	encstr;
 #endif   /* MULTIBYTE */
-
+ 
 	buf[sizeof(buf)-1] = '\0';
 	innerParenthesis = 0;
 	in_quote = in_dquote = in_escape = leadingSpace = FALSE;
@@ -2403,7 +2398,7 @@ int processParameters(const ConnectionClass *conn, const char *value,
 				}
 				innerParenthesis++;
 				break;
-
+     
 			case ')':
 				innerParenthesis--;
 				if (0 == innerParenthesis)
@@ -2414,18 +2409,18 @@ int processParameters(const ConnectionClass *conn, const char *value,
 					param_pos[param_count][1] = -1;
 				}
 				break;
-
+     
 			case '}':
 				stop = TRUE;
 				break;
-
+     
 			case '{':
 				if (subret = inner_convert_escape(conn, valptr, buf, sizeof(buf) - 1, &valptr, &inner_count), CONVERT_ESCAPE_OK != subret)
 					return CONVERT_ESCAPE_ERROR;
-
+     
 				if (inner_count + count >= maxLen)
 					return CONVERT_ESCAPE_OVERFLOW;
-				memcpy(&result[count], buf, inner_count);
+				memcpy(&result[count], buf, inner_count); 
 				count += inner_count;
 				ipos = (UInt4) (valptr - value);
 				continue;
@@ -2445,15 +2440,14 @@ int processParameters(const ConnectionClass *conn, const char *value,
 		*output_count = count;
 	return CONVERT_ESCAPE_OK;
 }
-
+     
 /*
  * convert_escape()
  * This function returns a pointer to static memory!
  */
-
+     
 int
-convert_escape(const char *value, StatementClass *stmt, int *npos, int *stsize,
-			   const char **val_resume)
+convert_escape(const char *value, StatementClass *stmt, int *npos, int *stsize, const char **val_resume)
 {
 	int	ret, pos = *npos;
 	UInt4 	count;
@@ -2920,12 +2914,13 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 	BindInfoClass *bindInfo = NULL;
 	ConnectionClass *conn = SC_get_conn(stmt);
 	ConnInfo   *ci = &(conn->connInfo);
+	ARDFields	*opts = SC_get_ARD(stmt);
 	int			factor = (fCType == SQL_C_CHAR ? 2 : 1);
 
 	/* If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)
 	{
-		bindInfo = &stmt->bindings[stmt->current_col];
+		bindInfo = &opts->bindings[stmt->current_col];
 		left = bindInfo->data_left;
 	}
 

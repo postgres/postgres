@@ -117,6 +117,10 @@ PGAPI_AllocStmt(HDBC hdbc,
 
 	/* Copy default statement options based from Connection options */
 	stmt->options = conn->stmtOptions;
+	stmt->ardopts = conn->ardOptions;
+	stmt->ardopts.bookmark = (BindInfoClass *) malloc(sizeof(BindInfoClass));
+	stmt->ardopts.bookmark->buffer = NULL;
+	stmt->ardopts.bookmark->used = NULL;
 
 	stmt->stmt_size_limit = CC_get_max_query_len(conn);
 	/* Save the handle for later */
@@ -205,17 +209,35 @@ void
 InitializeStatementOptions(StatementOptions *opt)
 {
 	memset(opt, 0, sizeof(StatementOptions));
-	opt->maxRows = 0;			/* driver returns all rows */
-	opt->maxLength = 0;			/* driver returns all data for char/binary */
-	opt->rowset_size = 1;
+	opt->maxRows = 0;		/* driver returns all rows */
+	opt->maxLength = 0;		/* driver returns all data for char/binary */
 	opt->keyset_size = 0;		/* fully keyset driven is the default */
 	opt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
 	opt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
-	opt->bind_size = 0;			/* default is to bind by column */
 	opt->retrieve_data = SQL_RD_ON;
 	opt->use_bookmarks = SQL_UB_OFF;
+}
+
+
+/*
+ * ARDFields initialize
+ */
+void
+InitializeARDFields(ARDFields *opt)
+{
+	memset(opt, 0, sizeof(ARDFields));
+	opt->rowset_size = 1;
+	opt->bind_size = 0;		/* default is to bind by column */
+}
+/*
+ * APDFields initialize
+ */
+void
+InitializeAPDFields(APDFields *opt)
+{
+	memset(opt, 0, sizeof(APDFields));
 	opt->paramset_size = 1;
-	opt->param_bind_type = 0;	/* default is column-wise binding */
+	opt->param_bind_type = 0;	/* default is to bind by column */
 }
 
 
@@ -246,15 +268,6 @@ SC_Constructor(void)
 		rv->stmt_size_limit = -1;
 		rv->statement_type = STMT_TYPE_UNKNOWN;
 
-		rv->bindings = NULL;
-		rv->bindings_allocated = 0;
-
-		rv->bookmark.buffer = NULL;
-		rv->bookmark.used = NULL;
-
-		rv->parameters_allocated = 0;
-		rv->parameters = 0;
-
 		rv->currTuple = -1;
 		rv->rowset_start = -1;
 		rv->current_col = -1;
@@ -274,21 +287,64 @@ SC_Constructor(void)
 
 		/* Parse Stuff */
 		rv->ti = NULL;
-		rv->fi = NULL;
 		rv->ntab = 0;
-		rv->nfld = 0;
 		rv->parse_status = STMT_PARSE_NONE;
 
 		/* Clear Statement Options -- defaults will be set in AllocStmt */
 		memset(&rv->options, 0, sizeof(StatementOptions));
+		memset(&rv->ardopts, 0, sizeof(ARDFields));
+		memset(&rv->apdopts, 0, sizeof(APDFields));
+		memset(&rv->irdopts, 0, sizeof(IRDFields));
+		memset(&rv->ipdopts, 0, sizeof(IPDFields));
 
 		rv->pre_executing = FALSE;
 		rv->inaccurate_result = FALSE;
 		rv->miscinfo = 0;
+		rv->updatable = FALSE;
 	}
 	return rv;
 }
 
+
+void ARDFields_free(ARDFields * self)
+{
+	if (self->bookmark)
+	{
+		free(self->bookmark);
+		self->bookmark = NULL;
+	}
+	/*
+	 * the memory pointed to by the bindings is not deallocated by the
+	 * driver but by the application that uses that driver, so we don't
+	 * have to care
+	 */
+	ARD_unbind_cols(self, TRUE);
+}
+
+void APDFields_free(APDFields * self)
+{
+	/* param bindings */
+	APD_free_params(self, STMT_FREE_PARAMS_ALL);
+}
+
+void IRDFields_free(IRDFields * self)
+{
+	/* Free the parsed field information */
+	if (self->fi)
+	{
+		int			i;
+
+		for (i = 0; i < (int) self->nfields; i++)
+			if (self->fi[i])
+				free(self->fi[i]);
+		free(self->fi);
+		self->fi = NULL;
+	}
+}
+
+void IPDFields_free(IPDFields * self)
+{
+}
 
 char
 SC_Destructor(StatementClass *self)
@@ -322,47 +378,25 @@ SC_Destructor(StatementClass *self)
 	if (self->load_statement)
 		free(self->load_statement);
 
-	SC_free_params(self, STMT_FREE_PARAMS_ALL);
-
-	/*
-	 * the memory pointed to by the bindings is not deallocated by the
-	 * driver but by the application that uses that driver, so we don't
-	 * have to care
-	 */
-	/* about that here. */
-	if (self->bindings)
-	{
-		int			lf;
-
-		for (lf = 0; lf < self->bindings_allocated; lf++)
-		{
-			if (self->bindings[lf].ttlbuf != NULL)
-				free(self->bindings[lf].ttlbuf);
-		}
-		free(self->bindings);
-	}
-
-	/* Free the parsed table information */
+        /* Free the parsed table information */
 	if (self->ti)
 	{
-		int			i;
+		int	i;
 
 		for (i = 0; i < self->ntab; i++)
-			free(self->ti[i]);
+			if (self->ti[i]);
+				free(self->ti[i]);
 
 		free(self->ti);
+		self->ti = NULL;
 	}
 
 	/* Free the parsed field information */
-	if (self->fi)
-	{
-		int			i;
-
-		for (i = 0; i < self->nfld; i++)
-			free(self->fi[i]);
-		free(self->fi);
-	}
-
+	ARDFields_free(&(self->ardopts));
+	APDFields_free(&(self->apdopts));
+	IRDFields_free(&(self->irdopts));
+	IPDFields_free(&(self->ipdopts));
+	
 	free(self);
 
 	mylog("SC_Destructor: EXIT\n");
@@ -378,46 +412,16 @@ SC_Destructor(StatementClass *self)
 void
 SC_free_params(StatementClass *self, char option)
 {
-	int			i;
-
-	mylog("SC_free_params:  ENTER, self=%d\n", self);
-
-	if (!self->parameters)
-		return;
-
-	for (i = 0; i < self->parameters_allocated; i++)
-	{
-		if (self->parameters[i].data_at_exec == TRUE)
-		{
-			if (self->parameters[i].EXEC_used)
-			{
-				free(self->parameters[i].EXEC_used);
-				self->parameters[i].EXEC_used = NULL;
-			}
-
-			if (self->parameters[i].EXEC_buffer)
-			{
-				if (self->parameters[i].SQLType != SQL_LONGVARBINARY)
-					free(self->parameters[i].EXEC_buffer);
-				self->parameters[i].EXEC_buffer = NULL;
-			}
-		}
-	}
+	APD_free_params(SC_get_APD(self), option);
 	self->data_at_exec = -1;
 	self->current_exec_param = -1;
 	self->put_data = FALSE;
-
 	if (option == STMT_FREE_PARAMS_ALL)
 	{
-		free(self->parameters);
-		self->parameters = NULL;
-		self->parameters_allocated = 0;
 		self->exec_start_row = -1;
 		self->exec_end_row = -1;
 		self->exec_current_row = -1;
 	}
-
-	mylog("SC_free_params:  EXIT\n");
 }
 
 
@@ -493,31 +497,22 @@ SC_recycle_statement(StatementClass *self)
 			return FALSE;
 	}
 
-	/* Free the parsed table information */
+        /* Free the parsed table information */
 	if (self->ti)
 	{
-		int			i;
+		int	i;
 
 		for (i = 0; i < self->ntab; i++)
-			free(self->ti[i]);
-
-		free(self->ti);
+			if (self->ti)
+				free(self->ti);
 		self->ti = NULL;
 		self->ntab = 0;
 	}
-
 	/* Free the parsed field information */
-	if (self->fi)
-	{
-		int			i;
+	IRDFields_free(SC_get_IRD(self));
 
-		for (i = 0; i < self->nfld; i++)
-			free(self->fi[i]);
-		free(self->fi);
-		self->fi = NULL;
-		self->nfld = 0;
-	}
 	self->parse_status = STMT_PARSE_NONE;
+	self->updatable = FALSE;
 
 	/* Free any cursors */
 	if (res = SC_get_Result(self), res)
@@ -605,19 +600,11 @@ SC_pre_execute(StatementClass *self)
 char
 SC_unbind_cols(StatementClass *self)
 {
-	Int2		lf;
+	ARDFields	*opts = SC_get_ARD(self);
 
-	for (lf = 0; lf < self->bindings_allocated; lf++)
-	{
-		self->bindings[lf].data_left = -1;
-		self->bindings[lf].buflen = 0;
-		self->bindings[lf].buffer = NULL;
-		self->bindings[lf].used = NULL;
-		self->bindings[lf].returntype = SQL_C_CHAR;
-	}
-
-	self->bookmark.buffer = NULL;
-	self->bookmark.used = NULL;
+	ARD_unbind_cols(opts, FALSE);
+	opts->bookmark->buffer = NULL;
+	opts->bookmark->used = NULL;
 
 	return 1;
 }
@@ -732,6 +719,7 @@ SC_fetch(StatementClass *self)
 {
 	static char *func = "SC_fetch";
 	QResultClass *res = SC_get_Curres(self);
+	ARDFields	*opts;
 	int			retval,
 				result;
 
@@ -791,25 +779,26 @@ SC_fetch(StatementClass *self)
 	result = SQL_SUCCESS;
 	self->last_fetch_count = 1;
 
+	opts = SC_get_ARD(self);
 	/*
 	 * If the bookmark column was bound then return a bookmark. Since this
 	 * is used with SQLExtendedFetch, and the rowset size may be greater
 	 * than 1, and an application can use row or column wise binding, use
 	 * the code in copy_and_convert_field() to handle that.
 	 */
-	if (self->bookmark.buffer)
+	if (opts->bookmark->buffer)
 	{
 		char		buf[32];
-		UInt4	offset = self->options.row_offset_ptr ? *self->options.row_offset_ptr : 0;
+		UInt4	offset = opts->row_offset_ptr ? *opts->row_offset_ptr : 0;
 
 		sprintf(buf, "%ld", SC_get_bookmark(self));
 		result = copy_and_convert_field(self, 0, buf,
-			 SQL_C_ULONG, self->bookmark.buffer + offset, 0,
-			self->bookmark.used ? self->bookmark.used + (offset >> 2) : NULL);
+			 SQL_C_ULONG, opts->bookmark->buffer + offset, 0,
+			opts->bookmark->used ? opts->bookmark->used + (offset >> 2) : NULL);
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	if (self->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
+	if (res->haskeyset)
 	{
 		num_cols -= 2;
 	}
@@ -818,12 +807,12 @@ SC_fetch(StatementClass *self)
 		return SQL_SUCCESS;
 	for (lf = 0; lf < num_cols; lf++)
 	{
-		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
+		mylog("fetch: cols=%d, lf=%d, opts = %u, opts->bindings = %u, buffer[] = %u\n", num_cols, lf, opts, opts->bindings, opts->bindings[lf].buffer);
 
 		/* reset for SQLGetData */
-		self->bindings[lf].data_left = -1;
+		opts->bindings[lf].data_left = -1;
 
-		if (self->bindings[lf].buffer != NULL)
+		if (opts->bindings[lf].buffer != NULL)
 		{
 			/* this column has a binding */
 
@@ -871,7 +860,7 @@ SC_fetch(StatementClass *self)
 					self->errornumber = STMT_TRUNCATED;
 					self->errormsg = "Fetched item was truncated.";
 					qlog("The %dth item was truncated\n", lf + 1);
-					qlog("The buffer size = %d", self->bindings[lf].buflen);
+					qlog("The buffer size = %d", opts->bindings[lf].buflen);
 					qlog(" and the value is '%s'\n", value);
 					result = SQL_SUCCESS_WITH_INFO;
 					break;
@@ -905,12 +894,14 @@ SC_execute(StatementClass *self)
 {
 	static char *func = "SC_execute";
 	ConnectionClass *conn;
+	APDFields	*apdopts;
 	char		was_ok, was_nonfatal;
 	QResultClass	*res = NULL;
 	Int2		oldstatus,
 				numcols;
 	QueryInfo	qi;
 	ConnInfo   *ci;
+	UDWORD		qflag = 0;
 
 
 	conn = SC_get_conn(self);
@@ -931,13 +922,15 @@ SC_execute(StatementClass *self)
 		 (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
 	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
-		if (!CC_begin(conn))
-		{
-			self->errormsg = "Could not begin a transaction";
-			self->errornumber = STMT_EXEC_ERROR;
-			SC_log_error(func, "", self);
-			return SQL_ERROR;
-		}
+		if (PG_VERSION_GE(conn, 7.1))
+			qflag |= GO_INTO_TRANSACTION;
+                else if (!CC_begin(conn))
+                {
+                        self->errormsg = "Could not begin a transaction";
+                        self->errornumber = STMT_EXEC_ERROR;
+                        SC_log_error(func, "", self);
+                        return SQL_ERROR;
+                }
 	}
 
 	oldstatus = conn->status;
@@ -954,7 +947,7 @@ SC_execute(StatementClass *self)
 	if (self->statement_type == STMT_TYPE_SELECT)
 	{
 		char		fetch[128];
-		UDWORD	qflag = (SQL_CONCUR_ROWVER == self->options.scroll_concurrency ? CREATE_KEYSET : 0); 
+		qflag |= (SQL_CONCUR_READ_ONLY != self->options.scroll_concurrency ? CREATE_KEYSET : 0); 
 
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
 
@@ -964,6 +957,7 @@ SC_execute(StatementClass *self)
 			QR_command_successful(res))
 		{
 			QR_Destructor(res);
+			qflag &= (~ GO_INTO_TRANSACTION);
 
 			/*
 			 * That worked, so now send the fetch to start getting data
@@ -990,7 +984,7 @@ SC_execute(StatementClass *self)
 	{
 		/* not a SELECT statement so don't use a cursor */
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
-		res = CC_send_query(conn, self->stmt_with_params, NULL, 0);
+		res = CC_send_query(conn, self->stmt_with_params, NULL, qflag);
 
 		/*
 		 * We shouldn't send COMMIT. Postgres backend does the autocommit
@@ -1037,8 +1031,9 @@ SC_execute(StatementClass *self)
 			/* now allocate the array to hold the binding info */
 			if (numcols > 0)
 			{
-				extend_bindings(self, numcols);
-				if (self->bindings == NULL)
+				ARDFields	*opts = SC_get_ARD(self);
+				extend_column_bindings(opts, numcols);
+				if (opts->bindings == NULL)
 				{
 					QR_Destructor(res);
 					self->errornumber = STMT_NO_MEMORY_ERROR;
@@ -1083,12 +1078,13 @@ SC_execute(StatementClass *self)
 		last->next = res;
 	}
 
+	apdopts = SC_get_APD(self);
 	if (self->statement_type == STMT_TYPE_PROCCALL &&
 		(self->errornumber == STMT_OK ||
 		 self->errornumber == STMT_INFO_ONLY) &&
-		self->parameters &&
-		self->parameters[0].buffer &&
-		self->parameters[0].paramType == SQL_PARAM_OUTPUT)
+		apdopts->parameters &&
+		apdopts->parameters[0].buffer &&
+		apdopts->parameters[0].paramType == SQL_PARAM_OUTPUT)
 	{							/* get the return value of the procedure
 								 * call */
 		RETCODE		ret;
@@ -1097,7 +1093,7 @@ SC_execute(StatementClass *self)
 		ret = SC_fetch(hstmt);
 		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
 		{
-			ret = PGAPI_GetData(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
+			ret = PGAPI_GetData(hstmt, 1, apdopts->parameters[0].CType, apdopts->parameters[0].buffer, apdopts->parameters[0].buflen, apdopts->parameters[0].used);
 			if (ret != SQL_SUCCESS)
 			{
 				self->errornumber = STMT_EXEC_ERROR;
@@ -1133,19 +1129,21 @@ SC_log_error(const char *func, const char *desc, const StatementClass *self)
 	if (self)
 	{
 		QResultClass *res = SC_get_Result(self);
+		const ARDFields	*opts = SC_get_ARD(self);
+		const APDFields	*apdopts = SC_get_APD(self);
 
 		qlog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck(self->errormsg));
 		mylog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck(self->errormsg));
 		qlog("                 ------------------------------------------------------------\n");
 		qlog("                 hdbc=%u, stmt=%u, result=%u\n", self->hdbc, self, res);
 		qlog("                 manual_result=%d, prepare=%d, internal=%d\n", self->manual_result, self->prepare, self->internal);
-		qlog("                 bindings=%u, bindings_allocated=%d\n", self->bindings, self->bindings_allocated);
-		qlog("                 parameters=%u, parameters_allocated=%d\n", self->parameters, self->parameters_allocated);
+		qlog("                 bindings=%u, bindings_allocated=%d\n", opts->bindings, opts->allocated);
+		qlog("                 parameters=%u, parameters_allocated=%d\n", apdopts->parameters, apdopts->allocated);
 		qlog("                 statement_type=%d, statement='%s'\n", self->statement_type, nullcheck(self->statement));
 		qlog("                 stmt_with_params='%s'\n", nullcheck(self->stmt_with_params));
 		qlog("                 data_at_exec=%d, current_exec_param=%d, put_data=%d\n", self->data_at_exec, self->current_exec_param, self->put_data);
 		qlog("                 currTuple=%d, current_col=%d, lobj_fd=%d\n", self->currTuple, self->current_col, self->lobj_fd);
-		qlog("                 maxRows=%d, rowset_size=%d, keyset_size=%d, cursor_type=%d, scroll_concurrency=%d\n", self->options.maxRows, self->options.rowset_size, self->options.keyset_size, self->options.cursor_type, self->options.scroll_concurrency);
+		qlog("                 maxRows=%d, rowset_size=%d, keyset_size=%d, cursor_type=%d, scroll_concurrency=%d\n", self->options.maxRows, opts->rowset_size, self->options.keyset_size, self->options.cursor_type, self->options.scroll_concurrency);
 		qlog("                 cursor_name='%s'\n", nullcheck(self->cursor_name));
 
 		qlog("                 ----------------QResult Info -------------------------------\n");
