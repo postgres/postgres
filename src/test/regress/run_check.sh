@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.3 1999/11/21 01:53:39 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.4 1999/12/03 12:47:43 wieck Exp $
 
 # ----------
 # This is currently needed because the actual 7.0 psql makes
@@ -35,10 +35,12 @@ BINDIR=$CHKDIR/bin
 LOGDIR=$CHKDIR/log
 TIMDIR=$CHKDIR/timestamp
 PGPORT=65432
+PGLIB=$LIBDIR
 PMPID=
 
 export CHKDIR
 export PGDATA
+export PGLIB
 export LOGDIR
 export TIMDIR
 export PGPORT
