@@ -34,12 +34,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.42 1999/12/16 01:25:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.43 2000/02/27 01:26:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ..
-include ../Makefile.global
+include $(SRCDIR)/Makefile.global
 
 DIRS = access bootstrap catalog commands executor lib libpq \
 	main parser nodes optimizer port postmaster regex rewrite \
@@ -55,6 +55,8 @@ ifeq ($(PORTNAME), qnx4)
 OBJS1 = bootstrap/bootstrap.o
 endif
 
+VERSIONOBJ = $(SRCDIR)/utils/version.o
+
 # kerberos flags
 
 ifdef KRBVERS
@@ -63,14 +65,13 @@ LDFLAGS+= $(KRBLIBS)
 endif
 
 ifeq ($(MAKE_DLL), true)
-DLLOBJS=$(OBJS)
-DLLOBJS+= ../utils/version.o
+DLLOBJS= $(OBJS) $(VERSIONOBJ)
 DLLLIBS= -L/usr/local/lib -lcygipc -lcrypt -lcygwin -lkernel32
 
 postgres.def: $(DLLOBJS)
 	$(DLLTOOL) --export-all --output-def $@ $(DLLOBJS)
 
-libpostgres.a: $(DLLOBJS) ../utils/dllinit.o postgres.def
+libpostgres.a: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 endif
 
@@ -78,10 +79,10 @@ all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
 				global1.description local1_template1.description
 
 ifneq ($(PORTNAME), win)
-postgres: fmgr.h $(OBJS) ../utils/version.o
-	$(CC) -o postgres $(OBJS) $(OBJS1) ../utils/version.o $(LDFLAGS)
+postgres: fmgr.h $(OBJS) $(VERSIONOBJ)
+	$(CC) -o postgres $(OBJS) $(OBJS1) $(VERSIONOBJ) $(LDFLAGS)
 else
-postgres: $(DLLOBJS) ../utils/dllinit.o postgres.def libpostgres.a
+postgres: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(DLLOBJS) $(DLLLIBS)
 	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
@@ -96,11 +97,11 @@ $(OBJS): $(DIRS:%=%.dir)
 $(DIRS:%=%.dir):
 	$(MAKE) -C $(subst .dir,,$@) all 
 
-../utils/version.o:
-	$(MAKE) -C ../utils version.o
+$(VERSIONOBJ): $(SRCDIR)/utils/version.c $(SRCDIR)/include/version.h
+	$(MAKE) -C $(SRCDIR)/utils version.o
 
-../utils/dllinit.c:
-	$(MAKE) -C ../utils dllinit.o
+$(SRCDIR)/utils/dllinit.o: $(SRCDIR)/utils/dllinit.c
+	$(MAKE) -C $(SRCDIR)/utils dllinit.o
 
 global1.bki.source local1_template1.bki.source \
 global1.description local1_template1.description: catalog/$@
