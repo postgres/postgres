@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.14 1998/02/01 11:42:47 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.15 1998/02/01 11:46:10 scrappy Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -41,13 +41,13 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "=============== running regression queries...         ================="
-echo "" > regression.${SYSTEM}
+echo "" > regression.diffs
 for i in `cat sql/tests`
 do
 	$ECHO_N "${i} .. " $ECHO_C
 	$FRONTEND regression < sql/${i}.sql > results/${i}.out 2>&1
-  if [ -f expected/${i}-${SYSTEM}.out ]
-  then
+	if [ -f expected/${i}-${SYSTEM}.out ]
+	then
 		EXPECTED="expected/${i}-${SYSTEM}.out"
 	else
 		EXPECTED="expected/${i}.out"
@@ -56,9 +56,9 @@ do
 	if [ `diff ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
 	then
 		( diff -c ${EXPECTED} results/${i}.out; \
-			echo "";  \
-			echo "----------------------"; \
-			echo "" ) >> regression.${SYSTEM}
+		echo "";  \
+		echo "----------------------"; \
+		echo "" ) >> regression.diffs
 		echo failed
 	else
 		echo ok
