@@ -13,7 +13,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.2 2002/07/25 22:45:27 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.3 2002/07/26 05:29:34 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -77,6 +77,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
          * Cache of the current isolation level
          */
         private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
+
+
+        public abstract java.sql.Statement createStatement() throws SQLException;
+
 
         /*
          * This method actually opens the connection. It is called by Driver.
@@ -360,6 +364,8 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
         // This should make it easy to maintain the two specifications.
 
         public abstract java.sql.ResultSet getResultSet(Statement statement, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
+
+        public abstract java.sql.ResultSet getResultSet(Statement statement, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount) throws SQLException;
 
         /*
          * This adds a warning to the warning chain.

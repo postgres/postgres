@@ -6,7 +6,7 @@ import java.sql.*;
 import org.postgresql.Field;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.3 2002/07/25 22:45:28 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.4 2002/07/26 05:29:35 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC1.
  * However most of the implementation is really done in 
  * org.postgresql.jdbc1.AbstractJdbc1Connection
@@ -32,7 +32,7 @@ public class Jdbc1Connection extends org.postgresql.jdbc1.AbstractJdbc1Connectio
 	public java.sql.DatabaseMetaData getMetaData() throws SQLException
 	{
 		if (metadata == null)
-			metadata = new org.postgresql.jdbc1.DatabaseMetaData(this);
+			metadata = new org.postgresql.jdbc1.Jdbc1DatabaseMetaData(this);
 		return metadata;
 	}
 

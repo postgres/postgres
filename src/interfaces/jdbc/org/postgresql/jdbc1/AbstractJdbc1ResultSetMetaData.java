@@ -1,26 +1,17 @@
-package org.postgresql.jdbc2;
+package org.postgresql.jdbc1;
 
-// IMPORTANT NOTE: This file implements the JDBC 2 version of the driver.
-// If you make any modifications to this file, you must make sure that the
-// changes are also made (if relevent) to the related JDBC 1 class in the
-// org.postgresql.jdbc1 package.
 
 import java.lang.*;
-import java.sql.*;
 import java.util.*;
 import org.postgresql.*;
 import org.postgresql.util.*;
+import java.sql.SQLException;
+import java.sql.Types;
 
-/**
- * A ResultSetMetaData object can be used to find out about the types and
- * properties of the columns in a ResultSet
- *
- * @see java.sql.ResultSetMetaData
- */
-public class ResultSetMetaData implements java.sql.ResultSetMetaData
+public abstract class AbstractJdbc1ResultSetMetaData 
 {
-	Vector rows;
-	Field[] fields;
+	protected Vector rows;
+	protected Field[] fields;
 
 	/*
 	 *	Initialise for a result with a tuple set and
@@ -29,7 +20,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	 * @param rows the Vector of rows returned by the ResultSet
 	 * @param fields the array of field descriptors
 	 */
-	public ResultSetMetaData(Vector rows, Field[] fields)
+	public AbstractJdbc1ResultSetMetaData(Vector rows, Field[] fields)
 	{
 		this.rows = rows;
 		this.fields = fields;
@@ -144,7 +135,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		 * defined with NOT NULL or PRIMARY KEY, CHECK constraints, views,
 		 * functions etc.
 		 */
-		return columnNullableUnknown;
+		return java.sql.ResultSetMetaData.columnNullableUnknown;
 	}
 
 	/*
@@ -403,7 +394,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return getField(column).getPGType();
 	}
 
-	/**
+	/*
 	 * Is the column definitely not writable?  In reality, we would
 	 * have to check the GRANT/REVOKE stuff for this to be effective,
 	 * and I haven't really looked into that yet, so this will get
@@ -418,7 +409,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Is it possible for a write on the column to succeed?  Again, we
 	 * would in reality have to check the GRANT/REVOKE stuff, which
 	 * I haven't worked with as yet.  However, if it isn't ReadOnly, then
@@ -433,7 +424,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return !isReadOnly(column);
 	}
 
-	/**
+	/*
 	 * Will a write on this column definately succeed?	Hmmm...this
 	 * is a bad one, since the two preceding functions have not been
 	 * really defined.	I cannot tell is the short answer.	I thus
@@ -452,7 +443,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	//	END OF PUBLIC INTERFACE
 	// ********************************************************
 
-	/**
+	/*
 	 * For several routines in this package, we need to convert
 	 * a columnIndex into a Field[] descriptor.  Rather than do
 	 * the same code several times, here it is.
@@ -466,101 +457,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		if (columnIndex < 1 || columnIndex > fields.length)
 			throw new PSQLException("postgresql.res.colrange");
 		return fields[columnIndex - 1];
-	}
-
-	// ** JDBC 2 Extensions **
-
-	// This can hook into our PG_Object mechanism
-	/**
-	 * Returns the fully-qualified name of the Java class whose instances 
-	 * are manufactured if the method <code>ResultSet.getObject</code>
-	 * is called to retrieve a value from the column.
-	 * 
-	 * <code>ResultSet.getObject</code> may return a subclass of the class
-	 * returned by this method.
-	 *
-	 * @param column the first column is 1, the second is 2, ...
-	 * @return the fully-qualified name of the class in the Java programming
-	 *         language that would be used by the method
-	 *         <code>ResultSet.getObject</code> to retrieve the value in the specified
-	 *         column. This is the class name used for custom mapping.
-	 * @exception SQLException if a database access error occurs
-	 */
-	public String getColumnClassName(int column) throws SQLException
-	{
- /*
-     The following data type mapping came from ../Field.java.
-
-     "int2",
-     "int4","oid",
-     "int8",
-     "cash","money",
-     "numeric",
-     "float4",
-     "float8",
-     "bpchar","char","char2","char4","char8","char16",
-     "varchar","text","name","filename",
-     "bool",
-     "date",
-     "time",
-     "abstime","timestamp"
-
-     Types.SMALLINT,
-     Types.INTEGER,Types.INTEGER,
-     Types.BIGINT,
-     Types.DOUBLE,Types.DOUBLE,
-     Types.NUMERIC,
-     Types.REAL,
-     Types.DOUBLE,
-     Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,
-     Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,
-     Types.BIT,
-     Types.DATE,
-     Types.TIME,
-     Types.TIMESTAMP,Types.TIMESTAMP
- */
-
-		Field field = getField(column);
-		int sql_type = field.getSQLType();
-
-		switch (sql_type)
-		{
-			case Types.BIT:
-				return("java.lang.Boolean");
-			case Types.SMALLINT:
-				return("java.lang.Short");
-			case Types.INTEGER:
-				return("java.lang.Integer");
-			case Types.BIGINT:
-				return("java.lang.Long");
-			case Types.NUMERIC:
-				return("java.math.BigDecimal");
-			case Types.REAL:
-				return("java.lang.Float");
-			case Types.DOUBLE:
-				return("java.lang.Double");
-			case Types.CHAR:
-			case Types.VARCHAR:
-				return("java.lang.String");
-			case Types.DATE:
-				return("java.sql.Date");
-			case Types.TIME:
-				return("java.sql.Time");
-			case Types.TIMESTAMP:
-				return("java.sql.Timestamp");
-			case Types.BINARY:
-			case Types.VARBINARY:
-				return("[B");
-			case Types.ARRAY:
-				return("java.sql.Array");
-			default:
-				String type = field.getPGType();
-				if ("unknown".equals(type))
-				{
-					return("java.lang.String");
-				}
-				return("java.lang.Object");
-		}
 	}
 }
 

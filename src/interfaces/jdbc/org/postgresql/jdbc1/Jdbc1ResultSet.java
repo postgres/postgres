@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.Vector;
 import org.postgresql.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1ResultSet.java,v 1.2 2002/07/25 22:45:28 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1ResultSet.java,v 1.3 2002/07/26 05:29:35 barry Exp $
  * This class implements the java.sql.ResultSet interface for JDBC1.
  * However most of the implementation is really done in 
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet
@@ -20,7 +20,7 @@ public class Jdbc1ResultSet extends org.postgresql.jdbc1.AbstractJdbc1ResultSet 
 
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException
 	{
-		return new ResultSetMetaData(rows, fields);
+		return new Jdbc1ResultSetMetaData(rows, fields);
 	}
 
 }
