@@ -22,12 +22,11 @@ to your /etc/login.conf file.
 mind that shared memory is not pageable.  It is locked in RAM.
 
 To increase the number of buffers supported by the postmaseter, add the
-following to your kernel config file.  A SHMMAXPGS value of 1024 
+following to your kernel config file.  A SHMALL value of 1024 
 represents 4MB of shared memory.  Increase it accordingly:
 
-options "SHMMAXPGS=4096"
-
-The default is 1024 which allows a maximum of 4MB of shared memory.
+options "SHMALL=4096"
+options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
 
 For those running 4.1 or later, just recompile the kernel and reboot. 
 For those running earlier releases, see step 2b.
