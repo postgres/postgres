@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.88 2000/04/12 17:15:14 momjian Exp $
+ *	$Id: pqcomm.c,v 1.89 2000/04/14 00:51:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,11 +205,8 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 		return STATUS_ERROR;
 	}
 
-#ifdef ONLY_REUSE_INET_SOCKETS
 	if (family == AF_INET)
 	{
-#endif
-
 		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 						sizeof(one))) == -1)
 		{
@@ -220,10 +217,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 			pqdebug("%s", PQerrormsg);
 			return STATUS_ERROR;
 		}
-
-#ifdef ONLY_REUSE_INET_SOCKETS
 	}
-#endif
 
 	MemSet((char *) &saddr, 0, sizeof(saddr));
 	saddr.sa.sa_family = family;

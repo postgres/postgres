@@ -2,8 +2,6 @@
 #define NOFILE			NOFILES_MIN
 #endif
 
-#define ONLY_REUSE_INET_SOCKETS
-
 #define DISABLE_COMPLEX_MACRO
 
 #define USE_POSIX_TIME
