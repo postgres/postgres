@@ -8,8 +8,10 @@
 
 #ifndef WIN32
 #include <sys/types.h>
-#include "iodbc.h"
 #endif
+
+#define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
+#define SQLWritePrivateProfileString(a,b,c,d) WritePrivateProfileString(a,b,c,d)
 
 #ifdef __cplusplus
 extern		"C"

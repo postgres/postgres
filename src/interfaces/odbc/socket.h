@@ -36,8 +36,6 @@ typedef unsigned int in_addr_t;
 #define SOCKETFD SOCKET
 #endif
 
-#include "psqlodbc.h"
-
 #define SOCKET_ALREADY_CONNECTED			1
 #define SOCKET_HOST_NOT_FOUND				2
 #define SOCKET_COULD_NOT_CREATE_SOCKET		3

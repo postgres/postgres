@@ -38,13 +38,6 @@
 #include "multibyte.h"
 #endif
 
-#ifndef WIN32
-#ifndef HAVE_STRICMP
-#define stricmp(s1,s2)		strcasecmp(s1,s2)
-#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
-#endif
-#endif
-
 #define FLD_INCR	32
 #define TAB_INCR	8
 #define COL_INCR	16

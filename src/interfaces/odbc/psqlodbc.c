@@ -16,15 +16,8 @@
 #include "psqlodbc.h"
 #include "dlg_specific.h"
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#include "isqlext.h"
-#else
+#ifdef WIN32
 #include <winsock.h>
-#include <windows.h>
-#include <sql.h>
-#include <odbcinst.h>
 #endif
 
 GLOBAL_VALUES globals;

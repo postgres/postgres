@@ -14,11 +14,11 @@
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
+#include "connection.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#include "connection.h"
 
 #include "environ.h"
 #include "socket.h"
@@ -31,9 +31,6 @@
 #include "multibyte.h"
 #endif
 
-#ifdef WIN32
-#include <odbcinst.h>
-#endif
 #include "pgapifunc.h"
 
 #define STMT_INCREMENT 16		/* how many statement holders to allocate

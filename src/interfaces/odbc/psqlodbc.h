@@ -5,26 +5,58 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.48 2001/09/08 16:20:16 inoue Exp $
+ * $Id: psqlodbc.h,v 1.49 2001/09/22 22:54:33 petere Exp $
  *
  */
 
 #ifndef __PSQLODBC_H__
 #define __PSQLODBC_H__
 
-#ifdef HAVE_CONFIG_H
+#ifndef WIN32
 #include "pg_config.h"
+#else
+#include <windows.h>
 #endif
 
 #include <stdio.h>				/* for FILE* pointers: see GLOBAL_VALUES */
+
+/* Must come before sql.h */
+#define ODBCVER						0x0250
+
+
+#if defined(WIN32) || defined(WITH_UNIXODBC) || defined(WITH_IODBC)
+#include <sql.h>
+#include <sqlext.h>
+#else
+#include "iodbc.h"
+#include "isql.h"
+#include "isqlext.h"
+#endif
+
+#if defined(WIN32)
+#include <odbcinst.h>
+#elif defined(WITH_UNIXODBC)
+#include <odbcinst.h>
+#elif defined(WITH_IODBC)
+#include <iodbcinst.h>
+#else
+#include "gpps.h"
+#endif
 
 #ifndef WIN32
 #define Int4 long int
 #define UInt4 unsigned int
 #define Int2 short
 #define UInt2 unsigned short
+
+#if !defined(WITH_UNIXODBC) && !defined(WITH_IODBC)
 typedef float SFLOAT;
 typedef double SDOUBLE;
+#endif
+
+#ifndef CALLBACK
+#define CALLBACK
+#endif
 
 #else
 #define Int4 int
@@ -35,8 +67,12 @@ typedef double SDOUBLE;
 
 typedef UInt4 Oid;
 
+#ifndef WIN32
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+#endif
+
 /* Driver stuff */
-#define ODBCVER						0x0250
 #define DRIVER_ODBC_VER				"02.50"
 
 #define DRIVERNAME					"PostgreSQL ODBC"

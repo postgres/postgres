@@ -10,15 +10,8 @@
 #define __STATEMENT_H__
 
 #include "psqlodbc.h"
-#include "bind.h"
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#else
-#include <windows.h>
-#include <sql.h>
-#endif
+#include "bind.h"
 
 
 #ifndef FALSE

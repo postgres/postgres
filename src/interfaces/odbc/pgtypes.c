@@ -23,16 +23,6 @@
 #include "connection.h"
 #include "qresult.h"
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#include "isqlext.h"
-#else
-#include <windows.h>
-#include <sql.h>
-#include <sqlext.h>
-#endif
-
 
 
 Int4		getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);

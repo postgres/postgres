@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.53 2001/09/11 23:20:41 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.54 2001/09/22 22:54:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -263,6 +263,7 @@ ifeq ($(PORTNAME), beos)
   SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
 
+SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
 endif

@@ -13,9 +13,7 @@
 #include "connection.h"
 
 #ifdef WIN32
-#include  <windows.h>
 #include  <windowsx.h>
-#include  <odbcinst.h>
 #include "resource.h"
 #endif
 

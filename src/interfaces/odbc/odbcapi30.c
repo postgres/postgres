@@ -24,13 +24,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isqlext.h"
-#else
-#include <windows.h>
-#include <sqlext.h>
-#endif
 #include "environ.h"
 #include "connection.h"
 #include "statement.h"

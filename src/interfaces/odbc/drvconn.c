@@ -25,18 +25,12 @@
 #define NEAR
 #else
 #include <winsock.h>
-#include <sqlext.h>
 #endif
 
 #include <string.h>
 
-#ifndef WIN32
-#define stricmp(s1,s2)	strcasecmp(s1,s2)
-#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
-#else
-#include <windows.h>
+#ifdef WIN32
 #include <windowsx.h>
-#include <odbcinst.h>
 #include "resource.h"
 #endif
 #include "pgapifunc.h"

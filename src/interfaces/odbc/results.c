@@ -29,13 +29,6 @@
 
 #include <stdio.h>
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isqlext.h"
-#else
-#include <windows.h>
-#include <sqlext.h>
-#endif
 #include "pgapifunc.h"
 
 

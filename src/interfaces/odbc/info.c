@@ -22,16 +22,7 @@
 #include <stdio.h>
 
 #ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#include "isqlext.h"
 #include <ctype.h>
-#else
-#include <windows.h>
-#include <sql.h>
-#include <sqlext.h>
-
-#include <odbcinst.h>
 #endif
 
 #include "tuple.h"
@@ -2060,7 +2051,7 @@ PGAPI_Statistics(
 	char		column_name[MAX_INFO_STRING],
 				relhasrules[MAX_INFO_STRING];
 	char	  **column_names = 0;
-	Int4		column_name_len;
+	SQLINTEGER	column_name_len;
 	int			total_columns = 0;
 	char		error = TRUE;
 	ConnInfo   *ci;

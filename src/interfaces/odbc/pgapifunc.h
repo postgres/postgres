@@ -10,13 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isqlext.h"
-#else
-#include <windows.h>
-#include <sqlext.h>
-#endif
 
 RETCODE  SQL_API PGAPI_AllocConnect(HENV EnvironmentHandle,
            HDBC FAR *ConnectionHandle);

@@ -11,11 +11,6 @@
 
 #include "psqlodbc.h"
 
-#ifndef WIN32
-#include "gpps.h"
-#define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
-#endif
-
 #include <stdio.h>
 
 /*	Uncomment MY_LOG define to compile in the mylog() statements.

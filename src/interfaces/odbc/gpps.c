@@ -19,7 +19,7 @@
  *-------
  */
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(WITH_UNIXODBC) && !defined(WITH_IODBC)
 
 #include "gpps.h"
 

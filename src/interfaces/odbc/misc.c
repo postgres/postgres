@@ -143,21 +143,6 @@ qlog(char *fmt,...)
 
 #endif
 
-/*	Undefine these because windows.h will redefine and cause a warning */
-
-#ifdef WIN32
-#undef va_start
-#undef va_end
-#endif
-
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#else
-#include <windows.h>
-#include <sql.h>
-#endif
-
 
 /*
  *	returns STRCPY_FAIL, STRCPY_TRUNCATED, or #bytes copied

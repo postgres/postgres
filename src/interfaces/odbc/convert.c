@@ -17,26 +17,16 @@
  */
 /* Multibyte support  Eiji Tokuya	2001-03-15	*/
 
+#include "convert.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#include "psqlodbc.h"
 #ifdef MULTIBYTE
 #include "multibyte.h"
 #endif
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#include "isqlext.h"
-#else
-#include <windows.h>
-#include <sql.h>
-#include <sqlext.h>
-#endif
-
-#include "convert.h"
 #include <time.h>
 #include <math.h>
 #include <stdlib.h>
@@ -47,17 +37,6 @@
 #include "lobj.h"
 #include "connection.h"
 #include "pgapifunc.h"
-
-#ifndef WIN32
-#ifndef HAVE_STRICMP
-#define stricmp(s1,s2) strcasecmp(s1,s2)
-#define strnicmp(s1,s2,n) strncasecmp(s1,s2,n)
-#endif
-#ifndef SCHAR
-typedef signed char SCHAR;
-
-#endif
-#endif
 
 
 /*

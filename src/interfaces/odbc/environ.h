@@ -11,16 +11,6 @@
 
 #include "psqlodbc.h"
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#include "isqlext.h"
-#else
-#include <windows.h>
-#include <sql.h>
-#include <sqlext.h>
-#endif
-
 #define ENV_ALLOC_ERROR 1
 
 /**********		Environment Handle	*************/

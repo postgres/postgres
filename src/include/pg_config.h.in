@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.6 2001/09/14 10:36:52 ishii Exp $
+ * $Id: pg_config.h.in,v 1.7 2001/09/22 22:54:32 petere Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -97,6 +97,13 @@
 
 /* location of locale files */
 #undef LOCALEDIR
+
+/* Define to build the ODBC driver for unixODBC */
+#undef WITH_UNIXODBC
+
+/* Define to build the ODBC driver for iODBC */
+#undef WITH_IODBC
+
 
 /*
  *------------------------------------------------------------------------

@@ -13,6 +13,7 @@
  */
 
 #include "statement.h"
+
 #include "bind.h"
 #include "connection.h"
 #include "qresult.h"
@@ -23,22 +24,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifndef WIN32
-#include "iodbc.h"
-#include "isql.h"
-#else
-#include <windows.h>
-#include <sql.h>
-#endif
 #include "pgapifunc.h"
 
 
-#ifndef WIN32
-#ifndef HAVE_STRICMP
-#define stricmp(s1,s2)		strcasecmp(s1,s2)
-#define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
-#endif
-#endif
 #define PRN_NULLCHECK
 
 

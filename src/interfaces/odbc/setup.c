@@ -14,10 +14,9 @@
  */
 
 #include  "psqlodbc.h"
+
 #include  "connection.h"
-#include  <windows.h>
 #include  <windowsx.h>
-#include  <odbcinst.h>
 #include  <string.h>
 #include  <stdlib.h>
 #include  "resource.h"

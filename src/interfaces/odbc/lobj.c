@@ -13,7 +13,7 @@
  */
 
 #include "lobj.h"
-#include "psqlodbc.h"
+
 #include "connection.h"
 
 

@@ -567,8 +567,23 @@ fi
  
 AC_MSG_CHECKING([whether to build the ODBC driver])
 PGAC_ARG_BOOL(enable, odbc, no, [  --enable-odbc           build the ODBC driver package])
-AC_MSG_RESULT([$enable_odbc])
+PGAC_ARG_BOOL(with, unixodbc, no, [  --with-unixodbc         build ODBC driver for unixODBC])
+PGAC_ARG_BOOL(with, iodbc, no, [  --with-iodbc            build ODBC driver for iODBC])
+if test "$with_unixodbc" = yes && test "$with_iodbc" = yes; then
+  AC_MSG_ERROR([ODBC driver cannot be built for both unixODBC and iODBC])
+fi
+if test "$with_unixodbc" = yes || test "$with_iodbc" = yes; then
+  enable_odbc=yes
+fi
+case $enable_odbc:$with_unixodbc:$with_iodbc in
+  yes:no:no)    AC_MSG_RESULT([yes (stand-alone)]);;
+  yes:yes:no)   AC_MSG_RESULT([yes (unixODBC)]); AC_DEFINE(WITH_UNIXODBC);;
+  yes:no:yes)   AC_MSG_RESULT([yes (iODBC)]); AC_DEFINE(WITH_IODBC);;
+  no:*)         AC_MSG_RESULT(no);;
+esac
 AC_SUBST([enable_odbc])
+AC_SUBST([with_unixodbc])
+AC_SUBST([with_iodbc])
 
 
 # Allow for overriding the default location of the odbcinst.ini
