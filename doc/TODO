@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug 17 00:43:46 EDT 2003
+Last updated:		Sun Aug 17 00:50:56 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -122,6 +122,8 @@ Multi-Language Support
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
 * -Remove Cyrillic recode support
+* Fix upper()/lower() to work for multibyte encodings
+
 
  
 Views / Rules
@@ -485,7 +487,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1120 2003/08/17 04:43:48 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1120 2003/08/17 04:43:48 momjian Exp $
+* Change CVS $Id: TODO,v 1.1121 2003/08/17 04:50:57 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1121 2003/08/17 04:50:57 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
