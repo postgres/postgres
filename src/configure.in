@@ -580,7 +580,7 @@ AC_CHECK_HEADERS(limits.h unistd.h termios.h values.h sys/select.h)
 AC_CHECK_HEADERS(sys/resource.h netdb.h arpa/inet.h getopt.h)
 AC_CHECK_HEADERS(readline.h history.h dld.h crypt.h endian.h float.h)
 AC_CHECK_HEADERS(readline/readline.h readline/history.h ieeefp.h fp_class.h)
-AC_CHECK_HEADERS(netinet/in.h string.h strings.h)
+AC_CHECK_HEADERS(netinet/in.h)
 dnl ODBC headers...
 AC_CHECK_HEADERS(sys/param.h pwd.h)
 dnl
