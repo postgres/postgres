@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.38 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.39 2003/12/01 17:58:27 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -33,11 +33,11 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    <command>CREATE TRIGGER</command> creates a new trigger.  The
    trigger will be associated with the specified table and will
    execute the specified function <replaceable
-   class="parameter">func</replaceable> when certain events occur.
+   class="parameter">funcname</replaceable> when certain events occur.
   </para>
 
   <para>
-   The trigger can be specified to fire either before before the
+   The trigger can be specified to fire either before the
    operation is attempted on a row (before constraints are checked and
    the <command>INSERT</command>, <command>UPDATE</command>, or
    <command>DELETE</command> is attempted) or after the operation has
@@ -143,7 +143,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">func</replaceable></term>
+    <term><replaceable class="parameter">funcname</replaceable></term>
     <listitem>
      <para>
       A user-supplied function that is declared as taking no arguments
