@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.56 2000/01/26 05:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.57 2000/02/18 06:32:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,36 +264,21 @@ _bt_skeycmp(Relation rel,
 	BTItem		item;
 	IndexTuple	indexTuple;
 	TupleDesc	tupDes;
-	ScanKey		entry;
 	int			i;
-	Datum		attrDatum;
-	Datum		keyDatum;
-	bool		compare;
-	bool		isNull;
-	bool		useEqual = false;
-	bool		keyNull;
-
-	if (strat == BTLessEqualStrategyNumber)
-	{
-		useEqual = true;
-		strat = BTLessStrategyNumber;
-	}
-	else if (strat == BTGreaterEqualStrategyNumber)
-	{
-		useEqual = true;
-		strat = BTGreaterStrategyNumber;
-	}
+	int32		compare = 0;
 
 	item = (BTItem) PageGetItem(page, itemid);
 	indexTuple = &(item->bti_itup);
 
 	tupDes = RelationGetDescr(rel);
 
-	/* see if the comparison is true for all of the key attributes */
 	for (i = 1; i <= keysz; i++)
 	{
+		ScanKey		entry = &scankey[i - 1];
+		Datum		attrDatum;
+		bool		isNull;
+		Datum		keyDatum;
 
-		entry = &scankey[i - 1];
 		Assert(entry->sk_attno == i);
 		attrDatum = index_getattr(indexTuple,
 								  entry->sk_attno,
@@ -304,54 +289,40 @@ _bt_skeycmp(Relation rel,
 		/* see comments about NULLs handling in btbuild */
 		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
-			Assert(entry->sk_procedure == F_NULLVALUE);
-			keyNull = true;
 			if (isNull)
-				compare = (strat == BTEqualStrategyNumber) ? true : false;
+				compare = 0;	/* NULL key "=" NULL datum */
 			else
-				compare = (strat == BTGreaterStrategyNumber) ? true : false;
+				compare = 1;	/* NULL key ">" not-NULL datum */
 		}
 		else if (isNull)		/* key is NOT_NULL and item is NULL */
 		{
-			keyNull = false;
-			compare = (strat == BTLessStrategyNumber) ? true : false;
+			compare = -1;		/* not-NULL key "<" NULL datum */
 		}
 		else
 		{
-			keyNull = false;
-			compare = _bt_invokestrat(rel, i, strat, keyDatum, attrDatum);
+			compare = (int32) FMGR_PTR2(&entry->sk_func, keyDatum, attrDatum);
 		}
 
-		if (compare)			/* true for one of ">, <, =" */
-		{
-			if (strat != BTEqualStrategyNumber)
-				return true;
-		}
-		else
-/* false for one of ">, <, =" */
-		{
-			if (strat == BTEqualStrategyNumber)
-				return false;
-
-			/*
-			 * if original strat was "<=, >=" OR "<, >" but some
-			 * attribute(s) left - need to test for Equality
-			 */
-			if (useEqual || i < keysz)
-			{
-				if (keyNull || isNull)
-					compare = (keyNull && isNull) ? true : false;
-				else
-					compare = _bt_invokestrat(rel, i, BTEqualStrategyNumber,
-											  keyDatum, attrDatum);
-				if (compare)	/* key' and item' attributes are equal */
-					continue;	/* - try to compare next attributes */
-			}
-			return false;
-		}
+		if (compare != 0)
+			break;				/* done when we find unequal attributes */
 	}
 
-	return true;
+	switch (strat)
+	{
+		case BTLessStrategyNumber:
+			return (bool) (compare < 0);
+		case BTLessEqualStrategyNumber:
+			return (bool) (compare <= 0);
+		case BTEqualStrategyNumber:
+			return (bool) (compare == 0);
+		case BTGreaterEqualStrategyNumber:
+			return (bool) (compare >= 0);
+		case BTGreaterStrategyNumber:
+			return (bool) (compare > 0);
+	}
+
+	elog(ERROR, "_bt_skeycmp: bogus strategy %d", (int) strat);
+	return false;
 }
 
 /*
@@ -610,7 +581,6 @@ _bt_compare(Relation rel,
 		/* see comments about NULLs handling in btbuild */
 		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
-			Assert(entry->sk_procedure == F_NULLVALUE);
 			if (null)
 				tmpres = (long) 0;		/* NULL "=" NULL */
 			else

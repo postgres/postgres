@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.5 2000/01/26 05:57:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.6 2000/02/18 06:32:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,6 +253,7 @@ struct Tuplesortstate
 	 * by tuplesort_begin_index and used only by the IndexTuple routines.
 	 */
 	Relation	indexRel;
+	ScanKey		indexScanKey;
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
 
 	/*
@@ -476,6 +477,8 @@ tuplesort_begin_index(Relation indexRel,
 	state->tuplesize = tuplesize_index;
 
 	state->indexRel = indexRel;
+	/* see comments below about btree dependence of this code... */
+	state->indexScanKey = _bt_mkscankey_nodata(indexRel);
 	state->enforceUnique = enforceUnique;
 
 	return state;
@@ -1745,40 +1748,56 @@ tuplesize_heap(Tuplesortstate *state, void *tup)
 static int
 comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 {
-	IndexTuple	ltup = (IndexTuple) a;
-	IndexTuple	rtup = (IndexTuple) b;
-	TupleDesc	itdesc = state->indexRel->rd_att;
-	bool		equal_isnull = false;
+	/*
+	 * This is almost the same as _bt_tuplecompare(), but we need to
+	 * keep track of whether any null fields are present.
+	 */
+	IndexTuple	tuple1 = (IndexTuple) a;
+	IndexTuple	tuple2 = (IndexTuple) b;
+	Relation	rel = state->indexRel;
+	Size		keysz = RelationGetNumberOfAttributes(rel);
+	ScanKey		scankey = state->indexScanKey;
+	TupleDesc	tupDes;
 	int			i;
+	bool		equal_hasnull = false;
 
-	for (i = 1; i <= itdesc->natts; i++)
+	tupDes = RelationGetDescr(rel);
+
+	for (i = 1; i <= keysz; i++)
 	{
-		Datum		lattr,
-					rattr;
-		bool		isnull1,
-					isnull2;
+		ScanKey		entry = &scankey[i - 1];
+		Datum		attrDatum1,
+					attrDatum2;
+		bool		isFirstNull,
+					isSecondNull;
+		int32		compare;
 
-		lattr = index_getattr(ltup, i, itdesc, &isnull1);
-		rattr = index_getattr(rtup, i, itdesc, &isnull2);
+		attrDatum1 = index_getattr(tuple1, i, tupDes, &isFirstNull);
+		attrDatum2 = index_getattr(tuple2, i, tupDes, &isSecondNull);
 
-		if (isnull1)
+		/* see comments about NULLs handling in btbuild */
+		if (isFirstNull)		/* attr in tuple1 is NULL */
 		{
-			if (!isnull2)
-				return 1;		/* NULL sorts after non-NULL */
-			equal_isnull = true;
-			continue;
+			if (isSecondNull)	/* attr in tuple2 is NULL too */
+			{
+				compare = 0;
+				equal_hasnull = true;
+			}
+			else
+				compare = 1;	/* NULL ">" not-NULL */
 		}
-		else if (isnull2)
-			return -1;
+		else if (isSecondNull)	/* attr in tuple1 is NOT_NULL and */
+		{						/* attr in tuple2 is NULL */
+			compare = -1;		/* not-NULL "<" NULL */
+		}
+		else
+		{
+			compare = (int32) FMGR_PTR2(&entry->sk_func,
+										attrDatum1, attrDatum2);
+		}
 
-		if (_bt_invokestrat(state->indexRel, i,
-							BTGreaterStrategyNumber,
-							lattr, rattr))
-			return 1;
-		if (_bt_invokestrat(state->indexRel, i,
-							BTGreaterStrategyNumber,
-							rattr, lattr))
-			return -1;
+		if (compare != 0)
+			return (int) compare; /* done when we find unequal attributes */
 	}
 
 	/*
@@ -1790,7 +1809,7 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 	 * the sort algorithm wouldn't have checked whether one must appear
 	 * before the other.
 	 */
-	if (state->enforceUnique && !equal_isnull)
+	if (state->enforceUnique && !equal_hasnull)
 		elog(ERROR, "Cannot create unique index. Table contains non-unique values");
 
 	return 0;

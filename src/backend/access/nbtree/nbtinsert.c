@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.54 2000/01/26 05:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.55 2000/02/18 06:32:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,11 @@
 
 
 static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem afteritem);
-static Buffer _bt_split(Relation rel, Buffer buf, OffsetNumber firstright);
-static OffsetNumber _bt_findsplitloc(Relation rel, Page page, OffsetNumber start, OffsetNumber maxoff, Size llimit);
+static Buffer _bt_split(Relation rel, Size keysz, ScanKey scankey,
+						Buffer buf, OffsetNumber firstright);
+static OffsetNumber _bt_findsplitloc(Relation rel, Size keysz, ScanKey scankey,
+									 Page page, OffsetNumber start,
+									 OffsetNumber maxoff, Size llimit);
 static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
@@ -297,7 +300,7 @@ _bt_insertonpg(Relation rel,
 		hitemid = PageGetItemId(page, P_HIKEY);
 		hitem = (BTItem) PageGetItem(page, hitemid);
 		if (maxoff > P_HIKEY &&
-			!_bt_itemcmp(rel, keysz, hitem,
+			!_bt_itemcmp(rel, keysz, scankey, hitem,
 			 (BTItem) PageGetItem(page, PageGetItemId(page, P_FIRSTKEY)),
 						 BTEqualStrategyNumber))
 			elog(FATAL, "btree: bad key on the page in the chain of duplicates");
@@ -373,7 +376,8 @@ _bt_insertonpg(Relation rel,
 			{
 				itid = PageGetItemId(page, offnum);
 				chkitem = (BTItem) PageGetItem(page, itid);
-				if (!_bt_itemcmp(rel, keysz, previtem, chkitem,
+				if (!_bt_itemcmp(rel, keysz, scankey,
+								 previtem, chkitem,
 								 BTEqualStrategyNumber))
 				{
 					if (currsize > maxsize)
@@ -471,9 +475,10 @@ _bt_insertonpg(Relation rel,
 				MAXALIGN(sizeof(BTPageOpaqueData))
 				+sizeof(ItemIdData);
 			llimit /= 2;
-			firstright = _bt_findsplitloc(rel, page, start, maxoff, llimit);
+			firstright = _bt_findsplitloc(rel, keysz, scankey,
+										  page, start, maxoff, llimit);
 
-			if (_bt_itemcmp(rel, keysz,
+			if (_bt_itemcmp(rel, keysz, scankey,
 				  (BTItem) PageGetItem(page, PageGetItemId(page, start)),
 			 (BTItem) PageGetItem(page, PageGetItemId(page, firstright)),
 							BTEqualStrategyNumber))
@@ -503,7 +508,8 @@ _bt_insertonpg(Relation rel,
 						ItemPointerSet(&(stack->bts_btitem->bti_itup.t_tid),
 									   bknum, P_HIKEY);
 						pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
-						if (_bt_itemcmp(rel, keysz, stack->bts_btitem,
+						if (_bt_itemcmp(rel, keysz, scankey,
+										stack->bts_btitem,
 										(BTItem) PageGetItem(page,
 											 PageGetItemId(page, start)),
 										BTLessStrategyNumber))
@@ -519,7 +525,7 @@ _bt_insertonpg(Relation rel,
 		}
 
 		/* split the buffer into left and right halves */
-		rbuf = _bt_split(rel, buf, firstright);
+		rbuf = _bt_split(rel, keysz, scankey, buf, firstright);
 
 		/* which new page (left half or right half) gets the tuple? */
 		if (_bt_goesonpg(rel, buf, keysz, scankey, afteritem))
@@ -550,7 +556,7 @@ _bt_insertonpg(Relation rel,
 				elog(FATAL, "btree: un-shifted page is empty");
 			lowLeftItem = (BTItem) PageGetItem(page,
 										PageGetItemId(page, P_FIRSTKEY));
-			if (_bt_itemcmp(rel, keysz, lowLeftItem,
+			if (_bt_itemcmp(rel, keysz, scankey, lowLeftItem,
 				(BTItem) PageGetItem(page, PageGetItemId(page, P_HIKEY)),
 							BTEqualStrategyNumber))
 				lpageop->btpo_flags |= BTP_CHAIN;
@@ -613,7 +619,8 @@ l_spl:	;
 			{
 				ritem = (BTItem) PageGetItem(rpage,
 									   PageGetItemId(rpage, P_FIRSTKEY));
-				if (_bt_itemcmp(rel, keysz, ritem,
+				if (_bt_itemcmp(rel, keysz, scankey,
+								ritem,
 								(BTItem) PageGetItem(rpage,
 										  PageGetItemId(rpage, P_HIKEY)),
 								BTEqualStrategyNumber))
@@ -663,13 +670,16 @@ l_spl:	;
 			 * possible in splitting leftmost page) and current parent
 			 * item == new_item.		- vadim 05/27/97
 			 */
-			if (_bt_itemcmp(rel, keysz, stack->bts_btitem, new_item,
+			if (_bt_itemcmp(rel, keysz, scankey,
+							stack->bts_btitem, new_item,
 							BTGreaterStrategyNumber) ||
 				(!shifted &&
-				 _bt_itemcmp(rel, keysz, stack->bts_btitem,
-							 new_item, BTEqualStrategyNumber) &&
-				 _bt_itemcmp(rel, keysz, lowLeftItem,
-							 new_item, BTLessStrategyNumber)))
+				 _bt_itemcmp(rel, keysz, scankey,
+							 stack->bts_btitem, new_item,
+							 BTEqualStrategyNumber) &&
+				 _bt_itemcmp(rel, keysz, scankey,
+							 lowLeftItem, new_item,
+							 BTLessStrategyNumber)))
 			{
 				do_update = true;
 
@@ -831,7 +841,8 @@ l_spl:	;
  *		pin and lock on buf are maintained.
  */
 static Buffer
-_bt_split(Relation rel, Buffer buf, OffsetNumber firstright)
+_bt_split(Relation rel, Size keysz, ScanKey scankey,
+		  Buffer buf, OffsetNumber firstright)
 {
 	Buffer		rbuf;
 	Page		origpage;
@@ -915,7 +926,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright)
 	{
 		Size		llimit = PageGetFreeSpace(leftpage) / 2;
 
-		firstright = _bt_findsplitloc(rel, origpage, start, maxoff, llimit);
+		firstright = _bt_findsplitloc(rel, keysz, scankey,
+									  origpage, start, maxoff, llimit);
 	}
 
 	for (i = start; i <= maxoff; i = OffsetNumberNext(i))
@@ -1027,6 +1039,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright)
  */
 static OffsetNumber
 _bt_findsplitloc(Relation rel,
+				 Size keysz,
+				 ScanKey scankey,
 				 Page page,
 				 OffsetNumber start,
 				 OffsetNumber maxoff,
@@ -1039,12 +1053,10 @@ _bt_findsplitloc(Relation rel,
 	BTItem		safeitem,
 				nxtitem;
 	Size		nbytes;
-	int			natts;
 
 	if (start >= maxoff)
 		elog(FATAL, "btree: cannot split if start (%d) >= maxoff (%d)",
 			 start, maxoff);
-	natts = rel->rd_rel->relnatts;
 	saferight = start;
 	safeitemid = PageGetItemId(page, saferight);
 	nbytes = ItemIdGetLength(safeitemid) + sizeof(ItemIdData);
@@ -1064,7 +1076,7 @@ _bt_findsplitloc(Relation rel,
 		 * at isn't equal to the last safe one we saw, then it's our new
 		 * safe tuple.
 		 */
-		if (!_bt_itemcmp(rel, natts,
+		if (!_bt_itemcmp(rel, keysz, scankey,
 						 safeitem, nxtitem, BTEqualStrategyNumber))
 		{
 			safeitem = nxtitem;
@@ -1345,92 +1357,94 @@ _bt_goesonpg(Relation rel,
 }
 
 /*
- *		_bt_itemcmp() -- compare item1 to item2 using a requested
+ *		_bt_tuplecompare() -- compare two IndexTuples,
+ *							  return -1, 0, or +1
+ *
+ */
+int32
+_bt_tuplecompare(Relation rel,
+				 Size keysz,
+				 ScanKey scankey,
+				 IndexTuple tuple1,
+				 IndexTuple tuple2)
+{
+	TupleDesc	tupDes;
+	int			i;
+	int32		compare = 0;
+
+	tupDes = RelationGetDescr(rel);
+
+	for (i = 1; i <= keysz; i++)
+	{
+		ScanKey		entry = &scankey[i - 1];
+		Datum		attrDatum1,
+					attrDatum2;
+		bool		isFirstNull,
+					isSecondNull;
+
+		attrDatum1 = index_getattr(tuple1, i, tupDes, &isFirstNull);
+		attrDatum2 = index_getattr(tuple2, i, tupDes, &isSecondNull);
+
+		/* see comments about NULLs handling in btbuild */
+		if (isFirstNull)		/* attr in tuple1 is NULL */
+		{
+			if (isSecondNull)	/* attr in tuple2 is NULL too */
+				compare = 0;
+			else
+				compare = 1;	/* NULL ">" not-NULL */
+		}
+		else if (isSecondNull)	/* attr in tuple1 is NOT_NULL and */
+		{						/* attr in tuple2 is NULL */
+			compare = -1;		/* not-NULL "<" NULL */
+		}
+		else
+		{
+			compare = (int32) FMGR_PTR2(&entry->sk_func,
+										attrDatum1, attrDatum2);
+		}
+
+		if (compare != 0)
+			break;				/* done when we find unequal attributes */
+	}
+
+	return compare;
+}
+
+/*
+ *		_bt_itemcmp() -- compare two BTItems using a requested
  *						 strategy (<, <=, =, >=, >)
  *
  */
 bool
 _bt_itemcmp(Relation rel,
 			Size keysz,
+			ScanKey scankey,
 			BTItem item1,
 			BTItem item2,
 			StrategyNumber strat)
 {
-	TupleDesc	tupDes;
-	IndexTuple	indexTuple1,
-				indexTuple2;
-	Datum		attrDatum1,
-				attrDatum2;
-	int			i;
-	bool		isFirstNull,
-				isSecondNull;
-	bool		compare;
-	bool		useEqual = false;
+	int32		compare;
 
-	if (strat == BTLessEqualStrategyNumber)
+	compare = _bt_tuplecompare(rel, keysz, scankey,
+							   &(item1->bti_itup),
+							   &(item2->bti_itup));
+
+	switch (strat)
 	{
-		useEqual = true;
-		strat = BTLessStrategyNumber;
-	}
-	else if (strat == BTGreaterEqualStrategyNumber)
-	{
-		useEqual = true;
-		strat = BTGreaterStrategyNumber;
+		case BTLessStrategyNumber:
+			return (bool) (compare < 0);
+		case BTLessEqualStrategyNumber:
+			return (bool) (compare <= 0);
+		case BTEqualStrategyNumber:
+			return (bool) (compare == 0);
+		case BTGreaterEqualStrategyNumber:
+			return (bool) (compare >= 0);
+		case BTGreaterStrategyNumber:
+			return (bool) (compare > 0);
 	}
 
-	tupDes = RelationGetDescr(rel);
-	indexTuple1 = &(item1->bti_itup);
-	indexTuple2 = &(item2->bti_itup);
-
-	for (i = 1; i <= keysz; i++)
-	{
-		attrDatum1 = index_getattr(indexTuple1, i, tupDes, &isFirstNull);
-		attrDatum2 = index_getattr(indexTuple2, i, tupDes, &isSecondNull);
-
-		/* see comments about NULLs handling in btbuild */
-		if (isFirstNull)		/* attr in item1 is NULL */
-		{
-			if (isSecondNull)	/* attr in item2 is NULL too */
-				compare = (strat == BTEqualStrategyNumber) ? true : false;
-			else
-				compare = (strat == BTGreaterStrategyNumber) ? true : false;
-		}
-		else if (isSecondNull)	/* attr in item1 is NOT_NULL and */
-		{						/* and attr in item2 is NULL */
-			compare = (strat == BTLessStrategyNumber) ? true : false;
-		}
-		else
-			compare = _bt_invokestrat(rel, i, strat, attrDatum1, attrDatum2);
-
-		if (compare)			/* true for one of ">, <, =" */
-		{
-			if (strat != BTEqualStrategyNumber)
-				return true;
-		}
-		else
-/* false for one of ">, <, =" */
-		{
-			if (strat == BTEqualStrategyNumber)
-				return false;
-
-			/*
-			 * if original strat was "<=, >=" OR "<, >" but some
-			 * attribute(s) left - need to test for Equality
-			 */
-			if (useEqual || i < keysz)
-			{
-				if (isFirstNull || isSecondNull)
-					compare = (isFirstNull && isSecondNull) ? true : false;
-				else
-					compare = _bt_invokestrat(rel, i, BTEqualStrategyNumber,
-											  attrDatum1, attrDatum2);
-				if (compare)	/* item1' and item2' attributes are equal */
-					continue;	/* - try to compare next attributes */
-			}
-			return false;
-		}
-	}
-	return true;
+	elog(ERROR, "_bt_itemcmp: bogus strategy %d", (int) strat);
+	return false;
 }
 
 /*
@@ -1585,7 +1599,7 @@ _bt_shift(Relation rel, Buffer buf, BTStack stack, int keysz,
 	/* init old page opaque */
 	pageop->btpo_flags = npageop->btpo_flags;	/* restore flags */
 	pageop->btpo_flags &= ~BTP_CHAIN;
-	if (_bt_itemcmp(rel, keysz, hikey, btitem, BTEqualStrategyNumber))
+	if (_bt_itemcmp(rel, keysz, scankey, hikey, btitem, BTEqualStrategyNumber))
 		pageop->btpo_flags |= BTP_CHAIN;
 	pageop->btpo_prev = npageop->btpo_prev;		/* restore prev */
 	pageop->btpo_next = nbknum; /* next points to the new page */

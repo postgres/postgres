@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.34 2000/01/26 05:55:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.35 2000/02/18 06:32:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,14 @@
 extern int	NIndexTupleProcessed;
 
 
-
+/*
+ * _bt_mkscankey
+ *		Build a scan key that contains comparison data from itup
+ *		as well as comparator routines appropriate to the key datatypes.
+ *
+ *		The result is intended for use with _bt_skeycmp() or _bt_compare(),
+ *		although it could be used with _bt_itemcmp() or _bt_tuplecompare().
+ */
 ScanKey
 _bt_mkscankey(Relation rel, IndexTuple itup)
 {
@@ -31,35 +38,67 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	TupleDesc	itupdesc;
 	int			natts;
 	int			i;
-	Datum		arg;
 	RegProcedure proc;
+	Datum		arg;
 	bool		null;
 	bits16		flag;
 
-	natts = rel->rd_rel->relnatts;
 	itupdesc = RelationGetDescr(rel);
+	natts = RelationGetNumberOfAttributes(rel);
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
 	for (i = 0; i < natts; i++)
 	{
+		proc = index_getprocid(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
-		if (null)
-		{
-			proc = F_NULLVALUE;
-			flag = SK_ISNULL;
-		}
-		else
-		{
-			proc = index_getprocid(rel, i + 1, BTORDER_PROC);
-			flag = 0x0;
-		}
-		ScanKeyEntryInitialize(&skey[i], flag, (AttrNumber) (i + 1), proc, arg);
+		flag = null ? SK_ISNULL : 0x0;
+		ScanKeyEntryInitialize(&skey[i],
+							   flag,
+							   (AttrNumber) (i + 1),
+							   proc,
+							   arg);
 	}
 
 	return skey;
 }
 
+/*
+ * _bt_mkscankey_nodata
+ *		Build a scan key that contains comparator routines appropriate to
+ *		the key datatypes, but no comparison data.
+ *
+ *		The result can be used with _bt_itemcmp() or _bt_tuplecompare(),
+ *		but not with _bt_skeycmp() or _bt_compare().
+ */
+ScanKey
+_bt_mkscankey_nodata(Relation rel)
+{
+	ScanKey		skey;
+	int			natts;
+	int			i;
+	RegProcedure proc;
+
+	natts = RelationGetNumberOfAttributes(rel);
+
+	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
+
+	for (i = 0; i < natts; i++)
+	{
+		proc = index_getprocid(rel, i + 1, BTORDER_PROC);
+		ScanKeyEntryInitialize(&skey[i],
+							   SK_ISNULL,
+							   (AttrNumber) (i + 1),
+							   proc,
+							   (Datum) NULL);
+	}
+
+	return skey;
+}
+
+/*
+ * free a scan key made by either _bt_mkscankey or _bt_mkscankey_nodata.
+ */
 void
 _bt_freeskey(ScanKey skey)
 {

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.33 2000/01/26 05:57:50 momjian Exp $
+ * $Id: nbtree.h,v 1.34 2000/02/18 06:32:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,11 +204,11 @@ typedef struct BTPageState
  * prototypes for functions in nbtinsert.c
  */
 extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem,
-			 bool index_is_unique, Relation heapRel);
-
- /* default is to allow duplicates */
-extern bool _bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
-			StrategyNumber strat);
+									  bool index_is_unique, Relation heapRel);
+extern int32 _bt_tuplecompare(Relation rel, Size keysz, ScanKey scankey,
+							  IndexTuple tuple1, IndexTuple tuple2);
+extern bool _bt_itemcmp(Relation rel, Size keysz, ScanKey scankey,
+						BTItem item1, BTItem item2, StrategyNumber strat);
 
 /*
  * prototypes for functions in nbtpage.c
@@ -272,14 +272,13 @@ extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
  * prototypes for functions in nbtstrat.c
  */
 extern StrategyNumber _bt_getstrat(Relation rel, AttrNumber attno,
-			 RegProcedure proc);
-extern bool _bt_invokestrat(Relation rel, AttrNumber attno,
-				StrategyNumber strat, Datum left, Datum right);
+								   RegProcedure proc);
 
 /*
  * prototypes for functions in nbtutils.c
  */
 extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
+extern ScanKey _bt_mkscankey_nodata(Relation rel);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_orderkeys(Relation relation, BTScanOpaque so);

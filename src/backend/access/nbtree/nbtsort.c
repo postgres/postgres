@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.50 2000/01/26 05:55:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.51 2000/02/18 06:32:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,12 +69,13 @@ struct BTSpool
 
 
 static void _bt_load(Relation index, BTSpool *btspool);
-static BTItem _bt_buildadd(Relation index, BTPageState *state, BTItem bti,
-						   int flags);
+static BTItem _bt_buildadd(Relation index, Size keysz, ScanKey scankey,
+						   BTPageState *state, BTItem bti, int flags);
 static BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
 static BTPageState *_bt_pagestate(Relation index, int flags,
 								  int level, bool doupper);
-static void _bt_uppershutdown(Relation index, BTPageState *state);
+static void _bt_uppershutdown(Relation index, Size keysz, ScanKey scankey,
+							  BTPageState *state);
 
 
 /*
@@ -282,7 +283,8 @@ _bt_minitem(Page opage, BlockNumber oblkno, int atend)
  * if all keys are unique, 'first' will always be the same as 'last'.
  */
 static BTItem
-_bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
+_bt_buildadd(Relation index, Size keysz, ScanKey scankey,
+			 BTPageState *state, BTItem bti, int flags)
 {
 	Buffer		nbuf;
 	Page		npage;
@@ -402,7 +404,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 			nopaque->btpo_prev = BufferGetBlockNumber(obuf);
 			nopaque->btpo_next = P_NONE;
 
-			if (_bt_itemcmp(index, index->rd_att->natts,
+			if (_bt_itemcmp(index, keysz, scankey,
 			  (BTItem) PageGetItem(opage, PageGetItemId(opage, P_HIKEY)),
 			(BTItem) PageGetItem(opage, PageGetItemId(opage, P_FIRSTKEY)),
 							BTEqualStrategyNumber))
@@ -424,7 +426,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 					_bt_pagestate(index, 0, state->btps_level + 1, true);
 			}
 			nbti = _bt_minitem(opage, BufferGetBlockNumber(obuf), 0);
-			_bt_buildadd(index, state->btps_next, nbti, 0);
+			_bt_buildadd(index, keysz, scankey, state->btps_next, nbti, 0);
 			pfree((void *) nbti);
 		}
 
@@ -454,7 +456,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 #endif
 	if (last_bti == (BTItem) NULL)
 		first_off = P_FIRSTKEY;
-	else if (!_bt_itemcmp(index, index->rd_att->natts,
+	else if (!_bt_itemcmp(index, keysz, scankey,
 						  bti, last_bti, BTEqualStrategyNumber))
 		first_off = off;
 	last_off = off;
@@ -470,7 +472,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 }
 
 static void
-_bt_uppershutdown(Relation index, BTPageState *state)
+_bt_uppershutdown(Relation index, Size keysz, ScanKey scankey,
+				  BTPageState *state)
 {
 	BTPageState *s;
 	BlockNumber blkno;
@@ -499,7 +502,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 			else
 			{
 				bti = _bt_minitem(s->btps_page, blkno, 0);
-				_bt_buildadd(index, s->btps_next, bti, 0);
+				_bt_buildadd(index, keysz, scankey, s->btps_next, bti, 0);
 				pfree((void *) bti);
 			}
 		}
@@ -521,6 +524,8 @@ static void
 _bt_load(Relation index, BTSpool *btspool)
 {
 	BTPageState *state;
+	ScanKey		skey;
+	int			natts;
 	BTItem		bti;
 	bool		should_free;
 
@@ -529,93 +534,21 @@ _bt_load(Relation index, BTSpool *btspool)
 	 */
 	state = _bt_pagestate(index, BTP_LEAF, 0, true);
 
+	skey = _bt_mkscankey_nodata(index);
+	natts = RelationGetNumberOfAttributes(index);
+
 	for (;;)
 	{
 		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true,
 											   &should_free);
 		if (bti == (BTItem) NULL)
 			break;
-		_bt_buildadd(index, state, bti, BTP_LEAF);
+		_bt_buildadd(index, natts, skey, state, bti, BTP_LEAF);
 		if (should_free)
 			pfree((void *) bti);
 	}
 
-	_bt_uppershutdown(index, state);
+	_bt_uppershutdown(index, natts, skey, state);
+
+	_bt_freeskey(skey);
 }
-
-
-/*
- * given the (appropriately side-linked) leaf pages of a btree,
- * construct the corresponding upper levels.  we do this by inserting
- * minimum keys from each page into parent pages as needed.  the
- * format of the internal pages is otherwise the same as for leaf
- * pages.
- *
- * this routine is not called during conventional bulk-loading (in
- * which case we can just build the upper levels as we create the
- * sorted bottom level).  it is only used for index recycling.
- */
-#ifdef NOT_USED
-void
-_bt_upperbuild(Relation index)
-{
-	Buffer		rbuf;
-	BlockNumber blk;
-	Page		rpage;
-	BTPageOpaque ropaque;
-	BTPageState *state;
-	BTItem		nbti;
-
-	/*
-	 * find the first leaf block.  while we're at it, clear the BTP_ROOT
-	 * flag that we set while building it (so we could find it later).
-	 */
-	rbuf = _bt_getroot(index, BT_WRITE);
-	blk = BufferGetBlockNumber(rbuf);
-	rpage = BufferGetPage(rbuf);
-	ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
-	ropaque->btpo_flags &= ~BTP_ROOT;
-	_bt_wrtbuf(index, rbuf);
-
-	state = _bt_pagestate(index, 0, 0, true);
-
-	/* for each page... */
-	do
-	{
-#ifdef NOT_USED
-		printf("\t\tblk=%d\n", blk);
-#endif
-		rbuf = _bt_getbuf(index, blk, BT_READ);
-		rpage = BufferGetPage(rbuf);
-		ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
-
-		/* for each item... */
-		if (!PageIsEmpty(rpage))
-		{
-
-			/*
-			 * form a new index tuple corresponding to the minimum key of
-			 * the lower page and insert it into a page at this level.
-			 */
-			nbti = _bt_minitem(rpage, blk, P_RIGHTMOST(ropaque));
-#ifdef FASTBUILD_DEBUG
-			{
-				bool		isnull;
-				Datum		d = index_getattr(&(nbti->bti_itup), 1, index->rd_att,
-											  &isnull);
-
-				printf("_bt_upperbuild: inserting <%x> at %d\n",
-					   d, state->btps_level);
-			}
-#endif
-			_bt_buildadd(index, state, nbti, 0);
-			pfree((void *) nbti);
-		}
-		blk = ropaque->btpo_next;
-		_bt_relbuf(index, rbuf, BT_READ);
-	} while (blk != P_NONE);
-
-	_bt_uppershutdown(index, state);
-}
-
-#endif
