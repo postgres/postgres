@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.23 2000/04/14 21:44:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.24 2000/04/14 22:13:24 momjian Exp $
 Postgres documentation
 -->
 
@@ -957,11 +957,13 @@ ERROR: Cannot insert a duplicate key into a unique index.
        <term>MATCH <replaceable class="parameter">matchtype</replaceable></term>
        <listitem>
         <para>
-         The type of comparison to do between the table data. There are
-         three types of matching, MATCH FULL, MATCH PARTIAL, and the
-         unspecified match type used if no match type is specified.
-         MATCH PARTIAL is not
-         currently supported.
+         There are three match types: MATCH FULL, MATCH PARTIAL, and a
+         default match type if none is specified. MATCH FULL will not
+         allow one column of a multi-column foreign key to be NULL
+         unless all foreign key columns are NULL. The default MATCH type
+         allows a single foreign key column to be NULL while other parts
+         of the foreign key are not NULL. MATCH PARTIAL is not currently
+         supported.
         </para>
        </listitem>
       </varlistentry>
@@ -1174,7 +1176,7 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
     </title>
     <para>
      Currently <productname>Postgres</productname> only supports MATCH
-     FULL and an unspecified match type. In addition, the referenced
+     FULL and a default match type. In addition, the referenced
      columns are supposed to be the columns of a UNIQUE constraint in
      the referenced table, however <productname>Postgres</productname>
      does not enforce this.
@@ -1503,10 +1505,13 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        <term>MATCH <replaceable class="parameter">matchtype</replaceable></term>
        <listitem>
         <para>
-         The type of comparison to do between the table data. There are
-         three types of matching, MATCH FULL, MATCH PARTIAL, and the
-         unspecified match type used if no match type is specified.
-         MATCH PARTIAL is not currently supported.
+         There are three match types: MATCH FULL, MATCH PARTIAL, and a
+         default match type if none is specified. MATCH FULL will not
+         allow one column of a multi-column foreign key to be NULL
+         unless all foreign key columns are NULL. The default MATCH type
+         allows a single foreign key column to be NULL while other parts
+         of the foreign key are not NULL. MATCH PARTIAL is not currently
+         supported.
         </para>
        </listitem>
       </varlistentry>
