@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.31 2000/11/21 23:40:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.32 2000/11/22 13:16:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -115,79 +115,19 @@ installcheck: all
 
 # old interfaces follow...
 
-#
-# huge extra tests run in target bigtest
-#
-EXTRA_TESTS	= numeric_big
+runcheck: check
+runtest: installcheck
 
-#
-# run the tests
-#
-runtest: all
-ifneq ($(PORTNAME), win)
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./regress.sh $(host_tuple) 2>&1 | tee regress.out
-else
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	./regress.sh $(host_tuple) 2>&1 | tee regress.out
-endif
-	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
-	@echo ""
-	@echo "To run the optional big test(s) too, type 'make bigtest'"
-	@echo "These big tests can take over an hour to complete"
-	@echo "These actually are: $(EXTRA_TESTS)"
+bigtest:
+	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) numeric_big
 
-#
-# run the test including the huge extra tests
-#
-bigtest: all
-ifneq ($(PORTNAME), win)
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./regress.sh $(host_tuple) $(EXTRA_TESTS) 2>&1 | tee regress.out
-else
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	./regress.sh $(host_tuple) $(EXTRA_TESTS) 2>&1 | tee regress.out
-endif
-	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
-
-#
-# run the parallel test suite
-#
-runcheck: all
-ifneq ($(PORTNAME), win)
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	MAKE=$(MAKE);export MAKE; \
-	$(SHELL) ./run_check.sh $(host_tuple)
-else
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	MAKE=$(MAKE);export MAKE; \
-	./run_check.sh $(host_tuple)
-endif
-	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILES run_check.out"
-	@echo "AND regress.out"
-	@echo ""
-	@echo "To run the optional big test(s) too, type 'make bigcheck'"
-	@echo "These big tests can take over an hour to complete"
-	@echo "These actually are: $(EXTRA_TESTS)"
-
-#
-# run the test including the huge extra tests
-#
-bigcheck: all
-ifneq ($(PORTNAME), win)
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	MAKE=$(MAKE);export MAKE; \
-	$(SHELL) ./run_check.sh $(host_tuple) $(EXTRA_TESTS)
-else
-	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	MAKE=$(MAKE);export MAKE; \
-	./run_check.sh $(host_tuple) $(EXTRA_TESTS)
-endif
-	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILES run_check.out"
-	@echo "AND regress.out"
+bigcheck:
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) numeric_big
 
 
-# clean up
+##
+## Clean up
+##
 
 clean distclean maintainer-clean:
 # things built by `all' target
