@@ -526,6 +526,15 @@ AC_TRY_LINK([#include <sys/types.h>
 	    [AC_DEFINE(HAVE_UNION_SEMUN) AC_MSG_RESULT(yes)],
 	    AC_MSG_RESULT(no))
 
+AC_MSG_CHECKING(for fcntl(F_SETLK))
+AC_TRY_LINK([#include <fcntl.h>],
+	    [struct flock lck;
+	     lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
+	     lck.l_type = F_WRLCK;
+	     fcntl(0, F_SETLK, &lck);],
+	    [AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
+	    AC_MSG_RESULT(no))
+
 AC_MSG_CHECKING(for good DBL_MIN)
 AC_TRY_RUN([#include <stdlib.h>
 #include <math.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.54 1998/09/10 04:07:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.55 1998/10/06 02:31:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,7 +560,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		 * If the socket exists but nobody has an advisory lock on it we
 		 * can safely delete the file.
 		 */
-		if ((lock_fd = open(sock_path, O_RDONLY | O_NONBLOCK, 0666)) >= 0)
+#ifdef HAVE_FCNTL_SETLK
+		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK, 0666)) >= 0)
 		{
 			struct flock	lck;
 			
@@ -575,6 +576,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				TPRINTF(TRACE_VERBOSE, "flock failed for %s", sock_path);
 			close(lock_fd);
 		}
+#endif /* HAVE_FCNTL_SETLK */
 	}
 	else
 	{
@@ -609,7 +611,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		 * Open the socket file and get an advisory lock on it. The
 		 * lock_fd is left open to keep the lock.
 		 */
-		if ((lock_fd = open(sock_path, O_RDONLY | O_NONBLOCK, 0666)) >= 0)
+#ifdef HAVE_FCNTL_SETLK
+		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK, 0666)) >= 0)
 		{
 			struct flock	lck;
 			
@@ -618,6 +621,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 			if (fcntl(lock_fd, F_SETLK, &lck) != 0)
 				TPRINTF(TRACE_VERBOSE, "flock error for %s", sock_path);
 		}
+#endif /* HAVE_FCNTL_SETLK */
 	}
 
 	listen(fd, SOMAXCONN);

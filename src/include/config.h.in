@@ -207,6 +207,9 @@ extern void srandom(int seed);
 /* Set to 1 if you have union semun */
 #undef HAVE_UNION_SEMUN
 
+/* Set to 1 if you have F_SETLK option for fcntl() */
+#undef HAVE_FCNTL_SETLK
+
 /* Set to 1 if you want to USE_LOCALE */
 #undef USE_LOCALE
 
