@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.38 2004/03/23 02:47:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.39 2004/06/18 21:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -90,8 +90,7 @@ PostgreSQL documentation
       <term><option>--location <replaceable class="parameter">location</replaceable></></term>
       <listitem>
        <para>
-	Specifies the alternative location for the database.  See also <xref
-	linkend="app-initlocation">.
+	Specifies the alternative location for the database.
        </para>
       </listitem>
      </varlistentry>

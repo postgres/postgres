@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.48 2004/06/18 06:13:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.49 2004/06/18 21:24:04 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -180,7 +180,6 @@ PostgreSQL Reference Manual
   </partintro>
 
    &initdb;
-   &initlocation;
    &ipcclean;
    &pgControldata;
    &pgCtl;

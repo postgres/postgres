@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.57 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.58 2004/06/18 21:24:01 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -111,7 +111,6 @@ Complete list of usable sgml source files in this directory.
 <!entity dropuser           system "dropuser.sgml">
 <!entity ecpgRef            system "ecpg-ref.sgml">
 <!entity initdb             system "initdb.sgml">
-<!entity initlocation       system "initlocation.sgml">
 <!entity ipcclean           system "ipcclean.sgml">
 <!entity pgConfig           system "pg_config-ref.sgml">
 <!entity pgControldata      system "pg_controldata.sgml">
