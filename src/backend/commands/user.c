@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.79 2001/07/12 18:02:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.80 2001/08/15 18:42:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/indexing.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
+#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -34,7 +35,7 @@
 
 
 static void CheckPgUserAclNotNull(void);
-
+extern bool Password_encryption;
 
 /*---------------------------------------------------------------------
  * write_password_file / update_pg_pwd
@@ -201,72 +202,80 @@ CreateUser(CreateUserStmt *stmt)
 	int			max_id = -1;
 	List	   *item, *option;
 	char	   *password = NULL;	/* PostgreSQL user password */
+	bool		encrypt_password = Password_encryption;	/* encrypt password? */
+	char		encrypted_password[MD5_PASSWD_LEN+1];
 	int			sysid = 0;			/* PgSQL system id (valid if havesysid) */
 	bool		createdb = false;	/* Can the user create databases? */
 	bool		createuser = false;	/* Can this user create users? */
 	List	   *groupElts = NIL;	/* The groups the user is a member of */
 	char	   *validUntil = NULL;	/* The time the login is valid until */
-    DefElem    *dpassword = NULL;
-    DefElem    *dsysid = NULL;
-    DefElem    *dcreatedb = NULL;
-    DefElem    *dcreateuser = NULL;
-    DefElem    *dgroupElts = NULL;
-    DefElem    *dvalidUntil = NULL;
+	DefElem    *dpassword = NULL;
+	DefElem    *dsysid = NULL;
+	DefElem    *dcreatedb = NULL;
+	DefElem    *dcreateuser = NULL;
+	DefElem    *dgroupElts = NULL;
+	DefElem    *dvalidUntil = NULL;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
 	{
 		DefElem *defel = (DefElem *) lfirst(option);
 
-        if (strcasecmp(defel->defname, "password") == 0) {
-            if (dpassword)
-                elog(ERROR, "CREATE USER: conflicting options");
-            dpassword = defel;
-        }
-        else if (strcasecmp(defel->defname, "sysid") == 0) {
-            if (dsysid)
-                elog(ERROR, "CREATE USER: conflicting options");
-            dsysid = defel;
-        }
-        else if (strcasecmp(defel->defname, "createdb") == 0) {
-            if (dcreatedb)
-                elog(ERROR, "CREATE USER: conflicting options");
-            dcreatedb = defel;
-        }
-        else if (strcasecmp(defel->defname, "createuser") == 0) {
-            if (dcreateuser)
-                elog(ERROR, "CREATE USER: conflicting options");
-            dcreateuser = defel;
-        } 
-        else if (strcasecmp(defel->defname, "groupElts") == 0) {
-            if (dgroupElts)
-                elog(ERROR, "CREATE USER: conflicting options");
-            dgroupElts = defel;
-        }
-        else if (strcasecmp(defel->defname, "validUntil") == 0) {
-            if (dvalidUntil)
-                elog(ERROR, "CREATE USER: conflicting options");
-            dvalidUntil = defel;
-        }
-        else 
-            elog(ERROR,"CREATE USER: option \"%s\" not recognized",
-                 defel->defname);
-    }
+		if (strcasecmp(defel->defname, "password") == 0 ||
+			strcasecmp(defel->defname, "encryptedPassword") == 0 ||
+			strcasecmp(defel->defname, "unencryptedPassword") == 0) {
+			if (dpassword)
+				elog(ERROR, "CREATE USER: conflicting options");
+			dpassword = defel;
+			if (strcasecmp(defel->defname, "encryptedPassword") == 0)
+				encrypt_password = true;
+			else if (strcasecmp(defel->defname, "unencryptedPassword") == 0)
+				encrypt_password = false;
+		}
+		else if (strcasecmp(defel->defname, "sysid") == 0) {
+			if (dsysid)
+				elog(ERROR, "CREATE USER: conflicting options");
+			dsysid = defel;
+		}
+		else if (strcasecmp(defel->defname, "createdb") == 0) {
+			if (dcreatedb)
+				elog(ERROR, "CREATE USER: conflicting options");
+			dcreatedb = defel;
+		}
+		else if (strcasecmp(defel->defname, "createuser") == 0) {
+			if (dcreateuser)
+				elog(ERROR, "CREATE USER: conflicting options");
+			dcreateuser = defel;
+		}
+		else if (strcasecmp(defel->defname, "groupElts") == 0) {
+			if (dgroupElts)
+				elog(ERROR, "CREATE USER: conflicting options");
+			dgroupElts = defel;
+		}
+		else if (strcasecmp(defel->defname, "validUntil") == 0) {
+			if (dvalidUntil)
+				elog(ERROR, "CREATE USER: conflicting options");
+			dvalidUntil = defel;
+		}
+		else
+			elog(ERROR,"CREATE USER: option \"%s\" not recognized",
+				 defel->defname);
+	}
 
-    if (dcreatedb)
+	if (dcreatedb)
 		createdb = intVal(dcreatedb->arg) != 0;
-    if (dcreateuser)
+	if (dcreateuser)
 		createuser = intVal(dcreateuser->arg) != 0;
-    if (dsysid)
+	if (dsysid)
 	{
 		sysid = intVal(dsysid->arg);
 		havesysid = true;
 	}
-    if (dvalidUntil)
+	if (dvalidUntil)
 		validUntil = strVal(dvalidUntil->arg);
-    if (dpassword)
+	if (dpassword)
 		password = strVal(dpassword->arg);
-    if (dgroupElts)
+	if (dgroupElts)
 		groupElts = (List *) dgroupElts->arg;
 
 	/* Check some permissions first */
@@ -337,8 +346,18 @@ CreateUser(CreateUserStmt *stmt)
 	new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(createuser);
 
 	if (password)
-		new_record[Anum_pg_shadow_passwd - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(password));
+	{
+		if (!encrypt_password || isMD5(password))
+			new_record[Anum_pg_shadow_passwd - 1] =
+				DirectFunctionCall1(textin, CStringGetDatum(password));
+		else
+		{
+			if (!EncryptMD5(password, stmt->user, encrypted_password))
+				elog(ERROR, "CREATE USER: password encryption failed");
+			new_record[Anum_pg_shadow_passwd - 1] =
+				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
+		}
+	}
 	if (validUntil)
 		new_record[Anum_pg_shadow_valuntil - 1] =
 			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
@@ -418,6 +437,8 @@ AlterUser(AlterUserStmt *stmt)
 	bool		null;
 	List       *option;
 	char	   *password = NULL;	/* PostgreSQL user password */
+	bool		encrypt_password = Password_encryption;	/* encrypt password? */
+	char		encrypted_password[MD5_PASSWD_LEN+1];
 	int			createdb = -1;		/* Can the user create databases? */
 	int			createuser = -1;	/* Can this user create users? */
 	char	   *validUntil = NULL;	/* The time the login is valid until */
@@ -431,10 +452,16 @@ AlterUser(AlterUserStmt *stmt)
 	{
 		DefElem *defel = (DefElem *) lfirst(option);
 
-		if (strcasecmp(defel->defname, "password") == 0) {
+		if (strcasecmp(defel->defname, "password") == 0 ||
+			strcasecmp(defel->defname, "encryptedPassword") == 0 ||
+			strcasecmp(defel->defname, "unencryptedPassword") == 0) {
 			if (dpassword)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dpassword = defel;
+			if (strcasecmp(defel->defname, "encryptedPassword") == 0)
+				encrypt_password = true;
+			else if (strcasecmp(defel->defname, "unencryptedPassword") == 0)
+				encrypt_password = false;
 		}
 		else if (strcasecmp(defel->defname, "createdb") == 0) {
 			if (dcreatedb)
@@ -445,17 +472,17 @@ AlterUser(AlterUserStmt *stmt)
 			if (dcreateuser)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dcreateuser = defel;
-		} 
+		}
 		else if (strcasecmp(defel->defname, "validUntil") == 0) {
 			if (dvalidUntil)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dvalidUntil = defel;
 		}
-		else 
+		else
 			elog(ERROR,"ALTER USER: option \"%s\" not recognized",
 				 defel->defname);
 	}
- 
+
 	if (dcreatedb)
 		createdb = intVal(dcreatedb->arg);
 	if (dcreateuser)
@@ -464,8 +491,8 @@ AlterUser(AlterUserStmt *stmt)
 		validUntil = strVal(dvalidUntil->arg);
 	if (dpassword)
 		password = strVal(dpassword->arg);
- 
- 	if (password)
+
+	if (password)
 		CheckPgUserAclNotNull();
 
 	/* must be superuser or just want to change your own password */
@@ -552,8 +579,16 @@ AlterUser(AlterUserStmt *stmt)
 	/* password */
 	if (password)
 	{
-		new_record[Anum_pg_shadow_passwd - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(password));
+		if (!encrypt_password || isMD5(password))
+			new_record[Anum_pg_shadow_passwd - 1] =
+				DirectFunctionCall1(textin, CStringGetDatum(password));
+		else
+		{
+			if (!EncryptMD5(password, stmt->user, encrypted_password))
+				elog(ERROR, "CREATE USER: password encryption failed");
+			new_record[Anum_pg_shadow_passwd - 1] =
+				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
+		}
 		new_record_nulls[Anum_pg_shadow_passwd - 1] = ' ';
 	}
 	else
@@ -793,40 +828,40 @@ CreateGroup(CreateGroupStmt *stmt)
 	Datum		new_record[Natts_pg_group];
 	char		new_record_nulls[Natts_pg_group];
 	List	   *item,
-               *option,
+			   *option,
 			   *newlist = NIL;
 	ArrayType  *userarray;
-    int			sysid = 0;
-    List	   *userElts = NIL;
-    DefElem    *dsysid = NULL;
-    DefElem    *duserElts = NULL;
+	int			sysid = 0;
+	List	   *userElts = NIL;
+	DefElem    *dsysid = NULL;
+	DefElem    *duserElts = NULL;
 
 	foreach(option, stmt->options)
 	{
 		DefElem *defel = (DefElem *) lfirst(option);
 
-        if (strcasecmp(defel->defname, "sysid") == 0) {
-            if (dsysid)
-                elog(ERROR, "CREATE GROUP: conflicting options");
-            dsysid = defel;
-        }
-        else if (strcasecmp(defel->defname, "userElts") == 0) {
-            if (duserElts)
-                elog(ERROR, "CREATE GROUP: conflicting options");
-            duserElts = defel;
-        }
-        else 
-            elog(ERROR,"CREATE GROUP: option \"%s\" not recognized",
-                 defel->defname);
-    }
+		if (strcasecmp(defel->defname, "sysid") == 0) {
+			if (dsysid)
+				elog(ERROR, "CREATE GROUP: conflicting options");
+			dsysid = defel;
+		}
+		else if (strcasecmp(defel->defname, "userElts") == 0) {
+			if (duserElts)
+				elog(ERROR, "CREATE GROUP: conflicting options");
+			duserElts = defel;
+		}
+		else
+			elog(ERROR,"CREATE GROUP: option \"%s\" not recognized",
+				 defel->defname);
+	}
 
-    if (dsysid)
+	if (dsysid)
 	{
 		sysid = intVal(dsysid->arg);
 		havesysid = true;
 	}
 
-    if (duserElts)
+	if (duserElts)
 		userElts = (List *) duserElts->arg;
 
 	/*

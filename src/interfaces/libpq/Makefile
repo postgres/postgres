@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.53 2001/07/15 13:45:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.54 2001/08/15 18:42:15 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ SO_MINOR_VERSION= 2
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-      pqexpbuffer.o dllist.o pqsignal.o \
+      pqexpbuffer.o dllist.o md5.o pqsignal.o \
       $(INET_ATON) $(SNPRINTF) $(STRERROR)
 
 ifdef MULTIBYTE
@@ -33,7 +33,7 @@ endif
 SHLIB_LINK += $(filter -L%, $(LDFLAGS)) $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS))
 
 
-all: all-lib
+all: md5.c md5.h all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -47,6 +47,12 @@ include $(top_srcdir)/src/Makefile.shlib
 backend_src = $(top_srcdir)/src/backend
 
 dllist.c: $(backend_src)/lib/dllist.c
+	rm -f $@ && $(LN_S) $< .
+
+md5.c: $(backend_src)/libpq/md5.c
+	rm -f $@ && $(LN_S) $< .
+
+md5.h: $(backend_src)/../include/libpq/md5.h
 	rm -f $@ && $(LN_S) $< .
 
 # this only gets done if configure finds system doesn't have inet_aton()
@@ -82,7 +88,7 @@ uninstall: uninstall-lib
 	rm -f $(addprefix $(DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) dllist.c wchar.c
+	rm -f $(OBJS) dllist.c md5.c md5.h wchar.c
 	rm -f $(OBJS) inet_aton.c snprintf.c strerror.c
 
 depend dep:

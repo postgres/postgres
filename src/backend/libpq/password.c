@@ -2,7 +2,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.37 2001/06/18 16:11:30 momjian Exp $
+ * $Id: password.c,v 1.38 2001/08/15 18:42:15 momjian Exp $
  *
  */
 
@@ -82,11 +82,14 @@ verify_password(const Port *port, const char *user, const char *password)
 			 * the current code needs non-encrypted passwords to
 			 * encrypt with a random salt.
 			 */
-			if (port->auth_method == uaCrypt
-				|| test_pw == NULL || test_pw[0] == '\0'
-				|| strcmp(test_pw, "+") == 0)
-				return crypt_verify(port, user, password);
+			if (port->auth_method == uaCrypt ||
+				port->auth_method == uaMD5 ||
+				test_pw == NULL ||
+				test_pw[0] == '\0' ||
+				strcmp(test_pw, "+") == 0)
+				return md5_crypt_verify(port, user, password);
 
+			/* external password file is crypt-only */
 			if (strcmp(crypt(password, test_pw), test_pw) == 0)
 			{
 				/* it matched. */

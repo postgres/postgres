@@ -677,7 +677,7 @@ CC_connect(ConnectionClass *self, char do_password)
 						mylog("auth got 'R'\n");
 
 						areq = SOCK_get_int(sock, 4);
-						if (areq == AUTH_REQ_CRYPT)
+						if (areq == AUTH_REQ_CRYPT || areq == AUTH_REQ_MD5)
 							SOCK_get_n_char(sock, salt, 2);
 
 						mylog("areq = %d\n", areq);
@@ -717,6 +717,7 @@ CC_connect(ConnectionClass *self, char do_password)
 							break;
 
 						case AUTH_REQ_CRYPT:
+						case AUTH_REQ_MD5:
 							self->errormsg = "Password crypt authentication not supported";
 							self->errornumber = CONN_AUTH_TYPE_UNSUPPORTED;
 							return 0;
@@ -1672,15 +1673,15 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 
 int     CC_get_max_query_len(const ConnectionClass *conn)
 {
-        int     value;
-        /* Long Queries in 7.0+ */
-        if (PG_VERSION_GE(conn, 7.0))
-                value = 0 /* MAX_STATEMENT_LEN */;
-        /* Prior to 7.0 we used 2*BLCKSZ */
-        else if (PG_VERSION_GE(conn, 6.5))
-                value = (2 * BLCKSZ);
-        else
-                /* Prior to 6.5 we used BLCKSZ */
-                value = BLCKSZ;
-        return value;
+		int     value;
+		/* Long Queries in 7.0+ */
+		if (PG_VERSION_GE(conn, 7.0))
+				value = 0 /* MAX_STATEMENT_LEN */;
+		/* Prior to 7.0 we used 2*BLCKSZ */
+		else if (PG_VERSION_GE(conn, 6.5))
+				value = (2 * BLCKSZ);
+		else
+				/* Prior to 6.5 we used BLCKSZ */
+				value = BLCKSZ;
+		return value;
 }

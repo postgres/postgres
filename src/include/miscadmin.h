@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.88 2001/08/05 02:06:50 tgl Exp $
+ * $Id: miscadmin.h,v 1.89 2001/08/15 18:42:15 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -171,8 +171,10 @@ extern bool enableFsync;
 extern bool allowSystemTableMods;
 extern int	SortMem;
 
-/* a few postmaster startup options are exported here so the
-   configuration file processor has access to them */
+/*
+ *	A few postmaster startup options are exported here so the
+ *  configuration file processor can access them.
+ */
 
 extern bool NetServer;
 extern bool EnableSSL;

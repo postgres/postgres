@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.105 2001/08/03 22:11:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.106 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1269,7 +1269,6 @@ errout:
 static int
 getNotice(PGconn *conn)
 {
-
 	/*
 	 * Since the Notice might be pretty long, we create a temporary
 	 * PQExpBuffer rather than using conn->workBuffer.	workBuffer is

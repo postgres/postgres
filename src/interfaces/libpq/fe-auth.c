@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.48 2001/07/15 13:45:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.49 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
+#include "md5.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -434,12 +435,52 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
+	int ret;
+	char *crypt_pwd;
+
 	/* Encrypt the password if needed. */
 
-	if (areq == AUTH_REQ_CRYPT)
-		password = crypt(password, conn->salt);
+	switch (areq)
+	{
+		case AUTH_REQ_CRYPT:
+			crypt_pwd = crypt(password, conn->salt);
+			break;
+		case AUTH_REQ_MD5:
+			{
+				char *crypt_pwd2;
 
-	return pqPacketSend(conn, password, strlen(password) + 1);
+				if (!(crypt_pwd = malloc(MD5_PASSWD_LEN+1)) ||
+					!(crypt_pwd2 = malloc(MD5_PASSWD_LEN+1)))
+				{
+					perror("malloc");
+					return STATUS_ERROR;
+				}
+				if (!EncryptMD5(password, conn->pguser, crypt_pwd2))
+				{
+					free(crypt_pwd);
+					free(crypt_pwd2);
+					return STATUS_ERROR;
+				}
+				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), conn->salt,
+								crypt_pwd))
+				{
+					free(crypt_pwd);
+					free(crypt_pwd2);
+					return STATUS_ERROR;
+				}
+				free(crypt_pwd2);
+				break;
+			}
+		default:
+			/* discard const so we can assign it */
+			crypt_pwd = (char *)password;
+			break;
+	}
+
+	ret = pqPacketSend(conn, crypt_pwd, strlen(crypt_pwd) + 1);
+	if (areq == AUTH_REQ_MD5)
+		free(crypt_pwd);
+	return ret;
 }
 
 /*
@@ -494,6 +535,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_PASSWORD:
 		case AUTH_REQ_CRYPT:
+		case AUTH_REQ_MD5:
 			if (password == NULL || *password == '\0')
 			{
 				(void) sprintf(PQerrormsg,
@@ -506,9 +548,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 				 "fe_sendauth: error sending password authentication\n");
 				return STATUS_ERROR;
 			}
-
 			break;
-
 		default:
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					 libpq_gettext("authentication method %u not supported\n"), areq);

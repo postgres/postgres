@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.172 2001/08/03 22:11:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.173 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1341,7 +1341,7 @@ keep_going:						/* We will come back to here until there
 				}
 
 				/* Get the password salt if there is one. */
-				if (areq == AUTH_REQ_CRYPT)
+				if (areq == AUTH_REQ_CRYPT || areq == AUTH_REQ_MD5)
 				{
 					if (pqGetnchar(conn->salt, sizeof(conn->salt), conn))
 					{
@@ -1960,7 +1960,7 @@ static void
 closePGconn(PGconn *conn)
 {
 	/* Note that the protocol doesn't allow us to send Terminate
-       messages during the startup phase. */
+	   messages during the startup phase. */
 	if (conn->sock >= 0 && conn->status == CONNECTION_OK)
 	{
 

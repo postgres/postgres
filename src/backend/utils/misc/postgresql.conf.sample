@@ -176,9 +176,10 @@
 #
 #	Misc
 #
-#default_transaction_isolation = 'read committed'
-#sql_inheritance = true
 #australian_timezones = false
 #deadlock_timeout = 1000
+#default_transaction_isolation = 'read committed'
 #max_expr_depth = 10000 # min 10
+#password_encryption = false
+#sql_inheritance = true
 

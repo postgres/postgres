@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.14 2001/07/10 22:09:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.15 2001/08/15 18:42:14 momjian Exp $
 Postgres documentation
 -->
 
@@ -27,7 +27,7 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> [ [ WITH ] <rep
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
 
-	  PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
+	  [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
         | CREATEDB | NOCREATEDB
         | CREATEUSER | NOCREATEUSER 
         | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
@@ -53,10 +53,13 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">password</replaceable></term>
+      <term><replaceable class="PARAMETER">[ encrypted | unencrypted ] password</replaceable></term>
       <listitem>
        <para>
 	The new password to be used for this account.
+	<literal>Encrypted</literal>/ <literal>unencrypted</literal>
+	controls whether the password is stored encrypted in the
+	database.
        </para>
       </listitem>
      </varlistentry>

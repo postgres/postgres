@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.56 2001/08/07 10:44:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.57 2001/08/15 18:42:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,9 +420,8 @@ auth_failed(Port *port)
 			authmethod = "IDENT";
 			break;
 		case uaPassword:
-			authmethod = "Password";
-			break;
 		case uaCrypt:
+		case uaMD5:
 			authmethod = "Password";
 			break;
 	}
@@ -507,6 +506,11 @@ ClientAuthentication(Port *port)
 			status = recv_and_check_password_packet(port);
 			break;
 
+		case uaMD5:
+			sendAuthRequest(port, AUTH_REQ_MD5);
+			status = recv_and_check_password_packet(port);
+			break;
+
 		case uaTrust:
 			status = STATUS_OK;
 			break;
@@ -532,7 +536,7 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	pq_sendint(&buf, (int32) areq, sizeof(int32));
 
 	/* Add the salt for encrypted passwords. */
-	if (areq == AUTH_REQ_CRYPT)
+	if (areq == AUTH_REQ_CRYPT || areq == AUTH_REQ_MD5)
 	{
 		pq_sendint(&buf, port->salt[0], 1);
 		pq_sendint(&buf, port->salt[1], 1);
@@ -557,7 +561,7 @@ recv_and_check_password_packet(Port *port)
 	if (pq_eof() == EOF || pq_getint(&len, 4) == EOF)
 		return STATUS_ERROR;	/* client didn't want to send password */
 	initStringInfo(&buf);
-	pq_getstr(&buf);
+	pq_getstr(&buf);		/* receive password */
 
 	if (DebugLvl)
 		fprintf(stderr, "received password packet with len=%d, pw=%s\n",
@@ -579,7 +583,7 @@ checkPassword(Port *port, char *user, char *password)
 	if (port->auth_arg[0] != '\0')
 		return verify_password(port, user, password);
 
-	return crypt_verify(port, user, password);
+	return md5_crypt_verify(port, user, password);
 }
 
 
@@ -594,7 +598,6 @@ old_be_recvauth(Port *port)
 	MsgType		msgtype = (MsgType) port->proto;
 
 	/* Handle the authentication that's offered. */
-
 	switch (msgtype)
 	{
 		case STARTUP_KRB4_MSG:
@@ -634,6 +637,7 @@ map_old_to_new(Port *port, UserAuth old, int status)
 	switch (port->auth_method)
 	{
 		case uaCrypt:
+		case uaMD5:
 		case uaReject:
 			status = STATUS_ERROR;
 			break;

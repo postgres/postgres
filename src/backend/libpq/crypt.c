@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.32 2001/06/23 23:26:17 petere Exp $
+ * $Id: crypt.c,v 1.33 2001/08/15 18:42:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 #include "libpq/crypt.h"
+#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/nabstime.h"
@@ -254,7 +255,7 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 /*-------------------------------------------------------------------------*/
 
 int
-crypt_verify(const Port *port, const char *user, const char *pgpass)
+md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 {
 
 	char	   *passwd,
@@ -280,9 +281,47 @@ crypt_verify(const Port *port, const char *user, const char *pgpass)
 	 * Compare with the encrypted or plain password depending on the
 	 * authentication method being used for this connection.
 	 */
+	 switch (port->auth_method)
+	 {
+		case uaCrypt:
+			crypt_pwd = crypt(passwd, port->salt);
+			break;
+		case uaMD5:
+			crypt_pwd = palloc(MD5_PASSWD_LEN+1);
 
-	crypt_pwd =
-		(port->auth_method == uaCrypt ? crypt(passwd, port->salt) : passwd);
+			if (isMD5(passwd))
+			{
+				if (!EncryptMD5(passwd + strlen("md5"),
+								(char *)port->salt, crypt_pwd))
+				{
+					pfree(crypt_pwd);
+					return STATUS_ERROR;
+				}
+			}
+			else
+			{
+				char *crypt_pwd2 = palloc(MD5_PASSWD_LEN+1);
+
+				if (!EncryptMD5(passwd, port->user, crypt_pwd2))
+				{
+					pfree(crypt_pwd);
+					pfree(crypt_pwd2);
+					return STATUS_ERROR;
+				}
+				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), port->salt,
+								crypt_pwd))
+				{
+					pfree(crypt_pwd);
+					pfree(crypt_pwd2);
+					return STATUS_ERROR;
+				}
+				pfree(crypt_pwd2);
+			}
+			break;
+		default:
+			crypt_pwd = passwd;
+			break;
+	}
 
 	if (!strcmp(pgpass, crypt_pwd))
 	{
@@ -302,9 +341,11 @@ crypt_verify(const Port *port, const char *user, const char *pgpass)
 			retval = STATUS_OK;
 	}
 
-	pfree((void *) passwd);
+	pfree(passwd);
 	if (valuntil)
-		pfree((void *) valuntil);
+		pfree(valuntil);
+	if (port->auth_method == uaMD5)
+		pfree(crypt_pwd);
 
 	return retval;
 }

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.55 2001/03/22 04:00:48 momjian Exp $
+ * $Id: pqcomm.h,v 1.56 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ typedef union SockAddr
 /* The earliest and latest frontend/backend protocol version supported. */
 
 #define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(0,0)
-#define PG_PROTOCOL_LATEST	PG_PROTOCOL(2,0)
+#define PG_PROTOCOL_LATEST	PG_PROTOCOL(2,1)
 
 /*
  * All packets sent to the postmaster start with the length.  This is omitted
@@ -127,11 +127,12 @@ typedef struct StartupPacket
 
 /* These are the authentication requests sent by the backend. */
 
-#define AUTH_REQ_OK		0		/* User is authenticated  */
+#define AUTH_REQ_OK			0	/* User is authenticated  */
 #define AUTH_REQ_KRB4		1	/* Kerberos V4 */
 #define AUTH_REQ_KRB5		2	/* Kerberos V5 */
 #define AUTH_REQ_PASSWORD	3	/* Password */
-#define AUTH_REQ_CRYPT		4	/* Encrypted password */
+#define AUTH_REQ_CRYPT		4	/* crypt password */
+#define AUTH_REQ_MD5		5	/* md5 password */
 
 typedef uint32 AuthRequest;
 

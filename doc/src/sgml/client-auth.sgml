@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.15 2001/08/01 23:25:39 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.16 2001/08/15 18:42:14 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -205,11 +205,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
          <para>
           Like the <literal>password</literal> method, but the password
           is sent over the wire encrypted using a simple
-          challenge-response protocol. This is still not
-          cryptographically secure but it protects against incidental
+          challenge-response protocol. This protects against incidental
           wire-sniffing. The name of a file may follow the
-          <literal>crypt</literal> keyword that contains a list of users
-          that this record pertains to.
+          <literal>crypt</literal> keyword.  It contains a list of users
+          for this record.
          </para>
         </listitem>
        </varlistentry>

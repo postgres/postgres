@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.17 2001/07/10 22:09:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.18 2001/08/15 18:42:14 momjian Exp $
 Postgres documentation
 -->
 
@@ -28,7 +28,7 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable> [ [ WITH ] <re
 where <replaceable class="PARAMETER">option</replaceable> can be:
     
 	  SYSID <replaceable class="PARAMETER">uid</replaceable> 
-        | PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+        | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
         | CREATEDB | NOCREATEDB
         | CREATEUSER | NOCREATEUSER
         | IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...]
@@ -72,12 +72,19 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">password</replaceable></term>
+      <term><replaceable class="parameter">[ encrypted | unencrypted ] password</replaceable></term>
       <listitem>
        <para>
         Sets the user's password. If you do not plan to use password
         authentication you can omit this option, otherwise the user
         won't be able to connect to a password-authenticated server.
+	</para>
+	<para>
+	<literal>ENCRYPTED/UNENCRYPTED</literal> controls whether the
+	password is stored encrypted in the database. Older clients may
+	have trouble communicating using encrypted password storage.
+	</para>
+	<para>
         See the chapter on client authentication in the
 	<citetitle>Administrator's Guide</citetitle> for details on
         how to set up authentication mechanisms.

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.18 2001/06/22 23:27:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.19 2001/08/15 18:42:14 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1295,7 +1295,7 @@ EncryptedPasswordPacket (F)
 </Term>
 <ListItem>
 <Para>
-                The encrypted (using crypt()) password.
+                The encrypted (using MD5 or crypt()) password.
 </Para>
 </ListItem>
 </VarListEntry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.94 2001/07/16 05:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.95 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"each", EACH},
 	{"else", ELSE},
 	{"encoding", ENCODING},
+	{"encrypted", ENCRYPTED},
 	{"end", END_TRANS},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
@@ -262,6 +263,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
+	{"unencrypted", UNENCRYPTED},
 	{"union", UNION},
 	{"unique", UNIQUE},
 	{"unknown", UNKNOWN},

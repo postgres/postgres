@@ -3,7 +3,6 @@
 # 
 # 
 # This file controls:
-# 
 # 	o which hosts are allowed to connect
 # 	o how users are authenticated on each host
 # 	o databases accessible by each host
@@ -24,7 +23,6 @@
 # ============
 # 
 # There are three types of records:
-# 
 # 	o host
 # 	o hostssl
 # 	o local
@@ -40,7 +38,6 @@
 #   host  DBNAME  IP_ADDRESS  ADDRESS_MASK  AUTH_TYPE  [AUTH_ARGUMENT]
 # 
 # DBNAME can be:
-# 
 # 	o the name of a PostgreSQL database
 # 	o "all" to indicate all databases
 # 	o "sameuser" to allow access only to databases with the same
@@ -80,7 +77,6 @@
 # allowed only if this record type appears.
 # 
 # Format:
-# 
 #   local  DBNAME  AUTH_TYPE  [AUTH_ARGUMENT]
 # 
 # This format is identical to the "host" record type except the IP_ADDRESS
@@ -219,4 +215,3 @@
 
 local      all                                          trust
 host       all         127.0.0.1     255.255.255.255    trust
-

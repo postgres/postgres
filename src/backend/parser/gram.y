@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.244 2001/08/13 21:34:51 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.245 2001/08/15 18:42:15 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -306,7 +306,7 @@ static void doNegateFloat(Value *v);
 		CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC,
 		DISTINCT, DOUBLE, DROP,
-		ELSE, END_TRANS, ESCAPE, EXCEPT, EXECUTE, EXISTS, EXTRACT,
+		ELSE, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
 		IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
@@ -319,7 +319,7 @@ static void doNegateFloat(Value *v);
 		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
-		UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
+		UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
@@ -557,6 +557,18 @@ OptUserElem:  PASSWORD Sconst
 				  $$ = makeNode(DefElem);
 				  $$->defname = "password";
 				  $$->arg = (Node *)makeString($2);
+				}
+			  | ENCRYPTED PASSWORD Sconst
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "encryptedPassword";
+				  $$->arg = (Node *)makeString($3);
+				}
+			  | UNENCRYPTED PASSWORD Sconst
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "unencryptedPassword";
+				  $$->arg = (Node *)makeString($3);
 				}
               | SYSID Iconst
 				{
@@ -5765,6 +5777,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| DISTINCT						{ $$ = "distinct"; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
+		| ENCRYPTED						{ $$ = "encrypted"; }
 		| END_TRANS						{ $$ = "end"; }
 		| EXCEPT						{ $$ = "except"; }
 		| EXISTS						{ $$ = "exists"; }
@@ -5836,6 +5849,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
+		| UNENCRYPTED					{ $$ = "unencrypted"; }
 		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
 		| UNKNOWN						{ $$ = "unknown"; }

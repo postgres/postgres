@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.61 2001/08/02 14:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.62 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,8 +203,8 @@ free_lines(List **lines)
  *  *error_p.  line points to the next token of the line.
  */
 static void
-parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
-				bool *error_p)
+parse_hba_auth(List *line, ProtocolVersion proto, UserAuth *userauth_p,
+				char *auth_arg, bool *error_p)
 {
 	char		*token;
 
@@ -227,7 +227,15 @@ parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 		else if (strcmp(token, "reject") == 0)
 			*userauth_p = uaReject;
 		else if (strcmp(token, "crypt") == 0)
-			*userauth_p = uaCrypt;
+		{
+			/* if the client supports it, use MD5 */
+			if (PG_PROTOCOL_MAJOR(proto) > 2 ||
+				(PG_PROTOCOL_MAJOR(proto) == 2 &&
+				 PG_PROTOCOL_MINOR(proto) >= 1))
+				*userauth_p = uaMD5;
+			else
+				*userauth_p = uaCrypt;
+		}
 		else
 			*error_p = true;
 		line = lnext(line);
@@ -285,7 +293,8 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
+		parse_hba_auth(line, port->proto, &port->auth_method,
+					   port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
@@ -354,7 +363,8 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
+		parse_hba_auth(line, port->proto, &port->auth_method,
+					   port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 

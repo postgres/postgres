@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.22 2001/08/01 23:25:39 tgl Exp $
+ * $Id: hba.h,v 1.23 2001/08/15 18:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,9 @@ typedef enum UserAuth
 	uaTrust,
 	uaIdent,
 	uaPassword,
-	uaCrypt
+	uaCrypt,
+	uaMD5		/* 	This starts as uaCrypt from pg_hba.conf, but gets 
+					overridden if the client supports MD5 */
 } UserAuth;
 
 typedef struct Port hbaPort;

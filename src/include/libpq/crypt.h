@@ -22,10 +22,6 @@ extern int	pwd_cache_count;
 extern char *crypt_getpwdfilename(void);
 extern char *crypt_getpwdreloadfilename(void);
 
-#ifdef NOT_USED
-extern MsgType crypt_salt(const char *user);
-
-#endif
-extern int	crypt_verify(const Port *port, const char *user, const char *pgpass);
+extern int md5_crypt_verify(const Port *port, const char *user, const char *pgpass);
 
 #endif

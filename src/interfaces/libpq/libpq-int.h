@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.36 2001/07/15 13:45:04 petere Exp $
+ * $Id: libpq-int.h,v 1.37 2001/08/15 18:42:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(2,0)
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(2,1)
 
 /*
  * POSTGRES backend dependent Constants.
