@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.207 2001/02/11 23:12:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.208 2001/02/20 01:34:40 tgl Exp $
  *
  * NOTES
  *
@@ -1122,6 +1122,14 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 	if (port->database[0] == '\0')
 		StrNCpy(port->database, si->user, sizeof(port->database));
+
+	/* Truncate given database and user names to length of a Postgres name. */
+	/* This avoids lookup failures when overlength names are given. */
+
+	if ((int) sizeof(port->database) >= NAMEDATALEN)
+		port->database[NAMEDATALEN-1] = '\0';
+	if ((int) sizeof(port->user) >= NAMEDATALEN)
+		port->user[NAMEDATALEN-1] = '\0';
 
 	/* Check a user name was given. */
 
