@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.59 2005/03/13 03:44:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.60 2005/03/13 04:10:23 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -318,14 +318,14 @@ initdb --locale=sv_SE
        <tbody>
         <row>
          <entry><literal>BIG5</literal></entry>
-         <entry></entry>
-         <entry>Chinese</entry>
+         <entry>Big Five</entry>
+         <entry>Traditional Chinese</entry>
          <entry>WIN950, Windows950</entry>
         </row>
         <row>
          <entry><literal>EUC_CN</literal></entry>
          <entry>Extended UNIX Code-CN</entry>
-         <entry>Chinese</entry>
+         <entry>Simplified Chinese</entry>
          <entry></entry>
         </row>
         <row>
@@ -343,19 +343,19 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>EUC_TW</literal></entry>
          <entry>Extended UNIX Code-TW</entry>
-         <entry>Taiwanese</entry>
+         <entry>Traditional Chinese, Taiwanese</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
-         <entry></entry>
+         <entry>National Standard</entry>
          <entry>Chinese</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
          <entry>Extended National Standard</entry>
-         <entry>Chinese</entry>
+         <entry>Simplified Chinese</entry>
          <entry>WIN936, Windows936</entry>
         </row>
         <row>
@@ -384,7 +384,7 @@ initdb --locale=sv_SE
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
-         <entry><acronym>EUC</></entry>
+         <entry><acronym>JOHAB</></entry>
          <entry>Korean (Hangle base)</entry>
          <entry></entry>
         </row>
@@ -392,7 +392,7 @@ initdb --locale=sv_SE
          <entry><literal>KOI8</literal></entry>
          <entry><acronym>KOI</acronym>8-R(U)</entry>
          <entry>Cyrillic</entry>
-         <entry>KOI8</entry>
+         <entry>KOI8R</entry>
         </row>
         <row>
          <entry><literal>LATIN1</literal></entry>
