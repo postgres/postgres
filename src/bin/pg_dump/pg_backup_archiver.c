@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.85 2004/03/24 03:06:08 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.86 2004/04/22 02:39:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1197,6 +1197,24 @@ die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...)
 	va_end(ap);
 }
 
+/* on some error, we may decide to go on... */
+void
+warn_or_die_horribly(ArchiveHandle *AH, 
+					 const char *modulename, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	if (AH->public.die_on_errors)
+	{
+		_die_horribly(AH, modulename, fmt, ap);
+	}
+	else
+	{
+		_write_msg(modulename, fmt, ap);
+		AH->public.n_errors++;
+	}
+	va_end(ap);
+}
 
 static void
 _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
@@ -1651,6 +1669,10 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 			die_horribly(AH, modulename, "unrecognized file format \"%d\"\n", fmt);
 	}
 
+	/* sql error handling */
+	AH->public.die_on_errors = true;
+	AH->public.n_errors = 0;
+
 	return AH;
 }
 
@@ -2011,6 +2033,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 		res = PQexec(AH->connection, cmd->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			/* NOT warn_or_die_horribly... use -O instead to skip this. */
 			die_horribly(AH, modulename, "could not set session user to \"%s\": %s",
 						 user, PQerrorMessage(AH->connection));
 
@@ -2042,8 +2065,9 @@ _doSetWithOids(ArchiveHandle *AH, const bool withOids)
 		res = PQexec(AH->connection, cmd->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			die_horribly(AH, modulename, "could not set default_with_oids: %s",
-						 PQerrorMessage(AH->connection));
+			warn_or_die_horribly(AH, modulename, 
+								 "could not set default_with_oids: %s",
+								 PQerrorMessage(AH->connection));
 
 		PQclear(res);
 	}
@@ -2181,8 +2205,9 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 		res = PQexec(AH->connection, qry->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			die_horribly(AH, modulename, "could not set search_path to \"%s\": %s",
-						 schemaName, PQerrorMessage(AH->connection));
+			warn_or_die_horribly(AH, modulename, 
+								 "could not set search_path to \"%s\": %s",
+								 schemaName, PQerrorMessage(AH->connection));
 
 		PQclear(res);
 	}

@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.57 2004/03/24 03:06:08 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.58 2004/04/22 02:39:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,7 @@ typedef struct _tocEntry
 extern const char *progname;
 
 extern void die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(printf, 3, 4)));
+extern void warn_or_die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(printf, 3, 4)));
 extern void write_msg(const char *modulename, const char *fmt,...) __attribute__((format(printf, 2, 3)));
 
 extern void WriteTOC(ArchiveHandle *AH);

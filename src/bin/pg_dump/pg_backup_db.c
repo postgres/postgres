@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.52 2004/03/03 21:28:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.53 2004/04/22 02:39:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,8 +316,8 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 			AH->pgCopyIn = 1;
 		}
 		else
-			die_horribly(AH, modulename, "%s: %s",
-						 desc, PQerrorMessage(AH->connection));
+			warn_or_die_horribly(AH, modulename, "%s: %s",
+								 desc, PQerrorMessage(AH->connection));
 	}
 
 	PQclear(res);
