@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.46 2001/01/08 21:01:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.47 2001/01/24 15:19:36 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1911,8 +1911,7 @@ openssl req -new -text -out cert.req
    To remove the passphrase (as you must if you want automatic start-up of
    the postmaster), run the commands
 <programlisting>
-mv privkey.pem cert.pem.pw
-openssl rsa -in cert.pem.pw -out cert.pem 
+openssl rsa -in privkey.pem -out cert.pem
 </programlisting>
    Enter the old passphrase to unlock the existing key. Now do
 <programlisting>
