@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.17 1999/02/04 01:46:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.18 1999/02/04 19:20:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,21 +101,24 @@ set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 List *
 add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
 {
-	List	   *x;
-	Path	   *new_path;
-	Path	   *old_path;
-	bool		noOther;
+	List	   *p1;
 
-	foreach(x, new_paths)
+	foreach(p1, new_paths)
 	{
-		new_path = (Path *) lfirst(x);
+		Path	   *new_path = (Path *) lfirst(p1);
+ 		Path	   *old_path;
+		bool		noOther;
+
+		/* Is this new path already in unique_paths? */
 		if (member(new_path, unique_paths))
 			continue;
+
+		/* Find best matching path */
 		old_path = better_path(new_path, unique_paths, &noOther);
 
 		if (noOther)
 		{
-			/* Is a brand new path.  */
+			/* This is a brand new path.  */
 			new_path->parent = parent_rel;
 			unique_paths = lcons(new_path, unique_paths);
 		}
