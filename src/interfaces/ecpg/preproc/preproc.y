@@ -2619,7 +2619,7 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 				}
 		| SelectStmt
 				{
-					$$ = $1
+					$$ = $1;
 				}
 		| '(' columnList ')' VALUES '(' res_target_list2 ')'
 				{
