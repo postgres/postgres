@@ -753,21 +753,19 @@ QueryInfo qi;
 
 	/*	Begin a transaction if one is not already in progress */
 	/*
-		Basically we don't have to begin a transaction in
-		autocommit mode because Postgres backend runs in
-		autocomit mode.  
-		We issue "BEGIN" in the following cases.
-		1) we use declare/fetch and the statement is SELECT
-		   (because declare/fetch must be called in a transaction).
-		2) we are not in autocommit state and the statement
-		   is of type UPDATE.
-	*/ 
-	if ( ! self->internal && ! CC_is_in_trans(conn) &&
-	    ((globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) || (! CC_is_in_autocommit(conn) && STMT_UPDATE(self)))) {
-
+	 * Basically we don't have to begin a transaction in autocommit mode
+	 * because Postgres backend runs in autocomit mode. We issue "BEGIN"
+	 * in the following cases. 1) we use declare/fetch and the statement
+	 * is SELECT (because declare/fetch must be called in a transaction).
+	 * 2) we are in autocommit off state and the statement isn't of type
+	 * OTHER.
+	 */
+	if (!self->internal && !CC_is_in_trans(conn) &&
+		((globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) || (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
+	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL);
-		if ( ! res) {
+		if (QR_aborted(res)) {
 			self->errormsg = "Could not begin a transaction";
 			self->errornumber = STMT_EXEC_ERROR;
 			SC_log_error(func, "", self);
@@ -843,10 +841,12 @@ QueryInfo qi;
 		/*	We shouldn't send COMMIT. Postgres backend does the
 			autocommit if neccessary. (Zoltan, 04/26/2000)
 		*/
-		/*	Even in case of autocommit, started transactions
-			must be committed. (Hiroshi, 09/02/2001)
+		/*	Above seems wrong.
+			Even in case of autocommit, started transactions
+			must be committed. (Hiroshi, 02/11/2001)
 		 */ 
-		if ( ! self->internal && CC_is_in_autocommit(conn) && CC_is_in_trans(conn) && STMT_UPDATE(self)) {                   
+		if ( ! self->internal && CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
+		 {                   
 			res = CC_send_query(conn, "COMMIT", NULL); 
 			QR_Destructor(res);
 			CC_set_no_trans(conn);
@@ -885,8 +885,8 @@ QueryInfo qi;
 				return SQL_ERROR;
 			}
 		}
-		/* in autocommit mode declare/fetch error must be aborted */ 
-		if ( ! was_ok && ! self->internal && CC_is_in_autocommit(conn) && CC_is_in_trans(conn))                   
+		/* issue "ABORT" when query aborted */ 
+		if (QR_get_aborted(self->result) && ! self->internal )                   
 			CC_abort(conn);
 	} else {		/* Bad Error -- The error message will be in the Connection */
 

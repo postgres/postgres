@@ -6,7 +6,7 @@
  *
  * Comments:        See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.37 2001/02/14 05:45:46 momjian Exp $
+ * $Id: psqlodbc.h,v 1.38 2001/02/15 05:32:00 inoue Exp $
  */
 
 #ifndef __PSQLODBC_H__
@@ -41,7 +41,7 @@ typedef UInt4 Oid;
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
 
-#define POSTGRESDRIVERVERSION  "07.01.0002"
+#define POSTGRESDRIVERVERSION  "07.01.0003"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"

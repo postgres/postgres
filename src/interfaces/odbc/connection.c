@@ -964,9 +964,10 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 						    self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
 						    CC_set_no_trans(self);
 						    }
-						else 
+						else
 						    self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
 						QR_set_status(res, PGRES_NONFATAL_ERROR);
+						QR_set_aborted(res, TRUE);
 						break;
 					}
 				}
@@ -1033,6 +1034,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 				self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
 				QR_set_status(res, PGRES_NONFATAL_ERROR);
 			}
+			QR_set_aborted(res, TRUE);
 
 			return res; /* instead of NULL. Zoltan */
 

@@ -62,6 +62,7 @@ struct QResultClass_ {
 	TupleField *tupleField;				/* current backend tuple being retrieved */
 
 	char inTuples;						/* is a fetch of rows from the backend in progress? */
+	char aborted;					/* was aborted?*/
 };
 
 #define QR_get_fields(self)				(self->fields)
@@ -91,11 +92,15 @@ struct QResultClass_ {
 #define QR_end_tuples(self)				( self->status == PGRES_END_TUPLES)
 #define QR_set_status(self, condition)	( self->status = condition )
 #define QR_set_message(self, message_)	( self->message = message_)
+#define QR_set_aborted(self, aborted_)	( self->aborted = aborted_)
 
 #define QR_get_message(self)			(self->message)
 #define QR_get_command(self)			(self->command)
 #define QR_get_notice(self)				(self->notice)
 #define QR_get_status(self)				(self->status)
+#define QR_get_aborted(self)				(self->aborted)
+
+#define QR_aborted(self)		(!self || self->aborted)
 
 /*	Core Functions */
 QResultClass *QR_Constructor(void);

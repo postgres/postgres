@@ -106,6 +106,7 @@ QResultClass *rv;
 		rv->num_fields = 0;
 		rv->tupleField = NULL;
 		rv->cursor = NULL;
+		rv->aborted = FALSE;
 
 		rv->cache_size = globals.fetch_max;
 		rv->rowset_size = 1;
