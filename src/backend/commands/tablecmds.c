@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.41 2002/09/12 21:16:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.42 2002/09/22 00:37:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "parser/gramparse.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -59,10 +60,19 @@ static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static void CheckTupleType(Form_pg_class tuple_class);
 static bool needs_toast_table(Relation rel);
+static void AlterTableAddCheckConstraint(Relation rel, Constraint *constr);
+static void AlterTableAddForeignKeyConstraint(Relation rel,
+											  FkConstraint *fkconstraint);
+static int transformColumnNameList(Oid relId, List *colList,
+								   const char *stmtname,
+								   int16 *attnums, Oid *atttypids);
+static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
+									  List **attnamelist,
+									  int16 *attnums, Oid *atttypids);
+static Oid	transformFkeyCheckAttrs(Relation pkrel,
+									int numattrs, int16 *attnums);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel);
-static Oid createForeignKeyConstraint(Relation rel, Relation pkrel,
-						   FkConstraint *fkconstraint);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 						 Oid constrOid);
 static char *fkMatchTypeToString(char match_type);
@@ -2513,6 +2523,22 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 					Constraint *constr = (Constraint *) newConstraint;
 
 					/*
+					 * Assign or validate constraint name
+					 */
+					if (constr->name)
+					{
+						if (ConstraintNameIsUsed(RelationGetRelid(rel),
+												 RelationGetNamespace(rel),
+												 constr->name))
+							elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
+								 constr->name, RelationGetRelationName(rel));
+					}
+					else
+						constr->name = GenerateConstraintName(RelationGetRelid(rel),
+															  RelationGetNamespace(rel),
+															  &counter);
+
+					/*
 					 * Currently, we only expect to see CONSTR_CHECK nodes
 					 * arriving here (see the preprocessing done in
 					 * parser/analyze.c).  Use a switch anyway to make it
@@ -2521,130 +2547,8 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 					switch (constr->contype)
 					{
 						case CONSTR_CHECK:
-							{
-								ParseState *pstate;
-								bool		successful = true;
-								HeapScanDesc scan;
-								ExprContext *econtext;
-								TupleTableSlot *slot;
-								HeapTuple	tuple;
-								RangeTblEntry *rte;
-								List	   *qual;
-								Node	   *expr;
-
-								/*
-								 * Assign or validate constraint name
-								 */
-								if (constr->name)
-								{
-									if (ConstraintNameIsUsed(RelationGetRelid(rel),
-											   RelationGetNamespace(rel),
-														   constr->name))
-										elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
-											 constr->name,
-										   RelationGetRelationName(rel));
-								}
-								else
-									constr->name = GenerateConstraintName(RelationGetRelid(rel),
-											   RelationGetNamespace(rel),
-															   &counter);
-
-								/*
-								 * We need to make a parse state and range
-								 * table to allow us to transformExpr and
-								 * fix_opids to get a version of the
-								 * expression we can pass to ExecQual
-								 */
-								pstate = make_parsestate(NULL);
-								rte = addRangeTableEntryForRelation(pstate,
-																 myrelid,
-																	makeAlias(RelationGetRelationName(rel), NIL),
-																	false,
-																	true);
-								addRTEtoQuery(pstate, rte, true, true);
-
-								/*
-								 * Convert the A_EXPR in raw_expr into an
-								 * EXPR
-								 */
-								expr = transformExpr(pstate, constr->raw_expr);
-
-								/*
-								 * Make sure it yields a boolean result.
-								 */
-								expr = coerce_to_boolean(expr, "CHECK");
-
-								/*
-								 * Make sure no outside relations are
-								 * referred to.
-								 */
-								if (length(pstate->p_rtable) != 1)
-									elog(ERROR, "Only relation '%s' can be referenced in CHECK",
-										 RelationGetRelationName(rel));
-
-								/*
-								 * No subplans or aggregates, either...
-								 */
-								if (contain_subplans(expr))
-									elog(ERROR, "cannot use subselect in CHECK constraint expression");
-								if (contain_agg_clause(expr))
-									elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
-
-								/*
-								 * Might as well try to reduce any
-								 * constant expressions.
-								 */
-								expr = eval_const_expressions(expr);
-
-								/* And fix the opids */
-								fix_opids(expr);
-
-								qual = makeList1(expr);
-
-								/* Make tuple slot to hold tuples */
-								slot = MakeTupleTableSlot();
-								ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
-								/* Make an expression context for ExecQual */
-								econtext = MakeExprContext(slot, CurrentMemoryContext);
-
-								/*
-								 * Scan through the rows now, checking the
-								 * expression at each row.
-								 */
-								scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
-
-								while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-								{
-									ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-									if (!ExecQual(qual, econtext, true))
-									{
-										successful = false;
-										break;
-									}
-									ResetExprContext(econtext);
-								}
-
-								heap_endscan(scan);
-
-								FreeExprContext(econtext);
-								pfree(slot);
-
-								if (!successful)
-									elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s",
-										 constr->name);
-
-								/*
-								 * Call AddRelationRawConstraints to do
-								 * the real adding -- It duplicates some
-								 * of the above, but does not check the
-								 * validity of the constraint against
-								 * tuples already in the table.
-								 */
-								AddRelationRawConstraints(rel, NIL,
-													  makeList1(constr));
-
-								break;
-							}
+							AlterTableAddCheckConstraint(rel, constr);
+							break;
 						default:
 							elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
 					}
@@ -2653,8 +2557,6 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 			case T_FkConstraint:
 				{
 					FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
-					Relation	pkrel;
-					Oid			constrOid;
 
 					/*
 					 * Assign or validate constraint name
@@ -2673,74 +2575,504 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 											   RelationGetNamespace(rel),
 															   &counter);
 
-					/*
-					 * Grab an exclusive lock on the pk table, so that
-					 * someone doesn't delete rows out from under us.
-					 * (Although a lesser lock would do for that purpose,
-					 * we'll need exclusive lock anyway to add triggers to
-					 * the pk table; trying to start with a lesser lock
-					 * will just create a risk of deadlock.)
-					 */
-					pkrel = heap_openrv(fkconstraint->pktable,
-										AccessExclusiveLock);
-
-					/*
-					 * Validity checks
-					 */
-					if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-						elog(ERROR, "referenced relation \"%s\" is not a table",
-							 RelationGetRelationName(pkrel));
-
-					if (!allowSystemTableMods
-						&& IsSystemRelation(pkrel))
-						elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-							 RelationGetRelationName(pkrel));
-
-					/* XXX shouldn't there be a permission check too? */
-
-					if (isTempNamespace(RelationGetNamespace(pkrel)) &&
-						!isTempNamespace(RelationGetNamespace(rel)))
-						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint");
-
-					/*
-					 * Check that the constraint is satisfied by existing
-					 * rows (we can skip this during table creation).
-					 *
-					 * NOTE: we assume parser has already checked for
-					 * existence of an appropriate unique index on the
-					 * referenced relation, and that the column datatypes
-					 * are comparable.
-					 */
-					if (!fkconstraint->skip_validation)
-						validateForeignKeyConstraint(fkconstraint, rel, pkrel);
-
-					/*
-					 * Record the FK constraint in pg_constraint.
-					 */
-					constrOid = createForeignKeyConstraint(rel, pkrel,
-														   fkconstraint);
-
-					/*
-					 * Create the triggers that will enforce the
-					 * constraint.
-					 */
-					createForeignKeyTriggers(rel, fkconstraint, constrOid);
-
-					/*
-					 * Close pk table, but keep lock until we've
-					 * committed.
-					 */
-					heap_close(pkrel, NoLock);
+					AlterTableAddForeignKeyConstraint(rel, fkconstraint);
 
 					break;
 				}
 			default:
 				elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
 		}
+
+		/* If we have multiple constraints to make, bump CC between 'em */
+		if (lnext(listptr))
+			CommandCounterIncrement();
 	}
 
 	/* Close rel, but keep lock till commit */
 	heap_close(rel, NoLock);
+}
+
+/*
+ * Add a check constraint to a single table
+ *
+ * Subroutine for AlterTableAddConstraint.  Must already hold exclusive
+ * lock on the rel, and have done appropriate validity/permissions checks
+ * for it.
+ */
+static void
+AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
+{
+	ParseState *pstate;
+	bool		successful = true;
+	HeapScanDesc scan;
+	ExprContext *econtext;
+	TupleTableSlot *slot;
+	HeapTuple	tuple;
+	RangeTblEntry *rte;
+	List	   *qual;
+	Node	   *expr;
+
+	/*
+	 * We need to make a parse state and range
+	 * table to allow us to transformExpr and
+	 * fix_opids to get a version of the
+	 * expression we can pass to ExecQual
+	 */
+	pstate = make_parsestate(NULL);
+	rte = addRangeTableEntryForRelation(pstate,
+										RelationGetRelid(rel),
+										makeAlias(RelationGetRelationName(rel), NIL),
+										false,
+										true);
+	addRTEtoQuery(pstate, rte, true, true);
+
+	/*
+	 * Convert the A_EXPR in raw_expr into an EXPR
+	 */
+	expr = transformExpr(pstate, constr->raw_expr);
+
+	/*
+	 * Make sure it yields a boolean result.
+	 */
+	expr = coerce_to_boolean(expr, "CHECK");
+
+	/*
+	 * Make sure no outside relations are referred to.
+	 */
+	if (length(pstate->p_rtable) != 1)
+		elog(ERROR, "Only relation '%s' can be referenced in CHECK",
+			 RelationGetRelationName(rel));
+
+	/*
+	 * No subplans or aggregates, either...
+	 */
+	if (contain_subplans(expr))
+		elog(ERROR, "cannot use subselect in CHECK constraint expression");
+	if (contain_agg_clause(expr))
+		elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
+
+	/*
+	 * Might as well try to reduce any constant expressions.
+	 */
+	expr = eval_const_expressions(expr);
+
+	/* And fix the opids */
+	fix_opids(expr);
+
+	qual = makeList1(expr);
+
+	/* Make tuple slot to hold tuples */
+	slot = MakeTupleTableSlot();
+	ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
+	/* Make an expression context for ExecQual */
+	econtext = MakeExprContext(slot, CurrentMemoryContext);
+
+	/*
+	 * Scan through the rows now, checking the expression at each row.
+	 */
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+		if (!ExecQual(qual, econtext, true))
+		{
+			successful = false;
+			break;
+		}
+		ResetExprContext(econtext);
+	}
+
+	heap_endscan(scan);
+
+	FreeExprContext(econtext);
+	pfree(slot);
+
+	if (!successful)
+		elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s",
+			 constr->name);
+
+	/*
+	 * Call AddRelationRawConstraints to do
+	 * the real adding -- It duplicates some
+	 * of the above, but does not check the
+	 * validity of the constraint against
+	 * tuples already in the table.
+	 */
+	AddRelationRawConstraints(rel, NIL, makeList1(constr));
+}
+
+/*
+ * Add a foreign-key constraint to a single table
+ *
+ * Subroutine for AlterTableAddConstraint.  Must already hold exclusive
+ * lock on the rel, and have done appropriate validity/permissions checks
+ * for it.
+ */
+static void
+AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
+{
+	const char *stmtname;
+	Relation	pkrel;
+	AclResult	aclresult;
+	int16		pkattnum[INDEX_MAX_KEYS];
+	int16		fkattnum[INDEX_MAX_KEYS];
+	Oid			pktypoid[INDEX_MAX_KEYS];
+	Oid			fktypoid[INDEX_MAX_KEYS];
+	int			i;
+	int			numfks,
+				numpks;
+	Oid			indexOid;
+	Oid			constrOid;
+
+	/* cheat a little to discover statement type for error messages */
+	stmtname = fkconstraint->skip_validation ? "CREATE TABLE" : "ALTER TABLE";
+
+	/*
+	 * Grab an exclusive lock on the pk table, so that
+	 * someone doesn't delete rows out from under us.
+	 * (Although a lesser lock would do for that purpose,
+	 * we'll need exclusive lock anyway to add triggers to
+	 * the pk table; trying to start with a lesser lock
+	 * will just create a risk of deadlock.)
+	 */
+	pkrel = heap_openrv(fkconstraint->pktable, AccessExclusiveLock);
+
+	/*
+	 * Validity and permissions checks
+	 *
+	 * Note: REFERENCES permissions checks are redundant with CREATE TRIGGER,
+	 * but we may as well error out sooner instead of later.
+	 */
+	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "referenced relation \"%s\" is not a table",
+			 RelationGetRelationName(pkrel));
+
+	if (!allowSystemTableMods
+		&& IsSystemRelation(pkrel))
+		elog(ERROR, "%s: relation \"%s\" is a system catalog",
+			 stmtname, RelationGetRelationName(pkrel));
+
+	aclresult = pg_class_aclcheck(RelationGetRelid(pkrel), GetUserId(),
+								  ACL_REFERENCES);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, RelationGetRelationName(pkrel));
+
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+								  ACL_REFERENCES);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, RelationGetRelationName(rel));
+
+	if (isTempNamespace(RelationGetNamespace(pkrel)) &&
+		!isTempNamespace(RelationGetNamespace(rel)))
+		elog(ERROR, "%s: Unable to reference temporary table from permanent table constraint",
+			 stmtname);
+
+	/*
+	 * Look up the referencing attributes to make sure they
+	 * exist, and record their attnums and type OIDs.
+	 */
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
+	{
+		pkattnum[i] = fkattnum[i] = 0;
+		pktypoid[i] = fktypoid[i] = InvalidOid;
+	}
+
+	numfks = transformColumnNameList(RelationGetRelid(rel),
+									 fkconstraint->fk_attrs,
+									 stmtname,
+									 fkattnum, fktypoid);
+
+	/*
+	 * If the attribute list for the referenced table was omitted,
+	 * lookup the definition of the primary key and use it.  Otherwise,
+	 * validate the supplied attribute list.  In either case, discover
+	 * the index OID and the attnums and type OIDs of the attributes.
+	 */
+	if (fkconstraint->pk_attrs == NIL)
+	{
+		numpks = transformFkeyGetPrimaryKey(pkrel, &indexOid,
+											&fkconstraint->pk_attrs,
+											pkattnum, pktypoid);
+	}
+	else
+	{
+		numpks = transformColumnNameList(RelationGetRelid(pkrel),
+										 fkconstraint->pk_attrs,
+										 stmtname,
+										 pkattnum, pktypoid);
+		/* Look for an index matching the column list */
+		indexOid = transformFkeyCheckAttrs(pkrel, numpks, pkattnum);
+	}
+
+	/* Be sure referencing and referenced column types are comparable */
+	if (numfks != numpks)
+		elog(ERROR, "%s: number of referencing and referenced attributes for foreign key disagree",
+			 stmtname);
+
+	for (i = 0; i < numpks; i++)
+	{
+		/*
+		 * fktypoid[i] is the foreign key table's i'th element's type
+		 * pktypoid[i] is the primary key table's i'th element's type
+		 *
+		 * We let oper() do our work for us, including elog(ERROR) if the
+		 * types don't compare with =
+		 */
+		Operator	o = oper(makeList1(makeString("=")),
+							 fktypoid[i], pktypoid[i], false);
+
+		ReleaseSysCache(o);
+	}
+
+	/*
+	 * Check that the constraint is satisfied by existing
+	 * rows (we can skip this during table creation).
+	 */
+	if (!fkconstraint->skip_validation)
+		validateForeignKeyConstraint(fkconstraint, rel, pkrel);
+
+	/*
+	 * Record the FK constraint in pg_constraint.
+	 */
+	constrOid = CreateConstraintEntry(fkconstraint->constr_name,
+									  RelationGetNamespace(rel),
+									  CONSTRAINT_FOREIGN,
+									  fkconstraint->deferrable,
+									  fkconstraint->initdeferred,
+									  RelationGetRelid(rel),
+									  fkattnum,
+									  numfks,
+									  InvalidOid, /* not a domain constraint */
+									  RelationGetRelid(pkrel),
+									  pkattnum,
+									  numpks,
+									  fkconstraint->fk_upd_action,
+									  fkconstraint->fk_del_action,
+									  fkconstraint->fk_matchtype,
+									  indexOid,
+									  NULL,	/* no check constraint */
+									  NULL,
+									  NULL);
+
+	/*
+	 * Create the triggers that will enforce the constraint.
+	 */
+	createForeignKeyTriggers(rel, fkconstraint, constrOid);
+
+	/*
+	 * Close pk table, but keep lock until we've committed.
+	 */
+	heap_close(pkrel, NoLock);
+}
+
+
+/*
+ * transformColumnNameList - transform list of column names
+ *
+ * Lookup each name and return its attnum and type OID
+ */
+static int
+transformColumnNameList(Oid relId, List *colList,
+						const char *stmtname,
+						int16 *attnums, Oid *atttypids)
+{
+	List	   *l;
+	int			attnum;
+
+	attnum = 0;
+	foreach(l, colList)
+	{
+		char	   *attname = strVal(lfirst(l));
+		HeapTuple	atttuple;
+
+		atttuple = SearchSysCacheAttName(relId, attname);
+		if (!HeapTupleIsValid(atttuple))
+			elog(ERROR, "%s: column \"%s\" referenced in foreign key constraint does not exist",
+				 stmtname, attname);
+		if (attnum >= INDEX_MAX_KEYS)
+			elog(ERROR, "Can only have %d keys in a foreign key",
+				 INDEX_MAX_KEYS);
+		attnums[attnum] = ((Form_pg_attribute) GETSTRUCT(atttuple))->attnum;
+		atttypids[attnum] = ((Form_pg_attribute) GETSTRUCT(atttuple))->atttypid;
+		ReleaseSysCache(atttuple);
+		attnum++;
+	}
+
+	return attnum;
+}
+
+/*
+ * transformFkeyGetPrimaryKey -
+ *
+ *	Look up the names, attnums, and types of the primary key attributes
+ *	for the pkrel.  Used when the column list in the REFERENCES specification
+ *	is omitted.
+ */
+static int
+transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
+						   List **attnamelist,
+						   int16 *attnums, Oid *atttypids)
+{
+	List	   *indexoidlist,
+			   *indexoidscan;
+	HeapTuple	indexTuple = NULL;
+	Form_pg_index indexStruct = NULL;
+	int			i;
+
+	/*
+	 * Get the list of index OIDs for the table from the relcache, and
+	 * look up each one in the pg_index syscache until we find one marked
+	 * primary key (hopefully there isn't more than one such).
+	 */
+	indexoidlist = RelationGetIndexList(pkrel);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		Oid			indexoid = lfirsti(indexoidscan);
+
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+				 indexoid);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+		if (indexStruct->indisprimary)
+		{
+			*indexOid = indexoid;
+			break;
+		}
+		ReleaseSysCache(indexTuple);
+		indexStruct = NULL;
+	}
+
+	freeList(indexoidlist);
+
+	/*
+	 * Check that we found it
+	 */
+	if (indexStruct == NULL)
+		elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
+			 RelationGetRelationName(pkrel));
+
+	/*
+	 * Now build the list of PK attributes from the indkey definition
+	 */
+	*attnamelist = NIL;
+	for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+	{
+		int			pkattno = indexStruct->indkey[i];
+
+		attnums[i] = pkattno;
+		atttypids[i] = attnumTypeId(pkrel, pkattno);
+		*attnamelist = lappend(*attnamelist,
+		   makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
+	}
+
+	ReleaseSysCache(indexTuple);
+
+	return i;
+}
+
+/*
+ * transformFkeyCheckAttrs -
+ *
+ *	Make sure that the attributes of a referenced table belong to a unique
+ *	(or primary key) constraint.  Return the OID of the index supporting
+ *	the constraint.
+ */
+static Oid
+transformFkeyCheckAttrs(Relation pkrel,
+						int numattrs, int16 *attnums)
+{
+	Oid			indexoid = InvalidOid;
+	bool		found = false;
+	List	   *indexoidlist,
+			   *indexoidscan;
+
+	/*
+	 * Get the list of index OIDs for the table from the relcache, and
+	 * look up each one in the pg_index syscache, and match unique indexes
+	 * to the list of attnums we are given.
+	 */
+	indexoidlist = RelationGetIndexList(pkrel);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		HeapTuple	indexTuple;
+		Form_pg_index indexStruct;
+		int			i, j;
+
+		indexoid = lfirsti(indexoidscan);
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "transformFkeyCheckAttrs: index %u not found",
+				 indexoid);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		/*
+		 * Must be unique, not a functional index, and not a partial index
+		 */
+		if (indexStruct->indisunique &&
+			indexStruct->indproc == InvalidOid &&
+			VARSIZE(&indexStruct->indpred) <= VARHDRSZ)
+		{
+			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+				;
+			if (i == numattrs)
+			{
+				/*
+				 * The given attnum list may match the index columns in any
+				 * order.  Check that each list is a subset of the other.
+				 */
+				for (i = 0; i < numattrs; i++)
+				{
+					found = false;
+					for (j = 0; j < numattrs; j++)
+					{
+						if (attnums[i] == indexStruct->indkey[j])
+						{
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+						break;
+				}
+				if (found)
+				{
+					for (i = 0; i < numattrs; i++)
+					{
+						found = false;
+						for (j = 0; j < numattrs; j++)
+						{
+							if (attnums[j] == indexStruct->indkey[i])
+							{
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+							break;
+					}
+				}
+			}
+		}
+		ReleaseSysCache(indexTuple);
+		if (found)
+			break;
+	}
+
+	if (!found)
+		elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
+			 RelationGetRelationName(pkrel));
+
+	freeList(indexoidlist);
+
+	return indexoid;
 }
 
 /*
@@ -2832,73 +3164,6 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	heap_endscan(scan);
 
 	pfree(trig.tgargs);
-}
-
-/*
- * Record an FK constraint in pg_constraint.
- */
-static Oid
-createForeignKeyConstraint(Relation rel, Relation pkrel,
-						   FkConstraint *fkconstraint)
-{
-	int16	   *fkattr;
-	int16	   *pkattr;
-	int			fkcount;
-	int			pkcount;
-	List	   *l;
-	int			i;
-
-	/* Convert foreign-key attr names to attr number array */
-	fkcount = length(fkconstraint->fk_attrs);
-	fkattr = (int16 *) palloc(fkcount * sizeof(int16));
-	i = 0;
-	foreach(l, fkconstraint->fk_attrs)
-	{
-		char	   *id = strVal(lfirst(l));
-		AttrNumber	attno;
-
-		attno = get_attnum(RelationGetRelid(rel), id);
-		if (attno == InvalidAttrNumber)
-			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-				 RelationGetRelationName(rel), id);
-		fkattr[i++] = attno;
-	}
-
-	/* The same for the referenced primary key attrs */
-	pkcount = length(fkconstraint->pk_attrs);
-	pkattr = (int16 *) palloc(pkcount * sizeof(int16));
-	i = 0;
-	foreach(l, fkconstraint->pk_attrs)
-	{
-		char	   *id = strVal(lfirst(l));
-		AttrNumber	attno;
-
-		attno = get_attnum(RelationGetRelid(pkrel), id);
-		if (attno == InvalidAttrNumber)
-			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-				 RelationGetRelationName(pkrel), id);
-		pkattr[i++] = attno;
-	}
-
-	/* Now we can make the pg_constraint entry */
-	return CreateConstraintEntry(fkconstraint->constr_name,
-								 RelationGetNamespace(rel),
-								 CONSTRAINT_FOREIGN,
-								 fkconstraint->deferrable,
-								 fkconstraint->initdeferred,
-								 RelationGetRelid(rel),
-								 fkattr,
-								 fkcount,
-								 InvalidOid,	/* not a domain constraint */
-								 RelationGetRelid(pkrel),
-								 pkattr,
-								 pkcount,
-								 fkconstraint->fk_upd_action,
-								 fkconstraint->fk_del_action,
-								 fkconstraint->fk_matchtype,
-								 NULL,	/* no check constraint */
-								 NULL,
-								 NULL);
 }
 
 /*

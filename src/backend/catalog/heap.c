@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.229 2002/09/19 23:40:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.230 2002/09/22 00:37:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1342,6 +1342,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 						  ' ',
 						  ' ',
 						  ' ',
+						  InvalidOid, /* no associated index */
 						  expr, /* Tree form check constraint */
 						  ccbin,	/* Binary form check constraint */
 						  ccsrc);		/* Source form check constraint */

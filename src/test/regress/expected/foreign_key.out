@@ -692,7 +692,7 @@ NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  CREATE TABLE: column "ftest2" referenced in foreign key constraint does not exist
 CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(ptest2));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  UNIQUE constraint matching given keys for referenced table "pktable" not found
+ERROR:  CREATE TABLE: column "ptest2" referenced in foreign key constraint does not exist
 DROP TABLE FKTABLE_FAIL1;
 ERROR:  table "fktable_fail1" does not exist
 DROP TABLE FKTABLE_FAIL2;

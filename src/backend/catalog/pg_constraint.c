@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.6 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.7 2002/09/22 00:37:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ CreateConstraintEntry(const char *constraintName,
 					  char foreignUpdateType,
 					  char foreignDeleteType,
 					  char foreignMatchType,
+					  Oid indexRelId,
 					  Node *conExpr,
 					  const char *conBin,
 					  const char *conSrc)
@@ -214,6 +215,21 @@ CreateConstraintEntry(const char *constraintName,
 
 			recordDependencyOn(&conobject, &relobject, DEPENDENCY_NORMAL);
 		}
+	}
+
+	if (OidIsValid(indexRelId))
+	{
+		/*
+		 * Register normal dependency on the unique index that supports
+		 * a foreign-key constraint.
+		 */
+		ObjectAddress relobject;
+
+		relobject.classId = RelOid_pg_class;
+		relobject.objectId = indexRelId;
+		relobject.objectSubId = 0;
+
+		recordDependencyOn(&conobject, &relobject, DEPENDENCY_NORMAL);
 	}
 
 	if (conExpr != NULL)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.196 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.197 2002/09/22 00:37:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -693,6 +693,7 @@ index_create(Oid heapRelationId,
 										   ' ',
 										   ' ',
 										   ' ',
+										   InvalidOid, /* no associated index */
 										   NULL,		/* no check constraint */
 										   NULL,
 										   NULL);

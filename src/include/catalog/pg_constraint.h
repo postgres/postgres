@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_constraint.h,v 1.3 2002/09/04 20:31:37 momjian Exp $
+ * $Id: pg_constraint.h,v 1.4 2002/09/22 00:37:09 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -159,6 +159,7 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  char foreignUpdateType,
 					  char foreignDeleteType,
 					  char foreignMatchType,
+					  Oid indexRelId,
 					  Node *conExpr,
 					  const char *conBin,
 					  const char *conSrc);
