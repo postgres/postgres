@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.203 2001/04/22 21:34:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.204 2001/04/23 23:36:33 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -948,6 +948,19 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* Get the target database name */
+	if (optind < argc)
+		dbname = argv[optind];
+	else
+		dbname = getenv("PGDATABASE");
+	if (!dbname)
+	{
+		fprintf(stderr,
+				"%s: no database name specified\n",
+				progname);
+		exit(1);
+	}
+
 	if (dataOnly && schemaOnly)
 	{
 		fprintf(stderr,
@@ -1021,8 +1034,6 @@ main(int argc, char **argv)
 
 	/* Let the archiver know how noisy to be */
 	g_fout->verbose = g_verbose;
-
-	dbname = argv[optind];
 
 	/*
 	 * Open the database using the Archiver, so it knows about it. Errors
