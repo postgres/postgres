@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.36 2003/07/22 19:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.37 2003/07/27 21:49:53 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -81,10 +81,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
-
-#include "libpq/libpq.h"
-#include "miscadmin.h"
-
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -94,17 +90,13 @@
 #include <arpa/inet.h>
 #endif
 
-#ifndef HAVE_STRDUP
-#include "strdup.h"
-#endif
-
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/dh.h>
 #endif
 
-extern void ExitPostmaster(int);
-extern void postmaster_error(const char *fmt,...);
+#include "libpq/libpq.h"
+#include "miscadmin.h"
 
 #ifdef USE_SSL
 static DH  *load_dh_file(int keylength);
@@ -126,6 +118,7 @@ static const char *SSLerrmessage(void);
  */
 #define RENEGOTIATION_LIMIT (512 * 1024 * 1024)
 #define CA_PATH NULL
+
 static SSL_CTX *SSL_context = NULL;
 #endif
 
@@ -607,7 +600,7 @@ info_cb(const SSL *ssl, int type, int args)
 static int
 initialize_SSL(void)
 {
-	char		fnbuf[2048];
+	char		fnbuf[MAXPGPATH];
 	struct stat buf;
 
 	if (!SSL_context)
@@ -616,50 +609,43 @@ initialize_SSL(void)
 		SSL_load_error_strings();
 		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)
-		{
-			postmaster_error("failed to create SSL context: %s",
-							 SSLerrmessage());
-			ExitPostmaster(1);
-		}
+			ereport(FATAL,
+					(errmsg("could not create SSL context: %s",
+							SSLerrmessage())));
 
 		/*
 		 * Load and verify certificate and private key
 		 */
 		snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
 		if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
-		{
-			postmaster_error("failed to load server certificate (%s): %s",
-							 fnbuf, SSLerrmessage());
-			ExitPostmaster(1);
-		}
+			ereport(FATAL,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not load server certificate file \"%s\": %s",
+							fnbuf, SSLerrmessage())));
 
 		snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
-		if (lstat(fnbuf, &buf) == -1)
-		{
-			postmaster_error("failed to stat private key file (%s): %s",
-							 fnbuf, strerror(errno));
-			ExitPostmaster(1);
-		}
-		if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
+		if (stat(fnbuf, &buf) == -1)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not access private key file \"%s\": %m",
+							fnbuf)));
+		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||
 			buf.st_uid != getuid())
-		{
-			postmaster_error("bad permissions on private key file (%s)\n"
-"File must be owned by the proper user and must have no permissions for\n"
-"\"group\" or \"other\".", fnbuf);
-			ExitPostmaster(1);
-		}
+			ereport(FATAL,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("unsafe permissions on private key file \"%s\"",
+							fnbuf),
+					 errdetail("File must be owned by the database user and must have no permissions for \"group\" or \"other\".")));
+
 		if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
-		{
-			postmaster_error("failed to load private key file (%s): %s",
-							 fnbuf, SSLerrmessage());
-			ExitPostmaster(1);
-		}
+			ereport(FATAL,
+					(errmsg("could not load private key file \"%s\": %s",
+							fnbuf, SSLerrmessage())));
+
 		if (!SSL_CTX_check_private_key(SSL_context))
-		{
-			postmaster_error("check of private key failed: %s",
-							 SSLerrmessage());
-			ExitPostmaster(1);
-		}
+			ereport(FATAL,
+					(errmsg("check of private key failed: %s",
+							SSLerrmessage())));
 	}
 
 	/* set up empheral DH keys */
@@ -668,25 +654,22 @@ initialize_SSL(void)
 
 	/* setup the allowed cipher list */
 	if (SSL_CTX_set_cipher_list(SSL_context, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH") != 1)
-	{
-		postmaster_error("unable to set the cipher list (no valid ciphers available)");
-		ExitPostmaster(1);
-	}
+		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
 	/* accept client certificates, but don't require them. */
-	snprintf(fnbuf, sizeof fnbuf, "%s/root.crt", DataDir);
+	snprintf(fnbuf, sizeof(fnbuf), "%s/root.crt", DataDir);
 	if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, CA_PATH))
 	{
+		/* Not fatal - we do not require client certificates */
+		ereport(LOG,
+				(errmsg("could not load root cert file \"%s\": %s",
+						fnbuf, SSLerrmessage()),
+				 errdetail("Will not verify client certificates.")));
 		return 0;
-#ifdef NOT_USED
-		/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
-		postmaster_error("could not read root cert file (%s): %s",
-						 fnbuf, SSLerrmessage());
-		ExitPostmaster(1);
-#endif
 	}
 	SSL_CTX_set_verify(SSL_context,
-					SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_cb);
+					   SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
+					   verify_cb);
 
 	return 0;
 }
@@ -716,7 +699,7 @@ open_server_SSL(Port *port)
 	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("failed to initialize SSL connection: %s",
+				 errmsg("could not initialize SSL connection: %s",
 						SSLerrmessage())));
 		close_SSL(port);
 		return -1;
@@ -739,7 +722,8 @@ open_server_SSL(Port *port)
 				   NID_commonName, port->peer_cn, sizeof(port->peer_cn));
 		port->peer_cn[sizeof(port->peer_cn) - 1] = '\0';
 	}
-	elog(DEBUG2, "secure connection from \"%s\"", port->peer_cn);
+	ereport(DEBUG2,
+			(errmsg("secure connection from \"%s\"", port->peer_cn)));
 
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);

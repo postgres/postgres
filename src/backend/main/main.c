@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.58 2003/07/04 16:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.59 2003/07/27 21:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,8 @@ main(int argc, char *argv[])
 #if defined(__alpha)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
-		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"), argv[0], strerror(errno));
+		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"),
+				argv[0], strerror(errno));
 #endif
 #endif   /* NOFIXADE || NOPRINTADE */
 
@@ -170,12 +171,12 @@ main(int argc, char *argv[])
 		 */
 		if (geteuid() == 0)
 		{
-			fprintf(stderr, gettext(
-									"\"root\" execution of the PostgreSQL server is not permitted.\n\n"
-									"The server must be started under an unprivileged user id to prevent\n"
-									"a possible system security compromise.  See the documentation for\n"
-			  "more information on how to properly start the server.\n\n"
-									));
+			fprintf(stderr,
+					gettext("\"root\" execution of the PostgreSQL server is not permitted.\n"
+							"The server must be started under an unprivileged user id to prevent\n"
+							"possible system security compromise.  See the documentation for\n"
+							"more information on how to properly start the server.\n"
+						));
 			exit(1);
 		}
 #endif   /* !__BEOS__ */
@@ -191,7 +192,8 @@ main(int argc, char *argv[])
 		 */
 		if (getuid() != geteuid())
 		{
-			fprintf(stderr, gettext("%s: real and effective user ids must match\n"),
+			fprintf(stderr,
+					gettext("%s: real and effective user ids must match\n"),
 					argv[0]);
 			exit(1);
 		}
@@ -236,7 +238,7 @@ main(int argc, char *argv[])
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
-		fprintf(stderr, gettext("%s: invalid current euid %d\n"),
+		fprintf(stderr, gettext("%s: invalid effective uid: %d\n"),
 				new_argv[0], (int) geteuid());
 		exit(1);
 	}
@@ -249,7 +251,8 @@ main(int argc, char *argv[])
 		pw_name_persist = malloc(namesize);
 		if (!GetUserName(pw_name_persist, &namesize))
 		{
-			fprintf(stderr, "%s: GetUserName failed\n", argv[0]);
+			fprintf(stderr, gettext("%s: GetUserName failed\n"),
+					new_argv[0]);
 			exit(1);
 		}
 	}

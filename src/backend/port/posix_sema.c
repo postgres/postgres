@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.7 2003/07/22 23:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.8 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,9 +89,7 @@ PosixSemaphoreCreate(void)
 		/*
 		 * Else complain and abort
 		 */
-		fprintf(stderr, "PosixSemaphoreCreate: sem_open(\"%s\") failed: %s\n",
-				semname, strerror(errno));
-		proc_exit(1);
+		elog(FATAL, "sem_open(\"%s\") failed: %m", semname);
 	}
 
 	/*
@@ -114,12 +112,9 @@ static void
 PosixSemaphoreCreate(sem_t * sem)
 {
 	if (sem_init(sem, 1, 1) < 0)
-	{
-		fprintf(stderr, "PosixSemaphoreCreate: sem_init failed: %s\n",
-				strerror(errno));
-		proc_exit(1);
-	}
+		elog(FATAL, "sem_init failed: %m");
 }
+
 #endif   /* USE_NAMED_POSIX_SEMAPHORES */
 
 
@@ -132,13 +127,11 @@ PosixSemaphoreKill(sem_t * sem)
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	/* Got to use sem_close for named semaphores */
 	if (sem_close(sem) < 0)
-		fprintf(stderr, "PosixSemaphoreKill: sem_close failed: %s\n",
-				strerror(errno));
+		elog(LOG, "sem_close failed: %m");
 #else
 	/* Got to use sem_destroy for unnamed semaphores */
 	if (sem_destroy(sem) < 0)
-		fprintf(stderr, "PosixSemaphoreKill: sem_destroy failed: %s\n",
-				strerror(errno));
+		elog(LOG, "sem_destroy failed: %m");
 #endif
 }
 
@@ -235,9 +228,7 @@ PGSemaphoreReset(PGSemaphore sema)
 				break;			/* got it down to 0 */
 			if (errno == EINTR)
 				continue;		/* can this happen? */
-			fprintf(stderr, "PGSemaphoreReset: sem_trywait failed: %s\n",
-					strerror(errno));
-			proc_exit(1);
+			elog(FATAL, "sem_trywait failed: %m");
 		}
 	}
 }
@@ -295,11 +286,7 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)
-	{
-		fprintf(stderr, "PGSemaphoreLock: sem_wait failed: %s\n",
-				strerror(errno));
-		proc_exit(255);
-	}
+		elog(FATAL, "sem_wait failed: %m");
 }
 
 /*
@@ -324,11 +311,7 @@ PGSemaphoreUnlock(PGSemaphore sema)
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)
-	{
-		fprintf(stderr, "PGSemaphoreUnlock: sem_post failed: %s\n",
-				strerror(errno));
-		proc_exit(255);
-	}
+		elog(FATAL, "sem_post failed: %m");
 }
 
 /*
@@ -356,9 +339,7 @@ PGSemaphoreTryLock(PGSemaphore sema)
 		if (errno == EAGAIN || errno == EDEADLK)
 			return false;		/* failed to lock it */
 		/* Otherwise we got trouble */
-		fprintf(stderr, "PGSemaphoreTryLock: sem_trywait failed: %s\n",
-				strerror(errno));
-		proc_exit(255);
+		elog(FATAL, "sem_trywait failed: %m");
 	}
 
 	return true;

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.114 2003/07/22 19:00:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.115 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,8 @@ ErrorContextCallback *error_context_stack = NULL;
 
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
-bool		Log_timestamp;		/* show timestamps in stderr output */
-bool		Log_pid;			/* show PIDs in stderr output */
+bool		Log_timestamp = false;	/* show timestamps in stderr output */
+bool		Log_pid = false;		/* show PIDs in stderr output */
 
 #ifdef HAVE_SYSLOG
 /*
@@ -1344,11 +1344,7 @@ useful_strerror(int errnum)
 	static char errorstr_buf[48];
 	const char   *str;
 
-	if (errnum == ERANGE)
-		/* small trick to save creating many regression test result files */
-		str = gettext("Numerical result out of range");
-	else
-		str = strerror(errnum);
+	str = strerror(errnum);
 
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.

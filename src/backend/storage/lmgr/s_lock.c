@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.11 2003/04/20 21:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.12 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,15 @@
 static void
 s_lock_stuck(volatile slock_t *lock, const char *file, int line)
 {
+#if defined(S_LOCK_TEST)
 	fprintf(stderr,
-			"\nFATAL: s_lock(%p) at %s:%d, stuck spinlock. Aborting.\n",
-			lock, file, line);
-	fprintf(stdout,
-			"\nFATAL: s_lock(%p) at %s:%d, stuck spinlock. Aborting.\n",
+			"\nFATAL: stuck spinlock (%p) detected at %s:%d.\n",
 			lock, file, line);
 	abort();
+#else
+	elog(PANIC, "stuck spinlock (%p) detected at %s:%d",
+		 lock, file, line);
+#endif
 }
 
 
@@ -238,7 +240,6 @@ main()
 
 	printf("S_LOCK_TEST: failed, lock not locked~\n");
 	exit(3);
-
 }
 
 #endif   /* S_LOCK_TEST */

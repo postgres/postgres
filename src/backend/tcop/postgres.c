@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.351 2003/07/22 19:00:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.352 2003/07/27 21:49:54 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2446,10 +2446,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		if (!potential_DataDir)
 		{
-			fprintf(stderr, "%s does not know where to find the database system "
-			   "data.  You must specify the directory that contains the "
-				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+			fprintf(stderr,
+					gettext("%s does not know where to find the database system data.\n"
+							"You must specify the directory that contains the database system\n"
+							"either by specifying the -D invocation option or by setting the\n"
+							"PGDATA environment variable.\n"),
 					argv[0]);
 			proc_exit(1);
 		}
@@ -2567,8 +2568,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * Create lockfile for data directory.
 		 */
-		if (!CreateDataDirLockFile(DataDir, false))
-			proc_exit(1);
+		CreateDataDirLockFile(DataDir, false);
 
 		XLOGPathInit();
 		BaseInit();
@@ -2626,7 +2626,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.351 $ $Date: 2003/07/22 19:00:11 $\n");
+		puts("$Revision: 1.352 $ $Date: 2003/07/27 21:49:54 $\n");
 	}
 
 	/*

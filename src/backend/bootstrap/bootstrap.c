@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.162 2003/07/22 23:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.163 2003/07/27 21:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,7 +359,7 @@ BootstrapMain(int argc, char *argv[])
 					gettext("%s does not know where to find the database system data.\n"
 							"You must specify the directory that contains the database system\n"
 							"either by specifying the -D invocation option or by setting the\n"
-							"PGDATA environment variable.\n\n"),
+							"PGDATA environment variable.\n"),
 					argv[0]);
 			proc_exit(1);
 		}
@@ -414,8 +414,7 @@ BootstrapMain(int argc, char *argv[])
 		/*
 		 * Create lockfile for data directory.
 		 */
-		if (!CreateDataDirLockFile(DataDir, false))
-			proc_exit(1);
+		CreateDataDirLockFile(DataDir, false);
 	}
 
 	SetProcessingMode(BootstrapProcessing);

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.45 2003/07/25 23:37:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.46 2003/07/27 21:49:54 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -553,7 +553,7 @@ decl_aliasitem	: T_WORD
 
 						plpgsql_convert_ident(yytext, &name, 1);
 						if (name[0] != '$')
-							yyerror("can only alias positional parameters");
+							yyerror("only positional parameters may be aliased");
 
 						plpgsql_ns_setlocal(false);
 						nsi = plpgsql_ns_lookup(name, NULL);
@@ -647,10 +647,10 @@ decl_defval		: ';'
 						switch (tok)
 						{
 							case 0:
-								yyerror("unexpected end of file");
+								yyerror("unexpected end of function");
 							case K_NULL:
 								if (yylex() != ';')
-									yyerror("expected ; after NULL");
+									yyerror("expected \";\" after \"NULL\"");
 
 								free(expr);
 								plpgsql_dstring_free(&ds);
@@ -1201,7 +1201,7 @@ stmt_return		: K_RETURN lno
 									break;
 							}
 							if (yylex() != ';')
-								yyerror("expected ';'");
+								yyerror("expected \";\"");
 						}
 						else
 							new->expr = plpgsql_read_expression(';', ";");
@@ -1232,10 +1232,10 @@ stmt_return_next: K_RETURN_NEXT lno
 							else if (tok == T_ROW)
 								new->row = yylval.row;
 							else
-								yyerror("Incorrect argument to RETURN NEXT");
+								yyerror("incorrect argument to RETURN NEXT");
 
 							if (yylex() != ';')
-								yyerror("Expected ';'");
+								yyerror("expected \";\"");
 						}
 						else
 							new->expr = plpgsql_read_expression(';', ";");
@@ -1467,7 +1467,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 								cp += strlen(cp) - 1;
 
 								if (*cp != ')')
-									yyerror("missing )");
+									yyerror("expected \")\"");
 								*cp = '\0';
 							}
 							else
@@ -2096,7 +2096,7 @@ check_assignable(PLpgSQL_datum *datum)
 			yyerror("cannot assign to tg_argv");
 			break;
 		default:
-			yyerror("check_assignable: unexpected datum type");
+			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
 			break;
 	}
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.12 2003/07/22 23:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.13 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,56 +88,45 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 		/*
 		 * Else complain and abort
 		 */
-		fprintf(stderr, "IpcMemoryCreate: shmget(key=%d, size=%u, 0%o) failed: %s\n",
-			  (int) memKey, size, (IPC_CREAT | IPC_EXCL | IPCProtection),
-				strerror(errno));
-
-		if (errno == EINVAL)
-			fprintf(stderr,
-					"\nThis error usually means that PostgreSQL's request for a shared memory\n"
-					"segment exceeded your kernel's SHMMAX parameter.  You can either\n"
-					"reduce the request size or reconfigure the kernel with larger SHMMAX.\n"
-					"To reduce the request size (currently %u bytes), reduce\n"
-					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
-					"its max_connections parameter (currently %d).\n"
-					"\n"
-					"If the request size is already small, it's possible that it is less than\n"
-					"your kernel's SHMMIN parameter, in which case raising the request size or\n"
-					"reconfiguring SHMMIN is called for.\n"
-					"\n"
-					"The PostgreSQL documentation contains more information about shared\n"
-					"memory configuration.\n\n",
-					size, NBuffers, MaxBackends);
-
-		else if (errno == ENOMEM)
-			fprintf(stderr,
-					"\nThis error usually means that PostgreSQL's request for a shared\n"
-					"memory segment exceeded available memory or swap space.\n"
-					"To reduce the request size (currently %u bytes), reduce\n"
-					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
-					"its max_connections parameter (currently %d).\n"
-					"\n"
-					"The PostgreSQL documentation contains more information about shared\n"
-					"memory configuration.\n\n",
-					size, NBuffers, MaxBackends);
-
-		else if (errno == ENOSPC)
-			fprintf(stderr,
-					"\nThis error does *not* mean that you have run out of disk space.\n"
-					"\n"
-					"It occurs either if all available shared memory IDs have been taken,\n"
-					"in which case you need to raise the SHMMNI parameter in your kernel,\n"
-					"or because the system's overall limit for shared memory has been\n"
-			"reached.  If you cannot increase the shared memory limit,\n"
-					"reduce PostgreSQL's shared memory request (currently %u bytes),\n"
-					"by reducing its shared_buffers parameter (currently %d) and/or\n"
-					"its max_connections parameter (currently %d).\n"
-					"\n"
-					"The PostgreSQL documentation contains more information about shared\n"
-					"memory configuration.\n\n",
-					size, NBuffers, MaxBackends);
-
-		proc_exit(1);
+		ereport(FATAL,
+				(errmsg("could not create shared memory segment: %m"),
+				 errdetail("Failed syscall was shmget(key=%d, size=%u, 0%o).",
+						   (int) memKey, size,
+						   IPC_CREAT | IPC_EXCL | IPCProtection),
+				 (errno == EINVAL) ?
+				 errhint("This error usually means that PostgreSQL's request for a shared memory "
+						 "segment exceeded your kernel's SHMMAX parameter.  You can either "
+						 "reduce the request size or reconfigure the kernel with larger SHMMAX. "
+						 "To reduce the request size (currently %u bytes), reduce "
+						 "PostgreSQL's shared_buffers parameter (currently %d) and/or "
+						 "its max_connections parameter (currently %d).\n"
+						 "If the request size is already small, it's possible that it is less than "
+						 "your kernel's SHMMIN parameter, in which case raising the request size or "
+						 "reconfiguring SHMMIN is called for.\n"
+						 "The PostgreSQL documentation contains more information about shared "
+						 "memory configuration.",
+						 size, NBuffers, MaxBackends) : 0,
+				 (errno == ENOMEM) ?
+				 errhint("This error usually means that PostgreSQL's request for a shared "
+						 "memory segment exceeded available memory or swap space. "
+						 "To reduce the request size (currently %u bytes), reduce "
+						 "PostgreSQL's shared_buffers parameter (currently %d) and/or "
+						 "its max_connections parameter (currently %d).\n"
+						 "The PostgreSQL documentation contains more information about shared "
+						 "memory configuration.",
+						 size, NBuffers, MaxBackends) : 0,
+				 (errno == ENOSPC) ?
+				 errhint("This error does *not* mean that you have run out of disk space. "
+						 "It occurs either if all available shared memory IDs have been taken, "
+						 "in which case you need to raise the SHMMNI parameter in your kernel, "
+						 "or because the system's overall limit for shared memory has been "
+						 "reached.  If you cannot increase the shared memory limit, "
+						 "reduce PostgreSQL's shared memory request (currently %u bytes), "
+						 "by reducing its shared_buffers parameter (currently %d) and/or "
+						 "its max_connections parameter (currently %d).\n"
+						 "The PostgreSQL documentation contains more information about shared "
+						 "memory configuration.",
+						 size, NBuffers, MaxBackends) : 0));
 	}
 
 	/* Register on-exit routine to delete the new segment */
@@ -152,11 +141,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 #endif
 
 	if (memAddress == (void *) -1)
-	{
-		fprintf(stderr, "IpcMemoryCreate: shmat(id=%d) failed: %s\n",
-				shmid, strerror(errno));
-		proc_exit(1);
-	}
+		elog(FATAL, "shmat(id=%d) failed: %m", shmid);
 
 	/* Register on-exit routine to detach new segment before deleting */
 	on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
@@ -177,13 +162,7 @@ static void
 IpcMemoryDetach(int status, Datum shmaddr)
 {
 	if (shmdt(DatumGetPointer(shmaddr)) < 0)
-		fprintf(stderr, "IpcMemoryDetach: shmdt(%p) failed: %s\n",
-				DatumGetPointer(shmaddr), strerror(errno));
-
-	/*
-	 * We used to report a failure via ereport(WARNING), but that's pretty
-	 * pointless considering any client has long since disconnected ...
-	 */
+		elog(LOG, "shmdt(%p) failed: %m", DatumGetPointer(shmaddr));
 }
 
 /****************************************************************************/
@@ -194,13 +173,8 @@ static void
 IpcMemoryDelete(int status, Datum shmId)
 {
 	if (shmctl(DatumGetInt32(shmId), IPC_RMID, (struct shmid_ds *) NULL) < 0)
-		fprintf(stderr, "IpcMemoryDelete: shmctl(%d, %d, 0) failed: %s\n",
-				DatumGetInt32(shmId), IPC_RMID, strerror(errno));
-
-	/*
-	 * We used to report a failure via ereport(WARNING), but that's pretty
-	 * pointless considering any client has long since disconnected ...
-	 */
+		elog(LOG, "shmctl(%d, %d, 0) failed: %m",
+			 DatumGetInt32(shmId), IPC_RMID);
 }
 
 /*
@@ -274,11 +248,8 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	if (ExecBackend && UsedShmemSegAddr != NULL && !makePrivate)
 	{
 		if ((hdr = PGSharedMemoryAttach(UsedShmemSegID, &shmid)) == NULL)
-		{
-			fprintf(stderr, "Unable to attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %s\n",
-				(int) UsedShmemSegID, UsedShmemSegAddr, strerror(errno));
-			proc_exit(1);
-		}
+			elog(FATAL, "could not attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %m",
+				 (int) UsedShmemSegID, UsedShmemSegAddr);
 		return hdr;
 	}
 

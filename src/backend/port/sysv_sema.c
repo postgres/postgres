@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.6 2003/07/22 23:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.7 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,26 +113,22 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 		/*
 		 * Else complain and abort
 		 */
-		fprintf(stderr, "IpcSemaphoreCreate: semget(key=%d, num=%d, 0%o) failed: %s\n",
-		   (int) semKey, numSems, (IPC_CREAT | IPC_EXCL | IPCProtection),
-				strerror(errno));
-
-		if (errno == ENOSPC)
-			fprintf(stderr,
-					"\nThis error does *not* mean that you have run out of disk space.\n"
-					"\n"
-					"It occurs when either the system limit for the maximum number of\n"
-					"semaphore sets (SEMMNI), or the system wide maximum number of\n"
-					"semaphores (SEMMNS), would be exceeded.  You need to raise the\n"
-					"respective kernel parameter.  Alternatively, reduce PostgreSQL's\n"
-					"consumption of semaphores by reducing its max_connections parameter\n"
-					"(currently %d).\n"
-					"\n"
-					"The PostgreSQL documentation contains more information about\n"
-					"configuring your system for PostgreSQL.\n\n",
-					MaxBackends);
-
-		proc_exit(1);
+		ereport(FATAL,
+				(errmsg("could not create semaphores: %m"),
+				 errdetail("Failed syscall was semget(%d, %d, 0%o).",
+						   (int) semKey, numSems,
+						   IPC_CREAT | IPC_EXCL | IPCProtection),
+				 (errno == ENOSPC) ?
+				 errhint("This error does *not* mean that you have run out of disk space.\n"
+						 "It occurs when either the system limit for the maximum number of "
+						 "semaphore sets (SEMMNI), or the system wide maximum number of "
+						 "semaphores (SEMMNS), would be exceeded.  You need to raise the "
+						 "respective kernel parameter.  Alternatively, reduce PostgreSQL's "
+						 "consumption of semaphores by reducing its max_connections parameter "
+						 "(currently %d).\n"
+						 "The PostgreSQL documentation contains more information about "
+						 "configuring your system for PostgreSQL.",
+						 MaxBackends) : 0));
 	}
 
 	return semId;
@@ -148,18 +144,13 @@ IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum, int value)
 
 	semun.val = value;
 	if (semctl(semId, semNum, SETVAL, semun) < 0)
-	{
-		fprintf(stderr, "IpcSemaphoreInitialize: semctl(id=%d, %d, SETVAL, %d) failed: %s\n",
-				semId, semNum, value, strerror(errno));
-
-		if (errno == ERANGE)
-			fprintf(stderr,
-					"You possibly need to raise your kernel's SEMVMX value to be at least\n"
-			"%d.  Look into the PostgreSQL documentation for details.\n",
-					value);
-
-		proc_exit(1);
-	}
+		ereport(FATAL,
+				(errmsg_internal("semctl(%d, %d, SETVAL, %d) failed: %m",
+								 semId, semNum, value),
+				 (errno == ERANGE) ?
+				 errhint("You possibly need to raise your kernel's SEMVMX value to be at least "
+						 "%d.  Look into the PostgreSQL documentation for details.",
+						 value) : 0));
 }
 
 /*
@@ -173,13 +164,7 @@ IpcSemaphoreKill(IpcSemaphoreId semId)
 	semun.val = 0;				/* unused, but keep compiler quiet */
 
 	if (semctl(semId, 0, IPC_RMID, semun) < 0)
-		fprintf(stderr, "IpcSemaphoreKill: semctl(%d, 0, IPC_RMID, ...) failed: %s\n",
-				semId, strerror(errno));
-
-	/*
-	 * We used to report a failure via ereport(WARNING), but that's pretty
-	 * pointless considering any client has long since disconnected ...
-	 */
+		elog(LOG, "semctl(%d, 0, IPC_RMID, ...) failed: %m", semId);
 }
 
 /* Get the current value (semval) of the semaphore */
@@ -436,11 +421,7 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)
-	{
-		fprintf(stderr, "PGSemaphoreLock: semop(id=%d) failed: %s\n",
-				sema->semId, strerror(errno));
-		proc_exit(255);
-	}
+		elog(FATAL, "semop(id=%d) failed: %m", sema->semId);
 }
 
 /*
@@ -470,11 +451,7 @@ PGSemaphoreUnlock(PGSemaphore sema)
 	} while (errStatus < 0 && errno == EINTR);
 
 	if (errStatus < 0)
-	{
-		fprintf(stderr, "PGSemaphoreUnlock: semop(id=%d) failed: %s\n",
-				sema->semId, strerror(errno));
-		proc_exit(255);
-	}
+		elog(FATAL, "semop(id=%d) failed: %m", sema->semId);
 }
 
 /*
@@ -514,9 +491,7 @@ PGSemaphoreTryLock(PGSemaphore sema)
 			return false;		/* failed to lock it */
 #endif
 		/* Otherwise we got trouble */
-		fprintf(stderr, "PGSemaphoreTryLock: semop(id=%d) failed: %s\n",
-				sema->semId, strerror(errno));
-		proc_exit(255);
+		elog(FATAL, "semop(id=%d) failed: %m", sema->semId);
 	}
 
 	return true;

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.336 2003/07/23 23:30:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.337 2003/07/27 21:49:54 tgl Exp $
  *
  * NOTES
  *
@@ -271,7 +271,7 @@ static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
 static int	BackendFork(Port *port);
-void		ExitPostmaster(int status);
+static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
@@ -290,8 +290,7 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 static pid_t SSDataBase(int xlop);
-void
-postmaster_error(const char *fmt,...)
+static void postmaster_error(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 1, 2)));
 
@@ -299,29 +298,21 @@ __attribute__((format(printf, 1, 2)));
 #define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
-#ifdef USE_SSL
-extern int	secure_initialize(void);
-extern void secure_destroy(void);
-extern int	secure_open_server(Port *);
-extern void secure_close(Port *);
-#endif   /* USE_SSL */
-
 
 static void
 checkDataDir(const char *checkdir)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
-
 	struct stat stat_buf;
 
 	if (checkdir == NULL)
 	{
-		fprintf(stderr, gettext(
-			 "%s does not know where to find the database system data.\n"
-								"You must specify the directory that contains the database system\n"
-								"either by specifying the -D invocation option or by setting the\n"
-								"PGDATA environment variable.\n\n"),
+		fprintf(stderr,
+				gettext("%s does not know where to find the database system data.\n"
+						"You must specify the directory that contains the database system\n"
+						"either by specifying the -D invocation option or by setting the\n"
+						"PGDATA environment variable.\n"),
 				progname);
 		ExitPostmaster(2);
 	}
@@ -353,7 +344,7 @@ checkDataDir(const char *checkdir)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("data directory \"%s\" has group or world access",
 						checkdir),
-				 errdetail("permissions should be u=rwx (0700)")));
+				 errdetail("Permissions should be u=rwx (0700).")));
 #endif
 
 	/* Look for PG_VERSION before looking for pg_control */
@@ -364,10 +355,10 @@ checkDataDir(const char *checkdir)
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)
 	{
-		fprintf(stderr, gettext(
-								"%s does not find the database system.\n"
-				  "Expected to find it in the PGDATA directory \"%s\",\n"
-								"but unable to open file \"%s\": %s\n\n"),
+		fprintf(stderr,
+				gettext("%s could not find the database system.\n"
+						"Expected to find it in the PGDATA directory \"%s\",\n"
+						"but failed to open file \"%s\": %s\n"),
 				progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
@@ -464,7 +455,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 #else
-				postmaster_error("Assert checking is not compiled in.");
+				postmaster_error("assert checking is not compiled in");
 #endif
 				break;
 			case 'a':
@@ -589,7 +580,9 @@ PostmasterMain(int argc, char *argv[])
 				}
 
 			default:
-				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr,
+						gettext("Try '%s --help' for more information.\n"),
+						progname);
 				ExitPostmaster(1);
 		}
 	}
@@ -599,8 +592,9 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (optind < argc)
 	{
-		postmaster_error("invalid argument -- %s", argv[optind]);
-		fprintf(stderr, gettext("Try '%s --help' for more information.\n"),
+		postmaster_error("invalid argument: \"%s\"", argv[optind]);
+		fprintf(stderr,
+				gettext("Try '%s --help' for more information.\n"),
 				progname);
 		ExitPostmaster(1);
 	}
@@ -626,13 +620,13 @@ PostmasterMain(int argc, char *argv[])
 		 * for lack of buffers.  The specific choices here are somewhat
 		 * arbitrary.
 		 */
-		postmaster_error("The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.");
+		postmaster_error("the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16");
 		ExitPostmaster(1);
 	}
 
 	if (ReservedBackends >= MaxBackends)
 	{
-		postmaster_error("superuser_reserved_connections must be less than max_connections.");
+		postmaster_error("superuser_reserved_connections must be less than max_connections");
 		ExitPostmaster(1);
 	}
 
@@ -641,7 +635,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (!CheckDateTokenTables())
 	{
-		postmaster_error("Invalid datetoken tables, please fix.");
+		postmaster_error("invalid datetoken tables, please fix");
 		ExitPostmaster(1);
 	}
 
@@ -680,8 +674,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_SSL
 	if (EnableSSL && !NetServer)
 	{
-		postmaster_error("For SSL, TCP/IP connections must be enabled.");
-		fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+		postmaster_error("for SSL, TCP/IP connections must be enabled");
 		ExitPostmaster(1);
 	}
 	if (EnableSSL)
@@ -713,8 +706,7 @@ PostmasterMain(int argc, char *argv[])
 	 * :-(). For the same reason, it's best to grab the TCP socket before
 	 * the Unix socket.
 	 */
-	if (!CreateDataDirLockFile(DataDir, true))
-		ExitPostmaster(1);
+	CreateDataDirLockFile(DataDir, true);
 
 	/*
 	 * Remove old temporary files.	At this point there can be no other
@@ -754,10 +746,9 @@ PostmasterMain(int argc, char *argv[])
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
 				if (status != STATUS_OK)
-				{
-					postmaster_error("could not create listen socket for \"%s\"",
-									 curhost);
-				}
+					ereport(LOG,
+							(errmsg("could not create listen socket for \"%s\"",
+									curhost)));
 				if (endptr)
 				{
 					*endptr = c;
@@ -774,9 +765,8 @@ PostmasterMain(int argc, char *argv[])
 									  UnixSocketDir,
 									  ListenSocket, MAXLISTEN);
 			if (status != STATUS_OK)
-			{
-				postmaster_error("could not create TCP/IP listen socket");
-			}
+				ereport(LOG,
+						(errmsg("could not create TCP/IP listen socket")));
 		}
 
 #ifdef USE_RENDEZVOUS					 
@@ -799,10 +789,8 @@ PostmasterMain(int argc, char *argv[])
 							  UnixSocketDir,
 							  ListenSocket, MAXLISTEN);
 	if (status != STATUS_OK)
-	{
-		postmaster_error("could not create UNIX stream port");
-		ExitPostmaster(1);
-	}
+		ereport(FATAL,
+				(errmsg("could not create UNIX stream port")));
 #endif
 
 	XLOGPathInit();
@@ -922,9 +910,9 @@ pmdaemonize(int argc, char *argv[])
 	pid = fork();
 	if (pid == (pid_t) -1)
 	{
-		postmaster_error("fork failed: %s", strerror(errno));
+		postmaster_error("could not fork background process: %s",
+						 strerror(errno));
 		ExitPostmaster(1);
-		return;					/* not reached */
 	}
 	else if (pid)
 	{							/* parent */
@@ -944,7 +932,7 @@ pmdaemonize(int argc, char *argv[])
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		postmaster_error("cannot disassociate from controlling TTY: %s",
+		postmaster_error("could not disassociate from controlling TTY: %s",
 						 strerror(errno));
 		ExitPostmaster(1);
 	}
@@ -1553,7 +1541,6 @@ ConnCreate(int serverFd)
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-		SignalChildren(SIGQUIT);
 		ExitPostmaster(1);
 	}
 
@@ -1842,6 +1829,7 @@ reaper(SIGNAL_ARGS)
 							 pid, exitstatus);
 				ExitPostmaster(1);
 			}
+			/* Normal postmaster exit is here */
 			ExitPostmaster(0);
 		}
 
@@ -2545,7 +2533,7 @@ BackendFork(Port *port)
  *
  * Do NOT call exit() directly --- always go through here!
  */
-void
+static void
 ExitPostmaster(int status)
 {
 	/* should cleanup shared memory and kill all backends */
@@ -2922,20 +2910,18 @@ static bool
 CreateOptsFile(int argc, char *argv[])
 {
 	char		fullprogname[MAXPGPATH];
-	char	   *filename;
+	char		filename[MAXPGPATH];
 	FILE	   *fp;
-	unsigned	i;
+	int			i;
 
 	if (FindExec(fullprogname, argv[0], "postmaster") < 0)
 		return false;
 
-	filename = palloc(strlen(DataDir) + 17);
-	sprintf(filename, "%s/postmaster.opts", DataDir);
+	snprintf(filename, sizeof(filename), "%s/postmaster.opts", DataDir);
 
 	if ((fp = fopen(filename, "w")) == NULL)
 	{
-		postmaster_error("cannot create file \"%s\": %s",
-						 filename, strerror(errno));
+		elog(LOG, "could not create file \"%s\": %m", filename);
 		return false;
 	}
 
@@ -2944,9 +2930,10 @@ CreateOptsFile(int argc, char *argv[])
 		fprintf(fp, " '%s'", argv[i]);
 	fputs("\n", fp);
 
+	fflush(fp);
 	if (ferror(fp))
 	{
-		postmaster_error("writing file %s failed", filename);
+		elog(LOG, "could not write file \"%s\": %m", filename);
 		fclose(fp);
 		return false;
 	}
@@ -2956,10 +2943,12 @@ CreateOptsFile(int argc, char *argv[])
 }
 
 /*
- * This should be used only for reporting "interactive" errors (ie, errors
- * during startup).  Once the postmaster is launched, use ereport.
+ * This should be used only for reporting "interactive" errors (essentially,
+ * bogus arguments on the command line).  Once the postmaster is launched,
+ * use ereport.  In particular, don't use this for anything that occurs
+ * after pmdaemonize.
  */
-void
+static void
 postmaster_error(const char *fmt,...)
 {
 	va_list		ap;

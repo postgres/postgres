@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.6 2003/07/22 23:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.7 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,8 @@ volatile bool ProcDiePending = false;
 volatile bool ImmediateInterruptOK = false;
 volatile uint32 InterruptHoldoffCount = 0;
 volatile uint32 CritSectionCount = 0;
+
+const bool	ExecBackend = false;
 
 bool		IsUnderPostmaster = false;
 
@@ -128,14 +130,60 @@ ExceptionalCondition(char *conditionName,
 	return 0;
 }
 
-void
-elog(int lev, const char *fmt,...)
+
+
+bool
+errstart(int elevel, const char *filename, int lineno,
+		 const char *funcname)
 {
-	if (lev >= ERROR)
-	{
-		fprintf(stderr, "elog(%s)\n", fmt);
-		abort();
-	}
+	return (elevel >= ERROR);
+}
+
+void
+errfinish(int dummy, ...)
+{
+	proc_exit(1);
+}
+
+void
+elog_finish(int elevel, const char *fmt, ...)
+{
+	fprintf(stderr, "ERROR: %s\n", fmt);
+	proc_exit(1);
+}
+
+int
+errcode(int sqlerrcode)
+{
+	return 0;					/* return value does not matter */
+}
+
+int
+errmsg(const char *fmt, ...)
+{
+	fprintf(stderr, "ERROR: %s\n", fmt);
+	return 0;					/* return value does not matter */
+}
+
+int
+errmsg_internal(const char *fmt, ...)
+{
+	fprintf(stderr, "ERROR: %s\n", fmt);
+	return 0;					/* return value does not matter */
+}
+
+int
+errdetail(const char *fmt, ...)
+{
+	fprintf(stderr, "DETAIL: %s\n", fmt);
+	return 0;					/* return value does not matter */
+}
+
+int
+errhint(const char *fmt, ...)
+{
+	fprintf(stderr, "HINT: %s\n", fmt);
+	return 0;					/* return value does not matter */
 }
 
 

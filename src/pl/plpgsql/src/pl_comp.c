@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.62 2003/07/27 18:38:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.63 2003/07/27 21:49:54 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -755,7 +755,7 @@ plpgsql_parse_word(char *word)
 			trigarg->dtype = PLPGSQL_DTYPE_TRIGARG;
 
 			if (plpgsql_yylex() != '[')
-				plpgsql_yyerror("expected [");
+				plpgsql_yyerror("expected \"[\"");
 
 			trigarg->argnum = plpgsql_read_expression(']', "]");
 

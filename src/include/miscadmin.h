@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.127 2003/07/27 17:10:07 tgl Exp $
+ * $Id: miscadmin.h,v 1.128 2003/07/27 21:49:54 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -286,8 +286,8 @@ extern void InitPostgres(const char *dbname, const char *username);
 extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
-extern bool CreateDataDirLockFile(const char *datadir, bool amPostmaster);
-extern bool CreateSocketLockFile(const char *socketfile, bool amPostmaster);
+extern void CreateDataDirLockFile(const char *datadir, bool amPostmaster);
+extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
 extern void RecordSharedMemoryInLockFile(unsigned long id1,
 							 unsigned long id2);

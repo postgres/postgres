@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.160 2003/07/24 00:02:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.161 2003/07/27 21:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,8 +389,7 @@ Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 	/*
 	 * Grab an interlock file associated with the socket file.
 	 */
-	if (!CreateSocketLockFile(sock_path, true))
-		return STATUS_ERROR;
+	CreateSocketLockFile(sock_path, true);
 
 	/*
 	 * Once we have the interlock, we can safely delete any pre-existing

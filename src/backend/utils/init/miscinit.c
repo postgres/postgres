@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.106 2003/07/27 19:39:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.107 2003/07/27 21:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -697,15 +697,13 @@ UnlinkLockFile(int status, Datum filename)
 }
 
 /*
- * Create a lockfile, if possible
+ * Create a lockfile.
  *
- * Call CreateLockFile with the name of the lockfile to be created.
- * Returns true if successful, false if not (with a message on stderr).
- *
+ * filename is the name of the lockfile to create.
  * amPostmaster is used to determine how to encode the output PID.
  * isDDLock and refName are used to determine what error message to produce.
  */
-static bool
+static void
 CreateLockFile(const char *filename, bool amPostmaster,
 			   bool isDDLock, const char *refName)
 {
@@ -786,19 +784,17 @@ CreateLockFile(const char *filename, bool amPostmaster,
 				 ))
 			{
 				/* lockfile belongs to a live process */
-				fprintf(stderr, "Lock file \"%s\" already exists.\n",
-						filename);
-				if (isDDLock)
-					fprintf(stderr,
-							"Is another %s (pid %d) running in \"%s\"?\n",
-							(encoded_pid < 0 ? "postgres" : "postmaster"),
-							(int) other_pid, refName);
-				else
-					fprintf(stderr,
-							"Is another %s (pid %d) using \"%s\"?\n",
-							(encoded_pid < 0 ? "postgres" : "postmaster"),
-							(int) other_pid, refName);
-				return false;
+				ereport(FATAL,
+						(errcode(ERRCODE_LOCK_FILE_EXISTS),
+						 errmsg("lock file \"%s\" already exists",
+								filename),
+						 isDDLock ?
+						 errhint("Is another %s (pid %d) running in \"%s\"?",
+								 (encoded_pid < 0 ? "postgres" : "postmaster"),
+								 (int) other_pid, refName) :
+						 errhint("Is another %s (pid %d) using \"%s\"?",
+								 (encoded_pid < 0 ? "postgres" : "postmaster"),
+								 (int) other_pid, refName)));
 			}
 		}
 
@@ -823,15 +819,16 @@ CreateLockFile(const char *filename, bool amPostmaster,
 				if (sscanf(ptr, "%lu %lu", &id1, &id2) == 2)
 				{
 					if (PGSharedMemoryIsInUse(id1, id2))
-					{
-						fprintf(stderr,
-								"Found a pre-existing shared memory block (key %lu, id %lu) still in use.\n"
-								"If you're sure there are no old backends still running,\n"
-								"remove the shared memory block with ipcrm(1), or just\n"
-								"delete \"%s\".\n",
-								id1, id2, filename);
-						return false;
-					}
+						ereport(FATAL,
+								(errcode(ERRCODE_LOCK_FILE_EXISTS),
+								 errmsg("pre-existing shared memory block "
+										"(key %lu, id %lu) is still in use",
+										id1, id2),
+								 errhint("If you're sure there are no old "
+										 "backends still running, remove "
+										 "the shared memory block with "
+										 "ipcrm(1), or just delete \"%s\".",
+										 filename)));
 				}
 			}
 		}
@@ -876,34 +873,28 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	 * Arrange for automatic removal of lockfile at proc_exit.
 	 */
 	on_proc_exit(UnlinkLockFile, PointerGetDatum(strdup(filename)));
-
-	return true;				/* Success! */
 }
 
-bool
+void
 CreateDataDirLockFile(const char *datadir, bool amPostmaster)
 {
 	char		lockfile[MAXPGPATH];
 
 	snprintf(lockfile, sizeof(lockfile), "%s/postmaster.pid", datadir);
-	if (!CreateLockFile(lockfile, amPostmaster, true, datadir))
-		return false;
+	CreateLockFile(lockfile, amPostmaster, true, datadir);
 	/* Save name of lockfile for RecordSharedMemoryInLockFile */
 	strcpy(directoryLockFile, lockfile);
-	return true;
 }
 
-bool
+void
 CreateSocketLockFile(const char *socketfile, bool amPostmaster)
 {
 	char		lockfile[MAXPGPATH];
 
 	snprintf(lockfile, sizeof(lockfile), "%s.lock", socketfile);
-	if (!CreateLockFile(lockfile, amPostmaster, false, socketfile))
-		return false;
+	CreateLockFile(lockfile, amPostmaster, false, socketfile);
 	/* Save name of lockfile for TouchSocketLockFile */
 	strcpy(socketLockFile, lockfile);
-	return true;
 }
 
 /*
@@ -1062,7 +1053,7 @@ ValidatePgVersion(const char *path)
 	if (*endptr == '.')
 		my_minor = strtol(endptr + 1, NULL, 10);
 
-	snprintf(full_path, MAXPGPATH, "%s/PG_VERSION", path);
+	snprintf(full_path, sizeof(full_path), "%s/PG_VERSION", path);
 
 	file = AllocateFile(full_path, "r");
 	if (!file)
