@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.96 2004/01/23 02:13:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.97 2004/01/28 21:02:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4027,8 +4027,9 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * We cannot allow toasting a shared relation after initdb (because
 	 * there's no way to mark it toasted in other databases' pg_class).
 	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend.	However, we can at least prevent this mistake
-	 * under normal multi-user operation.
+	 * standalone backend (toasting happens after the bootstrap phase,
+	 * so checking IsBootstrapProcessingMode() won't work).  However, we can
+	 * at least prevent this mistake under normal multi-user operation.
 	 */
 	shared_relation = rel->rd_rel->relisshared;
 	if (shared_relation && IsUnderPostmaster)

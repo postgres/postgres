@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.225 2004/01/07 18:56:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.226 2004/01/28 21:02:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -508,8 +508,9 @@ index_create(Oid heapRelationId,
 	 * We cannot allow indexing a shared relation after initdb (because
 	 * there's no way to make the entry in other databases' pg_class).
 	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend.	However, we can at least prevent this mistake
-	 * under normal multi-user operation.
+	 * standalone backend (toasting of shared rels happens after the bootstrap
+	 * phase, so checking IsBootstrapProcessingMode() won't work).  However,
+	 * we can at least prevent this mistake under normal multi-user operation.
 	 */
 	if (shared_relation && IsUnderPostmaster)
 		ereport(ERROR,

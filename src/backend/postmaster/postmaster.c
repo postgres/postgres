@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.363 2004/01/27 00:45:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.364 2004/01/28 21:02:40 tgl Exp $
  *
  * NOTES
  *
@@ -2697,6 +2697,10 @@ SubPostmasterMain(int argc, char* argv[])
 	/* Do this sooner rather than later... */
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
+	/* In EXEC case we will not have inherited these settings */
+	IsPostmasterEnvironment = true;
+	whereToSendOutput = None;
+
 	/* Setup global context */
 	MemoryContextInit();
 	InitializeGUCOptions();
@@ -2993,6 +2997,14 @@ SSDataBaseInit(int xlop)
 
 	IsUnderPostmaster = true;		/* we are a postmaster subprocess
 									 * now */
+
+#ifdef EXEC_BACKEND
+	/* In EXEC case we will not have inherited these settings */
+	IsPostmasterEnvironment = true;
+	whereToSendOutput = None;
+#endif
+
+	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/* Lose the postmaster's on-exit routines and port connections */
 	on_exit_reset();

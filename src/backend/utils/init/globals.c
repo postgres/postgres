@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.80 2004/01/26 22:59:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.81 2004/01/28 21:02:40 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -53,9 +53,19 @@ BackendId	MyBackendId;
 char	   *DatabasePath = NULL;
 Oid			MyDatabaseId = InvalidOid;
 
-pid_t PostmasterPid = 0;
+pid_t		PostmasterPid = 0;
 
-/* these are initialized for the bootstrap/standalone case: */
+/*
+ * IsPostmasterEnvironment is true in a postmaster process and any postmaster
+ * child process; it is false in a standalone process (bootstrap or
+ * standalone backend).  IsUnderPostmaster is true in postmaster child
+ * processes.  Note that "child process" includes all children, not only
+ * regular backends.  These should be set correctly as early as possible
+ * in the execution of a process, so that error handling will do the right
+ * things if an error should occur during process initialization.
+ *
+ * These are initialized for the bootstrap/standalone case.
+ */
 bool		IsPostmasterEnvironment = false;
 bool		IsUnderPostmaster = false;
 

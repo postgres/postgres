@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.216 2004/01/26 22:35:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.217 2004/01/28 21:02:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -829,7 +829,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 		if (pipe)
 		{
-			if (IsUnderPostmaster)
+			if (whereToSendOutput == Remote)
 				ReceiveCopyBegin(binary, length(attnumlist));
 			else
 				copy_file = stdin;
@@ -879,7 +879,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 		if (pipe)
 		{
-			if (IsUnderPostmaster)
+			if (whereToSendOutput == Remote)
 				SendCopyBegin(binary, length(attnumlist));
 			else
 				copy_file = stdout;
@@ -929,7 +929,7 @@ DoCopy(const CopyStmt *stmt)
 					 errmsg("could not write to file \"%s\": %m",
 							filename)));
 	}
-	else if (IsUnderPostmaster && !is_from)
+	else if (whereToSendOutput == Remote && !is_from)
 		SendCopyEnd(binary);
 	pfree(attribute_buf.data);
 	pfree(line_buf.data);
