@@ -247,6 +247,7 @@ CLIENTS
 	o Fix LargeObject API to handle OIDs as unsigned ints
 	o Implement cancel() method on Statement
 	o Use cursors implicitly to avoid large results (see setCursorName())
+        o Add support for CallableStatements
 * ECPG
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
