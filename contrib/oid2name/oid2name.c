@@ -46,6 +46,7 @@ struct options
 /* function prototypes */
 void		get_opts(int, char **, struct options *);
 void	   *myalloc(size_t size);
+char	   *mystrdup(const char *str);
 void		add_one_elt(char *eltname, eary *eary);
 char	   *get_comma_elts(eary *eary);
 PGconn	   *sql_conn(struct options *);
@@ -68,6 +69,11 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	my_opts->nodb = false;
 	my_opts->extended = false;
 	my_opts->tablespaces = false;
+	my_opts->dbname = NULL;
+	my_opts->hostname = NULL;
+	my_opts->port = NULL;
+	my_opts->username = NULL;
+	my_opts->password = NULL;
 
 	/* get opts */
 	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:f:qSxish?")) != -1)
@@ -76,8 +82,7 @@ get_opts(int argc, char **argv, struct options * my_opts)
 		{
 				/* specify the database */
 			case 'd':
-				my_opts->dbname = (char *) myalloc(strlen(optarg));
-				sscanf(optarg, "%s", my_opts->dbname);
+				my_opts->dbname = mystrdup(optarg);
 				break;
 
 				/* specify one tablename to show */
@@ -102,26 +107,22 @@ get_opts(int argc, char **argv, struct options * my_opts)
 
 				/* host to connect to */
 			case 'H':
-				my_opts->hostname = (char *) myalloc(strlen(optarg));
-				sscanf(optarg, "%s", my_opts->hostname);
+				my_opts->hostname = mystrdup(optarg);
 				break;
 
 				/* port to connect to on remote host */
 			case 'p':
-				my_opts->port = (char *) myalloc(strlen(optarg));
-				sscanf(optarg, "%s", my_opts->port);
+				my_opts->port = mystrdup(optarg);
 				break;
 
 				/* username */
 			case 'U':
-				my_opts->username = (char *) myalloc(strlen(optarg));
-				sscanf(optarg, "%s", my_opts->username);
+				my_opts->username = mystrdup(optarg);
 				break;
 
 				/* password */
 			case 'P':
-				my_opts->password = (char *) myalloc(strlen(optarg));
-				sscanf(optarg, "%s", my_opts->password);
+				my_opts->password = mystrdup(optarg);
 				break;
 
 				/* display system tables */
@@ -183,6 +184,18 @@ myalloc(size_t size)
 	return ptr;
 }
 
+char *
+mystrdup(const char *str)
+{
+	char *result = strdup(str);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory");
+		exit(1);
+	}
+	return result;
+}
+
 /*
  * add_one_elt
  *
@@ -208,7 +221,7 @@ add_one_elt(char *eltname, eary *eary)
 		}
 	}
 
-	eary->array[eary->num] = strdup(eltname);
+	eary->array[eary->num] = mystrdup(eltname);
 	eary->num++;
 }
 
@@ -227,7 +240,7 @@ get_comma_elts(eary *eary)
 	int i, length = 0;
 
 	if (eary->num == 0)
-		return "";
+		return mystrdup("");
 
 	/*
 	 * PQescapeString wants 2 * length + 1 bytes of breath space.  Add two
