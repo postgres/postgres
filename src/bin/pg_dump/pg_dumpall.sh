@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.4 2000/09/08 18:29:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.5 2000/10/25 10:21:38 pjw Exp $
 
 CMDNAME=`basename $0`
 
@@ -177,6 +177,20 @@ while read GRONAME GROSYSID GROLIST ; do
         echo "  ALTER GROUP \"$GRONAME\" ADD USER \"$username\";"
     done
 done
+
+
+# First we dump the template in case there are local extensions.
+
+echo
+echo "--"
+echo "-- Database template1"
+echo "--"
+echo "${BS}connect template1"
+$PGDUMP "template1"
+if [ "$?" -ne 0 ] ; then
+    echo "pg_dump failed on template1, exiting" 1>&2
+    exit 1
+fi
 
 
 # For each database, run pg_dump to dump the contents of that database.

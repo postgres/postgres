@@ -721,7 +721,7 @@ static void	_CloseArchive(ArchiveHandle* AH)
 	lclContext*		ctx = (lclContext*)AH->formatData;
 	TAR_MEMBER		*th;
 	RestoreOptions	*ropt;
-	int				savVerbose;
+	int				savVerbose, i;
 
     if (AH->mode == archModeWrite) {
 
@@ -774,6 +774,13 @@ static void	_CloseArchive(ArchiveHandle* AH)
 		AH->public.verbose = savVerbose;
 
 		tarClose(AH, th);
+
+		/* Add a block of NULLs since it's de-rigeur. */
+		for(i=0; i<512; i++) 
+		{
+			fputc(0, ctx->tarFH);
+		}
+
     }
 
     AH->FH = NULL; 
