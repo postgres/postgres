@@ -7,11 +7,17 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.1.1.1 1996/07/09 06:22:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.2 1997/07/10 01:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <stdlib.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
 
@@ -210,7 +216,11 @@ main(int argc, char **argv)
     PQclear(res);
     printf("importing file \"%s\" ...\n", in_filename);
 /*  lobjOid = importFile(conn, in_filename); */
-    lobjOid = lo_import(conn, in_filename); 
+    lobjOid = lo_import(conn, in_filename);
+    if (lobjOid == 0)
+    {
+       fprintf(stderr,"%s\n",PQerrorMessage(conn));
+    }
 /*
     printf("\tas large object %d.\n", lobjOid);
 
@@ -223,7 +233,10 @@ main(int argc, char **argv)
 
     printf("exporting large object to file \"%s\" ...\n", out_filename);
 /*    exportFile(conn, lobjOid, out_filename); */
-    lo_export(conn, lobjOid,out_filename);
+    if (!lo_export(conn, lobjOid,out_filename))
+    {
+       fprintf(stderr,"%s\n",PQerrorMessage(conn));
+    }
 
     res = PQexec(conn, "end");
     PQclear(res);
