@@ -55,6 +55,8 @@ New linux_m68k port
 Fix for sorting of NULL's in some cases(Tom)
 Shared library dependencies fixed (Tom)
 Fixed glitches affecting GROUP BY in subselects(Tom)
+Fix some compiler warnings (Tomoaki Nishiyama)
+Add Win1250 (Czech) support (Pavel Behal)
 </programlisting>
 </para>
 </sect2>
