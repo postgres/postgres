@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.4 1997/09/08 02:35:25 momjian Exp $
+ * $Id: pg_rewrite.h,v 1.5 1997/10/25 05:25:10 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -38,7 +38,7 @@ CATALOG(pg_rewrite)
 	int2		ev_attr;
 	bool		is_instead;
 	text		ev_qual;		/* VARLENA */
-	text		action;			/* VARLENA */
+	text		ev_action;		/* VARLENA */
 } FormData_pg_rewrite;
 
 /* ----------------
@@ -59,6 +59,6 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
 #define Anum_pg_rewrite_ev_attr			4
 #define Anum_pg_rewrite_is_instead		5
 #define Anum_pg_rewrite_ev_qual			6
-#define Anum_pg_rewrite_action			7
+#define Anum_pg_rewrite_ev_action		7
 
 #endif							/* PG_REWRITE_H */
