@@ -4249,10 +4249,26 @@ echo "${ECHO_T}$python_configdir" >&6
 echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5
 echo $ECHO_N "checking how to link an embedded Python application... $ECHO_C" >&6
 
-python_libspec=`${PYTHON} -c "import distutils.sysconfig,string; print '-lpython${python_version} '+string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
+python_libdir=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR')))"`
+python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY')))"`
+python_so=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('SO')))"`
+ldlibrary=`echo "${python_ldlibrary}" | sed "s/${python_so}$//"`
 
-echo "$as_me:$LINENO: result: ${python_libspec}" >&5
-echo "${ECHO_T}${python_libspec}" >&6
+if test x"${python_libdir}" != x"" -a x"${python_ldlibrary}" != x"" -a x"${python_ldlibrary}" != x"${ldlibrary}"
+then
+	# New way: use the official shared library
+	ldlibrary=`echo "${ldlibrary}" | sed "s/^lib//"`
+	python_libspec="-L${python_libdir} -l${ldlibrary}"
+else
+	# Old way: use libpython from python_configdir
+	python_libdir="${python_configdir}"
+	python_libspec="-L${python_libdir} -lpython${python_version}"
+fi
+
+python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
+
+echo "$as_me:$LINENO: result: ${python_libspec} ${python_additional_libs}" >&5
+echo "${ECHO_T}${python_libspec} ${python_additional_libs}" >&6
 
 
 fi
@@ -18893,7 +18909,9 @@ s,@PYTHON@,$PYTHON,;t t
 s,@python_version@,$python_version,;t t
 s,@python_configdir@,$python_configdir,;t t
 s,@python_includespec@,$python_includespec,;t t
+s,@python_libdir@,$python_libdir,;t t
 s,@python_libspec@,$python_libspec,;t t
+s,@python_additional_libs@,$python_additional_libs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HAVE_IPV6@,$HAVE_IPV6,;t t
 s,@acx_pthread_config@,$acx_pthread_config,;t t

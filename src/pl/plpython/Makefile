@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.16 2004/10/10 19:07:55 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.17 2004/10/11 19:32:19 tgl Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -6,24 +6,26 @@ include $(top_builddir)/src/Makefile.global
 
 
 # On some platforms we can only build PL/Python if libpython is a
-# shared library.  Since there is no official way to determine this,
-# we see if there is a file that is named like a shared library.
-ifneq (,$(wildcard $(python_configdir)/libpython*$(DLSUFFIX)*))
+# shared library.  Since there is no official way to determine this
+# (at least not in pre-2.3 Python), we see if there is a file that is
+# named like a shared library.
+ifneq (,$(wildcard $(python_libdir)/libpython*$(DLSUFFIX)*))
 shared_libpython = yes
 endif
 
 # Windows needs to convert backslashed paths to normal slashes,
-# and we have to remove -lpython from libspec since we are building our own
+# and we have to remove -lpython from the link since we are building our own
 ifeq ($(PORTNAME), win32)
 shared_libpython = yes
 python_includespec := $(subst \,/,$(python_includespec))
-python_libspec := $(subst -lpython$(python_version),,$(python_libspec))
+override python_libspec :=
 endif
 
 # Darwin (OS X) has its own ideas about how to do this.
 ifeq ($(PORTNAME), darwin)
 shared_libpython = yes
 override python_libspec := -framework Python
+override python_additional_libs :=
 endif
 
 # If we don't have a shared library and the platform doesn't allow it
@@ -53,7 +55,7 @@ python${pytverstr}.def: $(WD)/system32/python${pytverstr}.dll
 endif
 
 
-SHLIB_LINK = $(BE_DLLLIBS) $(python_libspec)
+SHLIB_LINK = $(BE_DLLLIBS) $(python_libspec) $(python_additional_libs)
 
 include $(top_srcdir)/src/Makefile.shlib
 
