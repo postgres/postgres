@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.157 2005/02/27 01:02:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.158 2005/03/12 01:54:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1557,7 +1557,6 @@ send_message_to_server_log(ErrorData *edata)
 		appendStringInfoChar(&buf, '\n');
 	}
 
-
 #ifdef HAVE_SYSLOG
 	/* Write to syslog, if enabled */
 	if (Log_destination & LOG_DESTINATION_SYSLOG)
@@ -1597,7 +1596,9 @@ send_message_to_server_log(ErrorData *edata)
 		write_syslog(syslog_level, buf.data);
 	}
 #endif   /* HAVE_SYSLOG */
+
 #ifdef WIN32
+	/* Write to eventlog, if enabled */
 	if (Log_destination & LOG_DESTINATION_EVENTLOG)
 	{
 		int			eventlog_level;
@@ -1628,19 +1629,23 @@ send_message_to_server_log(ErrorData *edata)
 		write_eventlog(eventlog_level, buf.data);
 	}
 #endif   /* WIN32 */
+
 	/* Write to stderr, if enabled */
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == Debug)
 	{
 #ifdef WIN32
-		/* In a win32 service environment, there is no usable stderr. Capture
-		   anything going there and write it to the eventlog instead.
-		   If stderr redirection is active, leave it to stderr because the
-		   logger will capture it to a file. */
+		/*
+		 * In a win32 service environment, there is no usable stderr. Capture
+		 * anything going there and write it to the eventlog instead.
+		 *
+		 * If stderr redirection is active, it's ok to write to stderr
+		 * because that's really a pipe to the syslogger process.
+		 */
 		if ((!Redirect_stderr || am_syslogger) && pgwin32_is_service())
 			write_eventlog(EVENTLOG_ERROR_TYPE, buf.data);
 		else
 #endif
-		fprintf(stderr, "%s", buf.data);
+			fprintf(stderr, "%s", buf.data);
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
