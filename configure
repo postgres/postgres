@@ -10388,7 +10388,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #ifdef HAVE_GETOPT_H
-include <getopt.h>
+#include <getopt.h>
 #endif
 
 #ifdef F77_DUMMY_MAIN
