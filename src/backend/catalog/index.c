@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.85 1999/07/17 20:16:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.86 1999/07/20 16:48:54 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -52,26 +52,23 @@
 
 /* non-export function prototypes */
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
-				   bool istemp);
+		bool istemp);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
-						 List *attributeList,
-						 int numatts, AttrNumber *attNums);
+		List *attributeList, int numatts, AttrNumber *attNums);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
-						int numatts,
-						Oid indexoid);
-static void
-			AppendAttributeTuples(Relation indexRelation, int numatts);
+		int numatts, Oid indexoid);
+static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
-					FuncIndexInfo *funcInfo, int natts,
-					AttrNumber *attNums, Oid *classOids, Node *predicate,
-		   List *attributeList, bool islossy, bool unique, bool primary);
+		FuncIndexInfo *funcInfo, int natts,
+		AttrNumber *attNums, Oid *classOids, Node *predicate,
+		List *attributeList, bool islossy, bool unique, bool primary);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
-			 int numberOfAttributes, AttrNumber *attributeNumber,
-			 IndexStrategy indexStrategy, uint16 parameterCount,
+		int numberOfAttributes, AttrNumber *attributeNumber,
+		IndexStrategy indexStrategy, uint16 parameterCount,
 		Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
 
 /* ----------------------------------------------------------------

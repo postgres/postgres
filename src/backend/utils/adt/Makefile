@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.23 1999/07/20 02:44:09 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.24 1999/07/20 16:48:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,12 @@ CFLAGS += -I../..
 
 # seems to be required for some date/time stuff 07/19/1999 bjm
 ifeq ($(CPU),alpha)
+ifeq ($(CC), gcc)
 CFLAGS+= -mieee
+endif
+ifeq ($(CC), egcs)
+CFLAGS+= -mieee
+endif
 endif
 
 ifdef MULTIBYTE
