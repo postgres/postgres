@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.56 2000/01/26 05:57:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.57 2000/03/24 02:41:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,13 +41,13 @@ static int	text_cmp(text *arg1, text *arg2);
  *				The input is scaned twice.
  *				The error checking of input is minimal.
  */
-text *
+bytea *
 byteain(char *inputText)
 {
 	char	   *tp;
 	char	   *rp;
 	int			byte;
-	text	   *result;
+	bytea	   *result;
 
 	if (inputText == NULL)
 		elog(ERROR, "Bad input string for type bytea");
@@ -64,7 +64,7 @@ byteain(char *inputText)
 		}
 	tp = inputText;
 	byte += VARHDRSZ;
-	result = (text *) palloc(byte);
+	result = (bytea *) palloc(byte);
 	result->vl_len = byte;		/* varlena? */
 	rp = result->vl_dat;
 	while (*tp != '\0')
@@ -90,10 +90,9 @@ byteain(char *inputText)
  *		NULL vlena should be an error--returning string with NULL for now.
  */
 char *
-byteaout(text *vlena)
+byteaout(bytea *vlena)
 {
 	char	   *result;
-
 	char	   *vp;
 	char	   *rp;
 	int			val;			/* holds unprintable chars */
@@ -173,7 +172,6 @@ textin(char *inputText)
  *		textout			- converts internal representation to "..."
  */
 char *
-
 textout(text *vlena)
 {
 	int			len;
@@ -218,7 +216,7 @@ textlen(text *t)
 #endif
 
 	if (!PointerIsValid(t))
-		elog(ERROR, "Null input to textlen");
+		return 0;
 
 #ifdef MULTIBYTE
 	len = 0;
@@ -247,10 +245,9 @@ int32
 textoctetlen(text *t)
 {
 	if (!PointerIsValid(t))
-		elog(ERROR, "Null input to textoctetlen");
+		return 0;
 
 	return VARSIZE(t) - VARHDRSZ;
-
 }	/* textoctetlen() */
 
 /*
@@ -621,19 +618,18 @@ text_smaller(text *arg1, text *arg2)
 }
 
 /*-------------------------------------------------------------
- * byteaGetSize
+ * byteaoctetlen
  *
  * get the number of bytes contained in an instance of type 'bytea'
  *-------------------------------------------------------------
  */
 int32
-byteaGetSize(text *v)
+byteaoctetlen(bytea *v)
 {
-	int			len;
+	if (!PointerIsValid(v))
+		return 0;
 
-	len = v->vl_len - sizeof(v->vl_len);
-
-	return len;
+	return VARSIZE(v) - VARHDRSZ;
 }
 
 /*-------------------------------------------------------------
@@ -645,23 +641,22 @@ byteaGetSize(text *v)
  *-------------------------------------------------------------
  */
 int32
-byteaGetByte(text *v, int32 n)
+byteaGetByte(bytea *v, int32 n)
 {
 	int			len;
 	int			byte;
 
-	len = byteaGetSize(v);
+	if (!PointerIsValid(v))
+		return 0;
 
-	if (n >= len)
-	{
-		elog(ERROR, "byteaGetByte: index (=%d) out of range [0..%d]",
+	len = VARSIZE(v) - VARHDRSZ;
+
+	if (n < 0 || n >= len)
+		elog(ERROR, "byteaGetByte: index %d out of range [0..%d]",
 			 n, len - 1);
-	}
-#ifdef USE_LOCALE
-	byte = (unsigned char) (v->vl_dat[n]);
-#else
-	byte = v->vl_dat[n];
-#endif
+
+	byte = ((unsigned char *) VARDATA(v))[n];
+
 	return (int32) byte;
 }
 
@@ -675,16 +670,26 @@ byteaGetByte(text *v, int32 n)
  *-------------------------------------------------------------
  */
 int32
-byteaGetBit(text *v, int32 n)
+byteaGetBit(bytea *v, int32 n)
 {
 	int			byteNo,
 				bitNo;
+	int			len;
 	int			byte;
+
+	if (!PointerIsValid(v))
+		return 0;
+
+	len = VARSIZE(v) - VARHDRSZ;
+
+	if (n < 0 || n >= len*8)
+		elog(ERROR, "byteaGetBit: index %d out of range [0..%d]",
+			 n, len*8 - 1);
 
 	byteNo = n / 8;
 	bitNo = n % 8;
 
-	byte = byteaGetByte(v, byteNo);
+	byte = ((unsigned char *) VARDATA(v))[byteNo];
 
 	if (byte & (1 << bitNo))
 		return (int32) 1;
@@ -700,36 +705,31 @@ byteaGetBit(text *v, int32 n)
  *
  *-------------------------------------------------------------
  */
-text *
-byteaSetByte(text *v, int32 n, int32 newByte)
+bytea *
+byteaSetByte(bytea *v, int32 n, int32 newByte)
 {
 	int			len;
-	text	   *res;
+	bytea	   *res;
 
-	len = byteaGetSize(v);
+	if (!PointerIsValid(v))
+		return 0;
 
-	if (n >= len)
-	{
-		elog(ERROR,
-			 "byteaSetByte: index (=%d) out of range [0..%d]",
+	len = VARSIZE(v) - VARHDRSZ;
+
+	if (n < 0 || n >= len)
+		elog(ERROR, "byteaSetByte: index %d out of range [0..%d]",
 			 n, len - 1);
-	}
 
 	/*
 	 * Make a copy of the original varlena.
 	 */
-	res = (text *) palloc(VARSIZE(v));
-	if (res == NULL)
-	{
-		elog(ERROR, "byteaSetByte: Out of memory (%d bytes requested)",
-			 VARSIZE(v));
-	}
-	memmove((char *) res, (char *) v, VARSIZE(v));
+	res = (bytea *) palloc(VARSIZE(v));
+	memcpy((char *) res, (char *) v, VARSIZE(v));
 
 	/*
 	 * Now set the byte.
 	 */
-	res->vl_dat[n] = newByte;
+	((unsigned char *) VARDATA(res))[n] = newByte;
 
 	return res;
 }
@@ -742,26 +742,37 @@ byteaSetByte(text *v, int32 n, int32 newByte)
  *
  *-------------------------------------------------------------
  */
-text *
-byteaSetBit(text *v, int32 n, int32 newBit)
+bytea *
+byteaSetBit(bytea *v, int32 n, int32 newBit)
 {
-	text	   *res;
+	bytea	   *res;
+	int			len;
 	int			oldByte,
 				newByte;
 	int			byteNo,
 				bitNo;
 
+	if (!PointerIsValid(v))
+		return NULL;
+
+	len = VARSIZE(v) - VARHDRSZ;
+
+	if (n < 0 || n >= len*8)
+		elog(ERROR, "byteaSetBit: index %d out of range [0..%d]",
+			 n, len*8 - 1);
+
+	byteNo = n / 8;
+	bitNo = n % 8;
+
 	/*
 	 * sanity check!
 	 */
 	if (newBit != 0 && newBit != 1)
-		elog(ERROR, "byteaSetByte: new bit must be 0 or 1");
+		elog(ERROR, "byteaSetBit: new bit must be 0 or 1");
 
 	/*
 	 * get the byte where the bit we want is stored.
 	 */
-	byteNo = n / 8;
-	bitNo = n % 8;
 	oldByte = byteaGetByte(v, byteNo);
 
 	/*
