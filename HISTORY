@@ -373,7 +373,7 @@ Move /interfaces/libpq++ to http://gborg.postgresql.org (Marc, Bruce)
 Move /interfaces/odbc to http://gborg.postgresql.org (Marc)
 Move /interfaces/libpgeasy to http://gborg.postgresql.org (Marc, Bruce)
 Move /interfaces/perl5 to http://gborg.postgresql.org (Marc, Bruce)
-Remove /bin/pgaccess from main tree, now at http::/www.pgaccess.org (Bruce)
+Remove /bin/pgaccess from main tree, now at http://www.pgaccess.org (Bruce)
 
 Build and Install
 =================
