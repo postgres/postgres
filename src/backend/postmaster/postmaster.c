@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.204 2001/01/27 00:05:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.205 2001/02/08 00:35:10 tgl Exp $
  *
  * NOTES
  *
@@ -202,6 +202,7 @@ extern void GetRedoRecPtr(void);
 static void pmdaemonize(int argc, char *argv[]);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
+static void ClosePostmasterPorts(Port *myConn);
 static void reset_shared(unsigned short port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
@@ -1285,6 +1286,51 @@ ConnFree(Port *conn)
 	free(conn);
 }
 
+/*
+ * ClosePostmasterPorts -- close all the postmaster's open sockets
+ *
+ * This is called during child process startup to release file descriptors
+ * that are not needed by that child process.  All descriptors other than
+ * the one for myConn (if it's not null) are closed.
+ *
+ * Note that closing the child's descriptor does not destroy the client
+ * connection prematurely, since the parent (postmaster) process still
+ * has the socket open.
+ */
+static void
+ClosePostmasterPorts(Port *myConn)
+{
+	Dlelem	   *curr;
+
+	/* Close the listen sockets */
+	if (NetServer)
+		StreamClose(ServerSock_INET);
+	ServerSock_INET = INVALID_SOCK;
+#ifdef HAVE_UNIX_SOCKETS
+	StreamClose(ServerSock_UNIX);
+	ServerSock_UNIX = INVALID_SOCK;
+#endif
+
+	/* Close any sockets for other clients, and release memory too */
+	curr = DLGetHead(PortList);
+
+	while (curr)
+	{
+		Port	   *port = (Port *) DLE_VAL(curr);
+		Dlelem	   *next = DLGetSucc(curr);
+
+		if (port != myConn)
+		{
+			StreamClose(port->sock);
+			DLRemove(curr);
+			ConnFree(port);
+			DLFreeElem(curr);
+		}
+
+		curr = next;
+	}
+}
+
 
 /*
  * reset_shared -- reset shared memory and semaphores
@@ -1918,20 +1964,14 @@ DoBackend(Port *port)
 	 * Signal handlers setting is moved to tcop/postgres...
 	 */
 
-	/* Close the postmaster sockets */
-	if (NetServer)
-		StreamClose(ServerSock_INET);
-	ServerSock_INET = INVALID_SOCK;
-#ifdef HAVE_UNIX_SOCKETS
-	StreamClose(ServerSock_UNIX);
-	ServerSock_UNIX = INVALID_SOCK;
-#endif
-
 	/* Save port etc. for ps status */
 	MyProcPort = port;
 
 	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
+
+	/* Close the postmaster's other sockets */
+	ClosePostmasterPorts(port);
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -2225,13 +2265,9 @@ SSDataBase(int xlop)
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
 
-		if (NetServer)
-			StreamClose(ServerSock_INET);
-		ServerSock_INET = INVALID_SOCK;
-#ifdef HAVE_UNIX_SOCKETS
-		StreamClose(ServerSock_UNIX);
-		ServerSock_UNIX = INVALID_SOCK;
-#endif
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(NULL);
+
 
 		av[ac++] = "postgres";
 
