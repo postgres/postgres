@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.43 2004/03/25 18:57:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.44 2004/04/22 07:02:36 neilc Exp $
 -->
 
  <chapter id="performance-tips">
@@ -28,8 +28,8 @@ $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.43 2004/03/25 18:57:57 tgl Exp 
     plan</firstterm> for each query it is given.  Choosing the right
     plan to match the query structure and the properties of the data
     is absolutely critical for good performance.  You can use the
-    <command>EXPLAIN</command> command to see what query plan the system
-    creates for any query.
+    <xref linkend="sql-explain" endterm="sql-explain-title"> command
+    to see what query plan the system creates for any query.
     Plan-reading is an art that deserves an extensive tutorial, which
     this is not; but here is some basic information.
    </para>
@@ -638,30 +638,51 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </indexterm>
 
    <para>
-    Turn off autocommit and just do one commit at
-    the end.  (In plain SQL, this means issuing <command>BEGIN</command>
-    at the start and <command>COMMIT</command> at the end.  Some client
-    libraries may do this behind your back, in which case you need to
-    make sure the library does it when you want it done.)
-    If you allow each insertion to be committed separately,
-    <productname>PostgreSQL</productname> is doing a lot of work for each
-    row that is added.
-    An additional benefit of doing all insertions in one transaction
-    is that if the insertion of one row were to fail then the
-    insertion of all rows inserted up to that point would be rolled
-    back, so you won't be stuck with partially loaded data.
+    Turn off autocommit and just do one commit at the end.  (In plain
+    SQL, this means issuing <command>BEGIN</command> at the start and
+    <command>COMMIT</command> at the end.  Some client libraries may
+    do this behind your back, in which case you need to make sure the
+    library does it when you want it done.)  If you allow each
+    insertion to be committed separately,
+    <productname>PostgreSQL</productname> is doing a lot of work for
+    each row that is added.  An additional benefit of doing all
+    insertions in one transaction is that if the insertion of one row
+    were to fail then the insertion of all rows inserted up to that
+    point would be rolled back, so you won't be stuck with partially
+    loaded data.
+   </para>
+
+   <para>
+    If you are issuing a large sequence of <command>INSERT</command>
+    commands to bulk load some data, also consider using <xref
+    linkend="sql-prepare" endterm="sql-prepare-title"> to create a
+    prepared <command>INSERT</command> statement. Since you are
+    executing the same command multiple times, it is more efficient to
+    prepare the command once and then use <command>EXECUTE</command>
+    as many times as required.
    </para>
   </sect2>
 
   <sect2 id="populate-copy-from">
-   <title>Use <command>COPY FROM</command></title>
+   <title>Use <command>COPY</command></title>
 
    <para>
-    Use <command>COPY FROM STDIN</command> to load all the rows in one
-    command, instead of using a series of <command>INSERT</command>
-    commands.  This reduces parsing, planning, etc.  overhead a great
-    deal. If you do this then it is not necessary to turn off
-    autocommit, since it is only one command anyway.
+    Use <xref linkend="sql-copy" endterm="sql-copy-title"> to load
+    all the rows in one command, instead of using a series of
+    <command>INSERT</command> commands.  The <command>COPY</command>
+    command is optimized for loading large numbers of rows; it is less
+    flexible than <command>INSERT</command>, but incurs significantly
+    less overhead for large data loads. Since <command>COPY</command>
+    is a single command, there is no need to disable autocommit if you
+    use this method to populate a table.
+   </para>
+
+   <para>
+    Note that loading a large number of rows using
+    <command>COPY</command> is almost always faster than using
+    <command>INSERT</command>, even if multiple
+    <command>INSERT</command> commands are batched into a single
+    transaction.
    </para>
   </sect2>
 
@@ -678,11 +699,12 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     If you are augmenting an existing table, you can drop the index,
-    load the table, then recreate the index. Of
-    course, the database performance for other users may be adversely 
-    affected during the time that the index is missing.  One should also
-    think twice before dropping unique indexes, since the error checking
-    afforded by the unique constraint will be lost while the index is missing.
+    load the table, and then recreate the index. Of course, the
+    database performance for other users may be adversely affected
+    during the time that the index is missing.  One should also think
+    twice before dropping unique indexes, since the error checking
+    afforded by the unique constraint will be lost while the index is
+    missing.
    </para>
   </sect2>
 
@@ -701,16 +723,39 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </para>
   </sect2>
 
+  <sect2 id="populate-checkpoint-segments">
+   <title>Increase <varname>checkpoint_segments</varname></title>
+
+   <para>
+    Temporarily increasing the <xref
+    linkend="guc-checkpoint-segments"> configuration variable can also
+    make large data loads faster.  This is because loading a large
+    amount of data into <productname>PostgreSQL</productname> can
+    cause checkpoints to occur more often than the normal checkpoint
+    frequency (specified by the <varname>checkpoint_timeout</varname>
+    configuration variable). Whenever a checkpoint occurs, all dirty
+    pages must be flushed to disk. By increasing
+    <varname>checkpoint_segments</varname> temporarily during bulk
+    data loads, the number of checkpoints that are required can be
+    reduced.
+   </para>
+  </sect2>
+
   <sect2 id="populate-analyze">
    <title>Run <command>ANALYZE</command> Afterwards</title>
 
    <para>
-    It's a good idea to run <command>ANALYZE</command> or <command>VACUUM
-    ANALYZE</command> anytime you've added or updated a lot of data,
-    including just after initially populating a table.  This ensures that
-    the planner has up-to-date statistics about the table.  With no statistics
-    or obsolete statistics, the planner may make poor choices of query plans,
-    leading to bad performance on queries that use your table.
+    Whenever you have significantly altered the distribution of data
+    within a table, running <xref linkend="sql-analyze"
+    endterm="sql-analyze-title"> is strongly recommended. This
+    includes when bulk loading large amounts of data into
+    <productname>PostgreSQL</productname>.  Running
+    <command>ANALYZE</command> (or <command>VACUUM ANALYZE</command>)
+    ensures that the planner has up-to-date statistics about the
+    table.  With no statistics or obsolete statistics, the planner may
+    make poor decisions during query planning, leading to poor
+    performance on any tables with inaccurate or nonexistent
+    statistics.
    </para>
   </sect2>
   </sect1>

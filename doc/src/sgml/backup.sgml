@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.38 2004/03/09 16:57:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.39 2004/04/22 07:02:35 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -30,7 +30,7 @@ $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.38 2004/03/09 16:57:46 neilc Exp
    commands that, when fed back to the server, will recreate the
    database in the same state as it was at the time of the dump.
    <productname>PostgreSQL</> provides the utility program
-   <application>pg_dump</> for this purpose. The basic usage of this
+   <xref linkend="app-pgdump"> for this purpose. The basic usage of this
    command is:
 <synopsis>
 pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">outfile</replaceable>
@@ -126,10 +126,11 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
    </para>
 
    <para>
-    Once restored, it is wise to run <command>ANALYZE</> on each
-    database so the optimizer has useful statistics. You
-    can also run <command>vacuumdb -a -z</> to <command>ANALYZE</> all
-    databases.
+    Once restored, it is wise to run <xref linkend="sql-analyze"
+    endterm="sql-analyze-title"> on each database so the optimizer has
+    useful statistics. You can also run <command>vacuumdb -a -z</> to
+    <command>VACUUM ANALYZE</> all databases; this is equivalent to
+    running <command>VACUUM ANALYZE</command> manually.
    </para>
 
    <para>
@@ -153,13 +154,11 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
     </para>
    </important>
 
-   <tip>
-    <para>
-    Restore performance can be improved by increasing the
-    configuration parameter <xref
-    linkend="guc-maintenance-work-mem">.
-    </para>
-   </tip>
+   <para>
+    For advice on how to load large amounts of data into
+    <productname>PostgreSQL</productname> efficiently, refer to <xref
+    linkend="populate">.
+   </para>
   </sect2>
 
   <sect2 id="backup-dump-all">
@@ -167,12 +166,11 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
 
    <para>
     The above mechanism is cumbersome and inappropriate when backing
-    up an entire database cluster. For this reason the
-    <application>pg_dumpall</> program is provided.
+    up an entire database cluster. For this reason the <xref
+    linkend="app-pg-dumpall"> program is provided.
     <application>pg_dumpall</> backs up each database in a given
-    cluster, and also preserves cluster-wide data such as
-    users and groups. The call sequence for
-    <application>pg_dumpall</> is simply
+    cluster, and also preserves cluster-wide data such as users and
+    groups. The basic usage of this command is:
 <synopsis>
 pg_dumpall &gt; <replaceable>outfile</>
 </synopsis>
@@ -195,7 +193,7 @@ psql template1 &lt; <replaceable class="parameter">infile</replaceable>
     Since <productname>PostgreSQL</productname> allows tables larger
     than the maximum file size on your system, it can be problematic
     to dump such a table to a file, since the resulting file will likely
-    be larger than the maximum size allowed by your system. As
+    be larger than the maximum size allowed by your system. Since
     <application>pg_dump</> can write to the standard output, you can
     just use standard Unix tools to work around this possible problem.
    </para>
@@ -274,7 +272,7 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
     For reasons of backward compatibility, <application>pg_dump</>
     does not dump large objects by default.<indexterm><primary>large
     object</primary><secondary>backup</secondary></indexterm> To dump
-    large objects you must use either the custom or the TAR output
+    large objects you must use either the custom or the tar output
     format, and use the <option>-b</> option in
     <application>pg_dump</>. See the reference pages for details.  The
     directory <filename>contrib/pg_dumplo</> of the
@@ -315,11 +313,12 @@ tar -cf backup.tar /usr/local/pgsql/data
      <para>
       The database server <emphasis>must</> be shut down in order to
       get a usable backup. Half-way measures such as disallowing all
-      connections will not work as there is always some buffering
-      going on. Information about stopping the server can be
-      found in <xref linkend="postmaster-shutdown">.  Needless to say
-      that you also need to shut down the server before restoring the
-      data.
+      connections will <emphasis>not</emphasis> work
+      (<command>tar</command> and similar tools do not take an atomic
+      snapshot of the state of the filesystem at a point in
+      time). Information about stopping the server can be found in
+      <xref linkend="postmaster-shutdown">.  Needless to say that you
+      also need to shut down the server before restoring the data.
      </para>
     </listitem>
 
