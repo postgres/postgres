@@ -255,7 +255,7 @@
      http://postgreSQL.org
      
    There is also an IRC channel on EFNet, channel #PostgreSQL. I use the
-   unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net
+   unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    Commercial support for PostgreSQL is available at
    http://www.pgsql.com/
