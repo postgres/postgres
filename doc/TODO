@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Mon Jul 21 18:01:37 EDT 1997
+last updated:		Sat Sep 13 22:00:05 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -25,6 +25,7 @@ Developers who have claimed items are:
  	Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
 	Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
+	Patrick is Patrick van Kleef <pvk@pobox.com>
 	Raymond is Raymond Toy <toy@rtp.ericsson.se>
 	Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
 	Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
@@ -38,17 +39,15 @@ RELIABILITY
 -----------
 -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup(Erich)
 -Overhaul bufmgr/lockmgr/transaction manager(Vadim)
-remove -S (stable memory) option or fix memory manager
 Fix CLUSTER
+Remove EXTEND?
 Fix all NULL features
 	allow psql to print nulls meaningfully
 Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
-Dropping a table twice causes corruption, drop/create not rollback-able
 COUNT on VIEW always returns zero (maybe because there is no oid for views?)
 CREATE VIEW requires super-user priviledge
 SELECT a[1] FROM test fails, it needs test.a[1]
 INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
-pg_database.datdba is oid, should be int4
 can lo_export()/lo_import() read/write anywhere, causing a security problem?
 Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
 SELECT COUNT(*) FROM TAB1, TAB2 fails
@@ -56,6 +55,14 @@ Tables that start with xinv confused to be large objects
 Two and three dimmensional arrays display improperly, missing {}
 Add GROUP BY and HAVING to INSERT INTO table SELECT * FROM table2
 Make timestamp type recognize DateStyle(Tom)
+SELECT SUM(2+2) FROM table dumps core
+lo_unlink() crashes server
+UPDATE table SET table.value = 3 fails
+Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
+Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
+Remove un-needed malloc() calls and replace with palloc().
+SELECT * FROM table WHERE int4_column = '1' fails
+Allow INSERT INTO table SELECT id, count(*) FROM table2 GROUP BY id
 
 ENHANCEMENTS
 ------------
@@ -66,16 +73,15 @@ Add full ANSI SQL capabilities (Stefan)
 	column constraints (using rules), PRIMARY KEY during table creation
 	add DEFAULT, RESTRAINT, and CHECK capabilities
 	report "Not implemented" if valid syntax is supplied
-	add NOT NULL to CREATE statement
-	add OUTER joins, left and right
+	add OUTER joins, left and right (Thomas)
 	make VIEWs updateable where possible
 	add UNIONS, INTERSECTS, SUBTRACTS
 	add temporary tables
-	add assertions
-	add domains
 	add sql3 recursive unions
 	add the concept of dataspaces
 	allow conversion type casts on SELECT target fields
+	add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
+	 	NCHAR (as distinguished from ordinary varchar),
 Allow compression of large fields or a compressed field type
 Fix the rules system(Jan?,Soo-Ho)
 	robust
@@ -92,7 +98,6 @@ Large objects
 Better interface for adding to pg_group
 Make MONEY/DECIMAL have a defined precision
 Add support for tables >2G, or test current version
-Incorporate the PERL PG95 interface library into source tree(Edmund)
 Threaded version of the server or libpq
 Allow libpq to cancel query requests
 Add REGEX internationalization
@@ -122,13 +127,13 @@ Add STDDEV/VARIANCE() function for standard deviation computation/variance
 Add table/column/function discription table indexed by oid
 add pg_type attribute to identify types that need length (bpchar, varchar)
 add UNIQUE capability to non-btree indexes
-make pg_dumpall preserve table ownership, not just database ownership
 make large objects have their own reltype
 make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 certain indexes will not shrink, i.e. oid indexes with many inserts
 make NULL's come out at the beginning or end depending on the ORDER BY direction
 change the library/backend interface to use network byte order
 allow unix domain sockets for local connections for performance and security
+Make operators for float8/int4 arithmetic
 
 PERFORMANCE
 -----------
@@ -136,9 +141,6 @@ Optimizing disjunctive queries
 Fix bushy-plans (Martin)
 Other optimizer bugs
 Is fsync use optimized?
-Multi-representational types, a la Illustra. For example, have a
-       text type that is stored in-tuple when less than 8K and in large
-       objects, when greater than 8K.
 Use indexes in ORDER BY
 Profile engine in INSERT's and other operations
 Cache most recent query plan(s?)
@@ -146,16 +148,15 @@ Allow compression of log and meta data
 Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 Add FILLFACTOR to index creation
 Allow indexes to be used with OR clauses(Vadim)
-Change pg_attribute.attnvals name to attdispursion and change type float4
-	update pg_statistic table to remove operator column
+update pg_statistic table to remove operator column
 
 DOCUMENTATION
 -------------
 Update usermanual source(many)
 remove time-travel in documentation(Bruce)
 added features used in grammer but not in docs, like :: and CAST
-add DECLARE manual page
 update libpq++ manual page
+Add pg_password manual page
 
 PORTABILITY
 -----------

@@ -1,3 +1,108 @@
+PostgreSQL 6.2beta               Sat Sep 13 21:53:27 EDT 1997
+-------------------------------------------------------------
+
+A dump/restore is required for those wishing to migrate data from
+previous releases of PostgreSQL.
+
+Bug Fixes
+---------
+Fix problems with pg_dump for iheritance, sequences, archive tables(Bruce)
+Fix compile errors on overflow due to shifts, unsigned, and bad prototypes
+	 from Solaris, (Diab Jerius)
+Fix bugs in line arithmetic which resulted in bad intersection
+	calculations(Thomas)
+Check explicitly for intersections at endpoints to avoid rounding
+	ugliness(Thomas)
+Catch non-functional delete attempts(Vadim)
+Change time function names to be more consistent(Michael Reifenberg)
+Check for zero divides(Michael Reifenberg)
+Fix very old bug which made tuples changed/inserted by a commnd
+	visible to command itself (so we had multiple update of 
+	updated tuples, etc).(Vadim)
+Fix for SELECT null, 'fail' FROM pg_am (Patrick)
+SELECT NULL as EMPTY_FIELD now allowed(Patrick)
+
+Enhancements
+------------
+psql:  Add PAGER for \h and \?,\C fix
+Allow hh:mm:ss time entry for timespan/reltime types(Thomas)
+Add center() routines for lseg, path, polygon(Thomas)
+Add distance() routines for circle-polygon, polygon-polygon(Thomas)
+Check explicitly for points and polygons contained within polygons
+	using an axis-crossing algorithm. (Thomas)
+Add routine to convert circle-box(Thomas)
+Merge conflicting operators for different geometric data types
+	(the point type especially had operators which were
+	weirdly dissimilar from the other types)(Thomas)
+Replace distance operator "<===>" with "<->"(Thomas)
+Replace "above" operator "!^" with ">^"
+	and "below" operator "!|" with "<^"(Thomas)
+Add routines for text trimming on both ends, substring, and string position(Thomas)
+Add new operators and functions for geometric types(Thomas)
+Add text concatenation operator and function(Thomas)
+Add text trim function for SQL92 support(Thomas)
+Added conversion routines circle(box) and poly(circle)(Thomas)
+Use better routines from geometry library(Thomas)
+Allow use parameters in target list having aggregates in functions(Vadim)
+Allow internal sorts to be stored in memory rather than in files(Bruce)
+Added JDBC driver as an interface(Adrian & Peter)
+Reduce open() calls(Bruce)
+NOT NULL implementation (Robson Paniago de Miranda).
+CHECK/DEFAULT syntax(Vadim)
+Syntax for [CONSTRAINT name] CHECK ...(Vadim)
+Allow functions and operators on internally-identical types to succeed(Bruce)
+Speed up backend startup after profiling analysis(Bruce)
+pg_password utility
+Number of tuples inserted/affected by INSERT/UPDATE/DELETE...(Vadim)
+SPI manager(Vadim)
+Triggers (Vadim)
+Add detection and warnings for UNION and HAVING clauses(Thomas)
+Add more reserved words, mostly for SQL92 compliance(Thomas)
+Include reserved words for string handling, outer joins, and unions(Thomas)
+Implement extended comments ("/* ... */") using exclusive states(Thomas)
+Modify definitions of operators to remove some restrictions on characters
+	and character order(Thomas)
+Fix for psql pager when no tty(Bruce)
+Add // comments(Bruce)
+New entab utility(Bruce)
+New system relations to store DEFAULT/CHECK expressions(Vadim)
+Store CHECK infos on CREATE TABLE(Vadim)
+Default GEQO parameter is now 8(Bruce)
+Define DOUBLE PRECISION, INTERVAL, CHARACTER, and 
+	CHARACTER VARYING (SQL-92)(Thomas)
+Define EXTRACT(), POSITION(), SUBSTRING(), and TRIM() (SQL-92)(Thomas)
+
+Source Tree Changes
+-------------------
+HPUX 10 patches (Vladimir Turin)
+Added SCO support, (Daniel Harris)
+mkLinux patches (Tatsuo Ishii)
+Change box terminology from "length" to "width"(Thomas)
+Deprecate temporary unstored slope fields(Thomas)
+Remove restart instructions from INSTALL(Bruce)
+Look in /usr/ucb first for install(Bruce)
+Fix c++ copy example code(Thomas)
+Add -o to psql manual page(Bruce)
+Prevent relname unallocated string length from being copied into database(Bruce)
+Cleanup for NAMEDATALEN use(Bruce)
+Fix pgproc names over 15 chars in output(Bruce)
+Add strNcpy() function(Bruce)
+remove some (void) casts that are unnecessary(Bruce)
+new interfaces directory(Marc)
+Replace fopen() calls with calls to fd.c functions(Bruce)
+Make functions static where possible(Bruce)
+enclose unused functions in #ifdef NOT_USED(Bruce)
+Fix for sunos4 difftime() call(Bruce)
+Changes for Digital Unix
+Portability fix for pg_dumpall(Bruce)
+Rename pg_attribute.attnvals to attdisbursion(Bruce)
+intro/unix manual page now pgintro(Bruce)
+built-in manual page now pgbuiltin(Bruce)
+Add PGINDENT and support program(Bruce)
+Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
+Files moved to /src/tools directory(Bruce)
+
+
 PostgreSQL 6.1.1                 Mon Jul 22 18:04:49 EDT 1997
 -------------------------------------------------------------
 

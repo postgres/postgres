@@ -1,8 +1,8 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Sep 4 01:32:22 EDT 1997
-   Version: 6.1.1
+   Last updated: Sat Sep 13 22:00:02 EDT 1997
+   Version: 6.2beta
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -90,6 +90,7 @@ Questions answered:
    3.21) What is the meaning of some of the terms used in Postgres?
    3.22) What is Genetic Query Optimization?
    3.23) How do you remove a column from a table?
+   3.24) How do SELECT only the first few rows of a query?
    
   4) Questions about extending PostgreSQL
   
@@ -514,24 +515,7 @@ Section 3: PostgreSQL Features
        
   3.6) What is the exact difference between binary cursors and normal cursors?
   
-   Normal cursors return data back in ASCII format. Since data is stored
-   natively in binary format, the system must do a conversion to produce
-   the ASCII format. In addition, ASCII formats are often large in size
-   than binary format. Once the attributes come back in ASCII, often the
-   client application then has to convert it to a binary format to
-   manipulate it anyway.
-   
-   Binary cursors give you back the data in the native binary
-   representation. Thus, binary cursors will tend to be a little faster
-   since there's less overhead of conversion.
-   
-   However, ASCII is architectural neutral whereas binary representation
-   can differ between different machine architecture. Thus, if your
-   client machine uses a different representation than you server
-   machine, getting back attributes in binary format is probably not what
-   you want. Also, if your main purpose is displaying the data in ASCII,
-   then getting it back in ASCII will save you some effort on the client
-   side.
+   See the declare manual page for a description.
    
   3.7) What is a R-tree index and what is it used for?
   
@@ -590,24 +574,12 @@ Section 3: PostgreSQL Features
   3.10) How do I do regular expression searches? case-insensitive regexp
   searching?
   
-   PostgreSQL supports the SQL LIKE syntax as well as more general
-   regular expression searching with the ~ operator. The !~ is the
-   negated regexp operator. ~* and !~* are the case-insensitive regular
-   expression operators.
+   See the pgbuiltin manual page. Search for regular expression.
    
   3.11) I experienced a server crash during a vacuum. How do I remove the lock
   file?
   
-   If the server crashes during a vacuum command, chances are it will
-   leave a lock file hanging around. Attempts to re-run the vacuum
-   command result in
-
-
-        WARN:can't create lock file -- another vacuum cleaner running?
-
-   If you are sure that no vacuum is actually running, you can remove the
-   file called "pg_vlock" in your database directory (which is
-   $PGDATA/base/<dbName>)
+   See the vacuum manual page.
    
   3.12) What is the difference between the various character types?
   
@@ -638,10 +610,8 @@ BYTEA           bytea           variable-length array of bytes
    
   3.14) How do I see how the query optimizer is evaluating my query?
   
-   Place the word 'EXPLAIN' at the beginning of the query, for example:
-
-        EXPLAIN SELECT * FROM table1 WHERE age = 23;
-
+   See the explain manual page.
+   
   3.15) How do I create a serial field?
   
    Postgres does not allow the user to specifiy a user column as type
@@ -683,6 +653,7 @@ BYTEA           bytea           variable-length array of bytes
   
    The default configuration allows only connections from tcp/ip host
    localhost. You need to add a host entry to the file pgsql/data/pg_hba.
+   See the hba_conf manual page.
    
   3.18) How do I find out what indexes or operations are defined in the
   database?
@@ -769,11 +740,20 @@ BYTEA           bytea           variable-length array of bytes
   
    We do not support ALTER TABLE DROP COLUMN, but do this:
 
-        SELECT ...  # select all columns but the one you want to remove
+        SELECT ...  -- select all columns but the one you want to remove
         INTO TABLE new_table
         FROM old_table;
         DROP TABLE old_table;
         ALTER TABLE new_table RENAME TO old_table;
+
+  3.23) How do SELECT only the first few rows of a query?
+  
+   See the fetch manual page.
+   
+   This only prevents all row results from being transfered to the
+   client. The entire query must be evaluated, even if you only want just
+   first few rows. Consider a query that has and ORDER BY. There is no
+   way to return any rows until the entire query is evaluated and sorted.
      _________________________________________________________________
    
 Section 4: Extending PostgreSQL
@@ -819,4 +799,4 @@ Section 5: Bugs
    You can also fill out the "bug-template" file and send it to:
      * bugs@postgreSQL.org
        
-   This is the address of the developers mailing list.
+   This is the address of the developers mailing list. 
