@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.68 1999/04/15 02:22:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.69 1999/04/26 04:42:48 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1451,7 +1451,13 @@ datetime_trunc(text *units, DateTime *datetime)
 #if defined(HAVE_TM_ZONE)
 				tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
-				tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
+
+#ifdef __CYGWIN__
+				tz = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+#else
+				tz = (tm->tm_isdst ? (timezone - 3600) : timezone);
+#endif
+
 #else
 #error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
@@ -2434,7 +2440,11 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 			if (tzn != NULL)
 				*tzn = (char *)tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
+#ifdef __CYGWIN__
+			*tzp = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+#else
 			*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
+#endif
 			if (tzn != NULL)
 				*tzn = tzname[(tm->tm_isdst > 0)];
 #else
@@ -3058,7 +3068,13 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #if defined(HAVE_TM_ZONE)
 				*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
-				*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
+ #ifdef __CYGWIN__
+                       *tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timez
+one);
+ #else
+                        *tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezon
+e);
+ #endif
 #else
 #error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif

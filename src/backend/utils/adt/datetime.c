@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.31 1999/04/15 02:22:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.32 1999/04/26 04:42:48 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,7 +360,11 @@ date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn)
 		if (tzn != NULL)
 			*tzn = (char *)tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
+#ifdef __CYGWIN__
+		*tzp = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+#else
 		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
+#endif
 		if (tzn != NULL)
 			*tzn = tzname[(tm->tm_isdst > 0)];
 #else
