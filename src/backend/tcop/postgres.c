@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.373 2003/10/16 16:50:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.374 2003/10/18 22:59:08 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1989,8 +1989,7 @@ usage(char *progname)
 	printf(gettext("  -P              disable system indexes\n"));
 	printf(gettext("  -s              show statistics after each query\n"));
 	printf(gettext("  -S SORT-MEM     set amount of memory for sorts (in kbytes)\n"));
-	printf(gettext("  --help-config   show configuration parameters, then exit;\n"
-				   "                  details: --help-config -h\n"));
+	printf(gettext("  --describe-config  describe configuration parameters, then exit\n"));
 	printf(gettext("  --help          show this help, then exit\n"));
 	printf(gettext("  --version       output version information, then exit\n"));
 	printf(gettext("\nDeveloper options:\n"));
@@ -2660,7 +2659,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.373 $ $Date: 2003/10/16 16:50:41 $\n");
+		puts("$Revision: 1.374 $ $Date: 2003/10/18 22:59:08 $\n");
 	}
 
 	/*
