@@ -65,7 +65,7 @@ public class PGline extends PGobject implements Serializable,Cloneable
   {
     PGtokenizer t = new PGtokenizer(PGtokenizer.removeBox(s),',');
     if(t.getSize() != 2)
-      throw new SQLException("conversion of line failed - "+s);
+      throw new PSQLException("postgresql.geo.line",s);
     
     point[0] = new PGpoint(t.getToken(0));
     point[1] = new PGpoint(t.getToken(1));

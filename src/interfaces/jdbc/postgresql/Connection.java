@@ -10,7 +10,7 @@ import postgresql.largeobject.*;
 import postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.16 1999/05/17 22:43:23 peter Exp $
+ * $Id: Connection.java,v 1.17 1999/05/18 23:17:15 peter Exp $
  *
  * This abstract class is used by postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -95,9 +95,9 @@ public abstract class Connection
     // This occasionally occurs when the client uses the properties version
     // of getConnection(), and is a common question on the email lists
     if(info.getProperty("user")==null)
-      throw new SQLException("The user property is missing. It is mandatory.");
+      throw new PSQLException("postgresql.con.user");
     if(info.getProperty("password")==null)
-      throw new SQLException("The password property is missing. It is mandatory.");
+      throw new PSQLException("postgresql.con.pass");
     
     this_driver = d;
     this_url = new String(url);
@@ -116,9 +116,9 @@ public abstract class Connection
 	// Added by Peter Mount <peter@retep.org.uk>
 	// ConnectException is thrown when the connection cannot be made.
 	// we trap this an return a more meaningful message for the end user
-	throw new SQLException ("Connection refused. Check that the hostname and port is correct, and that the postmaster is running with the -i flag, which enables TCP/IP networking.");
+	throw new PSQLException ("postgresql.con.refused");
       } catch (IOException e) {
-	throw new SQLException ("Connection failed: " + e.toString());
+	throw new PSQLException ("postgresql.con.failed",e);
       }
       
       // Now we need to construct and send a startup packet
@@ -173,11 +173,11 @@ public abstract class Connection
 		    
 		  case AUTH_REQ_KRB4:
 		    DriverManager.println("postgresql: KRB4");
-		    throw new SQLException("Kerberos 4 not supported");
+		    throw new PSQLException("postgresql.con.kerb4");
 		    
 		  case AUTH_REQ_KRB5:
 		    DriverManager.println("postgresql: KRB5");
-		    throw new SQLException("Kerberos 5 not supported");
+		    throw new PSQLException("postgresql.con.kerb5");
 		    
 		  case AUTH_REQ_PASSWORD:
 		    DriverManager.println("postgresql: PASSWORD");
@@ -197,17 +197,17 @@ public abstract class Connection
 		    break;
 		    
 		  default:
-		    throw new SQLException("Authentication type "+areq+" not supported. Check that you have configured the pg_hba.conf file to include the client's IP address or Subnet, and is using a supported authentication scheme.");
+		    throw new PSQLException("postgresql.con.auth",new Integer(areq));
 		  }
 		break;
 		
 	      default:
-		throw new SQLException("error getting authentication request");
+		throw new PSQLException("postgresql.con.authfail");
 	      }
 	    } while(areq != AUTH_REQ_OK);
 	  
 	} catch (IOException e) {
-	  throw new SQLException("Connection failed: " + e.toString());
+	  throw new PSQLException("postgresql.con.failed",e);
 	}
 	
       // Originally we issued a SHOW DATESTYLE statement to find the databases default
@@ -290,7 +290,7 @@ public abstract class Connection
 	    SQLException final_error = null;
 	    
 	    if (sql.length() > 8192)
-		throw new SQLException("SQL Statement too long: " + sql);
+		throw new PSQLException("postgresql.con.toolong",sql);
 	    try
 		{
 		    pg_stream.SendChar('Q');
@@ -299,7 +299,7 @@ public abstract class Connection
 		    pg_stream.SendChar(0);
 		    pg_stream.flush();
 		} catch (IOException e) {
-		    throw new SQLException("I/O Error: " + e.toString());
+		    throw new PSQLException("postgresql.con.ioerror",e);
 		}
 	    
 	    while (!hfr || fqp > 0)
@@ -316,7 +316,7 @@ public abstract class Connection
 			    break;
 			case 'B':	// Binary Data Transfer
 			    if (fields == null)
-				throw new SQLException("Tuple received before MetaData");
+				throw new PSQLException("postgresql.con.tuple");
 			    tup = pg_stream.ReceiveTuple(fields.length, true);
 			    // This implements Statement.setMaxRows()
 			    if(maxrows==0 || tuples.size()<maxrows)
@@ -330,7 +330,7 @@ public abstract class Connection
 					try {
 						update_count = Integer.parseInt(recv_status.substring(1+recv_status.lastIndexOf(' ')));
 					} catch(NumberFormatException nfe) {
-						throw new SQLException("Unable to fathom update count \""+recv_status+"\"");
+						throw new PSQLException("postgresql.con.fathom",recv_status);
 					}
 				}
 			    if (fields != null)
@@ -344,14 +344,14 @@ public abstract class Connection
 					    pg_stream.SendChar(0);
 					    pg_stream.flush();
 					} catch (IOException e) {
-					    throw new SQLException("I/O Error: " + e.toString());
+					    throw new PSQLException("postgresql.con.ioerror",e);
 					}
 				    fqp++;
 				}
 			    break;
 			case 'D':	// Text Data Transfer
 			    if (fields == null)
-				throw new SQLException("Tuple received before MetaData");
+				throw new PSQLException("postgresql.con.tuple");
 			    tup = pg_stream.ReceiveTuple(fields.length, false);
 			    // This implements Statement.setMaxRows()
 			    if(maxrows==0 || tuples.size()<maxrows)
@@ -366,7 +366,7 @@ public abstract class Connection
 			    int t = pg_stream.ReceiveChar();
 			    
 			    if (t != 0)
-				throw new SQLException("Garbled Data");
+				throw new PSQLException("postgresql.con.garbled");
 			    if (fqp > 0)
 				fqp--;
 			    if (fqp == 0)
@@ -380,11 +380,11 @@ public abstract class Connection
 			    break;
 			case 'T':	// MetaData Field Description
 			    if (fields != null)
-				throw new SQLException("Cannot handle multiple result groups");
+				throw new PSQLException("postgresql.con.multres");
 			    fields = ReceiveFields();
 			    break;
 			default:
-			    throw new SQLException("Unknown Response Type: " + (char)c);
+			    throw new PSQLException("postgresql.con.type",new Character((char)c));
 			}
 		}
 	    if (final_error != null)
@@ -587,7 +587,7 @@ public abstract class Connection
 	    sx.fillInStackTrace();
 	    throw sx;
 	} catch(Exception ex) {
-	    throw new SQLException("Failed to create object for "+type+": "+ex);
+	    throw new PSQLException("postgresql.con.creobj",type,ex);
 	}
 	
 	// should never be reached
@@ -622,14 +622,14 @@ public abstract class Connection
 		return ((Serialize)x).store(o);
 	    
 	    // Thow an exception because the type is unknown
-	    throw new SQLException("The object could not be stored. Check that any tables required have already been created in the database.");
+	    throw new PSQLException("postgresql.con.strobj");
 	    
 	} catch(SQLException sx) {
 	    // rethrow the exception. Done because we capture any others next
 	    sx.fillInStackTrace();
 	    throw sx;
 	} catch(Exception ex) {
-	    throw new SQLException("Failed to store object: "+ex);
+	    throw new PSQLException("postgresql.con.strobjex",ex);
 	}
     }
     

@@ -7,6 +7,8 @@ package postgresql.jdbc1;
 
 import java.sql.*;
 
+import postgresql.util.PSQLException;
+
 /**
  * A Statement object is used for executing a static SQL statement and
  * obtaining the results produced by it.
@@ -52,7 +54,7 @@ public class Statement implements java.sql.Statement
 		while (result != null && !((postgresql.ResultSet)result).reallyResultSet())
 			result = ((postgresql.ResultSet)result).getNext();
 		if (result == null)
-			throw new SQLException("no results returned");
+			throw new PSQLException("postgresql.stat.noresult");
 		return result;
 	}
 
@@ -69,7 +71,7 @@ public class Statement implements java.sql.Statement
 	{
 		this.execute(sql);
 		if (((postgresql.ResultSet)result).reallyResultSet())
-			throw new SQLException("results returned");
+			throw new PSQLException("postgresql.stat.result");
 		return this.getUpdateCount();
 	}
 
@@ -114,7 +116,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public void setMaxFieldSize(int max) throws SQLException
 	{
-		throw new SQLException("Attempt to setMaxFieldSize failed - compile time default");
+		throw new PSQLException("postgresql.stat.maxfieldsize");
 	}
 
 	/**

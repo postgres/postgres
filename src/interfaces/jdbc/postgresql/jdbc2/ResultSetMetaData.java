@@ -9,6 +9,7 @@ import java.lang.*;
 import java.sql.*;
 import java.util.*;
 import postgresql.*;
+import postgresql.util.*;
 
 /**
  * A ResultSetMetaData object can be used to find out about the types and
@@ -419,7 +420,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   private Field getField(int columnIndex) throws SQLException
   {
     if (columnIndex < 1 || columnIndex > fields.length)
-      throw new SQLException("Column index out of range");
+      throw new PSQLException("postgresql.res.colrange");
     return fields[columnIndex - 1];
   }
     

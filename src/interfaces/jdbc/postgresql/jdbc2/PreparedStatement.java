@@ -93,7 +93,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				throw new SQLException("No value specified for parameter " + (i + 1));
+				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
 			s.append (templateStrings[i]);
 			s.append (inStrings[i]);
 		}
@@ -118,7 +118,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				throw new SQLException("No value specified for parameter " + (i + 1));
+				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
 			s.append (templateStrings[i]);
 			s.append (inStrings[i]);
 		}
@@ -414,7 +414,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
-		throw new SQLException("InputStream as parameter not supported");
+		throw new PSQLException("postgresql.prep.is");
 	}
 
 	/**
@@ -489,7 +489,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 				setString(parameterIndex, ((PGobject)x).getValue());
 				break;
 			default:
-				throw new SQLException("Unknown Types value");
+				throw new PSQLException("postgresql.prep.type");
 		}
 	}
 
@@ -553,7 +553,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				throw new SQLException("No value specified for parameter " + (i + 1));
+				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
 			s.append (templateStrings[i]);
 			s.append (inStrings[i]);
 		}
@@ -597,7 +597,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	private void set(int paramIndex, String s) throws SQLException
 	{
 		if (paramIndex < 1 || paramIndex > inStrings.length)
-			throw new SQLException("Parameter index out of range");
+			throw new PSQLException("postgresql.prep.range");
 		inStrings[paramIndex - 1] = s;
 	}
     

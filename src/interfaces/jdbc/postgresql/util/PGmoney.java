@@ -65,7 +65,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
       val = negative ? -val : val;
 
     } catch(NumberFormatException e) {
-      throw new SQLException("conversion of money failed - "+e.toString());
+      throw new PSQLException("postgresql.money",e);
     }
   }
   

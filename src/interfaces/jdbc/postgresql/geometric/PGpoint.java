@@ -66,7 +66,7 @@ public class PGpoint extends PGobject implements Serializable,Cloneable
       x = Double.valueOf(t.getToken(0)).doubleValue();
       y = Double.valueOf(t.getToken(1)).doubleValue();
     } catch(NumberFormatException e) {
-      throw new SQLException("conversion of point failed - "+e.toString());
+      throw new PSQLException("postgresql.geo.point",e.toString());
     }
   }
   

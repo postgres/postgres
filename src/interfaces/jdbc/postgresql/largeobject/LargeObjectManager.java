@@ -7,6 +7,7 @@ import java.util.*;
 import java.sql.*;
 
 import postgresql.fastpath.*;
+import postgresql.util.*;
 
 /**
  * This class implements the large object interface to postgresql.
@@ -113,7 +114,7 @@ public class LargeObjectManager
 				      "    or proname = 'lowrite'");
     
     if(res==null)
-      throw new SQLException("failed to initialise LargeObject API");
+      throw new PSQLException("postgresql.lo.init");
     
     fp.addFunctions(res);
     res.close();

@@ -143,7 +143,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     //return null;
     //return new String(bytes);
     if (columnIndex < 1 || columnIndex > fields.length)
-      throw new SQLException("Column Index out of range");
+      throw new PSQLException("postgresql.res.colrange");
     wasNullFlag = (this_row[columnIndex - 1] == null);
     if(wasNullFlag)
       return null;
@@ -186,7 +186,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    return Byte.parseByte(s);
 	  } catch (NumberFormatException e) {
-	    throw new SQLException("Bad Byte Form: " + s);
+	    throw new PSQLException("postgresql.res.badbyte",s);
 	  }
       }
     return 0;		// SQL NULL
@@ -209,7 +209,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    return Short.parseShort(s);
 	  } catch (NumberFormatException e) {
-	    throw new SQLException("Bad Short Form: " + s);
+	    throw new PSQLException("postgresql.res.badshort",s);
 	  }
       }
     return 0;		// SQL NULL
@@ -232,7 +232,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    return Integer.parseInt(s);
 	  } catch (NumberFormatException e) {
-	    throw new SQLException ("Bad Integer Form: " + s);
+	    throw new PSQLException ("postgresql.badint",s);
 	  }
       }
     return 0;		// SQL NULL
@@ -255,7 +255,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    return Long.parseLong(s);
 	  } catch (NumberFormatException e) {
-	    throw new SQLException ("Bad Long Form: " + s);
+	    throw new PSQLException ("postgresql.res.badlong",s);
 	  }
       }
     return 0;		// SQL NULL
@@ -278,7 +278,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    return Float.valueOf(s).floatValue();
 	  } catch (NumberFormatException e) {
-	    throw new SQLException ("Bad Float Form: " + s);
+	    throw new PSQLException ("postgresql.res.badfloat",s);
 	  }
       }
     return 0;		// SQL NULL
@@ -301,7 +301,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    return Double.valueOf(s).doubleValue();
 	  } catch (NumberFormatException e) {
-	    throw new SQLException ("Bad Double Form: " + s);
+	    throw new PSQLException ("postgresql.res.baddouble",s);
 	  }
       }
     return 0;		// SQL NULL
@@ -327,13 +327,13 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  {
 	    val = new BigDecimal(s);
 	  } catch (NumberFormatException e) {
-	    throw new SQLException ("Bad BigDecimal Form: " + s);
+	    throw new PSQLException ("postgresql.res.badbigdec",s);
 	  }
 	  try
 	    {
 	      return val.setScale(scale);
 	    } catch (ArithmeticException e) {
-	      throw new SQLException ("Bad BigDecimal Form: " + s);
+		throw new PSQLException ("postgresql.res.badbigdec",s);
 	    }
       }
     return null;		// SQL NULL
@@ -357,7 +357,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
   public byte[] getBytes(int columnIndex) throws SQLException
   {
     if (columnIndex < 1 || columnIndex > fields.length)
-      throw new SQLException("Column Index out of range");
+      throw new PSQLException("postgresql.res.colrange");
     wasNullFlag = (this_row[columnIndex - 1] == null);
     
     // Handle OID's as BLOBS
@@ -390,7 +390,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     try {
       return new java.sql.Date(df.parse(s).getTime());
     } catch (ParseException e) {
-      throw new SQLException("Bad Date Format: at " + e.getErrorOffset() + " in " + s);
+      throw new PSQLException("postgresql.res.baddate",new Integer(e.getErrorOffset()),s);
     }
   }
   
@@ -417,7 +417,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	    int sec = (s.length() == 5) ? 0 : Integer.parseInt(s.substring(6));
 	    return new Time(hr, min, sec);
 	  } catch (NumberFormatException e) {
-	    throw new SQLException ("Bad Time Form: " + s);
+	    throw new PSQLException ("postgresql.res.badtime",s);
 	  }
       }
     return null;		// SQL NULL
@@ -448,7 +448,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	  java.util.Date d = df.parse(s);
 	  return new Timestamp(d.getTime());
 	} catch (ParseException e) {
-	  throw new SQLException("Bad Timestamp Format: at " + e.getErrorOffset() + " in " + s);
+	  throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
 	}
       }
     return null;                // SQL NULL
@@ -697,7 +697,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     Field field;
     
     if (columnIndex < 1 || columnIndex > fields.length)
-      throw new SQLException("Column index out of range");
+      throw new PSQLException("postgresql.res.colrange");
     field = fields[columnIndex - 1];
     
     // some fields can be null, mainly from those returned by MetaData methods
@@ -770,7 +770,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     for (i = 0 ; i < fields.length; ++i)
       if (fields[i].name.equalsIgnoreCase(columnName))
 	return (i+1);
-    throw new SQLException ("Column name not found");
+    throw new PSQLException ("postgresql.res.colname",columnName);
   }
 }
 

@@ -3,11 +3,6 @@ package postgresql;
 import java.sql.*;
 import java.util.*;
 
-// You will find some mentions to a PSQLException class. This was intended
-// to allow internationalisation of error messages. However, this is not
-// working quite to plan, so the class exists in the source, but it's not
-// quite implemented yet. Peter May 17 1999.
-//
 import postgresql.util.PSQLException;
 
 /**
@@ -109,10 +104,8 @@ public class Driver implements java.sql.Driver
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
 	throw new PSQLException("postgresql.jvm.version",ex);
-	//throw new SQLException("The postgresql.jar file does not contain the correct JDBC classes for this JVM. Try rebuilding.\nException thrown was "+ex.toString());
     } catch(Exception ex2) {
 	throw new PSQLException("postgresql.unusual",ex2);
-	//throw new SQLException("Something unusual has occured to cause the driver to fail. Please report this exception: "+ex2.toString());
     }
     // The old call - remove before posting
     //return new Connection (host(), port(), props, database(), url, this);
@@ -356,7 +349,6 @@ public class Driver implements java.sql.Driver
     public static SQLException notImplemented()
     {
 	return new PSQLException("postgresql.unimplemented");
-	//return new SQLException("This method is not yet implemented.");
     }
 }
 

@@ -7,6 +7,7 @@ package postgresql.jdbc2;
 
 import java.sql.*;
 import java.util.Vector;
+import postgresql.util.*;
 
 /**
  * A Statement object is used for executing a static SQL statement and
@@ -54,7 +55,7 @@ public class Statement implements java.sql.Statement
 		while (result != null && !((postgresql.ResultSet)result).reallyResultSet())
 			result = ((postgresql.ResultSet)result).getNext();
 		if (result == null)
-			throw new SQLException("no results returned");
+			throw new PSQLException("postgresql.stat.noresult");
 		return result;
 	}
 
@@ -71,7 +72,7 @@ public class Statement implements java.sql.Statement
 	{
 		this.execute(sql);
 		if (((postgresql.ResultSet)result).reallyResultSet())
-			throw new SQLException("results returned");
+			throw new PSQLException("postgresql.stat.result");
 		return this.getUpdateCount();
 	}
 
@@ -116,7 +117,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public void setMaxFieldSize(int max) throws SQLException
 	{
-		throw new SQLException("Attempt to setMaxFieldSize failed - compile time default");
+		throw new PSQLException("postgresql.stat.maxfieldsize");
 	}
 
 	/**
@@ -341,7 +342,7 @@ public class Statement implements java.sql.Statement
     public int[] executeBatch() throws SQLException
     {
 	if(batch==null || batch.isEmpty())
-	    throw new SQLException("The batch is empty.");
+	    throw new PSQLException("postgresql.stat.batch.empty");
 	
 	int size=batch.size();
 	int[] result=new int[size];
@@ -353,7 +354,7 @@ public class Statement implements java.sql.Statement
 	    this.execute("commit"); // PTM: check this
 	} catch(SQLException e) {
 	    this.execute("abort"); // PTM: check this
-	    throw new SQLException("The result "+i+" \""+batch.elementAt(i)+"\" aborted.");
+	    throw new PSQLException("postgresql.stat.batch.error",new Integer(i),batch.elementAt(i));
 	}
 	return result;
     }

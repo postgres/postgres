@@ -4,6 +4,7 @@ import java.lang.*;
 import java.sql.*;
 import java.util.*;
 import postgresql.*;
+import postgresql.util.*;
 
 /**
  * postgresql.Field is a class used to describe fields in a PostgreSQL
@@ -62,7 +63,7 @@ public class Field
       if(type_name==null) {
 	ResultSet result = (postgresql.ResultSet)conn.ExecSQL("select typname from pg_type where oid = " + oid);
 	if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
-	  throw new SQLException("Unexpected return from query for type");
+	  throw new PSQLException("postgresql.unexpected");
 	result.next();
 	type_name = result.getString(1);
 	conn.fieldCache.put(new Integer(oid),type_name);

@@ -93,7 +93,7 @@ public class Fastpath
       stream.flush();
       
     } catch(IOException ioe) {
-      throw new SQLException("Failed to send fastpath call "+fnid+"\n"+ioe);
+      throw new PSQLException("postgresql.fp.send",new Integer(fnid),ioe);
     }
     
     // Now handle the result
@@ -138,7 +138,7 @@ public class Fastpath
 	  //------------------------------
 	  // Error message returned
 	case 'E':
-	  throw new SQLException("Fastpath: "+stream.ReceiveString(4096));
+	  throw new PSQLException("postgresql.fp.error",stream.ReceiveString(4096));
 	  
 	  //------------------------------
 	  // Notice from backend
@@ -156,7 +156,7 @@ public class Fastpath
 	  return result;
 	  
 	default:
-	  throw new SQLException("Fastpath: protocol error. Got '"+((char)in)+"'");
+	  throw new PSQLException("postgresql.fp.protocol",new Character((char)in));
 	}
     }
     }
@@ -199,7 +199,7 @@ public class Fastpath
   {
     Integer i = (Integer)fastpath(name,true,args);
     if(i==null)
-      throw new SQLException("Fastpath:"+name+": no result returned, expected integer");
+      throw new PSQLException("postgresql.fp.expint",name);
     return i.intValue();
   }
   
@@ -292,7 +292,7 @@ public class Fastpath
     // so, until we know we can do this (needs testing, on the TODO list)
     // for now, we throw the exception and do no lookups.
     if(id==null)
-      throw new SQLException("Fastpath: function "+name+" is unknown");
+      throw new PSQLException("postgresql.fp.unknown",name);
     
     return id.intValue();
   }

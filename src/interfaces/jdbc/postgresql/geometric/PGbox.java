@@ -67,7 +67,7 @@ public class PGbox extends PGobject implements Serializable,Cloneable
   {
     PGtokenizer t = new PGtokenizer(value,',');
     if(t.getSize() != 2)
-      throw new SQLException("conversion of box failed - "+value);
+      throw new PSQLException("postgresql.geo.box",value);
     
     point[0] = new PGpoint(t.getToken(0));
     point[1] = new PGpoint(t.getToken(1));

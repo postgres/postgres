@@ -67,13 +67,13 @@ public class PGcircle extends PGobject implements Serializable,Cloneable
   {
     PGtokenizer t = new PGtokenizer(PGtokenizer.removeAngle(s),',');
     if(t.getSize() != 2)
-      throw new SQLException("conversion of circle failed - "+s);
+      throw new PSQLException("postgresql.geo.circle",s);
     
     try {
       center = new PGpoint(t.getToken(0));
       radius = Double.valueOf(t.getToken(1)).doubleValue();
     } catch(NumberFormatException e) {
-      throw new SQLException("conversion of circle failed - "+s+" - +"+e.toString());
+      throw new PSQLException("postgresql.geo.circle",e);
     }
   }
   

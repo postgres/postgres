@@ -46,6 +46,18 @@ public class PSQLException extends SQLException
     }
     
     /**
+     * Helper version for 2 args
+     */
+    public PSQLException(String error,Object arg1,Object arg2)
+    {
+	super();
+	Object[] argv = new Object[2];
+	argv[0] = arg1;
+	argv[1] = arg2;
+	translate(error,argv);
+    }
+    
+    /**
      * This does the actual translation
      */
     private void translate(String id,Object[] args)

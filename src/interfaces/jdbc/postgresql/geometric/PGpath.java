@@ -62,7 +62,7 @@ public class PGpath extends PGobject implements Serializable,Cloneable
       open = false;
       s = PGtokenizer.removePara(s);
     } else
-      throw new SQLException("cannot tell if path is open or closed");
+      throw new PSQLException("postgresql.geo.path");
     
     PGtokenizer t = new PGtokenizer(s,',');
     int npoints = t.getSize();

@@ -17,7 +17,7 @@ import postgresql.largeobject.*;
 import postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.1 1999/01/17 04:51:53 momjian Exp $
+ * $Id: Connection.java,v 1.2 1999/05/18 23:17:21 peter Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -96,7 +96,7 @@ public class Connection extends postgresql.Connection implements java.sql.Connec
    */
   public java.sql.CallableStatement prepareCall(String sql) throws SQLException
   {
-    throw new SQLException("Callable Statements are not supported at this time");
+    throw new PSQLException("postgresql.con.call");
     //		return new CallableStatement(this, sql);
   }
   
@@ -311,7 +311,7 @@ public class Connection extends postgresql.Connection implements java.sql.Connec
    */
   public void setTransactionIsolation(int level) throws SQLException
   {
-    throw new SQLException("Transaction Isolation Levels are not implemented");
+    throw postgresql.Driver.notImplemented();
   }
   
   /**

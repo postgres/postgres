@@ -45,7 +45,7 @@ public class Serialize
       className = toClassName(type);
       ourClass = Class.forName(className);
     } catch(ClassNotFoundException cnfe) {
-      throw new SQLException("No class found for '"+type+"`");
+      throw new PSQLException("postgresql.serial.noclass",type);
     }
     
     // Second check, the type must be a table
@@ -58,7 +58,7 @@ public class Serialize
     }
     // This should never occur, as postgresql has it's own internal checks
     if(!status)
-      throw new SQLException("The table for "+type+" is not in the database. Contact the DBA, as the database is in an inconsistent state.");
+      throw new PSQLException("postgresql.serial.table",type);
     
     // Finally cache the fields within the table
   }
@@ -106,7 +106,7 @@ public class Serialize
 	}
 	rs.close();
       } else
-       throw new SQLException("Unexpected result from query");
+       throw new PSQLException("postgresql.unexpected");
       return obj;
     } catch(IllegalAccessException iae) {
       throw new SQLException(iae.toString());
@@ -231,7 +231,7 @@ public class Serialize
   public static void create(postgresql.Connection con,Class c) throws SQLException
   {
     if(c.isInterface())
-      throw new SQLException("Cannot serialize an Interface");
+      throw new PSQLException("postgresql.serial.interface");
     
     // See if the table exists
     String tableName = toPostgreSQL(c.getName());
@@ -316,10 +316,10 @@ public class Serialize
     name = name.toLowerCase();
     
     if(name.indexOf("_")>-1)
-      throw new SQLException("Class names may not have _ in them: "+name);
+      throw new PSQLException("postgresql.serial.underscore");
     
     if(name.length()>32)
-      throw new SQLException("Class & Package name length cannot be longer than 32 characters. "+name+" is "+name.length()+" characters.");
+      throw new PSQLException("postgresql.serial.namelength",name,new Integer(name.length()));
     
     return name.replace('.','_');
   }

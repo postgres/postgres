@@ -261,7 +261,7 @@ public class LargeObject
    */
   public InputStream getInputStream() throws SQLException
   {
-    throw new SQLException("LargeObject:getInputStream not implemented");
+    throw postgresql.Driver.notImplemented();
   }
   
   /**
@@ -274,6 +274,6 @@ public class LargeObject
    */
   public OutputStream getOutputStream() throws SQLException
   {
-    throw new SQLException("LargeObject:getOutputStream not implemented");
+    throw postgresql.Driver.notImplemented();
   }
 }

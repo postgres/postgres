@@ -6,6 +6,7 @@ import java.net.*;
 import java.util.*;
 import java.sql.*;
 import postgresql.*;
+import postgresql.util.*;
 
 /**
  * @version 1.0 15-APR-1997
@@ -21,15 +22,6 @@ public class PG_Stream
   private Socket connection;
   private InputStream pg_input;
   private BufferedOutputStream pg_output;
-  
-  // This is the error message returned when an EOF occurs
-  private static final String EOF_MSG = "The backend has broken the connection. Possibly the action you have attempted has caused it to close.";
-  
-  // This is the error message returned when an IOException occurs
-  private static final String IOE_MSG = "IOError while reading from backend: ";
-  
-  // This is the error message returned when flushing the stream.
-  private static final String FLUSH_MSG = "Error flushing output: ";
   
   /**
    * Constructor:  Connect to the PostgreSQL back end and return
@@ -178,9 +170,9 @@ public class PG_Stream
     try
       {
 	c = pg_input.read();
-	if (c < 0) throw new IOException(EOF_MSG);
+	if (c < 0) throw new PSQLException("postgresql.stream.eof");
       } catch (IOException e) {
-	throw new SQLException(IOE_MSG + e.toString());
+	throw new PSQLException("postgresql.stream.ioerror",e);
       }
       return c;
   }
@@ -203,11 +195,11 @@ public class PG_Stream
 	    int b = pg_input.read();
 	    
 	    if (b < 0)
-	      throw new IOException(EOF_MSG);
+	      throw new PSQLException("postgresql.stream.eof");
 	    n = n | (b << (8 * i)) ;
 	  }
       } catch (IOException e) {
-	throw new SQLException(IOE_MSG + e.toString());
+	throw new PSQLException("postgresql.stream.ioerror",e);
       }
       return n;
   }
@@ -230,11 +222,11 @@ public class PG_Stream
 	    int b = pg_input.read();
 	    
 	    if (b < 0)
-	      throw new IOException(EOF_MSG);
+	      throw new PSQLException("postgresql.stream.eof");
 	    n = b | (n << 8);
 	  }
       } catch (IOException e) {
-	throw new SQLException(IOE_MSG + e.toString());
+	throw new PSQLException("postgresql.stream.ioerror",e);
       }
       return n;
   }
@@ -259,16 +251,16 @@ public class PG_Stream
 	  {
 	    int c = pg_input.read();
 	    if (c < 0)
-	      throw new IOException(EOF_MSG);
+	      throw new PSQLException("postgresql.stream.eof");
 	    else if (c == 0)
 	      break;
 	    else
 	      rst[s++] = (byte)c;
 	  }
 	if (s >= maxsiz)
-	  throw new IOException("Too Much Data");
+	  throw new PSQLException("postgresql.stream.toomuch");
       } catch (IOException e) {
-	throw new SQLException(IOE_MSG + e.toString());
+	throw new PSQLException("postgresql.stream.ioerror",e);
       }
       String v = new String(rst, 0, s);
       return v;
@@ -349,11 +341,11 @@ public class PG_Stream
 	  {
 	    int w = pg_input.read(b, off+s, siz - s);
 	    if (w < 0)
-	      throw new IOException(EOF_MSG);
+	      throw new PSQLException("postgresql.stream.eof");
 	    s += w;
 	  }
       } catch (IOException e) {
-	throw new SQLException(IOE_MSG + e.toString());
+	  throw new PSQLException("postgresql.stream.ioerror",e);
       }
   }
   
@@ -367,7 +359,7 @@ public class PG_Stream
     try {
       pg_output.flush();
     } catch (IOException e) {
-      throw new SQLException(FLUSH_MSG + e.toString());
+      throw new PSQLException("postgresql.stream.flush",e);
     }
   }
   

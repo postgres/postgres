@@ -8,6 +8,7 @@ package postgresql.jdbc1;
 import java.lang.*;
 import java.util.*;
 import postgresql.*;
+import postgresql.util.*;
 
 // We explicitly import classes here as the original line:
 //import java.sql.*;
@@ -424,7 +425,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   private Field getField(int columnIndex) throws SQLException
   {
     if (columnIndex < 1 || columnIndex > fields.length)
-      throw new SQLException("Column index out of range");
+      throw new PSQLException("postgresql.res.colrange");
     return fields[columnIndex - 1];
   }
 }
