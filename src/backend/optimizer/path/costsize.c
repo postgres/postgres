@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.13 1997/02/14 04:15:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.14 1997/04/09 02:13:41 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,9 @@ bool _enable_nestloop_ =    true;
 bool _enable_mergesort_ =   true;
 bool _enable_hashjoin_ =    true;
 
+Cost _cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
+Cost _cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
+
 /*    
  * cost_seqscan--
  *    Determines and returns the cost of scanning a relation sequentially.
@@ -87,7 +90,7 @@ cost_seqscan(int relid, int relpages, int reltuples)
 	temp += _TEMP_SCAN_COST_;
     } else {
 	temp += relpages;
-	temp += _CPU_PAGE_WEIGHT_ * reltuples;
+	temp += _cpu_page_wight_ * reltuples;
     }
     Assert(temp >= 0);
     return(temp);
@@ -124,9 +127,9 @@ cost_index(Oid indexid,
 	   bool is_injoin)
 {
     Cost temp;
-    Cost temp2;
+    double temp2;
 
-    temp = temp2 = (Cost) 0;
+    temp = (Cost) 0;
 
     if (!_enable_indexscan_ && !is_injoin)
 	temp += _disable_cost_;
@@ -134,16 +137,17 @@ cost_index(Oid indexid,
     /* expected index relation pages */
     temp += expected_indexpages;
 
-    /*   about one base relation page */
-    temp += Min(relpages,(int)ceil((double)selec*indextuples));
+    /* expected base relation pages */
+    temp2 = ( reltuples == 0 ) ? (double)0 : (double)relpages/reltuples;
+    temp2 = temp2 * (double)selec * indextuples;
+    temp += Min (relpages, (int)ceil (temp2));
 
-    /*
-     * per index tuple
-     */
-    temp2 += selec * indextuples;
-    temp2 += selec * reltuples;
+    /* per index tuples */
+    temp =  temp + (_cpu_index_page_wight_ * selec * indextuples);
 
-    temp =  temp + (_CPU_PAGE_WEIGHT_ * temp2);
+    /* per heap tuples */
+    temp =  temp + (_cpu_page_wight_ * selec * reltuples);
+
     Assert(temp >= 0);
     return(temp);
 }
@@ -186,7 +190,7 @@ cost_sort(List *keys, int tuples, int width, bool noread)
     /*
      * could be base_log(pages, NBuffers), but we are only doing 2-way merges
      */
-    temp += _CPU_PAGE_WEIGHT_ *
+    temp += _cpu_page_wight_ *
 	numTuples * base_log((double)pages,(double)2.0);
 
     if( !noread )
@@ -210,7 +214,7 @@ cost_result(int tuples, int width)
 {
     Cost temp =0;
     temp = temp + page_size(tuples,width);
-    temp = temp + _CPU_PAGE_WEIGHT_ * tuples;
+    temp = temp + _cpu_page_wight_ * tuples;
     Assert(temp >= 0);
     return(temp);
 }
@@ -279,7 +283,7 @@ cost_mergesort(Cost outercost,
     temp += innercost;
     temp += cost_sort(outersortkeys,outersize,outerwidth,false);
     temp += cost_sort(innersortkeys,innersize,innerwidth,false);
-    temp += _CPU_PAGE_WEIGHT_ * (outersize + innersize);
+    temp += _cpu_page_wight_ * (outersize + innersize);
     Assert(temp >= 0);
 
     return(temp);
@@ -327,7 +331,7 @@ cost_hashjoin(Cost outercost,
     */
     temp += outercost + (nrun + 1);
 
-    temp += _CPU_PAGE_WEIGHT_ * (outersize + nrun * innersize);
+    temp += _cpu_page_wight_ * (outersize + nrun * innersize);
     Assert(temp >= 0);
 
     return(temp);
