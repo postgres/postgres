@@ -12,11 +12,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.15 2002/11/01 00:40:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.16 2003/01/16 21:01:44 tgl Exp $
  *
  *	Interface:
  *
  *	DeadLockCheck()
+ *	DeadLockReport()
+ *	RememberSimpleDeadLock()
  *	InitDeadLockChecking()
  *
  *-------------------------------------------------------------------------
@@ -45,12 +47,27 @@ typedef struct
 	int			nProcs;
 } WAIT_ORDER;
 
+/*
+ * Information saved about each edge in a detected deadlock cycle.  This
+ * is used to print a diagnostic message upon failure.
+ *
+ * Note: because we want to examine this info after releasing the LockMgrLock,
+ * we can't just store LOCK and PGPROC pointers; we must extract out all the
+ * info we want to be able to print.
+ */
+typedef struct
+{
+	LOCKTAG		locktag;		/* ID of awaited lock object */
+	LOCKMODE	lockmode;		/* type of lock we're waiting for */
+	int			pid;			/* PID of blocked backend */
+} DEADLOCK_INFO;
+
 
 static bool DeadLockCheckRecurse(PGPROC *proc);
 static bool TestConfiguration(PGPROC *startProc);
 static bool FindLockCycle(PGPROC *checkProc,
 			  EDGE *softEdges, int *nSoftEdges);
-static bool FindLockCycleRecurse(PGPROC *checkProc,
+static bool FindLockCycleRecurse(PGPROC *checkProc, int depth,
 					 EDGE *softEdges, int *nSoftEdges);
 static bool ExpandConstraints(EDGE *constraints, int nConstraints);
 static bool TopoSort(LOCK *lock, EDGE *constraints, int nConstraints,
@@ -88,6 +105,8 @@ static int	maxCurConstraints;
 static EDGE *possibleConstraints;
 static int	nPossibleConstraints;
 static int	maxPossibleConstraints;
+static DEADLOCK_INFO *deadlockDetails;
+static int	nDeadlockDetails;
 
 
 /*
@@ -110,8 +129,10 @@ InitDeadLockChecking(void)
 
 	/*
 	 * FindLockCycle needs at most MaxBackends entries in visitedProcs[]
+	 * and deadlockDetails[].
 	 */
 	visitedProcs = (PGPROC **) palloc(MaxBackends * sizeof(PGPROC *));
+	deadlockDetails = (DEADLOCK_INFO *) palloc(MaxBackends * sizeof(DEADLOCK_INFO));
 
 	/*
 	 * TopoSort needs to consider at most MaxBackends wait-queue entries,
@@ -176,6 +197,10 @@ InitDeadLockChecking(void)
  * table to have a different masterLock, all locks that can block had
  * better use the same LWLock, else this code will not be adequately
  * interlocked!
+ *
+ * On failure, deadlock details are recorded in deadlockDetails[] for
+ * subsequent printing by DeadLockReport().  That activity is separate
+ * because we don't want to do it while holding the master lock.
  */
 bool
 DeadLockCheck(PGPROC *proc)
@@ -190,7 +215,19 @@ DeadLockCheck(PGPROC *proc)
 
 	/* Search for deadlocks and possible fixes */
 	if (DeadLockCheckRecurse(proc))
+	{
+		/*
+		 * Call FindLockCycle one more time, to record the correct
+		 * deadlockDetails[] for the basic state with no rearrangements.
+		 */
+		int		nSoftEdges;
+
+		nWaitOrders = 0;
+		if (!FindLockCycle(proc, possibleConstraints, &nSoftEdges))
+			elog(FATAL, "DeadLockCheck: deadlock seems to have disappeared");
+
 		return true;			/* cannot find a non-deadlocked state */
+	}
 
 	/* Apply any needed rearrangements of wait queues */
 	for (i = 0; i < nWaitOrders; i++)
@@ -357,9 +394,12 @@ TestConfiguration(PGPROC *startProc)
  *
  * Scan outward from the given proc to see if there is a cycle in the
  * waits-for graph that includes this proc.  Return TRUE if a cycle
- * is found, else FALSE.  If a cycle is found, we also return a list of
+ * is found, else FALSE.  If a cycle is found, we return a list of
  * the "soft edges", if any, included in the cycle.  These edges could
- * potentially be eliminated by rearranging wait queues.
+ * potentially be eliminated by rearranging wait queues.  We also fill
+ * deadlockDetails[] with information about the detected cycle; this info
+ * is not used by the deadlock algorithm itself, only to print a useful
+ * message after failing.
  *
  * Since we need to be able to check hypothetical configurations that would
  * exist after wait queue rearrangement, the routine pays attention to the
@@ -372,12 +412,14 @@ FindLockCycle(PGPROC *checkProc,
 			  int *nSoftEdges)	/* output argument */
 {
 	nVisitedProcs = 0;
+	nDeadlockDetails = 0;
 	*nSoftEdges = 0;
-	return FindLockCycleRecurse(checkProc, softEdges, nSoftEdges);
+	return FindLockCycleRecurse(checkProc, 0, softEdges, nSoftEdges);
 }
 
 static bool
 FindLockCycleRecurse(PGPROC *checkProc,
+					 int depth,
 					 EDGE *softEdges,	/* output argument */
 					 int *nSoftEdges)	/* output argument */
 {
@@ -402,7 +444,16 @@ FindLockCycleRecurse(PGPROC *checkProc,
 		{
 			/* If we return to starting point, we have a deadlock cycle */
 			if (i == 0)
+			{
+				/*
+				 * record total length of cycle --- outer levels will now
+				 * fill deadlockDetails[]
+				 */
+				Assert(depth <= MaxBackends);
+				nDeadlockDetails = depth;
+
 				return true;
+			}
 
 			/*
 			 * Otherwise, we have a cycle but it does not include the
@@ -449,8 +500,18 @@ FindLockCycleRecurse(PGPROC *checkProc,
 					((1 << lm) & conflictMask) != 0)
 				{
 					/* This proc hard-blocks checkProc */
-					if (FindLockCycleRecurse(proc, softEdges, nSoftEdges))
+					if (FindLockCycleRecurse(proc, depth+1,
+											 softEdges, nSoftEdges))
+					{
+						/* fill deadlockDetails[] */
+						DEADLOCK_INFO  *info = &deadlockDetails[depth];
+
+						info->locktag = lock->tag;
+						info->lockmode = checkProc->waitLockMode;
+						info->pid = checkProc->pid;
+
 						return true;
+					}
 					/* If no deadlock, we're done looking at this holder */
 					break;
 				}
@@ -496,8 +557,16 @@ FindLockCycleRecurse(PGPROC *checkProc,
 			if (((1 << proc->waitLockMode) & conflictMask) != 0)
 			{
 				/* This proc soft-blocks checkProc */
-				if (FindLockCycleRecurse(proc, softEdges, nSoftEdges))
+				if (FindLockCycleRecurse(proc, depth+1,
+										 softEdges, nSoftEdges))
 				{
+					/* fill deadlockDetails[] */
+					DEADLOCK_INFO  *info = &deadlockDetails[depth];
+
+					info->locktag = lock->tag;
+					info->lockmode = checkProc->waitLockMode;
+					info->pid = checkProc->pid;
+
 					/*
 					 * Add this edge to the list of soft edges in the
 					 * cycle
@@ -529,8 +598,16 @@ FindLockCycleRecurse(PGPROC *checkProc,
 			if (((1 << proc->waitLockMode) & conflictMask) != 0)
 			{
 				/* This proc soft-blocks checkProc */
-				if (FindLockCycleRecurse(proc, softEdges, nSoftEdges))
+				if (FindLockCycleRecurse(proc, depth+1,
+										 softEdges, nSoftEdges))
 				{
+					/* fill deadlockDetails[] */
+					DEADLOCK_INFO  *info = &deadlockDetails[depth];
+
+					info->locktag = lock->tag;
+					info->lockmode = checkProc->waitLockMode;
+					info->pid = checkProc->pid;
+
 					/*
 					 * Add this edge to the list of soft edges in the
 					 * cycle
@@ -758,3 +835,67 @@ PrintLockQueue(LOCK *lock, const char *info)
 }
 
 #endif
+
+/*
+ * Report details about a detected deadlock.
+ */
+void
+DeadLockReport(void)
+{
+	int		i;
+
+	for (i = 0; i < nDeadlockDetails; i++)
+	{
+		DEADLOCK_INFO  *info = &deadlockDetails[i];
+		int			nextpid;
+
+		/* The last proc waits for the first one... */
+		if (i < nDeadlockDetails-1)
+			nextpid = info[1].pid;
+		else
+			nextpid = deadlockDetails[0].pid;
+
+		if (info->locktag.relId == XactLockTableId && info->locktag.dbId == 0)
+		{
+			/* Lock is for transaction ID */
+			elog(NOTICE, "Proc %d waits for %s on transaction %u; blocked by %d",
+				 info->pid,
+				 GetLockmodeName(info->lockmode),
+				 info->locktag.objId.xid,
+				 nextpid);
+		}
+		else
+		{
+			/* Lock is for a relation */
+			elog(NOTICE, "Proc %d waits for %s on relation %u database %u; blocked by %d",
+				 info->pid,
+				 GetLockmodeName(info->lockmode),
+				 info->locktag.relId,
+				 info->locktag.dbId,
+				 nextpid);
+		}
+	}
+}
+
+/*
+ * RememberSimpleDeadLock: set up info for DeadLockReport when ProcSleep
+ * detects a trivial (two-way) deadlock.  proc1 wants to block for lockmode
+ * on lock, but proc2 is already waiting and would be blocked by proc1.
+ */
+void
+RememberSimpleDeadLock(PGPROC *proc1,
+					   LOCKMODE lockmode,
+					   LOCK *lock,
+					   PGPROC *proc2)
+{
+	DEADLOCK_INFO  *info = &deadlockDetails[0];
+
+	info->locktag = lock->tag;
+	info->lockmode = lockmode;
+	info->pid = proc1->pid;
+	info++;
+	info->locktag = proc2->waitLock->tag;
+	info->lockmode = proc2->waitLockMode;
+	info->pid = proc2->pid;
+	nDeadlockDetails = 2;
+}

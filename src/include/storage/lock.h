@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.67 2002/09/04 20:31:45 momjian Exp $
+ * $Id: lock.h,v 1.68 2003/01/16 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,6 +243,11 @@ extern void GrantLock(LOCK *lock, PROCLOCK *holder, LOCKMODE lockmode);
 extern void RemoveFromWaitQueue(PGPROC *proc);
 extern int	LockShmemSize(int maxBackends);
 extern bool DeadLockCheck(PGPROC *proc);
+extern void DeadLockReport(void);
+extern void RememberSimpleDeadLock(PGPROC *proc1,
+								   LOCKMODE lockmode,
+								   LOCK *lock,
+								   PGPROC *proc2);
 extern void InitDeadLockChecking(void);
 extern LockData *GetLockStatusData(void);
 extern const char *GetLockmodeName(LOCKMODE mode);

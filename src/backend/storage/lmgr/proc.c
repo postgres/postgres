@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.127 2002/10/31 21:34:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.128 2003/01/16 21:01:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,8 +566,9 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 					 * up correctly is to call RemoveFromWaitQueue(), but
 					 * we can't do that until we are *on* the wait queue.
 					 * So, set a flag to check below, and break out of
-					 * loop.
+					 * loop.  Also, record deadlock info for later message.
 					 */
+					RememberSimpleDeadLock(MyProc, lockmode, lock, proc);
 					early_deadlock = true;
 					break;
 				}

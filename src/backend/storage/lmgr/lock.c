@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.118 2002/11/01 00:40:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.119 2003/01/16 21:01:44 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -905,6 +905,13 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		LWLockRelease(lockMethodTable->masterLock);
+		/*
+		 * Now that we aren't holding the LockMgrLock, print details about
+		 * the detected deadlock.  We didn't want to do this before because
+		 * sending elog messages to the client while holding the shared lock
+		 * is bad for concurrency.
+		 */
+		DeadLockReport();
 		elog(ERROR, "deadlock detected");
 		/* not reached */
 	}
