@@ -1,0 +1,1700 @@
+# translation of pg_dump-ro.po to Romanian
+# Alin Vaida <alinv@myrealbox.com>, 2004.
+# Alin Vaida <alin.vaida@gmail.com>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_dump-8.0\n"
+"POT-Creation-Date: 2004-11-04 19:23+0000\n"
+"PO-Revision-Date: 2004-11-17 02:41+0200\n"
+"Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
+"Language-Team: Romanian <translators@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.10\n"
+
+#: pg_dump.c:366 pg_restore.c:229
+msgid "User name: "
+msgstr "Nume utilizator: "
+
+#: pg_dump.c:402 pg_dumpall.c:264 pg_restore.c:256
+#, c-format
+msgid "%s: invalid -X option -- %s\n"
+msgstr "%s: opţiune -X incorectă -- %s\n"
+
+#: pg_dump.c:404 pg_dump.c:418 pg_dump.c:427 pg_dumpall.c:266 pg_dumpall.c:275
+#: pg_dumpall.c:292 pg_restore.c:258 pg_restore.c:268 pg_restore.c:285
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Încercaţi \"%s --help\" pentru mai multe informaţii.\n"
+
+#: pg_dump.c:425 pg_dumpall.c:290
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: prea multe argumente în linia de comandă (primul este \"%s\")\n"
+
+#: pg_dump.c:438
+msgid "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n"
+msgstr "opţiunile \"doar schema\" (-s) şi \" doar date\" (-a) nu pot fi folosite împreună\n"
+
+#: pg_dump.c:444
+msgid "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n"
+msgstr "opţiunile \"curăţare\" (-c) şi \"doar date\" (-a) a) nu pot fi folosite împreună\n"
+
+#: pg_dump.c:450
+msgid "large-object output not supported for a single table\n"
+msgstr "ieşirea pentru obiecte mari nu este suportată pentru o singură tabelă\n"
+
+#: pg_dump.c:451 pg_dump.c:458
+msgid "use a full dump instead\n"
+msgstr "folosiţi în schimb o descărcare completă\n"
+
+#: pg_dump.c:457
+msgid "large-object output not supported for a single schema\n"
+msgstr "ieşirea pentru obiecte mari nu este suportată pentru o singură schemă\n"
+
+#: pg_dump.c:464
+msgid "INSERT (-d, -D) and OID (-o) options cannot be used together\n"
+msgstr "opţiunile INSERT (-d, -D) şi OID (-o) nu pot fi folosite împreună\n"
+
+#: pg_dump.c:465
+msgid "(The INSERT command cannot set OIDs.)\n"
+msgstr "(comanda INSERT nu poate seta OID-uri)\n"
+
+#: pg_dump.c:471
+msgid "large-object output is not supported for plain-text dump files\n"
+msgstr "ieşirea pentru obiecte mari nu este suportată pentru descărcarea în fişiere text simplu\n"
+
+#: pg_dump.c:472
+msgid "(Use a different output format.)\n"
+msgstr "(Folosiţi un alt format de ieşire)\n"
+
+#: pg_dump.c:501
+#, c-format
+msgid "invalid output format \"%s\" specified\n"
+msgstr "format de ieşire specificat \"%s\" incorect\n"
+
+#: pg_dump.c:507
+#, c-format
+msgid "could not open output file \"%s\" for writing\n"
+msgstr "imposibil de deschis pentru scriere fişierul de ieşire \"%s\"\n"
+
+#: pg_backup_db.c:52 pg_dump.c:518
+#, c-format
+msgid "could not parse version string \"%s\"\n"
+msgstr "imposibil de analizat şirul de versiune \"%s\"\n"
+
+#: pg_dump.c:554
+#, c-format
+msgid "last built-in OID is %u\n"
+msgstr "ultimul OID intern este %u\n"
+
+#: pg_dump.c:665
+#, c-format
+msgid ""
+"%s dumps a database as a text file or to other formats.\n"
+"\n"
+msgstr ""
+"%s descarcă o bază de date într-un fişier text sau alt format.\n"
+"\n"
+
+#: pg_dump.c:666 pg_dumpall.c:337 pg_restore.c:359
+msgid "Usage:\n"
+msgstr "Utilizare:\n"
+
+#: pg_dump.c:667
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPŢIUNE]... [NUMEDB]\n"
+
+#: pg_dump.c:669 pg_dumpall.c:340 pg_restore.c:362
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Opţiuni generale:\n"
+
+#: pg_dump.c:670 pg_restore.c:364
+msgid "  -f, --file=FILENAME      output file name\n"
+msgstr "  -f, --file=NUMEFIŞIER    nume fişier de ieşire\n"
+
+#: pg_dump.c:671
+msgid "  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
+msgstr "  -F, --format=c|t|p       format fişier de ieşire (c: particular, t: tar, p: text simplu)\n"
+
+#: pg_dump.c:672
+msgid ""
+"  -i, --ignore-version     proceed even when server version mismatches\n"
+"                           pg_dump version\n"
+msgstr ""
+"  -i, --ignore-version     continuă chiar dacă versiunea serverului\n"
+"                           nu se potriveşte cu cea a pg_dump\n"
+
+#: pg_dump.c:674 pg_restore.c:368
+msgid "  -v, --verbose            verbose mode\n"
+msgstr "  -v, --verbose            mod detaliat\n"
+
+#: pg_dump.c:675
+msgid "  -Z, --compress=0-9       compression level for compressed formats\n"
+msgstr "  -Z, --compress=0-9       nivel de compresie pentru formatele comprimate\n"
+
+#: pg_dump.c:676 pg_dumpall.c:343 pg_restore.c:369
+msgid "  --help                   show this help, then exit\n"
+msgstr "  --help                   afişează acest ajutor, apoi iese\n"
+
+#: pg_dump.c:677 pg_dumpall.c:344 pg_restore.c:370
+msgid "  --version                output version information, then exit\n"
+msgstr "  --version                afişează informaţii despre versiune, apoi iese\n"
+
+#: pg_dump.c:679 pg_dumpall.c:345
+msgid ""
+"\n"
+"Options controlling the output content:\n"
+msgstr ""
+"\n"
+"Opţiuni care controlează conţinutul ieşirii:\n"
+
+#: pg_dump.c:680 pg_dumpall.c:346
+msgid "  -a, --data-only          dump only the data, not the schema\n"
+msgstr "  -a, --data-only          descarcă numai datele, fără schemă\n"
+
+#: pg_dump.c:681
+msgid "  -b, --blobs              include large objects in dump\n"
+msgstr "  -b, --blobs              include obiecte mari în descărcare\n"
+
+#: pg_dump.c:682 pg_restore.c:374
+msgid "  -c, --clean              clean (drop) schema prior to create\n"
+msgstr "  -c, --clean              curăţă (şterge) schema înainte de creare\n"
+
+#: pg_dump.c:683
+msgid "  -C, --create             include commands to create database in dump\n"
+msgstr "  -C, --create             include în descărcare comenzi pentru crearea bazei de date\n"
+
+#: pg_dump.c:684 pg_dumpall.c:348
+msgid "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
+msgstr "  -d, --inserts            descarcă datele sub formă de comenzi INSERT, nu COPY\n"
+
+#: pg_dump.c:685 pg_dumpall.c:349
+msgid "  -D, --column-inserts     dump data as INSERT commands with column names\n"
+msgstr "  -D, --column-inserts     descarcă datele sub formă de comenzi INSERT cu nume de coloane\n"
+
+#: pg_dump.c:686
+msgid "  -n, --schema=SCHEMA      dump the named schema only\n"
+msgstr "  -n, --schema=SCHEMĂ      descarcă doar schema precizată\n"
+
+#: pg_dump.c:687 pg_dumpall.c:351
+msgid "  -o, --oids               include OIDs in dump\n"
+msgstr "  -o, --oids               include OID-uri în descărcare\n"
+
+#: pg_dump.c:688
+msgid ""
+"  -O, --no-owner           do not output commands to set object ownership\n"
+"                           in plain text format\n"
+msgstr ""
+"  -O, --no-owner           fără comenzi care setează proprietarul obiectelor\n"
+"                           în formatul text simplu\n"
+
+#: pg_dump.c:690 pg_dumpall.c:353
+msgid "  -s, --schema-only        dump only the schema, no data\n"
+msgstr "  -s, --schema-only        descarcă doar schema, fără date\n"
+
+#: pg_dump.c:691
+msgid ""
+"  -S, --superuser=NAME     specify the superuser user name to use in\n"
+"                           plain text format\n"
+msgstr ""
+"  -S, --superuser=NUME     specifică numele utilizatorului privilegiat folosit\n"
+"                           pentru formatul text simplu\n"
+
+#: pg_dump.c:693
+msgid "  -t, --table=TABLE        dump the named table only\n"
+msgstr "  -t, --table=TABELĂ       descarcă doar tabela precizată\n"
+
+#: pg_dump.c:694 pg_dumpall.c:355
+msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
+msgstr "  -x, --no-privileges      nu descarcă privilegiile (acordare/revocare)\n"
+
+#: pg_dump.c:695 pg_dumpall.c:356
+msgid ""
+"  -X disable-dollar-quoting, --disable-dollar-quoting\n"
+"                           disable dollar quoting, use SQL standard quoting\n"
+msgstr ""
+
+#: pg_dump.c:697 pg_dumpall.c:358 pg_restore.c:388
+msgid ""
+"  -X disable-triggers, --disable-triggers\n"
+"                           disable triggers during data-only restore\n"
+msgstr ""
+"  -X disable-triggers, --disable-triggers\n"
+"                           dezactivare declanşatori în timpul restabilirii doar a datelor\n"
+
+#: pg_dump.c:699 pg_dumpall.c:360 pg_restore.c:390
+msgid ""
+"  -X use-set-session-authorization, --use-set-session-authorization\n"
+"                           use SESSION AUTHORIZATION commands instead of\n"
+"                           OWNER TO commands\n"
+msgstr ""
+"  -X use-set-session-authorization, --use-set-session-authorization\n"
+"                           folosire comenzi SESSION AUTHORIZATION în locul\n"
+"                           celor OWNER TO\n"
+
+#: pg_dump.c:703 pg_dumpall.c:364 pg_restore.c:394
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Opţiuni de conectare:\n"
+
+#: pg_dump.c:704 pg_dumpall.c:365 pg_restore.c:395
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h NUMEGAZDĂ    gazda serverului de baze de date sau directorul soclului\n"
+
+#: pg_dump.c:705 pg_dumpall.c:366 pg_restore.c:396
+msgid "  -p, --port=PORT          database server port number\n"
+msgstr "  -p, --port=PORT          numărul portului serverului de baze de date\n"
+
+#: pg_dump.c:706 pg_dumpall.c:367 pg_restore.c:397
+msgid "  -U, --username=NAME      connect as specified database user\n"
+msgstr "  -U, --username=NUME      conectare ca utilizatorul de baze de date specificat\n"
+
+#: pg_dump.c:707 pg_dumpall.c:368 pg_restore.c:398
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr "  -W, --password           forţează solicitarea parolei (în mod normal, se face automat)\n"
+
+#: pg_dump.c:709
+msgid ""
+"\n"
+"If no database name is supplied, then the PGDATABASE environment\n"
+"variable value is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Dacă nu este specificat numele bazei de date, este folosită variabila de mediu PGDATABASE.\n"
+"\n"
+
+#: pg_dump.c:711 pg_dumpall.c:371 pg_restore.c:402
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Raportaţi erorile la <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_backup_archiver.c:1209 pg_dump.c:719
+msgid "*** aborted because of error\n"
+msgstr "*** abandon ca urmare a unei erori\n"
+
+#: pg_dump.c:801
+#, c-format
+msgid "dumping contents of table %s\n"
+msgstr "descărcarea conţinutului tabelei %s\n"
+
+#: pg_dump.c:913
+#, c-format
+msgid ""
+"SQL command to dump the contents of table \"%s\" failed: PQendcopy() "
+"failed.\n"
+msgstr "Comanda SQL pentru descărcarea conţinutului tabelei\"%s\" a eşuat: PQendcopy() a eşuat.\n"
+
+#: pg_dump.c:914 pg_dump.c:8071
+#, c-format
+msgid "Error message from server: %s"
+msgstr "Mesaj de eroare de la server: %s"
+
+#: pg_dump.c:915 pg_dump.c:8072
+#, c-format
+msgid "The command was: %s\n"
+msgstr "Comanda era: %s\n"
+
+#: pg_dump.c:1185
+msgid "saving database definition\n"
+msgstr "salvare definiţie bază de date\n"
+
+#: pg_dump.c:1231
+#, c-format
+msgid "missing pg_database entry for database \"%s\"\n"
+msgstr "lipseşte intrarea pg_database pentru baza de date \"%s\"\n"
+
+#: pg_dump.c:1238
+#, c-format
+msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
+msgstr "interogarea a returnat mai multe intrări pg_database (%d) pentru baza de date \"%s\"\n"
+
+#: pg_dump.c:1348
+msgid "saving encoding\n"
+msgstr "salvare codificare\n"
+
+#: pg_dump.c:1398
+msgid "saving large objects\n"
+msgstr "salvare obiecte mari\n"
+
+#: pg_dump.c:1431
+#, c-format
+msgid "dumpBlobs(): could not open large object: %s"
+msgstr "dumpBlobs(): imposibil de deschis obiectul mare: %s"
+
+#: pg_dump.c:1444
+#, c-format
+msgid "dumpBlobs(): error reading large object: %s"
+msgstr "dumpBlobs(): eroare la citirea obiectului mare: %s"
+
+#: pg_dump.c:1578
+#, c-format
+msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul schemei \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:1595
+#, c-format
+msgid "specified schema \"%s\" does not exist\n"
+msgstr "schema specificată \"%s\" nu există\n"
+
+#: pg_dump.c:1632
+#, c-format
+msgid "schema with OID %u does not exist\n"
+msgstr "schema cu OID %u nu există\n"
+
+#: pg_dump.c:1817
+#, c-format
+msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul tipului de date \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:1915
+#, c-format
+msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul operatorului \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:2081
+#, c-format
+msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul clasei de operatori \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:2185
+#, c-format
+msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul funcţiei de agregare \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:2319
+#, c-format
+msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul funcţiei \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:2597
+#, c-format
+msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
+msgstr "AVERTISMENT: proprietarul tabelei \"%s\" pare să fie incorect\n"
+
+#: pg_dump.c:2616
+#, c-format
+msgid "specified table \"%s\" does not exist\n"
+msgstr "tabela specificată \"%s\" nu există\n"
+
+#: pg_dump.c:2723
+#, c-format
+msgid "reading indexes for table \"%s\"\n"
+msgstr "citire indexuri pentru tabela \"%s\"\n"
+
+#: pg_dump.c:2960
+#, c-format
+msgid "reading foreign key constraints for table \"%s\"\n"
+msgstr "citire restrângeri de cheie străină pentru tabela \"%s\"\n"
+
+#: pg_dump.c:3236
+#, c-format
+msgid "reading triggers for table \"%s\"\n"
+msgstr "citire declanşatori pentru tabela \"%s\"\n"
+
+#: pg_dump.c:3308
+#, c-format
+msgid "expected %d triggers on table \"%s\" but found %d\n"
+msgstr "%d declanşatori aşteptaţi pentru tabela \"%s\", %d găsiţi\n"
+
+#: pg_dump.c:3353
+#, c-format
+msgid ""
+"query produced null referenced table name for foreign key trigger \"%s\" on "
+"table \"%s\" (OID of table: %u)\n"
+msgstr "interogarea a returnat un nume de tabelă referinţă nulă pentru declanşatorul de cheie străină \"%s\" pentru tabela \"%s\" (OID tabelă: %u)\n"
+
+#: pg_dump.c:3654
+#, c-format
+msgid "finding the columns and types of table \"%s\"\n"
+msgstr "găsire coloane şi tipuri pentru tabela \"%s\"\n"
+
+#: pg_dump.c:3740
+#, c-format
+msgid "invalid column numbering in table \"%s\"\n"
+msgstr "numerotarea coloanelor incorectă în tabela \"%s\"\n"
+
+#: pg_dump.c:3774
+#, c-format
+msgid "finding default expressions of table \"%s\"\n"
+msgstr "găsire expresii implicite pentru tabela \"%s\"\n"
+
+#: pg_dump.c:3857
+#, c-format
+msgid "invalid adnum value %d for table \"%s\"\n"
+msgstr "valoare adnum incorectă (%d) pentru tabela \"%s\"\n"
+
+#: pg_dump.c:3875
+#, c-format
+msgid "finding check constraints for table \"%s\"\n"
+msgstr "găsire verificări de restricţii pentru tabela \"%s\"\n"
+
+#: pg_dump.c:3939
+#, c-format
+msgid "expected %d check constraints on table \"%s\" but found %d\n"
+msgstr "%d verificări de restricţii aşteptate pentru tabela \"%s\", %d găsite\n"
+
+#: pg_dump.c:3941
+msgid "(The system catalogs might be corrupted.)\n"
+msgstr "(Cataloagele sistem ar putea fi corupte)\n"
+
+#: pg_dump.c:4628 pg_dump.c:4793 pg_dump.c:5192 pg_dump.c:5577 pg_dump.c:5874
+#: pg_dump.c:6074 pg_dump.c:6257
+#, c-format
+msgid "Got %d rows instead of one from: %s"
+msgstr "%d rânduri (în loc de unul) primite de la: %s"
+
+#: pg_dump.c:4901
+#, c-format
+msgid "query yielded no rows: %s\n"
+msgstr "interogarea nu a furnizat nici un rând: %s\n"
+
+#: pg_dump.c:5248
+msgid "WARNING: could not parse proargnames array\n"
+msgstr "AVERTISMENT: imposibil de analizat vectorul proargnames\n"
+
+#: pg_dump.c:5285
+#, c-format
+msgid "unrecognized provolatile value for function \"%s\"\n"
+msgstr "valoare provolatile nerecunoscută pentru funcţia \"%s\"\n"
+
+#: pg_dump.c:5799
+#, c-format
+msgid "WARNING: could not find operator with OID %s\n"
+msgstr "AVERTISMENT: imposibil de găsit operatorul cu OID %s\n"
+
+#: pg_dump.c:6285
+#, c-format
+msgid ""
+"WARNING: aggregate function %s could not be dumped correctly for this "
+"database version; ignored\n"
+msgstr "AVERTISMENT: funcţia de agregare %s nu a putut fi descărcată corect pentru această versiune de bază de date; se ignoră\n"
+
+#: pg_dump.c:6417
+#, c-format
+msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
+msgstr "imposibil de analizat lista de control al accesului (%s) pentru obiectul \"%s\" (%s)\n"
+
+#: pg_dump.c:6510
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned no data\n"
+msgstr "interogarea pentru obţinerea definiţia vizualizării \"%s\" nu a returnat nimic\n"
+
+#: pg_dump.c:6513
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
+msgstr "interogarea pentru obţinerea definiţiei vizualizării \"%s\" a returnat mai multe rezultate\n"
+
+#: pg_dump.c:6522
+#, c-format
+msgid "definition of view \"%s\" appears to be empty (length zero)\n"
+msgstr "definiţia vizualizării \"%s\" pare sa fie goală (lungime zero)\n"
+
+#: pg_dump.c:6832
+#, c-format
+msgid "invalid column number %d for table \"%s\"\n"
+msgstr "număr de coloane incorect (%d) pentru tabela \"%s\"\n"
+
+#: pg_dump.c:6933
+#, c-format
+msgid "missing index for constraint \"%s\"\n"
+msgstr "lipseşte indexul pentru restricţia \"%s\"\n"
+
+#: pg_dump.c:7103
+#, c-format
+msgid "unrecognized constraint type: %c\n"
+msgstr "tip de restricţie nerecunoscut: %c\n"
+
+#: pg_dump.c:7145
+msgid "inserted invalid OID\n"
+msgstr "OID incorect inserat\n"
+
+#: pg_dump.c:7151
+#, c-format
+msgid "maximum system OID is %u\n"
+msgstr "OID maxim pentru sistem este %u\n"
+
+#: pg_dump.c:7192
+msgid "missing pg_database entry for this database\n"
+msgstr "intrarea pg_database lipseşte pentru această bază de date\n"
+
+#: pg_dump.c:7197
+msgid "found more than one pg_database entry for this database\n"
+msgstr "au fost găsite mai multe intrări pg_database pentru această bază de date\n"
+
+#: pg_dump.c:7229
+msgid "could not find entry for pg_indexes in pg_class\n"
+msgstr "imposibil de găsit intrarea pentru pg_indexes în pg_class\n"
+
+#: pg_dump.c:7234
+msgid "found more than one entry for pg_indexes in pg_class\n"
+msgstr "au fost găsite mai multe intrări pg_indexes în pg_class\n"
+
+#: pg_dump.c:7283
+#, c-format
+msgid "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
+msgstr "interogarea pentru obţinerea datelor secvenţei \"%s\" a returnat %d rânduri (1 aşteptat)\n"
+
+#: pg_dump.c:7292
+#, c-format
+msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
+msgstr "interogarea pentru obţinerea datelor secvenţei \"%s\" a returnat numele \"%s\"\n"
+
+#: pg_dump.c:7529
+#, c-format
+msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
+msgstr "argument incorect (%s) pentru declanşatorul \"%s\" pentru tabela \"%s\"\n"
+
+#: pg_dump.c:7635
+#, c-format
+msgid ""
+"query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
+"returned"
+msgstr "interogarea pentru obţinerea regulii \"%s\" pentru tabela \"%s\" a eşuat: număr incorect de rânduri returnate"
+
+#: pg_dump.c:7702
+msgid "reading dependency data\n"
+msgstr "citire date de suport\n"
+
+#: pg_dump.c:7879
+#, c-format
+msgid "query yielded %d rows instead of one: %s\n"
+msgstr "interogarea a furnizat %d rânduri în loc de 1: %s\n"
+
+#: pg_dump.c:8066
+msgid "SQL command failed\n"
+msgstr "comanda SQL a eşuat\n"
+
+#: common.c:99
+msgid "reading schemas\n"
+msgstr "citire scheme\n"
+
+#: common.c:103
+msgid "reading user-defined functions\n"
+msgstr "citire funcţii definite de utilizator\n"
+
+#: common.c:108
+msgid "reading user-defined types\n"
+msgstr "citire tipuri definite de utilizator\n"
+
+#: common.c:113
+msgid "reading procedural languages\n"
+msgstr "citire limbaje procedurale\n"
+
+#: common.c:117
+msgid "reading user-defined aggregate functions\n"
+msgstr "citire funcţii de agregare definite de utilizator\n"
+
+#: common.c:121
+msgid "reading user-defined operators\n"
+msgstr "citire operatori definiţi de utilizator\n"
+
+#: common.c:125
+msgid "reading user-defined operator classes\n"
+msgstr "citire clase de operatori definite de utilizator\n"
+
+#: common.c:129
+msgid "reading user-defined conversions\n"
+msgstr "citire conversii definite de utilizator\n"
+
+#: common.c:133
+msgid "reading user-defined tables\n"
+msgstr "citire tabele definite de utilizator\n"
+
+#: common.c:137
+msgid "reading table inheritance information\n"
+msgstr "citire informaţii de moştenire pentru tabele\n"
+
+#: common.c:141
+msgid "reading rewrite rules\n"
+msgstr "citire reguli de rescriere\n"
+
+#: common.c:145
+msgid "reading type casts\n"
+msgstr "citire conversii de tip\n"
+
+#: common.c:150
+msgid "finding inheritance relationships\n"
+msgstr "găsire relaţii de moştenire\n"
+
+#: common.c:154
+msgid "reading column info for interesting tables\n"
+msgstr "citire informaţii coloane pentru tabelele interesante\n"
+
+#: common.c:158
+msgid "flagging inherited columns in subtables\n"
+msgstr "marcare coloane moştenite în subtabele\n"
+
+#: common.c:162
+msgid "reading indexes\n"
+msgstr "citire indexuri\n"
+
+#: common.c:166
+msgid "reading constraints\n"
+msgstr "citire restricţii\n"
+
+#: common.c:170
+msgid "reading triggers\n"
+msgstr "citire declanşatori\n"
+
+#: common.c:421 common.c:553 common.c:587 pg_backup_archiver.c:616
+#: pg_backup_archiver.c:960 pg_backup_archiver.c:1074
+#: pg_backup_archiver.c:1512 pg_backup_archiver.c:1662
+#: pg_backup_archiver.c:1695 pg_backup_custom.c:141 pg_backup_custom.c:146
+#: pg_backup_custom.c:152 pg_backup_custom.c:167 pg_backup_custom.c:544
+#: pg_backup_db.c:156 pg_backup_db.c:232 pg_backup_files.c:112
+#: pg_backup_tar.c:168 pg_backup_tar.c:960
+msgid "out of memory\n"
+msgstr "memorie insuficientă\n"
+
+#: common.c:728
+#, c-format
+msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
+msgstr "verificare de siguranţă eşuată, OID părinte %u pentru tabela \"%s\" (OID %u) nu a fost găsit\n"
+
+#: common.c:770
+msgid "could not parse numeric array: too many numbers\n"
+msgstr "imposibil de analizat tabloul numeric: prea multe numere\n"
+
+#: common.c:785
+msgid "could not parse numeric array: invalid character in number\n"
+msgstr "imposibil de analizat tabloul numeric: caracter incorect în număr\n"
+
+#: pg_backup_archiver.c:45
+msgid "archiver"
+msgstr "arhivator"
+
+#: pg_backup_archiver.c:125
+msgid "could not close output archive file\n"
+msgstr "imposibil de închis fişierul arhivă de ieşire\n"
+
+#: pg_backup_archiver.c:152
+msgid "-C and -c are incompatible options\n"
+msgstr "opţiunile -C şi -c sunt incompatibile\n"
+
+#: pg_backup_archiver.c:159
+msgid "connecting to database for restore\n"
+msgstr "conectare la baza de date pentru restabilire\n"
+
+#: pg_backup_archiver.c:161
+msgid "direct database connections are not supported in pre-1.3 archives\n"
+msgstr "conexiunile directe la baza de date nu sunt suportate în arhivele pre-1.3\n"
+
+#: pg_backup_archiver.c:204
+msgid "implied data-only restore\n"
+msgstr "presupune restabilirea doar a datelor\n"
+
+#: pg_backup_archiver.c:237
+#, c-format
+msgid "dropping %s %s\n"
+msgstr "ştergere %s %s\n"
+
+#: pg_backup_archiver.c:263 pg_backup_archiver.c:265
+#, c-format
+msgid "warning from original dump file: %s\n"
+msgstr "avertisment din fişierul de descărcare original: %s\n"
+
+#: pg_backup_archiver.c:272
+#, c-format
+msgid "creating %s %s\n"
+msgstr "creare %s %s\n"
+
+#: pg_backup_archiver.c:280
+#, c-format
+msgid "connecting to new database \"%s\"\n"
+msgstr "conectare la o noua bază de date \"%s\"\n"
+
+#: pg_backup_archiver.c:305
+msgid ""
+"cannot restore from compressed archive (not configured for compression "
+"support)\n"
+msgstr "imposibil de restabilit din arhiva comprimată (neconfigurat pentru compresie)\n"
+
+#: pg_backup_archiver.c:325
+msgid "WARNING: skipping large-object restoration\n"
+msgstr "AVERTISMENT: se ignoră restabilirea obiectelor mari\n"
+
+#: pg_backup_archiver.c:335
+#, c-format
+msgid "restoring data for table \"%s\"\n"
+msgstr "restabilire date pentru tabela \"%s\"\n"
+
+#: pg_backup_archiver.c:367 pg_backup_archiver.c:453
+#, c-format
+msgid "fixing up large-object cross-reference for \"%s\"\n"
+msgstr "reparare referinţe încrucişate ale obiectelor mari pentru \"%s\"\n"
+
+#: pg_backup_archiver.c:378
+#, c-format
+msgid "executing %s %s\n"
+msgstr "executare %s %s\n"
+
+#: pg_backup_archiver.c:398
+#, c-format
+msgid "setting owner and privileges for %s %s\n"
+msgstr "setare proprietar şi privilegii pentru %s %s\n"
+
+#: pg_backup_archiver.c:516
+msgid "disabling triggers\n"
+msgstr "dezactivare declanşatori\n"
+
+#: pg_backup_archiver.c:555
+msgid "enabling triggers\n"
+msgstr "activare declanşatori\n"
+
+#: pg_backup_archiver.c:590
+msgid ""
+"internal error -- WriteData cannot be called outside the context of a "
+"DataDumper routine\n"
+msgstr "eroare internă -- WriteData nu poate fi apelată în afara contextului unei rutine DataDumper\n"
+
+#: pg_backup_archiver.c:724
+msgid "large-object output not supported in chosen format\n"
+msgstr "ieşire obiecte mari nesuportată în formatul ales\n"
+
+#: pg_backup_archiver.c:764 pg_backup_archiver.c:852
+msgid "committing large-object transactions\n"
+msgstr "finalizare tranzacţii pentru obiecte mari\n"
+
+#: pg_backup_archiver.c:774
+#, c-format
+msgid "restored %d large objects\n"
+msgstr "%d obiecte mari restabilite\n"
+
+#: pg_backup_archiver.c:791
+msgid "cannot restore large objects without a database connection\n"
+msgstr "imposibil de restabilit obiecte mari fără o conexiune la baza de date\n"
+
+#: pg_backup_archiver.c:805
+msgid "starting large-object transactions\n"
+msgstr "pornire tranzacţii pentru obiecte mari\n"
+
+#: pg_backup_archiver.c:813
+msgid "could not create large object\n"
+msgstr "imposibil de creat obiectul mare\n"
+
+#: pg_backup_archiver.c:815
+#, c-format
+msgid "restoring large object with OID %u as %u\n"
+msgstr "restabilire obiect mare cu OID %u ca %u\n"
+
+#: pg_backup_archiver.c:821
+msgid "could not open large object\n"
+msgstr "imposibil de deschis obiectul mare\n"
+
+#: pg_backup_archiver.c:836
+#, c-format
+msgid "wrote remaining %lu bytes of large-object data (result = %lu)\n"
+msgstr "scriere %lu octeţi rămaşi din obiectul mare (rezultat = %lu)\n"
+
+#: pg_backup_archiver.c:839 pg_backup_archiver.c:1131
+#, c-format
+msgid "could not write to large object (result: %lu, expected: %lu)\n"
+msgstr "imposibil de scris în obiectul mare (rezultat: %lu, aşteptat: %lu)\n"
+
+#: pg_backup_archiver.c:885
+msgid "could not open TOC file\n"
+msgstr "imposibil de deschis fişierul cuprins\n"
+
+#: pg_backup_archiver.c:906
+#, c-format
+msgid "WARNING: line ignored: %s\n"
+msgstr "AVERTISMENT: linie ignorată: %s\n"
+
+#: pg_backup_archiver.c:913
+#, c-format
+msgid "could not find entry for ID %d\n"
+msgstr "imposibil de găsit intrarea pentru ID %d\n"
+
+#: pg_backup_archiver.c:923 pg_backup_files.c:156 pg_backup_files.c:439
+#, c-format
+msgid "could not close TOC file: %s\n"
+msgstr "imposibil de închis fişierul cuprins: %s\n"
+
+#: pg_backup_archiver.c:1022 pg_backup_files.c:130
+#, c-format
+msgid "could not open output file: %s\n"
+msgstr "imposibil de deschis fişierul de ieşire: %s\n"
+
+#: pg_backup_archiver.c:1038
+#, c-format
+msgid "could not close output file: %s\n"
+msgstr "imposibil de închis fişierul de ieşire: %s\n"
+
+#: pg_backup_archiver.c:1127
+#, c-format
+msgid "wrote %lu bytes of large object data (result = %lu)\n"
+msgstr "%lu octeţi din obiectul mare scrişi (rezultat = %lu)\n"
+
+#: pg_backup_archiver.c:1149
+msgid "could not write to compressed archive\n"
+msgstr "imposibil de scris în arhiva comprimată\n"
+
+#: pg_backup_archiver.c:1157
+msgid "could not write to custom output routine\n"
+msgstr "imposibil de scris în rutina de ieşire specifică\n"
+
+#: pg_backup_archiver.c:1172
+#, c-format
+msgid "could not write to output file (%lu != %lu)\n"
+msgstr "imposibil de scris în fişierul de ieşire (%lu != %lu)\n"
+
+#: pg_backup_archiver.c:1257
+msgid "Error while INITIALIZING:\n"
+msgstr "Eroare în timpul iniţializării:\n"
+
+#: pg_backup_archiver.c:1262
+msgid "Error while PROCESSING TOC:\n"
+msgstr "Eroare în timpul procesării cuprinsului:\n"
+
+#: pg_backup_archiver.c:1267
+msgid "Error while FINALIZING:\n"
+msgstr "Eroare în timpul finalizării:\n"
+
+#: pg_backup_archiver.c:1272
+#, c-format
+msgid "Error from TOC entry %d; %u %u %s %s %s\n"
+msgstr "Eroare din intrarea cuprinsului %d; %u %u %s %s %s\n"
+
+#: pg_backup_archiver.c:1405
+#, c-format
+msgid "Unexpected data offset flag %d\n"
+msgstr "Marcator de decalare pentru date %d neaşteptat\n"
+
+#: pg_backup_archiver.c:1418
+msgid "file offset in dump file is too large\n"
+msgstr "decalarea fisierului în fişierul de descărcare este prea mare\n"
+
+#: pg_backup_archiver.c:1530
+msgid "attempting to ascertain archive format\n"
+msgstr "încercare de stabilire a formatului arhivei\n"
+
+#: pg_backup_archiver.c:1550 pg_backup_files.c:148
+#, c-format
+msgid "could not open input file: %s\n"
+msgstr "imposibil de deschis fişierul de intrare: %s\n"
+
+#: pg_backup_archiver.c:1557
+#, c-format
+msgid "could not read input file: %s\n"
+msgstr "imposibil de citit fişierul de intrare: %s\n"
+
+#: pg_backup_archiver.c:1559
+#, c-format
+msgid "input file is too short (read %lu, expected 5)\n"
+msgstr "fişier de intrare prea scurt (%lu citit, aşteptat 5)\n"
+
+#: pg_backup_archiver.c:1612
+msgid "input file does not appear to be a valid archive (too short?)\n"
+msgstr "fişierul de intrare nu pare să fie o arhivă corectă (prea scurt?)\n"
+
+#: pg_backup_archiver.c:1615
+msgid "input file does not appear to be a valid archive\n"
+msgstr "fişierul de intrare nu pare să fie o arhivă corectă\n"
+
+#: pg_backup_archiver.c:1633
+#, c-format
+msgid "read %lu bytes into lookahead buffer\n"
+msgstr "%lu octeţi citiţi în memoria tampon lookahead\n"
+
+#: pg_backup_archiver.c:1640
+#, c-format
+msgid "could not close the input file after reading header: %s\n"
+msgstr "imposibil de închis fişierul de intrare după citirea antetului: %s\n"
+
+#: pg_backup_archiver.c:1657
+#, c-format
+msgid "allocating AH for %s, format %d\n"
+msgstr "alocare AH pentru %s, format %d\n"
+
+#: pg_backup_archiver.c:1711
+#, c-format
+msgid "archive format is %d\n"
+msgstr "formatul arhivei este %d\n"
+
+#: pg_backup_archiver.c:1739
+#, c-format
+msgid "unrecognized file format \"%d\"\n"
+msgstr "format de fişier \"%d\" nerecunoscut\n"
+
+#: pg_backup_archiver.c:1866
+#, c-format
+msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
+msgstr "ID-ul intrării (%d) este în afara intervalului -- probabil cuprinsul este corupt\n"
+
+#: pg_backup_archiver.c:1948
+#, c-format
+msgid "read TOC entry %d (ID %d) for %s %s\n"
+msgstr "citire intrare în cuprins %d (ID %d) pentru %s %s\n"
+
+#: pg_backup_archiver.c:2110
+#, c-format
+msgid "could not set session user to \"%s\": %s"
+msgstr "imposibil de setat utilizatorul sesiunii la \"%s\": %s"
+
+#: pg_backup_archiver.c:2495
+msgid ""
+"WARNING: requested compression not available in this installation -- archive "
+"will be uncompressed\n"
+msgstr "AVERTISMENT: compresia solicitată nu este disponibilă în această instalare -- arhiva va fi necomprimată\n"
+
+#: pg_backup_archiver.c:2528
+msgid "did not find magic string in file header\n"
+msgstr "nu a fost găsit şirul magic în antet\n"
+
+#: pg_backup_archiver.c:2542
+#, c-format
+msgid "unsupported version (%d.%d) in file header\n"
+msgstr "versiune nesuportată (%d.%d) în antetul fişierului\n"
+
+#: pg_backup_archiver.c:2547
+#, c-format
+msgid "sanity check on integer size (%lu) failed\n"
+msgstr "verificarea de siguranţă pentru dimensiunea întregilor (%lu) a eşuat\n"
+
+#: pg_backup_archiver.c:2551
+msgid ""
+"WARNING: archive was made on a machine with larger integers, some operations "
+"may fail\n"
+msgstr "AVERTISMENT: arhiva a fost creată pe o maşina cu întregi mai mari, unele operaţii ar putea eşua\n"
+
+#: pg_backup_archiver.c:2561
+#, c-format
+msgid "expected format (%d) differs from format found in file (%d)\n"
+msgstr "formatul aşteptat (%d) diferă de formatul găsit în fişier (%d)\n"
+
+#: pg_backup_archiver.c:2577
+msgid ""
+"WARNING: archive is compressed, but this installation does not support "
+"compression -- no data will be available\n"
+msgstr "AVERTISMENT: arhiva este comprimată, dar instalarea nu suportă compresia -- datele nu vor fi disponibile\n"
+
+#: pg_backup_archiver.c:2595
+msgid "WARNING: invalid creation date in header\n"
+msgstr "AVERTISMENT: data creării din antet este incorectă\n"
+
+#: pg_backup_custom.c:97
+msgid "custom archiver"
+msgstr "arhivator specific"
+
+#: pg_backup_custom.c:180 pg_backup_custom.c:191
+#, c-format
+msgid "could not open archive file \"%s\": %s\n"
+msgstr "imposibil de deschis fişierul arhivă \"%s\": %s\n"
+
+#: pg_backup_custom.c:389
+msgid "invalid OID for large object\n"
+msgstr "OID incorect pentru obiectul mare\n"
+
+#: pg_backup_custom.c:447
+msgid ""
+"Dumping a specific TOC data block out of order is not supported without ID "
+"on this input stream (fseek required)\n"
+msgstr "Descărcarea unui bloc defect de date cuprins nu este suportată fără ID în acest flux de intrare (este necesar fseek)\n"
+
+#: pg_backup_custom.c:462
+#, c-format
+msgid "unrecognized data block type (%d) while searching archive\n"
+msgstr "tip de bloc de date (%d) nerecunoscut întâlnit în timpul căutării prin arhivă\n"
+
+#: pg_backup_custom.c:473
+#, c-format
+msgid "error during file seek: %s\n"
+msgstr "eroare la căutarea în fişier: %s\n"
+
+#: pg_backup_custom.c:480
+#, c-format
+msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
+msgstr "ID de bloc neaşteptat (%d) întâlnit în timpul citirii datelor -- %d aşteptat\n"
+
+#: pg_backup_custom.c:491
+msgid "large objects cannot be loaded without a database connection\n"
+msgstr "obiectele mari nu pot fi încărcate fără o conexiune la baza de date\n"
+
+#: pg_backup_custom.c:497
+#, c-format
+msgid "unrecognized data block type %d while restoring archive\n"
+msgstr "tip de bloc de date (%d) nerecunoscut întâlnit în timpul restabilirii arhivei\n"
+
+#: pg_backup_custom.c:531 pg_backup_custom.c:893
+#, c-format
+msgid "could not initialize compression library: %s\n"
+msgstr "imposibil de iniţializat biblioteca pentru compresie: %s\n"
+
+#: pg_backup_custom.c:553 pg_backup_custom.c:676
+#, c-format
+msgid "could not read data block -- expected %lu, got %lu\n"
+msgstr "imposibil de citit blocul de date -- %lu aşteptat, %lu găsit\n"
+
+#: pg_backup_custom.c:571 pg_backup_custom.c:601
+#, c-format
+msgid "could not uncompress data: %s\n"
+msgstr "imposibil de decomprimat datele: %s\n"
+
+#: pg_backup_custom.c:607
+#, c-format
+msgid "could not close compression library: %s\n"
+msgstr "imposibil de închis biblioteca pentru compresie: %s\n"
+
+#: pg_backup_custom.c:704
+#, c-format
+msgid "could not write byte: %s\n"
+msgstr "imposibil de scris octetul: %s\n"
+
+#: pg_backup_custom.c:748 pg_backup_files.c:414
+#, c-format
+msgid "write error in _WriteBuf (%lu != %lu)\n"
+msgstr "eroare la scriere în _WriteBuf (%lu != %lu)\n"
+
+#: pg_backup_custom.c:819
+#, c-format
+msgid "could not close archive file: %s\n"
+msgstr "imposibil de închis fişierul arhivă: %s\n"
+
+#: pg_backup_custom.c:842
+msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
+msgstr "AVERTISMENT: nepotrivire ftell cu poziţia aşteptată -- folosit ftell\n"
+
+#: pg_backup_custom.c:925
+#, c-format
+msgid "could not compress data: %s\n"
+msgstr "imposibil de comprimat datele: %s\n"
+
+#: pg_backup_custom.c:945
+msgid "could not write compressed chunk\n"
+msgstr "imposibil de scris bucata comprimată\n"
+
+#: pg_backup_custom.c:959
+msgid "could not write uncompressed chunk\n"
+msgstr "imposibil de scris bucata necomprimată\n"
+
+#: pg_backup_custom.c:1005
+#, c-format
+msgid "could not close compression stream: %s\n"
+msgstr "imposibil de închis fluxul comprimat: %s\n"
+
+#: pg_backup_db.c:31
+msgid "archiver (db)"
+msgstr "arhivator (bd)"
+
+#: pg_backup_db.c:68
+msgid "could not get server_version from libpq\n"
+msgstr "imposibil de preluat server_version din libpq\n"
+
+#: pg_backup_db.c:78
+#, c-format
+msgid "server version: %s; %s version: %s\n"
+msgstr "versiune server: %s, %s versiune: %s\n"
+
+#: pg_backup_db.c:81
+msgid "proceeding despite version mismatch\n"
+msgstr "continuare în ciuda diferenţei de versiune\n"
+
+#: pg_backup_db.c:83
+msgid ""
+"aborting because of version mismatch  (Use the -i option to proceed "
+"anyway.)\n"
+msgstr "abandonare din cauza nepotrivirii de versiune (Folosiţi optiunea -i pentru a continua oricum.)\n"
+
+#: pg_backup_db.c:150
+#, c-format
+msgid "connecting to database \"%s\" as user \"%s\"\n"
+msgstr "conectare la baza de date \"%s\" ca utilizator \"%s\"\n"
+
+#: pg_backup_db.c:154 pg_backup_db.c:186 pg_backup_db.c:230 pg_backup_db.c:259
+#: pg_dumpall.c:941 pg_dumpall.c:967
+msgid "Password: "
+msgstr "Parolă: "
+
+#: pg_backup_db.c:166
+msgid "failed to reconnect to database\n"
+msgstr "reconectare la baza de date eşuată\n"
+
+#: pg_backup_db.c:189
+#, c-format
+msgid "could not reconnect to database: %s"
+msgstr "imposibil de reconectat la baza de date: %s"
+
+#: pg_backup_db.c:226
+msgid "already connected to a database\n"
+msgstr "deja conectat la baza de date\n"
+
+#: pg_backup_db.c:249
+msgid "failed to connect to database\n"
+msgstr "conectare la baza de date eşuată\n"
+
+#: pg_backup_db.c:268
+#, c-format
+msgid "connection to database \"%s\" failed: %s"
+msgstr "conectare la baza de date \"%s\" eşuată: %s"
+
+#: pg_backup_db.c:283
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_backup_db.c:312
+#, c-format
+msgid "%s: no result from server\n"
+msgstr "%s: nici un rezultat de la server\n"
+
+#: pg_backup_db.c:319
+msgid "COPY command executed in non-primary connection\n"
+msgstr "comanda COPY executată în conexiune ne-primară\n"
+
+#: pg_backup_db.c:409
+msgid "error returned by PQputline\n"
+msgstr "eroare returnată de PQputline\n"
+
+#: pg_backup_db.c:420
+msgid "error returned by PQendcopy\n"
+msgstr "eroare returnată de PQendcopy\n"
+
+#: pg_backup_db.c:480
+msgid "could not execute query"
+msgstr "imposibil de executat interogarea"
+
+#: pg_backup_db.c:700
+#, c-format
+msgid "could not find OID columns of table \"%s\": %s"
+msgstr "imposibil de găsit coloanele OID pentru tabela \"%s\": %s"
+
+#: pg_backup_db.c:706
+#, c-format
+msgid "no OID type columns in table %s\n"
+msgstr "nici o coloană de tip OID în tabela %s\n"
+
+#: pg_backup_db.c:720
+#, c-format
+msgid "fixing large object cross-references for %s.%s\n"
+msgstr "stabilire referinţe încrucişate ale obiectelor mari pentru %s.%s\n"
+
+#: pg_backup_db.c:759
+#, c-format
+msgid "SQL: %s\n"
+msgstr "SQL: %s\n"
+
+#: pg_backup_db.c:764
+#, c-format
+msgid "could not update column \"%s\" of table \"%s\": %s"
+msgstr "imposibil de actualizat coloana \"%s\" din tabela \"%s\": %s"
+
+#: pg_backup_db.c:769
+#, c-format
+msgid "error while updating column \"%s\" of table \"%s\": %s"
+msgstr "eroare la actualizarea coloanei \"%s\" din tabela \"%s\": %s"
+
+#: pg_backup_db.c:792
+msgid "creating table for large object cross-references\n"
+msgstr "creare tabelă pentru referinţele încrucişate ale obiectelor mari\n"
+
+#: pg_backup_db.c:795
+msgid "could not create large object cross-reference table"
+msgstr "imposibil de creat tabela pentru referinţele încrucişate ale obiectelor mari"
+
+#: pg_backup_db.c:805
+msgid "creating index for large object cross-references\n"
+msgstr "creare index pentru referinţele încrucişate ale obiectelor mari\n"
+
+#: pg_backup_db.c:809
+msgid "could not create index on large object cross-reference table"
+msgstr "imposibil de creat indexul pentru referinţele încrucişate ale obiectelor mari"
+
+#: pg_backup_db.c:822
+msgid "could not create large object cross-reference entry"
+msgstr "imposibil de creat intrarea pentru referinţele încrucişate ale obiectelor mari"
+
+#: pg_backup_db.c:834
+msgid "could not start database transaction"
+msgstr "imposibil de pornit tranzacţia de bază de date"
+
+#: pg_backup_db.c:848
+msgid "could not start transaction for large object cross-references"
+msgstr "imposibil de pornit tranzacţia pentru referinţele încrucişate ale obiectelor mari"
+
+#: pg_backup_db.c:861
+msgid "could not commit database transaction"
+msgstr "imposibil de finalizat tranzacţia de bază de date"
+
+#: pg_backup_db.c:874
+msgid "could not commit transaction for large object cross-references"
+msgstr "imposibil de finalizat tranzacţia pentru referinţele încrucişate ale obiectelor mari"
+
+#: pg_backup_files.c:69
+msgid "file archiver"
+msgstr "arhivator de fişiere"
+
+#: pg_backup_files.c:120
+msgid ""
+"WARNING:\n"
+"  This format is for demonstration purposes; it is not intended for\n"
+"  normal use. Files will be written in the current working directory.\n"
+msgstr ""
+"AVERTISMENT:\n"
+"  Acest format are scop demonstrativ; nu este destinat folosirii în mod normal.\n"
+"  Fişierele vor fi scrise în directorul de lucru curent.\n"
+
+#: pg_backup_files.c:246
+msgid "could not open data file for output\n"
+msgstr "imposibil de deschis fişierul pentru ieşire\n"
+
+#: pg_backup_files.c:266
+msgid "could not close data file\n"
+msgstr "imposibil de închis fişierul de date\n"
+
+#: pg_backup_files.c:290
+msgid "could not open data file for input\n"
+msgstr "imposibil de deschis fişierul pentru intrare\n"
+
+#: pg_backup_files.c:299
+msgid "could not close data file after reading\n"
+msgstr "imposibil de închis fişierul de date după citire\n"
+
+#: pg_backup_files.c:362
+#, c-format
+msgid "could not open large object TOC for input: %s\n"
+msgstr "imposibil de deschis cuprinsul obiectelor mari pentru citire: %s\n"
+
+#: pg_backup_files.c:375 pg_backup_files.c:545
+#, c-format
+msgid "could not close large object TOC file: %s\n"
+msgstr "imposibil de închis fişierul cuprins pentru obecte mari: %s\n"
+
+#: pg_backup_files.c:387
+msgid "could not write byte\n"
+msgstr "imposibil de scris octetul\n"
+
+#: pg_backup_files.c:473
+#, c-format
+msgid "could not open large object TOC for output: %s\n"
+msgstr "imposibil de deschis cuprinsul obiectelor mari pentru scriere: %s\n"
+
+#: pg_backup_files.c:493 pg_backup_tar.c:884
+#, c-format
+msgid "invalid OID for large object (%u)\n"
+msgstr "OID incorect pentru obiectul mare (%u)\n"
+
+#: pg_backup_files.c:512
+msgid "could not open large object file\n"
+msgstr "imposibil de deschis fişierul obiect mare\n"
+
+#: pg_backup_files.c:527
+msgid "could not close large object file\n"
+msgstr "imposibil de închis fişierul obiect mare\n"
+
+#: pg_backup_null.c:55
+msgid "this format cannot be read\n"
+msgstr "acest format nu poate fi citit\n"
+
+#: pg_backup_tar.c:105
+msgid "tar archiver"
+msgstr "arhivator tar"
+
+#: pg_backup_tar.c:183
+#, c-format
+msgid "could not open TOC file for output: %s\n"
+msgstr "imposibil de deschis fişierul cuprins pentru ieşire: %s\n"
+
+#: pg_backup_tar.c:208
+msgid "compression not supported by tar output format\n"
+msgstr "compresia nu este suportată de formatul de ieşire tar\n"
+
+#: pg_backup_tar.c:220
+#, c-format
+msgid "could not open TOC file for input: %s\n"
+msgstr "imposibil de deschis fişierul cuprins pentru intrare: %s\n"
+
+#: pg_backup_tar.c:341
+#, c-format
+msgid "could not find file %s in archive\n"
+msgstr "imposibil de găsit fişierul %s în arhivă\n"
+
+#: pg_backup_tar.c:352
+msgid "compression support is disabled in this format\n"
+msgstr "suportul pentru compresie este dezactivat pentru acest format\n"
+
+#: pg_backup_tar.c:367
+#, c-format
+msgid "could not generate temporary file name: %s\n"
+msgstr "imposibil de generat numele de fişier temporar: %s\n"
+
+#: pg_backup_tar.c:376
+msgid "could not open temporary file\n"
+msgstr "imposibil de deschis fişierul temporar\n"
+
+#: pg_backup_tar.c:406
+msgid "could not close tar member\n"
+msgstr "imposibil de închis membrul tar\n"
+
+#: pg_backup_tar.c:506
+msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
+msgstr "eroare internă --nu a fost specificat nici th, nici fh în ReadRaw()\n"
+
+#: pg_backup_tar.c:510
+#, c-format
+msgid "requested %d bytes, got %d from lookahead and %d from file\n"
+msgstr "%d octeţi solicitaţi, %d obţinuţi din lookahead şi %d din fişier\n"
+
+#: pg_backup_tar.c:549
+#, c-format
+msgid "could not write to tar member (wrote %lu, attempted %lu)\n"
+msgstr "imposibil de scris în membrul tar (%lu scrişi, %lu încercaţi)\n"
+
+#: pg_backup_tar.c:638
+#, c-format
+msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+msgstr "instrucţiune COPY incorectă -- imposibil de găsit \"copy\" în şirul \"%s\"\n"
+
+#: pg_backup_tar.c:656
+#, c-format
+msgid ""
+"invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
+"starting at position %lu\n"
+msgstr "instrucţiune COPY incorectă -- imposibil de găsit \"from stdin\" în şirul \"%s\" începând la poziţia %lu\n"
+
+#: pg_backup_tar.c:692
+#, c-format
+msgid "restoring large object OID %u\n"
+msgstr "restabilire OID obiect mare %u\n"
+
+#: pg_backup_tar.c:829
+msgid "could not write null block at end of tar archive\n"
+msgstr "imposibil de scris blocul nul la sfârşitul arhivei tar\n"
+
+#: pg_backup_tar.c:1023
+msgid "archive member too large for tar format\n"
+msgstr "membrul arhivei este prea mare pentru formatul tar\n"
+
+#: pg_backup_tar.c:1033
+#, c-format
+msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
+msgstr "eroare de scriere la adăugarea în arhiva tar (%lu scris, %lu încercat)\n"
+
+#: pg_backup_tar.c:1039
+#, c-format
+msgid "could not close tar member: %s\n"
+msgstr "imposibil de închis membrul tar: %s\n"
+
+#: pg_backup_tar.c:1048
+#, c-format
+msgid "actual file length (%s) does not match expected (%s)\n"
+msgstr "lungimea reală a fişierului (%s) nu se potriveşte cu cea aşteptată (%s)\n"
+
+#: pg_backup_tar.c:1056
+msgid "could not output padding at end of tar member\n"
+msgstr "imposibil de completat la sfârşitul membrului tar\n"
+
+#: pg_backup_tar.c:1085
+#, c-format
+msgid "moving from position %s to next member at file position %s\n"
+msgstr "mutare de la poziţia %s la următorul membru, la pozitia din fişier %s\n"
+
+#: pg_backup_tar.c:1096
+#, c-format
+msgid "now at file position %s\n"
+msgstr "acum la poziţia din fişier %s\n"
+
+#: pg_backup_tar.c:1105 pg_backup_tar.c:1132
+#, c-format
+msgid "could not find header for file %s in tar archive\n"
+msgstr "imposibil de găsit antetul pentru fişierul %s în arhiva tar\n"
+
+#: pg_backup_tar.c:1116
+#, c-format
+msgid "skipping tar member %s\n"
+msgstr "ignorare membru tar %s\n"
+
+#: pg_backup_tar.c:1120
+#, c-format
+msgid ""
+"dumping data out of order is not supported in this archive format: %s is "
+"required, but comes before %s in the archive file.\n"
+msgstr "descărcarea datelor defecte nu este suportată în acest format de arhivă: este necesar %s, dar apare înainte de %s în fişierul arhivă.\n"
+
+#: pg_backup_tar.c:1168
+#, c-format
+msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
+msgstr "nepotrivire între poziţia reală şi cea prezisă (%s şi %s)\n"
+
+#: pg_backup_tar.c:1183
+#, c-format
+msgid "incomplete tar header found (%lu bytes)\n"
+msgstr "antet tar incomplet (%lu octeţi)\n"
+
+#: pg_backup_tar.c:1218
+#, c-format
+msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
+msgstr "Intrare în cuprins %s la %s (lungime %lu, sumă de control %d)\n"
+
+#: pg_backup_tar.c:1228
+#, c-format
+msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
+msgstr "antet tar corupt găsit în %s (%d aşteptat, %d calculat) la poziţia din fişier %s\n"
+
+#: pg_backup_tar.c:1321
+msgid "could not write tar header\n"
+msgstr "imposibil de scris antetul tar\n"
+
+#: pg_restore.c:283
+#, c-format
+msgid "%s: cannot specify both -d and -f output\n"
+msgstr "%s: -d şi -f ieşire nu pot fi specificate împreună\n"
+
+#: pg_restore.c:344
+#, c-format
+msgid "WARNING: errors ignored on restore: %d\n"
+msgstr "AVERTISMENT: erori ignorate la restabilire: %d\n"
+
+#: pg_restore.c:358
+#, c-format
+msgid ""
+"%s restores a PostgreSQL database from an archive created by pg_dump.\n"
+"\n"
+msgstr ""
+"%s restabileşte o bază de date PostgreSQL dintr-o arhivă creată de pg_dump.\n"
+"\n"
+
+#: pg_restore.c:360
+#, c-format
+msgid "  %s [OPTION]... [FILE]\n"
+msgstr "  %s [OPŢIUNE]... [FIŞIER]\n"
+
+#: pg_restore.c:363
+msgid "  -d, --dbname=NAME        target database name\n"
+msgstr "  -d, --dbname=NUME        nume bază de date destinaţie\n"
+
+#: pg_restore.c:365
+msgid "  -F, --format=c|t         specify backup file format\n"
+msgstr "  -F, --format=c|t         specifică formatul fişierului de rezervă\n"
+
+#: pg_restore.c:366
+msgid "  -i, --ignore-version     proceed even when server version mismatches\n"
+msgstr "  -i, --ignore-version     continuare chiar dacă versiunea serverului nu se potriveşte\n"
+
+#: pg_restore.c:367
+msgid "  -l, --list               print summarized TOC of the archive\n"
+msgstr "  -l, --list               afişare cuprins sumar al arhivei\n"
+
+#: pg_restore.c:372
+msgid ""
+"\n"
+"Options controlling the restore:\n"
+msgstr ""
+"\n"
+"Opţiuni care controlează restabilirea:\n"
+
+#: pg_restore.c:373
+msgid "  -a, --data-only          restore only the data, no schema\n"
+msgstr "  -a, --data-only          restabileşte doar datele, fără schemă\n"
+
+#: pg_restore.c:375
+msgid "  -C, --create             issue commands to create the database\n"
+msgstr "  -C, --create             generare comenzi pentru crearea bazei de date\n"
+
+#: pg_restore.c:376
+msgid "  -I, --index=NAME         restore named index\n"
+msgstr "  -I, --index=NUME         restabilire index precizat\n"
+
+#: pg_restore.c:377
+msgid ""
+"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
+"                           output from this file\n"
+msgstr ""
+"  -L, --use-list=NUMEFIŞIER  folosire cuprins specificat pentru ordonarea\n"
+"                           ieşirii din acest fişier\n"
+
+#: pg_restore.c:379
+msgid "  -O, --no-owner           do not issue commands to set object ownership\n"
+msgstr "  -O, --no-owner           nu se generează comenzi pentru a seta proprietarul obiectului\n"
+
+#: pg_restore.c:380
+msgid ""
+"  -P, --function=NAME(args)\n"
+"                           restore named function\n"
+msgstr ""
+"  -P, --function=NUME(argumente)\n"
+"                           restabilire funcţie precizată\n"
+
+#: pg_restore.c:382
+msgid "  -s, --schema-only        restore only the schema, no data\n"
+msgstr "  -s, --schema-only        restabilire numai schemă, fără date\n"
+
+#: pg_restore.c:383
+msgid ""
+"  -S, --superuser=NAME     specify the superuser user name to use for\n"
+"                           disabling triggers\n"
+msgstr ""
+"  -S, --superuser=NUME     specifică numele utilizatorului privilegiat folosit\n"
+"                           pentru dezactivarea declanşatorilor\n"
+
+#: pg_restore.c:385
+msgid "  -t, --table=NAME         restore named table\n"
+msgstr "  -t, --table=NAME         restabilire tabelă precizată\n"
+
+#: pg_restore.c:386
+msgid "  -T, --trigger=NAME       restore named trigger\n"
+msgstr "  -T, --trigger=NAME       restabilire declanşator precizat\n"
+
+#: pg_restore.c:387
+msgid ""
+"  -x, --no-privileges      skip restoration of access privileges (grant/"
+"revoke)\n"
+msgstr "  -x, --no-privileges      se ignoră restabilirea drepturilor de acces (acordare/revocare)\n"
+
+#: pg_restore.c:399
+msgid "  -e, --exit-on-error      exit on error, default is to continue\n"
+msgstr "  -e, --exit-on-error      ieşire în caz de eroare, implicit se continuă\n"
+
+#: pg_restore.c:401
+msgid ""
+"\n"
+"If no input file name is supplied, then standard input is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Dacă nu este specificat un fişier de intrare, este folosită intrarea standard.\n"
+"\n"
+
+#: pg_dumpall.c:149
+#, c-format
+msgid ""
+"The program \"pg_dump\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Programul \"pg_dump\" este necesar pentru %s dar nu a fost găsit în acelaşi director cu \"%s\".\n"
+"Verificaţi instalarea.\n"
+
+#: pg_dumpall.c:156
+#, c-format
+msgid ""
+"The program \"pg_dump\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"Programul \"pg_dump\" a fost găsit de \"%s\"\n"
+"dar nu are aceeaşi versiune cu %s.\n"
+"Verificaţi instalarea.\n"
+
+#: pg_dumpall.c:336
+#, c-format
+msgid ""
+"%s extracts a PostgreSQL database cluster into an SQL script file.\n"
+"\n"
+msgstr ""
+"%s extrage un grup de baze de date PostgreSQL într-un fişier SQL.\n"
+"\n"
+
+#: pg_dumpall.c:338
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [OPŢIUNE]...\n"
+
+#: pg_dumpall.c:341
+msgid ""
+"  -i, --ignore-version     proceed even when server version mismatches\n"
+"                           pg_dumpall version\n"
+msgstr ""
+"  -i, --ignore-version     continuare chiar dacă versiunea serverului nu se potriveşte\n"
+"                           cu versiunea pg_dumpall\n"
+
+#: pg_dumpall.c:347
+msgid "  -c, --clean              clean (drop) databases prior to create\n"
+msgstr "  -c, --clean              curăţă (şterge) baza de date înainte de creare\n"
+
+#: pg_dumpall.c:350
+msgid "  -g, --globals-only       dump only global objects, no databases\n"
+msgstr "  -g, --globals-only       descarcă doar obiectele globale, fără baze de date\n"
+
+#: pg_dumpall.c:352
+msgid "  -O, --no-owner           do not output commands to set object ownership\n"
+msgstr "  -O, --no-owner           nu se generează comenzi pentru setarea proprietarului obiectului\n"
+
+#: pg_dumpall.c:354
+msgid ""
+"  -S, --superuser=NAME     specify the superuser user name to use in the "
+"dump\n"
+msgstr "  -S, --superuser=NUME     specifică numele utilizatorului privilegiat folosit în această descărcare\n"
+
+#: pg_dumpall.c:370
+msgid ""
+"\n"
+"The SQL script will be written to the standard output.\n"
+"\n"
+msgstr ""
+"\n"
+"Scriptul SQL va fi scris la ieşirea standard.\n"
+"\n"
+
+#: pg_dumpall.c:570
+#, c-format
+msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
+msgstr "%s: imposibil de analizat lista de control al accesului (%s) pentru spaţiul de tabele \"%s\"\n"
+
+#: pg_dumpall.c:702
+#, c-format
+msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
+msgstr "%s: imposibil de analizat lista de control al accesului (%s) pentru baza de date \"%s\"\n"
+
+#: pg_dumpall.c:852
+#, c-format
+msgid "%s: dumping database \"%s\"...\n"
+msgstr "%s: descărcare bază de date \"%s\"...\n"
+
+#: pg_dumpall.c:858
+#, c-format
+msgid "%s: pg_dump failed on database \"%s\", exiting\n"
+msgstr "%s: pg_dump a eşuat pentru baza de date \"%s\", ieşire\n"
+
+#: pg_dumpall.c:913
+#, c-format
+msgid "%s: running \"%s\"\n"
+msgstr "%s: rulare \"%s\"\n"
+
+#: pg_dumpall.c:954
+#, c-format
+msgid "%s: could not connect to database \"%s\"\n"
+msgstr "%s: imposibil de conectat la baza de date \"%s\"\n"
+
+#: pg_dumpall.c:977
+#, c-format
+msgid "%s: could not connect to database \"%s\": %s\n"
+msgstr "%s: imposibil de conectat la baza de date \"%s\": %s\n"
+
+#: pg_dumpall.c:985
+#, c-format
+msgid "%s: could not get server version\n"
+msgstr "%s: imposibil de obţinut versiunea serverului\n"
+
+#: pg_dumpall.c:991
+#, c-format
+msgid "%s: could not parse server version \"%s\"\n"
+msgstr "%s: imposibil de analizat versiunea serverului \"%s\"\n"
+
+#: pg_dumpall.c:1010
+#, c-format
+msgid "%s: executing %s\n"
+msgstr "%s: executare %s\n"
+
+#: pg_dumpall.c:1016
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: interogare eşuată: %s"
+
+#: pg_dumpall.c:1017
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: interogarea era: %s\n"
+
