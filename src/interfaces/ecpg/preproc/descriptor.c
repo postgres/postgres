@@ -55,6 +55,7 @@ ECPGnumeric_lvalue(FILE *f, char *name)
 		case ECPGt_unsigned_int:
 		case ECPGt_unsigned_long:
 		case ECPGt_unsigned_long_long:
+		case ECPGt_const:
 			fputs(name, yyout);
 			break;
 		default:
@@ -198,7 +199,7 @@ output_set_descr_header(char *desc_name)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGset_desc_header(__LINE__, %s, &(", desc_name);
+	fprintf(yyout, "{ ECPGset_desc_header(__LINE__, %s, (int)(", desc_name);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		if (results->value == ECPGd_count)

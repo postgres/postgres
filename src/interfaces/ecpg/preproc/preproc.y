@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.291 2004/07/04 15:02:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.292 2004/07/05 09:45:53 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -522,7 +522,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	select_limit opt_for_update_clause CheckPointStmt
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
-%type  <str>	columnref function_name insert_target_el
+%type  <str>	columnref function_name insert_target_el AllConstVar
 %type  <str>	insert_target_list insert_column_item DropRuleStmt
 %type  <str>	createfunc_opt_item set_rest var_list_or_default
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
@@ -4207,12 +4207,51 @@ IntConst:	PosIntConst		{ $$ = $1; }
 IntConstVar:	Iconst	
 		{
 		        char *length = mm_alloc(32);
-			
+
 			sprintf(length, "%d", (int) strlen($1));
 			new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0);
 			$$ = $1;
 		}
 		| cvariable	{ $$ = $1; }
+		;
+
+AllConstVar:	Fconst
+		{
+		        char *length = mm_alloc(32);
+			
+			sprintf(length, "%d", (int) strlen($1));
+			new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0);
+			$$ = $1;
+		}
+		| IntConstVar		{ $$ = $1; }
+		| '-' Fconst
+		{
+		        char *length = mm_alloc(32);
+			char *var = cat2_str(make_str("-"), $2);
+			
+			sprintf(length, "%d", (int) strlen(var));
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
+			$$ = var;
+		}
+		| '-' Iconst
+		{
+		        char *length = mm_alloc(32);
+			char *var = cat2_str(make_str("-"), $2);
+			
+			sprintf(length, "%d", (int) strlen(var));
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
+			$$ = var;
+		}
+		| Sconst		
+		{
+		        char *length = mm_alloc(32);
+			char *var = $1 + 1;
+			
+			var[strlen(var) - 1] = '\0';
+			sprintf(length, "%d", (int) strlen(var));
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
+			$$ = var;
+		}
 		;
 
 StringConst:	Sconst		{ $$ = $1; }
@@ -5375,7 +5414,7 @@ ECPGSetDescItems: ECPGSetDescItem
 		| ECPGSetDescItems ',' ECPGSetDescItem
 		;
 
-ECPGSetDescItem: descriptor_item '=' IntConstVar
+ECPGSetDescItem: descriptor_item '=' AllConstVar
 		{
 			push_assignment($3, $1);
 		}

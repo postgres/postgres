@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.36 2004/07/04 15:02:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.37 2004/07/05 09:45:53 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1080,6 +1080,7 @@ ECPGexecute(struct statement * stmt)
 		int	   hostvarl = 0;
 
 		tobeinserted = NULL;
+		
 		/* A descriptor is a special case since it contains many variables but is listed only once. */
 		if (var->type == ECPGt_descriptor)
 		{
@@ -1100,28 +1101,43 @@ ECPGexecute(struct statement * stmt)
 			}
 			
 			desc_counter++;
-			for (desc_item = desc->items; desc_item; desc_item = desc_item->next)
+			if (desc->count < 0 || desc->count >= desc_counter)
 			{
-				if (desc_item->num == desc_counter)
+				for (desc_item = desc->items; desc_item; desc_item = desc_item->next)
 				{
-					desc_inlist.type = ECPGt_char;
-					desc_inlist.value = desc_item->data;
-					desc_inlist.pointer = &(desc_item->data);
-					desc_inlist.varcharsize = strlen(desc_item->data);
-					desc_inlist.arrsize = 1;
-					desc_inlist.offset = 0;
-					desc_inlist.ind_type = ECPGt_NO_INDICATOR;
-					desc_inlist.ind_value = desc_inlist.ind_pointer = NULL;
-					desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = desc_inlist.ind_offset = 0;
-
-					if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced))
-						return false;
-					
-					break;
+					if (desc_item->num == desc_counter)
+					{
+						desc_inlist.type = ECPGt_char;
+						desc_inlist.value = desc_item->data;
+						desc_inlist.pointer = &(desc_item->data);
+						desc_inlist.varcharsize = strlen(desc_item->data);
+						desc_inlist.arrsize = 1;
+						desc_inlist.offset = 0;
+						if (!desc_item->indicator)
+						{
+							desc_inlist.ind_type = ECPGt_NO_INDICATOR;
+							desc_inlist.ind_value = desc_inlist.ind_pointer = NULL;
+							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = desc_inlist.ind_offset = 0;
+						}
+						else
+						{
+							desc_inlist.ind_type = ECPGt_int;
+							desc_inlist.ind_value = &(desc_item->indicator);
+							desc_inlist.ind_pointer = &(desc_inlist.ind_value);
+							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = 1;
+							desc_inlist.ind_offset = 0;
+						}
+						if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced))
+							return false;
+						
+						break;
+					}
 				}
-			}
 
-			if (!desc_item) /* no more entries found in descriptor */
+				if (!desc_item) /* no more entries found in descriptor */
+					desc_counter = 0;
+			}
+			else
 				desc_counter = 0;
 		}
 		else
@@ -1129,6 +1145,7 @@ ECPGexecute(struct statement * stmt)
 			if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, var, &tobeinserted, &malloced))
 				return false;
 		}
+		
 		if (tobeinserted)
 		{
 			/*
