@@ -881,7 +881,7 @@ print STDERR "Add triggers definition...\n" if ($self->{debug});
 				if ($self->{export_schema}) {
 					$sql_output .= "SET search_path = $self->{schema}, pg_catalog;\n\n";
 				}
-				$sql_output .= "CREATE FUNCTION pg_fct_\L$trig->[0]\E () RETURNS OPAQUE AS '\n$trig->[4]\n' LANGUAGE 'plpgsql'\n\n";
+				$sql_output .= "CREATE FUNCTION pg_fct_\L$trig->[0]\E () RETURNS TRIGGER AS '\n$trig->[4]\n' LANGUAGE 'plpgsql'\n\n";
 				$sql_output .= "CREATE TRIGGER \L$trig->[0]\E\n\t$trig->[1] $trig->[2] ON \"\L$trig->[3]\E\" FOR EACH ROW\n\tEXECUTE PROCEDURE pg_fct_\L$trig->[0]\E();\n\n";
 			}
 		}
