@@ -8,46 +8,46 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.6 1996/10/21 07:18:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.7 1996/10/21 11:49:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-
-#include "storage/block.h"
-#include "storage/off.h"
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "storage/itemptr.h"
-#include "access/tupdesc.h"
-#include "access/itup.h"
-
-#include "utils/memutils.h"
-#include "access/ibit.h"
-
-#include "access/tupmacs.h"
-
 #include <string.h>
-
-#include "utils/palloc.h"
-
 #include <time.h>
-#include "storage/fd.h"
+
+#include "postgres.h"
+#include "access/attnum.h"
+#include "access/tupmacs.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
-#include "utils/nabstime.h"
-#include "access/htup.h"
-#include "storage/itemptr.h"
-#include "utils/tqual.h"
+#include "nodes/pg_list.h"
+#include "storage/block.h"
 #include "storage/buf.h"
+#include "storage/fd.h"
+#include "storage/off.h"
+#include "utils/memutils.h"
+#include "utils/nabstime.h"
+#include "utils/palloc.h"
+
+#include "access/ibit.h"
+#include "access/skey.h"
+#include "access/tupdesc.h"
+#include "rewrite/prs2lock.h"
+#include "storage/itemptr.h"
+
+#include "access/strat.h"
+
+#include "access/itup.h"
+#include "access/htup.h"
+#include "utils/rel.h"
+
+#include "utils/tqual.h"
+
 #include "access/relscan.h"
+
 #include "access/heapam.h"
 
 static Size IndexInfoFindDataOffset(unsigned short t_info);

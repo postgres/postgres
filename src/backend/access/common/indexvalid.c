@@ -7,29 +7,29 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.5 1996/10/20 22:04:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.6 1996/10/21 11:49:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <time.h>
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "catalog/pg_attribute.h"
+#include "postgres.h"
 #include "access/attnum.h"
+#include "catalog/pg_attribute.h"
+#include "executor/execdebug.h"
 #include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "access/itup.h"
+#include "storage/off.h"
+#include "storage/block.h"
+#include "utils/nabstime.h"
 
 #include "access/skey.h"
+#include "access/tupdesc.h"
+#include "storage/itemptr.h"
 
-#include <time.h>
-#include "utils/nabstime.h"
 #include "access/htup.h"
+#include "access/itup.h"
 
-#include "executor/execdebug.h"
 
 /* ----------------------------------------------------------------
  *		  index scan key qualification code
