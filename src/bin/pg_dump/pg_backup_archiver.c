@@ -420,7 +420,7 @@ static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, Restore
 	 */
 
 	if (te && te->name && strlen(te->name) > 0)
-		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" ~* '%s';\n", 
+		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" = '%s';\n\n", 
 						te->name);
 	else
 		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" !~ '^pg_';\n\n");
@@ -471,26 +471,10 @@ static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreO
 	 * command when one is available.
 	 */
     ahprintf(AH, "-- Enable triggers\n");
-    ahprintf(AH, "BEGIN TRANSACTION;\n");
-    ahprintf(AH, "CREATE TEMP TABLE \"tr\" (\"tmp_relname\" name, \"tmp_reltriggers\" smallint);\n");
-
-	/*
-	 * Just update the affected table, if known.
-	 */
-	if (te && te->name && strlen(te->name) > 0)
-		ahprintf(AH, "INSERT INTO \"tr\" SELECT C.\"relname\", count(T.\"oid\") FROM \"pg_class\" C,"
-					" \"pg_trigger\" T WHERE C.\"oid\" = T.\"tgrelid\" AND C.\"relname\" ~* '%s' "
-					" GROUP BY 1;\n", te->name);
-	else
-		ahprintf(AH, "INSERT INTO \"tr\" SELECT C.\"relname\", count(T.\"oid\") FROM \"pg_class\" C,"
-					" \"pg_trigger\" T WHERE C.\"oid\" = T.\"tgrelid\" AND C.\"relname\" !~ '^pg_' "
-					" GROUP BY 1;\n");
-
-    ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = TMP.\"tmp_reltriggers\" "
-	    "FROM \"tr\" TMP WHERE "
-	    "\"pg_class\".\"relname\" = TMP.\"tmp_relname\";\n");
-    ahprintf(AH, "DROP TABLE \"tr\";\n");
-    ahprintf(AH, "COMMIT TRANSACTION;\n\n");
+	ahprintf(AH, "UPDATE pg_class SET reltriggers = "
+				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
+				 "WHERE relname = '%s';\n\n",
+				te->name);
 
 	/*
 	 * Restore the user connection from the start of this procedure
