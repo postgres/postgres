@@ -1,0 +1,641 @@
+From pgsql-hackers-owner+M4897@hub.org Wed Jul 12 00:15:33 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA06129
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 00:15:32 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C4FiW14410;
+	Wed, 12 Jul 2000 00:15:44 -0400 (EDT)
+Received: from onyx-technologies.com (iron.onyx-technologies.com [216.205.44.194] (may be forged))
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C4ECW07902
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 00:14:12 -0400 (EDT)
+Received: from onyx-technologies.com (collins.onyx-technologies.com [192.168.188.10])
+	by onyx-technologies.com (8.9.2/8.9.0) with ESMTP id AAA14868
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 00:11:43 -0400 (EDT)
+Message-ID: <396BE1B6.F755C5CE@onyx-technologies.com>
+Date: Tue, 11 Jul 2000 23:10:46 -0400
+From: Jeffery Collins <collins@onyx-technologies.com>
+X-Mailer: Mozilla 4.7 [en] (X11; I; Linux 2.2.14-15mdk i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling.
+References: <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+It seems like a first step would be to just have postmaster cache unused
+connections.  In other words if a client closes a connection, postmaster
+keeps the connection and the child process around for the next connect
+request.  This has many of your advantages, but not all.  However, it seems
+like it would be simpler than attempting to multiplex a connection between
+multiple clients.
+
+Jeff
+
+>
+> Alfred Perlstein wrote:
+> >
+> > In an effort to complicate the postmaster beyond recognition I'm
+> > proposing an idea that I hope can be useful to the developers.
+> >
+> > Connection pooling:
+> >
+> > The idea is to have the postmaster multiplex and do hand-offs of
+> > database connections to other postgresql processes when the max
+> > connections has been exceeded.
+> >
+> > This allows several gains:
+> >
+> > 1) Postgresql can support a large number of connections without
+> > requiring a large amount of processes to do so.
+> >
+> > 2) Connection startup/finish will be cheaper because Postgresql
+> > processes will not exit and need to reninit things such as shared
+> > memory attachments and file opens.  This will also reduce the load
+> > on the supporting operating system and make postgresql much 'cheaper'
+> > to run on systems that don't support the fork() model of execution
+> > gracefully.
+> >
+> > 3) Long running connections can be preempted at transaction boundries
+> > allowing other connections to gain process timeslices from the
+> > connection pool.
+> >
+> > The idea is to make the postmaster that accepts connections a broker
+> > for the connections.  It will dole out descriptors using file
+> > descriptor passing to children.  If there's a demand for connections
+> > meaning that all the postmasters are busy and there are pending
+> > connections the postmaster can ask for a yeild on one of the
+> > connections.
+> >
+> > A yeild involves the child postgresql process passing back the
+> > client connection at a transaction boundry (between transactions)
+> > so it can later be given to another (perhaps the same) child process.
+> >
+> > I spoke with Bruce briefly about this and he suggested that system
+> > tables containing unique IDs could be used to identify passed
+> > connections to the children and back to the postmaster.
+> >
+> > When a handoff occurs, the descriptor along with an ID referencing
+> > things like temp tables and enviornment variables and authentication
+> > information could be handed out as well allowing the child to resume
+> > service to the interrupted connection.
+> >
+> > I really don't have the knowledge of Postgresql internals to
+> > accomplish this, but the concepts are simple and the gains would
+> > seem to be very high.
+> >
+> > Comments?
+> >
+> > --
+> > -Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+> > "I have the heart of a child; I keep it in a jar on my desk."
+
+
+From pgsql-hackers-owner+M4904@hub.org Wed Jul 12 01:24:09 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA06757
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 01:24:08 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C5OLW65679;
+	Wed, 12 Jul 2000 01:24:21 -0400 (EDT)
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C5MkW61040
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 01:22:46 -0400 (EDT)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id e6C5Md429901;
+	Tue, 11 Jul 2000 22:22:39 -0700 (PDT)
+Date: Tue, 11 Jul 2000 22:22:39 -0700
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>
+Cc: pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling.
+Message-ID: <20000711222239.X25571@fw.wintelcom.net>
+References: <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <396BEA84.1A06F51F@nimrod.itg.telecom.com.au>; from chrisb@nimrod.itg.telstra.com.au on Wed, Jul 12, 2000 at 01:48:20PM +1000
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+* Chris Bitmead <chrisb@nimrod.itg.telstra.com.au> [000711 20:53] wrote:
+> 
+> Seems a lot trickier than you think. A backend can only be running
+> one transaction at a time, so you'd have to keep track of which backends
+> are in the middle of a transaction. I can imagine race conditions here.
+> And backends can have contexts that are set by various clients using
+> SET and friends. Then you'd have to worry about authentication each
+> time. And you'd have to have algorithms for cleaning up old processes
+> and/or dead processes. It all really sounds a bit hard. 
+
+The backends can simply inform the postmaster when they are ready
+either because they are done with a connection or because they
+have just closed a transaction.
+
+All the state (auth/temp tables) can be held in the system tables.
+
+It's complicated, but no where on the order of something like
+a new storage manager.
+
+-Alfred
+
+From bright@fw.wintelcom.net Wed Jul 12 01:34:30 2000
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA06793
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 01:34:29 -0400 (EDT)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id e6C5Z1f00384;
+	Tue, 11 Jul 2000 22:35:01 -0700 (PDT)
+Date: Tue, 11 Jul 2000 22:35:00 -0700
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Cc: Jeffery Collins <collins@onyx-technologies.com>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling.
+Message-ID: <20000711223500.Z25571@fw.wintelcom.net>
+References: <396BE1B6.F755C5CE@onyx-technologies.com> <200007120428.AAA06357@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <200007120428.AAA06357@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Wed, Jul 12, 2000 at 12:28:46AM -0400
+Status: OR
+
+* Bruce Momjian <pgman@candle.pha.pa.us> [000711 21:31] wrote:
+> > It seems like a first step would be to just have postmaster cache unused
+> > connections.  In other words if a client closes a connection, postmaster
+> > keeps the connection and the child process around for the next connect
+> > request.  This has many of your advantages, but not all.  However, it seems
+> > like it would be simpler than attempting to multiplex a connection between
+> > multiple clients.
+> > 
+> 
+> This does seem like a good optimization.
+
+I'm not sure if the postmaster is needed besideds just to fork/exec
+the backend, if so then when a backend finishes it can just call
+accept() on the listening socket inherited from the postmaster to
+get the next incomming connection.
+
+-Alfred
+
+From pgsql-hackers-owner+M4906@hub.org Wed Jul 12 01:36:44 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA06806
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 01:36:44 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C5akW94517;
+	Wed, 12 Jul 2000 01:36:46 -0400 (EDT)
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C5ZCW88503
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 01:35:12 -0400 (EDT)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id e6C5Z1f00384;
+	Tue, 11 Jul 2000 22:35:01 -0700 (PDT)
+Date: Tue, 11 Jul 2000 22:35:00 -0700
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Cc: Jeffery Collins <collins@onyx-technologies.com>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling.
+Message-ID: <20000711223500.Z25571@fw.wintelcom.net>
+References: <396BE1B6.F755C5CE@onyx-technologies.com> <200007120428.AAA06357@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <200007120428.AAA06357@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Wed, Jul 12, 2000 at 12:28:46AM -0400
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+* Bruce Momjian <pgman@candle.pha.pa.us> [000711 21:31] wrote:
+> > It seems like a first step would be to just have postmaster cache unused
+> > connections.  In other words if a client closes a connection, postmaster
+> > keeps the connection and the child process around for the next connect
+> > request.  This has many of your advantages, but not all.  However, it seems
+> > like it would be simpler than attempting to multiplex a connection between
+> > multiple clients.
+> > 
+> 
+> This does seem like a good optimization.
+
+I'm not sure if the postmaster is needed besideds just to fork/exec
+the backend, if so then when a backend finishes it can just call
+accept() on the listening socket inherited from the postmaster to
+get the next incomming connection.
+
+-Alfred
+
+From pgsql-hackers-owner+M4907@hub.org Wed Jul 12 01:55:39 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA06881
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 01:55:38 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C5tnW34576;
+	Wed, 12 Jul 2000 01:55:49 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C5rfW28119
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 01:53:42 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA21895;
+	Wed, 12 Jul 2000 01:52:56 -0400 (EDT)
+To: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>
+cc: Alfred Perlstein <bright@wintelcom.net>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling. 
+In-reply-to: <396BEA84.1A06F51F@nimrod.itg.telecom.com.au> 
+References: <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au>
+Comments: In-reply-to Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>
+	message dated "Wed, 12 Jul 2000 13:48:20 +1000"
+Date: Wed, 12 Jul 2000 01:52:56 -0400
+Message-ID: <21892.963381176@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Chris Bitmead <chrisb@nimrod.itg.telstra.com.au> writes:
+> Seems a lot trickier than you think. A backend can only be running
+> one transaction at a time, so you'd have to keep track of which backends
+> are in the middle of a transaction. I can imagine race conditions here.
+
+Aborting out of a transaction is no problem; we have code for that
+anyway.  More serious problems:
+
+* We have no code for reassigning a backend to a different database,
+  so the pooling would have to be per-database.
+
+* AFAIK there is no portable way to pass a socket connection from the
+  postmaster to an already-existing backend process.  If you do a
+  fork() then the connection is inherited ... otherwise you've got a
+  problem.  (You could work around this if the postmaster relays
+  every single byte in both directions between client and backend,
+  but the performance problems with that should be obvious.)
+
+> And backends can have contexts that are set by various clients using
+> SET and friends.
+
+Resetting SET variables would be a problem, and there's also the
+assigned user name to be reset.  This doesn't seem impossible, but
+it does seem tedious and error-prone.  (OTOH, Peter E's recent work
+on guc.c might have unified option-handling enough to bring it
+within reason.)
+
+The killer problem here is that you can't hand off a connection
+accepted by the postmaster to a backend except by fork() --- at least
+not with methods that work on a wide variety of Unixen.  Unless someone
+has a way around that, I think the idea is dead in the water; the lesser
+issues don't matter.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M4910@hub.org Wed Jul 12 02:24:16 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA11184
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 02:24:15 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C6OAW98187;
+	Wed, 12 Jul 2000 02:24:10 -0400 (EDT)
+Received: from acheron.rime.com.au (root@albatr.lnk.telstra.net [139.130.54.222])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C6MZW95741
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 02:22:36 -0400 (EDT)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id QAA12845;
+	Wed, 12 Jul 2000 16:16:23 +1000
+Message-Id: <3.0.5.32.20000712162210.0098fb00@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Wed, 12 Jul 2000 16:22:10 +1000
+To: Tom Lane <tgl@sss.pgh.pa.us>,
+        Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] Connection pooling. 
+Cc: Alfred Perlstein <bright@wintelcom.net>, pgsql-hackers@hub.org
+In-Reply-To: <21892.963381176@sss.pgh.pa.us>
+References: <396BEA84.1A06F51F@nimrod.itg.telecom.com.au>
+	<20000711185318.W25571@fw.wintelcom.net>
+	<396BEA84.1A06F51F@nimrod.itg.telecom.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+At 01:52 12/07/00 -0400, Tom Lane wrote:
+>
+>The killer problem here is that you can't hand off a connection
+>accepted by the postmaster to a backend except by fork() --- at least
+>not with methods that work on a wide variety of Unixen.  Unless someone
+>has a way around that, I think the idea is dead in the water; the lesser
+>issues don't matter.
+>
+
+My understanding of pg client interfaces is that the client uses ont of the
+pg interface libraries to make a connection to the db; they specify host &
+port and get back some kind of connection object.
+
+What stops the interface library from using the host & port to talk to the
+postmaster, find the host & port the spare db server, then connect directly
+to the server? This second connection is passed back in the connection object.
+
+When the client disconnects from the server, it tells the postmaster it's
+available again etc.
+
+ie. in very rough terms:
+
+    client calls interface to connect
+
+    interface talks to postmaster on port 5432, says "I want a server for
+xyz db"
+
+    postmaster replies with "Try port ABCD" OR "no servers available"
+    postmaster marks the nominated server as 'used'
+    postmaster disconnects from client
+
+    interface connects to port ABCD as per normal protocols
+    interface fills in connection object & returns
+
+    ...client does some work...
+
+    client disconnects
+
+    db server tells postmaster it's available again.
+
+
+There would also need to be timeout code to handle the case where the
+interface did not do the second connect.
+
+You could  also have the interface allocate a port send it's number to the
+postmaster then listen on it, but I think that would represent a potential
+security hole.
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.C.N. 008 659 498)             |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+From pgsql-hackers-owner+M4912@hub.org Wed Jul 12 02:32:21 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA11228
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 02:32:20 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C6WWW18412;
+	Wed, 12 Jul 2000 02:32:32 -0400 (EDT)
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C6UwW16062
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 02:30:58 -0400 (EDT)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id e6C6Uov01852;
+	Tue, 11 Jul 2000 23:30:50 -0700 (PDT)
+Date: Tue, 11 Jul 2000 23:30:49 -0700
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling.
+Message-ID: <20000711233049.A25571@fw.wintelcom.net>
+References: <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au> <21892.963381176@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <21892.963381176@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Wed, Jul 12, 2000 at 01:52:56AM -0400
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+* Tom Lane <tgl@sss.pgh.pa.us> [000711 22:53] wrote:
+> Chris Bitmead <chrisb@nimrod.itg.telstra.com.au> writes:
+> > Seems a lot trickier than you think. A backend can only be running
+> > one transaction at a time, so you'd have to keep track of which backends
+> > are in the middle of a transaction. I can imagine race conditions here.
+> 
+> Aborting out of a transaction is no problem; we have code for that
+> anyway.  More serious problems:
+> 
+> * We have no code for reassigning a backend to a different database,
+>   so the pooling would have to be per-database.
+
+That would need to be fixed.  How difficult would that be?
+
+> * AFAIK there is no portable way to pass a socket connection from the
+>   postmaster to an already-existing backend process.  If you do a
+>   fork() then the connection is inherited ... otherwise you've got a
+>   problem.  (You could work around this if the postmaster relays
+>   every single byte in both directions between client and backend,
+>   but the performance problems with that should be obvious.)
+
+no, see below.
+
+> > And backends can have contexts that are set by various clients using
+> > SET and friends.
+> 
+> Resetting SET variables would be a problem, and there's also the
+> assigned user name to be reset.  This doesn't seem impossible, but
+> it does seem tedious and error-prone.  (OTOH, Peter E's recent work
+> on guc.c might have unified option-handling enough to bring it
+> within reason.)
+
+What can be done is that each incomming connection can be assigned an
+ID into a system table.  As options are added the system would assign
+them to key-value pairs in this table.  Once someone detects that the
+remote side has closed the connection the data can be destroyed, but
+until then along with the descriptor passing the ID of the client
+as an index into the table can be passed for the backend to fetch.
+
+> The killer problem here is that you can't hand off a connection
+> accepted by the postmaster to a backend except by fork() --- at least
+> not with methods that work on a wide variety of Unixen.  Unless someone
+> has a way around that, I think the idea is dead in the water; the lesser
+> issues don't matter.
+
+The code has been around since 4.2BSD, it takes a bit of #ifdef to
+get it right on all systems but it's not impossible, have a look at
+http://www.fhttpd.org/ for a web server that does this in a portable
+fashion.
+
+I should have a library whipped up for you guys really soon now
+to handle the descriptor and message passing.
+
+-- 
+-Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+"I have the heart of a child; I keep it in a jar on my desk."
+
+From pgsql-hackers-owner+M4913@hub.org Wed Jul 12 03:06:54 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA11529
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 03:06:53 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C76ZW95615;
+	Wed, 12 Jul 2000 03:06:35 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C74gW93358
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 03:04:42 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id DAA22136;
+	Wed, 12 Jul 2000 03:04:13 -0400 (EDT)
+To: Alfred Perlstein <bright@wintelcom.net>
+cc: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling. 
+In-reply-to: <20000711233049.A25571@fw.wintelcom.net> 
+References: <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au> <21892.963381176@sss.pgh.pa.us> <20000711233049.A25571@fw.wintelcom.net>
+Comments: In-reply-to Alfred Perlstein <bright@wintelcom.net>
+	message dated "Tue, 11 Jul 2000 23:30:49 -0700"
+Date: Wed, 12 Jul 2000 03:04:13 -0400
+Message-ID: <22133.963385453@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Alfred Perlstein <bright@wintelcom.net> writes:
+> * Tom Lane <tgl@sss.pgh.pa.us> [000711 22:53] wrote:
+>> The killer problem here is that you can't hand off a connection
+>> accepted by the postmaster to a backend except by fork() --- at least
+>> not with methods that work on a wide variety of Unixen.
+
+> The code has been around since 4.2BSD, it takes a bit of #ifdef to
+> get it right on all systems but it's not impossible, have a look at
+> http://www.fhttpd.org/ for a web server that does this in a portable
+> fashion.
+
+I looked at this to see if it would teach me something I didn't know.
+It doesn't.  It depends on sendmsg() which is a BSD-ism and not very
+portable.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M4914@hub.org Wed Jul 12 03:12:40 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA11597
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 03:12:39 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C7CjW13459;
+	Wed, 12 Jul 2000 03:12:45 -0400 (EDT)
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C7B8W07036
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 03:11:08 -0400 (EDT)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id e6C79lE02841;
+	Wed, 12 Jul 2000 00:09:47 -0700 (PDT)
+Date: Wed, 12 Jul 2000 00:09:47 -0700
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling.
+Message-ID: <20000712000947.D25571@fw.wintelcom.net>
+References: <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au> <21892.963381176@sss.pgh.pa.us> <20000711233049.A25571@fw.wintelcom.net> <22133.963385453@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <22133.963385453@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Wed, Jul 12, 2000 at 03:04:13AM -0400
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+* Tom Lane <tgl@sss.pgh.pa.us> [000712 00:04] wrote:
+> Alfred Perlstein <bright@wintelcom.net> writes:
+> > * Tom Lane <tgl@sss.pgh.pa.us> [000711 22:53] wrote:
+> >> The killer problem here is that you can't hand off a connection
+> >> accepted by the postmaster to a backend except by fork() --- at least
+> >> not with methods that work on a wide variety of Unixen.
+> 
+> > The code has been around since 4.2BSD, it takes a bit of #ifdef to
+> > get it right on all systems but it's not impossible, have a look at
+> > http://www.fhttpd.org/ for a web server that does this in a portable
+> > fashion.
+> 
+> I looked at this to see if it would teach me something I didn't know.
+> It doesn't.  It depends on sendmsg() which is a BSD-ism and not very
+> portable.
+
+It's also specified by Posix.1g if that means anything.
+
+-Alfred
+
+From pgsql-hackers-owner+M4916@hub.org Wed Jul 12 03:49:58 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA11736
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jul 2000 03:49:58 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e6C7oBW95547;
+	Wed, 12 Jul 2000 03:50:11 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e6C7mPW93141
+	for <pgsql-hackers@hub.org>; Wed, 12 Jul 2000 03:48:25 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id DAA22297;
+	Wed, 12 Jul 2000 03:47:37 -0400 (EDT)
+To: Philip Warner <pjw@rhyme.com.au>
+cc: Chris Bitmead <chrisb@nimrod.itg.telstra.com.au>,
+        Alfred Perlstein <bright@wintelcom.net>, pgsql-hackers@hub.org
+Subject: Re: [HACKERS] Connection pooling. 
+In-reply-to: <3.0.5.32.20000712162210.0098fb00@mail.rhyme.com.au> 
+References: <396BEA84.1A06F51F@nimrod.itg.telecom.com.au> <20000711185318.W25571@fw.wintelcom.net> <396BEA84.1A06F51F@nimrod.itg.telecom.com.au> <3.0.5.32.20000712162210.0098fb00@mail.rhyme.com.au>
+Comments: In-reply-to Philip Warner <pjw@rhyme.com.au>
+	message dated "Wed, 12 Jul 2000 16:22:10 +1000"
+Date: Wed, 12 Jul 2000 03:47:37 -0400
+Message-ID: <22294.963388057@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+Philip Warner <pjw@rhyme.com.au> writes:
+> What stops the interface library from using the host & port to talk to
+> the postmaster, find the host & port the spare db server, then connect
+> directly to the server?
+
+You're assuming that we can change the on-the-wire protocol freely and
+only the API presented by the client libraries matters.  In a perfect
+world that might be true, but reality is that we can't change the wire
+protocol easily.  If we do, it breaks all existing precompiled clients.
+Updating clients can be an extremely painful experience in multiple-
+machine installations.
+	
+Also, we don't have just one set of client libraries to fix.  There are
+at least three client-side implementations that don't depend on libpq.
+
+We have done protocol updates in the past --- in fact I was responsible
+for the last one.  (And I'm still carrying the scars, which is why I'm
+not too enthusiastic about another one.)  It's not impossible, but it
+needs more evidence than "this should speed up connections by
+I-don't-know-how-much"...
+
+It might also be worth pointing out that the goal was to speed up the
+end-to-end connection time.  Redirecting as you suggest is not free
+(at minimum it would appear to require two TCP connection setups and two
+authentication cycles).  What evidence have you got that it'd be faster
+than spawning a new backend?
+
+I tend to agree with the opinion that connection-pooling on the client
+side offers more bang for the buck than we could hope to get by doing
+surgery on the postmaster/backend setup.
+
+Also, to return to the original point, AFAIK we have not tried hard
+to cut the backend startup time, other than the work that was done
+a year or so back to eliminate exec() of a separate executable.
+It'd be worth looking to see what could be done there with zero
+impact on existing clients.
+
+			regards, tom lane
+
