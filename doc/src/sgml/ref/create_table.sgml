@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.29 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.30 2000/06/09 01:43:57 momjian Exp $
 Postgres documentation
 -->
 
@@ -31,7 +31,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
     [, PRIMARY KEY ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
     [, CHECK ( <replaceable class="PARAMETER">condition</replaceable> ) ]
     [, <replaceable>table_constraint_clause</replaceable> ]
-    ) [ INHERITS ( <replaceable>inherited_table</replaceable> [, ...] ) ]
+    ) [ UNDER <replaceable>inherited_table</replaceable> [, ...] ]
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETABLE-1">
@@ -130,10 +130,10 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
      </varlistentry>
 
      <varlistentry>
-      <term>INHERITS <replaceable class="PARAMETER">inherited_table</replaceable></term>
+      <term>UNDER <replaceable class="PARAMETER">inherited_table</replaceable></term>
       <listitem>
        <para>
-	The optional INHERITS clause specifies a collection of table
+	The optional UNDER clause specifies a collection of table
 	names from which this table automatically inherits all fields.
 	If any inherited field name appears more than once, 
 	<productname>Postgres</productname>
@@ -229,7 +229,7 @@ ERROR:  DEFAULT: type mismatched
   </para>
 
   <para>
-   The optional INHERITS
+   The optional UNDER
    clause specifies a collection of class names from which this class
    automatically inherits all fields.  If any inherited field name
    appears more than once, Postgres reports an error.  Postgres automatically
@@ -1838,8 +1838,8 @@ CREATE TABLE distributors (
     Notes
    </title>
    <para>
-    CREATE TABLE/INHERITS is a <productname>Postgres</productname>
-    language extension.
+    CREATE TABLE/UNDER is defined by SQL3. Multiple inheritance is a 
+     <productname>Postgres</productname> language extension.
    </para>
   </refsect2>
   

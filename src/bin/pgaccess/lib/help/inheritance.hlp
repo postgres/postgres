@@ -11,7 +11,7 @@ Let's create two classes. The capitals class contains state capitals which are a
 
 CREATE TABLE capitals (
 	state           char2
-	) INHERITS (cities);
+	) UNDER cities;
 " {code} "
 In this case, an instance of capitals inherits all attributes (name, population, and altitude) from its parent, cities. The type of the attribute name is text, a native Postgres type for variable length ASCII strings. The type of the attribute population is float, a native Postgres type for double precision floating point numbers. State capitals have an extra attribute, state, that shows their state. In Postgres, a class can inherit from zero or more other classes, and a query can reference either all instances of a class or all instances of a class plus all of its descendants. 
 

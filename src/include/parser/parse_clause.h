@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.17 2000/04/12 17:16:45 momjian Exp $
+ * $Id: parse_clause.h,v 1.18 2000/06/09 01:44:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "parser/parse_node.h"
 
 extern void makeRangeTable(ParseState *pstate, List *frmList);
-extern void setTargetTable(ParseState *pstate, char *relname);
+extern void setTargetTable(ParseState *pstate, char *relname, bool inh);
 extern Node *transformWhereClause(ParseState *pstate, Node *where);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 					 List *targetlist);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.169 2000/05/31 00:28:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.170 2000/06/09 01:44:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -49,6 +49,7 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/numeric.h"
+#include "commands/variable.h"
 
 #ifdef MULTIBYTE
 #include "miscadmin.h"
@@ -170,7 +171,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock, stmtmulti,
 		result, OptTempTableName, relation_name_list, OptTableElementList,
-		OptInherit, definition, opt_distinct,
+		OptUnder, OptInherit, definition, opt_distinct,
 		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
@@ -207,7 +208,7 @@ static void doNegateFloat(Value *v);
 %type <list>	substr_list, substr_from, substr_for, trim_list
 %type <list>	opt_interval
 
-%type <boolean> opt_inh_star, opt_binary, opt_using, opt_instead,
+%type <boolean> opt_inh_star, opt_binary, opt_using, opt_instead, opt_only
 				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
 %type <boolean> opt_cursor
 
@@ -323,7 +324,8 @@ static void doNegateFloat(Value *v);
 		IMMEDIATE, INITIALLY,
 		PENDANT,
 		RESTRICT,
-		TRIGGER,
+        TRIGGER, 
+        UNDER,
 		OFF
 
 /* Keywords (in SQL92 non-reserved words) */
@@ -882,7 +884,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'A';
 					n->relname = $3;
-					n->inh = $4;
+					n->inh = $4 || examine_subclass;
 					n->def = $7;
 					$$ = (Node *)n;
 				}
@@ -892,7 +894,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'T';
 					n->relname = $3;
-					n->inh = $4;
+					n->inh = $4 || examine_subclass;
 					n->name = $7;
 					n->def = $8;
 					$$ = (Node *)n;
@@ -903,7 +905,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'D';
 					n->relname = $3;
-					n->inh = $4;
+					n->inh = $4 || examine_subclass;
 					n->name = $7;
 					n->behavior = $8;
 					$$ = (Node *)n;
@@ -914,7 +916,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'C';
 					n->relname = $3;
-					n->inh = $4;
+					n->inh = $4 || examine_subclass;
 					n->def = $6;
 					$$ = (Node *)n;
 				}
@@ -924,7 +926,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'X';
 					n->relname = $3;
-					n->inh = $4;
+					n->inh = $4 || examine_subclass;
 					n->name = $7;
 					n->behavior = $8;
 					$$ = (Node *)n;
@@ -1036,14 +1038,22 @@ copy_null:      WITH NULL_P AS Sconst			{ $$ = $4; }
  *
  *****************************************************************************/
 
-CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
-				OptInherit
+CreateStmt:  CREATE OptTemp TABLE relation_name OptUnder '(' OptTableElementList ')' OptInherit
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					n->istemp = $2;
 					n->relname = $4;
-					n->tableElts = $6;
-					n->inhRelnames = $8;
+					n->tableElts = $7;
+					n->inhRelnames = nconc($5, $9);
+/* if ($5 != NIL) 
+					{
+                        n->inhRelnames = $5;
+					}
+                    else
+					{ */
+                        /* INHERITS is deprecated */
+					/* n->inhRelnames = $9;
+					} */
 					n->constraints = NIL;
 					$$ = (Node *)n;
 				}
@@ -1400,8 +1410,17 @@ key_reference:  NO ACTION				{ $$ = FKCONSTR_ON_KEY_NOACTION; }
 		| SET DEFAULT					{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
 		;
 
+OptUnder: UNDER relation_name_list 		        { $$ = $2; }
+        | /*EMPTY*/								{ $$ = NIL; } 
+		;
+
+opt_only: ONLY              	     	        { $$ = FALSE; }
+        | /*EMPTY*/								{ $$ = TRUE; } 
+		;
+
+/* INHERITS is Deprecated */
 OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
-		| /*EMPTY*/										{ $$ = NIL; }
+		| /*EMPTY*/									{ $$ = NIL; }
 		;
 
 /*
@@ -1409,11 +1428,13 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
  * SELECT ... INTO.
  */
 
-CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS SelectStmt
 				{
-					SelectStmt *n = (SelectStmt *)$7;
-					if ($5 != NIL)
-						mapTargetColumns($5, n->targetList);
+					SelectStmt *n = (SelectStmt *)$8;
+                    if ($5 != NIL)
+						yyerror("CREATE TABLE/AS SELECT does not support UNDER");
+					if ($6 != NIL)
+						mapTargetColumns($6, n->targetList);
 					if (n->into != NULL)
 						elog(ERROR,"CREATE TABLE/AS SELECT may not specify INTO");
 					n->istemp = $2;
@@ -2536,11 +2557,12 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *****************************************************************************/
 
 RenameStmt:  ALTER TABLE relation_name opt_inh_star
+        /* "*" deprecated */
 				  RENAME opt_column opt_name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->relname = $3;
-					n->inh = $4;
+					n->inh = $4 || examine_subclass;
 					n->column = $7;
 					n->newname = $9;
 					$$ = (Node *)n;
@@ -3094,12 +3116,12 @@ columnElem:  ColId opt_indirection
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE FROM relation_name
-			 where_clause
+DeleteStmt:  DELETE FROM opt_only relation_name where_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
-					n->relname = $3;
-					n->whereClause = $4;
+                    n->inh = $3;
+					n->relname = $4;
+					n->whereClause = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -3136,16 +3158,17 @@ opt_lmode:	SHARE				{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-UpdateStmt:  UPDATE relation_name
+UpdateStmt:  UPDATE opt_only relation_name
 			  SET update_target_list
 			  from_clause
 			  where_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relname = $2;
-					n->targetList = $4;
-					n->fromClause = $5;
-					n->whereClause = $6;
+                    n->inh = $2;
+					n->relname = $3;
+					n->targetList = $5;
+					n->fromClause = $6;
+					n->whereClause = $7;
 					$$ = (Node *)n;
 				}
 		;
@@ -3780,10 +3803,10 @@ where_clause:  WHERE a_expr						{ $$ = $2; }
 
 relation_expr:	relation_name
 				{
-					/* normal relations */
+    				/* default inheritance */
 					$$ = makeNode(RelExpr);
 					$$->relname = $1;
-					$$->inh = FALSE;
+					$$->inh = examine_subclass;
 				}
 		| relation_name '*'				  %prec '='
 				{
@@ -3792,6 +3815,14 @@ relation_expr:	relation_name
 					$$->relname = $1;
 					$$->inh = TRUE;
 				}
+        | ONLY relation_name               %prec '='
+                {
+					/* no inheritance */
+					$$ = makeNode(RelExpr);
+					$$->relname = $2;
+					$$->inh = FALSE;
+                }
+         ;
 
 opt_array_bounds:	'[' ']' opt_array_bounds
 				{  $$ = lcons(makeInteger(-1), $3); }
@@ -5396,7 +5427,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| NOTIFY						{ $$ = "notify"; }
 		| OF							{ $$ = "of"; }
 		| OIDS							{ $$ = "oids"; }
-		| ONLY							{ $$ = "only"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
 		| PARTIAL						{ $$ = "partial"; }
@@ -5433,6 +5463,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
+		| UNDER 						{ $$ = "under"; }
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }
@@ -5534,6 +5565,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| OFF							{ $$ = "off"; }
 		| OFFSET						{ $$ = "offset"; }
 		| ON							{ $$ = "on"; }
+		| ONLY							{ $$ = "only"; }
 		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
 		| OUTER_P						{ $$ = "outer"; }

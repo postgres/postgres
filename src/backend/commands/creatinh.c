@@ -8,7 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.58 2000/05/30 00:49:43 momjian Exp $
+<<<<<<< creatinh.c
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.59 2000/06/09 01:44:03 momjian Exp $
+=======
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.59 2000/06/09 01:44:03 momjian Exp $
+>>>>>>> 1.58
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +38,9 @@ static bool checkAttrExists(const char *attributeName,
 				const char *attributeType, List *schema);
 static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
+static void
+setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
+
 
 /* ----------------------------------------------------------------
  *		DefineRelation
@@ -326,6 +333,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		TupleConstr *constr;
 
 		relation = heap_openr(name, AccessShareLock);
+		setRelhassubclassInRelation(relation->rd_id, true);
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
 
@@ -660,3 +668,39 @@ checkAttrExists(const char *attributeName, const char *attributeType, List *sche
 	}
 	return false;
 }
+
+
+static void
+setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
+{
+        Relation        relationRelation;
+        HeapTuple       tuple;
+        Relation        idescs[Num_pg_class_indices];
+
+        /*
+         * Lock a relation given its Oid. Go to the RelationRelation (i.e.
+         * pg_relation), find the appropriate tuple, and add the specified
+         * lock to it.
+         */
+        relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
+        tuple = SearchSysCacheTuple(RELOID,
+                                    ObjectIdGetDatum(relationId),
+                                    0, 0, 0)
+;
+        Assert(HeapTupleIsValid(tuple));
+
+        ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
+        heap_update(relationRelation, &tuple->t_self, tuple, NULL);
+
+        /* keep the catalog indices up to date */
+        CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
+        CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple
+);
+        CatalogCloseIndices(Num_pg_class_indices, idescs);
+
+        heap_close(relationRelation, RowExclusiveLock);
+}
+
+
+
+

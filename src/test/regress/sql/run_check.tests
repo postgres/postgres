@@ -70,6 +70,7 @@ parallel	group3
 	test	create_aggregate
 	test	create_operator
 	test	create_index
+    test    inherit
 endparallel
 
 test	create_view		# Depends on the above

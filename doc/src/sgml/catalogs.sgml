@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.5 2000/02/17 03:39:39 tgl Exp $
+.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.6 2000/06/09 01:43:56 momjian Exp $
 .TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
 .SH "Section 7 - System Catalogs"
 .de LS
@@ -191,6 +191,8 @@ pg_class
 			   2=main memory */
      int2vector relkey		/* - unused */
      oidvector  relkeyop	/* - unused */
+     bool       relhassubclass	/* does the class have a subclass?
+				    */
      aclitem    relacl[1]	/* access control lists */
 .fi
 .nf M

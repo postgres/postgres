@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.12 2000/04/11 14:43:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.13 2000/06/09 01:43:57 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,10 +23,10 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ]<replaceable class="PARAMETER">table</replaceable> [ * ]
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable
     class="PARAMETER">type</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ]<replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
     class="PARAMETER">value</replaceable> | DROP DEFAULT }
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
@@ -173,24 +173,6 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 </title>
    <para>
     The keyword <literal>COLUMN</literal> is noise and can be omitted.
-   </para>
-
-   <para>
-    <quote>*</quote> following a name of a table indicates that the statement
-    should be run over that table and all tables below it in the
-    inheritance hierarchy;
-    by default, the attribute will not be added to or renamed in any of the subclasses.
-
-    This should always be done when adding or modifying an attribute in a
-    superclass. If it is not, queries on  the  inheritance  hierarchy
-    such as
-
-    <programlisting>
-SELECT <replaceable>NewColumn</replaceable> FROM <replaceable>SuperClass</replaceable>*
-    </programlisting>
-
-    will not work because the subclasses will be missing an attribute
-    found in the superclass.
    </para>
 
    <para>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.34 2000/05/28 17:56:16 tgl Exp $
+ * $Id: pg_class.h,v 1.35 2000/06/09 01:44:23 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -78,11 +78,12 @@ CATALOG(pg_class) BOOTSTRAP
 	int2		relrefs;		/* # of references to this relation */
 	bool		relhaspkey;		/* has PRIMARY KEY */
 	bool		relhasrules;
+	bool		relhassubclass;
 	aclitem		relacl[1];		/* this is here for the catalog */
 } FormData_pg_class;
 
 #define CLASS_TUPLE_SIZE \
-	 (offsetof(FormData_pg_class,relhasrules) + sizeof(bool))
+	 (offsetof(FormData_pg_class,relhassubclass) + sizeof(bool))
 
 /* ----------------
  *		Form_pg_class corresponds to a pointer to a tuple with
@@ -102,8 +103,8 @@ typedef FormData_pg_class *Form_pg_class;
  *		relacl field.
  * ----------------
  */
-#define Natts_pg_class_fixed			18
-#define Natts_pg_class					19
+#define Natts_pg_class_fixed			19
+#define Natts_pg_class					20
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_reltype			2
 #define Anum_pg_class_relowner			3
@@ -122,38 +123,39 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relrefs			16
 #define Anum_pg_class_relhaspkey		17
 #define Anum_pg_class_relhasrules		18
-#define Anum_pg_class_relacl			19
+#define Anum_pg_class_relhassubclass		19
+#define Anum_pg_class_relacl			20
 
 /* ----------------
  *		initial contents of pg_class
  * ----------------
  */
 
-DATA(insert OID = 1247 (  pg_type 71		  PGUID 0 0 0 0 f f r 16 0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1247 (  pg_type 71		  PGUID 0 0 0 0 f f r 16 0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute 75	  PGUID 0 0 0 0 f f r 15 0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute 75	  PGUID 0 0 0 0 f f r 15 0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 0 0 0 f f r 17 0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 0 0 0 f f r 17 0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 0 0 0 f f r 19 0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 0 0 0 f f r 20 0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 0 0 0 f t r 8  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 0 0 0 f t r 8  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 0 0 0 f t r 3  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 0 0 0 f t r 3  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 0 0 0 f t r 4  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 0 0 0 f t r 4  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 0 0 0 f t s 1  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 0 0 0 f t s 1  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 0 0 0 f t s 1  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 0 0 0 f t s 1  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 376  (  pg_xactlock  0	  PGUID 0 0 0 0 f t s 1  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 376  (  pg_xactlock  0	  PGUID 0 0 0 0 f t s 1  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 0 0 0 t t r 4  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 0 0 0 t t r 4  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1216 (  pg_relcheck 110	  PGUID 0 0 0 0 t t r 4  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1216 (  pg_relcheck 110	  PGUID 0 0 0 0 t t r 4  0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 0 0 0 t t r 13  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 0 0 0 t t r 13  0 0 0 0 0 f f f _null_ ));
 DESCR("");
 
 #define RelOid_pg_type			1247

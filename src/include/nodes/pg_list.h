@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.17 2000/04/12 17:16:40 momjian Exp $
+ * $Id: pg_list.h,v 1.18 2000/06/09 01:44:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ extern void set_nth(List *l, int n, void *elem);
 
 extern List *set_difference(List *list1, List *list2);
 extern List *set_differencei(List *list1, List *list2);
+extern List *lreverse(List *l);
 extern List *LispUnion(List *list1, List *list2);
 extern List *LispUnioni(List *list1, List *list2);
 

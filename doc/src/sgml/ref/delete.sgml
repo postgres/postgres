@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.10 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.11 2000/06/09 01:44:00 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DELETE FROM <replaceable class="PARAMETER">table</replaceable> [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
   </synopsis>
 
   <refsect2 id="R2-SQL-DELETE-1">
@@ -116,6 +116,12 @@ DELETE <replaceable class="parameter">count</replaceable>
      faster mechanism to remove all rows from a table.
     </para>
    </tip>
+  </para>
+
+  <para>
+  By default DELETE will delete tuples in the table specified 
+  and all its sub-classes. If you wish to only update the
+  specific table mentioned, you should use the ONLY clause.
   </para>
 
   <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.63 2000/06/08 22:37:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.64 2000/06/09 01:44:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ makeRangeTable(ParseState *pstate, List *frmList)
  *	  there is no other use of any of its attributes.  Tricky, eh?
  */
 void
-setTargetTable(ParseState *pstate, char *relname)
+setTargetTable(ParseState *pstate, char *relname, bool inh)
 {
 	RangeTblEntry *rte;
 
@@ -80,7 +80,7 @@ setTargetTable(ParseState *pstate, char *relname)
 	if (refnameRangeTablePosn(pstate, relname, NULL) == 0)
 		rte = addRangeTableEntry(pstate, relname,
 								 makeAttr(relname, NULL),
-								 FALSE, FALSE, FALSE);
+								 inh, FALSE, FALSE);
 	else
 		rte = refnameRangeTableEntry(pstate, relname);
 

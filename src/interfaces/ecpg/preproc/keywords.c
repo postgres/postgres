@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.26 2000/04/08 12:20:27 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.27 2000/06/09 01:44:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,6 +246,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
+	{"under", UNDER},
 	{"union", UNION},
 	{"unique", UNIQUE},
 	{"unlisten", UNLISTEN},

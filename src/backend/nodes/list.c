@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.31 2000/04/12 17:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.32 2000/06/09 01:44:12 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -520,6 +520,21 @@ set_differencei(List *l1, List *l2)
 			result = lappendi(result, lfirsti(i));
 	}
 	return result;
+}
+
+/*
+ * Reverse a list, non-destructively
+ */
+List *
+lreverse(List *l)
+{
+    List       *result = NIL;
+    List       *i;
+    foreach(i, l)
+    {
+        result = lcons(lfirst(i), result);
+    }
+    return result;
 }
 
 /*

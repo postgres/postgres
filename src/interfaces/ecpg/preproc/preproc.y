@@ -236,7 +236,7 @@ make_name(void)
                 REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
                 SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID
 		TEMP, TRUNCATE, TRUSTED,
-                UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
+                UNDER, UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE
@@ -276,7 +276,7 @@ make_name(void)
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
-%type  <str>	OptInherit key_reference comment_text ConstraintDeferrabilitySpec
+%type  <str>	OptUnder key_reference comment_text ConstraintDeferrabilitySpec
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
@@ -995,7 +995,7 @@ copy_null:	WITH NULL_P AS Sconst	{ $$ = cat2_str(make_str("with null as"), $4); 
  *****************************************************************************/
 
 CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
-				OptInherit
+				OptUnder
 				{
 					$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8);
 				}
@@ -1192,7 +1192,8 @@ key_reference:  NO ACTION	{ $$ = make_str("no action"); }
 		| SET NULL_P	{ $$ = make_str("set null"); }
 		;
 
-OptInherit:  INHERITS '(' relation_name_list ')' { $$ = cat_str(3, make_str("inherits ("), $3, make_str(")")); }
+OptUnder: UNDER relation_name_list { $$ = cat_str(2, make_str("under "), $2); }
+        | INHERITS '(' relation_name_list ')' { $$ = cat_str(3, make_str("inherits ("), $3, make_str(")")); }
 		| /*EMPTY*/ { $$ = EMPTY; }
 		;
 
@@ -2876,6 +2877,11 @@ relation_expr:	relation_name
 				{
 					/* inheritance query */
 					$$ = cat2_str($1, make_str("*"));
+				}
+		| ONLY relation_name 				  %prec '='
+				{
+					/* inheritance query */
+                  $$ = cat2_str(make_str("ONLY "), $2);
 				}
 
 opt_array_bounds:  '[' ']' opt_array_bounds
@@ -5081,6 +5087,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
+	| UNDER 			{ $$ = make_str("under"); }
 	| UNLISTEN			{ $$ = make_str("unlisten"); }
 	| UNTIL				{ $$ = make_str("until"); }
 	| UPDATE			{ $$ = make_str("update"); }

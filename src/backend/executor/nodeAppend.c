@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.30 2000/04/12 17:15:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.31 2000/06/09 01:44:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,12 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 			resultList = lcons(rri, resultList);
 		}
-		appendstate->as_result_relation_info_list = resultList;
+        /*
+          The as_result_relation_info_list must be in the same
+          order as the rtentry list otherwise update or delete on
+          inheritance hierarchies won't work.
+        */
+		appendstate->as_result_relation_info_list = lreverse(resultList);
 	}
 	/* ----------------
 	 *	call ExecInitNode on each of the plans in our list

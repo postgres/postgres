@@ -1,5 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.43 2000/05/18 14:24:33 momjian Exp $
+<<<<<<< set.sgml
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.44 2000/06/09 01:44:00 momjian Exp $
+=======
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.44 2000/06/09 01:44:00 momjian Exp $
+>>>>>>> 1.43
 Postgres documentation
 -->
 
@@ -545,6 +549,39 @@ SELECT setseed(<replaceable>value</replaceable>);
 	   <para>
 	    Set the assumed cache size
 	    to the specified floating-point value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>EXAMINE_SUBCLASS</term>
+      <listitem>
+       <para>
+       Changes the behaviour of SELECT so that it no longer automatically
+       examines sub-classes. (See SELECT). By default a SELECT on a table
+       will also return subclass tuples unless specifying ONLY tablename.
+       Setting this returns postgres to the traditional behaviour of
+       only returning subclasses when appending "*" to the tablename.
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+       Returns SELECT to the behaviour of automatically returning
+       results from sub-classes.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+       Prevents SELECT from returning sub-classes unless the "*" follows the table name
 	   </para>
 	  </listitem>
 	 </varlistentry>

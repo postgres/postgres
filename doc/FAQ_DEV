@@ -90,16 +90,14 @@ s
                 M-x set-variable tab-width
             or
                 ; Cmd to set tab stops &etc for working with PostgreSQL code
-                (defun pgsql-mode ()
-                  "Set PostgreSQL C indenting conventions in current buffer."
-                  (interactive)
-                  (c-mode)                            ; necessary to make c-set
--offset local!
-                  (setq tab-width 4)                  ; already buffer-local
-                  ; (setq comment-column 48)          ; already buffer-local
-                  (c-set-style "bsd")
-                  (c-set-offset 'case-label '+)
-                )
+             (c-add-style "pgsql"
+			          '("bsd"
+                                 (indent-tabs-mode . t)
+                                 (c-basic-offset   . 4)
+                                 (tab-width . 4)
+			                     (c-offsets-alist .
+                                            ((case-label . +))))
+                       t) ; t = set this mode on
 
             and add this to your autoload list (modify file path in macro):
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.145 2000/05/30 00:49:50 momjian Exp $
+ *	$Id: analyze.c,v 1.146 2000/06/09 01:44:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	/* set up a range table */
 	makeRangeTable(pstate, NULL);
-	setTargetTable(pstate, stmt->relname);
+	setTargetTable(pstate, stmt->relname, stmt->inh);
 
 	qry->distinctClause = NIL;
 
@@ -368,7 +368,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * (We didn't want it there until now since it shouldn't be visible in
 	 * the SELECT part.)
 	 */
-	setTargetTable(pstate, stmt->relname);
+	setTargetTable(pstate, stmt->relname, FALSE);
 
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
@@ -1489,7 +1489,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
 	 */
 	makeRangeTable(pstate, stmt->fromClause);
-	setTargetTable(pstate, stmt->relname);
+	setTargetTable(pstate, stmt->relname, stmt->inh);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.105 2000/05/28 20:34:49 tgl Exp $
+ * $Id: parsenodes.h,v 1.106 2000/06/09 01:44:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,6 +795,7 @@ typedef struct DeleteStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to delete from */
 	Node	   *whereClause;	/* qualifications */
+  bool        inh;              /* delete from subclasses */
 } DeleteStmt;
 
 /* ----------------------
@@ -808,6 +809,7 @@ typedef struct UpdateStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *whereClause;	/* qualifications */
 	List	   *fromClause;		/* the from clause */
+  bool        inh;              /* update subclasses */
 } UpdateStmt;
 
 /* ----------------------

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.20 2000/05/02 20:01:53 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.21 2000/06/09 01:43:56 momjian Exp $
 -->
 
  <chapter id="syntax">
@@ -854,9 +854,10 @@ sqrt(emp.salary)
      defines one or more instance variables to range over the class
      indicated in <replaceable>class_reference</replaceable>.
      One can also request 
-     the instance variable to range over all classes that are beneath the
-     indicated class in the inheritance hierarchy by postpending the
-     designator asterisk ("*").
+     the instance variable to range over only the specific class
+     and not those that are beneath the
+     indicated class in the inheritance hierarchy by specifying ONLY before 
+     before the classname.
     </para>
    </sect2>
   </sect1>

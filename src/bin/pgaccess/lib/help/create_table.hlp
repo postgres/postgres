@@ -9,7 +9,7 @@ CREATE \[ TEMPORARY | TEMP \] TABLE table (
 	\[, PRIMARY KEY ( column \[, ...\] ) \]
 	\[, CHECK ( condition ) \]
 	\[, table_constraint_clause \]
-	) \[ INHERITS ( inherited_table \[, ...\] ) \]
+	) \[ UNDER inherited_table \[, ...\] \]
 " {code} "
 TEMPORARY
 	The table is created only for this session, and is automatically dropped on session exit. Existing permanent tables with the same name are not visible while the temporary table exists. 
