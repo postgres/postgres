@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.49 1999/09/26 21:21:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.50 1999/10/02 17:45:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1157,11 +1157,11 @@ dpow(float64 arg1, float64 arg2)
 
 	tmp1 = *arg1;
 	tmp2 = *arg2;
-#ifndef finite
+#ifndef HAVE_FINITE
 	errno = 0;
 #endif
 	*result = (float64data) pow(tmp1, tmp2);
-#ifndef finite
+#ifndef HAVE_FINITE
 	if (errno != 0)				/* on some machines both EDOM & ERANGE can
 								 * occur */
 #else
@@ -1189,11 +1189,11 @@ dexp(float64 arg1)
 	result = (float64) palloc(sizeof(float64data));
 
 	tmp = *arg1;
-#ifndef finite
+#ifndef HAVE_FINITE
 	errno = 0;
 #endif
 	*result = (float64data) exp(tmp);
-#ifndef finite
+#ifndef HAVE_FINITE
 	if (errno == ERANGE)
 #else
 	/* infinity implies overflow, zero implies underflow */

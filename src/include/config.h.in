@@ -359,6 +359,9 @@ extern int  inet_aton(const char *cp, struct in_addr * addr);
 /* Set to 1 if you have rint() */
 #undef HAVE_RINT 
 
+/* Set to 1 if you have finite() */
+#undef HAVE_FINITE
+
 /* Set to 1 if you have memmove() */
 #undef HAVE_MEMMOVE
 

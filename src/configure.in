@@ -769,6 +769,12 @@ AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
 	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB))
 
+AC_MSG_CHECKING(for finite() macro or function)
+AC_TRY_LINK([#include <math.h>],
+	[int dummy=finite(1.0);],
+	[AC_DEFINE(HAVE_FINITE) AC_MSG_RESULT(yes)],
+	AC_MSG_RESULT(no))
+
 dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:
 dnl (1) figure out if the compiler has a 64-bit int type with working
