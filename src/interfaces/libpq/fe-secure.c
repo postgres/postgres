@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.43 2004/07/12 14:11:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.44 2004/07/12 14:16:28 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -867,16 +867,10 @@ init_ssl_system(PGconn *conn)
 #ifndef WIN32
         static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 #else
-	static pthread_mutex_t init_mutex = NULL;
-	static long mutex_initlock = 0;
-
-	if (init_mutex == NULL) {
-		while(InterlockedExchange(&mutex_initlock, 1) == 1)
-			/* loop, another thread own the lock */ ;
-		if (init_mutex == NULL)
-			pthread_mutex_init(&init_mutex, NULL);
-		InterlockedExchange(&mutex_initlock,0);
-	}
+        static pthread_mutex_t init_mutex;
+        static long mutex_initialized = 0L;
+        if (!InterlockedExchange(&mutex_initialized, 1L))
+                pthread_mutex_init(&init_mutex, NULL);
 #endif
 	pthread_mutex_lock(&init_mutex);
 	
