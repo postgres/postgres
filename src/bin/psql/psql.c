@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.47 1997/01/10 20:52:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.48 1997/01/13 02:03:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1285,7 +1285,7 @@ MainLoop(PsqlSettings * settings, FILE * source)
 
 	query_start = line;
 
-	if (line == NULL) {	/* No more input.  Time to quit */
+	if (line == NULL && !settings->quiet) {	/* No more input.  Time to quit */
 	    printf("EOF\n");	/* Goes on prompt line */
 	    eof = true;
 	} else {
