@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.5 1998/03/14 21:57:56 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.6 1998/03/14 22:55:21 momjian Exp $
 .TH CLUSTER SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 cluster - give storage clustering advice to Postgres
@@ -48,11 +48,12 @@ unordered, the entries are on random pages, so there is one disk page
 retrieved for every row moved.  PostgreSQL has a cache, but the majority
 of a big table will not fit in the cache.
 .PP
-Another way is to use SELECT ... INTO TABLE temp FROM ...  This uses the
-PostgreSQL sorting code, and is much faster for unordered data.  You
-then drop the old table, use ALTER TABLE RENAME to rename 'temp' to the
-old name, and recreate the indexes.  From then on, CLUSTER should be
-fast because most of the heap data is ordered.
+Another way is to use SELECT ... INTO TABLE temp FROM ...ORDER BY ...
+This uses the PostgreSQL sorting code in ORDER BY to match the index,
+and is much faster for unordered data.  You then drop the old table, use
+ALTER TABLE RENAME to rename 'temp' to the old name, and recreate the
+indexes.  From then on, CLUSTER should be fast because most of the heap
+data has been already ordered.
 .SH EXAMPLE
 .nf
 /*
