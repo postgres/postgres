@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.12 1998/09/01 04:40:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.13 1998/10/04 20:46:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -548,6 +548,7 @@ do_field(PQprintOpt *po, PGresult *res,
 
 	if (!skipit)
 	{
+		char		ch = 0;
 #ifdef MULTIBYTE
 		int			len;
 
@@ -558,18 +559,36 @@ do_field(PQprintOpt *po, PGresult *res,
 		for (p = pval, o = buf; *p; *(o++) = *(p++))
 #endif
 		{
-			if ((fs_len == 1 && (*p == *(po->fieldSep))) || *p == '\\' || *p == '\n')
+			ch = *p;
+			/*
+			 * Consensus on pgsql-interfaces (as of Aug 1998) seems to be that
+			 * the print functions ought not insert backslashes.  If you like
+			 * them, you can re-enable this next bit.
+			 */
+#ifdef GRATUITOUS_BACKSLASHES
+			if ((fs_len == 1 && (ch == *(po->fieldSep))) ||
+				ch == '\\' || ch == '\n')
 				*(o++) = '\\';
-			if (po->align && (*pval == 'E' || *pval == 'e' ||
-							  !((*p >= '0' && *p <= '9') ||
-								*p == '.' ||
-								*p == 'E' ||
-								*p == 'e' ||
-								*p == ' ' ||
-								*p == '-')))
+#endif
+			if (po->align &&
+				!((ch >= '0' && ch <= '9') ||
+				  ch == '.' ||
+				  ch == 'E' ||
+				  ch == 'e' ||
+				  ch == ' ' ||
+				  ch == '-'))
 				fieldNotNum[j] = 1;
 		}
 		*o = '\0';
+		/*
+		 * Above loop will believe E in first column is numeric; also, we
+		 * insist on a digit in the last column for a numeric.  This test
+		 * is still not bulletproof but it handles most cases.
+		 */
+		if (po->align &&
+			(*pval == 'E' || *pval == 'e' ||
+			 !(ch >= '0' && ch <= '9')))
+			fieldNotNum[j] = 1;
 		if (!po->expanded && (po->align || po->html3))
 		{
 			int			n = strlen(buf);
