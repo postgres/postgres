@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.135 2003/07/09 06:47:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.136 2003/07/09 08:51:19 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2529,12 +2529,13 @@ set_config_option(const char *name, const char *value,
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_USERSTART &&
 						conf->session_val != 0 &&
-						newval > conf->session_val &&
+						(newval > conf->session_val ||
+						 newval == 0) &&
 						!superuser())
 					{
 						elog(elevel, "'%s': permission denied\n"
-								"Only super-users can increase this value.",
-								name);
+								"Only super-users can increase this value "
+								"or set it to zero.", name);
 						return false;
 					}
 					/* Allow admin to override non-super user setting */
