@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.274 2002/07/30 05:13:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.275 2002/07/30 05:35:53 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -577,6 +577,9 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 	start_xact_command();
 	xact_started = true;
 
+	if (StatementTimeout)
+		enable_sig_alarm(StatementTimeout, true);
+
 	/*
 	 * parse_context *must* be different from the execution memory
 	 * context, else the context reset at the bottom of the loop will
@@ -704,9 +707,6 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 		 */
 		MemoryContextSwitchTo(oldcontext);
 
-		if (StatementTimeout)
-			enable_sig_alarm(StatementTimeout, true);
-
 		/*
 		 * Inner loop handles the individual queries generated from a
 		 * single parsetree by analysis and rewrite.
@@ -828,8 +828,6 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 			}
 		} /* end loop over queries generated from a parsetree */
 
-		disable_sig_alarm(true);
-
 		/*
 		 * If this is the last parsetree of the query string, close down
 		 * transaction statement before reporting command-complete.  This is
@@ -870,6 +868,8 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 		 */
 		EndCommand(commandTag, dest);
 	}							/* end loop over parsetrees */
+
+	disable_sig_alarm(true);
 
 	/*
 	 * Close down transaction statement, if one is open.
@@ -1693,7 +1693,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.274 $ $Date: 2002/07/30 05:13:06 $\n");
+		puts("$Revision: 1.275 $ $Date: 2002/07/30 05:35:53 $\n");
 	}
 
 	/*
