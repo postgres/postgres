@@ -125,7 +125,7 @@
    development of PostgreSQL.
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
-   others have contributed to the porting, testing, debugging and
+   others have contributed to the porting, testing, debugging, and
    enhancement of the code. The original Postgres code, from which
    PostgreSQL is derived, was the effort of many graduate students,
    undergraduate students, and staff programmers working under the
@@ -140,7 +140,7 @@
    
     1.2) What's the copyright on PostgreSQL?
     
-   PostgreSQL is subject to the following COPYRIGHT.
+   PostgreSQL is subject to the following COPYRIGHT:
    
    PostgreSQL Data Base Management System
    
@@ -201,7 +201,7 @@
     1.5) Where can I get PostgreSQL?
     
    The primary anonymous ftp site for PostgreSQL is
-   ftp://ftp.PostgreSQL.org/pub. For mirror sites, see our main web site.
+   ftp://ftp.PostgreSQL.org/pub. For mirror sites, see our main Web site.
    
     1.6) Where can I get support?
     
@@ -267,7 +267,7 @@
    psql has some nice \d commands to show information about types,
    operators, functions, aggregates, etc.
    
-   Our web site contains even more documentation.
+   Our Web site contains even more documentation.
    
     1.9) How do I find out about known bugs or missing features?
     
@@ -295,7 +295,7 @@
     1.12) How do I join the development team?
     
    First, download the latest source and read the PostgreSQL Developers
-   documentation on our web site, or in the distribution. Second,
+   documentation on our Web site, or in the distribution. Second,
    subscribe to the pgsql-hackers and pgsql-patches mailing lists. Third,
    submit high-quality patches to pgsql-patches.
    
@@ -344,7 +344,7 @@
           Of course, MySQL doesn't have any of the features mentioned in
           the Features section above. We are built for flexibility and
           features, though we continue to improve performance through
-          profiling and source code analysis. There is an interesting web
+          profiling and source code analysis. There is an interesting Web
           page comparing PostgreSQL to MySQL at
           http://openacs.org/why-not-mysql.html
           We handle each user connection by creating a Unix process.
@@ -403,7 +403,7 @@
    
    There is also one at http://www.phone.net/home/mwm/hotlist/.
    
-   For web integration, PHP is an excellent interface. It is at
+   For Web integration, PHP is an excellent interface. It is at
    http://www.php.net
    
    For complex cases, many use the Perl interface and CGI.pm.
@@ -416,7 +416,7 @@
     
    We have a nice graphical user interface called pgaccess, which is
    shipped as part of the distribution. Pgaccess also has a report
-   generator. The web page is http://www.flex.ro/pgaccess
+   generator. The Web page is http://www.flex.ro/pgaccess
    
    We also include ecpg, which is an embedded SQL query language
    interface for C.
