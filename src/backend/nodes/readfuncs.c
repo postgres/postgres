@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.166 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.167 2004/05/06 14:01:33 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -99,17 +99,17 @@
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = nodeRead(true)
+	local_node->fldname = nodeRead(NULL, 0)
 
 /* Read an integer-list field */
 #define READ_INTLIST_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = toIntList(nodeRead(true))
+	local_node->fldname = toIntList(nodeRead(NULL, 0))
 
 /* Read an OID-list field */
 #define READ_OIDLIST_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = toOidList(nodeRead(true))
+	local_node->fldname = toOidList(nodeRead(NULL, 0))
 
 /* Routine exit */
 #define READ_DONE() \

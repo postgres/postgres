@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.233 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.234 2004/05/06 14:01:33 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -130,7 +130,6 @@ _outToken(StringInfo str, char *s)
 	/* These characters only need to be quoted at the start of the string */
 	if (*s == '<' ||
 		*s == '\"' ||
-		*s == '@' ||
 		isdigit((unsigned char) *s) ||
 		((*s == '+' || *s == '-') &&
 		 (isdigit((unsigned char) s[1]) || s[1] == '.')))

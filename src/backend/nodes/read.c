@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.39 2004/01/09 03:07:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.40 2004/05/06 14:01:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,7 +20,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <errno.h>
 
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"
@@ -51,7 +50,7 @@ stringToNode(char *str)
 
 	pg_strtok_ptr = str;		/* point pg_strtok at the string to read */
 
-	retval = nodeRead(true);	/* do the reading */
+	retval = nodeRead(NULL, 0);	/* do the reading */
 
 	pg_strtok_ptr = save_strtok;
 
@@ -184,9 +183,8 @@ debackslash(char *token, int length)
 
 #define RIGHT_PAREN (1000000 + 1)
 #define LEFT_PAREN	(1000000 + 2)
-#define NODE_SYM	(1000000 + 3)
-#define AT_SYMBOL	(1000000 + 4)
-#define ATOM_TOKEN	(1000000 + 5)
+#define LEFT_BRACE	(1000000 + 3)
+#define OTHER_TOKEN	(1000000 + 4)
 
 /*
  * nodeTokenType -
@@ -194,7 +192,7 @@ debackslash(char *token, int length)
  *	  It returns one of the following valid NodeTags:
  *		T_Integer, T_Float, T_String, T_BitString
  *	  and some of its own:
- *		RIGHT_PAREN, LEFT_PAREN, NODE_SYM, AT_SYMBOL, ATOM_TOKEN
+ *		RIGHT_PAREN, LEFT_PAREN, LEFT_BRACE, OTHER_TOKEN
  *
  *	  Assumption: the ascii representation is legal
  */
@@ -245,15 +243,13 @@ nodeTokenType(char *token, int length)
 	else if (*token == ')')
 		retval = RIGHT_PAREN;
 	else if (*token == '{')
-		retval = NODE_SYM;
-	else if (*token == '@' && length == 1)
-		retval = AT_SYMBOL;
+		retval = LEFT_BRACE;
 	else if (*token == '\"' && length > 1 && token[length - 1] == '\"')
 		retval = T_String;
 	else if (*token == 'b')
 		retval = T_BitString;
 	else
-		retval = ATOM_TOKEN;
+		retval = OTHER_TOKEN;
 	return retval;
 }
 
@@ -266,77 +262,70 @@ nodeTokenType(char *token, int length)
  *	* Value token nodes (integers, floats, or strings);
  *	* General nodes (via parseNodeString() from readfuncs.c);
  *	* Lists of the above.
+ * The return value is declared void *, not Node *, to avoid having to
+ * cast it explicitly in callers that assign to fields of different types.
+ *
+ * External callers should always pass NULL/0 for the arguments.  Internally
+ * a non-NULL token may be passed when the upper recursion level has already
+ * scanned the first token of a node's representation.
  *
  * We assume pg_strtok is already initialized with a string to read (hence
  * this should only be invoked from within a stringToNode operation).
- * Any callers should set read_car_only to true.
  */
 void *
-nodeRead(bool read_car_only)
+nodeRead(char *token, int tok_len)
 {
-	char	   *token;
-	int			tok_len;
+	Node	   *result;
 	NodeTag		type;
-	Node	   *this_value,
-			   *return_value;
-	bool		make_dotted_pair_cell = false;
 
-	token = pg_strtok(&tok_len);
+	if (token == NULL)			/* need to read a token? */
+	{
+		token = pg_strtok(&tok_len);
 
-	if (token == NULL)
-		return NULL;
+		if (token == NULL)		/* end of input */
+			return NULL;
+	}
 
 	type = nodeTokenType(token, tok_len);
 
 	switch (type)
 	{
-		case NODE_SYM:
-			this_value = parseNodeString();
+		case LEFT_BRACE:
+			result = parseNodeString();
 			token = pg_strtok(&tok_len);
 			if (token == NULL || token[0] != '}')
 				elog(ERROR, "did not find '}' at end of input node");
-			if (!read_car_only)
-				make_dotted_pair_cell = true;
-			else
-				make_dotted_pair_cell = false;
 			break;
 		case LEFT_PAREN:
-			if (!read_car_only)
 			{
-				List	   *l = makeNode(List);
+				List	   *l = NIL;
 
-				lfirst(l) = nodeRead(false);
-				lnext(l) = nodeRead(false);
-				this_value = (Node *) l;
+				for (;;)
+				{
+					token = pg_strtok(&tok_len);
+					if (token == NULL)
+						elog(ERROR, "unterminated List structure");
+					if (token[0] == ')')
+						break;
+					l = lappend(l, nodeRead(token, tok_len));
+				}
+				result = (Node *) l;
+				break;
 			}
-			else
-				this_value = nodeRead(false);
-			break;
 		case RIGHT_PAREN:
-			this_value = NULL;
+			elog(ERROR, "unexpected right parenthesis");
+			result = NULL;	/* keep compiler happy */
 			break;
-		case AT_SYMBOL:
-			this_value = NULL;
-			break;
-		case ATOM_TOKEN:
+		case OTHER_TOKEN:
 			if (tok_len == 0)
 			{
-				/* must be "<>" */
-				this_value = NULL;
-
-				/*
-				 * It might be NULL but it is an atom!
-				 */
-				if (read_car_only)
-					make_dotted_pair_cell = false;
-				else
-					make_dotted_pair_cell = true;
+				/* must be "<>" --- represents a null pointer */
+				result = NULL;
 			}
 			else
 			{
-				/* !attention! result is not a Node.  Use with caution. */
-				this_value = (Node *) debackslash(token, tok_len);
-				make_dotted_pair_cell = true;
+				elog(ERROR, "unrecognized token: \"%.*s\"", tok_len, token);
+				result = NULL;	/* keep compiler happy */
 			}
 			break;
 		case T_Integer:
@@ -345,8 +334,7 @@ nodeRead(bool read_car_only)
 			 * we know that the token terminates on a char atol will stop
 			 * at
 			 */
-			this_value = (Node *) makeInteger(atol(token));
-			make_dotted_pair_cell = true;
+			result = (Node *) makeInteger(atol(token));
 			break;
 		case T_Float:
 			{
@@ -354,14 +342,12 @@ nodeRead(bool read_car_only)
 
 				memcpy(fval, token, tok_len);
 				fval[tok_len] = '\0';
-				this_value = (Node *) makeFloat(fval);
-				make_dotted_pair_cell = true;
+				result = (Node *) makeFloat(fval);
 			}
 			break;
 		case T_String:
 			/* need to remove leading and trailing quotes, and backslashes */
-			this_value = (Node *) makeString(debackslash(token + 1, tok_len - 2));
-			make_dotted_pair_cell = true;
+			result = (Node *) makeString(debackslash(token + 1, tok_len - 2));
 			break;
 		case T_BitString:
 			{
@@ -370,27 +356,14 @@ nodeRead(bool read_car_only)
 				/* skip leading 'b' */
 				strncpy(val, token + 1, tok_len - 1);
 				val[tok_len - 1] = '\0';
-				this_value = (Node *) makeBitString(val);
+				result = (Node *) makeBitString(val);
 				break;
 			}
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) type);
-			this_value = NULL;	/* keep compiler happy */
+			result = NULL;	/* keep compiler happy */
 			break;
 	}
-	if (make_dotted_pair_cell)
-	{
-		List	   *l = makeNode(List);
 
-		lfirst(l) = this_value;
-
-		if (!read_car_only)
-			lnext(l) = nodeRead(false);
-		else
-			lnext(l) = NULL;
-		return_value = (Node *) l;
-	}
-	else
-		return_value = this_value;
-	return return_value;
+	return (void *) result;
 }
