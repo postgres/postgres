@@ -2,7 +2,12 @@
 -- ERRORS
 --
 -- bad in postquel, but ok in postsql
-select 1
+select 1;
+ ?column? 
+----------
+        1
+(1 row)
+
 --
 -- UNSUPPORTED STUFF
  
@@ -16,10 +21,14 @@ select 1
 -- RETRIEVE
  
 -- missing relation name 
-select
+select;
+ERROR:  parser: parse error at or near ";" at character 7
 -- no such relation 
 select * from nonesuch;
-ERROR:  parser: parse error at or near "select" at character 10
+ERROR:  Relation "nonesuch" does not exist
+-- missing target list
+select from pg_database;
+ERROR:  parser: parse error at or near "from" at character 8
 -- bad name in target list
 select nonesuch from pg_database;
 ERROR:  Attribute "nonesuch" not found

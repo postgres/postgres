@@ -3,7 +3,7 @@
 --
 
 -- bad in postquel, but ok in postsql
-select 1
+select 1;
 
 
 --
@@ -20,11 +20,13 @@ select 1
 -- RETRIEVE
  
 -- missing relation name 
-select
+select;
 
 -- no such relation 
 select * from nonesuch;
 
+-- missing target list
+select from pg_database;
 -- bad name in target list
 select nonesuch from pg_database;
 -- bad attribute name on lhs of operator
