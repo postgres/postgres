@@ -1124,7 +1124,7 @@ NINormalizeWord(IspellDict * Conf, char *word)
 {
 	char	  **res = NormalizeSubWord(Conf, word, 0);
 	TSLexeme *lcur=NULL, *lres=NULL;
-	u_int16_t NVariant=1;
+	uint16	  NVariant=1;
 
 	if (res) {
 		char **ptr = res;
