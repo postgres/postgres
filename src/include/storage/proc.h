@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.53 2001/11/05 17:46:35 momjian Exp $
+ * $Id: proc.h,v 1.54 2001/11/06 00:38:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,10 +93,12 @@ extern PROC *MyProc;
  * in each set for identification purposes.)
  *
  * PROC_SEM_MAP_ENTRIES is the number of semaphore sets we need to allocate
- * to keep track of up to maxBackends backends.
+ * to keep track of up to maxBackends backends.  Note that we need one extra
+ * semaphore (see storage/lmgr/proc.c), so the computation may look wrong,
+ * but it's right.
  */
 #define  PROC_NSEMS_PER_SET		16
-#define  PROC_SEM_MAP_ENTRIES(maxBackends)	(((maxBackends)-1)/PROC_NSEMS_PER_SET+1)
+#define  PROC_SEM_MAP_ENTRIES(maxBackends)	((maxBackends)/PROC_NSEMS_PER_SET+1)
 
 typedef struct
 {
