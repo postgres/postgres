@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.2 2001/10/25 05:49:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.3 2001/12/19 20:28:41 tgl Exp $
  *
  * Copyright (c) 2001  Tatsuo Ishii
  *
@@ -23,6 +23,7 @@
  */
 
 #include "postgres.h"
+
 #include "fmgr.h"
 #include "access/heapam.h"
 #include "access/transam.h"
@@ -48,20 +49,21 @@ pgstattuple(PG_FUNCTION_ARGS)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	BlockNumber nblocks;
-	BlockNumber block = InvalidBlockNumber;
+	BlockNumber block = 0;		/* next block to count free space in */
+	BlockNumber tupblock;
+	Buffer		buffer;
 	double		table_len;
 	uint64		tuple_len = 0;
 	uint64		dead_tuple_len = 0;
-	uint32		tuple_count = 0;
-	uint32		dead_tuple_count = 0;
+	uint64		tuple_count = 0;
+	uint64		dead_tuple_count = 0;
 	double		tuple_percent;
 	double		dead_tuple_percent;
 
-	Buffer		buffer = InvalidBuffer;
 	uint64		free_space = 0; /* free/reusable space in bytes */
 	double		free_percent;	/* free/reusable space in % */
 
-	rel = heap_openr(NameStr(*p), NoLock);
+	rel = heap_openr(NameStr(*p), AccessShareLock);
 	nblocks = RelationGetNumberOfBlocks(rel);
 	scan = heap_beginscan(rel, false, SnapshotAny, 0, NULL);
 
@@ -78,17 +80,33 @@ pgstattuple(PG_FUNCTION_ARGS)
 			dead_tuple_count++;
 		}
 
-		if (!BlockNumberIsValid(block) ||
-			block != BlockIdGetBlockNumber(&tuple->t_self.ip_blkid))
+		/*
+		 * To avoid physically reading the table twice, try to do the
+		 * free-space scan in parallel with the heap scan.  However,
+		 * heap_getnext may find no tuples on a given page, so we cannot
+		 * simply examine the pages returned by the heap scan.
+		 */
+		tupblock = BlockIdGetBlockNumber(&tuple->t_self.ip_blkid);
+
+		while (block <= tupblock)
 		{
-			block = BlockIdGetBlockNumber(&tuple->t_self.ip_blkid);
 			buffer = ReadBuffer(rel, block);
 			free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
 			ReleaseBuffer(buffer);
+			block++;
 		}
 	}
 	heap_endscan(scan);
-	heap_close(rel, NoLock);
+
+	while (block < nblocks)
+	{
+		buffer = ReadBuffer(rel, block);
+		free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
+		ReleaseBuffer(buffer);
+		block++;
+	}
+
+	heap_close(rel, AccessShareLock);
 
 	table_len = (double) nblocks *BLCKSZ;
 
@@ -105,20 +123,20 @@ pgstattuple(PG_FUNCTION_ARGS)
 		free_percent = (double) free_space *100.0 / table_len;
 	}
 
-	elog(NOTICE, "physical length: %.2fMB live tuples: %u (%.2fMB, %.2f%%) dead tuples: %u (%.2fMB, %.2f%%) free/reusable space: %.2fMB (%.2f%%) overhead: %.2f%%",
+	elog(NOTICE, "physical length: %.2fMB live tuples: %.0f (%.2fMB, %.2f%%) dead tuples: %.0f (%.2fMB, %.2f%%) free/reusable space: %.2fMB (%.2f%%) overhead: %.2f%%",
 
-		 table_len / 1024 / 1024,		/* phsical length in MB */
+		 table_len / (1024 * 1024),		/* physical length in MB */
 
-		 tuple_count,			/* number of live tuples */
-		 (double) tuple_len / 1024 / 1024,		/* live tuples in MB */
+		 (double) tuple_count,	/* number of live tuples */
+		 (double) tuple_len / (1024 * 1024),		/* live tuples in MB */
 		 tuple_percent,			/* live tuples in % */
 
-		 dead_tuple_count,		/* number of dead tuples */
-		 (double) dead_tuple_len / 1024 / 1024, /* dead tuples in MB */
+		 (double) dead_tuple_count,	/* number of dead tuples */
+		 (double) dead_tuple_len / (1024 * 1024), /* dead tuples in MB */
 		 dead_tuple_percent,	/* dead tuples in % */
 
-		 (double) free_space / 1024 / 1024,		/* free/available space in
-												 * MB */
+		 (double) free_space / (1024 * 1024), /* free/available space in
+											   * MB */
 
 		 free_percent,			/* free/available space in % */
 

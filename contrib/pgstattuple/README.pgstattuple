@@ -15,7 +15,7 @@ NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 32
        18.75
 (1 row)
 
-   Above example shows tellers tables includes 18.75% dead tuples.
+   Above example shows tellers table includes 18.75% dead tuples.
 
    physical length	physical size of the table in MB
    live tuples		information on the live tuples
@@ -40,7 +40,7 @@ NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 32
 
 4. Notes
 
-   pgstattuple does not lock the target table at all. So concurrent
+   pgstattuple acquires only a read lock on the table. So concurrent
    update may affect the result.
 
    pgstattuple judges a tuple is "dead" if HeapTupleSatisfiesNow()
