@@ -6316,7 +6316,6 @@ trap 'rm -fr `echo "GNUmakefile
 	interfaces/libpgtcl/Makefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global
-	interfaces/perl5/Makefile.PL
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
@@ -6479,7 +6478,6 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	interfaces/libpgtcl/Makefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global
-	interfaces/perl5/Makefile.PL
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh

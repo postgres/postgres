@@ -891,7 +891,6 @@ AC_OUTPUT(
 	interfaces/libpgtcl/Makefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global
-	interfaces/perl5/Makefile.PL
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh

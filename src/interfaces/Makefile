@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.18 1998/10/16 15:31:04 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.19 1998/10/18 02:33:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,10 @@ SRCDIR= ..
 include $(SRCDIR)/Makefile.global
 
 
-PERL_CLEAN := DO_NOTHING
+# Note: the klugery for perl5 is to ensure that the perl5 shared lib
+# gets built with the correct path to the installed location of libpq
+# during "make install", but is built against the local tree during
+# ordinary building and testing.
 
 .DEFAULT all install clean dep depend distclean:
 	$(MAKE) -C libpq $@
@@ -29,9 +32,12 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
 ifeq ($(USE_PERL), true)
-	-$(MAKE) -C perl5 $(PERL_CLEAN)
-	$(MAKE) perl5/Makefile
-	$(MAKE) -C perl5 $@
+	if [ "$@" = "install" ]; then \
+		$(MAKE) $(MFLAGS) install-perl5; \
+	else \
+		$(MAKE) $(MFLAGS) perl5/Makefile; \
+		$(MAKE) $(MFLAGS) -C perl5 $@; \
+	fi
 endif
 ifeq ($(USE_ODBC), true)
 	$(MAKE) -C odbc $@
@@ -39,3 +45,11 @@ endif
 
 perl5/Makefile: perl5/Makefile.PL
 	cd perl5 && perl Makefile.PL
+
+install-perl5:
+	$(MAKE) -C perl5 clean
+	cd perl5 && POSTGRES_HOME="$(POSTGRESDIR)" perl Makefile.PL
+	$(MAKE) -C perl5 install
+	rm -f perl5/Makefile
+
+.PHONY: install-perl5
