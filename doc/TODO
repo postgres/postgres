@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Sep 27 10:17:45 EDT 2004
+Last updated:		Thu Oct  7 20:36:17 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -766,6 +766,12 @@ Miscellaneous
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Use a phantom command counter for nested subtransactions to reduce
   tuple overhead
+* Consider parallel processing a single query
+
+  This would involve using multiple threads or processes to do optimization, 
+  sorting, or execution of single query.  The major advantage of such a 
+  feature would be to allow multiple CPUs to work together to process a 
+  single query.
 
 
 Source Code
