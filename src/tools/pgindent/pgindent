@@ -855,9 +855,8 @@ do
 				{
 					if ((getline saved_lines[++saved_len]) == 0)
 						break;
-					if (saved_lines[saved_len] ~ /\);?$/ ||
-					    saved_lines[saved_len] ~ /^[^ 	]/ ||
-					    saved_lines[saved_len] ~ /^$/)
+					if (saved_lines[saved_len] ~ /^[^ 	]/ ||
+					if (saved_lines[saved_len] !~ /,$/)
 						break;
 				}
 				for (i=1; i <= saved_len; i++)
