@@ -32,6 +32,7 @@ if (defined($opt_help) || (scalar(@ARGV) < 2)) {
 
 my $master = $ARGV[0] || "master";
 my $slave = $ARGV[1] || "slave";
+my $tables = $#ARGV < 2 ? undef : { map {($_, undef)} @ARGV[2..$#ARGV] };
 my $server = 0;
 
 my $minfo = "dbname=$master";
@@ -56,7 +57,7 @@ SyncSync($mconn, $sconn);
 my $outf = new IO::File;
 open $outf, ">$snapshot";
 print "\n>>>>>>>>>>>>> Prepare Snapshot\n\n" if ($verbose);
-$res = PrepareSnapshot($mconn, $outf, $server);
+$res = PrepareSnapshot($mconn, $outf, $server, $tables);
 close $outf;
 die "\n>>>>>>>>>>>>> ERROR\n" if $res < 0;
 if ($res == 0)
@@ -68,7 +69,7 @@ if ($res == 0)
 my $inpf = new IO::File;
 open $inpf, "<$snapshot";
 print "\n>>>>>>>>>>>>> Apply Snapshot\n\n" if ($verbose);
-$res = ApplySnapshot($sconn, $inpf);
+$res = ApplySnapshot($sconn, $inpf, $tables);
 close $inpf;
 die "\n>>>>>>>>>>>>> ERROR\n" if $res < 0;
 
