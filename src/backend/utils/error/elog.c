@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.156 2005/02/22 04:37:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.157 2005/02/27 01:02:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1630,7 +1630,18 @@ send_message_to_server_log(ErrorData *edata)
 #endif   /* WIN32 */
 	/* Write to stderr, if enabled */
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == Debug)
+	{
+#ifdef WIN32
+		/* In a win32 service environment, there is no usable stderr. Capture
+		   anything going there and write it to the eventlog instead.
+		   If stderr redirection is active, leave it to stderr because the
+		   logger will capture it to a file. */
+		if ((!Redirect_stderr || am_syslogger) && pgwin32_is_service())
+			write_eventlog(EVENTLOG_ERROR_TYPE, buf.data);
+		else
+#endif
 		fprintf(stderr, "%s", buf.data);
+	}
 
 	/* If in the syslogger process, try to write messages direct to file */
 	if (am_syslogger)
