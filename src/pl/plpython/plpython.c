@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.34 2003/06/25 01:18:58 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.35 2003/07/25 23:37:30 tgl Exp $
  *
  *********************************************************************
  */
@@ -333,7 +333,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		PLy_init_all();
 
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "plpython: Unable to connect to SPI manager");
+		elog(ERROR, "could not connect to SPI manager");
 
 	CALL_LEVEL_INC();
 	is_trigger = CALLED_AS_TRIGGER(fcinfo);
@@ -420,13 +420,13 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 	 * Disconnect from SPI manager
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "plpython: SPI_finish failed");
+		elog(ERROR, "SPI_finish failed");
 
 	if (plrv == NULL)
-		elog(FATAL, "Aiieee, PLy_procedure_call returned NULL");
+		elog(FATAL, "PLy_procedure_call returned NULL");
 
 	if (PLy_restart_in_progress)
-		elog(FATAL, "Aiieee, restart in progress not expected");
+		elog(FATAL, "restart in progress not expected");
 
 	/*
 	 * return of None means we're happy with the tuple
@@ -436,7 +436,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		char	   *srv;
 
 		if (!PyString_Check(plrv))
-			elog(ERROR, "plpython: Expected trigger to return None or a String");
+			elog(ERROR, "expected trigger to return None or a String");
 
 		srv = PyString_AsString(plrv);
 		if (strcasecmp(srv, "SKIP") == 0)
@@ -449,7 +449,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				(TRIGGER_FIRED_BY_UPDATE(tdata->tg_event)))
 				rv = PLy_modify_tuple(proc, plargs, tdata, rv);
 			else
-				elog(WARNING, "plpython: Ignoring modified tuple in DELETE trigger");
+				elog(WARNING, "ignoring modified tuple in DELETE trigger");
 		}
 		else if (strcasecmp(srv, "OK"))
 		{
@@ -458,7 +458,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			 * surprising thing since i've written no documentation, so
 			 * accept a belated OK
 			 */
-			elog(ERROR, "plpython: Expected return to be 'SKIP' or 'MODIFY'");
+			elog(ERROR, "expected return to be \"SKIP\" or \"MODIFY\"");
 		}
 	}
 
@@ -520,16 +520,16 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	}
 
 	if ((plntup = PyDict_GetItemString(pltd, "new")) == NULL)
-		elog(ERROR, "plpython: TD[\"new\"] deleted, unable to modify tuple");
+		elog(ERROR, "TD[\"new\"] deleted, unable to modify tuple");
 	if (!PyDict_Check(plntup))
-		elog(ERROR, "plpython: TD[\"new\"] is not a dictionary object");
+		elog(ERROR, "TD[\"new\"] is not a dictionary object");
 	Py_INCREF(plntup);
 
 	plkeys = PyDict_Keys(plntup);
 	natts = PyList_Size(plkeys);
 
 	if (natts != proc->result.out.r.natts)
-		elog(ERROR, "plpython: TD[\"new\"] has an incorrect number of keys.");
+		elog(ERROR, "TD[\"new\"] has an incorrect number of keys");
 
 	modattrs = palloc(natts * sizeof(int));
 	modvalues = palloc(natts * sizeof(Datum));
@@ -550,17 +550,17 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 
 		platt = PyList_GetItem(plkeys, j);
 		if (!PyString_Check(platt))
-			elog(ERROR, "plpython: attribute is not a string");
+			elog(ERROR, "attribute is not a string");
 		attn = modattrs[j] = SPI_fnumber(tupdesc, PyString_AsString(platt));
 
 		if (attn == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "plpython: invalid attribute `%s' in tuple.",
+			elog(ERROR, "invalid attribute \"%s\" in tuple",
 				 PyString_AsString(platt));
 		atti = attn - 1;
 
 		plval = PyDict_GetItem(plntup, platt);
 		if (plval == NULL)
-			elog(FATAL, "plpython: interpreter is probably corrupted");
+			elog(FATAL, "python interpreter is probably corrupted");
 
 		Py_INCREF(plval);
 
@@ -594,7 +594,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	pfree(modnulls);
 
 	if (rtup == NULL)
-		elog(ERROR, "plpython: SPI_modifytuple failed -- error %d", SPI_result);
+		elog(ERROR, "SPI_modifytuple failed -- error %d", SPI_result);
 
 	Py_DECREF(plntup);
 	Py_DECREF(plkeys);
@@ -636,7 +636,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 
 	pltdata = PyDict_New();
 	if (!pltdata)
-		PLy_elog(ERROR, "Unable to build arguments for trigger procedure");
+		PLy_elog(ERROR, "could not build arguments for trigger procedure");
 
 	pltname = PyString_FromString(tdata->tg_trigger->tgname);
 	PyDict_SetItemString(pltdata, "name", pltname);
@@ -786,14 +786,14 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 	 * it).
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "plpython: SPI_finish failed");
+		elog(ERROR, "SPI_finish failed");
 
 	if (plrv == NULL)
 	{
-		elog(FATAL, "Aiieee, PLy_procedure_call returned NULL");
+		elog(FATAL, "PLy_procedure_call returned NULL");
 #ifdef NOT_USED
 		if (!PLy_restart_in_progress)
-			PLy_elog(ERROR, "plpython: Function \"%s\" failed.", proc->proname);
+			PLy_elog(ERROR, "function \"%s\" failed", proc->proname);
 
 		/*
 		 * FIXME is this dead code?  i'm pretty sure it is for unnested
@@ -853,7 +853,7 @@ PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 	{
 		Py_XDECREF(rv);
 		if (!PLy_restart_in_progress)
-			PLy_elog(ERROR, "Call of function `%s' failed.", proc->proname);
+			PLy_elog(ERROR, "function \"%s\" failed", proc->proname);
 		RAISE_EXC(1);
 	}
 
@@ -951,13 +951,13 @@ PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 							 ObjectIdGetDatum(fn_oid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "plpython: cache lookup for procedure %u failed", fn_oid);
+		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
 	rv = snprintf(key, sizeof(key), "%u%s",
 				  fn_oid,
 				  is_trigger ? "_trigger" : "");
 	if ((rv >= sizeof(key)) || (rv < 0))
-		elog(FATAL, "plpython: Buffer overrun in %s:%d", __FILE__, __LINE__);
+		elog(ERROR, "key too long");
 
 	plproc = PyDict_GetItemString(PLy_procedure_cache, key);
 
@@ -965,13 +965,13 @@ PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 	{
 		Py_INCREF(plproc);
 		if (!PyCObject_Check(plproc))
-			elog(FATAL, "plpython: Expected a PyCObject, didn't get one");
+			elog(FATAL, "expected a PyCObject, didn't get one");
 
 		mark();
 
 		proc = PyCObject_AsVoidPtr(plproc);
 		if (proc->me != plproc)
-			elog(FATAL, "plpython: Aiieee, proc->me != plproc");
+			elog(FATAL, "proc->me != plproc");
 		/* did we find an up-to-date cache entry? */
 		if (proc->fn_xmin != HeapTupleHeaderGetXmin(procTup->t_data) ||
 			proc->fn_cmin != HeapTupleHeaderGetCmin(procTup->t_data))
@@ -1013,7 +1013,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 				  fcinfo->flinfo->fn_oid,
 				  is_trigger ? "_trigger" : "");
 	if ((rv >= sizeof(procName)) || (rv < 0))
-		elog(FATAL, "plpython: Procedure name would overrun buffer");
+		elog(ERROR, "procedure name would overrun buffer");
 
 	proc = PLy_malloc(sizeof(PLyProcedure));
 	proc->proname = PLy_malloc(strlen(NameStr(procStruct->proname)) + 1);
@@ -1047,19 +1047,21 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 	{
 		HeapTuple	rvTypeTup;
 		Form_pg_type rvTypeStruct;
-		Datum		rvDatum;
 
-		rvDatum = ObjectIdGetDatum(procStruct->prorettype);
-		rvTypeTup = SearchSysCache(TYPEOID, rvDatum, 0, 0, 0);
+		rvTypeTup = SearchSysCache(TYPEOID,
+								   ObjectIdGetDatum(procStruct->prorettype),
+								   0, 0, 0);
 		if (!HeapTupleIsValid(rvTypeTup))
-			elog(ERROR, "plpython: cache lookup for type \"%u\" failed",
+			elog(ERROR, "cache lookup failed for type %u",
 				 procStruct->prorettype);
 
 		rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
 		if (rvTypeStruct->typrelid == InvalidOid)
 			PLy_output_datum_func(&proc->result, rvTypeStruct);
 		else
-			elog(ERROR, "plpython: tuple return types not supported, yet");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("tuple return types are not supported yet")));
 
 		ReleaseSysCache(rvTypeTup);
 	}
@@ -1084,12 +1086,12 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 	{
 		HeapTuple	argTypeTup;
 		Form_pg_type argTypeStruct;
-		Datum		argDatum;
 
-		argDatum = ObjectIdGetDatum(procStruct->proargtypes[i]);
-		argTypeTup = SearchSysCache(TYPEOID, argDatum, 0, 0, 0);
+		argTypeTup = SearchSysCache(TYPEOID,
+									ObjectIdGetDatum(procStruct->proargtypes[i]),
+									0, 0, 0);
 		if (!HeapTupleIsValid(argTypeTup))
-			elog(ERROR, "plpython: cache lookup for type \"%u\" failed",
+			elog(ERROR, "cache lookup failed for type %u",
 				 procStruct->proargtypes[i]);
 		argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
@@ -1164,7 +1166,7 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 		 */
 		clen = snprintf(call, sizeof(call), "%s()", proc->pyname);
 		if ((clen < 0) || (clen >= sizeof(call)))
-			elog(ERROR, "plpython: string would overflow buffer.");
+			elog(ERROR, "string would overflow buffer");
 		proc->code = Py_CompileString(call, "<string>", Py_eval_input);
 		if ((proc->code != NULL) && (!PyErr_Occurred()))
 			return;
@@ -1172,7 +1174,7 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	else
 		Py_XDECREF(crv);
 
-	PLy_elog(ERROR, "Unable to compile function %s", proc->proname);
+	PLy_elog(ERROR, "could not compile function \"%s\"", proc->proname);
 }
 
 char *
@@ -1193,8 +1195,7 @@ PLy_procedure_munge_source(const char *name, const char *src)
 
 	mrc = PLy_malloc(mlen);
 	plen = snprintf(mrc, mlen, "def %s():\n\t", name);
-	if ((plen < 0) || (plen >= mlen))
-		elog(FATAL, "Aiieee, impossible buffer overrun (or snprintf failure)");
+	Assert(plen >= 0 && plen < mlen);
 
 	sp = src;
 	mp = mrc + plen;
@@ -1214,7 +1215,7 @@ PLy_procedure_munge_source(const char *name, const char *src)
 	*mp = '\0';
 
 	if (mp > (mrc + mlen))
-		elog(FATAL, "plpython: Buffer overrun in PLy_munge_source");
+		elog(FATAL, "buffer overrun in PLy_munge_source");
 
 	return mrc;
 }
@@ -1253,12 +1254,11 @@ void
 PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 {
 	int			i;
-	Datum		datum;
 
 	enter();
 
 	if (arg->is_rel == 0)
-		elog(FATAL, "plpython: PLyTypeInfo struct is initialized for a Datum");
+		elog(ERROR, "PLyTypeInfo struct is initialized for a Datum");
 
 	arg->is_rel = 1;
 	arg->in.r.natts = desc->natts;
@@ -1269,16 +1269,12 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
 
-		datum = ObjectIdGetDatum(desc->attrs[i]->atttypid);
-		typeTup = SearchSysCache(TYPEOID, datum, 0, 0, 0);
+		typeTup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-		{
-			char	   *attname = NameStr(desc->attrs[i]->attname);
-
-			elog(ERROR, "plpython: Cache lookup for attribute `%s' type `%u' failed",
-				 attname, desc->attrs[i]->atttypid);
-		}
-
+			elog(ERROR, "cache lookup failed for type %u",
+				 desc->attrs[i]->atttypid);
 		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 		PLy_input_datum_func2(&(arg->in.r.atts[i]),
@@ -1293,12 +1289,11 @@ void
 PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 {
 	int			i;
-	Datum		datum;
 
 	enter();
 
 	if (arg->is_rel == 0)
-		elog(FATAL, "plpython: PLyTypeInfo struct is initialized for a Datum");
+		elog(ERROR, "PLyTypeInfo struct is initialized for a Datum");
 
 	arg->is_rel = 1;
 	arg->out.r.natts = desc->natts;
@@ -1309,16 +1304,12 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
 
-		datum = ObjectIdGetDatum(desc->attrs[i]->atttypid);
-		typeTup = SearchSysCache(TYPEOID, datum, 0, 0, 0);
+		typeTup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
+								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-		{
-			char	   *attname = NameStr(desc->attrs[i]->attname);
-
-			elog(ERROR, "plpython: Cache lookup for attribute `%s' type `%u' failed",
-				 attname, desc->attrs[i]->atttypid);
-		}
-
+			elog(ERROR, "cache lookup failed for type %u",
+				 desc->attrs[i]->atttypid);
 		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 		PLy_output_datum_func2(&(arg->out.r.atts[i]), typeStruct);
@@ -1333,7 +1324,7 @@ PLy_output_datum_func(PLyTypeInfo * arg, Form_pg_type typeStruct)
 	enter();
 
 	if (arg->is_rel == 1)
-		elog(FATAL, "plpython: PLyTypeInfo struct is initialized for a Tuple");
+		elog(ERROR, "PLyTypeInfo struct is initialized for a Tuple");
 	arg->is_rel = 0;
 	PLy_output_datum_func2(&(arg->out.d), typeStruct);
 }
@@ -1354,7 +1345,7 @@ PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, Form_pg_type typeStruct)
 	enter();
 
 	if (arg->is_rel == 1)
-		elog(FATAL, "plpython: PLyTypeInfo struct is initialized for Tuple");
+		elog(ERROR, "PLyTypeInfo struct is initialized for Tuple");
 	arg->is_rel = 0;
 	PLy_input_datum_func2(&(arg->in.d), typeOid, typeStruct);
 }
@@ -1476,11 +1467,11 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 	enter();
 
 	if (info->is_rel != 1)
-		elog(FATAL, "plpython: PLyTypeInfo structure describes a datum.");
+		elog(ERROR, "PLyTypeInfo structure describes a datum");
 
 	dict = PyDict_New();
 	if (dict == NULL)
-		PLy_elog(ERROR, "Unable to create tuple dictionary.");
+		PLy_elog(ERROR, "could not create tuple dictionary");
 
 	SAVE_EXC();
 	if (TRAP_EXC())
@@ -1915,7 +1906,8 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 		Py_XDECREF(optr);
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_spi_error,
-							"Unknown error in PLy_spi_prepare.");
+							"Unknown error in PLy_spi_prepare");
+		/* XXX this oughta be replaced with errcontext mechanism */
 		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
@@ -2191,7 +2183,7 @@ PLy_spi_execute_query(char *query, int limit)
 		RESTORE_EXC();
 		if ((!PLy_restart_in_progress) && (!PyErr_Occurred()))
 			PyErr_SetString(PLy_exc_spi_error,
-							"Unknown error in PLy_spi_execute_query.");
+							"Unknown error in PLy_spi_execute_query");
 		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
@@ -2318,17 +2310,17 @@ PLy_init_all(void)
 	enter();
 
 	if (init_active)
-		elog(FATAL, "plpython: Initialization of language module failed.");
+		elog(FATAL, "initialization of language module failed");
 	init_active = 1;
 
 	Py_Initialize();
 	PLy_init_interp();
 	PLy_init_plpy();
 	if (PyErr_Occurred())
-		PLy_elog(FATAL, "Untrapped error in initialization.");
+		PLy_elog(FATAL, "untrapped error in initialization");
 	PLy_procedure_cache = PyDict_New();
 	if (PLy_procedure_cache == NULL)
-		PLy_elog(ERROR, "Unable to create procedure cache.");
+		PLy_elog(ERROR, "could not create procedure cache");
 
 	PLy_first_call = 0;
 
@@ -2344,14 +2336,14 @@ PLy_init_interp(void)
 
 	mainmod = PyImport_AddModule("__main__");
 	if ((mainmod == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to import '__main__' module.");
+		PLy_elog(ERROR, "could not import \"__main__\" module.");
 	Py_INCREF(mainmod);
 	PLy_interp_globals = PyModule_GetDict(mainmod);
 	PLy_interp_safe_globals = PyDict_New();
 	PyDict_SetItemString(PLy_interp_globals, "GD", PLy_interp_safe_globals);
 	Py_DECREF(mainmod);
 	if ((PLy_interp_globals == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to initialize globals.");
+		PLy_elog(ERROR, "could not initialize globals");
 }
 
 void
@@ -2389,7 +2381,7 @@ PLy_init_plpy(void)
 	plpy_mod = PyImport_AddModule("plpy");
 	PyDict_SetItemString(main_dict, "plpy", plpy_mod);
 	if (PyErr_Occurred())
-		elog(ERROR, "Unable to init plpy.");
+		elog(ERROR, "could not init plpy");
 }
 
 /* the python interface to the elog function
@@ -2450,7 +2442,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 	enter();
 
 	if (args == NULL)
-		elog(WARNING, "plpython, args is NULL in %s", __FUNCTION__);
+		elog(WARNING, "args is NULL");
 
 	so = PyObject_Str(args);
 	if ((so == NULL) || ((sv = PyString_AsString(so)) == NULL))
@@ -2492,7 +2484,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 		 * postgresql log, no?	whatever, this shouldn't happen so die
 		 * hideously.
 		 */
-		elog(FATAL, "plpython: Aiieee, elog threw an unknown exception!");
+		elog(FATAL, "elog threw an unknown exception");
 		RERAISE_EXC();
 	}
 
@@ -2576,18 +2568,18 @@ PLy_elog(int elevel, const char *fmt,...)
 		 */
 		PLy_restart_in_progress += 1;
 		PLy_free(emsg);
-		PLy_free(xmsg);
+		if (xmsg)
+			PLy_free(xmsg);
 		RERAISE_EXC();
 	}
 
-	if (xmsg)
-	{
-		elog(elevel, "plpython: %s\n%s", emsg, xmsg);
-		PLy_free(xmsg);
-	}
-	else
-		elog(elevel, "plpython: %s", emsg);
+	ereport(elevel,
+			(errmsg("plpython: %s", emsg),
+			 (xmsg) ? errdetail("%s", xmsg) : 0));
+
 	PLy_free(emsg);
+	if (xmsg)
+		PLy_free(xmsg);
 
 	leave();
 
@@ -2706,7 +2698,9 @@ PLy_malloc(size_t bytes)
 	void	   *ptr = malloc(bytes);
 
 	if (ptr == NULL)
-		elog(FATAL, "plpython: Memory exhausted.");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	return ptr;
 }
 
@@ -2716,7 +2710,9 @@ PLy_realloc(void *optr, size_t bytes)
 	void	   *nptr = realloc(optr, bytes);
 
 	if (nptr == NULL)
-		elog(FATAL, "plpython: Memory exhausted.");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	return nptr;
 }
 

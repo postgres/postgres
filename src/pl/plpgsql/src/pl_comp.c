@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.59 2003/07/01 21:47:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.60 2003/07/25 23:37:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -154,7 +154,7 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 							 ObjectIdGetDatum(funcOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "plpgsql: cache lookup for proc %u failed", funcOid);
+		elog(ERROR, "cache lookup failed for function %u", funcOid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
 	/*
@@ -301,15 +301,21 @@ do_compile(FunctionCallInfo fcinfo,
 			 * Check for a polymorphic returntype. If found, use the actual
 			 * returntype type from the caller's FuncExpr node, if we
 			 * have one.
+			 *
+			 * Note: errcode is FEATURE_NOT_SUPPORTED because it should always
+			 * work; if it doesn't we're in some context that fails to make
+			 * the info available.
 			 */
 			rettypeid = procStruct->prorettype;
 			if (rettypeid == ANYARRAYOID || rettypeid == ANYELEMENTOID)
 			{
 				rettypeid = get_fn_expr_rettype(fcinfo->flinfo);
 				if (!OidIsValid(rettypeid))
-					elog(ERROR, "could not determine actual return type "
-						 "for polymorphic function %s",
-						 plpgsql_error_funcname);
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("could not determine actual return type "
+									"for polymorphic function \"%s\"",
+									plpgsql_error_funcname)));
 			}
 
 			/*
@@ -325,8 +331,7 @@ do_compile(FunctionCallInfo fcinfo,
 									 ObjectIdGetDatum(rettypeid),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
-				elog(ERROR, "cache lookup for return type %u failed",
-					 rettypeid);
+				elog(ERROR, "cache lookup failed for type %u", rettypeid);
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID or RECORD */
@@ -337,12 +342,14 @@ do_compile(FunctionCallInfo fcinfo,
 					rettypeid == RECORDOID)
 					/* okay */ ;
 				else if (rettypeid == TRIGGEROID)
-					elog(ERROR, "plpgsql functions cannot return type %s"
-						 "\n\texcept when used as triggers",
-						 format_type_be(rettypeid));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("trigger functions may only be called as triggers")));
 				else
-					elog(ERROR, "plpgsql functions cannot return type %s",
-						 format_type_be(rettypeid));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("plpgsql functions cannot return type %s",
+									format_type_be(rettypeid))));
 			}
 
 			if (typeStruct->typrelid != InvalidOid ||
@@ -382,15 +389,16 @@ do_compile(FunctionCallInfo fcinfo,
 										 ObjectIdGetDatum(argtypeid),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
-					elog(ERROR, "cache lookup for argument type %u failed",
-						 argtypeid);
+					elog(ERROR, "cache lookup failed for type %u", argtypeid);
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 				/* Disallow pseudotype argument */
 				/* (note we already replaced ANYARRAY/ANYELEMENT) */
 				if (typeStruct->typtype == 'p')
-					elog(ERROR, "plpgsql functions cannot take type %s",
-						 format_type_be(argtypeid));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("plpgsql functions cannot take type %s",
+									format_type_be(argtypeid))));
 
 				if (typeStruct->typrelid != InvalidOid)
 				{
@@ -601,8 +609,7 @@ do_compile(FunctionCallInfo fcinfo,
 			break;
 
 		default:
-			elog(ERROR, "unknown function type %u in plpgsql_compile()",
-				 functype);
+			elog(ERROR, "unrecognized function typecode: %u", functype);
 			break;
 	}
 
@@ -634,7 +641,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 */
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
-		elog(ERROR, "plpgsql: parser returned %d ???", parse_rc);
+		elog(ERROR, "plpgsql parser returned %d", parse_rc);
 
 	plpgsql_scanner_finish();
 
@@ -864,8 +871,10 @@ plpgsql_parse_dblword(char *word)
 						return T_VARIABLE;
 					}
 				}
-				elog(ERROR, "row %s doesn't have a field %s",
-					 cp[0], cp[1]);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("row \"%s\" has no field \"%s\"",
+								cp[0], cp[1])));
 			}
 
 		default:
@@ -969,8 +978,10 @@ plpgsql_parse_tripword(char *word)
 						return T_VARIABLE;
 					}
 				}
-				elog(ERROR, "row %s.%s doesn't have a field %s",
-					 cp[0], cp[1], cp[2]);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("row \"%s.%s\" has no field \"%s\"",
+								cp[0], cp[1], cp[2])));
 			}
 
 		default:
@@ -1188,8 +1199,7 @@ plpgsql_parse_dblwordtype(char *word)
 							 ObjectIdGetDatum(attrStruct->atttypid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup for type %u of %s.%s failed",
-			 attrStruct->atttypid, cp[0], cp[1]);
+		elog(ERROR, "cache lookup failed for type %u", attrStruct->atttypid);
 
 	/*
 	 * Found that - build a compiler type struct and return it
@@ -1300,8 +1310,7 @@ plpgsql_parse_tripwordtype(char *word)
 							 ObjectIdGetDatum(attrStruct->atttypid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup for type %u of %s.%s failed",
-			 attrStruct->atttypid, cp[0], cp[1]);
+		elog(ERROR, "cache lookup failed for type %u", attrStruct->atttypid);
 
 	/*
 	 * Found that - build a compiler type struct and return it
@@ -1339,7 +1348,9 @@ plpgsql_parse_wordrowtype(char *word)
 	/* Lookup the relation */
 	classOid = RelnameGetRelid(cp[0]);
 	if (!OidIsValid(classOid))
-		elog(ERROR, "%s: no such class", cp[0]);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" does not exist", cp[0])));
 
 	/*
 	 * Build and return the complete row definition
@@ -1380,7 +1391,9 @@ plpgsql_parse_dblwordrowtype(char *word)
 	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp, "plpgsql_parse_dblwordrowtype"));
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
-		elog(ERROR, "%s: no such class", cp);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" does not exist", cp)));
 
 	/*
 	 * Build and return the complete row definition
@@ -1420,7 +1433,9 @@ plpgsql_build_rowtype(Oid classOid)
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW &&
 		classStruct->relkind != RELKIND_COMPOSITE_TYPE)
-		elog(ERROR, "%s isn't a table", relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a table", relname)));
 
 	/*
 	 * Create a row datum entry and all the required variables that it
@@ -1451,8 +1466,8 @@ plpgsql_build_rowtype(Oid classOid)
 								 Int16GetDatum(i + 1),
 								 0, 0);
 		if (!HeapTupleIsValid(attrtup))
-			elog(ERROR, "cache lookup for attribute %d of class %s failed",
-				 i + 1, relname);
+			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+				 i + 1, classOid);
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
 		attname = NameStr(attrStruct->attname);
@@ -1461,8 +1476,8 @@ plpgsql_build_rowtype(Oid classOid)
 								 ObjectIdGetDatum(attrStruct->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
-			elog(ERROR, "cache lookup for type %u of %s.%s failed",
-				 attrStruct->atttypid, relname, attname);
+			elog(ERROR, "cache lookup failed for type %u",
+				 attrStruct->atttypid);
 
 		/*
 		 * Create the internal variable
@@ -1639,7 +1654,10 @@ void
 plpgsql_yyerror(const char *s)
 {
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	elog(ERROR, "%s at or near \"%s\"", s, plpgsql_yytext);
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 /* translator: first %s is a phrase like "syntax error" */
+			 errmsg("%s at or near \"%s\"", s, plpgsql_yytext)));
 }
 
 
@@ -1678,9 +1696,11 @@ compute_function_hashkey(FmgrInfo *flinfo,
 		{
 			argtypeid = get_fn_expr_argtype(flinfo, i);
 			if (!OidIsValid(argtypeid))
-				elog(ERROR, "could not determine actual argument "
-					 "type for polymorphic function %s",
-					 NameStr(procStruct->proname));
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("could not determine actual argument "
+								"type for polymorphic function \"%s\"",
+								NameStr(procStruct->proname))));
 		}
 
 		hashkey->argtypes[i] = argtypeid;
@@ -1729,9 +1749,11 @@ plpgsql_HashTableInsert(PLpgSQL_function *function,
 											HASH_ENTER,
 											&found);
 	if (hentry == NULL)
-		elog(ERROR, "out of memory in plpgsql_HashTable");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	if (found)
-		elog(WARNING, "trying to insert a function that exists");
+		elog(WARNING, "trying to insert a function that already exists");
 
 	hentry->function = function;
 	/* prepare back link from function to hashtable key */

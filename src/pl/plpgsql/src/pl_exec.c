@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.87 2003/06/29 00:33:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.88 2003/07/25 23:37:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -212,8 +212,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 				break;
 
 			default:
-				elog(ERROR, "unknown dtype %d in plpgsql_exec_function()",
-					 func->datums[i]->dtype);
+				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
 		}
 	}
 
@@ -252,8 +251,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 				break;
 
 			default:
-				elog(ERROR, "unknown dtype %d in plpgsql_exec_function()",
-					 func->datums[i]->dtype);
+				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
 		}
 	}
 
@@ -283,8 +281,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 				break;
 
 			default:
-				elog(ERROR, "unknown dtype %d in plpgsql_exec_function()",
-					 func->datums[i]->dtype);
+				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
 		}
 	}
 
@@ -302,7 +299,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = "at END of toplevel PL block";
-		elog(ERROR, "control reaches end of function without RETURN");
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+				 errmsg("control reached end of function without RETURN")));
 	}
 
 	/*
@@ -320,7 +319,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		/* Check caller can handle a set result */
 		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
 			(rsi->allowedModes & SFRM_Materialize) == 0)
-			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that cannot accept a set")));
 		rsi->returnMode = SFRM_Materialize;
 
 		/* If we produced any tuples, send back the result */
@@ -447,8 +448,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 				break;
 
 			default:
-				elog(ERROR, "unknown dtype %d in plpgsql_exec_function()",
-					 func->datums[i]->dtype);
+				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
 		}
 	}
 
@@ -494,7 +494,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rec_old->tupdesc = trigdata->tg_relation->rd_att;
 	}
 	else
-		elog(ERROR, "Unknown trigger action: not INSERT, DELETE, or UPDATE");
+		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
 
 	/*
 	 * Assign the special tg_ variables
@@ -511,7 +511,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("DELETE"));
 	else
-		elog(ERROR, "Unknown trigger action: not INSERT, DELETE, or UPDATE");
+		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_name_varno]);
 	var->isnull = false;
@@ -527,7 +527,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("AFTER"));
 	else
-		elog(ERROR, "Unknown trigger execution time: not BEFORE or AFTER");
+		elog(ERROR, "unrecognized trigger execution time: not BEFORE or AFTER");
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	var->isnull = false;
@@ -537,7 +537,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("STATEMENT"));
 	else
-		elog(ERROR, "Unknown trigger event type: not ROW or STATEMENT");
+		elog(ERROR, "unrecognized trigger event type: not ROW or STATEMENT");
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relid_varno]);
 	var->isnull = false;
@@ -598,8 +598,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 				break;
 
 			default:
-				elog(ERROR, "unknown dtype %d in plpgsql_exec_trigger()",
-					 func->datums[i]->dtype);
+				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
 		}
 	}
 
@@ -617,11 +616,15 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = "at END of toplevel PL block";
-		elog(ERROR, "control reaches end of trigger procedure without RETURN");
+		ereport(ERROR,
+				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+				 errmsg("control reached end of trigger procedure without RETURN")));
 	}
 
 	if (estate.retisset)
-		elog(ERROR, "trigger procedure cannot return a set");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("trigger procedure cannot return a set")));
 
 	/*
 	 * Check that the returned tuple structure has the same attributes,
@@ -639,7 +642,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	{
 		if (!compatible_tupdesc(estate.rettupdesc,
 								trigdata->tg_relation->rd_att))
-			elog(ERROR, "returned tuple structure doesn't match table of trigger event");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("returned tuple structure does not match table of trigger event")));
 		/* Copy tuple to upper executor memory */
 		rettup = SPI_copytuple((HeapTuple) (estate.retval));
 	}
@@ -758,7 +763,10 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 							var->value = (Datum) 0;
 							var->isnull = true;
 							if (var->notnull)
-								elog(ERROR, "variable '%s' declared NOT NULL cannot default to NULL", var->refname);
+								ereport(ERROR,
+										(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+										 errmsg("variable \"%s\" declared NOT NULL cannot default to NULL",
+												var->refname)));
 						}
 						else
 						{
@@ -790,7 +798,8 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 				break;
 
 			default:
-				elog(ERROR, "unknown dtype %d in exec_stmt_block()", estate->datums[n]->dtype);
+				elog(ERROR, "unrecognized dtype: %d",
+					 estate->datums[n]->dtype);
 		}
 
 	}
@@ -822,7 +831,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 			return PLPGSQL_RC_RETURN;
 
 		default:
-			elog(ERROR, "unknown rc %d from exec_stmt()", rc);
+			elog(ERROR, "unrecognized rc: %d", rc);
 	}
 
 	return PLPGSQL_RC_OK;
@@ -951,8 +960,7 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 
 		default:
 			estate->err_stmt = save_estmt;
-			elog(ERROR, "unknown cmdtype %d in exec_stmt",
-				 stmt->cmd_type);
+			elog(ERROR, "unrecognized cmdtype: %d", stmt->cmd_type);
 	}
 
 	estate->err_stmt = save_estmt;
@@ -996,7 +1004,9 @@ exec_stmt_perform(PLpgSQL_execstate * estate, PLpgSQL_stmt_perform * stmt)
 
 	rc = exec_run_select(estate, expr, 0, NULL);
 	if (rc != SPI_OK_SELECT)
-		elog(ERROR, "query \"%s\" didn't return data", expr->query);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("query \"%s\" did not return data", expr->query)));
 
 	exec_set_found(estate, (estate->eval_processed != 0));
 
@@ -1046,8 +1056,7 @@ exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
 				break;
 
 			default:
-
-				elog(ERROR, "unknown attribute request %d in get_diagnostic",
+				elog(ERROR, "unrecognized attribute request: %d",
 					 dtitem->item);
 		}
 	}
@@ -1119,7 +1128,7 @@ exec_stmt_loop(PLpgSQL_execstate * estate, PLpgSQL_stmt_loop * stmt)
 				return PLPGSQL_RC_RETURN;
 
 			default:
-				elog(ERROR, "unknown rc %d from exec_stmts()", rc);
+				elog(ERROR, "unrecognized rc: %d", rc);
 		}
 	}
 
@@ -1169,7 +1178,7 @@ exec_stmt_while(PLpgSQL_execstate * estate, PLpgSQL_stmt_while * stmt)
 				return PLPGSQL_RC_RETURN;
 
 			default:
-				elog(ERROR, "unknown rc %d from exec_stmts()", rc);
+				elog(ERROR, "unrecognized rc: %d", rc);
 		}
 	}
 
@@ -1204,7 +1213,9 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 							var->datatype->typelem,
 							var->datatype->atttypmod, &isnull);
 	if (isnull)
-		elog(ERROR, "lower bound of FOR loop cannot be NULL");
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("lower bound of FOR loop cannot be NULL")));
 	var->value = value;
 	var->isnull = false;
 	exec_eval_cleanup(estate);
@@ -1218,7 +1229,9 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 							var->datatype->typelem,
 							var->datatype->atttypmod, &isnull);
 	if (isnull)
-		elog(ERROR, "upper bound of FOR loop cannot be NULL");
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("upper bound of FOR loop cannot be NULL")));
 	exec_eval_cleanup(estate);
 
 	/*
@@ -1319,7 +1332,7 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	else if (stmt->row != NULL)
 		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-		elog(ERROR, "unsupported target in exec_stmt_fors()");
+		elog(ERROR, "unsupported target");
 
 	/*
 	 * Open the implicit cursor for the statement and fetch the initial 10
@@ -1450,7 +1463,7 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	else if (stmt->row != NULL)
 		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-		elog(ERROR, "unsupported target in exec_stmt_select()");
+		elog(ERROR, "unsupported target");
 
 	/*
 	 * Run the query
@@ -1592,7 +1605,9 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 	bool		free_tuple = false;
 
 	if (!estate->retisset)
-		elog(ERROR, "Cannot use RETURN NEXT in a non-SETOF function");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot use RETURN NEXT in a non-SETOF function")));
 
 	if (estate->tuple_store == NULL)
 		exec_init_tuple_store(estate);
@@ -1606,9 +1621,15 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 		PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
 
 		if (!HeapTupleIsValid(rec->tup))
-			elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("record \"%s\" is not assigned yet",
+							rec->refname),
+					 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
 		if (!compatible_tupdesc(tupdesc, rec->tupdesc))
-			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("wrong record type supplied in RETURN NEXT")));
 		tuple = rec->tup;
 	}
 	else if (stmt->row)
@@ -1618,7 +1639,9 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 		int			i;
 
 		if (natts != stmt->row->nfields)
-			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("wrong record type supplied in RETURN NEXT")));
 
 		dvalues = (Datum *) palloc0(natts * sizeof(Datum));
 		nulls = (char *) palloc(natts * sizeof(char));
@@ -1630,7 +1653,9 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 
 			var = (PLpgSQL_var *) (estate->datums[stmt->row->varnos[i]]);
 			if (var->datatype->typoid != tupdesc->attrs[i]->atttypid)
-				elog(ERROR, "Wrong record type supplied in RETURN NEXT");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("wrong record type supplied in RETURN NEXT")));
 			dvalues[i] = var->value;
 			if (!var->isnull)
 				nulls[i] = ' ';
@@ -1650,7 +1675,9 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 		char		nullflag;
 
 		if (natts != 1)
-			elog(ERROR, "Wrong result type supplied in RETURN NEXT");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("wrong result type supplied in RETURN NEXT")));
 
 		retval = exec_eval_expr(estate,
 								stmt->expr,
@@ -1674,7 +1701,9 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 	}
 	else
 	{
-		elog(ERROR, "Blank RETURN NEXT not allowed");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("RETURN NEXT must have a parameter")));
 		tuple = NULL;			/* keep compiler quiet */
 	}
 
@@ -1705,7 +1734,9 @@ exec_init_tuple_store(PLpgSQL_execstate * estate)
 	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
 		(rsi->allowedModes & SFRM_Materialize) == 0 ||
 		rsi->expectedDesc == NULL)
-		elog(ERROR, "Set-valued function called in context that cannot accept a set");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
 
 	estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
 
@@ -1717,8 +1748,7 @@ exec_init_tuple_store(PLpgSQL_execstate * estate)
 }
 
 /* ----------
- * exec_stmt_raise			Build a message and throw it with
- *					elog()
+ * exec_stmt_raise			Build a message and throw it with elog()
  * ----------
  */
 static int
@@ -1741,9 +1771,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 	for (cp = stmt->message; *cp; cp++)
 	{
 		/*
-		 * Occurences of a single % are replaced by the next arguments
-		 * external representation. Double %'s are left as is so elog()
-		 * will also don't touch them.
+		 * Occurences of a single % are replaced by the next argument's
+		 * external representation. Double %'s are converted to one %.
 		 */
 		if ((c[0] = *cp) == '%')
 		{
@@ -1751,13 +1780,11 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 			if (*cp == '%')
 			{
 				plpgsql_dstring_append(&ds, c);
-				plpgsql_dstring_append(&ds, c);
 				continue;
 			}
 			cp--;
 			if (pidx >= stmt->nparams)
 			{
-				plpgsql_dstring_append(&ds, c);
 				plpgsql_dstring_append(&ds, c);
 				continue;
 			}
@@ -1774,7 +1801,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 										 ObjectIdGetDatum(paramtypeid),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
-					elog(ERROR, "cache lookup for type %u failed",
+					elog(ERROR, "cache lookup failed for type %u",
 						 paramtypeid);
 				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
@@ -1792,7 +1819,9 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 
 		/*
 		 * Occurrences of single ' are removed. double ' are reduced to
-		 * single ones.
+		 * single ones.  We must do this because the parameter stored
+		 * by the grammar is the raw T_STRING input literal, rather than
+		 * the de-lexed string as you might expect ...
 		 */
 		if (*cp == '\'')
 		{
@@ -1998,8 +2027,10 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 			break;
 
 		case SPI_OK_SELECT:
-			elog(ERROR, "SELECT query has no destination for result data."
-				 "\n\tIf you want to discard the results, use PERFORM instead.");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("SELECT query has no destination for result data"),
+					 errhint("If you want to discard the results, use PERFORM instead.")));
 
 		default:
 			elog(ERROR, "error executing query \"%s\"", expr->query);
@@ -2046,7 +2077,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
-		elog(ERROR, "cannot EXECUTE NULL query");
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("cannot EXECUTE a null querystring")));
 
 	/*
 	 * Get the C-String representation.
@@ -2055,7 +2088,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 							 ObjectIdGetDatum(restype),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup for type %u failed", restype);
+		elog(ERROR, "cache lookup failed for type %u", restype);
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	fmgr_info(typeStruct->typoutput, &finfo_output);
@@ -2109,12 +2142,14 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 					if (!isspace((unsigned char) *ptr))
 						break;
 				if (*ptr == 'S' || *ptr == 's')
-					elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("EXECUTE of SELECT ... INTO is not implemented yet")));
 				break;
 			}
 
 		default:
-			elog(ERROR, "unexpected error %d in EXECUTE of query '%s'",
+			elog(ERROR, "unexpected error %d in EXECUTE of query \"%s\"",
 				 exec_res, querystr);
 			break;
 	}
@@ -2166,7 +2201,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	else if (stmt->row != NULL)
 		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-		elog(ERROR, "unsupported target in exec_stmt_dynfors()");
+		elog(ERROR, "unsupported target");
 
 	/*
 	 * Evaluate the string expression after the EXECUTE keyword. It's
@@ -2174,7 +2209,9 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
-		elog(ERROR, "cannot EXECUTE NULL-query");
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("cannot EXECUTE a null querystring")));
 
 	/*
 	 * Get the C-String representation.
@@ -2183,7 +2220,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 							 ObjectIdGetDatum(restype),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup for type %u failed", restype);
+		elog(ERROR, "cache lookup failed for type %u", restype);
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	fmgr_info(typeStruct->typoutput, &finfo_output);
@@ -2335,7 +2372,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	{
 		curname = DatumGetCString(DirectFunctionCall1(textout, curvar->value));
 		if (SPI_cursor_find(curname) != NULL)
-			elog(ERROR, "cursor \"%s\" already in use", curname);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_CURSOR),
+					 errmsg("cursor \"%s\" already in use", curname)));
 	}
 
 	/* ----------
@@ -2377,7 +2416,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		 */
 		queryD = exec_eval_expr(estate, stmt->dynquery, &isnull, &restype);
 		if (isnull)
-			elog(ERROR, "cannot EXECUTE NULL query");
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("cannot EXECUTE a null querystring")));
 
 		/* ----------
 		 * Get the C-String representation.
@@ -2387,7 +2428,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 								 ObjectIdGetDatum(restype),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
-			elog(ERROR, "cache lookup for type %u failed", restype);
+			elog(ERROR, "cache lookup failed for type %u", restype);
 		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 		fmgr_info(typeStruct->typoutput, &finfo_output);
@@ -2409,7 +2450,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 				 querystr);
 		portal = SPI_cursor_open(curname, curplan, NULL, NULL);
 		if (portal == NULL)
-			elog(ERROR, "Failed to open cursor");
+			elog(ERROR, "failed to open cursor");
 		pfree(querystr);
 		SPI_freeplan(curplan);
 
@@ -2446,7 +2487,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 			PLpgSQL_stmt_select set_args;
 
 			if (curvar->cursor_explicit_argrow < 0)
-				elog(ERROR, "arguments given for cursor without arguments");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("arguments given for cursor without arguments")));
 
 			memset(&set_args, 0, sizeof(set_args));
 			set_args.cmd_type = PLPGSQL_STMT_SELECT;
@@ -2461,7 +2504,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		else
 		{
 			if (curvar->cursor_explicit_argrow >= 0)
-				elog(ERROR, "arguments required for cursor");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("arguments required for cursor")));
 		}
 
 		query = curvar->cursor_explicit_expr;
@@ -2498,7 +2543,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	 */
 	portal = SPI_cursor_open(curname, query->plan, values, nulls);
 	if (portal == NULL)
-		elog(ERROR, "Failed to open cursor");
+		elog(ERROR, "failed to open cursor");
 
 	pfree(values);
 	pfree(nulls);
@@ -2541,12 +2586,16 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	 */
 	curvar = (PLpgSQL_var *) (estate->datums[stmt->curvar]);
 	if (curvar->isnull)
-		elog(ERROR, "cursor variable \"%s\" is NULL", curvar->refname);
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("cursor variable \"%s\" is NULL", curvar->refname)));
 	curname = DatumGetCString(DirectFunctionCall1(textout, curvar->value));
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL)
-		elog(ERROR, "cursor \"%s\" is invalid", curname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("cursor \"%s\" does not exist", curname)));
 	pfree(curname);
 
 	/* ----------
@@ -2558,7 +2607,7 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	else if (stmt->row != NULL)
 		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-		elog(ERROR, "unsupported target in exec_stmt_fetch()");
+		elog(ERROR, "unsupported target");
 
 	/* ----------
 	 * Fetch 1 tuple from the cursor
@@ -2606,12 +2655,16 @@ exec_stmt_close(PLpgSQL_execstate * estate, PLpgSQL_stmt_close * stmt)
 	 */
 	curvar = (PLpgSQL_var *) (estate->datums[stmt->curvar]);
 	if (curvar->isnull)
-		elog(ERROR, "cursor variable \"%s\" is NULL", curvar->refname);
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("cursor variable \"%s\" is NULL", curvar->refname)));
 	curname = DatumGetCString(DirectFunctionCall1(textout, curvar->value));
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL)
-		elog(ERROR, "cursor \"%s\" is invalid", curname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("cursor \"%s\" does not exist", curname)));
 	pfree(curname);
 
 	/* ----------
@@ -2703,7 +2756,10 @@ exec_assign_value(PLpgSQL_execstate * estate,
 									   isNull);
 
 			if (*isNull && var->notnull)
-				elog(ERROR, "NULL assignment to variable '%s' declared NOT NULL", var->refname);
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("NULL cannot be assigned to variable \"%s\" declared NOT NULL",
+								var->refname)));
 
 			/*
 			 * If type is by-reference, make sure we have a freshly
@@ -2741,7 +2797,11 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 * structure.
 			 */
 			if (!HeapTupleIsValid(rec->tup))
-				elog(ERROR, "record \"%s\" is unassigned yet - don't know its tuple structure", rec->refname);
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("record \"%s\" is not assigned yet",
+								rec->refname),
+						 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
 
 			/*
 			 * Get the number of the records field to change and the
@@ -2749,7 +2809,10 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 */
 			fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 			if (fno == SPI_ERROR_NOATTRIBUTE)
-				elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("record \"%s\" has no field \"%s\"",
+								rec->refname, recfield->fieldname)));
 			fno--;
 			natts = rec->tupdesc->natts;
 
@@ -2835,7 +2898,10 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				PLpgSQL_arrayelem *arrayelem = (PLpgSQL_arrayelem *) target;
 
 				if (nsubscripts >= MAXDIM)
-					elog(ERROR, "Too many subscripts");
+					ereport(ERROR,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+									MAXDIM)));
 				subscripts[nsubscripts++] = arrayelem->subscript;
 				target = estate->datums[arrayelem->arrayparentno];
 			} while (target->dtype == PLPGSQL_DTYPE_ARRAYELEM);
@@ -2846,7 +2912,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 
 			getTypeInputInfo(arraytypeid, &arrayInputFn, &arrayelemtypeid);
 			if (!OidIsValid(arrayelemtypeid))
-				elog(ERROR, "Subscripted item is not an array");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("subscripted object is not an array")));
 
 			/* Evaluate the subscripts, switch into left-to-right order */
 			havenullsubscript = false;
@@ -2916,8 +2984,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			break;
 
 		default:
-			elog(ERROR, "unknown dtype %d in exec_assign_value()",
-				 target->dtype);
+			elog(ERROR, "unrecognized dtype: %d", target->dtype);
 	}
 }
 
@@ -2957,24 +3024,34 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 			*value = var->value;
 			*isnull = var->isnull;
 			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
-				elog(ERROR, "type of %s doesn't match that when preparing the plan",
-					 var->refname);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of \"%s\" does not match that when preparing the plan",
+								var->refname)));
 			break;
 
 		case PLPGSQL_DTYPE_RECFIELD:
 			recfield = (PLpgSQL_recfield *) datum;
 			rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
 			if (!HeapTupleIsValid(rec->tup))
-				elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("record \"%s\" is not assigned yet",
+								rec->refname),
+						 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
 			fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 			if (fno == SPI_ERROR_NOATTRIBUTE)
-				elog(ERROR, "record \"%s\" has no field named \"%s\"",
-					 rec->refname, recfield->fieldname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("record \"%s\" has no field \"%s\"",
+								rec->refname, recfield->fieldname)));
 			*typeid = SPI_gettypeid(rec->tupdesc, fno);
 			*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
 			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
-				elog(ERROR, "type of %s.%s doesn't match that when preparing the plan",
-					 rec->refname, recfield->fieldname);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of \"%s.%s\" does not match that when preparing the plan",
+								rec->refname, recfield->fieldname)));
 			break;
 
 		case PLPGSQL_DTYPE_TRIGARG:
@@ -2992,13 +3069,14 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				*isnull = false;
 			}
 			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
-				elog(ERROR, "type of tgargv[%d] doesn't match that when preparing the plan",
-					 tgargno);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of tgargv[%d] does not match that when preparing the plan",
+								tgargno)));
 			break;
 
 		default:
-			elog(ERROR, "unknown datum dtype %d in exec_eval_datum()",
-				 datum->dtype);
+			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
 	}
 }
 
@@ -3062,7 +3140,9 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 
 	rc = exec_run_select(estate, expr, 2, NULL);
 	if (rc != SPI_OK_SELECT)
-		elog(ERROR, "query \"%s\" didn't return data", expr->query);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("query \"%s\" did not return data", expr->query)));
 
 	/*
 	 * If there are no rows selected, the result is NULL.
@@ -3077,10 +3157,15 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 	 * Check that the expression returned one single Datum
 	 */
 	if (estate->eval_processed > 1)
-		elog(ERROR, "query \"%s\" returned more than one row", expr->query);
+		ereport(ERROR,
+				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				 errmsg("query \"%s\" returned more than one row",
+						expr->query)));
 	if (estate->eval_tuptable->tupdesc->natts != 1)
-		elog(ERROR, "query \"%s\" returned %d columns", expr->query,
-			 estate->eval_tuptable->tupdesc->natts);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query \"%s\" returned %d columns", expr->query,
+						estate->eval_tuptable->tupdesc->natts)));
 
 	/*
 	 * Return the result and its type
@@ -3149,7 +3234,9 @@ exec_run_select(PLpgSQL_execstate * estate,
 	 */
 	rc = SPI_execp(expr->plan, values, nulls, maxtuples);
 	if (rc != SPI_OK_SELECT)
-		elog(ERROR, "query \"%s\" isn't a SELECT", expr->query);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query \"%s\" is not a SELECT", expr->query)));
 
 	/* Save query results for eventual cleanup */
 	Assert(estate->eval_tuptable == NULL);
@@ -3356,7 +3443,7 @@ exec_move_row(PLpgSQL_execstate * estate,
 		return;
 	}
 
-	elog(ERROR, "unsupported target in exec_move_row()");
+	elog(ERROR, "unsupported target");
 }
 
 
@@ -3389,7 +3476,7 @@ exec_cast_value(Datum value, Oid valtype,
 									 ObjectIdGetDatum(valtype),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typetup))
-				elog(ERROR, "cache lookup for type %u failed", valtype);
+				elog(ERROR, "cache lookup failed for type %u", valtype);
 			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 			fmgr_info(typeStruct->typoutput, &finfo_output);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/pl/plpython/Attic/plpython.h,v 1.7 2003/05/27 17:49:47 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/pl/plpython/Attic/plpython.h,v 1.8 2003/07/25 23:37:30 tgl Exp $ */
 
 #ifndef PLPYTHON_H
 #define PLPYTHON_H
@@ -43,8 +43,8 @@
 
 #if DEBUG_LEVEL
 #define CALL_LEVEL_INC() do { PLy_call_level += 1; \
-	elog(DEBUG4, "Level: %d", PLy_call_level); } while (0)
-#define CALL_LEVEL_DEC() do { elog(DEBUG4, "Level: %d", PLy_call_level); \
+	elog(DEBUG4, "level: %d", PLy_call_level); } while (0)
+#define CALL_LEVEL_DEC() do { elog(DEBUG4, "level: %d", PLy_call_level); \
 	PLy_call_level -= 1; } while (0)
 #else
 #define CALL_LEVEL_INC() do { PLy_call_level += 1; } while (0)

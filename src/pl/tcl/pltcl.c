@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.71 2003/05/27 17:49:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.72 2003/07/25 23:37:31 tgl Exp $
  *
  **********************************************************************/
 
@@ -215,28 +215,19 @@ pltcl_init_all(void)
 	 * stdout and stderr on DeleteInterp
 	 ************************************************************/
 	if ((pltcl_hold_interp = Tcl_CreateInterp()) == NULL)
-	{
-		elog(ERROR, "pltcl: internal error - cannot create 'hold' "
-			 "interpreter");
-	}
+		elog(ERROR, "could not create \"hold\" interpreter");
 
 	/************************************************************
 	 * Create the two interpreters
 	 ************************************************************/
 	if ((pltcl_norm_interp =
 		 Tcl_CreateSlave(pltcl_hold_interp, "norm", 0)) == NULL)
-	{
-		elog(ERROR,
-		   "pltcl: internal error - cannot create 'normal' interpreter");
-	}
+		elog(ERROR, "could not create \"normal\" interpreter");
 	pltcl_init_interp(pltcl_norm_interp);
 
 	if ((pltcl_safe_interp =
 		 Tcl_CreateSlave(pltcl_hold_interp, "safe", 1)) == NULL)
-	{
-		elog(ERROR,
-			 "pltcl: internal error - cannot create 'safe' interpreter");
-	}
+		elog(ERROR, "could not create \"safe\" interpreter");
 	pltcl_init_interp(pltcl_safe_interp);
 
 	/************************************************************
@@ -285,10 +276,10 @@ pltcl_init_interp(Tcl_Interp *interp)
 	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "pltcl_init_interp(): SPI_connect failed");
+		elog(ERROR, "SPI_connect failed");
 	pltcl_init_load_unknown(interp);
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "pltcl_init_interp(): SPI_finish failed");
+		elog(ERROR, "SPI_finish failed");
 }
 
 
@@ -313,7 +304,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 					  "where relname = 'pltcl_modules'", 1);
 	SPI_freetuptable(SPI_tuptable);
 	if (spi_rc != SPI_OK_SELECT)
-		elog(ERROR, "pltcl_init_load_unknown(): select from pg_class failed");
+		elog(ERROR, "select from pg_class failed");
 	if (SPI_processed == 0)
 		return;
 
@@ -327,10 +318,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 					  "where modname = 'unknown' "
 					  "order by modseq", 0);
 	if (spi_rc != SPI_OK_SELECT)
-	{
-		elog(ERROR, "pltcl_init_load_unknown(): select from pltcl_modules "
-			 "failed");
-	}
+		elog(ERROR, "select from pltcl_modules failed");
 
 	/************************************************************
 	 * If there's nothing, module unknown doesn't exist
@@ -339,7 +327,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	{
 		Tcl_DStringFree(&unknown_src);
 		SPI_freetuptable(SPI_tuptable);
-		elog(WARNING, "pltcl: Module unknown not found in pltcl_modules");
+		elog(WARNING, "module \"unknown\" not found in pltcl_modules");
 		return;
 	}
 
@@ -394,7 +382,7 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	 * Connect to SPI manager
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "pltcl: cannot connect to SPI manager");
+		elog(ERROR, "could not connect to SPI manager");
 	/************************************************************
 	 * Keep track about the nesting of Tcl-SPI-Tcl-... calls
 	 ************************************************************/
@@ -550,9 +538,11 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			if (--pltcl_call_level == 0)
 				pltcl_restart_in_progress = 0;
 			UTF_BEGIN;
-			elog(ERROR, "pltcl: %s\n%s", interp->result,
-				 UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-									TCL_GLOBAL_ONLY)));
+			ereport(ERROR,
+					(errmsg("pltcl: %s", interp->result),
+					 errdetail("%s",
+							   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+												  TCL_GLOBAL_ONLY)))));
 			UTF_END;
 		}
 		if (--pltcl_call_level == 0)
@@ -586,7 +576,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 * the result type in that case.
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "pltcl: SPI_finish() failed");
+		elog(ERROR, "SPI_finish() failed");
 
 	if (fcinfo->isnull)
 		retval = (Datum) 0;
@@ -785,9 +775,11 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			if (--pltcl_call_level == 0)
 				pltcl_restart_in_progress = 0;
 			UTF_BEGIN;
-			elog(ERROR, "pltcl: %s\n%s", interp->result,
-				 UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-									TCL_GLOBAL_ONLY)));
+			ereport(ERROR,
+					(errmsg("pltcl: %s", interp->result),
+					 errdetail("%s",
+							   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+												  TCL_GLOBAL_ONLY)))));
 			UTF_END;
 		}
 		if (--pltcl_call_level == 0)
@@ -801,7 +793,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			elog(ERROR, "pltcl: unsupported TCL return code %d", tcl_rc);
+			elog(ERROR, "unsupported TCL return code: %d", tcl_rc);
 	}
 
 	/************************************************************
@@ -809,7 +801,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	 * the magic strings OK or SKIP or a list from array get
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "pltcl: SPI_finish() failed");
+		elog(ERROR, "SPI_finish() failed");
 
 	if (strcmp(interp->result, "OK") == 0)
 		return rettup;
@@ -822,15 +814,13 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	if (Tcl_SplitList(interp, interp->result,
 					  &ret_numvals, &ret_values) != TCL_OK)
-	{
-		elog(WARNING, "pltcl: cannot split return value from trigger");
-		elog(ERROR, "pltcl: %s", interp->result);
-	}
+		elog(ERROR, "could not split return value from trigger: %s",
+			 interp->result);
 
 	if (ret_numvals % 2 != 0)
 	{
 		ckfree((char *) ret_values);
-		elog(ERROR, "pltcl: invalid return list from trigger - must have even # of elements");
+		elog(ERROR, "invalid return list from trigger - must have even # of elements");
 	}
 
 	modattrs = (int *) palloc(tupdesc->natts * sizeof(int));
@@ -881,9 +871,11 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		 ************************************************************/
 		attnum = SPI_fnumber(tupdesc, ret_values[i++]);
 		if (attnum == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "pltcl: invalid attribute '%s'", ret_values[--i]);
+			elog(ERROR, "invalid attribute \"%s\"",
+				 ret_values[--i]);
 		if (attnum <= 0)
-			elog(ERROR, "pltcl: cannot set system attribute '%s'", ret_values[--i]);
+			elog(ERROR, "cannot set system attribute \"%s\"",
+				 ret_values[--i]);
 
 		/************************************************************
 		 * Lookup the attribute type in the syscache
@@ -893,11 +885,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 				  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-		{
-			elog(ERROR, "pltcl: Cache lookup for attribute '%s' type %u failed",
-				 ret_values[--i],
+			elog(ERROR, "cache lookup failed for type %u",
 				 tupdesc->attrs[attnum - 1]->atttypid);
-		}
 		typinput = ((Form_pg_type) GETSTRUCT(typeTup))->typinput;
 		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);
@@ -924,7 +913,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	pfree(modnulls);
 
 	if (rettup == NULL)
-		elog(ERROR, "pltcl: SPI_modifytuple() failed - RC = %d\n", SPI_result);
+		elog(ERROR, "SPI_modifytuple() failed - RC = %d", SPI_result);
 
 	ckfree((char *) ret_values);
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
@@ -954,7 +943,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 							 ObjectIdGetDatum(fn_oid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "pltcl: cache lookup for proc %u failed", fn_oid);
+		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
 	/************************************************************
@@ -1018,7 +1007,9 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 		 ************************************************************/
 		prodesc = (pltcl_proc_desc *) malloc(sizeof(pltcl_proc_desc));
 		if (prodesc == NULL)
-			elog(ERROR, "pltcl: out of memory");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		MemSet(prodesc, 0, sizeof(pltcl_proc_desc));
 		prodesc->proname = strdup(internal_proname);
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
@@ -1034,7 +1025,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "pltcl: cache lookup for language %u failed",
+			elog(ERROR, "cache lookup failed for language %u",
 				 procStruct->prolang);
 		}
 		langStruct = (Form_pg_language) GETSTRUCT(langTup);
@@ -1059,7 +1050,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				elog(ERROR, "pltcl: cache lookup for return type %u failed",
+				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -1073,16 +1064,18 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "pltcl functions cannot return type %s"
-						 "\n\texcept when used as triggers",
-						 format_type_be(procStruct->prorettype));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("trigger functions may only be called as triggers")));
 				}
 				else
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "pltcl functions cannot return type %s",
-						 format_type_be(procStruct->prorettype));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("pltcl functions cannot return type %s",
+									format_type_be(procStruct->prorettype))));
 				}
 			}
 
@@ -1090,7 +1083,9 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				elog(ERROR, "pltcl: return types of tuples not supported yet");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("pltcl functions cannot return tuples yet")));
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
@@ -1116,7 +1111,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "pltcl: cache lookup for argument type %u failed",
+					elog(ERROR, "cache lookup failed for type %u",
 						 procStruct->proargtypes[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -1126,8 +1121,10 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "pltcl functions cannot take type %s",
-						 format_type_be(procStruct->proargtypes[i]));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("pltcl functions cannot take type %s",
+									format_type_be(procStruct->proargtypes[i]))));
 				}
 
 				if (typeStruct->typrelid != InvalidOid)
@@ -1230,7 +1227,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "pltcl: cannot create internal procedure %s - %s",
+			elog(ERROR, "could not create internal procedure \"%s\": %s",
 				 internal_proname, interp->result);
 		}
 
@@ -1802,45 +1799,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 
 	if (plan == NULL)
 	{
-		char		buf[128];
-		char	   *reason;
-
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-
-		switch (SPI_result)
-		{
-			case SPI_ERROR_ARGUMENT:
-				reason = "SPI_ERROR_ARGUMENT";
-				break;
-
-			case SPI_ERROR_UNCONNECTED:
-				reason = "SPI_ERROR_UNCONNECTED";
-				break;
-
-			case SPI_ERROR_COPY:
-				reason = "SPI_ERROR_COPY";
-				break;
-
-			case SPI_ERROR_CURSOR:
-				reason = "SPI_ERROR_CURSOR";
-				break;
-
-			case SPI_ERROR_TRANSACTION:
-				reason = "SPI_ERROR_TRANSACTION";
-				break;
-
-			case SPI_ERROR_OPUNKNOWN:
-				reason = "SPI_ERROR_OPUNKNOWN";
-				break;
-
-			default:
-				snprintf(buf, sizeof(buf), "unknown RC %d", SPI_result);
-				reason = buf;
-				break;
-
-		}
-
-		elog(ERROR, "pltcl: SPI_prepare() failed - %s", reason);
+		elog(ERROR, "SPI_prepare() failed");
 	}
 
 	/************************************************************
@@ -1850,29 +1810,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc->plan = SPI_saveplan(plan);
 	if (qdesc->plan == NULL)
 	{
-		char		buf[128];
-		char	   *reason;
-
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-
-		switch (SPI_result)
-		{
-			case SPI_ERROR_ARGUMENT:
-				reason = "SPI_ERROR_ARGUMENT";
-				break;
-
-			case SPI_ERROR_UNCONNECTED:
-				reason = "SPI_ERROR_UNCONNECTED";
-				break;
-
-			default:
-				snprintf(buf, sizeof(buf), "unknown RC %d", SPI_result);
-				reason = buf;
-				break;
-
-		}
-
-		elog(ERROR, "pltcl: SPI_saveplan() failed - %s", reason);
+		elog(ERROR, "SPI_saveplan() failed");
 	}
 	/* Release the procCxt copy to avoid within-function memory leak */
 	SPI_freeplan(plan);
@@ -2359,10 +2298,8 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-		{
-			elog(ERROR, "pltcl: Cache lookup for attribute '%s' type %u failed",
-				 attname, tupdesc->attrs[i]->atttypid);
-		}
+			elog(ERROR, "cache lookup failed for type %u",
+				 tupdesc->attrs[i]->atttypid);
 
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
 		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
@@ -2431,10 +2368,8 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-		{
-			elog(ERROR, "pltcl: Cache lookup for attribute '%s' type %u failed",
-				 attname, tupdesc->attrs[i]->atttypid);
-		}
+			elog(ERROR, "cache lookup failed for type %u",
+				 tupdesc->attrs[i]->atttypid);
 
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
 		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.36 2003/04/20 21:15:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.37 2003/07/25 23:37:28 tgl Exp $
  *
  **********************************************************************/
 
@@ -47,7 +47,6 @@
 /* postgreSQL stuff */
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include "utils/elog.h"
 #include "fmgr.h"
 #include "access/heapam.h"
 #include "tcop/tcopprot.h"
@@ -193,7 +192,7 @@ plperl_init_interp(void)
 
 	plperl_interp = perl_alloc();
 	if (!plperl_interp)
-		elog(ERROR, "plperl_init_interp(): could not allocate perl interpreter");
+		elog(ERROR, "could not allocate perl interpreter");
 
 	perl_construct(plperl_interp);
 	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
@@ -232,7 +231,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	 * Connect to SPI manager
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "plperl: cannot connect to SPI manager");
+		elog(ERROR, "could not connect to SPI manager");
 
 	/************************************************************
 	 * Determine if called as function or trigger and
@@ -240,7 +239,9 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	if (CALLED_AS_TRIGGER(fcinfo))
 	{
-		elog(ERROR, "plperl: can't use perl in triggers yet.");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use perl in triggers yet")));
 
 		/*
 		 * retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
@@ -286,7 +287,7 @@ plperl_create_sub(char *s, bool trusted)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "plperl: didn't get a return item from mksafefunc");
+		elog(ERROR, "didn't get a return item from mksafefunc");
 	}
 
 	if (SvTRUE(ERRSV))
@@ -314,7 +315,7 @@ plperl_create_sub(char *s, bool trusted)
 		 * subref is our responsibility because it is not mortal
 		 */
 		SvREFCNT_dec(subref);
-		elog(ERROR, "plperl_create_sub: didn't get a code ref");
+		elog(ERROR, "didn't get a code ref");
 	}
 
 	PUTBACK;
@@ -406,7 +407,7 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "plperl: didn't get a return item from function");
+		elog(ERROR, "didn't get a return item from function");
 	}
 
 	if (SvTRUE(ERRSV))
@@ -415,7 +416,7 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "plperl: error from function: %s", SvPV(ERRSV, PL_na));
+		elog(ERROR, "error from function: %s", SvPV(ERRSV, PL_na));
 	}
 
 	retval = newSVsv(POPs);
@@ -453,7 +454,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	 * because SPI_finish would free it).
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "plperl: SPI_finish() failed");
+		elog(ERROR, "SPI_finish() failed");
 
 	if (!(perlret && SvOK(perlret)))
 	{
@@ -493,7 +494,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 							 ObjectIdGetDatum(fn_oid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "plperl: cache lookup for proc %u failed", fn_oid);
+		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
 	/************************************************************
@@ -551,7 +552,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 ************************************************************/
 		prodesc = (plperl_proc_desc *) malloc(sizeof(plperl_proc_desc));
 		if (prodesc == NULL)
-			elog(ERROR, "plperl: out of memory");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		MemSet(prodesc, 0, sizeof(plperl_proc_desc));
 		prodesc->proname = strdup(internal_proname);
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
@@ -567,7 +570,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "plperl: cache lookup for language %u failed",
+			elog(ERROR, "cache lookup failed for language %u",
 				 procStruct->prolang);
 		}
 		langStruct = (Form_pg_language) GETSTRUCT(langTup);
@@ -587,7 +590,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				elog(ERROR, "plperl: cache lookup for return type %u failed",
+				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -601,16 +604,18 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "plperl functions cannot return type %s"
-						 "\n\texcept when used as triggers",
-						 format_type_be(procStruct->prorettype));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("trigger functions may only be called as triggers")));
 				}
 				else
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "plperl functions cannot return type %s",
-						 format_type_be(procStruct->prorettype));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("plperl functions cannot return type %s",
+									format_type_be(procStruct->prorettype))));
 				}
 			}
 
@@ -618,7 +623,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				elog(ERROR, "plperl: return types of tuples not supported yet");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("plperl functions cannot return tuples yet")));
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
@@ -643,7 +650,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "plperl: cache lookup for argument type %u failed",
+					elog(ERROR, "cache lookup failed for type %u",
 						 procStruct->proargtypes[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -653,8 +660,10 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					elog(ERROR, "plperl functions cannot take type %s",
-						 format_type_be(procStruct->proargtypes[i]));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("plperl functions cannot take type %s",
+									format_type_be(procStruct->proargtypes[i]))));
 				}
 
 				if (typeStruct->typrelid != InvalidOid)
@@ -686,7 +695,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "plperl: cannot create internal procedure %s",
+			elog(ERROR, "could not create internal procedure \"%s\"",
 				 internal_proname);
 		}
 
@@ -751,8 +760,8 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
-				 attname, tupdesc->attrs[i]->atttypid);
+			elog(ERROR, "cache lookup failed for type %u",
+				 tupdesc->attrs[i]->atttypid);
 
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
 		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;

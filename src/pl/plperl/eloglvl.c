@@ -1,7 +1,5 @@
 #include "postgres.h"
 
-#include "utils/elog.h"
-
 /*
  * This kludge is necessary because of the conflicting
  * definitions of 'DEBUG' between postgres and perl.

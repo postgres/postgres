@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.28 2003/06/19 23:22:40 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.29 2003/07/25 23:37:29 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -228,7 +228,9 @@ dump			{ return O_DUMP;			}
 
 \".				{
 				plpgsql_error_lineno = plpgsql_scanner_lineno();
-				elog(ERROR, "unterminated quoted identifier");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("unterminated quoted identifier")));
 			}
 
     /* ----------
@@ -251,7 +253,9 @@ dump			{ return O_DUMP;			}
 <IN_COMMENT>.		;
 <IN_COMMENT><<EOF>>	{
 				plpgsql_error_lineno = start_lineno;
-				elog(ERROR, "unterminated comment");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("unterminated comment")));
 			}
 
     /* ----------
@@ -277,7 +281,9 @@ dump			{ return O_DUMP;			}
 			}
 <IN_STRING><<EOF>>	{
 				plpgsql_error_lineno = start_lineno;
-				elog(ERROR, "unterminated string");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("unterminated string")));
 			}
 <IN_STRING>[^'\\]*	{ }
 
@@ -344,7 +350,7 @@ void
 plpgsql_push_back_token(int token)
 {
 	if (have_pushback_token)
-		elog(ERROR, "plpgsql_push_back_token: can't push back multiple tokens");
+		elog(ERROR, "cannot push back multiple tokens");
 	pushback_token = token;
 	have_pushback_token = true;
 }

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.44 2003/05/27 17:49:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.45 2003/07/25 23:37:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -340,11 +340,17 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 							row->lineno		= $1.lineno;
 
 							if ($2)
-								elog(ERROR, "Rowtype variable cannot be CONSTANT");
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("rowtype variable cannot be CONSTANT")));
 							if ($4)
-								elog(ERROR, "Rowtype variable cannot be NOT NULL");
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("rowtype variable cannot be NOT NULL")));
 							if ($5 != NULL)
-								elog(ERROR, "Default value for rowtype variable is not supported");
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("default value for rowtype variable is not supported")));
 
 							plpgsql_adddatum((PLpgSQL_datum *)row);
 							plpgsql_ns_additem(PLPGSQL_NSTYPE_ROW,
@@ -554,7 +560,10 @@ decl_aliasitem	: T_WORD
 						if (nsi == NULL)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
-							elog(ERROR, "function has no parameter %s", name);
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_PARAMETER),
+									 errmsg("function has no parameter \"%s\"",
+											name)));
 						}
 
 						plpgsql_ns_setlocal(true);
@@ -1087,7 +1096,8 @@ stmt_fors		: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_
 								new->row = (PLpgSQL_row *)$4;
 								break;
 							default:
-								elog(ERROR, "unknown dtype %d in stmt_fors", $4->dtype);
+								elog(ERROR, "unrecognized dtype: %d",
+									 $4->dtype);
 						}
 						new->query = $7;
 						new->body  = $8;
@@ -1117,7 +1127,8 @@ stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop lo
 								new->row = (PLpgSQL_row *)$4;
 								break;
 							default:
-								elog(ERROR, "unknown dtype %d in stmt_dynfors", $4->dtype);
+								elog(ERROR, "unrecognized dtype: %d",
+									 $4->dtype);
 						}
 						new->query = $7;
 						new->body  = $8;
@@ -1375,7 +1386,11 @@ stmt_open		: K_OPEN lno cursor_varptr
 							if (tok != K_FOR)
 							{
 								plpgsql_error_lineno = $2;
-								elog(ERROR, "syntax error at \"%s\" - expected FOR to open a reference cursor", yytext);
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+										 errmsg("syntax error at \"%s\"",
+												yytext),
+										 errdetail("Expected FOR to open a reference cursor.")));
 							}
 
 							tok = yylex();
@@ -1391,7 +1406,10 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 								default:
 									plpgsql_error_lineno = $2;
-									elog(ERROR, "syntax error at \"%s\"", yytext);
+									ereport(ERROR,
+											(errcode(ERRCODE_SYNTAX_ERROR),
+											 errmsg("syntax error at \"%s\"",
+													yytext)));
 							}
 
 						}
@@ -1406,8 +1424,10 @@ stmt_open		: K_OPEN lno cursor_varptr
 								if (tok != '(')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
-									elog(ERROR, "cursor %s has arguments",
-										 $3->refname);
+									ereport(ERROR,
+											(errcode(ERRCODE_SYNTAX_ERROR),
+											 errmsg("cursor \"%s\" has arguments",
+													$3->refname)));
 								}
 
 								/*
@@ -1428,7 +1448,8 @@ stmt_open		: K_OPEN lno cursor_varptr
 								if (strncmp(cp, "SELECT", 6) != 0)
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
-									elog(ERROR, "expected 'SELECT (', got '%s' (internal error)",
+									/* internal error */
+									elog(ERROR, "expected \"SELECT (\", got \"%s\"",
 										 new->argquery->query);
 								}
 								cp += 6;
@@ -1437,7 +1458,8 @@ stmt_open		: K_OPEN lno cursor_varptr
 								if (*cp != '(')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
-									elog(ERROR, "expected 'SELECT (', got '%s' (internal error)",
+									/* internal error */
+									elog(ERROR, "expected \"SELECT (\", got \"%s\"",
 										 new->argquery->query);
 								}
 								*cp = ' ';
@@ -1455,13 +1477,19 @@ stmt_open		: K_OPEN lno cursor_varptr
 								if (tok == '(')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
-									elog(ERROR, "cursor %s has no arguments", $3->refname);
+									ereport(ERROR,
+											(errcode(ERRCODE_SYNTAX_ERROR),
+											 errmsg("cursor \"%s\" has no arguments",
+													$3->refname)));
 								}
 								
 								if (tok != ';')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
-									elog(ERROR, "syntax error at \"%s\"", yytext);
+									ereport(ERROR,
+											(errcode(ERRCODE_SYNTAX_ERROR),
+											 errmsg("syntax error at \"%s\"",
+													yytext)));
 								}
 							}
 						}
@@ -1503,8 +1531,10 @@ cursor_varptr	: T_VARIABLE
 						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
-							elog(ERROR, "%s must be of type cursor or refcursor",
-								 ((PLpgSQL_var *) yylval.variable)->refname);
+							ereport(ERROR,
+									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									 errmsg("\"%s\" must be of type cursor or refcursor",
+											((PLpgSQL_var *) yylval.variable)->refname)));
 						}
 						$$ = (PLpgSQL_var *) yylval.variable;
 					}
@@ -1518,8 +1548,10 @@ cursor_variable	: T_VARIABLE
 						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
-							elog(ERROR, "%s must be of type refcursor",
-								 ((PLpgSQL_var *) yylval.variable)->refname);
+							ereport(ERROR,
+									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									 errmsg("\"%s\" must be of type refcursor",
+											((PLpgSQL_var *) yylval.variable)->refname)));
 						}
 						$$ = yylval.variable->dno;
 					}
@@ -1632,7 +1664,9 @@ read_sql_construct(int until,
 		{
 			parenlevel--;
 			if (parenlevel < 0)
-				elog(ERROR, "mismatched parentheses");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("mismatched parentheses")));
 		}
 		/*
 		 * End of function definition is an error, and we don't expect to
@@ -1643,13 +1677,19 @@ read_sql_construct(int until,
 		{
 			plpgsql_error_lineno = lno;
 			if (parenlevel != 0)
-				elog(ERROR, "mismatched parentheses");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("mismatched parentheses")));
 			if (isexpression)
-				elog(ERROR, "missing %s at end of SQL expression",
-					 expected);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("missing \"%s\" at end of SQL expression",
+								expected)));
 			else
-				elog(ERROR, "missing %s at end of SQL statement",
-					 expected);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("missing \"%s\" at end of SQL statement",
+								expected)));
 			break;
 		}
 		if (plpgsql_SpaceScanned)
@@ -1709,8 +1749,12 @@ read_datatype(int tok)
 		{
 			plpgsql_error_lineno = lno;
 			if (parenlevel != 0)
-				elog(ERROR, "mismatched parentheses");
-			elog(ERROR, "incomplete datatype declaration");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("mismatched parentheses")));
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("incomplete datatype declaration")));
 		}
 		/* Possible followers for datatype in a declaration */
 		if (tok == K_NOT || tok == K_ASSIGN || tok == K_DEFAULT)
@@ -1769,14 +1813,18 @@ make_select_stmt(void)
 		if (tok == 0)
 		{
 			plpgsql_error_lineno = plpgsql_scanner_lineno();
-			elog(ERROR, "unexpected end of file");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unexpected end of function definition")));
 		}
 		if (tok == K_INTO)
 		{
 			if (have_into)
 			{
 				plpgsql_error_lineno = plpgsql_scanner_lineno();
-				elog(ERROR, "INTO specified more than once");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("INTO specified more than once")));
 			}
 			tok = yylex();
 			switch (tok)
@@ -1814,8 +1862,10 @@ make_select_stmt(void)
 
 							default:
 								plpgsql_error_lineno = plpgsql_scanner_lineno();
-								elog(ERROR, "plpgsql: %s is not a variable",
-									 yytext);
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+										 errmsg("\"%s\" is not a variable",
+												yytext)));
 						}
 					}
 					have_nexttok = 1;
@@ -1945,8 +1995,10 @@ make_fetch_stmt(void)
 
 						default:
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
-							elog(ERROR, "plpgsql: %s is not a variable",
-								 yytext);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("\"%s\" is not a variable",
+											yytext)));
 					}
 				}
 				have_nexttok = 1;
@@ -2028,8 +2080,10 @@ check_assignable(PLpgSQL_datum *datum)
 			if (((PLpgSQL_var *) datum)->isconst)
 			{
 				plpgsql_error_lineno = plpgsql_scanner_lineno();
-				elog(ERROR, "%s is declared CONSTANT",
-					 ((PLpgSQL_var *) datum)->refname);
+				ereport(ERROR,
+						(errcode(ERRCODE_ERROR_IN_ASSIGNMENT),
+						 errmsg("\"%s\" is declared CONSTANT",
+								((PLpgSQL_var *) datum)->refname)));
 			}
 			break;
 		case PLPGSQL_DTYPE_RECFIELD:

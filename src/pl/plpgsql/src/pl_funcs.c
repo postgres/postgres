@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.26 2003/05/23 04:08:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.27 2003/07/25 23:37:29 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -313,7 +313,10 @@ plpgsql_ns_rename(char *oldname, char *newname)
 		}
 	}
 
-	elog(ERROR, "there is no variable '%s' in the current block", oldname);
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("there is no variable \"%s\" in the current block",
+					oldname)));
 }
 
 
@@ -366,7 +369,9 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 				*cp++ = *s++;
 			}
 			if (*s != '"')		/* should not happen if lexer checked */
-				elog(ERROR, "unterminated \" in name: %s", sstart);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("unterminated \" in name: %s", sstart)));
 			s++;
 		}
 		else
@@ -403,8 +408,10 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 		if (identctr < numidents)
 			output[identctr++] = curident;
 		else
-			elog(ERROR, "Qualified identifier cannot be used here: %s",
-				 sstart);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("qualified identifier cannot be used here: %s",
+							sstart)));
 
 		/* If not done, skip whitespace, dot, whitespace */
 		if (*s)
@@ -412,16 +419,16 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 			while (*s && isspace((unsigned char) *s))
 				s++;
 			if (*s++ != '.')
-				elog(ERROR, "Expected dot between identifiers: %s", sstart);
+				elog(ERROR, "expected dot between identifiers: %s", sstart);
 			while (*s && isspace((unsigned char) *s))
 				s++;
 			if (*s == '\0')
-				elog(ERROR, "Expected another identifier: %s", sstart);
+				elog(ERROR, "expected another identifier: %s", sstart);
 		}
 	}
 
 	if (identctr != numidents)
-		elog(ERROR, "Improperly qualified identifier: %s",
+		elog(ERROR, "improperly qualified identifier: %s",
 			 sstart);
 }
 
@@ -586,7 +593,7 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			dump_perform((PLpgSQL_stmt_perform *) stmt);
 			break;
 		default:
-			elog(ERROR, "plpgsql_dump: unknown cmd_type %d\n", stmt->cmd_type);
+			elog(ERROR, "unknown cmd_type: %d", stmt->cmd_type);
 			break;
 	}
 }
