@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.62 1999/09/29 16:06:08 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.63 1999/10/15 01:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"coalesce", COALESCE},
 	{"collate", COLLATE},
 	{"column", COLUMN},
+	{"comment", COMMENT},
 	{"commit", COMMIT},
 	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.22 1999/10/03 23:55:35 tgl Exp $
+ * $Id: heap.h,v 1.23 1999/10/15 01:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,9 @@ extern Oid heap_create_with_catalog(char *relname,
 extern void heap_destroy_with_catalog(char *relname);
 extern void heap_truncate(char *relname);
 extern void heap_destroy(Relation rel);
+
+extern void CreateComments(Oid object, char *comments);
+extern void DeleteComments(Oid object);
 
 extern void AddRelationRawConstraints(Relation rel,
 									  List *rawColDefaults,

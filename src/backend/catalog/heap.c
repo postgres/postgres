@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.103 1999/10/07 05:48:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.104 1999/10/15 01:49:39 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -38,6 +38,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_description.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
@@ -67,6 +68,7 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 				  Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
 					char relkind, char *temp_relname);
 static void AddToNoNameRelList(Relation r);
+
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
@@ -861,10 +863,11 @@ heap_create_with_catalog(char *relname,
  *		2)	remove inheritance information
  *		3)	remove indexes
  *		4)	remove pg_class tuple
- *		5)	remove pg_attribute tuples
- *		6)	remove pg_type tuples
- *		7)	RemoveConstraints ()
- *		8)	unlink relation
+ *		5)	remove pg_attribute tuples and related descriptions
+ *              6)      remove pg_description tuples
+ *		7)	remove pg_type tuples
+ *		8)	RemoveConstraints ()
+ *		9)	unlink relation
  *
  * old comments
  *		Except for vital relations, removes relation from
@@ -1269,16 +1272,150 @@ DeleteAttributeTuples(Relation rel)
 		 attnum++)
 	{
 		if (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
-								 ObjectIdGetDatum(RelationGetRelid(rel)),
-												   Int16GetDatum(attnum),
+								   ObjectIdGetDatum(RelationGetRelid(rel)),
+								   Int16GetDatum(attnum),
 														   0, 0)))
 		{
-			heap_delete(pg_attribute_desc, &tup->t_self, NULL);
-			pfree(tup);
+		      DeleteComments(tup->t_data->t_oid);
+		      heap_delete(pg_attribute_desc, &tup->t_self, NULL);
+		      pfree(tup);
 		}
 	}
 
 	heap_close(pg_attribute_desc, RowExclusiveLock);
+}
+
+/* ----------------------------------------------------------
+ *  CreateComments
+ * 
+ *  This routine is handed the oid and the command associated
+ *  with that id and will insert, update, or delete (if the 
+ *  comment is an empty string or a NULL pointer) the associated
+ *  comment from the system cataloge, pg_description. 
+ *
+ * ----------------------------------------------------------
+ */
+
+void
+CreateComments(Oid oid, char *comment)
+{
+
+  Relation description;
+  TupleDesc tupDesc;
+  HeapScanDesc scan;
+  ScanKeyData entry;
+  HeapTuple desctuple, searchtuple;
+  Datum values[Natts_pg_description];
+  char nulls[Natts_pg_description];
+  char replaces[Natts_pg_description];
+  bool modified = false;
+  int i;
+
+  /*** Open pg_description, form a new tuple, if necessary ***/
+
+  description = heap_openr(DescriptionRelationName, RowExclusiveLock);
+  tupDesc = description->rd_att;
+  if ((comment != NULL) && (strlen(comment) > 0)) {
+    for (i = 0; i < Natts_pg_description; i++) {
+      nulls[i] = ' ';
+      replaces[i] = 'r';
+      values[i] = (Datum) NULL;
+    }
+    i = 0;
+    values[i++] = ObjectIdGetDatum(oid);
+    values[i++] = (Datum) fmgr(F_TEXTIN, comment);
+  }
+
+  /*** Now, open pg_description and attempt to find the old tuple ***/
+  
+  ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_description_objoid, F_OIDEQ,
+			 ObjectIdGetDatum(oid));
+  scan = heap_beginscan(description, false, SnapshotNow, 1, &entry);
+  searchtuple = heap_getnext(scan, 0);
+
+  /*** If a previous tuple exists, either delete it or prepare a replacement ***/
+
+  if (HeapTupleIsValid(searchtuple)) {
+        
+    /*** If the comment is blank, call heap_delete, else heap_replace ***/
+
+    if ((comment == NULL) || (strlen(comment) == 0)) {
+      heap_delete(description, &searchtuple->t_self, NULL);
+    } else {
+      desctuple = heap_modifytuple(searchtuple, description, values, nulls, replaces);      
+      setheapoverride(true);
+      heap_replace(description, &searchtuple->t_self, desctuple, NULL);
+      setheapoverride(false);
+      modified = TRUE;
+    }
+
+  } else {    
+    desctuple = heap_formtuple(tupDesc, values, nulls);
+    heap_insert(description, desctuple);
+    modified = TRUE;
+  }
+
+  /*** Complete the scan, update indices, if necessary ***/
+
+  heap_endscan(scan);
+  
+  if (modified) {
+    if (RelationGetForm(description)->relhasindex) {
+      Relation idescs[Num_pg_description_indices];
+      
+      CatalogOpenIndices(Num_pg_description_indices, Name_pg_description_indices, idescs);
+      CatalogIndexInsert(idescs, Num_pg_description_indices, description, desctuple);
+      CatalogCloseIndices(Num_pg_description_indices, idescs);
+    }
+    pfree(desctuple);
+
+  }
+
+  heap_close(description, RowExclusiveLock);
+
+}
+    
+/* --------------------------------
+ *  DeleteComments
+ *
+ *  This routine is used to purge any comments 
+ *  associated with the Oid handed to this routine,
+ *  regardless of the actual object type. It is
+ *  called, for example, when a relation is destroyed.
+ * --------------------------------
+ */
+
+void 
+DeleteComments(Oid oid) 
+{
+
+  Relation description;
+  TupleDesc tupDesc;
+  ScanKeyData entry;
+  HeapScanDesc scan;
+  HeapTuple searchtuple;
+
+  description = heap_openr(DescriptionRelationName, RowExclusiveLock);
+  tupDesc = description->rd_att;
+
+  /*** Now, open pg_description and attempt to find the old tuple ***/
+  
+  ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_description_objoid, F_OIDEQ,
+			 ObjectIdGetDatum(oid));
+  scan = heap_beginscan(description, false, SnapshotNow, 1, &entry);
+  searchtuple = heap_getnext(scan, 0);
+
+  /*** If a previous tuple exists, delete it ***/
+
+  if (HeapTupleIsValid(searchtuple)) {    
+    heap_delete(description, &searchtuple->t_self, NULL);
+  } 
+  
+  /*** Complete the scan, update indices, if necessary ***/
+
+  heap_endscan(scan);
+  heap_close(description, RowExclusiveLock);
+  
 }
 
 /* --------------------------------
@@ -1470,6 +1607,13 @@ heap_destroy_with_catalog(char *relname)
 	 * ----------------
 	 */
 	DeleteAttributeTuples(rel);
+
+	/* ----------------
+	 *      delete comments
+         * ----------------
+         */
+
+	DeleteComments(RelationGetRelid(rel));
 
 	if (istemp)
 		remove_temp_relation(rid);

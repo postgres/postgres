@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.8 1999/02/13 23:21:09 momjian Exp $
+ * $Id: pg_description.h,v 1.9 1999/10/15 01:49:44 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -65,3 +65,4 @@ typedef FormData_pg_description *Form_pg_description;
  */
 
 #endif	 /* PG_DESCRIPTION_H */
+

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.108 1999/10/07 04:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.109 1999/10/15 01:49:41 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -118,7 +118,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	stmt,
 		AddAttrStmt, ClosePortalStmt,
 		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
-		TruncateStmt,
+		TruncateStmt, CommentStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
@@ -314,7 +314,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
  */
 %token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, 
-		CACHE, CLUSTER, COPY, CREATEDB, CREATEUSER, CYCLE,
+		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
@@ -402,6 +402,7 @@ stmt :	  AddAttrStmt
 		| DefineStmt
 		| DestroyStmt		
 		| TruncateStmt
+		| CommentStmt
 		| DropPLangStmt
 		| DropTrigStmt
 		| DropUserStmt
@@ -1538,6 +1539,32 @@ TruncateStmt:  TRUNCATE TABLE relation_name
 					$$ = (Node *)n;
 				}
 			;
+
+/*****************************************************************************
+ *
+ *             QUERY:
+ *                     comment on [ table <relname> | column <relname>.<attribute> ]
+ *                                is 'text'
+ *
+ *****************************************************************************/
+ 
+CommentStmt:	COMMENT ON COLUMN relation_name '.' attr_name IS Sconst
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->relname = $4;
+				n->attrname = $6;
+				n->comment = $8;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON TABLE relation_name IS Sconst
+		        {
+				CommentStmt *n = makeNode(CommentStmt);
+				n->relname = $4;
+				n->attrname = NULL;
+				n->comment = $6;
+				$$ = (Node *) n;
+			}
+		;
 
 /*****************************************************************************
  *
@@ -5011,6 +5038,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| BACKWARD						{ $$ = "backward"; }
 		| BEFORE						{ $$ = "before"; }
 		| CACHE							{ $$ = "cache"; }
+		| COMMENT						{ $$ = "comment"; }
 		| COMMITTED						{ $$ = "committed"; }
 		| CONSTRAINTS					{ $$ = "constraints"; }
 		| CREATEDB						{ $$ = "createdb"; }
@@ -5081,6 +5109,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
 		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
 		| TRIGGER						{ $$ = "trigger"; }
+		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
 		| TYPE_P						{ $$ = "type"; }
 		| VALID							{ $$ = "valid"; }

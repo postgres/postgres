@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.69 1999/09/30 01:12:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.70 1999/10/15 01:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,6 +232,28 @@ ProcessUtility(Node *parsetree,
 				TruncateRelation(relname);
 			}
 			break;
+
+	case T_CommentStmt:
+	  {
+	    
+	    CommentStmt *statement;
+	    
+	    statement = ((CommentStmt *) parsetree);
+	    
+	    PS_SET_STATUS(commandTag = "COMMENT");
+	    CHECK_IF_ABORTED();
+
+#ifndef NO_SECURITY
+	    if (!pg_ownercheck(userName, statement->relname, RELNAME))
+	      elog(ERROR, "you do not own class \"%s\"", statement->relname);
+#endif
+
+	    CommentRelation(statement->relname, statement->attrname, 
+			    statement->comment);
+	  }
+	  break;
+	    
+
 
 		case T_CopyStmt:
 			{

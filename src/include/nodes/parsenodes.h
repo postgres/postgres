@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.84 1999/10/07 04:23:17 tgl Exp $
+ * $Id: parsenodes.h,v 1.85 1999/10/15 01:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,6 +309,18 @@ typedef struct TruncateStmt
         NodeTag         type;
         char	   *relName;            /* relation to be truncated */
 } TruncateStmt;
+
+/* ----------------------
+ *              Comment On Statement
+ * ----------------------
+ */
+typedef struct CommentStmt
+{
+  NodeTag         type;
+  char *relname;                       /* relation to create/drop comment */
+  char *attrname;                      /* attribute to comment on */
+  char *comment;                       /* the actual comment */
+} CommentStmt;
       
 /* ----------------------
  *		Extend Index Statement

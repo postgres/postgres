@@ -164,6 +164,7 @@ do
 -TDestReceiver \
 -TDestroyStmt \
 -TTruncateStmt \
+-TCommentStmt \
 -TDestroydbStmt \
 -TDisplay \
 -TDl_info \
