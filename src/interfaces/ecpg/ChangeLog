@@ -1724,9 +1724,9 @@ Wed Dec 17 16:11:16 CET 2003
 	  variable listing for output variables in cursor definitions
 	- Fixed incorrect if call in long=>numeric conversion.
 	- Set ecpg version to 3.1.0
-	- Set ecpg library to 4.1.0
-	- Set pgtypes library to 1.1.0
-	- Set compat library to 1.1.0
+	- Set ecpg library to 4.1
+	- Set pgtypes library to 1.1
+	- Set compat library to 1.1
 
 Mon Jan 26 21:57:14 CET 2004
 
@@ -1759,6 +1759,14 @@ Thu Mar  4 08:29:02 CET 2004
 
 	- Fixed segfault due to missing check for variable declaration.
 	- Added check for multidimensional array usage.
-	- Set pgtypeslib version to 1.2.
+	
+Sun Mar 14 12:59:15 CET 2004
+
+	- Fixed Informix compat math functions to cope with the situations
+	  where one argument takes the result.
+	- Applied thread patches by Lee Kindness
+	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
+	- Set compat library version to 1.2.
+	- Set ecpg library version to 4.2.
 
