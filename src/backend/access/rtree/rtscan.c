@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.8 1996/11/05 10:54:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.9 1996/11/15 18:37:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,7 @@ rtendscan(IndexScanDesc s)
     if (p != (RTreeScanOpaque) NULL) {
 	freestack(p->s_stack);
 	freestack(p->s_markstk);
+    	pfree (s->opaque);
     }
     
     rtdropscan(s);

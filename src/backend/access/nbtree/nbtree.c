@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.10 1996/11/13 20:47:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.11 1996/11/15 18:36:59 momjian Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -277,7 +277,6 @@ btbuild(Relation heap,
 	    }  
 	}
     
-    /* be tidy */
     pfree(nulls);
     pfree(attdata);
     
@@ -467,14 +466,11 @@ btendscan(IndexScanDesc scan)
 	so->btso_mrkbuf = InvalidBuffer;
 	ItemPointerSetInvalid(iptr);
     }
-    
-    /* don't need scan registered anymore */
-    _bt_dropscan(scan);
-    
-    /* be tidy */
+
+    pfree (scan->opaque);
     if ( so->keyData != (ScanKey) NULL )
     	pfree (so->keyData);
-    pfree (scan->opaque);
+    _bt_dropscan(scan);
 }
 
 /*
