@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.44 1997/11/10 05:10:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.45 1997/11/10 15:41:58 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
+void PQsetenv(PGconn *conn);
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
@@ -109,18 +110,15 @@ struct EnvironmentOptions
 }			EnvironmentOptions[] =
 
 {
-	{
-		"PG_DATESTYLE", "datestyle"
-	},
-	{
-		NULL
-	}
+	{	"PGDATESTYLE", "datestyle" },
+	{	"PGTZ", "timezone" },
+	{	NULL }
 };
 
 /* ----------------
  *		PQconnectdb
  *
- * establishes a connectin to a postgres backend through the postmaster
+ * establishes a connection to a postgres backend through the postmaster
  * using connection information in a string.
  *
  * The conninfo string is a list of
@@ -136,7 +134,7 @@ struct EnvironmentOptions
  * then some fields may be null'ed out instead of having valid values
  * ----------------
  */
-PGconn	   *
+PGconn *
 PQconnectdb(const char *conninfo)
 {
 	PGconn	   *conn;
@@ -255,6 +253,8 @@ PQconnectdb(const char *conninfo)
 		PQclear(res);
 	}
 
+	PQsetenv(conn);
+
 	return conn;
 }
 
@@ -308,6 +308,11 @@ PQconndefaults(void)
  *				   argument is NULL or a null string
  *
  *	  None of the above need be defined.  There are defaults for all of them.
+ *
+ * To support "delimited identifiers" for database names, only convert
+ * the database name to lower case if it is not surrounded by double quotes.
+ * Otherwise, strip the double quotes but leave the reset of the string intact.
+ * - thomas 1997-11-08
  *
  * ----------------
  */
@@ -419,8 +424,8 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 				conn->dbName = strdup(conn->pguser);
 
 			/*
-			 * if the table name is surrounded by double-quotes, then
-			 * don't convert case
+			 * if the database name is surrounded by double-quotes,
+			 *  then don't convert case
 			 */
 			if (*conn->dbName == '"')
 			{
@@ -457,6 +462,7 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 				}
 				PQclear(res);
 			}
+			PQsetenv(conn);
 		}
 	}
 	return conn;
@@ -625,24 +631,6 @@ connectDB(PGconn *conn)
 
 	conn->port = port;
 
-	{
-		struct EnvironmentOptions *eo;
-		char		setQuery[80];		/* mjl: size okay? XXX */
-
-		for (eo = EnvironmentOptions; eo->envName; eo++)
-		{
-			const char *val;
-
-			if ((val = getenv(eo->envName)))
-			{
-				PGresult   *res;
-
-				sprintf(setQuery, "SET %s TO '%.60s'", eo->pgName, val);
-				res = PQexec(conn, setQuery);
-				PQclear(res);	/* Don't care? */
-			}
-		}
-	}
 	return CONNECTION_OK;
 
 connect_errReturn:
@@ -657,6 +645,30 @@ connect_errReturn:
 	return CONNECTION_BAD;
 
 }
+
+void
+PQsetenv(PGconn *conn)
+{
+	struct EnvironmentOptions *eo;
+	char setQuery[80];		/* mjl: size okay? XXX */
+
+	for (eo = EnvironmentOptions; eo->envName; eo++)
+	{
+		const char *val;
+
+		if ((val = getenv(eo->envName)))
+		{
+			PGresult   *res;
+
+			sprintf(setQuery, "SET %s TO '%.60s'", eo->pgName, val);
+#ifdef CONNECTDEBUG
+printf("Use environment variable %s to send %s\n", eo->envName, setQuery);
+#endif
+			res = PQexec(conn, setQuery);
+			PQclear(res);	/* Don't care? */
+		}
+	}
+} /* PQsetenv() */
 
 /*
  * freePGconn
