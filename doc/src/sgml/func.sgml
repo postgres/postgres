@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.191 2004/03/05 02:41:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.192 2004/03/07 01:01:44 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -301,20 +301,22 @@ PostgreSQL documentation
     <literal><replaceable>expression</replaceable> = NULL</literal>
     because <literal>NULL</> is not <quote>equal to</quote>
     <literal>NULL</>.  (The null value represents an unknown value,
-    and it is not known whether two unknown values are equal.)
+    and it is not known whether two unknown values are equal.) This
+    behavior conforms to the SQL standard.
    </para>
 
    <para>
-    Some applications may (incorrectly) require that
+    Some applications may expect that
     <literal><replaceable>expression</replaceable> = NULL</literal>
     returns true if <replaceable>expression</replaceable> evaluates to
-    the null value.  To support these applications, the run-time option
-    <varname>transform_null_equals</varname> can be turned on (e.g.,
-    <literal>SET transform_null_equals TO ON;</literal>).
-    <productname>PostgreSQL</productname> will then convert
-    <literal>x = NULL</literal> clauses to
-    <literal>x IS NULL</literal>.  This was 
-    the default behavior in releases 6.5 through 7.1.
+    the null value.  It is highly recommended that these applications
+    be modified to comply with the SQL standard. However, if that
+    cannot be done the <varname>transform_null_equals</varname>
+    configuration variable is available. If it is enabled,
+    <productname>PostgreSQL</productname> will convert <literal>x =
+    NULL</literal> clauses to <literal>x IS NULL</literal>.  This was
+    the default behavior in <productname>PostgreSQL</productname>
+    releases 6.5 through 7.1.
    </para>
 
    <para>
