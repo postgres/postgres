@@ -2,9 +2,10 @@
 #
 # Makefile for src/interfaces/libpq library
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.118 2004/10/16 03:26:43 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.119 2004/10/16 20:10:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,7 +53,7 @@ SHLIB_LINK += -lwsock32 -lws2_32 $(filter -leay32 -lssleay32, $(LIBS))
 endif
 
 
-all: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h all-lib
+all: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h def-files all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -79,6 +80,42 @@ encnames.c wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
+# We need several not-quite-identical variants of .DEF files to build libpq
+# DLLs for Windows.  These are made from the single source file exports.txt.
+# Since we can't assume that Windows boxes will have sed, the .DEF files are
+# always built and included in distribution tarballs.
+
+distprep: def-files
+
+.PHONY: def-files
+
+def-files: $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.def
+
+$(srcdir)/libpqdll.def: exports.txt
+	echo '; DEF file for MS VC++' > $@
+	echo 'LIBRARY LIBPQ' >> $@
+	echo 'DESCRIPTION "PostgreSQL Client Library"' >> $@
+	echo 'EXPORTS' >> $@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' < $< >> $@
+
+$(srcdir)/libpqddll.def: exports.txt
+	echo '; DEF file for MS VC++' > $@
+	echo 'LIBRARY LIBPQD' >> $@
+	echo 'DESCRIPTION "PostgreSQL Client Library"' >> $@
+	echo 'EXPORTS' >> $@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' < $< >> $@
+
+$(srcdir)/blibpqdll.def: exports.txt
+	echo '; DEF file for Borland C++ Builder' > $@
+	echo 'LIBRARY BLIBPQ' >> $@
+	echo 'DESCRIPTION "PostgreSQL Client Library"' >> $@
+	echo 'EXPORTS' >> $@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    _\1@ \2/' < $< >> $@
+	echo '' >> $@
+	echo '; Aliases for MS compatible names' >> $@
+	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1= _\1/' < $< | sed 's/ *$$//' >> $@
+
+
 ifneq ($(PTHREAD_H_WIN32), "")
 pthread.h : % : $(top_srcdir)/src/interfaces/libpq/pthread.h.win
 	rm -f $@ && $(LN_S) $< .
@@ -99,5 +136,8 @@ installdirs:
 uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(DESTDIR)$(includedir_internal)/pqexpbuffer.h
 
-clean distclean maintainer-clean: clean-lib
+clean distclean: clean-lib
 	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c dllist.c md5.c ip.c encnames.c wchar.c pthread.h
+
+maintainer-clean: distclean
+	rm -f $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.def
