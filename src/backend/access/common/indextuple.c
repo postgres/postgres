@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.46 2000/11/16 05:50:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.47 2000/11/30 18:38:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,13 +160,13 @@ index_formtuple(TupleDesc tupleDescriptor,
  *
  *		This caches attribute offsets in the attribute descriptor.
  *
- *		an alternate way to speed things up would be to cache offsets
+ *		An alternate way to speed things up would be to cache offsets
  *		with the tuple, but that seems more difficult unless you take
  *		the storage hit of actually putting those offsets into the
  *		tuple you send to disk.  Yuck.
  *
  *		This scheme will be slightly slower than that, but should
- *		preform well for queries which hit large #'s of tuples.  After
+ *		perform well for queries which hit large #'s of tuples.  After
  *		you cache the offsets once, examining all the other tuples using
  *		the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
@@ -177,13 +177,13 @@ nocache_index_getattr(IndexTuple tup,
 					  TupleDesc tupleDesc,
 					  bool *isnull)
 {
-	char	   *tp;				/* ptr to att in tuple */
-	char	   *bp = NULL;		/* ptr to att in tuple */
-	int			slow;			/* do we have to walk nulls? */
-	int			data_off;		/* tuple data offset */
 	Form_pg_attribute *att = tupleDesc->attrs;
+	char	   *tp;				/* ptr to att in tuple */
+	bits8	   *bp = NULL;		/* ptr to null bitmask in tuple */
+	bool		slow = false;	/* do we have to walk nulls? */
+	int			data_off;		/* tuple data offset */
 
-	(void) isnull;
+	(void) isnull;				/* not used */
 	/* ----------------
 	 *	sanity checks
 	 * ----------------
@@ -209,17 +209,12 @@ nocache_index_getattr(IndexTuple tup,
 	data_off = IndexTupleHasMinHeader(tup) ? sizeof *tup :
 		IndexInfoFindDataOffset(tup->t_info);
 
+	attnum--;
+
 	if (IndexTupleNoNulls(tup))
 	{
-		attnum--;
-
 #ifdef IN_MACRO
 /* This is handled in the macro */
-
-		/* first attribute is always at position zero */
-
-		if (attnum == 1)
-			return (Datum) fetchatt(&(att[0]), (char *) tup + data_off);
 		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum) fetchatt(&(att[attnum]),
@@ -227,20 +222,13 @@ nocache_index_getattr(IndexTuple tup,
 									att[attnum]->attcacheoff);
 		}
 #endif
-
-		slow = 0;
 	}
 	else
 	{							/* there's a null somewhere in the tuple */
-
-		slow = 0;
 		/* ----------------
 		 *		check to see if desired att is null
 		 * ----------------
 		 */
-
-		attnum--;
-
 		bp = (char *) tup + sizeof(*tup);		/* "knows" t_bits are
 												 * here! */
 #ifdef IN_MACRO
@@ -254,34 +242,28 @@ nocache_index_getattr(IndexTuple tup,
 #endif
 
 		/* ----------------
-		 *		Now check to see if any preceeding bits are null...
+		 *		Now check to see if any preceding bits are null...
 		 * ----------------
 		 */
 		{
-			int			i = 0;	/* current offset in bp */
-			int			mask;	/* bit in byte we're looking at */
-			char		n;		/* current byte in bp */
-			int			byte,
-						finalbit;
+			int			byte = attnum >> 3;
+			int			finalbit = attnum & 0x07;
 
-			byte = attnum >> 3;
-			finalbit = attnum & 0x07;
-
-			for (; i <= byte && !slow; i++)
+			/* check for nulls "before" final bit of last byte */
+			if ((~bp[byte]) & ((1 << finalbit) - 1))
+				slow = true;
+			else
 			{
-				n = bp[i];
-				if (i < byte)
+				/* check for nulls in any "earlier" bytes */
+				int			i;
+
+				for (i = 0; i < byte; i++)
 				{
-					/* check for nulls in any "earlier" bytes */
-					if ((~n) != 0)
-						slow = 1;
-				}
-				else
-				{
-					/* check for nulls "before" final bit of last byte */
-					mask = (1 << finalbit) - 1;
-					if ((~n) & mask)
-						slow = 1;
+					if (bp[i] != 0xFF)
+					{
+						slow = true;
+						break;
+					}
 				}
 			}
 		}
@@ -298,24 +280,25 @@ nocache_index_getattr(IndexTuple tup,
 			return (Datum) fetchatt(&(att[attnum]),
 									tp + att[attnum]->attcacheoff);
 		}
-		else if (attnum == 0)
-			return (Datum) fetchatt(&(att[0]), (char *) tp);
 		else if (!IndexTupleAllFixed(tup))
 		{
-			int			j = 0;
+			int			j;
 
-			for (j = 0; j < attnum && !slow; j++)
-				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
-					slow = 1;
+			for (j = 0; j < attnum; j++)
+				if (att[j]->attlen <= 0)
+				{
+					slow = true;
+					break;
+				}
 		}
 	}
 
 	/*
-	 * if slow is zero, and we got here, we know that we have a tuple with
-	 * no nulls.  We also know that we have to initialize the remainder of
-	 * the attribute cached offset values.
+	 * If slow is false, and we got here, we know that we have a tuple with
+	 * no nulls or varlenas before the target attribute. If possible, we
+	 * also want to initialize the remainder of the attribute cached
+	 * offset values.
 	 */
-
 	if (!slow)
 	{
 		int			j = 1;
@@ -327,15 +310,12 @@ nocache_index_getattr(IndexTuple tup,
 
 		att[0]->attcacheoff = 0;
 
-		while (att[j]->attcacheoff != -1)
+		while (j < attnum && att[j]->attcacheoff > 0)
 			j++;
 
-		if (!VARLENA_FIXED_SIZE(att[j - 1]))
-			off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
-		else
-			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
+		off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
 
-		for (; j < attnum + 1; j++)
+		for (; j <= attnum; j++)
 		{
 
 			/*
@@ -347,14 +327,7 @@ nocache_index_getattr(IndexTuple tup,
 
 			att[j]->attcacheoff = off;
 
-			/* The only varlena/-1 length value to get here is this */
-			if (!VARLENA_FIXED_SIZE(att[j]))
-				off += att[j]->attlen;
-			else
-			{
-				Assert(att[j]->atttypmod == VARSIZE(tp + off));
-				off += att[j]->atttypmod;
-			}
+			off += att[j]->attlen;
 		}
 
 		return (Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
@@ -391,27 +364,14 @@ nocache_index_getattr(IndexTuple tup,
 					att[i]->attcacheoff = off;
 			}
 
-			switch (att[i]->attlen)
+			if (att[i]->attlen == -1)
 			{
-				case sizeof(char):
-					off++;
-					break;
-				case sizeof(short):
-					off += sizeof(short);
-					break;
-				case sizeof(int32):
-					off += sizeof(int32);
-					break;
-				case -1:
-					Assert(!VARLENA_FIXED_SIZE(att[i]) ||
-						   att[i]->atttypmod == VARSIZE(tp + off));
-					off += VARSIZE(tp + off);
-					if (!VARLENA_FIXED_SIZE(att[i]))
-						usecache = false;
-					break;
-				default:
-					off += att[i]->attlen;
-					break;
+				off += VARSIZE(tp + off);
+				usecache = false;
+			}
+			else
+			{
+				off += att[i]->attlen;
 			}
 		}
 

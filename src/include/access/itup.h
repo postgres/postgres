@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.25 2000/07/14 22:17:53 tgl Exp $
+ * $Id: itup.h,v 1.26 2000/11/30 18:38:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,24 +109,17 @@ typedef RetrieveIndexResultData *RetrieveIndexResult;
 	*(isnull) = false, \
 	IndexTupleNoNulls(tup) ? \
 	( \
-		((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
-		 (attnum) == 1) ? \
+		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ? \
 		( \
-			(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
+			(Datum) fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
 			(char *) (tup) + \
 			( \
 				IndexTupleHasMinHeader(tup) ? \
 						sizeof (*(tup)) \
 					: \
 						IndexInfoFindDataOffset((tup)->t_info) \
-				) + \
-				( \
-					((attnum) != 1) ? \
-						(tupleDesc)->attrs[(attnum)-1]->attcacheoff \
-					: \
-						0 \
-				) \
 			) \
+			+ (tupleDesc)->attrs[(attnum)-1]->attcacheoff) \
 		) \
 		: \
 			nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \

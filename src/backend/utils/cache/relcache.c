@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.117 2000/11/30 08:46:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.118 2000/11/30 18:38:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,6 +630,32 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	heap_endscan(pg_attribute_scan);
 	heap_close(pg_attribute_desc, AccessShareLock);
 
+	/* ----------------
+	 *	The attcacheoff values we read from pg_attribute should all be -1
+	 *	("unknown").  Verify this if assert checking is on.  They will be
+	 *	computed when and if needed during tuple access.
+	 * ----------------
+	 */
+#ifdef USE_ASSERT_CHECKING
+	{
+		int		i;
+
+		for (i = 0; i < relation->rd_rel->relnatts; i++)
+		{
+			Assert(relation->rd_att->attrs[i]->attcacheoff == -1);
+		}
+	}
+#endif
+
+	/* ----------------
+	 *	However, we can easily set the attcacheoff value for the first
+	 *	attribute: it must be zero.  This eliminates the need for special
+	 *	cases for attnum=1 that used to exist in fastgetattr() and
+	 *	index_getattr().
+	 * ----------------
+	 */
+	relation->rd_att->attrs[0]->attcacheoff = 0;
+
 	SetConstrOfRelation(relation, constr, ndef, attrdef);
 }
 
@@ -714,6 +740,28 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	}
 
 	heap_close(attrel, AccessShareLock);
+
+	/* ----------------
+	 *	The attcacheoff values we read from pg_attribute should all be -1
+	 *	("unknown").  Verify this if assert checking is on.  They will be
+	 *	computed when and if needed during tuple access.
+	 * ----------------
+	 */
+#ifdef USE_ASSERT_CHECKING
+	for (i = 0; i < relation->rd_rel->relnatts; i++)
+	{
+		Assert(relation->rd_att->attrs[i]->attcacheoff == -1);
+	}
+#endif
+
+	/* ----------------
+	 *	However, we can easily set the attcacheoff value for the first
+	 *	attribute: it must be zero.  This eliminates the need for special
+	 *	cases for attnum=1 that used to exist in fastgetattr() and
+	 *	index_getattr().
+	 * ----------------
+	 */
+	relation->rd_att->attrs[0]->attcacheoff = 0;
 
 	SetConstrOfRelation(relation, constr, ndef, attrdef);
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.97 2000/08/21 04:48:52 tgl Exp $
+ * $Id: pg_type.h,v 1.98 2000/11/30 18:38:47 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -415,7 +415,6 @@ DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in nume
 DESCR("numeric(precision, decimal), arbitrary precision number");
 #define NUMERICOID		1700
 
-#define VARLENA_FIXED_SIZE(attr)	((attr)->atttypid == BPCHAROID && (attr)->atttypmod > 0)
 
 /*
  * prototypes for functions in pg_type.c
