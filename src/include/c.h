@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.103 2001/10/18 22:40:52 tgl Exp $
+ * $Id: c.h,v 1.104 2001/10/19 15:38:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@
 #endif
 
 #ifndef __GNUC__
-#define __attribute__(x)
+#define __attribute__(_arg_)
 #endif
 
 /* ----------------------------------------------------------------
