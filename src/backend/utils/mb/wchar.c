@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.2 1998/08/24 01:14:01 momjian Exp $
+ * $Id: wchar.c,v 1.3 1998/08/25 04:19:16 momjian Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -13,6 +13,29 @@
  * supported in the client, you don't need to define 
  * mb2wchar_with_len() function (SJIS is the case).
  */
+
+/*
+ * SQL/ASCII
+ */
+static void pg_ascii2wchar_with_len
+(const unsigned char *from, pg_wchar *to, int len)
+{
+  while (*from && len > 0) {
+    *to++ = *from++;
+    len--;
+  }
+  *to = 0;
+}
+
+static int pg_ascii_mblen(const unsigned char *s)
+{
+  return(1);
+}
+
+/*
+ * EUC
+ */
+
 static void pg_euc2wchar_with_len
 (const unsigned char *from, pg_wchar *to, int len)
 {
@@ -316,7 +339,7 @@ static int pg_sjis_mblen(const unsigned char *s)
 }
 
 pg_wchar_tbl pg_wchar_table[] = {
-  {0, 0},
+  {pg_ascii2wchar_with_len, pg_ascii_mblen},
   {pg_eucjp2wchar_with_len, pg_eucjp_mblen},
   {pg_euccn2wchar_with_len, pg_euccn_mblen},
   {pg_euckr2wchar_with_len, pg_euckr_mblen},
