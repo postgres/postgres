@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.31 2002/08/17 12:19:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.32 2002/08/18 01:39:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 	 * Turn off the Tcl event source for this connection, and delete any
 	 * pending notify events.
 	 */
-	PgStopNotifyEventSource(connid,1);
+	PgStopNotifyEventSource(connid);
 
 	/* Close the libpq connection too */
 	PQfinish(connid->conn);
@@ -441,7 +441,7 @@ PgGetConnByResultId(Tcl_Interp *interp, char *resid_c)
 	*mark = '.';
 	if (conn_chan && Tcl_GetChannelType(conn_chan) == &Pg_ConnType)
 	{
-		Tcl_SetResult(interp, (char *)Tcl_GetChannelName(conn_chan), TCL_VOLATILE);
+		Tcl_SetResult(interp, Tcl_GetChannelName(conn_chan), TCL_VOLATILE);
 		return TCL_OK;
 	}
 
@@ -611,9 +611,7 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
 	 * closed socket descriptor.
 	 */
 	if (PQsocket(connid->conn) < 0)
-		/* do not remove any pending events, so that the virtual notification
-		  connection_closed will be processed */
-		PgStopNotifyEventSource(connid,0);
+		PgStopNotifyEventSource(connid);
 }
 
 /*
@@ -677,17 +675,7 @@ Pg_Notify_FileHandler(ClientData clientData, int mask)
 	 * it internally to libpq; but it will clear the read-ready
 	 * condition).
 	 */
-	if (!PQconsumeInput(connid->conn)) {
-		NotifyEvent *event = (NotifyEvent *) ckalloc(sizeof(NotifyEvent));
-		
-		PGnotify *closed = (PGnotify *) ckalloc(sizeof(PGnotify));
-		strcpy(closed->relname,"connection_closed");
-		event->header.proc = Pg_Notify_EventProc;
-		event->info= *closed;
-		event->connid = connid;
-		Tcl_QueueEvent((Tcl_Event *) event, TCL_QUEUE_TAIL);
-		ckfree((void *)closed);
-	}
+	PQconsumeInput(connid->conn);
 
 	/* Transfer notify events from libpq to Tcl event queue. */
 	PgNotifyTransferEvents(connid);
@@ -736,7 +724,7 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 }
 
 void
-PgStopNotifyEventSource(Pg_ConnectionId * connid, int remove_pending)
+PgStopNotifyEventSource(Pg_ConnectionId * connid)
 {
 	/* Remove the event source */
 	if (connid->notifier_running)
@@ -755,5 +743,5 @@ PgStopNotifyEventSource(Pg_ConnectionId * connid, int remove_pending)
 	}
 
 	/* Kill any queued Tcl events that reference this channel */
-	if (remove_pending) Tcl_DeleteEvents(NotifyEventDeleteProc, (ClientData) connid);
+	Tcl_DeleteEvents(NotifyEventDeleteProc, (ClientData) connid);
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclId.h,v 1.19 2002/08/17 12:19:31 momjian Exp $
+ * $Id: pgtclId.h,v 1.20 2002/08/18 01:39:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ extern PGresult *PgGetResultId(Tcl_Interp *interp, char *id);
 extern void PgDelResultId(Tcl_Interp *interp, char *id);
 extern int	PgGetConnByResultId(Tcl_Interp *interp, char *resid);
 extern void PgStartNotifyEventSource(Pg_ConnectionId * connid);
-extern void PgStopNotifyEventSource(Pg_ConnectionId * connid, int remove_pend);
+extern void PgStopNotifyEventSource(Pg_ConnectionId * connid);
 extern void PgNotifyTransferEvents(Pg_ConnectionId * connid);
 extern void PgNotifyInterpDelete(ClientData clientData, Tcl_Interp *interp);
 

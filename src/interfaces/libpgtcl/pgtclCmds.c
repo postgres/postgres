@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.63 2002/08/17 12:19:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.64 2002/08/18 01:39:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,11 +419,8 @@ Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 #if TCL_MAJOR_VERSION >= 8
 	conn = PgGetConnectionId(interp, argv[1], &connid);
-	if (connid->notifier_channel != NULL) {
-		/* stop listening for NOTIFY events on that channel */
-		PgStopNotifyEventSource(connid,1);
+	if (connid->notifier_channel != NULL)
 		Tcl_UnregisterChannel(interp, connid->notifier_channel);
-	}
 #endif
 
 	return Tcl_UnregisterChannel(interp, conn_chan);
