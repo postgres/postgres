@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.74 2003/01/07 20:56:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.75 2003/02/24 03:54:06 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -715,8 +715,10 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf, "SELECT\n  CASE i.indproc WHEN ('-'::pg_catalog.regproc) THEN a.attname\n  ELSE SUBSTR(pg_catalog.pg_get_indexdef(attrelid),\n  POSITION('(' in pg_catalog.pg_get_indexdef(attrelid)))\n  END,");
 	else
 		printfPQExpBuffer(&buf, "SELECT a.attname,");
-	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),\n"
-					  "  a.attnotnull, a.atthasdef, a.attnum");
+	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
+					  "\n  (SELECT substring(d.adsrc for 128) FROM pg_catalog.pg_attrdef d"
+					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
+					  "\n  a.attnotnull, a.attnum");
 	if (verbose)
 		appendPQExpBuffer(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
@@ -762,32 +764,20 @@ describeOneTableDetails(const char *schemaname,
 														 * either */
 
 		/* Extra: not null and default */
-		/* (I'm cutting off the 'default' string at 128) */
 		if (show_modifiers)
 		{
 			resetPQExpBuffer(&tmpbuf);
-			if (strcmp(PQgetvalue(res, i, 2), "t") == 0)
+			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
 				appendPQExpBufferStr(&tmpbuf, "not null");
 
 			/* handle "default" here */
-			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
+			/* (note: above we cut off the 'default' string at 128) */
+			if (strlen(PQgetvalue(res, i, 2)) != 0)
 			{
-				PGresult   *result;
-
-				printfPQExpBuffer(&buf,
-								  "SELECT substring(d.adsrc for 128) FROM pg_catalog.pg_attrdef d\n"
-								  "WHERE d.adrelid = '%s' AND d.adnum = %s",
-								  oid, PQgetvalue(res, i, 4));
-
-				result = PSQLexec(buf.data, false);
-
 				if (tmpbuf.len > 0)
 					appendPQExpBufferStr(&tmpbuf, " ");
-
 				appendPQExpBuffer(&tmpbuf, "default %s",
-								  result ? PQgetvalue(result, 0, 0) : "?");
-
-				PQclear(result);
+								  PQgetvalue(res, i, 2));
 			}
 
 			cells[i * cols + 2] = xstrdup(tmpbuf.data);
