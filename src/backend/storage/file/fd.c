@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.17 1997/05/22 16:51:19 vadim Exp $
+ *    $Id: fd.c,v 1.18 1997/05/23 02:56:48 vadim Exp $
  *
  * NOTES:
  *
@@ -835,7 +835,7 @@ AllocateFile()
     }
     close(fd);
     ++allocatedFiles;
-    fdleft = pg_nofile() - allocatedFiles - nfile;
+    fdleft = pg_nofile() - allocatedFiles;
     if (fdleft < 6) {
         elog(NOTICE,"warning: few usable file descriptors left (%d)", fdleft);
     }
