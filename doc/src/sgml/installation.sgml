@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.162 2003/10/26 00:58:31 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.163 2003/10/26 01:05:53 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1723,9 +1723,9 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">Tru64 UNIX</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-05,
-	 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+	<entry>7.4</entry>
+	<entry>2003-10-25,
+	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry></entry>
        </row>
        <row>
