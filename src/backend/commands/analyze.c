@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.61 2003/09/11 22:59:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.62 2003/09/11 23:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,6 +539,12 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	if (!HeapTupleIsValid(tuple))
 	{
 		*totalrows = (double) numrows;
+
+		ereport(elevel,
+				(errmsg("\"%s\": %u pages, %d rows sampled, %.0f estimated total rows",
+						RelationGetRelationName(onerel),
+						onerel->rd_nblocks, numrows, *totalrows)));
+
 		return numrows;
 	}
 
@@ -691,9 +697,9 @@ pageloop:;
 	 * Emit some interesting relation info 
 	 */
 	ereport(elevel,
-			(errmsg("\"%s\": %u pages, %.1f average rows/page in sample, %.0f estimated rows",
+			(errmsg("\"%s\": %u pages, %d rows sampled, %.0f estimated total rows",
 					RelationGetRelationName(onerel),
-					onerel->rd_nblocks, tuplesperpage, *totalrows)));
+					onerel->rd_nblocks, numrows, *totalrows)));
 
 	return numrows;
 }
