@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.17 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.18 2001/10/22 23:48:11 tgl Exp $
 Postgres documentation
 -->
 
@@ -185,6 +185,13 @@ Postgres documentation
   </title>
   <para>
    Use <xref linkend="app-droplang"> to remove a language.
+  </para>
+
+  <para>
+   <application>createlang</application> is a shell script that invokes
+   <application>psql</application> several times.  If you have things
+   arranged so that a password prompt is required to connect, you will be
+   prompted for a password several times.
   </para>
  </refsect1>
  
