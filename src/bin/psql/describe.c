@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.75 2003/02/24 03:54:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.76 2003/03/27 16:57:39 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -975,7 +975,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasrules)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT r.rulename\n"
+							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid))\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
 							  "WHERE r.ev_class = '%s'",
 							  oid);
@@ -990,7 +990,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.triggers)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT t.tgname\n"
+							  "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' "
 							  "and (not tgisconstraint "
@@ -1022,113 +1022,120 @@ describeOneTableDetails(const char *schemaname,
 				foreignkey_count = PQntuples(result5);
 		}
 
-		footers = xmalloczero((index_count + check_count + rule_count + trigger_count + foreignkey_count + 1)
+		footers = xmalloczero((index_count + check_count + rule_count + trigger_count + foreignkey_count + 6)
 							  * sizeof(*footers));
 
 		/* print indexes */
-		for (i = 0; i < index_count; i++)
-		{
-			char	   *s = _("Indexes");
-			const char *indexdef;
-			const char *usingpos;
-
-			if (i == 0)
-				printfPQExpBuffer(&buf, "%s: %s", s,
-								  PQgetvalue(result1, i, 0));
-			else
-				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "",
-								  PQgetvalue(result1, i, 0));
-
-			/* Label as primary key or unique (but not both) */
-			appendPQExpBuffer(&buf,
-							  strcmp(PQgetvalue(result1, i, 1), "t") == 0
-							  ? _(" primary key") :
-							  (strcmp(PQgetvalue(result1, i, 2), "t") == 0
-							   ? _(" unique")
-							   : ""));
-
-			/* Everything after "USING" is echoed verbatim */
-			indexdef = PQgetvalue(result1, i, 3);
-			usingpos = strstr(indexdef, " USING ");
-			if (usingpos)
-				indexdef = usingpos + 7;
-
-			appendPQExpBuffer(&buf, " %s", indexdef);
-
-			if (i < index_count - 1)
-				appendPQExpBuffer(&buf, ",");
-
+		if (index_count > 0) {
+			printfPQExpBuffer(&buf, _("Indexes:"));
 			footers[count_footers++] = xstrdup(buf.data);
+			for (i = 0; i < index_count; i++)
+			{
+				const char *indexdef;
+				const char *usingpos;
+
+				/* Output index/constraint name */
+				printfPQExpBuffer(&buf, "    \"%s\"",
+								  PQgetvalue(result1, i, 0));
+
+				/* Label as primary key or unique (but not both) */
+				appendPQExpBuffer(&buf,
+								  strcmp(PQgetvalue(result1, i, 1), "t") == 0
+								  ? _(" PRIMARY KEY") :
+								  (strcmp(PQgetvalue(result1, i, 2), "t") == 0
+								   ? _(" UNIQUE")
+								   : ""));
+
+				/* Everything after "USING" is echoed verbatim */
+				indexdef = PQgetvalue(result1, i, 3);
+				usingpos = strstr(indexdef, " USING ");
+				if (usingpos)
+					indexdef = usingpos + 7;
+
+				appendPQExpBuffer(&buf, " %s", indexdef);
+
+				if (i < index_count - 1)
+					appendPQExpBuffer(&buf, ",");
+
+				footers[count_footers++] = xstrdup(buf.data);
+			}
 		}
 
-
 		/* print check constraints */
-		for (i = 0; i < check_count; i++)
-		{
-			char	   *s = _("Check constraints");
-
-			if (i == 0)
-				printfPQExpBuffer(&buf, _("%s: \"%s\" %s"),
-								  s,
-								  PQgetvalue(result2, i, 1),
-								  PQgetvalue(result2, i, 0));
-			else
-				printfPQExpBuffer(&buf, _("%*s  \"%s\" %s"),
-								  (int) strlen(s), "",
-								  PQgetvalue(result2, i, 1),
-								  PQgetvalue(result2, i, 0));
+		if (check_count > 0) {
+			printfPQExpBuffer(&buf, _("Check Constraints:"));
 			footers[count_footers++] = xstrdup(buf.data);
+			for (i = 0; i < check_count; i++)
+			{
+				printfPQExpBuffer(&buf, _("    \"%s\" CHECK %s"),
+								  PQgetvalue(result2, i, 1),
+								  PQgetvalue(result2, i, 0));
+				if (i < check_count - 1)
+					appendPQExpBuffer(&buf, ",");
+
+				footers[count_footers++] = xstrdup(buf.data);
+			}
 		}
 
 		/* print foreign key constraints */
-		for (i = 0; i < foreignkey_count; i++)
-		{
-			char	   *s = _("Foreign Key constraints");
-
-			if (i == 0)
-				printfPQExpBuffer(&buf, _("%s: %s %s"),
-								  s,
-								  PQgetvalue(result5, i, 0),
-								  PQgetvalue(result5, i, 1));
-			else
-				printfPQExpBuffer(&buf, _("%*s  %s %s"),
-								  (int) strlen(s), "",
-								  PQgetvalue(result5, i, 0),
-								  PQgetvalue(result5, i, 1));
-			if (i < foreignkey_count - 1)
-				appendPQExpBuffer(&buf, ",");
-
+		if (foreignkey_count > 0) {
+			printfPQExpBuffer(&buf, _("Foreign Key Constraints:"));
 			footers[count_footers++] = xstrdup(buf.data);
+			for (i = 0; i < foreignkey_count; i++)
+			{
+				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
+								  PQgetvalue(result5, i, 0),
+								  PQgetvalue(result5, i, 1));
+				if (i < foreignkey_count - 1)
+					appendPQExpBuffer(&buf, ",");
+
+				footers[count_footers++] = xstrdup(buf.data);
+			}
 		}
 
 		/* print rules */
-		for (i = 0; i < rule_count; i++)
-		{
-			char	   *s = _("Rules");
-
-			if (i == 0)
-				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result3, i, 0));
-			else
-				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result3, i, 0));
-			if (i < rule_count - 1)
-				appendPQExpBuffer(&buf, ",");
-
+		if (rule_count > 0) {
+			printfPQExpBuffer(&buf, _("Rules:"));
 			footers[count_footers++] = xstrdup(buf.data);
+			for (i = 0; i < rule_count; i++)
+			{
+				const char *ruledef;
+
+				/* Everything after "CREATE RULE" is echoed verbatim */
+				ruledef = PQgetvalue(result3, i, 1);
+				ruledef += 12;
+
+				printfPQExpBuffer(&buf, "    %s", ruledef);
+
+				if (i < rule_count - 1)
+					appendPQExpBuffer(&buf, ",");
+
+				footers[count_footers++] = xstrdup(buf.data);
+			}
 		}
 
 		/* print triggers */
-		for (i = 0; i < trigger_count; i++)
-		{
-			char	   *s = _("Triggers");
-
-			if (i == 0)
-				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result4, i, 0));
-			else
-				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result4, i, 0));
-			if (i < trigger_count - 1)
-				appendPQExpBuffer(&buf, ",");
-
+		if (trigger_count > 0) {
+			printfPQExpBuffer(&buf, _("Triggers:"));
 			footers[count_footers++] = xstrdup(buf.data);
+			for (i = 0; i < trigger_count; i++)
+			{
+				const char *tgdef;
+				const char *usingpos;
+
+				/* Everything after "TRIGGER" is echoed verbatim */
+				tgdef = PQgetvalue(result4, i, 1);
+				usingpos = strstr(tgdef, " TRIGGER ");
+				if (usingpos)
+					tgdef = usingpos + 9;
+
+				printfPQExpBuffer(&buf, "    %s", tgdef);
+
+				if (i < trigger_count - 1)
+					appendPQExpBuffer(&buf, ",");
+
+				footers[count_footers++] = xstrdup(buf.data);
+			}
 		}
 
 		/* end of list marker */
