@@ -10,10 +10,11 @@
  *	 - this required changing sem_info from containig an array of sem_t to an array of sem_t*
  *
  * IDENTIFICATION
- *		 $Header: /cvsroot/pgsql/src/backend/port/darwin/Attic/sem.c,v 1.3 2001/03/22 03:59:42 momjian Exp $
+ *		 $Header: /cvsroot/pgsql/src/backend/port/darwin/Attic/sem.c,v 1.4 2001/09/07 00:27:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <errno.h>
 #include <semaphore.h>
@@ -22,13 +23,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "postgres.h"
+
+#include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "port/darwin/sem.h"
 
 #define SEMMAX	IPC_NMAXSEM
-#define SETMAX ((MAXBACKENDS + SEMMAX - 1) / SEMMAX)
 #define OPMAX	8
 
 #define MODE	0700
@@ -41,19 +42,23 @@ struct pending_ops
 	int			idx;			/* index of first free array member */
 };
 
+struct sem_set_info
+{
+	key_t		key;
+	int			nsems;
+	sem_t	   *sem[SEMMAX];	/* array of POSIX semaphores */
+	struct sem	semV[SEMMAX];	/* array of System V semaphore
+								 * structures */
+	struct pending_ops pendingOps[SEMMAX];	/* array of pending
+											 * operations */
+};
+
 struct sem_info
 {
 	sem_t	   *sem;
-	struct
-	{
-		key_t		key;
-		int			nsems;
-		sem_t	   *sem[SEMMAX];/* array of POSIX semaphores */
-		struct sem	semV[SEMMAX];		/* array of System V semaphore
-										 * structures */
-		struct pending_ops pendingOps[SEMMAX];	/* array of pending
-												 * operations */
-	}			set[SETMAX];
+	int			nsets;
+	/* there are actually nsets of these: */
+	struct sem_set_info set[1];	/* VARIABLE LENGTH ARRAY */
 };
 
 static struct sem_info *SemInfo = (struct sem_info *) - 1;
@@ -66,7 +71,7 @@ semctl(int semid, int semnum, int cmd, /* ... */ union semun arg)
 
 	sem_wait(SemInfo->sem);
 
-	if (semid < 0 || semid >= SETMAX ||
+	if (semid < 0 || semid >= SemInfo->nsets ||
 		semnum < 0 || semnum >= SemInfo->set[semid].nsems)
 	{
 		sem_post(SemInfo->sem);
@@ -132,8 +137,10 @@ semget(key_t key, int nsems, int semflg)
 {
 	int			fd,
 				semid,
-				semnum /* , semnum1 */ ;
+				semnum,
+				nsets;
 	int			exist = 0;
+	Size		sem_info_size;
 	char		semname[64];
 
 	if (nsems < 0 || nsems > SEMMAX)
@@ -163,13 +170,20 @@ semget(key_t key, int nsems, int semflg)
 			return fd;
 		shm_unlink(SHM_INFO_NAME);
 		/* The size may only be set once. Ignore errors. */
-		ftruncate(fd, sizeof(struct sem_info));
-		SemInfo = mmap(NULL, sizeof(struct sem_info),
+		nsets = PROC_SEM_MAP_ENTRIES(MaxBackends);
+		sem_info_size = sizeof(struct sem_info) + (nsets-1) * sizeof(struct sem_set_info);
+		ftruncate(fd, sem_info_size);
+		SemInfo = mmap(NULL, sem_info_size,
 					   PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 		if (SemInfo == MAP_FAILED)
 			return -1;
 		if (!exist)
 		{
+			/* initialize shared memory */
+			memset(SemInfo, 0, sem_info_size);
+			SemInfo->nsets = nsets;
+			for (semid = 0; semid < nsets; semid++)
+				SemInfo->set[semid].key = -1;
 			/* create semaphore for locking */
 			sprintf(semname, "%s-map", SEM_NAME);
 #ifdef DEBUG_IPC
@@ -177,30 +191,25 @@ semget(key_t key, int nsems, int semflg)
 #endif
 			SemInfo->sem = sem_open(semname, O_CREAT, semflg & 0777, 1);
 			sem_unlink(semname);
-			sem_wait(SemInfo->sem);
-			/* initilize shared memory */
-			memset(SemInfo->set, 0, sizeof(SemInfo->set));
-			for (semid = 0; semid < SETMAX; semid++)
-				SemInfo->set[semid].key = -1;
-			sem_post(SemInfo->sem);
 		}
 	}
 
 	sem_wait(SemInfo->sem);
+	nsets = SemInfo->nsets;
 
 	if (key != IPC_PRIVATE)
 	{
 		/* search existing element */
 		semid = 0;
-		while (semid < SETMAX && SemInfo->set[semid].key != key)
+		while (semid < nsets && SemInfo->set[semid].key != key)
 			semid++;
-		if (!(semflg & IPC_CREAT) && semid >= SETMAX)
+		if (!(semflg & IPC_CREAT) && semid >= nsets)
 		{
 			sem_post(SemInfo->sem);
 			errno = ENOENT;
 			return -1;
 		}
-		else if (semid < SETMAX)
+		else if (semid < nsets)
 		{
 			if (semflg & IPC_CREAT && semflg & IPC_EXCL)
 			{
@@ -228,12 +237,12 @@ semget(key_t key, int nsems, int semflg)
 
 	/* search first free element */
 	semid = 0;
-	while (semid < SETMAX && SemInfo->set[semid].key != -1)
+	while (semid < nsets && SemInfo->set[semid].key != -1)
 		semid++;
-	if (semid >= SETMAX)
+	if (semid >= nsets)
 	{
 #ifdef DEBUG_IPC
-		fprintf(stderr, "darwin semget failed because all keys were -1 up to SETMAX\n");
+		fprintf(stderr, "darwin semget failed because all keys were -1\n");
 #endif
 		sem_post(SemInfo->sem);
 		errno = ENOSPC;
@@ -249,15 +258,18 @@ semget(key_t key, int nsems, int semflg)
 		SemInfo->set[semid].sem[semnum] = sem_open(semname, O_CREAT, semflg & 0777, 0);
 		sem_unlink(semname);
 
-/* Currently sem_init always returns -1.
-	if( sem_init( &SemInfo->set[semid].sem[semnum], 1, 0 ) == -1 )	{
-	  for( semnum1 = 0; semnum1 < semnum; semnum1++ )  {
-			   sem_close( SemInfo->set[semid].sem[semnum1] );
-	  }
-		 sem_post( SemInfo->sem );
-	  return -1;
-	}
-*/
+		/* Currently sem_init always returns -1. */
+#ifdef NOT_USED
+		if( sem_init( &SemInfo->set[semid].sem[semnum], 1, 0 ) == -1 )	{
+			int semnum1;
+
+			for( semnum1 = 0; semnum1 < semnum; semnum1++ )  {
+				sem_close( SemInfo->set[semid].sem[semnum1] );
+			}
+			sem_post( SemInfo->sem );
+			return -1;
+		}
+#endif
 	}
 
 	SemInfo->set[semid].key = key;
@@ -279,7 +291,7 @@ semop(int semid, struct sembuf * sops, size_t nsops)
 
 	sem_wait(SemInfo->sem);
 
-	if (semid < 0 || semid >= SETMAX)
+	if (semid < 0 || semid >= SemInfo->nsets)
 	{
 		sem_post(SemInfo->sem);
 		errno = EINVAL;

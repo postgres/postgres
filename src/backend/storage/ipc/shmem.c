@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.57 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.58 2001/09/07 00:27:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,92 +260,6 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 }
 
 /*
- * ShmemPIDLookup -- lookup process data structure using process id
- *
- * Returns: TRUE if no error.  locationPtr is initialized if PID is
- *		found in the shmem index.
- *
- * NOTES:
- *		only information about success or failure is the value of
- *		locationPtr.
- */
-bool
-ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
-{
-	ShmemIndexEnt *result,
-				item;
-	bool		found;
-
-	Assert(ShmemIndex);
-	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
-	sprintf(item.key, "PID %d", pid);
-
-	SpinAcquire(ShmemIndexLock);
-
-	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, &found);
-
-	if (!result)
-	{
-		SpinRelease(ShmemIndexLock);
-		elog(ERROR, "ShmemInitPID: ShmemIndex corrupted");
-		return FALSE;
-	}
-
-	if (found)
-		*locationPtr = result->location;
-	else
-		result->location = *locationPtr;
-
-	SpinRelease(ShmemIndexLock);
-	return TRUE;
-}
-
-/*
- * ShmemPIDDestroy -- destroy shmem index entry for process
- *		using process id
- *
- * Returns: offset of the process struct in shared memory or
- *		INVALID_OFFSET if not found.
- *
- * Side Effect: removes the entry from the shmem index
- */
-SHMEM_OFFSET
-ShmemPIDDestroy(int pid)
-{
-	ShmemIndexEnt *result,
-				item;
-	bool		found;
-	SHMEM_OFFSET location = 0;
-
-	Assert(ShmemIndex);
-
-	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
-	sprintf(item.key, "PID %d", pid);
-
-	SpinAcquire(ShmemIndexLock);
-
-	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (char *) &item, HASH_REMOVE, &found);
-
-	if (found)
-		location = result->location;
-
-	SpinRelease(ShmemIndexLock);
-
-	if (!result)
-	{
-		elog(ERROR, "ShmemPIDDestroy: PID table corrupted");
-		return INVALID_OFFSET;
-	}
-
-	if (found)
-		return location;
-	else
-		return INVALID_OFFSET;
-}
-
-/*
  * ShmemInitStruct -- Create/attach to a structure in shared
  *		memory.
  *
@@ -373,7 +287,6 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 
 	if (!ShmemIndex)
 	{
-
 		/*
 		 * If the shmem index doesn't exist, we are bootstrapping: we must
 		 * be trying to init the shmem index itself.
@@ -400,7 +313,6 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 
 	if (*foundPtr)
 	{
-
 		/*
 		 * Structure is in the shmem index so someone else has allocated
 		 * it already.	The size better be the same as the size we are

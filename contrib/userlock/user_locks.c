@@ -73,20 +73,10 @@ user_write_unlock_oid(Oid oid)
 }
 
 int
-user_unlock_all()
+user_unlock_all(void)
 {
-	PROC	   *proc;
-	SHMEM_OFFSET location;
-
-	ShmemPIDLookup(MyProcPid, &location);
-	if (location == INVALID_OFFSET)
-	{
-		elog(NOTICE, "UserUnlockAll: unable to get proc ptr");
-		return -1;
-	}
-
-	proc = (PROC *) MAKE_PTR(location);
-	return LockReleaseAll(USER_LOCKMETHOD, proc, false, InvalidTransactionId);
+	return LockReleaseAll(USER_LOCKMETHOD, MyProc, false,
+						  InvalidTransactionId);
 }
 
 /* end of file */

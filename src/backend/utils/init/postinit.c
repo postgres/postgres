@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.89 2001/09/06 04:57:29 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.90 2001/09/07 00:27:29 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -281,7 +281,7 @@ InitPostgres(const char *dbname, const char *username)
 
 	InitBackendSharedInvalidationState();
 
-	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
+	if (MyBackendId > MaxBackends || MyBackendId <= 0)
 		elog(FATAL, "InitPostgres: bad backend id %d", MyBackendId);
 
 	/*

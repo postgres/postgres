@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.93 2001/08/29 19:14:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.94 2001/09/07 00:27:29 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1430,7 +1430,6 @@ LockShmemSize(int maxBackends)
 void
 DumpLocks(void)
 {
-	SHMEM_OFFSET location;
 	PROC	   *proc;
 	SHM_QUEUE  *procHolders;
 	HOLDER	   *holder;
@@ -1438,12 +1437,10 @@ DumpLocks(void)
 	int			lockmethod = DEFAULT_LOCKMETHOD;
 	LOCKMETHODTABLE *lockMethodTable;
 
-	ShmemPIDLookup(MyProcPid, &location);
-	if (location == INVALID_OFFSET)
+	proc = MyProc;
+	if (proc == NULL)
 		return;
-	proc = (PROC *) MAKE_PTR(location);
-	if (proc != MyProc)
-		return;
+
 	procHolders = &proc->procHolders;
 
 	Assert(lockmethod < NumLockMethods);
@@ -1477,22 +1474,16 @@ DumpLocks(void)
 void
 DumpAllLocks(void)
 {
-	SHMEM_OFFSET location;
 	PROC	   *proc;
 	HOLDER	   *holder = NULL;
 	LOCK	   *lock;
-	int			pid;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
 	LOCKMETHODTABLE *lockMethodTable;
 	HTAB	   *holderTable;
 	HASH_SEQ_STATUS status;
 
-	pid = getpid();
-	ShmemPIDLookup(pid, &location);
-	if (location == INVALID_OFFSET)
-		return;
-	proc = (PROC *) MAKE_PTR(location);
-	if (proc != MyProc)
+	proc = MyProc;
+	if (proc == NULL)
 		return;
 
 	Assert(lockmethod < NumLockMethods);

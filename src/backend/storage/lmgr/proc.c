@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.106 2001/09/04 21:42:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.107 2001/09/07 00:27:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,11 +124,18 @@ static void ProcFreeAllSemaphores(void);
 void
 InitProcGlobal(int maxBackends)
 {
+	int			semMapEntries;
+	Size		procGlobalSize;
 	bool		found = false;
 
-	/* attach to the free list */
+	/* Compute size for ProcGlobal structure */
+	Assert(maxBackends > 0);
+	semMapEntries = PROC_SEM_MAP_ENTRIES(maxBackends);
+	procGlobalSize = sizeof(PROC_HDR) + (semMapEntries-1) * sizeof(SEM_MAP_ENTRY);
+
+	/* Create or attach to the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
+		ShmemInitStruct("Proc Header", procGlobalSize, &found);
 
 	/* --------------------
 	 * We're the first - initialize.
@@ -141,10 +148,12 @@ InitProcGlobal(int maxBackends)
 		int			i;
 
 		ProcGlobal->freeProcs = INVALID_OFFSET;
-		for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
+		ProcGlobal->semMapEntries = semMapEntries;
+
+		for (i = 0; i < semMapEntries; i++)
 		{
-			ProcGlobal->procSemIds[i] = -1;
-			ProcGlobal->freeSemMap[i] = 0;
+			ProcGlobal->procSemMap[i].procSemId = -1;
+			ProcGlobal->procSemMap[i].freeSemMap = 0;
 		}
 
 		/*
@@ -157,11 +166,9 @@ InitProcGlobal(int maxBackends)
 		on_shmem_exit(ProcFreeAllSemaphores, 0);
 
 		/*
-		 * Pre-create the semaphores for the first maxBackends processes.
+		 * Pre-create the semaphores.
 		 */
-		Assert(maxBackends > 0 && maxBackends <= MAXBACKENDS);
-
-		for (i = 0; i < ((maxBackends - 1) / PROC_NSEMS_PER_SET + 1); i++)
+		for (i = 0; i < semMapEntries; i++)
 		{
 			IpcSemaphoreId semId;
 
@@ -169,7 +176,7 @@ InitProcGlobal(int maxBackends)
 									   IPCProtection,
 									   1,
 									   false);
-			ProcGlobal->procSemIds[i] = semId;
+			ProcGlobal->procSemMap[i].procSemId = semId;
 		}
 	}
 }
@@ -182,9 +189,17 @@ InitProcGlobal(int maxBackends)
 void
 InitProcess(void)
 {
-	bool		found = false;
-	unsigned long location,
-				myOffset;
+	SHMEM_OFFSET	myOffset;
+
+	/*
+	 * ProcGlobal should be set by a previous call to InitProcGlobal
+	 * (if we are a backend, we inherit this by fork() from the postmaster).
+	 */
+	if (ProcGlobal == NULL)
+		elog(STOP, "InitProcess: Proc Header uninitialized");
+
+	if (MyProc != NULL)
+		elog(ERROR, "InitProcess: you already exist");
 
 	/*
 	 * ProcStructLock protects the freelist of PROC entries and the map
@@ -196,27 +211,9 @@ InitProcess(void)
 	 * this routine, be careful to release the lock manually before any
 	 * elog(), else you'll have a stuck spinlock to add to your woes.
 	 */
-
 	SpinAcquire(ProcStructLock);
 
-	/* attach to the ProcGlobal structure */
-	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
-	if (!found)
-	{
-		/* this should not happen. InitProcGlobal() is called before this. */
-		SpinRelease(ProcStructLock);
-		elog(STOP, "InitProcess: Proc Header uninitialized");
-	}
-
-	if (MyProc != NULL)
-	{
-		SpinRelease(ProcStructLock);
-		elog(ERROR, "InitProcess: you already exist");
-	}
-
 	/* try to get a proc struct from the free list first */
-
 	myOffset = ProcGlobal->freeProcs;
 
 	if (myOffset != INVALID_OFFSET)
@@ -264,23 +261,6 @@ InitProcess(void)
 	MyProc->sLocks[ProcStructLock] = 1;
 
 	/*
-	 * Release the lock while accessing shmem index; we still haven't
-	 * installed ProcKill and so we don't want to hold lock if there's
-	 * an error.
-	 */
-	SpinRelease(ProcStructLock);
-
-	/*
-	 * Install ourselves in the shmem index table.	The name to use is
-	 * determined by the OS-assigned process id.  That allows the cleanup
-	 * process to find us after any untimely exit.
-	 */
-	location = MAKE_OFFSET(MyProc);
-	if ((!ShmemPIDLookup(MyProcPid, &location)) ||
-		(location != MAKE_OFFSET(MyProc)))
-		elog(STOP, "InitProcess: ShmemPID table broken");
-
-	/*
 	 * Arrange to clean up at backend exit.  Once we do this, owned
 	 * spinlocks will be released on exit, and so we can be a lot less
 	 * tense about errors.
@@ -288,20 +268,21 @@ InitProcess(void)
 	on_shmem_exit(ProcKill, 0);
 
 	/*
-	 * Set up a wait-semaphore for the proc.  (Do this last so that we
-	 * can rely on ProcKill to clean up if it fails.)
+	 * Set up a wait-semaphore for the proc.  (We rely on ProcKill to clean
+	 * up if this fails.)
 	 */
 	if (IsUnderPostmaster)
-	{
-		SpinAcquire(ProcStructLock);
 		ProcGetNewSemIdAndNum(&MyProc->sem.semId, &MyProc->sem.semNum);
-		SpinRelease(ProcStructLock);
-		/*
-		 * We might be reusing a semaphore that belongs to a dead backend.
-		 * So be careful and reinitialize its value here.
-		 */
+
+	/* Done with freelist and sem map */
+	SpinRelease(ProcStructLock);
+
+	/*
+	 * We might be reusing a semaphore that belongs to a dead backend.
+	 * So be careful and reinitialize its value here.
+	 */
+	if (MyProc->sem.semId >= 0)
 		ZeroProcSemaphore(MyProc);
-	}
 
 	/*
 	 * Now that we have a PROC, we could try to acquire locks, so
@@ -416,9 +397,7 @@ ProcReleaseLocks(bool isCommit)
 static void
 ProcKill(void)
 {
-	SHMEM_OFFSET location;
-
-	Assert(MyProc);
+	Assert(MyProc != NULL);
 
 	/* Release any spinlocks I am holding */
 	ProcReleaseSpins(MyProc);
@@ -434,11 +413,6 @@ ProcKill(void)
 	LockReleaseAll(USER_LOCKMETHOD, MyProc, true, InvalidTransactionId);
 #endif
 
-	/* Remove my PROC struct from the shmem hash table */
-	location = ShmemPIDDestroy(MyProcPid);
-	Assert(location != INVALID_OFFSET);
-	Assert(MyProc == (PROC *) MAKE_PTR(location));
-
 	SpinAcquire(ProcStructLock);
 
 	/* Free up my wait semaphore, if I got one */
@@ -449,9 +423,10 @@ ProcKill(void)
 	MyProc->links.next = ProcGlobal->freeProcs;
 	ProcGlobal->freeProcs = MAKE_OFFSET(MyProc);
 
-	SpinRelease(ProcStructLock);
-
+	/* PROC struct isn't mine anymore; stop tracking spinlocks with it! */
 	MyProc = NULL;
+
+	SpinRelease(ProcStructLock);
 }
 
 
@@ -987,8 +962,8 @@ static void
 ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 {
 	int			i;
-	IpcSemaphoreId *procSemIds = ProcGlobal->procSemIds;
-	int32	   *freeSemMap = ProcGlobal->freeSemMap;
+	int			semMapEntries = ProcGlobal->semMapEntries;
+	SEM_MAP_ENTRY  *procSemMap = ProcGlobal->procSemMap;
 	int32		fullmask = (1 << PROC_NSEMS_PER_SET) - 1;
 
 	/*
@@ -996,24 +971,24 @@ ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 	 * the bitmap to look for a free semaphore.
 	 */
 
-	for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
+	for (i = 0; i < semMapEntries; i++)
 	{
 		int			mask = 1;
 		int			j;
 
-		if (freeSemMap[i] == fullmask)
+		if (procSemMap[i].freeSemMap == fullmask)
 			continue;			/* this set is fully allocated */
-		if (procSemIds[i] < 0)
+		if (procSemMap[i].procSemId < 0)
 			continue;			/* this set hasn't been initialized */
 
 		for (j = 0; j < PROC_NSEMS_PER_SET; j++)
 		{
-			if ((freeSemMap[i] & mask) == 0)
+			if ((procSemMap[i].freeSemMap & mask) == 0)
 			{
 				/* A free semaphore found. Mark it as allocated. */
-				freeSemMap[i] |= mask;
+				procSemMap[i].freeSemMap |= mask;
 
-				*semId = procSemIds[i];
+				*semId = procSemMap[i].procSemId;
 				*semNum = j;
 				return;
 			}
@@ -1039,14 +1014,15 @@ ProcFreeSem(IpcSemaphoreId semId, int semNum)
 {
 	int32		mask;
 	int			i;
+	int			semMapEntries = ProcGlobal->semMapEntries;
 
 	mask = ~(1 << semNum);
 
-	for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
+	for (i = 0; i < semMapEntries; i++)
 	{
-		if (ProcGlobal->procSemIds[i] == semId)
+		if (ProcGlobal->procSemMap[i].procSemId == semId)
 		{
-			ProcGlobal->freeSemMap[i] &= mask;
+			ProcGlobal->procSemMap[i].freeSemMap &= mask;
 			return;
 		}
 	}
@@ -1064,9 +1040,9 @@ ProcFreeAllSemaphores(void)
 {
 	int			i;
 
-	for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
+	for (i = 0; i < ProcGlobal->semMapEntries; i++)
 	{
-		if (ProcGlobal->procSemIds[i] >= 0)
-			IpcSemaphoreKill(ProcGlobal->procSemIds[i]);
+		if (ProcGlobal->procSemMap[i].procSemId >= 0)
+			IpcSemaphoreKill(ProcGlobal->procSemMap[i].procSemId);
 	}
 }

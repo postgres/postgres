@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.29 2001/06/18 21:38:02 momjian Exp $
+ * $Id: shmem.h,v 1.30 2001/09/07 00:27:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,6 @@ extern void *ShmemAlloc(Size size);
 extern bool ShmemIsValid(unsigned long addr);
 extern HTAB *ShmemInitHash(char *name, long init_size, long max_size,
 			  HASHCTL *infoP, int hash_flags);
-extern bool ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr);
-extern SHMEM_OFFSET ShmemPIDDestroy(int pid);
 extern void *ShmemInitStruct(char *name, Size size, bool *foundPtr);
 
 

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.46 2001/08/15 18:42:15 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.47 2001/09/07 00:27:29 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -286,7 +286,7 @@ static struct config_int
 	 * constraints here are partially unused.
 	 */
 	{"max_connections", PGC_POSTMASTER, &MaxBackends,
-	DEF_MAXBACKENDS, 1, MAXBACKENDS, NULL, NULL},
+	DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL},
 
 	{"shared_buffers", PGC_POSTMASTER, &NBuffers,
 	DEF_NBUFFERS, 16, INT_MAX, NULL, NULL},

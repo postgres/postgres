@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.45 2001/07/06 21:04:26 tgl Exp $
+ * $Id: proc.h,v 1.46 2001/09/07 00:27:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,10 +104,21 @@ do { \
  * in each set for identification purposes.)
  *
  * PROC_SEM_MAP_ENTRIES is the number of semaphore sets we need to allocate
- * to keep track of up to MAXBACKENDS backends.
+ * to keep track of up to maxBackends backends.
  */
 #define  PROC_NSEMS_PER_SET		16
-#define  PROC_SEM_MAP_ENTRIES	((MAXBACKENDS-1)/PROC_NSEMS_PER_SET+1)
+#define  PROC_SEM_MAP_ENTRIES(maxBackends)	(((maxBackends)-1)/PROC_NSEMS_PER_SET+1)
+
+typedef struct
+{
+	/* info about a single set of per-process semaphores */
+	IpcSemaphoreId procSemId;
+	int32		freeSemMap;
+	/*
+	 * In freeSemMap, bit i is set if the i'th semaphore of this sema
+	 * set is allocated to a process.  (i counts from 0 at the LSB)
+	 */
+} SEM_MAP_ENTRY;
 
 typedef struct procglobal
 {
@@ -115,13 +126,12 @@ typedef struct procglobal
 	SHMEM_OFFSET freeProcs;
 
 	/* Info about semaphore sets used for per-process semaphores */
-	IpcSemaphoreId procSemIds[PROC_SEM_MAP_ENTRIES];
-	int32		freeSemMap[PROC_SEM_MAP_ENTRIES];
-
+	int			semMapEntries;
 	/*
-	 * In each freeSemMap entry, bit i is set if the i'th semaphore of the
-	 * set is allocated to a process.  (i counts from 0 at the LSB)
+	 * VARIABLE LENGTH ARRAY: actual length is semMapEntries.
+	 * THIS MUST BE LAST IN THE STRUCT DECLARATION.
 	 */
+	SEM_MAP_ENTRY	procSemMap[1];
 } PROC_HDR;
 
 /*
