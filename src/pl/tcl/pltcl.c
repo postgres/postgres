@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.67 2002/11/22 16:25:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.68 2002/12/30 22:10:54 tgl Exp $
  *
  **********************************************************************/
 
@@ -42,6 +42,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <setjmp.h>
+
+/* Hack to deal with Tcl 8.4 const-ification without losing compatibility */
+#ifndef CONST84
+#define CONST84
+#endif
 
 #include "access/heapam.h"
 #include "catalog/pg_language.h"
@@ -152,27 +157,28 @@ static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, bool is_trigger);
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
-		   int argc, char *argv[]);
+		   int argc, CONST84 char *argv[]);
 static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[]);
+			int argc, CONST84 char *argv[]);
 static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
-				int argc, char *argv[]);
+				int argc, CONST84 char *argv[]);
 static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
-				 int argc, char *argv[]);
+				 int argc, CONST84 char *argv[]);
 
 static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
-			   int argc, char *argv[]);
+			   int argc, CONST84 char *argv[]);
 static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
-				  int argc, char *argv[]);
+				  int argc, CONST84 char *argv[]);
 static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
-				int argc, char *argv[]);
+				int argc, CONST84 char *argv[]);
+static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
+				  int argc, CONST84 char *argv[]);
 
-static void pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
+static void pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
 static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 						   Tcl_DString *retval);
-static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
-				  int argc, char *argv[]);
+
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -190,6 +196,7 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 {
 	fmgr_info_cxt(functionId, finfo, TopMemoryContext);
 }
+
 
 /**********************************************************************
  * pltcl_init_all()		- Initialize all
@@ -625,7 +632,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	char	   *modnulls;
 
 	int			ret_numvals;
-	char	  **ret_values;
+	CONST84 char **ret_values;
 
 	sigjmp_buf	save_restart;
 
@@ -1246,7 +1253,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
  **********************************************************************/
 static int
 pltcl_elog(ClientData cdata, Tcl_Interp *interp,
-		   int argc, char *argv[])
+		   int argc, CONST84 char *argv[])
 {
 	int			level;
 	sigjmp_buf	save_restart;
@@ -1316,10 +1323,10 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_quote(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[])
+			int argc, CONST84 char *argv[])
 {
 	char	   *tmp;
-	char	   *cp1;
+	const char *cp1;
 	char	   *cp2;
 
 	/************************************************************
@@ -1369,7 +1376,7 @@ pltcl_quote(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
-				int argc, char *argv[])
+				int argc, CONST84 char *argv[])
 {
 	int			argno;
 	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
@@ -1426,7 +1433,7 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
-				 int argc, char *argv[])
+				 int argc, CONST84 char *argv[])
 {
 	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
 
@@ -1465,12 +1472,12 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
-			   int argc, char *argv[])
+			   int argc, CONST84 char *argv[])
 {
 	int			spi_rc;
 	char		buf[64];
 	int			count = 0;
-	char	   *volatile arrayname = NULL;
+	CONST84 char *volatile arrayname = NULL;
 	volatile int query_idx;
 	int			i;
 	int			loop_rc;
@@ -1709,10 +1716,10 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
-				  int argc, char *argv[])
+				  int argc, CONST84 char *argv[])
 {
 	int			nargs;
-	char	  **args;
+	CONST84 char **args;
 	pltcl_query_desc *qdesc;
 	void	   *plan;
 	int			i;
@@ -1778,7 +1785,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	for (i = 0; i < nargs; i++)
 	{
 		/* XXX should extend this to allow qualified type names */
-		typeTup = typenameType(makeTypeName(args[i]));
+		typeTup = typenameType(makeTypeName((char *) args[i]));
 		qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
 		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 					   &(qdesc->arginfuncs[i]));
@@ -1880,8 +1887,11 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		query_hash = pltcl_safe_query_hash;
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+
 	hashent = Tcl_CreateHashEntry(query_hash, qdesc->qname, &hashnew);
 	Tcl_SetHashValue(hashent, (ClientData) qdesc);
+
+	ckfree((char *) args);
 
 	Tcl_SetResult(interp, qdesc->qname, TCL_VOLATILE);
 	return TCL_OK;
@@ -1893,7 +1903,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
-				int argc, char *argv[])
+				int argc, CONST84 char *argv[])
 {
 	int			spi_rc;
 	char		buf[64];
@@ -1903,11 +1913,11 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
 	Datum	   *volatile argvalues = NULL;
-	char	   *volatile nulls = NULL;
-	char	   *volatile arrayname = NULL;
+	const char *volatile nulls = NULL;
+	CONST84 char *volatile arrayname = NULL;
 	int			count = 0;
 	int			callnargs;
-	static char **callargs = NULL;
+	static CONST84 char **callargs = NULL;
 	int			loop_rc;
 	int			ntuples;
 	HeapTuple  *volatile tuples = NULL;
@@ -2279,7 +2289,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
-				  int argc, char *argv[])
+				  int argc, CONST84 char *argv[])
 {
 	char		buf[64];
 
@@ -2294,7 +2304,7 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
  *				  of a given tuple
  **********************************************************************/
 static void
-pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
+pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
@@ -2303,14 +2313,14 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 	Datum		attr;
 	bool		isnull;
 
-	char	   *attname;
+	CONST84 char *attname;
 	HeapTuple	typeTup;
 	Oid			typoutput;
 	Oid			typelem;
 
-	char	  **arrptr;
-	char	  **nameptr;
-	char	   *nullname = NULL;
+	CONST84 char **arrptr;
+	CONST84 char **nameptr;
+	CONST84 char  *nullname = NULL;
 
 	/************************************************************
 	 * Prepare pointers for Tcl_SetVar2() below and in array

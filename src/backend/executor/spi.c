@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.82 2002/12/17 15:51:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.83 2002/12/30 22:10:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,11 +32,11 @@ static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
+static int	_SPI_execute(const char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
-				  Datum *Values, char *Nulls, int tcount);
+				  Datum *Values, const char *Nulls, int tcount);
 
 static void _SPI_cursor_operation(Portal portal, bool forward, int count,
 					  CommandDest dest);
@@ -187,7 +187,7 @@ SPI_pop(void)
 }
 
 int
-SPI_exec(char *src, int tcount)
+SPI_exec(const char *src, int tcount)
 {
 	int			res;
 
@@ -205,7 +205,7 @@ SPI_exec(char *src, int tcount)
 }
 
 int
-SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
+SPI_execp(void *plan, Datum *Values, const char *Nulls, int tcount)
 {
 	int			res;
 
@@ -226,7 +226,7 @@ SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
 }
 
 void *
-SPI_prepare(char *src, int nargs, Oid *argtypes)
+SPI_prepare(const char *src, int nargs, Oid *argtypes)
 {
 	_SPI_plan  *plan;
 
@@ -382,7 +382,7 @@ SPI_copytupleintoslot(HeapTuple tuple, TupleDesc tupdesc)
 
 HeapTuple
 SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
-				Datum *Values, char *Nulls)
+				Datum *Values, const char *Nulls)
 {
 	MemoryContext oldcxt = NULL;
 	HeapTuple	mtuple;
@@ -455,7 +455,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 }
 
 int
-SPI_fnumber(TupleDesc tupdesc, char *fname)
+SPI_fnumber(TupleDesc tupdesc, const char *fname)
 {
 	int			res;
 	Form_pg_attribute sysatt;
@@ -693,7 +693,7 @@ SPI_freetuptable(SPITupleTable *tuptable)
  *	Open a prepared SPI plan as a portal
  */
 Portal
-SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
+SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 {
 	static int	unnamed_portal_count = 0;
 
@@ -827,7 +827,7 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
  *	Find the portal of an existing open cursor
  */
 Portal
-SPI_cursor_find(char *name)
+SPI_cursor_find(const char *name)
 {
 	return GetPortalByName(name);
 }
@@ -944,7 +944,7 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
  * If plan != NULL, just prepare plan tree, else execute immediately.
  */
 static int
-_SPI_execute(char *src, int tcount, _SPI_plan *plan)
+_SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 {
 	StringInfoData stri;
 	List	   *raw_parsetree_list;
@@ -1110,7 +1110,8 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 }
 
 static int
-_SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
+_SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
+				  int tcount)
 {
 	List	   *query_list_list = plan->qtlist;
 	List	   *plan_list = plan->ptlist;

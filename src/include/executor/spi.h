@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.34 2002/12/13 19:45:56 tgl Exp $
+ * $Id: spi.h,v 1.35 2002/12/30 22:10:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,9 +80,10 @@ extern int	SPI_connect(void);
 extern int	SPI_finish(void);
 extern void SPI_push(void);
 extern void SPI_pop(void);
-extern int	SPI_exec(char *src, int tcount);
-extern int	SPI_execp(void *plan, Datum *values, char *Nulls, int tcount);
-extern void *SPI_prepare(char *src, int nargs, Oid *argtypes);
+extern int	SPI_exec(const char *src, int tcount);
+extern int	SPI_execp(void *plan, Datum *values, const char *Nulls,
+					  int tcount);
+extern void *SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
 extern int	SPI_freeplan(void *plan);
 
@@ -91,8 +92,8 @@ extern TupleDesc SPI_copytupledesc(TupleDesc tupdesc);
 extern TupleTableSlot *SPI_copytupleintoslot(HeapTuple tuple,
 					  TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
-				int *attnum, Datum *Values, char *Nulls);
-extern int	SPI_fnumber(TupleDesc tupdesc, char *fname);
+				int *attnum, Datum *Values, const char *Nulls);
+extern int	SPI_fnumber(TupleDesc tupdesc, const char *fname);
 extern char *SPI_fname(TupleDesc tupdesc, int fnumber);
 extern char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber);
 extern Datum SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull);
@@ -105,9 +106,9 @@ extern void SPI_pfree(void *pointer);
 extern void SPI_freetuple(HeapTuple pointer);
 extern void SPI_freetuptable(SPITupleTable *tuptable);
 
-extern Portal SPI_cursor_open(char *name, void *plan,
-				Datum *Values, char *Nulls);
-extern Portal SPI_cursor_find(char *name);
+extern Portal SPI_cursor_open(const char *name, void *plan,
+				Datum *Values, const char *Nulls);
+extern Portal SPI_cursor_find(const char *name);
 extern void SPI_cursor_fetch(Portal portal, bool forward, int count);
 extern void SPI_cursor_move(Portal portal, bool forward, int count);
 extern void SPI_cursor_close(Portal portal);

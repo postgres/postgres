@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.36 2002/12/05 15:50:39 tgl Exp $
+ * $Id: portal.h,v 1.37 2002/12/30 22:10:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,9 @@ typedef struct PortalData
 
 extern void EnablePortalManager(void);
 extern void AtEOXact_portals(void);
-extern Portal CreatePortal(char *name);
+extern Portal CreatePortal(const char *name);
 extern void PortalDrop(Portal portal);
-extern Portal GetPortalByName(char *name);
+extern Portal GetPortalByName(const char *name);
 extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
 						   void (*cleanup) (Portal portal));
 

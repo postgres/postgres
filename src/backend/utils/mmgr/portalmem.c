@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.50 2002/12/05 15:50:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.51 2002/12/30 22:10:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ EnablePortalManager(void)
  *		Returns a portal given a portal name, or NULL if name not found.
  */
 Portal
-GetPortalByName(char *name)
+GetPortalByName(const char *name)
 {
 	Portal		portal;
 
@@ -173,7 +173,7 @@ PortalSetQuery(Portal portal,
  *		"WARNING" if portal name is in use (existing portal is returned!)
  */
 Portal
-CreatePortal(char *name)
+CreatePortal(const char *name)
 {
 	Portal		portal;
 
