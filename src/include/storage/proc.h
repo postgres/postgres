@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.49 2001/09/29 21:35:14 momjian Exp $
+ * $Id: proc.h,v 1.50 2001/09/30 00:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,12 +67,12 @@ struct PROC
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitHolder are NULL if not currently waiting. */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
-	PROCLOCK	   *waitHolder;		/* Per-holder info for awaited lock */
+	HOLDER	   *waitHolder;		/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on
 								 * this lock object by this backend */
 
-	SHM_QUEUE	procHolders;	/* list of PROCLOCK objects for locks held
+	SHM_QUEUE	procHolders;	/* list of HOLDER objects for locks held
 								 * or awaited by this backend */
 };
 
@@ -138,7 +138,7 @@ extern void ProcReleaseLocks(bool isCommit);
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int ProcSleep(LOCKMETHODTABLE *lockMethodTable, LOCKMODE lockmode,
-		  LOCK *lock, PROCLOCK *holder);
+		  LOCK *lock, HOLDER *holder);
 extern PROC *ProcWakeup(PROC *proc, int errType);
 extern void ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock);
 extern bool LockWaitCancel(void);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.54 2001/09/29 21:35:14 momjian Exp $
+ * $Id: lock.h,v 1.55 2001/09/30 00:45:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ typedef struct LOCKTAG
  * tag -- uniquely identifies the object being locked
  * grantMask -- bitmask for all lock types currently granted on this object.
  * waitMask -- bitmask for all lock types currently awaited on this object.
- * lockHolders -- list of PROCLOCK objects for this lock.
+ * lockHolders -- list of HOLDER objects for this lock.
  * waitProcs -- queue of processes waiting for this lock.
  * requested -- count of each lock type currently requested on the lock
  *		(includes requests already granted!!).
@@ -160,7 +160,7 @@ typedef struct LOCK
 	/* data */
 	int			grantMask;		/* bitmask for lock types already granted */
 	int			waitMask;		/* bitmask for lock types awaited */
-	SHM_QUEUE	lockHolders;	/* list of PROCLOCK objects assoc. with lock */
+	SHM_QUEUE	lockHolders;	/* list of HOLDER objects assoc. with lock */
 	PROC_QUEUE	waitProcs;		/* list of PROC objects waiting on lock */
 	int			requested[MAX_LOCKMODES];		/* counts of requested
 												 * locks */
@@ -180,8 +180,8 @@ typedef struct LOCK
  * on the same lockable object.  We need to store some per-holder information
  * for each such holder (or would-be holder).
  *
- * PROCLOCKTAG is the key information needed to look up a PROCLOCK item in the
- * holder hashtable.  A PROCLOCKTAG value uniquely identifies a lock holder.
+ * HOLDERTAG is the key information needed to look up a HOLDER item in the
+ * holder hashtable.  A HOLDERTAG value uniquely identifies a lock holder.
  *
  * There are two possible kinds of holder tags: a transaction (identified
  * both by the PROC of the backend running it, and the xact's own ID) and
@@ -197,35 +197,35 @@ typedef struct LOCK
  * Otherwise, holder objects whose counts have gone to zero are recycled
  * as soon as convenient.
  *
- * Each PROCLOCK object is linked into lists for both the associated LOCK object
- * and the owning PROC object.	Note that the PROCLOCK is entered into these
+ * Each HOLDER object is linked into lists for both the associated LOCK object
+ * and the owning PROC object.	Note that the HOLDER is entered into these
  * lists as soon as it is created, even if no lock has yet been granted.
  * A PROC that is waiting for a lock to be granted will also be linked into
  * the lock's waitProcs queue.
  */
-typedef struct PROCLOCKTAG
+typedef struct HOLDERTAG
 {
 	SHMEM_OFFSET lock;			/* link to per-lockable-object information */
 	SHMEM_OFFSET proc;			/* link to PROC of owning backend */
 	TransactionId xid;			/* xact ID, or InvalidTransactionId */
-} PROCLOCKTAG;
+} HOLDERTAG;
 
-typedef struct PROCLOCK
+typedef struct HOLDER
 {
 	/* tag */
-	PROCLOCKTAG	tag;			/* unique identifier of holder object */
+	HOLDERTAG	tag;			/* unique identifier of holder object */
 
 	/* data */
 	int			holding[MAX_LOCKMODES]; /* count of locks currently held */
 	int			nHolding;		/* total of holding[] array */
 	SHM_QUEUE	lockLink;		/* list link for lock's list of holders */
 	SHM_QUEUE	procLink;		/* list link for process's list of holders */
-} PROCLOCK;
+} HOLDER;
 
-#define SHMEM_PROCLOCKTAB_KEYSIZE  sizeof(PROCLOCKTAG)
-#define SHMEM_PROCLOCKTAB_DATASIZE (sizeof(PROCLOCK) - SHMEM_PROCLOCKTAB_KEYSIZE)
+#define SHMEM_HOLDERTAB_KEYSIZE  sizeof(HOLDERTAG)
+#define SHMEM_HOLDERTAB_DATASIZE (sizeof(HOLDER) - SHMEM_HOLDERTAB_KEYSIZE)
 
-#define PROCLOCK_LOCKMETHOD(holder) \
+#define HOLDER_LOCKMETHOD(holder) \
 		(((LOCK *) MAKE_PTR((holder).tag.lock))->tag.lockmethod)
 
 
@@ -245,9 +245,9 @@ extern bool LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			   bool allxids, TransactionId xid);
 extern int LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 				   LOCKMODE lockmode,
-				   LOCK *lock, PROCLOCK *holder, PROC *proc,
+				   LOCK *lock, HOLDER *holder, PROC *proc,
 				   int *myHolding);
-extern void GrantLock(LOCK *lock, PROCLOCK *holder, LOCKMODE lockmode);
+extern void GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode);
 extern void RemoveFromWaitQueue(PROC *proc);
 extern int	LockShmemSize(int maxBackends);
 extern bool DeadLockCheck(PROC *proc);
