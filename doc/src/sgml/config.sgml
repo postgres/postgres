@@ -96,11 +96,11 @@ Features and packages:
    Alternatively, you can set variables on the <application>make</application>
    command line:
    <synopsis>
-    make [ <replaceable>variable</replaceable>=<replaceable class="parameter">value</replaceable> [,...] ]
+    make [ <replaceable>variable</replaceable>=<replaceable class="parameter">value</replaceable> [...] ]
    </synopsis>
   </para>
   <para>
-   A few of the many variables which can be specified are:
+   A few of the many variables that can be specified are:
    
    <variablelist>
     <varlistentry>
@@ -181,7 +181,7 @@ Features and packages:
     
     <varlistentry>
      <term>
-      YFLAGS
+      <envar>YFLAGS</envar>
      </term>
      <listitem>
       <para>

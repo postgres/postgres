@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.37 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.38 2000/03/31 15:00:14 tgl Exp $
 -->
 
  <Chapter Id="install">
@@ -54,7 +54,7 @@ mv postgresql-7.0 /usr/src
 
    <para>
     Although the minimum required memory for running <ProductName>PostgreSQL</ProductName>
-    can be as little as 8MB, there are noticable speed improvements when expanding memory
+    can be as little as 8MB, there are noticeable speed improvements when expanding memory
     up to 96MB or beyond. The rule is you can never have too much memory.
    </para>
    <Para>
@@ -301,7 +301,7 @@ kill <replaceable>pid</replaceable>
 <tip>
 <para>
 On systems which have <productname>PostgreSQL</productname> started at boot time, there
-is probably a startup file which will accomplish the same thing. For example, on a
+is probably a startup file that will accomplish the same thing. For example, on a
 Redhat Linux system one might find that
 <programlisting>
 /etc/rc.d/init.d/postgres.init stop
