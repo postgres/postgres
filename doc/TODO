@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb  9 15:08:47 EST 2000
+Last updated:		Sun Feb 20 22:00:39 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -208,7 +208,7 @@ MISC
 * -Allow WHERE restriction on ctid(Hiroshi)
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
-* Allow PQrequestCancel() to terminate when in waiting-for-lock state
+* -Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * Transaction log, so re-do log can be on a separate disk by
   with after-row images(Vadim) [logging](Vadim)(in-progress)
 * Populate backend status area and write program to dump status data
