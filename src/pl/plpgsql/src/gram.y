@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.56 2004/06/04 02:37:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.57 2004/07/04 02:49:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,9 +40,11 @@
 
 
 static	PLpgSQL_expr	*read_sql_construct(int until,
+											int until2,
 											const char *expected,
 											bool isexpression,
-											const char *sqlstart);
+											const char *sqlstart,
+											int *endtoken);
 static	PLpgSQL_expr	*read_sql_stmt(const char *sqlstart);
 static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_select_stmt(void);
@@ -73,9 +75,11 @@ static	void check_assignable(PLpgSQL_datum *datum);
 		}						dtlist;
 		struct
 		{
-			int  reverse;
-			PLpgSQL_expr *expr;
-		}						forilow;
+			char *name;
+			int  lineno;
+			PLpgSQL_rec	*rec;
+			PLpgSQL_row	*row;
+		}						forvariable;
 		struct
 		{
 			char *label;
@@ -110,11 +114,10 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <expr>	opt_exitcond
 
 %type <ival>	assign_var cursor_variable
-%type <var>		fori_var cursor_varptr
+%type <var>		cursor_varptr
 %type <variable>	decl_cursor_arg
-%type <varname> fori_varname
-%type <forilow> fori_lower
-%type <rec>		fors_target
+%type <forvariable>	for_variable
+%type <stmt>	for_control
 
 %type <str>		opt_lblname opt_label
 %type <str>		opt_exitlabel
@@ -124,8 +127,8 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
 %type <stmt>	stmt_return stmt_return_next stmt_raise stmt_execsql
-%type <stmt>	stmt_fori stmt_fors stmt_select stmt_perform
-%type <stmt>	stmt_dynexecute stmt_dynfors stmt_getdiag
+%type <stmt>	stmt_for stmt_select stmt_perform
+%type <stmt>	stmt_dynexecute stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_close
 
 %type <intlist>	raise_params
@@ -616,9 +619,7 @@ proc_stmt		: pl_block ';'
 						{ $$ = $1; }
 				| stmt_while
 						{ $$ = $1; }
-				| stmt_fori
-						{ $$ = $1; }
-				| stmt_fors
+				| stmt_for
 						{ $$ = $1; }
 				| stmt_select
 						{ $$ = $1; }
@@ -633,8 +634,6 @@ proc_stmt		: pl_block ';'
 				| stmt_execsql
 						{ $$ = $1; }
 				| stmt_dynexecute
-						{ $$ = $1; }
-				| stmt_dynfors
 						{ $$ = $1; }
 				| stmt_perform
 						{ $$ = $1; }
@@ -882,152 +881,218 @@ stmt_while		: opt_label K_WHILE lno expr_until_loop loop_body
 					}
 				;
 
-stmt_fori		: opt_label K_FOR lno fori_var K_IN fori_lower expr_until_loop loop_body
+stmt_for		: opt_label K_FOR for_control loop_body
 					{
-						PLpgSQL_stmt_fori		*new;
-
-						new = malloc(sizeof(PLpgSQL_stmt_fori));
-						memset(new, 0, sizeof(PLpgSQL_stmt_fori));
-
-						new->cmd_type = PLPGSQL_STMT_FORI;
-						new->lineno   = $3;
-						new->label	  = $1;
-						new->var	  = $4;
-						new->reverse  = $6.reverse;
-						new->lower	  = $6.expr;
-						new->upper	  = $7;
-						new->body	  = $8;
-
-						plpgsql_ns_pop();
-
-						$$ = (PLpgSQL_stmt *)new;
-					}
-				;
-
-fori_var		: fori_varname
-					{
-						PLpgSQL_var		*new;
-
-						new = (PLpgSQL_var *)
-							plpgsql_build_variable($1.name, $1.lineno,
-												   plpgsql_build_datatype(INT4OID,
-																		  -1),
-												   true);
-
-						plpgsql_add_initdatums(NULL);
-
-						$$ = new;
-					}
-				;
-
-fori_varname	: T_SCALAR
-					{
-						char	*name;
-
-						plpgsql_convert_ident(yytext, &name, 1);
-						/* name should be malloc'd for use as varname */
-						$$.name = strdup(name);
-						$$.lineno  = plpgsql_scanner_lineno();
-						pfree(name);
-					}
-				| T_WORD
-					{
-						char	*name;
-
-						plpgsql_convert_ident(yytext, &name, 1);
-						/* name should be malloc'd for use as varname */
-						$$.name = strdup(name);
-						$$.lineno  = plpgsql_scanner_lineno();
-						pfree(name);
-					}
-				;
-
-fori_lower		:
-					{
-						int			tok;
-
-						tok = yylex();
-						if (tok == K_REVERSE)
+						/* This runs after we've scanned the loop body */
+						if ($3->cmd_type == PLPGSQL_STMT_FORI)
 						{
-							$$.reverse = 1;
+							PLpgSQL_stmt_fori		*new;
+
+							new = (PLpgSQL_stmt_fori *) $3;
+							new->label	  = $1;
+							new->body	  = $4;
+							$$ = (PLpgSQL_stmt *) new;
+						}
+						else if ($3->cmd_type == PLPGSQL_STMT_FORS)
+						{
+							PLpgSQL_stmt_fors		*new;
+
+							new = (PLpgSQL_stmt_fors *) $3;
+							new->label	  = $1;
+							new->body	  = $4;
+							$$ = (PLpgSQL_stmt *) new;
 						}
 						else
 						{
-							$$.reverse = 0;
+							PLpgSQL_stmt_dynfors	*new;
+
+							Assert($3->cmd_type == PLPGSQL_STMT_DYNFORS);
+							new = (PLpgSQL_stmt_dynfors *) $3;
+							new->label	  = $1;
+							new->body	  = $4;
+							$$ = (PLpgSQL_stmt *) new;
+						}
+
+						/* close namespace started in opt_label */
+						plpgsql_ns_pop();
+					}
+				;
+
+for_control		: lno for_variable K_IN
+					{
+						int			tok;
+						bool		reverse = false;
+						bool		execute = false;
+						PLpgSQL_expr *expr1;
+
+						/* check for REVERSE and EXECUTE */
+						tok = yylex();
+						if (tok == K_REVERSE)
+						{
+							reverse = true;
+							tok = yylex();
+						}
+
+						if (tok == K_EXECUTE)
+							execute = true;
+						else
 							plpgsql_push_back_token(tok);
-						}
 
-						$$.expr = plpgsql_read_expression(K_DOTDOT, "..");
-					}
-				;
+						/* Collect one or two expressions */
+						expr1 = read_sql_construct(K_DOTDOT,
+												   K_LOOP,
+												   "LOOP",
+												   true,
+												   "SELECT ",
+												   &tok);
 
-stmt_fors		: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_body
-					{
-						PLpgSQL_stmt_fors		*new;
-
-						new = malloc(sizeof(PLpgSQL_stmt_fors));
-						memset(new, 0, sizeof(PLpgSQL_stmt_fors));
-
-						new->cmd_type = PLPGSQL_STMT_FORS;
-						new->lineno   = $3;
-						new->label	  = $1;
-						switch ($4->dtype)
+						if (tok == K_DOTDOT)
 						{
-							case PLPGSQL_DTYPE_REC:
-								new->rec = $4;
-								break;
-							case PLPGSQL_DTYPE_ROW:
-								new->row = (PLpgSQL_row *)$4;
-								break;
-							default:
-								elog(ERROR, "unrecognized dtype: %d",
-									 $4->dtype);
+							/* Found .., so it must be an integer loop */
+							PLpgSQL_stmt_fori	*new;
+							PLpgSQL_expr		*expr2;
+							PLpgSQL_var			*fvar;
+
+							expr2 = plpgsql_read_expression(K_LOOP, "LOOP");
+
+							if (execute)
+							{
+								plpgsql_error_lineno = $1;
+								yyerror("cannot specify EXECUTE in integer for-loop");
+							}
+
+							/* name should be malloc'd for use as varname */
+							fvar = (PLpgSQL_var *)
+								plpgsql_build_variable(strdup($2.name),
+													   $2.lineno,
+													   plpgsql_build_datatype(INT4OID,
+																			  -1),
+													   true);
+
+							/* put the for-variable into the local block */
+							plpgsql_add_initdatums(NULL);
+
+							new = malloc(sizeof(PLpgSQL_stmt_fori));
+							memset(new, 0, sizeof(PLpgSQL_stmt_fori));
+
+							new->cmd_type = PLPGSQL_STMT_FORI;
+							new->lineno   = $1;
+							new->var	  = fvar;
+							new->reverse  = reverse;
+							new->lower	  = expr1;
+							new->upper	  = expr2;
+
+							$$ = (PLpgSQL_stmt *) new;
 						}
-						new->query = $7;
-						new->body  = $8;
-
-						plpgsql_ns_pop();
-
-						$$ = (PLpgSQL_stmt *)new;
-					}
-				;
-
-stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop loop_body
-					{
-						PLpgSQL_stmt_dynfors	*new;
-
-						new = malloc(sizeof(PLpgSQL_stmt_dynfors));
-						memset(new, 0, sizeof(PLpgSQL_stmt_dynfors));
-
-						new->cmd_type = PLPGSQL_STMT_DYNFORS;
-						new->lineno   = $3;
-						new->label	  = $1;
-						switch ($4->dtype)
+						else if (execute)
 						{
-							case PLPGSQL_DTYPE_REC:
-								new->rec = $4;
-								break;
-							case PLPGSQL_DTYPE_ROW:
-								new->row = (PLpgSQL_row *)$4;
-								break;
-							default:
-								elog(ERROR, "unrecognized dtype: %d",
-									 $4->dtype);
+							/* No .., so it must be a loop over rows */
+							PLpgSQL_stmt_dynfors	*new;
+
+							if (reverse)
+							{
+								plpgsql_error_lineno = $1;
+								yyerror("cannot specify REVERSE in loop over rows");
+							}
+
+							new = malloc(sizeof(PLpgSQL_stmt_dynfors));
+							memset(new, 0, sizeof(PLpgSQL_stmt_dynfors));
+
+							new->cmd_type = PLPGSQL_STMT_DYNFORS;
+							new->lineno   = $1;
+							if ($2.rec)
+								new->rec = $2.rec;
+							else if ($2.row)
+								new->row = $2.row;
+							else
+							{
+								plpgsql_error_lineno = $1;
+								yyerror("loop variable of loop over rows must be a record or row variable");
+							}
+							new->query = expr1;
+
+							$$ = (PLpgSQL_stmt *) new;
 						}
-						new->query = $7;
-						new->body  = $8;
+						else
+						{
+							/* No .., so it must be a loop over rows */
+							PLpgSQL_stmt_fors		*new;
+							char					*newquery;
 
-						plpgsql_ns_pop();
+							if (reverse)
+							{
+								plpgsql_error_lineno = $1;
+								yyerror("cannot specify REVERSE in loop over rows");
+							}
 
-						$$ = (PLpgSQL_stmt *)new;
+							new = malloc(sizeof(PLpgSQL_stmt_fors));
+							memset(new, 0, sizeof(PLpgSQL_stmt_fors));
+
+							new->cmd_type = PLPGSQL_STMT_FORS;
+							new->lineno   = $1;
+							if ($2.rec)
+								new->rec = $2.rec;
+							else if ($2.row)
+								new->row = $2.row;
+							else
+							{
+								plpgsql_error_lineno = $1;
+								yyerror("loop variable of loop over rows must be a record or row variable");
+							}
+							/*
+							 * Must get rid of the "SELECT " we prepended
+							 * to expr1's text
+							 */
+							newquery = strdup(expr1->query + 7);
+							free(expr1->query);
+							expr1->query = newquery;
+
+							new->query = expr1;
+
+							$$ = (PLpgSQL_stmt *) new;
+						}
 					}
 				;
 
-fors_target		: T_RECORD
-					{ $$ = yylval.rec; }
+for_variable	: T_SCALAR
+					{
+						char		*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						$$.name = name;
+						$$.lineno  = plpgsql_scanner_lineno();
+						$$.rec = NULL;
+						$$.row = NULL;
+					}
+				| T_WORD
+					{
+						char		*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						$$.name = name;
+						$$.lineno  = plpgsql_scanner_lineno();
+						$$.rec = NULL;
+						$$.row = NULL;
+					}
+				| T_RECORD
+					{
+						char		*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						$$.name = name;
+						$$.lineno  = plpgsql_scanner_lineno();
+						$$.rec = yylval.rec;
+						$$.row = NULL;
+					}
 				| T_ROW
 					{
-						$$ = (PLpgSQL_rec *)(yylval.row);
+						char		*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						$$.name = name;
+						$$.lineno  = plpgsql_scanner_lineno();
+						$$.row = yylval.row;
+						$$.rec = NULL;
 					}
 				;
 
@@ -1521,20 +1586,33 @@ lno				:
 PLpgSQL_expr *
 plpgsql_read_expression(int until, const char *expected)
 {
-	return read_sql_construct(until, expected, true, "SELECT ");
+	return read_sql_construct(until, 0, expected, true, "SELECT ", NULL);
 }
 
 static PLpgSQL_expr *
 read_sql_stmt(const char *sqlstart)
 {
-	return read_sql_construct(';', ";", false, sqlstart);
+	return read_sql_construct(';', 0, ";", false, sqlstart, NULL);
 }
 
+/*
+ * Read a SQL construct and build a PLpgSQL_expr for it.
+ *
+ * until:		token code for expected terminator
+ * until2:		token code for alternate terminator (pass 0 if none)
+ * expected:	text to use in complaining that terminator was not found
+ * isexpression: whether to say we're reading an "expression" or a "statement"
+ * sqlstart:	text to prefix to the accumulated SQL text
+ * endtoken:	if not NULL, ending token is stored at *endtoken
+ *				(this is only interesting if until2 isn't zero)
+ */
 static PLpgSQL_expr *
 read_sql_construct(int until,
+				   int until2,
 				   const char *expected,
 				   bool isexpression,
-				   const char *sqlstart)
+				   const char *sqlstart,
+				   int *endtoken)
 {
 	int					tok;
 	int					lno;
@@ -1553,6 +1631,8 @@ read_sql_construct(int until,
 	{
 		tok = yylex();
 		if (tok == until && parenlevel == 0)
+			break;
+		if (tok == until2 && parenlevel == 0)
 			break;
 		if (tok == '(' || tok == '[')
 			parenlevel++;
@@ -1586,7 +1666,6 @@ read_sql_construct(int until,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("missing \"%s\" at end of SQL statement",
 								expected)));
-			break;
 		}
 		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
@@ -1615,6 +1694,9 @@ read_sql_construct(int until,
 				break;
 		}
 	}
+
+	if (endtoken)
+		*endtoken = tok;
 
 	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;

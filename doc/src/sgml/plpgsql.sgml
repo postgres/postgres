@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.38 2004/05/16 23:22:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.39 2004/07/04 02:48:52 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1769,7 +1769,7 @@ END;
 
     <para>
      The <literal>FOR-IN-EXECUTE</> statement is another way to iterate over
-     records:
+     rows:
 <synopsis>
 <optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>
 FOR <replaceable>record_or_row</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP 
@@ -1788,13 +1788,12 @@ END LOOP;
     <para>
      The <application>PL/pgSQL</> parser presently distinguishes the
      two kinds of <literal>FOR</> loops (integer or query result) by checking
-     whether the target variable mentioned just after <literal>FOR</> has been
-     declared as a record or row variable.  If not, it's presumed to be
-     an integer <literal>FOR</> loop.  This can cause rather nonintuitive error
-     messages when the true problem is, say, that one has
-     misspelled the variable name after the <literal>FOR</>.  Typically
-     the complaint will be something like <literal>missing ".." at end of SQL
-     expression</>.
+     whether <literal>..</> appears outside any parentheses between
+     <literal>IN</> and <literal>LOOP</>.  If <literal>..</> is not seen then
+     the loop is presumed to be a loop over rows.  Mistyping the <literal>..</>
+     is thus likely to lead to a complaint along the lines of
+     <quote>loop variable of loop over rows must be a record or row</>,
+     rather than the simple syntax error one might expect to get.
     </para>
     </note>
   </sect2>
