@@ -1,20 +1,20 @@
 # ru.po
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.11 2004/04/15 08:04:05 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.12 2004/05/29 06:26:12 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - April 6, 2004: Updates for 7.5.*; <mokhov@cs.concordia.ca>
+#   - March 27 - May 28, 2004: Updates for 7.5.*; <mokhov@cs.concordia.ca>
 #   - July 26 - October 12, 2003: Update for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - August 2001 - August 2002: Initial transaltion and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - August 2001 - August 2002: Initial translation and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5.x\n"
-"POT-Creation-Date: 2004-04-06 11:05-0300\n"
-"PO-Revision-Date: 2004-04-06 12:13-0500\n"
+"POT-Creation-Date: 2004-05-28 01:39-0300\n"
+"PO-Revision-Date: 2004-05-28 01:31-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -116,16 +116,16 @@ msgstr "Cекундомер выключен."
 #: command.c:1236
 #: command.c:1266
 #: common.c:171
-#: copy.c:412
-#: copy.c:457
+#: copy.c:537
+#: copy.c:582
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
 #: command.c:908
 #: command.c:932
-#: startup.c:183
-#: startup.c:201
+#: startup.c:184
+#: startup.c:202
 msgid "Password: "
 msgstr "Пароль: "
 
@@ -133,7 +133,7 @@ msgstr "Пароль: "
 #: common.c:217
 #: common.c:599
 #: common.c:654
-#: common.c:896
+#: common.c:897
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -314,7 +314,7 @@ msgid "%s\n"
 msgstr "%s\n"
 
 #: common.c:630
-#: common.c:864
+#: common.c:865
 msgid "You are currently not connected to a database.\n"
 msgstr "В данный момент вы не подсоединены к базе данных.\n"
 
@@ -323,7 +323,7 @@ msgstr "В данный момент вы не подсоединены к базе данных.\n"
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Получено асинхронное оповещение \"%s\" от процесса-сервера с PID %d.\n"
 
-#: common.c:872
+#: common.c:873
 #, c-format
 msgid ""
 "***(Single step mode: verify command)*******************************************\n"
@@ -334,40 +334,40 @@ msgstr ""
 "%s\n"
 "***(нажмите ввод для продолжения или наберите x и ввод для отмены)**************\n"
 
-#: common.c:923
+#: common.c:924
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Время: %.3f мс\n"
 
-#: copy.c:114
+#: copy.c:122
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: необходимы аргументы\n"
 
-#: copy.c:321
+#: copy.c:412
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: ошибка при анализе синтаксиса в \"%s\"\n"
 
-#: copy.c:323
+#: copy.c:414
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: ошибка при анализе синтаксиса в конце строки\n"
 
-#: copy.c:423
+#: copy.c:548
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: нельзя использовать COPY TO/FROM для директорий\n"
 
-#: copy.c:444
+#: copy.c:569
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:448
+#: copy.c:573
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: неожидаемый ответ (%d)\n"
 
-#: copy.c:549
+#: copy.c:674
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -877,8 +877,8 @@ msgstr "%s: неизвестное состояние транзакции\n"
 #: describe.c:266
 #: describe.c:313
 #: describe.c:413
-#: describe.c:693
-#: describe.c:1371
+#: describe.c:697
+#: describe.c:1383
 #: large_obj.c:258
 msgid "Description"
 msgstr "Описание"
@@ -892,29 +892,29 @@ msgstr "Большие объекты"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Используйте \"\\q\" чтобы выйти из %s.\n"
 
-#: print.c:421
+#: print.c:424
 msgid "(No rows)\n"
 msgstr "(Нет записей)\n"
 
-#: print.c:1186
+#: print.c:1193
 msgid "(1 row)"
 msgstr "(1 запись)"
 
-#: print.c:1188
+#: print.c:1195
 #, c-format
 msgid "(%d rows)"
 msgstr "(записей: %d)"
 
-#: startup.c:132
+#: startup.c:133
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: недостаточно памяти\n"
 
-#: startup.c:177
+#: startup.c:178
 msgid "User name: "
 msgstr "Имя пользователя: "
 
-#: startup.c:282
+#: startup.c:283
 #, c-format
 msgid ""
 "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
@@ -935,42 +935,42 @@ msgstr ""
 "           \\q для выхода\n"
 "\n"
 
-#: startup.c:443
+#: startup.c:444
 #, c-format
 msgid "%s: couldn't set printing parameter \"%s\"\n"
 msgstr "%s: не получилось установить параметр печати \"%s\"\n"
 
-#: startup.c:489
+#: startup.c:490
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: не получилось удалить переменную \"%s\"\n"
 
-#: startup.c:499
+#: startup.c:500
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: не получилось установить переменную \"%s\"\n"
 
-#: startup.c:530
-#: startup.c:536
+#: startup.c:531
+#: startup.c:537
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Наберите \"%s --help\" для более подробной информации.\n"
 
-#: startup.c:554
+#: startup.c:555
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: внимание: излишняя опция: \"%s\" -- проигнорирована\n"
 
-#: startup.c:561
+#: startup.c:562
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Внимание: Опция -u устарела. Используйте -U.\n"
 
-#: startup.c:613
+#: startup.c:626
 msgid "contains support for command-line editing"
 msgstr "поддерживает редактирование командной строки"
 
-#: startup.c:636
+#: startup.c:649
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -985,9 +985,9 @@ msgstr ""
 #: describe.c:264
 #: describe.c:359
 #: describe.c:413
-#: describe.c:1364
-#: describe.c:1470
-#: describe.c:1518
+#: describe.c:1376
+#: describe.c:1482
+#: describe.c:1530
 msgid "Schema"
 msgstr "Схема"
 
@@ -998,10 +998,10 @@ msgstr "Схема"
 #: describe.c:306
 #: describe.c:359
 #: describe.c:413
-#: describe.c:1364
-#: describe.c:1471
-#: describe.c:1519
-#: describe.c:1616
+#: describe.c:1376
+#: describe.c:1483
+#: describe.c:1531
+#: describe.c:1628
 msgid "Name"
 msgstr "Имя"
 
@@ -1027,8 +1027,8 @@ msgstr "Типы данных аргументов"
 
 #: describe.c:130
 #: describe.c:306
-#: describe.c:1366
-#: describe.c:1617
+#: describe.c:1378
+#: describe.c:1629
 msgid "Owner"
 msgstr "Владелец"
 
@@ -1082,26 +1082,26 @@ msgstr "Список баз данных"
 
 #: describe.c:359
 #: describe.c:487
-#: describe.c:1365
+#: describe.c:1377
 msgid "table"
 msgstr "таблица"
 
 #: describe.c:359
 #: describe.c:487
-#: describe.c:1365
+#: describe.c:1377
 msgid "view"
 msgstr "вид"
 
 #: describe.c:359
 #: describe.c:487
-#: describe.c:1365
+#: describe.c:1377
 msgid "sequence"
 msgstr "последовательность"
 
 #: describe.c:359
-#: describe.c:680
-#: describe.c:1366
-#: describe.c:1472
+#: describe.c:684
+#: describe.c:1378
+#: describe.c:1484
 msgid "Type"
 msgstr "Тип"
 
@@ -1135,7 +1135,7 @@ msgid "data type"
 msgstr "тип данных"
 
 #: describe.c:487
-#: describe.c:1365
+#: describe.c:1377
 msgid "index"
 msgstr "индекс"
 
@@ -1151,87 +1151,87 @@ msgstr "триггер"
 msgid "Object descriptions"
 msgstr "Описание объекта"
 
-#: describe.c:583
+#: describe.c:585
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Связи с именем \"%s\" не найдено.\n"
 
-#: describe.c:666
+#: describe.c:669
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Связи с OID %s не найдено.\n"
 
-#: describe.c:679
+#: describe.c:683
 msgid "Column"
 msgstr "Колонка"
 
-#: describe.c:687
+#: describe.c:691
 msgid "Modifiers"
 msgstr "Модификаторы"
 
-#: describe.c:794
+#: describe.c:798
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Таблица \"%s.%s\""
 
-#: describe.c:798
+#: describe.c:802
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Вид \"%s.%s\""
 
-#: describe.c:802
+#: describe.c:806
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Последовательность \"%s.%s\""
 
-#: describe.c:806
+#: describe.c:810
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Индекс \"%s.%s\""
 
-#: describe.c:810
+#: describe.c:814
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Специальная связь \"%s.%s\""
 
-#: describe.c:814
+#: describe.c:818
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-таблица \"%s.%s\""
 
-#: describe.c:818
+#: describe.c:822
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Сложный тип \"%s.%s\""
 
-#: describe.c:822
+#: describe.c:826
 #, c-format
 msgid "?%c? \"%s.%s\""
 msgstr "?%c? \"%s.%s\""
 
-#: describe.c:859
+#: describe.c:863
 msgid "PRIMARY KEY, "
 msgstr "PRIMARY KEY, "
 
-#: describe.c:861
+#: describe.c:865
 msgid "UNIQUE, "
 msgstr "UNIQUE, "
 
-#: describe.c:867
+#: describe.c:871
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "для таблицы \"%s.%s\""
 
-#: describe.c:871
+#: describe.c:875
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", предикат (%s)"
 
-#: describe.c:874
+#: describe.c:878
 msgid ", CLUSTER"
 msgstr ", CLUSTER"
 
-#: describe.c:908
+#: describe.c:912
 #, c-format
 msgid ""
 "View definition:\n"
@@ -1240,182 +1240,188 @@ msgstr ""
 "Определение вида:\n"
 "%s"
 
-#: describe.c:914
-#: describe.c:1135
+#: describe.c:918
+#: describe.c:1139
 msgid "Rules:"
 msgstr "Правила:"
 
-#: describe.c:1069
+#: describe.c:1073
 msgid "Indexes:"
 msgstr "Индексы:"
 
-#: describe.c:1077
+#: describe.c:1081
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1083
+#: describe.c:1087
 msgid " PRIMARY KEY,"
 msgstr " PRIMARY KEY,"
 
-#: describe.c:1085
+#: describe.c:1089
 msgid " UNIQUE,"
 msgstr " UNIQUE,"
 
-#: describe.c:1096
+#: describe.c:1100
 msgid " CLUSTER"
 msgstr " CLUSTER"
 
-#: describe.c:1105
+#: describe.c:1109
 msgid "Check constraints:"
 msgstr "CHECK-констрэйнты:"
 
-#: describe.c:1109
-#: describe.c:1124
+#: describe.c:1113
+#: describe.c:1128
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
 # TO REWVIEW
-#: describe.c:1120
+#: describe.c:1124
 msgid "Foreign-key constraints:"
 msgstr "Ограничения по вторичному ключу:"
 
-#: describe.c:1154
+#: describe.c:1158
 msgid "Triggers:"
 msgstr "Триггеры:"
 
-#: describe.c:1176
+#: describe.c:1180
 msgid "Inherits"
 msgstr "Наследует"
 
-#: describe.c:1263
-msgid "User name"
-msgstr "Имя пользователя"
+#: describe.c:1194
+msgid "Contains OIDs"
+msgstr "Содержит OIDs"
 
-#: describe.c:1263
-msgid "User ID"
-msgstr "ID пользователя"
-
-#: describe.c:1264
-msgid "superuser, create database"
-msgstr "superuser: создание базы данных"
-
-#: describe.c:1265
-msgid "superuser"
-msgstr "superuser"
-
-#: describe.c:1265
-msgid "create database"
-msgstr "создание базы данных"
-
-#: describe.c:1266
-msgid "Attributes"
-msgstr "Атрибуты"
-
-#: describe.c:1266
-msgid "Groups"
-msgstr "Группы"
-
-#: describe.c:1279
-msgid "List of database users"
-msgstr "Список пользователей базы данных"
-
-#: describe.c:1306
-msgid "Group name"
-msgstr "Имя группы"
-
-#: describe.c:1306
-msgid "Group ID"
-msgstr "ID Группы"
-
-#: describe.c:1319
-msgid "List of database groups"
-msgstr "Список групп базы"
-
-#: describe.c:1366
-msgid "special"
-msgstr "особенный"
-
-#: describe.c:1381
-msgid "Table"
-msgstr "Таблица"
-
-#: describe.c:1427
-msgid "No matching relations found.\n"
-msgstr "Подходящих связей не найдено.\n"
-
-#: describe.c:1429
-msgid "No relations found.\n"
-msgstr "Связи не найдены.\n"
-
-#: describe.c:1434
-msgid "List of relations"
-msgstr "Список связей"
-
-#: describe.c:1473
-msgid "Modifier"
-msgstr "Модификаторы"
-
-#: describe.c:1487
-msgid "List of domains"
-msgstr "Список доменов"
-
-#: describe.c:1520
-msgid "Source"
-msgstr "Источник"
-
-#: describe.c:1521
-msgid "Destination"
-msgstr "Назначение"
-
-#: describe.c:1522
-#: describe.c:1579
+#: describe.c:1196
+#: describe.c:1534
+#: describe.c:1591
 msgid "yes"
 msgstr "да"
 
-#: describe.c:1523
-#: describe.c:1577
+#: describe.c:1196
+#: describe.c:1535
+#: describe.c:1589
 msgid "no"
 msgstr "нет"
 
-#: describe.c:1524
+#: describe.c:1275
+msgid "User name"
+msgstr "Имя пользователя"
+
+#: describe.c:1275
+msgid "User ID"
+msgstr "ID пользователя"
+
+#: describe.c:1276
+msgid "superuser, create database"
+msgstr "superuser: создание базы данных"
+
+#: describe.c:1277
+msgid "superuser"
+msgstr "superuser"
+
+#: describe.c:1277
+msgid "create database"
+msgstr "создание базы данных"
+
+#: describe.c:1278
+msgid "Attributes"
+msgstr "Атрибуты"
+
+#: describe.c:1278
+msgid "Groups"
+msgstr "Группы"
+
+#: describe.c:1291
+msgid "List of database users"
+msgstr "Список пользователей базы данных"
+
+#: describe.c:1318
+msgid "Group name"
+msgstr "Имя группы"
+
+#: describe.c:1318
+msgid "Group ID"
+msgstr "ID Группы"
+
+#: describe.c:1331
+msgid "List of database groups"
+msgstr "Список групп базы"
+
+#: describe.c:1378
+msgid "special"
+msgstr "особенный"
+
+#: describe.c:1393
+msgid "Table"
+msgstr "Таблица"
+
+#: describe.c:1439
+msgid "No matching relations found.\n"
+msgstr "Подходящих связей не найдено.\n"
+
+#: describe.c:1441
+msgid "No relations found.\n"
+msgstr "Связи не найдены.\n"
+
+#: describe.c:1446
+msgid "List of relations"
+msgstr "Список связей"
+
+#: describe.c:1485
+msgid "Modifier"
+msgstr "Модификаторы"
+
+#: describe.c:1499
+msgid "List of domains"
+msgstr "Список доменов"
+
+#: describe.c:1532
+msgid "Source"
+msgstr "Источник"
+
+#: describe.c:1533
+msgid "Destination"
+msgstr "Назначение"
+
+#: describe.c:1536
 msgid "Default?"
 msgstr "По умолчанию?"
 
-#: describe.c:1538
+#: describe.c:1550
 msgid "List of conversions"
 msgstr "Список конверсий"
 
-#: describe.c:1573
+#: describe.c:1585
 msgid "Source type"
 msgstr "Исходный тип"
 
-#: describe.c:1574
+#: describe.c:1586
 msgid "Target type"
 msgstr "Тип назначения"
 
-#: describe.c:1575
+#: describe.c:1587
 msgid "(binary compatible)"
 msgstr "(двоично-совместимый)"
 
-#: describe.c:1576
+#: describe.c:1588
 msgid "Function"
 msgstr "Функция"
 
-#: describe.c:1578
+#: describe.c:1590
 msgid "in assignment"
 msgstr "в присвоении"
 
-#: describe.c:1580
+#: describe.c:1592
 msgid "Implicit?"
 msgstr "Подразумевается?"
 
-#: describe.c:1588
+#: describe.c:1600
 msgid "List of casts"
 msgstr "Список конверсий типов"
 
-#: describe.c:1630
+#: describe.c:1642
 msgid "List of schemas"
 msgstr "Список схем"
 
@@ -1453,12 +1459,16 @@ msgid ""
 "ALTER DATABASE name SET parameter { TO | = } { value | DEFAULT }\n"
 "ALTER DATABASE name RESET parameter\n"
 "\n"
+"ALTER DATABASE name OWNER TO new_owner\n"
+"\n"
 "ALTER DATABASE name RENAME TO newname"
 msgstr ""
 "ALTER DATABASE имя SET параметр { TO | = } { значение | DEFAULT }\n"
 "ALTER DATABASE имя RESET параметр\n"
 "\n"
-"ALTER DATABASE имя RENAME TO новоеимя"
+"ALTER DATABASE имя OWNER TO новый_владелецr\n"
+"\n"
+"ALTER DATABASE имя RENAME TO новое_имя"
 
 #: sql_help.h:41
 msgid "change the definition of a domain"
@@ -1557,57 +1567,49 @@ msgstr "изменить определение таблицы"
 #: sql_help.h:70
 msgid ""
 "ALTER TABLE [ ONLY ] name [ * ]\n"
-"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    ALTER [ COLUMN ] column { SET DEFAULT expression | DROP DEFAULT }\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    SET WITHOUT OIDS\n"
+"    action [, ... ]\n"
 "ALTER TABLE [ ONLY ] name [ * ]\n"
 "    RENAME [ COLUMN ] column TO new_column\n"
 "ALTER TABLE name\n"
 "    RENAME TO new_name\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
+"\n"
+"where action is one of:\n"
+"\n"
+"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
+"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] column TYPE type [ USING expression ]\n"
+"    ALTER [ COLUMN ] column SET DEFAULT expression\n"
+"    ALTER [ COLUMN ] column DROP DEFAULT\n"
+"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
 "    ADD table_constraint\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
 "    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
-"ALTER TABLE name\n"
+"    SET WITHOUT OIDS\n"
 "    OWNER TO new_owner\n"
-"ALTER TABLE name\n"
 "    CLUSTER ON index_name"
 msgstr ""
 "ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    ADD [ COLUMN ] колонка тип [ констрейнт_колонки [ ... ] ]\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    DROP [ COLUMN ] колонка [ RESTRICT | CASCADE ]\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    ALTER [ COLUMN ] колонка { SET DEFAULT выражение | DROP DEFAULT }\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    ALTER [ COLUMN ] колонка { SET | DROP } NOT NULL\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    ALTER [ COLUMN ] колока SET STATISTICS целое\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    ALTER [ COLUMN ] колонка SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    SET WITHOUT OIDS\n"
+"    действие [, ... ]\n"
 "ALTER TABLE [ ONLY ] имя [ * ]\n"
 "    RENAME [ COLUMN ] колонка TO новая_колонка\n"
 "ALTER TABLE имя\n"
 "    RENAME TO новое_имя\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
-"    ADD контрейнт_таблицы\n"
-"ALTER TABLE [ ONLY ] имя [ * ]\n"
+"\n"
+"где действие одно из следующих:\n"
+"\n"
+"    ADD [ COLUMN ] колонка тип [ констрейнт_колонки [ ... ] ]\n"
+"    DROP [ COLUMN ] колонка [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] колонка TYPE тип [ USING выражение ]\n"
+"    ALTER [ COLUMN ] колонка SET DEFAULT выражение\n"
+"    ALTER [ COLUMN ] колонка DROP DEFAULT\n"
+"    ALTER [ COLUMN ] колонка { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] колонка SET STATISTICS целое\n"
+"    ALTER [ COLUMN ] колонка SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
+"    ADD констрейнт_таблицы\n"
 "    DROP CONSTRAINT имя_констрейнта [ RESTRICT | CASCADE ]\n"
-"ALTER TABLE имя\n"
+"    SET WITHOUT OIDS\n"
 "    OWNER TO новый_владелец\n"
-"ALTER TABLE имя\n"
 "    CLUSTER ON имя_индекса"
 
 #: sql_help.h:73
@@ -1780,7 +1782,10 @@ msgid ""
 "          [ BINARY ] \n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
-"          [ NULL [ AS ] 'null string' ] ]\n"
+"          [ NULL [ AS ] 'null string' ]\n"
+"          [ CSV [ QUOTE [ AS ] 'quote' ] \n"
+"                [ ESCAPE [ AS ] 'escape' ]\n"
+"                [ FORCE NOT NULL column [, ...] ]\n"
 "\n"
 "COPY tablename [ ( column [, ...] ) ]\n"
 "    TO { 'filename' | STDOUT }\n"
@@ -1788,23 +1793,32 @@ msgid ""
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
-"          [ NULL [ AS ] 'null string' ] ]"
+"          [ NULL [ AS ] 'null string' ]\n"
+"          [ CSV [ QUOTE [ AS ] 'quote' ] \n"
+"                [ ESCAPE [ AS ] 'escape' ]\n"
+"                [ FORCE QUOTE column [, ...] ]"
 msgstr ""
-"COPY имятаблицы [ ( колонка [, ...] ) ]\n"
+"COPY имя_таблицы [ ( колонка [, ...] ) ]\n"
 "    FROM { 'имяфайла' | STDIN }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ] \n"
 "          [ OIDS ]\n"
-"          [ DELIMITER [ AS ] 'раделитель' ]\n"
+"          [ DELIMITER [ AS ] 'разделитель' ]\n"
 "          [ NULL [ AS ] 'пустая строка' ] ]\n"
+"          [ CSV [ QUOTE [ AS ] 'кавычка' ] \n"
+"                [ ESCAPE [ AS ] 'отмена' ]\n"
+"                [ FORCE NOT NULL колонка [, ...] ]\n"
 "\n"
-"COPY имятаблицы [ ( колонка [, ...] ) ]\n"
+"COPY имя_таблицы [ ( колонка [, ...] ) ]\n"
 "    TO { 'имяфайла' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
-"          [ DELIMITER [ AS ] 'раделитель' ]\n"
-"          [ NULL [ AS ] 'пустая строка' ] ]"
+"          [ DELIMITER [ AS ] 'разделитель' ]\n"
+"          [ NULL [ AS ] 'пустая строка' ] ]\n"
+"          [ CSV [ QUOTE [ AS ] 'кавычка' ] \n"
+"                [ ESCAPE [ AS ] 'отмена' ]\n"
+"                [ FORCE QUOTE колонка [, ...] ]"
 
 #: sql_help.h:113
 msgid "define a new aggregate function"
