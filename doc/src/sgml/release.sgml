@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.218 2003/10/27 02:51:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.219 2003/10/29 20:38:19 momjian Exp $
 -->
 
 <appendix id="release">
@@ -15,6 +15,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.218 2003/10/27 02:51:39 mo
 <glossentry><glossterm> Performance</glossterm>
 
 <glossdef><para> IN/NOT IN subqueries are now much more efficient
+  <footnote>
+  <para>
+   In previous releases, IN/NOT IN subqueries were joined to the
+   upper query by sequentially scanning the subquery looking for
+   a join.  The 7.4 code uses the same sophisticated techniques
+   used by ordinary joins and so is much faster, and is now faster
+   than EXISTS subqueries.
+  </para>
+  </footnote>
 </para>
 
 <para> Improved GROUP BY processing by using hash buckets</para>
