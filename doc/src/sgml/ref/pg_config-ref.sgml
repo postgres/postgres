@@ -1,26 +1,26 @@
 <!-- $Header -->
 
-<refentry id="app-pg-config">
+<refentry id="app-pg_config">
  <refmeta>
-  <refentrytitle id="app-pg-config-title">pg-config</>
+  <refentrytitle id="app-pg_config-title">pg_config</>
   <refmiscinfo>Application</>
  </refmeta>
 
  <refnamediv>
-  <refname>pg-config</>
+  <refname>pg_config</>
   <refpurpose>Provides information about the installed version of <productname>PostgreSQL</></>
  </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>
-pg-config --bindir | --includedir | --libdir | --configure | --version
+pg_config --bindir | --includedir | --libdir | --configure | --version
 </synopsis>
  </refsynopsisdiv>
 
  <refsect1>
   <title>Description</>
   <para>
-   The <application>pg-config</> stores and provides configuration parameters
+   The <application>pg_config</> stores and provides configuration parameters
    of the currently installed version of <productname>PostgreSQL</>. It is
    intended, for example, to be used by software packages that want to interface
    to <productname>PostgreSQL</> in order to find the respective header files
@@ -28,7 +28,7 @@ pg-config --bindir | --includedir | --libdir | --configure | --version
   </para>
 
   <para>
-   To use <application>pg-config</>, supply one or more of the following options:
+   To use <application>pg_config</>, supply one or more of the following options:
    <variablelist>
     <varlistentry>
      <term>--bindir</>
@@ -36,7 +36,7 @@ pg-config --bindir | --includedir | --libdir | --configure | --version
       <para>
        Print the location of user executables. Use this, for example, to find
        the <application>psql</> program. This is normally also the location
-       where the <filename>pg-config</> program resides.       
+       where the <filename>pg_config</> program resides.       
       </para>
      </listitem>
     </varlistentry>
