@@ -1,11 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.25 1999/05/27 15:49:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.26 1999/06/01 17:26:18 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.26  1999/06/01 17:26:18  thomas
+Make sure that only one intro is included in the integrated doc.
+Multiple intros cause trouble since they have some section elements
+ (e.g. "y2k.sgml") in common leading to duplicate labels.
+Include emacs formatting hints in the intro*.sgml sources.
+
 Revision 1.25  1999/05/27 15:49:08  thomas
 Markup fixes.
 Update for v6.5 release.
@@ -293,7 +299,12 @@ Your name here...
     Installation and maintenance information.
    </Para>
   </PartIntro>
+<!--
+  Disable these extra intro chapters since some elements (e.g. y2k
+  statement) are included in the first intro.sgml and cause errors if
+  included twice.
    &intro-ag;
+-->
    &ports;
    &config;
    &layout;
@@ -315,7 +326,12 @@ Your name here...
     Information for extending <ProductName>Postgres</ProductName>.
    </Para>
   </PartIntro>
+<!--
+  Disable these extra intro chapters since some elements (e.g. y2k
+  statement) are included in the first intro.sgml and cause errors if
+  included twice.
    &intro-pg;
+-->
    &arch-pg;
    &extend;
    &xfunc;
