@@ -1,14 +1,16 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.2 2000/01/26 06:33:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.3 2000/02/08 15:56:55 momjian Exp $
+ *
+ *
+ *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
  *
  *   TO_CHAR(); TO_DATETIME(); TO_DATE(); TO_NUMBER();  
  *
  *   The PostgreSQL routines for a DateTime/int/float/numeric formatting, 
  *   inspire with Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.  
- *
- *   1999 Karel Zak "Zakkr"
  *
  *
  *   Cache & Memory:
@@ -33,13 +35,16 @@
  *
  *  Supported types for to_char():
  *		
- *		DateTime, Numeric, int4, int8, float4, float8
+ *		Timestamp, DateTime, Numeric, int4, int8, float4, float8
  *
  *  Supported types for reverse conversion:
  *
  *		Datetime	- to_datetime()
  *		Date		- to_date()
  *		Numeric		- to_number()		
+ *  
+ * 
+ *	Karel Zak - Zakkr	
  *
  * -----------------------------------------------------------------------
  */
@@ -106,8 +111,8 @@
  * External (defined in PgSQL dt.c (datetime utils)) 
  * ----------
  */
-extern  char		*months[],		/* month abbreviation   */
-			*days[];		/* full days		*/
+extern  char		*months[],	/* month abbreviation   */
+			*days[];	/* full days		*/
 
 /* ----------
  * Format parser structs             
@@ -231,11 +236,13 @@ static int DCH_global_flag	= 0;
  */
 typedef struct {
 	int	pre,			/* (count) numbers before decimal */
-		pos,			/* (count) numbers after decimal  */
+		post,			/* (count) numbers after decimal  */
 		lsign,			/* want locales sign		  */
 		flag,			/* number parametrs		  */
 		pre_lsign_num,		/* tmp value for lsign		  */	
 		multi,			/* multiplier for 'V'		  */
+		zero_start,		/* position of first zero	  */
+		zero_end,		/* position of last zero	  */
 		need_locale;		/* needs it locale		  */ 
 } NUMDesc;
 
@@ -270,6 +277,7 @@ typedef struct {
 #define	IS_FILLMODE(_f)	((_f)->flag & NUM_F_FILLMODE)
 #define	IS_BRACKET(_f)	((_f)->flag & NUM_F_BRACKET)
 #define IS_MINUS(_f)	((_f)->flag & NUM_F_MINUS)
+#define IS_LSIGN(_f)	((_f)->flag & NUM_F_LSIGN)
 #define IS_PLUS(_f)	((_f)->flag & NUM_F_PLUS)
 #define IS_ROMAN(_f)	((_f)->flag & NUM_F_ROMAN)
 #define IS_MULTI(_f)	((_f)->flag & NUM_F_MULTI)
@@ -350,12 +358,13 @@ static KeySuffix DCH_suff[] = {
  *    Position for the keyword is simular as position in the enum DCH/NUM_poz 
  * (!)
  *
- * For fast search is used the 'int index[256-32]' (first 32 ascii chars is 
- * skiped), in this index is DCH_ enums for each ASCII position or -1 if 
- * char is not used in the KeyWord. Search example for string "MM":
- * 	1)	see in index to index[77-32] (77 = 'M'), 
- *	2)	take keywords position from index[77-32]
- *	3)	run sequential search in keywords[] from position   
+ * For fast search is used the 'int index[]', index is ascii table from position 
+ * 32 (' ') to 126 (~), in this index is DCH_ / NUM_ enums for each ASCII 
+ * position or -1 if char is not used in the KeyWord. Search example for 
+ * string "MM":
+ * 	1)	see in index to index['M' - 32], 
+ *	2)	take keywords position (enum DCH_MM) from index
+ *	3)	run sequential search in keywords[] from this position   
  *
  * ----------
  */
@@ -512,7 +521,7 @@ static int DCH_index[256 - 32] = {
 /*
 0	1	2	3	4	5	6	7	8	9
 */
-	/*---- first 0..31 chars is skiped ----*/
+	/*---- first 0..31 chars are skiped ----*/
 
 		-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
 -1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
@@ -562,18 +571,24 @@ typedef struct NUMProc
 {
 	int	type;		/* FROM_CHAR (TO_NUMBER) or TO_CHAR */
 
-	NUMDesc	*Num;		/* number description	*/	
+	NUMDesc	*Num;		/* number description		*/	
 	
-	int	sign,		/* '-' or '+'		*/
-		sign_wrote,	/* is sign wrote	*/
-		count_num,	/* number of non-write digits	*/
-		in_number,	/* is inside number	*/
-		pre_number;	/* space before number	*/
+	int	sign,		/* '-' or '+'			*/
+		sign_wrote,	/* was sign write		*/
+		sign_pos,	/* pre number sign position	*/
+		num_count,	/* number of write digits 	*/
+		num_in,		/* is inside number		*/
+		num_curr,	/* current position in number 	*/
+		num_pre,	/* space before first number	*/
+	
+		read_dec,	/* to_number - was read dec. point  */
+		read_post;	/* to_number - number of dec. digit */
 		
 	char	*number,	/* string with number	*/
 		*number_p,	/* pointer to current number pozition */
 		*inout,		/* in / out buffer	*/
 		*inout_p,	/* pointer to current inout pozition */
+		*last_relevant,	/* last relevant number after decimal point */
 		
 		*L_negative_sign,	/* Locale */
 		*L_positive_sign,
@@ -592,7 +607,7 @@ static KeySuffix *suff_search(char *str, KeySuffix *suf, int type);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, char *str, KeyWord *kw, 
 		KeySuffix *suf, int *index, int ver, NUMDesc *Num);
-static char *DCH_action(FormatNode *node, char *inout, int flag);
+static char *DCH_processor(FormatNode *node, char *inout, int flag);
 
 #ifdef DEBUG_TO_FROM_CHAR
 	static void dump_index(KeyWord *k, int *index);
@@ -614,7 +629,9 @@ static FormatNode *NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat,
 	   NUMDesc *CacheNum, NUMDesc *Num, char *pars_str, int *flag);
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
-static int NUM_numpart(NUMProc *Np, int id);
+static char *get_last_relevant_decnum(char *num);
+static void NUM_numpart_from_char(NUMProc *Np, int id); 
+static void NUM_numpart_to_char(NUMProc *Np, int id); 
 static char *NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number, 
 					int plen, int sign, int type);
 
@@ -677,27 +694,37 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 	switch(n->key->id) {
 		
 		case NUM_9:
+			if (IS_BRACKET(num))
+				elog(ERROR, "to_char/to_number(): '9' must be ahead of 'PR'.");   
+			
 			if (IS_MULTI(num)) {
 				++num->multi;
 				break;
 			}
 			if (IS_DECIMAL(num))
-				++num->pos;
+				++num->post;
 			else 
 				++num->pre;
 			break;
 		
 		case NUM_0:
-			if (num->pre == 0) 
+			if (IS_BRACKET(num))
+				elog(ERROR, "to_char/to_number(): '0' must be ahead of 'PR'.");   
+
+			if (!IS_ZERO(num) && !IS_DECIMAL(num)) {
 				num->flag |= NUM_F_ZERO; 
+				num->zero_start = num->pre + 1;
+			}
 			if (! IS_DECIMAL(num))
 				++num->pre;
 			else 
-				++num->pos;
+				++num->post;
+				
+			num->zero_end = num->pre + num->post;
 			break;	
 		
 		case NUM_B:
-			if (num->pre == 0 && num->pos == 0 && (! IS_ZERO(num)))
+			if (num->pre == 0 && num->post == 0 && (! IS_ZERO(num)))
 				num->flag |= NUM_F_BLANK; 				
 			break;		
 		
@@ -706,9 +733,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			num->need_locale = TRUE;
 		case NUM_DEC:
 			if (IS_DECIMAL(num))
-				elog(ERROR, "to_char/number(): not unique decimal poit."); 
+				elog(ERROR, "to_char/to_number(): not unique decimal poit."); 
 			if (IS_MULTI(num))
-				elog(ERROR, "to_char/number(): can't use 'V' and decimal poin together."); 	
+				elog(ERROR, "to_char/to_number(): can't use 'V' and decimal poin together."); 	
 			num->flag |= NUM_F_DECIMAL;
 			break;
 		
@@ -717,33 +744,53 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			break;
 		
 		case NUM_S:
+			if (IS_LSIGN(num))
+				elog(ERROR, "to_char/to_number(): not unique 'S'.");   
+			
+			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
+				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL'/'MI'/'SG'/'PR' together."); 	
+			
 			if (! IS_DECIMAL(num)) {
 				num->lsign = NUM_LSIGN_PRE;
 				num->pre_lsign_num = num->pre;
-				num->need_locale = TRUE;			
+				num->need_locale = TRUE;
+				num->flag |= NUM_F_LSIGN;
 				
 			} else if (num->lsign == NUM_LSIGN_NONE) {
 				num->lsign = NUM_LSIGN_POST;	
 				num->need_locale = TRUE;
+				num->flag |= NUM_F_LSIGN;
 			}	
 			break;
 		
 		case NUM_MI:
+			if (IS_LSIGN(num))
+				elog(ERROR, "to_char/to_number(): can't use 'S' and 'MI' together."); 	
+			
 			num->flag |= NUM_F_MINUS;
 			break;
 		
 		case NUM_PL:
+			if (IS_LSIGN(num))
+				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL' together."); 	
+			
 			num->flag |= NUM_F_PLUS;
 			break;		
 		
 		case NUM_SG:
+			if (IS_LSIGN(num))
+				elog(ERROR, "to_char/to_number(): can't use 'S' and 'SG' together."); 	
+			
 			num->flag |= NUM_F_MINUS;
 			num->flag |= NUM_F_PLUS;
 			break;
 		
 		case NUM_PR:
+			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
+				elog(ERROR, "to_char/to_number(): can't use 'PR' and 'S'/'PL'/'MI'/'SG' together.");   
 			num->flag |= NUM_F_BRACKET;
 			break;	
+	
 		case NUM_rn:
 		case NUM_RN:
 			num->flag |= NUM_F_ROMAN;
@@ -756,9 +803,12 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 		
 		case NUM_V:
 			if (IS_DECIMAL(num))
-				elog(ERROR, "to_char/number(): can't use 'V' and decimal poin together."); 	
+				elog(ERROR, "to_char/to_number(): can't use 'V' and decimal poin together."); 	
 			num->flag |= NUM_F_MULTI;
 			break;	
+		
+		case NUM_E:
+			elog(ERROR, "to_char/to_number(): 'E' is not supported."); 	
 	}
 	
 	return;
@@ -782,7 +832,7 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 			last=0;
 
 #ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, "to-from_char(): run parser.");
+	elog(DEBUG_elog_output, "to_char/number(): run parser.");
 #endif
 
 	n = node;
@@ -895,7 +945,7 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
  * ----------
  */
 static char *
-DCH_action(FormatNode *node, char *inout, int flag)
+DCH_processor(FormatNode *node, char *inout, int flag)
 {
 	FormatNode	*n;
 	char		*s;
@@ -919,7 +969,7 @@ DCH_action(FormatNode *node, char *inout, int flag)
 			len = n->key->action(n->key->id, s, n->suffix, flag, n); 	
 			if (len > 0) 
 				s += len;
-			else 
+			else if (len == -1)
 				continue;	
 				
 		} else {
@@ -972,8 +1022,8 @@ dump_node(FormatNode *node, int max)
 	
 	for(a=0, n=node; a<=max; n++, a++) {
 		if (n->type == NODE_TYPE_ACTION) 
-			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_ACTION\t(%s,%s)", 
-					a, DUMP_THth(n->suffix), DUMP_FM(n->suffix));
+			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_ACTION '%s'\t(%s,%s)", 
+					a, n->key->name, DUMP_THth(n->suffix), DUMP_FM(n->suffix));
 		else if (n->type == NODE_TYPE_CHAR) 
 			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_CHAR '%c'", a, n->character);	
 		else if (n->type == NODE_TYPE_END) {
@@ -1221,7 +1271,7 @@ dch_global(int arg, char *inout, int suf, int flag, FormatNode *node)
 		DCH_global_flag	|= DCH_F_FX;
 		break;
 	}
-	return 0;
+	return -1;
 }
 
 /* ----------
@@ -1245,8 +1295,11 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 				tm->tm_hour <13	? tm->tm_hour : tm->tm_hour-12);
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, 0);
-			if (S_FM(suf) || S_THth(suf)) return strlen(p_inout)-1;
-			else return 1;
+			if (S_FM(suf) || S_THth(suf)) 
+				return strlen(p_inout)-1;
+			else 
+				return 1;
+			
 		} else if (flag == FROM_CHAR) {
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_hour);
@@ -1255,15 +1308,18 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 				sscanf(inout, "%02d", &tm->tm_hour);
 				return 1 + SKIP_THth(suf);
 			}
-				
 		}
+
 	case DCH_HH24:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_hour);
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_FM(suf) || S_THth(suf)) return strlen(p_inout)-1;
-			else return 1;
+			if (S_FM(suf) || S_THth(suf)) 
+				return strlen(p_inout) -1;
+			else 
+				return 1;
+		
 		} else if (flag == FROM_CHAR) {
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_hour);
@@ -1273,13 +1329,17 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 				return 1 + SKIP_THth(suf);
 			}
 		}
+		
 	case DCH_MI:	
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_min);
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_FM(suf) || S_THth(suf)) return strlen(p_inout)-1;
-			else return 1;
+			if (S_FM(suf) || S_THth(suf)) 
+				return strlen(p_inout)-1;
+			else 
+				return 1;
+		
 		} else if (flag == FROM_CHAR) {
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_min);
@@ -1294,8 +1354,11 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_sec);
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_FM(suf) || S_THth(suf)) return strlen(p_inout)-1;
-			else return 1;
+			if (S_FM(suf) || S_THth(suf)) 
+				return strlen(p_inout) -1;
+			else 
+				return 1;
+		
 		} else if (flag == FROM_CHAR) {
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_sec);
@@ -1314,14 +1377,14 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			return strlen(p_inout)-1;		
 		}  else if (flag == FROM_CHAR) 
-			elog(ERROR, "to_datatime: SSSS is not supported");
+			elog(ERROR, "to_datatime()/to_timestamp(): SSSS is not supported");
 	}	
-	return 0;	
+	return -1;	
 }
 
 #define CHECK_SEQ_SEARCH(_l, _s) {					\
 	if (_l <= 0) { 							\
-		elog(ERROR, "to_datatime: bad value for %s", _s);		\
+		elog(ERROR, "to_datatime()/to_timestamp(): bad value for %s", _s);		\
 	}								\
 }
 
@@ -1382,28 +1445,40 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	case DCH_MONTH:
 		strcpy(inout, months_full[ tm->tm_mon - 1]);		
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));	
-		if (S_FM(suf)) return strlen(p_inout)-1;
-		else return 8;
+		if (S_FM(suf)) 
+			return strlen(p_inout)-1;
+		else 
+			return 8;
+		
 	case DCH_Month:
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[ tm->tm_mon -1 ]);		
-	        if (S_FM(suf)) return strlen(p_inout)-1;
-		else return 8;
+	        if (S_FM(suf)) 
+	        	return strlen(p_inout)-1;
+		else 
+			return 8;
+			
 	case DCH_month:
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[ tm->tm_mon -1 ]);
 		*inout = tolower(*inout);
-	        if (S_FM(suf)) return strlen(p_inout)-1;
-		else return 8;
+	        if (S_FM(suf)) 
+	        	return strlen(p_inout)-1;
+		else 
+			return 8;
+			
 	case DCH_MON:
 		strcpy(inout, months[ tm->tm_mon -1 ]);		
 		inout = str_toupper(inout);
 		return 2;
+		
 	case DCH_Mon:
 		strcpy(inout, months[ tm->tm_mon -1 ]);		
 		return 2;     
+		
 	case DCH_mon:
 		strcpy(inout, months[ tm->tm_mon -1 ]);		
 		*inout = tolower(*inout);
 		return 2;
+		
 	case DCH_MM:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_mon );
@@ -1411,7 +1486,9 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			if (S_FM(suf) || S_THth(suf)) 
 				return strlen(p_inout)-1;
-			else return 1;
+			else 
+				return 1;
+				
 		} else if (flag == FROM_CHAR) {
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_mon);
@@ -1419,33 +1496,46 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			} else {
 				sscanf(inout, "%02d", &tm->tm_mon);
 				return 1 + SKIP_THth(suf);
-			}		
+			}	
 		}	
+		
 	case DCH_DAY:
 		strcpy(inout, days[ tm->tm_wday ]); 			        
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout)); 
-	        if (S_FM(suf)) return strlen(p_inout)-1;
-		else return 8;	
+	        if (S_FM(suf)) 
+	        	return strlen(p_inout)-1;
+		else 
+			return 8;	
+			
 	case DCH_Day:
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[ tm->tm_wday]);			
-	       	if (S_FM(suf)) return strlen(p_inout)-1;
-		else return 8;			
+	       	if (S_FM(suf)) 
+	       		return strlen(p_inout)-1;
+		else 
+			return 8;			
+			
 	case DCH_day:
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[ tm->tm_wday]);			
 		*inout = tolower(*inout);
-	       	if (S_FM(suf)) return strlen(p_inout)-1;
-		else return 8;
+	       	if (S_FM(suf)) 
+	       		return strlen(p_inout)-1;
+		else 
+			return 8;
+			
 	case DCH_DY:	        
 		strcpy(inout, days[ tm->tm_wday]);
 		inout = str_toupper(inout);		
 		return 2;
+		
 	case DCH_Dy:
 		strcpy(inout, days[ tm->tm_wday]);			
 		return 2;			
+		
 	case DCH_dy:
 		strcpy(inout, days[ tm->tm_wday]);			
 		*inout = tolower(*inout);
 		return 2;
+		
 	case DCH_DDD:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 3, tm->tm_yday);
@@ -1454,6 +1544,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			if (S_FM(suf) || S_THth(suf)) 
 				return strlen(p_inout)-1;
 			else return 2;
+			
 		} else if (flag == FROM_CHAR) {	
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_yday);
@@ -1463,6 +1554,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				return 2 + SKIP_THth(suf);
 			}	
 		}
+		
 	case DCH_DD:
 		if (flag == TO_CHAR) {	
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_mday);	
@@ -1470,7 +1562,9 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			if (S_FM(suf) || S_THth(suf)) 
 				return strlen(p_inout)-1;
-			else return 1;
+			else 
+				return 1;
+				
 		} else if (flag == FROM_CHAR) {	
 			if (S_FM(suf)) {
 				sscanf(inout, "%d", &tm->tm_mday);
@@ -1483,16 +1577,17 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	case DCH_D:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%d", tm->tm_wday+1);
-	        	if (S_THth(suf)) 
+	        	if (S_THth(suf)) {
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_THth(suf)) 
 				return 2;
+	        	}
 	        	return 0;
 	        } else if (flag == FROM_CHAR) {	
 			sscanf(inout, "%1d", &tm->tm_wday);
 			if(tm->tm_wday) --tm->tm_wday;
 			return 0 + SKIP_THth(suf);
 		} 
+		
 	case DCH_WW:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,  
@@ -1501,19 +1596,23 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			if (S_FM(suf) || S_THth(suf)) 
 				return strlen(p_inout)-1;
-			else return 1;
+			else 
+				return 1;
+			
 		}  else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime: WW is not supported");
+			elog(ERROR, "to_datatime()/to_timestamp(): WW is not supported");
 	case DCH_Q:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%d", (tm->tm_mon-1)/3+1);		
-			if (S_THth(suf)) 
+			if (S_THth(suf)) {
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_THth(suf)) 
 				return 2;
+	        	} 
 	        	return 0;
+	        	
 	        } else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime: Q is not supported");
+			elog(ERROR, "to_datatime()/to_timestamp(): Q is not supported");
+			
 	case DCH_CC:
 		if (flag == TO_CHAR) {
 			i = tm->tm_year/100 +1;
@@ -1524,8 +1623,9 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			return strlen(p_inout)-1;
+			
 		} else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime: CC is not supported");
+			elog(ERROR, "to_datatime()/to_timestamp(): CC is not supported");
 	case DCH_Y_YYY:	
 		if (flag == TO_CHAR) {
 			i= YEAR_ABS(tm->tm_year) / 1000;
@@ -1535,6 +1635,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			if (tm->tm_year < 0)
 				strcat(inout, BC_STR);	
 			return strlen(p_inout)-1;
+			
 		} else if (flag == FROM_CHAR) {
 			int	cc, yy;
 			sscanf(inout, "%d,%03d", &cc, &yy);
@@ -1552,6 +1653,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				tm->tm_year = tm->tm_year+1; 
 			return len-1;
 		}	
+		
 	case DCH_YYYY:
 		if (flag == TO_CHAR) {
 			if (tm->tm_year <= 9999 && tm->tm_year >= -9998)
@@ -1563,6 +1665,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			if (tm->tm_year < 0)
 				strcat(inout, BC_STR);
 			return strlen(p_inout)-1;
+			
 		} else if (flag == FROM_CHAR) {
 			sscanf(inout, "%d", &tm->tm_year);
 			if (!S_FM(suf) && tm->tm_year <= 9999 && tm->tm_year >= -9999)	
@@ -1577,73 +1680,92 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				tm->tm_year = tm->tm_year+1; 
 			return len-1;
 		}	
+		
 	case DCH_YYY:
 		if (flag == TO_CHAR) {
 			sprintf(buff, "%03d", YEAR_ABS(tm->tm_year));
 			i=strlen(buff);
 			strcpy(inout, buff+(i-3));
-			if (S_THth(suf)) 
+			if (S_THth(suf)) {
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_THth(suf)) return 4;
+				return 4;
+			}
 			return 2;
+			
 		} else if (flag == FROM_CHAR) {
 			int	yy;
 			sscanf(inout, "%03d", &yy);
 			tm->tm_year = (tm->tm_year/1000)*1000 +yy;
 			return 2 +  SKIP_THth(suf);
-		}	
+		}
+			
 	case DCH_YY:
 		if (flag == TO_CHAR) {
 			sprintf(buff, "%02d", YEAR_ABS(tm->tm_year));
 			i=strlen(buff);
 			strcpy(inout, buff+(i-2));
-			if (S_THth(suf)) 
+			if (S_THth(suf)) {
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_THth(suf)) return 3;
+				return 3;
+			}	
 			return 1;
+			
 		} else if (flag == FROM_CHAR) {
 			int	yy;
 			sscanf(inout, "%02d", &yy);
 			tm->tm_year = (tm->tm_year/100)*100 +yy;
 			return 1 +  SKIP_THth(suf);
 		}	
+		
 	case DCH_Y:
 		if (flag == TO_CHAR) {
 			sprintf(buff, "%1d", YEAR_ABS(tm->tm_year));
 			i=strlen(buff);
 			strcpy(inout, buff+(i-1));
-			if (S_THth(suf)) 
+			if (S_THth(suf)) {
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_THth(suf)) return 2;
+				return 2;
+			}	
 			return 0;
+			
 		} else if (flag == FROM_CHAR) {
 			int	yy;
 			sscanf(inout, "%1d", &yy);
 			tm->tm_year = (tm->tm_year/10)*10 +yy;
 			return 0 +  SKIP_THth(suf);
 		}	
+		
 	case DCH_RM:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,   
 				rm_months[ 12 - tm->tm_mon ]);
-			if (S_FM(suf)) return strlen(p_inout)-1;
-			else return 3;
+			if (S_FM(suf)) 
+				return strlen(p_inout)-1;
+			else 
+				return 3;
+				
 		} else if (flag == FROM_CHAR) {
 			tm->tm_mon = 11-seq_search(inout, rm_months, ALL_UPPER, FULL_SIZ, &len);
 			CHECK_SEQ_SEARCH(len, "RM");
 			++tm->tm_mon;
-			if (S_FM(suf))	return len-1;
-			else 		return 3;
+			if (S_FM(suf))	
+				return len-1;
+			else 		
+				return 3;
 		}	
+		
 	case DCH_W:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%d", (tm->tm_mday - tm->tm_wday +7) / 7 );
-			if (S_THth(suf)) 
+			if (S_THth(suf)) {
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
-			if (S_THth(suf)) return 2;
+				return 2;
+			}
 			return 0;
+			
 		} else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime: W is not supported");
+			elog(ERROR, "to_datatime()/to_timestamp(): W is not supported");
+			
 	case DCH_J:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%d", date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));		
@@ -1651,9 +1773,9 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			return strlen(p_inout)-1;
 		} else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime: J is not supported");	
+			elog(ERROR, "to_datatime()/to_timestamp(): J is not supported");	
 	}	
-	return 0;	
+	return -1;	
 }
 
 /****************************************************************************
@@ -1699,7 +1821,7 @@ datetime_to_char(DateTime *dt, text *fmt)
 		datetime2tm(SetDateTime(*dt), &tz, tm, &fsec, &tzn);
 	} else {
 		if (datetime2tm(*dt, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "to_char: Unable to convert datetime to tm");
+			elog(ERROR, "to_char(): Unable to convert datetime to tm");
 	}
 
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7; 
@@ -1756,20 +1878,20 @@ datetime_to_char(DateTime *dt, text *fmt)
         		 */		
 			strncpy(CacheStr, str, DCH_CACHE_SIZE);
 				
+         		parse_format(CacheFormat, str, DCH_keywords, 
+         		     DCH_suff, DCH_index, DCH_TYPE, NULL);
+
 #ifdef DEBUG_TO_FROM_CHAR	 
 			/* dump_node(CacheFormat, len); */
 			/* dump_index(DCH_keywords, DCH_index); */
 #endif         	
-         		parse_format(CacheFormat, str, DCH_keywords, 
-         		     DCH_suff, DCH_index, DCH_TYPE, NULL);
-         		
          		(CacheFormat + len)->type = NODE_TYPE_END;	/* Paranoa? */	
         	}
 
         	format = CacheFormat;
 	}
 	
-	DCH_action(format, VARDATA(result), TO_CHAR);
+	DCH_processor(format, VARDATA(result), TO_CHAR);
 
 	if (flag)
 		pfree(format);
@@ -1888,7 +2010,7 @@ to_datetime(text *date_str, text *fmt)
 		/* dump_node(format, len); */
 #endif
 		VARDATA(date_str)[ VARSIZE(date_str) - VARHDRSZ ] = '\0';
-		DCH_action(format, VARDATA(date_str), FROM_CHAR);	
+		DCH_processor(format, VARDATA(date_str), FROM_CHAR);	
 
 		pfree(str);
 		
@@ -1939,7 +2061,7 @@ to_datetime(text *date_str, text *fmt)
 	NOTICE_TM; 
 #endif
 	if (tm2datetime(tm, fsec, &tz, result) != 0)
-        	elog(ERROR, "to_datatime: can't convert 'tm' to datetime.");
+        	elog(ERROR, "to_datatime()/to_timestamp(): can't convert 'tm' to datetime.");
 	
 	return result;
 }
@@ -2012,9 +2134,13 @@ NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat,
 		Num->flag 		= 0;	
 		Num->lsign		= 0;	
 		Num->pre		= 0;	
-		Num->pos		= 0;
+		Num->post		= 0;
          	Num->pre_lsign_num	= 0;
-		
+		Num->zero_start		= 0;
+		Num->zero_end		= 0;		
+		Num->need_locale	= 0;
+		Num->multi		= 0;
+
 		parse_format(format, str, NUM_keywords, 
          			NULL, NUM_index, NUM_TYPE, Num);
 	
@@ -2051,17 +2177,20 @@ NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat,
 			CacheNum->flag 		= 0;	
 			CacheNum->lsign		= 0;	
 			CacheNum->pre		= 0;	
-			CacheNum->pos		= 0;
+			CacheNum->post		= 0;
          		CacheNum->pre_lsign_num	= 0;
         		CacheNum->need_locale	= 0;
         		CacheNum->multi		= 0; 	
+         		CacheNum->zero_start	= 0;
+         		CacheNum->zero_end	= 0;
+         	
+         		parse_format(CacheFormat, str, NUM_keywords, 
+         			NULL, NUM_index, NUM_TYPE, CacheNum);
          	
 #ifdef DEBUG_TO_FROM_CHAR	 
 			/* dump_node(CacheFormat, len); */
 			/* dump_index(NUM_keywords, NUM_index); */
-#endif         	
-         		parse_format(CacheFormat, str, NUM_keywords, 
-         			NULL, NUM_index, NUM_TYPE, CacheNum);
+#endif         	         	
          		
          		(CacheFormat + len)->type = NODE_TYPE_END;	/* Paranoa? */	
         	}
@@ -2072,10 +2201,12 @@ NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat,
 		Num->flag 		= CacheNum->flag;
 		Num->lsign		= CacheNum->lsign;
 		Num->pre		= CacheNum->pre;
-		Num->pos		= CacheNum->pos;
+		Num->post		= CacheNum->post;
 		Num->pre_lsign_num 	= CacheNum->pre_lsign_num;	
 		Num->need_locale	= CacheNum->need_locale; 
 		Num->multi		= CacheNum->multi; 	
+		Num->zero_start		= CacheNum->zero_start;
+		Num->zero_end		= CacheNum->zero_end;
 
 		pfree(str);
 		return CacheFormat;
@@ -2210,213 +2341,332 @@ NUM_prepare_locale(NUMProc *Np)
 }
 
 /* ----------
- * SET SIGN macro - set 'S' or 'PR' befor number 	
+ * Return pointer of last relevant number after decimal point
+ *	12.0500	--> last relevant is '5'
  * ----------
- */
-#define SET_SIGN(_np) {								\
-	if ((_np)->sign_wrote==0) {							\
-		if (IS_BRACKET((_np)->Num)) {					\
-										\
-			*(_np)->inout_p = '<';					\
-			++(_np)->inout_p;					\
-			(_np)->sign_wrote = 1;					\
-										\
-		} else if ((_np)->Num->lsign==NUM_LSIGN_PRE && (! IS_BRACKET((_np)->Num)) &&	\
-			(! IS_MINUS((_np)->Num)) && (! IS_PLUS((_np)->Num))) {	\
-										\
-			if ((_np)->sign=='-') 					\
-				strcpy((_np)->inout_p, (_np)->L_negative_sign);	\
-			else 							\
-				strcpy((_np)->inout_p, (_np)->L_positive_sign);	\
-			(_np)->inout_p += strlen((_np)->inout_p);		\
-			(_np)->sign_wrote = 1;					\
-										\
-		} else {							\
-			if ((_np)->sign=='-' && (_np)->Num->lsign==NUM_LSIGN_NONE \
-				&& (! IS_BRACKET((_np)->Num)) && 		\
-				(! IS_MINUS((_np)->Num)) && (! IS_PLUS((_np)->Num))) {	\
-										\
-				*(_np)->inout_p = '-';					\
-				++(_np)->inout_p;						\
-				(_np)->sign_wrote=1;					\
-										\
-			} else if ((! IS_FILLMODE((_np)->Num)) && (_np)->Num->lsign==NUM_LSIGN_NONE && \
-				(! IS_BRACKET((_np)->Num)) && (! IS_MINUS((_np)->Num)) && (! IS_PLUS((_np)->Num))) {	\
-										\
-				*(_np)->inout_p = ' ';					\
-				++(_np)->inout_p;						\
-				(_np)->sign_wrote=1;					\
-			}							\
-		}								\
-	}									\
+ */ 
+static char *
+get_last_relevant_decnum(char *num)
+{
+	char	*result, 
+		*p = strchr(num, '.');
+	
+	elog(NOTICE, "CALL: get_last_relevant_decnum()");
+	
+	if (!p)	
+		p = num;
+	result = p;
+	
+	while(*(++p)) {
+		if (*p!='0')
+			result = p;
+	}
+	
+	return result;
 }
 
 /* ----------
- * Create number
- *	return FALSE if any work over current NUM_[0|9|D|DEC] must be skip
- *	in NUM_processor()   
+ * Number extraction for TO_NUMBER()
  * ----------
  */
-static int
-NUM_numpart(NUMProc *Np, int id) 
-{	
-	if (IS_ROMAN(Np->Num))
-		return FALSE;
-			
-	/* Note: in this elog() output not set '\0' in inout
-	elog(DEBUG_elog_output, "sign_w: %d, count: %d, plen %d, sn: %s, inout: '%s'", 
-		Np->sign_wrote, Np->count_num, Np->pre_number, Np->number_p, Np->inout);
-	*/
+static void
+NUM_numpart_from_char(NUMProc *Np, int id) 
+{
+	
+#ifdef DEBUG_TO_FROM_CHAR
+	elog(DEBUG_elog_output, " --- scan start --- ");
+#endif
+
+	if (*Np->inout_p == ' ') 
+		Np->inout_p++;		
 
 	/* ----------
-	 * Number extraction for TO_NUMBER()
+	 * read sign
 	 * ----------
 	 */
-	if (Np->type == FROM_CHAR) {
-		if (id == NUM_9 || id == NUM_0) {
-			if (!*(Np->number+1)) {
-				if (*Np->inout_p == '-' || 
-				     (IS_BRACKET(Np->Num) && 
-				      *Np->inout_p == '<' )) {
-				
-					*Np->number = '-';
-					Np->inout_p++;
-				
-				} else if (*Np->inout_p == '+') {
-				
-					*Np->number = '+';
-					Np->inout_p++;
-				
-				} else if (*Np->inout_p == ' ' && (! IS_FILLMODE(Np->Num))) {
-					Np->inout_p++;
-				} 
+	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9 || NUM_S)) {
+
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "Try read sign (%c).", *Np->inout_p);
+#endif		
+		/* ----------
+		 * locale sign
+		 * ----------
+		 */
+		if (IS_LSIGN(Np->Num)) {
+		
+			int x = strlen(Np->L_negative_sign);
+			
+#ifdef DEBUG_TO_FROM_CHAR
+			elog(DEBUG_elog_output, "Try read locale sign (%c).", *Np->inout_p);
+#endif			
+			if (!strncmp(Np->inout_p, Np->L_negative_sign, x)) {
+				Np->inout_p += x-1;
+				*Np->number = '-';
+				return;
 			}
-			if (isdigit((unsigned char) *Np->inout_p)) {
-				*Np->number_p = *Np->inout_p;
-				Np->number_p++;
-			} 
+						
+			x = strlen(Np->L_positive_sign);
+			if (!strncmp(Np->inout_p, Np->L_positive_sign, x)) {
+				Np->inout_p += x-1;
+				*Np->number = '+';
+				return;
+			}
+		}
+
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "Try read sipmle sign (%c).", *Np->inout_p);
+#endif		
+		/* ----------
+		 * simple + - < >
+		 * ----------
+		 */
+		if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) && 
+		    *Np->inout_p == '<' )) {
+			
+			*Np->number = '-';		/* set - */
+			Np->inout_p++;
+			
+		} else if (*Np->inout_p == '+') {
+				
+			*Np->number = '+';		/* set + */
+			Np->inout_p++;
+		} 		
+	}
+	
+	/* ----------
+	 * read digit
+	 * ----------
+	 */
+	if (isdigit((unsigned char) *Np->inout_p)) {
+		
+		if (Np->read_dec && Np->read_post == Np->Num->post)
+			return;
+		
+		*Np->number_p = *Np->inout_p;
+		Np->number_p++;
+	
+		if (Np->read_dec)
+			Np->read_post++;
+
+#ifdef DEBUG_TO_FROM_CHAR	
+		elog(DEBUG_elog_output, "Read digit (%c).", *Np->inout_p);
+#endif	
+	
+	/* ----------
+	 * read decimal point
+	 * ----------
+	 */
+	} else if (IS_DECIMAL(Np->Num)) {
+
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "Try read decimal point (%c).", *Np->inout_p);
+#endif		
+		if (*Np->inout_p == '.') {
+		
+			*Np->number_p = '.';
+			Np->number_p++;
+			Np->read_dec = TRUE;
+			
 		} else {
-			if (id == NUM_DEC) {
+			
+			int x = strlen(Np->decimal);
+			
+#ifdef DEBUG_TO_FROM_CHAR
+			elog(DEBUG_elog_output, "Try read locale point (%c).", *Np->inout_p);
+#endif			
+			if (!strncmp(Np->inout_p, Np->decimal, x)) {
+				Np->inout_p += x-1;
 				*Np->number_p = '.';
 				Np->number_p++;
-				
-			} else if (id == NUM_D) {
-				
-				int x = strlen(Np->decimal);
-				
-				if (!strncmp(Np->inout_p, Np->decimal, x)) {
-					Np->inout_p += x-1;
-					*Np->number_p = '.';
-					Np->number_p++;
-				}	                    
+				Np->read_dec = TRUE;
 			}
-		}	
-		return TRUE;		
-	}
-
-	/* ----------
-	 * Add blank space (pre number)
-	 * ----------
-	 */
-	if ((! IS_ZERO(Np->Num)) && (! IS_FILLMODE(Np->Num)) && Np->pre_number > 0) { 
-		*Np->inout_p = ' ';
-		--Np->pre_number;
-		--Np->count_num;
-		return TRUE;
-	} 
-	
-	/* ----------
-	 * Add zero (pre number)
-	 * ----------
-	 */
-	if (IS_ZERO(Np->Num) && Np->pre_number > 0) {
-
-		SET_SIGN(Np);
-		*Np->inout_p='0';
-		--Np->pre_number;
-		--Np->count_num;
-		return TRUE;
-	}
-	
-	if (IS_FILLMODE(Np->Num) && Np->pre_number > 0) { 
-		--Np->pre_number;
-		return FALSE;
-	}
-	
-	/* ----------
-	 * Add sign or '<' or ' '
-	 * ----------
-	 */
-	if (Np->number_p==Np->number && Np->sign_wrote==0) {
-		SET_SIGN(Np);			
+		}
 	}	
+}
+
+/* ----------
+ * Add digit or sign to number-string
+ * ----------
+ */
+static void
+NUM_numpart_to_char(NUMProc *Np, int id) 
+{	
+	if (IS_ROMAN(Np->Num))
+		return;
+			
+	/* Note: in this elog() output not set '\0' in 'inout' */
+
+#ifdef DEBUG_TO_FROM_CHAR	
+	/*
+ 	 * Np->num_curr is number of current item in format-picture, it is not
+ 	 * current position in inout! 
+ 	 */
+	elog(DEBUG_elog_output, 
+	
+	"SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: '%s', INOUT: '%s'", 
+		Np->sign_wrote, 
+		Np->num_curr,
+		Np->number_p, 
+		Np->inout);
+#endif	
+	Np->num_in = FALSE;
 	
 	/* ----------
-	 * Add decimal point
+	 * Write sign
 	 * ----------
 	 */
-	if (*Np->number_p=='.') {
-		strcpy(Np->inout_p, Np->decimal);
-		Np->inout_p += strlen(Np->inout_p);
-		if (*Np->number_p)
-			++Np->number_p;
-		return FALSE;	
-	}
-	
-	if (*Np->number_p) { 
-	
-		/* ----------
-		 * Copy number string to inout string
-		 * ----------
-		 */
-		*Np->inout_p = *Np->number_p;
-		++Np->number_p;	
+	if (Np->num_curr == Np->sign_pos && Np->sign_wrote==FALSE) {
+
+#ifdef DEBUG_TO_FROM_CHAR	
+		elog(DEBUG_elog_output, "Writing sign to position: %d", Np->num_curr);
+#endif	
+		if (IS_LSIGN(Np->Num)) {
 		
-		Np->in_number = 1;
-		
-		/* ----------
-		 * Number end (set post 'S' or '>' 
-		 * ----------
-		 */
-		if ((--Np->count_num)==0) {
-		
-			if (IS_BRACKET(Np->Num)) {
-				++Np->inout_p;
-				*Np->inout_p 	= '>';
-				Np->sign_wrote	=1;
-			}
-		
-			if (Np->Num->lsign==NUM_LSIGN_POST && Np->sign_wrote==0) {
-				++Np->inout_p;
-				if (Np->sign=='-')
+			/* ----------
+			 * Write locale SIGN 
+			 * ----------
+			 */
+			if (Np->sign=='-')		
 					strcpy(Np->inout_p, Np->L_negative_sign);
 				else 
 					strcpy(Np->inout_p, Np->L_positive_sign);
-				Np->inout_p += strlen(Np->inout_p)-1;	
-				Np->sign_wrote = 1;
+			Np->inout_p += strlen(Np->inout_p);			
+		
+		} else if (IS_BRACKET(Np->Num)) {
+			*Np->inout_p = '<';		/* Write < */
+			++Np->inout_p;	
+		
+		} else if (Np->sign=='+') {
+			*Np->inout_p = ' ';		/* Write + */
+			++Np->inout_p;
+			
+		} else if (Np->sign=='-') {		/* Write - */
+			*Np->inout_p = '-';
+			++Np->inout_p;	
+		}	
+		Np->sign_wrote = TRUE;
+
+	} else if (Np->sign_wrote && IS_BRACKET(Np->Num) && 
+		  (Np->num_curr == Np->num_count + (Np->num_pre ? 1 : 0)
+		  			+ (IS_DECIMAL(Np->Num) ? 1 : 0))) {
+		/* ----------
+		 * Write close BRACKET
+		 * ----------
+		 */		
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "Writing bracket to position %d", Np->num_curr);
+#endif		
+		*Np->inout_p = '>';			/* Write '>' */
+		++Np->inout_p;	
+	}
+	
+	/* ----------
+	 * digits / FM / Zero / Dec. point
+	 * ----------
+	 */
+	if (id == NUM_9 || id == NUM_0 || id == NUM_D || id == NUM_DEC || 
+	   (id == NUM_S && Np->num_curr < Np->num_pre)) {
+	
+		if (Np->num_curr < Np->num_pre && 
+		    (Np->Num->zero_start > Np->num_curr || !IS_ZERO(Np->Num))) {
+		    
+ 			/* ----------
+ 			 * Write blank space
+ 			 * ----------
+ 			 */ 			
+ 			if (!IS_FILLMODE(Np->Num)) { 
+ #ifdef DEBUG_TO_FROM_CHAR			
+ 				elog(DEBUG_elog_output, "Writing blank space to position %d", Np->num_curr);
+ #endif			
+ 				*Np->inout_p = ' ';		/* Write ' ' */
+				++Np->inout_p;
 			}
-		}
-	} else	
-		return FALSE;
-	return TRUE;
+
+		} else if (IS_ZERO(Np->Num) && 
+			   Np->num_curr < Np->num_pre &&
+			   Np->Num->zero_start <= Np->num_curr) {
+		
+			/* ----------
+			 * Write ZERO
+			 * ----------
+			 */
+#ifdef DEBUG_TO_FROM_CHAR		
+			elog(DEBUG_elog_output, "Writing zero to position %d", Np->num_curr);
+#endif			
+			*Np->inout_p = '0';		/* Write '0' */
+			++Np->inout_p;
+			Np->num_in = TRUE;
+		
+		} else {
+
+			/* ----------
+			* Write Decinal point 
+			* ----------
+		 	*/
+			if (*Np->number_p=='.') {
+			 
+				if (!Np->last_relevant || *Np->last_relevant!='.' ) {
+#ifdef DEBUG_TO_FROM_CHAR					
+					elog(DEBUG_elog_output, "Writing decimal point to position %d", Np->num_curr);
+#endif					
+					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
+					Np->inout_p += strlen(Np->inout_p);
+				
+				/* terrible Ora
+				 *	'0' -- 9.9 --> '0.'
+				 */
+				} else if (IS_FILLMODE(Np->Num) && *Np->number == '0' && 
+					   Np->last_relevant && *Np->last_relevant=='.' ) {
+					   
+					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
+					Np->inout_p += strlen(Np->inout_p);
+				}
+				
+			} else  {
+
+				/* ----------
+				 * Write Digits
+				 * ----------
+				 */
+				if (Np->last_relevant && Np->number_p > Np->last_relevant &&
+				    id != NUM_0)
+					;
+				
+				/* terrible Ora format: 
+				 *	'0.1' -- 9.9 --> '  .1' 
+				 */
+				else if (!IS_ZERO(Np->Num) && *Np->number == '0' && 
+				          Np->number == Np->number_p && Np->Num->post !=0) {
+					
+					if (!IS_FILLMODE(Np->Num)) {
+						*Np->inout_p = ' ';
+						++Np->inout_p;
+					
+					/* total terible Ora:
+					 *	'0' -- FM9.9 --> '0.'
+					 */	
+					} else if (Np->last_relevant && *Np->last_relevant=='.') { 
+						*Np->inout_p = '0';
+						++Np->inout_p;
+					}
+					
+				} else {
+#ifdef DEBUG_TO_FROM_CHAR
+					elog(DEBUG_elog_output, "Writing digit '%c' to position %d", *Np->number_p, Np->num_curr);
+#endif				
+					*Np->inout_p = *Np->number_p;	/* Write DIGIT */
+					++Np->inout_p;
+					Np->num_in = TRUE;
+				}	
+			}
+			++Np->number_p;
+		}	
+	}
+	
+	++Np->num_curr;
 }
 		
-/* ----------
- *  Master function for NUMBER version.
- *  type (variant):
- *	TO_CHAR 		
- *		-> create formatted string by course of FormatNode 
- *
- *	FROM_CHAR (TO_NUMBER) 	
- *		-> extract number string from formatted string (reverse TO_CHAR)
- *		
- *		- ! this version use non-string 'inout' VARDATA(), 
- *		  and 'plen' is used for VARSIZE()
- *		- value 'sign' is not used	
- *		- number is creating in Np->number and first position (*Np->number)
- *		  in this buffer is reserved for +/- sign	
- * ----------
- */
 static char *
 NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number, 
 					int plen, int sign, int type)
@@ -2427,32 +2677,24 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	Np->Num 	= Num;
 	Np->type	= type;
 	Np->number	= number;
-	
-	if (type == TO_CHAR) {
-		Np->pre_number 	= plen;
-		Np->sign	= sign;
-
-	} else if (type == FROM_CHAR) {	
-		Np->pre_number 	= 0; 
-		*Np->number	= ' ';	/* sign space */	
-		*(Np->number+1)	= '\0';	
-		Np->sign	= 0;
-	}	
-	
 	Np->inout	= inout;
-	
-	Np->sign_wrote	= Np->count_num	= Np->in_number	= 0;
-	
+	Np->last_relevant = NULL;
+	Np->read_post	= 0;
+	Np->read_dec	= FALSE;
+
+	if (Np->Num->zero_start)
+		--Np->Num->zero_start;
+
 	/* ---------- 
-	 * Roman corection 
+	 * Roman correction 
 	 * ----------
 	 */
 	if (IS_ROMAN(Np->Num)) {		
 		if (Np->type==FROM_CHAR)
-			elog(ERROR, "to_number: RN is not supported");	
+			elog(ERROR, "to_number(): RN is not supported");	
 			
-		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->pos = 
-		Np->Num->pre = Np->pre_number = Np->sign = 0;
+		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->post = 
+		Np->Num->pre = Np->num_pre = Np->sign = 0;
 		
 		if (IS_FILLMODE(Np->Num)){
 			Np->Num->flag = 0;
@@ -2462,36 +2704,127 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		}	
 		Np->Num->flag |= NUM_F_ROMAN; 
 	}
-
-	/* ---------- 
-	 * Check Num struct
+	
+	/* ----------
+	 * Sign
 	 * ----------
 	 */
-	if (Np->sign=='+')
-		Np->Num->flag &= ~NUM_F_BRACKET;
+	if (type == FROM_CHAR) {
+		Np->sign 	= FALSE; 
+		Np->sign_pos	= -1;
+	} else {
+		Np->sign = sign; 
+		
+		if (Np->sign != '-') {
+			Np->Num->flag &= ~NUM_F_BRACKET;
+			Np->Num->flag &= ~NUM_F_MINUS;
+		} else if (Np->sign != '+') {
+			Np->Num->flag &= ~NUM_F_PLUS;
+		}
 	
-	if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
-		Np->Num->lsign = NUM_LSIGN_POST;
+		if (Np->sign=='+' && IS_FILLMODE(Np->Num) && !IS_LSIGN(Np->Num)) 
+			Np->sign_wrote	= TRUE;		/* needn't sign */	
+		else
+			Np->sign_wrote  = FALSE;        /* need sign */
 
-	/* set counter (number of all digits) */ 
-	Np->count_num = Np->Num->pos + Np->Num->pre;
+		Np->sign_pos = -1;
 	
-	if (Np->type==TO_CHAR && IS_FILLMODE(Np->Num) && (! IS_ZERO(Np->Num)))
-		Np->count_num -= Np->pre_number;
+		if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
+			Np->Num->lsign = NUM_LSIGN_POST;
+	
+		/* MI/PL/SG - write sign itself and not in number */
+		if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
+			Np->sign_wrote = TRUE;         /* needn't sign */
+	}
+
+	/* ----------
+	 * Count
+	 * ----------
+	 */
+	Np->num_count = Np->Num->post + Np->Num->pre -1;
+
+	if (type == TO_CHAR)  {
+		Np->num_pre = plen;
+
+		if (IS_FILLMODE(Np->Num)) {
+			if (IS_DECIMAL(Np->Num))
+				Np->last_relevant = get_last_relevant_decnum(
+					Np->number + 
+					((Np->Num->zero_end - Np->num_pre > 0) ? 
+					 Np->Num->zero_end - Np->num_pre : 0));
+		}	
+		
+		if (!Np->sign_wrote && Np->num_pre==0)
+			++Np->num_count;
+		
+	        if (!Np->sign_wrote) {
+	        
+	        	/* ----------
+	        	 * Set SING position
+	        	 * ----------
+	        	 */
+	        	if (Np->Num->lsign == NUM_LSIGN_POST) {
+	        		Np->sign_pos = Np->num_count + (Np->num_pre ? 1 : 0);
+	        	
+	        		if (IS_DECIMAL(Np->Num))	/* decimal point correctio */
+	        			++Np->sign_pos;
+	        	}
+	        	else if (IS_ZERO(Np->Num) && Np->num_pre > Np->Num->zero_start)
+	        		Np->sign_pos = Np->Num->zero_start ? Np->Num->zero_start : 0;         
+	        	
+	        	else
+	        		Np->sign_pos = Np->num_pre && !IS_FILLMODE(Np->Num) ? Np->num_pre : 0;         
+	        
+	        	/* ----------
+	        	 * terrible Ora format
+	        	 * ----------
+	        	 */
+			if (!IS_ZERO(Np->Num) && *Np->number == '0' && 
+	        	    !IS_FILLMODE(Np->Num) && Np->Num->post!=0) {
+	        		
+	        		++Np->sign_pos;
+	        		
+	        		if (IS_LSIGN(Np->Num)) {
+	        			if (Np->Num->lsign == NUM_LSIGN_PRE)
+	        				++Np->sign_pos;
+	        			else
+	        				--Np->sign_pos;	
+	        		}	
+	        	}
+	        }
+	        	
+	} else {
+		Np->num_pre = 0;
+		*Np->number	= ' ';		/* sign space */	
+		*(Np->number+1)	= '\0';	
+	}
+		
+	Np->num_in	= 0;
+	Np->num_curr 	= 0;	
 
 #ifdef DEBUG_TO_FROM_CHAR	
-	elog(DEBUG_elog_output, "NUM: '%s', PRE: %d, POS: %d, PLEN: %d, LSIGN: %d, DECIMAL: %d, MULTI: %d",
-			Np->number, Np->Num->pre, Np->Num->pos, 
-			Np->pre_number, Np->Num->lsign,IS_DECIMAL(Np->Num), 
-			Np->Num->multi); 
+	elog(DEBUG_elog_output, 
+	
+	"\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_POS: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s",
+			Np->number, 
+			Np->Num->pre, 
+			Np->Num->post,
+			Np->num_count, 
+			Np->num_pre,
+			Np->sign_pos,
+			Np->sign_wrote 		? "Yes" : "No",
+			IS_ZERO(Np->Num)	? "Yes" : "No",
+			Np->Num->zero_start,
+			Np->Num->zero_end,
+			Np->last_relevant ? Np->last_relevant : "<not set>"
+	);	
 #endif
+
 	/* ----------
 	 * Locale
 	 * ----------
 	 */
 	NUM_prepare_locale(Np);
-
-	/* need for DEBUG: memset(Np->inout, '\0', Np->count_num );*/
 
 	/* ----------
 	 * Processor direct cycle
@@ -2501,7 +2834,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		 Np->number_p=Np->number+1;  /* first char is space for sign */
 	else if (Np->type == TO_CHAR)
 		Np->number_p=Np->number;
-		
+
 	for(n=node, Np->inout_p=Np->inout; n->type != NODE_TYPE_END; n++) {
 		
 		if (Np->type == FROM_CHAR) {
@@ -2529,15 +2862,19 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			case NUM_0:
 			case NUM_DEC:
 			case NUM_D:
-			
-				if (NUM_numpart(Np, n->key->id))
-					break; 				
-				else
-					continue;
+			case NUM_S:
+			case NUM_PR:
+				if (Np->type == TO_CHAR) {
+					NUM_numpart_to_char(Np, n->key->id);
+					continue;	/* for() */
+				} else {
+					NUM_numpart_from_char(Np, n->key->id);
+					break;		/* switch() case: */
+				}
 			
 			case NUM_COMMA:
 				if (Np->type == TO_CHAR) {
-					if (!Np->in_number) {
+					if (!Np->num_in) {
 						if (IS_FILLMODE(Np->Num))
 							continue;
 						else
@@ -2546,7 +2883,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						*Np->inout_p = ',';
 				
 				} else if (Np->type == FROM_CHAR) {
-					if (!Np->in_number) {
+					if (!Np->num_in) {
 						if (IS_FILLMODE(Np->Num))
 							continue;
 					}
@@ -2555,7 +2892,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				
 			case NUM_G:
 				if (Np->type == TO_CHAR) {
-					if (!Np->in_number) {
+					if (!Np->num_in) {
 						if (IS_FILLMODE(Np->Num)) 
 							continue;
 						else {
@@ -2569,7 +2906,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					}
 					
 				} else if (Np->type == FROM_CHAR) {		
-					if (!Np->in_number) {
+					if (!Np->num_in) {
 						if (IS_FILLMODE(Np->Num)) 
 							continue;
 					}
@@ -2587,69 +2924,7 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				}
 				break;		
 				
-			case NUM_MI:
-				if (Np->sign_wrote==1 || IS_BRACKET(Np->Num)) {
-					if (Np->type == TO_CHAR)
-						continue; 
-					else
-						break;
-				}	
-				if (Np->type == TO_CHAR) {
-					if (Np->sign=='-')
-						*Np->inout_p = '-';
-					else	
-						*Np->inout_p = ' ';
-						
-				} else if (Np->type == FROM_CHAR) {
-					if (*Np->inout_p == '-')
-						*Np->number = '-';
-				}
-				Np->sign_wrote=1;
-				break;
-				
-			case NUM_PL:
-				if (Np->sign_wrote==1 || IS_BRACKET(Np->Num)) {
-					if (Np->type == TO_CHAR)
-						continue; 
-					else
-						break;
-				}
-				if (Np->type == TO_CHAR) {
-					if (Np->sign=='+')
-						*Np->inout_p = '+';
-					else
-						*Np->inout_p = ' ';
-						
-				}  else if (Np->type == FROM_CHAR) {
-					if (*Np->inout_p == '+')
-						*Np->number = '+';
-				}
-				Np->sign_wrote=1;       	
-				break;	
-				
-			case NUM_SG:
-				if (Np->sign_wrote==1 || IS_BRACKET(Np->Num)) {
-					if (Np->type == TO_CHAR)
-						continue; 
-					else
-						break;
-				}	
-				if (Np->type == TO_CHAR) 
-					*Np->inout_p = Np->sign;
-				
-				else if (Np->type == FROM_CHAR) {
-					if (*Np->inout_p == '-')
-						*Np->number = '-';
-					else if (*Np->inout_p == '+')
-						*Np->number = '+';	
-				}
-				Np->sign_wrote=1;
-				break;	
-				
 			case NUM_RN:
-				if (Np->type == FROM_CHAR) 
-					elog(ERROR, "TO_NUMBER: internal error #1");
-					
 				if (IS_FILLMODE(Np->Num)) {
 					strcpy(Np->inout_p, Np->number_p);	
 					Np->inout_p += strlen(Np->inout_p) - 1;
@@ -2658,9 +2933,6 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				break;	
 				
 			case NUM_rn:
-				if (Np->type == FROM_CHAR) 
-					elog(ERROR, "TO_NUMBER: internal error #2");
-				
 				if (IS_FILLMODE(Np->Num)) {
 					strcpy(Np->inout_p, str_tolower(Np->number_p));	
 					Np->inout_p += strlen(Np->inout_p) - 1;
@@ -2688,29 +2960,45 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				Np->inout_p += 1;
 				break;	
 			
-			case NUM_S:
-				/* ----------
-				 * 'S' for TO_CHAR is in NUM_numpart()
-				 * ----------
-				 */
-				if (Np->type == FROM_CHAR && Np->sign_wrote==FALSE) {
-					
-					int x = strlen(Np->L_negative_sign);
-					if (!strncmp(Np->inout_p, Np->L_negative_sign, x)) {
-						Np->inout_p += x-1;
+			case NUM_MI:
+				if (Np->type == TO_CHAR) {
+					if (Np->sign=='-')
+						*Np->inout_p = '-';
+					else	
+						*Np->inout_p = ' ';
+						
+				} else if (Np->type == FROM_CHAR) {
+					if (*Np->inout_p == '-')
 						*Np->number = '-';
-						break;
-					}
-					
-					x = strlen(Np->L_positive_sign);
-					if (!strncmp(Np->inout_p, Np->L_positive_sign, x)) {
-						Np->inout_p += x-1;
-						*Np->number = '+';
-						break;
-					}
-				} else
-					continue;
+				}
 				break;
+				
+			case NUM_PL:
+				if (Np->type == TO_CHAR) {
+					if (Np->sign=='+')
+						*Np->inout_p = '+';
+					else
+						*Np->inout_p = ' ';
+						
+				}  else if (Np->type == FROM_CHAR) {
+					if (*Np->inout_p == '+')
+						*Np->number = '+';
+				}
+				break;	
+				
+			case NUM_SG:
+				if (Np->type == TO_CHAR) 
+					*Np->inout_p = Np->sign;
+				
+				else if (Np->type == FROM_CHAR) {
+					if (*Np->inout_p == '-')
+						*Np->number = '-';
+					else if (*Np->inout_p == '+')
+						*Np->number = '+';	
+				}
+				break;	
+			
+			
 			default:
 				continue;
 				break;
@@ -2729,16 +3017,29 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	
 	if (Np->type == TO_CHAR) {
 		*Np->inout_p = '\0';
-		return Np->inout;
+		return Np->inout;	
 	
 	} else if (Np->type == FROM_CHAR) {
-		*Np->number_p = '\0';
+		
+		if (*(Np->number_p-1) == '.')
+			*(Np->number_p-1) = '\0';
+		else
+			*Np->number_p = '\0';
+			
+		/* ----------
+		 * Correction - precision of dec. number
+		 * ----------
+		 */
+		 Np->Num->post = Np->read_post;
+
 #ifdef DEBUG_TO_FROM_CHAR
 	        elog(DEBUG_elog_output, "TO_NUMBER (number): '%s'", Np->number);
 #endif
 		return Np->number;
 	} else
 		return NULL;	
+	
+	return NULL;	
 }
 
 /* ----------
@@ -2811,7 +3112,7 @@ numeric_to_number(text *value, text *fmt)
 	NUM_processor(format, &Num, VARDATA(value), numstr, 
 			VARSIZE(value) - VARHDRSZ, 0, FROM_CHAR);
 	
-	scale = Num.pos;
+	scale = Num.post;
 	precision = MAX(0, Num.pre) + scale;
 	
 	return numeric_in(numstr, 0, ((precision << 16) | scale) + VARHDRSZ);						
@@ -2853,7 +3154,7 @@ numeric_to_char(Numeric value, text *fmt)
 			Num.pre += Num.multi;
 		}
 		
-		orgnum = numeric_out( numeric_round(val, Num.pos) );
+		orgnum = numeric_out( numeric_round(val, Num.post) );
 		if (*orgnum == '-') { 					/* < 0 */
 			sign = '-';
 			numstr = orgnum+1; 
@@ -2872,10 +3173,10 @@ numeric_to_char(Numeric value, text *fmt)
 		else if (len > Num.pre) {
 			fill_str(numstr, '#', Num.pre);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.pos);
+			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		} 
 	}	
-	/*dump_node(format, VARSIZE(fmt) - VARHDRSZ);*/
+
 	NUM_TOCHAR_finish;
 	return result;
 }
@@ -2921,16 +3222,16 @@ int4_to_char(int32 value, text *fmt)
 		} else
 			sign = '+';
 		
-		if (Num.pos) {
+		if (Num.post) {
 			int	i;
 			
-			numstr = palloc( len + 1 + Num.pos ); 
+			numstr = palloc( len + 1 + Num.post ); 
 			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
 			*(numstr + len) = '.';	
 			
-			for(i=len+1; i<=Num.pos+len+1; i++)
+			for(i=len+1; i<=Num.post+len+1; i++)
 				*(numstr+i) = '0';
-			*(numstr + Num.pos + len + 1)  = '\0';
+			*(numstr + Num.post + len + 1)  = '\0';
 			pfree(orgnum);
 			orgnum = numstr;  	 
 		} else
@@ -2941,12 +3242,10 @@ int4_to_char(int32 value, text *fmt)
 		else if (len > Num.pre) {
 			fill_str(numstr, '#', Num.pre);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.pos);
+			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}
 	}
 
-	/*dump_node(format, len);*/
-	
 	NUM_TOCHAR_finish;
 	return result;
 }
@@ -2993,16 +3292,16 @@ int8_to_char(int64 *value, text *fmt)
 		} else
 			sign = '+';
 		
-		if (Num.pos) {
+		if (Num.post) {
 			int	i;
 			
-			numstr = palloc( len + 1 + Num.pos ); 
+			numstr = palloc( len + 1 + Num.post ); 
 			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
 			*(numstr + len) = '.';	
 			
-			for(i=len+1; i<=Num.pos+len+1; i++)
+			for(i=len+1; i<=Num.post+len+1; i++)
 				*(numstr+i) = '0';
-			*(numstr + Num.pos + len + 1)  = '\0';
+			*(numstr + Num.post + len + 1)  = '\0';
 			pfree(orgnum);
 			orgnum = numstr;  	 
 		} else 
@@ -3013,7 +3312,7 @@ int8_to_char(int64 *value, text *fmt)
 		else if (len > Num.pre) {
 			fill_str(numstr, '#', Num.pre);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.pos);
+			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}	
 	}
 	
@@ -3058,10 +3357,10 @@ float4_to_char(float32 value, text *fmt)
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		if (len >= FLT_DIG)
-		        Num.pos = 0;
-		else if (Num.pos + len > FLT_DIG)
-		        Num.pos = FLT_DIG - len;
-		sprintf(orgnum, "%.*f", Num.pos, *val);
+		        Num.post = 0;
+		else if (Num.post + len > FLT_DIG)
+		        Num.post = FLT_DIG - len;
+		sprintf(orgnum, "%.*f", Num.post, *val);
 		
 		if (*orgnum == '-') { 					/* < 0 */
 			sign = '-';
@@ -3081,7 +3380,7 @@ float4_to_char(float32 value, text *fmt)
 		else if (len > Num.pre) {
 			fill_str(numstr, '#', Num.pre);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.pos);
+			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		} 
 	}
 	
@@ -3125,10 +3424,10 @@ float8_to_char(float64 value, text *fmt)
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		if (len >= DBL_DIG)
-		        Num.pos = 0;
-		else if (Num.pos + len > DBL_DIG)
-		        Num.pos = DBL_DIG - len;
-		sprintf(orgnum, "%.*f", Num.pos, *val);
+		        Num.post = 0;
+		else if (Num.post + len > DBL_DIG)
+		        Num.post = DBL_DIG - len;
+		sprintf(orgnum, "%.*f", Num.post, *val);
 	
 		if (*orgnum == '-') { 					/* < 0 */
 			sign = '-';
@@ -3148,7 +3447,7 @@ float8_to_char(float64 value, text *fmt)
 		else if (len > Num.pre) {
 			fill_str(numstr, '#', Num.pre);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.pos);
+			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		} 
 	}
 	

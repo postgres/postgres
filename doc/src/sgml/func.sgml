@@ -518,7 +518,7 @@
 
    <para>
     <table tocentry="1">
-     <title>Format-pictures for datetime to_char() version.</title>
+     <title>Format-pictures for date/time to_char() version.</title>
      <tgroup cols="2">
       <thead>
        <row>
@@ -662,12 +662,12 @@
 
    <para>
     All format-pictures	allow use suffixes (postfix / prefix). The suffix is 
-    always valid for near format-picture. The 'FX' is global prefix only.      
+    always valid for a near format-picture. The 'FX' is global prefix only.      
    </para>
 
    <para>
     <table tocentry="1">
-     <title>Suffixes for format-pictures for datetime to_char() version.</title>
+     <title>Suffixes for format-pictures for date/time to_char() version.</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -695,7 +695,7 @@
        <row>
 	<entry> FX </entry>
 	<entry> FX - (Fixed format) global format-picture switch. 
-	 the TO_DATETIME / TO_DATA skip blank space if this option is
+	 The TO_DATETIME / TO_DATE skip blank space if this option is
 	 not use. Must by used as first item in formt-picture. </entry>
 	<entry> FX Month DD Day </entry>
        </row>	
@@ -714,7 +714,7 @@
    </para>
    <para>
      '"' - string between a quotation marks is skipen and not is parsed. 
-     If you want write '"' to output you must use \\", exapmle '\\"YYYY Month\\"'.
+     If you want write '"' to output you must use \\", example '\\"YYYY Month\\"'.
    </para>
    <para>
      text - the PostgreSQL's to_char() support text without '"', but string 
@@ -776,7 +776,11 @@
        </row>
        <row>
 	<entry> PL </entry>
-	<entry> return plus sign on specified position (if number > 0) </entry>
+	<entry> return plus sign on specified position (if number > 0) - PostgreSQL extension </entry>
+       </row>
+       <row>
+	<entry> SG </entry>
+	<entry> return plus/minus sign on specified position - PostgreSQL extension </entry>
        </row>
        <row>
 	<entry> RN </entry>
@@ -784,7 +788,7 @@
        </row>
        <row>
 	<entry> TH or th </entry>
-	<entry> convert number to ordinal number (not convert numbers under zero and decimal numbers) </entry>
+	<entry> convert number to ordinal number (not convert numbers under zero and decimal numbers) - PostgreSQL extension </entry>
        </row>
        <row>
 	<entry> V </entry>
@@ -801,9 +805,12 @@
    </para>
 
    <para>
-    The PostgreSQL to_char() not support absurd to_char(0.1, '99.99') 
-    --> <ProgramListing> '   .10' </ProgramListing> format. 
-   </para>
+      Note: A sign formatted via 'SG', 'PL' or 'MI' is not anchor in number;
+      to_char(-12, 'S9999') produce: <ProgramListing> '  -12' </ProgramListing>, 
+      but to_char(-12, 'MI9999') produce: <ProgramListing> '-  12' </ProgramListing>. 
+      The Oracle not allow use 'MI' ahead of '9', in the Oracle must be it always
+      after '9'.
+   </para>   
 
    <para>
     <table tocentry="1">
@@ -825,16 +832,24 @@
         <entry><ProgramListing> 'Tuesday, 05:39:18' </ProgramListing></entry>
        </row>          
        <row>
-        <entry> to_char( 0.1, '99.99') </entry>
-        <entry><ProgramListing> '  0.10' </ProgramListing></entry>
+        <entry> to_char( -0.1, '99.99') </entry>
+        <entry><ProgramListing> ' -.10' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( -0.1, 'FM9.99') </entry>
+        <entry><ProgramListing> '-.1' </ProgramListing></entry>
        </row>
        <row>
         <entry> to_char( 0.1, '0.9') </entry>
         <entry><ProgramListing> ' 0.1' </ProgramListing></entry>
        </row>
        <row>
-        <entry> to_char( 0.1, '090.9') </entry>
-        <entry><ProgramListing> ' 000.1' </ProgramListing></entry>
+        <entry> to_char( 12, '9990999.9') </entry>
+        <entry><ProgramListing> '    0012.0' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 12, 'FM9990999.9') </entry>
+        <entry><ProgramListing> '0012' </ProgramListing></entry>
        </row>
        <row>
         <entry> to_char( 485, '999') </entry>
@@ -843,18 +858,6 @@
        <row>
         <entry> to_char( -485, '999') </entry>
         <entry><ProgramListing> '-485' </ProgramListing></entry>
-       </row>
-       <row>
-        <entry> to_char( 485, '09999') </entry>
-        <entry><ProgramListing> ' 00485' </ProgramListing></entry>
-       </row>
-       <row>
-        <entry> to_char( 485, 'FM09999') </entry>
-        <entry><ProgramListing> '00485' </ProgramListing></entry>
-       </row>
-       <row>
-        <entry> to_char( 485, 'FM999') </entry>
-        <entry><ProgramListing> '485' </ProgramListing></entry>
        </row>
        <row>
         <entry> to_char( 485, '9 9 9') </entry>

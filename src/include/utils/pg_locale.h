@@ -1,14 +1,19 @@
 
-/*------
+/* -----------------------------------------------------------------------
  * pg_locale.h
  *
- *	The PostgreSQL locale utils
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_locale.h,v 1.2 2000/02/08 15:57:01 momjian Exp $
  *
- *	2000 Karel Zak - Zakkr
  *
- *------
- */ 
- 
+ *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
+ *   The PostgreSQL locale utils.
+ *
+ *	Karel Zak - Zakkr
+ *
+ * -----------------------------------------------------------------------
+ */
+  
  #ifndef _PG_LOCALE_
  #define _PG_LOCALE_
  
