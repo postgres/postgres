@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.18 2001/08/25 17:46:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.19 2001/08/26 03:46:58 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -226,15 +226,15 @@ QUERY="CREATE USER \"$NewUser\""
 
 SUBQUERY=
 [ "$SysID" ] &&    SUBQUERY="$SUBQUERY SYSID $SysID"
-[ "$Password" ] && SUBQUERY="$SUBQUERY PASSWORD '$Password'"
+[ "$Encrypted" = t ] &&   SUBQUERY="$SUBQUERY ENCRYPTED"
+[ "$Encrypted" = f ] &&   SUBQUERY="$SUBQUERY UNENCRYPTED"
+[ "$Password" ] &&        SUBQUERY="$SUBQUERY PASSWORD '$Password'"
 [ "$SUBQUERY" ] &&        QUERY="$QUERY WITH $SUBQUERY"
 
 [ "$CanCreateDb" = t ] && QUERY="$QUERY CREATEDB"
 [ "$CanCreateDb" = f ] && QUERY="$QUERY NOCREATEDB"
 [ "$CanAddUser" = t ] &&  QUERY="$QUERY CREATEUSER"
 [ "$CanAddUser" = f ] &&  QUERY="$QUERY NOCREATEUSER"
-[ "$Encrypted" = t ] &&   QUERY="$QUERY ENCRYPTED"
-[ "$Encrypted" = f ] &&   QUERY="$QUERY UNENCRYPTED"
 
 ${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
 if [ $? -ne 0 ]; then
