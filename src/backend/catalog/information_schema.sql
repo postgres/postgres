@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.10 2003/06/28 20:50:08 petere Exp $
+ * $Id: information_schema.sql,v 1.11 2003/06/29 10:18:26 petere Exp $
  */
 
 /*
@@ -1496,7 +1496,7 @@ CREATE VIEW element_types AS
           AND at.typelem = bt.oid
           AND nbt.oid = bt.typnamespace
 
-          AND (x.objschema, x.objname, x.objtype, x.objtypeid) IN
+          AND (n.nspname, x.objname, x.objtype, x.objtypeid) IN
               ( SELECT object_schema, object_name, object_type, dtd_identifier
                     FROM data_type_privileges );
 
