@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.390 2004/12/03 22:24:53 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.391 2004/12/16 20:40:59 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1222,6 +1222,11 @@ if test "$with_tcl" = yes; then
     PGAC_EVAL_TCLCONFIGSH([$TCL_CONFIG_SH],
                           [TCL_INCLUDE_SPEC,TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
     AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
+    # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
+    ac_save_CPPFLAGS=$CPPFLAGS
+    CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
+    AC_CHECK_HEADER(tcl.h, [], [AC_MSG_ERROR([header file <tcl.h> is required for Tcl])])
+    CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
 #
