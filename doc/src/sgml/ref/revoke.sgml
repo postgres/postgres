@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.8 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.9 2000/04/07 19:20:48 momjian Exp $
 Postgres documentation
 -->
 
@@ -25,7 +25,7 @@ Postgres documentation
   <synopsis>
 REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
     ON <replaceable class="PARAMETER">object</replaceable> [, ...]
-    FROM { PUBLIC | GROUP <replaceable class="PARAMETER">ER">g</replaceable>BLE> | <replaceable class="PARAMETER">username</replaceable> }
+    FROM { PUBLIC | GROUP <replaceable class="PARAMETER">groupname</replaceable> | <replaceable class="PARAMETER">username</replaceable> }
   </synopsis>
 
   <refsect2 id="R2-SQL-REVOKE-1">
