@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.32 2004/05/18 03:36:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.33 2004/05/25 01:00:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ static void check_ok(void);
 static bool chklocale(const char *locale);
 static void setlocales(void);
 static void usage(const char *progname);
-static void init_nls(void);
+static void init_nls(const char *argv0);
 
 
 /*
@@ -1754,13 +1754,9 @@ usage(const char *progname)
  * Initialized NLS if enabled.
  */
 static void
-init_nls(void)
+init_nls(const char *argv0)
 {
-#ifdef ENABLE_NLS
-        setlocale(LC_ALL, "");
-        bindtextdomain("initdb", LOCALEDIR);
-        textdomain("initdb");
-#endif
+	set_pglocale(argv0, "initdb");
 }
 
 
@@ -1801,7 +1797,7 @@ main(int argc, char *argv[])
 								 * environment */
 	char	   *subdirs[] =
 	{"global", "pg_xlog", "pg_clog", "base", "base/1"};
-	init_nls();
+	init_nls(argv[0]);
 
 	progname = get_progname(argv[0]);
 

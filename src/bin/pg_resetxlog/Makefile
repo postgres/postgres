@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.9 2004/05/24 01:01:37 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.10 2004/05/25 01:00:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS += -DFRONTEND
 
-OBJS= pg_resetxlog.o pg_crc.o dirmod.o
+OBJS= pg_resetxlog.o pg_crc.o dirmod.o exec.o
 
 all: submake-libpgport pg_resetxlog
 
@@ -27,6 +27,9 @@ dirmod.c: % : $(top_srcdir)/src/port/%
 pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
 	rm -f $@ && $(LN_S) $< .
 
+exec.c: % : $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
+
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_resetxlog$(X) $(DESTDIR)$(bindir)/pg_resetxlog$(X)
 
@@ -37,4 +40,4 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/pg_resetxlog$(X)
 
 clean distclean maintainer-clean:
-	rm -f pg_resetxlog$(X) pg_crc.c dirmod.c $(OBJS)
+	rm -f pg_resetxlog$(X) pg_crc.c dirmod.c exec.c $(OBJS)

@@ -11,7 +11,7 @@ int			optreset;
 const char *get_user_name(const char *progname);
 
 #define _(x) gettext((x))
-void		init_nls(void);
+void		init_nls(const char *argv0);
 
 typedef void (*help_handler) (const char *);
 

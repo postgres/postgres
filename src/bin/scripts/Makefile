@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.26 2004/04/26 17:40:48 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.27 2004/05/25 01:00:27 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,21 +15,24 @@ include $(top_builddir)/src/Makefile.global
 
 PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb
 
-override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -DFRONTEND -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
 all: submake-libpq submake-backend $(PROGRAMS)
 
 %: %.o
 	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
 
-createdb: createdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-createlang: createlang.o common.o print.o mbprint.o
-createuser: createuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-dropdb: dropdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-droplang: droplang.o common.o print.o mbprint.o
-dropuser: dropuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-clusterdb: clusterdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-vacuumdb: vacuumdb.o common.o
+createdb: createdb.o common.o exec.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+createlang: createlang.o common.o exec.o print.o mbprint.o
+createuser: createuser.o common.o exec.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+dropdb: dropdb.o common.o exec.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+droplang: droplang.o common.o exec.o print.o mbprint.o
+dropuser: dropuser.o common.o exec.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+clusterdb: clusterdb.o common.o exec.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+vacuumdb: vacuumdb.o common.o exec.o
+
+exec.c: % : $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
 
 dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
@@ -60,4 +63,4 @@ uninstall:
 
 
 clean distclean maintainer-clean:
-	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS)) common.o dumputils.o print.o mbprint.o dumputils.c print.c mbprint.c
+	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS)) common.o dumputils.o print.o mbprint.o dumputils.c exec.c print.c mbprint.c

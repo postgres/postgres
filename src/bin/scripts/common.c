@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.7 2004/04/19 17:42:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.8 2004/05/25 01:00:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,13 +51,9 @@ get_user_name(const char *progname)
  * Initialized NLS if enabled.
  */
 void
-init_nls(void)
+init_nls(const char *argv0)
 {
-#ifdef ENABLE_NLS
-	setlocale(LC_ALL, "");
-	bindtextdomain("pgscripts", LOCALEDIR);
-	textdomain("pgscripts");
-#endif
+	set_pglocale(argv0, "pgscripts");
 }
 
 

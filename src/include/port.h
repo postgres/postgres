@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.37 2004/05/21 16:06:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.38 2004/05/25 01:00:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ extern void get_etc_path(const char *my_exec_path, char *ret_path);
 extern void get_include_path(const char *my_exec_path, char *ret_path);
 extern void get_pkginclude_path(const char *my_exec_path, char *ret_path);
 extern void get_pkglib_path(const char *my_exec_path, char *ret_path);
+extern void get_locale_path(const char *my_exec_path, char *ret_path);
+extern void set_pglocale(const char *argv0, const char *app);
 
 /*
  *	is_absolute_path

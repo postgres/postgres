@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.34 2004/05/19 21:21:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.35 2004/05/25 01:00:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,11 +101,7 @@ main(int argc, char *argv[])
 
 	int			optindex;
 
-#ifdef ENABLE_NLS
-	setlocale(LC_ALL, "");
-	bindtextdomain("pg_dump", LOCALEDIR);
-	textdomain("pg_dump");
-#endif
+	set_pglocale(argv[0], "pg_dump");
 
 	progname = get_progname(argv[0]);
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.81 2004/05/24 02:47:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.82 2004/05/25 01:00:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,8 @@ main(int argc, char *argv[])
 	 * startup error messages to be localized.
 	 */
 
+	set_pglocale(argv[0], "postgres");
+
 #ifdef WIN32
 	/* 
 	 * Windows uses codepages rather than the environment, so we work around
@@ -184,11 +186,6 @@ main(int argc, char *argv[])
 	setlocale(LC_MONETARY, "C");
 	setlocale(LC_NUMERIC, "C");
 	setlocale(LC_TIME, "C");
-
-#ifdef ENABLE_NLS
-	bindtextdomain("postgres", LOCALEDIR);
-	textdomain("postgres");
-#endif
 
 	/*
 	 * Skip permission checks if we're just trying to do --help or

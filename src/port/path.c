@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.11 2004/05/21 20:56:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.12 2004/05/25 01:00:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,12 +113,14 @@ get_progname(const char *argv0)
 void
 get_share_path(const char *my_exec_path, char *ret_path)
 {
+	char path[MAXPGPATH];
+	
 	if (relative_path(PGBINDIR, PGSHAREDIR))
 	{
-		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
-		trim_directory(ret_path);	/* trim off binary */
-		trim_directory(ret_path);	/* trim off /bin */
-		strcat(ret_path, "/share");	/* add /share */
+		StrNCpy(path, my_exec_path, MAXPGPATH);
+		trim_directory(path);	/* trim off binary */
+		trim_directory(path);	/* trim off /bin */
+		snprintf(ret_path, MAXPGPATH, "%s/share", path);
 	}
 	else
 		StrNCpy(ret_path, PGSHAREDIR, MAXPGPATH);
@@ -132,12 +134,14 @@ get_share_path(const char *my_exec_path, char *ret_path)
 void
 get_etc_path(const char *my_exec_path, char *ret_path)
 {
+	char path[MAXPGPATH];
+	
 	if (relative_path(PGBINDIR, SYSCONFDIR))
 	{
-		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
-		trim_directory(ret_path);
-		trim_directory(ret_path);
-		strcat(ret_path, "/etc");
+		StrNCpy(path, my_exec_path, MAXPGPATH);
+		trim_directory(path);
+		trim_directory(path);
+		snprintf(ret_path, MAXPGPATH, "%s/etc", path);
 	}
 	else
 		StrNCpy(ret_path, SYSCONFDIR, MAXPGPATH);
@@ -151,12 +155,14 @@ get_etc_path(const char *my_exec_path, char *ret_path)
 void
 get_include_path(const char *my_exec_path, char *ret_path)
 {
+	char path[MAXPGPATH];
+	
 	if (relative_path(PGBINDIR, INCLUDEDIR))
 	{
-		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
-		trim_directory(ret_path);
-		trim_directory(ret_path);
-		strcat(ret_path, "/include");
+		StrNCpy(path, my_exec_path, MAXPGPATH);
+		trim_directory(path);
+		trim_directory(path);
+		snprintf(ret_path, MAXPGPATH, "%s/include", path);
 	}
 	else
 		StrNCpy(ret_path, INCLUDEDIR, MAXPGPATH);
@@ -170,12 +176,14 @@ get_include_path(const char *my_exec_path, char *ret_path)
 void
 get_pkginclude_path(const char *my_exec_path, char *ret_path)
 {
+	char path[MAXPGPATH];
+	
 	if (relative_path(PGBINDIR, PKGINCLUDEDIR))
 	{
-		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
-		trim_directory(ret_path);
-		trim_directory(ret_path);
-		strcat(ret_path, "/include");
+		StrNCpy(path, my_exec_path, MAXPGPATH);
+		trim_directory(path);
+		trim_directory(path);
+		snprintf(ret_path, MAXPGPATH, "%s/include", path);
 	}
 	else
 		StrNCpy(ret_path, PKGINCLUDEDIR, MAXPGPATH);
@@ -191,15 +199,66 @@ get_pkginclude_path(const char *my_exec_path, char *ret_path)
 void
 get_pkglib_path(const char *my_exec_path, char *ret_path)
 {
+	char path[MAXPGPATH];
+	
 	if (relative_path(PGBINDIR, PKGLIBDIR))
 	{
-		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
-		trim_directory(ret_path);
-		trim_directory(ret_path);
-		strcat(ret_path, "/lib");
+		StrNCpy(path, my_exec_path, MAXPGPATH);
+		trim_directory(path);
+		trim_directory(path);
+		snprintf(ret_path, MAXPGPATH, "%s/lib", path);
 	}
 	else
 		StrNCpy(ret_path, PKGLIBDIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	get_locale_path
+ *
+ *	Return locale path, either relative to /bin or hardcoded
+ */
+void
+get_locale_path(const char *my_exec_path, char *ret_path)
+{
+	char path[MAXPGPATH];
+	
+	if (relative_path(PGBINDIR, LOCALEDIR))
+	{
+		StrNCpy(path, my_exec_path, MAXPGPATH);
+		trim_directory(path);
+		trim_directory(path);
+		snprintf(ret_path, MAXPGPATH, "%s/share/locale", path);
+	}
+	else
+		StrNCpy(ret_path, LOCALEDIR, MAXPGPATH);
+}
+
+
+
+/*
+ *	set_pglocale
+ *
+ *	Set application-specific locale
+ *
+ *	This function takes an argv[0] rather than a full path.
+ */
+void
+set_pglocale(const char *argv0, const char *app)
+{
+#ifdef ENABLE_NLS
+	char path[MAXPGPATH];
+	char my_exec_path[MAXPGPATH];
+
+	setlocale(LC_ALL, "");
+	if (find_my_exec(argv0, my_exec_path) < 0)
+		return;
+		
+	get_locale_path(argv0, path);
+	bindtextdomain(app, path);
+	textdomain(app);
+#endif
 }
 
 
