@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.66 2004/03/02 00:03:02 tgl Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.67 2004/03/05 19:48:03 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -180,7 +180,7 @@ JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i 
 LYNX = lynx
 
 INSTALL HISTORY regress_README: % : %.html
-	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist -stdin >$@
+	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist - >$@
 
 INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml >$@
