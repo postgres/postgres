@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.40 1999/02/03 21:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.41 1999/04/18 17:35:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,9 +345,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				foreach(args, c->args)
 				{
 					w = lfirst(args);
-					/* shorthand form was specified, so expand... */
 					if (c->arg != NULL)
 					{
+						/* shorthand form was specified, so expand... */
 						A_Expr *a = makeNode(A_Expr);
 						a->oper = OP;
 						a->opname = "=";
@@ -358,6 +358,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					lfirst(args) = transformExpr(pstate, (Node *) w, precedence);
 				}
 
+				/* It's not shorthand anymore, so drop the implicit argument.
+				 * This is necessary to keep the executor from seeing an
+				 * untransformed expression...
+				 */
+				c->arg = NULL;
+
+				/* transform the default clause */
 				if (c->defresult == NULL)
 				{
 					A_Const *n = makeNode(A_Const);
@@ -365,9 +372,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					c->defresult = (Node *)n;
 				}
 				c->defresult = transformExpr(pstate, (Node *) c->defresult, precedence);
-				c->casetype = exprType(c->defresult);
 
 				/* now check types across result clauses... */
+				c->casetype = exprType(c->defresult);
 				ptype = c->casetype;
 				pcategory = TypeCategory(ptype);
 				foreach(args, c->args)
