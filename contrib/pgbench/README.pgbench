@@ -1,4 +1,4 @@
-pgbench README		2002/07/20 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2003/11/26 Tatsuo Ishii (t-ishii@sra.co.jp)
 
 o What is pgbench?
 
@@ -163,6 +163,10 @@ o License?
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2003/11/26
+	* create indexes after data insertion to reduce time.
+	  patch from Yutaka Tanida.
 
 2003/06/10
 	* fix uninitialized memory bug

@@ -1,10 +1,10 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.27 2003/09/27 19:15:34 wieck Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.28 2003/11/26 06:53:18 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2000-2002	Tatsuo Ishii
+ * Copyright (c) 2000-2003	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -482,13 +482,19 @@ init(void)
 	PGresult   *res;
 	static char *DDLs[] = {
 		"drop table branches",
-		"create table branches(bid int, primary key(bid),bbalance int,filler char(88))",
+		"create table branches(bid int not null,bbalance int,filler char(88))",
 		"drop table tellers",
-		"create table tellers(tid int, primary key(tid),bid int,tbalance int,filler char(84))",
+		"create table tellers(tid int not null,bid int,tbalance int,filler char(84))",
 		"drop table accounts",
-		"create table accounts(aid int,primary key(aid),bid int,abalance int,filler char(84))",
+		"create table accounts(aid int not null,bid int,abalance int,filler char(84))",
 		"drop table history",
 	"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
+	static char *DDLAFTERs[] = {
+		"alter table branches add primary key (bid)",
+		"alter table tellers add primary key (tid)",
+		"alter table accounts add primary key (aid)"};
+
+
 	char		sql[256];
 
 	int			i;
@@ -607,6 +613,17 @@ init(void)
 			PQclear(res);
 #endif   /* NOT_USED */
 		}
+	}
+	fprintf(stderr, "set primary key...\n");
+	for (i = 0; i < (sizeof(DDLAFTERs) / sizeof(char *)); i++)
+	{
+		res = PQexec(con, DDLAFTERs[i]);
+		if (strncmp(DDLs[i], "drop", 4) && PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "%s", PQerrorMessage(con));
+			exit(1);
+		}
+		PQclear(res);
 	}
 
 	/* vacuum */
