@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Known bugs:
+#
+# Blank line is added after, seen as a function definition, no space
+# after *:
+#	y = (int) x *y;
+
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
 if [ "$?" -ne 0 ]
@@ -38,14 +44,14 @@ do
 	awk '	BEGIN	{line1 = ""; line2 = ""}
 		{
 			line2 = $0;
+	 		if (NR >= 2)
+				print line1;
 			if (NR >= 2 &&
 			    line2 ~ "^{[ 	]*$" &&
 			    line1 !~ "^struct" &&
 			    line1 !~ "^enum" &&
 			    line1 !~ "^typedef")
-				printf "int	pgindent_func_no_var_fix;";
-	 		if (NR >= 2)
-				print line1;
+				print "int	pgindent_func_no_var_fix;";
 			line1 = line2;
 		}
 		END {
