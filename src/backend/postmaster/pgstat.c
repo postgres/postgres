@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2004, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.80 2004/08/29 05:06:46 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.81 2004/10/14 20:23:44 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1505,7 +1505,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
 	/* tmpfname need only be set correctly in this process */
 	snprintf(pgStat_tmpfname, MAXPGPATH, PGSTAT_STAT_TMPFILE,
-			 DataDir, getpid());
+			 DataDir, (int)getpid());
 
 	/*
 	 * Arrange to write the initial status file right away

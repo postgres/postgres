@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.127 2004/10/09 02:46:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.128 2004/10/14 20:23:46 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1133,7 +1133,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		const char *tmpdirenv = getenv("TMPDIR");
 
 		snprintf(fnametmp, sizeof(fnametmp), "%s/psql.edit.%d.%d",
-				 tmpdirenv ? tmpdirenv : "/tmp", geteuid(), getpid());
+				 tmpdirenv ? tmpdirenv : "/tmp", geteuid(), (int)getpid());
 #else
 		GetTempFileName(".", "psql", 0, fnametmp);
 #endif
