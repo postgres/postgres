@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.4 1996/11/06 10:31:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.5 1996/11/10 01:20:44 bryanh Exp $
  *
  *      Alistair Crooks added the code for the regex caching
  *	agc - cached the regular expressions used - there's a good chance
@@ -37,13 +37,6 @@
 #if defined(DISABLE_XOPEN_NLS)
 #undef _XOPEN_SOURCE
 #endif /* DISABLE_XOPEN_NLS */
-
-#ifndef WIN32
-
-#include <sys/types.h>
-#include <regex.h>
-
-#endif /* WIN32 why is this necessary? */
 
 /* this is the number of cached regular expressions held. */
 #ifndef MAX_CACHED_RES
