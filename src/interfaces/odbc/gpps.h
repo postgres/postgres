@@ -1,5 +1,6 @@
-/* GetPrivateProfileString */
-/* for UNIX use */
+/* GetPrivateProfileString
+ * for UNIX use
+ */
 #ifndef GPPS_H
 #define GPPS_H
 

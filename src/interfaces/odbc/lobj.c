@@ -1,4 +1,3 @@
-
 /* Module:			lobj.c
  *
  * Description:		This module contains routines related to manipulating

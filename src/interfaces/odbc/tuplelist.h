@@ -1,4 +1,3 @@
-
 /* File:			tuplelist.h
  *
  * Description:		See "tuplelist.c"

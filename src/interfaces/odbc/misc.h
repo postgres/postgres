@@ -1,4 +1,3 @@
-
 /* File:			misc.h
  *
  * Description:		See "misc.c"
@@ -39,11 +38,11 @@
 
 
 #ifdef MY_LOG
-#define MYLOGFILE "mylog_"
+#define MYLOGFILE			"mylog_"
 #ifndef WIN32
-#define MYLOGDIR	"/tmp"
+#define MYLOGDIR			"/tmp"
 #else
-#define MYLOGDIR	"c:"
+#define MYLOGDIR			"c:"
 #endif
 extern void mylog(char *fmt,...);
 
@@ -56,11 +55,11 @@ extern void mylog(char *fmt,...);
 #endif
 
 #ifdef Q_LOG
-#define QLOGFILE  "psqlodbc_"
+#define QLOGFILE			"psqlodbc_"
 #ifndef WIN32
-#define QLOGDIR		"/tmp"
+#define QLOGDIR				"/tmp"
 #else
-#define QLOGDIR		"c:"
+#define QLOGDIR				"c:"
 #endif
 extern void qlog(char *fmt,...);
 
@@ -73,19 +72,19 @@ extern void qlog(char *fmt,...);
 #endif
 
 #ifndef WIN32
-#define DIRSEPARATOR	"/"
+#define DIRSEPARATOR		"/"
 #else
-#define DIRSEPARATOR	"\\"
+#define DIRSEPARATOR		"\\"
 #endif
 
 #ifdef WIN32
-#define PG_BINARY	O_BINARY
-#define PG_BINARY_R "rb"
-#define PG_BINARY_W "wb"
+#define PG_BINARY			O_BINARY
+#define PG_BINARY_R			"rb"
+#define PG_BINARY_W			"wb"
 #else
-#define PG_BINARY	0
-#define PG_BINARY_R "r"
-#define PG_BINARY_W "w"
+#define PG_BINARY			0
+#define PG_BINARY_R			"r"
+#define PG_BINARY_W			"w"
 #endif
 
 
@@ -98,8 +97,8 @@ char	   *my_strcat(char *buf, char *fmt, char *s, int len);
 /* defines for return value of my_strcpy */
 #define STRCPY_SUCCESS		1
 #define STRCPY_FAIL			0
-#define STRCPY_TRUNCATED	-1
-#define STRCPY_NULL			-2
+#define STRCPY_TRUNCATED	(-1)
+#define STRCPY_NULL			(-2)
 
 int			my_strcpy(char *dst, int dst_len, char *src, int src_len);
 

@@ -1,4 +1,3 @@
-
 /* Module:			qresult.c
  *
  * Description:		This module contains functions related to

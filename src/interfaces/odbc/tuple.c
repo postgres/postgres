@@ -1,4 +1,3 @@
-
 /* Module:			tuple.c
  *
  * Description:		This module contains functions for setting the data for individual

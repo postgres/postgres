@@ -1,4 +1,3 @@
-
 /* File:			convert.h
  *
  * Description:		See "convert.c"
@@ -13,12 +12,12 @@
 #include "psqlodbc.h"
 
 /* copy_and_convert results */
-#define COPY_OK						 0
-#define COPY_UNSUPPORTED_TYPE		 1
-#define COPY_UNSUPPORTED_CONVERSION  2
-#define COPY_RESULT_TRUNCATED		 3
-#define COPY_GENERAL_ERROR			 4
-#define COPY_NO_DATA_FOUND			 5
+#define COPY_OK									0
+#define COPY_UNSUPPORTED_TYPE					1
+#define COPY_UNSUPPORTED_CONVERSION				2
+#define COPY_RESULT_TRUNCATED					3
+#define COPY_GENERAL_ERROR						4
+#define COPY_NO_DATA_FOUND						5
 
 typedef struct
 {

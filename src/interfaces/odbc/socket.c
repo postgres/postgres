@@ -1,4 +1,3 @@
-
 /* Module:			socket.c
  *
  * Description:		This module contains functions for low level socket

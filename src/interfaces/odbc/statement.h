@@ -1,4 +1,3 @@
-
 /* File:			statement.h
  *
  * Description:		See "statement.c"
@@ -50,38 +49,40 @@ typedef enum
 	STMT_EXECUTING				/* statement execution is still going on */
 } STMT_Status;
 
-#define STMT_TRUNCATED -2
-#define STMT_INFO_ONLY -1		/* not an error message, just a
-								 * notification to be returned by SQLError */
-#define STMT_OK 0				/* will be interpreted as "no error
-								 * pending" */
-#define STMT_EXEC_ERROR 1
-#define STMT_STATUS_ERROR 2
-#define STMT_SEQUENCE_ERROR 3
-#define STMT_NO_MEMORY_ERROR 4
-#define STMT_COLNUM_ERROR 5
-#define STMT_NO_STMTSTRING 6
-#define STMT_ERROR_TAKEN_FROM_BACKEND 7
-#define STMT_INTERNAL_ERROR 8
-#define STMT_STILL_EXECUTING 9
-#define STMT_NOT_IMPLEMENTED_ERROR 10
-#define STMT_BAD_PARAMETER_NUMBER_ERROR 11
-#define STMT_OPTION_OUT_OF_RANGE_ERROR 12
-#define STMT_INVALID_COLUMN_NUMBER_ERROR 13
-#define STMT_RESTRICTED_DATA_TYPE_ERROR 14
-#define STMT_INVALID_CURSOR_STATE_ERROR 15
-#define STMT_OPTION_VALUE_CHANGED 16
-#define STMT_CREATE_TABLE_ERROR 17
-#define STMT_NO_CURSOR_NAME 18
-#define STMT_INVALID_CURSOR_NAME 19
-#define STMT_INVALID_ARGUMENT_NO 20
-#define STMT_ROW_OUT_OF_RANGE 21
-#define STMT_OPERATION_CANCELLED 22
-#define STMT_INVALID_CURSOR_POSITION 23
-#define STMT_VALUE_OUT_OF_RANGE 24
-#define STMT_OPERATION_INVALID 25
-#define STMT_PROGRAM_TYPE_OUT_OF_RANGE 26
-#define STMT_BAD_ERROR 27
+#define STMT_TRUNCATED							(-2)
+#define STMT_INFO_ONLY							(-1)	/* not an error message,
+														 * just a notification
+														 * to be returned by
+														 * SQLError */
+#define STMT_OK									0		/* will be interpreted
+														 * as "no error pending" */
+#define STMT_EXEC_ERROR							1
+#define STMT_STATUS_ERROR						2
+#define STMT_SEQUENCE_ERROR						3
+#define STMT_NO_MEMORY_ERROR					4
+#define STMT_COLNUM_ERROR						5
+#define STMT_NO_STMTSTRING						6
+#define STMT_ERROR_TAKEN_FROM_BACKEND			7
+#define STMT_INTERNAL_ERROR						8
+#define STMT_STILL_EXECUTING					9
+#define STMT_NOT_IMPLEMENTED_ERROR				10
+#define STMT_BAD_PARAMETER_NUMBER_ERROR			11
+#define STMT_OPTION_OUT_OF_RANGE_ERROR			12
+#define STMT_INVALID_COLUMN_NUMBER_ERROR		13
+#define STMT_RESTRICTED_DATA_TYPE_ERROR			14
+#define STMT_INVALID_CURSOR_STATE_ERROR			15
+#define STMT_OPTION_VALUE_CHANGED				16
+#define STMT_CREATE_TABLE_ERROR					17
+#define STMT_NO_CURSOR_NAME						18
+#define STMT_INVALID_CURSOR_NAME				19
+#define STMT_INVALID_ARGUMENT_NO				20
+#define STMT_ROW_OUT_OF_RANGE					21
+#define STMT_OPERATION_CANCELLED				22
+#define STMT_INVALID_CURSOR_POSITION			23
+#define STMT_VALUE_OUT_OF_RANGE					24
+#define STMT_OPERATION_INVALID					25
+#define STMT_PROGRAM_TYPE_OUT_OF_RANGE			26
+#define STMT_BAD_ERROR							27
 
 /* statement types */
 enum

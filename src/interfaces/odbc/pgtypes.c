@@ -1,4 +1,3 @@
-
 /* Module:			pgtypes.c
  *
  * Description:		This module contains routines for getting information

@@ -1,4 +1,3 @@
-
 /* File:			bind.h
  *
  * Description:		See "bind.c"

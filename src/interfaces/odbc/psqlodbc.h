@@ -1,4 +1,3 @@
-
 /* File:			psqlodbc.h
  *
  * Description:		This file contains defines and declarations that are related to
@@ -6,7 +5,8 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.40 2001/03/22 04:01:35 momjian Exp $
+ * $Id: psqlodbc.h,v 1.41 2001/03/27 04:00:54 momjian Exp $
+ *
  */
 
 #ifndef __PSQLODBC_H__
@@ -36,18 +36,18 @@ typedef double SDOUBLE;
 typedef UInt4 Oid;
 
 /* Driver stuff */
-#define ODBCVER				0x0250
-#define DRIVER_ODBC_VER		"02.50"
+#define ODBCVER						0x0250
+#define DRIVER_ODBC_VER				"02.50"
 
-#define DRIVERNAME			   "PostgreSQL ODBC"
-#define DBMS_NAME			   "PostgreSQL"
+#define DRIVERNAME					"PostgreSQL ODBC"
+#define DBMS_NAME					"PostgreSQL"
 
-#define POSTGRESDRIVERVERSION  "07.01.0004"
+#define POSTGRESDRIVERVERSION		"07.01.0004"
 
 #ifdef WIN32
-#define DRIVER_FILE_NAME		"PSQLODBC.DLL"
+#define DRIVER_FILE_NAME			"PSQLODBC.DLL"
 #else
-#define DRIVER_FILE_NAME		"libpsqlodbc.so"
+#define DRIVER_FILE_NAME			"libpsqlodbc.so"
 #endif
 
 /* Limits */
@@ -83,27 +83,28 @@ typedef UInt4 Oid;
 
 
 /*	These prefixes denote system tables */
-#define POSTGRES_SYS_PREFIX "pg_"
-#define KEYS_TABLE			"dd_fkey"
+#define POSTGRES_SYS_PREFIX			"pg_"
+#define KEYS_TABLE					"dd_fkey"
 
 /*	Info limits */
-#define MAX_INFO_STRING		128
-#define MAX_KEYPARTS		20
-#define MAX_KEYLEN			512 /* max key of the form
-								 * "date+outlet+invoice" */
-#define MAX_ROW_SIZE		0	/* Unlimited rowsize with the Tuple
-								 * Toaster */
-#define MAX_STATEMENT_LEN	0	/* Unlimited statement size with 7.0 */
+#define MAX_INFO_STRING				128
+#define MAX_KEYPARTS				20
+#define MAX_KEYLEN					512 /* max key of the form
+										 * "date+outlet+invoice" */
+#define MAX_ROW_SIZE				0	/* Unlimited rowsize with the
+										 * Tuple Toaster */
+#define MAX_STATEMENT_LEN			0	/* Unlimited statement size with
+										 * 7.0 */
 
 /* Previously, numerous query strings were defined of length MAX_STATEMENT_LEN */
 /* Now that's 0, lets use this instead. DJP 24-1-2001 */
-#define STD_STATEMENT_LEN	MAX_MESSAGE_LEN
+#define STD_STATEMENT_LEN			MAX_MESSAGE_LEN
 
-#define PG62	"6.2"			/* "Protocol" key setting to force
-								 * Postgres 6.2 */
-#define PG63	"6.3"			/* "Protocol" key setting to force
-								 * postgres 6.3 */
-#define PG64	"6.4"
+#define PG62						"6.2"		/* "Protocol" key setting
+												 * to force Postgres 6.2 */
+#define PG63						"6.3"		/* "Protocol" key setting
+												 * to force postgres 6.3 */
+#define PG64						"6.4"
 
 typedef struct ConnectionClass_ ConnectionClass;
 typedef struct StatementClass_ StatementClass;
@@ -173,17 +174,18 @@ typedef struct QueryInfo_
 } QueryInfo;
 
 
-#define PG_TYPE_LO				-999	/* hack until permanent type
-										 * available */
-#define PG_TYPE_LO_NAME			"lo"
-#define OID_ATTNUM				-2		/* the attnum in pg_index of the
-										 * oid */
+#define PG_TYPE_LO					(-999)		/* hack until permanent
+												 * type available */
+#define PG_TYPE_LO_NAME				"lo"
+#define OID_ATTNUM					(-2)		/* the attnum in pg_index
+												 * of the oid */
 
 /* sizes */
-#define TEXT_FIELD_SIZE			8190	/* size of text fields (not
-										 * including null term) */
-#define NAME_FIELD_SIZE			32		/* size of name fields */
-#define MAX_VARCHAR_SIZE		254		/* maximum size of a varchar (not
+#define TEXT_FIELD_SIZE				8190		/* size of text fields
+												 * (not including null
+												 * term) */
+#define NAME_FIELD_SIZE				32	/* size of name fields */
+#define MAX_VARCHAR_SIZE			254 /* maximum size of a varchar (not
 										 * including null term) */
 
 #define PG_NUMERIC_MAX_PRECISION	1000

@@ -1,4 +1,3 @@
-
 /* Module:			options.c
  *
  * Description:		This module contains routines for getting/setting

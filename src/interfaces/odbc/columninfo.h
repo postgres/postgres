@@ -1,4 +1,3 @@
-
 /* File:			columninfo.h
  *
  * Description:		See "columninfo.c"
@@ -39,6 +38,5 @@ char		CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn);
 void		CI_set_num_fields(ColumnInfoClass *self, int new_num_fields);
 void CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
 				  Oid new_adtid, Int2 new_adtsize, Int4 atttypmod);
-
 
 #endif

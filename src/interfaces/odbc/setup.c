@@ -1,4 +1,3 @@
-
 /* Module:			setup.c
  *
  * Description:		This module contains the setup functions for
@@ -11,7 +10,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- *************************************************************************************/
+ */
 
 #include  "psqlodbc.h"
 #include  "connection.h"

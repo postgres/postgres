@@ -1,4 +1,3 @@
-
 /* Module:			statement.c
  *
  * Description:		This module contains functions related to creating

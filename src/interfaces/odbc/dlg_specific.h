@@ -1,4 +1,3 @@
-
 /* File:			dlg_specific.h
  *
  * Description:		See "dlg_specific.c"
@@ -25,73 +24,81 @@
 #endif
 
 /*	Unknown data type sizes */
-#define UNKNOWNS_AS_MAX				0
-#define UNKNOWNS_AS_DONTKNOW		1
-#define UNKNOWNS_AS_LONGEST			2
+#define UNKNOWNS_AS_MAX					0
+#define UNKNOWNS_AS_DONTKNOW			1
+#define UNKNOWNS_AS_LONGEST				2
 
 /* INI File Stuff */
 #ifndef WIN32
-#define ODBC_INI		".odbc.ini"
+#define ODBC_INI						".odbc.ini"
 #ifdef ODBCINSTDIR
-#define ODBCINST_INI	ODBCINSTDIR "/odbcinst.ini"
+#define ODBCINST_INI					ODBCINSTDIR "/odbcinst.ini"
 #else
-#define ODBCINST_INI	"/etc/odbcinst.ini"
+#define ODBCINST_INI					"/etc/odbcinst.ini"
 #endif
 #else							/* WIN32 */
-#define ODBC_INI		"ODBC.INI"		/* ODBC initialization file */
-#define ODBCINST_INI	"ODBCINST.INI"	/* ODBC Installation file */
+#define ODBC_INI						"ODBC.INI"		/* ODBC initialization
+														 * file */
+#define ODBCINST_INI					"ODBCINST.INI"	/* ODBC Installation
+														 * file */
 #endif	 /* WIN32 */
 
 
-#define INI_DSN			  DBMS_NAME		/* Name of default Datasource in
-										 * ini file (not used?) */
-#define INI_KDESC		  "Description" /* Data source description */
-#define INI_SERVER		  "Servername"	/* Name of Server running the
-										 * Postgres service */
-#define INI_PORT		  "Port"/* Port on which the Postmaster is
-								 * listening */
-#define INI_DATABASE	  "Database"	/* Database Name */
-#define INI_USER		  "Username"	/* Default User Name */
-#define INI_PASSWORD	  "Password"	/* Default Password */
-#define INI_DEBUG		  "Debug"		/* Debug flag */
-#define INI_FETCH		  "Fetch"		/* Fetch Max Count */
-#define INI_SOCKET		  "Socket"		/* Socket buffer size */
-#define INI_READONLY	  "ReadOnly"	/* Database is read only */
-#define INI_COMMLOG		  "CommLog"		/* Communication to backend
-										 * logging */
-#define INI_PROTOCOL	  "Protocol"	/* What protocol (6.2) */
-#define INI_OPTIMIZER	  "Optimizer"	/* Use backend genetic optimizer */
-#define INI_KSQO		  "Ksqo"/* Keyset query optimization */
-#define INI_CONNSETTINGS  "ConnSettings"		/* Anything to send to
-												 * backend on successful
-												 * connection */
-#define INI_UNIQUEINDEX   "UniqueIndex" /* Recognize unique indexes */
-#define INI_UNKNOWNSIZES  "UnknownSizes"		/* How to handle unknown
-												 * result set sizes */
+#define INI_DSN							DBMS_NAME		/* Name of default
+														 * Datasource in ini
+														 * file (not used?) */
+#define INI_KDESC						"Description"	/* Data source
+														 * description */
+#define INI_SERVER						"Servername"	/* Name of Server
+														 * running the Postgres
+														 * service */
+#define INI_PORT						"Port"	/* Port on which the
+												 * Postmaster is listening */
+#define INI_DATABASE					"Database"		/* Database Name */
+#define INI_USER						"Username"		/* Default User Name */
+#define INI_PASSWORD					"Password"		/* Default Password */
+#define INI_DEBUG						"Debug" /* Debug flag */
+#define INI_FETCH						"Fetch" /* Fetch Max Count */
+#define INI_SOCKET						"Socket"		/* Socket buffer size */
+#define INI_READONLY					"ReadOnly"		/* Database is read only */
+#define INI_COMMLOG						"CommLog"		/* Communication to
+														 * backend logging */
+#define INI_PROTOCOL					"Protocol"		/* What protocol (6.2) */
+#define INI_OPTIMIZER					"Optimizer"		/* Use backend genetic
+														 * optimizer */
+#define INI_KSQO						"Ksqo"	/* Keyset query
+												 * optimization */
+#define INI_CONNSETTINGS				 "ConnSettings" /* Anything to send to
+														 * backend on successful
+														 * connection */
+#define INI_UNIQUEINDEX					"UniqueIndex"	/* Recognize unique
+														 * indexes */
+#define INI_UNKNOWNSIZES				"UnknownSizes"	/* How to handle unknown
+														 * result set sizes */
 
-#define INI_CANCELASFREESTMT  "CancelAsFreeStmt"
+#define INI_CANCELASFREESTMT			"CancelAsFreeStmt"
 
-#define INI_USEDECLAREFETCH "UseDeclareFetch"	/* Use Declare/Fetch
-												 * cursors */
+#define INI_USEDECLAREFETCH				"UseDeclareFetch"		/* Use Declare/Fetch
+																 * cursors */
 
 /*	More ini stuff */
-#define INI_TEXTASLONGVARCHAR		"TextAsLongVarchar"
-#define INI_UNKNOWNSASLONGVARCHAR	"UnknownsAsLongVarchar"
-#define INI_BOOLSASCHAR				"BoolsAsChar"
-#define INI_MAXVARCHARSIZE			"MaxVarcharSize"
-#define INI_MAXLONGVARCHARSIZE		"MaxLongVarcharSize"
+#define INI_TEXTASLONGVARCHAR			"TextAsLongVarchar"
+#define INI_UNKNOWNSASLONGVARCHAR		"UnknownsAsLongVarchar"
+#define INI_BOOLSASCHAR					"BoolsAsChar"
+#define INI_MAXVARCHARSIZE				"MaxVarcharSize"
+#define INI_MAXLONGVARCHARSIZE			"MaxLongVarcharSize"
 
-#define INI_FAKEOIDINDEX			"FakeOidIndex"
-#define INI_SHOWOIDCOLUMN			"ShowOidColumn"
-#define INI_ROWVERSIONING			"RowVersioning"
-#define INI_SHOWSYSTEMTABLES		"ShowSystemTables"
-#define INI_LIE						"Lie"
-#define INI_PARSE					"Parse"
-#define INI_EXTRASYSTABLEPREFIXES	"ExtraSysTablePrefixes"
+#define INI_FAKEOIDINDEX				"FakeOidIndex"
+#define INI_SHOWOIDCOLUMN				"ShowOidColumn"
+#define INI_ROWVERSIONING				"RowVersioning"
+#define INI_SHOWSYSTEMTABLES			"ShowSystemTables"
+#define INI_LIE							"Lie"
+#define INI_PARSE						"Parse"
+#define INI_EXTRASYSTABLEPREFIXES		"ExtraSysTablePrefixes"
 
-#define INI_TRANSLATIONNAME		  "TranslationName"
-#define INI_TRANSLATIONDLL		  "TranslationDLL"
-#define INI_TRANSLATIONOPTION	  "TranslationOption"
+#define INI_TRANSLATIONNAME				"TranslationName"
+#define INI_TRANSLATIONDLL				"TranslationDLL"
+#define INI_TRANSLATIONOPTION			"TranslationOption"
 
 
 /*	Connection Defaults */

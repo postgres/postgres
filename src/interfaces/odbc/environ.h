@@ -1,4 +1,3 @@
-
 /* File:			environ.h
  *
  * Description:		See "environ.c"

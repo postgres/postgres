@@ -1,4 +1,3 @@
-
 /* File:			connection.h
  *
  * Description:		See "connection.c"
@@ -38,41 +37,41 @@ typedef enum
 } CONN_Status;
 
 /*	These errors have general sql error state */
-#define CONNECTION_SERVER_NOT_REACHED 101
-#define CONNECTION_MSG_TOO_LONG 103
-#define CONNECTION_COULD_NOT_SEND 104
-#define CONNECTION_NO_SUCH_DATABASE 105
-#define CONNECTION_BACKEND_CRAZY 106
-#define CONNECTION_NO_RESPONSE 107
-#define CONNECTION_SERVER_REPORTED_ERROR 108
-#define CONNECTION_COULD_NOT_RECEIVE 109
-#define CONNECTION_SERVER_REPORTED_WARNING 110
-#define CONNECTION_NEED_PASSWORD 112
+#define CONNECTION_SERVER_NOT_REACHED				101
+#define CONNECTION_MSG_TOO_LONG						103
+#define CONNECTION_COULD_NOT_SEND					104
+#define CONNECTION_NO_SUCH_DATABASE					105
+#define CONNECTION_BACKEND_CRAZY					106
+#define CONNECTION_NO_RESPONSE						107
+#define CONNECTION_SERVER_REPORTED_ERROR			108
+#define CONNECTION_COULD_NOT_RECEIVE				109
+#define CONNECTION_SERVER_REPORTED_WARNING			110
+#define CONNECTION_NEED_PASSWORD					112
 
 /*	These errors correspond to specific SQL states */
-#define CONN_INIREAD_ERROR 201
-#define CONN_OPENDB_ERROR 202
-#define CONN_STMT_ALLOC_ERROR 203
-#define CONN_IN_USE 204
-#define CONN_UNSUPPORTED_OPTION 205
+#define CONN_INIREAD_ERROR							201
+#define CONN_OPENDB_ERROR							202
+#define CONN_STMT_ALLOC_ERROR						203
+#define CONN_IN_USE									204
+#define CONN_UNSUPPORTED_OPTION						205
 /* Used by SetConnectoption to indicate unsupported options */
-#define CONN_INVALID_ARGUMENT_NO 206
+#define CONN_INVALID_ARGUMENT_NO					206
 /* SetConnectOption: corresponds to ODBC--"S1009" */
-#define CONN_TRANSACT_IN_PROGRES 207
-#define CONN_NO_MEMORY_ERROR 208
-#define CONN_NOT_IMPLEMENTED_ERROR 209
-#define CONN_INVALID_AUTHENTICATION 210
-#define CONN_AUTH_TYPE_UNSUPPORTED 211
-#define CONN_UNABLE_TO_LOAD_DLL 212
+#define CONN_TRANSACT_IN_PROGRES					207
+#define CONN_NO_MEMORY_ERROR						208
+#define CONN_NOT_IMPLEMENTED_ERROR					209
+#define CONN_INVALID_AUTHENTICATION					210
+#define CONN_AUTH_TYPE_UNSUPPORTED					211
+#define CONN_UNABLE_TO_LOAD_DLL						212
 
-#define CONN_OPTION_VALUE_CHANGED 213
-#define CONN_VALUE_OUT_OF_RANGE 214
+#define CONN_OPTION_VALUE_CHANGED					213
+#define CONN_VALUE_OUT_OF_RANGE						214
 
-#define CONN_TRUNCATED 215
+#define CONN_TRUNCATED								215
 
 /* Conn_status defines */
-#define CONN_IN_AUTOCOMMIT 0x01
-#define CONN_IN_TRANSACTION 0x02
+#define CONN_IN_AUTOCOMMIT							0x01
+#define CONN_IN_TRANSACTION							0x02
 
 /* AutoCommit functions */
 #define CC_set_autocommit_off(x)	(x->transact_status &= ~CONN_IN_AUTOCOMMIT)
@@ -86,31 +85,31 @@ typedef enum
 
 
 /* Authentication types */
-#define AUTH_REQ_OK			0
-#define AUTH_REQ_KRB4		1
-#define AUTH_REQ_KRB5		2
-#define AUTH_REQ_PASSWORD	3
-#define AUTH_REQ_CRYPT		4
+#define AUTH_REQ_OK									0
+#define AUTH_REQ_KRB4								1
+#define AUTH_REQ_KRB5								2
+#define AUTH_REQ_PASSWORD							3
+#define AUTH_REQ_CRYPT								4
 
 /*	Startup Packet sizes */
-#define SM_DATABASE		64
-#define SM_USER			32
-#define SM_OPTIONS		64
-#define SM_UNUSED		64
-#define SM_TTY			64
+#define SM_DATABASE									64
+#define SM_USER										32
+#define SM_OPTIONS									64
+#define SM_UNUSED									64
+#define SM_TTY										64
 
 /*	Old 6.2 protocol defines */
-#define NO_AUTHENTICATION	7
-#define PATH_SIZE			64
-#define ARGV_SIZE			64
-#define NAMEDATALEN			16
+#define NO_AUTHENTICATION							7
+#define PATH_SIZE									64
+#define ARGV_SIZE									64
+#define NAMEDATALEN									16
 
 typedef unsigned int ProtocolVersion;
 
 #define PG_PROTOCOL(major, minor)	(((major) << 16) | (minor))
-#define PG_PROTOCOL_LATEST		PG_PROTOCOL(2, 0)
-#define PG_PROTOCOL_63			PG_PROTOCOL(1, 0)
-#define PG_PROTOCOL_62			PG_PROTOCOL(0, 0)
+#define PG_PROTOCOL_LATEST							PG_PROTOCOL(2, 0)
+#define PG_PROTOCOL_63								PG_PROTOCOL(1, 0)
+#define PG_PROTOCOL_62								PG_PROTOCOL(0, 0)
 
 /*	This startup packet is to support latest Postgres protocol (6.4, 6.3) */
 typedef struct _StartupPacket
@@ -275,12 +274,12 @@ struct ConnectionClass_
 
 
 /* Accessor functions */
-#define CC_get_socket(x)	(x->sock)
-#define CC_get_database(x)	(x->connInfo.database)
-#define CC_get_server(x)	(x->connInfo.server)
-#define CC_get_DSN(x)		(x->connInfo.dsn)
-#define CC_get_username(x)	(x->connInfo.username)
-#define CC_is_onlyread(x)	(x->connInfo.onlyread[0] == '1')
+#define CC_get_socket(x)					(x->sock)
+#define CC_get_database(x)					(x->connInfo.database)
+#define CC_get_server(x)					(x->connInfo.server)
+#define CC_get_DSN(x)						(x->connInfo.dsn)
+#define CC_get_username(x)					(x->connInfo.username)
+#define CC_is_onlyread(x)					(x->connInfo.onlyread[0] == '1')
 
 
 /*	for CC_DSN_info */

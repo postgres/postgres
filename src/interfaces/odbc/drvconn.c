@@ -1,4 +1,3 @@
-
 /* Module:			drvconn.c
  *
  * Description:		This module contains only routines related to

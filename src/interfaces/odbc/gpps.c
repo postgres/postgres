@@ -1,14 +1,21 @@
-/* GetPrivateProfileString() -- approximate implementation of */
-/* Windows NT System Services version of GetPrivateProfileString() */
-/* probably doesn't handle the NULL key for section name or value key */
-/* correctly also, doesn't provide Microsoft backwards compatability */
-/* wrt TAB characters in the value string -- Microsoft terminates value */
-/* at the first TAB, but I couldn't discover what the behavior should */
-/* be regarding TABS in quoted strings so, I treat tabs like any other */
-/* characters -- NO comments following value string separated by a TAB */
-/* are allowed (that is an anachronism anyway) */
-/* Added code to search for ODBC_INI file in users home directory on */
-/* Unix */
+/* GetPrivateProfileString()
+ *
+ * approximate implementation of
+ * Windows NT System Services version of GetPrivateProfileString()
+ * probably doesn't handle the NULL key for section name or value key
+ * correctly also, doesn't provide Microsoft backwards compatability
+ * wrt TAB characters in the value string
+ *
+ * Microsoft terminates value
+ * at the first TAB, but I couldn't discover what the behavior should
+ * be regarding TABS in quoted strings so, I treat tabs like any other
+ * characters
+ *
+ * NO comments following value string separated by a TAB
+ * are allowed (that is an anachronism anyway)
+ * Added code to search for ODBC_INI file in users home directory on
+ * Unix
+ */
 
 #ifndef WIN32
 

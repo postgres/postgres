@@ -6,6 +6,7 @@
  *					Create 2001-03-03 Eiji Tokuya
  *
  */
+
 #include <string.h>
 #include "multibyte.h"
 

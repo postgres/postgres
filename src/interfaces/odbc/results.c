@@ -1,4 +1,3 @@
-
 /* Module:			results.c
  *
  * Description:		This module contains functions related to
