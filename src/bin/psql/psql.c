@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.174 1999/03/30 05:00:42 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.175 1999/04/15 02:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,17 @@ typedef struct _psqlSettings
 								 * password */
 } PsqlSettings;
 
+/*
+ * cur_cmd_source and cur_cmd_interactive are the top of a stack of
+ * source files (one stack level per recursive invocation of MainLoop).
+ * It's kinda grotty to make these global variables, but the alternative
+ * of passing them around through many function parameter lists seems
+ * worse.
+ */
+static FILE * cur_cmd_source = stdin; /* current source of command input */
+static bool cur_cmd_interactive = false; /* is it an interactive source? */
+
+
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
 
@@ -172,10 +183,9 @@ static char *gets_noreadline(char *prompt, FILE *source);
 static char *gets_readline(char *prompt, FILE *source);
 static char *gets_fromFile(char *prompt, FILE *source);
 static int	listAllDbs(PsqlSettings *pset);
-static void SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
-		  const bool copy_in, const bool copy_out, FILE *copystream);
-static int
-			HandleSlashCmds(PsqlSettings *pset, char *line, char *query);
+static bool SendQuery(PsqlSettings *pset, const char *query,
+					  FILE *copy_in_stream, FILE *copy_out_stream);
+static int	HandleSlashCmds(PsqlSettings *pset, char *line, char *query);
 static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
 static FILE *setFout(PsqlSettings *pset, char *fname);
 
@@ -1059,7 +1069,7 @@ objectDescription(PsqlSettings *pset, char *object)
 
 	PQclear(res);
 
-	SendQuery(&success, pset, descbuf, false, false, NULL);
+	success = SendQuery(pset, descbuf, NULL, NULL);
 
 	return 0;
 }
@@ -1132,14 +1142,18 @@ gets_fromFile(char *prompt, FILE *source)
 }
 
 /*
- * SendQuery: send the query string to the backend return *success_p = 1 if
- * the query executed successfully returns *success_p = 0 otherwise
+ * SendQuery: send the query string to the backend.
+ *
+ * Return true if the query executed successfully, false otherwise.
+ *
+ * If not NULL, copy_in_stream and copy_out_stream are files to redirect
+ * copy in/out data to.
  */
-static void
-SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
-		  const bool copy_in, const bool copy_out, FILE *copystream)
+static bool
+SendQuery(PsqlSettings *pset, const char *query,
+		  FILE *copy_in_stream, FILE *copy_out_stream)
 {
-
+	bool		success = false;
 	PGresult   *results;
 	PGnotify   *notify;
 
@@ -1164,7 +1178,7 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 	if (results == NULL)
 	{
 		fprintf(stderr, "%s", PQerrorMessage(pset->db));
-		*success_p = false;
+		success = false;
 	}
 	else
 	{
@@ -1180,11 +1194,9 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 					fp = setFout(&settings_copy, pset->gfname);
 					if (!fp || fp == stdout)
 					{
-						*success_p = false;
+						success = false;
 						break;
 					}
-					else
-						*success_p = true;
 					PQprint(fp,
 							results,
 							&pset->opt);
@@ -1194,11 +1206,12 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 						fclose(fp);
 					free(pset->gfname);
 					pset->gfname = NULL;
+					success = true;
 					break;
 				}
 				else
 				{
-					*success_p = true;
+					success = true;
 					PQprint(pset->queryFout,
 							results,
 							&(pset->opt));
@@ -1206,36 +1219,36 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 				}
 				break;
 			case PGRES_EMPTY_QUERY:
-				*success_p = true;
+				success = true;
 				break;
 			case PGRES_COMMAND_OK:
-				*success_p = true;
+				success = true;
 				if (!pset->quiet)
 					printf("%s\n", PQcmdStatus(results));
 				break;
 			case PGRES_COPY_OUT:
-				if (copy_out)
-					*success_p = handleCopyOut(pset->db, copystream);
+				if (copy_out_stream)
+					success = handleCopyOut(pset->db, copy_out_stream);
 				else
 				{
-					if (!pset->quiet)
+					if (pset->queryFout == stdout && !pset->quiet)
 						printf("Copy command returns...\n");
 
-					*success_p = handleCopyOut(pset->db, stdout);
+					success = handleCopyOut(pset->db, pset->queryFout);
 				}
 				break;
 			case PGRES_COPY_IN:
-				if (copy_in)
-					*success_p = handleCopyIn(pset->db, false, copystream);
+				if (copy_in_stream)
+					success = handleCopyIn(pset->db, false, copy_in_stream);
 				else
-					*success_p = handleCopyIn(pset->db,
-											!pset->quiet && !pset->notty,
-											  stdin);
+					success = handleCopyIn(pset->db,
+										   cur_cmd_interactive && !pset->quiet,
+										   cur_cmd_source);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
-				*success_p = false;
+				success = false;
 				fprintf(stderr, "%s", PQerrorMessage(pset->db));
 				break;
 		}
@@ -1259,6 +1272,7 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 		if (results)
 			PQclear(results);
 	}
+	return success;
 }
 
 
@@ -1495,7 +1509,9 @@ do_copy(const char *args, PsqlSettings *pset)
 		{
 			bool		success;/* The query succeeded at the backend */
 
-			SendQuery(&success, pset, query, from, !from, copystream);
+			success = SendQuery(pset, query,
+								from ? copystream : (FILE*) NULL,
+								!from ? copystream : (FILE*) NULL);
 			fclose(copystream);
 			if (!pset->quiet)
 			{
@@ -1999,7 +2015,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "ORDER BY aggname, type;");
-				SendQuery(&success, pset, descbuf, false, false, NULL);
+				success = SendQuery(pset, descbuf, NULL, NULL);
 			}
 			else if (strncmp(cmd, "dd", 2) == 0)
 				/* descriptions */
@@ -2036,7 +2052,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "ORDER BY result, function, arguments;");
-				SendQuery(&success, pset, descbuf, false, false, NULL);
+				success = SendQuery(pset, descbuf, NULL, NULL);
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
 				/* only indices */
@@ -2110,7 +2126,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "ORDER BY op, left_arg, right_arg, result;");
-				SendQuery(&success, pset, descbuf, false, false, NULL);
+				success = SendQuery(pset, descbuf, NULL, NULL);
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
 				/* only sequences */
@@ -2139,7 +2155,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					strcat(descbuf, optarg2);
 					strcat(descbuf, "' ");
 				}
-				SendQuery(&success, pset, descbuf, false, false, NULL);
+				success = SendQuery(pset, descbuf, NULL, NULL);
 			}
 			else if (!optarg)
 				/* show tables, sequences and indices */
@@ -2413,7 +2429,6 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	char	   *line;			/* line of input */
 	char	   *xcomment;		/* start of extended comment */
 	int			len;			/* length of the line */
-	bool		query_alloced = false;
 	int			successResult = 1;
 	int			slashCmdStatus = CMD_SEND;
 
@@ -2431,31 +2446,25 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	 */
 
 	bool		querySent = false;
-	bool		interactive;
 	READ_ROUTINE GetNextLine;
-	bool		eof = 0;
-
-	/* We've reached the end of our command input. */
+	bool		eof = false;	/* end of our command input? */
 	bool		success;
 	char		in_quote;		/* == 0 for no in_quote */
 	bool		was_bslash;		/* backslash */
 	int			paren_level;
 	char	   *query_start;
+	/* Stack the prior command source */
+	FILE	   *prev_cmd_source = cur_cmd_source;
+	bool		prev_cmd_interactive = cur_cmd_interactive;
 
-	if (query_alloced == false)
-	{
-		if ((query = malloc(MAX_QUERY_BUFFER)) == NULL)
-		{
+	/* Establish new source */
+	cur_cmd_source = source;
+	cur_cmd_interactive = ((source == stdin) && !pset->notty);
 
-			perror("Memory Allocation Failed");
+	if ((query = malloc(MAX_QUERY_BUFFER)) == NULL)
+		perror("Memory Allocation Failed");
 
-		}
-		else
-			query_alloced = true;
-	}
-
-	interactive = ((source == stdin) && !pset->notty);
-	if (interactive)
+	if (cur_cmd_interactive)
 	{
 		if (pset->prompt)
 			free(pset->prompt);
@@ -2504,7 +2513,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		}
 		else
 		{
-			if (interactive && !pset->quiet)
+			if (cur_cmd_interactive && !pset->quiet)
 			{
 				if (in_quote && in_quote == PROMPT_SINGLEQUOTE)
 					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_SINGLEQUOTE;
@@ -2519,7 +2528,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 			}
 			line = GetNextLine(pset->prompt, source);
 #ifdef USE_HISTORY
-			if (interactive && pset->useReadline && line != NULL)
+			if (cur_cmd_interactive && pset->useReadline && line != NULL)
 				add_history(line);		/* save non-empty lines in history */
 #endif
 		}
@@ -2528,7 +2537,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		 * query - pointer to current command query_start - placeholder
 		 * for next command
 		 */
-		if (line == NULL || (!interactive && *line == '\0'))
+		if (line == NULL || (!cur_cmd_interactive && *line == '\0'))
 		{						/* No more input.  Time to quit, or \i
 								 * done */
 			if (!pset->quiet)
@@ -2554,7 +2563,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		line = rightTrim(line);
 
 		/* echo back if input is from file */
-		if (!interactive && !pset->singleStep && !pset->quiet)
+		if (!cur_cmd_interactive && !pset->singleStep && !pset->quiet)
 			fprintf(stderr, "%s\n", line);
 
 		slashCmdStatus = CMD_UNKNOWN;
@@ -2569,7 +2578,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 		if (pset->singleLineMode)
 		{
-			SendQuery(&success, pset, line, false, false, NULL);
+			success = SendQuery(pset, line, NULL, NULL);
 			successResult &= success;
 			querySent = true;
 		}
@@ -2697,7 +2706,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 						else
 							strcpy(query, query_start);
 					}
-					SendQuery(&success, pset, query, false, false, NULL);
+					success = SendQuery(pset, query, NULL, NULL);
 					successResult &= success;
 					line[i + 1] = hold_char;
 					query_start = line + i + 1;
@@ -2793,7 +2802,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		/* had a backslash-g? force the query to be sent */
 		if (slashCmdStatus == CMD_SEND)
 		{
-			SendQuery(&success, pset, query, false, false, NULL);
+			success = SendQuery(pset, query, NULL, NULL);
 			successResult &= success;
 			xcomment = NULL;
 			in_quote = false;
@@ -2801,8 +2810,12 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 			querySent = true;
 		}
 	}							/* while */
-	if (query_alloced)
+
+	if (query)
 		free(query);
+
+	cur_cmd_source = prev_cmd_source;
+	cur_cmd_interactive = prev_cmd_interactive;
 
 	return successResult;
 }	/* MainLoop() */
@@ -3038,12 +3051,7 @@ main(int argc, char **argv)
 	else
 	{
 		if (singleQuery)
-		{
-			bool		success;/* The query succeeded at the backend */
-
-			SendQuery(&success, &settings, singleQuery, false, false, NULL);
-			successResult = success;
-		}
+			successResult = SendQuery(&settings, singleQuery, NULL, NULL);
 		else
 			successResult = MainLoop(&settings, NULL, stdin);
 	}
