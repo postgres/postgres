@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * xlog_bufmgr.c
+ * bufmgr.c
  *	  buffer manager interface routines
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.97 2000/11/30 08:46:23 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.98 2000/11/30 19:03:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
