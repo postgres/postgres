@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Jul 30 11:05:09 EDT 2002
+   Last updated: Thu Aug 22 11:30:58 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -53,7 +53,8 @@
    3.7) What debugging features are available?
    3.8) Why do I get "Sorry, too many clients" when trying to connect?
    3.9) What are the pg_sorttempNNN.NN files in my database directory?
-   3.10) Why do I need to do a dump and restore to upgrade PostgreSQL?
+   3.10) Why do I need to do a dump and restore to upgrade PostgreSQL
+   releases?
    
                            Operational Questions
                                       
@@ -602,23 +603,20 @@
    a backend crashes during a sort. If you have no backends running at
    the time, it is safe to delete the pg_tempNNN.NN files.
    
-    3.10) Why do I need to do a dump and restore to upgrade PostgreSQL?
+    3.10) Why do I need to do a dump and restore to upgrade between major
+    PostgreSQL releases?
     
-   The PostgreSQL team tries very heard to maintain compatability across
-   minor releases. So upgrading from 7.2 to 7.2.1 does not require a dump
-   a restore. However, new features are continuously being adding and
-   sometimes this requires new fields to be added to system tables.
+   The PostgreSQL team makes only small changes between minor releases,
+   so upgrading from 7.2 to 7.2.1 does not require a dump and restore.
+   However, major releases often change the internal format of system
+   tables and data files. These changes are often complex, so we don't
+   maintain backward compatability for data files. A dump outputs data in
+   a generic format that can then be loaded in using the new internal
+   format.
    
-   These changes may be across many tables and so maintaining backward
-   compatability would be quite difficult. Thus, restoring from a dump is
-   required to make everything work.
-   
-   Note that the actual on-disk file format does not change very often, a
-   feature the pg_upgrade script uses quite successfully. There the dump
-   is used create the necessary information in the system tables. The
-   data files are then just copied across. This method is not as
-   guarenteed as the dump/restore method but when it works it can make
-   upgrades very efficient.
+   In releases where the on-disk format does not change, the pg_upgrade
+   script can be used to upgrade without a dump/restore. The release
+   notes mention whether pg_upgrade is available for the release.
      _________________________________________________________________
    
                            Operational Questions
