@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.54 2001/01/24 19:43:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.55 2001/02/27 07:07:00 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,6 +224,12 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		 */
 		if (typeInheritsFrom(inputTypeId, targetTypeId))
 			continue;
+
+		/* don't choke on references to no-longer-existing types */
+		if (!typeidIsValid(inputTypeId))
+ 		    return false;
+ 		if (!typeidIsValid(targetTypeId))
+ 		    return false;
 
 		/*
 		 * Else, try for explicit conversion using functions: look for a
