@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.14 2000/05/31 00:28:37 petere Exp $
+ * $Id: async.h,v 1.15 2000/08/27 19:00:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ extern void AtCommit_Notify(void);
 extern void AtAbort_Notify(void);
 
 /* signal handler for inbound notifies (SIGUSR2) */
-extern void Async_NotifyHandler(SIGNAL_ARGS);
+extern void Async_NotifyHandler(int signum);
 
 /*
  * enable/disable processing of inbound notifies directly from signal handler.

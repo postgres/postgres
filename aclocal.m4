@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
 # (I removed the $ before the Id CVS keyword below.)
@@ -65,38 +65,7 @@ extern accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_acc
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3,$ac_cv_func_accept_arg3)
 ])
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
-
-
-# PGAC_C_SIGNED
-# -------------
-# Check if the C compiler understands signed types.
-# (Of course any ISO C compiler should, what is this still doing here?)
-AC_DEFUN([PGAC_C_SIGNED],
-[AC_CACHE_CHECK(for signed types, pgac_cv_c_signed,
-[AC_TRY_COMPILE([],
-[signed char c; signed short s; signed int i;],
-[pgac_cv_c_signed=yes],
-[pgac_cv_c_signed=no])])
-if test x"$pgac_cv_c_signed" = xno ; then
-  AC_DEFINE(signed,, [Define empty if the C compiler does not understand signed types])
-fi])# PGAC_C_SIGNED
-
-
-
-# PGAC_C_VOLATILE
-# ---------------
-# Check if the C compiler understands `volatile'. Note that if it doesn't
-# then this will potentially break the program semantics.
-AC_DEFUN([PGAC_C_VOLATILE],
-[AC_CACHE_CHECK(for volatile, pgac_cv_c_volatile,
-[AC_TRY_COMPILE([],
-[extern volatile int i;],
-[pgac_cv_c_volatile=yes],
-[pgac_cv_c_volatile=no])])
-if test x"$pgac_cv_c_volatile" = xno ; then
-  AC_DEFINE(volatile,, [Define empty if the C compiler does not understand `volatile'])
-fi])# PGAC_C_VOLATILE
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
 
 
 
@@ -185,7 +154,7 @@ undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])# PGAC_CHECK_ALIGNOF
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -264,7 +233,7 @@ fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
 # Macros to detect certain C++ features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
 
 
 # PGAC_CLASS_STRING
@@ -333,7 +302,7 @@ fi])# PGAC_CXX_NAMESPACE_STD
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
 #
 
 # PGAC_PROG_PYTHON

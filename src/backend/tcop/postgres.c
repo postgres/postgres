@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.171 2000/08/11 23:45:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.172 2000/08/27 19:00:31 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -83,7 +83,7 @@ CommandDest whereToSendOutput = Debug;
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(void);
 
-extern void HandleDeadLock(SIGNAL_ARGS);
+extern void HandleDeadLock(int signum);
 
 extern char XLogDir[];
 extern char ControlFilePath[];
@@ -129,9 +129,9 @@ int			XfuncMode = 0;
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
-static void SigHupHandler(SIGNAL_ARGS);
-static void FloatExceptionHandler(SIGNAL_ARGS);
-static void quickdie(SIGNAL_ARGS);
+static void SigHupHandler(int signum);
+static void FloatExceptionHandler(int signum);
+static void quickdie(int signum);
 
 /*
  * Flag to mark SIGHUP. Whenever the main loop comes around it
@@ -705,13 +705,13 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
  */
 
 void
-handle_warn(SIGNAL_ARGS)
+handle_warn(int signum)
 {
 	siglongjmp(Warn_restart, 1);
 }
 
 static void
-quickdie(SIGNAL_ARGS)
+quickdie(int signum)
 {
 	PG_SETMASK(&BlockSig);
 	elog(NOTICE, "Message from PostgreSQL backend:"
@@ -735,7 +735,7 @@ quickdie(SIGNAL_ARGS)
  * Abort transaction and exit
  */
 void
-die(SIGNAL_ARGS)
+die(int signum)
 {
 	PG_SETMASK(&BlockSig);
 
@@ -752,7 +752,7 @@ die(SIGNAL_ARGS)
 
 /* signal handler for floating point exception */
 static void
-FloatExceptionHandler(SIGNAL_ARGS)
+FloatExceptionHandler(int signum)
 {
 	elog(ERROR, "floating point exception!"
 		 " The last floating point operation either exceeded legal ranges"
@@ -761,7 +761,7 @@ FloatExceptionHandler(SIGNAL_ARGS)
 
 /* signal handler for query cancel signal from postmaster */
 static void
-QueryCancelHandler(SIGNAL_ARGS)
+QueryCancelHandler(int signum)
 {
 	QueryCancel = true;
 	LockWaitCancel();
@@ -779,7 +779,7 @@ CancelQuery(void)
 }
 
 static void
-SigHupHandler(SIGNAL_ARGS)
+SigHupHandler(int signum)
 {
 	got_SIGHUP = true;
 }
@@ -1404,7 +1404,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.171 $ $Date: 2000/08/11 23:45:35 $\n");
+		puts("$Revision: 1.172 $ $Date: 2000/08/27 19:00:31 $\n");
 	}
 
 	/*

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.160 2000/08/20 10:55:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.161 2000/08/27 19:00:26 petere Exp $
  *
  * NOTES
  *
@@ -231,10 +231,10 @@ static void pmdaemonize(int argc, char *argv[]);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 static void reset_shared(int port);
-static void SIGHUP_handler(SIGNAL_ARGS);
-static void pmdie(SIGNAL_ARGS);
-static void reaper(SIGNAL_ARGS);
-static void dumpstatus(SIGNAL_ARGS);
+static void SIGHUP_handler(int signum);
+static void pmdie(int signum);
+static void reaper(int signum);
+static void dumpstatus(int signum);
 static void CleanupProc(int pid, int exitstatus);
 static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
@@ -246,7 +246,7 @@ static int	processCancelRequest(Port *port, PacketLen len, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
-static void SignalChildren(SIGNAL_ARGS);
+static void SignalChildren(int signum);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 
@@ -1266,7 +1266,7 @@ reset_shared(int port)
  * main loop
  */
 static void
-SIGHUP_handler(SIGNAL_ARGS)
+SIGHUP_handler(int signum)
 {
 	got_SIGHUP = true;
 	if (Shutdown > SmartShutdown)
@@ -1281,14 +1281,14 @@ SIGHUP_handler(SIGNAL_ARGS)
  * pmdie -- signal handler for cleaning up after a kill signal.
  */
 static void
-pmdie(SIGNAL_ARGS)
+pmdie(int signum)
 {
 	PG_SETMASK(&BlockSig);
 
 	if (DebugLvl >= 1)
-		elog(DEBUG, "pmdie %d", postgres_signal_arg);
+		elog(DEBUG, "pmdie %d", signum);
 
-	switch (postgres_signal_arg)
+	switch (signum)
 	{
 		case SIGUSR2:
 
@@ -1399,7 +1399,7 @@ pmdie(SIGNAL_ARGS)
  * Reaper -- signal handler to cleanup after a backend (child) dies.
  */
 static void
-reaper(SIGNAL_ARGS)
+reaper(int signum)
 {
 /* GH: replace waitpid for !HAVE_WAITPID. Does this work ? */
 #ifdef HAVE_WAITPID
@@ -1970,7 +1970,7 @@ ExitPostmaster(int status)
 }
 
 static void
-dumpstatus(SIGNAL_ARGS)
+dumpstatus(int signum)
 {
 	Dlelem	   *curr;
 
