@@ -1002,6 +1002,9 @@ dblink_last_oid(PG_FUNCTION_ARGS)
 }
 
 
+#ifndef SHRT_MAX
+#define SHRT_MAX (0x7FFF)
+#endif
 /*
  * dblink_build_sql_insert
  *
@@ -1028,7 +1031,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	Oid			relid;
 	text	   *relname_text;
 	int16	   *pkattnums;
-	int16		pknumatts;
+	int			pknumatts_tmp;
+	int16		pknumatts = 0;
 	char	  **src_pkattvals;
 	char	  **tgt_pkattvals;
 	ArrayType  *src_pkattvals_arry;
@@ -1057,7 +1061,11 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 		elog(ERROR, "dblink_build_sql_insert: relation does not exist");
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
-	pknumatts = PG_GETARG_INT16(2);
+	pknumatts_tmp = PG_GETARG_INT32(2);
+	if (pknumatts_tmp <= SHRT_MAX)
+		pknumatts = pknumatts_tmp;
+	else
+		elog(ERROR, "Bad input value for pknumatts; too large");
 
 	/*
 	 * There should be at least one key attribute
@@ -1167,7 +1175,8 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	Oid			relid;
 	text	   *relname_text;
 	int16	   *pkattnums;
-	int16		pknumatts;
+	int			pknumatts_tmp;
+	int16		pknumatts = 0;
 	char	  **tgt_pkattvals;
 	ArrayType  *tgt_pkattvals_arry;
 	int			tgt_ndim;
@@ -1191,7 +1200,11 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 		elog(ERROR, "dblink_build_sql_delete: relation does not exist");
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
-	pknumatts = PG_GETARG_INT16(2);
+	pknumatts_tmp = PG_GETARG_INT32(2);
+	if (pknumatts_tmp <= SHRT_MAX)
+		pknumatts = pknumatts_tmp;
+	else
+		elog(ERROR, "Bad input value for pknumatts; too large");
 
 	/*
 	 * There should be at least one key attribute
@@ -1274,7 +1287,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	Oid			relid;
 	text	   *relname_text;
 	int16	   *pkattnums;
-	int16		pknumatts;
+	int			pknumatts_tmp;
+	int16		pknumatts = 0;
 	char	  **src_pkattvals;
 	char	  **tgt_pkattvals;
 	ArrayType  *src_pkattvals_arry;
@@ -1303,7 +1317,11 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 		elog(ERROR, "dblink_build_sql_update: relation does not exist");
 
 	pkattnums = (int16 *) PG_GETARG_POINTER(1);
-	pknumatts = PG_GETARG_INT16(2);
+	pknumatts_tmp = PG_GETARG_INT32(2);
+	if (pknumatts_tmp <= SHRT_MAX)
+		pknumatts = pknumatts_tmp;
+	else
+		elog(ERROR, "Bad input value for pknumatts; too large");
 
 	/*
 	 * There should be one source array key values for each key attnum

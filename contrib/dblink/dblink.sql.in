@@ -57,15 +57,15 @@ CREATE OR REPLACE FUNCTION dblink_get_pkey (text) RETURNS setof dblink_pkey_resu
   AS 'MODULE_PATHNAME','dblink_get_pkey' LANGUAGE 'c'
   WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int2, _text, _text) RETURNS text
+CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int4, _text, _text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_build_sql_insert' LANGUAGE 'c'
   WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int2, _text) RETURNS text
+CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int4, _text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_build_sql_delete' LANGUAGE 'c'
   WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int2, _text, _text) RETURNS text
+CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int4, _text, _text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_build_sql_update' LANGUAGE 'c'
   WITH (isstrict);
 
@@ -82,8 +82,8 @@ GRANT EXECUTE ON FUNCTION dblink (text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION dblink_exec (text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION dblink_exec (text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION dblink_get_pkey (text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_build_sql_insert (text, int2vector, int2, _text, _text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_build_sql_delete (text, int2vector, int2, _text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_build_sql_update (text, int2vector, int2, _text, _text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_build_sql_insert (text, int2vector, int4, _text, _text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_build_sql_delete (text, int2vector, int4, _text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_build_sql_update (text, int2vector, int4, _text, _text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION dblink_current_query () TO PUBLIC;
 
