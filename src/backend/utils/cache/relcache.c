@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.8 1997/05/22 17:24:20 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.9 1997/06/04 08:56:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,6 +251,13 @@ static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		Relation relation, AttributeTupleForm attp, u_int natts);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
 static void IndexedAccessMethodInitialize(Relation relation);
+
+/*
+ * newlyCreatedRelns -
+ *    relations created during this transaction. We need to keep track of
+ *    these.
+ */
+static List *newlyCreatedRelns = NULL;
 
 /* ----------------------------------------------------------------
  *	RelationIdGetRelation() and RelationNameGetRelation()
@@ -1244,6 +1251,51 @@ RelationFlushRelation(Relation *relationPtr,
 }
 
 /* --------------------------------
+ *	RelationForgetRelation -
+ *	   RelationFlushRelation + if the relation is local then get rid of
+ *	   the relation descriptor from the newly created relation list. 
+ * --------------------------------
+ */
+void
+RelationForgetRelation (Oid rid)
+{
+    Relation relation;
+    
+    RelationIdCacheLookup (rid, relation);
+    Assert ( PointerIsValid (relation) );
+    
+    if ( relation->rd_islocal )
+    {
+    	MemoryContext oldcxt;
+    	List *curr;
+    	List *prev = NIL;
+    
+    	oldcxt = MemoryContextSwitchTo((MemoryContext)CacheCxt);
+    
+    	foreach (curr, newlyCreatedRelns)
+    	{
+	    Relation reln = lfirst(curr);
+    
+    	    Assert ( reln != NULL && reln->rd_islocal );
+    	    if ( reln->rd_id == rid )
+    	    	break;
+    	    prev = curr;
+    	}
+    	if ( curr == NIL )
+    	    elog (FATAL, "Local relation %.*s not found in list",
+    	    	NAMEDATALEN, (RelationGetRelationName(relation))->data);
+    	if ( prev == NIL )
+    	    newlyCreatedRelns = lnext (newlyCreatedRelns);
+    	else
+    	    lnext (prev) = lnext (curr);
+    	pfree (curr);
+    	MemoryContextSwitchTo(oldcxt);
+    }
+
+    RelationFlushRelation (&relation, false);
+}
+
+/* --------------------------------
  *	RelationIdInvalidateRelationCacheByRelationId
  * --------------------------------
  */
@@ -1342,14 +1394,6 @@ RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
 	Assert(RelationIdCache->hctl->nkeys == 10);
     }
 }
-
-
-/*
- * newlyCreatedRelns -
- *    relations created during this transaction. We need to keep track of
- *    these
- */
-static List *newlyCreatedRelns = NULL;
 					   
 
 /* --------------------------------
