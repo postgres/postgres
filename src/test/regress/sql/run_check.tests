@@ -40,8 +40,8 @@ parallel	group2
 endparallel
 
 test	abstime		# Depends on the reltime test
-test	horology	# Depends on timespan, datetime, reltime and abstime
 test	geometry	# Depends on point, lseg, box, path, polygon and circle
+test	horology	# Depends on timespan, datetime, reltime and abstime
 
 # ----------
 # These four each depend on the previous one

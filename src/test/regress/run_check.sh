@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.1 1999/11/19 18:51:49 wieck Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.2 1999/11/20 20:21:30 tgl Exp $
 
 # ----------
 # This is currently needed because the actual 7.0 psql makes
@@ -96,7 +96,7 @@ SYSTEM=`/bin/sh ../../config.guess | awk -F\- '{ split($3,a,/[0-9]/); printf"%s-
 trap '	echo ""
 		echo ""
 		echo "user abort ..."
-		if [ ! -z $PMPID ]
+		if [ ! -z "$PMPID" ]
 		then
 			echo "Signalling postmaster with PID $PMPID to shutdown immediately"
 			kill -2 $PMPID
@@ -110,7 +110,7 @@ trap '	echo ""
 # ----------
 # Prepare a clean check directory
 # ----------
-if [ -e $CHKDIR ]
+if [ -d $CHKDIR ]
 then
 	echo "=============== Removing old ./tmp_check directory ... ================"
 	rm -rf $CHKDIR
@@ -126,17 +126,14 @@ mkdir -p $LOGDIR
 # Install this build into ./tmp/check
 # ----------
 echo "=============== Installing new build into ./tmp_check  ================"
-(
-	cd ../..
-	make POSTGRESDIR=$CHKDIR install >$LOGDIR/install.log 2>&1
-	exit $?
-)
+${MAKE:-gmake} -C ../.. POSTGRESDIR=$CHKDIR install >$LOGDIR/install.log 2>&1
+
 if [ $? -ne 0 ]
 then
 	echo ""
 	echo "ERROR: Check installation failed - cannot continue"
 	echo "Please examine $LOGDIR/install.log"
-	echo "for the errors occured."
+	echo "for the reason."
 	echo ""
 	exit 2
 fi
@@ -168,9 +165,9 @@ initdb --pglib=$LIBDIR --pgdata=$PGDATA >$LOGDIR/initdb.log 2>&1
 if [ $? -ne 0 ]
 then
 	echo ""
-	echo "ERROR: Check installation failed - cannot continue"
+	echo "ERROR: Check initdb failed - cannot continue"
 	echo "Please examine $LOGDIR/initdb.log"
-	echo "for the errors occured."
+	echo "for the reason."
 	echo ""
 	exit 3
 fi
@@ -185,16 +182,17 @@ postmaster -D $PGDATA -p $PGPORT -o -F >$LOGDIR/postmaster.log 2>&1 &
 PMPID=$!
 sleep 2
 
-if ! kill -0 $PMPID >/dev/null 2>&1
+if kill -0 $PMPID >/dev/null 2>&1
 then
+	echo "Regression postmaster is running - PID=$PMPID PGPORT=$PGPORT"
+else
 	echo ""
 	echo "ERROR: Regression postmaster did not startup."
-	echo "Please examing $LOGDIR/postmaster.log"
-	echo "for the errors occured."
+	echo "Please examine $LOGDIR/postmaster.log"
+	echo "for the reason."
 	echo ""
 	exit 4
 fi
-echo "Regression postmaster is running - PID=$PMPID PGPORT=$PGPORT"
 
 
 # ----------
@@ -332,23 +330,21 @@ lno=0
 					fi
 
 					# ----------
-					# Tell what we're doing and start them all inside a
-					# subshell in background. The bourne shell's wait is
+					# Tell what we're doing and start them all in background.
+					# The bourne shell's wait is
 					# too dumb to do it smarter. I'd really like to see
 					# the ok|failed message as soon as the individual tests
 					# finish. That'd make it easier to start longer running
 					# ones first to increase concurrency.
 					# ----------
-					gnam=`echo "$pargroup ($parntests tests)" | awk '{printf "%-26.26s", $line;}'`
+					gnam=`echo "$pargroup ($parntests tests)" | awk '{printf "%-26.26s", $0;}'`
 					$ECHO_N "parallel $gnam  ... " $ECHO_C
 
-					(
-						for name in $parlist ; do
-							$FRONTEND regression < sql/${name}.sql			\
-								> results/${name}.out 2>&1
-						done
-						wait
-					)
+					for name in $parlist ; do
+						$FRONTEND regression < sql/${name}.sql			\
+							> results/${name}.out 2>&1  &
+					done
+					wait
 
 					# ----------
 					# Setup status information for the diff check below
