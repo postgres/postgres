@@ -3,7 +3,8 @@
 
 DROP FUNCTION geo_distance (point, point);
 CREATE FUNCTION geo_distance (point, point) RETURNS float8
-  AS 'MODULE_PATHNAME' LANGUAGE 'c';
+  AS 'MODULE_PATHNAME' LANGUAGE 'c'
+  WITH (isstrict);
 
 SELECT geo_distance ('(1,2)'::point, '(3,4)'::point);
 
