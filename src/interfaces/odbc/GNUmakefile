@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.10 2001/02/10 11:31:35 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.11 2001/02/10 15:59:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,9 +36,11 @@ include $(top_srcdir)/src/Makefile.shlib
 # BSD/OS fails with libc and crt1.o undefined symbols without this.
 # bjm 2001-02-09
 #
+ifneq ($(PORTNAME), bsdi)
 LINK.shared += $(shlib_symbolic)
-ifeq ($(PORTNAME), bsdi)
-SHLIB_LINK += -lc -R /usr/lib/crt1.o
+else
+LINK.shared = gcc -shared -Wl,-Bsymbolic,-soname,$(soname)
+SHLIB_LINK += -lc
 endif
 
 odbc_headers = isql.h isqlext.h iodbc.h
