@@ -899,24 +899,22 @@ static int tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt, ...)
 	int			bSize = strlen(fmt) + 256; /* Should be enough */
 	int			cnt = -1;
 
-	va_start(ap, fmt);
 	/* This is paranoid: deal with the possibility that vsnprintf is willing to ignore trailing null */
 	/* or returns > 0 even if string does not fit. It may be the case that it returns cnt = bufsize */
-	while (cnt < 0 || cnt >= (bSize - 1) ) {
+	while (cnt < 0 || cnt >= (bSize - 1) )
+	{
 		if (p != NULL) free(p);
 		bSize *= 2;
 		p = (char*)malloc(bSize);
 		if (p == NULL)
 		{
-			va_end(ap);
-			die_horribly(AH, "%s: could not allocate buffer for ahprintf\n", progname);
+			die_horribly(AH, "%s: could not allocate buffer for tarPrintf\n", progname);
 		}
+		va_start(ap, fmt);
 		cnt = vsnprintf(p, bSize, fmt, ap);
+		va_end(ap);
 	}
-	va_end(ap);
-
 	cnt = tarWrite(p, cnt, th);
-
 	free(p);
 	return cnt;
 }

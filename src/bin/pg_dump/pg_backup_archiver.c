@@ -872,21 +872,21 @@ int archprintf(Archive* AH, const char *fmt, ...)
     int		bSize = strlen(fmt) + 256;
     int		cnt = -1;
 
-    va_start(ap, fmt);
-
     /* This is paranoid: deal with the possibility that vsnprintf is willing to ignore trailing null */
     /* or returns > 0 even if string does not fit. It may be the case that it returns cnt = bufsize */ 
-    while (cnt < 0 || cnt >= (bSize-1) ) {
-	if (p != NULL) free(p);
-	bSize *= 2;
-	if ((p = malloc(bSize)) == NULL)
+    while (cnt < 0 || cnt >= (bSize-1) )
 	{
-	    va_end(ap);
-	    exit_horribly(AH, "%s: could not allocate buffer for archprintf\n", progname);
-	}
-	cnt = vsnprintf(p, bSize, fmt, ap);
+		if (p != NULL) free(p);
+		bSize *= 2;
+		p = (char*)malloc(bSize);
+		if (p == NULL)
+		{
+			exit_horribly(AH, "%s: could not allocate buffer for archprintf\n", progname);
+		}
+		va_start(ap, fmt);
+		cnt = vsnprintf(p, bSize, fmt, ap);
+		va_end(ap);
     }
-    va_end(ap);
     WriteData(AH, p, cnt);
     free(p);
     return cnt;
@@ -977,21 +977,21 @@ int ahprintf(ArchiveHandle* AH, const char *fmt, ...)
     int		bSize = strlen(fmt) + 256; /* Should be enough */
     int		cnt = -1;
 
-    va_start(ap, fmt);
     /* This is paranoid: deal with the possibility that vsnprintf is willing to ignore trailing null */
     /* or returns > 0 even if string does not fit. It may be the case that it returns cnt = bufsize */ 
-    while (cnt < 0 || cnt >= (bSize - 1) ) {
+    while (cnt < 0 || cnt >= (bSize - 1) )
+	{
 		if (p != NULL) free(p);
 		bSize *= 2;
 		p = (char*)malloc(bSize);
 		if (p == NULL)
 		{
-			va_end(ap);
 			die_horribly(AH, "%s: could not allocate buffer for ahprintf\n", progname);
 		}
+		va_start(ap, fmt);
 		cnt = vsnprintf(p, bSize, fmt, ap);
+		va_end(ap);
     }
-    va_end(ap);
     ahwrite(p, 1, cnt, AH);
     free(p);
     return cnt;
