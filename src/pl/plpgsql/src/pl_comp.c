@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.10 1999/09/20 22:28:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.11 1999/09/21 21:10:37 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -96,7 +96,7 @@ static char *xlateSqlType(char *name);
 
 /* ----------
  * plpgsql_compile		Given a pg_proc's oid, make
- *				an execution tree for it.
+ *						an execution tree for it.
  * ----------
  */
 PLpgSQL_function *
