@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.6 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.7 1999/12/07 22:41:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -126,6 +126,16 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
      </varlistentry>
 
      <varlistentry>
+      <term>-i, --sysid <replaceable class="parameter">uid</replaceable></term>
+      <listitem>
+       <para>
+       Allows you to pick a non-default user id for the new user. This is not
+       necessary, but some people like it.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
@@ -142,11 +152,9 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
 
     <para>
     The options <literal>-h</literal>, <literal>-p</literal>, and <literal>-e</literal>,
-    are passed on literally to <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. If you
-    need the <application>psql</application> options <literal>-U</literal> and
-    <literal>-W</literal> as well, you can uncomment the
-    respective lines in the source. They are disabled by default because of the potential
-    conceptual confusion between existing and new users.
+    are passed on literally to <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. The
+    <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
+    are available as well, but their use can be confusing in this context.
    </para>
   </refsect2>
 
@@ -243,7 +251,7 @@ CREATE USER
 
    <programlisting>
 $ <userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>
-QUERY: CREATE USER "joe" NOCREATEDB NOCREATEUSER
+CREATE USER "joe" NOCREATEDB NOCREATEUSER
 CREATE USER
    </programlisting>
   </para>

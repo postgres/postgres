@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.6 1999/11/28 02:17:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.7 1999/12/07 22:41:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 VACUUM [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMETER">table</replaceable> ]
-VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ER">t</replaceable>BLE> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
   </synopsis>
 
   <refsect2 id="R2-SQL-VACUUM-1">

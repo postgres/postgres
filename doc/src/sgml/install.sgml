@@ -808,7 +808,7 @@ $ nohup postmaster -i > pgserver.log 2>&1 &
 <para>
 Create a database by typing
 <ProgramListing>
-$ createdb
+$ createdb test
 </ProgramListing>
 </para>
 </step>
@@ -816,7 +816,7 @@ $ createdb
 <para>
 Connect to the new database:
 <ProgramListing>
-$ psql
+$ psql test
 </ProgramListing>
 </para>
 </step>
@@ -840,7 +840,7 @@ postgres=> \q
 <para>
 Remove the test database (unless you will want to use it later for other tests):
 <ProgramListing>
-$ destroydb
+$ dropdb test
 </ProgramListing>
 </para>
 </step>
@@ -1028,7 +1028,7 @@ For example,
      After running the regression tests, type
 
 <ProgramListing>
-$ destroydb regression
+$ dropdb regression
 $ cd /usr/src/pgsql/postgresql-6.5.3/src/test/regress
 $ gmake clean
 </ProgramListing>
@@ -1241,7 +1241,7 @@ Create the database foo:
 
 <ProgramListing>
 template1=> create database foo;
-CREATEDB
+CREATE DATABASE
 </ProgramListing>
 
 (Get in the habit of including those SQL semicolons.  Psql won't execute

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.1 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.2 1999/12/07 22:41:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -101,11 +101,9 @@ dropuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable
 
     <para>
     The options <literal>-h</literal>, <literal>-p</literal>, and <literal>-e</literal>,
-    are passed on literally to <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. If you
-    need the <application>psql</application> options <literal>-U</literal> and
-    <literal>-W</literal> as well, you can uncomment the
-    respective lines in the source. They are disabled by default because of the potential
-    conceptual confusion between existing and new users.
+    are passed on literally to <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. The
+    <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
+    are available as well, but they can be confusing in this context.
    </para>
   </refsect2>
 
@@ -201,7 +199,7 @@ DROP USER
 $ <userinput>dropuser -p 5000 -h eden -i -e joe</userinput>
 User "joe" and any owned databases will be permanently deleted.
 Are you sure? (y/n) <userinput>y</userinput>
-QUERY: DROP USER "joe"
+DROP USER "joe"
 DROP USER
    </programlisting>
   </para>

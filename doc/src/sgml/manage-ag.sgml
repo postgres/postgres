@@ -143,7 +143,7 @@ You are currently connected to the database: <replaceable>dbname</replaceable>
     mydb,  you can destroy it using the following Unix command:
 
     <programlisting>
-% destroydb <replaceable class="parameter">dbname</replaceable>
+% dropdb <replaceable class="parameter">dbname</replaceable>
     </programlisting>
 
     This action physically removes all of  the  Unix  files

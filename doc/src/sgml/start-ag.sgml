@@ -10,7 +10,7 @@
   <para>
    <application>createuser</application> enables specific users to access
    <productname>Postgres</productname>.  
-   <application>destroyuser</application> removes  users  and
+   <application>dropuser</application> removes  users  and
    prevents them from accessing <productname>Postgres</productname>.
   </para>
 
@@ -115,7 +115,7 @@ Creating Postgres database system directory /home/postgres/data/base
 
     <programlisting>
 % createdb -D PGDATA2 test
-% destroydb test
+% dropdb test
     </programlisting>
 
    </para>

@@ -246,7 +246,7 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 	<Para>
 	  After running the tests and examining the results, type
 	  <ProgramListing>
-	    destroydb regression
+	    dropdb regression
 	    cd /usr/src/pgsql/src/test/regress
 	    gmake clean
 	  </ProgramListing>

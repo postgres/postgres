@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.1 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.2 1999/12/07 22:41:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -207,7 +207,7 @@ DROP DATABASE
 $ <userinput>dropdb -p 5000 -h eden -i -e demo</userinput>
 Database "demo" will be permanently deleted.
 Are you sure? (y/n) <userinput>y</userinput>
-QUERY: DROP DATABASE "demo"
+DROP DATABASE "demo"
 DROP DATABASE
    </programlisting>
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.7 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.8 1999/12/07 22:41:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -96,7 +96,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
      </varlistentry>
 
      <varlistentry>
-      <term>-D, --dbpath <replaceable class="parameter">datadir</replaceable></term>
+      <term>-D, --location <replaceable class="parameter">datadir</replaceable></term>
       <listitem>
        <para>
 	Specifies the alternate database location for this database installation.
@@ -120,7 +120,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
       <listitem>
        <para>
 	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>Postgres</productname> databases in this installation.
+	unique among all <productname>PostgreSQL</productname> databases in this installation.
        </para>
       </listitem>
      </varlistentry>
@@ -167,7 +167,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>createdb: Comment creation failed.</computeroutput></term>
+      <term><computeroutput>createdb: Comment creation failed. (Database was created.)</computeroutput></term>
       <listitem>
        <para>
        The comment/description for the database could not be created.
@@ -235,11 +235,11 @@ CREATE DATABASE
   <para>
    To create the database <literal>demo</literal>
    using the postmaster on host eden, port 5000, using the <literal>LATIN1</literal>
-   encoding scheme and look at the underlying query:
+   encoding scheme with a look at the underlying query:
 
    <programlisting>
 $ <userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
-QUERY: CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'
+CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'
 CREATE DATABASE
    </programlisting>
   </para>

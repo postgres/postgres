@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.8 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.9 1999/12/07 22:41:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -94,9 +94,7 @@ ERROR: removeUser: user "<replaceable class="parameter">name</replaceable>" does
    user from the database,
    along with any databases owned by the user. It
    does not remove tables, views, or triggers owned by the
-   named user in databases not owned by the user. This statement
-   can be used in place of the <application>dropuser</application>
-   script, regardless of how the user was created.
+   named user in databases not owned by the user.
   </para>
 
   <refsect2 id="R2-SQL-DROPUSER-3">

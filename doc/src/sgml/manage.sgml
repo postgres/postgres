@@ -283,7 +283,7 @@ TBD
      If you are the database administrator for the  database
      <Database>mydb</Database>,  you can destroy it using the following Unix command:
 <ProgramListing>
-% destroydb mydb
+% dropdb mydb
 </ProgramListing>
      This action physically removes all of  the  Unix  files
      associated  with  the database and cannot be undone, so

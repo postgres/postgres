@@ -1,7 +1,7 @@
 #!/bin/sh
 #-------------------------------------------------------------------------
 #
-# createdb.sh--
+# createdb--
 #    create a postgres database
 #
 #    This program runs psql with the "-c" option to create
@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.2 1999/12/07 22:41:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,7 @@ MB=
 PSQLOPT=
 dbname=
 dbcomment=
+dbpath=
 
 while [ $# -gt 0 ]
 do
@@ -33,12 +34,33 @@ do
 	--host|-h)
 		PSQLOPT="$PSQLOPT -h $2"
 		shift;;
+        -h*)
+                PSQLOPT="$PSQLOPT $1"
+                ;;
+        --host=*)
+                PSQLOPT="$PSQLOPT -h "`echo $1 | sed 's/^--host=//'`
+                ;;
 	--port|-p)
 		PSQLOPT="$PSQLOPT -p $2"
 		shift;;
+        -p*)
+                PSQLOPT="$PSQLOPT $1"
+                ;;
+        --port=*)
+                PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
+                ;;
 	--user|--username|-U)
-		PSQLOPT="$PSQLOPT -U $2"
+		PSQLOPT="$PSQLOPT -U '$2'"
 		shift;;
+        -U*)
+                PSQLOPT="$PSQLOPT $1"
+                ;;
+        --user=*)
+                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--user=//'`
+                ;;
+        --username=*)
+                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--username=//'`
+                ;;
 	--password|-W)
 		PSQLOPT="$PSQLOPT -W"
 		;;
@@ -49,18 +71,24 @@ do
 		PSQLOPT="$PSQLOPT -o /dev/null"
 		;;
 # options converted into SQL command
-	--dbpath|-D)
+	--location|-D)
 		dbpath="$2"
 		shift;;
+        -D*)
+                dbpath=`echo $1 | sed 's/^-D//'`
+                ;;
+        --location=*)
+                dbpath=`echo $1 | sed 's/^--location=//'`
+                ;;
 	--encoding|-E)
 		MB=$2
-		shift
-		if [ -z `pg_encoding $MB` ]; then
-			echo "$CMDNAME: $MB is not a valid encoding name"
-			exit 1
-		fi
-		;;
-
+		shift;;
+        -E*)
+                MB=`echo $1 | sed 's/^-E//'`
+                ;;
+        --encoding=*)
+                MB=`echo $1 | sed 's/^--encoding=//'`
+                ;;
 	-*)
 		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
 		exit 1
@@ -78,9 +106,15 @@ done
 
 
 if [ "$usage" ]; then
-	echo "Usage: $CMDNAME [-h <server>] [-p <port>] [-D <path>] \\"
-	echo "       [-E <encoding>] [-U <username>] [-W] dbname [description]"
+	echo "Usage: $CMDNAME [-h server] [-p port] [-D path] \\"
+	echo "       [-E encoding] [-U username] dbname [description]"
 	exit 0
+fi
+
+
+if [ "$MB" -a -z "`pg_encoding '$MB'`" ]; then
+	echo "$CMDNAME: \"$MB\" is not a valid encoding name."
+	exit 1
 fi
 
 if [ -z "$dbname" ]; then
@@ -88,6 +122,9 @@ if [ -z "$dbname" ]; then
 	exit 1
 fi
 
+
+dbpath=`echo $dbpath | sed "s/'/\\\\\'/g"`
+dbname=`echo $dbname | sed 's/\"/\\\"/g'`
 
 withstring=
 [ "$dbpath" ] &&     withstring="$withstring LOCATION = '$dbpath'"
@@ -103,9 +140,11 @@ fi
 # Insert comment as well, if requested
 [ -z "$dbcomment" ] && exit 0
 
-psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS \'$dbcomment\'"
+dbcomment=`echo $dbcomment | sed "s/'/\\\\\'/g"`
+
+psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: Comment creation failed."
+	echo "$CMDNAME: Comment creation failed. (Database was created.)"
 	exit 1
 fi
 
