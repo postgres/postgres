@@ -1,4 +1,4 @@
-# @(#)northamerica	7.67
+# @(#)northamerica	7.69
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
@@ -193,10 +193,6 @@ Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
 #	Samoa standard time
 # The law doesn't give abbreviations.
 #
-# From Paul Eggert (1995-12-19):
-# Shanks uses 1983-10-30, not 1983-11-30, for the 1983 transitions.
-# Go with Shanks.
-#
 # From Paul Eggert (2000-01-08), following a heads-up from Rives McDow:
 # Public law 106-564 (2000-12-23) introduced the abbreviation
 # "Chamorro Standard Time" for time in Guam and the Northern Marianas.
@@ -323,13 +319,14 @@ Zone America/Juneau	 15:02:19 -	LMT	1867 Oct 18
 			 -8:00	US	P%sT	1946
 			 -8:00	-	PST	1969
 			 -8:00	US	P%sT	1983 Oct 30 2:00
+			 -9:00	US	Y%sT	1983 Nov 30
 			 -9:00	US	AK%sT
 Zone America/Yakutat	 14:41:05 -	LMT	1867 Oct 18
 			 -9:18:55 -	LMT	1900 Aug 20 12:00
 			 -9:00	-	YST	1942
 			 -9:00	US	Y%sT	1946
 			 -9:00	-	YST	1969
-			 -9:00	US	Y%sT	1983 Oct 30 2:00
+			 -9:00	US	Y%sT	1983 Nov 30
 			 -9:00	US	AK%sT
 Zone America/Anchorage	 14:00:24 -	LMT	1867 Oct 18
 			 -9:59:36 -	LMT	1900 Aug 20 12:00
@@ -338,6 +335,7 @@ Zone America/Anchorage	 14:00:24 -	LMT	1867 Oct 18
 			-10:00	-	CAT	1967 Apr
 			-10:00	-	AHST	1969
 			-10:00	US	AH%sT	1983 Oct 30 2:00
+			 -9:00	US	Y%sT	1983 Nov 30
 			 -9:00	US	AK%sT
 Zone America/Nome	 12:58:21 -	LMT	1867 Oct 18
 			-11:01:38 -	LMT	1900 Aug 20 12:00
@@ -346,6 +344,7 @@ Zone America/Nome	 12:58:21 -	LMT	1867 Oct 18
 			-11:00	-	NST	1967 Apr
 			-11:00	-	BST	1969
 			-11:00	US	B%sT	1983 Oct 30 2:00
+			 -9:00	US	Y%sT	1983 Nov 30
 			 -9:00	US	AK%sT
 Zone America/Adak	 12:13:21 -	LMT	1867 Oct 18
 			-11:46:38 -	LMT	1900 Aug 20 12:00
@@ -354,6 +353,7 @@ Zone America/Adak	 12:13:21 -	LMT	1867 Oct 18
 			-11:00	-	NST	1967 Apr
 			-11:00	-	BST	1969
 			-11:00	US	B%sT	1983 Oct 30 2:00
+			-10:00	US	AH%sT	1983 Nov 30
 			-10:00	US	HA%sT
 # Shanks writes that part of southwest Alaska (e.g. Aniak)
 # switched from -11:00 to -10:00 on 1968-09-22 at 02:00,
@@ -989,6 +989,13 @@ Rule	Toronto	1922	1923	-	May	Sun>=8	2:00	1:00	D
 # Shanks says 1923-09-19; assume it's a typo and that "-16" was meant.
 Rule	Toronto	1922	1926	-	Sep	Sun>=15	2:00	0	S
 Rule	Toronto	1924	1927	-	May	Sun>=1	2:00	1:00	D
+# The 1927-to-1939 rules can be expressed more simply as
+# Rule	Toronto	1927	1937	-	Sep	Sun>=25	2:00	0	S
+# Rule	Toronto	1928	1937	-	Apr	Sun>=25	2:00	1:00	D
+# Rule	Toronto	1938	1940	-	Apr	lastSun	2:00	1:00	D
+# Rule	Toronto	1938	1939	-	Sep	lastSun	2:00	0	S
+# The rules below avoid use of Sun>=25
+# (which pre-2004 versions of zic cannot handle).
 Rule	Toronto	1927	1932	-	Sep	lastSun	2:00	0	S
 Rule	Toronto	1928	1931	-	Apr	lastSun	2:00	1:00	D
 Rule	Toronto	1932	only	-	May	1	2:00	1:00	D

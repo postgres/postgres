@@ -1,4 +1,4 @@
-# @(#)zone.tab	1.29
+# @(#)zone.tab	1.30
 #
 # TZ zone descriptions
 #
@@ -41,11 +41,17 @@ AQ	-6617+11031	Antarctica/Casey	Casey Station, Bailey Peninsula
 AQ	-7824+10654	Antarctica/Vostok	Vostok Station, S Magnetic Pole
 AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Base, Terre Adelie
 AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
-AR	-3436-05827	America/Buenos_Aires	E Argentina (BA, DF, SC, TF)
-AR	-3124-06411	America/Cordoba	most locations (CB,CC,CH,CN,ER,FM,LP,LR,MN,NQ,RN,SA,SE,SF,SJ,SL,TM)
-AR	-2411-06518	America/Jujuy	Jujuy (JY)
-AR	-2828-06547	America/Catamarca	Catamarca (CT)
-AR	-3253-06849	America/Mendoza	Mendoza (MZ)
+AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
+AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, LP, MN, NQ, RN, SA, SE, SF, SL)
+AR	-2411-06518	America/Argentina/Jujuy	Jujuy (JY)
+AR	-3124-06411	America/Argentina/Tucuman	Tucuman (TM)
+AR	-2828-06547	America/Argentina/Catamarca	Catamarca (CT)
+AR	-2926-06651	America/Argentina/La_Rioja	La Rioja (LR)
+AR	-3132-06831	America/Argentina/San_Juan	San Juan (SJ)
+AR	-3253-06849	America/Argentina/Mendoza	Mendoza (MZ)
+AR	-4552-06730	America/Argentina/ComodRivadavia	Chubut (CH)
+AR	-5138-06913	America/Argentina/Rio_Gallegos	Santa Cruz (SC)
+AR	-5448-06818	America/Argentina/Ushuaia	Tierra del Fuego (TF)
 AS	-1416-17042	Pacific/Pago_Pago
 AT	+4813+01620	Europe/Vienna
 AU	-3133+15905	Australia/Lord_Howe	Lord Howe Island
@@ -59,6 +65,7 @@ AU	-3455+13835	Australia/Adelaide	South Australia
 AU	-1228+13050	Australia/Darwin	Northern Territory
 AU	-3157+11551	Australia/Perth	Western Australia
 AW	+1230-06858	America/Aruba
+AX	+6006+01957	Europe/Mariehamn
 AZ	+4023+04951	Asia/Baku
 BA	+4352+01825	Europe/Sarajevo
 BB	+1306-05937	America/Barbados

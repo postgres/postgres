@@ -1,4 +1,4 @@
-# @(#)leapseconds	7.16
+# @(#)leapseconds	7.17
 
 # Allowance for leapseconds added to each timezone file.
 
@@ -44,19 +44,20 @@ Leap	1995	Dec	31	23:59:60	+	S
 Leap	1997	Jun	30	23:59:60	+	S
 Leap	1998	Dec	31	23:59:60	+	S
 
-# 		INTERNATIONAL EARTH ROTATION SERVICE (IERS)
-# 		SERVICE INTERNATIONAL DE LA ROTATION TERRESTRE
+# 	INTERNATIONAL EARTH ROTATION AND REFERENCE SYSTEMS SERVICE (IERS)
+# 
+# SERVICE INTERNATIONAL DE LA ROTATION TERRESTRE ET DES SYSTEMES DE REFERENCE
 # 
 # SERVICE DE LA ROTATION TERRESTRE
 # OBSERVATOIRE DE PARIS
 # 61, Av. de l'Observatoire 75014 PARIS (France)
 # Tel.      : 33 (0) 1 40 51 22 26
 # FAX       : 33 (0) 1 40 51 22 91
-# Internet  : iers@obspm.fr
+# Internet  : services.iers@obspm.fr
 # 
-# 				 		Paris, 1 July 2003
+# 						Paris, 15 January 2004
 # 
-# 						Bulletin C 26
+# 						Bulletin C 27
 # 
 # 						To authorities responsible
 # 						for the measurement and
@@ -64,10 +65,10 @@ Leap	1998	Dec	31	23:59:60	+	S
 # 
 # 			INFORMATION ON UTC - TAI
 # 
-# NO positive leap second will be introduced at the end of December 2003.
+# NO positive leap second will be introduced at the end of June 2004.
 # The difference between UTC and the International Atomic Time TAI is:
-# 		
-# 	from 1999 January 1, 0h UTC, until further notice: UTC-TAI = -32 s
+# 
+# 	from 1999 January 1, 0h UTC, until further notice : UTC-TAI = -32 s
 # 
 # Leap seconds can be introduced in UTC at the end of the months of December
 # or June, depending on the evolution of UT1-TAI. Bulletin C is mailed every
@@ -77,3 +78,4 @@ Leap	1998	Dec	31	23:59:60	+	S
 # 					Daniel GAMBIS
 # 					Director
 # 					Earth Orientation Center of IERS
+# 					Observatoire de Paris, France

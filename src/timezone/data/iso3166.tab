@@ -1,12 +1,12 @@
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	1.14
+# @(#)iso3166.tab	1.15
 #
-# From Paul Eggert <eggert@twinsun.com> (2003-02-04):
+# From Paul Eggert <eggert@twinsun.com> (2004-06-14):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166-1 alpha-2 country code, current as of
-#     ISO 3166-1 Newsletter No. V-8 (2003-07-23).  See:
+#     ISO 3166-1 Newsletter No. V-10 (2004-04-26).  See:
 #     <a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">
 #     ISO 3166 Maintenance agency (ISO 3166/MA)
 #     </a>.
@@ -36,6 +36,7 @@ AS	Samoa (American)
 AT	Austria
 AU	Australia
 AW	Aruba
+AX	Aaland Islands
 AZ	Azerbaijan
 BA	Bosnia & Herzegovina
 BB	Barbados
