@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.23 1998/09/01 04:36:47 momjian Exp $
+ * $Id: primnodes.h,v 1.24 1999/01/24 00:28:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,7 @@ typedef struct Func
 } Func;
 
 /* ----------------
- * Aggreg
+ * Aggref
  *		aggname			- name of the aggregate
  *		basetype		- base type Oid of the aggregate
  *		aggtype			- type Oid of final result of the aggregate
@@ -263,7 +263,7 @@ typedef struct Func
  *		aggno			- index to ecxt_values
  * ----------------
  */
-typedef struct Aggreg
+typedef struct Aggref
 {
 	NodeTag		type;
 	char	   *aggname;
@@ -272,7 +272,7 @@ typedef struct Aggreg
 	Node	   *target;
 	int			aggno;
 	bool		usenulls;
-} Aggreg;
+} Aggref;
 
 /* ----------------
  * SubLink

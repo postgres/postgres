@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.24 1999/01/18 00:09:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.25 1999/01/24 00:28:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,9 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				OffsetVarNodes(
 						(Node *)(agg->target),
@@ -271,9 +271,9 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				ChangeVarNodes(
 						(Node *)(agg->target),
@@ -641,8 +641,8 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 			ResolveNew(info, targetlist, &((TargetEntry *) node)->expr,
 					   sublevels_up);
 			break;
-		case T_Aggreg:
-			ResolveNew(info, targetlist, &((Aggreg *) node)->target,
+		case T_Aggref:
+			ResolveNew(info, targetlist, &((Aggref *) node)->target,
 					   sublevels_up);
 			break;
 		case T_Expr:
@@ -746,9 +746,9 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 										   sublevels_up);
 			}
 			break;
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	   *agg = (Aggreg *) node;
+				Aggref	   *agg = (Aggref *) node;
 
 				nodeHandleRIRAttributeRule(&agg->target, rtable, targetlist,
 									rt_index, attr_num, modified, badsql,
@@ -911,9 +911,9 @@ nodeHandleViewRule(Node **nodePtr,
 								   rt_index, modified, sublevels_up);
 			}
 			break;
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	   *agg = (Aggreg *) node;
+				Aggref	   *agg = (Aggref *) node;
 
 				nodeHandleViewRule(&(agg->target), rtable, targetlist,
 								   rt_index, modified, sublevels_up);

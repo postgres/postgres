@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.31 1999/01/23 23:28:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.32 1999/01/24 00:28:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -611,8 +611,8 @@ replace_result_clause(Node *clause,
 		((Var *) clause)->varno = (Index) OUTER;
 		((Var *) clause)->varattno = subplanVar->resdom->resno;
 	}
-	else if (IsA(clause, Aggreg))
-		replace_result_clause(((Aggreg *) clause)->target, subplanTargetList);
+	else if (IsA(clause, Aggref))
+		replace_result_clause(((Aggref *) clause)->target, subplanTargetList);
 	else if (is_funcclause(clause))
 	{
 		List	   *subExpr;
@@ -704,7 +704,7 @@ OperandIsInner(Node *opnd, int inner_relid)
  *	  changes the target list of an Agg node so that it points to
  *	  the tuples returned by its left tree subplan.
  *
- *	We now also generate a linked list of Aggreg pointers for Agg.
+ *	We now also generate a linked list of Aggref pointers for Agg.
  *
  */
 List *
@@ -765,10 +765,10 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		}
 		return agg_list;
 	}
-	else if (IsA(clause, Aggreg))
+	else if (IsA(clause, Aggref))
 	{
 		return lcons(clause,
-					 replace_agg_clause(((Aggreg *) clause)->target, subplanTargetList));
+					 replace_agg_clause(((Aggref *) clause)->target, subplanTargetList));
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -866,11 +866,11 @@ del_agg_clause(Node *clause)
 		foreach(t, ((Expr *) clause)->args)
 			lfirst(t) = del_agg_clause(lfirst(t));
 	}
-	else if (IsA(clause, Aggreg))
+	else if (IsA(clause, Aggref))
 	{
 
 		/* here is the real action, to remove the Agg node */
-		return del_agg_clause(((Aggreg *) clause)->target);
+		return del_agg_clause(((Aggref *) clause)->target);
 
 	}
 	else if (IsA(clause, ArrayRef))
@@ -967,10 +967,10 @@ check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 	}
       return targetlist_so_far;
     }
-  else if (IsA(clause, Aggreg))
+  else if (IsA(clause, Aggref))
     {
 	  targetlist_so_far = 
-	    check_having_qual_for_vars(((Aggreg *) clause)->target, targetlist_so_far);
+	    check_having_qual_for_vars(((Aggref *) clause)->target, targetlist_so_far);
 	  return targetlist_so_far;
     }
   else if (IsA(clause, ArrayRef))
@@ -1100,10 +1100,10 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 		}
 		return agg_list;
 	}
-	else if (IsA(clause, Aggreg))
+	else if (IsA(clause, Aggref))
 	{
 		return lcons(clause,
-		    check_having_qual_for_aggs(((Aggreg *) clause)->target, subplanTargetList,
+		    check_having_qual_for_aggs(((Aggref *) clause)->target, subplanTargetList,
 					       groupClause));		
 	}
 	else if (IsA(clause, ArrayRef))

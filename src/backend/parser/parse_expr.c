@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.38 1998/12/13 23:56:43 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.39 1999/01/24 00:28:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,8 +586,8 @@ exprType(Node *expr)
 		case T_ArrayRef:
 			type = ((ArrayRef *) expr)->refelemtype;
 			break;
-		case T_Aggreg:
-			type = ((Aggreg *) expr)->aggtype;
+		case T_Aggref:
+			type = ((Aggref *) expr)->aggtype;
 			break;
 		case T_Param:
 			type = ((Param *) expr)->paramtype;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.15 1998/12/08 06:18:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.16 1999/01/24 00:28:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause);
 
 /*
  * contain_agg_clause--
- *	  Recursively find aggreg nodes from a clause.
+ *	  Recursively find aggref nodes from a clause.
  *
  *	  Returns true if any aggregate found.
  */
@@ -46,7 +46,7 @@ contain_agg_clause(Node *clause)
 {
 	if (clause == NULL)
 		return FALSE;
-	else if (IsA(clause, Aggreg))
+	else if (IsA(clause, Aggref))
 		return TRUE;
 	else if (IsA(clause, Iter))
 		return contain_agg_clause(((Iter *) clause)->iterexpr);
@@ -105,7 +105,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
 	List	   *gl;
 
 	if (expr == NULL || IsA(expr, Const) ||
-		IsA(expr, Param) || IsA(expr, Aggreg) || 
+		IsA(expr, Param) || IsA(expr, Aggref) || 
 		IsA(expr, SubLink))		/* can't handle currently !!! */
 		return TRUE;
 
@@ -155,7 +155,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 		}
 	}
 
-	if (IsA(expr, Aggreg))
+	if (IsA(expr, Aggref))
 		return TRUE;
 
 	if (IsA(expr, Expr))
@@ -217,7 +217,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 }
 
 
-Aggreg *
+Aggref *
 ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		 List *target, int precedence)
 {
@@ -225,7 +225,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	Oid			vartype;
 	Oid			xfn1;
 	Form_pg_aggregate aggform;
-	Aggreg	   *aggreg;
+	Aggref	   *aggref;
 	HeapTuple	theAggTuple;
 	bool		usenulls = false;
 
@@ -324,18 +324,18 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		}
 	}
 
-	aggreg = makeNode(Aggreg);
-	aggreg->aggname = pstrdup(aggname);
-	aggreg->basetype = aggform->aggbasetype;
-	aggreg->aggtype = fintype;
+	aggref = makeNode(Aggref);
+	aggref->aggname = pstrdup(aggname);
+	aggref->basetype = aggform->aggbasetype;
+	aggref->aggtype = fintype;
 
-	aggreg->target = lfirst(target);
+	aggref->target = lfirst(target);
 	if (usenulls)
-		aggreg->usenulls = true;
+		aggref->usenulls = true;
 
 	pstate->p_hasAggs = true;
 
-	return aggreg;
+	return aggref;
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.53 1999/01/21 22:55:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.54 1999/01/24 00:28:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -899,13 +899,13 @@ _copyFunc(Func *from)
 }
 
 /* ----------------
- *		_copyAggreg
+ *		_copyAggref
  * ----------------
  */
-static Aggreg *
-_copyAggreg(Aggreg *from)
+static Aggref *
+_copyAggref(Aggref *from)
 {
-	Aggreg	   *newnode = makeNode(Aggreg);
+	Aggref	   *newnode = makeNode(Aggref);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1782,8 +1782,8 @@ copyObject(void *from)
 		case T_ArrayRef:
 			retval = _copyArrayRef(from);
 			break;
-		case T_Aggreg:
-			retval = _copyAggreg(from);
+		case T_Aggref:
+			retval = _copyAggref(from);
 			break;
 		case T_SubLink:
 			retval = _copySubLink(from);

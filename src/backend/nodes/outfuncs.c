@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.60 1999/01/21 16:08:36 vadim Exp $
+ *  $Id: outfuncs.c,v 1.61 1999/01/24 00:28:20 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -686,10 +686,10 @@ _outConst(StringInfo str, Const *node)
 }
 
 /*
- *	Aggreg
+ *	Aggref
  */
 static void
-_outAggreg(StringInfo str, Aggreg *node)
+_outAggref(StringInfo str, Aggref *node)
 {
 	appendStringInfo(str, 
 			" AGGREG :aggname %s :basetype %u :aggtype %u :target ",
@@ -1506,8 +1506,8 @@ _outNode(StringInfo str, void *obj)
 			case T_Const:
 				_outConst(str, obj);
 				break;
-			case T_Aggreg:
-				_outAggreg(str, obj);
+			case T_Aggref:
+				_outAggref(str, obj);
 				break;
 			case T_SubLink:
 				_outSubLink(str, obj);

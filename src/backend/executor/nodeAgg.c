@@ -45,7 +45,7 @@ typedef struct AggFuncInfo
 	FmgrInfo	finalfn;
 } AggFuncInfo;
 
-static Datum aggGetAttr(TupleTableSlot *tuple, Aggreg *agg, bool *isNull);
+static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *agg, bool *isNull);
 
 
 /* ---------------------------------------
@@ -90,7 +90,7 @@ ExecAgg(Agg *node)
 {
 	AggState   *aggstate;
 	EState	   *estate;
-	Aggreg	  **aggregates;
+	Aggref	  **aggregates;
 	Plan	   *outerPlan;
 	int			i,
 				nagg;
@@ -133,7 +133,7 @@ ExecAgg(Agg *node)
 
 		nagg = length(node->aggs);
 
-		aggregates = (Aggreg **) palloc(sizeof(Aggreg *) * nagg);
+		aggregates = (Aggref **) palloc(sizeof(Aggref *) * nagg);
 
 		/* take List* and make it an array that can be quickly indexed */
 		alist = node->aggs;
@@ -163,7 +163,7 @@ ExecAgg(Agg *node)
 
 		for (i = 0; i < nagg; i++)
 		{
-			Aggreg	   *agg;
+			Aggref	   *agg;
 			char	   *aggname;
 			HeapTuple	aggTuple;
 			Form_pg_aggregate aggp;
@@ -628,7 +628,7 @@ ExecEndAgg(Agg *node)
  */
 static Datum
 aggGetAttr(TupleTableSlot *slot,
-		   Aggreg *agg,
+		   Aggref *agg,
 		   bool *isNull)
 {
 	Datum		result;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.14 1998/12/04 15:34:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.15 1999/01/24 00:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,8 +194,8 @@ pull_var_clause(Node *clause)
 			retval = nconc(retval,
 				 pull_var_clause(lfirst(((Expr *) lfirst(temp))->args)));
 	}
-	else if (IsA(clause, Aggreg))
-		retval = pull_var_clause(((Aggreg *) clause)->target);
+	else if (IsA(clause, Aggref))
+		retval = pull_var_clause(((Aggref *) clause)->target);
 	else if (IsA(clause, ArrayRef))
 	{
 		List	   *temp;

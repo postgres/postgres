@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.29 1999/01/21 16:08:48 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.30 1999/01/24 00:28:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,11 +54,11 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  bool *instead_flag);
 static bool rangeTableEntry_used(Node *node, int rt_index, int sublevels_up);
 static bool attribute_used(Node *node, int rt_index, int attno, int sublevels_up);
-static void modifyAggregUplevel(Node *node);
-static void modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up);
-static void modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr);
-static SubLink *modifyAggregMakeSublink(Expr *origexp, Query *parsetree);
-static void modifyAggregQual(Node **nodePtr, Query *parsetree);
+static void modifyAggrefUplevel(Node *node);
+static void modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up);
+static void modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr);
+static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
+static void modifyAggrefQual(Node **nodePtr, Query *parsetree);
 
 
 static Query *fireRIRrules(Query *parsetree);
@@ -160,9 +160,9 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				return rangeTableEntry_used(
 						(Node *)(agg->target),
@@ -396,9 +396,9 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				return attribute_used(
 						(Node *)(agg->target),
@@ -584,13 +584,13 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 
 
 /*
- * modifyAggregUplevel -
+ * modifyAggrefUplevel -
  *	In the newly created sublink for an aggregate column used in
  *	the qualification, we must adjust the varlevelsup in all the
  *	var nodes.
  */
 static void
-modifyAggregUplevel(Node *node)
+modifyAggrefUplevel(Node *node)
 {
 	if (node == NULL)
 		return;
@@ -600,16 +600,16 @@ modifyAggregUplevel(Node *node)
 			{
 				TargetEntry	*tle = (TargetEntry *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(tle->expr));
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(agg->target));
 			}
 			break;
@@ -618,7 +618,7 @@ modifyAggregUplevel(Node *node)
 			{
 				Expr	*exp = (Expr *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(exp->args));
 			}
 			break;
@@ -627,7 +627,7 @@ modifyAggregUplevel(Node *node)
 			{
 				Iter	*iter = (Iter *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(iter->iterexpr));
 			}
 			break;
@@ -636,13 +636,13 @@ modifyAggregUplevel(Node *node)
 			{
 				ArrayRef	*ref = (ArrayRef *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(ref->refupperindexpr));
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(ref->reflowerindexpr));
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(ref->refexpr));
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(ref->refassgnexpr));
 			}
 			break;
@@ -666,7 +666,7 @@ modifyAggregUplevel(Node *node)
 				List	*l;
 
 				foreach (l, (List *)node)
-					modifyAggregUplevel(
+					modifyAggrefUplevel(
 							(Node *)lfirst(l));
 			}
 			break;
@@ -675,13 +675,13 @@ modifyAggregUplevel(Node *node)
 			{
 				SubLink	*sub = (SubLink *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(sub->lefthand));
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(sub->oper));
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(sub->subselect));
 			}
 			break;
@@ -690,22 +690,22 @@ modifyAggregUplevel(Node *node)
 			{
 				Query	*qry = (Query *)node;
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(qry->targetList));
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(qry->qual));
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(qry->havingQual));
 
-				modifyAggregUplevel(
+				modifyAggrefUplevel(
 						(Node *)(qry->groupClause));
 			}
 			break;
 
 		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggregUplevel()", nodeTag(node));
+			elog(NOTICE, "unknown node tag %d in modifyAggrefUplevel()", nodeTag(node));
 			elog(NOTICE, "Node is: %s", nodeToString(node));
 			break;
 
@@ -715,13 +715,13 @@ modifyAggregUplevel(Node *node)
 
 
 /*
- * modifyAggregChangeVarnodes -
+ * modifyAggrefChangeVarnodes -
  *	Change the var nodes in a sublink created for an aggregate column
  *	used in the qualification that is subject of the aggregate
  *	function to point to the correct local RTE.
  */
 static void
-modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up)
+modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up)
 {
 	Node	*node = *nodePtr;
 
@@ -733,7 +733,7 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				TargetEntry	*tle = (TargetEntry *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(tle->expr)),
 						rt_index,
 						new_index,
@@ -741,11 +741,11 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(agg->target)),
 						rt_index,
 						new_index,
@@ -757,7 +757,7 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				GroupClause	*grp = (GroupClause *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(grp->entry)),
 						rt_index,
 						new_index,
@@ -769,7 +769,7 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				Expr	*exp = (Expr *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(exp->args)),
 						rt_index,
 						new_index,
@@ -781,7 +781,7 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				Iter	*iter = (Iter *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(iter->iterexpr)),
 						rt_index,
 						new_index,
@@ -793,22 +793,22 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				ArrayRef	*ref = (ArrayRef *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(ref->refupperindexpr)),
 						rt_index,
 						new_index,
 						sublevels_up);
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(ref->reflowerindexpr)),
 						rt_index,
 						new_index,
 						sublevels_up);
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(ref->refexpr)),
 						rt_index,
 						new_index,
 						sublevels_up);
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(ref->refassgnexpr)),
 						rt_index,
 						new_index,
@@ -843,7 +843,7 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 				List	*l;
 
 				foreach (l, (List *)node)
-					modifyAggregChangeVarnodes(
+					modifyAggrefChangeVarnodes(
 							(Node **)(&lfirst(l)),
 							rt_index,
 							new_index,
@@ -855,19 +855,19 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				SubLink	*sub = (SubLink *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(sub->lefthand)),
 						rt_index,
 						new_index,
 						sublevels_up);
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(sub->oper)),
 						rt_index,
 						new_index,
 						sublevels_up);
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(sub->subselect)),
 						rt_index,
 						new_index,
@@ -879,25 +879,25 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			{
 				Query	*qry = (Query *)node;
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(qry->targetList)),
 						rt_index,
 						new_index,
 						sublevels_up);
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(qry->qual)),
 						rt_index,
 						new_index,
 						sublevels_up);
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(qry->havingQual)),
 						rt_index,
 						new_index,
 						sublevels_up);
 
-				modifyAggregChangeVarnodes(
+				modifyAggrefChangeVarnodes(
 						(Node **)(&(qry->groupClause)),
 						rt_index,
 						new_index,
@@ -906,7 +906,7 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			break;
 
 		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggregChangeVarnodes()", nodeTag(node));
+			elog(NOTICE, "unknown node tag %d in modifyAggrefChangeVarnodes()", nodeTag(node));
 			elog(NOTICE, "Node is: %s", nodeToString(node));
 			break;
 
@@ -916,11 +916,11 @@ modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 
 
 /*
- * modifyAggregDropQual -
- *	remove the pure aggreg clase from a qualification
+ * modifyAggrefDropQual -
+ *	remove the pure aggref clase from a qualification
  */
 static void
-modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
+modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 {
 	Node	*node = *nodePtr;
 
@@ -931,12 +931,12 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 		case T_Var:
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
-				Aggreg	*oagg = (Aggreg *)orignode;
+				Aggref	*agg = (Aggref *)node;
+				Aggref	*oagg = (Aggref *)orignode;
 
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(agg->target)),
 						(Node *)(oagg->target),
 						expr);
@@ -973,7 +973,7 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 					*nodePtr = (Node *)ctrue;
 				}
 				else
-					modifyAggregDropQual(
+					modifyAggrefDropQual(
 						(Node **)(&(this_expr->args)),
 						(Node *)(orig_expr->args),
 						expr);
@@ -985,7 +985,7 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 				Iter	*iter = (Iter *)node;
 				Iter	*oiter = (Iter *)orignode;
 
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(iter->iterexpr)),
 						(Node *)(oiter->iterexpr),
 						expr);
@@ -997,19 +997,19 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 				ArrayRef	*ref = (ArrayRef *)node;
 				ArrayRef	*oref = (ArrayRef *)orignode;
 
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(ref->refupperindexpr)),
 						(Node *)(oref->refupperindexpr),
 						expr);
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(ref->reflowerindexpr)),
 						(Node *)(oref->reflowerindexpr),
 						expr);
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(ref->refexpr)),
 						(Node *)(oref->refexpr),
 						expr);
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(ref->refassgnexpr)),
 						(Node *)(oref->refassgnexpr),
 						expr);
@@ -1023,7 +1023,7 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 				int	li = 0;
 
 				foreach (l, (List *)node) {
-					modifyAggregDropQual(
+					modifyAggrefDropQual(
 							(Node **)(&(lfirst(l))),
 							(Node *)nth(li, ol),
 							expr);
@@ -1037,7 +1037,7 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 				SubLink	*sub = (SubLink *)node;
 				SubLink	*osub = (SubLink *)orignode;
 
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(sub->subselect)),
 						(Node *)(osub->subselect),
 						expr);
@@ -1049,12 +1049,12 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 				Query	*qry = (Query *)node;
 				Query	*oqry = (Query *)orignode;
 
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(qry->qual)),
 						(Node *)(oqry->qual),
 						expr);
 
-				modifyAggregDropQual(
+				modifyAggrefDropQual(
 						(Node **)(&(qry->havingQual)),
 						(Node *)(oqry->havingQual),
 						expr);
@@ -1062,7 +1062,7 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 			break;
 
 		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggregDropQual()", nodeTag(node));
+			elog(NOTICE, "unknown node tag %d in modifyAggrefDropQual()", nodeTag(node));
 			elog(NOTICE, "Node is: %s", nodeToString(node));
 			break;
 
@@ -1072,38 +1072,38 @@ modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 
 
 /*
- * modifyAggregMakeSublink -
+ * modifyAggrefMakeSublink -
  *	Create a sublink node for a qualification expression that
  *	uses an aggregate column of a view
  */
 static SubLink *
-modifyAggregMakeSublink(Expr *origexp, Query *parsetree)
+modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 {
 	SubLink		*sublink;
 	Query		*subquery;
 	Node		*subqual;
 	RangeTblEntry	*rte;
-	Aggreg		*aggreg;
+	Aggref		*aggref;
 	Var		*target;
 	TargetEntry	*tle;
 	Resdom		*resdom;
 	Expr		*exp = copyObject(origexp);
 
-	if (nodeTag(nth(0, exp->args)) == T_Aggreg)
+	if (nodeTag(nth(0, exp->args)) == T_Aggref)
 	{
-		if (nodeTag(nth(1, exp->args)) == T_Aggreg)
+		if (nodeTag(nth(1, exp->args)) == T_Aggref)
 			elog(ERROR, "rewrite: comparision of 2 aggregate columns not supported");
 		else
 			elog(ERROR, "rewrite: aggregate column of view must be at rigth side in qual");
 	}
 
-	aggreg = (Aggreg *)nth(1, exp->args);
-	target	= (Var *)(aggreg->target);
+	aggref = (Aggref *)nth(1, exp->args);
+	target	= (Var *)(aggref->target);
 	rte	= (RangeTblEntry *)nth(target->varno - 1, parsetree->rtable);
 	tle	= makeNode(TargetEntry);
 	resdom	= makeNode(Resdom);
 
-	aggreg->usenulls = TRUE;
+	aggref->usenulls = TRUE;
 
 	resdom->resno	= 1;
 	resdom->restype	= ((Oper *)(exp->oper))->opresulttype;
@@ -1114,10 +1114,10 @@ modifyAggregMakeSublink(Expr *origexp, Query *parsetree)
 	resdom->resjunk	= 0;
 
 	tle->resdom	= resdom;
-	tle->expr	= (Node *)aggreg;
+	tle->expr	= (Node *)aggref;
 
 	subqual = copyObject(parsetree->qual);
-	modifyAggregDropQual((Node **)&subqual, (Node *)parsetree->qual, origexp);
+	modifyAggrefDropQual((Node **)&subqual, (Node *)parsetree->qual, origexp);
 
 	sublink = makeNode(SubLink);
 	sublink->subLinkType	= EXPR_SUBLINK;
@@ -1148,13 +1148,13 @@ modifyAggregMakeSublink(Expr *origexp, Query *parsetree)
 	subquery->unionClause		= NULL;
 
 
-	modifyAggregUplevel((Node *)sublink);
+	modifyAggrefUplevel((Node *)sublink);
 
-	modifyAggregChangeVarnodes((Node **)&(sublink->lefthand), target->varno,
+	modifyAggrefChangeVarnodes((Node **)&(sublink->lefthand), target->varno,
 			1, target->varlevelsup);
-	modifyAggregChangeVarnodes((Node **)&(sublink->oper), target->varno,
+	modifyAggrefChangeVarnodes((Node **)&(sublink->oper), target->varno,
 			1, target->varlevelsup);
-	modifyAggregChangeVarnodes((Node **)&(sublink->subselect), target->varno,
+	modifyAggrefChangeVarnodes((Node **)&(sublink->subselect), target->varno,
 			1, target->varlevelsup);
 
 	return sublink;
@@ -1162,14 +1162,14 @@ modifyAggregMakeSublink(Expr *origexp, Query *parsetree)
 
 
 /*
- * modifyAggregQual -
+ * modifyAggrefQual -
  *	Search for qualification expressions that contain aggregate
  *	functions and substiture them by sublinks. These expressions
  *	originally come from qualifications that use aggregate columns
  *	of a view.
  */
 static void
-modifyAggregQual(Node **nodePtr, Query *parsetree)
+modifyAggrefQual(Node **nodePtr, Query *parsetree)
 {
 	Node	*node = *nodePtr;
 
@@ -1190,7 +1190,7 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 			{
 				GroupClause	*grp = (GroupClause *)node;
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(grp->entry)),
 						parsetree);
 			}
@@ -1203,22 +1203,22 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 
 
 				if (length(exp->args) != 2) {
-					modifyAggregQual(
+					modifyAggrefQual(
 						(Node **)(&(exp->args)),
 						parsetree);
 					break;
 				}
 
-				if (nodeTag(nth(0, exp->args)) != T_Aggreg &&
-					nodeTag(nth(1, exp->args)) != T_Aggreg) {
+				if (nodeTag(nth(0, exp->args)) != T_Aggref &&
+					nodeTag(nth(1, exp->args)) != T_Aggref) {
 
-					modifyAggregQual(
+					modifyAggrefQual(
 						(Node **)(&(exp->args)),
 						parsetree);
 					break;
 				}
 
-				sub = modifyAggregMakeSublink(exp,
+				sub = modifyAggrefMakeSublink(exp,
 						parsetree);
 
 				*nodePtr = (Node *)sub;
@@ -1231,11 +1231,11 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 				/* We're calling recursively,
 				 * and this routine knows how to handle lists
 				 * so let it do the work to handle the WHEN clauses... */
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(((CaseExpr *)node)->args)),
 						parsetree);
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(((CaseExpr *)node)->defresult)),
 						parsetree);
 			}
@@ -1243,11 +1243,11 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 
 		case T_CaseWhen:
 			{
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(((CaseWhen *)node)->expr)),
 						parsetree);
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(((CaseWhen *)node)->result)),
 						parsetree);
 			}
@@ -1257,7 +1257,7 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 			{
 				Iter	*iter = (Iter *)node;
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(iter->iterexpr)),
 						parsetree);
 			}
@@ -1267,16 +1267,16 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 			{
 				ArrayRef	*ref = (ArrayRef *)node;
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(ref->refupperindexpr)),
 						parsetree);
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(ref->reflowerindexpr)),
 						parsetree);
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(ref->refexpr)),
 						parsetree);
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(ref->refassgnexpr)),
 						parsetree);
 			}
@@ -1287,7 +1287,7 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 				List	*l;
 
 				foreach (l, (List *)node)
-					modifyAggregQual(
+					modifyAggrefQual(
 							(Node **)(&(lfirst(l))),
 							parsetree);
 			}
@@ -1297,7 +1297,7 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 			{
 				SubLink	*sub = (SubLink *)node;
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(sub->subselect)),
 						(Query *)(sub->subselect));
 			}
@@ -1307,18 +1307,18 @@ modifyAggregQual(Node **nodePtr, Query *parsetree)
 			{
 				Query	*qry = (Query *)node;
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(qry->qual)),
 						parsetree);
 
-				modifyAggregQual(
+				modifyAggrefQual(
 						(Node **)(&(qry->havingQual)),
 						parsetree);
 			}
 			break;
 
 		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggregQual()", nodeTag(node));
+			elog(NOTICE, "unknown node tag %d in modifyAggrefQual()", nodeTag(node));
 			elog(NOTICE, "Node is: %s", nodeToString(node));
 			break;
 
@@ -1376,9 +1376,9 @@ apply_RIR_adjust_sublevel(Node *node, int sublevels_up)
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				apply_RIR_adjust_sublevel(
 						(Node *)(agg->target),
@@ -1525,9 +1525,9 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				apply_RIR_view(
 						(Node **)(&(agg->target)),
@@ -1924,9 +1924,9 @@ fireRIRonSubselect(Node *node)
 			}
 			break;
 
-		case T_Aggreg:
+		case T_Aggref:
 			{
-				Aggreg	*agg = (Aggreg *)node;
+				Aggref	*agg = (Aggref *)node;
 
 				fireRIRonSubselect(
 						(Node *)(agg->target));
@@ -2143,7 +2143,7 @@ fireRIRrules(Query *parsetree)
 	}
 
 	fireRIRonSubselect((Node *) parsetree);
-	modifyAggregQual((Node **) &(parsetree->qual), parsetree);
+	modifyAggrefQual((Node **) &(parsetree->qual), parsetree);
 
 	return parsetree;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.32 1998/12/13 23:56:44 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.33 1999/01/24 00:28:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,8 +872,8 @@ FigureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{
-		case T_Aggreg:
-			return (char *) ((Aggreg *) expr)->aggname;
+		case T_Aggref:
+			return (char *) ((Aggref *) expr)->aggname;
 		case T_Expr:
 			if (((Expr *) expr)->opType == FUNC_EXPR)
 			{

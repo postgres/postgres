@@ -282,8 +282,8 @@ _finalize_primnode(void *expr, List **subplan)
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
 			 not_clause(expr) || is_funcclause(expr))
 		return _finalize_primnode(((Expr *) expr)->args, subplan);
-	else if (IsA(expr, Aggreg))
-		return _finalize_primnode(((Aggreg *) expr)->target, subplan);
+	else if (IsA(expr, Aggref))
+		return _finalize_primnode(((Aggref *) expr)->target, subplan);
 	else if (IsA(expr, ArrayRef))
 	{
 		result = _finalize_primnode(((ArrayRef *) expr)->refupperindexpr, subplan);
@@ -349,9 +349,9 @@ SS_replace_correlation_vars(Node *expr)
 			 not_clause(expr) || is_funcclause(expr))
 		((Expr *) expr)->args = (List *)
 			SS_replace_correlation_vars((Node *) ((Expr *) expr)->args);
-	else if (IsA(expr, Aggreg))
-		((Aggreg *) expr)->target =
-			SS_replace_correlation_vars((Node *) ((Aggreg *) expr)->target);
+	else if (IsA(expr, Aggref))
+		((Aggref *) expr)->target =
+			SS_replace_correlation_vars((Node *) ((Aggref *) expr)->target);
 	else if (IsA(expr, ArrayRef))
 	{
 		((ArrayRef *) expr)->refupperindexpr = (List *)
@@ -530,8 +530,8 @@ SS_pull_subplan(void *expr)
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
 			 not_clause(expr) || is_funcclause(expr))
 		return SS_pull_subplan(((Expr *) expr)->args);
-	else if (IsA(expr, Aggreg))
-		return SS_pull_subplan(((Aggreg *) expr)->target);
+	else if (IsA(expr, Aggref))
+		return SS_pull_subplan(((Aggref *) expr)->target);
 	else if (IsA(expr, ArrayRef))
 	{
 		result = SS_pull_subplan(((ArrayRef *) expr)->refupperindexpr);

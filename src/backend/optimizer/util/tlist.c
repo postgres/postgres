@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.21 1998/12/04 15:34:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.22 1999/01/24 00:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,7 +483,7 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 
 		return ((Node *) make_funcclause((Func *) expr->oper, temp_result));
 	}
-	else if (IsA(tlistentry, Aggreg))
+	else if (IsA(tlistentry, Aggref))
 	{
 		return tlistentry;
 	}

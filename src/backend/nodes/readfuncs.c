@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.42 1999/01/21 16:08:37 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.43 1999/01/24 00:28:20 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1161,19 +1161,19 @@ _readParam()
 }
 
 /* ----------------
- *		_readAggreg
+ *		_readAggref
  *
- *	Aggreg is a subclass of Node
+ *	Aggref is a subclass of Node
  * ----------------
  */
-static Aggreg *
-_readAggreg()
+static Aggref *
+_readAggref()
 {
-	Aggreg	   *local_node;
+	Aggref	   *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(Aggreg);
+	local_node = makeNode(Aggref);
 
 	token = lsptok(NULL, &length);		/* eat :aggname */
 	token = lsptok(NULL, &length);		/* get aggname */
@@ -2040,7 +2040,7 @@ parsePlanString(void)
 	else if (!strncmp(token, "SORT", length))
 		return_value = _readSort();
 	else if (!strncmp(token, "AGGREG", length))
-		return_value = _readAggreg();
+		return_value = _readAggref();
 	else if (!strncmp(token, "SUBLINK", length))
 		return_value = _readSubLink();
 	else if (!strncmp(token, "AGG", length))
