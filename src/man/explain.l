@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.5 1997/06/12 23:45:54 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.6 1998/01/07 15:32:47 momjian Exp $
 .TH EXPLAIN SQL 06/12/97 PostgreSQL PostgreSQL
 .SH NAME
 explain \(em explains statement execution details
@@ -29,16 +29,16 @@ EXPLAIN
 tgl=> explain verbose select sum(a) from test;
 NOTICE:QUERY PLAN:
 
-{AGG :cost 0 :size 0 :width 0 :state nil :qptargetlist
+{AGG :cost 0 :size 0 :width 0 :state "" :qptargetlist
  ({TLE :resdom {RESDOM :resno 1 :restype 700 :reslen 4 :resname "sum"
    :reskey 0 :reskeyop 0 :resjunk 0}
   :expr {AGGREG :aggname "sum" :basetype 700 :aggtype 700 :aggno 0
  :target {VAR :varno 1 :varattno 1 :vartype 700 :varnoold 1 :varoattno 1}}})
- :qpqual nil :lefttree {SEQSCAN :cost 0 :size 0 :width 4 :state nil
+ :qpqual "" :lefttree {SEQSCAN :cost 0 :size 0 :width 4 :state ""
   :qptargetlist ({TLE :resdom {RESDOM :resno 1 :restype 700 :reslen 4
    :resname "null" :reskey 0 :reskeyop 0 :resjunk 0}
   :expr {VAR :varno 1 :varattno 1 :vartype 700 :varnoold 1 :varoattno 1}})
- :qpqual nil :lefttree nil :righttree nil :scanrelid 1} :righttree nil :numagg 1 }
+ :qpqual "" :lefttree "" :righttree "" :scanrelid 1} :righttree "" :numagg 1 }
 
 Aggregate  (cost=0.00 size=0 width=0)
   ->   Seq Scan on test  (cost=0.00 size=0 width=4)

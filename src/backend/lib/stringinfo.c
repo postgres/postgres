@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.7 1998/01/06 18:52:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.8 1998/01/07 15:32:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ appendStringInfo(StringInfo str, char *buffer)
 
 	Assert(str != NULL);
 	if (buffer == NULL)
-		buffer = "\"\"";
+		buffer = "<>";
 
 	/*
 	 * do we have enough space to append the new string? (don't forget to

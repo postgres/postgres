@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.19 1998/01/07 05:54:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.20 1998/01/07 15:32:25 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -282,7 +282,7 @@ _outPlanInfo(StringInfo str, Plan *node)
 	sprintf(buf, " :width %d ", node->plan_width);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :state ");
-	appendStringInfo(str,  node->state ? "not-NULL" : "\"\"");
+	appendStringInfo(str,  node->state ? "not-NULL" : "<>");
 	appendStringInfo(str, " :qptargetlist ");
 	_outNode(str, node->targetlist);
 	appendStringInfo(str, " :qpqual ");
@@ -727,7 +727,7 @@ _outConst(StringInfo str, Const *node)
 	appendStringInfo(str, " :constvalue ");
 	if (node->constisnull)
 	{
-		appendStringInfo(str, "\"\"");
+		appendStringInfo(str, "<>");
 	}
 	else
 	{
@@ -1538,7 +1538,7 @@ _outNode(StringInfo str, void *obj)
 {
 	if (obj == NULL)
 	{
-		appendStringInfo(str, "\"\"");
+		appendStringInfo(str, "<>");
 		return;
 	}
 
