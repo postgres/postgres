@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.1 2000/08/28 11:53:13 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.2 2000/10/26 16:28:00 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -22,7 +22,7 @@ else
     for pgac_prog in flex lex; do
       pgac_candidate="$pgac_dir/$pgac_prog"
       if test -f "$pgac_candidate" \
-        && $pgac_candidate --version >/dev/null 2>&1
+        && $pgac_candidate --version </dev/null >/dev/null 2>&1
       then
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
