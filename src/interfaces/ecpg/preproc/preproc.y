@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.298 2004/10/18 13:36:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.299 2004/11/01 13:17:12 davec Exp $ */
 
 /* Copyright comment */
 %{
@@ -208,10 +208,16 @@ static char *
 adjust_informix(struct arguments *list)
 {
 	/* Informix accepts DECLARE with variables that are out of scope when OPEN is called.
+     * for instance you can declare variables in a function, and then subsequently use them
+     * { 
+     *      declare_vars();
+     *      exec sql ... which uses vars declared in the above function
+     *
 	 * This breaks standard and leads to some very dangerous programming. 
 	 * Since they do, we have to work around and accept their syntax as well.
 	 * But we will do so ONLY in Informix mode.
-	 * We have to change the variables to our own struct and just store the pointer instead of the variable */
+	 * We have to change the variables to our own struct and just store the pointer instead of the variable 
+    */
 
 	 struct arguments *ptr;
 	 char *result = make_str("");
@@ -2100,7 +2106,7 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_
 
 RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list opt_drop_behavior
 			{
-			  $$ = cat_str(9, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7, $8);
+			  $$ = cat_str(8, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7, $8);
 			}
 			  
 		;
