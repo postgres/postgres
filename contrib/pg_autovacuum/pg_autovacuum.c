@@ -3,13 +3,25 @@
  * (c) 2003 Matthew T. O'Connor
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
+ *
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.22 2004/10/16 21:50:02 tgl Exp $
  */
+
+#include "postgres_fe.h"
+
+#include <unistd.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
+#include <time.h>
+#include <sys/time.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #include "pg_autovacuum.h"
 
 #ifdef WIN32
-#include <windows.h>
-
 unsigned int sleep();
 
 SERVICE_STATUS ServiceStatus;
@@ -17,8 +29,62 @@ SERVICE_STATUS_HANDLE hStatus;
 int			appMode = 0;
 #endif
 
-FILE	   *LOGOUTPUT;
-char		logbuffer[4096];
+/* define atooid */
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
+
+static cmd_args *args;
+static FILE	   *LOGOUTPUT;
+static char		logbuffer[4096];
+
+
+/* The main program loop function */
+static int	VacuumLoop(int argc, char **argv);
+
+/* Functions for dealing with command line arguements */
+static cmd_args *get_cmd_args(int argc, char *argv[]);
+static void print_cmd_args(void);
+static void free_cmd_args(void);
+static void usage(void);
+
+/* Functions for managing database lists */
+static Dllist *init_db_list(void);
+static db_info *init_dbinfo(char *dbname, Oid oid, long age);
+static void update_db_list(Dllist *db_list);
+static void remove_db_from_list(Dlelem *db_to_remove);
+static void print_db_info(db_info * dbi, int print_table_list);
+static void print_db_list(Dllist *db_list, int print_table_lists);
+static int	xid_wraparound_check(db_info * dbi);
+static void free_db_list(Dllist *db_list);
+
+/* Functions for managing table lists */
+static tbl_info *init_table_info(PGresult *conn, int row, db_info * dbi);
+static void update_table_list(db_info * dbi);
+static void remove_table_from_list(Dlelem *tbl_to_remove);
+static void print_table_list(Dllist *tbl_node);
+static void print_table_info(tbl_info * tbl);
+static void update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type);
+static void free_tbl_list(Dllist *tbl_list);
+
+/* A few database helper functions */
+static int	check_stats_enabled(db_info * dbi);
+static PGconn *db_connect(db_info * dbi);
+static void db_disconnect(db_info * dbi);
+static PGresult *send_query(const char *query, db_info * dbi);
+
+/* Other Generally needed Functions */
+#ifndef WIN32
+static void daemonize(void);
+#endif
+static void log_entry(const char *logentry, int level);
+
+#ifdef WIN32
+/* Windows Service related functions */
+static void ControlHandler(DWORD request);
+static int	InstallService();
+static int	RemoveService();
+#endif
+
 
 static void
 log_entry(const char *logentry, int level)
