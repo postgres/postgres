@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.110 2004/07/31 20:55:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.111 2004/07/31 23:04:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -795,27 +795,45 @@ copy_rec(PLpgSQL_rec * rec)
 
 
 static bool
-exception_matches_label(ErrorData *edata, const char *label)
+exception_matches_conditions(ErrorData *edata, PLpgSQL_condition *cond)
 {
-	int			i;
+	for (; cond != NULL; cond = cond->next)
+	{
+		const char *condname = cond->condname;
+		int			i;
 
-	/*
-	 * OTHERS matches everything *except* query-canceled;
-	 * if you're foolish enough, you can match that explicitly.
-	 */
-	if (pg_strcasecmp(label, "OTHERS") == 0)
-	{
-		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
-			return false;
-		else
-			return true;
+		/*
+		 * OTHERS matches everything *except* query-canceled;
+		 * if you're foolish enough, you can match that explicitly.
+		 */
+		if (pg_strcasecmp(condname, "OTHERS") == 0)
+		{
+			if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
+				return false;
+			else
+				return true;
+		}
+		for (i = 0; exception_label_map[i].label != NULL; i++)
+		{
+			if (pg_strcasecmp(condname, exception_label_map[i].label) == 0)
+			{
+				int labelerrcode = exception_label_map[i].sqlerrstate;
+
+				/* Exact match? */
+				if (edata->sqlerrcode == labelerrcode)
+					return true;
+				/* Category match? */
+				if (ERRCODE_IS_CATEGORY(labelerrcode) &&
+					ERRCODE_TO_CATEGORY(edata->sqlerrcode) == labelerrcode)
+					return true;
+				/*
+				 * You would think we should "break" here, but there are some
+				 * duplicate names in the table, so keep looking.
+				 */
+			}
+		}
+		/* Should we raise an error if condname is unrecognized?? */
 	}
-	for (i = 0; exception_label_map[i].label != NULL; i++)
-	{
-		if (pg_strcasecmp(label, exception_label_map[i].label) == 0)
-			return (edata->sqlerrcode == exception_label_map[i].sqlerrstate);
-	}
-	/* Should we raise an error if label is unrecognized?? */
 	return false;
 }
 
@@ -944,7 +962,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 			{
 				PLpgSQL_exception *exception = exceptions->exceptions[j];
 
-				if (exception_matches_label(edata, exception->label))
+				if (exception_matches_conditions(edata, exception->conditions))
 				{
 					rc = exec_stmts(estate, exception->action);
 					break;

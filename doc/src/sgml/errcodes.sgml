@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.6 2004/05/16 23:18:52 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.7 2004/07/31 23:04:54 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -41,10 +41,18 @@
   within the class but do not have any more-specific code assigned.
  </para>
 
+ <para>
+  The <application>PL/pgSQL</> condition name for each error code is the
+  same as the phrase shown in the table, with underscores substituted
+  for spaces.  For example, code <literal>22012</>, DIVISION BY ZERO,
+  has condition name <literal>DIVISION_BY_ZERO</>.  Condition names can
+  be written in either upper or lower case.
+ </para>
+
 
 <!--
  The following table should correspond to the contents of
- src/include/utils/errcodes.h.
+ src/include/utils/errcodes.h and src/pl/plpgsql/src/plerrcodes.h.
 -->
 
 <table id="errcodes-table">
@@ -82,27 +90,37 @@
 
 <row>
 <entry><literal>0100C</literal></entry>
-<entry>WARNING DYNAMIC RESULT SETS RETURNED</entry>
+<entry>DYNAMIC RESULT SETS RETURNED</entry>
 </row>
 
 <row>
 <entry><literal>01008</literal></entry>
-<entry>WARNING IMPLICIT ZERO BIT PADDING</entry>
+<entry>IMPLICIT ZERO BIT PADDING</entry>
 </row>
 
 <row>
 <entry><literal>01003</literal></entry>
-<entry>WARNING NULL VALUE ELIMINATED IN SET FUNCTION</entry>
+<entry>NULL VALUE ELIMINATED IN SET FUNCTION</entry>
+</row>
+
+<row>
+<entry><literal>01007</literal></entry>
+<entry>PRIVILEGE NOT GRANTED</entry>
+</row>
+
+<row>
+<entry><literal>01006</literal></entry>
+<entry>PRIVILEGE NOT REVOKED</entry>
 </row>
 
 <row>
 <entry><literal>01004</literal></entry>
-<entry>WARNING STRING DATA RIGHT TRUNCATION</entry>
+<entry>STRING DATA RIGHT TRUNCATION</entry>
 </row>
 
 <row>
 <entry><literal>01P01</literal></entry>
-<entry>WARNING DEPRECATED FEATURE</entry>
+<entry>DEPRECATED FEATURE</entry>
 </row>
 
 <row>
@@ -218,7 +236,7 @@
 
 <row>
 <entry><literal>0F001</literal></entry>
-<entry>INVALID SPECIFICATION</entry>
+<entry>INVALID LOCATOR SPECIFICATION</entry>
 </row>
 
 
@@ -272,7 +290,7 @@
 
 <row>
 <entry><literal>2202E</literal></entry>
-<entry>ARRAY ELEMENT ERROR</entry>
+<entry>ARRAY SUBSCRIPT ERROR</entry>
 </row>
 
 <row>
@@ -729,6 +747,22 @@
 
 
 <row>
+<entry>Class 3B</entry>
+<entry>Savepoint Exception</entry>
+</row>
+
+<row>
+<entry><literal>3B000</literal></entry>
+<entry>SAVEPOINT EXCEPTION</entry>
+</row>
+
+<row>
+<entry><literal>3B001</literal></entry>
+<entry>INVALID SAVEPOINT SPECIFICATION</entry>
+</row>
+
+
+<row>
 <entry>Class 3D</entry>
 <entry>Invalid Catalog Name</entry>
 </row>
@@ -762,7 +796,7 @@
 
 <row>
 <entry><literal>40002</literal></entry>
-<entry>INTEGRITY CONSTRAINT VIOLATION</entry>
+<entry>TRANSACTION INTEGRITY CONSTRAINT VIOLATION</entry>
 </row>
 
 <row>
@@ -893,7 +927,7 @@
 
 <row>
 <entry><literal>42P05</literal></entry>
-<entry>DUPLICATE PSTATEMENT</entry>
+<entry>DUPLICATE PREPARED STATEMENT</entry>
 </row>
 
 <row>
@@ -963,7 +997,7 @@
 
 <row>
 <entry><literal>42P14</literal></entry>
-<entry>INVALID PSTATEMENT DEFINITION</entry>
+<entry>INVALID PREPARED STATEMENT DEFINITION</entry>
 </row>
 
 <row>
@@ -1131,6 +1165,22 @@
 <row>
 <entry><literal>F0001</literal></entry>
 <entry>LOCK FILE EXISTS</entry>
+</row>
+
+
+<row>
+<entry>Class P0</entry>
+<entry><application>PL/pgSQL</> Error</entry>
+</row>
+
+<row>
+<entry><literal>P0000</literal></entry>
+<entry>PLPGSQL ERROR</entry>
+</row>
+
+<row>
+<entry><literal>P0001</literal></entry>
+<entry>RAISE EXCEPTION</entry>
 </row>
 
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.42 2004/07/31 07:39:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.43 2004/07/31 23:04:54 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1816,12 +1816,11 @@ END LOOP;
 BEGIN
     <replaceable>statements</replaceable>
 EXCEPTION
-    WHEN <replaceable>condition</replaceable> THEN
+    WHEN <replaceable>condition</replaceable> <optional> OR <replaceable>condition</replaceable> ... </optional> THEN
         <replaceable>handler_statements</replaceable>
-    <optional> WHEN <replaceable>condition</replaceable> THEN
-                   <replaceable>handler_statements</replaceable>
-    ...
-    </optional>
+    <optional> WHEN <replaceable>condition</replaceable> <optional> OR <replaceable>condition</replaceable> ... </optional> THEN
+          <replaceable>handler_statements</replaceable>
+    ... </optional>
 END;
 </synopsis>
     </para>
@@ -1841,10 +1840,18 @@ END;
      as though the <literal>EXCEPTION</> clause were not there at all:
      the error can be caught by an enclosing block with
      <literal>EXCEPTION</>, or if there is none it aborts processing
-     of the function.  The special condition name <literal>OTHERS</>
+     of the function.
+    </para>
+
+    <para>
+     The <replaceable>condition</replaceable> names can be any of those
+     shown in <xref linkend="errcodes-appendix">.  A category name matches
+     any error within its category.
+     The special condition name <literal>OTHERS</>
      matches every error type except <literal>QUERY_CANCELED</>.
-     (It is possible, but usually not a good idea, to trap
+     (It is possible, but often unwise, to trap
      <literal>QUERY_CANCELED</> by name.)
+     Condition names are not case-sensitive.
     </para>
 
     <para>
@@ -1879,9 +1886,9 @@ END;
      the <literal>EXCEPTION</> clause.  The value returned in the
      <command>RETURN</> statement will be the incremented value of
      <literal>x</>, but the effects of the <command>UPDATE</> command will
-     have been rolled back.  The <command>INSERT</> command is not rolled
-     back, however, so the end result is that the database contains
-     <literal>Tom Jones</> not <literal>Joe Jones</>.
+     have been rolled back.  The <command>INSERT</> command preceding the
+     block is not rolled back, however, so the end result is that the database
+     contains <literal>Tom Jones</> not <literal>Joe Jones</>.
     </para>
 
     <tip>

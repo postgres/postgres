@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.48 2004/07/31 07:39:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.49 2004/07/31 23:04:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -322,10 +322,16 @@ typedef struct
 }	PLpgSQL_stmts;
 
 
+typedef struct PLpgSQL_condition
+{								/* One EXCEPTION condition name */
+	char	   *condname;
+	struct PLpgSQL_condition *next;
+}	PLpgSQL_condition;
+
 typedef struct
 {								/* One EXCEPTION ... WHEN clause */
 	int			lineno;
-	char	   *label;
+	PLpgSQL_condition *conditions;
 	PLpgSQL_stmts *action;
 }	PLpgSQL_exception;
 

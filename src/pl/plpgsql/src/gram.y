@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.58 2004/07/31 07:39:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.59 2004/07/31 23:04:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -96,6 +96,7 @@ static	void check_assignable(PLpgSQL_datum *datum);
 		PLpgSQL_stmt			*stmt;
 		PLpgSQL_stmts			*stmts;
 		PLpgSQL_stmt_block		*program;
+		PLpgSQL_condition		*condition;
 		PLpgSQL_exception		*exception;
 		PLpgSQL_exceptions		*exceptions;
 		PLpgSQL_nsitem			*nsitem;
@@ -135,6 +136,7 @@ static	void check_assignable(PLpgSQL_datum *datum);
 
 %type <exceptions>	exception_sect proc_exceptions
 %type <exception>	proc_exception
+%type <condition>	proc_conditions
 
 %type <intlist>	raise_params
 %type <ival>	raise_level raise_param
@@ -181,6 +183,7 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %token	K_NOTICE
 %token	K_NULL
 %token	K_OPEN
+%token	K_OR
 %token	K_PERFORM
 %token	K_ROW_COUNT
 %token	K_RAISE
@@ -1563,19 +1566,50 @@ proc_exceptions	: proc_exceptions proc_exception
 						}
 				;
 
-proc_exception	: K_WHEN lno opt_lblname K_THEN proc_sect
+proc_exception	: K_WHEN lno proc_conditions K_THEN proc_sect
 					{
 						PLpgSQL_exception *new;
 
 						new = malloc(sizeof(PLpgSQL_exception));
 						memset(new, 0, sizeof(PLpgSQL_exception));
 
-						new->lineno   = $2;
-						new->label	  = $3;
-						new->action	  = $5;
+						new->lineno     = $2;
+						new->conditions = $3;
+						new->action	    = $5;
 
 						$$ = new;
 					}
+				;
+
+proc_conditions	: proc_conditions K_OR opt_lblname
+						{
+								PLpgSQL_condition	*new;
+								PLpgSQL_condition	*old;
+
+								new = malloc(sizeof(PLpgSQL_condition));
+								memset(new, 0, sizeof(PLpgSQL_condition));
+
+								new->condname = $3;
+								new->next = NULL;
+
+								for (old = $1; old->next != NULL; old = old->next)
+									/* skip */ ;
+								old->next = new;
+
+								$$ = $1;
+						}
+				| opt_lblname
+						{
+								PLpgSQL_condition	*new;
+
+								new = malloc(sizeof(PLpgSQL_condition));
+								memset(new, 0, sizeof(PLpgSQL_condition));
+
+								new->condname = $1;
+								new->next = NULL;
+
+								$$ = new;
+						}
 				;
 
 expr_until_semi :

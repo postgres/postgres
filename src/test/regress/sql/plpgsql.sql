@@ -1615,7 +1615,7 @@ drop table perform_test;
 
 create function trap_zero_divide(int) returns int as $$
 declare x int;
-declare sx smallint;
+	sx smallint;
 begin
 	begin	-- start a subtransaction
 		raise notice 'should see this';
@@ -1641,3 +1641,61 @@ select trap_zero_divide(50);
 select trap_zero_divide(0);
 select trap_zero_divide(100000);
 select trap_zero_divide(-100);
+
+create function trap_matching_test(int) returns int as $$
+declare x int;
+	sx smallint;
+	y int;
+begin
+	begin	-- start a subtransaction
+		x := 100 / $1;
+		sx := $1;
+		select into y unique1 from tenk1 where unique2 =
+			(select unique2 from tenk1 b where ten = $1);
+	exception
+		when data_exception then  -- category match
+			raise notice 'caught data_exception';
+			x := -1;
+		when NUMERIC_VALUE_OUT_OF_RANGE OR CARDINALITY_VIOLATION then
+			raise notice 'caught numeric_value_out_of_range or cardinality_violation';
+			x := -2;
+	end;
+	return x;
+end$$ language plpgsql;
+
+select trap_matching_test(50);
+select trap_matching_test(0);
+select trap_matching_test(100000);
+select trap_matching_test(1);
+
+create temp table foo (f1 int);
+
+create function blockme() returns int as $$
+declare x int;
+begin
+  x := 1;
+  insert into foo values(x);
+  begin
+    x := x + 1;
+    insert into foo values(x);
+    -- we assume this will take longer than 1 second:
+    select count(*) into x from tenk1 a, tenk1 b, tenk1 c;
+  exception
+    when others then
+      raise notice 'caught others?';
+      return -1;
+    when query_canceled then
+      raise notice 'nyeah nyeah, can''t stop me';
+      x := x * 10;
+  end;
+  insert into foo values(x);
+  return x;
+end$$ language plpgsql;
+
+set statement_timeout to 1000;
+
+select blockme();
+
+reset statement_timeout;
+
+select * from foo;
