@@ -6,13 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.10 1997/11/02 15:26:48 vadim Exp $
+ * $Id: xact.h,v 1.11 1997/11/07 18:39:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XACT_H
 #define XACT_H
 
+#include <access/transam.h>
 #include <utils/nabstime.h>
 
 /* ----------------
