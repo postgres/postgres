@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.25 2003/09/15 03:21:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.26 2003/09/15 03:32:24 tgl Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-UNLISTEN">
  <refmeta>
-  <refentrytitle>UNLISTEN</refentrytitle>
+  <refentrytitle id="SQL-UNLISTEN-TITLE">UNLISTEN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
