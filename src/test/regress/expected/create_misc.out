@@ -151,3 +151,13 @@ SELECT * FROM serialTest;
  force | 100
 (3 rows)
 
+CREATE SEQUENCE sequence_test;
+BEGIN;
+SELECT nextval('sequence_test');
+ nextval 
+---------
+       1
+(1 row)
+
+DROP SEQUENCE sequence_test;
+END;

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.87 2002/06/25 17:58:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.88 2002/06/26 21:58:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,11 +154,11 @@ cost_seqscan(Path *path, Query *root,
  *
  * Given a guesstimated cache size, we estimate the actual I/O cost per page
  * with the entirely ad-hoc equations:
- *	for rel_size <= effective_cache_size:
- *		1 + (random_page_cost/2-1) * (rel_size/effective_cache_size) ** 2
- *	for rel_size >= effective_cache_size:
- *		random_page_cost * (1 - (effective_cache_size/rel_size)/2)
- * These give the right asymptotic behavior (=> 1.0 as rel_size becomes
+ *	if relpages >= effective_cache_size:
+ *		random_page_cost * (1 - (effective_cache_size/relpages)/2)
+ *	if relpages < effective_cache_size:
+ *		1 + (random_page_cost/2-1) * (relpages/effective_cache_size) ** 2
+ * These give the right asymptotic behavior (=> 1.0 as relpages becomes
  * small, => random_page_cost as it becomes large) and meet in the middle
  * with the estimate that the cache is about 50% effective for a relation
  * of the same size as effective_cache_size.  (XXX this is probably all
