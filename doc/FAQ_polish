@@ -165,7 +165,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2002, PostgreSQL Global Development Group
+   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
@@ -747,8 +747,7 @@
    DROP COLUMN. We wczesniejszych wersjach mozesz zrobic tak:
          BEGIN;
          LOCAL TABLE old_table;
-    SELECT ...  -- wybierz wszystkie kolumny poza ta jedna której chcesz sie po
-zbyc
+    SELECT ...  -- wybierz wszystkie kolumny poza ta jedna której chcesz sie pozbyc
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
@@ -770,8 +769,7 @@ zbyc
     Maksymalny rozmiar dla rzedu?            1.6 TB
     Maksymalny rozmiar pola?                 1 GB
     Maksymalna liczba rzedów w tabeli?       nieograniczona
-    Maksymalna liczba kolumn w tabeli?       250-1600 w zalezonosci od typów ko
-lumn
+    Maksymalna liczba kolumn w tabeli?       250-1600 w zalezonosci od typów kolumn
     Makasymalna liczba indeksów na tabeli?   nieograniczona
 
    Oczywiscie "nieograniczony" nie jest prawda tak do konca, istnieja
@@ -807,8 +805,7 @@ lumn
         Strona danych w PostgreSQL zajmuje 8192 bajtów (8 KB), wiec:
 
    8192 bajtów na strone
-   ---------------------   =  128 rzedów na jedna strone w bazie (zaokraglone w
- dól/)
+   ---------------------   =  128 rzedów na jedna strone w bazie (zaokraglone w dól/)
      64 bajtów na rzad
 
    100000 rzedów danych
@@ -858,6 +855,7 @@ lumn
    zl/aczen (join). Sekwencyjne przeszukiwanie po którym nastepuje
    sortowanie jest zazwyczaj szybsze nie wyszukiwanie za pomoca indeksu
    na duzej tabeli.
+   
    Jakkolwiek LIMIT w pol/aczeniu z ORDER BY czesto bedzie wykorzystywal/
    indeksy poniewaz jedynie mal/a czesc z tabeli jest zwracana. W
    rzeczywistosci, chociaz MAX() i MIN() nie uzywaja indeksów, mozliwe
@@ -952,13 +950,10 @@ lumn
     
 Type            Nazwa wewnetrzna   Uwagi
 --------------------------------------------------
-VARCHAR(n)      varchar            rozmiar okresla maksymalna dl/ugosc, nie ma
-tutaj wypel/niania
-CHAR(n)         bpchar             wypel/niane pustymi znakami do podanej dl/ug
-osci
+VARCHAR(n)      varchar            rozmiar okresla maksymalna dl/ugosc, nie matutaj wypel/niania
+CHAR(n)         bpchar             wypel/niane pustymi znakami do podanej dl/ugosci
 TEXT            text               bez limitu na dl/ugosc l/ancucha
-BYTEA           bytea              zmiennej dl/ugosci tablica bajtów (null-byte
- safe)
+BYTEA           bytea              zmiennej dl/ugosci tablica bajtów (null-byte safe)
 "char"          char                      1 znak
 
    Jesli bedziesz przegladac katalogi systemowe lub komunikaty o bl/edach
@@ -970,6 +965,7 @@ BYTEA           bytea              zmiennej dl/ugosci tablica bajtów (null-byte
    zadeklarowany rozmiar. Te typy takze podlegaja kompresji lub moga byc
    przechowywane out-of-line jako TOAST, wiec faktyczne zuzycie miejsca
    na dysku moze byc mniejsze niz oczekiwane.
+   
    VARCHAR(n) jest najodpowiedniejszy do przechowywania l/ancuchów o
    róznej dl/ugosci ale okresla on maksymalna jego dl/ugosc. TEXT jest
    najlepszy dla l/ancuchów o dowolnej dl/ugosci, nie przekraczajacej
@@ -1229,13 +1225,14 @@ SELECT *
    
     4.27) Jakie sa mozliwosci replikacji w PostgreSQL?
     
-    Jest kilka opcji aby stosowac replikacje typu master/slave. Ten typ pozwala
-    jedynie masterowi na dokonywanie zmian w bazie danych, a slave moze jedynie
-    te zmiany odczytywac. Na stronie
-    http://gborg.PostgreSQL.org/genpage?replication_research znajduje sie ich
-    lista. Replikacja typu multi-master jest w trakcie prac, opis projektu
-    znajduje sie pod adresem:
-    http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
+   Jest kilka opcji aby stosowac replikacje typu master/slave. Ten typ
+   pozwala jedynie masterowi na dokonywanie zmian w bazie danych, a slave
+   moze jedynie te zmiany odczytywac. Na stronie
+   http://gborg.PostgreSQL.org/genpage?replication_research znajduje sie
+   ich lista. Replikacja typu multi-master jest w trakcie prac, opis
+   projektu znajduje sie pod adresem:
+   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
+   
     4.28) Jakie mozliwosci szyfrowania oferuje PostgreSQL?
     
      * contrib/pgcrypto zawiera wiele funkcji za pomoca, których mozemy
@@ -1257,22 +1254,26 @@ SELECT *
     5.1) Napisal/em wl/asna funkcje. Kiedy uzyje jej w psql, program zrzuca
     pamiec (dump core)?
     
-    Problem moze byc spowodowany przez bardzo wiele rzeczy. Spróbuj najpierw
-    przetestowac Twoja funkcje w samodzielnie dzial/ajacym programie.
+   Problem moze byc spowodowany przez bardzo wiele rzeczy. Spróbuj
+   najpierw przetestowac Twoja funkcje w samodzielnie dzial/ajacym
+   programie.
+   
     5.2) Jak moge dodac/zgl/osic nowe typy czy funkcje do PostgreSQL?
     
-    Wyslij Twoje propozycje na liste mailowa pgsql-hackers, wtedy
-    prawdopodobnie Twój kod znajdzie sie w katalogu contrib/.
+   Wyslij Twoje propozycje na liste mailowa pgsql-hackers, wtedy
+   prawdopodobnie Twój kod znajdzie sie w katalogu contrib/.
+   
     5.3) Jak napisac funkcje C zwracajaca krotke (tuple)?
     
-    W wersjach PostgreSQL od numeru 7.3, funckje zwracajace tabele sa w pelni
-    wspierane w C, PL/PgSQL i SQL. Sprawdz w Programmer's Guide aby uzyskac
-    wiecej informacji. Przykl/ad funkcji napisanej w C zwracajacej tabele
-    zostal/ umieszczony w contrib/tablefunc.
+   W wersjach PostgreSQL od numeru 7.3, funckje zwracajace tabele sa w
+   pelni wspierane w C, PL/PgSQL i SQL. Sprawdz w Programmer's Guide aby
+   uzyskac wiecej informacji. Przykl/ad funkcji napisanej w C zwracajacej
+   tabele zostal/ umieszczony w contrib/tablefunc.
+   
     5.4) Zmienil/em plik zródl/owy. Dlaczego po rekompilacji nie widac zmiany?
     
-    Pliki Makefiles nie maja dorzuconych odpowiednich zaleznosci dla plików
-    nagl/ówkowych (include files). Wykonaj najpierw make clean, a nastepnie
-    ponownie make. Jesli uzywasz GCC mozesz uzyc opcji --enable-depend przy
-    wykonywaniu configure aby kompilator mógl/ okreslic zaleznosci
-    samodzielnie.
+   Pliki Makefiles nie maja dorzuconych odpowiednich zaleznosci dla
+   plików nagl/ówkowych (include files). Wykonaj najpierw make clean, a
+   nastepnie ponownie make. Jesli uzywasz GCC mozesz uzyc opcji
+   --enable-depend przy wykonywaniu configure aby kompilator mógl/
+   okreslic zaleznosci samodzielnie.

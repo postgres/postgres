@@ -643,14 +643,12 @@
    
    Wenn der postmaster hingegen läuft, führen Sie psql in einem Fenster
    aus, ermitteln Sie die Prozessnummer (PID) des postgres-Prozesses, der
-   von psql verwendet wird (mit
-SELECT pg_backend_pid()
-
-   ). Binden Sie einen Debugger an diese PID und führen Sie Abfragen von
-   psql aus. Wenn Sie den postgres-Serverstart analysieren wollen, setzen
-   Sie die Umgebungsvariable PGOPTIONS="-W n", und starten Sie dann psql.
-   Dies verzögert den Start um n Sekunden, damit Sie einen Debugger an
-   den Prozess binden und ggf. Breakpoints setzen können, bevor die
+   von psql verwendet wird (mit SELECT pg_backend_pid()). Binden Sie
+   einen Debugger an diese PID und führen Sie Abfragen von psql aus. Wenn
+   Sie den postgres-Serverstart analysieren wollen, setzen Sie die
+   Umgebungsvariable PGOPTIONS="-W n", und starten Sie dann psql. Dies
+   verzögert den Start um n Sekunden, damit Sie einen Debugger an den
+   Prozess binden und ggf. Breakpoints setzen können, bevor die
    Startsequenz begonnen wird.
    
    Es gibt verschiedene Einstellungen (die log_*-Gruppe), die diverse

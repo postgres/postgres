@@ -171,7 +171,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
+   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
@@ -760,8 +760,7 @@
    Pour changer le type de données d'une colonne, faites :
     BEGIN;
     ALTER TABLE table ADD COLUMN nouvelle_colonne nouveau_type_de_donnees;
-    UPDATE table SET nouvelle_colonne = CAST(ancienne_colonne AS nouveau_type_d
-e_donnees);
+    UPDATE table SET nouvelle_colonne = CAST(ancienne_colonne AS nouveau_type_de_donnees);
     ALTER TABLE table DROP COLUMN ancienne_colonne;
     COMMIT;
 
@@ -772,14 +771,12 @@ e_donnees);
     données ?
     
    Les limites sont :
-    Taille maximum pour une base de données     illimitée (il existe des bases
-de 32 To)
+    Taille maximum pour une base de données     illimitée (il existe des basesde 32 To)
     Taille maximum pour une table               32 To
     Taille maximum pour une ligne               1,6 To
     Taille maximum pour un champ                1 Go
     Nombre maximum de lignes dans une table     illimité
-    Nombre maximum de colonnes dans une table   250-1600, selon le type de colo
-nnes
+    Nombre maximum de colonnes dans une table   250-1600, selon le type de colonnes
     Nombre maximum d'index sur une table        illimité
 
    Bien sûr, ces valeurs ne sont pas vraiment illimitée, elles sont
@@ -813,21 +810,17 @@ nnes
    ----------------------------------------
     60 octets par ligne
 
-   La taille des pages de données dans PostgreSQL est de 8192 octets (8 KO), do
-nc :
+   La taille des pages de données dans PostgreSQL est de 8192 octets (8 KO), donc :
 
    8192 octets par page
-   ----------------------   = 136 lignes par page de base de données (arrondi à
- l'entier inférieur)
+   ----------------------   = 136 lignes par page de base de données (arrondi à l'entier inférieur)
      60 octets par ligne
 
    100000 lignes de données
-   -------------------------  =  735 pages de base de données (arrondi à l'enti
-er supérieur)
+   -------------------------  =  735 pages de base de données (arrondi à l'entier supérieur)
       128 lignes par page
 
-735 pages de base de données * 8192 octets par page  =  6 021 120 octets (6,4 M
-o)
+735 pages de base de données * 8192 octets par page  =  6 021 120 octets (6,4 Mo)
 
    Les index utilisent moins d'espace, mais ils contiennent les données
    indexées, ils peuvent donc également être grands.
@@ -1025,8 +1018,7 @@ BYTEA           bytea           tableau d'octets (accepte les octets nuls)
    table d'exemple de la section 4.15.1, un exemple dans un
    pseudo-langage ressemblerait à ceci :
     nouvelle_id = execute("SELECT nextval('personne_id_seq')");
-    execute("INSERT INTO personne (id, nom) VALUES (nouvelle_id, 'Blaise Pascal
-')");
+    execute("INSERT INTO personne (id, nom) VALUES (nouvelle_id, 'Blaise Pascal')");
 
    Vous pourriez ensuite utiliser la nouvelle valeur stockée dans
    nouvelle_id avec d'autres requêtes (c'est-à-dire en tant que clé
@@ -1085,8 +1077,7 @@ BYTEA           bytea           tableau d'octets (accepte les octets nuls)
    en quelque chose d'autre ou si vous voulez faire une copie de la table
    avec les OID originaux, il n'y a pas de raisons pour ne pas le faire :
     CREATE TABLE nouvelle_table (macolonne int);
-    SELECT oid AS ancienne_oid, macolonne INTO table_temporaire FROM ancienne_t
-able;
+    SELECT oid AS ancienne_oid, macolonne INTO table_temporaire FROM ancienne_table;
     COPY table_temporaire FROM '/tmp/tablepg';
     COPY nouvelle_table WITH OIDS FROM '/tmp/tablepg';
     DROP TABLE table_temporaire;
@@ -1178,8 +1169,7 @@ CREATE TABLE test (x int, heuremodif timestamp DEFAULT CURRENT_TIMESTAMP );
    to:
     SELECT *
     FROM table
-    WHERE EXISTS (SELECT souscolonne FROM soustable WHERE souscolonne = colonne
-);
+    WHERE EXISTS (SELECT souscolonne FROM soustable WHERE souscolonne = colonne);
 
    Pour que ceci soit rapide, souscolonne doit être une colonne indexée.
    

@@ -603,22 +603,17 @@
    
    Se o postmaster está sendo executado, inicie o psql em uma janela, e
    então encontre o PID do processo postgres utilizado pelo psql
-   utilizando
-SELECT pg_backend_pid()
-
-   . Utilize um depurador para anexar ao PID do postgres. Você pode
-   definir pontos de parada (breakpoints) no depurador e digitar
-   consultas no psql. Se você está depurando a inicialização do postgres,
-   você pode definir PGOPTIONS="-W n" e então iniciar o psql. Isto
-   retardará a inicialização por n segundos então você pode anexar o
-   depurador ao processo, definir quaisquer pontos de parada e continuar
-   pela sequência de inicialização.
+   utilizando SELECT pg_backend_pid(). Utilize um depurador para anexar
+   ao PID do postgres. Você pode definir pontos de parada (breakpoints)
+   no depurador e digitar consultas no psql. Se você está depurando a
+   inicialização do postgres, você pode definir PGOPTIONS="-W n" e então
+   iniciar o psql. Isto retardará a inicialização por n segundos então
+   você pode anexar o depurador ao processo, definir quaisquer pontos de
+   parada e continuar pela sequência de inicialização.
    
-   Há várias variáveis de configuração do servidor
-log_*
-
-   que habilitam a exibição de estatísticas que podem ser muito úteis
-   para depuração e medidas de performance.
+   Há várias variáveis de configuração do servidor log_* que habilitam a
+   exibição de estatísticas que podem ser muito úteis para depuração e
+   medidas de performance.
    
    Você também pode compilar com perfil para ver que funções estão
    demandando tempo de execução. Os arquivo de perfil do núcleo (backend)
@@ -680,13 +675,13 @@ log_*
     3.11) Que tipo de hardware eu devo usar?
     
    Por causa do hardware de PC ser em sua maioria compatível, pessoas
-   tendem a acreditar que todos os hardwares de PC são de mesma
-   qualidade. Não é verdade. ECC RAM, SCSI e placas mãe de qualidade são
-   mais confiáveis e têm uma melhor performance do que hardwares mais
-   baratos. O PostgreSQL executará em quase todo hardware, mas se a
-   confiabilidade e a performance forem importantes é prudente pesquisar
-   sobre as opções de hardware. Nossas listas de discussão podem ser
-   usadas para discutir opções de hardware e dilemas.
+   tendem a acreditar que todos os hardwares de PC satilde;o de mesma
+   qualidade. Natilde;o é verdade. ECC RAM, SCSI e placas mãe de
+   qualidade são mais confiáveis e têm uma melhor performance do que
+   hardwares mais baratos. O PostgreSQL executará em quase todo hardware,
+   mas se a confiabilidade e a performance forem importantes é prudente
+   pesquisar sobre as opções de hardware. Nossas listas de discussão
+   podem ser usadas para discutir opções de hardware e dilemas.
      _________________________________________________________________
    
                            Perguntas Operacionais
@@ -753,14 +748,12 @@ log_*
     dados?
     
    Estes são os limites:
-Tamanho máximo de um banco de dados?           ilimitado (existem bancos de dad
-os de 32 TB)
+Tamanho máximo de um banco de dados?           ilimitado (existem bancos de dados de 32 TB)
 Tamanho máximo de uma tabela?                  32 TB
 Tamanho máximo de um registro?                 1.6TB
 Tamanho máximo de um campo?                    1 GB
 Número máximo de registros em uma tabela?      ilimitado
-Número máximo de colunas em uma tabela?        250-1600 dependendo dos tipos da
-s colunas
+Número máximo de colunas em uma tabela?        250-1600 dependendo dos tipos das colunas
 Número máximo de índices em uma tabela?        ilimitado
 
    É claro, que eles não são ilimitados, mas limitados ao espaço em disco
@@ -795,17 +788,14 @@ Número máximo de índices em uma tabela?        ilimitado
    O tamanho de uma página de dados no PostgreSQL é 8192 bytes (8 KB), então:
 
    8192 bytes por página
-   ------------------------   =  136 registros por página do banco de dados (ar
-redondado para baixo)
+   ------------------------   =  136 registros por página do banco de dados (arredondado para baixo)
      60 bytes por registro
 
    100000 registros de dados
-   ----------------------------  =  735 páginas do banco de dados (arredondado
-para cima)
+   ----------------------------  =  735 páginas do banco de dados (arredondadopara cima)
       128 registros por página
 
-735 páginas do banco de dados * 8192 bytes por página  =  6,021,120 bytes (6 MB
-)
+735 páginas do banco de dados * 8192 bytes por página  =  6,021,120 bytes (6 MB)
 
    Índices não requerem muito espaço, mas contém dados que foram
    indexados, então eles podem ocupar algum espaço.
@@ -874,10 +864,8 @@ para cima)
      * A localidade padrão C deve ser utilizada durante o initdb porque
        não é possível saber o próximo/maior caracter em uma localidade
        que não seja a C. Você pode criar um índice especial
-text_pattern_ops
-       para tais casos que funcionam somente para indexação utilizando
-LIKE
-       .
+       text_pattern_ops para tais casos que funcionam somente para
+       indexação utilizando LIKE.
        
    Em versões anteriores a 8.0, índices frequentemente não podiam ser
    usados a menos que os tipos de dados correspodessem aos tipos da
@@ -948,14 +936,10 @@ LIKE
     
 Tipo            Nome Interno    Notas
 --------------------------------------------------
-VARCHAR(n)      varchar         tamanho especifica o comprimento máximo, sem pr
-eenchimento
-CHAR(n)         bpchar          preenchimento em branco para comprimento fixo e
-specífico
-TEXT            text            nenhum limite superior específico no compriment
-o
-BYTEA           bytea           vetor de bytes de comprimento variável (null-by
-te safe)
+VARCHAR(n)      varchar         tamanho especifica o comprimento máximo, sem preenchimento
+CHAR(n)         bpchar          preenchimento em branco para comprimento fixo específico
+TEXT            text            nenhum limite superior específico no comprimento
+BYTEA           bytea           vetor de bytes de comprimento variável (null-byte safe)
 "char"          char            um caracter
 
    Você verá o nome interno quando examinar o catálogo do sistema e em
@@ -1063,8 +1047,7 @@ te safe)
    de alguma coisa, ou se você quer fazer uma cópia da tabela, com os
    OIDs, não há razão para que você não possa fazê-la:
         CREATE TABLE nova_tabela(minha_coluna int);
-        SELECT oid as oid_antigo, minha_coluna INTO tabela_tmp FROM tabela_anti
-ga;
+        SELECT oid as oid_antigo, minha_coluna INTO tabela_tmp FROM tabela_antiga;
         COPY tabela_tmp TO '/tmp/pgtable';
         DROP TABLE tabela_tmp;
         COPY nova_tabela WITH OIDS FROM '/tmp/pgtable';

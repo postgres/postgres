@@ -212,7 +212,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Eine Portierung für Novell Netware 6 gibt es unter <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
     <p>Für OS/2 (eComStation) gibt es eine Version hier:
-    <a href="http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F">http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>
+    <a href="http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&amp;button=Search&amp;key=postgreSQL&amp;stype=all&amp;sort=type&amp;dir=%2F">http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&amp;button=Search&amp;key=postgreSQL&amp;stype=all&amp;sort=type&amp;dir=%2F</a></p>
 
     <h4><a name="1.5">1.5</a>) Woher bekomme ich PostgreSQL?</h4>
 
@@ -223,7 +223,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <h4><a name="1.6">1.6</a>) Wo bekomme ich Support für PostgreSQL?</h4>
 
     <p>Die zentrale (englischsprachige) Mailing-Liste ist:
-    <a href="mailto:pgsql-general@postgresql.org">mailto:pgsql-general@postgresql.org</a> .
+    <a href="mailto:pgsql-general@postgresql.org">mailto:pgsql-general@postgresql.org</a> .</p>
 
     <p>Die Liste ist Themen vorbehalten, die PostgreSQL betreffen. Die Anmeldung
     erfolgt mit einer Email an die Adresse <a href="mailto:pgsql-general-request@postgresql.org">pgsql-general-request@postgresql.org</a> mit folgenden Zeilen im Text
@@ -260,7 +260,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Weitere Mailinglisten und Informationen zu PostgreSQL befinden sich auf der PostgreSQL-Homepage:</p>
 <blockquote>
-<a href="http://www.postgresql.org">http://www.postgresql.org</a>
+<p><a href="http://www.postgresql.org">http://www.postgresql.org</a></p>
 </blockquote>
     <p>Es gibt außerdem einen IRC-Channel bei EFNet und bei Freenode, Channel
     <em>#PostgreSQL</em>. Unter UNIX/Linux können Sie mit z.B.
@@ -341,7 +341,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <h4><a name="1.13">1.13</a>) Wie sende ich einen Fehlerbericht?</h4>
 
     <p>Bitte besuchen Sie die PostgreSQL-BugTool-Seite <a href="http://www.postgresql.org/bugform.html">http://www.postgresql.org/bugform.html</a>,
-    die Hinweise und Anleitungen zur Einreichung von Fehlerberichten enthält.
+    die Hinweise und Anleitungen zur Einreichung von Fehlerberichten enthält.</p>
 
     <p>Überprüfe auch den ftp-Server <a href="ftp://ftp.postgresql.org/pub/">ftp://ftp.postgresql.org/pub/</a>,
     um nachzusehen, ob es eine neuere PostgreSQL-Version oder neue Patches gibt.</p>
@@ -475,7 +475,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     </a>) und Rekall (<a href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</a>, GPL/proprietär). Es gibt 
     außerdem phpPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
-    http://phppgadmin.sourceforge.net/ </a>), eine web-basierte Schnittstelle. 
+    http://phppgadmin.sourceforge.net/ </a>), eine web-basierte Schnittstelle. </p>
 
     <h4><a name="2.4">2.4</a>) Welche Programmiersprachen und Schnittstellen gibt es?</h4>
 
@@ -500,7 +500,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     (Bereich <em>Drivers/Interfaces</em>) bezogen werden.
     </p>
     <hr />
-    <h2 align="center">Administrative Fragen</h2><p>
+    <h2 align="center">Administrative Fragen</h2>
 
     <h4><a name="3.1">3.1</a>) Wie installiere ich PostgreSQL woanders als in /usr/local/pgsql?</h4>
 
@@ -632,7 +632,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Wenn der <em>postmaster</em> hingegen läuft, führen Sie <em>psql</em> in einem Fenster aus,
     ermitteln Sie die Prozessnummer (<small>PID</small>) des <em>postgres</em>-Prozesses, der von <em>psql</em>
-    verwendet wird (mit <pre>SELECT pg_backend_pid()</pre>). Binden Sie einen Debugger an diese <small>PID</small>
+    verwendet wird (mit <code>SELECT pg_backend_pid()</code>). Binden Sie einen Debugger an diese <small>PID</small>
     und führen Sie Abfragen von <em>psql</em> aus. Wenn Sie den postgres-Serverstart analysieren 
     wollen, setzen Sie die Umgebungsvariable <em>PGOPTIONS="-W </em>n<em>"</em>, und starten Sie 
     dann <em>psql</em>. Dies verzögert den Start um <em>n</em> Sekunden, damit Sie einen Debugger an
@@ -728,7 +728,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <h4><a name="4.2">4.2</a>) Wie wähle ich per <small>SELECT</small>-Anweisung nur die ersten paar
     Zeilen bzw. eine beliebige Zeile in einer Abfrage aus?</h4>
 
-    <p>Vgl. die <small>FETCH</small> Man-Page, oder benutzen Sie <small>SELECT ... LIMIT...</small> .
+    <p>Vgl. die <small>FETCH</small> Man-Page, oder benutzen Sie <small>SELECT ... LIMIT...</small> .</p>
 
     <p>Selbst wenn Sie nur die ersten paar Zeilen einer Tabelle abfragen möchten,
     muß unter Umständen die komplette Abfrage abgearbeitet werden. Ziehen Sie also
@@ -1123,7 +1123,7 @@ BYTEA         bytea           Bytearray mit variabler Länge (auch für
     durch Block und Offset Werte zu identifizieren. T<small>ID</small>s
     verändern sich, sobald Zeilen verändert oder zurückgeladen werden. Sie
     werden in Indexeinträgen benutzt um auf die physikalischen Zeilen zu
-    zeigen.
+    zeigen.</p>
 
     <h4><a name="4.16">4.16</a>) Welche Bedeutung haben die verschiedenen Ausdrücke, die in
     PostgreSQL benutzt werden (z.B. attribute, class,...)?</h4>

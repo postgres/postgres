@@ -129,7 +129,7 @@
  
    <H2 align="center">Obecné otázky</H2>
 
-   <H4><A name="1.1">1.1</A>) Co je PostgreSQL? Jak se vyslovuje?</H2>
+   <H4><A name="1.1">1.1</A>) Co je PostgreSQL? Jak se vyslovuje?</H4>
 
    <P>PostgreSQL se vyslovuje <I>Post-Gres-Q-L</I>. Zvukový záznam je 
    dostupný na adrese <A href="http://www.postgresql.org/postgresql.mp3"></A>.</P>
@@ -206,18 +206,18 @@
    Win32 knihovny <I>libpq</I> a <I>psql</I>. K databázi PostgerSQL lze pøistupovat skrze
    rozhraní <SMALL>ODBC</SMALL>.</P>
 
-   <P><STRONG>Server</STRONG><P>
+   <P><STRONG>Server</STRONG></P>
 
    <P>Server mù¾e být na WindowsNT a Win2k provozován pouze s knihovnou
    Cygwin, Cygnus Unix/NT porting library. Více <I>pgsql/doc/FAQ_MSWIN</I> v
    distribuci nebo MS Windows FAQ na adrese
-   <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.
+   <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
 
    <P>Na nativním portu pro MS Win NT/2000/XP se pracuje. Dal¹í informace
    o aktuálním stavu PostgreSQL pro Windows naleznet na adrese
    <A href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</A> a
    <A href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">
-   http://momjian.postgresql.org/main/writings/pgsql/win32.html</A>.
+   http://momjian.postgresql.org/main/writings/pgsql/win32.html</A>.</P>
 
    <P>Existující port pro Novell Netware 6 naleznete na
    <A href="http://forge.novell.com">http://forge.novell.com</A>.</P>
@@ -238,7 +238,7 @@
     subscribe
     end
 </PRE>
-   na adresu <A href="mailto:pgsql-general-request@PostgreSQL.org">
+<P>na adresu <A href="mailto:pgsql-general-request@PostgreSQL.org">
    pgsql-general-request@PostgreSQL.org</A>.</P>
 
    <P>Mù¾ete si vy¾ádat denní pøehled (diggest), který má zhruba 30K dennì
@@ -254,7 +254,7 @@
 
    <P>Seznam dal¹ích konferencí naleznete na stránkách PostgreSQL:</P>
    <BLOCKQUOTE>
-   <A href="http://www.postgresql.org">http://www.postgresql.org</A>
+   <P><A href="http://www.postgresql.org">http://www.postgresql.org</A></P>
    </BLOCKQUOTE>
    <H4><A name="1.7">1.7</A>) Jaká je poslední verze?</H4>
 
@@ -315,7 +315,7 @@
 
    <P>Nejdøíve si stáhnìte nejnovìj¹í zdroje a pøeètìte si vývojáøskou
    dokumentaci na na¹em webu nebo v distribuci. Pak se pøihla¹te do
-   konferencí <I>pgsql-hackers</I> a <P>pgsql-patches</I>. Kvalitní záplaty posílejte do
+   konferencí <I>pgsql-hackers</I> a <I>pgsql-patches</I>. Kvalitní záplaty posílejte do
    pgsql-patches.</P>
 
    <P>Právo commit má v <SMALL>CVS</SMALL> archivu asi tøinácti lidí. Ka¾dý z nich poslal
@@ -341,7 +341,7 @@
 	<SMALL>DBMS</SMALL>, napø. transakce, vnoøené dotazy, spou¹tì, pohledy, kontrolu 
 	referenèní integrity a sofistikované zamykání. Podporuje nìkteré 
 	vlastnosti, které tyto systémy nemají, u¾ivatelem definované typy, 
-	dìdiènost, pravidla, MVCC redukující zamykání.</BR></BR></DD>
+	dìdiènost, pravidla, MVCC redukující zamykání.<BR><BR></DD>
 
    <DT><B>Výkon</B></DT>
 	<DD>Výkonnostnì je na tom PostgreSQL podobnì jako dal¹í komerèní ale 
@@ -363,7 +363,7 @@
 	kód s minimem chyb. Ka¾dá verze je více ne¾ mìsíc v beta testování, 
 	a na¹e historie verzí ukazuje, ¾e mù¾eme nabídnout stabilní, solidní 
 	verze, které jsou pøipraveny pro reálné nasazení. V této oblasti 
-	jsme srovnatelní s dal¹ími databázemi.</BR></BR></DD>
+	jsme srovnatelní s dal¹ími databázemi.<BR><BR></DD>
 
    <DT><B>Podpora</B></DT>
 	<DD>Na na¹í mailové konferenci mù¾ete kontaktovat velkou skupinu 
@@ -375,7 +375,7 @@
 	kteøí vy¾adují podporu ke konkrétním pøípadùm, existuje placená 
 	podpora (<A href="#1.6">FAQ sekce 1.6</A>).<BR><BR></DD>
 
-   <DT><B>Cena</B><DT>
+   <DT><B>Cena</B></DT>
 	<DD>PosgreSQL lze volnì pou¾ívat pro nekomerèní i komerèní pou¾ití. 
 	Mù¾ete do svých produktù pøidat ná¹ kód bez omezení, respektive 
 	v souladu s podmínkami na¹í licenèní smlouvy (v duchu BSD licence).<BR>
@@ -553,7 +553,7 @@
    napøíklad:</P>
 <PRE>
     cd /usr/local/pgsql
-    ./bin/postmaster > server.log 2>&1 &
+    ./bin/postmaster > server.log 2>&amp;1 &amp;
 </PRE>
    <P>Tím se vytvoøí log v adresáøi PostgreSQL, Tento soubor obsahuje u¾iteèné
    informace o problémech a chybách vyskytlých se na serveru. Postmaster má
@@ -773,7 +773,7 @@
 
    <P>Jinak je tomu v pøípadì pou¾ití <SMALL>LIMIT</SMALL> a <SMALL>ORDER BY</SMALL>, pøi kterém se vìt¹inou
    index pou¾ije, výsledkem je pouze malá èást tabulky. Funkce MAX() a
-   MIN() nepou¾ívají indexy, ale je mo¾né tuté¾ hodnotu získat:
+   MIN() nepou¾ívají indexy, ale je mo¾né tuté¾ hodnotu získat:</P>
 <PRE>
     SELECT col 
     FROM tab
@@ -791,7 +791,7 @@
       <UL>
         <LI>vzor <SMALL>LIKE</SMALL> nesmí zaèínat <I>%</I></LI>
         <LI><I>~</I> regulární výraz musí zaèínat <I>^</I></LI>
-      </UL>
+      </UL></LI>
     <LI>vzor nesmí zaèínat intervalem, napø. [a-e]</LI>
     <LI>vyhledávaní, které není Case sensitiv jako je <SMALL>ILIKE</SMALL> nebo <I>~*</I> 
       nepou¾ívá indexy. Mù¾ete ale pou¾ít funkcionální indexy, které jsou 
@@ -926,7 +926,7 @@ BYTEA       bytea               pole bytù (bezpeènì lze ulo¾it i znak NULL)
    <P>Koneènì mù¾ete pou¾ít <SMALL>OID</SMALL> hodnotu vrácenou pøíkazem <SMALL>INSERT</SMALL>, ale to je
    pravdìpodobnì nejménì pøenositelné øe¹ení. V Perlu pøi pou¾ití DBI
    modulu Edmunda Mergleho DBD:Pg oid hodnotu získáme <I>$sth->{pg_oid_status}</I>
-   po ka¾dém <I>$sth->execute()</I>.
+   po ka¾dém <I>$sth->execute()</I>.</P>
 
    <H4><A name="4.15.3">4.15.3</A>) Nepovede <I>currval()</I> a <I>nextval()</I> k rozhození 
      podmínek pøi soubìhu s jinými u¾ivateli?</H4>
@@ -986,7 +986,7 @@ BYTEA       bytea               pole bytù (bezpeènì lze ulo¾it i znak NULL)
       <LI> pøidání, vkládání (append, insert)</LI>
       <LI> OID, serial value (OID, serial value)</LI>
       <LI> portal, kurzor (portal, cursor)</LI>
-      <LI> range variable, jméno tabulky, alias tabulky (range</LI>
+      <LI> range variable, jméno tabulky, alias tabulky (range
         variable, table name, table alias)</LI>
    </UL>
 
@@ -1038,13 +1038,13 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    <P>Døívìj¹í verze (pøed 7.4) spojovali vnoøené dotazy k vnìj¹ím sekvenèním
    ètením výsledku poddotazu pro ka¾dý øádek vnìj¹ího dotazu. Pokud poddotaz
    vrátil nìkolik málo øádkù <SMALL>IN</SMALL> bylo rychlé. Pro ostatní pøípady je vhodné
-   nahradit <SMALL>IN</SMALL> <SMALL>EXISTS</SMALL>:
+   nahradit <SMALL>IN</SMALL> <SMALL>EXISTS</SMALL>:</P>
 <PRE>
     SELECT * 
     FROM tab
     WHERE col IN (SELECT subcol FROM subtab);
 </PRE>
-  na:
+<p>na:</p>
 <PRE>
    SELECT * 
    FROM tab
@@ -1101,7 +1101,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
    <P>V PostgreSQL 7.3 mù¾ete jednodu¹e vracet více øádkù nebo sloupcù z
    funkce, viz:
-   <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.
+   <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.</P>
 
    <H4><A name="4.26">4.26</A>) Proè nelze spolehlivì vytváøet a ru¹it doèasné tabulky v PL/pgSQL funkcích?</H4>
 

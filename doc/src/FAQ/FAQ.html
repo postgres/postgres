@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Thu Feb 24 23:18:31 EST 2005</P>
+    <P>Last updated: Fri Mar 11 16:42:06 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -197,7 +197,7 @@
     and Win2003.  A prepackaged installer is available at <a href=
     "http://pgfoundry.org/projects/pginstaller">
     http://pgfoundry.org/projects/pginstaller</a>.  MSDOS-based versions
-    of Windows (Win95, Win98, WinMe) can run PostgreSQL using Cygwin.
+    of Windows (Win95, Win98, WinMe) can run PostgreSQL using Cygwin.</P>
 
     <p>There is also a Novell Netware 6 port at
     <a href="http://forge.novell.com">http://forge.novell.com</a>,
@@ -217,14 +217,14 @@
     via email.  The main web site to subscribe to the email lists is
     <a href="http://www.postgresql.org/community/lists/">
     http://www.postgresql.org/community/lists/</a>. The <I>general</I>
-    or <I>bugs</I> lists are a good place to start.
+    or <I>bugs</I> lists are a good place to start.</P>
 
     <P>The major IRC channel is <I>#postgresql</I> on Freenode
     (<I>irc.freenode.net</I>).  To connect you can use the Unix
     program <CODE>irc -c '#postgresql' "$USER" irc.freenode.net</CODE>
     or use any of the other popular IRC clients.  A Spanish one also exists
     on the same network, (<I>#postgresql-es</I>), and a French one,
-    (<I>#postgresqlfr</I>).  There is also a PostgreSQL channel on EFNet.
+    (<I>#postgresqlfr</I>).  There is also a PostgreSQL channel on EFNet.</P>
 
     <P>A list of commercial support companies is available at <A href=
     "http://techdocs.postgresql.org/companies.php">
@@ -482,7 +482,7 @@
     <li>Use of Prepared queries</li>
     <li>Use of <SMALL>ANALYZE</SMALL> to maintain accurate optimizer
     statistics</li>
-    <li>Regular use of <SMALL>VACUUM</SMALL> or <I>pg_autovacuum</I>
+    <li>Regular use of <SMALL>VACUUM</SMALL> or <I>pg_autovacuum</I></li>
     <li>Dropping of indexes during large data changes</li>
     </ul><BR>
     <BR>
@@ -609,7 +609,7 @@
     <SMALL>SELECT</SMALL> time, use a cursor and
     <SMALL>FETCH</SMALL>.</P>
 
-    <P>To <SMALL>SELECT</SMALL> a random row, use:
+    <P>To <SMALL>SELECT</SMALL> a random row, use:</P>
 <PRE>
     SELECT col
     FROM tab
@@ -643,7 +643,7 @@
     <H4><A name="4.3">4.3</A>) How do you change a column's data type?</H4>
 
     <P>Changing the data type of a column can be done easily in 8.0
-    and later with <SMALL>ALTER TABLE ALTER COLUMN TYPE</SMALL>.
+    and later with <SMALL>ALTER TABLE ALTER COLUMN TYPE</SMALL>.</P>
 
     <P>In earlier releases, do this:</P>
 <PRE>
@@ -661,7 +661,7 @@
 
     <P>These are the limits:</P>
 <BLOCKQUOTE>
-<TABLE BORDER=1>
+<TABLE >
 <TR><TD>Maximum size for a database?</TD><TD>unlimited (32 TB databases
 exist)</TD></TR>
 <TR><TD>Maximum size for a table?</TD><TD>32 TB</TD></TR>
@@ -731,7 +731,7 @@ table?</TD><TD>unlimited</TD></TR>
     used if the table is larger than a minimum size, and the query
     selects only a small percentage of the rows in the table. This is
     because the random disk access caused by an index scan can be
-    slower than a straight read through the table, or sequential scan. 
+    slower than a straight read through the table, or sequential scan. </P>
 
     <P>To determine if an index should be used, PostgreSQL must have
     statistics about the table. These statistics are collected using
@@ -843,7 +843,7 @@ table?</TD><TD>unlimited</TD></TR>
     <H4><A name="4.10">4.10</A>) What is the difference between the
     various character types?</H4>
 <BLOCKQUOTE>
-<TABLE BORDER=1>
+<TABLE >
 <TR><TH>Type</TH><TH>Internal Name</TH><TH>Notes</TH></TR>
 <TR><TD>VARCHAR(n)</TD><TD>varchar</TD><TD>size specifies maximum
 length, no padding</TD></TR>
@@ -1057,7 +1057,7 @@ length</TD></TR>
 
     <P>It is easy using set-returning functions, 
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
-    http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
+    http://techdocs.postgresql.org/guides/SetReturningFunctions</a></P>.
 
     <H4><A name="4.20">4.20</A>) Why do I get "relation with OID #####
     does not exist" errors when accessing temporary tables in PL/PgSQL
@@ -1082,7 +1082,7 @@ length</TD></TR>
     <I>pg_hba.conf</I>, and the client <I>sslmode</I> must not be
     <I>disable.</I> (Note that it is also possible to use a third-party
     encrypted transport, such as stunnel or ssh, rather than PostgreSQL's
-    native SSL connections.)
+    native SSL connections.)</LI>
     <LI>Database user passwords are automatically encrypted when stored in
     the system tables.</LI>
     <LI>The server can run using an encrypted file system.</LI>
