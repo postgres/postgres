@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.19 1997/05/05 03:41:19 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.20 1997/05/30 18:35:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,9 +158,7 @@ _bt_moveright(Relation rel,
     Page page;
     BTPageOpaque opaque;
     ItemId hikey;
-    ItemId itemid;
     BlockNumber rblkno;
-    int natts = rel->rd_rel->relnatts;
         
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -184,7 +182,7 @@ _bt_moveright(Relation rel,
 	/* move right as long as we need to */
 	do
 	{
-	    OffsetNumber offmax;
+	    OffsetNumber offmax = PageGetMaxOffsetNumber(page);
 	    /*
 	     *  If this page consists of all duplicate keys (hikey and first
 	     *  key on the page have the same value), then we don't need to
@@ -200,22 +198,43 @@ _bt_moveright(Relation rel,
 	     *  our scankey is x = 2. Scankey >= (2,1) because of 
 	     *  we compare first attrs only, but we shouldn't to move
 	     *  right of here.		- vadim 04/15/97
+	     *
+	     *  XXX
+	     *  This code changed again! Actually, we break our
+	     *  duplicates handling in single case: if we insert 
+	     *  new minimum key into leftmost page with duplicates
+	     *  and splitting doesn't occure then _bt_insertonpg doesn't 
+	     *  worry about duplicates-rule. Fix _bt_insertonpg ?
+	     *  But I don't see why don't compare scankey with _last_
+	     *  item on the page instead of first one, in any cases.
+	     *  So - we do it in that way now.	- vadim 05/26/97
+	     *
+	     *  Also, if we are on an "pseudo-empty" leaf page (i.e. there is
+	     *  only hikey here) and scankey == hikey then we don't move
+	     *  right! It's fix for bug described in _bt_insertonpg(). It's 
+	     *  right - at least till index cleanups are perfomed by vacuum 
+	     *  in exclusive mode: so, though this page may be just splitted, 
+	     *  it may not be "emptied" before we got here. - vadim 05/27/97
 	     */
-	    if ( (offmax = PageGetMaxOffsetNumber(page)) > P_HIKEY)
+	    
+	    if ( _bt_skeycmp (rel, keysz, scankey, page, hikey, 
+	    				BTEqualStrategyNumber) )
 	    {
-		itemid = PageGetItemId(page, P_FIRSTKEY);
-		if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
-				BTEqualStrategyNumber)) {
-		    /* break is for the "move right" while loop */
-		    break;
-		}
-		else if ( natts > keysz )
-		{
-		    itemid = PageGetItemId(page, offmax);
-		    if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
-				BTLessEqualStrategyNumber))
+	    	if ( opaque->btpo_flags & BTP_CHAIN )
+	    	{
+	    	    Assert ( ( opaque->btpo_flags & BTP_LEAF ) || offmax > P_HIKEY );
+	    	    break;
+	    	}
+	    	if ( offmax > P_HIKEY )
+	    	{
+		    if ( _bt_skeycmp (rel, keysz, scankey, page, 
+		    		PageGetItemId (page, offmax),
+				BTLessEqualStrategyNumber) )
 		    	break;
-		}
+	    	}
+	    	else if ( offmax == P_HIKEY && 
+	    		( opaque->btpo_flags & BTP_LEAF ) )
+	    	    break;
 	    }
 	    
 	    /* step right one page */
@@ -371,27 +390,37 @@ _bt_binsrch(Relation rel,
     int natts = rel->rd_rel->relnatts;
     int result;
     
+    itupdesc = RelationGetTupleDescriptor(rel);
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
     
-    /* by convention, item 0 on any non-rightmost page is the high key */
+    /* by convention, item 1 on any non-rightmost page is the high key */
     low = mid = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
     
     high = PageGetMaxOffsetNumber(page);
     
     /*
-     *  Since for non-rightmost pages, the zeroeth item on the page is the
+     *  Since for non-rightmost pages, the first item on the page is the
      *  high key, there are two notions of emptiness.  One is if nothing
      *  appears on the page.  The other is if nothing but the high key does.
      *  The reason we test high <= low, rather than high == low, is that
      *  after vacuuming there may be nothing *but* the high key on a page.
-     *  In that case, given the scheme above, low = 1 and high = 0.
+     *  In that case, given the scheme above, low = 2 and high = 1.
      */
     
-    if (PageIsEmpty(page) || (! P_RIGHTMOST(opaque) && high <= low))
+    if ( PageIsEmpty (page) )
 	return (low);
-    
-    itupdesc = RelationGetTupleDescriptor(rel);
+    if ( (! P_RIGHTMOST(opaque) && high <= low))
+    {
+    	if ( high < low || 
+    		(srchtype == BT_DESCENT && !(opaque->btpo_flags & BTP_LEAF)) )
+    	    return (low);
+    	/* It's insertion and high == low == 2 */
+	result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
+    	if ( result > 0 )
+    	    return ( OffsetNumberNext (low) );
+    	return (low);
+    }
     
     while ((high - low) > 1) {
 	mid = low + ((high - low) / 2);
@@ -736,6 +765,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     TupleDesc itupdesc;
     Buffer buf;
     Page page;
+    BTPageOpaque pop;
     BTStack stack;
     OffsetNumber offnum, maxoff;
     bool offGmax = false;
@@ -803,11 +833,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     
     stack = _bt_search(rel, 1, &skdata, &buf);
     _bt_freestack(stack);
-    
-    /* find the nearest match to the manufactured scan key on the page */
-    offnum = _bt_binsrch(rel, buf, 1, &skdata, BT_DESCENT);
+
+    blkno = BufferGetBlockNumber(buf);
     page = BufferGetPage(buf);
-    
+
     /*
      *  This will happen if the tree we're searching is entirely empty,
      *  or if we're doing a search for a key that would appear on an
@@ -821,8 +850,39 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	_bt_relbuf(rel, buf, BT_READ);
 	return ((RetrieveIndexResult) NULL);
     }
-    
     maxoff = PageGetMaxOffsetNumber(page);
+    pop = (BTPageOpaque) PageGetSpecialPointer(page);
+    
+    /*
+     * Now _bt_moveright doesn't move from non-rightmost leaf page
+     * if scankey == hikey and there is only hikey there. It's
+     * good for insertion, but we need to do work for scan here.
+     * 		- vadim 05/27/97
+     */
+    
+    while ( maxoff == P_HIKEY && !P_RIGHTMOST(pop) &&
+		_bt_skeycmp(rel, 1, &skdata, page, 
+			PageGetItemId(page, P_HIKEY),
+			BTGreaterEqualStrategyNumber) )
+    {
+	/* step right one page */
+	blkno = pop->btpo_next;
+	_bt_relbuf(rel, buf, BT_READ);
+	buf = _bt_getbuf(rel, blkno, BT_READ);
+	page = BufferGetPage(buf);
+    	if (PageIsEmpty(page)) {
+	    ItemPointerSetInvalid(current);
+	    so->btso_curbuf = InvalidBuffer;
+	    _bt_relbuf(rel, buf, BT_READ);
+	    return ((RetrieveIndexResult) NULL);
+	}
+    	maxoff = PageGetMaxOffsetNumber(page);
+	pop = (BTPageOpaque) PageGetSpecialPointer(page);
+    }
+
+
+    /* find the nearest match to the manufactured scan key on the page */
+    offnum = _bt_binsrch(rel, buf, 1, &skdata, BT_DESCENT);
     
     if (offnum > maxoff)
     {
@@ -830,7 +890,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	offGmax = true;
     }
     
-    blkno = BufferGetBlockNumber(buf);
     ItemPointerSet(current, blkno, offnum);
     
     /*
@@ -889,7 +948,32 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	break;
 	
     case BTGreaterEqualStrategyNumber:
-	if (result < 0) {
+	if ( offGmax )
+	{
+	    if (result < 0)
+	    {
+	    	Assert ( !P_RIGHTMOST(pop) && maxoff == P_HIKEY );
+	    	if ( !_bt_step(scan, &buf, ForwardScanDirection) )
+	    	{
+	    	    _bt_relbuf(scan->relation, buf, BT_READ);
+	    	    so->btso_curbuf = InvalidBuffer;
+	    	    ItemPointerSetInvalid(&(scan->currentItemData));
+	    	    return ((RetrieveIndexResult) NULL);
+		}
+	    }
+	    else if (result > 0)
+	    {	/*
+		 * Just remember:  _bt_binsrch() returns the OffsetNumber of 
+		 * the first matching key on the page, or the OffsetNumber at 
+		 * which the matching key WOULD APPEAR IF IT WERE on this page.
+		 * No key on this page, but offnum from _bt_binsrch() greater
+		 * maxoff - have to move right. - vadim 12/06/96
+		 */
+	    	(void) _bt_twostep(scan, &buf, ForwardScanDirection);
+	    }
+	}
+	else if (result < 0)
+	{
 	    do {
 		if (!_bt_twostep(scan, &buf, BackwardScanDirection))
 		    break;
@@ -901,16 +985,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	    
 	    if (result > 0)
 		(void) _bt_twostep(scan, &buf, ForwardScanDirection);
-	}
-	else if ( offGmax && result > 0 )
-	{   /*
-	     * Just remember:  _bt_binsrch() returns the OffsetNumber of 
-	     * the first matching key on the page, or the OffsetNumber at 
-	     * which the matching key WOULD APPEAR IF IT WERE on this page.
-	     * No key on this page, but offnum from _bt_binsrch() greater
-	     * maxoff - have to move right. - vadim 12/06/96
-	     */
-	    (void) _bt_twostep(scan, &buf, ForwardScanDirection);
 	}
 	break;
 	

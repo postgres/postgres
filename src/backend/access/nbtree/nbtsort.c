@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.15 1997/04/18 03:37:57 vadim Exp $
+ *    $Id: nbtsort.c,v 1.16 1997/05/30 18:35:40 vadim Exp $
  *
  * NOTES
  *
@@ -983,6 +983,12 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 	    oopaque->btpo_next = BufferGetBlockNumber(nbuf);
 	    nopaque->btpo_prev = BufferGetBlockNumber(obuf);
 	    nopaque->btpo_next = P_NONE;
+
+    	    if ( _bt_itemcmp(index, _bt_nattr, 
+    		   (BTItem) PageGetItem(opage, PageGetItemId(opage, P_HIKEY)), 
+    		   (BTItem) PageGetItem(opage, PageGetItemId(opage, P_FIRSTKEY)), 
+    			BTEqualStrategyNumber) )
+    		oopaque->btpo_flags |= BTP_CHAIN;
 	}
 
 	/*

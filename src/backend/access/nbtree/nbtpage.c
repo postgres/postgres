@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.7 1997/04/16 01:48:15 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.8 1997/05/30 18:35:33 vadim Exp $
  *
  *  NOTES
  *     Postgres btree pages look like ordinary relation pages.  The opaque
@@ -441,6 +441,9 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
  *	This is possible because we save a bit image of the last item
  *	we looked at in the parent, and the update algorithm guarantees
  *	that if items above us in the tree move, they only move right.
+ *
+ *	Also, re-set bts_blkno & bts_offset if changed and 
+ *	bts_btitem (it may be changed - see _bt_insertonpg).
  */
 Buffer
 _bt_getstackbuf(Relation rel, BTStack stack, int access)
@@ -453,6 +456,8 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
     ItemId itemid;
     BTItem item;
     BTPageOpaque opaque;
+    BTItem item_save;
+    int item_nbytes;
     
     blkno = stack->bts_blkno;
     buf = _bt_getbuf(rel, blkno, access);
@@ -466,7 +471,14 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	
 	/* if the item is where we left it, we're done */
 	if ( BTItemSame (item, stack->bts_btitem) )
+	{
+	    pfree(stack->bts_btitem);
+	    item_nbytes = ItemIdGetLength(itemid);
+	    item_save = (BTItem) palloc(item_nbytes);
+	    memmove((char *) item_save, (char *) item, item_nbytes);
+	    stack->bts_btitem = item_save;
 	    return (buf);
+	}
 	
 	/* if the item has just moved right on this page, we're done */
 	for (i = OffsetNumberNext(stack->bts_offset);
@@ -477,7 +489,15 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	    
 	    /* if the item is where we left it, we're done */
 	    if ( BTItemSame (item, stack->bts_btitem) )
+	    {
+	    	stack->bts_offset = i;
+	    	pfree(stack->bts_btitem);
+	    	item_nbytes = ItemIdGetLength(itemid);
+	    	item_save = (BTItem) palloc(item_nbytes);
+	    	memmove((char *) item_save, (char *) item, item_nbytes);
+	    	stack->bts_btitem = item_save;
 		return (buf);
+	    }
 	}
     }
     
@@ -503,7 +523,16 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	    itemid = PageGetItemId(page, offnum);
 	    item = (BTItem) PageGetItem(page, itemid);
 	    if ( BTItemSame (item, stack->bts_btitem) )
+	    {
+	    	stack->bts_offset = offnum;
+	    	stack->bts_blkno = blkno;
+	    	pfree(stack->bts_btitem);
+	    	item_nbytes = ItemIdGetLength(itemid);
+	    	item_save = (BTItem) palloc(item_nbytes);
+	    	memmove((char *) item_save, (char *) item, item_nbytes);
+	    	stack->bts_btitem = item_save;
 		return (buf);
+	    }
 	}
     }
 }
