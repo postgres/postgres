@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.18 2001/08/25 17:46:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.19 2001/08/26 04:20:36 momjian Exp $
 Postgres documentation
 -->
 
@@ -133,7 +133,7 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--encrypted</term>
+      <term>-E, --encrypted</term>
       <listitem>
        <para>
 	Encrypts the user's password stored in the database. If not
@@ -143,7 +143,7 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--unencrypted</term>
+      <term>-N, --unencrypted</term>
       <listitem>
        <para>
 	Does not encrypt the user's password stored in the database. If
