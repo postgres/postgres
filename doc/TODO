@@ -1,6 +1,6 @@
 ODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 16 12:12:54 EDT 2000
+Last updated:		Mon Oct 16 13:18:25 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -235,6 +235,7 @@ INDEXES
   float4, numeric/decimal too [optimizer]
 * Include heap CTID in btree index keys, remove equal-key cruft from btree
 * Use indexes with CIDR '<<' (contains) operator
+* Fix LIKE indexing optimization for non-ASCII locales
 
 CACHE
 
