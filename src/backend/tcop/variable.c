@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.21 1997/11/10 15:37:15 thomas Exp $
+ * $Id: variable.c,v 1.22 1997/11/14 15:34:09 thomas Exp $
  *
  */
 
@@ -540,27 +540,13 @@ struct VariableParsers
 }			VariableParsers[] =
 
 {
-	{
-		"datestyle", parse_date, show_date, reset_date
-	},
-	{
-		"timezone", parse_timezone, show_timezone, reset_timezone
-	},
-	{
-		"cost_heap", parse_cost_heap, show_cost_heap, reset_cost_heap
-	},
-	{
-		"cost_index", parse_cost_index, show_cost_index, reset_cost_index
-	},
-	{
-		"geqo", parse_geqo, show_geqo, reset_geqo
-	},
-	{
-		"r_plans", parse_r_plans, show_r_plans, reset_r_plans
-	},
-	{
-		NULL, NULL, NULL
-	}
+	{	"datestyle", parse_date, show_date, reset_date },
+	{	"timezone", parse_timezone, show_timezone, reset_timezone },
+	{	"cost_heap", parse_cost_heap, show_cost_heap, reset_cost_heap },
+	{	"cost_index", parse_cost_index, show_cost_index, reset_cost_index },
+	{	"geqo", parse_geqo, show_geqo, reset_geqo },
+	{	"r_plans", parse_r_plans, show_r_plans, reset_r_plans },
+	{	NULL, NULL, NULL, NULL }
 };
 
 /*-----------------------------------------------------------------------*/
