@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.59 2000/04/12 17:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.60 2000/05/12 01:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@ static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
 static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
 
 #ifndef DISABLE_OUTER_JOINS
-static Node *transformUsingClause(ParseState *pstate, List *using, List *left, List *right);
-
+static List *transformUsingClause(ParseState *pstate, List *using,
+								  List *left, List *right);
 #endif
 
 
@@ -94,32 +94,33 @@ setTargetTable(ParseState *pstate, char *relname)
 }
 
 
-Node *
-			mergeInnerJoinQuals(ParseState *pstate, Node *clause);
-
-Node *
+static Node *
 mergeInnerJoinQuals(ParseState *pstate, Node *clause)
 {
-	A_Expr	   *expr = (A_Expr *) pstate->p_join_quals;
+	List	   *jquals;
 
-	if (expr == NULL)
-		return clause;
-
-	if (clause != NULL)
+	foreach(jquals, pstate->p_join_quals)
 	{
-		A_Expr	   *a = makeNode(A_Expr);
+		Node	   *jqual = (Node *) lfirst(jquals);
 
-		a->oper = AND;
-		a->opname = NULL;
-		a->lexpr = (Node *) expr;
-		a->rexpr = clause;
-		expr = a;
+		if (clause == NULL)
+			clause = jqual;
+		else
+		{
+			A_Expr	   *a = makeNode(A_Expr);
+
+			a->oper = AND;
+			a->opname = NULL;
+			a->lexpr = clause;
+			a->rexpr = jqual;
+			clause = (Node *) a;
+		}
 	}
 
-	/* Make sure that we don't do this twice... */
-	pstate->p_join_quals = NULL;
+	/* Make sure that we don't add same quals twice... */
+	pstate->p_join_quals = NIL;
 
-	return (Node *) expr;
+	return clause;
 }	/* mergeInnerJoinQuals() */
 
 /*
@@ -131,7 +132,7 @@ transformWhereClause(ParseState *pstate, Node *clause)
 {
 	Node	   *qual;
 
-	if (pstate->p_join_quals != NULL)
+	if (pstate->p_join_quals != NIL)
 		clause = mergeInnerJoinQuals(pstate, clause);
 
 	if (clause == NULL)
@@ -275,21 +276,22 @@ ExpandAttrs(Attr *attr)
 
 /* transformUsingClause()
  * Take an ON or USING clause from a join expression and expand if necessary.
+ * Result is an implicitly-ANDed list of untransformed qualification clauses.
  */
-static Node *
-transformUsingClause(ParseState *pstate, List *usingList, List *leftList, List *rightList)
+static List *
+transformUsingClause(ParseState *pstate, List *usingList,
+					 List *leftList, List *rightList)
 {
-	A_Expr	   *expr = NULL;
+	List	   *result = NIL;
 	List	   *using;
 
 	foreach(using, usingList)
 	{
-		List	   *col;
-		A_Expr	   *e;
-
 		Attr	   *uattr = lfirst(using);
 		Attr	   *lattr = NULL,
 				   *rattr = NULL;
+		List	   *col;
+		A_Expr	   *e;
 
 		/*
 		 * find the first instances of this column in the shape list and
@@ -324,22 +326,11 @@ transformUsingClause(ParseState *pstate, List *usingList, List *leftList, List *
 		e->lexpr = (Node *) lattr;
 		e->rexpr = (Node *) rattr;
 
-		if (expr != NULL)
-		{
-			A_Expr	   *a = makeNode(A_Expr);
-
-			a->oper = AND;
-			a->opname = NULL;
-			a->lexpr = (Node *) expr;
-			a->rexpr = (Node *) e;
-			expr = a;
-		}
-		else
-			expr = e;
+		result = lappend(result, e);
 	}
 
-	return ((Node *) transformExpr(pstate, (Node *) expr, EXPR_COLUMN_FIRST));
-}	/* transformUsiongClause() */
+	return result;
+}	/* transformUsingClause() */
 
 #endif
 
@@ -632,7 +623,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 
 					printf("JOIN/USING input quals are %s\n", nodeToString(j->quals));
 
-					j->quals = (List *) transformUsingClause(pstate, shape, l_cols, r_cols);
+					j->quals = transformUsingClause(pstate, shape, l_cols, r_cols);
 
 					printf("JOIN/USING transformed quals are %s\n", nodeToString(j->quals));
 
@@ -650,7 +641,12 @@ parseFromClause(ParseState *pstate, List *frmList)
 				else
 					j->quals = (List *) lcons(j->quals, NIL);
 
-				pstate->p_join_quals = (Node *) j->quals;
+				/* listCopy may not be needed here --- will j->quals list
+				 * be used again anywhere?  The #ifdef'd code below may need
+				 * it, if it ever gets used...
+				 */
+				pstate->p_join_quals = nconc(pstate->p_join_quals,
+											 listCopy(j->quals));
 
 #if 0
 				if (qual == NULL)
@@ -660,11 +656,13 @@ parseFromClause(ParseState *pstate, List *frmList)
 #endif
 
 #if 0
+				/* XXX this code is WRONG because j->quals is a List
+				 * not a simple expression.  Perhaps *qual
+				 * ought also to be a List and we append to it,
+				 * similarly to the way p_join_quals is handled above?
+				 */
 				if (*qual == NULL)
 				{
-#endif
-
-#if 0
 					/* merge qualified join clauses... */
 					if (j->quals != NULL)
 					{
@@ -682,9 +680,6 @@ parseFromClause(ParseState *pstate, List *frmList)
 						else
 							*qual = (Node *) j->quals;
 					}
-#endif
-
-#if 0
 				}
 				else
 				{

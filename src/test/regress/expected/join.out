@@ -274,10 +274,22 @@ SELECT '' AS "xxx", *
 --
 SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.i);
-ERROR:  transformExpr: does not know how to transform node 501 (internal error)
+ xxx | i | j |   t   | i | k  
+-----+---+---+-------+---+----
+     | 1 | 3 | one   | 1 | -1
+     | 2 | 2 | two   | 2 |  2
+     | 2 | 2 | two   | 2 |  4
+     | 3 | 1 | three | 3 | -3
+(4 rows)
+
 SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.k);
-ERROR:  transformExpr: does not know how to transform node 501 (internal error)
+ xxx | i | j |  t   | i | k 
+-----+---+---+------+---+---
+     | 2 | 2 | two  | 2 | 2
+     | 4 | 0 | four | 2 | 4
+(2 rows)
+
 SELECT '' AS "xxx", *
   FROM J1_TBL CROSS JOIN J2_TBL;
  xxx | i | j |   t   | i | k  
@@ -305,7 +317,16 @@ SELECT '' AS "xxx", *
 --
 SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i <= J2_TBL.k);
-ERROR:  transformExpr: does not know how to transform node 501 (internal error)
+ xxx | i | j |   t   | i | k 
+-----+---+---+-------+---+---
+     | 1 | 3 | one   | 2 | 2
+     | 2 | 2 | two   | 2 | 2
+     | 1 | 3 | one   | 2 | 4
+     | 2 | 2 | two   | 2 | 4
+     | 3 | 1 | three | 2 | 4
+     | 4 | 0 | four  | 2 | 4
+(6 rows)
+
 --
 -- Outer joins
 --
