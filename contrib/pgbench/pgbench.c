@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.10 2001/09/09 03:15:56 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.11 2001/10/24 08:07:22 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -301,7 +301,7 @@ doOne(CState * state, int n, int debug)
 			sprintf(sql, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
 			break;
 		case 5:
-			sprintf(sql, "insert into history(tid,bid,aid,delta,time) values(%d,%d,%d,%d,'now')",
+			sprintf(sql, "insert into history(tid,bid,aid,delta,mtime) values(%d,%d,%d,%d,'now')",
 					st->tid, st->bid, st->aid, st->delta);
 			break;
 		case 6:
@@ -444,7 +444,7 @@ init()
 		"drop table accounts",
 		"create table accounts(aid int,primary key(aid),bid int,abalance int,filler char(84))",
 		"drop table history",
-	"create table history(tid int,bid int,aid int,delta int,time timestamp,filler char(22))"};
+	"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
 	char		sql[256];
 
 	int			i;

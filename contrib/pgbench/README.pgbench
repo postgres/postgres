@@ -1,4 +1,4 @@
-pgbench 1.3 README		2001/09/09 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2001/10/24 Tatsuo Ishii (t-ishii@sra.co.jp)
 
 o What is pgbench?
 
@@ -152,6 +152,9 @@ o License?
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2001/10/24
+	* "time"->"mtime"
 
 2001/09/09
 	* Add -U, -P, -C options

@@ -1,4 +1,4 @@
-pgbench 1.3 README		2001/09/09 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2001/09/09 Tatsuo Ishii (t-ishii@sra.co.jp)
 
 ■pgbench とは？
 
@@ -168,6 +168,10 @@ pgbench は石井 達夫によって書かれました．ライセンス条件は pgbench.c 
 できます．
 
 ■改定履歴
+
+2001/10/24
+	* PostgreSQL 7.2で，"time"が予約語になったので，"mtime"に変更
+	した．
 
 2001/09/09
 	* PostgreSQL 7.2用に，-U, -P, -C オプションを追加しました．
