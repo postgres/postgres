@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug  6 13:52:36 EDT 2004
+Last updated:		Fri Aug  6 21:58:13 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -91,6 +91,8 @@ Administration
   recent transactions aren't available for recovery in case of a disk
   failure.
 
+* Create dump tool for write-ahead logs for use in determining
+  transaction id for point-in-time recovery
 * Improve replication solutions
 	o Automatic failover
 
