@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.43 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.44 2003/03/23 23:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,28 +78,14 @@ gistrescan(PG_FUNCTION_ARGS)
 	ItemPointerSetInvalid(&s->currentItemData);
 	ItemPointerSetInvalid(&s->currentMarkData);
 
-	if (s->numberOfKeys > 0)
-	{
-		memmove(s->keyData,
-				key,
-				s->numberOfKeys * sizeof(ScanKeyData));
-	}
-
 	p = (GISTScanOpaque) s->opaque;
 	if (p != (GISTScanOpaque) NULL)
 	{
+		/* rescan an existing indexscan --- reset state */
 		gistfreestack(p->s_stack);
 		gistfreestack(p->s_markstk);
 		p->s_stack = p->s_markstk = (GISTSTACK *) NULL;
 		p->s_flags = 0x0;
-		for (i = 0; i < s->numberOfKeys; i++)
-		{
-			s->keyData[i].sk_procedure
-				= RelationGetGISTStrategy(s->indexRelation,
-										  s->keyData[i].sk_attno,
-										  s->keyData[i].sk_procedure);
-			s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
-		}
 	}
 	else
 	{
@@ -110,22 +96,28 @@ gistrescan(PG_FUNCTION_ARGS)
 		s->opaque = p;
 		p->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
 		initGISTstate(p->giststate, s->indexRelation);
-		if (s->numberOfKeys > 0)
+	}
 
-			/*
-			 * * Play games here with the scan key to use the Consistent *
-			 * function for all comparisons: * 1) the sk_procedure field
-			 * will now be used to hold the *	 strategy number * 2) the
-			 * sk_func field will point to the Consistent function
-			 */
-			for (i = 0; i < s->numberOfKeys; i++)
-			{
-				s->keyData[i].sk_procedure =
-					RelationGetGISTStrategy(s->indexRelation,
-											s->keyData[i].sk_attno,
-											s->keyData[i].sk_procedure);
-				s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
-			}
+	/* Update scan key, if a new one is given */
+	if (key && s->numberOfKeys > 0)
+	{
+		memmove(s->keyData,
+				key,
+				s->numberOfKeys * sizeof(ScanKeyData));
+		/*
+		 * Play games here with the scan key to use the Consistent
+		 * function for all comparisons: 1) the sk_procedure field
+		 * will now be used to hold the strategy number 2) the
+		 * sk_func field will point to the Consistent function
+		 */
+		for (i = 0; i < s->numberOfKeys; i++)
+		{
+			s->keyData[i].sk_procedure =
+				RelationGetGISTStrategy(s->indexRelation,
+										s->keyData[i].sk_attno,
+										s->keyData[i].sk_procedure);
+			s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
+		}
 	}
 
 	PG_RETURN_VOID();

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.101 2003/03/04 21:51:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.102 2003/03/23 23:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,6 +396,7 @@ btrescan(PG_FUNCTION_ARGS)
 			so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
 		else
 			so->keyData = (ScanKey) NULL;
+		so->numberOfKeys = scan->numberOfKeys;
 		scan->opaque = so;
 	}
 
@@ -420,12 +421,12 @@ btrescan(PG_FUNCTION_ARGS)
 	 * Reset the scan keys. Note that keys ordering stuff moved to
 	 * _bt_first.	   - vadim 05/05/97
 	 */
-	so->numberOfKeys = scan->numberOfKeys;
-	if (scan->numberOfKeys > 0)
+	if (scankey && scan->numberOfKeys > 0)
 	{
 		memmove(scan->keyData,
 				scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
+		so->numberOfKeys = scan->numberOfKeys;
 		memmove(so->keyData,
 				scankey,
 				so->numberOfKeys * sizeof(ScanKeyData));

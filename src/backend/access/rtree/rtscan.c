@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.42 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.43 2003/03/23 23:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,22 +80,14 @@ rtrescan(PG_FUNCTION_ARGS)
 	ItemPointerSetInvalid(&s->currentItemData);
 	ItemPointerSetInvalid(&s->currentMarkData);
 
-	if (s->numberOfKeys > 0)
-	{
-		memmove(s->keyData,
-				key,
-				s->numberOfKeys * sizeof(ScanKeyData));
-	}
-
 	p = (RTreeScanOpaque) s->opaque;
 	if (p != (RTreeScanOpaque) NULL)
 	{
+		/* rescan an existing indexscan --- reset state */
 		freestack(p->s_stack);
 		freestack(p->s_markstk);
 		p->s_stack = p->s_markstk = (RTSTACK *) NULL;
 		p->s_flags = 0x0;
-		for (i = 0; i < s->numberOfKeys; i++)
-			p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
 	}
 	else
 	{
@@ -106,28 +98,32 @@ rtrescan(PG_FUNCTION_ARGS)
 		p->s_flags = 0x0;
 		s->opaque = p;
 		if (s->numberOfKeys > 0)
-		{
 			p->s_internalKey = (ScanKey) palloc(sizeof(ScanKeyData) * s->numberOfKeys);
+	}
 
-			/*
-			 * Scans on internal pages use different operators than they
-			 * do on leaf pages.  For example, if the user wants all boxes
-			 * that exactly match (x1,y1,x2,y2), then on internal pages we
-			 * need to find all boxes that contain (x1,y1,x2,y2).
-			 */
+	/* Update scan key, if a new one is given */
+	if (key && s->numberOfKeys > 0)
+	{
+		memmove(s->keyData,
+				key,
+				s->numberOfKeys * sizeof(ScanKeyData));
 
-			for (i = 0; i < s->numberOfKeys; i++)
-			{
-				p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
-				internal_proc = RTMapOperator(s->indexRelation,
-											  s->keyData[i].sk_attno,
-											  s->keyData[i].sk_procedure);
-				ScanKeyEntryInitialize(&(p->s_internalKey[i]),
-									   s->keyData[i].sk_flags,
-									   s->keyData[i].sk_attno,
-									   internal_proc,
-									   s->keyData[i].sk_argument);
-			}
+		/*
+		 * Scans on internal pages use different operators than they
+		 * do on leaf pages.  For example, if the user wants all boxes
+		 * that exactly match (x1,y1,x2,y2), then on internal pages we
+		 * need to find all boxes that contain (x1,y1,x2,y2).
+		 */
+		for (i = 0; i < s->numberOfKeys; i++)
+		{
+			internal_proc = RTMapOperator(s->indexRelation,
+										  s->keyData[i].sk_attno,
+										  s->keyData[i].sk_procedure);
+			ScanKeyEntryInitialize(&(p->s_internalKey[i]),
+								   s->keyData[i].sk_flags,
+								   s->keyData[i].sk_attno,
+								   internal_proc,
+								   s->keyData[i].sk_argument);
 		}
 	}
 
