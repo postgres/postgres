@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.63 2001/01/24 19:42:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.64 2001/01/27 01:41:19 tgl Exp $
  *
  */
 
@@ -54,7 +54,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 		return;
 	}
 
-	/* rewriter and planner will not cope with utility statements */
+	/* rewriter will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
 		elog(NOTICE, "Utility statements have no plan structure");
@@ -87,6 +87,16 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 	char	   *s;
 	Plan	   *plan;
 	ExplainState *es;
+
+	/* planner will not cope with utility statements */
+	if (query->commandType == CMD_UTILITY)
+	{
+		if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
+			elog(NOTICE, "QUERY PLAN:\n\nNOTIFY\n");
+		else
+			elog(NOTICE, "QUERY PLAN:\n\nUTILITY\n");
+		return;
+	}
 
 	/* plan the query */
 	plan = planner(query);
