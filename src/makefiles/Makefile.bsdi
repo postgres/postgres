@@ -1,1 +1,1 @@
-CC=gcc2 -O2 -m486 -pipe
+CC=gcc2 -O2 -m486 -pipe -g -Wall -g -Wall

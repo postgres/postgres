@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.138 1998/04/05 21:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.139 1998/05/04 02:02:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2420,6 +2420,9 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		{
 			SendQuery(&success, pset, query, false, false, 0);
 			successResult &= success;
+			xcomment = NULL;
+			in_quote = false;
+			paren_level = 0;
 			querySent = true;
 		}
 	}							/* while */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.30 1998/04/29 12:40:56 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.31 1998/05/04 02:02:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,7 @@
 /***************************************************************************
  * All non Linux
  */
+#endif
 
 #if defined (nextstep)
 /*
