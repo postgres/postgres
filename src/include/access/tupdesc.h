@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.6 1997/08/19 04:45:20 vadim Exp $
+ * $Id: tupdesc.h,v 1.7 1997/08/21 04:10:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,23 +17,38 @@
 #include <access/attnum.h>
 #include <catalog/pg_attribute.h>
 
-typedef struct attrConstr {
-/*------------------------------------------------------------------------
-  This structure contains flags to the constraints of a tuple
-  ------------------------------------------------------------------------*/
-  bool    has_not_null;
-} AttrConstr;
 
+typedef struct attrDefault {
+    AttrNumber		adnum;
+    char		*adbin;
+    char		*adsrc;
+} AttrDefault;
+
+typedef struct constrCheck {
+    char		*ccname;
+    char		*ccbin;
+    char		*ccsrc;
+} ConstrCheck;
+
+/* This structure contains constraints of a tuple */
+typedef struct tupleConstr {
+    AttrDefault		*defval;
+    ConstrCheck		*check;
+    uint16		num_defval;
+    uint16		num_check;
+    bool		has_not_null;
+} TupleConstr;
+
+/*
+ * This structure contains all information (i.e. from Classes
+ * pg_attribute, pg_attrdef, pg_relcheck) for a tuple. 
+ */
 typedef struct tupleDesc {
-/*------------------------------------------------------------------------ 
-  This structure contains all the attribute information (i.e. from Class 
-  pg_attribute) for a tuple. 
--------------------------------------------------------------------------*/
     int  natts;      
       /* Number of attributes in the tuple */
     AttributeTupleForm *attrs;
       /* attrs[N] is a pointer to the description of Attribute Number N+1.  */
-    AttrConstr *constr;
+    TupleConstr *constr;
 } *TupleDesc;
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.17 1997/08/21 01:36:09 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.18 1997/08/21 04:09:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,7 +500,7 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	build_tupdesc_seq(buildinfo, relation, natts);
     else
     {
-    	relation->rd_att->constr = (AttrConstr *) palloc(sizeof(struct attrConstr));
+    	relation->rd_att->constr = (TupleConstr *) palloc(sizeof(TupleConstr));
     	relation->rd_att->constr->num_check = 0;
     	relation->rd_att->constr->num_defval = 0;
     	relation->rd_att->constr->has_not_null = false;
