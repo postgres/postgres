@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.8 1997/05/31 16:52:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.9 1997/06/13 03:24:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1155,11 +1155,11 @@ setVarAttrLenForCreateTable(TupleDesc tupType, List *targetList,
 		Relation	rd;
 
 		var = (Var *)expr;
-		rtentry = rt_fetch(var->varno, rangeTable);
+		rtentry = rt_fetch(var->varnoold, rangeTable);
 		rd = heap_open(rtentry->relid);
 			/* set length to that defined in relation */
 		tupType->attrs[varno]->attlen =
-				(*rd->rd_att->attrs[var->varattno-1]).attlen;
+				(*rd->rd_att->attrs[var->varoattno-1]).attlen;
 		heap_close(rd);
 	    }
 	    else
