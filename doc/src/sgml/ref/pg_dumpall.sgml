@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.8 2000/07/21 00:24:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.9 2000/07/21 18:51:24 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,6 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-pg_dumpall
 pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -O ] [ -s ] [ -u ] [ -v ] [ -x ]
   </synopsis>
 
