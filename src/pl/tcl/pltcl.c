@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.7 1998/10/09 16:57:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.8 1998/11/27 20:05:27 vadim Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1613,7 +1613,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "pltcl: Cache lookup of type %s failed", args[i]);
-		qdesc->argtypes[i] = typeTup->t_oid;
+		qdesc->argtypes[i] = typeTup->t_data->t_oid;
 		fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 				  &(qdesc->arginfuncs[i]));
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;

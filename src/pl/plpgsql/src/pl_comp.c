@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.3 1998/09/01 04:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.4 1998/11/27 20:07:22 vadim Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -620,7 +620,7 @@ plpgsql_parse_word(char *word)
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 		typ->typname = strdup(nameout(&(typeStruct->typname)));
-		typ->typoid = typeTup->t_oid;
+		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typbyval = typeStruct->typbyval;
 		typ->atttypmod = -1;
@@ -943,7 +943,7 @@ plpgsql_parse_wordtype(char *word)
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 		typ->typname = strdup(nameout(&(typeStruct->typname)));
-		typ->typoid = typeTup->t_oid;
+		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typbyval = typeStruct->typbyval;
 		typ->atttypmod = -1;
@@ -1060,7 +1060,7 @@ plpgsql_parse_dblwordtype(char *string)
 	 * ----------
 	 */
 	attrtup = SearchSysCacheTuple(ATTNAME,
-								  ObjectIdGetDatum(classtup->t_oid),
+								  ObjectIdGetDatum(classtup->t_data->t_oid),
 								  PointerGetDatum(word2), 0, 0);
 	if (!HeapTupleIsValid(attrtup))
 	{
@@ -1087,7 +1087,7 @@ plpgsql_parse_dblwordtype(char *string)
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 	typ->typname = strdup(nameout(&(typeStruct->typname)));
-	typ->typoid = typetup->t_oid;
+	typ->typoid = typetup->t_data->t_oid;
 	fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typbyval = typeStruct->typbyval;
 	typ->atttypmod = attrStruct->atttypmod;
@@ -1163,7 +1163,7 @@ plpgsql_parse_wordrowtype(char *string)
 
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->nfields = classStruct->relnatts;
-	row->rowtypeclass = typetup->t_oid;
+	row->rowtypeclass = typetup->t_data->t_oid;
 	row->fieldnames = malloc(sizeof(char *) * row->nfields);
 	row->varnos = malloc(sizeof(int) * row->nfields);
 
@@ -1174,7 +1174,7 @@ plpgsql_parse_wordrowtype(char *string)
 		 * ----------
 		 */
 		attrtup = SearchSysCacheTuple(ATTNUM,
-									  ObjectIdGetDatum(classtup->t_oid),
+									  ObjectIdGetDatum(classtup->t_data->t_oid),
 									  (Datum) (i + 1), 0, 0);
 		if (!HeapTupleIsValid(attrtup))
 		{
@@ -1215,7 +1215,7 @@ plpgsql_parse_wordrowtype(char *string)
 		strcat(var->refname, cp);
 		var->datatype = malloc(sizeof(PLpgSQL_type));
 		var->datatype->typname = strdup(nameout(&(typeStruct->typname)));
-		var->datatype->typoid = typetup->t_oid;
+		var->datatype->typoid = typetup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 		var->datatype->typbyval = typeStruct->typbyval;
 		var->datatype->atttypmod = attrStruct->atttypmod;

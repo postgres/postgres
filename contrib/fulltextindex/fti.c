@@ -154,7 +154,7 @@ fti()
 	tupdesc = rel->rd_att;	/* what the tuple looks like (?) */
 
 	/* get oid of current tuple, needed by all, so place here */
-	oid = rettuple->t_oid;
+	oid = rettuple->t_data->t_oid;
 	if (!OidIsValid(oid))
 	    elog(ERROR,"Full Text Indexing: oid of current tuple is NULL");
 
