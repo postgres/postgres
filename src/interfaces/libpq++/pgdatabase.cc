@@ -10,13 +10,13 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.2 1999/05/30 15:17:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
 #include "pgdatabase.h"
 
-static char rcsid[] = "$Id: pgdatabase.cc,v 1.1 1999/05/23 01:04:01 momjian Exp $"; 
 
 void PgDatabase::DisplayTuples(FILE *out = 0, int fillAlign = 1, 
 	const char* fieldSep = "|",int printHeader = 1, int quiet = 0) 

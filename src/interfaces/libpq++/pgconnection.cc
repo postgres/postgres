@@ -9,6 +9,8 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.6 1999/05/30 15:17:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +22,6 @@
 extern "C" {
 #include "fe-auth.h"
 }
-
-static char rcsid[] = "$Id: pgconnection.cc,v 1.5 1999/05/23 01:04:00 momjian Exp $";
 
 // ****************************************************************
 //

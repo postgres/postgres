@@ -9,6 +9,8 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.5 1999/05/30 15:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +20,6 @@ extern "C" {
 }
 
 #include "pglobject.h"
-
-static char rcsid[] = "$Id: pglobject.cc,v 1.4 1999/05/23 01:04:03 momjian Exp $";
 
 // ****************************************************************
 //

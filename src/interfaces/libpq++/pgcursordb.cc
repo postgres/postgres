@@ -9,15 +9,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.3 1999/05/30 15:17:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
- #include "pgcursordb.h"
-
-static char rcsid[] = "$Id: pgcursordb.cc,v 1.2 1999/05/23 01:04:01 momjian Exp $";
-
- 
+#include "pgcursordb.h"
  
 // ****************************************************************
 //

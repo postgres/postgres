@@ -9,14 +9,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgtransdb.cc,v 1.3 1999/05/30 15:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
- #include "pgtransdb.h"
- 
-static char rcsid[] = "$Id: pgtransdb.cc,v 1.2 1999/05/23 01:04:03 momjian Exp $";
- 
+#include "pgtransdb.h"
+
 // ****************************************************************
 //
 // PgTransaction Implementation
