@@ -235,9 +235,6 @@
 /* Set to 1 if you have <fp_class.h> */
 #undef HAVE_FP_CLASS_H
 
-/* Set to 1 if you have <fp_class.h> */
-#undef HAVE_GETOPT
-
 /* Set to 1 if you have <history.h> */
 #undef HAVE_HISTORY_H
 

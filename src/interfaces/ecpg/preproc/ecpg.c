@@ -2,14 +2,11 @@
 /* (C) Michael Meskes <meskes@debian.org> Feb 5th, 1998 */
 /* Placed under the same copyright as PostgresSQL */
 
+#include <unistd.h>
 #include "postgres.h"
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#else
-#include <unistd.h>
-extern int	optind;
-extern char *optarg;
+#ifdef __CYGWIN32__
+#include "getopt.h"
 #endif
 
 #include "extern.h"
