@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.6 2002/04/22 21:46:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.7 2002/04/22 21:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -888,10 +888,9 @@ AlterTableAlterColumnFlags(Oid myrelid,
 	{
 		/*
 		 * safety check: do not allow toasted storage modes unless column
-		 * datatype is TOAST-aware.  We assume the datatype's typstorage
-		 * will be 'p' if and only if it ain't TOAST-aware.
+		 * datatype is TOAST-aware.
 		 */
-		if (newstorage == 'p' || get_typstorage(attrtuple->atttypid) != 'p')
+		if (newstorage == 'p' || TypeIsToastable(attrtuple->atttypid))
 			attrtuple->attstorage = newstorage;
 		else
 			elog(ERROR, "ALTER TABLE: Column datatype %s can only have storage \"plain\"",
