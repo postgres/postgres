@@ -140,15 +140,15 @@ CREATE OPERATOR && (
 --	SORT2 = '<'
 --);
 
-CREATE OPERATOR <> (
-	LEFTARG = _int4,
-	RIGHTARG = _int4,
-	PROCEDURE = _int_different,
-	COMMUTATOR = '<>',
-	NEGATOR = '=',
-	RESTRICT = neqsel,
-	JOIN = neqjoinsel
-);
+--CREATE OPERATOR <> (
+--	LEFTARG = _int4,
+--	RIGHTARG = _int4,
+--	PROCEDURE = _int_different,
+--	COMMUTATOR = '<>',
+--	NEGATOR = '=',
+--	RESTRICT = neqsel,
+--	JOIN = neqjoinsel
+--);
 
 CREATE OPERATOR @ (
 	LEFTARG = _int4,
@@ -343,7 +343,7 @@ LANGUAGE 'C';
 CREATE OPERATOR CLASS gist__int_ops
 DEFAULT FOR TYPE _int4 USING gist AS
 	OPERATOR	3	&&,
-	OPERATOR	6	=	RECHECK,
+	OPERATOR	6	= (anyarray, anyarray)	RECHECK,
 	OPERATOR	7	@,
 	OPERATOR	8	~,
 	OPERATOR	20	@@ (_int4, query_int),
@@ -418,7 +418,7 @@ CREATE OPERATOR CLASS gist__intbig_ops
 FOR TYPE _int4 USING gist
 AS
 	OPERATOR	3	&&	RECHECK,
-	OPERATOR	6	=	RECHECK,
+	OPERATOR	6	= (anyarray, anyarray)	RECHECK,
 	OPERATOR	7	@	RECHECK,
 	OPERATOR	8	~	RECHECK,
 	OPERATOR	20	@@ (_int4, query_int)	RECHECK,
