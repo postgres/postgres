@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.48 2002/01/02 22:09:23 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.49 2002/01/04 15:49:42 thomas Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -3112,7 +3112,7 @@ to_date(PG_FUNCTION_ARGS)
 	 * Quick hack: since our inputs are just like to_timestamp, hand over
 	 * the whole input info struct...
 	 */
-	return DirectFunctionCall1(timestamp_date, to_timestamp(fcinfo));
+	return DirectFunctionCall1(timestamptz_date, to_timestamp(fcinfo));
 }
 
 /**********************************************************************
