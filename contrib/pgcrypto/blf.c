@@ -126,7 +126,7 @@ Blowfish_initstate(blf_ctx * c)
 
 /* P-box and S-box tables initialized with digits of Pi */
 
-	const blf_ctx initstate =
+	static const blf_ctx initstate =
 
 	{{
 			{
