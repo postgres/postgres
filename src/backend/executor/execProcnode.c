@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.9 1998/02/26 04:31:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.10 1998/05/19 18:05:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,8 @@
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
+#include "tcop/tcopprot.h"
 #include "executor/executor.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeAppend.h"
@@ -233,6 +235,10 @@ ExecProcNode(Plan *node, Plan *parent)
 	 *	deal with NULL nodes..
 	 * ----------------
 	 */
+
+	if (QueryCancel)
+		CancelQuery();
+
 	if (node == NULL)
 		return NULL;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.21 1998/02/26 04:37:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.22 1998/05/19 18:05:51 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -37,8 +37,10 @@
 
 ProtocolVersion FrontendProtocol = PG_PROTOCOL_LATEST;
 int			Portfd = -1;
-int			Noversion = 0;
-int			Quiet = 1;
+
+bool		Noversion = false;
+bool		Quiet = false;
+bool		QueryCancel = false;
 
 int			MyProcPid;
 

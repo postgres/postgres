@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.27 1998/02/26 04:37:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.28 1998/05/19 18:05:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ elog(int lev, const char *fmt,...)
 
 	if (lev == ERROR)
 	{
-		extern int	InError;
+		extern bool	InError;
 
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.68 1998/05/06 23:50:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.69 1998/05/19 18:05:48 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -119,7 +119,7 @@ jmp_buf		Warn_restart;
 sigjmp_buf	Warn_restart;
 
 #endif							/* defined(nextstep) */
-int			InError;
+bool			InError;
 
 extern int	NBuffers;
 
@@ -618,6 +618,9 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 	/* plan the queries */
 	plan_list = pg_parse_and_plan(query_string, typev, nargs, &querytree_list, dest);
 
+	if (QueryCancel)
+		CancelQuery();
+		
 	/* pg_parse_and_plan could have failed */
 	if (querytree_list == NULL)
 		return;
@@ -776,6 +779,26 @@ FloatExceptionHandler(SIGNAL_ARGS)
 }
 
 
+/* signal handler for query cancel */
+static void
+QueryCancelHandler(SIGNAL_ARGS)
+{
+	QueryCancel = true;
+}
+
+void
+CancelQuery(void)
+{
+	char dummy;
+
+	/* throw it away */
+	while (pq_recvoob(&dummy, 1) > 0)
+		;
+	/* QueryCancel reset in longjump after elog() call */
+	elog(ERROR, "Query was cancelled.");
+}
+
+
 static void
 usage(char *progname)
 {
@@ -819,11 +842,11 @@ usage(char *progname)
 int
 PostgresMain(int argc, char *argv[])
 {
-	int			flagC;
-	int			flagQ;
-	int			flagE;
-	int			flagEu;
-	int			flag;
+	bool			flagC = false,
+					flagQ = false,
+					flagE = false,
+					flagEu = false;
+	int				flag;
 
 	char	   *DBName = NULL;
 	int			errs = 0;
@@ -865,7 +888,7 @@ PostgresMain(int argc, char *argv[])
 	/*
 	 * Set default values.
 	 */
-	flagC = flagQ = flagE = flagEu = ShowStats = 0;
+	ShowStats = 0;
 	ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
 #ifdef LOCK_MGR_DEBUG
 	lockDebug = 0;
@@ -928,14 +951,14 @@ PostgresMain(int argc, char *argv[])
 				 *	don't print version string (don't know why this is 'C' --mao)
 				 * ----------------
 				 */
-				flagC = 1;
+				flagC = true;
 				break;
 
 			case 'D':			/* PGDATA directory */
 				DataDir = optarg;
 
 			case 'd':			/* debug level */
-				flagQ = 0;
+				flagQ = false;
 				DebugLvl = (short) atoi(optarg);
 				if (DebugLvl > 1)
 					DebugPrintQuery = true;
@@ -952,7 +975,7 @@ PostgresMain(int argc, char *argv[])
 				 *	E - echo the query the user entered
 				 * ----------------
 				 */
-				flagE = 1;
+				flagE = true;
 				break;
 
 			case 'e':
@@ -960,7 +983,7 @@ PostgresMain(int argc, char *argv[])
 				 * Use european date formats.
 				 * --------------------------
 				 */
-				flagEu = 1;
+				flagEu = true;
 				break;
 
 			case 'F':
@@ -1064,7 +1087,7 @@ PostgresMain(int argc, char *argv[])
 				 *	Q - set Quiet mode (reduce debugging output)
 				 * ----------------
 				 */
-				flagQ = 1;
+				flagQ = true;
 				break;
 
 			case 'S':
@@ -1252,6 +1275,7 @@ PostgresMain(int argc, char *argv[])
 		}
 		pq_init(Portfd);
 		whereToSendOutput = Remote;
+		pq_regoob(QueryCancelHandler); /* we do it here so the backend it connected */	
 	}
 	else
 		whereToSendOutput = Debug;
@@ -1282,7 +1306,7 @@ PostgresMain(int argc, char *argv[])
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
-		InError = 1;
+		InError = true;
 
 		time(&tim);
 
@@ -1292,8 +1316,10 @@ PostgresMain(int argc, char *argv[])
 		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
 		AbortCurrentTransaction();
+
 	}
-	InError = 0;
+
+	InError = false;
 
 	/* ----------------
 	 *	POSTGRES main processing loop begins here
@@ -1302,7 +1328,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.68 $ $Date: 1998/05/06 23:50:19 $");
+		puts("$Revision: 1.69 $ $Date: 1998/05/19 18:05:48 $");
 	}
 
 	/* ----------------
@@ -1329,6 +1355,9 @@ PostgresMain(int argc, char *argv[])
 		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
 		firstchar = ReadCommand(parser_input);
+
+		QueryCancel = false;
+
 		/* process the command */
 		switch (firstchar)
 		{

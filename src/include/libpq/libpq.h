@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.13 1998/03/02 05:42:06 scrappy Exp $
+ * $Id: libpq.h,v 1.14 1998/05/19 18:05:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ extern void pq_putstr(char *s);
 extern void pq_putnchar(char *s, int n);
 extern void pq_putint(int i, int b);
 extern int	pq_sendoob(char *msg, int len);
-extern int	pq_recvoob(char *msgPtr, int *lenPtr);
+extern int	pq_recvoob(char *msgPtr, int len);
 extern int	pq_getinaddr(struct sockaddr_in * sin, char *host, int port);
 extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
 extern int

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.40 1998/04/26 04:06:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.41 1998/05/19 18:05:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,8 +312,8 @@ BootstrapMain(int argc, char *argv[])
 	 */
 
 	/* Set defaults, to be overriden by explicit options below */
-	Quiet = 0;
-	Noversion = 0;
+	Quiet = false;
+	Noversion = false;
 	dbName = NULL;
 	DataDir = getenv("PGDATA"); /* Null if no PGDATA variable */
 
@@ -325,19 +325,19 @@ BootstrapMain(int argc, char *argv[])
 				DataDir = optarg;
 				break;
 			case 'd':
-				DebugMode = 1;	/* print out debugging info while parsing */
+				DebugMode = true;	/* print out debugging info while parsing */
 				break;
 			case 'C':
-				Noversion = 1;
+				Noversion = true;
 				break;
 			case 'F':
-				fsyncOff = 1;
+				fsyncOff = true;
 				break;
 			case 'O':
 				override = true;
 				break;
 			case 'Q':
-				Quiet = 1;
+				Quiet = true;
 				break;
 			case 'P':			/* specify port */
 				portFd = atoi(optarg);

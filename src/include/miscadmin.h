@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.22 1998/04/05 21:04:50 momjian Exp $
+ * $Id: miscadmin.h,v 1.23 1998/05/19 18:05:52 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -35,8 +35,9 @@ extern int	PostmasterMain(int argc, char *argv[]);
  * from utils/init/globals.c
  */
 extern int	Portfd;
-extern int	Noversion;
-extern int	Quiet;
+extern bool	Noversion;
+extern bool	Quiet;
+extern bool	QueryCancel;
 extern char *DataDir;
 
 extern int	MyProcPid;
