@@ -398,6 +398,8 @@ public class ResultSet implements java.sql.ResultSet
   public java.sql.Date getDate(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
+    if(s==null)
+      return null;
     SimpleDateFormat df = new SimpleDateFormat(connection.getDateStyle());
     try {
       return new java.sql.Date(df.parse(s).getTime());
@@ -856,5 +858,28 @@ public class ResultSet implements java.sql.ResultSet
   {
     return fields.length;
   }
+   
+   /**
+    * Returns the status message from the backend.<p>
+    * It is used internally by the driver.
+    *
+    * @return the status string from the backend
+    */
+   public String getStatusString()
+   {
+     return status;
+   }
+   
+   /**
+    * returns the OID of a field.<p>
+    * It is used internally by the driver.
+    *
+    * @param field field id
+    * @return the oid of that field's type
+    */
+   public int getColumnOID(int field)
+   {
+     return fields[field-1].getOID();
+   }
 }
 

@@ -299,4 +299,17 @@ public class Statement implements java.sql.Statement
 		result = result.getNext();
 		return (result != null && result.reallyResultSet());
 	}
+   
+   /**
+    * Returns the status message from the current Result.<p>
+    * This is used internally by the driver.
+    *
+    * @return status message from backend
+    */
+   public String getResultStatusString()
+   {
+     if(result == null)
+       return null;
+     return result.getStatusString();
+   }
 }

@@ -81,6 +81,12 @@ public class Connection implements java.sql.Connection
   // New for 6.3, salt value for crypt authorisation
   private String salt;
   
+  // This is used by Field to cache oid -> names.
+  // It's here, because it's shared across this connection only.
+  // Hence it cannot be static within the Field class, because it would then
+  // be across all connections, which could be to different backends.
+  protected Hashtable fieldCache = new Hashtable();
+  
   /**
    * This is the current date style of the backend
    */

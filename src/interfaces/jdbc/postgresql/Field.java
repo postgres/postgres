@@ -54,13 +54,21 @@ public class Field
   public int getSQLType() throws SQLException
   {
     if(sql_type == -1) {
-      ResultSet result = (postgresql.ResultSet)conn.ExecSQL("select typname from pg_type where oid = " + oid);
-      if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
-	throw new SQLException("Unexpected return from query for type");
-      result.next();
-      type_name = result.getString(1);
+      type_name = (String)conn.fieldCache.get(new Integer(oid));
+      
+      // it's not in the cache, so perform a query, and add the result to
+      // the cache
+      if(type_name==null) {
+	ResultSet result = (postgresql.ResultSet)conn.ExecSQL("select typname from pg_type where oid = " + oid);
+	if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+	  throw new SQLException("Unexpected return from query for type");
+	result.next();
+	type_name = result.getString(1);
+	conn.fieldCache.put(new Integer(oid),type_name);
+	result.close();
+      }
+      
       sql_type = getSQLType(type_name);
-      result.close();
     }
     return sql_type;
   }
