@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.27 2001/05/09 19:19:00 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.28 2001/05/09 20:08:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ override CFLAGS = $(TCL_CFLAGS_OPTIMIZE) $(TCL_SHLIB_CFLAGS)
 # first of all calls to the call handler. See the doc in the modules
 # directory about details.
 
-ifeq ($(with_pltcl_unknown), yes)
+ifeq ($(enable_pltcl_unknown), yes)
 override CPPFLAGS+= -DPLTCL_UNKNOWN_SUPPORT
 endif
 
@@ -99,7 +99,7 @@ pltcl$(DLSUFFIX): pltcl.o
 
 install: all installdirs
 	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(libdir)/$(DLOBJS)
-ifeq ($(with_pltcl_unknown), yes)
+ifeq ($(enable_pltcl_unknown), yes)
 	$(INSTALL_SCRIPT) modules/pltcl_loadmod \
 		$(DESTDIR)$(bindir)/pltcl_loadmod
 	$(INSTALL_SCRIPT) modules/pltcl_delmod \
