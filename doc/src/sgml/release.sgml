@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.102 2001/09/22 21:36:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.103 2001/11/08 23:42:23 petere Exp $
 -->
 
  <appendix id="release">
@@ -3847,7 +3847,7 @@ Bug fixes:
 </sect1>
 
 <sect1 id="release-0-03">
-<title><productname>Postgres95</productname>Release 0.03</title>
+<title><productname>Postgres95</productname> Release 0.03</title>
 
    <note>
    <title>Release date</title>
@@ -3980,7 +3980,7 @@ New documentation:
 </sect1>
 
 <sect1 id="release-0-02">
-<title><productname>Postgres95</productname>Release 0.02</title>
+<title><productname>Postgres95</productname> Release 0.02</title>
 
    <note>
    <title>Release date</title>
@@ -4042,7 +4042,7 @@ The following bugs have been fixed in postgres95-beta-0.02:
 </sect1>
 
 <sect1 id="release-0-01">
-<title><productname>Postgres95</productname>Release 0.01</title>
+<title><productname>Postgres95</productname> Release 0.01</title>
 
    <note>
    <title>Release date</title>
