@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.74 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.75 2001/04/03 02:31:52 tgl Exp $
  *
  * NOTES:
  *
@@ -112,7 +112,7 @@ typedef struct vfd
 	long		seekPos;		/* current logical file position */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
-	int			fileFlags;		/* open(2) flags for opening the file */
+	int			fileFlags;		/* open(2) flags for (re)opening the file */
 	int			fileMode;		/* mode to pass to open(2) */
 } Vfd;
 
@@ -681,8 +681,10 @@ fileNameOpenFile(FileName fileName,
 	vfdP->fileName = malloc(strlen(fileName) + 1);
 	strcpy(vfdP->fileName, fileName);
 
-	vfdP->fileFlags = fileFlags & ~(O_TRUNC | O_EXCL);
+	/* Saved flags are adjusted to be OK for re-opening file */
+	vfdP->fileFlags = fileFlags & ~(O_CREAT | O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
+
 	vfdP->seekPos = 0;
 
 	/*
