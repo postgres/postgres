@@ -1292,7 +1292,7 @@ int	pgindent_func_no_var_fix;\
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 # add space after comments that start on tab stops
-	sed 's:\([;,)/]\)/\*.*\*/\)$:\1	\2:' |
+	sed 's:\([^ 	]\)/\*.*\*/\)$:\1	\2:' |
 # work around #else indenting next line if #ifdef defines variables at top
 # work around misindenting of function with no variables defined
 	awk '
@@ -1329,14 +1329,13 @@ int	pgindent_func_no_var_fix;\
 					print line1;
 			line1 = line2;
 			line2 = line3;
-			line3 = "";
 		}
 		END {
 			if (skips <= 1)
 				print line1;
 			if (skips <= 2)
 				print line2;
-	}' |
+		}' |
 # remove blank line between opening brace and block comment
 	awk '
 	{	
@@ -1358,14 +1357,13 @@ int	pgindent_func_no_var_fix;\
 					print line1;
 			line1 = line2;
 			line2 = line3;
-			line3 = "";
 		}
 		END {
 			if (skips <= 1)
 				print line1;
 			if (skips <= 2)
 				print line2;
-	}' |
+		}' |
 # remove blank line before #endif
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{	
@@ -1383,12 +1381,24 @@ int	pgindent_func_no_var_fix;\
 	 			if (skips == 0 && NR >= 2)
 					print line1;
 			line1 = line2;
-			line2 = "";
 		}
 		END {
 			if (skips <= 1)
 				print line1;
-	}' |
+		}' |
+# add blank line before #endif if it is the last line in the file
+	awk '	BEGIN	{line1 = ""; line2 = ""}
+		{	
+			line2 = $0;
+	 		if (NR >= 2)
+				print line1;
+			line1 = line2;
+		}
+		END {
+			if (line2 ~ "^#endif")
+				printf "\n";
+			print line1;
+		}' |
 #  Move prototype names to the same line as return type.  Useful for ctags. 
 #  Indent should do this, but it does not.  It formats prototypes just
 #  like real functions.

@@ -66,6 +66,8 @@ Fix nested EXCEPT/INTERSECT (Tom)
 Python fix fetchone() (Gerhard Haring)
 ECPG fixes (Michael, Christof Petig)
 PL/PgSQL trailing semicolon optional (Tom)
+Fix path_inter, path_distance, path_length, dist_ppath to handle closed
+  paths (Curtis Barrett, Tom)
 
 Enhancements
 ------------
@@ -138,6 +140,7 @@ New CREATE OR REPLACE FUNCTION that preserves function oid (Gavin Sherry)
 DROP AGGREGATE and COMMENT ON AGGREGATE now accept an aggtype (Tom)
 Prevent output of default index op class in pg_dump (Tom)
 Allow trailing semicolons in psql backslash commands (Greg Sabino Mullane)
+Prompt for psql password from /dev/tty if possible
 
 Types
 -----
@@ -165,7 +168,10 @@ Modify type coersion logic to attempt binary-compatible functions first (Tom)
 Allow optional () after current_user, session_user, user, etc. (Peter E)
 Add compatibility functions to odbc.sql (Peter E)
 Force new password prompt when changing user and database in psql (Tatsuo, Tom)
-
+New /contrib/tsearch full text indexing (Oleg, Teodor Sigaev)
+Allow better selectivity with Nan and infinities in NUMERIC (Tom)
+Accept an INTERVAL argument for SET TIME ZONE (Thomas)
+Implement INTERVAL() YEA
 Performance
 -----------
 Optimizer improvements (Tom)
@@ -225,6 +231,7 @@ ODBC
 ECPG
 	EXECUTE ... INTO ...    implemented
 	multiple row descriptor support (e.g. CARDINALITY)
+	Fix for GRANT parameters (Lee Kindness)
 
 Source Code
 -----------
