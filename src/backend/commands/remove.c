@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.8 1997/05/22 00:14:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.9 1997/06/03 06:23:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,6 @@ RemoveAggregate(char *aggName, char *aggType)
     HeapTuple           tup;
     ItemPointerData     itemPointerData;
     char                *userName;
-    char                *typename;
     Oid                 basetypeID = InvalidOid;
     bool                defined;
     ScanKeyData         aggregateKey[3];
