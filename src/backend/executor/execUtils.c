@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.6 1996/11/13 20:48:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.7 1997/01/10 09:58:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1103,10 +1103,10 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	
 	
 	result = index_insert(relationDescs[i], /* index relation */
-			      datum,  /* array of heaptuple Datums */
-			      nulls, /* info on nulls */
- 			      &(heapTuple->t_ctid),
-			      is_update); /* oid of heap tuple */
+			      datum,	/* array of heaptuple Datums */
+			      nulls,	/* info on nulls */
+ 			      &(heapTuple->t_ctid),	/* oid of heap tuple */
+			      heapRelation);
 	
 	/* ----------------
 	 *	keep track of index inserts for debugging

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.7 1996/11/13 20:49:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.8 1997/01/10 10:00:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1008,7 +1008,8 @@ inv_indextup(LargeObjectDesc *obj_desc, HeapTuple htup)
 
     n[0] = ' ';
     v[0] = Int32GetDatum(obj_desc->highbyte);
-    res = index_insert(obj_desc->index_r, &v[0], &n[0], &(htup->t_ctid), false);
+    res = index_insert(obj_desc->index_r, &v[0], &n[0], 
+    				&(htup->t_ctid), obj_desc->heap_r);
 
     if (res)
 	pfree(res);

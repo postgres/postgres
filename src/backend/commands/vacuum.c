@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.12 1997/01/05 10:58:15 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.13 1997/01/10 09:57:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1006,7 +1006,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				idatum,
 				inulls,
 				&(newtup->t_ctid),
-				true);
+				onerel);
 		    if (iresult) pfree(iresult);
 		}
 	    }
