@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.14 2001/02/18 17:53:54 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.15 2001/03/27 05:47:13 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -144,6 +144,10 @@ then
         if [ -z "$mbcode" ]
 	then
 		echo "$CMDNAME: \"$MB\" is not a valid encoding name" 1>&2
+		exit 1
+	elif [ $mbcode -gt 31 ]
+	then
+		echo "$CMDNAME: $MB cannot be used as a database encoding" 1>&2
 		exit 1
 	fi
 fi
