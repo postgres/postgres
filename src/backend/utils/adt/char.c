@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.6 1997/08/12 20:15:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.7 1997/08/12 20:39:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,7 @@ char *char16in(char *s)
     if (s == NULL)
 	return(NULL);
     result = (char *) palloc(16);
-    memset(result, 0, 16);
-    (void) strncpy(result, s, 16);
+    strncpy(result, s, 16);
     return(result);
 }
 
@@ -113,12 +112,11 @@ char *char16out(char *s)
 {
     char	*result = (char *) palloc(17);
     
-    memset(result, 0, 17);
     if (s == NULL) {
 	result[0] = '-';
-    } else {
-	strncpy(result, s, 16);
-    }
+	result[1] = '\0';
+    } else
+	strNcpy(result, s, 16);
     return(result);
 }
 
@@ -207,8 +205,7 @@ uint16 char2in(char *s)
     if (s == NULL)
 	return(0);
     
-    memset((char *) &res, 0, sizeof(res));
-    (void) strncpy((char *) &res, s, 2);
+    strncpy((char *) &res, s, 2);
     return(res);
 }
 
@@ -216,8 +213,7 @@ char *char2out(uint16 s)
 {
     char	*result = (char *) palloc(3);
     
-    memset(result, 0, 3);
-    (void) strncpy(result, (char *) &s, 2);
+    strNcpy(result, (char *) &s, 2);
     
     return(result);
 }
