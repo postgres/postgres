@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.29 2000/02/15 20:49:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.30 2000/02/19 08:14:54 thomas Exp $
 Postgres documentation
 -->
 
@@ -50,8 +50,8 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
       <term><replaceable class="PARAMETER">value</replaceable></term>
       <listitem>
        <para>
-	New value of parameter.  The word <term>DEFAULT</term> can be
-	written to specify resetting the parameter to its default value.
+	New value of parameter.  <option>DEFAULT</option> can be
+	used to specify resetting the parameter to its default value.
        </para>
       </listitem>
      </varlistentry>
