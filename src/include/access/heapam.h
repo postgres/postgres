@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.65 2001/06/22 19:16:23 wieck Exp $
+ * $Id: heapam.h,v 1.66 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define HEAPAM_H
 
 #include <time.h>
+
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "access/tupmacs.h"
@@ -218,6 +219,11 @@ extern void heap_restrpos(HeapScanDesc scan);
 extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(char *buf, uint8 xl_info, char *rec);
+extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
+								 char *unused, int unlen);
+extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
+								ItemPointerData from,
+								Buffer newbuf, HeapTuple newtup);
 
 /* in common/heaptuple.c */
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum *value, char *nulls);

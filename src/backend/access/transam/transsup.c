@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.30 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.31 2001/07/12 04:11:13 tgl Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -16,11 +16,66 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/xact.h"
 #include "utils/bit.h"
+
+
+/* ----------------
+ *		transaction system version id
+ *
+ *		this is stored on the first page of the log, time and variable
+ *		relations on the first 4 bytes.  This is so that if we improve
+ *		the format of the transaction log after postgres version 2, then
+ *		people won't have to rebuild their databases.
+ *
+ *		TRANS_SYSTEM_VERSION 100 means major version 1 minor version 0.
+ *		Two databases with the same major version should be compatible,
+ *		even if their minor versions differ.
+ *
+ *		XXX This isn't actually being used!
+ * ----------------
+ */
+#define TRANS_SYSTEM_VERSION	200
+
+/* ----------------
+ *		LogRelationContents structure
+ *
+ *		This structure describes the storage of the data in the
+ *		first 128 bytes of the log relation.  This storage is never
+ *		used for transaction status because transaction id's begin
+ *		their numbering at 512.
+ *
+ *		The first 4 bytes of this relation store the version
+ *		number of the transaction system.
+ *
+ *		XXX This isn't actually being used!
+ * ----------------
+ */
+typedef struct LogRelationContentsData
+{
+	XLogRecPtr	LSN;			/* temp hack: LSN is member of any block */
+	/* so should be described in bufmgr */
+	int			TransSystemVersion;
+} LogRelationContentsData;
+
+typedef LogRelationContentsData *LogRelationContents;
+
+
+/* ----------------
+ *		BitIndexOf computes the index of the Nth xid on a given block
+ * ----------------
+ */
+#define BitIndexOf(N)	((N) * 2)
+
+/* ----------------
+ *		transaction page definitions
+ * ----------------
+ */
+#define TP_DataSize				(BLCKSZ - sizeof(XLogRecPtr))
+#define TP_NumXidStatusPerBlock (TP_DataSize * 4)
+
 
 static XidStatus TransBlockGetXidStatus(Block tblock,
 					   TransactionId transactionId);
@@ -54,7 +109,7 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
 														 * test */
 						BlockNumber *blockNumberOutP)
 {
-	long		itemsPerBlock = 0;
+	uint32		itemsPerBlock = 0;
 
 	/*
 	 * we calculate the block number of our transaction by dividing the
@@ -135,10 +190,7 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 		if (xstatus != XID_INPROGRESS)
 		{
 			if (returnXidP != NULL)
-			{
-				TransactionIdStore(baseXid, returnXidP);
-				TransactionIdAdd(returnXidP, index - 1);
-			}
+				TransactionIdStore(baseXid + (index - 1), returnXidP);
 			break;
 		}
 	}

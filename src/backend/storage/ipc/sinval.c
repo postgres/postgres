@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.35 2001/07/06 21:04:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.36 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,7 +194,7 @@ TransactionIdIsInProgress(TransactionId xid)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
 
-			if (proc->xid == xid)
+			if (TransactionIdEquals(proc->xid, xid))
 			{
 				result = true;
 				break;
@@ -212,15 +212,20 @@ TransactionIdIsInProgress(TransactionId xid)
  *					when all current transaction were started.
  *					It's used by vacuum to decide what deleted
  *					tuples must be preserved in a table.
+ *
+ * Note: we include all currently running xids in the set of considered xids.
+ * This ensures that if a just-started xact has not yet set its snapshot,
+ * when it does set the snapshot it cannot set xmin less than what we compute.
  */
 void
 GetXmaxRecent(TransactionId *XmaxRecent)
 {
 	SISeg	   *segP = shmInvalBuffer;
 	ProcState  *stateP = segP->procState;
+	TransactionId result;
 	int			index;
 
-	*XmaxRecent = GetCurrentTransactionId();
+	result = GetCurrentTransactionId();
 
 	SpinAcquire(SInvalLock);
 
@@ -231,18 +236,24 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
-			TransactionId xmin;
+			TransactionId xid;
 
-			xmin = proc->xmin;	/* we don't use spin-locking in
-								 * AbortTransaction() ! */
-			if (proc == MyProc || xmin < FirstTransactionId)
-				continue;
-			if (xmin < *XmaxRecent)
-				*XmaxRecent = xmin;
+			xid = proc->xid;
+			if (! TransactionIdIsSpecial(xid))
+			{
+				if (TransactionIdPrecedes(xid, result))
+					result = xid;
+				xid = proc->xmin;
+				if (! TransactionIdIsSpecial(xid))
+					if (TransactionIdPrecedes(xid, result))
+						result = xid;
+			}
 		}
 	}
 
 	SpinRelease(SInvalLock);
+
+	*XmaxRecent = result;
 }
 
 /*
@@ -291,28 +302,21 @@ GetSnapshotData(bool serializable)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
-			TransactionId xid;
+			TransactionId xid = proc->xid;
 
 			/*
-			 * We don't use spin-locking when changing proc->xid in
-			 * GetNewTransactionId() and in AbortTransaction() !..
+			 * Ignore my own proc (dealt with my xid above), procs not
+			 * running a transaction, and xacts started since we read
+			 * the next transaction ID.  There's no need to store XIDs
+			 * above what we got from ReadNewTransactionId, since we'll
+			 * treat them as running anyway.
 			 */
-			xid = proc->xid;
 			if (proc == MyProc ||
-				xid < FirstTransactionId || xid >= snapshot->xmax)
-			{
-
-				/*--------
-				 * Seems that there is no sense to store
-				 * 		xid >= snapshot->xmax
-				 * (what we got from ReadNewTransactionId above)
-				 * in snapshot->xip.  We just assume that all xacts
-				 * with such xid-s are running and may be ignored.
-				 *--------
-				 */
+				TransactionIdIsSpecial(xid) ||
+				! TransactionIdPrecedes(xid, snapshot->xmax))
 				continue;
-			}
-			if (xid < snapshot->xmin)
+
+			if (TransactionIdPrecedes(xid, snapshot->xmin))
 				snapshot->xmin = xid;
 			snapshot->xip[count] = xid;
 			count++;

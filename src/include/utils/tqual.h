@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.31 2001/06/18 21:38:02 momjian Exp $
+ * $Id: tqual.h,v 1.32 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,9 @@ typedef struct SnapshotData
 {
 	TransactionId xmin;			/* XID < xmin are visible to me */
 	TransactionId xmax;			/* XID >= xmax are invisible to me */
-	uint32		xcnt;			/* # of xact below */
-	TransactionId *xip;			/* array of xacts in progress */
+	uint32		xcnt;			/* # of xact ids in xip[] */
+	TransactionId *xip;			/* array of xact IDs in progress */
+	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
 	ItemPointerData tid;		/* required for Dirty snapshot -:( */
 } SnapshotData;
 
@@ -34,8 +35,8 @@ typedef SnapshotData *Snapshot;
 #define SnapshotSelf				((Snapshot) 0x1)
 #define SnapshotAny					((Snapshot) 0x2)
 
-extern Snapshot SnapshotDirty;
-extern Snapshot QuerySnapshot;
+extern DLLIMPORT Snapshot SnapshotDirty;
+extern DLLIMPORT Snapshot QuerySnapshot;
 extern DLLIMPORT Snapshot SerializableSnapshot;
 
 extern bool ReferentialIntegritySnapshotOverride;
@@ -66,11 +67,11 @@ extern bool ReferentialIntegritySnapshotOverride;
 			(IsSnapshotSelf(snapshot) ? \
 				HeapTupleSatisfiesItself((tuple)->t_data) \
 			: \
-				(IsSnapshotDirty(snapshot) ? \
-					HeapTupleSatisfiesDirty((tuple)->t_data) \
+				(IsSnapshotNow(snapshot) ? \
+					HeapTupleSatisfiesNow((tuple)->t_data) \
 				: \
-					(IsSnapshotNow(snapshot) ? \
-						HeapTupleSatisfiesNow((tuple)->t_data) \
+					(IsSnapshotDirty(snapshot) ? \
+						HeapTupleSatisfiesDirty((tuple)->t_data) \
 					: \
 						HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \
 					) \
@@ -79,11 +80,22 @@ extern bool ReferentialIntegritySnapshotOverride;
 	) \
 )
 
+/* Result codes for HeapTupleSatisfiesUpdate */
 #define HeapTupleMayBeUpdated		0
 #define HeapTupleInvisible			1
 #define HeapTupleSelfUpdated		2
 #define HeapTupleUpdated			3
 #define HeapTupleBeingUpdated		4
+
+/* Result codes for HeapTupleSatisfiesVacuum */
+typedef enum
+{
+	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
+	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
+	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
+	HEAPTUPLE_INSERT_IN_PROGRESS, /* inserting xact is still in progress */
+	HEAPTUPLE_DELETE_IN_PROGRESS /* deleting xact is still in progress */
+} HTSV_Result;
 
 extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple);
@@ -91,6 +103,8 @@ extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple,
 						   Snapshot snapshot);
 extern int	HeapTupleSatisfiesUpdate(HeapTuple tuple);
+extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
+											TransactionId XmaxRecent);
 
 extern Snapshot GetSnapshotData(bool serializable);
 extern void SetQuerySnapshot(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.122 2001/07/06 09:41:36 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.123 2001/07/12 04:11:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -47,11 +47,6 @@
 #include "utils/relcache.h"
 #include "pgstat.h"
 
-
-XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
-			  Buffer newbuf, HeapTuple newtup);
-XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-			   char *unused, int unlen);
 
 /* comments are in heap_update */
 static xl_heaptid _locked_tuple_;

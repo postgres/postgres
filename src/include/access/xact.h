@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.33 2001/03/22 04:00:32 momjian Exp $
+ * $Id: xact.h,v 1.34 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,17 +67,6 @@ typedef TransactionStateData *TransactionState;
 #define TBLOCK_ABORT			4
 #define TBLOCK_ENDABORT			5
 
-/* ----------------
- *		transaction ID manipulation macros
- * ----------------
- */
-#define TransactionIdIsValid(xid)		((bool) ((xid) != NullTransactionId))
-#define TransactionIdEquals(id1, id2)	((bool) ((id1) == (id2)))
-#define TransactionIdStore(xid, dest)	\
-	(*((TransactionId*) (dest)) = (TransactionId) (xid))
-#define StoreInvalidTransactionId(dest) \
-	(*((TransactionId*) (dest)) = NullTransactionId)
-
 /*
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
@@ -133,8 +122,6 @@ extern void AbortOutOfAnyTransaction(void);
 
 extern void RecordTransactionCommit(void);
 
-extern TransactionId DisabledTransactionId;
-
 extern void XactPushRollback(void (*func) (void *), void *data);
 extern void XactPopRollback(void);
 
@@ -146,6 +133,5 @@ extern void xact_desc(char *buf, uint8 xl_info, char *rec);
 extern Datum xidin(PG_FUNCTION_ARGS);
 extern Datum xidout(PG_FUNCTION_ARGS);
 extern Datum xideq(PG_FUNCTION_ARGS);
-extern void TransactionIdAdd(TransactionId *xid, int value);
 
 #endif	 /* XACT_H */

@@ -1,17 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * transam.h
- *	  postgres transaction access method support code header
+ *	  postgres transaction access method support code
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.35 2001/05/25 15:45:33 momjian Exp $
- *
- *	 NOTES
- *		Transaction System Version 101 now support proper oid
- *		generation and recording in the variable relation.
+ * $Id: transam.h,v 1.36 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,76 +16,59 @@
 
 #include "storage/bufmgr.h"
 
-/* ----------------
- *		transaction system version id
- *
- *		this is stored on the first page of the log, time and variable
- *		relations on the first 4 bytes.  This is so that if we improve
- *		the format of the transaction log after postgres version 2, then
- *		people won't have to rebuild their databases.
- *
- *		TRANS_SYSTEM_VERSION 100 means major version 1 minor version 0.
- *		Two databases with the same major version should be compatible,
- *		even if their minor versions differ.
- * ----------------
- */
-#define TRANS_SYSTEM_VERSION	200
 
 /* ----------------
- *		transaction id status values
+ *		Special transaction ID values
+ *
+ * We do not use any transaction IDs less than 512 --- this leaves the first
+ * 128 bytes of pg_log available for special purposes such as version number
+ * storage.  (Currently, we do not actually use them for anything.)
+ *
+ * AmiTransactionId is the XID for "bootstrap" operations.  It should always
+ * be considered valid.
+ *
+ * FirstTransactionId is the first "normal" transaction id.
+ * ----------------
+ */
+#define NullTransactionId		((TransactionId) 0)
+#define DisabledTransactionId	((TransactionId) 1)
+#define AmiTransactionId		((TransactionId) 512)
+#define FirstTransactionId		((TransactionId) 514)
+
+/* ----------------
+ *		transaction ID manipulation macros
+ * ----------------
+ */
+#define TransactionIdIsValid(xid)		((bool) ((xid) != NullTransactionId))
+#define TransactionIdIsSpecial(xid)		((bool) ((xid) < FirstTransactionId))
+#define TransactionIdEquals(id1, id2)	((bool) ((id1) == (id2)))
+#define TransactionIdPrecedes(id1, id2)	((bool) ((id1) < (id2)))
+#define TransactionIdStore(xid, dest)	\
+	(*((TransactionId*) (dest)) = (TransactionId) (xid))
+#define StoreInvalidTransactionId(dest) \
+	(*((TransactionId*) (dest)) = NullTransactionId)
+
+/* ----------------
+ *		transaction status values
  *
  *		someday we will use "11" = 3 = XID_COMMIT_CHILD to mean the
  *		commiting of child xactions.
  * ----------------
  */
-#define XID_COMMIT			2	/* transaction commited */
-#define XID_ABORT			1	/* transaction aborted */
 #define XID_INPROGRESS		0	/* transaction in progress */
+#define XID_ABORT			1	/* transaction aborted */
+#define XID_COMMIT			2	/* transaction commited */
 #define XID_COMMIT_CHILD	3	/* child xact commited */
 
-typedef unsigned char XidStatus;/* (2 bits) */
+typedef unsigned char XidStatus;	/* (2 bits) */
 
 /* ----------
- *		note: we reserve the first 16384 object ids for internal use.
+ *		We reserve the first 16384 object ids for manual assignment.
  *		oid's less than this appear in the .bki files.  the choice of
  *		16384 is completely arbitrary.
  * ----------
  */
 #define BootstrapObjectIdData 16384
-
-/* ----------------
- *		BitIndexOf computes the index of the Nth xid on a given block
- * ----------------
- */
-#define BitIndexOf(N)	((N) * 2)
-
-/* ----------------
- *		transaction page definitions
- * ----------------
- */
-#define TP_DataSize				(BLCKSZ - sizeof(XLogRecPtr))
-#define TP_NumXidStatusPerBlock (TP_DataSize * 4)
-
-/* ----------------
- *		LogRelationContents structure
- *
- *		This structure describes the storage of the data in the
- *		first 128 bytes of the log relation.  This storage is never
- *		used for transaction status because transaction id's begin
- *		their numbering at 512.
- *
- *		The first 4 bytes of this relation store the version
- *		number of the transaction system.
- * ----------------
- */
-typedef struct LogRelationContentsData
-{
-	XLogRecPtr	LSN;			/* temp hack: LSN is member of any block */
-	/* so should be described in bufmgr */
-	int			TransSystemVersion;
-} LogRelationContentsData;
-
-typedef LogRelationContentsData *LogRelationContents;
 
 /*
  * VariableCache is placed in shmem and used by
@@ -103,6 +82,7 @@ typedef struct VariableCacheData
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;
+
 
 /* ----------------
  *		extern declarations
@@ -142,16 +122,7 @@ extern void CheckMaxObjectId(Oid assigned_oid);
 /* in transam.c */
 extern Relation LogRelation;
 
-extern TransactionId cachedTestXid;
-extern XidStatus cachedTestXidStatus;
-
-extern TransactionId NullTransactionId;
-extern TransactionId AmiTransactionId;
-extern TransactionId FirstTransactionId;
-
-extern int	RecoveryCheckingEnableState;
-
-/* in transsup.c */
+/* in xact.c */
 extern bool AMI_OVERRIDE;
 
 /* in varsup.c */

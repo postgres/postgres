@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * xid.c
- *	  POSTGRES transaction identifier type.
+ *	  POSTGRES transaction identifier datatype.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.30 2001/03/22 03:59:18 momjian Exp $
+ *	$Id: xid.c,v 1.31 2001/07/12 04:11:13 tgl Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -30,12 +30,6 @@
 #define PG_RETURN_TRANSACTIONID(x)	PG_RETURN_UINT32(x)
 
 
-extern TransactionId NullTransactionId;
-extern TransactionId DisabledTransactionId;
-extern TransactionId AmiTransactionId;
-extern TransactionId FirstTransactionId;
-
-/* XXX name for catalogs */
 Datum
 xidin(PG_FUNCTION_ARGS)
 {
@@ -44,7 +38,6 @@ xidin(PG_FUNCTION_ARGS)
 	PG_RETURN_TRANSACTIONID((TransactionId) atol(representation));
 }
 
-/* XXX name for catalogs */
 Datum
 xidout(PG_FUNCTION_ARGS)
 {
@@ -73,15 +66,5 @@ xideq(PG_FUNCTION_ARGS)
 	TransactionId xid1 = PG_GETARG_TRANSACTIONID(0);
 	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
 
-	PG_RETURN_BOOL(xid1 == xid2);
-}
-
-/* ----------------------------------------------------------------
- *		TransactionIdAdd
- * ----------------------------------------------------------------
- */
-void
-TransactionIdAdd(TransactionId *xid, int value)
-{
-	*xid += value;
+	PG_RETURN_BOOL(TransactionIdEquals(xid1, xid2));
 }

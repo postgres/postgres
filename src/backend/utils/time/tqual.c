@@ -8,18 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.37 2001/01/24 19:43:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.38 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-/* #define TQUALDEBUG	1 */
-
 #include "postgres.h"
 
+#include "storage/sinval.h"
 #include "utils/tqual.h"
 
-SnapshotData SnapshotDirtyData;
+
+static SnapshotData SnapshotDirtyData;
 Snapshot	SnapshotDirty = &SnapshotDirtyData;
 
 Snapshot	QuerySnapshot = NULL;
@@ -587,10 +587,138 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	return false;
 }
 
+
+/*
+ * HeapTupleSatisfiesVacuum - determine tuple status for VACUUM and related
+ *		operations
+ *
+ * XmaxRecent is a cutoff XID (obtained from GetXmaxRecent()).  Tuples
+ * deleted by XIDs >= XmaxRecent are deemed "recently dead"; they might
+ * still be visible to some open transaction, so we can't remove them,
+ * even if we see that the deleting transaction has committed.
+ *
+ * As with the other HeapTupleSatisfies routines, we may update the tuple's
+ * "hint" status bits if we see that the inserting or deleting transaction
+ * has now committed or aborted.  The caller is responsible for noticing any
+ * change in t_infomask and scheduling a disk write if so.
+ */
+HTSV_Result
+HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
+{
+	/*
+	 * Has inserting transaction committed?
+	 *
+	 * If the inserting transaction aborted, then the tuple was never visible
+	 * to any other transaction, so we can delete it immediately.
+	 */
+	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	{
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+			return HEAPTUPLE_DEAD;
+		else if (tuple->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdDidCommit((TransactionId) tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return HEAPTUPLE_DEAD;
+			}
+			/* Assume we can only get here if previous VACUUM aborted, */
+			/* ie, it couldn't still be in progress */
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		}
+		else if (tuple->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdDidCommit((TransactionId) tuple->t_cmin))
+			{
+				/* Assume we can only get here if previous VACUUM aborted */
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return HEAPTUPLE_DEAD;
+			}
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		}
+		else if (TransactionIdDidAbort(tuple->t_xmin))
+		{
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
+			return HEAPTUPLE_DEAD;
+		}
+		else if (TransactionIdDidCommit(tuple->t_xmin))
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else if (TransactionIdIsInProgress(tuple->t_xmin))
+			return HEAPTUPLE_INSERT_IN_PROGRESS;
+		else
+		{
+			/*
+			 * Not Aborted, Not Committed, Not in Progress -
+			 * so it's from crashed process. - vadim 11/26/96
+			 */
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
+			return HEAPTUPLE_DEAD;
+		}
+		/* Should only get here if we set XMIN_COMMITTED */
+		Assert(tuple->t_infomask & HEAP_XMIN_COMMITTED);
+	}
+
+	/*
+	 * Okay, the inserter committed, so it was good at some point.  Now
+	 * what about the deleting transaction?
+	 */
+	if (tuple->t_infomask & HEAP_XMAX_INVALID)
+		return HEAPTUPLE_LIVE;
+
+	if (!(tuple->t_infomask & HEAP_XMAX_COMMITTED))
+	{
+		if (TransactionIdDidAbort(tuple->t_xmax))
+		{
+			tuple->t_infomask |= HEAP_XMAX_INVALID;
+			return HEAPTUPLE_LIVE;
+		}
+		else if (TransactionIdDidCommit(tuple->t_xmax))
+			tuple->t_infomask |= HEAP_XMAX_COMMITTED;
+		else if (TransactionIdIsInProgress(tuple->t_xmax))
+			return HEAPTUPLE_DELETE_IN_PROGRESS;
+		else
+		{
+			/*
+			 * Not Aborted, Not Committed, Not in Progress -
+			 * so it's from crashed process. - vadim 06/02/97
+			 */
+			tuple->t_infomask |= HEAP_XMAX_INVALID;
+			return HEAPTUPLE_LIVE;
+		}
+		/* Should only get here if we set XMAX_COMMITTED */
+		Assert(tuple->t_infomask & HEAP_XMAX_COMMITTED);
+	}
+
+	/*
+	 * Deleter committed, but check special cases.
+	 */
+
+	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+	{
+		/* "deleting" xact really only marked it for update */
+		return HEAPTUPLE_LIVE;
+	}
+
+	if (TransactionIdEquals(tuple->t_xmin, tuple->t_xmax))
+	{
+		/* inserter also deleted it, so it was never visible to anyone else */
+		return HEAPTUPLE_DEAD;
+	}
+
+	if (!TransactionIdPrecedes(tuple->t_xmax, XmaxRecent))
+	{
+		/* deleting xact is too recent, tuple could still be visible */
+		return HEAPTUPLE_RECENTLY_DEAD;
+	}
+
+	/* Otherwise, it's dead and removable */
+	return HEAPTUPLE_DEAD;
+}
+
+
 void
 SetQuerySnapshot(void)
 {
-
 	/* Initialize snapshot overriding to false */
 	ReferentialIntegritySnapshotOverride = false;
 
@@ -615,13 +743,11 @@ SetQuerySnapshot(void)
 		QuerySnapshot = GetSnapshotData(false);
 
 	Assert(QuerySnapshot != NULL);
-
 }
 
 void
 FreeXactSnapshot(void)
 {
-
 	if (QuerySnapshot != NULL && QuerySnapshot != SerializableSnapshot)
 	{
 		free(QuerySnapshot->xip);
@@ -637,5 +763,4 @@ FreeXactSnapshot(void)
 	}
 
 	SerializableSnapshot = NULL;
-
 }

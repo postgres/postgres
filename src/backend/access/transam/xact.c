@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.105 2001/07/06 21:04:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.106 2001/07/12 04:11:13 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -199,14 +199,9 @@ static void StartTransaction(void);
 
 /* ----------------
  *		global variables holding the current transaction state.
- *
- *		Note: when we are running several slave processes, the
- *			  current transaction state data is copied into shared memory
- *			  and the CurrentTransactionState pointer changed to
- *			  point to the shared copy.  All this occurrs in slaves.c
  * ----------------
  */
-TransactionStateData CurrentTransactionStateData = {
+static TransactionStateData CurrentTransactionStateData = {
 	0,							/* transaction id */
 	FirstCommandId,				/* command id */
 	0,							/* scan command id */
@@ -234,29 +229,17 @@ static void *_RollbackData = NULL;
  *		info returned when the system is disabled
  *
  * Apparently a lot of this code is inherited from other prototype systems.
+ *
  * For DisabledStartTime, use a symbolic value to make the relationships clearer.
  * The old value of 1073741823 corresponds to a date in y2004, which is coming closer
  *	every day. It appears that if we return a value guaranteed larger than
  *	any real time associated with a transaction then comparisons in other
  *	modules will still be correct. Let's use BIG_ABSTIME for this. tgl 2/14/97
- *
- *		Note:  I have no idea what the significance of the
- *			   1073741823 in DisabledStartTime.. I just carried
- *			   this over when converting things from the old
- *			   V1 transaction system.  -cim 3/18/90
  * ----------------
  */
-TransactionId DisabledTransactionId = (TransactionId) -1;
+static CommandId	DisabledCommandId = (CommandId) -1;
 
-CommandId	DisabledCommandId = (CommandId) -1;
-
-AbsoluteTime DisabledStartTime = (AbsoluteTime) BIG_ABSTIME;	/* 1073741823; */
-
-/* ----------------
- *		overflow flag
- * ----------------
- */
-bool		CommandIdCounterOverflowFlag;
+static AbsoluteTime DisabledStartTime = (AbsoluteTime) BIG_ABSTIME;
 
 /* ----------------
  *		catalog creation transaction bootstrapping flag.
@@ -362,7 +345,7 @@ IsAbortedTransactionBlockState(void)
  *		themselves.
  * --------------------------------
  */
-int			SavedTransactionState;
+static int		SavedTransactionState;
 
 void
 OverrideTransactionSystem(bool flag)
@@ -403,12 +386,12 @@ GetCurrentTransactionId(void)
 	 * "disabled" transaction id.
 	 */
 	if (s->state == TRANS_DISABLED)
-		return (TransactionId) DisabledTransactionId;
+		return DisabledTransactionId;
 
 	/*
 	 * otherwise return the current transaction id.
 	 */
-	return (TransactionId) s->transactionIdData;
+	return s->transactionIdData;
 }
 
 
@@ -426,7 +409,7 @@ GetCurrentCommandId(void)
 	 * "disabled" command id.
 	 */
 	if (s->state == TRANS_DISABLED)
-		return (CommandId) DisabledCommandId;
+		return DisabledCommandId;
 
 	return s->commandId;
 }
@@ -441,7 +424,7 @@ GetScanCommandId(void)
 	 * "disabled" command id.
 	 */
 	if (s->state == TRANS_DISABLED)
-		return (CommandId) DisabledCommandId;
+		return DisabledCommandId;
 
 	return s->scanCommandId;
 }
@@ -461,7 +444,7 @@ GetCurrentTransactionStartTime(void)
 	 * "disabled" starting time.
 	 */
 	if (s->state == TRANS_DISABLED)
-		return (AbsoluteTime) DisabledStartTime;
+		return DisabledStartTime;
 
 	return s->startTime;
 }
@@ -479,8 +462,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	if (AMI_OVERRIDE)
 		return false;
 
-	return (bool)
-		TransactionIdEquals(xid, s->transactionIdData);
+	return TransactionIdEquals(xid, s->transactionIdData);
 }
 
 
@@ -512,19 +494,6 @@ CommandIdGEScanCommandId(CommandId cid)
 
 
 /* --------------------------------
- *		ClearCommandIdCounterOverflowFlag
- * --------------------------------
- */
-#ifdef NOT_USED
-void
-ClearCommandIdCounterOverflowFlag(void)
-{
-	CommandIdCounterOverflowFlag = false;
-}
-
-#endif
-
-/* --------------------------------
  *		CommandCounterIncrement
  * --------------------------------
  */
@@ -533,10 +502,7 @@ CommandCounterIncrement(void)
 {
 	CurrentTransactionStateData.commandId += 1;
 	if (CurrentTransactionStateData.commandId == FirstCommandId)
-	{
-		CommandIdCounterOverflowFlag = true;
 		elog(ERROR, "You may only have 2^32-1 commands per transaction");
-	}
 
 	CurrentTransactionStateData.scanCommandId = CurrentTransactionStateData.commandId;
 
@@ -551,9 +517,7 @@ CommandCounterIncrement(void)
 void
 SetScanCommandId(CommandId savedId)
 {
-
 	CurrentTransactionStateData.scanCommandId = savedId;
-
 }
 
 /* ----------------------------------------------------------------
@@ -1113,6 +1077,13 @@ AbortTransaction(void)
 	/*
 	 * Let others to know about no transaction in progress - vadim
 	 * 11/26/96
+	 *
+	 * XXX it'd be nice to acquire SInvalLock for this, but too much risk of
+	 * lockup: what if we were holding SInvalLock when we elog'd?  Net effect
+	 * is that we are relying on fetch/store of an xid to be atomic, else
+	 * other backends might see a partially-zeroed xid here.  Would it be
+	 * safe to release spins before we reset xid/xmin?  But see also 
+	 * GetNewTransactionId, which does the same thing.
 	 */
 	if (MyProc != (PROC *) NULL)
 	{

@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.40 2001/05/25 15:45:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.41 2001/07/12 04:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,7 @@
 #include "storage/proc.h"
 
 
-/* Number of XIDs and OIDs to prefetch (preallocate) per XLOG write */
-#define VAR_XID_PREFETCH		1024
+/* Number of OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_OID_PREFETCH		8192
 
 /* Spinlocks for serializing generation of XIDs and OIDs, respectively */
@@ -29,10 +28,13 @@ SPINLOCK	OidGenLockId;
 /* pointer to "variable cache" in shared memory (set up by shmem.c) */
 VariableCache ShmemVariableCache = NULL;
 
+
+/*
+ * Allocate the next XID for my new transaction.
+ */
 void
 GetNewTransactionId(TransactionId *xid)
 {
-
 	/*
 	 * During bootstrap initialization, we return the special bootstrap
 	 * transaction id.
@@ -49,10 +51,22 @@ GetNewTransactionId(TransactionId *xid)
 
 	(ShmemVariableCache->nextXid)++;
 
-	SpinRelease(XidGenLockId);
-
+	/*
+	 * Must set MyProc->xid before releasing XidGenLock.  This ensures that
+	 * when GetSnapshotData calls ReadNewTransactionId, all active XIDs
+	 * before the returned value of nextXid are already present in the shared
+	 * PROC array.  Else we have a race condition.
+	 *
+	 * XXX by storing xid into MyProc without acquiring SInvalLock, we are
+	 * relying on fetch/store of an xid to be atomic, else other backends
+	 * might see a partially-set xid here.  But holding both locks at once
+	 * would be a nasty concurrency hit (and at this writing, could cause a
+	 * deadlock against GetSnapshotData).  So for now, assume atomicity.
+	 */
 	if (MyProc != (PROC *) NULL)
 		MyProc->xid = *xid;
+
+	SpinRelease(XidGenLockId);
 }
 
 /*
@@ -61,7 +75,6 @@ GetNewTransactionId(TransactionId *xid)
 void
 ReadNewTransactionId(TransactionId *xid)
 {
-
 	/*
 	 * During bootstrap initialization, we return the special bootstrap
 	 * transaction id.
