@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.3 2000/09/30 16:58:20 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.4 2000/12/20 00:44:49 ishii Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -574,7 +574,11 @@ RESET CLIENT_ENCODING;
 
     <para>
      An automatic encoding translation between Unicode and other
-     encodings is not yet supported.
+     encodings has been supported since PostgreSQL 7.1.
+     Because this requires huge conversion tables, it's not enabled by default.
+     To enable this feature, run configure with the
+     --enable-unicode-conversion option. Note that this requires
+     the --enable-multibyte option also.
     </para>
    </sect2>
 
@@ -632,6 +636,11 @@ RESET CLIENT_ENCODING;
 
     <para>
      <programlisting>
+Dec 7, 2000
+	* An automatic encoding translation between Unicode and other
+	  encodings are implemented
+	* Changes above will appear in 7.1
+
 May 20, 2000
 	* SJIS UDC (NEC selection IBM kanji) support contributed
 	  by Eiji Tokuya
