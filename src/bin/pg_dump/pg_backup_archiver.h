@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.62 2004/11/06 19:36:01 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.63 2005/01/25 22:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,13 @@ typedef enum
 	STAGE_PROCESSING,
 	STAGE_FINALIZING
 } ArchiverStage;
+
+typedef enum
+{
+	REQ_SCHEMA = 1,
+	REQ_DATA = 2,
+	REQ_ALL = REQ_SCHEMA + REQ_DATA
+} teReqs;
 
 typedef struct _archiveHandle
 {
@@ -321,7 +328,7 @@ extern void WriteToc(ArchiveHandle *AH);
 extern void ReadToc(ArchiveHandle *AH);
 extern void WriteDataChunks(ArchiveHandle *AH);
 
-extern int	TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt);
+extern teReqs TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt);
 extern bool checkSeek(FILE *fp);
 
 /*

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.102 2005/01/23 00:03:54 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.103 2005/01/25 22:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,21 +27,14 @@
 #include "dumputils.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <unistd.h>
 
 #include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
 
 
-typedef enum _teReqs_
-{
-	REQ_SCHEMA = 1,
-	REQ_DATA = 2,
-	REQ_ALL = REQ_SCHEMA + REQ_DATA
-} teReqs;
-
 const char *progname;
+
 static char *modulename = gettext_noop("archiver");
 
 
@@ -63,7 +56,7 @@ static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 static void _selectTablespace(ArchiveHandle *AH, const char *tablespace);
 
-static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool acl_pass);
+static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
@@ -135,7 +128,6 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	TocEntry   *te = AH->toc->next;
 	teReqs		reqs;
 	OutputContext sav;
-	int			impliedDataOnly;
 	bool		defnDumped;
 
 	AH->ropt = ropt;
@@ -188,17 +180,16 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	if (!ropt->dataOnly)
 	{
-		te = AH->toc->next;
-		impliedDataOnly = 1;
-		while (te != AH->toc)
+		int		impliedDataOnly = 1;
+
+		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
-			reqs = _tocEntryRequired(te, ropt, false);
+			reqs = _tocEntryRequired(te, ropt, true);
 			if ((reqs & REQ_SCHEMA) != 0)
 			{					/* It's schema, and it's wanted */
 				impliedDataOnly = 0;
 				break;
 			}
-			te = te->next;
 		}
 		if (impliedDataOnly)
 		{
@@ -232,7 +223,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		while (te != AH->toc)
 		{
-			reqs = _tocEntryRequired(te, ropt, false);
+			reqs = _tocEntryRequired(te, ropt, false /* needn't drop ACLs */);
 			if (((reqs & REQ_SCHEMA) != 0) && te->dropStmt)
 			{
 				/* We want the schema */
@@ -248,7 +239,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	}
 
 	/*
-	 * Now process each TOC entry
+	 * Now process each non-ACL TOC entry
 	 */
 	te = AH->toc->next;
 	while (te != AH->toc)
@@ -709,7 +700,7 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 
 	while (te != AH->toc)
 	{
-		if (_tocEntryRequired(te, ropt, false) != 0)
+		if (_tocEntryRequired(te, ropt, true) != 0)
 			ahprintf(AH, "%d; %u %u %s %s %s %s\n", te->dumpId,
 					 te->catalogId.tableoid, te->catalogId.oid,
 					 te->desc, te->namespace ? te->namespace : "-",
@@ -1341,7 +1332,7 @@ getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
 	return NULL;
 }
 
-int
+teReqs
 TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt)
 {
 	TocEntry   *te = getTocEntryByDumpId(AH, id);
@@ -1349,7 +1340,7 @@ TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt)
 	if (!te)
 		return 0;
 
-	return _tocEntryRequired(te, ropt, false);
+	return _tocEntryRequired(te, ropt, true);
 }
 
 size_t
@@ -1971,16 +1962,16 @@ ReadToc(ArchiveHandle *AH)
 }
 
 static teReqs
-_tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool acl_pass)
+_tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 {
-	teReqs		res = 3;		/* Schema = 1, Data = 2, Both = 3 */
+	teReqs		res = REQ_ALL;
 
 	/* ENCODING objects are dumped specially, so always reject here */
 	if (strcmp(te->desc, "ENCODING") == 0)
 		return 0;
 
 	/* If it's an ACL, maybe ignore it */
-	if ((!acl_pass || ropt->aclsSkip) && strcmp(te->desc, "ACL") == 0)
+	if ((!include_acls || ropt->aclsSkip) && strcmp(te->desc, "ACL") == 0)
 		return 0;
 
 	if (!ropt->create && strcmp(te->desc, "DATABASE") == 0)

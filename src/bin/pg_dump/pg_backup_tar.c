@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.46 2004/11/29 03:01:54 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.47 2005/01/25 22:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1120,7 +1120,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		ahlog(AH, 4, "skipping tar member %s\n", th->targetFile);
 
 		id = atoi(th->targetFile);
-		if ((TocIDRequired(AH, id, AH->ropt) & 2) != 0)
+		if ((TocIDRequired(AH, id, AH->ropt) & REQ_DATA) != 0)
 			die_horribly(AH, modulename, "dumping data out of order is not supported in this archive format: "
 			"%s is required, but comes before %s in the archive file.\n",
 						 th->targetFile, filename);
