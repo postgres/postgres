@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.7 2002/03/05 18:01:27 davec Exp $
+ * $Id: QueryExecutor.java,v 1.8 2002/03/05 20:11:57 davec Exp $
  */
 
 public class QueryExecutor
@@ -57,7 +57,6 @@ public class QueryExecutor
 
 		int fqp = 0;
 		boolean hfr = false;
-		int lastMessage = 0;
 
 		synchronized (pg_stream)
 		{
@@ -113,26 +112,11 @@ public class QueryExecutor
 						receiveFields();
 						break;
 					case 'Z':		 // backend ready for query, ignore for now :-)
-						if ( lastMessage == 'Z' )
- 			                        {
-						     try
-                        			     {
-                                    			pg_stream.SendChar('Q');
-                                    			pg_stream.SendChar(' ');
-                                    			pg_stream.SendChar(0);
-                                    			pg_stream.flush();
-                                 		     } catch (IOException e) {
-                                    			throw new PSQLException("postgresql.con.ioerror",e);
-                                 		     }
-                              			     fqp++;
-                           			}
- 					
 						break;
 					default:
 						throw new PSQLException("postgresql.con.type",
 												new Character((char) c));
 				}
-				lastMessage = c;
 			}
 			return connection.getResultSet(connection, statement, fields, tuples, status, update_count, insert_oid, binaryCursor);
 		}
