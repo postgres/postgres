@@ -776,7 +776,7 @@ fi
 
 
 if test "$LIBRARY_DIRS"; then
-	for dir in $withval; do
+	for dir in $LIBRARY_DIRS; do
 		if test -d "$dir"; then
 			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
 		else
@@ -3387,7 +3387,7 @@ else
 fi
 rm -f conftest*
 
-if test $ac_cv_prog_gcc = yes; then
+if test x$ac_cv_prog_gcc = xyes; then
     echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
 echo "configure:3393: checking whether ${CC-cc} needs -traditional" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
@@ -5617,7 +5617,7 @@ then
 	ice_save_CPPFLAGS="$CPPFLAGS"
 	ice_save_LDFLAGS="$LDFLAGS"
 
-	LIBS="$LIBS $X_EXTRA_LIBS"
+	LIBS="$TCL_LIB $X_PRE_LIBS $X11_LIBS $X_EXTRA_LIBS $LIBS"
 	CFLAGS="$CFLAGS $X_CFLAGS"
 	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 	LDFLAGS="$LDFLAGS $X_LIBS"
@@ -5633,7 +5633,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-l$tk_lib $TCL_LIB $X_PRE_LIBS $X_LIBS $X11_LIBS $LIBS"
+LIBS="-l$tk_lib  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 5639 "configure"
 #include "confdefs.h"

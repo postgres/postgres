@@ -288,6 +288,7 @@ PostgreSQL:
                           for header files.  (Typical use will need
                           --with-includes=/usr/local/include)
 
+       --with-libs=DIRS
        --with-libraries=DIRS
                           Include DIRS in list of directories searched
                           for archive libraries.  (Typical use will need
