@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.31 2000/07/21 18:51:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.32 2000/07/22 04:30:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -306,7 +306,7 @@ WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
     
     <replaceable class="PARAMETER">boolean_expr</replaceable>
     can consist of any expression which evaluates to a boolean value.
-    In many cases, this expression will be
+    In many cases, this expression will be:
 
     <synopsis>
      <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">cond_op</replaceable> <replaceable class="PARAMETER">expr</replaceable>

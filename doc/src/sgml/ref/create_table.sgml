@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.32 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.33 2000/07/22 04:30:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -1351,7 +1351,7 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
      Define a UNIQUE table constraint for the table distributors:
      <programlisting>
 CREATE TABLE distributors (
-    did      DECIMAL(03),
+    did      DECIMAL(3),
     name     VARCHAR(40),
     UNIQUE(name)
 );
@@ -1737,7 +1737,7 @@ CREATE TABLE films (
 
    <programlisting>
 CREATE TABLE distributors (
-     did      DECIMAL(03) PRIMARY KEY DEFAULT NEXTVAL('serial'),
+     did      DECIMAL(3) PRIMARY KEY DEFAULT NEXTVAL('serial'),
      name     VARCHAR(40) NOT NULL CHECK (name &lt;&gt; '')
 );
    </programlisting>
@@ -1762,7 +1762,7 @@ CREATE TABLE distributors (
 CREATE TABLE films (
     code      CHAR(5),
     title     VARCHAR(40),
-    did       DECIMAL(03),
+    did       DECIMAL(3),
     date_prod DATE,
     kind      CHAR(10),
     len       INTERVAL HOUR TO MINUTE,
@@ -1801,9 +1801,9 @@ CREATE TABLE distributors (
 
    <programlisting>
 CREATE TABLE films (
-    code      CHAR(05),
+    code      CHAR(5),
     title     VARCHAR(40),
-    did       DECIMAL(03),
+    did       DECIMAL(3),
     date_prod DATE,
     kind      CHAR(10),
     len       INTERVAL HOUR TO MINUTE,
@@ -1819,7 +1819,7 @@ CREATE TABLE films (
 
    <programlisting>
 CREATE TABLE distributors (
-    did      DECIMAL(03),
+    did      DECIMAL(3),
     name     CHAR VARYING(40),
     PRIMARY KEY(did)
 ); 
@@ -1827,7 +1827,7 @@ CREATE TABLE distributors (
 
    <programlisting>
 CREATE TABLE distributors (
-    did      DECIMAL(03) PRIMARY KEY,
+    did      DECIMAL(3) PRIMARY KEY,
     name     VARCHAR(40)
 );
    </programlisting>
@@ -1881,7 +1881,7 @@ CREATE GLOBAL TEMPORARY TABLE <replaceable class="parameter">table</replaceable>
 
     <programlisting>
 CREATE TEMPORARY TABLE actors (
-    id         DECIMAL(03),
+    id         DECIMAL(3),
     name       VARCHAR(40),
     CONSTRAINT actor_id CHECK (id &lt; 150)
 ) ON COMMIT DELETE ROWS;

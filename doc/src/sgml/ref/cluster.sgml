@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.8 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.9 2000/07/22 04:30:26 momjian Exp $
 Postgres documentation
 -->
 
@@ -129,7 +129,7 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
    In other words, as the class is updated, the changes are
    not clustered. No attempt is made to keep new instances or
    updated tuples clustered.  If one wishes, one can
-   recluster manually by issuing the command again.
+   re-cluster manually by issuing the command again.
   </para>
 
   <refsect2 id="R2-SQL-CLUSTER-3">

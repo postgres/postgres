@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.14 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.15 2000/07/22 04:30:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -301,7 +301,7 @@ CREATE FUNCTION point(complex) RETURNS point
     LANGUAGE 'c';
   </programlisting>
   <para>
-  The C decalaration of the function is:
+  The C declaration of the function is:
   </para>
   <programlisting>
 Point * complex_to_point (Complex *z)

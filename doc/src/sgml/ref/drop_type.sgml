@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.6 1999/07/22 15:09:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.7 2000/07/22 04:30:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -109,7 +109,7 @@ ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>'
    </para>
    <para>
     Refer to <command>CREATE TYPE</command> for
-    inforamation on how to create types.
+    information on how to create types.
    </para>
    <para>
     It is the user's responsibility to remove any operators,

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.11 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.12 2000/07/22 04:30:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -187,7 +187,7 @@ ERROR:  FETCH/RELATIVE at current position is not supported
        </computeroutput></term>
       <listitem>
        <para>
-	<acronym>SQL92</acronym> allows one to repetatively retrieve the cursor
+	<acronym>SQL92</acronym> allows one to repetitively retrieve the cursor
 	at its "current position" using the syntax
 	<synopsis>
 FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
