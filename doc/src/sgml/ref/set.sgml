@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.68 2002/10/13 16:55:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.69 2003/01/11 00:39:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -508,6 +508,12 @@ SELECT CURRENT_TIMESTAMP AS today;
 
  <refsect1>
   <title>See Also</title>
+
+  <simpara>
+   <xref linkend="sql-set_constraints" endterm="sql-set_constraints">,
+   <xref linkend="sql-set_session_auth" endterm="sql-set-session_auth">,
+   <xref linkend="sql-set_transaction" endterm="sql-set_transaction">
+  </simpara>
 
   <para>
     The function <function>set_config</function> provides the equivalent
