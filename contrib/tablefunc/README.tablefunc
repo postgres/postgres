@@ -60,6 +60,12 @@ Installation:
       - requires anonymous composite type syntax in the FROM clause. See
         the instructions in the documentation below.
 
+    connectby(text relname, text keyid_fld, text parent_keyid_fld,
+                text start_with, int max_depth [, text branch_delim])
+      - returns keyid, parent_keyid, level, and an optional branch string
+      - requires anonymous composite type syntax in the FROM clause. See
+        the instructions in the documentation below.
+
 Documentation
 ==================================================================
 Name
@@ -323,6 +329,109 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
  test1    | val2       | val3       |
  test2    | val6       | val7       |
 (2 rows)
+
+==================================================================
+Name
+
+connectby(text, text, text, text, int[, text]) - returns a set
+    representing a hierarchy (tree structure)
+
+Synopsis
+
+connectby(text relname, text keyid_fld, text parent_keyid_fld,
+            text start_with, int max_depth [, text branch_delim])
+
+Inputs
+
+  relname
+
+    Name of the source relation
+
+  keyid_fld
+
+    Name of the key field
+
+  parent_keyid_fld
+
+    Name of the key_parent field
+
+  start_with
+
+    root value of the tree input as a text value regardless of keyid_fld type
+
+  max_depth
+
+    zero (0) for unlimited depth, otherwise restrict level to this depth
+
+  branch_delim
+
+    if optional branch value is desired, this string is used as the delimiter
+
+Outputs
+
+  Returns setof record, which must defined with a column definition
+  in the FROM clause of the SELECT statement, e.g.:
+
+    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~')
+      AS t(keyid text, parent_keyid text, level int, branch text);
+
+    - or -
+
+    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
+      AS t(keyid text, parent_keyid text, level int);
+    
+Notes
+
+  1. keyid and parent_keyid must be the same data type
+
+  2. The column definition *must* include a third column of type INT4 for
+     the level value output
+
+  3. If the branch field is not desired, omit both the branch_delim input
+     parameter *and* the branch field in the query column definition
+
+  4. If the branch field is desired, it must be the forth column in the query
+     column definition, and it must be type TEXT
+
+Example usage
+
+CREATE TABLE connectby_tree(keyid text, parent_keyid text);
+
+INSERT INTO connectby_tree VALUES('row1',NULL);
+INSERT INTO connectby_tree VALUES('row2','row1');
+INSERT INTO connectby_tree VALUES('row3','row1');
+INSERT INTO connectby_tree VALUES('row4','row2');
+INSERT INTO connectby_tree VALUES('row5','row2');
+INSERT INTO connectby_tree VALUES('row6','row4');
+INSERT INTO connectby_tree VALUES('row7','row3');
+INSERT INTO connectby_tree VALUES('row8','row6');
+INSERT INTO connectby_tree VALUES('row9','row5');
+
+-- with branch
+SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~')
+ AS t(keyid text, parent_keyid text, level int, branch text);
+ keyid | parent_keyid | level |       branch
+-------+--------------+-------+---------------------
+ row2  |              |     0 | row2
+ row4  | row2         |     1 | row2~row4
+ row6  | row4         |     2 | row2~row4~row6
+ row8  | row6         |     3 | row2~row4~row6~row8
+ row5  | row2         |     1 | row2~row5
+ row9  | row5         |     2 | row2~row5~row9
+(6 rows)
+
+-- without branch
+SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
+ AS t(keyid text, parent_keyid text, level int);
+ keyid | parent_keyid | level
+-------+--------------+-------
+ row2  |              |     0
+ row4  | row2         |     1
+ row6  | row4         |     2
+ row8  | row6         |     3
+ row5  | row2         |     1
+ row9  | row5         |     2
+(6 rows)
 
 ==================================================================
 -- Joe Conway

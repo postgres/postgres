@@ -38,3 +38,11 @@ CREATE OR REPLACE FUNCTION crosstab4(text)
 CREATE OR REPLACE FUNCTION crosstab(text,int)
   RETURNS setof record
   AS 'MODULE_PATHNAME','crosstab' LANGUAGE 'c' STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION connectby(text,text,text,text,int,text)
+  RETURNS setof record
+  AS 'MODULE_PATHNAME','connectby_text' LANGUAGE 'c' STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION connectby(text,text,text,text,int)
+  RETURNS setof record
+  AS 'MODULE_PATHNAME','connectby_text' LANGUAGE 'c' STABLE STRICT;
