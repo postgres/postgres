@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.16 1996/10/29 19:08:46 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.17 1996/10/31 20:25:56 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -60,7 +60,7 @@
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
 # 
-PORTNAME=	UNDEFINED
+PORTNAME=	BSD44_derived
 
 # SRCDIR specifies where the source files are. 
 SRCDIR=		/usr/local/postgres95/src
@@ -75,7 +75,7 @@ POSTGRESDIR=	/usr/local/postgres95
 # you can change it to any existing login name (such as your own 
 # login if you are compiling a private version or don't have root
 # access). 
-POSTGRESLOGIN=	postgres
+POSTGRESLOGIN=	scrappy
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
@@ -106,7 +106,7 @@ POSTDOCDIR=	$(POSTGRESDIR)/doc
 HEADERDIR=	$(POSTGRESDIR)/include
 
 # The port to run the postmaster on
-POSTPORT= 5432
+POSTPORT= 6543
 
 # NAMEDATALEN is the max length for system identifiers (e.g. table names, 
 # attribute names, function names, etc.)  
@@ -176,41 +176,6 @@ ifdef HBA
 HBAFLAGS= -DHBA
 endif
 
-# If you plan to use Kerberos for authentication...
-#
-# Comment out KRBVERS if you do not use Kerberos.
-# 	Set KRBVERS to "4" for Kerberos v4, "5" for Kerberos v5.
-#	XXX Edit the default Kerberos variables below!
-#
-#KRBVERS=	5
-
-# Globally pass Kerberos file locations.
-#	these are used in the postmaster and all libpq applications.
-#
-#	Adjust KRBINCS and KRBLIBS to reflect where you have Kerberos
-#		include files and libraries installed.
-#	PG_KRB_SRVNAM is the name under which POSTGRES is registered in
-#		the Kerberos database (KDC).
-#	PG_KRB_SRVTAB is the location of the server's keytab file.
-#
-ifdef KRBVERS
-KRBINCS= -I/usr/athena/include
-KRBLIBS= -L/usr/athena/lib
-KRBFLAGS+= $(KRBINCS) -DPG_KRB_SRVNAM='"postgres_dbms"'
-   ifeq ($(KRBVERS), 4)
-KRBFLAGS+= -DKRB4
-KRBFLAGS+= -DPG_KRB_SRVTAB='"/etc/srvtab"'
-KRBLIBS+= -lkrb -ldes
-   else
-   ifeq ($(KRBVERS), 5)
-KRBFLAGS+= -DKRB5
-KRBFLAGS+= -DPG_KRB_SRVTAB='"FILE:/krb5/srvtab.postgres"'
-KRBLIBS+= -lkrb5 -lcrypto -lcom_err -lisode
-   endif
-   endif
-endif
-
-#
 # location of Tcl/Tk headers and libraries
 #
 # Uncomment this to build the tcl utilities.
