@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.7 2003/03/10 03:53:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.8 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,17 +334,19 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 				 * This is where we fail if upper levels of planner
 				 * haven't rewritten UNION JOIN as an Append ...
 				 */
-				elog(ERROR, "UNION JOIN is not implemented yet");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("UNION JOIN is not implemented yet")));
 				break;
 			default:
-				elog(ERROR, "pull_up_subqueries: unexpected join type %d",
-					 j->jointype);
+				elog(ERROR, "unrecognized join type: %d",
+					 (int) j->jointype);
 				break;
 		}
 	}
 	else
-		elog(ERROR, "pull_up_subqueries: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return jtnode;
 }
 
@@ -363,7 +365,7 @@ is_simple_subquery(Query *subquery)
 		subquery->commandType != CMD_SELECT ||
 		subquery->resultRelation != 0 ||
 		subquery->into != NULL)
-		elog(ERROR, "is_simple_subquery: subquery is bogus");
+		elog(ERROR, "subquery is bogus");
 
 	/*
 	 * Can't currently pull up a query with setops. Maybe after querytree
@@ -478,8 +480,8 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
 		 */
 	}
 	else
-		elog(ERROR, "resolvenew_in_jointree: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 /*
@@ -524,7 +526,7 @@ reduce_outer_joins(Query *parse)
 
 	/* planner.c shouldn't have called me if no outer joins */
 	if (state == NULL || !state->contains_outer)
-		elog(ERROR, "reduce_outer_joins: so where are the outer joins?");
+		elog(ERROR, "so where are the outer joins?");
 
 	reduce_outer_joins_pass2((Node *) parse->jointree, state, parse, NULL);
 }
@@ -591,8 +593,8 @@ reduce_outer_joins_pass1(Node *jtnode)
 		result->sub_states = lappend(result->sub_states, sub_state);
 	}
 	else
-		elog(ERROR, "reduce_outer_joins_pass1: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return result;
 }
 
@@ -615,10 +617,10 @@ reduce_outer_joins_pass2(Node *jtnode,
 	 * because it's only called on subtrees marked as contains_outer.
 	 */
 	if (jtnode == NULL)
-		elog(ERROR, "reduce_outer_joins_pass2: reached empty jointree");
+		elog(ERROR, "reached empty jointree");
 	if (IsA(jtnode, RangeTblRef))
 	{
-		elog(ERROR, "reduce_outer_joins_pass2: reached base rel");
+		elog(ERROR, "reached base rel");
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
@@ -735,8 +737,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 		}
 	}
 	else
-		elog(ERROR, "reduce_outer_joins_pass2: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 /*
@@ -972,8 +974,8 @@ simplify_jointree(Query *parse, Node *jtnode)
 		}
 	}
 	else
-		elog(ERROR, "simplify_jointree: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return jtnode;
 }
 
@@ -1043,8 +1045,8 @@ get_relids_in_jointree(Node *jtnode)
 		result = bms_join(result, get_relids_in_jointree(j->rarg));
 	}
 	else
-		elog(ERROR, "get_relids_in_jointree: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return result;
 }
 
@@ -1061,7 +1063,7 @@ get_relids_for_join(Query *parse, int joinrelid)
 
 	jtnode = find_jointree_node_for_rel((Node *) parse->jointree, joinrelid);
 	if (!jtnode)
-		elog(ERROR, "get_relids_for_join: join node %d not found", joinrelid);
+		elog(ERROR, "could not find join node %d", joinrelid);
 	return get_relids_in_jointree(jtnode);
 }
 
@@ -1108,7 +1110,7 @@ find_jointree_node_for_rel(Node *jtnode, int relid)
 			return jtnode;
 	}
 	else
-		elog(ERROR, "find_jointree_node_for_rel: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return NULL;
 }

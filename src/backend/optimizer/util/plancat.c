@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.84 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.85 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,7 @@ restriction_selectivity(Query *root,
 											 Int32GetDatum(varRelid)));
 
 	if (result < 0.0 || result > 1.0)
-		elog(ERROR, "restriction_selectivity: bad value %f", result);
+		elog(ERROR, "invalid restriction selectivity: %f", result);
 
 	return (Selectivity) result;
 }
@@ -293,7 +293,7 @@ join_selectivity(Query *root,
 											 Int16GetDatum(jointype)));
 
 	if (result < 0.0 || result > 1.0)
-		elog(ERROR, "join_selectivity: bad value %f", result);
+		elog(ERROR, "invalid join selectivity: %f", result);
 
 	return (Selectivity) result;
 }
@@ -365,7 +365,7 @@ has_subclass(Oid relationId)
 						   ObjectIdGetDatum(relationId),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "has_subclass: Relation %u not found", relationId);
+		elog(ERROR, "cache lookup failed for relation %u", relationId);
 
 	result = ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
 	ReleaseSysCache(tuple);

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.99 2003/07/20 21:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.100 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ recurse_set_operations(Node *setOp, Query *parse,
 	}
 	else
 	{
-		elog(ERROR, "recurse_set_operations: unexpected node %d",
+		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
 		return NULL;			/* keep compiler quiet */
 	}
@@ -312,7 +312,8 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 			cmd = op->all ? SETOPCMD_EXCEPT_ALL : SETOPCMD_EXCEPT;
 			break;
 		default:
-			elog(ERROR, "generate_nonunion_plan: bogus operation code");
+			elog(ERROR, "unrecognized set operation code: %d",
+				 (int) op->op);
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.144 2003/06/15 22:51:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.145 2003/07/25 00:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,7 +490,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	} while (!DoneMatchingIndexKeys(classes));
 
 	if (FastListValue(&quals) == NIL)
-		elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
+		elog(ERROR, "no matching OR clause");
 
 	return FastListValue(&quals);
 }
@@ -1245,7 +1245,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	if (!OidIsValid(test_op))
 	{
 		/* This should not fail, else pg_amop entry is missing */
-		elog(ERROR, "Missing pg_amop entry for opclass %u strategy %d",
+		elog(ERROR, "missing pg_amop entry for opclass %u strategy %d",
 			 opclass_id, test_strategy);
 	}
 
@@ -1281,7 +1281,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	if (isNull)
 	{
 		/* Treat a null result as false ... but it's a tad fishy ... */
-		elog(DEBUG2, "pred_test_simple_clause: null test result");
+		elog(DEBUG2, "null predicate test result");
 		return false;
 	}
 	return DatumGetBool(test_result);
@@ -2055,7 +2055,8 @@ prefix_quals(Node *leftop, Oid opclass,
 			break;
 
 		default:
-			elog(ERROR, "prefix_quals: unexpected opclass %u", opclass);
+			/* shouldn't get here */
+			elog(ERROR, "unexpected opclass: %u", opclass);
 			return NIL;
 	}
 
@@ -2078,7 +2079,7 @@ prefix_quals(Node *leftop, Oid opclass,
 															 prefix_const->constvalue));
 				break;
 			default:
-				elog(ERROR, "prefix_quals: unexpected consttype %u",
+				elog(ERROR, "unexpected const type: %u",
 					 prefix_const->consttype);
 				return NIL;
 		}
@@ -2093,7 +2094,7 @@ prefix_quals(Node *leftop, Oid opclass,
 	{
 		oproid = get_opclass_member(opclass, BTEqualStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "prefix_quals: no operator = for opclass %u", opclass);
+			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
 		result = makeList1(expr);
@@ -2107,7 +2108,7 @@ prefix_quals(Node *leftop, Oid opclass,
 	 */
 	oproid = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "prefix_quals: no operator >= for opclass %u", opclass);
+		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
 	result = makeList1(expr);
@@ -2122,7 +2123,7 @@ prefix_quals(Node *leftop, Oid opclass,
 	{
 		oproid = get_opclass_member(opclass, BTLessStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "prefix_quals: no operator < for opclass %u", opclass);
+			elog(ERROR, "no < operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
 		result = lappend(result, expr);
@@ -2167,8 +2168,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 			is_eq = true;
 			break;
 		default:
-			elog(ERROR, "network_prefix_quals: unexpected operator %u",
-				 expr_op);
+			elog(ERROR, "unexpected operator: %u", expr_op);
 			return NIL;
 	}
 
@@ -2180,15 +2180,13 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 	{
 		opr1oid = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
 		if (opr1oid == InvalidOid)
-			elog(ERROR, "network_prefix_quals: no >= operator for opclass %u",
-				 opclass);
+			elog(ERROR, "no >= operator for opclass %u", opclass);
 	}
 	else
 	{
 		opr1oid = get_opclass_member(opclass, BTGreaterStrategyNumber);
 		if (opr1oid == InvalidOid)
-			elog(ERROR, "network_prefix_quals: no > operator for opclass %u",
-				 opclass);
+			elog(ERROR, "no > operator for opclass %u", opclass);
 	}
 
 	opr1right = network_scan_first(rightop);
@@ -2203,8 +2201,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 
 	opr2oid = get_opclass_member(opclass, BTLessEqualStrategyNumber);
 	if (opr2oid == InvalidOid)
-		elog(ERROR, "network_prefix_quals: no <= operator for opclass %u",
-			 opclass);
+		elog(ERROR, "no <= operator for opclass %u", opclass);
 
 	opr2right = network_scan_last(rightop);
 

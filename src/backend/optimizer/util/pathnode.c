@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.92 2003/07/14 22:35:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.93 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ set_cheapest(RelOptInfo *parent_rel)
 	Assert(IsA(parent_rel, RelOptInfo));
 
 	if (pathlist == NIL)
-		elog(ERROR, "Unable to devise a query plan for the given query");
+		elog(ERROR, "could not devise a query plan for the given query");
 
 	cheapest_startup_path = cheapest_total_path = (Path *) lfirst(pathlist);
 

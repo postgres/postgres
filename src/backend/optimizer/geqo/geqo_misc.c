@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.36 2002/12/16 21:30:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.37 2003/07/25 00:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ avg_pool(Pool *pool)
 	double		cumulative = 0.0;
 
 	if (pool->size <= 0)
-		elog(ERROR, "avg_pool: pool_size of zero");
+		elog(ERROR, "pool_size is zero");
 
 	/*
 	 * Since the pool may contain multiple occurrences of DBL_MAX, divide

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.73 2003/07/16 17:25:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.74 2003/07/25 00:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -678,14 +678,14 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (length(parsetree->jointree->fromlist) != 1)
-		elog(ERROR, "getInsertSelectQuery: expected to find SELECT subquery");
+		elog(ERROR, "expected to find SELECT subquery");
 	rtr = (RangeTblRef *) lfirst(parsetree->jointree->fromlist);
 	Assert(IsA(rtr, RangeTblRef));
 	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
 	selectquery = selectrte->subquery;
 	if (!(selectquery && IsA(selectquery, Query) &&
 		  selectquery->commandType == CMD_SELECT))
-		elog(ERROR, "getInsertSelectQuery: expected to find SELECT subquery");
+		elog(ERROR, "expected to find SELECT subquery");
 	if (length(selectquery->rtable) >= 2 &&
 	strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
 		   "*OLD*") == 0 &&
@@ -696,7 +696,7 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 			*subquery_ptr = &(selectrte->subquery);
 		return selectquery;
 	}
-	elog(ERROR, "getInsertSelectQuery: can't find rule placeholders");
+	elog(ERROR, "could not find rule placeholders");
 	return NULL;				/* not reached */
 }
 
@@ -730,7 +730,9 @@ AddQual(Query *parsetree, Node *qual)
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
 			return;
 		else
-			elog(ERROR, "Conditional utility statements are not implemented");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("conditional utility statements are not implemented")));
 	}
 
 	if (parsetree->setOperations != NULL)
@@ -740,7 +742,9 @@ AddQual(Query *parsetree, Node *qual)
 		 * (This could be fixed, but right now the planner simply ignores
 		 * any qual condition on a setop query.)
 		 */
-		elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 	}
 
 	/* INTERSECT want's the original, but we need to copy - Jan */
@@ -780,7 +784,9 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
 			return;
 		else
-			elog(ERROR, "Conditional utility statements are not implemented");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("conditional utility statements are not implemented")));
 	}
 
 	if (parsetree->setOperations != NULL)
@@ -790,7 +796,9 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 		 * (This could be fixed, but right now the planner simply ignores
 		 * any qual condition on a setop query.)
 		 */
-		elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 	}
 
 	/* INTERSECT want's the original, but we need to copy - Jan */
@@ -905,7 +913,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 			/* band-aid: don't do the wrong thing with a whole-tuple Var */
 			if (var->varattno == InvalidAttrNumber)
-				elog(ERROR, "ResolveNew: can't handle whole-tuple reference");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot handle whole-tuple reference")));
 
 			n = FindMatchingNew(context->targetlist, var->varattno);
 

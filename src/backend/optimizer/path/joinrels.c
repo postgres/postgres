@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.60 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.61 2003/07/25 00:01:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,8 +227,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 		}
 
 		if (result_rels == NIL)
-			elog(ERROR, "make_rels_by_joins: failed to build any %d-way joins",
-				 level);
+			elog(ERROR, "failed to build any %d-way joins", level);
 	}
 
 	return result_rels;
@@ -367,8 +366,8 @@ make_jointree_rel(Query *root, Node *jtnode)
 		/* Make this join rel */
 		rel = make_join_rel(root, lrel, rrel, j->jointype);
 
-		if (rel == NULL)
-			elog(ERROR, "make_jointree_rel: invalid join order!?");
+		if (rel == NULL)		/* oops */
+			elog(ERROR, "invalid join order");
 
 		/*
 		 * Since we are only going to consider this one way to do it,
@@ -385,8 +384,8 @@ make_jointree_rel(Query *root, Node *jtnode)
 		return rel;
 	}
 	else
-		elog(ERROR, "make_jointree_rel: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return NULL;				/* keep compiler quiet */
 }
 
@@ -571,7 +570,7 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 								 restrictlist);
 			break;
 		default:
-			elog(ERROR, "make_join_rel: unsupported join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) jointype);
 			break;
 	}

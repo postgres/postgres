@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.156 2003/07/03 19:07:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.157 2003/07/25 00:01:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,8 +448,8 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
 		j->quals = preprocess_expression(parse, j->quals, EXPRKIND_QUAL);
 	}
 	else
-		elog(ERROR, "preprocess_qual_conditions: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 /*--------------------
@@ -582,7 +582,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * already, but let's make sure).
 		 */
 		if (parse->rowMarks)
-			elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 		/*
 		 * We set current_pathkeys NIL indicating we do not know sort
@@ -646,7 +648,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 * level
 			 */
 			if (PlannerQueryLevel > 1)
-				elog(ERROR, "SELECT FOR UPDATE is not allowed in subselects");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("SELECT FOR UPDATE is not allowed in subselects")));
 
 			foreach(l, parse->rowMarks)
 			{
@@ -1491,7 +1495,7 @@ locate_grouping_columns(Query *parse,
 				break;
 		}
 		if (!sl)
-			elog(ERROR, "locate_grouping_columns: failed");
+			elog(ERROR, "failed to locate grouping columns");
 
 		groupColIdx[keyno++] = te->resdom->resno;
 	}
@@ -1504,7 +1508,7 @@ locate_grouping_columns(Query *parse,
  * We need to transpose sort key info from the orig_tlist into new_tlist.
  * NOTE: this would not be good enough if we supported resjunk sort keys
  * for results of set operations --- then, we'd need to project a whole
- * new tlist to evaluate the resjunk columns.  For now, just elog if we
+ * new tlist to evaluate the resjunk columns.  For now, just ereport if we
  * find any resjunk columns in orig_tlist.
  */
 static List *
@@ -1524,13 +1528,13 @@ postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
 		Assert(orig_tlist != NIL);
 		orig_tle = (TargetEntry *) lfirst(orig_tlist);
 		orig_tlist = lnext(orig_tlist);
-		if (orig_tle->resdom->resjunk)
-			elog(ERROR, "postprocess_setop_tlist: resjunk output columns not implemented");
+		if (orig_tle->resdom->resjunk) /* should not happen */
+			elog(ERROR, "resjunk output columns are not implemented");
 		Assert(new_tle->resdom->resno == orig_tle->resdom->resno);
 		Assert(new_tle->resdom->restype == orig_tle->resdom->restype);
 		new_tle->resdom->ressortgroupref = orig_tle->resdom->ressortgroupref;
 	}
 	if (orig_tlist != NIL)
-		elog(ERROR, "postprocess_setop_tlist: resjunk output columns not implemented");
+		elog(ERROR, "resjunk output columns are not implemented");
 	return new_tlist;
 }

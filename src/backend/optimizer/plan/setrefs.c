@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.93 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.94 2003/07/25 00:01:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,8 +233,8 @@ set_plan_references(Plan *plan, List *rtable)
 				set_plan_references((Plan *) lfirst(pl), rtable);
 			break;
 		default:
-			elog(ERROR, "set_plan_references: unknown plan type %d",
-				 nodeTag(plan));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(plan));
 			break;
 	}
 
@@ -584,7 +584,7 @@ join_references_mutator(Node *node,
 			return (Node *) copyObject(var);
 
 		/* No referent found for Var */
-		elog(ERROR, "join_references: variable not in subplan target lists");
+		elog(ERROR, "variable not found in subplan target lists");
 	}
 	/* Try matching more complex expressions too, if tlists have any */
 	if (context->tlists_have_non_vars)
@@ -680,7 +680,7 @@ replace_vars_with_subplan_refs_mutator(Node *node,
 
 		resdom = tlist_member((Node *) var, context->subplan_targetlist);
 		if (!resdom)
-			elog(ERROR, "replace_vars_with_subplan_refs: variable not in subplan target list");
+			elog(ERROR, "variable not found in subplan target list");
 		newvar = (Var *) copyObject(var);
 		newvar->varno = context->subvarno;
 		newvar->varattno = resdom->resno;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.146 2003/07/03 19:07:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.147 2003/07/25 00:01:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -404,7 +404,9 @@ count_agg_clause_walker(Node *node, int *count)
 		 * nested agg functions are semantically nonsensical.
 		 */
 		if (contain_agg_clause((Node *) ((Aggref *) node)->target))
-			elog(ERROR, "Aggregate function calls may not be nested");
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("aggregate function calls may not be nested")));
 
 		/*
 		 * Having checked that, we need not recurse into the argument.
@@ -982,14 +984,15 @@ CommuteClause(OpExpr *clause)
 	Oid			opoid;
 	Node	   *temp;
 
+	/* Sanity checks: caller is at fault if these fail */
 	if (!is_opclause(clause) ||
 		length(clause->args) != 2)
-		elog(ERROR, "CommuteClause: applied to non-binary-operator clause");
+		elog(ERROR, "cannot commute non-binary-operator clause");
 
 	opoid = get_commutator(clause->opno);
 
 	if (!OidIsValid(opoid))
-		elog(ERROR, "CommuteClause: no commutator for operator %u",
+		elog(ERROR, "could not find commutator for operator %u",
 			 clause->opno);
 
 	/*
@@ -1346,7 +1349,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 				/* Else we still need a NOT node */
 				return (Node *) make_notclause(lfirst(args));
 			default:
-				elog(ERROR, "eval_const_expressions: unexpected boolop %d",
+				elog(ERROR, "unrecognized boolop: %d",
 					 (int) expr->boolop);
 				break;
 		}
@@ -1357,7 +1360,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * Return a SubPlan unchanged --- too late to do anything
 		 * with it.
 		 *
-		 * XXX should we elog() here instead?  Probably this routine
+		 * XXX should we ereport() here instead?  Probably this routine
 		 * should never be invoked after SubPlan creation.
 		 */
 		return node;
@@ -1610,7 +1613,7 @@ simplify_function(Oid funcid, Oid result_type, List *args,
 								ObjectIdGetDatum(funcid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(func_tuple))
-		elog(ERROR, "Function OID %u does not exist", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	newexpr = evaluate_function(funcid, result_type, args, func_tuple);
 
@@ -1794,8 +1797,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 						  Anum_pg_proc_prosrc,
 						  &isNull);
 	if (isNull)
-		elog(ERROR, "inline_function: null prosrc for procedure %u",
-			 funcid);
+		elog(ERROR, "null prosrc for function %u", funcid);
 	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	/*
@@ -1961,9 +1963,9 @@ substitute_actual_parameters_mutator(Node *node,
 		Param	   *param = (Param *) node;
 
 		if (param->paramkind != PARAM_NUM)
-			elog(ERROR, "substitute_actual_parameters_mutator: unexpected paramkind");
+			elog(ERROR, "unexpected paramkind: %d", param->paramkind);
 		if (param->paramid <= 0 || param->paramid > context->nargs)
-			elog(ERROR, "substitute_actual_parameters_mutator: unexpected paramid");
+			elog(ERROR, "invalid paramid: %d", param->paramid);
 
 		/* Count usage of parameter */
 		context->usecounts[param->paramid - 1]++;
@@ -2350,8 +2352,8 @@ expression_tree_walker(Node *node,
 			}
 			break;
 		default:
-			elog(ERROR, "expression_tree_walker: Unexpected node type %d",
-				 nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(node));
 			break;
 	}
 	return false;
@@ -2816,8 +2818,8 @@ expression_tree_mutator(Node *node,
 			}
 			break;
 		default:
-			elog(ERROR, "expression_tree_mutator: Unexpected node type %d",
-				 nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(node));
 			break;
 	}
 	/* can't get here, but keep compiler happy */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.86 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.87 2003/07/25 00:01:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,11 +97,13 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 		 * Safety check: join RTEs should not be SELECT FOR UPDATE targets
 		 */
 		if (intMember(j->rtindex, root->rowMarks))
-			elog(ERROR, "SELECT FOR UPDATE cannot be applied to a join");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("SELECT FOR UPDATE cannot be applied to a join")));
 	}
 	else
-		elog(ERROR, "add_base_rels_to_query: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 
@@ -284,11 +286,12 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 				 * This is where we fail if upper levels of planner
 				 * haven't rewritten UNION JOIN as an Append ...
 				 */
-				elog(ERROR, "UNION JOIN is not implemented yet");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("UNION JOIN is not implemented yet")));
 				break;
 			default:
-				elog(ERROR,
-					 "distribute_quals_to_rels: unsupported join type %d",
+				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
 				break;
 		}
@@ -302,8 +305,8 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 			mark_baserels_for_outer_join(root, nullable_rels, result);
 	}
 	else
-		elog(ERROR, "distribute_quals_to_rels: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 	return result;
 }
 
@@ -340,7 +343,9 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 		if (rel->outerjoinset == NULL)
 		{
 			if (intMember(relno, root->rowMarks))
-				elog(ERROR, "SELECT FOR UPDATE cannot be applied to the nullable side of an OUTER JOIN");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("SELECT FOR UPDATE cannot be applied to the nullable side of an OUTER JOIN")));
 		}
 
 		rel->outerjoinset = outerrels;
@@ -603,7 +608,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 * 'clause' references no rels, and therefore we have no place to
 			 * attach it.  Shouldn't get here if callers are working properly.
 			 */
-			elog(ERROR, "distribute_qual_to_rels: can't cope with variable-free clause");
+			elog(ERROR, "cannot cope with variable-free clause");
 			break;
 	}
 
@@ -745,8 +750,10 @@ process_implied_equality(Query *root,
 		 * we have no suitable equality operator for the combination of
 		 * datatypes?  NO, because sortkey selection may screw up anyway.
 		 */
-		elog(ERROR, "Unable to identify an equality operator for types '%s' and '%s'",
-			 format_type_be(ltype), format_type_be(rtype));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("unable to identify an equality operator for types %s and %s",
+						format_type_be(ltype), format_type_be(rtype))));
 	}
 	pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
 
@@ -756,8 +763,10 @@ process_implied_equality(Query *root,
 	if (pgopform->oprlsortop != sortop1 ||
 		pgopform->oprrsortop != sortop2 ||
 		pgopform->oprresult != BOOLOID)
-		elog(ERROR, "Equality operator for types '%s' and '%s' should be mergejoinable, but isn't",
-			 format_type_be(ltype), format_type_be(rtype));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("equality operator for types %s and %s should be mergejoinable, but isn't",
+						format_type_be(ltype), format_type_be(rtype))));
 
 	clause = make_opclause(oprid(eq_operator), /* opno */
 						   BOOLOID,	/* opresulttype */

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.50 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.51 2003/07/25 00:01:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1089,7 +1089,7 @@ make_pathkeys_for_mergeclauses(Query *root,
 		}
 		else
 		{
-			elog(ERROR, "make_pathkeys_for_mergeclauses: can't identify which side of mergeclause to use");
+			elog(ERROR, "could not identify which side of mergeclause to use");
 			pathkey = NIL;	/* keep compiler quiet */
 		}
 

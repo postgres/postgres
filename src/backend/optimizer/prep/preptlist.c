@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.61 2003/05/12 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.62 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ preprocess_targetlist(List *tlist,
 		RangeTblEntry *rte = rt_fetch(result_relation, range_table);
 
 		if (rte->subquery != NULL || rte->relid == InvalidOid)
-			elog(ERROR, "preprocess_targetlist: subquery cannot be result relation");
+			elog(ERROR, "subquery cannot be result relation");
 	}
 
 	/*
@@ -236,7 +236,8 @@ expand_targetlist(List *tlist, int command_type,
 					}
 					break;
 				default:
-					elog(ERROR, "expand_targetlist: unexpected command_type");
+					elog(ERROR, "unrecognized command_type: %d",
+						 (int) command_type);
 					new_expr = NULL;	/* keep compiler quiet */
 					break;
 			}
@@ -266,7 +267,7 @@ expand_targetlist(List *tlist, int command_type,
 		Resdom	   *resdom = old_tle->resdom;
 
 		if (!resdom->resjunk)
-			elog(ERROR, "expand_targetlist: targetlist is not sorted correctly");
+			elog(ERROR, "targetlist is not sorted correctly");
 		/* Get the resno right, but don't copy unnecessarily */
 		if (resdom->resno != attrno)
 		{

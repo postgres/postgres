@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.103 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.104 2003/07/25 00:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,9 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	 * do better?
 	 */
 	if (intMember(parentRTindex, root->rowMarks))
-		elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE is not supported for inherit queries")));
 
 	/*
 	 * The executor will check the parent table's access permissions when
@@ -642,7 +644,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
 	}
 	else
 	{
-		elog(ERROR, "recurse_pushdown_safe: unexpected node %d",
+		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
 	}
 	return true;
@@ -839,7 +841,7 @@ recurse_push_qual(Node *setOp, Query *topquery,
 	}
 	else
 	{
-		elog(ERROR, "recurse_push_qual: unexpected node %d",
+		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
 	}
 }

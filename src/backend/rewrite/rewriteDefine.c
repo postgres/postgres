@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.82 2003/01/17 02:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.83 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -97,8 +98,10 @@ InsertRule(char *rulname,
 	if (HeapTupleIsValid(oldtup))
 	{
 		if (!replace)
-			elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
-				 rulname);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("rule \"%s\" for relation \"%s\" already exists",
+							rulname, get_rel_name(eventrel_oid))));
 
 		/*
 		 * When replacing, we don't need to replace every attribute
@@ -224,11 +227,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (query != getInsertSelectQuery(query, NULL))
 			continue;
 		if (query->resultRelation == PRS2_OLD_VARNO)
-			elog(ERROR, "rule actions on OLD currently not supported"
-				 "\n\tuse views or triggers instead");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("rule actions on OLD are not implemented"),
+					 errhint("Use views or triggers instead.")));
 		if (query->resultRelation == PRS2_NEW_VARNO)
-			elog(ERROR, "rule actions on NEW currently not supported"
-				 "\n\tuse triggers instead");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("rule actions on NEW are not implemented"),
+					 errhint("Use triggers instead.")));
 	}
 
 	/*
@@ -243,29 +250,35 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * So there cannot be INSTEAD NOTHING, ...
 		 */
 		if (length(action) == 0)
-		{
-			elog(ERROR, "instead nothing rules on select currently not supported"
-				 "\n\tuse views instead");
-		}
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("INSTEAD NOTHING rules on select are not implemented"),
+					 errhint("Use views instead.")));
 
 		/*
 		 * ... there cannot be multiple actions, ...
 		 */
 		if (length(action) > 1)
-			elog(ERROR, "multiple action rules on select currently not supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("multiple action rules on select are not implemented")));
 
 		/*
 		 * ... the one action must be a SELECT, ...
 		 */
 		query = (Query *) lfirst(action);
 		if (!is_instead || query->commandType != CMD_SELECT)
-			elog(ERROR, "only instead-select rules currently supported on select");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("only instead-select rules are currently supported on select")));
 
 		/*
 		 * ... there can be no rule qual, ...
 		 */
 		if (event_qual != NULL)
-			elog(ERROR, "event qualifications not supported for rules on select");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("event qualifications are not implemented for rules on select")));
 
 		/*
 		 * ... the targetlist of the SELECT action must exactly match the
@@ -283,7 +296,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 				continue;
 			i++;
 			if (i > event_relation->rd_att->natts)
-				elog(ERROR, "select rule's target list has too many entries");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("select rule's target list has too many entries")));
 
 			attr = event_relation->rd_att->attrs[i - 1];
 			attname = NameStr(attr->attname);
@@ -297,13 +312,19 @@ DefineQueryRewrite(RuleStmt *stmt)
 			 * positions.
 			 */
 			if (attr->attisdropped)
-				elog(ERROR, "cannot convert relation containing dropped columns to view");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot convert relation containing dropped columns to view")));
 
 			if (strcmp(resdom->resname, attname) != 0)
-				elog(ERROR, "select rule's target entry %d has different column name from %s", i, attname);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("select rule's target entry %d has different column name from \"%s\"", i, attname)));
 
 			if (attr->atttypid != resdom->restype)
-				elog(ERROR, "select rule's target entry %d has different type from attribute %s", i, attname);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("select rule's target entry %d has different type from attribute \"%s\"", i, attname)));
 
 			/*
 			 * Allow typmods to be different only if one of them is -1,
@@ -314,11 +335,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 			 */
 			if (attr->atttypmod != resdom->restypmod &&
 				attr->atttypmod != -1 && resdom->restypmod != -1)
-				elog(ERROR, "select rule's target entry %d has different size from attribute %s", i, attname);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("select rule's target entry %d has different size from attribute \"%s\"", i, attname)));
 		}
 
 		if (i != event_relation->rd_att->natts)
-			elog(ERROR, "select rule's target list has too few entries");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("select rule's target list has too few entries")));
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...
@@ -331,8 +356,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
-					elog(ERROR, "\"%s\" is already a view",
-						 RelationGetRelationName(event_relation));
+					ereport(ERROR,
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("\"%s\" is already a view",
+									RelationGetRelationName(event_relation))));
 			}
 		}
 
@@ -353,8 +380,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (strncmp(stmt->rulename, "_RET", 4) != 0 ||
 				strncmp(stmt->rulename + 4, event_obj->relname,
 						NAMEDATALEN - 4 - 4) != 0)
-				elog(ERROR, "view rule for \"%s\" must be named \"%s\"",
-					 event_obj->relname, ViewSelectRuleName);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("view rule for \"%s\" must be named \"%s\"",
+								event_obj->relname, ViewSelectRuleName)));
 			stmt->rulename = pstrdup(ViewSelectRuleName);
 		}
 
@@ -370,8 +399,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 			scanDesc = heap_beginscan(event_relation, SnapshotNow, 0, NULL);
 			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
-				elog(ERROR, "Relation \"%s\" is not empty. Cannot convert it to view",
-					 event_obj->relname);
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot convert non-empty table \"%s\" to a view",
+								event_obj->relname)));
 			heap_endscan(scanDesc);
 
 			RelisBecomingView = true;
@@ -509,12 +540,17 @@ RenameRewriteRule(Oid owningRel, const char *oldName,
 								 PointerGetDatum(oldName),
 								 0, 0);
 	if (!HeapTupleIsValid(ruletup))
-		elog(ERROR, "RenameRewriteRule: rule \"%s\" does not exist", oldName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+						oldName, get_rel_name(owningRel))));
 
 	/* should not already exist */
 	if (IsDefinedRewriteRule(owningRel, newName))
-		elog(ERROR, "Attempt to rename rule \"%s\" failed: \"%s\" already exists",
-			 oldName, newName);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("rule \"%s\" for relation \"%s\" already exists",
+						newName, get_rel_name(owningRel))));
 
 	namestrcpy(&(((Form_pg_rewrite) GETSTRUCT(ruletup))->rulename), newName);
 

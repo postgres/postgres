@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.49 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.50 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ build_base_rel(Query *root, int relid)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
 		if (relid == rel->relid)
-			elog(ERROR, "build_base_rel: rel already exists");
+			elog(ERROR, "rel already exists");
 	}
 
 	/* It should not exist as an "other" rel, either */
@@ -63,7 +63,7 @@ build_base_rel(Query *root, int relid)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
 		if (relid == rel->relid)
-			elog(ERROR, "build_base_rel: rel already exists as 'other' rel");
+			elog(ERROR, "rel already exists as \"other\" rel");
 	}
 
 	/* No existing RelOptInfo for this base rel, so make a new one */
@@ -98,7 +98,7 @@ build_other_rel(Query *root, int relid)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
 		if (relid == rel->relid)
-			elog(ERROR, "build_other_rel: rel already exists as base rel");
+			elog(ERROR, "rel already exists as base rel");
 	}
 
 	/* No existing RelOptInfo for this other rel, so make a new one */
@@ -165,7 +165,7 @@ make_base_rel(Query *root, int relid)
 			rel->max_attr = length(rte->eref->colnames);
 			break;
 		default:
-			elog(ERROR, "make_base_rel: unsupported RTE kind %d",
+			elog(ERROR, "unrecognized RTE kind: %d",
 				 (int) rte->rtekind);
 			break;
 	}
@@ -211,7 +211,7 @@ find_base_rel(Query *root, int relid)
 			return rel;
 	}
 
-	elog(ERROR, "find_base_rel: no relation entry for relid %d", relid);
+	elog(ERROR, "no relation entry for relid %d", relid);
 
 	return NULL;				/* keep compiler quiet */
 }

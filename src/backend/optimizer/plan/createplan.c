@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.148 2003/07/14 22:35:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.149 2003/07/25 00:01:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,8 +155,8 @@ create_plan(Query *root, Path *best_path)
 											   (UniquePath *) best_path);
 			break;
 		default:
-			elog(ERROR, "create_plan: unknown pathtype %d",
-				 best_path->pathtype);
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) best_path->pathtype);
 			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -252,8 +252,8 @@ create_scan_plan(Query *root, Path *best_path)
 			break;
 
 		default:
-			elog(ERROR, "create_scan_plan: unknown node type: %d",
-				 best_path->pathtype);
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) best_path->pathtype);
 			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -384,8 +384,8 @@ create_join_plan(Query *root, JoinPath *best_path)
 												 inner_plan);
 			break;
 		default:
-			elog(ERROR, "unsupported node type %d",
-				 best_path->path.pathtype);
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) best_path->path.pathtype);
 			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -1172,7 +1172,7 @@ fix_indxqual_sublist(List *indexqual,
 		Oid			opclass;
 
 		if (!IsA(clause, OpExpr) || length(clause->args) != 2)
-			elog(ERROR, "fix_indxqual_sublist: indexqual clause is not binary opclause");
+			elog(ERROR, "indexqual clause is not binary opclause");
 
 		/*
 		 * Make a copy that will become the fixed clause.
@@ -1287,7 +1287,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 	}
 
 	/* Ooops... */
-	elog(ERROR, "fix_indxqual_operand: node is not index attribute");
+	elog(ERROR, "node is not an index attribute");
 	return NULL;				/* keep compiler quiet */
 }
 
@@ -1804,7 +1804,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 					break;
 			}
 			if (!j)
-				elog(ERROR, "make_sort_from_pathkeys: cannot find pathkey item to sort");
+				elog(ERROR, "could not find pathkey item to sort");
 			/*
 			 * Do we need to insert a Result node?
 			 *

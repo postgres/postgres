@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.110 2003/07/14 22:35:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.111 2003/07/25 00:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1513,7 +1513,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 	else if (IsA(node, SubLink))
 	{
 		/* This routine should not be applied to un-planned expressions */
-		elog(ERROR, "cost_qual_eval: can't handle unplanned sub-select");
+		elog(ERROR, "cannot handle unplanned sub-select");
 	}
 	else if (IsA(node, SubPlan))
 	{
@@ -1805,8 +1805,7 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 				temp = inner_rel->rows;
 			break;
 		default:
-			elog(ERROR, "set_joinrel_size_estimates: unsupported join type %d",
-				 (int) jointype);
+			elog(ERROR, "unrecognized join type: %d", (int) jointype);
 			temp = 0;			/* keep compiler quiet */
 			break;
 	}

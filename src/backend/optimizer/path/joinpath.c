@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.78 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.79 2003/07/25 00:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ sort_inner_and_outer(Query *root,
 			useallclauses = true;
 			break;
 		default:
-			elog(ERROR, "sort_inner_and_outer: unexpected join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) jointype);
 			useallclauses = false;		/* keep compiler quiet */
 			break;
@@ -363,7 +363,7 @@ match_unsorted_outer(Query *root,
 			useallclauses = true;
 			break;
 		default:
-			elog(ERROR, "match_unsorted_outer: unexpected join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) jointype);
 			nestjoinOK = false; /* keep compiler quiet */
 			useallclauses = false;
@@ -815,7 +815,9 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 				case JOIN_FULL:
 					if (restrictinfo->left_relids == NULL ||
 						restrictinfo->mergejoinoperator == InvalidOid)
-						elog(ERROR, "FULL JOIN is only supported with mergejoinable join conditions");
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("FULL JOIN is only supported with mergejoinable join conditions")));
 					break;
 				default:
 					/* otherwise, it's OK to have nonmergeable join quals */

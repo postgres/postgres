@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.17 2002/03/02 21:39:26 momjian Exp $
+* $Id: geqo_erx.c,v 1.18 2003/07/25 00:01:06 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -333,7 +333,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 			minimum_count = 1;
 		}
 		else if (minimum_count == -1)
-			elog(ERROR, "gimme_gene: Internal error - minimum_count not set");
+			elog(ERROR, "minimum_count not set");
 		else if (edge_table[(int) friend].unused_edges == minimum_edges)
 			minimum_count++;
 
@@ -359,7 +359,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 	}
 
 	/* ... should never be reached */
-	elog(ERROR, "gimme_gene: neither shared nor minimum number nor random edge found");
+	elog(ERROR, "neither shared nor minimum number nor random edge found");
 	return 0;					/* to keep the compiler quiet */
 }
 
@@ -419,15 +419,11 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 			}
 		}
 
-		elog(LOG, "edge_failure(1): no edge found via random decision and total_edges == 4");
+		elog(LOG, "no edge found via random decision and total_edges == 4");
 	}
-
-	else
-/* random decision of the gene with remaining edges */
-
-	if (remaining_edges != 0)
+	else if (remaining_edges != 0)
 	{
-
+		/* random decision of the gene with remaining edges */
 		rand_decision = (int) geqo_randint(remaining_edges - 1, 0);
 
 		for (i = 1; i <= num_gene; i++)
@@ -444,7 +440,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 			}
 		}
 
-		elog(LOG, "edge_failure(2): no edge found via random decision and remainig edges");
+		elog(LOG, "no edge found via random decision with remaining edges");
 	}
 
 	/*
@@ -462,11 +458,11 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 			if (edge_table[i].unused_edges >= 0)
 				return (Gene) i;
 
-		elog(LOG, "edge_failure(3): no edge found via looking for the last ununsed point");
+		elog(LOG, "no edge found via looking for the last ununsed point");
 	}
 
 
-/* ... should never be reached */
-	elog(ERROR, "edge_failure: no edge detected");
+	/* ... should never be reached */
+	elog(ERROR, "no edge found");
 	return 0;					/* to keep the compiler quiet */
 }

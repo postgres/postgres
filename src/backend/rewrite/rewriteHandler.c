@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.123 2003/07/16 17:25:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.124 2003/07/25 00:01:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,9 @@ rewriteRuleAction(Query *parsetree,
 			 * member statements of the setop?)
 			 */
 			if (sub_action->setOperations != NULL)
-				elog(ERROR, "Conditional UNION/INTERSECT/EXCEPT statements are not implemented");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 
 			sub_action->jointree->fromlist =
 				nconc(newjointree, sub_action->jointree->fromlist);
@@ -407,8 +409,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 		{
 			/* Let's just make sure we processed all the non-junk items */
 			if (resdom->resno < 1 || resdom->resno > numattrs)
-				elog(ERROR, "rewriteTargetList: bogus resno %d in targetlist",
-					 resdom->resno);
+				elog(ERROR, "bogus resno %d in targetlist", resdom->resno);
 		}
 	}
 
@@ -449,8 +450,10 @@ process_matched_tle(TargetEntry *src_tle,
 		((ArrayRef *) prior_tle->expr)->refassgnexpr == NULL ||
 		((ArrayRef *) src_tle->expr)->refrestype !=
 		((ArrayRef *) prior_tle->expr)->refrestype)
-		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
-			 resdom->resname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("multiple assignments to same attribute \"%s\"",
+						resdom->resname)));
 
 	/*
 	 * Prior TLE could be a nest of ArrayRefs if we do this more than
@@ -461,8 +464,10 @@ process_matched_tle(TargetEntry *src_tle,
 		   ((ArrayRef *) priorbottom)->refassgnexpr != NULL)
 		priorbottom = (Node *) ((ArrayRef *) priorbottom)->refexpr;
 	if (!equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
-		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
-			 resdom->resname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("multiple assignments to same attribute \"%s\"",
+						resdom->resname)));
 
 	/*
 	 * Looks OK to nest 'em.
@@ -550,12 +555,14 @@ build_column_default(Relation rel, int attrno)
 	 * type when it was created ...
 	 */
 	if (expr == NULL)
-		elog(ERROR, "Column \"%s\" is of type %s"
-			 " but default expression is of type %s"
-			 "\n\tYou will need to rewrite or cast the expression",
-			 NameStr(att_tup->attname),
-			 format_type_be(atttype),
-			 format_type_be(exprtype));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("column \"%s\" is of type %s"
+						" but default expression is of type %s",
+						NameStr(att_tup->attname),
+						format_type_be(atttype),
+						format_type_be(exprtype)),
+				 errhint("You will need to rewrite or cast the expression.")));
 
 	return expr;
 }
@@ -619,11 +626,11 @@ ApplyRetrieveRule(Query *parsetree,
 			   *subrte;
 
 	if (length(rule->actions) != 1)
-		elog(ERROR, "ApplyRetrieveRule: expected just one rule action");
+		elog(ERROR, "expected just one rule action");
 	if (rule->qual != NULL)
-		elog(ERROR, "ApplyRetrieveRule: can't handle qualified ON SELECT rule");
+		elog(ERROR, "cannot handle qualified ON SELECT rule");
 	if (!relation_level)
-		elog(ERROR, "ApplyRetrieveRule: can't handle per-attribute ON SELECT rule");
+		elog(ERROR, "cannot handle per-attribute ON SELECT rule");
 
 	/*
 	 * Make a modifiable copy of the view query, and recursively expand
@@ -872,8 +879,10 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 			List	   *l;
 
 			if (oidMember(RelationGetRelid(rel), activeRIRs))
-				elog(ERROR, "Infinite recursion detected in rules for relation %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("infinite recursion detected in rules for relation \"%s\"",
+								RelationGetRelationName(rel))));
 			newActiveRIRs = lconso(RelationGetRelid(rel), activeRIRs);
 
 			foreach(l, locks)
@@ -913,7 +922,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		parsetree->hasAggs = checkExprHasAggs((Node *) parsetree);
 		if (parsetree->hasAggs)
 			if (checkExprHasAggs((Node *) parsetree->jointree))
-				elog(ERROR, "fireRIRrules: failed to remove aggs from qual");
+				elog(ERROR, "failed to remove aggregates from qual");
 	}
 	if (parsetree->hasSubLinks)
 		parsetree->hasSubLinks = checkExprHasSubLink((Node *) parsetree);
@@ -1151,8 +1160,10 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 					rev = (rewrite_event *) lfirst(n);
 					if (rev->relation == RelationGetRelid(rt_entry_relation) &&
 						rev->event == event)
-						elog(ERROR, "Infinite recursion detected in rules for relation %s",
-							 RelationGetRelationName(rt_entry_relation));
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("infinite recursion detected in rules for relation \"%s\"",
+										RelationGetRelationName(rt_entry_relation))));
 				}
 
 				rev = (rewrite_event *) palloc(sizeof(rewrite_event));
@@ -1259,19 +1270,25 @@ QueryRewrite(Query *parsetree)
 				switch (query->commandType)
 				{
 					case CMD_INSERT:
-						elog(ERROR, "Cannot insert into a view"
-							 "\n\tYou need an unconditional ON INSERT DO INSTEAD rule");
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot insert into a view"),
+								 errhint("You need an unconditional ON INSERT DO INSTEAD rule.")));
 						break;
 					case CMD_UPDATE:
-						elog(ERROR, "Cannot update a view"
-							 "\n\tYou need an unconditional ON UPDATE DO INSTEAD rule");
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot update a view"),
+								 errhint("You need an unconditional ON UPDATE DO INSTEAD rule.")));
 						break;
 					case CMD_DELETE:
-						elog(ERROR, "Cannot delete from a view"
-							 "\n\tYou need an unconditional ON DELETE DO INSTEAD rule");
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot delete from a view"),
+								 errhint("You need an unconditional ON DELETE DO INSTEAD rule.")));
 						break;
 					default:
-						elog(ERROR, "QueryRewrite: unexpected commandType %d",
+						elog(ERROR, "unrecognized commandType: %d",
 							 (int) query->commandType);
 						break;
 				}

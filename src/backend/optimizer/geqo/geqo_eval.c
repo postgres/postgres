@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.62 2003/05/02 20:54:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.63 2003/07/25 00:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	 * Since geqo_eval() will be called many times, we can't afford to let
 	 * all that memory go unreclaimed until end of statement.  Note we
 	 * make the temp context a child of the planner's normal context, so that
-	 * it will be freed even if we abort via elog(ERROR).
+	 * it will be freed even if we abort via ereport(ERROR).
 	 */
 	mycontext = AllocSetContextCreate(CurrentMemoryContext,
 									  "GEQO",
