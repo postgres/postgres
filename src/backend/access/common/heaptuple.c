@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.3 1996/08/27 07:42:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.4 1996/09/19 20:00:37 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -24,6 +24,7 @@
 #include "access/itup.h"
 #include "access/tupmacs.h"
 #include "access/skey.h"
+#include "access/heapam.h"
 #include "storage/ipc.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
@@ -56,12 +57,12 @@ ComputeDataSize(TupleDesc tupleDesc,
 		Datum value[],
 		char nulls[])
 {
-    uint32 length;
+    uint32 data_length;
     int i;
     int numberOfAttributes = tupleDesc->natts;
     AttributeTupleForm *att = tupleDesc->attrs;
     
-    for (length = 0, i = 0; i < numberOfAttributes; i++) {
+    for (data_length = 0, i = 0; i < numberOfAttributes; i++) {
 	if (nulls[i] != ' ') continue;
 	    
 	switch (att[i]->attlen) {
@@ -71,35 +72,35 @@ ComputeDataSize(TupleDesc tupleDesc,
 	     * must include the additional sizeof long.
 	     */
 	    if (att[i]->attalign == 'd') {
-		length = DOUBLEALIGN(length)
+		data_length = DOUBLEALIGN(data_length)
 		    + VARSIZE(DatumGetPointer(value[i]));
 	    } else {
-		length = INTALIGN(length)
+		data_length = INTALIGN(data_length)
 		    + VARSIZE(DatumGetPointer(value[i]));
 	    }
 	    break;
 	case sizeof(char):
-	    length++;
+	    data_length++;
 	    break;
 	case sizeof(short):
-	    length = SHORTALIGN(length + sizeof(short));
+	    data_length = SHORTALIGN(data_length + sizeof(short));
 	    break;
 	case sizeof(int32):
-	    length = INTALIGN(length + sizeof(int32));
+	    data_length = INTALIGN(data_length + sizeof(int32));
 	    break;
 	default:
 	    if (att[i]->attlen < sizeof(int32))
 		elog(WARN, "ComputeDataSize: attribute %d has len %d",
 		     i, att[i]->attlen);
 	    if (att[i]->attalign == 'd')
-		length = DOUBLEALIGN(length) + att[i]->attlen;
+		data_length = DOUBLEALIGN(data_length) + att[i]->attlen;
 	    else
-		length = LONGALIGN(length) + att[i]->attlen;
+		data_length = LONGALIGN(data_length) + att[i]->attlen;
 	    break;
 	}
     }
     
-    return length;
+    return data_length;
 }
 
 /* ----------------
@@ -114,12 +115,12 @@ DataFill(char *data,
 	 char *infomask,
 	 bits8 *bit)
 {
-    bits8	*bitP;
-    int		bitmask;
-    uint32	length;
+    bits8				*bitP = 0;
+    int					bitmask = 0;
+    uint32				data_length;
     int		i;
     int         numberOfAttributes = tupleDesc->natts;
-    AttributeTupleForm* att = tupleDesc->attrs;
+    AttributeTupleForm	*att = tupleDesc->attrs;
     
     if (bit != NULL) {
 	bitP = &bit[-1];
@@ -154,9 +155,9 @@ DataFill(char *data,
 	    } else {
 		data = (char *) INTALIGN(data);
 	    }
-	    length = VARSIZE(DatumGetPointer(value[i]));
-	    memmove(data, DatumGetPointer(value[i]),length);
-	    data += length;
+	    		data_length = VARSIZE(DatumGetPointer(value[i]));
+	    		memmove(data, DatumGetPointer(value[i]),data_length);
+	    		data += data_length;
 	    break;
 	case sizeof(char):
 	    *data = att[i]->attbyval ?
@@ -192,7 +193,7 @@ DataFill(char *data,
 			att[i]->attlen);
 		data += att[i]->attlen;
 	    }
-		    
+				break;
 	}
     }
 }
@@ -256,49 +257,27 @@ int
 heap_sysattrlen(AttrNumber attno)
 {
     HeapTupleData	*f = NULL;
-    int			len;
 
     switch (attno) {
-    case SelfItemPointerAttributeNumber:
-	len = sizeof f->t_ctid;
-	break;
-    case ObjectIdAttributeNumber:
-	len = sizeof f->t_oid;
-	break;
-    case MinTransactionIdAttributeNumber:
-	len = sizeof f->t_xmin;
-	break;
-    case MinCommandIdAttributeNumber:
-	len = sizeof f->t_cmin;
-	break;
-    case MaxTransactionIdAttributeNumber:
-	len = sizeof f->t_xmax;
-	break;
-    case MaxCommandIdAttributeNumber:
-	len = sizeof f->t_cmax;
-	break;
-    case ChainItemPointerAttributeNumber:
-	len = sizeof f->t_chain;
-	break;
+		case SelfItemPointerAttributeNumber:	return sizeof f->t_ctid;
+		case ObjectIdAttributeNumber:			return sizeof f->t_oid;
+		case MinTransactionIdAttributeNumber:	return sizeof f->t_xmin;
+		case MinCommandIdAttributeNumber:		return sizeof f->t_cmin;
+		case MaxTransactionIdAttributeNumber:	return sizeof f->t_xmax;
+		case MaxCommandIdAttributeNumber:		return sizeof f->t_cmax;
+		case ChainItemPointerAttributeNumber:	return sizeof f->t_chain;
+		case MinAbsoluteTimeAttributeNumber:	return sizeof f->t_tmin;
+		case MaxAbsoluteTimeAttributeNumber:	return sizeof f->t_tmax;
+		case VersionTypeAttributeNumber:		return sizeof f->t_vtype;
+
     case AnchorItemPointerAttributeNumber:
 	elog(WARN, "heap_sysattrlen: field t_anchor does not exist!");
-	break;
-    case MinAbsoluteTimeAttributeNumber:
-	len = sizeof f->t_tmin;
-	break;
-    case MaxAbsoluteTimeAttributeNumber:
-	len = sizeof f->t_tmax;
-	break;
-    case VersionTypeAttributeNumber:
-	len = sizeof f->t_vtype;
-	break;
+			return 0;
+
     default:
-	elog(WARN, "sysattrlen: System attribute number %d unknown.",
-	     attno);
-	len = 0;
-	break;
+			elog(WARN, "sysattrlen: System attribute number %d unknown.", attno);
+			return 0;
     }
-    return (len);
 }
 
 /* ----------------
@@ -437,7 +416,7 @@ fastgetattr(HeapTuple tup,
 	    bool *isnull)
 {
     char *tp;		/* ptr to att in tuple */
-    bits8  *bp;	        /* ptr to att in tuple */
+    bits8  *bp = NULL;	        /* ptr to att in tuple */
     int slow;		/* do we have to walk nulls? */
     AttributeTupleForm *att = tupleDesc->attrs;
     
