@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.49 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.50 2004/09/23 13:20:45 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -1019,7 +1019,8 @@ open_client_SSL(PGconn *conn)
 	r = SSL_connect(conn->ssl);
 	if (r <= 0)
 	{
-		switch (SSL_get_error(conn->ssl, r))
+		int err = SSL_get_error(conn->ssl, r);
+		switch (err)
 		{
 			case SSL_ERROR_WANT_READ:
 				return PGRES_POLLING_READING;
@@ -1054,7 +1055,7 @@ open_client_SSL(PGconn *conn)
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("unrecognized SSL error code\n"));
+						 libpq_gettext("unrecognized SSL error code (%d)\n"), err);
 				close_SSL(conn);
 				return PGRES_POLLING_FAILED;
 		}
