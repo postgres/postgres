@@ -1,5 +1,5 @@
 :
-# report which files have extra includes
+# remove extra #include's
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -print | 
@@ -52,7 +52,7 @@ do
 				mv /tmp/$$b "$FILE"
 				# reload after #include removal
 				if [ "$IS_INCLUDE" = "Y" ]
-				then	cat "$FILE" | grep -v "^#if" | grep -v "^#else" | 
+				then	cat "$FILE" | grep -v "^#if" | grep -v "^#else" |
 					grep -v "^#endif" | sed 's/->[a-zA-Z0-9_\.]*//g' >/tmp/$$a
 				else	cat "$FILE" >/tmp/$$a
 				fi
