@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.83 2001/03/22 04:00:25 momjian Exp $
+ * $Id: miscadmin.h,v 1.84 2001/05/08 21:06:43 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -208,7 +208,8 @@ extern Oid	GetUserId(void);
 extern void SetUserId(Oid userid);
 extern Oid	GetSessionUserId(void);
 extern void SetSessionUserId(Oid userid);
-extern void SetSessionUserIdFromUserName(const char *username);
+extern void InitializeSessionUserId(const char *username);
+extern void SetSessionAuthorization(const char *username);
 
 extern void SetDataDir(const char *dir);
 

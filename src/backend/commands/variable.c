@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.47 2001/03/29 19:03:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.48 2001/05/08 21:06:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,6 +721,8 @@ SetPGVariable(const char *name, const char *value)
 		parse_server_encoding(mvalue);
 	else if (strcasecmp(name, "seed") == 0)
 		parse_random_seed(mvalue);
+	else if (strcasecmp(name, "session_authorization") == 0)
+		SetSessionAuthorization(value);
 	else
 		SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.91 2001/05/07 00:43:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.92 2001/05/08 21:06:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"as", AS},
 	{"asc", ASC},
 	{"at", AT},
+	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
 	{"before", BEFORE},
 	{"begin", BEGIN_TRANS},

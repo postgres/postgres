@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.65 2001/04/16 02:42:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.66 2001/05/08 21:06:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,6 +354,7 @@ convertstr(unsigned char *buff, int len, int dest)
 static Oid	CurrentUserId = InvalidOid;
 static Oid	SessionUserId = InvalidOid;
 
+static bool AuthenticatedUserIsSuperuser = false;
 
 /*
  * This function is relevant for all privilege checks.
@@ -397,7 +398,7 @@ SetSessionUserId(Oid newid)
 
 
 void
-SetSessionUserIdFromUserName(const char *username)
+InitializeSessionUserId(const char *username)
 {
 	HeapTuple	userTup;
 
@@ -407,6 +408,9 @@ SetSessionUserIdFromUserName(const char *username)
 	 */
 	AssertState(!IsBootstrapProcessingMode());
 
+	/* call only once */
+	AssertState(!OidIsValid(SessionUserId));
+
 	userTup = SearchSysCache(SHADOWNAME,
 							 PointerGetDatum(username),
 							 0, 0, 0);
@@ -414,6 +418,29 @@ SetSessionUserIdFromUserName(const char *username)
 		elog(FATAL, "user \"%s\" does not exist", username);
 
 	SetSessionUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
+
+	AuthenticatedUserIsSuperuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
+
+	ReleaseSysCache(userTup);
+}
+
+
+
+void SetSessionAuthorization(const char * username)
+{
+	HeapTuple	userTup;
+
+	if (!AuthenticatedUserIsSuperuser)
+		elog(ERROR, "permission denied");
+
+	userTup = SearchSysCache(SHADOWNAME,
+							 PointerGetDatum(username),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(userTup))
+		elog(ERROR, "user \"%s\" does not exist", username);
+
+	SetSessionUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
+	SetUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
 
 	ReleaseSysCache(userTup);
 }

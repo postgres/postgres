@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.31 2001/05/07 19:31:33 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.32 2001/05/08 21:06:43 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -201,7 +201,7 @@ psql_completion(char *text, int start, int end)
 		/* these SET arguments are known in gram.y */
 		"CONSTRAINTS",
 		"NAMES",
-		"SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
+		"SESSION",
 		"TRANSACTION ISOLATION LEVEL",
 		/* these are treated in backend/commands/variable.c */
 		"DateStyle",
@@ -645,6 +645,22 @@ psql_completion(char *text, int start, int end)
 		char	   *constraint_list[] = {"DEFERRED", "IMMEDIATE", NULL};
 
 		COMPLETE_WITH_LIST(constraint_list);
+	}
+	/* Complete SET SESSION with AUTHORIZATION or CHARACTERISTICS... */
+	else if (strcasecmp(prev2_wd, "SET") == 0 && strcasecmp(prev_wd, "SESSION") == 0)
+	{
+		char *my_list[] = {"AUTHORIZATION",
+						   "CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
+						   NULL};
+
+		COMPLETE_WITH_LIST(my_list);
+	}
+	/* Complete SET SESSION AUTHORIZATION with username */
+	else if (strcasecmp(prev3_wd, "SET") == 0 
+			 && strcasecmp(prev2_wd, "SESSION") == 0
+			 && strcasecmp(prev_wd, "AUTHORIZATION") == 0)
+	{
+		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 	}
 	/* Complete SET <var> with "TO" */
 	else if (strcasecmp(prev2_wd, "SET") == 0 &&

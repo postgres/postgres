@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.16 2001/05/07 00:43:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.17 2001/05/08 21:06:42 petere Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -84,6 +84,7 @@ PostgreSQL Reference Manual
    &selectInto;
    &set;
    &setConstraints;
+   &setSessionAuth;
    &setTransaction;
    &show;
    &truncate;
@@ -131,7 +132,6 @@ Disable this chapter until we have more functions documented.
    &dropuser;
    &ecpgRef;
    &pgAccess;
-   &pgAdmin;
    &pgConfig;
    &pgDump;
    &pgDumpall;

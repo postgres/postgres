@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.223 2001/05/07 00:43:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.224 2001/05/08 21:06:42 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -259,7 +259,7 @@ static void doNegateFloat(Value *v);
 
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
-%type <str>		UserId, opt_boolean, var_value, zone_value
+%type <str>		UserId, opt_boolean, var_value, zone_value, Ident_or_Sconst
 %type <str>		ColId, ColLabel, TokenId
 
 %type <node>	TableConstraint
@@ -292,7 +292,7 @@ static void doNegateFloat(Value *v);
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC, AT,
+%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC, AT, AUTHORIZATION,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE, 
 		COALESCE, COLLATE, COLUMN, COMMIT,
@@ -761,6 +761,13 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $3;
 					$$ = (Node *) n;
 				}
+		| SET SESSION AUTHORIZATION Ident_or_Sconst
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "session_authorization";
+					n->value = $4;
+					$$ = (Node *) n;
+				}
 		;
 
 opt_level:  READ COMMITTED					{ $$ = "committed"; }
@@ -836,6 +843,10 @@ opt_encoding:  Sconst						{ $$ = $1; }
         | DEFAULT							{ $$ = NULL; }
         | /*EMPTY*/							{ $$ = NULL; }
         ;
+
+Ident_or_Sconst: IDENT						{ $$ = $1; }
+		| SCONST							{ $$ = $1; }
+
 
 VariableShowStmt:  SHOW ColId
 				{
@@ -5459,6 +5470,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| AGGREGATE						{ $$ = "aggregate"; }
 		| ALTER							{ $$ = "alter"; }
 		| AT							{ $$ = "at"; }
+		| AUTHORIZATION					{ $$ = "authorization"; }
 		| BACKWARD						{ $$ = "backward"; }
 		| BEFORE						{ $$ = "before"; }
 		| BEGIN_TRANS					{ $$ = "begin"; }

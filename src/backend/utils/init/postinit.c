@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.84 2001/04/21 18:29:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.85 2001/05/08 21:06:43 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -341,7 +341,7 @@ InitPostgres(const char *dbname, const char *username)
 	if (bootstrap)
 		SetSessionUserId(geteuid());
 	else
-		SetSessionUserIdFromUserName(username);
+		InitializeSessionUserId(username);
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()
