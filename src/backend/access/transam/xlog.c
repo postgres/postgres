@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.16 2000/06/02 15:57:16 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.17 2000/07/04 01:49:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1402,7 +1402,7 @@ StartupXLOG()
 				record = ReadRecord(&RecPtr, buffer);
 				if (TransactionIdIsValid(record->xl_xid) &&
 					!TransactionIdDidCommit(record->xl_xid))
-					RmgrTable[record->xl_rmid].rm_undo(record);
+					RmgrTable[record->xl_rmid].rm_undo(EndRecPtr, record);
 				RecPtr = record->xl_prev;
 			} while (XLByteLE(checkPoint.undo, RecPtr));
 			elog(LOG, "Undo done at (%u, %u)",

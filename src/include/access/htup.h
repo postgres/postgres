@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.32 2000/07/03 02:54:17 vadim Exp $
+ * $Id: htup.h,v 1.33 2000/07/04 01:49:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,8 @@ typedef struct xl_heap_delete
 	xl_heaptid			dtid;		/* deleted tuple id */
 } xl_heap_delete;
 
+#define	SizeOfHeapDelete	(offsetof(xl_heaptid, tid) + SizeOfIptrData))
+
 /* This is what we need to know about insert - 26 + data */
 typedef struct xl_heap_insert
 {
@@ -98,6 +100,8 @@ typedef struct xl_heap_insert
 	uint8				mask;		/* low 8 bits of t_infomask */
 	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_insert;
+
+#define SizeOfHeapInsert	(offsetof(xl_heap_insert, mask) + sizeof(uint8))
 
 /* This is what we need to know about update - 28 + data */
 typedef struct xl_heap_update
@@ -111,12 +115,16 @@ typedef struct xl_heap_update
 	/* NEW TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
 
+#define SizeOfHeapUpdate	(offsetof(xl_heap_update, mask) + sizeof(uint8))
+
 /* This is what we need to know about tuple move - 24 bytes */
 typedef struct xl_heap_move
 {
 	xl_heaptid			ftid;		/* moved from */
 	ItemPointerData		ttid;		/* moved to */
 } xl_heap_move;
+
+#define	SizeOfHeapMove	(offsetof(xl_heap_move, ttid) + SizeOfIptrData))
 
 /* end of XLOG stuff */
 

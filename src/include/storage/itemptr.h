@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.14 2000/01/26 05:58:33 momjian Exp $
+ * $Id: itemptr.h,v 1.15 2000/07/04 01:49:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,9 @@ typedef struct ItemPointerData
 	BlockIdData ip_blkid;
 	OffsetNumber ip_posid;
 } ItemPointerData;
+
+#define	SizeOfIptrData	\
+	(offsetof(ItemPointerData, ip_posid) + sizeof(OffsetNumber))
 
 typedef ItemPointerData *ItemPointer;
 

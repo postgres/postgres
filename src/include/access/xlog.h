@@ -22,7 +22,7 @@ typedef struct XLogRecord
 	XLogRecPtr	xl_prev;		/* ptr to previous record in log */
 	XLogRecPtr	xl_xact_prev;	/* ptr to previous record of this xact */
 	TransactionId xl_xid;		/* xact id */
-	uint16		xl_len;			/* len of record on this page */
+	uint16		xl_len;			/* len of record *data* on this page */
 	uint8		xl_info;
 	RmgrId		xl_rmid;		/* resource manager inserted this record */
 
@@ -32,6 +32,10 @@ typedef struct XLogRecord
 
 #define SizeOfXLogRecord	DOUBLEALIGN(sizeof(XLogRecord))
 #define MAXLOGRECSZ			(2 * BLCKSZ)
+
+#define XLogRecGetData(record)	\
+	((char*)record + SizeOfXLogRecord)
+
 /*
  * When there is no space on current page we continue on the next
  * page with subrecord.
