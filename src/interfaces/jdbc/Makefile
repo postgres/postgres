@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.8 1998/06/03 18:56:09 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.9 1998/09/03 02:29:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -70,12 +70,14 @@ OBJS=	postgresql/CallableStatement.class \
 	postgresql/fastpath/FastpathArg.class \
 	postgresql/geometric/PGbox.class \
 	postgresql/geometric/PGcircle.class \
+	postgresql/geometric/PGline.class \
 	postgresql/geometric/PGlseg.class \
 	postgresql/geometric/PGpath.class \
 	postgresql/geometric/PGpoint.class \
 	postgresql/geometric/PGpolygon.class \
 	postgresql/largeobject/LargeObject.class \
 	postgresql/largeobject/LargeObjectManager.class \
+	postgresql/util/PGmoney.class \
 	postgresql/util/PGobject.class \
 	postgresql/util/PGtokenizer.class \
 	postgresql/util/Serialize.class \
@@ -122,6 +124,7 @@ postgresql/geometric/PGpoint.class:	postgresql/geometric/PGpoint.java
 postgresql/geometric/PGpolygon.class:	postgresql/geometric/PGpolygon.java
 postgresql/largeobject/LargeObject.class: postgresql/largeobject/LargeObject.java
 postgresql/largeobject/LargeObjectManager.class: postgresql/largeobject/LargeObjectManager.java
+postgresql/util/PGmoney.class:		postgresql/util/PGmoney.java
 postgresql/util/PGobject.class:		postgresql/util/PGobject.java
 postgresql/util/PGtokenizer.class:	postgresql/util/PGtokenizer.java
 postgresql/util/Serialize.class:	postgresql/util/Serialize.java
@@ -134,7 +137,8 @@ EX=	example/basic.class \
 	example/datestyle.class \
 	example/psql.class \
 	example/ImageViewer.class \
-	example/Objects.class
+	example/metadata.class
+#	example/Objects.class
 
 # This rule builds the examples
 examples:	postgresql.jar $(EX)
@@ -155,6 +159,8 @@ examples:	postgresql.jar $(EX)
 	@echo "  example.ImageViewer  Example application storing images"
 	@echo "  example.psql         Simple java implementation of psql"
 	@echo "  example.Objects      Demonstrates Object Serialisation"
+	@echo " "
+	@echo "  example.metadata     Tests various metadata methods"
 	@echo ------------------------------------------------------------
 	@echo
 
@@ -163,5 +169,7 @@ example/blobtest.class:			example/blobtest.java
 example/datestyle.class:		example/datestyle.java
 example/psql.class:			example/psql.java
 example/ImageViewer.class:		example/ImageViewer.java
-example/Objects.class:			example/Objects.java
+#example/Objects.class:			example/Objects.java
+
+example/metadata.class:			example/metadata.java
 #######################################################################

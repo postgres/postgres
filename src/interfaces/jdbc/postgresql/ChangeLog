@@ -1,0 +1,78 @@
+Modifications done since 6.3.2 was released and Sun Aug 30 11:33:06 BST 1998
+
+	- Fixed PreparedStatement.setObject as it didn't handle shorts
+	- ResultSet.getDate() now handles null dates (returns null ratrher
+	  than a NullPointerException)
+	- ResultSetMetaData.getPrecision() new returns 0 for VARCHAR
+	- Field now caches the typename->oid in a Hashtable to speed things
+	  up. It removes the need for some unnecessary queries to the backend.
+	- PreparedStatement.toString() now returns the SQL statement that it
+	  will send to the backend. Before it did nothing.
+	- DatabaseMetaData.getTypeInfo() now does something.
+	- Connection now throws an exception if either of the user or password
+	  properties are missing, as they are required for JDBC to work.
+	  This occasionally occurs when the client uses the properties version
+	  of getConnection(), and is a common question on the email lists.
+	
+Sun Aug 30 11:33:06 BST 1998
+
+	- Created ChangeLog file, and entered stuff done since 6.3.2 and today
+	- Change version number to 6.4 in Driver.java
+	- Added fix to DatabaseMetaData.getTables() submitted by
+	  Stefan Andreasen <stefan@linux.kapow.dk>
+	- Added fix to DatabaseMetaData.getColumns() to handle patterns
+	  submitted by Stefan Andreasen <stefan@linux.kapow.dk>
+	- Set TcpNoDelay on the connection, as this gives us a 10x speed
+	  improvement on FreeBSD (caused by a bug in their TCP Stack). They
+	  should fix the bug before 6.4 is released, but will keep this
+	  in here unless it causes more problems.
+	  Submitted by Jason Venner <jason@idiom.com>
+	- Removed a duplicate definition of fieldCache
+	- Added a more meaningful message when the connection is refused. It
+	  now says:
+		Connection refused. Check that the hostname and port is
+		correct, and that the postmaster is running with the -i flag,
+		which enables TCP/IP networking.
+	- Removed kludge in PreparedStatement.setDate() that acted as a
+	  temporary fix to a bug in SimpleDateFormat, as it broke date
+	  handling in JDK 1.1.6.
+	- Modified PG_Stream and Connection, so that outbound data is now
+	  buffered. This should give us a speed improvement, and reduce the
+	  ammount of network packets generated.
+	- Removed duplicate code and optimised PG_Stream.
+	- PG_Stream now returns a more meaningful message when the connection
+	  is broken by the backend. It now returns:
+		The backend has broken the connection. Possibly the action you
+		have attempted has caused it to close.
+	- Removed obsolete code from Connection.
+	- The error message returned when the authentication scheme is unknown
+	  has been extended. It now reads:
+		Authentication type ### not supported. Check that you have
+		configured the pg_hba.conf file to include the client's IP
+		address or Subnet, and is using a supported authentication
+		scheme.
+	- Connection.getMetaData() now caches the instance returned, so
+	  multiple calls will return the same instance.
+	- Created a test application that tests the DatabaseMetaData and
+	  ResultSetMetaData classes.
+	- Replaced getString(#).getBytes() with getBytes(#) which should speed
+	  things up, and reduce memory useage.
+	- Optimised DatabaseMetaData.getProcedures(), and implemented patterns
+	- Fixed NullPointerExceptions thrown when a field is null (Internal
+	  to the driver, not caused by results from the backend.
+	  DatabaseMetaData.getProcedures() is an example of a method that
+	  causes this):
+		- ResultSetMetaData.getColumnName() now returns field# where
+		  # is the column name.
+		- ResultSet.getObject() fixed
+		- Fixed bug in psql example that was affected by null fields
+		- DatabaseMetaData.getTables()
+	- DatabaseMetaData.getPrimaryKeys() ran a query with an ambiguous field
+	  fixed.
+	- getTypeInfo() optimised to increase speed and reduce memory useage
+	- ResultSetMetaData.isCurrency() optimised and is now smaller.
+	- Removed unnecessary code fromResultSetMetaData.getCatalogName()
+	  and getSchemaName().
+	- Created new class postgresql.util.PGmoney to map the money type
+	- Created new class postgresql.geometric.PGline to map the line type
+	
