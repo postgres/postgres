@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.122 2002/03/19 00:12:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.123 2002/03/19 14:14:44 momjian Exp $
 -->
 
 <appendix id="release">
@@ -36,7 +36,6 @@ Ensure that sequence counters do not go backwards after a crash (Tom)
 Fix pgaccess kanji-coversion key binding (Tatsuo)
 Optimizer improvements (Tom)
 cash I/O improvements (Tom)
-contrib/btree_gist improvements (Teodor Sigaev)
 New Russian FAQ
 Compile fix for missing AuthBlockSig (Heiko)
 Additional time zones and time zone fixes (Thomas)
@@ -45,7 +44,9 @@ Return proper OID on command completion even with ON INSERT rules (Tom)
 Allow COPY FROM to use 8-bit DELIMITERS (Tatsuo)
 Fix bug in extract/date_part for milliseconds/microseconds (Tatsuo)
 Improve handling of multiple UNIONs with different lengths (Tom)
-contrib/tsearch dictionary improvements (Thomas T. Thai, Teodor Sigaev)
+contrib/btree_gist improvements (Teodor Sigaev)
+contrib/tsearch dictionary improvements, see README.tsearch for
+  an additional installation step (Thomas T. Thai, Teodor Sigaev)
 Fix for array subscripts handling (Tom)
      </programlisting>
     </para>

@@ -4,15 +4,6 @@ a searchable data type (textual) with indexed access.
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su).
 
-CHANGES:
-  
-  To upgrade from 7.2 to 7.2.1 one needs to perform following sql
-  (after compiling and installing contrib/tsearch):
-
-  update pg_amop set amopreqcheck = true where amopclaid =
-     (select oid from pg_opclass where opcname = 'gist_txtidx_ops');
-
-
 IMPORTANT NOTICE:
 
 This is a first step of our work on integration of OpenFTS
