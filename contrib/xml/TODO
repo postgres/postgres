@@ -1,0 +1,83 @@
+PGXML TODO List
+===============
+
+Some of these items still require much more thought! The data model
+for XML documents and the parsing model of expat don't really fit so
+well with a standard SQL model.
+
+1. Generalised XML parsing support
+
+Allow a user to specify handlers (in any PL) to be used by the parser.
+This must permit distinct sets of parser settings -user may want some
+documents in a database to parsed with one set of handlers, others
+with a different set.
+
+i.e. the pgxml_parse function would take as parameters (document,
+parsername) where parsername was the identifier for a collection of
+handler etc. settings.
+
+"Stub" handlers in the pgxml code would invoke the functions through
+the standard fmgr interface. The parser interface would define the
+prototype for these functions. How does the handler function know
+which document/context has resulted it in being called?
+
+Mechanism for defining collection of parser settings (in a table? -but
+maybe copied for efficiency into a structure when first required by a
+query?)
+
+2. Support for other parsers
+
+Expat may not be the best choice as a parser because a new parser
+instance is needed for each document i.e. all the handlers must be set
+again for each document. Another parser may have a more efficient way
+of parsing a set of documents identically.
+
+3. XPath support
+
+Proper XPath support. I really need to sit down and plough
+through the specification...
+
+The very simple text comparison system currently used is too
+basic. Need to convert the path to an ordered list of nodes. Each node
+is an element qualifier, and may have a list of attribute
+qualifications attached. This probably requires lexx/yacc combination.
+(James Clark has written a yacc grammar for XPath). Not all the
+features of XPath are necessarily relevant.
+
+An option to return subdocuments (i.e. subelements AND cdata, not just
+cdata). This should maybe be the default.
+
+4. Multiple occurences of elements.
+
+This section is all very sketchy, and has various weaknesses.
+ 
+Is there a good way to optimise/index the results of certain XPath
+operations to make them faster?:
+
+select docid, pgxml_xpath(document,'/site/location',1) as location 
+where pgxml_xpath(document,'/site/name',1) = 'Church Farm';
+
+and with multiple element occurences in a document?
+
+select d.docid, pgxml_xpath(d.document,'/site/location',1) 
+from docstore d, 
+pgxml_xpaths('docstore','document','feature/type','docid') ft 
+where ft.key = d.docid and ft.value ='Limekiln';
+
+pgxml_xpaths params are relname, attrname, xpath, returnkey. It would
+return a set of two-element tuples (key,value) consisting of the value of
+returnkey, and the cdata value of the xpath. The XML document would be
+defined by relname and attrname.
+
+The pgxml_xpaths function could be the basis of a functional index,
+which could speed up the above query very substantially, working
+through the normal query planner mechanism. Syntax above is fragile
+through using names rather than OID.
+ 
+John Gray <jgray@azuli.co.uk>
+
+
+
+
+
+

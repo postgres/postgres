@@ -1,0 +1,78 @@
+This package contains a couple of simple routines for hooking the
+expat XML parser up to PostgreSQL. This is a work-in-progress and all
+very basic at the moment (see the file TODO for some outline of what
+remains to be done).
+
+At present, two functions are defined, one which checks
+well-formedness, and the other which performs very simple XPath-type
+queries.
+
+Prerequisite:
+
+expat parser 1.95.0 or newer (http://expat.sourceforge.net)
+
+I used a shared library version -I'm sure you could use a static
+library if you wished though. I had no problems compiling from source.
+
+Function documentation and usage:
+---------------------------------
+
+pgxml_parse(text) returns bool
+  parses the provided text and returns true or false if it is 
+well-formed or not. It returns NULL if the parser couldn't be
+created for any reason.
+
+pgxml_xpath(text doc, text xpath, int n) returns text
+  parses doc and returns the cdata of the nth occurence of
+the "XPath" listed. See below for details on the syntax.
+
+
+Example:
+
+Given a  table docstore:
+
+ Attribute |  Type   | Modifier 
+-----------+---------+----------
+ docid     | integer | 
+ document  | text    | 
+
+containing documents such as (these are archaeological site
+descriptions, in case anyone is wondering):
+
+<?XML version="1.0"?>
+<site provider="Foundations" sitecode="ak97" version="1">
+   <name>Church Farm, Ashton Keynes</name>
+   <invtype>watching brief</invtype>
+   <location scheme="osgb">SU04209424</location>
+</site>
+
+one can type:
+
+select docid, 
+pgxml_xpath(document,'/site/name',1) as sitename,
+pgxml_xpath(document,'/site/location',1) as location
+ from docstore;
+ 
+and get as output:
+
+ docid |          sitename           |  location  
+-------+-----------------------------+------------
+     1 | Church Farm, Ashton Keynes  | SU04209424
+     2 | Glebe Farm, Long Itchington | SP41506500
+(2 rows)
+
+
+"XPath" syntax supported
+------------------------
+
+At present it only supports paths of the form:
+'tag1/tag2' or '/tag1/tag2'
+
+The first case will find any <tag2> within a <tag1>, the second will
+find any <tag2> within a <tag1> at the top level of the document.
+
+The real XPath is much more complex (see TODO file).
+
+
+John Gray <jgray@azuli.co.uk>  26 July 2001
+

@@ -1,0 +1,178 @@
+
+%token QNAME
+%token NAME_COLON_STAR
+%token DOT
+%token DOT_DOT
+%token AT
+%token AXIS_NAME
+%token FUNCTION_NAME
+%token COMMENT
+%token PI
+%token TEXT
+%token NODE
+%token STAR
+%token LPAR
+%token RPAR
+%token LSQB
+%token RSQB
+%token LITERAL
+%token NUMBER
+%token COLON_COLON
+%token DOLLAR_QNAME
+%token SLASH
+%token SLASH_SLASH
+%token VBAR
+%token COMMA
+%token PLUS
+%token MINUS
+%token EQUALS
+%token GT
+%token LT
+%token GTE
+%token LTE
+%token MULTIPLY
+%token AND
+%token OR
+%token MOD
+%token DIV
+%token QUO
+
+%%
+
+expr :
+  or_expr
+  ;
+
+or_expr :
+  and_expr
+  | or_expr OR and_expr
+  ;
+
+and_expr :
+  equality_expr
+  | and_expr AND equality_expr
+  ;
+
+equality_expr :
+  relational_expr
+  | equality_expr EQUALS relational_expr
+  ;
+
+relational_expr :
+  additive_expr
+  | relational_expr LT additive_expr
+  | relational_expr GT additive_expr
+  | relational_expr LTE additive_expr
+  | relational_expr GTE additive_expr
+  ;
+
+additive_expr :
+  multiplicative_expr
+  | additive_expr PLUS multiplicative_expr
+  | additive_expr MINUS multiplicative_expr
+  ;
+
+multiplicative_expr :
+  unary_expr
+  | multiplicative_expr MULTIPLY unary_expr
+  | multiplicative_expr DIV unary_expr
+  | multiplicative_expr MOD unary_expr
+  ;
+
+unary_expr :
+  union_expr
+  | '-' unary_expr
+  ;
+
+union_expr :
+  path_expr
+  | union_expr VBAR path_expr
+  ;
+
+path_expr :
+  location_path
+  | primary_expr predicates segment
+  ;
+
+segment :
+  /* empty */
+  | SLASH relative_location_path
+  | SLASH_SLASH relative_location_path
+  ;
+
+location_path :
+  relative_location_path
+  | absolute_location_path
+  ;
+
+absolute_location_path :
+  SLASH
+  | SLASH relative_location_path
+  | SLASH_SLASH relative_location_path
+  ;
+
+relative_location_path :
+  step
+  | relative_location_path SLASH step
+  | relative_location_path SLASH_SLASH step
+  ;
+
+step :
+  axis node_test predicates
+  | DOT
+  | DOT_DOT
+  ;
+
+axis:
+  /* empty */
+  | AXIS_NAME COLON_COLON
+  | AT
+  ;
+
+predicates :
+  /* empty */
+  | predicates LSQB expr RSQB
+  ;
+
+primary_expr :
+  DOLLAR_QNAME
+  | LPAR expr RPAR
+  | LITERAL
+  | NUMBER
+  | function_call
+  ;
+
+function_call :
+  FUNCTION_NAME LPAR opt_args RPAR
+  ;
+
+opt_args :
+  /* empty */
+  | args
+  ;
+
+args :
+  expr
+  | args COMMA expr
+  ;
+  
+node_test :
+  QNAME
+  | STAR
+  | NAME_COLON_STAR
+  | PI LPAR opt_literal RPAR
+  | COMMENT LPAR RPAR
+  | TEXT LPAR RPAR
+  | NODE LPAR RPAR
+  ;
+
+opt_literal :
+  /* empty */
+  | LITERAL
+  ;
+
+
+
+
+
+
