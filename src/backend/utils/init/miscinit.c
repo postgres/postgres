@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.68 2001/06/01 20:27:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.69 2001/06/06 17:07:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,13 +659,15 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	snprintf(buffer, sizeof(buffer), "%d\n%s\n",
 			 amPostmaster ? (int) my_pid : -((int) my_pid),
 			 DataDir);
+	errno = 0;
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
 		int			save_errno = errno;
 
 		close(fd);
 		unlink(filename);
-		errno = save_errno;
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
 		elog(FATAL, "Can't write lock file %s: %m", filename);
 	}
 	close(fd);
@@ -794,9 +796,13 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 	 * update should appear atomic to onlookers.
 	 */
 	len = strlen(buffer);
+	errno = 0;
 	if (lseek(fd, (off_t) 0, SEEK_SET) != 0 ||
 		(int) write(fd, buffer, len) != len)
 	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		elog(DEBUG, "Failed to write %s: %m", directoryLockFile);
 		close(fd);
 		return;

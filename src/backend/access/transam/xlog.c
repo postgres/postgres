@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.68 2001/06/03 14:53:56 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.69 2001/06/06 17:07:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1068,9 +1068,15 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 		/* OK to write the page */
 		from = XLogCtl->pages + Write->curridx * BLCKSZ;
+		errno = 0;
 		if (write(openLogFile, from, BLCKSZ) != BLCKSZ)
+		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			elog(STOP, "write of log file %u, segment %u, offset %u failed: %m",
 				 openLogId, openLogSeg, openLogOff);
+		}
 		openLogOff += BLCKSZ;
 
 		/*
@@ -1323,6 +1329,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	MemSet(zbuffer, 0, sizeof(zbuffer));
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += sizeof(zbuffer))
 	{
+		errno = 0;
 		if ((int) write(fd, zbuffer, sizeof(zbuffer)) != (int) sizeof(zbuffer))
 		{
 			int			save_errno = errno;
@@ -1332,7 +1339,8 @@ XLogFileInit(uint32 log, uint32 seg,
 			 * space
 			 */
 			unlink(tmppath);
-			errno = save_errno;
+			/* if write didn't set errno, assume problem is no disk space */
+			errno = save_errno ? save_errno : ENOSPC;
 
 			elog(STOP, "ZeroFill failed to create or write %s: %m", tmppath);
 		}
@@ -1990,8 +1998,14 @@ WriteControlFile(void)
 		elog(STOP, "WriteControlFile: could not create control file (%s): %m",
 			 ControlFilePath);
 
+	errno = 0;
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		elog(STOP, "WriteControlFile: write to control file failed: %m");
+	}
 
 	if (pg_fsync(fd) != 0)
 		elog(STOP, "WriteControlFile: fsync of control file failed: %m");
@@ -2109,8 +2123,14 @@ UpdateControlFile(void)
 	if (fd < 0)
 		elog(STOP, "could not open control file (%s): %m", ControlFilePath);
 
+	errno = 0;
 	if (write(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		elog(STOP, "write to control file failed: %m");
+	}
 
 	if (pg_fsync(fd) != 0)
 		elog(STOP, "fsync of control file failed: %m");
@@ -2248,8 +2268,14 @@ BootStrapXLOG(void)
 	use_existent = false;
 	openLogFile = XLogFileInit(0, 0, &use_existent, false);
 
+	errno = 0;
 	if (write(openLogFile, buffer, BLCKSZ) != BLCKSZ)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		elog(STOP, "BootStrapXLOG failed to write log file: %m");
+	}
 
 	if (pg_fsync(openLogFile) != 0)
 		elog(STOP, "BootStrapXLOG failed to fsync log file: %m");
@@ -2852,15 +2878,22 @@ CreateCheckPoint(bool shutdown)
 		elog(STOP, "concurrent transaction log activity while database system is shutting down");
 
 	/*
-	 * Remember location of prior checkpoint's earliest info. Oldest item
-	 * is redo or undo, whichever is older; but watch out for case that
-	 * undo = 0.
+	 * Select point at which we can truncate the log, which we base on the
+	 * prior checkpoint's earliest info.
+	 *
+	 * With UNDO support: oldest item is redo or undo, whichever is older;
+	 * but watch out for case that undo = 0.
+	 *
+	 * Without UNDO support: just use the redo pointer.  This allows xlog
+	 * space to be freed much faster when there are long-running transactions.
 	 */
+#ifdef NOT_USED
 	if (ControlFile->checkPointCopy.undo.xrecoff != 0 &&
 		XLByteLT(ControlFile->checkPointCopy.undo,
 				 ControlFile->checkPointCopy.redo))
 		XLByteToSeg(ControlFile->checkPointCopy.undo, _logId, _logSeg);
 	else
+#endif
 		XLByteToSeg(ControlFile->checkPointCopy.redo, _logId, _logSeg);
 
 	/*

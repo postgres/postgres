@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.84 2001/05/10 20:38:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.85 2001/06/06 17:07:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,8 +582,12 @@ mdblindwrt(RelFileNode rnode,
 	status = SM_SUCCESS;
 
 	/* write and optionally sync the block */
+	errno = 0;
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
 	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		elog(DEBUG, "mdblindwrt: write() failed: %m");
 		status = SM_FAIL;
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.79 2001/05/30 14:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.80 2001/06/06 17:07:46 tgl Exp $
  *
  * NOTES:
  *
@@ -865,7 +865,14 @@ FileWrite(File file, char *buffer, int amount)
 			   VfdCache[file].seekPos, amount, buffer));
 
 	FileAccess(file);
+
+	errno = 0;
 	returnCode = write(VfdCache[file].fd, buffer, amount);
+
+	/* if write didn't set errno, assume problem is no disk space */
+	if (returnCode != amount && errno == 0)
+		errno = ENOSPC;
+
 	if (returnCode > 0)
 		VfdCache[file].seekPos += returnCode;
 	else

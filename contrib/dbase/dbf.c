@@ -155,9 +155,8 @@ int	dbf_write_head(dbhead *dbh) {
 	put_short(head.dbh_hlen, dbh->db_hlen);
 	put_short(head.dbh_rlen, dbh->db_rlen);
 	
-	if (write(dbh->db_fd, &head, sizeof(dbf_header)) == -1 ) {
+	if (write(dbh->db_fd, &head, sizeof(dbf_header)) != sizeof(dbf_header))
 		return DBF_ERROR;
-	}
 
 	return 0;
 }
@@ -180,14 +179,12 @@ int dbf_put_fields(dbhead *dbh) {
 		field.dbf_flen = dbh->db_fields[t].db_flen;
 		field.dbf_dec = dbh->db_fields[t].db_dec;
 
-		if (write(dbh->db_fd, &field, sizeof(dbf_field)) == -1) {
+		if (write(dbh->db_fd, &field, sizeof(dbf_field)) != sizeof(dbf_field))
 			return DBF_ERROR;
-		}
 	}
 
-	if (write(dbh->db_fd, &end, 1) == -1) {
+	if (write(dbh->db_fd, &end, 1) != 1)
 		return DBF_ERROR;
-	}
 
 	return 0;
 }
@@ -457,15 +454,13 @@ int dbf_put_record(dbhead *dbh, field *rec, u_long where) {
 	  idx += rec[t].db_flen;
 	}
 
-	if (write(dbh->db_fd, data, dbh->db_rlen) == -1) {
+	if (write(dbh->db_fd, data, dbh->db_rlen) != dbh->db_rlen)
 		return DBF_ERROR;
-	}
 
 /* There's a 0x1A at the end of a dbf-file */
 	if (where == dbh->db_records) {
-		if (write(dbh->db_fd, &end, 1) == -1) {
+		if (write(dbh->db_fd, &end, 1) != 1)
 			return DBF_ERROR;
-		}
 	}
 
 	dbh->db_offset += dbh->db_rlen;
