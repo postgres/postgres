@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.124 2001/11/12 04:54:08 tgl Exp $
+ *	$Id: pqcomm.c,v 1.125 2001/12/04 19:40:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
  * low-level I/O:
  *		pq_getbytes		- get a known number of bytes from connection
  *		pq_getstring	- get a null terminated string from connection
+ *		pq_getbyte		- get next byte from connection
  *		pq_peekbyte		- peek at next byte from connection
  *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
  *		pq_flush		- flush pending output
@@ -527,7 +528,7 @@ pq_recvbuf(void)
  *		pq_getbyte	- get a single byte from connection, or return EOF
  * --------------------------------
  */
-static int
+int
 pq_getbyte(void)
 {
 	while (PqRecvPointer >= PqRecvLength)

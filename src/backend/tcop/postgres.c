@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.242 2001/11/10 23:51:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.243 2001/12/04 19:40:17 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -242,25 +242,25 @@ InteractiveBackend(StringInfo inBuf)
 static int
 SocketBackend(StringInfo inBuf)
 {
-	char		qtype;
-	char		result = '\0';
+	int			qtype;
 
 	/*
 	 * get input from the frontend
 	 */
-	qtype = '?';
-	if (pq_getbytes(&qtype, 1) == EOF)
-		return EOF;
+	qtype = pq_getbyte();
 
 	switch (qtype)
 	{
+		case EOF:
+			/* frontend disconnected */
+			break;
+
 			/*
 			 * 'Q': user entered a query
 			 */
 		case 'Q':
 			if (pq_getstr(inBuf))
 				return EOF;
-			result = 'Q';
 			break;
 
 			/*
@@ -269,14 +269,12 @@ SocketBackend(StringInfo inBuf)
 		case 'F':
 			if (pq_getstr(inBuf))
 				return EOF;		/* ignore "string" at start of F message */
-			result = 'F';
 			break;
 
 			/*
 			 * 'X':  frontend is exiting
 			 */
 		case 'X':
-			result = 'X';
 			break;
 
 			/*
@@ -289,7 +287,8 @@ SocketBackend(StringInfo inBuf)
 			elog(FATAL, "Socket command type %c unknown", qtype);
 			break;
 	}
-	return result;
+
+	return qtype;
 }
 
 /* ----------------
@@ -1627,7 +1626,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.242 $ $Date: 2001/11/10 23:51:14 $\n");
+		puts("$Revision: 1.243 $ $Date: 2001/12/04 19:40:17 $\n");
 	}
 
 	/*
