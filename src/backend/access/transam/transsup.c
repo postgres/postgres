@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.5 1996/11/03 22:58:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.6 1996/11/05 11:12:30 scrappy Exp $
  *
  * NOTES
  *    This file contains support functions for the high
@@ -16,16 +16,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "utils/rel.h"
-#include "access/transam.h"
-
-#include "utils/bit.h"
-
-#include "access/xact.h"
-
-#include "storage/lmgr.h"
+#include <access/transam.h>
+#include <utils/bit.h>
+#include <access/xact.h>
+#include <storage/lmgr.h>
 
 /* ----------------------------------------------------------------
  *		      general support routines

@@ -7,30 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.5 1996/11/03 22:58:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.6 1996/11/05 11:12:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "catalog/pg_attribute.h"
-#include "access/tupdesc.h"
-#include "storage/bufmgr.h"
-#include "utils/nabstime.h"
-#include "access/transam.h"
-
-#include "storage/spin.h"
-
-#include "access/xact.h"
-
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "access/htup.h"
-#include "access/relscan.h"
-#include "access/heapam.h"
-
-#include "catalog/catname.h"
+#include <access/transam.h>
+#include <storage/spin.h>
+#include <access/xact.h>
+#include <access/heapam.h>
+#include <catalog/catname.h>
 
 /* ---------------------
  *	spin lock for oid generation

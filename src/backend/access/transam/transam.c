@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.4 1996/11/03 22:58:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.5 1996/11/05 11:12:28 scrappy Exp $
  *
  * NOTES
  *    This file contains the high level access-method interface to the
@@ -16,24 +16,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "utils/rel.h"
-#include "access/transam.h"
-#include "access/xact.h"
-
-#include "nodes/memnodes.h"
-
-#include "access/htup.h"
-#include "access/heapam.h"
-
-#include "utils/mcxt.h"
-
-#include "catalog/catname.h"
-
-#include "storage/spin.h"
-
-#include "commands/vacuum.h"
+#include <access/transam.h>
+#include <access/xact.h>
+#include <access/heapam.h>
+#include <utils/mcxt.h>
+#include <catalog/catname.h>
+#include <storage/spin.h>
+#include <commands/vacuum.h>
 
 /* ----------------
  *    global variables holding pointers to relations used
