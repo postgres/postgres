@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.39 1998/02/21 06:31:40 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.40 1998/02/23 02:54:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,7 +549,10 @@ _copyUnique(Unique *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	newnode->uniqueAttr = pstrdup(from->uniqueAttr);
+	if (newnode->uniqueAttr)
+		newnode->uniqueAttr = pstrdup(from->uniqueAttr);
+	else
+		newnode->uniqueAttr = NULL;
 	newnode->uniqueAttrNum = from->uniqueAttrNum;
 	Node_Copy(from, newnode, uniquestate);
 
