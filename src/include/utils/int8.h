@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.28 2001/10/25 05:50:10 momjian Exp $
+ * $Id: int8.h,v 1.29 2001/10/25 14:10:07 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -97,6 +97,9 @@ extern Datum int48div(PG_FUNCTION_ARGS);
 
 extern Datum int48(PG_FUNCTION_ARGS);
 extern Datum int84(PG_FUNCTION_ARGS);
+
+extern Datum int28(PG_FUNCTION_ARGS);
+extern Datum int82(PG_FUNCTION_ARGS);
 
 extern Datum i8tod(PG_FUNCTION_ARGS);
 extern Datum dtoi8(PG_FUNCTION_ARGS);
