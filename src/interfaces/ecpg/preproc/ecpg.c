@@ -6,11 +6,10 @@
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
-#endif
+#else
 #include <unistd.h>
 extern int	optind;
 extern char *optarg;
-
 #endif
 
 #include "extern.h"
