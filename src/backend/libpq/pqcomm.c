@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.123 2001/11/05 17:46:25 momjian Exp $
+ *	$Id: pqcomm.c,v 1.124 2001/11/12 04:54:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,19 +503,18 @@ pq_recvbuf(void)
 				continue;		/* Ok if interrupted */
 
 			/*
-			 * We would like to use elog() here, but dare not because elog
-			 * tries to write to the client, which will cause problems if
-			 * we have a hard communications failure ... So just write the
-			 * message to the postmaster log.
+			 * Careful: an elog() that tries to write to the client
+			 * would cause recursion to here, leading to stack overflow
+			 * and core dump!  This message must go *only* to the postmaster
+			 * log.  elog(DEBUG) is presently safe.
 			 */
-			fprintf(stderr, "pq_recvbuf: recv() failed: %s\n",
-					strerror(errno));
+			elog(DEBUG, "pq_recvbuf: recv() failed: %m");
 			return EOF;
 		}
 		if (r == 0)
 		{
-			/* as above, elog not safe */
-			fprintf(stderr, "pq_recvbuf: unexpected EOF on client connection\n");
+			/* as above, only write to postmaster log */
+			elog(DEBUG, "pq_recvbuf: unexpected EOF on client connection");
 			return EOF;
 		}
 		/* r contains number of bytes read, so just incr length */
@@ -655,6 +654,8 @@ pq_putbytes(const char *s, size_t len)
 int
 pq_flush(void)
 {
+	static int last_reported_send_errno = 0;
+
 	unsigned char *bufptr = PqSendBuffer;
 	unsigned char *bufend = PqSendBuffer + PqSendPointer;
 
@@ -675,12 +676,20 @@ pq_flush(void)
 				continue;		/* Ok if we were interrupted */
 
 			/*
-			 * We would like to use elog() here, but cannot because elog
-			 * tries to write to the client, which would cause a recursive
-			 * flush attempt!  So just write it out to the postmaster log.
+			 * Careful: an elog() that tries to write to the client
+			 * would cause recursion to here, leading to stack overflow
+			 * and core dump!  This message must go *only* to the postmaster
+			 * log.  elog(DEBUG) is presently safe.
+			 *
+			 * If a client disconnects while we're in the midst of output,
+			 * we might write quite a bit of data before we get to a safe
+			 * query abort point.  So, suppress duplicate log messages.
 			 */
-			fprintf(stderr, "pq_flush: send() failed: %s\n",
-					strerror(errno));
+			if (errno != last_reported_send_errno)
+			{
+				last_reported_send_errno = errno;
+				elog(DEBUG, "pq_flush: send() failed: %m");
+			}
 
 			/*
 			 * We drop the buffered data anyway so that processing can
@@ -689,8 +698,11 @@ pq_flush(void)
 			PqSendPointer = 0;
 			return EOF;
 		}
+
+		last_reported_send_errno = 0; /* reset after any successful send */
 		bufptr += r;
 	}
+
 	PqSendPointer = 0;
 	return 0;
 }
@@ -709,8 +721,8 @@ pq_eof(void)
 
 	if (res < 0)
 	{
-		/* don't try to elog here... */
-		fprintf(stderr, "pq_eof: recv() failed: %s\n", strerror(errno));
+		/* can log to postmaster log only */
+		elog(DEBUG, "pq_eof: recv() failed: %m");
 		return EOF;
 	}
 	if (res == 0)
