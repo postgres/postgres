@@ -1845,6 +1845,11 @@ Mon,  5 Jul 2004 10:41:54 +0200
 Mon Jul  5 20:50:09 CEST 2004
 
 	- Added free() calls against memory leak in interval.c.
+	
+Tue Jul 20 09:15:21 CEST 2004
+
+	- Synced parser and keyword list.
+	- Fixed handling of cyclic defines.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.

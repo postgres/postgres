@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.129 2004/06/30 15:01:57 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.130 2004/07/20 18:06:41 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,11 +598,11 @@ cppline			{space}*#(.*\\{space})+.*
 <SQL>{identifier}	{
 						ScanKeyword    *keyword;
 						struct _defines *ptr;
-
+						
 						/* How about a DEFINE? */
 						for (ptr = defines; ptr; ptr = ptr->next)
 						{
-							if (strcmp(yytext, ptr->old) == 0)
+							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
 							{
 								struct _yy_buffer *yb;
 
@@ -611,15 +611,14 @@ cppline			{space}*#(.*\\{space})+.*
 								yb->buffer =  YY_CURRENT_BUFFER;
 								yb->lineno = yylineno;
 								yb->filename = mm_strdup(input_filename);
-								yb->next = yy_buffer;
-
+								ptr->used = yb->next = yy_buffer;
+								
 								yy_buffer = yb;
 
 								yy_scan_string(ptr->new);
 								break;
 							}
 						}
-
 						if (ptr == NULL)
 						{
 							/* Is it an SQL keyword? */
@@ -640,16 +639,13 @@ cppline			{space}*#(.*\\{space})+.*
 							/*
 							 * None of the above.  Return it as an identifier.
 							 *
-							 * The backend would attempt to truncate and case-fold
+							 * The backend will attempt to truncate and case-fold
 							 * the identifier, but I see no good reason for ecpg
 							 * to do so; that's just another way that ecpg could get
 							 * out of step with the backend.
 							 */
-							if (ptr == NULL)
-							{
-								yylval.str = mm_strdup(yytext);
-								return IDENT;
-							}
+							yylval.str = mm_strdup(yytext);
+							return IDENT;
 						}
 					}
 <SQL>{other}		{ return yytext[0]; }
@@ -700,7 +696,7 @@ cppline			{space}*#(.*\\{space})+.*
 						/* is it a define? */
 						for (ptr = defines; ptr; ptr = ptr->next)
 						{
-							if (strcmp(yytext, ptr->old) == 0)
+							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
 							{
 								struct _yy_buffer *yb;
 
@@ -709,7 +705,7 @@ cppline			{space}*#(.*\\{space})+.*
 								yb->buffer =  YY_CURRENT_BUFFER;
 								yb->lineno = yylineno;
 								yb->filename = mm_strdup(input_filename);
-								yb->next = yy_buffer;
+								ptr->used = yb->next = yy_buffer;
 
 								yy_buffer = yb;
 
@@ -739,7 +735,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C>"-"				{ return('-'); }
 <C>"("				{ return('('); }
 <C>")"				{ return(')'); }
-<C>{space}			{ ECHO; }
+<C,xskip>{space}		{ ECHO; }
 <C>\{				{ return('{'); }
 <C>\}				{ return('}'); }
 <C>\[				{ return('['); }
@@ -975,12 +971,13 @@ cppline			{space}*#(.*\\{space})+.*
 						}
 						if (ptr == NULL)
 						{
-												this = (struct _defines *) mm_alloc(sizeof(struct _defines));
+							this = (struct _defines *) mm_alloc(sizeof(struct _defines));
 
-												/* initial definition */
-												this->old = old;
-												this->new = mm_strdup(literalbuf);
+							/* initial definition */
+							this->old = old;
+							this->new = mm_strdup(literalbuf);
 							this->next = defines;
+							this->used = NULL;
 							defines = this;
 						}
 
@@ -993,7 +990,7 @@ cppline			{space}*#(.*\\{space})+.*
 <incl>[^;\<\>\"]+";"		{ parse_include(); }
 
 <<EOF>>				{
-				  		if (yy_buffer == NULL) {
+			  		if (yy_buffer == NULL) {
 				  		if ( preproc_tos > 0 ) 
 						{
 					  		preproc_tos = 0;
@@ -1005,7 +1002,15 @@ cppline			{space}*#(.*\\{space})+.*
 				  		{
 							struct _yy_buffer *yb = yy_buffer;
 							int i;
+							struct _defines *ptr;
 
+							for (ptr = defines; ptr; ptr = ptr->next)
+								if (ptr->used == yy_buffer)
+								{
+									ptr->used = NULL;
+									break;
+								}
+									
 							if (yyin != NULL)
 								fclose(yyin);
 
@@ -1025,6 +1030,7 @@ cppline			{space}*#(.*\\{space})+.*
 
 							if (i != 0)
 								output_line_number();
+							
 				  		}
 					}
 %%

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.292 2004/07/05 09:45:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.293 2004/07/20 18:06:41 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -385,7 +385,7 @@ add_additional_variables(char *name, bool insert)
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
         OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
-	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
+	PARTIAL PASSWORD PLACING POSITION
 	PRECISION PRESERVE PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	QUOTE
@@ -403,7 +403,7 @@ add_additional_variables(char *name, bool insert)
         UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL UPDATE USAGE
         USER USING
 
-        VACUUM VALID VALUES VARCHAR VARYING VERBOSE VERSION VIEW VOLATILE
+        VACUUM VALID VALUES VARCHAR VARYING VERBOSE VIEW VOLATILE
 	WHEN WHERE WITH WITHOUT WORK WRITE
         YEAR_P
         ZONE
@@ -414,7 +414,7 @@ add_additional_variables(char *name, bool insert)
  */
 %token	UNIONJOIN
 
-/* Special keywords, not in the query language - see the "lex" file */
+/* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST XCONST
 %token <ival>	ICONST PARAM
 %token <dval>	FCONST
@@ -1232,6 +1232,9 @@ alter_table_cmd:
 /* ALTER TABLE <name> SET WITHOUT CLUSTER */
 		| SET WITHOUT CLUSTER
 			{ $$ = make_str("set without cluster"); }
+		/* ALTER TABLE <name> SET TABLESPACE <tablespacename> */
+		| SET TABLESPACE name
+			{ $$ = cat_str(2, make_str("set tablespace"), $3); }
 		;
 
 alter_column_default:
@@ -1590,8 +1593,8 @@ CreateAsElement:  ColId { $$ = $1; }
  *
  *****************************************************************************/
 
-CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList OptTableSpace
-			{ $$ = cat_str(5, make_str("create"), $2, make_str("sequence"), $4, $5, $6); }
+CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList
+			{ $$ = cat_str(4, make_str("create"), $2, make_str("sequence"), $4, $5); }
 		;
 
 AlterSeqStmt: ALTER SEQUENCE qualified_name OptSeqList
@@ -5857,6 +5860,7 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ADD				{ $$ = make_str("add"); }
 		| AFTER				{ $$ = make_str("after"); }
 		| AGGREGATE			{ $$ = make_str("aggregate"); }
+		| ALSO				{ $$ = make_str("also"); }
 		| ALTER				{ $$ = make_str("alter"); }
 		| ASSERTION			{ $$ = make_str("assertion"); }
 		| ASSIGNMENT			{ $$ = make_str("assignment"); }
@@ -5957,8 +5961,6 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| OWNER				{ $$ = make_str("owner"); }
 		| PARTIAL			{ $$ = make_str("partial"); }
 		| PASSWORD			{ $$ = make_str("password"); }
-		| PATH_P			{ $$ = make_str("path"); }
-		| PENDANT			{ $$ = make_str("pendant"); }
 		| PREPARE			{ $$ = make_str("prepare"); }
 		| PRESERVE			{ $$ = make_str("preserver"); }
 		| PRIOR				{ $$ = make_str("prior"); }
@@ -6021,7 +6023,6 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| VALID				{ $$ = make_str("valid"); }
 		| VALUES			{ $$ = make_str("values"); }
 		| VARYING			{ $$ = make_str("varying"); }
-		| VERSION			{ $$ = make_str("version"); }
 		| VIEW				{ $$ = make_str("view"); }
 		| WITH				{ $$ = make_str("with"); }
 		| WITHOUT			{ $$ = make_str("without"); }

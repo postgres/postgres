@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.88 2004/06/10 22:26:23 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.89 2004/07/20 18:06:41 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -96,7 +96,7 @@ add_preprocessor_define(char *define)
 	{
 		char	   *tmp;
 
-		/* symbol gets a value */
+		/* symbol has a value */
 		for (tmp = ptr - 1; *tmp == ' '; tmp--);
 		tmp[1] = '\0';
 		defines->old = define_copy;
@@ -105,9 +105,10 @@ add_preprocessor_define(char *define)
 	else
 	{
 		defines->old = define_copy;
-		defines->new = mm_strdup("");
+		defines->new = mm_strdup("1");
 	}
 	defines->pertinent = true;
+	defines->used = NULL;
 	defines->next = pd;
 }
 
