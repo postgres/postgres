@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.105 2002/10/21 02:12:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.106 2002/10/31 22:18:42 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1276,7 +1276,7 @@ SELECT b, char_length(b) FROM test2;
       </thead>
       <tbody>
        <row>
-        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] without time zone</type></entry>
+        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] [ without time zone ]</type></entry>
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
@@ -1284,7 +1284,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
-        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] [ with time zone ]</type></entry>
+        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
@@ -1293,7 +1293,7 @@ SELECT b, char_length(b) FROM test2;
        </row>
        <row>
         <entry><type>interval [ (<replaceable>p</replaceable>) ]</type></entry>
-        <entry>for time intervals</entry>
+        <entry>time intervals</entry>
         <entry>12 bytes</entry>
         <entry>-178000000 years</entry>
         <entry>178000000 years</entry>
@@ -1334,15 +1334,21 @@ SELECT b, char_length(b) FROM test2;
     optional precision value <replaceable>p</replaceable> which
     specifies the number of fractional digits retained in the seconds
     field. By default, there is no explicit bound on precision.  The
-    effective limit of precision is determined by the underlying double
-    precision floating-point number used to store values (in seconds
-    for <type>interval</type> and
-    in seconds since 2000-01-01 for <type>timestamp</type>).  The
-    useful range of <replaceable>p</replaceable> is from 0 to about
-    6 for <type>timestamp</type>, but may be more for <type>interval</type>.
-    The system will accept <replaceable>p</replaceable> ranging from
-    0 to 13.
+    allowed range of <replaceable>p</replaceable> is from 0 to 6.
    </para>
+
+   <note>
+   <para>
+    When timestamps are stored as double precision floating-point
+    numbers (currently the default), the effective limit of precision
+    may be less than 6, since timestamp values are stored as seconds
+    since 2000-01-01.  Microsecond precision is achieved for dates within
+    a few years of 2000-01-01, but the precision degrades for dates further
+    away.  When timestamps are stored as eight-byte integers (a compile-time
+    option), microsecond precision is available over the full range of
+    values.
+   </para>
+   </note>
 
    <para>
     Time zones, and time-zone conventions, are influenced by
