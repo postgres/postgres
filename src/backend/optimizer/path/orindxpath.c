@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.49 2002/12/12 15:49:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.50 2003/05/28 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,10 +149,12 @@ best_or_subclause_indices(Query *root,
 						  List *indices,
 						  IndexPath *pathnode)
 {
+	FastList	infos;
+	FastList	quals;
 	List	   *slist;
 
-	pathnode->indexinfo = NIL;
-	pathnode->indexqual = NIL;
+	FastListInit(&infos);
+	FastListInit(&quals);
 	pathnode->path.startup_cost = 0;
 	pathnode->path.total_cost = 0;
 
@@ -170,14 +172,17 @@ best_or_subclause_indices(Query *root,
 
 		Assert(best_indexinfo != NULL);
 
-		pathnode->indexinfo = lappend(pathnode->indexinfo, best_indexinfo);
-		pathnode->indexqual = lappend(pathnode->indexqual, best_indexqual);
+		FastAppend(&infos, best_indexinfo);
+		FastAppend(&quals, best_indexqual);
 		if (slist == subclauses)	/* first scan? */
 			pathnode->path.startup_cost = best_startup_cost;
 		pathnode->path.total_cost += best_total_cost;
 
 		indices = lnext(indices);
 	}
+
+	pathnode->indexinfo = FastListValue(&infos);
+	pathnode->indexqual = FastListValue(&quals);
 }
 
 /*

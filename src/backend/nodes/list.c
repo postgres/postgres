@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.48 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.49 2003/05/28 22:32:49 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -141,9 +141,9 @@ lconso(Oid datum, List *list)
  * MORE EXPENSIVE THAN lcons
  */
 List *
-lappend(List *list, void *obj)
+lappend(List *list, void *datum)
 {
-	return nconc(list, makeList1(obj));
+	return nconc(list, makeList1(datum));
 }
 
 /*
@@ -193,6 +193,120 @@ nconc(List *l1, List *l2)
 
 	lnext(temp) = l2;
 	return l1;					/* list1 is now list1+list2  */
+}
+
+/*
+ * FastAppend - append to a FastList.
+ *
+ * For long lists this is significantly faster than repeated lappend's,
+ * since we avoid having to chase down the list again each time.
+ */
+void
+FastAppend(FastList *fl, void *datum)
+{
+	List	   *cell = makeList1(datum);
+
+	if (fl->tail)
+	{
+		lnext(fl->tail) = cell;
+		fl->tail = cell;
+	}
+	else
+	{
+		/* First cell of list */
+		Assert(fl->head == NIL);
+		fl->head = fl->tail = cell;
+	}
+}
+
+/*
+ * FastAppendi - same for integers
+ */
+void
+FastAppendi(FastList *fl, int datum)
+{
+	List	   *cell = makeListi1(datum);
+
+	if (fl->tail)
+	{
+		lnext(fl->tail) = cell;
+		fl->tail = cell;
+	}
+	else
+	{
+		/* First cell of list */
+		Assert(fl->head == NIL);
+		fl->head = fl->tail = cell;
+	}
+}
+
+/*
+ * FastAppendo - same for Oids
+ */
+void
+FastAppendo(FastList *fl, Oid datum)
+{
+	List	   *cell = makeListo1(datum);
+
+	if (fl->tail)
+	{
+		lnext(fl->tail) = cell;
+		fl->tail = cell;
+	}
+	else
+	{
+		/* First cell of list */
+		Assert(fl->head == NIL);
+		fl->head = fl->tail = cell;
+	}
+}
+
+/*
+ * FastConc - nconc() for FastList building
+ *
+ * Note that the cells of the second argument are absorbed into the FastList.
+ */
+void
+FastConc(FastList *fl, List *cells)
+{
+	if (cells == NIL)
+		return;					/* nothing to do */
+	if (fl->tail)
+	{
+		lnext(fl->tail) = cells;
+	}
+	else
+	{
+		/* First cell of list */
+		Assert(fl->head == NIL);
+		fl->head = cells;
+	}
+	while (lnext(cells) != NIL)
+		cells = lnext(cells);
+	fl->tail = cells;
+}
+
+/*
+ * FastConcFast - nconc() for FastList building
+ *
+ * Note that the cells of the second argument are absorbed into the first.
+ */
+void
+FastConcFast(FastList *fl, FastList *fl2)
+{
+	if (fl2->head == NIL)
+		return;					/* nothing to do */
+	if (fl->tail)
+	{
+		lnext(fl->tail) = fl2->head;
+	}
+	else
+	{
+		/* First cell of list */
+		Assert(fl->head == NIL);
+		fl->head = fl2->head;
+	}
+	fl->tail = fl2->tail;
 }
 
 /*

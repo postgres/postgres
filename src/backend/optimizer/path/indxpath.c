@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.142 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.143 2003/05/28 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,10 +417,11 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 								IndexOptInfo *index,
 								Expr *orsubclause)
 {
-	List	   *quals = NIL;
+	FastList	quals;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
 
+	FastListInit(&quals);
 	/*
 	 * Extract relevant indexclauses in indexkey order.  This is
 	 * essentially just like group_clauses_by_indexkey() except that the
@@ -430,9 +431,10 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	do
 	{
 		Oid			curClass = classes[0];
-		List	   *clausegroup = NIL;
+		FastList	clausegroup;
 		List	   *item;
 
+		FastListInit(&clausegroup);
 		if (and_clause((Node *) orsubclause))
 		{
 			foreach(item, ((BoolExpr *) orsubclause)->args)
@@ -442,21 +444,23 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 				if (match_clause_to_indexcol(rel, index,
 											 indexcol, curClass,
 											 subsubclause))
-					clausegroup = nconc(clausegroup,
-										expand_indexqual_condition(subsubclause,
-																   curClass));
+					FastConc(&clausegroup,
+							 expand_indexqual_condition(subsubclause,
+														curClass));
 			}
 		}
 		else if (match_clause_to_indexcol(rel, index,
 										  indexcol, curClass,
 										  orsubclause))
-			clausegroup = expand_indexqual_condition(orsubclause, curClass);
+			FastConc(&clausegroup,
+					 expand_indexqual_condition(orsubclause,
+												curClass));
 
 		/*
 		 * If we found no clauses for this indexkey in the OR subclause
 		 * itself, try looking in the rel's top-level restriction list.
 		 */
-		if (clausegroup == NIL)
+		if (FastListValue(&clausegroup) == NIL)
 		{
 			foreach(item, rel->baserestrictinfo)
 			{
@@ -465,9 +469,9 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 				if (match_clause_to_indexcol(rel, index,
 											 indexcol, curClass,
 											 rinfo->clause))
-					clausegroup = nconc(clausegroup,
-										expand_indexqual_condition(rinfo->clause,
-																   curClass));
+					FastConc(&clausegroup,
+							 expand_indexqual_condition(rinfo->clause,
+														curClass));
 			}
 		}
 
@@ -475,20 +479,20 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 		 * If still no clauses match this key, we're done; we don't want
 		 * to look at keys to its right.
 		 */
-		if (clausegroup == NIL)
+		if (FastListValue(&clausegroup) == NIL)
 			break;
 
-		quals = nconc(quals, clausegroup);
+		FastConcFast(&quals, &clausegroup);
 
 		indexcol++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(classes));
 
-	if (quals == NIL)
+	if (FastListValue(&quals) == NIL)
 		elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
 
-	return quals;
+	return FastListValue(&quals);
 }
 
 
@@ -520,7 +524,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 static List *
 group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 {
-	List	   *clausegroup_list = NIL;
+	FastList	clausegroup_list;
 	List	   *restrictinfo_list = rel->baserestrictinfo;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
@@ -528,12 +532,14 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 	if (restrictinfo_list == NIL)
 		return NIL;
 
+	FastListInit(&clausegroup_list);
 	do
 	{
 		Oid			curClass = classes[0];
-		List	   *clausegroup = NIL;
+		FastList	clausegroup;
 		List	   *i;
 
+		FastListInit(&clausegroup);
 		foreach(i, restrictinfo_list)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
@@ -543,24 +549,24 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 										 indexcol,
 										 curClass,
 										 rinfo->clause))
-				clausegroup = lappend(clausegroup, rinfo);
+				FastAppend(&clausegroup, rinfo);
 		}
 
 		/*
 		 * If no clauses match this key, we're done; we don't want to look
 		 * at keys to its right.
 		 */
-		if (clausegroup == NIL)
+		if (FastListValue(&clausegroup) == NIL)
 			break;
 
-		clausegroup_list = lappend(clausegroup_list, clausegroup);
+		FastAppend(&clausegroup_list, FastListValue(&clausegroup));
 
 		indexcol++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(classes));
 
-	return clausegroup_list;
+	return FastListValue(&clausegroup_list);
 }
 
 /*
@@ -580,16 +586,19 @@ static List *
 group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 								   Relids outer_relids, bool isouterjoin)
 {
-	List	   *clausegroup_list = NIL;
+	FastList	clausegroup_list;
 	bool		jfound = false;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
 
+	FastListInit(&clausegroup_list);
 	do
 	{
 		Oid			curClass = classes[0];
-		List	   *clausegroup = NIL;
+		FastList	clausegroup;
 		List	   *i;
+
+		FastListInit(&clausegroup);
 
 		/* Look for joinclauses that are usable with given outer_relids */
 		foreach(i, rel->joininfo)
@@ -614,7 +623,7 @@ group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 												  curClass,
 												  rinfo->clause))
 				{
-					clausegroup = lappend(clausegroup, rinfo);
+					FastAppend(&clausegroup, rinfo);
 					jfound = true;
 				}
 			}
@@ -634,17 +643,17 @@ group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 										 indexcol,
 										 curClass,
 										 rinfo->clause))
-				clausegroup = lappend(clausegroup, rinfo);
+				FastAppend(&clausegroup, rinfo);
 		}
 
 		/*
 		 * If no clauses match this key, we're done; we don't want to look
 		 * at keys to its right.
 		 */
-		if (clausegroup == NIL)
+		if (FastListValue(&clausegroup) == NIL)
 			break;
 
-		clausegroup_list = lappend(clausegroup_list, clausegroup);
+		FastAppend(&clausegroup_list, FastListValue(&clausegroup));
 
 		indexcol++;
 		classes++;
@@ -653,12 +662,9 @@ group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 
 	/* if no join clause was matched then forget it, per comments above */
 	if (!jfound)
-	{
-		freeList(clausegroup_list);
 		return NIL;
-	}
 
-	return clausegroup_list;
+	return FastListValue(&clausegroup_list);
 }
 
 
@@ -1870,12 +1876,13 @@ match_special_index_operator(Expr *clause, Oid opclass,
 List *
 expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
-	List	   *resultquals = NIL;
+	FastList	resultquals;
 	Oid		   *classes = index->classlist;
 
 	if (clausegroups == NIL)
 		return NIL;
 
+	FastListInit(&resultquals);
 	do
 	{
 		Oid			curClass = classes[0];
@@ -1885,9 +1892,9 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
-			resultquals = nconc(resultquals,
-								expand_indexqual_condition(rinfo->clause,
-														   curClass));
+			FastConc(&resultquals,
+					 expand_indexqual_condition(rinfo->clause,
+												curClass));
 		}
 
 		clausegroups = lnext(clausegroups);
@@ -1898,7 +1905,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 
 	Assert(clausegroups == NIL); /* else more groups than indexkeys... */
 
-	return resultquals;
+	return FastListValue(&resultquals);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.49 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.50 2003/05/28 22:32:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct
 
 typedef struct
 {
-	List	   *varlist;
+	FastList	varlist;
 	bool		includeUpperVars;
 } pull_var_clause_context;
 
@@ -344,11 +344,11 @@ pull_var_clause(Node *node, bool includeUpperVars)
 {
 	pull_var_clause_context context;
 
-	context.varlist = NIL;
+	FastListInit(&context.varlist);
 	context.includeUpperVars = includeUpperVars;
 
 	pull_var_clause_walker(node, &context);
-	return context.varlist;
+	return FastListValue(&context.varlist);
 }
 
 static bool
@@ -359,7 +359,7 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 	if (IsA(node, Var))
 	{
 		if (((Var *) node)->varlevelsup == 0 || context->includeUpperVars)
-			context->varlist = lappend(context->varlist, node);
+			FastAppend(&context->varlist, node);
 		return false;
 	}
 	return expression_tree_walker(node, pull_var_clause_walker,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.129 2003/05/02 20:54:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.130 2003/05/28 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2320,9 +2320,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				CaseExprState *cstate = makeNode(CaseExprState);
-				List	   *outlist = NIL;
+				FastList	outlist;
 				List	   *inlist;
 
+				FastListInit(&outlist);
 				foreach(inlist, caseexpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(inlist);
@@ -2332,9 +2333,9 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					wstate->xprstate.expr = (Expr *) when;
 					wstate->expr = ExecInitExpr(when->expr, parent);
 					wstate->result = ExecInitExpr(when->result, parent);
-					outlist = lappend(outlist, wstate);
+					FastAppend(&outlist, wstate);
 				}
-				cstate->args = outlist;
+				cstate->args = FastListValue(&outlist);
 				/* caseexpr->arg should be null by now */
 				Assert(caseexpr->arg == NULL);
 				cstate->defresult = ExecInitExpr(caseexpr->defresult, parent);
@@ -2345,18 +2346,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				ArrayExpr	   *arrayexpr = (ArrayExpr *) node;
 				ArrayExprState *astate = makeNode(ArrayExprState);
-				List		   *outlist = NIL;
+				FastList		outlist;
 				List		   *inlist;
 
+				FastListInit(&outlist);
 				foreach(inlist, arrayexpr->elements)
 				{
 					Expr	   *e = (Expr *) lfirst(inlist);
 					ExprState  *estate;
 
 					estate = ExecInitExpr(e, parent);
-					outlist = lappend(outlist, estate);
+					FastAppend(&outlist, estate);
 				}
-				astate->elements = outlist;
+				astate->elements = FastListValue(&outlist);
 				/* do one-time catalog lookup for type info */
 				get_typlenbyvalalign(arrayexpr->element_typeid,
 									 &astate->elemlength,
@@ -2369,18 +2371,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 				CoalesceExprState *cstate = makeNode(CoalesceExprState);
-				List	   *outlist = NIL;
+				FastList	outlist;
 				List	   *inlist;
 
+				FastListInit(&outlist);
 				foreach(inlist, coalesceexpr->args)
 				{
 					Expr *e = (Expr *) lfirst(inlist);
 					ExprState *estate;
 
 					estate = ExecInitExpr(e, parent);
-					outlist = lappend(outlist, estate);
+					FastAppend(&outlist, estate);
 				}
-				cstate->args = outlist;
+				cstate->args = FastListValue(&outlist);
 				state = (ExprState *) cstate;
 			}
 			break;
@@ -2434,17 +2437,18 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_List:
 			{
-				List	   *outlist = NIL;
+				FastList	outlist;
 				List	   *inlist;
 
+				FastListInit(&outlist);
 				foreach(inlist, (List *) node)
 				{
-					outlist = lappend(outlist,
-									  ExecInitExpr((Expr *) lfirst(inlist),
-												   parent));
+					FastAppend(&outlist,
+							   ExecInitExpr((Expr *) lfirst(inlist),
+											parent));
 				}
 				/* Don't fall through to the "common" code below */
-				return (ExprState *) outlist;
+				return (ExprState *) FastListValue(&outlist);
 			}
 		default:
 			elog(ERROR, "ExecInitExpr: unknown expression type %d",

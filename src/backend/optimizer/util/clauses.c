@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.137 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.138 2003/05/28 22:32:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -771,21 +771,24 @@ is_pseudo_constant_clause(Node *clause)
 List *
 pull_constant_clauses(List *quals, List **constantQual)
 {
-	List	   *constqual = NIL;
-	List	   *restqual = NIL;
+	FastList	constqual,
+				restqual;
 	List	   *q;
+
+	FastListInit(&constqual);
+	FastListInit(&restqual);
 
 	foreach(q, quals)
 	{
 		Node	   *qual = (Node *) lfirst(q);
 
 		if (is_pseudo_constant_clause(qual))
-			constqual = lappend(constqual, qual);
+			FastAppend(&constqual, qual);
 		else
-			restqual = lappend(restqual, qual);
+			FastAppend(&restqual, qual);
 	}
-	*constantQual = constqual;
-	return restqual;
+	*constantQual = FastListValue(&constqual);
+	return FastListValue(&restqual);
 }
 
 
@@ -1187,16 +1190,17 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					 * when no input is TRUE and at least one is NULL.
 					 *----------
 					 */
-					List	   *newargs = NIL;
+					FastList	newargs;
 					List	   *arg;
 					bool		haveNull = false;
 					bool		forceTrue = false;
 
+					FastListInit(&newargs);
 					foreach(arg, args)
 					{
 						if (!IsA(lfirst(arg), Const))
 						{
-							newargs = lappend(newargs, lfirst(arg));
+							FastAppend(&newargs, lfirst(arg));
 							continue;
 						}
 						const_input = (Const *) lfirst(arg);
@@ -1217,15 +1221,15 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					if (forceTrue)
 						return MAKEBOOLCONST(true, false);
 					if (haveNull)
-						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+						FastAppend(&newargs, MAKEBOOLCONST(false, true));
 					/* If all the inputs are FALSE, result is FALSE */
-					if (newargs == NIL)
+					if (FastListValue(&newargs) == NIL)
 						return MAKEBOOLCONST(false, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (lnext(newargs) == NIL)
-						return (Node *) lfirst(newargs);
+					if (lnext(FastListValue(&newargs)) == NIL)
+						return (Node *) lfirst(FastListValue(&newargs));
 					/* Else we still need an OR node */
-					return (Node *) make_orclause(newargs);
+					return (Node *) make_orclause(FastListValue(&newargs));
 				}
 			case AND_EXPR:
 				{
@@ -1239,16 +1243,17 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					 * when no input is FALSE and at least one is NULL.
 					 *----------
 					 */
-					List	   *newargs = NIL;
+					FastList	newargs;
 					List	   *arg;
 					bool		haveNull = false;
 					bool		forceFalse = false;
 
+					FastListInit(&newargs);
 					foreach(arg, args)
 					{
 						if (!IsA(lfirst(arg), Const))
 						{
-							newargs = lappend(newargs, lfirst(arg));
+							FastAppend(&newargs, lfirst(arg));
 							continue;
 						}
 						const_input = (Const *) lfirst(arg);
@@ -1269,15 +1274,15 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					if (forceFalse)
 						return MAKEBOOLCONST(false, false);
 					if (haveNull)
-						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+						FastAppend(&newargs, MAKEBOOLCONST(false, true));
 					/* If all the inputs are TRUE, result is TRUE */
-					if (newargs == NIL)
+					if (FastListValue(&newargs) == NIL)
 						return MAKEBOOLCONST(true, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (lnext(newargs) == NIL)
-						return (Node *) lfirst(newargs);
+					if (lnext(FastListValue(&newargs)) == NIL)
+						return (Node *) lfirst(FastListValue(&newargs));
 					/* Else we still need an AND node */
-					return (Node *) make_andclause(newargs);
+					return (Node *) make_andclause(FastListValue(&newargs));
 				}
 			case NOT_EXPR:
 				Assert(length(args) == 1);
@@ -1370,11 +1375,12 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 */
 		CaseExpr   *caseexpr = (CaseExpr *) node;
 		CaseExpr   *newcase;
-		List	   *newargs = NIL;
+		FastList	newargs;
 		Node	   *defresult;
 		Const	   *const_input;
 		List	   *arg;
 
+		FastListInit(&newargs);
 		foreach(arg, caseexpr->args)
 		{
 			/* Simplify this alternative's condition and result */
@@ -1387,7 +1393,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			if (casewhen->expr == NULL ||
 				!IsA(casewhen->expr, Const))
 			{
-				newargs = lappend(newargs, casewhen);
+				FastAppend(&newargs, casewhen);
 				continue;
 			}
 			const_input = (Const *) casewhen->expr;
@@ -1399,13 +1405,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			 * Found a TRUE condition.	If it's the first (un-dropped)
 			 * alternative, the CASE reduces to just this alternative.
 			 */
-			if (newargs == NIL)
+			if (FastListValue(&newargs) == NIL)
 				return (Node *) casewhen->result;
 
 			/*
 			 * Otherwise, add it to the list, and drop all the rest.
 			 */
-			newargs = lappend(newargs, casewhen);
+			FastAppend(&newargs, casewhen);
 			break;
 		}
 
@@ -1417,13 +1423,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * If no non-FALSE alternatives, CASE reduces to the default
 		 * result
 		 */
-		if (newargs == NIL)
+		if (FastListValue(&newargs) == NIL)
 			return defresult;
 		/* Otherwise we need a new CASE node */
 		newcase = makeNode(CaseExpr);
 		newcase->casetype = caseexpr->casetype;
 		newcase->arg = NULL;
-		newcase->args = newargs;
+		newcase->args = FastListValue(&newargs);
 		newcase->defresult = (Expr *) defresult;
 		return (Node *) newcase;
 	}
@@ -1432,9 +1438,10 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		ArrayExpr *arrayexpr = (ArrayExpr *) node;
 		ArrayExpr *newarray;
 		bool all_const = true;
-		List *newelems = NIL;
+		FastList	newelems;
 		List *element;
 
+		FastListInit(&newelems);
 		foreach(element, arrayexpr->elements)
 		{
 			Node *e;
@@ -1443,13 +1450,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 											   active_fns);
 			if (!IsA(e, Const))
 				all_const = false;
-			newelems = lappend(newelems, e);
+			FastAppend(&newelems, e);
 		}
 
 		newarray = makeNode(ArrayExpr);
 		newarray->array_typeid = arrayexpr->array_typeid;
 		newarray->element_typeid = arrayexpr->element_typeid;
-		newarray->elements = newelems;
+		newarray->elements = FastListValue(&newelems);
 		newarray->ndims = arrayexpr->ndims;
 
 		if (all_const)
@@ -1462,9 +1469,10 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	{
 		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 		CoalesceExpr *newcoalesce;
-		List *newargs = NIL;
+		FastList	newargs;
 		List *arg;
 
+		FastListInit(&newargs);
 		foreach(arg, coalesceexpr->args)
 		{
 			Node *e;
@@ -1480,15 +1488,15 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			{
 				if (((Const *) e)->constisnull)
 					continue;	/* drop null constant */
-				if (newargs == NIL)
+				if (FastListValue(&newargs) == NIL)
 					return e;	/* first expr */
 			}
-			newargs = lappend(newargs, e);
+			FastAppend(&newargs, e);
 		}
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
-		newcoalesce->args = newargs;
+		newcoalesce->args = FastListValue(&newargs);
 		return (Node *) newcoalesce;
 	}
 	if (IsA(node, FieldSelect))
@@ -2647,16 +2655,16 @@ expression_tree_mutator(Node *node,
 				 * NOTE: this would fail badly on a list with integer
 				 * elements!
 				 */
-				List	   *resultlist = NIL;
+				FastList	resultlist;
 				List	   *temp;
 
+				FastListInit(&resultlist);
 				foreach(temp, (List *) node)
 				{
-					resultlist = lappend(resultlist,
-										 mutator((Node *) lfirst(temp),
-												 context));
+					FastAppend(&resultlist,
+							   mutator((Node *) lfirst(temp), context));
 				}
-				return (Node *) resultlist;
+				return (Node *) FastListValue(&resultlist);
 			}
 			break;
 		case T_FromExpr:
@@ -2739,7 +2747,7 @@ query_tree_mutator(Query *query,
 				   void *context,
 				   int flags)
 {
-	List	   *newrt = NIL;
+	FastList	newrt;
 	List	   *rt;
 
 	Assert(query != NULL && IsA(query, Query));
@@ -2757,6 +2765,7 @@ query_tree_mutator(Query *query,
 	MUTATE(query->setOperations, query->setOperations, Node *);
 	MUTATE(query->havingQual, query->havingQual, Node *);
 	MUTATE(query->in_info_list, query->in_info_list, List *);
+	FastListInit(&newrt);
 	foreach(rt, query->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
@@ -2791,9 +2800,9 @@ query_tree_mutator(Query *query,
 				rte = newrte;
 				break;
 		}
-		newrt = lappend(newrt, rte);
+		FastAppend(&newrt, rte);
 	}
-	query->rtable = newrt;
+	query->rtable = FastListValue(&newrt);
 	return query;
 }
 

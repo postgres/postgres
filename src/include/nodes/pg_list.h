@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.35 2003/02/09 06:56:28 tgl Exp $
+ * $Id: pg_list.h,v 1.36 2003/05/28 22:32:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,21 @@ typedef struct List
 #define makeListo2(x1,x2)			lconso(x1, makeListo1(x2))
 
 /*
+ * FastList is an optimization for building large lists.  The conventional
+ * way to build a list is repeated lappend() operations, but that is O(N^2)
+ * in the number of list items, which gets tedious for large lists.
+ */
+typedef struct FastList
+{
+	List	   *head;
+	List	   *tail;
+} FastList;
+
+#define FastListInit(fl)	( (fl)->head = (fl)->tail = NIL )
+#define FastListValue(fl)	( (fl)->head )
+
+
+/*
  * function prototypes in nodes/list.c
  */
 extern Value *makeInteger(long i);
@@ -143,6 +158,11 @@ extern List *lappend(List *list, void *datum);
 extern List *lappendi(List *list, int datum);
 extern List *lappendo(List *list, Oid datum);
 extern List *nconc(List *list1, List *list2);
+extern void FastAppend(FastList *fl, void *datum);
+extern void FastAppendi(FastList *fl, int datum);
+extern void FastAppendo(FastList *fl, Oid datum);
+extern void FastConc(FastList *fl, List *cells);
+extern void FastConcFast(FastList *fl, FastList *fl2);
 extern void *nth(int n, List *l);
 extern int	length(List *list);
 extern void *llast(List *list);
