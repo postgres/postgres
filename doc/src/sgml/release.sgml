@@ -1,9 +1,57 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.21 2004/03/07 22:08:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.22 2004/06/12 03:56:25 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-4-3">
+   <title>Release 7.4.3</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-06-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.2.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.3</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<para>
+</para>
+<itemizedlist>
+<listitem><para>Fix temporary memory leak when using hashed aggregates (Tom)</para></listitem>
+<listitem><para>Ecpg fixes, including those for Informix compatibility (Michael)</para></listitem>
+<listitem><para>Fixes for compiling with thread-safety, particularly Solaris (Bruce)</para></listitem>
+<listitem><para>Fix error in termination of COPY IN mode when using old protocol (Tom)</para></listitem>
+<listitem><para>Several pg_autovacuum fixes, including fixes for large oids, stability, temp tables, and debug fixes (Matthew T. O'Connor)</para></listitem>
+<listitem><para>Fix problem with reading tar pg_dump's on NetBSD and BSD/OS (Bruce)</para></listitem>
+<listitem><para>Several JDBC fixes</para></listitem>
+<listitem><para>Fix for ALTER SEQUENCE RESTART where last_value was equals restart value (Tom)</para></listitem>
+<listitem><para>Support FULL JOIN with no join clauses, such as X FULL JOIN Y ON TRUE (Tom)</para></listitem>
+<listitem><para>Fix a zero-column bug (Tom)</para></listitem>
+<listitem><para>Improve handling of non-qualitified identifiers in GROUP BY clauses (Tom)</para></listitem>
+<listitem><para>Do not allow NATURAL CROSS JOIN (Tom)</para></listitem>
+<listitem><para>Add missing check for invalid protocol packet length in binary COPY (Tom)</para></listitem>
+<para>
+  This fixes a difficult-to-exploit security hole.
+</para>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-4-2">
    <title>Release 7.4.2</title>
@@ -1447,7 +1495,11 @@ DROP SCHEMA information_schema CASCADE;
     </listitem>
 
     <listitem>
-     <para>Have <command>COMMENT ON DATABASE</command> on nonlocal database generate a warning (Rod)</para>
+     <para>
+       Have <command>COMMENT ON DATABASE</command> on nonlocal
+       database generate a warning, rather than an error (Rod)
+      </para>
+
      <para>
       Database comments are stored in database-local tables so
       comments on a database have to be stored in each database.
@@ -1688,8 +1740,8 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      New function <function>pg_get_triggerdef(prettyprint)</function>
-      and <function>pg_constraint_is_visible()</function>
+      New functions <function>pg_get_triggerdef(prettyprint)</function>
+      and <function>pg_conversion_is_visible()</function> (Christopher)
      </para>
     </listitem>
 
@@ -1706,7 +1758,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Make <function>pg_get_constraintdef</function> to support
+      Make <function>pg_get_constraintdef</function> support
       unique, primary-key, and check constraints (Christopher)
      </para>
     </listitem>
@@ -1744,7 +1796,7 @@ DROP SCHEMA information_schema CASCADE;
      <para>
       The Python language no longer supports a restricted execution
       environment, so the trusted version of PL/Python was removed. If
-      this situation changes, a version of PL/python that can be used
+      this situation changes, a version of PL/Python that can be used
       by non-superusers will be readded.
      </para>
     </listitem>
@@ -1807,7 +1859,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>
       <command>\encoding</> now changes based on the server parameter
-      <varname>client_encoding server</varname> (Tom)
+      <varname>client_encoding</varname> (Tom)
      </para>
      <para>
       In previous versions, <command>\encoding</command> was not aware
@@ -1938,7 +1990,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Improve performance of function <function>PGunescapeBytea</function> (Ben Lamb)
+      Improve performance of function <function>PQunescapeBytea</function> (Ben Lamb)
      </para>
     </listitem>
 
