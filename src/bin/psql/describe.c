@@ -317,11 +317,11 @@ listAllDbs(PsqlSettings *pset, bool desc)
 
 	strcpy(buf,
            "SELECT pg_database.datname as \"Database\",\n"
-		   "       pg_user.usename as \"Owner\""
+		   "       pg_user.usename as \"Owner\"");
 #ifdef MULTIBYTE
-		   ",\n       pg_database.encoding as \"Encoding\""
+	strcat(buf,
+		   ",\n       pg_database.encoding as \"Encoding\"");
 #endif
-		);
 	if (desc)
 		strcat(buf, ",\n       obj_description(pg_database.oid) as \"Description\"\n");
 	strcat(buf, "FROM pg_database, pg_user\n"

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.3 1999/12/16 20:10:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.4 1999/12/17 18:05:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -133,10 +133,10 @@ if [ "$usage" ]; then
 	echo "    -h HOSTNAME, --host=HOSTNAME     "
 	echo "    -p PORT,     --port=PORT         "
 	echo "    -U USERNAME, --username=USERNAME "
+	echo "    -l,          --list              "
 	echo "    -W,          --password          "
 	echo "    -d DBNAME,   --database=DBNAME   "
 	echo "    -e,          --echo              "
-        echo "    -q,          --quiet             "   
 	echo "    -D PATH,     --location=PATH     "     
 	echo "    -L PGLIB     --pglib=PGLIB       "
 	echo "    -?,          --help              "

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.69 1999/12/17 16:53:11 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.70 1999/12/17 18:05:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -202,14 +202,26 @@ do
     shift
 done
 
-
 if [ "$usage" ]; then
-        echo "$CMDNAME [-t|--template] [-d|--debug] [-n|--noclean] \\"
-        echo "  [-u|--username SUPERUSER] [-D|--pgdata DATADIR] \\"
-        echo "  [-L|--pglib=LIBDIR] [-e|--pgencoding=ENCODING]"
-        exit 0
+ 	echo ""
+ 	echo "Usage: $CMDNAME [options]"
+ 	echo ""
+        echo "    -t,           --template           "
+        echo "    -d,           --debug              "
+        echo "    -n,           --noclean            "
+        echo "    -i SYSID,     --sysid=SYSID        "
+        echo "    -W PASSWORD,  --password=PASSWORD  "
+        echo "    -u SUPERUSER, --username=SUPERUSER " 
+        echo "    -D DATADIR,   --pgdata=DATADIR     "
+        echo "    -L LIBDIR,    --pglib=LIBDIR       "
+ 	
+ 	if [ -n "$MULTIBYTE" ]; then 
+ 		echo "    -e ENCODING,  --pgencoding=ENCODING"
+        fi
+ 	echo "    -?,           --help               "           	
+ 	echo ""	 
+ 	exit 0
 fi
-
 
 #-------------------------------------------------------------------------
 # Resolve the multibyte encoding name
