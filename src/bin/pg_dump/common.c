@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.46 2000/09/15 04:35:16 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.47 2000/09/15 04:57:09 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -79,7 +79,7 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts)
 	{
 		if (strcmp(tinfo[i].oid, oid) == 0) {
 			if ( (opts & useBaseTypeName) != 0 ) {
-				return fmtId(tinfo[i].typname, false);
+				return (char*) fmtId(tinfo[i].typname, false);
 			} else {
 				return tinfo[i].typedefn;
 			}
