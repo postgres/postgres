@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.102 1999/02/18 05:26:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.103 1999/02/18 06:00:49 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -907,7 +907,7 @@ usage(char *progname)
 	fprintf(stderr,
 			"Usage: %s [options] [dbname]\n", progname);
 #ifdef USE_ASSERT_CHECKING
-	fprintf(stderr, "    A: enable/disable assert checking\n");
+	fprintf(stderr, "\t-A enable/disable assert checking\n");
 #endif
 	fprintf(stderr, "\t-B buffers\tset number of buffers in buffer pool\n");
 	fprintf(stderr, "\t-C \t\tsupress version info\n");
@@ -1017,7 +1017,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	optind = 1;					/* reset after postmaster usage */
 
 	while ((flag = getopt(argc, argv,
-						  "A:B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:FW:"))
+						  "A:B:CD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:FW:"))
 		   != EOF)
 		switch (flag)
 		{
@@ -1522,7 +1522,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.102 $ $Date: 1999/02/18 05:26:24 $\n");
+		puts("$Revision: 1.103 $ $Date: 1999/02/18 06:00:49 $\n");
 	}
 
 	/* ----------------

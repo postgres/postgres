@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.14 1999/02/14 04:57:02 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.15 1999/02/18 06:01:11 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -60,24 +60,6 @@ for more information.
 	on=10	- use for statements with 10 or more tables
 	off	- do not use the genetic optimizer
 .fi
-.PP
-.IR R_PLANS
-enables or disables right-hand evaluation of plans. It may be useful
-when joining big relations with small ones. This algorithm is
-.IR off
-by default. It's not used by GEQO anyway.
-
-.if n .ta 5 +15 +40
-.if t .ta 0.5i +1.5i +3.0i
-.in 0
-.nf
-.ce 1
-\fBR_PLANS Values\fR
-
-	on	- turn right-hand plan evaluation 'on'
-	off	- do not use right-hand plan evaluation
-.fi
-
 .PP
 .IR QUERY_LIMIT
 restricts the number of rows returned by a query.

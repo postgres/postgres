@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.18 1998/12/18 09:10:20 vadim Exp $
+ * $Id: variable.c,v 1.19 1999/02/18 06:00:44 momjian Exp $
  *
  */
 
@@ -36,9 +36,6 @@ static bool parse_cost_heap(const char *);
 static bool show_cost_index(void);
 static bool reset_cost_index(void);
 static bool parse_cost_index(const char *);
-static bool show_r_plans(void);
-static bool reset_r_plans(void);
-static bool parse_r_plans(const char *);
 static bool reset_geqo(void);
 static bool show_geqo(void);
 static bool parse_geqo(const char *);
@@ -58,7 +55,6 @@ extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
 extern bool _use_geqo_;
 extern int32 _use_geqo_rels_;
-extern bool _use_right_sided_plans_;
 extern bool _use_keyset_query_optimizer;
 
 /*
@@ -239,53 +235,6 @@ reset_geqo(void)
 	_use_geqo_ = false;
 #endif
 	_use_geqo_rels_ = GEQO_RELS;
-	return TRUE;
-}
-
-/*
- *
- * R_PLANS
- *
- */
-static bool
-parse_r_plans(const char *value)
-{
-	if (value == NULL)
-	{
-		reset_r_plans();
-		return TRUE;
-	}
-
-	if (strcasecmp(value, "on") == 0)
-		_use_right_sided_plans_ = true;
-	else if (strcasecmp(value, "off") == 0)
-		_use_right_sided_plans_ = false;
-	else
-		elog(ERROR, "Bad value for Right-sided Plans (%s)", value);
-
-	return TRUE;
-}
-
-static bool
-show_r_plans()
-{
-
-	if (_use_right_sided_plans_)
-		elog(NOTICE, "Right-sided Plans are ON");
-	else
-		elog(NOTICE, "Right-sided Plans are OFF");
-	return TRUE;
-}
-
-static bool
-reset_r_plans()
-{
-
-#ifdef USE_RIGHT_SIDED_PLANS
-	_use_right_sided_plans_ = true;
-#else
-	_use_right_sided_plans_ = false;
-#endif
 	return TRUE;
 }
 
@@ -658,9 +607,6 @@ struct VariableParsers
 	},
 	{
 		"geqo", parse_geqo, show_geqo, reset_geqo
-	},
-	{
-		"r_plans", parse_r_plans, show_r_plans, reset_r_plans
 	},
 #ifdef MULTIBYTE
 	{

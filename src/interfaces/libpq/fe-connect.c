@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.92 1999/02/13 23:22:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.93 1999/02/18 06:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,9 +135,6 @@ static struct EnvironmentOptions
 	},
 	{
 		"PGCOSTINDEX", "cost_index"
-	},
-	{
-		"PGRPLANS", "r_plans"
 	},
 	{
 		"PGGEQO", "geqo"

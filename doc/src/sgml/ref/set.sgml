@@ -413,64 +413,12 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  <para>
 		The frontend may be initialized by setting PGGEQO
 		environment variable.
-	 
-		<variablelist>
-		  
-		  <varlistentry>
-			<term>
-			  R_PLANS
-			</term>
-			<listitem>
-			  <para>
-				Determines whether right-hand plan evaluation is allowed:
-			  </para>
-			  
-			  <variablelist>
-				<varlistentry>
-				  <term>
-					On
-				  </term>
-				  <listitem>
-					<para>
-					  enables right-hand evaluation of plans.
-					</para>
-				  </listitem>
-				</varlistentry>
-				
-				<varlistentry>
-				  <term>
-					Off
-				  </term>
-				  <listitem>
-					<para>
-					  disables right-hand evaluation of plans.
-					</para>
-				  </listitem>
-				</varlistentry>
-				
-				<varlistentry>
-				  <term>
-					DEFAULT
-				  </term>
-				  <listitem>
-					<para>
-					  Equivalent to specifying <command>SET R_PLANS='off'</command>.
-					</para>
-				  </listitem>
-				</varlistentry>
-			  </variablelist>
-			</listitem>
-		  </varlistentry>
-		</variablelist>
 	  </para>
 	  <para>
 		It may be useful when joining big relations with
 		small ones. This algorithm is off by default.
 		It's not used by GEQO anyway.
-	  </para>
-	  <para>
-		The frontend may be initialized by setting the PGRPLANS
-		environment variable.
+
 		<variablelist>
 		  <varlistentry>
 			<term>
@@ -527,7 +475,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 		It's not used by GEQO anyway.
 	  </para>
 	  <para>
-		The frontend may be initialized by setting the PGRPLANS
+		The frontend may be initialized by setting the PGKSQO
 		environment variable.
 		<variablelist>
 		  <varlistentry>
@@ -685,11 +633,6 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  --Set GEQO to default:
 	  --
 	  SET GEQO = DEFAULT;
-	</programlisting>
-	<programlisting> 
-	  --Turn on right-hand evaluation of plans:
-	  --
-	  SET R_PLANS TO 'on';
 	</programlisting>
 	<programlisting> 
 	  --set the timezone for Berkeley, California:
