@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.18 1998/09/01 04:36:46 momjian Exp $
+ * $Id: plannodes.h,v 1.18.2.1 1998/11/24 02:05:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,7 @@ typedef struct IndexScan
 	Scan		scan;
 	List	   *indxid;
 	List	   *indxqual;
+	List	   *indxqualorig;
 	IndexScanState *indxstate;
 } IndexScan;
 

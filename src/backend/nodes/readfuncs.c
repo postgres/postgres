@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.38 1998/10/22 13:52:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.38.2.1 1998/11/24 02:05:08 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -545,6 +545,9 @@ _readIndexScan()
 
 	token = lsptok(NULL, &length);		/* eat :indxqual */
 	local_node->indxqual = nodeRead(true);		/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :indxqualorig */
+	local_node->indxqualorig = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
