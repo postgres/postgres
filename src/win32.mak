@@ -1,7 +1,7 @@
+# $Header: /cvsroot/pgsql/src/win32.mak,v 1.6 2001/08/24 22:42:28 petere Exp $
+
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
-
 # Top-file makefile for Win32 parts of postgresql.
-
 # Note that most parts are not ported to Win32!
 
 !IF "$(OS)" == "Windows_NT"
@@ -16,7 +16,7 @@ MAKEMACRO = "MULTIBYTE=$(MULTIBYTE)"
 
 ALL: 
    cd include
-   if not exist config.h copy config.h.win32 config.h
+   if not exist pg_config.h copy pg_config.h.win32 pg_config.h
    cd ..
    cd interfaces\libpq
    nmake /f win32.mak $(MAKEMACRO)
