@@ -307,7 +307,7 @@ then
    AC_MSG_CHECKING(setting ODBCINST)
    AC_ARG_WITH(
       odbcinst,
-      [   --with-odbcinst=dir    change default directory for odbcinst.ini],
+      [  --with-odbcinst=dir    change default directory for odbcinst.ini],
       AC_DEFINE_UNQUOTED(ODBCINST, ${with_odbcinst}) AC_MSG_RESULT($with_odbcinst),
       AC_DEFINE_UNQUOTED(ODBCINST, ${ODBCINSTDIR}) AC_MSG_RESULT(${ODBCINSTDIR})
    )
