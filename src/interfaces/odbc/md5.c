@@ -10,7 +10,9 @@
  *
  *	Sverre H. Huseby <sverrehu@online.no>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/md5.c,v 1.3 2001/11/12 01:59:43 momjian Exp $
+ *	There are two copies of this file, one in backend/libpq and another
+ *	in interfaces/odbc.  These two files must be identical or they will not
+ *	compile.  There is no CVS tag in this file so they can remain identical.
  */
 
 
