@@ -7,7 +7,7 @@
 
 * Release notes
     update doc/src/sgml/release.sgml 
-    re-generate HISTORY
+    HISTORY
 
 * Documentation
     document all new features
