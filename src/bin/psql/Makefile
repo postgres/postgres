@@ -7,27 +7,25 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.7 1996/11/01 01:46:55 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.8 1996/11/02 09:53:15 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-PROG= psql
+SRCDIR = ../..
+LIBPQDIR = $(SRCDIR)/libpq
+include ../../Makefile.global
 
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
-include ../Makefile.global
+INCLUDE_OPT := \
+               -I$(LIBPQDIR) \
+               -I$(SRCDIR)/include
 
+CFLAGS += $(INCLUDE_OPT)
 #
 #USE_READLINE is set in Makefile.global
 # 
 
 ifeq ($(USE_READLINE), true)
    CFLAGS += $(READLINE_INC) $(HISTORY_INC)
-
-# if you are using an older readline that uses #include "readline.h" instead
-# of #include <readline/readline.h>,
-# uncomment this
-# CFLAGS += -DOLD_READLINE
 
    LIBCURSES=	-lcurses 
    LD_ADD += $(READLINE_LIB) $(HISTORY_LIB) $(LIBCURSES)
@@ -59,14 +57,32 @@ else
    CFLAGS += -DNOREADLINE
 endif
 
-SRCS= psql.c stringutils.c 
+OBJS= psql.o stringutils.o 
 
 ifneq ($(USE_READLINE), true)
-SRCS+= rlstubs.c
+OBJS+= rlstubs.o
 endif
 
-include $(MKDIR)/postgres.prog.mk
+all: psql
 
+psql: $(OBJS) $(LIBPQDIR)/libpq.a
+	$(CC) $(LDFLAGS) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+
+$(srcdir)/libpq/libpq.a:
+	$(MAKE) -C $(LIBPQDIR) libpq.a
+
+install:
+	$(INSTALL) $(INSTL_EXE_OPTS) psql $(DESTDIR)$(BINDIR)/psql
+
+depend dep:
+	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+
+clean: 
+	rm -f psql $(OBJS) 
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif
 
 
 
