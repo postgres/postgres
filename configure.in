@@ -678,8 +678,11 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_SEARCH_LIBS(crypt,  crypt)
-AC_CHECK_LIB(z,        inflate)
 AC_CHECK_LIB(bind,     __inet_ntoa)
+dnl only consider libz to be present if we find <zlib.h> as well
+AC_CHECK_HEADER(zlib.h, [
+AC_CHECK_LIB(z,        inflate)
+])
 
 
 if test "$with_krb4" = yes ; then
