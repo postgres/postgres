@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.5.2.2 1996/10/02 21:39:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.5.2.3 1996/10/28 22:09:39 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1405,7 +1405,9 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable, int 
 	        while (!copydone) {
 	            ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
 	
-	            if (copybuf[0] == '.' && copybuf[1] =='\0') {
+	            if (copybuf[0] == '\\' &&
+			copybuf[1] == '.' &&
+			copybuf[2] == '\0') {
 	  	        copydone = true;	/* don't print this... */
 	            } else {
 	    	        fputs(copybuf, fout);
@@ -1421,7 +1423,7 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable, int 
 	    	        }
 	            }
 	        }
-	        fprintf(fout, ".\n");
+	        fprintf(fout, "\\.\n");
 	        PQclear(res);
 	        PQendcopy(res->conn);
             } else {
