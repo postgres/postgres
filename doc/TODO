@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Oct  5 00:00:16 EDT 2002
+Last updated:		Sat Oct  5 15:03:41 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -89,6 +89,7 @@ Data Types
 * -Allow bytea to handle LIKE with non-TEXT patterns
 * -to_char(0,'FM999.99') returns a period, to_char(1,'FM999.99') doesn't (Karel)
 * Add floor(float8) and other missing functions
+* Add now("transaction|statement|clock") functionality
 
 * CONVERSION
 	o -Store binary-compatible type information in the system
