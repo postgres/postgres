@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.72 2000/12/26 20:12:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.73 2001/01/24 05:06:15 momjian Exp $
 -->
 
  <chapter id="release">
@@ -15,12 +15,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.72 2000/12/26 20:12:49 pet
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-12-16</date>
+  <date>2001-??-??</date>
   </docinfo>
    -->
 
    <para>
-	Release date 2001-1-??.
+	Release date 2001-??-??.
 	This release focuses on removing limitations that have existed in the
 	PostgreSQL code for many years.
    </para>
