@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.39 2005/02/22 07:18:24 neilc Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.40 2005/03/11 19:13:43 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -45,6 +45,7 @@
 #define YY_READ_BUF_SIZE 16777216
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#undef fprintf
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 /* Handles to the buffer that the lexer uses internally */

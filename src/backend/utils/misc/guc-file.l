@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.29 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.30 2005/03/11 19:13:42 momjian Exp $
  */
 
 %{
@@ -19,6 +19,7 @@
 #include "utils/guc.h"
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#undef fprintf
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 static unsigned ConfigFileLineno;

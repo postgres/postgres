@@ -6,9 +6,10 @@
 * Version numbers
 	o configure.in, and run autoconf or update configure
 	o doc/bug.template
-	o bump interface version numbers
+	o bump library versions
 		- src/interfaces/*/Makefile (major releases only)
 		- src/interfaces/*/*/Makefile (major releases only)
+	o bump interface version numbers
 		- src/interfaces/libpq/libpq.rc.in (major and minor releases)
 		- src/include/pg_config.h.win32 (major and minor releases)
 		- src/port/win32ver.rc (major and minor releases)

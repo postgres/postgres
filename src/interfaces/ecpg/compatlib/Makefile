@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.19 2005/01/18 05:00:15 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.20 2005/03/11 19:13:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 NAME= ecpg_compat
-SO_MAJOR_VERSION= 1
-SO_MINOR_VERSION= 2
+SO_MAJOR_VERSION= 2
+SO_MINOR_VERSION= 0
 DLTYPE= library
 
 override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdir) \

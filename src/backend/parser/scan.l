@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.120 2005/02/22 04:36:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.121 2005/03/11 19:13:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#undef fprintf
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 extern YYSTYPE yylval;
