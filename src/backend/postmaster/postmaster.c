@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.341 2003/08/12 18:23:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.342 2003/09/04 00:36:46 momjian Exp $
  *
  * NOTES
  *
@@ -2609,7 +2609,7 @@ sigusr1_handler(SIGNAL_ARGS)
 					ereport(LOG,
 							(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
 									elapsed_secs),
-					errhint("Consider increasing CHECKPOINT_SEGMENTS.")));
+					errhint("Consider increasing 'checkpoint_segments'.")));
 			}
 			LastSignalledCheckpoint = now;
 		}
