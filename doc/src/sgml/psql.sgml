@@ -2,7 +2,42 @@
 <Title><Command>psql</Command></Title>
 
 <Para>
-This section needs to be written. Volunteers?
+This section needs to be converted from the original psql man page. Volunteers?
 </Para>
+
+<Tip>
+<Para>
+To change the paging behavior of your results, set/unset your PAGER environment variable.
+</Para>
+</Tip>
+
+<Sect1>
+<Title>Paging To Screen</Title>
+
+<Note>
+<Title>Author</Title>
+<Para>
+From Brett McCormick on the mailing list 1998-04-04.
+</Para>
+</Note>
+
+<Para>
+To affect the paging behavior of your <Command>psql</Command> output,
+set or unset your PAGER environment variable.  I always have to set mine
+before it will pause.  And of course you have to do this before
+starting the program.
+
+<Para>
+In csh/tcsh or other C shells:
+
+<ProgramListing>
+  unsetenv PAGER
+</ProgramListing>
+
+while in sh/bash or other Bourne shells:
+
+<ProgramListing>
+  unset PAGER
+</ProgramListing>
 
 </Chapter>
