@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.6 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.7 2004/01/01 19:27:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,10 @@ main(int argc, char *argv[])
 
 	PQfinish(conn);
 	if (!quiet)
+	{
 		puts("DROP USER");
+		fflush(stdout);
+	}
 	exit(0);
 }
 

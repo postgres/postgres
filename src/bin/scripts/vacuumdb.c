@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.4 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.5 2004/01/01 19:27:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,15 +14,16 @@
 #include "common.h"
 
 
-static
-void
-vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze, const char *table,
- const char *host, const char *port, const char *username, bool password,
+static void
+vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
+					const char *table,
+					const char *host, const char *port,
+					const char *username, bool password,
 					const char *progname, bool echo, bool quiet);
-static
-void
+static void
 vacuum_all_databases(bool full, bool verbose, bool analyze,
- const char *host, const char *port, const char *username, bool password,
+					 const char *host, const char *port,
+					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet);
 
 static void help(const char *progname);
@@ -168,10 +169,11 @@ main(int argc, char *argv[])
 }
 
 
-static
-void
-vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze, const char *table,
- const char *host, const char *port, const char *username, bool password,
+static void
+vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
+					const char *table,
+					const char *host, const char *port,
+					const char *username, bool password,
 					const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
@@ -215,14 +217,17 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze, c
 	termPQExpBuffer(&sql);
 
 	if (!quiet)
+	{
 		puts("VACUUM");
+		fflush(stdout);
+	}
 }
 
 
-static
-void
+static void
 vacuum_all_databases(bool full, bool verbose, bool analyze,
- const char *host, const char *port, const char *username, bool password,
+					 const char *host, const char *port,
+					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet)
 {
 	PGconn	   *conn;

@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.4 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.5 2004/01/01 19:27:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,14 +14,14 @@
 #include "dumputils.h"
 
 
-static
-void
+static void
 cluster_one_database(const char *dbname, const char *table,
- const char *host, const char *port, const char *username, bool password,
+					 const char *host, const char *port,
+					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet);
-static
-void
-cluster_all_databases(const char *host, const char *port, const char *username, bool password,
+static void
+cluster_all_databases(const char *host, const char *port,
+					  const char *username, bool password,
 					  const char *progname, bool echo, bool quiet);
 
 static void help(const char *progname);
@@ -151,10 +151,10 @@ main(int argc, char *argv[])
 }
 
 
-static
-void
+static void
 cluster_one_database(const char *dbname, const char *table,
- const char *host, const char *port, const char *username, bool password,
+					 const char *host, const char *port,
+					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
@@ -192,13 +192,16 @@ cluster_one_database(const char *dbname, const char *table,
 	termPQExpBuffer(&sql);
 
 	if (!quiet)
+	{
 		puts("CLUSTER");
+		fflush(stdout);
+	}
 }
 
 
-static
-void
-cluster_all_databases(const char *host, const char *port, const char *username, bool password,
+static void
+cluster_all_databases(const char *host, const char *port,
+					  const char *username, bool password,
 					  const char *progname, bool echo, bool quiet)
 {
 	PGconn	   *conn;
