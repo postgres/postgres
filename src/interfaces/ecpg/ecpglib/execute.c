@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.16 2003/07/04 12:00:52 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.17 2003/07/07 12:15:33 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -138,6 +138,14 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			else
 				var->value = var->pointer;
 
+			/* negative values are used to indicate an array without given bounds */
+			/* reset to zero for us */
+			if (var->arrsize < 0)
+				var->arrsize = 0;
+			if (var->varcharsize < 0)
+				var->varcharsize = 0;
+				
+		
 			var->ind_type = va_arg(ap, enum ECPGttype);
 			var->ind_pointer = va_arg(ap, char *);
 			var->ind_varcharsize = va_arg(ap, long);

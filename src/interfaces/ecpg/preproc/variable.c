@@ -512,7 +512,14 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			/* one index is the string length */
 			if (atoi(*length) < 0)
 			{
-				*length = (atoi(*dimension) < 0) ? make_str("1") : *dimension;
+				/* make sure we return length = -1 for arrays without given bounds */
+				if (atoi(*dimension) < 0)
+					*length = make_str("1");
+				else if (atoi(*dimension) == 0)
+					*length = make_str("-1");
+				else 
+					*length = *dimension;
+				
 				*dimension = make_str("-1");
 			}
 			break;

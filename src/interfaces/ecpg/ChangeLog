@@ -1550,6 +1550,10 @@ Wed Jul  2 09:45:59 CEST 2003
 Fri Jul  4 13:51:11 CEST 2003
 
 	- date, interval and timestamp data should be quoted. 
+	
+Mon Jul  7 14:13:43 CEST 2003
+
+	- Made sure "char *" is handled differently than "char []".
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
