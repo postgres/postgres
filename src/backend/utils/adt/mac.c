@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.26 2002/09/04 20:31:28 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.27 2002/10/13 15:39:17 tgl Exp $
  */
 
 #include "postgres.h"
@@ -35,19 +35,28 @@ macaddr_in(PG_FUNCTION_ARGS)
 				d,
 				e,
 				f;
+	char		junk[2];
 	int			count;
 
-	count = sscanf(str, "%x:%x:%x:%x:%x:%x", &a, &b, &c, &d, &e, &f);
+	/* %1s matches iff there is trailing non-whitespace garbage */
+
+	count = sscanf(str, "%x:%x:%x:%x:%x:%x%1s",
+				   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		count = sscanf(str, "%x-%x-%x-%x-%x-%x", &a, &b, &c, &d, &e, &f);
+		count = sscanf(str, "%x-%x-%x-%x-%x-%x%1s",
+					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		count = sscanf(str, "%2x%2x%2x:%2x%2x%2x", &a, &b, &c, &d, &e, &f);
+		count = sscanf(str, "%2x%2x%2x:%2x%2x%2x%1s",
+					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		count = sscanf(str, "%2x%2x%2x-%2x%2x%2x", &a, &b, &c, &d, &e, &f);
+		count = sscanf(str, "%2x%2x%2x-%2x%2x%2x%1s",
+					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x", &a, &b, &c, &d, &e, &f);
+		count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x%1s",
+					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		count = sscanf(str, "%2x%2x%2x%2x%2x%2x", &a, &b, &c, &d, &e, &f);
+		count = sscanf(str, "%2x%2x%2x%2x%2x%2x%1s",
+					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
 		elog(ERROR, "macaddr_in: error in parsing \"%s\"", str);
 
@@ -122,11 +131,11 @@ text_macaddr(PG_FUNCTION_ARGS)
 {
 	text	   *addr = PG_GETARG_TEXT_P(0);
 	Datum		result;
-	char		str[18];
+	char		str[100];
 	int			len;
 
 	len = (VARSIZE(addr) - VARHDRSZ);
-	if (len >= 18)
+	if (len >= sizeof(str))
 		elog(ERROR, "Text is too long to convert to MAC address");
 
 	memcpy(str, VARDATA(addr), len);
