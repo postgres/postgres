@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.210 2004/12/11 19:31:45 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.211 2004/12/11 20:54:14 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1463,9 +1463,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>Alpha</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
@@ -1478,25 +1477,22 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>arm41</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>Itanium</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>m68k</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
+        <entry>8.0.0</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-09</entry>
+        <entry>sid</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
@@ -1506,28 +1502,32 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>3.1 (sarge), kernel 2.4</entry>
        </row>
        <row>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>PA-RISC</></entry>
+        <entry>8.0.0</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-07</entry>
+        <entry></entry>
+     </row>
+       <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
-        <entry><systemitem>PPC</></entry>
+        <entry><systemitem>PowerPC</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>S/390</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>Sparc</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-24, 
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-        <entry>2.4, 32-bit</entry>
+        <entry>8.0.0</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-09</entry>
+        <entry>sid, 32-bit</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
@@ -1547,8 +1547,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">FreeBSD</></entry>
         <entry><systemitem>Alpha</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-10-25</entry>
         <entry>4.8</entry>
        </row>
        <row>
@@ -1571,8 +1570,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem>PA-RISC</></entry>
         <entry>7.4</entry>
         <entry>
-         2003-10-31, 10.20, Tom Lane (<email>tgl@sss.pgh.pa.us</email>);
-         2003-11-04, 11.00, Peter Eisentraut (<email>peter_e@gmx.net</email>)
+         Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2003-10-31 (10.20);
+         Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-04 (11.00)
         </entry>
         <entry><command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
@@ -1580,13 +1579,12 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">IRIX</></entry>
         <entry><systemitem>MIPS</></entry>
         <entry>7.4</entry>
-        <entry>2003-11-12,
-         Robert E. Bruccoleri (<email>bruc@stone.congenomics.com</email>)</entry>
+        <entry>Robert E. Bruccoleri (<email>bruc@stone.congenomics.com</email>), 2003-11-12</entry>
         <entry>6.5.20, <command>cc</command> only</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Mac OS X</></entry>
-        <entry><systemitem>PPC</></entry>
+        <entry><systemitem>PowerPC</></entry>
         <entry>8.0.0</entry>
         <entry>Andrew Rawnsley (<email>ronz@ravensfield.com</email>), 2004-12-07</entry>
         <entry>10.3.5</entry>
@@ -1602,16 +1600,14 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>arm32</></entry>
         <entry>7.4</entry>
-        <entry>2003-11-12,
-         Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
+        <entry>Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>), 2003-11-12</entry>
         <entry>1.6ZE/acorn32</entry>
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>Sparc</></entry>
         <entry>7.4.1</entry>
-        <entry>2003-11-26,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-26</entry>
         <entry>1.6.1, 32-bit</entry>
        </row>
        <row>
@@ -1625,8 +1621,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">OpenBSD</></entry>
         <entry><systemitem>Sparc</></entry>
         <entry>7.4</entry>
-        <entry>2003-11-01,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-01</entry>
         <entry>3.4</entry>
        </row>
        <row>
@@ -1666,14 +1661,14 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">Red Hat Linux</></entry>
-        <entry><systemitem>S390</></entry>
+        <entry><systemitem>S/390</></entry>
         <entry>8.0.0</entry>
         <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2004-12-07</entry>
         <entry>RHEL 3AS</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Red Hat Linux</></entry>
-        <entry><systemitem>S390x</></entry>
+        <entry><systemitem>S/390x</></entry>
         <entry>8.0.0</entry>
         <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2004-12-07</entry>
         <entry>RHEL 3AS</entry>
@@ -1689,31 +1684,29 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>Sparc</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-26,
-         Christopher Browne (<email>cbbrowne@libertyrms.info</email>)</entry>
+        <entry>Christopher Browne (<email>cbbrowne@libertyrms.info</email>), 2003-10-26</entry>
         <entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>x86</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-26,
-         Kurt Roeckx (<email>Q@ping.be</email>)</entry>
+        <entry>Kurt Roeckx (<email>Q@ping.be</email>), 2003-10-26</entry>
         <entry>2.6; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Tru64 UNIX</></entry>
         <entry><systemitem>Alpha</></entry>
         <entry>7.4</entry>
-        <entry>2003-10-25, 5.1b, Peter Eisentraut (<email>peter_e@gmx.net</email>);
-         2003-10-29, 4.0g, Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-10-25 (5.1b);
+         Alessio Bragadini (<email>alessio@albourne.com</email>), 2003-10-29 (4.0g)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">UnixWare</></entry>
         <entry><systemitem>x86</></entry>
         <entry>7.4</entry>
-        <entry>2003-11-03, Larry Rosenman (<email>ler@lerctr.org</email>)</entry>
+        <entry>Larry Rosenman (<email>ler@lerctr.org</email>), 2003-11-03</entry>
         <entry>7.1.3; join test may fail, see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
@@ -1779,14 +1772,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       </entry>
      </row>
      <row>
-      <entry><systemitem class="osname">Linux</></entry>
-      <entry><systemitem>PA-RISC</></entry>
-      <entry>7.4</entry>
-      <entry>2003-10-25,
-       No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-      <entry>needs <option>--disable-spinlocks</option>, otherwise OK</entry>
-     </row>
-     <row>
       <entry><systemitem class="osname">NetBSD</></entry>
       <entry><systemitem>Alpha</></entry>
       <entry>7.2</entry>
@@ -1804,7 +1789,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>
-      <entry><systemitem>PPC</></entry>
+      <entry><systemitem>PowerPC</></entry>
       <entry>7.2</entry>
       <entry>2001-11-28,
        Bill Studenmund (<email>wrstuden@netbsd.org</email>)</entry>
