@@ -97,7 +97,13 @@ typedef struct ControlFileData
 	XLogRecPtr		checkPoint;		/* last check point record ptr */
 	time_t			time;			/* time stamp of last modification */
 	DBState			state;			/* */
+
+	/*
+	 * following data used to make sure that configurations for this DB
+	 * do not conflict with the backend
+	 */
 	uint32			blcksz;			/* block size for this DB */
+	uint32			relseg_size;		/* segmented file's block number */
 	/* MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE
 	 * - locations of data dirs 
 	 */
@@ -1164,6 +1170,7 @@ BootStrapXLOG()
 	ControlFile->time = time(NULL);
 	ControlFile->state = DB_SHUTDOWNED;
 	ControlFile->blcksz = BLCKSZ;
+	ControlFile->relseg_size = RELSEG_SIZE;
 
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
 		elog(STOP, "BootStrapXLOG failed to write control file: %d", errno);
@@ -1253,6 +1260,9 @@ tryAgain:
 
 	if (ControlFile->blcksz != BLCKSZ)
 		elog(STOP, "database was initialized in BLCKSZ(%d), but the backend was compiled in BLCKSZ(%d)",ControlFile->blcksz,BLCKSZ);
+
+	if (ControlFile->relseg_size != RELSEG_SIZE)
+		elog(STOP, "database was initialized in RELSEG_SIZE(%d), but the backend was compiled in RELSEG_SIZE(%d)",ControlFile->relseg_size, RELSEG_SIZE);
 
 	if (ControlFile->state == DB_SHUTDOWNED)
 		elog(LOG, "Data Base System was shutdowned at %s",
