@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.198 2001/07/16 05:06:59 tgl Exp $
+ * $Id: pg_proc.h,v 1.199 2001/07/31 17:09:30 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2101,7 +2101,7 @@ DESCR("right-pad string to length");
 DATA(insert OID =  877 (  substr	   PGUID 12 f t t t 3 f 25 "25 23 23" 100 0 0 100  text_substr - ));
 DESCR("return portion of string");
 DATA(insert OID =  878 (  translate    PGUID 12 f t t t 3 f 25 "25 25 25" 100 0 0 100  translate - ));
-DESCR("modify string by substring replacement");
+DESCR("map a set of character appearing in string");
 DATA(insert OID =  879 (  lpad		   PGUID 14 f t t t 2 f 25 "25 23" 100 0 0 100	"select lpad($1, $2, \' \')" - ));
 DESCR("left-pad string to length");
 DATA(insert OID =  880 (  rpad		   PGUID 14 f t t t 2 f 25 "25 23" 100 0 0 100	"select rpad($1, $2, \' \')" - ));
