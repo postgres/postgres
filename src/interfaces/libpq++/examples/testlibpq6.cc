@@ -43,8 +43,8 @@ main()
   cout << "Line: \"3\thello world\t4.5\" copied..." << endl;
   data.PutLine("4\tgoodbye word\t7.11\n");
   cout << "Line: \"4\tgoodbye word\t7.11\" copied..." << endl;
-  data.PutLine(".\n");
-  cout << "Line: \".\" copied..." << endl;
+  data.PutLine("\\.\n");
+  cout << "Line: \"\\.\" copied..." << endl;
   if ( !data.EndCopy() )
        cout << "Ended COPY succesfully..." << endl;
   else cerr << "End Copy failed..." << endl;
