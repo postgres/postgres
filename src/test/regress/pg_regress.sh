@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.44 2004/05/20 00:21:36 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.45 2004/06/03 00:25:47 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -208,18 +208,6 @@ esac
 
 
 # ----------
-# Set up pwd to give a win32 happy pathname
-# ----------
-
-case $host_platform in
-    *-*-mingw32*)
-        PWDFLAGS=-W;;
-    *)
-        PWDFLAGS=;;
-esac
-
-
-# ----------
 # Set backend timezone and datestyle explicitly
 #
 # To pass the horology test in its current form, the postmaster must be
@@ -306,12 +294,20 @@ LOGDIR=$outputdir/log
 if [ x"$temp_install" != x"" ]
 then
     if echo x"$temp_install" | grep -v '^x/' >/dev/null 2>&1; then
-        temp_install="`pwd $PWDFLAGS`/$temp_install"
+        case $host_platform in
+          *-*-mingw32*)
+                pkglibdir="`pwd -W`/$temp_install/install/$pkglibdir"
+        	  temp_install="`pwd`/$temp_install"
+                ;;
+          *)
+                temp_install="`pwd`/$temp_install"
+                pkglibdir=$temp_install/install/$pkglibdir
+                ;;
+        esac
     fi
 
     bindir=$temp_install/install/$bindir
     libdir=$temp_install/install/$libdir
-    pkglibdir=$temp_install/install/$pkglibdir
     datadir=$temp_install/install/$datadir
     PGDATA=$temp_install/data
 
@@ -602,7 +598,8 @@ do
         # Run a single test
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
         $ECHO_N "test $formatted ... $ECHO_C"
-        $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1
+        ( $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1 )&
+	wait
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): $ECHO_C"
@@ -704,7 +701,7 @@ done | tee "$result_summary_file" 2>&1
 
 if [ -n "$postmaster_pid" ]; then
     message "shutting down postmaster"
-    kill -15 "$postmaster_pid"
+    "$bindir/pg_ctl" -s -D "$PGDATA" stop
     wait "$postmaster_pid"
     unset postmaster_pid
 fi
