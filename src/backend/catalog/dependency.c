@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.1 2002/07/12 18:43:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.2 2002/07/15 16:33:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
@@ -46,6 +47,7 @@ typedef enum ObjectClasses
 	OCLASS_PROC,				/* pg_proc */
 	OCLASS_TYPE,				/* pg_type */
 	OCLASS_CONSTRAINT,			/* pg_constraint */
+	OCLASS_DEFAULT,				/* pg_attrdef */
 	OCLASS_LANGUAGE,			/* pg_language */
 	OCLASS_OPERATOR,			/* pg_operator */
 	OCLASS_REWRITE,				/* pg_rewrite */
@@ -59,6 +61,7 @@ static bool recursiveDeletion(const ObjectAddress *object,
 static void doDeletion(const ObjectAddress *object);
 static ObjectClasses getObjectClass(const ObjectAddress *object);
 static char *getObjectDescription(const ObjectAddress *object);
+static void getRelationDescription(StringInfo buffer, Oid relid);
 
 
 /*
@@ -285,7 +288,7 @@ recursiveDeletion(const ObjectAddress *object,
 				 * RESTRICT case.  (However, normal dependencies on the
 				 * component object could still cause failure.)
 				 */
-				elog(DEBUG1, "Drop internally cascades to %s",
+				elog(DEBUG1, "Drop auto-cascades to %s",
 					 getObjectDescription(&otherObject));
 
 				if (!recursiveDeletion(&otherObject, behavior,
@@ -392,6 +395,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveConstraintById(object->objectId);
 			break;
 
+		case OCLASS_DEFAULT:
+			RemoveAttrDefaultById(object->objectId);
+			break;
+
 		case OCLASS_LANGUAGE:
 			DropProceduralLanguageById(object->objectId);
 			break;
@@ -425,6 +432,7 @@ getObjectClass(const ObjectAddress *object)
 {
 	static bool reloids_initialized = false;
 	static Oid	reloid_pg_constraint;
+	static Oid	reloid_pg_attrdef;
 	static Oid	reloid_pg_language;
 	static Oid	reloid_pg_operator;
 	static Oid	reloid_pg_rewrite;
@@ -456,6 +464,7 @@ getObjectClass(const ObjectAddress *object)
 	if (!reloids_initialized)
 	{
 		reloid_pg_constraint = get_system_catalog_relid(ConstraintRelationName);
+		reloid_pg_attrdef = get_system_catalog_relid(AttrDefaultRelationName);
 		reloid_pg_language = get_system_catalog_relid(LanguageRelationName);
 		reloid_pg_operator = get_system_catalog_relid(OperatorRelationName);
 		reloid_pg_rewrite = get_system_catalog_relid(RewriteRelationName);
@@ -467,6 +476,11 @@ getObjectClass(const ObjectAddress *object)
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_CONSTRAINT;
+	}
+	if (object->classId == reloid_pg_attrdef)
+	{
+		Assert(object->objectSubId == 0);
+		return OCLASS_DEFAULT;
 	}
 	if (object->classId == reloid_pg_language)
 	{
@@ -509,63 +523,12 @@ getObjectDescription(const ObjectAddress *object)
 	switch (getObjectClass(object))
 	{
 		case OCLASS_CLASS:
-		{
-			HeapTuple	relTup;
-			Form_pg_class	relForm;
-
-			relTup = SearchSysCache(RELOID,
-									ObjectIdGetDatum(object->objectId),
-									0, 0, 0);
-			if (!HeapTupleIsValid(relTup))
-				elog(ERROR, "getObjectDescription: Relation %u does not exist",
-					 object->objectId);
-			relForm = (Form_pg_class) GETSTRUCT(relTup);
-
-			switch (relForm->relkind)
-			{
-				case RELKIND_RELATION:
-					appendStringInfo(&buffer, "table %s",
-									 NameStr(relForm->relname));
-					break;
-				case RELKIND_INDEX:
-					appendStringInfo(&buffer, "index %s",
-									 NameStr(relForm->relname));
-					break;
-				case RELKIND_SPECIAL:
-					appendStringInfo(&buffer, "special system relation %s",
-									 NameStr(relForm->relname));
-					break;
-				case RELKIND_SEQUENCE:
-					appendStringInfo(&buffer, "sequence %s",
-									 NameStr(relForm->relname));
-					break;
-				case RELKIND_UNCATALOGED:
-					appendStringInfo(&buffer, "uncataloged table %s",
-									 NameStr(relForm->relname));
-					break;
-				case RELKIND_TOASTVALUE:
-					appendStringInfo(&buffer, "toast table %s",
-									 NameStr(relForm->relname));
-					break;
-				case RELKIND_VIEW:
-					appendStringInfo(&buffer, "view %s",
-									 NameStr(relForm->relname));
-					break;
-				default:
-					/* shouldn't get here */
-					appendStringInfo(&buffer, "relation %s",
-									 NameStr(relForm->relname));
-					break;
-			}
-
+			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)
 				appendStringInfo(&buffer, " column %s",
 								 get_attname(object->objectId,
 											 object->objectSubId));
-
-			ReleaseSysCache(relTup);
 			break;
-		}
 
 		case OCLASS_PROC:
 			/* XXX could improve on this */
@@ -614,14 +577,58 @@ getObjectDescription(const ObjectAddress *object)
 
 			con = (Form_pg_constraint) GETSTRUCT(tup);
 
-			appendStringInfo(&buffer, "constraint %s",
-							 NameStr(con->conname));
 			if (OidIsValid(con->conrelid))
-				appendStringInfo(&buffer, " on table %s",
-								 get_rel_name(con->conrelid));
+			{
+				appendStringInfo(&buffer, "constraint %s on ",
+								 NameStr(con->conname));
+				getRelationDescription(&buffer, con->conrelid);
+			}
+			else
+			{
+				appendStringInfo(&buffer, "constraint %s",
+								 NameStr(con->conname));
+			}
 
 			systable_endscan(rcscan);
 			heap_close(conDesc, AccessShareLock);
+			break;
+		}
+
+		case OCLASS_DEFAULT:
+		{
+			Relation		attrdefDesc;
+			ScanKeyData		skey[1];
+			SysScanDesc		adscan;
+			HeapTuple		tup;
+			Form_pg_attrdef attrdef;
+			ObjectAddress	colobject;
+
+			attrdefDesc = heap_openr(AttrDefaultRelationName, AccessShareLock);
+
+			ScanKeyEntryInitialize(&skey[0], 0x0,
+								   ObjectIdAttributeNumber, F_OIDEQ,
+								   ObjectIdGetDatum(object->objectId));
+
+			adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndex, true,
+										SnapshotNow, 1, skey);
+
+			tup = systable_getnext(adscan);
+
+			if (!HeapTupleIsValid(tup))
+				elog(ERROR, "getObjectDescription: Default %u does not exist",
+					 object->objectId);
+
+			attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
+
+			colobject.classId = RelOid_pg_class;
+			colobject.objectId = attrdef->adrelid;
+			colobject.objectSubId = attrdef->adnum;
+
+			appendStringInfo(&buffer, "default for %s",
+							 getObjectDescription(&colobject));
+
+			systable_endscan(adscan);
+			heap_close(attrdefDesc, AccessShareLock);
 			break;
 		}
 
@@ -672,11 +679,9 @@ getObjectDescription(const ObjectAddress *object)
 
 			rule = (Form_pg_rewrite) GETSTRUCT(tup);
 
-			appendStringInfo(&buffer, "rule %s",
+			appendStringInfo(&buffer, "rule %s on ",
 							 NameStr(rule->rulename));
-			if (OidIsValid(rule->ev_class))
-				appendStringInfo(&buffer, " on table %s",
-								 get_rel_name(rule->ev_class));
+			getRelationDescription(&buffer, rule->ev_class);
 
 			systable_endscan(rcscan);
 			heap_close(ruleDesc, AccessShareLock);
@@ -708,11 +713,9 @@ getObjectDescription(const ObjectAddress *object)
 
 			trig = (Form_pg_trigger) GETSTRUCT(tup);
 
-			appendStringInfo(&buffer, "trigger %s",
+			appendStringInfo(&buffer, "trigger %s on ",
 							 NameStr(trig->tgname));
-			if (OidIsValid(trig->tgrelid))
-				appendStringInfo(&buffer, " on table %s",
-								 get_rel_name(trig->tgrelid));
+			getRelationDescription(&buffer, trig->tgrelid);
 
 			systable_endscan(tgscan);
 			heap_close(trigDesc, AccessShareLock);
@@ -728,4 +731,61 @@ getObjectDescription(const ObjectAddress *object)
 	}
 
 	return buffer.data;
+}
+
+/*
+ * subroutine for getObjectDescription: describe a relation
+ */
+static void
+getRelationDescription(StringInfo buffer, Oid relid)
+{
+	HeapTuple	relTup;
+	Form_pg_class	relForm;
+
+	relTup = SearchSysCache(RELOID,
+							ObjectIdGetDatum(relid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(relTup))
+		elog(ERROR, "getObjectDescription: Relation %u does not exist",
+			 relid);
+	relForm = (Form_pg_class) GETSTRUCT(relTup);
+
+	switch (relForm->relkind)
+	{
+		case RELKIND_RELATION:
+			appendStringInfo(buffer, "table %s",
+							 NameStr(relForm->relname));
+			break;
+		case RELKIND_INDEX:
+			appendStringInfo(buffer, "index %s",
+							 NameStr(relForm->relname));
+			break;
+		case RELKIND_SPECIAL:
+			appendStringInfo(buffer, "special system relation %s",
+							 NameStr(relForm->relname));
+			break;
+		case RELKIND_SEQUENCE:
+			appendStringInfo(buffer, "sequence %s",
+							 NameStr(relForm->relname));
+			break;
+		case RELKIND_UNCATALOGED:
+			appendStringInfo(buffer, "uncataloged table %s",
+							 NameStr(relForm->relname));
+			break;
+		case RELKIND_TOASTVALUE:
+			appendStringInfo(buffer, "toast table %s",
+							 NameStr(relForm->relname));
+			break;
+		case RELKIND_VIEW:
+			appendStringInfo(buffer, "view %s",
+							 NameStr(relForm->relname));
+			break;
+		default:
+			/* shouldn't get here */
+			appendStringInfo(buffer, "relation %s",
+							 NameStr(relForm->relname));
+			break;
+	}
+
+	ReleaseSysCache(relTup);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.206 2002/07/14 21:08:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.207 2002/07/15 16:33:31 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -75,7 +75,6 @@ static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
 static void SetRelationNumChecks(Relation rel, int numchecks);
-static void RemoveDefaults(Relation rel);
 static void RemoveStatistics(Relation rel);
 
 
@@ -767,18 +766,18 @@ static void
 RelationRemoveInheritance(Relation relation)
 {
 	Relation	catalogRelation;
-	HeapTuple	tuple;
 	SysScanDesc scan;
-	ScanKeyData entry;
+	ScanKeyData key;
+	HeapTuple	tuple;
 
 	catalogRelation = heap_openr(InheritsRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&entry, 0x0,
+	ScanKeyEntryInitialize(&key, 0x0,
 						   Anum_pg_inherits_inhrelid, F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndex, true,
-							  SnapshotNow, 1, &entry);
+							  SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
@@ -859,6 +858,125 @@ DeleteAttributeTuples(Oid relid)
 	heap_close(attrel, RowExclusiveLock);
 }
 
+/*
+ *		RemoveAttrDefault
+ *
+ * If the specified relation/attribute has a default, remove it.
+ * (If no default, raise error if complain is true, else return quietly.)
+ */
+void
+RemoveAttrDefault(Oid relid, AttrNumber attnum,
+				  DropBehavior behavior, bool complain)
+{
+	Relation	attrdef_rel;
+	ScanKeyData scankeys[2];
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	bool		found = false;
+
+	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
+
+	ScanKeyEntryInitialize(&scankeys[0], 0x0,
+						   Anum_pg_attrdef_adrelid, F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+	ScanKeyEntryInitialize(&scankeys[1], 0x0,
+						   Anum_pg_attrdef_adnum, F_INT2EQ,
+						   Int16GetDatum(attnum));
+
+	scan = systable_beginscan(attrdef_rel, AttrDefaultIndex, true,
+							  SnapshotNow, 2, scankeys);
+
+	/* There should be at most one matching tuple, but we loop anyway */
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		ObjectAddress	object;
+
+		object.classId = RelationGetRelid(attrdef_rel);
+		object.objectId = tuple->t_data->t_oid;
+		object.objectSubId = 0;
+
+		performDeletion(&object, behavior);
+
+		found = true;
+	}
+
+	systable_endscan(scan);
+	heap_close(attrdef_rel, RowExclusiveLock);
+
+	if (complain && !found)
+		elog(ERROR, "RemoveAttrDefault: no default found for rel %u attnum %d",
+			 relid, attnum);
+}
+
+/*
+ *		RemoveAttrDefaultById
+ *
+ * Remove a pg_attrdef entry specified by OID.  This is the guts of
+ * attribute-default removal.  Note it should be called via performDeletion,
+ * not directly.
+ */
+void
+RemoveAttrDefaultById(Oid attrdefId)
+{
+	Relation	attrdef_rel;
+	Relation	attr_rel;
+	ScanKeyData scankeys[1];
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	Oid			myrelid;
+	AttrNumber	myattnum;
+
+	/* Grab an appropriate lock on the pg_attrdef relation */
+	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
+
+	ScanKeyEntryInitialize(&scankeys[0], 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(attrdefId));
+
+	scan = systable_beginscan(attrdef_rel, AttrDefaultOidIndex, true,
+							  SnapshotNow, 1, scankeys);
+
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "RemoveAttrDefaultById: cache lookup failed for attrdef %u",
+			 attrdefId);
+
+	myrelid = ((Form_pg_attrdef) GETSTRUCT(tuple))->adrelid;
+	myattnum = ((Form_pg_attrdef) GETSTRUCT(tuple))->adnum;
+
+	simple_heap_delete(attrdef_rel, &tuple->t_self);
+
+	systable_endscan(scan);
+	heap_close(attrdef_rel, RowExclusiveLock);
+
+	/* Fix the pg_attribute row */
+	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(ATTNUM,
+							   ObjectIdGetDatum(myrelid),
+							   Int16GetDatum(myattnum),
+							   0, 0);
+	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+		elog(ERROR, "RemoveAttrDefaultById: cache lookup failed for rel %u attr %d",
+			 myrelid, myattnum);
+
+	((Form_pg_attribute) GETSTRUCT(tuple))->atthasdef = false;
+
+	simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+	/* keep the system catalog indices current */
+	if (RelationGetForm(attr_rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_attr_indices];
+
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
+		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	}
+
+	heap_close(attr_rel, RowExclusiveLock);
+}
+
 /* ----------------------------------------------------------------
  *		heap_drop_with_catalog	- removes specified relation from catalogs
  *
@@ -866,7 +984,7 @@ DeleteAttributeTuples(Oid relid)
  *		2)	flush relation buffers from bufmgr
  *		3)	remove inheritance information
  *		4)	remove pg_statistic tuples
- *		5)	remove pg_attribute tuples and related items
+ *		5)	remove pg_attribute tuples
  *		6)	remove pg_class tuple
  *		7)	unlink relation file
  *
@@ -908,11 +1026,9 @@ heap_drop_with_catalog(Oid rid)
 	RemoveStatistics(rel);
 
 	/*
-	 * delete attribute tuples and associated defaults
+	 * delete attribute tuples
 	 */
 	DeleteAttributeTuples(RelationGetRelid(rel));
-
-	RemoveDefaults(rel);
 
 	/*
 	 * delete relation tuple
@@ -957,6 +1073,9 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	Relation	attridescs[Num_pg_attr_indices];
 	HeapTuple	atttup;
 	Form_pg_attribute attStruct;
+	Oid			attrdefOid;
+	ObjectAddress	colobject,
+				defobject;
 
 	/*
 	 * Need to construct source equivalent of given node-string.
@@ -971,21 +1090,33 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 											RelationGetRelid(rel)),
 							   false);
 
+	/*
+	 * Make the pg_attrdef entry.
+	 */
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
 	values[Anum_pg_attrdef_adbin - 1] = DirectFunctionCall1(textin,
 												 CStringGetDatum(adbin));
 	values[Anum_pg_attrdef_adsrc - 1] = DirectFunctionCall1(textin,
 												 CStringGetDatum(adsrc));
+
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
+
 	tuple = heap_formtuple(adrel->rd_att, values, nulls);
-	simple_heap_insert(adrel, tuple);
+	attrdefOid = simple_heap_insert(adrel, tuple);
+
 	CatalogOpenIndices(Num_pg_attrdef_indices, Name_pg_attrdef_indices,
 					   idescs);
 	CatalogIndexInsert(idescs, Num_pg_attrdef_indices, adrel, tuple);
 	CatalogCloseIndices(Num_pg_attrdef_indices, idescs);
+
+	defobject.classId = RelationGetRelid(adrel);
+	defobject.objectId = attrdefOid;
+	defobject.objectSubId = 0;
+
 	heap_close(adrel, RowExclusiveLock);
 
+	/* now can free some of the stuff allocated above */
 	pfree(DatumGetPointer(values[Anum_pg_attrdef_adbin - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_attrdef_adsrc - 1]));
 	heap_freetuple(tuple);
@@ -1016,6 +1147,16 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	}
 	heap_close(attrrel, RowExclusiveLock);
 	heap_freetuple(atttup);
+
+	/*
+	 * Make a dependency so that the pg_attrdef entry goes away if the
+	 * column (or whole table) is deleted.
+	 */
+	colobject.classId = RelOid_pg_class;
+	colobject.objectId = RelationGetRelid(rel);
+	colobject.objectSubId = attnum;
+
+	recordDependencyOn(&defobject, &colobject, DEPENDENCY_AUTO);
 }
 
 /*
@@ -1497,29 +1638,6 @@ cookDefault(ParseState *pstate,
 }
 
 
-static void
-RemoveAttrDefaults(Relation rel)
-{
-	Relation	adrel;
-	HeapScanDesc adscan;
-	ScanKeyData key;
-	HeapTuple	tup;
-
-	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
-
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_attrdef_adrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)));
-
-	adscan = heap_beginscan(adrel, SnapshotNow, 1, &key);
-
-	while ((tup = heap_getnext(adscan, ForwardScanDirection)) != NULL)
-		simple_heap_delete(adrel, &tup->t_self);
-
-	heap_endscan(adscan);
-	heap_close(adrel, RowExclusiveLock);
-}
-
 /*
  * Removes all constraints on a relation that match the given name.
  *
@@ -1577,18 +1695,6 @@ RemoveRelConstraints(Relation rel, const char *constrName,
 	return ndeleted;
 }
 
-static void
-RemoveDefaults(Relation rel)
-{
-	TupleConstr *constr = rel->rd_att->constr;
-
-	/*
-	 * We can skip looking at pg_attrdef if there are no defaults recorded
-	 * in the Relation.
-	 */
-	if (constr && constr->num_defval > 0)
-		RemoveAttrDefaults(rel);
-}
 
 static void
 RemoveStatistics(Relation rel)

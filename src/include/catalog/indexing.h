@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.69 2002/07/12 18:43:19 tgl Exp $
+ * $Id: indexing.h,v 1.70 2002/07/15 16:33:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,10 @@
 #define Num_pg_amop_indices			2
 #define Num_pg_amproc_indices		1
 #define Num_pg_attr_indices			2
-#define Num_pg_attrdef_indices		1
+#define Num_pg_attrdef_indices		2
 #define Num_pg_class_indices		2
 #define Num_pg_constraint_indices	3
-#define Num_pg_conversion_indices	2
+#define Num_pg_conversion_indices	3
 #define Num_pg_database_indices		2
 #define Num_pg_depend_indices		2
 #define Num_pg_description_indices	1
@@ -57,6 +57,7 @@
 #define AmNameIndex					"pg_am_name_index"
 #define AmOidIndex					"pg_am_oid_index"
 #define AttrDefaultIndex			"pg_attrdef_adrelid_adnum_index"
+#define AttrDefaultOidIndex			"pg_attrdef_oid_index"
 #define AttributeRelidNameIndex		"pg_attribute_relid_attnam_index"
 #define AttributeRelidNumIndex		"pg_attribute_relid_attnum_index"
 #define ClassNameNspIndex			"pg_class_relname_nsp_index"
@@ -66,6 +67,7 @@
 #define ConstraintRelidIndex		"pg_constraint_conrelid_index"
 #define ConversionDefaultIndex		"pg_conversion_default_index"
 #define ConversionNameNspIndex		"pg_conversion_name_nsp_index"
+#define ConversionOidIndex			"pg_conversion_oid_index"
 #define DatabaseNameIndex			"pg_database_datname_index"
 #define DatabaseOidIndex			"pg_database_oid_index"
 #define DependDependerIndex			"pg_depend_depender_index"
@@ -161,6 +163,7 @@ DECLARE_UNIQUE_INDEX(pg_amop_opc_opr_index on pg_amop using btree(amopclaid oid_
 DECLARE_UNIQUE_INDEX(pg_amop_opc_strategy_index on pg_amop using btree(amopclaid oid_ops, amopstrategy int2_ops));
 DECLARE_UNIQUE_INDEX(pg_amproc_opc_procnum_index on pg_amproc using btree(amopclaid oid_ops, amprocnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_attrdef_adrelid_adnum_index on pg_attrdef using btree(adrelid oid_ops, adnum int2_ops));
+DECLARE_UNIQUE_INDEX(pg_attrdef_oid_index on pg_attrdef using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index on pg_attribute using btree(attrelid oid_ops, attname name_ops));
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnum_index on pg_attribute using btree(attrelid oid_ops, attnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_class_oid_index on pg_class using btree(oid oid_ops));
@@ -173,6 +176,7 @@ DECLARE_UNIQUE_INDEX(pg_constraint_oid_index on pg_constraint using btree(oid oi
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_conversion_default_index on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops));
 DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index on pg_conversion using btree(conname name_ops, connamespace oid_ops));
+DECLARE_UNIQUE_INDEX(pg_conversion_oid_index on pg_conversion using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_database_datname_index on pg_database using btree(datname name_ops));
 DECLARE_UNIQUE_INDEX(pg_database_oid_index on pg_database using btree(oid oid_ops));
 /* This following index is not used for a cache and is not unique */

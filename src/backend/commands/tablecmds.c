@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.20 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.21 2002/07/15 16:33:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
@@ -57,7 +56,6 @@ static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
-static void drop_default(Oid relid, int16 attnum);
 static void CheckTupleType(Form_pg_class tuple_class);
 static bool needs_toast_table(Relation rel);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
@@ -2080,13 +2078,17 @@ AlterTableAlterColumnDefault(Oid myrelid,
 	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
 	ReleaseSysCache(tuple);
 
+	/*
+	 * Remove any old default for the column.  We use RESTRICT here for
+	 * safety, but at present we do not expect anything to depend on the
+	 * default.
+	 */
+	RemoveAttrDefault(myrelid, attnum, DROP_RESTRICT, false);
+
 	if (newDefault)
 	{
 		/* SET DEFAULT */
 		RawColumnDefault *rawEnt;
-
-		/* Get rid of the old one first */
-		drop_default(myrelid, attnum);
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attnum;
@@ -2098,72 +2100,9 @@ AlterTableAlterColumnDefault(Oid myrelid,
 		 */
 		AddRelationRawConstraints(rel, makeList1(rawEnt), NIL);
 	}
-	else
-	{
-		/* DROP DEFAULT */
-		Relation	attr_rel;
-
-		/* Fix the pg_attribute row */
-		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
-
-		tuple = SearchSysCacheCopy(ATTNAME,
-								   ObjectIdGetDatum(myrelid),
-								   PointerGetDatum(colName),
-								   0, 0);
-		if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
-			elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-				 RelationGetRelationName(rel), colName);
-
-		((Form_pg_attribute) GETSTRUCT(tuple))->atthasdef = FALSE;
-
-		simple_heap_update(attr_rel, &tuple->t_self, tuple);
-
-		/* keep the system catalog indices current */
-		if (RelationGetForm(attr_rel)->relhasindex)
-		{
-			Relation	idescs[Num_pg_attr_indices];
-
-			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
-			CatalogCloseIndices(Num_pg_attr_indices, idescs);
-		}
-
-		heap_close(attr_rel, RowExclusiveLock);
-
-		/* get rid of actual default definition in pg_attrdef */
-		drop_default(myrelid, attnum);
-	}
 
 	heap_close(rel, NoLock);
 }
-
-
-static void
-drop_default(Oid relid, int16 attnum)
-{
-	ScanKeyData scankeys[2];
-	HeapScanDesc scan;
-	Relation	attrdef_rel;
-	HeapTuple	tuple;
-
-	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&scankeys[0], 0x0,
-						   Anum_pg_attrdef_adrelid, F_OIDEQ,
-						   ObjectIdGetDatum(relid));
-	ScanKeyEntryInitialize(&scankeys[1], 0x0,
-						   Anum_pg_attrdef_adnum, F_INT2EQ,
-						   Int16GetDatum(attnum));
-
-	scan = heap_beginscan(attrdef_rel, SnapshotNow, 2, scankeys);
-
-	if ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-		simple_heap_delete(attrdef_rel, &tuple->t_self);
-
-	heap_endscan(scan);
-
-	heap_close(attrdef_rel, NoLock);
-}
-
 
 /*
  * ALTER TABLE ALTER COLUMN SET STATISTICS / STORAGE
