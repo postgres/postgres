@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.213.2.2 2002/09/30 19:45:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.213.2.3 2003/01/21 19:38:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,6 +187,10 @@ vacuum(VacuumStmt *vacstmt)
 	if (IsTransactionBlock())
 		elog(ERROR, "%s cannot run inside a BEGIN/END block", stmttype);
 
+	/* Running VACUUM from a function would free the function context */
+	if (!MemoryContextContains(QueryContext, vacstmt))
+		elog(ERROR, "%s cannot be executed from a function", stmttype);
+                        
 	/*
 	 * Send info about dead objects to the statistics collector
 	 */
@@ -1320,7 +1324,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		usable_free_size = 0;
 	}
 
-	if (usable_free_size > 0 && num_vtlinks > 0)
+	/* don't bother to save vtlinks if we will not call repair_frag */
+	if (fraged_pages->num_pages > 0 && num_vtlinks > 0)
 	{
 		qsort((char *) vtlinks, num_vtlinks, sizeof(VTupleLinkData),
 			  vac_cmp_vtlinks);
@@ -1602,7 +1607,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 */
 			if ((tuple.t_data->t_infomask & HEAP_UPDATED &&
 			 !TransactionIdPrecedes(tuple.t_data->t_xmin, OldestXmin)) ||
-				(!(tuple.t_data->t_infomask & HEAP_XMAX_INVALID) &&
+				(!(tuple.t_data->t_infomask & (HEAP_XMAX_INVALID |
+											   HEAP_MARKED_FOR_UPDATE)) &&
 				 !(ItemPointerEquals(&(tuple.t_self),
 									 &(tuple.t_data->t_ctid)))))
 			{
@@ -1633,7 +1639,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				 * If this tuple is in the begin/middle of the chain then
 				 * we have to move to the end of chain.
 				 */
-				while (!(tp.t_data->t_infomask & HEAP_XMAX_INVALID) &&
+				while (!(tp.t_data->t_infomask & (HEAP_XMAX_INVALID |
+												  HEAP_MARKED_FOR_UPDATE)) &&
 					   !(ItemPointerEquals(&(tp.t_self),
 										   &(tp.t_data->t_ctid))))
 				{
