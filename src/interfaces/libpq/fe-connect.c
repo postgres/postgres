@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.8 1996/08/19 13:38:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.9 1996/10/10 08:20:09 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,9 @@
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
-#include "libpq/pqcomm.h" /* for decls of MsgType, PacketBuf, StartupInfo */
-#include "fe-auth.h"
+#include <signal.h>
+#include <libpq/pqcomm.h> /* for decls of MsgType, PacketBuf, StartupInfo */
+#include <fe-auth.h>
 #include "libpq-fe.h"
 
 #if defined(PORTNAME_ultrix4) || defined(PORTNAME_next)
@@ -56,19 +57,45 @@ static void closePGconn(PGconn *conn);
 /* ----------------
  *	PQsetdb
  * 
- * establishes a connectin to a postgres backend through the postmaster
+ * establishes a connection to a postgres backend through the postmaster
  * at the specified host and port.
  *
  * returns a PGconn* which is needed for all subsequent libpq calls
  * if the status field of the connection returned is CONNECTION_BAD,
  * then some fields may be null'ed out instead of having valid values 
+ *
+ *  Uses these environment variables:
+ *
+ *    PGHOST       identifies host to which to connect if <pghost> argument
+ *                 is NULL or a null string.
+ *
+ *    PGPORT       identifies TCP port to which to connect if <pgport> argument
+ *                 is NULL or a null string.
+ *
+ *    PGTTY        identifies tty to which to send messages if <pgtty> argument
+ *                 is NULL or a null string.
+ *
+ *    PGOPTIONS    identifies connection options if <pgoptions> argument is
+ *                 NULL or a null string.
+ *
+ *    PGUSER       Postgres username to associate with the connection.
+ *
+ *    PGDATABASE   name of database to which to connect if <pgdatabase> 
+ *                 argument is NULL or a null string
+ *
+ *    None of the above need be defined.  There are defaults for all of them.
+ *
  * ----------------
  */
 PGconn* 
 PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const char* pgtty, const char* dbName)
 {
   PGconn *conn;
-  const char *tmp;
+  char *tmp;
+  char errorMessage[ERROR_MSG_LENGTH];
+    /* An error message from some service we call. */
+  bool error;   
+    /* We encountered an error that prevents successful completion */
 
   conn = (PGconn*)malloc(sizeof(PGconn));
 
@@ -113,33 +140,45 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
       conn->pgoptions = strdup(tmp);
     } else
       conn->pgoptions = strdup(pgoptions);
-    if (((tmp = dbName) && (dbName[0] != '\0')) ||
-        ((tmp = getenv("PGDATABASE")))) {
-      conn->dbName = strdup(tmp);
+
+    if (tmp = getenv("PGUSER")) {
+      error = FALSE;
+      conn->pguser = strdup(tmp);
     } else {
-      char errorMessage[ERROR_MSG_LENGTH];
-      if ((tmp = fe_getauthname(errorMessage)) != 0) {
-        conn->dbName = strdup(tmp);
-        free((char*)tmp);
-      } else {
+      tmp = fe_getauthname(errorMessage);
+      if (tmp == 0) {
+        error = TRUE;
         sprintf(conn->errorMessage,
-                "FATAL: PQsetdb: Unable to determine a database name!\n");
-        conn->dbName = NULL;
-        return conn;
+                "FATAL: PQsetdb: Unable to determine a Postgres username!\n");
+      } else {
+        error = FALSE;
+        conn->pguser = tmp;
       }
     }
-    conn->status = connectDB(conn);
-    if (conn->status == CONNECTION_OK) {
-      PGresult *res;
-      /* Send a blank query to make sure everything works; in particular, that
-         the database exists.
-         */
-      res = PQexec(conn," ");
-      if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY) {
-        /* PQexec has put error message in conn->errorMessage */
-        closePGconn(conn);
+
+    if (!error) {
+      if (((tmp = (char *)dbName) && (dbName[0] != '\0')) ||
+          ((tmp = getenv("PGDATABASE")))) {
+        conn->dbName = strdup(tmp);
+      } else conn->dbName = conn->pguser;
+    } else conn->dbName = NULL;
+
+    if (error) conn->status = CONNECTION_BAD;
+    else {
+      conn->status = connectDB(conn);  
+        /* Puts message in conn->errorMessage */
+      if (conn->status == CONNECTION_OK) {
+        PGresult *res;
+        /* Send a blank query to make sure everything works; 
+           in particular, that the database exists.
+           */
+        res = PQexec(conn," ");
+        if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY) {
+          /* PQexec has put error message in conn->errorMessage */
+          closePGconn(conn);
+        }
+        PQclear(res);
       }
-      PQclear(res);
     }
   }        
   return conn;
@@ -165,7 +204,6 @@ connectDB(PGconn *conn)
     Port        *port = conn->port;
     int         portno;
 
-    char        *user;
     /*
     //
     // Initialize the startup packet. 
@@ -175,11 +213,7 @@ connectDB(PGconn *conn)
     //
     //
     */
-    user = fe_getauthname(conn->errorMessage);
-    if (!user)
-	goto connect_errReturn;
-    strncpy(startup.user,user,sizeof(startup.user));
-    free(user);
+    strncpy(startup.user,conn->pguser,sizeof(startup.user));
     strncpy(startup.database,conn->dbName,sizeof(startup.database));
     strncpy(startup.tty,conn->pgtty,sizeof(startup.tty));
     if (conn->pgoptions) {
@@ -292,6 +326,7 @@ freePGconn(PGconn *conn)
   if (conn->pgoptions) free(conn->pgoptions);
   if (conn->pgport) free(conn->pgport);
   if (conn->dbName) free(conn->dbName);
+  if (conn->pguser) free(conn->pguser);
   if (conn->notifyList) DLFreeList(conn->notifyList);
   free(conn);
 }
@@ -303,8 +338,16 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
+    const struct sigaction ignore_action = {SIG_IGN, 0, 0, NULL};
+    struct sigaction oldaction;
+
+    /* If connection is already gone, that's cool.  No reason for kernel
+       to kill us when we try to write to it.  So ignore SIGPIPE signals.
+       */
+    sigaction(SIGPIPE, (struct sigaction *) &ignore_action, &oldaction);
     fputs("X\0", conn->Pfout);
     fflush(conn->Pfout);
+    sigaction(SIGPIPE, &oldaction, NULL);
     if (conn->Pfout) fclose(conn->Pfout);
     if (conn->Pfin)  fclose(conn->Pfin);
     if (conn->Pfdebug) fclose(conn->Pfdebug);

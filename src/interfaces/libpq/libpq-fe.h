@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.7 1996/08/13 01:34:29 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.8 1996/10/10 08:20:11 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,7 @@ typedef struct pg_conn{
   void *port; /* really a Port* */
   int asyncNotifyWaiting;
   Dllist* notifyList;
+  char *pguser;  /* Postgres username of user who is connected */
 } PGconn;
 
 #define CMDSTATUS_LEN 40
