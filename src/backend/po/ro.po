@@ -348,7 +348,7 @@ msgstr "nu existã un marcator contrecord în fiºierul jurnal %u, segment %u, deca
 #: access/transam/xlog.c:2569
 #, c-format
 msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
-msgstr "lungime contrecord incorectã (%u) în fiºierul jurnal %u, segment %u, decalare %u: %m"
+msgstr "lungime contrecord incorectã (%u) în fiºierul jurnal %u, segment %u, decalare %u"
 
 #: access/transam/xlog.c:2636
 #, c-format
