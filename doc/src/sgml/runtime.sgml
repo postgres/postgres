@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.284 2004/09/26 22:51:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.285 2004/09/29 06:27:11 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3063,19 +3063,19 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <term><varname>default_with_oids</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        This controls whether <command>CREATE TABLE</command>
-        and <command>CREATE TABLE AS</command> will include OIDs in
+        This controls whether <command>CREATE TABLE</command> and
+        <command>CREATE TABLE AS</command> will include OIDs in
         newly-created tables, if neither <literal>WITH OIDS</literal>
-        nor <literal>WITHOUT OIDS</literal> have been specified. It
-        also determines whether OIDs will be included in tables
-        created by <command>SELECT INTO</command>. In
+        nor <literal>WITHOUT OIDS</literal> is specified. It also
+        determines whether OIDs will be included in tables created by
+        <command>SELECT INTO</command>. In
         <productname>PostgreSQL</productname> &version;
-        <varname>default_with_oids</varname> defaults to
-        true. This is also the behavior of previous versions
-        of <productname>PostgreSQL</productname>. However, assuming
-        that tables will contain OIDs by default is not
-        encouraged. This option will probably default to false in a
-        future release of <productname>PostgreSQL</productname>.
+        <varname>default_with_oids</varname> defaults to true. This is
+        also the behavior of previous versions of
+        <productname>PostgreSQL</productname>. However, assuming that
+        tables will contain OIDs by default is not encouraged. This
+        option will probably default to false in a future release of
+        <productname>PostgreSQL</productname>.
        </para>
 
        <para>
@@ -3084,8 +3084,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         future versions of <productname>PostgreSQL</productname>, this
         option should be disabled, and applications that require OIDs
         on certain tables should explicitly specify <literal>WITH
-        OIDS</literal> when issuing the <command>CREATE
-        TABLE</command> statements for the tables in question.
+        OIDS</literal> when those tables are created.
        </para>
       </listitem>
      </varlistentry>
