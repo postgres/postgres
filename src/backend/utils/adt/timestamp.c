@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.71 2002/09/02 02:47:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.72 2002/09/03 22:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2871,7 +2871,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
+#ifdef HAVE_INT64_TIMESTAMP
 				result = ((timestamp - SetEpochTimestamp()) / 1000000e0);
+#else
+				result = timestamp - SetEpochTimestamp();
+#endif
 				break;
 
 			case DTK_DOW:
@@ -3052,7 +3056,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((timestamp - SetEpochTimestamp()) / 100000e0);
+				result = ((timestamp - SetEpochTimestamp()) / 1000000e0);
 #else
 				result = timestamp - SetEpochTimestamp();
 #endif
