@@ -3,17 +3,14 @@
  * like.c
  *	  like expression handling code.
  *
- * Copyright (c) 1994, Regents of the University of California
- *
- *
- * IDENTIFICATION
- *	  /usr/local/devel/pglite/cvs/src/backend/utils/adt/like.c,v 1.1 1995/07/30 23:55:36 emkxp01 Exp
- *
- *
  *	 NOTES
  *		A big hack of the regexp.c code!! Contributed by
  *		Keith Parks <emkxp01@mtcc.demon.co.uk> (7/95).
  *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.31 1999/09/07 19:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,9 +106,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.30 $
-**	"like.c" A first attempt at a LIKE operator for Postgres95.
-**
+/*
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
 **	Rich $alz is now <rsalz@bbn.com>.
 **	Special thanks to Lars Mathiesen <thorinn@diku.dk> for the LABORT code.
@@ -125,8 +120,7 @@ textnlike(struct varlena * s, struct varlena * p)
 **	All the nice shell RE matching stuff was replaced by just "_" and "%"
 **
 **	As I don't have a copy of the SQL standard handy I wasn't sure whether
-**	to leave in the '\' escape character handling. (I suspect the standard
-**	handles "%%" as a single literal percent)
+**	to leave in the '\' escape character handling.
 **
 **	Keith Parks. <keith@mtcc.demon.co.uk>
 **
@@ -140,15 +134,21 @@ textnlike(struct varlena * s, struct varlena * p)
 #define LIKE_FALSE						0
 #define LIKE_ABORT						-1
 
-/*
-**	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
-*/
+/*--------------------
+ *	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
+ *
+ *	LIKE_TRUE: they match
+ *	LIKE_FALSE: they don't match
+ *	LIKE_ABORT: not only don't they match, but the text is too short.
+ *
+ * If LIKE_ABORT is returned, then no suffix of the text can match the
+ * pattern either, so an upper-level % scan can stop scanning now.
+ *--------------------
+ */
 static int
 DoMatch(pg_wchar * text, pg_wchar * p)
 {
-	int			matched;
-
-	for (; *p && *text; text ++, p++)
+	for (; *p && *text; text++, p++)
 	{
 		switch (*p)
 		{
@@ -157,47 +157,55 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 				p++;
 				/* FALLTHROUGH */
 			default:
-				if (*text !=*p)
+				if (*text != *p)
 					return LIKE_FALSE;
 				break;
 			case '_':
-				/* Match anything. */
+				/* Match any single character. */
 				break;
 			case '%':
 				/* %% is the same as % according to the SQL standard */
 				/* Advance past all %'s */
 				while (*p == '%')
 					p++;
+				/* Trailing percent matches everything. */
 				if (*p == '\0')
-					/* Trailing percent matches everything. */
 					return LIKE_TRUE;
-				while (*text)
+				/* Otherwise, scan for a text position at which we
+				 * can match the rest of the pattern.
+				 */
+				for (; *text; text++)
 				{
-					/* Optimization to prevent most recursion */
-					if ((*text == *p ||
-						 *p == '\\' || *p == '%' || *p == '_') &&
-						(matched = DoMatch(text, p)) != LIKE_FALSE)
-						return matched;
-					text	  ++;
+					/* Optimization to prevent most recursion: don't recurse
+					 * unless first pattern char might match this text char.
+					 */
+					if (*text == *p || *p == '\\' || *p == '_')
+					{
+						int	matched = DoMatch(text, p);
+						if (matched != LIKE_FALSE)
+							return matched;	/* TRUE or ABORT */
+					}
 				}
+				/* End of text with no match, so no point in trying later
+				 * places to start matching this pattern.
+				 */
 				return LIKE_ABORT;
 		}
 	}
 
-	if (*text !='\0')
-		return LIKE_ABORT;
-	else
-	{
-		/* End of input string.  Do we have matching string remaining? */
-		while (*p == '%')		/* allow multiple %'s at end of pattern */
-			p++;
-		if (*p == '\0')
-			return LIKE_TRUE;
-		else
-			return LIKE_ABORT;
-	}
-}
+	if (*text != '\0')
+		return LIKE_FALSE;		/* end of pattern, but not of text */
 
+	/* End of input string.  Do we have matching pattern remaining? */
+	while (*p == '%')			/* allow multiple %'s at end of pattern */
+		p++;
+	if (*p == '\0')
+		return LIKE_TRUE;
+	/* End of text with no match, so no point in trying later
+	 * places to start matching this pattern.
+	 */
+	return LIKE_ABORT;
+}
 
 /*
 **	User-level routine.  Returns TRUE or FALSE.
@@ -205,6 +213,7 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 static int
 like(pg_wchar * text, pg_wchar * p)
 {
+	/* Fast path for match-everything pattern */
 	if (p[0] == '%' && p[1] == '\0')
 		return TRUE;
 	return DoMatch(text, p) == LIKE_TRUE;
