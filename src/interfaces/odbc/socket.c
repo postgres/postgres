@@ -79,8 +79,7 @@ SOCK_Destructor(SocketClass *self)
 	{
 		SOCK_put_char(self, 'X');
 		SOCK_flush_output(self);
-		if (!shutdown(self->socket, 2)) /* no sends or receives */
-			closesocket(self->socket);
+		closesocket(self->socket);
 	}
 
 	if (self->buffer_in)
@@ -291,9 +290,11 @@ SOCK_get_next_byte(SocketClass *self)
 		/* reload the buffer */
 
 		self->buffer_read_in = 0;
-		self->buffer_filled_in = recv(self->socket, (char *) self->buffer_in, globals.socket_buffersize, 0);
+		self->buffer_filled_in = recv(self->socket, (char *) self->buffer_in,
+									  globals.socket_buffersize, 0);
 
-		mylog("read %d, global_socket_buffersize=%d\n", self->buffer_filled_in, globals.socket_buffersize);
+		mylog("read %d, global_socket_buffersize=%d\n",
+			  self->buffer_filled_in, globals.socket_buffersize);
 
 		if (self->buffer_filled_in == -1)
 		{
