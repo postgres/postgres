@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.17 1996/07/31 02:07:25 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.18 1996/07/31 18:52:38 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -211,12 +211,12 @@ endif
 #USE_TCL= true
 # customize these to your site's needs
 #
-TCL_INCDIR= /usr/local/devel/tcl7.4/include
-TCL_LIBDIR= /usr/local/devel/tcl7.4/lib
-TCL_LIB = -ltcl7.4
-TK_INCDIR=  /usr/local/devel/tk4.0/include
-TK_LIBDIR=  /usr/local/devel/tk4.0/lib
-TK_LIB = -ltk4.0
+TCL_INCDIR= /usr/local/include
+TCL_LIBDIR= /usr/local/lib
+TCL_LIB = -ltcl7.5
+TK_INCDIR=  /usr/local/include
+TK_LIBDIR=  /usr/local/lib
+TK_LIB = -ltk4.1
 
 X11_INCDIR = /usr/X11R6.1/include
 X11_LIBDIR = /usr/X11R6.1/lib
