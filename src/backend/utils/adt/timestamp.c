@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.46 2001/03/22 03:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.47 2001/04/03 18:05:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1085,7 +1085,6 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 				if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 				{
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-					tm->tm_isdst = -1;
 					tm->tm_year -= 1900;
 					tm->tm_mon -= 1;
 					tm->tm_isdst = -1;
@@ -1727,7 +1726,6 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 			{
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-				tm->tm_isdst = -1;
 				tm->tm_year -= 1900;
 				tm->tm_mon -= 1;
 				tm->tm_isdst = -1;

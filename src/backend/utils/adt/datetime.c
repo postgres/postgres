@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.62 2001/03/22 03:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.63 2001/04/03 18:05:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1120,6 +1120,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		tmp->tm_sec = tm->tm_sec;
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+		tmp->tm_year -= 1900;
+		tmp->tm_mon -= 1;
 		tmp->tm_isdst = -1;
 		mktime(tmp);
 		tm->tm_isdst = tmp->tm_isdst;
