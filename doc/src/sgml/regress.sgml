@@ -1,5 +1,5 @@
 <Chapter Id="regress">
-<Title>Regression Test</Title>
+<Title id="regress-title">Regression Test</Title>
 
 <Abstract>
 <Para>
@@ -14,20 +14,39 @@ Regression test instructions and analysis.
 </Para>
 
 <Para>
+  There are two different ways in which the regression tests can be run:
+  the "sequential" method and the "parallel" method.  The sequential method
+  runs each test script in turn, whereas the parallel method starts up
+  multiple server processes to run groups of tests in parallel.  Parallel
+  testing gives confidence that interprocess communication and locking
+  are working correctly.  Another key difference is that the sequential
+  test procedure uses an already-installed postmaster, whereas the
+  parallel test procedure tests a system that has been built but not yet
+  installed.  (The parallel test script actually does an installation into
+  a temporary directory and fires up a private postmaster therein.)
+</Para>
+
+<Para>
+  Some properly installed and fully functional PostgreSQL installations
+  can "fail" some of these regression tests due to artifacts of floating point
+  representation and time zone support. The tests are currently evaluated
+  using a simple <application>diff</application> comparison against the
+  outputs generated on a reference system, so the results are sensitive to
+  small system differences.
+  When a test is reported as "failed", always examine the differences
+  between expected and actual results; you may well find that the differences
+  are not significant.
+</Para>
+
+<Para>
   The regression tests were originally developed by Jolly Chen and Andrew Yu,
   and were extensively revised/repackaged by Marc Fournier and Thomas Lockhart.
   From <ProductName>PostgreSQL</ProductName> v6.1 onward
   the regression tests are current for every official release. 
 </Para>
 
-<Para>
-  Some properly installed and fully functional PostgreSQL installations
-  can fail some of these regression tests due to artifacts of floating point
-  representation and time zone support. The current tests are evaluated
-  using a simple "diff" algorithm, and are sensitive to small system
-  differences. For apparently failed tests, examining the differences
-  may reveal that the differences are not significant.
-</Para>
+<Sect1>
+<Title>Regression Environment</Title>
 
 <Para>
 The regression testing notes below assume the following (except where noted):
@@ -60,22 +79,11 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 </ItemizedList>
 </Para>
 
-<Sect1>
-<Title>Regression Environment</Title>
-
-<Para>
-  To prepare for regression testing, do <Command>make all</Command> in the regression test
-  directory.  This compiles a <Acronym>C</Acronym> program with PostgreSQL extension functions
-  into a shared library.  Localized SQL scripts and output-comparison
-  files are also created for the tests that need them.  The localization
-  replaces macros in the source files with absolute pathnames and user names.  
-</Para>
-
 <Para>
   Normally, the regression tests should be run as the postgres user since
   the 'src/test/regress' directory and sub-directories are owned by the
   postgres user. If you run the regression test as another user the
-  'src/test/regress' directory tree must be writeable to that user.
+  'src/test/regress' directory tree must be writeable by that user.
 </Para>
 
 <Para>
@@ -131,6 +139,8 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 
   results/ .. .out files that contain what the results *actually* look
               like. Also used as temporary storage for table copy testing.
+
+  tmp_check/  temporary installation created by parallel testing script.
       </ProgramListing>
     </Para>
   </Sect1>
@@ -144,39 +154,48 @@ The runtime path is /usr/local/pgsql (other paths are possible).
       like <FileName>ps</FileName> and <FileName>tar</FileName> vary wildly on what options you should use on each
       platform. <Emphasis>Use common sense</Emphasis> before typing in these commands.
     </Para>
-      
-      <Para>
-	For a fresh install or upgrading from previous releases of
-	<ProductName>Postgres</ProductName>:
-      </Para>
     
     <Procedure>
-      <Title><ProductName>Postgres</ProductName> Regression Configuration</Title>
-
+      <Title><ProductName>Postgres</ProductName> Regression Test</Title>
+      
       <Step Performance="required">
 	<Para>
-	  The file /usr/src/pgsql/src/test/regress/README has detailed
-	  instructions for running and interpreting the regression tests.
-	  A short version follows here:
-	</Para>
-	
+	  Prepare the files needed for the regression test with:
+	  <ProgramListing>
+	    cd /usr/src/pgsql/src/test/regress
+	    gmake clean
+	    gmake all
+	  </ProgramListing>
+	  You can skip "gmake clean" if this is the first time you
+	  are running the tests.
+	</para>
 	<Para>
-	  If the postmaster is not already running, start the postmaster on an
-	  available window by typing
+	  This step compiles a <Acronym>C</Acronym>
+	  program with PostgreSQL extension functions into a shared library.
+	  Localized SQL scripts and output-comparison files are also created
+	  for the tests that need them.  The localization replaces macros in
+	  the source files with absolute pathnames and user names.
+	</Para>
+      </step>
+
+      <Step Performance="optional">
+	<Para>
+	  If you intend to use the "sequential" test procedure, which tests
+	  an already-installed postmaster, be sure that the postmaster
+	  is running.  If it isn't already running,
+	  start the postmaster in an available window by typing
 	  <ProgramListing>
 	    postmaster
 	  </ProgramListing>
-	  
 	  or start the postmaster daemon running in the background by typing
 	  <ProgramListing>
 	    cd
 	    nohup postmaster > regress.log 2>&1 &
 	  </ProgramListing>
-	</Para>
-	
-	<Para>
-	  Run postmaster from your <ProductName>Postgres</ProductName> super user account (typically
-	  account postgres).
+	  The latter is probably preferable, since the regression test log
+	  will be quite lengthy (60K or so, in
+	  <ProductName>Postgres</ProductName> 7.0) and you might want to
+	  review it for clues if things go wrong.
 	  
 	  <Note>
 	    <Para>
@@ -186,56 +205,39 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 	</Para>
       </Step>
       
-      <Step Performance="optional">
-	<Para>
-	  If you have previously invoked the regression test, clean up the
-	  working directory with:
-	  
-	  <ProgramListing>
-	    cd /usr/src/pgsql/src/test/regress
-	    gmake clean
-	  </ProgramListing>
-	</para>
-	<Para>
-	  You do not need to type "gmake clean" if this is the first time you
-	  are running the tests.
-	</Para>
-      </step>
-
-      
       <Step Performance="required">
 	<Para>
-	  Build the regression test. Type
-	  <ProgramListing>
-	    cd /usr/src/pgsql/src/test/regress
-	    gmake all
-	  </ProgramListing>
-	</Para>
-      </Step>
-      
-      <Step Performance="required">
-	<Para>
-	  Run the regression tests.  Type
+	  Run the regression tests.  For a sequential test, type
 	  <ProgramListing>
 	    cd /usr/src/pgsql/src/test/regress
 	    gmake runtest
 	  </ProgramListing>
+	  For a parallel test, type
+	  <ProgramListing>
+	    cd /usr/src/pgsql/src/test/regress
+	    gmake runcheck
+	  </ProgramListing>
+	  The sequential test just runs the test scripts using your
+	  already-running postmaster.
+	  The parallel test will perform a complete installation of
+	  <ProductName>Postgres</ProductName> into a temporary directory,
+	  start a private postmaster therein, and then run the test scripts.
+	  Finally it will kill the private postmaster (but the temporary
+	  directory isn't removed automatically).
 	</Para>
       </Step>
       
       <Step Performance="required">
 	<Para>
-	  
 	  You should get on the screen (and also written to file ./regress.out)
 	  a series of statements stating which tests passed and which tests
 	  failed.  Please note that it can be normal for some of the tests to
-	  "fail".  For the failed tests, use diff to compare the files in
-	  directories ./results and ./expected.  If float8 failed, type
-	  something like:
-	  <ProgramListing>
-	    cd /usr/src/pgsql/src/test/regress
-	    diff -w expected/float8.out results
-	  </ProgramListing>
+	  "fail" due to platform-specific variations.  See the next section
+	  for details on determining whether a "failure" is significant.
+	</Para>
+	<Para>
+	  Some of the tests, notably "numeric", can take a while, especially
+	  on slower platforms.  Have patience.
 	</Para>
       </Step>
       
@@ -243,11 +245,14 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 	<Para>
 	  After running the tests and examining the results, type
 	  <ProgramListing>
-	    dropdb regression
 	    cd /usr/src/pgsql/src/test/regress
 	    gmake clean
 	  </ProgramListing>
 	  to recover the temporary disk space used by the tests.
+	  If you ran a sequential test, also type
+	  <ProgramListing>
+	    dropdb regression
+	  </ProgramListing>
 	</Para>
       </Step>
     </procedure>
@@ -257,10 +262,14 @@ The runtime path is /usr/local/pgsql (other paths are possible).
     <Title>Regression Analysis</Title>
 
      <Para>
-       The results are in files in the ./results directory. These results
-       can be compared with results in the ./expected directory using 'diff'.
-       (The test script does this for you, and leaves the differences
-       in ./regression.diffs.)
+       The actual outputs of the regression tests are in files in the
+       <filename>./results</filename> directory. The test script
+       uses <application>diff</application> to compare each output file
+       against the reference outputs stored in the
+       <filename>./expected</filename> directory.  Any differences are
+       saved for your inspection in
+       <filename>./regression.diffs</filename>.  (Or you can run
+       <application>diff</application> yourself, if you prefer.)
      </Para>
 
      <Para>
@@ -354,7 +363,7 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 	
 	When comparing the results from different platforms, differences occur
 	in the 2nd or 3rd place to the right of the decimal point. The SQL
-	statements where these problems occur are the folowing:
+	statements where these problems occur are the following:
 	
 	<ProgramListing>
 	  QUERY: SELECT * from street;
@@ -368,18 +377,19 @@ The runtime path is /usr/local/pgsql (other paths are possible).
       <Title>Random differences</Title>
       
       <Para>
-	There is at least one test case in random.out which is intended to produce
-	random results. This causes random to fail the regression testing
-	once in a while.
+	There is at least one case in the "random" test script that is
+	intended to produce
+	random results. This causes random to fail the regression test
+	once in a while (perhaps once in every five to ten trials).
 	Typing
 	<ProgramListing>
 	  diff results/random.out expected/random.out
 	</ProgramListing>
-	
-	should produce only
-	one or a few lines of differences for this reason, but other floating
-	point differences on dissimilar architectures might cause many more
-	differences. See the release notes below.
+	should produce only one or a few lines of differences.  You need
+	not worry unless the random test always fails in repeated attempts.
+	(On the other hand, if the random test is <emphasis>never</emphasis>
+	reported to fail even in many trials of the regress tests, you
+	probably <emphasis>should</emphasis> worry.)
       </Para>
       
     </Sect2>
@@ -398,10 +408,10 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 	system using the <FileName>postgres5-1.02a5.tar.gz</FileName> source tree. It was compared
 	with a file created on an I386 Solaris 2.4 system and the differences
 	were only in the floating point polygons in the 3rd digit to the right
-	of the decimal point. (see below)
+	of the decimal point.
 	
 	The original <FileName>sample.regress.out</FileName> file was from the postgres-1.01 release
-	constructed by Jolly Chen and is included here for reference. It may
+	constructed by Jolly Chen. It may
 	have been created on a DEC ALPHA machine as the <FileName>Makefile.global</FileName>
 	in the postgres-1.01 release has PORTNAME=alpha.
       </Para>
