@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.146 2001/05/07 00:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.147 2001/05/14 21:53:16 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -587,9 +587,7 @@ UpdateIndexRelation(Oid indexoid,
 	indexForm->indexrelid = indexoid;
 	indexForm->indrelid = heapoid;
 	indexForm->indproc = indexInfo->ii_FuncOid;
-	indexForm->indisclustered = false;
 	indexForm->indislossy = islossy;
-	indexForm->indhaskeytype = true;	/* not actually used anymore */
 	indexForm->indisunique = indexInfo->ii_Unique;
 	indexForm->indisprimary = primary;
 	memcpy((char *) &indexForm->indpred, (char *) predText, predLen);

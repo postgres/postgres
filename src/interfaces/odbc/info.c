@@ -2009,8 +2009,7 @@ SQLStatistics(
 	char	   *table_name;
 	char		index_name[MAX_INFO_STRING];
 	short		fields_vector[16];
-	char		isunique[10],
-				isclustered[10];
+	char		isunique[10];
 	SDWORD		index_name_len,
 				fields_vector_len;
 	TupleNode  *row;
@@ -2170,7 +2169,7 @@ SQLStatistics(
 	indx_stmt = (StatementClass *) hindx_stmt;
 
 	sprintf(index_query, "select c.relname, i.indkey, i.indisunique"
-			", i.indisclustered, c.relhasrules"
+			", c.relhasrules"
 			" from pg_index i, pg_class c, pg_class d"
 			" where c.oid = i.indexrelid and d.relname = '%s'"
 			" and d.oid = i.indrelid", table_name);
@@ -2178,7 +2177,6 @@ SQLStatistics(
 	result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-
 		/*
 		 * "Couldn't execute index query (w/SQLExecDirect) in
 		 * SQLStatistics.";
@@ -2226,20 +2224,7 @@ SQLStatistics(
 		goto SEEYA;
 	}
 
-	/* bind the "is clustered" column */
 	result = SQLBindCol(hindx_stmt, 4, SQL_C_CHAR,
-						isclustered, sizeof(isclustered), NULL);
-	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
-	{
-		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
-												 * in SQLStatistics."; */
-		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
-		goto SEEYA;
-
-	}
-
-	result = SQLBindCol(hindx_stmt, 5, SQL_C_CHAR,
 						relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
@@ -2270,10 +2255,6 @@ SQLStatistics(
 		sprintf(buf, "%s_idx_fake_oid", table_name);
 		set_tuplefield_string(&row->tuple[5], buf);
 
-		/*
-		 * Clustered index?  I think non-clustered should be type OTHER
-		 * not HASHED
-		 */
 		set_tuplefield_int2(&row->tuple[6], (Int2) SQL_INDEX_OTHER);
 		set_tuplefield_int2(&row->tuple[7], (Int2) 1);
 
@@ -2316,11 +2297,7 @@ SQLStatistics(
 				set_tuplefield_string(&row->tuple[4], "");
 				set_tuplefield_string(&row->tuple[5], index_name);
 
-				/*
-				 * Clustered index?  I think non-clustered should be type
-				 * OTHER not HASHED
-				 */
-				set_tuplefield_int2(&row->tuple[6], (Int2) (atoi(isclustered) ? SQL_INDEX_CLUSTERED : SQL_INDEX_OTHER));
+				set_tuplefield_int2(&row->tuple[6], (Int2) SQL_INDEX_OTHER);
 				set_tuplefield_int2(&row->tuple[7], (Int2) (i + 1));
 
 				if (fields_vector[i] == OID_ATTNUM)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.16 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_index.h,v 1.17 2001/05/14 21:53:16 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -48,7 +48,6 @@ CATALOG(pg_index)
 								 * index */
 	int2vector	indkey;
 	oidvector	indclass;
-	bool		indisclustered;
 	bool		indislossy;		/* do we fetch false tuples (lossy
 								 * compression)? */
 	bool		indhaskeytype;	/* does key type != attribute type? */
@@ -70,18 +69,16 @@ typedef FormData_pg_index *Form_pg_index;
  *		compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index					12
+#define Natts_pg_index					10
 #define Anum_pg_index_indexrelid		1
 #define Anum_pg_index_indrelid			2
 #define Anum_pg_index_indproc			3
 #define Anum_pg_index_indkey			4
 #define Anum_pg_index_indclass			5
-#define Anum_pg_index_indisclustered	6
-#define Anum_pg_index_indislossy		7
-#define Anum_pg_index_indhaskeytype		8
-#define Anum_pg_index_indisunique		9
-#define Anum_pg_index_indisprimary		10
-#define Anum_pg_index_indreference		11
-#define Anum_pg_index_indpred			12
+#define Anum_pg_index_indislossy		6
+#define Anum_pg_index_indisunique		7
+#define Anum_pg_index_indisprimary		8
+#define Anum_pg_index_indreference		9
+#define Anum_pg_index_indpred			10
 
 #endif	 /* PG_INDEX_H */

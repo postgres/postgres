@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.132 2001/05/14 20:30:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.133 2001/05/14 21:53:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,6 @@ static FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
 static FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
 static FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
 static FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
-static FormData_pg_attribute Desc_pg_variable[Natts_pg_variable] = {Schema_pg_variable};
 static FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
 
 /*
