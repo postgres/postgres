@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.5 1997/04/26 05:06:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.6 1998/01/04 19:12:21 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,14 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)
+
+#
+# And where libpq goes, so goes the authentication stuff...
+#
+ifdef KRBVERS
+LDFLAGS+= $(KRBLIBS)
+CFLAGS+= $(KRBFLAGS)
+endif
 
 OBJS= psql.o stringutils.o @STRDUP@ 
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.4 1997/07/28 23:57:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.5 1998/01/04 19:12:48 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,6 +18,14 @@ CREATEFILES= create.sql bench.sql
 OUTFILES= bench.out bench.out.perquery
 
 CFLAGS+= -I$(LIBPQDIR) $(CFLAGS_SL)
+
+#
+# And where libpq goes, so goes the authentication stuff...
+#
+ifdef KRBVERS
+LDFLAGS+= $(KRBLIBS)
+CFLAGS+= $(KRBFLAGS)
+endif
 
 all: $(CREATEFILES)
 	rm -f $(OUTFILES)

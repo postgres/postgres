@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.5 1997/01/05 21:17:45 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.6 1998/01/04 19:12:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,14 @@ SRCDIR= ..
 include ../Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR) -I../../include
+
+#
+# And where libpq goes, so goes the authentication stuff...
+#
+ifdef KRBVERS
+LDFLAGS+= $(KRBLIBS)
+CFLAGS+= $(KRBFLAGS)
+endif
 
 #
 # DLOBJS is the dynamically-loaded object files.  The "funcs" queries
