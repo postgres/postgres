@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.80 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.81 2001/02/13 14:32:52 momjian Exp $
  *
  * NOTES
  *
@@ -205,7 +205,17 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
+	{
 		tx = localtime((time_t *) &time);
+# ifdef NO_MKTIME_BEFORE_1970
+		if (tx->tm_year < 70 && tx->tm_isdst == 1)
+		{
+			time -= 3600;
+			tx = localtime((time_t *) &time);
+			tx->tm_isdst = 0;
+		}
+# endif
+	}
 	else
 	{
 		tx = gmtime((time_t *) &time);
