@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.84 2001/02/23 18:28:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.85 2001/02/23 20:12:37 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1410,8 +1410,8 @@ LockShmemSize(int maxBackends)
 	int			size = 0;
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
-	size += MAXALIGN(maxBackends * sizeof(PROC));		/* each MyProc */
-	size += MAXALIGN(MAX_LOCK_METHODS * sizeof(LOCKMETHODCTL));	/* each lockMethodTable->ctl */
+	size += maxBackends * MAXALIGN(sizeof(PROC));		/* each MyProc */
+	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODCTL));	/* each lockMethodTable->ctl */
 
 	/* lockHash table */
 	size += hash_estimate_size(NLOCKENTS(maxBackends),
