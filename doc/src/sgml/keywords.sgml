@@ -1,3 +1,5 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.3 2001/11/02 19:13:09 petere Exp $ -->
+
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
 
@@ -252,7 +254,7 @@
    </row>
    <row>
     <entry><token>AUTHORIZATION</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
@@ -1025,6 +1027,12 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>ENCRYPTED</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>END</token></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -1098,12 +1106,6 @@
    </row>
    <row>
     <entry><token>EXPLAIN</token></entry>
-    <entry>reserved</entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>EXTEND</token></entry>
     <entry>reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -1190,6 +1192,12 @@
     <entry><token>FREE</token></entry>
     <entry></entry>
     <entry>reserved</entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>FREEZE</token></entry>
+    <entry>reserved</entry>
+    <entry></entry>
     <entry></entry>
    </row>
    <row>
@@ -1458,7 +1466,7 @@
    </row>
    <row>
     <entry><token>INTERVAL</token></entry>
-    <entry>non-reserved</entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
@@ -2285,6 +2293,12 @@
     <entry>non-reserved</entry>
    </row>
    <row>
+    <entry><token>REPLACE</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>RESET</token></entry>
     <entry>reserved</entry>
     <entry></entry>
@@ -2495,12 +2509,6 @@
     <entry></entry>
    </row>
    <row>
-    <entry><token>SERIAL</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
     <entry><token>SERIALIZABLE</token></entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
@@ -2675,6 +2683,12 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>STATISTICS</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>STDIN</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -2796,25 +2810,25 @@
    </row>
    <row>
     <entry><token>TIME</token></entry>
-    <entry>non-reserved</entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
    <row>
     <entry><token>TIMESTAMP</token></entry>
-    <entry>non-reserved</entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
    <row>
     <entry><token>TIMEZONE_HOUR</token></entry>
-    <entry>non-reserved</entry>
+    <entry></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
    <row>
     <entry><token>TIMEZONE_MINUTE</token></entry>
-    <entry>non-reserved</entry>
+    <entry></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
@@ -2957,6 +2971,12 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>UNENCRYPTED</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>UNION</token></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -2970,7 +2990,7 @@
    </row>
    <row>
     <entry><token>UNKNOWN</token></entry>
-    <entry></entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
    </row>
