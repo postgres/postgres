@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.16 1998/10/07 06:41:40 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.17 1998/10/16 04:37:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,13 +15,11 @@ SRCDIR= ..
 include $(SRCDIR)/Makefile.global
 
 
-perl-makefile-dep :=
-ifeq ($(USE_PERL), true)
-  perl-makefile-dep := perl5/Makefile
-endif
+PERL_CLEAN := DO_NOTHING
+install: PERL_CLEAN := clean
 
 
-.DEFAULT all install clean dep depend distclean: $(perl-makefile-dep)
+.DEFAULT all install clean dep depend distclean:
 	$(MAKE) -C libpq $@
 	$(MAKE) -C ecpg $@
 ifeq ($(HAVE_Cplusplus), true)
@@ -33,6 +31,8 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
 ifeq ($(USE_PERL), true)
+	-$(MAKE) -C perl5 $(PERL_CLEAN)
+	$(MAKE) perl5/Makefile
 	$(MAKE) -C perl5 $@
 endif
 ifeq ($(USE_ODBC), true)

@@ -246,17 +246,6 @@ AC_ARG_WITH(
    [ USE_PERL=false; AC_MSG_RESULT(disabled) ]
 )
 
-dnl Verify that postgres is already installed
-dnl per instructions for perl interface installation
-if test "$USE_PERL" = true
-then
-	if test "$WHOAMI" != "root"
-	then	AC_MSG_WARN(perl support disabled; must be root to install)
-		USE_PERL=
-	fi
-fi
-export USE_PERL
-
 dnl We include odbc support unless we disable it with --with-odbc=false
 AC_MSG_CHECKING(setting USE_ODBC)
 AC_ARG_WITH(
@@ -902,6 +891,7 @@ AC_OUTPUT(
 	interfaces/libpgtcl/Makefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global
+	interfaces/perl5/Makefile.PL
 	pl/plpgsql/src/Makefile
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
