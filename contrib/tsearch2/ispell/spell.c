@@ -49,7 +49,7 @@ strnduplicate(char *s, int len) {
 }
 /* backward string compaire for suffix tree operations */
 static int
-strbcmp(const char *s1, const char *s2)
+strbcmp(const unsigned char *s1, const unsigned char *s2)
 {
 	int			l1 = strlen(s1) - 1,
 				l2 = strlen(s2) - 1;
@@ -71,7 +71,7 @@ strbcmp(const char *s1, const char *s2)
 	return 0;
 }
 static int
-strbncmp(const char *s1, const char *s2, size_t count)
+strbncmp(const unsigned char *s1, const unsigned char *s2, size_t count)
 {
 	int			l1 = strlen(s1) - 1,
 				l2 = strlen(s2) - 1,
@@ -536,9 +536,10 @@ mkANode(IspellDict *Conf, int low, int high, int level, int type) {
 			}
 			data->val=GETCHAR( Conf->Affix + i, level, type );
 			if ( Conf->Affix[i].replen == level+1 ) { /* affix stopped */
-				if ( !data->naff )
+				if ( !data->naff ) {
 					data->aff=(AFFIX**)malloc(sizeof(AFFIX*)*(high-i+1));
-					MEMOUT(data);
+					MEMOUT(data->aff);
+				}
 				data->aff[ data->naff ] = Conf->Affix + i;
 				data->naff++;
 			}
