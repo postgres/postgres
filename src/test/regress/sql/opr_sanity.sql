@@ -196,12 +196,18 @@ WHERE castsource = casttarget OR castsource = 0 OR casttarget = 0
 -- Look for cast functions that don't have the right signature.  The
 -- argument and result types in pg_proc must be the same as, or binary
 -- compatible with, what it says in pg_cast.
+-- As a special case, we allow casts from CHAR(n) that use functions
+-- declared to take TEXT.  This does not pass the binary-coercibility test
+-- because CHAR(n)-to-TEXT normally invokes rtrim().  However, the results
+-- are the same, so long as the function is one that ignores trailing blanks.
 
 SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
     (p.pronargs <> 1
-     OR NOT binary_coercible(c.castsource, p.proargtypes[0])
+     OR NOT (binary_coercible(c.castsource, p.proargtypes[0])
+             OR (c.castsource = 'character'::regtype AND
+                 p.proargtypes[0] = 'text'::regtype))
      OR NOT binary_coercible(p.prorettype, c.casttarget));
 
 -- Look for binary compatible casts that do not have the reverse

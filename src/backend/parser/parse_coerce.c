@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.113 2003/12/17 19:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.114 2004/03/15 01:13:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,50 +63,6 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 	if (can_coerce_type(1, &exprtype, &targettype, ccontext))
 		expr = coerce_type(pstate, expr, exprtype, targettype,
 						   ccontext, cformat);
-	else if (ccontext >= COERCION_ASSIGNMENT)
-	{
-		/*
-		 * String hacks to get transparent conversions for char and
-		 * varchar: if a coercion to text is available, use it for forced
-		 * coercions to char(n) or varchar(n) or domains thereof.
-		 *
-		 * This is pretty grotty, but seems easier to maintain than providing
-		 * entries in pg_cast that parallel all the ones for text.
-		 */
-		Oid			targetbasetype = getBaseType(targettype);
-
-		if (targetbasetype == BPCHAROID || targetbasetype == VARCHAROID)
-		{
-			Oid			text_id = TEXTOID;
-
-			if (can_coerce_type(1, &exprtype, &text_id, ccontext))
-			{
-				expr = coerce_type(pstate, expr, exprtype, text_id,
-								   ccontext, cformat);
-				if (targetbasetype != targettype)
-				{
-					/* need to coerce to domain over char or varchar */
-					expr = coerce_to_domain(expr, targetbasetype, targettype,
-											cformat);
-				}
-				else
-				{
-					/*
-					 * need a RelabelType if no typmod coercion will be
-					 * performed
-					 */
-					if (targettypmod < 0)
-						expr = (Node *) makeRelabelType((Expr *) expr,
-														targettype, -1,
-														cformat);
-				}
-			}
-			else
-				expr = NULL;
-		}
-		else
-			expr = NULL;
-	}
 	else
 		expr = NULL;
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.10 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.11 2004/03/15 01:13:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -168,11 +168,14 @@ DATA(insert ( 1042 1043  401 i ));
 DATA(insert ( 1043	 25    0 i ));
 DATA(insert ( 1043 1042    0 i ));
 DATA(insert (	18	 25  946 i ));
-DATA(insert (	18 1042  860 i ));
+DATA(insert (	18 1042  860 a ));
+DATA(insert (	18 1043  946 a ));
 DATA(insert (	19	 25  406 i ));
-DATA(insert (	19 1042  408 i ));
-DATA(insert (	19 1043 1401 i ));
+DATA(insert (	19 1042  408 a ));
+DATA(insert (	19 1043 1401 a ));
 DATA(insert (	25	 18  944 a ));
+DATA(insert ( 1042	 18  944 a ));
+DATA(insert ( 1043	 18  944 a ));
 DATA(insert (	25	 19  407 i ));
 DATA(insert ( 1042	 19  409 i ));
 DATA(insert ( 1043	 19 1400 i ));
@@ -280,5 +283,82 @@ DATA(insert ( 1266	 25  939 i ));
 DATA(insert (	25 1266  938 e ));
 DATA(insert ( 1700	 25 1688 i ));
 DATA(insert (	25 1700 1686 e ));
+
+/*
+ * Cross-category casts to and from VARCHAR
+ *
+ * We support all the same casts as for TEXT, but none are implicit.
+ */
+DATA(insert (	20 1043 1289 a ));
+DATA(insert ( 1043	 20 1290 e ));
+DATA(insert (	21 1043  113 a ));
+DATA(insert ( 1043	 21  818 e ));
+DATA(insert (	23 1043  112 a ));
+DATA(insert ( 1043	 23  819 e ));
+DATA(insert (	26 1043  114 a ));
+DATA(insert ( 1043	 26  817 e ));
+DATA(insert ( 1043	650 1714 e ));
+DATA(insert (  700 1043  841 a ));
+DATA(insert ( 1043	700  839 e ));
+DATA(insert (  701 1043  840 a ));
+DATA(insert ( 1043	701  838 e ));
+DATA(insert (  829 1043  752 e ));
+DATA(insert ( 1043	829  767 e ));
+DATA(insert (  650 1043  730 e ));
+DATA(insert (  869 1043  730 e ));
+DATA(insert ( 1043	869 1713 e ));
+DATA(insert ( 1082 1043  749 a ));
+DATA(insert ( 1043 1082  748 e ));
+DATA(insert ( 1083 1043  948 a ));
+DATA(insert ( 1043 1083  837 e ));
+DATA(insert ( 1114 1043 2034 a ));
+DATA(insert ( 1043 1114 2022 e ));
+DATA(insert ( 1184 1043 1192 a ));
+DATA(insert ( 1043 1184 1191 e ));
+DATA(insert ( 1186 1043 1193 a ));
+DATA(insert ( 1043 1186 1263 e ));
+DATA(insert ( 1266 1043  939 a ));
+DATA(insert ( 1043 1266  938 e ));
+DATA(insert ( 1700 1043 1688 a ));
+DATA(insert ( 1043 1700 1686 e ));
+
+/*
+ * Cross-category casts to and from BPCHAR
+ *
+ * A function supporting cast to TEXT/VARCHAR can be used for cast to BPCHAR,
+ * but the other direction is okay only if the function treats trailing
+ * blanks as insignificant.  So this is a subset of the VARCHAR list.
+ * (Arguably the holdouts should be fixed, but I'm not doing that now...)
+ */
+DATA(insert (	20 1042 1289 a ));
+DATA(insert ( 1042	 20 1290 e ));
+DATA(insert (	21 1042  113 a ));
+DATA(insert ( 1042	 21  818 e ));
+DATA(insert (	23 1042  112 a ));
+DATA(insert ( 1042	 23  819 e ));
+DATA(insert (	26 1042  114 a ));
+DATA(insert ( 1042	 26  817 e ));
+DATA(insert (  700 1042  841 a ));
+DATA(insert ( 1042	700  839 e ));
+DATA(insert (  701 1042  840 a ));
+DATA(insert ( 1042	701  838 e ));
+DATA(insert (  829 1042  752 e ));
+DATA(insert ( 1042	829  767 e ));
+DATA(insert (  650 1042  730 e ));
+DATA(insert (  869 1042  730 e ));
+DATA(insert ( 1082 1042  749 a ));
+DATA(insert ( 1042 1082  748 e ));
+DATA(insert ( 1083 1042  948 a ));
+DATA(insert ( 1042 1083  837 e ));
+DATA(insert ( 1114 1042 2034 a ));
+DATA(insert ( 1042 1114 2022 e ));
+DATA(insert ( 1184 1042 1192 a ));
+DATA(insert ( 1042 1184 1191 e ));
+DATA(insert ( 1186 1042 1193 a ));
+DATA(insert ( 1042 1186 1263 e ));
+DATA(insert ( 1266 1042  939 a ));
+DATA(insert ( 1042 1266  938 e ));
+DATA(insert ( 1700 1042 1688 a ));
+DATA(insert ( 1042 1700 1686 e ));
 
 #endif   /* PG_CAST_H */
