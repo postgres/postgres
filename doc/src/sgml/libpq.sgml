@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.55 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.56 2001/01/18 07:18:39 thomas Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -879,7 +879,7 @@ int PQfnumber(const PGresult *res,
           at 0.
 <synopsis>
 Oid PQftype(const PGresult *res,
-            int field_num);
+            int field_index);
 </synopsis>
 You can query the system table <literal>pg_type</literal> to obtain
 the name and properties of the various datatypes. The <acronym>OID</acronym>s
