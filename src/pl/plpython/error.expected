@@ -1,0 +1,19 @@
+SELECT invalid_type_uncaught('rick');
+ERROR:  plpython: Call of function `__plpython_procedure_invalid_type_uncaught_1175341' failed.
+plpy.SPIError: Cache lookup for type `test' failed.
+SELECT invalid_type_caught('rick');
+NOTICE:  ("Cache lookup for type `test' failed.",)
+ invalid_type_caught 
+---------------------
+ 
+(1 row)
+
+SELECT invalid_type_reraised('rick');
+ERROR:  plpython: Call of function `__plpython_procedure_invalid_type_reraised_1175343' failed.
+plpy.Error: ("Cache lookup for type `test' failed.",)
+SELECT valid_type('rick');
+ valid_type 
+------------
+ 
+(1 row)
+

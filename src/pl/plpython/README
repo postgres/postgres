@@ -1,0 +1,171 @@
+
+*** INSTALLING ***
+
+  0) Build, install or borrow postgresql 7.1, not 7.0.  I've got
+a language module for 7.0, but it has no SPI interface.  Build is best
+because it will allow you to do
+
+     "cd postgres/src/"
+     "patch -p2 < dynloader.diff"
+
+or if that fails open linux.h in src/backend/ports/dynloader and
+change the pg_dlopen define from
+
+#define pg_dlopen(f) dlopen(f, 2)
+
+to
+
+#define pg_dlopen(f) dlopen(f, (RTLD_NOW|RTLD_GLOBAL))
+
+adding the RTLD_GLOBAL flag to the dlopen call allows libpython to
+properly resolve symbols when it loads dynamic module.  If you can't
+patch and rebuild postgres read about DLHACK in the next section.
+
+  1) Edit the Makefile.  Basically select python 2.0 or 1.5, and set
+the include file locations for postgresql and python.  If you can't
+patch linux.h (or whatever file is appropriate for your architecture)
+to add RTLD_GLOBAL to the pg_dlopen/dlopen function and rebuild
+postgres.  You must uncomment the DLHACK and DLDIR variables.  You may
+need to alter the DLDIR and add shared modules to DLHACK.  This
+explicitly links the shared modules to the plpython.so file, and
+allows libpython find required symbols.  However you will NOT be able
+to import any C modules that are not explicitly linked to
+plpython.so.  Module dependencies get ugly, and all in all it's a
+crude hack.
+
+  2) Run make.  
+
+  3) Copy 'plpython.so' to '/usr/local/lib/postgresql/lang/'.
+The scripts 'update.sh' and 'plpython_create.sql' are hard coded to
+look for it there, if you want to install the module elsewhere edit
+them.
+
+  4) Optionally type 'test.sh', this will create a new database
+'pltest' and run some checks.  (more checks needed)
+
+  5) 'psql -Upostgres yourTESTdb < plpython_create.sql'
+
+*** USING ***
+
+	There are sample functions in 'plpython_function.sql'.
+Remember that the python code you write gets transformed into a
+function.  ie.
+
+CREATE FUNCTION myfunc(text) RETURNS text
+	AS
+'return args[0]'
+	LANGUAGE 'plpython';
+
+gets tranformed into
+
+def __plpython_procedure_myfunc_23456():
+	return args[0]
+
+where 23456 is the Oid of the function. 
+
+If you don't provide a return value, python returns the default 'None'
+which probably isn't what you want.  The language module transforms
+python None to postgresql NULL.
+
+Postgresql function variables are available in the global "args" list.
+In the myfunc example, args[0] contains whatever was passed in as the
+text argument.  For myfunc2(text, int4), args[0] would contain the
+text variable and args[1] the int4 variable.  The global dictionary SD
+is available to store data between function calls.  This variable is
+private static data.  The global dictionary GD is public data,
+available to all python functions within a backend.  Use with care.
+When the function is used in a trigger, the triggers tuples are in
+TD["new"] and/or TD["old"] depending on the trigger event.  Return
+'None' or "OK" from the python function to indicate the tuple is
+unmodified, "SKIP" to abort the event, or "MODIFIED" to indicate
+you've modified the tuple.  If the trigger was called with arguments
+they are available in TD["args"][0] to TD["args"][(n -1)]
+
+Each function gets it's own restricted execution object in the python
+interpreter so global data, function arguments from myfunc are not
+available to myfunc2.  Except for data in the GD dictionary, as
+mentioned above.
+
+The plpython language module automatically imports a python module
+called 'plpy'.  The functions and constants in this module are
+available to you in the python code as 'plpy.foo'.  At present 'plpy'
+implements the functions 'plpy.error("msg")', 'plpy.fatal("msg")',
+'plpy.debug("msg")' and 'plpy.notice("msg")'.  They are mostly
+equivalent to calling 'elog(LEVEL, "msg")', where level is DEBUG,
+ERROR, FATAL or NOTICE.  'plpy.error', and 'plpy.fatal' actually raise
+a python exception which if uncaught causes the plpython module to
+call elog(ERROR, msg) when the function handler returns from the
+python interpreter. Long jumping out of the python interpreter
+probably isn't good.  'raise plpy.ERROR("msg")' and 'raise
+plpy.FATAL("msg") are equivalent to calling plpy.error or plpy.fatal.
+
+Additionally the in the plpy module there are two functions called
+execute and prepare.  Calling plpy.execute with a query string, and
+optional limit argument, causing that query to be run, and the result
+returned in a result object.  The result object emulates a list or
+dictionary objects.  The result object can be accessed by row number,
+and field name.  It has these additional methods: nrows() which
+returns the number of rows returned by the query, and status which is
+the SPI_exec return variable.  The result object can be modified.
+
+rv = plpy.execute("SELECT * FROM my_table", 5)
+
+returns up to 5 rows from my_table.  if my_table a column my_field it
+would be accessed as
+
+foo = rv[i]["my_field"]
+
+The second function plpy.prepare is called with a query string, and a
+list of argument types if you have bind variables in the query.
+
+plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name =
+$1", [ "text" ])
+
+text is the type of the variable you will be passing as $1.  After
+preparing you use the function plpy.execute to run it.
+
+rv = plpy.execute(plan, [ "name" ], 5)
+
+The limit argument is optional in the call to plpy.execute.
+
+When you prepare a plan using the plpython module it is automatically
+saved.  Read the SPI documentation for postgresql for a description of
+what this means.  Anyway the take home message is if you do:
+
+plan = plpy.prepare("SOME QUERY")
+plan = plpy.prepare("SOME OTHER QUERY")
+
+You are leaking memory, as I know of no way to free a saved plan.  The
+alternative of using unsaved plans it even more painful (for me).
+
+*** BUGS ***
+
+If the module blows up postgresql or bites your dog, please send a
+script that will recreate the behaviour.  Back traces from core dumps
+are good, but python reference counting bugs and postgresql exeception
+handling bugs give uninformative back traces (you can't long_jmp into
+functions that have already returned? *boggle*)
+
+*** TODO ***
+
+1) create a new restricted execution class that will allow me to pass
+function arguments in as locals.  passing them as globals means
+function cannot be called recursively...
+
+2) Functions cache the input and output functions for their arguments,
+so the following will make postgres unhappy
+
+create table users (first_name text, last_name text);
+create function user_name(user) returns text as 'mycode' language 'plpython';
+select user_name(user) from users;
+alter table add column user_id int4;
+select user_name(user) from users;
+
+you have to drop and create the function(s) each time it's arguments
+are modified (not nice), don't cache the input and output functions
+(slower?), or check if the structure of the argument has been altered
+(is this possible, easy, quick?) and recreate cache.
+
+3) better documentation
+
+4) suggestions?

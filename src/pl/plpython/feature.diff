@@ -1,0 +1,11 @@
+--- feature.expected	Sat Mar 31 16:15:31 2001
++++ feature.output	Thu Apr 19 23:47:52 2001
+@@ -29,7 +29,7 @@
+ (1 row)
+ 
+ SELECT import_fail();
+-NOTICE:  ('import socket failed -- untrusted dynamic module: socket',)
++NOTICE:  ('import socket failed -- untrusted dynamic module: _socket',)
+     import_fail     
+ --------------------
+  failed as expected

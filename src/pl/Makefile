@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.17 2000/10/24 19:31:13 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.18 2001/05/09 19:54:38 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,6 +20,10 @@ endif
 
 ifeq ($(with_perl), yes)
 DIRS += plperl
+endif
+
+ifeq ($(with_python), yes)
+DIRS += plpython
 endif
 
 all install installdirs uninstall depend distprep:

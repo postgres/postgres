@@ -1,0 +1,139 @@
+select stupid();
+ stupid 
+--------
+ zarkon
+(1 row)
+
+SELECT static_test();
+ static_test 
+-------------
+           1
+(1 row)
+
+SELECT static_test();
+ static_test 
+-------------
+           2
+(1 row)
+
+SELECT global_test_one();
+                    global_test_one                     
+--------------------------------------------------------
+ SD: set by global_test_one, GD: set by global_test_one
+(1 row)
+
+SELECT global_test_two();
+                    global_test_two                     
+--------------------------------------------------------
+ SD: set by global_test_two, GD: set by global_test_one
+(1 row)
+
+SELECT import_fail();
+NOTICE:  ('import socket failed -- untrusted dynamic module: socket',)
+    import_fail     
+--------------------
+ failed as expected
+(1 row)
+
+SELECT import_succeed();
+     import_succeed     
+------------------------
+ succeeded, as expected
+(1 row)
+
+SELECT import_test_one('sha hash of this string');
+             import_test_one              
+------------------------------------------
+ a04e23cb9b1a09cd1051a04a7c571aae0f90346c
+(1 row)
+
+select import_test_two(users) from users where fname = 'willem';
+                          import_test_two                          
+-------------------------------------------------------------------
+ sha hash of willemdoe is 3cde6b574953b0ca937b4d76ebc40d534d910759
+(1 row)
+
+select argument_test_one(users, fname, lname) from users where lname = 'doe';
+                                  argument_test_one                                  
+-------------------------------------------------------------------------------------
+ willem doe => {'fname': 'willem', 'userid': 3, 'lname': 'doe', 'username': 'w_doe'}
+ john doe => {'fname': 'john', 'userid': 2, 'lname': 'doe', 'username': 'johnd'}
+ jane doe => {'fname': 'jane', 'userid': 1, 'lname': 'doe', 'username': 'j_doe'}
+(3 rows)
+
+select nested_call_one('pass this along');
+                         nested_call_one                         
+-----------------------------------------------------------------
+ {'nested_call_two': "{'nested_call_three': 'pass this along'}"}
+(1 row)
+
+select spi_prepared_plan_test_one('doe');
+ spi_prepared_plan_test_one 
+----------------------------
+ there are 3 does
+(1 row)
+
+select spi_prepared_plan_test_one('smith');
+ spi_prepared_plan_test_one 
+----------------------------
+ there are 1 smiths
+(1 row)
+
+select spi_prepared_plan_test_nested('smith');
+ spi_prepared_plan_test_nested 
+-------------------------------
+ there are 1 smiths
+(1 row)
+
+SELECT * FROM users;
+ fname  | lname | username | userid 
+--------+-------+----------+--------
+ jane   | doe   | j_doe    |      1
+ john   | doe   | johnd    |      2
+ willem | doe   | w_doe    |      3
+ rick   | smith | slash    |      4
+(4 rows)
+
+UPDATE users SET fname = 'william' WHERE fname = 'willem';
+INSERT INTO users (fname, lname) VALUES ('william', 'smith');
+INSERT INTO users (fname, lname, username) VALUES ('charles', 'darwin', 'beagle');
+SELECT * FROM users;
+  fname  | lname  | username | userid 
+---------+--------+----------+--------
+ jane    | doe    | j_doe    |      1
+ john    | doe    | johnd    |      2
+ willem  | doe    | w_doe    |      3
+ rick    | smith  | slash    |      4
+ willem  | smith  | w_smith  |      5
+ charles | darwin | beagle   |      6
+(6 rows)
+
+SELECT join_sequences(sequences) FROM sequences;
+ join_sequences 
+----------------
+ ABCDEFGHIJKL
+ ABCDEF
+ ABCDEF
+ ABCDEF
+ ABCDEF
+ ABCDEF
+(6 rows)
+
+SELECT join_sequences(sequences) FROM sequences
+	WHERE join_sequences(sequences) ~* '^A';
+ join_sequences 
+----------------
+ ABCDEFGHIJKL
+ ABCDEF
+ ABCDEF
+ ABCDEF
+ ABCDEF
+ ABCDEF
+(6 rows)
+
+SELECT join_sequences(sequences) FROM sequences
+	WHERE join_sequences(sequences) ~* '^B';
+ join_sequences 
+----------------
+(0 rows)
+
