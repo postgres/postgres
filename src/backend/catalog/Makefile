@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.24 2000/08/31 16:09:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.25 2000/09/17 13:02:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,17 +43,17 @@ template1.bki template1.description: genbki.sh $(TEMPLATE1_BKI_SRCS)
 
 .PHONY: install-bki
 install-bki: $(BKIFILES) installdirs
-	$(INSTALL_DATA) global.bki            $(datadir)/global.bki
-	$(INSTALL_DATA) global.description    $(datadir)/global.description
-	$(INSTALL_DATA) template1.bki         $(datadir)/template1.bki
-	$(INSTALL_DATA) template1.description $(datadir)/template1.description
+	$(INSTALL_DATA) global.bki            $(DESTDIR)$(datadir)/global.bki
+	$(INSTALL_DATA) global.description    $(DESTDIR)$(datadir)/global.description
+	$(INSTALL_DATA) template1.bki         $(DESTDIR)$(datadir)/template1.bki
+	$(INSTALL_DATA) template1.description $(DESTDIR)$(datadir)/template1.description
 
 installdirs:
-	$(mkinstalldirs) $(datadir)
+	$(mkinstalldirs) $(DESTDIR)$(datadir)
 
 .PHONY: uninstall-bki
 uninstall-bki:
-	rm -f $(addprefix $(datadir)/, $(BKIFILES))
+	rm -f $(addprefix $(DESTDIR)$(datadir)/, $(BKIFILES))
 
 
 clean: 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.10 2000/08/31 16:11:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.11 2000/09/17 13:02:37 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,13 +25,13 @@ submake:
 	$(MAKE) -C $(libpq_builddir) all
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_encoding$(X) $(bindir)/pg_encoding$(X)
+	$(INSTALL_PROGRAM) pg_encoding$(X) $(DESTDIR)$(bindir)/pg_encoding$(X)
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/pg_encoding$(X)
+	rm -f $(DESTDIR)$(bindir)/pg_encoding$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

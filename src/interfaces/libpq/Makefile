@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.40 2000/08/31 16:11:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.41 2000/09/17 13:02:49 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -67,15 +67,15 @@ install: all installdirs install-headers install-lib
 
 .PHONY: install-headers
 install-headers: libpq-fe.h libpq-int.h pqexpbuffer.h
-	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(includedir)
-	$(INSTALL_DATA) $(srcdir)/libpq-int.h $(includedir)
-	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h $(includedir)
+	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/libpq-int.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h $(DESTDIR)$(includedir)
 
 installdirs:
-	$(mkinstalldirs) $(libdir) $(includedir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir)
 
 uninstall: uninstall-lib
-	rm -f $(addprefix $(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
+	rm -f $(addprefix ($DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) dllist.c snprintf.c inet_aton.c common.c wchar.c conv.c big5.c

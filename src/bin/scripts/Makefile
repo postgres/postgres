@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.9 2000/09/08 18:29:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.10 2000/09/17 13:02:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,13 +23,13 @@ createlang: createlang.sh
 	chmod a+x $@
 
 install: all installdirs
-	for i in $(SCRIPTS); do $(INSTALL_SCRIPT) $$i $(bindir) || exit; done
+	for i in $(SCRIPTS); do $(INSTALL_SCRIPT) $$i $(DESTDIR)$(bindir)/$$i || exit; done
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(addprefix $(bindir)/, $(SCRIPTS))
+	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS))
 
 clean distclean maintainer-clean:
 	rm -f createlang

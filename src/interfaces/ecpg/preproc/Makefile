@@ -41,13 +41,13 @@ endif
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
 install: all installdirs
-	$(INSTALL_PROGRAM) ecpg$(X) $(bindir)
+	$(INSTALL_PROGRAM) ecpg$(X) $(DESTDIR)$(bindir)
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/ecpg$(X)
+	rm -f $(DESTDIR)$(bindir)/ecpg$(X)
 
 clean distclean:
 	rm -f *.o ecpg$(X)

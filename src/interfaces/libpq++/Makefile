@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.24 2000/08/31 16:11:51 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.25 2000/09/17 13:02:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,15 +72,15 @@ LIBPGXXHEADERS = pgconnection.h pgdatabase.h pgtransdb.h pgcursordb.h pglobject.
 
 .PHONY: install-headers
 install-headers: $(MAINHEADER) $(LIBPGXXHEADERS)
-	$(INSTALL_DATA) $< $(includedir)
-	for i in $(LIBPGXXHEADERS); do $(INSTALL_DATA) $(srcdir)/$$i $(libpqxx_includedir) || exit 1; done
+	$(INSTALL_DATA) $< $(DESTDIR)$(includedir)
+	for i in $(LIBPGXXHEADERS); do $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(libpqxx_includedir) || exit 1; done
 
 installdirs:
-	$(mkinstalldirs) $(libdir) $(includedir) $(libpqxx_includedir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(libpqxx_includedir)
 
 uninstall: uninstall-lib
-	rm -f $(includedir)/$(MAINHEADER)
-	rm -rf $(libpqxx_includedir)
+	rm -f $(DESTDIR)$(includedir)/$(MAINHEADER)
+	for i in $(LIBPGXXHEADERS); do rm -f $(DESTDIR)$(libpqxx_includedir)/$$i || exit; done
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)

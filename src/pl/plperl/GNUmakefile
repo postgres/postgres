@@ -1,10 +1,10 @@
-# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.3 2000/08/31 16:12:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.4 2000/09/17 13:02:51 petere Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-plperl_installdir = $(libdir)
+plperl_installdir = $(DESTDIR)$(libdir)
 
 
 all: Makefile
@@ -16,13 +16,13 @@ Makefile: Makefile.PL
 	  $(PERL) $< POLLUTE=1
 
 install: all installdirs
-	$(MAKE) -f $< install
+	$(MAKE) -f Makefile install
 
 installdirs:
-	$(mkinstalldirs) $(plperl_installdir)
+	$(mkinstalldirs) $(DESTDIR)$(plperl_installdir)
 
 uninstall:
-	rm -f $(libdir)/plperl$(DLSUFFIX)
+	rm -f $(DESTDIR)$(libdir)/plperl$(DLSUFFIX)
 
 clean distclean maintainer-clean:
 	-[ -f Makefile ] && $(MAKE) -f Makefile clean

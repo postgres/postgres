@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1999, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.8 2000/09/08 18:29:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.9 2000/09/17 13:02:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,13 +19,13 @@ pg_ctl: pg_ctl.sh
 	chmod a+x $@
 
 install: all installdirs
-	$(INSTALL_SCRIPT) pg_ctl $(bindir)/pg_ctl
+	$(INSTALL_SCRIPT) pg_ctl $(DESTDIR)$(bindir)/pg_ctl
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/pg_ctl
+	rm -f $(DESTDIR)$(bindir)/pg_ctl
 
 clean distclean maintainer-clean:
 	rm -f pg_ctl

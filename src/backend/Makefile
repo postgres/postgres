@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.64 2000/08/31 16:09:23 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.65 2000/09/17 13:02:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -119,23 +119,23 @@ distprep:
 install: all installdirs install-bin
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)
-	$(INSTALL_DATA) libpostgres.a $(libdir)/libpostgres.a
+	$(INSTALL_DATA) libpostgres.a $(DESTDIR)$(libdir)/libpostgres.a
 endif
 endif
 	$(MAKE) -C catalog install-bki
-	$(INSTALL_DATA) libpq/pg_hba.conf.sample $(datadir)/pg_hba.conf.sample
-	$(INSTALL_DATA) libpq/pg_ident.conf.sample $(datadir)/pg_ident.conf.sample
-	$(INSTALL_DATA) utils/misc/postgresql.conf.sample $(datadir)/postgresql.conf.sample
+	$(INSTALL_DATA) libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
+	$(INSTALL_DATA) libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
+	$(INSTALL_DATA) utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
 
 installdirs:
-	$(mkinstalldirs) $(bindir) $(libdir) $(datadir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) $(DESTDIR)$(datadir)
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
-	$(INSTALL_PROGRAM) postgres$(X) $(bindir)/postgres$(X)
-	@rm -f $(bindir)/postmaster
-	ln -s postgres$(X) $(bindir)/postmaster
+	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
+	@rm -f $(DESTDIR)$(bindir)/postmaster
+	ln -s postgres$(X) $(DESTDIR)$(bindir)/postmaster
 ifeq ($(MAKE_EXPORTS), true)
-	$(INSTALL_DATA) $(POSTGRES_IMP) $(libdir)/$(POSTGRES_IMP)
+	$(INSTALL_DATA) $(POSTGRES_IMP) $(DESTDIR)$(libdir)/$(POSTGRES_IMP)
 endif
 
 .PHONY: install-bin
@@ -143,19 +143,19 @@ endif
 ##########################################################################
 
 uninstall:
-	rm -f $(bindir)/postgres$(X) $(bindir)/postmaster
+	rm -f $(DESTDIR)$(bindir)/postgres$(X) $(DESTDIR)$(bindir)/postmaster
 ifeq ($(MAKE_EXPORTS), true)
-	rm -f $(libdir)/$(POSTGRES_IMP)
+	rm -f $(DESTDIR)$(libdir)/$(POSTGRES_IMP)
 endif
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)
-	rm -f $(libdir)/libpostgres.a
+	rm -f $(DESTDIR)$(libdir)/libpostgres.a
 endif
 endif
 	$(MAKE) -C catalog uninstall-bki
-	rm -f $(datadir)/pg_hba.conf.sample \
-	      $(datadir)/pg_ident.conf.sample \
-	      $(datadir)/postgresql.conf.sample
+	rm -f $(DESTDIR)$(datadir)/pg_hba.conf.sample \
+	      $(DESTDIR)$(datadir)/pg_ident.conf.sample \
+	      $(DESTDIR)$(datadir)/postgresql.conf.sample
 
 
 ##########################################################################

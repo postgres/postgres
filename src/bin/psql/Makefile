@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.24 2000/08/31 16:11:23 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.25 2000/09/17 13:02:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -68,13 +68,13 @@ submake:
 distprep: $(srcdir)/sql_help.h
 
 install: all installdirs
-	$(INSTALL_PROGRAM) psql$(X) $(bindir)/psql$(X)
+	$(INSTALL_PROGRAM) psql$(X) $(DESTDIR)$(bindir)/psql$(X)
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/psql$(X)
+	rm -f $(DESTDIR)$(bindir)/psql$(X)
 
 depend dep:
 	$(CC) -MM -MG $(CFLAGS) *.c >depend

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.18 2000/07/17 22:31:57 petere Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.19 2000/09/17 13:02:28 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -38,21 +38,21 @@ all:
 install: all installdirs
 ifneq ($(strip $(found_MODULES)),)
 	for module in $(found_MODULES); do \
-	  gunzip -c $${module}.tar.gz | ( cd $(docdir)/$$module && $(TAR) xf - ) || \
+	  gzip -d -c $${module}.tar.gz | ( cd $(DESTDIR)$(docdir)/$$module && $(TAR) xf - ) || \
 	  exit; \
 	done
 endif
 ifdef found_man
-	gunzip -c man.tar.gz | ( cd $(mandir) && $(TAR) xf - )
+	gzip -d -c man.tar.gz | ( cd $(DESTDIR)$(mandir) && $(TAR) xf - )
 endif
 
 
 installdirs:
-	$(mkinstalldirs) $(mandir) $(addprefix $(docdir)/, . $(found_MODULES))
+	$(mkinstalldirs) $(DESTDIR)$(mandir) $(addprefix $(DESTDIR)$(docdir)/, . $(found_MODULES))
 
 
 uninstall:
-	-rm -rf $(addprefix $(docdir)/, $(MODULES))
+	-rm -rf $(addprefix $(DESTDIR)$(docdir)/, $(MODULES))
 ifdef found_man
-	-rm -f $(addprefix $(mandir)/, $(shell gunzip -c man.tar.gz | tar tf -))
+	-rm -f $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c man.tar.gz | tar tf -))
 endif

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.20 2000/08/31 16:11:45 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.21 2000/09/17 13:02:49 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,13 +36,13 @@ install: all installdirs install-headers install-lib
 
 .PHONY: install-headers
 install-headers: libpgtcl.h
-	$(INSTALL_DATA) $< $(includedir)/libpgtcl.h
+	$(INSTALL_DATA) $< $(DESTDIR)$(includedir)/libpgtcl.h
 
 installdirs:
-	$(mkinstalldirs) $(libdir) $(includedir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir)
 
 uninstall: uninstall-lib
-	rm -f $(includedir)/libpgtcl.h
+	rm -f $(DESTDIR)$(includedir)/libpgtcl.h
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.22 2000/07/07 01:23:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.23 2000/09/17 13:02:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -274,19 +274,19 @@ endif # shlib
 install-lib: install-lib-static install-lib-shared
 
 install-lib-static: lib$(NAME).a
-	$(INSTALL_DATA) $< $(libdir)/lib$(NAME).a
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/lib$(NAME).a
 
 ifdef shlib
 install-lib-shared: $(shlib)
-	$(INSTALL_SHLIB) $< $(libdir)/$(shlib)
+	$(INSTALL_SHLIB) $< $(DESTDIR)$(libdir)/$(shlib)
 ifneq ($(PORTNAME), win)
 ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
-	cd $(libdir) && \
+	cd $(DESTDIR)$(libdir) && \
 	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) && \
 	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 endif
 ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
-	cd $(libdir) && \
+	cd $(DESTDIR)$(libdir) && \
 	rm -f lib$(NAME)$(DLSUFFIX) && \
 	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
 endif
@@ -301,11 +301,11 @@ endif # shlib
 
 .PHONY: uninstall-lib
 uninstall-lib:
-	rm -f $(libdir)/lib$(NAME).a
+	rm -f $(DESTDIR)$(libdir)/lib$(NAME).a
 ifdef shlib
-	rm -f $(libdir)/lib$(NAME)$(DLSUFFIX) \
-	  $(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) \
-	  $(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+	rm -f $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX) \
+	  $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) \
+	  $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 endif # shlib
 
 

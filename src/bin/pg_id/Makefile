@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2000 by PostgreSQL Global Development Team
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.18 2000/08/31 16:11:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.19 2000/09/17 13:02:39 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,13 +18,13 @@ pg_id$(X): pg_id.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_id$(X) $(bindir)/pg_id$(X)
+	$(INSTALL_PROGRAM) pg_id$(X) $(DESTDIR)$(bindir)/pg_id$(X)
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/pg_id$(X)
+	rm -f $(DESTDIR)$(bindir)/pg_id$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

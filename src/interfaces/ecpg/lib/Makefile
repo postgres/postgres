@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.7 2000/08/31 16:11:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.8 2000/09/17 13:02:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ include $(top_srcdir)/src/Makefile.shlib
 install: all installdirs install-lib
 
 installdirs:
-	$(mkinstalldirs) $(libdir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
 
 uninstall: uninstall-lib
 

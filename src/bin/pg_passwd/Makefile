@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/bin/pg_passwd/Attic/Makefile,v 1.10 2000/08/31 16:11:20 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_passwd/Attic/Makefile,v 1.11 2000/09/17 13:02:41 petere Exp $
 
 subdir = src/bin/pg_passwd
 top_builddir = ../../..
@@ -10,13 +10,13 @@ pg_passwd$(X): pg_passwd.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_passwd$(X) $(bindir)/pg_passwd$(X)
+	$(INSTALL_PROGRAM) pg_passwd$(X) $(DESTDIR)$(bindir)/pg_passwd$(X)
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/pg_passwd$(X)
+	rm -f $(DESTDIR)$(bindir)/pg_passwd$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

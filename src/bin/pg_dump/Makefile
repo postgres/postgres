@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.24 2000/09/08 18:29:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.25 2000/09/17 13:02:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,16 +41,16 @@ submake:
 	$(MAKE) -C $(libpq_builddir) all
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_dump$(X) $(bindir)/pg_dump$(X)
-	$(INSTALL_PROGRAM) pg_restore$(X) $(bindir)/pg_restore$(X)
-	$(INSTALL_SCRIPT) pg_dumpall $(bindir)/pg_dumpall
-	$(INSTALL_SCRIPT) pg_upgrade $(bindir)/pg_upgrade
+	$(INSTALL_PROGRAM) pg_dump$(X) $(DESTDIR)$(bindir)/pg_dump$(X)
+	$(INSTALL_PROGRAM) pg_restore$(X) $(DESTDIR)$(bindir)/pg_restore$(X)
+	$(INSTALL_SCRIPT) pg_dumpall $(DESTDIR)$(bindir)/pg_dumpall
+	$(INSTALL_SCRIPT) pg_upgrade $(DESTDIR)$(bindir)/pg_upgrade
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(addprefix $(bindir)/, pg_dump$(X) pg_restore$(X) pg_dumpall pg_upgrade)
+	rm -f $(addprefix $(DESTDIR)$(bindir)/, pg_dump$(X) pg_restore$(X) pg_dumpall pg_upgrade)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

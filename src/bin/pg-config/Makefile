@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/bin/pg-config/Attic/Makefile,v 1.2 2000/09/08 18:29:26 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg-config/Attic/Makefile,v 1.3 2000/09/17 13:02:34 petere Exp $
 
 subdir = src/bin/pg-config
 top_builddir = ../../..
@@ -17,13 +17,13 @@ pg-config: pg-config.sh $(top_builddir)/config.status $(top_builddir)/src/Makefi
 	chmod a+x $@
 
 install: all installdirs
-	$(INSTALL_SCRIPT) pg-config $(bindir)/pg-config
+	$(INSTALL_SCRIPT) pg-config $(DESTDIR)$(bindir)/pg-config
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/pg-config
+	rm -f $(DESTDIR)$(bindir)/pg-config
 
 clean distclean maintainer-clean:
 	rm -f pg-config

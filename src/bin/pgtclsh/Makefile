@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.31 2000/08/31 16:11:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.32 2000/09/17 13:02:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,16 +52,16 @@ submake:
 	$(MAKE) -C $(libpgtcl_builddir) all
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pgtclsh $(bindir)/pgtclsh
+	$(INSTALL_PROGRAM) pgtclsh $(DESTDIR)$(bindir)/pgtclsh
 ifeq ($(USE_TK), true)
-	$(INSTALL_PROGRAM) pgtksh $(bindir)/pgtksh
+	$(INSTALL_PROGRAM) pgtksh $(DESTDIR)$(bindir)/pgtksh
 endif
 
 installdirs:
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(bindir)/pgtclsh $(bindir)/pgtksh
+	rm -f $(DESTDIR)$(bindir)/pgtclsh $(DESTDIR)$(bindir)/pgtksh
 
 Makefile.tcldefs: mkMakefile.tcldefs.sh
 	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'

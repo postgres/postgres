@@ -7,10 +7,10 @@ install: all installdirs install-headers
 .PHONY: install-headers
 ecpg_headers = ecpgerrno.h ecpglib.h ecpgtype.h sqlca.h sql3types.h
 install-headers: $(ecpg_headers)
-	for i in $^; do $(INSTALL_DATA) $$i $(includedir); done
+	for i in $^; do $(INSTALL_DATA) $$i $(DESTDIR)$(includedir); done
 
 installdirs:
-	$(mkinstalldirs) $(includedir)
+	$(mkinstalldirs) $(DESTDIR)$(includedir)
 
 uninstall:
-	rm -f $(addprefix $(includedir)/, $(ecpg_headers))
+	rm -f $(addprefix $(DESTDIR)$(includedir)/, $(ecpg_headers))
