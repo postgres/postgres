@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.22 1997/09/24 17:48:25 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.23 1997/09/25 14:10:23 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,8 +183,8 @@ other			.
 <xq>{xqliteral} {
 					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
 						elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
-					memcpy(literal+llen, yytext+1, yyleng);
-					llen += yyleng-1;
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
 				}
 
 <xm>{space}*	{ /* ignore */ }
