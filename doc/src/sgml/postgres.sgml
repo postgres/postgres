@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.58 2003/10/22 22:28:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.59 2003/10/23 13:58:43 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -239,7 +239,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.58 2003/10/22 22:28:10 tg
   &gist;
   &page;
   &bki;
-  &compiler;
 
  </part>
 

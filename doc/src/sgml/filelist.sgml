@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.32 2003/10/22 22:28:10 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.33 2003/10/23 13:58:43 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -77,7 +77,6 @@
 <!entity arch-dev   SYSTEM "arch-dev.sgml">
 <!entity bki        SYSTEM "bki.sgml">
 <!entity catalogs   SYSTEM "catalogs.sgml">
-<!entity compiler   SYSTEM "compiler.sgml">
 <!entity geqo       SYSTEM "geqo.sgml">
 <!entity gist       SYSTEM "gist.sgml">
 <!entity indexcost  SYSTEM "indexcost.sgml">
