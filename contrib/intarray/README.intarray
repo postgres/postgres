@@ -37,6 +37,8 @@ OPERATIONS:
   int[] | int     - returns intarray - union of arguments
   int[] | int[]   - returns intarray as a union of two arrays
   int[] & int[]   - returns intersection of arrays
+  int[] @@ query_int  - returns TRUE if array satisfies query (like '1&(2|3)') 
+  query_int ~~ int[]  - -/-
 
 CHANGES:
 
