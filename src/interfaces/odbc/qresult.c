@@ -368,8 +368,9 @@ QR_next_tuple(QResultClass *self)
 	int			end_tuple = self->rowset_size + self->base;
 	char		corrected = FALSE;
 	TupleField *the_tuples = self->backend_tuples;
-	static char msgbuffer[MAX_MESSAGE_LEN + 1];
-	char		cmdbuffer[MAX_MESSAGE_LEN + 1]; /* QR_set_command() dups
+	/* ERROR_MSG_LENGTH is sufficient */
+	static char msgbuffer[ERROR_MSG_LENGTH + 1];
+	char		cmdbuffer[ERROR_MSG_LENGTH + 1]; /* QR_set_command() dups
 												 * this string so dont
 												 * need static */
 	char		fetch[128];
@@ -528,7 +529,7 @@ QR_next_tuple(QResultClass *self)
 
 
 			case 'C':			/* End of tuple list */
-				SOCK_get_string(sock, cmdbuffer, MAX_MESSAGE_LEN);
+				SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 				QR_set_command(self, cmdbuffer);
 
 				mylog("end of tuple list -- setting inUse to false: this = %u\n", self);

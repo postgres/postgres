@@ -1322,6 +1322,7 @@ convert_escape(char *value)
 
 	if ((strcmp(key, "d") == 0) ||
 		(strcmp(key, "t") == 0) ||
+		(strcmp(key, "oj") == 0) || /* {oj syntax support for 7.1 servers */
 		(strcmp(key, "ts") == 0))
 	{
 		/* Literal; return the escape part as-is */

@@ -300,6 +300,11 @@ SQLExecute(
 		stmt->data_at_exec = -1;
 		for (i = 0; i < stmt->parameters_allocated; i++)
 		{
+			Int4 *pcVal = stmt->parameters[i].used;
+			if (pcVal && (*pcVal == SQL_DATA_AT_EXEC || *pcVal <= SQL_LEN_DATA_AT_EXEC_OFFSET))
+				stmt->parameters[i].data_at_exec = TRUE;
+			else
+				stmt->parameters[i].data_at_exec = FALSE;
 			/* Check for data at execution parameters */
 			if (stmt->parameters[i].data_at_exec == TRUE)
 			{

@@ -913,8 +913,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	char		swallow;
 	int			id;
 	SocketClass *sock = self->sock;
-	static char msgbuffer[MAX_MESSAGE_LEN + 1];
-	char		cmdbuffer[MAX_MESSAGE_LEN + 1]; /* QR_set_command() dups
+	/* ERROR_MSG_LENGTH is suffcient */
+	static char msgbuffer[ERROR_MSG_LENGTH + 1];
+	char		cmdbuffer[ERROR_MSG_LENGTH + 1]; /* QR_set_command() dups
 												 * this string so dont
 												 * need static */
 
@@ -986,13 +987,13 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		{
 			case 'A':			/* Asynchronous Messages are ignored */
 				(void) SOCK_get_int(sock, 4);	/* id of notification */
-				SOCK_get_string(sock, msgbuffer, MAX_MESSAGE_LEN);
+				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 				/* name of the relation the message comes from */
 				break;
 			case 'C':			/* portal query command, no tuples
 								 * returned */
 				/* read in the return message from the backend */
-				SOCK_get_string(sock, cmdbuffer, MAX_MESSAGE_LEN);
+				SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 				if (SOCK_get_errcode(sock) != 0)
 				{
 					self->errornumber = CONNECTION_NO_RESPONSE;
@@ -1146,7 +1147,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				return res;		/* instead of NULL. Zoltan */
 
 			case 'P':			/* get the Portal name */
-				SOCK_get_string(sock, msgbuffer, MAX_MESSAGE_LEN);
+				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 				break;
 			case 'T':			/* Tuple results start here */
 				result_in = qi ? qi->result_in : NULL;
@@ -1209,7 +1210,8 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 				c,
 				done;
 	SocketClass *sock = self->sock;
-	static char msgbuffer[MAX_MESSAGE_LEN + 1];
+	/* ERROR_MSG_LENGTH is sufficient */
+	static char msgbuffer[ERROR_MSG_LENGTH + 1];
 	int			i;
 
 	mylog("send_function(): conn=%u, fnid=%d, result_is_int=%d, nargs=%d\n", self, fnid, result_is_int, nargs);

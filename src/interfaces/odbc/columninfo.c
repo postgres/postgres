@@ -57,7 +57,8 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 	Oid			new_adtid;
 	Int2		new_adtsize;
 	Int4		new_atttypmod = -1;
-	char		new_field_name[MAX_MESSAGE_LEN + 1];
+	/* MAX_COLUMN_LEN may be sufficient but for safety */ 
+	char		new_field_name[2 * MAX_COLUMN_LEN + 1];
 	SocketClass *sock;
 	ConnInfo   *ci;
 
@@ -78,7 +79,7 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 	for (lf = 0; lf < new_num_fields; lf++)
 	{
 
-		SOCK_get_string(sock, new_field_name, MAX_MESSAGE_LEN);
+		SOCK_get_string(sock, new_field_name, 2 * MAX_COLUMN_LEN);
 		new_adtid = (Oid) SOCK_get_int(sock, 4);
 		new_adtsize = (Int2) SOCK_get_int(sock, 2);
 
@@ -116,16 +117,30 @@ CI_free_memory(ColumnInfoClass *self)
 	for (lf = 0; lf < num_fields; lf++)
 	{
 		if (self->name[lf])
+		{
 			free(self->name[lf]);
+			self->name[lf] = NULL;
+		}
 	}
 
 	/* Safe to call even if null */
-	free(self->name);
-	free(self->adtid);
-	free(self->adtsize);
-	free(self->display_size);
+	self->num_fields = 0;
+	if (self->name)
+		free(self->name);
+	self->name = NULL;
+	if (self->adtid)
+		free(self->adtid);
+	self->adtid = NULL;
+	if (self->adtsize)
+		free(self->adtsize);
+	self->adtsize = NULL;
+	if (self->display_size)
+		free(self->display_size);
+	self->display_size = NULL;
 
-	free(self->atttypmod);
+	if (self->atttypmod)
+		free(self->atttypmod);
+	self->atttypmod = NULL;
 }
 
 void
@@ -136,6 +151,7 @@ CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 	self->num_fields = new_num_fields;
 
 	self->name = (char **) malloc(sizeof(char *) * self->num_fields);
+	memset(self->name, 0,  sizeof(char *) * self->num_fields);
 	self->adtid = (Oid *) malloc(sizeof(Oid) * self->num_fields);
 	self->adtsize = (Int2 *) malloc(sizeof(Int2) * self->num_fields);
 	self->display_size = (Int2 *) malloc(sizeof(Int2) * self->num_fields);
