@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.243 2001/08/10 18:57:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.244 2001/08/13 21:34:51 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -163,7 +163,8 @@ static void doNegateFloat(Value *v);
 %type <list>	OptUserList
 %type <defelt>	OptUserElem
 
-%type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted, opt_procedural
+%type <boolean>	TriggerActionTime, TriggerForSpec, opt_trusted, opt_procedural
+%type <str>		opt_lancompiler
 
 %type <str>		OptConstrFromTable
 
@@ -1688,23 +1689,26 @@ IntegerOnly:  Iconst
  *
  *****************************************************************************/
 
-CreatePLangStmt:  CREATE PLangTrusted opt_procedural LANGUAGE Sconst 
-			HANDLER func_name LANCOMPILER Sconst
+CreatePLangStmt:  CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
+			HANDLER func_name opt_lancompiler
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
 				n->plhandler = $7;
-				n->plcompiler = $9;
+				n->plcompiler = $8;
 				n->pltrusted = $2;
 				$$ = (Node *)n;
 			}
 		;
 
-PLangTrusted:  TRUSTED			{ $$ = TRUE; }
+opt_trusted:  TRUSTED			{ $$ = TRUE; }
 			| /*EMPTY*/			{ $$ = FALSE; }
 		;
 
-DropPLangStmt:  DROP opt_procedural LANGUAGE Sconst
+opt_lancompiler: LANCOMPILER Sconst { $$ = $2; }
+			| /*EMPTY*/			{ $$ = ""; }
+
+DropPLangStmt:  DROP opt_procedural LANGUAGE ColId_or_Sconst
 			{
 				DropPLangStmt *n = makeNode(DropPLangStmt);
 				n->plname = $4;
@@ -2511,7 +2515,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return AS func_as LANGUAGE Sconst opt_with
+			 RETURNS func_return AS func_as LANGUAGE ColId_or_Sconst opt_with
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->funcname = $3;

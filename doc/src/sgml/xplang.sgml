@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.13 2001/05/19 09:01:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.14 2001/08/13 21:34:51 petere Exp $
 -->
 
  <chapter id="xplang">
@@ -79,7 +79,7 @@ createlang plpgsql template1
 <synopsis>
 CREATE FUNCTION <replaceable>handler_function_name</replaceable> ()
     RETURNS OPAQUE AS
-    '<replaceable>path-to-shared-object</replaceable>' LANGUAGE 'C';
+    '<replaceable>path-to-shared-object</replaceable>' LANGUAGE C;
 </synopsis>
       The special return type of <type>OPAQUE</type> tells
       the database that this function does not return one of
@@ -92,9 +92,8 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable> ()
      <para>
       The PL must be declared with the command
 <synopsis>
-CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE '<replaceable>language-name</replaceable>'
-    HANDLER <replaceable>handler_function_name</replaceable>
-    LANCOMPILER '<replaceable>description</replaceable>';
+CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
+    HANDLER <replaceable>handler_function_name</replaceable>;
 </synopsis>
       The optional key word <token>TRUSTED</token> tells
       whether ordinary database users that have no superuser
@@ -130,7 +129,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE '<r
 
 <programlisting>
 CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
-    '$libdir/plpgsql' LANGUAGE 'C';
+    '$libdir/plpgsql' LANGUAGE C;
 </programlisting>
      </para>
     </step>
@@ -139,9 +138,8 @@ CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
      <para>
       The command
 <programlisting>
-CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'
-    HANDLER plpgsql_call_handler
-    LANCOMPILER 'PL/pgSQL';
+CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
+    HANDLER plpgsql_call_handler;
 </programlisting>
       then defines that the previously declared call handler function
       should be invoked for functions and trigger procedures where the

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.24 2001/06/04 23:27:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.25 2001/08/13 21:34:51 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -18,12 +18,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.24 2001/06/04 
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
     AS '<replaceable class="parameter">definition</replaceable>'
-    LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+    LANGUAGE <replaceable class="parameter">langname</replaceable>
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
     AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
-    LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+    LANGUAGE <replaceable class="parameter">langname</replaceable>
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -123,13 +123,14 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 
      <listitem>
       <para>
-       May be '<literal>sql</literal>', '<literal>C</literal>',
-       '<literal>internal</literal>', or '<replaceable
-       class="parameter">plname</replaceable>', where '<replaceable
-       class="parameter">plname</replaceable>' is the name of a
+       May be <literal>SQL</literal>, <literal>C</literal>,
+       <literal>internal</literal>, or <replaceable
+       class="parameter">plname</replaceable>, where <replaceable
+       class="parameter">plname</replaceable> is the name of a
        created procedural language. See
        <xref linkend="sql-createlanguage">
-       for details.
+       for details.  For backward compatibility, the name may be
+       enclosed by single quotes.
       </para>
      </listitem>
     </varlistentry>
@@ -261,7 +262,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 <programlisting>
 CREATE FUNCTION one() RETURNS integer
     AS 'SELECT 1 AS RESULT;'
-    LANGUAGE 'sql';
+    LANGUAGE SQL;
 
 SELECT one() AS answer;
 <computeroutput>
@@ -281,7 +282,7 @@ SELECT one() AS answer;
 
 <programlisting>
 CREATE FUNCTION ean_checkdigit(char, char) RETURNS boolean
-    AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
+    AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE C;
     
 CREATE TABLE product (
     id        char(8) PRIMARY KEY,
@@ -306,7 +307,7 @@ CREATE TABLE product (
 <programlisting>
 CREATE FUNCTION point(complex) RETURNS point
     AS '/home/bernie/pgsql/lib/complex.so', 'complex_to_point'
-    LANGUAGE 'c';
+    LANGUAGE C;
 </programlisting>
 
   The C declaration of the function could be:

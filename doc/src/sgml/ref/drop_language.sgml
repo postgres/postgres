@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.10 2001/08/13 21:34:51 petere Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP [ PROCEDURAL ] LANGUAGE '<replaceable class="PARAMETER">name</replaceable>'
+DROP [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">name</replaceable>
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPLANGUAGE-1">
@@ -40,7 +40,8 @@ DROP [ PROCEDURAL ] LANGUAGE '<replaceable class="PARAMETER">name</replaceable>'
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing procedural language.
+	The name of an existing procedural language.  For backward
+        compatibility, the name may be enclosed by single quotes.
        </para>
       </listitem>
      </varlistentry>
@@ -132,7 +133,7 @@ ERROR: Language "<replaceable class="parameter">name</replaceable>" doesn't exis
    This command removes the PL/Sample language:
 
    <programlisting>
-DROP PROCEDURAL LANGUAGE 'plsample';
+DROP LANGUAGE plsample;
    </programlisting>
   </para>
  </refsect1>

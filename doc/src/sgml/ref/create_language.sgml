@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.14 2000/11/20 20:36:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.15 2001/08/13 21:34:51 petere Exp $
 Postgres documentation
 -->
 
@@ -23,9 +23,8 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langname</replaceable>
     HANDLER <replaceable class="parameter">call_handler</replaceable>
-    LANCOMPILER '<replaceable class="parameter">comment</replaceable>'
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATELANGUAGE-1">
@@ -62,6 +61,10 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE '<replaceable class="parameter">langn
 	language cannot override one of the built-in languages of
 	<productname>Postgres</productname>.
        </para>
+       <para>
+        For backward compatibility, the name may be enclosed by single
+        quotes.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -77,20 +80,6 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE '<replaceable class="parameter">langn
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><replaceable class="parameter">comment</replaceable></term>
-      <listitem>
-       <para>
-	The <function>LANCOMPILER</function> argument is the
-	string that will be
-	inserted in the <literal>LANCOMPILER</literal> attribute
-	of the new
-	<filename>pg_language</filename> entry. At present,
-	<productname>Postgres</productname> does not use
-	this attribute in any way.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
    
@@ -346,10 +335,9 @@ plsample_call_handler(PG_FUNCTION_ARGS)
    <programlisting>
 CREATE FUNCTION plsample_call_handler () RETURNS opaque
     AS '/usr/local/pgsql/lib/plsample.so'
-    LANGUAGE 'C';
-CREATE PROCEDURAL LANGUAGE 'plsample'
-    HANDLER plsample_call_handler
-    LANCOMPILER 'PL/Sample';
+    LANGUAGE C;
+CREATE LANGUAGE plsample
+    HANDLER plsample_call_handler;
    </programlisting>
   </para>
  </refsect1>

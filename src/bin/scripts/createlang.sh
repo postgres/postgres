@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.28 2001/06/18 21:40:06 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.29 2001/08/13 21:34:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -121,7 +121,7 @@ do
     shift
 done
 
-if [ "$usage" ]; then	
+if [ -n "$usage" ]; then	
         echo "$CMDNAME installs a procedural language into a PostgreSQL database."
 	echo
 	echo "Usage:"
@@ -158,7 +158,7 @@ fi
 # List option
 # ----------
 if [ "$list" ]; then
-	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\", lancompiler as \"Compiler\" FROM pg_language WHERE lanispl = 't';"
+	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\" FROM pg_language WHERE lanispl = TRUE;"
 	if [ "$showsql" = yes ]; then
 		echo "$sqlcmd"
 	fi
@@ -185,46 +185,43 @@ fi
 # ----------
 # Check if supported and set related values
 # ----------
+
+langname=`echo "$langname" | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+
 case "$langname" in
 	plpgsql)
-		lancomp="PL/pgSQL"
 		trusted="TRUSTED "
 		handler="plpgsql_call_handler"
 		object="plpgsql"
 		;;
 	pltcl)
-		lancomp="PL/Tcl"
 		trusted="TRUSTED "
 		handler="pltcl_call_handler"
 		object="pltcl"
 		;;
 	pltclu)
-		lancomp="PL/Tcl (untrusted)"
 		trusted=""
 		handler="pltclu_call_handler"
 		object="pltcl"
 		;;
 	plperl)
-		lancomp="PL/Perl"
 		trusted="TRUSTED "
 		handler="plperl_call_handler"
 		object="plperl"
 		;;
 	plperlu)
-		lancomp="PL/Perl (untrusted)"
 		trusted=""
 		handler="plperl_call_handler"
 		object="plperl"
 		;;
 	plpython)
-		lancomp="PL/Python"
 		trusted="TRUSTED "
 		handler="plpython_call_handler"
 		object="plpython"
 		;;
 	*)
-		echo "$CMDNAME: unsupported language '$langname'" 1>&2
-		echo "Supported languages are 'plpgsql', 'pltcl', 'pltclu', 'plperl', and 'plpython'." 1>&2
+		echo "$CMDNAME: unsupported language \"$langname\"" 1>&2
+		echo "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpython." 1>&2
 		exit 1
         ;;
 esac
@@ -244,39 +241,42 @@ if [ $? -ne 0 ]; then
 	echo "$CMDNAME: external error" 1>&2
 	exit 1
 fi
-if [ "$res" ]; then
-	echo "$CMDNAME: '$langname' is already installed in database $dbname" 1>&2
+if [ -n "$res" ]; then
+	echo "$CMDNAME: language \"$langname\" is already installed in database $dbname" 1>&2
 	# separate exit status for "already installed"
 	exit 2
 fi
 
 # ----------
-# Check that there is no function named as the call handler
+# Check whether the call handler exists
 # ----------
-sqlcmd="SELECT oid FROM pg_proc WHERE proname = '$handler';"
+sqlcmd="SELECT oid FROM pg_proc WHERE proname = '$handler' AND prorettype = 0 AND pronargs = 0;"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
 res=`$PSQL "$sqlcmd"`
-if [ ! -z "$res" ]; then
-	echo "$CMDNAME: A function named '$handler' already exists. Installation aborted." 1>&2
-	exit 1
+if [ -n "$res" ]; then
+	handlerexists=yes
+else
+	handlerexists=no
 fi
 
 # ----------
 # Create the call handler and the language
 # ----------
-sqlcmd="CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}' LANGUAGE 'C';"
-if [ "$showsql" = yes ]; then
-	echo "$sqlcmd"
-fi
-$PSQL "$sqlcmd"
-if [ $? -ne 0 ]; then
-	echo "$CMDNAME: language installation failed" 1>&2
-	exit 1
+if [ "$handlerexists" = no ]; then
+	sqlcmd="CREATE FUNCTION \"$handler\" () RETURNS OPAQUE AS '$PGLIB/${object}' LANGUAGE C;"
+	if [ "$showsql" = yes ]; then
+		echo "$sqlcmd"
+	fi
+	$PSQL "$sqlcmd"
+	if [ $? -ne 0 ]; then
+		echo "$CMDNAME: language installation failed" 1>&2
+		exit 1
+	fi
 fi
 
-sqlcmd="CREATE ${trusted}PROCEDURAL LANGUAGE '$langname' HANDLER $handler LANCOMPILER '$lancomp';"
+sqlcmd="CREATE ${trusted}LANGUAGE \"$langname\" HANDLER \"$handler\";"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi

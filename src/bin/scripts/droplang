@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.15 2001/05/12 01:30:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.16 2001/08/13 21:34:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ fi
 
 
 if [ "$list" ]; then
-	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\", lancompiler as \"Compiler\" FROM pg_language WHERE lanispl = 't'"
+	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\" FROM pg_language WHERE lanispl = TRUE"
 	if [ "$showsql" = yes ]; then
 		echo "$sqlcmd"
 	fi
@@ -157,55 +157,23 @@ if [ -z "$langname" ]; then
 	read langname
 fi
 
-# ----------
-# Check if supported and set related values
-# ----------
-case "$langname" in
-	plpgsql)
-                lancomp="PL/pgSQL"
-		handler="plpgsql_call_handler"
-                ;;
-	pltcl)
-		lancomp="PL/Tcl"
-		handler="pltcl_call_handler"
-                ;;
-	pltclu)
-		lancomp="PL/Tcl (untrusted)"
-		handler="pltclu_call_handler"
-		;;
-	plperl)
-		lancomp="PL/Perl"
-		handler="plperl_call_handler"
-                ;;
-	plpython)
-		lancomp="PL/Python"
-		handler="plpython_call_handler"
-                ;;
-	*)
-		echo "$CMDNAME: unsupported language '$langname'" 1>&2
-		echo "Supported languages are 'plpgsql', 'pltcl', 'pltclu', 'plperl', and 'plpython'." 1>&2
-		exit 1
-                ;;
-esac
-
-
 PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
 
 
 # ----------
-# Make sure the language is installed
+# Make sure the language is installed and find the oid of the handler function
 # ----------
-sqlcmd="SELECT oid FROM pg_language WHERE lanname = '$langname';"
+sqlcmd="SELECT lanplcallfoid FROM pg_language WHERE lanname = '$langname' AND lanispl;"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
-res=`$PSQL "$sqlcmd"`
+lanplcallfoid=`$PSQL "$sqlcmd"`
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: external error" 1>&2
 	exit 1
 fi
-if [ -z "$res" ]; then
-	echo "$CMDNAME: '$langname' is not installed in database $dbname" 1>&2
+if [ -z "$lanplcallfoid" ]; then
+	echo "$CMDNAME: language \"$langname\" is not installed in database $dbname" 1>&2
 	exit 1
 fi
 
@@ -224,14 +192,32 @@ if [ $? -ne 0 ]; then
 fi
 if [ "$res" -ne 0 ]; then
 	echo "$CMDNAME: There are $res functions/trigger procedures declared in language" 1>&2
-        echo "$lancomp. Language not removed." 1>&2
+        echo "$langname. Language not removed." 1>&2
 	exit 1
 fi
 
 # ----------
-# Drop the language and the call handler function
+# Check that the handler function isn't used by some other language
 # ----------
-sqlcmd="DROP PROCEDURAL LANGUAGE '$langname';"
+sqlcmd="SELECT count(*) FROM pg_language WHERE lanplcallfoid = $lanplcallfoid AND lanname <> '$langname';"
+if [ "$showsql" = yes ]; then
+	echo "$sqlcmd"
+fi
+res=`$PSQL "$sqlcmd"`
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: external error" 1>&2
+	exit 1
+fi
+if [ "$res" -eq 0 ]; then
+	keephandler=no
+else
+	keephandler=yes
+fi
+
+# ----------
+# Drop the language
+# ----------
+sqlcmd="DROP LANGUAGE \"$langname\";"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
@@ -241,7 +227,24 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-sqlcmd="DROP FUNCTION $handler();"
+# ----------
+# Drop the call handler
+# ----------
+if [ "$keephandler" = yes ]; then
+        exit 0
+fi
+
+sqlcmd="SELECT proname FROM pg_proc WHERE oid = $lanplcallfoid;"
+if [ "$showsql" = yes ]; then
+	echo "$sqlcmd"
+fi
+handler=`$PSQL "$sqlcmd"`
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: external error" 1>&2
+	exit 1
+fi
+
+sqlcmd="DROP FUNCTION \"$handler\" ();"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
