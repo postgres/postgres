@@ -24,10 +24,6 @@
  *	PRIVATE FUNCTIONS
  */
 
-typedef unsigned char unsigned8;
-typedef unsigned int  unsigned32;
-typedef unsigned long unsigned64;
-
 #ifdef FRONTEND
 #undef palloc
 #define palloc malloc
@@ -39,13 +35,13 @@ typedef unsigned long unsigned64;
  *	The returned array is allocated using malloc.  the caller should free it
  * 	when it is no longer needed.
  */
-static unsigned8 *
-createPaddedCopyWithLength(unsigned8 *b, unsigned32 *l)
+static uint8 *
+createPaddedCopyWithLength(uint8 *b, uint32 *l)
 {
-	unsigned8  *ret;
-	unsigned32 q;
-	unsigned32 len, newLen448;
-	unsigned64 len64;
+	uint8  *ret;
+	uint32 q;
+	uint32 len, newLen448;
+	uint32 len_high, len_low;	/* 64-bit value split into 32-bit sections */
 
 	len = ((b == NULL) ? 0 : *l);
 	newLen448 = len + 64 - (len % 64) - 8;
@@ -53,11 +49,11 @@ createPaddedCopyWithLength(unsigned8 *b, unsigned32 *l)
 		newLen448 += 64;
 
 	*l = newLen448 + 8;
-	if ((ret = (unsigned8 *) malloc(sizeof(unsigned8) * *l)) == NULL)
+	if ((ret = (uint8 *) malloc(sizeof(uint8) * *l)) == NULL)
 		return NULL;
 
 	if (b != NULL)
-		memcpy(ret, b, sizeof(unsigned8) * len);
+		memcpy(ret, b, sizeof(uint8) * len);
 
 	/* pad */
 	ret[len] = 0x80;
@@ -65,24 +61,26 @@ createPaddedCopyWithLength(unsigned8 *b, unsigned32 *l)
 		ret[q] = 0x00;
 
 	/* append length as a 64 bit bitcount */
-	len64 = len;
-	len64 <<= 3;
+	len_low = len;
+	/* split into two 32-bit values */
+	/* we only look at the bottom 32-bits */
+	len_high = len >> 29;
+	len_low <<= 3;
 	q = newLen448;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q++] = (len64 & 0xFF);
-	len64 >>= 8;
-	ret[q] = (len64 & 0xFF);
+	ret[q++] = (len_low & 0xff);
+	len_low >>= 8;
+	ret[q++] = (len_low & 0xff);
+	len_low >>= 8;
+	ret[q++] = (len_low & 0xff);
+	len_low >>= 8;
+	ret[q++] = (len_low & 0xff);
+	ret[q++] = (len_high & 0xff);
+	len_high >>= 8;
+	ret[q++] = (len_high & 0xff);
+	len_high >>= 8;
+	ret[q++] = (len_high & 0xff);
+	len_high >>= 8;
+	ret[q] = (len_high & 0xff);
 
 	return ret;
 }
@@ -94,9 +92,9 @@ createPaddedCopyWithLength(unsigned8 *b, unsigned32 *l)
 #define ROT_LEFT(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
 static void
-doTheRounds(unsigned32 X[16], unsigned32 state[4])
+doTheRounds(uint32 X[16], uint32 state[4])
 {
-	unsigned32 a, b, c, d;
+	uint32 a, b, c, d;
 
 	a = state[0];
 	b = state[1];
@@ -182,13 +180,13 @@ doTheRounds(unsigned32 X[16], unsigned32 state[4])
 }
 
 static int
-calculateDigestFromBuffer(unsigned8 *b, unsigned32 len, unsigned8 sum[16])
+calculateDigestFromBuffer(uint8 *b, uint32 len, uint8 sum[16])
 {
-	register unsigned32 i, j, k, newI;
-	unsigned32 l;
-	unsigned8 *input;
-	register unsigned32 *wbp;
-	unsigned32 workBuff[16], state[4];
+	register uint32 i, j, k, newI;
+	uint32 l;
+	uint8 *input;
+	register uint32 *wbp;
+	uint32 workBuff[16], state[4];
 
 	l = len;
 
@@ -223,19 +221,19 @@ calculateDigestFromBuffer(unsigned8 *b, unsigned32 len, unsigned8 sum[16])
 	j = 0;
 	for (i = 0; i < 4; i++) {
 		k = state[i];
-		sum[j++] = (k & 0xFF);
+		sum[j++] = (k & 0xff);
 		k >>= 8;
-		sum[j++] = (k & 0xFF);
+		sum[j++] = (k & 0xff);
 		k >>= 8;
-		sum[j++] = (k & 0xFF);
+		sum[j++] = (k & 0xff);
 		k >>= 8;
-		sum[j++] = (k & 0xFF);
+		sum[j++] = (k & 0xff);
 	}
 	return 1;
 }
 
 static void
-bytesToHex(unsigned8 b[16], char *s)
+bytesToHex(uint8 b[16], char *s)
 {
 	static char *hex = "0123456789abcdef";
 	int         q, w;
@@ -280,9 +278,9 @@ bytesToHex(unsigned8 b[16], char *s)
 bool
 md5_hash(const void *buff, size_t len, char *hexsum)
 {
-	unsigned8 sum[16];
+	uint8 sum[16];
 
-	if (!calculateDigestFromBuffer((unsigned8 *) buff, len, sum))
+	if (!calculateDigestFromBuffer((uint8 *) buff, len, sum))
 		return false;
 
 	bytesToHex(sum, hexsum);

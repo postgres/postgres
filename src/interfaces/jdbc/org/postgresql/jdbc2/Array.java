@@ -169,11 +169,11 @@ public class Array implements java.sql.Array
 	}
 
 	public int getBaseType() throws SQLException {
-                return conn.getSQLType(getBaseTypeName());
+		return Field.getSQLType( getBaseTypeName() );
 	}
 
 	public String getBaseTypeName() throws SQLException {
-                String fType = field.getPGType();
+		String fType = field.getTypeName();
 		if( fType.charAt(0) == '_' )
 			fType = fType.substring(1);
 		return fType;
@@ -195,12 +195,12 @@ public class Array implements java.sql.Array
 		Object array = getArray( index, count, map );
 		Vector rows = new Vector();
 		Field[] fields = new Field[2];
-                fields[0] = new Field(conn, "INDEX", conn.getOID("int2"), 2);
+		fields[0] = new Field(conn, "INDEX", field.getOID("int2"), 2);
 		switch ( getBaseType() )
 		{
 			case Types.BIT:
 				boolean[] booleanArray = (boolean[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("bool"), 1);
+				fields[1] = new Field(conn, "VALUE", field.getOID("bool"), 1);
 				for( int i=0; i<booleanArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -208,11 +208,11 @@ public class Array implements java.sql.Array
 					rows.addElement(tuple);
 				}
 			case Types.SMALLINT:
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("int2"), 2);
+				fields[1] = new Field(conn, "VALUE", field.getOID("int2"), 2);
 			case Types.INTEGER:
 				int[] intArray = (int[]) array;
 				if( fields[1] == null )
-                                        fields[1] = new Field(conn, "VALUE", conn.getOID("int4"), 4);
+					fields[1] = new Field(conn, "VALUE", field.getOID("int4"), 4);
 				for( int i=0; i<intArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -222,7 +222,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.BIGINT:
 				long[] longArray = (long[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("int8"), 8);
+				fields[1] = new Field(conn, "VALUE", field.getOID("int8"), 8);
 				for( int i=0; i<longArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -232,7 +232,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.NUMERIC:
 				BigDecimal[] bdArray = (BigDecimal[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("numeric"), -1);
+				fields[1] = new Field(conn, "VALUE", field.getOID("numeric"), -1);
 				for( int i=0; i<bdArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -242,7 +242,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.REAL:
 				float[] floatArray = (float[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("float4"), 4);
+				fields[1] = new Field(conn, "VALUE", field.getOID("float4"), 4);
 				for( int i=0; i<floatArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -252,7 +252,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.DOUBLE:
 				double[] doubleArray = (double[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("float8"), 8);
+				fields[1] = new Field(conn, "VALUE", field.getOID("float8"), 8);
 				for( int i=0; i<doubleArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -261,11 +261,11 @@ public class Array implements java.sql.Array
 				}
 				break;
 			case Types.CHAR:
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("char"), 1);
+				fields[1] = new Field(conn, "VALUE", field.getOID("char"), 1);
 			case Types.VARCHAR:
 				String[] strArray = (String[]) array;
 				if( fields[1] == null )
-                                        fields[1] = new Field(conn, "VALUE", conn.getOID("varchar"), -1);
+					fields[1] = new Field(conn, "VALUE", field.getOID("varchar"), -1);
 				for( int i=0; i<strArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -275,7 +275,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.DATE:
 				java.sql.Date[] dateArray = (java.sql.Date[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("date"), 4);
+				fields[1] = new Field(conn, "VALUE", field.getOID("date"), 4);
 				for( int i=0; i<dateArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -285,7 +285,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.TIME:
 				java.sql.Time[] timeArray = (java.sql.Time[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("time"), 8);
+				fields[1] = new Field(conn, "VALUE", field.getOID("time"), 8);
 				for( int i=0; i<timeArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
@@ -295,7 +295,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.TIMESTAMP:
 				java.sql.Timestamp[] timestampArray = (java.sql.Timestamp[]) array;
-                                fields[1] = new Field(conn, "VALUE", conn.getOID("timestamp"), 8);
+				fields[1] = new Field(conn, "VALUE", field.getOID("timestamp"), 8);
 				for( int i=0; i<timestampArray.length; i++ ) {
 					byte[][] tuple = new byte[2][0];
 	  				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index+i) ); // Index 
