@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.31 2000/12/08 00:09:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.32 2001/02/16 03:26:40 tgl Exp $
  *
  **********************************************************************/
 
@@ -103,7 +103,7 @@ static Tcl_Interp *pltcl_safe_interp = NULL;
 static Tcl_HashTable *pltcl_proc_hash = NULL;
 static Tcl_HashTable *pltcl_norm_query_hash = NULL;
 static Tcl_HashTable *pltcl_safe_query_hash = NULL;
-static FunctionCallInfo pltcl_actual_fcinfo = NULL;
+static FunctionCallInfo pltcl_current_fcinfo = NULL;
 
 /**********************************************************************
  * Forward declarations
@@ -354,18 +354,18 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	 * Determine if called as function or trigger and
 	 * call appropriate subhandler
 	 ************************************************************/
-	save_fcinfo = pltcl_actual_fcinfo;
+	save_fcinfo = pltcl_current_fcinfo;
 
 	if (CALLED_AS_TRIGGER(fcinfo))
 	{
-		pltcl_actual_fcinfo = NULL;
+		pltcl_current_fcinfo = NULL;
 		retval = PointerGetDatum(pltcl_trigger_handler(fcinfo));
 	} else {
-		pltcl_actual_fcinfo = fcinfo;
+		pltcl_current_fcinfo = fcinfo;
 		retval = pltcl_func_handler(fcinfo);
 	}
 
-	pltcl_actual_fcinfo = save_fcinfo;
+	pltcl_current_fcinfo = save_fcinfo;
 
 	pltcl_call_level--;
 
@@ -743,17 +743,27 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 * Disconnect from SPI manager and then create the return
 	 * values datum (if the input function does a palloc for it
 	 * this must not be allocated in the SPI memory context
-	 * because SPI_finish would free it).
+	 * because SPI_finish would free it).  But don't try to call
+	 * the result_in_func if we've been told to return a NULL;
+	 * the contents of interp->result may not be a valid value of
+	 * the result type in that case.
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
-	retval = FunctionCall3(&prodesc->result_in_func,
-						   PointerGetDatum(interp->result),
-						   ObjectIdGetDatum(prodesc->result_in_elem),
-						   Int32GetDatum(-1));
+	if (fcinfo->isnull)
+		retval = (Datum) 0;
+	else
+		retval = FunctionCall3(&prodesc->result_in_func,
+							   PointerGetDatum(interp->result),
+							   ObjectIdGetDatum(prodesc->result_in_elem),
+							   Int32GetDatum(-1));
 
+	/************************************************************
+	 * Finally we may restore normal error handling.
+	 ************************************************************/
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+
 	return retval;
 }
 
@@ -1345,7 +1355,7 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[])
 {
 	int		argno;
-	FunctionCallInfo fcinfo = pltcl_actual_fcinfo;
+	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
 
 	/************************************************************
 	 * Check call syntax
@@ -1357,20 +1367,20 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Get the argument number
-	 ************************************************************/
-	if (Tcl_GetInt(interp, argv[1], &argno) != TCL_OK)
-		return TCL_ERROR;
-
-	/************************************************************
 	 * Check that we're called as a normal function
 	 ************************************************************/
 	if (fcinfo == NULL)
 	{
 		Tcl_SetResult(interp, "argisnull cannot be used in triggers", 
-				TCL_VOLATILE);
+					  TCL_VOLATILE);
 		return TCL_ERROR;
 	}
+
+	/************************************************************
+	 * Get the argument number
+	 ************************************************************/
+	if (Tcl_GetInt(interp, argv[1], &argno) != TCL_OK)
+		return TCL_ERROR;
 
 	/************************************************************
 	 * Check that the argno is valid
@@ -1402,7 +1412,7 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[])
 {
 	int		argno;
-	FunctionCallInfo fcinfo = pltcl_actual_fcinfo;
+	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
 
 	/************************************************************
 	 * Check call syntax
@@ -1414,10 +1424,21 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
+	 * Check that we're called as a normal function
+	 ************************************************************/
+	if (fcinfo == NULL)
+	{
+		Tcl_SetResult(interp, "return_null cannot be used in triggers", 
+					  TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/************************************************************
 	 * Set the NULL return flag and cause Tcl to return from the
 	 * procedure.
 	 ************************************************************/
 	fcinfo->isnull = true;
+
 	return TCL_RETURN;
 }
 
