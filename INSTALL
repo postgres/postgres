@@ -1,3 +1,9 @@
+Chapter 0. Installation
+
+Table of Contents
+Before you start
+Installation Procedure
+
      Installation instructions for PostgreSQL 7.0.0.
 
 Commands were tested on RedHat Linux version 5.2 using the bash shell.
@@ -52,6 +58,7 @@ Considering today's prices for hard disks, getting a large and fast hard
 disk should probably be in your plans before putting a database into
 production use.
 
+---------------------------------------------------------------------------
 
 Installation Procedure
 
@@ -72,7 +79,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      (although you can). You will be told when you need to login as the
      database superuser.
 
-  2. If you are not upgrading an existing system then skip to step 4.
+  2. If you are not upgrading an existing system then skip to .
 
      You now need to back up your existing database. To dump your fairly
      recent post-6.0 database installation, type
@@ -96,7 +103,6 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
       backup. If necessary, bring down postmaster, edit the permissions in file
       /usr/local/pgsql/data/pg_hba.conf to allow only you on, then bring
       postmaster back up.
-
   3. If you are upgrading an existing system then kill the database server
      now. Type
 
