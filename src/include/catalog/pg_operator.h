@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.23 1998/01/24 22:48:36 momjian Exp $
+ * $Id: pg_operator.h,v 1.24 1998/02/03 16:01:54 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -387,7 +387,7 @@ DATA(insert OID =  795 (  "<="	   PGUID 0 b t f  602  602	701  794  0 0 0 path_n
 DATA(insert OID =  796 (  ">="	   PGUID 0 b t f  602  602	701  793  0 0 0 path_n_ge intltsel intltjoinsel ));
 DATA(insert OID =  797 (  "#"	   PGUID 0 l t f	0  602	 23    0  0 0 0 path_npoints - - ));
 DATA(insert OID =  798 (  "?#"	   PGUID 0 b t f  602  602	 16    0  0 0 0 path_inter - - ));
-DATA(insert OID =  799 (  "??"	   PGUID 0 l t f	0  602	701    0  0 0 0 path_length - - ));
+DATA(insert OID =  799 (  "@-@"	   PGUID 0 l t f	0  602	701    0  0 0 0 path_length - - ));
 DATA(insert OID =  800 (  ">^"	   PGUID 0 b t f  603  603	 16    0  0 0 0 box_above intltsel intltjoinsel ));
 DATA(insert OID =  801 (  "<^"	   PGUID 0 b t f  603  603	 16    0  0 0 0 box_below intltsel intltjoinsel ));
 DATA(insert OID =  802 (  "?#"	   PGUID 0 b t f  603  603	 16    0  0 0 0 box_overlap - - ));
@@ -647,7 +647,17 @@ DATA(insert OID = 1559 (  "##"	  PGUID 0 b t f  600  603  600	  0  0 0 0 close_p
 DATA(insert OID = 1566 (  "##"	  PGUID 0 b t f  601  628  600	  0  0 0 0 close_sl - - ));
 DATA(insert OID = 1567 (  "##"	  PGUID 0 b t f  601  603  600	  0  0 0 0 close_sb - - ));
 DATA(insert OID = 1568 (  "##"	  PGUID 0 b t f  628  603  600	  0  0 0 0 close_lb - - ));
+DATA(insert OID = 1577 (  "##"	  PGUID 0 b t f  628  601  600	  0  0 0 0 close_ls - - ));
+DATA(insert OID = 1578 (  "##"	  PGUID 0 b t f  601  601  600	  0  0 0 0 close_lseg - - ));
 DATA(insert OID = 1585 (  "/"	  PGUID 0 b t f 1186 1186 1186	  0  0 0 0 timespan_div - - ));
+
+DATA(insert OID = 1586 (  "<>"	  PGUID 0 b t f  601  601	16 1535  0 0 0 lseg_eq intltsel - ));
+DATA(insert OID = 1587 (  "<"	  PGUID 0 b t f  601  601	16 1590  0 0 0 lseg_lt intltsel - ));
+DATA(insert OID = 1588 (  "<="	  PGUID 0 b t f  601  601	16 1589  0 0 0 lseg_le intltsel - ));
+DATA(insert OID = 1589 (  ">"	  PGUID 0 b t f  601  601	16 1588  0 0 0 lseg_gt intltsel - ));
+DATA(insert OID = 1590 (  ">="	  PGUID 0 b t f  601  601	16 1587  0 0 0 lseg_ge intltsel - ));
+
+DATA(insert OID = 1591 (  "@-@"	  PGUID 0 l t f	0  601	701    0  0 0 0 lseg_length - - ));
 
 /*
  * function prototypes

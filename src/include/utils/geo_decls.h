@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.17 1998/01/24 22:50:43 momjian Exp $
+ * $Id: geo_decls.h,v 1.18 1998/02/03 16:01:06 thomas Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -170,6 +170,12 @@ extern bool lseg_perp(LSEG *l1, LSEG *l2);
 extern bool lseg_vertical(LSEG *lseg);
 extern bool lseg_horizontal(LSEG *lseg);
 extern bool lseg_eq(LSEG *l1, LSEG *l2);
+extern bool lseg_ne(LSEG *l1, LSEG *l2);
+extern bool lseg_lt(LSEG *l1, LSEG *l2);
+extern bool lseg_le(LSEG *l1, LSEG *l2);
+extern bool lseg_gt(LSEG *l1, LSEG *l2);
+extern bool lseg_ge(LSEG *l1, LSEG *l2);
+extern double *lseg_length(LSEG *lseg);
 extern double *lseg_distance(LSEG *l1, LSEG *l2);
 extern Point *lseg_center(LSEG *lseg);
 extern Point *lseg_interpt(LSEG *l1, LSEG *l2);
@@ -180,11 +186,13 @@ extern double *dist_pb(Point *pt, BOX *box);
 extern double *dist_sl(LSEG *lseg, LINE *line);
 extern double *dist_sb(LSEG *lseg, BOX *box);
 extern double *dist_lb(LINE *line, BOX *box);
+extern Point *close_lseg(LSEG *l1, LSEG *l2);
 extern Point *close_pl(Point *pt, LINE *line);
 extern Point *close_ps(Point *pt, LSEG *lseg);
 extern Point *close_pb(Point *pt, BOX *box);
 extern Point *close_sl(LSEG *lseg, LINE *line);
 extern Point *close_sb(LSEG *lseg, BOX *box);
+extern Point *close_ls(LINE *line, LSEG *lseg);
 extern Point *close_lb(LINE *line, BOX *box);
 extern bool on_pl(Point *pt, LINE *line);
 extern bool on_ps(Point *pt, LSEG *lseg);
