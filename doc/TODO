@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun  3 18:45:19 EDT 2002
+Last updated:		Thu Jun  6 23:46:49 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -239,7 +239,7 @@ Commands
 	  ANALYZE, and CLUSTER
 	o Add SHOW command to see locale
 	o Allow SHOW to output as a query result, like EXPLAIN
-	o Abort all SET changes made in an aborted transaction
+	o -Abort all SET changes made in an aborted transaction
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
