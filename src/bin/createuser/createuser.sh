@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.11 1999/01/31 05:04:25 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.12 1999/07/30 18:09:49 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -218,7 +218,7 @@ fi
 QUERY="insert into pg_shadow \
         (usename, usesysid, usecreatedb, usetrace, usesuper, usecatupd) \
        values \
-         ('$NEWUSER', $SYSID, '$CANCREATE', 't', '$CANADDUSER','t')"
+         ('$NEWUSER', $SYSID, '$CANCREATE', 'f', '$CANADDUSER','f')"
 
 RES=`$PSQL -c "$QUERY" template1`
 

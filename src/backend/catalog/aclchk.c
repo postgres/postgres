@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.26 1999/07/17 20:16:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.27 1999/07/30 18:09:44 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -392,6 +392,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	 */
 	if (((mode & ACL_WR) || (mode & ACL_AP)) &&
 		!allowSystemTableMods && IsSystemRelationName(relname) &&
+		strncmp(relname,"pg_temp.", strlen("pg_temp.")) != 0 &&
 		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
 	{
 		elog(DEBUG, "pg_aclcheck: catalog update to \"%s\": permission denied",
