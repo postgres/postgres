@@ -22,8 +22,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-PGACCESS 0.3 , 29 September 1997
+PGACCESS 0.4 , 1 October 1997
 ================================
+I dedicate this program to my little 4 year daughter Ana-Maria and my wife
+for their understanding. I hope they will forgive me for spending so many
+time far from them.
 
 
 
@@ -34,7 +37,7 @@ can manage your tables, edit them, define queries, sequences and
 functions.
 
 I use Tcl/Tk because it's a powerfull language, and it took me only
-three days of hard work to get it as you see it now.
+four days of hard work to get it as you see it now.
 
 
 
@@ -73,6 +76,7 @@ pgaccess.tcl file.
 4.What does it now ?
 
 Opens any database on a specified host at the specified port.
+Perform vacuum command.
 
 Tables
 - opening tables for vieweing, max 200 records
@@ -81,30 +85,41 @@ Tables
 - import/export to external files (SDF,CSV)
 - filter capabilities ,enter filter like price>3.14
 - sort order capabilities ,enter manually the sort field(s)
-- editing in place
+- editing in place, double click the text you want to change
+- record deleting , point the record, press Del key
+- adding new records ,save new row with right-button-click on table for the moment
 - table generator assistant lizzard :-) (not wizzard)
 - table renaming and deleting (dropping)
+- table information retrieving : owner, field information
+
 Queries
 - define, edit and store "user defined queries"
+- save view layout
 - can store queries as views
 - execution of queries
 - vieweing of select type queries result
 - running action queries (insert, update, delete)
+
 Sequences
-- define them
-- inspect them
-- delete them
+- define
+- inspect
+- delete
+
 Views
 - defining them saving queries as views
 - view them , with filtering and sorting capabilities
 - delete them
 
+Functions
+- define , inspect , delete
+
+
 
 5.What it should do in the future ?
 
 - table design (add new fields, renaming, etc)
+- sequence and function renaming
 - script execution (simple SQL commands)
-- function manipulation (defining, vieweing)
 - a simple report generator and viewer
 - help on line
 
@@ -120,8 +135,7 @@ Some information about table structure, no. of fields, records would
 be also good.
 
 ===========================================================================
-
-You will always find the latest version at:  http://www.flex.ro/pgaccess
+You would find always the last version at   http://www.flex.ro/pgaccess
 
 Please feel free to e-mail me with any suggestion or bug description
 that will help to improve this.
