@@ -93,7 +93,7 @@
 
 /*	Connection Defaults */
 #define DEFAULT_PORT					"5432"
-#define DEFAULT_READONLY				1
+#define DEFAULT_READONLY				0
 #define DEFAULT_PROTOCOL				"6.4"	/* the latest protocol is
 												 * the default */
 #define DEFAULT_USEDECLAREFETCH			0
@@ -102,7 +102,7 @@
 #define DEFAULT_BOOLSASCHAR				1
 #define DEFAULT_OPTIMIZER				1		/* disable */
 #define DEFAULT_KSQO					1		/* on */
-#define DEFAULT_UNIQUEINDEX				0		/* dont recognize */
+#define DEFAULT_UNIQUEINDEX				1		/* dont recognize */
 #define DEFAULT_COMMLOG					0		/* dont log */
 #define DEFAULT_DEBUG					0
 #define DEFAULT_UNKNOWNSIZES			UNKNOWNS_AS_MAX

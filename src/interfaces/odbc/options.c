@@ -178,7 +178,7 @@ set_statement_option(ConnectionClass *conn,
 			/* "0" returned in SQLGetStmtOption */
 			break;
 
-		case SQL_RETRIEVE_DATA:	/* ignored, but saved */
+		case SQL_RETRIEVE_DATA:
 			mylog("SetStmtOption(): SQL_RETRIEVE_DATA, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.retrieve_data = vParam;
@@ -636,7 +636,7 @@ PGAPI_GetStmtOption(
 			*((SDWORD *) pvParam) = 0;
 			break;
 
-		case SQL_RETRIEVE_DATA:	/* NOT SUPPORTED, but saved */
+		case SQL_RETRIEVE_DATA:
 			*((SDWORD *) pvParam) = stmt->options.retrieve_data;
 			break;
 

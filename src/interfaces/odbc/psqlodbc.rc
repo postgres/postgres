@@ -104,7 +104,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,13,47,84,10
     CONTROL         "Cancel as FreeStmt (Exp)",DRV_CANCELASFREESTMT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,164,50,112,10
-    CONTROL         "Mylog(Debug ouput",DRV_DEBUG,"Button",
+    CONTROL         "Mylog(Debug ouput)",DRV_DEBUG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,164,63,112,10
     GROUPBOX        "Unknown Sizes",IDC_STATIC,13,76,175,24
     CONTROL         "Maximum",DRV_UNKNOWN_MAX,"Button",BS_AUTORADIOBUTTON | 
@@ -150,7 +150,7 @@ BEGIN
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,45,28,88,10
     CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,149,28,72,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,28,86,10
     GROUPBOX        "Protocol",IDC_STATIC,43,44,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,53,54,47,10

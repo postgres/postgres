@@ -439,15 +439,18 @@ updateCommons(const ConnInfo *ci)
 								 INI_KSQO, tmp, fileName);
 
 	/*
-	 * Never update the onlyread, unique_index from this module
-	 * sprintf(tmp, "%d", comval->unique_index);
-	 * SQLWritePrivateProfileString(sectionName, INI_UNIQUEINDEX, tmp,
-	 * fileName);
-	 *
-	 * sprintf(tmp, "%d", comval->onlyread);
-	 * SQLWritePrivateProfileString(sectionName, INI_READONLY, tmp,
-	 * fileName);
+	 * Never update the onlyread, unique_index from this module.
 	 */
+	if (!ci)
+	{
+		sprintf(tmp, "%d", comval->unique_index);
+		SQLWritePrivateProfileString(sectionName, INI_UNIQUEINDEX, tmp,
+			fileName);
+
+	 	sprintf(tmp, "%d", comval->onlyread);
+	 	SQLWritePrivateProfileString(sectionName, INI_READONLY, tmp,
+			fileName);
+	}
 
 	sprintf(tmp, "%d", comval->use_declarefetch);
 	SQLWritePrivateProfileString(sectionName,

@@ -378,18 +378,19 @@ parse_statement(StatementClass *stmt)
 		{
 			/* just eat the expression */
 			mylog("in_expr=%d or func=%d\n", in_expr, in_func);
-			if (!unquoted)
-				continue;
 
-			if (token[0] == '(')
+			if (unquoted)
 			{
-				blevel++;
-				mylog("blevel++ = %d\n", blevel);
-			}
-			else if (token[0] == ')')
-			{
-				blevel--;
-				mylog("blevel-- = %d\n", blevel);
+				if (token[0] == '(')
+				{
+					blevel++;
+					mylog("blevel++ = %d\n", blevel);
+				}
+				else if (token[0] == ')')
+				{
+					blevel--;
+					mylog("blevel-- = %d\n", blevel);
+				}
 			}
 			if (blevel == 0)
 			{
@@ -400,7 +401,7 @@ parse_statement(StatementClass *stmt)
 					in_expr = FALSE;
 					in_field = FALSE;
 				}
-				else if (!stricmp(token, "as"))
+				else if (unquoted && !stricmp(token, "as"))
 				{
 					mylog("got AS in_expr\n");
 					in_func = FALSE;
@@ -474,9 +475,8 @@ parse_statement(StatementClass *stmt)
 
 				if (quote)
 				{
-					fi[stmt->nfld++]->quote = TRUE;
-					in_expr = TRUE;
-					continue;
+					fi[stmt->nfld]->quote = TRUE;
+					fi[stmt->nfld]->precision = strlen(token);
 				}
 				else if (numeric)
 				{
@@ -573,6 +573,7 @@ parse_statement(StatementClass *stmt)
 			in_expr = TRUE;
 			fi[stmt->nfld - 1]->expr = TRUE;
 			fi[stmt->nfld - 1]->name[0] = '\0';
+			fi[stmt->nfld - 1]->precision = 0;
 			mylog("*** setting expression\n");
 		}
 
@@ -661,7 +662,12 @@ parse_statement(StatementClass *stmt)
 			 * following may be better
 			 */
 			fi[i]->type = PG_TYPE_UNKNOWN;
-			fi[i]->precision = 254;
+			if (fi[i]->precision == 0)
+			{
+				fi[i]->type = PG_TYPE_VARCHAR;
+				fi[i]->precision = 254;
+			}
+			fi[i]->length = fi[i]->precision;
 			continue;
 		}
 		/* it's a dot, resolve to table or alias */

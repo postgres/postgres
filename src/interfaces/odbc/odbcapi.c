@@ -26,9 +26,6 @@
  *-------
  */
 
-#ifdef	WIN32
-#define ODBCVER_REP 0x3000
-#endif
 #include "psqlodbc.h"
 #include <stdio.h>
 #include <string.h>
@@ -200,7 +197,7 @@ SQLFetch(HSTMT StatementHandle)
 {
 	static char *func = "SQLFetch";
 
-#if (ODBCVER >= 0x3000)
+#if (ODBCVER >= 0x0300)
 	StatementClass *stmt = (StatementClass *) StatementHandle;
 	ConnectionClass *conn = SC_get_conn(stmt);
 
@@ -273,7 +270,7 @@ SQLGetFunctions(HDBC ConnectionHandle,
 				SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported)
 {
 	mylog("[SQLGetFunctions]");
-#if (ODBCVER >= 0x3000)
+#if (ODBCVER >= 0x0300)
 	if (FunctionId == SQL_API_ODBC3_ALL_FUNCTIONS)
 		return PGAPI_GetFunctions30(ConnectionHandle, FunctionId, Supported);
 #endif
@@ -284,14 +281,14 @@ SQLGetInfo(HDBC ConnectionHandle,
 		   SQLUSMALLINT InfoType, PTR InfoValue,
 		   SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
-#if (ODBCVER >= 0x3000)
+#if (ODBCVER >= 0x0300)
 	RETCODE		ret;
 
 	mylog("[SQLGetInfo(30)]");
 	if ((ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
 							 BufferLength, StringLength)) == SQL_ERROR)
 	{
-		if (((ConnectionClass *) ConnectionHandle)->driver_version >= 0x3000)
+		if (((ConnectionClass *) ConnectionHandle)->driver_version >= 0x0300)
 			return PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
 								   BufferLength, StringLength);
 	}
