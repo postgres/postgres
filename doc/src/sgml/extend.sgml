@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="extend">
@@ -7,7 +7,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
 
   <para>
    In  the  sections  that follow, we will discuss how you
-   can extend the <productname>Postgres</productname> 
+   can extend the <productname>PostgreSQL</productname> 
    <acronym>SQL</acronym> query language by adding:
 
    <itemizedlist spacing="compact" mark="bullet">
@@ -38,7 +38,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
    <title>How Extensibility Works</title>
 
    <para>
-    <productname>Postgres</productname> is extensible because its operation  is  
+    <productname>PostgreSQL</productname> is extensible because its operation  is  
     catalog-driven.   If  you  are familiar with standard 
     relational systems, you know that  they  store  information
     about  databases,  tables,  columns,  etc., in what are
@@ -46,13 +46,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
     this  the data dictionary).  The catalogs appear to the
     user as tables like any other, but  the  <acronym>DBMS</acronym>  stores
     its  internal  bookkeeping in them.  One key difference
-    between <productname>Postgres</productname> and  standard  relational  systems  is
-    that <productname>Postgres</productname> stores much more information in its 
+    between <productname>PostgreSQL</productname> and  standard  relational  systems  is
+    that <productname>PostgreSQL</productname> stores much more information in its 
     catalogs -- not only information about tables and  columns,
     but also information about its types, functions, access
     methods, and so on.  These tables can be  modified  by
-    the  user, and since <productname>Postgres</productname> bases its internal operation 
-    on these tables, this means that <productname>Postgres</productname> can  be
+    the  user, and since <productname>PostgreSQL</productname> bases its internal operation 
+    on these tables, this means that <productname>PostgreSQL</productname> can  be
     extended   by   users.    By  comparison,  conventional
     database systems can only be extended by changing hardcoded  
     procedures within the <acronym>DBMS</acronym> or by loading modules
@@ -60,29 +60,29 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
    </para>
 
    <para>
-    <productname>Postgres</productname> is also unlike most  other  data  managers  in
+    <productname>PostgreSQL</productname> is also unlike most  other  data  managers  in
     that  the server can incorporate user-written code into
     itself through dynamic loading.  That is, the user  can
     specify  an  object code file (e.g., a compiled .o file
     or shared library) that implements a new type or  function 
-    and <productname>Postgres</productname> will load it as required.  Code written 
+    and <productname>PostgreSQL</productname> will load it as required.  Code written 
     in <acronym>SQL</acronym> are even more trivial to add to the  server.
     This ability to modify its operation <quote>on the fly</quote> makes
-    <productname>Postgres</productname> uniquely suited for rapid prototyping  of  new
+    <productname>PostgreSQL</productname> uniquely suited for rapid prototyping  of  new
     applications and storage structures.
    </para>
   </sect1>
 
   <sect1 id="type-system">
-   <title>The <productname>Postgres</productname> Type System</title>
+   <title>The <productname>PostgreSQL</productname> Type System</title>
 
    <para>
-    The <productname>Postgres</productname> type system
+    The <productname>PostgreSQL</productname> type system
     can be broken down in several ways.
     Types are divided into base types and composite  types.
     Base  types  are those, like <firstterm>int4</firstterm>, that are implemented
     in a language such as <productname>C</productname>.  They generally correspond  to
-    what are often known as <firstterm>abstract data types</firstterm>; <productname>Postgres</productname>
+    what are often known as <firstterm>abstract data types</firstterm>; <productname>PostgreSQL</productname>
     can only operate on such types through methods provided
     by  the  user and only understands the behavior of such
     types to the extent that the user describes them.  
@@ -91,13 +91,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
    </para>
 
    <para>
-    <productname>Postgres</productname>  stores  these  types
+    <productname>PostgreSQL</productname>  stores  these  types
     in only one way (within the
     file that stores all rows of a table)  but  the
     user can <quote>look inside</quote> at the attributes of these types
     from the query language and optimize their retrieval by
     (for example) defining indexes on the attributes.
-    <productname>Postgres</productname>  base  types are further
+    <productname>PostgreSQL</productname>  base  types are further
     divided into built-in
     types and user-defined  types.   Built-in  types  (like
     <firstterm>int4</firstterm>)  are  those  that  are  compiled
@@ -108,7 +108,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
   </sect1>
 
   <sect1 id="pg-system-catalogs">
-   <title>About the <productname>Postgres</productname> System Catalogs</title>
+   <title>About the <productname>PostgreSQL</productname> System Catalogs</title>
 
    <para>
     Having  introduced the basic extensibility concepts, we
@@ -125,7 +125,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
     them directly.)
 
     <table tocentry="1">
-     <title>Postgres System Catalogs</title>
+     <title>PostgreSQL System Catalogs</title>
      <titleabbrev>Catalogs</titleabbrev>
      <tgroup cols="2">
       <thead>
@@ -190,7 +190,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
 
    <para>
     <figure float="1" id="EXTEND-CATALOGS">
-     <title>The major <productname>Postgres</productname> system catalogs</title>
+     <title>The major <productname>PostgreSQL</productname> system catalogs</title>
      <mediaobject>
       <imageobject>
        <imagedata fileref="catalogs" align="center">
@@ -246,7 +246,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.13 2001/09/30 16:05:54 pete
 
        Nearly  every catalog contains some reference to
        rows in one or both of these tables.   For
-       example,  <productname>Postgres</productname>  frequently  uses type 
+       example,  <productname>PostgreSQL</productname>  frequently  uses type 
        signatures (e.g.,  of  functions  and  operators)  to
        identify unique rows of other catalogs.
       </para>

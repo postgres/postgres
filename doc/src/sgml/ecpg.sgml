@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.31 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="ecpg">
@@ -32,11 +32,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere
 
   <para>
    This describes the embedded <acronym>SQL</acronym> package for
-   <productname>Postgres</productname>. It works with
+   <productname>PostgreSQL</productname>. It works with
    <acronym>C</acronym> and <acronym>C++</acronym>. It was written by
    Linus Tolke (<email>linus@epact.se</email>) and Michael Meskes
    (<email>meskes@debian.org</email>). The package is installed with the
-   <productname>Postgres</> distribution, and carries a similar license.
+   <productname>PostgreSQL</> distribution, and carries a similar license.
   </para>
 
   <sect1 id="ecpg-why">
@@ -55,7 +55,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere
     should work. <application>ecpg</application> was designed to match
     this standard as much as possible. It is possible to port embedded
     <acronym>SQL</acronym> programs written for other
-    <acronym>RDBMS</acronym> to <productname>Postgres</productname>.
+    <acronym>RDBMS</acronym> to <productname>PostgreSQL</productname>.
    </para>
   </sect1>
 
@@ -99,7 +99,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere
 
     <para>
      The preprocessor is called <application>ecpg</application>. After
-     installation it resides in the <productname>Postgres</productname>
+     installation it resides in the <productname>PostgreSQL</productname>
      <filename>bin/</filename> directory.
     </para>
    </sect2>
@@ -111,7 +111,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere
      <filename>libecpg.a</filename> or <filename>libecpg.so</filename>.
      Additionally, the library uses the <filename>libpq</filename>
      library for communication to the
-     <productname>Postgres</productname> server. You will have to link
+     <productname>PostgreSQL</productname> server. You will have to link
      your program using <parameter>-lecpg -lpq</parameter>.
     </para>
 
@@ -133,7 +133,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere
         The most important function , <function>ECPGdo</function>, logs
         all <acronym>SQL</acronym> statements with both the expanded
         string, i.e. the string with all the input variables inserted,
-        and the result from the <productname>Postgres</productname>
+        and the result from the <productname>PostgreSQL</productname>
         server. This can be very useful when searching for errors in
         your <acronym>SQL</acronym> statements.
        </para>
@@ -153,7 +153,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.30 2001/11/12 19:19:39 petere
     <title>Error handling</title>
 
     <para>
-     To detect errors from the <productname>Postgres</productname>
+     To detect errors from the <productname>PostgreSQL</productname>
      server, include a line like: 
 <programlisting>
 exec sql include sqlca; 
@@ -241,7 +241,7 @@ struct sqlca
        <term><computeroutput>-201 (ECPG_TOO_MANY_ARGUMENTS): Too many arguments line %d.</computeroutput></term>
        <listitem>
         <para>
-         This means that <productname>Postgres</productname> has
+         This means that <productname>PostgreSQL</productname> has
          returned more arguments than we have matching variables.
          Perhaps you have forgotten a couple of the host variables in
          the <command>INTO :var1,:var2</command>-list.
@@ -253,7 +253,7 @@ struct sqlca
        <term><computeroutput>-202 (ECPG_TOO_FEW_ARGUMENTS): Too few arguments line %d.</computeroutput></term>
        <listitem>
         <para>
-         This means that <productname>Postgres</productname> has
+         This means that <productname>PostgreSQL</productname> has
          returned fewer arguments than we have host variables. Perhaps
          you have too many host variables in the <command>INTO
          :var1,:var2</command>-list.
@@ -277,7 +277,7 @@ struct sqlca
        <listitem>
         <para>
          This means the host variable is of type <type>int</type> and
-         the field in the <productname>Postgres</productname> database
+         the field in the <productname>PostgreSQL</productname> database
          is of another type and contains a value that cannot be
          interpreted as an <type>int</type>. The library uses
          <function>strtol()</function> for this conversion.
@@ -291,7 +291,7 @@ struct sqlca
         <para>
          This means the host variable is of type <type>unsigned
          int</type> and the field in the
-         <productname>Postgres</productname> database is of another type
+         <productname>PostgreSQL</productname> database is of another type
          and contains a value that cannot be interpreted as an
          <type>unsigned int</type>. The library uses
          <function>strtoul()</function> for this conversion.
@@ -304,7 +304,7 @@ struct sqlca
        <listitem>
         <para>
          This means the host variable is of type <type>float</type> and
-         the field in the <productname>Postgres</productname> database
+         the field in the <productname>PostgreSQL</productname> database
          is of another type and contains a value that cannot be
          interpreted as a <type>float</type>. The library uses
          <function>strtod()</function> for this conversion.
@@ -317,7 +317,7 @@ struct sqlca
        <listitem>
         <para>
          This means the host variable is of type <type>bool</type> and
-         the field in the <productname>Postgres</productname> database
+         the field in the <productname>PostgreSQL</productname> database
          is neither <literal>'t'</> nor <literal>'f'</>.
         </para>
        </listitem>
@@ -327,7 +327,7 @@ struct sqlca
        <term><computeroutput>-208 (ECPG_EMPTY): Empty query line %d.</computeroutput></term>
        <listitem>
         <para>
-         <productname>Postgres</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
+         <productname>PostgreSQL</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
          because the query indeed was empty.
         </para>
        </listitem>
@@ -337,7 +337,7 @@ struct sqlca
        <term><computeroutput>-209 (ECPG_MISSING_INDICATOR): NULL value without indicator in line %d.</computeroutput></term>
        <listitem>
         <para>
-         <productname>Postgres</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
+         <productname>PostgreSQL</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
          because a NULL was returned and no NULL indicator variable was supplied.
         </para>
        </listitem>
@@ -347,7 +347,7 @@ struct sqlca
        <term><computeroutput>-210 (ECPG_NO_ARRAY): Variable is not an array in line %d.</computeroutput></term>
        <listitem>
         <para>
-         <productname>Postgres</productname> returned <symbol>ECPG_NO_ARRAY</symbol>
+         <productname>PostgreSQL</productname> returned <symbol>ECPG_NO_ARRAY</symbol>
          because an ordinary variable was used in a place that requires
          an array.
         </para>
@@ -358,7 +358,7 @@ struct sqlca
        <term><computeroutput>-211 (ECPG_DATA_NOT_ARRAY): Data read from backend is not an array in line %d.</computeroutput></term>
        <listitem>
         <para>
-         <productname>Postgres</productname> returned <symbol>ECPG_DATA_NOT_ARRAY</symbol>
+         <productname>PostgreSQL</productname> returned <symbol>ECPG_DATA_NOT_ARRAY</symbol>
          because the database returned an ordinary variable in a place
          that requires array value.
         </para>
@@ -444,9 +444,9 @@ struct sqlca
        <term><computeroutput>-400 (ECPG_PGSQL): Postgres error: %s line %d.</computeroutput></term>
        <listitem>
         <para>
-         Some <productname>Postgres</productname> error. 
+         Some <productname>PostgreSQL</productname> error. 
          The message contains the error message from the
-         <productname>Postgres</productname> backend.
+         <productname>PostgreSQL</productname> backend.
         </para>
        </listitem>
       </varlistentry>
@@ -455,7 +455,7 @@ struct sqlca
        <term><computeroutput>-401 (ECPG_TRANS): Error in transaction processing line %d.</computeroutput></term>
        <listitem>
         <para>
-         <productname>Postgres</productname> signaled that we cannot start,
+         <productname>PostgreSQL</productname> signaled that we cannot start,
          commit or rollback the transaction.
         </para>
        </listitem>
@@ -506,7 +506,7 @@ struct sqlca
 
        <para>
         This would require a total redesign of the
-        <productname>Postgres</productname> access model and the
+        <productname>PostgreSQL</productname> access model and the
         performance gain does not justify the effort.
        </para>
       </listitem>
@@ -581,7 +581,7 @@ struct sqlca
        <listitem>
         <para>
          to_date et al. does not exist. However,
-         <productname>Postgres</productname> has some good conversion
+         <productname>PostgreSQL</productname> has some good conversion
          routines so you probably won't miss them.
         </para>
        </listitem>

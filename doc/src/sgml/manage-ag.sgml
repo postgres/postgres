@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.18 2001/11/18 00:38:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.19 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <chapter id="managing-databases">
@@ -30,7 +30,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.18 2001/11/18 00:38:00 t
  </note>
 
  <para>
-  In order to create or drop databases, the <productname>Postgres</>
+  In order to create or drop databases, the <productname>PostgreSQL</>
   <application>postmaster</> must be up and running (see <xref
   linkend="postmaster-start">).
  </para>
@@ -123,7 +123,8 @@ createdb <replaceable class="parameter">dbname</replaceable>
    There is a second standard system database named <literal>template0</>.
    This database contains the same data as the initial contents of
    <literal>template1</>, that is, only the standard objects predefined by
-   your version of Postgres.  <literal>template0</> should never be changed
+   your version of <productname>PostgreSQL</productname>.
+     <literal>template0</> should never be changed 
    after <literal>initdb</>.  By instructing <command>CREATE DATABASE</> to
    copy <literal>template0</> instead of <literal>template1</>, you can
    create a <quote>virgin</> user database that contains none of the
@@ -283,7 +284,7 @@ CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
      It can also be possible to specify absolute paths directly to the
      <command>CREATE DATABASE</> command without defining environment
      variables. This is disallowed by default because it is a security
-     risk. To allow it, you must compile <productname>Postgres</> with
+     risk. To allow it, you must compile <productname>PostgreSQL</> with
      the C preprocessor macro <literal>ALLOW_ABSOLUTE_DBPATHS</>
      defined. One way to do this is to run the compilation step like
      this:

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.1 2001/06/02 18:25:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.2 2001/11/21 05:53:41 thomas Exp $ -->
 
 <chapter id="nls">
  <docinfo>
@@ -14,11 +14,13 @@
   <title>For the Translator</title>
 
   <para>
-   PostgreSQL programs (server and client) can issue their messages in
+   <productname>PostgreSQL</>
+   programs (server and client) can issue their messages in
    your favorite language -- if the messages have been translated.
    Creating and maintaining translated message sets needs the help of
    people who speak their own language well and want to contribute to
-   the PostgreSQL effort.  You do not have to be a programmer at all
+   the <productname>PostgreSQL</> effort.  You do not have to be a
+   programmer at all
    to do this.  This section explains how to help.
   </para>
 
@@ -300,7 +302,8 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
 
   <para>
    This section describes how to support native language support in a
-   program or library that is part of the PostgreSQL distribution.
+   program or library that is part of the
+   <productname>PostgreSQL</> distribution.
    Currently, it only applies to C programs.
   </para>
 

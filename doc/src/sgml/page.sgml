@@ -9,7 +9,7 @@ A description of the database file default page format.
 </abstract>
 
 <para>
-This section provides an overview of the page format used by <productname>Postgres</productname>
+This section provides an overview of the page format used by <productname>PostgreSQL</productname>
 tables.  User-defined access methods need not use this page format.
 </para>
 
@@ -18,12 +18,12 @@ In the following explanation, a
 <firstterm>byte</firstterm>
 is assumed to contain 8 bits.  In addition, the term
 <firstterm>item</firstterm>
-refers to data that is stored in <productname>Postgres</productname> tables.
+refers to data that is stored in <productname>PostgreSQL</productname> tables.
 </para>
 
 <para>
-<xref linkend="page-table"> shows how pages in both normal <productname>Postgres</productname> tables
- and <productname>Postgres</productname> indexes
+<xref linkend="page-table"> shows how pages in both normal <productname>PostgreSQL</productname> tables
+ and <productname>PostgreSQL</productname> indexes
 (e.g., a B-tree index) are structured.
 </para>
 
@@ -131,7 +131,7 @@ unallocated space.  Because an item identifier is never moved until it
 is freed, its index may be used to indicate the location of an item on
 a page.  In fact, every pointer to an item
 (<firstterm>ItemPointer</firstterm>)
-created by <productname>Postgres</productname> consists of a frame number and an index of an item
+created by <productname>PostgreSQL</productname> consists of a frame number and an index of an item
 identifier.  An item identifier contains a byte-offset to the start of
 an item, its length in bytes, and a set of attribute bits which affect
 its interpretation.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.19 2001/10/09 18:45:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.20 2001/11/21 05:53:40 thomas Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -26,7 +26,7 @@ Thomas Lockhart
  <title>The <productname>CVS</productname> Repository</title>
 
  <para>
-  The <productname>Postgres</productname> source code is stored and managed using the
+  The <productname>PostgreSQL</productname> source code is stored and managed using the
   <productname>CVS</productname> code management system.
  </para>
 
@@ -34,7 +34,7 @@ Thomas Lockhart
   At least two methods,
   anonymous CVS and <productname>CVSup</productname>, 
   are available to pull the <productname>CVS</productname> code tree from the 
-  <productname>Postgres</productname> server to your local machine.
+  <productname>PostgreSQL</productname> server to your local machine.
  </para>
 
  <sect1 id="anoncvs">
@@ -78,12 +78,12 @@ $ cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot login
 
    <step>
     <para>
-     Fetch the <productname>Postgres</productname> sources:
+     Fetch the <productname>PostgreSQL</productname> sources:
      <programlisting>
 cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot co -P pgsql
      </programlisting>
 
-     which installs the <productname>Postgres</productname> sources into a 
+     which installs the <productname>PostgreSQL</productname> sources into a 
      subdirectory <filename>pgsql</filename>
      of the directory you are currently in.
 
@@ -160,7 +160,7 @@ $ chmod -R go-w pgsql
   <para>
    <productname>CVS</productname> can do a lot of other things,
    such as fetching prior revisions
-   of the <productname>Postgres</productname> sources
+   of the <productname>PostgreSQL</productname> sources
    rather than the latest development version.
    For more info consult the manual that comes with
    <productname>CVS</productname>, or see the online
@@ -292,7 +292,7 @@ cvs commit
 
   <para>
    An alternative to using anonymous CVS for retrieving 
-   the <productname>Postgres</productname> source tree
+   the <productname>PostgreSQL</productname> source tree
    is <productname>CVSup</productname>.
    <productname>CVSup</productname> was developed by
    John Polstra (<email>jdp@polstra.com</email>) to
@@ -306,7 +306,7 @@ cvs commit
    replicate the <emphasis>entire</emphasis> CVS repository on your local system,
    allowing fast local access to cvs operations such as <option>log</option>
    and <option>diff</option>. Other advantages include fast synchronization to
-   the <productname>Postgres</productname> server due to an efficient
+   the <productname>PostgreSQL</productname> server due to an efficient
    streaming transfer protocol which only sends the changes since the last update.
   </para>
 
@@ -327,7 +327,7 @@ cvs commit
     <productname>CVS</productname> repository. On one of our systems we
     recently set up a repository in <filename>/home/cvs/</filename>, 
     but had formerly kept it under a
-    <productname>Postgres</productname> development tree in
+    <productname>PostgreSQL</productname> development tree in
     <filename>/opt/postgres/cvs/</filename>. If you intend to keep your
     repository in <filename>/home/cvs/</filename>, then put
 
@@ -393,7 +393,7 @@ $ cvsup -L 2 <replaceable class="parameter">postgres.cvsup</replaceable>
 
     <programlisting>
 # This file represents the standard CVSup distribution file
-# for the PostgreSQL ORDBMS project
+# for the <productname>PostgreSQL</> ORDBMS project
 # Modified by lockhart@alumni.caltech.edu 1997-08-28
 # - Point to my local snapshot source tree
 # - Pull the full CVS repository, not just the latest snapshot
@@ -430,12 +430,12 @@ pgsql
 
    <para>
     The following is a suggested <productname>CVSup</productname> config file from
-    <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup">the Postgres ftp site</ulink>
+    <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup">the <productname>PostgreSQL</> ftp site</ulink>
     which will fetch the current snapshot only:
 
     <programlisting>
 # This file represents the standard CVSup distribution file
-# for the PostgreSQL ORDBMS project
+# for the <productname>PostgreSQL</> ORDBMS project
 #
 # Defaults that apply to all the collections
 *default host=cvsup.postgresql.org
@@ -479,7 +479,7 @@ pgsql
      You can use pre-built binaries
      if you have a platform for which binaries
      are posted on 
-     <ulink url="ftp://ftp.postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
+     <ulink url="ftp://ftp.postgresql.org/pub">the <productname>PostgreSQL</productname> ftp site</ulink>,
      or if you are running FreeBSD, for which
      <productname>CVSup</productname> is available as a port.
 
@@ -520,7 +520,7 @@ pgsql
       <step performance="optional">
        <para>
 	If you have another platform, check for and download the appropriate binary from
-	<ulink url="ftp://ftp.postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>.
+	<ulink url="ftp://ftp.postgresql.org/pub">the <productname>PostgreSQL</productname> ftp site</ulink>.
        </para>
       </step>
      </substeps>
@@ -764,7 +764,7 @@ malloc in place, the CVSup system should be rock solid.  We have
 servers that have been up for weeks and have served many thousands
 of clients without any observed problems.
 
-> We hope to have the Postgres tree using CVSup within a month or
+> We hope to have the PostgreSQL tree using CVSup within a month or
 > so, and hope to retire sup in September...
 
 Great!  I'll do my best to help make sure you don't regret it.

@@ -11,7 +11,7 @@
 
 <Para>
 <literal>pgtcl</literal> is a Tcl package for front-end programs 
-to interface with <ProductName>Postgres</ProductName>
+to interface with <ProductName>PostgreSQL</ProductName>
 backends.  It makes most of the functionality of <literal>libpq</literal> available to
 Tcl scripts.
 </Para>
@@ -114,7 +114,7 @@ These commands are described further on subsequent pages.
 
 <Para>
 The pg_lo* routines are interfaces to the Large Object features of
-<ProductName>Postgres</ProductName>.
+<ProductName>PostgreSQL</ProductName>.
 The functions are designed to mimic the analogous file system functions in
 the standard Unix file system interface.
 The pg_lo* routines should be used within a BEGIN/END transaction
@@ -293,7 +293,7 @@ Handles start with the prefix <literal>pgsql</literal>.
 <TITLE>Description
 </TITLE>
 <PARA><FUNCTION>pg_connect</FUNCTION> opens a connection to the
-<ProductName>Postgres</ProductName> backend.
+<ProductName>PostgreSQL</ProductName> backend.
 </Para>
 
 <para>
@@ -379,7 +379,7 @@ pg_disconnect <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
 </REFSECT1INFO>
 <TITLE>Description
 </TITLE>
-<PARA><FUNCTION>pg_disconnect</FUNCTION> closes a connection to the <ProductName>Postgres</ProductName> backend.
+<PARA><FUNCTION>pg_disconnect</FUNCTION> closes a connection to the <ProductName>PostgreSQL</ProductName> backend.
 </PARA>
 </REFSECT1>
 
@@ -553,7 +553,7 @@ to obtain the results of the query.
 <TITLE>Description
 </TITLE>
 <PARA>
-<FUNCTION>pg_exec</FUNCTION> submits a query to the <ProductName>Postgres</ProductName> backend and returns a result.
+<FUNCTION>pg_exec</FUNCTION> submits a query to the <ProductName>PostgreSQL</ProductName> backend and returns a result.
 
 Query result handles start with the connection handle and add a period
 and a result number.
@@ -896,7 +896,7 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 </TITLE>
 <PARA>
 <FUNCTION>pg_select</FUNCTION> submits a SELECT query to the
-<ProductName>Postgres</ProductName> backend, and executes a
+<ProductName>PostgreSQL</ProductName> backend, and executes a
 given chunk of code for each tuple in the result.
   The <REPLACEABLE CLASS="PARAMETER">queryString</REPLACEABLE>
   must be a SELECT statement.  Anything else returns an error.
@@ -1015,7 +1015,7 @@ when a matching notification arrives.
 </TITLE>
 <PARA><FUNCTION>pg_listen</FUNCTION> creates, changes, or cancels a request
 to listen for asynchronous NOTIFY messages from the
-<ProductName>Postgres</ProductName> backend.  With a <parameter>callbackCommand</>
+<ProductName>PostgreSQL</ProductName> backend.  With a <parameter>callbackCommand</>
 parameter, the request is established, or the command string of an already
 existing request is replaced.  With no <parameter>callbackCommand</> parameter, a prior
 request is canceled.
@@ -1025,7 +1025,7 @@ request is canceled.
 After a <FUNCTION>pg_listen</FUNCTION> request is established,
 the specified command string is executed whenever a NOTIFY message bearing
 the given name arrives from the backend.  This occurs when any
-<ProductName>Postgres</ProductName> client application issues a NOTIFY command
+<ProductName>PostgreSQL</ProductName> client application issues a NOTIFY command
 referencing that name.  (Note that the name can be, but does not have to be,
 that of an existing relation in the database.)
 The command string is executed from the Tcl idle loop.  That is the normal

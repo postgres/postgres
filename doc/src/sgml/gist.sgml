@@ -96,7 +96,7 @@ A few notes on the sources:
 </ProgramListing>
 
    Roger that!! I thought it could be related to a number of
-   <ProductName>Postgres</ProductName> versions
+   <ProductName>PostgreSQL</ProductName> versions
    back and tried the query. My system went nuts and I had to shoot down
    the postmaster in about ten minutes.
 </para>

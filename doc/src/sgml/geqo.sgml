@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.19 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.20 2001/11/21 05:53:41 thomas Exp $
 Genetic Optimizer
 -->
 
@@ -49,14 +49,14 @@ Genetic Optimizer
     grows exponentially with the number of joins included in it. Further
     optimization effort is caused by the support of a variety of
     <firstterm>join methods</firstterm>
-    (e.g., nested loop, hash join, merge join in <productname>Postgres</productname>) to
+    (e.g., nested loop, hash join, merge join in <productname>PostgreSQL</productname>) to
     process individual joins and a diversity of
     <firstterm>indexes</firstterm> (e.g., R-tree,
-    B-tree, hash in <productname>Postgres</productname>) as access paths for relations.
+    B-tree, hash in <productname>PostgreSQL</productname>) as access paths for relations.
    </para>
 
    <para>
-    The current <productname>Postgres</productname> optimizer
+    The current <productname>PostgreSQL</productname> optimizer
     implementation performs a <firstterm>near-exhaustive search</firstterm>
     over the space of alternative strategies. This query 
     optimization technique is inadequate to support database application
@@ -67,7 +67,7 @@ Genetic Optimizer
    <para>
     The Institute of Automatic Control at the University of Mining and
     Technology, in Freiberg, Germany, encountered the described problems as its
-    folks wanted to take the <productname>Postgres</productname> DBMS as the backend for a decision
+    folks wanted to take the <productname>PostgreSQL</productname> DBMS as the backend for a decision
     support knowledge based system for the maintenance of an electrical
     power grid. The DBMS needed to handle large join queries for the
     inference machine of the knowledge based system.
@@ -166,7 +166,7 @@ Genetic Optimizer
   </sect1>
 
   <sect1 id="geqo-pg-intro">
-   <title>Genetic Query Optimization (<acronym>GEQO</acronym>) in Postgres</title>
+   <title>Genetic Query Optimization (<acronym>GEQO</acronym>) in PostgreSQL</title>
 
    <para>
     The <acronym>GEQO</acronym> module is intended for the solution of the query
@@ -183,7 +183,7 @@ Genetic Optimizer
     is encoded by the integer string '4-1-3-2',
     which means, first join relation '4' and '1', then '3', and
     then '2', where 1, 2, 3, 4 are relids within the
-    <productname>Postgres</productname> optimizer.
+    <productname>PostgreSQL</productname> optimizer.
    </para>
 
    <para>
@@ -193,7 +193,7 @@ Genetic Optimizer
 
    <para>
     Specific characteristics of the <acronym>GEQO</acronym>
-    implementation in <productname>Postgres</productname>
+    implementation in <productname>PostgreSQL</productname>
     are:
 
     <itemizedlist spacing="compact" mark="bullet">
@@ -226,7 +226,7 @@ Genetic Optimizer
 
    <para>
     The <acronym>GEQO</acronym> module allows
-    the <productname>Postgres</productname> query optimizer to
+    the <productname>PostgreSQL</productname> query optimizer to
     support large join queries effectively through
     non-exhaustive search.
    </para>

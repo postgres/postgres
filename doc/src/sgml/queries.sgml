@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.12 2001/11/19 03:58:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.13 2001/11/21 05:53:41 thomas Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -342,7 +342,7 @@ FROM <replaceable>table_reference</replaceable> AS <replaceable>alias</replaceab
 SELECT * FROM my_table AS m WHERE my_table.a > 5;
 </programlisting>
      is not valid SQL syntax.  What will actually happen (this is a
-     <productname>Postgres</productname> extension to the standard)
+     <productname>PostgreSQL</productname> extension to the standard)
      is that an implicit
      table reference is added to the FROM clause, so the query is
      processed as if it were written as
@@ -586,7 +586,7 @@ SELECT pid, p.name, (sum(s.units) * p.price) AS sales
 
    <para>
     In strict SQL, GROUP BY can only group by columns of the source
-    table but Postgres extends this to also allow GROUP BY to group by
+    table but <productname>PostgreSQL</productname> extends this to also allow GROUP BY to group by
     select columns in the query select list.  Grouping by value
     expressions instead of simple column names is also allowed.
    </para>
@@ -598,7 +598,7 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
     If a table has been grouped using a GROUP BY clause, but then only
     certain groups are of interest, the HAVING clause can be used,
     much like a WHERE clause, to eliminate groups from a grouped
-    table.  Postgres allows a HAVING clause to be
+    table.  <productname>PostgreSQL</productname> allows a HAVING clause to be
     used without a GROUP BY, in which case it acts like another WHERE
     clause, but the point in using HAVING that way is not clear.  A good
     rule of thumb is that a HAVING condition should refer to the results
@@ -865,7 +865,7 @@ SELECT a, sum(b) FROM table1 GROUP BY a ORDER BY 1;
   </para>
 
   <para>
-   As an extension to the SQL standard, Postgres also allows ordering
+   As an extension to the SQL standard, <productname>PostgreSQL</productname> also allows ordering
    by arbitrary expressions:
 <programlisting>
 SELECT a, b FROM table1 ORDER BY a + b;

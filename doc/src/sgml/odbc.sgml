@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.27 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="odbc">
@@ -48,7 +48,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.27 2001/11/12 19:19:39 
     The <acronym>ODBC</acronym> <acronym>API</acronym> matches up 
     on the backend to an <acronym>ODBC</acronym>-compatible data source.
     This could be anything from a text file to an Oracle or 
-    <productname>Postgres</productname> <acronym>RDBMS</acronym>.
+    <productname>PostgreSQL</productname> <acronym>RDBMS</acronym>.
    </para>
 
    <para>
@@ -68,7 +68,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.27 2001/11/12 19:19:39 
 
    <para>
     For example. you could have <productname>MS SQL Server</productname>
-    and <productname>Postgres</productname> servers that have
+    and <productname>PostgreSQL</productname> servers that have
     exactly the same data.  Using <acronym>ODBC</acronym>, 
     your Windows application would make exactly the
     same calls and the back end data source would look the same (to the Windows
@@ -195,9 +195,9 @@ Port=5432
 
     <tip>
      <para>
-      Remember that the <productname>Postgres</productname> database name is
+      Remember that the <productname>PostgreSQL</productname> database name is
       usually a single word, without path names of any sort. 
-      The <productname>Postgres</productname> server manages the actual access
+      The <productname>PostgreSQL</productname> server manages the actual access
       to the database, and you need only specify the name from the client.
      </para>
     </tip>
@@ -287,9 +287,9 @@ InstallDir = /opt/applix/axdata/axshlib
 
     <para>
      <quote>
-      If I write an application for <productname>Postgres</productname> 
+      If I write an application for <productname>PostgreSQL</productname> 
       can I write it using <acronym>ODBC</acronym> calls
-      to the <productname>Postgres</productname> server, 
+      to the <productname>PostgreSQL</productname> server, 
       or is that only when another database program 
       like MS SQL Server or Access needs to access the data?
      </quote>
@@ -335,9 +335,9 @@ InstallDir = /opt/applix/axdata/axshlib
     <acronym>ODBC</acronym> database interface
     supported on at least some platforms. 
     <productname>ApplixWare</productname> 4.4.2 has been
-    demonstrated under Linux with <productname>Postgres</productname> 7.0 
+    demonstrated under Linux with <productname>PostgreSQL</productname> 7.0 
     using the <productname>psqlODBC</productname>
-    driver contained in the <productname>Postgres</productname> distribution.
+    driver contained in the <productname>PostgreSQL</productname> distribution.
    </para>
 
    <sect2>
@@ -346,7 +346,7 @@ InstallDir = /opt/applix/axdata/axshlib
     <para>
      <productname>ApplixWare</productname> must be configured correctly
      in order for it to
-     be able to access the <productname>Postgres</productname>
+     be able to access the <productname>PostgreSQL</productname>
      <acronym>ODBC</acronym> software drivers.
     </para>
 
@@ -434,7 +434,7 @@ TextAsLongVarchar=0
 
      <step performance="required">
       <para>
-       Select the <productname>Postgres</productname> database of interest.
+       Select the <productname>PostgreSQL</productname> database of interest.
       </para>
 
       <substeps>
@@ -666,7 +666,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
      the sample tables that the Tutorial refers to.  The ELF Macro used to
      create the tables tries to use a NULL condition 
      on many of the database columns,
-     and <productname>Postgres</productname> does not currently allow this option.
+     and <productname>PostgreSQL</productname> does not currently allow this option.
     </para>
     <para>
      To get around this problem, you can do the following:

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.10 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.11 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <chapter id="plperl">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.10 2001/09/10 21:58:47 pete
  <para>
   PL/Perl allows you to write functions in the Perl programming
   language that may be used in SQL queries as if they were built into
-  <productname>Postgres</productname>.
+  <productname>PostgreSQL</productname>.
  </para>
 
  <para>
@@ -41,7 +41,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.10 2001/09/10 21:58:47 pete
 
   <para>
    In order to build and install PL/Perl if you are installing
-   <productname>Postgres</productname> from source then the
+   <productname>PostgreSQL</productname> from source then the
    <option>--with-perl</option> must be supplied to the
    <indexterm><primary><filename>configure</filename></primary></indexterm>
    <filename>configure</filename> script.  PL/Perl requires that, when
@@ -69,7 +69,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.10 2001/09/10 21:58:47 pete
    When you want to retry to build PL/Perl after having reinstalled
    Perl, then change to the directory
    <filename>src/pl/plperl</filename> in the
-   <productname>Postgres</productname> source tree and issue the commands
+   <productname>PostgreSQL</productname> source tree and issue the commands
 <programlisting>
 gmake clean
 gmake all

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.13 2001/11/08 23:37:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.14 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <sect1 id="resources">
@@ -127,7 +127,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.13 2001/11/08 23:37:50 petere
       answered, to share experiences with other users, and to contact
       the developers.  Consult the <ulink
       url="http://www.postgresql.org/users-lounge/">User's
-      Lounge</ulink> section of the PostgreSQL web site for details.
+      Lounge</ulink> section of the <productname>PostgreSQL</>
+      web site for details.
      </para>
     </listitem>
    </varlistentry>

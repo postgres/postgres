@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.24 2001/11/19 23:17:38 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.25 2001/11/21 05:53:40 thomas Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -215,7 +215,7 @@ UPDATE branches SET balance = balance + 100.00
    </para>
 
    <para>
-    In <productname>Postgres</>, a transaction is set up by surrounding
+    In <productname>PostgreSQL</>, a transaction is set up by surrounding
     the SQL commands of the transaction with
     <command>BEGIN</> and <command>COMMIT</> commands.  So our banking
     transaction would actually look like
@@ -233,7 +233,7 @@ COMMIT;
    </para>
 
    <para>
-    <productname>Postgres</> actually treats every SQL statement as being
+    <productname>PostgreSQL</> actually treats every SQL statement as being
     executed within a transaction.  If you don't issue a <command>BEGIN</>
     command, 
     then each individual statement has an implicit <command>BEGIN</> and
@@ -316,7 +316,7 @@ CREATE TABLE capitals (
     <structfield>population</>, and <structfield>altitude</>) from its
     <firstterm>parent</firstterm>, <classname>cities</classname>.  The
     type of the column <structfield>name</structfield> is
-    <type>text</type>, a native <productname>Postgres</productname>
+    <type>text</type>, a native <productname>PostgreSQL</productname>
     type for variable length character strings.  State capitals have
     an extra column, state, that shows their state.  In
     <productname>PostgreSQL</productname>, a table can inherit from

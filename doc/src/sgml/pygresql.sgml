@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.4 2001/11/19 03:58:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.5 2001/11/21 05:53:41 thomas Exp $ -->
 
 <chapter id="pygresql">
  <title><application>PyGreSQL</application> - <application>Python</application> Interface</title>
@@ -384,7 +384,7 @@ make && make install
     <listitem>
      <para>
       <classname>pglargeobject</classname>, which handles all the accesses
-      to <productname>Postgres</productname> large objects, and
+      to <productname>PostgreSQL</productname> large objects, and
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.12 2001/10/04 22:28:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.13 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <copyright>
@@ -56,14 +56,15 @@ There is no legal requirement to make trademark acknowledgements in
 references to third party products that happen to have trademarked
 names.
 
-The exception would be if PostgreSQL were to license a particular
+The exception would be if <productname>PostgreSQL</>
+ were to license a particular
 trademark and the trademark holder makes this requirement (as in the
 case of UNIX and Java).
 
 What is not allowed, however, is to use a trademark name in a way that
-could lead people to believe that they label PostgreSQL products.
-E.g., "the PostgreSQL UNIX database system" would probably be illegal,
-whereas "PostgreSQL, which runs on many UNIX computer systems" is
+could lead people to believe that they label <productname>PostgreSQL</> products.
+E.g., "the <productname>PostgreSQL</> UNIX database system" would probably be illegal,
+whereas "<productname>PostgreSQL</>, which runs on many UNIX computer systems" is
 fine.  This is independent of whether a trademark acknowledgement is
 made.
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.16 2001/11/21 05:53:40 thomas Exp $
 -->
 
  <chapter id="overview">
@@ -17,11 +17,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
 
   <para>
    This chapter gives an overview of the internal structure of the
-   backend of <productname>Postgres</productname>.
+   backend of <productname>PostgreSQL</productname>.
    After having read the following sections you
    should have an idea of how a query is processed. Don't expect a
    detailed description here (I think such a description dealing with
-   all data structures and functions used within <productname>Postgres</productname>
+   all data structures and functions used within <productname>PostgreSQL</productname>
    would exceed 1000
    pages!). This chapter is intended to help understanding the general
    control and data flow within the backend from receiving a query to
@@ -39,7 +39,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
    <procedure>
     <step>
      <para>
-      A connection from an application program to the <productname>Postgres</productname>
+      A connection from an application program to the <productname>PostgreSQL</productname>
       server has to be established. The application program transmits a
       query to the server and receives the results sent back by the server.
      </para>
@@ -109,7 +109,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
 
    <para>
     In the following sections we will cover every of the above listed items
-    in more detail to give a better understanding on <productname>Postgres</productname>'s internal
+    in more detail to give a better understanding on <productname>PostgreSQL</productname>'s internal
     control and data structures.
    </para>
   </sect1>
@@ -118,7 +118,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
    <title>How Connections are Established</title>
 
    <para>
-    <productname>Postgres</productname> is implemented using a simple "process per-user"
+    <productname>PostgreSQL</productname> is implemented using a simple "process per-user"
     client/server model.  In this model there is one <firstterm>client process</firstterm>
     connected to exactly one <firstterm>server process</firstterm>.
     As we don't know <foreignphrase>per se</foreignphrase> 
@@ -142,7 +142,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
     interactive SQL queries) or any user application implemented using
     the <filename>libpg</filename> library. Note that applications implemented using
     <application>ecpg</application>
-    (the <productname>Postgres</productname> embedded SQL preprocessor for C)
+    (the <productname>PostgreSQL</productname> embedded SQL preprocessor for C)
     also use this library.
    </para>
 
@@ -236,7 +236,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
       <para>
        The mentioned transformations and compilations are normally done
        automatically using the <firstterm>makefiles</firstterm>
-       shipped with the <productname>Postgres</productname>
+       shipped with the <productname>PostgreSQL</productname>
        source distribution.
       </para>
      </note>
@@ -255,7 +255,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 pe
 
     <para>
      For a better understanding of the data structures used in
-     <productname>Postgres</productname>
+     <productname>PostgreSQL</productname>
      for the processing of a query we use an example to illustrate the
      changes made to these data structures in every stage.
      This example contains the following simple query that will be used in
@@ -443,13 +443,13 @@ current context are performed.
   </sect1>
 
   <sect1 id="rule-system">
-   <title>The <productname>Postgres</productname> Rule System</title>
+   <title>The <productname>PostgreSQL</productname> Rule System</title>
 
    <para>
-    <productname>Postgres</productname> supports a powerful
+    <productname>PostgreSQL</productname> supports a powerful
     <firstterm>rule system</firstterm> for the specification
     of <firstterm>views</firstterm> and ambiguous <firstterm>view updates</firstterm>.
-    Originally the <productname>Postgres</productname>
+    Originally the <productname>PostgreSQL</productname>
     rule system consisted of two implementations:
 
     <itemizedlist>
@@ -459,7 +459,7 @@ current context are performed.
        implemented deep in the <firstterm>executor</firstterm>. The rule system was
        called whenever an individual tuple had been accessed. This
        implementation was removed in 1995 when the last official release
-       of the <productname>Postgres</productname> project was transformed into 
+       of the <productname>PostgreSQL</productname> project was transformed into 
        <productname>Postgres95</productname>. 
       </para>
      </listitem>
@@ -478,7 +478,7 @@ current context are performed.
 
    <para>
     For information on the syntax and creation of rules in the
-    <productname>Postgres</productname> system refer to
+    <productname>PostgreSQL</productname> system refer to
     <citetitle>The PostgreSQL User's Guide</citetitle>.
    </para>
 
@@ -700,7 +700,7 @@ current context are performed.
      Another task performed by the planner/optimizer is fixing the
      <firstterm>operator ids</firstterm> in the <literal>Expr</literal>
      and <literal>Oper</literal> nodes. As
-     mentioned earlier, <productname>Postgres</productname> supports a variety of different data
+     mentioned earlier, <productname>PostgreSQL</productname> supports a variety of different data
      types and even user defined types can be used. To be able to maintain
      the huge amount of functions and operators it is necessary to store
      them in a system table. Each function and operator gets a unique
@@ -1181,7 +1181,7 @@ transformInsertStmt()} above have been added here as well.
 \subsubsection{The Rewrite System}
 
 This section describes the changes to the {\it rewrite system} of
-<productname>Postgres</productname> that have been necessary to support the use of {\it views}
+<productname>PostgreSQL</productname> that have been necessary to support the use of {\it views}
 within queries using a {\it having clause} and to support the
 definition of {\it views} by queries using a {\it having clause}.
 
@@ -1395,7 +1395,7 @@ items. Note that it is not necessary to understand the meaning of
 every single source line here and therefore we will not discuss
 detailed questions like "Why has the variable {\tt varno} to be
 increased by 3?". Questions like that belong to a chapter dealing
-with the implementation of {\it views} in <productname>Postgres</productname> and to be able to
+with the implementation of {\it views} in <productname>PostgreSQL</productname> and to be able to
 answer them it would be necessary to know all the functions and not
 only those described here. The fact important for us is to make sure,
 that whatever is applied to the {\it targetlist} and the data
@@ -1538,7 +1538,7 @@ examined.
 %
 <step> {\tt QueryRewrite()} \\
 This function takes the {\it parsetree} of a query and rewrites it
-using <productname>Postgres</productname>'s {\it rewrite system}. Before the query itself can be
+using <productname>PostgreSQL</productname>'s {\it rewrite system}. Before the query itself can be
 rewritten, subqueries that are possibly part of the query have to be
 processed. Therefore the function {\tt  QueryRewriteSubLink()} is
 called for the {\it where clause} and for the {\it having clause}.
@@ -2750,7 +2750,7 @@ produced by the {\it parser stage} that can be executed by the {\it
 executor}. In most cases there are several ways (paths) with different
 cost to get to the same result. It's the {\it planner/optimizer's}
 task to find out which path is the cheapest and to create a {\it plan}
-using this path.  The implementation of {\it unions} in <productname>Postgres</productname> is
+using this path.  The implementation of {\it unions} in <productname>PostgreSQL</productname> is
 based on the following idea: \\
 \\
 The set derived by evaluating $A \cup B$ must contain every member of
@@ -2786,7 +2786,7 @@ and the sort is just performed to make its work easier.
 \subsection{How Intersect, Except and Union Work Together}  
 
 The last section showed that every stage ({\it parser stage}, {\it
-planner/optimizer}, {\it executor}) of <productname>Postgres</productname> has to provide
+planner/optimizer}, {\it executor}) of <productname>PostgreSQL</productname> has to provide
 features in order to support {\it union} statements. For the
 implementation of {\it intersect} and {\it except} statements (and
 statements involving all {\it set operators}) we choose a different approach
@@ -3039,7 +3039,7 @@ file {\tt $\ldots$/src/backend/parser/keywords.c}:
   };
 \end{verbatim}
 %
-<step> <productname>Postgres</productname> contains functions to convert the internal
+<step> <productname>PostgreSQL</productname> contains functions to convert the internal
 representation of a {\it parsetree} or {\it plantree} into an ASCII
 representation (that can easily be printed to the screen (for
 debugging purposes) or be stored in a file) and vice versa. These
@@ -3629,7 +3629,7 @@ troubles in the {\it transforming logic}.
 \end{figure}
 %
 <step> Transform the new {\it operator tree} into DNF (disjunctive normal
-form). <productname>Postgres</productname> does not provide any function for the transformation
+form). <productname>PostgreSQL</productname> does not provide any function for the transformation
 into DNF but it provides a function {\tt cnfify()} that performs a
 transformation into CNF (conjunctive normal form). So we can easily
 make use of this function when we exchange every {\tt OR} with an {\tt

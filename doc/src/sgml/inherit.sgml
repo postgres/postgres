@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.16 2001/11/19 03:58:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.17 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="inherit">
@@ -25,11 +25,11 @@ CREATE TABLE capitals (
    In this case, a row  of  capitals  <firstterm>inherits</firstterm>  all
    attributes  (name,  population,  and altitude) from its
    parent, cities.  The type  of  the  attribute  name  is
-   <type>text</type>,  a  native  <productname>Postgres</productname>  type  for variable length
+   <type>text</type>,  a  native  <productname>PostgreSQL</productname>  type  for variable length
    ASCII strings.  The type of the attribute population is
-   <type>float</type>,  a  native <productname>Postgres</productname> type for double precision
+   <type>float</type>,  a  native <productname>PostgreSQL</productname> type for double precision
    floating point numbers.  State capitals have  an  extra
-   attribute, state, that shows their state.  In <productname>Postgres</productname>,
+   attribute, state, that shows their state.  In <productname>PostgreSQL</productname>,
    a  table  can inherit from zero or more other tables,
    and a query can reference either  all  rows  of  a
    table  or  all  rows of  a  table plus all of its
@@ -150,7 +150,7 @@ SELECT name, altitude
   <note>
    <title>Deprecated</title> 
    <para>
-     In previous versions of <productname>Postgres</productname>, the
+     In previous versions of <productname>PostgreSQL</productname>, the
      default was not to get access to child tables. This was found to
      be error prone and is also in violation of SQL99. Under the old
      syntax, to get the sub-tables you append <literal>*</literal> to the table name.

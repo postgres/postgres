@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.46 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.47 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -47,11 +47,12 @@ sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t
 sgml-indent-step:1
+sgml-indent-tabs-mode:nil
 sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-catalogs:("/usr/share/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

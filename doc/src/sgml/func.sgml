@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.83 2001/11/20 15:42:44 momjian Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.84 2001/11/21 05:53:41 thomas Exp $
+PostgreSQL documentation
 -->
 
 <chapter id="functions">
@@ -15,7 +15,7 @@ Postgres documentation
  </indexterm>
 
  <para>
-  <productname>Postgres</productname> provides a large number of
+  <productname>PostgreSQL</productname> provides a large number of
   functions and operators for the built-in data types.  Users can also
   define their own functions and operators, as described in the
   <citetitle>Programmer's Guide</citetitle>.  The
@@ -1349,7 +1349,7 @@ Postgres documentation
 
   <para>
    There are two separate approaches to pattern matching provided by
-   <productname>Postgres</productname>:  the <acronym>SQL</acronym>
+   <productname>PostgreSQL</productname>:  the <acronym>SQL</acronym>
    <function>LIKE</function> operator and
    <acronym>POSIX</acronym>-style regular expressions.
   </para>
@@ -1446,7 +1446,7 @@ Postgres documentation
     The keyword <token>ILIKE</token> can be used instead of
     <token>LIKE</token> to make the match case insensitive according
     to the active locale.  This is not in the <acronym>SQL</acronym> standard but is a
-    <productname>Postgres</productname> extension.
+    <productname>PostgreSQL</productname> extension.
    </para>
 
    <para>
@@ -1456,7 +1456,7 @@ Postgres documentation
     <literal>!~~</literal> and <literal>!~~*</literal> operators that
     represent <function>NOT LIKE</function> and <function>NOT
     ILIKE</function>.  All of these operators are
-    <productname>Postgres</productname>-specific.
+    <productname>PostgreSQL</productname>-specific.
    </para>
   </sect2>
 
@@ -1537,7 +1537,7 @@ Postgres documentation
     <command>egrep</command>; 1003.2 calls these
     <quote>extended</quote> REs) and obsolete REs (roughly those of
     <command>ed</command>; 1003.2 <quote>basic</quote> REs).
-    <productname>Postgres</productname> implements the modern form.
+    <productname>PostgreSQL</productname> implements the modern form.
    </para>
 
    <para>
@@ -1786,7 +1786,7 @@ Postgres documentation
    </note>
 
    <para>
-    The <productname>Postgres</productname> formatting functions
+    The <productname>PostgreSQL</productname> formatting functions
     provide a powerful set of tools for converting various data types
     (date/time, integer, floating point, numeric) to formatted strings
     and for converting from formatted strings to specific data types.
@@ -2137,7 +2137,7 @@ Postgres documentation
        in a string constant, a double backslash
        (<quote><literal>\\</literal></quote>) must be entered; for
        example <literal>'\\HH\\MI\\SS'</literal>.  This is true for
-       any string constant in <productname>Postgres</productname>.
+       any string constant in <productname>PostgreSQL</productname>.
       </para>
      </listitem>
 
@@ -2311,7 +2311,7 @@ Postgres documentation
      <listitem>
       <para>
        <literal>PL</literal>, <literal>SG</literal>, and
-       <literal>TH</literal> are <productname>Postgres</productname>
+       <literal>TH</literal> are <productname>PostgreSQL</productname>
        extensions. 
       </para>
      </listitem>
@@ -3217,7 +3217,7 @@ SELECT CURRENT_TIMESTAMP;
 
    <para>
     The function <function>now()</function> is the traditional
-    <productname>Postgres</productname> equivalent to
+    <productname>PostgreSQL</productname> equivalent to
     <function>CURRENT_TIMESTAMP</function>.
    </para>
 
@@ -3889,7 +3889,7 @@ SELECT TIMESTAMP 'now';
    </table>
 
   <para>
-   This section describes <productname>Postgres</productname>'s functions
+   This section describes <productname>PostgreSQL</productname>'s functions
    for operating on <firstterm>sequence objects</>.
    Sequence objects (also called sequence generators or
    just sequences) are special single-row tables created with
@@ -4013,7 +4013,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next nextval() will return 4
 
   <para>
    This section describes the <acronym>SQL</acronym>-compliant conditional expressions
-   available in <productname>Postgres</productname>.
+   available in <productname>PostgreSQL</productname>.
   </para>
 
   <tip>

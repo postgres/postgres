@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.35 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -7,23 +7,23 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
   
   <para>
    <filename>libpq++</filename> is the C++ API to 
-   <productname>Postgres</productname>.
+   <productname>PostgreSQL</productname>.
    <filename>libpq++</filename>  is a set of classes that allow
    client programs to connect to the 
-   <productname>Postgres</productname> backend server. These connections
+   <productname>PostgreSQL</productname> backend server. These connections
    come in two forms: a Database Class and a Large Object class.
   </para>
 
   <para>
    The Database Class is intended for manipulating a database. You can
-   send all sorts of SQL queries to the <productname>Postgres</productname> 
+   send all sorts of SQL queries to the <productname>PostgreSQL</productname> 
    backend server and retrieve the responses of the server.
   </para>
 
   <para>
    The Large Object Class is intended for manipulating a large object
    in a database. Although a Large Object instance can send normal
-   queries to the <productname>Postgres</productname> backend server 
+   queries to the <productname>PostgreSQL</productname> backend server 
    it is only intended for simple
    queries that do not return any data. A large object should be seen
    as a file stream. In the future it should behave much like the C++ file
@@ -91,13 +91,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
        <para>
 	<envar>PGPORT</envar> sets the default TCP port number or Unix-domain
 	socket file extension for communicating with the
-	<productname>Postgres</productname> backend.
+	<productname>PostgreSQL</productname> backend.
        </para>
       </listitem>
       <listitem>
        <para>
 	<envar>PGDATABASE</envar>  sets the default 
-	<productname>Postgres</productname> database name.
+	<productname>PostgreSQL</productname> database name.
        </para>
       </listitem>
       <listitem>
@@ -115,9 +115,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
       <listitem>
        <para>
 	<envar>PGREALM</envar> sets the Kerberos realm to  use  with  
-	<productname>Postgres</productname>,
+	<productname>PostgreSQL</productname>,
 	if  it is different from the local realm.  If
-	<envar>PGREALM</envar> is set, <productname>Postgres</productname> 
+	<envar>PGREALM</envar> is set, <productname>PostgreSQL</productname> 
 	applications  will  attempt
 	authentication  with  servers for this realm and use
 	separate ticket files to avoid conflicts with  local
@@ -128,7 +128,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
       <listitem>
        <para>
 	<envar>PGOPTIONS</envar> sets additional runtime  options  for  
-	the <productname>Postgres</productname> backend.
+	the <productname>PostgreSQL</productname> backend.
        </para>
       </listitem>
       <listitem>
@@ -142,7 +142,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
 	
     <para>
      The following environment variables can be used to specify user-level default
-     behavior for every Postgres session:
+     behavior for every <productname>PostgreSQL</productname> session:
 	  
      <itemizedlist>
       <listitem>
@@ -162,7 +162,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
     
     <para>
      The following environment variables can be used to specify default internal
-     behavior for every Postgres session:
+     behavior for every <productname>PostgreSQL</productname> session:
      
      <itemizedlist>
       <listitem>
@@ -641,7 +641,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
    <title>Asynchronous Notification</title>
     
    <para>
-    <productname>Postgres</productname> supports asynchronous notification 
+    <productname>PostgreSQL</productname> supports asynchronous notification 
     via the <command>LISTEN</command> and <command>NOTIFY</command>
     commands.  A backend registers its interest in a particular semaphore
     with the <command>LISTEN</command> command.
@@ -706,7 +706,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:
    <title>Functions Associated with the COPY Command</title>
    
    <para>
-    The <command>copy</command> command in <productname>Postgres</productname> 
+    The <command>copy</command> command in <productname>PostgreSQL</productname> 
     has options to read from or write to the network
     connection used by <filename>libpq++</filename>.  
     Therefore, functions are necessary to

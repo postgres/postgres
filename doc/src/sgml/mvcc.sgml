@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.19 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.20 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="mvcc">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.19 2001/10/09 18:46:00 petere
     is an advanced technique for improving database performance in a
     multi-user environment. 
     Vadim Mikheev (<email>vadim@krs.ru</email>) provided
-    the implementation for <productname>Postgres</productname>.
+    the implementation for <productname>PostgreSQL</productname>.
    </para>
   </abstract>
 
@@ -25,7 +25,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.19 2001/10/09 18:46:00 petere
 
    <para>
     Unlike most other database systems which use locks for concurrency control,
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     maintains data consistency by using a multiversion model. 
     This means that while querying a database each transaction sees
     a snapshot of data (a <firstterm>database version</firstterm>)
@@ -191,7 +191,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.19 2001/10/09 18:46:00 petere
    </para>
 
    <para>
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     offers the read committed and serializable isolation levels.
    </para>
   </sect1>
@@ -206,7 +206,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.19 2001/10/09 18:46:00 petere
 
    <para>
     <firstterm>Read Committed</firstterm>
-    is the default isolation level in <productname>Postgres</productname>. 
+    is the default isolation level in <productname>PostgreSQL</productname>. 
     When a transaction runs on this isolation level,
     a <command>SELECT</command> query sees only data committed before the
     query began and never sees either uncommitted data or changes committed
@@ -324,7 +324,7 @@ ERROR:  Can't serialize access due to concurrent update
    <title>Data consistency checks at the application level</title>
 
    <para>
-    Because readers in <productname>Postgres</productname>
+    Because readers in <productname>PostgreSQL</productname>
     don't lock data, regardless of
     transaction isolation level, data read by one transaction can be
     overwritten by another concurrent transaction. In other words,
@@ -354,15 +354,15 @@ ERROR:  Can't serialize access due to concurrent update
     concurrent updates, while <command>LOCK TABLE</command> protects the
     whole table.)
     This should be taken into account when porting applications to
-    <productname>Postgres</productname> from other environments.
+    <productname>PostgreSQL</productname> from other environments.
 
     <note>
      <para>
-      Before version 6.5 <productname>Postgres</productname>
+      Before version 6.5 <productname>PostgreSQL</productname>
       used read-locks and so the
       above consideration is also the case
       when upgrading to 6.5 (or higher) from previous
-      <productname>Postgres</productname> versions.
+      <productname>PostgreSQL</productname> versions.
      </para>
     </note>
    </para>
@@ -376,10 +376,10 @@ ERROR:  Can't serialize access due to concurrent update
    </indexterm>
 
    <para>
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     provides various lock modes to control concurrent
     access to data in tables. Some of these lock modes are acquired by
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     automatically before statement execution, while others are
     provided to be used by applications. All lock modes acquired in a
     transaction are held for the duration 
@@ -559,7 +559,7 @@ ERROR:  Can't serialize access due to concurrent update
     </para>
 
     <para>
-     <productname>Postgres</productname>
+     <productname>PostgreSQL</productname>
      doesn't remember any information about modified rows in memory and
      so has no limit to the number of rows locked at one time.  However,
      locking a row may cause a disk write; thus, for example,
@@ -581,11 +581,11 @@ ERROR:  Can't serialize access due to concurrent update
    <title>Locking and Indexes</title>
 
    <para>
-    Though <productname>Postgres</productname>
+    Though <productname>PostgreSQL</productname>
     provides nonblocking read/write access to table
     data, nonblocking read/write access is not currently offered for every
     index access method implemented
-    in <productname>Postgres</productname>.
+    in <productname>PostgreSQL</productname>.
    </para>
 
    <para>

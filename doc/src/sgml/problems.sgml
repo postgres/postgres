@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.10 2001/11/18 07:14:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.11 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -8,8 +8,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.10 2001/11/18 07:14:49 tg
  <para>
   When you find a bug in <productname>PostgreSQL</productname> we want to
   hear about it. Your bug reports play an important part in making
-  <productname>PostgreSQL</productname> more reliable, because even the utmost
-  care cannot guarantee that every part of PostgreSQL will work on every
+  <productname>PostgreSQL</productname> more reliable because even the utmost
+  care cannot guarantee that every part of
+  <productname>PostgreSQL</productname> 
+  will work on every 
   platform under every circumstance.
  </para>
 
@@ -259,7 +261,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.10 2001/11/18 07:14:49 tg
    The software package in total is called <quote>PostgreSQL</quote>,
    sometimes <quote>Postgres</quote> for short. If you
    are specifically talking about the backend server, mention that, do not
-   just say <quote>Postgres crashes</quote>.  A crash of a single
+   just say <quote>PostgreSQL crashes</quote>.  A crash of a single
    backend server process is quite different from crash of the parent
    <quote>postmaster</> process; please don't say <quote>the postmaster
    crashed</> when you mean a single backend went down, nor vice versa.

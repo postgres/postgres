@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.78 2001/11/20 20:28:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.79 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="libpq">
@@ -892,7 +892,7 @@ undefined.  A call to <function>PQescapeString</> writes an escaped
 version of the <parameter>from</> string to the <parameter>to</>
 buffer, replacing special characters so that they cannot cause any
 harm, and adding a terminating NUL character.  The single quotes that
-must surround PostgreSQL string literals are not part of the result
+must surround <productname>PostgreSQL</> string literals are not part of the result
 string.
 </para>
 <para>
@@ -2152,7 +2152,7 @@ foo.c:95: `PGRES_TUPLES_OK' undeclared (first use in this function)
 
     <listitem>
      <para>
-      Point your compiler to the directory where the PostgreSQL header
+      Point your compiler to the directory where the <productname>PostgreSQL</> header
       files were installed, by supplying the
       <literal>-I<replaceable>directory</replaceable></literal> option
       to your compiler.  (In some cases the compiler will look into
@@ -2239,7 +2239,7 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
    <indexterm><primary>libpq-int.h</></>
    If your codes references the header file
    <filename>libpq-int.h</filename> and you refuse to fix your code to
-   not use it, starting in PostgreSQL 7.2, this file will be found in
+   not use it, starting in <productname>PostgreSQL</> 7.2, this file will be found in
    <filename><replaceable>includedir</replaceable>/postgresql/internal/libpq-int.h</filename>,
    so you need to add the appropriate <option>-I</option> option to
    your compiler command line.
@@ -2258,7 +2258,7 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
 /*
  * testlibpq.c
  *
- * Test the C version of libpq, the PostgreSQL frontend
+ * Test the C version of libpq, the <productname>PostgreSQL</> frontend
  * library.
  */
 #include &lt;stdio.h&gt;
@@ -2509,7 +2509,7 @@ main()
 
 <programlisting>
 /*
- * testlibpq3.c Test the C version of Libpq, the Postgres frontend
+ * testlibpq3.c Test the C version of Libpq, the <productname>PostgreSQL</> frontend
  * library. tests the binary cursor interface
  *
  *

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.49 2001/11/16 00:40:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.50 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.49 2001/11/16 00:40:11
 
  <para>
   <application>PL/pgSQL</application> is a loadable procedural language for the
-  <productname>Postgres</productname> database system.
+  <productname>PostgreSQL</productname> database system.
  </para>
    
  <para>
@@ -151,7 +151,7 @@ END;
     <title>Better Performance</title>
 
     <para>
-     <acronym>SQL</acronym> is the language PostgreSQL (and
+     <acronym>SQL</acronym> is the language <productname>PostgreSQL</> (and
      most other Relational Databases) use as query
      language. It's portable and easy to learn. But every
      <acronym>SQL</acronym> statement must be executed
@@ -194,8 +194,8 @@ END;
     <title>Portability</title>
 
     <para>
-     Because <application>PL/pgSQL</application> functions run inside PostgreSQL, these
-     functions will run on any platform where PostgreSQL
+     Because <application>PL/pgSQL</application> functions run inside <productname>PostgreSQL</>, these
+     functions will run on any platform where <productname>PostgreSQL</>
      runs. Thus you can reuse code and have less development costs.
     </para>
    </sect3>
@@ -219,7 +219,7 @@ END;
 
      <listitem>
       <para>
-       Using PostgreSQL's GUI Tool: <application>PgAccess</>
+       Using <productname>PostgreSQL</>'s GUI Tool: <application>PgAccess</>
       </para>
      </listitem>
     </itemizedlist>
@@ -319,7 +319,7 @@ END;
      they do not start or end a transaction.  Functions and trigger procedures
      are always executed within a transaction established by an outer query
      --- they cannot start or commit transactions, since
-     <productname>Postgres</productname> does not have nested transactions.
+     <productname>PostgreSQL</productname> does not have nested transactions.
     </para>
 
    <sect2>
@@ -643,7 +643,7 @@ SELECT <replaceable>expression</replaceable>
     </para>
 
     <para>
-     The evaluation done by the <productname>Postgres</productname>
+     The evaluation done by the <productname>PostgreSQL</productname>
      main parser has some side
      effects on the interpretation of constant values. In detail there
      is a difference between what these two functions do:
@@ -675,7 +675,7 @@ CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
 </programlisting>
 
      In the case of <function>logfunc1()</function>, the 
-     <productname>Postgres</productname> main parser knows when 
+     <productname>PostgreSQL</productname> main parser knows when 
      preparing the plan for the INSERT, that the string 
      <literal>'now'</literal> should be interpreted as 
      <type>timestamp</type> because the target field of <classname>logtable</classname>
@@ -688,7 +688,7 @@ CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
 
     <para>
      In the case of <function>logfunc2()</function>, the 
-     <productname>Postgres</productname> main parser does not know
+     <productname>PostgreSQL</productname> main parser does not know
      what type <literal>'now'</literal> should become and therefore 
      it returns a data value of type <type>text</type> containing the string 
      <literal>'now'</literal>. During the ensuing assignment
@@ -779,7 +779,7 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replacea
      where <replaceable>target</replaceable> can be a record variable, a row
      variable, or a comma-separated list of simple variables and
      record/row fields. Note that this is quite different from
-     Postgres' normal interpretation of SELECT INTO, which is that the
+     <productname>PostgreSQL</>'s normal interpretation of SELECT INTO, which is that the
      INTO target is a newly created table.  (If you want to create a
      table from a SELECT result inside a <application>PL/pgSQL</application> function, use the
      syntax <command>CREATE TABLE ... AS SELECT</command>.)
@@ -1675,7 +1675,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
    <title>Exceptions</title>
 
     <para>
-     <productname>Postgres</productname> does not have a very smart
+     <productname>PostgreSQL</productname> does not have a very smart
      exception handling model. Whenever the parser, planner/optimizer
      or executor decide that a statement cannot be processed any longer,
      the whole transaction gets aborted and the system jumps back
@@ -1914,7 +1914,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     either doubled or quoted with a backslash. We are still looking for
     an elegant alternative. In the meantime, doubling the single quotes
     as in the examples below should be used. Any solution for this
-    in future versions of <productname>Postgres</productname> will be
+    in future versions of <productname>PostgreSQL</productname> will be
     forward compatible.
    </para>
 
@@ -2036,11 +2036,11 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
 
   <para>
    This section explains differences between Oracle's PL/SQL and
-   PostgreSQL's <application>PL/pgSQL</application> languages in the hopes of helping developers
-   port applications from Oracle to PostgreSQL.  Most of the code here
+   <productname>PostgreSQL</>'s <application>PL/pgSQL</application> languages in the hopes of helping developers
+   port applications from Oracle to <productname>PostgreSQL</>.  Most of the code here
    is from the <ulink url="http://www.arsdigita.com">ArsDigita</ulink>
    <ulink url="http://www.arsdigita.com/asj/clickstream">Clickstream
-   module</ulink> that I ported to PostgreSQL when I took an
+   module</ulink> that I ported to <productname>PostgreSQL</> when I took an
    internship with <ulink url="http://www.openforce.net">OpenForce
    Inc.</ulink> in the Summer of 2000.
   </para>
@@ -2048,7 +2048,7 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
   <para>
    <application>PL/pgSQL</application> is similar to PL/SQL in many aspects. It is a block
    structured, imperative language (all variables have to be
-   declared). PL/SQL has many more features than its PostgreSQL
+   declared). PL/SQL has many more features than its <productname>PostgreSQL</>
    counterpart, but <application>PL/pgSQL</application> allows for a great deal of functionality
    and it is being improved constantly.
   </para>
@@ -2057,18 +2057,18 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
    <title>Main Differences</title>
 
    <para>
-    Some things you should keep in mind when porting from Oracle to PostgreSQL:
+    Some things you should keep in mind when porting from Oracle to <productname>PostgreSQL</>:
 
     <itemizedlist>
      <listitem>
       <para>
-       No default parameters in PostgreSQL.
+       No default parameters in <productname>PostgreSQL</>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       You can overload functions in PostgreSQL. This is often used to work 
+       You can overload functions in <productname>PostgreSQL</>. This is often used to work 
        around the lack of default parameters.
       </para>
      </listitem>
@@ -2081,14 +2081,14 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
 
      <listitem>
       <para>
-       No need for cursors in PostgreSQL, just put the query in the FOR 
+       No need for cursors in <productname>PostgreSQL</>, just put the query in the FOR 
        statement (see example below)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       In PostgreSQL you <emphasis>need</emphasis> to escape single
+       In <productname>PostgreSQL</> you <emphasis>need</emphasis> to escape single
        quotes. See <xref linkend="plpgsql-quote">.
       </para>
      </listitem>
@@ -2099,7 +2099,7 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
     <title>Quote Me on That: Escaping Single Quotes</title>
 
     <para>
-     In PostgreSQL you need to escape single quotes inside your
+     In <productname>PostgreSQL</> you need to escape single quotes inside your
      function definition. This can lead to quite amusing code at
      times, especially if you are creating a function that generates
      other function(s), as in 
@@ -2246,7 +2246,7 @@ SHOW ERRORS;
         Oracle can have <literal>IN</literal>, <literal>OUT</literal>,
         and <literal>INOUT</literal> parameters passed to functions.
         The <literal>INOUT</literal>, for example, means that the
-        parameter will receive a value and return another. PostgreSQL
+        parameter will receive a value and return another. <productname>PostgreSQL</>
         only has <quote>IN</quote> parameters and functions can return
         only a single value.
        </para>
@@ -2256,13 +2256,13 @@ SHOW ERRORS;
        <para>
         The <literal>RETURN</literal> key word in the function
         prototype (not the function body) becomes
-        <literal>RETURNS</literal> in PostgreSQL.
+        <literal>RETURNS</literal> in <productname>PostgreSQL</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        On PostgreSQL functions are created using single quotes as
+        On <productname>PostgreSQL</> functions are created using single quotes as
         delimiters, so you have to escape single quotes inside your
         functions (which can be quite annoying at times; see <xref
         linkend="plpgsql-quote">).
@@ -2272,7 +2272,7 @@ SHOW ERRORS;
       <listitem>
        <para>
         The <literal>/show errors</literal> command does not exist in
-        PostgreSQL.
+        <productname>PostgreSQL</>.
        </para>
       </listitem>
      </itemizedlist>
@@ -2280,7 +2280,7 @@ SHOW ERRORS;
 
     <para>
      So let's see how this function would look when ported to
-     PostgreSQL:
+     <productname>PostgreSQL</>:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION cs_fmt_browser_version(VARCHAR, VARCHAR)
@@ -2310,7 +2310,7 @@ END;
      with the results in <literal>IF</literal> statements, for the
      sake of efficiency. Notice particularly the differences in
      cursors, <literal>FOR</literal> loops, and the need to escape
-     single quotes in PostgreSQL.
+     single quotes in <productname>PostgreSQL</>.
 
 <programlisting>
 CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc IS
@@ -2338,7 +2338,7 @@ show errors
     </para>
 
     <para>
-     Here is how this function would end up in PostgreSQL:
+     Here is how this function would end up in <productname>PostgreSQL</>:
 
 <programlisting>
 CREATE FUNCTION cs_update_referrer_type_proc() RETURNS INTEGER AS '
@@ -2387,7 +2387,7 @@ END;
      return several elements (host, path and query). It is an
      procedure because in <application>PL/pgSQL</application> functions only one value can be returned
      (see <xref linkend="plpgsql-porting-procedures">).  In
-     PostgreSQL, one way to work around this is to split the procedure
+     <productname>PostgreSQL</>, one way to work around this is to split the procedure
      in three different functions: one to return the host, another for
      the path and another for the query.
     </para>
@@ -2405,7 +2405,7 @@ begin
     v_host := NULL;
     v_path := NULL;
     v_query := NULL;
-    a_pos1 := instr(v_url, '//'); -- PostgreSQL doesn't have an instr function
+    a_pos1 := instr(v_url, '//'); -- <productname>PostgreSQL</> doesn't have an instr function
 
     IF a_pos1 = 0 THEN
         RETURN;
@@ -2433,7 +2433,7 @@ show errors;
 </programlisting>
 
     <para>
-     Here is how this procedure could be translated for PostgreSQL:
+     Here is how this procedure could be translated for <productname>PostgreSQL</>:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION cs_parse_url_host(VARCHAR) RETURNS VARCHAR AS ' 
@@ -2469,7 +2469,7 @@ END;
 
    <note>
     <para>
-     PostgreSQL does not have an <function>instr</function> function,
+     <productname>PostgreSQL</> does not have an <function>instr</function> function,
      so you can work around it using a combination of other functions.
      I got tired of doing this and created my own
      <function>instr</function> functions that behave exactly like
@@ -2524,14 +2524,14 @@ show errors
    </para>
 
    <para>
-    Procedures like this can be easily converted into PostgreSQL
+    Procedures like this can be easily converted into <productname>PostgreSQL</>
     functions returning an <type>INTEGER</type>. This procedure in
     particular is interesting because it can teach us some things:
 
     <calloutlist>
      <callout arearefs="co.plpgsql-porting-pragma">
       <para>
-       There is no <literal>pragma</literal> statement in PostgreSQL.
+       There is no <literal>pragma</literal> statement in <productname>PostgreSQL</>.
       </para>
      </callout>
 
@@ -2546,7 +2546,7 @@ show errors
       <para>
        You also cannot have transactions in <application>PL/pgSQL</application> procedures. The
        entire function (and other functions called from therein) is
-       executed in a transaction and PostgreSQL rolls back the results if
+       executed in a transaction and <productname>PostgreSQL</> rolls back the results if
        something goes wrong. Therefore only one
        <literal>BEGIN</literal> statement is allowed.
       </para>
@@ -2659,10 +2659,10 @@ show errors
    </para>
 
    <para>
-    We port this to PostgreSQL by creating the different objects of
+    We port this to <productname>PostgreSQL</> by creating the different objects of
     the Oracle package as functions with a standard naming
     convention. We have to pay attention to some other details, like
-    the lack of default parameters in PostgreSQL functions. The above
+    the lack of default parameters in <productname>PostgreSQL</> functions. The above
     package would become something like this:
  
 <programlisting>
@@ -2697,7 +2697,7 @@ END;
     <title>EXECUTE</title>
 
     <para>
-     The PostgreSQL version of <literal>EXECUTE</literal> works
+     The <productname>PostgreSQL</> version of <literal>EXECUTE</literal> works
      nicely, but you have to remember to use
      <function>quote_literal(TEXT)</function> and
      <function>quote_string(TEXT)</function> as described in <xref
@@ -2711,7 +2711,7 @@ END;
     <title>Optimizing <application>PL/pgSQL</application> Functions</title>
 
     <para>
-     PostgreSQL gives you two function creation modifiers to optimize
+     <productname>PostgreSQL</> gives you two function creation modifiers to optimize
      execution: <literal>iscachable</literal> (function always returns
      the same result when given the same arguments) and
      <literal>isstrict</literal> (function returns NULL if any

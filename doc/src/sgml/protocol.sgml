@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.21 2001/09/21 20:31:42 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.22 2001/11/21 05:53:41 thomas Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -57,7 +57,8 @@
    normally create a new child process to handle each incoming
    connection.  However, this is not required.  In the current
    implementation, a new child process is created immediately after an
-   incoming connection is detected.  In earlier versions of PostgreSQL
+   incoming connection is detected.  In earlier versions of
+   <productname>PostgreSQL</> 
    (7.1 and earlier), the child process was created after sending the
    authentication confirmation message.
   </para>

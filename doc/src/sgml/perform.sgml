@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.13 2001/10/16 01:13:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.14 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="performance-tips">
@@ -9,14 +9,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.13 2001/10/16 01:13:44 tgl
    Query performance can be affected by many things. Some of these can 
    be manipulated by the user, while others are fundamental to the underlying
    design of the system.  This chapter provides some hints about understanding
-   and tuning <productname>Postgres</productname> performance.
+   and tuning <productname>PostgreSQL</productname> performance.
   </para>
 
   <sect1 id="using-explain">
    <title>Using <command>EXPLAIN</command></title>
 
    <para>
-    <productname>Postgres</productname> devises a <firstterm>query
+    <productname>PostgreSQL</productname> devises a <firstterm>query
     plan</firstterm> for each query it is given.  Choosing the right
     plan to match the query structure and the properties of the data
     is absolutely critical for good performance.  You can use the
@@ -398,7 +398,7 @@ regression=# select attname, n_distinct, most_common_vals from pg_stats where ta
 regression=#
 </screen>
 
-   As of <productname>Postgres</productname> 7.2 the following columns exist
+   As of <productname>PostgreSQL</productname> 7.2 the following columns exist
    in <structname>pg_stats</structname>:
   </para>
 
@@ -513,7 +513,7 @@ regression=#
   <title>Controlling the Planner with Explicit JOINs</title>
 
   <para>
-   Beginning with <productname>Postgres</productname> 7.1 it is possible
+   Beginning with <productname>PostgreSQL</productname> 7.1 it is possible
    to control the query planner to some extent by using explicit JOIN
    syntax.  To see why this matters, we first need some background.
   </para>
@@ -531,7 +531,7 @@ SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
    be inefficient, since the full Cartesian product of A and C would have
    to be formed, there being no applicable WHERE clause to allow optimization
    of the join.
-   (All joins in the <productname>Postgres</productname> executor happen
+   (All joins in the <productname>PostgreSQL</productname> executor happen
    between two input tables, so it's necessary to build up the result in one
    or another of these fashions.)  The important point is that these different
    join possibilities give semantically equivalent results but may have hugely
@@ -546,7 +546,7 @@ SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
    tables it's no longer practical to do an exhaustive search of all the
    possibilities, and even for six or seven tables planning may take an
    annoyingly long time.  When there are too many input tables, the
-   <productname>Postgres</productname> planner will switch from exhaustive
+   <productname>PostgreSQL</productname> planner will switch from exhaustive
    search to a <firstterm>genetic</firstterm> probabilistic search
    through a limited number of possibilities.  (The switch-over threshold is
    set by the <varname>GEQO_THRESHOLD</varname> run-time
@@ -570,7 +570,7 @@ SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
   </para>
 
   <para>
-   In <productname>Postgres</productname> 7.1, the planner treats all
+   In <productname>PostgreSQL</productname> 7.1, the planner treats all
    explicit JOIN syntaxes as constraining the join order, even though
    it is not logically necessary to make such a constraint for inner
    joins.  Therefore, although all of these queries give the same result:
@@ -639,7 +639,7 @@ SELECT * FROM d LEFT JOIN
     libraries may do this behind your back, in which case you need to
     make sure the library does it when you want it done.)
     If you allow each insertion to be committed separately,
-    <productname>Postgres</productname> is doing a lot of work for each
+    <productname>PostgreSQL</productname> is doing a lot of work for each
     record added.
    </para>
   </sect2>

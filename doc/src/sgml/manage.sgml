@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.19 2001/11/19 03:58:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.20 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <Chapter Id="manage">
@@ -13,13 +13,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.19 2001/11/19 03:58:2
 
   <Para>
    Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management 
-   of the <ProductName>Postgres</ProductName> installation, some databases within the
+   of the <ProductName>PostgreSQL</ProductName> installation, some databases within the
    installation may be managed by another person, 
    designated the <FirstTerm>database administrator</FirstTerm>.
    This assignment of responsibilities occurs when a database is created. 
    A user may be assigned explicit privileges to create databases and/or to create new users. 
    A user assigned both privileges can perform most administrative tasks
-   within <ProductName>Postgres</ProductName>, but will
+   within <ProductName>PostgreSQL</ProductName>, but will
    not by default have the same operating system privileges as the site administrator.
   </Para>
 
@@ -34,14 +34,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.19 2001/11/19 03:58:2
    <Para>
     Databases are created by the <Command>CREATE DATABASE</Command>
     command issued from within
-    <ProductName>Postgres</ProductName>. <Application>createdb</Application>
+    <ProductName>PostgreSQL</ProductName>. <Application>createdb</Application>
     is a shell script provided to give the same functionality from the
     Unix command line.
    </Para>
 
    <Para>
-    The <ProductName>Postgres</ProductName> backend must be running for either method
-    to succeed, and the user issuing the command must be the <ProductName>Postgres</ProductName>
+    The <ProductName>PostgreSQL</ProductName> backend must be running for either method
+    to succeed, and the user issuing the command must be the <ProductName>PostgreSQL</ProductName>
     <FirstTerm>superuser</FirstTerm> or have been assigned database creation privileges by the
     superuser.
    </Para>
@@ -71,7 +71,7 @@ ERROR:  CREATE DATABASE: Permission denied.
     database  administrator  of  the database you just created.  
     Database names must  have  an  alphabetic  first
     character and are limited to 31 characters in length.
-    <ProductName>Postgres</ProductName>  allows  you to create any number of
+    <ProductName>PostgreSQL</ProductName>  allows  you to create any number of
     databases at a  given  site.  
    </Para>
 
@@ -157,7 +157,7 @@ mydb=> \h
 
      Once  you  have finished entering your queries into the
      workspace, you can pass the contents of  the  workspace
-     to the <ProductName>Postgres</ProductName> server by typing:
+     to the <ProductName>PostgreSQL</ProductName> server by typing:
 <ProgramListing>
 mydb=> \g
 </ProgramListing>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.8 2001/11/20 04:27:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.9 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <chapter id="maintenance">
@@ -393,7 +393,7 @@ VACUUM
   <para>
    The simplest production-grade approach to managing log output is to send it
    all to <application>syslog</> and let <application>syslog</> deal with file
-   rotation.  To do this, make sure <productname>Postgres</> was built with
+   rotation.  To do this, make sure <productname>PostgreSQL</> was built with
    the <option>--enable-syslog</> configure option, and set
    <literal>syslog</> to 2
    (log to syslog only) in <filename>postgresql.conf</>.
@@ -415,7 +415,7 @@ VACUUM
 <userinput>pg_ctl start | logrotate</userinput>
 </screen>
 
-   The <productname>Postgres</> distribution doesn't include a suitable
+   The <productname>PostgreSQL</> distribution doesn't include a suitable
    log rotation program, but there are many available on the net;
    one is included in the Apache distribution, for example.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.7 2001/06/12 05:55:48 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.8 2001/11/21 05:53:40 thomas Exp $
  -->
 
 <chapter id="bki">
@@ -8,7 +8,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.7 2001/06/12 05:55:48 tgl Exp 
  <para>
   Backend Interface (<acronym>BKI</acronym>) files are scripts in a
   special language that are input to the
-  <productname>Postgres</productname> backend running in the special
+  <productname>PostgreSQL</productname> backend running in the special
   <quote>bootstrap</quote> mode that allows it to perform database
   functions without a database system already existing.
   <acronym>BKI</acronym> files can therefore be used to create the
@@ -20,7 +20,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.7 2001/06/12 05:55:48 tgl Exp 
   <application>initdb</application> uses a <acronym>BKI</acronym> file
   to do part of its job when creating a new database cluster.  The
   input file used by <application>initdb</application> is created as
-  part of building and installing <productname>Postgres</productname>
+  part of building and installing <productname>PostgreSQL</productname>
   by a program named <filename>genbki.sh</filename> from some
   specially formatted C header files in the source tree.  The created
   BKI file is called <filename>postgres.bki</filename> and is
@@ -37,7 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.7 2001/06/12 05:55:48 tgl Exp 
   <title><acronym>BKI</acronym> File Format</title>
 
   <para>
-   This section describes how the <productname>Postgres</productname>
+   This section describes how the <productname>PostgreSQL</productname>
    backend interprets <acronym>BKI</acronym> files.  This description
    will be easier to understand if the <filename>postgres.bki</filename>
    file is at hand as an example.  You should also study the source

@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.17 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.18 2001/11/21 05:53:41 thomas Exp $
 -->
 
 <sect1 id="notation">
  <title>Terminology and Notation</title>
 
  <para>
-  The terms <quote>Postgres</quote> and <quote>PostgreSQL</quote> will be
+  The terms <quote>PostgreSQL</quote> and <quote>Postgres</quote> will be
   used interchangeably to refer to the software that accompanies this
   documentation.
  </para>

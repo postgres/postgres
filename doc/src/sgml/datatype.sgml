@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.73 2001/11/21 03:17:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.74 2001/11/21 05:53:40 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -15,9 +15,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.73 2001/11/21 03:17:22 mo
   </indexterm>
 
   <para>
-   <productname>Postgres</productname> has a rich set of native data 
+   <productname>PostgreSQL</productname> has a rich set of native data 
    types available to users.
-   Users may add new types to <productname>Postgres</productname> using the
+   Users may add new types to <productname>PostgreSQL</productname> using the
    <command>CREATE TYPE</command> command.
   </para>
 
@@ -26,12 +26,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.73 2001/11/21 03:17:22 mo
    included in the standard distribution.  Most of the alternative names
    listed in the 
    <quote>Aliases</quote> column are the names used internally by
-   <productname>Postgres</productname> for historical reasons.  In
+   <productname>PostgreSQL</productname> for historical reasons.  In
    addition, some internally used or deprecated types are available,
    but they are not listed here.
   </para>
 
-  <para>
+ <para>
    <table id="datatype-table">
     <title>Data Types</title>
     <tgroup cols="3">
@@ -264,7 +264,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.73 2001/11/21 03:17:22 mo
    Each data type has an external representation determined by its input
    and output functions.  Many of the built-in types have
    obvious external formats.  However, several types are either unique
-   to <productname>Postgres</productname>, such as open and closed
+   to <productname>PostgreSQL</productname>, such as open and closed
    paths, or have several possibilities for formats, such as the date
    and time types.
    Most of the input and output functions corresponding to the
@@ -486,7 +486,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.73 2001/11/21 03:17:22 mo
 ... WHERE smallint_column = 42
 </programlisting>
       will not use an index, because the system assigns type
-      <type>integer</type> to the constant 42, and PostgreSQL currently
+      <type>integer</type> to the constant 42, and
+      <productname>PostgreSQL</productname> currently
       cannot use an index when two different data types are involved.  A
       workaround is to single-quote the constant, thus:
 <programlisting>
@@ -731,7 +732,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    <para>
     The <type>money</type> type stores U.S.-style currency with fixed
     decimal point representation.  If
-    <productname>Postgres</productname> is compiled with locale
+    <productname>PostgreSQL</productname> is compiled with locale
     support then the <type>money</type> type uses locale-specific
     output formatting.
    </para>
@@ -831,7 +832,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
    <note>
     <para>
-     Prior to PostgreSQL 7.2, strings that were too long were silently
+     Prior to <productname>PostgreSQL</> 7.2, strings that were too long were silently
      truncated, no error was raised.
     </para>
    </note>
@@ -844,7 +845,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     respectively. <type>character</type> without length specifier is
     equivalent to <type>character(1)</type>; if <type>character
     varying</type> is used without length specifier, the type accepts
-    strings of any size.  The latter is a PostgreSQL extension.
+    strings of any size.  The latter is a <productname>PostgreSQL</> extension.
    </para>
 
    <para>
@@ -924,7 +925,7 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     There are two other fixed-length character types in
-    <productname>Postgres</productname>.  The <type>name</type> type
+    <productname>PostgreSQL</productname>.  The <type>name</type> type
     exists <emphasis>only</emphasis> for storage of internal catalog
     names and is not intended for use by the general user.  Its length
     is currently defined as 32 bytes (31 usable characters plus terminator)
@@ -1262,7 +1263,7 @@ SELECT b, char_length(b) FROM test2;
    <title>Date/Time Types</title>
 
    <para>
-    <productname>Postgres</productname> supports the full set of
+    <productname>PostgreSQL</productname> supports the full set of
     <acronym>SQL</acronym> date and time types.
    </para>
 
@@ -1352,7 +1353,7 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    To ensure compatibility to earlier versions of <productname>Postgres</productname>
+    To ensure compatibility to earlier versions of <productname>PostgreSQL</productname>
     we also continue to provide <type>datetime</type>
     (equivalent to <type>timestamp</type>) and
     <type>timespan</type> (equivalent to <type>interval</type>),
@@ -1373,7 +1374,7 @@ SELECT b, char_length(b) FROM test2;
     <para>
      Date and time input is accepted in almost any reasonable format, including
      <acronym>ISO-8601</acronym>, <acronym>SQL</acronym>-compatible, 
-     traditional <productname>Postgres</productname>, and others.
+     traditional <productname>PostgreSQL</productname>, and others.
      The ordering of month and day in date input can be ambiguous, therefore a setting
      exists to specify how it should be interpreted in ambiguous cases. The command
      <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
@@ -1396,7 +1397,7 @@ SELECT b, char_length(b) FROM test2;
 <synopsis>
 <replaceable>type</replaceable> '<replaceable>value</replaceable>'
 </synopsis>
-     but <productname>Postgres</productname> is more flexible.
+     but <productname>PostgreSQL</productname> is more flexible.
     </para>
 
     <sect3>
@@ -1848,79 +1849,93 @@ January 8 04:05:06 1999 PST
 
      <indexterm>
       <primary>time</primary>
-      <secondary>current</secondary>
+      <secondary>constants</secondary>
      </indexterm>
 
      <indexterm>
       <primary>date</primary>
-      <secondary>current</secondary>
+      <secondary>constants</secondary>
      </indexterm>
 
      <para>
-      The following <acronym>SQL</acronym>-compatible functions can be used as date or time
+      The following <acronym>SQL</acronym>-compatible functions can be
+      used as date or time
       input for the corresponding data type: <literal>CURRENT_DATE</literal>,
       <literal>CURRENT_TIME</literal>, <literal>CURRENT_TIMESTAMP</literal>.
      </para>
+
      <para>
-      <productname>Postgres</productname> also supports several special constants for
-      convenience.
+      <productname>PostgreSQL</productname> also supports several
+      special constants for convenience.
 
-     <table tocentry="1">
-      <title>Special Date/Time Constants</title>
-      <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Constant</entry>
-	 <entry>Description</entry>
-	</row>
-       </thead>
-       <tbody>
-<!--
-	<row>
-	 <entry>current</entry>
-	 <entry>Current transaction time, deferred</entry>
-	</row>
--->
-	<row>
-	 <entry>epoch</entry>
-	 <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
-	</row>
-	<row>
-	 <entry>infinity</entry>
-	 <entry>Later than other valid times</entry>
-	</row>
-	<row>
-	 <entry>-infinity</entry>
-	 <entry>Earlier than other valid times</entry>
-	</row>
-	<row>
-	 <entry>invalid</entry>
-	 <entry>Illegal entry</entry>
-	</row>
-	<row>
-	 <entry>now</entry>
-	 <entry>Current transaction time</entry>
-	</row>
-	<row>
-	 <entry>today</entry>
-	 <entry>Midnight today</entry>
-	</row>
-	<row>
-	 <entry>tomorrow</entry>
-	 <entry>Midnight tomorrow</entry>
-        </row>
-	<row>
-	 <entry>yesterday</entry>
-	 <entry>Midnight yesterday</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-    </para>
+      <table tocentry="1">
+       <title>Special Date/Time Constants</title>
+       <tgroup cols="2">
+	<thead>
+	 <row>
+	  <entry>Constant</entry>
+	  <entry>Description</entry>
+	 </row>
+	</thead>
+	<tbody>
+	 <row>
+	  <entry>epoch</entry>
+	  <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
+	 </row>
+	 <row>
+	  <entry>infinity</entry>
+	  <entry>Later than other valid times</entry>
+	 </row>
+	 <row>
+	  <entry>-infinity</entry>
+	  <entry>Earlier than other valid times</entry>
+	 </row>
+	 <row>
+	  <entry>invalid</entry>
+	  <entry>Illegal entry</entry>
+	 </row>
+	 <row>
+	  <entry>now</entry>
+	  <entry>Current transaction time</entry>
+	 </row>
+	 <row>
+	  <entry>today</entry>
+	  <entry>Midnight today</entry>
+	 </row>
+	 <row>
+	  <entry>tomorrow</entry>
+	  <entry>Midnight tomorrow</entry>
+	 </row>
+	 <row>
+	  <entry>yesterday</entry>
+	  <entry>Midnight yesterday</entry>
+	 </row>
+	 <row>
+	  <entry>zulu, allballs, z</entry>
+	  <entry>00:00:00.00 GMT</entry>
+	 </row>
+	</tbody>
+       </tgroup>
+      </table>
+
+      <literal>'now'</literal> is
+      evaluated when the value is first interpreted.
+
+      <caution>
+       <para>
+	As of <productname>PostgreSQL</> version 7.2,
+	<literal>'current'</literal> is no longer supported as a
+	date/time constant.
+	Previously,
+	<literal>'current'</literal> was stored as a special value,
+	and evaluated to <literal>'now'</literal> only when
+	used in a math operation or type
+	conversion.
+       </para>
+      </caution>
+     </para>
     </sect3>
-
    </sect2>
-
 
    <sect2 id="datatype-datetime-output">
     <title>Date/Time Output</title>
@@ -1940,7 +1955,7 @@ January 8 04:05:06 1999 PST
     <para>
      Output formats can be set to one of the four styles
      ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
-     Postgres, and German, using the <command>SET DateStyle</command>.
+     PostgreSQL, and German, using the <command>SET DateStyle</command>.
      The default is the <acronym>ISO</acronym> format.
 
      <table tocentry="1">
@@ -1965,7 +1980,7 @@ January 8 04:05:06 1999 PST
 	 <entry>12/17/1997 07:37:16.00 PST</entry>
 	</row>
 	<row>
-	 <entry>'Postgres'</entry>
+	 <entry>'PostgreSQL'</entry>
 	 <entry>Original style</entry>
 	 <entry>Wed Dec 17 07:37:16 1997 PST</entry>
 	</row>
@@ -1980,14 +1995,18 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     The output of the <type>date</type> and <type>time</type> types is of course
+     The output of the <type>date</type> and <type>time</type> styles
+     is of course 
      only the date or time part in accordance with the above examples.
     </para>
 
     <para>
-     The <acronym>SQL</acronym> style has European and non-European (US) variants, 
-     which determines whether month follows day or vice versa. (See also above
-     at Date/Time Input, how this setting affects interpretation of input values.)
+     The <acronym>SQL</acronym> style has European and non-European
+     (US) variants, 
+     which determines whether month follows day or vice versa. (See
+     also <xref linkend="datatype-datetime-input">
+     for how this setting affects interpretation of
+     input values.) 
 
      <table tocentry="1">
       <title>Date Order Conventions</title>
@@ -2059,7 +2078,7 @@ January 8 04:05:06 1999 PST
     </indexterm>
 
     <para>
-     <productname>Postgres</productname> endeavors to be compatible with
+     <productname>PostgreSQL</productname> endeavors to be compatible with
      <acronym>SQL92</acronym> definitions for typical usage.
      However, the <acronym>SQL92</acronym> standard has an odd mix of date and
      time types and capabilities. Two obvious problems are:
@@ -2094,9 +2113,9 @@ January 8 04:05:06 1999 PST
      types that contain both date and time when using time zones. We
      recommend <emphasis>not</emphasis> using the SQL92 type TIME
      WITH TIME ZONE (though it is supported by
-     <productname>Postgres</productname> for legacy applications and
+     <productname>PostgreSQL</productname> for legacy applications and
      for compatibility with other RDBMS implementations).
-     <productname>Postgres</productname> 
+     <productname>PostgreSQL</productname> 
      assumes local time for any type containing only
      date or time. Further, time zone support is derived from 
      the underlying operating system
@@ -2105,7 +2124,7 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     <productname>Postgres</productname> obtains time zone support 
+     <productname>PostgreSQL</productname> obtains time zone support 
      from the underlying operating system for dates between 1902 and
      2038 (near the typical date limits for Unix-style
      systems). Outside of this range, all dates are assumed to be
@@ -2178,7 +2197,7 @@ January 8 04:05:06 1999 PST
     <title>Internals</title>
 
     <para>
-     <productname>Postgres</productname> uses Julian dates
+     <productname>PostgreSQL</productname> uses Julian dates
      for all date/time calculations. They have the nice property of correctly
      predicting/calculating any date more recent than 4713BC
      to far into the future, using the assumption that the length of the
@@ -2210,7 +2229,7 @@ January 8 04:05:06 1999 PST
    </indexterm>
 
    <para>
-    <productname>Postgres</productname> provides the
+    <productname>PostgreSQL</productname> provides the
     <acronym>SQL99</acronym> type <type>boolean</type>.
     <type>boolean</type> can have one of only two states:
     <quote>true</quote> or <quote>false</quote>.  A third state,
@@ -2649,7 +2668,7 @@ SELECT * FROM test1 WHERE a;
    </indexterm>
 
    <para>
-    <productname>Postgres</> offers data types to store IP and MAC
+    <productname>PostgreSQL</> offers data types to store IP and MAC
     addresses.  It is preferable to use these types over plain text
     types, because these types offer input error checking and several
     specialized operators and functions.
@@ -2914,7 +2933,7 @@ SELECT * FROM test1 WHERE a;
 
    <note>
     <para>
-     Prior to PostgreSQL 7.2, <type>BIT</type> type data was
+     Prior to <productname>PostgreSQL</> 7.2, <type>BIT</type> type data was
      zero-padded on the right.  This was changed to comply with the
      SQL standard.  To implement zero-padded bit strings, a
      combination of the concatenation operator and the
@@ -2956,11 +2975,12 @@ sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t
 sgml-indent-step:1
+sgml-indent-tabs-mode:nil
 sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-catalogs:("/usr/share/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

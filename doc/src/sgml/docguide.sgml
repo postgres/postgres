@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.35 2001/10/09 18:45:59 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.36 2001/11/21 05:53:41 thomas Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -68,7 +68,7 @@
    <listitem>
     <para>
      <citetitle>Developer's Guide</citetitle>: assorted information
-     for developers of PostgreSQL proper
+     for developers of <productname>PostgreSQL</> proper
     </para>
    </listitem>
   </itemizedlist>

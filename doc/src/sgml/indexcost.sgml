@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.9 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.10 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="indexcost">
@@ -28,7 +28,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.9 2001/09/13 15:55
 
    <note>
     <para>
-     Prior to Postgres 7.0, a different scheme was used for registering
+     Prior to <productname>PostgreSQL</productname> 7.0, a different
+     scheme was used for registering 
      index-specific cost estimation functions.
     </para>
    </note>

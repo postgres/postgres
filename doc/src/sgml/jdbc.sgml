@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.27 2001/10/25 22:00:31 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.28 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="jdbc">
@@ -20,7 +20,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.27 2001/10/25 22:00:31 
   </para>
 
   <para>
-   <application>Postgres</application> provides a <firstterm>type
+   <productname>PostgreSQL</> provides a <firstterm>type
    4</firstterm> <acronym>JDBC</acronym> Driver.  Type 4 indicates
    that the driver is written in Pure Java, and communicates in the
    database system's own network protocol. Because of this, the driver
@@ -225,7 +225,7 @@ import java.sql.*;
    <para>
     In the first method, your code implicitly loads the driver using the
     <function>Class.forName()</function> method.
-    For <application>Postgres</application>, you would use:
+    For <productname>PostgreSQL</>, you would use:
 
 <programlisting>
 Class.forName("org.postgresql.Driver");
@@ -245,9 +245,9 @@ Class.forName("org.postgresql.Driver");
 
    <para>
     This is the most common method to use, but restricts your code to
-    use just <productname>Postgres</productname>.  If your code may
+    use just <productname>PostgreSQL</productname>.  If your code may
     access another database system in the future, and you do not use
-    any <productname>Postgres</productname>-specific extensions, then
+    any <productname>PostgreSQL</productname>-specific extensions, then
     the second method is advisable.
    </para>
 
@@ -285,7 +285,7 @@ java -Djdbc.drivers=org.postgresql.Driver example.ImageViewer
    <para>
     With <acronym>JDBC</acronym>, a database is represented by a
     <acronym>URL</acronym> (Uniform Resource Locator).  With
-    <application>Postgres</application>, this takes one of the
+    <application>PostgreSQL</application>, this takes one of the
     following forms:
 
     <itemizedlist>
@@ -329,7 +329,7 @@ jdbc:postgresql://<replaceable class="parameter">host</replaceable>:<replaceable
       <listitem>
        <para>
         The port number the server is listening on. Defaults to the
-        Postgres standard port number (5432).
+        <productname>PostgreSQL</productname> standard port number (5432).
        </para>
       </listitem>
      </varlistentry>
@@ -465,7 +465,7 @@ st.close();
         Under the <acronym>JDBC</acronym> specification, you should
         access a field only once. It is safest to stick to this rule,
         although at the current time, the
-        <productname>Postgres</productname> driver will allow you to
+        <productname>PostgreSQL</productname> driver will allow you to
         access a field as many times as you want.
        </para>
       </listitem>
@@ -509,7 +509,7 @@ st.executeUpdate("CREATE TABLE basic (a int, b int)");
   <title>Using Large Objects</title>
 
   <para>
-   In <application>Postgres</application>, <firstterm>Large
+   In <application>PostgreSQL</application>, <firstterm>Large
    Objects</firstterm> (also known as <acronym>BLOB</acronym>s) are
    used to hold data in the database that cannot be stored in a normal
    SQL table. They are stored in a separate table in a special format,
@@ -518,7 +518,7 @@ st.executeUpdate("CREATE TABLE basic (a int, b int)");
 
   <important>
    <para>
-    For <productname>Postgres</productname>, you must access Large
+    For <productname>PostgreSQL</productname>, you must access Large
     Objects within an <acronym>SQL</acronym> transaction.  You would
     open a transaction by using the
     <function>setAutoCommit()</function> method with an input
@@ -631,10 +631,10 @@ ps.close();
     <acronym>JDBC</acronym> <acronym>API</acronym></title>
 
   <para>
-   <productname>Postgres</productname> is an extensible database
+   <productname>PostgreSQL</productname> is an extensible database
    system.  You can add your own functions to the backend, which can
    then be called from queries, or even add your own data types.  As
-   these are facilities unique to <productname>Postgres</productname>,
+   these are facilities unique to <productname>PostgreSQL</productname>,
    we support them from Java, with a set of extension
    <acronym>API</acronym>'s. Some features within the core of the
    standard driver actually use these extensions to implement Large
@@ -756,7 +756,7 @@ LargeObjectManager lo = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
 public void addDataType(String type, String name)
 </synopsis>
         This allows client code to add a handler for one of
-        PostgreSQL's more unique data types. Normally, a data type not
+        <productname>PostgreSQL</productname>'s more unique data types. Normally, a data type not
         known by the driver is returned by <literal>ResultSet.getObject()</literal> as a
         <classname>PGobject</> instance.  This method allows you to write a class
         that extends <classname>PGobject</>, and tell the driver the type name, and
@@ -841,7 +841,7 @@ public Object fastpath(int fnid,
                        FastpathArg args[]) throws SQLException
 </synopsis>
        <para>
-        Send a function call to the PostgreSQL backend.
+        Send a function call to the <productname>PostgreSQL</productname> backend.
        </para>
 
        <formalpara>
@@ -871,7 +871,7 @@ public Object fastpath(String name,
                        FastpathArg args[]) throws SQLException
 </synopsis>
        <para>
-        Send a function call to the PostgreSQL backend by name.
+        Send a function call to the <productname>PostgreSQL</productname> backend by name.
        </para>
 
        <note>
@@ -1005,7 +1005,7 @@ public void addFunctions(ResultSet rs) throws SQLException
         <title>Implementation note about function name look-ups</title>
 
         <para>
-         PostgreSQL stores the function id's and their corresponding
+         <productname>PostgreSQL</productname> stores the function id's and their corresponding
          names in the <classname>pg_proc</> table. To speed things up locally,
          instead of querying each function from that table when
          required, a <classname>Hashtable</classname> is used. Also, only the function's
@@ -1227,7 +1227,7 @@ Constructors
  public PGbox(String s) throws SQLException
                             
         Parameters:
-                s - Box definition in PostgreSQL syntax
+                s - Box definition in <productname>PostgreSQL</productname> syntax
 
         Throws: SQLException
                 if definition is invalid
@@ -1324,7 +1324,7 @@ Constructors
  public PGcircle(String s) throws SQLException
 
         Parameters:
-                s - definition of the circle in PostgreSQL's syntax.
+                s - definition of the circle in <productname>PostgreSQL</productname>'s syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1338,7 +1338,7 @@ Methods
  public void setValue(String s) throws SQLException
 
         Parameters:
-                s - definition of the circle in PostgreSQL's syntax.
+                s - definition of the circle in <productname>PostgreSQL</productname>'s syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1417,7 +1417,7 @@ Constructors
  public PGline(String s) throws SQLException
                
         Parameters:
-                s - definition of the line in PostgreSQL's syntax.
+                s - definition of the line in <productname>PostgreSQL</productname>'s syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1431,7 +1431,7 @@ Methods
  public void setValue(String s) throws SQLException
 
         Parameters:
-                s - Definition of the line segment in PostgreSQL's 
+                s - Definition of the line segment in <productname>PostgreSQL</productname>'s 
 syntax
 
         Throws: SQLException
@@ -1510,7 +1510,7 @@ Constructors
  public PGlseg(String s) throws SQLException
 
         Parameters:
-                s - Definition of the line segment in PostgreSQL's syntax.
+                s - Definition of the line segment in <productname>PostgreSQL</productname>'s syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1524,7 +1524,7 @@ Methods
  public void setValue(String s) throws SQLException
    
         Parameters:
-                s - Definition of the line segment in PostgreSQL's 
+                s - Definition of the line segment in <productname>PostgreSQL</productname>'s 
 syntax
 
         Throws: SQLException
@@ -1600,7 +1600,7 @@ Constructors
  public PGpath(String s) throws SQLException
 
         Parameters:
-                s - definition of the path in PostgreSQL's syntax.
+                s - definition of the path in <productname>PostgreSQL</productname>'s syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1610,7 +1610,7 @@ Methods
  public void setValue(String s) throws SQLException
    
         Parameters:
-                s - Definition of the path in PostgreSQL's syntax
+                s - Definition of the path in <productname>PostgreSQL</productname>'s syntax
            
         Throws: SQLException
                 on conversion failure
@@ -1702,7 +1702,7 @@ Constructors
 point is embedded within their definition.
              
         Parameters:
-                value - Definition of this point in PostgreSQL's 
+                value - Definition of this point in <productname>PostgreSQL</productname>'s 
 syntax
    
  public PGpoint()
@@ -1714,7 +1714,7 @@ Methods
  public void setValue(String s) throws SQLException
 
         Parameters:
-                s - Definition of this point in PostgreSQL's syntax
+                s - Definition of this point in <productname>PostgreSQL</productname>'s syntax
 
         Throws: SQLException
                 on conversion failure
@@ -1820,7 +1820,7 @@ java.lang.Object
    public class PGpolygon extends PGobject implements Serializable, 
 Cloneable
                
-   This implements the polygon data type within PostgreSQL.
+   This implements the polygon data type within <productname>PostgreSQL</productname>.
 
 Variables
 
@@ -1840,7 +1840,7 @@ Constructors
  public PGpolygon(String s) throws SQLException
                  
         Parameters:
-                s - definition of the polygon in PostgreSQL's syntax.
+                s - definition of the polygon in <productname>PostgreSQL</productname>'s syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1854,7 +1854,7 @@ Methods
  public void setValue(String s) throws SQLException
 
         Parameters:
-                s - Definition of the polygon in PostgreSQL's syntax
+                s - Definition of the polygon in <productname>PostgreSQL</productname>'s syntax
 
         Throws: SQLException
                 on conversion failure
@@ -1897,7 +1897,7 @@ Methods
    <para>
     Large objects are supported in the standard
     <acronym>JDBC</acronym> specification.  However, that interface is
-    limited, and the <acronym>API</acronym> provided by PostgreSQL allows for random
+    limited, and the <acronym>API</acronym> provided by <productname>PostgreSQL</productname> allows for random
     access to the objects contents, as if it was a local file.
    </para>
 
@@ -2429,7 +2429,7 @@ java.lang.Object
 
    public class Serialize extends Object
 
-   This class uses PostgreSQL's object oriented features to store Java 
+   This class uses <productname>PostgreSQL</productname>'s object oriented features to store Java 
 Objects. It does this by mapping a Java Class name to a table in the 
 database. Each entry in this new table then represents a Serialized 
 instance of this class. As each entry has an OID (Object IDentifier), 
@@ -2442,7 +2442,7 @@ Constructors
                   String type) throws SQLException
 
           This creates an instance that can be used to serialize 
-or deserialize a Java object from a PostgreSQL table.
+or deserialize a Java object from a <productname>PostgreSQL</productname> table.
 
 Methods
 
@@ -2518,13 +2518,13 @@ serializing any objects.
 
           Another limitation, is that the entire class name (including
           packages) cannot be longer than 31 characters (a limit 
-forced by PostgreSQL).
+forced by <productname>PostgreSQL</productname>).
 
         Parameters:
                 name - Class name
 
         Returns:
-                PostgreSQL table name
+                <productname>PostgreSQL</productname> table name
 
         Throws: SQLException
                 on error
@@ -2535,7 +2535,7 @@ forced by PostgreSQL).
           replacing _ with .
 
         Parameters:
-                name - PostgreSQL table name
+                name - <productname>PostgreSQL</productname> table name
   
         Returns:
                 Class name
@@ -2559,7 +2559,7 @@ java.lang.Object
    public class PGmoney extends PGobject implements Serializable, 
 Cloneable
                
-   This implements a class that handles the PostgreSQL money type
+   This implements a class that handles the <productname>PostgreSQL</productname> money type
 
 Variables
 
@@ -2579,7 +2579,7 @@ Constructors
           Create a money.
 
         Parameters:
-                value - Definition of this money in PostgreSQL's 
+                value - Definition of this money in <productname>PostgreSQL</productname>'s 
 syntax
 
  public PGmoney()
@@ -2591,7 +2591,7 @@ Methods
  public void setValue(String s) throws SQLException
 
         Parameters:
-                s - Definition of this money in PostgreSQL's syntax
+                s - Definition of this money in <productname>PostgreSQL</productname>'s syntax
 
         Throws: SQLException
                 on conversion failure

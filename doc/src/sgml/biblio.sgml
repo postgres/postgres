@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.15 2001/11/08 23:34:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.16 2001/11/21 05:53:40 thomas Exp $
 -->
 
  <bibliography id="biblio">
@@ -7,7 +7,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.15 2001/11/08 23:34:33 pete
 
   <para>
    Selected references and readings for <acronym>SQL</acronym>
-   and <productname>Postgres</productname>.
+   and <productname>PostgreSQL</productname>.
   </para>
 
   <para>

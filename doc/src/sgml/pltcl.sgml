@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.16 2001/11/19 03:58:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.17 2001/11/21 05:53:41 thomas Exp $
 -->
 
  <chapter id="pltcl">
@@ -15,7 +15,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.16 2001/11/19 03:58:24 tgl E
 
   <para>
    PL/Tcl is a loadable procedural language for the
-   <productname>Postgres</productname> database system
+   <productname>PostgreSQL</productname> database system
    that enables the Tcl language to be used to create functions and
    trigger procedures.
   </para>
@@ -39,7 +39,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.16 2001/11/19 03:58:24 tgl E
     a few commands are available to access the database via SPI and to raise
     messages via <function>elog()</>. There is no way to access internals of the
     database backend or to gain OS-level access under the permissions of the
-    <productname>Postgres</productname> user ID, as a C function can do.
+    <productname>PostgreSQL</productname> user ID, as a C function can do.
     Thus, any unprivileged database user may be
     permitted to use this language.
    </para>
@@ -62,7 +62,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.16 2001/11/19 03:58:24 tgl E
    <para>
     The shared object for the PL/Tcl and PL/TclU call handlers is
     automatically built and installed in the
-    <productname>Postgres</productname> 
+    <productname>PostgreSQL</productname> 
     library directory if Tcl/Tk support is specified
     in the configuration step of the installation procedure.  To install
     PL/Tcl and/or PL/TclU in a particular database, use the
@@ -76,16 +76,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.16 2001/11/19 03:58:24 tgl E
    <title>Description</title>
 
    <sect2>
-    <title><productname>Postgres</productname> Functions and Tcl Procedure Names</title>
+    <title><productname>PostgreSQL</productname> Functions and Tcl Procedure Names</title>
 
     <para>
-     In <productname>Postgres</productname>, one and the 
+     In <productname>PostgreSQL</productname>, one and the 
      same function name can be used for
      different functions as long as the number of arguments or their types
      differ. This would collide with Tcl procedure names. To offer the same
      flexibility in PL/Tcl, the internal Tcl procedure names contain the object
      ID of the procedure's pg_proc row as part of their name. Thus, different
-     argtype versions of the same <productname>Postgres</productname> 
+     argtype versions of the same <productname>PostgreSQL</productname> 
      function are different for Tcl too.
     </para>
 
@@ -128,7 +128,7 @@ CREATE FUNCTION tcl_max (int4, int4) RETURNS int4 AS '
      type. If an attribute in the actual row
      has the NULL value, it will not appear in the array! Here is
      an example that defines the overpaid_2 function (as found in the
-     older <productname>Postgres</productname> documentation) in PL/Tcl
+     older <productname>PostgreSQL</productname> documentation) in PL/Tcl
 
      <programlisting>
 CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
@@ -175,7 +175,7 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
     </indexterm>
 
     <para>
-     Trigger procedures are defined in <productname>Postgres</productname>
+     Trigger procedures are defined in <productname>PostgreSQL</productname>
      as functions without
      arguments and a return type of opaque. And so are they in the PL/Tcl
      language.

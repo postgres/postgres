@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.28 2001/11/19 03:58:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.29 2001/11/21 05:53:40 thomas Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -9,7 +9,7 @@
 
  <para>
   When a client application connects to the database server, it specifies which
-  <productname>Postgres</productname> user name it wants to connect as,
+  <productname>PostgreSQL</productname> user name it wants to connect as,
   much the same way one logs into a Unix computer as a particular user.
   Within the SQL environment the active
   database user name determines access privileges to database
@@ -27,14 +27,14 @@
  </para>
 
  <para>
-  <productname>Postgres</productname> offers a number of different
+  <productname>PostgreSQL</productname> offers a number of different
   client authentication methods.  The method to be used can be selected
   on the basis of (client) host and database; some authentication methods
   allow you to restrict by user name as well.
  </para>
 
  <para>
-  <productname>Postgres</productname> database user names are logically
+  <productname>PostgreSQL</productname> database user names are logically
   separate from user names of the operating system in which the server
   runs.  If all the users of a particular server also have accounts on
   the server's machine, it makes sense to assign database user names
@@ -136,7 +136,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        <literal>all</literal> specifies that it applies to all
        databases, while the value <literal>sameuser</> identifies the
        database with the same name as the connecting user.  Otherwise,
-       this is the name of a specific <productname>Postgres</productname>
+       this is the name of a specific <productname>PostgreSQL</productname>
        database.
       </para>
      </listitem>
@@ -152,7 +152,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        record applies, based on their IP
        address. (Of course IP addresses can be spoofed but this
        consideration is beyond the scope of
-       <productname>Postgres</productname>.) The precise logic is that
+       <productname>PostgreSQL</productname>.) The precise logic is that
        <blockquote>
         <informalfigure>
          <programlisting>(<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable></programlisting>
@@ -179,7 +179,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
          <para>
           The connection is allowed unconditionally. This method allows
           any user that has login access to the client host to connect as
-          any <productname>Postgres</productname> user whatsoever.
+          any <productname>PostgreSQL</productname> user whatsoever.
          </para>
         </listitem>
        </varlistentry>
@@ -277,7 +277,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <listitem>
 	 <para>
 	  The identity of the user as determined on login to the
-	  operating system is used by <productname>Postgres</productname>
+	  operating system is used by <productname>PostgreSQL</productname>
 	  to determine whether the user
           is allowed to connect as the requested database user.
 	  For TCP/IP connections the user's identity is determined by
@@ -413,7 +413,7 @@ host         all        0.0.0.0        0.0.0.0            krb5
 
 # Allow users from 192.168.x.x hosts to connect to any database, if they
 # pass the ident check.  If, for example, ident says the user is "bryanh"
-# and he requests to connect as PostgreSQL user "guest1", the connection
+# and he requests to connect as <productname>PostgreSQL</> user "guest1", the connection
 # is allowed if there is an entry in pg_ident.conf for map "omicron" that
 # says "bryanh" is allowed to connect as "guest1":
 
@@ -451,7 +451,7 @@ local        all                                          md5  admins
    </indexterm>
 
    <para>
-    <productname>Postgres</> database passwords are separate from
+    <productname>PostgreSQL</productname> database passwords are separate from
     operating system user passwords. Ordinarily, the password for each
     database user is stored in the pg_shadow system catalog table.
     Passwords can be managed with the query language commands
@@ -486,7 +486,7 @@ local        all                                          md5  admins
     ignored. The password is expected to be encrypted using the
     system's <function>crypt()</function> function. The utility
     program <application>pg_passwd</application> that is installed
-    with <productname>Postgres</productname> can be used to manage
+    with <productname>PostgreSQL</productname> can be used to manage
     these password files.
    </para>
 
@@ -546,7 +546,7 @@ local        all                                          md5  admins
    </para>
 
    <para>
-    <productname>Postgres</> operates like a normal Kerberos service.
+    <productname>PostgreSQL</> operates like a normal Kerberos service.
     The name of the service principal is
     <replaceable>servicename/hostname@realm</>, where 
     <replaceable>servicename</> is <literal>postgres</literal>
@@ -558,18 +558,19 @@ local        all                                          md5  admins
    </para>
 
    <para>
-    Client principals must have their <productname>Postgres</> username as
+    Client principals must have their <productname>PostgreSQL</> username as
     their first component, for example
     <replaceable>pgusername/otherstuff@realm</>.
     At present the realm of the client is not checked by
-    <productname>Postgres</>; so
+    <productname>PostgreSQL</>; so
     if you have cross-realm authentication enabled, then any principal
     in any realm that can communicate with yours will be accepted.
    </para>
 
    <para>
     Make sure that your server key file is readable (and
-    preferably only readable) by the Postgres server account (see
+    preferably only readable) by the
+    <productname>PostgreSQL</productname> server account (see 
     <xref linkend="postgres-user">). The location of the key file
     is specified with the <varname>krb_server_keyfile</> run time
     configuration parameter. (See also <xref linkend="runtime-config">.)
@@ -621,7 +622,7 @@ local        all                                          md5  admins
     is to answer questions like <quote>What user initiated the
     connection that goes out of your port <replaceable>X</replaceable>
     and connects to my port <replaceable>Y</replaceable>?</quote>.
-    Since <productname>Postgres</> knows both <replaceable>X</> and
+    Since <productname>PostgreSQL</> knows both <replaceable>X</> and
     <replaceable>Y</> when a physical connection is established, it
     can interrogate the ident server on the host of the connecting
     client and could theoretically determine the operating system user
@@ -657,7 +658,7 @@ local        all                                          md5  admins
    <para>
     When using ident-based authentication, after having determined the
     name of the operating system user that initiated the connection,
-    <productname>Postgres</productname> checks whether that user is allowed
+    <productname>PostgreSQL</productname> checks whether that user is allowed
     to connect as the database user he is requesting to connect as.
     This is controlled by the ident map
     argument that follows the <literal>ident</> keyword in the
@@ -707,7 +708,8 @@ local        all                                          md5  admins
     logged in to a machine on the 192.168 network that does not have
     the Unix user name <systemitem>bryanh</>, <systemitem>ann</>, or <systemitem>robert</> would not be granted access.
     Unix user <systemitem>robert</> would only be allowed access when he tries to
-    connect as Postgres user <systemitem>bob</>, not as <systemitem>robert</>
+    connect as <productname>PostgreSQL</> user <systemitem>bob</>,
+      not as <systemitem>robert</>
     or anyone else. <systemitem>ann</> would only be allowed to connect as
     <systemitem>ann</>. User <systemitem>bryanh</> would be allowed to connect as either
     <systemitem>bryanh</> himself or as <systemitem>guest1</>.
