@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.3 1997/06/02 14:12:40 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.4 1997/06/03 04:14:31 vadim Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set \(em set run-time parameters for session
@@ -61,18 +61,20 @@ See the GEQO README for more information.
 	on=10	- use for statements with 10 or more tables
 	off	- do not use the genetic optimizer
 .fi
-The default is on.
 .PP
 .IR R_PLANS
-enables or disables right-hand evaluation of plans. This algorithm is
+enables or disables right-hand evaluation of plans. It may be useful
+when joining big relations with small ones. This algorithm is
 .IR off
-by default.
+by default. It's not used by GEQO anyway.
 
 .if n .ta 5 +15 +40
 .if t .ta 0.5i +1.5i +3.0i
 .in 0
 .nf
-R_PLANS
+.ce 1
+\fBR_PLANS Values\fR
+
 	on	- turn right-hand plan evaluation 'on'
 	off	- do not use right-hand plan evaluation
 .fi
@@ -96,7 +98,7 @@ set DateStyle to 'SQL,European'
 --
 --Use GEQO for statements with 4 or more tables
 --
-set GEQO to on=4
+set GEQO to 'on=4'
 --
 --Turn off the genetic optimizer
 --
