@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.143 2000/02/04 18:49:34 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.144 2000/02/07 16:30:58 wieck Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -809,8 +809,20 @@ main(int argc, char **argv)
 	else
 		tblinfo = dumpSchema(NULL, &numTables, tablename, aclsSkip);
 
-	if (!schemaOnly)
+	if (!schemaOnly) {
+		if (dataOnly)
+			fprintf(g_fout, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" !~ '^pg_';\n");
+
 		dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
+
+		if (dataOnly) {
+			fprintf(g_fout, "BEGIN TRANSACTION;\n");
+			fprintf(g_fout, "CREATE TEMP TABLE \"tr\" (\"tmp_relname\" name, \"tmp_reltriggers\" smallint);\n");
+			fprintf(g_fout, "INSERT INTO \"tr\" SELECT C.\"relname\", count(T.\"oid\") FROM \"pg_class\" C, \"pg_trigger\" T WHERE C.\"oid\" = T.\"tgrelid\" AND C.\"relname\" !~ '^pg_' GROUP BY 1;\n");
+			fprintf(g_fout, "UPDATE \"pg_class\" SET \"reltriggers\" = TMP.\"tmp_reltriggers\" FROM \"tr\" TMP WHERE \"pg_class\".\"relname\" = TMP.\"tmp_relname\";\n");
+			fprintf(g_fout, "COMMIT TRANSACTION;\n");
+		}
+	}
 
 	if (!dataOnly)				/* dump indexes and triggers at the end
 								 * for performance */
