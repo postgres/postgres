@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.14 1997/03/18 21:30:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.15 1997/03/18 21:40:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,6 @@ elog(int lev, const char *fmt, ... )
     register char	*bp;
     register const char *cp;
     extern	int	errno, sys_nerr;
-#if !defined(BSD44_derived) && \
-    !defined(bsdi) && \
-    !defined(bsdi_2_1) && \
-    !defined(linuxalpha) && \
-    !defined(__GLIBC__)
-    extern	char	*sys_errlist[];
-#endif /* bsd derived */
 #ifndef PG_STANDALONE
     extern	FILE	*Pfout;
 #endif /* !PG_STANDALONE */
@@ -104,7 +97,7 @@ elog(int lev, const char *fmt, ... )
     for (cp = fmt; *cp; cp++)
 	if (*cp == '%' && *(cp+1) == 'm') {
 	    if (errno < sys_nerr && errno >= 0)
-		strcpy(bp, sys_errlist[errno]);
+		strcpy(bp, strerror(errno));
 	    else
 		sprintf(bp, "error %d", errno);
 	    bp += strlen(bp);
