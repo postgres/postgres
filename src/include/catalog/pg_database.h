@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.12 2000/10/22 17:55:49 pjw Exp $
+ * $Id: pg_database.h,v 1.13 2000/10/22 18:29:58 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -36,7 +36,7 @@ CATALOG(pg_database) BOOTSTRAP
 	NameData	datname;
 	int4		datdba;
 	int4		encoding;
-	int4		datlastsysoid;
+	Oid			datlastsysoid;
 	text		datpath;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_database;
 
