@@ -28,7 +28,7 @@ public class Fastpath
         // to a connection).
         protected Hashtable func = new Hashtable();
 
-        protected org.postgresql.Connection conn;		// our connection
+        protected org.postgresql.PGConnection conn;		// our connection
         protected org.postgresql.PG_Stream stream;	// the network stream
 
         /*
@@ -41,7 +41,7 @@ public class Fastpath
          * @param conn org.postgresql.Connection to attach to
          * @param stream The network stream to the backend
          */
-        public Fastpath(org.postgresql.Connection conn, org.postgresql.PG_Stream stream)
+        public Fastpath(org.postgresql.PGConnection conn, org.postgresql.PG_Stream stream)
         {
                 this.conn = conn;
                 this.stream = stream;
@@ -113,7 +113,7 @@ public class Fastpath
                                                 //------------------------------
                                                 // Notice from backend
                                         case 'N':
-                                                conn.addWarning(stream.ReceiveString(conn.getEncoding()));
+                                                ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).addWarning(stream.ReceiveString(conn.getEncoding()));
                                                 break;
 
                                         case 'V':

@@ -45,7 +45,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	/*
 	 * @exception SQLException on failure
 	 */
-	public CallableStatement(Connection c, String q) throws SQLException
+	public CallableStatement(Jdbc2Connection c, String q) throws SQLException
 	{
 		super(c, q); // don't parse yet..
 	}

@@ -76,7 +76,7 @@ public class blobtest
 		// objects, however the unique methods available to postgresql makes
 		// things a little easier.
 		System.out.println("Gaining access to large object api");
-		lobj = ((org.postgresql.Connection)db).getLargeObjectAPI();
+		lobj = ((org.postgresql.PGConnection)db).getLargeObjectAPI();
 
 		int oid = ownapi_test1();
 		ownapi_test2(oid);

@@ -28,7 +28,6 @@ public class UpdateableResultTest extends TestCase
 			Connection con = JDBC2Tests.openDB();
       JDBC2Tests.createTable(con, "updateable","id int primary key, name text, notselected text");
       JDBC2Tests.createTable(con, "second","id1 int primary key, name1 text");
-
       Statement st1 = con.createStatement();
       boolean retVal = st1.execute( "insert into updateable ( id, name, notselected ) values (1, 'jake', 'avalue')" );
       assert( retVal== false );

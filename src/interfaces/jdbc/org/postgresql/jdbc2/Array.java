@@ -25,9 +25,9 @@ import org.postgresql.util.*;
 
 public class Array implements java.sql.Array
 {
-	private org.postgresql.Connection conn = null;
+	private org.postgresql.PGConnection conn = null;
 	private org.postgresql.Field field = null;
-	private org.postgresql.jdbc2.ResultSet rs = null;
+        private ResultSet rs;
 	private int idx = 0;
 	private String rawString = null;
 
@@ -39,14 +39,14 @@ public class Array implements java.sql.Array
 	 * @param field the Field descriptor for the field to load into this Array
 	 * @param rs the ResultSet from which to get the data for this Array
 	 */
-	public Array( org.postgresql.Connection conn, int idx, Field field, org.postgresql.jdbc2.ResultSet rs )
+	public Array( org.postgresql.PGConnection conn, int idx, Field field, ResultSet rs )
 	throws SQLException
 	{
 		this.conn = conn;
 		this.field = field;
-		this.rs = rs;
+                this.rs = rs;
 		this.idx = idx;
-		this.rawString = rs.getFixedString(idx);
+		this.rawString = ((AbstractJdbc2ResultSet)rs).getFixedString(idx);
 	}
 
 	public Object getArray() throws SQLException
@@ -124,33 +124,33 @@ public class Array implements java.sql.Array
 			case Types.BIT:
 				retVal = new boolean[ count ];
 				for ( ; count > 0; count-- )
-					((boolean[])retVal)[i++] = ResultSet.toBoolean( arrayContents[(int)index++] );
+					((boolean[])retVal)[i++] = Jdbc2ResultSet.toBoolean( arrayContents[(int)index++] );
 				break;
 			case Types.SMALLINT:
 			case Types.INTEGER:
 				retVal = new int[ count ];
 				for ( ; count > 0; count-- )
-					((int[])retVal)[i++] = ResultSet.toInt( arrayContents[(int)index++] );
+					((int[])retVal)[i++] = Jdbc2ResultSet.toInt( arrayContents[(int)index++] );
 				break;
 			case Types.BIGINT:
 				retVal = new long[ count ];
 				for ( ; count > 0; count-- )
-					((long[])retVal)[i++] = ResultSet.toLong( arrayContents[(int)index++] );
+					((long[])retVal)[i++] = Jdbc2ResultSet.toLong( arrayContents[(int)index++] );
 				break;
 			case Types.NUMERIC:
 				retVal = new BigDecimal[ count ];
 				for ( ; count > 0; count-- )
-					((BigDecimal[])retVal)[i++] = ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
+					((BigDecimal[])retVal)[i++] = Jdbc2ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
 				break;
 			case Types.REAL:
 				retVal = new float[ count ];
 				for ( ; count > 0; count-- )
-					((float[])retVal)[i++] = ResultSet.toFloat( arrayContents[(int)index++] );
+					((float[])retVal)[i++] = Jdbc2ResultSet.toFloat( arrayContents[(int)index++] );
 				break;
 			case Types.DOUBLE:
 				retVal = new double[ count ];
 				for ( ; count > 0; count-- )
-					((double[])retVal)[i++] = ResultSet.toDouble( arrayContents[(int)index++] );
+					((double[])retVal)[i++] = Jdbc2ResultSet.toDouble( arrayContents[(int)index++] );
 				break;
 			case Types.CHAR:
 			case Types.VARCHAR:
@@ -161,18 +161,18 @@ public class Array implements java.sql.Array
 			case Types.DATE:
 				retVal = new java.sql.Date[ count ];
 				for ( ; count > 0; count-- )
-					((java.sql.Date[])retVal)[i++] = ResultSet.toDate( arrayContents[(int)index++] );
+					((java.sql.Date[])retVal)[i++] = Jdbc2ResultSet.toDate( arrayContents[(int)index++] );
 				break;
 			case Types.TIME:
 				retVal = new java.sql.Time[ count ];
 				for ( ; count > 0; count-- )
-					((java.sql.Time[])retVal)[i++] = ResultSet.toTime( arrayContents[(int)index++], rs, getBaseTypeName() );
+					((java.sql.Time[])retVal)[i++] = Jdbc2ResultSet.toTime( arrayContents[(int)index++], rs, getBaseTypeName() );
 				break;
 			case Types.TIMESTAMP:
 				retVal = new Timestamp[ count ];
 				StringBuffer sbuf = null;
 				for ( ; count > 0; count-- )
-					((java.sql.Timestamp[])retVal)[i++] = ResultSet.toTimestamp( arrayContents[(int)index++], rs, getBaseTypeName() );
+					((java.sql.Timestamp[])retVal)[i++] = Jdbc2ResultSet.toTimestamp( arrayContents[(int)index++], rs, getBaseTypeName() );
 				break;
 
 				// Other datatypes not currently supported.  If you are really using other types ask
@@ -216,12 +216,12 @@ public class Array implements java.sql.Array
 		Object array = getArray( index, count, map );
 		Vector rows = new Vector();
 		Field[] fields = new Field[2];
-		fields[0] = new Field(conn, "INDEX", conn.getOID("int2"), 2);
+		fields[0] = new Field(conn, "INDEX", conn.getPGType("int2"), 2);
 		switch ( getBaseType() )
 		{
 			case Types.BIT:
 				boolean[] booleanArray = (boolean[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("bool"), 1);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("bool"), 1);
 				for ( int i = 0; i < booleanArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -230,11 +230,11 @@ public class Array implements java.sql.Array
 					rows.addElement(tuple);
 				}
 			case Types.SMALLINT:
-				fields[1] = new Field(conn, "VALUE", conn.getOID("int2"), 2);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("int2"), 2);
 			case Types.INTEGER:
 				int[] intArray = (int[]) array;
 				if ( fields[1] == null )
-					fields[1] = new Field(conn, "VALUE", conn.getOID("int4"), 4);
+					fields[1] = new Field(conn, "VALUE", conn.getPGType("int4"), 4);
 				for ( int i = 0; i < intArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -245,7 +245,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.BIGINT:
 				long[] longArray = (long[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("int8"), 8);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("int8"), 8);
 				for ( int i = 0; i < longArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -256,7 +256,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.NUMERIC:
 				BigDecimal[] bdArray = (BigDecimal[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("numeric"), -1);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("numeric"), -1);
 				for ( int i = 0; i < bdArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -267,7 +267,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.REAL:
 				float[] floatArray = (float[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("float4"), 4);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("float4"), 4);
 				for ( int i = 0; i < floatArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -278,7 +278,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.DOUBLE:
 				double[] doubleArray = (double[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("float8"), 8);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("float8"), 8);
 				for ( int i = 0; i < doubleArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -288,11 +288,11 @@ public class Array implements java.sql.Array
 				}
 				break;
 			case Types.CHAR:
-				fields[1] = new Field(conn, "VALUE", conn.getOID("char"), 1);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("char"), 1);
 			case Types.VARCHAR:
 				String[] strArray = (String[]) array;
 				if ( fields[1] == null )
-					fields[1] = new Field(conn, "VALUE", conn.getOID("varchar"), -1);
+					fields[1] = new Field(conn, "VALUE", conn.getPGType("varchar"), -1);
 				for ( int i = 0; i < strArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -303,7 +303,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.DATE:
 				java.sql.Date[] dateArray = (java.sql.Date[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("date"), 4);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("date"), 4);
 				for ( int i = 0; i < dateArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -314,7 +314,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.TIME:
 				java.sql.Time[] timeArray = (java.sql.Time[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("time"), 8);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("time"), 8);
 				for ( int i = 0; i < timeArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -325,7 +325,7 @@ public class Array implements java.sql.Array
 				break;
 			case Types.TIMESTAMP:
 				java.sql.Timestamp[] timestampArray = (java.sql.Timestamp[]) array;
-				fields[1] = new Field(conn, "VALUE", conn.getOID("timestamp"), 8);
+				fields[1] = new Field(conn, "VALUE", conn.getPGType("timestamp"), 8);
 				for ( int i = 0; i < timestampArray.length; i++ )
 				{
 					byte[][] tuple = new byte[2][0];
@@ -340,7 +340,7 @@ public class Array implements java.sql.Array
 			default:
 				throw org.postgresql.Driver.notImplemented();
 		}
-		return new ResultSet((org.postgresql.jdbc2.Connection)conn, fields, rows, "OK", 1 );
+		return new Jdbc2ResultSet((org.postgresql.jdbc2.Jdbc2Connection)conn, fields, rows, "OK", 1 );
 	}
 
 	public String toString()

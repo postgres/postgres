@@ -301,7 +301,7 @@ public class threadsafe
 			//st = c.createStatement();
 
 			// create a blob
-			lom = ((org.postgresql.Connection)c).getLargeObjectAPI();
+			lom = ((org.postgresql.PGConnection)c).getLargeObjectAPI();
 			oid = lom.create();
 			System.out.println("Thread 3 has created a blob of oid " + oid);
 		}

@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.8 2002/06/05 19:12:01 davec Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.9 2002/07/23 03:59:55 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -163,13 +163,13 @@ public class DatabaseMetaDataTest extends TestCase
 			// We need to type cast the connection to get access to the
 			// PostgreSQL-specific method haveMinimumServerVersion().
 			// This is not available through the java.sql.Connection interface.
-			assertTrue( con instanceof org.postgresql.Connection );
+			assertTrue( con instanceof org.postgresql.PGConnection );
 
 			assertTrue(!dbmd.nullsAreSortedAtStart());
 			assertTrue( dbmd.nullsAreSortedAtEnd() !=
-						((org.postgresql.Connection)con).haveMinimumServerVersion("7.2"));
+						((org.postgresql.jdbc2.AbstractJdbc2Connection)con).haveMinimumServerVersion("7.2"));
 			assertTrue( dbmd.nullsAreSortedHigh() ==
-						((org.postgresql.Connection)con).haveMinimumServerVersion("7.2"));
+						((org.postgresql.jdbc2.AbstractJdbc2Connection)con).haveMinimumServerVersion("7.2"));
 			assertTrue(!dbmd.nullsAreSortedLow());
 
 			assertTrue(dbmd.nullPlusNonNullIsNull());
@@ -250,7 +250,7 @@ public class DatabaseMetaDataTest extends TestCase
       {
 
          String pkTableName = rs.getString( "PKTABLE_NAME" );
-         assertTrue (  pkTableName.equals("people") || pkTableName.equals("policy")  );
+	 assertTrue (  pkTableName.equals("people") || pkTableName.equals("policy")  );
 
          String pkColumnName = rs.getString( "PKCOLUMN_NAME" );
          assertTrue( pkColumnName.equals("id") );
@@ -367,14 +367,20 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			assertTrue(con instanceof org.postgresql.Connection);
-			org.postgresql.Connection pc = (org.postgresql.Connection) con;
+		        assertTrue(con instanceof org.postgresql.PGConnection);
+			org.postgresql.jdbc2.AbstractJdbc2Connection pc = (org.postgresql.jdbc2.AbstractJdbc2Connection) con;
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
 			assertTrue(dbmd.getDatabaseProductName().equals("PostgreSQL"));
-			assertTrue(dbmd.getDatabaseProductVersion().startsWith(Integer.toString(pc.this_driver.getMajorVersion()) + "." + Integer.toString(pc.this_driver.getMinorVersion())));
+                        //The test below doesn't make sense to me, it tests that 
+                        //the version of the driver = the version of the database it is connected to
+                        //since the driver should be backwardly compatible this test is commented out 
+			//assertTrue(dbmd.getDatabaseProductVersion().startsWith(
+                        //         Integer.toString(pc.getDriver().getMajorVersion()) 
+                        //         + "." 
+                        //         + Integer.toString(pc.getDriver().getMinorVersion())));
 			assertTrue(dbmd.getDriverName().equals("PostgreSQL Native Driver"));
 
 		}
@@ -388,15 +394,15 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		try
 		{
-			assertTrue(con instanceof org.postgresql.Connection);
-			org.postgresql.Connection pc = (org.postgresql.Connection) con;
+			assertTrue(con instanceof org.postgresql.PGConnection);
+			org.postgresql.jdbc2.AbstractJdbc2Connection pc = (org.postgresql.jdbc2.AbstractJdbc2Connection) con;
 
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
-			assertTrue(dbmd.getDriverVersion().equals(pc.this_driver.getVersion()));
-			assertTrue(dbmd.getDriverMajorVersion() == pc.this_driver.getMajorVersion());
-			assertTrue(dbmd.getDriverMinorVersion() == pc.this_driver.getMinorVersion());
+			assertTrue(dbmd.getDriverVersion().equals(pc.getDriver().getVersion()));
+			assertTrue(dbmd.getDriverMajorVersion() == pc.getDriver().getMajorVersion());
+			assertTrue(dbmd.getDriverMinorVersion() == pc.getDriver().getMinorVersion());
 
 
 		}

@@ -1,9 +1,7 @@
 package org.postgresql.jdbc2;
 
 // IMPORTANT NOTE: This is the begining of supporting updateable ResultSets.
-// It is not a working solution (yet)!
 //
-// You will notice here we really do throw org.postgresql.Driver.notImplemented()
 // This is because here we should be updateable, so any unimplemented methods
 // must say so.
 //
@@ -27,7 +25,7 @@ import org.postgresql.Driver;
  * @see ResultSetMetaData
  * @see java.sql.ResultSet
  */
-public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
+public class UpdateableResultSet extends org.postgresql.jdbc2.Jdbc2ResultSet
 {
 
 
@@ -118,7 +116,7 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
 	 * @param updateCount the number of rows affected by the operation
 	 * @param cursor the positioned update/delete cursor name
 	 */
-	public UpdateableResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+	public UpdateableResultSet(Jdbc2Connection conn, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		super(conn, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}
@@ -274,7 +272,7 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
       {
         // we have to get the last inserted OID and put it in the resultset
 
-        long insertedOID = ((org.postgresql.Statement)insertStatement).getLastOID();
+        long insertedOID = ((AbstractJdbc2Statement)insertStatement).getLastOID();
 
         updateValues.put("oid", new Long(insertedOID) );
 
@@ -670,7 +668,7 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
         selectStatement.setObject( i, ((PrimaryKey)primaryKeys.get(j)).getValue() );
       }
 
-      org.postgresql.jdbc2.ResultSet rs = (org.postgresql.jdbc2.ResultSet) selectStatement.executeQuery();
+      Jdbc2ResultSet rs = (Jdbc2ResultSet) selectStatement.executeQuery();
 
       if( rs.first() )
       {
@@ -1274,7 +1272,7 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
     else
     {
       // otherwise go and get the primary keys and create a hashtable of keys
-      java.sql.ResultSet rs  = ((org.postgresql.jdbc2.Connection)connection).getMetaData().getPrimaryKeys("","",tableName);
+      java.sql.ResultSet rs  = ((java.sql.Connection)connection).getMetaData().getPrimaryKeys("","",tableName);
 
 
       for( ; rs.next(); i++ )

@@ -94,16 +94,16 @@ public class LargeObjectManager
 	 * org.postgresql.Connection class keeps track of the various extension API's
 	 * and it's advised you use those to gain access, and not going direct.
 	 */
-	public LargeObjectManager(org.postgresql.Connection conn) throws SQLException
+	public LargeObjectManager(Connection conn) throws SQLException
 	{
 		// We need Fastpath to do anything
-		this.fp = conn.getFastpathAPI();
+		this.fp = ((org.postgresql.PGConnection)conn).getFastpathAPI();
 
 		// Now get the function oid's for the api
 		//
 		// This is an example of Fastpath.addFunctions();
 		//
-		java.sql.ResultSet res = (java.sql.ResultSet)conn.createStatement().executeQuery("select proname, oid from pg_proc" +
+		ResultSet res = conn.createStatement().executeQuery("select proname, oid from pg_proc" +
 								 " where proname = 'lo_open'" +
 								 "    or proname = 'lo_close'" +
 								 "    or proname = 'lo_creat'" +

@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.7 2001/11/19 22:33:39 momjian Exp $
+ * $Id: ConnectionTest.java,v 1.8 2002/07/23 03:59:55 barry Exp $
  */
 
 public class ConnectionTest extends TestCase
@@ -199,13 +199,13 @@ public class ConnectionTest extends TestCase
 			String testStr = "This Is OuR TeSt message";
 
 			// The connection must be ours!
-			assertTrue(con instanceof org.postgresql.Connection);
+			assertTrue(con instanceof org.postgresql.PGConnection);
 
 			// Clear any existing warnings
 			con.clearWarnings();
 
 			// Set the test warning
-			((org.postgresql.Connection)con).addWarning(testStr);
+			((org.postgresql.jdbc2.AbstractJdbc2Connection)con).addWarning(testStr);
 
 			// Retrieve it
 			SQLWarning warning = con.getWarnings();

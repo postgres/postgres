@@ -205,7 +205,7 @@ public class ImageViewer implements ItemListener
 		stat = db.createStatement();
 
 		// Also, get the LargeObjectManager for this connection
-		lom = ((org.postgresql.Connection)db).getLargeObjectAPI();
+		lom = ((org.postgresql.PGConnection)db).getLargeObjectAPI();
 
 		// Now refresh the image selection list
 		refreshList();
@@ -299,7 +299,7 @@ public class ImageViewer implements ItemListener
 				try
 				{
 					// fetch the large object manager
-					LargeObjectManager lom = ((org.postgresql.Connection)db).getLargeObjectAPI();
+					LargeObjectManager lom = ((org.postgresql.PGConnection)db).getLargeObjectAPI();
 
 					db.setAutoCommit(false);
 

@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.24 2002/06/27 04:38:01 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.25 2002/07/23 03:59:54 barry Exp $
 
 -->
 
@@ -29,7 +29,7 @@
     in the CLASSPATH (ie JDK1.2 or later), and then enterprise if the
     javax.sql.DataSource class is present.
 
-    Important: This must have the following order: jdbc1, jdbc2, enterprise
+    Important: This must have the following order: jdbc1, jdbc2, jdbc3
   -->
   <target name="check_versions">
     <condition property="jdbc1">
@@ -39,22 +39,12 @@
       <or>
         <equals arg1="${ant.java.version}" arg2="1.2"/>
         <equals arg1="${ant.java.version}" arg2="1.3"/>
-        <equals arg1="${ant.java.version}" arg2="1.4"/>
       </or>
     </condition> 
     <condition property="jdbc3">
         <equals arg1="${ant.java.version}" arg2="1.4"/>
     </condition> 
-    <condition property="datasource">
-      <and>
-      <or>
-        <equals arg1="${ant.java.version}" arg2="1.2"/>
-        <equals arg1="${ant.java.version}" arg2="1.3"/>
-        <equals arg1="${ant.java.version}" arg2="1.4"/>
-      </or>     
-        <available classname="javax.sql.DataSource"/>
-      </and>
-    </condition>
+    <available property="datasource" classname="javax.sql.DataSource"/>
     <available property="junit" classname="junit.framework.Test" />
   </target>
 
@@ -97,16 +87,17 @@
 
       <exclude name="${package}/jdbc1/**" unless="jdbc1"/>
       <exclude name="${package}/jdbc2/**" unless="jdbc2"/>
+      <exclude name="${package}/jdbc3/**" unless="jdbc3"/>
  
-      <exclude name="${package}/largeobject/PGblob.java" unless="jdbc2" />
-      <exclude name="${package}/largeobject/PGclob.java" unless="jdbc2" />
+      <exclude name="${package}/largeobject/PGblob.java" if="jdbc1" />
+      <exclude name="${package}/largeobject/PGclob.java" if="jdbc1" />
 
       <exclude name="${package}/PostgresqlDataSource.java" unless="datasource" />
       <exclude name="${package}/xa/**" unless="datasource" />
 
       <exclude name="${package}/test/**" unless="junit" />
-      <exclude name="${package}/test/jdbc2/**" unless="jdbc2" />
-      <exclude name="${package}/test/JDBC2Tests.java" unless="jdbc2" />
+      <exclude name="${package}/test/jdbc2/**" if="jdbc1" />
+      <exclude name="${package}/test/JDBC2Tests.java" if="jdbc1" />
     </javac>
   </target>
 
@@ -121,10 +112,10 @@
         <equals arg1="${jdbc1}" arg2="true"/>
     </condition>
     <condition property="edition" value="JDBC2">
-      <or>
         <equals arg1="${jdbc2}" arg2="true"/>
-        <equals arg1="${jdbc3}" arg2="true"/> <!-- fake it for now -->
-      </or>
+    </condition>
+    <condition property="edition" value="JDBC3">
+        <equals arg1="${jdbc3}" arg2="true"/> 
     </condition>
     <condition property="edition" value="JDBC2 Enterprise">
       <and>
@@ -134,8 +125,8 @@
     </condition>
 
     <!-- determine the connection class -->
-    <property name="connectclass" value="org.postgresql.jdbc1.Connection" />
-    <available property="connectclass" value="org.postgresql.jdbc2.Connection" classname="java.lang.ThreadLocal" />
+    <property name="connectclass" value="org.postgresql.jdbc1.Jdbc1Connection" />
+    <available property="connectclass" value="org.postgresql.jdbc2.Jdbc2Connection" classname="java.lang.ThreadLocal" />
 
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
@@ -173,13 +164,13 @@
     <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
       <include name="example/**" />
       <exclude name="example/corba/**"/>
-      <exclude name="example/blobtest.java" unless="jdk1.2+"/>
+      <exclude name="example/blobtest.java" if="jdbc1"/>
     </javac>
   </target>
 
 
   <!-- Builds the corba example -->
-  <target name="corba" if="jdk1.2+">
+  <target name="corba" if="jdbc2">
     <exec dir="${srcdir}/example/corba" executable="idl2java">
       <arg value="stock.idl" />
     </exec>
@@ -230,8 +221,8 @@
 
   <target name="test" depends="jar" if="junit">
     <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
-      <include name="${package}/test/jdbc2/**" if="jdk1.2+" />
-      <include name="${package}/test/java2ee/**" if="jdk1.2e+" />
+      <include name="${package}/test/jdbc2/**" if="jdbc2" />
+      <include name="${package}/test/jdbc2/**" if="jdbc3" />
     </javac>
 
     <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">

@@ -29,12 +29,12 @@ import org.postgresql.util.*;
  * @see ResultSet
  * @see java.sql.PreparedStatement
  */
-public class PreparedStatement extends Statement implements java.sql.PreparedStatement
+public class PreparedStatement extends Jdbc1Statement implements java.sql.PreparedStatement
 {
 	String sql;
 	String[] templateStrings;
 	String[] inStrings;
-	Connection connection;
+	Jdbc1Connection connection;
 
 	// Some performance caches
 	private StringBuffer sbuf = new StringBuffer();
@@ -49,7 +49,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @param sql the SQL statement with ? for IN markers
 	 * @exception SQLException if something bad occurs
 	 */
-	public PreparedStatement(Connection connection, String sql) throws SQLException
+	public PreparedStatement(Jdbc1Connection connection, String sql) throws SQLException
 	{
 		super(connection);
 

@@ -17,7 +17,7 @@ public class Field
 	private int mod;		// type modifier of this field
 	private String name;		// Name of this field
 
-	private Connection conn;	// Connection Instantation
+	private org.postgresql.PGConnection conn;	// Connection Instantation
 
 
 	/*
@@ -28,7 +28,7 @@ public class Field
 	 * @param oid the OID of the field
 	 * @param len the length of the field
 	 */
-	public Field(Connection conn, String name, int oid, int length, int mod)
+	public Field(org.postgresql.PGConnection conn, String name, int oid, int length, int mod)
 	{
 		this.conn = conn;
 		this.name = name;
@@ -45,7 +45,7 @@ public class Field
 	 * @param oid the OID of the field
 	 * @param len the length of the field
 	 */
-	public Field(Connection conn, String name, int oid, int length)
+	public Field(org.postgresql.PGConnection conn, String name, int oid, int length)
 	{
 		this(conn, name, oid, length, 0);
 	}

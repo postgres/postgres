@@ -116,7 +116,7 @@ public class Driver implements java.sql.Driver
 		{
 			if (Driver.logDebug) Driver.debug("connect " + url);
 
-			org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
+			@JDBCCONNECTCLASS@ con = (@JDBCCONNECTCLASS@)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
 			con.openConnection (host(), port(), props, database(), url, this);
 			return (java.sql.Connection)con;
 		}

@@ -20,18 +20,16 @@ import org.postgresql.largeobject.*;
  * This implements the Blob interface, which is basically another way to
  * access a LargeObject.
  *
- * $Id: PGblob.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
+ * $Id: PGblob.java,v 1.4 2002/07/23 03:59:55 barry Exp $
  *
  */
 public class PGblob implements java.sql.Blob
 {
-	private org.postgresql.Connection conn;
 	private int oid;
 	private LargeObject lo;
 
-	public PGblob(org.postgresql.Connection conn, int oid) throws SQLException
+	public PGblob(org.postgresql.PGConnection conn, int oid) throws SQLException
 	{
-		this.conn = conn;
 		this.oid = oid;
 		LargeObjectManager lom = conn.getLargeObjectAPI();
 		this.lo = lom.open(oid);

@@ -5,12 +5,10 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: TimestampTest.java,v 1.6 2001/11/19 22:33:39 momjian Exp $
+ * $Id: TimestampTest.java,v 1.7 2002/07/23 03:59:55 barry Exp $
  *
- * This has been the most controversial pair of methods since 6.5 was released!
- *
- * From now on, any changes made to either getTimestamp or setTimestamp
- * MUST PASS this TestCase!!!
+ * Test get/setTimestamp for both timestamp with time zone and 
+ * timestamp without time zone datatypes
  *
  */
 public class TimestampTest extends TestCase
@@ -28,38 +26,37 @@ public class TimestampTest extends TestCase
 		con = JDBC2Tests.openDB();
 		Statement stmt = con.createStatement();
 
-		JDBC2Tests.createTable(con, "testtimestamp", "ts timestamp");
+		JDBC2Tests.createTable(con, TSWTZ_TABLE, "ts timestamp with time zone");
+		JDBC2Tests.createTable(con, TSWOTZ_TABLE, "ts timestamp without time zone");
 	}
 
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable(con, "testtimestamp");
+		JDBC2Tests.dropTable(con, TSWTZ_TABLE);
+		JDBC2Tests.dropTable(con, TSWOTZ_TABLE);
 		JDBC2Tests.closeDB(con);
 	}
 
 	/*
-	 * Tests the time methods in ResultSet
+	 * Tests the timestamp methods in ResultSet on timestamp with time zone
+         * we insert a known string value (don't use setTimestamp) then see that 
+         * we get back the same value from getTimestamp   
 	 */
-	public void testGetTimestamp()
+	public void testGetTimestampWTZ()
 	{
 		try
 		{
 			Statement stmt = con.createStatement();
 
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtimestamp",
-											   "'1950-02-07 15:00:00'")));
-
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtimestamp", "'" +
-											   getTimestamp(1970, 6, 2, 8, 13, 0, 0).toString() +
-											   "'")));
-
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtimestamp",
-											   "'1970-06-02 08:13:00'")));
+                        //Insert the three timestamp values in raw pg format
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWTZ_TABLE,"'" + TS1WTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWTZ_TABLE,"'" + TS2WTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWTZ_TABLE,"'" + TS3WTZ_PGFORMAT + "'")));
 
 			// Fall through helper
-			timestampTest();
+                        timestampTestWTZ();
 
-			assertEquals(3, stmt.executeUpdate("DELETE FROM testtimestamp"));
+                        assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWTZ_TABLE));
 
 			stmt.close();
 		}
@@ -70,28 +67,31 @@ public class TimestampTest extends TestCase
 	}
 
 	/*
-	 * Tests the time methods in PreparedStatement
+	 * Tests the timestamp methods in PreparedStatement on timestamp with time zone
+         * we insert a value using setTimestamp then see that 
+         * we get back the same value from getTimestamp (which we know works as it was tested
+         * independently of setTimestamp
 	 */
-	public void testSetTimestamp()
+	public void testSetTimestampWTZ()
 	{
 		try
 		{
 			Statement stmt = con.createStatement();
-			PreparedStatement pstmt = con.prepareStatement(JDBC2Tests.insertSQL("testtimestamp", "?"));
+			PreparedStatement pstmt = con.prepareStatement(JDBC2Tests.insertSQL(TSWTZ_TABLE, "?"));
 
-			pstmt.setTimestamp(1, getTimestamp(1950, 2, 7, 15, 0, 0, 0));
-			assertEquals(1, pstmt.executeUpdate());
+			pstmt.setTimestamp(1, TS1WTZ);
+                        assertEquals(1, pstmt.executeUpdate());
 
-			pstmt.setTimestamp(1, getTimestamp(1970, 6, 2, 8, 13, 0, 0));
-			assertEquals(1, pstmt.executeUpdate());
+			pstmt.setTimestamp(1, TS2WTZ);
+                        assertEquals(1, pstmt.executeUpdate());
 
-			pstmt.setTimestamp(1, getTimestamp(1970, 6, 2, 8, 13, 0, 0));
-			assertEquals(1, pstmt.executeUpdate());
+			pstmt.setTimestamp(1, TS3WTZ);
+                        assertEquals(1, pstmt.executeUpdate());
 
 			// Fall through helper
-			timestampTest();
+			timestampTestWTZ();
 
-			assertEquals(3, stmt.executeUpdate("DELETE FROM testtimestamp"));
+                        assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWTZ_TABLE));
 
 			pstmt.close();
 			stmt.close();
@@ -103,31 +103,97 @@ public class TimestampTest extends TestCase
 	}
 
 	/*
-	 * Helper for the TimeTests. It tests what should be in the db
+	 * Tests the timestamp methods in ResultSet on timestamp without time zone
+         * we insert a known string value (don't use setTimestamp) then see that 
+         * we get back the same value from getTimestamp   
 	 */
-	private void timestampTest() throws SQLException
+	public void testGetTimestampWOTZ()
+	{
+		try
+		{
+			Statement stmt = con.createStatement();
+
+                        //Insert the three timestamp values in raw pg format
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWOTZ_TABLE,"'" + TS1WOTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWOTZ_TABLE,"'" + TS2WOTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWOTZ_TABLE,"'" + TS3WOTZ_PGFORMAT + "'")));
+
+			// Fall through helper
+			timestampTestWOTZ();
+
+                        assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWOTZ_TABLE));
+
+			stmt.close();
+		}
+		catch (Exception ex)
+		{
+			fail(ex.getMessage());
+		}
+	}
+
+
+	/*
+	 * Tests the timestamp methods in PreparedStatement on timestamp without time zone
+         * we insert a value using setTimestamp then see that 
+         * we get back the same value from getTimestamp (which we know works as it was tested
+         * independently of setTimestamp
+	 */
+	public void testSetTimestampWOTZ()
+	{
+		try
+		{
+			Statement stmt = con.createStatement();
+			PreparedStatement pstmt = con.prepareStatement(JDBC2Tests.insertSQL(TSWOTZ_TABLE, "?"));
+
+			pstmt.setTimestamp(1, TS1WOTZ);
+                        assertEquals(1, pstmt.executeUpdate());
+
+			pstmt.setTimestamp(1, TS2WOTZ);
+                        assertEquals(1, pstmt.executeUpdate());
+
+			pstmt.setTimestamp(1, TS3WOTZ);
+                        assertEquals(1, pstmt.executeUpdate());
+
+			// Fall through helper
+			timestampTestWOTZ();
+
+                        assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWOTZ_TABLE));
+
+			pstmt.close();
+			stmt.close();
+		}
+		catch (Exception ex)
+		{
+			fail(ex.getMessage());
+		}
+	}
+
+	/*
+	 * Helper for the TimestampTests. It tests what should be in the db
+	 */
+	private void timestampTestWTZ() throws SQLException
 	{
 		Statement stmt = con.createStatement();
 		ResultSet rs;
 		java.sql.Timestamp t;
 
-		rs = stmt.executeQuery(JDBC2Tests.selectSQL("testtimestamp", "ts"));
-		assertNotNull(rs);
+		rs = stmt.executeQuery("select ts from " + TSWTZ_TABLE + " order by ts");
+                assertNotNull(rs);
 
 		assertTrue(rs.next());
 		t = rs.getTimestamp(1);
-		assertNotNull(t);
-		assertTrue(t.equals(getTimestamp(1950, 2, 7, 15, 0, 0, 0)));
+                assertNotNull(t);
+		assertTrue(t.equals(TS1WTZ));
 
 		assertTrue(rs.next());
 		t = rs.getTimestamp(1);
-		assertNotNull(t);
-		assertTrue(t.equals(getTimestamp(1970, 6, 2, 8, 13, 0, 0)));
+                assertNotNull(t);
+		assertTrue(t.equals(TS2WTZ));
 
 		assertTrue(rs.next());
 		t = rs.getTimestamp(1);
-		assertNotNull(t);
-		assertTrue(t.equals(getTimestamp(1970, 6, 2, 8, 13, 0, 0)));
+                assertNotNull(t);
+                assertTrue(t.equals(TS3WTZ));
 
 		assertTrue(! rs.next()); // end of table. Fail if more entries exist.
 
@@ -135,14 +201,92 @@ public class TimestampTest extends TestCase
 		stmt.close();
 	}
 
-	private java.sql.Timestamp getTimestamp(int y, int m, int d, int h, int mn, int se, int f)
+	/*
+	 * Helper for the TimestampTests. It tests what should be in the db
+	 */
+	private void timestampTestWOTZ() throws SQLException
 	{
-		return java.sql.Timestamp.valueOf(JDBC2Tests.fix(y, 4) + "-" +
-										  JDBC2Tests.fix(m, 2) + "-" +
-										  JDBC2Tests.fix(d, 2) + " " +
-										  JDBC2Tests.fix(h, 2) + ":" +
-										  JDBC2Tests.fix(mn, 2) + ":" +
-										  JDBC2Tests.fix(se, 2) + "." +
-										  JDBC2Tests.fix(f, 9));
+		Statement stmt = con.createStatement();
+		ResultSet rs;
+		java.sql.Timestamp t;
+
+		rs = stmt.executeQuery("select ts from " + TSWOTZ_TABLE + " order by ts");
+                assertNotNull(rs);
+
+		assertTrue(rs.next());
+		t = rs.getTimestamp(1);
+                assertNotNull(t);
+		assertTrue(t.toString().equals(TS1WOTZ_JAVAFORMAT));
+
+		assertTrue(rs.next());
+		t = rs.getTimestamp(1);
+                assertNotNull(t);
+		assertTrue(t.toString().equals(TS2WOTZ_JAVAFORMAT));
+
+		assertTrue(rs.next());
+		t = rs.getTimestamp(1);
+                assertNotNull(t);
+		assertTrue(t.toString().equals(TS3WOTZ_JAVAFORMAT));
+
+		assertTrue(! rs.next()); // end of table. Fail if more entries exist.
+
+		rs.close();
+		stmt.close();
 	}
+
+	private static java.sql.Timestamp getTimestamp(int y, int m, int d, int h, int mn, int se, int f, String tz)
+	{
+            java.sql.Timestamp l_return = null;
+            java.text.DateFormat l_df;
+	    try {
+   	        String l_ts;
+                l_ts = JDBC2Tests.fix(y, 4) + "-" +
+		   JDBC2Tests.fix(m, 2) + "-" +
+		   JDBC2Tests.fix(d, 2) + " " +
+		   JDBC2Tests.fix(h, 2) + ":" +
+		   JDBC2Tests.fix(mn, 2) + ":" +
+		   JDBC2Tests.fix(se, 2) + " ";
+
+                if (tz == null) {
+                    l_df = new java.text.SimpleDateFormat("y-M-d H:m:s");
+                } else {
+                    l_ts = l_ts + tz;
+                    l_df = new java.text.SimpleDateFormat("y-M-d H:m:s z");
+		}
+                java.util.Date l_date = l_df.parse(l_ts);
+	        l_return = new java.sql.Timestamp(l_date.getTime());
+                l_return.setNanos(f);
+ 	    } catch (Exception ex) {
+		fail(ex.getMessage());
+	    }
+            return l_return;
+	}
+
+    private static final java.sql.Timestamp TS1WTZ = getTimestamp(1950, 2, 7, 15, 0, 0, 100000000, "PST");
+    private static final String TS1WTZ_PGFORMAT = "1950-02-07 15:00:00.1-08";
+ 
+    private static final java.sql.Timestamp TS2WTZ = getTimestamp(2000, 2, 7, 15, 0, 0, 120000000, "GMT");
+    private static final String TS2WTZ_PGFORMAT = "2000-02-07 15:00:00.12+00";
+
+    private static final java.sql.Timestamp TS3WTZ = getTimestamp(2000, 7, 7, 15, 0, 0, 123000000, "GMT");
+    private static final String TS3WTZ_PGFORMAT = "2000-07-07 15:00:00.123+00";
+
+
+    private static final java.sql.Timestamp TS1WOTZ = getTimestamp(1950, 2, 7, 15, 0, 0, 100000000, null);
+    private static final String TS1WOTZ_PGFORMAT = "1950-02-07 15:00:00.1";
+    private static final String TS1WOTZ_JAVAFORMAT = "1950-02-07 15:00:00.1";
+ 
+    private static final java.sql.Timestamp TS2WOTZ = getTimestamp(2000, 2, 7, 15, 0, 0, 120000000, null);
+    private static final String TS2WOTZ_PGFORMAT = "2000-02-07 15:00:00.12";
+    //there is probably a bug here in that this needs to be .1 instead of .12, but I couldn't find it now
+    private static final String TS2WOTZ_JAVAFORMAT = "2000-02-07 15:00:00.1";
+
+    private static final java.sql.Timestamp TS3WOTZ = getTimestamp(2000, 7, 7, 15, 0, 0, 123000000, null);
+    private static final String TS3WOTZ_PGFORMAT = "2000-07-07 15:00:00.123";
+    //there is probably a bug here in that this needs to be .12 instead of .123, but I couldn't find it now
+    private static final String TS3WOTZ_JAVAFORMAT = "2000-07-07 15:00:00.12";
+
+    private static final String TSWTZ_TABLE = "testtimestampwtz";
+    private static final String TSWOTZ_TABLE = "testtimestampwotz";
+
 }

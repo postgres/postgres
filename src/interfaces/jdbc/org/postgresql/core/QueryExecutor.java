@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.12 2002/03/26 05:52:49 barry Exp $
+ * $Id: QueryExecutor.java,v 1.13 2002/07/23 03:59:55 barry Exp $
  */
 
 public class QueryExecutor
@@ -22,18 +22,18 @@ public class QueryExecutor
         private final String sql;
         private final java.sql.Statement statement;
         private final PG_Stream pg_stream;
-        private final org.postgresql.Connection connection;
+        private final org.postgresql.jdbc1.AbstractJdbc1Connection connection;
 
         public QueryExecutor(String sql,
                                                  java.sql.Statement statement,
                                                  PG_Stream pg_stream,
-                                                 org.postgresql.Connection connection)
+                                                 java.sql.Connection connection)
         throws SQLException
         {
                 this.sql = sql;
                 this.statement = statement;
                 this.pg_stream = pg_stream;
-                this.connection = connection;
+                this.connection = (org.postgresql.jdbc1.AbstractJdbc1Connection)connection;
 
                 if (statement != null)
                         maxRows = statement.getMaxRows();
@@ -122,7 +122,7 @@ public class QueryExecutor
                         if ( errorMessage != null )
                                 throw new SQLException( errorMessage.toString() );
 
-                        return connection.getResultSet(connection, statement, fields, tuples, status, update_count, insert_oid, binaryCursor);
+                        return connection.getResultSet(statement, fields, tuples, status, update_count, insert_oid, binaryCursor);
                 }
         }
 

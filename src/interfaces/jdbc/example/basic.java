@@ -6,7 +6,7 @@ import java.text.*;
 
 /*
  *
- * $Id: basic.java,v 1.11 2001/11/25 23:26:56 barry Exp $
+ * $Id: basic.java,v 1.12 2002/07/23 03:59:54 barry Exp $
  *
  * This example tests the basic components of the JDBC driver, and shows
  * how even the simplest of queries can be implemented.
@@ -87,9 +87,8 @@ public class basic
 		st.executeUpdate("insert into basic values (3,1)");
 
 		// This shows how to get the oid of a just inserted row
-		// updated for 7.1
 		st.executeUpdate("insert into basic values (4,1)");
-		long insertedOID = ((org.postgresql.Statement)st).getLastOID();
+		long insertedOID = ((org.postgresql.PGStatement)st).getLastOID();
 		System.out.println("Inserted row with oid " + insertedOID);
 
 		// Now change the value of b from 1 to 8

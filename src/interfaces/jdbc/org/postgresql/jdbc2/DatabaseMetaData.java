@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.58 2002/07/12 13:07:48 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.59 2002/07/23 03:59:55 barry Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -39,7 +39,7 @@ import org.postgresql.util.PSQLException;
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
-	Connection connection;		// The connection association
+	Jdbc2Connection connection;		// The connection association
 
 	// These define various OID's. Hopefully they will stay constant.
 	static final int iVarcharOid = 1043;	// OID for varchar
@@ -48,7 +48,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	static final int iInt4Oid = 23; // OID for int4
 	static final int VARHDRSZ = 4;	// length for int4
 
-	public DatabaseMetaData(Connection conn)
+	public DatabaseMetaData(Jdbc2Connection conn)
 	{
 		this.connection = conn;
 	}
@@ -1653,7 +1653,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 			v.addElement(tuple);
 		}
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -1731,7 +1731,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 		// add query loop here
 
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -1825,7 +1825,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 			byte remarks[] = null;
 
-			if (((org.postgresql.ResultSet)dr).getTupleCount() == 1)
+			if (((AbstractJdbc2ResultSet)dr).getTupleCount() == 1)
 			{
 				dr.next();
 				remarks = dr.getBytes(1);
@@ -1866,7 +1866,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			v.addElement(tuple);
 		}
 		r.close();
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	// This array contains the valid values for the types argument
@@ -1913,7 +1913,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		f[0] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
 		tuple[0] = "".getBytes();
 		v.addElement(tuple);
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -1958,7 +1958,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			tuple[0] = getTableTypes[i][0].getBytes();
 			v.addElement(tuple);
 		}
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -2154,7 +2154,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		}
 		r.close();
 
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -2218,7 +2218,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			//v.addElement(tuple);
 		}
 
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -2281,7 +2281,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			//v.addElement(tuple);
 		}
 
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -2337,7 +2337,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		f[6] = new Field(connection, "DECIMAL_DIGITS", iInt2Oid, 2);
 		f[7] = new Field(connection, "PSEUDO_COLUMN", iInt2Oid, 2);
 
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 	/*
@@ -2680,7 +2680,7 @@ WHERE
       tuples.addElement(tuple);
     }
 
-    return new ResultSet(connection, f, tuples, "OK", 1);
+    return new Jdbc2ResultSet(connection, f, tuples, "OK", 1);
 	}
 
 	/*
@@ -2959,7 +2959,7 @@ WHERE
 				v.addElement(tuple);
 			}
 			rs.close();
-			return new ResultSet(connection, f, v, "OK", 1);
+			return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 		}
 
 		throw new PSQLException("postgresql.metadata.unavailable");
@@ -3097,7 +3097,7 @@ WHERE
 			}
 		}
 
-		return new ResultSet(connection, f, v, "OK", 1);
+		return new Jdbc2ResultSet(connection, f, v, "OK", 1);
 	}
 
 

@@ -1,34 +1,38 @@
-package org.postgresql;
+package org.postgresql.jdbc1;
 
-import java.io.*;
-import java.net.*;
+
+import java.io.IOException;
+import java.net.ConnectException;
 import java.sql.*;
 import java.util.*;
 import org.postgresql.Driver;
-import org.postgresql.Field;
-import org.postgresql.fastpath.*;
-import org.postgresql.largeobject.*;
-import org.postgresql.util.*;
+import org.postgresql.PG_Stream;
 import org.postgresql.core.*;
+import org.postgresql.fastpath.Fastpath;
+import org.postgresql.largeobject.LargeObjectManager;
+import org.postgresql.util.*;
 
-/*
- * $Id: Connection.java,v 1.48 2002/06/11 02:55:15 barry Exp $
- *
- * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
- * JDBC2 versions of the Connection class.
- *
+
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+ * This class defines methods of the jdbc1 specification.  This class is
+ * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
+ * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
  */
-public abstract class Connection
+public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnection
 {
         // This is the network stream associated with this connection
         public PG_Stream pg_stream;
 
-        private String PG_HOST;
-        private int PG_PORT;
-        private String PG_USER;
-        private String PG_DATABASE;
-        private boolean PG_STATUS;
-        private String compatible;
+        protected String PG_HOST;
+        protected int PG_PORT;
+        protected String PG_USER;
+        protected String PG_DATABASE;
+        protected boolean PG_STATUS;
+        protected String compatible;
+
+        // The PID an cancellation key we get from the backend process
+        protected int pid;
+        protected int ckey;
 
         /*
          The encoding to use for this connection.
@@ -43,7 +47,7 @@ public abstract class Connection
         public boolean autoCommit = true;
         public boolean readOnly = false;
 
-        public Driver this_driver;
+        public org.postgresql.Driver this_driver;
         private String this_url;
         private String cursor = null;	// The positioned update cursor name
 
@@ -74,50 +78,6 @@ public abstract class Connection
          */
         private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
-        // The PID an cancellation key we get from the backend process
-        public int pid;
-        public int ckey;
-
-        /*
-         * This is called by Class.forName() from within org.postgresql.Driver
-         */
-        public Connection()
-        {}
-
-        public void cancelQuery() throws SQLException
-        {
-                PG_Stream cancelStream = null;
-                try {
-                        cancelStream = new PG_Stream(PG_HOST, PG_PORT);
-                } catch (ConnectException cex) {
-                        // Added by Peter Mount <peter@retep.org.uk>
-                        // ConnectException is thrown when the connection cannot be made.
-                        // we trap this an return a more meaningful message for the end user
-                        throw new PSQLException ("postgresql.con.refused");
-                } catch (IOException e) {
-                        throw new PSQLException ("postgresql.con.failed",e);
-                }
-
-                // Now we need to construct and send a cancel packet
-                try {
-                        cancelStream.SendInteger(16, 4);
-                        cancelStream.SendInteger(80877102, 4);
-                        cancelStream.SendInteger(pid, 4);
-                        cancelStream.SendInteger(ckey, 4);
-                        cancelStream.flush();
-                }
-                catch(IOException e) {
-                        throw new PSQLException("postgresql.con.failed",e);
-                }
-                finally {
-                        try {
-                                if(cancelStream != null)
-                                        cancelStream.close();
-                        }
-                        catch(IOException e) {} // Ignore
-                }
-        }
-
         /*
          * This method actually opens the connection. It is called by Driver.
          *
@@ -125,12 +85,11 @@ public abstract class Connection
          * @param port the port number of the postmaster process
          * @param info a Properties[] thing of the user and password
          * @param database the database to connect to
-         * @param u the URL of the connection
+         * @param url the URL of the connection
          * @param d the Driver instantation of the connection
-         * @return a valid connection profile
          * @exception SQLException if a database access error occurs
          */
-        protected void openConnection(String host, int port, Properties info, String database, String url, Driver d) throws SQLException
+        public void openConnection(String host, int port, Properties info, String database, String url, org.postgresql.Driver d) throws SQLException
         {
                 firstWarning = null;
 
@@ -140,7 +99,7 @@ public abstract class Connection
                 if (info.getProperty("user") == null)
                         throw new PSQLException("postgresql.con.user");
 
-                this_driver = d;
+                this_driver = (org.postgresql.Driver)d;
                 this_url = url;
 
                 PG_DATABASE = database;
@@ -168,19 +127,19 @@ public abstract class Connection
                 int l_logLevel = 0;
                 try {
 		    l_logLevel = Integer.parseInt(l_logLevelProp);
-                    if (l_logLevel > Driver.DEBUG || l_logLevel < Driver.INFO) {
+                    if (l_logLevel > org.postgresql.Driver.DEBUG || l_logLevel < org.postgresql.Driver.INFO) {
                         l_logLevel = 0;
 		    }
 		} catch (Exception l_e) {
                     //invalid value for loglevel ignore
 		}
                 if (l_logLevel > 0) {
-                    Driver.setLogLevel(l_logLevel);
+                    org.postgresql.Driver.setLogLevel(l_logLevel);
                     enableDriverManagerLogging();
 		}
 
                 //Print out the driver version number
-                if (Driver.logInfo) Driver.info(Driver.getVersion());
+                if (org.postgresql.Driver.logInfo) org.postgresql.Driver.info(org.postgresql.Driver.getVersion());
 
                 // Now make the initial connection
                 try
@@ -238,7 +197,7 @@ public abstract class Connection
                                                         rst[0] = (byte)pg_stream.ReceiveChar();
                                                         rst[1] = (byte)pg_stream.ReceiveChar();
                                                         salt = new String(rst, 0, 2);
-                                                        if (Driver.logDebug) Driver.debug("Crypt salt=" + salt);
+                                                        if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("Crypt salt=" + salt);
                                                 }
 
                                                 // Or get the md5 password salt if there is one
@@ -250,7 +209,7 @@ public abstract class Connection
                                                         rst[2] = (byte)pg_stream.ReceiveChar();
                                                         rst[3] = (byte)pg_stream.ReceiveChar();
                                                         salt = new String(rst, 0, 4);
-                                                        if (Driver.logDebug) Driver.debug("MD5 salt=" + salt);
+                                                        if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("MD5 salt=" + salt);
                                                 }
 
                                                 // now send the auth packet
@@ -260,15 +219,15 @@ public abstract class Connection
                                                                 break;
 
                                                         case AUTH_REQ_KRB4:
-                                                                if (Driver.logDebug) Driver.debug("postgresql: KRB4");
+                                                                if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("postgresql: KRB4");
                                                                 throw new PSQLException("postgresql.con.kerb4");
 
                                                         case AUTH_REQ_KRB5:
-                                                                if (Driver.logDebug) Driver.debug("postgresql: KRB5");
+                                                                if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("postgresql: KRB5");
                                                                 throw new PSQLException("postgresql.con.kerb5");
 
                                                         case AUTH_REQ_PASSWORD:
-                                                                if (Driver.logDebug) Driver.debug("postgresql: PASSWORD");
+                                                                if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("postgresql: PASSWORD");
                                                                 pg_stream.SendInteger(5 + password.length(), 4);
                                                                 pg_stream.Send(password.getBytes());
                                                                 pg_stream.SendInteger(0, 1);
@@ -276,7 +235,7 @@ public abstract class Connection
                                                                 break;
 
                                                         case AUTH_REQ_CRYPT:
-                                                                if (Driver.logDebug) Driver.debug("postgresql: CRYPT");
+                                                                if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("postgresql: CRYPT");
                                                                 String crypted = UnixCrypt.crypt(salt, password);
                                                                 pg_stream.SendInteger(5 + crypted.length(), 4);
                                                                 pg_stream.Send(crypted.getBytes());
@@ -285,7 +244,7 @@ public abstract class Connection
                                                                 break;
 
                                                         case AUTH_REQ_MD5:
-                                                                if (Driver.logDebug) Driver.debug("postgresql: MD5");
+                                                                if (org.postgresql.Driver.logDebug) org.postgresql.Driver.debug("postgresql: MD5");
                                                                 byte[] digest = MD5Digest.encode(PG_USER, password, salt);
                                                                 pg_stream.SendInteger(5 + digest.length, 4);
                                                                 pg_stream.Send(digest);
@@ -386,9 +345,22 @@ public abstract class Connection
                 PG_STATUS = CONNECTION_OK;
         }
 
+
+        /*
+         * Return the instance of org.postgresql.Driver
+         * that created this connection
+         */
+        public org.postgresql.Driver getDriver()
+        {
+	    return this_driver;
+	}
+
         // These methods used to be in the main Connection implementation. As they
         // are common to all implementations (JDBC1 or 2), they are placed here.
         // This should make it easy to maintain the two specifications.
+
+//BJL TODO this method shouldn't need to take a Connection since this can be used.
+        public abstract java.sql.ResultSet getResultSet(java.sql.Statement stat, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
         /*
          * This adds a warning to the warning chain.
@@ -448,7 +420,7 @@ public abstract class Connection
          */
         public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
         {
-                return new QueryExecutor(sql, stat, pg_stream, this).execute();
+                return new QueryExecutor(sql, stat, pg_stream, (java.sql.Connection)this).execute();
         }
 
         /*
@@ -569,7 +541,7 @@ public abstract class Connection
         public LargeObjectManager getLargeObjectAPI() throws SQLException
         {
                 if (largeobject == null)
-                        largeobject = new LargeObjectManager(this);
+                        largeobject = new LargeObjectManager((java.sql.Connection)this);
                 return largeobject;
         }
 
@@ -606,7 +578,7 @@ public abstract class Connection
                         // can handle it
                         if (o == null)
                         {
-                                Serialize ser = new Serialize(this, type);
+                                Serialize ser = new Serialize((java.sql.Connection)this, type);
                                 objectTypes.put(type, ser);
                                 return ser.fetch(Integer.parseInt(value));
                         }
@@ -679,7 +651,7 @@ public abstract class Connection
                         // can handle it
                         if (x == null)
                         {
-                                Serialize ser = new Serialize(this, type);
+                                Serialize ser = new Serialize((java.sql.Connection)this, type);
                                 objectTypes.put(type, ser);
                                 return ser.storeObject(o);
                         }
@@ -755,15 +727,6 @@ public abstract class Connection
                 for (int i = 0;i < defaultObjectTypes.length;i++)
                         objectTypes.put(defaultObjectTypes[i][0], defaultObjectTypes[i][1]);
         }
-
-        // These are required by other common classes
-        public abstract java.sql.Statement createStatement() throws SQLException;
-
-        /*
-         * This returns a resultset. It must be overridden, so that the correct
-         * version (from jdbc1 or jdbc2) are returned.
-         */
-        public abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
         /*
          * In some cases, it is desirable to immediately release a Connection's
@@ -1162,8 +1125,8 @@ public abstract class Connection
                 // it's not in the cache, so perform a query, and add the result to the cache
                 if (sqlType == null)
                 {
-                        ResultSet result = (org.postgresql.ResultSet)ExecSQL("select typname from pg_type where oid = " + oid);
-                        if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+                        ResultSet result = ExecSQL("select typname from pg_type where oid = " + oid);
+                        if (((AbstractJdbc1ResultSet)result).getColumnCount() != 1 || ((AbstractJdbc1ResultSet)result).getTupleCount() != 1)
                                 throw new PSQLException("postgresql.unexpected");
                         result.next();
                         String pgType = result.getString(1);
@@ -1178,19 +1141,11 @@ public abstract class Connection
         }
 
         /*
-         * This returns the java.sql.Types type for a PG type
-         *
-         * @param pgTypeName PostgreSQL type name
-         * @return the java.sql.Types type
-         */
-        public abstract int getSQLType(String pgTypeName);
-
-        /*
          * This returns the oid for a given PG data type
          * @param typeName PostgreSQL type name
          * @return PostgreSQL oid value for a field of this type
          */
-        public int getOID(String typeName) throws SQLException
+        public int getPGType(String typeName) throws SQLException
         {
                 int oid = -1;
                 if (typeName != null)
@@ -1203,9 +1158,9 @@ public abstract class Connection
                         else
                         {
                                 // it's not in the cache, so perform a query, and add the result to the cache
-                                ResultSet result = (org.postgresql.ResultSet)ExecSQL("select oid from pg_type where typname='"
+                                ResultSet result = ExecSQL("select oid from pg_type where typname='"
                                                                    + typeName + "'");
-                                if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+                                if (((AbstractJdbc1ResultSet)result).getColumnCount() != 1 || ((AbstractJdbc1ResultSet)result).getTupleCount() != 1)
                                         throw new PSQLException("postgresql.unexpected");
                                 result.next();
                                 oid = Integer.parseInt(result.getString(1));
@@ -1242,5 +1197,91 @@ public abstract class Connection
 	    }
 	}
 
+	// This is a cache of the DatabaseMetaData instance for this connection
+	protected java.sql.DatabaseMetaData metadata;
+
+
+	/*
+	 * Tests to see if a Connection is closed
+	 *
+	 * @return the status of the connection
+	 * @exception SQLException (why?)
+	 */
+	public boolean isClosed() throws SQLException
+	{
+		return (pg_stream == null);
+	}
+
+	/* 
+	 * This implemetation uses the jdbc1Types array to support the jdbc1
+	 * datatypes.  Basically jdbc1 and jdbc2 are the same, except that
+	 * jdbc2 adds the Array types.
+	 */
+	public int getSQLType(String pgTypeName)
+	{
+		int sqlType = Types.OTHER; // default value
+		for (int i = 0;i < jdbc1Types.length;i++)
+		{
+			if (pgTypeName.equals(jdbc1Types[i]))
+			{
+				sqlType = jdbc1Typei[i];
+				break;
+			}
+		}
+		return sqlType;
+	}
+
+	/*
+	 * This table holds the org.postgresql names for the types supported.
+	 * Any types that map to Types.OTHER (eg POINT) don't go into this table.
+	 * They default automatically to Types.OTHER
+	 *
+	 * Note: This must be in the same order as below.
+	 *
+	 * Tip: keep these grouped together by the Types. value
+	 */
+	private static final String jdbc1Types[] = {
+				"int2",
+				"int4", "oid",
+				"int8",
+				"cash", "money",
+				"numeric",
+				"float4",
+				"float8",
+				"bpchar", "char", "char2", "char4", "char8", "char16",
+				"varchar", "text", "name", "filename",
+				"bytea",
+				"bool",
+				"date",
+				"time",
+				"abstime", "timestamp", "timestamptz"
+			};
+
+	/*
+	 * This table holds the JDBC type for each entry above.
+	 *
+	 * Note: This must be in the same order as above
+	 *
+	 * Tip: keep these grouped together by the Types. value
+	 */
+	private static final int jdbc1Typei[] = {
+												Types.SMALLINT,
+												Types.INTEGER, Types.INTEGER,
+												Types.BIGINT,
+												Types.DOUBLE, Types.DOUBLE,
+												Types.NUMERIC,
+												Types.REAL,
+												Types.DOUBLE,
+												Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
+												Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
+												Types.BINARY,
+												Types.BIT,
+												Types.DATE,
+												Types.TIME,
+												Types.TIMESTAMP, Types.TIMESTAMP, Types.TIMESTAMP
+											};
+
+
 }
+
 

@@ -44,7 +44,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 	/*
 	 * @exception SQLException on failure
 	 */
-	CallableStatement(Connection c, String q) throws SQLException
+	CallableStatement(Jdbc1Connection c, String q) throws SQLException
 	{
 		super(c, q);
 	}

@@ -109,7 +109,7 @@ import java.sql.*;
 public class Serialize
 {
 	// This is the connection that the instance refers to
-	protected org.postgresql.Connection conn;
+	protected Connection conn;
 
 	// This is the table name
 	protected String tableName;
@@ -124,7 +124,7 @@ public class Serialize
 	 * This creates an instance that can be used to serialize or deserialize
 	 * a Java object from a PostgreSQL table.
 	 */
-	public Serialize(org.postgresql.Connection c, String type) throws SQLException
+	public Serialize(Connection c, String type) throws SQLException
 	{
 		try
 		{
@@ -142,7 +142,7 @@ public class Serialize
 
 		// Second check, the type must be a table
 		boolean status = false;
-		ResultSet rs = conn.ExecSQL("select typname from pg_type,pg_class where typname=relname and typname='" + tableName + "'");
+		ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL("select typname from pg_type,pg_class where typname=relname and typname='" + tableName + "'");
 		if (rs != null)
 		{
 			if (rs.next())
@@ -164,7 +164,7 @@ public class Serialize
 	/*
 	 * Constructor when Object is passed in
 	 */
-	public Serialize(org.postgresql.Connection c, Object o) throws SQLException
+	public Serialize(Connection c, Object o) throws SQLException
 	{
 		this(c, o.getClass().getName());
 	}
@@ -172,7 +172,7 @@ public class Serialize
 	/*
 	 * Constructor when Class is passed in
 	 */
-	public Serialize(org.postgresql.Connection c, Class cls) throws SQLException
+	public Serialize(Connection c, Class cls) throws SQLException
 	{
 		this(c, cls.getName());
 	}
@@ -221,7 +221,7 @@ public class Serialize
 			sb.append(oid);
 
 			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + sb.toString());
-			ResultSet rs = conn.ExecSQL(sb.toString());
+			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL(sb.toString());
 
 			if (rs != null)
 			{
@@ -390,7 +390,7 @@ public class Serialize
 			}
 
 			if (Driver.logDebug) Driver.debug("Serialize.store: " + sb.toString() );
-			org.postgresql.ResultSet rs = (org.postgresql.ResultSet) conn.ExecSQL(sb.toString());
+			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL(sb.toString());
 
 			// fetch the OID for returning
 			if (update)
@@ -403,7 +403,7 @@ public class Serialize
 			else
 			{
 				// new record inserted has new oid; rs should be not null
-				long newOID = ((org.postgresql.ResultSet)rs).getLastOID();
+				long newOID = ((org.postgresql.jdbc1.AbstractJdbc1ResultSet)rs).getLastOID();
 				rs.close();
 				// update the java object's oid field if it has the oid field
 				if (hasOID)
@@ -472,7 +472,7 @@ public class Serialize
 	 * @param o Object to base table on
 	 * @exception SQLException on error
 	 */
-	public static void create(org.postgresql.Connection con, Object o) throws SQLException
+	public static void create(Connection con, Object o) throws SQLException
 	{
 		create(con, o.getClass());
 	}
@@ -485,7 +485,7 @@ public class Serialize
 	 * @param o Class to base table on
 	 * @exception SQLException on error
 	 */
-	public static void create(org.postgresql.Connection con, Class c) throws SQLException
+	public static void create(Connection con, Class c) throws SQLException
 	{
 		if (c.isInterface())
 			throw new PSQLException("postgresql.serial.interface");
@@ -493,7 +493,7 @@ public class Serialize
 		// See if the table exists
 		String tableName = toPostgreSQL(c.getName());
 
-		ResultSet rs = con.ExecSQL("select relname from pg_class where relname = '" + tableName + "'");
+		ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)con).ExecSQL("select relname from pg_class where relname = '" + tableName + "'");
 		if ( rs.next() )
 		{
 			if (Driver.logDebug) Driver.debug("Serialize.create: table " + tableName + " exists, skipping");
@@ -549,7 +549,7 @@ public class Serialize
 
 		// Now create the table
 		if (Driver.logDebug) Driver.debug("Serialize.create: " + sb );
-		con.ExecSQL(sb.toString());
+		((org.postgresql.jdbc1.AbstractJdbc1Connection)con).ExecSQL(sb.toString());
 	}
 
 	// This is used to translate between Java primitives and PostgreSQL types.
