@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.320 2003/05/03 03:52:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.321 2003/05/03 05:13:18 momjian Exp $
  *
  * NOTES
  *
@@ -2242,10 +2242,6 @@ BackendFinalize(Port *port)
 
 	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
-
-#ifdef EXEC_BACKEND
-	read_nondefault_variables();
-#endif
 
 	/*
 	 * Initialize libpq and enable reporting of elog errors to the client.

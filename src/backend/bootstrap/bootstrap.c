@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.151 2003/05/03 03:52:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.152 2003/05/03 05:13:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,7 @@ BootstrapMain(int argc, char *argv[])
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || ExecBackend)
 		MemoryContextInit();
 
 	/*
@@ -245,9 +245,12 @@ BootstrapMain(int argc, char *argv[])
 
 	/* Set defaults, to be overriden by explicit options below */
 	dbName = NULL;
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || ExecBackend)
 	{
 		InitializeGUCOptions();
+#ifdef EXEC_BACKEND
+		read_nondefault_variables();
+#endif
 		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
 												 * variable */
 	}
@@ -306,7 +309,7 @@ BootstrapMain(int argc, char *argv[])
 		AttachSharedMemoryAndSemaphores();
 	}
 	
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || ExecBackend)
 	{
 		if (!potential_DataDir)
 		{
