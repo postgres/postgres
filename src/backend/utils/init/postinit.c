@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.90 2001/09/07 00:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.91 2001/09/08 15:24:00 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -25,6 +25,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_shadow.h"
 #include "commands/trigger.h"
 #include "commands/variable.h"	/* for set_default_client_encoding() */
 #include "mb/pg_wchar.h"
@@ -43,6 +44,7 @@
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
 static void ShutdownPostgres(void);
+static bool ThereIsAtLeastOneUser(void);
 
 int			lockingOff = 0;		/* backend -L switch */
 
@@ -329,12 +331,24 @@ InitPostgres(const char *dbname, const char *username)
 		LockDisable(true);
 
 	/*
-	 * Figure out our postgres user id.  If bootstrapping, we can't
-	 * assume that pg_shadow exists yet, so fake it.
+	 * Figure out our postgres user id.  In standalone mode we use a
+	 * fixed id, otherwise we figure it out from the authenticated
+	 * user name.
 	 */
 	if (bootstrap)
-		SetSessionUserId(geteuid());
+		InitializeSessionUserIdStandalone();
+	else if (!IsUnderPostmaster)
+	{
+		InitializeSessionUserIdStandalone();
+		if (!ThereIsAtLeastOneUser())
+		{
+			elog(NOTICE, "There are currently no users defined in this database system.");
+			elog(NOTICE, "You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
+				 username, BOOTSTRAP_USESYSID);
+		}
+	}
 	else
+		/* normal multiuser case */
 		InitializeSessionUserId(username);
 
 	/*
@@ -405,4 +419,29 @@ ShutdownPostgres(void)
 	 * callback for it wouldn't work.
 	 */
 	smgrDoPendingDeletes(false);/* delete as though aborting xact */
+}
+
+
+
+/*
+ * Returns true if at least one user is defined in this database cluster.
+ */
+static bool
+ThereIsAtLeastOneUser(void)
+{
+	Relation	pg_shadow_rel;
+	TupleDesc	pg_shadow_dsc;
+	HeapScanDesc scan;
+	bool		result;
+
+	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
+	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
+
+	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, 0);
+	result = HeapTupleIsValid(heap_getnext(scan, 0));
+
+	heap_endscan(scan);
+	heap_close(pg_shadow_rel, AccessExclusiveLock);
+
+	return result;
 }

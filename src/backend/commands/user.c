@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.82 2001/08/17 02:59:19 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.83 2001/09/08 15:24:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,7 @@ CreateUser(CreateUserStmt *stmt)
 	bool		user_exists = false,
 				sysid_exists = false,
 				havesysid = false;
-	int			max_id = -1;
+	int			max_id;
 	List	   *item, *option;
 	char	   *password = NULL;	/* PostgreSQL user password */
 	bool		encrypt_password = Password_encryption;	/* encrypt password? */
@@ -268,6 +268,8 @@ CreateUser(CreateUserStmt *stmt)
 	if (dsysid)
 	{
 		sysid = intVal(dsysid->arg);
+		if (sysid <= 0)
+			elog(ERROR, "user id must be positive");
 		havesysid = true;
 	}
 	if (dvalidUntil)
@@ -294,6 +296,7 @@ CreateUser(CreateUserStmt *stmt)
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
+	max_id = 99;				/* start auto-assigned ids at 100 */
 	while (!user_exists && !sysid_exists &&
 		   HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
@@ -550,30 +553,30 @@ AlterUser(AlterUserStmt *stmt)
 	new_record[Anum_pg_shadow_usetrace - 1] = heap_getattr(tuple, Anum_pg_shadow_usetrace, pg_shadow_dsc, &null);
 	new_record_nulls[Anum_pg_shadow_usetrace - 1] = null ? 'n' : ' ';
 
-	/* createuser (superuser) */
+	/*
+	 * createuser (superuser) and catupd
+	 *
+	 * XXX It's rather unclear how to handle catupd.  It's probably
+	 * best to keep it equal to the superuser status, otherwise you
+	 * could end up with a situation where no existing superuser can
+	 * alter the catalogs, including pg_shadow!
+	 */
 	if (createuser < 0)
 	{
 		/* don't change */
 		new_record[Anum_pg_shadow_usesuper - 1] = heap_getattr(tuple, Anum_pg_shadow_usesuper, pg_shadow_dsc, &null);
 		new_record_nulls[Anum_pg_shadow_usesuper - 1] = null ? 'n' : ' ';
+
+		new_record[Anum_pg_shadow_usecatupd - 1] = heap_getattr(tuple, Anum_pg_shadow_usecatupd, pg_shadow_dsc, &null);
+		new_record_nulls[Anum_pg_shadow_usecatupd - 1] = null ? 'n' : ' ';
 	}
 	else
 	{
 		new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(createuser > 0);
 		new_record_nulls[Anum_pg_shadow_usesuper - 1] = ' ';
-	}
 
-	/* catupd - set to false if someone's superuser priv is being yanked */
-	if (createuser == 0)
-	{
-		new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(false);
+		new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(createuser > 0);
 		new_record_nulls[Anum_pg_shadow_usecatupd - 1] = ' ';
-	}
-	else
-	{
-		/* leave alone */
-		new_record[Anum_pg_shadow_usecatupd - 1] = heap_getattr(tuple, Anum_pg_shadow_usecatupd, pg_shadow_dsc, &null);
-		new_record_nulls[Anum_pg_shadow_usecatupd - 1] = null ? 'n' : ' ';
 	}
 
 	/* password */
@@ -691,6 +694,11 @@ DropUser(DropUserStmt *stmt)
 				 (length(stmt->users) > 1) ? " (no users removed)" : "");
 
 		usesysid = DatumGetInt32(heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null));
+
+		if (usesysid == GetUserId())
+			elog(ERROR, "current user cannot be dropped");
+		if (usesysid == GetSessionUserId())
+			elog(ERROR, "session user cannot be dropped");
 
 		/*
 		 * Check if user still owns a database. If so, error out.
@@ -825,7 +833,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	bool		group_exists = false,
 				sysid_exists = false,
 				havesysid = false;
-	int			max_id = 0;
+	int			max_id;
 	Datum		new_record[Natts_pg_group];
 	char		new_record_nulls[Natts_pg_group];
 	List	   *item,
@@ -859,6 +867,8 @@ CreateGroup(CreateGroupStmt *stmt)
 	if (dsysid)
 	{
 		sysid = intVal(dsysid->arg);
+		if (sysid <= 0)
+			elog(ERROR, "group id must be positive");
 		havesysid = true;
 	}
 
@@ -875,6 +885,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
 	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
+	max_id = 99;				/* start auto-assigned ids at 100 */
 	while (!group_exists && !sysid_exists &&
 		   HeapTupleIsValid(tuple = heap_getnext(scan, false)))
 	{

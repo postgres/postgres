@@ -34,12 +34,13 @@ CREATE USER <replaceable>name</replaceable>
 
   <para>
    In order to bootstrap the database system, a freshly initialized
-   system always contains one predefined user. This user will have
-   the same name as the operating system user that initialized the
-   area (and is presumably being used as the user that runs the
-   server). Thus, often an initial user <quote>postgres</quote>
-   exists. In order to create more users you have to first connect as
-   this initial user.
+   system always contains one predefined user. This user will have the
+   fixed id 1, and by default (unless altered when running
+   <command>initdb</command>) it will have the same name as the
+   operating system user that initialized the area (and is presumably
+   being used as the user that runs the server). Customarily, this user
+   will be called <quote>postgres</quote>. In order to create more
+   users you have to first connect as this initial user.
   </para>
 
   <para>

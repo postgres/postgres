@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.18 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.19 2001/09/08 15:24:00 petere Exp $
 Postgres documentation
 -->
 
@@ -35,7 +35,7 @@ Postgres documentation
    <arg>-i</arg>
    <arg>-L</arg>
    <arg>-N</arg>
-   <arg>-o <replaceable>file-name</replaceable></arg>
+   <arg>-o <replaceable>filename</replaceable></arg>
    <arg>-O</arg>
    <arg>-P</arg>
    <group>
@@ -58,7 +58,7 @@ Postgres documentation
    <arg>-F</arg>
    <arg>-i</arg>
    <arg>-L</arg>
-   <arg>-o <replaceable>file-name</replaceable></arg>
+   <arg>-o <replaceable>filename</replaceable></arg>
    <arg>-O</arg>
    <arg>-p <replaceable>database</replaceable></arg>
    <arg>-P</arg>
@@ -103,9 +103,12 @@ Postgres documentation
   </para>
 
   <para>
-   When running a stand-alone backend the session user name will
-   automatically be set to the current effective Unix user name.  If
-   that user does not exist the server will not start.
+   When running a stand-alone backend, the session user will be set to
+   the user with id 1.  This user does not actually have to exist, so
+   a stand-alone backend can be used to manually recover from certain
+   kinds of accidental damage to the system catalogs.  Implicit
+   superuser powers are granted to the user with id 1 in stand-alone
+   mode.
   </para>
 
   <refsect2>
@@ -157,14 +160,14 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-o <replaceable class="parameter">file-name</replaceable></term>
+      <term>-o <replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
 	Sends all debugging and error output to 
-	<replaceable class="parameter">OutputFile</replaceable>.
+	<replaceable class="parameter">filename</replaceable>.
 	If the backend is running under the <application>postmaster</application>,
 	error messages are still sent to the frontend process as well as to
-	<replaceable class="parameter">OutputFile</replaceable>,
+	<replaceable class="parameter">filename</replaceable>,
 	but debugging output is sent to the controlling tty of the
 	<application>postmaster</application>
 	(since only one file descriptor can be sent to an actual file).
@@ -359,7 +362,7 @@ Postgres documentation
  </refsect1>
 
  <refsect1>
-  <title>See also</title>
+  <title>See Also</title>
 
   <para>
    <xref linkend="app-initdb">,

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.136 2001/09/06 04:57:29 ishii Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.137 2001/09/08 15:24:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -183,7 +183,6 @@ show_setting=
 #       user with the same name as the Unix user running it. That's
 #       a security measure.
 POSTGRES_SUPERUSERNAME="$EffectiveUser"
-POSTGRES_SUPERUSERID=`$PGPATH/pg_id -u`
 
 while [ "$#" -gt 0 ]
 do
@@ -207,15 +206,15 @@ do
                 noclean=yes
                 echo "Running with noclean mode on. Mistakes will not be cleaned up."
                 ;;
-# The sysid of the database superuser. Can be freely changed.
-        --sysid|-i)
-                POSTGRES_SUPERUSERID="$2"
+# The name of the database superuser. Can be freely changed.
+        --username|-U)
+                POSTGRES_SUPERUSERNAME="$2"
                 shift;;
-        --sysid=*)
-                POSTGRES_SUPERUSERID=`echo $1 | sed 's/^--sysid=//'`
+        --username=*)
+                POSTGRES_SUPERUSERNAME=`echo $1 | sed 's/^--username=//'`
                 ;;
-        -i*)
-                POSTGRES_SUPERUSERID=`echo $1 | sed 's/^-i//'`
+        -U*)
+                POSTGRES_SUPERUSERNAME=`echo $1 | sed 's/^-U//'`
                 ;;
 # The default password of the database superuser.
 # Make initdb prompt for the default password of the database superuser.
@@ -276,7 +275,7 @@ if [ "$usage" ]; then
     if [ -n "$MULTIBYTE" ] ; then 
         echo "  -E, --encoding ENCODING     Set the default multibyte encoding for new databases"
     fi
-    echo "  -i, --sysid SYSID           Database sysid for the superuser"
+    echo "  -U, --username NAME         Database superuser name"
     echo "Less commonly used options: "
     echo "  -L DIRECTORY                Where to find the input files"
     echo "  -d, --debug                 Generate lots of debugging output"
@@ -343,7 +342,7 @@ then
     echo
     echo "initdb variables:"
     for var in PGDATA datadir PGPATH MULTIBYTE MULTIBYTEID \
-        POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID POSTGRES_BKI \
+        POSTGRES_SUPERUSERNAME POSTGRES_BKI \
         POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
 	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
         eval "echo '  '$var=\$$var"
@@ -384,10 +383,9 @@ done
 trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 
 # Let's go
-echo "This database system will be initialized with user name \"$POSTGRES_SUPERUSERNAME\"."
-echo "This user will own all the data files and must also own the server process."
+echo "The files belonging to this database system will be owned by user \"$EffectiveUser\"."
+echo "This user must also own the server process."
 echo
-
 
 ##########################################################################
 #
@@ -467,7 +465,6 @@ mkdir "$PGDATA"/base/1 || exit_nicely
 
 cat "$POSTGRES_BKI" \
 | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
-      -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
       -e "s/ENCODING/$MULTIBYTEID/g" \
 | "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BACKEND_TALK_ARG template1 \
 || exit_nicely

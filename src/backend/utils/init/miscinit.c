@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.76 2001/08/15 07:07:40 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.77 2001/09/08 15:24:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,6 +473,20 @@ InitializeSessionUserId(const char *username)
 	AuthenticatedUserIsSuperuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
 
 	ReleaseSysCache(userTup);
+}
+
+
+void
+InitializeSessionUserIdStandalone(void)
+{
+	/* This function should only be called in a single-user backend. */
+	AssertState(!IsUnderPostmaster);
+
+	/* call only once */
+	AssertState(!OidIsValid(SessionUserId));
+
+	SetSessionUserId(BOOTSTRAP_USESYSID);
+	AuthenticatedUserIsSuperuser = true;
 }
 
 

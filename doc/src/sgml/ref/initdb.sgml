@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.16 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.17 2001/09/08 15:24:00 petere Exp $
 Postgres documentation
 -->
 
@@ -9,7 +9,7 @@ Postgres documentation
  </docinfo>
 
  <refmeta>
-  <refentrytitle id="APP-INITDB-TITLE"><application>initdb</application></refentrytitle>
+  <refentrytitle id="APP-INITDB-TITLE">initdb</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -25,12 +25,12 @@ Postgres documentation
     <group choice="plain">
      <arg>--pgdata </arg>
      <arg>-D </arg>
-     <replaceable>dbdir</replaceable>
+     <replaceable>directory</replaceable>
     </group>
     <group>
-     <arg>--sysid </arg>
-     <arg>-i </arg>
-     <replaceable>sysid</replaceable>
+     <arg>--username </arg>
+     <arg>-U </arg>
+     <replaceable>username</replaceable>
     </group>
     <group><arg>--pwprompt</arg><arg>-W</arg></group>
     <group>
@@ -49,11 +49,12 @@ Postgres documentation
    Description
   </title>
   <para>
-   <application>initdb</application> creates a new
-   <productname>Postgres</productname> database cluster or system.  A
-   database cluster is a collection of databases that are managed by a
-   single postmaster.
+   <command>initdb</command> creates a new
+   <productname>PostgreSQL</productname> database cluster (or database
+   system).  A database cluster is a collection of databases that are
+   managed by a single server instance.
   </para>
+
   <para>
    Creating a database system consists of creating the directories in which
    the database data will live, generating the shared catalog tables 
@@ -66,26 +67,23 @@ Postgres documentation
   </para>
 
   <para>
-   You must not execute <application>initdb</application> as root; it must
-   be run by the Unix user account that will run the database server.
-   This is because you cannot run the database server as root either, but the
-   server needs to have access to the files <application>initdb</application>
-   creates. Furthermore, during the initialization phase, when there are no
-   users and no access controls installed, <productname>Postgres</productname>
-   will only connect with
-   the name of the current Unix user, so you must log in under the account
-   that will own the server process.
+   <command>initdb</command> must be run as the user that will own the
+   server process, because the server needs to have access to the
+   files and directories that <command>initdb</command> creates.
+   Since the server may not be run as root, you must not run
+   <command>initdb</command> as root either.  (It will in fact refuse
+   to do so.)
   </para>
 
   <para>
-   Although <application>initdb</application> will attempt to create the
+   Although <command>initdb</command> will attempt to create the
    specified data directory, often it won't have permission to do so,
    since the parent of the desired data directory is often a root-owned
    directory.  To set up an arrangement like this, create an empty data
-   directory as root, then use <application>chown</application> to hand over
+   directory as root, then use <command>chown</command> to hand over
    ownership of that directory to the database user account, then
-   <application>su</application> to become the database user, and
-   finally run <application>initdb</application> as the database user.
+   <command>su</command> to become the database user, and
+   finally run <command>initdb</command> as the database user.
   </para>
 
   <refsect2>
@@ -94,31 +92,32 @@ Postgres documentation
    <para>
     <variablelist>
      <varlistentry>
-      <term>--pgdata=<replaceable class="parameter">dbdir</replaceable></term>
-      <term>-D <replaceable class="parameter">dbdir</replaceable></term>
+      <term>--pgdata=<replaceable class="parameter">directory</replaceable></term>
+      <term>-D <replaceable class="parameter">directory</replaceable></term>
       <listitem>
        <para>
-        This option specifies where in the file system the database
+        This option specifies the directory where the database system
         should be stored. This is the only information required by
-        <application>initdb</application>, but you can avoid writing it by
+        <command>initdb</command>, but you can avoid writing it by
         setting the <envar>PGDATA</envar> environment variable, which
         can be convenient since the database server
-        (<filename>postmaster</filename>) can find the database
+        (<command>postmaster</command>) can find the database
         directory later by the same variable.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>--sysid=<replaceable class="parameter">sysid</replaceable></term>
-      <term>-i <replaceable class="parameter">sysid</replaceable></term>
+      <term>--username=<replaceable class="parameter">username</replaceable></term>
+      <term>-U <replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        Selects the system id of the database superuser. This defaults
-        to the effective user id of the user running
-        <application>initdb</application>. It is really not important
-        what the superuser's sysid is, but one might choose to start
-        the numbering at some number like 1.
+        Selects the user name of the database superuser. This defaults
+        to the name of the effective user running
+        <command>initdb</command>. It is really not important what the
+        superuser's name is, but one might choose to keep the
+        customary name <quote>postgres</quote>, even if the operating
+        system user's name is different.
        </para>
       </listitem>
      </varlistentry>
@@ -128,7 +127,7 @@ Postgres documentation
       <term>-W</term>
       <listitem>
        <para>
-        Makes <application>initdb</application> prompt for a password
+        Makes <command>initdb</command> prompt for a password
         to give the database superuser. If you don't plan on using password
         authentication, this is not important.  Otherwise you won't be
         able to use password authentication until you have a password
@@ -162,7 +161,7 @@ Postgres documentation
       <term>-L <replaceable class="parameter">directory</replaceable></term>
       <listitem>
        <para>
-        Specifies where <application>initdb</application> should find
+        Specifies where <command>initdb</command> should find
         its input files to initialize the database system.  This is
         normally not necessary.  You will be told if you need to
         specify their location explicitly.
@@ -175,7 +174,7 @@ Postgres documentation
       <term>-n</term>
       <listitem>
        <para>
-	By default, when <application>initdb</application>
+	By default, when <command>initdb</command>
 	determines that an error prevented it from completely creating the database
 	system, it removes any files it may have created before discovering
 	that it can't finish the job. This option inhibits tidying-up and is
@@ -191,7 +190,7 @@ Postgres documentation
        <para>
 	Print debugging output from the bootstrap backend and a few other
         messages of lesser interest for the general public.
-	The bootstrap backend is the program <application>initdb</application>
+	The bootstrap backend is the program <command>initdb</command>
 	uses to create the catalog tables.  This option generates a tremendous
 	amount of extremely boring output.
        </para>
@@ -205,11 +204,30 @@ Postgres documentation
  </refsect1>
 
  <refsect1>
-  <title>See also</title>
+  <title>Environment</title>
 
-  <simpara>
-   <citetitle>PostgreSQL Administrator's Guide</citetitle>
-  </simpara>
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGDATA</envar></term>
+
+    <listitem>
+     <para>
+      Specifies the directory where the database system is to be
+      stored; may be overridden using the <option>-D</option> option.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-postgres"></member>
+   <member><xref linkend="app-postmaster"></member>
+   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

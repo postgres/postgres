@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.18 2001/06/13 21:44:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.19 2001/09/08 15:24:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,10 @@ superuser(void)
 {
 	bool		result = false;
 	HeapTuple	utup;
+
+	/* Special escape path in case you deleted all your users. */
+	if (!IsUnderPostmaster && GetUserId() == BOOTSTRAP_USESYSID)
+		return true;
 
 	utup = SearchSysCache(SHADOWSYSID,
 						  ObjectIdGetDatum(GetUserId()),

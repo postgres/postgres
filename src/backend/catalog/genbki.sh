@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.23 2001/08/26 16:55:59 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.24 2001/09/08 15:24:00 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -183,6 +183,7 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/[ 	]TransactionId/ xid/g" \
     -e "s/^TransactionId/xid/g" \
     -e "s/(TransactionId/(xid/g" \
+    -e "s/PGUID/1/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
     -e "s/DEFAULT_ATTSTATTARGET/$DEFAULTATTSTATTARGET/g" \
     -e "s/INDEX_MAX_KEYS\*2/$INDEXMAXKEYS2/g" \
