@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.2 1996/07/25 20:36:46 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -356,11 +356,21 @@ clause_relids_vars(Node *clause, List **relids, List **vars)
 
     foreach (i, clvars) {
 	Var *var = (Var *)lfirst(i);
+	List *vi;
 
 	if (!intMember(var->varno, varno_list)) {
 	    varno_list = lappendi(varno_list, var->varno);
-	    var_list = lappend(var_list, var);
 	}
+	foreach (vi, var_list)
+	{
+	    Var *in_list = (Var *)lfirst(vi);
+	    
+	    if ( in_list->varno == var->varno && 
+	    		in_list->varattno == var->varattno )
+	    	break;
+	}
+	if ( vi == NIL )
+	    var_list = lappend(var_list, var);
     }
 
     *relids = varno_list;
