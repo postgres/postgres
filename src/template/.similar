@@ -3,3 +3,7 @@ i386-unknown-freebsd3.0=freebsd
 i386-unknown-netbsd1.2.1=netbsd
 sparc-sun-solaris2.5=sparc_solaris-gcc
 sparc-unknown-linux-gnu=linux-elf
+i386-pc-bsdi2.0
+i386-pc-bsdi2.1
+i386-pc-bsdi3.0
+
