@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.2 1996/07/31 02:19:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.3 1996/09/19 19:58:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 
 int Noversion = 0;
 char *DataDir = (char *) NULL;
+
+extern void SetPgVersion(const char *);
 
 int
 main(int argc, char **argv)
@@ -24,12 +26,14 @@ main(int argc, char **argv)
 	exit(1);
     }
     SetPgVersion(argv[1]);
-    exit(0);
+    return(0);
 }
 
-elog() {}
+void
+elog(void) {}
 
-GetDataHome()
+int
+GetDataHome(void)
 {
 	return(0);
 }
