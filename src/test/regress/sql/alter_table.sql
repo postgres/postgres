@@ -532,3 +532,42 @@ insert into child (a, b) values (NULL, 'foo');
 drop table child;
 drop table parent;
 
+-- test setting and removing default values
+create table def_test (
+	c1	int4 default 5,
+	c2	text default 'initial_default'
+);
+insert into def_test default values;
+alter table def_test alter column c1 drop default;
+insert into def_test default values;
+alter table def_test alter column c2 drop default;
+insert into def_test default values;
+alter table def_test alter column c1 set default 10;
+alter table def_test alter column c2 set default 'new_default';
+insert into def_test default values;
+select * from def_test;
+
+-- set defaults to an incorrect type: this should fail
+alter table def_test alter column c1 set default 'wrong_datatype';
+alter table def_test alter column c2 set default 20;
+
+-- set defaults on a non-existent column: this should fail
+alter table def_test alter column c3 set default 30;
+
+-- set defaults on views: we need to create a view, add a rule
+-- to allow insertions into it, and then alter the view to add
+-- a default
+create view def_view_test as select * from def_test;
+create rule def_view_test_ins as
+	on insert to def_view_test
+	do instead insert into def_test select new.*;
+insert into def_view_test default values;
+alter table def_view_test alter column c1 set default 45;
+insert into def_view_test default values;
+alter table def_view_test alter column c2 set default 'view_default';
+insert into def_view_test default values;
+select * from def_view_test;
+
+drop rule def_view_test_ins;
+drop view def_view_test;
+drop table def_test;
