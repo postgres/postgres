@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56.2.2 2003/09/03 19:01:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56.2.3 2005/03/26 00:42:44 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -2001,6 +2001,7 @@ static int
 dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 {
 	char		buff[DCH_CACHE_SIZE],
+				workbuff[32],
 			   *p_inout;
 	int			i,
 				len;
@@ -2123,14 +2124,18 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_MONTH:
-			strcpy(inout, months_full[tm->tm_mon - 1]);
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));
+			if (!tm->tm_mon)
+				return -1;
+			strcpy(workbuff, months_full[tm->tm_mon - 1]);
+			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
 				return 8;
 
 		case DCH_Month:
+			if (!tm->tm_mon)
+				return -1;
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
@@ -2138,6 +2143,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 8;
 
 		case DCH_month:
+			if (!tm->tm_mon)
+				return -1;
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			*inout = tolower((unsigned char) *inout);
 			if (S_FM(suf))
@@ -2146,15 +2153,21 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 8;
 
 		case DCH_MON:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(inout, months[tm->tm_mon - 1]);
 			inout = str_toupper(inout);
 			return 2;
 
 		case DCH_Mon:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(inout, months[tm->tm_mon - 1]);
 			return 2;
 
 		case DCH_mon:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(inout, months[tm->tm_mon - 1]);
 			*inout = tolower((unsigned char) *inout);
 			return 2;
@@ -2169,7 +2182,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return strlen(p_inout) - 1;
 				else
 					return 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
@@ -2186,8 +2198,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_DAY:
-			strcpy(inout, days[tm->tm_wday]);
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));
+			strcpy(workbuff, days[tm->tm_wday]);
+			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
@@ -2329,7 +2341,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return strlen(p_inout) - 1;
 				else
 					return 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
@@ -2348,6 +2359,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_Q:
 			if (flag == TO_CHAR)
 			{
+				if (!tm->tm_mon)
+					return -1;
 				sprintf(inout, "%d", (tm->tm_mon - 1) / 3 + 1);
 				if (S_THth(suf))
 				{
@@ -2355,7 +2368,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 2;
 				}
 				return 0;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
@@ -2523,6 +2535,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_RM:
 			if (flag == TO_CHAR)
 			{
+				if (!tm->tm_mon)
+					return -1;
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,
 						rm_months_upper[12 - tm->tm_mon]);
 				if (S_FM(suf))
@@ -2544,6 +2558,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_rm:
 			if (flag == TO_CHAR)
 			{
+				if (!tm->tm_mon)
+					return -1;
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,
 						rm_months_lower[12 - tm->tm_mon]);
 				if (S_FM(suf))
