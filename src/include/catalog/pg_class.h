@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.27 1999/02/13 23:21:08 momjian Exp $
+ * $Id: pg_class.h,v 1.28 1999/03/28 02:01:38 tgl Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -140,7 +140,7 @@ DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 0 0 f t s 3  0 0 0 0 0 f f _nul
 DESCR("");
 DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 0 0 f t r 4  0 0 0 0 0 f f _null_ ));
 DESCR("");
-DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 0 0 f t s 2  0 0 0 0 0 f f _null_ ));
+DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 0 0 f t s 1  0 0 0 0 0 f f _null_ ));
 DESCR("");
 DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 0 0 f t s 1  0 0 0 0 0 f f _null_ ));
 DESCR("");

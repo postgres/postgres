@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.21 1999/03/26 07:32:40 tgl Exp $
+ * $Id: pg_amop.h,v 1.22 1999/03/28 02:01:38 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -349,7 +349,7 @@ DATA(insert OID = 0 (  405	423  670 1 hashsel hashnpage ));
 /* int4_ops */
 DATA(insert OID = 0 (  405	426   96 1 hashsel hashnpage ));
 /* int8_ops */
-DATA(insert OID = 0 (  405	426   96 1 hashsel hashnpage ));
+DATA(insert OID = 0 (  405	754   96 1 hashsel hashnpage ));
 /* oid_ops */
 DATA(insert OID = 0 (  405	427  607 1 hashsel hashnpage ));
 /* oid8_ops */

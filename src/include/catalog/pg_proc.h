@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.92 1999/03/14 16:32:46 momjian Exp $
+ * $Id: pg_proc.h,v 1.93 1999/03/28 02:01:39 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -295,7 +295,7 @@ DATA(insert OID = 138 (  box_center		   PGUID 11 f t f 1 f 600 "603" 100 1 0 100
 DESCR("center of");
 DATA(insert OID = 139 (  areasel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
 DESCR("selectivity");
-DATA(insert OID = 140 (  areajoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 140 (  areajoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100  foo bar ));
 DESCR("selectivity");
 DATA(insert OID = 141 (  int4mul		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
 DESCR("multiply");

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.45 1999/02/13 23:21:07 momjian Exp $
+ * $Id: pg_attribute.h,v 1.46 1999/03/28 02:01:38 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -470,5 +470,16 @@ DATA(insert OID = 0 ( 1264 varfoo			26 0  4   1 0 -1 -1 t f i f f));
 { 1269, {"logfoo"},  26, 0, 4, 1, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1269 logfoo			26 0  4   1 0 -1 -1 t f i f f));
+
+/* ----------------
+ *		pg_xactlock - this relation is modified by special purpose access
+ *				  method code.	The following is garbage but is needed
+ *				  so that the reldesc code works properly.
+ * ----------------
+ */
+#define Schema_pg_xactlock \
+{ 376, {"xactlockfoo"},  26, 0, 4, 1, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }
+
+DATA(insert OID = 0 ( 376 xactlockfoo		26 0  4   1 0 -1 -1 t f i f f));
 
 #endif	 /* PG_ATTRIBUTE_H */
