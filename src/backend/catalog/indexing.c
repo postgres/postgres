@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.63 2000/06/07 02:44:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.64 2000/06/07 04:09:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ char	   *Name_pg_inherits_indices[Num_pg_inherits_indices] =
 char	   *Name_pg_language_indices[Num_pg_language_indices] =
 {LanguageOidIndex, LanguageNameIndex};
 char	   *Name_pg_listener_indices[Num_pg_listener_indices] =
-{ListenerRelnamePidIndex};
+{ListenerPidRelnameIndex};
 char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =
 {OpclassNameIndex, OpclassDeftypeIndex};
 char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
@@ -653,7 +653,7 @@ LanguageOidIndexScan(Relation heapRelation, Oid lanId)
 
 
 HeapTuple
-ListenerRelnamePidIndexScan(Relation heapRelation, char *relName, int4 pid)
+ListenerPidRelnameIndexScan(Relation heapRelation, int4 pid, char *relName)
 {
 	Relation	idesc;
 	ScanKeyData skey[2];
@@ -662,16 +662,16 @@ ListenerRelnamePidIndexScan(Relation heapRelation, char *relName, int4 pid)
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) F_NAMEEQ,
-						   PointerGetDatum(relName));
+						   (RegProcedure) F_INT4EQ,
+						   Int32GetDatum(pid));
 
 	ScanKeyEntryInitialize(&skey[1],
 						   (bits16) 0x0,
 						   (AttrNumber) 2,
-						   (RegProcedure) F_INT4EQ,
-						   Int32GetDatum(pid));
+						   (RegProcedure) F_NAMEEQ,
+						   PointerGetDatum(relName));
 
-	idesc = index_openr(ListenerRelnamePidIndex);
+	idesc = index_openr(ListenerPidRelnameIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 2);
 
 	index_close(idesc);

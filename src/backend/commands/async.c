@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.63 2000/06/04 01:44:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.64 2000/06/07 04:09:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,6 @@ Async_Notify(char *relname)
 	/* no point in making duplicate entries in the list ... */
 	if (!AsyncExistsPendingNotify(relname))
 	{
-
 		/*
 		 * We allocate list memory from the global malloc pool to ensure
 		 * that it will live until we want to use it.  This is probably
@@ -202,7 +201,6 @@ Async_Listen(char *relname, int pid)
 	Datum		d;
 	int			i;
 	bool		isnull;
-	int			alreadyListener = 0;
 	TupleDesc	tupDesc;
 
 	if (Trace_notify)
@@ -212,25 +210,12 @@ Async_Listen(char *relname, int pid)
 	tdesc = RelationGetDescr(lRel);
 
 	/* Detect whether we are already listening on this relname */
-	scan = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	tuple = SearchSysCacheTuple(LISTENREL, Int32GetDatum(pid),
+								PointerGetDatum(relname),
+								0, 0);
+	if (tuple != NULL)
 	{
-		d = heap_getattr(tuple, Anum_pg_listener_relname, tdesc, &isnull);
-		if (!strncmp((char *) DatumGetPointer(d), relname, NAMEDATALEN))
-		{
-			d = heap_getattr(tuple, Anum_pg_listener_pid, tdesc, &isnull);
-			if (DatumGetInt32(d) == pid)
-			{
-				alreadyListener = 1;
-				/* No need to scan the rest of the table */
-				break;
-			}
-		}
-	}
-	heap_endscan(scan);
-
-	if (alreadyListener)
-	{
+		/* No need to scan the rest of the table */
 		heap_close(lRel, AccessExclusiveLock);
 		elog(NOTICE, "Async_Listen: We are already listening on %s", relname);
 		return;
@@ -313,9 +298,9 @@ Async_Unlisten(char *relname, int pid)
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	/* Note we assume there can be only one matching tuple. */
-	lTuple = SearchSysCacheTuple(LISTENREL, PointerGetDatum(relname),
-								 Int32GetDatum(pid),
-								 0, 0);
+	lTuple = SearchSysCacheTuple(LISTENREL, Int32GetDatum(pid),
+								PointerGetDatum(relname),
+								0, 0);
 	if (lTuple != NULL)
 		heap_delete(lRel, &lTuple->t_self, NULL);
 	heap_close(lRel, AccessExclusiveLock);

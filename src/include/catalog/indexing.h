@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.38 2000/06/07 02:44:40 momjian Exp $
+ * $Id: indexing.h,v 1.39 2000/06/07 04:09:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@
 #define InheritsRelidSeqnoIndex		"pg_inherits_relid_seqno_index"
 #define LanguageNameIndex			"pg_language_name_index"
 #define LanguageOidIndex			"pg_language_oid_index"
-#define ListenerRelnamePidIndex		"pg_listener_relname_pid_index"
+#define ListenerPidRelnameIndex		"pg_listener_pid_relname_index"
 #define OpclassDeftypeIndex			"pg_opclass_deftype_index"
 #define OpclassNameIndex			"pg_opclass_name_index"
 #define OperatorNameIndex			"pg_operator_oprname_l_r_k_index"
@@ -141,7 +141,7 @@ extern HeapTuple InheritsRelidSeqnoIndexScan(Relation heapRelation, Oid relid,
 							int4 seqno);
 extern HeapTuple LanguageNameIndexScan(Relation heapRelation, char *lanName);
 extern HeapTuple LanguageOidIndexScan(Relation heapRelation, Oid lanId);
-extern HeapTuple ListenerRelnamePidIndexScan(Relation heapRelation, char *relName, int4 pid);
+extern HeapTuple ListenerPidRelnameIndexScan(Relation heapRelation, int4 pid, char *relName);
 extern HeapTuple OpclassDeftypeIndexScan(Relation heapRelation, Oid defType);
 extern HeapTuple OpclassNameIndexScan(Relation heapRelation, char *opcName);
 extern HeapTuple OperatorNameIndexScan(Relation heapRelation,
@@ -190,7 +190,7 @@ DECLARE_UNIQUE_INDEX(pg_index_indexrelid_index on pg_index using btree(indexreli
 DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index on pg_inherits using btree(inhrelid oid_ops, inhseqno int4_ops));
 DECLARE_UNIQUE_INDEX(pg_language_name_index on pg_language using btree(lanname name_ops));
 DECLARE_UNIQUE_INDEX(pg_language_oid_index on pg_language using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_listener_relname_pid_index on pg_listener using btree(relname name_ops, listenerpid int4_ops));
+DECLARE_UNIQUE_INDEX(pg_listener_pid_relname_index on pg_listener using btree(listenerpid int4_ops, relname name_ops));
 /* This column needs to allow multiple zero entries, but is in the cache */
 DECLARE_INDEX(pg_opclass_deftype_index on pg_opclass using btree(opcdeftype oid_ops));
 DECLARE_UNIQUE_INDEX(pg_opclass_name_index on pg_opclass using btree(opcname name_ops));

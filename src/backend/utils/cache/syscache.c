@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.52 2000/06/07 02:44:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.53 2000/06/07 04:09:36 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -241,14 +241,14 @@ static struct cachedesc cacheinfo[] = {
 	{ListenerRelationName,		/* LISTENREL */
 		2,
 		{
-			Anum_pg_listener_relname,
 			Anum_pg_listener_pid,
+			Anum_pg_listener_relname,
 			0,
 			0
 		},
 		sizeof(FormData_pg_listener),
-		ListenerRelnamePidIndex,
-	ListenerRelnamePidIndexScan},
+		ListenerPidRelnameIndex,
+	ListenerPidRelnameIndexScan},
 	{OperatorRelationName,		/* OPERNAME */
 		4,
 		{
