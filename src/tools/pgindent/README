@@ -6,7 +6,7 @@ pgsql/bin directory:
 
 	/src/tools/find_typedef
 
-and update the list in pgindent.
+and update the list in pgindent.  This requires debug symbols.
 
 From the top directory, run:
 

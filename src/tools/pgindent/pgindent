@@ -103,1384 +103,1450 @@ do
 # We get the list of typedef's from /src/tools/find_typedef
 	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l75 \
 		-lp -nip -npro -bbb $EXTRA_OPTS \
--TA_Const \
--TA_Expr \
--TA_Indices \
--TAbsoluteTime \
--TAcl \
--TAclId \
--TAclIdType \
--TAclItem \
--TAclMode \
--TAgg \
--TAggInfo \
--TAggState \
--TAggStatePerAgg \
--TAggStatePerAggData \
--TAggref \
--TAlgCode \
--TAllocBlock \
--TAllocBlockData \
--TAllocChunk \
--TAllocChunkData \
--TAllocPointer \
--TAllocSet \
--TAllocSetContext \
--TAlterGroupStmt \
--TAlterTableStmt \
--TAlterUserStmt \
--TAppend \
--TAppendPath \
--TAppendState \
--TArchive \
--TArchiveEntryPtr \
--TArchiveFormat \
--TArchiveHandle \
--TArchiveMode \
--TArrayRef \
--TArrayType \
--TAtom \
--TAttr \
--TAttrDefault \
--TAttrNumber \
--TAuthRequest \
--TAuthRequestPacket \
--TBOX \
--TBTBuildState \
--TBTItem \
--TBTItemData \
--TBTMetaPageData \
--TBTPageOpaque \
--TBTPageOpaqueData \
--TBTPageState \
--TBTScanOpaque \
--TBTScanOpaqueData \
--TBTSpool \
--TBTStack \
--TBTStackData \
--TBackend \
--TBackendId \
--TBitArray \
--TBitIndex \
--TBkpBlock \
--TBlock \
--TBlockId \
--TBlockIdData \
--TBlockNumber \
--TBoolPtr \
--TBoolTestType \
--TBooleanTest \
--TBpChar \
--TBucket \
--TBufFile \
--TBufFlags \
--TBuffer \
--TBufferDesc \
--TBufferLookupEnt \
--TBufferTag \
--TByte \
--TBytef \
--TCATEGORY \
--TCIRCLE \
--TCPFunction \
--TCPPFunction \
--TCancelRequestPacket \
--TCandidateList \
--TCaseExpr \
--TCaseWhen \
--TCash \
--TCatCTup \
--TCatCache \
--TCatCacheHeader \
--TChangeVarNodes_context \
--TCheckPoint \
--TCheckPointStmt \
--TChromosome \
--TCity \
--TClientData \
--TClogCtlData \
--TClogPageStatus \
--TClosePortalStmt \
--TClosePtr \
--TClusterStmt \
--TCmdType \
--TColormap \
--TColumnDef \
--TCommandDest \
--TCommandId \
--TCommentStmt \
--TCommonScanState \
--TCommonState \
--TConnStatusType \
--TConst \
--TConstrCheck \
--TConstrType \
--TConstraint \
--TConstraintsSetStmt \
--TControlFileData \
--TCopyStmt \
--TCost \
--TCostSelector \
--TCreateGroupStmt \
--TCreatePLangStmt \
--TCreateSeqStmt \
--TCreateStmt \
--TCreateStmtContext \
--TCreateTrigStmt \
--TCreateUserStmt \
--TCreatedbStmt \
--TCred \
--TCursor \
--TCustomOutPtr \
--TDBState \
--TDCHCacheEntry \
--TDCH_poz \
--TDIR \
--TDR_printtup \
--TDataDumperPtr \
--TDateADT \
--TDatum \
--TDatumPtr \
--TDatumTuple \
--TDefElem \
--TDeferredTriggerEvent \
--TDeferredTriggerEventData \
--TDeferredTriggerEventItem \
--TDeferredTriggerStatus \
--TDeferredTriggerStatusData \
--TDefineStmt \
--TDeleteStmt \
--TDepth \
--TDestReceiver \
--TDisplay \
--TDl_info \
--TDlelem \
--TDllist \
--TDrawable \
--TDropGroupStmt \
--TDropPLangStmt \
--TDropStmt \
--TDropTrigStmt \
--TDropUserStmt \
--TDropdbStmt \
--TDumpContext \
--TDynamicFileList \
--TEDGE \
--TEState \
--TEdge \
--TEndBlobPtr \
--TEndBlobsPtr \
--TEndDataPtr \
--TErrorMessagePacket \
--TExcContext \
--TExcData \
--TExcDetail \
--TExcFrame \
--TExcId \
--TExcMessage \
--TExcProc \
--TException \
--TExecScanAccessMtd \
--TExecStatus \
--TExecStatusType \
--TExplainState \
--TExplainStmt \
--TExpr \
--TExprContext \
--TExprDoneCond \
--TFILE \
--TFSMChunk \
--TFSMHeader \
--TFSMRelation \
--TFUNMAP \
--TFetchStmt \
--TFieldSelect \
--TFile \
--TFileName \
--TFindSplitData \
--TFjoin \
--TFkConstraint \
--TFmgrBuiltin \
--TFmgrInfo \
--TFont \
--TFormData_pg_aggregate \
--TFormData_pg_am \
--TFormData_pg_amop \
--TFormData_pg_amproc \
--TFormData_pg_attrdef \
--TFormData_pg_attribute \
--TFormData_pg_class \
--TFormData_pg_database \
--TFormData_pg_description \
--TFormData_pg_group \
--TFormData_pg_index \
--TFormData_pg_inherits \
--TFormData_pg_language \
--TFormData_pg_largeobject \
--TFormData_pg_listener \
--TFormData_pg_opclass \
--TFormData_pg_operator \
--TFormData_pg_proc \
--TFormData_pg_relcheck \
--TFormData_pg_rewrite \
--TFormData_pg_sequence \
--TFormData_pg_shadow \
--TFormData_pg_statistic \
--TFormData_pg_trigger \
--TFormData_pg_type \
--TForm_pg_aggregate \
--TForm_pg_am \
--TForm_pg_amop \
--TForm_pg_amproc \
--TForm_pg_attrdef \
--TForm_pg_attribute \
--TForm_pg_class \
--TForm_pg_database \
--TForm_pg_description \
--TForm_pg_group \
--TForm_pg_index \
--TForm_pg_inherits \
--TForm_pg_language \
--TForm_pg_largeobject \
--TForm_pg_listener \
--TForm_pg_opclass \
--TForm_pg_operator \
--TForm_pg_proc \
--TForm_pg_relcheck \
--TForm_pg_rewrite \
--TForm_pg_sequence \
--TForm_pg_shadow \
--TForm_pg_statistic \
--TForm_pg_trigger \
--TForm_pg_type \
--TFormatNode \
--TFromExpr \
--TFunc \
--TFuncCall \
--TFuncDetailCode \
--TFuncInfo \
--TFunction \
--TFunctionCache \
--TFunctionCachePtr \
--TFunctionCallInfo \
--TFunctionCallInfoData \
--TGC \
--TGContext \
--TGISTBuildState \
--TGISTENTRY \
--TGISTPageOpaque \
--TGISTPageOpaqueData \
--TGISTSTACK \
--TGISTSTATE \
--TGISTScanList \
--TGISTScanListData \
--TGISTScanOpaque \
--TGISTScanOpaqueData \
--TGIST_SPLITVEC \
--TGUC_yy_size_t \
--TGUC_yy_state_type \
--TGene \
--TGrantStmt \
--TGroup \
--TGroupClause \
--TGroupState \
--TGucContext \
--THASHACTION \
--THASHBUCKET \
--THASHCTL \
--THASHELEMENT \
--THASHHDR \
--THASHSEGMENT \
--THASH_SEQ_STATUS \
--THISTORY_STATE \
--THIST_ENTRY \
--THOLDER \
--THOLDERTAG \
--THTAB \
--THTSV_Result \
--THash \
--THashBuildState \
--THashItem \
--THashItemData \
--THashJoin \
--THashJoinState \
--THashJoinTable \
--THashJoinTuple \
--THashJoinTupleData \
--THashMetaPage \
--THashMetaPageData \
--THashPageOpaque \
--THashPageOpaqueData \
--THashPath \
--THashScanList \
--THashScanListData \
--THashScanOpaque \
--THashScanOpaqueData \
--THashState \
--THashTableData \
--THeapAccessStatistics \
--THeapAccessStatisticsData \
--THeapScanDesc \
--THeapScanDescData \
--THeapTuple \
--THeapTupleData \
--THeapTupleHeader \
--THeapTupleHeaderData \
--TIdList \
--TIdent \
--TIncrementVarSublevelsUp_context \
--TIndInfo \
--TIndex \
--TIndexAttributeBitMap \
--TIndexAttributeBitMapData \
--TIndexBuildCallback \
--TIndexBulkDeleteCallback \
--TIndexBulkDeleteResult \
--TIndexElem \
--TIndexInfo \
--TIndexList \
--TIndexOptInfo \
--TIndexPath \
--TIndexScan \
--TIndexScanDesc \
--TIndexScanDescData \
--TIndexScanDescPtr \
--TIndexScanState \
--TIndexStmt \
--TIndexStrategy \
--TIndexStrategyData \
--TIndexTuple \
--TIndexTupleData \
--TIndirectBlock \
--TInhInfo \
--TInhOption \
--TInhPaths \
--TInsertIndexResult \
--TInsertIndexResultData \
--TInsertStmt \
--TInstrumentation \
--TInt8TransTypeData \
--TIntArray \
--TInt_yy_size_t \
--TInt_yy_state_type \
--TInterval \
--TInvalidationChunk \
--TInvalidationListHeader \
--TIpcMemoryId \
--TIpcMemoryKey \
--TIpcSemaphoreId \
--TIpcSemaphoreKey \
--TItem \
--TItemId \
--TItemIdData \
--TItemIdFlags \
--TItemLength \
--TItemOffset \
--TItemPointer \
--TItemPointerData \
--TIter \
--TJoin \
--TJoinExpr \
--TJoinInfo \
--TJoinPath \
--TJoinState \
--TJoinType \
--TJunkFilter \
--TKEYMAP_ENTRY \
--TKEYMAP_ENTRY_ARRAY \
--TKeyCode \
--TKeySuffix \
--TKeySym \
--TKeyWord \
--TKeymap \
--TLINE \
--TLOCK \
--TLOCKMASK \
--TLOCKMETHOD \
--TLOCKMETHODCTL \
--TLOCKMETHODTABLE \
--TLOCKMODE \
--TLOCKTAG \
--TLSEG \
--TLVRelStats \
--TLWLock \
--TLWLockId \
--TLWLockMode \
--TLargeObjectDesc \
--TLimit \
--TLimitState \
--TList \
--TListenStmt \
--TLoadStmt \
--TLocationIndex \
--TLockInfo \
--TLockInfoData \
--TLockRelId \
--TLockStmt \
--TLogicalTape \
--TLogicalTapeSet \
--TMask \
--TMaterial \
--TMaterialState \
--TMdfdVec \
--TMemoryContext \
--TMemoryContextData \
--TMemoryContextMethods \
--TMergeJoin \
--TMergeJoinState \
--TMergePath \
--TMsgType \
--TNUMCacheEntry \
--TNUMDesc \
--TNUMProc \
--TNUM_poz \
--TName \
--TNameData \
--TNestLoop \
--TNestLoopState \
--TNestPath \
--TNode \
--TNodeTag \
--TNotifyStmt \
--TNullTest \
--TNullTestType \
--TNumeric \
--TNumericData \
--TNumericDigit \
--TNumericVar \
--TOffset \
--TOffsetNumber \
--TOffsetVarNodes_context \
--TOid \
--TOidOptions \
--TOldstyle_fnextra \
--TOpType \
--TOpaque \
--TOpaqueData \
--TOper \
--TOperator \
--TOprInfo \
--TOutputContext \
--TOverflowPageAddress \
--TPATH \
--TPGFInfoFunction \
--TPGFunction \
--TPGLZ_DecompState \
--TPGLZ_Header \
--TPGLZ_HistEntry \
--TPGLZ_Strategy \
--TPGShmemHeader \
--TPG_LocaleCategories \
--TPGconn \
--TPGnotify \
--TPGresult \
--TPOLYGON \
--TPQArgBlock \
--TPQExpBuffer \
--TPQExpBufferData \
--TPQconninfoOption \
--TPQnoticeProcessor \
--TPQprintOpt \
--TPROC \
--TPROC_HDR \
--TPROC_QUEUE \
--TPacket \
--TPacketDoneProc \
--TPacketLen \
--TPacketState \
--TPage \
--TPageHeader \
--TPageHeaderData \
--TPageManagerMode \
--TPageOffset \
--TParam \
--TParamExecData \
--TParamListInfo \
--TParamListInfoData \
--TParamNo \
--TParseState \
--TPasswordPacket \
--TPasswordPacketV0 \
--TPath \
--TPathKeyItem \
--TPathKeysComparison \
--TPattern_Prefix_Status \
--TPattern_Type \
--TPendingRelDelete \
--TPgStat_Counter \
--TPgStat_Info \
--TPgStat_Msg \
--TPgStat_MsgActivity \
--TPgStat_MsgBestart \
--TPgStat_MsgBeterm \
--TPgStat_MsgDropdb \
--TPgStat_MsgDummy \
--TPgStat_MsgHdr \
--TPgStat_MsgResetcounter \
--TPgStat_MsgTabpurge \
--TPgStat_MsgTabstat \
--TPgStat_StatBeDead \
--TPgStat_StatBeEntry \
--TPgStat_StatDBEntry \
--TPgStat_StatTabEntry \
--TPgStat_TableEntry \
--TPg_finfo_record \
--TPixmap \
--TPlan \
--TPoint \
--TPointer \
--TPool \
--TPort \
--TPortal \
--TPortalData \
--TPortalHashEnt \
--TPostgresPollingStatusType \
--TPrintExtraTocPtr \
--TPrintTocDataPtr \
--TPrinttupAttrInfo \
--TPrivGrantee \
--TProcState \
--TProcedureStmt \
--TProcessingMode \
--TProjectionInfo \
--TProtocolVersion \
--TPsqlSettings \
--TQuery \
--TQueryDesc \
--TRI_OpreqHashEntry \
--TRI_QueryHashEntry \
--TRI_QueryKey \
--TRTBuildState \
--TRTSTACK \
--TRTSTATE \
--TRTScanList \
--TRTScanListData \
--TRTreePageOpaque \
--TRTreePageOpaqueData \
--TRTreeScanOpaque \
--TRTreeScanOpaqueData \
--TRangeQueryClause \
--TRangeSubselect \
--TRangeTblEntry \
--TRangeTblRef \
--TRangeVar \
--TRawColumnDefault \
--TReadBufPtr \
--TReadBytePtr \
--TReadExtraTocPtr \
--TRecipeStmt \
--TRegProcedure \
--TReindexStmt \
--TRelFileNode \
--TRelIdCacheEnt \
--TRelNameCacheEnt \
--TRelNodeCacheEnt \
--TRelOptInfo \
--TRelabelType \
--TRelation \
--TRelationBuildDescInfo \
--TRelationData \
--TRelationPtr \
--TRelativeTime \
--TRelids \
--TRemoveAggrStmt \
--TRemoveFuncStmt \
--TRemoveOperStmt \
--TRenameStmt \
--TResTarget \
--TResdom \
--TResolveNew_context \
--TRestoreOptions \
--TRestrictInfo \
--TResult \
--TResultRelInfo \
--TResultState \
--TRetrieveIndexResult \
--TRetrieveIndexResultData \
--TReturnSetInfo \
--TRewriteRule \
--TRmgrData \
--TRmgrId \
--TRuleLock \
--TRuleStmt \
--TSEMA \
--TSEM_MAP_ENTRY \
--TSHMEM_OFFSET \
--TSHM_QUEUE \
--TSISeg \
--TSPITupleTable \
--TSPLITCOST \
--TSPLITVEC \
--TSQLFunctionCache \
--TSQLFunctionCachePtr \
--TSaveArchivePtr \
--TScalarItem \
--TScalarMCVItem \
--TScan \
--TScanDirection \
--TScanKey \
--TScanKeyData \
--TScanKeyword \
--TScreen \
--TScreenFormat \
--TSelectStmt \
--TSelectivity \
--TSeqScan \
--TSeqTable \
--TSeqTableData \
--TSetOp \
--TSetOpCmd \
--TSetOpState \
--TSetOperation \
--TSetOperationStmt \
--TSharedInvalCatcacheMsg \
--TSharedInvalRelcacheMsg \
--TSharedInvalidationMessage \
--TShmemIndexEnt \
--TSigHandler \
--TSize \
--TSnapshot \
--TSnapshotData \
--TSockAddr \
--TSort \
--TSortClause \
--TSortFunctionKind \
--TSortGroupBy \
--TSortState \
--TSplitNumber \
--TStandardChunkHeader \
--TStartBlobPtr \
--TStartBlobsPtr \
--TStartDataPtr \
--TStartUpID \
--TStartupPacket \
--TStrategyEvaluation \
--TStrategyEvaluationData \
--TStrategyExpression \
--TStrategyExpressionData \
--TStrategyMap \
--TStrategyMapData \
--TStrategyNumber \
--TStrategyOperator \
--TStrategyOperatorData \
--TStrategyTerm \
--TStrategyTermData \
--TStrategyTransformMap \
--TStrategyTransformMapData \
--TStream \
--TStreamPtr \
--TStringInfo \
--TStringInfoData \
--TSubLink \
--TSubLinkType \
--TSubPlan \
--TSubqueryScan \
--TSubqueryScanState \
--TTAR_MEMBER \
--TTableInfo \
--TTargetEntry \
--TTcl_AppInitProc \
--TTcl_AsyncHandler \
--TTcl_AsyncProc \
--TTcl_CallFrame \
--TTcl_Channel \
--TTcl_ChannelProc \
--TTcl_ChannelType \
--TTcl_CloseProc \
--TTcl_CmdDeleteProc \
--TTcl_CmdInfo \
--TTcl_CmdProc \
--TTcl_CmdTraceProc \
--TTcl_Command \
--TTcl_DString \
--TTcl_DriverBlockModeProc \
--TTcl_DriverCloseProc \
--TTcl_DriverGetHandleProc \
--TTcl_DriverGetOptionProc \
--TTcl_DriverInputProc \
--TTcl_DriverOutputProc \
--TTcl_DriverSeekProc \
--TTcl_DriverSetOptionProc \
--TTcl_DriverWatchProc \
--TTcl_DupInternalRepProc \
--TTcl_EolTranslation \
--TTcl_Event \
--TTcl_EventCheckProc \
--TTcl_EventDeleteProc \
--TTcl_EventProc \
--TTcl_EventSetupProc \
--TTcl_ExitProc \
--TTcl_FileFreeProc \
--TTcl_FileProc \
--TTcl_FreeInternalRepProc \
--TTcl_FreeProc \
--TTcl_HashEntry \
--TTcl_HashSearch \
--TTcl_HashTable \
--TTcl_IdleProc \
--TTcl_Interp \
--TTcl_InterpDeleteProc \
--TTcl_MathProc \
--TTcl_Namespace \
--TTcl_NamespaceDeleteProc \
--TTcl_Obj \
--TTcl_ObjCmdProc \
--TTcl_ObjType \
--TTcl_PackageInitProc \
--TTcl_PathType \
--TTcl_Pid \
--TTcl_QueuePosition \
--TTcl_RegExp \
--TTcl_SetFromAnyProc \
--TTcl_TcpAcceptProc \
--TTcl_Time \
--TTcl_TimerProc \
--TTcl_TimerToken \
--TTcl_Trace \
--TTcl_UpdateStringProc \
--TTcl_Value \
--TTcl_ValueType \
--TTcl_Var \
--TTcl_VarTraceProc \
--TTempTable \
--TThingFile \
--TTidPath \
--TTidScan \
--TTidScanState \
--TTime \
--TTimeADT \
--TTimeInterval \
--TTimeIntervalData \
--TTimeTzADT \
--TTimestamp \
--TTimestampTz \
--TTk_3DBorder \
--TTk_Anchor \
--TTk_ArgvInfo \
--TTk_BindingTable \
--TTk_Canvas \
--TTk_CanvasTextInfo \
--TTk_ConfigSpec \
--TTk_Cursor \
--TTk_CustomOption \
--TTk_ErrorHandler \
--TTk_ErrorProc \
--TTk_EventProc \
--TTk_FakeWin \
--TTk_Font \
--TTk_FontMetrics \
--TTk_GenericProc \
--TTk_GeomLostSlaveProc \
--TTk_GeomMgr \
--TTk_GeomRequestProc \
--TTk_GetSelProc \
--TTk_Image \
--TTk_ImageChangedProc \
--TTk_ImageCreateProc \
--TTk_ImageDeleteProc \
--TTk_ImageDisplayProc \
--TTk_ImageFileMatchProc \
--TTk_ImageFileReadProc \
--TTk_ImageFileWriteProc \
--TTk_ImageFreeProc \
--TTk_ImageGetProc \
--TTk_ImageMaster \
--TTk_ImageStringMatchProc \
--TTk_ImageStringReadProc \
--TTk_ImageStringWriteProc \
--TTk_ImageType \
--TTk_Item \
--TTk_ItemAreaProc \
--TTk_ItemConfigureProc \
--TTk_ItemCoordProc \
--TTk_ItemCreateProc \
--TTk_ItemCursorProc \
--TTk_ItemDCharsProc \
--TTk_ItemDeleteProc \
--TTk_ItemDisplayProc \
--TTk_ItemIndexProc \
--TTk_ItemInsertProc \
--TTk_ItemPointProc \
--TTk_ItemPostscriptProc \
--TTk_ItemScaleProc \
--TTk_ItemSelectionProc \
--TTk_ItemTranslateProc \
--TTk_ItemType \
--TTk_Justify \
--TTk_LostSelProc \
--TTk_OptionParseProc \
--TTk_OptionPrintProc \
--TTk_PhotoHandle \
--TTk_PhotoImageBlock \
--TTk_PhotoImageFormat \
--TTk_RestrictAction \
--TTk_RestrictProc \
--TTk_SelectionProc \
--TTk_TextLayout \
--TTk_Uid \
--TTk_Window \
--TTmFromChar \
--TTmToChar \
--TTocEntry \
--TTocSortCompareFn \
--TTrackItem \
--TTransactionId \
--TTransactionState \
--TTransactionStateData \
--TTransactionStmt \
--TTrigInfo \
--TTrigger \
--TTriggerData \
--TTriggerDesc \
--TTriggerEvent \
--TTruncateStmt \
--TTupSortStatus \
--TTupStoreStatus \
--TTupleConstr \
--TTupleDesc \
--TTupleTable \
--TTupleTableData \
--TTupleTableSlot \
--TTuplesortstate \
--TTuplestorestate \
--TType \
--TTypeCast \
--TTypeInfo \
--TTypeName \
--TUNDO_LIST \
--TUnique \
--TUniqueState \
--TUnlistenStmt \
--TUpdateStmt \
--TUserAuth \
--TVFunction \
--TVRelList \
--TVRelListData \
--TVRelStats \
--TVTupleLink \
--TVTupleLinkData \
--TVTupleMove \
--TVTupleMoveData \
--TVacAttrStats \
--TVacPage \
--TVacPageData \
--TVacPageList \
--TVacPageListData \
--TVacRUsage \
--TVacuumStmt \
--TValue \
--TVar \
--TVarBit \
--TVarChar \
--TVariableCache \
--TVariableCacheData \
--TVariableResetStmt \
--TVariableSetStmt \
--TVariableShowStmt \
--TVariableSpace \
--TVersionStmt \
--TVfd \
--TViewStmt \
--TVisual \
--TVisualID \
--TWAIT_ORDER \
--TWindow \
--TWriteBufPtr \
--TWriteBytePtr \
--TWriteDataPtr \
--TWriteExtraTocPtr \
--TXActivateDeactivateEvent \
--TXActivateEvent \
--TXAnyEvent \
--TXArc \
--TXButtonEvent \
--TXButtonPressedEvent \
--TXButtonReleasedEvent \
--TXChar2b \
--TXCharStruct \
--TXCirculateEvent \
--TXCirculateRequestEvent \
--TXClientMessageEvent \
--TXColor \
--TXColormapEvent \
--TXConfigureEvent \
--TXConfigureRequestEvent \
--TXConnectionWatchProc \
--TXCreateWindowEvent \
--TXCrossingEvent \
--TXDeactivateEvent \
--TXDestroyWindowEvent \
--TXEDataObject \
--TXEnterWindowEvent \
--TXErrorEvent \
--TXErrorHandler \
--TXEvent \
--TXExposeEvent \
--TXExtCodes \
--TXExtData \
--TXFocusChangeEvent \
--TXFocusInEvent \
--TXFocusOutEvent \
--TXFontProp \
--TXFontSet \
--TXFontSetExtents \
--TXFontStruct \
--TXGCValues \
--TXGraphicsExposeEvent \
--TXGravityEvent \
--TXHostAddress \
--TXIC \
--TXICCallback \
--TXICProc \
--TXID \
--TXIDProc \
--TXIM \
--TXIMCallback \
--TXIMCaretDirection \
--TXIMCaretStyle \
--TXIMFeedback \
--TXIMHotKeyState \
--TXIMHotKeyTrigger \
--TXIMHotKeyTriggers \
--TXIMPreeditCaretCallbackStruct \
--TXIMPreeditDrawCallbackStruct \
--TXIMPreeditState \
--TXIMPreeditStateNotifyCallbackStruct \
--TXIMProc \
--TXIMResetState \
--TXIMStatusDataType \
--TXIMStatusDrawCallbackStruct \
--TXIMStringConversionCallbackStruct \
--TXIMStringConversionFeedback \
--TXIMStringConversionOperation \
--TXIMStringConversionPosition \
--TXIMStringConversionText \
--TXIMStringConversionType \
--TXIMStyle \
--TXIMStyles \
--TXIMText \
--TXIMValuesList \
--TXIOErrorHandler \
--TXImage \
--TXKeyEvent \
--TXKeyPressedEvent \
--TXKeyReleasedEvent \
--TXKeyboardControl \
--TXKeyboardState \
--TXKeymapEvent \
--TXLeaveWindowEvent \
--TXLogContRecord \
--TXLogCtlData \
--TXLogCtlInsert \
--TXLogCtlWrite \
--TXLogPageHeader \
--TXLogPageHeaderData \
--TXLogRecData \
--TXLogRecPtr \
--TXLogRecord \
--TXLogRelCacheEntry \
--TXLogRelDesc \
--TXLogwrtResult \
--TXLogwrtRqst \
--TXMapEvent \
--TXMapRequestEvent \
--TXMappingEvent \
--TXModifierKeymap \
--TXMotionEvent \
--TXNoExposeEvent \
--TXOC \
--TXOM \
--TXOMCharSetList \
--TXOMFontInfo \
--TXOMOrientation \
--TXOrientation \
--TXPixmapFormatValues \
--TXPoint \
--TXPointer \
--TXPointerMovedEvent \
--TXPropertyEvent \
--TXRectangle \
--TXReparentEvent \
--TXResizeRequestEvent \
--TXSegment \
--TXSelectionClearEvent \
--TXSelectionEvent \
--TXSelectionRequestEvent \
--TXSetWindowAttributes \
--TXTextItem \
--TXTextItem16 \
--TXTimeCoord \
--TXUnmapEvent \
--TXVaNestedList \
--TXVirtualEvent \
--TXVisibilityEvent \
--TXWindowAttributes \
--TXWindowChanges \
--TXidStatus \
--TXmbTextItem \
--TXwcTextItem \
--TYYSTYPE \
--TYY_BUFFER_STATE \
--TYY_CHAR \
--T_LIB_VERSION_TYPE \
--T_RuneEntry \
--T_RuneLocale \
--T_RuneRange \
--T_SPI_connection \
--T_SPI_plan \
--T_XPrivDisplay \
--Taclitem \
--Tadjust_inherited_attrs_context \
--Talloc_func \
--Tassoc_list \
--Tattribute_used_context \
--TbackslashResult \
--Tbits16 \
--Tbits32 \
--Tbits8 \
--Tbool \
--Tbool16 \
--Tbool32 \
--Tbool8 \
--Tbytea \
--Tcaddr_t \
--Tcat_t \
--Tcc_t \
--Tchar \
--Tcharf \
--Tcheck_ungrouped_columns_context \
--Tclock_t \
--Tclockid_t \
--Tcodes_t \
--Tcontain_var_reference_context \
--Tcrc64 \
--Tcset \
--Tdaddr_t \
--Tdatetkn \
--Tdeparse_context \
--Tdeparse_namespace \
--Tdev_t \
--Tdiv_t \
--Tdouble \
--TevalPlanQual \
--TexecRowMark \
--Texecution_state \
--Tf_smgr \
--Tfd_mask \
--Tfd_set \
--Tfinalize_primnode_results \
--Tfixpt_t \
--Tfloat \
--Tfloat32 \
--Tfloat32data \
--Tfloat4 \
--Tfloat64 \
--Tfloat64data \
--Tfloat8 \
--TformatLiteralOptions \
--Tfp_except \
--Tfp_rnd \
--Tfpclass_t \
--Tfpos_t \
--Tfree_func \
--Tfrom_mic_converter \
--Tfunc_ptr \
--Tgid_t \
--TgzFile \
--Thashnode \
--ThbaPort \
--Tin_addr_t \
--Tin_port_t \
--Tinet \
--Tinet_struct \
--Tino_t \
--Tint \
--Tint16 \
--Tint16_t \
--Tint16m_t \
--Tint2 \
--Tint2vector \
--Tint32 \
--Tint32_t \
--Tint32m_t \
--Tint4 \
--Tint64 \
--Tint64_t \
--Tint64m_t \
--Tint8 \
--Tint8_t \
--Tint8m_t \
--Tintf \
--Tjmp_buf \
--Tjoin_references_context \
--Tkey_t \
--TlclContext \
--TlclTocEntry \
--Tldiv_t \
--Tmacaddr \
--Tmb2wchar_with_len_converter \
--Tmblen_converter \
--Tmode_t \
--Tnlink_t \
--Toff_t \
--Toidvector \
--ToptType \
--Tpg_enc \
--Tpg_enc2name \
--Tpg_encname \
--Tpg_enconv \
--Tpg_local_to_utf \
--Tpg_pwd \
--Tpg_utf_to_local \
--Tpg_wchar \
--Tpg_wchar_tbl \
--Tpgsql_thing_t \
--Tpid_t \
--Tpqbool \
--Tpqsigfunc \
--TprintQueryOpt \
--TprintTableOpt \
--TpromptStatus_t \
--Tptrdiff_t \
--Tpull_var_clause_context \
--Tpull_varnos_context \
--Tq128_t \
--Tqaddr_t \
--Tquad_t \
--TrangeTableEntry_used_context \
--Tregex_t \
--Tregister_t \
--Tregmatch_t \
--Tregoff_t \
--Tregproc \
--Treplace_vars_with_subplan_refs_context \
--Trune_t \
--Tsa_family_t \
--Tsegsz_t \
--Tsequence_magic \
--Tsig_atomic_t \
--Tsig_t \
--Tsighandler_cxt \
--Tsigjmp_buf \
--Tsigset_t \
--Tsize_t \
--Tslock_t \
--Tsmgrid \
--Tsocklen_t \
--Tsop \
--Tsopno \
--Tspeed_t \
--TsqlparseInfo \
--TsqlparseState \
--Tssize_t \
--Tstack_t \
--Tswblk_t \
--Ttcflag_t \
--Ttcp_seq \
--Ttext \
--Ttime_t \
--Tto_mic_converter \
--TuInt \
--TuIntf \
--TuLong \
--TuLongf \
--Tu_char \
--Tu_int \
--Tu_int16_t \
--Tu_int16m_t \
--Tu_int32_t \
--Tu_int32m_t \
--Tu_int64_t \
--Tu_int64m_t \
--Tu_int8_t \
--Tu_int8m_t \
--Tu_long \
--Tu_quad_t \
--Tu_short \
--Tuch \
--Tuid_t \
--Tuint \
--Tuint16 \
--Tuint32 \
--Tuint64 \
--Tuint8 \
--Tushort \
--Tva_list \
--Tvarattrib \
--Tvm_offset_t \
--Tvm_size_t \
--Tvoid \
--Tvoidp \
--Tvoidpf \
--Twchar_t \
--Tword16 \
--Tword32 \
--Tword8 \
--Txl_btree_delete \
--Txl_btree_insert \
--Txl_btree_newroot \
--Txl_btree_split \
--Txl_btreetid \
--Txl_heap_clean \
--Txl_heap_delete \
--Txl_heap_header \
--Txl_heap_insert \
--Txl_heap_update \
--Txl_heaptid \
--Txl_seq_rec \
--Txl_xact_abort \
--Txl_xact_commit \
--Tyy_size_t \
--Tyy_state_type \
--Tz_stream \
--Tz_streamp \
--TBOOKMARK \
--TBOOL \
--TBYTE \
--TBindInfoClass \
--TCOL_INFO \
--TCONN_Status \
--TColumnInfoClass \
--TConnInfo \
--TConnectionClass \
--TDATE_STRUCT \
--TDWORD \
--TDataSourceToDriverProc \
--TDriverToDataSourceProc \
--TEnvironmentClass \
--TFIELD_INFO \
--TFILE \
--TGLOBAL_VALUES \
--THDBC \
--THENV \
--THSTMT \
--THWND \
--TLO_ARG \
--TLPARAM \
--TOid \
--TPTR \
--TParameterInfoClass \
--TProtocolVersion \
--TQResultClass \
--TQueryInfo \
--TQueryResultCode \
--TRETCODE \
--TSDOUBLE \
--TSDWORD \
--TSFLOAT \
--TSIMPLE_TIME \
--TSQLBIGINT \
--TSQLCHAR \
--TSQLDOUBLE \
--TSQLFLOAT \
--TSQLGUID \
--TSQLINTEGER \
--TSQLINTERVAL \
--TSQLREAL \
--TSQLSCHAR \
--TSQLSMALLINT \
--TSQLUBIGINT \
--TSQLUINTEGER \
--TSQLUSMALLINT \
--TSQL_DATE_STRUCT \
--TSQL_DAY_SECOND_STRUCT \
--TSQL_INTERVAL_STRUCT \
--TSQL_TIMESTAMP_STRUCT \
--TSQL_TIME_STRUCT \
--TSQL_YEAR_MONTH_STRUCT \
--TSSHOR \
--TSTMT_Status \
--TSWORD \
--TSocketClass \
--TStartupPacket \
--TStartupPacket6_2 \
--TStatementClass \
--TStatementOptions \
--TTABLE_INFO \
--TTIMESTAMP_STRUCT \
--TTIME_STRUCT \
--TTupleField \
--TTupleListClass \
--TTupleNode \
--TUCHAR \
--TUDWORD \
--TUWORD \
--TWORD \
--TWPARAM \
--T_LIB_VERSION_TYPE \
--T_RuneEntry \
--T_RuneLocale \
--T_RuneRange \
--Tcaddr_t \
--Tchar \
--Tclock_t \
--Tclockid_t \
--Tdaddr_t \
--Tdev_t \
--Tdiv_t \
--Tdouble \
--Tfd_mask \
--Tfd_set \
--Tfixpt_t \
--Tfloat \
--Tfpos_t \
--Tgid_t \
--Tin_addr_t \
--Tin_port_t \
--Tino_t \
--Tint \
--Tint16_t \
--Tint16m_t \
--Tint32_t \
--Tint32m_t \
--Tint64_t \
--Tint64m_t \
--Tint8_t \
--Tint8m_t \
--Tkey_t \
--Tldiv_t \
--Tmode_t \
--Tnlink_t \
--Toff_t \
--Tpid_t \
--Tq128_t \
--Tqaddr_t \
--Tquad_t \
--Tregister_t \
--Trune_t \
--Tsa_family_t \
--Tsegsz_t \
--Tsig_atomic_t \
--Tsig_t \
--Tsigset_t \
--Tsize_t \
--Tslock_t \
--Tsocklen_t \
--Tssize_t \
--Tstack_t \
--Tswblk_t \
--Ttime_t \
--Tu_char \
--Tu_int \
--Tu_int16_t \
--Tu_int16m_t \
--Tu_int32_t \
--Tu_int32m_t \
--Tu_int64_t \
--Tu_int64m_t \
--Tu_int8_t \
--Tu_int8m_t \
--Tu_long \
--Tu_quad_t \
--Tu_short \
--Tuid_t \
--Tuint \
--Tushort \
--Tva_list \
--Tvm_offset_t \
--Tvm_size_t \
--Tvoid \
--Twchar_t \
+-T ASN1_BIT_STRING \
+-T ASN1_BMPSTRING \
+-T ASN1_BOOLEAN \
+-T ASN1_CTX \
+-T ASN1_ENUMERATED \
+-T ASN1_GENERALIZEDTIME \
+-T ASN1_GENERALSTRING \
+-T ASN1_HEADER \
+-T ASN1_IA5STRING \
+-T ASN1_INTEGER \
+-T ASN1_METHOD \
+-T ASN1_NULL \
+-T ASN1_OBJECT \
+-T ASN1_OCTET_STRING \
+-T ASN1_PRINTABLESTRING \
+-T ASN1_STRING \
+-T ASN1_STRING_TABLE \
+-T ASN1_T61STRING \
+-T ASN1_TIME \
+-T ASN1_TYPE \
+-T ASN1_UNIVERSALSTRING \
+-T ASN1_UTCTIME \
+-T ASN1_UTF8STRING \
+-T ASN1_VISIBLESTRING \
+-T A_Const \
+-T A_Expr \
+-T A_Indices \
+-T AbsoluteTime \
+-T Acl \
+-T AclId \
+-T AclItem \
+-T AclMode \
+-T AclResult \
+-T Agg \
+-T AggInfo \
+-T AggState \
+-T AggStatePerAgg \
+-T AggStatePerAggData \
+-T Aggref \
+-T AlgCode \
+-T Alias \
+-T AllocBlock \
+-T AllocBlockData \
+-T AllocChunk \
+-T AllocChunkData \
+-T AllocPointer \
+-T AllocSet \
+-T AllocSetContext \
+-T AlterDatabaseSetStmt \
+-T AlterGroupStmt \
+-T AlterTableStmt \
+-T AlterUserSetStmt \
+-T AlterUserStmt \
+-T Append \
+-T AppendPath \
+-T AppendState \
+-T Archive \
+-T ArchiveEntryPtr \
+-T ArchiveFormat \
+-T ArchiveHandle \
+-T ArchiveMode \
+-T ArrayRef \
+-T ArrayType \
+-T Atom \
+-T AttInMetadata \
+-T AttrDefault \
+-T AttrNumber \
+-T AuthRequest \
+-T BF_KEY \
+-T BIGNUM \
+-T BIO \
+-T BIO_F_BUFFER_CTX \
+-T BIO_METHOD \
+-T BIO_dummy \
+-T BIT_STRING_BITNAME \
+-T BN_BLINDING \
+-T BN_CTX \
+-T BN_MONT_CTX \
+-T BN_RECP_CTX \
+-T BOX \
+-T BTBuildState \
+-T BTItem \
+-T BTItemData \
+-T BTMetaPageData \
+-T BTPageOpaque \
+-T BTPageOpaqueData \
+-T BTPageState \
+-T BTScanOpaque \
+-T BTScanOpaqueData \
+-T BTSpool \
+-T BTStack \
+-T BTStackData \
+-T BUF_MEM \
+-T Backend \
+-T BackendId \
+-T BitArray \
+-T BitIndex \
+-T BkpBlock \
+-T Block \
+-T BlockId \
+-T BlockIdData \
+-T BlockNumber \
+-T BoolPtr \
+-T BoolTestType \
+-T BooleanTest \
+-T BpChar \
+-T Bucket \
+-T BufFile \
+-T BufFlags \
+-T Buffer \
+-T BufferDesc \
+-T BufferLookupEnt \
+-T BufferTag \
+-T Byte \
+-T Bytef \
+-T CAST_KEY \
+-T CATEGORY \
+-T CBC_PARAM \
+-T CIRCLE \
+-T COMP_CTX \
+-T COMP_METHOD \
+-T CPFunction \
+-T CPPFunction \
+-T CRYPTO_EX_DATA \
+-T CRYPTO_EX_DATA_FUNCS \
+-T CRYPTO_EX_dup \
+-T CRYPTO_EX_free \
+-T CRYPTO_EX_new \
+-T CRYPTO_dynlock \
+-T CacheCallbackFunction \
+-T CancelRequestPacket \
+-T CaseExpr \
+-T CaseWhen \
+-T Cash \
+-T CatCList \
+-T CatCTup \
+-T CatCache \
+-T CatCacheHeader \
+-T CatalogIndexState \
+-T ChangeVarNodes_context \
+-T CheckPoint \
+-T CheckPointStmt \
+-T Chromosome \
+-T City \
+-T ClientData \
+-T ClogCtlData \
+-T ClogPageStatus \
+-T ClosePortalStmt \
+-T ClosePtr \
+-T ClusterStmt \
+-T CmdType \
+-T Colormap \
+-T ColumnDef \
+-T ColumnRef \
+-T CommandDest \
+-T CommandId \
+-T CommentStmt \
+-T CommonScanState \
+-T CommonState \
+-T CompositeTypeStmt \
+-T ConnStatusType \
+-T Const \
+-T ConstrCheck \
+-T ConstrType \
+-T Constraint \
+-T ConstraintTest \
+-T ConstraintTestType \
+-T ConstraintsSetStmt \
+-T ControlFileData \
+-T CopyReadResult \
+-T CopyStmt \
+-T Cost \
+-T CostSelector \
+-T CreateCastStmt \
+-T CreateConversionStmt \
+-T CreateDomainStmt \
+-T CreateFunctionStmt \
+-T CreateGroupStmt \
+-T CreateOpClassItem \
+-T CreateOpClassStmt \
+-T CreatePLangStmt \
+-T CreateSchemaStmt \
+-T CreateSchemaStmtContext \
+-T CreateSeqStmt \
+-T CreateStmt \
+-T CreateStmtContext \
+-T CreateTrigStmt \
+-T CreateUserStmt \
+-T CreatedbStmt \
+-T Cred \
+-T Cursor \
+-T CustomOutPtr \
+-T DBState \
+-T DCHCacheEntry \
+-T DCH_poz \
+-T DH \
+-T DH_METHOD \
+-T DIR \
+-T DR_printtup \
+-T DSA \
+-T DSA_METHOD \
+-T DSA_SIG \
+-T DataDumperPtr \
+-T DateADT \
+-T Datum \
+-T DatumPtr \
+-T DatumTuple \
+-T DeallocateStmt \
+-T DefElem \
+-T DeferredTriggerEvent \
+-T DeferredTriggerEventData \
+-T DeferredTriggerEventItem \
+-T DeferredTriggerStatus \
+-T DeferredTriggerStatusData \
+-T DefineStmt \
+-T DeleteStmt \
+-T DependencyType \
+-T Depth \
+-T DestReceiver \
+-T Display \
+-T Dl_info \
+-T Dlelem \
+-T Dllist \
+-T Drawable \
+-T DropBehavior \
+-T DropCastStmt \
+-T DropGroupStmt \
+-T DropPLangStmt \
+-T DropPropertyStmt \
+-T DropStmt \
+-T DropUserStmt \
+-T DropdbStmt \
+-T DumpContext \
+-T DynamicFileList \
+-T EDGE \
+-T ERR_STATE \
+-T ERR_STRING_DATA \
+-T EState \
+-T EVP_CIPHER \
+-T EVP_CIPHER_CTX \
+-T EVP_CIPHER_INFO \
+-T EVP_ENCODE_CTX \
+-T EVP_MD \
+-T EVP_MD_CTX \
+-T EVP_PBE_KEYGEN \
+-T EVP_PKEY \
+-T Edge \
+-T EndBlobPtr \
+-T EndBlobsPtr \
+-T EndDataPtr \
+-T ExecScanAccessMtd \
+-T ExecStatus \
+-T ExecStatusType \
+-T ExecuteStmt \
+-T ExplainState \
+-T ExplainStmt \
+-T Expr \
+-T ExprContext \
+-T ExprContextCallbackFunction \
+-T ExprContext_CB \
+-T ExprDoneCond \
+-T ExprFieldSelect \
+-T FILE \
+-T FSMChunk \
+-T FSMHeader \
+-T FSMRelation \
+-T FUNMAP \
+-T FetchStmt \
+-T FieldSelect \
+-T File \
+-T FileName \
+-T FindSplitData \
+-T Fjoin \
+-T FkConstraint \
+-T FmgrBuiltin \
+-T FmgrInfo \
+-T Font \
+-T FormData_pg_aggregate \
+-T FormData_pg_am \
+-T FormData_pg_amop \
+-T FormData_pg_amproc \
+-T FormData_pg_attrdef \
+-T FormData_pg_attribute \
+-T FormData_pg_cast \
+-T FormData_pg_class \
+-T FormData_pg_constraint \
+-T FormData_pg_conversion \
+-T FormData_pg_database \
+-T FormData_pg_depend \
+-T FormData_pg_description \
+-T FormData_pg_group \
+-T FormData_pg_index \
+-T FormData_pg_inherits \
+-T FormData_pg_language \
+-T FormData_pg_largeobject \
+-T FormData_pg_listener \
+-T FormData_pg_namespace \
+-T FormData_pg_opclass \
+-T FormData_pg_operator \
+-T FormData_pg_proc \
+-T FormData_pg_rewrite \
+-T FormData_pg_sequence \
+-T FormData_pg_shadow \
+-T FormData_pg_statistic \
+-T FormData_pg_trigger \
+-T FormData_pg_type \
+-T Form_pg_aggregate \
+-T Form_pg_am \
+-T Form_pg_amop \
+-T Form_pg_amproc \
+-T Form_pg_attrdef \
+-T Form_pg_attribute \
+-T Form_pg_cast \
+-T Form_pg_class \
+-T Form_pg_constraint \
+-T Form_pg_conversion \
+-T Form_pg_database \
+-T Form_pg_depend \
+-T Form_pg_description \
+-T Form_pg_group \
+-T Form_pg_index \
+-T Form_pg_inherits \
+-T Form_pg_language \
+-T Form_pg_largeobject \
+-T Form_pg_listener \
+-T Form_pg_namespace \
+-T Form_pg_opclass \
+-T Form_pg_operator \
+-T Form_pg_proc \
+-T Form_pg_rewrite \
+-T Form_pg_sequence \
+-T Form_pg_shadow \
+-T Form_pg_statistic \
+-T Form_pg_trigger \
+-T Form_pg_type \
+-T FormatNode \
+-T FromExpr \
+-T Func \
+-T FuncCall \
+-T FuncCallContext \
+-T FuncCandidateList \
+-T FuncDetailCode \
+-T FuncInfo \
+-T FuncWithArgs \
+-T Function \
+-T FunctionCache \
+-T FunctionCachePtr \
+-T FunctionCallInfo \
+-T FunctionCallInfoData \
+-T FunctionScan \
+-T FunctionScanState \
+-T GC \
+-T GContext \
+-T GISTBuildState \
+-T GISTENTRY \
+-T GISTPageOpaque \
+-T GISTPageOpaqueData \
+-T GISTSTACK \
+-T GISTSTATE \
+-T GISTScanList \
+-T GISTScanListData \
+-T GISTScanOpaque \
+-T GISTScanOpaqueData \
+-T GIST_SPLITVEC \
+-T GUC_yy_size_t \
+-T GUC_yy_state_type \
+-T Gene \
+-T GrantObjectType \
+-T GrantStmt \
+-T Group \
+-T GroupClause \
+-T GroupState \
+-T GucContext \
+-T GucSource \
+-T HASHACTION \
+-T HASHBUCKET \
+-T HASHCTL \
+-T HASHELEMENT \
+-T HASHHDR \
+-T HASHSEGMENT \
+-T HASH_SEQ_STATUS \
+-T HISTORY_STATE \
+-T HIST_ENTRY \
+-T HTAB \
+-T HTSV_Result \
+-T Hash \
+-T HashBuildState \
+-T HashItem \
+-T HashItemData \
+-T HashJoin \
+-T HashJoinState \
+-T HashJoinTable \
+-T HashJoinTuple \
+-T HashJoinTupleData \
+-T HashMetaPage \
+-T HashMetaPageData \
+-T HashPageOpaque \
+-T HashPageOpaqueData \
+-T HashPath \
+-T HashScanList \
+-T HashScanListData \
+-T HashScanOpaque \
+-T HashScanOpaqueData \
+-T HashState \
+-T HashTableData \
+-T HeapScanDesc \
+-T HeapScanDescData \
+-T HeapTuple \
+-T HeapTupleData \
+-T HeapTupleHeader \
+-T HeapTupleHeaderData \
+-T IdList \
+-T IncrementVarSublevelsUp_context \
+-T Index \
+-T IndexAttributeBitMap \
+-T IndexAttributeBitMapData \
+-T IndexAttrs \
+-T IndexBuildCallback \
+-T IndexBulkDeleteCallback \
+-T IndexBulkDeleteResult \
+-T IndexElem \
+-T IndexInfo \
+-T IndexList \
+-T IndexOptInfo \
+-T IndexPath \
+-T IndexScan \
+-T IndexScanDesc \
+-T IndexScanDescData \
+-T IndexScanDescPtr \
+-T IndexScanState \
+-T IndexStmt \
+-T IndexStrategy \
+-T IndexStrategyData \
+-T IndexTuple \
+-T IndexTupleData \
+-T IndirectBlock \
+-T InhInfo \
+-T InhOption \
+-T InhPaths \
+-T InsertDefault \
+-T InsertIndexResult \
+-T InsertIndexResultData \
+-T InsertStmt \
+-T Instrumentation \
+-T Int8TransTypeData \
+-T IntArray \
+-T Int_yy_size_t \
+-T Int_yy_state_type \
+-T Interval \
+-T InvalidationChunk \
+-T InvalidationListHeader \
+-T IpcMemoryId \
+-T IpcMemoryKey \
+-T IpcSemaphoreId \
+-T IpcSemaphoreKey \
+-T Item \
+-T ItemId \
+-T ItemIdData \
+-T ItemIdFlags \
+-T ItemLength \
+-T ItemOffset \
+-T ItemPointer \
+-T ItemPointerData \
+-T Join \
+-T JoinExpr \
+-T JoinInfo \
+-T JoinPath \
+-T JoinState \
+-T JoinType \
+-T JunkFilter \
+-T KEYMAP_ENTRY \
+-T KEYMAP_ENTRY_ARRAY \
+-T KeyCode \
+-T KeySuffix \
+-T KeySym \
+-T KeyWord \
+-T Keymap \
+-T LHASH \
+-T LHASH_NODE \
+-T LINE \
+-T LOCK \
+-T LOCKMASK \
+-T LOCKMETHOD \
+-T LOCKMETHODTABLE \
+-T LOCKMODE \
+-T LOCKTAG \
+-T LSEG \
+-T LVRelStats \
+-T LWLock \
+-T LWLockId \
+-T LWLockMode \
+-T LargeObjectDesc \
+-T Limit \
+-T LimitState \
+-T List \
+-T ListenStmt \
+-T LoadStmt \
+-T LocationIndex \
+-T LockData \
+-T LockInfo \
+-T LockInfoData \
+-T LockRelId \
+-T LockStmt \
+-T LogicalTape \
+-T LogicalTapeSet \
+-T MD2_CTX \
+-T MD4_CTX \
+-T MD5_CTX \
+-T MDC2_CTX \
+-T Mask \
+-T Material \
+-T MaterialState \
+-T MdfdVec \
+-T MemoryContext \
+-T MemoryContextData \
+-T MemoryContextMethods \
+-T MergeJoin \
+-T MergeJoinState \
+-T MergePath \
+-T MsgType \
+-T NETSCAPE_CERT_SEQUENCE \
+-T NETSCAPE_SPKAC \
+-T NETSCAPE_SPKI \
+-T NUMCacheEntry \
+-T NUMDesc \
+-T NUMProc \
+-T NUM_poz \
+-T Name \
+-T NameData \
+-T NamespaceInfo \
+-T NestLoop \
+-T NestLoopState \
+-T NestPath \
+-T Node \
+-T NodeTag \
+-T NotifyStmt \
+-T NullTest \
+-T NullTestType \
+-T Numeric \
+-T NumericData \
+-T NumericDigit \
+-T NumericVar \
+-T OBJ_NAME \
+-T ObjectAddress \
+-T ObjectAddresses \
+-T ObjectClasses \
+-T Offset \
+-T OffsetNumber \
+-T OffsetVarNodes_context \
+-T Oid \
+-T OidOptions \
+-T Oldstyle_fnextra \
+-T OpClassCacheEnt \
+-T OpType \
+-T OpclassCandidateList \
+-T OpclassInfo \
+-T Oper \
+-T Operator \
+-T OprInfo \
+-T OutputContext \
+-T OverflowPageAddress \
+-T PATH \
+-T PBE2PARAM \
+-T PBEPARAM \
+-T PBKDF2PARAM \
+-T PEM_CTX \
+-T PEM_ENCODE_SEAL_CTX \
+-T PEM_USER \
+-T PGFInfoFunction \
+-T PGFunction \
+-T PGLZ_DecompState \
+-T PGLZ_Header \
+-T PGLZ_HistEntry \
+-T PGLZ_Strategy \
+-T PGPROC \
+-T PGSemaphore \
+-T PGSemaphoreData \
+-T PGShmemHeader \
+-T PG_Lock_Status \
+-T PGconn \
+-T PGnotify \
+-T PGresult \
+-T PKCS7 \
+-T PKCS7_DIGEST \
+-T PKCS7_ENCRYPT \
+-T PKCS7_ENC_CONTENT \
+-T PKCS7_ENVELOPE \
+-T PKCS7_ISSUER_AND_SERIAL \
+-T PKCS7_RECIP_INFO \
+-T PKCS7_SIGNED \
+-T PKCS7_SIGNER_INFO \
+-T PKCS7_SIGN_ENVELOPE \
+-T PKCS8_PRIV_KEY_INFO \
+-T PMSignalReason \
+-T POLYGON \
+-T PQArgBlock \
+-T PQExpBuffer \
+-T PQExpBufferData \
+-T PQconninfoOption \
+-T PQnoticeProcessor \
+-T PQprintOpt \
+-T PROCLOCK \
+-T PROCLOCKTAG \
+-T PROC_HDR \
+-T PROC_QUEUE \
+-T PacketLen \
+-T Page \
+-T PageHeader \
+-T PageHeaderData \
+-T PageOffset \
+-T Param \
+-T ParamExecData \
+-T ParamListInfo \
+-T ParamListInfoData \
+-T ParamRef \
+-T ParseState \
+-T Path \
+-T PathKeyItem \
+-T PathKeysComparison \
+-T Pattern_Prefix_Status \
+-T Pattern_Type \
+-T PendingRelDelete \
+-T PgStat_Counter \
+-T PgStat_Info \
+-T PgStat_Msg \
+-T PgStat_MsgActivity \
+-T PgStat_MsgBestart \
+-T PgStat_MsgBeterm \
+-T PgStat_MsgDropdb \
+-T PgStat_MsgDummy \
+-T PgStat_MsgHdr \
+-T PgStat_MsgResetcounter \
+-T PgStat_MsgTabpurge \
+-T PgStat_MsgTabstat \
+-T PgStat_StatBeDead \
+-T PgStat_StatBeEntry \
+-T PgStat_StatDBEntry \
+-T PgStat_StatTabEntry \
+-T PgStat_TableEntry \
+-T Pg_finfo_record \
+-T Pixmap \
+-T Plan \
+-T Point \
+-T Pointer \
+-T Pool \
+-T Port \
+-T Portal \
+-T PortalData \
+-T PortalHashEnt \
+-T PostgresPollingStatusType \
+-T PrepareStmt \
+-T PrintExtraTocPtr \
+-T PrintTocDataPtr \
+-T PrinttupAttrInfo \
+-T PrivGrantee \
+-T PrivTarget \
+-T ProcState \
+-T ProcessingMode \
+-T ProjectionInfo \
+-T ProtocolVersion \
+-T PsqlSettings \
+-T Query \
+-T QueryDesc \
+-T QueryHashEntry \
+-T RC2_KEY \
+-T RC4_KEY \
+-T RIPEMD160_CTX \
+-T RI_OpreqHashEntry \
+-T RI_QueryHashEntry \
+-T RI_QueryKey \
+-T RSA \
+-T RSA_METHOD \
+-T RTBuildState \
+-T RTEKind \
+-T RTSTACK \
+-T RTSTATE \
+-T RTScanList \
+-T RTScanListData \
+-T RTreePageOpaque \
+-T RTreePageOpaqueData \
+-T RTreeScanOpaque \
+-T RTreeScanOpaqueData \
+-T RangeFunction \
+-T RangeQueryClause \
+-T RangeSubselect \
+-T RangeTblEntry \
+-T RangeTblRef \
+-T RangeVar \
+-T RawColumnDefault \
+-T ReadBufPtr \
+-T ReadBytePtr \
+-T ReadExtraTocPtr \
+-T RegProcedure \
+-T ReindexStmt \
+-T RelFileNode \
+-T RelIdCacheEnt \
+-T RelNameCacheEnt \
+-T RelNodeCacheEnt \
+-T RelOptInfo \
+-T RelOptKind \
+-T RelabelType \
+-T Relation \
+-T RelationBuildDescInfo \
+-T RelationData \
+-T RelationPtr \
+-T RelativeTime \
+-T Relids \
+-T RemoveAggrStmt \
+-T RemoveFuncStmt \
+-T RemoveOpClassStmt \
+-T RemoveOperStmt \
+-T RenameStmt \
+-T ResTarget \
+-T Resdom \
+-T ResolveNew_context \
+-T RestoreOptions \
+-T RestrictInfo \
+-T Result \
+-T ResultRelInfo \
+-T ResultState \
+-T ReturnSetInfo \
+-T RewriteRule \
+-T RmgrData \
+-T RmgrId \
+-T RuleLock \
+-T RuleStmt \
+-T SHA_CTX \
+-T SHMEM_OFFSET \
+-T SHM_QUEUE \
+-T SISeg \
+-T SPITupleTable \
+-T SPLITCOST \
+-T SPLITVEC \
+-T SQLFunctionCache \
+-T SQLFunctionCachePtr \
+-T SSL \
+-T SSL2_STATE \
+-T SSL3_BUFFER \
+-T SSL3_RECORD \
+-T SSL3_STATE \
+-T SSL_CIPHER \
+-T SSL_COMP \
+-T SSL_CTX \
+-T SSL_METHOD \
+-T SSL_SESSION \
+-T STACK \
+-T SaveArchivePtr \
+-T ScalarItem \
+-T ScalarMCVItem \
+-T Scan \
+-T ScanDirection \
+-T ScanKey \
+-T ScanKeyData \
+-T ScanKeyword \
+-T Screen \
+-T ScreenFormat \
+-T SelectStmt \
+-T Selectivity \
+-T SeqScan \
+-T SeqTable \
+-T SeqTableData \
+-T SetFunctionReturnMode \
+-T SetOp \
+-T SetOpCmd \
+-T SetOpState \
+-T SetOperation \
+-T SetOperationStmt \
+-T SharedInvalCatcacheMsg \
+-T SharedInvalRelcacheMsg \
+-T SharedInvalidationMessage \
+-T ShmemIndexEnt \
+-T SigHandler \
+-T Size \
+-T Snapshot \
+-T SnapshotData \
+-T SockAddr \
+-T Sort \
+-T SortClause \
+-T SortFunctionKind \
+-T SortGroupBy \
+-T SortState \
+-T SplitNumber \
+-T StandardChunkHeader \
+-T StartBlobPtr \
+-T StartBlobsPtr \
+-T StartDataPtr \
+-T StartUpID \
+-T StartupPacket \
+-T StrategyEvaluation \
+-T StrategyEvaluationData \
+-T StrategyExpression \
+-T StrategyExpressionData \
+-T StrategyMap \
+-T StrategyMapData \
+-T StrategyNumber \
+-T StrategyOperator \
+-T StrategyOperatorData \
+-T StrategyTerm \
+-T StrategyTermData \
+-T StrategyTransformMap \
+-T StrategyTransformMapData \
+-T StringInfo \
+-T StringInfoData \
+-T SubLink \
+-T SubLinkType \
+-T SubPlan \
+-T SubqueryScan \
+-T SubqueryScanState \
+-T SysScanDesc \
+-T SysScanDescData \
+-T TAR_MEMBER \
+-T TableInfo \
+-T TargetEntry \
+-T TclStubHooks \
+-T TclStubs \
+-T Tcl_AppInitProc \
+-T Tcl_AsyncHandler \
+-T Tcl_AsyncProc \
+-T Tcl_CallFrame \
+-T Tcl_Channel \
+-T Tcl_ChannelProc \
+-T Tcl_ChannelType \
+-T Tcl_ChannelTypeVersion \
+-T Tcl_CloseProc \
+-T Tcl_CmdDeleteProc \
+-T Tcl_CmdInfo \
+-T Tcl_CmdProc \
+-T Tcl_CmdTraceProc \
+-T Tcl_Command \
+-T Tcl_Condition \
+-T Tcl_CreateFileHandlerProc \
+-T Tcl_DString \
+-T Tcl_DeleteFileHandlerProc \
+-T Tcl_DriverBlockModeProc \
+-T Tcl_DriverClose2Proc \
+-T Tcl_DriverCloseProc \
+-T Tcl_DriverFlushProc \
+-T Tcl_DriverGetHandleProc \
+-T Tcl_DriverGetOptionProc \
+-T Tcl_DriverHandlerProc \
+-T Tcl_DriverInputProc \
+-T Tcl_DriverOutputProc \
+-T Tcl_DriverSeekProc \
+-T Tcl_DriverSetOptionProc \
+-T Tcl_DriverWatchProc \
+-T Tcl_DupInternalRepProc \
+-T Tcl_Encoding \
+-T Tcl_EncodingConvertProc \
+-T Tcl_EncodingFreeProc \
+-T Tcl_EncodingState \
+-T Tcl_EncodingType \
+-T Tcl_EolTranslation \
+-T Tcl_Event \
+-T Tcl_EventCheckProc \
+-T Tcl_EventDeleteProc \
+-T Tcl_EventProc \
+-T Tcl_EventSetupProc \
+-T Tcl_ExitProc \
+-T Tcl_FileFreeProc \
+-T Tcl_FileProc \
+-T Tcl_FreeInternalRepProc \
+-T Tcl_FreeProc \
+-T Tcl_HashEntry \
+-T Tcl_HashSearch \
+-T Tcl_HashTable \
+-T Tcl_IdleProc \
+-T Tcl_Interp \
+-T Tcl_InterpDeleteProc \
+-T Tcl_MainLoopProc \
+-T Tcl_MathProc \
+-T Tcl_Mutex \
+-T Tcl_Namespace \
+-T Tcl_NamespaceDeleteProc \
+-T Tcl_NotifierProcs \
+-T Tcl_Obj \
+-T Tcl_ObjCmdProc \
+-T Tcl_ObjType \
+-T Tcl_PackageInitProc \
+-T Tcl_PanicProc \
+-T Tcl_Parse \
+-T Tcl_PathType \
+-T Tcl_Pid \
+-T Tcl_QueuePosition \
+-T Tcl_RegExp \
+-T Tcl_RegExpIndices \
+-T Tcl_RegExpInfo \
+-T Tcl_SavedResult \
+-T Tcl_SetFromAnyProc \
+-T Tcl_SetTimerProc \
+-T Tcl_Stat_ \
+-T Tcl_TcpAcceptProc \
+-T Tcl_ThreadCreateProc \
+-T Tcl_ThreadDataKey \
+-T Tcl_ThreadId \
+-T Tcl_Time \
+-T Tcl_TimerProc \
+-T Tcl_TimerToken \
+-T Tcl_Token \
+-T Tcl_Trace \
+-T Tcl_UniChar \
+-T Tcl_UpdateStringProc \
+-T Tcl_Value \
+-T Tcl_ValueType \
+-T Tcl_Var \
+-T Tcl_VarTraceProc \
+-T Tcl_WaitForEventProc \
+-T ThingFile \
+-T TidPath \
+-T TidScan \
+-T TidScanState \
+-T Time \
+-T TimeADT \
+-T TimeInterval \
+-T TimeIntervalData \
+-T TimeTzADT \
+-T Timestamp \
+-T TimestampTz \
+-T TkStubHooks \
+-T TkStubs \
+-T Tk_3DBorder \
+-T Tk_Anchor \
+-T Tk_ArgvInfo \
+-T Tk_BindingTable \
+-T Tk_Canvas \
+-T Tk_CanvasTextInfo \
+-T Tk_ClientMessageProc \
+-T Tk_ConfigSpec \
+-T Tk_ConfigTypes \
+-T Tk_Cursor \
+-T Tk_CustomOption \
+-T Tk_Dash \
+-T Tk_ErrorHandler \
+-T Tk_ErrorProc \
+-T Tk_EventProc \
+-T Tk_FakeWin \
+-T Tk_Font \
+-T Tk_FontMetrics \
+-T Tk_GenericProc \
+-T Tk_GeomLostSlaveProc \
+-T Tk_GeomMgr \
+-T Tk_GeomRequestProc \
+-T Tk_GetSelProc \
+-T Tk_Image \
+-T Tk_ImageChangedProc \
+-T Tk_ImageCreateProc \
+-T Tk_ImageDeleteProc \
+-T Tk_ImageDisplayProc \
+-T Tk_ImageFileMatchProc \
+-T Tk_ImageFileReadProc \
+-T Tk_ImageFileWriteProc \
+-T Tk_ImageFreeProc \
+-T Tk_ImageGetProc \
+-T Tk_ImageMaster \
+-T Tk_ImagePostscriptProc \
+-T Tk_ImageStringMatchProc \
+-T Tk_ImageStringReadProc \
+-T Tk_ImageStringWriteProc \
+-T Tk_ImageType \
+-T Tk_Item \
+-T Tk_ItemAreaProc \
+-T Tk_ItemConfigureProc \
+-T Tk_ItemCoordProc \
+-T Tk_ItemCreateProc \
+-T Tk_ItemCursorProc \
+-T Tk_ItemDCharsProc \
+-T Tk_ItemDeleteProc \
+-T Tk_ItemDisplayProc \
+-T Tk_ItemIndexProc \
+-T Tk_ItemInsertProc \
+-T Tk_ItemPointProc \
+-T Tk_ItemPostscriptProc \
+-T Tk_ItemScaleProc \
+-T Tk_ItemSelectionProc \
+-T Tk_ItemTranslateProc \
+-T Tk_ItemType \
+-T Tk_Justify \
+-T Tk_LostSelProc \
+-T Tk_OptionParseProc \
+-T Tk_OptionPrintProc \
+-T Tk_OptionSpec \
+-T Tk_OptionTable \
+-T Tk_OptionType \
+-T Tk_Outline \
+-T Tk_PhotoHandle \
+-T Tk_PhotoImageBlock \
+-T Tk_PhotoImageFormat \
+-T Tk_PostscriptInfo \
+-T Tk_RestrictAction \
+-T Tk_RestrictProc \
+-T Tk_SavedOption \
+-T Tk_SavedOptions \
+-T Tk_SelectionProc \
+-T Tk_SmoothMethod \
+-T Tk_State \
+-T Tk_TSOffset \
+-T Tk_TextLayout \
+-T Tk_Uid \
+-T Tk_Window \
+-T TmFromChar \
+-T TmToChar \
+-T TocEntry \
+-T TocSortCompareFn \
+-T TrackItem \
+-T TransactionId \
+-T TransactionState \
+-T TransactionStateData \
+-T TransactionStmt \
+-T Trigger \
+-T TriggerData \
+-T TriggerDesc \
+-T TriggerEvent \
+-T TruncateStmt \
+-T TupOutputState \
+-T TupSortStatus \
+-T TupStoreStatus \
+-T TupleConstr \
+-T TupleDesc \
+-T TupleTable \
+-T TupleTableData \
+-T TupleTableSlot \
+-T Tuplesortstate \
+-T Tuplestorestate \
+-T Type \
+-T TypeCast \
+-T TypeInfo \
+-T TypeName \
+-T UNDO_LIST \
+-T Unique \
+-T UniqueState \
+-T UnlistenStmt \
+-T UpdateStmt \
+-T UserAuth \
+-T VFunction \
+-T VRelStats \
+-T VTupleLink \
+-T VTupleLinkData \
+-T VTupleMove \
+-T VTupleMoveData \
+-T VacAttrStats \
+-T VacPage \
+-T VacPageData \
+-T VacPageList \
+-T VacPageListData \
+-T VacRUsage \
+-T VacuumStmt \
+-T Value \
+-T Var \
+-T VarBit \
+-T VarChar \
+-T VariableCache \
+-T VariableCacheData \
+-T VariableResetStmt \
+-T VariableSetStmt \
+-T VariableShowStmt \
+-T VariableSpace \
+-T Vfd \
+-T ViewStmt \
+-T Visual \
+-T VisualID \
+-T WAIT_ORDER \
+-T Window \
+-T WriteBufPtr \
+-T WriteBytePtr \
+-T WriteDataPtr \
+-T WriteExtraTocPtr \
+-T X509 \
+-T X509_ALGOR \
+-T X509_ATTRIBUTE \
+-T X509_CERT_AUX \
+-T X509_CERT_FILE_CTX \
+-T X509_CINF \
+-T X509_CRL \
+-T X509_CRL_INFO \
+-T X509_EXTENSION \
+-T X509_HASH_DIR_CTX \
+-T X509_INFO \
+-T X509_LOOKUP \
+-T X509_LOOKUP_METHOD \
+-T X509_NAME \
+-T X509_NAME_ENTRY \
+-T X509_OBJECT \
+-T X509_OBJECTS \
+-T X509_PKEY \
+-T X509_PUBKEY \
+-T X509_REQ \
+-T X509_REQ_INFO \
+-T X509_REVOKED \
+-T X509_SIG \
+-T X509_STORE \
+-T X509_STORE_CTX \
+-T X509_TRUST \
+-T X509_VAL \
+-T XActivateDeactivateEvent \
+-T XActivateEvent \
+-T XAnyEvent \
+-T XArc \
+-T XButtonEvent \
+-T XButtonPressedEvent \
+-T XButtonReleasedEvent \
+-T XChar2b \
+-T XCharStruct \
+-T XCirculateEvent \
+-T XCirculateRequestEvent \
+-T XClientMessageEvent \
+-T XColor \
+-T XColormapEvent \
+-T XConfigureEvent \
+-T XConfigureRequestEvent \
+-T XConnectionWatchProc \
+-T XCreateWindowEvent \
+-T XCrossingEvent \
+-T XDeactivateEvent \
+-T XDestroyWindowEvent \
+-T XEDataObject \
+-T XEnterWindowEvent \
+-T XErrorEvent \
+-T XErrorHandler \
+-T XEvent \
+-T XExposeEvent \
+-T XExtCodes \
+-T XExtData \
+-T XFocusChangeEvent \
+-T XFocusInEvent \
+-T XFocusOutEvent \
+-T XFontProp \
+-T XFontSet \
+-T XFontSetExtents \
+-T XFontStruct \
+-T XGCValues \
+-T XGraphicsExposeEvent \
+-T XGravityEvent \
+-T XHostAddress \
+-T XIC \
+-T XICCallback \
+-T XICProc \
+-T XID \
+-T XIDProc \
+-T XIM \
+-T XIMCallback \
+-T XIMCaretDirection \
+-T XIMCaretStyle \
+-T XIMFeedback \
+-T XIMHotKeyState \
+-T XIMHotKeyTrigger \
+-T XIMHotKeyTriggers \
+-T XIMPreeditCaretCallbackStruct \
+-T XIMPreeditDrawCallbackStruct \
+-T XIMPreeditState \
+-T XIMPreeditStateNotifyCallbackStruct \
+-T XIMProc \
+-T XIMResetState \
+-T XIMStatusDataType \
+-T XIMStatusDrawCallbackStruct \
+-T XIMStringConversionCallbackStruct \
+-T XIMStringConversionFeedback \
+-T XIMStringConversionOperation \
+-T XIMStringConversionPosition \
+-T XIMStringConversionText \
+-T XIMStringConversionType \
+-T XIMStyle \
+-T XIMStyles \
+-T XIMText \
+-T XIMValuesList \
+-T XIOErrorHandler \
+-T XImage \
+-T XKeyEvent \
+-T XKeyPressedEvent \
+-T XKeyReleasedEvent \
+-T XKeyboardControl \
+-T XKeyboardState \
+-T XKeymapEvent \
+-T XLeaveWindowEvent \
+-T XLogContRecord \
+-T XLogCtlData \
+-T XLogCtlInsert \
+-T XLogCtlWrite \
+-T XLogPageHeader \
+-T XLogPageHeaderData \
+-T XLogRecData \
+-T XLogRecPtr \
+-T XLogRecord \
+-T XLogRelCacheEntry \
+-T XLogRelDesc \
+-T XLogwrtResult \
+-T XLogwrtRqst \
+-T XMapEvent \
+-T XMapRequestEvent \
+-T XMappingEvent \
+-T XModifierKeymap \
+-T XMotionEvent \
+-T XNoExposeEvent \
+-T XOC \
+-T XOM \
+-T XOMCharSetList \
+-T XOMFontInfo \
+-T XOMOrientation \
+-T XOrientation \
+-T XPixmapFormatValues \
+-T XPoint \
+-T XPointer \
+-T XPointerMovedEvent \
+-T XPropertyEvent \
+-T XRectangle \
+-T XReparentEvent \
+-T XResizeRequestEvent \
+-T XSegment \
+-T XSelectionClearEvent \
+-T XSelectionEvent \
+-T XSelectionRequestEvent \
+-T XSetWindowAttributes \
+-T XTextItem \
+-T XTextItem16 \
+-T XTimeCoord \
+-T XUnmapEvent \
+-T XVaNestedList \
+-T XVirtualEvent \
+-T XVisibilityEvent \
+-T XWindowAttributes \
+-T XWindowChanges \
+-T XidStatus \
+-T XmbTextItem \
+-T XwcTextItem \
+-T YYSTYPE \
+-T YY_BUFFER_STATE \
+-T YY_CHAR \
+-T _LIB_VERSION_TYPE \
+-T _RuneEntry \
+-T _RuneLocale \
+-T _RuneRange \
+-T _SPI_connection \
+-T _SPI_plan \
+-T _XPrivDisplay \
+-T aclitem \
+-T adjust_inherited_attrs_context \
+-T alloc_func \
+-T assoc_list \
+-T attribute_used_context \
+-T backslashResult \
+-T bio_info_cb \
+-T bit_64 \
+-T bits16 \
+-T bits32 \
+-T bits8 \
+-T bool \
+-T bool16 \
+-T bool32 \
+-T bool8 \
+-T bytea \
+-T caddr_t \
+-T cat_t \
+-T cc_t \
+-T char \
+-T charf \
+-T check_subplans_for_ungrouped_vars_context \
+-T check_ungrouped_columns_context \
+-T clock_t \
+-T clockid_t \
+-T const_des_cblock \
+-T contain_var_reference_context \
+-T crc64 \
+-T cset \
+-T daddr_t \
+-T datetkn \
+-T deparse_context \
+-T deparse_namespace \
+-T des_cblock \
+-T des_key_schedule \
+-T dev_t \
+-T div_t \
+-T double \
+-T evalPlanQual \
+-T execRowMark \
+-T execution_state \
+-T f_smgr \
+-T fd_mask \
+-T fd_set \
+-T finalize_primnode_results \
+-T find_expr_references_context \
+-T fixpt_t \
+-T flatten_join_alias_vars_context \
+-T float \
+-T float32 \
+-T float32data \
+-T float4 \
+-T float64 \
+-T float64data \
+-T float8 \
+-T fp_except \
+-T fp_rnd \
+-T fpclass_t \
+-T fpos_t \
+-T free_func \
+-T fsec_t \
+-T func_ptr \
+-T gid_t \
+-T gzFile \
+-T hashnode \
+-T hbaPort \
+-T in_addr_t \
+-T in_port_t \
+-T inet \
+-T inet_struct \
+-T ino_t \
+-T int \
+-T int16 \
+-T int16_t \
+-T int16m_t \
+-T int2 \
+-T int2vector \
+-T int32 \
+-T int32_t \
+-T int32m_t \
+-T int4 \
+-T int64 \
+-T int64_t \
+-T int64m_t \
+-T int8 \
+-T int8_t \
+-T int8m_t \
+-T intf \
+-T jmp_buf \
+-T join_references_context \
+-T key_t \
+-T lclContext \
+-T lclTocEntry \
+-T ldiv_t \
+-T macaddr \
+-T mb2wchar_with_len_converter \
+-T mblen_converter \
+-T mode_t \
+-T nlink_t \
+-T off_t \
+-T oidvector \
+-T optType \
+-T pem_password_cb \
+-T pg_enc \
+-T pg_enc2name \
+-T pg_encname \
+-T pg_local_to_utf \
+-T pg_utf_to_local \
+-T pg_wchar \
+-T pg_wchar_tbl \
+-T pgsql_thing_t \
+-T pid_t \
+-T pqbool \
+-T pqsigfunc \
+-T printQueryOpt \
+-T printTableOpt \
+-T promptStatus_t \
+-T ptrdiff_t \
+-T pull_var_clause_context \
+-T pull_varnos_context \
+-T q128_t \
+-T qaddr_t \
+-T quad_t \
+-T rangeTableEntry_used_context \
+-T regex_t \
+-T register_t \
+-T regmatch_t \
+-T regoff_t \
+-T regproc \
+-T replace_vars_with_subplan_refs_context \
+-T rune_t \
+-T sa_family_t \
+-T segsz_t \
+-T sequence_magic \
+-T sig_atomic_t \
+-T sig_t \
+-T sighandler_cxt \
+-T sigjmp_buf \
+-T sigset_t \
+-T size_t \
+-T slock_t \
+-T smgrid \
+-T socklen_t \
+-T sop \
+-T sopno \
+-T speed_t \
+-T sqlparseInfo \
+-T sqlparseState \
+-T ssize_t \
+-T ssl_crock_st \
+-T stack_t \
+-T swblk_t \
+-T tcflag_t \
+-T tcp_seq \
+-T teReqs \
+-T text \
+-T time_t \
+-T uInt \
+-T uIntf \
+-T uLong \
+-T uLongf \
+-T u_char \
+-T u_int \
+-T u_int16_t \
+-T u_int16m_t \
+-T u_int32_t \
+-T u_int32m_t \
+-T u_int64_t \
+-T u_int64m_t \
+-T u_int8_t \
+-T u_int8m_t \
+-T u_long \
+-T u_quad_t \
+-T u_short \
+-T uch \
+-T uid_t \
+-T uint \
+-T uint16 \
+-T uint32 \
+-T uint64 \
+-T uint8 \
+-T unknown \
+-T ushort \
+-T va_list \
+-T varattrib \
+-T vm_offset_t \
+-T vm_size_t \
+-T void \
+-T voidp \
+-T voidpf \
+-T wchar_t \
+-T word16 \
+-T word32 \
+-T word8 \
+-T xl_btree_delete \
+-T xl_btree_insert \
+-T xl_btree_newroot \
+-T xl_btree_split \
+-T xl_btreetid \
+-T xl_heap_clean \
+-T xl_heap_delete \
+-T xl_heap_header \
+-T xl_heap_insert \
+-T xl_heap_update \
+-T xl_heaptid \
+-T xl_seq_rec \
+-T xl_xact_abort \
+-T xl_xact_commit \
+-T yy_size_t \
+-T yy_state_type \
+-T z_stream \
+-T z_streamp \
 /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
 	then	echo
