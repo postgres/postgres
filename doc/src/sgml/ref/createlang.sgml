@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.7 2000/06/01 23:40:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.8 2000/07/21 03:38:22 momjian Exp $
 Postgres documentation
 -->
 
@@ -48,10 +48,10 @@ createlang [ <replaceable class="parameter">connection options</replaceable> ] -
      </varlistentry>
 
      <varlistentry>
-      <term>[-d, --dbname] <replaceable class="parameter">dbname</replaceable></term>
+      <term>-d, --dbname <replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies to which database the language should be added.
+	Specifies which database the language should be added.
        </para>
       </listitem>
      </varlistentry>
