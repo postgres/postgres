@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.1.1.1 1996/07/09 06:21:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.2 1996/10/18 05:50:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,11 +26,6 @@
 #include "catalog/catalog.h"
 #include "storage/bufmgr.h"
 #include "access/transam.h"
-
-
-#ifndef	MAXPATHLEN
-#define	MAXPATHLEN	80
-#endif
 
 /*
  * relpath		- path to the relation
