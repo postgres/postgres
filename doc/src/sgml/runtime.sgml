@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.4 2002/12/09 21:03:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.5 2002/12/27 14:07:14 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1656,7 +1656,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Sets the maximum number of relations (tables) for which free
         space will be tracked in the shared free-space map. The default
-        is 100. This option can only be set at server start.
+        is 1000. This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
