@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.221 2003/10/29 23:28:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.222 2003/10/30 03:46:42 momjian Exp $
 -->
 
 <appendix id="release">
@@ -456,13 +456,14 @@ required for those wishing to migrate data from any previous release.</para>
 <sect3><title>Server Configuration</title>
 
 <itemizedlist>
-<listitem><para>Rename server parameter server_min_messages to log_min_messages (Bruce)</para></listitem>
+<listitem><para>Rename server parameter server_min_messages to log_min_messages (Bruce)
    <footnote>
    <para>
     This was done so most parameters that control the server logs being
-    with <literal>log_>/>.
+    with <literal>log_</>.
    </para>
    </footnote>
+</para></listitem>
 <listitem><para>Rename show_*_stats to log_*_stats (Bruce)</para></listitem>
 <listitem><para>Rename show_source_port to log_source_port (Bruce)</para></listitem>
 <listitem><para>Rename hostname_lookup to log_hostname (Bruce)</para></listitem>
