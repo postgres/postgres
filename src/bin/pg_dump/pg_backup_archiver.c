@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.48 2002/05/29 01:38:56 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.49 2002/05/29 01:49:57 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -597,12 +597,12 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	 */
 	if (te && te->name && strlen(te->name) > 0)
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
-				 "(SELECT count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
+				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
 				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
 				 fmtId(te->name, false));
 	else
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
-				 "(SELECT count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
+				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
 				 "FROM pg_catalog.pg_namespace "
 				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
 
