@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.64.4.2 2005/02/07 03:52:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.64.4.3 2005/02/08 18:21:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1766,8 +1766,19 @@ read_sql_construct(int until,
 						 errmsg("missing \"%s\" at end of SQL statement",
 								expected)));
 		}
+
 		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
+
+		/* Check for array overflow */
+		if (nparams >= 1024)
+		{
+			plpgsql_error_lineno = lno;
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("too many variables specified in SQL statement")));
+		}
+
 		switch (tok)
 		{
 			case T_SCALAR:
@@ -1791,15 +1802,6 @@ read_sql_construct(int until,
 			default:
 				plpgsql_dstring_append(&ds, yytext);
 				break;
-		}
-
-		/* Check for array overflow */
-		if (nparams >= 1024)
-		{
-			plpgsql_error_lineno = lno;
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("too many variables specified in SQL statement")));
 		}
 	}
 
@@ -2008,6 +2010,16 @@ make_select_stmt(void)
 
 		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
+
+		/* Check for array overflow */
+		if (nparams >= 1024)
+		{
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("too many variables specified in SQL statement")));
+		}
+
 		switch (tok)
 		{
 			case T_SCALAR:
@@ -2031,15 +2043,6 @@ make_select_stmt(void)
 			default:
 				plpgsql_dstring_append(&ds, yytext);
 				break;
-		}
-
-		/* Check for array overflow */
-		if (nparams >= 1024)
-		{
-			plpgsql_error_lineno = plpgsql_scanner_lineno();
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("too many variables specified in SQL statement")));
 		}
 	}
 
