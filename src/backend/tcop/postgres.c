@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.359 2003/08/12 18:52:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.360 2003/08/13 16:16:23 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1753,6 +1753,11 @@ finish_xact_command(void)
 		/* Cancel any active statement timeout before committing */
 		disable_sig_alarm(true);
 
+#ifdef MEMORY_CONTEXT_CHECKING
+		/* Check memory before committing (since commit discards much) */
+		MemoryContextCheck(TopMemoryContext);
+#endif
+
 		/* Now commit the command */
 		ereport(DEBUG3,
 				(errmsg_internal("CommitTransactionCommand")));
@@ -1760,7 +1765,7 @@ finish_xact_command(void)
 		CommitTransactionCommand();
 
 #ifdef SHOW_MEMORY_STATS
-		/* Print mem stats at each commit for leak tracking */
+		/* Print mem stats after each commit for leak tracking */
 		if (ShowStats)
 			MemoryContextStats(TopMemoryContext);
 #endif
@@ -2646,7 +2651,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.359 $ $Date: 2003/08/12 18:52:38 $\n");
+		puts("$Revision: 1.360 $ $Date: 2003/08/13 16:16:23 $\n");
 	}
 
 	/*
@@ -3063,15 +3068,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 						 errmsg("invalid frontend message type %d",
 								firstchar)));
 		}
-
-#ifdef MEMORY_CONTEXT_CHECKING
-
-		/*
-		 * Check all memory after each backend loop.  This is a rather
-		 * weird place to do it, perhaps.
-		 */
-		MemoryContextCheck(TopMemoryContext);
-#endif
 	}							/* end of input-reading loop */
 
 	/* can't get here because the above loop never exits */
