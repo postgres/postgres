@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.12 1997/04/02 18:13:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.13 1997/04/09 08:29:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,9 +285,19 @@ textne(struct varlena *arg1, struct varlena *arg2)
     return((bool) !texteq(arg1, arg2));
 }
 
+/* text_lt()
+ * Comparison function for text strings.
+ * Includes locale support, but must copy strings to temporary memory
+ *  to allow null-termination for inputs to strcoll().
+ * XXX HACK code for textlen() indicates that there can be embedded nulls
+ *  but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
+ */
 bool
 text_lt(struct varlena *arg1, struct varlena *arg2) 
 {
+    bool result;
+
+    int cval;
     int len;
 #ifdef UNSIGNED_CHAR_TEXT
     unsigned
@@ -295,34 +305,55 @@ text_lt(struct varlena *arg1, struct varlena *arg2)
     char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
+	return((bool) FALSE);
     
+    len = (((VARSIZE(arg1) <= VARSIZE(arg2))? VARSIZE(arg1): VARSIZE(arg2))-VARHDRSZ);
+    
+#ifdef USE_LOCALE
+    if (!PointerIsValid(a1p = PALLOC(len+1))
+      || !PointerIsValid(a2p = PALLOC(len+1))) {
+	elog(WARN,"Unable to allocate memory for text comparison",NULL);
+	return(FALSE);
+    };
+
+    memcpy(a1p, VARDATA(arg1), len);
+    *(a1p+len) = '\0';
+    memcpy(a2p, VARDATA(arg2), len);
+    *(a2p+len) = '\0';
+
+    cval = strcoll(a1p,a2p);
+    result = ((cval < 0) || ((cval == 0) && (VARSIZE(arg1) < VARSIZE(arg2))));
+
+    PFREE(a1p);
+    PFREE(a2p);
+
+    return(result);
+#else
     a1p = (unsigned char *)VARDATA(arg1);
     a2p = (unsigned char *)VARDATA(arg2);
     
-    if ((len = arg1->vl_len) > arg2->vl_len)
-	len = arg2->vl_len;
-    len -= sizeof(int32);
-    
-    while (len != 0 && *a1p == *a2p)
-	{
-	    a1p++;
-	    a2p++;
-	    len--;
-	}
-    if (len)
-#ifdef USE_LOCALE
-        return (bool) (strcoll(a2p,a1p));
-#else
-	return (bool) (*a1p < *a2p);
+    while (len != 0 && *a1p == *a2p) {
+	a1p++;
+	a2p++;
+	len--;
+    };
+    return((bool) (len? (*a1p < *a2p): (VARSIZE(arg1) < VARSIZE(arg2))));
 #endif
-    else
-	return (bool) (arg1->vl_len < arg2->vl_len);
-}
+} /* text_lt() */
 
+/* text_le()
+ * Comparison function for text strings.
+ * Includes locale support, but must copy strings to temporary memory
+ *  to allow null-termination for inputs to strcoll().
+ * XXX HACK code for textlen() indicates that there can be embedded nulls
+ *  but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
+ */
 bool
 text_le(struct varlena *arg1, struct varlena *arg2) 
 {
+    bool result;
+
+    int cval;
     int len;
 #ifdef UNSIGNED_CHAR_TEXT
     unsigned
@@ -332,28 +363,40 @@ text_le(struct varlena *arg1, struct varlena *arg2)
     if (arg1 == NULL || arg2 == NULL)
 	return((bool) 0);
     
+    len = (((VARSIZE(arg1) <= VARSIZE(arg2))? VARSIZE(arg1): VARSIZE(arg2))-VARHDRSZ);
+    
+#ifdef USE_LOCALE
+    if (!PointerIsValid(a1p = PALLOC(len+1))
+      || !PointerIsValid(a2p = PALLOC(len+1))) {
+	elog(WARN,"Unable to allocate memory for text comparison",NULL);
+	return(FALSE);
+    };
+
+    memcpy(a1p, VARDATA(arg1), len);
+    *(a1p+len) = '\0';
+    memcpy(a2p, VARDATA(arg2), len);
+    *(a2p+len) = '\0';
+
+    cval = strcoll(a1p,a2p);
+    result = ((cval < 0) || ((cval == 0) && (VARSIZE(arg1) <= VARSIZE(arg2))));
+
+    PFREE(a1p);
+    PFREE(a2p);
+
+    return(result);
+#else
     a1p = (unsigned char *)VARDATA(arg1);
     a2p = (unsigned char *)VARDATA(arg2);
     
-    if ((len = arg1->vl_len) > arg2->vl_len)
-	len = arg2->vl_len;
-    len -= sizeof(int32);					/* varlena! */
-    
-    while (len != 0 && *a1p == *a2p)
-	{
-	    a1p++;
-	    a2p++;
-	    len--;
-	}
-    if (len)
-#ifdef USE_LOCALE
-        return (bool) (strcoll(a2p,a1p));
-#else
-	return (bool) (*a1p < *a2p);
+    while (len != 0 && *a1p == *a2p) {
+	a1p++;
+	a2p++;
+	len--;
+    };
+
+    return((bool) (len? (*a1p <= *a2p): (VARSIZE(arg1) <= VARSIZE(arg2))));
 #endif
-    else
-	return ((bool) VARSIZE(arg1) <= VARSIZE(arg2));
-}
+} /* text_le() */
 
 bool
 text_gt(struct varlena *arg1, struct varlena *arg2) 
