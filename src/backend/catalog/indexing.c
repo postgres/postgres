@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.27 1998/09/01 06:22:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.28 1998/09/01 06:51:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,10 +121,8 @@ CatalogIndexInsert(Relation *idescs,
 
 	for (i = 0; i < nIndices; i++)
 	{
-		TupleDesc	indexDescriptor;
 		InsertIndexResult indexRes;
 
-		indexDescriptor = RelationGetDescr(idescs[i]);
 		pgIndexTup = SearchSysCacheTupleCopy(INDEXRELID,
 									  ObjectIdGetDatum(idescs[i]->rd_id),
 											 0, 0, 0);
@@ -134,7 +132,7 @@ CatalogIndexInsert(Relation *idescs,
 		/*
 		 * Compute the number of attributes we are indexing upon.
 		 */
-		for (attnumP = (&pgIndexP->indkey[0]), natts = 0;
+		for (attnumP = pgIndexP->indkey, natts = 0;
 			 *attnumP != InvalidAttrNumber;
 			 attnumP++, natts++)
 			;
@@ -151,7 +149,7 @@ CatalogIndexInsert(Relation *idescs,
 			finfoP = (FuncIndexInfo *) NULL;
 
 		FormIndexDatum(natts,
-					   (AttrNumber *) &pgIndexP->indkey[0],
+					   (AttrNumber *) pgIndexP->indkey,
 					   heapTuple,
 					   heapDescriptor,
 					   &datum,
