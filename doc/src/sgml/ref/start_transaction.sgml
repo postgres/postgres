@@ -1,4 +1,8 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.2 2002/08/06 05:32:16 momjian Exp $ -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.3 2002/08/30 22:45:25 tgl Exp $
+PostgreSQL documentation
+-->
+
 <refentry id="SQL-START-TRANSACTION">
  <docinfo>
   <date>2002-07-26</date>
@@ -76,7 +80,7 @@ WARNING:  BEGIN: already a transaction in progress
    This command begins a new transaction. If the isolation level is
    specified, the new transaction has that isolation level. In all other
    respects, the behavior of this command is identical to the
-   <command>BEGIN</command> command.
+   <xref linkend="sql-begin" endterm="sql-begin-title"> command.
   </para>
 
  </refsect1>
@@ -87,8 +91,8 @@ WARNING:  BEGIN: already a transaction in progress
   <para>
    The isolation level of a transaction can also be set with the <xref
    linkend="sql-set-transaction" endterm="sql-set-transaction-title">
-   command. If no isolation level is specified, the level defaults to
-   <option>READ COMMITTED</option>.
+   command. If no isolation level is specified, the default isolation
+   level is used.
   </para>
  </refsect1>
 
@@ -99,11 +103,14 @@ WARNING:  BEGIN: already a transaction in progress
    <title>SQL99</title>
 
    <para>
-    <option>SERIALIZABLE</option> is the default level in
-    <acronym>SQL</acronym>. <productname>PostgreSQL</productname>
+    <option>SERIALIZABLE</option> is the default isolation level in
+    <acronym>SQL99</acronym>, but it is not the usual default in
+    <productname>PostgreSQL</productname>: the factory default setting
+    is READ COMMITTED.
+    <productname>PostgreSQL</productname> 
     does not provide the isolation levels <option>READ UNCOMMITTED</option>
-    and <option>REPEATABLE READ</option>. Because of multiversion
-    concurrency control, the <option>SERIALIZABLE</option> level is
+    and <option>REPEATABLE READ</option>. Because of lack of predicate
+    locking, the <option>SERIALIZABLE</option> level is
     not truly serializable. See the <citetitle>User's Guide</citetitle>
     for details.
    </para>
