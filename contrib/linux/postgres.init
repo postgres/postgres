@@ -1,0 +1,59 @@
+#! /bin/sh
+#
+# postgres.init Start postgres back end system.
+#
+# Author:       Thomas Lockhart <Thomas.Lockhart@jpl.nasa.gov>
+#               based on news startup by David Myers
+#
+# Written for RedHat Linux but should apply to other Linux distributions.
+# Assumptions:
+# - the postgres user is named "postgres"
+# - the postgres user is running csh/tcsh
+#
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get config.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+# Pretty much need it for postmaster.
+if [ ${NETWORKING} = "no" ]
+then
+	exit 0
+fi
+
+[ -f /opt/postgres/current/bin/postmaster ] || exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+	echo -n "Starting postgres service: "
+# force full login to get path names and environment variables
+# postgres runs tcsh so use proper syntax in redirection
+# change this line if another shell syntax is necessary
+#	su - postgres -c 'postmaster -S' > /dev/null&
+	su - postgres -c 'postmaster >>&! /tmp/postmaster.log&' > /dev/null&
+	sleep 5
+	pid=`pidof postmaster`
+	echo -n "postmaster [$pid]"
+#	touch /var/lock/subsys/postmaster
+	echo
+	;;
+  stop)
+	echo -n "Stopping postgres service: "
+	pid=`pidof postmaster`
+	if [ "$pid" != "" ] ; then
+		echo -n "postmaster [$pid]"
+		kill -TERM $pid
+		sleep 1
+	fi
+	echo
+	;;
+  *)
+	echo "Usage: postgres.init {start|stop}"
+	exit 1
+esac
+
+exit 0
