@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.4 2002/09/01 09:31:58 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.5 2002/09/20 06:19:07 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
 	{"immutable", IMMUTABLE},
+	{"implicit", IMPLICIT_P},
 	{"in", IN_P},
 	{"increment", INCREMENT},
 	{"index", INDEX},

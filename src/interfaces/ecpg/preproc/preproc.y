@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190.2.6 2002/09/11 08:50:29 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190.2.7 2002/09/20 06:19:07 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -203,7 +203,7 @@ make_name(void)
 	GET GLOBAL GRANT GROUP_P
         HANDLER HAVING HOUR_P
 
-	ILIKE IMMEDIATE IMMUTABLE IN_P INCREMENT INDEX INHERITS
+	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT INDEX INHERITS
         INITIALLY INNER_P INOUT INPUT INSENSITIVE INSERT INSTEAD INT
         INTEGER INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 			
@@ -289,8 +289,8 @@ make_name(void)
 %type  <str>	comment_text ConstraintDeferrabilitySpec TableElementList
 %type  <str>	key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>	ColConstraint ColConstraintElem drop_type Bconst 
-%type  <str>	TableConstraint OptTableElementList Xconst prep_type_clause
-%type  <str>	ConstraintElem key_actions ColQualList type_name PrepareStmt
+%type  <str>	TableConstraint OptTableElementList Xconst 
+%type  <str>	ConstraintElem key_actions ColQualList type_name
 %type  <str>	target_list target_el update_target_list alias_clause
 %type  <str>	update_target_el opt_id qualified_name database_name
 %type  <str>	access_method attr_name index_name name func_name
@@ -301,7 +301,7 @@ make_name(void)
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
-%type  <str>	opt_collate opt_timezone opt_interval table_ref DeallocateStmt
+%type  <str>	opt_collate opt_timezone opt_interval table_ref 
 %type  <str>	row_descriptor row_list ConstDatetime trans_options
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
@@ -322,7 +322,7 @@ make_name(void)
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst ExecuteStmt
+%type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst 
 %type  <str>	MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
@@ -362,13 +362,13 @@ make_name(void)
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list opt_mode copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition 
-%type  <str>	opt_assignment row r_expr qual_Op qual_all_Op opt_default
+%type  <str>	cast_context row r_expr qual_Op qual_all_Op opt_default
 %type  <str>	CreateConversionStmt any_operator opclass_item_list
-%type  <str>	iso_level convert_list prep_type_list
+%type  <str>	iso_level convert_list 
 %type  <str>	convert_args type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
-%type  <str>	ConstBit GenericType TableFuncElementList execute_param_clause
-%type  <str>	execute_param_list opt_sort_clause
+%type  <str>	ConstBit GenericType TableFuncElementList
+%type  <str>	opt_sort_clause
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare opt_ecpg_using ecpg_into
@@ -456,7 +456,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| CreateTrigStmt	{ output_statement($1, 0, connection); }
 		| CreateUserStmt	{ output_statement($1, 0, connection); }
 		| ClusterStmt		{ output_statement($1, 0, connection); }
-		| DeallocateStmt	{ output_statement($1, 0, connection); }
+		/*| DeallocateStmt	{ output_statement($1, 0, connection); }*/
 		| DefineStmt		{ output_statement($1, 0, connection); }
 		| DropStmt		{ output_statement($1, 0, connection); }
 		| TruncateStmt		{ output_statement($1, 0, connection); }
@@ -468,8 +468,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| DropTrigStmt		{ output_statement($1, 0, connection); }
 		| DropRuleStmt		{ output_statement($1, 0, connection); }
 		| DropUserStmt		{ output_statement($1, 0, connection); }
-		| ExplainStmt		{ output_statement($1, 0, connection); }
-		| ExecuteStmt		{ output_statement($1, 0, connection); }
+		| ExplainStmt		{ output_statement($1, 0, connection); }/*		| ExecuteStmt		{ output_statement($1, 0, connection); }*/
 		| FetchStmt		{ output_statement($1, 1, connection); }
 		| GrantStmt		{ output_statement($1, 0, connection); }
 		| IndexStmt		{ output_statement($1, 0, connection); }
@@ -477,7 +476,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| UnlistenStmt		{ output_statement($1, 0, connection); }
 		| LockStmt		{ output_statement($1, 0, connection); }
 		| NotifyStmt		{ output_statement($1, 0, connection); }
-		| PrepareStmt		{ output_statement($1, 0, connection); }
+/*		| PrepareStmt		{ output_statement($1, 0, connection); }*/
 		| ReindexStmt		{ output_statement($1, 0, connection); }
 		| RemoveAggrStmt	{ output_statement($1, 0, connection); }
 		| RemoveOperStmt	{ output_statement($1, 0, connection); }
@@ -671,11 +670,14 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
  *
  *****************************************************************************/
 
-CreateUserStmt: CREATE USER UserId OptUserList
-			{ $$ = cat_str(3, make_str("create user"), $3, $4); }
-		| CREATE USER UserId WITH OptUserList
+CreateUserStmt: CREATE USER UserId opt_with OptUserList
 			{ $$ = cat_str(4, make_str("create user"), $3, make_str("with"), $5); }
 		;
+
+opt_with:  WITH 		{ $$ = make_str("with"); }
+		| /*EMPTY*/	{ $$ = EMPTY; }
+		;
+
 
 /*****************************************************************************
  *
@@ -1865,15 +1867,11 @@ opt_class:	any_name 	{ $$ = $1; }
 		;
 
 CreateFunctionStmt:	CREATE opt_or_replace FUNCTION func_name func_args
-					RETURNS func_return createfunc_opt_list opt_with
+					RETURNS func_return createfunc_opt_list opt_definition
 			{ $$ = cat_str(8, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns"), $7, $8); }
 		;
 
 opt_or_replace:  OR REPLACE		{ $$ = make_str("or replace"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
-		;
-
-opt_with:  WITH definition		{ $$ = cat2_str(make_str("with"), $2); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
@@ -2019,14 +2017,14 @@ any_operator:
 			;
 
 CreateCastStmt:		CREATE CAST '(' ConstTypename AS ConstTypename ')'
-				WITH FUNCTION function_with_argtypes opt_assignment opt_definition
-			{ $$ = cat_str(7, make_str("create cast ("), $4, make_str("as"), $6, make_str(") with function"), $10, $11); }
-			| CREATE CAST '(' ConstTypename AS ConstTypename ')'
-				WITH FUNCTION opt_assignment
+				WITH FUNCTION function_with_argtypes cast_context
 			{ $$ = cat_str(6, make_str("create cast ("), $4, make_str("as"), $6, make_str(") with function"), $10); }
+			| CREATE CAST '(' ConstTypename AS ConstTypename ')'
+				WITHOUT FUNCTION cast_context
+			{ $$ = cat_str(6, make_str("create cast ("), $4, make_str("as"), $6, make_str(") without function"), $10); }
 		;
 
-opt_assignment: AS ASSIGNMENT   { $$ = make_str("as assignment"); }
+cast_context: AS ASSIGNMENT   { $$ = make_str("as assignment"); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
@@ -2363,54 +2361,38 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
 			{ $$ = cat_str(4, make_str("explain"), $2, $3, $4); }
 		;
 
-/*****************************************************************************
- *
- *              QUERY:
- *                              PREPARE <plan_name> [(args, ...)] AS <query>
- *
- *****************************************************************************/
+/*
+
+conflicts with ecpg 
 
 PrepareStmt: PREPARE name prep_type_clause AS OptimizableStmt
 		{ $$ = cat_str(5, make_str("prepare"), $2, $3, make_str("as"), $5); }
 		;
 
 prep_type_clause: '(' prep_type_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-			| /* EMPTY */		{ $$ = EMPTY; }
+			| /* EMPTY * /		{ $$ = EMPTY; }
 			;
 
 prep_type_list: Typename		{ $$ = $1; }
 	| prep_type_list ',' Typename	{ $$ = cat_str(3, $1, make_str(","), $3); }
 	;
 
-/*****************************************************************************
- *
- *              QUERY:
- *                              EXECUTE <plan_name> [(params, ...)] [INTO ...]
- *
- *****************************************************************************/
-
 ExecuteStmt: EXECUTE name execute_param_clause into_clause
 		{ $$ = cat_str(4, make_str("execute"), $2, $3, $4); }
 		;
 
 execute_param_clause: '(' execute_param_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-			| /* EMPTY */		{ $$ = EMPTY; }
+			| /* EMPTY * /		{ $$ = EMPTY; }
 			;
 
 execute_param_list: a_expr		{ $$ = $1; }
 	| execute_param_list ',' a_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
 	;
-	
-/*****************************************************************************
- *
- *              QUERY:
- *                              DEALLOCATE [PREPARE] <plan_name>
- *
- *****************************************************************************/
 
 DeallocateStmt: DEALLOCATE name		{ $$ = cat2_str(make_str("deallocate"), $2); }
 	| DEALLOCATE PREPARE name	{ $$ = cat2_str(make_str("deallocate prepare"), $3); }
 	;
+*/
 
 /*****************************************************************************
  *																			 *
@@ -4112,7 +4094,10 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
  * prepared statement
  */
 ECPGDeallocate: DEALLOCATE PREPARE ident
-			{ $$ = cat_str(3, make_str("ECPGdeallocate(__LINE__, \""), $3, make_str("\");")); };
+			{ $$ = cat_str(3, make_str("ECPGdeallocate(__LINE__, \""), $3, make_str("\");")); }
+		| DEALLOCATE ident
+			{ $$ = cat_str(2, make_str("ECPGdeallocate(__LINE__, \""), $2, make_str("\");")); }
+		;
 
 /*
  * variable declaration inside the exec sql declare block
@@ -5177,6 +5162,7 @@ unreserved_keyword:
 		| HOUR_P						{ $$ = make_str("hour"); }
 		| IMMEDIATE						{ $$ = make_str("immediate"); }
 		| IMMUTABLE						{ $$ = make_str("immutable"); }
+		| IMPLICIT_P						{ $$ = make_str("implicit"); }
 		| INCREMENT						{ $$ = make_str("increment"); }
 		| INDEX							{ $$ = make_str("index"); }
 		| INHERITS						{ $$ = make_str("inherits"); }
