@@ -34,6 +34,7 @@
  * Size of a disk block --- currently, this limits the size of a tuple.
  * You can set it bigger if you need bigger tuples.
  */
+/* currently must be <= 32k bjm */
 #define BLCKSZ	8192
 
 /*

@@ -34,6 +34,8 @@ PARSER
 * INSERT ... SELECT ... GROUP BY groups by target columns not source columns
 * CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
 * UNION with LIMIT fails
+* Unique index on base column not honored on inserts from inherited table
+  INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
 
 VIEWS
 
