@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.28 1998/06/27 13:24:21 momjian Exp $
+ * $Id: ipc.h,v 1.29 1998/06/27 15:47:47 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -109,7 +109,7 @@ typedef enum _LockId_
 	LOCKLOCKID,
 	OIDGENLOCKID,
 	SHMEMLOCKID,
-	BINDINGLOCKID,
+	SHMEMINDEXLOCKID,
 	LOCKMGRLOCKID,
 	SINVALLOCKID,
 
@@ -139,7 +139,7 @@ typedef struct slock
 typedef enum _LockId_
 {
 	SHMEMLOCKID,
-	BINDINGLOCKID,
+	SHMEMINDEXLOCKID,
 	BUFMGRLOCKID,
 	LOCKMGRLOCKID,
 	SINVALLOCKID,

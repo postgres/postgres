@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.17 1998/01/07 21:04:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.18 1998/06/27 15:47:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,14 +277,14 @@ BufferShmemSize()
 	nbuckets = 1 << (int) my_log2((NBuffers - 1) / DEF_FFACTOR + 1);
 	nsegs = 1 << (int) my_log2((nbuckets - 1) / DEF_SEGSIZE + 1);
 
-	/* size of shmem binding table */
-	size += MAXALIGN(my_log2(BTABLE_SIZE) * sizeof(void *));	/* HTAB->dir */
+	/* size of shmem index table */
+	size += MAXALIGN(my_log2(SHMEM_INDEX_SIZE) * sizeof(void *));	/* HTAB->dir */
 	size += MAXALIGN(sizeof(HHDR));		/* HTAB->hctl */
 	size += MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
 	size += BUCKET_ALLOC_INCR *
 		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(BTABLE_KEYSIZE) +
-		 MAXALIGN(BTABLE_DATASIZE));
+		 MAXALIGN(SHMEM_INDEX_KEYSIZE) +
+		 MAXALIGN(SHMEM_INDEX_DATASIZE));
 
 	/* size of buffer descriptors */
 	size += MAXALIGN((NBuffers + 1) * sizeof(BufferDesc));

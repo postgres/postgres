@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.24 1998/06/27 14:06:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.25 1998/06/27 15:47:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * POSTGRES processes share one or more regions of shared memory.
- * The shared memory is created by a postmaster and is "attached to"
- * by each of the backends.  The routines in this file are used for
+ * The shared memory is created by a postmaster and is inherited
+ * by each backends via fork().  The routines in this file are used for
  * allocating and binding to shared memory data structures.
  *
  * NOTES:
@@ -30,16 +30,16 @@
  *	it (assigned in the module that declares it).
  *
  *		(b) During initialization, each module looks for its
- *	shared data structures in a hash table called the "Binding Table".
+ *	shared data structures in a hash table called the "Shmem Index".
  *	If the data structure is not present, the caller can allocate
  *	a new one and initialize it.  If the data structure is present,
  *	the caller "attaches" to the structure by initializing a pointer
  *	in the local address space.
- *		The binding table has two purposes: first, it gives us
+ *		The shmem index has two purposes: first, it gives us
  *	a simple model of how the world looks when a backend process
- *	initializes.  If something is present in the binding table,
+ *	initializes.  If something is present in the shmem index,
  *	it is initialized.	If it is not, it is uninitialized.	Second,
- *	the binding table allows us to allocate shared memory on demand
+ *	the shmem index allows us to allocate shared memory on demand
  *	instead of trying to preallocate structures and hard-wire the
  *	sizes and locations in header files.  If you are using a lot
  *	of shared memory in a lot of different places (and changing
@@ -54,7 +54,7 @@
  *	unnecessary.
  *
  *		See InitSem() in sem.c for an example of how to use the
- *	binding table.
+ *	shmem index.
  *
  */
 #include <stdio.h>
@@ -76,28 +76,28 @@ static unsigned long ShmemSize = 0;		/* current size (and default) */
 
 SPINLOCK	ShmemLock;			/* lock for shared memory allocation */
 
-SPINLOCK	BindingLock;		/* lock for binding table access */
+SPINLOCK	ShmemIndexLock;		/* lock for shmem index access */
 
 static unsigned long *ShmemFreeStart = NULL;	/* pointer to the OFFSET
 												 * of first free shared
 												 * memory */
-static unsigned long *ShmemBindingTableOffset = NULL;		/* start of the binding
+static unsigned long *ShmemIndexOffset = NULL;		/* start of the shmem index
 														 * table (for bootstrap) */
 static int	ShmemBootstrap = FALSE;		/* flag becomes true when shared
 										 * mem is created by POSTMASTER */
 
-static HTAB *BindingTable = NULL;
+static HTAB *ShmemIndex = NULL;
 
 /* ---------------------
- * ShmemBindingTableReset() - Resets the binding table to NULL....
+ * ShmemIndexReset() - Resets the shmem index to NULL....
  * useful when the postmaster destroys existing shared memory
  * and creates all new segments after a backend crash.
  * ----------------------
  */
 void
-ShmemBindingTableReset(void)
+ShmemIndexReset(void)
 {
-	BindingTable = (HTAB *) NULL;
+	ShmemIndex = (HTAB *) NULL;
 }
 
 /*
@@ -147,7 +147,7 @@ InitShmem(unsigned int key, unsigned int size)
 
 	HASHCTL		info;
 	int			hash_flags;
-	BindingEnt *result,
+	ShmemIndexEnt *result,
 				item;
 	bool		found;
 	IpcMemoryId shmid;
@@ -178,15 +178,15 @@ InitShmem(unsigned int key, unsigned int size)
 
 	/* First long in shared memory is the count of available space */
 	ShmemFreeStart = (unsigned long *) ShmemBase;
-	/* next is a shmem pointer to the binding table */
-	ShmemBindingTableOffset = ShmemFreeStart + 1;
+	/* next is a shmem pointer to the shmem index */
+	ShmemIndexOffset = ShmemFreeStart + 1;
 
 	currFreeSpace +=
-		sizeof(ShmemFreeStart) + sizeof(ShmemBindingTableOffset);
+		sizeof(ShmemFreeStart) + sizeof(ShmemIndexOffset);
 
 	/*
 	 * bootstrap initialize spin locks so we can start to use the
-	 * allocator and binding table.
+	 * allocator and shmem index.
 	 */
 	if (!InitSpinLocks(ShmemBootstrap, IPCKeyGetSpinLockSemaphoreKey(key)))
 		return (FALSE);
@@ -201,37 +201,37 @@ InitShmem(unsigned int key, unsigned int size)
 	/* if ShmemFreeStart is NULL, then the allocator won't work */
 	Assert(*ShmemFreeStart);
 
-	/* create OR attach to the shared memory binding table */
-	info.keysize = BTABLE_KEYSIZE;
-	info.datasize = BTABLE_DATASIZE;
+	/* create OR attach to the shared memory shmem index */
+	info.keysize = SHMEM_INDEX_KEYSIZE;
+	info.datasize = SHMEM_INDEX_DATASIZE;
 	hash_flags = (HASH_ELEM);
 
-	/* This will acquire the binding table lock, but not release it. */
-	BindingTable = ShmemInitHash("BindingTable",
-								 BTABLE_SIZE, BTABLE_SIZE,
+	/* This will acquire the shmem index lock, but not release it. */
+	ShmemIndex = ShmemInitHash("ShmemIndex",
+								 SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
 								 &info, hash_flags);
 
-	if (!BindingTable)
+	if (!ShmemIndex)
 	{
-		elog(FATAL, "InitShmem: couldn't initialize Binding Table");
+		elog(FATAL, "InitShmem: couldn't initialize Shmem Index");
 		return (FALSE);
 	}
 
 	/*
-	 * Now, check the binding table for an entry to the binding table.	If
+	 * Now, check the shmem index for an entry to the shmem index.	If
 	 * there is an entry there, someone else created the table. Otherwise,
 	 * we did and we have to initialize it.
 	 */
-	MemSet(item.key, 0, BTABLE_KEYSIZE);
-	strncpy(item.key, "BindingTable", BTABLE_KEYSIZE);
+	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
+	strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
 
-	result = (BindingEnt *)
-		hash_search(BindingTable, (char *) &item, HASH_ENTER, &found);
+	result = (ShmemIndexEnt *)
+		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, &found);
 
 
 	if (!result)
 	{
-		elog(FATAL, "InitShmem: corrupted binding table");
+		elog(FATAL, "InitShmem: corrupted shmem index");
 		return (FALSE);
 	}
 
@@ -239,14 +239,14 @@ InitShmem(unsigned int key, unsigned int size)
 	{
 
 		/*
-		 * bootstrapping shmem: we have to initialize the binding table
+		 * bootstrapping shmem: we have to initialize the shmem index
 		 * now.
 		 */
 
 		Assert(ShmemBootstrap);
-		result->location = MAKE_OFFSET(BindingTable->hctl);
-		*ShmemBindingTableOffset = result->location;
-		result->size = BTABLE_SIZE;
+		result->location = MAKE_OFFSET(ShmemIndex->hctl);
+		*ShmemIndexOffset = result->location;
+		result->size = SHMEM_INDEX_SIZE;
 
 		ShmemBootstrap = FALSE;
 
@@ -254,9 +254,9 @@ InitShmem(unsigned int key, unsigned int size)
 	else
 		Assert(!ShmemBootstrap);
 	/* now release the lock acquired in ShmemHashInit */
-	SpinRelease(BindingLock);
+	SpinRelease(ShmemIndexLock);
 
-	Assert(result->location == MAKE_OFFSET(BindingTable->hctl));
+	Assert(result->location == MAKE_OFFSET(ShmemIndex->hctl));
 
 	return (TRUE);
 }
@@ -329,7 +329,7 @@ ShmemIsValid(unsigned long addr)
  * for the structure before creating the structure itself.
  */
 HTAB *
-ShmemInitHash(char *name,		/* table string name for binding */
+ShmemInitHash(char *name,		/* table string name for shmem index */
 			  long init_size,	/* initial size */
 			  long max_size,	/* max size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
@@ -348,12 +348,12 @@ ShmemInitHash(char *name,		/* table string name for binding */
 	infoP->max_size = max_size;
 	hash_flags |= HASH_SHARED_MEM;
 
-	/* look it up in the binding table */
+	/* look it up in the shmem index */
 	location =
 		ShmemInitStruct(name, my_log2(max_size) + sizeof(HHDR), &found);
 
 	/*
-	 * binding table is corrupted.	Let someone else give the error
+	 * shmem index is corrupted.	Let someone else give the error
 	 * message since they have more information
 	 */
 	if (location == NULL)
@@ -379,7 +379,7 @@ ShmemInitHash(char *name,		/* table string name for binding */
  * ShmemPIDLookup -- lookup process data structure using process id
  *
  * Returns: TRUE if no error.  locationPtr is initialized if PID is
- *		found in the binding table.
+ *		found in the shmem index.
  *
  * NOTES:
  *		only information about success or failure is the value of
@@ -388,23 +388,23 @@ ShmemInitHash(char *name,		/* table string name for binding */
 bool
 ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 {
-	BindingEnt *result,
+	ShmemIndexEnt *result,
 				item;
 	bool		found;
 
-	Assert(BindingTable);
-	MemSet(item.key, 0, BTABLE_KEYSIZE);
+	Assert(ShmemIndex);
+	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
 	sprintf(item.key, "PID %d", pid);
 
-	SpinAcquire(BindingLock);
-	result = (BindingEnt *)
-		hash_search(BindingTable, (char *) &item, HASH_ENTER, &found);
+	SpinAcquire(ShmemIndexLock);
+	result = (ShmemIndexEnt *)
+		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, &found);
 
 	if (!result)
 	{
 
-		SpinRelease(BindingLock);
-		elog(ERROR, "ShmemInitPID: BindingTable corrupted");
+		SpinRelease(ShmemIndexLock);
+		elog(ERROR, "ShmemInitPID: ShmemIndex corrupted");
 		return (FALSE);
 
 	}
@@ -414,39 +414,39 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 	else
 		result->location = *locationPtr;
 
-	SpinRelease(BindingLock);
+	SpinRelease(ShmemIndexLock);
 	return (TRUE);
 }
 
 /*
- * ShmemPIDDestroy -- destroy binding table entry for process
+ * ShmemPIDDestroy -- destroy shmem index entry for process
  *		using process id
  *
  * Returns: offset of the process struct in shared memory or
  *		INVALID_OFFSET if not found.
  *
- * Side Effect: removes the entry from the binding table
+ * Side Effect: removes the entry from the shmem index
  */
 SHMEM_OFFSET
 ShmemPIDDestroy(int pid)
 {
-	BindingEnt *result,
+	ShmemIndexEnt *result,
 				item;
 	bool		found;
 	SHMEM_OFFSET location = 0;
 
-	Assert(BindingTable);
+	Assert(ShmemIndex);
 
-	MemSet(item.key, 0, BTABLE_KEYSIZE);
+	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
 	sprintf(item.key, "PID %d", pid);
 
-	SpinAcquire(BindingLock);
-	result = (BindingEnt *)
-		hash_search(BindingTable, (char *) &item, HASH_REMOVE, &found);
+	SpinAcquire(ShmemIndexLock);
+	result = (ShmemIndexEnt *)
+		hash_search(ShmemIndex, (char *) &item, HASH_REMOVE, &found);
 
 	if (found)
 		location = result->location;
-	SpinRelease(BindingLock);
+	SpinRelease(ShmemIndexLock);
 
 	if (!result)
 	{
@@ -473,33 +473,33 @@ ShmemPIDDestroy(int pid)
  *		table is returned.
  *
  *	Returns: real pointer to the object.  FoundPtr is TRUE if
- *		the object is already in the binding table (hence, already
+ *		the object is already in the shmem index (hence, already
  *		initialized).
  */
 long *
 ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 {
-	BindingEnt *result,
+	ShmemIndexEnt *result,
 				item;
 	long	   *structPtr;
 
-	strncpy(item.key, name, BTABLE_KEYSIZE);
+	strncpy(item.key, name, SHMEM_INDEX_KEYSIZE);
 	item.location = BAD_LOCATION;
 
-	SpinAcquire(BindingLock);
+	SpinAcquire(ShmemIndexLock);
 
-	if (!BindingTable)
+	if (!ShmemIndex)
 	{
 #ifdef USE_ASSERT_CHECKING
-		char	   *strname = "BindingTable";
+		char	   *strname = "ShmemIndex";
 #endif
 		/*
-		 * If the binding table doesnt exist, we fake it.
+		 * If the shmem index doesnt exist, we fake it.
 		 *
-		 * If we are creating the first binding table, then let shmemalloc()
+		 * If we are creating the first shmem index, then let shmemalloc()
 		 * allocate the space for a new HTAB.  Otherwise, find the old one
-		 * and return that.  Notice that the BindingLock is held until the
-		 * binding table has been completely initialized.
+		 * and return that.  Notice that the ShmemIndexLock is held until the
+		 * shmem index has been completely initialized.
 		 */
 		Assert(!strcmp(name, strname));
 		if (ShmemBootstrap)
@@ -511,41 +511,41 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 		}
 		else
 		{
-			Assert(ShmemBindingTableOffset);
+			Assert(ShmemIndexOffset);
 
 			*foundPtr = TRUE;
-			return ((long *) MAKE_PTR(*ShmemBindingTableOffset));
+			return ((long *) MAKE_PTR(*ShmemIndexOffset));
 		}
 
 
 	}
 	else
 	{
-		/* look it up in the binding table */
-		result = (BindingEnt *)
-			hash_search(BindingTable, (char *) &item, HASH_ENTER, foundPtr);
+		/* look it up in the shmem index */
+		result = (ShmemIndexEnt *)
+			hash_search(ShmemIndex, (char *) &item, HASH_ENTER, foundPtr);
 	}
 
 	if (!result)
 	{
-		SpinRelease(BindingLock);
+		SpinRelease(ShmemIndexLock);
 
-		elog(ERROR, "ShmemInitStruct: Binding Table corrupted");
+		elog(ERROR, "ShmemInitStruct: Shmem Index corrupted");
 		return (NULL);
 
 	}
 	else if (*foundPtr)
 	{
 		/*
-		 * Structure is in the binding table so someone else has allocated
+		 * Structure is in the shmem index so someone else has allocated
 		 * it already.	The size better be the same as the size we are
 		 * trying to initialize to or there is a name conflict (or worse).
 		 */
 		if (result->size != size)
 		{
-			SpinRelease(BindingLock);
+			SpinRelease(ShmemIndexLock);
 
-			elog(NOTICE, "ShmemInitStruct: BindingTable entry size is wrong");
+			elog(NOTICE, "ShmemInitStruct: ShmemIndex entry size is wrong");
 			/* let caller print its message too */
 			return (NULL);
 		}
@@ -558,9 +558,9 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 		if (!structPtr)
 		{
 			/* out of memory */
-			Assert(BindingTable);
-			hash_search(BindingTable, (char *) &item, HASH_REMOVE, foundPtr);
-			SpinRelease(BindingLock);
+			Assert(ShmemIndex);
+			hash_search(ShmemIndex, (char *) &item, HASH_REMOVE, foundPtr);
+			SpinRelease(ShmemIndexLock);
 			*foundPtr = FALSE;
 
 			elog(NOTICE, "ShmemInitStruct: cannot allocate '%s'",
@@ -572,7 +572,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	}
 	Assert(ShmemIsValid((unsigned long) structPtr));
 
-	SpinRelease(BindingLock);
+	SpinRelease(ShmemIndexLock);
 	return (structPtr);
 }
 
@@ -586,19 +586,19 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 bool
 TransactionIdIsInProgress(TransactionId xid)
 {
-	BindingEnt *result;
+	ShmemIndexEnt *result;
 	PROC	   *proc;
 
-	Assert(BindingTable);
+	Assert(ShmemIndex);
 
-	SpinAcquire(BindingLock);
+	SpinAcquire(ShmemIndexLock);
 
 	hash_seq((HTAB *) NULL);
-	while ((result = (BindingEnt *) hash_seq(BindingTable)) != NULL)
+	while ((result = (ShmemIndexEnt *) hash_seq(ShmemIndex)) != NULL)
 	{
-		if (result == (BindingEnt *) TRUE)
+		if (result == (ShmemIndexEnt *) TRUE)
 		{
-			SpinRelease(BindingLock);
+			SpinRelease(ShmemIndexLock);
 			return (false);
 		}
 		if (result->location == INVALID_OFFSET ||
@@ -607,12 +607,12 @@ TransactionIdIsInProgress(TransactionId xid)
 		proc = (PROC *) MAKE_PTR(result->location);
 		if (proc->xid == xid)
 		{
-			SpinRelease(BindingLock);
+			SpinRelease(ShmemIndexLock);
 			return (true);
 		}
 	}
 
-	SpinRelease(BindingLock);
-	elog(ERROR, "TransactionIdIsInProgress: BindingTable corrupted");
+	SpinRelease(ShmemIndexLock);
+	elog(ERROR, "TransactionIdIsInProgress: ShmemIndex corrupted");
 	return (false);
 }

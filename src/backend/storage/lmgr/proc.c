@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.37 1998/06/27 04:53:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.38 1998/06/27 15:47:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.37 1998/06/27 04:53:39 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.38 1998/06/27 15:47:46 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -184,7 +184,7 @@ InitProcess(IPCKey key)
 	{
 
 		/*
-		 * have to allocate one.  We can't use the normal binding table
+		 * have to allocate one.  We can't use the normal shmem index table
 		 * mechanism because the proc structure is stored by PID instead
 		 * of by a global name (need to look it up by PID when we cleanup
 		 * dead processes).
@@ -261,7 +261,7 @@ InitProcess(IPCKey key)
 	MemSet(MyProc->sLocks, 0, MAX_SPINS * sizeof(*MyProc->sLocks));
 
 	/* -------------------------
-	 * Install ourselves in the binding table.	The name to
+	 * Install ourselves in the shmem index table.	The name to
 	 * use is determined by the OS-assigned process id.  That
 	 * allows the cleanup process to find us after any untimely
 	 * exit.

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.12 1998/06/25 14:24:35 momjian Exp $
+ * $Id: shmem.h,v 1.13 1998/06/27 15:47:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ extern SHMEM_OFFSET ShmemBase;
 
 
 extern SPINLOCK ShmemLock;
-extern SPINLOCK BindingLock;
+extern SPINLOCK ShmemIndexLock;
 
 /* shmemqueue.c */
 typedef struct SHM_QUEUE
@@ -59,7 +59,7 @@ typedef struct SHM_QUEUE
 } SHM_QUEUE;
 
 /* shmem.c */
-extern void ShmemBindingTableReset(void);
+extern void ShmemIndexReset(void);
 extern void ShmemCreate(unsigned int key, unsigned int size);
 extern int	InitShmem(unsigned int key, unsigned int size);
 extern long *ShmemAlloc(unsigned long size);
@@ -77,21 +77,21 @@ extern bool TransactionIdIsInProgress(TransactionId xid);
 
 typedef int TableID;
 
-/* size constants for the binding table */
+/* size constants for the shmem index table */
  /* max size of data structure string name */
-#define BTABLE_KEYSIZE	(50)
- /* data in binding table hash bucket */
-#define BTABLE_DATASIZE (sizeof(BindingEnt) - BTABLE_KEYSIZE)
- /* maximum size of the binding table */
-#define BTABLE_SIZE		 (100)
+#define SHMEM_INDEX_KEYSIZE	(50)
+ /* data in shmem index table hash bucket */
+#define SHMEM_INDEX_DATASIZE (sizeof(ShmemIndexEnt) - SHMEM_INDEX_KEYSIZE)
+ /* maximum size of the shmem index table */
+#define SHMEM_INDEX_SIZE		 (100)
 
-/* this is a hash bucket in the binding table */
+/* this is a hash bucket in the shmem index table */
 typedef struct
 {
-	char		key[BTABLE_KEYSIZE];	/* string name */
+	char		key[SHMEM_INDEX_KEYSIZE];	/* string name */
 	unsigned long location;		/* location in shared mem */
 	unsigned long size;			/* numbytes allocated for the structure */
-} BindingEnt;
+} ShmemIndexEnt;
 
 /*
  * prototypes for functions in shmqueue.c

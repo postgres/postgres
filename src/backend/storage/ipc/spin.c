@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.13 1998/06/23 16:04:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.14 1998/06/27 15:47:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ bool
 InitSpinLocks(int init, IPCKey key)
 {
 	extern SPINLOCK ShmemLock;
-	extern SPINLOCK BindingLock;
+	extern SPINLOCK ShmemIndexLock;
 	extern SPINLOCK BufMgrLock;
 	extern SPINLOCK LockMgrLock;
 	extern SPINLOCK ProcStructLock;
@@ -66,7 +66,7 @@ InitSpinLocks(int init, IPCKey key)
 
 	/* These six spinlocks have fixed location is shmem */
 	ShmemLock = (SPINLOCK) SHMEMLOCKID;
-	BindingLock = (SPINLOCK) BINDINGLOCKID;
+	ShmemIndexLock = (SPINLOCK) SHMEMINDEXLOCKID;
 	BufMgrLock = (SPINLOCK) BUFMGRLOCKID;
 	LockMgrLock = (SPINLOCK) LOCKMGRLOCKID;
 	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
@@ -265,7 +265,7 @@ AttachSpinLocks(IPCKey key)
  * InitSpinLocks -- Spinlock bootstrapping
  *
  * We need several spinlocks for bootstrapping:
- * BindingLock (for the shmem binding table) and
+ * ShmemIndexLock (for the shmem index table) and
  * ShmemLock (for the shmem allocator), BufMgrLock (for buffer
  * pool exclusive access), LockMgrLock (for the lock table), and
  * ProcStructLock (a spin lock for the shared process structure).
@@ -277,7 +277,7 @@ bool
 InitSpinLocks(int init, IPCKey key)
 {
 	extern SPINLOCK ShmemLock;
-	extern SPINLOCK BindingLock;
+	extern SPINLOCK ShmemIndexLock;
 	extern SPINLOCK BufMgrLock;
 	extern SPINLOCK LockMgrLock;
 	extern SPINLOCK ProcStructLock;
@@ -305,7 +305,7 @@ InitSpinLocks(int init, IPCKey key)
 
 	/* These five (or six) spinlocks have fixed location is shmem */
 	ShmemLock = (SPINLOCK) SHMEMLOCKID;
-	BindingLock = (SPINLOCK) BINDINGLOCKID;
+	ShmemIndexLock = (SPINLOCK) SHMEMINDEXLOCKID;
 	BufMgrLock = (SPINLOCK) BUFMGRLOCKID;
 	LockMgrLock = (SPINLOCK) LOCKMGRLOCKID;
 	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
