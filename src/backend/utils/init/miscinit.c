@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.132 2004/08/29 05:06:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.133 2004/10/01 18:30:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,10 +526,22 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		/*
 		 * Check to see if the other process still exists
 		 *
+		 * If the PID in the lockfile is our own PID or our parent's PID,
+		 * then the file must be stale (probably left over from a previous
+		 * system boot cycle).  We need this test because of the likelihood
+		 * that a reboot will assign exactly the same PID as we had in the
+		 * previous reboot.  Also, if there is just one more process launch
+		 * in this reboot than in the previous one, the lockfile might mention
+		 * our parent's PID.  We can reject that since we'd never be launched
+		 * directly by a competing postmaster.  We can't detect grandparent
+		 * processes unfortunately, but if the init script is written carefully
+		 * then all but the immediate parent shell will be root-owned processes
+		 * and so the kill test will fail with EPERM.
+		 *
 		 * Normally kill() will fail with ESRCH if the given PID doesn't
 		 * exist.  BeOS returns EINVAL for some silly reason, however.
 		 */
-		if (other_pid != my_pid)
+		if (other_pid != my_pid && other_pid != getppid())
 		{
 			if (kill(other_pid, 0) == 0 ||
 				(errno != ESRCH
@@ -544,12 +556,16 @@ CreateLockFile(const char *filename, bool amPostmaster,
 						 errmsg("lock file \"%s\" already exists",
 								filename),
 						 isDDLock ?
-						 errhint("Is another %s (PID %d) running in data directory \"%s\"?",
-						   (encoded_pid < 0 ? "postgres" : "postmaster"),
-								 (int) other_pid, refName) :
-						 errhint("Is another %s (PID %d) using socket file \"%s\"?",
-						   (encoded_pid < 0 ? "postgres" : "postmaster"),
-								 (int) other_pid, refName)));
+						 (encoded_pid < 0 ?
+						  errhint("Is another postgres (PID %d) running in data directory \"%s\"?",
+								  (int) other_pid, refName) :
+						  errhint("Is another postmaster (PID %d) running in data directory \"%s\"?",
+								  (int) other_pid, refName)) :
+						 (encoded_pid < 0 ?
+						  errhint("Is another postgres (PID %d) using socket file \"%s\"?",
+								  (int) other_pid, refName) :
+						  errhint("Is another postmaster (PID %d) using socket file \"%s\"?",
+								  (int) other_pid, refName))));
 			}
 		}
 
