@@ -1,20 +1,22 @@
+# translation of postgres-tr.po to 
+# translation of postgres-tr.po to
 # translation of postgres-tr.po to Turkish
 # Nicolai Tufar <ntufar@tdmsoft.com>, 2002-2004.
 # Devrim GÜNDÜZ <devrim@tdmsoft.com>, 2003.
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
+# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005.
 #
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "POT-Creation-Date: 2005-01-04 18:59+0000\n"
-"PO-Revision-Date: 2005-01-28 17:58+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
-"Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
+"PO-Revision-Date: 2005-03-25 15:05+0200\n"
+"Last-Translator: \n"
+"Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.3.1\n"
+"X-Generator: KBabel 1.9.1\n"
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 "X-Poedit-Basepath: c:\\pgsql\\src\\backend\n"
@@ -289,14 +291,14 @@ msgstr "\"%s\" dosyası \"%s\" dosyasına bağlanamıyor (log dosyası %u, segme
 #: access/transam/xlog.c:1799
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m"
-msgstr "\"%s\" dosyası \"%s\" dosyasına taşınamıyor (log dosyası %u, segment %u iklendirme işlemi): %m"
+msgstr "\"%s\" dosyası \"%s\" dosyasına taşınamıyor (log dosyası %u, segment %u ilklendirme işlemi): %m"
 
 #: access/transam/xlog.c:1954
 #: access/transam/xlog.c:2056
 #: access/transam/xlog.c:5340
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "\"%s\" dosyası stat hatası: %m"
+msgstr "\"%s\" dosyası durumlanamadı: %m"
 
 #: access/transam/xlog.c:1962
 #: access/transam/xlog.c:5502
@@ -304,12 +306,12 @@ msgstr "\"%s\" dosyası stat hatası: %m"
 #: commands/tablespace.c:589
 #, c-format
 msgid "could not remove file \"%s\": %m"
-msgstr "\"%s\" dosyası silme hatası: %m"
+msgstr "\"%s\" dosyası silinemedi: %m"
 
 #: access/transam/xlog.c:2037
 #, c-format
 msgid "archive file \"%s\" has wrong size: %lu instead of %lu"
-msgstr "\"%s\" archive dosyası yanlış boyuta sahiptir: %lu yerine %lu olmalıydı."
+msgstr "\"%s\" arşiv dosyası yanlış boyuta sahip: %lu yerine %lu olmalıydı."
 
 #: access/transam/xlog.c:2044
 #, c-format
@@ -324,17 +326,17 @@ msgstr "\"%s\" dosyası arşivden geri yüklenemiyor: dönüş kodu %d"
 #: access/transam/xlog.c:2137
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
-msgstr "\"%s\" transaction log dizini açılamıyor: %m"
+msgstr "\"%s\" transaction kayıt dizini açılamıyor: %m"
 
 #: access/transam/xlog.c:2182
 #, c-format
 msgid "recycled transaction log file \"%s\""
-msgstr "\"%s\" transaction log dosyası yeniden kullanımda"
+msgstr "\"%s\" transaction kayıt dosyası yeniden kullanımda"
 
 #: access/transam/xlog.c:2190
 #, c-format
 msgid "removing transaction log file \"%s\""
-msgstr "\"%s\" transaction log dosyası kaldırılıyor"
+msgstr "\"%s\" transaction kayıt dosyası kaldırılıyor"
 
 #: access/transam/xlog.c:2213
 #, c-format
@@ -457,7 +459,7 @@ msgstr "Timeline ID daima artan sırayla olmalıdır."
 #: access/transam/xlog.c:2819
 #, c-format
 msgid "invalid data in history file \"%s\""
-msgstr "\"%s\" geçmişdosyasında geçersiz veri"
+msgstr "\"%s\" geçmiş dosyasında geçersiz veri"
 
 #: access/transam/xlog.c:2820
 msgid "Timeline IDs must be less than child timeline's ID."
@@ -466,7 +468,7 @@ msgstr "timeline ID, child timeline ID'sinden daha düşük olmalıdır."
 #: access/transam/xlog.c:3058
 #, c-format
 msgid "could not link file \"%s\" to \"%s\": %m"
-msgstr "\"%s\" dosyasından \"%s\" dosyasına link hatası: %m"
+msgstr "\"%s\" dosyası \"%s\" dosyasına bağlanamadı: %m"
 
 #: access/transam/xlog.c:3065
 #: access/transam/xlog.c:3847
@@ -614,12 +616,12 @@ msgstr "veritabanı dosyaları işletim sistemi ile uyumlu değildir"
 #: access/transam/xlog.c:3313
 #, c-format
 msgid "The database cluster was initialized with LC_COLLATE \"%s\", which is not recognized by setlocale()."
-msgstr "Veritabanı LC_COLLATE \"%s\", ile ilklendirilmiştir, ancak setlocale() bun yereli tanımamaktadır.."
+msgstr "Veritabanı LC_COLLATE \"%s\", ile ilklendirilmiştir, ancak setlocale() bu yereli tanımamaktadır.."
 
 #: access/transam/xlog.c:3316
 #: access/transam/xlog.c:3323
 msgid "It looks like you need to initdb or install locale support."
-msgstr "Yerel dil desteğini etkinleştirmek için initdb çalıştırmanız gerekir."
+msgstr "Yerel desteğini kurmanız ya da initdb çalıştırmanız gerekmektedir."
 
 #: access/transam/xlog.c:3320
 #, c-format
@@ -629,12 +631,12 @@ msgstr "Veritabanı LC_CTYPE \"%s\", ile ilklendirilmiştir, ancak setlocale() b
 #: access/transam/xlog.c:3546
 #, c-format
 msgid "could not write bootstrap transaction log file: %m"
-msgstr "bootstrap transaction log dosyası kapatma başarısız: %m"
+msgstr "bootstrap transaction log dosyası kapatılamadı: %m"
 
 #: access/transam/xlog.c:3552
 #, c-format
 msgid "could not fsync bootstrap transaction log file: %m"
-msgstr "bootstrap transaction log dosyası fsyanc başarısız: %m"
+msgstr "bootstrap transaction log dosyası fsync başarısız: %m"
 
 #: access/transam/xlog.c:3557
 #, c-format
@@ -697,7 +699,7 @@ msgstr "\"%s\" tanınmayan recovery parametresi"
 #: access/transam/xlog.c:3756
 #, c-format
 msgid "syntax error in recovery command file: %s"
-msgstr "%s recovery komut dosyasında söz dizim hatası "
+msgstr "%s recovery komut dosyasında sözdizimi hatası "
 
 #: access/transam/xlog.c:3758
 msgid "Lines should have the format parameter = 'value'."
@@ -720,36 +722,36 @@ msgstr "archive recovery tamamlandı"
 #: access/transam/xlog.c:3978
 #, c-format
 msgid "recovery stopping after commit of transaction %u, time %s"
-msgstr "recovery stopping after commit of transaction %u, time %s"
+msgstr "kurtarma işlemi %u transactionunun, %s zamanında commit edilmesinden sonra durdu"
 
 #: access/transam/xlog.c:3982
 #, c-format
 msgid "recovery stopping before commit of transaction %u, time %s"
-msgstr "recovery stopping before commit of transaction %u, time %s"
+msgstr "kurtarma işlemi %u transactionunun, %s zamanında commit edilmesinden önce durdu"
 
 #: access/transam/xlog.c:3989
 #, c-format
 msgid "recovery stopping after abort of transaction %u, time %s"
-msgstr "recovery stopping after abort of transaction %u, time %s"
+msgstr "kurtarma işlemi %u transactionunun, %s zamanunda iptal edilmesinden sonra duruyor"
 
 #: access/transam/xlog.c:3993
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
-msgstr "recovery stopping before abort of transaction %u, time %s"
+msgstr "kurtarma işlemi %u transactionunun, %s zamanunda iptal edilmesinden önce duruyor"
 
 #: access/transam/xlog.c:4035
 msgid "control file contains invalid data"
-msgstr "kontrol dosyasında veri geçersiz"
+msgstr "kontrol dosyası geçersiz veri içeriyor"
 
 #: access/transam/xlog.c:4039
 #, c-format
 msgid "database system was shut down at %s"
-msgstr "veritabanı sunucusu %s tarihinde kapatılmıştır"
+msgstr "veritabanı sunucusu %s tarihinde kapatıldı"
 
 #: access/transam/xlog.c:4043
 #, c-format
 msgid "database system shutdown was interrupted at %s"
-msgstr "veritabanı kapatma işlemi %s tarihinde iptal edilmiştir"
+msgstr "veritabanı kapatma işlemi %s tarihinde iptal edildi"
 
 #: access/transam/xlog.c:4047
 #, c-format
@@ -822,7 +824,7 @@ msgstr "otomatik kurtarma sürüyor"
 
 #: access/transam/xlog.c:4209
 msgid "database system was not properly shut down; automatic recovery in progress"
-msgstr "veritabanı düzgün kapatılmamış otomatik kurtarma işlemi sürüyor"
+msgstr "veritabanı düzgün kapatılmamış; otomatik kurtarma işlemi sürüyor"
 
 #: access/transam/xlog.c:4246
 #, c-format
@@ -840,11 +842,11 @@ msgstr "redo işlemi gerekmiyor"
 
 #: access/transam/xlog.c:4332
 msgid "requested recovery stop point is before end time of backup dump"
-msgstr "talep edilen kutarma durma noktası yedek dump'ının bitiş tarihinden öncedir"
+msgstr "talep edilen kurtarma durma noktası yedek dump'ının bitiş tarihinden öncedir"
 
 #: access/transam/xlog.c:4336
 msgid "WAL ends before end time of backup dump"
-msgstr "WAL yedek dump'ının bitiş zamanından önce sona ermiştir"
+msgstr "WAL, yedek dump'ının bitiş zamanından önce sona ermiştir"
 
 #: access/transam/xlog.c:4351
 #, c-format
@@ -871,11 +873,11 @@ msgstr "veritabanı sunucusu hazır"
 
 #: access/transam/xlog.c:4556
 msgid "invalid primary checkpoint link in control file"
-msgstr "kontrol dosyasındaki ana checkpoint link geçersiz"
+msgstr "kontrol dosyasındaki ana checkpoint bağlantısı geçersiz"
 
 #: access/transam/xlog.c:4560
 msgid "invalid secondary checkpoint link in control file"
-msgstr "kontrol dosyasındaki ikincil checkpoint link geçersiz"
+msgstr "kontrol dosyasındaki ikincil checkpoint bağlantısı geçersiz"
 
 #: access/transam/xlog.c:4564
 msgid "invalid checkpoint link in backup_label file"
@@ -948,7 +950,7 @@ msgstr "veritabanının kapanması sırasında eşzamanlı transaction log harek
 #: access/transam/xlog.c:4998
 #, c-format
 msgid "checkpoint complete; %d transaction log file(s) added, %d removed, %d recycled"
-msgstr "checkpoint tamamlanmıştır; %d tane transaction log dosyası eklenmiştir, %d tane kaldırılmıştır, %d tane yeniden kullanıma alınmıştır"
+msgstr "checkpoint tamamlandı; %d tane transaction log dosyası eklendi, %d tane kaldırıldı, %d tane yeniden kullanıma alındı"
 
 #: access/transam/xlog.c:5058
 #, c-format
@@ -1015,7 +1017,7 @@ msgstr "\"%s\" dosyasında geçersiz veri"
 #: access/transam/slru.c:452
 #, c-format
 msgid "file \"%s\" doesn't exist, reading as zeroes"
-msgstr "\"%s\" dosyası mevcut değildir, sıfırlarla dolu dosya olarak okunmaktadır"
+msgstr "\"%s\" dosyası mevcut değilr, sıfırlarla dolu dosya olarak okunuyor"
 
 #: access/transam/slru.c:637
 #: access/transam/slru.c:644
@@ -1077,7 +1079,7 @@ msgstr "bir transaction içinde 2^32-1 komuttan fazla olamaz"
 #: access/transam/xact.c:2178
 #, c-format
 msgid "%s cannot run inside a transaction block"
-msgstr "%s bir transaction block içinde çalışamaz"
+msgstr "%s bir transaction bloğu içinde çalışamaz"
 
 #. translator: %s represents an SQL statement name
 #: access/transam/xact.c:2188
@@ -1104,7 +1106,7 @@ msgstr "bir transaction zaten başlatılmıştır"
 #: access/transam/xact.c:2549
 #: access/transam/xact.c:2640
 msgid "there is no transaction in progress"
-msgstr "yürüyen bir transaction yok"
+msgstr "çalışan bir transaction yok"
 
 #: access/transam/xact.c:2732
 #: access/transam/xact.c:2781
@@ -1160,7 +1162,7 @@ msgstr "diğer nesnelerin ona bağlı olması nedeniyle %s kaldırılamıyor"
 
 #: catalog/dependency.c:154
 msgid "Use DROP ... CASCADE to drop the dependent objects too."
-msgstr "Bağlı nesneleri de kaldırmak için DROP ... CASCADE kulanın."
+msgstr "Bağlı nesneleri de kaldırmak için DROP ... CASCADE kullanın."
 
 #: catalog/dependency.c:212
 #, c-format
@@ -1250,22 +1252,22 @@ msgstr "%s dili"
 #: catalog/dependency.c:1592
 #, c-format
 msgid "operator %s"
-msgstr "operator %s"
+msgstr "operatör %s"
 
 #: catalog/dependency.c:1626
 #, c-format
 msgid "operator class %s for access method %s"
-msgstr "%s erişim metodu için %s operator sınıfı"
+msgstr "%s erişim metodu için %s operatör sınıfı"
 
 #: catalog/dependency.c:1662
 #, c-format
 msgid "rule %s on "
-msgstr "rule %s etkin"
+msgstr "%s rule'u etkin"
 
 #: catalog/dependency.c:1697
 #, c-format
 msgid "trigger %s on "
-msgstr "%s triggeri açık"
+msgstr "%s triggeri etkin"
 
 #: catalog/dependency.c:1714
 #, c-format
@@ -1295,7 +1297,7 @@ msgstr "sequence %s"
 #: catalog/dependency.c:1774
 #, c-format
 msgid "uncataloged table %s"
-msgstr "katalog edilmemiş tablo %s"
+msgstr "%s kataloglanmamış tablosu"
 
 #: catalog/dependency.c:1778
 #, c-format
@@ -1485,7 +1487,7 @@ msgstr "%s şemasına erişim engellendi"
 #: catalog/aclchk.c:1256
 #, c-format
 msgid "permission denied for operator class %s"
-msgstr "%s operator sınıfına erişim engellendi"
+msgstr "%s operatör sınıfına erişim engellendi"
 
 #: catalog/aclchk.c:1258
 #, c-format
@@ -1535,7 +1537,7 @@ msgstr "%s şemasının sahibi olmalısınız"
 #: catalog/aclchk.c:1280
 #, c-format
 msgid "must be owner of operator class %s"
-msgstr "%s operator sınıfının sahibi olmalısınız"
+msgstr "%s operatör sınıfının sahibi olmalısınız"
 
 #: catalog/aclchk.c:1282
 #, c-format
@@ -1656,16 +1658,16 @@ msgstr "%s fonksiyonu bir küme döndürüyor"
 #: catalog/pg_aggregate.c:330
 #, c-format
 msgid "function %s requires run-time type coercion"
-msgstr "%s fonksiyonu çalışma zamanı tip düzeltmesini gerektirir"
+msgstr "%s fonksiyonu çalışma zamanı tipi zorlaması gerektirir"
 
 #: catalog/heap.c:221
 #, c-format
 msgid "permission denied to create \"%s.%s\""
-msgstr "\"%s.%s\" oluşturma izni yok"
+msgstr "\"%s.%s\" oluşturulmasına izin verilmedi"
 
 #: catalog/heap.c:223
 msgid "System catalog modifications are currently disallowed."
-msgstr "System catalog değişikliklerine şu anda izin verilmez."
+msgstr "System catalog değişikliklerine şu anda izin verilmiyor."
 
 #: catalog/heap.c:382
 #: commands/tablecmds.c:723
@@ -1683,12 +1685,12 @@ msgstr "\"%s\" kolon adı sistem kolonu ile çakışmaktadır"
 #: catalog/heap.c:415
 #, c-format
 msgid "column name \"%s\" is duplicated"
-msgstr "\"%s\" sütun adı mukerrerdir"
+msgstr "\"%s\" sütun adı mükerrer"
 
 #: catalog/heap.c:452
 #, c-format
 msgid "column \"%s\" has type \"unknown\""
-msgstr "\"%s\" sütunu \"unknown\" tipine sahiptir"
+msgstr "\"%s\" sütunu \"unknown\" tipine sahip"
 
 #: catalog/heap.c:453
 msgid "Proceeding with relation creation anyway."
@@ -6819,23 +6821,23 @@ msgstr "veritabanı kurtarma modundadır"
 #: storage/ipc/sinval.c:105
 #: storage/lmgr/proc.c:246
 msgid "sorry, too many clients already"
-msgstr "özgünüm, istemci sayısı çok fazla"
+msgstr "üzgünüm, istemci sayısı çok fazla"
 
 #: postmaster/postmaster.c:1790
 msgid "received SIGHUP, reloading configuration files"
-msgstr "SIGHUP sinyali alınmıştır, konfigurasyon dosyaları yeniden okunuyor"
+msgstr "SIGHUP sinyali alınmıştır, yapılandırma dosyaları yeniden okunuyor"
 
 #: postmaster/postmaster.c:1842
 msgid "received smart shutdown request"
-msgstr "smart shutdown isteği alındı"
+msgstr "akıllı kapatma isteği alındı"
 
 #: postmaster/postmaster.c:1878
 msgid "received fast shutdown request"
-msgstr "fast shutdown isteği alındı"
+msgstr "hızlı kapatma isteği alındı"
 
 #: postmaster/postmaster.c:1885
 msgid "aborting any active transactions"
-msgstr "actif transactionlar iptal ediliyor"
+msgstr "aktif transactionlar iptal ediliyor"
 
 #: postmaster/postmaster.c:1923
 msgid "received immediate shutdown request"
@@ -6867,7 +6869,7 @@ msgstr "system logger süreci"
 
 #: postmaster/postmaster.c:2127
 msgid "all server processes terminated; reinitializing"
-msgstr "tüm sunucu süreçleri durdurulmuş; shared memory ve spamothorları yeniden tanımlanıyor"
+msgstr "tüm sunucu süreçleri durduruldu; yeniden ilklendiriliyor"
 
 #: postmaster/postmaster.c:2173
 #: postmaster/postmaster.c:2183
@@ -6881,17 +6883,17 @@ msgstr "diğer aktif sunucu süreçleri durduruluyor"
 #: postmaster/postmaster.c:2325
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
-msgstr "%s (PID %d) exit code %d ile sonlandırılmış"
+msgstr "%s (PID %d) exit code %d ile sonlandı"
 
 #: postmaster/postmaster.c:2334
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
-msgstr "%s (PID %d) %d sinyali tarafından sonlandırılmış"
+msgstr "%s (PID %d) %d sinyali tarafından sonlandırıldı"
 
 #: postmaster/postmaster.c:2343
 #, c-format
 msgid "%s (PID %d) exited with unexpected status %d"
-msgstr "%s (PID %d) bekleynmeyen status kodu ile sonlandırılmış %d"
+msgstr "%s (PID %d) beklenmeyen status kodu ile sonlandırıldı %d"
 
 #: postmaster/postmaster.c:2468
 #, c-format
@@ -6910,7 +6912,7 @@ msgstr "getnameinfo_all() başarısız: %s"
 #: postmaster/postmaster.c:2655
 #, c-format
 msgid "connection received: host=%s port=%s"
-msgstr "connection alındı: host=%s port=%s"
+msgstr "bağlantı alındı: istemci=%s port=%s"
 
 #: postmaster/postmaster.c:2727
 #, c-format
@@ -6925,12 +6927,12 @@ msgstr "\"%s\" sunucu süreci başlatma hatası: %m"
 #: postmaster/postmaster.c:3551
 #, c-format
 msgid "could not fork startup process: %m"
-msgstr "startup süreci başlatma hatası: %m"
+msgstr "başlatma süreci fork edilemedi: %m"
 
 #: postmaster/postmaster.c:3555
 #, c-format
 msgid "could not fork background writer process: %m"
-msgstr "backgroun writer süreci başlatma hatası: %m"
+msgstr "background writer süreci başlatılamadı: %m"
 
 #: postmaster/postmaster.c:3559
 #, c-format
@@ -6956,15 +6958,17 @@ msgstr "\"%s\" backend parametreler dosyasından okunamıyor: %s\n"
 #: postmaster/postmaster.c:3807
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
-msgstr "\"%s\" dosyası silme hatası: %s\n"
+msgstr "\"%s\" dosyası silinemedi: %s\n"
 
 #: postmaster/postmaster.c:3820
 #, c-format
+#, fuzzy
 msgid "could not map view of backend variables: error code %d\n"
 msgstr "backend değişkenleri map view hatası: hata kodu: %d\n"
 
 #: postmaster/postmaster.c:3829
 #, c-format
+#, fuzzy
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr "backend değişkenleri unmap view hatası: hata kodu: %d\n"
 
@@ -6985,11 +6989,11 @@ msgstr "checkpoint işlemi çok sık çağırılıyor (%d saniye aralıkla)"
 
 #: postmaster/bgwriter.c:338
 msgid "Consider increasing the configuration parameter \"checkpoint_segments\"."
-msgstr "\"checkpoint_segments\" konfigurasyon parametresi ile bu aralığı büyütebilirsiniz."
+msgstr "\"checkpoint_segments\" yapılandırma parametresi ile bu aralığı büyütebilirsiniz."
 
 #: postmaster/bgwriter.c:488
 msgid "not enough shared memory for background writer"
-msgstr "arka planı writer için sharem memory yeterli değildir"
+msgstr "arka planı writer için shared memory yeterli değildir"
 
 #: postmaster/bgwriter.c:553
 msgid "checkpoint request failed"
@@ -7012,22 +7016,22 @@ msgstr "transaction log dosyası \"%s\" arşivlenemedi: çok fazla başarısız 
 #: postmaster/pgarch.c:474
 #, c-format
 msgid "archive command \"%s\" failed: return code %d"
-msgstr "arşıv komutu \"%s\" başarısız: döndürülen kod %d"
+msgstr "arşiv komutu \"%s\" başarısız: döndürülen kod %d"
 
 #: postmaster/pgarch.c:479
 #, c-format
 msgid "archived transaction log file \"%s\""
-msgstr "archived transaction log dosyası \"%s\""
+msgstr "arşivlenen transaction kayıt dosyası \"%s\""
 
 #: postmaster/pgarch.c:525
 #, c-format
 msgid "could not open archive status directory \"%s\": %m"
-msgstr "archive status dizini \"%s\" açılamıyor: %m"
+msgstr "arşiv durum dizini \"%s\" açılamıyor: %m"
 
 #: postmaster/pgarch.c:564
 #, c-format
 msgid "could not read archive status directory \"%s\": %m"
-msgstr "archive status dizini \"%s\" okunamıyor: %m"
+msgstr "arşiv durum dizini \"%s\" okunamıyor: %m"
 
 #: postmaster/pgstat.c:259
 #, c-format
@@ -7037,22 +7041,22 @@ msgstr "\"localhost\" adresi çözümlenemedi: %s"
 #: postmaster/pgstat.c:287
 #, c-format
 msgid "could not create socket for statistics collector: %m"
-msgstr "statistic collectror socket oluşturma hatası: %m"
+msgstr "istatistik toplayıcı socket oluşturma hatası: %m"
 
 #: postmaster/pgstat.c:299
 #, c-format
 msgid "could not bind socket for statistics collector: %m"
-msgstr "statistic collectror socket bind hatası: %m"
+msgstr "istatistik toplayıcı soket bind hatası: %m"
 
 #: postmaster/pgstat.c:310
 #, c-format
 msgid "could not get address of socket for statistics collector: %m"
-msgstr "istatistik toplayıcı sürecinin socket adresi alınamadı: %m"
+msgstr "istatistik toplayıcı sürecinin soket adresi alınamadı: %m"
 
 #: postmaster/pgstat.c:326
 #, c-format
 msgid "could not connect socket for statistics collector: %m"
-msgstr "statistic collectror socket bağlama hatası: %m"
+msgstr "statistic collectror soket bağlama hatası: %m"
 
 #: postmaster/pgstat.c:343
 #, c-format
@@ -7063,7 +7067,7 @@ msgstr "istatistik toplayıcı sürecine test mesajı gönderme hatası: %m"
 #: postmaster/pgstat.c:1565
 #, c-format
 msgid "select() failed in statistics collector: %m"
-msgstr "istatistik toplayıcı süreci select() hatası: %m"
+msgstr "istatistik toplayıcı sürecinde select() hatası: %m"
 
 #: postmaster/pgstat.c:383
 msgid "test message did not get through on socket for statistics collector"
@@ -7072,16 +7076,16 @@ msgstr "istatistik toplayıcı sürecine test mesajı gönderilemedi"
 #: postmaster/pgstat.c:395
 #, c-format
 msgid "could not receive test message on socket for statistics collector: %m"
-msgstr "istatistik toplayıcı süreci test mesajı alma hatası: %m"
+msgstr "istatistik toplayıcı süreci deneme mesajı alma hatası: %m"
 
 #: postmaster/pgstat.c:405
 msgid "incorrect test message transmission on socket for statistics collector"
-msgstr "istatistik toplayıcı socket aracılığı ile mesaj gönderme hatası"
+msgstr "istatistik toplayıcı sokket aracılığı ile mesaj gönderme hatası"
 
 #: postmaster/pgstat.c:429
 #, c-format
 msgid "could not set statistics collector socket to nonblocking mode: %m"
-msgstr "istatistik toplayıc socketi nonblocking durumuna getirilemedi: %m"
+msgstr "istatistik toplayıcı soketi nonblocking durumuna getirilemedi: %m"
 
 #: postmaster/pgstat.c:439
 msgid "disabling statistics collector for lack of working socket"
@@ -7098,31 +7102,31 @@ msgstr "istatistik tampon süreci başlatılamıyor: %m"
 
 #: postmaster/pgstat.c:957
 msgid "must be superuser to reset statistics counters"
-msgstr "istatistik sayaçları sadece veritabanı superuser sıfırlayabilir"
+msgstr "istatistik sayaçlarını sadece veritabanı superuserı sıfırlayabilir"
 
 #: postmaster/pgstat.c:1379
 #, c-format
 msgid "could not create pipe for statistics buffer: %m"
-msgstr "statistics tamponu için pipe oluşturma hatası: %m"
+msgstr "istatistik tamponu için pipe oluşturma hatası: %m"
 
 #: postmaster/pgstat.c:1391
 #, c-format
 msgid "could not fork statistics collector: %m"
-msgstr "statistics collector başlatılamıyor: %m"
+msgstr "istatistik toplayıcı başlatılamıyor: %m"
 
 #: postmaster/pgstat.c:1606
 #, c-format
 msgid "could not read from statistics collector pipe: %m"
-msgstr "statistics collector pipe okuma hatası: %m"
+msgstr "istatistik toplayıcı pipe okuma hatası: %m"
 
 #: postmaster/pgstat.c:1627
 msgid "invalid statistics message length"
-msgstr "istatistik mesaj uzunluğu yanlıştır"
+msgstr "geçersiz istatistik mesaj uzunluğu "
 
 #: postmaster/pgstat.c:1772
 #, c-format
 msgid "could not set statistics collector pipe to nonblocking mode: %m"
-msgstr "istatistik toplayıc pipe nonblocking durumuna getirilemedi: %m"
+msgstr "istatistik toplayıcı pipe nonblocking durumuna getirilemedi: %m"
 
 #: postmaster/pgstat.c:1803
 msgid "statistics buffer is full"
@@ -7136,7 +7140,7 @@ msgstr "istatistik toplama süreci içerisinde select() hatası: %m"
 #: postmaster/pgstat.c:1848
 #, c-format
 msgid "could not read statistics message: %m"
-msgstr "istatistik mesajı okuma hatası: %m"
+msgstr "istatistik mesajı okunamadı: %m"
 
 #: postmaster/pgstat.c:1911
 #, c-format
@@ -7146,13 +7150,13 @@ msgstr "statistics collector pipe yazma hatası: %m"
 #: postmaster/pgstat.c:1986
 #, c-format
 msgid "invalid server process ID %d"
-msgstr "sunucu süreci ID %d geçersiz"
+msgstr "geçersiz sunucu süreci ID %d"
 
 #: postmaster/pgstat.c:2045
 #: postmaster/pgstat.c:2120
 #: postmaster/pgstat.c:2718
 msgid "out of memory in statistics collector --- abort"
-msgstr "statistics collector sürecinde bellek yetersizliği --- abort"
+msgstr "istatistik toplayıcıda yetersiz bellek --- abort"
 
 #: postmaster/pgstat.c:2168
 #, c-format
@@ -7180,7 +7184,7 @@ msgstr "geçici istatistik dosyasının adı değiştirilemiyor eski: \"%s\" yen
 
 #: postmaster/pgstat.c:2308
 msgid "dead-server-process hash table corrupted during cleanup --- abort"
-msgstr "ölü backend hash tablosu başlatma sırasında bozulmuştur --- iptal"
+msgstr "ölü backend hash tablosu başlatma sırasında bozulmuş --- iptal"
 
 #: postmaster/pgstat.c:2415
 #: postmaster/pgstat.c:2435
@@ -7190,7 +7194,7 @@ msgstr "ölü backend hash tablosu başlatma sırasında bozulmuştur --- iptal"
 #: postmaster/pgstat.c:2553
 #: postmaster/pgstat.c:2582
 msgid "corrupted pgstat.stat file"
-msgstr "pgstat.stat dosysı bozulmuştur"
+msgstr "bozuk pgstat.stat dosyası"
 
 #: postmaster/syslogger.c:317
 #, c-format
@@ -7242,7 +7246,7 @@ msgstr "log file yazma hatası: %m"
 #: postmaster/syslogger.c:790
 #, c-format
 msgid "could not open new log file \"%s\": %m"
-msgstr "yeni log file \"%s\" açma hatası: %m"
+msgstr "yeni kayıt dosyası \"%s\" açma hatası: %m"
 
 #: postmaster/syslogger.c:802
 msgid "disabling automatic rotation (use SIGHUP to reenable)"
@@ -7252,27 +7256,27 @@ msgstr "otomatik dönüşüm etkisiz (yeniden yetkilendirmek için SIGHUP kullan
 #: rewrite/rewriteDefine.c:587
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" already exists"
-msgstr "Rule \"%s\", \"%s\" için zaten mevcut"
+msgstr "\"%s\" kuralı(rule), \"%s\" nesnesi için zaten mevcut"
 
 #: rewrite/rewriteDefine.c:234
 msgid "rule actions on OLD are not implemented"
-msgstr "OLD için rule eylemleri emplemente edilmemiş"
+msgstr "OLD için rule eylemleri implement edilmemiş"
 
 #: rewrite/rewriteDefine.c:235
 msgid "Use views or triggers instead."
-msgstr "Yerine view veya trigger kullanın."
+msgstr "Bunun yerine view veya trigger kullanın."
 
 #: rewrite/rewriteDefine.c:239
 msgid "rule actions on NEW are not implemented"
-msgstr "NEW için rule eylemleri emplemente edilmemiş"
+msgstr "NEW için rule eylemleri implement edilmemiş"
 
 #: rewrite/rewriteDefine.c:240
 msgid "Use triggers instead."
-msgstr "lütfen yerine triggerleri kullanın."
+msgstr "Bunun yerine lütfen triggerleri kullanın."
 
 #: rewrite/rewriteDefine.c:257
 msgid "INSTEAD NOTHING rules on SELECT are not implemented"
-msgstr "SELECT üzerinde INSTEAD NOTHING rule emplemente edilmemiştir"
+msgstr "SELECT üzerinde INSTEAD NOTHING rule implement edilmemiştir"
 
 #: rewrite/rewriteDefine.c:258
 msgid "Use views instead."
@@ -7280,7 +7284,7 @@ msgstr "Lütfen yerine viewları kullanın"
 
 #: rewrite/rewriteDefine.c:266
 msgid "multiple actions for rules on SELECT are not implemented"
-msgstr "SELECT rule'ler için birden fazla eylem tanımlanma emplemente edilmemiş"
+msgstr "SELECT rule'ler için birden fazla eylem tanımlanma implement edilmemiştir"
 
 #: rewrite/rewriteDefine.c:275
 msgid "rules on SELECT must have action INSTEAD SELECT"
@@ -7288,7 +7292,7 @@ msgstr "SELECT rule tanımları INSTEAD SELECT öğesini taşımak zorundadır"
 
 #: rewrite/rewriteDefine.c:283
 msgid "event qualifications are not implemented for rules on SELECT"
-msgstr "SELECT rule'ler için olay tanımları emplemente edilmemiş"
+msgstr "SELECT rule'ler için olay tanımları implement edilmemiştir"
 
 #: rewrite/rewriteDefine.c:303
 msgid "SELECT rule's target list has too many entries"
@@ -7390,7 +7394,7 @@ msgstr "ON DELETE DO INSTEAD rule gerekmetedir."
 #: rewrite/rewriteManip.c:737
 #: rewrite/rewriteManip.c:793
 msgid "conditional utility statements are not implemented"
-msgstr "Conditional utility statements emplemente edilmemiş"
+msgstr "Conditional utility statements implement edilmemiş"
 
 #: storage/buffer/bufmgr.c:216
 #, c-format
@@ -8670,11 +8674,11 @@ msgstr "dış \"polygon\" değerinde geçersiz nokta sayısı"
 
 #: utils/adt/geo_ops.c:3751
 msgid "function \"poly_distance\" not implemented"
-msgstr "\"poly_distance\" fonksiyonu emplemente edilmemiş"
+msgstr "\"poly_distance\" fonksiyonu implement edilmemiş"
 
 #: utils/adt/geo_ops.c:4063
 msgid "function \"path_center\" not implemented"
-msgstr "\"path_center\" fonksiyonu emplemente edilmemiş"
+msgstr "\"path_center\" fonksiyonu implement edilmemiş"
 
 #: utils/adt/geo_ops.c:4080
 msgid "open path cannot be converted to polygon"

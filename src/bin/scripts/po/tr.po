@@ -1,13 +1,14 @@
+# translation of pgscripts-tr.po to 
 # translation of pgscripts-tr.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
+# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts-tr\n"
 "POT-Creation-Date: 2004-12-14 19:09+0000\n"
-"PO-Revision-Date: 2004-12-15 02:48+0200\n"
-"Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
-"Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
+"PO-Revision-Date: 2005-03-25 08:48+0200\n"
+"Last-Translator: \n"
+"Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -75,7 +76,7 @@ msgstr ""
 
 #: createdb.c:221
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr "  -D, --tablespace=TABLESPACE  veritabanı için ön tanımlı tablespace\n"
+msgstr "  -D, --tablespace=TABLESPACE  veritabanı için öntanımlı tablespace\n"
 
 #: createdb.c:222
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
@@ -101,11 +102,11 @@ msgstr "  -q, --quiet                  Hiç bir mesaj yazma\n"
 
 #: createdb.c:227
 msgid "  --help                       show this help, then exit\n"
-msgstr "  --help                       bu yardımı gösterir ve çıkar\n"
+msgstr "  --help                       bu yardımı göster ve çık\n"
 
 #: createdb.c:228
 msgid "  --version                    output version information, then exit\n"
-msgstr "  --version                    sürüm bilgisini gösterir ve çıkar\n"
+msgstr "  --version                    sürüm bilgisini göster ve çık\n"
 
 #: clusterdb.c:244 createdb.c:229 createuser.c:255 vacuumdb.c:273
 msgid ""
@@ -148,7 +149,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Hataları <pgsql-bugs@postgresql.org> adresine yazabilirsiniz.\n"
+"Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
 
 #: createlang.c:143 droplang.c:140
 msgid "Name"
@@ -219,15 +220,15 @@ msgstr "  -d, --dbname=VERİTABANI_ADI       dilin kurulacağı veritabanının 
 #: clusterdb.c:240 createlang.c:303 createuser.c:251 dropdb.c:150
 #: droplang.c:284 dropuser.c:150
 msgid "  -e, --echo                show the commands being sent to the server\n"
-msgstr "  -e, --echo                sunucuya gönderilen komutları gösterir\n"
+msgstr "  -e, --echo                sunucuya gönderilen komutları göster\n"
 
 #: createlang.c:304 droplang.c:285
 msgid "  -l, --list                show a list of currently installed languages\n"
-msgstr "  -l, --list                Şu anda kurulu olan dilleri gösterir\n"
+msgstr "  -l, --list                Şu anda kurulu olan dilleri göster\n"
 
 #: createlang.c:305
 msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
-msgstr "  -L, --pglib=DİZİN     DİZİN dizini içindeki dil interpreterini bulur.\n"
+msgstr "  -L, --pglib=DİZİN     DİZİN dizini içindeki dil interpreterini bul.\n"
 
 #: clusterdb.c:245 createlang.c:306 createuser.c:256 dropdb.c:153
 #: droplang.c:286 dropuser.c:153 vacuumdb.c:274
@@ -264,7 +265,7 @@ msgstr "%s: kullanıcı ID'si pozitif bir sayı olmalıdır\n"
 
 #: createuser.c:148
 msgid "Enter name of user to add: "
-msgstr "Eklenilecek kullanıcı adını girin:"
+msgstr "Eklenecek kullanıcı adını girin:"
 
 #: createuser.c:155
 msgid "Enter password for new user: "
@@ -607,7 +608,7 @@ msgstr ""
 #: common.c:33
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
-msgstr "%s: geçerli kullanıcı hakkında ilgi alınamadı: %s\n"
+msgstr "%s: geçerli kullanıcı hakkında bilgi alınamadı: %s\n"
 
 #: common.c:44
 #, c-format
