@@ -1320,7 +1320,6 @@ int	pgindent_func_no_var_fix;\
 			    line3 ~ "		*}$")
 			{
 				print line2;
-				line1 = "";
 				line2 = "";
 				line3 = "";
 				skips = 3;
@@ -1350,7 +1349,6 @@ int	pgindent_func_no_var_fix;\
 			{
 				print line1;
 				print line3;
-				line1 = "";
 				line2 = "";
 				line3 = "";
 				skips = 3;
@@ -1378,7 +1376,6 @@ int	pgindent_func_no_var_fix;\
 			    line2 ~ "^#endif")
 			{
 				print line2;
-				line1 = "";
 				line2 = "";
 				skips = 2;
 			}
