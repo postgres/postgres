@@ -10,13 +10,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.16 1997/09/18 20:22:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.17 1997/11/17 16:26:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>				/* for sprintf() */
 #include <errno.h>
 #include <math.h>
+#ifdef HAVE_LIMITS
+#include <limits.h>
+#endif
 #include "postgres.h"
 #include "utils/builtins.h"		/* where the declarations go */
 #ifndef HAVE_MEMMOVE
@@ -25,6 +28,25 @@
 #include <string.h>
 #endif
 #include <port-protos.h>		/* ecvt(), fcvt() */
+
+#ifndef INT_MAX
+#define INT_MAX (0x7FFFFFFFL)
+#endif
+#ifndef INT_MIN
+#define INT_MIN (-0x80000000L)
+#endif
+#ifndef SHRT_MAX
+#define SHRT_MAX (0x7FFF)
+#endif
+#ifndef SHRT_MIN
+#define SHRT_MIN (-0x8000)
+#endif
+#ifndef SCHAR_MAX
+#define SCHAR_MAX (0x7F)
+#endif
+#ifndef SCHAR_MIN
+#define SCHAR_MIN (-0x80)
+#endif
 
 int32
 pg_atoi(char *s, int size, int c)
@@ -46,12 +68,12 @@ pg_atoi(char *s, int size, int c)
 		case sizeof(int32):
 #ifdef HAS_LONG_LONG
 			/* won't get ERANGE on these with 64-bit longs... */
-			if (l < -0x80000000L)
+			if (l < INT_MIN)
 			{
 				errno = ERANGE;
 				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
 			}
-			if (l > 0x7fffffffL)
+			if (l > INT_MAX)
 			{
 				errno = ERANGE;
 				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
@@ -59,24 +81,24 @@ pg_atoi(char *s, int size, int c)
 #endif							/* HAS_LONG_LONG */
 			break;
 		case sizeof(int16):
-			if (l < -0x8000)
+			if (l < SHRT_MIN)
 			{
 				errno = ERANGE;
 				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
 			}
-			if (l > 0x7fff)
+			if (l > SHRT_MAX)
 			{
 				errno = ERANGE;
 				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
 			}
 			break;
 		case sizeof(int8):
-			if (l < -0x80)
+			if (l < SCHAR_MIN)
 			{
 				errno = ERANGE;
 				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
 			}
-			if (l > 0x7f)
+			if (l > SCHAR_MAX)
 			{
 				errno = ERANGE;
 				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
