@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.24 2001/05/07 19:57:24 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.25 2001/05/31 17:32:33 tgl Exp $
  *
  * ----------
  */
@@ -3243,7 +3243,9 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 	if (!found)
 	{
 		HeapTuple	opr_tup;
-		Form_pg_operator opr_struct;
+		Oid			opr_proc;
+		MemoryContext	oldcontext;
+		FmgrInfo	finfo;
 
 		opr_tup = SearchSysCache(OPERNAME,
 								 PointerGetDatum("="),
@@ -3251,9 +3253,22 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 								 ObjectIdGetDatum(typeid),
 								 CharGetDatum('b'));
 		if (!HeapTupleIsValid(opr_tup))
-			elog(ERROR, "ri_AttributesEqual(): cannot find '=' operator "
-				 "for type %u", typeid);
-		opr_struct = (Form_pg_operator) GETSTRUCT(opr_tup);
+			elog(ERROR,
+				 "ri_AttributesEqual(): cannot find '=' operator for type %u",
+				 typeid);
+		opr_proc = ((Form_pg_operator) GETSTRUCT(opr_tup))->oprcode;
+		ReleaseSysCache(opr_tup);
+
+		/*
+		 * Since fmgr_info could fail, call it *before* creating the
+		 * hashtable entry --- otherwise we could elog leaving an incomplete
+		 * entry in the hashtable.  Also, because this will be a permanent
+		 * table entry, we must make sure any subsidiary structures of the
+		 * fmgr record are kept in TopMemoryContext.
+		 */
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		fmgr_info(opr_proc, &finfo);
+		MemoryContextSwitchTo(oldcontext);
 
 		entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
 												  (char *) &typeid,
@@ -3263,8 +3278,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 			elog(FATAL, "can't insert into RI operator cache");
 
 		entry->typeid = typeid;
-		fmgr_info(opr_struct->oprcode, &(entry->oprfmgrinfo));
-		ReleaseSysCache(opr_tup);
+		memcpy(&(entry->oprfmgrinfo), &finfo, sizeof(FmgrInfo));
 	}
 
 	/*
