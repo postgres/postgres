@@ -6,16 +6,11 @@ if [ ! -f @TCL_CONFIG_SH@ ]; then
     exit 1
 fi
 
-. @TCL_CONFIG_SH@
-
-set												| 
-    egrep '^TCL_|^TK_'							|
-    sed -e 's/=[ 	]*/="/' -e 's/[ 	]*$/"/'	|
-    while read v
+cat @TCL_CONFIG_SH@ |
+    egrep '^TCL_|^TK_' |
+    while read inp
     do
-		eval "$v"
-		v1=`echo $v | sed -e 's/=.*//'`
-		eval "echo $v1 = \"\$$v1\""
+	    eval eval echo $inp
     done >Makefile.tcldefs
 
 exit 0
