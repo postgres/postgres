@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.112 1997/11/18 06:46:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.113 1997/11/19 03:14:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1709,19 +1709,33 @@ HandleSlashCmds(PsqlSettings *pset,
 								/* descriptions */
 				objectDescription(pset, optarg+1, NULL);
 			else if (strncmp(cmd, "df", 2) == 0)
+			{
 								/* functions/procedures */
 			/* we skip in/out funcs by excluding functions that take
 			   some arguments, but have no types defined for those arguments */
 				SendQuery(&success, pset,"\
-					SELECT	p.proname as function, \
-							t.typname as return_type, \
+					SELECT	t.typname as return_type, \
+							p.proname as function, \
+							oid8types(p.proargtypes) as arguments, \
+							obj_description(p.oid) \
+					FROM 	pg_proc p, pg_type t \
+					WHERE 	p.prorettype = t.oid and \
+							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
+							t.typname != 'bool' \
+					ORDER BY return_type, function;",
+					false, false, 0);
+				SendQuery(&success, pset,"\
+					SELECT	t.typname as return_type, \
+							p.proname as function, \
 							oid8types(p.proargtypes) as arguments, \
 							obj_description(p.oid) \
 					FROM pg_proc p, pg_type t \
 					WHERE p.prorettype = t.oid and \
-							(pronargs = 0 or oid8types(p.proargtypes) != '') \
-					ORDER BY function;",
+							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
+							t.typname = 'bool' \
+					ORDER BY return_type, function;",
 					false, false, 0);
+			}
 			else if (strncmp(cmd, "di", 2) == 0)
 								/* only indices */
 				tableList(pset, false, 'i', false);
