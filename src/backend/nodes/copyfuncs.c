@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.91 1999/08/16 02:17:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.92 1999/08/21 03:48:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,12 +456,6 @@ _copyAgg(Agg *from)
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	/*
-	 * Cannot copy agg list; it must be rebuilt to point to subnodes of
-	 * new node.
-	 */
-	set_agg_tlist_references(newnode);
-
 	return newnode;
 }
 
@@ -474,8 +468,8 @@ _copyGroupClause(GroupClause *from)
 {
 	GroupClause *newnode = makeNode(GroupClause);
 
-	newnode->grpOpoid = from->grpOpoid;
-	newnode->tleGroupref = from->tleGroupref;
+	newnode->tleSortGroupRef = from->tleSortGroupRef;
+	newnode->sortop = from->sortop;
 
 	return newnode;
 }
@@ -567,12 +561,11 @@ _copyResdom(Resdom *from)
 	newnode->resno = from->resno;
 	newnode->restype = from->restype;
 	newnode->restypmod = from->restypmod;
-
 	if (from->resname != NULL)
 		newnode->resname = pstrdup(from->resname);
+	newnode->ressortgroupref = from->ressortgroupref;
 	newnode->reskey = from->reskey;
 	newnode->reskeyop = from->reskeyop;
-	newnode->resgroupref = from->resgroupref;
 	newnode->resjunk = from->resjunk;
 
 	return newnode;
@@ -862,8 +855,8 @@ _copyAggref(Aggref *from)
 	newnode->basetype = from->basetype;
 	newnode->aggtype = from->aggtype;
 	Node_Copy(from, newnode, target);
-	newnode->aggno = from->aggno;
 	newnode->usenulls = from->usenulls;
+	newnode->aggno = from->aggno; /* probably not needed */
 
 	return newnode;
 }
@@ -1345,8 +1338,8 @@ _copySortClause(SortClause *from)
 {
 	SortClause *newnode = makeNode(SortClause);
 
-	Node_Copy(from, newnode, resdom);
-	newnode->opoid = from->opoid;
+	newnode->tleSortGroupRef = from->tleSortGroupRef;
+	newnode->sortop = from->sortop;
 
 	return newnode;
 }
@@ -1398,33 +1391,29 @@ _copyQuery(Query *from)
 	newnode->isBinary = from->isBinary;
 	newnode->isTemp = from->isTemp;
 	newnode->unionall = from->unionall;
-	if (from->uniqueFlag)
-		newnode->uniqueFlag = pstrdup(from->uniqueFlag);
-	Node_Copy(from, newnode, sortClause);
-	Node_Copy(from, newnode, rtable);
-	Node_Copy(from, newnode, targetList);
-	Node_Copy(from, newnode, qual);
-
-	Node_Copy(from, newnode, groupClause);
-	Node_Copy(from, newnode, havingQual);
-
 	newnode->hasAggs = from->hasAggs;
 	newnode->hasSubLinks = from->hasSubLinks;
 
-	if (from->unionClause)
-	{
-		List	   *ulist,
-				   *temp_list = NIL;
+	Node_Copy(from, newnode, rtable);
+	Node_Copy(from, newnode, targetList);
+	Node_Copy(from, newnode, qual);
+	Node_Copy(from, newnode, rowMark);
 
-		foreach(ulist, from->unionClause)
-			temp_list = lappend(temp_list, copyObject(lfirst(ulist)));
-		newnode->unionClause = temp_list;
-	}
+	if (from->uniqueFlag)
+		newnode->uniqueFlag = pstrdup(from->uniqueFlag);
+	Node_Copy(from, newnode, sortClause);
+	Node_Copy(from, newnode, groupClause);
+	Node_Copy(from, newnode, havingQual);
+
+	/* why is intersectClause missing? */
+	Node_Copy(from, newnode, unionClause);
 
 	Node_Copy(from, newnode, limitOffset);
 	Node_Copy(from, newnode, limitCount);
 
-	Node_Copy(from, newnode, rowMark);
+	/* we do not copy the planner internal fields: base_rel_list,
+	 * join_rel_list, query_pathkeys.  Not entirely clear if this is right?
+	 */
 
 	return newnode;
 }

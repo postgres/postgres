@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.29 1999/08/09 03:13:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.30 1999/08/21 03:49:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,6 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 		{
 			TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
 
-			old_tle = lfirst(temp);
 			if (!strcmp(old_tle->resdom->resname,
 						new_tle->resdom->resname))
 			{
@@ -174,6 +173,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 
 		if (matching_old_tl)
 		{
+			/* XXX safe to modify old resdom? */
 			matching_old_tl->resdom->resno = new_tle->resdom->resno;
 			t_list = lappend(t_list, matching_old_tl);
 		}
@@ -197,45 +197,42 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 	{
 		TargetEntry *old_tle,
 				   *new_tl;
-		Resdom	   *newresno;
 
 		old_tle = lfirst(temp);
 		if (old_tle->resdom->resno < 0)
 		{
-			newresno = (Resdom *) copyObject((Node *) old_tle->resdom);
-			newresno->resno = length(t_list) + 1;
-			newresno->resjunk = true;
-			new_tl = makeTargetEntry(newresno, old_tle->expr);
+			Resdom	   *newresdom;
+
+			newresdom = (Resdom *) copyObject((Node *) old_tle->resdom);
+			newresdom->resno = length(t_list) + 1;
+			newresdom->resjunk = true;
+			new_tl = makeTargetEntry(newresdom, old_tle->expr);
 			t_list = lappend(t_list, new_tl);
 		}
-
 		/*
 		 * Also it is possible that the parser or rewriter added some junk
-		 * attributes to hold GROUP BY expressions which are not part of
+		 * attributes to hold ORDER/GROUP BY expressions which are not part of
 		 * the result attributes. We can simply identify them by looking
-		 * at the resgroupref in the TLE's resdom, which is a unique
-		 * number telling which TLE belongs to which GroupClause.
+		 * at the ressortgroupref in the TLE's resdom, which is a unique
+		 * number telling which TLE belongs to which Sort/GroupClause.
 		 */
-		if (old_tle->resdom->resgroupref > 0)
+		else if (old_tle->resdom->ressortgroupref > 0)
 		{
-			bool		already_there = FALSE;
-			TargetEntry *new_tle;
-			Resdom	   *newresno;
+			bool		already_there = false;
 
 			/*
 			 * Check if the tle is already in the new list
 			 */
 			foreach(i, t_list)
 			{
-				new_tle = (TargetEntry *) lfirst(i);
+				TargetEntry *new_tle = (TargetEntry *) lfirst(i);
 
-				if (new_tle->resdom->resgroupref ==
-					old_tle->resdom->resgroupref)
+				if (new_tle->resdom->ressortgroupref ==
+					old_tle->resdom->ressortgroupref)
 				{
-					already_there = TRUE;
+					already_there = true;
 					break;
 				}
-
 			}
 
 			/*
@@ -243,10 +240,12 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 			 */
 			if (!already_there)
 			{
-				newresno = (Resdom *) copyObject((Node *) old_tle->resdom);
-				newresno->resno = length(t_list) + 1;
-				newresno->resjunk = true;
-				new_tl = makeTargetEntry(newresno, old_tle->expr);
+				Resdom	   *newresdom;
+
+				newresdom = (Resdom *) copyObject((Node *) old_tle->resdom);
+				newresdom->resno = length(t_list) + 1;
+				newresdom->resjunk = true;
+				new_tl = makeTargetEntry(newresdom, old_tle->expr);
 				t_list = lappend(t_list, new_tl);
 			}
 		}

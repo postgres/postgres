@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.34 1999/08/16 02:17:45 tgl Exp $
+ * $Id: paths.h,v 1.35 1999/08/21 03:49:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,11 +56,15 @@ typedef enum
 
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
-extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys);
+extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
+											bool indexpaths_only);
 extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
 								  RelOptInfo *index);
 extern List *build_join_pathkeys(List *outer_pathkeys,
 								 List *join_rel_tlist, List *joinclauses);
+extern bool commute_pathkeys(List *pathkeys);
+extern List *make_pathkeys_for_sortclauses(List *sortclauses,
+										   List *tlist);
 extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
 											List *restrictinfos);
 extern List *make_pathkeys_for_mergeclauses(List *mergeclauses,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.72 1999/08/16 02:17:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.73 1999/08/21 03:48:58 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -184,12 +184,13 @@ _readSortClause()
 
 	local_node = makeNode(SortClause);
 
-	token = lsptok(NULL, &length);		/* skip the :resdom */
-	local_node->resdom = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip :tleSortGroupRef */
+	token = lsptok(NULL, &length);		/* get tleSortGroupRef */
+	local_node->tleSortGroupRef = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* skip :opoid */
-	token = lsptok(NULL, &length);		/* get opoid */
-	local_node->opoid = strtoul(token, NULL, 10);
+	token = lsptok(NULL, &length);		/* skip :sortop */
+	token = lsptok(NULL, &length);		/* get sortop */
+	local_node->sortop = strtoul(token, NULL, 10);
 
 	return local_node;
 }
@@ -207,13 +208,13 @@ _readGroupClause()
 
 	local_node = makeNode(GroupClause);
 
-	token = lsptok(NULL, &length);		/* skip :grpOpoid */
-	token = lsptok(NULL, &length);		/* get grpOpoid */
-	local_node->grpOpoid = strtoul(token, NULL, 10);
+	token = lsptok(NULL, &length);		/* skip :tleSortGroupRef */
+	token = lsptok(NULL, &length);		/* get tleSortGroupRef */
+	local_node->tleSortGroupRef = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* skip :tleGroupref */
-	token = lsptok(NULL, &length);		/* get tleGroupref */
-	local_node->tleGroupref = strtoul(token, NULL, 10);
+	token = lsptok(NULL, &length);		/* skip :sortop */
+	token = lsptok(NULL, &length);		/* get sortop */
+	local_node->sortop = strtoul(token, NULL, 10);
 
 	return local_node;
 }
@@ -600,14 +601,9 @@ static Agg *
 _readAgg()
 {
 	Agg		   *local_node;
-	char	   *token;
-	int			length;
 
 	local_node = makeNode(Agg);
 	_getPlan((Plan *) local_node);
-
-	token = lsptok(NULL, &length);		/* eat :agg */
-	local_node->aggs = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -712,9 +708,9 @@ _readResdom()
 	token = lsptok(NULL, &length);		/* get reskeyop */
 	local_node->reskeyop = (Oid) atol(token);
 
-	token = lsptok(NULL, &length);		/* eat :resgroupref */
-	token = lsptok(NULL, &length);		/* get resgroupref */
-	local_node->resgroupref = strtoul(token, NULL, 10);
+	token = lsptok(NULL, &length);		/* eat :ressortgroupref */
+	token = lsptok(NULL, &length);		/* get ressortgroupref */
+	local_node->ressortgroupref = strtoul(token, NULL, 10);
 
 	token = lsptok(NULL, &length);		/* eat :resjunk */
 	token = lsptok(NULL, &length);		/* get resjunk */
@@ -1162,10 +1158,6 @@ _readAggref()
 
 	token = lsptok(NULL, &length);		/* eat :target */
 	local_node->target = nodeRead(true);		/* now read it */
-
-	token = lsptok(NULL, &length);		/* eat :aggno */
-	token = lsptok(NULL, &length);		/* get aggno */
-	local_node->aggno = atoi(token);
 
 	token = lsptok(NULL, &length);		/* eat :usenulls */
 	token = lsptok(NULL, &length);		/* get usenulls */

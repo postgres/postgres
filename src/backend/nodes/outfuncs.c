@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.93 1999/08/16 02:17:42 tgl Exp $
+ *	$Id: outfuncs.c,v 1.94 1999/08/21 03:48:58 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -237,18 +237,15 @@ _outQuery(StringInfo str, Query *node)
 static void
 _outSortClause(StringInfo str, SortClause *node)
 {
-	appendStringInfo(str, " SORTCLAUSE :resdom ");
-	_outNode(str, node->resdom);
-
-	appendStringInfo(str, " :opoid %u ", node->opoid);
+	appendStringInfo(str, " SORTCLAUSE :tleSortGroupRef %d :sortop %u ",
+					 node->tleSortGroupRef, node->sortop);
 }
 
 static void
 _outGroupClause(StringInfo str, GroupClause *node)
 {
-	appendStringInfo(str, " GROUPCLAUSE :grpOpoid %u :tleGroupref %d",
-					 node->grpOpoid,
-					 node->tleGroupref);
+	appendStringInfo(str, " GROUPCLAUSE :tleSortGroupRef %d :sortop %u ",
+					 node->tleSortGroupRef, node->sortop);
 }
 
 /*
@@ -482,9 +479,6 @@ _outAgg(StringInfo str, Agg *node)
 
 	appendStringInfo(str, " AGG ");
 	_outPlanInfo(str, (Plan *) node);
-
-	appendStringInfo(str, " :aggs ");
-	_outNode(str, node->aggs);
 }
 
 static void
@@ -549,8 +543,8 @@ _outResdom(StringInfo str, Resdom *node)
 					 node->reskey,
 					 node->reskeyop);
 
-	appendStringInfo(str, " :resgroupref %d :resjunk %s ",
-					 node->resgroupref,
+	appendStringInfo(str, " :ressortgroupref %d :resjunk %s ",
+					 node->ressortgroupref,
 					 node->resjunk ? "true" : "false");
 }
 
@@ -665,8 +659,7 @@ _outAggref(StringInfo str, Aggref *node)
 					 node->aggtype);
 	_outNode(str, node->target);
 
-	appendStringInfo(str, ":aggno %d :usenulls %s",
-					 node->aggno,
+	appendStringInfo(str, " :usenulls %s ",
 					 node->usenulls ? "true" : "false");
 }
 

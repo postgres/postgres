@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.20 1999/08/16 02:17:45 tgl Exp $
+ * $Id: tlist.h,v 1.21 1999/08/21 03:49:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,16 +21,17 @@ extern void add_var_to_tlist(RelOptInfo *rel, Var *var);
 extern TargetEntry *create_tl_element(Var *var, int resdomno);
 extern List *get_actual_tlist(List *tlist);
 extern Resdom *tlist_member(Var *var, List *tlist);
-extern Resdom *tlist_resdom(List *tlist, Resdom *resnode);
 
 extern TargetEntry *match_varid(Var *test_var, List *tlist);
 extern List *new_unsorted_tlist(List *targetlist);
 extern List *copy_vars(List *target, List *source);
 extern List *flatten_tlist(List *tlist);
-extern List *flatten_tlist_vars(List *full_tlist,
-				   List *flat_tlist);
+extern List *add_to_flat_tlist(List *tlist, List *vars);
+extern List *unflatten_tlist(List *full_tlist,
+							 List *flat_tlist);
 
 extern Var *get_expr(TargetEntry *tle);
-extern Var *get_groupclause_expr(GroupClause *groupClause, List *targetList);
+extern Node *get_sortgroupclause_expr(SortClause *sortClause,
+									  List *targetList);
 
 #endif	 /* TLIST_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.18 1999/07/15 23:04:02 momjian Exp $
+ * $Id: parse_func.h,v 1.19 1999/08/21 03:49:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@ extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 						int *curr_resno, int precedence);
 extern Node *ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  int *curr_resno, int precedence);
+
+extern List *setup_base_tlist(Oid typeid);
 
 extern void func_error(char *caller, char *funcname,
 					   int nargs, Oid *argtypes, char *msg);

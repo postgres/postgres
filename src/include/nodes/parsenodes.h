@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.77 1999/07/18 03:45:01 tgl Exp $
+ * $Id: parsenodes.h,v 1.78 1999/08/21 03:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,28 +48,29 @@ typedef struct Query
 	bool		hasAggs;		/* has aggregates in target list */
 	bool		hasSubLinks;	/* has subquery SubLink */
 
+	List	   *rtable;			/* list of range table entries */
+	List	   *targetList;		/* target list (of TargetEntry) */
+	Node	   *qual;			/* qualifications applied to tuples */
+	List	   *rowMark;		/* list of RowMark entries */
+
 	char	   *uniqueFlag;		/* NULL, '*', or Unique attribute name */
 	List	   *sortClause;		/* a list of SortClause's */
 
-	List	   *rtable;			/* list of range table entries */
-	List	   *targetList;		/* target list (of TargetEntry) */
-	Node	   *qual;			/* qualifications */
-	List	   *rowMark;		/* list of RowMark entries */
+	List	   *groupClause;	/* a list of GroupClause's */
 
-	List	   *groupClause;	/* list of columns to specified in GROUP
-								 * BY */
-	Node	   *havingQual;		/* qualification of each group */
+	Node	   *havingQual;		/* qualifications applied to groups */
 
 	List	   *intersectClause;
-
 	List	   *unionClause;	/* unions are linked under the previous
 								 * query */
+
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
 
 	/* internal to planner */
-	List	   *base_rel_list;	/* base relation list */
-	List	   *join_rel_list;	/* list of relation involved in joins */
+	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
+	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
+	List	   *query_pathkeys;	/* pathkeys for query_planner()'s result */
 } Query;
 
 
@@ -608,7 +609,7 @@ typedef struct InsertStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
 	Node	   *whereClause;	/* qualifications */
-	List	   *groupClause;	/* group by clause */
+	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* having conditional-expression */
 	List	   *unionClause;	/* union subselect parameters */
 	bool		unionall;		/* union without unique sort */
@@ -652,7 +653,7 @@ typedef struct SelectStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
 	Node	   *whereClause;	/* qualifications */
-	List	   *groupClause;	/* group by clause */
+	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* having conditional-expression */
 	List	   *intersectClause;
 	List	   *exceptClause;
@@ -950,25 +951,28 @@ typedef struct RangeTblEntry
 
 /*
  * SortClause -
- *	   used in the sort clause for retrieves and cursors
+ *	   representation of ORDER BY clauses
+ *
+ * tleSortGroupRef must match ressortgroupref of exactly one Resdom of the
+ * associated targetlist; that is the expression to be sorted (or grouped) by.
+ * sortop is the OID of the ordering operator.
  */
 typedef struct SortClause
 {
 	NodeTag		type;
-	Resdom	   *resdom;			/* attributes in tlist to be sorted */
-	Oid			opoid;			/* sort operators */
+	Index		tleSortGroupRef; /* reference into targetlist */
+	Oid			sortop;			/* the sort operator to use */
 } SortClause;
 
 /*
  * GroupClause -
- *	   used in the GROUP BY clause
+ *	   representation of GROUP BY clauses
+ *
+ * GroupClause is exactly like SortClause except for the nodetag value
+ * (and it's probably not even really necessary to have two different
+ * nodetags...).  We have routines that operate interchangeably on both.
  */
-typedef struct GroupClause
-{
-	NodeTag		type;
-	Oid			grpOpoid;		/* the sort operator to use */
-	Index		tleGroupref;	/* reference into targetlist */
-} GroupClause;
+typedef SortClause GroupClause;
 
 #define ROW_MARK_FOR_UPDATE		(1 << 0)
 #define ROW_ACL_FOR_UPDATE		(1 << 1)

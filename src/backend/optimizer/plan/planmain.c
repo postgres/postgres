@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.40 1999/07/16 04:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.41 1999/08/21 03:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,13 @@
 
 
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
+#include "utils/lsyscache.h"
 
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
@@ -41,6 +43,13 @@ static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
  *	  command-type is the query command, e.g., select, delete, etc.
  *	  tlist is the target list of the query
  *	  qual is the qualification of the query
+ *
+ *	  Note: the Query node now also includes a query_pathkeys field, which
+ *	  signals query_planner that the indicated sort order is wanted in the
+ *	  final output plan.  If, for some reason, query_planner is unable to
+ *	  comply, it sets query_pathkeys to NIL before returning.  (The reason
+ *	  query_pathkeys is a Query field and not a passed parameter is that
+ *	  the low-level routines in indxpath.c need to see it.)
  *
  *	  Returns a query plan.
  */
@@ -100,6 +109,8 @@ query_planner(Query *root,
 	 */
 	if (var_only_tlist == NULL && qual == NULL)
 	{
+		root->query_pathkeys = NIL; /* these plans make unordered results */
+
 		switch (command_type)
 		{
 			case CMD_SELECT:
@@ -152,6 +163,8 @@ query_planner(Query *root,
 		 */
 		set_tlist_references(subplan);
 
+		root->query_pathkeys = NIL; /* result is unordered, no? */
+
 		return subplan;
 	}
 
@@ -163,15 +176,15 @@ query_planner(Query *root,
 	 * responsibility to optimally push these expressions down the plan
 	 * tree.  -- Wei
 	 *
-	 * Note: formerly there was a test here to skip the flatten call if we
-	 * expected union_planner to insert a Group or Agg node above our
+	 * Note: formerly there was a test here to skip the unflatten call if
+	 * we expected union_planner to insert a Group or Agg node above our
 	 * result. However, now union_planner tells us exactly what it wants
 	 * returned, and we just do it.  Much cleaner.
 	 */
 	else
 	{
-		subplan->targetlist = flatten_tlist_vars(tlist,
-												 subplan->targetlist);
+		subplan->targetlist = unflatten_tlist(tlist,
+											  subplan->targetlist);
 		return subplan;
 	}
 
@@ -204,6 +217,8 @@ subplanner(Query *root,
 		   List *qual)
 {
 	RelOptInfo *final_rel;
+	Cost		cheapest_cost;
+	Path	   *sortedpath;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to
@@ -244,18 +259,83 @@ subplanner(Query *root,
 	}
 #endif
 
-	/*
-	 * Determine the cheapest path and create a subplan corresponding to
-	 * it.
-	 */
-	if (final_rel)
-		return create_plan((Path *) final_rel->cheapestpath);
-	else
+	if (! final_rel)
 	{
 		elog(NOTICE, "final relation is null");
+		root->query_pathkeys = NIL; /* result is unordered, no? */
 		return create_plan((Path *) NULL);
 	}
 
+	/*
+	 * Determine the cheapest path and create a subplan to execute it.
+	 *
+	 * If no special sort order is wanted, or if the cheapest path is
+	 * already appropriately ordered, just use the cheapest path.
+	 */
+	if (root->query_pathkeys == NIL ||
+		pathkeys_contained_in(root->query_pathkeys,
+							  final_rel->cheapestpath->pathkeys))
+		return create_plan(final_rel->cheapestpath);
+	/*
+	 * Otherwise, look to see if we have an already-ordered path that is
+	 * cheaper than doing an explicit sort on cheapestpath.
+	 */
+	cheapest_cost = final_rel->cheapestpath->path_cost +
+		cost_sort(root->query_pathkeys, final_rel->size, final_rel->width);
+
+	sortedpath = get_cheapest_path_for_pathkeys(final_rel->pathlist,
+												root->query_pathkeys,
+												false);
+	if (sortedpath)
+	{
+		if (sortedpath->path_cost <= cheapest_cost)
+		{
+			/* Found a better presorted path, use it */
+			return create_plan(sortedpath);
+		}
+		/* otherwise, doing it the hard way is still cheaper */
+	}
+	else
+	{
+		/*
+		 * If we found no usable presorted path at all, it is possible
+		 * that the user asked for descending sort order.  Check to see
+		 * if we can satisfy the pathkeys by using a backwards indexscan.
+		 * To do this, we commute all the operators in the pathkeys and
+		 * then look for a matching path that is an IndexPath.
+		 */
+		List	   *commuted_pathkeys = copyObject(root->query_pathkeys);
+
+		if (commute_pathkeys(commuted_pathkeys))
+		{
+			/* pass 'true' to force only IndexPaths to be considered */
+			sortedpath = get_cheapest_path_for_pathkeys(final_rel->pathlist,
+														commuted_pathkeys,
+														true);
+			if (sortedpath && sortedpath->path_cost <= cheapest_cost)
+			{
+				/*
+				 * Kluge here: since IndexPath has no representation for
+				 * backwards scan, we have to convert to Plan format and
+				 * then poke the result.
+				 */
+				Plan	   *sortedplan = create_plan(sortedpath);
+
+				Assert(IsA(sortedplan, IndexScan));
+				((IndexScan *) sortedplan)->indxorderdir = BackwardScanDirection;
+				return sortedplan;
+			}
+		}
+	}
+
+	/* Nothing for it but to sort the cheapestpath...
+	 *
+	 * we indicate we failed to sort the plan, and let the caller
+	 * stick the appropriate sortplan on top.
+	 */
+	root->query_pathkeys = NIL; /* sorry, it ain't sorted */
+
+	return create_plan(final_rel->cheapestpath);
 }
 
 /*****************************************************************************

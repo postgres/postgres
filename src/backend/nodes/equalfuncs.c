@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.47 1999/08/16 02:17:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.48 1999/08/21 03:48:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,22 @@ _equalResdom(Resdom *a, Resdom *b)
 		return false;
 	if (a->restypmod != b->restypmod)
 		return false;
-	if (strcmp(a->resname, b->resname) != 0)
+	if (a->resname && b->resname)
+	{
+		if (strcmp(a->resname, b->resname) != 0)
+			return false;
+	}
+	else
+	{
+		/* must both be null to be equal */
+		if (a->resname != b->resname)
+			return false;
+	}
+	if (a->ressortgroupref != b->ressortgroupref)
 		return false;
 	if (a->reskey != b->reskey)
 		return false;
 	if (a->reskeyop != b->reskeyop)
-		return false;
-	if (a->resgroupref != b->resgroupref)
 		return false;
 	/* we ignore resjunk flag ... is this correct? */
 
@@ -208,10 +217,9 @@ _equalAggref(Aggref *a, Aggref *b)
 		return false;
 	if (!equal(a->target, b->target))
 		return false;
-	if (a->aggno != b->aggno)
-		return false;
 	if (a->usenulls != b->usenulls)
 		return false;
+	/* ignore aggno, which is only a private field for the executor */
 	return true;
 }
 
@@ -503,6 +511,14 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (a->hasSubLinks != b->hasSubLinks)
 		return false;
+	if (!equal(a->rtable, b->rtable))
+		return false;
+	if (!equal(a->targetList, b->targetList))
+		return false;
+	if (!equal(a->qual, b->qual))
+		return false;
+	if (!equal(a->rowMark, b->rowMark))
+		return false;
 	if (a->uniqueFlag && b->uniqueFlag)
 	{
 		if (strcmp(a->uniqueFlag, b->uniqueFlag) != 0)
@@ -514,14 +530,6 @@ _equalQuery(Query *a, Query *b)
 			return false;
 	}
 	if (!equal(a->sortClause, b->sortClause))
-		return false;
-	if (!equal(a->rtable, b->rtable))
-		return false;
-	if (!equal(a->targetList, b->targetList))
-		return false;
-	if (!equal(a->qual, b->qual))
-		return false;
-	if (!equal(a->rowMark, b->rowMark))
 		return false;
 	if (!equal(a->groupClause, b->groupClause))
 		return false;
@@ -537,9 +545,9 @@ _equalQuery(Query *a, Query *b)
 		return false;
 
 	/*
-	 * We do not check the internal-to-the-planner fields base_rel_list
-	 * and join_rel_list.  They might not be set yet, and in any case they
-	 * should be derivable from the other fields.
+	 * We do not check the internal-to-the-planner fields: base_rel_list,
+	 * join_rel_list, query_pathkeys.  They might not be set yet, and
+	 * in any case they should be derivable from the other fields.
 	 */
 	return true;
 }

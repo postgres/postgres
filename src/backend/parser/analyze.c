@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.117 1999/08/15 06:46:49 thomas Exp $
+ *	$Id: analyze.c,v 1.118 1999/08/21 03:48:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * transformSortClause because it also handles uniqueFlag.
 	 */
 	qry->sortClause = transformSortClause(pstate,
-										  NIL,
 										  NIL,
 										  qry->targetList,
 										  qry->uniqueFlag);
@@ -1039,7 +1038,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
-										  NIL,
 										  qry->targetList,
 										  qry->uniqueFlag);
 

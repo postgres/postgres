@@ -23,6 +23,7 @@
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 
@@ -91,7 +92,7 @@ ExecAgg(Agg *node)
 	EState	   *estate;
 	Plan	   *outerPlan;
 	int			aggno,
-				nagg;
+				numaggs;
 	Datum	   *value1,
 			   *value2;
 	int		   *noInitValue;
@@ -128,19 +129,19 @@ ExecAgg(Agg *node)
 		estate = node->plan.state;
 		econtext = aggstate->csstate.cstate.cs_ExprContext;
 
-		nagg = length(node->aggs);
+		numaggs = length(aggstate->aggs);
 
 		value1 = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_values;
 		nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
 
-		value2 = (Datum *) palloc(sizeof(Datum) * nagg);
-		MemSet(value2, 0, sizeof(Datum) * nagg);
+		value2 = (Datum *) palloc(sizeof(Datum) * numaggs);
+		MemSet(value2, 0, sizeof(Datum) * numaggs);
 
-		aggFuncInfo = (AggFuncInfo *) palloc(sizeof(AggFuncInfo) * nagg);
-		MemSet(aggFuncInfo, 0, sizeof(AggFuncInfo) * nagg);
+		aggFuncInfo = (AggFuncInfo *) palloc(sizeof(AggFuncInfo) * numaggs);
+		MemSet(aggFuncInfo, 0, sizeof(AggFuncInfo) * numaggs);
 
-		noInitValue = (int *) palloc(sizeof(int) * nagg);
-		MemSet(noInitValue, 0, sizeof(int) * nagg);
+		noInitValue = (int *) palloc(sizeof(int) * numaggs);
+		MemSet(noInitValue, 0, sizeof(int) * numaggs);
 
 		outerPlan = outerPlan(node);
 		oneTuple = NULL;
@@ -148,7 +149,7 @@ ExecAgg(Agg *node)
 		projInfo = aggstate->csstate.cstate.cs_ProjInfo;
 
 		aggno = -1;
-		foreach(alist, node->aggs)
+		foreach(alist, aggstate->aggs)
 		{
 			Aggref	   *aggref = lfirst(alist);
 			char	   *aggname;
@@ -269,7 +270,7 @@ ExecAgg(Agg *node)
 			}
 
 			aggno = -1;
-			foreach(alist, node->aggs)
+			foreach(alist, aggstate->aggs)
 			{
 				Aggref	   *aggref = lfirst(alist);
 				AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
@@ -367,7 +368,7 @@ ExecAgg(Agg *node)
 		 */
 
 		aggno = -1;
-		foreach(alist, node->aggs)
+		foreach(alist, aggstate->aggs)
 		{
 			char	   *args[2];
 			AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
@@ -467,6 +468,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	AggState   *aggstate;
 	Plan	   *outerPlan;
 	ExprContext *econtext;
+	int			numaggs;
 
 	/*
 	 * assign the node's execution state
@@ -478,7 +480,16 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	 */
 	aggstate = makeNode(AggState);
 	node->aggstate = aggstate;
-	aggstate->agg_done = FALSE;
+	aggstate->agg_done = false;
+
+	/*
+	 * find aggregates in targetlist and quals
+	 */
+	aggstate->aggs = nconc(pull_agg_clause((Node *) node->plan.targetlist),
+						   pull_agg_clause((Node *) node->plan.qual));
+	numaggs = length(aggstate->aggs);
+	if (numaggs <= 0)
+		elog(ERROR, "ExecInitAgg: could not find any aggregate functions");
 
 	/*
 	 * assign node's base id and create expression context
@@ -495,10 +506,10 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	ExecInitResultTupleSlot(estate, &aggstate->csstate.cstate);
 
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
-	econtext->ecxt_values = (Datum *) palloc(sizeof(Datum) * length(node->aggs));
-	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
-	econtext->ecxt_nulls = (char *) palloc(sizeof(char) * length(node->aggs));
-	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(node->aggs));
+	econtext->ecxt_values = (Datum *) palloc(sizeof(Datum) * numaggs);
+	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * numaggs);
+	econtext->ecxt_nulls = (char *) palloc(sizeof(char) * numaggs);
+	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * numaggs);
 
 	/*
 	 * initializes child nodes
@@ -510,7 +521,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	 * Result runs in its own context, but make it use our aggregates fix
 	 * for 'select sum(2+2)'
 	 */
-	if (nodeTag(outerPlan) == T_Result)
+	if (IsA(outerPlan, Result))
 	{
 		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_values =
 			econtext->ecxt_values;
@@ -645,9 +656,9 @@ ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
 	AggState   *aggstate = node->aggstate;
 	ExprContext *econtext = aggstate->csstate.cstate.cs_ExprContext;
 
-	aggstate->agg_done = FALSE;
-	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
-	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(node->aggs));
+	aggstate->agg_done = false;
+	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(aggstate->aggs));
+	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(aggstate->aggs));
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

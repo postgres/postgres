@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.38 1999/08/16 02:17:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.39 1999/08/21 03:49:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ plan_union_queries(Query *parse)
 		union_plans = lcons(union_planner(parse), NIL);
 		union_rts = lcons(parse->rtable, NIL);
 
-		/* Append the remainging UNION ALLs */
+		/* Append the remaining UNION ALLs */
 		foreach(ulist, union_all_queries)
 		{
 			Query	   *union_all_query = lfirst(ulist);
@@ -172,14 +172,19 @@ plan_union_queries(Query *parse)
 	/* We have already split UNION and UNION ALL and we made it consistent */
 	if (!last_union_all_flag)
 	{
+		/* Need SELECT DISTINCT behavior to implement UNION.
+		 * Set uniqueFlag properly, put back the held sortClause,
+		 * and add any missing columns to the sort clause.
+		 */
 		parse->uniqueFlag = "*";
-		parse->sortClause = transformSortClause(NULL, NIL,
-												hold_sortClause,
-												parse->targetList, "*");
+		parse->sortClause = addAllTargetsToSortList(hold_sortClause,
+													parse->targetList);
 	}
 	else
+	{
 		/* needed so we don't take the flag from the first query */
 		parse->uniqueFlag = NULL;
+	}
 
 	/* Make sure we don't try to apply the first query's grouping stuff
 	 * to the Append node, either.  Basically we don't want union_planner

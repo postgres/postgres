@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.73 1999/08/18 04:15:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.74 1999/08/21 03:49:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1131,7 +1131,6 @@ make_agg(List *tlist, Plan *lefttree)
 	node->plan.targetlist = tlist;
 	node->plan.lefttree = lefttree;
 	node->plan.righttree = (Plan *) NULL;
-	node->aggs = NIL;
 
 	return node;
 }
@@ -1141,15 +1140,15 @@ make_group(List *tlist,
 		   bool tuplePerGroup,
 		   int ngrp,
 		   AttrNumber *grpColIdx,
-		   Sort *lefttree)
+		   Plan *lefttree)
 {
 	Group	   *node = makeNode(Group);
 
-	copy_costsize(&node->plan, (Plan *) lefttree);
+	copy_costsize(&node->plan, lefttree);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
-	node->plan.lefttree = (Plan *) lefttree;
+	node->plan.lefttree = lefttree;
 	node->plan.righttree = (Plan *) NULL;
 	node->tuplePerGroup = tuplePerGroup;
 	node->numCols = ngrp;

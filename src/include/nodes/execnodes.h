@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.33 1999/07/16 17:07:33 momjian Exp $
+ * $Id: execnodes.h,v 1.34 1999/08/21 03:49:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,6 +572,7 @@ typedef struct MaterialState
 typedef struct AggState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
+	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	bool		agg_done;
 } AggState;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.16 1999/07/15 22:39:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.17 1999/08/21 03:48:58 tgl Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -102,9 +102,12 @@ makeResdom(AttrNumber resno,
 	resdom->restype = restype;
 	resdom->restypmod = restypmod;
 	resdom->resname = resname;
+	/* For historical reasons, ressortgroupref defaults to 0 while
+	 * reskey/reskeyop are passed in explicitly.  This is pretty silly.
+	 */
+	resdom->ressortgroupref = 0;
 	resdom->reskey = reskey;
 	resdom->reskeyop = reskeyop;
-	resdom->resgroupref = 0;
 	resdom->resjunk = resjunk;
 	return resdom;
 }

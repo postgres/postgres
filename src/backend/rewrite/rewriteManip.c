@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.38 1999/07/17 20:17:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.39 1999/08/21 03:49:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
+#include "parser/parse_clause.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -533,25 +534,32 @@ AddNotQual(Query *parsetree, Node *qual)
 }
 
 
+/*
+ * Add all expressions used by the given GroupClause list to the
+ * parsetree's targetlist and groupclause list.
+ *
+ * tlist is the old targetlist associated with the input groupclauses.
+ *
+ * XXX shouldn't we be checking to see if there are already matching
+ * entries in parsetree->targetlist?
+ */
 void
 AddGroupClause(Query *parsetree, List *group_by, List *tlist)
 {
 	List	   *l;
-	List	   *tl;
-	GroupClause *groupclause;
-	TargetEntry *tle;
-	int			new_resno;
-
-	new_resno = length(parsetree->targetList);
 
 	foreach(l, group_by)
 	{
-		groupclause = (GroupClause *) copyObject(lfirst(l));
-		tle = NULL;
+		GroupClause *groupclause = (GroupClause *) copyObject(lfirst(l));
+		Index		refnumber = groupclause->tleSortGroupRef;
+		TargetEntry *tle = NULL;
+		List	   *tl;
+
+		/* Find and copy the groupclause's TLE in the old tlist */
 		foreach(tl, tlist)
 		{
-			if (((TargetEntry *) lfirst(tl))->resdom->resgroupref ==
-				groupclause->tleGroupref)
+			if (((TargetEntry *) lfirst(tl))->resdom->ressortgroupref ==
+				refnumber)
 			{
 				tle = (TargetEntry *) copyObject(lfirst(tl));
 				break;
@@ -560,10 +568,16 @@ AddGroupClause(Query *parsetree, List *group_by, List *tlist)
 		if (tle == NULL)
 			elog(ERROR, "AddGroupClause(): GROUP BY entry not found in rules targetlist");
 
-		tle->resdom->resno = ++new_resno;
+		/* The ressortgroupref number in the old tlist might be already
+		 * taken in the new tlist, so force assignment of a new number.
+		 */
+		tle->resdom->ressortgroupref = 0;
+		groupclause->tleSortGroupRef =
+			assignSortGroupRef(tle, parsetree->targetList);
+
+		/* Also need to set the resno and mark it resjunk. */
+		tle->resdom->resno = length(parsetree->targetList) + 1;
 		tle->resdom->resjunk = true;
-		tle->resdom->resgroupref = length(parsetree->groupClause) + 1;
-		groupclause->tleGroupref = tle->resdom->resgroupref;
 
 		parsetree->targetList = lappend(parsetree->targetList, tle);
 		parsetree->groupClause = lappend(parsetree->groupClause, groupclause);

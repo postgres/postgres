@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.62 1999/08/09 06:20:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.63 1999/08/21 03:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/internal.h"
+#include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
@@ -35,11 +36,10 @@
 #include "utils/syscache.h"
 
 static List *make_subplanTargetList(Query *parse, List *tlist,
-					   AttrNumber **groupColIdx);
+									AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
-			   List *groupClause, AttrNumber *grpColIdx,
-			   Plan *subplan);
-static ScanDirection get_dir_to_omit_sortplan(List *sortcls, Plan *plan);
+							List *groupClause, AttrNumber *grpColIdx,
+							bool is_sorted, Plan *subplan);
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 
 /*****************************************************************************
@@ -59,6 +59,7 @@ planner(Query *parse)
 	PlannerPlanId = 0;
 
 	transformKeySetQuery(parse);
+
 	result_plan = union_planner(parse);
 
 	Assert(PlannerQueryLevel == 1);
@@ -88,6 +89,7 @@ union_planner(Query *parse)
 	List	   *rangetable = parse->rtable;
 	Plan	   *result_plan = (Plan *) NULL;
 	AttrNumber *groupColIdx = NULL;
+	bool		is_sorted = false;
 	Index		rt_index;
 
 	if (parse->unionClause)
@@ -180,6 +182,34 @@ union_planner(Query *parse)
 		}
 
 		/*
+		 * Figure out whether we need a sorted result from query_planner.
+		 *
+		 * If we have a GROUP BY clause, then we want a result sorted
+		 * properly for grouping.  Otherwise, if there is an ORDER BY clause
+		 * and no need for an aggregate node, we want to sort by the ORDER BY
+		 * clause.  (XXX In some cases, we could presort even when there is
+		 * an aggregate, but I'll leave that refinement for another day.)
+		 *
+		 * NOTE: the reason we put the target pathkeys into the Query node
+		 * rather than passing them as an argument to query_planner is that
+		 * the low-level routines in indxpath.c want to be able to see them.
+		 */
+		if (parse->groupClause)
+		{
+			parse->query_pathkeys =
+				make_pathkeys_for_sortclauses(parse->groupClause, tlist);
+		}
+		else if (parse->sortClause && ! parse->hasAggs)
+		{
+			parse->query_pathkeys =
+				make_pathkeys_for_sortclauses(parse->sortClause, tlist);
+		}
+		else
+		{
+			parse->query_pathkeys = NIL;
+		}
+
+		/*
 		 * Generate appropriate target list for subplan; may be different
 		 * from tlist if grouping or aggregation is needed.
 		 */
@@ -190,6 +220,12 @@ union_planner(Query *parse)
 									parse->commandType,
 									sub_tlist,
 									(List *) parse->qual);
+
+		/* query_planner sets query_pathkeys to NIL if it didn't make
+		 * a properly sorted plan
+		 */
+		if (parse->query_pathkeys)
+			is_sorted = true;
 	}
 
 	/* query_planner returns NULL if it thinks plan is bogus */
@@ -197,8 +233,8 @@ union_planner(Query *parse)
 		elog(ERROR, "union_planner: failed to create plan");
 
 	/*
-	 * If we have a GROUP BY clause, insert a group node (with the
-	 * appropriate sort node.)
+	 * If we have a GROUP BY clause, insert a group node (plus the
+	 * appropriate sort node, if necessary).
 	 */
 	if (parse->groupClause)
 	{
@@ -215,17 +251,27 @@ union_planner(Query *parse)
 
 		/*
 		 * If there are aggregates then the Group node should just return
-		 * the same (simplified) tlist as the subplan, which we indicate
-		 * to make_groupplan by passing NIL.  If there are no aggregates
+		 * the same set of vars as the subplan did (but we can exclude
+		 * any GROUP BY expressions).  If there are no aggregates
 		 * then the Group node had better compute the final tlist.
 		 */
-		group_tlist = parse->hasAggs ? NIL : tlist;
+		if (parse->hasAggs)
+			group_tlist = flatten_tlist(result_plan->targetlist);
+		else
+			group_tlist = tlist;
 
 		result_plan = make_groupplan(group_tlist,
 									 tuplePerGroup,
 									 parse->groupClause,
 									 groupColIdx,
+									 is_sorted,
 									 result_plan);
+
+		/*
+		 * Assume the result of the group step is not ordered suitably
+		 * for any ORDER BY that may exist.  XXX it might be; improve this!
+		 */
+		is_sorted = false;
 	}
 
 	/*
@@ -269,66 +315,48 @@ union_planner(Query *parse)
 		result_plan->qual = (List *) parse->havingQual;
 
 		/*
-		 * Update vars to refer to subplan result tuples, find Aggrefs,
+		 * Update vars to refer to subplan result tuples, and
 		 * make sure there is an Aggref in every HAVING clause.
 		 */
 		if (!set_agg_tlist_references((Agg *) result_plan))
 			elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 
 		/*
-		 * Check that we actually found some aggregates, else executor
-		 * will die unpleasantly.  (This defends against possible bugs in
-		 * parser or rewrite that might cause hasAggs to be incorrectly
-		 * set 'true'. It's not easy to recover here, since we've already
-		 * made decisions assuming there will be an Agg node.)
+		 * Assume result is not ordered suitably for ORDER BY.
+		 * XXX it might be; improve this!
 		 */
-		if (((Agg *) result_plan)->aggs == NIL)
-			elog(ERROR, "union_planner: query is marked hasAggs, but I don't see any");
+		is_sorted = false;
 	}
 
 	/*
-	 * For now, before we hand back the plan, check to see if there is a
-	 * user-specified sort that needs to be done.  Eventually, this will
-	 * be moved into the guts of the planner s.t. user specified sorts
-	 * will be considered as part of the planning process. Since we can
-	 * only make use of user-specified sorts in special cases, we can do
-	 * the optimization step later.
+	 * If we were not able to make the plan come out in the right order,
+	 * add an explicit sort step.
 	 */
+	if (parse->sortClause && ! is_sorted)
+	{
+		result_plan = make_sortplan(tlist, parse->sortClause, result_plan);
+	}
 
+	/*
+	 * Finally, if there is a UNIQUE clause, add the UNIQUE node.
+	 */
 	if (parse->uniqueFlag)
 	{
-		Plan	   *sortplan = make_sortplan(tlist, parse->sortClause, result_plan);
-
-		return ((Plan *) make_unique(tlist, sortplan, parse->uniqueFlag));
-	}
-	else
-	{
-		if (parse->sortClause)
-		{
-			ScanDirection	dir = get_dir_to_omit_sortplan(parse->sortClause, result_plan);
-			if (ScanDirectionIsNoMovement(dir))
-				return (make_sortplan(tlist, parse->sortClause, result_plan));
-			else
-			{ 
-				((IndexScan *)result_plan)->indxorderdir = dir;
-				return ((Plan *) result_plan);
-			}
-		}
-		else
-			return ((Plan *) result_plan);
+		result_plan = (Plan *) make_unique(tlist, result_plan,
+										   parse->uniqueFlag);
 	}
 
+	return result_plan;
 }
 
 /*---------------
  * make_subplanTargetList
- *	  Generate appropriate target lists when grouping is required.
+ *	  Generate appropriate target list when grouping is required.
  *
- * When union_planner inserts Aggregate and/or Group/Sort plan nodes above
- * the result of query_planner, we typically need to pass a different
+ * When union_planner inserts Aggregate and/or Group plan nodes above
+ * the result of query_planner, we typically want to pass a different
  * target list to query_planner than the outer plan nodes should have.
- * This routine generates the correct target list for the subplan, and
- * if necessary modifies the target list for the inserted nodes as well.
+ * This routine generates the correct target list for the subplan.
  *
  * The initial target list passed from the parser already contains entries
  * for all ORDER BY and GROUP BY expressions, but it will not have entries
@@ -340,26 +368,18 @@ union_planner(Query *parse)
  * given a query like
  *		SELECT a+b,SUM(c+d) FROM table GROUP BY a+b;
  * we want to pass this targetlist to the subplan:
- *		a+b,c,d
+ *		a,b,c,d,a+b
  * where the a+b target will be used by the Sort/Group steps, and the
- * c and d targets will be needed to compute the aggregate results.
+ * other targets will be used for computing the final results.  (In the
+ * above example we could theoretically suppress the a and b targets and
+ * use only a+b, but it's not really worth the trouble.)
  *
  * 'parse' is the query being processed.
- * 'tlist' is the query's target list.  CAUTION: list elements may be
- * modified by this routine!
+ * 'tlist' is the query's target list.
  * 'groupColIdx' receives an array of column numbers for the GROUP BY
  * expressions (if there are any) in the subplan's target list.
  *
- * The result is the targetlist to be passed to the subplan.  Also,
- * the parent tlist is modified so that any nontrivial targetlist items that
- * exactly match GROUP BY items are replaced by simple Var nodes referencing
- * those outputs of the subplan.  This avoids redundant recalculations in
- * cases like
- *		SELECT a+1, ... GROUP BY a+1
- * Note, however, that other varnodes in the parent's targetlist (and
- * havingQual, if any) will still need to be updated to refer to outputs
- * of the subplan.	This routine is quite large enough already, so we do
- * that later.
+ * The result is the targetlist to be passed to the subplan.
  *---------------
  */
 static List *
@@ -368,14 +388,8 @@ make_subplanTargetList(Query *parse,
 					   AttrNumber **groupColIdx)
 {
 	List	   *sub_tlist;
-	List	   *prnt_tlist;
-	List	   *sl,
-			   *gl;
-	List	   *glc = NIL;
-	List	   *extravars = NIL;
+	List	   *extravars;
 	int			numCols;
-	AttrNumber *grpColIdx = NULL;
-	int			next_resno = 1;
 
 	*groupColIdx = NULL;
 
@@ -387,247 +401,151 @@ make_subplanTargetList(Query *parse,
 		return tlist;
 
 	/*
-	 * If grouping, make a working copy of groupClause list (which we use
-	 * just to verify that we found all the groupClause items in tlist).
-	 * Also allocate space to remember where the group columns are in the
-	 * subplan tlist.
+	 * Otherwise, start with a "flattened" tlist (having just the vars
+	 * mentioned in the targetlist and HAVING qual).
+	 */
+	sub_tlist = flatten_tlist(tlist);
+	extravars = pull_var_clause(parse->havingQual);
+	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
+	freeList(extravars);
+
+	/*
+	 * If grouping, create sub_tlist entries for all GROUP BY expressions
+	 * (GROUP BY items that are simple Vars should be in the list already),
+	 * and make an array showing where the group columns are in the sub_tlist.
 	 */
 	numCols = length(parse->groupClause);
 	if (numCols > 0)
 	{
-		glc = listCopy(parse->groupClause);
+		int			keyno = 0;
+		AttrNumber *grpColIdx;
+		List	   *gl;
+
 		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 		*groupColIdx = grpColIdx;
-	}
-
-	sub_tlist = new_unsorted_tlist(tlist);		/* make a modifiable copy */
-
-	/*
-	 * Step 1: build grpColIdx by finding targetlist items that match
-	 * GroupBy entries.  If there are aggregates, remove non-GroupBy items
-	 * from sub_tlist, and reset its resnos accordingly.  When we leave an
-	 * expression in the subplan tlist, modify the parent tlist to copy
-	 * the value from the subplan output rather than re-evaluating it.
-	 */
-	prnt_tlist = tlist;			/* scans parent tlist in sync with sl */
-	foreach(sl, sub_tlist)
-	{
-		TargetEntry *te = (TargetEntry *) lfirst(sl);
-		TargetEntry *parentte = (TargetEntry *) lfirst(prnt_tlist);
-		Resdom	   *resdom = te->resdom;
-		bool		keepInSubPlan = true;
-		bool		foundGroupClause = false;
-		int			keyno = 0;
 
 		foreach(gl, parse->groupClause)
 		{
-			GroupClause *grpcl = (GroupClause *) lfirst(gl);
+			GroupClause	   *grpcl = (GroupClause *) lfirst(gl);
+			Node		   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+			TargetEntry	   *te = NULL;
+			List		   *sl;
 
-			keyno++;			/* sort key # for this GroupClause */
-			if (grpcl->tleGroupref == resdom->resgroupref)
+			/* Find or make a matching sub_tlist entry */
+			foreach(sl, sub_tlist)
 			{
-				/* Found a matching groupclause; record info for sorting */
-				foundGroupClause = true;
-				resdom->reskey = keyno;
-				resdom->reskeyop = get_opcode(grpcl->grpOpoid);
-				grpColIdx[keyno - 1] = next_resno;
-
-				/*
-				 * Remove groupclause from our list of unmatched
-				 * groupclauses. NB: this depends on having used a shallow
-				 * listCopy() above.
-				 */
-				glc = lremove((void *) grpcl, glc);
-				break;
+				te = (TargetEntry *) lfirst(sl);
+				if (equal(groupexpr, te->expr))
+					break;
 			}
-		}
-
-		if (!foundGroupClause)
-		{
-
-			/*
-			 * Non-GroupBy entry: remove it from subplan if there are
-			 * aggregates in query - it will be evaluated by Aggregate
-			 * plan. But do not remove simple-Var entries; we'd just have
-			 * to add them back anyway, and we risk confusing
-			 * INSERT/UPDATE.
-			 */
-			if (parse->hasAggs && !IsA(te->expr, Var))
-				keepInSubPlan = false;
-		}
-
-		if (keepInSubPlan)
-		{
-			/* Assign new sequential resnos to subplan tlist items */
-			resdom->resno = next_resno++;
-			if (!IsA(parentte->expr, Var))
+			if (! sl)
 			{
-
-				/*
-				 * Since the item is being computed in the subplan, we can
-				 * just make a Var node to reference it in the outer plan,
-				 * rather than recomputing it there. Note we use varnoold
-				 * = -1 as a flag to let replace_vars_with_subplan_refs
-				 * know it needn't change this Var node. If it's only a
-				 * Var anyway, we leave it alone for now;
-				 * replace_vars_with_subplan_refs will fix it later.
-				 */
-				parentte->expr = (Node *) makeVar(1, resdom->resno,
-												  resdom->restype,
-												  resdom->restypmod,
-												  0, -1, resdom->resno);
+				te = makeTargetEntry(makeResdom(length(sub_tlist) + 1,
+												exprType(groupexpr),
+												exprTypmod(groupexpr),
+												NULL,
+												(Index) 0,
+												(Oid) 0,
+												false),
+									 groupexpr);
+				sub_tlist = lappend(sub_tlist, te);
 			}
-		}
-		else
-		{
 
-			/*
-			 * Remove this tlist item from the subplan, but remember the
-			 * vars it needs.  The outer tlist item probably needs
-			 * changes, but that will happen later.
-			 */
-			sub_tlist = lremove(te, sub_tlist);
-			extravars = nconc(extravars, pull_var_clause(te->expr));
-		}
-
-		prnt_tlist = lnext(prnt_tlist);
-	}
-
-	/* We should have found all the GROUP BY clauses in the tlist. */
-	if (length(glc) != 0)
-		elog(ERROR, "make_subplanTargetList: GROUP BY attribute not found in target list");
-
-	/*
-	 * Add subplan targets for any variables needed by removed tlist
-	 * entries that aren't otherwise mentioned in the subplan target list.
-	 * We'll also need targets for any variables seen only in HAVING.
-	 */
-	extravars = nconc(extravars, pull_var_clause(parse->havingQual));
-
-	foreach(gl, extravars)
-	{
-		Var		   *v = (Var *) lfirst(gl);
-
-		if (tlist_member(v, sub_tlist) == NULL)
-		{
-
-			/*
-			 * Make sure sub_tlist element is a fresh object not shared
-			 * with any other structure; not sure if anything will break
-			 * if it is shared, but better to be safe...
-			 */
-			sub_tlist = lappend(sub_tlist,
-								create_tl_element((Var *) copyObject(v),
-												  next_resno));
-			next_resno++;
+			/* and save its resno */
+			grpColIdx[keyno++] = te->resdom->resno;
 		}
 	}
 
 	return sub_tlist;
 }
 
+/*
+ * make_groupplan
+ *		Add a Group node for GROUP BY processing.
+ *		If we couldn't make the subplan produce presorted output for grouping,
+ *		first add an explicit Sort node.
+ */
 static Plan *
 make_groupplan(List *group_tlist,
 			   bool tuplePerGroup,
 			   List *groupClause,
 			   AttrNumber *grpColIdx,
+			   bool is_sorted,
 			   Plan *subplan)
 {
-	List	   *sort_tlist;
-	List	   *sl;
-	Sort	   *sortplan;
-	Group	   *grpplan;
 	int			numCols = length(groupClause);
+	Group	   *grpplan;
 
-	/*
-	 * Make the targetlist for the Sort node; it always just references
-	 * each of the corresponding target items of the subplan.  We need to
-	 * ensure that simple Vars in the subplan's target list are
-	 * recognizable by replace_vars_with_subplan_refs when it's applied to
-	 * the Sort/Group target list, so copy up their varnoold/varoattno.
-	 */
-	sort_tlist = NIL;
-	foreach(sl, subplan->targetlist)
+	if (! is_sorted)
 	{
-		TargetEntry *te = (TargetEntry *) lfirst(sl);
-		Resdom	   *resdom = te->resdom;
-		Var		   *newvar;
+		/*
+		 * The Sort node always just takes a copy of the subplan's tlist
+		 * plus ordering information.  (This might seem inefficient if the
+		 * subplan contains complex GROUP BY expressions, but in fact Sort
+		 * does not evaluate its targetlist --- it only outputs the same
+		 * tuples in a new order.  So the expressions we might be copying
+		 * are just dummies with no extra execution cost.)
+		 */
+		List	   *sort_tlist = new_unsorted_tlist(subplan->targetlist);
+		int			keyno = 0;
+		List	   *gl;
 
-		if (IsA(te->expr, Var))
+		foreach(gl, groupClause)
 		{
-			Var		   *subvar = (Var *) te->expr;
+			GroupClause	   *grpcl = (GroupClause *) lfirst(gl);
+			TargetEntry	   *te = nth(grpColIdx[keyno]-1, sort_tlist);
+			Resdom		   *resdom = te->resdom;
 
-			newvar = makeVar(1, resdom->resno,
-							 resdom->restype, resdom->restypmod,
-							 0, subvar->varnoold, subvar->varoattno);
-		}
-		else
-		{
-			newvar = makeVar(1, resdom->resno,
-							 resdom->restype, resdom->restypmod,
-							 0, -1, resdom->resno);
+			/*
+			 * Check for the possibility of duplicate group-by clauses --- the
+			 * parser should have removed 'em, but the Sort executor will get
+			 * terribly confused if any get through!
+			 */
+			if (resdom->reskey == 0)
+			{
+				/* OK, insert the ordering info needed by the executor. */
+				resdom->reskey = ++keyno;
+				resdom->reskeyop = get_opcode(grpcl->sortop);
+			}
 		}
 
-		sort_tlist = lappend(sort_tlist,
-						   makeTargetEntry((Resdom *) copyObject(resdom),
-										   (Node *) newvar));
+		subplan = (Plan *) make_sort(sort_tlist,
+									 _NONAME_RELATION_ID_,
+									 subplan,
+									 keyno);
 	}
 
 	/*
-	 * Make the Sort node
+	 * Fix variables in tlist (should be done somewhere else?)
 	 */
-	sortplan = make_sort(sort_tlist,
-						 _NONAME_RELATION_ID_,
-						 subplan,
-						 numCols);
-	sortplan->plan.cost = subplan->cost;		/* XXX assume no cost */
-
-	/*
-	 * If the caller gave us a target list, use it after fixing the
-	 * variables. If not, we need the same sort of "repeater" tlist as for
-	 * the Sort node.
-	 */
-	if (group_tlist)
-	{
-		group_tlist = copyObject(group_tlist);	/* necessary?? */
-		replace_tlist_with_subplan_refs(group_tlist,
-										(Index) 0,
-										subplan->targetlist);
-	}
-	else
-		group_tlist = copyObject(sort_tlist);
+	group_tlist = copyObject(group_tlist);	/* necessary?? */
+	replace_tlist_with_subplan_refs(group_tlist,
+									(Index) 0,
+									subplan->targetlist);
 
 	/*
 	 * Make the Group node
 	 */
 	grpplan = make_group(group_tlist, tuplePerGroup, numCols,
-						 grpColIdx, sortplan);
+						 grpColIdx, subplan);
 
 	return (Plan *) grpplan;
 }
 
 /*
  * make_sortplan
- *	  Returns a sortplan which is basically a SORT node attached to the
- *	  top of the plan returned from the planner.  It also adds the
- *	   cost of sorting into the plan.
- *
- * sortkeys: ( resdom1 resdom2 resdom3 ...)
- * sortops:  (sortop1 sortop2 sortop3 ...)
+ *	  Add a Sort node to implement an explicit ORDER BY clause.
  */
 static Plan *
 make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 {
-	Plan	   *sortplan = (Plan *) NULL;
-	List	   *temp_tlist = NIL;
-	List	   *i = NIL;
-	Resdom	   *resnode = (Resdom *) NULL;
-	Resdom	   *resdom = (Resdom *) NULL;
-	int			keyno = 1;
+	List	   *temp_tlist;
+	List	   *i;
+	int			keyno = 0;
 
 	/*
-	 * First make a copy of the tlist so that we don't corrupt the the
-	 * original .
+	 * First make a copy of the tlist so that we don't corrupt the
+	 * original.
 	 */
 
 	temp_tlist = new_unsorted_tlist(tlist);
@@ -635,35 +553,38 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 	foreach(i, sortcls)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(i);
+		Index		refnumber = sortcl->tleSortGroupRef;
+		TargetEntry *tle = NULL;
+		Resdom	   *resdom;
+		List	   *l;
 
-		resnode = sortcl->resdom;
-		resdom = tlist_resdom(temp_tlist, resnode);
+		foreach(l, temp_tlist)
+		{
+			tle = (TargetEntry *) lfirst(l);
+			if (tle->resdom->ressortgroupref == refnumber)
+				break;
+		}
+		if (l == NIL)
+			elog(ERROR, "make_sortplan: ORDER BY expression not found in targetlist");
+		resdom = tle->resdom;
 
 		/*
-		 * Order the resdom keys and replace the operator OID for each key
-		 * with the regproc OID.
+		 * Check for the possibility of duplicate order-by clauses --- the
+		 * parser should have removed 'em, but the executor will get terribly
+		 * confused if any get through!
 		 */
-		resdom->reskey = keyno;
-		resdom->reskeyop = get_opcode(sortcl->opoid);
-		keyno += 1;
+		if (resdom->reskey == 0)
+		{
+			/* OK, insert the ordering info needed by the executor. */
+			resdom->reskey = ++keyno;
+			resdom->reskeyop = get_opcode(sortcl->sortop);
+		}
 	}
 
-	sortplan = (Plan *) make_sort(temp_tlist,
-								  _NONAME_RELATION_ID_,
-								  (Plan *) plannode,
-								  length(sortcls));
-
-	/*
-	 * XXX Assuming that an internal sort has no. cost. This is wrong, but
-	 * given that at this point, we don't know the no. of tuples returned,
-	 * etc, we can't do better than to add a constant cost. This will be
-	 * fixed once we move the sort further into the planner, but for now
-	 * ... functionality....
-	 */
-
-	sortplan->cost = plannode->cost;
-
-	return sortplan;
+	return (Plan *) make_sort(temp_tlist,
+							  _NONAME_RELATION_ID_,
+							  plannode,
+							  keyno);
 }
 
 /*
@@ -827,188 +748,4 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 
 	/* success */
 	return;
-}
-
-
-/* ----------
- * Support function for get scan direction to omit sortplan
- * ----------
- */
-static TargetEntry *
-get_matching_tle(Plan *plan, Resdom *resdom)
-{
-	List	   *i;
-	TargetEntry *tle;
-
-	foreach(i, plan->targetlist)
-	{
-		tle = (TargetEntry *) lfirst(i);
-		if (tle->resdom->resno == resdom->resno)
-			return tle;
-	}
-	return NULL;
-}
-
-
-/* ----------
- * Check if a user requested ORDER BY is already satisfied by
- * the choosen index scan.
- *
- * Returns the direction of Index scan to omit sort,
- * if sort is required returns NoMovementScanDirection  
- *
- * ----------
- */
-static ScanDirection
-get_dir_to_omit_sortplan(List *sortcls, Plan *plan)
-{
-	Relation	indexRel;
-	IndexScan  *indexScan;
-	Oid			indexId;
-	List	   *i;
-	HeapTuple	htup;
-	Form_pg_index index_tup;
-	int			key_no = 0;
-	ScanDirection   dir, nodir = NoMovementScanDirection;
-
-	dir = nodir;
-	/* ----------
-	 * Must be an IndexScan
-	 * ----------
-	 */
-	if (nodeTag(plan) != T_IndexScan)
-		return nodir;
-
-	indexScan = (IndexScan *) plan;
-
-	/* ----------
-	 * Should not have left- or righttree
-	 * ----------
-	 */
-	if (plan->lefttree != NULL)
-		return nodir;
-	if (plan->righttree != NULL)
-		return nodir;
-
-	/* ----------
-	 * Must be a single index scan
-	 * ----------
-	 */
-	if (length(indexScan->indxid) != 1)
-		return nodir;
-
-	/* ----------
-	 * Indices can only have up to 8 attributes. So an ORDER BY using
-	 * more that 8 attributes could never be satisfied by an index.
-	 * ----------
-	 */
-	if (length(sortcls) > 8)
-		return nodir;
-
-	/* ----------
-	 * The choosen Index must be a btree
-	 * ----------
-	 */
-	indexId = lfirsti(indexScan->indxid);
-
-	indexRel = index_open(indexId);
-	if (strcmp(nameout(&(indexRel->rd_am->amname)), "btree") != 0)
-	{
-		heap_close(indexRel);
-		return nodir;
-	}
-	heap_close(indexRel);
-
-	/* ----------
-	 * Fetch the index tuple
-	 * ----------
-	 */
-	htup = SearchSysCacheTuple(INDEXRELID,
-							   ObjectIdGetDatum(indexId), 0, 0, 0);
-	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "cache lookup for index %u failed", indexId);
-	index_tup = (Form_pg_index) GETSTRUCT(htup);
-
-	/* ----------
-	 * Check if all the sort clauses match the attributes in the index
-	 * ----------
-	 */
-	foreach(i, sortcls)
-	{
-		SortClause *sortcl;
-		Resdom	   *resdom;
-		TargetEntry *tle;
-		Var		   *var;
-
-		sortcl = (SortClause *) lfirst(i);
-
-		resdom = sortcl->resdom;
-		tle = get_matching_tle(plan, resdom);
-		if (tle == NULL)
-		{
-			/* ----------
-			 * Could this happen?
-			 * ----------
-			 */
-			return nodir;
-		}
-		if (nodeTag(tle->expr) != T_Var)
-		{
-			/* ----------
-			 * The target list expression isn't a var, so it
-			 * cannot be the indexed attribute
-			 * ----------
-			 */
-			return nodir;
-		}
-		var = (Var *) (tle->expr);
-
-		if (var->varno != indexScan->scan.scanrelid)
-		{
-			/* ----------
-			 * This Var isn't from the scan relation. So it isn't
-			 * that of the index
-			 * ----------
-			 */
-			return nodir;
-		}
-
-		if (var->varattno != index_tup->indkey[key_no])
-		{
-			/* ----------
-			 * It isn't the indexed attribute.
-			 * ----------
-			 */
-			return nodir;
-		}
-
-		if (oprid(oper("<", resdom->restype, resdom->restype, FALSE)) != sortcl->opoid)
-		{
-			/* ----------
-			 * Sort order isn't in ascending order.
-			 * ----------
-			 */
-			if (ScanDirectionIsForward(dir))
-				return nodir;
-			dir = BackwardScanDirection;
-		}
-		else
-		{
-			/* ----------
-			 * Sort order is in ascending order.
-			 * ----------
-			*/
-			if (ScanDirectionIsBackward(dir))
-				return nodir;
-			dir = ForwardScanDirection;
-		}
-
-		key_no++;
-	}
-
-	/* ----------
-	 * Index matches ORDER BY - sort not required
-	 * ----------
-	 */
-	return dir;
 }

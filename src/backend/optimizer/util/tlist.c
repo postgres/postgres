@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.38 1999/08/10 03:00:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.39 1999/08/21 03:49:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 
-static Node *flatten_tlist_vars_mutator(Node *node, List *flat_tlist);
+static Node *unflatten_tlist_mutator(Node *node, List *flat_tlist);
 
 /*****************************************************************************
  *	---------- RELATION node target list routines ----------
@@ -89,7 +89,7 @@ tlist_member(Var *var, List *tlist)
 void
 add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
-	if (tlistentry_member(var, rel->targetlist) == NULL)
+	if (! tlistentry_member(var, rel->targetlist))
 	{
 		/* XXX is copyObject necessary here? */
 		rel->targetlist = lappend(rel->targetlist,
@@ -155,27 +155,6 @@ get_actual_tlist(List *tlist)
 /*****************************************************************************
  *		---------- GENERAL target list routines ----------
  *****************************************************************************/
-
-/*
- *	 Routine to get the resdom out of a targetlist.
- */
-Resdom *
-tlist_resdom(List *tlist, Resdom *resnode)
-{
-	List	   *i;
-
-	foreach(i, tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(i);
-		Resdom	   *resdom = tle->resdom;
-
-		/* Since resnos are supposed to be unique */
-		if (resnode->resno == resdom->resno)
-			return resdom;
-	}
-	return (Resdom *) NULL;
-}
-
 
 /*
  * match_varid
@@ -276,48 +255,67 @@ copy_vars(List *target, List *source)
  * flatten_tlist
  *	  Create a target list that only contains unique variables.
  *
- *
  * 'tlist' is the current target list
  *
  * Returns the "flattened" new target list.
  *
+ * The result is entirely new structure sharing no nodes with the original.
+ * Copying the Var nodes is probably overkill, but be safe for now.
  */
 List *
 flatten_tlist(List *tlist)
 {
 	List	   *vlist = pull_var_clause((Node *) tlist);
-	int			last_resdomno = 1;
-	List	   *new_tlist = NIL;
+	List	   *new_tlist;
+
+	new_tlist = add_to_flat_tlist(NIL, vlist);
+	freeList(vlist);
+	return new_tlist;
+}
+
+/*
+ * add_to_flat_tlist
+ *		Add more vars to a flattened tlist (if they're not already in it)
+ *
+ * 'tlist' is the flattened tlist
+ * 'vars' is a list of var nodes
+ *
+ * Returns the extended tlist.
+ */
+List *
+add_to_flat_tlist(List *tlist, List *vars)
+{
+	int			next_resdomno = length(tlist) + 1;
 	List	   *v;
 
-	foreach(v, vlist)
+	foreach(v, vars)
 	{
 		Var		   *var = lfirst(v);
 
-		if (! tlistentry_member(var, new_tlist))
+		if (! tlistentry_member(var, tlist))
 		{
 			Resdom	   *r;
 
-			r = makeResdom(last_resdomno++,
+			r = makeResdom(next_resdomno++,
 						   var->vartype,
 						   var->vartypmod,
 						   NULL,
 						   (Index) 0,
 						   (Oid) 0,
 						   false);
-			new_tlist = lappend(new_tlist,
-								makeTargetEntry(r, (Node *) var));
+			tlist = lappend(tlist,
+							makeTargetEntry(r, copyObject(var)));
 		}
 	}
-	freeList(vlist);
-
-	return new_tlist;
+	return tlist;
 }
 
 /*
- * flatten_tlist_vars
- *	  Redoes the target list of a query by replacing vars within
+ * unflatten_tlist
+ *	  Reconstructs the target list of a query by replacing vars within
  *	  target expressions with vars from the 'flattened' target list.
+ *
+ * XXX is this really necessary?  Why can't we just use the tlist as is?
  *
  * 'full_tlist' is the original target list
  * 'flat_tlist' is the flattened (var-only) target list
@@ -326,21 +324,21 @@ flatten_tlist(List *tlist)
  *
  */
 List *
-flatten_tlist_vars(List *full_tlist, List *flat_tlist)
+unflatten_tlist(List *full_tlist, List *flat_tlist)
 {
-	return (List *) flatten_tlist_vars_mutator((Node *) full_tlist,
-											   flat_tlist);
+	return (List *) unflatten_tlist_mutator((Node *) full_tlist,
+											flat_tlist);
 }
 
 static Node *
-flatten_tlist_vars_mutator(Node *node, List *flat_tlist)
+unflatten_tlist_mutator(Node *node, List *flat_tlist)
 {
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 		return (Node *) get_expr(match_varid((Var *) node,
 											 flat_tlist));
-	return expression_tree_mutator(node, flatten_tlist_vars_mutator,
+	return expression_tree_mutator(node, unflatten_tlist_mutator,
 								   (void *) flat_tlist);
 }
 
@@ -354,20 +352,28 @@ get_expr(TargetEntry *tle)
 	return (Var *) tle->expr;
 }
 
-
-Var *
-get_groupclause_expr(GroupClause *groupClause, List *targetList)
+/*
+ * get_sortgroupclause_expr
+ *		Find the targetlist entry matching the given SortClause
+ *		(or GroupClause) by ressortgroupref, and return its expression.
+ *
+ * Because GroupClause is typedef'd as SortClause, either kind of
+ * node can be passed without casting.
+ */
+Node *
+get_sortgroupclause_expr(SortClause *sortClause, List *targetList)
 {
+	Index		refnumber = sortClause->tleSortGroupRef;
 	List	   *l;
 
 	foreach(l, targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		if (tle->resdom->resgroupref == groupClause->tleGroupref)
-			return get_expr(tle);
+
+		if (tle->resdom->ressortgroupref == refnumber)
+			return tle->expr;
 	}
 
-	elog(ERROR,
-	"get_groupclause_expr: GROUP BY expression not found in targetlist");
-	return NULL;
+	elog(ERROR, "get_sortgroupclause_expr: ORDER/GROUP BY expression not found in targetlist");
+	return NULL;				/* keep compiler quiet */
 }

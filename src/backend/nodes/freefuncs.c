@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.25 1999/08/16 02:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.26 1999/08/21 03:48:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,8 +370,6 @@ static void
 _freeAgg(Agg *node)
 {
 	FreePlanFields((Plan *) node);
-
-	freeList(node->aggs);
 
 	pfree(node);
 }
@@ -964,8 +962,6 @@ _freeRowMark(RowMark *node)
 static void
 _freeSortClause(SortClause *node)
 {
-	freeObject(node->resdom);
-
 	pfree(node);
 }
 
@@ -1000,19 +996,22 @@ _freeQuery(Query *node)
 	}
 	if (node->into)
 		pfree(node->into);
+	freeObject(node->rtable);
+	freeObject(node->targetList);
+	freeObject(node->qual);
+	freeObject(node->rowMark);
 	if (node->uniqueFlag)
 		pfree(node->uniqueFlag);
 
 	freeObject(node->sortClause);
-	freeObject(node->rtable);
-	freeObject(node->targetList);
-	freeObject(node->qual);
 	freeObject(node->groupClause);
 	freeObject(node->havingQual);
+	/* why not intersectClause? */
 	freeObject(node->unionClause);
 	freeObject(node->limitOffset);
 	freeObject(node->limitCount);
-	freeObject(node->rowMark);
+
+	/* XXX should we be freeing the planner internal fields? */
 
 	pfree(node);
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.30 1999/08/09 00:56:04 tgl Exp $
+ * $Id: planmain.h,v 1.31 1999/08/21 03:49:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
 		  int keycount);
 extern Agg *make_agg(List *tlist, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
-		   AttrNumber *grpColIdx, Sort *lefttree);
+		   AttrNumber *grpColIdx, Plan *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
 
 /*
@@ -54,9 +54,14 @@ extern void replace_tlist_with_subplan_refs(List *tlist,
 								Index subvarno,
 								List *subplanTargetList);
 extern bool set_agg_tlist_references(Agg *aggNode);
+extern List *pull_agg_clause(Node *clause);
 extern void check_having_for_ungrouped_vars(Node *clause,
 								List *groupClause,
 								List *targetList);
+
+/*
+ * prep/prepkeyset.c
+ */
 extern void transformKeySetQuery(Query *origNode);
 
 #endif	 /* PLANMAIN_H */

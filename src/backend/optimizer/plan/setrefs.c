@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.55 1999/08/18 04:15:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.56 1999/08/21 03:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@ static void replace_vars_with_subplan_refs(Node *clause,
 										   List *subplanTargetList);
 static bool replace_vars_with_subplan_refs_walker(Node *node,
 					replace_vars_with_subplan_refs_context *context);
-static List *pull_agg_clause(Node *clause);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool check_having_for_ungrouped_vars_walker(Node *node,
 					check_having_for_ungrouped_vars_context *context);
@@ -416,23 +415,9 @@ replace_vars_with_subplan_refs_walker(Node *node,
 		return false;
 	if (IsA(node, Var))
 	{
-		/*
-		 * It could be that this varnode has been created by make_groupplan
-		 * and is already set up to reference the subplan target list. We
-		 * recognize that case by varno = 1, varnoold = -1, varattno =
-		 * varoattno, and varlevelsup = 0.	(Probably ought to have an
-		 * explicit flag, but this should do for now.)
-		 */
 		Var		   *var = (Var *) node;
 		TargetEntry *subplanVar;
 
-		if (var->varno == (Index) 1 &&
-			var->varnoold == ((Index) -1) &&
-			var->varattno == var->varoattno &&
-			var->varlevelsup == 0)
-			return false;		/* OK to leave it alone */
-
-		/* Otherwise it had better be in the subplan list. */
 		subplanVar = match_varid(var, context->subplanTargetList);
 		if (!subplanVar)
 			elog(ERROR, "replace_vars_with_subplan_refs: variable not in target list");
@@ -461,7 +446,6 @@ replace_vars_with_subplan_refs_walker(Node *node,
  *	  the tuples returned by its left tree subplan.
  *	* If there is a qual list (from a HAVING clause), similarly update
  *	  vars in it to point to the subplan target list.
- *	* Generate the aggNode->aggs list of Aggref nodes contained in the Agg.
  *
  * The return value is TRUE if all qual clauses include Aggrefs, or FALSE
  * if any do not (caller may choose to raise an error condition).
@@ -475,7 +459,6 @@ set_agg_tlist_references(Agg *aggNode)
 	bool		all_quals_ok;
 
 	subplanTargetList = aggNode->plan.lefttree->targetlist;
-	aggNode->aggs = NIL;
 
 	foreach(tl, aggNode->plan.targetlist)
 	{
@@ -484,24 +467,19 @@ set_agg_tlist_references(Agg *aggNode)
 		replace_vars_with_subplan_refs(tle->expr,
 									   (Index) 0,
 									   subplanTargetList);
-		aggNode->aggs = nconc(pull_agg_clause(tle->expr), aggNode->aggs);
 	}
 
 	all_quals_ok = true;
 	foreach(ql, aggNode->plan.qual)
 	{
 		Node	   *qual = lfirst(ql);
-		List	   *qualaggs;
 
 		replace_vars_with_subplan_refs(qual,
 									   (Index) 0,
 									   subplanTargetList);
-		qualaggs = pull_agg_clause(qual);
-		if (qualaggs == NIL)
+		if (pull_agg_clause(qual) == NIL)
 			all_quals_ok = false;		/* this qual clause has no agg
 										 * functions! */
-		else
-			aggNode->aggs = nconc(qualaggs, aggNode->aggs);
 	}
 
 	return all_quals_ok;
@@ -514,7 +492,7 @@ set_agg_tlist_references(Agg *aggNode)
  *	  Returns list of Aggref nodes found.  Note the nodes themselves are not
  *	  copied, only referenced.
  */
-static List *
+List *
 pull_agg_clause(Node *clause)
 {
 	List	   *result = NIL;
@@ -545,10 +523,6 @@ pull_agg_clause_walker(Node *node, List **listptr)
  * exprIsAggOrGroupCol()).	But that routine currently does not check subplans,
  * because the necessary info is not computed until the planner runs.
  * This ought to be cleaned up someday.
- *
- * NOTE: the havingClause has been cnf-ified, so AND subclauses have been
- * turned into a plain List.  Thus, this routine has to cope with List nodes
- * where the routine above does not...
  */
 
 void
@@ -588,10 +562,13 @@ check_having_for_ungrouped_vars_walker(Node *node,
 
 			foreach(gl, context->groupClause)
 			{
-				Var	   *groupexpr = get_groupclause_expr(lfirst(gl),
-														 context->targetList);
+				GroupClause	   *gcl = lfirst(gl);
+				Node		   *groupexpr;
 
-				if (var_equal((Var *) thisarg, groupexpr))
+				groupexpr = get_sortgroupclause_expr(gcl,
+													 context->targetList);
+				/* XXX is var_equal correct, or should we use equal()? */
+				if (var_equal((Var *) thisarg, (Var *) groupexpr))
 				{
 					contained_in_group_clause = true;
 					break;

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.21 1999/07/16 04:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.22 1999/08/21 03:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -552,9 +552,7 @@ SS_finalize_plan(Plan *plan)
 			break;
 
 		case T_Agg:
-			finalize_primnode_walker((Node *) ((Agg *) plan)->aggs,
-									 &results);
-			Assert(results.subplans == NIL);
+			/* XXX Code used to reject subplans in Aggref args; needed?? */
 			break;
 
 		case T_SeqScan:

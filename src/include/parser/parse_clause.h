@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.12 1999/07/19 00:26:16 tgl Exp $
+ * $Id: parse_clause.h,v 1.13 1999/08/21 03:49:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,11 @@ extern void setTargetTable(ParseState *pstate, char *relname);
 extern Node *transformWhereClause(ParseState *pstate, Node *where,
 								  Node *using);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
-					 List *targetlist);
-extern List *transformSortClause(ParseState *pstate,
-					List *orderlist, List *sortClause,
-					List *targetlist, char *uniqueFlag);
+								  List *targetlist);
+extern List *transformSortClause(ParseState *pstate, List *orderlist,
+								 List *targetlist, char *uniqueFlag);
+
+extern List *addAllTargetsToSortList(List *sortlist, List *targetlist);
+extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
+
 #endif	 /* PARSE_CLAUSE_H */

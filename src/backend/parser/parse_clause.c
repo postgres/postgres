@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.43 1999/08/16 02:10:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.44 1999/08/21 03:48:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,9 @@ static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 										List *tlist, int clause);
 static void parseFromClause(ParseState *pstate, List *frmList, Node **qual);
 static char	*transformTableEntry(ParseState *pstate, RangeVar *r);
+static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
+								 List *targetlist, char *opname);
+static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
 
 #ifdef ENABLE_OUTER_JOINS
 static Node *transformUsingClause(ParseState *pstate, List *onList,
@@ -464,39 +467,25 @@ List *
 transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 {
 	List	   *glist = NIL,
-			   *gl,
-			   *othergl;
-	int			nextgroupref = 1;
+			   *gl;
 
 	foreach(gl, grouplist)
 	{
-		TargetEntry *restarget;
-		Resdom	   *resdom;
+		TargetEntry *tle;
 
-		restarget = findTargetlistEntry(pstate, lfirst(gl),
-										targetlist, GROUP_CLAUSE);
-		resdom = restarget->resdom;
+		tle = findTargetlistEntry(pstate, lfirst(gl),
+								  targetlist, GROUP_CLAUSE);
 
 		/* avoid making duplicate grouplist entries */
-		foreach(othergl, glist)
-		{
-			GroupClause *gcl = (GroupClause *) lfirst(othergl);
-
-			if (equal(get_groupclause_expr(gcl, targetlist),
-					  restarget->expr))
-				break;
-		}
-
-		if (othergl == NIL)		/* not in grouplist already */
+		if (! exprIsInSortList(tle->expr, glist, targetlist))
 		{
 			GroupClause *grpcl = makeNode(GroupClause);
 
-			grpcl->tleGroupref = nextgroupref++;
-			resdom->resgroupref = grpcl->tleGroupref;
+			grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 
-			grpcl->grpOpoid = oprid(oper("<",
-										 resdom->restype,
-										 resdom->restype, false));
+			grpcl->sortop = oprid(oper("<",
+									   tle->resdom->restype,
+									   tle->resdom->restype, false));
 
 			glist = lappend(glist, grpcl);
 		}
@@ -513,139 +502,167 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 List *
 transformSortClause(ParseState *pstate,
 					List *orderlist,
-					List *sortlist,
 					List *targetlist,
 					char *uniqueFlag)
 {
-	List	   *s = NIL;
+	List	   *sortlist = NIL;
+	List	   *olitem;
 
-	while (orderlist != NIL)
+	/* Transform all the explicit ORDER BY clauses */
+
+	foreach(olitem, orderlist)
 	{
-		SortGroupBy *sortby = lfirst(orderlist);
-		SortClause *sortcl = makeNode(SortClause);
-		TargetEntry *restarget;
-		Resdom	   *resdom;
+		SortGroupBy	   *sortby = lfirst(olitem);
+		TargetEntry	   *tle;
 
-		restarget = findTargetlistEntry(pstate, sortby->node,
-										targetlist, ORDER_CLAUSE);
+		tle = findTargetlistEntry(pstate, sortby->node,
+								  targetlist, ORDER_CLAUSE);
 
-		sortcl->resdom = resdom = restarget->resdom;
-
-		/*
-		 * if we have InvalidOid, then this is a NULL field and don't need
-		 * to sort
-		 */
-		if (resdom->restype == InvalidOid)
-			resdom->restype = INT4OID;
-
-		sortcl->opoid = oprid(oper(sortby->useOp,
-								   resdom->restype,
-								   resdom->restype, false));
-		if (sortlist == NIL)
-			s = sortlist = lcons(sortcl, NIL);
-		else
-		{
-			List	   *i;
-
-			foreach(i, sortlist)
-			{
-				SortClause *scl = (SortClause *) lfirst(i);
-
-				if (scl->resdom == sortcl->resdom)
-					break;
-			}
-			if (i == NIL)		/* not in sortlist already */
-			{
-				lnext(s) = lcons(sortcl, NIL);
-				s = lnext(s);
-			}
-			else
-				pfree(sortcl);	/* get rid of this */
-		}
-		orderlist = lnext(orderlist);
+		sortlist = addTargetToSortList(tle, sortlist, targetlist,
+									   sortby->useOp);
 	}
+
+	/* If we have a DISTINCT clause, add any necessary entries to
+	 * the sortlist to ensure that all the DISTINCT columns will be
+	 * sorted.  A subsequent UNIQUE pass will then do the right thing.
+	 */
 
 	if (uniqueFlag)
 	{
-		List	   *i;
-
 		if (uniqueFlag[0] == '*')
 		{
-
 			/*
 			 * concatenate all elements from target list that are not
 			 * already in the sortby list
 			 */
-			foreach(i, targetlist)
-			{
-				TargetEntry *tlelt = (TargetEntry *) lfirst(i);
-
-				s = sortlist;
-				while (s != NIL)
-				{
-					SortClause *sortcl = lfirst(s);
-
-					/*
-					 * We use equal() here because we are called for UNION
-					 * from the optimizer, and at that point, the sort
-					 * clause resdom pointers don't match the target list
-					 * resdom pointers
-					 */
-					if (equal(sortcl->resdom, tlelt->resdom))
-						break;
-					s = lnext(s);
-				}
-				if (s == NIL)
-				{
-					/* not a member of the sortclauses yet */
-					SortClause *sortcl = makeNode(SortClause);
-
-					if (tlelt->resdom->restype == InvalidOid)
-						tlelt->resdom->restype = INT4OID;
-
-					sortcl->resdom = tlelt->resdom;
-					sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
-
-					sortlist = lappend(sortlist, sortcl);
-				}
-			}
+			sortlist = addAllTargetsToSortList(sortlist, targetlist);
 		}
 		else
 		{
-			TargetEntry *tlelt = NULL;
+			TargetEntry *tle = NULL;
 			char	   *uniqueAttrName = uniqueFlag;
+			List	   *i;
 
 			/* only create sort clause with the specified unique attribute */
 			foreach(i, targetlist)
 			{
-				tlelt = (TargetEntry *) lfirst(i);
-				if (strcmp(tlelt->resdom->resname, uniqueAttrName) == 0)
+				tle = (TargetEntry *) lfirst(i);
+				if (strcmp(tle->resdom->resname, uniqueAttrName) == 0)
 					break;
 			}
 			if (i == NIL)
 				elog(ERROR, "All fields in the UNIQUE ON clause must appear in the target list");
 
-			foreach(s, sortlist)
-			{
-				SortClause *sortcl = lfirst(s);
-
-				if (sortcl->resdom == tlelt->resdom)
-					break;
-			}
-			if (s == NIL)
-			{
-				/* not a member of the sortclauses yet */
-				SortClause *sortcl = makeNode(SortClause);
-
-				sortcl->resdom = tlelt->resdom;
-				sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
-
-				sortlist = lappend(sortlist, sortcl);
-			}
+			sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
 		}
 	}
 
 	return sortlist;
+}
+
+/*
+ * addAllTargetsToSortList
+ *		Make sure all targets in the targetlist are in the ORDER BY list,
+ *		adding the not-yet-sorted ones to the end of the list.
+ *		This is typically used to help implement SELECT DISTINCT.
+ *
+ * Returns the updated ORDER BY list.
+ */
+List *
+addAllTargetsToSortList(List *sortlist, List *targetlist)
+{
+	List	   *i;
+
+	foreach(i, targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(i);
+
+		sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
+	}
+	return sortlist;
+}
+
+/*
+ * addTargetToSortList
+ *		If the given targetlist entry isn't already in the ORDER BY list,
+ *		add it to the end of the list, using the sortop with given name
+ *		or any available sort operator if opname == NULL.
+ *
+ * Returns the updated ORDER BY list.
+ */
+static List *
+addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
+					char *opname)
+{
+	/* avoid making duplicate sortlist entries */
+	if (! exprIsInSortList(tle->expr, sortlist, targetlist))
+	{
+		SortClause *sortcl = makeNode(SortClause);
+
+		sortcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
+
+		if (opname)
+			sortcl->sortop = oprid(oper(opname,
+										tle->resdom->restype,
+										tle->resdom->restype, false));
+		else
+			sortcl->sortop = any_ordering_op(tle->resdom->restype);
+
+		sortlist = lappend(sortlist, sortcl);
+	}
+	return sortlist;
+}
+
+/*
+ * assignSortGroupRef
+ *	  Assign the targetentry an unused ressortgroupref, if it doesn't
+ *	  already have one.  Return the assigned or pre-existing refnumber.
+ *
+ * 'tlist' is the targetlist containing (or to contain) the given targetentry.
+ */
+Index
+assignSortGroupRef(TargetEntry *tle, List *tlist)
+{
+	Index		maxRef;
+	List	   *l;
+
+	if (tle->resdom->ressortgroupref)		/* already has one? */
+		return tle->resdom->ressortgroupref;
+
+	/* easiest way to pick an unused refnumber: max used + 1 */
+	maxRef = 0;
+	foreach(l, tlist)
+	{
+		Index	ref = ((TargetEntry *) lfirst(l))->resdom->ressortgroupref;
+
+		if (ref > maxRef)
+			maxRef = ref;
+	}
+	tle->resdom->ressortgroupref = maxRef + 1;
+	return tle->resdom->ressortgroupref;
+}
+
+/*
+ * exprIsInSortList
+ *		Is the given expression already in the sortlist?
+ *		Note we will say 'yes' if it is equal() to any sortlist item,
+ *		even though that might be a different targetlist member.
+ *
+ * Works for both SortClause and GroupClause lists.
+ */
+static bool
+exprIsInSortList(Node *expr, List *sortList, List *targetList)
+{
+	List	   *i;
+
+	foreach(i, sortList)
+	{
+		SortClause *scl = (SortClause *) lfirst(i);
+
+		if (equal(expr, get_sortgroupclause_expr(scl, targetList)))
+			return true;
+	}
+	return false;
 }
 
 /* transformUnionClause()

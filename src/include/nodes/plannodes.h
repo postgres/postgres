@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.29 1999/08/09 06:20:27 momjian Exp $
+ * $Id: plannodes.h,v 1.30 1999/08/21 03:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,6 @@ typedef struct HashJoin
 typedef struct Agg
 {
 	Plan		plan;
-	List	   *aggs;
 	AggState   *aggstate;
 } Agg;
 

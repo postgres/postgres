@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.69 1999/08/16 02:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.70 1999/08/21 03:49:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,8 @@ static List *index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 							 List *clausegroup_list, List *outerrelids_list);
 static bool useful_for_mergejoin(RelOptInfo *rel, RelOptInfo *index,
 								 List *joininfo_list);
+static bool useful_for_ordering(Query *root, RelOptInfo *rel,
+								RelOptInfo *index);
 static bool match_index_to_operand(int indexkey, Var *operand,
 								   RelOptInfo *rel, RelOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
@@ -86,7 +88,8 @@ static List *prefix_quals(Var *leftop, Oid expr_op,
  *	  Generate all interesting index paths for the given relation.
  *
  * To be considered for an index scan, an index must match one or more
- * restriction clauses or join clauses from the query's qual condition.
+ * restriction clauses or join clauses from the query's qual condition,
+ * or match the query's ORDER BY condition.
  *
  * There are two basic kinds of index scans.  A "plain" index scan uses
  * only restriction clauses (possibly none at all) in its indexqual,
@@ -103,14 +106,6 @@ static List *prefix_quals(Var *leftop, Oid expr_op,
  * path is also generated for each interesting combination of outer join
  * relations.  The innerjoin paths are *not* in the return list, but are
  * appended to the "innerjoin" list of the relation itself.
- *
- * XXX An index scan might also be used simply to order the result.  We
- * probably should create an index path for any index that matches the
- * query's ORDER BY condition, even if it doesn't seem useful for join
- * or restriction clauses.  But currently, such a path would never
- * survive the path selection process, so there's no point.  The selection
- * process needs to award bonus scores to indexscans that produce a
- * suitably-ordered result...
  *
  * 'rel' is the relation for which we want to generate index paths
  * 'indices' is a list of available indexes for 'rel'
@@ -192,13 +187,16 @@ create_index_paths(Query *root,
 		 * index path for it even if there were no restriction clauses.
 		 * (If there were, there is no need to make another index path.)
 		 * This will allow the index to be considered as a base for a
-		 * mergejoin in later processing.
+		 * mergejoin in later processing.  Similarly, if the index matches
+		 * the ordering that is needed for the overall query result, make
+		 * an index path for it even if there is no other reason to do so.
 		 */
-		if (restrictclauses == NIL &&
-			useful_for_mergejoin(rel, index, joininfo_list))
+		if (restrictclauses == NIL)
 		{
-			retval = lappend(retval,
-							 create_index_path(root, rel, index, NIL));
+			if (useful_for_mergejoin(rel, index, joininfo_list) ||
+				useful_for_ordering(root, rel, index))
+				retval = lappend(retval,
+								 create_index_path(root, rel, index, NIL));
 		}
 
 		/*
@@ -748,6 +746,101 @@ indexable_operator(Expr *clause, int xclass, Oid relam,
 	return false;
 }
 
+/*
+ * useful_for_mergejoin
+ *	  Determine whether the given index can support a mergejoin based
+ *	  on any available join clause.
+ *
+ *	  We look to see whether the first indexkey of the index matches the
+ *	  left or right sides of any of the mergejoinable clauses and provides
+ *	  the ordering needed for that side.  If so, the index is useful.
+ *	  Matching a second or later indexkey is not useful unless there is
+ *	  also a mergeclause for the first indexkey, so we need not consider
+ *	  secondary indexkeys at this stage.
+ *
+ * 'rel' is the relation for which 'index' is defined
+ * 'joininfo_list' is the list of JoinInfo nodes for 'rel'
+ */
+static bool
+useful_for_mergejoin(RelOptInfo *rel,
+					 RelOptInfo *index,
+					 List *joininfo_list)
+{
+	int		   *indexkeys = index->indexkeys;
+	Oid		   *ordering = index->ordering;
+	List	   *i;
+
+	if (!indexkeys || indexkeys[0] == 0 ||
+		!ordering || ordering[0] == InvalidOid)
+		return false;			/* unordered index is not useful */
+
+	foreach(i, joininfo_list)
+	{
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+		List	   *j;
+
+		foreach(j, joininfo->jinfo_restrictinfo)
+		{
+			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
+
+			if (restrictinfo->mergejoinoperator)
+			{
+				if (restrictinfo->left_sortop == ordering[0] &&
+					match_index_to_operand(indexkeys[0],
+										   get_leftop(restrictinfo->clause),
+										   rel, index))
+					return true;
+				if (restrictinfo->right_sortop == ordering[0] &&
+					match_index_to_operand(indexkeys[0],
+										   get_rightop(restrictinfo->clause),
+										   rel, index))
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
+ * useful_for_ordering
+ *	  Determine whether the given index can produce an ordering matching
+ *	  the order that is wanted for the query result.
+ *
+ * We check to see whether either forward or backward scan direction can
+ * match the specified pathkeys.
+ *
+ * 'rel' is the relation for which 'index' is defined
+ */
+static bool
+useful_for_ordering(Query *root,
+					RelOptInfo *rel,
+					RelOptInfo *index)
+{
+	List	   *index_pathkeys;
+
+	if (root->query_pathkeys == NIL)
+		return false;			/* no special ordering requested */
+
+	index_pathkeys = build_index_pathkeys(root, rel, index);
+
+	if (index_pathkeys == NIL)
+		return false;			/* unordered index */
+
+	if (pathkeys_contained_in(root->query_pathkeys, index_pathkeys))
+		return true;
+
+	/* caution: commute_pathkeys destructively modifies its argument;
+	 * safe because we just built the index_pathkeys for local use here.
+	 */
+	if (commute_pathkeys(index_pathkeys))
+	{
+		if (pathkeys_contained_in(root->query_pathkeys, index_pathkeys))
+			return true;		/* useful as a reverse-order path */
+	}
+
+	return false;
+}
+
 /****************************************************************************
  *				----  ROUTINES TO DO PARTIAL INDEX PREDICATE TESTS	----
  ****************************************************************************/
@@ -1283,61 +1376,6 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 		outerrelids_list = lnext(outerrelids_list);
 	}
 	return path_list;
-}
-
-/*
- * useful_for_mergejoin
- *	  Determine whether the given index can support a mergejoin based
- *	  on any available join clause.
- *
- *	  We look to see whether the first indexkey of the index matches the
- *	  left or right sides of any of the mergejoinable clauses and provides
- *	  the ordering needed for that side.  If so, the index is useful.
- *	  Matching a second or later indexkey is not useful unless there is
- *	  also a mergeclause for the first indexkey, so we need not consider
- *	  secondary indexkeys at this stage.
- *
- * 'rel' is the relation for which 'index' is defined
- * 'joininfo_list' is the list of JoinInfo nodes for 'rel'
- */
-static bool
-useful_for_mergejoin(RelOptInfo *rel,
-					 RelOptInfo *index,
-					 List *joininfo_list)
-{
-	int		   *indexkeys = index->indexkeys;
-	Oid		   *ordering = index->ordering;
-	List	   *i;
-
-	if (!indexkeys || indexkeys[0] == 0 ||
-		!ordering || ordering[0] == InvalidOid)
-		return false;			/* unordered index is not useful */
-
-	foreach(i, joininfo_list)
-	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		List	   *j;
-
-		foreach(j, joininfo->jinfo_restrictinfo)
-		{
-			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
-
-			if (restrictinfo->mergejoinoperator)
-			{
-				if (restrictinfo->left_sortop == ordering[0] &&
-					match_index_to_operand(indexkeys[0],
-										   get_leftop(restrictinfo->clause),
-										   rel, index))
-					return true;
-				if (restrictinfo->right_sortop == ordering[0] &&
-					match_index_to_operand(indexkeys[0],
-										   get_rightop(restrictinfo->clause),
-										   rel, index))
-					return true;
-			}
-		}
-	}
-	return false;
 }
 
 /****************************************************************************

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.33 1999/08/16 02:17:39 tgl Exp $
+ * $Id: primnodes.h,v 1.34 1999/08/21 03:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,15 +25,33 @@
 /* ----------------
  * Resdom (Result Domain)
  *		resno			- attribute number
- *		restype			- type of the resdom
- *		restypmod		- type-specific modifier of the result
+ *		restype			- type of the value
+ *		restypmod		- type-specific modifier of the value
  *		resname			- name of the resdom (could be NULL)
+ *		ressortgroupref	- nonzero if referenced by a sort/group clause
  *		reskey			- order of key in a sort (for those > 0)
- *		reskeyop		- sort operator Oid
- *		resgroupref		- set to nonzero if referenced from a group by clause
+ *		reskeyop		- sort operator's regproc Oid
  *		resjunk			- set to true to eliminate the attribute
  *						  from final target list
  *
+ * Notes:
+ * ressortgroupref is the parse/plan-time representation of ORDER BY and
+ * GROUP BY items.  Targetlist entries with ressortgroupref=0 are not
+ * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY or
+ * GROUP BY value.  No two entries in a targetlist may have the same nonzero
+ * ressortgroupref --- but there is no particular meaning to the nonzero
+ * values, except as tags.  (For example, one must not assume that lower
+ * ressortgroupref means a more significant sort key.)  The order of the
+ * associated SortClause or GroupClause lists determine the semantics.
+ *
+ * reskey and reskeyop are the execution-time representation of sorting.
+ * reskey must be zero in any non-sort-key item.  The reskey of sort key
+ * targetlist items for a sort plan node is 1,2,...,n for the n sort keys.
+ * The reskeyop of each such targetlist item is the sort operator's
+ * regproc OID.  reskeyop will be zero in non-sort-key items.
+ *
+ * Both reskey and reskeyop are typically zero during parse/plan stages.
+ * The executor does not pay any attention to ressortgroupref.
  * ----------------
  */
 typedef struct Resdom
@@ -43,9 +61,9 @@ typedef struct Resdom
 	Oid			restype;
 	int32		restypmod;
 	char	   *resname;
+	Index		ressortgroupref;
 	Index		reskey;
 	Oid			reskeyop;
-	Index		resgroupref;
 	bool		resjunk;
 } Resdom;
 
@@ -275,7 +293,8 @@ typedef struct Iter
  *		basetype		- base type Oid of the aggregate
  *		aggtype			- type Oid of final result of the aggregate
  *		target			- attribute or expression we are aggregating on
- *		aggno			- index to ecxt_values
+ *		usenulls		- TRUE to accept null values as inputs
+ *		aggno			- workspace for nodeAgg.c executor
  * ----------------
  */
 typedef struct Aggref
@@ -285,8 +304,8 @@ typedef struct Aggref
 	Oid			basetype;
 	Oid			aggtype;
 	Node	   *target;
-	int			aggno;
 	bool		usenulls;
+	int			aggno;
 } Aggref;
 
 /* ----------------

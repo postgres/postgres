@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.14 1999/08/16 02:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.15 1999/08/21 03:49:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "parser/parse_func.h"
 #include "utils/lsyscache.h"
 
 static PathKeyItem *makePathKeyItem(Node *key, Oid sortop);
@@ -88,6 +89,11 @@ static List *build_join_pathkey(List *pathkeys, List *join_rel_tlist,
  *	order --- not even the outer path's order.  This is true because the
  *	executor might have to split the join into multiple batches.  Therefore
  *	a Hashjoin is always given NIL pathkeys.
+ *
+ *	Pathkeys are also useful to represent an ordering that we wish to achieve,
+ *	since they are easily compared to the pathkeys of a potential candidate
+ *	path.  So, SortClause lists are turned into pathkeys lists for use inside
+ *	the optimizer.
  *
  *	-- bjm & tgl
  *--------------------
@@ -254,9 +260,11 @@ pathkeys_contained_in(List *keys1, List *keys2)
  *
  * 'paths' is a list of possible paths (either inner or outer)
  * 'pathkeys' represents a required ordering
+ * if 'indexpaths_only' is true, only IndexPaths will be considered.
  */
 Path *
-get_cheapest_path_for_pathkeys(List *paths, List *pathkeys)
+get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
+							   bool indexpaths_only)
 {
 	Path	   *matched_path = NULL;
 	List	   *i;
@@ -264,6 +272,9 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys)
 	foreach(i, paths)
 	{
 		Path	   *path = (Path *) lfirst(i);
+
+		if (indexpaths_only && ! IsA(path, IndexPath))
+			continue;
 
 		if (pathkeys_contained_in(pathkeys, path->pathkeys))
 		{
@@ -314,7 +325,8 @@ build_index_pathkeys(Query *root, RelOptInfo *rel, RelOptInfo *index)
 		funcnode->funcisindex = false;
 		funcnode->funcsize = 0;
 		funcnode->func_fcache = NULL;
-		funcnode->func_tlist = NIL;
+		/* we assume here that the function returns a base type... */
+		funcnode->func_tlist = setup_base_tlist(funcnode->functype);
 		funcnode->func_planlist = NIL;
 
 		while (*indexkeys != 0)
@@ -514,6 +526,70 @@ build_join_pathkey(List *pathkey,
 	}
 
 	return new_pathkey;
+}
+
+/*
+ * commute_pathkeys
+ *		Attempt to commute the operators in a set of pathkeys, producing
+ *		pathkeys that describe the reverse sort order (DESC instead of ASC).
+ *		Returns TRUE if successful (all the operators have commutators).
+ *
+ * CAUTION: given pathkeys are modified in place, even if not successful!!
+ * Usually, caller should have just built or copied the pathkeys list to
+ * ensure there are no unwanted side-effects.
+ */
+bool
+commute_pathkeys(List *pathkeys)
+{
+	List	   *i;
+
+	foreach(i, pathkeys)
+	{
+		List	   *pathkey = lfirst(i);
+		List	   *j;
+
+		foreach(j, pathkey)
+		{
+			PathKeyItem	   *key = lfirst(j);
+
+			key->sortop = get_commutator(key->sortop);
+			if (key->sortop == InvalidOid)
+				return false;
+		}
+	}
+	return true;				/* successful */
+}
+
+/****************************************************************************
+ *		PATHKEYS AND SORT CLAUSES
+ ****************************************************************************/
+
+/*
+ * make_pathkeys_for_sortclauses
+ *		Generate a pathkeys list that represents the sort order specified
+ *		by a list of SortClauses (GroupClauses will work too!)
+ *
+ * 'sortclauses' is a list of SortClause or GroupClause nodes
+ * 'tlist' is the targetlist to find the referenced tlist entries in
+ */
+List *
+make_pathkeys_for_sortclauses(List *sortclauses, List *tlist)
+{
+	List	   *pathkeys = NIL;
+	List	   *i;
+
+	foreach(i, sortclauses)
+	{
+		SortClause	   *sortcl = (SortClause *) lfirst(i);
+		Node		   *sortkey;
+		PathKeyItem	   *pathkey;
+
+		sortkey = get_sortgroupclause_expr(sortcl, tlist);
+		pathkey = makePathKeyItem(sortkey, sortcl->sortop);
+		/* pathkey becomes a one-element sublist */
+		pathkeys = lappend(pathkeys, lcons(pathkey, NIL));
+	}
+	return pathkeys;
 }
 
 /****************************************************************************
