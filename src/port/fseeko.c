@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.2 2002/10/23 21:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.3 2002/10/23 21:39:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,16 +40,10 @@ fseeko(FILE *stream, off_t offset, int whence)
 		case SEEK_CUR:
 			flockfile(stream);
 			if (fgetpos(stream, &floc) != 0)
-			{
-				funlockfile(stream);
-				return -1;
-			}
+				goto failure;
 			floc += offset;
 			if (fsetpos(stream, &floc) != 0)
-			{
-				funlockfile(stream);
-				return -1;
-			}
+				goto failure;
 			flockfile(stream);
 			return 0;
 			break;
@@ -61,16 +55,10 @@ fseeko(FILE *stream, off_t offset, int whence)
 		case SEEK_END:
 			flockfile(stream);
 			if (fstat(fileno(stream), &filestat) != 0)
-			{
-				funlockfile(stream);
-				return -1;
-			}
+				goto failure;
 			floc = filestat.st_size;
 			if (fsetpos(stream, &floc) != 0)
-			{
-				funlockfile(stream);
-				return -1;
-			}
+				goto failure;
 			funlockfile(stream);
 			return 0;
 			break;
@@ -78,6 +66,10 @@ fseeko(FILE *stream, off_t offset, int whence)
 			errno =	EINVAL;
 			return -1;
 	}
+
+failure:
+	funlockfile(stream);
+	return -1;
 }
 
 
