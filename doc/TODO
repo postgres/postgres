@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun  2 14:42:27 EDT 2003
+Last updated:		Mon Jun  2 14:51:39 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -57,6 +57,7 @@ Administration
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow CIDR format to be used in pg_hba.conf
+* Allow logging of only data definition(DDL), or DDL and modification statements
 
 
 Data Types
@@ -419,7 +420,6 @@ Miscellaneous
 * Improve caching of attribute offsets when NULLs exist in the row
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Allow partitioning of table into multiple subtables
-
 T
 
 Source Code
