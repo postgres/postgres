@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.13 1997/09/08 21:55:13 momjian Exp $
+ * $Id: nabstime.h,v 1.14 1998/02/03 02:09:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef TimeIntervalData *TimeInterval;
 #define BIG_ABSTIME		((AbsoluteTime) 0x7FFFFFFB)		/* 2147483644 == 2^31 -
 														 * 4 */
 
-#if defined(aix)
+#if defined(__AIX)
 /*
  * AIX considers 2147483648 == -2147483648 (since they have the same bit
  * representation) but uses a different sign sense in a comparison to
@@ -63,7 +63,7 @@ typedef TimeIntervalData *TimeInterval;
 #define NOSTART_ABSTIME		 ((AbsoluteTime) INT_MIN)
 #else
 #define NOSTART_ABSTIME ((AbsoluteTime) 0x80000001)		/* -2147483647 == - 2^31 */
-#endif							/* aix */
+#endif							/* __AIX */
 
 #define INVALID_RELTIME ((RelativeTime) 0x7FFFFFFE)		/* 2147483647 == 2^31 -
 														 * 1 */
