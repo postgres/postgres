@@ -1,9 +1,20 @@
-# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.8 2001/07/10 16:33:02 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.9 2001/08/27 00:29:49 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+
+# On some platforms we can only build PL/Python if libpython is a
+# shared library.  Since there is no official way to determine this,
+# we see if there is a file that is named like a shared library.
+ifneq (,$(wildcard $(python_configdir)/libpython*$(DLSUFFIX)*))
+shared_libpython = yes
+endif
+
+# If we don't have a shared library and the platform doesn't allow it
+# to work without, we have to skip it.
+ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
 
 override CPPFLAGS := -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 
@@ -36,3 +47,14 @@ clean distclean maintainer-clean: clean-lib
 
 installcheck:
 	PATH=$(bindir):$$PATH $(SHELL) $(srcdir)/test.sh
+
+else # can't build
+
+all:
+	@echo ""; \
+	 echo "*** Cannot build PL/Python because libpython is not a shared library." ; \
+	 echo "*** You might have to rebuild your Python installation.  Refer to"; \
+	 echo "*** the documentation for details."; \
+	 echo ""
+
+endif # can't build

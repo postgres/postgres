@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.133 2001/08/26 22:28:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.134 2001/08/27 00:29:49 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -128,6 +128,7 @@ python_includespec	= @python_includespec@
 python_moduledir	= @python_moduledir@
 python_moduleexecdir	= @python_moduleexecdir@
 python_libspec		= @python_libspec@
+python_configdir	= @python_configdir@
 
 krb_srvtab = @krb_srvtab@
 
