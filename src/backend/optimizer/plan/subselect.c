@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.35 2000/04/12 17:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.36 2000/04/14 00:19:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,13 @@ make_subplan(SubLink *slink)
 
 	PlannerQueryLevel++;		/* we become child */
 
+	/* Check to see if this node was already processed; if so we have
+	 * trouble.  Someday should change tree representation so that we can
+	 * cope with multiple links to the same subquery, but for now...
+	 */
+	if (subquery == NULL)
+		elog(ERROR, "make_subplan: invalid expression structure (subquery already processed?)");
+
 	/*
 	 * For an EXISTS subplan, tell lower-level planner to expect that only
 	 * the first tuple will be retrieved.  For ALL and ANY subplans, we
@@ -194,7 +201,7 @@ make_subplan(SubLink *slink)
 	node->plan_id = PlannerPlanId++;
 	node->rtable = subquery->rtable;
 	node->sublink = slink;
-	slink->subselect = NULL;	/* cool ?! */
+	slink->subselect = NULL;	/* cool ?! see error check above! */
 
 	/* make parParam list of params coming from current query level */
 	foreach(lst, plan->extParam)

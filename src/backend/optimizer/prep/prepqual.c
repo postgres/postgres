@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.24 2000/04/12 17:15:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.25 2000/04/14 00:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,15 +656,26 @@ or_normalize(List *orlist)
 	foreach(temp, distributable->args)
 	{
 		Expr	   *andclause = lfirst(temp);
+		List	   *neworlist;
+
+		/*
+		 * We are going to insert the orlist into multiple places in the
+		 * result expression.  For most expression types, it'd be OK to
+		 * just have multiple links to the same subtree, but this fails
+		 * badly for SubLinks (and perhaps other cases?).  For safety,
+		 * we make a distinct copy for each place the orlist is inserted.
+		 */
+		if (lnext(temp) == NIL)
+			neworlist = orlist;	/* can use original tree at the end */
+		else
+			neworlist = copyObject(orlist);
 
 		/*
 		 * pull_ors is needed here in case andclause has a top-level OR.
 		 * Then we recursively apply or_normalize, since there might be an
-		 * AND subclause in the resulting OR-list. Note: we rely on
-		 * pull_ors to build a fresh list, and not damage the given
-		 * orlist.
+		 * AND subclause in the resulting OR-list.
 		 */
-		andclause = or_normalize(pull_ors(lcons(andclause, orlist)));
+		andclause = or_normalize(pull_ors(lcons(andclause, neworlist)));
 		andclauses = lappend(andclauses, andclause);
 	}
 
@@ -773,15 +784,26 @@ and_normalize(List *andlist)
 	foreach(temp, distributable->args)
 	{
 		Expr	   *orclause = lfirst(temp);
+		List	   *newandlist;
+
+		/*
+		 * We are going to insert the andlist into multiple places in the
+		 * result expression.  For most expression types, it'd be OK to
+		 * just have multiple links to the same subtree, but this fails
+		 * badly for SubLinks (and perhaps other cases?).  For safety,
+		 * we make a distinct copy for each place the andlist is inserted.
+		 */
+		if (lnext(temp) == NIL)
+			newandlist = andlist;	/* can use original tree at the end */
+		else
+			newandlist = copyObject(andlist);
 
 		/*
 		 * pull_ands is needed here in case orclause has a top-level AND.
 		 * Then we recursively apply and_normalize, since there might be
-		 * an OR subclause in the resulting AND-list. Note: we rely on
-		 * pull_ands to build a fresh list, and not damage the given
-		 * andlist.
+		 * an OR subclause in the resulting AND-list.
 		 */
-		orclause = and_normalize(pull_ands(lcons(orclause, andlist)));
+		orclause = and_normalize(pull_ands(lcons(orclause, newandlist)));
 		orclauses = lappend(orclauses, orclause);
 	}
 
@@ -931,6 +953,17 @@ count_bool_nodes(Expr *qual,
 	{
 		count_bool_nodes(get_notclausearg(qual),
 						 nodes, cnfnodes, dnfnodes);
+	}
+	else if (contain_subplans((Node *) qual))
+	{
+		/* charge extra for subexpressions containing sub-SELECTs,
+		 * to discourage us from rearranging them in a way that might
+		 * generate N copies of a subselect rather than one.  The magic
+		 * constant here interacts with the "4x maximum growth" heuristic
+		 * in canonicalize_qual().
+		 */
+		*nodes = 1.0;
+		*cnfnodes = *dnfnodes = 25.0;
 	}
 	else
 	{
