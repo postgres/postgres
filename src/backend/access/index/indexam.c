@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.9 1996/12/26 17:44:46 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.10 1997/01/10 09:46:25 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -165,7 +165,7 @@ index_insert(Relation relation,
 	     Datum *datum,
 	     char *nulls,
 	     ItemPointer heap_t_ctid,
-	     bool is_update)
+	     Relation heapRel)
 {
     RegProcedure		procedure;
     InsertIndexResult		specificResult;
@@ -178,7 +178,7 @@ index_insert(Relation relation,
      * ----------------
      */
     specificResult = (InsertIndexResult)
-	fmgr(procedure, relation, datum, nulls, heap_t_ctid, is_update, NULL);
+	fmgr(procedure, relation, datum, nulls, heap_t_ctid, heapRel, NULL);
     
     /* ----------------
      *	the insert proc is supposed to return a "specific result" and
