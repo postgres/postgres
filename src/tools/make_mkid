@@ -5,5 +5,5 @@ mkid `find \`pwd\`/ \( -name _deadcode -a -prune \) -o \
 
 find . -name  'CVS' -prune -o -type d -print  |while read DIR
 do
-	[ "$DIR" != "." ] && ln -f -s `pwd`/ID $DIR/ID
+	[ "$DIR" != "." ] && ln -f -s `echo "$DIR" | sed 's;/[^/]*;/..;g'`/ID $DIR/ID
 done

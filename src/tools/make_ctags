@@ -14,5 +14,5 @@ sort tags >/tmp/$$ && mv /tmp/$$ tags
 
 find . -name  'CVS' -prune -o -type d -print  |while read DIR
 do
-	[ "$DIR" != "." ] && ln -f -s `pwd`/tags $DIR/tags
+	[ "$DIR" != "." ] && ln -f -s `echo "$DIR" | sed 's;/[^/]*;/..;g'`/tags $DIR/tags
 done
