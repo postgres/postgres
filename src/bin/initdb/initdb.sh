@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.7 1996/10/03 00:23:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.8 1996/10/03 04:20:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -141,7 +141,7 @@ fi
 echo "We are initializing the database system with username" \
   "$POSTGRES_SUPERUSERNAME (uid=$POSTGRES_SUPERUID)."   
 echo "Please be aware that Postgres is not secure.  Anyone who can connect"
-echo "to the database can act as user $POSTGRES_SUPERUSERNAME " \
+echo "to the database can act as user $POSTGRES_SUPERUSERNAME" \
      "with very little effort."
 
 # -----------------------------------------------------------------------
