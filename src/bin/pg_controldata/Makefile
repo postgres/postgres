@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.8 2004/05/25 01:00:23 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.9 2004/05/26 17:24:01 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,4 +37,4 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/pg_controldata$(X)
 
 clean distclean maintainer-clean:
-	rm -f pg_controldata$(X) pg_controldata.o pg_crc.o pg_crc.c exec.c
+	rm -f pg_controldata$(X) $(OBJS) pg_crc.c exec.c

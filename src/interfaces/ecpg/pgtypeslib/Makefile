@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.20 2004/05/24 01:01:38 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.21 2004/05/26 17:24:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ installdirs:
 uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS)
+	rm -f $(OBJS) rint.c pgstrcasecmp.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
