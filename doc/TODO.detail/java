@@ -1,0 +1,407 @@
+From pgsql-hackers-owner+M4145@postgresql.org Sat Feb  3 05:54:06 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA22302
+	for <pgman@candle.pha.pa.us>; Sat, 3 Feb 2001 05:54:04 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f13Ap4q95132;
+	Sat, 3 Feb 2001 05:51:04 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4145@postgresql.org)
+Received: from mail.retep.org.uk ([216.126.85.184])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f13AnIq94863
+	for <pgsql-hackers@postgresql.org>; Sat, 3 Feb 2001 05:49:18 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Received: from heather.retep.org.uk ([193.113.118.193])
+	(authenticated)
+	by mail.retep.org.uk (8.11.1/8.11.1) with ESMTP id f13AlnO94823;
+	Sat, 3 Feb 2001 05:47:49 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Message-Id: <5.0.2.1.0.20010203103036.009efec0@mail.retep.org.uk>
+X-Sender: peter@mail.retep.org.uk
+X-Mailer: QUALCOMM Windows Eudora Version 5.0.2
+Date: Sat, 03 Feb 2001 10:46:24 +0000
+To: Alex Pilosov <alex@pilosoft.com>, tomasz konefal <twkonefal@yahoo.ca>
+From: Peter Mount <peter@retep.org.uk>
+Subject: Re: [HACKERS] TODO list:  Allow Java server-side programming
+Cc: pgsql-hackers@postgresql.org
+In-Reply-To: <Pine.BSO.4.10.10102021453160.9372-100000@spider.pilosoft.c
+	om>
+References: <20010202194049.38902.qmail@web12003.mail.yahoo.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 14:57 02/02/01 -0500, Alex Pilosov wrote:
+>On Fri, 2 Feb 2001, tomasz konefal wrote:
+>
+> >   could someone please clarify what "Allow Java
+> > server-side programming" actually means?  what are the
+> > limitations of using java and jdbc with pgsql?
+>
+>It means to embed Java interpreter inside postgres, and allow writing
+>stored procedures and triggers in Java.
+
+Thats correct. Basically you are talking of something like PL/Java. The 
+Java side would be simple, but its linking the JVM to the backend that's 
+the problem.
+
+It's been a while since I delved into the backend, but unless it's changed 
+from fork() to threading, I don't really see this happening, unless someone 
+who knows C that well knows of a portable way of communicating between two 
+processes - other than RMI. If that could be solved, then you could use JNI 
+to interface the JVM.
+
+I know some people think this would slow the backend down, but it's only 
+the instanciation of the JVM thats slow, hence the other reason fork() is 
+holding this back. Ideally you would want the JVM to be running with 
+PostMaster, and then each backend can then use the JVM as and when necessary.
+
+Obviously you wouldn't want a JVM in every installation, but there are a 
+lot of good reasons to have this capability. For example, as part of the 
+course I did this week, we used Tomcat (Servlet/JSP/Web server). Now 
+there's no reason why Tomcat could run within the same JVM. JBoss is 
+another good example (EJB Server). The JBoss team have actually got Tomcat 
+to run within the same JVM. Doesn't hinder performance at all, but does 
+reduce the memory footprint.
+
+This is a good future thing to look into (why not for 8.0 ;-) ). If we 
+could find an _optional_ way of hooking the backend direct into the JVM, we 
+could get PostgreSQL into a lot of new areas. It also would make things 
+like CORBA etc a doddle.
+
+PS: I'm writing down notes of the course to go onto the JDBC web site this 
+weekend, so there's some nice things for EJB, RMI, Corba etc.
+
+More later, Peter
+
+
+From pgsql-hackers-owner+M4153@postgresql.org Sat Feb  3 11:54:12 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA13446
+	for <pgman@candle.pha.pa.us>; Sat, 3 Feb 2001 11:54:12 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f13GrZq17345;
+	Sat, 3 Feb 2001 11:53:35 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4153@postgresql.org)
+Received: from mailout04.sul.t-online.com (mailout04.sul.t-online.com [194.25.134.18])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f13GnZq17000
+	for <pgsql-hackers@postgresql.org>; Sat, 3 Feb 2001 11:49:37 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd06.sul.t-online.com 
+	by mailout04.sul.t-online.com with smtp 
+	id 14P5rE-0000zq-00; Sat, 03 Feb 2001 17:48:16 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.12]) by fmrl06.sul.t-online.com
+	with esmtp id 14P5r6-0YvD60C; Sat, 3 Feb 2001 17:48:08 +0100
+Date: Sat, 3 Feb 2001 17:56:33 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Peter Mount <peter@retep.org.uk>
+cc: Alex Pilosov <alex@pilosoft.com>, tomasz konefal <twkonefal@yahoo.ca>,
+        <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] TODO list:  Allow Java server-side programming
+In-Reply-To: <5.0.2.1.0.20010203103036.009efec0@mail.retep.org.uk>
+Message-ID: <Pine.LNX.4.30.0102031746220.8648-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Mount writes:
+
+> Thats correct. Basically you are talking of something like PL/Java. The
+> Java side would be simple, but its linking the JVM to the backend that's
+> the problem.
+
+I've tried that recently, here's how it looks as far as Linux JVMs go:
+
+* Kaffe has a very polluted name space.  Calls to its own functions get
+resolved to PostgreSQL, and vice versa.  Crash and burn result.  The Kaffe
+folks have admitted that this should be fixed but I didn't look farther
+yet.
+
+* The Sun/Blackdown JVM didn't work at all (not even 'java -version')
+until I upgraded my libc.  Then a simple test run crashes with an "error
+external to JVM"; at first it looked like a segfault when referencing a
+string constant.  In gdb I saw myself faced with about 10 threads running
+when nothing was going on yet, at which point I was too exhausted to
+proceed.
+
+* IBM's offering didn't work at all.  I don't recall the problem anymore
+but I think it didn't even link correctly.
+
+So currently I don't see how this could become a mainstream project, let
+alone across platforms.
+
+> I know some people think this would slow the backend down, but it's only
+> the instanciation of the JVM thats slow, hence the other reason fork() is
+> holding this back. Ideally you would want the JVM to be running with
+> PostMaster, and then each backend can then use the JVM as and when necessary.
+
+But how do the other languages cope?  Starting up a new Perl for each
+backend can't be so cheap either.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+From pgsql-hackers-owner+M4154@postgresql.org Sat Feb  3 12:37:02 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA00813
+	for <pgman@candle.pha.pa.us>; Sat, 3 Feb 2001 12:37:01 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f13Haiq21225;
+	Sat, 3 Feb 2001 12:36:44 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4154@postgresql.org)
+Received: from spider.pilosoft.com (p55-222.acedsl.com [160.79.55.222])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f13HX9q20913
+	for <pgsql-hackers@postgresql.org>; Sat, 3 Feb 2001 12:33:09 -0500 (EST)
+	(envelope-from alex@pilosoft.com)
+Received: from localhost (alexmail@localhost)
+	by spider.pilosoft.com (8.9.3/8.9.3) with ESMTP id MAA09231;
+	Sat, 3 Feb 2001 12:36:01 -0500 (EST)
+Date: Sat, 3 Feb 2001 12:36:01 -0500 (EST)
+From: Alex Pilosov <alex@pilosoft.com>
+To: Peter Mount <peter@retep.org.uk>
+cc: Alex Pilosov <alex@pilosoft.com>, tomasz konefal <twkonefal@yahoo.ca>,
+        pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] TODO list:  Allow Java server-side programming
+In-Reply-To: <5.0.2.1.0.20010203103036.009efec0@mail.retep.org.uk>
+Message-ID: <Pine.BSO.4.10.10102031220470.10437-100000@spider.pilosoft.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Sat, 3 Feb 2001, Peter Mount wrote:
+
+> It's been a while since I delved into the backend, but unless it's
+> changed from fork() to threading, I don't really see this happening,
+> unless someone who knows C that well knows of a portable way of
+> communicating between two processes - other than RMI. If that could be
+> solved, then you could use JNI to interface the JVM.
+There are many ways one can do this:
+a) each backend will have a JVM linked in (shared object). This is the
+way perl/tcl/ruby is embedded, and it works pretty nice. But, Java
+['s memory requirement] sucks, therefore, this may not be the optimal
+way.
+
+> I know some people think this would slow the backend down, but it's
+> only the instanciation of the JVM thats slow, hence the other reason
+> fork() is holding this back. Ideally you would want the JVM to be
+> running with PostMaster, and then each backend can then use the JVM as
+> and when necessary.
+b) since JVM is threaded, it may be more efficient to have a dedicated
+process running JVM, and accepting some sort of IPC connections from
+postgres processes. The biggest problem here is SPI, there aren't a good
+way for that JVM to talk back to database.
+
+c) temporarily, to have quick working code, you can reach java using hacks
+using programming languages already built into postgres. Both TCL (tcl
+blend) and Perl (JPL and another hack which name escapes me) are able to
+execute java code. SPI is possible, I think both of these bindings are
+two-way (you can go perl-java-perl-java). Might be worth a quick try?
+-alex
+ 
+
+
+From pgsql-hackers-owner+M4164@postgresql.org Sun Feb  4 04:23:42 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA04260
+	for <pgman@candle.pha.pa.us>; Sun, 4 Feb 2001 04:23:41 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f149Nhx75443;
+	Sun, 4 Feb 2001 04:23:43 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4164@postgresql.org)
+Received: from me.tm.ee (adsl895.estpak.ee [213.168.23.133])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f149Mgx75338
+	for <pgsql-hackers@postgresql.org>; Sun, 4 Feb 2001 04:22:42 -0500 (EST)
+	(envelope-from hannu@tm.ee)
+Received: from tm.ee (IDENT:hannu@localhost.localdomain [127.0.0.1])
+	by me.tm.ee (8.9.3/8.9.3) with ESMTP id LAA01488;
+	Sun, 4 Feb 2001 11:18:09 +0200
+Message-ID: <3A7D1E51.E383AB7F@tm.ee>
+Date: Sun, 04 Feb 2001 11:18:09 +0200
+From: Hannu Krosing <hannu@tm.ee>
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Mount <peter@retep.org.uk>
+CC: Alex Pilosov <alex@pilosoft.com>, tomasz konefal <twkonefal@yahoo.ca>,
+        pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] TODO list:  Allow Java server-side programming
+References: <20010202194049.38902.qmail@web12003.mail.yahoo.com> <5.0.2.1.0.20010203103036.009efec0@mail.retep.org.uk>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Mount wrote:
+> 
+> At 14:57 02/02/01 -0500, Alex Pilosov wrote:
+> >On Fri, 2 Feb 2001, tomasz konefal wrote:
+> >
+> > >   could someone please clarify what "Allow Java
+> > > server-side programming" actually means?  what are the
+> > > limitations of using java and jdbc with pgsql?
+> >
+> >It means to embed Java interpreter inside postgres, and allow writing
+> >stored procedures and triggers in Java.
+> 
+> Thats correct. Basically you are talking of something like PL/Java. The
+> Java side would be simple, but its linking the JVM to the backend that's
+> the problem.
+> 
+> It's been a while since I delved into the backend, but unless it's changed
+> from fork() to threading,
+
+Someone posted here recently his port/tweaks of backend so that it used 
+threads instead of fork(). IIRC it was done to be used inside a java 
+client in an embedded system.
+
+----------------
+Hannu
+
+From pgsql-hackers-owner+M4168@postgresql.org Sun Feb  4 06:54:27 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA19741
+	for <pgman@candle.pha.pa.us>; Sun, 4 Feb 2001 06:54:26 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f14BsOx83329;
+	Sun, 4 Feb 2001 06:54:24 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4168@postgresql.org)
+Received: from mail.retep.org.uk ([216.126.85.184])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f14Bs9x83240
+	for <pgsql-hackers@postgresql.org>; Sun, 4 Feb 2001 06:54:09 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Received: from heather.retep.org.uk ([193.113.241.180])
+	(authenticated)
+	by mail.retep.org.uk (8.11.1/8.11.1) with ESMTP id f14BqkR83161;
+	Sun, 4 Feb 2001 06:52:46 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Message-Id: <5.0.2.1.0.20010204114942.00a0c8d0@mail.retep.org.uk>
+X-Sender: peter@mail.retep.org.uk
+X-Mailer: QUALCOMM Windows Eudora Version 5.0.2
+Date: Sun, 04 Feb 2001 11:51:21 +0000
+To: Peter Eisentraut <peter_e@gmx.net>
+From: Peter Mount <peter@retep.org.uk>
+Subject: Re: [HACKERS] TODO list:  Allow Java server-side programming
+Cc: Alex Pilosov <alex@pilosoft.com>, tomasz konefal <twkonefal@yahoo.ca>,
+        <pgsql-hackers@postgresql.org>
+In-Reply-To: <Pine.LNX.4.30.0102031746220.8648-100000@peter.localdomain>
+References: <5.0.2.1.0.20010203103036.009efec0@mail.retep.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 17:56 03/02/01 +0100, Peter Eisentraut wrote:
+>Peter Mount writes:
+>
+> > Thats correct. Basically you are talking of something like PL/Java. The
+> > Java side would be simple, but its linking the JVM to the backend that's
+> > the problem.
+>
+>I've tried that recently, here's how it looks as far as Linux JVMs go:
+
+[snip]
+
+
+>So currently I don't see how this could become a mainstream project, let
+>alone across platforms.
+
+I don't think it would be, but it would be a good side-project. Over time 
+the various JVM's should become better to interface with.
+
+
+> > I know some people think this would slow the backend down, but it's only
+> > the instanciation of the JVM thats slow, hence the other reason fork() is
+> > holding this back. Ideally you would want the JVM to be running with
+> > PostMaster, and then each backend can then use the JVM as and when 
+> necessary.
+>
+>But how do the other languages cope?  Starting up a new Perl for each
+>backend can't be so cheap either.
+
+But a lot cheaper than Java.
+
+Peter
+
+
+From pgsql-hackers-owner+M4169@postgresql.org Sun Feb  4 06:57:24 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA19817
+	for <pgman@candle.pha.pa.us>; Sun, 4 Feb 2001 06:57:23 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f14BvLx83711;
+	Sun, 4 Feb 2001 06:57:21 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4169@postgresql.org)
+Received: from mail.retep.org.uk ([216.126.85.184])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f14Bv7x83611
+	for <pgsql-hackers@postgresql.org>; Sun, 4 Feb 2001 06:57:07 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Received: from heather.retep.org.uk ([193.113.241.180])
+	(authenticated)
+	by mail.retep.org.uk (8.11.1/8.11.1) with ESMTP id f14BtjR83557;
+	Sun, 4 Feb 2001 06:55:45 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Message-Id: <5.0.2.1.0.20010204115139.009f1c50@mail.retep.org.uk>
+X-Sender: peter@mail.retep.org.uk
+X-Mailer: QUALCOMM Windows Eudora Version 5.0.2
+Date: Sun, 04 Feb 2001 11:54:20 +0000
+To: Alex Pilosov <alex@pilosoft.com>
+From: Peter Mount <peter@retep.org.uk>
+Subject: Re: [HACKERS] TODO list:  Allow Java server-side programming
+Cc: Alex Pilosov <alex@pilosoft.com>, tomasz konefal <twkonefal@yahoo.ca>,
+        pgsql-hackers@postgresql.org
+In-Reply-To: <Pine.BSO.4.10.10102031220470.10437-100000@spider.pilosoft.
+	com>
+References: <5.0.2.1.0.20010203103036.009efec0@mail.retep.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 12:36 03/02/01 -0500, Alex Pilosov wrote:
+>On Sat, 3 Feb 2001, Peter Mount wrote:
+
+[snip]
+
+
+> > I know some people think this would slow the backend down, but it's
+> > only the instanciation of the JVM thats slow, hence the other reason
+> > fork() is holding this back. Ideally you would want the JVM to be
+> > running with PostMaster, and then each backend can then use the JVM as
+> > and when necessary.
+>b) since JVM is threaded, it may be more efficient to have a dedicated
+>process running JVM, and accepting some sort of IPC connections from
+>postgres processes. The biggest problem here is SPI, there aren't a good
+>way for that JVM to talk back to database.
+
+That was my other idea, but it is the IPC thats problematical. You would 
+still need to do some native api to implement some messaging system between 
+the two.
+
+However, at the other extreme there is RPC, which is possible now, but 
+would be a lot slower.
+
+
+>c) temporarily, to have quick working code, you can reach java using hacks
+>using programming languages already built into postgres. Both TCL (tcl
+>blend) and Perl (JPL and another hack which name escapes me) are able to
+>execute java code. SPI is possible, I think both of these bindings are
+>two-way (you can go perl-java-perl-java). Might be worth a quick try?
+
+Might be one way to go...
+
+Peter
+
+>-alex
+>
+
+
