@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.10 2003/07/01 12:40:51 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.11 2003/07/08 07:13:48 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -324,8 +324,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		envname = getenv("PG_DBPATH");
 		if (envname)
 		{
-			free(dbname);
-			dbname = envname;
+			ECPGfree(dbname);
+			dbname = strdup(envname);
 		}
 					
 	}
