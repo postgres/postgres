@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.38 2000/01/09 07:53:58 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.39 2000/01/09 20:54:36 tgl Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -27,15 +27,33 @@ else
 	ECHO_C='\c'
 fi
 
-if [ -d ./obj ]; then
-	cd ./obj
-fi
-
 PGTZ="PST8PDT"; export PGTZ
 PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 
-#FRONTEND=monitor
 FRONTEND="psql $HOSTLOC -n -e -q"
+
+# ----------
+# Scan resultmap file to find which platform-specific expected files to use.
+# The format of each line of the file is
+#		testname/hostnamepattern=substitutefile
+# where the hostnamepattern is evaluated per the rules of expr(1) --- namely,
+# it is a standard regular expression with an implicit ^ at the start.
+# ----------
+SUBSTLIST=""
+exec 4<resultmap
+while read LINE <&4
+do
+	HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
+	if [ `expr "$hostname" : "$HOSTPAT"` -ne 0 ]
+	then
+		SUBSTLIST="$SUBSTLIST $LINE"
+	fi
+done
+exec 4<&-
+
+if [ -d ./obj ]; then
+	cd ./obj
+fi
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
@@ -94,32 +112,19 @@ do
 	$FRONTEND regression < sql/${tst}.sql > results/${tst}.out 2>&1
 
 	#
-	# Check resultmap to see if we should compare to a
-	# system-specific result file.  The format of the .similar file is
-	#	testname/hostname=substitutefile
+	# Check list extracted from resultmap to see if we should compare
+	# to a system-specific expected file.
 	# There shouldn't be multiple matches, but take the last if there are.
 	#
 	EXPECTED="expected/${tst}.out"
-	SUBST=`grep "^$tst/$hostname=" resultmap | sed 's/^.*=//' | tail -1`
-	if test "$SUBST"
-	then EXPECTED="expected/${SUBST}.out"
-	else
-	    # Next look for a .similar entry that is a prefix of $hostname.
-	    # If there are multiple matches, take the last one.
-	    exec 4<resultmap
-	    while read LINE <&4
-	    do
-		SIMHOST=`expr "$LINE" : '\(.*\)='`
-		MATCH=`expr "$tst/$hostname" : "$SIMHOST"`
-		if test "$MATCH" != 0
-		then SUBST=`echo "$LINE" | sed 's/^.*=//'`
+	for LINE in $SUBSTLIST
+	do
+		if [ `expr "$LINE" : "$tst/"` -ne 0 ]
+		then
+			SUBST=`echo "$LINE" | sed 's/^.*=//'`
+			EXPECTED="expected/${SUBST}.out"
 		fi
-	    done
-	    exec 4<&-
-	    if test "$SUBST"
-	    then EXPECTED="expected/${SUBST}.out"
-	    fi
-	fi
+	done
 
 	if [ `diff ${DIFFOPT} ${EXPECTED} results/${tst}.out | wc -l` -ne 0 ]
 	then

@@ -3,10 +3,12 @@ Introduction
 
   The PostgreSQL regression tests are a comprehensive set of tests for the
   SQL implementation embedded in PostgreSQL.  They test standard SQL
-  operations as well as the extensibility capabilities of PostgreSQL.
+  operations as well as the extended capabilities of PostgreSQL.
 
   The regression tests were originally developed by Jolly Chen and Andrew Yu,
   and were extensively revised/repackaged by Marc Fournier and Thomas Lockhart.
+  From PostgreSQL v6.1 onward the regression tests are current for every
+  official release.
 
   Some properly installed and fully functional PostgreSQL installations
   can fail some of these regression tests due to artifacts of floating point
@@ -17,11 +19,16 @@ Introduction
 
 Preparation
 
-  To prepare for regression testing, do "make all".  This compiles
-  a 'C' program with PostgreSQL extension functions into a shared library
-  in the current directory.  Localized SQL scripts and output-comparison
+  To prepare for regression testing, do "make all" in the regression test
+  directory.  This compiles a 'C' program with PostgreSQL extension functions
+  into a shared library.  Localized SQL scripts and output-comparison
   files are also created for the tests that need them.  The localization
   replaces macros in the source files with absolute pathnames and user names.  
+
+  Normally, the regression tests should be run as the postgres user since
+  the 'src/test/regress' directory and sub-directories are owned by the
+  postgres user. If you run the regression test as another user the
+  'src/test/regress' directory tree must be writeable to that user.
 
   It was formerly necessary to run the postmaster with system time zone
   set to PST, but this is no longer required.  You can run the regression
@@ -63,11 +70,6 @@ Running the regression test
   which invokes a parallel form of the regress tests, and does not
   need an already-installed postmaster.  Instead, runcheck creates
   a temporary installation under the regress directory.
-
-  Normally, the regression tests should be run as the postgres user since
-  the 'src/test/regress' directory and sub-directories are owned by the
-  postgres user. If you run the regression test as another user the
-  'src/test/regress' directory tree must be writeable to that user.
 
 Comparing expected/actual output
 
@@ -172,11 +174,12 @@ Platform-specific comparison files
   to the mapping file, which is "resultmap".
 
   Each line in the mapping file is of the form
-		testname/platformname=comparisonfilename
+		testname/platformnamepattern=comparisonfilename
   The test name is just the name of the particular regression test module.
-  The platform name is the platform name as printed by config.guess (in
-  the toplevel PostgreSQL src directory), or any prefix of it.  The
-  comparison file name is the name of the substitute result comparison file.
+  The platform name pattern is a pattern in the style of expr(1) (that is,
+  a regular expression with an implicit ^ anchor at the start).  It is matched
+  against the platform name as printed by config.guess.  The comparison
+  file name is the name of the substitute result comparison file.
 
   For example: the int2 regress test includes a deliberate entry of a value
   that is too large to fit in int2.  The specific error message that is

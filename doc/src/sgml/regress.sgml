@@ -9,17 +9,15 @@ Regression test instructions and analysis.
 
 <Para>
   The PostgreSQL regression tests are a comprehensive set of tests for the
-  SQL implementation embedded in PostgreSQL developed by Jolly Chen and
-  Andrew Yu. It tests standard SQL operations as well as the extended
-  capabilities of PostgreSQL.
+  SQL implementation embedded in PostgreSQL.  They test standard SQL
+  operations as well as the extended capabilities of PostgreSQL.
 </Para>
 
 <Para>
-  These tests have recently been revised by Marc Fournier and Thomas Lockhart
-and are now packaged as
-  functional units which should make them easier to run and easier to interpret.
-From <ProductName>PostgreSQL</ProductName> v6.1 onward
- the regression tests are current for every official release. 
+  The regression tests were originally developed by Jolly Chen and Andrew Yu,
+  and were extensively revised/repackaged by Marc Fournier and Thomas Lockhart.
+  From <ProductName>PostgreSQL</ProductName> v6.1 onward
+  the regression tests are current for every official release. 
 </Para>
 
 <Para>
@@ -66,19 +64,18 @@ The runtime path is /usr/local/pgsql (other paths are possible).
 <Title>Regression Environment</Title>
 
 <Para>
-  The regression test is invoked by the <Command>make</Command> command which compiles
-  a <Acronym>C</Acronym> program into a shared library
-  in the current directory.  Localized shell scripts are also created in
-  the current directory. The output file templates are massaged into the
-  <FileName>./expected/*.out</FileName> files.  The localization replaces macros in the source
-  files with absolute pathnames and user names.
+  To prepare for regression testing, do <Command>make all</Command> in the regression test
+  directory.  This compiles a <Acronym>C</Acronym> program with PostgreSQL extension functions
+  into a shared library.  Localized SQL scripts and output-comparison
+  files are also created for the tests that need them.  The localization
+  replaces macros in the source files with absolute pathnames and user names.  
 </Para>
 
 <Para>
-  Normally, the regression test should be run as the pg_superuser since
+  Normally, the regression tests should be run as the postgres user since
   the 'src/test/regress' directory and sub-directories are owned by the
-  pg_superuser. If you run the regression test as another user the
-  'src/test/regress' directory tree should be writeable to that user.
+  postgres user. If you run the regression test as another user the
+  'src/test/regress' directory tree must be writeable to that user.
 </Para>
 
 <Para>
@@ -132,7 +129,7 @@ The runtime path is /usr/local/pgsql (other paths are possible).
   expected/ . .out files that represent what we *expect* the results to
               look like
 
-  results/ .. .out files that represent what the results *actually* look
+  results/ .. .out files that contain what the results *actually* look
               like. Also used as temporary storage for table copy testing.
       </ProgramListing>
     </Para>
@@ -297,25 +294,6 @@ The runtime path is /usr/local/pgsql (other paths are possible).
     </Sect2>
     
     <Sect2>
-      <Title>OID differences</Title>
-      
-      <Para>
-	There are several places where PostgreSQL OID (object identifiers) appear
-	in 'regress.out'. OID's are unique 32-bit integers which are generated
-	by the PostgreSQL backend whenever a table row is inserted or updated.
-	If you run the regression test on a non-virgin database or run it multiple
-	times, the OID's reported will have different values. 
-	
-	The following SQL statements in 'misc.out' have shown this behavior:
-	
-	QUERY: SELECT user_relns() AS user_relns ORDER BY user_relns;
-	
-	The 'a,523676' row is composed from an OID.
-      </Para>
-      
-    </Sect2>
-    
-    <Sect2>
       <Title>Date and time differences</Title>
       
       <Para>
@@ -429,6 +407,56 @@ The runtime path is /usr/local/pgsql (other paths are possible).
       </Para>
       
     </Sect2>
+    
+  </Sect1>
+
+  <Sect1>
+    <Title>Platform-specific comparison files</Title>
+
+     <Para>
+  Since some of the tests inherently produce platform-specific results,
+  we have provided a way to supply platform-specific result comparison
+  files.  Frequently, the same variation applies to multiple platforms;
+  rather than supplying a separate comparison file for every platform,
+  there is a mapping file that defines which comparison file to use.
+  So, to eliminate bogus test "failures" for a particular platform,
+  you must choose or make a variant result file, and then add a line
+  to the mapping file, which is "resultmap".
+     </Para>
+
+     <Para>
+  Each line in the mapping file is of the form
+	<ProgramListing>
+		testname/platformnamepattern=comparisonfilename
+	</ProgramListing>
+  The test name is just the name of the particular regression test module.
+  The platform name pattern is a pattern in the style of expr(1) (that is,
+  a regular expression with an implicit ^ anchor at the start).  It is matched
+  against the platform name as printed by config.guess.  The comparison
+  file name is the name of the substitute result comparison file.
+     </Para>
+
+     <Para>
+  For example: the int2 regress test includes a deliberate entry of a value
+  that is too large to fit in int2.  The specific error message that is
+  produced is platform-dependent; our reference platform emits
+	<ProgramListing>
+    ERROR:  pg_atoi: error reading "100000": Numerical result out of range
+	</ProgramListing>
+  but a fair number of other Unix platforms emit
+	<ProgramListing>
+    ERROR:  pg_atoi: error reading "100000": Result too large
+	</ProgramListing>
+  Therefore, we provide a variant comparison file, int2-too-large.out,
+  that includes this spelling of the error message.  To silence the
+  bogus "failure" message on HPPA platforms,  resultmap includes
+	<ProgramListing>
+		int2/hppa=int2-too-large
+	</ProgramListing>
+  which will trigger on any machine for which config.guess's output
+  begins with 'hppa'.  Other lines in resultmap select the variant
+  comparison file for other platforms where it's appropriate.
+     </Para>
     
   </Sect1>
   

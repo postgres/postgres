@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.5 2000/01/09 07:53:58 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.6 2000/01/09 20:54:36 tgl Exp $
 
 # ----------
 # Check call syntax
@@ -79,16 +79,23 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 FRONTEND="$BINDIR/psql $HOSTLOC -n -e -q"
 
 # ----------
-# Prepare temp file holding combined test script.
+# Scan resultmap file to find which platform-specific expected files to use.
+# The format of each line of the file is
+#		testname/hostnamepattern=substitutefile
+# where the hostnamepattern is evaluated per the rules of expr(1) --- namely,
+# it is a standard regular expression with an implicit ^ at the start.
 # ----------
-TESTLIST="/tmp/testlist.$$"
-TESTS=./sql/run_check.tests
-(
-	cat $TESTS 
-	for name in $extratests ; do
-		echo "test $name"
-	done
-) > $TESTLIST
+SUBSTLIST=""
+exec 4<resultmap
+while read LINE <&4
+do
+	HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
+	if [ `expr "$hostname" : "$HOSTPAT"` -ne 0 ]
+	then
+		SUBSTLIST="$SUBSTLIST $LINE"
+	fi
+done
+exec 4<&-
 
 # ----------
 # Catch SIGINT and SIGTERM to shutdown the postmaster
@@ -104,7 +111,6 @@ trap '	echo ""
 			echo ""
 		fi
 		echo ""
-		rm $TESTLIST
 		exit 1
 ' 2 15
 
@@ -221,15 +227,21 @@ fi
 
 
 # ----------
-# Run the regression tests specified in the $TESTLIST file
+# Run the regression tests specified in the ./sql/run_check.tests file
 # ----------
 echo "=============== Running regression queries...          ================"
 echo "" > regression.diffs
 echo "" > regress.out
 
+TESTS=./sql/run_check.tests
 lno=0
-while read line
-do
+(
+	cat $TESTS 
+	for name in $extratests ; do
+		echo "test $name"
+	done
+) | while read line ; do
+
 	# ----------
 	# Count line numbers and skip comments and empty lines
 	# ----------
@@ -256,8 +268,7 @@ do
 					pargroup=$name
 					parntests=0
 					parpar=0
-					while read line
-					do
+					while read line ; do
 						# ----------
 						# Again count line numbers and skip comments
 						# ----------
@@ -334,14 +345,14 @@ do
 								> results/${name}.out 2>&1
 							$ECHO_N " $name" $ECHO_C
 						) &
-					done </dev/null
+					done
 					wait
 					echo ""
 
 					# ----------
 					# Setup status information for the diff check below
 					# ----------
-					checklist=$parlist
+					checklist="$parlist"
 					checkpname=1
 					;;
 
@@ -357,7 +368,7 @@ do
 					# ----------
 					# Setup status information for the diff check below
 					# ----------
-					checklist=$name
+					checklist="$name"
 					checkpname=0
 					;;
 
@@ -379,55 +390,43 @@ do
 	# old format, so checkresults will still find the proper
 	# information.
 	# ----------
-	for tst in $checklist ; do
+	for name in $checklist ; do
 		if [ $checkpname -ne 0 ]
 		then
-			pnam=`echo $tst | awk '{printf "%-20.20s", $1;}'`
+			pnam=`echo $name | awk '{printf "%-20.20s", $1;}'`
 			$ECHO_N "           test $pnam ... " $ECHO_C
 		fi
 
 		#
-		# Check resultmap to see if we should compare to a
-		# system-specific result file.  The format of the file is
-		#	testname/hostname=substitutefile
+		# Check list extracted from resultmap to see if we should compare
+		# to a system-specific expected file.
 		# There shouldn't be multiple matches, but take the last if there are.
 		#
-		EXPECTED="expected/${tst}.out"
-		SUBST=`grep "^$tst/$hostname=" resultmap | sed 's/^.*=//' | tail -1`
-		if test "$SUBST"
-		then EXPECTED="expected/${SUBST}.out"
-		else
-		    # Next look for a .similar entry that is a prefix of $hostname.
-		    # If there are multiple matches, take the last one.
-		    while read LINE
-		    do
-			SIMHOST=`expr "$LINE" : '\(.*\)='`
-			MATCH=`expr "$tst/$hostname" : "$SIMHOST"`
-			echo "$LINE $SIMHOST $MATCH"
-			if test "$MATCH" != 0
-			then SUBST=`echo "$LINE" | sed 's/^.*=//'`
+		EXPECTED="expected/${name}.out"
+		for LINE in $SUBSTLIST
+		do
+			if [ `expr "$LINE" : "$name/"` -ne 0 ]
+			then
+				SUBST=`echo "$LINE" | sed 's/^.*=//'`
+				EXPECTED="expected/${SUBST}.out"
 			fi
-		    done <resultmap
-		    if test "$SUBST"
-		    then EXPECTED="expected/${SUBST}.out"
-		    fi
-		fi
+		done
 
-		if [ `diff -w ${EXPECTED} results/${tst}.out | wc -l` -ne 0 ]
+		if [ `diff -w ${EXPECTED} results/${name}.out | wc -l` -ne 0 ]
 		then
-			(	diff -wC3 ${EXPECTED} results/${tst}.out	; \
+			(	diff -wC3 ${EXPECTED} results/${name}.out	; \
 				echo ""										; \
 				echo "----------------------"				; \
 				echo ""										; \
 			) >> regression.diffs
 			echo "FAILED"
-			echo "$tst .. failed" >> regress.out
+			echo "$name .. failed" >> regress.out
 		else
 			echo "ok"
-			echo "$tst .. ok" >> regress.out
+			echo "$name .. ok" >> regress.out
 		fi
 	done
-done <$TESTLIST | tee run_check.out 2>&1
+done | tee run_check.out 2>&1
 
 # ----------
 # Finally kill the postmaster we started
@@ -435,6 +434,5 @@ done <$TESTLIST | tee run_check.out 2>&1
 echo "=============== Terminating regression postmaster      ================"
 kill -15 $PMPID
 
-rm $TESTLIST
 
 exit 0

@@ -1,0 +1,215 @@
+--
+-- INT2
+-- NOTE: int2 operators never check for over/underflow!
+-- Some of these answers are consequently numerically incorrect.
+--
+CREATE TABLE INT2_TBL(f1 int2);
+INSERT INTO INT2_TBL(f1) VALUES ('0');
+INSERT INTO INT2_TBL(f1) VALUES ('1234');
+INSERT INTO INT2_TBL(f1) VALUES ('-1234');
+INSERT INTO INT2_TBL(f1) VALUES ('34.5');
+ERROR:  pg_atoi: error in "34.5": can't parse ".5"
+-- largest and smallest values 
+INSERT INTO INT2_TBL(f1) VALUES ('32767');
+INSERT INTO INT2_TBL(f1) VALUES ('-32767');
+-- bad input values -- should give warnings 
+INSERT INTO INT2_TBL(f1) VALUES ('100000');
+ERROR:  pg_atoi: error reading "100000": Math result not representable
+INSERT INTO INT2_TBL(f1) VALUES ('asdf');
+ERROR:  pg_atoi: error in "asdf": can't parse "asdf"
+SELECT '' AS five, INT2_TBL.*;
+ five |   f1   
+------+--------
+      |      0
+      |   1234
+      |  -1234
+      |  32767
+      | -32767
+(5 rows)
+
+SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int2 '0';
+ four |   f1   
+------+--------
+      |   1234
+      |  -1234
+      |  32767
+      | -32767
+(4 rows)
+
+SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int4 '0';
+ four |   f1   
+------+--------
+      |   1234
+      |  -1234
+      |  32767
+      | -32767
+(4 rows)
+
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = int2 '0';
+ one | f1 
+-----+----
+     |  0
+(1 row)
+
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = int4 '0';
+ one | f1 
+-----+----
+     |  0
+(1 row)
+
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < int2 '0';
+ two |   f1   
+-----+--------
+     |  -1234
+     | -32767
+(2 rows)
+
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < int4 '0';
+ two |   f1   
+-----+--------
+     |  -1234
+     | -32767
+(2 rows)
+
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= int2 '0';
+ three |   f1   
+-------+--------
+       |      0
+       |  -1234
+       | -32767
+(3 rows)
+
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= int4 '0';
+ three |   f1   
+-------+--------
+       |      0
+       |  -1234
+       | -32767
+(3 rows)
+
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > int2 '0';
+ two |  f1   
+-----+-------
+     |  1234
+     | 32767
+(2 rows)
+
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > int4 '0';
+ two |  f1   
+-----+-------
+     |  1234
+     | 32767
+(2 rows)
+
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int2 '0';
+ three |  f1   
+-------+-------
+       |     0
+       |  1234
+       | 32767
+(3 rows)
+
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int4 '0';
+ three |  f1   
+-------+-------
+       |     0
+       |  1234
+       | 32767
+(3 rows)
+
+-- positive odds 
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % int2 '2') = int2 '1';
+ one |  f1   
+-----+-------
+     | 32767
+(1 row)
+
+-- any evens 
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
+ three |  f1   
+-------+-------
+       |     0
+       |  1234
+       | -1234
+(3 rows)
+
+SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x   
+------+--------+-------
+      |      0 |     0
+      |   1234 |  2468
+      |  -1234 | -2468
+      |  32767 |    -2
+      | -32767 |     2
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x    
+------+--------+--------
+      |      0 |      0
+      |   1234 |   2468
+      |  -1234 |  -2468
+      |  32767 |  65534
+      | -32767 | -65534
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x    
+------+--------+--------
+      |      0 |      2
+      |   1234 |   1236
+      |  -1234 |  -1232
+      |  32767 | -32767
+      | -32767 | -32765
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x    
+------+--------+--------
+      |      0 |      2
+      |   1234 |   1236
+      |  -1234 |  -1232
+      |  32767 |  32769
+      | -32767 | -32765
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x   
+------+--------+-------
+      |      0 |    -2
+      |   1234 |  1232
+      |  -1234 | -1236
+      |  32767 | 32765
+      | -32767 | 32767
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x    
+------+--------+--------
+      |      0 |     -2
+      |   1234 |   1232
+      |  -1234 |  -1236
+      |  32767 |  32765
+      | -32767 | -32769
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x    
+------+--------+--------
+      |      0 |      0
+      |   1234 |    617
+      |  -1234 |   -617
+      |  32767 |  16383
+      | -32767 | -16383
+(5 rows)
+
+SELECT '' AS five, i.f1, i.f1 / int4 '2' AS x FROM INT2_TBL i;
+ five |   f1   |   x    
+------+--------+--------
+      |      0 |      0
+      |   1234 |    617
+      |  -1234 |   -617
+      |  32767 |  16383
+      | -32767 | -16383
+(5 rows)
+

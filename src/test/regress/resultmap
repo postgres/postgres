@@ -1,4 +1,8 @@
 int2/hppa=int2-too-large
 int4/hppa=int4-too-large
-geometry/hppa2.0=geometry-hppa2.0
+int2/i.86-pc-linux-gnulibc=int2-not-representable
+int4/i.86-pc-linux-gnulibc=int4-not-representable
+geometry/hppa1\.1=geometry-hppa1.1
+geometry/hppa2\.0=geometry-hppa2.0
+geometry/i.86-.*-gnulibc=geometry-i86-gnulibc
 horology/hppa=horology-no-DST-before-1970
