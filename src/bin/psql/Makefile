@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.4.2.2 1996/08/19 19:36:01 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.4.2.3 1996/08/20 04:02:01 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ include ../Makefile.global
 # 
 
 ifeq ($(USE_READLINE), true)
-   CFLAGS += -I$(READLINE_INCDIR) -I$(HISTORY_INCDIR)
+   CFLAGS += $(READLINE_INCDIR) $(HISTORY_INCDIR)
 
 # if you are using an older readline that uses #include "readline.h" instead
 # of #include <readline/readline.h>,
@@ -30,9 +30,7 @@ ifeq ($(USE_READLINE), true)
 # CFLAGS += -DOLD_READLINE
 
    LIBCURSES=	-lcurses 
-   LD_ADD += -L$(READLINE_LIB) -L$(HISTORY_LIB) $(LIBCURSES)
-# use the following if your readline has no separate history lib
-#   LD_ADD += -L$(READLINE_LIBDIR) -lreadline $(LIBCURSES)
+   LD_ADD += $(READLINE_LIB) $(HISTORY_LIB) $(LIBCURSES)
 
    ifeq ($(PORTNAME), ultrix4)
    LD_ADD += -ltermcap
