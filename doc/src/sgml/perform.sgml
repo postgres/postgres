@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.42 2004/03/09 16:57:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.43 2004/03/25 18:57:57 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -120,7 +120,8 @@ SELECT * FROM pg_class WHERE relname = 'tenk1';
 
     you will find out that <classname>tenk1</classname> has 233 disk
     pages and 10000 rows.  So the cost is estimated at 233 page
-    reads, defined as costing 1.0 apiece, plus 10000 * <varname>cpu_tuple_cost</varname> which is
+    reads, defined as costing 1.0 apiece, plus 10000 * <xref
+    linkend="guc-cpu-tuple-cost"> which is
     currently 0.01 (try <command>SHOW cpu_tuple_cost</command>).
    </para>
 
@@ -450,7 +451,7 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
    arrays for each column, can be set on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
    command, or globally by setting the
-   <varname>default_statistics_target</varname> runtime parameter.
+   <xref linkend="guc-default-statistics-target"> configuration variable.
    The default limit is presently 10 entries.  Raising the limit
    may allow more accurate planner estimates to be made, particularly for
    columns with irregular data distributions, at the price of consuming
@@ -599,14 +600,15 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    problem replacing two separate three-way join problems.  Because of the
    exponential growth of the number of possibilities, this makes a big
    difference.  The planner tries to avoid getting stuck in huge join search
-   problems by not collapsing a subquery if more than <xref linkend="guc-from-collapse-limit">
+   problems by not collapsing a subquery if more than <varname>from_collapse_limit</>
    <literal>FROM</> items would result in the parent
    query.  You can trade off planning time against quality of plan by
    adjusting this run-time parameter up or down.
   </para>
 
   <para>
-   <varname>from_collapse_limit</> and <varname>join_collapse_limit</>
+   <xref linkend="guc-from-collapse-limit"> and <xref
+   linkend="guc-join-collapse-limit">
    are similarly named because they do almost the same thing: one controls
    when the planner will <quote>flatten out</> subselects, and the
    other controls when it will flatten out explicit inner joins.  Typically
