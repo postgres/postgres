@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.53 2000/06/04 01:44:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.54 2000/06/05 07:16:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -77,9 +77,7 @@ libpostgres.a: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 endif
 
-all: prebuildheaders postgres $(POSTGRES_IMP) \
-		global1.bki.source local1_template1.bki.source \
-		global1.description local1_template1.description
+all: prebuildheaders postgres $(POSTGRES_IMP)
 
 ifneq ($(PORTNAME), win)
 
@@ -107,14 +105,6 @@ $(VERSIONOBJ): $(SRCDIR)/utils/version.c $(SRCDIR)/include/version.h
 
 $(SRCDIR)/utils/dllinit.o: $(SRCDIR)/utils/dllinit.c
 	$(MAKE) -C $(SRCDIR)/utils dllinit.o
-
-global1.bki.source local1_template1.bki.source \
-global1.description local1_template1.description: catalog/$@
-	cp catalog/$@ .
-
-catalog/global1.bki.source catalog/local1_template1.bki.source \
-catalog/global1.description catalog/local1_template1.description:
-	$(MAKE) -C catalog $@
 
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
@@ -148,9 +138,7 @@ utils/fmgroids.h: utils/Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
 clean:
 	rm -f postgres$(X) $(POSTGRES_IMP) \
 		$(SRCDIR)/include/parser/parse.h \
-		$(SRCDIR)/include/utils/fmgroids.h \
-	    global1.bki.source local1_template1.bki.source \
-	    global1.description local1_template1.description
+		$(SRCDIR)/include/utils/fmgroids.h
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)
 	rm -f postgres.dll postgres.def libpostgres.a
@@ -203,18 +191,9 @@ endif
 endif
 
 install-templates: $(TEMPLATEDIR) \
-         global1.bki.source local1_template1.bki.source \
-         global1.description local1_template1.description \
          libpq/pg_hba.conf.sample libpq/pg_ident.conf.sample \
          utils/misc/postgresql.conf.sample
-	$(INSTALL) $(INSTLOPTS) global1.bki.source \
-	  $(TEMPLATEDIR)/global1.bki.source
-	$(INSTALL) $(INSTLOPTS) global1.description \
-	  $(TEMPLATEDIR)/global1.description
-	$(INSTALL) $(INSTLOPTS) local1_template1.bki.source \
-	  $(TEMPLATEDIR)/local1_template1.bki.source
-	$(INSTALL) $(INSTLOPTS) local1_template1.description \
-	  $(TEMPLATEDIR)/local1_template1.description
+	$(MAKE) -C catalog install-bki-templates
 	$(INSTALL) $(INSTLOPTS) libpq/pg_hba.conf.sample \
 	  $(TEMPLATEDIR)/pg_hba.conf.sample
 	$(INSTALL) $(INSTLOPTS) libpq/pg_ident.conf.sample \
