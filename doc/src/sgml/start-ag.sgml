@@ -4,7 +4,7 @@
 -	- thomas 1998-02-24
 -->
 
-<Chapter>
+<Chapter Id="start-ag">
 <Title>Runtime Environment</Title>
 
 <Para>
@@ -153,7 +153,7 @@ There is one evident drawback of using locale - it's speed ! So, use locale only
 
 </Chapter>
 
-<Chapter>
+<Chapter Id="postmaster">
 <Title>Starting <Application>postmaster</Application></Title>
 
 <Para>
@@ -186,7 +186,7 @@ There is one evident drawback of using locale - it's speed ! So, use locale only
 </Para>
 </Chapter>
 
-<Chapter>
+<Chapter Id="newuser">
 <Title>Adding and Deleting Users</Title>
 
 <Para>
@@ -200,7 +200,7 @@ to the underlying
 </Para>
 </Chapter>
 
-<Chapter>
+<Chapter Id="disk">
 <Title>Disk Management</Title>
 
 <Para>
@@ -266,7 +266,7 @@ To test the new location, create a database <Database>test</Database> by typing
 </Sect1>
 </Chapter>
 
-<Chapter>
+<Chapter Id="trouble">
 <Title>Troubleshooting</Title>
 
 <Para>
@@ -296,7 +296,7 @@ FATAL 1:Feb 17 23:19:55:process userid (2360) != database owner (268)
 </Para>
 </Chapter>
 
-<Chapter>
+<Chapter Id="manage-ag">
 <Title>Managing a Database</Title>
 
 <Para>

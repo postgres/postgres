@@ -23,7 +23,7 @@
 <!entity biblio   SYSTEM "biblio.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
-<Book>
+<Book Id="user">
 
 <!-- Title information -->
 

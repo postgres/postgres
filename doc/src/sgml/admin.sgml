@@ -18,7 +18,7 @@
 <!entity biblio   SYSTEM "biblio.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
-<Book>
+<Book Id="admin">
 
 <!-- Title information -->
 

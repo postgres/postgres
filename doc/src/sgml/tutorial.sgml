@@ -12,7 +12,7 @@
 <!entity advanced SYSTEM "advanced.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
 ]>
-<Book>
+<Book Id="tutorial">
 
 <!-- Title information -->
 

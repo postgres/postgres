@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="rules">
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
 
 <Para>
