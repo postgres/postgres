@@ -3,9 +3,13 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.1 2002/07/06 20:12:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.2 2002/07/06 20:14:58 momjian Exp $
  */
 
+
+/* This file is shared by psql and pg_dump. */
+
+ 
 /*
  * simple_prompt
  *
