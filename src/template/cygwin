@@ -1,2 +1,2 @@
-CFLAGS=-O2
-SRCH_LIB=/usr/local/lib
+CFLAGS='-O2'
+SRCH_LIB='/usr/local/lib'
