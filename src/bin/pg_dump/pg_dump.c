@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.121 1999/10/10 14:42:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.122 1999/10/10 17:00:26 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3075,11 +3075,16 @@ findLastBuiltinOid(void)
 		exit_nicely(g_conn);
 	}
 	ntups = PQntuples(res);
-	if (ntups != 1)
+	if (ntups < 1)
 	{
 		fprintf(stderr,"pg_dump: couldn't find the template1 database.\n");
-		fprintf(stderr,"Check the table pg_database for a problem.\n");
-		fprintf(stderr,"There should be exactly one 'template1' entry\n");
+		fprintf(stderr,"There is no 'template1' entry in the 'pg_database' table.\n");
+		exit_nicely(g_conn);
+	}
+	if (ntups > 1)
+	{
+		fprintf(stderr,"pg_dump: found more than one template1 database.\n");
+		fprintf(stderr,"There is more than one 'template1' entry in the 'pg_database' table\n");
 		exit_nicely(g_conn);
 	}
 	last_oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "oid")));
