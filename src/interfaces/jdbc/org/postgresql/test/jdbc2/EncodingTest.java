@@ -8,7 +8,7 @@ import java.io.*;
 /**
  * Tests for the Encoding class.
  *
- * $Id: EncodingTest.java,v 1.1 2001/07/21 18:52:11 momjian Exp $
+ * $Id: EncodingTest.java,v 1.1 2001/07/21 21:27:41 momjian Exp $
  */
 
 
