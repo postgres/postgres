@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.27 2004/09/27 19:16:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.28 2004/10/11 22:50:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,7 @@ pgunlink(const char *path)
 }
 
 
+#ifdef WIN32	/* Cygwin has its own symlinks */
 /*
  *	pgsymlink support:
  *
@@ -160,9 +161,7 @@ typedef struct
 	WORD		PrintNameOffset;
 	WORD		PrintNameLength;
 	WCHAR		PathBuffer[1];
-}
-
-			REPARSE_JUNCTION_DATA_BUFFER;
+}	REPARSE_JUNCTION_DATA_BUFFER;
 
 #define REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE   \
 		FIELD_OFFSET(REPARSE_JUNCTION_DATA_BUFFER, SubstituteNameOffset)
@@ -245,6 +244,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 	return 0;
 }
+#endif
 #endif
 
 
