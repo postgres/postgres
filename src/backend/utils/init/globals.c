@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.12 1997/09/08 02:31:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.13 1997/09/18 05:23:58 vadim Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -80,6 +80,7 @@ char		FloatFormat[20] = "%f";
 
 int			fsyncOff = 0;
 int			SortMem = 512;
+int			SortTuplesInTree = 2560;
 
 char	   *IndexedCatalogNames[] = {
 	AttributeRelationName,
