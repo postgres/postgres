@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.79 2003/07/23 08:47:39 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.80 2003/07/25 21:42:26 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -928,12 +928,14 @@ describeOneTableDetails(const char *schemaname,
 				   *result2 = NULL,
 				   *result3 = NULL,
 				   *result4 = NULL,
-				   *result5 = NULL;
+				   *result5 = NULL,
+				   *result6 = NULL;
 		int			check_count = 0,
 					index_count = 0,
 					foreignkey_count = 0,
 					rule_count = 0,
-					trigger_count = 0;
+					trigger_count = 0,
+				    inherits_count = 0;
 		int			count_footers = 0;
 
 		/* count indexes */
@@ -1037,7 +1039,16 @@ describeOneTableDetails(const char *schemaname,
 				foreignkey_count = PQntuples(result5);
 		}
 
-		footers = xmalloczero((index_count + check_count + rule_count + trigger_count + foreignkey_count + 6)
+		/* count inherited tables */
+		printfPQExpBuffer(&buf, "SELECT c.relname FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno ASC", oid);
+
+		result6 = PSQLexec(buf.data, false);
+		if (!result6)
+			goto error_return;
+		else
+			inherits_count = PQntuples(result6);
+
+		footers = xmalloczero((index_count + check_count + rule_count + trigger_count + foreignkey_count + inherits_count + 6)
 							  * sizeof(*footers));
 
 		/* print indexes */
@@ -1140,6 +1151,21 @@ describeOneTableDetails(const char *schemaname,
 			}
 		}
 
+		/* print inherits */
+		for (i = 0; i < inherits_count; i++)
+		{
+			char	   *s = _("Inherits");
+
+			if (i == 0)
+				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result6, i, 0));
+			else
+				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result6, i, 0));
+			if (i < inherits_count - 1)
+				appendPQExpBuffer(&buf, ",");
+
+			footers[count_footers++] = xstrdup(buf.data);
+		}
+
 		/* end of list marker */
 		footers[count_footers] = NULL;
 
@@ -1148,6 +1174,7 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result3);
 		PQclear(result4);
 		PQclear(result5);
+		PQclear(result6);
 	}
 
 	printTable(title.data, headers,
