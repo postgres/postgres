@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.22 2001/07/11 18:54:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.23 2001/07/12 01:19:40 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -332,7 +332,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
 						PLpgSQL_rec		*new;
 
-						new = malloc(sizeof(PLpgSQL_var));
+						new = malloc(sizeof(PLpgSQL_rec));
 
 						new->dtype		= PLPGSQL_DTYPE_REC;
 						new->refname	= $1.name;
@@ -374,8 +374,8 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						new = malloc(sizeof(PLpgSQL_var));
 						memset(new, 0, sizeof(PLpgSQL_var));
 
-						curname_def = malloc(sizeof(PLpgSQL_var));
-						memset(curname_def, 0, sizeof(PLpgSQL_var));
+						curname_def = malloc(sizeof(PLpgSQL_expr));
+						memset(curname_def, 0, sizeof(PLpgSQL_expr));
 
 						new->dtype		= PLPGSQL_DTYPE_VAR;
 						new->refname	= $1.name;
