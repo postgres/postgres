@@ -1,6 +1,6 @@
 * Version numbers
     configure.in and configure
-    doc/src/sgml/version.sgml
+    update doc/src/sgml/version.sgml
     bump interface version numbers
     update src/interfaces/libpq/libpq.rc
     update src/interfaces/libpq++/libpq++dll.rc
