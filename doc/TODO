@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May  5 18:24:10 EDT 2000
+Last updated:		Fri May  5 21:04:39 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -111,6 +111,7 @@ COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
 * Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E)
+* Add ALTER TABLE command to change table ownership
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table[cluster]
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
