@@ -1,0 +1,2056 @@
+2001-01-10 13:07  petere
+
+	* configure, config/c-library.m4: Make checks for global variables
+	(sys_nerr, timezone) safe against getting optimized away
+	completely.
+
+2001-01-09 21:24  inoue
+
+	* src/backend/storage/lmgr/lock.c: Removed a no longer needed
+	SetWaitingForLock() call in DeadLockCheck().
+
+2001-01-09 21:12  tgl
+
+	* src/backend/commands/cluster.c: Do The Right Thing (tm) if asked
+	to cluster a temp table.  Previous code would cluster, but table
+	would magically lose its tempness.
+
+2001-01-09 15:46  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, preproc/preproc.y: Synced
+	preproc.y with gram.y.
+
+2001-01-09 14:45  petere
+
+	* src/makefiles/Makefile.win: Remove -L$(libdir) from DLLLIBS to
+	prevent linking with an old version (i.e., 7.0.3) of libpostgres.a.
+	 From Jason Tishler <jt@dothill.com>.
+
+2001-01-09 14:40  petere
+
+	* configure, configure.in, config/c-library.m4,
+	src/backend/utils/error/elog.c, src/backend/utils/error/exc.c,
+	src/include/c.h, src/include/config.h.in, src/include/port/beos.h,
+	src/include/port/win.h: Add configure check for sys_nerr, to end
+	all discussions.
+
+2001-01-09 14:06  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-09 12:07  momjian
+
+	* contrib/pgcrypto/md5.c, contrib/pgcrypto/md5.h,
+	contrib/pgcrypto/pgcrypto.c, contrib/pgcrypto/pgcrypto.h,
+	contrib/pgcrypto/sha1.c, contrib/pgcrypto/sha1.h, src/include/c.h:
+	The KAME files md5.* and sha1.* have the following changelog entry:
+        
+
+2001-01-09 12:05  momjian
+
+	* doc/src/sgml/sql.sgml: Apply proper sql.sgml change.
+
+2001-01-09 11:48  momjian
+
+	* doc/src/sgml/sql.sgml: Attached is a doc patch for
+	doc/src/sgml/sql.sgml.
+	
+	It adds information about SQL JOIN that is implemented in 7.1.
+	
+	-- -------- Robert B. Easter
+
+2001-01-09 11:37  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-09 11:26  momjian
+
+	* doc/src/sgml/plsql.sgml: A patch for doc/src/sgml/plsql.sgml to
+	add a little more info about PL/pgSQL EXECUTE.
+	
+	-- -------- Robert B. Easter
+
+2001-01-09 10:23  momjian
+
+	* doc/src/sgml/spi.sgml: Approaching the current documentation from
+	a position of ignorance, I find it ambiguous.  I propose something
+	along the lines of the following patch to clarify it.  Thanks.
+	
+	(Alternatively, perhaps the code could maintain a count of nested
+	calls to SPI_connect/SPI_finish.  But I didn't try to write that
+	patch.)
+	
+	Ian Lance Taylor
+
+2001-01-09 10:12  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-09 09:52  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-09 09:48  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-09 09:11  pgsql
+
+	* configure, configure.in: 
+	jump version to beta3 ... beta2 was created and pulled due to a
+	couple of large-ish bugs that Tom and Vadim were able to fix, but
+	to avoid any confusion, beta2 was removed ... and for tag'ng
+	purposes, beta3 is being created ...
+
+2001-01-09 05:54  ishii
+
+	* doc/README.mb.big5: Add a README file for multi-byte. This file
+	is contributed by Chih-Chang Hsieh <cch@cc.kmu.edu.tw>, written in
+	traditional Chinese (Big5).
+
+2001-01-09 05:38  inoue
+
+	* src/backend/storage/lmgr/proc.c: Disable query cancel during
+	HandleDeadLock().
+
+2001-01-09 02:24  vadim
+
+	* src/backend/: access/transam/xlog.c, utils/misc/guc.c: 1.
+	Checkpoint.undo may be after checkpoint itself:    - no more
+	elog(STOP) in StartupXLOG();	- both checkpoint' undo & redo are
+	used to define	    oldest on-line log file.  2. Ability to
+	pre-allocate a few log files at checkpoint time    (wal_files
+	option). Off by default.
+
+2001-01-09 02:16  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-09 00:40  ishii
+
+	* doc/README.mb: README.mb has been unified into SGML documents.
+
+2001-01-08 23:48  tgl
+
+	* src/: backend/optimizer/util/tlist.c, include/optimizer/tlist.h,
+	backend/optimizer/plan/setrefs.c,
+	backend/optimizer/plan/subselect.c: Fix oversight in planning of
+	GROUP queries: when an expression is used as both a GROUP BY item
+	and an output expression, the top-level Group node should just copy
+	up the evaluated expression value from its input, rather than
+	re-evaluating the expression.  Aside from any performance benefit
+	this might offer, this avoids a crash when there is a sub-SELECT in
+	said expression.
+
+2001-01-08 22:15  tgl
+
+	* src/include/storage/relfilenode.h: Fix small but critical typo
+	...
+
+2001-01-08 19:02  tgl
+
+	* src/bin/scripts/vacuumdb: Prevent vacuumdb from trying to vacuum
+	template0.
+
+2001-01-08 18:07  tgl
+
+	* doc/src/sgml/syntax.sgml: Document the system attributes ctid and
+	tableoid, which for some reason were never yet mentioned anywhere
+	in our documentation.  Improve explanations of the other system
+	attributes, too.
+
+2001-01-08 17:30  tgl
+
+	* doc/src/sgml/ref/select.sgml: Document that we don't support
+	ORDER BY with general expressions on the output of
+	UNION/INTERSECT/EXCEPT.
+
+2001-01-08 17:01  petere
+
+	* doc/src/sgml/runtime.sgml: Add rudimentary section about
+	controlling kernel's file and process limits.
+
+2001-01-08 16:54  momjian
+
+	* doc/TODO.detail/flock, doc/TODO.detail/memory,
+	src/backend/parser/analyze.c: Remove compiler warning about
+	uninitialized warnings.
+
+2001-01-08 16:32  tgl
+
+	* src/bin/scripts/vacuumdb: check for failure after vacuuming each
+	DB, not only the last one.
+
+2001-01-08 14:34  tgl
+
+	* src/backend/utils/cache/relcache.c: Add some debugging support
+	code (ifdef'd out in normal use).
+
+2001-01-08 14:31  tgl
+
+	* src/backend/storage/buffer/bufmgr.c: LockBuffer should not elog
+	while holding buffer's cntx_lock.
+
+2001-01-07 23:14  inoue
+
+	* src/backend/commands/command.c: Keep relations open until they
+	are no longer needed.
+
+2001-01-07 20:31  tgl
+
+	* src/backend/nodes/: outfuncs.c, readfuncs.c: Make
+	outfuncs/readfuncs treat OIDs properly as unsigned values.  Clean
+	up inconsistent coding practices for handling Index values and
+	booleans, too.
+
+2001-01-07 18:14  tgl
+
+	* src/backend/access/heap/heapam.c: Correct nasty error in
+	heap_update: it was releasing the buffer refcount before calling
+	RelationInvalidateHeapTuple(), which is bad because the latter
+	needs to look at the tuple data, which is in the shared disk
+	buffer.  If another backend manages to recycle the buffer while
+	this is going on, we will compute the wrong hashindex for the tuple
+	or maybe even crash outright.  Must hold buffer refcount until
+	afterwards.  (This bug is not in 7.0.*; seems to be have introduced
+	during WAL changes.)
+
+2001-01-07 00:30  tgl
+
+	* src/backend/storage/ipc/ipc.c: Clear QueryCancel and
+	ProcDiePending at start of proc_exit, to ensure that leftover
+	cancel/die requests cannot interfere with exit activities.
+
+2001-01-07 00:17  tgl
+
+	* src/: include/miscadmin.h, include/utils/elog.h,
+	backend/tcop/postgres.c, backend/utils/init/globals.c: Fix recent
+	breakage of query-cancel logic, see my pghackers message of 6 Jan
+	2001 21:55.
+
+2001-01-06 22:23  pgsql
+
+	* configure, configure.in: 
+	tag configure as beta2 ..
+
+2001-01-06 21:14  tgl
+
+	* src/test/regress/resultmap: Resultmap updates for OpenBSD, per
+	report from bpalmer@crimelabs.net.
+
+2001-01-06 21:08  tgl
+
+	* src/: backend/nodes/outfuncs.c, backend/nodes/read.c,
+	backend/nodes/readfuncs.c, include/catalog/catversion.h,
+	include/nodes/readfuncs.h: Modify readfuncs so that recursive use
+	of stringToNode will not crash and burn.  Just for added luck,
+	change reading of CONST nodes so that we do not need to consult
+	pg_type rows while reading them; this means that no database access
+	occurs during stringToNode.  This requires changing the order in
+	which const-node fields are written, which means an initdb is
+	forced.
+
+2001-01-06 20:05  tgl
+
+	* src/backend/commands/command.c: Clean up checking of relkind for
+	ALTER TABLE and LOCK TABLE commands.  Disallow cases like adding
+	constraints to sequences :-(, and eliminate now-unnecessary search
+	of pg_rewrite to decide if a relation is a view.
+
+2001-01-06 17:59  tgl
+
+	* src/backend/utils/mmgr/aset.c: Log memory context stats to stderr
+	when reporting a 'Memory exhausted' error, so as to provide a
+	starting point for debugging.
+
+2001-01-06 17:53  tgl
+
+	* src/backend/utils/cache/relcache.c: Fix memory leak in relcache
+	handling of rules: allocate rule parsetrees in per-entry
+	sub-memory-context, where they were supposed to go, rather than in
+	CacheMemoryContext where the code was putting them.  Must've
+	suffered a severe brain fade when I wrote this :-(
+
+2001-01-06 17:24  petere
+
+	* GNUmakefile.in: Use more portable syntax for 'find'.
+
+2001-01-06 16:57  petere
+
+	* src/bin/pg_dump/: pg_dump.c, pg_restore.c: Polish help output. 
+	Allow --help to work with BSD getopts.
+
+2001-01-06 13:43  tgl
+
+	* src/interfaces/libpq/fe-print.c: No need for screen_size to be
+	static.
+
+2001-01-06 12:54  petere
+
+	* doc/src/sgml/Makefile: Simplify rules to build man pages so they
+	run a lot faster and create less noise.
+
+2001-01-06 08:38  ishii
+
+	* doc/README.mb.jp: Update multibyte Japanese doc for 7.1.
+
+2001-01-06 08:26  petere
+
+	* doc/src/sgml/plsql.sgml: EXECUTE documentation, from "Robert B.
+	Easter" <reaster@comptechnews.com>.  I threw in spell check run
+	over the whole file.
+
+2001-01-06 07:58  petere
+
+	* doc/src/sgml/: datetime.sgml, filelist.sgml, keywords.sgml,
+	syntax.sgml, user.sgml: Update section on SQL syntax.  (Still a lot
+	to be done though.)  Add appendix with comprehensive list of key
+	words.
+
+2001-01-06 06:50  petere
+
+	* src/backend/parser/gram.y: Simplify the rules that explicitly
+	allowed TYPE as a type name (which is no longer the case).  Add AND
+	and TRAILING to ColLabel.  All key words except AS are now at least
+	ColLabel's.
+
+2001-01-06 00:14  tgl
+
+	* doc/src/sgml/ref/create_rule.sgml: Bring CREATE RULE reference
+	page into some semblance of agreement with what's actually
+	implemented.
+
+2001-01-05 23:33  ishii
+
+	* src/backend/commands/copy.c: Fix copy to make it more robust
+	against unexpected character sequences. This is done by disabling
+	multi-byte awareness when it's not necessary. This is kind of a
+	workaround, not a perfect solution.  However, there is no ideal way
+	to parse broken multi-byte character sequences. So I guess this is
+	the best way what we could do right now...
+
+2001-01-05 21:48  inoue
+
+	* src/backend/utils/cache/relcache.c: init_irels() is changed to be
+	called in RelationCacheInitializePhase2() so that transactional
+	control could guarantee the consistency.
+
+2001-01-05 21:43  tgl
+
+	* src/pl/plpgsql/src/pl_exec.c: Fix NOT NULL option for plpgsql
+	variables (doesn't look like it could ever have worked...)
+
+2001-01-05 21:39  tgl
+
+	* src/pl/plpgsql/src/gram.y: Fix misplaced strdup(), which could
+	lead to error messages referencing deallocated memory later on.
+
+2001-01-05 18:54  tgl
+
+	* src/: backend/utils/cache/catcache.c,
+	backend/utils/cache/inval.c, include/utils/catcache.h: Rename and
+	document some invalidation routines to make it clearer that they
+	don't themselves flush any cache entries, only add to to-do lists
+	that will be processed later.
+
+2001-01-05 02:34  tgl
+
+	* doc/src/sgml/advanced.sgml, doc/src/sgml/inherit.sgml,
+	doc/src/sgml/ref/alter_table.sgml,
+	doc/src/sgml/ref/create_table.sgml, src/backend/nodes/copyfuncs.c,
+	src/backend/nodes/equalfuncs.c, src/backend/parser/analyze.c,
+	src/backend/parser/gram.y, src/backend/parser/parse_clause.c,
+	src/backend/parser/keywords.c, src/backend/tcop/utility.c,
+	src/bin/pgaccess/lib/help/create_table.hlp,
+	src/bin/pgaccess/lib/help/inheritance.hlp,
+	src/include/nodes/parsenodes.h, src/include/parser/parse_clause.h,
+	src/interfaces/ecpg/preproc/keywords.c,
+	src/interfaces/ecpg/preproc/preproc.y,
+	src/test/regress/sql/inherit.sql,
+	src/test/regress/expected/inherit.out: Remove not-really-standard
+	implementation of CREATE TABLE's UNDER clause, and revert
+	documentation to describe the existing INHERITS clause instead, per
+	recent discussion in pghackers.  Also fix implementation of
+	SQL_inheritance SET variable: it is not cool to look at this var
+	during the initial parsing phase, only during parse_analyze().	See
+	recent bug report concerning misinterpretation of date constants
+	just after a SET TIMEZONE command.  gram.y really has to be an
+	invariant transformation of the query string to a raw parsetree;
+	anything that can vary with time must be done during parse
+	analysis.
+
+2001-01-04 22:58  tgl
+
+	* src/backend/commands/creatinh.c: Disallow creation of a child
+	table by a user who does not own the parent table, per pghackers
+	discussion around 22-Dec-00.
+
+2001-01-04 14:51  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-04 13:58  petere
+
+	* configure, configure.in: Allow NetBSD's libedit to be used
+	instead of GNU Readline.  (This simply amounts to checking for
+	-ledit instead of -lreadline.)
+
+2001-01-04 13:25  petere
+
+	* src/bin/initdb/initdb.sh: Correct path where to check for
+	password file existance.
+
+2001-01-04 04:24  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-04 04:13  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-01-03 22:38  tgl
+
+	* src/pl/plpgsql/src/pl_exec.c: Clean up some unnecessary fragility
+	in EXECUTE command.
+
+2001-01-03 22:36  tgl
+
+	* src/backend/executor/spi.c: Repair guaranteed core dump in
+	SPI_exec().  Guess this routine wasn't used before ...
+
+2001-01-03 22:24  inoue
+
+	* src/backend/utils/cache/relcache.c: I neglected to remove a debug
+	message,sorry.
+
+2001-01-03 21:23  tgl
+
+	* src/bin/pg_dump/pg_dump.c: pg_dump failed to handle backslashes
+	embedded in function definitions (and most other places where it
+	needed to output a string literal, too, except for data INSERT
+	statements).  Per bug report from Easter, 12/1/00.
+
+2001-01-03 18:01  tgl
+
+	* src/backend/: rewrite/rewriteHandler.c, utils/adt/ruleutils.c:
+	Fix breakage of rules using NOTIFY actions, per bug report and
+	patch from sergiop@sinectis.com.ar.
+
+2001-01-03 16:04  tgl
+
+	* doc/src/sgml/ref/copy.sgml, src/backend/commands/copy.c: New file
+	format for COPY BINARY, in accordance with pghackers discussions of
+	early December 2000.  COPY BINARY is now TOAST-safe.
+
+2001-01-03 14:43  tgl
+
+	* src/backend/commands/view.c: MakeRetrieveViewRuleName was
+	scribbling on memory that didn't belong to it.	Bad dog.
+
+2001-01-03 12:48  thomas
+
+	* src/backend/utils/adt/timestamp.c: Repair always-broken
+	date_part('quarter',timestamp).  Previous result did not have
+	correct month boundaries so anything near edge	cases was suspect
+	(e.g. April was in Q1 and July, August were lumped into  Q2). 
+	Thanks to Denis Osadchy <osadchy@turbo.nsk.su> for the report.
+
+2001-01-03 02:56  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.311 diff -r1.311 TODO 3c3 < Last updated:	     Tue
+	Jan  2 21:23:11 EST 2001 ---
+	> Last updated: 	Wed Jan  3 01:56:41 EST 2001
+	10c10 < A dash(-) marks changes that will appear in the upcoming
+	7.1 release.  ---
+	> A dash (-) marks changes that will appear in the upcoming 7.1
+	release.
+	23c23 < * -Creating index of TIMESTAMP & RELTIME fails, or rename
+	to DATETIME(Thomas) ---
+	> * -Creating index of TIMESTAMP & RELTIME fails, or rename to
+	DATETIME (Thomas)
+	35c35 < * -Views containing aggregates sometimes fail(Jan) ---
+	> * -Views containing aggregates sometimes fail (Jan)
+	37,38c37,38 <	duplicates(inherit) < * -Disallow LOCK on view(Mark
+	Hollomon) ---
+	>   duplicates (inherit)
+	> * -Disallow LOCK on view (Mark Hollomon)
+	58,60c58,60 < * -Add OUTER joins, left and right[outer](Tom,
+	Thomas) < * -Allow long tuples by chaining or auto-storing outside
+	db (TOAST)(Jan) < * Fix memory leak for expressions[memory](Tom?)
+	---
+	> * -Add OUTER joins, left and right[outer] (Tom, Thomas)
+	> * -Allow long tuples by chaining or auto-storing outside db
+	(TOAST) (Jan)
+	> * Fix memory leak for expressions[memory] (Tom?)
+	70c70 < * Allow row re-use without vacuum(Vadim) ---
+	> * Allow row re-use without vacuum (Vadim)
+	74c74 < * More access control over who can create tables and use
+	locks(Karel) ---
+	> * More access control over who can create tables and use locks
+	(Karel)
+	92c92 < 	o -Fix large object mapping scheme, own typeid or
+	reltype(Peter) ---
+	>	o -Fix large object mapping scheme, own typeid or reltype
+	(Peter)
+	97c97 < * Fix improper masking of some inet/cidr types [cidr] ---
+	> * -Fix improper masking of some inet/cidr types [cidr]
+	113c113 < * Get BIT type working ---
+	> * -Get BIT type working
+	119c119 < * Update macaddr manufacturer numbers, or remove the
+	function macaddr_manuf() ---
+	> * -Update macaddr manufacturer numbers, or remove the function
+	macaddr_manuf()
+	147c147 < * -Add ALTER TABLE ALTER COLUMN feature(Peter E) ---
+	> * -Add ALTER TABLE ALTER COLUMN feature (Peter E)
+	157c157 < * Auto-destroy sequence on DROP of table with
+	SERIAL(Ryan) ---
+	> * Auto-destroy sequence on DROP of table with SERIAL (Ryan)
+	166a167
+	> * Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
+	172d172 < * Allow INSERT INTO tab (col1, ..) VALUES (val1, ..),
+	(val2, ..) 176c176 < * Make NULL's come out at the beginning or end
+	depending on the ---
+	> * Make NULL's come out at the beginning or end depending on the
+	220c220 < * Certain indexes will not shrink, i.e. oid indexes with
+	many inserts(Vadim) ---
+	> * Certain indexes will not shrink, i.e. oid indexes with many
+	inserts (Vadim)
+	226c226 <   with after-row images(Vadim) [logging](Vadim) ---
+	>   with after-row images (Vadim) [logging]
+	232c232 < * -Redesign the function call interface to handle NULLs
+	better[function](Tom) ---
+	> * -Redesign the function call interface to handle NULLs
+	better[function] (Tom)
+	239c239 < * Encrpyt passwords in pg_shadow table using MD5(Vince)
+	---
+	> * Encrpyt passwords in pg_shadow table using MD5 (Vince)
+	298a299,300
+	> * Create a transaction processor to aid in persistent connections
+	and
+	>   connection pooling
+	307c309 < * Remove SET KSQO option now that OR processing is
+	improved(Tom) ---
+	> * Remove SET KSQO option now that OR processing is improved (Tom)
+
+2001-01-02 22:23  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.310 diff -r1.310 TODO 3c3 < Last updated:	     Wed
+	Dec 27 00:44:44 EST 2000 ---
+	> Last updated: 	Tue Jan  2 21:23:11 EST 2001
+	310a311
+	> * Allow libedit to be used in place of libreadline
+
+2001-01-02 18:13  petere
+
+	* configure, configure.in: Only update stamp-h if config.status
+	actually looks at config.h.
+
+2001-01-02 18:03  momjian
+
+	* src/interfaces/ecpg/lib/execute.c: I've found a memory leak in
+	libecpg of PostgreSQL 7.0.3.  The leak is caused by the memory
+	allocation in src/interfaces/ecpg/lib/execute.c in line 669 which
+	is never freed.  Adding a "free(array_query);" after PQexec in line
+	671 seems to fix the leak.
+	
+	Thorsten Knabe
+
+2001-01-02 01:56  tgl
+
+	* src/test/regress/README, doc/src/sgml/regress.sgml: Document
+	tuple ordering differences as a possible cause of regression test
+	'failures'.
+
+2001-01-02 00:33  tgl
+
+	* src/: backend/access/transam/xlogutils.c, backend/lib/hasht.c,
+	backend/storage/lmgr/lock.c, backend/utils/cache/relcache.c,
+	backend/utils/hash/dynahash.c, backend/utils/mmgr/portalmem.c,
+	include/lib/hasht.h, include/utils/hsearch.h: Clean up
+	non-reentrant interface for hash_seq/HashTableWalk, so that
+	starting a new hashtable search no longer clobbers any other search
+	active anywhere in the system.	Fix RelationCacheInvalidate() so
+	that it will not crash or go into an infinite loop if invoked
+	recursively, as for example by a second SI Reset message arriving
+	while we are still processing a prior one.
+
+2001-01-01 22:13  tgl
+
+	* src/test/regress/pg_regress.sh: Tweak temporary-installation
+	setup so that it doesn't break when the configured install --prefix
+	begins with /data/...
+
+2001-01-01 19:18  tgl
+
+	* src/test/regress/expected/geometry-alpha-precision.out: Update
+	geometry-alpha-precision.out per reports from Brent Verner and
+	Adriaan Joubert.
+
+2001-01-01 19:10  tgl
+
+	* configure, configure.in: Define HAVE_LIBZ only if we detect
+	<zlib.h> as well as libz.a/.so.  Otherwise, build falls over on a
+	machine with a non-devel RPM of libz.
+
+2001-01-01 17:35  tgl
+
+	* src/backend/commands/cluster.c: CLUSTER forgot to create a TOAST
+	table for the clustered relation.
+
+2001-01-01 17:33  tgl
+
+	* src/backend/catalog/heap.c: Ensure attcacheoff is written out as
+	-1 when writing pg_attribute tuples for a relation.  Needed to
+	prevent Assert failure in CLUSTER.
+
+2001-01-01 17:22  tgl
+
+	* src/backend/executor/execMain.c: Update comment.
+
+2000-12-31 18:34  tgl
+
+	* src/include/catalog/pg_operator.h: Mark geometric 'overlaps'
+	operators (&&) as self-commutative.
+
+2000-12-31 18:24  tgl
+
+	* src/bin/initdb/initdb.sh: Fix typo in error message.
+
+2000-12-31 14:38  tgl
+
+	* src/test/regress/pg_regress.sh: Don't say 'export PGHOST' or
+	'export PGPORT' unless we actually define those variables.  Some
+	shells will invent an empty-string definition in this case, which
+	is not what we want.
+
+2000-12-31 14:23  tgl
+
+	* src/interfaces/libpq/fe-connect.c: On further thought, we need a
+	defense against empty PGPORT here too.
+
+2000-12-31 14:15  tgl
+
+	* src/interfaces/libpq/fe-connect.c: Ignore PGPORT environment
+	variable if it is an empty string.
+
+2000-12-31 14:04  tgl
+
+	* src/backend/main/main.c: Reverse #if test to be defined(__osf__)
+	rather than not-any-of-a-lot- of-others.
+
+2000-12-31 07:57  petere
+
+	* src/bin/psql/tab-complete.c: Remove incorrect use of
+	rl_special_prefixes until further evaluation.
+
+2000-12-30 23:33  tgl
+
+	* src/: include/port/netbsd.h, backend/main/main.c: NetBSD/Alpha
+	porting fixes from tom@minnesota.com.
+
+2000-12-30 15:17  tgl
+
+	* src/backend/port/snprintf.c: Be more careful about the difference
+	between signed and unsigned ints.  Bug is revealed by OID regress
+	test on 64-bit platforms.
+
+2000-12-30 15:11  petere
+
+	* doc/src/sgml/advanced.sgml: Correct UNDER syntax.
+
+2000-12-30 15:00  petere
+
+	* doc/src/sgml/ref/create_table.sgml: Correct UNDER syntax.
+
+2000-12-30 13:11  petere
+
+	* doc/src/sgml/ref/pgaccess-ref.sgml: Refinements
+
+2000-12-30 12:48  petere
+
+	* src/interfaces/odbc/statement.c: Remove C++ comment.
+
+2000-12-30 11:19  vadim
+
+	* src/: backend/access/heap/heapam.c, backend/commands/vacuum.c,
+	backend/storage/page/bufpage.c, include/access/htup.h,
+	include/storage/bufpage.h: 1. WAL needs in zero-ed content of newly
+	initialized page.  2. Log record for PageRepaireFragmentation now
+	keeps array    of !LP_USED offnums to redo cleanup properly.
+
+2000-12-30 11:03  petere
+
+	* doc/src/sgml/runtime.sgml: Add mention of sysctl(8) for IPC
+	tuning on Linux.
+
+2000-12-30 10:47  petere
+
+	* src/bin/psql/command.c: Remove incorrect assert.
+
+2000-12-30 02:52  vadim
+
+	* src/backend/access/: heap/heapam.c, transam/xlog.c: Fixed
+	misprint in heap update WALoging.
+
+2000-12-30 02:10  ishii
+
+	* src/bin/pg_ctl/pg_ctl.sh: Imporve messages.
+
+2000-12-29 22:48  tgl
+
+	* src/test/regress/resultmap: Apparently, special float8 comparison
+	file for Alpha is only needed when using vendor cc, not gcc.
+
+2000-12-29 22:34  tgl
+
+	* src/include/storage/s_lock.h: Clean up spinlock assembly code
+	slightly (just cosmetic improvements) for Alpha gcc case.  For
+	Alpha non-gcc case, replace use of __INTERLOCKED_TESTBITSS_QUAD
+	builtin with __LOCK_LONG_RETRY and __UNLOCK_LONG.  The former does
+	not execute an MB instruction and therefore was guaranteed not to
+	work on multiprocessor machines.  The LOCK_LONG builtins produce
+	code that is the same in all essential details as the gcc assembler
+	code.
+
+2000-12-29 21:20  tgl
+
+	* src/backend/storage/ipc/ipc.c: Paranoia about possible values of
+	errno after a shmget/semget failure.  In theory we should always
+	get EEXIST if there's a key collision, but if the kernel code tests
+	error conditions in a weird order, perhaps EACCES or EIDRM could
+	occur too.
+
+2000-12-29 20:50  tgl
+
+	* src/pl/plpgsql/enable_plpgsql: Remove obsolete and unportable
+	enable_plpgsql script.	createlang has been the supported and
+	documented way to do this for a long time...
+
+2000-12-29 20:24  petere
+
+	* Makefile, src/Makefile, src/interfaces/python/GNUmakefile: Fix
+	unportable use of '!' in shell commands.
+
+2000-12-29 18:46  tgl
+
+	* src/interfaces/libpgtcl/pgtclCmds.c: column and tuple numbers
+	should be int not size_t.
+
+2000-12-29 17:31  tgl
+
+	* src/: backend/storage/buffer/s_lock.c, include/storage/s_lock.h,
+	backend/access/transam/xlog.c, backend/storage/buffer/bufmgr.c: Fix
+	failure in CreateCheckPoint on some Alpha boxes --- it's not OK to
+	assume that TAS() will always succeed the first time, even if the
+	lock is known to be free.  Also, make sure that code will
+	eventually time out and report a stuck spinlock, rather than
+	looping forever.  Small cleanups in s_lock.h, too.
+
+2000-12-29 16:47  vadim
+
+	* src/backend/access/nbtree/: nbtinsert.c, nbtpage.c: MUST update
+	(in-memory) data page BEFORE XLogInsert to log NEW page content if
+	WAL will decide to backup page.
+
+2000-12-29 16:39  tgl
+
+	* src/Makefile.global.in, configure, configure.in: stamp-h needs to
+	be made by config.status, not elsewhere, per recipe in Autoconf
+	manual.  In particular, touching it before creating config.status
+	is guaranteed to lose.
+
+2000-12-29 04:08  vadim
+
+	* src/backend/access/nbtree/nbtree.c: nbtree_xlog_newroot: set meta
+	flag in meta page opaque.
+
+2000-12-28 19:56  momjian
+
+	* src/interfaces/jdbc/org/postgresql/:
+	jdbc1/PreparedStatement.java, jdbc1/ResultSet.java,
+	jdbc2/PreparedStatement.java, jdbc2/ResultSet.java: Attached are
+	patches for two fixes to reduce memory usage by the JDBC drivers.
+	
+	The first fix fixes the PreparedStatement object to not allocate
+	unnecessary objects when converting native types to Stings.  The
+	old code used the following format:	    (new
+	Integer(x)).toString() whereas this can more efficiently be
+	occompilshed by:	 Integer.toString(x); avoiding the
+	unnecessary object creation.
+	
+	The second fix is to release some resources on the close() of a
+	ResultSet.  Currently the close() method on ResultSet is a noop. 
+	The purpose of the close() method is to release resources when the
+	ResultSet is no longer needed.	The fix is to free the tuples
+	cached by the ResultSet when it is closed (by clearing out the
+	Vector object that stores the tuples).	This is important for my
+	application, as I have a cache of Statement objects that I reuse. 
+	Since the Statement object maintains a reference to the ResultSet
+	and the ResultSet kept references to the old tuples, my cache was
+	holding on to a lot of memory.
+	
+	Barry Lind
+
+2000-12-28 13:34  petere
+
+	* contrib/rserv/Makefile: Qualify %.in rule to avoid triggering on
+	configure.in, repair unportable attempt to install more than one
+	file per 'install' invocation, clean up some other oddities.
+
+2000-12-28 09:00  vadim
+
+	* src/: backend/access/heap/heapam.c,
+	backend/access/nbtree/nbtinsert.c, backend/access/nbtree/nbtpage.c,
+	backend/access/nbtree/nbtree.c, backend/access/transam/xact.c,
+	backend/access/transam/xlog.c, backend/bootstrap/bootstrap.c,
+	backend/commands/sequence.c, backend/commands/vacuum.c,
+	backend/postmaster/postmaster.c, backend/storage/buffer/bufmgr.c,
+	backend/utils/init/globals.c, include/access/htup.h,
+	include/access/nbtree.h, include/access/xlog.h,
+	include/catalog/catversion.h, include/commands/sequence.h,
+	include/storage/bufmgr.h: New WAL version - CRC and data blocks
+	backup.
+
+2000-12-27 21:51  tgl
+
+	* src/backend/utils/adt/oid.c: Let's try this again on accepting
+	the correct range of Oid input values for 64-bit platforms ...
+
+2000-12-27 20:16  tgl
+
+	* doc/src/sgml/libpq.sgml: Correct erroneous documentation of
+	PQsetnonblocking().
+
+2000-12-27 19:59  tgl
+
+	* configure, configure.in, contrib/array/array_iterator.c,
+	src/backend/access/common/heaptuple.c,
+	src/backend/access/common/indextuple.c,
+	src/backend/access/common/printtup.c,
+	src/backend/access/common/tupdesc.c,
+	src/backend/access/heap/heapam.c, src/backend/catalog/catalog.c,
+	src/backend/catalog/heap.c, src/backend/executor/execTuples.c,
+	src/backend/executor/execUtils.c, src/backend/parser/parse_func.c,
+	src/backend/utils/adt/arrayfuncs.c,
+	src/backend/utils/cache/lsyscache.c, src/include/access/heapam.h,
+	src/include/access/htup.h, src/include/access/itup.h,
+	src/include/access/tupmacs.h, src/include/catalog/catalog.h,
+	src/include/catalog/pg_type.h, src/backend/commands/copy.c,
+	src/include/config.h.in: Fix portability problems recently exposed
+	by regression tests on Alphas.	1. Distinguish cases where a Datum
+	representing a tuple datatype is an OID from cases where it is a
+	pointer to TupleTableSlot, and make sure we use the right typlen in
+	each case.  2. Make fetchatt() and related code support 8-byte
+	by-value datatypes on machines where Datum is 8 bytes.	Centralize
+	knowledge of the available by-value datatype sizes in two macros in
+	tupmacs.h, so that this will be easier if we ever have to do it
+	again.
+
+2000-12-27 01:44  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.309 diff -r1.309 TODO 3c3 < Last updated:	     Sat
+	Dec 23 09:48:47 EST 2000 ---
+	> Last updated: 	Wed Dec 27 00:44:44 EST 2000
+	60a61,70
+	> * Add replication of distributed databases [replication]
+	>	o automatic fallover
+	>	o load balancing
+	>	o master/slave replication
+	>	o multi-master replication
+	>	o partition data across servers
+	>	o sample implementation in contrib/rserv
+	>	o queries across databases or servers (two-phase commit)
+	> * Point-in-time data recovery using backup and write-ahead log
+	> * Allow row re-use without vacuum(Vadim)
+	112c122 < * Make file in/out interface to TOAST columns ---
+	> * Make binary/file in/out interface for TOAST columns
+	122a133
+	> * Automatically create rules on views so they are updateable, per
+	SQL92
+	173c184 < * allow psql \d to show temporary table schema ---
+	> * allow psql \d to show temporary table structure
+	195d205 < * Add replication of distributed databases [replication]
+	200a211,212
+	> * Incremental backups
+	> * Allow SQL92 schemas
+	205d216 < * Allow row re-use without vacuum(Vadim) 229a241
+	> * Allow Java server-side programming
+	278a291
+	> * Automatically keep clustering on a table
+	329d341 < ›5~
+
+2000-12-26 16:47  petere
+
+	* doc/Makefile: Only install the integrated HTML documentation set
+	(not the individual books separately), in directory $(docdir)/html.
+
+2000-12-26 16:12  petere
+
+	* doc/src/sgml/release.sgml: Add id attribute to sect1 tag.
+
+2000-12-25 20:10  petere
+
+	* doc/src/sgml/: arch-dev.sgml, arch-pg.sgml, arch.sgml,
+	extend.sgml, libpq++.sgml, xfunc.sgml, xindex.sgml: Fix some cross
+	reference links.
+
+2000-12-25 19:15  petere
+
+	* doc/src/sgml/: reference.sgml, ref/alter_table.sgml,
+	ref/begin.sgml, ref/commit.sgml, ref/create_function.sgml,
+	ref/create_index.sgml, ref/create_table.sgml,
+	ref/create_table_as.sgml, ref/createdb.sgml, ref/createlang.sgml,
+	ref/createuser.sgml, ref/declare.sgml, ref/drop_aggregate.sgml,
+	ref/drop_function.sgml, ref/drop_index.sgml,
+	ref/drop_language.sgml, ref/drop_operator.sgml, ref/dropdb.sgml,
+	ref/droplang.sgml, ref/dropuser.sgml, ref/ecpg-ref.sgml,
+	ref/end.sgml, ref/fetch.sgml, ref/initdb.sgml, ref/insert.sgml,
+	ref/listen.sgml, ref/lock.sgml, ref/move.sgml, ref/pg_ctl-ref.sgml,
+	ref/pg_dump.sgml, ref/pg_dumpall.sgml, ref/pg_passwd.sgml,
+	ref/pg_restore.sgml, ref/pg_upgrade.sgml, ref/pgaccess-ref.sgml,
+	ref/pgadmin-ref.sgml, ref/pgtclsh.sgml, ref/pgtksh.sgml,
+	ref/postgres-ref.sgml, ref/postmaster.sgml, ref/psql-ref.sgml,
+	ref/reset.sgml, ref/revoke.sgml, ref/rollback.sgml,
+	ref/select_into.sgml, ref/show.sgml, ref/unlisten.sgml,
+	ref/update.sgml, ref/vacuumdb.sgml: Refine some things to create
+	better looking man pages.
+
+2000-12-23 15:55  tgl
+
+	* src/include/utils/rel.h: Improve comments.
+
+2000-12-23 14:49  tgl
+
+	* src/backend/optimizer/plan/createplan.c: Compute reasonable cost
+	and output-row-count estimates for LIMIT plan nodes.
+
+2000-12-23 12:24  petere
+
+	* doc/src/sgml/bki.sgml: Some of the stuff documented here hasn't
+	existed since Postgres95.
+
+2000-12-23 10:48  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.308 diff -r1.308 TODO 3c3 < Last updated:	     Thu
+	Dec 21 14:45:00 EST 2000 ---
+	> Last updated: 	Sat Dec 23 09:48:47 EST 2000
+	72a73
+	> * Remove unused files during database vacuum or postmaster
+	startup
+
+2000-12-23 07:10  petere
+
+	* doc/src/sgml/keys.sgml: Remove unused file (the information is
+	already contained elsewhere).
+
+2000-12-23 00:05  tgl
+
+	* src/backend/utils/adt/formatting.c: Replace overly-cute coding
+	with code that (a) has defined behavior according to the ANSI C
+	spec, (b) gets the boundary conditions right, and (c) is about a
+	third as long and three times more intelligible.
+
+2000-12-22 19:12  tgl
+
+	* src/: backend/catalog/heap.c, backend/catalog/index.c,
+	backend/commands/command.c, backend/commands/creatinh.c,
+	backend/commands/vacuum.c, backend/utils/cache/relcache.c,
+	backend/utils/cache/temprel.c, include/utils/temprel.h: Small
+	cleanup of temp-table handling.  Disallow creation of a non-temp
+	table that inherits from a temp table.	Make sure the right things
+	happen if one creates a temp table, creates another temp that
+	inherits from it, then renames the first one.  (Previously, system
+	would end up trying to delete the temp tables in the wrong order.)
+
+2000-12-22 17:51  petere
+
+	* doc/src/sgml/: charset.sgml, compiler.sgml, cvs.sgml,
+	datetime.sgml, ecpg.sgml, geqo.sgml, gist.sgml, history.sgml,
+	indexcost.sgml, indices.sgml, info.sgml, jdbc.sgml, keys.sgml,
+	libpgeasy.sgml, lisp.sgml, mvcc.sgml, notation.sgml, odbc.sgml,
+	problems.sgml, protocol.sgml, release.sgml, y2k.sgml: Make use of
+	<email> tag for marking up email addresses.
+
+2000-12-22 17:36  tgl
+
+	* src/: backend/utils/adt/oid.c, include/postgres_ext.h: Repair
+	not-too-well-thought-out code to do rangechecking of OIDs on 64-bit
+	machines.  Also, make oidvectorin use the same code as oidin.
+
+2000-12-22 16:04  vadim
+
+	* src/backend/storage/buffer/bufmgr.c: Avoid XLogFlush for clean
+	buffers in BufferSync.
+
+2000-12-22 15:31  petere
+
+	* doc/src/sgml/: arch-pg.sgml, arch.sgml, notation.sgml,
+	query.sgml: Avoid using the terms 'installation', 'site', or
+	'instance' when referring to the thing you get from running initdb.
+	 That's called a database cluster (per SQL).
+
+2000-12-22 15:21  tgl
+
+	* src/backend/catalog/heap.c: Improve error message for case where
+	DROP TABLE is rejected because table has a child table.
+
+2000-12-22 14:57  petere
+
+	* doc/src/sgml/: advanced.sgml, arch-dev.sgml, bki.sgml,
+	catalogs.sgml, cvs.sgml, datatype.sgml, docguide.sgml,
+	indices.sgml, installation.sgml, jdbc.sgml, keys.sgml,
+	libpq++.sgml, libpq.sgml, odbc.sgml, page.sgml, plperl.sgml,
+	plsql.sgml, query.sgml, regress.sgml, spi.sgml, syntax.sgml,
+	trigger.sgml, typeconv.sgml, xfunc.sgml: Replace incorrect uses of
+	'which' with 'that'.  (so-called "wicked which")
+
+2000-12-22 14:35  tgl
+
+	* src/backend/utils/adt/ri_triggers.c: Add 'ONLY' to queries
+	generated by RI triggers, so as to preserve pre-7.1 semantics of RI
+	operations.  Eventually we ought to look at making RI work properly
+	across inheritance trees, but not for 7.1 ...
+
+2000-12-22 14:06  tgl
+
+	* doc/src/sgml/runtime.sgml: Fix broken markup.
+
+2000-12-22 14:00  tgl
+
+	* src/include/catalog/pg_proc.h, src/include/utils/builtins.h,
+	src/backend/utils/adt/network.c,
+	src/test/regress/expected/inet.out, doc/src/sgml/datatype.sgml,
+	doc/src/sgml/func.sgml: Change default output formatting for CIDR
+	to be unabbreviated, per recommendation from Paul Vixie.  Add a new
+	abbrev() function to produce abbreviated format as text.  No forced
+	initdb, but new function is not available unless you do an initdb
+	or add the pg_proc row manually.
+
+2000-12-22 08:43  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, preproc/preproc.y,
+	test/Makefile, test/test4.pgc: - Fixed bug in a connect statement
+	using varchars.  - Synced parser.
+
+2000-12-22 03:59  ishii
+
+	* src/interfaces/libpq/fe-connect.c: Fix PQsetdbLogin() backward
+	compatibility problem.
+	
+	If pghost == "" and pgport == "" then PQsetdbLogin() fails with a
+	error message:
+	
+	 Is the postmaster running locally
+		and accepting connections on Unix socket '/tmp/.s.PGSQL.0'?
+	
+	I see many applications such as PHP fails due to this behavior. 
+	Now if pgport == "", then it is assumed to be a DEF_PGPORT_STR.
+	This is the same behavior as the version prior 7.1.
+
+2000-12-22 03:07  tgl
+
+	* src/backend/parser/gram.y: Clean up CREATE
+	TYPE/OPERATOR/AGGREGATE productions, so that parser will not accept
+	types named with operator names or vice versa.
+
+2000-12-21 23:08  momjian
+
+	* src/interfaces/jdbc/org/postgresql/Connection.java: In looking at
+	the 7.1beta1 code for JDBC, I noticed that support was added to
+	support character set encodings.  However I noticed that the
+	encoding that is used isn't obtained from the DB.  Since Java uses
+	unicode UCS2 internally the character set encoding is used to
+	translate strings from/to the DB encoding.  So it seems logical
+	that the code would get the encoding from the DB instead of the
+	current method of requiring the user pass it as a parameter.
+	
+	Attached is a patch that gets the DB encoding from the DB in the
+	same manner as is done in libpq/fe-connect.c.  The patch is created
+	off of the latest CVS sources (Connection.java version 1.10).
+	
+	Barry Lind
+
+2000-12-21 20:51  tgl
+
+	* contrib/userlock/user_locks.c, src/backend/access/transam/xact.c,
+	src/backend/commands/vacuum.c, src/backend/storage/ipc/ipci.c,
+	src/backend/storage/lmgr/README, src/backend/storage/lmgr/lmgr.c,
+	src/backend/storage/lmgr/lock.c, src/backend/storage/lmgr/proc.c,
+	src/include/storage/lmgr.h, src/include/storage/lock.h,
+	src/include/storage/proc.h: Revise lock manager to support "session
+	level" locks as well as "transaction level" locks.  A session lock
+	is not released at transaction commit (but it is released on
+	transaction abort, to ensure recovery after an elog(ERROR)).  In
+	VACUUM, use a session lock to protect the master table while
+	vacuuming a TOAST table, so that the TOAST table can be done in an
+	independent transaction.
+	
+	I also took this opportunity to do some cleanup and renaming in the
+	lock code.  The previously noted bug in ProcLockWakeup, that it
+	couldn't wake up any waiters beyond the first non-wakeable waiter,
+	is now fixed.  Also found a previously unknown bug of the same kind
+	(failure to scan all members of a lock queue in some cases) in
+	DeadLockCheck.	This might have led to failure to detect a deadlock
+	condition, resulting in indefinite waits, but it's difficult to
+	characterize the conditions required to trigger a failure.
+
+2000-12-21 18:55  petere
+
+	* doc/src/sgml/: arch-dev.sgml, cvs.sgml, datetime.sgml,
+	history.sgml, jdbc.sgml, lobj.sgml, notation.sgml, protocol.sgml,
+	release.sgml, syntax.sgml, xfunc.sgml: Get rid of the little "v"s
+	in front of version numbers, substituting the full word "version"
+	where appropriate.
+
+2000-12-21 18:30  petere
+
+	* doc/src/sgml/install-win32.sgml: Updates
+
+2000-12-21 16:48  petere
+
+	* src/include/catalog/pg_proc.h: Repair round(numeric) function. 
+	An initdb would be required to get the fixed version, otherwise
+	you'll continue to encounter breakage.
+
+2000-12-21 15:45  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.307 diff -r1.307 TODO 3c3 < Last updated:	     Thu
+	Dec 21 14:12:04 EST 2000 ---
+	> Last updated: 	Thu Dec 21 14:45:00 EST 2000
+	32d31 < * Prevent BETWEEN from using duplicate nodes
+
+2000-12-21 15:12  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.306 diff -r1.306 TODO 3c3 < Last updated:	     Fri
+	Dec 15 17:44:57 EST 2000 ---
+	> Last updated: 	Thu Dec 21 14:12:04 EST 2000
+	31a32
+	> * Prevent BETWEEN from using duplicate nodes
+
+2000-12-21 15:08  momjian
+
+	* doc/src/sgml/runtime.sgml:   >openssl req -new -text -out
+	cert.req (you will have to enter a password)
+	  >mv privkey.pem cert.pem.pw
+	  >openssl rsa -in cert.pem.pw -out cert.pem  (this removes the
+	password)
+	  >openssl req -x509 -in cert.req -text -key cert.pem -out
+	cert.cert
+	
+	then
+	
+	  cp cert.pem $PGDATA/server.key
+	  cp cert.cert $PGDATA/server.crt
+	
+	Thank you; this works.
+	
+	Oliver Elphick
+
+2000-12-21 14:47  momjian
+
+	* doc/src/sgml/libpq.sgml: responce->response
+	
+	Alfred Perlstein
+
+2000-12-21 13:36  tgl
+
+	* src/backend/commands/view.c: Fix longstanding bug with VIEW using
+	BETWEEN: OffsetVarNodes would get applied to the duplicated subtree
+	twice.	Probably someday we should fix the parser not to generate
+	multiple links to the same subtree, but for now a quick
+	copyObject() is the path of least resistance.
+
+2000-12-21 11:28  thomas
+
+	* contrib/rserv/regress.sh: Rename undocumented utility SyncSyncID
+	to MasterSync.
+
+2000-12-21 11:26  thomas
+
+	* contrib/rserv/: GetSyncID.in, Makefile, MasterSync.in,
+	README.rserv, SlaveInit.in, SyncSyncID.in: Rename undocumented
+	utility SyncSyncID to MasterSync.  Document MasterSync.  Fix up a
+	couple of print statements to respect $verbose and $debug.
+
+2000-12-20 18:54  tgl
+
+	* src/backend/storage/lmgr/: multi.c, single.c: Remove multi.c and
+	single.c, which have been dead code for over two years.
+
+2000-12-20 17:51  tgl
+
+	* src/backend/: postmaster/postmaster.c, tcop/postgres.c: Prevent
+	freshly-started backend from ignoring SIGUSR1, per race condition
+	observed by Inoue.  Also, don't call ProcRemove() from postmaster
+	if we have detected a backend crash --- too risky if shared memory
+	is corrupted.  It's not needed anyway, considering we are going to
+	reinitialize shared memory and semaphores as soon as the last child
+	is dead.
+
+2000-12-20 13:23  thomas
+
+	* doc/src/sgml/installation.sgml: Update info for BeOS and
+	MacOS-X-darwin as supported platforms.
+
+2000-12-20 13:22  thomas
+
+	* contrib/rserv/: ApplySnapshot.in, CleanLog.in, GetSyncID.in,
+	InitRservTest.in, Makefile, MasterAddTable.in, MasterInit.in,
+	PrepareSnapshot.in, README.rserv, RServ.pm, Replicate.in,
+	RservTest.in, SlaveAddTable.in, SlaveInit.in, SyncSyncID.in,
+	master.sql.in, regress.sh, rserv.c, slave.sql.in: rserv replication
+	toolkit from Vadim Mikheev.
+
+2000-12-20 13:22  thomas
+
+	* contrib/Makefile: Add rserv replication toolkit from Vadim
+	Mikheev.
+
+2000-12-20 13:20  thomas
+
+	* contrib/mysql/mysql2pgsql: Utility to convert MySQL schema dumps
+	to SQL92 and PostgreSQL conventions.
+
+2000-12-20 12:22  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, build.xml,
+	org/postgresql/Driver.java.in, utils/buildDriver: Finished
+	build.xml and updated Driver.java.in and buildDriver to match how
+	Makefile and ANT operate.
+
+2000-12-20 11:43  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Fix typo.
+
+2000-12-19 23:19  momjian
+
+	* doc/src/sgml/ref/alter_table.sgml: On Sunday 17 December 2000
+	15:07, Bruce Momjian wrote:
+	> We need additions to alter_table.sgml for the new OWNER option
+	mention
+	> in the features list.
+	
+	Here it is.
+	
+	-- Mark Hollomon
+
+2000-12-19 23:02  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Add mention of Alpha
+
+2000-12-19 22:15  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Holloman -> Hollomon.  Sorry.
+
+2000-12-19 20:44  ishii
+
+	* doc/src/sgml/charset.sgml: Add description about automatic
+	encoding conversion between Unicode and other encodings.
+
+2000-12-19 18:12  petere
+
+	* doc/src/sgml/ref/pg_dumpall.sgml, src/bin/pg_dump/pg_dumpall.sh:
+	Rename --accounts-only to --globals-only, polish documentation.
+
+2000-12-19 14:16  petere
+
+	* doc/src/sgml/plperl.sgml, src/pl/plperl/README: Polish PL/Perl
+	documentation.	The README file got shrunk to being a pointer into
+	the real documentation.
+
+2000-12-19 13:52  petere
+
+	* src/interfaces/odbc/: bind.c, columninfo.c, environ.c,
+	tuplelist.c: Remove inclusions of <malloc.h>.
+
+2000-12-19 13:35  petere
+
+	* doc/src/sgml/func.sgml: Correct results of usage examples.
+
+2000-12-19 13:33  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, build.xml,
+	utils/CheckVersion.java: Finally created ant build.xml file
+
+2000-12-18 20:54  tgl
+
+	* doc/src/sgml/typeconv.sgml: Mention fallback case for type
+	coercion in description of function resolution procedure.
+
+2000-12-18 19:39  tgl
+
+	* doc/src/sgml/: advanced.sgml, array.sgml, syntax.sgml: Document
+	the array_dims() function, and make some other small improvements
+	in the docs for arrays.
+
+2000-12-18 14:45  momjian
+
+	* src/: backend/access/transam/xlog.c, backend/port/beos/sem.c,
+	backend/port/dynloader/beos.c, backend/postmaster/postmaster.c,
+	backend/tcop/postgres.c, include/port/beos.h: >>     Here is a
+	patch for the beos port (All regression tests are OK).
+	>>     xlog.c : special case for beos to avoid 'link' which does
+	not work yet
+	>>     beos/sem.c : implementation of new sem_ctl call (GETPID) and
+	a new
+	>sem_op
+	>> flag (IPCNOWAIT)
+	>>     dynloader/beos.c : add a verification of symbol validity
+	(seem that
+	the
+	>> loader sometime return OK with an invalid symbol)
+	>>     postmaster.c :  add beos forking support for the new
+	checkpoint
+	process
+	>>     postgres.c : remove beos special case for getrusage
+	>>     beos.h : Correction of a bas definition of AF_UNIX, misc
+	defnitions
+	>>
+	>>
+	>>     thanks
+	>>
+	>>
+	>>	       cyril
+	
+	Cyril VELTER
+
+2000-12-18 13:33  tgl
+
+	* src/: backend/commands/async.c, backend/postmaster/postmaster.c,
+	backend/storage/lmgr/proc.c, backend/tcop/postgres.c,
+	interfaces/libpq/fe-connect.c, bin/psql/common.c: Ensure that
+	'errno' is saved and restored by all signal handlers that might
+	change it.  Experimentation shows that the signal handler call
+	mechanism does not save/restore errno for you, at least not on
+	Linux or HPUX, so this is definitely a real risk.
+
+2000-12-18 12:30  momjian
+
+	* register.txt, src/bin/pg_dump/pg_upgrade: Updates for 7.1
+	branding.
+
+2000-12-18 07:33  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, include/ecpglib.h,
+	include/ecpgtype.h, lib/data.c, lib/execute.c, preproc/keywords.c,
+	preproc/preproc.y:	   - Synced gram.y and preproc.y.
+		- Synced keyword.c.
+		- Added several small patches from Christof.
+
+2000-12-18 02:50  tgl
+
+	* src/backend/optimizer/path/joinrels.c: Make sure
+	make_rels_by_clause_joins doesn't return multiple references to
+	same joinrel.  Although make_rels_by_joins doesn't mind, GEQO has
+	an Assert that doesn't like this.
+
+2000-12-18 00:32  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Large objects in single
+	"table".
+
+2000-12-18 00:20  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Updates from Tom Lane.
+
+2000-12-18 00:07  momjian
+
+	* HISTORY: Fix upgrade mention to 7.1.
+
+2000-12-17 22:45  tgl
+
+	* src/test/regress/regressplans.sh: Tweak regressplans.sh to use
+	any already-set PGOPTIONS.
+
+2000-12-17 21:37  tgl
+
+	* src/backend/parser/analyze.c: Repair mishandling of PRIMARY KEY
+	declaration that references an inherited column, per bug report
+	from Elphick 12/15/00.
+
+2000-12-17 20:44  tgl
+
+	* src/: backend/access/transam/xact.c,
+	backend/access/transam/xlog.c, backend/commands/trigger.c,
+	backend/libpq/pqcomm.c, backend/storage/buffer/buf_init.c,
+	backend/storage/lmgr/proc.c, backend/tcop/postgres.c,
+	backend/utils/error/elog.c, backend/utils/init/postinit.c,
+	include/access/xlog.h, include/commands/trigger.h,
+	include/libpq/libpq.h, include/storage/bufmgr.h,
+	include/utils/elog.h: Clean up backend-exit-time cleanup behavior. 
+	Use on_shmem_exit callbacks to ensure that we have released buffer
+	refcounts and so forth, rather than putting ad-hoc operations
+	before (some of the calls to) proc_exit.  Add commentary to
+	discourage future hackers from repeating that mistake.
+
+2000-12-17 13:50  petere
+
+	* doc/src/sgml/typeconv.sgml: Add missing tags.
+
+2000-12-17 07:25  petere
+
+	* doc/src/sgml/version.sgml: Bump version to 7.1.  (No "beta1",
+	since we're just going to forget to change it again anyway.)
+
+2000-12-17 07:22  petere
+
+	* doc/src/sgml/runtime.sgml: Update SysV IPC information.
+
+2000-12-17 01:55  tgl
+
+	* doc/src/sgml/: func.sgml, typeconv.sgml: Update type-coercion
+	discussions to reflect current reality.
+
+2000-12-17 01:50  tgl
+
+	* doc/src/sgml/array.sgml: Misc. cleanups.
+
+2000-12-17 01:47  tgl
+
+	* doc/src/sgml/syntax.sgml: Outer join updates, miscellaneous
+	polishing.
+
+2000-12-17 00:32  tgl
+
+	* src/backend/parser/parse_coerce.c: Tweak select_common_type() to
+	deal with possibility of multiple preferred types in a category ---
+	it was taking the last preferred type among the inputs, rather than
+	the first one as intended.
+
+2000-12-16 18:44  tgl
+
+	* doc/src/sgml/geqo.sgml: Update some obsolete info about GEQO.
+
+2000-12-16 16:12  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Add 7.1 features list
+
+2000-12-16 15:33  tgl
+
+	* doc/src/sgml/func.sgml: A little wordsmithing in the
+	pattern-matching section.
+
+2000-12-16 14:33  tgl
+
+	* doc/src/sgml/func.sgml: Add note that COALESCE and NULLIF are
+	shorthand forms of CASE.
+
+2000-12-16 14:22  tgl
+
+	* doc/src/sgml/syntax.sgml: Clean up some bogosities in description
+	of target lists.
+
+2000-12-16 14:14  petere
+
+	* src/: interfaces/odbc/GNUmakefile, makefiles/Makefile.bsdi,
+	makefiles/Makefile.freebsd, makefiles/Makefile.irix5,
+	makefiles/Makefile.linux, makefiles/Makefile.netbsd,
+	makefiles/Makefile.openbsd, makefiles/Makefile.solaris,
+	makefiles/Makefile.unixware: Fix linker options for ODBC driver. 
+	See comment in src/interfaces/odbc/GNUmakefile.
+
+2000-12-16 09:03  petere
+
+	* configure, configure.in, src/Makefile.global.in: Fix rules to
+	re-generate config.h.  The examples in the Autoconf manual are
+	flawed because the timestamp file is already updated when
+	Makefile.global is remade, and the rule for config.h never gets
+	run.
+
+2000-12-15 22:29  tgl
+
+	* doc/src/sgml/: filelist.sgml, perform.sgml, plan.sgml,
+	populate.sgml, user.sgml: Restructure performance tips into a
+	single chapter ('populating a database' was way too small to make a
+	chapter).  Add a section about using JOIN syntax to direct the
+	planner.
+
+2000-12-15 19:36  momjian
+
+	* src/: backend/parser/keywords.c,
+	interfaces/ecpg/preproc/keywords.c: Remove current->old mapping.
+
+2000-12-15 18:45  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.305 diff -r1.305 TODO 3c3 < Last updated:	     Fri
+	Dec 15 17:40:22 EST 2000 ---
+	> Last updated: 	Fri Dec 15 17:44:57 EST 2000
+	312a313
+	>	* Mark is Mark Hollomon <mhh@mindspring.com>
+	326a328
+	> ›5~
+
+2000-12-15 18:40  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.304 diff -r1.304 TODO 3c3 < Last updated:	     Fri
+	Dec 15 17:03:28 EST 2000 ---
+	> Last updated: 	Fri Dec 15 17:40:22 EST 2000
+	318a319
+	>	* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
+
+2000-12-15 18:03  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.303 diff -r1.303 TODO 3c3 < Last updated:	     Fri
+	Dec 15 16:46:43 EST 2000 ---
+	> Last updated: 	Fri Dec 15 17:03:28 EST 2000
+	319a320
+	>	* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
+
+2000-12-15 17:46  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.302 diff -r1.302 TODO 3c3 < Last updated:	     Tue
+	Dec 12 23:01:53 EST 2000 ---
+	> Last updated: 	Fri Dec 15 16:46:43 EST 2000
+
+2000-12-15 17:46  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.301 diff -r1.301 TODO 306d305 <   * Bryan is Bryan
+	Henderson<bryanh@giraffe.netgate.net> 308d306 <        * David is
+	David Hartwig <daveh@insightdist.com> 311c309,310 <  * Hiroshi is
+	Hiroshi Inoue<Inoue@tpf.co.jp> ---
+	>	* Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
+	>	* Karel is Karel Zak <zakkr@zf.jcu.cz>
+	314c313 <	* Massimo Dal Zotto <dz@cs.unitn.it> ---
+	>	* Massimo is Massimo Dal Zotto <dz@cs.unitn.it>
+	318c317 <	* Philip Warner <pjw@rhyme.com.au> ---
+	>	* Philip is Philip Warner <pjw@rhyme.com.au>
+	321d319 <	* Stefan Simkovics
+	<ssimkovi@rainbow.studorg.tuwien.ac.at> 326c324 <    * Vadim is
+	"Vadim B. Mikheev" <vadim4o@email.com> ---
+	>	* Vadim is Vadim B. Mikheev <vadim4o@email.com>
+
+2000-12-15 16:01  momjian
+
+	* doc/FAQ_german, doc/src/FAQ/FAQ_german.html,
+	src/bin/pgaccess/lib/help/create_database.hlp,
+	src/interfaces/ecpg/preproc/descriptor.c,
+	src/interfaces/ecpg/preproc/pgc.l,
+	src/interfaces/ecpg/preproc/preproc.y,
+	src/interfaces/ecpg/preproc/type.h: Change ET_WARN to ET_NOTICE to
+	match internal codes, leave message as WARNING.  Fix German FAQ
+	mention about warning.
+
+2000-12-15 15:22  tgl
+
+	* src/backend/parser/: parse_func.c, parse_oper.c: Make algorithm
+	for resolving UNKNOWN function/operator inputs be insensitive to
+	the order of arguments.  Per pghackers discussion 12/10/00.
+
+2000-12-15 15:15  momjian
+
+	* src/backend/utils/adt/formatting.c: here is a patch fixing
+	today's bug report:
+	
+	> Date: Thu, 14 Dec 2000 12:44:47 +0100 (CET)
+	> From: Kovacs Zoltan Sandor <tip@pc10.radnoti-szeged.sulinet.hu>
+	> To: pgsql-bugs@postgresql.org
+	> Subject: [BUGS] to_char() causes backend to close connection
+	>
+	> Hi, this query gives different strange results:
+	>
+	> select to_char(now()::abstime,'YYMMDDHH24MI');
+	>
+	> I get e.g. a "backend closed the channel unexpectedly..." error
+	with
+	> successful or failed resetting attempt (indeterministic)
+	
+	 Again thanks Kovacs, you found really designing bug, that appear
+	if anyone write bad format template to "number" version of
+	to_char() (as you with 'DD').
+	
+						Karel
+
+2000-12-15 15:11  momjian
+
+	* src/interfaces/odbc/: options.c, statement.c: there is one
+	problem with Zoltan patches commited into the tree: if we set
+	autocommit off and issued COMMIT (or ROLLBACK) on a connection new
+	transaction is not started
+	
+	Max Khon
+
+2000-12-15 14:50  petere
+
+	* src/pl/tcl/Makefile: List .o file explicitly as dependency, to
+	work around a gmake bug (intermediate .o file gets deleted and
+	rebuild on next make invocation).
+
+2000-12-15 14:02  tgl
+
+	* src/backend/parser/parse_coerce.c: Remove obsolete comment.
+
+2000-12-15 13:54  petere
+
+	* src/bin/psql/common.c: Print the error message before attempting
+	to reset the connection after a backend crash.
+
+2000-12-15 00:08  tgl
+
+	* src/: backend/commands/indexcmds.c, backend/commands/remove.c,
+	include/commands/command.h: Remove a few remaining vestiges of
+	elog(WARN).
+
+2000-12-14 19:51  wieck
+
+	* src/backend/utils/init/postinit.c: Bugfix
+	
+	Trying to connect to template0 left a global referenced buffer
+	because the scan of pg_database wasn't ended properly before
+	elog(FATAL).
+	
+	Jan
+
+2000-12-14 18:30  petere
+
+	* doc/src/sgml/: Makefile, datatype.sgml, filelist.sgml, func.sgml,
+	oper.sgml, syntax.sgml, user.sgml: Merge functions and operators
+	chapters.  Lots of updates.
+
+2000-12-14 18:30  tgl
+
+	* src/: backend/nodes/copyfuncs.c, backend/nodes/equalfuncs.c,
+	backend/nodes/readfuncs.c, backend/optimizer/path/allpaths.c,
+	backend/optimizer/path/indxpath.c,
+	backend/optimizer/path/joinpath.c,
+	backend/optimizer/path/pathkeys.c,
+	backend/optimizer/plan/initsplan.c,
+	backend/optimizer/plan/planner.c,
+	backend/optimizer/prep/prepunion.c,
+	backend/optimizer/util/pathnode.c, include/nodes/relation.h,
+	backend/optimizer/README, include/optimizer/pathnode.h,
+	include/optimizer/paths.h, test/regress/expected/join.out: Planner
+	speedup hacking.  Avoid saving useless pathkeys, so that path
+	comparison does not consider paths different when they differ only
+	in uninteresting aspects of sort order.  (We had a special case of
+	this consideration for indexscans already, but generalize it to
+	apply to ordered join paths too.)  Be stricter about what is a
+	canonical pathkey to allow faster pathkey comparison.  Cache
+	canonical pathkeys and dispersion stats for left and right sides of
+	a RestrictInfo's clause, to avoid repeated computation.  Total
+	speedup will depend on number of tables in a query, but I see about
+	4x speedup of planning phase for a sample seven-table query.
+
+2000-12-14 03:02  inoue
+
+	* src/backend/catalog/indexing.c: Make sure to not handle
+	deactivated system indexes
+
+2000-12-13 20:41  tgl
+
+	* src/backend/commands/creatinh.c: Change StoreCatalogInheritance()
+	to work from a list of parent relation OIDs rather than names. 
+	Aside from being simpler and faster, this way doesn't blow up in
+	the face of 'create temp table foo () inherits (foo)'.	Which is a
+	rather odd thing to do, but it seems some people want to.
+
+2000-12-13 19:45  tgl
+
+	* src/backend/executor/nodeMergejoin.c: Fix thinko for case of
+	outer join where inner table is empty: should output first outer
+	tuple before advancing...
+
+2000-12-13 00:02  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.300 diff -r1.300 TODO 3c3 < Last updated:	     Tue
+	Dec 12 23:01:04 EST 2000 ---
+	> Last updated: 	Tue Dec 12 23:01:53 EST 2000
+	21d20 < * test to show diffs for TODO changes
+
+2000-12-13 00:01  momjian
+
+	* doc/TODO: Update TODO list.
+	
+	Index: TODO
+	===================================================================
+	RCS file: /home/projects/pgsql/cvsroot/pgsql/doc/TODO,v retrieving
+	revision 1.299 diff -r1.299 TODO 3c3 < Last updated:	     Tue
+	Dec 12 15:27:50 EST 2000 ---
+	> Last updated: 	Tue Dec 12 23:01:04 EST 2000
+	20a21
+	> * test to show diffs for TODO changes
+
+2000-12-12 19:33  tgl
+
+	* src/: backend/nodes/copyfuncs.c, include/nodes/relation.h,
+	backend/nodes/equalfuncs.c, backend/nodes/readfuncs.c,
+	backend/optimizer/path/costsize.c,
+	backend/optimizer/plan/initsplan.c,
+	backend/optimizer/prep/prepunion.c: Cache eval cost of
+	qualification expressions in RestrictInfo nodes to avoid repeated
+	evaluations in cost_qual_eval().  This turns out to save a useful
+	fraction of planning time.  No change to external representation of
+	RestrictInfo --- although that node type doesn't appear in stored
+	rules anyway.
+
+2000-12-12 16:28  momjian
+
+	* doc/TODO: Update TODO list.
+
+2000-12-12 12:47  momjian
+
+	* doc/src/sgml/: query.sgml, ref/create_rule.sgml: In 'Joins
+	between classes' in Section 5 of the tutorial we have, in the first
+	paragraph:
+	
+	    As an example, say we wish to find all the records that
+	    are in the	temperature  range  of	other records. In
+	    effect, we need to compare the temp_lo and temp_hi
+	    attributes of each EMP instance to the temp_lo and
+	    temp_hi  attributes of all other EMP instances.
+	
+	I believe that EMP should read WEATHER, as the example query that
+	follows joins WEATHER to itself.
+	
+	EMP is often used in Oracle examples.
+	
+	Regards, Graham
+	
+	Other RULE cleanups
+
+2000-12-12 01:07  tgl
+
+	* doc/src/sgml/: rules.sgml, sql.sgml, ref/select.sgml,
+	ref/select_into.sgml: Revise SELECT reference page for outer joins,
+	subselect in FROM, ISO-compliant UNION/INTERSECT/EXCEPT.  Revise
+	discussion of rule rewriter to reflect new subselect-in-FROM
+	implementation of views.  Miscellaneous other cleanups.
+
+2000-12-11 16:40  tgl
+
+	* contrib/: Makefile, README: Links to CUBE, SEG contrib items
+
+2000-12-11 16:40  tgl
+
+	* contrib/seg/: Makefile, README.seg, buffer.c, buffer.h,
+	seg-validate.pl, seg.c, seg.sql.in, segdata.h, segparse.y,
+	segscan.l, sort-segments.pl, data/test_seg.data, expected/seg.out,
+	sql/seg.sql: Gene Selkov's SEG datatype (GiST example code)
+
+2000-12-11 16:39  tgl
+
+	* contrib/cube/: Makefile, README.cube, buffer.c, buffer.h, cube.c,
+	cube.sql.in, cubedata.h, cubeparse.y, cubescan.l,
+	data/test_cube.data, expected/cube.out, sql/cube.sql: Gene Selkov's
+	CUBE datatype (GiST example code)
+
+2000-12-11 15:27  vadim
+
+	* src/backend/access/transam/xlog.c: Remove elog for online log
+	files.
+
+2000-12-11 15:06  momjian
+
+	* src/interfaces/odbc/: isql.h, psqlodbc.h: Make all ODBCVER = 2.50
+
+2000-12-11 15:00  tgl
+
+	* src/test/regress/pg_regress.sh: Allow resultmap file to be
+	missing, for use in contrib self-tests.
+
+2000-12-11 14:51  momjian
+
+	* src/interfaces/odbc/: info.c, isql.h, psqlodbc.h: Fix ODBC
+	compile, prevent ODBCVER warning, though the version numbers go not
+	match.
+
+2000-12-11 14:26  momjian
+
+	* doc/src/sgml/catalogs.sgml: Change to Negator.
+
+2000-12-11 14:02  vadim
+
+	* src/backend/access/transam/xlog.c: elog(LOG)-->elog(DEBUG) for
+	skipped logs.
+
+2000-12-11 12:45  tgl
+
+	* src/test/regress/: resultmap,
+	expected/geometry-powerpc-darwin.out: Add Darwin-specific geometry
+	test file.
+
+2000-12-11 12:35  tgl
+
+	* src/backend/storage/lmgr/proc.c: Tweak Darwin patch to get right
+	include order.
+
+2000-12-11 05:14  inoue
+
+	* src/backend/access/heap/heapam.c: Resolve complie error(was my
+	fault).
+
+2000-12-11 01:25  inoue
+
+	* src/backend/access/heap/heapam.c: *redo: Heap move* neglects to
+	set t_cmin for MOVED_IN tuples.
+
+2000-12-11 01:00  ishii
+
+	* src/backend/utils/adt/like.c: Fix ILIKE bug (only in multi-byte
+	case)
+
+2000-12-10 21:44  momjian
+
+	* doc/TODO: Update TODO list.
+
+2000-12-10 20:49  tgl
+
+	* src/: backend/storage/buffer/s_lock.c, backend/storage/ipc/ipc.c,
+	backend/storage/ipc/spin.c, backend/storage/lmgr/proc.c,
+	makefiles/Makefile.darwin, include/port/darwin.h,
+	include/port/darwin/sem.h, template/darwin,
+	backend/port/Makefile.in, backend/port/darwin/Makefile,
+	backend/port/darwin/sem.c, backend/port/dynloader/darwin.c,
+	backend/port/dynloader/darwin.h: Darwin porting patches from Peter
+	Bierman <bierman@apple.com>
+
+2000-12-10 19:54  momjian
+
+	* src/interfaces/odbc/psqlodbc.h: Here is patch to the ODBC driver
+	to update the version to 2.5 and allow all forms of foreign keys be
+	exposed to SQLForeignKeys.  This patch is in addition to the ones I
+	mailed yesterday (forget had I changed that as well....)
+	
+	Michael Fork - CCNA - MCP - A+ Network Support - Toledo Internet
+	Access - Toledo Ohio
+
+2000-12-10 18:59  momjian
+
+	* src/interfaces/odbc/info.c: Here is a diff to info.c in
+	interfaces/odbc that updates SQLForeignKeys to return foreign key
+	information based on the pg_trigger system table.  I have tested
+	the patch with (what I believe) is all possible primary/foreign key
+	combinations -- however I may have missed some, so if anyone feels
+	like taking the patch for a test drive, here are some useful links:
+	
+	Michael Fork
+
+2000-12-10 18:37  momjian
+
+	* doc/src/sgml/catalogs.sgml: Backout right-hand/left-hand.
+
+2000-12-10 18:35  momjian
+
+	* doc/src/sgml/catalogs.sgml: in catalog.sgml line 1324:
+	"left-hand" should be "right-hand"
+	
+	BTW: new document looks very good! And the new configure/build
+	process seems much better then before!
+	
+	Thanks!
+	
+	Laser
+
+2000-12-10 17:56  momjian
+
+	* doc/src/sgml/ref/comment.sgml: Add mention of \d+ to comment.
+
+2000-12-10 17:19  petere
+
+	* src/include/catalog/pg_proc.h: Correct one description, add one.
+
+2000-12-10 16:47  momjian
+
+	* doc/src/sgml/backup.sgml: Fix typo
+
+2000-12-09 19:25  momjian
+
+	* doc/TODO: Update TODO list.
+
+2000-12-09 18:59  momjian
+
+	* doc/src/sgml/sql.sgml: Fixes for examples from Thomas Diffenbach
+
+2000-12-09 16:40  tgl
+
+	* src/backend/utils/adt/nabstime.c: Portability fix from Ryan
+	Kirkpatrick's Alpha patches.  I believe this is the only diff not
+	accounted for by fmgr rewrite...
+
+2000-12-09 16:31  tgl
+
+	* src/backend/: catalog/index.c, utils/cache/relcache.c: Suppress
+	compiler warnings.
+
+2000-12-09 11:52  momjian
+
+	* contrib/fulltextindex/TODO: Add fulltextindex TODO list.
+
+2000-12-09 00:57  momjian
+
+	* doc/: FAQ_DEV, src/FAQ/FAQ_DEV.html: Update FAQ_DEV.
+
+2000-12-09 00:29  momjian
+
+	* doc/: FAQ_DEV, src/FAQ/FAQ_DEV.html: Update FAQ_DEV.
+
+2000-12-09 00:29  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2000-12-09 00:27  ishii
+
+	* src/backend/utils/mb/big5.c: Fix a bug in conversion from big5 to
+	EUC_TW (CNS 11643-1992 Plane 3) Thanks Chih-Chang Hsieh
+	<cch@cc.kmu.edu.tw> for finding the bug.
+
+2000-12-08 19:57  tgl
+
+	* src/: include/utils/builtins.h, backend/access/rtree/rtproc.c,
+	backend/access/hash/hashfunc.c, include/catalog/pg_amproc.h,
+	include/catalog/pg_proc.h, backend/utils/adt/geo_ops.c,
+	backend/utils/adt/mac.c, backend/utils/adt/varchar.c: Repair
+	erroneous use of hashvarlena() for MACADDR, which is not a varlena
+	type.  (I did not force initdb, but you won't see the fix unless
+	you do one.)  Also, make sure all index support operators and
+	functions are careful not to leak memory for toasted inputs; I had
+	missed some hash and rtree support ops on this point before.
+
+2000-12-08 18:21  tgl
+
+	* src/: backend/storage/file/fd.c, include/storage/fd.h,
+	backend/access/transam/xlog.c: Resurrect -F switch: it controls
+	fsyncs again, though the fsyncs are mostly just on the WAL logfile
+	nowadays.  But if people want to disable fsync for performance, why
+	should we say no?
+
+2000-12-08 16:11  momjian
+
+	* doc/src/sgml/ref/select.sgml: Fix Westwood/Westward, from Wessel
+	van Norel.
+
+2000-12-08 16:10  tgl
+
+	* src/backend/commands/sequence.c: Add missing copyright and RCS
+	identification header.
+
+2000-12-08 16:06  tgl
+
+	* doc/src/sgml/ref/create_sequence.sgml,
+	src/backend/commands/sequence.c: Remove error check that disallowed
+	setval() on a sequence with cache value greater than one.  The
+	behavior this sought to disallow doesn't seem any less confusing
+	than the other behaviors of cached sequences.  Improve wording of
+	some error messages, too.  Update documentation accordingly.  Also
+	add an explanation that aborted transactions do not roll back their
+	nextval() calls; this seems to be a FAQ, so it ought to be
+	mentioned here...
+
+2000-12-08 02:43  inoue
+
+	* src/backend/commands/vacuum.c: Cache invalidation for vacuum of
+	system tables.
+
+2000-12-08 02:17  inoue
+
+	* src/: backend/utils/cache/relcache.c, include/catalog/index.h,
+	backend/catalog/index.c, backend/commands/indexcmds.c,
+	backend/tcop/utility.c: REINDEX under WAL.
+
+2000-12-07 20:11  tgl
+
+	* src/pl/plperl/plperl.c: Improve error message for erroneous use
+	of 'opaque' as plperl argument or return type.
+
+2000-12-07 20:09  tgl
+
+	* src/pl/tcl/pltcl.c: Improve error message for erroneous use of
+	'opaque' as pltcl argument or return type.
+
+2000-12-07 20:03  tgl
+
+	* src/pl/plpgsql/src/pl_comp.c: Improve error message for erroneous
+	use of 'opaque' as plpgsql argument or return type.
+
+2000-12-07 19:22  tgl
+
+	* src/backend/utils/adt/oracle_compat.c: Change lpad() and rpad()
+	to behave more Oracle-compatibly when target length is less than
+	original string length.
+
+2000-12-07 18:37  petere
+
+	* doc/src/sgml/catalogs.sgml: typo correction
+
+2000-12-07 15:43  petere
+
+	* src/makefiles/: Makefile.bsdi, Makefile.freebsd, Makefile.netbsd,
+	Makefile.openbsd, Makefile.sco: Do not use 'ar cq' to build library
+	archives, use 'ar cr' instead.
+
+2000-12-07 15:40  tgl
+
+	* src/backend/catalog/pg_proc.c: checkretval() failed to cope with
+	an empty SQL function body.
+
+2000-12-07 14:38  tgl
+
+	* src/: include/catalog/pg_proc.h, backend/utils/adt/date.c,
+	backend/utils/adt/timestamp.c: Make OVERLAPS operators conform to
+	SQL92 spec regarding NULL handling.  As I read it, the spec
+	requires a non-null result in some cases where one of the inputs is
+	NULL: specifically, if the other endpoint of that interval is
+	between the endpoints of the other interval, then the result is
+	known TRUE despite the missing endpoint.  The spec could've been a
+	lot simpler if they did not intend this behavior.  I did not force
+	an initdb for this change, but if you don't do one you'll still see
+	the old strict-function behavior.
