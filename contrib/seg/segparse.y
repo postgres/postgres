@@ -2,14 +2,14 @@
 #define YYERROR_VERBOSE   
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
   
-#include <string.h>
-#include <stdlib.h>
+#include "postgres.h"
+
 #include <math.h>
+  
+#include "utils/elog.h"
+
 #include "segdata.h"
 #include "buffer.h"
-  
-#include "postgres.h"
-#include "utils/elog.h"
   
 #ifdef __CYGWIN__
 #define HUGE HUGE_VAL
@@ -26,10 +26,6 @@
   int seg_yyparse( void *result );
 
   float seg_atof( char *value );
-
-#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
-#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
-#define ABS(X) ((X) < 0 ? (-X) : (X))
 
   long threshold;
   char strbuf[25] = {
@@ -68,9 +64,9 @@ range:
 	    ((SEG *)result)->lower = $1.val - $3.val;
 	    ((SEG *)result)->upper = $1.val + $3.val;
 	    sprintf(strbuf, "%g", ((SEG *)result)->lower);
-	    ((SEG *)result)->l_sigd = MAX(MIN(6, significant_digits(strbuf)), MAX($1.sigd, $3.sigd));
+	    ((SEG *)result)->l_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
 	    sprintf(strbuf, "%g", ((SEG *)result)->upper);
-	    ((SEG *)result)->u_sigd = MAX(MIN(6, significant_digits(strbuf)), MAX($1.sigd, $3.sigd));
+	    ((SEG *)result)->u_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
 	    ((SEG *)result)->l_ext = '\0';
 	    ((SEG *)result)->u_ext = '\0';
           }
