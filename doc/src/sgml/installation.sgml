@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.199 2004/05/17 16:06:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.200 2004/05/18 20:34:01 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -502,6 +502,16 @@ su - postgres
          relocatable, meaning you can move the directory after
          installation. (The <literal>man</> and <literal>doc</>
          locations are not affected by this.)
+        </para>
+
+        <para>
+         For relocatable installs, you might want to use 
+         <filename>configure</filename>'s <literal>--disable-rpath</>
+         option.  Also, you will need to tell the operating system how
+         to find the shared libraries used by applications like 
+         <application>psql</> either using a system-wide shared
+         library configuration file like <filename>ld.so.conf</>,
+         or an environment variable like <literal>LD_LIBRARY_PATH</>.
         </para>
        </listitem>
       </varlistentry>
