@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.15 1997/08/14 16:11:28 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.16 1997/08/18 02:14:56 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -763,16 +763,10 @@ gettape()
     memmove(tp->tl_name, uniqueName, strlen(uniqueName));
     
     
-    AllocateFile();
-    file = fopen(tp->tl_name, "w+");
-    if (file == NULL) {
-	elog(NOTICE, "psort: gettape: fopen returned error code %i", errno);
-	/* XXX this should not happen */
-	FreeFile();
-	FREE(tp->tl_name);
-	FREE(tp);
-	return(NULL);
-    }
+    file = AllocateFile(tp->tl_name, "w+");
+    if (file == NULL)
+	elog(WARN,"Open: %s in %s line %d, %s", tp->tl_name,
+            __FILE__, __LINE__, strerror(errno));
     
     tp->tl_fd = fileno(file);
     tp->tl_next = Tapes;
@@ -823,8 +817,7 @@ destroytape(FILE *file)
     
     if ((fd = fileno(file)) == tp->tl_fd) {
 	Tapes = tp->tl_next;
-	fclose(file);
-	FreeFile();
+	FreeFile(file);
 	unlink(tp->tl_name);
 	FREE(tp->tl_name);
 	FREE(tp);
@@ -833,8 +826,7 @@ destroytape(FILE *file)
 	    if (tp->tl_next == NULL)
 		elog(FATAL, "destroytape: tape not found");
 	    if (tp->tl_next->tl_fd == fd) {
-		fclose(file);
-		FreeFile();
+		FreeFile(file);
 		tq = tp->tl_next;
 		tp->tl_next = tq->tl_next;
 		unlink(tq->tl_name);

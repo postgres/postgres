@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.16 1997/08/12 22:53:46 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.17 1997/08/18 02:14:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1663,7 +1663,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
     
     tb = &TraceBuf[cur];
     
-    if ((fp = fopen("/tmp/death_notice", "w")) == (FILE *) NULL)
+    if ((fp = AllocateFile("/tmp/death_notice", "w")) == NULL)
 	elog(FATAL, "buffer alloc trace error and can't open log file");
     
     fprintf(fp, "buffer alloc trace detected the following error:\n\n");
@@ -1728,7 +1728,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 	break;
     }
     
-    fclose(fp);
+    FreeFile(fp);
     
     kill(getpid(), SIGILL);
 }

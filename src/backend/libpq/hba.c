@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.17 1997/08/12 22:52:52 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.18 1997/08/18 02:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include <libpq/pqcomm.h>
 #include <libpq/hba.h>
 #include <port/inet_aton.h>    /* For inet_aton() */
-
+#include <storage/fd.h>
 
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.
@@ -334,8 +334,8 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
                                  strlen(CONF_FILE)+2)*sizeof(char));
     sprintf(conf_file, "%s/%s", DataDir, CONF_FILE);
     
-    file = fopen(conf_file, "r");
-    if (file == 0) {  
+    file = AllocateFile(conf_file, "r");
+    if (file == NULL) {  
       /* The open of the config file failed.  */
       
       *host_ok_p = false;
@@ -350,7 +350,7 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
     } else {
       process_open_config_file(file, ip_addr, database, host_ok_p, userauth_p,
                                usermap_name, find_password_entries);
-      fclose(file);
+      FreeFile(file);
     }
     free(conf_file);
   }
@@ -636,8 +636,8 @@ verify_against_usermap(const char DataDir[],
                                 strlen(MAP_FILE)+2)*sizeof(char));
     sprintf(map_file, "%s/%s", DataDir, MAP_FILE);
     
-    file = fopen(map_file, "r");
-    if (file == 0) {  
+    file = AllocateFile(map_file, "r");
+    if (file == NULL) {  
       /* The open of the map file failed.  */
       
       *checks_out_p = false;
@@ -654,7 +654,7 @@ verify_against_usermap(const char DataDir[],
       verify_against_open_usermap(file, 
                                   pguser, ident_username, usermap_name,
                                   checks_out_p);
-      fclose(file);
+      FreeFile(file);
     }
     free(map_file);
 

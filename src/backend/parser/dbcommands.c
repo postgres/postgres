@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.3 1997/01/10 20:18:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.4 1997/08/18 02:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "tcop/tcopprot.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/fd.h"
 
 
 /* non-export function prototypes */
@@ -249,9 +250,9 @@ stop_vacuum(char *dbname)
     
     sprintf(filename, "%s%cbase%c%s%c%s.vacuum", DataDir, SEP_CHAR, SEP_CHAR,
        dbname, SEP_CHAR, dbname);
-    if ((fp = fopen(filename, "r")) != (FILE *) NULL) {
+    if ((fp = AllocateFile(filename, "r")) != NULL) {
 	fscanf(fp, "%d", &pid);
-	fclose(fp);
+	FreeFile(fp);
 	if (kill(pid, SIGKILLDAEMON1) < 0) {
 	    elog(WARN, "can't kill vacuum daemon (pid %d) on %s",
 		 pid, dbname);

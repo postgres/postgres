@@ -2,6 +2,7 @@
 #include <libpq/password.h>
 #include <libpq/hba.h>
 #include <libpq/libpq.h>
+#include <storage/fd.h>
 #include <string.h>
 #include <unistd.h>
 #ifdef HAVE_CRYPT_H
@@ -56,7 +57,7 @@ verify_password(char *user, char *password, Port *port,
     strcat(pw_file_fullname, "/");
     strcat(pw_file_fullname, pw_file_name);
 
-    pw_file = fopen(pw_file_fullname, "r");
+    pw_file = AllocateFile(pw_file_fullname, "r");
     if(!pw_file) {
 	sprintf(PQerrormsg,
 		"verify_password: couldn't open password file '%s'\n",
@@ -84,7 +85,7 @@ verify_password(char *user, char *password, Port *port,
 
 	if(strcmp(user, test_user) == 0) {
 	    /* we're outta here one way or the other. */
-	    fclose(pw_file);
+	    FreeFile(pw_file);
 
 	    if(strcmp(crypt(password, salt), test_pw) == 0) {
 		/* it matched. */

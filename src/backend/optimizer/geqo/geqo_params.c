@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.4 1997/08/12 22:53:09 momjian Exp $
+* $Id: geqo_params.c,v 1.5 1997/08/18 02:14:41 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -42,6 +42,8 @@
 
 #include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
+
+#include "storage/fd.h"
 
 #define POOL_TAG	"Pool_Size"
 #define TRIAL_TAG	"Generations"
@@ -89,7 +91,7 @@ geqo_params(int string_length)
 	sprintf(conf_file, "%s/%s", DataDir, GEQO_FILE);
 
 	/* open the config file */
-	file = fopen(conf_file, "r");
+	file = AllocateFile(conf_file, "r");
 	if (file)
 	{
 		/*
@@ -187,7 +189,7 @@ geqo_params(int string_length)
 		   }
 		}
 
-		fclose(file);
+		FreeFile(file);
 
 		pfree(conf_file);
 	}

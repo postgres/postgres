@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.13 1997/08/12 22:54:24 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.14 1997/08/18 02:14:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 #include "utils/syscache.h"
 #include "utils/memutils.h"
-#include "storage/fd.h"		/* for SEEK_ */
+#include "storage/fd.h"
 #include "fmgr.h"
 #include "utils/array.h"
 
@@ -463,11 +463,12 @@ _ReadLOArray(char *str,
     
     if ( accessfile ) {
         FILE *afd;
-        if ((afd = fopen (accessfile, "r")) == NULL)
+        if ((afd = AllocateFile(accessfile, "r")) == NULL)
             elog(WARN, "unable to open access pattern file");
         *chunkFlag = true;
         retStr = _ChunkArray(*fd, afd, ndim, dim, baseSize, nbytes,
 			     chunkfile);
+	FreeFile(afd);
     }    
     return(retStr);
 }

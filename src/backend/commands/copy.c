@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.24 1997/06/12 15:39:44 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.25 1997/08/18 02:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include <catalog/catname.h>
 #include <catalog/pg_user.h>
 #include <commands/copy.h>
+#include <storage/fd.h>
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define VALUE(c) ((c) - '0')
@@ -127,7 +128,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
                     fp = Pfin;
                 } else fp = stdin;
             } else {
-                fp = fopen(filename, "r");
+                fp = AllocateFile(filename, "r");
                 if (fp == NULL) 
                     elog(WARN, "COPY command, running in backend with "
                          "effective uid %d, could not open file '%s' for "
@@ -145,7 +146,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
             } else {
                 mode_t oumask;  /* Pre-existing umask value */
                 oumask =  umask((mode_t) 0);
-                fp = fopen(filename, "w");
+                fp = AllocateFile(filename, "w");
                 umask(oumask);
                 if (fp == NULL) 
                     elog(WARN, "COPY command, running in backend with "
@@ -156,7 +157,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
             }
             CopyTo(rel, binary, oids, fp, delim);
         }
-        if (!pipe) fclose(fp);
+        if (!pipe)
+		FreeFile(fp);
         else if (!from && !binary) {
             fputs("\\.\n", fp);
             if (IsUnderPostmaster) fflush(Pfout);

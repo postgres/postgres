@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.18 1997/07/24 20:15:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.19 1997/08/18 02:14:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 #include "tcop/variable.h"
 #include "tcop/utility.h"
 #include "fmgr.h"       /* For load_file() */
+#include "storage/fd.h"
 
 #ifndef NO_SECURITY
 #include "miscadmin.h"
@@ -218,9 +219,6 @@ ProcessUtility(Node *parsetree,
 	    commandTag = "COPY";
 	    CHECK_IF_ABORTED();
 	    
-	    /* Free up file descriptors - going to do a read... */
-	    closeOneVfd();
-
 	    DoCopy(stmt->relname, 
                    stmt->binary, 
                    stmt->oids, 
@@ -594,9 +592,9 @@ ProcessUtility(Node *parsetree,
 
 	    filename = stmt->filename;
 	    closeAllVfds();
-	    if ((fp = fopen(filename, "r")) == NULL)
+	    if ((fp = AllocateFile(filename, "r")) == NULL)
 		elog(WARN, "LOAD: could not open file %s", filename);
-	    fclose(fp);
+	    FreeFile(fp);
 	    load_file(filename);
 	}
 	break;

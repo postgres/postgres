@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.20 1997/08/12 22:53:51 momjian Exp $
+ *    $Id: fd.c,v 1.21 1997/08/18 02:14:50 momjian Exp $
  *
  * NOTES:
  *
@@ -124,12 +124,6 @@ static  Size    SizeVfdCache = 0;
  */
 static  int     nfile = 0;
 
-/*
- * we use the name of the null device in various places, mostly so
- * that we can open it and find out if we really have any descriptors
- * available or not.
- */
-static char *Nulldev = "/dev/null";
 static char Sep_char = '/';
 
 /*
@@ -312,7 +306,6 @@ LruInsert (File file)
     vfdP = &VfdCache[file];
     
     if (FileIsNotOpen(file)) {
-        int tmpfd;
 
     	if ( nfile >= pg_nofile() )
             AssertLruRoom();
@@ -324,16 +317,13 @@ LruInsert (File file)
          * should be able to open all the time. If this fails, we
          * assume this is because there's no free file descriptors.
          */
-    tryAgain:
-        tmpfd = open(Nulldev, O_CREAT|O_RDWR, 0666);
-        if (tmpfd < 0) {
+ tryAgain:
+        vfdP->fd = open(vfdP->fileName,vfdP->fileFlags,vfdP->fileMode);
+        if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE)) {
             errno = 0;
             AssertLruRoom();
             goto tryAgain;
-        } else {
-            close(tmpfd);
         }
-        vfdP->fd = open(vfdP->fileName,vfdP->fileFlags,vfdP->fileMode);
         
         if (vfdP->fd < 0) {
             DO_DB(elog(DEBUG, "RE_OPEN FAILED: %d",
@@ -530,7 +520,6 @@ fileNameOpenFile(FileName fileName,
 {
     File        file;
     Vfd *vfdP;
-    int     tmpfd;
     
     DO_DB(elog(DEBUG, "fileNameOpenFile: %s %x %o",
                  fileName, fileFlags, fileMode));
@@ -542,18 +531,15 @@ fileNameOpenFile(FileName fileName,
         AssertLruRoom();
     
  tryAgain:
-    tmpfd = open(Nulldev, O_CREAT|O_RDWR, 0666);
-    if (tmpfd < 0) {
+    vfdP->fd = open(fileName,fileFlags,fileMode);
+    if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE)) {
         DO_DB(elog(DEBUG, "fileNameOpenFile: not enough descs, retry, er= %d",
                      errno));
         errno = 0;
         AssertLruRoom();
         goto tryAgain;
-    } else {
-        close(tmpfd);
     }
     
-    vfdP->fd = open(fileName,fileFlags,fileMode);
     vfdP->fdstate = 0x0;
     
     if (vfdP->fd < 0) {
@@ -816,30 +802,31 @@ FileNameUnlink(char *filename)
  */
 static int allocatedFiles = 0;
 
-void
-AllocateFile()
+FILE *
+AllocateFile(char *name, char *mode)
 {
-    int fd;
+    FILE *file;
     int fdleft;
     
     DO_DB(elog(DEBUG, "AllocateFile: Allocated %d.", allocatedFiles));
 
-    while ((fd = open(Nulldev,O_WRONLY,0)) < 0) {
-        if (errno == EMFILE) {
-            errno = 0;
-            AssertLruRoom();
-        } else {
-            elog(WARN,"Open: %s in %s line %d, %s", Nulldev,
-                 __FILE__, __LINE__, strerror(errno));
-        }
+TryAgain:
+    if ((file = fopen(name, mode)) == NULL) {
+	if  (errno == EMFILE || errno == ENFILE) {
+	    DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
+			errno));
+	    errno = 0;
+	    AssertLruRoom();
+	    goto TryAgain;
+    	}
     }
-    close(fd);
-    ++allocatedFiles;
-    fdleft = pg_nofile() - allocatedFiles;
-    if (fdleft < 6) {
-        elog(NOTICE,"warning: few usable file descriptors left (%d)", fdleft);
+    else {
+	++allocatedFiles;
+	fdleft = pg_nofile() - allocatedFiles;
+	if (fdleft < 6)
+            elog(NOTICE,"warning: few usable file descriptors left (%d)", fdleft);
     }
-
+    return file;
 }
 
 /*
@@ -847,11 +834,12 @@ AllocateFile()
  * AllocateFile()?
  */
 void
-FreeFile()
+FreeFile(FILE *file)
 {
     DO_DB(elog(DEBUG, "FreeFile: Allocated %d.", allocatedFiles));
 
     Assert(allocatedFiles > 0);
+    fclose(file);
     --allocatedFiles;
 }
 
@@ -864,16 +852,4 @@ closeAllVfds()
         if (!FileIsNotOpen(i))
             LruDelete(i);
     }
-}
-
-void
-closeOneVfd()
-{
-    int tmpfd;
-    
-    tmpfd = open(Nulldev, O_CREAT | O_RDWR, 0666);
-    if (tmpfd < 0)
-        AssertLruRoom();
-    else
-        close(tmpfd);
 }
