@@ -13,23 +13,32 @@ INSERT INTO INET_TBL (c, i) VALUES ('10.1.2.3', '10.1.2.3/32');
 INSERT INTO INET_TBL (c, i) VALUES ('10.1.2', '10.1.2.3/24');
 INSERT INTO INET_TBL (c, i) VALUES ('10.1', '10.1.2.3/16');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '10.1.2.3/8');
+INSERT INTO INET_TBL (c, i) VALUES ('10', '11.1.2.3/8');
+INSERT INTO INET_TBL (c, i) VALUES ('10', '9.1.2.3/8');
 
-SELECT '' as eight, c as cidr, i as inet FROM INET_TBL;
+SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
 
 -- now test some support functions
 
-SELECT '' as eight, i as inet, host(i) FROM INET_TBL;
-SELECT '' as eight, c as cidr, broadcast(c),
-  i as inet, broadcast(i) FROM INET_TBL;
-SELECT '' as eight, c as cidr, network(c) as "network(cidr)",
-  i as inet, network(i) as "network(inet)" FROM INET_TBL;
-SELECT '' as eight, c as cidr, masklen(c) as "masklen(cidr)",
-  i as inet, masklen(i) as "masklen(inet)" FROM INET_TBL;
+SELECT '' AS ten, i AS inet, host(i) FROM INET_TBL;
+SELECT '' AS ten, c AS cidr, broadcast(c),
+  i AS inet, broadcast(i) FROM INET_TBL;
+SELECT '' AS ten, c AS cidr, network(c) AS "network(cidr)",
+  i AS inet, network(i) AS "network(inet)" FROM INET_TBL;
+SELECT '' AS ten, c AS cidr, masklen(c) AS "masklen(cidr)",
+  i AS inet, masklen(i) AS "masklen(inet)" FROM INET_TBL;
 
-SELECT '' as two, c as cidr, masklen(c) as "masklen(cidr)",
-  i as inet, masklen(i) as "masklen(inet)" FROM INET_TBL
+SELECT '' AS four, c AS cidr, masklen(c) AS "masklen(cidr)",
+  i AS inet, masklen(i) AS "masklen(inet)" FROM INET_TBL
   WHERE masklen(c) <= 8;
 
-SELECT '' as six, c as cidr, i as inet FROM INET_TBL
+SELECT '' AS six, c AS cidr, i AS inet FROM INET_TBL
   WHERE c = i;
+
+SELECT '' AS ten, i, c,
+  i < c AS lt, i <= c AS le, i = c AS eq, 
+  i >= c AS ge, i > c AS gt, i <> c AS ne,
+  i << c AS sb, i <<= c AS sbe,
+  i >> c AS sup, i >>= c AS spe
+  FROM INET_TBL;
 
