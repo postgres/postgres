@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.11 1996/07/31 06:05:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.12 1996/07/31 18:40:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -829,21 +829,22 @@ PQprint(FILE *fout,
     nFields = PQnfields(res);
 
     if ( nFields > 0 ) {  /* only print tuples with at least 1 field.  */
-    	int i,j;
-    	int nTups;
-	int *fieldMax=NULL; /* keep -Wall happy */
-	unsigned char *fieldNotNum=NULL; /* keep -Wall happy */
-	char **fields=NULL; /*keep -Wall happy */
+	int i,j;
+	int nTups;
+	int *fieldMax=NULL;	/* in case we don't use them */
+	unsigned char *fieldNotNum=NULL;
+	char *border=NULL;
+	char **fields=NULL;
 	char **fieldNames;
 	int fieldMaxLen=0;
-	char *border=NULL;
-        int numFieldName;
+	int numFieldName;
 	int fs_len=strlen(po->fieldSep);
- 	int total_line_length = 0;
- 	int usePipe = 0;
- 	char *pagerenv;
+	int total_line_length = 0;
+	int usePipe = 0;
+	char *pagerenv;
+	char buf[8192*2+1];
 
-    	nTups = PQntuples(res);
+	nTups = PQntuples(res);
 	if (!(fieldNames=(char **)calloc(nFields, sizeof (char *))))
 	{
 		perror("calloc");
@@ -882,7 +883,10 @@ PQprint(FILE *fout,
  
 	if (fout == NULL) 
 		fout = stdout;
-	if (po->pager && fout == stdout && isatty(fileno(stdout))) {
+	if (po->pager && fout == stdout &&
+		isatty(fileno(stdin)) &&
+		isatty(fileno(stdout)))
+	{
 		/* try to pipe to the pager program if possible */
 #ifdef TIOCGWINSZ
 		if (ioctl(fileno(stdout),TIOCGWINSZ,&screen_size) == -1 ||
@@ -907,8 +911,7 @@ PQprint(FILE *fout,
 			screen_size.ws_row -
 			(po->header != 0) *
 				(total_line_length / screen_size.ws_col + 1) * 2
- 			/*- 1 */ /* newline at end of tuple list */
-			/*- (quiet == 0)*/
+ 			- (po->header != 0) *2 /* row count and newline */
 			)))
 		{
 			fout = popen(pagerenv, "w");
@@ -927,7 +930,8 @@ PQprint(FILE *fout,
 			perror("calloc");
 			exit(1);
 		}
-	} else
+	}
+	else
 		if (po->header && !po->html3)
         	{
 			if (po->expanded)
@@ -936,7 +940,8 @@ PQprint(FILE *fout,
 					fprintf(fout, "%-*s%s Value\n", fieldMaxLen-fs_len, "Field", po->fieldSep);
 				else
 					fprintf(fout, "%s%sValue\n", "Field", po->fieldSep);
-			} else
+			}
+			else
 			{
 				int len=0;
 				for (j=0; j < nFields; j++)
@@ -959,8 +964,8 @@ PQprint(FILE *fout,
 		else
 			fprintf(fout, "<centre><h2>Query retrieved %d tuples * %d fields</h2></centre>\n", nTups, nFields);
 	}
-        for (i = 0; i < nTups; i++) {
-	    char buf[8192*2+1];
+        for (i = 0; i < nTups; i++)
+	{
 	    if (po->expanded)
 	    {
 	    	if (po->html3)
@@ -968,7 +973,8 @@ PQprint(FILE *fout,
 		else
 			fprintf(fout, "-- RECORD %d --\n", i);
 	    }
-            for (j = 0; j < nFields; j++) {
+            for (j = 0; j < nFields; j++)
+	    {
                 char *pval, *p, *o;
 		int plen;
 		if ((plen=PQgetlength(res,i,j))<1 || !(pval=PQgetvalue(res,i,j)) || !*pval)
@@ -996,7 +1002,8 @@ PQprint(FILE *fout,
 				exit(1);
 			}
 			strcpy(fields[i*nFields+j], buf);
-		} else
+		}
+		else
 		{
 			if (po->expanded)
 			{
@@ -1089,7 +1096,8 @@ efield:
 				{
 					fprintf(fout, "<th align=%s>%s</th>", fieldNotNum[j]? "left": "right",
 						fieldNames[j]);
-				} else
+				}
+				else
 				{
 					int n=strlen(s);
 					if (n>fieldMax[j])
@@ -1139,10 +1147,14 @@ efield:
 		}
 		free(fields);
 	}
+	if (po->header && !po->html3)
+		fprintf (fout, "(%d row%s)\n\n",PQntuples(res),
+			 (PQntuples(res) == 1) ? "" : "s");
 	free(fieldMax);
 	free(fieldNotNum);
 	free(fieldNames);
-	if (usePipe) {
+	if (usePipe)
+	{
 		pclose(fout);
 		signal(SIGPIPE, SIG_DFL);
 	}

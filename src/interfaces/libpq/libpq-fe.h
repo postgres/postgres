@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.4 1996/07/27 02:55:23 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.5 1996/07/31 18:40:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,12 +128,12 @@ typedef struct pg_result{
 } PGresult;
 
 struct _PQprintOpt {
-    bool header;         /* print output field headers or not */
+    bool header;         /* print output field headings and row count */
     bool align;          /* fill align the fields */
     bool standard;       /* old brain dead format */
     bool html3;          /* output html tables */
     bool expanded;       /* expand tables */
-	bool pager;			 /* use pager for output if needed */
+    bool pager;          /* use pager for output if needed */
     char *fieldSep;      /* field separator */
     char *tableOpt;	 /* insert to HTML <table ...> */
     char *caption;       /* HTML <caption> */
