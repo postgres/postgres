@@ -2,287 +2,353 @@
 
 -- define the array operators *=, **=, *~ and **~ for type _text
 --
-create or replace function array_texteq(_text, text) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
 
-create or replace function array_all_texteq(_text, text) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-create or replace function array_textregexeq(_text, text) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+SET autocommit TO 'on';
 
-create or replace function array_all_textregexeq(_text, text) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_texteq(_text, text)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *= (
-  leftarg=_text, 
-  rightarg=text, 
-  procedure=array_texteq);
+CREATE OR REPLACE FUNCTION array_all_texteq(_text, text)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator **= (
-  leftarg=_text,
-  rightarg=text,
-  procedure=array_all_texteq);
+CREATE OR REPLACE FUNCTION array_textregexeq(_text, text)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *~ (
-  leftarg=_text,
-  rightarg=text,
-  procedure=array_textregexeq);
+CREATE OR REPLACE FUNCTION array_all_textregexeq(_text, text)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator **~ (
-  leftarg=_text,
-  rightarg=text,
-  procedure=array_all_textregexeq);
+CREATE OPERATOR *= (
+	LEFTARG=_text, 
+	RIGHTARG=text, 
+	PROCEDURE=array_texteq
+);
+
+CREATE OPERATOR **= (
+	LEFTARG=_text,
+	RIGHTARG=text,
+	PROCEDURE=array_all_texteq
+);
+
+CREATE OPERATOR *~ (
+	LEFTARG=_text,
+	RIGHTARG=text,
+	PROCEDURE=array_textregexeq
+);
+
+CREATE OPERATOR **~ (
+	LEFTARG=_text,
+	RIGHTARG=text,
+	PROCEDURE=array_all_textregexeq
+);
 
 
 -- define the array operators *=, **=, *~ and **~ for type _varchar
 --
 -- NOTE: "varchar" is also a reserved word and must be quoted.
 --
-create or replace function array_varchareq(_varchar, varchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_varchareq(_varchar, varchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_varchareq(_varchar, varchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_varchareq(_varchar, varchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_varcharregexeq(_varchar, varchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_varcharregexeq(_varchar, varchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_varcharregexeq(_varchar, varchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_varcharregexeq(_varchar, varchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *= (
-  leftarg=_varchar, 
-  rightarg="varchar", 
-  procedure=array_varchareq);
+CREATE OPERATOR *= (
+	LEFTARG=_varchar, 
+	RIGHTARG="varchar", 
+	PROCEDURE=array_varchareq
+);
 
-create operator **= (
-  leftarg=_varchar,
-  rightarg="varchar",
-  procedure=array_all_varchareq);
+CREATE OPERATOR **= (
+	LEFTARG=_varchar,
+	RIGHTARG="varchar",
+	PROCEDURE=array_all_varchareq
+);
 
-create operator *~ (
-  leftarg=_varchar,
-  rightarg="varchar",
-  procedure=array_varcharregexeq);
+CREATE OPERATOR *~ (
+	LEFTARG=_varchar,
+	RIGHTARG="varchar",
+	PROCEDURE=array_varcharregexeq
+);
 
-create operator **~ (
-  leftarg=_varchar,
-  rightarg="varchar",
-  procedure=array_all_varcharregexeq);
+CREATE OPERATOR **~ (
+	LEFTARG=_varchar,
+	RIGHTARG="varchar",
+	PROCEDURE=array_all_varcharregexeq
+);
 
 
 -- define the array operators *=, **=, *~ and **~ for type _bpchar
 --
-create or replace function array_bpchareq(_bpchar, bpchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_bpchareq(_bpchar, bpchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_bpchareq(_bpchar, bpchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_bpchareq(_bpchar, bpchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_bpcharregexeq(_bpchar, bpchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_bpcharregexeq(_bpchar, bpchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_bpcharregexeq(_bpchar, bpchar) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_bpcharregexeq(_bpchar, bpchar)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *= (
-  leftarg=_bpchar, 
-  rightarg=bpchar, 
-  procedure=array_bpchareq);
+CREATE OPERATOR *= (
+	LEFTARG=_bpchar, 
+	RIGHTARG=bpchar, 
+	PROCEDURE=array_bpchareq
+);
 
-create operator **= (
-  leftarg=_bpchar,
-  rightarg=bpchar,
-  procedure=array_all_bpchareq);
+CREATE OPERATOR **= (
+	LEFTARG=_bpchar,
+	RIGHTARG=bpchar,
+	PROCEDURE=array_all_bpchareq
+);
 
-create operator *~ (
-  leftarg=_bpchar,
-  rightarg=bpchar,
-  procedure=array_bpcharregexeq);
+CREATE OPERATOR *~ (
+	LEFTARG=_bpchar,
+	RIGHTARG=bpchar,
+	PROCEDURE=array_bpcharregexeq
+);
 
-create operator **~ (
-  leftarg=_bpchar,
-  rightarg=bpchar,
-  procedure=array_all_bpcharregexeq);
+CREATE OPERATOR **~ (
+	LEFTARG=_bpchar,
+	RIGHTARG=bpchar,
+	PROCEDURE=array_all_bpcharregexeq
+);
 
 
 -- define the array operators *=, **=, *> and **> for type _int4
 --
-create or replace function array_int4eq(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_int4eq(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_int4eq(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_int4eq(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_int4ne(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_int4ne(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_int4ne(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_int4ne(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_int4gt(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_int4gt(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_int4gt(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_int4gt(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_int4ge(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_int4ge(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_int4ge(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_int4ge(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_int4lt(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_int4lt(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_int4lt(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_int4lt(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_int4le(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_int4le(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_int4le(_int4, int4) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_int4le(_int4, int4)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *= (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_int4eq);
+CREATE OPERATOR *= (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_int4eq
+);
 
-create operator **= (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_all_int4eq);
+CREATE OPERATOR **= (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_all_int4eq
+);
 
-create operator *<> (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_int4ne);
+CREATE OPERATOR *<> (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_int4ne
+);
 
-create operator **<> (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_all_int4ne);
+CREATE OPERATOR **<> (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_all_int4ne
+);
 
-create operator *> (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_int4gt);
+CREATE OPERATOR *> (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_int4gt
+);
 
-create operator **> (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_all_int4gt);
+CREATE OPERATOR **> (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_all_int4gt
+);
 
-create operator *>= (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_int4ge);
+CREATE OPERATOR *>= (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_int4ge
+);
 
-create operator **>= (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_all_int4ge);
+CREATE OPERATOR **>= (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_all_int4ge
+);
 
-create operator *< (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_int4lt);
+CREATE OPERATOR *< (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_int4lt
+);
 
-create operator **< (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_all_int4lt);
+CREATE OPERATOR **< (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_all_int4lt
+);
 
-create operator *<= (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_int4le);
+CREATE OPERATOR *<= (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_int4le
+);
 
-create operator **<= (
-  leftarg=_int4,
-  rightarg=int4,
-  procedure=array_all_int4le);
+CREATE OPERATOR **<= (
+	LEFTARG=_int4,
+	RIGHTARG=int4,
+	PROCEDURE=array_all_int4le
+);
 
 -- define the array operators *=, **<>  for type _oid  (added tobias 1. 1999)
 --
-create or replace function array_oideq(_oid, oid) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_oideq(_oid, oid)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_oidne(_oid, oid) returns bool
-  as 'MODULE_PATHNAME' 
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_oidne(_oid, oid)
+RETURNS bool
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *= (
-  leftarg=_oid, 
-  rightarg=oid, 
-  procedure=array_oideq);
+CREATE OPERATOR *= (
+	LEFTARG=_oid, 
+	RIGHTARG=oid, 
+	PROCEDURE=array_oideq
+);
 
-create operator **<> (
-  leftarg=_oid,
-  rightarg=oid,
-  procedure=array_all_oidne);
+CREATE OPERATOR **<> (
+	LEFTARG=_oid,
+	RIGHTARG=oid,
+	PROCEDURE=array_all_oidne
+);
 
 -- define the array operators *=, **=, *<>, **<> for type _inet
 
-create or replace function array_ineteq(_inet, inet) returns bool
-  as 'MODULE_PATHNAME'
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_ineteq(_inet, inet)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_ineteq(_inet, inet) returns bool
-  as 'MODULE_PATHNAME'
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_ineteq(_inet, inet)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_inetne(_inet, inet) returns bool
-  as 'MODULE_PATHNAME'
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_inetne(_inet, inet)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isStrict);
 
-create or replace function array_all_inetne(_inet, inet) returns bool
-  as 'MODULE_PATHNAME'
-  language C with (isStrict);
+CREATE OR REPLACE FUNCTION array_all_inetne(_inet, inet)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isStrict);
 
-create operator *= (
-  leftarg=_inet,
-  rightarg=inet,
-  procedure=array_ineteq);
+CREATE OPERATOR *= (
+	LEFTARG=_inet,
+	RIGHTARG=inet,
+	PROCEDURE=array_ineteq
+);
 
-create operator **= (
-  leftarg=_inet,
-  rightarg=inet,
-  procedure=array_all_ineteq);
+CREATE OPERATOR **= (
+	LEFTARG=_inet,
+	RIGHTARG=inet,
+	PROCEDURE=array_all_ineteq
+);
 
-create operator *<> (
-  leftarg=_inet,
-  rightarg=inet,
-  procedure=array_inetne);
+CREATE OPERATOR *<> (
+	LEFTARG=_inet,
+	RIGHTARG=inet,
+	PROCEDURE=array_inetne
+);
 
-create operator **<> (
-  leftarg=_inet,
-  rightarg=inet,
-  procedure=array_all_inetne);
+CREATE OPERATOR **<> (
+	LEFTARG=_inet,
+	RIGHTARG=inet,
+	PROCEDURE=array_all_inetne
+);

@@ -1,16 +1,22 @@
-CREATE FUNCTION levenshtein (text,text) RETURNS int
-  AS 'MODULE_PATHNAME','levenshtein' LANGUAGE 'c' with (iscachable, isstrict);
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-CREATE FUNCTION metaphone (text,int) RETURNS text
-  AS 'MODULE_PATHNAME','metaphone' LANGUAGE 'c' with (iscachable, isstrict);
+SET autocommit TO 'on';
+
+CREATE FUNCTION levenshtein (text,text)
+RETURNS int
+AS 'MODULE_PATHNAME','levenshtein'
+LANGUAGE 'C' WITH (iscachable, isstrict);
+
+CREATE FUNCTION metaphone (text,int)
+RETURNS text
+AS 'MODULE_PATHNAME','metaphone'
+LANGUAGE 'C' WITH (iscachable, isstrict);
 
 CREATE FUNCTION soundex(text) RETURNS text
-  AS 'MODULE_PATHNAME', 'soundex' LANGUAGE 'c' with (iscachable, isstrict);
+AS 'MODULE_PATHNAME', 'soundex'
+LANGUAGE 'C' WITH (iscachable, isstrict);
 
 CREATE FUNCTION text_soundex(text) RETURNS text
-  AS 'MODULE_PATHNAME', 'soundex' LANGUAGE 'c';
-
-GRANT EXECUTE ON FUNCTION levenshtein (text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION metaphone (text,int) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION soundex(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION text_soundex(text) TO PUBLIC;
+AS 'MODULE_PATHNAME', 'soundex'
+LANGUAGE 'C';

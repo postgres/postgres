@@ -25,6 +25,20 @@ EOT
 $opt{d} ||= 'TEST';
 my $dbi=DBI->connect('DBI:Pg:dbname='.$opt{d}) || die "Couldn't connect DB: $opt{d} !\n";
 
+my $setsql = qq{
+    SET search_path = public;
+};
+
+my $sth = $dbi->prepare($setsql);
+$sth->execute();
+
+my $setsql2 = qq{
+    SET autocommit TO 'on';
+};
+
+my $sth2 = $dbi->prepare($setsql2);
+$sth2->execute();
+
 my $sql;
 my $notice;
 my $sss = '(3000,3000,2990,2990)';

@@ -1,26 +1,28 @@
 --
 -- crypt() and gen_salt(): extended des
 --
-select crypt('', '_J9..j2zz');
+SET autocommit TO 'on';
+SELECT crypt('', '_J9..j2zz');
         crypt         
 ----------------------
  _J9..j2zzR/nIRDK3pPc
 (1 row)
 
-select crypt('foox', '_J9..j2zz');
+SELECT crypt('foox', '_J9..j2zz');
         crypt         
 ----------------------
  _J9..j2zzAYKMvO2BYRY
 (1 row)
 
-create table ctest (data text, res text, salt text);
-insert into ctest values ('password', '', '');
-update ctest set salt = gen_salt('xdes', 1001);
-update ctest set res = crypt(data, salt);
-select res = crypt(data, res) as "worked" from ctest;
+CREATE TABLE ctest (data text, res text, salt text);
+INSERT INTO ctest VALUES ('password', '', '');
+UPDATE ctest SET salt = gen_salt('xdes', 1001);
+UPDATE ctest SET res = crypt(data, salt);
+SELECT res = crypt(data, res) AS "worked"
+FROM ctest;
  worked 
 --------
  t
 (1 row)
 
-drop table ctest;
+DROP TABLE ctest;

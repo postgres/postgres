@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.2 2002/08/22 00:01:38 tgl Exp $
+--  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.3 2002/10/18 18:41:19 momjian Exp $
 --
 --  best viewed with tabs set to 4
 --
@@ -13,41 +13,46 @@
 --	Input and output functions and the type itself:
 --
 
-create function chkpass_in(cstring)
-	returns chkpass
-	as 'MODULE_PATHNAME'
-	language 'c';
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-create function chkpass_out(chkpass)
-	returns cstring
-	as 'MODULE_PATHNAME'
-	language 'c';
+SET autocommit TO 'on';
 
-create type chkpass (
+CREATE FUNCTION chkpass_in(cstring)
+	RETURNS chkpass
+	AS 'MODULE_PATHNAME'
+	LANGUAGE 'c';
+
+CREATE FUNCTION chkpass_out(chkpass)
+	RETURNS cstring
+	AS 'MODULE_PATHNAME'
+	LANGUAGE 'c';
+
+CREATE TYPE chkpass (
 	internallength = 16,
 	externallength = 13,
 	input = chkpass_in,
 	output = chkpass_out
 );
 
-create function raw(chkpass)
-	returns text
-	as 'MODULE_PATHNAME', 'chkpass_rout'
-	language 'c';
+CREATE FUNCTION raw(chkpass)
+	RETURNS text
+	AS 'MODULE_PATHNAME', 'chkpass_rout'
+	LANGUAGE 'c';
 
 --
 --	The various boolean tests:
 --
 
-create function eq(chkpass, text)
-	returns bool
-	as 'MODULE_PATHNAME', 'chkpass_eq'
-	language 'c';
+CREATE FUNCTION eq(chkpass, text)
+	RETURNS bool
+	AS 'MODULE_PATHNAME', 'chkpass_eq'
+	LANGUAGE 'c';
 
-create function ne(chkpass, text)
-	returns bool
-	as 'MODULE_PATHNAME', 'chkpass_ne'
-	language 'c';
+CREATE FUNCTION ne(chkpass, text)
+	RETURNS bool
+	AS 'MODULE_PATHNAME', 'chkpass_ne'
+	LANGUAGE 'c';
 
 --
 --	Now the operators.  Note how some of the parameters to some
@@ -56,7 +61,7 @@ create function ne(chkpass, text)
 --	will be implicitly defined when those are, further down.
 --
 
-create operator = (
+CREATE OPERATOR = (
 	leftarg = chkpass,
 	rightarg = text,
 	commutator = =,
@@ -64,7 +69,7 @@ create operator = (
 	procedure = eq
 );
 
-create operator <> (
+CREATE OPERATOR <> (
 	leftarg = chkpass,
 	rightarg = text,
 	negator = =,

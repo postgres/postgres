@@ -166,6 +166,8 @@ sub main {
 		return 1;
 	}
 
+	PQexec($PG_CONN, "SET search_path = public");
+	PQexec($PG_CONN, "SET autocommit TO 'on'");
 	PQexec($PG_CONN, "begin");
 
 	$query = "declare C cursor for select (\"";

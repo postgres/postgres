@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.16 2002/10/03 17:20:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.17 2002/10/18 18:41:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,6 +206,28 @@ vacuumlo(char *database, struct _param * param)
 		if (param->dry_run)
 			fprintf(stdout, "Test run: no large objects will be removed!\n");
 	}
+
+	res = PQexec(conn, "SET search_path = public");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Failed to set search_path on:\n");
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQclear(res);
+		PQfinish(conn);
+		return -1;
+	}
+	PQclear(res);
+
+	res = PQexec(conn, "SET autocommit TO 'on'");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Failed to set autocommit on:\n");
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQclear(res);
+		PQfinish(conn);
+		return -1;
+	}
+	PQclear(res);
 
 	/*
 	 * First we create and populate the LO temp table

@@ -1,7 +1,16 @@
 --SQL for XML parser
 
-CREATE FUNCTION pgxml_parse(text) RETURNS bool
-	AS '_OBJWD_/pgxml_dom_DLSUFFIX_' LANGUAGE 'c' WITH (isStrict);
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-CREATE FUNCTION pgxml_xpath(text,text,text,text) RETURNS text
-	AS '_OBJWD_/pgxml_dom_DLSUFFIX_' LANGUAGE 'c' WITH (isStrict);
+SET autocommit TO 'on';
+
+CREATE OR REPLACE FUNCTION pgxml_parse(text)
+RETURNS bool
+AS '_OBJWD_/pgxml_dom_DLSUFFIX_'
+LANGUAGE 'c' WITH (isStrict);
+
+CREATE OR REPLACE FUNCTION pgxml_xpath(text,text,text,text)
+RETURNS text
+AS '_OBJWD_/pgxml_dom_DLSUFFIX_'
+LANGUAGE 'c' WITH (isStrict);

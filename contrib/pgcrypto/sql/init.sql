@@ -3,10 +3,11 @@
 --
 
 \set ECHO none
+SET autocommit TO 'on';
 \i pgcrypto.sql
 \set ECHO all
 
 -- check for encoding fn's
-select encode('foo', 'hex');
-select decode('666f6f', 'hex');
+SELECT encode('foo', 'hex');
+SELECT decode('666f6f', 'hex');
 

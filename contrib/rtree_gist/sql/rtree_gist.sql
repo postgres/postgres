@@ -3,36 +3,46 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
+SET autocommit TO 'on';
 \i rtree_gist.sql
 \set ECHO all
 
-create table boxtmp (b box);
+CREATE TABLE boxtmp (b box);
 
 \copy boxtmp from 'data/test_box.data'
 
-select count(*) from boxtmp where b && '(1000,1000,0,0)'::box;
+SELECT count(*)
+FROM boxtmp
+WHERE b && '(1000,1000,0,0)'::box;
 
-create index bix on boxtmp using rtree (b);
+CREATE INDEX bix ON boxtmp USING rtree (b);
 
-select count(*) from boxtmp where b && '(1000,1000,0,0)'::box;
+SELECT count(*)
+FROM boxtmp
+WHERE b && '(1000,1000,0,0)'::box;
 
-drop index bix;
+DROP INDEX bix;
 
-create index bix on boxtmp using gist (b);
+CREATE INDEX bix ON boxtmp USING gist (b);
 
-select count(*) from boxtmp where b && '(1000,1000,0,0)'::box;
+SELECT count(*)
+FROM boxtmp
+WHERE b && '(1000,1000,0,0)'::box;
 
-create table polytmp (p polygon);
+CREATE TABLE polytmp (p polygon);
 
 \copy polytmp from 'data/test_box.data'
 
-create index pix on polytmp using rtree (p);
+CREATE INDEX pix ON polytmp USING rtree (p);
 
-select count(*) from polytmp where p && '(1000,1000),(0,0)'::polygon;
+SELECT count(*)
+FROM polytmp
+WHERE p && '(1000,1000),(0,0)'::polygon;
 
-drop index pix;
+DROP INDEX pix;
 
-create index pix on polytmp using gist (p);
+CREATE INDEX pix ON polytmp USING gist (p);
 
-select count(*) from polytmp where p && '(1000,1000),(0,0)'::polygon;
-
+SELECT count(*)
+FROM polytmp
+WHERE p && '(1000,1000),(0,0)'::polygon;

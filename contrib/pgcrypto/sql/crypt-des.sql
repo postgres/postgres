@@ -2,16 +2,19 @@
 -- crypt() and gen_salt(): crypt-des
 --
 
-select crypt('', 'NB');
+SET autocommit TO 'on';
 
-select crypt('foox', 'NB');
+SELECT crypt('', 'NB');
 
-create table ctest (data text, res text, salt text);
-insert into ctest values ('password', '', '');
+SELECT crypt('foox', 'NB');
 
-update ctest set salt = gen_salt('des');
-update ctest set res = crypt(data, salt);
-select res = crypt(data, res) as "worked" from ctest;
+CREATE TABLE ctest (data text, res text, salt text);
+INSERT INTO ctest VALUES ('password', '', '');
 
-drop table ctest;
+UPDATE ctest SET salt = gen_salt('des');
+UPDATE ctest SET res = crypt(data, salt);
+SELECT res = crypt(data, res) AS "worked"
+FROM ctest;
+
+DROP TABLE ctest;
 

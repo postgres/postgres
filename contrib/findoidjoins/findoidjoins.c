@@ -3,7 +3,7 @@
  *
  * Copyright 2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/findoidjoins.c,v 1.18 2002/09/05 19:57:32 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/findoidjoins.c,v 1.19 2002/10/18 18:41:20 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -48,6 +48,8 @@ main(int argc, char **argv)
 	resetPQExpBuffer(&sql);
 
 	appendPQExpBuffer(&sql, "%s",
+		"SET search_path = public;"
+		"SET autocommit TO 'on';"
 		"SELECT c.relname, (SELECT nspname FROM "
 		"pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
 		"FROM pg_catalog.pg_class c "

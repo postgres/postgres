@@ -3,364 +3,364 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-psql:_int.sql:13: WARNING:  ProcedureCreate: type query_int is not yet defined
-psql:_int.sql:18: WARNING:  Argument type "query_int" is only a shell
-select intset(1234);
+psql:_int.sql:15: WARNING:  ProcedureCreate: type query_int is not yet defined
+psql:_int.sql:20: WARNING:  Argument type "query_int" is only a shell
+SELECT intset(1234);
  intset 
 --------
  {1234}
 (1 row)
 
-select icount('{1234234,234234}');
+SELECT icount('{1234234,234234}');
  icount 
 --------
       2
 (1 row)
 
-select sort('{1234234,-30,234234}');
+SELECT sort('{1234234,-30,234234}');
          sort         
 ----------------------
  {-30,234234,1234234}
 (1 row)
 
-select sort('{1234234,-30,234234}','asc');
+SELECT sort('{1234234,-30,234234}','asc');
          sort         
 ----------------------
  {-30,234234,1234234}
 (1 row)
 
-select sort('{1234234,-30,234234}','desc');
+SELECT sort('{1234234,-30,234234}','desc');
          sort         
 ----------------------
  {1234234,234234,-30}
 (1 row)
 
-select sort_asc('{1234234,-30,234234}');
+SELECT sort_asc('{1234234,-30,234234}');
        sort_asc       
 ----------------------
  {-30,234234,1234234}
 (1 row)
 
-select sort_desc('{1234234,-30,234234}');
+SELECT sort_desc('{1234234,-30,234234}');
       sort_desc       
 ----------------------
  {1234234,234234,-30}
 (1 row)
 
-select uniq('{1234234,-30,-30,234234,-30}');
+SELECT uniq('{1234234,-30,-30,234234,-30}');
            uniq           
 --------------------------
  {1234234,-30,234234,-30}
 (1 row)
 
-select uniq(sort_asc('{1234234,-30,-30,234234,-30}'));
+SELECT uniq(sort_asc('{1234234,-30,-30,234234,-30}'));
          uniq         
 ----------------------
  {-30,234234,1234234}
 (1 row)
 
-select idx('{1234234,-30,-30,234234,-30}',-30);
+SELECT idx('{1234234,-30,-30,234234,-30}',-30);
  idx 
 -----
    2
 (1 row)
 
-select subarray('{1234234,-30,-30,234234,-30}',2,3);
+SELECT subarray('{1234234,-30,-30,234234,-30}',2,3);
      subarray     
 ------------------
  {-30,-30,234234}
 (1 row)
 
-select subarray('{1234234,-30,-30,234234,-30}',-1,1);
+SELECT subarray('{1234234,-30,-30,234234,-30}',-1,1);
  subarray 
 ----------
  {-30}
 (1 row)
 
-select subarray('{1234234,-30,-30,234234,-30}',0,-1);
+SELECT subarray('{1234234,-30,-30,234234,-30}',0,-1);
          subarray         
 --------------------------
  {1234234,-30,-30,234234}
 (1 row)
 
-select #'{1234234,234234}'::int[];
+SELECT #'{1234234,234234}'::int[];
  ?column? 
 ----------
         2
 (1 row)
 
-select '{123,623,445}'::int[] + 1245;
+SELECT '{123,623,445}'::int[] + 1245;
       ?column?      
 --------------------
  {123,623,445,1245}
 (1 row)
 
-select '{123,623,445}'::int[] + 445;
+SELECT '{123,623,445}'::int[] + 445;
      ?column?      
 -------------------
  {123,623,445,445}
 (1 row)
 
-select '{123,623,445}'::int[] + '{1245,87,445}';
+SELECT '{123,623,445}'::int[] + '{1245,87,445}';
          ?column?          
 ---------------------------
  {123,623,445,1245,87,445}
 (1 row)
 
-select '{123,623,445}'::int[] - 623;
+SELECT '{123,623,445}'::int[] - 623;
  ?column?  
 -----------
  {123,445}
 (1 row)
 
-select '{123,623,445}'::int[] - '{1623,623}';
+SELECT '{123,623,445}'::int[] - '{1623,623}';
  ?column?  
 -----------
  {123,445}
 (1 row)
 
-select '{123,623,445}'::int[] | 623;
+SELECT '{123,623,445}'::int[] | 623;
    ?column?    
 ---------------
  {123,445,623}
 (1 row)
 
-select '{123,623,445}'::int[] | 1623;
+SELECT '{123,623,445}'::int[] | 1623;
       ?column?      
 --------------------
  {123,445,623,1623}
 (1 row)
 
-select '{123,623,445}'::int[] | '{1623,623}';
+SELECT '{123,623,445}'::int[] | '{1623,623}';
       ?column?      
 --------------------
  {123,445,623,1623}
 (1 row)
 
-select '{123,623,445}'::int[] & '{1623,623}';
+SELECT '{123,623,445}'::int[] & '{1623,623}';
  ?column? 
 ----------
  {623}
 (1 row)
 
 --test query_int
-select '1'::query_int;
+SELECT '1'::query_int;
  query_int 
 -----------
  1
 (1 row)
 
-select ' 1'::query_int;
+SELECT ' 1'::query_int;
  query_int 
 -----------
  1
 (1 row)
 
-select '1 '::query_int;
+SELECT '1 '::query_int;
  query_int 
 -----------
  1
 (1 row)
 
-select ' 1 '::query_int;
+SELECT ' 1 '::query_int;
  query_int 
 -----------
  1
 (1 row)
 
-select ' ! 1 '::query_int;
+SELECT ' ! 1 '::query_int;
  query_int 
 -----------
  !1
 (1 row)
 
-select '!1'::query_int;
+SELECT '!1'::query_int;
  query_int 
 -----------
  !1
 (1 row)
 
-select '1|2'::query_int;
+SELECT '1|2'::query_int;
  query_int 
 -----------
  1 | 2
 (1 row)
 
-select '1|!2'::query_int;
+SELECT '1|!2'::query_int;
  query_int 
 -----------
  1 | !2
 (1 row)
 
-select '!1|2'::query_int;
+SELECT '!1|2'::query_int;
  query_int 
 -----------
  !1 | 2
 (1 row)
 
-select '!1|!2'::query_int;
+SELECT '!1|!2'::query_int;
  query_int 
 -----------
  !1 | !2
 (1 row)
 
-select '!(!1|!2)'::query_int;
+SELECT '!(!1|!2)'::query_int;
   query_int   
 --------------
  !( !1 | !2 )
 (1 row)
 
-select '!(!1|2)'::query_int;
+SELECT '!(!1|2)'::query_int;
   query_int  
 -------------
  !( !1 | 2 )
 (1 row)
 
-select '!(1|!2)'::query_int;
+SELECT '!(1|!2)'::query_int;
   query_int  
 -------------
  !( 1 | !2 )
 (1 row)
 
-select '!(1|2)'::query_int;
+SELECT '!(1|2)'::query_int;
  query_int  
 ------------
  !( 1 | 2 )
 (1 row)
 
-select '1&2'::query_int;
+SELECT '1&2'::query_int;
  query_int 
 -----------
  1 & 2
 (1 row)
 
-select '!1&2'::query_int;
+SELECT '!1&2'::query_int;
  query_int 
 -----------
  !1 & 2
 (1 row)
 
-select '1&!2'::query_int;
+SELECT '1&!2'::query_int;
  query_int 
 -----------
  1 & !2
 (1 row)
 
-select '!1&!2'::query_int;
+SELECT '!1&!2'::query_int;
  query_int 
 -----------
  !1 & !2
 (1 row)
 
-select '(1&2)'::query_int;
+SELECT '(1&2)'::query_int;
  query_int 
 -----------
  1 & 2
 (1 row)
 
-select '1&(2)'::query_int;
+SELECT '1&(2)'::query_int;
  query_int 
 -----------
  1 & 2
 (1 row)
 
-select '!(1)&2'::query_int;
+SELECT '!(1)&2'::query_int;
  query_int 
 -----------
  !1 & 2
 (1 row)
 
-select '!(1&2)'::query_int;
+SELECT '!(1&2)'::query_int;
  query_int  
 ------------
  !( 1 & 2 )
 (1 row)
 
-select '1|2&3'::query_int;
+SELECT '1|2&3'::query_int;
  query_int 
 -----------
  1 | 2 & 3
 (1 row)
 
-select '1|(2&3)'::query_int;
+SELECT '1|(2&3)'::query_int;
  query_int 
 -----------
  1 | 2 & 3
 (1 row)
 
-select '(1|2)&3'::query_int;
+SELECT '(1|2)&3'::query_int;
    query_int   
 ---------------
  ( 1 | 2 ) & 3
 (1 row)
 
-select '1|2&!3'::query_int;
+SELECT '1|2&!3'::query_int;
  query_int  
 ------------
  1 | 2 & !3
 (1 row)
 
-select '1|!2&3'::query_int;
+SELECT '1|!2&3'::query_int;
  query_int  
 ------------
  1 | !2 & 3
 (1 row)
 
-select '!1|2&3'::query_int;
+SELECT '!1|2&3'::query_int;
  query_int  
 ------------
  !1 | 2 & 3
 (1 row)
 
-select '!1|(2&3)'::query_int;
+SELECT '!1|(2&3)'::query_int;
  query_int  
 ------------
  !1 | 2 & 3
 (1 row)
 
-select '!(1|2)&3'::query_int;
+SELECT '!(1|2)&3'::query_int;
    query_int    
 ----------------
  !( 1 | 2 ) & 3
 (1 row)
 
-select '(!1|2)&3'::query_int;
+SELECT '(!1|2)&3'::query_int;
    query_int    
 ----------------
  ( !1 | 2 ) & 3
 (1 row)
 
-select '1|(2|(4|(5|6)))'::query_int;
+SELECT '1|(2|(4|(5|6)))'::query_int;
            query_int           
 -------------------------------
  1 | ( 2 | ( 4 | ( 5 | 6 ) ) )
 (1 row)
 
-select '1|2|4|5|6'::query_int;
+SELECT '1|2|4|5|6'::query_int;
            query_int           
 -------------------------------
  ( ( ( 1 | 2 ) | 4 ) | 5 ) | 6
 (1 row)
 
-select '1&(2&(4&(5&6)))'::query_int;
+SELECT '1&(2&(4&(5&6)))'::query_int;
      query_int     
 -------------------
  1 & 2 & 4 & 5 & 6
 (1 row)
 
-select '1&2&4&5&6'::query_int;
+SELECT '1&2&4&5&6'::query_int;
      query_int     
 -------------------
  1 & 2 & 4 & 5 & 6
 (1 row)
 
-select '1&(2&(4&(5|6)))'::query_int;
+SELECT '1&(2&(4&(5|6)))'::query_int;
        query_int       
 -----------------------
  1 & 2 & 4 & ( 5 | 6 )
 (1 row)
 
-select '1&(2&(4&(5|!6)))'::query_int;
+SELECT '1&(2&(4&(5|!6)))'::query_int;
        query_int        
 ------------------------
  1 & 2 & 4 & ( 5 | !6 )
@@ -465,7 +465,7 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
     21
 (1 row)
 
-drop index text_idx;
+DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
  count 

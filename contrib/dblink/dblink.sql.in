@@ -1,33 +1,43 @@
--- Uncomment the following 9 lines to use original DEPRECATED functions
---CREATE OR REPLACE FUNCTION dblink (text,text) RETURNS setof int
---  AS 'MODULE_PATHNAME','dblink' LANGUAGE 'c'
---  WITH (isstrict);
---CREATE OR REPLACE FUNCTION dblink_tok (int,int) RETURNS text
---  AS 'MODULE_PATHNAME','dblink_tok' LANGUAGE 'c'
---  WITH (isstrict);
---CREATE OR REPLACE FUNCTION dblink_last_oid (int) RETURNS oid
---  AS 'MODULE_PATHNAME','dblink_last_oid' LANGUAGE 'c'
---  WITH (isstrict);
+--
+-- Uncomment the following commented lines to use original DEPRECATED functions
+--
+--CREATE OR REPLACE FUNCTION dblink (text,text)
+--RETURNS setof int
+--AS 'MODULE_PATHNAME','dblink'
+--LANGUAGE 'C' WITH (isstrict);
+--CREATE OR REPLACE FUNCTION dblink_tok (int,int)
+--RETURNS text
+--AS 'MODULE_PATHNAME','dblink_tok'
+--LANGUAGE 'C' WITH (isstrict);
+--CREATE OR REPLACE FUNCTION dblink_last_oid (int)
+--RETURNS oid
+--AS 'MODULE_PATHNAME','dblink_last_oid'
+--LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_connect (text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_connect' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_connect (text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_connect'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_disconnect () RETURNS text
-  AS 'MODULE_PATHNAME','dblink_disconnect' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_disconnect ()
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_disconnect'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_open (text,text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_open' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_open (text,text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_open'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_fetch (text,int) RETURNS setof record
-  AS 'MODULE_PATHNAME','dblink_fetch' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_fetch (text,int)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_fetch'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_close (text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_close' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_close (text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_close'
+LANGUAGE 'C' WITH (isstrict);
 
 -- Note: if this is not a first time install of dblink, uncomment the
 -- following DROP which prepares the database for the new, non-deprecated
@@ -35,55 +45,49 @@ CREATE OR REPLACE FUNCTION dblink_close (text) RETURNS text
 --DROP FUNCTION dblink (text,text);
 
 -- Comment out the following 3 lines if the DEPRECATED functions are used.
-CREATE OR REPLACE FUNCTION dblink (text,text) RETURNS setof record
-  AS 'MODULE_PATHNAME','dblink_record' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink (text,text)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_record'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink (text) RETURNS setof record
-  AS 'MODULE_PATHNAME','dblink_record' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink (text)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_record'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_exec (text,text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_exec' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_exec (text,text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_exec'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_exec (text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_exec' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_exec (text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_exec'
+LANGUAGE 'c' WITH (isstrict);
 
 CREATE TYPE dblink_pkey_results AS (position int4, colname text);
 
-CREATE OR REPLACE FUNCTION dblink_get_pkey (text) RETURNS setof dblink_pkey_results
-  AS 'MODULE_PATHNAME','dblink_get_pkey' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_get_pkey (text)
+RETURNS setof dblink_pkey_results
+AS 'MODULE_PATHNAME','dblink_get_pkey'
+LANGUAGE 'c' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int4, _text, _text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_build_sql_insert' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int4, _text, _text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_build_sql_insert'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int4, _text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_build_sql_delete' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int4, _text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_build_sql_delete'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int4, _text, _text) RETURNS text
-  AS 'MODULE_PATHNAME','dblink_build_sql_update' LANGUAGE 'c'
-  WITH (isstrict);
+CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int4, _text, _text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_build_sql_update'
+LANGUAGE 'C' WITH (isstrict);
 
-CREATE OR REPLACE FUNCTION dblink_current_query () RETURNS text
-  AS 'MODULE_PATHNAME','dblink_current_query' LANGUAGE 'c';
-
-GRANT EXECUTE ON FUNCTION dblink_connect (text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_disconnect () TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_open (text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_fetch (text,int) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_close (text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink (text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink (text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_exec (text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_exec (text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_get_pkey (text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_build_sql_insert (text, int2vector, int4, _text, _text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_build_sql_delete (text, int2vector, int4, _text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_build_sql_update (text, int2vector, int4, _text, _text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION dblink_current_query () TO PUBLIC;
-
+CREATE OR REPLACE FUNCTION dblink_current_query ()
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_current_query'
+LANGUAGE 'C';

@@ -6,8 +6,8 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-psql:seg.sql:11: WARNING:  ProcedureCreate: type seg is not yet defined
-psql:seg.sql:16: WARNING:  Argument type "seg" is only a shell
+psql:seg.sql:12: WARNING:  ProcedureCreate: type seg is not yet defined
+psql:seg.sql:17: WARNING:  Argument type "seg" is only a shell
 --
 -- testing the input and output functions
 --

@@ -1,6 +1,9 @@
-DROP FUNCTION noup ();
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-CREATE FUNCTION noup ()
-	RETURNS trigger
-	AS 'MODULE_PATHNAME'
-	LANGUAGE 'C';
+SET autocommit TO 'on';
+
+CREATE OR REPLACE FUNCTION noup ()
+RETURNS trigger
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';

@@ -1,7 +1,7 @@
-begin transaction;
-
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
+
+SET autocommit TO 'on';
 
 --
 --
@@ -11,23 +11,45 @@ SET search_path = public;
 --
 --
 -- define the GiST support methods
-create function gbox_consistent(internal,box,int4) returns bool as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gbox_consistent(internal,box,int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function gbox_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gbox_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function rtree_decompress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION rtree_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function gbox_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with (isstrict);
+CREATE FUNCTION gbox_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
-create function gbox_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gbox_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function gbox_union(bytea, internal) returns box as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gbox_union(bytea, internal)
+RETURNS box
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function gbox_same(box, box, internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gbox_same(box, box, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 -- create the operator class
 CREATE OPERATOR CLASS gist_box_ops
-    DEFAULT FOR TYPE box USING gist AS
+DEFAULT FOR TYPE box USING gist
+AS
 	OPERATOR	1	<< ,
 	OPERATOR	2	&< ,
 	OPERATOR	3	&& ,
@@ -53,21 +75,28 @@ CREATE OPERATOR CLASS gist_box_ops
 --
 --
 -- define the GiST support methods
-create function gpoly_consistent(internal,polygon,int4) returns bool as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gpoly_consistent(internal,polygon,int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function gpoly_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION gpoly_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 -- create the operator class
 CREATE OPERATOR CLASS gist_poly_ops
-    DEFAULT FOR TYPE polygon USING gist AS
-	OPERATOR	1	<<	RECHECK ,
-	OPERATOR	2	&<	RECHECK ,
-	OPERATOR	3	&&	RECHECK ,
-	OPERATOR	4	&>	RECHECK ,
-	OPERATOR	5	>>	RECHECK ,
-	OPERATOR	6	~=	RECHECK ,
-	OPERATOR	7	~	RECHECK ,
-	OPERATOR	8	@	RECHECK ,
+DEFAULT FOR TYPE polygon USING gist 
+AS
+	OPERATOR	1	<<	RECHECK,
+	OPERATOR	2	&<	RECHECK,
+	OPERATOR	3	&&	RECHECK,
+	OPERATOR	4	&>	RECHECK,
+	OPERATOR	5	>>	RECHECK,
+	OPERATOR	6	~=	RECHECK,
+	OPERATOR	7	~	RECHECK,
+	OPERATOR	8	@	RECHECK,
 	FUNCTION	1	gpoly_consistent (internal, polygon, int4),
 	FUNCTION	2	gbox_union (bytea, internal),
 	FUNCTION	3	gpoly_compress (internal),
@@ -76,6 +105,3 @@ CREATE OPERATOR CLASS gist_poly_ops
 	FUNCTION	6	gbox_picksplit (internal, internal),
 	FUNCTION	7	gbox_same (box, box, internal),
 	STORAGE		box;
-
-
-end transaction;

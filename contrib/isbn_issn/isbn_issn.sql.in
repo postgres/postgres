@@ -1,35 +1,36 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.6 2002/08/22 00:01:39 tgl Exp $
+--	$Id: isbn_issn.sql.in,v 1.7 2002/10/18 18:41:20 momjian Exp $
 --
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
+SET autocommit TO 'on';
 
 --
 --	Input and output functions and the type itself:
 --
 
-create function issn_in(cstring)
-	returns issn
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_in(cstring)
+RETURNS issn
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function issn_out(issn)
-	returns cstring
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_out(issn)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create type issn (
-	internallength = 16,
-	externallength = 9,
-	input = issn_in,
-	output = issn_out
+CREATE TYPE issn (
+	INTERNALLENGTH = 16,
+	EXTERNALLENGTH = 9,
+	INPUT = issn_in,
+	OUTPUT = issn_out
 );
 
-comment on type issn
+COMMENT ON TYPE issn
   is 'International Standard Serial Number';
 
 
@@ -37,35 +38,35 @@ comment on type issn
 --	The various boolean tests:
 --
 
-create function issn_lt(issn, issn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_lt(issn, issn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function issn_le(issn, issn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_le(issn, issn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function issn_eq(issn, issn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_eq(issn, issn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function issn_ge(issn, issn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_ge(issn, issn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function issn_gt(issn, issn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_gt(issn, issn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function issn_ne(issn, issn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION issn_ne(issn, issn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 --
 --	Now the operators.  Note how some of the parameters to some
@@ -74,47 +75,47 @@ create function issn_ne(issn, issn)
 --	will be implicitly defined when those are, further down.
 --
 
-create operator < (
-	leftarg = issn,
-	rightarg = issn,
---	negator = >=,
-	procedure = issn_lt
+CREATE OPERATOR < (
+	LEFTARG = issn,
+	RIGHTARG = issn,
+--	NEGATOR = >=,
+	PROCEDURE = issn_lt
 );
 
-create operator <= (
-	leftarg = issn,
-	rightarg = issn,
---	negator = >,
-	procedure = issn_le
+CREATE OPERATOR <= (
+	LEFTARG = issn,
+	RIGHTARG = issn,
+--	NEGATOR = >,
+	PROCEDURE = issn_le
 );
 
-create operator = (
-	leftarg = issn,
-	rightarg = issn,
-	commutator = =,
---	negator = <>,
-	procedure = issn_eq
+CREATE OPERATOR = (
+	LEFTARG = issn,
+	RIGHTARG = issn,
+	COMMUTATOR = =,
+--	NEGATOR = <>,
+	PROCEDURE = issn_eq
 );
 
-create operator >= (
-	leftarg = issn,
-	rightarg = issn,
-	negator = <,
-	procedure = issn_ge
+CREATE OPERATOR >= (
+	LEFTARG = issn,
+	RIGHTARG = issn,
+	NEGATOR = <,
+	PROCEDURE = issn_ge
 );
 
-create operator > (
-	leftarg = issn,
-	rightarg = issn,
-	negator = <=,
-	procedure = issn_gt
+CREATE OPERATOR > (
+	LEFTARG = issn,
+	RIGHTARG = issn,
+	NEGATOR = <=,
+	PROCEDURE = issn_gt
 );
 
-create operator <> (
-	leftarg = issn,
-	rightarg = issn,
-	negator = =,
-	procedure = issn_ne
+CREATE OPERATOR <> (
+	LEFTARG = issn,
+	RIGHTARG = issn,
+	NEGATOR = =,
+	PROCEDURE = issn_ne
 );
 
 --
@@ -123,66 +124,65 @@ create operator <> (
 --
 --	PostgreSQL code for ISBNs.
 --
---	$Id: isbn_issn.sql.in,v 1.6 2002/08/22 00:01:39 tgl Exp $
+--	$Id: isbn_issn.sql.in,v 1.7 2002/10/18 18:41:20 momjian Exp $
 --
 --
 --	Input and output functions and the type itself:
 --
 
-create function isbn_in(cstring)
-	returns isbn
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_in(cstring)
+RETURNS isbn
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function isbn_out(isbn)
-	returns cstring
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_out(isbn)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create type isbn (
-	internallength = 16,
-	externallength = 13,
-	input = isbn_in,
-	output = isbn_out
+CREATE TYPE isbn (
+	INTERNALLENGTH = 16,
+	EXTERNALLENGTH = 13,
+	INPUT = isbn_in,
+	OUTPUT = isbn_out
 );
 
-comment on type isbn
-  is 'International Standard Book Number';
+COMMENT ON TYPE isbn IS 'International Standard Book Number';
 
 
 --
 --	The various boolean tests:
 --
 
-create function isbn_lt(isbn, isbn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_lt(isbn, isbn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function isbn_le(isbn, isbn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_le(isbn, isbn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function isbn_eq(isbn, isbn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_eq(isbn, isbn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function isbn_ge(isbn, isbn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_ge(isbn, isbn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function isbn_gt(isbn, isbn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_gt(isbn, isbn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-create function isbn_ne(isbn, isbn)
-	returns bool
-	as 'MODULE_PATHNAME'
-	language 'c';
+CREATE FUNCTION isbn_ne(isbn, isbn)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 --
 --	Now the operators.  Note how some of the parameters to some
@@ -191,61 +191,61 @@ create function isbn_ne(isbn, isbn)
 --	will be implicitly defined when those are, further down.
 --
 
-create operator < (
-	leftarg = isbn,
-	rightarg = isbn,
---	negator = >=,
-	procedure = isbn_lt
+CREATE OPERATOR < (
+	LEFTARG = isbn,
+	RIGHTARG = isbn,
+--	NEGATOR = >=,
+	PROCEDURE = isbn_lt
 );
 
-create operator <= (
-	leftarg = isbn,
-	rightarg = isbn,
---	negator = >,
-	procedure = isbn_le
+CREATE OPERATOR <= (
+	LEFTARG = isbn,
+	RIGHTARG = isbn,
+--	NEGATOR = >,
+	PROCEDURE = isbn_le
 );
 
-create operator = (
-	leftarg = isbn,
-	rightarg = isbn,
-	commutator = =,
---	negator = <>,
-	procedure = isbn_eq
+CREATE OPERATOR = (
+	LEFTARG = isbn,
+	RIGHTARG = isbn,
+	COMMUTATOR = =,
+--	NEGATOR = <>,
+	PROCEDURE = isbn_eq
 );
 
-create operator >= (
-	leftarg = isbn,
-	rightarg = isbn,
-	negator = <,
-	procedure = isbn_ge
+CREATE OPERATOR >= (
+	LEFTARG = isbn,
+	RIGHTARG = isbn,
+	NEGATOR = <,
+	PROCEDURE = isbn_ge
 );
 
-create operator > (
-	leftarg = isbn,
-	rightarg = isbn,
-	negator = <=,
-	procedure = isbn_gt
+CREATE OPERATOR > (
+	LEFTARG = isbn,
+	RIGHTARG = isbn,
+	NEGATOR = <=,
+	PROCEDURE = isbn_gt
 );
 
-create operator <> (
-	leftarg = isbn,
-	rightarg = isbn,
-	negator = =,
-	procedure = isbn_ne
+CREATE OPERATOR <> (
+	LEFTARG = isbn,
+	RIGHTARG = isbn,
+	NEGATOR = =,
+	PROCEDURE = isbn_ne
 );
 
 
 -- Register 'isbn' comparison function
-create function isbn_cmp(isbn, isbn)
-    returns integer
-    as '$libdir/isbn_issn'
-    language c;
+CREATE FUNCTION isbn_cmp(isbn, isbn)
+RETURNS integer
+AS '$libdir/isbn_issn'
+LANGUAGE c;
 
 -- Register 'issn' comparison function
-create function issn_cmp(issn, issn)
-    returns integer
-    as '$libdir/isbn_issn'
-    language c;
+CREATE FUNCTION issn_cmp(issn, issn)
+RETURNS integer
+AS '$libdir/isbn_issn'
+LANGUAGE c;
 
 -------------------------------------------------
 -- Create default operator class for 'isbn'    --
@@ -253,7 +253,8 @@ create function issn_cmp(issn, issn)
 -------------------------------------------------
 
 CREATE OPERATOR CLASS isbn_ops
-    DEFAULT FOR TYPE isbn USING btree AS
+DEFAULT FOR TYPE isbn USING btree 
+AS
         OPERATOR        1       < ,
         OPERATOR        2       <= ,
         OPERATOR        3       = ,
@@ -267,7 +268,8 @@ CREATE OPERATOR CLASS isbn_ops
 -------------------------------------------------
 
 CREATE OPERATOR CLASS issn_ops
-    DEFAULT FOR TYPE issn USING btree AS
+DEFAULT FOR TYPE issn USING btree 
+AS
         OPERATOR        1       < ,
         OPERATOR        2       <= ,
         OPERATOR        3       = ,

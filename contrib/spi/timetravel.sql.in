@@ -1,12 +1,14 @@
-DROP FUNCTION timetravel();
-DROP FUNCTION set_timetravel(name, int4);
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-CREATE FUNCTION timetravel() 
-	RETURNS trigger 
-	AS 'MODULE_PATHNAME'
-	LANGUAGE 'C';
+SET autocommit TO 'on';
 
-CREATE FUNCTION set_timetravel(name, int4) 
-	RETURNS int4 
-	AS 'MODULE_PATHNAME'
-	LANGUAGE 'C' WITH (isStrict);
+CREATE OR REPLACE FUNCTION timetravel() 
+RETURNS trigger 
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE OR REPLACE FUNCTION set_timetravel(name, int4) 
+RETURNS int4 
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isStrict);

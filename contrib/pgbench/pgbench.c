@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.20 2002/10/07 05:10:02 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.21 2002/10/18 18:41:20 momjian Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -117,7 +117,8 @@ static PGconn *
 doConnect()
 {
 	PGconn	   *con;
-
+	PGresult   *res;
+ 
 	con = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
 					   login, pwd);
 	if (con == NULL)
@@ -138,6 +139,22 @@ doConnect()
 
 		return (NULL);
 	}
+
+	res = PQexec(con, "SET search_path = public");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "%s", PQerrorMessage(con));
+		exit(1);
+	}
+	PQclear(res);
+	res = PQexec(con, "SET autocommit TO 'on'");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "%s", PQerrorMessage(con));
+		exit(1);
+	}
+	PQclear(res);
+
 	return (con);
 }
 
@@ -499,6 +516,7 @@ init(void)
 		fprintf(stderr, "%s", PQerrorMessage(con));
 		exit(1);
 	}
+	PQclear(res);
 
 	for (i = 0; i < nbranches * tps; i++)
 	{
@@ -589,6 +607,7 @@ init(void)
 				fprintf(stderr, "%s", PQerrorMessage(con));
 				exit(1);
 			}
+			PQclear(res);
 #endif   /* NOT_USED */
 		}
 	}
@@ -601,6 +620,7 @@ init(void)
 		fprintf(stderr, "%s", PQerrorMessage(con));
 		exit(1);
 	}
+	PQclear(res);
 	fprintf(stderr, "done.\n");
 
 	PQfinish(con);
@@ -833,6 +853,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s", PQerrorMessage(con));
 		exit(1);
 	}
+	PQclear(res);
 	tps = atoi(PQgetvalue(res, 0, 0));
 	if (tps < 0)
 	{

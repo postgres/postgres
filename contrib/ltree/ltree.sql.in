@@ -1,23 +1,23 @@
-BEGIN;
-
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
+
+SET autocommit TO 'on';
 
 CREATE FUNCTION ltree_in(cstring)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
+LANGUAGE 'C' WITH (isstrict);
 
 CREATE FUNCTION ltree_out(ltree)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
+LANGUAGE 'C' WITH (isstrict);
 
 CREATE TYPE ltree (
-internallength = -1,
-input = ltree_in,
-output = ltree_out,
-storage = extended
+	INTERNALLENGTH = -1,
+	INPUT = ltree_in,
+	OUTPUT = ltree_out,
+	STORAGE = extended
 );
 
 
@@ -25,74 +25,99 @@ storage = extended
 CREATE FUNCTION ltree_cmp(ltree,ltree)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_lt(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_le(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_eq(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_ge(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_gt(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_ne(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 
 CREATE OPERATOR < (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_lt,
-        COMMUTATOR = '>', NEGATOR = '>=',
-        RESTRICT = contsel, JOIN = contjoinsel
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_lt,
+        COMMUTATOR = '>',
+	NEGATOR = '>=',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR <= (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_le,
-        COMMUTATOR = '>=', NEGATOR = '>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_le,
+        COMMUTATOR = '>=',
+	NEGATOR = '>',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR >= (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_ge,
-        COMMUTATOR = '<=', NEGATOR = '<',
-        RESTRICT = contsel, JOIN = contjoinsel
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_ge,
+        COMMUTATOR = '<=',
+	NEGATOR = '<',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR > (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_gt,
-        COMMUTATOR = '<', NEGATOR = '<=',
-        RESTRICT = contsel, JOIN = contjoinsel
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_gt,
+        COMMUTATOR = '<',
+	NEGATOR = '<=',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR = (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_eq,
-        COMMUTATOR = '=', NEGATOR = '<>',
-        RESTRICT = eqsel, JOIN = eqjoinsel,
-        SORT1 = '<', SORT2 = '<'
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_eq,
+        COMMUTATOR = '=',
+	NEGATOR = '<>',
+        RESTRICT = eqsel,
+	JOIN = eqjoinsel,
+        SORT1 = '<',
+	SORT2 = '<'
 );
 
 CREATE OPERATOR <> (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_ne,
-        COMMUTATOR = '<>', NEGATOR = '=',
-        RESTRICT = neqsel, JOIN = neqjoinsel
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_ne,
+        COMMUTATOR = '<>',
+	NEGATOR = '=',
+        RESTRICT = neqsel,
+	JOIN = neqjoinsel
 );
 
 --util functions
@@ -100,122 +125,140 @@ CREATE OPERATOR <> (
 CREATE FUNCTION subltree(ltree,int4,int4)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION subpath(ltree,int4,int4)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION subpath(ltree,int4)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION nlevel(ltree)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(_ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME','_lca'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION lca(ltree,ltree,ltree,ltree,ltree,ltree,ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_isparent(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_risparent(ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_addltree(ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_addtext(ltree,text)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltree_textadd(text,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE OPERATOR @> (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_isparent,
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_isparent,
         COMMUTATOR = '<@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^@> (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_isparent,
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_isparent,
         COMMUTATOR = '^<@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR <@ (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_risparent,
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_risparent,
         COMMUTATOR = '@>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^<@ (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_risparent,
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_risparent,
         COMMUTATOR = '^@>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR || (
-        LEFTARG = ltree, RIGHTARG = ltree, PROCEDURE = ltree_addltree
+        LEFTARG = ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_addltree
 );
 
 CREATE OPERATOR || (
-        LEFTARG = ltree, RIGHTARG = text, PROCEDURE = ltree_addtext
+        LEFTARG = ltree,
+	RIGHTARG = text,
+	PROCEDURE = ltree_addtext
 );
 
 CREATE OPERATOR || (
-        LEFTARG = text, RIGHTARG = ltree, PROCEDURE = ltree_textadd
+        LEFTARG = text,
+	RIGHTARG = ltree,
+	PROCEDURE = ltree_textadd
 );
 
 
@@ -235,135 +278,166 @@ CREATE OPERATOR CLASS ltree_ops
 CREATE FUNCTION lquery_in(cstring)
 RETURNS lquery
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
+LANGUAGE 'C' WITH (isstrict);
 
 CREATE FUNCTION lquery_out(lquery)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
+LANGUAGE 'C' WITH (isstrict);
 
 CREATE TYPE lquery (
-internallength = -1,
-input = lquery_in,
-output = lquery_out,
-storage = extended
+	INTERNALLENGTH = -1,
+	INPUT = lquery_in,
+	OUTPUT = lquery_out,
+	STORAGE = extended
 );
 
 CREATE FUNCTION ltq_regex(ltree,lquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION ltq_rregex(lquery,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE OPERATOR ~ (
-        LEFTARG = ltree, RIGHTARG = lquery, PROCEDURE = ltq_regex,
+        LEFTARG = ltree,
+	RIGHTARG = lquery,
+	PROCEDURE = ltq_regex,
 	COMMUTATOR = '~',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ~ (
-        LEFTARG = lquery, RIGHTARG = ltree, PROCEDURE = ltq_rregex,
+        LEFTARG = lquery,
+	RIGHTARG = ltree,
+	PROCEDURE = ltq_rregex,
 	COMMUTATOR = '~',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 --not-indexed
 CREATE OPERATOR ^~ (
-        LEFTARG = ltree, RIGHTARG = lquery, PROCEDURE = ltq_regex,
+        LEFTARG = ltree,
+	RIGHTARG = lquery,
+	PROCEDURE = ltq_regex,
 	COMMUTATOR = '^~',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^~ (
-        LEFTARG = lquery, RIGHTARG = ltree, PROCEDURE = ltq_rregex,
+        LEFTARG = lquery,
+	RIGHTARG = ltree,
+	PROCEDURE = ltq_rregex,
 	COMMUTATOR = '^~',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE FUNCTION ltxtq_in(cstring)
 RETURNS ltxtquery
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
+LANGUAGE 'C' WITH (isstrict);
 
 CREATE FUNCTION ltxtq_out(ltxtquery)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
+LANGUAGE 'C' WITH (isstrict);
 
 CREATE TYPE ltxtquery (
-internallength = -1,
-input = ltxtq_in,
-output = ltxtq_out,
-storage = extended
+	INTERNALLENGTH = -1,
+	INPUT = ltxtq_in,
+	OUTPUT = ltxtq_out,
+	STORAGE = extended
 );
 
--- operations with ltxtquery
+-- operations WITH ltxtquery
 
 CREATE FUNCTION ltxtq_exec(ltree, ltxtquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict, iscachable);
+LANGUAGE 'C' WITH (isstrict, iscachable);
 
 CREATE FUNCTION ltxtq_rexec(ltxtquery, ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict, iscachable);
+LANGUAGE 'C' WITH (isstrict, iscachable);
 
 CREATE OPERATOR @ (
-        LEFTARG = ltree, RIGHTARG = ltxtquery, PROCEDURE = ltxtq_exec,
+        LEFTARG = ltree,
+	RIGHTARG = ltxtquery,
+	PROCEDURE = ltxtq_exec,
 	COMMUTATOR = '@',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR @ (
-        LEFTARG = ltxtquery, RIGHTARG = ltree, PROCEDURE = ltxtq_rexec,
+        LEFTARG = ltxtquery,
+	RIGHTARG = ltree,
+	PROCEDURE = ltxtq_rexec,
 	COMMUTATOR = '@',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 --not-indexed
 CREATE OPERATOR ^@ (
-        LEFTARG = ltree, RIGHTARG = ltxtquery, PROCEDURE = ltxtq_exec,
+        LEFTARG = ltree,
+	RIGHTARG = ltxtquery,
+	PROCEDURE = ltxtq_exec,
 	COMMUTATOR = '^@',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^@ (
-        LEFTARG = ltxtquery, RIGHTARG = ltree, PROCEDURE = ltxtq_rexec,
+        LEFTARG = ltxtquery,
+	RIGHTARG = ltree,
+	PROCEDURE = ltxtq_rexec,
 	COMMUTATOR = '^@',
-	RESTRICT = contsel, JOIN = contjoinsel
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 --GiST support for ltree
 CREATE FUNCTION ltree_gist_in(cstring)
 RETURNS ltree_gist
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
-   
+LANGUAGE 'C' WITH (isstrict);
+  
 CREATE FUNCTION ltree_gist_out(ltree_gist)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict);
-   
+LANGUAGE 'C' WITH (isstrict);
+  
 CREATE TYPE ltree_gist (
 	internallength = -1,
 	input = ltree_gist_in,
 	output = ltree_gist_out,
 	storage = plain
-);    
+);   
 
 
-create function ltree_consistent(internal,internal,int2) returns bool as 'MODULE_PATHNAME' language 'C';
-create function ltree_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
-create function ltree_decompress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
-create function ltree_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
-create function ltree_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
-create function ltree_union(bytea, internal) returns int4 as 'MODULE_PATHNAME' language 'C';
-create function ltree_same(internal, internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION ltree_consistent(internal,internal,int2)
+RETURNS bool as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION ltree_compress(internal)
+RETURNS internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION ltree_decompress(internal)
+RETURNS internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION ltree_penalty(internal,internal,internal)
+RETURNS internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
+CREATE FUNCTION ltree_picksplit(internal, internal)
+RETURNS internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION ltree_union(bytea, internal)
+RETURNS int4 as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION ltree_same(internal, internal, internal)
+RETURNS internal as 'MODULE_PATHNAME' language 'C';
 
 CREATE OPERATOR CLASS gist_ltree_ops
     DEFAULT FOR TYPE ltree USING gist AS
@@ -393,185 +467,259 @@ CREATE OPERATOR CLASS gist_ltree_ops
 CREATE FUNCTION _ltree_isparent(_ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltree_r_isparent(ltree,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltree_risparent(_ltree,ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltree_r_risparent(ltree,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltq_regex(_ltree,lquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltq_rregex(lquery,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltxtq_exec(_ltree, ltxtquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict, iscachable);
+LANGUAGE 'C' WITH (isstrict, iscachable);
 
 CREATE FUNCTION _ltxtq_rexec(ltxtquery, _ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict, iscachable);
+LANGUAGE 'C' WITH (isstrict, iscachable);
 
 CREATE OPERATOR @> (
-        LEFTARG = _ltree, RIGHTARG = ltree, PROCEDURE = _ltree_isparent,
+        LEFTARG = _ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = _ltree_isparent,
         COMMUTATOR = '<@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR <@ (
-        LEFTARG = ltree, RIGHTARG = _ltree, PROCEDURE = _ltree_r_isparent,
+        LEFTARG = ltree,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltree_r_isparent,
         COMMUTATOR = '@>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR <@ (
-        LEFTARG = _ltree, RIGHTARG = ltree, PROCEDURE = _ltree_risparent,
+        LEFTARG = _ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = _ltree_risparent,
         COMMUTATOR = '@>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR @> (
-        LEFTARG = ltree, RIGHTARG = _ltree, PROCEDURE = _ltree_r_risparent,
+        LEFTARG = ltree,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltree_r_risparent,
         COMMUTATOR = '<@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ~ (
-        LEFTARG = _ltree, RIGHTARG = lquery, PROCEDURE = _ltq_regex,
+        LEFTARG = _ltree,
+	RIGHTARG = lquery,
+	PROCEDURE = _ltq_regex,
         COMMUTATOR = '~',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ~ (
-        LEFTARG = lquery, RIGHTARG = _ltree, PROCEDURE = _ltq_rregex,
+        LEFTARG = lquery,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltq_rregex,
         COMMUTATOR = '~',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR @ (
-        LEFTARG = _ltree, RIGHTARG = ltxtquery, PROCEDURE = _ltxtq_exec,
+        LEFTARG = _ltree,
+	RIGHTARG = ltxtquery,
+	PROCEDURE = _ltxtq_exec,
         COMMUTATOR = '@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR @ (
-        LEFTARG = ltxtquery, RIGHTARG = _ltree, PROCEDURE = _ltxtq_rexec,
+        LEFTARG = ltxtquery,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltxtq_rexec,
         COMMUTATOR = '@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 
 --not indexed
 CREATE OPERATOR ^@> (
-        LEFTARG = _ltree, RIGHTARG = ltree, PROCEDURE = _ltree_isparent,
+        LEFTARG = _ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = _ltree_isparent,
         COMMUTATOR = '^<@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^<@ (
-        LEFTARG = ltree, RIGHTARG = _ltree, PROCEDURE = _ltree_r_isparent,
+        LEFTARG = ltree,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltree_r_isparent,
         COMMUTATOR = '^@>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^<@ (
-        LEFTARG = _ltree, RIGHTARG = ltree, PROCEDURE = _ltree_risparent,
+        LEFTARG = _ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = _ltree_risparent,
         COMMUTATOR = '^@>',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^@> (
-        LEFTARG = ltree, RIGHTARG = _ltree, PROCEDURE = _ltree_r_risparent,
+        LEFTARG = ltree,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltree_r_risparent,
         COMMUTATOR = '^<@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^~ (
-        LEFTARG = _ltree, RIGHTARG = lquery, PROCEDURE = _ltq_regex,
+        LEFTARG = _ltree,
+	RIGHTARG = lquery,
+	PROCEDURE = _ltq_regex,
         COMMUTATOR = '^~',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^~ (
-        LEFTARG = lquery, RIGHTARG = _ltree, PROCEDURE = _ltq_rregex,
+        LEFTARG = lquery,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltq_rregex,
         COMMUTATOR = '^~',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^@ (
-        LEFTARG = _ltree, RIGHTARG = ltxtquery, PROCEDURE = _ltxtq_exec,
+        LEFTARG = _ltree,
+	RIGHTARG = ltxtquery,
+	PROCEDURE = _ltxtq_exec,
         COMMUTATOR = '^@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ^@ (
-        LEFTARG = ltxtquery, RIGHTARG = _ltree, PROCEDURE = _ltxtq_rexec,
+        LEFTARG = ltxtquery,
+	RIGHTARG = _ltree,
+	PROCEDURE = _ltxtq_rexec,
         COMMUTATOR = '^@',
-        RESTRICT = contsel, JOIN = contjoinsel
+        RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 --extractors
 CREATE FUNCTION _ltree_extract_isparent(_ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE OPERATOR ?@> (
-        LEFTARG = _ltree, RIGHTARG = ltree, PROCEDURE = _ltree_extract_isparent
+        LEFTARG = _ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = _ltree_extract_isparent
 );
 
 CREATE FUNCTION _ltree_extract_risparent(_ltree,ltree)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE OPERATOR ?<@ (
-        LEFTARG = _ltree, RIGHTARG = ltree, PROCEDURE = _ltree_extract_risparent
+        LEFTARG = _ltree,
+	RIGHTARG = ltree,
+	PROCEDURE = _ltree_extract_risparent
 );
 
 CREATE FUNCTION _ltq_extract_regex(_ltree,lquery)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE OPERATOR ?~ (
-        LEFTARG = _ltree, RIGHTARG = lquery, PROCEDURE = _ltq_extract_regex
+        LEFTARG = _ltree,
+	RIGHTARG = lquery,
+	PROCEDURE = _ltq_extract_regex
 );
 
 CREATE FUNCTION _ltxtq_extract_exec(_ltree,ltxtquery)
 RETURNS ltree
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE OPERATOR ?@ (
-        LEFTARG = _ltree, RIGHTARG = ltxtquery, PROCEDURE = _ltxtq_extract_exec
+        LEFTARG = _ltree,
+	RIGHTARG = ltxtquery,
+	PROCEDURE = _ltxtq_extract_exec
 );
 
 --GiST support for ltree[]
-create function _ltree_consistent(internal,internal,int2) returns bool as 'MODULE_PATHNAME' language 'C';
-create function _ltree_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
-create function _ltree_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
-create function _ltree_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
-create function _ltree_union(bytea, internal) returns int4 as 'MODULE_PATHNAME' language 'C';
-create function _ltree_same(internal, internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
+CREATE FUNCTION _ltree_consistent(internal,internal,int2)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+CREATE FUNCTION _ltree_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+CREATE FUNCTION _ltree_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH(isstrict);
+CREATE FUNCTION _ltree_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+CREATE FUNCTION _ltree_union(bytea, internal)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+CREATE FUNCTION _ltree_same(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 CREATE OPERATOR CLASS gist__ltree_ops
     DEFAULT FOR TYPE _ltree USING gist AS
@@ -589,6 +737,3 @@ CREATE OPERATOR CLASS gist__ltree_ops
 	FUNCTION	6	_ltree_picksplit (internal, internal),
 	FUNCTION	7	_ltree_same (internal, internal, internal),
 	STORAGE		ltree_gist;
-
-
-END;

@@ -1,6 +1,9 @@
-DROP FUNCTION moddatetime();
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
-CREATE FUNCTION moddatetime() 
-	RETURNS trigger 
-	AS 'MODULE_PATHNAME'
-	LANGUAGE 'C';
+SET autocommit TO 'on';
+
+CREATE OR REPLACE FUNCTION moddatetime()
+RETURNS trigger
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';

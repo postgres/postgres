@@ -1,24 +1,19 @@
-begin;
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
+SET autocommit TO 'on';
 
 --------------- geo_distance
 
-CREATE OR REPLACE FUNCTION geo_distance (point, point) RETURNS float8
-  LANGUAGE 'c' IMMUTABLE STRICT AS 'MODULE_PATHNAME';
+CREATE OR REPLACE FUNCTION geo_distance (point, point)
+RETURNS float8
+LANGUAGE 'C' IMMUTABLE STRICT AS 'MODULE_PATHNAME';
 
 --------------- geo_distance as operator <@>
 
 CREATE OPERATOR <@> (
-  leftarg = point,
-  rightarg = point,
-  procedure = geo_distance,
-  commutator = <@>
+  LEFTARG = point,
+  RIGHTARG = point,
+  PROCEDURE = geo_distance,
+  COMMUTATOR = <@>
 );
-
---
--- By default this function is made executable by anyone. To restrict
--- access by default, comment out the following grant command.
---
-
-grant execute on function geo_distance(point, point) to public;
-
-commit;

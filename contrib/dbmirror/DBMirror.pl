@@ -19,7 +19,7 @@
 #    GNU General Public License for more details.
 #
 ##############################################################################
-# $Id: DBMirror.pl,v 1.1 2002/06/23 21:58:07 momjian Exp $ 
+# $Id: DBMirror.pl,v 1.2 2002/10/18 18:41:19 momjian Exp $ 
 #
 ##############################################################################
 
@@ -112,6 +112,23 @@ sub Main() {
     die;
   }
     
+  my $setQuery;
+  $setQuery = "SET search_path = public";
+  $setResult = $masterConn->exec($setQuery);
+  if($setResult->resultStatus!=PGRES_COMMAND_OK) { 
+    logErrorMessage($masterConn->errorMessage . "\n" . 
+		    $setQuery);
+    die;
+  }
+    
+  my $setQuery2;
+  $setQuery2 = "SET autocommit TO 'on'";
+  $setResult2 = $masterConn->exec($setQuery2);
+  if($setResult2->resultStatus!=PGRES_COMMAND_OK) { 
+    logErrorMessage($masterConn->errorMessage . "\n" . 
+		    $setQuery2);
+    die;
+  }
     
   my $firstTime = 1;
   while(1) {
@@ -127,6 +144,7 @@ sub Main() {
     
     
    
+    sendQueryToSlaves(undef,"SET autocommit TO 'on'");
     sendQueryToSlaves(undef,"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
     sendQueryToSlaves(undef,"SET CONSTRAINTS ALL DEFERRED");
     
@@ -703,7 +721,7 @@ sub openSlaveConnection($) {
     
     $slaveConn = Pg::connectdb($slaveConnString);
     
-    if($slaveConn->status !=PGRES_CONNECTION_OK) {
+    if($slaveConn->status != PGRES_CONNECTION_OK) {
 	my $errorMessage = "Can't connect to slave database " ;
 	$errorMessage .= $slavePtr->{"slaveHost"} . "\n";
 	$errorMessage .= $slaveConn->errorMessage;

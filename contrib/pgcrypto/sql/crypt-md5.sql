@@ -2,16 +2,19 @@
 -- crypt() and gen_salt(): md5
 --
 
-select crypt('', '$1$Szzz0yzz');
+SET autocommit TO 'on';
 
-select crypt('foox', '$1$Szzz0yzz');
+SELECT crypt('', '$1$Szzz0yzz');
 
-create table ctest (data text, res text, salt text);
-insert into ctest values ('password', '', '');
+SELECT crypt('foox', '$1$Szzz0yzz');
 
-update ctest set salt = gen_salt('md5');
-update ctest set res = crypt(data, salt);
-select res = crypt(data, res) as "worked" from ctest;
+CREATE TABLE ctest (data text, res text, salt text);
+INSERT INTO ctest VALUES ('password', '', '');
 
-drop table ctest;
+UPDATE ctest SET salt = gen_salt('md5');
+UPDATE ctest SET res = crypt(data, salt);
+SELECT res = crypt(data, res) AS "worked"
+FROM ctest;
+
+DROP TABLE ctest;
 

@@ -2,11 +2,11 @@
 use strict;
 
 my $NUM = 20000;
-print "drop table boxtmp;\n"; 
-print "drop table boxtmp2;\n"; 
+print "DROP TABLE boxtmp;\n"; 
+print "DROP TABLE boxtmp2;\n"; 
 
-print "create table boxtmp (b box);\n";
-print "create table boxtmp2 (b box);\n";
+print "CREATE TABLE boxtmp (b box);\n";
+print "CREATE TABLE boxtmp2 (b box);\n";
 
 srand(1);
 open(DAT,">bbb.dat") || die;
@@ -26,20 +26,20 @@ foreach ( 1..$NUM ) {
 }
 close DAT;
 
-print "copy boxtmp from stdin;\n";
+print "COPY boxtmp FROM stdin;\n";
 open(DAT,"bbb.dat") || die;
 while(<DAT>) { print; }
 close DAT;
 print "\\.\n";
 
-print "copy boxtmp2 from stdin;\n";
+print "COPY boxtmp2 FROM stdin;\n";
 open(DAT,"bbb.dat") || die;
 while(<DAT>) { print; }
 close DAT;
 print "\\.\n";
 
-print "create index bix on boxtmp using gist (b gist_box_ops);\n";
-print "create index bix2 on boxtmp2 using rtree (b box_ops);\n";
+print "CREATE INDEX bix ON boxtmp USING gist (b gist_box_ops);\n";
+print "CREATE INDEX bix2 ON boxtmp2 USING rtree (b box_ops);\n";
 
 
 sub min {

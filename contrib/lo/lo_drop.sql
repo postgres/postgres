@@ -3,13 +3,18 @@
 -- It's used just for development
 --
 
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
+SET autocommit TO 'on';
+
 -- remove our test table
-drop table a;
+DROP TABLE a;
 
 -- now drop the type and associated C functions
-drop type lo CASCADE;
+DROP TYPE lo CASCADE;
 
 -- the trigger function has no dependency on the type, so drop separately
-drop function lo_manage();
+DROP FUNCTION lo_manage();
 
 -- the lo stuff is now removed from the system

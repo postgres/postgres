@@ -1,4 +1,6 @@
 
+SET autocommit TO 'on';
+
 CREATE FUNCTION "recordchange" () RETURNS trigger AS
 '/usr/local/pgsql/lib/pending.so', 'recordchange' LANGUAGE 'C';
 

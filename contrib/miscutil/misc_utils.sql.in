@@ -9,38 +9,48 @@
 
 -- Return the pid of the backend.
 --
-create function backend_pid() returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
+
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
+SET autocommit TO 'on';
+
+CREATE OR REPLACE FUNCTION backend_pid()
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 -- Unlisten from a relation.
 --
-create function "unlisten"(name) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
+CREATE OR REPLACE FUNCTION "unlisten"(name)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 -- Unlisten from all relations for this backend.
 --
-create function "unlisten"() returns int4
-  as 'select "unlisten"(''*'')'
-  language 'sql';
+CREATE OR REPLACE FUNCTION "unlisten"()
+RETURNS int4
+AS 'SELECT "unlisten"(''*'')'
+LANGUAGE 'SQL';
 
 -- min(x,y)
 --
-create function min(int4,int4) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
+CREATE OR REPLACE FUNCTION min(int4,int4)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 -- max(x,y)
 --
-create function max(int4,int4) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
+CREATE OR REPLACE FUNCTION max(int4,int4)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 -- Return the number of active listeners on a relation
 --
-create function active_listeners(text) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
-
--- end of file
+CREATE OR REPLACE FUNCTION active_listeners(text)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';

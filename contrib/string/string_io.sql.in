@@ -9,71 +9,76 @@
 
 -- Define the new output functions.
 --
-create function c_charout(bpchar) returns cstring
-  as 'MODULE_PATHNAME' 
-  language 'c';
+CREATE FUNCTION c_charout(bpchar)
+RETURNS cstring
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C';
 
-create function c_textout(text) returns cstring
-  as 'MODULE_PATHNAME' 
-  language 'c';
+CREATE FUNCTION c_textout(text)
+RETURNS cstring
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C';
 
-create function c_varcharout(varchar) returns cstring
-  as 'MODULE_PATHNAME' 
-  language 'c';
+CREATE FUNCTION c_varcharout(varchar)
+RETURNS cstring
+AS 'MODULE_PATHNAME' 
+LANGUAGE 'C';
 
 -- This is not needed because escapes are handled by the parser
 --
--- create function c_textin(cstring)
---   returns text
---   as 'MODULE_PATHNAME' 
---   language 'c';
+-- CREATE FUNCTION c_textin(cstring)
+-- RETURNS text
+-- AS 'MODULE_PATHNAME' 
+-- LANGUAGE 'c';
 
 -- Define a function which sets the new output routines for char types.
 --
---   select c_mode();
+--   SELECT c_mode();
 --
-create function c_mode() returns text
-  as 'update pg_type set typoutput=''c_textout''    where typname=''SET'';
-      update pg_type set typoutput=''c_varcharout'' where typname=''bpchar'';
-      update pg_type set typoutput=''c_textout''    where typname=''bytea'';
-      update pg_type set typoutput=''c_charout''    where typname=''char'';
-      update pg_type set typoutput=''c_textout''    where typname=''text'';
-      update pg_type set typoutput=''c_textout''    where typname=''unknown'';
-      update pg_type set typoutput=''c_varcharout'' where typname=''varchar'';
+CREATE FUNCTION c_mode()
+RETURNS text
+AS '  UPDATE pg_type SET typoutput=''c_textout''    WHERE typname=''SET'';
+      UPDATE pg_type SET typoutput=''c_varcharout'' WHERE typname=''bpchar'';
+      UPDATE pg_type SET typoutput=''c_textout''    WHERE typname=''bytea'';
+      UPDATE pg_type SET typoutput=''c_charout''    WHERE typname=''char'';
+      UPDATE pg_type SET typoutput=''c_textout''    WHERE typname=''text'';
+      UPDATE pg_type SET typoutput=''c_textout''    WHERE typname=''unknown'';
+      UPDATE pg_type SET typoutput=''c_varcharout'' WHERE typname=''varchar'';
       select ''c_mode''::text;'
-  language 'sql';
+LANGUAGE 'SQL';
 
 -- Define a function which restores the standard routines for char types.
 --
---   select pg_mode();
+--   SELECT pg_mode();
 --
-create function pg_mode() returns text
-  as 'update pg_type set typoutput=''textout''    where typname=''SET'';
-      update pg_type set typoutput=''varcharout'' where typname=''bpchar'';
-      update pg_type set typoutput=''textout''    where typname=''bytea'';
-      update pg_type set typoutput=''charout''    where typname=''char'';
-      update pg_type set typoutput=''textout''    where typname=''text'';
-      update pg_type set typoutput=''textout''    where typname=''unknown'';
-      update pg_type set typoutput=''varcharout'' where typname=''varchar'';
+CREATE FUNCTION pg_mode()
+RETURNS text
+AS '  UPDATE pg_type SET typoutput=''textout''    WHERE typname=''SET'';
+      UPDATE pg_type SET typoutput=''varcharout'' WHERE typname=''bpchar'';
+      UPDATE pg_type SET typoutput=''textout''    WHERE typname=''bytea'';
+      UPDATE pg_type SET typoutput=''charout''    WHERE typname=''char'';
+      UPDATE pg_type SET typoutput=''textout''    WHERE typname=''text'';
+      UPDATE pg_type SET typoutput=''textout''    WHERE typname=''unknown'';
+      UPDATE pg_type SET typoutput=''varcharout'' WHERE typname=''varchar'';
       select ''pg_mode''::text;'
-  language 'sql';
+LANGUAGE 'SQL';
 
 -- Use these to do the changes manually.
 --
--- update pg_type set typoutput='textout'    where typname='SET';
--- update pg_type set typoutput='varcharout' where typname='bpchar';
--- update pg_type set typoutput='textout'    where typname='bytea';
--- update pg_type set typoutput='charout'    where typname='char';
--- update pg_type set typoutput='textout'    where typname='text';
--- update pg_type set typoutput='textout'    where typname='unknown';
--- update pg_type set typoutput='varcharout' where typname='varchar';
+-- UPDATE pg_type SET typoutput='textout'    WHERE typname='SET';
+-- UPDATE pg_type SET typoutput='varcharout' WHERE typname='bpchar';
+-- UPDATE pg_type SET typoutput='textout'    WHERE typname='bytea';
+-- UPDATE pg_type SET typoutput='charout'    WHERE typname='char';
+-- UPDATE pg_type SET typoutput='textout'    WHERE typname='text';
+-- UPDATE pg_type SET typoutput='textout'    WHERE typname='unknown';
+-- UPDATE pg_type SET typoutput='varcharout' WHERE typname='varchar';
 --
--- update pg_type set typoutput='c_textout'    where typname='SET';
--- update pg_type set typoutput='c_varcharout' where typname='bpchar';
--- update pg_type set typoutput='c_textout'    where typname='bytea';
--- update pg_type set typoutput='c_charout'    where typname='char';
--- update pg_type set typoutput='c_textout'    where typname='text';
--- update pg_type set typoutput='c_textout'    where typname='unknown';
--- update pg_type set typoutput='c_varcharout' where typname='varchar';
+-- UPDATE pg_type SET typoutput='c_textout'    WHERE typname='SET';
+-- UPDATE pg_type SET typoutput='c_varcharout' WHERE typname='bpchar';
+-- UPDATE pg_type SET typoutput='c_textout'    WHERE typname='bytea';
+-- UPDATE pg_type SET typoutput='c_charout'    WHERE typname='char';
+-- UPDATE pg_type SET typoutput='c_textout'    WHERE typname='text';
+-- UPDATE pg_type SET typoutput='c_textout'    WHERE typname='unknown';
+-- UPDATE pg_type SET typoutput='c_varcharout' WHERE typname='varchar';
 
 -- end of file

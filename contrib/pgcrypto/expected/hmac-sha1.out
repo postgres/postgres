@@ -1,7 +1,8 @@
 --
 -- HMAC-MD5
 --
-select encode(hmac(
+SET autocommit TO 'on';
+SELECT encode(hmac(
 'Hi There',
 decode('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex'),
 'sha1'), 'hex');
@@ -11,7 +12,7 @@ decode('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex'),
 (1 row)
 
 -- 2
-select encode(hmac(
+SELECT encode(hmac(
 'Jefe',
 'what do ya want for nothing?',
 'sha1'), 'hex');
@@ -21,7 +22,7 @@ select encode(hmac(
 (1 row)
 
 -- 3
-select encode(hmac(
+SELECT encode(hmac(
 decode('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', 'hex'),
 decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
 'sha1'), 'hex');
@@ -31,7 +32,7 @@ decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
 (1 row)
 
 -- 4
-select encode(hmac(
+SELECT encode(hmac(
 decode('cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd', 'hex'),
 decode('0102030405060708090a0b0c0d0e0f10111213141516171819', 'hex'),
 'sha1'), 'hex');
@@ -41,7 +42,7 @@ decode('0102030405060708090a0b0c0d0e0f10111213141516171819', 'hex'),
 (1 row)
 
 -- 5
-select encode(hmac(
+SELECT encode(hmac(
 'Test With Truncation',
 decode('0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c', 'hex'),
 'sha1'), 'hex');
@@ -51,7 +52,7 @@ decode('0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c', 'hex'),
 (1 row)
 
 -- 6
-select encode(hmac(
+SELECT encode(hmac(
 'Test Using Larger Than Block-Size Key - Hash Key First',
 decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
 'sha1'), 'hex');
@@ -61,7 +62,7 @@ decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 (1 row)
 
 -- 7
-select encode(hmac(
+SELECT encode(hmac(
 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data',
 decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
 'sha1'), 'hex');

@@ -1,24 +1,25 @@
 -- Create the user-defined type for 1-D floating point intervals (seg)
 -- 
-BEGIN TRANSACTION;
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
+SET autocommit TO 'on';
+
 CREATE FUNCTION seg_in(cstring)
 RETURNS seg
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c';
+LANGUAGE 'C';
 
 CREATE FUNCTION seg_out(seg)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c';
+LANGUAGE 'C';
 
 CREATE TYPE seg (
-internallength = 12,
-input = seg_in,
-output = seg_out
+	INTERNALLENGTH = 12,
+	INPUT = seg_in,
+	OUTPUT = seg_out
 );
 
 COMMENT ON TYPE seg IS
@@ -30,26 +31,34 @@ COMMENT ON TYPE seg IS
 
 -- Left/Right methods
 
-CREATE FUNCTION seg_over_left(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_over_left(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_over_left(seg, seg) IS
 'is over and left of';
 
-CREATE FUNCTION seg_over_right(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_over_right(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_over_right(seg, seg) IS
 'is over and right of';
 
-CREATE FUNCTION seg_left(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_left(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_left(seg, seg) IS
 'is left of';
 
-CREATE FUNCTION seg_right(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_right(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_right(seg, seg) IS
 'is right of';
@@ -57,78 +66,106 @@ COMMENT ON FUNCTION seg_right(seg, seg) IS
 
 -- Comparison methods
 
-CREATE FUNCTION seg_lt(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_lt(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_lt(seg, seg) IS
 'less than';
 
-CREATE FUNCTION seg_le(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_le(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_le(seg, seg) IS
 'less than or equal';
 
-CREATE FUNCTION seg_gt(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_gt(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_gt(seg, seg) IS
 'greater than';
 
-CREATE FUNCTION seg_ge(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_ge(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_ge(seg, seg) IS
 'greater than or equal';
 
-CREATE FUNCTION seg_contains(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_contains(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_contains(seg, seg) IS
 'contains';
 
-CREATE FUNCTION seg_contained(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_contained(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_contained(seg, seg) IS
 'contained in';
 
-CREATE FUNCTION seg_overlap(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_overlap(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_overlap(seg, seg) IS
 'overlaps';
 
-CREATE FUNCTION seg_same(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_same(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_same(seg, seg) IS
 'same as';
 
-CREATE FUNCTION seg_different(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_different(seg, seg)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 COMMENT ON FUNCTION seg_different(seg, seg) IS
 'different';
 
 -- support routines for indexing
 
-CREATE FUNCTION seg_union(seg, seg) RETURNS seg
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_union(seg, seg)
+RETURNS seg
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
-CREATE FUNCTION seg_inter(seg, seg) RETURNS seg
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_inter(seg, seg)
+RETURNS seg
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
-CREATE FUNCTION seg_size(seg) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_size(seg)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 -- miscellaneous
 
-CREATE FUNCTION seg_upper(seg) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_upper(seg)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
-CREATE FUNCTION seg_lower(seg) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION seg_lower(seg)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
 
 --
@@ -136,112 +173,173 @@ CREATE FUNCTION seg_lower(seg) RETURNS float4
 --
 
 CREATE OPERATOR < (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_lt,
-   COMMUTATOR = '>', NEGATOR = '>=',
-   RESTRICT = scalarltsel, JOIN = scalarltjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_lt,
+	COMMUTATOR = '>',
+	NEGATOR = '>=',
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel
 );
 
 CREATE OPERATOR <= (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_le,
-   COMMUTATOR = '>=', NEGATOR = '>',
-   RESTRICT = scalarltsel, JOIN = scalarltjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_le,
+	COMMUTATOR = '>=',
+	NEGATOR = '>',
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel
 );
 
 CREATE OPERATOR > (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_gt,
-   COMMUTATOR = '<', NEGATOR = '<=',
-   RESTRICT = scalargtsel, JOIN = scalargtjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_gt,
+	COMMUTATOR = '<',
+	NEGATOR = '<=',
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel
 );
 
 CREATE OPERATOR >= (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_ge,
-   COMMUTATOR = '<=', NEGATOR = '<',
-   RESTRICT = scalargtsel, JOIN = scalargtjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_ge,
+	COMMUTATOR = '<=',
+	NEGATOR = '<',
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel
 );
 
 CREATE OPERATOR << (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_left,
-   COMMUTATOR = '>>',
-   RESTRICT = positionsel, JOIN = positionjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_left,
+	COMMUTATOR = '>>',
+	RESTRICT = positionsel,
+	JOIN = positionjoinsel
 );
 
 CREATE OPERATOR &< (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_over_left,
-   COMMUTATOR = '&>',
-   RESTRICT = positionsel, JOIN = positionjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_over_left,
+	COMMUTATOR = '&>',
+	RESTRICT = positionsel,
+	JOIN = positionjoinsel
 );
 
 CREATE OPERATOR && (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_overlap,
-   COMMUTATOR = '&&',
-   RESTRICT = positionsel, JOIN = positionjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_overlap,
+	COMMUTATOR = '&&',
+	RESTRICT = positionsel,
+	JOIN = positionjoinsel
 );
 
 CREATE OPERATOR &> (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_over_right,
-   COMMUTATOR = '&<',
-   RESTRICT = positionsel, JOIN = positionjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_over_right,
+	COMMUTATOR = '&<',
+	RESTRICT = positionsel,
+	JOIN = positionjoinsel
 );
 
 CREATE OPERATOR >> (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_right,
-   COMMUTATOR = '<<',
-   RESTRICT = positionsel, JOIN = positionjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_right,
+	COMMUTATOR = '<<',
+	RESTRICT = positionsel,
+	JOIN = positionjoinsel
 );
 
 CREATE OPERATOR = (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_same,
-   COMMUTATOR = '=', NEGATOR = '<>',
-   RESTRICT = eqsel, JOIN = eqjoinsel,
-   SORT1 = '<', SORT2 = '<'
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_same,
+	COMMUTATOR = '=',
+	NEGATOR = '<>',
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel,
+	SORT1 = '<',
+	SORT2 = '<'
 );
 
 CREATE OPERATOR <> (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_different,
-   COMMUTATOR = '<>', NEGATOR = '=',
-   RESTRICT = neqsel, JOIN = neqjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_different,
+	COMMUTATOR = '<>',
+	NEGATOR = '=',
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel
 );
 
 CREATE OPERATOR @ (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_contains,
-   COMMUTATOR = '~',
-   RESTRICT = contsel, JOIN = contjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_contains,
+	COMMUTATOR = '~',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 CREATE OPERATOR ~ (
-   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_contained,
-   COMMUTATOR = '@',
-   RESTRICT = contsel, JOIN = contjoinsel
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_contained,
+	COMMUTATOR = '@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
 );
 
 
 -- define the GiST support methods
-CREATE FUNCTION gseg_consistent(internal,seg,int4) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+CREATE FUNCTION gseg_consistent(internal,seg,int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-CREATE FUNCTION gseg_compress(internal) RETURNS internal 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+CREATE FUNCTION gseg_compress(internal)
+RETURNS internal 
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-CREATE FUNCTION gseg_decompress(internal) RETURNS internal 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+CREATE FUNCTION gseg_decompress(internal)
+RETURNS internal 
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-CREATE FUNCTION gseg_penalty(internal,internal,internal) RETURNS internal
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION gseg_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
 
-CREATE FUNCTION gseg_picksplit(internal, internal) RETURNS internal
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+CREATE FUNCTION gseg_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-CREATE FUNCTION gseg_union(bytea, internal) RETURNS seg 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+CREATE FUNCTION gseg_union(bytea, internal)
+RETURNS seg 
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
-CREATE FUNCTION gseg_same(seg, seg, internal) RETURNS internal 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+CREATE FUNCTION gseg_same(seg, seg, internal)
+RETURNS internal 
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
 
 
 -- Create the operator class for indexing
 
 CREATE OPERATOR CLASS gist_seg_ops
-    DEFAULT FOR TYPE seg USING gist AS
+DEFAULT FOR TYPE seg USING gist 
+AS
 	OPERATOR	1	<< ,
 	OPERATOR	2	&< ,
 	OPERATOR	3	&& ,
@@ -257,6 +355,3 @@ CREATE OPERATOR CLASS gist_seg_ops
 	FUNCTION	5	gseg_penalty (internal, internal, internal),
 	FUNCTION	6	gseg_picksplit (internal, internal),
 	FUNCTION	7	gseg_same (seg, seg, internal);
-
-
-END TRANSACTION;

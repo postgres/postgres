@@ -1,75 +1,76 @@
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
 
--- drop function digest(text, text);
--- drop function digest(bytea, text);
--- drop function digest_exists(text);
--- drop function hmac(text, text, text);
--- drop function hmac(bytea, bytea, text);
--- drop function hmac_exists(text);
--- drop function crypt(text, text);
--- drop function gen_salt(text);
--- drop function gen_salt(text, int4);
--- drop function encrypt(bytea, bytea, text);
--- drop function decrypt(bytea, bytea, text);
--- drop function encrypt_iv(bytea, bytea, bytea, text);
--- drop function decrypt_iv(bytea, bytea, bytea, text);
--- drop function cipher_exists(text);
+SET autocommit TO 'on';
 
+CREATE OR REPLACE FUNCTION digest(text, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_digest'
+LANGUAGE 'C';
 
+CREATE OR REPLACE FUNCTION digest(bytea, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_digest'
+LANGUAGE 'C';
 
-CREATE FUNCTION digest(text, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_digest' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION digest_exists(text)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pg_digest_exists'
+LANGUAGE 'C';
 
-CREATE FUNCTION digest(bytea, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_digest' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION hmac(text, text, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_hmac'
+LANGUAGE 'C';
 
-CREATE FUNCTION digest_exists(text) RETURNS bool
-  AS 'MODULE_PATHNAME',
-  'pg_digest_exists' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION hmac(bytea, bytea, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_hmac'
+LANGUAGE 'C';
 
-CREATE FUNCTION hmac(text, text, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_hmac' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION hmac_exists(text)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pg_hmac_exists'
+LANGUAGE 'C';
 
-CREATE FUNCTION hmac(bytea, bytea, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_hmac' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION crypt(text, text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'pg_crypt'
+LANGUAGE 'C';
 
-CREATE FUNCTION hmac_exists(text) RETURNS bool
-  AS 'MODULE_PATHNAME',
-  'pg_hmac_exists' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION gen_salt(text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'pg_gen_salt'
+LANGUAGE 'C';
 
-CREATE FUNCTION crypt(text, text) RETURNS text
-  AS 'MODULE_PATHNAME',
-  'pg_crypt' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION gen_salt(text, int4)
+RETURNS text
+AS 'MODULE_PATHNAME', 'pg_gen_salt_rounds'
+LANGUAGE 'C';
 
-CREATE FUNCTION gen_salt(text) RETURNS text
-  AS 'MODULE_PATHNAME',
-  'pg_gen_salt' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION encrypt(bytea, bytea, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_encrypt'
+LANGUAGE 'C';
 
-CREATE FUNCTION gen_salt(text, int4) RETURNS text
-  AS 'MODULE_PATHNAME',
-  'pg_gen_salt_rounds' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION decrypt(bytea, bytea, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_decrypt'
+LANGUAGE 'C';
 
-CREATE FUNCTION encrypt(bytea, bytea, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_encrypt' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION encrypt_iv(bytea, bytea, bytea, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_encrypt_iv'
+LANGUAGE 'C';
 
-CREATE FUNCTION decrypt(bytea, bytea, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_decrypt' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION decrypt_iv(bytea, bytea, bytea, text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_decrypt_iv'
+LANGUAGE 'C';
 
-CREATE FUNCTION encrypt_iv(bytea, bytea, bytea, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_encrypt_iv' LANGUAGE 'C';
-
-CREATE FUNCTION decrypt_iv(bytea, bytea, bytea, text) RETURNS bytea
-  AS 'MODULE_PATHNAME',
-  'pg_decrypt_iv' LANGUAGE 'C';
-
-CREATE FUNCTION cipher_exists(text) RETURNS bool
-  AS 'MODULE_PATHNAME',
-  'pg_cipher_exists' LANGUAGE 'C';
+CREATE OR REPLACE FUNCTION cipher_exists(text)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pg_cipher_exists'
+LANGUAGE 'C';
 
 

@@ -1,1008 +1,1008 @@
 \set ECHO none
 psql:ltree.sql:9: WARNING:  ProcedureCreate: type ltree is not yet defined
 psql:ltree.sql:14: WARNING:  Argument type "ltree" is only a shell
-psql:ltree.sql:238: WARNING:  ProcedureCreate: type lquery is not yet defined
-psql:ltree.sql:243: WARNING:  Argument type "lquery" is only a shell
-psql:ltree.sql:290: WARNING:  ProcedureCreate: type ltxtquery is not yet defined
-psql:ltree.sql:295: WARNING:  Argument type "ltxtquery" is only a shell
-psql:ltree.sql:345: WARNING:  ProcedureCreate: type ltree_gist is not yet defined
-psql:ltree.sql:350: WARNING:  Argument type "ltree_gist" is only a shell
-select ''::ltree;
+psql:ltree.sql:281: WARNING:  ProcedureCreate: type lquery is not yet defined
+psql:ltree.sql:286: WARNING:  Argument type "lquery" is only a shell
+psql:ltree.sql:345: WARNING:  ProcedureCreate: type ltxtquery is not yet defined
+psql:ltree.sql:350: WARNING:  Argument type "ltxtquery" is only a shell
+psql:ltree.sql:412: WARNING:  ProcedureCreate: type ltree_gist is not yet defined
+psql:ltree.sql:417: WARNING:  Argument type "ltree_gist" is only a shell
+SELECT ''::ltree;
  ltree 
 -------
  
 (1 row)
 
-select '1'::ltree;
+SELECT '1'::ltree;
  ltree 
 -------
  1
 (1 row)
 
-select '1.2'::ltree;
+SELECT '1.2'::ltree;
  ltree 
 -------
  1.2
 (1 row)
 
-select '1.2._3'::ltree;
+SELECT '1.2._3'::ltree;
  ltree  
 --------
  1.2._3
 (1 row)
 
-select subltree('Top.Child1.Child2',1,2);
+SELECT subltree('Top.Child1.Child2',1,2);
  subltree 
 ----------
  Child1
 (1 row)
 
-select subpath('Top.Child1.Child2',1,2);
+SELECT subpath('Top.Child1.Child2',1,2);
     subpath    
 ---------------
  Child1.Child2
 (1 row)
 
-select subpath('Top.Child1.Child2',-1,1);
+SELECT subpath('Top.Child1.Child2',-1,1);
  subpath 
 ---------
  Child2
 (1 row)
 
-select subpath('Top.Child1.Child2',0,-2);
+SELECT subpath('Top.Child1.Child2',0,-2);
  subpath 
 ---------
  Top
 (1 row)
 
-select subpath('Top.Child1.Child2',0,-1);
+SELECT subpath('Top.Child1.Child2',0,-1);
   subpath   
 ------------
  Top.Child1
 (1 row)
 
-select subpath('Top.Child1.Child2',0,0);
+SELECT subpath('Top.Child1.Child2',0,0);
       subpath      
 -------------------
  Top.Child1.Child2
 (1 row)
 
-select subpath('Top.Child1.Child2',1,0);
+SELECT subpath('Top.Child1.Child2',1,0);
     subpath    
 ---------------
  Child1.Child2
 (1 row)
 
-select subpath('Top.Child1.Child2',0);
+SELECT subpath('Top.Child1.Child2',0);
       subpath      
 -------------------
  Top.Child1.Child2
 (1 row)
 
-select subpath('Top.Child1.Child2',1);
+SELECT subpath('Top.Child1.Child2',1);
     subpath    
 ---------------
  Child1.Child2
 (1 row)
 
-select 'Top.Child1.Child2'::ltree || 'Child3'::text;
+SELECT 'Top.Child1.Child2'::ltree || 'Child3'::text;
          ?column?         
 --------------------------
  Top.Child1.Child2.Child3
 (1 row)
 
-select 'Top.Child1.Child2'::ltree || 'Child3'::ltree;
+SELECT 'Top.Child1.Child2'::ltree || 'Child3'::ltree;
          ?column?         
 --------------------------
  Top.Child1.Child2.Child3
 (1 row)
 
-select 'Top_0'::ltree || 'Top.Child1.Child2'::ltree;
+SELECT 'Top_0'::ltree || 'Top.Child1.Child2'::ltree;
         ?column?         
 -------------------------
  Top_0.Top.Child1.Child2
 (1 row)
 
-select 'Top.Child1.Child2'::ltree || ''::ltree;
+SELECT 'Top.Child1.Child2'::ltree || ''::ltree;
      ?column?      
 -------------------
  Top.Child1.Child2
 (1 row)
 
-select ''::ltree || 'Top.Child1.Child2'::ltree;
+SELECT ''::ltree || 'Top.Child1.Child2'::ltree;
      ?column?      
 -------------------
  Top.Child1.Child2
 (1 row)
 
-select lca('{la.2.3,1.2.3.4.5.6,}') is null;
+SELECT lca('{la.2.3,1.2.3.4.5.6,}') IS NULL;
  ?column? 
 ----------
  t
 (1 row)
 
-select lca('{la.2.3,1.2.3.4.5.6}') is null;
+SELECT lca('{la.2.3,1.2.3.4.5.6}') IS NULL;
  ?column? 
 ----------
  f
 (1 row)
 
-select lca('{1.la.2.3,1.2.3.4.5.6}');
+SELECT lca('{1.la.2.3,1.2.3.4.5.6}');
  lca 
 -----
  1
 (1 row)
 
-select lca('{1.2.3,1.2.3.4.5.6}');
+SELECT lca('{1.2.3,1.2.3.4.5.6}');
  lca 
 -----
  1.2
 (1 row)
 
-select lca('1.la.2.3','1.2.3.4.5.6');
+SELECT lca('1.la.2.3','1.2.3.4.5.6');
  lca 
 -----
  1
 (1 row)
 
-select lca('1.2.3','1.2.3.4.5.6');
+SELECT lca('1.2.3','1.2.3.4.5.6');
  lca 
 -----
  1.2
 (1 row)
 
-select lca('1.2.2.3','1.2.3.4.5.6');
+SELECT lca('1.2.2.3','1.2.3.4.5.6');
  lca 
 -----
  1.2
 (1 row)
 
-select lca('1.2.2.3','1.2.3.4.5.6','');
+SELECT lca('1.2.2.3','1.2.3.4.5.6','');
  lca 
 -----
  
 (1 row)
 
-select lca('1.2.2.3','1.2.3.4.5.6','2');
+SELECT lca('1.2.2.3','1.2.3.4.5.6','2');
  lca 
 -----
  
 (1 row)
 
-select lca('1.2.2.3','1.2.3.4.5.6','1');
+SELECT lca('1.2.2.3','1.2.3.4.5.6','1');
  lca 
 -----
  
 (1 row)
 
-select '1'::lquery;
+SELECT '1'::lquery;
  lquery 
 --------
  1
 (1 row)
 
-select '4|3|2'::lquery;
+SELECT '4|3|2'::lquery;
  lquery 
 --------
  4|3|2
 (1 row)
 
-select '1.2'::lquery;
+SELECT '1.2'::lquery;
  lquery 
 --------
  1.2
 (1 row)
 
-select '1.4|3|2'::lquery;
+SELECT '1.4|3|2'::lquery;
  lquery  
 ---------
  1.4|3|2
 (1 row)
 
-select '1.0'::lquery;
+SELECT '1.0'::lquery;
  lquery 
 --------
  1.0
 (1 row)
 
-select '4|3|2.0'::lquery;
+SELECT '4|3|2.0'::lquery;
  lquery  
 ---------
  4|3|2.0
 (1 row)
 
-select '1.2.0'::lquery;
+SELECT '1.2.0'::lquery;
  lquery 
 --------
  1.2.0
 (1 row)
 
-select '1.4|3|2.0'::lquery;
+SELECT '1.4|3|2.0'::lquery;
   lquery   
 -----------
  1.4|3|2.0
 (1 row)
 
-select '1.*'::lquery;
+SELECT '1.*'::lquery;
  lquery 
 --------
  1.*
 (1 row)
 
-select '4|3|2.*'::lquery;
+SELECT '4|3|2.*'::lquery;
  lquery  
 ---------
  4|3|2.*
 (1 row)
 
-select '1.2.*'::lquery;
+SELECT '1.2.*'::lquery;
  lquery 
 --------
  1.2.*
 (1 row)
 
-select '1.4|3|2.*'::lquery;
+SELECT '1.4|3|2.*'::lquery;
   lquery   
 -----------
  1.4|3|2.*
 (1 row)
 
-select '*.1.*'::lquery;
+SELECT '*.1.*'::lquery;
  lquery 
 --------
  *.1.*
 (1 row)
 
-select '*.4|3|2.*'::lquery;
+SELECT '*.4|3|2.*'::lquery;
   lquery   
 -----------
  *.4|3|2.*
 (1 row)
 
-select '*.1.2.*'::lquery;
+SELECT '*.1.2.*'::lquery;
  lquery  
 ---------
  *.1.2.*
 (1 row)
 
-select '*.1.4|3|2.*'::lquery;
+SELECT '*.1.4|3|2.*'::lquery;
    lquery    
 -------------
  *.1.4|3|2.*
 (1 row)
 
-select '1.*.4|3|2'::lquery;
+SELECT '1.*.4|3|2'::lquery;
   lquery   
 -----------
  1.*.4|3|2
 (1 row)
 
-select '1.*.4|3|2.0'::lquery;
+SELECT '1.*.4|3|2.0'::lquery;
    lquery    
 -------------
  1.*.4|3|2.0
 (1 row)
 
-select '1.*.4|3|2.*{1,4}'::lquery;
+SELECT '1.*.4|3|2.*{1,4}'::lquery;
       lquery      
 ------------------
  1.*.4|3|2.*{1,4}
 (1 row)
 
-select '1.*.4|3|2.*{,4}'::lquery;
+SELECT '1.*.4|3|2.*{,4}'::lquery;
      lquery      
 -----------------
  1.*.4|3|2.*{,4}
 (1 row)
 
-select '1.*.4|3|2.*{1,}'::lquery;
+SELECT '1.*.4|3|2.*{1,}'::lquery;
      lquery      
 -----------------
  1.*.4|3|2.*{1,}
 (1 row)
 
-select '1.*.4|3|2.*{1}'::lquery;
+SELECT '1.*.4|3|2.*{1}'::lquery;
      lquery     
 ----------------
  1.*.4|3|2.*{1}
 (1 row)
 
-select 'qwerty%@*.tu'::lquery;
+SELECT 'qwerty%@*.tu'::lquery;
     lquery    
 --------------
  qwerty%@*.tu
 (1 row)
 
-select nlevel('1.2.3.4');
+SELECT nlevel('1.2.3.4');
  nlevel 
 --------
       4
 (1 row)
 
-select '1.2'::ltree  < '2.2'::ltree;
+SELECT '1.2'::ltree  < '2.2'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '1.2'::ltree  <= '2.2'::ltree;
+SELECT '1.2'::ltree  <= '2.2'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '2.2'::ltree  = '2.2'::ltree;
+SELECT '2.2'::ltree  = '2.2'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '3.2'::ltree  >= '2.2'::ltree;
+SELECT '3.2'::ltree  >= '2.2'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '3.2'::ltree  > '2.2'::ltree;
+SELECT '3.2'::ltree  > '2.2'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '1.2.3'::ltree @> '1.2.3.4'::ltree;
+SELECT '1.2.3'::ltree @> '1.2.3.4'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '1.2.3.4'::ltree @> '1.2.3.4'::ltree;
+SELECT '1.2.3.4'::ltree @> '1.2.3.4'::ltree;
  ?column? 
 ----------
  t
 (1 row)
 
-select '1.2.3.4.5'::ltree @> '1.2.3.4'::ltree;
+SELECT '1.2.3.4.5'::ltree @> '1.2.3.4'::ltree;
  ?column? 
 ----------
  f
 (1 row)
 
-select '1.3.3'::ltree @> '1.2.3.4'::ltree;
+SELECT '1.3.3'::ltree @> '1.2.3.4'::ltree;
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.b.c.d.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'A.b.c.d.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'A.b.c.d.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'A@.b.c.d.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'A@.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'aa.b.c.d.e'::ltree ~ 'A@.b.c.d.e';
+SELECT 'aa.b.c.d.e'::ltree ~ 'A@.b.c.d.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'aa.b.c.d.e'::ltree ~ 'A*.b.c.d.e';
+SELECT 'aa.b.c.d.e'::ltree ~ 'A*.b.c.d.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'aa.b.c.d.e'::ltree ~ 'A*@.b.c.d.e';
+SELECT 'aa.b.c.d.e'::ltree ~ 'A*@.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'aa.b.c.d.e'::ltree ~ 'A*@|g.b.c.d.e';
+SELECT 'aa.b.c.d.e'::ltree ~ 'A*@|g.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'g.b.c.d.e'::ltree ~ 'A*@|g.b.c.d.e';
+SELECT 'g.b.c.d.e'::ltree ~ 'A*@|g.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.b.c.d.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{3}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{3}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2}.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{4}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{4}.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{,4}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{,4}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2,}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2,}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2,4}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2,4}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2,3}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2,3}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2,3}';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2,3}';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2,4}';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2,4}';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*{2,5}';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2,5}';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{2,3}.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*{2,3}.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{2,4}.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*{2,4}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{2,5}.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*{2,5}.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.e.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.e.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.d.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.a.*.d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.a.*.d.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!d.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!d';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!d';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!d.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!a.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!a.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!e';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!e.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!e.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*.!e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*.!e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*.!d';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*.!d';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*.!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*.!d.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.*.!f.*';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*.!f.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.a.*.!f.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.a.*.!f.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.a.*.!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.a.*.!d.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.a.!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.a.!d.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.a.!d';
+SELECT 'a.b.c.d.e'::ltree ~ '*.a.!d';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.!d.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.a.*.!d.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.a.*.!d.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.c.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.*.c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*.c.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.*.c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.*.c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.b.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.b.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.*.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.*.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{2}.!b.*.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*{2}.!b.*.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{1}.!b.*.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*{1}.!b.*.!c.*.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{1}.!b.*{1}.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*{1}.!b.*{1}.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.!b.*{1}.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.!b.*{1}.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.*{1}.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.*{1}.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.*{1}.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*{1}.!c.*.e';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.*.!c.*.e';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*.!c.*.e';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.*.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.*.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{2}.!b.*.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*{2}.!b.*.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{1}.!b.*.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*{1}.!b.*.!c.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*{1}.!b.*{1}.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*{1}.!b.*{1}.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ 'a.!b.*{1}.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.!b.*{1}.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '!b.*{1}.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '!b.*{1}.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.*{1}.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*{1}.!c.*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a.b.c.d.e'::ltree ~ '*.!b.*.!c.*';
+SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*.!c.*';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'QWER_TY'::ltree ~ 'q%@*';
+SELECT 'QWER_TY'::ltree ~ 'q%@*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'QWER_TY'::ltree ~ 'Q_t%@*';
+SELECT 'QWER_TY'::ltree ~ 'Q_t%@*';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'QWER_GY'::ltree ~ 'q_t%@*';
+SELECT 'QWER_GY'::ltree ~ 'q_t%@*';
  ?column? 
 ----------
  f
 (1 row)
 
 --ltxtquery
-select '!tree & aWdf@*'::ltxtquery;
+SELECT '!tree & aWdf@*'::ltxtquery;
    ltxtquery    
 ----------------
  !tree & aWdf@*
 (1 row)
 
-select 'tree & aw_qw%*'::ltxtquery;
+SELECT 'tree & aw_qw%*'::ltxtquery;
    ltxtquery    
 ----------------
  tree & aw_qw%*
 (1 row)
 
-select 'ltree.awdfg'::ltree @ '!tree & aWdf@*'::ltxtquery;
+SELECT 'ltree.awdfg'::ltree @ '!tree & aWdf@*'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg'::ltree @ '!tree & aWdf@*'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ '!tree & aWdf@*'::ltxtquery;
  ?column? 
 ----------
  f
 (1 row)
 
-select 'tree.awdfg'::ltree @ '!tree | aWdf@*'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ '!tree | aWdf@*'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree | aWdf@*'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree | aWdf@*'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree & aWdf@*'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree & aWdf@*'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree & aWdf@'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree & aWdf@'::ltxtquery;
  ?column? 
 ----------
  f
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree & aWdf*'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree & aWdf*'::ltxtquery;
  ?column? 
 ----------
  f
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree & aWdf'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree & aWdf'::ltxtquery;
  ?column? 
 ----------
  f
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree & awdf*'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree & awdf*'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg'::ltree @ 'tree & aWdfg@'::ltxtquery;
+SELECT 'tree.awdfg'::ltree @ 'tree & aWdfg@'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg_qwerty'::ltree @ 'tree & aw_qw%*'::ltxtquery;
+SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_qw%*'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select 'tree.awdfg_qwerty'::ltree @ 'tree & aw_rw%*'::ltxtquery;
+SELECT 'tree.awdfg_qwerty'::ltree @ 'tree & aw_rw%*'::ltxtquery;
  ?column? 
 ----------
  f
 (1 row)
 
 --arrays
-select '{1.2.3}'::ltree[] @> '1.2.3.4';
+SELECT '{1.2.3}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  t
 (1 row)
 
-select '{1.2.3.4}'::ltree[] @> '1.2.3.4';
+SELECT '{1.2.3.4}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  t
 (1 row)
 
-select '{1.2.3.4.5}'::ltree[] @> '1.2.3.4';
+SELECT '{1.2.3.4.5}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  f
 (1 row)
 
-select '{1.3.3}'::ltree[] @> '1.2.3.4';
+SELECT '{1.3.3}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  f
 (1 row)
 
-select '{5.67.8, 1.2.3}'::ltree[] @> '1.2.3.4';
+SELECT '{5.67.8, 1.2.3}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  t
 (1 row)
 
-select '{5.67.8, 1.2.3.4}'::ltree[] @> '1.2.3.4';
+SELECT '{5.67.8, 1.2.3.4}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  t
 (1 row)
 
-select '{5.67.8, 1.2.3.4.5}'::ltree[] @> '1.2.3.4';
+SELECT '{5.67.8, 1.2.3.4.5}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  f
 (1 row)
 
-select '{5.67.8, 1.3.3}'::ltree[] @> '1.2.3.4';
+SELECT '{5.67.8, 1.3.3}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  f
 (1 row)
 
-select '{1.2.3, 7.12.asd}'::ltree[] @> '1.2.3.4';
+SELECT '{1.2.3, 7.12.asd}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  t
 (1 row)
 
-select '{1.2.3.4, 7.12.asd}'::ltree[] @> '1.2.3.4';
+SELECT '{1.2.3.4, 7.12.asd}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  t
 (1 row)
 
-select '{1.2.3.4.5, 7.12.asd}'::ltree[] @> '1.2.3.4';
+SELECT '{1.2.3.4.5, 7.12.asd}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  f
 (1 row)
 
-select '{1.3.3, 7.12.asd}'::ltree[] @> '1.2.3.4';
+SELECT '{1.3.3, 7.12.asd}'::ltree[] @> '1.2.3.4';
  ?column? 
 ----------
  f
 (1 row)
 
-select '{ltree.asd, tree.awdfg}'::ltree[] @ 'tree & aWdfg@'::ltxtquery;
+SELECT '{ltree.asd, tree.awdfg}'::ltree[] @ 'tree & aWdfg@'::ltxtquery;
  ?column? 
 ----------
  t
 (1 row)
 
-select '{j.k.l.m, g.b.c.d.e}'::ltree[] ~ 'A*@|g.b.c.d.e';
+SELECT '{j.k.l.m, g.b.c.d.e}'::ltree[] ~ 'A*@|g.b.c.d.e';
  ?column? 
 ----------
  t
 (1 row)
 
 --exractors
-select ('{3456,1.2.3.34}'::ltree[] ?@> '1.2.3.4') is null;
+SELECT ('{3456,1.2.3.34}'::ltree[] ?@> '1.2.3.4') is null;
  ?column? 
 ----------
  t
 (1 row)
 
-select '{3456,1.2.3}'::ltree[] ?@> '1.2.3.4';
+SELECT '{3456,1.2.3}'::ltree[] ?@> '1.2.3.4';
  ?column? 
 ----------
  1.2.3
 (1 row)
 
-select '{3456,1.2.3.4}'::ltree[] ?<@ '1.2.3';
+SELECT '{3456,1.2.3.4}'::ltree[] ?<@ '1.2.3';
  ?column? 
 ----------
  1.2.3.4
 (1 row)
 
-select ('{3456,1.2.3.4}'::ltree[] ?<@ '1.2.5') is null;
+SELECT ('{3456,1.2.3.4}'::ltree[] ?<@ '1.2.5') is null;
  ?column? 
 ----------
  t
 (1 row)
 
-select '{ltree.asd, tree.awdfg}'::ltree[] ?@ 'tree & aWdfg@'::ltxtquery;
+SELECT '{ltree.asd, tree.awdfg}'::ltree[] ?@ 'tree & aWdfg@'::ltxtquery;
   ?column?  
 ------------
  tree.awdfg
 (1 row)
 
-select '{j.k.l.m, g.b.c.d.e}'::ltree[] ?~ 'A*@|g.b.c.d.e';
+SELECT '{j.k.l.m, g.b.c.d.e}'::ltree[] ?~ 'A*@|g.b.c.d.e';
  ?column?  
 -----------
  g.b.c.d.e
 (1 row)
 
-create table ltreetest (t ltree);
-\copy ltreetest from 'data/ltree.data'
-select * from ltreetest where t <  '12.3' order by t asc;
+CREATE TABLE ltreetest (t ltree);
+\copy ltreetest FROM 'data/ltree.data'
+SELECT * FROM ltreetest WHERE t <  '12.3' order by t asc;
                 t                 
 ----------------------------------
  
@@ -1130,7 +1130,7 @@ select * from ltreetest where t <  '12.3' order by t asc;
  12.29.26.18.4.21.28.8.13.3
 (123 rows)
 
-select * from ltreetest where t <= '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t <= '12.3' order by t asc;
                 t                 
 ----------------------------------
  
@@ -1259,13 +1259,13 @@ select * from ltreetest where t <= '12.3' order by t asc;
  12.3
 (124 rows)
 
-select * from ltreetest where t =  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
   t   
 ------
  12.3
 (1 row)
 
-select * from ltreetest where t >= '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t >= '12.3' order by t asc;
                 t                 
 ----------------------------------
  12.3
@@ -2153,7 +2153,7 @@ select * from ltreetest where t >= '12.3' order by t asc;
  9.9.13.9.14.27
 (883 rows)
 
-select * from ltreetest where t >  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t >  '12.3' order by t asc;
                 t                 
 ----------------------------------
  12.4.10.17.4.10.23.3
@@ -3040,7 +3040,7 @@ select * from ltreetest where t >  '12.3' order by t asc;
  9.9.13.9.14.27
 (882 rows)
 
-select * from ltreetest where t @> '1.1.1' order by t asc;
+SELECT * FROM ltreetest WHERE t @> '1.1.1' order by t asc;
    t   
 -------
  
@@ -3049,7 +3049,7 @@ select * from ltreetest where t @> '1.1.1' order by t asc;
  1.1.1
 (4 rows)
 
-select * from ltreetest where t <@ '1.1.1' order by t asc;
+SELECT * FROM ltreetest WHERE t <@ '1.1.1' order by t asc;
      t     
 -----------
  1.1.1
@@ -3058,7 +3058,7 @@ select * from ltreetest where t <@ '1.1.1' order by t asc;
  1.1.1.2.1
 (4 rows)
 
-select * from ltreetest where t ~ '1.1.1.*' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '1.1.1.*' order by t asc;
      t     
 -----------
  1.1.1
@@ -3067,7 +3067,7 @@ select * from ltreetest where t ~ '1.1.1.*' order by t asc;
  1.1.1.2.1
 (4 rows)
 
-select * from ltreetest where t ~ '*.1' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
                t                
 --------------------------------
  1
@@ -3097,20 +3097,20 @@ select * from ltreetest where t ~ '*.1' order by t asc;
  9.21.20.29.1
 (25 rows)
 
-select * from ltreetest where t ~ '23.*.1' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
             t            
 -------------------------
  23.28.1
  23.3.32.21.5.14.10.17.1
 (2 rows)
 
-select * from ltreetest where t ~ '23.*{1}.1' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
     t    
 ---------
  23.28.1
 (1 row)
 
-select * from ltreetest where t @ '23 & 1' order by t asc;
+SELECT * FROM ltreetest WHERE t @ '23 & 1' order by t asc;
                t                
 --------------------------------
  1.10.23.25.5.11
@@ -3156,7 +3156,7 @@ select * from ltreetest where t @ '23 & 1' order by t asc;
 
 create unique index tstidx on ltreetest (t);
 set enable_seqscan=off;
-select * from ltreetest where t <  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t <  '12.3' order by t asc;
                 t                 
 ----------------------------------
  
@@ -3284,7 +3284,7 @@ select * from ltreetest where t <  '12.3' order by t asc;
  12.29.26.18.4.21.28.8.13.3
 (123 rows)
 
-select * from ltreetest where t <= '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t <= '12.3' order by t asc;
                 t                 
 ----------------------------------
  
@@ -3413,13 +3413,13 @@ select * from ltreetest where t <= '12.3' order by t asc;
  12.3
 (124 rows)
 
-select * from ltreetest where t =  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
   t   
 ------
  12.3
 (1 row)
 
-select * from ltreetest where t >= '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t >= '12.3' order by t asc;
                 t                 
 ----------------------------------
  12.3
@@ -4307,7 +4307,7 @@ select * from ltreetest where t >= '12.3' order by t asc;
  9.9.13.9.14.27
 (883 rows)
 
-select * from ltreetest where t >  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t >  '12.3' order by t asc;
                 t                 
 ----------------------------------
  12.4.10.17.4.10.23.3
@@ -5197,7 +5197,7 @@ select * from ltreetest where t >  '12.3' order by t asc;
 drop index tstidx;
 create index tstidx on ltreetest using gist (t);
 set enable_seqscan=off;
-select * from ltreetest where t <  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t <  '12.3' order by t asc;
                 t                 
 ----------------------------------
  
@@ -5325,7 +5325,7 @@ select * from ltreetest where t <  '12.3' order by t asc;
  12.29.26.18.4.21.28.8.13.3
 (123 rows)
 
-select * from ltreetest where t <= '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t <= '12.3' order by t asc;
                 t                 
 ----------------------------------
  
@@ -5454,13 +5454,13 @@ select * from ltreetest where t <= '12.3' order by t asc;
  12.3
 (124 rows)
 
-select * from ltreetest where t =  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
   t   
 ------
  12.3
 (1 row)
 
-select * from ltreetest where t >= '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t >= '12.3' order by t asc;
                 t                 
 ----------------------------------
  12.3
@@ -6348,7 +6348,7 @@ select * from ltreetest where t >= '12.3' order by t asc;
  9.9.13.9.14.27
 (883 rows)
 
-select * from ltreetest where t >  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t >  '12.3' order by t asc;
                 t                 
 ----------------------------------
  12.4.10.17.4.10.23.3
@@ -7235,7 +7235,7 @@ select * from ltreetest where t >  '12.3' order by t asc;
  9.9.13.9.14.27
 (882 rows)
 
-select * from ltreetest where t @> '1.1.1' order by t asc;
+SELECT * FROM ltreetest WHERE t @> '1.1.1' order by t asc;
    t   
 -------
  
@@ -7244,7 +7244,7 @@ select * from ltreetest where t @> '1.1.1' order by t asc;
  1.1.1
 (4 rows)
 
-select * from ltreetest where t <@ '1.1.1' order by t asc;
+SELECT * FROM ltreetest WHERE t <@ '1.1.1' order by t asc;
      t     
 -----------
  1.1.1
@@ -7253,7 +7253,7 @@ select * from ltreetest where t <@ '1.1.1' order by t asc;
  1.1.1.2.1
 (4 rows)
 
-select * from ltreetest where t ~ '1.1.1.*' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '1.1.1.*' order by t asc;
      t     
 -----------
  1.1.1
@@ -7262,7 +7262,7 @@ select * from ltreetest where t ~ '1.1.1.*' order by t asc;
  1.1.1.2.1
 (4 rows)
 
-select * from ltreetest where t ~ '*.1' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
                t                
 --------------------------------
  1
@@ -7292,20 +7292,20 @@ select * from ltreetest where t ~ '*.1' order by t asc;
  9.21.20.29.1
 (25 rows)
 
-select * from ltreetest where t ~ '23.*.1' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
             t            
 -------------------------
  23.28.1
  23.3.32.21.5.14.10.17.1
 (2 rows)
 
-select * from ltreetest where t ~ '23.*{1}.1' order by t asc;
+SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
     t    
 ---------
  23.28.1
 (1 row)
 
-select * from ltreetest where t @ '23 & 1' order by t asc;
+SELECT * FROM ltreetest WHERE t @ '23 & 1' order by t asc;
                t                
 --------------------------------
  1.10.23.25.5.11
@@ -7350,44 +7350,44 @@ select * from ltreetest where t @ '23 & 1' order by t asc;
 (39 rows)
 
 create table _ltreetest (t ltree[]);
-\copy _ltreetest from 'data/_ltree.data'
-select count(*) from _ltreetest where t @> '1.1.1' ;
+\copy _ltreetest FROM 'data/_ltree.data'
+SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
  count 
 -------
     15
 (1 row)
 
-select count(*) from _ltreetest where t <@ '1.1.1' ;
+SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;
  count 
 -------
     19
 (1 row)
 
-select count(*) from _ltreetest where t ~ '1.1.1.*' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
  count 
 -------
     19
 (1 row)
 
-select count(*) from _ltreetest where t ~ '*.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
  count 
 -------
     83
 (1 row)
 
-select count(*) from _ltreetest where t ~ '23.*.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
  count 
 -------
     10
 (1 row)
 
-select count(*) from _ltreetest where t ~ '23.*{1}.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
  count 
 -------
      5
 (1 row)
 
-select count(*) from _ltreetest where t @ '23 & 1' ;
+SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
  count 
 -------
    147
@@ -7395,43 +7395,43 @@ select count(*) from _ltreetest where t @ '23 & 1' ;
 
 create index _tstidx on _ltreetest using gist (t);
 set enable_seqscan=off;
-select count(*) from _ltreetest where t @> '1.1.1' ;
+SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
  count 
 -------
     15
 (1 row)
 
-select count(*) from _ltreetest where t <@ '1.1.1' ;
+SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;
  count 
 -------
     19
 (1 row)
 
-select count(*) from _ltreetest where t ~ '1.1.1.*' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
  count 
 -------
     19
 (1 row)
 
-select count(*) from _ltreetest where t ~ '*.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
  count 
 -------
     83
 (1 row)
 
-select count(*) from _ltreetest where t ~ '23.*.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
  count 
 -------
     10
 (1 row)
 
-select count(*) from _ltreetest where t ~ '23.*{1}.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
  count 
 -------
      5
 (1 row)
 
-select count(*) from _ltreetest where t @ '23 & 1' ;
+SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
  count 
 -------
    147
