@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.2 2003/01/09 14:35:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.3 2003/03/29 11:31:51 petere Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -44,9 +44,9 @@
 #define LOG  stderr
 #endif
 
-#if defined(HAVE_UNIX_SOCKETS) && defined(HAVE_IPV6)
+#if defined(HAVE_UNIX_SOCKETS)
 static int getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
-		struct addrinfo **result);
+							struct addrinfo **result);
 #endif   /* HAVE_UNIX_SOCKETS */
 
 /*
@@ -54,48 +54,17 @@ static int getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
  */
 int
 getaddrinfo2(const char *hostname, const char *servname,
-#ifdef HAVE_IPV6
 			 const struct addrinfo *hintp, struct addrinfo **result)
-#else
-			 int family, SockAddr *result)
-#endif
 {
 #ifdef HAVE_UNIX_SOCKETS
-#ifdef HAVE_IPV6
 	if (hintp != NULL && hintp->ai_family == AF_UNIX)
 		return getaddrinfo_unix(servname, hintp, result);
-#else
-	if (family == AF_UNIX)
-		return 0;
-#endif
 	else
 	{
 #endif   /* HAVE_UNIX_SOCKETS */
-#ifdef HAVE_IPV6
 		/* NULL has special meaning to getaddrinfo */
 		return getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
 						   servname, hintp, result);
-#else
-		if (hostname[0] == '\0')
-			result->in.sin_addr.s_addr = htonl(INADDR_ANY);
-		else
-		{
-			struct hostent *hp;
-
-			hp = gethostbyname(hostname);
-			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-			{
-				elog(LOG, "getaddrinfo2: gethostbyname(%s) failed\n", hostname);
-				return STATUS_ERROR;
-			}
-			memmove((char *) &(result->in.sin_addr), (char *) hp->h_addr,
-					hp->h_length);
-		}
-
-		result->in.sin_port = htons((unsigned short)atoi(servname));
-		return 0;
-#endif	/* HAVE_IPV6 */
-
 #ifdef HAVE_UNIX_SOCKETS
 	}
 #endif   /* HAVE_UNIX_SOCKETS */
@@ -105,7 +74,6 @@ getaddrinfo2(const char *hostname, const char *servname,
 /*
  *	freeaddrinfo2 - free IPv6 addrinfo structures
  */
-#ifdef HAVE_IPV6
 void
 freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
 {
@@ -126,10 +94,9 @@ freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
 #endif   /* HAVE_UNIX_SOCKETS */
 		freeaddrinfo(ai);
 }
-#endif
 
 
-#if defined(HAVE_UNIX_SOCKETS) && defined(HAVE_IPV6)
+#if defined(HAVE_UNIX_SOCKETS)
 /* -------
  *	getaddrinfo_unix - get unix socket info using IPv6
  *
@@ -140,7 +107,7 @@ freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
  */
 static int
 getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
-		struct addrinfo **result)
+				 struct addrinfo **result)
 {
 	struct addrinfo hints;
 	struct addrinfo *aip;
@@ -159,9 +126,9 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 	if (hints.ai_socktype == 0)
 		hints.ai_socktype = SOCK_STREAM;
 
-	if (!(hints.ai_family == AF_UNIX))
+	if (hints.ai_family != AF_UNIX)
 	{
-		elog(LOG, "hints.ai_family is invalied getaddrinfo_unix()\n");
+		elog(LOG, "hints.ai_family is invalid in getaddrinfo_unix()\n");
 		return EAI_ADDRFAMILY;
 	}
 
@@ -197,7 +164,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 
 	return 0;
 }
-#endif   /* HAVE_UNIX_SOCKETS && HAVE_IPV6 */
+#endif   /* HAVE_UNIX_SOCKETS */
 
 /* ----------
  * SockAddr_ntop - set IP address string from SockAddr

@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.41 2003/03/06 03:16:55 tgl Exp $
+ * $Id: pg_config.h.in,v 1.42 2003/03/29 11:31:51 petere Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -458,6 +458,9 @@
 #undef HAVE_FP_CLASS_H
 #undef HAVE_FP_CLASS_D
 #undef HAVE_CLASS
+
+/* Set to 1 if you have getaddrinfo() */
+#undef HAVE_GETADDRINFO
 
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME

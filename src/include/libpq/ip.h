@@ -1,17 +1,16 @@
 #ifndef IP_H
 #define IP_H
+#include "c.h"
 #include <sys/socket.h>
 #include <netdb.h>
 #include "libpq/pqcomm.h"
-
-#ifdef HAVE_IPV6
-void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
-int   getaddrinfo2(const char *hostname, const char *servname,
-		   const struct addrinfo *hintp, struct addrinfo **result);
-#else
-int   getaddrinfo2(const char *hostname, const char *servname,
-			 int family, SockAddr *result);
+#ifndef HAVE_GETADDRINFO
+#include "getaddrinfo.h"
 #endif
+
+int   getaddrinfo2(const char *hostname, const char *servname,
+				   const struct addrinfo *hintp, struct addrinfo **result);
+void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
 
 char *SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt, int v4conv);
 int   SockAddr_pton(SockAddr *sa, const char *src);

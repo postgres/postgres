@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.147 2003/01/25 05:19:46 tgl Exp $
+ *	$Id: pqcomm.c,v 1.148 2003/03/29 11:31:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,13 +95,6 @@ static void pq_close(void);
 static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
 static int	Setup_AF_UNIX(void);
 #endif   /* HAVE_UNIX_SOCKETS */
-
-#ifdef HAVE_IPV6
-#define FREEADDRINFO2(family, addrs)	freeaddrinfo2((family), (addrs))
-#else
-/* do nothing */
-#define FREEADDRINFO2(family, addrs)	do {} while (0)
-#endif
 
 
 /*
@@ -208,13 +201,6 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	int			ret;
 	char		portNumberStr[64];
 	char	   *service;
-
-	/*
-	 *	IPv6 address lookups use a hint structure, while IPv4 creates an
-	 *	address structure directly.
-	 */
-
-#ifdef HAVE_IPV6
 	struct addrinfo *addrs = NULL;
 	struct addrinfo hint;
 
@@ -225,16 +211,6 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	hint.ai_family = family;
 	hint.ai_flags = AI_PASSIVE;
 	hint.ai_socktype = SOCK_STREAM;
-#else
-	SockAddr	saddr;
-	size_t		len;
-
-	Assert(family == AF_INET || family == AF_UNIX);
-
-	/* Initialize address structure */
-	MemSet((char *) &saddr, 0, sizeof(saddr));
-	saddr.sa.sa_family = family;
-#endif	/* HAVE_IPV6 */
 
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
@@ -242,38 +218,21 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		if (Lock_AF_UNIX(portNumber, unixSocketName) != STATUS_OK)
 			return STATUS_ERROR;
 		service = sock_path;
-#ifndef HAVE_IPV6
-		UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
-		len = UNIXSOCK_LEN(saddr.un);
-#endif
 	}
 	else
 #endif   /* HAVE_UNIX_SOCKETS */
 	{
 		snprintf(portNumberStr, sizeof(portNumberStr), "%d", portNumber);
 		service = portNumberStr;
-#ifndef HAVE_IPV6
-		len = sizeof(saddr.in);
-#endif
 	}
 	
-	/* Look up name using IPv6 or IPv4 routines */
-#ifdef HAVE_IPV6
 	ret = getaddrinfo2(hostName, service, &hint, &addrs);
 	if (ret || addrs == NULL)
-#else
-	ret = getaddrinfo2(hostName, service, family, &saddr);
-	if (ret)
-#endif
 	{
 		elog(LOG, "server socket failure: getaddrinfo2()%s: %s",
-#ifdef HAVE_IPV6
 			 (family == AF_INET6) ? " using IPv6" : "", gai_strerror(ret));
 		if (addrs != NULL)
-			FREEADDRINFO2(hint.ai_family, addrs);
-#else
-			 "", hostName);
-#endif
+			freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -281,7 +240,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		elog(LOG, "server socket failure: socket(): %s",
 			 strerror(errno));
-		FREEADDRINFO2(hint.ai_family, addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -292,17 +251,13 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			elog(LOG, "server socket failure: setsockopt(SO_REUSEADDR): %s",
 				 strerror(errno));
-			FREEADDRINFO2(hint.ai_family, addrs);
+			freeaddrinfo2(hint.ai_family, addrs);
 			return STATUS_ERROR;
 		}
 	}
 
-#ifdef HAVE_IPV6
 	Assert(addrs->ai_next == NULL && addrs->ai_family == family);
 	err = bind(fd, addrs->ai_addr, addrs->ai_addrlen);
-#else
-	err = bind(fd, (struct sockaddr *) &saddr.sa, len);
-#endif
 	if (err < 0)
 	{
 		elog(LOG, "server socket failure: bind(): %s\n"
@@ -313,7 +268,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				 sock_path);
 		else
 			elog(LOG, "\tIf not, wait a few seconds and retry.");
-		FREEADDRINFO2(hint.ai_family, addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -322,7 +277,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		if (Setup_AF_UNIX() != STATUS_OK)
 		{
-			FREEADDRINFO2(hint.ai_family, addrs);
+			freeaddrinfo2(hint.ai_family, addrs);
 			return STATUS_ERROR;
 		}
 	}
@@ -342,12 +297,12 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		elog(LOG, "server socket failure: listen(): %s",
 			 strerror(errno));
-		FREEADDRINFO2(hint.ai_family, addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
 	*fdP = fd;
-	FREEADDRINFO2(hint.ai_family, addrs);
+	freeaddrinfo2(hint.ai_family, addrs);
 	return STATUS_OK;
 
 }
