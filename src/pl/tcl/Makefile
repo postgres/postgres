@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.6 1998/10/08 23:45:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.7 1998/10/13 16:30:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,15 +20,6 @@ include $(SRCDIR)/Makefile.global
 #
 include Makefile.tcldefs
 
-
-#
-# Uncomment the following to force a specific version of the
-# Tcl shared library to be used.
-#
-#TCL_LIB_SPEC=-L/usr/lib -ltcl8.0
-
-
-#
 # Change following to how shared library that contain
 # correct references to libtcl must get built on your system.
 # Since these definitions come from the tclConfig.sh script,

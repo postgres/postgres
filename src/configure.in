@@ -772,39 +772,6 @@ if test "$USE_X" = true; then
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
-dnl Check for location of Tcl support
-dnl Disable Tcl support if not found
-
-dnl Check for tcl.h
-if test "$USE_TCL" = "true"
-then
-	TCL_INCDIR=no
-	AC_CHECK_HEADER(tcl.h, TCL_INCDIR=yes)
-	if test "$TCL_INCDIR" = "no"; then
-		AC_MSG_WARN(tcl support disabled; tcl.h missing)
-		USE_TCL=
-	fi
-	AC_SUBST(TCL_INCDIR)
-fi
-
-dnl Check for Tcl archive
-if test "$USE_TCL" = "true"; then
-	TCL_LIB=
-	tcl_libs="tcl8.0 tcl80 tcl7.6 tcl76 tcl"
-	for tcl_lib in $tcl_libs; do
-		if test -z "$TCL_LIB"; then
-			AC_CHECK_LIB($tcl_lib, main, TCL_LIB=$tcl_lib)
-		fi
-	done
-	if test -z "$TCL_LIB"; then
-		AC_MSG_WARN(tcl support disabled; Tcl library missing)
-		USE_TCL=
-	else
-		TCL_LIB=-l$TCL_LIB
-		AC_SUBST(TCL_LIB)
-	fi
-fi
-
 dnl Check for Tcl configuration script tclConfig.sh
 if test "$USE_TCL"; then
 	AC_MSG_CHECKING(for tclConfig.sh)
@@ -832,66 +799,6 @@ if test "$USE_TCL"; then
 		AC_MSG_RESULT($TCL_CONFIG_SH)
 		AC_SUBST(TCL_CONFIG_SH)
 	fi
-fi
-
-dnl Check for location of Tk support (only if Tcl used)
-dnl Disable Tcl support if Tk not found
-
-dnl Check for tk.h
-if test "$USE_TCL" = "true"
-then
-	ice_save_LIBS="$LIBS"
-	ice_save_CFLAGS="$CFLAGS"
-	ice_save_CPPFLAGS="$CPPFLAGS"
-	ice_save_LDFLAGS="$LDFLAGS"
-
-	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-	TK_INCDIR=no
-	AC_CHECK_HEADER(tk.h, TK_INCDIR=yes)
-	if test "$TK_INCDIR" = "no"; then
-		AC_MSG_WARN(tcl support disabled; tk.h missing)
-		USE_TCL=
-	fi
-
-	LIBS="$ice_save_LIBS"
-	CFLAGS="$ice_save_CFLAGS"
-	CPPFLAGS="$ice_save_CPPFLAGS"
-	LDFLAGS="$ice_save_LDFLAGS"
-fi
-
-dnl Check for Tk archive
-if test "$USE_TCL" = "true"
-then
-	ice_save_LIBS="$LIBS"
-	ice_save_CFLAGS="$CFLAGS"
-	ice_save_CPPFLAGS="$CPPFLAGS"
-	ice_save_LDFLAGS="$LDFLAGS"
-
-	LIBS="$TCL_LIB $X_PRE_LIBS $X11_LIBS $X_EXTRA_LIBS $LIBS"
-	CFLAGS="$CFLAGS $X_CFLAGS"
-	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-	LDFLAGS="$LDFLAGS $X_LIBS"
-
-	TK_LIB=
-	tk_libs="tk8.0 tk80 tk4.2 tk42 tk"
-	for tk_lib in $tk_libs; do
-		if test -z "$TK_LIB"; then
-			AC_CHECK_LIB($tk_lib, main, TK_LIB=$tk_lib)
-		fi
-	done
-	if test -z "$TK_LIB"; then
-		AC_MSG_WARN(tk support disabled; Tk library missing)
-		USE_TCL=
-	else
-		TK_LIB=-l$TK_LIB
-		AC_SUBST(TK_LIB)
-	fi
-
-	LIBS="$ice_save_LIBS"
-	CFLAGS="$ice_save_CFLAGS"
-	CPPFLAGS="$ice_save_CPPFLAGS"
-	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
 dnl Check for Tk configuration script tkConfig.sh
