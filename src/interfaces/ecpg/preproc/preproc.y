@@ -392,7 +392,16 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 	| blockend			{ fputs($1, yyout); free($1); }
 	;
 
-opt_at:	AT connection_target	{ connection = $2; };
+opt_at:	AT connection_target		{
+						connection = $2;
+						/* 
+						   if we have a variable as connection
+						   target, remove it from the variable
+						   list or else it will be used twice
+						*/
+						if (argsinsert != NULL)
+							argsinsert = NULL;
+					};
 
 stmt:  AlterSchemaStmt 			{ output_statement($1, 0, connection); }
 		| AlterTableStmt	{ output_statement($1, 0, connection); }
@@ -3877,6 +3886,13 @@ connection_target: database_name opt_server opt_port
         |  db_prefix ':' server opt_port '/' database_name opt_options
                 {
 		  /* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
+			printf("%s\n", $1);
+		  if (strncmp($1, "unix:postgresql", strlen("unix:postgresql")) != 0 && strncmp($1, "tcp:postgresql", strlen("tcp:postgresql")) != 0)
+		  {
+		    sprintf(errortext, "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
+                    mmerror(ET_ERROR, errortext);
+		  }
+
                   if (strncmp($3, "//", strlen("//")) != 0)
 		  {
 		    sprintf(errortext, "Expected '://', found '%s'", $3);
@@ -3888,12 +3904,6 @@ connection_target: database_name opt_server opt_port
 			strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
 		  {
 		    sprintf(errortext, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
-                    mmerror(ET_ERROR, errortext);
-		  }
-
-		  if (strncmp($1, "unix", strlen("unix")) != 0 && strncmp($1, "tcp", strlen("tcp")) != 0)
-		  {
-		    sprintf(errortext, "only protocols 'tcp' and 'unix' are supported");
                     mmerror(ET_ERROR, errortext);
 		  }
 	

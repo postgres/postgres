@@ -35,6 +35,7 @@ exec sql begin declare section;
         char name[AMOUNT][8];
 	char letter[AMOUNT][1];
 	char command[128];
+	char *connection="pm";
 exec sql end declare section;
 	exec sql var name is string(AMOUNT);
 	char msg[128];
@@ -94,7 +95,7 @@ exec sql end declare section;
 	exec sql at pm begin transaction;
 
         strcpy(msg, "select");
-        exec sql select name, amount, letter into :name, :amount, :letter from "Test";
+        exec sql select * into :name, :amount, :letter from "Test";
 
 	printf("Database: mm\n");
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
@@ -113,7 +114,7 @@ exec sql end declare section;
 	}
 
         strcpy(msg, "select");
-        exec sql at pm select * into :name, :amount, :letter from "Test";
+        exec sql at :connection select name, amount, letter into :name, :amount, :letter from "Test";
 
 	printf("Database: pm\n");
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)

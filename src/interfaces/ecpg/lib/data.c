@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.19 2001/11/14 11:11:49 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.20 2001/12/05 15:32:06 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -277,15 +277,15 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							case ECPGt_short:
 							case ECPGt_unsigned_short:
-								((short *) ind)[act_tuple] = varcharsize;
+								((short *) ind)[act_tuple] = strlen(pval);
 								break;
 							case ECPGt_int:
 							case ECPGt_unsigned_int:
-								((int *) ind)[act_tuple] = varcharsize;
+								((int *) ind)[act_tuple] = strlen(pval);
 								break;
 							case ECPGt_long:
 							case ECPGt_unsigned_long:
-								((long *) ind)[act_tuple] = varcharsize;
+								((long *) ind)[act_tuple] = strlen(pval);
 								break;
 							default:
 								break;
@@ -300,12 +300,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					struct ECPGgeneric_varchar *variable =
 					(struct ECPGgeneric_varchar *) ((long) var + offset * act_tuple);
 
+					variable->len = strlen(pval);
 					if (varcharsize == 0)
-						strncpy(variable->arr, pval, strlen(pval));
+						strncpy(variable->arr, pval, variable->len);
 					else
 						strncpy(variable->arr, pval, varcharsize);
 
-					variable->len = strlen(pval);
 					if (varcharsize > 0 && variable->len > varcharsize)
 					{
 						/* truncation */
@@ -313,15 +313,15 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							case ECPGt_short:
 							case ECPGt_unsigned_short:
-								((short *) ind)[act_tuple] = varcharsize;
+								((short *) ind)[act_tuple] = variable->len;
 								break;
 							case ECPGt_int:
 							case ECPGt_unsigned_int:
-								((int *) ind)[act_tuple] = varcharsize;
+								((int *) ind)[act_tuple] = variable->len;
 								break;
 							case ECPGt_long:
 							case ECPGt_unsigned_long:
-								((long *) ind)[act_tuple] = varcharsize;
+								((long *) ind)[act_tuple] = variable->len;
 								break;
 							default:
 								break;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.15 2001/11/14 11:11:49 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.16 2001/12/05 15:32:06 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -386,6 +386,10 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			else
 				host = strdup(dbname + offset);
 
+		}
+		else
+		{
+			realname = strdup(dbname);
 		}
 	}
 	else
