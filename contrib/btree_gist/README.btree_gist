@@ -1,0 +1,31 @@
+This is B-Tree implementation using GiST for int4 and 
+timestamp types.
+
+All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
+(oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
+for additional information.
+
+NOTICE:
+     This version will works only with postgresql version 7.2 and above
+     because of changes in interface of function calling and in system
+     tables.
+
+INSTALLATION:
+
+  gmake
+  gmake install
+  -- load functions
+  psql <database> < btree_gist.sql
+
+REGRESSION TEST:
+
+   gmake installcheck
+
+EXAMPLE USAGE:
+
+   create table test (a int4);
+   -- create index
+   create index testidx on test using gist (a);
+   -- query
+   select * from test where a < 10;
+
