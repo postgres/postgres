@@ -1,39 +1,587 @@
-        0x0d2C
-      ==========
+array set Messages {
+"Label" "標籤"
+ 
+"Save schema" "儲存綱要"
+ 
+"Is unique ?" "是否唯一?"
+ 
+"Report builder" "報表製作器"
+ 
+"Criteria" "標準"
+ 
+"FATAL ERROR upgrading PgAccess table" " PgAccess 表格在升級時發生致命錯誤"
 
-May your signals all trap
-    May your references be bounded
-All memory aligned
-    Floats to ints rounded
+"Page header" "頁首"
+ 
+"Query name" "查詢名字"
+ 
+"Please select an object first!" "請先選擇一個物件!"
+ 
+"Fields :" "欄位 :"
+ 
+"Name" "名字"
+ 
+"File name" "檔案名"
+ 
+"Detail record" "記錄明細"
+ 
+"Auto-load the last opened database at startup" "啟動時自動載入上次打開的資料庫"
+ 
+"Maxvalue" "最大值"
 
+"Start value" "初始值"
+ 
+"Report fields" "報表欄位"
+ 
+"Test form" "測試表單"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "試圖聯接主機 %s \n\nPostgreSQL 上的資料庫 '%s' 時出錯, 錯誤訊息:%s"
+ 
+"No field type ?" "無欄位型別?"
+ 
+"User without name?" "用戶沒有名字?"
+ 
+"You have to supply a name for this schema!" "你必須給這個綱要指定一個名字!"
+ 
+"Last value" "最後值"
 
-Remember ...
+"Preferences" " 個人設定"
+ 
+"View '%s' already exists!\nOverwrite ?" "閱覽表 '%s' 已經存在!\n 覆蓋?"
+ 
+"You have to select an index!" "你必須選定一個索引!"
+ 
+"Field type" "欄位型別"
+ 
+"Script name" "腳本名字"
+ 
+"Reload" "重新載入"
+ 
+"Remove table %s from query?" "從查詢中刪除表格 %s?"
 
+"SQL window" " SQL 視窗"
+ 
+"Allow user to create other users" "允許用戶新增其它用戶"
+ 
+"Delete current record ?" "刪除目前記錄?"
 
-Non-zero is true
-    ++ adds one
-Arrays start with zero
-and, NULL is for none
+"List box" "列表框"
+ 
+"Save to query builder" "儲存到查詢製作器"
+ 
+"fixed width" "定寬"
+ 
+"Scripts" "腳本"
+ 
+"Yes" "是"
+ 
+"Add label" "增加標籤"
+ 
+"Sequence created!" "序列已新增!"
+ 
+"Field information" "欄位資訊"
+ 
+"Design" "設計"
+ 
+"Field" "欄位"
+ 
+"You have to supply an external file name!" "你必須提供一個外部檔案名!"
+ 
+"Increment" "增加"
+ 
+"No" "否"
 
+"List box" "列表框"
+ 
+"Save to query builder" "儲存到查詢製作器"
+ 
+"fixed width" "定寬"
+ 
+"Scripts" "腳本"
+ 
+"Yes" "是"
+ 
+"Add label" "增加標籤"
+ 
+"Sequence created!" "序列已新增!"
+ 
+"Field information" "欄位資訊"
+ 
+"Design" "設計"
+ 
+"Field" "欄位"
+ 
+"You have to supply an external file name!" "你必須提供一個外部檔案名!"
+ 
+"Increment" "增加"
+ 
+"No" "否"
 
-For octal, use zero
-    0x means hex
-= will set
-    == means test
+"Form design" "表單設計"
+ 
+"You must supply a return type!" "你必須提供一種傳回型別!"
+ 
+"Remove field from result ?" "從結果中刪除欄位?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "存在另外一個同名物件 (%s).\n 請改名!"
+ 
+"This query has no commands?" "這條查詢沒有命令?"
+ 
+"Execute query" "執行查詢"
+ 
+"field cannot be null" "欄位不能為空"
+ 
+"Help" "說明"
+ 
+"Rename column" "重新命名欄位"
+ 
+"Database" "資料庫"
+ 
+"Information" "資訊"
+ 
+"Close" "關閉 "
+ 
+"Command" "命令"
+ 
+"Table" "表格"
+ 
+"verify password" "驗證密碼"
 
+"Vacuum" "清理"
+ 
+"Default value" "預設值"
+ 
+"Import" "匯入"
+ 
+"Delete index" "刪除索引"
+ 
+"Move up" "向上移"
+ 
+"index properties" "索引屬性"
+ 
+"check" "檢查"
+ 
+"Create new table" "建立新表格"
 
-use -&gt; for a pointer
-    a dot if its not
-? : is confusing
-    use them a lot
+"Visual query designer" "視覺化查詢設計器"
+ 
+"Delete all" "全部刪除"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "你正準備刪除\n\n %s \n\n繼續?"
+ 
+"Schema name" "綱要名"
+ 
+"Error executing query" "執行查詢出錯"
+ 
+"Report name" "報表名字"
+ 
+"Add field" "增加欄位" 
 
+"Field name" "欄位名"
+ 
+"FATAL ERROR searching for PgAccess system tables" "搜索 PgAccess 系統表格時發生致命錯誤"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "在閱覽表裡顯示大量的記錄列將會使用大量記憶體!"
+ 
+"Preview" "預覽"
 
-a.out is your program
-        there's no U in foobar
-and, char (*(*x())[])() is
-        a function returning a pointer
-        to an array of pointers to
-        functions returning char
+"Users" "用戶"
+ 
+"Owner" "所有者"
+ 
+"Form's window internal name" "表單的視窗內部名字"
+ 
+"Sort field" "排序欄位"
+ 
+"New name is the same as the old one!" "新、舊名字相同!"
+ 
+"Warning" "警告"
+ 
+"Suggestions at" "請把建議發給"
+ 
+"Functions" "函數"
+ 
+"Schema" "綱要"
+ 
+"Open" "開啟 "
 
-  -- Jon S. Stumpf
+"size" "尺寸"
+ 
+"Delete" "刪除"
+ 
+"Returns" "傳回值"
+ 
+"Define new user" "定義新用戶"
+ 
+"Move down" "向下移"
+ 
+"Design script" "設計腳本"
+ 
+"Check box" "多選框"
+ 
+"FINAL WARNING" "最後警告"
+
+"Add table" "增加表格"
+ 
+"Table viewer font" "表格查看器字體"
+ 
+"The field type is not specified!" "欄位型別未指定!"
+ 
+"Close test form" "關閉測試表單"
+ 
+"Export table" " 匯出表格 "
+ 
+"Add new index" "增加新索引"
+ 
+"Left" "左"
+ 
+"Field delimiter" "欄位分隔符"
+ 
+"Add formula" "增加公式"
+ 
+"Open database" "開啟資料庫"
+ 
+"Return" "傳回"
+ 
+"Changed fonts may appear in the next working session!" "字體修改將在下個工作會期中生效!"
+ 
+"Error" "錯誤"
+ 
+"Enter a field name" "輸入欄位名"
+ 
+"field name" "欄位名"
+ 
+"Forms" "表單"
+
+"Cannot add column" "無法追加欄位"
+
+"Clean" "清空"
+ 
+"Delete all objects ?" "刪除所有物件?"
+ 
+"Preferred language" "偏好語言"
+ 
+"Execute SQL" "執行 SQL"
+ 
+"Sequences" "序列"
+ 
+"Button" "按鈕"
+ 
+"Language" "語言"
+ 
+"Query '%s' was not found!" "沒有找到查詢 '%s'"
+ 
+"Object" "物件"
+ 
+"Font fixed" "固定字體"
+ 
+"Table name" "表格名"
+ 
+"Export" "匯出"
+ 
+"Change user" "更改用戶"
+ 
+"You must give object a new name!" "你必須給物件一個新名字!"
+ 
+"Query" "查詢"
+
+"User name" "用戶名"
+ 
+"Font normal" "正常字體"
+ 
+"Import table" " 匯入表格 "
+ 
+"Toolbar" "工具列"
+ 
+"Radio btn" "單選按鈕"
+
+"You must supply a name for this function!" "你必須給這個函數提供一個名字!"
+ 
+"You have to select index fields!" "你必須選擇索引欄位!"
+ 
+"Constraint" "限制"
+ 
+"The script must have a name" "腳本必須有一個名字"
+ 
+"Save" "儲存"
+ 
+"Exit" " 退出 "
+ 
+"Inherits" "繼承"
+ 
+"Delete field" "刪除欄位"
+ 
+"About" " 關於 "
+ 
+"Empty field name ?" "空欄位名?"
+ 
+"All report information will be deleted.\n\nProceed ?" "所有報表資訊都將刪除\n\n繼續?"
+ 
+"Host" "主機"
+ 
+"vacuuming database %s ..." "正在清理資料庫 %s ..."
+ 
+"Indexes defined" "索引已定義"
+
+"You must specify field size!" "你必須指定欄位大小!"
+
+"Schema '%s' already exists!" "綱要 '%s' 已經存在!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "存在另外一個欄位 '%s' 與此同名!\n\n替換它?"
+
+"Contents" " 內容 "
+ 
+"Views" "閱覽表"
+ 
+"Variable" "變數"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "執行查詢\n\n %s\n\n 時出錯\n\nPostgreSQL 錯誤資訊:\n%s \n PostgreSQL 狀態 :%s"
+
+"Filter conditions" "過濾條件"
+ 
+"Error retrieving query definition" "檢索查詢定義出錯"
+ 
+"Error deleting view" "刪除閱覽表出錯"
+ 
+"New" "新建"
+ 
+"Tables" "表格"
+ 
+"Create" "建立"
+ 
+"Forms need an internal name, only literals, low case" "表單需要一個內部名字, 限用小寫文字"
+ 
+"Do you want to save the form into the database?" "你想把該表單儲存到資料庫中嗎?"
+ 
+"Schema '%s' was not found!" "沒有找到綱要 '%s'!"
+ 
+"proportional" "比例"
+
+"Function saved!" "函數已儲存!"
+ 
+"with OIDs" "帶 OID"
+
+"Table information" "表格明細"
+ 
+"Error inserting new record" "插入新記錄時出錯"
+
+"Error inserting new record" "插入新記錄時出錯"
+ 
+"Column name '%s' already exists in this table!" "欄位 '%s' 已存在於此表格中!"
+ 
+"File" "檔案"
+ 
+"Your table has no fields!" "你的表格沒有欄位!"
+ 
+"Height" "高度"
+ 
+"You will always get the latest version at:" "你可以在這裡找到最新版本:"
+ 
+"Form must have a name" "表單必須有名字"
+ 
+"Password" "密碼"
+ 
+"Valid until (date)" "有效至"
+ 
+"Report source" "報表原始資料"
+ 
+"Allow user to create databases" "允許用戶新增資料庫"
+ 
+"Cancel" "取消"
+ 
+"Is clustered ?" "有無建群?"
+ 
+"Add new column" "增加新欄位"
+ 
+"Show SQL" "顯示 SQL"
+ 
+"New name" "新名字" 
+
+"Table '%s' not found!" "沒有找到表格 '%s'!"
+ 
+"Form name" "表單名"
+ 
+"Visual designer" "視覺化設計器"
+
+"You choose to delete index\n\n %s \n\nProceed?" "你將要刪除索引\n\n %s \n\n繼續?"
+ 
+"Error retrieving from" "檢索出錯"
+ 
+"Save query definition" "儲存查詢定義"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Constantin Teodorescu 製作的\nPostgreSQL\n Tcl/TK 界面"
+ 
+"Operation completed!" "操作完成!"
+
+"Max rows displayed in table/query view" "在表格/查詢閱覽表中顯示的最大行數"
+ 
+"Passwords do not match!" "密碼不符!"
+ 
+"Rename" "重新命名"
+
+"Entry" "記錄"
+ 
+"Error retrieving schema definition" "檢索綱要定義出錯"
+ 
+"This is an action query!\n\nExecute it?" "這是一條動作查詢!\n\n執行?"
+ 
+"Error retrieving view definition for" "為下面物件檢索閱覽表定義出錯"
+ 
+"options" "選項"
+ 
+"Sequence '%s' not found!" "未發現序列 '%s'!"
+ 
+"Text" "文本"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Tcl 在執行pg_exec %s\n\n%s時發生錯誤"
+ 
+"Width" "寬"
+ 
+"You have to supply a name for this query!" "你必須給這個查詢提供名字!"
+ 
+"Accessing data. Please wait ..." "讀取資料中. 請稍候..."
+ 
+"Report footer" "報表註腳"
+ 
+"Parameters" "參數"
+ 
+"Queries" "查詢"
+ 
+"Query '%s' already exists!" "查詢 '%s' 已經存在!"
+ 
+"Font bold" "寬體"
+
+"Query builder" "查詢製作器"
+ 
+"Error defining view" "定義閱覽表出錯"
+ 
+"Top" "頂"
+ 
+"You must supply a name for your table!" "你必須給你的表格提供一個名字!"
+ 
+"Page footer" "頁尾"
+ 
+"Font italic" "斜體"
+ 
+"Field name not entered!" "未輸入欄位名!"
+ 
+"Index name cannot be null!" "索引名不能為空!"
+ 
+"Sort" "排序"
+ 
+"Import-Export table" "匯入-匯出表格"
+ 
+"Point" "點"
+ 
+"type" "型別"
+ 
+"You should supply a name for this sequence" "你應該給這個序列提供一個名字"
+ 
+"Remove link ?" "刪除鏈接?"
+ 
+"You have to supply a table name!" "你必須提供一個表格名字!"
+
+"Report header" "報表頭"
+ 
+"Attributes" "屬性"
+ 
+"Table '%s' already in schema" "表格 '%s' 已經在綱要中"
+ 
+"Username" "用戶名"
+ 
+"Minvalue" "最小值"
+ 
+"Sequence name" "序列名"
+ 
+"Define sequence" "定義序列"
+
+"Function" "函數"
+
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "查詢中尚無法做排序和過濾!\n\n請在查詢定義中輸入它們!"
+
+"Reports" "報表"
+ 
+"Columns" "行"
+
+"Indexes" "索引"
+
+"Index" "索引"
+ 
+"Permissions" "權限"
+ 
+"not null" "非空"
+
+"Cluster index" "群索引"
+
+"index columns" "索引欄位"
+ 
+"Add user" "增加用戶"
+ 
+"Change permissions" "修改權限"
+ 
+"select" "選擇"
+ 
+"update" "更新"
+ 
+"insert" "插入"
+ 
+"rule" "規則"
+ 
+"Identification" "標識"
+ 
+"Owner ID" "所有者 ID"
+ 
+"Has primary key ?" "有主鍵嗎?"
+ 
+"Has rules ?" "有規則嗎?"
+ 
+"Statistics" "統計"
+ 
+"Number of tuples" "記錄數"
+ 
+"Number of pages" "頁數"
+ 
+"Index name" "索引名字"
+ 
+"Index fields" "索引欄位"
+
+"Index name" "索引名字"
+ 
+"Index fields" "索引欄位"
+ 
+"Table OID" "表格 OID"
+ 
+"View system tables" "察看系統表格"
+ 
+"Back" "退回"
+ 
+"primary key" "主鍵"
+ 
+"Comments" "註釋"
+ 
+"Print" "列印"
+
+"Class" "類別"
+
+"Report preview" "報表預覽"
+
+"Delete current report object?" "刪除目前的報表物件 ?"
+
+"Your query has been executed without error!" "你的查詢已被執行-無錯誤!"
+
+"Visual schema designer" "視覺化資料庫綱要設計"
+
+"Query result:%s" "查詢結果; %s"
+
+"Loading maximum %s" "載入最大的 %s"
+
+"records..." "紀錄..."
+
+"Startup script" "啟動腳本"
+
+"Table information - %s" "表格明細 - %s"
+
+"Loading maximum %s records ..." "載入至多 %s 筆資料..."
+
+}
 
