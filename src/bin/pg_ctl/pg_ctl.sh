@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.6 2000/01/09 12:06:52 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.7 2000/01/23 08:20:24 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
@@ -214,9 +214,9 @@ if [ $op = "start" -o $op = "restart" ];then
     # no -o given
     if [ -z "$POSTOPTS" ];then
 	if [ $op = "start" ];then
-	    # if we are in start mode, then look postmaster.opts.default
+	    # if we are in start mode, then look for postmaster.opts.default
 	    if [ -f $DEFPOSTOPTS ];then
-		eval `cat $DEFPOSTOPTS` &
+		eval "$po_path `cat $DEFPOSTOPTS`" &
 	    else
 		$ECHO "$CMDNAME: Can't find $DEFPOSTOPTS"
 		exit 1
