@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.18 2000/11/16 22:30:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.19 2000/11/21 04:01:09 inoue Exp $
  *
  * ----------
  */
@@ -247,7 +247,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			qplan = SPI_saveplan(qplan);
 			ri_HashPreparedPlan(&qkey, qplan);
 		}
-		heap_close(pk_rel, NoLock);
 
 		/* ----------
 		 * Execute the plan
@@ -257,6 +256,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			elog(NOTICE, "SPI_connect() failed in RI_FKey_check()");
 
 		SetUserId(RelationGetForm(pk_rel)->relowner);
+		/* pk_rel is no longer neede OK ? */
+		heap_close(pk_rel, NoLock);
 
 		if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
 			elog(ERROR, "SPI_execp() failed in RI_FKey_check()");
@@ -353,7 +354,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 */
 			break;
 	}
-	heap_close(pk_rel, NoLock);
 
 	/* ----------
 	 * Note:
@@ -445,6 +445,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 
 	SetUserId(RelationGetForm(pk_rel)->relowner);
+	/* pk_rel is no longer needed OK ? */
+	heap_close(pk_rel, NoLock);
 
 	if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
 		elog(ERROR, "SPI_execp() failed in RI_FKey_check()");
@@ -2357,7 +2359,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 					 */
 					break;
 			}
-			heap_close(fk_rel, NoLock);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_setdefault_del()");
@@ -2461,6 +2462,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 					}
 				}
 			}
+			/* fk_rel is no longer needed OK ? */
+			heap_close(fk_rel, NoLock);
 
 			/* ----------
 			 * We have a plan now. Build up the arguments for SPI_execp()
@@ -2614,7 +2617,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 					 */
 					break;
 			}
-			heap_close(fk_rel, NoLock);
 
 			/* ----------
 			 * No need to do anything if old and new keys are equal
@@ -2743,6 +2745,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 					}
 				}
 			}
+			/* fk_rel is no longer needed OK ? */
+			heap_close(fk_rel, NoLock);
 
 			/* ----------
 			 * We have a plan now. Build up the arguments for SPI_execp()
