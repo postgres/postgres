@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.35 2004/10/13 10:35:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.36 2004/10/15 01:36:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ typedef enum
 static bool do_wait = false;
 static bool wait_set = false;
 static int	wait_seconds = 60;
-static bool silence_echo = false;
+static bool silent_mode = false;
 static ShutdownMode shutdown_mode = SMART_MODE;
 static int	sig = SIGTERM;		/* default */
 static CtlCommand ctl_command = NO_COMMAND;
@@ -92,25 +92,26 @@ static void do_advice(void);
 static void do_help(void);
 static void set_mode(char *modeopt);
 static void set_sig(char *signame);
-static void do_start();
+static void do_start(void);
 static void do_stop(void);
 static void do_restart(void);
 static void do_reload(void);
 static void do_status(void);
 static void do_kill(pgpid_t pid);
+static void print_msg(const char *msg);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 static bool pgwin32_IsInstalled(SC_HANDLE);
 static char *pgwin32_CommandLine(bool);
-static void pgwin32_doRegister();
-static void pgwin32_doUnregister();
+static void pgwin32_doRegister(void);
+static void pgwin32_doUnregister(void);
 static void pgwin32_SetServiceStatus(DWORD);
 static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
-static void pgwin32_doRunAsService();
+static void pgwin32_doRunAsService(void);
 #endif
 static pgpid_t get_pgpid(void);
-static char **readfile(char *path);
+static char **readfile(const char *path);
 static int	start_postmaster(void);
 static bool test_postmaster_connection(void);
 
@@ -201,7 +202,6 @@ xmalloc(size_t size)
 }
 
 
-
 static char *
 xstrdup(const char *s)
 {
@@ -216,7 +216,19 @@ xstrdup(const char *s)
 	return result;
 }
 
-
+/*
+ * Given an already-localized string, print it to stdout unless the
+ * user has specified that no messages should be printed.
+ */
+static void
+print_msg(const char *msg)
+{
+	if (!silent_mode)
+	{
+		fputs(msg, stdout);
+		fflush(stdout);
+	}
+}
 
 static pgpid_t
 get_pgpid(void)
@@ -247,7 +259,7 @@ get_pgpid(void)
  * get the lines from a text file - return NULL if file can't be opened
  */
 static char **
-readfile(char *path)
+readfile(const char *path)
 {
 	FILE	   *infile;
 	int			maxlength = 0,
@@ -281,7 +293,6 @@ readfile(char *path)
 		maxlength = linelen;
 
 	/* set up the result and the line buffer */
-
 	result = (char **) xmalloc((nlines + 1) * sizeof(char *));
 	buffer = (char *) xmalloc(maxlength + 1);
 
@@ -429,11 +440,7 @@ test_postmaster_connection(void)
 		}
 		else
 		{
-			if (!silence_echo)
-			{
-				printf(".");
-				fflush(stdout);
-			}
+			print_msg(".");
 			pg_usleep(1000000); /* 1 sec */
 		}
 	}
@@ -563,21 +570,16 @@ do_start(void)
 
 	if (do_wait)
 	{
-		if (!silence_echo)
-		{
-			printf(_("waiting for postmaster to start..."));
-			fflush(stdout);
-		}
+		print_msg(_("waiting for postmaster to start..."));
 
 		if (test_postmaster_connection() == false)
 			printf(_("could not start postmaster\n"));
-		else if (!silence_echo)
-			printf(_("done\npostmaster started\n"));
+		else
+			print_msg(_(" done\npostmaster started\n"));
 	}
-	else if (!silence_echo)
-		printf(_("postmaster starting\n"));
+	else
+		print_msg(_("postmaster starting\n"));
 }
-
 
 
 static void
@@ -612,27 +614,18 @@ do_stop(void)
 
 	if (!do_wait)
 	{
-		if (!silence_echo)
-			printf(_("postmaster shutting down\n"));
+		print_msg(_("postmaster shutting down\n"));
 		return;
 	}
 	else
 	{
-		if (!silence_echo)
-		{
-			printf(_("waiting for postmaster to shut down... "));
-			fflush(stdout);
-		}
+		print_msg(_("waiting for postmaster to shut down..."));
 
 		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
 			if ((pid = get_pgpid()) != 0)
 			{
-				if (!silence_echo)
-				{
-					printf(".");
-					fflush(stdout);
-				}
+				print_msg(".");
 				pg_usleep(1000000);		/* 1 sec */
 			}
 			else
@@ -641,14 +634,12 @@ do_stop(void)
 
 		if (pid != 0)			/* pid file still exists */
 		{
-			if (!silence_echo)
-				printf(_("failed\n"));
+			print_msg(_(" failed\n"));
 
 			write_stderr(_("%s: postmaster does not shut down\n"), progname);
 			exit(1);
 		}
-		if (!silence_echo)
-			printf(_("done\n"));
+		print_msg(_(" done\n"));
 
 		printf(_("postmaster stopped\n"));
 	}
@@ -691,11 +682,7 @@ do_restart(void)
 		exit(1);
 	}
 
-	if (!silence_echo)
-	{
-		printf(_("waiting for postmaster to shut down..."));
-		fflush(stdout);
-	}
+	print_msg(_("waiting for postmaster to shut down..."));
 
 	/* always wait for restart */
 
@@ -703,11 +690,7 @@ do_restart(void)
 	{
 		if ((pid = get_pgpid()) != 0)
 		{
-			if (!silence_echo)
-			{
-				printf(".");
-				fflush(stdout);
-			}
+			print_msg(".");
 			pg_usleep(1000000); /* 1 sec */
 		}
 		else
@@ -716,16 +699,13 @@ do_restart(void)
 
 	if (pid != 0)				/* pid file still exists */
 	{
-		if (!silence_echo)
-			printf(_(" failed\n"));
+		print_msg(_(" failed\n"));
 
 		write_stderr(_("%s: postmaster does not shut down\n"), progname);
 		exit(1);
 	}
 
-	if (!silence_echo)
-		printf(_("done\n"));
-
+	print_msg(_(" done\n"));
 	printf(_("postmaster stopped\n"));
 	do_start();
 }
@@ -760,8 +740,7 @@ do_reload(void)
 		exit(1);
 	}
 
-	if (!silence_echo)
-		fprintf(stdout, _("postmaster signaled\n"));
+	print_msg(_("postmaster signaled\n"));
 }
 
 /*
@@ -876,7 +855,7 @@ pgwin32_CommandLine(bool registration)
 }
 
 static void
-pgwin32_doRegister()
+pgwin32_doRegister(void)
 {
 	SC_HANDLE	hService;
 	SC_HANDLE	hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
@@ -908,7 +887,7 @@ pgwin32_doRegister()
 }
 
 static void
-pgwin32_doUnregister()
+pgwin32_doUnregister(void)
 {
 	SC_HANDLE	hService;
 	SC_HANDLE	hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
@@ -1060,7 +1039,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 }
 
 static void
-pgwin32_doRunAsService()
+pgwin32_doRunAsService(void)
 {
 	SERVICE_TABLE_ENTRY st[] = {{register_servicename, pgwin32_ServiceMain},
 	{NULL, NULL}};
@@ -1287,7 +1266,7 @@ main(int argc, char **argv)
 					register_password = xstrdup(optarg);
 					break;
 				case 's':
-					silence_echo = true;
+					silent_mode = true;
 					break;
 				case 'U':
 					if (strchr(optarg, '\\'))
