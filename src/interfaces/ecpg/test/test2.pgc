@@ -34,6 +34,16 @@ exec sql end declare section;
 	strcpy(msg, "connect");
 	exec sql connect 'mm';
 
+	strcpy(msg, "create");
+	exec sql create table meskes(name char8, born int4, age int2);
+
+	strcpy(msg, "insert");
+	exec sql insert into meskes(name, born, age) values ('Petra', 19661202, 31);
+	exec sql insert into meskes(name, born, age) values ('Michael', 19660117, 32);
+	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 7);
+	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 4);
+	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 0);
+
 	strcpy(msg, "declare");
 	exec sql declare cur cursor for 
 		select name, born, age from meskes;
@@ -41,13 +51,22 @@ exec sql end declare section;
 	exec sql open cur;
 
 	while (1) {
+		/* make sure we leave this loop */
+		exec sql whenever not found break;
+
 		strcpy(msg, "fetch");
 		exec sql fetch in cur into :personal;
 		printf ("%8.8s was born %d (age = %d)\n", personal.name.arr, personal.birth.born, personal.birth.age);
 	}
 
+	/* back to normal behaviour */
+	exec sql whenever not found sqlprint;
+
 	strcpy(msg, "close");
 	exec sql close cur;
+
+	strcpy(msg, "drop");
+	exec sql drop table meskes;
 
 	strcpy(msg, "commit");
 	exec sql commit;

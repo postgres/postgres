@@ -38,3 +38,21 @@ Thu Feb 19 12:48:14 CET 1998
 
 	- added do option to whenever statement
 
+Sat Feb 21 19:10:55 CET 1998
+
+	- use char[] as string not as array of bytes that is integers
+
+Sun Feb 22 16:37:36 CET 1998
+
+	- use long for all size variables
+	- added execute immediate statement
+
+Sun Feb 22 20:41:32 CET 1998
+
+	- use varcharsize = 1 for all simple types, 0 means pointer, > 1
+	  means array if type is char resp. unsigned char
+
+Thu Feb 24 12:26:12 CET 1998
+
+	- allow 'go to' in whenever statement as well as 'goto'
+	- new argument 'stop' for whenever statement

@@ -40,8 +40,22 @@ could be realised in a script.
 
 Now comes my list (MM):
 
-What do we do with enum data types?
+The return code is alway -1 in case of an error. You cannot see which error
+occured by examining the return code.
 
-The cursor is opened when the declare statement is issued. 
+The cursor is opened when the declare statement is issued.
+
+ecpg does not understand enum datatypes.
 
 The is no exec sql prepare statement.
+
+The complete structure definition has to be listed inside the declare
+section for ecpg to be able to understand it.
+
+Each variable has to be defined on a line on its own.
+
+There is no way yet to fill a complete array with one call except arrays of
+[unsigned] char which are considered strings.
+
+ecpg cannot use pointer variables except [unsigned] char *
+

@@ -52,7 +52,9 @@ print_action(struct when *w)
 				 break;
 		case W_DO:	 fprintf(yyout, "%s;", w->str);
 				 break;
-		default:	 fprintf(yyout, "{/* not implemented yet */}");
+		case W_STOP:	 fprintf(yyout, "exit (1);");
+				 break;
+		default:	 fprintf(yyout, "{/* %d not implemented yet */}", w->code);
 				 break;
 	}
 }
@@ -168,8 +170,8 @@ struct arguments {
 static struct arguments * argsinsert = NULL;
 static struct arguments * argsresult = NULL;
 
-void
-reset_variables()
+static void
+reset_variables(void)
 {
     argsinsert = NULL;
     argsresult = NULL;
@@ -177,7 +179,7 @@ reset_variables()
 
 
 /* Add a variable to a request. */
-void
+static void
 add_variable(struct arguments ** list, struct variable * var)
 {
     struct arguments * p = (struct arguments *)malloc(sizeof(struct arguments));
@@ -191,7 +193,7 @@ add_variable(struct arguments ** list, struct variable * var)
    This is a recursive function that works from the end of the list and
    deletes the list as we go on.
  */
-void
+static void
 dump_variables(struct arguments * list)
 {
     if (list == NULL)
@@ -217,7 +219,7 @@ dump_variables(struct arguments * list)
     int				tagname;
     struct ECPGtemp_type	type;
     char *			symbolname;
-    int				indexsize;
+    long			indexsize;
     enum ECPGttype		type_enum;
     struct when			action;
 }
@@ -227,19 +229,20 @@ dump_variables(struct arguments * list)
 %token <tagname> SQL_CONNECT SQL_OPEN SQL_EXECUTE SQL_IMMEDIATE
 %token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK SQL_WHENEVER
 %token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_BREAK SQL_CONTINUE
-%token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT
+%token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT SQL_STOP
 
 %token <tagname> S_SYMBOL S_LENGTH S_ANYTHING S_LABEL
 %token <tagname> S_VARCHAR S_VARCHAR2
-%token <tagname> S_EXTERN S_STATIC S_AUTO S_CONST S_REGISTER S_STRUCT S_SIGNED
+%token <tagname> S_EXTERN S_STATIC S_AUTO S_CONST S_REGISTER S_STRUCT
 %token <tagname> S_UNSIGNED S_SIGNED
 %token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE S_BOOL
 %token <tagname> '[' ']' ';' ',' '{' '}' '=' '*' '(' ')'
 
-%type <type> type type_detailed varchar_type simple_type array_type struct_type
+%type <type> type type_detailed varchar_type simple_type struct_type string_type
+/* % type <type> array_type pointer_type */
 %type <symbolname> symbol label
 %type <tagname> maybe_storage_clause varchar_tag db_name
-%type <type_enum> simple_tag
+%type <type_enum> simple_tag char_tag
 %type <indexsize> index length
 %type <action> action
 %type <tagname> canything sqlanything both_anything vartext commit_release
@@ -286,7 +289,7 @@ variable_declaration : type initializer ';'	{
     if (struct_level == 0)
     {
 	new_variable($<type>1.name, $<type>1.typ);
-	free($<type>1.name);
+	free((void *)$<type>1.name);
     }
     fprintf(yyout, ";"); 
 }
@@ -319,15 +322,16 @@ symbol : S_SYMBOL {
 type : maybe_storage_clause type_detailed { $<type>$ = $<type>2; };
 type_detailed : varchar_type { $<type>$ = $<type>1; }
 	      | simple_type { $<type>$ = $<type>1; }
-	      | array_type {$<type>$ = $<type>1; }
-	      | pointer_type {$<type>$ = $<type>1; }
+	      | string_type { $<type>$ = $<type>1; }
+/*	      | array_type {$<type>$ = $<type>1; }
+	      | pointer_type {$<type>$ = $<type>1; }*/
 	      | struct_type {$<type>$ = $<type>1; };
 
 varchar_type : varchar_tag symbol index {
-    if ($<indexsize>3 > 0)
-	fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
+    if ($<indexsize>3 > 0L)
+	fprintf(yyout, "struct varchar_%s { int len; char arr[%ld]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
     else
-	fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
+	fprintf(yyout, "struct varchar_%s { int len; char arr[]; } %s", $<symbolname>2, $<symbolname>2);
     if (struct_level == 0)
     {
 	$<type>$.name = $<symbolname>2;
@@ -345,15 +349,53 @@ simple_type : simple_tag symbol {
     if (struct_level == 0)
     {
 	$<type>$.name = $<symbolname>2;
-	$<type>$.typ = ECPGmake_simple_type($<type_enum>1);
+	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, 1);
     }
     else
-        ECPGmake_record_member($<symbolname>2, ECPGmake_simple_type($<type_enum>1), &(record_member_list[struct_level-1]));
+        ECPGmake_record_member($<symbolname>2, ECPGmake_simple_type($<type_enum>1, 1), &(record_member_list[struct_level-1]));
 }
 
+string_type : char_tag symbol index {
+    if ($<indexsize>3 > 0L)
+	    fprintf(yyout, "%s %s [%ld]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
+    else
+	    fprintf(yyout, "%s %s []", ECPGtype_name($<type_enum>1), $<symbolname>2);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>2;
+	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, $<indexsize>3);
+    }
+    else
+	ECPGmake_record_member($<symbolname>2, ECPGmake_simple_type($<type_enum>1, $<indexsize>3), &(record_member_list[struct_level-1]));
+}
+	|	char_tag '*' symbol {
+    fprintf(yyout, "%s *%s", ECPGtype_name($<type_enum>1), $<symbolname>3);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>3;
+	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, 0);
+    }
+    else
+	ECPGmake_record_member($<symbolname>3, ECPGmake_simple_type($<type_enum>1, 0), &(record_member_list[struct_level-1]));
+}
+	|	char_tag symbol {
+    fprintf(yyout, "%s %s", ECPGtype_name($<type_enum>1), $<symbolname>2);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>2;
+	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, 1);
+    }
+    else
+        ECPGmake_record_member($<symbolname>2, ECPGmake_simple_type($<type_enum>1, 1), &(record_member_list[struct_level-1]));
+}
+
+char_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
+           | S_UNSIGNED S_CHAR { $<type_enum>$ = ECPGt_unsigned_char; }
+
+/*
 array_type : simple_tag symbol index {
     if ($<indexsize>3 > 0)
-	    fprintf(yyout, "%s %s [%d]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
+	    fprintf(yyout, "%s %s [%ld]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
     else
 	    fprintf(yyout, "%s %s []", ECPGtype_name($<type_enum>1), $<symbolname>2);
     if (struct_level == 0)
@@ -375,6 +417,7 @@ pointer_type : simple_tag '*' symbol {
     else
 	ECPGmake_record_member($<symbolname>3, ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), 0), &(record_member_list[struct_level-1]));
 }
+*/
 
 s_struct : S_STRUCT symbol {
     struct_level++;
@@ -394,9 +437,7 @@ struct_type : s_struct '{' variable_declarations '}' symbol {
     record_member_list[struct_level] = NULL;
 }
 
-simple_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
-           | S_UNSIGNED S_CHAR { $<type_enum>$ = ECPGt_unsigned_char; }
-	   | S_SHORT { $<type_enum>$ = ECPGt_short; }
+simple_tag : S_SHORT { $<type_enum>$ = ECPGt_short; }
            | S_UNSIGNED S_SHORT { $<type_enum>$ = ECPGt_unsigned_short; }
 	   | S_INT { $<type_enum>$ = ECPGt_int; }
            | S_UNSIGNED S_INT { $<type_enum>$ = ECPGt_unsigned_int; }
@@ -415,9 +456,9 @@ maybe_storage_clause : S_EXTERN { fwrite(yytext, yyleng, 1, yyout); }
                        | /* empty */ { };
   	 
 index : '[' length ']' { $<indexsize>$ = $<indexsize>2; }
-	| '[' ']' { $<indexsize>$ = 0; }
+	| '[' ']' { $<indexsize>$ = 0L; }
 
-length : S_LENGTH { $<indexsize>$ = atoi(yytext); }
+length : S_LENGTH { $<indexsize>$ = atol(yytext); }
 
 sqlinclude : SQL_START SQL_INCLUDE { fprintf(yyout, "#include \""); }
 	filename SQL_SEMI { fprintf(yyout, ".h\""); output_line_number(); };
@@ -430,7 +471,7 @@ sqlconnect : SQL_START SQL_CONNECT { fprintf(yyout, "ECPGconnect("); }
 	     SQL_SEMI { fprintf(yyout, ");"); whenever_action();}
 
 db_name : SQL_STRING { fprintf(yyout, "\""); fwrite(yytext + 1, yyleng - 2, 1, yyout); fprintf(yyout, "\""); }
-	| ':' symbol { /* check if we have a char variabnle */
+	| ':' symbol { /* check if we have a char variable */
 			struct variable *p = find_variable($<symbolname>2);
 			enum ECPGttype typ = p->type->typ;
 
@@ -465,45 +506,55 @@ sqlrollback : SQL_START SQL_ROLLBACK SQL_SEMI {
     whenever_action();
 };
 
-sqlexecute : SQL_START { /* Reset stack */
-    reset_variables();
-    fprintf(yyout, "ECPGdo(__LINE__, \"");
-} SQL_EXECUTE SQL_IMMEDIATE sqlstatement_words SQL_SEMI {  
-    /* Dump */
-    fprintf(yyout, "\", ");		   
-    dump_variables(argsinsert);
-    fprintf(yyout, "ECPGt_EOIT, ");
-    /* dump_variables(argsresult); output variables must not exist here */
-    fprintf(yyout, "ECPGt_EORT );");
+sqlexecute : SQL_START SQL_EXECUTE SQL_IMMEDIATE  ':' symbol  SQL_SEMI {  
+    fprintf(yyout, "ECPGdo(__LINE__, %s, ECPGt_EOIT, ECPGt_EORT );", $5);
     whenever_action();
 };
 
-sqlwhenever : SQL_START SQL_WHENEVER SQL_SQLERROR action SQL_SEMI{
-	when_error = $<action>4;
+sqlwhenever : SQL_START SQL_WHENEVER SQL_SQLERROR {
+	fprintf(yyout, "/* exec sql whenever sqlerror ");
+}	action SQL_SEMI{
+	when_error.code = $<action>5.code;
+	when_error.str = $<action>5.str;
+	fprintf(yyout, "; */\n");
 }
-	| SQL_START SQL_WHENEVER SQL_NOT_FOUND action SQL_SEMI{
-	when_nf = $<action>4;
+	| SQL_START SQL_WHENEVER SQL_NOT_FOUND {
+	fprintf(yyout, "/* exec sql whenever not found ");
+}	 action SQL_SEMI{
+	when_nf.code = $<action>5.code;
+	when_nf.str=$<action>5.str;
+	fprintf(yyout, "; */\n");
 }
 
 action : SQL_BREAK {
 	$<action>$.code = W_BREAK;
 	$<action>$.str = NULL;
+	fprintf(yyout, "break");
 }
        | SQL_CONTINUE {
 	$<action>$.code = W_CONTINUE;
 	$<action>$.str = NULL;
+	fprintf(yyout, "continue");
 }
        | SQL_SQLPRINT {
 	$<action>$.code = W_SQLPRINT;
 	$<action>$.str = NULL;
+	fprintf(yyout, "sqlprint");
+}
+       | SQL_STOP {
+	$<action>$.code = W_STOP;
+	$<action>$.str = NULL;
+	fprintf(yyout, "stop");
 }
        | SQL_GOTO label {
 	$<action>$.code = W_GOTO;
 	$<action>$.str = $<symbolname>2;
+	fprintf(yyout, "goto %s", $<symbolname>2);
 }
-	| SQL_GOTO symbol {
+       | SQL_GOTO symbol {
         $<action>$.code = W_GOTO;
         $<action>$.str = $<symbolname>2;
+	fprintf(yyout, "goto %s", $<symbolname>2);
 }
        | SQL_DO symbol '(' {
 	do_str = (char *) mm_alloc(do_length = strlen($<symbolname>2) + 4);
@@ -513,6 +564,7 @@ action : SQL_BREAK {
 	do_str[strlen(do_str)]=')';
 	$<action>$.code = W_DO;
 	$<action>$.str = do_str;
+	fprintf(yyout, "do %s", do_str);
 	do_str = NULL;
 	do_length = 0;
 }
@@ -599,6 +651,7 @@ blockend : '}' {
     fwrite(yytext, yyleng, 1, yyout);
 }
 %%
+
 static void yyerror(char * error)
 {
     fprintf(stderr, "%s in line %d\n", error, yylineno);

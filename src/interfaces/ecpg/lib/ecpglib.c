@@ -96,9 +96,9 @@ ECPGdo(int lineno, char *query,...)
 	while (type != ECPGt_EOIT)
 	{
 		void	   *value = NULL;
-		short		varcharsize;
-		short		size;
-		short		arrsize;
+		long		varcharsize;
+		long		size;
+		long		arrsize;
 
 		char	   *newcopy;
 		char	   *mallocedval = NULL;
@@ -110,20 +110,18 @@ ECPGdo(int lineno, char *query,...)
 		   contents to arrive in a comma-separated list on insert (I think). */
 
 		value = va_arg(ap, void *);
-		varcharsize = va_arg(ap, short);
-		size = va_arg(ap, short);
-		arrsize = va_arg(ap, short);
+		varcharsize = va_arg(ap, long);
+		size = va_arg(ap, long);
+		arrsize = va_arg(ap, long);
 
 		switch (type)
 		{
-			case ECPGt_char:
 			case ECPGt_short:
 			case ECPGt_int:
 				sprintf(buff, "%d", *(int *) value);
 				tobeinserted = buff;
 				break;
 
-			case ECPGt_unsigned_char:
 			case ECPGt_unsigned_short:
 			case ECPGt_unsigned_int:
 				sprintf(buff, "%d", *(unsigned int *) value);
@@ -153,6 +151,27 @@ ECPGdo(int lineno, char *query,...)
 			case ECPGt_bool:
 				sprintf(buff, "'%c'", (*(char *) value ? 't' : 'f'));
 				tobeinserted = buff;
+				break;
+
+			case ECPGt_char:
+			case ECPGt_unsigned_char:
+				{
+					/* set slen to string length if type is char * */
+					int slen = (varcharsize == 0) ? strlen((char *) value) : varcharsize;
+				
+					newcopy = (char *) malloc(slen + 1);
+					strncpy(newcopy, (char *) value, slen);
+					newcopy[slen] = '\0';
+
+					mallocedval = (char *) malloc(2 * strlen(newcopy) + 3);
+					strcpy(mallocedval, "'");
+					strcat(mallocedval, quote_postgres(newcopy));
+					strcat(mallocedval, "'");
+
+					free(newcopy);
+
+					tobeinserted = mallocedval;
+				}
 				break;
 
 			case ECPGt_varchar:
@@ -274,7 +293,7 @@ ECPGdo(int lineno, char *query,...)
 
 				if (n < 1)
 				{
-					ECPGlog("ECPGdo lineno %d: Incorrect number of matches: %d\n",
+					ECPGlog("ECPGdo line %d: Incorrect number of matches: %d\n",
 							lineno, n);
 					register_error(1, "Data not found line %d.", lineno);
 					break;
@@ -293,9 +312,9 @@ ECPGdo(int lineno, char *query,...)
 				for (x = 0; x < m && status; x++)
 				{
 					void	   *value = NULL;
-					short		varcharsize;
-					short		size;
-					short		arrsize;
+					long		varcharsize;
+					long		size;
+					long		arrsize;
 
 					char	   *pval = PQgetvalue(results, 0, x);
 
@@ -311,9 +330,9 @@ ECPGdo(int lineno, char *query,...)
 					/* We will have to decode the value */
 					type = va_arg(ap, enum ECPGttype);
 					value = va_arg(ap, void *);
-					varcharsize = va_arg(ap, short);
-					size = va_arg(ap, short);
-					arrsize = va_arg(ap, short);
+					varcharsize = va_arg(ap, long);
+					size = va_arg(ap, long);
+					arrsize = va_arg(ap, long);
 
 					switch (type)
 					{
@@ -321,7 +340,6 @@ ECPGdo(int lineno, char *query,...)
 							unsigned long ures;
 							double		dres;
 
-						case ECPGt_char:
 						case ECPGt_short:
 						case ECPGt_int:
 						case ECPGt_long:
@@ -342,9 +360,6 @@ ECPGdo(int lineno, char *query,...)
 							/* Again?! Yes */
 							switch (type)
 							{
-								case ECPGt_char:
-									*(char *) value = (char) res;
-									break;
 								case ECPGt_short:
 									*(short *) value = (short) res;
 									break;
@@ -360,7 +375,6 @@ ECPGdo(int lineno, char *query,...)
 							}
 							break;
 
-						case ECPGt_unsigned_char:
 						case ECPGt_unsigned_short:
 						case ECPGt_unsigned_int:
 						case ECPGt_unsigned_long:
@@ -381,9 +395,6 @@ ECPGdo(int lineno, char *query,...)
 							/* Again?! Yes */
 							switch (type)
 							{
-								case ECPGt_unsigned_char:
-									*(unsigned char *) value = (unsigned char) ures;
-									break;
 								case ECPGt_unsigned_short:
 									*(unsigned short *) value = (unsigned short) ures;
 									break;
@@ -452,6 +463,20 @@ ECPGdo(int lineno, char *query,...)
 							return false;
 							break;
 
+						case ECPGt_char:
+						case ECPGt_unsigned_char:
+							{
+								if (varcharsize == 0)
+								{
+									/* char* */
+									strncpy((char *) value, pval, strlen(pval));
+									((char *) value)[strlen(pval)] = '\0';
+								}
+								else
+									strncpy((char *) value, pval, varcharsize);
+							}
+							break;
+							
 						case ECPGt_varchar:
 							{
 								struct ECPGgeneric_varchar *var =

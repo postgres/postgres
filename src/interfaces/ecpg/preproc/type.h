@@ -9,7 +9,7 @@ struct ECPGrecord_member {
 
 struct ECPGtype {
     enum ECPGttype	typ;
-    unsigned short	size;	/* For array it is the number of elements.
+    long		size;	/* For array it is the number of elements.
 				 * For varchar it is the maxsize of the area.
 				 */
     union {
@@ -23,9 +23,9 @@ struct ECPGtype {
 
 /* Everything is malloced. */
 struct ECPGrecord_member * ECPGmake_record_member(char *, struct ECPGtype *, struct ECPGrecord_member **);
-struct ECPGtype * ECPGmake_simple_type(enum ECPGttype);
-struct ECPGtype * ECPGmake_varchar_type(enum ECPGttype, unsigned short);
-struct ECPGtype * ECPGmake_array_type(struct ECPGtype *, unsigned short);
+struct ECPGtype * ECPGmake_simple_type(enum ECPGttype, long);
+struct ECPGtype * ECPGmake_varchar_type(enum ECPGttype, long);
+struct ECPGtype * ECPGmake_array_type(struct ECPGtype *, long);
 struct ECPGtype * ECPGmake_record_type(struct ECPGrecord_member *);
 
 /* Frees a type. */
@@ -59,7 +59,8 @@ enum WHEN {
         W_BREAK,
         W_SQLPRINT,
         W_GOTO,
-        W_DO
+        W_DO,
+        W_STOP
 };
 
 struct when

@@ -29,6 +29,7 @@ end	[eE][nN][dD]
 exec	[eE][xX][eE][cC]
 execute	[eE][xX][eE][cC][uU][tT][eE]
 found	[fF][oO][uU][nN][dD]
+go	[gG][oO]
 goto    [gG][oO][tT][oO]
 immediate [iI][mM][mM][eE][dD][iI][aA][tT][eE]
 include [iI][nN][cC][lL][uU][dD][eE]
@@ -41,6 +42,8 @@ section	[sS][eE][cC][tT][iI][oO][nN]
 sql	[sS][qQ][lL]
 sqlerror [sS][qQ][lL][eE][rR][rR][oO][rR]
 sqlprint [sS][qQ][lL][pP][rR][iI][nN][tT]
+stop	[sS][tT][oO][pP]
+to    	[tT][oO]
 varchar	[vV][aA][rR][cC][hH][aA][rR]
 varchar2	[vV][aA][rR][cC][hH][aA][rR]2
 whenever [wW][hH][eE][nN][eE][vV][eE][rR]
@@ -69,6 +72,8 @@ work    [wW][oO][rR][kK]
 <SQL>{continue}		{ dbg(SQL_CONTINUE); return SQL_CONTINUE; }
 <SQL>{into}		{ dbg(SQL_INTO); return SQL_INTO; }
 <SQL>{goto}		{ dbg(SQL_GOTO); return SQL_GOTO; }
+<SQL>{go}{ws}{to}	{ dbg(SQL_GOTO); return SQL_GOTO; }
+<SQL>{stop}		{ dbg(SQL_STOP); return SQL_STOP; }
 <SQL>{do}		{ dbg(SQL_DO); return SQL_DO; }
 			  
 {length}		{ dbg(S_LENGTH); return S_LENGTH; }
