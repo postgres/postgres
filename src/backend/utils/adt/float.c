@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.2 1996/07/20 08:36:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.2.2.1 1996/08/19 13:47:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1275,7 +1275,7 @@ static int isinf(x)
 }
 #endif /* PORTNAME_alpha */
 
-#if defined(PORTNAME_sparc_solaris)||defined(PORTNAME_i386_solaris)
+#if defined(PORTNAME_sparc_solaris)||defined(PORTNAME_i386_solaris) || defined(PORTNAME_svr4)
 #include <ieeefp.h>
 static int
     isinf(d)
