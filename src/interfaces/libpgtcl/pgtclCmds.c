@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.10 1997/01/11 14:24:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.11 1997/01/11 14:28:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,7 +391,7 @@ Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
  **********************************/
 
 int
-Pg_exec(AlientData cData, Tcl_Interp *interp, int argc, char* argv[])
+Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
     Pg_clientData *cd = (Pg_clientData *)cData;
     PGconn *conn;
