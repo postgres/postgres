@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.119 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.120 2002/11/06 00:00:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 static Scan *create_scan_plan(Query *root, Path *best_path);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
+static Result *create_result_plan(Query *root, ResultPath *best_path);
 static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
@@ -134,6 +135,10 @@ create_plan(Query *root, Path *best_path)
 		case T_Append:
 			plan = (Plan *) create_append_plan(root,
 											   (AppendPath *) best_path);
+			break;
+		case T_Result:
+			plan = (Plan *) create_result_plan(root,
+											   (ResultPath *) best_path);
 			break;
 		default:
 			elog(ERROR, "create_plan: unknown pathtype %d",
@@ -338,6 +343,35 @@ create_append_plan(Query *root, AppendPath *best_path)
 	}
 
 	plan = make_append(subplans, false, tlist);
+
+	return plan;
+}
+
+/*
+ * create_result_plan
+ *	  Create a Result plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ *
+ *	  Returns a Plan node.
+ */
+static Result *
+create_result_plan(Query *root, ResultPath *best_path)
+{
+	Result	   *plan;
+	List	   *tlist;
+	Plan	   *subplan;
+
+	if (best_path->path.parent)
+		tlist = best_path->path.parent->targetlist;
+	else
+		tlist = NIL;			/* will be filled in later */
+
+	if (best_path->subpath)
+		subplan = create_plan(root, best_path->subpath);
+	else
+		subplan = NULL;
+
+	plan = make_result(tlist, (Node *) best_path->constantqual, subplan);
 
 	return plan;
 }
@@ -1605,10 +1639,15 @@ make_material(List *tlist, Plan *lefttree)
 }
 
 Agg *
-make_agg(List *tlist, List *qual, Plan *lefttree)
+make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
+		 int ngrp, AttrNumber *grpColIdx, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 	Plan	   *plan = &node->plan;
+
+	node->aggstrategy = aggstrategy;
+	node->numCols = ngrp;
+	node->grpColIdx = grpColIdx;
 
 	copy_plan_costsize(plan, lefttree);
 
@@ -1621,22 +1660,21 @@ make_agg(List *tlist, List *qual, Plan *lefttree)
 		 length(pull_agg_clause((Node *) qual)));
 
 	/*
-	 * We will produce a single output tuple if the input is not a Group,
+	 * We will produce a single output tuple if not grouping,
 	 * and a tuple per group otherwise.  For now, estimate the number of
 	 * groups as 10% of the number of tuples --- bogus, but how to do
-	 * better? (Note we assume the input Group node is in "tuplePerGroup"
-	 * mode, so it didn't reduce its row count already.)
+	 * better?
 	 */
-	if (IsA(lefttree, Group))
+	if (aggstrategy == AGG_PLAIN)
+	{
+		plan->plan_rows = 1;
+		plan->startup_cost = plan->total_cost;
+	}
+	else
 	{
 		plan->plan_rows *= 0.1;
 		if (plan->plan_rows < 1)
 			plan->plan_rows = 1;
-	}
-	else
-	{
-		plan->plan_rows = 1;
-		plan->startup_cost = plan->total_cost;
 	}
 
 	plan->state = (EState *) NULL;
@@ -1650,7 +1688,6 @@ make_agg(List *tlist, List *qual, Plan *lefttree)
 
 Group *
 make_group(List *tlist,
-		   bool tuplePerGroup,
 		   int ngrp,
 		   AttrNumber *grpColIdx,
 		   Plan *lefttree)
@@ -1667,25 +1704,18 @@ make_group(List *tlist,
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * ngrp;
 
 	/*
-	 * If tuplePerGroup (which is named exactly backwards) is true, we
-	 * will return all the input tuples, so the input node's row count is
-	 * OK.	Otherwise, we'll return only one tuple from each group. For
-	 * now, estimate the number of groups as 10% of the number of tuples
+	 * Estimate the number of groups as 10% of the number of tuples
 	 * --- bogus, but how to do better?
 	 */
-	if (!tuplePerGroup)
-	{
-		plan->plan_rows *= 0.1;
-		if (plan->plan_rows < 1)
-			plan->plan_rows = 1;
-	}
+	plan->plan_rows *= 0.1;
+	if (plan->plan_rows < 1)
+		plan->plan_rows = 1;
 
 	plan->state = (EState *) NULL;
 	plan->qual = NULL;
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
 	plan->righttree = (Plan *) NULL;
-	node->tuplePerGroup = tuplePerGroup;
 	node->numCols = ngrp;
 	node->grpColIdx = grpColIdx;
 
@@ -1883,9 +1913,6 @@ make_result(List *tlist,
 	Result	   *node = makeNode(Result);
 	Plan	   *plan = &node->plan;
 
-#ifdef NOT_USED
-	tlist = generate_fjoin(tlist);
-#endif
 	if (subplan)
 		copy_plan_costsize(plan, subplan);
 	else
@@ -1906,57 +1933,3 @@ make_result(List *tlist,
 
 	return node;
 }
-
-#ifdef NOT_USED
-List *
-generate_fjoin(List *tlist)
-{
-	List		tlistP;
-	List		newTlist = NIL;
-	List		fjoinList = NIL;
-	int			nIters = 0;
-
-	/*
-	 * Break the target list into elements with Iter nodes, and those
-	 * without them.
-	 */
-	foreach(tlistP, tlist)
-	{
-		List		tlistElem;
-
-		tlistElem = lfirst(tlistP);
-		if (IsA(lsecond(tlistElem), Iter))
-		{
-			nIters++;
-			fjoinList = lappend(fjoinList, tlistElem);
-		}
-		else
-			newTlist = lappend(newTlist, tlistElem);
-	}
-
-	/*
-	 * if we have an Iter node then we need to flatten.
-	 */
-	if (nIters > 0)
-	{
-		List	   *inner;
-		List	   *tempList;
-		Fjoin	   *fjoinNode;
-		DatumPtr	results = (DatumPtr) palloc(nIters * sizeof(Datum));
-		BoolPtr		alwaysDone = (BoolPtr) palloc(nIters * sizeof(bool));
-
-		inner = lfirst(fjoinList);
-		fjoinList = lnext(fjoinList);
-		fjoinNode = (Fjoin) MakeFjoin(false,
-									  nIters,
-									  inner,
-									  results,
-									  alwaysDone);
-		tempList = lcons(fjoinNode, fjoinList);
-		newTlist = lappend(newTlist, tempList);
-	}
-	return newTlist;
-	return tlist;				/* do nothing for now - ay 10/94 */
-}
-
-#endif

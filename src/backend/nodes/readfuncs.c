@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.135 2002/10/14 22:14:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.136 2002/11/06 00:00:44 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -692,17 +692,6 @@ _readSort(void)
 	token = pg_strtok(&length); /* eat :keycount */
 	token = pg_strtok(&length); /* get keycount */
 	local_node->keycount = atoi(token);
-
-	return local_node;
-}
-
-static Agg *
-_readAgg(void)
-{
-	Agg		   *local_node;
-
-	local_node = makeNode(Agg);
-	_getPlan((Plan *) local_node);
 
 	return local_node;
 }
@@ -1881,6 +1870,45 @@ _readAppendPath(void)
 }
 
 /* ----------------
+ *		_readResultPath
+ *
+ *	ResultPath is a subclass of Path.
+ * ----------------
+ */
+static ResultPath *
+_readResultPath(void)
+{
+	ResultPath *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(ResultPath);
+
+	token = pg_strtok(&length); /* get :pathtype */
+	token = pg_strtok(&length); /* now read it */
+	local_node->path.pathtype = atoi(token);
+
+	token = pg_strtok(&length); /* get :startup_cost */
+	token = pg_strtok(&length); /* now read it */
+	local_node->path.startup_cost = (Cost) atof(token);
+
+	token = pg_strtok(&length); /* get :total_cost */
+	token = pg_strtok(&length); /* now read it */
+	local_node->path.total_cost = (Cost) atof(token);
+
+	token = pg_strtok(&length); /* get :pathkeys */
+	local_node->path.pathkeys = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* get :subpath */
+	local_node->subpath = nodeRead(true);		/* now read it */
+
+	token = pg_strtok(&length); /* get :constantqual */
+	local_node->constantqual = nodeRead(true);		/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
  *		_readNestPath
  *
  *	NestPath is a subclass of Path
@@ -2196,8 +2224,6 @@ parsePlanString(void)
 		return_value = _readFromExpr();
 	else if (length == 8 && strncmp(token, "JOINEXPR", length) == 0)
 		return_value = _readJoinExpr();
-	else if (length == 3 && strncmp(token, "AGG", length) == 0)
-		return_value = _readAgg();
 	else if (length == 4 && strncmp(token, "HASH", length) == 0)
 		return_value = _readHash();
 	else if (length == 6 && strncmp(token, "RESDOM", length) == 0)
@@ -2240,6 +2266,8 @@ parsePlanString(void)
 		return_value = _readTidPath();
 	else if (length == 10 && strncmp(token, "APPENDPATH", length) == 0)
 		return_value = _readAppendPath();
+	else if (length == 10 && strncmp(token, "RESULTPATH", length) == 0)
+		return_value = _readResultPath();
 	else if (length == 8 && strncmp(token, "NESTPATH", length) == 0)
 		return_value = _readNestPath();
 	else if (length == 9 && strncmp(token, "MERGEPATH", length) == 0)

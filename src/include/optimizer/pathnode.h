@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.44 2002/06/20 20:29:51 momjian Exp $
+ * $Id: pathnode.h,v 1.45 2002/11/06 00:00:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@ extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
 extern TidPath *create_tidscan_path(Query *root, RelOptInfo *rel,
 					List *tideval);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
+extern ResultPath *create_result_path(RelOptInfo *rel, Path *subpath,
+									  List *constantqual);
 extern Path *create_subqueryscan_path(RelOptInfo *rel);
 extern Path *create_functionscan_path(Query *root, RelOptInfo *rel);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.78 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.79 2002/11/06 00:00:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,7 +405,6 @@ create_tidscan_path(Query *root, RelOptInfo *rel, List *tideval)
  * create_append_path
  *	  Creates a path corresponding to an Append plan, returning the
  *	  pathnode.
- *
  */
 AppendPath *
 create_append_path(RelOptInfo *rel, List *subpaths)
@@ -428,6 +427,41 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 		if (l == subpaths)		/* first node? */
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
+	}
+
+	return pathnode;
+}
+
+/*
+ * create_result_path
+ *	  Creates a path corresponding to a Result plan, returning the
+ *	  pathnode.
+ */
+ResultPath *
+create_result_path(RelOptInfo *rel, Path *subpath, List *constantqual)
+{
+	ResultPath *pathnode = makeNode(ResultPath);
+
+	pathnode->path.pathtype = T_Result;
+	pathnode->path.parent = rel; /* may be NULL */
+
+	if (subpath)
+		pathnode->path.pathkeys = subpath->pathkeys;
+	else
+		pathnode->path.pathkeys = NIL;
+
+	pathnode->subpath = subpath;
+	pathnode->constantqual = constantqual;
+
+	if (subpath)
+	{
+		pathnode->path.startup_cost = subpath->startup_cost;
+		pathnode->path.total_cost = subpath->total_cost;
+	}
+	else
+	{
+		pathnode->path.startup_cost = 0;
+		pathnode->path.total_cost = cpu_tuple_cost;
 	}
 
 	return pathnode;

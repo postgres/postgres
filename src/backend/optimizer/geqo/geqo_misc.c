@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.34 2002/09/04 20:31:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.35 2002/11/06 00:00:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,19 +19,17 @@
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
-
-
 #include "postgres.h"
 
 #include "optimizer/geqo_misc.h"
 #include "nodes/print.h"
 
+
 #ifdef GEQO_DEBUG
 
-static float avg_pool(Pool *pool);
 
-/* avg_pool
- *
+/*
+ * avg_pool
  */
 static float
 avg_pool(Pool *pool)
@@ -81,7 +79,6 @@ print_pool(FILE *fp, Pool *pool, int start, int stop)
 /* print_gen
  *
  *	 printout for chromosome: best, worst, mean, average
- *
  */
 void
 print_gen(FILE *fp, Pool *pool, int generation)
@@ -119,135 +116,6 @@ print_edge_table(FILE *fp, Edge *edge_table, int num_gene)
 	}
 
 	fprintf(fp, "\n");
-}
-
-/*************************************************************
- Debug output subroutines
- *************************************************************/
-
-void
-geqo_print_joinclauses(Query *root, List *clauses)
-{
-	List	   *l;
-
-	foreach(l, clauses)
-	{
-		RestrictInfo *c = lfirst(l);
-
-		print_expr((Node *) c->clause, root->rtable);
-		if (lnext(l))
-			printf(" ");
-	}
-}
-
-void
-geqo_print_path(Query *root, Path *path, int indent)
-{
-	char	   *ptype = NULL;
-	JoinPath   *jp;
-	bool		join = false;
-	int			i;
-
-	for (i = 0; i < indent; i++)
-		printf("\t");
-
-	switch (nodeTag(path))
-	{
-		case T_Path:
-			ptype = "SeqScan";
-			join = false;
-			break;
-		case T_IndexPath:
-			ptype = "IdxScan";
-			join = false;
-			break;
-		case T_NestPath:
-			ptype = "Nestloop";
-			join = true;
-			break;
-		case T_MergePath:
-			ptype = "MergeJoin";
-			join = true;
-			break;
-		case T_HashPath:
-			ptype = "HashJoin";
-			join = true;
-			break;
-		default:
-			break;
-	}
-	if (join)
-	{
-		jp = (JoinPath *) path;
-		printf("%s rows=%.0f cost=%.2f..%.2f\n",
-			   ptype, path->parent->rows,
-			   path->startup_cost, path->total_cost);
-		switch (nodeTag(path))
-		{
-			case T_MergePath:
-			case T_HashPath:
-				for (i = 0; i < indent + 1; i++)
-					printf("\t");
-				printf("   clauses=(");
-				geqo_print_joinclauses(root, jp->joinrestrictinfo);
-				printf(")\n");
-
-				if (nodeTag(path) == T_MergePath)
-				{
-					MergePath  *mp = (MergePath *) path;
-
-					if (mp->outersortkeys || mp->innersortkeys)
-					{
-						for (i = 0; i < indent + 1; i++)
-							printf("\t");
-						printf("   sortouter=%d sortinner=%d\n",
-							   ((mp->outersortkeys) ? 1 : 0),
-							   ((mp->innersortkeys) ? 1 : 0));
-					}
-				}
-				break;
-			default:
-				break;
-		}
-		geqo_print_path(root, jp->outerjoinpath, indent + 1);
-		geqo_print_path(root, jp->innerjoinpath, indent + 1);
-	}
-	else
-	{
-		int			relid = lfirsti(path->parent->relids);
-
-		printf("%s(%d) rows=%.0f cost=%.2f..%.2f\n",
-			   ptype, relid, path->parent->rows,
-			   path->startup_cost, path->total_cost);
-
-		if (IsA(path, IndexPath))
-		{
-			printf("  pathkeys=");
-			print_pathkeys(path->pathkeys, root->rtable);
-		}
-	}
-}
-
-void
-geqo_print_rel(Query *root, RelOptInfo *rel)
-{
-	List	   *l;
-
-	printf("______________________________\n");
-	printf("(");
-	foreach(l, rel->relids)
-		printf("%d ", lfirsti(l));
-	printf("): rows=%.0f width=%d\n", rel->rows, rel->width);
-
-	printf("\tpath list:\n");
-	foreach(l, rel->pathlist)
-		geqo_print_path(root, lfirst(l), 1);
-
-	printf("\n\tcheapest startup path:\n");
-	geqo_print_path(root, rel->cheapest_startup_path, 1);
-
-	printf("\n\tcheapest total path:\n");
-	geqo_print_path(root, rel->cheapest_total_path, 1);
 }
 
 #endif   /* GEQO_DEBUG */

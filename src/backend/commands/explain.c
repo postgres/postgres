@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.89 2002/10/14 04:26:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.90 2002/11/06 00:00:43 tgl Exp $
  *
  */
 
@@ -275,7 +275,21 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			pname = "Group";
 			break;
 		case T_Agg:
-			pname = "Aggregate";
+			switch (((Agg *) plan)->aggstrategy)
+			{
+				case AGG_PLAIN:
+					pname = "Aggregate";
+					break;
+				case AGG_SORTED:
+					pname = "GroupAggregate";
+					break;
+				case AGG_HASHED:
+					pname = "HashAggregate";
+					break;
+				default:
+					pname = "Aggregate ???";
+					break;
+			}
 			break;
 		case T_Unique:
 			pname = "Unique";

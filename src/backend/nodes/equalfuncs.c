@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.161 2002/10/14 22:14:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.162 2002/11/06 00:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,6 +459,18 @@ _equalAppendPath(AppendPath *a, AppendPath *b)
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
 	if (!equal(a->subpaths, b->subpaths))
+		return false;
+	return true;
+}
+
+static bool
+_equalResultPath(ResultPath *a, ResultPath *b)
+{
+	if (!_equalPath((Path *) a, (Path *) b))
+		return false;
+	if (!equal(a->subpath, b->subpath))
+		return false;
+	if (!equal(a->constantqual, b->constantqual))
 		return false;
 	return true;
 }
@@ -2102,6 +2114,9 @@ equal(void *a, void *b)
 			break;
 		case T_AppendPath:
 			retval = _equalAppendPath(a, b);
+			break;
+		case T_ResultPath:
+			retval = _equalResultPath(a, b);
 			break;
 		case T_IndexOptInfo:
 			retval = _equalIndexOptInfo(a, b);

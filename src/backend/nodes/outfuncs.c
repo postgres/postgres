@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.176 2002/10/14 22:14:34 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.177 2002/11/06 00:00:44 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -597,6 +597,8 @@ _outAgg(StringInfo str, Agg *node)
 {
 	appendStringInfo(str, " AGG ");
 	_outPlanInfo(str, (Plan *) node);
+	appendStringInfo(str, " :aggstrategy %d :numCols %d ",
+					 (int) node->aggstrategy, node->numCols);
 }
 
 static void
@@ -604,11 +606,7 @@ _outGroup(StringInfo str, Group *node)
 {
 	appendStringInfo(str, " GRP ");
 	_outPlanInfo(str, (Plan *) node);
-
-	/* the actual Group fields */
-	appendStringInfo(str, " :numCols %d :tuplePerGroup %s ",
-					 node->numCols,
-					 booltostr(node->tuplePerGroup));
+	appendStringInfo(str, " :numCols %d ", node->numCols);
 }
 
 static void
@@ -1112,6 +1110,26 @@ _outAppendPath(StringInfo str, AppendPath *node)
 
 	appendStringInfo(str, " :subpaths ");
 	_outNode(str, node->subpaths);
+}
+
+/*
+ *	ResultPath is a subclass of Path.
+ */
+static void
+_outResultPath(StringInfo str, ResultPath *node)
+{
+	appendStringInfo(str,
+					 " RESULTPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
+					 node->path.pathtype,
+					 node->path.startup_cost,
+					 node->path.total_cost);
+	_outNode(str, node->path.pathkeys);
+
+	appendStringInfo(str, " :subpath ");
+	_outNode(str, node->subpath);
+
+	appendStringInfo(str, " :constantqual ");
+	_outNode(str, node->constantqual);
 }
 
 /*
@@ -1716,6 +1734,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AppendPath:
 				_outAppendPath(str, obj);
+				break;
+			case T_ResultPath:
+				_outResultPath(str, obj);
 				break;
 			case T_NestPath:
 				_outNestPath(str, obj);

@@ -219,11 +219,9 @@ planner()
    pull out constant quals, which can be used to gate execution of the
 	whole plan (if any are found, we make a top-level Result node
 	to do the gating)
-   make a simplified target list that only contains Vars, no expressions
----subplanner()
-    make list of base relations used in query
-    split up the qual into restrictions (a=1) and joins (b=c)
-    find qual clauses that enable merge and hash joins
+   make list of base relations used in query
+   split up the qual into restrictions (a=1) and joins (b=c)
+   find qual clauses that enable merge and hash joins
 ----make_one_rel()
      set_base_rel_pathlist()
       find scan and all index paths for each base relation
@@ -239,7 +237,7 @@ planner()
       cheapest path for each newly constructed joinrel.
       Loop back if this wasn't the top join level.
    Back at query_planner:
-   put back constant quals and non-simplified target list
+    put back any constant quals by adding a Result node
  Back at grouping_planner:
  do grouping(GROUP)
  do aggregates
@@ -257,8 +255,11 @@ RelOptInfo      - a relation or joined relations
  JoinInfo       - join clauses, including the relids needed for the join
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
-  SeqScan       - a plain Path node with nodeTag = T_SeqScan
+  SeqScan       - a plain Path node with pathtype = T_SeqScan
   IndexPath     - index scans
+  TidPath       - scan by CTID
+  AppendPath    - append multiple subpaths together
+  ResultPath    - a Result plan (used for variable-free tlist or qual)
   NestPath      - nested-loop joins
   MergePath     - merge joins
   HashPath      - hash joins
@@ -276,10 +277,10 @@ generated during the optimization process are marked with their sort order
 
 It is also possible to avoid an explicit sort step to implement a user's
 ORDER BY clause if the final path has the right ordering already, so the
-sort ordering is of interest even at the top level.  subplanner() will
+sort ordering is of interest even at the top level.  query_planner() will
 look for the cheapest path with a sort order matching the desired order,
-and will compare its cost to the cost of using the cheapest-overall path
-and doing an explicit sort.
+and grouping_planner() will compare its cost to the cost of using the
+cheapest-overall path and doing an explicit sort.
 
 When we are generating paths for a particular RelOptInfo, we discard a path
 if it is more expensive than another known path that has the same or better

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.125 2002/09/24 18:38:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.126 2002/11/06 00:00:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@
 #include "nodes/print.h"
 #endif
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
+#include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
@@ -53,10 +55,10 @@ static Plan *inheritance_planner(Query *parse, List *inheritlist);
 static Plan *grouping_planner(Query *parse, double tuple_fraction);
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);
-static Plan *make_groupplan(Query *parse,
-			   List *group_tlist, bool tuplePerGroup,
-			   List *groupClause, AttrNumber *grpColIdx,
-			   bool is_presorted, Plan *subplan);
+static Plan *make_groupsortplan(Query *parse,
+								List *groupClause,
+								AttrNumber *grpColIdx,
+								Plan *subplan);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 
 
@@ -877,9 +879,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 	List	   *tlist = parse->targetList;
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
-	List	   *group_pathkeys;
 	List	   *sort_pathkeys;
-	AttrNumber *groupColIdx = NULL;
 
 	if (parse->setOperations)
 	{
@@ -917,17 +917,20 @@ grouping_planner(Query *parse, double tuple_fraction)
 		current_pathkeys = NIL;
 
 		/*
-		 * Calculate pathkeys that represent grouping/ordering
-		 * requirements (grouping should always be null, but...)
+		 * Calculate pathkeys that represent ordering requirements
 		 */
-		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
-													   tlist);
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
 													  tlist);
+		sort_pathkeys = canonicalize_pathkeys(parse, sort_pathkeys);
 	}
 	else
 	{
+		/* No set operations, do regular planning */
 		List	   *sub_tlist;
+		List	   *group_pathkeys;
+		AttrNumber *groupColIdx = NULL;
+		Path	   *cheapest_path;
+		Path	   *sorted_path;
 
 		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
 		tlist = preprocess_targetlist(tlist,
@@ -1192,99 +1195,162 @@ grouping_planner(Query *parse, double tuple_fraction)
 				tuple_fraction = 0.25;
 		}
 
-		/* Generate the basic plan for this Query */
-		result_plan = query_planner(parse,
-									sub_tlist,
-									tuple_fraction);
+		/*
+		 * Generate the best unsorted and presorted paths for this Query
+		 * (but note there may not be any presorted path).
+		 */
+		query_planner(parse, sub_tlist, tuple_fraction,
+					  &cheapest_path, &sorted_path);
 
 		/*
-		 * query_planner returns actual sort order (which is not
-		 * necessarily what we requested) in query_pathkeys.
+		 * We couldn't canonicalize group_pathkeys and sort_pathkeys before
+		 * running query_planner(), so do it now.
 		 */
-		current_pathkeys = parse->query_pathkeys;
-	}
-
-	/*
-	 * We couldn't canonicalize group_pathkeys and sort_pathkeys before
-	 * running query_planner(), so do it now.
-	 */
-	group_pathkeys = canonicalize_pathkeys(parse, group_pathkeys);
-	sort_pathkeys = canonicalize_pathkeys(parse, sort_pathkeys);
-
-	/*
-	 * If we have a GROUP BY clause, insert a group node (plus the
-	 * appropriate sort node, if necessary).
-	 */
-	if (parse->groupClause)
-	{
-		bool		tuplePerGroup;
-		List	   *group_tlist;
-		bool		is_sorted;
+		group_pathkeys = canonicalize_pathkeys(parse, group_pathkeys);
+		sort_pathkeys = canonicalize_pathkeys(parse, sort_pathkeys);
 
 		/*
-		 * Decide whether how many tuples per group the Group node needs
-		 * to return. (Needs only one tuple per group if no aggregate is
-		 * present. Otherwise, need every tuple from the group to do the
-		 * aggregation.)  Note tuplePerGroup is named backwards :-(
+		 * Select the best path and create a plan to execute it.
+		 *
+		 * If no special sort order is wanted, or if the cheapest path is
+		 * already appropriately ordered, use the cheapest path.
+		 * Otherwise, look to see if we have an already-ordered path that is
+		 * cheaper than doing an explicit sort on the cheapest-total-cost
+		 * path.
 		 */
-		tuplePerGroup = parse->hasAggs;
-
-		/*
-		 * If there are aggregates then the Group node should just return
-		 * the same set of vars as the subplan did.  If there are no aggs
-		 * then the Group node had better compute the final tlist.
-		 */
-		if (parse->hasAggs)
-			group_tlist = new_unsorted_tlist(result_plan->targetlist);
-		else
-			group_tlist = tlist;
-
-		/*
-		 * Figure out whether the path result is already ordered the way
-		 * we need it --- if so, no need for an explicit sort step.
-		 */
-		if (pathkeys_contained_in(group_pathkeys, current_pathkeys))
+		if (parse->query_pathkeys == NIL ||
+			pathkeys_contained_in(parse->query_pathkeys,
+								  cheapest_path->pathkeys))
 		{
-			is_sorted = true;	/* no sort needed now */
-			/* current_pathkeys remains unchanged */
+			result_plan = create_plan(parse, cheapest_path);
+			current_pathkeys = cheapest_path->pathkeys;
+		}
+		else if (sorted_path)
+		{
+			Path		sort_path;	/* dummy for result of cost_sort */
+
+			cost_sort(&sort_path, parse, parse->query_pathkeys,
+					  sorted_path->parent->rows, sorted_path->parent->width);
+			sort_path.startup_cost += cheapest_path->total_cost;
+			sort_path.total_cost += cheapest_path->total_cost;
+			if (compare_fractional_path_costs(sorted_path, &sort_path,
+											  tuple_fraction) <= 0)
+			{
+				/* Presorted path is cheaper, use it */
+				result_plan = create_plan(parse, sorted_path);
+				current_pathkeys = sorted_path->pathkeys;
+			}
+			else
+			{
+				/* otherwise, doing it the hard way is still cheaper */
+				result_plan = create_plan(parse, cheapest_path);
+				current_pathkeys = cheapest_path->pathkeys;
+			}
 		}
 		else
 		{
 			/*
-			 * We will need to do an explicit sort by the GROUP BY clause.
-			 * make_groupplan will do the work, but set current_pathkeys
-			 * to indicate the resulting order.
+			 * No sorted path, so we must use the cheapest-total path.
+			 * The actual sort step will be generated below.
 			 */
-			is_sorted = false;
-			current_pathkeys = group_pathkeys;
+			result_plan = create_plan(parse, cheapest_path);
+			current_pathkeys = cheapest_path->pathkeys;
 		}
 
-		result_plan = make_groupplan(parse,
-									 group_tlist,
-									 tuplePerGroup,
-									 parse->groupClause,
-									 groupColIdx,
-									 is_sorted,
-									 result_plan);
-	}
+		/*
+		 * create_plan() returns a plan with just a "flat" tlist of required
+		 * Vars.  We want to insert the sub_tlist as the tlist of the top
+		 * plan node.  If the top-level plan node is one that cannot do
+		 * expression evaluation, we must insert a Result node to project the
+		 * desired tlist.
+		 * Currently, the only plan node we might see here that falls into
+		 * that category is Append.
+		 */
+		if (IsA(result_plan, Append))
+		{
+			result_plan = (Plan *) make_result(sub_tlist, NULL, result_plan);
+		}
+		else
+		{
+			/*
+			 * Otherwise, just replace the flat tlist with the desired tlist.
+			 */
+			result_plan->targetlist = sub_tlist;
+		}
 
-	/*
-	 * If aggregate is present, insert the Agg node
-	 *
-	 * HAVING clause, if any, becomes qual of the Agg node
-	 */
-	if (parse->hasAggs)
-	{
-		result_plan = (Plan *) make_agg(tlist,
-										(List *) parse->havingQual,
-										result_plan);
-		/* Note: Agg does not affect any existing sort order of the tuples */
-	}
-	else
-	{
-		/* If there are no Aggs, we shouldn't have any HAVING qual anymore */
-		Assert(parse->havingQual == NULL);
-	}
+		/*
+		 * If any aggregate is present, insert the Agg node, plus an explicit
+		 * sort if necessary.
+		 *
+		 * HAVING clause, if any, becomes qual of the Agg node
+		 */
+		if (parse->hasAggs)
+		{
+			AggStrategy aggstrategy;
+
+			if (parse->groupClause)
+			{
+				aggstrategy = AGG_SORTED;
+				/*
+				 * Add an explicit sort if we couldn't make the path come out
+				 * the way the AGG node needs it.
+				 */
+				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
+				{
+					result_plan = make_groupsortplan(parse,
+													 parse->groupClause,
+													 groupColIdx,
+													 result_plan);
+					current_pathkeys = group_pathkeys;
+				}
+			}
+			else
+				aggstrategy = AGG_PLAIN;
+
+			result_plan = (Plan *) make_agg(tlist,
+											(List *) parse->havingQual,
+											aggstrategy,
+											length(parse->groupClause),
+											groupColIdx,
+											result_plan);
+			/*
+			 * Note: plain or grouped Agg does not affect any existing
+			 * sort order of the tuples
+			 */
+		}
+		else
+		{
+			/*
+			 * If there are no Aggs, we shouldn't have any HAVING qual anymore
+			 */
+			Assert(parse->havingQual == NULL);
+
+			/*
+			 * If we have a GROUP BY clause, insert a group node (plus the
+			 * appropriate sort node, if necessary).
+			 */
+			if (parse->groupClause)
+			{
+				/*
+				 * Add an explicit sort if we couldn't make the path come out
+				 * the way the GROUP node needs it.
+				 */
+				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
+				{
+					result_plan = make_groupsortplan(parse,
+													 parse->groupClause,
+													 groupColIdx,
+													 result_plan);
+					current_pathkeys = group_pathkeys;
+				}
+
+				result_plan = (Plan *) make_group(tlist,
+												  length(parse->groupClause),
+												  groupColIdx,
+												  result_plan);
+			}
+		}
+	} /* end of if (setOperations) */
 
 	/*
 	 * If we were not able to make the plan come out in the right order,
@@ -1323,7 +1389,7 @@ grouping_planner(Query *parse, double tuple_fraction)
  * make_subplanTargetList
  *	  Generate appropriate target list when grouping is required.
  *
- * When grouping_planner inserts Aggregate and/or Group plan nodes above
+ * When grouping_planner inserts Aggregate or Group plan nodes above
  * the result of query_planner, we typically want to pass a different
  * target list to query_planner than the outer plan nodes should have.
  * This routine generates the correct target list for the subplan.
@@ -1433,62 +1499,48 @@ make_subplanTargetList(Query *parse,
 }
 
 /*
- * make_groupplan
- *		Add a Group node for GROUP BY processing.
- *		If we couldn't make the subplan produce presorted output for grouping,
- *		first add an explicit Sort node.
+ * make_groupsortplan
+ *		Add a Sort node to explicitly sort according to the GROUP BY clause.
+ *
+ * Note: the Sort node always just takes a copy of the subplan's tlist
+ * plus ordering information.  (This might seem inefficient if the
+ * subplan contains complex GROUP BY expressions, but in fact Sort
+ * does not evaluate its targetlist --- it only outputs the same
+ * tuples in a new order.  So the expressions we might be copying
+ * are just dummies with no extra execution cost.)
  */
 static Plan *
-make_groupplan(Query *parse,
-			   List *group_tlist,
-			   bool tuplePerGroup,
-			   List *groupClause,
-			   AttrNumber *grpColIdx,
-			   bool is_presorted,
-			   Plan *subplan)
+make_groupsortplan(Query *parse,
+				   List *groupClause,
+				   AttrNumber *grpColIdx,
+				   Plan *subplan)
 {
-	int			numCols = length(groupClause);
+	List	   *sort_tlist = new_unsorted_tlist(subplan->targetlist);
+	int			keyno = 0;
+	List	   *gl;
 
-	if (!is_presorted)
+	foreach(gl, groupClause)
 	{
+		GroupClause *grpcl = (GroupClause *) lfirst(gl);
+		TargetEntry *te = nth(grpColIdx[keyno] - 1, sort_tlist);
+		Resdom	   *resdom = te->resdom;
+
 		/*
-		 * The Sort node always just takes a copy of the subplan's tlist
-		 * plus ordering information.  (This might seem inefficient if the
-		 * subplan contains complex GROUP BY expressions, but in fact Sort
-		 * does not evaluate its targetlist --- it only outputs the same
-		 * tuples in a new order.  So the expressions we might be copying
-		 * are just dummies with no extra execution cost.)
+		 * Check for the possibility of duplicate group-by clauses ---
+		 * the parser should have removed 'em, but the Sort executor
+		 * will get terribly confused if any get through!
 		 */
-		List	   *sort_tlist = new_unsorted_tlist(subplan->targetlist);
-		int			keyno = 0;
-		List	   *gl;
-
-		foreach(gl, groupClause)
+		if (resdom->reskey == 0)
 		{
-			GroupClause *grpcl = (GroupClause *) lfirst(gl);
-			TargetEntry *te = nth(grpColIdx[keyno] - 1, sort_tlist);
-			Resdom	   *resdom = te->resdom;
-
-			/*
-			 * Check for the possibility of duplicate group-by clauses ---
-			 * the parser should have removed 'em, but the Sort executor
-			 * will get terribly confused if any get through!
-			 */
-			if (resdom->reskey == 0)
-			{
-				/* OK, insert the ordering info needed by the executor. */
-				resdom->reskey = ++keyno;
-				resdom->reskeyop = grpcl->sortop;
-			}
+			/* OK, insert the ordering info needed by the executor. */
+			resdom->reskey = ++keyno;
+			resdom->reskeyop = grpcl->sortop;
 		}
-
-		Assert(keyno > 0);
-
-		subplan = (Plan *) make_sort(parse, sort_tlist, subplan, keyno);
 	}
 
-	return (Plan *) make_group(group_tlist, tuplePerGroup, numCols,
-							   grpColIdx, subplan);
+	Assert(keyno > 0);
+
+	return (Plan *) make_sort(parse, sort_tlist, subplan, keyno);
 }
 
 /*

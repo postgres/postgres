@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.58 2002/09/04 20:31:44 momjian Exp $
+ * $Id: plannodes.h,v 1.59 2002/11/06 00:00:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,17 +140,23 @@ typedef struct Plan
  * ===============
  */
 
-/* all plan nodes "derive" from the Plan structure by having the
-   Plan structure as the first field.  This ensures that everything works
-   when nodes are cast to Plan's.  (node pointers are frequently cast to Plan*
-   when passed around generically in the executor */
+/*
+ * all plan nodes "derive" from the Plan structure by having the
+ * Plan structure as the first field.  This ensures that everything works
+ * when nodes are cast to Plan's.  (node pointers are frequently cast to Plan*
+ * when passed around generically in the executor)
+ */
 
 
 /* ----------------
  *	 Result node -
  *		If no outer plan, evaluate a variable-free targetlist.
- *		If outer plan, return tuples from outer plan that satisfy
- *		given quals (we can also do a level of projection)
+ *		If outer plan, return tuples from outer plan (after a level of
+ *		projection as shown by targetlist).
+ *
+ * If resconstantqual isn't NULL, it represents a one-time qualification
+ * test (i.e., one that doesn't depend on any variables from the outer plan,
+ * so needs to be evaluated only once).
  * ----------------
  */
 typedef struct Result
@@ -318,30 +324,45 @@ typedef struct HashJoin
 
 /* ---------------
  *		aggregate node
+ *
+ * An Agg node implements plain or grouped aggregation.  For grouped
+ * aggregation, we can work with presorted input or unsorted input;
+ * the latter strategy uses an internal hashtable.
+ *
+ * Notice the lack of any direct info about the aggregate functions to be
+ * computed.  They are found by scanning the node's tlist and quals during
+ * executor startup.  (It is possible that there are no aggregate functions;
+ * this could happen if they get optimized away by constant-folding, or if
+ * we are using the Agg node to implement hash-based grouping.)
  * ---------------
  */
+typedef enum AggStrategy
+{
+	AGG_PLAIN,					/* simple agg across all input rows */
+	AGG_SORTED,					/* grouped agg, input must be sorted */
+	AGG_HASHED					/* grouped agg, use internal hashtable */
+} AggStrategy;
+
 typedef struct Agg
 {
 	Plan		plan;
+	AggStrategy	aggstrategy;
+	int			numCols;		/* number of grouping columns */
+	AttrNumber *grpColIdx;		/* their indexes in the target list */
 	AggState   *aggstate;
 } Agg;
 
 /* ---------------
  *	 group node -
- *		use for queries with GROUP BY specified.
- *
- *		If tuplePerGroup is true, one tuple (with group columns only) is
- *		returned for each group and NULL is returned when there are no more
- *		groups. Otherwise, all the tuples of a group are returned with a
- *		NULL returned at the end of each group. (see nodeGroup.c for details)
+ *		Used for queries with GROUP BY (but no aggregates) specified.
+ *		The input must be presorted according to the grouping columns.
  * ---------------
  */
 typedef struct Group
 {
 	Plan		plan;
-	bool		tuplePerGroup;	/* what tuples to return (see above) */
-	int			numCols;		/* number of group columns */
-	AttrNumber *grpColIdx;		/* indexes into the target list */
+	int			numCols;		/* number of grouping columns */
+	AttrNumber *grpColIdx;		/* their indexes in the target list */
 	GroupState *grpstate;
 } Group;
 

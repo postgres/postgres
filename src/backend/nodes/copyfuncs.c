@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.214 2002/10/14 22:14:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.215 2002/11/06 00:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,10 +497,10 @@ _copyGroup(Group *from)
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	newnode->tuplePerGroup = from->tuplePerGroup;
 	newnode->numCols = from->numCols;
 	newnode->grpColIdx = palloc(from->numCols * sizeof(AttrNumber));
-	memcpy(newnode->grpColIdx, from->grpColIdx, from->numCols * sizeof(AttrNumber));
+	memcpy(newnode->grpColIdx, from->grpColIdx,
+		   from->numCols * sizeof(AttrNumber));
 
 	return newnode;
 }
@@ -515,6 +515,15 @@ _copyAgg(Agg *from)
 	Agg		   *newnode = makeNode(Agg);
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	newnode->aggstrategy = from->aggstrategy;
+	newnode->numCols = from->numCols;
+	if (from->numCols > 0)
+	{
+		newnode->grpColIdx = palloc(from->numCols * sizeof(AttrNumber));
+		memcpy(newnode->grpColIdx, from->grpColIdx,
+			   from->numCols * sizeof(AttrNumber));
+	}
 
 	return newnode;
 }
@@ -1276,6 +1285,29 @@ _copyAppendPath(AppendPath *from)
 	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, subpaths);
+
+	return newnode;
+}
+
+/* ----------------
+ *				_copyResultPath
+ * ----------------
+ */
+static ResultPath *
+_copyResultPath(ResultPath *from)
+{
+	ResultPath    *newnode = makeNode(ResultPath);
+
+	/*
+	 * copy the node superclass fields
+	 */
+	CopyPathFields((Path *) from, (Path *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	Node_Copy(from, newnode, subpath);
+	Node_Copy(from, newnode, constantqual);
 
 	return newnode;
 }
@@ -2877,6 +2909,9 @@ copyObject(void *from)
 			break;
 		case T_AppendPath:
 			retval = _copyAppendPath(from);
+			break;
+		case T_ResultPath:
+			retval = _copyResultPath(from);
 			break;
 		case T_NestPath:
 			retval = _copyNestPath(from);

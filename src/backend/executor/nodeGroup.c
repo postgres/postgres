@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.47 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.48 2002/11/06 00:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,147 +31,14 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-static TupleTableSlot *ExecGroupEveryTuple(Group *node);
-static TupleTableSlot *ExecGroupOneTuple(Group *node);
 
-/* ---------------------------------------
+/*
  *	 ExecGroup -
  *
- *		There are two modes in which tuples are returned by ExecGroup. If
- *		tuplePerGroup is TRUE, every tuple from the same group will be
- *		returned, followed by a NULL at the end of each group. This is
- *		useful for Agg node which needs to aggregate over tuples of the same
- *		group. (eg. SELECT salary, count(*) FROM emp GROUP BY salary)
- *
- *		If tuplePerGroup is FALSE, only one tuple per group is returned. The
- *		tuple returned contains only the group columns. NULL is returned only
- *		at the end when no more groups are present. This is useful when
- *		the query does not involve aggregates. (eg. SELECT salary FROM emp
- *		GROUP BY salary)
- * ------------------------------------------
+ *		Return one tuple for each group of matching input tuples.
  */
 TupleTableSlot *
 ExecGroup(Group *node)
-{
-	if (node->tuplePerGroup)
-		return ExecGroupEveryTuple(node);
-	else
-		return ExecGroupOneTuple(node);
-}
-
-/*
- * ExecGroupEveryTuple -
- *	 return every tuple with a NULL between each group
- */
-static TupleTableSlot *
-ExecGroupEveryTuple(Group *node)
-{
-	GroupState *grpstate;
-	EState	   *estate;
-	ExprContext *econtext;
-	TupleDesc	tupdesc;
-	HeapTuple	outerTuple = NULL;
-	HeapTuple	firsttuple;
-	TupleTableSlot *outerslot;
-	ProjectionInfo *projInfo;
-	TupleTableSlot *resultSlot;
-
-	/*
-	 * get state info from node
-	 */
-	grpstate = node->grpstate;
-	if (grpstate->grp_done)
-		return NULL;
-	estate = node->plan.state;
-	econtext = grpstate->csstate.cstate.cs_ExprContext;
-	tupdesc = ExecGetScanType(&grpstate->csstate);
-
-	/*
-	 * We need not call ResetExprContext here because execTuplesMatch will
-	 * reset the per-tuple memory context once per input tuple.
-	 */
-
-	/* if we haven't returned first tuple of a new group yet ... */
-	if (grpstate->grp_useFirstTuple)
-	{
-		grpstate->grp_useFirstTuple = FALSE;
-
-		/*
-		 * note we rely on subplan to hold ownership of the tuple for as
-		 * long as we need it; we don't copy it.
-		 */
-		ExecStoreTuple(grpstate->grp_firstTuple,
-					   grpstate->csstate.css_ScanTupleSlot,
-					   InvalidBuffer, false);
-	}
-	else
-	{
-		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
-		if (TupIsNull(outerslot))
-		{
-			grpstate->grp_done = TRUE;
-			return NULL;
-		}
-		outerTuple = outerslot->val;
-
-		firsttuple = grpstate->grp_firstTuple;
-		if (firsttuple == NULL)
-		{
-			/* this should occur on the first call only */
-			grpstate->grp_firstTuple = heap_copytuple(outerTuple);
-		}
-		else
-		{
-			/*
-			 * Compare with first tuple and see if this tuple is of the
-			 * same group.
-			 */
-			if (!execTuplesMatch(firsttuple, outerTuple,
-								 tupdesc,
-								 node->numCols, node->grpColIdx,
-								 grpstate->eqfunctions,
-								 econtext->ecxt_per_tuple_memory))
-			{
-				/*
-				 * No; save the tuple to return it next time, and return
-				 * NULL
-				 */
-				grpstate->grp_useFirstTuple = TRUE;
-				heap_freetuple(firsttuple);
-				grpstate->grp_firstTuple = heap_copytuple(outerTuple);
-
-				return NULL;	/* signifies the end of the group */
-			}
-		}
-
-		/*
-		 * note we rely on subplan to hold ownership of the tuple for as
-		 * long as we need it; we don't copy it.
-		 */
-		ExecStoreTuple(outerTuple,
-					   grpstate->csstate.css_ScanTupleSlot,
-					   InvalidBuffer, false);
-	}
-
-	/*
-	 * form a projection tuple, store it in the result tuple slot and
-	 * return it.
-	 */
-	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
-
-	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
-	resultSlot = ExecProject(projInfo, NULL);
-
-	return resultSlot;
-}
-
-/*
- * ExecGroupOneTuple -
- *	  returns one tuple per group, a NULL at the end when there are no more
- *	  tuples.
- */
-static TupleTableSlot *
-ExecGroupOneTuple(Group *node)
 {
 	GroupState *grpstate;
 	EState	   *estate;
@@ -198,10 +65,11 @@ ExecGroupOneTuple(Group *node)
 	 * reset the per-tuple memory context once per input tuple.
 	 */
 
+	/* If we don't already have first tuple of group, fetch it */
+	/* this should occur on the first call only */
 	firsttuple = grpstate->grp_firstTuple;
 	if (firsttuple == NULL)
 	{
-		/* this should occur on the first call only */
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
 		if (TupIsNull(outerslot))
 		{
@@ -213,7 +81,7 @@ ExecGroupOneTuple(Group *node)
 	}
 
 	/*
-	 * find all tuples that belong to a group
+	 * Scan over all tuples that belong to this group
 	 */
 	for (;;)
 	{
@@ -239,22 +107,18 @@ ExecGroupOneTuple(Group *node)
 	}
 
 	/*
-	 * form a projection tuple, store it in the result tuple slot and
-	 * return it.
-	 */
-	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
-
-	/*
-	 * note we rely on subplan to hold ownership of the tuple for as long
-	 * as we need it; we don't copy it.
+	 * form a projection tuple based on the (copied) first tuple of the
+	 * group, and store it in the result tuple slot.
 	 */
 	ExecStoreTuple(firsttuple,
 				   grpstate->csstate.css_ScanTupleSlot,
-				   InvalidBuffer, false);
+				   InvalidBuffer,
+				   false);
 	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
+	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
 	resultSlot = ExecProject(projInfo, NULL);
 
-	/* save outerTuple if we are not done yet */
+	/* save first tuple of next group, if we are not done yet */
 	if (!grpstate->grp_done)
 	{
 		heap_freetuple(firsttuple);
@@ -386,14 +250,14 @@ ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
 }
 
 /*****************************************************************************
- *		Code shared with nodeUnique.c
+ *		Code shared with nodeUnique.c and nodeAgg.c
  *****************************************************************************/
 
 /*
  * execTuplesMatch
  *		Return true if two tuples match in all the indicated fields.
- *		This is used to detect group boundaries in nodeGroup, and to
- *		decide whether two tuples are distinct or not in nodeUnique.
+ *		This is used to detect group boundaries in nodeGroup and nodeAgg,
+ *		and to decide whether two tuples are distinct or not in nodeUnique.
  *
  * tuple1, tuple2: the tuples to compare
  * tupdesc: tuple descriptor applying to both tuples
@@ -425,7 +289,8 @@ execTuplesMatch(HeapTuple tuple1,
 	 * We cannot report a match without checking all the fields, but we
 	 * can report a non-match as soon as we find unequal fields.  So,
 	 * start comparing at the last field (least significant sort key).
-	 * That's the most likely to be different...
+	 * That's the most likely to be different if we are dealing with
+	 * sorted input.
 	 */
 	result = true;
 
