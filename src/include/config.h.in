@@ -32,17 +32,18 @@
  * Thus, the maximum size of a single file is RELSEG_SIZE * BLCKSZ;
  * relations bigger than that are divided into multiple files.
  *
- * CAUTION: RELSEG_SIZE * BLCKSZ must be less than your OS' limit on file size.
- * This is typically 2Gb or 4Gb in a 32-bit operating system.  By default,
- * we make the limit one billion bytes to avoid any possible integer-overflow
+ * CAUTION: RELSEG_SIZE * BLCKSZ must be less than your OS' limit on file
+ * size.  This is typically 2Gb or 4Gb in a 32-bit operating system.  By
+ * default, we make the limit 1Gb to avoid any possible integer-overflow
  * problems within the OS.  A limit smaller than necessary only means we
- * divide a large relation into more chunks than necessary, so it seems best
- * to err in the direction of a small limit.
+ * divide a large relation into more chunks than necessary, so it seems
+ * best to err in the direction of a small limit.  (Besides, a power-of-2
+ * value saves a few cycles in md.c.)
  *
  * CAUTION: you had best do an initdb if you change either BLCKSZ or
  * RELSEG_SIZE.
  */
-#define RELSEG_SIZE	(1000000000 / BLCKSZ)
+#define RELSEG_SIZE	(0x40000000 / BLCKSZ)
 
 /* 
  * The following is set using configure.  
