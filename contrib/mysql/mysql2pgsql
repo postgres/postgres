@@ -15,11 +15,12 @@ use Getopt::Long;
 my $progname = "mysql2pgsql";
 my $version = "0.3";
 
-GetOptions("debug!", "verbose!", "version", "path=s", "help");
+GetOptions("debug!", "verbose!", "version", "path=s", "help", "data!");
 
 my $debug = $opt_debug || 0;
 my $verbose = $opt_verbose || 0;
 my $pathfrom = $opt_path || "";
+my $nodata = (! $opt_data);
 
 $pathfrom = "$pathfrom/" if ($pathfrom =~ /.*[^\/]$/);
 
@@ -29,12 +30,15 @@ print "\t(c) 2000 Thomas Lockhart PostgreSQL Inc.\n"
     if ($opt_version && $opt_verbose || $opt_help);
 
 if ($opt_help) {
-    print "$0 --verbose --version --help --path=dir infile ...\n";
+    print "$0 --verbose --version --help --path=dir --nodata infile ...\n";
     exit;
 }
 
 while (@ARGV) {
     my $ostem;
+	my $oname;
+	my $pname;
+	my @xargs;
 
     $iname = shift @ARGV;
     $ostem = $iname;
@@ -44,7 +48,10 @@ while (@ARGV) {
     $oname = "$ostem.sql92";
     $pname = "$ostem.init";
 
-    print "$iname $oname $pname\n" if ($debug);
+	@xargs = ($iname, $oname);
+	push @xargs, $pname unless ($nodata);
+
+    print "@xargs\n" if ($debug);
 
     TransformDumpFile($iname, $oname, $pname);
 }
@@ -68,7 +75,7 @@ sub TransformDumpFile {
 		push @dlines, $_;
     }
 
-    print "Calling CreateSchema with $#dlines lines\n" if ($debug);
+    print("Calling CreateSchema with $#dlines lines\n") if ($debug);
     @slines = CreateSchema(@dlines);
 
     open(OUT, ">$oname") || die "Unable to open output file $oname";
