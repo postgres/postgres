@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.20 2000/09/12 05:36:06 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.21 2000/10/05 16:57:23 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -27,9 +27,12 @@ top_builddir = ../../..
 #HSTYLE=/usr/lib/sgml/stylesheets/nwalsh-modular/html
 #PSTYLE=/usr/lib/sgml/stylesheets/nwalsh-modular/print
 # This is where the production stylesheets appear on postgresql.org
-
+ifndef HSTYLE
 HSTYLE= /home/projects/pgsql/developers/thomas/db143.d/docbook/html
+endif
+ifndef PSTYLE
 PSTYLE= /home/projects/pgsql/developers/thomas/db143.d/docbook/print
+endif
 
 HDSL=$(HSTYLE)/docbook.dsl
 PDSL=$(PSTYLE)/docbook.dsl
