@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.8 2001/03/22 04:00:13 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.9 2001/03/23 01:27:12 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -158,7 +158,9 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 
 		ReadHead(AH);
 		ReadToc(AH);
-		fclose(AH->FH);			/* Nothing else in the file... */
+		/* Nothing else in the file... */
+		if (fclose(AH->FH) != 0)
+			die_horribly(AH, "%s: Could not close TOC file (fclose failed).\n", progname);
 	}
 
 }
@@ -268,7 +270,9 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	/* Close the file */
-	GZCLOSE(tctx->FH);
+	if (GZCLOSE(tctx->FH) != 0)
+		die_horribly(AH, "%s: could not close data file\n", progname);
+
 	tctx->FH = NULL;
 }
 
@@ -299,7 +303,9 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 		ahwrite(buf, 1, cnt, AH);
 	}
 
-	GZCLOSE(AH->FH);
+	if (GZCLOSE(AH->FH) != 0)
+		die_horribly(AH, "%s: could not close data file after reading\n", progname);
+
 }
 
 
@@ -374,7 +380,8 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 		_getBlobTocEntry(AH, &oid, fname);
 	}
 
-	fclose(ctx->blobToc);
+	if (fclose(ctx->blobToc) != 0)
+		die_horribly(AH, "%s: could not close BLOB TOC file\n", progname);
 
 	EndRestoreBlobs(AH);
 }
@@ -437,7 +444,8 @@ _CloseArchive(ArchiveHandle *AH)
 	{
 		WriteHead(AH);
 		WriteToc(AH);
-		fclose(AH->FH);
+		if (fclose(AH->FH) != 0)
+			die_horribly(AH, "%s: could not close TOC file\n", progname);
 		WriteDataChunks(AH);
 	}
 
@@ -524,7 +532,8 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, int oid)
 {
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
-	GZCLOSE(tctx->FH);
+	if (GZCLOSE(tctx->FH) != 0)
+		die_horribly(AH, "%s: could not close BLOB file\n", progname);
 }
 
 /*
@@ -541,6 +550,8 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 	/* Write out a fake zero OID to mark end-of-blobs. */
 	/* WriteInt(AH, 0); */
 
-	fclose(ctx->blobToc);
+	if (fclose(ctx->blobToc) != 0)
+		die_horribly(AH, "%s: could not close BLOB TOC file\n", progname);
 
 }
+
