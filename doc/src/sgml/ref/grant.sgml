@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.6 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.7 2000/04/09 12:08:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -132,11 +132,6 @@ GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...] ON <replace
 	  </para>
 	 </listitem>
 
-	 <listitem>
-	  <para>
-	   index
-	  </para>
-	 </listitem>
 	</itemizedlist>
        </para>
       </listitem>
