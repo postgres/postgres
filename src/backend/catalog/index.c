@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.185 2002/07/18 16:47:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.186 2002/07/20 05:16:56 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -111,7 +111,7 @@ BuildFuncTupleDesc(Oid funcOid,
 	/*
 	 * Allocate and zero a tuple descriptor for a one-column tuple.
 	 */
-	funcTupDesc = CreateTemplateTupleDesc(1);
+	funcTupDesc = CreateTemplateTupleDesc(1, UNDEFOID);
 	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	MemSet(funcTupDesc->attrs[0], 0, ATTRIBUTE_TUPLE_SIZE);
 
@@ -199,7 +199,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 	 * allocate the new tuple descriptor
 	 */
 
-	indexTupDesc = CreateTemplateTupleDesc(numatts);
+	indexTupDesc = CreateTemplateTupleDesc(numatts, WITHOUTOID);
 
 	/* ----------------
 	 *	  for each attribute we are indexing, obtain its attribute
@@ -320,6 +320,7 @@ UpdateRelationRelation(Relation indexRelation)
 
 	/* XXX Natts_pg_class_fixed is a hack - see pg_class.h */
 	tuple = heap_addheader(Natts_pg_class_fixed,
+	                       true,
 						   CLASS_TUPLE_SIZE,
 						   (void *) indexRelation->rd_rel);
 
@@ -327,7 +328,8 @@ UpdateRelationRelation(Relation indexRelation)
 	 * the new tuple must have the oid already chosen for the index.
 	 * sure would be embarrassing to do this sort of thing in polite company.
 	 */
-	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
+	AssertTupleDescHasOid(pg_class->rd_att);
+	HeapTupleSetOid(tuple, RelationGetRelid(indexRelation));
 	simple_heap_insert(pg_class, tuple);
 
 	/*
@@ -406,6 +408,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		Assert(indexTupDesc->attrs[i]->attcacheoff == -1);
 
 		new_tuple = heap_addheader(Natts_pg_attribute,
+		                           false,
 								   ATTRIBUTE_TUPLE_SIZE,
 								   (void *) indexTupDesc->attrs[i]);
 
@@ -495,6 +498,7 @@ UpdateIndexRelation(Oid indexoid,
 	 * form a tuple to insert into pg_index
 	 */
 	tuple = heap_addheader(Natts_pg_index,
+	                       false,
 						   itupLen,
 						   (void *) indexForm);
 
@@ -599,6 +603,7 @@ index_create(Oid heapRelationId,
 											indexInfo->ii_KeyAttrNumbers,
 												classObjectId);
 
+	indexTupDesc->tdhasoid = WITHOUTOID;
 	/*
 	 * create the index relation (but don't create storage yet)
 	 */
@@ -626,7 +631,7 @@ index_create(Oid heapRelationId,
 	indexRelation->rd_rel->relowner = GetUserId();
 	indexRelation->rd_rel->relam = accessMethodObjectId;
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
-	indexRelation->rd_rel->relhasoids = false;
+	indexRelation->rd_rel->relhasoids = false;  /* WITHOUTOID! */
 
 	/*
 	 * store index's pg_class entry

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.77 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.78 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ DefineIndex(RangeVar *heapRelation,
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DefineIndex: access method \"%s\" not found",
 			 accessMethodName);
-	accessMethodId = tuple->t_data->t_oid;
+	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 
 	if (unique && !accessMethodForm->amcanunique)
@@ -496,7 +496,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	 * Verify that the index operator class accepts this
 	 * datatype.  Note we will accept binary compatibility.
 	 */
-	opClassId = tuple->t_data->t_oid;
+	opClassId = HeapTupleGetOid(tuple);
 	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
 
 	if (!IsBinaryCompatible(attrType, opInputType))
@@ -761,7 +761,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 				relids = repalloc(relids, sizeof(Oid) * relalc);
 			}
 			MemoryContextSwitchTo(old);
-			relids[relcnt] = tuple->t_data->t_oid;
+			relids[relcnt] = HeapTupleGetOid(tuple);
 			relcnt++;
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.105 2002/07/18 17:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.106 2002/07/20 05:16:58 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1071,7 +1071,7 @@ CommuteClause(Expr *clause)
 
 	commuTup = (Form_pg_operator) GETSTRUCT(optup);
 
-	commu = makeOper(optup->t_data->t_oid,
+	commu = makeOper(HeapTupleGetOid(optup),
 					 commuTup->oprcode,
 					 commuTup->oprresult,
 					 ((Oper *) clause->oper)->opretset);

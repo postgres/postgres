@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.71 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.72 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -435,11 +435,15 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	{
 		mtuple = heap_formtuple(rel->rd_att, v, n);
 		infomask = mtuple->t_data->t_infomask;
-		memmove(&(mtuple->t_data->t_oid), &(tuple->t_data->t_oid),
-				((char *) &(tuple->t_data->t_hoff) -
-				 (char *) &(tuple->t_data->t_oid)));
+		/*
+		 * copy t_xmin, t_cid, t_xmax, t_ctid, t_natts, t_infomask
+		 */
+		memmove((char *)mtuple->t_data, (char *)tuple->t_data,
+				offsetof(HeapTupleHeaderData, t_hoff));
 		mtuple->t_data->t_infomask = infomask;
 		mtuple->t_data->t_natts = numberOfAttributes;
+		if (rel->rd_rel->relhasoids)
+			HeapTupleSetOid(mtuple, HeapTupleGetOid(tuple));
 	}
 	else
 	{

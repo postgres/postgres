@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.56 2002/07/08 01:52:23 momjian Exp $
+ * $Id: htup.h,v 1.57 2002/07/20 05:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,6 @@
 */
 typedef struct HeapTupleHeaderData
 {
-	Oid			t_oid;			/* OID of this tuple -- 4 bytes */
-
 	TransactionId t_xmin;		/* Xmin -- 4 bytes each */
 	TransactionId t_cid;		/* Cmin, Cmax, Xvac */
 	TransactionId t_xmax;		/* Xmax, Cmax */
@@ -84,7 +82,7 @@ typedef struct HeapTupleHeaderData
 
 	uint8		t_hoff;			/* sizeof header incl. bitmap, padding */
 
-	/* ^ - 27 bytes - ^ */
+	/* ^ - 23 bytes - ^ */
 
 	bits8		t_bits[1];		/* bitmap of NULLs -- VARIABLE LENGTH */
 
@@ -123,9 +121,41 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 
 #define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
 
+/* paranoid checking */
+
+#ifdef DEBUG_TUPLE_ACCESS
+
+#define HeapTupleHeaderExpectedLen(tup, withoid) \
+	MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) + \
+	         (((tup)->t_infomask & HEAP_HASNULL) \
+	          ? BITMAPLEN((tup)->t_natts) : 0) + \
+		     ((withoid) ? sizeof(Oid) : 0) \
+	        ) 
+
+#define AssertHeapTupleHeaderHoffIsValid(tup, withoid) \
+	AssertMacro((tup)->t_hoff == HeapTupleHeaderExpectedLen(tup, withoid))
+
+#else
+
+#define AssertHeapTupleHeaderHoffIsValid(tup, withoid) ((void)true)
+
+#endif  /* DEBUG_TUPLE_ACCESS */
 
 
 /* HeapTupleHeader accessor macros */
+
+#define HeapTupleHeaderGetOid(tup) \
+( \
+	AssertHeapTupleHeaderHoffIsValid(tup, true), \
+	*((Oid *)((char *)(tup) + (tup)->t_hoff - sizeof(Oid))) \
+)
+
+#define HeapTupleHeaderSetOid(tup, oid) \
+( \
+	AssertHeapTupleHeaderHoffIsValid(tup, true), \
+	*((Oid *)((char *)(tup) + (tup)->t_hoff - sizeof(Oid))) = (oid) \
+)
+		
 
 #define HeapTupleHeaderGetXmin(tup) \
 ( \
@@ -405,5 +435,11 @@ typedef HeapTupleData *HeapTuple;
 
 #define HeapTupleHasExtended(tuple) \
 		((((HeapTuple)(tuple))->t_data->t_infomask & HEAP_HASEXTENDED) != 0)
+
+#define HeapTupleGetOid(tuple) \
+		HeapTupleHeaderGetOid(((HeapTuple)(tuple))->t_data)
+
+#define HeapTupleSetOid(tuple, oid) \
+		HeapTupleHeaderSetOid(((HeapTuple)(tuple))->t_data, (oid))
 
 #endif   /* HTUP_H */

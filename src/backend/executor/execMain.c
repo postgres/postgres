@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.170 2002/07/11 21:36:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.171 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,6 +716,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 									   get_namespace_name(namespaceId));
 				}
 
+				/*
+				 * new "INTO" table is created WITH OIDS
+				 */
+				tupType->tdhasoid = WITHOID;
 				/*
 				 * have to copy tupType to get rid of constraints
 				 */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.49 2002/07/12 18:43:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.50 2002/07/20 05:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,13 +179,13 @@ Boot_CreateStmt:
 						}
 
 						tupdesc = CreateTupleDesc(numattr, attrtypes);
+						tupdesc->tdhasoid = BoolToHasOid(! ($4));
 						boot_reldesc = heap_create(LexIDStr($5),
 												   PG_CATALOG_NAMESPACE,
 												   tupdesc,
 												   $3,
 												   true,
 												   true);
-						boot_reldesc->rd_rel->relhasoids = ! ($4);
 						elog(DEBUG3, "bootstrap relation created");
 					}
 					else

@@ -102,7 +102,9 @@ _rserv_log_()
 
 	if (keynum == ObjectIdAttributeNumber)
 	{
-		sprintf(oidbuf, "%u", tuple->t_data->t_oid);
+		sprintf(oidbuf, "%u", rel->rd_rel->relhasoids
+		                      ? HeapTupleGetOid(tuple)
+		                      : InvalidOid);
 		key = oidbuf;
 	}
 	else

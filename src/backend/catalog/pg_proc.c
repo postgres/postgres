@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.79 2002/07/18 23:11:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.80 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,6 +239,7 @@ ProcedureCreate(const char *procedureName,
 		/* start out with empty permissions */
 		nulls[Anum_pg_proc_proacl-1] = 'n';
 
+		AssertTupleDescHasOid(tupDesc);
 		tup = heap_formtuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
 		is_update = false;
@@ -254,7 +255,8 @@ ProcedureCreate(const char *procedureName,
 		CatalogCloseIndices(Num_pg_proc_indices, idescs);
 	}
 
-	retval = tup->t_data->t_oid;
+	AssertTupleDescHasOid(tupDesc);
+	retval = HeapTupleGetOid(tup);
 
 	/*
 	 * Create dependencies for the new function.  If we are updating an

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.2 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.3 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		 */
 		char	   *attname = strVal(lfirst(rte->eref->colnames));
 
-		tupdesc = CreateTemplateTupleDesc(1);
+		tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
 		TupleDescInitEntry(tupdesc,
 						   (AttrNumber) 1,
 						   attname,

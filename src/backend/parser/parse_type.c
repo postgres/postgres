@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.44 2002/07/06 20:16:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.45 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ typeTypeId(Type tp)
 {
 	if (tp == NULL)
 		elog(ERROR, "typeTypeId() called with NULL type struct");
-	return tp->t_data->t_oid;
+	return HeapTupleGetOid(tp);
 }
 
 /* given type (as type struct), return the length of type */

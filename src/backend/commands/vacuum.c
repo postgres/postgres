@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.231 2002/07/20 04:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.232 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,8 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 		{
 			/* Make a relation list entry for this guy */
 			oldcontext = MemoryContextSwitchTo(vac_context);
-			vrl = lappendi(vrl, tuple->t_data->t_oid);
+			AssertTupleDescHasOid(pgclass->rd_att);
+			vrl = lappendi(vrl, HeapTupleGetOid(tuple));
 			MemoryContextSwitchTo(oldcontext);
 		}
 
@@ -1172,8 +1173,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			/*
 			 * Other checks...
 			 */
-			if (!OidIsValid(tuple.t_data->t_oid) &&
-				onerel->rd_rel->relhasoids)
+			if (onerel->rd_rel->relhasoids &&
+				!OidIsValid(HeapTupleGetOid(&tuple)))
 				elog(WARNING, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
 					 relname, blkno, offnum, (int) tupgone);
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.25 2002/07/16 06:58:14 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.26 2002/07/20 05:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,7 +571,7 @@ FuncnameGetCandidates(List *names, int nargs)
 						continue; /* keep previous result */
 					/* replace previous result */
 					prevResult->pathpos = pathpos;
-					prevResult->oid = proctup->t_data->t_oid;
+					prevResult->oid = HeapTupleGetOid(proctup);
 					continue;	/* args are same, of course */
 				}
 			}
@@ -584,7 +584,7 @@ FuncnameGetCandidates(List *names, int nargs)
 			palloc(sizeof(struct _FuncCandidateList) - sizeof(Oid)
 				   + nargs * sizeof(Oid));
 		newResult->pathpos = pathpos;
-		newResult->oid = proctup->t_data->t_oid;
+		newResult->oid = HeapTupleGetOid(proctup);
 		newResult->nargs = nargs;
 		memcpy(newResult->args, procform->proargtypes, nargs * sizeof(Oid));
 
@@ -818,7 +818,7 @@ OpernameGetCandidates(List *names, char oprkind)
 						continue; /* keep previous result */
 					/* replace previous result */
 					prevResult->pathpos = pathpos;
-					prevResult->oid = opertup->t_data->t_oid;
+					prevResult->oid = HeapTupleGetOid(opertup);
 					continue;	/* args are same, of course */
 				}
 			}
@@ -830,7 +830,7 @@ OpernameGetCandidates(List *names, char oprkind)
 		newResult = (FuncCandidateList)
 			palloc(sizeof(struct _FuncCandidateList) + sizeof(Oid));
 		newResult->pathpos = pathpos;
-		newResult->oid = opertup->t_data->t_oid;
+		newResult->oid = HeapTupleGetOid(opertup);
 		newResult->nargs = 2;
 		newResult->args[0] = operform->oprleft;
 		newResult->args[1] = operform->oprright;
@@ -994,7 +994,7 @@ OpclassGetCandidates(Oid amid)
 				/* replace previous result */
 				prevResult->opcname_tmp = NameStr(opcform->opcname);
 				prevResult->pathpos = pathpos;
-				prevResult->oid = opctup->t_data->t_oid;
+				prevResult->oid = HeapTupleGetOid(opctup);
 				prevResult->opcintype = opcform->opcintype;
 				prevResult->opcdefault = opcform->opcdefault;
 				prevResult->opckeytype = opcform->opckeytype;
@@ -1009,7 +1009,7 @@ OpclassGetCandidates(Oid amid)
 			palloc(sizeof(struct _OpclassCandidateList));
 		newResult->opcname_tmp = NameStr(opcform->opcname);
 		newResult->pathpos = pathpos;
-		newResult->oid = opctup->t_data->t_oid;
+		newResult->oid = HeapTupleGetOid(opctup);
 		newResult->opcintype = opcform->opcintype;
 		newResult->opcdefault = opcform->opcdefault;
 		newResult->opckeytype = opcform->opckeytype;
@@ -1572,8 +1572,9 @@ RemoveTempRelations(Oid tempNamespaceId)
 			case RELKIND_RELATION:
 			case RELKIND_SEQUENCE:
 			case RELKIND_VIEW:
+				AssertTupleDescHasOid(pgclass->rd_att);
 				object.classId = RelOid_pg_class;
-				object.objectId = tuple->t_data->t_oid;
+				object.objectId = HeapTupleGetOid(tuple);
 				object.objectSubId = 0;
 				performDeletion(&object, DROP_CASCADE);
 				break;

@@ -190,7 +190,7 @@ fti(PG_FUNCTION_ARGS)
 	tupdesc = rel->rd_att;		/* what the tuple looks like (?) */
 
 	/* get oid of current tuple, needed by all, so place here */
-	oid = rettuple->t_data->t_oid;
+	oid = rel->rd_rel->relhasoids ? HeapTupleGetOid(rettuple) : InvalidOid;
 	if (!OidIsValid(oid))
 		elog(ERROR, "Full Text Indexing: Oid of current tuple is invalid");
 

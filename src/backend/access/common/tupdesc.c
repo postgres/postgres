@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.80 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.81 2002/07/20 05:16:56 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -36,7 +36,7 @@
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTemplateTupleDesc(int natts)
+CreateTemplateTupleDesc(int natts, hasoid_t withoid)
 {
 	uint32		size;
 	TupleDesc	desc;
@@ -58,6 +58,7 @@ CreateTemplateTupleDesc(int natts)
 	MemSet(desc->attrs, 0, size);
 
 	desc->natts = natts;
+	desc->tdhasoid = withoid;
 
 	return desc;
 }
@@ -82,6 +83,7 @@ CreateTupleDesc(int natts, Form_pg_attribute *attrs)
 	desc->attrs = attrs;
 	desc->natts = natts;
 	desc->constr = NULL;
+	desc->tdhasoid = UNDEFOID;
 
 	return desc;
 }
@@ -116,6 +118,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 		desc->attrs[i]->atthasdef = false;
 	}
 	desc->constr = NULL;
+	desc->tdhasoid = tupdesc->tdhasoid;
 
 	return desc;
 }
@@ -182,6 +185,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	else
 		desc->constr = NULL;
 
+	desc->tdhasoid = tupdesc->tdhasoid;
 	return desc;
 }
 
@@ -234,6 +238,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 				n;
 
 	if (tupdesc1->natts != tupdesc2->natts)
+		return false;
+	if (tupdesc1->tdhasoid != tupdesc2->tdhasoid)
 		return false;
 	for (i = 0; i < tupdesc1->natts; i++)
 	{
@@ -392,7 +398,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 */
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
-	att->atttypid = tuple->t_data->t_oid;
+	att->atttypid = HeapTupleGetOid(tuple);
 
 	/*
 	 * There are a couple of cases where we must override the information
@@ -479,7 +485,7 @@ BuildDescForRelation(List *schema)
 	 * allocate a new tuple descriptor
 	 */
 	natts = length(schema);
-	desc = CreateTemplateTupleDesc(natts);
+	desc = CreateTemplateTupleDesc(natts, UNDEFOID);
 	constr->has_not_null = false;
 
 	attnum = 0;
@@ -646,7 +652,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		/* OK, get the column alias */
 		attname = strVal(lfirst(colaliases));
 
-		tupdesc = CreateTemplateTupleDesc(1);
+		tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
 		TupleDescInitEntry(tupdesc,
 						   (AttrNumber) 1,
 						   attname,

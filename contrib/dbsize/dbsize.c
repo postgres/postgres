@@ -65,7 +65,7 @@ database_size(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "database %s does not exist", NameStr(*dbname));
 
-	dbid = tuple->t_data->t_oid;
+	dbid = HeapTupleGetOid(tuple);
 	if (dbid == InvalidOid)
 		elog(ERROR, "invalid database id");
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.211 2002/07/19 22:21:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.212 2002/07/20 05:16:56 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -65,7 +65,7 @@
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid, Oid new_type_oid,
-					char relkind, bool relhasoids);
+					char relkind);
 static void AddNewRelationType(const char *typeName,
 							   Oid typeNamespace,
 							   Oid new_rel_oid,
@@ -445,6 +445,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		(*dpp)->attcacheoff = -1;
 
 		tup = heap_addheader(Natts_pg_attribute,
+		                     false,
 							 ATTRIBUTE_TUPLE_SIZE,
 							 (void *) *dpp);
 
@@ -481,6 +482,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 				Form_pg_attribute attStruct;
 
 				tup = heap_addheader(Natts_pg_attribute,
+				                     false,
 									 ATTRIBUTE_TUPLE_SIZE,
 									 (void *) *dpp);
 
@@ -527,8 +529,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
 					Oid new_type_oid,
-					char relkind,
-					bool relhasoids)
+					char relkind)
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
@@ -579,7 +580,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->relowner = GetUserId();
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->relkind = relkind;
-	new_rel_reltup->relhasoids = relhasoids;
 
 	/* ----------------
 	 *	now form a tuple to add to pg_class
@@ -587,11 +587,13 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 * ----------------
 	 */
 	tup = heap_addheader(Natts_pg_class_fixed,
+	                     true,
 						 CLASS_TUPLE_SIZE,
 						 (void *) new_rel_reltup);
 
 	/* force tuple to have the desired OID */
-	tup->t_data->t_oid = new_rel_oid;
+	AssertTupleDescHasOid(pg_class_desc->rd_att);
+	HeapTupleSetOid(tup, new_rel_oid);
 
 	/*
 	 * finally insert the new tuple and free it.
@@ -691,6 +693,8 @@ heap_create_with_catalog(const char *relname,
 	if (get_relname_relid(relname, relnamespace))
 		elog(ERROR, "Relation '%s' already exists", relname);
 
+	tupdesc->tdhasoid = BoolToHasOid(relhasoids);
+	
 	/*
 	 * Tell heap_create not to create a physical file; we'll do that below
 	 * after all our catalog updates are done.	(This isn't really
@@ -723,8 +727,7 @@ heap_create_with_catalog(const char *relname,
 						new_rel_desc,
 						new_rel_oid,
 						new_type_oid,
-						relkind,
-						relhasoids);
+						relkind);
 
 	/*
 	 * since defining a relation also defines a complex type, we add a new
@@ -920,13 +923,14 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 	scan = systable_beginscan(attrdef_rel, AttrDefaultIndex, true,
 							  SnapshotNow, 2, scankeys);
 
+	AssertTupleDescHasOid(attrdef_rel->rd_att);
 	/* There should be at most one matching tuple, but we loop anyway */
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		ObjectAddress	object;
 
 		object.classId = RelationGetRelid(attrdef_rel);
-		object.objectId = tuple->t_data->t_oid;
+		object.objectId = HeapTupleGetOid(tuple);
 		object.objectSubId = 0;
 
 		performDeletion(&object, behavior);
@@ -1711,6 +1715,7 @@ RemoveRelConstraints(Relation rel, const char *constrName,
 	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
 								 SnapshotNow, 1, key);
 
+	AssertTupleDescHasOid(conrel->rd_att);
 	/*
 	 * Scan over the result set, removing any matching entries.
 	 */
@@ -1723,7 +1728,7 @@ RemoveRelConstraints(Relation rel, const char *constrName,
 			ObjectAddress	conobj;
 
 			conobj.classId = RelationGetRelid(conrel);
-			conobj.objectId = contup->t_data->t_oid;
+			conobj.objectId = HeapTupleGetOid(contup);
 			conobj.objectSubId = 0;
 
 			performDeletion(&conobj, behavior);

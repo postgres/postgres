@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.77 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.78 2002/07/20 05:16:56 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -436,7 +436,7 @@ heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
 			result = PointerGetDatum(&(tup->t_self));
 			break;
 		case ObjectIdAttributeNumber:
-			result = ObjectIdGetDatum(tup->t_data->t_oid);
+			result = ObjectIdGetDatum(HeapTupleGetOid(tup));
 			break;
 		case MinTransactionIdAttributeNumber:
 			result = TransactionIdGetDatum(HeapTupleHeaderGetXmin(tup->t_data));
@@ -581,6 +581,8 @@ heap_formtuple(TupleDesc tupleDescriptor,
 		elog(ERROR, "heap_formtuple: numberOfAttributes %d exceeds limit %d",
 			 numberOfAttributes, MaxTupleAttributeNumber);
 
+	AssertTupleDescHasOidIsValid(tupleDescriptor);
+
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (nulls[i] != ' ')
@@ -594,6 +596,9 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);
+
+	if (tupleDescriptor->tdhasoid == WITHOID)
+		len += sizeof(Oid);
 
 	hoff = len = MAXALIGN(len); /* align user data safely */
 
@@ -698,14 +703,18 @@ heap_modifytuple(HeapTuple tuple,
 	 * t_infomask
 	 */
 	infomask = newTuple->t_data->t_infomask;
-	memmove((char *) &newTuple->t_data->t_oid,	/* XXX */
-			(char *) &tuple->t_data->t_oid,
-			((char *) &tuple->t_data->t_hoff -
-			 (char *) &tuple->t_data->t_oid));	/* XXX */
+	/*
+	 * copy t_xmin, t_cid, t_xmax, t_ctid, t_natts, t_infomask
+	 */
+	memmove((char *) newTuple->t_data,	/* XXX */
+			(char *) tuple->t_data,
+			offsetof(HeapTupleHeaderData, t_hoff));	/* XXX */
 	newTuple->t_data->t_infomask = infomask;
 	newTuple->t_data->t_natts = numberOfAttributes;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
+	if (relation->rd_rel->relhasoids)
+		HeapTupleSetOid(newTuple, HeapTupleGetOid(tuple));
 
 	return newTuple;
 }
@@ -738,6 +747,7 @@ heap_freetuple(HeapTuple htup)
  */
 HeapTuple
 heap_addheader(int natts,		/* max domain index */
+			   bool withoid,	/* reserve space for oid */
 			   Size structlen,	/* its length */
 			   void *structure) /* pointer to the struct */
 {
@@ -749,7 +759,10 @@ heap_addheader(int natts,		/* max domain index */
 	AssertArg(natts > 0);
 
 	/* header needs no null bitmap */
-	hoff = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits));
+	hoff = offsetof(HeapTupleHeaderData, t_bits);
+	if (withoid)
+		hoff += sizeof(Oid);
+	hoff = MAXALIGN(hoff);
 	len = hoff + structlen;
 
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);

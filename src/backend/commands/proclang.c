@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.36 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.37 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Create dependencies for language
 	 */
 	myself.classId = RelationGetRelid(rel);
-	myself.objectId = tup->t_data->t_oid;
+	myself.objectId = HeapTupleGetOid(tup);
 	myself.objectSubId = 0;
 
 	/* dependency on the PL handler function */
@@ -191,7 +191,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 			 languageName);
 
 	object.classId = get_system_catalog_relid(LanguageRelationName);
-	object.objectId = langTup->t_data->t_oid;
+	object.objectId = HeapTupleGetOid(langTup);
 	object.objectSubId = 0;
 
 	ReleaseSysCache(langTup);

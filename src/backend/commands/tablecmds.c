@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.23 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.24 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,6 +149,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * have to copy inherited constraints here.)
 	 */
 	descriptor = BuildDescForRelation(schema);
+	descriptor->tdhasoid = BoolToHasOid(stmt->hasoids || parentHasOids);
 
 	if (old_constraints != NIL)
 	{
@@ -1658,6 +1659,7 @@ AlterTableAddColumn(Oid myrelid,
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
+	                                false,
 									ATTRIBUTE_TUPLE_SIZE,
 									(void *) &attributeD);
 
@@ -1665,7 +1667,7 @@ AlterTableAddColumn(Oid myrelid,
 
 	attribute->attrelid = myrelid;
 	namestrcpy(&(attribute->attname), colDef->colname);
-	attribute->atttypid = typeTuple->t_data->t_oid;
+	attribute->atttypid = HeapTupleGetOid(typeTuple);
 	attribute->attstattarget = DEFAULT_ATTSTATTARGET;
 	attribute->attlen = tform->typlen;
 	attribute->attcacheoff = -1;
@@ -1682,6 +1684,7 @@ AlterTableAddColumn(Oid myrelid,
 
 	ReleaseSysCache(typeTuple);
 
+	AssertTupleDescHasNoOid(attrdesc->rd_att);
 	simple_heap_insert(attrdesc, attributeTuple);
 
 	/* Update indexes on pg_attribute */
@@ -1702,6 +1705,7 @@ AlterTableAddColumn(Oid myrelid,
 	newreltup = heap_copytuple(reltup);
 
 	((Form_pg_class) GETSTRUCT(newreltup))->relnatts = maxatts;
+	AssertTupleDescHasOid(pgclass->rd_att);
 	simple_heap_update(pgclass, &newreltup->t_self, newreltup);
 
 	/* keep catalog indices current */
@@ -3299,7 +3303,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	sprintf(toast_idxname, "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3);
+	tupdesc = CreateTemplateTupleDesc(3, WITHOUTOID);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "chunk_id",
 					   OIDOID,

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.58 2002/07/18 05:07:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.59 2002/07/20 05:16:59 momjian Exp $
  *
  **********************************************************************/
 
@@ -1743,7 +1743,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	{
 		/* XXX should extend this to allow qualified type names */
 		typeTup = typenameType(makeTypeName(args[i]));
-		qdesc->argtypes[i] = typeTup->t_data->t_oid;
+		qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
 		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 					   &(qdesc->arginfuncs[i]));
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;

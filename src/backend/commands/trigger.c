@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.121 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.122 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,8 +400,9 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_rel_name(relid));
 
+	AssertTupleDescHasOid(tgrel->rd_att);
 	object.classId = RelationGetRelid(tgrel);
-	object.objectId = tup->t_data->t_oid;
+	object.objectId = HeapTupleGetOid(tup);
 	object.objectSubId = 0;
 
 	systable_endscan(tgscan);
@@ -671,7 +672,8 @@ RelationBuildTriggers(Relation relation)
 				 RelationGetRelationName(relation));
 		build = &(triggers[found]);
 
-		build->tgoid = htup->t_data->t_oid;
+		AssertTupleDescHasOid(tgrel->rd_att);
+		build->tgoid = HeapTupleGetOid(htup);
 		build->tgname = MemoryContextStrdup(CacheMemoryContext,
 							 DatumGetCString(DirectFunctionCall1(nameout,
 									NameGetDatum(&pg_trigger->tgname))));
@@ -1932,7 +1934,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				elog(ERROR, "Constraint '%s' is not deferrable",
 					 cname);
 
-			constr_oid = htup->t_data->t_oid;
+			AssertTupleDescHasOid(tgrel->rd_att);
+			constr_oid = HeapTupleGetOid(htup);
 			loid = lappendi(loid, constr_oid);
 			found = true;
 		}

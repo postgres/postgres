@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.82 2002/07/18 23:11:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.83 2002/07/20 05:16:58 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -597,7 +597,7 @@ GetSysCacheOid(int cacheId,
 	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
-	result = tuple->t_data->t_oid;
+	result = HeapTupleGetOid(tuple);
 	ReleaseSysCache(tuple);
 	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.72 2002/07/18 16:47:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.73 2002/07/20 05:16:56 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -144,7 +144,7 @@ OperatorGet(const char *operatorName,
 	{
 		RegProcedure oprcode = ((Form_pg_operator) GETSTRUCT(tup))->oprcode;
 
-		operatorObjectId = tup->t_data->t_oid;
+		operatorObjectId = HeapTupleGetOid(tup);
 		*defined = RegProcedureIsValid(oprcode);
 		ReleaseSysCache(tup);
 	}
@@ -918,7 +918,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 					referenced;
 
 	myself.classId = pg_operator_relid;
-	myself.objectId = tuple->t_data->t_oid;
+	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
 	/* In case we are updating a shell, delete any existing entries */

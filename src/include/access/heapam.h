@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.77 2002/06/20 20:29:43 momjian Exp $
+ * $Id: heapam.h,v 1.78 2002/07/20 05:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,6 +200,6 @@ extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
 		Relation relation, Datum *replValue, char *replNull, char *repl);
 extern void heap_freetuple(HeapTuple tuple);
-extern HeapTuple heap_addheader(int natts, Size structlen, void *structure);
+extern HeapTuple heap_addheader(int natts, bool withoid, Size structlen, void *structure);
 
 #endif   /* HEAPAM_H */

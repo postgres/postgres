@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.57 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.58 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,7 @@ any_ordering_op(Oid argtype)
 Oid
 oprid(Operator op)
 {
-	return op->t_data->t_oid;
+	return HeapTupleGetOid(op);
 }
 
 /* given operator tuple, return the underlying function's OID */

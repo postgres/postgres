@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.132 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.133 2002/07/20 05:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,7 +495,8 @@ boot_openrel(char *relname)
 		app = Typ;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
-			(*app)->am_oid = tup->t_data->t_oid;
+			AssertTupleDescHasOid(rel->rd_att);
+			(*app)->am_oid = HeapTupleGetOid(tup);
 			memcpy((char *) &(*app)->am_typ,
 				   (char *) GETSTRUCT(tup),
 				   sizeof((*app)->am_typ));
@@ -675,11 +676,15 @@ InsertOneTuple(Oid objectid)
 	elog(DEBUG3, "inserting row oid %u, %d columns", objectid, numattr);
 
 	tupDesc = CreateTupleDesc(numattr, attrtypes);
+	tupDesc->tdhasoid = BoolToHasOid(RelationGetForm(boot_reldesc)->relhasoids);
 	tuple = heap_formtuple(tupDesc, values, Blanks);
-	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 
 	if (objectid != (Oid) 0)
-		tuple->t_data->t_oid = objectid;
+	{
+		AssertTupleDescHasOid(tupDesc);
+		HeapTupleSetOid(tuple, objectid);
+	}
+	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 	simple_heap_insert(boot_reldesc, tuple);
 	heap_freetuple(tuple);
 	elog(DEBUG3, "row inserted");
@@ -871,7 +876,8 @@ gettype(char *type)
 		app = Typ;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
-			(*app)->am_oid = tup->t_data->t_oid;
+			AssertTupleDescHasOid(rel->rd_att);
+			(*app)->am_oid = HeapTupleGetOid(tup);
 			memmove((char *) &(*app++)->am_typ,
 					(char *) GETSTRUCT(tup),
 					sizeof((*app)->am_typ));

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.47 2002/07/18 23:11:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.48 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,8 @@ SetDefine(char *querystr, Oid elemType)
 
 		simple_heap_update(procrel, &newtup->t_self, newtup);
 
-		setoid = newtup->t_data->t_oid;
+		AssertTupleDescHasOid(procrel->rd_att);
+		setoid = HeapTupleGetOid(newtup);
 
 		if (RelationGetForm(procrel)->relhasindex)
 		{

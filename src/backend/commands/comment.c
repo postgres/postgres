@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.51 2002/07/14 23:38:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.52 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -435,7 +435,8 @@ CommentDatabase(List *qualname, char *comment)
 
 	if (!HeapTupleIsValid(dbtuple))
 		elog(ERROR, "database \"%s\" does not exist", database);
-	oid = dbtuple->t_data->t_oid;
+	AssertTupleDescHasOid(pg_database->rd_att);
+	oid = HeapTupleGetOid(dbtuple);
 
 	/* Allow if the user matches the database dba or is a superuser */
 
@@ -481,7 +482,8 @@ CommentNamespace(List *qualname, char *comment)
 		elog(ERROR, "CommentSchema: Schema \"%s\" could not be found",
 			 namespace);
 
-	oid = tp->t_data->t_oid;
+	/* no TupleDesc here to Assert(...->tdhasoid); */
+	oid = HeapTupleGetOid(tp);
 
 	/* Check object security */
 	if (!pg_namespace_ownercheck(oid, GetUserId()))
@@ -552,7 +554,8 @@ CommentRule(List *qualname, char *comment)
 		if (HeapTupleIsValid(tuple))
 		{
 			reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
-			ruleoid = tuple->t_data->t_oid;
+			AssertTupleDescHasOid(RewriteRelation->rd_att);
+			ruleoid = HeapTupleGetOid(tuple);
 		}
 		else
 		{
@@ -592,7 +595,8 @@ CommentRule(List *qualname, char *comment)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "rule \"%s\" does not exist", rulename);
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
-		ruleoid = tuple->t_data->t_oid;
+		AssertTupleDescHasOid(relation->rd_att);
+		ruleoid = HeapTupleGetOid(tuple);
 		ReleaseSysCache(tuple);
 	}
 
@@ -805,7 +809,8 @@ CommentTrigger(List *qualname, char *comment)
 		elog(ERROR, "trigger \"%s\" for relation \"%s\" does not exist",
 			 trigname, RelationGetRelationName(relation));
 
-	oid = triggertuple->t_data->t_oid;
+	AssertTupleDescHasOid(pg_trigger->rd_att);
+	oid = HeapTupleGetOid(triggertuple);
 
 	systable_endscan(scan);
 
@@ -880,7 +885,7 @@ CommentConstraint(List *qualname, char *comment)
 			if (OidIsValid(conOid))
 				elog(ERROR, "Relation \"%s\" has multiple constraints named \"%s\"",
 					 RelationGetRelationName(relation), conName);
-			conOid = tuple->t_data->t_oid;
+			conOid = HeapTupleGetOid(tuple);
 		}
 	}
 

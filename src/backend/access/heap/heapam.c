@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.141 2002/07/02 05:48:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.142 2002/07/20 05:16:56 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1116,10 +1116,11 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		 * to support a persistent object store (objects need to contain
 		 * pointers to one another).
 		 */
-		if (!OidIsValid(tup->t_data->t_oid))
-			tup->t_data->t_oid = newoid();
+		AssertTupleDescHasOid(relation->rd_att);
+		if (!OidIsValid(HeapTupleGetOid(tup)))
+			HeapTupleSetOid(tup, newoid());
 		else
-			CheckMaxObjectId(tup->t_data->t_oid);
+			CheckMaxObjectId(HeapTupleGetOid(tup));
 	}
 
 	HeapTupleHeaderSetXmin(tup->t_data, GetCurrentTransactionId());
@@ -1166,7 +1167,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		rdata[0].len = SizeOfHeapInsert;
 		rdata[0].next = &(rdata[1]);
 
-		xlhdr.t_oid = tup->t_data->t_oid;
+		if (relation->rd_rel->relhasoids)
+		{
+			AssertTupleDescHasOid(relation->rd_att);
+			xlhdr.t_oid = HeapTupleGetOid(tup);
+		}
+		else
+			xlhdr.t_oid = InvalidOid;
 		xlhdr.t_natts = tup->t_data->t_natts;
 		xlhdr.t_hoff = tup->t_data->t_hoff;
 		xlhdr.mask = tup->t_data->t_infomask;
@@ -1176,6 +1183,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		rdata[1].next = &(rdata[2]);
 
 		rdata[2].buffer = buffer;
+		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 		rdata[2].data = (char *) tup->t_data + offsetof(HeapTupleHeaderData, t_bits);
 		rdata[2].len = tup->t_len - offsetof(HeapTupleHeaderData, t_bits);
 		rdata[2].next = NULL;
@@ -1206,7 +1214,11 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	 */
 	CacheInvalidateHeapTuple(relation, tup);
 
-	return tup->t_data->t_oid;
+	if (!relation->rd_rel->relhasoids)
+		return InvalidOid;
+		
+	AssertTupleDescHasOid(relation->rd_att);
+	return HeapTupleGetOid(tup);
 }
 
 /*
@@ -1499,7 +1511,11 @@ l2:
 	}
 
 	/* Fill in OID and transaction status data for newtup */
-	newtup->t_data->t_oid = oldtup.t_data->t_oid;
+	if (relation->rd_rel->relhasoids)
+	{
+		AssertTupleDescHasOid(relation->rd_att);
+		HeapTupleSetOid(newtup, HeapTupleGetOid(&oldtup));
+	}
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
 	HeapTupleHeaderSetXmin(newtup->t_data, GetCurrentTransactionId());
@@ -1972,24 +1988,28 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[1].len = 0;
 	rdata[1].next = &(rdata[2]);
 
-	xlhdr.hdr.t_oid = newtup->t_data->t_oid;
+	if (reln->rd_rel->relhasoids)
+	{
+		AssertTupleDescHasOid(reln->rd_att);
+		xlhdr.hdr.t_oid = HeapTupleGetOid(newtup);
+	}
+	else
+		xlhdr.hdr.t_oid = InvalidOid;
 	xlhdr.hdr.t_natts = newtup->t_data->t_natts;
 	xlhdr.hdr.t_hoff = newtup->t_data->t_hoff;
 	xlhdr.hdr.mask = newtup->t_data->t_infomask;
 	if (move)					/* remember xmin & xmax */
 	{
-		TransactionId xmax;
-		TransactionId xmin;
+		TransactionId xid[2];   /* xmax, xmin */
 
-		if (newtup->t_data->t_infomask & HEAP_XMAX_INVALID ||
-			newtup->t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
-			xmax = InvalidTransactionId;
+		if (newtup->t_data->t_infomask & (HEAP_XMAX_INVALID |
+		                                  HEAP_MARKED_FOR_UPDATE))
+			xid[0] = InvalidTransactionId;
 		else
-			xmax = HeapTupleHeaderGetXmax(newtup->t_data);
-		xmin = HeapTupleHeaderGetXmin(newtup->t_data);
-		memcpy((char *) &xlhdr + hsize, &xmax, sizeof(TransactionId));
-		memcpy((char *) &xlhdr + hsize + sizeof(TransactionId),
-			   &xmin, sizeof(TransactionId));
+			xid[0] = HeapTupleHeaderGetXmax(newtup->t_data);
+		xid[1] = HeapTupleHeaderGetXmin(newtup->t_data);
+		memcpy((char *) &xlhdr + hsize,
+		       (char *) xid,            2 * sizeof(TransactionId));
 		hsize += 2 * sizeof(TransactionId);
 	}
 	rdata[2].buffer = newbuf;
@@ -1998,6 +2018,7 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[2].next = &(rdata[3]);
 
 	rdata[3].buffer = newbuf;
+	/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 	rdata[3].data = (char *) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits);
 	rdata[3].len = newtup->t_len - offsetof(HeapTupleHeaderData, t_bits);
 	rdata[3].next = NULL;
@@ -2193,12 +2214,13 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		memcpy((char *) &xlhdr,
 			   (char *) xlrec + SizeOfHeapInsert,
 			   SizeOfHeapHeader);
+		htup = &tbuf.hdr;
+		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
 		memcpy((char *) &tbuf + offsetof(HeapTupleHeaderData, t_bits),
 			   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
 			   newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup = &tbuf.hdr;
-		htup->t_oid = xlhdr.t_oid;
 		htup->t_natts = xlhdr.t_natts;
 		htup->t_hoff = xlhdr.t_hoff;
 		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
@@ -2206,6 +2228,11 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		HeapTupleHeaderSetXmaxInvalid(htup);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId);
+		if (reln->rd_rel->relhasoids)
+		{
+			AssertTupleDescHasOid(reln->rd_att);
+			HeapTupleHeaderSetOid(htup, xlhdr.t_oid);
+		}
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
@@ -2362,28 +2389,33 @@ newsame:;
 		memcpy((char *) &xlhdr,
 			   (char *) xlrec + SizeOfHeapUpdate,
 			   SizeOfHeapHeader);
+		htup = &tbuf.hdr;
+		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
 		memcpy((char *) &tbuf + offsetof(HeapTupleHeaderData, t_bits),
 			   (char *) xlrec + hsize,
 			   newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup = &tbuf.hdr;
-		htup->t_oid = xlhdr.t_oid;
 		htup->t_natts = xlhdr.t_natts;
 		htup->t_hoff = xlhdr.t_hoff;
+		if (reln->rd_rel->relhasoids)
+		{
+			AssertTupleDescHasOid(reln->rd_att);
+			HeapTupleHeaderSetOid(htup, xlhdr.t_oid);
+		}
 		if (move)
 		{
-			TransactionId xmax;
-			TransactionId xmin;
+			TransactionId xid[2];   /* xmax, xmin */
 			
 			hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
-			memcpy(&xmax, (char *) xlrec + hsize, sizeof(TransactionId));
-			memcpy(&xmin, (char *) xlrec + hsize + sizeof(TransactionId), sizeof(TransactionId));
+			memcpy((char *) xid,
+			       (char *) xlrec + hsize, 2 * sizeof(TransactionId));
 			htup->t_infomask = xlhdr.mask;
 			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
 								  HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
 			htup->t_infomask |= HEAP_MOVED_IN;
-			HeapTupleHeaderSetXmin(htup, xmin);
-			HeapTupleHeaderSetXmax(htup, xmax);
+			HeapTupleHeaderSetXmin(htup, xid[1]);
+			HeapTupleHeaderSetXmax(htup, xid[0]);
 			HeapTupleHeaderSetXvac(htup, record->xl_xid);
 		}
 		else

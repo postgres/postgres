@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.51 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.52 2002/07/20 05:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			if (strcmp(name, NameStr(tup_db->datname)) == 0)
 			{
 				/* Found it; extract the OID and the database path. */
-				*db_id = tup.t_data->t_oid;
+				*db_id = HeapTupleGetOid(&tup);
 				pathlen = VARSIZE(&(tup_db->datpath)) - VARHDRSZ;
 				if (pathlen < 0)
 					pathlen = 0;				/* pure paranoia */

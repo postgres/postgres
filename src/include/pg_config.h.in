@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.24 2002/05/05 00:03:29 tgl Exp $
+ * $Id: pg_config.h.in,v 1.25 2002/07/20 05:16:59 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -311,6 +311,12 @@
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
 /* #define GISTDEBUG */
+/*
+ * DEBUG_TUPLE_ACCESS enables paranoid assertions during
+ * elimination of oids from the fixed sized part of HeapTupleHeader.
+ * This is expected to be undef'd after v7.3 release at the latest.
+ */
+#define DEBUG_TUPLE_ACCESS
 
 /*
  * defining unsafe floats will make float4 and float8 ops faster

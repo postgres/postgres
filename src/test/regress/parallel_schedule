@@ -75,3 +75,6 @@ test: select_views alter_table portals_p2 rules foreign_key
 # ----------
 # "plpgsql" cannot run concurrently with "rules"
 test: limit plpgsql temp domain rangefuncs copy2
+
+test: without_oid
+

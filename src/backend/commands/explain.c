@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.80 2002/06/20 20:29:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.81 2002/07/20 05:16:57 momjian Exp $
  *
  */
 
@@ -855,7 +855,7 @@ begin_text_output(CommandDest dest, char *title)
 	tstate = (TextOutputState *) palloc(sizeof(TextOutputState));
 
 	/* need a tuple descriptor representing a single TEXT column */
-	tupdesc = CreateTemplateTupleDesc(1);
+	tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, title,
 					   TEXTOID, -1, 0, false);
 

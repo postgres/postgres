@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.74 2002/07/18 16:47:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.75 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,8 @@ TypeCreate(const char *typeName,
 
 		simple_heap_update(pg_type_desc, &tup->t_self, tup);
 
-		typeObjectId = tup->t_data->t_oid;
+		AssertTupleDescHasOid(pg_type_desc->rd_att);
+		typeObjectId = HeapTupleGetOid(tup);
 	}
 	else
 	{
@@ -285,7 +286,8 @@ TypeCreate(const char *typeName,
 							 nulls);
 
 		/* preassign tuple Oid, if one was given */
-		tup->t_data->t_oid = assignedTypeOid;
+		AssertTupleDescHasOid(tupDesc);
+		HeapTupleSetOid(tup, assignedTypeOid);
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}

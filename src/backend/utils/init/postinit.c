@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.108 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.109 2002/07/20 05:16:59 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -98,8 +98,9 @@ ReverifyMyDatabase(const char *name)
 	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
 
 	tup = heap_getnext(pgdbscan, ForwardScanDirection);
+	AssertTupleDescHasOid(pgdbrel->rd_att);
 	if (!HeapTupleIsValid(tup) ||
-		tup->t_data->t_oid != MyDatabaseId)
+		HeapTupleGetOid(tup) != MyDatabaseId)
 	{
 		/* OOPS */
 		heap_close(pgdbrel, AccessShareLock);

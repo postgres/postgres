@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.6 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.7 2002/07/20 05:16:57 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -396,7 +396,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	typeTup = typenameType(stmt->typename);
 
 	baseType = (Form_pg_type) GETSTRUCT(typeTup);
-	basetypeoid = typeTup->t_data->t_oid;
+	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
 	 * What we really don't want is domains of domains.  This could cause all sorts

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.69 2002/06/26 21:58:56 momjian Exp $
+ * $Id: executor.h,v 1.70 2002/07/20 05:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ extern void ExecInitScanTupleSlot(EState *estate,
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate);
 extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 					  TupleDesc tupType);
-extern TupleDesc ExecTypeFromTL(List *targetList);
+extern TupleDesc ExecTypeFromTL(List *targetList, hasoid_t withoid);
 extern void SetChangedParamList(Plan *node, List *newchg);
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.159 2002/07/18 04:43:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.160 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,9 +614,13 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
 			/* Send OID if wanted --- note fld_count doesn't include it */
 			if (oids)
 			{
+				Oid oid;
+				
+				AssertTupleDescHasOid(tupDesc);
+				oid = HeapTupleGetOid(tuple);
 				fld_size = sizeof(Oid);
 				CopySendData(&fld_size, sizeof(int16), fp);
-				CopySendData(&tuple->t_data->t_oid, sizeof(Oid), fp);
+				CopySendData(&oid, sizeof(Oid), fp);
 			}
 		}
 		else
@@ -624,8 +628,9 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
 			/* Text format has no per-tuple header, but send OID if wanted */
 			if (oids)
 			{
+				AssertTupleDescHasOid(tupDesc);
 				string = DatumGetCString(DirectFunctionCall1(oidout,
-								ObjectIdGetDatum(tuple->t_data->t_oid)));
+								ObjectIdGetDatum(HeapTupleGetOid(tuple))));
 				CopySendString(string, fp);
 				pfree(string);
 				need_delim = true;
@@ -1069,7 +1074,7 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 		tuple = heap_formtuple(tupDesc, values, nulls);
   	
 		if (oids && file_has_oids)
-			tuple->t_data->t_oid = loaded_oid;
+			HeapTupleSetOid(tuple, loaded_oid);
 
 		skip_tuple = false;
 

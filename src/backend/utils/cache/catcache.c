@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.96 2002/06/20 20:29:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.97 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, HeapTuple tuple)
 		case 4:
 			cur_skey[3].sk_argument =
 				(cache->cc_key[3] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(tuple->t_data->t_oid)
+				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
 				: fastgetattr(tuple,
 							  cache->cc_key[3],
 							  cache->cc_tupdesc,
@@ -228,7 +228,7 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, HeapTuple tuple)
 		case 3:
 			cur_skey[2].sk_argument =
 				(cache->cc_key[2] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(tuple->t_data->t_oid)
+				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
 				: fastgetattr(tuple,
 							  cache->cc_key[2],
 							  cache->cc_tupdesc,
@@ -238,7 +238,7 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, HeapTuple tuple)
 		case 2:
 			cur_skey[1].sk_argument =
 				(cache->cc_key[1] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(tuple->t_data->t_oid)
+				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
 				: fastgetattr(tuple,
 							  cache->cc_key[1],
 							  cache->cc_tupdesc,
@@ -248,7 +248,7 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, HeapTuple tuple)
 		case 1:
 			cur_skey[0].sk_argument =
 				(cache->cc_key[0] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(tuple->t_data->t_oid)
+				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
 				: fastgetattr(tuple,
 							  cache->cc_key[0],
 							  cache->cc_tupdesc,
@@ -572,7 +572,7 @@ AtEOXact_CatCache(bool isCommit)
 			if (isCommit)
 				elog(WARNING, "Cache reference leak: cache %s (%d), tuple %u has count %d",
 					 ct->my_cache->cc_relname, ct->my_cache->id,
-					 ct->tuple.t_data->t_oid,
+					 HeapTupleGetOid(&ct->tuple),
 					 ct->refcount);
 			ct->refcount = 0;
 		}
@@ -717,7 +717,7 @@ CatalogCacheFlushRelation(Oid relId)
 					continue;
 
 				if (cache->cc_reloidattr == ObjectIdAttributeNumber)
-					tupRelid = ct->tuple.t_data->t_oid;
+					tupRelid = HeapTupleGetOid(&ct->tuple);
 				else
 				{
 					bool		isNull;
@@ -907,6 +907,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 * copy the relcache's tuple descriptor to permanent cache storage
 	 */
 	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
+	AssertTupleDescHasOidIsValid(tupdesc);
 
 	/*
 	 * get the relation's OID and relisshared flag, too
@@ -1685,7 +1686,11 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 	}
 
 	ntp = heap_formtuple(tupDesc, values, nulls);
-	ntp->t_data->t_oid = tupOid;
+	if (tupOid != InvalidOid)
+	{
+		AssertTupleDescHasOid(tupDesc);
+		HeapTupleSetOid(ntp, tupOid);
+	}
 
 	pfree(values);
 	pfree(nulls);

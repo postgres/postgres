@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.54 2002/07/18 04:40:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.55 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,6 +540,7 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 
 	ExecSetSlotDescriptor(slot, tupType, false);
 
+	NullTupleDesc.tdhasoid = WITHOUTOID;
 	nullTuple = heap_formtuple(&NullTupleDesc, values, nulls);
 
 	return ExecStoreTuple(nullTuple, slot, InvalidBuffer, true);
@@ -557,7 +558,7 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecTypeFromTL(List *targetList)
+ExecTypeFromTL(List *targetList, hasoid_t withoid)
 {
 	List	   *tlitem;
 	TupleDesc	typeInfo;
@@ -576,7 +577,7 @@ ExecTypeFromTL(List *targetList)
 	/*
 	 * allocate a new typeInfo
 	 */
-	typeInfo = CreateTemplateTupleDesc(len);
+	typeInfo = CreateTemplateTupleDesc(len, withoid);
 
 	/*
 	 * scan list, generate type info for each entry

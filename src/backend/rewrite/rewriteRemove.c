@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.51 2002/07/12 18:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.52 2002/07/20 05:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior)
 	 * Do the deletion
 	 */
 	object.classId = get_system_catalog_relid(RewriteRelationName);
-	object.objectId = tuple->t_data->t_oid;
+	object.objectId = HeapTupleGetOid(tuple);
 	object.objectSubId = 0;
 
 	ReleaseSysCache(tuple);

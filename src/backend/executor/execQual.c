@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.99 2002/07/18 17:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.100 2002/07/20 05:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1770,7 +1770,10 @@ ExecTargetList(List *targetlist,
 	 * natts = 0 to deal with it.
 	 */
 	if (targettype == NULL)
+	{
 		targettype = &NullTupleDesc;
+		targettype->tdhasoid = WITHOUTOID;
+	}
 
 	/*
 	 * allocate an array of char's to hold the "null" information only if

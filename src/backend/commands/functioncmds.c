@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.9 2002/07/18 23:11:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.10 2002/07/20 05:16:57 momjian Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -425,7 +425,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	if (!HeapTupleIsValid(languageTuple))
 		elog(ERROR, "language \"%s\" does not exist", languageName);
 
-	languageOid = languageTuple->t_data->t_oid;
+	languageOid = HeapTupleGetOid(languageTuple);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 
 	if (languageStruct->lanpltrusted)
