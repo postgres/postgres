@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.1.1.1 1996/07/09 06:21:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.2 1996/10/20 06:34:14 scrappy Exp $
  *
  * NOTES
  *    These functions are stored in pg_amproc.  For each operator class
@@ -15,8 +15,8 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-#include "utils/nabstime.h"
 
 uint32 hashint2(int16 key)
 {

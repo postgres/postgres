@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.1.1.1 1996/07/09 06:21:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.2 1996/10/20 06:34:21 scrappy Exp $
  *
  * NOTES
  *    Postgres hash pages look like ordinary relation pages.  The opaque
@@ -22,17 +22,11 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-
-#include "utils/elog.h"
 #include "utils/rel.h"
-#include "utils/excid.h"
-
-#include "access/genam.h"
 #include "access/hash.h"
+#include "storage/bufmgr.h"
 
 static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);
 static void _hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.1.1.1 1996/07/09 06:21:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.2 1996/10/20 06:34:23 scrappy Exp $
  *
  * NOTES
  *    Because we can be doing an index scan on a relation while we
@@ -26,19 +26,9 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/rel.h"
-#include "utils/excid.h"
-
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "access/sdir.h"
 #include "access/hash.h"
 
 static void _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
