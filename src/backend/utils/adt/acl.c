@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.51 2000/10/16 17:08:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.52 2000/11/03 19:01:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,8 +212,7 @@ makeacl(int n)
 	if (n < 0)
 		elog(ERROR, "makeacl: invalid size: %d", n);
 	size = ACL_N_SIZE(n);
-	if (!(new_acl = (Acl *) palloc(size)))
-		elog(ERROR, "makeacl: palloc failed on %d", size);
+	new_acl = (Acl *) palloc(size);
 	MemSet((char *) new_acl, 0, size);
 	new_acl->size = size;
 	new_acl->ndim = 1;
@@ -382,7 +381,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 
 	/* These checks for null input are probably dead code, but... */
 	if (!old_acl || ACL_NUM(old_acl) < 1)
-		old_acl = makeacl(0);
+		old_acl = makeacl(1);
 	if (!mod_aip)
 	{
 		new_acl = makeacl(ACL_NUM(old_acl));
@@ -402,12 +401,13 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	/* find the first element not less than the element to be inserted */
 	for (dst = 0; dst < num && aclitemgt(mod_aip, old_aip + dst); ++dst)
 		;
+
 	if (dst < num && aclitemeq(mod_aip, old_aip + dst))
 	{
 		/* modify in-place */
-		new_acl = makeacl(ACL_NUM(old_acl));
-		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		new_acl = makeacl(num);
 		new_aip = ACL_DAT(new_acl);
+		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 		src = dst;
 	}
 	else
@@ -420,24 +420,26 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 		}
 		else if (dst >= num)
 		{						/* end */
-			memmove((char *) new_aip,
-					(char *) old_aip,
-					num * sizeof(AclItem));
+			memcpy((char *) new_aip,
+				   (char *) old_aip,
+				   num * sizeof(AclItem));
 		}
 		else
 		{						/* middle */
-			memmove((char *) new_aip,
-					(char *) old_aip,
-					dst * sizeof(AclItem));
-			memmove((char *) (new_aip + dst + 1),
-					(char *) (old_aip + dst),
-					(num - dst) * sizeof(AclItem));
+			memcpy((char *) new_aip,
+				   (char *) old_aip,
+				   dst * sizeof(AclItem));
+			memcpy((char *) (new_aip + dst + 1),
+				   (char *) (old_aip + dst),
+				   (num - dst) * sizeof(AclItem));
 		}
 		new_aip[dst].ai_id = mod_aip->ai_id;
 		new_aip[dst].ai_idtype = mod_aip->ai_idtype;
 		num++;					/* set num to the size of new_acl */
-		src = 0;				/* world entry */
+		src = 0;				/* if add or del, start from world entry */
 	}
+
+	/* apply the permissions mod */
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
@@ -452,11 +454,11 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	}
 
 	/*
-	 * if the newly added entry has no permissions, delete it from the
+	 * if the adjusted entry has no permissions, delete it from the
 	 * list.  For example, this helps in removing entries for users who no
-	 * longer exist...
+	 * longer exist.  EXCEPTION: never remove the world entry.
 	 */
-	if (new_aip[dst].ai_mode == 0)
+	if (new_aip[dst].ai_mode == 0 && dst > 0)
 	{
 		int			i;
 
@@ -467,7 +469,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 			new_aip[i - 1].ai_mode = new_aip[i].ai_mode;
 		}
 		ARR_DIMS(new_acl)[0] = num - 1;
-		/* Adjust also the array size because it is used for memmove */
+		/* Adjust also the array size because it is used for memcpy */
 		ARR_SIZE(new_acl) -= sizeof(AclItem);
 	}
 
@@ -500,7 +502,7 @@ aclremove(PG_FUNCTION_ARGS)
 
 	/* These checks for null input should be dead code, but... */
 	if (!old_acl || ACL_NUM(old_acl) < 1)
-		old_acl = makeacl(0);
+		old_acl = makeacl(1);
 	if (!mod_aip)
 	{
 		new_acl = makeacl(ACL_NUM(old_acl));
@@ -511,11 +513,14 @@ aclremove(PG_FUNCTION_ARGS)
 	old_num = ACL_NUM(old_acl);
 	old_aip = ACL_DAT(old_acl);
 
+	/* Search for the matching entry */
 	for (dst = 0; dst < old_num && !aclitemeq(mod_aip, old_aip + dst); ++dst)
 		;
+
 	if (dst >= old_num)
-	{							/* not found or empty */
-		new_acl = makeacl(ACL_NUM(old_acl));
+	{
+		/* Not found, so return copy of source ACL */
+		new_acl = makeacl(old_num);
 		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 	}
 	else
@@ -529,20 +534,21 @@ aclremove(PG_FUNCTION_ARGS)
 		}
 		else if (dst == old_num - 1)
 		{						/* end */
-			memmove((char *) new_aip,
-					(char *) old_aip,
-					new_num * sizeof(AclItem));
+			memcpy((char *) new_aip,
+				   (char *) old_aip,
+				   new_num * sizeof(AclItem));
 		}
 		else
 		{						/* middle */
-			memmove((char *) new_aip,
-					(char *) old_aip,
-					dst * sizeof(AclItem));
-			memmove((char *) (new_aip + dst),
-					(char *) (old_aip + dst + 1),
-					(new_num - dst) * sizeof(AclItem));
+			memcpy((char *) new_aip,
+				   (char *) old_aip,
+				   dst * sizeof(AclItem));
+			memcpy((char *) (new_aip + dst),
+				   (char *) (old_aip + dst + 1),
+				   (new_num - dst) * sizeof(AclItem));
 		}
 	}
+
 	PG_RETURN_ACL_P(new_acl);
 }
 
