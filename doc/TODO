@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May 11 16:23:02 EDT 2004
+Last updated:		Wed May 12 00:10:39 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -245,7 +245,6 @@ Commands
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
 	o Add table function support to pltcl, plperl, plpython
-	o Add PL/PHP (Joe)
 	o Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
 	o Allow PL/pgSQL EXECUTE query_var INTO record_var;
 	o Add capability to create and call PROCEDURES
