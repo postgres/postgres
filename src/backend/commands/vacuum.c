@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.132 1999/12/29 10:12:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.133 1999/12/29 10:13:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2148,7 +2148,7 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
  *	frequently in each column.  These figures are used to compute
  *	the selectivity of the column.
  *
- *	We use a three-bucked cache to get the most frequent item
+ *	We use a three-bucked cache to get the most frequent item.
  *	The 'guess' buckets count hits.  A cache miss causes guess1
  *	to get the most hit 'guess' item in the most recent cycle, and
  *	the new item goes into guess2.	Whenever the total count of hits
