@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.9 2002/11/17 13:28:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.10 2002/11/24 03:15:55 momjian Exp $
 -->
 
 <appendix id="features">
@@ -1285,6 +1285,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.9 2002/11/17 13:28:43 pet
         <entry></entry>
        </row>
        <row>
+        <entry>T212</entry>
+        <entry>Enhanced integrity management</entry>
+        <entry>Enhanced trigger capability</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>T231</entry>
         <entry></entry>
         <entry>SENSITIVE cursors</entry>
@@ -2150,12 +2156,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.9 2002/11/17 13:28:43 pet
         <entry>Enhanced integrity management</entry>
         <entry>Multiple triggers for the same the event are executed in
          the order in which they were created</entry> 
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T212</entry>
-        <entry>Enhanced integrity management</entry>
-        <entry>Enhanced trigger capability</entry>
         <entry></entry>
        </row>
        <row>
