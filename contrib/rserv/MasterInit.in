@@ -90,15 +90,15 @@ $result = $conn->exec("create sequence _rserv_sync_seq_");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("CREATE FUNCTION _rserv_log_() RETURNS opaque" .
-					  " AS '_OBJWD_/rserv_DLSUFFIX_' LANGUAGE 'c'");
+					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("CREATE FUNCTION _rserv_sync_(int4) RETURNS int4" .
-					  " AS '_OBJWD_/rserv_DLSUFFIX_' LANGUAGE 'c'");
+					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("CREATE FUNCTION _rserv_debug_(int4) RETURNS int4" .
-					  " AS '_OBJWD_/rserv_DLSUFFIX_' LANGUAGE 'c'");
+					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("COMMIT");

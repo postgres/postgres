@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.55 2001/09/12 20:57:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.56 2001/09/16 16:11:09 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -471,9 +471,11 @@ su - postgres
        <varname>includedir</varname> and are namespace-clean.  The
        internal header files and the server header files are installed
        into private directories under
-       <filename><replaceable>includedir</replaceable>/postgresql</filename>.
+       <varname>includedir</varname>.
        See the <citetitle>Programmer's Guide</citetitle> for
        information how to get at the header files for each interface.
+       Finally, a private subdirectory will also be created, if appropriate,
+       under <varname>libdir</varname> for dynamically loadable modules.       
       </para>
      </note>
     </para>

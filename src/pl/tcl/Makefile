@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.33 2001/05/11 23:38:06 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.34 2001/09/16 16:11:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -93,19 +93,19 @@ endif
 pltcl$(DLSUFFIX): pltcl.o
 
 install: all installdirs
-	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(libdir)/$(DLOBJS)
+	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(pkglibdir)/$(DLOBJS)
 ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
 endif
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
 ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
 endif
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/$(DLOBJS)
+	rm -f $(DESTDIR)$(pkglibdir)/$(DLOBJS)
 ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
 endif

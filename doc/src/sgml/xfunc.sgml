@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.37 2001/09/15 19:56:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.38 2001/09/16 16:11:09 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -466,7 +466,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      <listitem>
       <para>
        If the name starts with the string <literal>$libdir</literal>,
-       that part is replaced by the PostgreSQL library directory,
+       that part is replaced by the PostgreSQL package library directory,
        which is determined at build time.
       </para>
      </listitem>
@@ -516,7 +516,9 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     It is recommended to locate shared libraries either relative to
     <literal>$libdir</literal> or through the dynamic library path.
     This simplifies version upgrades if the new installation is at a
-    different location.
+    different location.  The actual directory that
+    <literal>$libdir</literal> stands for can be found out with the
+    command <literal>pg_config --pkglibdir</literal>.
    </para>
 
    <note>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.79 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.80 2001/09/16 16:11:09 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1047,12 +1047,13 @@ env PGOPTIONS='-c geqo=off' psql
         The value for dynamic_library_path has to be a colon-separated
         list of absolute directory names.  If a directory name starts
         with the special value <literal>$libdir</literal>, the
-        compiled-in PostgreSQL library directory, which is where the
+        compiled-in PostgreSQL package library directory, which is where the
         modules provided by the PostgreSQL distribution are installed,
-        is substituted.  An example value:
+        is substituted.  (Use <literal>pg_config --pkglibdir</literal>
+        to print the name of this directory.)  An example value:
         <informalexample>
 <programlisting>
-dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/contrib'
+dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 </programlisting>
         </informalexample>
        </para>

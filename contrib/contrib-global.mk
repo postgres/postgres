@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.1 2001/09/06 10:49:29 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.2 2001/09/16 16:11:08 petere Exp $
 
 # This file contains generic rules to build many kinds of simple
 # contrib modules.  You only need to set a few variables and include
@@ -78,8 +78,8 @@ ifneq (,$(DATA)$(DATA_built))
 endif # DATA
 ifdef MODULES
 	@for file in $(addsuffix $(DLSUFFIX), $(MODULES)); do \
-	  echo "$(INSTALL_SHLIB) $$file $(DESTDIR)$(libdir)/contrib"; \
-	  $(INSTALL_SHLIB) $$file $(DESTDIR)$(libdir)/contrib; \
+	  echo "$(INSTALL_SHLIB) $$file $(DESTDIR)$(pkglibdir)"; \
+	  $(INSTALL_SHLIB) $$file $(DESTDIR)$(pkglibdir); \
 	done
 endif # MODULES
 ifdef DOCS
@@ -92,12 +92,12 @@ ifdef PROGRAM
 	$(INSTALL_PROGRAM) $(PROGRAM)$(X) $(DESTDIR)$(bindir)
 endif # PROGRAM
 ifdef MODULE_big
-	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(libdir)/contrib/$(MODULE_big)$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)
 endif # MODULE_big
 ifdef SCRIPTS
 	@for file in $(addprefix $(srcdir)/, $(SCRIPTS)); do \
 	  echo "$(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir)"; \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(bindir); \
+	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir); \
 	done
 endif # SCRIPTS
 
@@ -107,7 +107,7 @@ ifneq (,$(DATA)$(DATA_built))
 	$(mkinstalldirs) $(DESTDIR)$(datadir)/contrib
 endif
 ifneq (,$(MODULES)$(MODULE_big))
-	$(mkinstalldirs) $(DESTDIR)$(libdir)/contrib
+	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
 endif
 ifdef DOCS
 	$(mkinstalldirs) $(DESTDIR)$(docdir)/contrib
@@ -122,7 +122,7 @@ ifneq (,$(DATA)$(DATA_built))
 	rm -f $(addprefix $(DESTDIR)$(datadir)/contrib/, $(DATA) $(DATA_built))
 endif
 ifdef MODULES
-	rm -f $(addprefix $(DESTDIR)$(libdir)/contrib/, $(addsuffix $(DLSUFFIX), $(MODULES)))
+	rm -f $(addprefix $(DESTDIR)$(pkglibdir)/, $(addsuffix $(DLSUFFIX), $(MODULES)))
 endif
 ifdef DOCS
 	rm -f $(addprefix $(DESTDIR)$(docdir)/contrib/, $(DOCS))
@@ -131,7 +131,7 @@ ifdef PROGRAM
 	rm -f $(DESTDIR)$(bindir)/$(PROGRAM)$(X)
 endif
 ifdef MODULE_big
-	rm -f $(DESTDIR)$(libdir)/contrib/$(MODULE_big)$(DLSUFFIX)
+	rm -f $(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)
 endif
 ifdef SCRIPTS
 	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS))
@@ -193,7 +193,7 @@ endif # REGRESS
 
 ifneq (,$(MODULES)$(MODULE_big))
 %.sql: %.sql.in
-	sed 's,MODULE_PATHNAME,$(libdir)/contrib/$*,g' $< >$@
+	sed 's,MODULE_PATHNAME,$$libdir/$*,g' $< >$@
 endif
 
 ifdef PROGRAM

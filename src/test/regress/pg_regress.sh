@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.21 2001/05/27 09:59:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.22 2001/09/16 16:11:11 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -70,6 +70,7 @@ fi
 : ${outputdir=.}
 
 libdir='@libdir@'
+pkglibdir='@pkglibdir@'
 bindir='@bindir@'
 datadir='@datadir@'
 host_platform='@host_tuple@'
@@ -271,6 +272,7 @@ then
 
     bindir=$temp_install/install/$bindir
     libdir=$temp_install/install/$libdir
+    pkglibdir=$temp_install/install/$pkglibdir
     datadir=$temp_install/install/$datadir
     PGDATA=$temp_install/data
 
@@ -450,7 +452,7 @@ fi
 
 if [ "$enable_shared" = yes ]; then
         message "installing PL/pgSQL"
-        "$bindir/createlang" -L "$libdir" $psql_options plpgsql $dbname
+        "$bindir/createlang" -L "$pkglibdir" $psql_options plpgsql $dbname
         if [ $? -ne 0 ] && [ $? -ne 2 ]; then
             echo "$me: createlang failed"
             (exit 2); exit

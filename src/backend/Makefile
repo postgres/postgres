@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.73 2001/06/02 18:25:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.74 2001/09/16 16:11:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -136,28 +136,36 @@ ifeq ($(enable_nls), yes)
 	$(MAKE) -C po $@
 endif
 
-installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) $(DESTDIR)$(datadir)
-ifeq ($(enable_nls), yes)
-	$(MAKE) -C po $@
-endif
-
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
 	@rm -f $(DESTDIR)$(bindir)/postmaster
 	ln -s postgres$(X) $(DESTDIR)$(bindir)/postmaster
 ifeq ($(MAKE_EXPORTS), true)
-	$(INSTALL_DATA) $(POSTGRES_IMP) $(DESTDIR)$(libdir)/$(POSTGRES_IMP)
+	$(INSTALL_DATA) $(POSTGRES_IMP) $(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)
 endif
 
 .PHONY: install-bin
+
+installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(datadir)
+ifeq ($(PORTNAME), win)
+ifeq ($(MAKE_DLL), true)
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
+endif
+endif
+ifeq ($(MAKE_EXPORTS), true)
+	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
+endif
+ifeq ($(enable_nls), yes)
+	$(MAKE) -C po $@
+endif
 
 ##########################################################################
 
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/postgres$(X) $(DESTDIR)$(bindir)/postmaster
 ifeq ($(MAKE_EXPORTS), true)
-	rm -f $(DESTDIR)$(libdir)/$(POSTGRES_IMP)
+	rm -f $(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)
 endif
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.5 2001/08/21 00:42:41 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.6 2001/09/16 16:11:09 petere Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -47,13 +47,14 @@ SO_MINOR_VERSION = 1
 
 override CPPFLAGS	+= $(CRYPTO_CFLAGS) -I$(srcdir) 
 override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+rpath :=
 
 all: all-lib $(NAME).sql
 
 include $(top_srcdir)/src/Makefile.shlib
 
 $(NAME).sql: $(NAME).sql.in
-	sed 's,@MODULE_FILENAME@,$(libdir)/contrib/pgcrypto$(DLSUFFIX),g' $< >$@
+	sed 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' $< >$@
 
 rijndael.o: rijndael.tbl
 
@@ -62,15 +63,15 @@ rijndael.tbl:
 	./gen-rtab > rijndael.tbl
 
 install: all installdirs
-	$(INSTALL_SHLIB) $(shlib)	$(DESTDIR)$(libdir)/contrib/pgcrypto$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib)	$(DESTDIR)$(pkglibdir)/pgcrypto$(DLSUFFIX)
 	$(INSTALL_DATA) $(NAME).sql	$(DESTDIR)$(datadir)/contrib/$(NAME).sql
 	$(INSTALL_DATA) README.$(NAME)	$(DESTDIR)$(docdir)/contrib/README.$(NAME)
 
 installdirs:
-	$(mkinstalldirs) $(libdir)/contrib $(datadir)/contrib $(docdir)/contrib
+	$(mkinstalldirs) $(pkglibdir) $(datadir)/contrib $(docdir)/contrib
 
 uninstall: uninstall-lib
-	rm -f $(DESTDIR)$(libdir)/contrib/pgcrypto$(DLSUFFIX) $(datadir)/contrib/$(NAME).sql $(docdir)/contrib/README.$(NAME)
+	rm -f $(DESTDIR)$(pkglibdir)/pgcrypto$(DLSUFFIX) $(datadir)/contrib/$(NAME).sql $(docdir)/contrib/README.$(NAME)
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) $(NAME).sql gen-rtab

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.136 2001/08/29 19:14:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.137 2001/09/16 16:11:09 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -80,10 +80,20 @@ endif
 endif
 
 libdir := @libdir@
-pkglibdir = $(libdir)/postgresql
+pkglibdir = $(libdir)
+ifeq "$(findstring pgsql, $(pkglibdir))" ""
+ifeq "$(findstring postgres, $(pkglibdir))" ""
+override pkglibdir := $(pkglibdir)/postgresql
+endif
+endif
 
 includedir := @includedir@
-pkgincludedir = $(includedir)/postgresql
+pkgincludedir = $(includedir)
+ifeq "$(findstring pgsql, $(pkgincludedir))" ""
+ifeq "$(findstring postgres, $(pkgincludedir))" ""
+override pkgincludedir := $(pkgincludedir)/postgresql
+endif
+endif
 includedir_server = $(pkgincludedir)/server
 includedir_internal = $(pkgincludedir)/internal
 

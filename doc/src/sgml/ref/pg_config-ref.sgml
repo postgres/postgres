@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.7 2001/09/03 12:57:50 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.8 2001/09/16 16:11:09 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <docinfo>
@@ -24,6 +24,7 @@
     <arg>--includedir</arg>
     <arg>--includedir-server</arg>
     <arg>--libdir</arg>
+    <arg>--pkglibdir</arg>
     <arg>--configure</arg>
     <arg>--version</arg>
    </group>
@@ -83,6 +84,18 @@
      <listitem>
       <para>
        Print the location of object code libraries.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>--pkglibdir</>
+     <listitem>
+      <para>
+       Print the location of dynamically loadable modules, or where
+       the server would search for them.  (Other
+       architecture-dependent data files may also be installed in this
+       directory.)
       </para>
      </listitem>
     </varlistentry>

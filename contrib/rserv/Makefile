@@ -22,15 +22,13 @@ override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 all: $(SQLS) $(TCLS) $(PERLS) $(SCRIPTS) $(SONAME)
 
 %.sql: %.sql.in
-	sed -e "s:_OBJWD_:$(libdir)/contrib:g" \
-	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" $< >$@
+	sed 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' $< >$@
 
 $(PERLS) $(TCLS) $(SCRIPTS): %: %.in
-	sed -e "s:_OBJWD_:$(libdir)/contrib:g" \
-	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
-	    -e "s:@SQLDIR@:$(datadir)/contrib:g" \
-	    -e "s:@BINDIR@:$(bindir):g" \
-	    -e "s:@LIBDIR@:$(datadir)/contrib:g" $< >$@
+	sed -e 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' \
+	    -e 's:@SQLDIR@:$(datadir)/contrib:g' \
+	    -e 's:@BINDIR@:$(bindir):g' \
+	    -e 's:@LIBDIR@:$(datadir)/contrib:g' $< >$@
 	chmod a+x $@
 
 
@@ -42,12 +40,12 @@ install: all installdirs
 	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir) || exit ; \
 	done
 	$(INSTALL_DATA) $(srcdir)/RServ.pm $(DESTDIR)$(datadir)/contrib
-	$(INSTALL_SHLIB) $(SONAME) $(DESTDIR)$(libdir)/contrib
+	$(INSTALL_SHLIB) $(SONAME) $(DESTDIR)$(pkglibdir)
 	$(INSTALL_DATA) $(srcdir)/README.$(NAME) $(DESTDIR)$(docdir)/contrib
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(datadir)/contrib \
-	  $(DESTDIR)$(libdir)/contrib $(DESTDIR)$(docdir)/contrib
+	  $(DESTDIR)$(pkglibdir) $(DESTDIR)$(docdir)/contrib
 
 
 clean distclean maintainer-clean:

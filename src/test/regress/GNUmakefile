@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.34 2001/04/04 21:15:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.35 2001/09/16 16:11:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ all: pg_regress
 pg_regress: pg_regress.sh GNUmakefile
 	sed -e 's,@bindir@,$(bindir),g' \
 	    -e 's,@libdir@,$(libdir),g' \
+	    -e 's,@pkglibdir@,$(pkglibdir),g' \
 	    -e 's,@datadir@,$(datadir),g' \
 	    -e 's/@VERSION@/$(VERSION)/g' \
 	    -e 's/@host_tuple@/$(host_tuple)/g' \

@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.17 2001/08/21 16:25:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.18 2001/09/16 16:11:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,8 +20,8 @@ SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-
 override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+rpath :=
 
 OBJS = pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
@@ -46,7 +46,7 @@ include $(top_srcdir)/src/Makefile.shlib
 
 install: installdirs all
 ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(libdir)/plpgsql$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)
 else
 	@echo "*****"; \
 	 echo "* PL/pgSQL was not installed due to lack of shared library support."; \
@@ -54,10 +54,10 @@ else
 endif
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/plpgsql$(DLSUFFIX)
+	rm -f $(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)
 
 pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
 

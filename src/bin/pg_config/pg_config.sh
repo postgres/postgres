@@ -7,7 +7,7 @@
 # Author:  Peter Eisentraut <peter_e@gmx.net> 
 # Public domain
 
-# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.4 2001/08/28 14:20:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.5 2001/09/16 16:11:11 petere Exp $
 
 me=`basename $0`
 
@@ -16,13 +16,14 @@ val_bindir='@bindir@'
 val_includedir='@includedir@'
 val_includedir_server='@includedir_server@'
 val_libdir='@libdir@'
+val_pkglibdir='@pkglibdir@'
 val_configure="@configure@"
 val_version='@version@'
 
 help="\
 $me provides information about the installed version of PostgreSQL.
 
-Usage: $me --bindir | --includedir | --includedir-server | --libdir | --configure | --version
+Usage: $me --bindir | --includedir | --includedir-server | --libdir | --pkglibdir | --configure | --version
 
 Operation modes:
   --bindir              show location of user executables
@@ -30,6 +31,7 @@ Operation modes:
                         interfaces
   --includedir-server   show location of C header files for the server
   --libdir              show location of object code libraries
+  --pkglibdir           show location of dynamically loadable modules
   --configure           show options given to 'configure' script when
                         PostgreSQL was built
   --version             show the PostgreSQL version and exit
@@ -55,6 +57,7 @@ do
         --includedir-server)
                         show="$show \$val_includedir_server";;
         --libdir)       show="$show \$val_libdir";;
+        --pkglibdir)    show="$show \$val_pkglibdir";;
         --configure)    show="$show \$val_configure";;
 
 	--version)      echo "PostgreSQL $val_version"

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/bin/pg_config/Makefile,v 1.2 2001/08/28 14:20:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Makefile,v 1.3 2001/09/16 16:11:11 petere Exp $
 
 subdir = src/bin/pg_config
 top_builddir = ../../..
@@ -12,6 +12,7 @@ pg_config: pg_config.sh $(top_builddir)/config.status $(top_builddir)/src/Makefi
 	    -e 's,@includedir@,$(includedir),g' \
 	    -e 's,@includedir_server@,$(includedir_server),g' \
 	    -e 's,@libdir@,$(libdir),g' \
+	    -e 's,@pkglibdir@,$(pkglibdir),g' \
 	    -e "s,@configure@,$$configure,g" \
 	    -e 's,@version@,$(VERSION),g' \
 	  $< >$@

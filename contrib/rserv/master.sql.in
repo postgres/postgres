@@ -80,7 +80,7 @@ drop function _rserv_log_();
 
 CREATE FUNCTION _rserv_log_()
 	RETURNS opaque
-	AS '_OBJWD_/rserv_DLSUFFIX_'
+	AS '@MODULE_FILENAME@'
 	LANGUAGE 'c'
 ;
 
@@ -88,7 +88,7 @@ drop function _rserv_sync_(int4);
 
 CREATE FUNCTION _rserv_sync_(int4)
 	RETURNS int4
-	AS '_OBJWD_/rserv_DLSUFFIX_'
+	AS '@MODULE_FILENAME@'
 	LANGUAGE 'c'
 ;
 
@@ -96,6 +96,6 @@ drop function _rserv_debug_(int4);
 
 CREATE FUNCTION _rserv_debug_(int4)
 	RETURNS int4
-	AS '_OBJWD_/rserv_DLSUFFIX_'
+	AS '@MODULE_FILENAME@'
 	LANGUAGE 'c'
 ;
