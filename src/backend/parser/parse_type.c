@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.71 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.72 2004/12/15 20:15:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,6 +452,8 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	typename = typecast->typename;
 	if (typename == NULL ||
 		!IsA(typename, TypeName))
+		goto fail;
+	if (typename->setof)
 		goto fail;
 
 	*type_id = typenameTypeId(typename);
