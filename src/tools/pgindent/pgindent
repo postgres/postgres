@@ -1462,7 +1462,7 @@ do
 	sed 's;/\*---X_X;/* ---;g' |
 # workaround indent bug
 	sed 's;^static[ 	][ 	]*;static ;g' |
-	sed 's;^}		*;}	;' |
+	sed 's;^}	[ 	]*;}	;' |
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 # work around #else indenting next line if #ifdef defines variables at top
