@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.244 2002/07/18 23:11:30 petere Exp $
+ * $Id: pg_proc.h,v 1.245 2002/07/20 05:49:27 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2880,6 +2880,11 @@ DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 f f f t f i 2 25 "25 25" 10
 DESCR("substitutes regular expression");
 DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f f t f i 3 25 "25 25 25" 100 0 0 100	"select substring($1, like_escape($2, $3))" - _null_ ));
 DESCR("substitutes regular expression with escape argument");
+
+DATA(insert OID = 2090 (  current_setting	PGNSP PGUID 12 f f f t f s 1 25 "25" 100 0 0 100 show_config_by_name - _null_ ));
+DESCR("SHOW X as a function");
+DATA(insert OID = 2091 (  set_config		PGNSP PGUID 12 f f f f f v 3 25 "25 25 16" 100 0 0 100 set_config_by_name - _null_ ));
+DESCR("SET X as a function");
 
 /* Aggregates (moved here from pg_aggregate for 7.3) */
 

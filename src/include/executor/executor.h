@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.70 2002/07/20 05:16:59 momjian Exp $
+ * $Id: executor.h,v 1.71 2002/07/20 05:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,25 @@ extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 					  TupleDesc tupType);
 extern TupleDesc ExecTypeFromTL(List *targetList, hasoid_t withoid);
 extern void SetChangedParamList(Plan *node, List *newchg);
+
+typedef struct TupOutputState
+{
+	TupleDesc	tupdesc;
+	DestReceiver *destfunc;
+} TupOutputState;
+
+extern TupOutputState *begin_tup_output_tupdesc(CommandDest dest, TupleDesc tupdesc);
+extern void do_tup_output(TupOutputState *tstate, char **values);
+extern void do_text_output_multiline(TupOutputState *tstate, char *text);
+extern void end_tup_output(TupOutputState *tstate);
+
+#define PROJECT_LINE_OF_TEXT(text_to_project) \
+	do { \
+		char *values[1]; \
+		values[0] = text_to_project; \
+		do_tup_output(tstate, values); \
+	} while (0)
+
 
 /*
  * prototypes from functions in execUtils.c

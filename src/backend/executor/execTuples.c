@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.55 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.56 2002/07/20 05:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,3 +791,73 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	return tuple;
 }
 
+/*
+ * Functions for sending tuples to the frontend (or other specified destination)
+ * as though it is a SELECT result. These are used by utility commands that
+ * need to project directly to the destination and don't need or want full
+ * Table Function capability. Currently used by EXPLAIN and SHOW ALL
+ */
+TupOutputState *
+begin_tup_output_tupdesc(CommandDest dest, TupleDesc tupdesc)
+{
+	TupOutputState *tstate;
+
+	tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
+
+	tstate->tupdesc = tupdesc;
+	tstate->destfunc = DestToFunction(dest);
+
+	(*tstate->destfunc->setup) (tstate->destfunc, (int) CMD_SELECT,
+								NULL, tupdesc);
+
+	return tstate;
+}
+
+/*
+ * write a single tuple
+ *
+ * values is a list of the external C string representations of the values
+ * to be projected.
+ */
+void
+do_tup_output(TupOutputState *tstate, char **values)
+{
+	/* build a tuple from the input strings using the tupdesc */
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tstate->tupdesc);
+	HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
+
+	/* send the tuple to the receiver */
+	(*tstate->destfunc->receiveTuple) (tuple,
+									   tstate->tupdesc,
+									   tstate->destfunc);
+	/* clean up */
+	heap_freetuple(tuple);
+}
+
+/* write a chunk of text, breaking at newline characters
+ * NB: scribbles on its input!
+ * Should only be used for a single TEXT attribute tupdesc.
+ */
+void
+do_text_output_multiline(TupOutputState *tstate, char *text)
+{
+	while (*text)
+	{
+		char   *eol;
+
+		eol = strchr(text, '\n');
+		if (eol)
+			*eol++ = '\0';
+		else
+			eol = text + strlen(text);
+		do_tup_output(tstate, &text);
+		text = eol;
+	}
+}
+
+void
+end_tup_output(TupOutputState *tstate)
+{
+	(*tstate->destfunc->cleanup) (tstate->destfunc);
+	pfree(tstate);
+}

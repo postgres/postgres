@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.81 2002/07/20 05:16:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.82 2002/07/20 05:49:27 momjian Exp $
  *
  */
 
@@ -15,6 +15,7 @@
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
+#include "executor/executor.h"
 #include "executor/instrument.h"
 #include "lib/stringinfo.h"
 #include "nodes/print.h"
@@ -38,15 +39,9 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 } ExplainState;
 
-typedef struct TextOutputState
-{
-	TupleDesc	tupdesc;
-	DestReceiver *destfunc;
-} TextOutputState;
-
 static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
-							TextOutputState *tstate);
+							TupOutputState *tstate);
 static void explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
@@ -59,11 +54,6 @@ static void show_upper_qual(List *qual, const char *qlabel,
 static void show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 						   StringInfo str, int indent, ExplainState *es);
 static Node *make_ors_ands_explicit(List *orclauses);
-static TextOutputState *begin_text_output(CommandDest dest, char *title);
-static void do_text_output(TextOutputState *tstate, char *aline);
-static void do_text_output_multiline(TextOutputState *tstate, char *text);
-static void end_text_output(TextOutputState *tstate);
-
 
 /*
  * ExplainQuery -
@@ -73,16 +63,23 @@ void
 ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 {
 	Query	   *query = stmt->query;
-	TextOutputState *tstate;
+	TupOutputState *tstate;
+	TupleDesc	tupdesc;
 	List	   *rewritten;
 	List	   *l;
 
-	tstate = begin_text_output(dest, "QUERY PLAN");
+	/* need a tuple descriptor representing a single TEXT column */
+	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN",
+					   TEXTOID, -1, 0, false);
+
+	/* prepare for projection of tuples */
+	tstate = begin_tup_output_tupdesc(dest, tupdesc);
 
 	if (query->commandType == CMD_UTILITY)
 	{
 		/* rewriter will not cope with utility statements */
-		do_text_output(tstate, "Utility statements have no plan structure");
+		PROJECT_LINE_OF_TEXT("Utility statements have no plan structure");
 	}
 	else
 	{
@@ -92,7 +89,7 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 		if (rewritten == NIL)
 		{
 			/* In the case of an INSTEAD NOTHING, tell at least that */
-			do_text_output(tstate, "Query rewrites to nothing");
+			PROJECT_LINE_OF_TEXT("Query rewrites to nothing");
 		}
 		else
 		{
@@ -102,12 +99,12 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 				ExplainOneQuery(lfirst(l), stmt, tstate);
 				/* put a blank line between plans */
 				if (lnext(l) != NIL)
-					do_text_output(tstate, "");
+					PROJECT_LINE_OF_TEXT("");
 			}
 		}
 	}
 
-	end_text_output(tstate);
+	end_tup_output(tstate);
 }
 
 /*
@@ -115,7 +112,7 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
  *	  print out the execution plan for one query
  */
 static void
-ExplainOneQuery(Query *query, ExplainStmt *stmt, TextOutputState *tstate)
+ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 {
 	Plan	   *plan;
 	ExplainState *es;
@@ -125,9 +122,9 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TextOutputState *tstate)
 	if (query->commandType == CMD_UTILITY)
 	{
 		if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
-			do_text_output(tstate, "NOTIFY");
+			PROJECT_LINE_OF_TEXT("NOTIFY");
 		else
-			do_text_output(tstate, "UTILITY");
+			PROJECT_LINE_OF_TEXT("UTILITY");
 		return;
 	}
 
@@ -192,7 +189,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TextOutputState *tstate)
 			do_text_output_multiline(tstate, f);
 			pfree(f);
 			if (es->printCost)
-				do_text_output(tstate, "");	/* separator line */
+				PROJECT_LINE_OF_TEXT("");	/* separator line */
 		}
 	}
 
@@ -836,79 +833,4 @@ make_ors_ands_explicit(List *orclauses)
 
 		return (Node *) make_orclause(args);
 	}
-}
-
-
-/*
- * Functions for sending text to the frontend (or other specified destination)
- * as though it is a SELECT result.
- *
- * We tell the frontend that the table structure is a single TEXT column.
- */
-
-static TextOutputState *
-begin_text_output(CommandDest dest, char *title)
-{
-	TextOutputState *tstate;
-	TupleDesc	tupdesc;
-
-	tstate = (TextOutputState *) palloc(sizeof(TextOutputState));
-
-	/* need a tuple descriptor representing a single TEXT column */
-	tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, title,
-					   TEXTOID, -1, 0, false);
-
-	tstate->tupdesc = tupdesc;
-	tstate->destfunc = DestToFunction(dest);
-
-	(*tstate->destfunc->setup) (tstate->destfunc, (int) CMD_SELECT,
-								NULL, tupdesc);
-
-	return tstate;
-}
-
-/* write a single line of text */
-static void
-do_text_output(TextOutputState *tstate, char *aline)
-{
-	HeapTuple	tuple;
-	Datum		values[1];
-	char		nulls[1];
-
-	/* form a tuple and send it to the receiver */
-	values[0] = DirectFunctionCall1(textin, CStringGetDatum(aline));
-	nulls[0] = ' ';
-	tuple = heap_formtuple(tstate->tupdesc, values, nulls);
-	(*tstate->destfunc->receiveTuple) (tuple,
-									   tstate->tupdesc,
-									   tstate->destfunc);
-	pfree(DatumGetPointer(values[0]));
-	heap_freetuple(tuple);
-}
-
-/* write a chunk of text, breaking at newline characters */
-/* NB: scribbles on its input! */
-static void
-do_text_output_multiline(TextOutputState *tstate, char *text)
-{
-	while (*text)
-	{
-		char   *eol;
-
-		eol = strchr(text, '\n');
-		if (eol)
-			*eol++ = '\0';
-		else
-			eol = text + strlen(text);
-		do_text_output(tstate, text);
-		text = eol;
-	}
-}
-
-static void
-end_text_output(TextOutputState *tstate)
-{
-	(*tstate->destfunc->cleanup) (tstate->destfunc);
-	pfree(tstate);
 }
