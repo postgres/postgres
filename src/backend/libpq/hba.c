@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.105 2003/07/22 19:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.106 2003/07/22 21:19:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1391,7 +1391,7 @@ ident_unix(int sock, char *ident_user)
 	{
 		ereport(LOG,
 				(errmsg("local user with uid %d is not known to getpwuid",
-						(int) peercred.uid);
+						(int) peercred.uid)));
 		return false;
 	}
 
@@ -1461,7 +1461,7 @@ ident_unix(int sock, char *ident_user)
 	{
 		ereport(LOG,
 				(errmsg("local user with uid %d is not known to getpwuid",
-						(int) cred->cruid);
+						(int) cred->cruid)));
 		return false;
 	}
 
