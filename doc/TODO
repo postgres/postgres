@@ -116,7 +116,7 @@ INDEXES
 COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
-* Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E)
+* Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E) [drop]
 * Add ALTER TABLE command to change table ownership
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table

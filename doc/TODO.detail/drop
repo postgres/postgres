@@ -1,0 +1,722 @@
+From pgsql-hackers-owner+M3040@hub.org Thu Jun  8 00:31:01 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13157
+	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:31:00 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5846ib99782;
+	Thu, 8 Jun 2000 00:06:44 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5846Xb99707
+	for <pgsql-hackers@postgreSQL.org>; Thu, 8 Jun 2000 00:06:33 -0400 (EDT)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id NAA01145; Thu, 08 Jun 2000 13:05:42 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] DROP COLUMN status
+Date: Thu, 8 Jun 2000 13:07:44 +0900
+Message-ID: <000d01bfd0ff$194d56c0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+In-Reply-To: <200006080309.XAA10305@candle.pha.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@hub.org [mailto:pgsql-hackers-owner@hub.org]On
+> Behalf Of Bruce Momjian
+> 
+> Can someone comment on where we are with DROP COLUMN?
+>
+
+I've already committed my trial implementation 3 months ago.
+They are $ifdef'd by _DROP_COLUMN_HACK__.
+Please enable the feature and evaluate it.
+You could enable the feature without initdb.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+ 
+
+From Inoue@tpf.co.jp Thu Jun  8 02:03:27 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA14243
+	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 02:03:25 -0400 (EDT)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id PAA01221; Thu, 08 Jun 2000 15:03:23 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] DROP COLUMN status
+Date: Thu, 8 Jun 2000 15:05:24 +0900
+Message-ID: <000f01bfd10f$893798a0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+In-Reply-To: <200006080457.AAA13430@candle.pha.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+Status: OR
+
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> Sent: Thursday, June 08, 2000 1:58 PM
+> 
+> [ Charset ISO-8859-1 unsupported, converting... ]
+> > > -----Original Message-----
+> > > From: pgsql-hackers-owner@hub.org 
+> [mailto:pgsql-hackers-owner@hub.org]On
+> > > Behalf Of Bruce Momjian
+> > > 
+> > > Can someone comment on where we are with DROP COLUMN?
+> > >
+> > 
+> > I've already committed my trial implementation 3 months ago.
+> > They are $ifdef'd by _DROP_COLUMN_HACK__.
+> > Please enable the feature and evaluate it.
+> > You could enable the feature without initdb.
+> 
+> OK, can you explain how it works, and add any needed documentation so we
+> can enable it.
+>
+
+First it's only a trial so I don't implement it completely.
+Especially I don't completely drop related objects
+(FK_constraint,triggers,views etc). I don't know whether
+we could drop them properly or not.
+
+The implementation makes the dropped column invisible by
+changing its attnum to -attnum - offset(currently 20) and
+attnam to ("*already Dropped%d",attnum). It doesn't touch
+the table at all. After dropping a column insert/update
+operation regards the column as NULL and other related
+stuff simply ignores the column.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+From tgl@sss.pgh.pa.us Thu Jun  8 10:20:34 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29148
+	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 10:20:33 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id KAA15725;
+	Thu, 8 Jun 2000 10:20:11 -0400 (EDT)
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "PostgreSQL-development" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] DROP COLUMN status 
+In-reply-to: <000f01bfd10f$893798a0$2801007e@tpf.co.jp> 
+References: <000f01bfd10f$893798a0$2801007e@tpf.co.jp>
+Comments: In-reply-to "Hiroshi Inoue" <Inoue@tpf.co.jp>
+	message dated "Thu, 08 Jun 2000 15:05:24 +0900"
+Date: Thu, 08 Jun 2000 10:20:11 -0400
+Message-ID: <15722.960474011@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+"Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+> The implementation makes the dropped column invisible by
+> changing its attnum to -attnum - offset(currently 20) and
+> attnam to ("*already Dropped%d",attnum).
+
+Ugh.  No wonder you had to hack so many places in such an ugly fashion.
+Why not leave the attnum as-is, and just add a bool saying "column is
+dropped" to pg_attribute?  As long as the parser ignores columns marked
+that way for field lookup and expansion of *, it seems the rest of the
+system wouldn't need to treat dropped columns specially in any way.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M3094@hub.org Thu Jun  8 15:58:30 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA25109
+	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 15:58:28 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e58JrqT91713;
+	Thu, 8 Jun 2000 15:53:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e58JqpT91436
+	for <pgsql-hackers@postgreSQL.org>; Thu, 8 Jun 2000 15:52:51 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id PAA19690;
+	Thu, 8 Jun 2000 15:52:43 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] DROP COLUMN status 
+In-reply-to: <200006081541.LAA01566@candle.pha.pa.us> 
+References: <200006081541.LAA01566@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Thu, 08 Jun 2000 11:41:43 -0400"
+Date: Thu, 08 Jun 2000 15:52:43 -0400
+Message-ID: <19687.960493963@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+>>>> The implementation makes the dropped column invisible by
+>>>> changing its attnum to -attnum - offset(currently 20) and
+>>>> attnam to ("*already Dropped%d",attnum).
+>> 
+>> Ugh.  No wonder you had to hack so many places in such an ugly fashion.
+>> Why not leave the attnum as-is, and just add a bool saying "column is
+>> dropped" to pg_attribute?  As long as the parser ignores columns marked
+>> that way for field lookup and expansion of *, it seems the rest of the
+>> system wouldn't need to treat dropped columns specially in any way.
+
+> If we leave it as positive, don't we have to change user applications
+> that query pg_attribute so they also know to skip it?
+
+Good point, but I think user applications that query pg_attribute
+are likely to have trouble anyway: if they're expecting a consecutive
+series of attnums then they're going to lose no matter what.
+
+			regards, tom lane
+
+From hannu@tm.ee Sat Jun 10 01:02:57 2000
+Received: from me.tm.ee (ppp15.tele2.ee [212.107.33.15])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10377
+	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:02:55 -0400 (EDT)
+Received: from tm.ee (IDENT:hannu@localhost.localdomain [127.0.0.1])
+	by me.tm.ee (8.9.3/8.9.3) with ESMTP id GAA00940;
+	Sat, 10 Jun 2000 06:59:33 +0300
+Sender: hannu@me.tm.ee
+Message-ID: <3941BD25.96760D2E@tm.ee>
+Date: Sat, 10 Jun 2000 06:59:33 +0300
+From: Hannu Krosing <hannu@tm.ee>
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.12-20 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+CC: Tom Lane <tgl@sss.pgh.pa.us>, Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] ALTER TABLE DROP COLUMN
+References: <200006091249.IAA18730@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> Seems we have 4 DROP COLUMN ideas:
+> 
+>         Method                                                  Advantage
+>         -----------------------------------------------------------------
+> 1       invisible column marked by negative attnum              fast
+> 2       invisible column marked by is_dropped column            fast
+> 3       make copy of table without column                       col removed
+> 4       make new tuples in existing table without column        col removed
+
+IIRC there was a fifth idea, a variation of 2 that would work better
+with 
+inheritance -
+
+5   all columns have is_real_column attribute that is true for all
+coluns 
+present in that relation, so situations like
+
+create table tab_a(a_i int);
+create table tab_b(b_i int) inherits(tab_a);
+alter table tab_a add column c_i int;
+
+can be made to work.
+
+It would also require clients to ignore all missing columns that backend
+can 
+pass to them as nulls (which is usually quite cheap in bandwith usage)
+in 
+case of "SELECT **" queries.
+
+We could even rename attno to attid to make folks aware that it is not
+be 
+assumed to be continuous.
+
+> Folks, we had better choose one and get started.
+> 
+> Number 1 Hiroshi has ifdef'ed out in the code.  Items 1 and 2 have
+> problems with backend code and 3rd party code not seeing the dropped
+> columns, or having gaps in the attno numbering.
+
+If we want to make ADD COLUMN to work with inheritance wihout having to 
+rewrite every single tuple in both parent and inherited tables, we will 
+have to accept the fact that there are caps in in attno numbering.
+
+> Number 3 has problems
+> with making it an atomic operation, and number 4 is described below.
+
+Nr 4 has still problems with attno numbering _changing_ during drop
+which 
+could either be better or worse for client software than having gaps -
+in both cases client must be prepared to deal with runtime changes in 
+attribute definition.
+
+--------------
+Hannu
+
+From Inoue@tpf.co.jp Sat Jun 10 01:01:01 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10355
+	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:00 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
+Received: from mcadnote1 (ppm110.noc.fukui.nsk.ne.jp [210.161.188.29] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id NAA03125; Sat, 10 Jun 2000 13:40:40 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>, "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] ALTER TABLE DROP COLUMN
+Date: Sat, 10 Jun 2000 13:43:26 +0900
+Message-ID: <EKEJJICOHDIEMGPNIFIJEELACBAA.Inoue@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <200006091249.IAA18730@candle.pha.pa.us>
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6700
+Status: ORr
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@hub.org 
+> [mailto:pgsql-hackers-owner@hub.org]On Behalf Of Bruce Momjian
+> 
+> Seems we have 4 DROP COLUMN ideas:
+> 
+> 	Method                                                  Advantage
+> 	-----------------------------------------------------------------
+> 1	invisible column marked by negative attnum		fast
+> 2	invisible column marked by is_dropped column		fast
+> 3	make copy of table without column			col removed
+> 4	make new tuples in existing table without column	col removed
+> 
+> Folks, we had better choose one and get started.  
+> 
+> Number 1 Hiroshi has ifdef'ed out in the code.  Items 1 and 2 have
+> problems with backend code and 3rd party code not seeing the dropped
+> columns,
+
+Hmm,doesn't  *not seeing*  mean the column is dropped ?
+
+> or having gaps in the attno numbering. Number 3 has problems
+> with making it an atomic operation, and number 4 is described below. 
+>
+
+Don't forget another important point.
+
+Currently even DROP TABLE doesn't remove related objects completely.
+And I don't think I could remove objects related to the dropping column
+completely using 1)2) in ALTER TABLE DROP COLUMN implementation.
+
+Using 3)4) we should not only remove objects as 1)2) but also
+change attnum-s in all objects related to the relation. Otherwise
+PostgreSQL would do the wrong thing silently.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp 
+
+From dhogaza@pacifier.com Sat Jun 10 01:01:06 2000
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10370
+	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:04 -0400 (EDT)
+Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
+	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id WAA08521;
+	Fri, 9 Jun 2000 22:01:00 -0700 (PDT)
+Message-Id: <3.0.1.32.20000609215758.0116d850@mail.pacifier.com>
+X-Sender: dhogaza@mail.pacifier.com
+X-Mailer: Windows Eudora Pro Version 3.0.1 (32)
+Date: Fri, 09 Jun 2000 21:57:58 -0700
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>,
+        "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "Tom Lane" <tgl@sss.pgh.pa.us>
+From: Don Baccus <dhogaza@pacifier.com>
+Subject: RE: [HACKERS] ALTER TABLE DROP COLUMN
+Cc: "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgreSQL.org>
+In-Reply-To: <EKEJJICOHDIEMGPNIFIJEELACBAA.Inoue@tpf.co.jp>
+References: <200006091249.IAA18730@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Status: OR
+
+At 01:43 PM 6/10/00 +0900, Hiroshi Inoue wrote:
+>> -----Original Message-----
+>> From: pgsql-hackers-owner@hub.org 
+>> [mailto:pgsql-hackers-owner@hub.org]On Behalf Of Bruce Momjian
+>> 
+>> Seems we have 4 DROP COLUMN ideas:
+>> 
+>> 	Method                                                  Advantage
+>> 	-----------------------------------------------------------------
+>> 1	invisible column marked by negative attnum		fast
+>> 2	invisible column marked by is_dropped column		fast
+>> 3	make copy of table without column			col removed
+>> 4	make new tuples in existing table without column	col removed
+>> 
+>> Folks, we had better choose one and get started.  
+
+Oracle gives you the choice between the "cheating" fast method(s) and
+the "real" slow (really slow?) real method.
+
+So there's at least real world experience by virtue of example by
+the world's most successful database supplier that user control
+over "hide the column" and "really delete the column" is valuable.
+
+It really makes a lot of sense to give such a choice.  If one
+does so by "hiding", at a later date one would think the choice
+of "really deleting" would be a possibility.  I don't know if
+Oracle does this...
+
+If not, they might not care.  In today's world, there are bazillions
+of dollars for Oracle to scoop up from users who could just as easily
+be PG users - all those "we'll fail if don't IPO 'cause we'll never
+have any customers" database-backed websites :)
+
+
+
+- Don Baccus, Portland OR <dhogaza@pacifier.com>
+  Nature photos, on-line guides, Pacific Northwest
+  Rare Bird Alert Service and other goodies at
+  http://donb.photo.net.
+
+From tgl@sss.pgh.pa.us Sat Jun 10 01:31:04 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10922
+	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:31:03 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA06206;
+	Sat, 10 Jun 2000 01:14:37 -0400 (EDT)
+To: Don Baccus <dhogaza@pacifier.com>
+cc: "Hiroshi Inoue" <Inoue@tpf.co.jp>,
+        "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] ALTER TABLE DROP COLUMN 
+In-reply-to: <3.0.1.32.20000609215758.0116d850@mail.pacifier.com> 
+References: <200006091249.IAA18730@candle.pha.pa.us> <3.0.1.32.20000609215758.0116d850@mail.pacifier.com>
+Comments: In-reply-to Don Baccus <dhogaza@pacifier.com>
+	message dated "Fri, 09 Jun 2000 21:57:58 -0700"
+Date: Sat, 10 Jun 2000 01:14:37 -0400
+Message-ID: <6203.960614077@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Don Baccus <dhogaza@pacifier.com> writes:
+> Oracle gives you the choice between the "cheating" fast method(s) and
+> the "real" slow (really slow?) real method.
+
+> So there's at least real world experience by virtue of example by
+> the world's most successful database supplier that user control
+> over "hide the column" and "really delete the column" is valuable.
+
+Sure, but you don't need any help from the database to do "really delete
+the column".  SELECT INTO... is enough, and it's not even any slower
+than the implementations under discussion.
+
+So I'm satisfied if we offer the "hide the column" approach.
+
+Has anyone thought about what happens to table constraints that use the
+doomed column?  Triggers, RI rules, yadda yadda?
+
+Has anyone thought about undoing a DELETE COLUMN?  The data is still
+there, at least in tuples that have not been updated, so it's not
+totally unreasonable.
+
+			regards, tom lane
+
+From dhogaza@pacifier.com Sat Jun 10 09:30:59 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA25987
+	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:30:58 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
+Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
+	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA15799;
+	Sat, 10 Jun 2000 06:14:28 -0700 (PDT)
+Message-Id: <3.0.1.32.20000610054306.0115f020@mail.pacifier.com>
+X-Sender: dhogaza@mail.pacifier.com
+X-Mailer: Windows Eudora Pro Version 3.0.1 (32)
+Date: Sat, 10 Jun 2000 05:43:06 -0700
+To: Tom Lane <tgl@sss.pgh.pa.us>
+From: Don Baccus <dhogaza@pacifier.com>
+Subject: Re: [HACKERS] ALTER TABLE DROP COLUMN 
+Cc: "Hiroshi Inoue" <Inoue@tpf.co.jp>,
+        "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgreSQL.org>
+In-Reply-To: <6203.960614077@sss.pgh.pa.us>
+References: <3.0.1.32.20000609215758.0116d850@mail.pacifier.com>
+	<200006091249.IAA18730@candle.pha.pa.us>
+	<3.0.1.32.20000609215758.0116d850@mail.pacifier.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Status: OR
+
+At 01:14 AM 6/10/00 -0400, Tom Lane wrote:
+>Don Baccus <dhogaza@pacifier.com> writes:
+>> Oracle gives you the choice between the "cheating" fast method(s) and
+>> the "real" slow (really slow?) real method.
+>
+>> So there's at least real world experience by virtue of example by
+>> the world's most successful database supplier that user control
+>> over "hide the column" and "really delete the column" is valuable.
+>
+>Sure, but you don't need any help from the database to do "really delete
+>the column".  SELECT INTO... is enough, and it's not even any slower
+>than the implementations under discussion.
+>
+>So I'm satisfied if we offer the "hide the column" approach.
+
+<shrug> I wouldn't put a "real" drop column at the top of my list
+of priorities, but there is something to be said for user convenience.
+
+
+
+- Don Baccus, Portland OR <dhogaza@pacifier.com>
+  Nature photos, on-line guides, Pacific Northwest
+  Rare Bird Alert Service and other goodies at
+  http://donb.photo.net.
+
+From tgl@sss.pgh.pa.us Sun Jun 11 12:31:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA05771
+	for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:31:01 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA09503;
+	Sun, 11 Jun 2000 12:22:42 -0400 (EDT)
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] ALTER TABLE DROP COLUMN 
+In-reply-to: <EKEJJICOHDIEMGPNIFIJEELACBAA.Inoue@tpf.co.jp> 
+References: <EKEJJICOHDIEMGPNIFIJEELACBAA.Inoue@tpf.co.jp>
+Comments: In-reply-to "Hiroshi Inoue" <Inoue@tpf.co.jp>
+	message dated "Sat, 10 Jun 2000 13:43:26 +0900"
+Date: Sun, 11 Jun 2000 12:22:42 -0400
+Message-ID: <9500.960740562@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+>> Seems we have 4 DROP COLUMN ideas:
+>> Method                                                  Advantage
+>> -----------------------------------------------------------------
+>> 1	invisible column marked by negative attnum		fast
+>> 2	invisible column marked by is_dropped column		fast
+>> 3	make copy of table without column			col removed
+>> 4	make new tuples in existing table without column	col removed
+
+Bruce and I talked about this by phone yesterday, and we realized that
+none of these are very satisfactory.  #1 and #2 both have the flaw that
+applications that examine pg_attribute will probably break: they will
+see a sequence of attnum values with gaps in it.  And what should the
+rel's relnatts field be set to?  #3 and #4 are better on that point,
+but they leave us with the problem of renumbering references to columns
+after the dropped one in constraints, rules, PL functions, etc.
+
+Furthermore, there is a closely related problem that none of these
+approaches give us much help on: recursive ALTER TABLE ADD COLUMN.
+Right now, ADD puts the new column at the end of each table it's added
+to, which often means that it gets a different column number in child
+tables than in parent tables.  That leads to havoc for pg_dump.
+
+I think the only clean solution is to create a clear distinction between
+physical and logical column numbers.  Each pg_attribute tuple would need
+two attnum fields, and pg_class would need two relnatts fields as well.
+A column once created would never change its physical column number, but
+its logical column number might change as a consequence of adding or
+dropping columns before it.  ADD COLUMN would ensure that a column added
+to child tables receives the same logical column number as it has in the
+parent table, thus solving the dump/reload problem.  DROP COLUMN would
+assign an invalid logical column number to dropped columns.  They could
+be numbered zero except that we'd probably still want a unique index on
+attrelid+attnum, and the index would complain.  I'd suggest using
+Hiroshi's idea: give a dropped column a logical attnum equal to
+-(physical_attnum + offset).
+
+With this approach, internal operations on tuples would all use
+physical column numbers, but operations that interface to the outside
+world would present a view of only the valid logical columns.  For
+example, the parser would only allow logical columns to be referenced
+by name; "SELECT *" would expand to valid logical columns in logical-
+column-number order; COPY would send or receive valid logical columns
+in logical-column-number order; etc.
+
+Stored rules and so forth probably should store physical column numbers
+so that they need not be modified during column add/drop.
+
+This would require looking at all the places in the backend to determine
+whether they should be working with logical or physical column numbers,
+but the design is such that most all places would want to be using
+physical numbers, so I don't think it'd be too painful.
+
+Although I'd prefer to give the replacement columns two new names
+(eg, "attlnum" and "attpnum") to ensure we find all uses, this would
+surely break applications that examine pg_attribute.  For compatibility
+we'd have to recycle "attnum" and "relnatts" to indicate logical column
+number and logical column count, while adding new fields (say "attpnum"
+and "relnpatts") for the physical number and count.
+
+Comments?
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M3184@hub.org Mon Jun 12 09:29:17 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA16538
+	for <pgman@candle.pha.pa.us>; Mon, 12 Jun 2000 09:29:15 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5C9RxT92685;
+	Mon, 12 Jun 2000 05:27:59 -0400 (EDT)
+Received: from clio.trends.ca (root@clio.trends.ca [209.47.148.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5C8YWT89945
+	for <pgsql-hackers@postgreSQL.org>; Mon, 12 Jun 2000 04:34:32 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by clio.trends.ca (8.9.3+Sun/8.9.3) with ESMTP id VAA17711
+	for <pgsql-hackers@postgreSQL.org>; Sun, 11 Jun 2000 21:40:28 -0400 (EDT)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id KAA03734; Mon, 12 Jun 2000 10:38:42 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] ALTER TABLE DROP COLUMN 
+Date: Mon, 12 Jun 2000 10:40:47 +0900
+Message-ID: <000b01bfd40f$3b3091e0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-2022-jp"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+In-Reply-To: <9500.960740562@sss.pgh.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+> -----Original Message-----
+> From: Tom Lane [mailto:tgl@sss.pgh.pa.us]
+> 
+> >> Seems we have 4 DROP COLUMN ideas:
+> >> Method                                                  Advantage
+> >> -----------------------------------------------------------------
+> >> 1	invisible column marked by negative attnum		fast
+> >> 2	invisible column marked by is_dropped column		fast
+> >> 3	make copy of table without column			col removed
+> >> 4	make new tuples in existing table without column	col removed
+>
+
+Hmm,I've received no pg-ML mails for more than 1 day.
+What's happened with pgsql ML ? 
+ 
+> Bruce and I talked about this by phone yesterday, and we realized that
+> none of these are very satisfactory.  #1 and #2 both have the flaw that
+> applications that examine pg_attribute will probably break: they will
+> see a sequence of attnum values with gaps in it.  And what should the
+> rel's relnatts field be set to?  #3 and #4 are better on that point,
+> but they leave us with the problem of renumbering references to columns
+> after the dropped one in constraints, rules, PL functions, etc.
+> 
+> Furthermore, there is a closely related problem that none of these
+> approaches give us much help on: recursive ALTER TABLE ADD COLUMN.
+> Right now, ADD puts the new column at the end of each table it's added
+> to, which often means that it gets a different column number in child
+> tables than in parent tables.  That leads to havoc for pg_dump.
+>
+
+Inheritance is one of the reason why I didn't take #2. I don't understand 
+marking is_dropped is needed or not when pg_attribute is overhauled
+for inheritance.
+I myself have never wanted to use current inheritance functionality
+mainly because of this big flaw. Judging from the recent discussion
+about oo(though I don't understand details),the change seems to be
+needed in order to make inheritance functionality really useful. 
+  
+> I think the only clean solution is to create a clear distinction between
+> physical and logical column numbers.  Each pg_attribute tuple would need
+> two attnum fields, and pg_class would need two relnatts fields as well.
+> A column once created would never change its physical column number, but
+
+I don't understand inheritance well. In the near future wouldn't the
+implementation require e.g. attid which is common to all children
+of a parent and is never changed ? If so,we would need the third 
+attid field which is irrevalent to physical/logical position. If not,
+physical column number would be sufficient . 
+ 
+> its logical column number might change as a consequence of adding or
+> dropping columns before it.  ADD COLUMN would ensure that a column added
+> to child tables receives the same logical column number as it has in the
+> parent table, thus solving the dump/reload problem.  DROP COLUMN would
+> assign an invalid logical column number to dropped columns.  They could
+> be numbered zero except that we'd probably still want a unique index on
+> attrelid+attnum, and the index would complain.  I'd suggest using
+> Hiroshi's idea: give a dropped column a logical attnum equal to
+> -(physical_attnum + offset).
+> 
+> With this approach, internal operations on tuples would all use
+> physical column numbers, but operations that interface to the outside
+> world would present a view of only the valid logical columns.  For
+> example, the parser would only allow logical columns to be referenced
+> by name; "SELECT *" would expand to valid logical columns in logical-
+> column-number order; COPY would send or receive valid logical columns
+> in logical-column-number order; etc.
+> 
+> Stored rules and so forth probably should store physical column numbers
+> so that they need not be modified during column add/drop.
+> 
+> This would require looking at all the places in the backend to determine
+> whether they should be working with logical or physical column numbers,
+> but the design is such that most all places would want to be using
+> physical numbers, so I don't think it'd be too painful.
+> 
+> Although I'd prefer to give the replacement columns two new names
+> (eg, "attlnum" and "attpnum") to ensure we find all uses, this would
+> surely break applications that examine pg_attribute.  For compatibility
+> we'd have to recycle "attnum" and "relnatts" to indicate logical column
+> number and logical column count, while adding new fields (say "attpnum"
+> and "relnpatts") for the physical number and count.
+>
+
+I agree with you that we would add attpnum and change the meaing of
+attnum as logical column number for backward compatibility.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
