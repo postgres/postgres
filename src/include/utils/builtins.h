@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.32 1997/12/23 19:55:51 thomas Exp $
+ * $Id: builtins.h,v 1.33 1998/01/01 05:42:40 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -471,16 +471,17 @@ extern uint32 hashvarchar(struct varlena * key);
 
 /* varlena.c */
 extern text *textin(char *inputText);
-extern char *textout(struct varlena *vlena);
+extern char *textout(text *vlena);
 extern text *textcat(text *arg1, text *arg2);
-extern bool texteq(struct varlena * arg1, struct varlena * arg2);
-extern bool textne(struct varlena * arg1, struct varlena * arg2);
-extern bool text_lt(struct varlena * arg1, struct varlena * arg2);
-extern bool text_le(struct varlena * arg1, struct varlena * arg2);
-extern bool text_gt(struct varlena * arg1, struct varlena * arg2);
-extern bool text_ge(struct varlena * arg1, struct varlena * arg2);
+extern bool texteq(text *arg1, text *arg2);
+extern bool textne(text *arg1, text *arg2);
+extern bool text_lt(text *arg1, text *arg2);
+extern bool text_le(text *arg1, text *arg2);
+extern bool text_gt(text *arg1, text *arg2);
+extern bool text_ge(text *arg1, text *arg2);
 extern int32 textlen(text *arg);
 extern int32 textpos(text *arg1, text *arg2);
+extern text *text_substr(text *string, int32 m, int32 n);
 
 extern struct varlena *byteain(char *inputText);
 extern char *byteaout(struct varlena *vlena);
