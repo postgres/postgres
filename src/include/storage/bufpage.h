@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.1 1996/08/28 01:58:03 scrappy Exp $
+ * $Id: bufpage.h,v 1.2 1996/10/18 07:39:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,13 @@ typedef enum {
 #define PageIsEmpty(page) \
     (((PageHeader) (page))->pd_lower == \
      (sizeof(PageHeaderData) - sizeof(ItemIdData)) ? true : false)
+
+/*
+ * PageIsNew -- 
+ *	returns true iff page is not initialized (by PageInit)
+ */
+
+#define PageIsNew(page)	(((PageHeader) (page))->pd_upper == 0)
 
 /*
  * PageGetItemId --
