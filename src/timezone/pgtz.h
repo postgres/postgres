@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.7 2004/05/21 05:08:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.8 2004/05/21 12:30:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,6 @@
 
 #define TZ_STRLEN_MAX 255
 
-extern char	   *pg_TZDIR(void);
+extern char *pg_TZDIR(void);
 
-#endif /* _PGTZ_H */
+#endif   /* _PGTZ_H */

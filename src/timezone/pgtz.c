@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.10 2004/05/21 05:08:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.11 2004/05/21 12:30:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,36 +45,46 @@ pg_TZDIR(void)
  * set in our own library).
  */
 #define T_YEAR	(60*60*24*365)
-#define T_MONTH	(60*60*24*30)
+#define T_MONTH (60*60*24*30)
 
-struct tztry {
-	time_t std_t,dst_t;
-	char std_time[TZ_STRLEN_MAX+1],dst_time[TZ_STRLEN_MAX+1];
-	int std_ofs,dst_ofs;
-	struct tm std_tm, dst_tm;
+struct tztry
+{
+	time_t		std_t,
+				dst_t;
+	char		std_time[TZ_STRLEN_MAX + 1],
+				dst_time[TZ_STRLEN_MAX + 1];
+	int			std_ofs,
+				dst_ofs;
+	struct tm	std_tm,
+				dst_tm;
 };
 
 
-static bool compare_tm(struct tm *s, struct pg_tm *p) {
-	if (s->tm_sec   != p->tm_sec ||
-		s->tm_min   != p->tm_min ||
-		s->tm_hour  != p->tm_hour ||
-		s->tm_mday  != p->tm_mday ||
-		s->tm_mon   != p->tm_mon ||
-		s->tm_year  != p->tm_year ||
-		s->tm_wday  != p->tm_wday ||
-		s->tm_yday  != p->tm_yday ||
+static bool
+compare_tm(struct tm * s, struct pg_tm * p)
+{
+	if (s->tm_sec != p->tm_sec ||
+		s->tm_min != p->tm_min ||
+		s->tm_hour != p->tm_hour ||
+		s->tm_mday != p->tm_mday ||
+		s->tm_mon != p->tm_mon ||
+		s->tm_year != p->tm_year ||
+		s->tm_wday != p->tm_wday ||
+		s->tm_yday != p->tm_yday ||
 		s->tm_isdst != p->tm_isdst)
 		return false;
 	return true;
 }
 
-static bool try_timezone(char *tzname, struct tztry *tt, bool checkdst) {
+static bool
+try_timezone(char *tzname, struct tztry * tt, bool checkdst)
+{
 	struct pg_tm *pgtm;
 
 	if (!pg_tzset(tzname))
-		return false; /* If this timezone couldn't be picked at all */
-	
+		return false;			/* If this timezone couldn't be picked at
+								 * all */
+
 	/* Verify standard time */
 	pgtm = pg_localtime(&(tt->std_t));
 	if (!pgtm)
@@ -95,7 +105,9 @@ static bool try_timezone(char *tzname, struct tztry *tt, bool checkdst) {
 	return true;
 }
 
-static int get_timezone_offset(struct tm *tm) {
+static int
+get_timezone_offset(struct tm * tm)
+{
 #if defined(HAVE_STRUCT_TM_TM_ZONE)
 	return tm->tm_gmtoff;
 #elif defined(HAVE_INT_TIMEZONE)
@@ -113,12 +125,15 @@ static int get_timezone_offset(struct tm *tm) {
 #ifdef WIN32
 #define TZABBREV(tz) win32_get_timezone_abbrev(tz)
 
-static char *win32_get_timezone_abbrev(char *tz) {
-	static char w32tzabbr[TZ_STRLEN_MAX+1];
-	int l = 0;
-	char *c;
+static char *
+win32_get_timezone_abbrev(char *tz)
+{
+	static char w32tzabbr[TZ_STRLEN_MAX + 1];
+	int			l = 0;
+	char	   *c;
 
-	for (c = tz; *c; c++) {
+	for (c = tz; *c; c++)
+	{
 		if (isupper(*c))
 			w32tzabbr[l++] = *c;
 	}
@@ -140,47 +155,50 @@ static char *win32_get_timezone_abbrev(char *tz) {
 static char *
 identify_system_timezone(void)
 {
-	static char __tzbuf[TZ_STRLEN_MAX+1];
-	bool std_found=false,
-		dst_found=false;
-	time_t tnow = time(NULL);
-	time_t t;
+	static char __tzbuf[TZ_STRLEN_MAX + 1];
+	bool		std_found = false,
+				dst_found = false;
+	time_t		tnow = time(NULL);
+	time_t		t;
 	struct tztry tt;
-	char cbuf[TZ_STRLEN_MAX+1];
+	char		cbuf[TZ_STRLEN_MAX + 1];
 
 	/* Initialize OS timezone library */
 	tzset();
 
 	memset(&tt, 0, sizeof(tt));
-	
-	for (t = tnow; t < tnow+T_YEAR; t += T_MONTH) {
-		struct tm *tm = localtime(&t);
 
-		if (tm->tm_isdst == 0 && !std_found) {
+	for (t = tnow; t < tnow + T_YEAR; t += T_MONTH)
+	{
+		struct tm  *tm = localtime(&t);
+
+		if (tm->tm_isdst == 0 && !std_found)
+		{
 			/* Standard time */
 			memcpy(&tt.std_tm, tm, sizeof(struct tm));
-			memset(cbuf,0,sizeof(cbuf));
-			strftime(cbuf, sizeof(cbuf)-1, "%Z", tm); /* zone abbr */
+			memset(cbuf, 0, sizeof(cbuf));
+			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
 			strcpy(tt.std_time, TZABBREV(cbuf));
 			tt.std_ofs = get_timezone_offset(tm);
 			tt.std_t = t;
 			std_found = true;
 		}
-		else if (tm->tm_isdst == 1 && !dst_found) {
+		else if (tm->tm_isdst == 1 && !dst_found)
+		{
 			/* Daylight time */
 			memcpy(&tt.dst_tm, tm, sizeof(struct tm));
-			memset(cbuf,0,sizeof(cbuf));
-			strftime(cbuf, sizeof(cbuf)-1, "%Z", tm); /* zone abbr */
+			memset(cbuf, 0, sizeof(cbuf));
+			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
 			strcpy(tt.dst_time, TZABBREV(cbuf));
 			tt.dst_ofs = get_timezone_offset(tm);
 			tt.dst_t = t;
 			dst_found = true;
 		}
 		if (std_found && dst_found)
-			break; /* Got both standard and daylight */
+			break;				/* Got both standard and daylight */
 	}
 
-	if (!std_found) 
+	if (!std_found)
 	{
 		/* Failed to determine TZ! */
 		ereport(LOG,
@@ -189,24 +207,25 @@ identify_system_timezone(void)
 		return NULL;			/* go to GMT */
 	}
 
-	if (dst_found) {
+	if (dst_found)
+	{
 		/* Try STD<ofs>DST */
-		sprintf(__tzbuf,"%s%d%s",tt.std_time,-tt.std_ofs/3600,tt.dst_time);
+		sprintf(__tzbuf, "%s%d%s", tt.std_time, -tt.std_ofs / 3600, tt.dst_time);
 		if (try_timezone(__tzbuf, &tt, dst_found))
 			return __tzbuf;
 	}
 	/* Try just the STD timezone */
-	strcpy(__tzbuf,tt.std_time);
-	if (try_timezone(__tzbuf, &tt, dst_found)) 
+	strcpy(__tzbuf, tt.std_time);
+	if (try_timezone(__tzbuf, &tt, dst_found))
 		return __tzbuf;
 
 	/* Did not find the timezone. Fallback to try a GMT zone. */
-	sprintf(__tzbuf,"Etc/GMT%s%d",
-			(-tt.std_ofs<0)?"+":"",tt.std_ofs/3600);
+	sprintf(__tzbuf, "Etc/GMT%s%d",
+			(-tt.std_ofs < 0) ? "+" : "", tt.std_ofs / 3600);
 	ereport(LOG,
-			(errmsg("could not recognize system timezone, defaulting to \"%s\"",
-					__tzbuf),
-			 errhint("You can specify the correct timezone in postgresql.conf.")));
+	 (errmsg("could not recognize system timezone, defaulting to \"%s\"",
+			 __tzbuf),
+	errhint("You can specify the correct timezone in postgresql.conf.")));
 	return __tzbuf;
 }
 
@@ -223,7 +242,7 @@ identify_system_timezone(void)
 bool
 tz_acceptable(void)
 {
-	struct pg_tm	tt;
+	struct pg_tm tt;
 	time_t		time2000;
 
 	/*
@@ -255,7 +274,7 @@ tz_acceptable(void)
 const char *
 select_default_timezone(void)
 {
-	char *def_tz;
+	char	   *def_tz;
 
 	def_tz = getenv("TZ");
 	if (def_tz && pg_tzset(def_tz) && tz_acceptable())
@@ -280,9 +299,12 @@ select_default_timezone(void)
  * This is called after initial loading of postgresql.conf.  If no TimeZone
  * setting was found therein, we try to derive one from the environment.
  */
-void pg_timezone_initialize(void) {
+void
+pg_timezone_initialize(void)
+{
 	/* Do we need to try to figure the timezone? */
-	if (strcmp(GetConfigOption("timezone"), "UNKNOWN") == 0) {
+	if (strcmp(GetConfigOption("timezone"), "UNKNOWN") == 0)
+	{
 		const char *def_tz;
 
 		/* Select setting */

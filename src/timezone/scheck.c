@@ -3,15 +3,16 @@
 #include "private.h"
 
 
-char *scheck(const char *string, const char *format)
+char *
+scheck(const char *string, const char *format)
 {
-	register char *		fbuf;
-	register const char *	fp;
-	register char *		tp;
-	register int		c;
-	register char *		result;
-	char			dummy;
-	static char		nada;
+	register char *fbuf;
+	register const char *fp;
+	register char *tp;
+	register int c;
+	register char *result;
+	char		dummy;
+	static char nada;
 
 	result = &nada;
 	if (string == NULL || format == NULL)
@@ -21,10 +22,12 @@ char *scheck(const char *string, const char *format)
 		return result;
 	fp = format;
 	tp = fbuf;
-	while ((*tp++ = c = *fp++) != '\0') {
+	while ((*tp++ = c = *fp++) != '\0')
+	{
 		if (c != '%')
 			continue;
-		if (*fp == '%') {
+		if (*fp == '%')
+		{
 			*tp++ = *fp++;
 			continue;
 		}
@@ -36,8 +39,9 @@ char *scheck(const char *string, const char *format)
 		if (*fp == 'l' || *fp == 'h')
 			*tp++ = *fp++;
 		else if (*fp == '[')
-			do *tp++ = *fp++;
-				while (*fp != '\0' && *fp != ']');
+			do
+				*tp++ = *fp++;
+			while (*fp != '\0' && *fp != ']');
 		if ((*tp++ = *fp++) == '\0')
 			break;
 	}
