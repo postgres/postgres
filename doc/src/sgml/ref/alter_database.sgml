@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.12 2004/05/26 13:56:42 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.13 2004/07/05 02:34:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,9 +23,9 @@ PostgreSQL documentation
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>parameter</replaceable>
 
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
-
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
+
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
