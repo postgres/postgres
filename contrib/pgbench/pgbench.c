@@ -1,10 +1,10 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.30 2003/12/07 19:55:58 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.31 2004/06/14 11:00:12 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2000-2003	Tatsuo Ishii
+ * Copyright (c) 2000-2004	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -552,7 +552,7 @@ init(void)
 		fprintf(stderr, "%s", PQerrorMessage(con));
 		exit(1);
 	}
-
+	PQclear(res);
 
 	/*
 	 * occupy accounts table with some data
