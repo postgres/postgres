@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.43 2002/10/22 19:15:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.43.2.1 2003/02/01 22:07:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,7 +589,6 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 			   *uRes;
 	int			i,
 				n;
-	char	   *attr;
 
 	if (strcmp(te->tag, BLOB_XREF_TABLE) == 0)
 		return;
@@ -604,7 +603,7 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 					  fmtId(te->tag));
 
 	appendPQExpBuffer(tblQry,
-					  "SELECT a.attname FROM "
+					  "SELECT a.attname, t.typname FROM "
 					  "pg_catalog.pg_attribute a, pg_catalog.pg_type t "
 		 "WHERE a.attnum > 0 AND a.attrelid = '%s'::pg_catalog.regclass "
 				 "AND a.atttypid = t.oid AND t.typname in ('oid', 'lo')",
@@ -623,23 +622,53 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 
 	for (i = 0; i < n; i++)
 	{
+		char	   *attr;
+		char	   *typname;
+		bool		typeisoid;
+
 		attr = PQgetvalue(res, i, 0);
+		typname = PQgetvalue(res, i, 1);
+
+		typeisoid = (strcmp(typname, "oid") == 0);
 
 		ahlog(AH, 1, "fixing large object cross-references for %s.%s\n",
 			  te->tag, attr);
 
 		resetPQExpBuffer(tblQry);
 
-		/* Can't use fmtId twice in one call... */
+		/*
+		 * Note: we use explicit typename() cast style here because if we
+		 * are dealing with a dump from a pre-7.3 database containing LO
+		 * columns, the dump probably will not have CREATE CAST commands
+		 * for lo<->oid conversions.  What it will have is functions,
+		 * which we will invoke as functions.
+		 */
+
+		/* Can't use fmtId more than once per call... */
 		appendPQExpBuffer(tblQry,
-						  "UPDATE %s SET %s = %s.newOid",
-						  tblName->data, fmtId(attr),
-						  BLOB_XREF_TABLE);
-		appendPQExpBuffer(tblQry,
-						  " FROM %s WHERE %s.oldOid = %s.%s",
-						  BLOB_XREF_TABLE,
-						  BLOB_XREF_TABLE,
+						  "UPDATE %s SET %s = ",
 						  tblName->data, fmtId(attr));
+		if (typeisoid)
+			appendPQExpBuffer(tblQry,
+							  "%s.newOid",
+							  BLOB_XREF_TABLE);
+		else
+			appendPQExpBuffer(tblQry,
+							  "%s(%s.newOid)",
+							  fmtId(typname),
+							  BLOB_XREF_TABLE);
+		appendPQExpBuffer(tblQry,
+						  " FROM %s WHERE %s.oldOid = ",
+						  BLOB_XREF_TABLE,
+						  BLOB_XREF_TABLE);
+		if (typeisoid)
+			appendPQExpBuffer(tblQry,
+							  "%s.%s",
+							  tblName->data, fmtId(attr));
+		else
+			appendPQExpBuffer(tblQry,
+							  "oid(%s.%s)",
+							  tblName->data, fmtId(attr));
 
 		ahlog(AH, 10, "SQL: %s\n", tblQry->data);
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.1 2003/01/27 00:23:49 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.2 2003/02/01 22:07:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1459,7 +1459,7 @@ WriteInt(ArchiveHandle *AH, int i)
 
 	/*
 	 * This is a bit yucky, but I don't want to make the binary format
-	 * very dependant on representation, and not knowing much about it, I
+	 * very dependent on representation, and not knowing much about it, I
 	 * write out a sign byte. If you change this, don't forget to change
 	 * the file version #, and modify readInt to read the new format AS
 	 * WELL AS the old formats.
