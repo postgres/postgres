@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.39 2001/01/11 23:28:34 petere Exp $
+ * $Id: memutils.h,v 1.40 2001/01/22 00:18:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,12 +63,12 @@ typedef struct StandardChunkHeader
  * Only TopMemoryContext and ErrorContext are initialized by
  * MemoryContextInit() itself.
  */
-extern MemoryContext TopMemoryContext;
-extern MemoryContext ErrorContext;
-extern MemoryContext PostmasterContext;
-extern MemoryContext CacheMemoryContext;
-extern MemoryContext QueryContext;
-extern MemoryContext TopTransactionContext;
+extern DLLIMPORT MemoryContext TopMemoryContext;
+extern DLLIMPORT MemoryContext ErrorContext;
+extern DLLIMPORT MemoryContext PostmasterContext;
+extern DLLIMPORT MemoryContext CacheMemoryContext;
+extern DLLIMPORT MemoryContext QueryContext;
+extern DLLIMPORT MemoryContext TopTransactionContext;
 extern DLLIMPORT MemoryContext TransactionCommandContext;
 
 
