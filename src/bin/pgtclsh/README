@@ -1,21 +1,10 @@
 pgtclsh is an example of a tclsh extended with the new Tcl
 commands provided by the libpgtcl library.  By using pgtclsh, one can
-write front-end applications to Postgres95 in Tcl without having to
+write front-end applications to PostgreSQL in Tcl without having to
 deal with any libpq programming at all.  
 
 The pgtclsh is an enhanced version of tclsh.  Similarly, pgtksh is a
-wish replacement with postgres95 bindings. The Makefile is also set up
-so that you can choose "pgtksh" as a target.   
+wish replacement with PostgreSQL bindings.
 
-pgtclsh has been tested with the official releases of
-	Tcl version 7.4 
-and 	Tk  version 4.0 
-
-and will probably not work with versions older than those (including
-earlier beta releases). 
-
-For details of the libpgtcl interface, please see the file
-src/doc/libpgtcl.doc. 
-
-If you have any questions or bug reports, please send them to
-Jolly Chen at jolly@cs.berkeley.edu.
+For details of the libpgtcl interface, please see the Programmer's
+Guide.
