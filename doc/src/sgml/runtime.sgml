@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.296 2004/12/13 18:05:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.297 2004/12/18 04:21:43 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3148,8 +3148,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Sets the time zone for displaying and interpreting time
-        stamps.  The default is to use whatever the system environment
-        specifies as the time zone.  See <xref
+        stamps.  The default is 'unknown', which means to use whatever 
+        the system environment specifies as the time zone.  See <xref
         linkend="datatype-datetime"> for more information.
        </para>
       </listitem>
