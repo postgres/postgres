@@ -153,4 +153,11 @@ CREATE TABLE tictactoe (
      unspecified length.
 </Para>
 
+<Para>
+     Actually, the current implementation doesn't enforce the declared
+     number of dimensions either.  Arrays of a particular base type
+     are all considered to be of the same type, regardless of size or
+     number of dimensions.
+</Para>
+
 </Chapter>
