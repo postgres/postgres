@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan  4 13:22:43 EST 2002
+Last updated:		Fri Jan  4 13:41:50 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -40,7 +40,7 @@ ADMIN
 * Improve control over user privileges, including table creation and
   lock use [privileges] (Karel, others)
 * Make it easier to create a database owned by someone who can't createdb,
-  perhaps CREATE DATABASE dbname WITH USER = "user" (Gavin)
+  perhaps CREATE DATABASE dbname WITH OWNER = "user" (Gavin)
 * Make equals sign optional in CREATE DATABASE WITH param = 'val'
 * -Permission to DELETE table also allows UPDATE (Peter E)
 * Allow elog() to return error codes, module name, file name, line
