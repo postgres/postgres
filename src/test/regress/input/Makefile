@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.5 1997/05/05 06:53:31 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.6 1997/08/28 04:49:18 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,8 @@ include ../../../Makefile.global
 INFILES= copy.sql \
          create_function_1.sql \
          create_function_2.sql \
-         misc.sql
+         misc.sql \
+	 constraints.sql
 
 all: $(INFILES)
 

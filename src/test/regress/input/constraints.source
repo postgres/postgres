@@ -1,0 +1,72 @@
+--
+-- Check constraints
+--
+
+-- Check constraints on INSERT
+drop sequence seq;
+drop table test;
+create sequence seq;
+create table test (x int default  nextval ( 'seq')  , 
+y text default '-NULL-', z int default -1 * currval('seq') ) 
+constraint test1 check (x > 3 and y <> 'check failed' and x < 8 ), 
+check x + z = 0;
+insert into test values (null, null, null);
+insert into test values (null, null, -2);
+select * from test;
+select nextval('seq');
+insert into test values (null, null, null);
+insert into test values (1, null, -2);
+insert into test values (7, null, -7);
+insert into test values (5, 'check failed', -5);
+insert into test values (7, '!check failed', -7);
+insert into test values (null, null, null);
+select * from test;
+insert into test values (null, 'check failed', 5);
+insert into test values (5, 'check failed', null);
+insert into test values (5, '!check failed', null);
+insert into test values (null, null, null);
+select * from test;
+insert into test values (null, null, null);
+select currval('seq');
+
+-- Check constraints on INSERT INTO
+
+drop table test;
+drop sequence seq;
+create sequence seq start 4;
+create table dummy (xd int, yd text, zd int);
+
+create table test (x int default  nextval ( 'seq')  , 
+y text default '-NULL-', z int default -1 * currval('seq') ) 
+constraint test1 check (x > 3 and y <> 'check failed' and x < 7 ), check 
+x + z = 0;
+
+select nextval('seq');
+insert into dummy values (null, null, null);
+insert into dummy values (5, '!check failed', null);
+insert into dummy values (null, 'try again', null);
+insert into test select * from dummy;
+select * from test;
+insert into test select * from dummy where yd = 'try again';
+
+-- Check constraints on UPDATE
+update test set x = null where x = 6;
+select currval('seq');
+
+-- Check constraints on COPY FROM
+drop table test;
+drop sequence seq;
+create sequence seq start 4;
+create table test (x int default  nextval ( 'seq')  , 
+y text default '-NULL-', z int default -1 * currval('seq') ) 
+constraint test1 check (x > 3 and y <> 'check failed' and x < 7 ), check 
+x + z = 0;
+copy test from '_OBJWD_/data/constro.data';
+select * from test;
+copy test from '_OBJWD_/data/constrf.data';
+select * from test;
+select nextval('seq') - 1 as currval;
+
+-- Clean up
+drop sequence seq;
+drop table test;

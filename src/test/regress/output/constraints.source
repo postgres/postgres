@@ -1,0 +1,139 @@
+QUERY: drop sequence seq;
+WARN:Relation seq Does Not Exist!
+QUERY: drop table test;
+WARN:Relation test Does Not Exist!
+QUERY: create sequence seq;
+QUERY: create table test (x int default  nextval ( 'seq')  ,
+y text default '-NULL-', z int default -1 * currval('seq') )
+constraint test1 check (x > 3 and y <> 'check failed' and x < 8 ),
+check x + z = 0;
+QUERY: insert into test values (null, null, null);
+WARN:ExecAppend: rejected due to CHECK constraint test1
+QUERY: insert into test values (null, null, -2);
+WARN:ExecAppend: rejected due to CHECK constraint test1
+QUERY: select * from test;
+x|y|z
+-+-+-
+(0 rows)
+
+QUERY: select nextval('seq');
+nextval
+-------
+      3
+(1 row)
+
+QUERY: insert into test values (null, null, null);
+QUERY: insert into test values (1, null, -2);
+WARN:ExecAppend: rejected due to CHECK constraint $2
+QUERY: insert into test values (7, null, -7);
+QUERY: insert into test values (5, 'check failed', -5);
+WARN:ExecAppend: rejected due to CHECK constraint test1
+QUERY: insert into test values (7, '!check failed', -7);
+QUERY: insert into test values (null, null, null);
+QUERY: select * from test;
+x|y            | z
+-+-------------+--
+4|-NULL-       |-4
+7|-NULL-       |-7
+7|!check failed|-7
+5|-NULL-       |-5
+(4 rows)
+
+QUERY: insert into test values (null, 'check failed', 5);
+WARN:ExecAppend: rejected due to CHECK constraint $2
+QUERY: insert into test values (5, 'check failed', null);
+WARN:ExecAppend: rejected due to CHECK constraint $2
+QUERY: insert into test values (5, '!check failed', null);
+WARN:ExecAppend: rejected due to CHECK constraint $2
+QUERY: insert into test values (null, null, null);
+QUERY: select * from test;
+x|y            | z
+-+-------------+--
+4|-NULL-       |-4
+7|-NULL-       |-7
+7|!check failed|-7
+5|-NULL-       |-5
+7|-NULL-       |-7
+(5 rows)
+
+QUERY: insert into test values (null, null, null);
+WARN:ExecAppend: rejected due to CHECK constraint test1
+QUERY: select currval('seq');
+currval
+-------
+      8
+(1 row)
+
+QUERY: drop table test;
+QUERY: drop sequence seq;
+QUERY: create sequence seq start 4;
+QUERY: create table dummy (xd int, yd text, zd int);
+QUERY: create table test (x int default  nextval ( 'seq')  ,
+y text default '-NULL-', z int default -1 * currval('seq') )
+constraint test1 check (x > 3 and y <> 'check failed' and x < 7 ), check
+x + z = 0;
+QUERY: select nextval('seq');
+NOTICE:seq.nextval: sequence was re-created
+
+nextval
+-------
+      4
+(1 row)
+
+QUERY: insert into dummy values (null, null, null);
+QUERY: insert into dummy values (5, '!check failed', null);
+QUERY: insert into dummy values (null, 'try again', null);
+QUERY: insert into test select * from dummy;
+QUERY: select * from test;
+x|y            | z
+-+-------------+--
+5|-NULL-       |-5
+5|!check failed|-5
+6|try again    |-6
+(3 rows)
+
+QUERY: insert into test select * from dummy where yd = 'try again';
+WARN:ExecAppend: rejected due to CHECK constraint test1
+QUERY: update test set x = null where x = 6;
+WARN:ExecReplace: rejected due to CHECK constraint $2
+QUERY: select currval('seq');
+currval
+-------
+      8
+(1 row)
+
+QUERY: drop table test;
+QUERY: drop sequence seq;
+QUERY: create sequence seq start 4;
+QUERY: create table test (x int default  nextval ( 'seq')  ,
+y text default '-NULL-', z int default -1 * currval('seq') )
+constraint test1 check (x > 3 and y <> 'check failed' and x < 7 ), check
+x + z = 0;
+QUERY: copy test from '_OBJWD_/data/constro.data';
+NOTICE:seq.nextval: sequence was re-created
+QUERY: select * from test;
+x|y     | z
+-+------+--
+4|-NULL-|-4
+5|-NULL-|-5
+6|-NULL-|-6
+(3 rows)
+
+QUERY: copy test from '_OBJWD_/data/constrf.data';
+WARN:CopyFrom: rejected due to CHECK constraint test1
+QUERY: select * from test;
+x|y     | z
+-+------+--
+4|-NULL-|-4
+5|-NULL-|-5
+6|-NULL-|-6
+(3 rows)
+
+QUERY: select nextval('seq') - 1 as currval;
+currval
+-------
+      7
+(1 row)
+
+QUERY: drop sequence seq;
+QUERY: drop table test;
