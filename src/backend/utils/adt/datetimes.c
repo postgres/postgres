@@ -7,17 +7,17 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.3 1996/08/27 07:32:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.4 1996/10/25 06:02:52 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "config.h"
-
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
-#include "postgres.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
+
+#include <config.h>
+#include <postgres.h>
+#include <utils/palloc.h>
+#include <utils/elog.h>
 
 /* these things look like structs, but we pass them by value so be careful
    For example, passing an int -> DateADT is not portable! */
@@ -33,9 +33,6 @@ typedef struct TimeADT {
     float	sec;
 } TimeADT;
 
-#ifndef EUROPEAN_STYLE
-#define AMERICAN_STYLE
-#endif
 
 static int	day_tab[2][12] = {
 	{31,28,31,30,31,30,31,31,30,31,30,31},
@@ -69,7 +66,7 @@ date_in(char *datestr)
 # define CHECK_DATE_LEN(datestr) 1
 #endif
 
-#ifdef AMERICAN_STYLE
+#ifndef EUROPEAN_DATES
     if (!CHECK_DATE_LEN(datestr) ||
 	sscanf(datestr, "%d%*c%d%*c%d", &m, &d, &y) != 3) {
 	elog(WARN, "date_in: date \"%s\" not of the form mm-dd-yyyy",
@@ -113,7 +110,7 @@ date_out(int4 dateVal)
     date = (DateADT*)&dateStore;
     dateStore = dateVal;
 
-#ifdef AMERICAN_STYLE
+#ifndef EUROPEAN_DATES
     sprintf(datestr, "%02d-%02d-%04d",
             (int)date->month, (int)date->day, (int)date->year);
 #else
