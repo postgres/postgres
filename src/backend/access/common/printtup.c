@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.72 2003/05/09 18:08:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.73 2003/05/13 18:39:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +181,10 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 
 	for (i = 0; i < natts; ++i)
 	{
+		Oid		atttypid = attrs[i]->atttypid;
+		int32	atttypmod = attrs[i]->atttypmod;
+		Oid		basetype;
+
 		pq_sendstring(&buf, NameStr(attrs[i]->attname));
 		/* column ID info appears in protocol 3.0 and up */
 		if (proto >= 3)
@@ -204,14 +208,18 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 				pq_sendint(&buf, 0, 2);
 			}
 		}
-		pq_sendint(&buf, (int) attrs[i]->atttypid,
-				   sizeof(attrs[i]->atttypid));
-		pq_sendint(&buf, attrs[i]->attlen,
-				   sizeof(attrs[i]->attlen));
+		/* If column is a domain, send the base type and typmod instead */
+		basetype = getBaseType(atttypid);
+		if (basetype != atttypid)
+		{
+			atttypmod = get_typtypmod(atttypid);
+			atttypid = basetype;
+		}
+		pq_sendint(&buf, (int) atttypid, sizeof(atttypid));
+		pq_sendint(&buf, attrs[i]->attlen, sizeof(attrs[i]->attlen));
 		/* typmod appears in protocol 2.0 and up */
 		if (proto >= 2)
-			pq_sendint(&buf, attrs[i]->atttypmod,
-					   sizeof(attrs[i]->atttypmod));
+			pq_sendint(&buf, atttypmod, sizeof(atttypmod));
 		/* format info appears in protocol 3.0 and up */
 		if (proto >= 3)
 		{
