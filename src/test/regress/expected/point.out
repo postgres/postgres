@@ -75,7 +75,7 @@ three|f1
 (3 rows)
 
 QUERY: SELECT '' AS two, p.* FROM POINT_TBL p
-   WHERE on_ppath(p.f1,'(0,3,0,0,-10,0,-10,10)'::path);
+   WHERE on_ppath(p.f1,'[(0,0),(-10,0),(-10,10)]'::path);
 two|f1     
 ---+-------
    |(0,0)  
