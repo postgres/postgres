@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.63 1999/10/08 03:49:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.64 1999/11/12 06:39:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
  *		ExecEvalExpr	- evaluate an expression and return a datum
- *		ExecQual		- return true/false if qualification is satisified
+ *		ExecQual		- return true/false if qualification is satisfied
  *		ExecTargetList	- form a new tuple by projecting the given tuple
  *
  *	 NOTES
@@ -71,7 +71,6 @@ static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecMakeFunctionResult(Node *node, List *arguments,
 					   ExprContext *econtext, bool *isNull, bool *isDone);
-static bool ExecQualClause(Node *clause, ExprContext *econtext);
 
 /*
  *	  ExecEvalArrayRef
@@ -1253,7 +1252,9 @@ ExecEvalExpr(Node *expression,
 						retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
 						break;
 					case SUBPLAN_EXPR:
-						retDatum = (Datum) ExecSubPlan((SubPlan *) expr->oper, expr->args, econtext);
+						retDatum = (Datum) ExecSubPlan((SubPlan *) expr->oper,
+													   expr->args, econtext,
+													   isNull);
 						break;
 					default:
 						elog(ERROR, "ExecEvalExpr: unknown expression type %d", expr->opType);
@@ -1280,46 +1281,6 @@ ExecEvalExpr(Node *expression,
  */
 
 /* ----------------------------------------------------------------
- *		ExecQualClause
- *
- *		this is a workhorse for ExecQual.  ExecQual has to deal
- *		with a list of qualifications, so it passes each qualification
- *		in the list to this function one at a time.  ExecQualClause
- *		returns true when the qualification *fails* and false if
- *		the qualification succeeded (meaning we have to test the
- *		rest of the qualification)
- * ----------------------------------------------------------------
- */
-static bool
-ExecQualClause(Node *clause, ExprContext *econtext)
-{
-	Datum		expr_value;
-	bool		isNull;
-	bool		isDone;
-
-	/* when there is a null clause, consider the qualification to fail */
-	if (clause == NULL)
-		return true;
-
-	/*
-	 * pass isDone, but ignore it.	We don't iterate over multiple returns
-	 * in the qualifications.
-	 */
-	expr_value = ExecEvalExpr(clause, econtext, &isNull, &isDone);
-
-	/*
-	 * remember, we return true when the qualification fails;
-	 * NULL is considered failure.
-	 */
-	if (isNull)
-		return true;
-	if (DatumGetInt32(expr_value) == 0)
-		return true;
-
-	return false;
-}
-
-/* ----------------------------------------------------------------
  *		ExecQual
  *
  *		Evaluates a conjunctive boolean expression and returns t
@@ -1329,7 +1290,7 @@ ExecQualClause(Node *clause, ExprContext *econtext)
 bool
 ExecQual(List *qual, ExprContext *econtext)
 {
-	List	   *clause;
+	List	   *qlist;
 
 	/*
 	 * debugging stuff
@@ -1341,24 +1302,37 @@ ExecQual(List *qual, ExprContext *econtext)
 	IncrProcessed();
 
 	/*
-	 * return true immediately if no qual
-	 */
-	if (qual == NIL)
-		return true;
-
-	/*
 	 * a "qual" is a list of clauses.  To evaluate the qual, we evaluate
-	 * each of the clauses in the list.
+	 * each of the clauses in the list.  (For an empty list, we'll return
+	 * TRUE.)
 	 *
-	 * ExecQualClause returns true when we know the qualification *failed*
-	 * so we just pass each clause in qual to it until we know the qual
-	 * failed or there are no more clauses.
+	 * If any of the clauses return NULL, we treat this as FALSE.  This
+	 * is correct per the SQL spec: if any ANDed conditions are NULL, then
+	 * the AND result is either FALSE or NULL, and in either case the
+	 * WHERE condition fails.  NOTE: it would NOT be correct to use this
+	 * simplified logic in a sub-clause; ExecEvalAnd must do the full
+	 * three-state condition evaluation.  We can get away with simpler
+	 * logic here because we know how the result will be used.
 	 */
-
-	foreach(clause, qual)
+	foreach(qlist, qual)
 	{
-		if (ExecQualClause((Node *) lfirst(clause), econtext))
-			return false;		/* qual failed, so return false */
+		Node	   *clause = (Node *) lfirst(qlist);
+		Datum		expr_value;
+		bool		isNull;
+		bool		isDone;
+
+		/* if there is a null clause, consider the qualification to fail */
+		if (clause == NULL)
+			return false;
+		/*
+		 * pass isDone, but ignore it.	We don't iterate over multiple returns
+		 * in the qualifications.
+		 */
+		expr_value = ExecEvalExpr(clause, econtext, &isNull, &isDone);
+		if (isNull)
+			return false;		/* treat NULL as FALSE */
+		if (DatumGetInt32(expr_value) == 0)
+			return false;
 	}
 
 	return true;
