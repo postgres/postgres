@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.32 2002/06/23 22:15:04 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.33 2002/07/30 16:32:20 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -35,6 +35,7 @@ WANTED_DIRS = \
 		seg		\
 		spi		\
 		string		\
+		tablefunc	\
 		tips		\
 		tsearch		\
 		userlock	\
