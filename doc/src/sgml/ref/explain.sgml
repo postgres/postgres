@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.17 2002/03/24 04:31:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.18 2002/03/24 16:57:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -220,13 +220,13 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
    using an aggregate function:
 
    <programlisting>
-EXPLAIN SELECT sum(i) FROM foo WHERE i < 4;
+EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
     <computeroutput>
                              QUERY PLAN
 ---------------------------------------------------------------------
  Aggregate  (cost=23.93..23.93 rows=1 width=4)
-   ->  Index Scan using fi on foo  (cost=0.00..23.92 rows=6 width=4)
-         Index Filter: (i < 10)
+   -&gt;  Index Scan using fi on foo  (cost=0.00..23.92 rows=6 width=4)
+         Index Filter: (i &lt; 10)
 (3 rows)
     </computeroutput>
    </programlisting>
