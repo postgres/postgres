@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Oct 17 19:33:40 EDT 2002
+   Last updated: Sat Oct 19 22:58:02 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -848,7 +848,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    VARCHAR(n) is best when storing variable-length strings but it limits
    how long a string can be. TEXT is for strings of unlimited length,
    maximum 1 gigabyte. BYTEA is for storing binary data, particularly
-   values that include NULL bytes.
+   values that include NULL bytes. These types have similar performance
+   characteristics.
    
     4.15.1) How do I create a serial/auto-incrementing field?
     
