@@ -54,7 +54,7 @@ installation.tar:
 postgres.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml postgres.html
-	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm -C ../graphics catalogs.gif connections.gif layout.gif)
+	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm -C ../graphics catalogs.gif clientserver.gif connections.gif layout.gif)
 
 programmer.tar:
 	$(MAKE) -C sgml clean
