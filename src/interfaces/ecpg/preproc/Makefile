@@ -7,7 +7,7 @@ PATCHLEVEL=0
 
 CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
-	-DINCLUDE_PATH=\"$(DESTDIR)$(HEADERDIR)\"
+	-DINCLUDE_PATH=\"$(HEADERDIR)\"
 
 OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o ../../../backend/parser/scansup.o \
     keywords.o c_keywords.o ../lib/typename.o
@@ -27,10 +27,10 @@ clean:
 # to ship those files in the distribution, for people with inadequate tools.
 
 install: all
-	$(INSTALL) $(INSTL_EXE_OPTS) ecpg$(X) $(DESTDIR)$(BINDIR)
+	$(INSTALL) $(INSTL_EXE_OPTS) ecpg$(X) $(BINDIR)
 
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/ecpg
+	rm -f $(BINDIR)/ecpg
 
 # Rule that really do something.
 ecpg: $(OBJ)
