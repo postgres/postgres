@@ -3,13 +3,17 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.6 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.7 2003/07/27 03:32:26 momjian Exp $
  */
 
 #include "postgres_fe.h"
 #include "mbprint.h"
 
 #include "mb/pg_wchar.h"
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 /*
  * This is an implementation of wcwidth() and wcswidth() as defined in
@@ -330,6 +334,14 @@ mbvalidate(unsigned char *pwcs, int encoding)
 		return mb_utf_validate(pwcs);
 	else
 	{
+#ifdef WIN32
+		/*
+		 * translate characters to DOS console encoding, e.g. needed
+		 * for German umlauts
+		 */
+		if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
+			CharToOem(pwcs, pwcs);
+#endif
 		/*
 		 * other encodings needing validation should add their own
 		 * routines here

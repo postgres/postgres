@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.91 2003/07/23 15:05:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.92 2003/07/27 03:32:26 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2072,6 +2072,19 @@ bar
 	This variable can be set to the values <literal>default</>,
 	<literal>verbose</>, or <literal>terse</> to control the verbosity
 	of error reports.
+	</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><varname>WIN32_CONSOLE</varname></term>
+	<listitem>
+	<para>
+        This variable is only useful when working under the Win32 command
+        console. As the Win32 command console uses a different encoding than
+        the rest of the Windows system.  Eight-bit characters (e.g. German Umlauts)
+        are corrupted. When this variable is set the command console encoding will
+        be translated into ASCII encoding for input and output. 
 	</para>
 	</listitem>
       </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.254 2003/07/26 13:50:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.255 2003/07/27 03:32:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1970,8 +1970,24 @@ makeEmptyPGconn(void)
 {
 	PGconn	   *conn = (PGconn *) malloc(sizeof(PGconn));
 
+/* needed to use the static libpq under windows as well */
+#ifdef WIN32
+	WSADATA wsaData;
+#endif
+
 	if (conn == NULL)
 		return conn;
+
+#ifdef WIN32
+	if (WSAStartup(MAKEWORD(1, 1), &wsaData))
+	{
+		free(conn);
+		return (PGconn*) NULL; 
+	}
+
+	WSASetLastError(0);
+
+#endif
 
 	/* Zero all pointers and booleans */
 	MemSet((char *) conn, 0, sizeof(PGconn));

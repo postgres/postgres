@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.4 2003/03/18 22:09:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.5 2003/07/27 03:32:26 momjian Exp $
  */
 
 
@@ -26,6 +26,10 @@
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#else
+#ifdef WIN32
+#include <windows.h>
+#endif
 #endif
 
 bool		prompt_state = false;
@@ -42,6 +46,11 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
+#else
+#ifdef WIN32
+	HANDLE t;
+	LPDWORD t_orig;
+#endif
 #endif
 
 	destination = (char *) malloc(maxlen + 1);
@@ -74,6 +83,21 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		t.c_lflag &= ~ECHO;
 		tcsetattr(fileno(termin), TCSAFLUSH, &t);
 	}
+#else
+#ifdef WIN32
+	if (!echo)
+	{
+		/* get a new handle to turn echo off */
+		t_orig=(LPDWORD)malloc(sizeof(DWORD));
+		t=GetStdHandle(STD_INPUT_HANDLE);
+
+		/* save the old configuration first */
+		GetConsoleMode(t, t_orig);
+
+		/* set to the new mode */
+		SetConsoleMode(t, ENABLE_LINE_INPUT|ENABLE_PROCESSED_INPUT);
+	}
+#endif
 #endif
 
 	if (prompt)
@@ -111,6 +135,17 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		fputs("\n", termout);
 		fflush(termout);
 	}
+#else
+#ifdef WIN32
+	if (!echo)
+	{
+		/* reset to the original console mode */
+		SetConsoleMode(t, *t_orig);
+		fputs("\n", termout);
+		fflush(termout);
+		free(t_orig);
+	}
+#endif
 #endif
 
 	if (termin != stdin)
