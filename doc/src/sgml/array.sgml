@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.8 2000/12/18 23:39:37 tgl Exp $
+-->
+
 <Chapter Id="arrays">
 <Title>Arrays</Title>
 
@@ -30,7 +34,7 @@ CREATE TABLE sal_emp (
      (pay_by_quarter),  which  represents   the   employee's
      salary by quarter, and a two-dimensional array of <FirstTerm>text</FirstTerm>
      (schedule),  which  represents  the  employee's  weekly
-     schedule.   Now  we  do  some  <FirstTerm>INSERTS</FirstTerm>s; note that when
+     schedule.   Now  we  do  some  <FirstTerm>INSERT</FirstTerm>s; note that when
      appending to an array, we  enclose  the  values  within
      braces  and  separate  them  by commas.  If you know <FirstTerm>C</FirstTerm>,
      this is not unlike the syntax for  initializing  structures.
@@ -82,9 +86,10 @@ SELECT pay_by_quarter[3] FROM sal_emp;
 </Para>
 
 <Para>
-     We  can  also  access  arbitrary slices of an array, or
+     We  can  also  access  arbitrary rectangular slices of an array, or
      subarrays.  An array slice is denoted by writing
-     "lower subscript : upper subscript" for one or more array
+     <replaceable>lower subscript</replaceable> <literal>:</literal>
+     <replaceable>upper subscript</replaceable> for one or more array
      dimensions.  This query  retrieves  the  first  item  on
      Bill's schedule for the first two days of the week:
      
@@ -103,7 +108,11 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
 </ProgramListing>
 
-     with the same result.
+     with the same result.  An array subscripting operation is taken to
+     represent an array slice if any of the subscripts are written in
+     the form <replaceable>lower</replaceable> <literal>:</literal>
+     <replaceable>upper</replaceable>.  A lower bound of 1 is assumed
+     for any subscript where only one value is specified.
 </Para>
 
 <Para>
@@ -114,7 +123,7 @@ UPDATE sal_emp SET pay_by_quarter = '{25000,25000,27000,27000}'
     WHERE name = 'Carol';
 </ProgramListing>
 
-     or updated at a single entry:
+     or updated at a single element:
 
 <ProgramListing>
 UPDATE sal_emp SET pay_by_quarter[4] = 15000
@@ -132,10 +141,11 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
 <Para>
      An array can be enlarged by assigning to an element adjacent to
      those already present, or by assigning to a slice that is adjacent
-     to or overlaps the data already present.  Currently, this is only
-     allowed for one-dimensional arrays, not multidimensional arrays.
+     to or overlaps the data already present.
      For example, if an array value currently has 4 elements, it will
      have five elements after an update that assigns to array[5].
+     Currently, enlargement in this fashion is only
+     allowed for one-dimensional arrays, not multidimensional arrays.
 </Para>
 
 <Para>
@@ -158,6 +168,24 @@ CREATE TABLE tictactoe (
      number of dimensions either.  Arrays of a particular base type
      are all considered to be of the same type, regardless of size or
      number of dimensions.
+</Para>
+
+<Para>
+     The current dimensions of any array value can be retrieved with
+     the <function>array_dims</function> function:
+
+<ProgramListing>
+SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
+
+ array_dims
+------------
+ [1:2][1:1]
+(1 row)
+</ProgramListing>
+
+     <function>array_dims</function> produces a <type>text</type> result,
+     which is convenient for people to read but perhaps not so convenient
+     for programs.
 </Para>
 
 </Chapter>

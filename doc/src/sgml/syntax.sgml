@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.28 2000/12/17 05:47:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.29 2000/12/18 23:39:37 tgl Exp $
 -->
 
  <chapter id="syntax">
@@ -555,12 +555,10 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     </para>
 
     <para>
-     Individual array elements can be placed between single-quote
-     marks to avoid ambiguity problems with respect to leading white space.
-     Without quote marks, the array-value parser will skip white space.
-     Note that to write a quote mark inside a string literal that is to
-     become an array value, you must double the quote mark as described
-     previously.
+     Individual array elements can be placed between double-quote
+     marks (<literal>"</literal>) to avoid ambiguity problems with respect to
+     white space.
+     Without quote marks, the array-value parser will skip leading white space.
     </para>
    </sect2>
   </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.16 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.17 2000/12/18 23:39:37 tgl Exp $
 -->
 
  <chapter id="advanced">
@@ -178,7 +178,7 @@ CREATE TABLE SAL_EMP (
      salary by quarter and a two-dimensional array of
      <firstterm>text</firstterm>
      (schedule),  which  represents  the  employee's  weekly
-     schedule.   Now  we  do  some  <firstterm>INSERTS</firstterm>s;
+     schedule.   Now  we  do  some  <firstterm>INSERT</firstterm>s;
      note that when
      appending to an array, we  enclose  the  values  within
      braces  and  separate  them  by commas.  If you know
@@ -239,8 +239,9 @@ SELECT SAL_EMP.pay_by_quarter[3] FROM SAL_EMP;
     </para>
 
     <para>
-     We  can  also  access  arbitrary slices of an array, or
-     subarrays.  This query  retrieves  the  first  item  on
+     We  can  also  access  arbitrary slices of an array (subarrays)
+     by specifying both lower and upper bounds for
+     each subscript.  This query  retrieves  the  first  item  on
      Bill's schedule for the first two days of the week.
 
      <programlisting>
