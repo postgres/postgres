@@ -1,14 +1,13 @@
 :
-# This utility is used to generate a compact list of changes for each
-# release, bjm 2000-02-22
+# This utility is used to generate a compact list of changes
+# for each release, bjm 2000-02-22
 
 # Usage $0 file
 
-# no branches: 
-# cvs log -d '>1999-06-14 00:00:00 GMT' . > log
+# no branches:	# cvs log -d '>1999-06-14 00:00:00 GMT' . > log
 #
 # pre and post-branch logs:
-# find . -name CVS -type d -exec touch '{}/Entries.Static' \;
+# find . -name CVS -type d -exec touch'{}/Entries.Static' \;
 # cvs log -d'2000-05-08 00:00:00 GMT<2000-05-29 00:00:00 GMT'
 # cvs log -d'>2000-05-29 00:00:00 GMT' -rREL7_0_PATCHES
 # find . -name CVS -type d -exec rm '{}/Entries.Static' \;
@@ -16,8 +15,9 @@
 
 cat "$@" |
 
-# mark each line with a datetime and line number, for sorting and merging
-# we don't print anything from the -- or == line and the date:
+# mark each line with a datetime and line number, for sorting and
+# merging we don't print anything from the -- or == line and the
+# date:
 
 awk '
 	$0 ~ /^Working file:/	{workingfile = "/" $3}
@@ -49,49 +49,73 @@ awk '
 		if (workingfile != "" && skip == "N")
 		{
 			gsub(";", "", $5);
-			printf ("%s| %10d|  %70s\n", datetime, NR-2, $5);
-			printf ("%s| %10d|%s\n", datetime, NR-1, workingfile);
-			printf ("%s| %10d|%s\n", datetime, NR, $0);
-			printf ("%s| %10d|%s\n", datetime, NR+1, "");
+			printf ("%s| %10d|%s\n", datetime, NR-2, workingfile);
+			printf ("%s| %10d|%s\n", datetime, NR-1, $0);
+/*			printf ("%s| %10d|%s\n", datetime, NR, "");*/
+			printf ("%s| %10d|  %70s\n", datetime, NR+1, $5);
 		}
 	}
 
-	$0 ~ /^====*$/ 			{workingfile=""}' |
+	$0 ~ /^====*$/			{workingfile=""}' |
 
 sort | cut -d'|' -f3 | cat |
 
 # collect duplicate narratives
-awk '	BEGIN	{ slot = 0;}
+awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; }
 	{
+		/* filename */
+		/* We have a filename, so we look at the previous */
+		/* narrative to see if it is new narrative text.*/
+		/* */
+		/* If there are a different number of narrative */
+		/* lines, they can not possibly be the same. */
 		if ($0 ~ /^\//)
 		{
 			if (slot != oldslot)
-				same = 0;
+				same = "N";
 			else
 			{
-				same = 1;
+				same = "Y";
 				for (i=1; i <= slot; i++)
 				{
 					if (oldnarr[i] != narr[i])
-						same = 0;
+					{
+						same = "N";
+						break;
+					}
 				}
 			}
 
-			if (oldslot && !same)
-				for (i=1; i <= oldslot; i++)
-					print oldnarr[i];
-			for (i=1; i <= slot; i++)
-				oldnarr[i] = narr[i];
-			oldslot = slot;
+			/* dump out the old narrative if it is new */
+			if (same == "N")
+			{
+				if (oldslot)
+					for (i=1; i <= oldslot; i++)
+						print oldnarr[i];
+				/* save the current narrative */
+				for (i=1; i <= slot; i++)
+					oldnarr[i] = narr[i];
+				oldslot = slot;
+			}
 			slot = 0;
+
+			/* dump out the previous filename */
 			print save_working;
+
+			/* store the current filename for later printing */
 			save_working = $0;
- 		}
+		}
 		else if ($1 != "date:")
+		{
+			/* accumulate narrative */
 			narr[++slot] = $0;
+		}
 	}
 	END	{
+			/* dump out the last filename */
 			print save_working;
+
+			/* dump out the last narrative */
 			for (i=1; i <= slot; i++)
 				print narr[i];
 		}'
