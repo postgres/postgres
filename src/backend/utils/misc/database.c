@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.8 1998/04/27 04:07:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.9 1998/05/29 13:43:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,9 +117,13 @@ ExpandDatabasePath(char *dbpath)
 	/* leading path delimiter? then already absolute path */
 	if (*dbpath == SEP_CHAR)
 	{
+#ifdef ALLOW_ABSOLUTE_DBPATHS
 		cp = strrchr(dbpath, SEP_CHAR);
 		strncpy(buf, dbpath, (cp - dbpath));
 		sprintf(&buf[cp - dbpath], "%cbase%c%s", SEP_CHAR, SEP_CHAR, (cp + 1));
+#else
+		return NULL;
+#endif
 	}
 	/* path delimiter somewhere? then has leading environment variable */
 	else if (strchr(dbpath, SEP_CHAR) != NULL)
