@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.4 2002/03/22 19:20:15 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.5 2002/10/30 05:14:32 momjian Exp $ -->
 
 <chapter id="nls">
  <docinfo>
@@ -176,8 +176,9 @@ gmake init-po
     This will create a file
     <filename><replaceable>progname</replaceable>.pot</filename>.
     (<filename>.pot</filename> to distinguish it from PO files that
-    are <quote>in production</quote>.  What does the T stand for?  I
-    don't know.)  Copy this file to
+    are <quote>in production</quote>. The <literal>T</> stands for
+    <quote>template</>.)
+    Copy this file to
     <filename><replaceable>language</replaceable>.po</filename> and
     edit it.  To make it known that the new language is available,
     also edit the file <filename>nls.mk</filename> and add the
