@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.180 2004/05/27 17:12:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.181 2004/05/28 05:12:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,16 +43,11 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/ps_status.h"
 #include "utils/relcache.h"
 
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
-
-#ifdef EXEC_BACKEND
-typedef struct Port Port;
-extern void SSDataBaseInit(int);
-extern void read_backend_variables(unsigned long, Port*);
-#endif
 
 extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -233,34 +228,29 @@ usage(void)
 }
 
 
-
-int
-BootstrapMain(int argc, char *argv[])
-/* ----------------------------------------------------------------
- *	 The main loop for handling the backend in bootstrap mode
- *	 the bootstrap mode is used to initialize the template database
- *	 the bootstrap backend doesn't speak SQL, but instead expects
+/*
+ *	 The main loop for running the backend in bootstrap mode
+ *
+ *	 The bootstrap mode is used to initialize the template database.
+ *	 The bootstrap backend doesn't speak SQL, but instead expects
  *	 commands in a special bootstrap language.
  *
- *	 The arguments passed in to BootstrapMain are the run-time arguments
- *	 without the argument '-boot', the caller is required to have
- *	 removed -boot from the run-time args
- * ----------------------------------------------------------------
+ *	 For historical reasons, BootstrapMain is also used as the control
+ *	 routine for non-backend subprocesses launched by the postmaster,
+ *	 such as startup and shutdown.
  */
+int
+BootstrapMain(int argc, char *argv[])
 {
 	int			i;
 	char	   *dbname;
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
 	char	   *potential_DataDir = NULL;
-#ifdef EXEC_BACKEND
-	unsigned long	backendID = 0;
-#endif
 
 	/*
 	 * initialize globals
 	 */
-
 	MyProcPid = getpid();
 
 	/*
@@ -268,7 +258,7 @@ BootstrapMain(int argc, char *argv[])
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster || ExecBackend)
+	if (!IsUnderPostmaster)
 		MemoryContextInit();
 
 	/*
@@ -282,6 +272,13 @@ BootstrapMain(int argc, char *argv[])
 		InitializeGUCOptions();
 		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
 												 * variable */
+	}
+
+	/* Ignore the initial -boot argument, if present */
+	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
+	{
+		argv++;
+		argc--;
 	}
 
 	while ((flag = getopt(argc, argv, "B:c:d:D:Fo:p:x:-:")) != -1)
@@ -315,14 +312,6 @@ BootstrapMain(int argc, char *argv[])
 				xlogop = atoi(optarg);
 				break;
 			case 'p':
-#ifdef EXEC_BACKEND
-				{
-					char buf[MAXPGPATH];
-					IsUnderPostmaster = true;
-					sscanf(optarg,"%lu,%s",&backendID,buf);
-					dbname = strdup(buf);
-				}
-#endif
 				dbname = strdup(optarg);
 				break;
 			case 'B':
@@ -369,7 +358,7 @@ BootstrapMain(int argc, char *argv[])
 	if (!dbname || argc != optind)
 		usage();
 
-	if (!IsUnderPostmaster || ExecBackend)
+	if (!IsUnderPostmaster)
 	{
 		if (!potential_DataDir)
 		{
@@ -388,21 +377,43 @@ BootstrapMain(int argc, char *argv[])
 	Assert(DataDir);
 	ValidatePgVersion(DataDir);
 
-	/* Acquire configuration parameters */
+	/*
+	 * Identify myself via ps
+	 */
 	if (IsUnderPostmaster)
 	{
-#ifdef EXEC_BACKEND
-		read_backend_variables(backendID,NULL);
-		read_nondefault_variables();
+		const char *statmsg;
 
-		SSDataBaseInit(xlogop);
-#endif
+		switch (xlogop)
+		{
+			case BS_XLOG_STARTUP:
+				statmsg = "startup subprocess";
+				break;
+			case BS_XLOG_CHECKPOINT:
+				statmsg = "checkpoint subprocess";
+				break;
+			case BS_XLOG_BGWRITER:
+				statmsg = "bgwriter subprocess";
+				break;
+			case BS_XLOG_SHUTDOWN:
+				statmsg = "shutdown subprocess";
+				break;
+			default:
+				statmsg = "??? subprocess";
+				break;
+		}
+		init_ps_display(statmsg, "", "");
+		set_ps_display("");
 	}
-	else
+
+	/* Acquire configuration parameters, unless inherited from postmaster */
+	if (!IsUnderPostmaster)
+	{
 		ProcessConfigFile(PGC_POSTMASTER);
 
-	/* If timezone is not set, determine what the OS uses */
-	pg_timezone_initialize();
+		/* If timezone is not set, determine what the OS uses */
+		pg_timezone_initialize();
+	}
 
 	if (IsUnderPostmaster)
 	{
@@ -450,10 +461,6 @@ BootstrapMain(int argc, char *argv[])
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes(true);
 
-#ifdef EXEC_BACKEND
-	if (IsUnderPostmaster)
-		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
-#endif
 	XLOGPathInit();
 
 	BaseInit();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.66 2004/04/19 23:27:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.67 2004/05/28 05:13:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,13 @@
  *
  * This is called by the postmaster or by a standalone backend.
  * It is also called by a backend forked from the postmaster under
- * the EXEC_BACKEND case
- *
- * In the non EXEC_BACKEND case, backends already have shared memory ready-to-go.
+ * the EXEC_BACKEND case.  (In the non EXEC_BACKEND case, backends
+ * start life already attached to shared memory.)  The initialization
+ * functions are set up to simply "attach" to pre-existing shared memory
+ * structures in the latter case.  We have to do that in order to
+ * initialize pointers in local memory that reference the shared structures.
+ * (In the non EXEC_BACKEND case, these pointer values are inherited via
+ * fork() from the postmaster.)
  *
  * If "makePrivate" is true then we only need private memory, not shared
  * memory.	This is true for a standalone backend, false for a postmaster.
@@ -96,8 +100,12 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 		 * (this should only ever be reached by EXEC_BACKEND code,
 		 *  and only then with makePrivate == false)
 		 */
-		Assert(ExecBackend && !makePrivate);
+#ifdef EXEC_BACKEND
+		Assert(!makePrivate);
 		seghdr = PGSharedMemoryCreate(-1, makePrivate, 0);
+#else
+		Assert(false);
+#endif
 	}
 
 

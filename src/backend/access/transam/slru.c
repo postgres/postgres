@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.13 2004/02/23 23:03:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.14 2004/05/28 05:12:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,10 +164,9 @@ static bool SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions);
 int
 SimpleLruShmemSize(void)
 {
-	return MAXALIGN(sizeof(SlruSharedData)) + BLCKSZ * NUM_CLOG_BUFFERS
-#ifdef EXEC_BACKEND
+	return MAXALIGN(sizeof(SlruSharedData))
+		+ BLCKSZ * NUM_CLOG_BUFFERS
 		+ MAXALIGN(sizeof(SlruLockData))
-#endif
 		;
 }
 
@@ -181,21 +180,8 @@ SimpleLruInit(SlruCtl ctl, const char *name, const char *subdir)
 
 	ptr = ShmemInitStruct(name, SimpleLruShmemSize(), &found);
 	shared = (SlruShared) ptr;
-
-#ifdef EXEC_BACKEND
-	/*
-	 * Locks are in shared memory
-	 */
 	locks = (SlruLock) (ptr + MAXALIGN(sizeof(SlruSharedData)) +
 						BLCKSZ * NUM_CLOG_BUFFERS);
-#else
-	/*
-	 * Locks are in private memory
-	 */
-	Assert(!IsUnderPostmaster);
-	locks = malloc(sizeof(SlruLockData));
-	Assert(locks);
-#endif
 
 	if (!IsUnderPostmaster)
 	{
@@ -225,6 +211,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, const char *subdir)
 	else
 		Assert(found);
 
+	/* Initialize the unshared control struct */
 	ctl->locks = locks;
 	ctl->shared = shared;
 

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.21 2004/03/09 05:11:53 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.22 2004/05/28 05:13:25 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -325,18 +325,6 @@ typedef union PgStat_Msg
 } PgStat_Msg;
 
 
-#ifdef EXEC_BACKEND
-typedef enum STATS_PROCESS_TYPE
-{
-	STAT_PROC_BUFFER,
-	STAT_PROC_COLLECTOR
-} STATS_PROCESS_TYPE;
-#define PGSTAT_FORK_ARGS int argc, char *argv[]
-#else
-#define PGSTAT_FORK_ARGS void
-#endif
-
-
 /* ----------
  * GUC parameters
  * ----------
@@ -355,27 +343,20 @@ extern bool pgstat_is_running;
 
 
 /* ----------
- * Functions called from main
- * ----------
- */
-#ifdef EXEC_BACKEND
-extern void pgstat_main(PGSTAT_FORK_ARGS);
-extern void pgstat_mainChild(PGSTAT_FORK_ARGS);
-#endif
-
-
-/* ----------
  * Functions called from postmaster
  * ----------
  */
-#ifdef EXEC_BACKEND
-extern void pgstat_init_forkexec_backend(void);
-#endif
 extern void pgstat_init(void);
 extern void pgstat_start(void);
 extern bool pgstat_ispgstat(int pid);
 extern void pgstat_close_sockets(void);
 extern void pgstat_beterm(int pid);
+
+#ifdef EXEC_BACKEND
+extern void PgstatBufferMain(int argc, char *argv[]);
+extern void PgstatCollectorMain(int argc, char *argv[]);
+#endif
+
 
 /* ----------
  * Functions called from backends

@@ -9,11 +9,11 @@
  *			- Add some automatic call for pgstat vacuuming.
  *
  *			- Add a pgstat config column to pg_database, so this
- *			  entire thing can be enabled/disabled on a per db base.
+ *			  entire thing can be enabled/disabled on a per db basis.
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.71 2004/05/24 02:47:47 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.72 2004/05/28 05:12:58 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -51,13 +51,6 @@
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
 
-#ifdef EXEC_BACKEND
-#include "utils/guc.h"
-#endif
-
-#ifdef WIN32
-extern pid_t win32_forkexec(const char* path, char *argv[]);
-#endif
 
 /* ----------
  * GUC parameters
@@ -107,8 +100,8 @@ static HTAB *pgStatBeDead = NULL;
 static PgStat_StatBeEntry *pgStatBeTable = NULL;
 static int	pgStatNumBackends = 0;
 
-static char pgStat_tmpfname[MAXPGPATH];
 static char pgStat_fname[MAXPGPATH];
+static char pgStat_tmpfname[MAXPGPATH];
 
 
 /* ----------
@@ -116,12 +109,20 @@ static char pgStat_fname[MAXPGPATH];
  * ----------
  */
 #ifdef EXEC_BACKEND
+
+typedef enum STATS_PROCESS_TYPE
+{
+	STAT_PROC_BUFFER,
+	STAT_PROC_COLLECTOR
+} STATS_PROCESS_TYPE;
+
 static pid_t pgstat_forkexec(STATS_PROCESS_TYPE procType);
-static void pgstat_parseArgs(PGSTAT_FORK_ARGS);
+static void pgstat_parseArgs(int argc, char *argv[]);
+
 #endif
-NON_EXEC_STATIC void pgstat_main(PGSTAT_FORK_ARGS);
-NON_EXEC_STATIC void pgstat_mainChild(PGSTAT_FORK_ARGS);
-static void pgstat_mainInit(void);
+
+NON_EXEC_STATIC void PgstatBufferMain(int argc, char *argv[]);
+NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]);
 static void pgstat_recvbuffer(void);
 static void pgstat_die(SIGNAL_ARGS);
 
@@ -149,18 +150,6 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
  * Public functions called from postmaster follow
  * ------------------------------------------------------------
  */
-
-#ifdef EXEC_BACKEND
-
-void
-pgstat_init_forkexec_backend(void)
-{
-	Assert(DataDir != NULL);
-	snprintf(pgStat_fname, MAXPGPATH,
-			 PGSTAT_STAT_FILENAME, DataDir);
-}
-
-#endif
 
 /* ----------
  * pgstat_init() -
@@ -195,12 +184,12 @@ pgstat_init(void)
 		pgstat_collect_startcollector = true;
 
 	/*
-	 * Initialize the filenames for the status reports.
+	 * Initialize the filename for the status reports.  (In the EXEC_BACKEND
+	 * case, this only sets the value in the postmaster.  The collector
+	 * subprocess will recompute the value for itself, and individual
+	 * backends must do so also if they want to access the file.)
 	 */
-	snprintf(pgStat_tmpfname, MAXPGPATH,
-			 PGSTAT_STAT_TMPFILE, DataDir, getpid());
-	snprintf(pgStat_fname, MAXPGPATH,
-			 PGSTAT_STAT_FILENAME, DataDir);
+	snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
 
 	/*
 	 * If we don't have to start a collector or should reset the collected
@@ -441,112 +430,83 @@ startup_failed:
 
 #ifdef EXEC_BACKEND
 
-/* ----------
+/*
  * pgstat_forkexec() -
  *
- * Used to format up the arglist for, then fork and exec, statistics
+ * Format up the arglist for, then fork and exec, statistics
  * (buffer and collector) processes
- *
  */
 static pid_t
 pgstat_forkexec(STATS_PROCESS_TYPE procType)
 {
-	pid_t pid;
-	char *av[15];
+	char *av[12];
 	int ac = 0, bufc = 0, i;
-	char pgstatBuf[12][MAXPGPATH];
+	char pgstatBuf[7][32];
 
 	av[ac++] = "postgres";
+
 	switch (procType)
 	{
 		case STAT_PROC_BUFFER:
-			av[ac++] = "-statBuf";
+			av[ac++] = "-forkbuf";
 			break;
 
 		case STAT_PROC_COLLECTOR:
-			av[ac++] = "-statCol";
+			av[ac++] = "-forkcol";
 			break;
 
 		default:
 			Assert(false);
 	}
 
-	/* Sockets + pipes */
-	bufc = 0;
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatSock);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPmPipe[0]);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPmPipe[1]);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatCollectorPmPipe[0]);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatCollectorPmPipe[1]);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[0]);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[1]);
+	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 
-	/* + misc */
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",MaxBackends);
+	/* postgres_exec_path is not passed by write_backend_variables */
+	av[ac++] = postgres_exec_path;
 
-	/* + the pstat file names, and postgres pathname */
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",pgStat_tmpfname);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",pgStat_fname);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",postgres_exec_path);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",DataDir);
+	/* Sockets + pipes (those not passed by write_backend_variables) */
+	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPmPipe[0]);
+	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPmPipe[1]);
+	snprintf(pgstatBuf[bufc++],32,"%d",pgStatCollectorPmPipe[0]);
+	snprintf(pgstatBuf[bufc++],32,"%d",pgStatCollectorPmPipe[1]);
+	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPipe[0]);
+	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPipe[1]);
 
 	/* Add to the arg list */
 	Assert(bufc <= lengthof(pgstatBuf));
 	for (i = 0; i < bufc; i++)
 		av[ac++] = pgstatBuf[i];
 
-	av[ac++] = NULL;
-	Assert(ac <= lengthof(av));
+	av[ac] = NULL;
+	Assert(ac < lengthof(av));
 
-	/* Fire off execv in child */
-#ifdef WIN32
-	pid = win32_forkexec(postgres_exec_path, av);
-#else
-	if ((pid = fork()) == 0 && (execv(postgres_exec_path, av) == -1))
-		/* FIXME: [fork/exec] suggestions for what to do here? Can't call elog... */
-		abort();
-#endif
-	return pid; /* Parent returns pid */
+	return postmaster_forkexec(ac, av);
 }
 
 
-/* ----------
+/*
  * pgstat_parseArgs() -
  *
- * Used to unformat the arglist for exec'ed statistics
+ * Extract data from the arglist for exec'ed statistics
  * (buffer and collector) processes
- *
  */
 static void
-pgstat_parseArgs(PGSTAT_FORK_ARGS)
+pgstat_parseArgs(int argc, char *argv[])
 {
-	Assert(argc == 14);
+	Assert(argc == 10);
 
-	if (find_my_exec(argv[0], my_exec_path) < 0)
-		elog(FATAL,
-				gettext("%s: could not locate my own executable path"),
-						argv[0]);
-	
-	get_pkglib_path(my_exec_path, pkglib_path);
-
-	argc = 2;
-	pgStatSock 		= atoi(argv[argc++]);
+	argc = 3;
+	StrNCpy(postgres_exec_path,	argv[argc++], MAXPGPATH);
 	pgStatPmPipe[0]	= atoi(argv[argc++]);
 	pgStatPmPipe[1]	= atoi(argv[argc++]);
 	pgStatCollectorPmPipe[0] = atoi(argv[argc++]);
 	pgStatCollectorPmPipe[1] = atoi(argv[argc++]);
 	pgStatPipe[0]	= atoi(argv[argc++]);
 	pgStatPipe[1]	= atoi(argv[argc++]);
-	MaxBackends		= atoi(argv[argc++]);
-	StrNCpy(pgStat_tmpfname,argv[argc++],MAXPGPATH);
-	StrNCpy(pgStat_fname,	argv[argc++],MAXPGPATH);
-	StrNCpy(postgres_exec_path,	argv[argc++],MAXPGPATH);
-	DataDir			= strdup(argv[argc++]);
-
-	read_nondefault_variables();
 }
 
-#endif
+#endif /* EXEC_BACKEND */
+
 
 /* ----------
  * pgstat_start() -
@@ -638,7 +598,7 @@ pgstat_start(void)
 			/* Drop our connection to postmaster's shared memory, as well */
 			PGSharedMemoryDetach();
 
-			pgstat_main();
+			PgstatBufferMain(0, NULL);
 			break;
 #endif
 
@@ -1443,25 +1403,19 @@ pgstat_send(void *msg, int len)
 }
 
 
-/* ------------------------------------------------------------
- * Local functions implementing the statistics collector itself follow
- *------------------------------------------------------------
+/* ----------
+ * PgstatBufferMain() -
+ *
+ *	Start up the statistics buffer process.  This is the body of the
+ *	postmaster child process.
+ *
+ *	The argc/argv parameters are valid only in EXEC_BACKEND case.
+ * ----------
  */
-
-static void
-pgstat_mainInit(void)
+NON_EXEC_STATIC void
+PgstatBufferMain(int argc, char *argv[])
 {
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-#ifdef EXEC_BACKEND
-	/* In EXEC case we will not have inherited these settings */
-	IsPostmasterEnvironment = true;
-	whereToSendOutput = None;
-
-	/* Setup global context */
-	MemoryContextInit(); /* before any elog'ing can occur */
-	InitializeGUCOptions();
-#endif
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
@@ -1485,20 +1439,8 @@ pgstat_mainInit(void)
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
 	pqsignal(SIGWINCH, SIG_DFL);
-}
+	/* unblock will happen in pgstat_recvbuffer */
 
-
-/* ----------
- * pgstat_main() -
- *
- *	Start up the statistics collector itself.  This is the body of the
- *	postmaster child process.
- * ----------
- */
-NON_EXEC_STATIC void
-pgstat_main(PGSTAT_FORK_ARGS)
-{
-	pgstat_mainInit(); /* Note: for *both* EXEC_BACKEND and regular cases */
 #ifdef EXEC_BACKEND
 	pgstat_parseArgs(argc,argv);
 #endif
@@ -1547,7 +1489,7 @@ pgstat_main(PGSTAT_FORK_ARGS)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* child becomes collector process */
-			pgstat_mainChild();
+			PgstatCollectorMain(0, NULL);
 			break;
 #endif
 
@@ -1560,8 +1502,17 @@ pgstat_main(PGSTAT_FORK_ARGS)
 }
 
 
+/* ----------
+ * PgstatCollectorMain() -
+ *
+ *	Start up the statistics collector itself.  This is the body of the
+ *	postmaster grandchild process.
+ *
+ *	The argc/argv parameters are valid only in EXEC_BACKEND case.
+ * ----------
+ */
 NON_EXEC_STATIC void
-pgstat_mainChild(PGSTAT_FORK_ARGS)
+PgstatCollectorMain(int argc, char *argv[])
 {
 	PgStat_Msg	msg;
 	fd_set		rfds;
@@ -1574,28 +1525,51 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 	bool		need_statwrite;
 	HASHCTL		hash_ctl;
 
-#ifdef EXEC_BACKEND
-	pgstat_mainInit();  /* Note: only in EXEC_BACKEND case */
-	pgstat_parseArgs(argc,argv);
-#else
 	MyProcPid = getpid();		/* reset MyProcPid */
+
+	/*
+	 * Reset signal handling.  With the exception of restoring default
+	 * SIGCHLD handling, this is a no-op in the non-EXEC_BACKEND case
+	 * because we'll have inherited these settings from the buffer process;
+	 * but it's not a no-op for EXEC_BACKEND.
+	 */
+	pqsignal(SIGHUP, SIG_IGN);
+	pqsignal(SIGINT, SIG_IGN);
+	pqsignal(SIGTERM, SIG_IGN);
+	pqsignal(SIGQUIT, SIG_IGN);
+	pqsignal(SIGALRM, SIG_IGN);
+	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGUSR1, SIG_IGN);
+	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGCHLD, SIG_DFL);
+	pqsignal(SIGTTIN, SIG_DFL);
+	pqsignal(SIGTTOU, SIG_DFL);
+	pqsignal(SIGCONT, SIG_DFL);
+	pqsignal(SIGWINCH, SIG_DFL);
+	PG_SETMASK(&UnBlockSig);
+
+#ifdef EXEC_BACKEND
+	pgstat_parseArgs(argc,argv);
 #endif
 
+	/* Close unwanted files */
 	closesocket(pgStatPipe[1]);
 	closesocket(pgStatSock);
 	pmPipe = pgStatCollectorPmPipe[0];
-
-	/*
-	 * In the child we can have default SIGCHLD handling (in case we want
-	 * to call system() here...)
-	 */
-	pqsignal(SIGCHLD, SIG_DFL);
 
 	/*
 	 * Identify myself via ps
 	 */
 	init_ps_display("stats collector process", "", "");
 	set_ps_display("");
+
+	/*
+	 * Initialize filenames needed for status reports.
+	 */
+	snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
+	/* tmpfname need only be set correctly in this process */
+	snprintf(pgStat_tmpfname, MAXPGPATH, PGSTAT_STAT_TMPFILE,
+			 DataDir, getpid());
 
 	/*
 	 * Arrange to write the initial status file right away
@@ -2548,6 +2522,18 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 		*numbackends = 0;
 	if (betab != NULL)
 		*betab = NULL;
+
+	/*
+	 * In EXEC_BACKEND case, we won't have inherited pgStat_fname from
+	 * postmaster, so compute it first time through.
+	 */
+#ifdef EXEC_BACKEND
+	if (pgStat_fname[0] == '\0')
+	{
+		Assert(DataDir != NULL);
+		snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
+	}
+#endif
 
 	/*
 	 * Try to open the status file. If it doesn't exist, the backends

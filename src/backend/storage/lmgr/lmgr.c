@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.62 2003/12/01 21:59:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.63 2004/05/28 05:13:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,13 @@ void
 InitLockTable(int maxBackends)
 {
 	LOCKMETHODID	LongTermTableId;
+
+	/* there's no zero-th table */
+	NumLockMethods = 1;
+
+	/*
+	 * Create the default lock method table
+	 */
 
 	/* number of lock modes is lengthof()-1 because of dummy zero */
 	LockTableId = LockMethodTableInit("LockTable",

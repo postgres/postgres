@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.415 2004/05/26 04:41:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.416 2004/05/28 05:13:12 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2189,10 +2189,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/* Set up reference point for stack depth checking */
 	stack_base_ptr = &stack_base;
 
-	if (my_exec_path[0] == '\0' && find_my_exec(argv[0], my_exec_path) < 0)
-		elog(FATAL,
-				gettext("%s: could not locate my own executable path"),
-						argv[0]);
+	/* Compute paths, if we didn't inherit them from postmaster */
+	if (my_exec_path[0] == '\0')
+	{
+		if (find_my_exec(argv[0], my_exec_path) < 0)
+			elog(FATAL, "%s: could not locate my own executable path",
+				 argv[0]);
+	}
 	
 	if (pkglib_path[0] == '\0')
 		get_pkglib_path(my_exec_path, pkglib_path);
@@ -2547,7 +2550,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			on_proc_exit(log_disconnections,0);
 	}
 
-	if (!IsUnderPostmaster || ExecBackend)
+	if (!IsUnderPostmaster)
 	{
 		if (!potential_DataDir)
 		{
@@ -2563,17 +2566,14 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 	Assert(DataDir);
 
-	/* Acquire configuration parameters */
-	if (IsUnderPostmaster)
+	/* Acquire configuration parameters, unless inherited from postmaster */
+	if (!IsUnderPostmaster)
 	{
-#ifdef EXEC_BACKEND
-		read_nondefault_variables();
-#endif
-	} else
 		ProcessConfigFile(PGC_POSTMASTER);
 
-	/* If timezone is not set, determine what the OS uses */
-	pg_timezone_initialize();
+		/* If timezone is not set, determine what the OS uses */
+		pg_timezone_initialize();
+	}
 
 	/*
 	 * Set up signal handlers and masks.
@@ -2918,11 +2918,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
-#ifdef EXEC_BACKEND
-			read_nondefault_variables();
-#else
 			ProcessConfigFile(PGC_SIGHUP);
-#endif
 		}
 
 		/*

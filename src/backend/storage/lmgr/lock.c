@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.131 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.132 2004/05/28 05:13:05 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -155,7 +155,9 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 static LockMethod LockMethods[MAX_LOCK_METHODS];
 static HTAB*	LockMethodLockHash[MAX_LOCK_METHODS];
 static HTAB*	LockMethodProcLockHash[MAX_LOCK_METHODS];
-static int	NumLockMethods;
+
+/* exported so lmgr.c can initialize it */
+int		NumLockMethods;
 
 
 /*
@@ -190,15 +192,15 @@ GetLocksMethodTable(LOCK *lock)
  */
 static void
 LockMethodInit(LockMethod lockMethodTable,
-			   LOCKMASK *conflictsP,
+			   const LOCKMASK *conflictsP,
 			   int numModes)
 {
 	int			i;
 
 	lockMethodTable->numLockModes = numModes;
 	/* copies useless zero element as well as the N lockmodes */
-	for (i = 0; i <= numModes; i++, conflictsP++)
-		lockMethodTable->conflictTab[i] = *conflictsP;
+	for (i = 0; i <= numModes; i++)
+		lockMethodTable->conflictTab[i] = conflictsP[i];
 }
 
 /*
@@ -211,8 +213,8 @@ LockMethodInit(LockMethod lockMethodTable,
  * TopMemoryContext.
  */
 LOCKMETHODID
-LockMethodTableInit(char *tabName,
-					LOCKMASK *conflictsP,
+LockMethodTableInit(const char *tabName,
+					const LOCKMASK *conflictsP,
 					int numModes,
 					int maxBackends)
 {
@@ -245,17 +247,6 @@ LockMethodTableInit(char *tabName,
 		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
 
 	/*
-	 * Lock the LWLock for the table (probably not necessary here)
-	 */
-#ifndef EXEC_BACKEND
-	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
-#endif
-	/*
-	 * no zero-th table
-	 */
-	NumLockMethods = 1;
-
-	/*
 	 * we're first - initialize
 	 */
 	if (!found)
@@ -263,6 +254,7 @@ LockMethodTableInit(char *tabName,
 		MemSet(newLockMethod, 0, sizeof(LockMethodData));
 		newLockMethod->masterLock = LockMgrLock;
 		newLockMethod->lockmethodid = NumLockMethods;
+		LockMethodInit(newLockMethod, conflictsP, numModes);
 	}
 
 	/*
@@ -311,12 +303,6 @@ LockMethodTableInit(char *tabName,
 	if (!LockMethodProcLockHash[NumLockMethods-1])
 		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
 
-	/* init data structures */
-	LockMethodInit(newLockMethod, conflictsP, numModes);
-
-#ifndef EXEC_BACKEND
-	LWLockRelease(LockMgrLock);
-#endif
 	pfree(shmemName);
 
 	return newLockMethod->lockmethodid;

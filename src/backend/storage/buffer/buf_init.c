@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.65 2004/04/22 07:21:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.66 2004/05/28 05:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,15 +93,6 @@ InitBufferPool(void)
 				foundDescs;
 	int			i;
 
-	/*
-	 * It's probably not really necessary to grab the lock --- if there's
-	 * anyone else attached to the shmem at this point, we've got
-	 * problems.
-	 */
-#ifndef EXEC_BACKEND
-	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-#endif
-
 	BufferDescriptors = (BufferDesc *)
 		ShmemInitStruct("Buffer Descriptors",
 						NBuffers * sizeof(BufferDesc), &foundDescs);
@@ -119,6 +110,13 @@ InitBufferPool(void)
 	{
 		BufferDesc *buf;
 		char	   *block;
+
+		/*
+		 * It's probably not really necessary to grab the lock --- if there's
+		 * anyone else attached to the shmem at this point, we've got
+		 * problems.
+		 */
+		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 		buf = BufferDescriptors;
 		block = BufferBlocks;
@@ -147,14 +145,12 @@ InitBufferPool(void)
 
 		/* Correct last entry */
 		BufferDescriptors[NBuffers - 1].bufNext = -1;
+
+		LWLockRelease(BufMgrLock);
 	}
 
 	/* Init other shared buffer-management stuff */
 	StrategyInitialize(!foundDescs);
-
-#ifndef EXEC_BACKEND
-	LWLockRelease(BufMgrLock);
-#endif
 }
 
 /*

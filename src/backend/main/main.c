@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.83 2004/05/27 15:07:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.84 2004/05/28 05:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,9 +242,9 @@ main(int argc, char *argv[])
 
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
-	 * SubPostmasterMain, pgstat_main, pgstat_mainChild or BootstrapMain
-	 * depending on the program name (and possibly first argument) we were
-	 * called with. The lack of consistency here is historical.
+	 * SubPostmasterMain, or BootstrapMain depending on the program name
+	 * (and possibly first argument) we were called with. The lack of
+	 * consistency here is historical.
 	 */
 	len = strlen(argv[0]);
 
@@ -259,43 +259,21 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * If the first argument is "-boot", then invoke bootstrap mode. Note
-	 * we remove "-boot" from the arguments passed on to BootstrapMain.
+	 * If the first argument begins with "-fork", then invoke
+	 * SubPostmasterMain.  This is used for forking postmaster child
+	 * processes on systems where we can't simply fork.
+	 */
+#ifdef EXEC_BACKEND
+	if (argc > 1 && strncmp(argv[1], "-fork", 5) == 0)
+		exit(SubPostmasterMain(argc, argv));
+#endif
+
+	/*
+	 * If the first argument is "-boot", then invoke bootstrap mode.
+	 * (This path is taken only for a standalone bootstrap process.)
 	 */
 	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
-		exit(BootstrapMain(argc - 1, argv + 1));
-
-#ifdef EXEC_BACKEND
-
-	/*
-	 * If the first argument is "-forkexec", then invoke
-	 * SubPostmasterMain. Note we remove "-forkexec" from the arguments
-	 * passed on to SubPostmasterMain.
-	 */
-	if (argc > 1 && strcmp(argv[1], "-forkexec") == 0)
-	{
-		SubPostmasterMain(argc - 2, argv + 2);
-		exit(0);
-	}
-
-	/*
-	 * If the first argument is "-statBuf", then invoke pgstat_main.
-	 */
-	if (argc > 1 && strcmp(argv[1], "-statBuf") == 0)
-	{
-		pgstat_main(argc, argv);
-		exit(0);
-	}
-
-	/*
-	 * If the first argument is "-statCol", then invoke pgstat_mainChild.
-	 */
-	if (argc > 1 && strcmp(argv[1], "-statCol") == 0)
-	{
-		pgstat_mainChild(argc, argv);
-		exit(0);
-	}
-#endif
+		exit(BootstrapMain(argc, argv));
 
 	/*
 	 * If the first argument is "--describe-config", then invoke runtime
@@ -331,7 +309,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-#endif
+#endif /* WIN32 */
 
 	exit(PostgresMain(argc, argv, pw_name_persist));
 }

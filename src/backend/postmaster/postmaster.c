@@ -7,10 +7,10 @@
  *	  message to setup a backend process.
  *
  *	  The postmaster also manages system-wide operations such as
- *	  startup, shutdown, and periodic checkpoints.	The postmaster
- *	  itself doesn't do those operations, mind you --- it just forks
- *	  off a subprocess to do them at the right times.  It also takes
- *	  care of resetting the system if a backend crashes.
+ *	  startup and shutdown.	The postmaster itself doesn't do those
+ *	  operations, mind you --- it just forks off a subprocess to do them
+ *	  at the right times.  It also takes care of resetting the system
+ *	  if a backend crashes.
  *
  *	  The postmaster process creates the shared memory and semaphore
  *	  pools during startup, but as a rule does not touch them itself.
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.397 2004/05/27 17:12:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.398 2004/05/28 05:12:58 tgl Exp $
  *
  * NOTES
  *
@@ -113,8 +113,6 @@
 #include "pgstat.h"
 
 
-#define INVALID_SOCK	(-1)
-
 #ifdef HAVE_SIGPROCMASK
 sigset_t	UnBlockSig,
 			BlockSig,
@@ -176,14 +174,6 @@ static const char *progname = NULL;
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	10
 static int	ListenSocket[MAXLISTEN];
-
-/* Used to reduce macros tests */
-#ifdef EXEC_BACKEND
-const bool	ExecBackend = true;
-
-#else
-const bool	ExecBackend = false;
-#endif
 
 /*
  * Set by the -o option
@@ -258,7 +248,12 @@ extern int	optreset;
 /*
  * postmaster.c - function prototypes
  */
-static void pmdaemonize(int argc, char *argv[]);
+static void checkDataDir(const char *checkdir);
+#ifdef USE_RENDEZVOUS
+static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode,
+					  void *context);
+#endif
+static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 static void reset_shared(unsigned short port);
@@ -270,7 +265,6 @@ static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
-static void BackendInit(Port *port);
 static int	BackendRun(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
@@ -286,7 +280,6 @@ static void RandomSalt(char *cryptSalt, char *md5Salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
-NON_EXEC_STATIC void SSDataBaseInit(int xlop);
 static pid_t SSDataBase(int xlop);
 static void
 postmaster_error(const char *fmt,...)
@@ -296,8 +289,7 @@ __attribute__((format(printf, 1, 2)));
 #ifdef EXEC_BACKEND
 
 #ifdef WIN32
-pid_t		win32_forkexec(const char *path, char *argv[]);
-
+static pid_t win32_forkexec(const char *path, char *argv[]);
 static void win32_AddChild(pid_t pid, HANDLE handle);
 static void win32_RemoveChild(pid_t pid);
 static pid_t win32_waitpid(int *exitstatus);
@@ -308,98 +300,26 @@ static HANDLE *win32_childHNDArray;
 static unsigned long win32_numChildren = 0;
 #endif
 
-static pid_t Backend_forkexec(Port *port);
+static pid_t backend_forkexec(Port *port);
+static pid_t internal_forkexec(int argc, char *argv[], Port *port);
 
-static unsigned long tmpBackendFileNum = 0;
-void		read_backend_variables(unsigned long id, Port *port);
-static bool write_backend_variables(Port *port);
+static void read_backend_variables(char *filename, Port *port);
+static bool write_backend_variables(char *filename, Port *port);
 
 static void ShmemBackendArrayAdd(Backend *bn);
 static void ShmemBackendArrayRemove(pid_t pid);
-#endif
+
+#endif /* EXEC_BACKEND */
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
 #define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)
 #define StartBackgroundWriter() SSDataBase(BS_XLOG_BGWRITER)
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
-static void
-checkDataDir(const char *checkdir)
-{
-	char		path[MAXPGPATH];
-	FILE	   *fp;
-	struct stat stat_buf;
 
-	if (checkdir == NULL)
-	{
-		fprintf(stderr,
-				gettext("%s does not know where to find the database system data.\n"
-						"You must specify the directory that contains the database system\n"
-						"either by specifying the -D invocation option or by setting the\n"
-						"PGDATA environment variable.\n"),
-				progname);
-		ExitPostmaster(2);
-	}
-
-	if (stat(checkdir, &stat_buf) == -1)
-	{
-		if (errno == ENOENT)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("data directory \"%s\" does not exist",
-							checkdir)));
-		else
-			ereport(FATAL,
-					(errcode_for_file_access(),
-			 errmsg("could not read permissions of directory \"%s\": %m",
-					checkdir)));
-	}
-
-	/*
-	 * Check if the directory has group or world access.  If so, reject.
-	 *
-	 * XXX temporarily suppress check when on Windows, because there may not
-	 * be proper support for Unix-y file permissions.  Need to think of a
-	 * reasonable check to apply on Windows.
-	 */
-#if !defined(__CYGWIN__) && !defined(WIN32)
-	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has group or world access",
-						checkdir),
-				 errdetail("Permissions should be u=rwx (0700).")));
-#endif
-
-	/* Look for PG_VERSION before looking for pg_control */
-	ValidatePgVersion(checkdir);
-
-	snprintf(path, sizeof(path), "%s/global/pg_control", checkdir);
-
-	fp = AllocateFile(path, PG_BINARY_R);
-	if (fp == NULL)
-	{
-		fprintf(stderr,
-				gettext("%s: could not find the database system\n"
-						"Expected to find it in the directory \"%s\",\n"
-						"but could not open file \"%s\": %s\n"),
-				progname, checkdir, path, strerror(errno));
-		ExitPostmaster(2);
-	}
-	FreeFile(fp);
-}
-
-
-#ifdef USE_RENDEZVOUS
-
-/* reg_reply -- empty callback function for DNSServiceRegistrationCreate() */
-static void
-reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
-{
-
-}
-#endif
-
+/*
+ * Postmaster main entry point
+ */
 int
 PostmasterMain(int argc, char *argv[])
 {
@@ -462,8 +382,7 @@ PostmasterMain(int argc, char *argv[])
 	IgnoreSystemIndexes(false);
 
 	if (find_my_exec(argv[0], my_exec_path) < 0)
-		elog(FATAL,
-			 gettext("%s: could not locate my own executable path"),
+		elog(FATAL, "%s: could not locate my own executable path",
 			 argv[0]);
 
 	get_pkglib_path(my_exec_path, pkglib_path);
@@ -700,9 +619,10 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef EXEC_BACKEND
-	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR, postgres_exec_path) < 0)
+	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
+						postgres_exec_path) < 0)
 		ereport(FATAL,
-				(errmsg("%s: could not locate postgres executable or non-matching version",
+				(errmsg("%s: could not locate matching postgres executable",
 						progname)));
 #endif
 
@@ -728,7 +648,7 @@ PostmasterMain(int argc, char *argv[])
 	 * will show the wrong PID.
 	 */
 	if (SilentMode)
-		pmdaemonize(argc, argv);
+		pmdaemonize();
 
 	/*
 	 * Create lockfile for data directory.
@@ -945,8 +865,96 @@ PostmasterMain(int argc, char *argv[])
 	return 0;					/* not reached */
 }
 
+
+/*
+ * Validate the proposed data directory
+ */
 static void
-pmdaemonize(int argc, char *argv[])
+checkDataDir(const char *checkdir)
+{
+	char		path[MAXPGPATH];
+	FILE	   *fp;
+	struct stat stat_buf;
+
+	if (checkdir == NULL)
+	{
+		fprintf(stderr,
+				gettext("%s does not know where to find the database system data.\n"
+						"You must specify the directory that contains the database system\n"
+						"either by specifying the -D invocation option or by setting the\n"
+						"PGDATA environment variable.\n"),
+				progname);
+		ExitPostmaster(2);
+	}
+
+	if (stat(checkdir, &stat_buf) == -1)
+	{
+		if (errno == ENOENT)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("data directory \"%s\" does not exist",
+							checkdir)));
+		else
+			ereport(FATAL,
+					(errcode_for_file_access(),
+			 errmsg("could not read permissions of directory \"%s\": %m",
+					checkdir)));
+	}
+
+	/*
+	 * Check if the directory has group or world access.  If so, reject.
+	 *
+	 * XXX temporarily suppress check when on Windows, because there may not
+	 * be proper support for Unix-y file permissions.  Need to think of a
+	 * reasonable check to apply on Windows.
+	 */
+#if !defined(__CYGWIN__) && !defined(WIN32)
+	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("data directory \"%s\" has group or world access",
+						checkdir),
+				 errdetail("Permissions should be u=rwx (0700).")));
+#endif
+
+	/* Look for PG_VERSION before looking for pg_control */
+	ValidatePgVersion(checkdir);
+
+	snprintf(path, sizeof(path), "%s/global/pg_control", checkdir);
+
+	fp = AllocateFile(path, PG_BINARY_R);
+	if (fp == NULL)
+	{
+		fprintf(stderr,
+				gettext("%s: could not find the database system\n"
+						"Expected to find it in the directory \"%s\",\n"
+						"but could not open file \"%s\": %s\n"),
+				progname, checkdir, path, strerror(errno));
+		ExitPostmaster(2);
+	}
+	FreeFile(fp);
+}
+
+
+#ifdef USE_RENDEZVOUS
+
+/*
+ * empty callback function for DNSServiceRegistrationCreate()
+ */
+static void
+reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
+{
+
+}
+
+#endif /* USE_RENDEZVOUS */
+
+
+/*
+ * Fork away from the controlling terminal (-S option)
+ */
+static void
+pmdaemonize(void)
 {
 #ifdef WIN32
 	/* not supported */
@@ -960,7 +968,7 @@ pmdaemonize(int argc, char *argv[])
 #endif
 
 #ifdef LINUX_PROFILE
-	/* see comments in BackendRun */
+	/* see comments in BackendStartup */
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
@@ -1003,7 +1011,6 @@ pmdaemonize(int argc, char *argv[])
 }
 
 
-
 /*
  * Print out help message
  */
@@ -1044,6 +1051,10 @@ usage(const char *progname)
 				   "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
+
+/*
+ * Main loop of postmaster
+ */
 static int
 ServerLoop(void)
 {
@@ -1194,7 +1205,6 @@ ServerLoop(void)
  * Initialise the masks for select() for the ports
  * we are listening on.  Return the number of sockets to listen on.
  */
-
 static int
 initMasks(fd_set *rmask)
 {
@@ -1524,10 +1534,8 @@ processCancelRequest(Port *port, void *pkt)
 	int			backendPID;
 	long		cancelAuthCode;
 	Backend    *bp;
-
 #ifndef EXEC_BACKEND
 	Dlelem	   *curr;
-
 #else
 	int			i;
 #endif
@@ -1550,7 +1558,11 @@ processCancelRequest(Port *port, void *pkt)
 		return;
 	}
 
-	/* See if we have a matching backend */
+	/*
+	 * See if we have a matching backend.  In the EXEC_BACKEND case, we
+	 * can no longer access the postmaster's own backend list, and must
+	 * rely on the backup array in shared memory.
+	 */
 #ifndef EXEC_BACKEND
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
 	{
@@ -1728,12 +1740,14 @@ SIGHUP_handler(SIGNAL_ARGS)
 		ereport(LOG,
 			 (errmsg("received SIGHUP, reloading configuration files")));
 		ProcessConfigFile(PGC_SIGHUP);
-#ifdef EXEC_BACKEND
-		write_nondefault_variables(PGC_SIGHUP);
-#endif
 		SignalChildren(SIGHUP);
 		load_hba();
 		load_ident();
+
+#ifdef EXEC_BACKEND
+		/* Update the starting-point file for future children */
+		write_nondefault_variables(PGC_SIGHUP);
+#endif
 
 		/*
 		 * Tell the background writer to terminate so that we will start a
@@ -1747,7 +1761,6 @@ SIGHUP_handler(SIGNAL_ARGS)
 
 	errno = save_errno;
 }
-
 
 
 /*
@@ -2249,6 +2262,9 @@ BackendStartup(Port *port)
 		return STATUS_ERROR;
 	}
 
+	/* Pass down canAcceptConnections state (kluge for EXEC_BACKEND case) */
+	port->canAcceptConnections = canAcceptConnections();
+
 	/*
 	 * Flush stdio channels just before fork, to avoid double-output
 	 * problems. Ideally we'd use fflush(NULL) here, but there are still a
@@ -2259,6 +2275,12 @@ BackendStartup(Port *port)
 	 */
 	fflush(stdout);
 	fflush(stderr);
+
+#ifdef EXEC_BACKEND
+
+	pid = backend_forkexec(port);
+
+#else /* !EXEC_BACKEND */
 
 #ifdef LINUX_PROFILE
 
@@ -2277,10 +2299,6 @@ BackendStartup(Port *port)
 	beos_before_backend_startup();
 #endif
 
-	port->canAcceptConnections = canAcceptConnections();
-#ifdef EXEC_BACKEND
-	pid = Backend_forkexec(port);
-#else
 	pid = fork();
 
 	if (pid == 0)				/* child */
@@ -2297,11 +2315,12 @@ BackendStartup(Port *port)
 
 		proc_exit(BackendRun(port));
 	}
-#endif
 
-	/* in parent, error */
+#endif /* EXEC_BACKEND */
+
 	if (pid < 0)
 	{
+		/* in parent, fork failed */
 		int			save_errno = errno;
 
 #ifdef __BEOS__
@@ -2316,7 +2335,7 @@ BackendStartup(Port *port)
 		return STATUS_ERROR;
 	}
 
-	/* in parent, normal */
+	/* in parent, successful fork */
 	ereport(DEBUG2,
 			(errmsg_internal("forked new backend, pid=%d socket=%d",
 							 (int) pid, port->sock)));
@@ -2392,16 +2411,15 @@ split_opts(char **argv, int *argcp, char *s)
 
 
 /*
- * BackendInit/Run -- perform authentication [BackendInit], and if successful,
- *				set up the backend's argument list [BackendRun] and invoke
- *				backend main()
+ * BackendRun -- perform authentication, and if successful,
+ *				set up the backend's argument list and invoke PostgresMain()
  *
  * returns:
  *		Shouldn't return at all.
  *		If PostgresMain() fails, return status.
  */
-static void
-BackendInit(Port *port)
+static int
+BackendRun(Port *port)
 {
 	int			status;
 	struct timeval now;
@@ -2409,10 +2427,20 @@ BackendInit(Port *port)
 	char		remote_host[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
 	char		remote_ps_data[NI_MAXHOST];
+	char	  **av;
+	int			maxac;
+	int			ac;
+	char		debugbuf[32];
+	char		protobuf[32];
+	int			i;
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
-	ClientAuthInProgress = true;	/* limit visibility of log messages */
+	/*
+	 * Let's clean up ourselves as the postmaster child, and close the
+	 * postmaster's other sockets
+	 */
+	ClosePostmasterPorts(true);
 
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();
@@ -2421,6 +2449,24 @@ BackendInit(Port *port)
 	 * Signal handlers setting is moved to tcop/postgres...
 	 */
 
+	/* Save port etc. for ps status */
+	MyProcPort = port;
+
+	/* Reset MyProcPid to new backend's pid */
+	MyProcPid = getpid();
+
+	/*
+	 * PreAuthDelay is a debugging aid for investigating problems in the
+	 * authentication cycle: it can be set in postgresql.conf to allow
+	 * time to attach to the newly-forked backend with a debugger. (See
+	 * also the -W backend switch, which we allow clients to pass through
+	 * PGOPTIONS, but it is not honored until after authentication.)
+	 */
+	if (PreAuthDelay > 0)
+		pg_usleep(PreAuthDelay * 1000000L);
+
+	ClientAuthInProgress = true;	/* limit visibility of log messages */
+
 	/* save start time for end of session reporting */
 	gettimeofday(&(port->session_start), NULL);
 
@@ -2428,12 +2474,6 @@ BackendInit(Port *port)
 	port->remote_host = "";
 	port->remote_port = "";
 	port->commandTag = "";
-
-	/* Save port etc. for ps status */
-	MyProcPort = port;
-
-	/* Reset MyProcPid to new backend's pid */
-	MyProcPid = getpid();
 
 	/*
 	 * Initialize libpq and enable reporting of ereport errors to the
@@ -2490,6 +2530,29 @@ BackendInit(Port *port)
 	port->remote_port = strdup(remote_port);
 
 	/*
+	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.c
+	 * etcetera from the postmaster, and have to load them ourselves.
+	 * Build the PostmasterContext (which didn't exist before, in this
+	 * process) to contain the data.
+	 *
+	 * FIXME: [fork/exec] Ugh.  Is there a way around this overhead?
+	 */
+#ifdef EXEC_BACKEND
+	Assert(PostmasterContext == NULL);
+	PostmasterContext = AllocSetContextCreate(TopMemoryContext,
+											  "Postmaster",
+											  ALLOCSET_DEFAULT_MINSIZE,
+											  ALLOCSET_DEFAULT_INITSIZE,
+											  ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(PostmasterContext);
+
+	load_hba();
+	load_ident();
+	load_user();
+	load_group();
+#endif
+
+	/*
 	 * Ready to begin client interaction.  We will give up and exit(0)
 	 * after a time delay, so that a broken client can't hog a connection
 	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
@@ -2540,37 +2603,6 @@ BackendInit(Port *port)
 	random_seed = 0;
 	gettimeofday(&now, &tz);
 	srandom((unsigned int) now.tv_usec);
-}
-
-
-static int
-BackendRun(Port *port)
-{
-	char	  **av;
-	int			maxac;
-	int			ac;
-	char		debugbuf[32];
-	char		protobuf[32];
-	int			i;
-
-	/*
-	 * Let's clean up ourselves as the postmaster child, and close the
-	 * postmaster's other sockets
-	 */
-	ClosePostmasterPorts(true);
-
-	/*
-	 * PreAuthDelay is a debugging aid for investigating problems in the
-	 * authentication cycle: it can be set in postgresql.conf to allow
-	 * time to attach to the newly-forked backend with a debugger. (See
-	 * also the -W backend switch, which we allow clients to pass through
-	 * PGOPTIONS, but it is not honored until after authentication.)
-	 */
-	if (PreAuthDelay > 0)
-		pg_usleep(PreAuthDelay * 1000000L);
-
-	/* Will exit on failure */
-	BackendInit(port);
 
 
 	/* ----------------
@@ -2607,19 +2639,14 @@ BackendRun(Port *port)
 
 	/*
 	 * Pass any backend switches specified with -o in the postmaster's own
-	 * command line.  We assume these are secure.
+	 * command line.  We assume these are secure.  (It's OK to mangle
+	 * ExtraOptions now, since we're safely inside a subprocess.)
 	 */
 	split_opts(av, &ac, ExtraOptions);
 
 	/* Tell the backend what protocol the frontend is using. */
 	snprintf(protobuf, sizeof(protobuf), "-v%u", port->proto);
 	av[ac++] = protobuf;
-
-#ifdef EXEC_BACKEND
-	/* pass data dir before end of secure switches (-p) */
-	av[ac++] = "-D";
-	av[ac++] = DataDir;
-#endif
 
 	/*
 	 * Tell the backend it is being called from the postmaster, and which
@@ -2647,9 +2674,7 @@ BackendRun(Port *port)
 	 * username isn't lost either; see ProcessStartupPacket().
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
-#ifndef EXEC_BACKEND
 	MemoryContextDelete(PostmasterContext);
-#endif
 	PostmasterContext = NULL;
 
 	/*
@@ -2673,111 +2698,176 @@ BackendRun(Port *port)
 
 #ifdef EXEC_BACKEND
 
-
 /*
- * SubPostmasterMain -- prepare the fork/exec'd process to be in an equivalent
- *			state (for calling BackendRun) as a forked process.
+ * postmaster_forkexec -- fork and exec a postmaster subprocess
  *
- * returns:
- *		Shouldn't return at all.
+ * The caller must have set up the argv array already, except for argv[2]
+ * which will be filled with the name of the temp variable file.
+ *
+ * Returns the child process PID, or -1 on fork failure (a suitable error
+ * message has been logged on failure).
+ *
+ * All uses of this routine will dispatch to SubPostmasterMain in the
+ * child process.
  */
-void
-SubPostmasterMain(int argc, char *argv[])
+pid_t
+postmaster_forkexec(int argc, char *argv[])
 {
-	unsigned long backendID;
 	Port		port;
 
-	memset((void *) &port, 0, sizeof(Port));
-	Assert(argc == 2);
+	/* This entry point passes dummy values for the Port variables */
+	memset(&port, 0, sizeof(port));
+	return internal_forkexec(argc, argv, &port);
+}
+
+/*
+ * backend_forkexec -- fork/exec off a backend process
+ *
+ * returns the pid of the fork/exec'd process, or -1 on failure
+ */
+static pid_t
+backend_forkexec(Port *port)
+{
+	char	   *av[4];
+	int			ac = 0;
+
+	av[ac++] = "postgres";
+	av[ac++] = "-forkbackend";
+	av[ac++] = NULL;			/* filled in by internal_forkexec */
+
+	av[ac] = NULL;
+	Assert(ac < lengthof(av));
+
+	return internal_forkexec(ac, av, port);
+}
+
+static pid_t
+internal_forkexec(int argc, char *argv[], Port *port)
+{
+	pid_t		pid;
+	char		tmpfilename[MAXPGPATH];
+
+	if (!write_backend_variables(tmpfilename, port))
+		return -1;				/* log made by write_backend_variables */
+
+	/* Make sure caller set up argv properly */
+	Assert(argc >= 3);
+	Assert(argv[argc] == NULL);
+	Assert(strncmp(argv[1], "-fork", 5) == 0);
+	Assert(argv[2] == NULL);
+
+	/* Insert temp file name after -fork argument */
+	argv[2] = tmpfilename;
+
+#ifdef WIN32
+	pid = win32_forkexec(postgres_exec_path, argv);
+#else
+	/* Fire off execv in child */
+	if ((pid = fork()) == 0)
+	{
+		if (execv(postgres_exec_path, argv) < 0)
+		{
+			ereport(LOG,
+					(errmsg("could not exec backend process \"%s\": %m",
+							postgres_exec_path)));
+			/* We're already in the child process here, can't return */
+			exit(1);
+		}
+	}
+#endif
+
+	return pid;					/* Parent returns pid, or -1 on fork failure */
+}
+
+/*
+ * SubPostmasterMain -- Get the fork/exec'd process into a state equivalent
+ *			to what it would be if we'd simply forked on Unix, and then
+ *			dispatch to the appropriate place.
+ *
+ * The first two command line arguments are expected to be "-forkFOO"
+ * (where FOO indicates which postmaster child we are to become), and
+ * the name of a variables file that we can read to load data that would
+ * have been inherited by fork() on Unix.  Remaining arguments go to the
+ * subprocess FooMain() routine.
+ */
+int
+SubPostmasterMain(int argc, char *argv[])
+{
+	Port		port;
 
 	/* Do this sooner rather than later... */
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
-	/* In EXEC case we will not have inherited these settings */
+	MyProcPid = getpid();		/* reset MyProcPid */
+
+	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
 	whereToSendOutput = None;
+	pqinitmask();
+	PG_SETMASK(&BlockSig);
 
-	/* Setup global context */
+	/* Setup essential subsystems */
 	MemoryContextInit();
 	InitializeGUCOptions();
 
-	/* Parse passed-in context */
-	argc = 0;
-	backendID = (unsigned long) atol(argv[argc++]);
-	DataDir = strdup(argv[argc++]);
+	/* Check we got appropriate args */
+	if (argc < 3)
+		elog(FATAL, "invalid subpostmaster invocation");
 
 	/* Read in file-based context */
-	read_backend_variables(backendID, &port);
+	memset(&port, 0, sizeof(Port));
+	read_backend_variables(argv[2], &port);
 	read_nondefault_variables();
 
-	/* Remaining initialization */
-	pgstat_init_forkexec_backend();
+	/* Run backend or appropriate child */
+	if (strcmp(argv[1], "-forkbackend") == 0)
+	{
+		/* BackendRun will close sockets */
 
-	/* FIXME: [fork/exec] Ugh */
-	load_hba();
-	load_ident();
-	load_user();
-	load_group();
+		/* Attach process to shared segments */
+		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
 
-	/* Attach process to shared segments */
-	CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
+		Assert(argc == 3);		/* shouldn't be any more args */
+		proc_exit(BackendRun(&port));
+	}
+	if (strcmp(argv[1], "-forkboot") == 0)
+	{
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(true);
 
-	/* Run backend */
-	proc_exit(BackendRun(&port));
-}
+		/* Attach process to shared segments */
+		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
 
+		BootstrapMain(argc - 2, argv + 2);
+		ExitPostmaster(0);
+	}
+	if (strcmp(argv[1], "-forkbuf") == 0)
+	{
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(false);
 
-/*
- * Backend_forkexec -- fork/exec off a backend process
- *
- * returns:
- *		the pid of the fork/exec'd process
- */
-static pid_t
-Backend_forkexec(Port *port)
-{
-	pid_t		pid;
-	char	   *av[5];
-	int			ac = 0,
-				bufc = 0,
-				i;
-	char		buf[2][MAXPGPATH];
+		/* Do not want to attach to shared memory */
 
-	if (!write_backend_variables(port))
-		return -1;				/* log made by write_backend_variables */
-
-	av[ac++] = "postgres";
-	av[ac++] = "-forkexec";
-
-	/* Format up context to pass to exec'd process */
-	snprintf(buf[bufc++], MAXPGPATH, "%lu", tmpBackendFileNum);
-	snprintf(buf[bufc++], MAXPGPATH, "\"%s\"", DataDir);
-
-	/* Add to the arg list */
-	Assert(bufc <= lengthof(buf));
-	for (i = 0; i < bufc; i++)
-		av[ac++] = buf[i];
-
-	/* FIXME: [fork/exec] ExtraOptions? */
-
-	av[ac++] = NULL;
-	Assert(ac <= lengthof(av));
-
-#ifdef WIN32
-	pid = win32_forkexec(postgres_exec_path, av);		/* logs on error */
-#else
-	/* Fire off execv in child */
-	if ((pid = fork()) == 0 && (execv(postgres_exec_path, av) == -1))
-
+		PgstatBufferMain(argc, argv);
+		ExitPostmaster(0);
+	}
+	if (strcmp(argv[1], "-forkcol") == 0)
+	{
 		/*
-		 * FIXME: [fork/exec] suggestions for what to do here? Probably OK
-		 * to issue error (unlike pgstat case)
+		 * Do NOT close postmaster sockets here, because we are forking from
+		 * pgstat buffer process, which already did it.
 		 */
-		abort();
-#endif
-	return pid;					/* Parent returns pid */
+
+		/* Do not want to attach to shared memory */
+
+		PgstatCollectorMain(argc, argv);
+		ExitPostmaster(0);
+	}
+
+	return 1;					/* shouldn't get here */
 }
-#endif
+
+#endif /* EXEC_BACKEND */
 
 
 /*
@@ -2984,80 +3074,61 @@ CountChildren(void)
 	return cnt;
 }
 
+
 /*
- * Fire off a subprocess for startup/shutdown/checkpoint/bgwriter.
+ * SSDataBase -- start a non-backend child process for the postmaster
  *
- * Return value of SSDataBase is subprocess' PID, or 0 if failed to start subprocess
- * (0 is returned only for checkpoint/bgwriter cases).
+ * xlog determines what kind of child will be started.  All child types
+ * initially go to BootstrapMain, which will handle common setup.
  *
- * note: in the EXEC_BACKEND case, we delay the fork until argument list has been
- *	established
+ * Return value of SSDataBase is subprocess' PID, or 0 if failed to start
+ * subprocess (0 is returned only for checkpoint/bgwriter cases).
  */
-NON_EXEC_STATIC void
-SSDataBaseInit(int xlop)
-{
-	const char *statmsg;
-
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-#ifdef EXEC_BACKEND
-	/* In EXEC case we will not have inherited these settings */
-	IsPostmasterEnvironment = true;
-	whereToSendOutput = None;
-#endif
-
-	MyProcPid = getpid();		/* reset MyProcPid */
-
-	/* Lose the postmaster's on-exit routines and port connections */
-	on_exit_reset();
-
-	/*
-	 * Identify myself via ps
-	 */
-	switch (xlop)
-	{
-		case BS_XLOG_STARTUP:
-			statmsg = "startup subprocess";
-			break;
-		case BS_XLOG_CHECKPOINT:
-			statmsg = "checkpoint subprocess";
-			break;
-		case BS_XLOG_BGWRITER:
-			statmsg = "bgwriter subprocess";
-			break;
-		case BS_XLOG_SHUTDOWN:
-			statmsg = "shutdown subprocess";
-			break;
-		default:
-			statmsg = "??? subprocess";
-			break;
-	}
-	init_ps_display(statmsg, "", "");
-	set_ps_display("");
-}
-
-
 static pid_t
 SSDataBase(int xlop)
 {
-	pid_t		pid;
 	Backend    *bn;
-
-#ifndef EXEC_BACKEND
+	pid_t		pid;
+	char	   *av[10];
+	int			ac = 0;
+	char		xlbuf[32];
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
 #endif
-#else
-	char		idbuf[32];
-	char		ddirbuf[MAXPGPATH];
+
+	/*
+	 * Set up command-line arguments for subprocess
+	 */
+	av[ac++] = "postgres";
+
+#ifdef EXEC_BACKEND
+	av[ac++] = "-forkboot";
+	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 #endif
 
+	snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
+	av[ac++] = xlbuf;
+
+	av[ac++] = "-p";
+	av[ac++] = "template1";
+
+	av[ac] = NULL;
+	Assert(ac < lengthof(av));
+
+	/*
+	 * Flush stdio channels (see comments in BackendStartup)
+	 */
 	fflush(stdout);
 	fflush(stderr);
 
-#ifndef EXEC_BACKEND
+#ifdef EXEC_BACKEND
+
+	pid = postmaster_forkexec(ac, av);
+
+#else /* !EXEC_BACKEND */
+
 #ifdef LINUX_PROFILE
-	/* see comments in BackendRun */
+	/* see comments in BackendStartup */
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
@@ -3066,16 +3137,10 @@ SSDataBase(int xlop)
 	beos_before_backend_startup();
 #endif
 
-	/* Non EXEC_BACKEND case; fork here */
-	if ((pid = fork()) == 0)	/* child */
-#endif
-	{
-		char	   *av[10];
-		int			ac = 0;
-		char		nbbuf[32];
-		char		xlbuf[32];
+	pid = fork();
 
-#ifndef EXEC_BACKEND
+	if (pid == 0)				/* child */
+	{
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
 #endif
@@ -3085,72 +3150,30 @@ SSDataBase(int xlop)
 		beos_backend_startup();
 #endif
 
+		IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(true);
 
-		SSDataBaseInit(xlop);
-#else
-		if (!write_backend_variables(NULL))
-			return -1;			/* log issued by write_backend_variables */
-#endif
+		/* Lose the postmaster's on-exit routines and port connections */
+		on_exit_reset();
 
-		/* Set up command-line arguments for subprocess */
-		av[ac++] = "postgres";
-
-#ifdef EXEC_BACKEND
-		av[ac++] = "-boot";
-#endif
-		snprintf(nbbuf, sizeof(nbbuf), "-B%d", NBuffers);
-		av[ac++] = nbbuf;
-
-		snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
-		av[ac++] = xlbuf;
-
-#ifdef EXEC_BACKEND
-		/* pass data dir before end of secure switches (-p) */
-		snprintf(ddirbuf, MAXPGPATH, "\"%s\"", DataDir);
-		av[ac++] = "-D";
-		av[ac++] = ddirbuf;
-
-		/* and the backend identifier + dbname */
-		snprintf(idbuf, sizeof(idbuf), "-p%lu,template1", tmpBackendFileNum);
-		av[ac++] = idbuf;
-#else
-		av[ac++] = "-p";
-		av[ac++] = "template1";
-#endif
-
-		av[ac] = NULL;
-
-		Assert(ac < lengthof(av));
-
-#ifdef EXEC_BACKEND
-		/* EXEC_BACKEND case; fork/exec here */
-#ifdef WIN32
-		pid = win32_forkexec(postgres_exec_path, av);	/* logs on error */
-#else
-		if ((pid = fork()) == 0 && (execv(postgres_exec_path, av) == -1))
-		{
-			/* in child */
-			elog(ERROR, "unable to execv in SSDataBase: %m");
-			exit(0);
-		}
-#endif
-#else
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
-#endif
 	}
 
-	/* in parent */
+#endif /* EXEC_BACKEND */
+
 	if (pid < 0)
 	{
-#ifndef EXEC_BACKEND
+		/* in parent, fork failed */
+		int			save_errno = errno;
+
 #ifdef __BEOS__
 		/* Specific beos actions before backend startup */
 		beos_backend_startup_failed();
 #endif
-#endif
+		errno = save_errno;
 		switch (xlop)
 		{
 			case BS_XLOG_STARTUP:
@@ -3188,6 +3211,8 @@ SSDataBase(int xlop)
 	}
 
 	/*
+	 * in parent, successful fork
+	 *
 	 * The startup and shutdown processes are not considered normal
 	 * backends, but the checkpoint and bgwriter processes are. They must
 	 * be added to the list of backends.
@@ -3280,7 +3305,7 @@ postmaster_error(const char *fmt,...)
  * functions
  */
 #include "storage/spin.h"
-extern XLogwrtResult LogwrtResult;
+
 extern slock_t *ShmemLock;
 extern slock_t *ShmemIndexLock;
 extern void *ShmemIndexAlloc;
@@ -3291,24 +3316,19 @@ extern int	pgStatSock;
 
 #define write_var(var,fp) fwrite((void*)&(var),sizeof(var),1,fp)
 #define read_var(var,fp)  fread((void*)&(var),sizeof(var),1,fp)
-#define get_tmp_backend_file_name(buf,id)	\
-		do {								\
-			Assert(DataDir);				\
-			sprintf((buf),					\
-				"%s/%s/%s.backend_var.%lu", \
-				DataDir,					\
-				PG_TEMP_FILES_DIR,			\
-				PG_TEMP_FILE_PREFIX,		\
-				(id));						\
-		} while (0)
 
 static bool
-write_backend_variables(Port *port)
+write_backend_variables(char *filename, Port *port)
 {
-	char		filename[MAXPGPATH];
+	static unsigned long tmpBackendFileNum = 0;
 	FILE	   *fp;
+	char		str_buf[MAXPGPATH];
 
-	get_tmp_backend_file_name(filename, ++tmpBackendFileNum);
+	/* Calculate name for temp file in caller's buffer */
+	Assert(DataDir);
+	snprintf(filename, MAXPGPATH, "%s/%s/%s.backend_var.%lu",
+			 DataDir, PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
+			 ++tmpBackendFileNum);
 
 	/* Open file */
 	fp = AllocateFile(filename, PG_BINARY_W);
@@ -3317,33 +3337,38 @@ write_backend_variables(Port *port)
 		/* As per OpenTemporaryFile... */
 		char		dirname[MAXPGPATH];
 
-		sprintf(dirname, "%s/%s", DataDir, PG_TEMP_FILES_DIR);
+		snprintf(dirname, MAXPGPATH, "%s/%s", DataDir, PG_TEMP_FILES_DIR);
 		mkdir(dirname, S_IRWXU);
 
 		fp = AllocateFile(filename, PG_BINARY_W);
 		if (!fp)
 		{
-			ereport(ERROR,
+			ereport(LOG,
 					(errcode_for_file_access(),
-				errmsg("could not write to file \"%s\": %m", filename)));
+					 errmsg("could not create file \"%s\": %m",
+							filename)));
 			return false;
 		}
 	}
 
 	/* Write vars */
-	if (port)
-	{
-		write_var(port->sock, fp);
-		write_var(port->proto, fp);
-		write_var(port->laddr, fp);
-		write_var(port->raddr, fp);
-		write_var(port->canAcceptConnections, fp);
-		write_var(port->cryptSalt, fp);
-		write_var(port->md5Salt, fp);
-	}
-	write_var(MyCancelKey, fp);
+	write_var(port->sock, fp);
+	write_var(port->proto, fp);
+	write_var(port->laddr, fp);
+	write_var(port->raddr, fp);
+	write_var(port->canAcceptConnections, fp);
+	write_var(port->cryptSalt, fp);
+	write_var(port->md5Salt, fp);
 
-	write_var(LogwrtResult, fp);
+	/*
+	 * XXX FIXME later: writing these strings as MAXPGPATH bytes always is
+	 * probably a waste of resources
+	 */
+
+	StrNCpy(str_buf, DataDir, MAXPGPATH);
+	fwrite((void *) str_buf, MAXPGPATH, 1, fp);
+
+	write_var(MyCancelKey, fp);
 
 	write_var(UsedShmemSegID, fp);
 	write_var(UsedShmemSegAddr, fp);
@@ -3358,11 +3383,17 @@ write_backend_variables(Port *port)
 	write_var(ProcStructLock, fp);
 	write_var(pgStatSock, fp);
 
-	write_var(PreAuthDelay, fp);
 	write_var(debug_flag, fp);
 	write_var(PostmasterPid, fp);
 
 	fwrite((void *) my_exec_path, MAXPGPATH, 1, fp);
+
+	fwrite((void *) ExtraOptions, sizeof(ExtraOptions), 1, fp);
+
+	StrNCpy(str_buf, setlocale(LC_COLLATE, NULL), MAXPGPATH);
+	fwrite((void *) str_buf, MAXPGPATH, 1, fp);
+	StrNCpy(str_buf, setlocale(LC_CTYPE, NULL), MAXPGPATH);
+	fwrite((void *) str_buf, MAXPGPATH, 1, fp);
 
 	/* Release file */
 	if (FreeFile(fp))
@@ -3376,38 +3407,33 @@ write_backend_variables(Port *port)
 	return true;
 }
 
-void
-read_backend_variables(unsigned long id, Port *port)
+static void
+read_backend_variables(char *filename, Port *port)
 {
-	char		filename[MAXPGPATH];
 	FILE	   *fp;
-
-	get_tmp_backend_file_name(filename, id);
+	char		str_buf[MAXPGPATH];
 
 	/* Open file */
 	fp = AllocateFile(filename, PG_BINARY_R);
 	if (!fp)
-	{
-		ereport(ERROR,
+		ereport(FATAL,
 				(errcode_for_file_access(),
-				 errmsg("could not read from backend_variables file \"%s\": %m", filename)));
-		return;
-	}
+				 errmsg("could not read from backend variables file \"%s\": %m",
+						filename)));
 
 	/* Read vars */
-	if (port)
-	{
-		read_var(port->sock, fp);
-		read_var(port->proto, fp);
-		read_var(port->laddr, fp);
-		read_var(port->raddr, fp);
-		read_var(port->canAcceptConnections, fp);
-		read_var(port->cryptSalt, fp);
-		read_var(port->md5Salt, fp);
-	}
-	read_var(MyCancelKey, fp);
+	read_var(port->sock, fp);
+	read_var(port->proto, fp);
+	read_var(port->laddr, fp);
+	read_var(port->raddr, fp);
+	read_var(port->canAcceptConnections, fp);
+	read_var(port->cryptSalt, fp);
+	read_var(port->md5Salt, fp);
 
-	read_var(LogwrtResult, fp);
+	fread((void *) str_buf, MAXPGPATH, 1, fp);
+	SetDataDir(str_buf);
+
+	read_var(MyCancelKey, fp);
 
 	read_var(UsedShmemSegID, fp);
 	read_var(UsedShmemSegAddr, fp);
@@ -3422,11 +3448,17 @@ read_backend_variables(unsigned long id, Port *port)
 	read_var(ProcStructLock, fp);
 	read_var(pgStatSock, fp);
 
-	read_var(PreAuthDelay, fp);
 	read_var(debug_flag, fp);
 	read_var(PostmasterPid, fp);
 
 	fread((void *) my_exec_path, MAXPGPATH, 1, fp);
+
+	fread((void *) ExtraOptions, sizeof(ExtraOptions), 1, fp);
+
+	fread((void *) str_buf, MAXPGPATH, 1, fp);
+	setlocale(LC_COLLATE, str_buf);
+	fread((void *) str_buf, MAXPGPATH, 1, fp);
+	setlocale(LC_CTYPE, str_buf);
 
 	/* Release file */
 	FreeFile(fp);
@@ -3490,52 +3522,54 @@ ShmemBackendArrayRemove(pid_t pid)
 			(errmsg_internal("unable to find backend entry with pid %d",
 							 pid)));
 }
-#endif
+
+#endif /* EXEC_BACKEND */
+
 
 #ifdef WIN32
 
-pid_t
+static pid_t
 win32_forkexec(const char *path, char *argv[])
 {
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	char	   *p;
 	int			i;
-	char		cmdLine[MAXPGPATH];
+	int			j;
+	char		cmdLine[MAXPGPATH * 2];
 	HANDLE		childHandleCopy;
 	HANDLE		waiterThread;
 
 	/* Format the cmd line */
-	snprintf(cmdLine, sizeof(cmdLine), "\"%s\"", path);
+	cmdline[sizeof(cmdLine)-1] = '\0';
+	cmdline[sizeof(cmdLine)-2] = '\0';
+	snprintf(cmdLine, sizeof(cmdLine)-1, "\"%s\"", path);
 	i = 0;
 	while (argv[++i] != NULL)
 	{
-		/* FIXME: [fork/exec] some strlen checks might be prudent here */
-		strcat(cmdLine, " ");
-		strcat(cmdLine, argv[i]);
+		j = strlen(cmdLine);
+		snprintf(cmdLine+j, sizeof(cmdLine)-1-j, " \"%s\"", argv[i]);
 	}
-
-	/*
-	 * The following snippet can disappear when we consistently use
-	 * forward slashes.
-	 */
-	p = cmdLine;
-	while (*(p++) != '\0')
-		if (*p == '/')
-			*p = '\\';
+	if (cmdline[sizeof(cmdLine)-2] != '\0')
+	{
+		elog(LOG, "subprocess command line too long");
+		return -1;
+	}
 
 	memset(&pi, 0, sizeof(pi));
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	if (!CreateProcess(NULL, cmdLine, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
 	{
-		elog(ERROR, "CreateProcess call failed (%i): %m", (int) GetLastError());
+		elog(LOG, "CreateProcess call failed (%d): %m", (int) GetLastError());
 		return -1;
 	}
 
 	if (!IsUnderPostmaster)
+	{
 		/* We are the Postmaster creating a child... */
 		win32_AddChild(pi.dwProcessId, pi.hProcess);
+	}
 
 	if (!DuplicateHandle(GetCurrentProcess(),
 						 pi.hProcess,
@@ -3545,11 +3579,15 @@ win32_forkexec(const char *path, char *argv[])
 						 FALSE,
 						 DUPLICATE_SAME_ACCESS))
 		ereport(FATAL,
-				(errmsg_internal("failed to duplicate child handle: %i", (int) GetLastError())));
-	waiterThread = CreateThread(NULL, 64 * 1024, win32_sigchld_waiter, (LPVOID) childHandleCopy, 0, NULL);
+				(errmsg_internal("failed to duplicate child handle: %d",
+								 (int) GetLastError())));
+
+	waiterThread = CreateThread(NULL, 64 * 1024, win32_sigchld_waiter,
+								(LPVOID) childHandleCopy, 0, NULL);
 	if (!waiterThread)
 		ereport(FATAL,
-				(errmsg_internal("failed to create sigchld waiter thread: %i", (int) GetLastError())));
+				(errmsg_internal("failed to create sigchld waiter thread: %d",
+								 (int) GetLastError())));
 	CloseHandle(waiterThread);
 
 	if (IsUnderPostmaster)
@@ -3582,7 +3620,7 @@ win32_AddChild(pid_t pid, HANDLE handle)
 	else
 		ereport(FATAL,
 				(errmsg_internal("unable to add child entry with pid %lu",
-								 pid)));
+								 (unsigned long) pid)));
 }
 
 static void
@@ -3608,7 +3646,7 @@ win32_RemoveChild(pid_t pid)
 
 	ereport(WARNING,
 			(errmsg_internal("unable to find child entry with pid %lu",
-							 pid)));
+							 (unsigned long) pid)));
 }
 
 static pid_t
@@ -3678,9 +3716,10 @@ win32_sigchld_waiter(LPVOID param)
 	if (r == WAIT_OBJECT_0)
 		pg_queue_signal(SIGCHLD);
 	else
-		fprintf(stderr, "ERROR: Failed to wait on child process handle: %i\n", (int) GetLastError());
+		fprintf(stderr, "ERROR: Failed to wait on child process handle: %i\n",
+				(int) GetLastError());
 	CloseHandle(procHandle);
 	return 0;
 }
 
-#endif
+#endif /* WIN32 */

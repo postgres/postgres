@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.160 2004/05/18 03:36:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.161 2004/05/28 05:13:24 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -116,13 +116,13 @@ do { \
  * from postmaster/postmaster.c
  */
 extern bool ClientAuthInProgress;
-extern const bool ExecBackend;
 
 extern int	PostmasterMain(int argc, char *argv[]);
-#ifdef EXEC_BACKEND
-extern void SubPostmasterMain(int argc, char* argv[]);
-#endif
 extern void ClosePostmasterPorts(bool pgstat_too);
+#ifdef EXEC_BACKEND
+extern pid_t postmaster_forkexec(int argc, char *argv[]);
+extern int	SubPostmasterMain(int argc, char *argv[]);
+#endif
 
 #define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
@@ -143,8 +143,10 @@ extern long MyCancelKey;
 
 extern char OutputFileName[];
 extern char my_exec_path[];
-extern char postgres_exec_path[];
 extern char pkglib_path[];
+#ifdef EXEC_BACKEND
+extern char postgres_exec_path[];
+#endif
 
 /*
  * done in storage/backendid.h for now.

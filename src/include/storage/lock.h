@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.76 2003/12/20 17:31:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.77 2004/05/28 05:13:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,13 +223,16 @@ typedef struct
 	LOCK	   *locks;
 } LockData;
 
+extern int NumLockMethods;
+
 /*
  * function prototypes
  */
 extern void InitLocks(void);
 extern LockMethod GetLocksMethodTable(LOCK *lock);
-extern LOCKMETHODID LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
-					int numModes, int maxBackends);
+extern LOCKMETHODID LockMethodTableInit(const char *tabName,
+										const LOCKMASK *conflictsP,
+										int numModes, int maxBackends);
 extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
 extern bool LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait);

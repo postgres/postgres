@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.12 2003/12/12 18:45:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.13 2004/05/28 05:12:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,6 @@ volatile bool ProcDiePending = false;
 volatile bool ImmediateInterruptOK = false;
 volatile uint32 InterruptHoldoffCount = 0;
 volatile uint32 CritSectionCount = 0;
-
-const bool	ExecBackend = false;
 
 bool		IsUnderPostmaster = false;
 
