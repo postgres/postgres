@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.93 2001/01/14 05:08:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.94 2001/01/18 18:33:45 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1737,8 +1737,6 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	if (info == XLOG_XACT_COMMIT)
 	{
-		xl_xact_commit	*xlrec = (xl_xact_commit*) XLogRecGetData(record);
-
 		TransactionIdCommit(record->xl_xid);
 		/* SHOULD REMOVE FILES OF ALL DROPPED RELATIONS */
 	}
