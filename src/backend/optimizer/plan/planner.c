@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.179 2005/03/10 23:21:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.180 2005/03/17 23:44:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
@@ -698,65 +697,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
 
-		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
-		tlist = preprocess_targetlist(tlist,
-									  parse->commandType,
-									  parse->resultRelation,
-									  parse->rtable);
-
-		/*
-		 * Add TID targets for rels selected FOR UPDATE (should this be
-		 * done in preprocess_targetlist?).  The executor uses the TID to
-		 * know which rows to lock, much as for UPDATE or DELETE.
-		 */
-		if (parse->rowMarks)
-		{
-			ListCell   *l;
-
-			/*
-			 * We've got trouble if the FOR UPDATE appears inside
-			 * grouping, since grouping renders a reference to individual
-			 * tuple CTIDs invalid.  This is also checked at parse time,
-			 * but that's insufficient because of rule substitution, query
-			 * pullup, etc.
-			 */
-			CheckSelectForUpdate(parse);
-
-			/*
-			 * Currently the executor only supports FOR UPDATE at top
-			 * level
-			 */
-			if (PlannerQueryLevel > 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("SELECT FOR UPDATE is not allowed in subqueries")));
-
-			foreach(l, parse->rowMarks)
-			{
-				Index		rti = lfirst_int(l);
-				char	   *resname;
-				Resdom	   *resdom;
-				Var		   *var;
-				TargetEntry *ctid;
-
-				resname = (char *) palloc(32);
-				snprintf(resname, 32, "ctid%u", rti);
-				resdom = makeResdom(list_length(tlist) + 1,
-									TIDOID,
-									-1,
-									resname,
-									true);
-
-				var = makeVar(rti,
-							  SelfItemPointerAttributeNumber,
-							  TIDOID,
-							  -1,
-							  0);
-
-				ctid = makeTargetEntry(resdom, (Expr *) var);
-				tlist = lappend(tlist, ctid);
-			}
-		}
+		/* Preprocess targetlist */
+		tlist = preprocess_targetlist(parse, tlist);
 
 		/*
 		 * Generate appropriate target list for subplan; may be different

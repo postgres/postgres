@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.72 2004/12/31 22:00:20 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.73 2005/03/17 23:44:52 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/prep.h"
+#include "optimizer/subselect.h"
+#include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 
@@ -41,11 +43,12 @@ static List *expand_targetlist(List *tlist, int command_type,
  *	  Returns the new targetlist.
  */
 List *
-preprocess_targetlist(List *tlist,
-					  int command_type,
-					  Index result_relation,
-					  List *range_table)
+preprocess_targetlist(Query *parse, List *tlist)
 {
+	int		result_relation = parse->resultRelation;
+	List   *range_table = parse->rtable;
+	CmdType	command_type = parse->commandType;
+
 	/*
 	 * Sanity check: if there is a result relation, it'd better be a real
 	 * relation not a subquery.  Else parser or rewriter messed up.
@@ -97,6 +100,60 @@ preprocess_targetlist(List *tlist,
 			tlist = list_copy(tlist);
 
 		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) var));
+	}
+
+	/*
+	 * Add TID targets for rels selected FOR UPDATE.  The executor
+	 * uses the TID to know which rows to lock, much as for UPDATE or
+	 * DELETE.
+	 */
+	if (parse->rowMarks)
+	{
+		ListCell   *l;
+
+		/*
+		 * We've got trouble if the FOR UPDATE appears inside
+		 * grouping, since grouping renders a reference to individual
+		 * tuple CTIDs invalid.  This is also checked at parse time,
+		 * but that's insufficient because of rule substitution, query
+		 * pullup, etc.
+		 */
+		CheckSelectForUpdate(parse);
+
+		/*
+		 * Currently the executor only supports FOR UPDATE at top
+		 * level
+		 */
+		if (PlannerQueryLevel > 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("SELECT FOR UPDATE is not allowed in subqueries")));
+
+		foreach(l, parse->rowMarks)
+		{
+			Index		rti = lfirst_int(l);
+			char	   *resname;
+			Resdom	   *resdom;
+			Var		   *var;
+			TargetEntry *ctid;
+
+			resname = (char *) palloc(32);
+			snprintf(resname, 32, "ctid%u", rti);
+			resdom = makeResdom(list_length(tlist) + 1,
+								TIDOID,
+								-1,
+								resname,
+								true);
+
+			var = makeVar(rti,
+						  SelfItemPointerAttributeNumber,
+						  TIDOID,
+						  -1,
+						  0);
+
+			ctid = makeTargetEntry(resdom, (Expr *) var);
+			tlist = lappend(tlist, ctid);
+		}
 	}
 
 	return tlist;
