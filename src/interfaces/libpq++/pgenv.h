@@ -19,7 +19,7 @@
 #define PGENV_H
 
 #include <string>
-#include <iostream>
+#include <iostream.h>
 
 #ifdef __sun__
 #ifndef __GNUC__

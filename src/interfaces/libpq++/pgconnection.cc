@@ -10,14 +10,14 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.3 1999/05/10 15:27:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.4 1999/05/16 14:34:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include <strstream>
+#include <strstream.h>
 #include "pgconnection.h"
 
 extern "C" {
