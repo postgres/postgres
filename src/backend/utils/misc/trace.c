@@ -108,7 +108,8 @@ tprintf(int flag, const char *fmt,...)
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsprintf(line + TIMESTAMP_SIZE, fmt, ap);
+	vsnprintf(line + TIMESTAMP_SIZE, ELOG_MAXLEN,
+		  fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
@@ -138,7 +139,8 @@ tprintf1(const char *fmt, ... )
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsprintf(line+TIMESTAMP_SIZE, fmt, ap);
+	vsnprintf(line+TIMESTAMP_SIZE, ELOG_MAXLEN,
+		 fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
@@ -166,7 +168,8 @@ eprintf(const char *fmt,...)
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsprintf(line + TIMESTAMP_SIZE, fmt, ap);
+	vsnprintf(line + TIMESTAMP_SIZE, ELOG_MAXLEN,
+		  fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
@@ -344,7 +347,8 @@ read_pg_options(SIGNAL_ARGS)
 	    return;
 	}
 
-	sprintf(buffer, "%s/%s", DataDir, "pg_options");
+	snprintf(buffer, BUF_SIZE - 1,
+		 "%s/%s", DataDir, "pg_options");
 	if ((fd = open(buffer, O_RDONLY)) < 0)
 		return;
 
