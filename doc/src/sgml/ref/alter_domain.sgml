@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.11 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.12 2004/03/23 13:21:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -139,7 +139,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>CASCADE</term>
+      <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
         Automatically drop objects that depend on the constraint.
@@ -148,7 +148,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>RESTRICT</term>
+      <term><literal>RESTRICT</literal></term>
       <listitem>
        <para>
         Refuse to drop the constraint if there are any dependent
@@ -174,11 +174,11 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
   <title>Examples</title>
 
   <para>
-   To add a NOT NULL constraint to a domain:
+   To add a <literal>NOT NULL</literal> constraint to a domain:
    <programlisting>
 ALTER DOMAIN zipcode SET NOT NULL;
    </programlisting>
-   To remove a NOT NULL constraint from a domain:
+   To remove a <literal>NOT NULL</literal> constraint from a domain:
    <programlisting>
 ALTER DOMAIN zipcode DROP NOT NULL;
    </programlisting>

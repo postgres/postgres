@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.31 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.32 2004/03/23 13:21:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -129,9 +129,10 @@ CLUSTER
    </para>
 
    <para>
-    Because the planner records statistics about the ordering of tables, it
-    is advisable to run <command>ANALYZE</command> on the newly clustered
-    table.  Otherwise, the planner may make poor choices of query plans.
+    Because the planner records statistics about the ordering of
+    tables, it is advisable to run <xref linkend="sql-analyze"
+    endterm="sql-analyze-title"> on the newly clustered table.
+    Otherwise, the planner may make poor choices of query plans.
    </para>
 
    <para>
@@ -175,7 +176,7 @@ CLUSTER emp_ind ON emp;
   </para>
 
   <para>
-   Cluster the <literal>employees</literal> relation using the same
+   Cluster the <literal>employees</literal> table using the same
    index that was used before:
 <programlisting>
 CLUSTER emp;

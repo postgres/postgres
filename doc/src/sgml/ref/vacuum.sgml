@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.34 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.35 2004/03/23 13:21:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -64,14 +64,14 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
   </para>
 
   <para>
-   <command>FREEZE</command> is a special-purpose option that
+   <literal>FREEZE</literal> is a special-purpose option that
    causes tuples to be marked <quote>frozen</quote> as soon as possible,
    rather than waiting until they are quite old.  If this is done when there
    are no other open transactions in the same database, then it is guaranteed
    that all tuples in the database are <quote>frozen</> and will not be
    subject to transaction ID wraparound problems, no matter how long the
    database is left unvacuumed.
-   <command>FREEZE</command> is not recommended for routine use.  Its only
+   <literal>FREEZE</literal> is not recommended for routine use.  Its only
    intended usage is in connection with preparation of user-defined template
    databases, or other databases that are completely read-only and will not
    receive routine maintenance <command>VACUUM</> operations.
