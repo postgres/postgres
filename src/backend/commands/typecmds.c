@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.26 2003/01/04 00:46:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.27 2003/01/06 00:31:44 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1672,4 +1672,62 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 * perform any additional required tests.
 	 */
 	return ccbin;
+}
+
+/*
+ * ALTER DOMAIN .. OWNER TO
+ *
+ * Eventually this should allow changing ownership of other kinds of types,
+ * but some thought must be given to handling complex types.  (A table's
+ * rowtype probably shouldn't be allowed as target, but what of a standalone
+ * composite type?)
+ *
+ * Assumes that permission checks have been completed earlier.
+ */
+void
+AlterTypeOwner(List *names, AclId newOwnerSysId)
+{
+	TypeName   *typename;
+	Oid			typeOid;
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_type	typTup;
+
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeNode(TypeName);
+	typename->names = names;
+	typename->typmod = -1;
+	typename->arrayBounds = NIL;
+
+	/* Lock the type table */
+	rel = heap_openr(TypeRelationName, RowExclusiveLock);
+
+	/* Use LookupTypeName here so that shell types can be processed (why?) */
+	typeOid = LookupTypeName(typename);
+	if (!OidIsValid(typeOid))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+
+	tup = SearchSysCacheCopy(TYPEOID,
+							 ObjectIdGetDatum(typeOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
+			 TypeNameToString(typename));
+	typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/* Check that this is actually a domain */
+	if (typTup->typtype != 'd')
+		elog(ERROR, "%s is not a domain",
+			 TypeNameToString(typename));
+
+	/* Modify the owner --- okay to scribble on typTup because it's a copy */
+	typTup->typowner = newOwnerSysId;
+
+	simple_heap_update(rel, &tup->t_self, tup);
+
+	CatalogUpdateIndexes(rel, tup);
+
+	/* Clean up */
+	heap_close(rel, RowExclusiveLock);
 }

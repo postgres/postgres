@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.224 2002/12/30 15:31:51 momjian Exp $
+ * $Id: parsenodes.h,v 1.225 2003/01/06 00:31:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ typedef struct AlterTableStmt
  *	Alter Domain
  *
  * The fields are used in different ways by the different variants of
- * this command. Subtypes should match AlterTable subtypes
+ * this command. Subtypes should match AlterTable subtypes where possible.
  * ----------------------
  */
 typedef struct AlterDomainStmt

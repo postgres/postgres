@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.389 2002/12/30 15:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.390 2003/01/06 00:31:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3762,6 +3762,15 @@ AlterDomainStmt:
 					n->typename = $3;
 					n->name = $6;
 					n->behavior = $7;
+					$$ = (Node *)n;
+				}
+			/* ALTER DOMAIN <domain> OWNER TO UserId */
+			| ALTER DOMAIN_P any_name OWNER TO UserId
+				{
+					AlterDomainStmt *n = makeNode(AlterDomainStmt);
+					n->subtype = 'U';
+					n->typename = $3;
+					n->name = $6;
 					$$ = (Node *)n;
 				}
 			;

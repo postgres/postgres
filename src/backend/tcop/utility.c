@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.187 2002/12/30 18:42:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.188 2003/01/06 00:31:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,11 +439,11 @@ ProcessUtility(Node *parsetree,
 								   stmt->newname);		/* new att name */
 						break;
 					case RENAME_RULE:
-						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
+						elog(ERROR, "ProcessUtility: Invalid type for RENAME: %d",
 							 stmt->renameType);
 						break;
 					default:
-						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
+						elog(ERROR, "ProcessUtility: Invalid type for RENAME: %d",
 							 stmt->renameType);
 				}
 			}
@@ -553,7 +553,8 @@ ProcessUtility(Node *parsetree,
 										get_usesysid(stmt->name));
 						break;
 					default:	/* oops */
-						elog(ERROR, "T_AlterTableStmt: unknown subtype");
+						elog(ERROR, "ProcessUtility: Invalid type for AlterTableStmt: %d",
+							 stmt->subtype);
 						break;
 				}
 			}
@@ -595,8 +596,17 @@ ProcessUtility(Node *parsetree,
 												  stmt->name,
 												  stmt->behavior);
 						break;
+					case 'U':	/* OWNER TO */
+						/* check that we are the superuser */
+						if (!superuser())
+							elog(ERROR, "ALTER DOMAIN: permission denied");
+						/* get_usesysid raises an error if no such user */
+						AlterTypeOwner(stmt->typename,
+									   get_usesysid(stmt->name));
+						break;
 					default:	/* oops */
-						elog(ERROR, "T_AlterDomainStmt: unknown subtype");
+						elog(ERROR, "ProcessUtility: Invalid type for AlterDomainStmt: %d",
+							 stmt->subtype);
 						break;
 				}
 			}

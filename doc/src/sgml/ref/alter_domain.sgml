@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.6 2002/12/06 16:40:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.7 2003/01/06 00:31:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,6 +29,8 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     ADD <replaceable class="PARAMETER">domain_constraint</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
   </synopsis>
 
   <refsect2 id="R2-SQL-ALTERDOMAIN-1">
@@ -73,7 +75,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
       <term>CASCADE</term>
       <listitem>
        <para>
-        Automatically drop objects that depend constraint.
+        Automatically drop objects that depend on the constraint.
        </para>
       </listitem>
      </varlistentry>
@@ -84,6 +86,15 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
        <para>
         Refuse to drop the constraint if there are any dependent
 	objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <listitem>
+       <para>
+	The user name of the new owner of the domain.
        </para>
       </listitem>
      </varlistentry>
@@ -141,9 +152,9 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     <term>SET/DROP DEFAULT</term>
     <listitem>
      <para>
-      These forms set or remove the default value for a column. Note
+      These forms set or remove the default value for a domain. Note
       that defaults only apply to subsequent <command>INSERT</command>
-      commands; they do not cause rows already in a table using the domain.
+      commands; they do not affect rows already in a table using the domain.
      </para>
     </listitem>
    </varlistentry>
@@ -154,8 +165,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
      <para>
       These forms change whether a domain is marked to allow NULL
       values or to reject NULL values.  You may only <literal>SET NOT NULL</>
-      when the tables using the domain contain no null values in the domain
-      based column.
+      when the columns using the domain contain no null values.
      </para>
     </listitem>
    </varlistentry>
@@ -164,8 +174,10 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     <term>ADD <replaceable class="PARAMETER">domain_constraint</replaceable></term>
     <listitem>
      <para>
-      This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATEDOMAIN" endterm="SQL-CREATEDOMAIN-TITLE">. 
+      This form adds a new constraint to a domain using the same syntax as
+      <xref linkend="SQL-CREATEDOMAIN" endterm="SQL-CREATEDOMAIN-TITLE">.
+      This will only succeed if all columns using the domain satisfy the
+      new constraint.
      </para>
     </listitem>
    </varlistentry>
@@ -179,11 +191,19 @@ ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>OWNER</term>
+    <listitem>
+     <para>
+      This form changes the owner of the domain to the specified user.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
 
   <para>
    You must own the domain to use <command>ALTER DOMAIN</>; except for
-   <command>ALTER TABLE OWNER</>, which may only be executed by a superuser.
+   <command>ALTER DOMAIN OWNER</>, which may only be executed by a superuser.
   </para>
  </refsect1>
 

@@ -7,14 +7,16 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: typecmds.h,v 1.2 2002/12/10 16:12:53 tgl Exp $
+ * $Id: typecmds.h,v 1.3 2003/01/06 00:31:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TYPECMDS_H
 #define TYPECMDS_H
 
+#include "miscadmin.h"
 #include "nodes/parsenodes.h"
+
 
 #define DEFAULT_TYPDELIM		','
 
@@ -30,5 +32,7 @@ extern void AlterDomainNotNull(List *names, bool notNull);
 extern void AlterDomainAddConstraint(List *names, Node *constr);
 extern void AlterDomainDropConstraint(List *names, const char *constrName,
 									  DropBehavior behavior);
+
+extern void AlterTypeOwner(List *names, AclId newOwnerSysId);
 
 #endif   /* TYPECMDS_H */
