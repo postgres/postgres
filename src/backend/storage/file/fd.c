@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.2 1996/07/15 19:22:07 scrappy Exp $
+ *    $Id: fd.c,v 1.3 1996/07/18 04:59:42 scrappy Exp $
  *
  * NOTES:
  *
@@ -62,6 +62,11 @@
 #define NOFILE NOFILE_IN_U
 #endif /* PORTNAME_sparc */
 
+#ifdef PORTNAME_sparc_solaris
+#include <sys/user.h>
+#undef NOFILE
+#define NOFILE 64
+#endif /* PORTNAME_sparc_solaris */
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.  This
  * will open several extra files in addition to those used by
