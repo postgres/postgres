@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.17 1999/02/13 23:17:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.18 1999/04/29 01:13:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,11 +305,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	if (OidIsValid(xfn1))
 	{
 		basetype = aggform->aggbasetype;
-		if (nodeTag(lfirst(target)) == T_Var)
-			vartype = ((Var *) lfirst(target))->vartype;
-		else
-			vartype = ((Expr *) lfirst(target))->typeOid;
-
+		vartype = exprType(lfirst(target));
 		if ((basetype != vartype)
 			&& (! IS_BINARY_COMPATIBLE(basetype, vartype)))
 		{

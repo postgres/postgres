@@ -275,34 +275,21 @@ ExecAgg(Agg *node)
 			foreach(alist, node->aggs)
 			{
 				Aggref	   *aggref = lfirst(alist);
-				AttrNumber	attnum;
-				Datum		newVal = (Datum) NULL;
 				AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
+				Datum		newVal;
 				Datum		args[2];
-				Node	   *tagnode = NULL;
 
-				switch (nodeTag(aggref->target))
+				/* Do we really need the special case for Var here? */
+				if (IsA(aggref->target, Var))
 				{
-					case T_Var:
-						tagnode = NULL;
-						newVal = aggGetAttr(outerslot,
-											aggref,
-											&isNull);
-						break;
-					case T_Expr:
-						tagnode = ((Expr *) aggref->target)->oper;
-						econtext->ecxt_scantuple = outerslot;
-						newVal = ExecEvalExpr(aggref->target, econtext,
-											  &isNull, &isDone);
-						break;
-					case T_Const:
-						tagnode = NULL;
-						econtext->ecxt_scantuple = outerslot;
-						newVal = ExecEvalExpr(aggref->target, econtext,
-											  &isNull, &isDone);
-						break;
-					default:
-						elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", aggno);
+					newVal = aggGetAttr(outerslot, aggref,
+										&isNull);
+				}
+				else
+				{
+					econtext->ecxt_scantuple = outerslot;
+					newVal = ExecEvalExpr(aggref->target, econtext,
+										  &isNull, &isDone);
 				}
 
 				if (isNull && !aggref->usenulls)
@@ -312,50 +299,22 @@ ExecAgg(Agg *node)
 				{
 					if (noInitValue[aggno])
 					{
-						int			attlen = 0;
-						int			byVal = 0;
-
 						/*
-						 * value1 and value2 has not been initialized.
-						 * This is the first non-NULL value. We use it as
-						 * the initial value.
-						 */
-
-						/*
-						 * but we can't just use it straight, we have to
+						 * value1 has not been initialized.
+						 * This is the first non-NULL input value.
+						 * We use it as the initial value for value1.
+						 *
+						 * But we can't just use it straight, we have to
 						 * make a copy of it since the tuple from which it
 						 * came will be freed on the next iteration of the
-						 * scan
+						 * scan.  This requires finding out how to copy
+						 * the Datum.  We assume the datum is of the agg's
+						 * basetype, or at least binary compatible with it.
 						 */
-						switch (nodeTag(aggref->target))
-						{
-							case T_Var:
-								attnum = ((Var *) aggref->target)->varattno;
-								attlen = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attlen;
-								byVal = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attbyval;
-								break;
+						Type	aggBaseType = typeidType(aggref->basetype);
+						int		attlen = typeLen(aggBaseType);
+						bool	byVal = typeByVal(aggBaseType);
 
-							case T_Expr:
-								{
-									FunctionCachePtr fcache_ptr;
-
-									if (nodeTag(tagnode) == T_Func)
-										fcache_ptr = ((Func *) tagnode)->func_fcache;
-									else
-										fcache_ptr = ((Oper *) tagnode)->op_fcache;
-									attlen = fcache_ptr->typlen;
-									byVal = fcache_ptr->typbyval;
-									break;
-
-								}
-							case T_Const:
-								attlen = ((Const *) aggref->target)->constlen;
-								byVal = ((Const *) aggref->target)->constbyval;
-
-								break;
-							default:
-								elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", aggno);
-						}
 						if (byVal)
 							value1[aggno] = newVal;
 						else
