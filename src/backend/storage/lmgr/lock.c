@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.81 2001/01/25 03:31:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.82 2001/02/22 23:02:33 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -87,11 +87,11 @@ bool Debug_deadlocks    = false;
 inline static bool
 LOCK_DEBUG_ENABLED(const LOCK * lock)
 {
-    return
-        (((LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD && Trace_locks)
-          || (LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD && Trace_userlocks))
-         && (lock->tag.relId >= (Oid) Trace_lock_oidmin))
-        || (Trace_lock_table && (lock->tag.relId == Trace_lock_table));
+	return
+		(((LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD && Trace_locks)
+		  || (LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD && Trace_userlocks))
+		 && (lock->tag.relId >= (Oid) Trace_lock_oidmin))
+		|| (Trace_lock_table && (lock->tag.relId == Trace_lock_table));
 }
 
 
@@ -99,20 +99,20 @@ inline static void
 LOCK_PRINT(const char * where, const LOCK * lock, LOCKMODE type)
 {
 	if (LOCK_DEBUG_ENABLED(lock))
-        elog(DEBUG,
-             "%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) "
-             "req(%d,%d,%d,%d,%d,%d,%d)=%d "
-             "grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)",
-             where, MAKE_OFFSET(lock),
-             lock->tag.lockmethod, lock->tag.relId, lock->tag.dbId,
-             lock->tag.objId.blkno, lock->grantMask,
-             lock->requested[1], lock->requested[2], lock->requested[3],
+		elog(DEBUG,
+			 "%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) "
+			 "req(%d,%d,%d,%d,%d,%d,%d)=%d "
+			 "grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)",
+			 where, MAKE_OFFSET(lock),
+			 lock->tag.lockmethod, lock->tag.relId, lock->tag.dbId,
+			 lock->tag.objId.blkno, lock->grantMask,
+			 lock->requested[1], lock->requested[2], lock->requested[3],
 			 lock->requested[4], lock->requested[5], lock->requested[6],
 			 lock->requested[7], lock->nRequested,
-             lock->granted[1], lock->granted[2], lock->granted[3],
-             lock->granted[4], lock->granted[5], lock->granted[6],
-             lock->granted[7], lock->nGranted,
-             lock->waitProcs.size, lock_types[type]);
+			 lock->granted[1], lock->granted[2], lock->granted[3],
+			 lock->granted[4], lock->granted[5], lock->granted[6],
+			 lock->granted[7], lock->nGranted,
+			 lock->waitProcs.size, lock_types[type]);
 }
 
 
@@ -120,17 +120,17 @@ inline static void
 HOLDER_PRINT(const char * where, const HOLDER * holderP)
 {
 	if (
-        (((HOLDER_LOCKMETHOD(*holderP) == DEFAULT_LOCKMETHOD && Trace_locks)
-          || (HOLDER_LOCKMETHOD(*holderP) == USER_LOCKMETHOD && Trace_userlocks))
-         && (((LOCK *)MAKE_PTR(holderP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
+		(((HOLDER_LOCKMETHOD(*holderP) == DEFAULT_LOCKMETHOD && Trace_locks)
+		  || (HOLDER_LOCKMETHOD(*holderP) == USER_LOCKMETHOD && Trace_userlocks))
+		 && (((LOCK *)MAKE_PTR(holderP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
 		|| (Trace_lock_table && (((LOCK *)MAKE_PTR(holderP->tag.lock))->tag.relId == Trace_lock_table))
-        )
-        elog(DEBUG,
-             "%s: holder(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%d)=%d",
-             where, MAKE_OFFSET(holderP), holderP->tag.lock,
+		)
+		elog(DEBUG,
+			 "%s: holder(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%d)=%d",
+			 where, MAKE_OFFSET(holderP), holderP->tag.lock,
 			 HOLDER_LOCKMETHOD(*(holderP)),
-             holderP->tag.proc, holderP->tag.xid,
-             holderP->holding[1], holderP->holding[2], holderP->holding[3],
+			 holderP->tag.proc, holderP->tag.xid,
+			 holderP->holding[1], holderP->holding[2], holderP->holding[3],
 			 holderP->holding[4], holderP->holding[5], holderP->holding[6],
 			 holderP->holding[7], holderP->nHolding);
 }
@@ -157,24 +157,24 @@ SPINLOCK	LockMgrLock;		/* in Shmem or created in
 static LOCKMASK BITS_OFF[MAX_LOCKMODES];
 static LOCKMASK BITS_ON[MAX_LOCKMODES];
 
-/* -----------------
+/*
  * Disable flag
- * -----------------
+ *
  */
 static bool LockingIsDisabled;
 
-/* -------------------
+/*
  * map from lockmethod to the lock table structure
- * -------------------
+ *
  */
 static LOCKMETHODTABLE *LockMethodTable[MAX_LOCK_METHODS];
 
 static int	NumLockMethods;
 
-/* -------------------
+/*
  * InitLocks -- Init the lock module.  Create a private data
  *		structure for constructing conflict masks.
- * -------------------
+ *
  */
 void
 InitLocks(void)
@@ -190,9 +190,9 @@ InitLocks(void)
 	}
 }
 
-/* -------------------
+/*
  * LockDisable -- sets LockingIsDisabled flag to TRUE or FALSE.
- * ------------------
+ *
  */
 void
 LockDisable(bool status)
@@ -200,9 +200,9 @@ LockDisable(bool status)
 	LockingIsDisabled = status;
 }
 
-/* -----------------
+/*
  * Boolean function to determine current locking status
- * -----------------
+ *
  */
 bool
 LockingDisabled(void)
@@ -295,16 +295,16 @@ LockMethodTableInit(char *tabName,
 	lockMethodTable = (LOCKMETHODTABLE *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(LOCKMETHODTABLE));
 
-	/* ------------------------
+	/*
 	 * find/acquire the spinlock for the table
-	 * ------------------------
+	 *
 	 */
 	SpinAcquire(LockMgrLock);
 
-	/* -----------------------
+	/*
 	 * allocate a control structure from shared memory or attach to it
 	 * if it already exists.
-	 * -----------------------
+	 *
 	 */
 	sprintf(shmemName, "%s (ctl)", tabName);
 	lockMethodTable->ctl = (LOCKMETHODCTL *)
@@ -313,15 +313,15 @@ LockMethodTableInit(char *tabName,
 	if (!lockMethodTable->ctl)
 		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 
-	/* -------------------
+	/*
 	 * no zero-th table
-	 * -------------------
+	 *
 	 */
 	NumLockMethods = 1;
 
-	/* ----------------
+	/*
 	 * we're first - initialize
-	 * ----------------
+	 *
 	 */
 	if (!found)
 	{
@@ -330,18 +330,18 @@ LockMethodTableInit(char *tabName,
 		lockMethodTable->ctl->lockmethod = NumLockMethods;
 	}
 
-	/* --------------------
+	/*
 	 * other modules refer to the lock table by a lockmethod ID
-	 * --------------------
+	 *
 	 */
 	LockMethodTable[NumLockMethods] = lockMethodTable;
 	NumLockMethods++;
 	Assert(NumLockMethods <= MAX_LOCK_METHODS);
 
-	/* ----------------------
+	/*
 	 * allocate a hash table for LOCK structs.  This is used
 	 * to store per-locked-object information.
-	 * ----------------------
+	 *
 	 */
 	info.keysize = SHMEM_LOCKTAB_KEYSIZE;
 	info.datasize = SHMEM_LOCKTAB_DATASIZE;
@@ -359,10 +359,10 @@ LockMethodTableInit(char *tabName,
 		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
 
-	/* -------------------------
+	/*
 	 * allocate a hash table for HOLDER structs.  This is used
 	 * to store per-lock-holder information.
-	 * -------------------------
+	 *
 	 */
 	info.keysize = SHMEM_HOLDERTAB_KEYSIZE;
 	info.datasize = SHMEM_HOLDERTAB_DATASIZE;
@@ -528,9 +528,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return FALSE;
 	}
 
-	/* --------------------
+	/*
 	 * if it's a new lock object, initialize it
-	 * --------------------
+	 *
 	 */
 	if (!found)
 	{
@@ -552,9 +552,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		Assert(lock->nGranted <= lock->nRequested);
 	}
 
-	/* ------------------
+	/*
 	 * Create the hash key for the holder table.
-	 * ------------------
+	 *
 	 */
 	MemSet(&holdertag, 0, sizeof(HOLDERTAG)); /* must clear padding, needed */
 	holdertag.lock = MAKE_OFFSET(lock);
@@ -623,20 +623,20 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 #endif /* CHECK_DEADLOCK_RISK */
 	}
 
-	/* ----------------
+	/*
 	 * lock->nRequested and lock->requested[] count the total number of
 	 * requests, whether granted or waiting, so increment those immediately.
 	 * The other counts don't increment till we get the lock.
-	 * ----------------
+	 *
 	 */
 	lock->nRequested++;
 	lock->requested[lockmode]++;
 	Assert((lock->nRequested > 0) && (lock->requested[lockmode] > 0));
 
-	/* --------------------
+	/*
 	 * If I already hold one or more locks of the requested type,
 	 * just grant myself another one without blocking.
-	 * --------------------
+	 *
 	 */
 	if (holder->holding[lockmode] > 0)
 	{
@@ -646,10 +646,10 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return TRUE;
 	}
 
-	/* --------------------
+	/*
 	 * If this process (under any XID) is a holder of the lock,
 	 * also grant myself another one without blocking.
-	 * --------------------
+	 *
 	 */
 	LockCountMyLocks(holder->tag.lock, MyProc, myHolding);
 	if (myHolding[lockmode] > 0)
@@ -660,11 +660,11 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return TRUE;
 	}
 
-	/* --------------------
+	/*
 	 * If lock requested conflicts with locks requested by waiters,
 	 * must join wait queue.  Otherwise, check for conflict with
 	 * already-held locks.  (That's last because most complex check.)
-	 * --------------------
+	 *
 	 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
 		status = STATUS_FOUND;
@@ -760,7 +760,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	return status == STATUS_OK;
 }
 
-/* ----------------------------
+/*
  * LockCheckConflicts -- test whether requested lock conflicts
  *		with those already granted
  *
@@ -775,7 +775,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
  *
  * The caller can optionally pass the process's total holding counts, if
  * known.  If NULL is passed then these values will be computed internally.
- * ----------------------------
+ *
  */
 int
 LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
@@ -792,7 +792,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 				tmpMask;
 	int			localHolding[MAX_LOCKMODES];
 
-	/* ----------------------------
+	/*
 	 * first check for global conflicts: If no locks conflict
 	 * with my request, then I get the lock.
 	 *
@@ -800,7 +800,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 	 * currently held locks.  conflictTable[lockmode] has a bit
 	 * set for each type of lock that conflicts with request.	Bitwise
 	 * compare tells if there is a conflict.
-	 * ----------------------------
+	 *
 	 */
 	if (!(lockctl->conflictTab[lockmode] & lock->grantMask))
 	{
@@ -808,12 +808,12 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 		return STATUS_OK;
 	}
 
-	/* ------------------------
+	/*
 	 * Rats.  Something conflicts. But it could still be my own
 	 * lock.  We have to construct a conflict mask
 	 * that does not reflect our own locks.  Locks held by the current
 	 * process under another XID also count as "our own locks".
-	 * ------------------------
+	 *
 	 */
 	if (myHolding == NULL)
 	{
@@ -831,12 +831,12 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 			bitmask |= tmpMask;
 	}
 
-	/* ------------------------
+	/*
 	 * now check again for conflicts.  'bitmask' describes the types
 	 * of locks held by other processes.  If one of these
 	 * conflicts with the kind of lock that I want, there is a
 	 * conflict and I have to sleep.
-	 * ------------------------
+	 *
 	 */
 	if (!(lockctl->conflictTab[lockmode] & bitmask))
 	{
@@ -935,7 +935,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	strcat(new_status, " waiting");
 	set_ps_display(new_status);
 
-	/* -------------------
+	/*
 	 * NOTE: Think not to put any lock state cleanup after the call to
 	 * ProcSleep, in either the normal or failure path.  The lock state
 	 * must be fully set by the lock grantor, or by HandleDeadLock if we
@@ -944,7 +944,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	 * after someone else grants us the lock, but before we've noticed it.
 	 * Hence, after granting, the locktable state must fully reflect the
 	 * fact that we own the lock; we can't do additional work on return.
-	 * -------------------
+	 *
 	 */
 
 	if (ProcSleep(lockMethodTable,
@@ -952,11 +952,11 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 				  lock,
 				  holder) != STATUS_OK)
 	{
-		/* -------------------
+		/*
 		 * We failed as a result of a deadlock, see HandleDeadLock().
 		 * Quit now.  Removal of the holder and lock objects, if no longer
 		 * needed, will happen in xact cleanup (see above for motivation).
-		 * -------------------
+		 *
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		SpinRelease(lockMethodTable->ctl->masterLock);
@@ -1043,7 +1043,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
-        elog(DEBUG, "LockRelease: user lock tag [%u] %d", locktag->objId.blkno, lockmode);
+		elog(DEBUG, "LockRelease: user lock tag [%u] %d", locktag->objId.blkno, lockmode);
 #endif
 
 	/* ???????? This must be changed when short term locks will be used */
@@ -1105,7 +1105,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		SpinRelease(masterLock);
 #ifdef USER_LOCKS
 		if (!found && lockmethod == USER_LOCKMETHOD)
-            elog(NOTICE, "LockRelease: no lock with this tag");
+			elog(NOTICE, "LockRelease: no lock with this tag");
 		else
 #endif
 			elog(NOTICE, "LockRelease: holder table corrupted");
@@ -1150,7 +1150,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	Assert((lock->nGranted >= 0) && (lock->granted[lockmode] >= 0));
 	Assert(lock->nGranted <= lock->nRequested);
 
-	/* --------------------------
+	/*
 	 * We need only run ProcLockWakeup if the released lock conflicts with
 	 * at least one of the lock types requested by waiter(s).  Otherwise
 	 * whatever conflict made them wait must still exist.  NOTE: before MVCC,
@@ -1158,18 +1158,18 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * But that's not true anymore, because the remaining granted locks might
 	 * belong to some waiter, who could now be awakened because he doesn't
 	 * conflict with his own locks.
-	 * --------------------------
+	 *
 	 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
 		wakeupNeeded = true;
 
 	if (lock->nRequested == 0)
 	{
-		/* ------------------
+		/*
 		 * if there's no one waiting in the queue,
 		 * we just released the last lock on this object.
 		 * Delete it from the lock table.
-		 * ------------------
+		 *
 		 */
 		Assert(lockMethodTable->lockHash->hash == tag_hash);
 		lock = (LOCK *) hash_search(lockMethodTable->lockHash,
@@ -1297,9 +1297,9 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		Assert(holder->nHolding >= 0);
 		Assert(holder->nHolding <= lock->nRequested);
 
-		/* ------------------
+		/*
 		 * fix the general lock stats
-		 * ------------------
+		 *
 		 */
 		if (lock->nRequested != holder->nHolding)
 		{
@@ -1328,10 +1328,10 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		}
 		else
 		{
-			/* --------------
+			/*
 			 * This holder accounts for all the requested locks on the object,
 			 * so we can be lazy and just zero things out.
-			 * --------------
+			 *
 			 */
 			lock->nRequested = 0;
 			lock->nGranted = 0;
@@ -1368,10 +1368,10 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 
 		if (lock->nRequested == 0)
 		{
-			/* --------------------
+			/*
 			 * We've just released the last lock, so garbage-collect the
 			 * lock object.
-			 * --------------------
+			 *
 			 */
 			LOCK_PRINT("LockReleaseAll: deleting", lock, 0);
 			Assert(lockMethodTable->lockHash->hash == tag_hash);
@@ -1395,8 +1395,8 @@ next_item:
 	SpinRelease(masterLock);
 
 #ifdef LOCK_DEBUG
-    if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
-        elog(DEBUG, "LockReleaseAll: done");
+	if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
+		elog(DEBUG, "LockReleaseAll: done");
 #endif
 
 	return TRUE;

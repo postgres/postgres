@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.53 2001/02/22 21:48:49 momjian Exp $
+ * $Id: nbtree.h,v 1.54 2001/02/22 23:02:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ typedef struct BTMetaPageData
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
-#define BTREE_METAPAGE	0	/* first page is meta */
+#define BTREE_METAPAGE	0			/* first page is meta */
 #define BTREE_MAGIC		0x053162	/* magic number of btree pages */
 
 #define BTreeInvalidParent(opaque)	\
@@ -215,8 +215,8 @@ typedef BTStackData *BTStack;
  *	items beginning in item 1.
  */
 
-#define P_HIKEY			((OffsetNumber) 1)
-#define P_FIRSTKEY		((OffsetNumber) 2)
+#define P_HIKEY				((OffsetNumber) 1)
+#define P_FIRSTKEY			((OffsetNumber) 2)
 #define P_FIRSTDATAKEY(opaque)  (P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
 
 /*

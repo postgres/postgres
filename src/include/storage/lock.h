@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.44 2001/01/25 03:31:16 tgl Exp $
+ * $Id: lock.h,v 1.45 2001/02/22 23:02:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef int LOCKMODE;
 typedef int LOCKMETHOD;
 
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
-#define MAX_LOCKMODES	8
+#define MAX_LOCKMODES  		8
 
 /*
  * MAX_LOCK_METHODS corresponds to the number of spin locks allocated in
