@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.26 2000/08/31 16:09:53 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.27 2001/07/13 22:55:59 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = async.o creatinh.o command.o comment.o copy.o indexcmds.o define.o \
-       remove.o rename.o vacuum.o analyze.o view.o cluster.o \
+       remove.o rename.o vacuum.o vacuumlazy.o analyze.o view.o cluster.o \
        explain.o sequence.o trigger.o user.o proclang.o \
        dbcommands.o variable.o
 

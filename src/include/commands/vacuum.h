@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.37 2001/07/12 04:11:13 tgl Exp $
+ * $Id: vacuum.h,v 1.38 2001/07/13 22:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #endif
 
 #include "nodes/parsenodes.h"
-#include "storage/block.h"
+#include "utils/rel.h"
 
 
 /* State structure for vac_init_rusage/vac_show_rusage */
@@ -37,12 +37,18 @@ typedef struct VacRUsage
 
 /* in commands/vacuum.c */
 extern void vacuum(VacuumStmt *vacstmt);
+extern void vac_open_indexes(Relation relation, int *nindexes,
+							 Relation **Irel);
+extern void vac_close_indexes(int nindexes, Relation *Irel);
 extern void vac_update_relstats(Oid relid,
 								BlockNumber num_pages,
 								double num_tuples,
 								bool hasindex);
 extern void vac_init_rusage(VacRUsage *ru0);
 extern const char *vac_show_rusage(VacRUsage *ru0);
+
+/* in commands/vacuumlazy.c */
+extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt);

@@ -1,41 +1,39 @@
 /*-------------------------------------------------------------------------
  *
  * vacuum.c
- *	  the postgres vacuum cleaner
+ *	  The postgres vacuum cleaner.
+ *
+ * This file includes the "full" version of VACUUM, as well as control code
+ * used by all three of full VACUUM, lazy VACUUM, and ANALYZE.  See
+ * vacuumlazy.c and analyze.c for the rest of the code for the latter two.
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.203 2001/07/12 04:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.204 2001/07/13 22:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
-#include "catalog/index.h"
 #include "catalog/pg_index.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "nodes/execnodes.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "tcop/pquery.h"
-#include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -123,7 +121,7 @@ static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 					  VacPageList vacuum_pages, VacPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel,
 						VacPageList vacuum_pages, VacPageList fraged_pages,
-						int nindices, Relation *Irel);
+						int nindexes, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel,
 						VacPageList vacpagelist);
 static void vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage);
@@ -135,8 +133,6 @@ static void vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 						   BlockNumber rel_pages);
 static VacPage copy_vac_page(VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
-static void get_indices(Relation relation, int *nindices, Relation **Irel);
-static void close_indices(int nindices, Relation *Irel);
 static bool is_partial_index(Relation indrel);
 static void *vac_bsearch(const void *key, const void *base,
 						 size_t nelem, size_t size,
@@ -455,14 +451,6 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
  */
 
 
-/* XXX Temporary placeholder */
-static void
-lazy_vacuum_rel(Relation onerel)
-{
-	full_vacuum_rel(onerel);
-}
-
-
 /*
  *	vacuum_rel() -- vacuum one heap relation
  *
@@ -554,11 +542,17 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
+	 *
+	 * XXX for the moment, lazy vac not supported unless CONCURRENT_VACUUM
 	 */
+#ifdef CONCURRENT_VACUUM
 	if (vacstmt->full)
 		full_vacuum_rel(onerel);
 	else
-		lazy_vacuum_rel(onerel);
+		lazy_vacuum_rel(onerel, vacstmt);
+#else
+	full_vacuum_rel(onerel);
+#endif
 
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
@@ -596,7 +590,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 /*
  *	full_vacuum_rel() -- perform FULL VACUUM for one heap relation
  *
- *		This routine vacuums a single heap, cleans out its indices, and
+ *		This routine vacuums a single heap, cleans out its indexes, and
  *		updates its num_pages and num_tuples statistics.
  *
  *		At entry, we have already established a transaction and opened
@@ -606,11 +600,11 @@ static void
 full_vacuum_rel(Relation onerel)
 {
 	VacPageListData vacuum_pages;		/* List of pages to vacuum and/or
-										 * clean indices */
+										 * clean indexes */
 	VacPageListData fraged_pages;		/* List of pages with space enough
 										 * for re-using */
 	Relation   *Irel;
-	int32		nindices,
+	int			nindexes,
 				i;
 	VRelStats  *vacrelstats;
 	bool		reindex = false;
@@ -633,15 +627,13 @@ full_vacuum_rel(Relation onerel)
 	vacuum_pages.num_pages = fraged_pages.num_pages = 0;
 	scan_heap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
 
-	/* Now open all indices of the relation */
-	nindices = 0;
-	Irel = (Relation *) NULL;
-	get_indices(onerel, &nindices, &Irel);
+	/* Now open all indexes of the relation */
+	vac_open_indexes(onerel, &nindexes, &Irel);
 	if (!Irel)
 		reindex = false;
 	else if (!RelationGetForm(onerel)->relhasindex)
 		reindex = true;
-	if (nindices > 0)
+	if (nindexes > 0)
 		vacrelstats->hasindex = true;
 
 #ifdef NOT_USED
@@ -651,7 +643,7 @@ full_vacuum_rel(Relation onerel)
 	 */
 	if (reindex)
 	{
-		close_indices(nindices, Irel);
+		vac_close_indexes(nindexes, Irel);
 		Irel = (Relation *) NULL;
 		activate_indexes_of_a_table(RelationGetRelid(onerel), false);
 	}
@@ -662,14 +654,14 @@ full_vacuum_rel(Relation onerel)
 	{
 		if (vacuum_pages.num_pages > 0)
 		{
-			for (i = 0; i < nindices; i++)
+			for (i = 0; i < nindexes; i++)
 				vacuum_index(&vacuum_pages, Irel[i],
 							 vacrelstats->rel_tuples, 0);
 		}
 		else
 		{
-			/* just scan indices to update statistic */
-			for (i = 0; i < nindices; i++)
+			/* just scan indexes to update statistic */
+			for (i = 0; i < nindexes; i++)
 				scan_index(Irel[i], vacrelstats->rel_tuples);
 		}
 	}
@@ -678,12 +670,12 @@ full_vacuum_rel(Relation onerel)
 	{
 		/* Try to shrink heap */
 		repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages,
-					nindices, Irel);
-		close_indices(nindices, Irel);
+					nindexes, Irel);
+		vac_close_indexes(nindexes, Irel);
 	}
 	else
 	{
-		close_indices(nindices, Irel);
+		vac_close_indexes(nindexes, Irel);
 		if (vacuum_pages.num_pages > 0)
 		{
 			/* Clean pages from vacuum_pages list */
@@ -835,7 +827,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			itemid = PageGetItemId(page, offnum);
 
 			/*
-			 * Collect un-used items too - it's possible to have indices
+			 * Collect un-used items too - it's possible to have indexes
 			 * pointing here after crash.
 			 */
 			if (!ItemIdIsUsed(itemid))
@@ -944,7 +936,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				}
 
 				/* mark it unused on the temp page */
-				lpp = &(((PageHeader) tempPage)->pd_linp[offnum - 1]);
+				lpp = PageGetItemId(tempPage, offnum);
 				lpp->lp_flags &= ~LP_USED;
 
 				vacpage->offsets[vacpage->offsets_free++] = offnum;
@@ -1073,8 +1065,8 @@ Re-using: Free/Avail. Space %.0f/%.0f; EndEmpty/Avail. Pages %u/%u. %s",
  *	repair_frag() -- try to repair relation's fragmentation
  *
  *		This routine marks dead tuples as unused and tries re-use dead space
- *		by moving tuples (and inserting indices if needed). It constructs
- *		Nvacpagelist list of free-ed pages (moved tuples) and clean indices
+ *		by moving tuples (and inserting indexes if needed). It constructs
+ *		Nvacpagelist list of free-ed pages (moved tuples) and clean indexes
  *		for them after committing (in hack-manner - without losing locks
  *		and freeing memory!) current transaction. It truncates relation
  *		if some end-blocks are gone away.
@@ -1082,7 +1074,7 @@ Re-using: Free/Avail. Space %.0f/%.0f; EndEmpty/Avail. Pages %u/%u. %s",
 static void
 repair_frag(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacuum_pages, VacPageList fraged_pages,
-			int nindices, Relation *Irel)
+			int nindexes, Relation *Irel)
 {
 	TransactionId myXID;
 	CommandId	myCID;
@@ -1884,7 +1876,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * relation.  Ideally we should do Commit/StartTransactionCommand
 		 * here, relying on the session-level table lock to protect our
 		 * exclusive access to the relation.  However, that would require
-		 * a lot of extra code to close and re-open the relation, indices,
+		 * a lot of extra code to close and re-open the relation, indexes,
 		 * etc.  For now, a quick hack: record status of current
 		 * transaction as committed, and continue.
 		 */
@@ -1985,7 +1977,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 	if (Nvacpagelist.num_pages > 0)
 	{
-		/* vacuum indices again if needed */
+		/* vacuum indexes again if needed */
 		if (Irel != (Relation *) NULL)
 		{
 			VacPage    *vpleft,
@@ -2002,7 +1994,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				*vpright = vpsave;
 			}
 			Assert(keep_tuples >= 0);
-			for (i = 0; i < nindices; i++)
+			for (i = 0; i < nindexes; i++)
 				vacuum_index(&Nvacpagelist, Irel[i],
 							 vacrelstats->rel_tuples, keep_tuples);
 		}
@@ -2175,7 +2167,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	START_CRIT_SECTION();
 	for (i = 0; i < vacpage->offsets_free; i++)
 	{
-		itemid = &(((PageHeader) page)->pd_linp[vacpage->offsets[i] - 1]);
+		itemid = PageGetItemId(page, vacpage->offsets[i]);
 		itemid->lp_flags &= ~LP_USED;
 	}
 	uncnt = PageRepairFragmentation(page, unused);
@@ -2244,9 +2236,9 @@ scan_index(Relation indrel, double num_tuples)
  *
  *		Vpl is the VacPageList of the heap we're currently vacuuming.
  *		It's locked. Indrel is an index relation on the vacuumed heap.
- *		We don't set locks on the index	relation here, since the indexed
- *		access methods support locking at different granularities.
- *		We let them handle it.
+ *
+ *		We don't bother to set locks on the index relation here, since
+ *		the parent table is exclusive-locked already.
  *
  *		Finally, we arrange to update the index relation's statistics in
  *		pg_class.
@@ -2555,8 +2547,8 @@ vac_cmp_vtlinks(const void *left, const void *right)
 }
 
 
-static void
-get_indices(Relation relation, int *nindices, Relation **Irel)
+void
+vac_open_indexes(Relation relation, int *nindexes, Relation **Irel)
 {
 	List	   *indexoidlist,
 			   *indexoidscan;
@@ -2564,10 +2556,10 @@ get_indices(Relation relation, int *nindices, Relation **Irel)
 
 	indexoidlist = RelationGetIndexList(relation);
 
-	*nindices = length(indexoidlist);
+	*nindexes = length(indexoidlist);
 
-	if (*nindices > 0)
-		*Irel = (Relation *) palloc(*nindices * sizeof(Relation));
+	if (*nindexes > 0)
+		*Irel = (Relation *) palloc(*nindexes * sizeof(Relation));
 	else
 		*Irel = NULL;
 
@@ -2584,14 +2576,14 @@ get_indices(Relation relation, int *nindices, Relation **Irel)
 }
 
 
-static void
-close_indices(int nindices, Relation *Irel)
+void
+vac_close_indexes(int nindexes, Relation *Irel)
 {
 	if (Irel == (Relation *) NULL)
 		return;
 
-	while (nindices--)
-		index_close(Irel[nindices]);
+	while (nindexes--)
+		index_close(Irel[nindexes]);
 	pfree(Irel);
 }
 
@@ -2621,22 +2613,20 @@ is_partial_index(Relation indrel)
 static bool
 enough_space(VacPage vacpage, Size len)
 {
-
 	len = MAXALIGN(len);
 
 	if (len > vacpage->free)
 		return false;
 
-	if (vacpage->offsets_used < vacpage->offsets_free)	/* there are free
-														 * itemid(s) */
-		return true;			/* and len <= free_space */
+	/* if there are free itemid(s) and len <= free_space... */
+	if (vacpage->offsets_used < vacpage->offsets_free)
+		return true;
 
-	/* ok. noff_usd >= noff_free and so we'll have to allocate new itemid */
-	if (len + MAXALIGN(sizeof(ItemIdData)) <= vacpage->free)
+	/* noff_used >= noff_free and so we'll have to allocate new itemid */
+	if (len + sizeof(ItemIdData) <= vacpage->free)
 		return true;
 
 	return false;
-
 }
 
 
