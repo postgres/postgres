@@ -1,13 +1,13 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for the postgres backend (and the postmaster)
+#   Makefile for the postgres backend (and the postmaster)
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.5 1996/08/28 02:18:00 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.6 1996/09/21 06:27:11 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
