@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.124 2003/12/27 20:58:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.125 2004/01/03 05:47:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +510,7 @@ typedef unsigned long slock_t;
 #endif	 /* __alpha || __alpha__ */
 
 
-#if defined(__hppa)
+#if defined(__hppa) || defined(__hppa__)
 /*
  * HP's PA-RISC
  *
@@ -560,7 +560,7 @@ tas(volatile slock_t *lock)
 
 #define S_LOCK_FREE(lock)	(*TAS_ACTIVE_WORD(lock) != 0)
 
-#endif	 /* __hppa */
+#endif	 /* __hppa || __hppa__ */
 
 
 #if defined(__QNX__) && defined(__WATCOMC__)
