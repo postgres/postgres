@@ -1,4 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.19 2001/11/18 22:17:30 tgl Exp $ -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.20 2001/11/18 22:27:00 tgl Exp $
+-->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -81,10 +83,12 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
 
   <important>
    <para>
-    When your database schema relies on OIDs (for instances as foreign
+    When your database schema relies on OIDs (for instance as foreign
     keys) you must instruct <application>pg_dump</> to dump the OIDs
     as well. To do this, use the <option>-o</option> command line
-    option.
+    option.  <quote>Large objects</> are not dumped by default, either.
+    See <application>pg_dump</>'s command reference page if you use
+    large objects.
    </para>
   </important>
 
@@ -115,7 +119,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     users, then the dump will instruct <application>psql</> to connect
     as each affected user in turn and then create the relevant
     objects. This way the original ownership is preserved. This also
-    means, however, that all these user must already exist, and
+    means, however, that all these users must already exist, and
     furthermore that you must be allowed to connect as each of them.
     It might therefore be necessary to temporarily relax the client
     authentication settings.
@@ -123,8 +127,8 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
 
    <para>
     The ability of <application>pg_dump</> and <application>psql</> to
-    write or read from pipes also make it possible to dump a database
-    directory from one server to another, for example
+    write to or read from pipes makes it possible to dump a database
+    directly from one server to another, for example
     <informalexample>
 <programlisting>
 pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>host2</> <replaceable>dbname</>
