@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.23 2002/01/09 00:52:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.24 2002/10/20 20:58:02 momjian Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -32,8 +32,8 @@ Thomas Lockhart
 
  <para>
   At least two methods,
-  anonymous CVS and <productname>CVSup</productname>, 
-  are available to pull the <productname>CVS</productname> code tree from the 
+  anonymous CVS and <productname>CVSup</productname>,
+  are available to pull the <productname>CVS</productname> code tree from the
   <productname>PostgreSQL</productname> server to your local machine.
  </para>
 
@@ -42,7 +42,7 @@ Thomas Lockhart
 
   <para>
    If you would like to keep up with the current sources on a regular
-   basis, you can fetch them from our <productname>CVS</productname> server 
+   basis, you can fetch them from our <productname>CVS</productname> server
    and then use <productname>CVS</productname> to
    retrieve updates from time to time.
   </para>
@@ -52,12 +52,12 @@ Thomas Lockhart
 
    <step>
     <para>
-     You will need a local copy of <productname>CVS</productname> 
+     You will need a local copy of <productname>CVS</productname>
      (Concurrent Version Control System), which you can get from
      <ulink url="http://www.cyclic.com/">http://www.cyclic.com/</ulink> or
-     any GNU software archive site.  
+     any GNU software archive site.
      We currently recommend version 1.10 (the most recent at the time
-     of writing). Many systems have a recent version of 
+     of writing). Many systems have a recent version of
      <application>cvs</application> installed by default.
     </para>
    </step>
@@ -83,7 +83,7 @@ $ cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot login
 cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot co -P pgsql
      </programlisting>
 
-     which installs the <productname>PostgreSQL</productname> sources into a 
+     which installs the <productname>PostgreSQL</productname> sources into a
      subdirectory <filename>pgsql</filename>
      of the directory you are currently in.
 
@@ -152,7 +152,7 @@ $ cvs update
 $ chmod -R go-w pgsql
     </programlisting>
     to set the permissions properly.
-    This bug is fixed as of 
+    This bug is fixed as of
     <productname>CVS</productname> version 1.9.28.
    </para>
   </caution>
@@ -208,10 +208,10 @@ $ cvs checkout -r REL6_4 tc
    When you tag more than one file with the same tag you can think
    about the tag as <quote>a curve drawn through a matrix of filename vs.
    revision number</quote>.  Say we have 5 files with the following revisions:
-   
+
    <programlisting>
              file1   file2   file3   file4   file5
-     
+
              1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
              1.2*-   1.2     1.2    -1.2*-
              1.3  \- 1.3*-   1.3   / 1.3
@@ -291,7 +291,7 @@ cvs commit
   <title>Getting The Source Via <productname>CVSup</productname></title>
 
   <para>
-   An alternative to using anonymous CVS for retrieving 
+   An alternative to using anonymous CVS for retrieving
    the <productname>PostgreSQL</productname> source tree
    is <productname>CVSup</productname>.
    <productname>CVSup</productname> was developed by
@@ -323,9 +323,9 @@ cvs commit
    </para>
 
    <para>
-    Decide where you want to keep your local copy of the 
+    Decide where you want to keep your local copy of the
     <productname>CVS</productname> repository. On one of our systems we
-    recently set up a repository in <filename>/home/cvs/</filename>, 
+    recently set up a repository in <filename>/home/cvs/</filename>,
     but had formerly kept it under a
     <productname>PostgreSQL</productname> development tree in
     <filename>/opt/postgres/cvs/</filename>. If you intend to keep your
@@ -337,7 +337,7 @@ setenv CVSROOT /home/cvs
 
     in your <filename>.cshrc</filename> file, or a similar line in
     your <filename>.bashrc</filename> or
-    <filename>.profile</filename> file, depending on your shell. 
+    <filename>.profile</filename> file, depending on your shell.
    </para>
 
    <para>
@@ -372,7 +372,7 @@ CVSROOT/
 which cvsup
     </programlisting>
 
-    Then, simply run 
+    Then, simply run
     <application>cvsup</application> using:
 
     <programlisting>
@@ -417,7 +417,7 @@ $ cvsup -L 2 <replaceable class="parameter">postgres.cvsup</replaceable>
 # prefix directory where CVSup will store the actual distribution(s)
 *default prefix=/home/cvs
 
-# complete distribution, including all below 
+# complete distribution, including all below
 pgsql
 
 # individual distributions vs 'the whole thing'
@@ -450,7 +450,7 @@ pgsql
 # prefix directory where CVSup will store the actual distribution(s)
 *default prefix=<replaceable class="parameter">/usr/local/pgsql</replaceable>
 
-# complete distribution, including all below 
+# complete distribution, including all below
 pgsql
 
 # individual distributions vs 'the whole thing'
@@ -466,7 +466,7 @@ pgsql
    <title>Installing <productname>CVSup</productname></title>
 
    <para>
-    <productname>CVSup</productname> is available as source, pre-built 
+    <productname>CVSup</productname> is available as source, pre-built
     binaries, or Linux RPMs. It is far easier to use a binary than to
     build from source, primarily because the very capable, but
     voluminous, Modula-3 compiler is required for the build.
@@ -478,7 +478,7 @@ pgsql
     <para>
      You can use pre-built binaries
      if you have a platform for which binaries
-     are posted on 
+     are posted on
      <ulink url="ftp://ftp.postgresql.org/pub">the <productname>PostgreSQL</productname> ftp site</ulink>,
      or if you are running FreeBSD, for which
      <productname>CVSup</productname> is available as a port.
@@ -487,7 +487,7 @@ pgsql
       <para>
        <productname>CVSup</productname> was originally developed as a
        tool for distributing the <productname>FreeBSD</productname>
-       source tree. It is available as a <quote>port</quote>, and for those running 
+       source tree. It is available as a <quote>port</quote>, and for those running
        FreeBSD, if this is not sufficient to tell how to obtain and
        install it then please contribute a procedure here.
       </para>
@@ -516,7 +516,7 @@ pgsql
 	If you are running FreeBSD, install the <productname>CVSup</productname> port.
        </para>
       </step>
-      
+
       <step performance="optional">
        <para>
 	If you have another platform, check for and download the appropriate binary from
@@ -536,7 +536,7 @@ pgsql
      <substeps>
       <step>
        <para>
-	If the binary is in the top level of the tar file, then simply 
+	If the binary is in the top level of the tar file, then simply
 	unpack the tar file into your target directory:
 
 	<programlisting>
@@ -549,7 +549,7 @@ $ mv cvsup.1 ../doc/man/man1/
 
       <step>
        <para>
-	If there is a directory structure in the tar file, then unpack 
+	If there is a directory structure in the tar file, then unpack
 	the tar file within /usr/local/src and move the binaries into
 	the appropriate location as above.
        </para>
@@ -604,7 +604,7 @@ $ which cvsup
 	Pick up the <productname>Modula-3</productname>
 	distribution from
 	<ulink url="http://m3.polymtl.ca/m3">Polytechnique Montréal</ulink>,
-	who are actively maintaining the code base originally developed by 
+	who are actively maintaining the code base originally developed by
 	<ulink
 	 url="http://www.research.digital.com/SRC/modula-3/html/home.html">the DEC Systems Research Center</ulink>.
        The <productname>PM3</productname> <productname>RPM</productname> distribution is roughly
@@ -815,7 +815,7 @@ Regards,
 John
 
 I've deposited a statically built cvsup client executable (and man pages
-and test configuration) in 
+and test configuration) in
 
   /pub/incoming/cvsup-15.1-client-linux.tar.gz
 
@@ -832,7 +832,7 @@ yet) but each major package (there are 4) can be built without needing
 the makefiles with two commands each. Not difficult at all. John gives
 some hints in his e-mail on how to build a static executable, and on how
 to shrink the size of the executable by leaving out the GUI support.
-Again, easy to do. 
+Again, easy to do.
 
 My client test case, picking up a sub-tree of the FreeBSD distribution,
 worked flawlessly. I haven't tried running a server.
