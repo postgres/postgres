@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.43 2000/07/02 22:00:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.44 2000/07/23 03:50:26 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -24,11 +24,10 @@
 /*				---------- AMOP CACHES ----------						 */
 
 /*
- * op_class -
+ * op_class
  *
  *		Return t iff operator 'opid' is in operator class 'opclass' for
  *		access method 'amopid'.
- *
  */
 bool
 op_class(Oid opid, Oid opclass, Oid amopid)
@@ -46,11 +45,10 @@ op_class(Oid opid, Oid opclass, Oid amopid)
 /*				---------- ATTRIBUTE CACHES ----------					 */
 
 /*
- * get_attname -
+ * get_attname
  *
  *		Given the relation id and the attribute number,
  *		return the "attname" field from the attribute relation.
- *
  */
 char *
 get_attname(Oid relid, AttrNumber attnum)
@@ -59,7 +57,7 @@ get_attname(Oid relid, AttrNumber attnum)
 
 	tp = SearchSysCacheTuple(ATTNUM,
 							 ObjectIdGetDatum(relid),
-							 UInt16GetDatum(attnum),
+							 Int16GetDatum(attnum),
 							 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
@@ -72,11 +70,10 @@ get_attname(Oid relid, AttrNumber attnum)
 }
 
 /*
- * get_attnum -
+ * get_attnum
  *
  *		Given the relation id and the attribute name,
  *		return the "attnum" field from the attribute relation.
- *
  */
 AttrNumber
 get_attnum(Oid relid, char *attname)
@@ -98,11 +95,10 @@ get_attnum(Oid relid, char *attname)
 }
 
 /*
- * get_atttype -
+ * get_atttype
  *
  *		Given the relation OID and the attribute number with the relation,
  *		return the attribute type OID.
- *
  */
 Oid
 get_atttype(Oid relid, AttrNumber attnum)
@@ -111,7 +107,7 @@ get_atttype(Oid relid, AttrNumber attnum)
 
 	tp = SearchSysCacheTuple(ATTNUM,
 							 ObjectIdGetDatum(relid),
-							 UInt16GetDatum(attnum),
+							 Int16GetDatum(attnum),
 							 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
@@ -147,11 +143,10 @@ get_attisset(Oid relid, char *attname)
 }
 
 /*
- * get_atttypmod -
+ * get_atttypmod
  *
  *		Given the relation id and the attribute number,
  *		return the "atttypmod" field from the attribute relation.
- *
  */
 int32
 get_atttypmod(Oid relid, AttrNumber attnum)
@@ -160,7 +155,7 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 
 	tp = SearchSysCacheTuple(ATTNUM,
 							 ObjectIdGetDatum(relid),
-							 UInt16GetDatum(attnum),
+							 Int16GetDatum(attnum),
 							 0, 0);
 	if (HeapTupleIsValid(tp))
 	{
@@ -272,11 +267,10 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 /*				---------- OPERATOR CACHE ----------					 */
 
 /*
- * get_opcode -
+ * get_opcode
  *
  *		Returns the regproc id of the routine used to implement an
  *		operator given the operator oid.
- *
  */
 RegProcedure
 get_opcode(Oid opno)
@@ -297,7 +291,7 @@ get_opcode(Oid opno)
 }
 
 /*
- * get_opname -
+ * get_opname
  *	  returns the name of the operator with the given opno
  *
  * Note: returns a palloc'd copy of the string, or NULL if no such operator.
@@ -321,11 +315,10 @@ get_opname(Oid opno)
 }
 
 /*
- * op_mergejoinable -
+ * op_mergejoinable
  *
  *		Returns the left and right sort operators and types corresponding to a
  *		mergejoinable operator, or nil if the operator is not mergejoinable.
- *
  */
 bool
 op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
@@ -344,8 +337,8 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 			optup->oprleft == ltype &&
 			optup->oprright == rtype)
 		{
-			*leftOp = ObjectIdGetDatum(optup->oprlsortop);
-			*rightOp = ObjectIdGetDatum(optup->oprrsortop);
+			*leftOp = optup->oprlsortop;
+			*rightOp = optup->oprrsortop;
 			return true;
 		}
 	}
@@ -356,8 +349,7 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
  * op_hashjoinable
  *
  * Returns the hash operator corresponding to a hashjoinable operator,
- * or nil if the operator is not hashjoinable.
- *
+ * or InvalidOid if the operator is not hashjoinable.
  */
 Oid
 op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
@@ -393,10 +385,9 @@ get_operator_tuple(Oid opno)
 }
 
 /*
- * get_commutator -
+ * get_commutator
  *
  *		Returns the corresponding commutator of an operator.
- *
  */
 Oid
 get_commutator(Oid opno)
@@ -417,10 +408,9 @@ get_commutator(Oid opno)
 }
 
 /*
- * get_negator -
+ * get_negator
  *
  *		Returns the corresponding negator of an operator.
- *
  */
 Oid
 get_negator(Oid opno)
@@ -441,10 +431,9 @@ get_negator(Oid opno)
 }
 
 /*
- * get_oprrest -
+ * get_oprrest
  *
  *		Returns procedure id for computing selectivity of an operator.
- *
  */
 RegProcedure
 get_oprrest(Oid opno)
@@ -465,10 +454,9 @@ get_oprrest(Oid opno)
 }
 
 /*
- * get_oprjoin -
+ * get_oprjoin
  *
  *		Returns procedure id for computing selectivity of a join.
- *
  */
 RegProcedure
 get_oprjoin(Oid opno)
@@ -498,29 +486,23 @@ Oid
 get_func_rettype(Oid funcid)
 {
 	HeapTuple	func_tuple;
-	Oid			funcrettype;
 
 	func_tuple = SearchSysCacheTuple(PROCOID,
 									 ObjectIdGetDatum(funcid),
 									 0, 0, 0);
-
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
-	funcrettype = (Oid)
-		((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
-
-	return funcrettype;
+	return ((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
 }
 
 /*				---------- RELATION CACHE ----------					 */
 
 #ifdef NOT_USED
 /*
- * get_relnatts -
+ * get_relnatts
  *
  *		Returns the number of attributes for a given relation.
- *
  */
 int
 get_relnatts(Oid relid)
@@ -542,10 +524,9 @@ get_relnatts(Oid relid)
 #endif
 
 /*
- * get_rel_name -
+ * get_rel_name
  *
  *		Returns the name of a given relation.
- *
  */
 char *
 get_rel_name(Oid relid)
@@ -568,10 +549,9 @@ get_rel_name(Oid relid)
 /*				---------- TYPE CACHE ----------						 */
 
 /*
- * get_typlen -
+ * get_typlen
  *
  *		Given the type OID, return the length of the type.
- *
  */
 int16
 get_typlen(Oid typid)
@@ -592,11 +572,10 @@ get_typlen(Oid typid)
 }
 
 /*
- * get_typbyval -
+ * get_typbyval
  *
  *		Given the type OID, determine whether the type is returned by value or
- *		not.  Returns 1 if by value, 0 if by reference.
- *
+ *		not.  Returns true if by value, false if by reference.
  */
 bool
 get_typbyval(Oid typid)
@@ -610,7 +589,7 @@ get_typbyval(Oid typid)
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
 
-		return (bool) typtup->typbyval;
+		return typtup->typbyval;
 	}
 	else
 		return false;
@@ -638,7 +617,7 @@ get_typalign(Oid typid)
 #endif
 
 /*
- * get_typdefault -
+ * get_typdefault
  *
  *	  Given a type OID, return the typdefault field associated with that
  *	  type, or Datum(NULL) if there is no typdefault.  (This implies
@@ -744,12 +723,11 @@ get_typdefault(Oid typid)
 }
 
 /*
- * get_typtype -
+ * get_typtype
  *
  *		Given the type OID, find if it is a basic type, a named relation
  *		or the generic type 'relation'.
  *		It returns the null char if the cache lookup fails...
- *
  */
 #ifdef NOT_USED
 char
