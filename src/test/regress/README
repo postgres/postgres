@@ -166,6 +166,31 @@ statements where these problems occur are the following:
 SELECT * from street;
 SELECT * from iexit;
 
+Tuple ordering differences
+
+You might see differences in which the same tuples are output in a
+different order than what appears in the expected file.  In most cases
+this is not, strictly speaking, a bug.  Most of the regression test
+scripts are not so pedantic as to use an ORDER BY for every single
+SELECT, and so their result tuple orderings are not well-defined
+according to the letter of the SQL spec.  In practice, since we are
+looking at the same queries being executed on the same data by the same
+software, we usually get the same result ordering on all platforms, and
+so the lack of ORDER BY isn't a problem.  Some queries do exhibit
+cross-platform ordering differences, however.
+
+Therefore, if you see an ordering difference, it's not something to
+worry about (unless the query does have an ORDER BY that your result
+is violating).  But please report it anyway, so that we can add an
+ORDER BY to that particular query and thereby eliminate the bogus
+"failure" in future releases.
+
+You might wonder why we don't ORDER all the regress test SELECTs to
+get rid of this issue once and for all.  The reason is that that would
+make the regression tests less useful, not more, since they'd tend
+to exercise query plan types that produce ordered results to the
+exclusion of those that don't.
+
 The "random" test
 
 There is at least one case in the "random" test script that is
