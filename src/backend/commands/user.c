@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.134 2004/02/02 00:17:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.135 2004/02/02 16:37:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ write_group_file(Relation grel)
 	tempname = (char *) palloc(bufsize);
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
 #if defined(WIN32) || defined(CYGWIN)
-	filename = repalloc(filename, strlen(filename) + 1 + strlen(".new");
+	filename = repalloc(filename, strlen(filename) + 1 + strlen(".new"));
 	strcat(filename, ".new");
 #endif
 	
@@ -291,7 +291,7 @@ write_user_file(Relation urel)
 	tempname = (char *) palloc(bufsize);
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
 #if defined(WIN32) || defined(CYGWIN)
-	filename = repalloc(filename, strlen(filename) + 1 + strlen(".new");
+	filename = repalloc(filename, strlen(filename) + 1 + strlen(".new"));
 	strcat(filename, ".new");
 #endif
 
