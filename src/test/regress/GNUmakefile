@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.13 1998/01/01 05:37:29 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.14 1998/01/17 23:39:22 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ runtest: $(INFILES)
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
 clean:
-	rm -f $(INFILES)
+	rm -f $(INFILES) regress.out
 	$(MAKE) -C sql clean
 	$(MAKE) -C expected clean
 	$(MAKE) -C results clean

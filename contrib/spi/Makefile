@@ -33,4 +33,4 @@ $(CONTRIBDIR):
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" < $< > $@
 
 clean: 
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) *.o
