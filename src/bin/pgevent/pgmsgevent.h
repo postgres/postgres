@@ -39,7 +39,7 @@
 //
 // MessageText:
 //
-//  %1.
+//  %1
 //
 #define PGWIN32_EVENTLOG_MSG             0x00000000L
 
