@@ -1,9 +1,76 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.324 2005/01/23 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.325 2005/01/30 01:26:41 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-0-1">
+   <title>Release 8.0.1</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.0, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.1</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.0.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Check that creator of an aggregate function has the right to
+execute the specified transition functions</para>
+<para>
+This oversight made it possible to bypass denial of EXECUTE
+permission on a function.</para></listitem>
+<listitem><para>Fix security and 64-bit issues in
+contrib/intagg</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Make <command>ALTER TABLE ADD COLUMN</> enforce domain
+constraints in all cases</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Improve planning of grouped aggregate queries</para></listitem>
+<listitem><para><command>ROLLBACK TO <replaceable>savepoint</></command>
+closes cursors created since the savepoint</para></listitem>
+<listitem><para>Fix inadequate backend stack size on Windows</para></listitem>
+<listitem><para>Avoid SHGetSpecialFolderPath() on Windows
+(Magnus)</para></listitem>
+<listitem><para>Fix some problems in running pg_autovacuum as a Windows
+service (Dave Page)</para></listitem>
+<listitem><para>Multiple minor bug fixes in
+pg_dump/pg_restore</para></listitem>
+<listitem><para>Fix ecpg segfault with named structs used in
+typedefs (Michael)</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-0">
   <title>Release 8.0</title>
@@ -2342,6 +2409,64 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.324 2005/01/23 00:30:18 momjian
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-4-7">
+   <title>Release 7.4.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.6, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.7</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Check that creator of an aggregate function has the right to
+execute the specified transition functions</para>
+<para>
+This oversight made it possible to bypass denial of EXECUTE
+permission on a function.</para></listitem>
+<listitem><para>Fix security and 64-bit issues in
+contrib/intagg</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Fix plperl for quote marks in tuple fields</para></listitem>
+<listitem><para>Fix display of negative intervals in SQL and GERMAN
+datestyles</para></listitem>
+<listitem><para>Make age(timestamptz) do calculation in local timezone not
+GMT</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-4-6">
    <title>Release 7.4.6</title>
 
@@ -4665,6 +4790,62 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-9">
+   <title>Release 7.3.9</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.8, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.9</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Check that creator of an aggregate function has the right to
+execute the specified transition functions</para>
+<para>
+This oversight made it possible to bypass denial of EXECUTE
+permission on a function.</para></listitem>
+<listitem><para>Fix security and 64-bit issues in
+contrib/intagg</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Fix plperl for quote marks in tuple fields</para></listitem>
+<listitem><para>Fix display of negative intervals in SQL and GERMAN
+datestyles</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-3-8">
    <title>Release 7.3.8</title>
 
@@ -5766,6 +5947,54 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Improve /contrib/fulltextindex (Christopher)</para></listitem>
 </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-2-7">
+   <title>Release 7.2.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.2.6, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.2.7</title>
+
+    <para>
+     A dump/restore is not required for those running 7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Fix display of negative intervals in SQL and GERMAN
+datestyles</para></listitem>
+</itemizedlist>
 
   </sect2>
  </sect1>
