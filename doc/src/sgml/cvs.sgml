@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.1 1998/12/18 16:08:19 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.2 1999/01/07 03:00:43 thomas Exp $
 CVS code repository
 Thomas Lockhart
 
 $Log: cvs.sgml,v $
+Revision 1.2  1999/01/07 03:00:43  thomas
+Put in more markup. Not done yet though.
+
 Revision 1.1  1998/12/18 16:08:19  thomas
 Information on the CVS tree and remote access.
 Not yet complete, integrated, or marked up.
@@ -27,6 +30,7 @@ Not yet included in a document (should go in the developer's doc?).
 <para>
 The <productname>Postgres</productname> source code is stored and managed using the
 <productname>CVS</productname> code management system.
+</para>
 
 At least two options,
 anonymous CVS and <productname>CVSup</productname>, 
@@ -127,6 +131,7 @@ allow independent updates of either tree.
 If you are <emphasis>only</emphasis> working on the <literal>CURRENT</literal>
  source tree, you just do
 everything as before we started tagging release branches.
+</para>
 
 <para>
 After you've done the initial checkout on a branch
@@ -204,6 +209,7 @@ This initial checkout is a little slower than simply downloading
 a <filename>tar.gz</filename> file; expect it to take 40 minutes or so if you
 have a 28.8K modem.  The advantage of <productname>CVS</productname> doesn't show up until you
 want to update the file set later on.
+</para>
 </step>
 
 <step>
@@ -217,6 +223,7 @@ cvs -z3 update -d -P
 This will fetch only the changes since the last time you updated.
 You can update in just a couple of minutes, typically, even over
 a modem-speed line.
+</para>
 </step>
 
 <step>
@@ -236,6 +243,7 @@ to say
 cvs update
 </programlisting>
 to update your files.
+</para>
 </step>
 </procedure>
 
@@ -250,26 +258,86 @@ chmod -R go-w pgsql
 to set the permissions properly.
 This bug is fixed as of <productname>CVS</productname> version 1.9.28.
 </caution>
+</para>
 
 <para>
 <productname>CVS</productname> can do a lot of other things, such as fetching prior revisions
 of the <productname>Postgres</productname> sources rather than the latest development version.
 For more info consult the manual that comes with <productname>CVS</productname>, or see the online
 documentation at <ulink url="http://www.cyclic.com/">http://www.cyclic.com/</ulink>.
+</para>
 
+</sect1>
 
 <sect1>
 <title>Getting The Source Via <productname>CVSup</productname></title>
 
 <para>
-An alternative to using anonymous CVS for retrieving the <productname>Postgres</productname> source tree
+An alternative to using anonymous CVS for retrieving 
+the <productname>Postgres</productname> source tree
 is <productname>CVSup</productname>. The major advantage to using
-<productname>CVSup</productname> is that it can replicate the <emphasis>entire</emphasis>
-CVS repository on your local system,
+<productname>CVSup</productname> is that it can reliably
+replicate the <emphasis>entire</emphasis> CVS repository on your local system,
 allowing fast local access to cvs operations such as <option>log</option>
 and <option>diff</option>. Other advantages include fast synchronization to
 the <productname>Postgres</productname> server due to an efficient
 streaming transfer protocol which only sends the changes since the last update.
+</para>
+
+<procedure>
+<title>Installation from Binaries</title>
+
+<para>
+Instructions for installing <productname>CVSup</productname> from sources
+are in a subsequent section. You can instead use pre-built binaries
+if you have a platform for which binaries
+are posted on 
+<ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
+or if you are running FreeBSD, for which <productname>CVSup</productname> is available
+as a port.
+</para>
+
+<step>
+<para>
+Retrieve the binary tar file appropriate for your platform.
+
+<substeps>
+<step performance="optional">
+<para>
+If you are running FreeBSD, install the <productname>CVSup</productname> port.
+</para>
+</step>
+
+<step performance="optional">
+<para>
+If you have another platform, check for and download the appropriate binary from
+<ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
+</para>
+</step>
+</substeps>
+</para>
+
+<step>
+<para>
+</para>
+
+</procedure>
+
+<sect2>
+<title>Installation from Binaries</title>
+
+<para>
+Instructions for installing <productname>CVSup</productname> from sources
+are in a subsequent section. If you have a platform for which static binaries
+are posted on 
+<ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>.
+</para>
+
+<sect2>
+<title>Client Configuration</title>
+
+<para>
+</para>
 
 <sect2>
 <title>Background</title>
