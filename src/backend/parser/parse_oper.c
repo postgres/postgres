@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * parse_oper.h
+ * parse_oper.c
  *		handle operator things for parser
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.35 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.36 2000/02/27 02:48:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@ static int unary_oper_get_candidates(char *op,
 						  CandidateList *candidates,
 						  char rightleft);
 static void op_error(char *op, Oid arg1, Oid arg2);
+static void unary_op_error(char *op, Oid arg, bool is_left_op);
+
 
 Oid
 any_ordering_op(Oid restype)
@@ -224,11 +226,11 @@ oper_select_candidate(int nargs,
 
 	if (ncandidates <= 1)
 	{
-		if (ncandidates > 0 &&
-			(!can_coerce_type(1, &input_typeids[0], &candidates->args[0]) ||
-			 (nargs > 1 &&
-			  !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))))
-			ncandidates = 0;
+		if (ncandidates > 0)
+		{
+			if (!can_coerce_type(nargs, input_typeids, candidates->args))
+				ncandidates = 0;
+		}
 		return (ncandidates == 1) ? candidates->args : NULL;
 	}
 
@@ -279,11 +281,11 @@ oper_select_candidate(int nargs,
 
 	if (ncandidates <= 1)
 	{
-		if (ncandidates > 0 &&
-			(!can_coerce_type(1, &input_typeids[0], &candidates->args[0]) ||
-			 (nargs > 1 &&
-			  !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))))
-			ncandidates = 0;
+		if (ncandidates > 0)
+		{
+			if (!can_coerce_type(nargs, input_typeids, candidates->args))
+				ncandidates = 0;
+		}
 		return (ncandidates == 1) ? candidates->args : NULL;
 	}
 
@@ -368,8 +370,7 @@ oper_select_candidate(int nargs,
 		 current_candidate != NULL;
 		 current_candidate = current_candidate->next)
 	{
-		if (can_coerce_type(1, &input_typeids[0], &current_candidate->args[0])
-			&& can_coerce_type(1, &input_typeids[1], &current_candidate->args[1]))
+		if (can_coerce_type(nargs, input_typeids, current_candidate->args))
 		{
 			ncandidates++;
 			last_candidate = current_candidate;
@@ -559,6 +560,7 @@ right_oper(char *op, Oid arg)
 	int			ncandidates;
 	Oid		   *targetOid;
 
+	/* Try for exact match */
 	tup = SearchSysCacheTuple(OPERNAME,
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(arg),
@@ -567,44 +569,35 @@ right_oper(char *op, Oid arg)
 
 	if (!HeapTupleIsValid(tup))
 	{
+		/* Try for inexact matches */
 		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'r');
 		if (ncandidates == 0)
 		{
-			elog(ERROR, "Can't find right op '%s' for type %u", op, arg);
-			return NULL;
+			unary_op_error(op, arg, FALSE);
 		}
 		else if (ncandidates == 1)
 		{
 			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
-								   ObjectIdGetDatum(candidates->args[0]),
+									  ObjectIdGetDatum(candidates->args[0]),
 									  ObjectIdGetDatum(InvalidOid),
 									  CharGetDatum('r'));
-			Assert(HeapTupleIsValid(tup));
 		}
 		else
 		{
 			targetOid = oper_select_candidate(1, &arg, candidates);
-
 			if (targetOid != NULL)
-			{
 				tup = SearchSysCacheTuple(OPERNAME,
 										  PointerGetDatum(op),
+										  ObjectIdGetDatum(targetOid[0]),
 										  ObjectIdGetDatum(InvalidOid),
-										  ObjectIdGetDatum(*targetOid),
 										  CharGetDatum('r'));
-			}
-			else
-				tup = NULL;
-
-			if (!HeapTupleIsValid(tup))
-			{
-				elog(ERROR, "Unable to convert right operator '%s' from type '%s'",
-					 op, typeidTypeName(arg));
-				return NULL;
-			}
 		}
+
+		if (!HeapTupleIsValid(tup))
+			unary_op_error(op, arg, FALSE);
 	}
+
 	return (Operator) tup;
 }	/* right_oper() */
 
@@ -619,6 +612,7 @@ left_oper(char *op, Oid arg)
 	int			ncandidates;
 	Oid		   *targetOid;
 
+	/* Try for exact match */
 	tup = SearchSysCacheTuple(OPERNAME,
 							  PointerGetDatum(op),
 							  ObjectIdGetDatum(InvalidOid),
@@ -627,43 +621,35 @@ left_oper(char *op, Oid arg)
 
 	if (!HeapTupleIsValid(tup))
 	{
+		/* Try for inexact matches */
 		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'l');
 		if (ncandidates == 0)
 		{
-			elog(ERROR, "Can't find left op '%s' for type %u", op, arg);
-			return NULL;
+			unary_op_error(op, arg, TRUE);
 		}
 		else if (ncandidates == 1)
 		{
 			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(InvalidOid),
-								   ObjectIdGetDatum(candidates->args[0]),
+									  ObjectIdGetDatum(candidates->args[0]),
 									  CharGetDatum('l'));
-			Assert(HeapTupleIsValid(tup));
 		}
 		else
 		{
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
-			{
 				tup = SearchSysCacheTuple(OPERNAME,
 										  PointerGetDatum(op),
 										  ObjectIdGetDatum(InvalidOid),
-										  ObjectIdGetDatum(*targetOid),
+										  ObjectIdGetDatum(targetOid[0]),
 										  CharGetDatum('l'));
-			}
-			else
-				tup = NULL;
-
-			if (!HeapTupleIsValid(tup))
-			{
-				elog(ERROR, "Unable to convert left operator '%s' from type '%s'",
-					 op, typeidTypeName(arg));
-				return NULL;
-			}
 		}
+
+		if (!HeapTupleIsValid(tup))
+			unary_op_error(op, arg, TRUE);
 	}
+
 	return (Operator) tup;
 }	/* left_oper() */
 
@@ -697,4 +683,29 @@ op_error(char *op, Oid arg1, Oid arg2)
 	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
 		 "\n\tYou will have to retype this query using an explicit cast",
 		 op, typeTypeName(tp1), typeTypeName(tp2));
+}
+
+/* unary_op_error()
+ * Give a somewhat useful error message when the operator for one type
+ * is not found.
+ */
+static void
+unary_op_error(char *op, Oid arg, bool is_left_op)
+{
+	Type		tp1 = NULL;
+
+	if (typeidIsValid(arg))
+		tp1 = typeidType(arg);
+	else
+	{
+		elog(ERROR, "Argument of %s operator '%s' has an unknown type"
+			 "\n\tProbably a bad attribute name",
+			 (is_left_op ? "left" : "right"),
+			 op);
+	}
+
+	elog(ERROR, "Unable to identify a %s operator '%s' for type '%s'"
+		 "\n\tYou will have to retype this query using an explicit cast",
+		 (is_left_op ? "left" : "right"),
+		 op, typeTypeName(tp1));
 }
