@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.26 1999/02/28 00:36:04 tgl Exp $
+ * $Id: execnodes.h,v 1.27 1999/03/23 16:51:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,6 +686,7 @@ typedef struct HashState
 	File	   *hashBatches;
 } HashState;
 
+#ifdef NOT_USED
 /* -----------------------
  *	TeeState information
  *	  leftPlace  :	  next item in the queue unseen by the left parent
@@ -704,13 +705,14 @@ typedef struct TeeState
 {
 	CommonState	 cstate;			/* its first field is NodeTag */
 	int						tee_leftPlace,
-								tee_rightPlace,
-								tee_lastPlace;
+							tee_rightPlace,
+							tee_lastPlace;
 	char					*tee_bufferRelname;
-	Relation			tee_bufferRel;
+	Relation				tee_bufferRel;
 	MemoryContext tee_mcxt;
-	HeapScanDesc	tee_leftScanDesc,
-								tee_rightScanDesc;
+	HeapScanDesc			tee_leftScanDesc,
+							tee_rightScanDesc;
 } TeeState;
+#endif
 
 #endif	 /* EXECNODES_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.47 1999/03/07 03:34:11 momjian Exp $
+ * $Id: nodes.h,v 1.48 1999/03/23 16:51:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ typedef enum NodeTag
 	T_Unique,
 	T_Hash,
 	T_Choose,
-	T_Tee,
 	T_Group,
 	T_SubPlan,
 
@@ -117,7 +116,6 @@ typedef enum NodeTag
 	T_SortState,
 	T_UniqueState,
 	T_HashState,
-	T_TeeState,
 
 	/*---------------------
 	 * TAGS FOR MEMORY NODES (memnodes.h)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.23 1999/03/01 00:10:36 tgl Exp $
+ * $Id: plannodes.h,v 1.24 1999/03/23 16:51:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,6 +325,7 @@ typedef struct Hash
 	int			hashtablesize;
 } Hash;
 
+#ifdef NOT_USED
 /* -------------------
  *		Tee node information
  *
@@ -344,6 +345,7 @@ typedef struct Tee
 								 * Tee may be different than the parent
 								 * plans */
 } Tee;
+#endif
 
 /* ---------------------
  *		SubPlan node

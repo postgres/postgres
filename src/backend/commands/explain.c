@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.32 1999/02/13 23:15:06 momjian Exp $
+ *	  $Id: explain.c,v 1.33 1999/03/23 16:50:46 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -193,9 +193,6 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			break;
 		case T_Hash:
 			pname = "Hash";
-			break;
-		case T_Tee:
-			pname = "Tee";
 			break;
 		default:
 			pname = "";

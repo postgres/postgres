@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.77 1999/03/01 00:10:31 tgl Exp $
+ *  $Id: outfuncs.c,v 1.78 1999/03/23 16:50:53 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -542,20 +542,6 @@ _outHash(StringInfo str, Hash *node)
 			(int) node->hashtable,
 			node->hashtablekey,
 			node->hashtablesize);
-}
-
-static void
-_outTee(StringInfo str, Tee *node)
-{
-	appendStringInfo(str, " TEE ");
-	_outPlanInfo(str, (Plan *) node);
-
-	appendStringInfo(str, " :leftParent %X :rightParent %X ",
-		(int) node->leftParent,
-		(int) node->rightParent);
-
-	appendStringInfo(str, " :rtentries ");
-	_outNode(str, node->rtentries);
 }
 
 /*****************************************************************************
@@ -1527,9 +1513,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SubPlan:
 				_outSubPlan(str, obj);
-				break;
-			case T_Tee:
-				_outTee(str, obj);
 				break;
 			case T_Resdom:
 				_outResdom(str, obj);

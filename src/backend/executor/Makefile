@@ -4,7 +4,7 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.7 1998/04/06 00:22:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.8 1999/03/23 16:50:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = execAmi.o execFlatten.o execJunk.o execMain.o \
        execUtils.o functions.o nodeAppend.o nodeAgg.o nodeHash.o \
        nodeHashjoin.o nodeIndexscan.o nodeMaterial.o nodeMergejoin.o \
        nodeNestloop.o nodeResult.o nodeSeqscan.o nodeSort.o \
-       nodeUnique.o nodeTee.o nodeGroup.o spi.o nodeSubplan.o
+       nodeUnique.o nodeGroup.o spi.o nodeSubplan.o
 
 all: SUBSYS.o
 

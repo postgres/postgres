@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.23 1999/02/13 23:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.24 1999/03/23 16:50:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -797,14 +797,6 @@ NodeGetResultTupleSlot(Plan *node)
 				HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
 
 				slot = hashjoinstate->jstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_Tee:
-			{
-				TeeState   *teestate = ((Tee *) node)->teestate;
-
-				slot = teestate->cstate.cs_ResultTupleSlot;
 			}
 			break;
 

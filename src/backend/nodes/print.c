@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.25 1999/02/22 01:57:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.26 1999/03/23 16:50:54 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -338,9 +338,6 @@ plannode_type(Plan *p)
 			break;
 		case T_Hash:
 			return "HASH";
-			break;
-		case T_Tee:
-			return "TEE";
 			break;
 		case T_Choose:
 			return "CHOOSE";

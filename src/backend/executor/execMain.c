@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.81 1999/03/20 01:13:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.82 1999/03/23 16:50:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,7 +884,6 @@ ExecutePlan(EState *estate,
 			DestReceiver* destfunc)
 {
 	JunkFilter *junkfilter;
-
 	TupleTableSlot *slot;
 	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
@@ -898,7 +897,7 @@ ExecutePlan(EState *estate,
 	current_tuple_count = 0;
 	result = NULL;
 
-	/*
+ 	/*
 	 *	Set the direction.
 	 */
 	estate->es_direction = direction;
