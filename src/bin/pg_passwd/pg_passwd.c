@@ -54,11 +54,7 @@ read_pwd_file(char *filename)
 	int			i;
 
 try_again:
-#ifndef __CYGWIN32__
-	fp = fopen(filename, "r");
-#else
-	fp = fopen(filename, "rb");
-#endif
+	fp = fopen(filename, PG_BINARY_R);
 	if (fp == NULL)
 	{
 		if (errno == ENOENT)
@@ -70,11 +66,7 @@ try_again:
 			{
 				case 'y':
 				case 'Y':
-#ifndef __CYGWIN32__
-					fp = fopen(filename, "w");
-#else
-					fp = fopen(filename, "wb");
-#endif
+					fp = fopen(filename, PG_BINARY_W);
 					if (fp == NULL)
 					{
 						perror(filename);
@@ -192,11 +184,7 @@ link_again:
 	}
 
 	/* open file */
-#ifndef __CYGWIN32__
-	if ((fp = fopen(filename, "w")) == NULL)
-#else
-	if ((fp = fopen(filename, "wb")) == NULL)
-#endif
+	if ((fp = fopen(filename, PG_BINARY_W)) == NULL)
 	{
 		perror(filename);
 		exit(1);

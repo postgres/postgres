@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.51 2000/04/12 17:15:14 momjian Exp $
+ *	$Id: hba.c,v 1.52 2000/06/02 15:57:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,11 +397,7 @@ find_hba_entry(hbaPort *port, bool *hba_ok_p)
 	old_conf_file = (char *) palloc(bufsize);
 	snprintf(old_conf_file, bufsize, "%s/%s", DataDir, OLD_CONF_FILE);
 
-#ifndef __CYGWIN32__
-	if ((fd = open(old_conf_file, O_RDONLY, 0)) != -1)
-#else
-	if ((fd = open(old_conf_file, O_RDONLY | O_BINARY, 0)) != -1)
-#endif
+	if ((fd = open(old_conf_file, O_RDONLY | PG_BINARY, 0)) != -1)
 	{
 		/* Old config file exists.	Tell this guy he needs to upgrade. */
 		close(fd);
@@ -810,11 +806,7 @@ verify_against_usermap(const char *pguser,
 		map_file = (char *) palloc(bufsize);
 		snprintf(map_file, bufsize, "%s/%s", DataDir, USERMAP_FILE);
 
-#ifndef __CYGWIN32__
-		file = AllocateFile(map_file, "r");
-#else
-		file = AllocateFile(map_file, "rb");
-#endif
+		file = AllocateFile(map_file, PG_BINARY_R);
 		if (file == NULL)
 		{
 			/* The open of the map file failed.  */
@@ -986,11 +978,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 	bufsize = (strlen(DataDir) + strlen(CHARSET_FILE) + 2) * sizeof(char);
 	map_file = (char *) palloc(bufsize);
 	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
-#ifndef __CYGWIN32__
-	file = AllocateFile(map_file, "r");
-#else
-	file = AllocateFile(map_file, "rb");
-#endif
+	file = AllocateFile(map_file, PG_BINARY_R);
 	if (file == NULL)
 		return;
 	while (!eof)

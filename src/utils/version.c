@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.15 2000/04/12 17:17:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.16 2000/06/02 15:57:44 momjian Exp $
  *
  *	STANDALONE CODE - do not use error routines as this code is not linked
  *	with any...
@@ -67,11 +67,7 @@ ValidatePgVersion(const char *path, char **reason_p)
 
 	sprintf(myversion, "%s.%s\n", PG_RELEASE, PG_VERSION);
 
-#ifndef __CYGWIN32__
-	if ((fd = open(full_path, O_RDONLY, 0)) == -1)
-#else
-	if ((fd = open(full_path, O_RDONLY | O_BINARY, 0)) == -1)
-#endif
+	if ((fd = open(full_path, O_RDONLY | PG_BINARY, 0)) == -1)
 	{
 		*reason_p = malloc(100 + strlen(full_path));
 		sprintf(*reason_p, "File '%s' does not exist or no read permission.", full_path);
@@ -125,11 +121,7 @@ SetPgVersion(const char *path, char **reason_p)
 
 	sprintf(version, "%s.%s\n", PG_RELEASE, PG_VERSION);
 
-#ifndef __CYGWIN32__
-	fd = open(full_path, O_WRONLY | O_CREAT | O_EXCL, 0666);
-#else
-	fd = open(full_path, O_WRONLY | O_CREAT | O_EXCL | O_BINARY, 0666);
-#endif
+	fd = open(full_path, O_WRONLY | O_CREAT | O_EXCL | PG_BINARY, 0666);
 	if (fd < 0)
 	{
 		*reason_p = malloc(100 + strlen(full_path));

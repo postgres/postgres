@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.144 2000/05/31 00:28:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.145 2000/06/02 15:57:22 momjian Exp $
  *
  * NOTES
  *
@@ -327,11 +327,7 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 
 		snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
 				 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
-#ifndef __CYGWIN32__
-		fp = AllocateFile(path, "r");
-#else
-		fp = AllocateFile(path, "rb");
-#endif
+		fp = AllocateFile(path, PG_BINARY_R);
 		if (fp == NULL)
 		{
 			fprintf(stderr, "%s does not find the database system.  "
@@ -433,7 +429,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	umask((mode_t) 0077);
 
-    ResetAllOptions();
+	ResetAllOptions();
 
 	if (!(hostName = getenv("PGHOST")))
 	{
@@ -445,10 +441,10 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = getpid();
 	DataDir = getenv("PGDATA"); /* default value */
 
-    /*
-     * First we must scan for a -D argument to get the data dir. Then
-     * read the config file. Finally, scan all the other arguments.
-     * (Command line switches override config file.)
+	/*
+	 * First we must scan for a -D argument to get the data dir. Then
+	 * read the config file. Finally, scan all the other arguments.
+	 * (Command line switches override config file.)
 	 *
 	 * Note: The two lists of options must be exactly the same, even
 	 * though perhaps the first one would only have to be "D:" with
@@ -457,15 +453,15 @@ PostmasterMain(int argc, char *argv[])
 	 * to the local world view) which will result in some switches
 	 * being associated with the wrong argument. Death and destruction
 	 * will occur.
-     */
+	 */
 	opterr = 1;
 	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
-    {
-        if (opt == 'D')
-            DataDir = optarg;
-    }
+	{
+		if (opt == 'D')
+			DataDir = optarg;
+	}
 
-    optind = 1; /* start over */
+	optind = 1; /* start over */
 	checkDataDir(DataDir, &DataDirOK);	/* issues error messages */
 	if (!DataDirOK)
 	{
@@ -473,7 +469,7 @@ PostmasterMain(int argc, char *argv[])
 		exit(2);
 	}
 
-    ProcessConfigFile(PGC_POSTMASTER);
+	ProcessConfigFile(PGC_POSTMASTER);
 
 	IgnoreSystemIndexes(false);
 	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
@@ -511,7 +507,7 @@ PostmasterMain(int argc, char *argv[])
 				}
 				break;
 			case 'D':
-                /* already done above */
+				/* already done above */
 				break;
 			case 'd':
 
@@ -521,9 +517,9 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				DebugLvl = atoi(optarg);
 				break;
-            case 'F':
-                enableFsync = false;
-                break;
+			case 'F':
+				enableFsync = false;
+				break;
 			case 'i':
 				NetServer = true;
 				break;
@@ -593,21 +589,21 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				SendStop = true;
 				break;
-            case '-':
-            {
-                /* A little 'long argument' simulation */
-                size_t equal_pos = strcspn(optarg, "=");
-                char *cp;
+			case '-':
+			{
+				/* A little 'long argument' simulation */
+				size_t equal_pos = strcspn(optarg, "=");
+				char *cp;
 
-                if (optarg[equal_pos] != '=')
-                    elog(ERROR, "--%s requires argument", optarg);
-                optarg[equal_pos] = '\0';
-                for(cp = optarg; *cp; cp++)
-                    if (*cp == '-')
-                        *cp = '_';
-                SetConfigOption(optarg, optarg + equal_pos + 1, PGC_POSTMASTER);
-                break;
-            }
+				if (optarg[equal_pos] != '=')
+					elog(ERROR, "--%s requires argument", optarg);
+				optarg[equal_pos] = '\0';
+				for(cp = optarg; *cp; cp++)
+					if (*cp == '-')
+						*cp = '_';
+				SetConfigOption(optarg, optarg + equal_pos + 1, PGC_POSTMASTER);
+				break;
+			}
 			default:
 				/* usage() never returns */
 				usage(progname);
@@ -839,11 +835,7 @@ pmdaemonize(char *extraoptions)
 		exit(1);
 	}
 #endif
-#ifndef __CYGWIN32__
-	i = open(NULL_DEV, O_RDWR);
-#else
-	i = open(NULL_DEV, O_RDWR | O_BINARY);
-#endif
+	i = open(NULL_DEV, O_RDWR | PG_BINARY);
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);

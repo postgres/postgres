@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.148 2000/05/28 20:34:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.149 2000/06/02 15:57:38 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -760,11 +760,7 @@ main(int argc, char **argv)
 		g_fout = stdout;
 	else
 	{
-#ifndef __CYGWIN32__
-		g_fout = fopen(filename, "w");
-#else
-		g_fout = fopen(filename, "wb");
-#endif
+		g_fout = fopen(filename, PG_BINARY_W);
 		if (g_fout == NULL)
 		{
 			fprintf(stderr,

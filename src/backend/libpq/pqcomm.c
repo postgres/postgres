@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.93 2000/05/31 00:28:18 petere Exp $
+ *	$Id: pqcomm.c,v 1.94 2000/06/02 15:57:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,11 +234,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 		 * can safely delete the file.
 		 */
 #ifdef HAVE_FCNTL_SETLK
-#ifndef __CYGWIN32__
-		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK, 0666)) >= 0)
-#else
-		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | O_BINARY, 0666)) >= 0)
-#endif
+		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | PG_BINARY, 0666)) >= 0)
 		{
 			struct flock lck;
 
@@ -287,11 +283,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 		 * lock_fd is left open to keep the lock.
 		 */
 #ifdef HAVE_FCNTL_SETLK
-#ifndef __CYGWIN32__
-		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK, 0666)) >= 0)
-#else
-		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | O_BINARY, 0666)) >= 0)
-#endif
+		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | PG_BINARY, 0666)) >= 0)
 		{
 			struct flock lck;
 

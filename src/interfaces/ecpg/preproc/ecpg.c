@@ -66,11 +66,7 @@ main(int argc, char *const argv[])
 		switch (c)
 		{
 			case 'o':
-#ifndef __CYGWIN32__
-				yyout = fopen(optarg, "w");
-#else
-				yyout = fopen(optarg, "wb");
-#endif
+				yyout = fopen(optarg, PG_BINARY_W);
 				if (yyout == NULL)
 					perror(optarg);
 				else
@@ -147,11 +143,7 @@ main(int argc, char *const argv[])
 				ptr2ext[1] = 'c';
 				ptr2ext[2] = '\0';
 
-#ifndef __CYGWIN32__
-				yyout = fopen(output_filename, "w");
-#else
-				yyout = fopen(output_filename, "wb");
-#endif
+				yyout = fopen(output_filename, PG_BINARY_W);
 				if (yyout == NULL)
 				{
 					perror(output_filename);
@@ -161,11 +153,7 @@ main(int argc, char *const argv[])
 				}
 			}
 
-#ifndef __CYGWIN32__
-			yyin = fopen(input_filename, "r");
-#else
-			yyin = fopen(input_filename, "rb");
-#endif
+			yyin = fopen(input_filename, PG_BINARY_R);
 			if (yyin == NULL)
 				perror(argv[fnr]);
 			else

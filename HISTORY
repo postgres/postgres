@@ -34,7 +34,8 @@ Copy pg_ident.conf.sample into /lib directory in install (Bruce)
 Add SJIS UDC (NEC selection IBM kanji) support (Eiji Tokuya)
 Fix too long syslog message (Tatsuo)
 Fix problem with quoted indexes that are too long (Tom)
-
+JDBC ResultSet.getTimestamp() fix (Gregory Krasnow & Floyd Marinescu)
+ecpg changes (Michael)
 
   ------------------------------------------------------------------------
                                                                Release 7.0

@@ -68,11 +68,7 @@ mylog(char * fmt, ...)
 
 		if (! LOGFP) {
 			generate_filename(MYLOGDIR,MYLOGFILE,filebuf);
-#ifndef __CYGWIN32__
-			LOGFP = fopen(filebuf, "w");
-#else
-			LOGFP = fopen(filebuf, "wb");
-#endif
+			LOGFP = fopen(filebuf, PG_BINARY_W);
 			globals.mylogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
@@ -100,11 +96,7 @@ qlog(char * fmt, ...)
 
 		if (! LOGFP) {
 			generate_filename(QLOGDIR,QLOGFILE,filebuf);
-#ifndef __CYGWIN32__
-			LOGFP = fopen(filebuf, "w");
-#else
-			LOGFP = fopen(filebuf, "wb");
-#endif
+			LOGFP = fopen(filebuf, PG_BINARY_W);
 			globals.qlogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
@@ -136,9 +128,9 @@ qlog(char * fmt, ...)
 #include <sql.h>
 #endif
 
- 
+
 /*	returns STRCPY_FAIL, STRCPY_TRUNCATED, or #bytes copied (not including null term) */
-int 
+int
 my_strcpy(char *dst, int dst_len, char *src, int src_len)
 {
 	if (dst_len <= 0)
@@ -146,7 +138,7 @@ my_strcpy(char *dst, int dst_len, char *src, int src_len)
 
 	if (src_len == SQL_NULL_DATA) {
 		dst[0] = '\0';
-		return STRCPY_NULL;	
+		return STRCPY_NULL;
 	}
 	else if (src_len == SQL_NTS)
 		src_len = strlen(src);
@@ -154,12 +146,12 @@ my_strcpy(char *dst, int dst_len, char *src, int src_len)
 	if (src_len <= 0)
 		return STRCPY_FAIL;
 
-	else {	
+	else {
 		if (src_len < dst_len) {
 			memcpy(dst, src, src_len);
 			dst[src_len] = '\0';
 		}
-		else { 
+		else {
 			memcpy(dst, src, dst_len-1);
 			dst[dst_len-1] = '\0';	/* truncated */
 			return STRCPY_TRUNCATED;
@@ -184,7 +176,7 @@ int i;
 		if (len == SQL_NULL_DATA) {
 			dst[0] = '\0';
 			return NULL;
-		}	
+		}
 		else if (len == SQL_NTS)
 			len = strlen(src) + 1;
 
@@ -208,7 +200,7 @@ make_string(char *s, int len, char *buf)
 int length;
 char *str;
 
-    if(s && (len > 0 || (len == SQL_NTS && strlen(s) > 0))) {
+	if(s && (len > 0 || (len == SQL_NTS && strlen(s) > 0))) {
 		length = (len > 0) ? len : strlen(s);
 
 		if (buf) {
@@ -216,11 +208,11 @@ char *str;
 			return buf;
 		}
 
-        str = malloc(length + 1);
+		str = malloc(length + 1);
 		if ( ! str)
 			return NULL;
 
-        strncpy_null(str, s, length+1);
+		strncpy_null(str, s, length+1);
 		return str;
 	}
 
@@ -235,7 +227,7 @@ char *
 my_strcat(char *buf, char *fmt, char *s, int len)
 {
 
-    if (s && (len > 0 || (len == SQL_NTS && strlen(s) > 0))) {
+	if (s && (len > 0 || (len == SQL_NTS && strlen(s) > 0))) {
 		int length = (len > 0) ? len : strlen(s);
 
 		int pos = strlen(buf);
@@ -248,14 +240,14 @@ my_strcat(char *buf, char *fmt, char *s, int len)
 
 void remove_newlines(char *string)
 {
-    unsigned int i;
+	unsigned int i;
 
-    for(i=0; i < strlen(string); i++) {
-        if((string[i] == '\n') ||
-           (string[i] == '\r')) {
-            string[i] = ' ';
-        }
-    }
+	for(i=0; i < strlen(string); i++) {
+		if((string[i] == '\n') ||
+		   (string[i] == '\r')) {
+			string[i] = ' ';
+		}
+	}
 }
 
 char *

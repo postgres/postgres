@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.109 2000/05/30 04:25:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.110 2000/06/02 15:57:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,11 +320,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		}
 		else
 		{
-#ifndef __CYGWIN32__
-			fp = AllocateFile(filename, "r");
-#else
-			fp = AllocateFile(filename, "rb");
-#endif
+			fp = AllocateFile(filename, PG_BINARY_R);
 			if (fp == NULL)
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
@@ -355,12 +351,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 					 " COPY command.");
 
 			oumask = umask((mode_t) 022);
-
-#ifndef __CYGWIN32__
-			fp = AllocateFile(filename, "w");
-#else
-			fp = AllocateFile(filename, "wb");
-#endif
+			fp = AllocateFile(filename, PG_BINARY_W);
 			umask(oumask);
 
 			if (fp == NULL)

@@ -1,19 +1,28 @@
 From Inoue@tpf.co.jp Tue Jan 18 19:08:30 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA10148
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 20:08:27 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id KAA02790; Wed, 19 Jan 2000 10:08:02 +0900
 From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 To: "Bruce Momjian" <pgman@candle.pha.pa.us>
 Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
 Subject: RE: [HACKERS] Index recreation in vacuum
 Date: Wed, 19 Jan 2000 10:13:40 +0900
 Message-ID: <000201bf621a$6b9baf20$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
 X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
 X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 Importance: Normal
 In-Reply-To: <200001181821.NAA02988@candle.pha.pa.us>
-Content-Length:  1479
+Status: ORr
 
-[ Charset ISO-8859-1 unsupported, converting... ]
 > -----Original Message-----
 > From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
 > 
@@ -68,12 +77,35 @@ Hiroshi Inoue
 Inoue@tpf.co.jp
 
 From owner-pgsql-hackers@hub.org Tue Jan 18 19:15:27 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA10454
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 20:15:26 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id UAA42280;
+	Tue, 18 Jan 2000 20:10:35 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 18 Jan 2000 20:10:30 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id UAA42081
+	for pgsql-hackers-outgoing; Tue, 18 Jan 2000 20:09:31 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA41943
+	for <pgsql-hackers@postgreSQL.org>; Tue, 18 Jan 2000 20:08:39 -0500 (EST)
+	(envelope-from Inoue@tpf.co.jp)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id KAA02790; Wed, 19 Jan 2000 10:08:02 +0900
 From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 To: "Bruce Momjian" <pgman@candle.pha.pa.us>
 Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
 Subject: RE: [HACKERS] Index recreation in vacuum
 Date: Wed, 19 Jan 2000 10:13:40 +0900
 Message-ID: <000201bf621a$6b9baf20$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
 X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
@@ -81,9 +113,8 @@ X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 Importance: Normal
 In-Reply-To: <200001181821.NAA02988@candle.pha.pa.us>
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:  1493
+Status: OR
 
-[ Charset ISO-8859-1 unsupported, converting... ]
 > -----Original Message-----
 > From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
 > 
@@ -140,6 +171,25 @@ Inoue@tpf.co.jp
 ************
 
 From owner-pgsql-hackers@hub.org Tue Jan 18 19:57:21 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA11764
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 20:57:19 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id UAA50653;
+	Tue, 18 Jan 2000 20:52:38 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 18 Jan 2000 20:52:30 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id UAA50513
+	for pgsql-hackers-outgoing; Tue, 18 Jan 2000 20:51:32 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (pgman@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA50462
+	for <pgsql-hackers@postgreSQL.org>; Tue, 18 Jan 2000 20:51:06 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id UAA11421;
+	Tue, 18 Jan 2000 20:50:50 -0500 (EST)
 From: Bruce Momjian <pgman@candle.pha.pa.us>
 Message-Id: <200001190150.UAA11421@candle.pha.pa.us>
 Subject: Re: [HACKERS] Index recreation in vacuum
@@ -149,8 +199,11 @@ To: Hiroshi Inoue <Inoue@tpf.co.jp>
 Date: Tue, 18 Jan 2000 20:50:50 -0500 (EST)
 CC: pgsql-hackers <pgsql-hackers@postgreSQL.org>
 X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:  2329
+Status: ORr
 
 > > > Add a new option to force index recreation in vacuum
 > > > and if index recreation is specified.
@@ -208,6 +261,9 @@ old copy of the index.
 ************
 
 From pgman Tue Jan 18 20:04:11 2000
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id VAA11990;
+	Tue, 18 Jan 2000 21:04:11 -0500 (EST)
 From: Bruce Momjian <pgman>
 Message-Id: <200001190204.VAA11990@candle.pha.pa.us>
 Subject: Re: [HACKERS] Index recreation in vacuum
@@ -218,7 +274,10 @@ Date: Tue, 18 Jan 2000 21:04:11 -0500 (EST)
 CC: Hiroshi Inoue <Inoue@tpf.co.jp>,
         pgsql-hackers <pgsql-hackers@postgreSQL.org>
 X-Mailer: ELM [version 2.4ME+ PL66 (25)]
-Content-Length:  2434
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Status: OR
 
 > > I don't know how people estimate this disadvantage.
 > 
@@ -270,21 +329,30 @@ old index around, but the index is invalid anyway, right?
   +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
 
 From Inoue@tpf.co.jp Tue Jan 18 20:18:48 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA12437
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 21:18:46 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id LAA02845; Wed, 19 Jan 2000 11:18:18 +0900
 From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 To: "Bruce Momjian" <pgman@candle.pha.pa.us>
 Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
 Subject: RE: [HACKERS] Index recreation in vacuum
 Date: Wed, 19 Jan 2000 11:23:55 +0900
 Message-ID: <000801bf6224$3bfdd9a0$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
 X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
 X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 Importance: Normal
 In-Reply-To: <200001190204.VAA11990@candle.pha.pa.us>
-Content-Length:  2308
+Status: ORr
 
-[ Charset ISO-8859-1 unsupported, converting... ]
 > -----Original Message-----
 > From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
 >
@@ -337,6 +405,25 @@ Inoue@tpf.co.jp
 
 
 From owner-pgsql-hackers@hub.org Tue Jan 18 20:53:49 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA13285
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 21:53:47 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id VAA65183;
+	Tue, 18 Jan 2000 21:47:47 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 18 Jan 2000 21:47:33 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id VAA65091
+	for pgsql-hackers-outgoing; Tue, 18 Jan 2000 21:46:33 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (pgman@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id VAA65034
+	for <pgsql-hackers@postgreSQL.org>; Tue, 18 Jan 2000 21:46:12 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id VAA13040;
+	Tue, 18 Jan 2000 21:45:27 -0500 (EST)
 From: Bruce Momjian <pgman@candle.pha.pa.us>
 Message-Id: <200001190245.VAA13040@candle.pha.pa.us>
 Subject: Re: [HACKERS] Index recreation in vacuum
@@ -346,8 +433,11 @@ To: Hiroshi Inoue <Inoue@tpf.co.jp>
 Date: Tue, 18 Jan 2000 21:45:27 -0500 (EST)
 CC: pgsql-hackers <pgsql-hackers@postgreSQL.org>
 X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:  2480
+Status: OR
 
 > > > In fact, for REINDEX cases where you don't have a lock on the entire
 > > > table as you do in vacuum, you could reindex the table with a simple
@@ -398,6 +488,25 @@ of using 2x the disk space.  Seems like a big win.
 ************
 
 From owner-pgsql-hackers@hub.org Tue Jan 18 21:15:24 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA14115
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 22:15:23 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id WAA72950;
+	Tue, 18 Jan 2000 22:10:40 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 18 Jan 2000 22:10:32 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id WAA72644
+	for pgsql-hackers-outgoing; Tue, 18 Jan 2000 22:09:36 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (pgman@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA72504
+	for <pgsql-hackers@postgreSQL.org>; Tue, 18 Jan 2000 22:08:40 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id WAA13965;
+	Tue, 18 Jan 2000 22:08:25 -0500 (EST)
 From: Bruce Momjian <pgman@candle.pha.pa.us>
 Message-Id: <200001190308.WAA13965@candle.pha.pa.us>
 Subject: Re: [HACKERS] Index recreation in vacuum
@@ -407,27 +516,72 @@ To: Hiroshi Inoue <Inoue@tpf.co.jp>
 Date: Tue, 18 Jan 2000 22:08:25 -0500 (EST)
 CC: pgsql-hackers <pgsql-hackers@postgreSQL.org>
 X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UNKNOWN-8BIT
+Content-Transfer-Encoding: 8bit
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:    50
+Status: OR
 
-[ Charset UNKNOWN-8BIT unsupported, skipping... ]
+> I heard from someone that old vacuum had been like so.
+> Probably 2x disk space for big tables was a big disadvantage.
+
+That's interesting.
+
+> 
+> In addition,rename(),unlink(),mv aren't preferable for transaction
+> control as far as I see. We couldn't avoid inconsistency using
+> those OS functions.
+
+I disagree.  Vacuum can't be rolled back anyway in the sense you can
+bring back expire tuples, though I have no idea why you would want to.
+
+You have an exclusive lock on the table.  Putting new heap/indexes in
+place that match and have no expired tuples seems like it can not fail
+in any situation.
+
+Of course, the buffers of the old table have to be marked as invalid,
+but with an exclusive lock, that is not a problem.  I am sure we do that
+anyway in vacuum.
+
+> We have to wait the change of relation file naming if copying
+> vacuum is needed.
+> Under the spec we need not rename(),mv etc.
+
+Sorry, I don't agree, yet...
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+************
 
 From Inoue@tpf.co.jp Tue Jan 18 21:05:23 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA13858
+	for <pgman@candle.pha.pa.us>; Tue, 18 Jan 2000 22:05:21 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id MAA02870; Wed, 19 Jan 2000 12:04:55 +0900
 From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 To: "Bruce Momjian" <pgman@candle.pha.pa.us>
 Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
 Subject: RE: [HACKERS] Index recreation in vacuum
 Date: Wed, 19 Jan 2000 12:10:32 +0900
 Message-ID: <000f01bf622a$bf423940$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
 X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
 X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 Importance: Normal
 In-Reply-To: <200001190245.VAA13040@candle.pha.pa.us>
-Content-Length:  1509
+Status: ORr
 
-[ Charset ISO-8859-1 unsupported, converting... ]
 > -----Original Message-----
 > From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
 > > >
@@ -471,20 +625,28 @@ Inoue@tpf.co.jp
 
 
 From dms@wplus.net Wed Jan 19 15:30:40 2000
+Received: from relay.wplus.net (relay.wplus.net [195.131.52.179])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA25919
+	for <pgman@candle.pha.pa.us>; Wed, 19 Jan 2000 16:30:38 -0500 (EST)
 X-Real-To: pgman@candle.pha.pa.us
+Received: from wplus.net (ppdms.dialup.wplus.net [195.131.52.71])
+	by relay.wplus.net (8.9.1/8.9.1/wplus.2) with ESMTP id AAA64218;
+	Thu, 20 Jan 2000 00:26:37 +0300 (MSK)
 Message-ID: <38862C9D.C2151E4E@wplus.net>
 Date: Thu, 20 Jan 2000 00:29:01 +0300
 From: Dmitry Samersoff <dms@wplus.net>
 X-Mailer: Mozilla 4.61 [en] (WinNT; I)
 X-Accept-Language: ru,en
+MIME-Version: 1.0
 To: Hiroshi Inoue <Inoue@tpf.co.jp>
 CC: Bruce Momjian <pgman@candle.pha.pa.us>,
         pgsql-hackers <pgsql-hackers@postgreSQL.org>
 Subject: Re: [HACKERS] Index recreation in vacuum
 References: <000f01bf622a$bf423940$2801007e@tpf.co.jp>
-Content-Length:  1204
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: 7bit
+Status: ORr
 
-[ Charset KOI8-R unsupported, converting... ]
 Hiroshi Inoue wrote:
 > > > Yes,I believe so.  It's necessary to keep consistency between heap
 > > > table and indexes even in case of abort/crash.
@@ -522,20 +684,28 @@ dms@wplus.net http://devnull.wplus.net
 * there will come soft rains
 
 From dms@wplus.net Wed Jan 19 15:42:49 2000
+Received: from relay.wplus.net (relay.wplus.net [195.131.52.179])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA26645
+	for <pgman@candle.pha.pa.us>; Wed, 19 Jan 2000 16:42:47 -0500 (EST)
 X-Real-To: pgman@candle.pha.pa.us
+Received: from wplus.net (ppdms.dialup.wplus.net [195.131.52.71])
+	by relay.wplus.net (8.9.1/8.9.1/wplus.2) with ESMTP id AAA65264;
+	Thu, 20 Jan 2000 00:39:02 +0300 (MSK)
 Message-ID: <38862F86.20328BD3@wplus.net>
 Date: Thu, 20 Jan 2000 00:41:26 +0300
 From: Dmitry Samersoff <dms@wplus.net>
 X-Mailer: Mozilla 4.61 [en] (WinNT; I)
 X-Accept-Language: ru,en
+MIME-Version: 1.0
 To: Bruce Momjian <pgman@candle.pha.pa.us>
 CC: Hiroshi Inoue <Inoue@tpf.co.jp>,
         pgsql-hackers <pgsql-hackers@postgreSQL.org>
 Subject: Re: [HACKERS] Index recreation in vacuum
 References: <200001192132.QAA26048@candle.pha.pa.us>
-Content-Length:   431
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: 7bit
+Status: ORr
 
-[ Charset KOI8-R unsupported, converting... ]
 Bruce Momjian wrote:
 > 
 > We need two things:
@@ -554,20 +724,98 @@ Dmitry Samersoff, DM\S
 dms@wplus.net http://devnull.wplus.net
 * there will come soft rains
 
+From owner-pgsql-hackers@hub.org Thu Jan 20 23:51:34 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13891
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 00:51:31 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id AAA91784;
+	Fri, 21 Jan 2000 00:47:07 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 21 Jan 2000 00:45:38 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id AAA91495
+	for pgsql-hackers-outgoing; Fri, 21 Jan 2000 00:44:40 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (pgman@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id AAA91378
+	for <pgsql-hackers@postgreSQL.org>; Fri, 21 Jan 2000 00:44:04 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id AAA13592;
+	Fri, 21 Jan 2000 00:43:49 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200001210543.AAA13592@candle.pha.pa.us>
+Subject: [HACKERS] vacuum timings
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Fri, 21 Jan 2000 00:43:49 -0500 (EST)
+CC: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+I loaded 10,000,000 rows into CREATE TABLE test (x INTEGER);  Table is
+400MB and index is 160MB.
+
+With index on the single in4 column, I got:
+	 78 seconds for a vacuum
+	121 seconds for vacuum after deleting a single row
+	662 seconds for vacuum after deleting the entire table
+
+With no index, I got:
+	 43 seconds for a vacuum
+	 43 seconds for vacuum after deleting a single row
+	 43 seconds for vacuum after deleting the entire table
+
+I find this quite interesting.
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+************
+
 From owner-pgsql-hackers@hub.org Fri Jan 21 00:34:56 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA15559
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 01:34:55 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id BAA06108;
+	Fri, 21 Jan 2000 01:32:23 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 21 Jan 2000 01:30:38 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id BAA03704
+	for pgsql-hackers-outgoing; Fri, 21 Jan 2000 01:27:53 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sunpine.krs.ru (SunPine.krs.ru [195.161.16.37])
+	by hub.org (8.9.3/8.9.3) with ESMTP id BAA01710
+	for <pgsql-hackers@postgreSQL.org>; Fri, 21 Jan 2000 01:26:44 -0500 (EST)
+	(envelope-from vadim@krs.ru)
+Received: from krs.ru (dune.krs.ru [195.161.16.38])
+	by sunpine.krs.ru (8.8.8/8.8.8) with ESMTP id NAA01685;
+	Fri, 21 Jan 2000 13:26:33 +0700 (KRS)
 Message-ID: <3887FC19.80305217@krs.ru>
 Date: Fri, 21 Jan 2000 13:26:33 +0700
 From: Vadim Mikheev <vadim@krs.ru>
 Organization: OJSC Rostelecom (Krasnoyarsk)
 X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
 X-Accept-Language: ru, en
+MIME-Version: 1.0
 To: Bruce Momjian <pgman@candle.pha.pa.us>
 CC: Tom Lane <tgl@sss.pgh.pa.us>,
         PostgreSQL-development <pgsql-hackers@postgreSQL.org>
 Subject: Re: [HACKERS] vacuum timings
 References: <200001210543.AAA13592@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:   557
+Status: OR
 
 Bruce Momjian wrote:
 > 
@@ -591,6 +839,12 @@ Vadim
 ************
 
 From vadim@krs.ru Fri Jan 21 00:26:33 2000
+Received: from sunpine.krs.ru (SunPine.krs.ru [195.161.16.37])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA15239
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 01:26:31 -0500 (EST)
+Received: from krs.ru (dune.krs.ru [195.161.16.38])
+	by sunpine.krs.ru (8.8.8/8.8.8) with ESMTP id NAA01685;
+	Fri, 21 Jan 2000 13:26:33 +0700 (KRS)
 Sender: root@sunpine.krs.ru
 Message-ID: <3887FC19.80305217@krs.ru>
 Date: Fri, 21 Jan 2000 13:26:33 +0700
@@ -598,12 +852,15 @@ From: Vadim Mikheev <vadim@krs.ru>
 Organization: OJSC Rostelecom (Krasnoyarsk)
 X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
 X-Accept-Language: ru, en
+MIME-Version: 1.0
 To: Bruce Momjian <pgman@candle.pha.pa.us>
 CC: Tom Lane <tgl@sss.pgh.pa.us>,
         PostgreSQL-development <pgsql-hackers@postgreSQL.org>
 Subject: Re: [HACKERS] vacuum timings
 References: <200001210543.AAA13592@candle.pha.pa.us>
-Content-Length:   543
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: ORr
 
 Bruce Momjian wrote:
 > 
@@ -625,6 +882,12 @@ Wi/wo -F ?
 Vadim
 
 From Inoue@tpf.co.jp Fri Jan 21 00:40:35 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA15684
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 01:40:33 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id PAA04316; Fri, 21 Jan 2000 15:40:35 +0900
 From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 To: "Bruce Momjian" <pgman@candle.pha.pa.us>
 Cc: "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>,
@@ -632,15 +895,18 @@ Cc: "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>,
 Subject: RE: [HACKERS] vacuum timings
 Date: Fri, 21 Jan 2000 15:46:15 +0900
 Message-ID: <000201bf63db$36cdae20$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
 X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
 Importance: Normal
 X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 In-Reply-To: <200001210543.AAA13592@candle.pha.pa.us>
-Content-Length:   737
+Status: OR
 
-[ Charset ISO-8859-1 unsupported, converting... ]
 > -----Original Message-----
 > From: owner-pgsql-hackers@postgreSQL.org
 > [mailto:owner-pgsql-hackers@postgreSQL.org]On Behalf Of Bruce Momjian
@@ -669,6 +935,25 @@ Hiroshi Inoue
 Inoue@tpf.co.jp
 
 From owner-pgsql-hackers@hub.org Fri Jan 21 12:00:49 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA13329
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 13:00:47 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id MAA96106;
+	Fri, 21 Jan 2000 12:55:34 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 21 Jan 2000 12:53:53 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id MAA95775
+	for pgsql-hackers-outgoing; Fri, 21 Jan 2000 12:52:54 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (root@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id MAA95720
+	for <pgsql-hackers@postgreSQL.org>; Fri, 21 Jan 2000 12:52:39 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id MAA12106;
+	Fri, 21 Jan 2000 12:51:53 -0500 (EST)
 From: Bruce Momjian <pgman@candle.pha.pa.us>
 Message-Id: <200001211751.MAA12106@candle.pha.pa.us>
 Subject: [HACKERS] Re: vacuum timings
@@ -678,8 +963,11 @@ To: Tom Lane <tgl@sss.pgh.pa.us>
 Date: Fri, 21 Jan 2000 12:51:53 -0500 (EST)
 CC: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
 X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:  1437
+Status: OR
 
 > Bruce Momjian <pgman@candle.pha.pa.us> writes:
 > > I loaded 10,000,000 rows into CREATE TABLE test (x INTEGER);  Table is
@@ -734,6 +1022,13 @@ What other conclusions can be made?
 ************
 
 From scrappy@hub.org Fri Jan 21 12:45:38 2000
+Received: from thelab.hub.org (nat200.60.mpoweredpc.net [142.177.200.60])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA14380
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 13:45:29 -0500 (EST)
+Received: from localhost (scrappy@localhost)
+	by thelab.hub.org (8.9.3/8.9.1) with ESMTP id OAA68289;
+	Fri, 21 Jan 2000 14:45:35 -0400 (AST)
+	(envelope-from scrappy@hub.org)
 X-Authentication-Warning: thelab.hub.org: scrappy owned process doing -bs
 Date: Fri, 21 Jan 2000 14:45:34 -0400 (AST)
 From: The Hermit Hacker <scrappy@hub.org>
@@ -743,7 +1038,9 @@ cc: Tom Lane <tgl@sss.pgh.pa.us>,
 Subject: Re: [HACKERS] Re: vacuum timings
 In-Reply-To: <200001211751.MAA12106@candle.pha.pa.us>
 Message-ID: <Pine.BSF.4.21.0001211443480.23487-100000@thelab.hub.org>
-Content-Length:   787
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
 
 On Fri, 21 Jan 2000, Bruce Momjian wrote:
 
@@ -778,6 +1075,12 @@ primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org
 
 
 From tgl@sss.pgh.pa.us Fri Jan 21 13:06:35 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA14618
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 14:06:33 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id OAA16501;
+	Fri, 21 Jan 2000 14:06:31 -0500 (EST)
 To: Bruce Momjian <pgman@candle.pha.pa.us>
 cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
 Subject: Re: vacuum timings 
@@ -788,7 +1091,7 @@ Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
 Date: Fri, 21 Jan 2000 14:06:31 -0500
 Message-ID: <16498.948481591@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Content-Length:   391
+Status: OR
 
 Bruce Momjian <pgman@candle.pha.pa.us> writes:
 > Conclusions:
@@ -805,20 +1108,28 @@ fraction of the rows, rather than just the all or none cases.
 			regards, tom lane
 
 From dms@wplus.net Fri Jan 21 13:51:27 2000
+Received: from relay.wplus.net (relay.wplus.net [195.131.52.179])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA15623
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 14:51:24 -0500 (EST)
 X-Real-To: pgman@candle.pha.pa.us
+Received: from wplus.net (ppdms.dialup.wplus.net [195.131.52.71])
+	by relay.wplus.net (8.9.1/8.9.1/wplus.2) with ESMTP id WAA89451;
+	Fri, 21 Jan 2000 22:46:19 +0300 (MSK)
 Message-ID: <3888B822.28F79A1F@wplus.net>
 Date: Fri, 21 Jan 2000 22:48:50 +0300
 From: Dmitry Samersoff <dms@wplus.net>
 X-Mailer: Mozilla 4.7 [en] (WinNT; I)
 X-Accept-Language: ru,en
+MIME-Version: 1.0
 To: Tom Lane <tgl@sss.pgh.pa.us>
 CC: Bruce Momjian <pgman@candle.pha.pa.us>,
         PostgreSQL-development <pgsql-hackers@postgresql.org>
 Subject: Re: [HACKERS] Re: vacuum timings
 References: <200001211751.MAA12106@candle.pha.pa.us> <16498.948481591@sss.pgh.pa.us>
-Content-Length:   585
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: 7bit
+Status: ORr
 
-[ Charset KOI8-R unsupported, converting... ]
 Tom Lane wrote:
 > 
 > Bruce Momjian <pgman@candle.pha.pa.us> writes:
@@ -844,6 +1155,25 @@ dms@wplus.net http://devnull.wplus.net
 * there will come soft rains
 
 From owner-pgsql-hackers@hub.org Fri Jan 21 14:04:08 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA16140
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 15:04:06 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id OAA34808;
+	Fri, 21 Jan 2000 14:59:30 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 21 Jan 2000 14:57:48 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id OAA34320
+	for pgsql-hackers-outgoing; Fri, 21 Jan 2000 14:56:50 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from candle.pha.pa.us (pgman@s5-03.ppp.op.net [209.152.195.67])
+	by hub.org (8.9.3/8.9.3) with ESMTP id OAA34255
+	for <pgsql-hackers@postgresql.org>; Fri, 21 Jan 2000 14:56:18 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id OAA15772;
+	Fri, 21 Jan 2000 14:54:22 -0500 (EST)
 From: Bruce Momjian <pgman@candle.pha.pa.us>
 Message-Id: <200001211954.OAA15772@candle.pha.pa.us>
 Subject: Re: [HACKERS] Re: vacuum timings
@@ -854,8 +1184,11 @@ Date: Fri, 21 Jan 2000 14:54:21 -0500 (EST)
 CC: Tom Lane <tgl@sss.pgh.pa.us>,
         PostgreSQL-development <pgsql-hackers@postgreSQL.org>
 X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: owner-pgsql-hackers@postgreSQL.org
-Content-Length:  1093
+Status: OR
 
 [Charset koi8-r unsupported, filtering to ASCII...]
 > Tom Lane wrote:
@@ -894,6 +1227,13 @@ toying with:
 ************
 
 From scrappy@hub.org Fri Jan 21 14:12:16 2000
+Received: from thelab.hub.org (nat200.60.mpoweredpc.net [142.177.200.60])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA16521
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 15:12:13 -0500 (EST)
+Received: from localhost (scrappy@localhost)
+	by thelab.hub.org (8.9.3/8.9.1) with ESMTP id QAA69039;
+	Fri, 21 Jan 2000 16:12:25 -0400 (AST)
+	(envelope-from scrappy@hub.org)
 X-Authentication-Warning: thelab.hub.org: scrappy owned process doing -bs
 Date: Fri, 21 Jan 2000 16:12:25 -0400 (AST)
 From: The Hermit Hacker <scrappy@hub.org>
@@ -903,7 +1243,9 @@ cc: Dmitry Samersoff <dms@wplus.net>, Tom Lane <tgl@sss.pgh.pa.us>,
 Subject: Re: [HACKERS] Re: vacuum timings
 In-Reply-To: <200001211954.OAA15772@candle.pha.pa.us>
 Message-ID: <Pine.BSF.4.21.0001211607080.23487-100000@thelab.hub.org>
-Content-Length:  2345
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
 
 On Fri, 21 Jan 2000, Bruce Momjian wrote:
 
@@ -965,6 +1307,12 @@ primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org
 
 
 From tgl@sss.pgh.pa.us Fri Jan 21 16:02:07 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA20290
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 17:02:06 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id RAA09697;
+	Fri, 21 Jan 2000 17:02:06 -0500 (EST)
 To: The Hermit Hacker <scrappy@hub.org>
 cc: Bruce Momjian <pgman@candle.pha.pa.us>,
         PostgreSQL-development <pgsql-hackers@postgreSQL.org>
@@ -976,7 +1324,7 @@ Comments: In-reply-to The Hermit Hacker <scrappy@hub.org>
 Date: Fri, 21 Jan 2000 17:02:06 -0500
 Message-ID: <9694.948492126@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Content-Length:  1274
+Status: OR
 
 The Hermit Hacker <scrappy@hub.org> writes:
 >> lock table for less duration, or read lock
@@ -1006,6 +1354,12 @@ recipe for deadlocks.  Not sure if this can be solved.
 			regards, tom lane
 
 From tgl@sss.pgh.pa.us Fri Jan 21 22:50:34 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA01657
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 23:50:28 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id XAA19681;
+	Fri, 21 Jan 2000 23:50:13 -0500 (EST)
 To: Bruce Momjian <pgman@candle.pha.pa.us>
 cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
 Subject: Re: vacuum timings 
@@ -1016,7 +1370,7 @@ Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
 Date: Fri, 21 Jan 2000 23:50:13 -0500
 Message-ID: <19678.948516613@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Content-Length:  1302
+Status: ORr
 
 Bruce Momjian <pgman@candle.pha.pa.us> writes:
 > Conclusions:
@@ -1046,12 +1400,36 @@ into...
 			regards, tom lane
 
 From owner-pgsql-hackers@hub.org Sat Jan 22 02:31:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA06743
+	for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:31:02 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id DAA07529 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:25:13 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id DAA31900;
+	Sat, 22 Jan 2000 03:19:53 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sat, 22 Jan 2000 03:17:56 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id DAA31715
+	for pgsql-hackers-outgoing; Sat, 22 Jan 2000 03:16:58 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.9.3/8.9.3) with ESMTP id DAA31647
+	for <pgsql-hackers@postgresql.org>; Sat, 22 Jan 2000 03:16:26 -0500 (EST)
+	(envelope-from Inoue@tpf.co.jp)
+Received: from mcadnote1 (ppm114.noc.fukui.nsk.ne.jp [210.161.188.33])
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id RAA04754; Sat, 22 Jan 2000 17:14:43 +0900
 From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 To: "Tom Lane" <tgl@sss.pgh.pa.us>, "Bruce Momjian" <pgman@candle.pha.pa.us>
 Cc: "PostgreSQL-development" <pgsql-hackers@postgresql.org>
 Subject: RE: [HACKERS] Re: vacuum timings 
 Date: Sat, 22 Jan 2000 17:15:37 +0900
 Message-ID: <NDBBIJLOILGIKBGDINDFIEEACCAA.Inoue@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-2022-jp"
+Content-Transfer-Encoding: 7bit
 X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
 X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
@@ -1059,11 +1437,48 @@ X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 In-Reply-To: <16498.948481591@sss.pgh.pa.us>
 Importance: Normal
 Sender: owner-pgsql-hackers@postgresql.org
-Content-Length:    49
+Status: OR
 
-[ Charset iso-2022-jp unsupported, skipping... ]
+> -----Original Message-----
+> From: owner-pgsql-hackers@postgresql.org
+> [mailto:owner-pgsql-hackers@postgresql.org]On Behalf Of Tom Lane
+> 
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > Conclusions:
+> > 	o  indexes never get smaller
+> 
+> Which we knew...
+> 
+> > 	o  drop/recreate index is slower than vacuum of indexes
+> 
+> Quite a few people have reported finding the opposite in practice.
+> You should probably try vacuuming after deleting or updating some
+> fraction of the rows, rather than just the all or none cases.
+>
+
+Vacuum after delelting all rows isn't a worst case.
+There's no moving in that case and vacuum doesn't need to call
+index_insert() corresponding to the moving of heap tuples.
+
+Vacuum after deleting half of rows may be one of the worst case.
+In this case,index_delete() is called as many times as 'delete all'
+case and expensive index_insert() is called for moved_in tuples.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp 
+
+************
 
 From tgl@sss.pgh.pa.us Sat Jan 22 10:31:02 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA20882
+	for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:31:00 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id LAA26612 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:12:44 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA20569;
+	Sat, 22 Jan 2000 11:11:26 -0500 (EST)
 To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
 cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
         "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>
@@ -1075,7 +1490,7 @@ Comments: In-reply-to "Hiroshi Inoue" <Inoue@tpf.co.jp>
 Date: Sat, 22 Jan 2000 11:11:25 -0500
 Message-ID: <20566.948557485@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Content-Length:   186
+Status: OR
 
 "Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
 > Vacuum after deleting half of rows may be one of the worst case.

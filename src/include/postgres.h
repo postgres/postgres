@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.39 2000/05/28 17:56:12 tgl Exp $
+ * $Id: postgres.h,v 1.40 2000/06/02 15:57:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,6 @@ typedef uint32 CommandId;
  */
 #ifdef CYR_RECODE
 extern void SetCharSet();
-
 #endif	 /* CYR_RECODE */
 
 #endif	 /* POSTGRES_H */

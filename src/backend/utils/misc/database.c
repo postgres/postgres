@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.37 2000/04/12 17:16:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.38 2000/06/02 15:57:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,11 +146,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 	dbfname = (char *) palloc(strlen(DataDir) + strlen(DatabaseRelationName) + 2);
 	sprintf(dbfname, "%s%c%s", DataDir, SEP_CHAR, DatabaseRelationName);
 
-#ifndef __CYGWIN32__
-	if ((dbfd = open(dbfname, O_RDONLY, 0)) < 0)
-#else
-	if ((dbfd = open(dbfname, O_RDONLY | O_BINARY, 0)) < 0)
-#endif
+	if ((dbfd = open(dbfname, O_RDONLY | PG_BINARY, 0)) < 0)
 		elog(FATAL, "cannot open %s: %s", dbfname, strerror(errno));
 
 	pfree(dbfname);

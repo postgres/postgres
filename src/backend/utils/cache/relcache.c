@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.98 2000/05/30 00:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.99 2000/06/02 15:57:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2122,11 +2122,7 @@ init_irels(void)
 	int			i;
 	int			relno;
 
-#ifndef __CYGWIN32__
-	if ((fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_RDONLY, 0600)) < 0)
-#else
-	if ((fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_RDONLY | O_BINARY, 0600)) < 0)
-#endif
+	if ((fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_RDONLY | PG_BINARY, 0600)) < 0)
 	{
 		write_irels();
 		return;
@@ -2292,11 +2288,7 @@ write_irels(void)
 	snprintf(finalfilename, sizeof(finalfilename), "%s%c%s",
 			 DatabasePath, SEP_CHAR, RELCACHE_INIT_FILENAME);
 
-#ifndef __CYGWIN32__
-	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-#else
-	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
-#endif
+	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC | PG_BINARY, 0600);
 	if (fd < 0)
 		elog(FATAL, "cannot create init file %s", tempfilename);
 

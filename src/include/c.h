@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.70 2000/05/28 17:56:09 tgl Exp $
+ * $Id: c.h,v 1.71 2000/06/02 15:57:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/fcntl.h>
 #ifdef STDC_HEADERS
 #include <stddef.h>
 #include <stdarg.h>
@@ -894,6 +895,16 @@ extern char *vararg_format(const char *fmt,...);
  *		changes to c.h (and everyone recompiling their whole system).
  * ----------------------------------------------------------------
  */
+
+#ifndef __CYGWIN32__
+#define	PG_BINARY	0
+#define	PG_BINARY_R	"rb"
+#define	PG_BINARY_W	"wb"
+#else
+#define PG_BINARY	O_BINARY
+#define	PG_BINARY_R	"r"
+#define	PG_BINARY_W	"w"
+#endif
 
 #ifdef FIXADE
 #if defined(hpux)

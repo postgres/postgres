@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.58 2000/06/02 03:58:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.59 2000/06/02 15:57:24 momjian Exp $
  *
  * NOTES:
  *
@@ -701,14 +701,8 @@ OpenTemporaryFile(void)
 			 "pg_sorttemp%d.%ld", MyProcPid, tempFileCounter++);
 
 	/* Open the file */
-#ifndef __CYGWIN32__
 	file = FileNameOpenFile(tempfilename,
-							O_RDWR | O_CREAT | O_TRUNC, 0600);
-#else
-	file = FileNameOpenFile(tempfilename,
-							O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0600);
-#endif
-
+							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY, 0600);
 	if (file <= 0)
 		elog(ERROR, "Failed to create temporary file %s", tempfilename);
 

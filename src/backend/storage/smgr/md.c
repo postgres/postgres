@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.69 2000/06/02 03:58:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.70 2000/06/02 15:57:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,11 +131,7 @@ mdcreate(Relation reln)
 
 	Assert(reln->rd_unlinked && reln->rd_fd < 0);
 	path = relpath(RelationGetPhysicalRelationName(reln));
-#ifndef __CYGWIN32__
-	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
-#else
-	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
-#endif
+	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 
 	/*
 	 * During bootstrap processing, we skip that check, because pg_time,
@@ -155,11 +151,7 @@ mdcreate(Relation reln)
 			reln->rd_rel->relkind == RELKIND_UNCATALOGED)
 			return -1;
 
-#ifndef __CYGWIN32__
-		fd = FileNameOpenFile(path, O_RDWR, 0600);
-#else
-		fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
-#endif
+		fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 		if (fd < 0)
 			return -1;
 		if (!IsBootstrapProcessingMode())
@@ -332,23 +324,12 @@ mdopen(Relation reln)
 	Assert(reln->rd_fd < 0);
 	path = relpath(RelationGetPhysicalRelationName(reln));
 
-#ifndef __CYGWIN32__
-	fd = FileNameOpenFile(path, O_RDWR, 0600);
-#else
-	fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
-#endif
-
+	fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 	if (fd < 0)
 	{
 		/* in bootstrap mode, accept mdopen as substitute for mdcreate */
 		if (IsBootstrapProcessingMode())
-		{
-#ifndef __CYGWIN32__
-			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
-#else
-			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
-#endif
-		}
+			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 		if (fd < 0)
 		{
 			elog(NOTICE, "mdopen: couldn't open %s: %m", path);
@@ -1004,11 +985,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 		fullpath = path;
 
 	/* open the file */
-#ifndef __CYGWIN32__
-	fd = FileNameOpenFile(fullpath, O_RDWR | oflags, 0600);
-#else
-	fd = FileNameOpenFile(fullpath, O_RDWR | O_BINARY | oflags, 0600);
-#endif
+	fd = FileNameOpenFile(fullpath, O_RDWR | PG_BINARY | oflags, 0600);
 
 	pfree(fullpath);
 
@@ -1130,12 +1107,7 @@ _mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
 #endif
 
 	/* call fd.c to allow other FDs to be closed if needed */
-#ifndef __CYGWIN32__
-	fd = BasicOpenFile(path, O_RDWR, 0600);
-#else
-	fd = BasicOpenFile(path, O_RDWR | O_BINARY, 0600);
-#endif
-
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0600);
 	if (fd < 0)
 		elog(DEBUG, "_mdfd_blind_getseg: couldn't open %s: %m", path);
 

@@ -59,7 +59,7 @@ GetPrivateProfileString(char *theSection,	/* section name */
 	BOOL aSectionFound = FALSE;
 	BOOL aKeyFound = FALSE;
 	int j = 0;
-	
+
 	j = strlen(theIniFileName) + 1;
 	ptr = (char*)getpwuid(getuid());	/* get user info */
 
@@ -92,21 +92,13 @@ GetPrivateProfileString(char *theSection,	/* section name */
 	  /* This code makes it so that a file in the users home dir
 	   * overrides a the "default" file as passed in
 	  */
-#ifndef __CYGWIN32__
-	aFile = (FILE*)(buf ? fopen(buf, "r") : NULL);
-#else
-	aFile = (FILE*)(buf ? fopen(buf, "rb") : NULL);
-#endif
+	aFile = (FILE*)(buf ? fopen(buf, PG_BINARY_R) : NULL);
 	if(!aFile) {
 		sprintf(buf,"%s",theIniFileName);
-#ifndef __CYGWIN32__
-		aFile = (FILE*)(buf ? fopen(buf, "r") : NULL);
-#else
-		aFile = (FILE*)(buf ? fopen(buf, "rb") : NULL);
-#endif
+		aFile = (FILE*)(buf ? fopen(buf, PG_BINARY_R) : NULL);
 	}
 
-		
+
 	aLength = (theDefault == NULL) ? 0 : strlen(theDefault);
 
 	if(theReturnBufferLength == 0 || theReturnBuffer == NULL)
@@ -145,7 +137,7 @@ GetPrivateProfileString(char *theSection,	/* section name */
 			case ';': /* comment line */
 				continue;
 			break;
-			
+
 			case '[':	/* section marker */
 
 				if( (aString = strchr(aLine, ']')) )
@@ -173,7 +165,7 @@ GetPrivateProfileString(char *theSection,	/* section name */
 				if(aSectionFound)
 				{
 					/* try to match requested key */
-	
+
 					if( (aString = aValue = strchr(aLine, '=')) )
 					{
 						*aValue = '\0';
@@ -220,7 +212,7 @@ GetPrivateProfileString(char *theSection,	/* section name */
 						/* remove trailing blanks from aValue if any */
 
 						aString = aValue + aLength - 1;
-						
+
 						while(--aString > aValue && *aString == ' ')
 						{
 							*aString = '\0';
@@ -333,9 +325,9 @@ WritePrivateProfileString(char *theSection,	/* section name */
 	BOOL aSectionFound = FALSE;
 	BOOL keyFound = FALSE;
 	int j = 0;
-	
+
 	/* If this isn't correct processing we'll change it later  */
-	if(theSection == NULL || theKey == NULL || theBuffer == NULL || 
+	if(theSection == NULL || theKey == NULL || theBuffer == NULL ||
 		theIniFileName == NULL) return 0;
 
 	aLength = strlen(theBuffer);
@@ -380,7 +372,7 @@ WritePrivateProfileString(char *theSection,	/* section name */
 		if(!aFile) return 0;
 	}
 
-		
+
 	aLength = strlen(theBuffer);
 
 	/* We have to search for theKey, because if it already */
@@ -401,7 +393,7 @@ WritePrivateProfileString(char *theSection,	/* section name */
 			case ';': /* comment line */
 				continue;
 			break;
-			
+
 			case '[':	/* section marker */
 
 				if( (aString = strchr(aLine, ']')) )
@@ -425,7 +417,7 @@ WritePrivateProfileString(char *theSection,	/* section name */
 				if(aSectionFound)
 				{
 					/* try to match requested key */
-	
+
 					if( (aString = aValue = strchr(aLine, '=')) )
 					{
 						*aValue = '\0';
