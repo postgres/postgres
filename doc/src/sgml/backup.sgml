@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.59 2005/03/17 15:38:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.60 2005/03/23 19:38:53 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -364,11 +364,12 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   If your database is spread across multiple file systems there may not 
+   If your database is spread across multiple file systems, there may not 
    be any way to obtain exactly-simultaneous frozen snapshots of all 
-   the volumes.  For example, if your data files and WAL log on different 
-   file disks, or if tablespaces are on different file systems, it might
-   not be possible to use snapshots because the snapshots must be simultaneous.
+   the volumes.  For example, if your data files and WAL log are on different
+   disks, or if tablespaces are on different file systems, it might
+   not be possible to use snapshot backup because the snapshots must be
+   simultaneous.
    Read your file system documentation very carefully before trusting
    to the consistent-snapshot technique in such situations.  The safest
    approach is to shut down the database server for long enough to
@@ -381,7 +382,8 @@ tar -cf backup.tar /usr/local/pgsql/data
    while the database server is running, then shutting down the database
    server just long enough to do a second <application>rsync</>.  The
    second <application>rsync</> will be much quicker than the first,
-   but will be consistent because the server was down.  This method
+   because it has relatively little data to transfer, and the end result
+   will be consistent because the server was down.  This method
    allows a file system backup to be performed with minimal downtime.
   </para>
 
@@ -1123,6 +1125,19 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
      such index after completing a recovery operation.
     </para>
    </listitem>
+
+   <listitem>
+    <para>
+     <command>CREATE TABLESPACE</> commands are WAL-logged with the literal
+     absolute path, and will therefore be replayed as tablespace creations
+     with the same absolute path.  This might be undesirable if the log is
+     being replayed on a different machine.  It can be dangerous even if
+     the log is being replayed on the same machine, but into a new data
+     directory: the replay will still overwrite the contents of the original
+     tablespace.  To avoid potential gotchas of this sort, the best practice
+     is to take a new base backup after creating or dropping tablespaces.
+    </para>
+   </listitem>
   </itemizedlist>
    </para>
 
@@ -1133,7 +1148,9 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     since we may need to fix partially-written disk pages.  It is not
     necessary to store so many page copies for PITR operations, however.
     An area for future development is to compress archived WAL data by
-    removing unnecessary page copies.
+    removing unnecessary page copies.  In the meantime, administrators
+    may wish to reduce the number of page snapshots included in WAL by
+    increasing the checkpoint interval parameters as much as feasible.
    </para>
   </sect2>
  </sect1>
