@@ -2,12 +2,12 @@
 -- JOIN
 -- Test join clauses
 --
-CREATE TABLE JOIN1_TBL (
+CREATE TABLE J1_TBL (
   i integer,
   j integer,
   t text
 );
-CREATE TABLE JOIN2_TBL (
+CREATE TABLE J2_TBL (
   i integer,
   k integer
 );
@@ -20,21 +20,99 @@ CREATE TABLE JOIN4_TBL (
   k integer,
   z integer
 );
-INSERT INTO JOIN1_TBL VALUES (1, 3, 'one');
-INSERT INTO JOIN1_TBL VALUES (2, 2, 'two');
-INSERT INTO JOIN1_TBL VALUES (3, 1, 'three');
-INSERT INTO JOIN1_TBL VALUES (4, 0, 'four');
-INSERT INTO JOIN2_TBL VALUES (1, -1);
-INSERT INTO JOIN2_TBL VALUES (2, 2);
-INSERT INTO JOIN2_TBL VALUES (3, -3);
-INSERT INTO JOIN2_TBL VALUES (2, 4);
+INSERT INTO J1_TBL VALUES (1, 3, 'one');
+INSERT INTO J1_TBL VALUES (2, 2, 'two');
+INSERT INTO J1_TBL VALUES (3, 1, 'three');
+INSERT INTO J1_TBL VALUES (4, 0, 'four');
+INSERT INTO J2_TBL VALUES (1, -1);
+INSERT INTO J2_TBL VALUES (2, 2);
+INSERT INTO J2_TBL VALUES (3, -3);
+INSERT INTO J2_TBL VALUES (2, 4);
+--
+-- CORRELATION NAMES
+-- Make sure that table/column aliases are supported
+-- before diving into more complex join syntax.
+--
+SELECT '' AS "xxx", *
+  FROM J1_TBL AS tx;
+ xxx | i | j |   t   
+-----+---+---+-------
+     | 1 | 3 | one
+     | 2 | 2 | two
+     | 3 | 1 | three
+     | 4 | 0 | four
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL tx;
+ xxx | i | j |   t   
+-----+---+---+-------
+     | 1 | 3 | one
+     | 2 | 2 | two
+     | 3 | 1 | three
+     | 4 | 0 | four
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL AS t1 (a, b, c);
+ xxx | a | b |   c   
+-----+---+---+-------
+     | 1 | 3 | one
+     | 2 | 2 | two
+     | 3 | 1 | three
+     | 4 | 0 | four
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c);
+ xxx | a | b |   c   
+-----+---+---+-------
+     | 1 | 3 | one
+     | 2 | 2 | two
+     | 3 | 1 | three
+     | 4 | 0 | four
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c), J2_TBL t2 (d, e);
+ xxx | a | b |   c   | d | e  
+-----+---+---+-------+---+----
+     | 1 | 3 | one   | 1 | -1
+     | 2 | 2 | two   | 1 | -1
+     | 3 | 1 | three | 1 | -1
+     | 4 | 0 | four  | 1 | -1
+     | 1 | 3 | one   | 2 |  2
+     | 2 | 2 | two   | 2 |  2
+     | 3 | 1 | three | 2 |  2
+     | 4 | 0 | four  | 2 |  2
+     | 1 | 3 | one   | 3 | -3
+     | 2 | 2 | two   | 3 | -3
+     | 3 | 1 | three | 3 | -3
+     | 4 | 0 | four  | 3 | -3
+     | 1 | 3 | one   | 2 |  4
+     | 2 | 2 | two   | 2 |  4
+     | 3 | 1 | three | 2 |  4
+     | 4 | 0 | four  | 2 |  4
+(16 rows)
+
+SELECT '' AS "xxx", t1.a, t2.e
+  FROM J1_TBL t1 (a, b, c), J2_TBL t2 (d, e)
+  WHERE t1.a = t2.d;
+ xxx | a | e  
+-----+---+----
+     | 1 | -1
+     | 2 |  2
+     | 2 |  4
+     | 3 | -3
+(4 rows)
+
 --
 -- CROSS JOIN
 -- Qualifications are not allowed on cross joins,
 -- which degenerate into a standard unqualified inner join.
 --
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+  FROM J1_TBL CROSS JOIN J2_TBL;
  xxx | i | j |   t   | i | k  
 -----+---+---+-------+---+----
      | 1 | 3 | one   | 1 | -1
@@ -55,15 +133,41 @@ SELECT '' AS "xxx", *
      | 4 | 0 | four  | 2 |  4
 (16 rows)
 
+-- ambiguous column
 SELECT '' AS "xxx", i, k, t
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+  FROM J1_TBL CROSS JOIN J2_TBL;
 ERROR:  Column 'i' is ambiguous
+-- resolve previous ambiguity by specifying the table name
+SELECT '' AS "xxx", t1.i, k, t
+  FROM J1_TBL t1 CROSS JOIN J2_TBL t2;
+ xxx | i | k  |   t   
+-----+---+----+-------
+     | 1 | -1 | one
+     | 2 | -1 | two
+     | 3 | -1 | three
+     | 4 | -1 | four
+     | 1 |  2 | one
+     | 2 |  2 | two
+     | 3 |  2 | three
+     | 4 |  2 | four
+     | 1 | -3 | one
+     | 2 | -3 | two
+     | 3 | -3 | three
+     | 4 | -3 | four
+     | 1 |  4 | one
+     | 2 |  4 | two
+     | 3 |  4 | three
+     | 4 |  4 | four
+(16 rows)
+
 SELECT '' AS "xxx", ii, tt, kk
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL AS JT (ii, jj, tt, ii2, kk);
-ERROR:  parser: parse error at or near "("
-SELECT '' AS "xxx", jt.ii, jt.jj, jt.kk
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL AS JT (ii, jj, tt, ii2, kk);
-ERROR:  parser: parse error at or near "("
+  FROM (J1_TBL CROSS JOIN J2_TBL)
+    AS tx (ii, jj, tt, ii2, kk);
+ERROR:  JOIN table aliases are not supported
+SELECT '' AS "xxx", tx.ii, tx.jj, tx.kk
+  FROM (J1_TBL t1 (a, b, c) CROSS JOIN J2_TBL t2 (d, e))
+    AS tx (ii, jj, tt, ii2, kk);
+ERROR:  JOIN table aliases are not supported
 --
 --
 -- Inner joins (equi-joins)
@@ -74,29 +178,108 @@ ERROR:  parser: parse error at or near "("
 -- The USING syntax changes the shape of the resulting table
 -- by including a column in the USING clause only once in the result.
 --
--- Inner equi-join on all columns with the same name
-SELECT '' AS "xxx", *
-  FROM JOIN1_TBL NATURAL JOIN JOIN2_TBL;
-ERROR:  JOIN expressions are not yet implemented
 -- Inner equi-join on specified column
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL INNER JOIN JOIN2_TBL USING (i);
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL INNER JOIN J2_TBL USING (i);
+ xxx | i | j |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+(4 rows)
+
 -- Same as above, slightly different syntax
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL USING (i);
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL JOIN J2_TBL USING (i);
+ xxx | i | j |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) JOIN J2_TBL t2 (a, d) USING (a);
+ xxx | a | b |   c   | d  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) JOIN J2_TBL t2 (a, b) USING (b);
+ xxx | b | a |  c  | a 
+-----+---+---+-----+---
+     | 2 | 2 | two | 2
+(1 row)
+
+--
+-- NATURAL JOIN
+-- Inner equi-join on all columns with the same name
+--
+SELECT '' AS "xxx", *
+  FROM J1_TBL NATURAL JOIN J2_TBL;
+ xxx | i | j |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (a, d);
+ xxx | a | b |   c   | d  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+(4 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
+ xxx | a | b |  c   | d 
+-----+---+---+------+---
+     | 2 | 2 | two  | 2
+     | 4 | 0 | four | 2
+(2 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
+ xxx | a | b |  c   | d 
+-----+---+---+------+---
+     | 2 | 2 | two  | 2
+     | 4 | 0 | four | 2
+(2 rows)
+
+-- mismatch number of columns
+-- currently, Postgres will fill in with underlying names
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b) NATURAL JOIN J2_TBL t2 (a);
+ xxx | a | b |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+(4 rows)
+
 --
 -- Inner joins (equi-joins)
 --
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i = JOIN2_TBL.i);
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.i);
+ERROR:  transformExpr: does not know how to transform node 501 (internal error)
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i = JOIN2_TBL.k);
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.k);
+ERROR:  transformExpr: does not know how to transform node 501 (internal error)
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+  FROM J1_TBL CROSS JOIN J2_TBL;
  xxx | i | j |   t   | i | k  
 -----+---+---+-------+---+----
      | 1 | 3 | one   | 1 | -1
@@ -121,32 +304,28 @@ SELECT '' AS "xxx", *
 -- Non-equi-joins
 --
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i <= JOIN2_TBL.k);
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i <= J2_TBL.k);
+ERROR:  transformExpr: does not know how to transform node 501 (internal error)
 --
 -- Outer joins
 --
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL OUTER JOIN JOIN2_TBL USING (i);
-NOTICE:  OUTER JOIN not yet implemented
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL OUTER JOIN J2_TBL USING (i);
+ERROR:  OUTER JOIN is not yet supported
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
-NOTICE:  LEFT OUTER JOIN not yet implemented
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL LEFT OUTER JOIN J2_TBL USING (i);
+ERROR:  OUTER JOIN is not yet supported
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
-NOTICE:  RIGHT OUTER JOIN not yet implemented
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL RIGHT OUTER JOIN J2_TBL USING (i);
+ERROR:  OUTER JOIN is not yet supported
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
-NOTICE:  FULL OUTER JOIN not yet implemented
-ERROR:  JOIN expressions are not yet implemented
+  FROM J1_TBL FULL OUTER JOIN J2_TBL USING (i);
+ERROR:  OUTER JOIN is not yet supported
 --
 -- More complicated constructs
 --
 --
 -- Clean up
 --
-DROP TABLE JOIN1_TBL;
-DROP TABLE JOIN2_TBL;
+DROP TABLE J1_TBL;
+DROP TABLE J2_TBL;

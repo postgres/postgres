@@ -3,13 +3,13 @@
 -- Test join clauses
 --
 
-CREATE TABLE JOIN1_TBL (
+CREATE TABLE J1_TBL (
   i integer,
   j integer,
   t text
 );
 
-CREATE TABLE JOIN2_TBL (
+CREATE TABLE J2_TBL (
   i integer,
   k integer
 );
@@ -25,15 +25,40 @@ CREATE TABLE JOIN4_TBL (
   z integer
 );
 
-INSERT INTO JOIN1_TBL VALUES (1, 3, 'one');
-INSERT INTO JOIN1_TBL VALUES (2, 2, 'two');
-INSERT INTO JOIN1_TBL VALUES (3, 1, 'three');
-INSERT INTO JOIN1_TBL VALUES (4, 0, 'four');
+INSERT INTO J1_TBL VALUES (1, 3, 'one');
+INSERT INTO J1_TBL VALUES (2, 2, 'two');
+INSERT INTO J1_TBL VALUES (3, 1, 'three');
+INSERT INTO J1_TBL VALUES (4, 0, 'four');
 
-INSERT INTO JOIN2_TBL VALUES (1, -1);
-INSERT INTO JOIN2_TBL VALUES (2, 2);
-INSERT INTO JOIN2_TBL VALUES (3, -3);
-INSERT INTO JOIN2_TBL VALUES (2, 4);
+INSERT INTO J2_TBL VALUES (1, -1);
+INSERT INTO J2_TBL VALUES (2, 2);
+INSERT INTO J2_TBL VALUES (3, -3);
+INSERT INTO J2_TBL VALUES (2, 4);
+
+--
+-- CORRELATION NAMES
+-- Make sure that table/column aliases are supported
+-- before diving into more complex join syntax.
+--
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL AS tx;
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL tx;
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL AS t1 (a, b, c);
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c);
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c), J2_TBL t2 (d, e);
+
+SELECT '' AS "xxx", t1.a, t2.e
+  FROM J1_TBL t1 (a, b, c), J2_TBL t2 (d, e)
+  WHERE t1.a = t2.d;
 
 
 --
@@ -43,16 +68,23 @@ INSERT INTO JOIN2_TBL VALUES (2, 4);
 --
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+  FROM J1_TBL CROSS JOIN J2_TBL;
 
+-- ambiguous column
 SELECT '' AS "xxx", i, k, t
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+  FROM J1_TBL CROSS JOIN J2_TBL;
+
+-- resolve previous ambiguity by specifying the table name
+SELECT '' AS "xxx", t1.i, k, t
+  FROM J1_TBL t1 CROSS JOIN J2_TBL t2;
 
 SELECT '' AS "xxx", ii, tt, kk
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL AS JT (ii, jj, tt, ii2, kk);
+  FROM (J1_TBL CROSS JOIN J2_TBL)
+    AS tx (ii, jj, tt, ii2, kk);
 
-SELECT '' AS "xxx", jt.ii, jt.jj, jt.kk
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL AS JT (ii, jj, tt, ii2, kk);
+SELECT '' AS "xxx", tx.ii, tx.jj, tx.kk
+  FROM (J1_TBL t1 (a, b, c) CROSS JOIN J2_TBL t2 (d, e))
+    AS tx (ii, jj, tt, ii2, kk);
 
 
 --
@@ -67,17 +99,42 @@ SELECT '' AS "xxx", jt.ii, jt.jj, jt.kk
 -- by including a column in the USING clause only once in the result.
 --
 
--- Inner equi-join on all columns with the same name
-SELECT '' AS "xxx", *
-  FROM JOIN1_TBL NATURAL JOIN JOIN2_TBL;
-
 -- Inner equi-join on specified column
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL INNER JOIN JOIN2_TBL USING (i);
+  FROM J1_TBL INNER JOIN J2_TBL USING (i);
 
 -- Same as above, slightly different syntax
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL USING (i);
+  FROM J1_TBL JOIN J2_TBL USING (i);
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) JOIN J2_TBL t2 (a, d) USING (a);
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) JOIN J2_TBL t2 (a, b) USING (b);
+
+
+--
+-- NATURAL JOIN
+-- Inner equi-join on all columns with the same name
+--
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL NATURAL JOIN J2_TBL;
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (a, d);
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
+
+-- mismatch number of columns
+-- currently, Postgres will fill in with underlying names
+SELECT '' AS "xxx", *
+  FROM J1_TBL t1 (a, b) NATURAL JOIN J2_TBL t2 (a);
 
 
 --
@@ -85,13 +142,13 @@ SELECT '' AS "xxx", *
 --
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i = JOIN2_TBL.i);
+  FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.i);
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i = JOIN2_TBL.k);
+  FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.k);
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+  FROM J1_TBL CROSS JOIN J2_TBL;
 
 
 --
@@ -99,7 +156,7 @@ SELECT '' AS "xxx", *
 --
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i <= JOIN2_TBL.k);
+  FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i <= J2_TBL.k);
 
 
 --
@@ -107,16 +164,16 @@ SELECT '' AS "xxx", *
 --
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL OUTER JOIN JOIN2_TBL USING (i);
+  FROM J1_TBL OUTER JOIN J2_TBL USING (i);
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
+  FROM J1_TBL LEFT OUTER JOIN J2_TBL USING (i);
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
+  FROM J1_TBL RIGHT OUTER JOIN J2_TBL USING (i);
 
 SELECT '' AS "xxx", *
-  FROM JOIN1_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
+  FROM J1_TBL FULL OUTER JOIN J2_TBL USING (i);
 
 
 --
@@ -127,6 +184,6 @@ SELECT '' AS "xxx", *
 -- Clean up
 --
 
-DROP TABLE JOIN1_TBL;
-DROP TABLE JOIN2_TBL;
+DROP TABLE J1_TBL;
+DROP TABLE J2_TBL;
 
