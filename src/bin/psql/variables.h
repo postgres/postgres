@@ -3,17 +3,13 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.5 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.6 2000/02/13 21:45:14 petere Exp $
  */
 
 /*
  * This implements a sort of variable repository. One could also think of it
  * as cheap version of an associative array. In each one of these
  * datastructures you can store name/value pairs.
- *
- * All functions (should) follow the Shit-In-Shit-Out (SISO) principle, i.e.,
- * you can pass them NULL pointers and the like and they will return something
- * appropriate.
  */
 
 #ifndef VARIABLES_H
@@ -37,6 +33,7 @@ VariableSpace CreateVariableSpace(void);
 const char *GetVariable(VariableSpace space, const char *name);
 bool		GetVariableBool(VariableSpace space, const char *name);
 bool		SetVariable(VariableSpace space, const char *name, const char *value);
+bool        SetVariableBool(VariableSpace space, const char *name);
 bool		DeleteVariable(VariableSpace space, const char *name);
 void		DestroyVariableSpace(VariableSpace space);
 

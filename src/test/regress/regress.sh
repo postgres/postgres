@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.39 2000/01/09 20:54:36 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.40 2000/02/13 21:45:15 petere Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -30,7 +30,7 @@ fi
 PGTZ="PST8PDT"; export PGTZ
 PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 
-FRONTEND="psql $HOSTLOC -n -e -q"
+FRONTEND="psql $HOSTLOC -a -q"
 
 # ----------
 # Scan resultmap file to find which platform-specific expected files to use.

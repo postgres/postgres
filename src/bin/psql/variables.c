@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.5 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.6 2000/02/13 21:45:14 petere Exp $
  */
 #include <c.h>
 #include "variables.h"
@@ -107,6 +107,14 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		return false;
 	previous->next->value = strdup(value);
 	return previous->next->value ? true : false;
+}
+
+
+
+bool
+SetVariableBool(VariableSpace space, const char *name)
+{
+    return SetVariable(space, name, "");
 }
 
 

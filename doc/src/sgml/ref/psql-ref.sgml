@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.24 2000/02/10 20:08:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.25 2000/02/13 21:45:13 petere Exp $
 Postgres documentation
 -->
 
@@ -609,7 +609,7 @@ Tue Oct 26 21:40:57 CEST 1999
 	<note>
 	<para>
 	If you want to see the lines on the screen as they are read you must set
-	the variable <envar>ECHO</envar> to <literal>full</literal>.
+	the variable <envar>ECHO</envar> to <literal>all</literal>.
 	</para>
 	</note>
         </listitem>
@@ -1190,6 +1190,18 @@ Access permissions for database "test"
   <para>
   <variablelist>
     <varlistentry>
+      <term>-a, --echo-all</term>
+      <listitem>
+      <para>
+      Print all the lines to the screen as they are read. This is more useful for
+      script processing rather than interactive mode.
+      This is equivalent to setting the variable <envar>ECHO</envar> to <literal>all</literal>.
+      </para>
+      </listitem>
+    </varlistentry>
+
+
+    <varlistentry>
       <term>-A, --no-align</term>
       <listitem>
       <para>
@@ -1234,11 +1246,12 @@ Access permissions for database "test"
 
 
     <varlistentry>
-      <term>-e, --echo</term>
+      <term>-e, --echo-queries</term>
       <listitem>
       <para>
-      In non-interactive mode, all lines are printed to the screen as they are read.
-      This is equivalent to setting the variable <envar>ECHO</envar> to <literal>full</literal>.
+      Show all queries that are sent to the backend.
+      This is equivalent to setting the variable <envar>ECHO</envar>
+      to <literal>queries</literal>.
       </para>
       </listitem>
     </varlistentry>
@@ -1621,12 +1634,12 @@ bar
         <term><envar>ECHO</envar></term>
 	<listitem>
 	<para>
-	If set to <quote><literal>full</literal></quote>, all lines entered or from a script
+	If set to <quote><literal>all</literal></quote>, all lines entered or from a script
         are written to the standard output before they
-	are parsed or executed. To specify this on program startup, in conjunction with the
-	<option>-f</option> option perhaps, use the switch <option>-e</option>.
-        If set to <quote><literal>brief</literal></quote>, <application>psql</application>
-        merely prints all queries as they are sent to the backend.
+	are parsed or executed. To specify this on program startup, use the switch
+        <option>-a</option>. If set to <quote><literal>queries</literal></quote>,
+        <application>psql</application> merely prints all queries as they are sent to the
+        backend. The option for this is <option>-e</option>.
 	</para>
 	</listitem>
       </varlistentry>

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.18 2000/02/10 20:08:56 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.19 2000/02/13 21:45:14 petere Exp $
  */
 #include <c.h>
 #include "mainloop.h"
@@ -217,7 +217,7 @@ MainLoop(FILE *source)
 
 		/* echo back if flag is set */
         var = GetVariable(pset.vars, "ECHO");
-        if (var && strcmp(var, "full")==0)
+        if (var && strcmp(var, "all")==0)
             puts(line);
         fflush(stdout);
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.12 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.13 2000/02/13 21:45:14 petere Exp $
  */
 #include <c.h>
 #include "common.h"
@@ -382,7 +382,7 @@ SendQuery(const char *query)
     else
     {
         const char * var = GetVariable(pset.vars, "ECHO");
-        if (var && strcmp(var, "brief")==0)
+        if (var && strncmp(var, "queries", strlen(var))==0)
             puts(query);
     }
 

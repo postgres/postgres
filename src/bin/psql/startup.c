@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.22 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.23 2000/02/13 21:45:14 petere Exp $
  */
 #include <c.h>
 
@@ -280,17 +280,17 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] =
     {
+        {"echo-all", no_argument, NULL, 'a'},
 		{"no-align", no_argument, NULL, 'A'},
 		{"command", required_argument, NULL, 'c'},
 		{"dbname", required_argument, NULL, 'd'},
-		{"echo", no_argument, NULL, 'e'},
+		{"echo-queries", no_argument, NULL, 'e'},
 		{"echo-hidden", no_argument, NULL, 'E'},
 		{"file", required_argument, NULL, 'f'},
 		{"field-separator", required_argument, NULL, 'F'},
 		{"host", required_argument, NULL, 'h'},
 		{"html", no_argument, NULL, 'H'},
 		{"list", no_argument, NULL, 'l'},
-		{"no-readline", no_argument, NULL, 'n'},
 		{"output", required_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
 		{"pset", required_argument, NULL, 'P'},
@@ -320,18 +320,20 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 	memset(options, 0, sizeof *options);
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "Ac:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWx?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWx?", long_options, &optindex)) != -1)
 #else /* not HAVE_GETOPT_LONG */
-
 	/*
 	 * Be sure to leave the '-' in here, so we can catch accidental long
 	 * options.
 	 */
-	while ((c = getopt(argc, argv, "Ac:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWx?-")) != -1)
+	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWx?-")) != -1)
 #endif /* not HAVE_GETOPT_LONG */
 	{
 		switch (c)
 		{
+			case 'a':
+				SetVariable(pset.vars, "ECHO", "all");
+				break;
 			case 'A':
 				pset.popt.topt.format = PRINT_UNALIGNED;
 				break;
@@ -346,10 +348,10 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 				options->dbname = optarg;
 				break;
 			case 'e':
-				SetVariable(pset.vars, "ECHO", "full");
+				SetVariable(pset.vars, "ECHO", "queries");
 				break;
 			case 'E':
-				SetVariable(pset.vars, "ECHO_HIDDEN", "");
+				SetVariableBool(pset.vars, "ECHO_HIDDEN");
 				break;
 			case 'f':
 				options->action = ACT_FILE;
@@ -402,16 +404,16 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 					break;
 				}
 			case 'q':
-				SetVariable(pset.vars, "QUIET", "");
+				SetVariableBool(pset.vars, "QUIET");
 				break;
             case 'R':
                 pset.popt.topt.recordSep = xstrdup(optarg);
                 break;
 			case 's':
-				SetVariable(pset.vars, "SINGLESTEP", "");
+				SetVariableBool(pset.vars, "SINGLESTEP");
 				break;
 			case 'S':
-				SetVariable(pset.vars, "SINGLELINE", "");
+				SetVariableBool(pset.vars, "SINGLELINE");
 				break;
 			case 't':
 				pset.popt.topt.tuples_only = true;

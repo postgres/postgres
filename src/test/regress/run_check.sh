@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.7 2000/01/16 20:05:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.8 2000/02/13 21:45:15 petere Exp $
 
 # ----------
 # Check call syntax
@@ -86,7 +86,7 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 # ----------
 # The SQL shell to use during this test
 # ----------
-FRONTEND="$BINDIR/psql $HOSTLOC -n -e -q"
+FRONTEND="$BINDIR/psql $HOSTLOC -a -q"
 
 # ----------
 # Scan resultmap file to find which platform-specific expected files to use.

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.17 2000/02/10 20:08:56 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.18 2000/02/13 21:45:14 petere Exp $
  */
 #include <c.h>
 #include "help.h"
@@ -72,7 +72,7 @@ usage(void)
 	puts(  "Usage:");
     puts(  "  psql [options] [dbname [username]]\n");
     puts(  "Options:");
-/*	puts(  "  -a              Echo all input from script");*/
+	puts(  "  -a              Echo all input from script");
 	puts(  "  -A              Unaligned table output mode (-P format=unaligned)");
 	puts(  "  -c <query>      Run only single query (or slash command) and exit");
 
