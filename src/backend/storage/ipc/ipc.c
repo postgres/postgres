@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.39 1999/10/06 21:58:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.40 1999/10/10 16:53:51 momjian Exp $
  *
  * NOTES
  *
@@ -46,6 +46,7 @@
 static int	UsePrivateMemory = 0;
 
 static void IpcMemoryDetach(int status, char *shmaddr);
+static void IpcConfigTip(void);
 
 /* ----------------------------------------------------------------
  *						exit() handling stuff
@@ -329,6 +330,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 			EPRINTF("IpcSemaphoreCreate: semget failed (%s) "
 					"key=%d, num=%d, permission=%o",
 					strerror(errno), semKey, semNum, permission);
+			IpcConfigTip();
 			return(-1);
 		}
 		for (i = 0; i < semNum; i++)
@@ -340,6 +342,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 			EPRINTF("IpcSemaphoreCreate: semctl failed (%s) id=%d",
 					strerror(errno), semId);
 			semctl(semId, 0, IPC_RMID, semun);
+			IpcConfigTip();
 			return(-1);
 		}
 
@@ -534,6 +537,7 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		EPRINTF("IpcMemoryCreate: shmget failed (%s) "
 				"key=%d, size=%d, permission=%o",
 				strerror(errno), memKey, size, permission);
+		IpcConfigTip();
 		return IpcMemCreationFailed;
 	}
 
@@ -711,13 +715,12 @@ LockIsFree(int lockid)
 
 #endif	 /* HAS_TEST_AND_SET */
 
-#ifdef NOT_USED
 static void
 IpcConfigTip(void)
 {
-	fprintf(stderr, "This type of error is usually caused by improper\n");
+	fprintf(stderr, "This type of error is usually caused by an improper\n");
 	fprintf(stderr, "shared memory or System V IPC semaphore configuration.\n");
-	fprintf(stderr, "See the FAQ for more detailed information\n");
+	fprintf(stderr, "For more information, see the FAQ and platform-specific\n");
+	fprintf(stderr, "FAQ's in the source directory pgsql/doc or on our\n");
+	fprintf(stderr, "web site at http://www.postgresql.org.\n");
 }
-
-#endif
