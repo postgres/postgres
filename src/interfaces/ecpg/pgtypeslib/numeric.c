@@ -1,12 +1,12 @@
-#include <stdio.h>
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
-#include "postgres_fe.h"
 #include "extern.h"
 #include "pgtypes_error.h"
 
