@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 20:41:21 EST 2005
+   Last updated: Mon Jan 31 21:31:39 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -68,19 +68,18 @@
    4.11.3) Why aren't my sequence numbers reused on transaction abort?
    Why are there gaps in the numbering of my sequence/SERIAL column?
    4.12) What is an OID? What is a TID?
-   4.13) What is the meaning of some of the terms used in PostgreSQL?
-   4.14) Why do I get the error "ERROR: Memory exhausted in
+   4.13) Why do I get the error "ERROR: Memory exhausted in
    AllocSetAlloc()"?
-   4.15) How do I tell what PostgreSQL version I am running?
-   4.16) Why does my large-object operations get "invalid large obj
+   4.14) How do I tell what PostgreSQL version I am running?
+   4.15) Why does my large-object operations get "invalid large obj
    descriptor"?
-   4.17) How do I create a column that will default to the current time?
-   4.18) How do I perform an outer join?
-   4.19) How do I perform queries using multiple databases?
-   4.20) How do I return multiple rows or columns from a function?
-   4.21) Why can't I reliably create/drop temporary tables in PL/PgSQL
+   4.16) How do I create a column that will default to the current time?
+   4.17) How do I perform an outer join?
+   4.18) How do I perform queries using multiple databases?
+   4.19) How do I return multiple rows or columns from a function?
+   4.20) Why can't I reliably create/drop temporary tables in PL/PgSQL
    functions?
-   4.22) What encryption options are available?
+   4.21) What encryption options are available?
    
                             Extending PostgreSQL
                                       
@@ -394,6 +393,7 @@
    properly. First, by running configure with the --enable-cassert
    option, many assert()s monitor the progress of the backend and halt
    the program when something unexpected occurs.
+   
    The postmaster has a -d option that allows even more detailed
    information to be reported. The -d option takes a number that
    specifies the debug level. Be warned that high debug level values
@@ -517,14 +517,16 @@
     4.4) What is the maximum size for a row, a table, and a database?
     
    These are the limits:
-    Maximum size for a database?             unlimited (32 TB databases exist)
-    Maximum size for a table?                32 TB
-    Maximum size for a row?                  1.6TB
-    Maximum size for a field?                1 GB
-    Maximum number of rows in a table?       unlimited
-    Maximum number of columns in a table?    250-1600 depending on column types
-    Maximum number of indexes on a table?    unlimited
-
+   
+   Maximum size for a database? unlimited (32 TB databases exist)
+   Maximum size for a table? 32 TB
+   Maximum size for a row? 1.6TB
+   Maximum size for a field? 1 GB
+   Maximum number of rows in a table? unlimited
+   Maximum number of columns in a table? 250-1600 depending on column
+   types
+   Maximum number of indexes on a table? unlimited
+   
    Of course, these are not actually unlimited, but limited to available
    disk space and memory/swap space. Performance may suffer when these
    values get unusually large.
@@ -611,15 +613,15 @@
      * The search string can not start with a character class, e.g.
        [a-e].
      * Case-insensitive searches such as ILIKE and ~* do not utilize
-       indexes. Instead, use functional indexes, which are described in
-       section 4.10.
+       indexes. Instead, use expression indexes, which are described in
+       section 4.8.
      * The default C locale must be used during initdb because it is not
-       possible to know the next-greater character in a non-C locale. You
-       can create a special text_pattern_ops index for such cases that
-       work only for LIKE indexing.
+       possible to know the next-greatest character in a non-C locale.
+       You can create a special text_pattern_ops index for such cases
+       that work only for LIKE indexing.
        
    In pre-8.0 releases, indexes often can not be used unless the data
-   types exactly match the index's column types. This is particularly
+   types exactly match the index's column types. This was particularly
    true of int2, int8, and numeric column indexes.
    
     4.7) How do I see how the query optimizer is evaluating my query?
@@ -640,7 +642,7 @@
     WHERE lower(col) = 'abc';
 
    This will not use an standard index. However, if you create a
-   functional index, it will be used:
+   expresssion index, it will be used:
     CREATE INDEX tabindex ON tab (lower(col));
 
     4.9) In a query, how do I detect if a field is NULL?
@@ -649,14 +651,13 @@
    
     4.10) What is the difference between the various character types?
     
-Type            Internal Name   Notes
---------------------------------------------------
-VARCHAR(n)      varchar         size specifies maximum length, no padding
-CHAR(n)         bpchar          blank padded to the specified fixed length
-TEXT            text            no specific upper limit on length
-BYTEA           bytea           variable-length byte array (null-byte safe)
-"char"          char            one character
-
+       Type    Internal Name                    Notes
+    VARCHAR(n) varchar       size specifies maximum length, no padding
+    CHAR(n)    bpchar        blank padded to the specified fixed length
+    TEXT       text          no specific upper limit on length
+    BYTEA      bytea         variable-length byte array (null-byte safe)
+    "char"     char          one character
+   
    You will see the internal name when examining system catalogs and in
    some error messages.
    
@@ -692,9 +693,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     );
 
    See the create_sequence manual page for more information about
-   sequences. You can also use each row's OID field as a unique value.
-   However, if you need to dump and reload the database, you need to use
-   pg_dump's -o option or COPY WITH OIDS option to preserve the OIDs.
+   sequences.
    
     4.11.2) How do I get the value of a SERIAL insert?
     
@@ -716,16 +715,10 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
 
-   Finally, you could use the OID returned from the INSERT statement to
-   look up the default value, though this is probably the least portable
-   approach, and the oid value will wrap around when it reaches 4
-   billion. In Perl, using DBI with the DBD::Pg module, the oid value is
-   made available via $sth->{pg_oid_status} after $sth->execute().
-   
     4.11.3) Doesn't currval() lead to a race condition with other users?
     
-   No. currval() returns the current value assigned by your backend, not
-   by all users.
+   No. currval() returns the current value assigned by your session, not
+   by all sessions.
    
     4.11.4) Why aren't my sequence numbers reused on transaction abort? Why are
     there gaps in the numbering of my sequence/SERIAL column?
@@ -751,25 +744,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    values. TIDs change after rows are modified or reloaded. They are used
    by index entries to point to physical rows.
    
-    4.13) What is the meaning of some of the terms used in PostgreSQL?
-    
-   Some of the source code and older documentation use terms that have
-   more common usage. Here are some:
-     * table, relation, class
-     * row, record, tuple
-     * column, field, attribute
-     * retrieve, select
-     * replace, update
-     * append, insert
-     * OID, serial value
-     * portal, cursor
-     * range variable, table name, table alias
-       
-   A list of general database terms can be found at:
-   http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
-   /glossary.html
-   
-    4.14) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
+    4.13) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
     
    You probably have run out of virtual memory on your system, or your
    kernel has a low limit for certain resources. Try this before starting
@@ -784,11 +759,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    problem with the SQL client because the backend is returning too much
    data, try it before starting the client.
    
-    4.15) How do I tell what PostgreSQL version I am running?
+    4.14) How do I tell what PostgreSQL version I am running?
     
    From psql, type SELECT version();
    
-    4.16) Why does my large-object operations get "invalid large obj
+    4.15) Why does my large-object operations get "invalid large obj
     descriptor"?
     
    You need to put BEGIN WORK and COMMIT around any use of a large object
@@ -803,12 +778,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    If you are using a client interface like ODBC you may need to set
    auto-commit off.
    
-    4.17) How do I create a column that will default to the current time?
+    4.16) How do I create a column that will default to the current time?
     
    Use CURRENT_TIMESTAMP:
     CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
-    4.18) How do I perform an outer join?
+    4.17) How do I perform an outer join?
     
    PostgreSQL supports outer joins using the SQL standard syntax. Here
    are two examples:
@@ -838,7 +813,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
 
-    4.19) How do I perform queries using multiple databases?
+    4.18) How do I perform queries using multiple databases?
     
    There is no way to query a database other than the current one.
    Because PostgreSQL loads database-specific system catalogs, it is
@@ -848,12 +823,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    course, a client can make simultaneous connections to different
    databases and merge the results on the client side.
    
-    4.20) How do I return multiple rows or columns from a function?
+    4.19) How do I return multiple rows or columns from a function?
     
    In 7.3, you can easily return multiple rows or columns from a
    function, http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.21) Why can't I reliably create/drop temporary tables in PL/PgSQL
+    4.20) Why can't I reliably create/drop temporary tables in PL/PgSQL
     functions?
     
    PL/PgSQL caches function contents, and an unfortunate side effect is
@@ -864,7 +839,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-    4.22) What encryption options are available?
+    4.21) What encryption options are available?
     
      * contrib/pgcrypto contains many encryption functions for use in SQL
        queries.

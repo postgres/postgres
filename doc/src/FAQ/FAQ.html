@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jan 31 20:41:21 EST 2005</P>
+    <P>Last updated: Mon Jan 31 21:31:39 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -101,24 +101,22 @@
     my sequence/SERIAL column?<BR>
      <A href="#4.12">4.12</A>) What is an <SMALL>OID</SMALL>? What is a
     <SMALL>TID</SMALL>?<BR>
-     <A href="#4.13">4.13</A>) What is the meaning of some of the terms
-    used in PostgreSQL?<BR>
-     <A href="#4.14">4.14</A>) Why do I get the error <I>"ERROR: Memory
+     <A href="#4.12">4.13</A>) Why do I get the error <I>"ERROR: Memory
     exhausted in AllocSetAlloc()"</I>?<BR>
-     <A href="#4.15">4.15</A>) How do I tell what PostgreSQL version I
+     <A href="#4.14">4.14</A>) How do I tell what PostgreSQL version I
     am running?<BR>
-     <A href="#4.16">4.16</A>) Why does my large-object operations get
+     <A href="#4.15">4.15</A>) Why does my large-object operations get
     <I>"invalid large obj descriptor"</I>?<BR>
-     <A href="#4.17">4.17</A>) How do I create a column that will
+     <A href="#4.16">4.16</A>) How do I create a column that will
     default to the current time?<BR>
-     <A href="#4.18">4.18</A>) How do I perform an outer join?<BR>
-     <A href="#4.19">4.19</A>) How do I perform queries using multiple
+     <A href="#4.17">4.17</A>) How do I perform an outer join?<BR>
+     <A href="#4.18">4.18</A>) How do I perform queries using multiple
     databases?<BR>
-     <A href="#4.20">4.20</A>) How do I return multiple rows or columns
+     <A href="#4.19">4.19</A>) How do I return multiple rows or columns
     from a function?<BR>
-     <A href="#4.21">4.21</A>) Why can't I reliably create/drop
+     <A href="#4.20">4.20</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?<BR>
-     <A href="#4.22">4.22</A>) What encryption options are available?<BR>
+     <A href="#4.21">4.21</A>) What encryption options are available?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -531,7 +529,7 @@
     option, many <I>assert()</I>s monitor the progress of the backend
     and halt the program when something unexpected occurs.</P>
 
-    The <I>postmaster</I> has a <I>-d</I> option that allows even more
+    <P>The <I>postmaster</I> has a <I>-d</I> option that allows even more
     detailed information to be reported. The <I>-d</I> option takes a
     number that specifies the debug level. Be warned that high debug
     level values generate large log files.</P>
@@ -567,7 +565,7 @@
     <H4><A name="3.5">3.5</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?</H4>
 
-    You have reached the default limit is 100 database sessions. You
+    <P>You have reached the default limit is 100 database sessions. You
     need to increase the <I>postmaster</I>'s limit on how many
     concurrent backend processes it can start by changing the
     <I>max_connections</I> value in <I>postgresql.conf</I> and
@@ -672,19 +670,25 @@
     table, and a database?</H4>
 
     <P>These are the limits:</P>
-<PRE>
-    Maximum size for a database?             unlimited (32 TB databases exist)
-    Maximum size for a table?                32 TB
-    Maximum size for a row?                  1.6TB
-    Maximum size for a field?                1 GB
-    Maximum number of rows in a table?       unlimited
-    Maximum number of columns in a table?    250-1600 depending on column types
-    Maximum number of indexes on a table?    unlimited
-</PRE>
+<CENTER>
+<TABLE BORDER=1>
+<TR><TD>Maximum size for a database?</TD><TD>unlimited (32 TB databases
+exist)</TD></TR>
+<TR><TD>Maximum size for a table?</TD><TD>32 TB</TD></TR>
+<TR><TD>Maximum size for a row?</TD><TD>1.6TB</TD></TR>
+<TR><TD>Maximum size for a field?</TD><TD>1 GB</TD></TR>
+<TR><TD>Maximum number of rows in a table?</TD><TD>unlimited</TD></TR>
+<TR><TD>Maximum number of columns in a table?</TD><TD>250-1600 depending
+on column types</TD></TR>
+<TR><TD>Maximum number of indexes on a
+table?</TD><TD>unlimited</TD></TR>
+</TABLE>
+</CENTER>
+<BR>
 
-    Of course, these are not actually unlimited, but limited to
+    <P>Of course, these are not actually unlimited, but limited to
     available disk space and memory/swap space. Performance may suffer
-    when these values get unusually large. 
+    when these values get unusually large.</P>
 
     <P>The maximum table size of 32 TB does not require large file
     support from the operating system. Large tables are stored as
@@ -781,10 +785,10 @@
     <LI>The search string can not start with a character class,
     e.g. [a-e].</LI>
     <LI>Case-insensitive searches such as <SMALL>ILIKE</SMALL> and
-    <I>~*</I> do not utilize indexes. Instead, use functional
-    indexes, which are described in section <a href="#4.10">4.10</a>.</LI>
+    <I>~*</I> do not utilize indexes. Instead, use expression
+    indexes, which are described in section <a href="#4.8">4.8</a>.</LI>
     <LI>The default <I>C</I> locale must be used during
-    <i>initdb</i> because it is not possible to know the next-greater
+    <i>initdb</i> because it is not possible to know the next-greatest
     character in a non-C locale.  You can create a special
     <CODE>text_pattern_ops</CODE> index for such cases that work only
     for <SMALL>LIKE</SMALL> indexing.
@@ -792,7 +796,7 @@
     </UL>
 
     <P>In pre-8.0 releases, indexes often can not be used unless the data
-    types exactly match the index's column types.  This is particularly
+    types exactly match the index's column types.  This was particularly
     true of int2, int8, and numeric column indexes.</P>
 
     <H4><A name="4.7">4.7</A>) How do I see how the query optimizer is
@@ -818,7 +822,7 @@
 </PRE>
 
     This will not use an standard index. However, if you create a
-    functional index, it will be used: 
+    expresssion index, it will be used: 
 <PRE>
     CREATE INDEX tabindex ON tab (lower(col));
 </PRE>
@@ -831,16 +835,20 @@
 
     <H4><A name="4.10">4.10</A>) What is the difference between the
     various character types?</H4>
-<PRE>
-Type            Internal Name   Notes
---------------------------------------------------
-VARCHAR(n)      varchar         size specifies maximum length, no padding
-CHAR(n)         bpchar          blank padded to the specified fixed length
-TEXT            text            no specific upper limit on length
-BYTEA           bytea           variable-length byte array (null-byte safe)
-"char"          char            one character
-</PRE>
-
+<CENTER>
+<TABLE BORDER=1>
+<TR><TH>Type</TH><TH>Internal Name</TH><TH>Notes</TH></TR>
+<TR><TD>VARCHAR(n)</TD><TD>varchar</TD><TD>size specifies maximum
+length, no padding</TD></TR>
+<TR><TD>CHAR(n)</TD><TD>bpchar</TD><TD>blank padded to the specified
+fixed length</TD></TR>
+<TR><TD>TEXT</TD><TD>text</TD><TD>no specific upper limit on
+length</TD></TR>
+<TR><TD>BYTEA</TD><TD>bytea</TD><TD>variable-length byte array
+(null-byte safe)</TD></TR>
+<TR><TD>"char"</TD><TD>char</TD><TD>one character</TD></TR>
+</TABLE>
+</CENTER>
     <P>You will see the internal name when examining system catalogs
     and in some error messages.</P>
 
@@ -884,10 +892,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 </PRE>
 
     See the <I>create_sequence</I> manual page for more information
-    about sequences. You can also use each row's <I>OID</I> field as a
-    unique value. However, if you need to dump and reload the database,
-    you need to use <I>pg_dump</I>'s <I>-o</I> option or <SMALL>COPY
-    WITH OIDS</SMALL> option to preserve the <SMALL>OID</SMALL>s. 
+    about sequences.
 
     <H4><A name="4.11.2">4.11.2</A>) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?</H4>
@@ -918,19 +923,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     new_id = execute("SELECT currval('person_id_seq')");
 </PRE>
     
-    <P>Finally, you could use the <A href="#4.12"><SMALL>OID</SMALL></A>
-    returned from the <SMALL>INSERT</SMALL> statement to look up the
-    default value, though this is probably the least portable approach,
-    and the oid value will wrap around when it reaches 4 billion.
-    In Perl, using DBI with the DBD::Pg module, the oid value is made
-    available via <I>$sth-&gt;{pg_oid_status}</I> after
-    <I>$sth-&gt;execute()</I>.</P>
-
     <H4><A name="4.11.3">4.11.3</A>) Doesn't <I>currval()</I>
     lead to a race condition with other users?</H4>
 
     <P>No. <I>currval()</I> returns the current value assigned by your
-    backend, not by all users.</P>
+    session, not by all sessions.</P>
 
     <H4><A name="4.11.4">4.11.4</A>) Why aren't my sequence numbers
     reused on transaction abort? Why are there gaps in the numbering of
@@ -964,36 +961,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     are modified or reloaded. They are used by index entries to point
     to physical rows.</P>
 
-    <H4><A name="4.13">4.13</A>) What is the meaning of some of the
-    terms used in PostgreSQL?</H4>
-
-    <P>Some of the source code and older documentation use terms that
-    have more common usage. Here are some:</P>
-
-    <UL>
-      <LI>table, relation, class</LI>
-
-      <LI>row, record, tuple</LI>
-
-      <LI>column, field, attribute</LI>
-
-      <LI>retrieve, select</LI>
-
-      <LI>replace, update</LI>
-
-      <LI>append, insert</LI>
-
-      <LI><SMALL>OID</SMALL>, serial value</LI>
-
-      <LI>portal, cursor</LI>
-
-      <LI>range variable, table name, table alias</LI>
-    </UL>
-
-    <P>A list of general database terms can be found at: <A href=
-    "http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</A></P>
-
-    <H4><A name="4.14">4.14</A>) Why do I get the error <I>"ERROR:
+    <H4><A name="4.13">4.13</A>) Why do I get the error <I>"ERROR:
     Memory exhausted in AllocSetAlloc()"</I>?</H4>
 
     <P>You probably have run out of virtual memory on your system,
@@ -1012,12 +980,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     backend is returning too much data, try it before starting the
     client.
 
-    <H4><A name="4.15">4.15</A>) How do I tell what PostgreSQL version
+    <H4><A name="4.14">4.14</A>) How do I tell what PostgreSQL version
     I am running?</H4>
 
     <P>From <I>psql</I>, type <CODE>SELECT version();</CODE></P>
 
-    <H4><A name="4.16">4.16</A>) Why does my large-object operations
+    <H4><A name="4.15">4.15</A>) Why does my large-object operations
     get <I>"invalid large obj descriptor"</I>?</H4>
 
     <P>You need to put <CODE>BEGIN WORK</CODE> and <CODE>COMMIT</CODE>
@@ -1033,7 +1001,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <P>If you are using a client interface like <SMALL>ODBC</SMALL> you
     may need to set <CODE>auto-commit off.</CODE></P>
 
-    <H4><A name="4.17">4.17</A>) How do I create a column that will
+    <H4><A name="4.16">4.16</A>) How do I create a column that will
     default to the current time?</H4>
 
     <P>Use <I>CURRENT_TIMESTAMP</I>:</P>
@@ -1041,7 +1009,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 </PRE>
 
-    <H4><A name="4.18">4.18</A>) How do I perform an outer join?</H4>
+    <H4><A name="4.17">4.17</A>) How do I perform an outer join?</H4>
 
     <P>PostgreSQL supports outer joins using the SQL standard syntax.
     Here are two examples:</P>
@@ -1081,7 +1049,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     ORDER BY col1
 </PRE>
 
-    <H4><A name="4.19">4.19</A>) How do I perform queries using
+    <H4><A name="4.18">4.18</A>) How do I perform queries using
     multiple databases?</H4>
 
     <P>There is no way to query a database other than the current one.
@@ -1093,7 +1061,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     connections to different databases and merge the results on the
     client side.</P>
 
-    <H4><A name="4.20">4.20</A>) How do I return multiple rows or
+    <H4><A name="4.19">4.19</A>) How do I return multiple rows or
     columns from a function?</H4>
 
     <P>In 7.3, you can easily return multiple rows or columns from a
@@ -1101,7 +1069,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
-    <H4><A name="4.21">4.21</A>) Why can't I reliably create/drop
+    <H4><A name="4.20">4.20</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>
     <P>PL/PgSQL caches function contents, and an unfortunate side effect
     is that if a PL/PgSQL function accesses a temporary table, and that
@@ -1111,7 +1079,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
-    <H4><A name="4.22">4.22</A>) What encryption options are available?
+    <H4><A name="4.21">4.21</A>) What encryption options are available?
     </H4>
     <UL>
     <LI><I>contrib/pgcrypto</I> contains many encryption functions for
