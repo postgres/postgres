@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.37 2001/03/22 04:00:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.38 2001/05/07 19:31:33 petere Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -196,6 +196,7 @@ slashUsage(void)
 	fprintf(fout, " \\c[onnect] [dbname|- [user]]\n"
 			"                connect to new database (currently '%s')\n", PQdb(pset.db));
 	fprintf(fout, " \\C <title>     table title\n");
+	fprintf(fout, " \\cd [<dir>]    change the current working directory\n");
 	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine\n");
 	fprintf(fout, " \\copyright     show PostgreSQL usage and distribution terms\n");
 	fprintf(fout, " \\d <table>     describe table (or view, index, sequence)\n");

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.50 2001/05/06 21:15:51 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.51 2001/05/07 19:31:33 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -11,6 +11,9 @@
 #include <errno.h>
 #include <assert.h>
 #include <ctype.h>
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
 #ifndef WIN32
 #include <sys/types.h>			/* for umask() */
 #include <sys/stat.h>			/* for stat() */
@@ -254,6 +257,45 @@ exec_command(const char *cmd,
 
 		free(opt1);
 		free(opt2);
+	}
+
+	/* \cd */
+	else if (strcmp(cmd, "cd") == 0)
+	{
+		char   *opt = scan_option(&string, OT_NORMAL, NULL);
+		char   *dir;
+
+		if (opt)
+			dir = opt;
+		else
+		{
+#ifndef WIN32
+			struct passwd *pw;
+
+			pw = getpwuid(geteuid());
+			if (!pw)
+			{
+				psql_error("could not get home directory: %s\n", strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			dir = pw->pw_dir;
+#else /* WIN32 */
+			/* On Windows, 'cd' without arguments prints the current
+               directory, so if someone wants to code this here
+               instead... */
+			dir = "/";
+#endif /* WIN32 */
+		}
+
+		if (chdir(dir) == -1)
+		{
+			psql_error("\\%s: could not change directory to '%s': %s\n",
+					   cmd, dir, strerror(errno));
+			success = false;
+		}
+
+		if (opt)
+			free(opt);
 	}
 
 	/* \copy */

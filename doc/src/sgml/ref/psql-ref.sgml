@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.49 2001/05/06 17:38:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.50 2001/05/07 19:31:33 petere Exp $
 Postgres documentation
 -->
 
@@ -215,6 +215,23 @@ testdb=>
 	general solution.
         </para>
         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>\cd</literal> <optional><replaceable>directory</replaceable></optional></term>
+       <listitem>
+        <para>
+	 Change the current working directory to
+	 <replaceable>directory</replaceable>.  Without argument,
+	 change to the current user's home directory.
+        </para>
+
+	<tip>
+	 <para>
+	  To print your current working directory, use <literal>\!pwd</literal>.
+	 </para>
+	</tip>
+       </listitem>
       </varlistentry>
 
       <varlistentry>
