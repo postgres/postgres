@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.18 2002/09/04 20:31:34 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.19 2002/09/10 18:25:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -413,7 +413,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 
 	res = fwrite(buf, 1, len, AH->FH);
 	if (res != len)
-		die_horribly(AH, modulename, "write error in _WriteBuf (%d != %d)\n", res, len);
+		die_horribly(AH, modulename, "write error in _WriteBuf (%lu != %lu)\n", (unsigned long) res, (unsigned long) len);
 
 	ctx->filePos += res;
 	return res;
