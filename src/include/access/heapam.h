@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.16 1997/09/12 04:09:03 momjian Exp $
+ * $Id: heapam.h,v 1.17 1997/09/12 05:58:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,13 +95,12 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
  *		pointer to the structure describing the row and all its fields.
  * ---------------- */
 #define heap_getattr(tup, b, attnum, tupleDesc, isnull) \
-	(AssertMacro((tup) != NULL) ? \
-		((attnum) > (int) (tup)->t_natts) ? \
-			(((isnull) ? (*(isnull) = true) : (char)NULL), (Datum)NULL) : \
-		((attnum) > 0) ? \
-			fastgetattr((tup), (attnum), (tupleDesc), (isnull)) : \
-		(((isnull) ? (*(isnull) = false) : (char)NULL), heap_getsysattr((tup), (b), (attnum))) : \
-	(Datum)NULL)
+	(AssertMacro((tup) != NULL) && \
+	((attnum) > (int) (tup)->t_natts) ? \
+		((isnull && (*(isnull) = true)), (Datum)NULL) : \
+	((attnum) > 0) ? \
+		fastgetattr((tup), (attnum), (tupleDesc), (isnull)) : \
+	((isnull && (*(isnull) = false)), heap_getsysattr((tup), (b), (attnum))))
 
 extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
