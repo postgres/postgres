@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.61 1999/10/06 21:58:12 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.62 1999/11/21 04:16:15 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -293,6 +293,11 @@ else
         echo
         mkdir $PGDATA
         if [ $? -ne 0 ]; then exit 5; fi
+	else
+        echo "Fixing permissions on pre-existing $PGDATA"
+        echo
+		chmod go-rwx $PGDATA
+        if [ $? -ne 0 ]; then exit 5; fi
     fi
     if [ ! -d $PGDATA/base ]; then
         echo "Creating Postgres database system directory $PGDATA/base"
@@ -411,8 +416,11 @@ PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
 echo "Vacuuming template1"
 echo "vacuum" | postgres $PGSQL_OPT template1 > /dev/null
 
+# Create the initial pg_pwd (flat-file copy of pg_shadow)
 echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \
 	postgres $PGSQL_OPT template1 > /dev/null
+# An ordinary COPY will leave the file too loosely protected.
+chmod go-rw $PGDATA/pg_pwd
 
 echo "Creating public pg_user view"
 echo "CREATE TABLE pg_user (		\

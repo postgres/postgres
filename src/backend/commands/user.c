@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.35 1999/09/27 16:44:50 momjian Exp $
+ * $Id: user.c,v 1.36 1999/11/21 04:16:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
+#include "commands/copy.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
@@ -43,7 +44,7 @@ static void CheckPgUserAclNotNull(void);
  *---------------------------------------------------------------------
  */
 static void
-UpdatePgPwdFile(char *sql, CommandDest dest)
+UpdatePgPwdFile(void)
 {
 	char	   *filename,
 			   *tempname;
@@ -60,16 +61,22 @@ UpdatePgPwdFile(char *sql, CommandDest dest)
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
 
 	/*
-	 * Copy the contents of pg_shadow to the pg_pwd ASCII file using a the
-	 * SEPCHAR character as the delimiter between fields.  Then rename the
-	 * file to its final name.
+	 * Copy the contents of pg_shadow to the pg_pwd ASCII file using the
+	 * SEPCHAR character as the delimiter between fields.  Make sure the
+	 * file is created with mode 600 (umask 077).
 	 */
-	snprintf(sql, SQL_LENGTH,
-			 "copy %s to '%s' using delimiters %s",
-			 ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
-	pg_exec_query_dest(sql, dest, false);
+	DoCopy(ShadowRelationName,	/* relname */
+		   false,				/* binary */
+		   false,				/* oids */
+		   false,				/* from */
+		   false,				/* pipe */
+		   tempname,			/* filename */
+		   CRYPT_PWD_FILE_SEPCHAR, /* delim */
+		   0077);				/* fileumask */
+	/*
+	 * And rename the temp file to its final name, deleting the old pg_pwd.
+	 */
 	rename(tempname, filename);
-	pfree((void *) tempname);
 
 	/*
 	 * Create a flag file the postmaster will detect the next time it
@@ -78,6 +85,8 @@ UpdatePgPwdFile(char *sql, CommandDest dest)
 	 */
 	filename = crypt_getpwdreloadfilename();
 	creat(filename, S_IRUSR | S_IWUSR);
+
+	pfree((void *) tempname);
 }
 
 /*---------------------------------------------------------------------
@@ -203,7 +212,7 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	 * we can be sure no other backend will try to write the flat
 	 * file at the same time.
 	 */
-	UpdatePgPwdFile(sql, dest);
+	UpdatePgPwdFile();
 
 	/*
 	 * Now we can clean up.
@@ -313,7 +322,7 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	 * we can be sure no other backend will try to write the flat
 	 * file at the same time.
 	 */
-	UpdatePgPwdFile(sql, dest);
+	UpdatePgPwdFile();
 
 	/*
 	 * Now we can clean up.
@@ -446,7 +455,7 @@ RemoveUser(char *user, CommandDest dest)
 	 * we can be sure no other backend will try to write the flat
 	 * file at the same time.
 	 */
-	UpdatePgPwdFile(sql, dest);
+	UpdatePgPwdFile();
 
 	/*
 	 * Now we can clean up.

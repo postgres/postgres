@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.89 1999/09/27 20:00:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.90 1999/11/21 04:16:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,12 +214,12 @@ CopyDonePeek(FILE *fp, int c, int pickup)
 
 
 /*
- *	 DoCopy executes a the SQL COPY statement.
+ *	 DoCopy executes the SQL COPY statement.
  */
 
 void
 DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
-	   char *filename, char *delim)
+	   char *filename, char *delim, int fileumask)
 {
 /*----------------------------------------------------------------------------
   Either unload or reload contents of class <relname>, depending on <from>.
@@ -233,6 +233,11 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
   more wasteful but more robust and portable text format.
 
   If in the text format, delimit columns with delimiter <delim>.
+
+  <fileumask> is the umask(2) setting to use while creating an output file.
+  This should usually be more liberal than the backend's normal 077 umask,
+  but not always (in particular, "pg_pwd" should be written with 077!).
+  Up through version 6.5, <fileumask> was always 000, which was foolhardy.
 
   When loading in the text format from an input stream (as opposed to
   a file), recognize a "." on a line by itself as EOF.	Also recognize
@@ -316,7 +321,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			{
 				mode_t		oumask;		/* Pre-existing umask value */
 
-				oumask = umask((mode_t) 0);
+				oumask = umask((mode_t) fileumask);
 #ifndef __CYGWIN32__
 				fp = AllocateFile(filename, "w");
 #else
