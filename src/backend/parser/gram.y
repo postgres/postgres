@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.80 1999/05/21 04:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.81 1999/05/21 15:47:13 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5360,13 +5360,15 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 			char *match_least = palloc(strlen(n->val.val.str)+2);
 			char *match_most = palloc(strlen(n->val.val.str)+2);
 			int pos, match_pos=0;
-			bool found_pipe = false;
+			bool found_special = false;
 
 			for (pos = 1; n->val.val.str[pos]; pos++)
 			{
-				if (n->val.val.str[pos] == '|')
+				if (n->val.val.str[pos] == '|' ||
+				if (n->val.val.str[pos] == '{' ||
+				if (n->val.val.str[pos] == '}')
 				{
-					found_pipe = true;
+					found_special = true;
 					break;
 				}
 		     	if (n->val.val.str[pos] == '\\')
@@ -5374,7 +5376,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 			}
 
 			/* skip leading ^ */
-			if (!found_pipe)
+			if (!found_special)
 			{
 				for (pos = 1; n->val.val.str[pos]; pos++)
 				{
