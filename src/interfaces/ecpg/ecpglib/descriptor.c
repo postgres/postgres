@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.1 2003/03/16 10:42:53 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.2 2003/05/30 13:22:02 meskes Exp $
  */
 
 #include "postgres_fe.h"
@@ -446,4 +446,11 @@ ECPGdescriptor_lvalue(int line, const char *descriptor)
 
 	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor);
 	return NULL;
+}
+
+bool
+ECPGdescribe(int line, bool input, const char *statement, ...)
+{
+	ECPGlog("ECPGdescribe called on line %d for %s in %s\n", line, (input) ? "input" : "output", statement);
+	return false;
 }

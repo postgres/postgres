@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.226 2003/05/30 08:39:01 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.227 2003/05/30 13:22:02 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -438,18 +438,17 @@ create_questionmarks(char *name, bool array)
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>	struct_union_type s_struct_union vt_declarations 
 %type  <str>	var_declaration type_declaration single_vt_declaration
-%type  <str>	ECPGSetAutocommit on_off variable_declarations
+%type  <str>	ECPGSetAutocommit on_off variable_declarations ECPGDescribe
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_output
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName variablelist ECPGColLabelCommon c_variable
-%type  <str>	inf_val_list inf_col_list using_descriptor ECPGDescribe
-%type  <str>	into_descriptor 
+%type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 
 %type  <struct_union> s_struct_union_symbol
 
-%type  <descriptor> ECPGGetDescriptor
+%type  <descriptor> ECPGGetDescriptor 
 
 %type  <type_enum> simple_type signed_type unsigned_type
 
@@ -617,10 +616,12 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		}
 		| ECPGDescribe
 		{
-			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for describe statement.\n");
-
-			fprintf(yyout, "{ /* ECPGdescribe(__LINE__, %s) */;", $1);
+			fprintf(yyout, "{ ECPGdescribe(__LINE__, %s,", $1);
+			dump_variables(argsresult, 1);
+			fputs("ECPGt_EORT);", yyout);
+			fprintf(yyout, "}");
+			output_line_number();
+				
 			/* whenever_action(2); */
 			free($1);
 		}
@@ -5186,18 +5187,18 @@ ECPGPrepare: PREPARE name FROM execstring
  */
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor 
 	{ 
-		mmerror(PARSE_ERROR, ET_ERROR, "using unsupported describe statement.\n");
-		$$ = cat_str(3, make_str("input"), $3, $4);
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
+		$$ = cat_str(3, make_str("1, ECPGprepared_statement(\""), $3, make_str("\")"));
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
-		mmerror(PARSE_ERROR, ET_ERROR, "using unsupported describe statement.\n");
-		$$ = cat_str(3, $2, $3, $4);
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
+		$$ = cat_str(3, make_str("0, ECPGprepared_statement(\""), $3, make_str("\")"));
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
-		mmerror(PARSE_ERROR, ET_ERROR, "using unsupported describe statement.\n");
-		$$ = cat_str(3, $2, $3, $4);
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
+		$$ = cat_str(3, make_str("0, ECPGprepared_statement(\""), $3, make_str("\")"));
 	}
 	;
 

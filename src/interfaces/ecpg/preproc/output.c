@@ -15,7 +15,7 @@ output_simple_statement(char *cmd)
 	int			i,
 				j = strlen(cmd);;
 
-	/* do this char by char as we have to filter '\"' */
+	/* output this char by char as we have to filter '\"' */
 	for (i = 0; i < j; i++)
 	{
 		if (cmd[i] != '"')
@@ -111,7 +111,7 @@ output_statement(char *stmt, int mode, char *con)
 
 	fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", con ? con : "NULL");
 
-	/* do this char by char as we have to filter '\"' */
+	/* output this char by char as we have to filter '\"' */
 	for (i = 0; i < j; i++)
 	{
 		if (stmt[i] != '"')
