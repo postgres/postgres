@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.116 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.117 2002/10/03 19:19:09 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -172,11 +172,14 @@ InitCommunication(void)
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
 		/*
-		 * we're running a postgres backend by itself with no front end or
-		 * postmaster.	Create private "shmem" and semaphores.	Setting
-		 * MaxBackends = 16 is arbitrary.
+		 * We're running a postgres bootstrap process or a standalone backend.
+		 * Create private "shmem" and semaphores.  Force MaxBackends to 1 so
+		 * that we don't allocate more resources than necessary.
 		 */
-		CreateSharedMemoryAndSemaphores(true, 16, 0);
+		SetConfigOption("max_connections", "1",
+						PGC_POSTMASTER, PGC_S_OVERRIDE);
+
+		CreateSharedMemoryAndSemaphores(true, MaxBackends, 0);
 	}
 }
 
