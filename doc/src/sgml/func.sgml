@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.114 2002/08/21 05:25:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.115 2002/08/21 16:08:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -686,7 +686,7 @@ PostgreSQL documentation
 
       <row>
        <entry><function>trunc</function>(<type>numeric</type>,
-        <parameter>r</parameter>rameter> <type>integer</type>)</entry>
+        <parameter>r</parameter> <type>integer</type>)</entry>
        <entry><type>numeric</type></entry>
        <entry>truncate to <parameter>s</parameter> decimal places</entry>
        <entry><literal>trunc(42.4382, 2)</literal></entry>
@@ -743,7 +743,7 @@ PostgreSQL documentation
        <entry><function>atan2</function>(<replaceable>x</replaceable>,
         <replaceable>y</replaceable>)</entry>
        <entry>inverse tangent of
-        <replaceable>a</replaceable>aceable>/<replaceable>x</replaceable></entry>
+        <replaceable>a</replaceable>/<replaceable>x</replaceable></entry>
       </row>
 
       <row>
@@ -1884,7 +1884,7 @@ PostgreSQL documentation
 
       <row>
        <entry><function>to_ascii</function>(<type>text</type>
-        <optional>ptional>, <parameter>encoding</parameter></optional>)</entry>
+        <optional>, <parameter>encoding</parameter></optional>)</entry>
        <entry><type>text</type></entry>
        <entry>Converts text from multibyte encoding to <acronym>ASCII</acronym>.</entry>
        <entry><literal>to_ascii('Karel')</literal></entry>
@@ -2737,12 +2737,12 @@ PostgreSQL documentation
        </row>
        <row>
 	<entry><literal>AM</literal> or <literal>A.M.</literal> or
-<literal>li</literal>literal> or <literal>P.M.</literal></entry>
+<literal>li</literal> or <literal>P.M.</literal></entry>
 	<entry>meridian indicator (upper case)</entry>
        </row>
        <row>
 	<entry><literal>am</literal> or <literal>a.m.</literal> or
-<literal>li</literal>literal> or <literal>p.m.</literal></entry>
+<literal>li</literal> or <literal>p.m.</literal></entry>
 	<entry>meridian indicator (lower case)</entry>
        </row>
        <row>
@@ -2767,12 +2767,12 @@ PostgreSQL documentation
        </row>
        <row>
 	<entry><literal>BC</literal> or <literal>B.C.</literal> or
-<literal>li</literal>literal> or <literal>A.D.</literal></entry>
+<literal>li</literal> or <literal>A.D.</literal></entry>
 	<entry>era indicator (upper case)</entry>
        </row>
        <row>
 	<entry><literal>bc</literal> or <literal>b.c.</literal> or
-<literal>li</literal>literal> or <literal>a.d.</literal></entry>
+<literal>li</literal> or <literal>a.d.</literal></entry>
 	<entry>era indicator (lower case)</entry>
        </row>
        <row>
@@ -5871,7 +5871,7 @@ SELECT col1 FROM tab1
 
 <synopsis>
 <replaceable>expression</replaceable> IN
- <replaceable>ble>value</replaceable><optional>, ...</optional>)
+ <replaceable>value</replaceable><optional>, ...</optional>)
 </synopsis>
 
   <para>
@@ -5932,7 +5932,7 @@ OR
 
 <synopsis>
 (<replaceable>expression</replaceable>,
-<replaceable>ble>expres</replaceable><optional>nal>,</optional>nal>)
+<replaceable>expres</replaceable><optional>,</optional>)
     IN (<replaceable>subquery</replaceable>)
 </synopsis>
 
@@ -5960,7 +5960,7 @@ OR
 
 <synopsis>
 <replaceable>expression</replaceable> NOT IN
- <replaceable>ble>value</replaceable><optional>, ...</optional>)
+ <replaceable>value</replaceable><optional>, ...</optional>)
 </synopsis>
 
   <para>
@@ -6024,7 +6024,7 @@ AND
 
 <synopsis>
 (<replaceable>expression</replaceable>,
-<replaceable>ble>expres</replaceable><optional>nal>,</optional>nal>)
+<replaceable>expres</replaceable><optional>,</optional>)
     NOT IN (<replaceable>subquery</replaceable>)
 </synopsis>
 
@@ -6052,9 +6052,9 @@ AND
 
 <synopsis>
 <replaceable>expression</replaceable>
-<replaceable>ble>oper</replaceable>ble> ANY (<replaceable>subquery</replaceable>)
+<replaceable>oper</replaceable> ANY (<replaceable>subquery</replaceable>)
 <replaceable>expression</replaceable>
-<replaceable>ble>oper</replaceable>ble> SOME (<replaceable>subquery</replaceable>)
+<replaceable>oper</replaceable> SOME (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
@@ -6088,9 +6088,9 @@ AND
 
 <synopsis>
 (<replaceable>expression</replaceable>,
-<replaceable>ble>expres</replaceable><optional>nal>,</optional>optiona<replaceable>aceable></replaceable>aceable> ANY (<replaceable>subquery</replaceable>)
+<replaceable>expres</replaceable><optional>,</optional>optiona<replaceable></replaceable> ANY (<replaceable>subquery</replaceable>)
 (<replaceable>expression</replaceable>,
-<replaceable>ble>expres</replaceable><optional>nal>,</optional>optiona<replaceable>aceable></replaceable>aceable> SOME (<replaceable>subquery</replaceable>)
+<replaceable>expres</replaceable><optional>,</optional>optiona<replaceable></replaceable> SOME (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
@@ -6121,7 +6121,7 @@ AND
 
 <synopsis>
 <replaceable>expression</replaceable>
-<replaceable>ble>oper</replaceable>ble> ALL (<replaceable>subquery</replaceable>)
+<replaceable>oper</replaceable> ALL (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
