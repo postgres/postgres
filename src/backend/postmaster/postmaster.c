@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.16 1996/10/24 07:55:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.17 1996/10/28 09:05:29 bryanh Exp $
  *
  * NOTES
  *
@@ -598,20 +598,23 @@ ConnStartup(Port *port, int *status,
     (void) strncpy(namebuf, sp.user, NAMEDATALEN);
     namebuf[NAMEDATALEN] = '\0';
     if (!namebuf[0]) {
-        snprintf(errormsg, errormsg_len, 
-                 "No Postgres username specified in startup packet.");
+        strncpy(errormsg, 
+                "No Postgres username specified in startup packet.",
+                errormsg_len);
         *status = STATUS_ERROR;
     } else {
         if (be_recvauth(msgType, port, namebuf, &sp) != STATUS_OK) {
-            snprintf(errormsg, errormsg_len, 
-                     "Failed to authenticate client as Postgres user '%s' "
-                     "using authentication scheme %d.",
-                     namebuf, msgType);
+            char buffer[200 + sizeof(namebuf)];
+            sprintf(buffer, 
+                    "Failed to authenticate client as Postgres user '%s' "
+                    "using authentication scheme %d.",
+                    namebuf, msgType);
+            strncpy(errormsg, buffer, errormsg_len);
             *status = STATUS_ERROR;
         } else {
             if (BackendStartup(&sp, port, &pid) != STATUS_OK) {
-                snprintf(errormsg, errormsg_len, 
-                         "Startup (fork) of backend failed.");
+                strncpy(errormsg, "Startup (fork) of backend failed.",
+                        errormsg_len);
                 *status = STATUS_ERROR;
             } else {
                 errormsg[0] = '\0';  /* just for robustness */
