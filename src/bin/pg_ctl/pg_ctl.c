@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.49 2004/12/06 01:09:20 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.50 2004/12/21 17:38:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,7 +582,10 @@ do_start(void)
 		print_msg(_("waiting for postmaster to start..."));
 
 		if (test_postmaster_connection() == false)
+		{
 			printf(_("could not start postmaster\n"));
+			exit(1);
+		}
 		else
 		{
 			print_msg(_(" done\n"));
