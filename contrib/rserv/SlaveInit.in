@@ -38,7 +38,7 @@ sub RollbackAndQuit {
     exit (-1);
 }
 
-print "Connecting to $sinfo\n";
+print("Connecting to $sinfo\n") if ($debug || $verbose);
 my $conn = Pg::connectdb($sinfo);
 if ($conn->status != PGRES_CONNECTION_OK) {
     print STDERR "Failed opening $sinfo\n";

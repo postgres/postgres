@@ -34,7 +34,7 @@ $sinfo = "$sinfo host=$opt_host" if (defined($opt_host));
 $sinfo = "$sinfo user=$opt_user" if (defined($opt_user));
 $sinfo = "$sinfo password=$opt_password" if (defined($opt_password));
 
-if ($verbose) { print "Connecting to '$sinfo'\n" };
+print("Connecting to '$sinfo'\n") if ($debug || $verbose);
 my $conn = Pg::connectdb($sinfo);
 
 $res = GetSyncID($conn);

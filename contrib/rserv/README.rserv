@@ -48,7 +48,12 @@ Replicate masterdb slavedb
 
 GetSyncID [--noverbose] slavedb
   returns the last syncid the specified slave has seen. May be used
-  in conjunction with CleanLog using the --noverbose option.
+  in conjunction with SyncSyncID and CleanLog using the --noverbose
+  option.
+
+MasterSync masterdb syncid
+  registers a syncid with the specified master database. Used to
+  propagate replication success back to the master database.
 
 CleanLog masterdb syncid
   removes obsolete entries in the master database replication log

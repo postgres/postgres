@@ -13,8 +13,9 @@ OBJS	= $(NAME).o
 DOCS	= README.$(NAME)
 SQLS	= master.sql slave.sql
 TCLS	= RservTest
-PERLS	= MasterInit SlaveInit MasterAddTable SlaveAddTable Replicate CleanLog
-PERLS	+= PrepareSnapshot ApplySnapshot GetSyncID SyncSyncID
+PERLS	= MasterInit MasterAddTable Replicate MasterSync CleanLog
+PERLS	+= SlaveInit SlaveAddTable GetSyncID
+PERLS	+= PrepareSnapshot ApplySnapshot
 LIBS	= RServ.pm
 SCRIPTS	= InitRservTest
 MODS	= $(OBJS:.o=$(DLSUFFIX))
