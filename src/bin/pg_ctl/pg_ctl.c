@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.37 2004/10/15 04:32:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.38 2004/10/15 04:54:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,7 +501,7 @@ do_start(void)
 			{
 				char	   *arg1;
 
-				arg1 = strchr(optline, '\'');
+				arg1 = strchr(optline, *SYSTEMQUOTE);
 				if (arg1 == NULL || arg1 == optline)
 					post_opts = "";
 				else
