@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.34 1999/02/13 23:19:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.35 1999/02/15 16:29:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 /*
  *		regprocin		- converts "proname" or "proid" to proid
  *
- *		proid of NULL signifies unknown
+ *		proid of '-' signifies unknown, for consistency with regprocout
  */
 int32
 regprocin(char *pro_name_or_oid)
@@ -46,6 +46,8 @@ regprocin(char *pro_name_or_oid)
 	RegProcedure	result = InvalidOid;
 
 	if (pro_name_or_oid == NULL)
+		return InvalidOid;
+	if (pro_name_or_oid[0] == '-' && pro_name_or_oid[1] == '\0')
 		return InvalidOid;
 
 	if (!IsBootstrapProcessingMode())
