@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.20 2004/06/11 17:09:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.21 2004/07/10 22:58:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,21 +266,21 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 	bindtextdomain(app, path);
 	textdomain(app);
 
-	if (!getenv("PGLOCALEDIR"))
+	if (getenv("PGLOCALEDIR") == NULL)
 	{
 		/* set for libpq to use */
-		sprintf(env_path, "PGLOCALEDIR=%s", path);
-		putenv(env_path);
+		snprintf(env_path, sizeof(env_path), "PGLOCALEDIR=%s", path);
+		putenv(strdup(env_path));
 	}
 #endif
 
-	if (!getenv("PGSYSCONFDIR"))
+	if (getenv("PGSYSCONFDIR") == NULL)
 	{
 		get_etc_path(my_exec_path, path);
 	
 		/* set for libpq to use */
-		sprintf(env_path, "PGSYSCONFDIR=%s", path);
-		putenv(env_path);
+		snprintf(env_path, sizeof(env_path), "PGSYSCONFDIR=%s", path);
+		putenv(strdup(env_path));
 	}
 }
 
@@ -328,11 +328,12 @@ relative_path(const char *bin_path, const char *other_path)
 		/* Win32 filesystem is case insensitive */
 		if ((!IS_DIR_SEP(*bin_path) || !IS_DIR_SEP(*other_path)) &&
 #ifndef WIN32
-			*bin_path != *other_path)
+			*bin_path != *other_path
 #else
-			toupper((unsigned char) *bin_path) != toupper((unsigned char)*other_path))
+			toupper((unsigned char) *bin_path) != toupper((unsigned char)*other_path)
 #endif
-				break;
+			)
+			break;
 
 		if (IS_DIR_SEP(*other_path))
 			other_sep = other_path + 1;		/* past separator */
@@ -377,7 +378,6 @@ trim_directory(char *path)
 	for (; !IS_DIR_SEP(*p) && p > path; p--)
 		;
 	*p = '\0';
-	return;
 }
 
 
@@ -392,6 +392,6 @@ trim_trailing_separator(char *path)
 	
 	/* trim off trailing slashes */
 	if (p > path)
-		for (p--; p >= path && IS_DIR_SEP(*p); p--)
+		for (p--; p > path && IS_DIR_SEP(*p); p--)
 			*p = '\0';
 }
