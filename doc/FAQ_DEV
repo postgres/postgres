@@ -1,9 +1,9 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jul 10 00:38:09 EDT 1999
+   Last updated: Tue Dec 21 12:30:20 EST 1999
    
-   Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
+   Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at the
    postgreSQL Web site, http://PostgreSQL.org.
@@ -48,6 +48,8 @@ s
         make_mkid               make mkid ID files
         mkldexport              create AIX exports file
         pgindent                indents C source files
+        pginclude               scripts for adding/removing include files
+        unused_oids             in pgsql/src/include/catalog
 
    Let me note some of these. If you point your browser at the
    file:/usr/local/src/pgsql/src/tools/backend/index.html directory, you
@@ -74,15 +76,51 @@ s
    make_diff has tools to create patch diff files that can be applied to
    the distribution.
    
-   pgindent will format source files to match our standard format, which
-   has four-space tabs, and an indenting format specified by flags to the
-   your operating system's utility indent.
+   Our standard format is to indent each code level with one tab, where
+   each tab is four spaces. You will need to set your editor to display
+   tabs as four spaces:
+        vi in ~/.exrc:
+                        set tabstop=4
+                set sw=4
+        more:
+                more -x4
+        less:
+                less -x4
+        emacs:
+                M-x set-variable tab-width
+            or
+                ; Cmd to set tab stops &etc for working with PostgreSQL code
+                (defun pgsql-mode ()
+                  "Set PostgreSQL C indenting conventions in current buffer."
+                  (interactive)
+                  (c-mode)                            ; necessary to make c-set
+-offset local!
+                  (setq tab-width 4)                  ; already buffer-local
+                  ; (setq comment-column 48)          ; already buffer-local
+                  (c-set-style "bsd")
+                  (c-set-offset 'case-label '+)
+                )
+            or
+                /*
+                 * Local variables:
+                 *  tab-width: 4
+                 *  c-indent-level: 4
+                 *  c-basic-offset: 4
+                 * End:
+                 */
+
+   pgindent will the format code by specifying flags to your operating
+   system's utility indent.
    
    pgindent is run on all source files just before each beta test period.
    It auto-formats all source files to make them consistent. Comment
    blocks that need specific line breaks should be formatted as block
    comments, where the comment starts as /*------. These comments will
-   not be reformatted in any way.
+   not be reformatted in any way. pginclude contains scripts used to add
+   needed #include's to include files, and removed unneeded #include's.
+   When adding system types, you will need to assign oids to them. There
+   is also a script called unused_oids in pgsql/src/include/catalog that
+   shows the unused oids.
    
   2) What books are good for developers?
   
@@ -362,5 +400,6 @@ s
    
    Then, check src/include/port and add your new OS file, with
    appropriate values. Hopefully, there is already locking code in
-   src/include/storage/s_lock.h for your CPU. There is a backend/port
-   directory if you need special files for your OS.
+   src/include/storage/s_lock.h for your CPU. There is also a
+   src/makefiles directory for port-specific Makefile handling. There is
+   a backend/port directory if you need special files for your OS.
