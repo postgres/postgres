@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.13 2000/09/29 17:17:31 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.14 2000/10/02 22:21:21 petere Exp $
 #
 
 subdir =
@@ -29,7 +29,9 @@ distclean maintainer-clean:
 	-$(MAKE) -C src $@
 	-rm -f config.cache config.log config.status GNUmakefile
 
-check installcheck: all
+check: all
+
+check installcheck:
 	$(MAKE) -C src/test $@
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
