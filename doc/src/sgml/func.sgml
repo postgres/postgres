@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.79 2001/11/17 22:20:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.80 2001/11/18 21:17:10 tgl Exp $
 Postgres documentation
 -->
 
@@ -1228,8 +1228,19 @@ Postgres documentation
    <para>
     Note that the backslash already has a special meaning in string
     literals, so to write a pattern constant that contains a backslash
-    you must write two backslashes in the query.  You can avoid this by
-    selecting a different escape character with <literal>ESCAPE</literal>.
+    you must write two backslashes in the query.  Thus, writing a pattern
+    that actually matches a literal backslash means writing four backslashes
+    in the query.  You can avoid this by selecting a different escape
+    character with <literal>ESCAPE</literal>; then backslash isn't special
+    to <function>LIKE</> anymore. (But it's still special to the string
+    literal parser, so you still need two of them.)
+   </para>
+
+   <para>
+    It's also possible to select no escape character by writing
+    <literal>ESCAPE ''</literal>.  In this case there is no way to
+    turn off the special meaning of underscore and percent signs in
+    the pattern.
    </para>
 
    <para>
@@ -1245,7 +1256,7 @@ Postgres documentation
     <function>ILIKE</function>.  There are also
     <literal>!~~</literal> and <literal>!~~*</literal> operators that
     represent <function>NOT LIKE</function> and <function>NOT
-    ILIKE</function>.  All of these are also
+    ILIKE</function>.  All of these operators are
     <productname>Postgres</productname>-specific.
    </para>
   </sect2>
