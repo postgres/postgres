@@ -165,7 +165,6 @@ WHERE o.oprleft = t.oid and ( o.oprright = t.oid or o.oprright=tq.oid )
 -- SELECT * from _int_ops_tmp;
 
 -- using the tmp table, generate the amop entries 
--- note: these operators are all lossy
 
 -- _int_overlap
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
@@ -211,14 +210,6 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist__int_ops' 
       and c.oprname = '@@';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 20, false, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops' 
-      and c.oprname = '~~';
 
 DROP TABLE _int_ops_tmp;
 
@@ -367,13 +358,6 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist__intbig_ops' 
       and c.oprname = '@@';
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 20, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops' 
-      and c.oprname = '~~';
 
 DROP TABLE _int_ops_tmp;
 
