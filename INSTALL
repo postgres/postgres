@@ -16,13 +16,16 @@ list.  Version 1 (through 1.01) was developed by Jolly Chen and Andrew
 Yu.
 
 The installation notes below assume the following (except where noted):
-  - Commands were tested on RedHat Linux version 4.0 using the bash
-    shell.  Except where noted, they will probably work on most
-    systems.  USE COMMON SENSE before typing in these commands.
-    Commands like ps and tar vary wildly on what options you should
-    use on each platform.
-  - Defaults are assumed.
+  - Commands are Unix-compatible. See note below.
+  - Defaults are used except where noted.
   - User postgres is the postgres superuser.
+  - The source path is /usr/src/pgsql (other paths are possible).
+  - The runtime path is /usr/local/pgsql (other paths are possible).
+
+Commands were tested on RedHat Linux version 4.0 using the bash shell.
+Except where noted, they will probably work on most systems. Commands
+like ps and tar vary wildly on what options you should use on each
+platform. USE COMMON SENSE before typing in these commands.
 
 Our Makefiles require GNU make (called gmake in this document) and
 also assume that "install" accepts BSD options. The INSTALL
@@ -45,7 +48,7 @@ PostgreSQL has been tested on the following platforms:
    hpux           HP PA-RISC on HP-UX 9.0
    i386_solaris   i386 Solaris
    irix5          SGI MIPS on IRIX 5.3
-   linux          Intel x86 on Linux 1.2 and Linux ELF
+   linux          Intel x86 on Linux 2.0 and Linux ELF
                   (For non-ELF Linux, see LINUX_ELF below).
    sparc_solaris  SUN SPARC on Solaris 2.4
    sunos4         SUN SPARC on SunOS 4.1.3
@@ -160,7 +163,10 @@ To upgrade to PostgreSQL v6.1 do the following:
      else) then you will also want to move this directory in the same
      manner.
 
-  9) Make new source and install directories.  Type
+  9) Make new source and install directories.  The actual paths can be
+     different for your installation; be consistant with your configuration
+     in step (11).
+     Type
         su
         cd /usr/src
         mkdir pgsql
@@ -174,7 +180,9 @@ To upgrade to PostgreSQL v6.1 do the following:
         cd /usr/src/pgsql
         gunzip -c ~/postgresql-v6.1.tar.gz | tar xvf -
 
- 11) Configure the source code for your system.  Type
+ 11) Configure the source code for your system.  It is this step at which
+     you can specify your actual source path and installation paths for
+     the build process (see the --prefix option below).  Type
         cd /usr/src/pgsql/src
         ./configure
 
@@ -236,8 +244,9 @@ To upgrade to PostgreSQL v6.1 do the following:
 
  12) Compile the program.  Type
         cd /usr/src/pgsql/src
-        gmake all &> make.log &
+        gmake all >& make.log &
         tail -f make.log
+
      The last line displayed will hopefully be "All of PostgreSQL is
      successfully made. Ready to install."  At this point, or earlier
      if you wish, type control-C to get out of tail.  (If you have
@@ -258,8 +267,9 @@ To upgrade to PostgreSQL v6.1 do the following:
 
  13) Install the program.  Type
         cd /usr/src/pgsql/src
-        gmake install &> make.install.log &
+        gmake install >& make.install.log &
         tail -f make.install.log
+
      The last line displayed will be "gmake[1]: Leaving directory
      `/usr/src/pgsql/src/man'".  At this point, or earlier if you wish,
      type control-C to get out of tail.
@@ -320,12 +330,14 @@ To upgrade to PostgreSQL v6.1 do the following:
      However, we think skipping the tests is a BAD idea!
 
      Start the postmaster in preparation for the regression tests.  First,
-     set the timezone for Berkley, California.  On some systems you may do
+     set the timezone for Berkeley, California.  On some systems you may do
      this by setting environment variable TZ.  I.e., using bash, type
-        export TZ=PST8PDT7,M04.01.0,M10.0503
+        export TZ=PST8PDT7,M04.01.0,M10.05.03
+
      Now start the postmaster daemon running in the background by typing
         cd
         nohup postmaster > regress.log 2>&1 &
+
      Run postmaster from your postgres super user account (typically
      account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
 
@@ -340,31 +352,40 @@ To upgrade to PostgreSQL v6.1 do the following:
 
      You should get on the screen (and also written to file ./regress.out)
      a series of statements stating which tests passed and which tests
-     failed.  Please note that it is normal for some of the tests to
-     "fail".
-
-     For the tests that failed, i.e. if float8 failed, type something like:
+     failed.  Please note that it can be normal for some of the tests to
+     "fail".  For the failed tests, use diff to compare the files in
+     directories ./results and ./expected.  If float8 failed, type
+     something like:
         cd /usr/src/pgsql/src/test/regress
         diff -w expected/float8.out results
-     Now do some intelligent interpretation of what you see before
-     deciding if you have detected a bug in PostgreSQL as it compiled on
-     you platform.
 
-     For example.  On a SPARC/Linux-elf platform using the 970516 beta
-     version of PostgreSQL v6.1 the following tests "failed".  float8
-     and geometry "failed" due to minor precision differences in floating
-     point numbers.  timespan and horology had different values from the
-     expected "14 secs ago".  (This may be a real bug.  It may simply be
-     problems with convincing the back end what timezone and time to
-     use.)  datetime, abstime and tinterval failed because it used GMT
-     where it should have used PST and PDT.  (Same comment.)  select_views
-     failed for unknown reasons.  Conclusion?  There may be some real
-     bugs exhibited here but will they effect what you intend to use
-     PostgreSQL for?  (Note:  Most of these bugs also occur on the
-     i86/Linux platform.  Also note that there will be significant
-     changes made to the date and time types immediately after the
-     v6.1 release so if you do need these functions, monitor the HACKERS
-     and PORTS mailing lists to see what is going on.)
+    "Failed" tests may have failed due to slightly different error messages,
+     output formatting, failure to set the timezone correctly for your
+     platform, etc.  "Failures" of this type do not indicate a problem with
+     PostgreSQL.
+
+     Here is an example from a i686/Linux-ELF platform (this is the platform
+     on which most of the regression tests were generated). float8 failed
+     on exponentiation and logarithmic operations due to known differences
+     in error handling for those math functions between this platform
+     and the original Sun (?) Postgres v4.2 development environment.
+
+     Here is an example from a SPARC/Linux-ELF platform (note that this is
+     for an "unsupported" platform).  Using the 970516 beta version of
+     PostgreSQL v6.1 the following tests "failed". float8 and geometry
+     "failed" due to minor precision differences in floating point numbers.
+     timespan and horology had different values from the expected
+     "14 secs ago". datetime, abstime and tinterval had "GMT" for the time
+     zone rather than "PST" or "PDT". These differences were due to a
+     mis-typed string for the TZ environment variable from step (18).
+     select_views failed for unknown reasons.
+
+     Conclusion?  If you do see failures, try to understand the nature of
+     the differences and then decide if those differences will affect your
+     intended use of PostgreSQL.  However, keep in mind that this is likely
+     to be the most solid release of PostgreSQL to date, incorporating many
+     bug fixes from v6.0, and that previous versions of PostgreSQL has been
+     in use successfully for some time now.
 
      After running the tests, type
         cd /usr/src/pgsql/src/test/regress
@@ -508,8 +529,9 @@ Create the database foo:
 template1=> CREATE DATABASE FOO;
 INSERT 773248
 
-(Don't ever forget those SQL semicolons.  Psql won't execute anything until it
-sees the semicolon.)
+(Get in the habit of including those SQL semicolons.  Psql won't execute
+anything until it sees the semicolon or a "\g" and the semicolon is required
+to delimit multiple statements.)
 
 template1=> \c foo
 closing connection to database: template1
@@ -517,10 +539,10 @@ connecting to new database: foo
 
 (\ commands aren't SQL, so no semicolon.  Use \? to see all the \ commands.)
 
-template1=> CREATE TABLE bar (column1 int4, column2 char16);
+foo=> CREATE TABLE bar (column1 int4, column2 char16);
 CREATE
 
-template1=> \d bar
+foo=> \d bar
 
 ...
 
@@ -553,25 +575,31 @@ Ultrix4.x:
            s2k-ftp.CS.Berkeley.EDU:pub/personal/andrew/libdl-1.1.tar.Z
 
 Linux:
-        The linux port defaults to the ELF binary format. (Note that if you're
-        using ELF, you don't need dld because you'll be using the dl library
-        that comes with Linux ELF instead.)
+        The linux-elf port installs cleanly. If you are using an
+        i486 processor or higher, you can edit template/linux-elf
+        to include "-m486" as a compiler option. configure does not
+        detect that sigsetjmp() is available, but you can edit
+        include/config.h after running configure and before running
+        make to include "#define HAVE_SIGSETJMP 1". Note that I have
+        not seen any difference in PostgreSQL behavior either way.
+                                (Thomas G. Lockhart
+                                <Thomas.Lockhart@jpl.nasa.gov> 97/05/17)
 
-        To compile on non-ELF Linux, comment out the LINUX_ELF line in
-        src/mk/port/postgres.mk.linux. Also, the dld library MUST be obtained
-        and installed on the system. It enables dynamic link loading capability
-        to the postgres port. The dld library can be obtained from the sunsite
-        linux distributions. The current name is dld-3.2.5.
+        For non-ELF Linux, the dld library MUST be obtained and installed on
+        the system. It enables dynamic link loading capability to the postgres
+        port. The dld library can be obtained from the sunsite linux
+        distributions. The current name is dld-3.2.5.
                                 (Jalon Q. Zimmerman
                                 <sneaker@powergrid.electriciti.com> 5/11/95)
 
-        To compile with flex, you need a recent version (2.5.2 or
+        To compile with flex, you need a recent version (v2.5.2 or v2.5.4 or
         later). Otherwise, you will get a 'yy_flush_buffer' undefined error.
         Note, however, that flex v2.5.3 has a bug. See the FAQs.
 
 BSD/OS:
-        For BSD/OS 2.0 and 2.01, you will need to get flex version 2.5.2
-        as well as the GNU dld library.  Flex version 2.5.3 has a known bug.
+        For BSD/OS 2.0 and 2.01, you will need to get flex version 2.5.2 or
+        flex version 2.5.4 as well as the GNU dld library.
+        Flex version 2.5.3 has a known bug on all platforms.
 
 NeXT:
         The NeXT port was supplied by Tom R. Hageman <tom@basil.icce.rug.nl>.
@@ -585,8 +613,8 @@ SPARC Linux-elf:
         There was not time to finish adding support for this in the v6.1
         release.  However, if you are running RedHat Linux v4.0 on a
         SPARC platform then install flex v2.5.4 and tell configure you
-        have a Linux-elf platform.  Between configuring and compiling
-        PostgreSQL, edit the following files:
+        have a "linux-elf" platform.  After running "configure" and before
+        compiling PostgreSQL, make the following changes:
           1) Edit src/GNUmakefile to comment out the call to lexflex and
              the if-then-else test that follows it.  (This may not be
              necessary by the time v6.1 gets released.)
@@ -602,8 +630,7 @@ SPARC Linux-elf:
                 #endif
                 */
                 #define BYTE_ORDER LITTLE_ENDIAN 
-        If you want to know the reasonilng behind the above instructions
-        then look in ftp://ftp.postgresql.org/pub/majordomo/ports for a
-        May 16, 1997 mail message called "regression tests on a
+        For more details, look in ftp://ftp.postgresql.org/pub/majordomo/ports
+        for a May 16, 1997 mail message called "regression tests on a
         SPARC/Linux platform".
 
