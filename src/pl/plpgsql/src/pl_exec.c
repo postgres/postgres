@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.55 2002/03/25 07:41:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.56 2002/06/24 23:12:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -969,9 +969,11 @@ exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 	else
 	{
 		/*
-		 * PERFORM: evaluate query and discard result.	This cannot share
-		 * code with the assignment case since we do not wish to
-		 * constraint the discarded result to be only one row/column.
+		 * PERFORM: evaluate query and discard result (but set FOUND
+		 * depending on whether at least one row was returned).
+		 *
+		 * This cannot share code with the assignment case since we do not
+		 * wish to constrain the discarded result to be only one row/column.
 		 */
 		int			rc;
 
@@ -984,6 +986,8 @@ exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 		rc = exec_run_select(estate, expr, 0, NULL);
 		if (rc != SPI_OK_SELECT)
 			elog(ERROR, "query \"%s\" didn't return data", expr->query);
+
+		exec_set_found(estate, (estate->eval_processed != 0));
 
 		exec_eval_cleanup(estate);
 	}

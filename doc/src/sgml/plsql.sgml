@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.59 2002/06/15 19:34:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.60 2002/06/24 23:12:06 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -903,7 +903,9 @@ PERFORM <replaceable>query</replaceable>;
      This executes a <literal>SELECT</literal>
      <replaceable>query</replaceable> and discards the
      result. <application>PL/pgSQL</application> variables are substituted
-     in the query as usual.
+     in the query as usual.  Also, the special variable FOUND is set to
+     true if the query produced at least one row, or false if it produced
+     no rows.
     </para>
 
     <note>
@@ -916,11 +918,7 @@ PERFORM <replaceable>query</replaceable>;
     <para>
      An example:
 <programlisting>
-PERFORM create_mv(''cs_session_page_requests_mv'',''
-     SELECT   session_id, page_id, count(*) AS n_hits,
-              sum(dwell_time) AS dwell_time, count(dwell_time) AS dwell_count
-     FROM     cs_fact_table
-     GROUP BY session_id, page_id '');
+PERFORM create_mv(''cs_session_page_requests_mv'', my_query);
 </programlisting>
     </para>
    </sect2>
