@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.4 1996/09/10 06:23:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.5 1996/09/26 15:43:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,8 +297,8 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
      * component to pass it to the defining procedure.
      */
     if (Old_pg_index_Form->indproc != InvalidOid) {
-	FIgetnArgs(finfo) = natts;
-	FIgetProcOid(finfo) = Old_pg_index_Form->indproc;
+	FIgetnArgs(&finfo) = natts;
+	FIgetProcOid(&finfo) = Old_pg_index_Form->indproc;
 
 	pg_proc_Tuple =
 	    SearchSysCacheTuple(PROOID,
