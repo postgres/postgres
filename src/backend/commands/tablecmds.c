@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.114 2004/06/10 18:25:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.115 2004/06/10 18:34:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2706,6 +2706,8 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 		/* Child should see column as singly inherited */
 		colDefChild->inhcount = 1;
 		colDefChild->is_local = false;
+		/* and don't make a support dependency on the child */
+		colDefChild->support = NULL;
 
 		ATOneLevelRecursion(wqueue, rel, childCmd);
 	}
