@@ -1,4 +1,4 @@
-/*
+/*-------------------------------------------------------------------------
  * nabstime.c
  *	  Utilities for the built-in type "AbsoluteTime".
  *	  Functions for the built-in type "RelativeTime".
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.76 2000/12/03 20:45:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.77 2000/12/09 20:40:57 tgl Exp $
  *
  * NOTES
  *
@@ -31,12 +31,6 @@
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-
-
-#if 0
-static AbsoluteTime tm2abstime(struct tm * tm, int tz);
-
-#endif
 
 
 #define MIN_DAYNUM -24856		/* December 13, 1901 */
@@ -103,6 +97,7 @@ static int	sec_tab[] = {
  * Function prototypes -- internal to this file only
  */
 
+static AbsoluteTime tm2abstime(struct tm * tm, int tz);
 static void reltime2tm(RelativeTime time, struct tm * tm);
 
 #ifdef NOT_USED
@@ -114,6 +109,7 @@ static int	correct_dir(char *direction, int *signptr);
 static int istinterval(char *i_string,
 			AbsoluteTime *i_start,
 			AbsoluteTime *i_end);
+
 
 /* GetCurrentAbsoluteTime()
  * Get the current system time. Set timezone parameters if not specified elsewhere.
@@ -291,8 +287,8 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 static AbsoluteTime
 tm2abstime(struct tm * tm, int tz)
 {
-	int			day,
-				sec;
+	int			day;
+	AbsoluteTime sec;
 
 	/* validate, before going out of range on some members */
 	if (tm->tm_year < 1901 || tm->tm_year > 2038
