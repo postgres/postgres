@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.27 2005/01/08 22:13:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.28 2005/02/25 02:34:56 momjian Exp $
 -->
 
 <chapter id="user-manag">
@@ -259,7 +259,7 @@ SELECT groname FROM pg_group;
   <remark>Being moved to the DDL chapter.  Will eventually disappear here.</remark>
 
   <para>
-   When a database object is created, it is assigned an owner. The
+   When an object is created, it is assigned an owner. The
    owner is the user that executed the creation statement. To change
    the owner of a table, index, sequence, or view, use the
    <command>ALTER TABLE</command> command. By default, only an owner
