@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.79 2001/06/17 22:27:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.80 2001/09/08 01:10:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,6 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "tcop/dest.h"
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
 #include "utils/ps_status.h"
@@ -94,7 +93,7 @@
 
 /* stuff that we really ought not be touching directly :-( */
 extern TransactionState CurrentTransactionState;
-extern CommandDest whereToSendOutput;
+
 
 /*
  * State for outbound notifies consists of a list of all relnames NOTIFYed

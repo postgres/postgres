@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.58 2001/08/23 00:49:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.59 2001/09/08 01:10:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,7 @@ ProcedureCreate(char *procedureName,
 				int32 perbyte_cpu,
 				int32 percall_cpu,
 				int32 outin_ratio,
-				List *argList,
-				CommandDest dest)
+				List *argList)
 {
 	int			i;
 	Relation	rel;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.231 2001/09/07 16:12:48 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.232 2001/09/08 01:10:20 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -85,6 +85,7 @@ bool		ShowPortNumber;
 
 bool		Log_connections = false;
 
+/* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
 
 static bool dontExecute = false;
@@ -536,7 +537,7 @@ pg_plan_query(Query *querytree)
 
 	if (Show_planner_stats)
 	{
-		fprintf(stderr, "PLANNER STATISTICS\n");
+		fprintf(StatFp, "PLANNER STATISTICS\n");
 		ShowUsage();
 	}
 
@@ -813,7 +814,7 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 
 				if (Show_executor_stats)
 				{
-					fprintf(stderr, "EXECUTOR STATISTICS\n");
+					fprintf(StatFp, "EXECUTOR STATISTICS\n");
 					ShowUsage();
 				}
 			}
@@ -910,9 +911,9 @@ quickdie(SIGNAL_ARGS)
 	PG_SETMASK(&BlockSig);
 	elog(NOTICE, "Message from PostgreSQL backend:"
 		 "\n\tThe Postmaster has informed me that some other backend"
-		 "\tdied abnormally and possibly corrupted shared memory."
+		 "\n\tdied abnormally and possibly corrupted shared memory."
 		 "\n\tI have rolled back the current transaction and am"
-		 "\tgoing to terminate your database system connection and exit."
+		 "\n\tgoing to terminate your database system connection and exit."
 	"\n\tPlease reconnect to the database system and repeat your query.");
 
 	/*
@@ -968,6 +969,10 @@ die(SIGNAL_ARGS)
 /*
  * Shutdown signal from postmaster during client authentication.
  * Simply exit(0).
+ *
+ * XXX: possible future improvement: try to send a message indicating
+ * why we are disconnecting.  Problem is to be sure we don't block while
+ * doing so nor mess up the authentication message exchange.
  */
 void
 authdie(SIGNAL_ARGS)
@@ -1164,6 +1169,16 @@ PostgresMain(int argc, char *argv[],
 	SetProcessingMode(InitProcessing);
 
 	/*
+	 * If under postmaster, initialize libpq and enable reporting of
+	 * elog errors to the client.
+	 */
+	if (IsUnderPostmaster)
+	{
+		pq_init();				/* initialize libpq at backend startup */
+		whereToSendOutput = Remote;	/* now safe to elog to client */
+	}
+
+	/*
 	 * Set default values for command-line options.
 	 */
 	Noversion = false;
@@ -1209,7 +1224,7 @@ PostgresMain(int argc, char *argv[],
 #ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, ctx, true);
 #else
-				fprintf(stderr, "Assert checking is not compiled in\n");
+				elog(NOTICE, "Assert checking is not compiled in");
 #endif
 				break;
 
@@ -1439,7 +1454,7 @@ PostgresMain(int argc, char *argv[],
 				 */
 				if (XfuncMode != 0)
 				{
-					fprintf(stderr, "only one -x flag is allowed\n");
+					elog(NOTICE, "only one -x flag is allowed");
 					errs++;
 					break;
 				}
@@ -1457,7 +1472,7 @@ PostgresMain(int argc, char *argv[],
 					XfuncMode = XFUNC_WAIT;
 				else
 				{
-					fprintf(stderr, "use -x {off,nor,nopull,nopm,pullall,wait}\n");
+					elog(NOTICE, "use -x {off,nor,nopull,nopm,pullall,wait}");
 					errs++;
 				}
 #endif
@@ -1492,14 +1507,11 @@ PostgresMain(int argc, char *argv[],
 
 	/*
 	 * Post-processing for command line options.
-	 *
-	 * XXX It'd be nice if libpq were already running here, so we could do
-	 * elog(NOTICE) instead of just writing on stderr...
 	 */
 	if (Show_query_stats &&
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
-		fprintf(stderr, "Query statistics are disabled because parser, planner, or executor statistics are on.\n");
+		elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
 		SetConfigOption("show_query_stats", "false", ctx, true);
 	}
 
@@ -1508,9 +1520,9 @@ PostgresMain(int argc, char *argv[],
 		if (!potential_DataDir)
 		{
 			fprintf(stderr, "%s does not know where to find the database system "
-			   "data.  You must specify the directory that contains the "
-				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+					"data.  You must specify the directory that contains the "
+					"database system either by specifying the -D invocation "
+					"option or by setting the PGDATA environment variable.\n\n",
 					argv[0]);
 			proc_exit(1);
 		}
@@ -1578,11 +1590,11 @@ PostgresMain(int argc, char *argv[],
 		/* noninteractive case: nothing should be left after switches */
 		if (errs || argc != optind || DBName == NULL)
 		{
-			fprintf(stderr, "%s: invalid command line arguments\nTry -? for help.\n", argv[0]);
+			elog(NOTICE, "%s: invalid command line arguments\nTry -? for help.",
+				 argv[0]);
 			proc_exit(0);		/* not 1, that causes system-wide
 								 * restart... */
 		}
-		pq_init();				/* initialize libpq at backend startup */
 		BaseInit();
 	}
 	else
@@ -1590,15 +1602,16 @@ PostgresMain(int argc, char *argv[],
 		/* interactive case: database name can be last arg on command line */
 		if (errs || argc - optind > 1)
 		{
-			fprintf(stderr, "%s: invalid command line arguments\nTry -? for help.\n", argv[0]);
+			elog(NOTICE, "%s: invalid command line arguments\nTry -? for help.",
+				 argv[0]);
 			proc_exit(1);
 		}
 		else if (argc - optind == 1)
 			DBName = argv[optind];
 		else if ((DBName = username) == NULL)
 		{
-			fprintf(stderr, "%s: user name undefined and no database specified\n",
-					argv[0]);
+			elog(NOTICE, "%s: user name undefined and no database specified\n",
+				 argv[0]);
 			proc_exit(1);
 		}
 
@@ -1723,7 +1736,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.231 $ $Date: 2001/09/07 16:12:48 $\n");
+		puts("$Revision: 1.232 $ $Date: 2001/09/08 01:10:20 $\n");
 	}
 
 	/*

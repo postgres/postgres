@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.116 2001/08/21 16:36:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.117 2001/09/08 01:10:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,7 +525,7 @@ ProcessUtility(Node *parsetree,
 		case T_ProcedureStmt:	/* CREATE FUNCTION */
 			set_ps_display(commandTag = "CREATE");
 
-			CreateFunction((ProcedureStmt *) parsetree, dest);	/* everything */
+			CreateFunction((ProcedureStmt *) parsetree);
 			break;
 
 		case T_IndexStmt:		/* CREATE INDEX */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.24 2001/08/21 16:36:06 tgl Exp $
+ * $Id: defrem.h,v 1.25 2001/09/08 01:10:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #define DEFREM_H
 
 #include "nodes/parsenodes.h"
-#include "tcop/dest.h"
 
 /*
  * prototypes in indexcmds.c
@@ -36,7 +35,7 @@ extern void ReindexDatabase(const char *databaseName, bool force, bool all);
 /*
  * prototypes in define.c
  */
-extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
+extern void CreateFunction(ProcedureStmt *stmt);
 extern void DefineOperator(char *name, List *parameters);
 extern void DefineAggregate(char *name, List *parameters);
 extern void DefineType(char *name, List *parameters);

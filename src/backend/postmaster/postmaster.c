@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.240 2001/09/07 16:12:48 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.241 2001/09/08 01:10:20 tgl Exp $
  *
  * NOTES
  *
@@ -686,6 +686,15 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
+
+	/*
+	 * Reset whereToSendOutput from Debug (its starting state) to None.
+	 * This prevents elog from sending messages to stderr unless the
+	 * syslog/stderr switch permits.  We don't do this until the postmaster
+	 * is fully launched, since startup failures may as well be reported
+	 * to stderr.
+	 */
+	whereToSendOutput = None;
 
 	/*
 	 * Initialize and startup the statistics collector process
@@ -1932,8 +1941,6 @@ DoBackend(Port *port)
 	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
 
-	whereToSendOutput = Remote;	/* XXX probably doesn't belong here */
-
 	/*
 	 * We arrange for a simple exit(0) if we receive SIGTERM or SIGQUIT
 	 * during any client authentication related communication. Otherwise
@@ -1955,6 +1962,10 @@ DoBackend(Port *port)
 
 	ClientAuthentication(MyProcPort); /* might not return, if failure */
 
+	/*
+	 * Done with authentication.  Prevent SIGTERM/SIGQUIT again until
+	 * backend startup is complete.
+	 */
 	PG_SETMASK(&BlockSig);
 
 	/*

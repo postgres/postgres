@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.22 2001/09/07 16:12:48 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.23 2001/09/08 01:10:20 tgl Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -46,11 +46,14 @@
 
 
 /*
- * Initialize BlockSig and UnBlockSig.
+ * Initialize BlockSig, UnBlockSig, and AuthBlockSig.
  *
  * BlockSig is the set of signals to block when we are trying to block
  * signals.  This includes all signals we normally expect to get, but NOT
  * signals that should never be turned off.
+ *
+ * AuthBlockSig is the set of signals to block during authentication;
+ * it's essentially BlockSig minus SIGTERM and SIGQUIT.
  *
  * UnBlockSig is the set of signals to block when we don't want to block
  * signals (is this ever nonzero??)

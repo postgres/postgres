@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.209 2001/09/06 04:57:29 ishii Exp $
+ * $Id: pg_proc.h,v 1.210 2001/09/08 01:10:20 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -23,7 +23,7 @@
 #ifndef PG_PROC_H
 #define PG_PROC_H
 
-#include "tcop/dest.h"
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		postgres.h contains the system type definintions and the
@@ -2757,8 +2757,6 @@ extern Oid ProcedureCreate(char *procedureName,
 				int32 perbyte_cpu,
 				int32 percall_cpu,
 				int32 outin_ratio,
-				List *argList,
-				CommandDest dest);
-
+				List *argList);
 
 #endif	 /* PG_PROC_H */

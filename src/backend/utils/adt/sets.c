@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.37 2001/03/22 03:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.38 2001/09/08 01:10:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 #include "utils/fcache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
-
-extern CommandDest whereToSendOutput;	/* defined in tcop/postgres.c */
 
 
 /*
@@ -65,8 +63,7 @@ SetDefine(char *querystr, char *typename)
 							 0, /* perbyte_cpu */
 							 0, /* percall_cpu */
 							 100,		/* outin_ratio */
-							 NIL,		/* argList */
-							 whereToSendOutput);
+							 NIL);		/* argList */
 
 	/*
 	 * Since we're still inside this command of the transaction, we can't
