@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.12 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.13 2001/11/06 23:54:32 tgl Exp $
 Postgres documentation
 -->
 
@@ -102,7 +102,7 @@ ERROR:  Relation '<replaceable class="parameter">view</replaceable>' already exi
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE create: attribute named "<replaceable class="parameter">column</replaceable>" has an unknown type
+NOTICE:  Attribute '<replaceable class="parameter">column</replaceable>' has an unknown type
        </computeroutput></term>
       <listitem>
        <para>
@@ -149,7 +149,11 @@ CREATE VIEW vista AS SELECT text 'Hello World'
    </title>
 
    <para>
-    Currently, views are read only.
+    Currently, views are read only: the system will not allow an insert,
+    update, or delete on a view.  You can get the effect of an updatable
+    view by creating rules that rewrite inserts, etc. on the view into
+    appropriate actions on other tables.  For more information see
+    <xref linkend="sql-createrule">.
    </para>
 
    <para>

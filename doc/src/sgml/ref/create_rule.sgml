@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.28 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.29 2001/11/06 23:54:32 tgl Exp $
 Postgres documentation
 -->
 
@@ -196,10 +196,10 @@ CREATE
   
   <refsect2 id="R2-SQL-CREATERULE-3">
    <refsect2info>
-    <date>2001-01-05</date>
+    <date>2001-11-06</date>
    </refsect2info>
    <title>
-    Notes
+    Rules and Views
    </title>
    <para>
     Presently, ON SELECT rules must be unconditional INSTEAD rules and must
@@ -207,10 +207,44 @@ CREATE
     rule effectively turns the object table into a view, whose visible
     contents are the rows returned by the rule's SELECT query rather than
     whatever had been stored in the table (if anything).  It is considered
-    better style to write a CREATE VIEW command than to create a table and
-    define an ON SELECT rule for it.
+    better style to write a CREATE VIEW command than to create a real table
+    and define an ON SELECT rule for it.
    </para>
 
+   <para>
+    <xref linkend="sql-createview"> creates a dummy table (with no underlying
+    storage) and associates an ON SELECT rule with it.  The system will not
+    allow updates to the view, since it knows there is no real table there.
+    You can create the
+    illusion of an updatable view by defining ON INSERT, ON UPDATE, and
+    ON DELETE rules (or any subset of those that's sufficient
+    for your purposes) to replace update actions on the view with
+    appropriate updates on other tables.
+   </para>
+
+   <para>
+    There is a catch if you try to use conditional
+    rules for view updates: there <emphasis>must</> be an unconditional
+    INSTEAD rule for each action you wish to allow on the view.  If the
+    rule is conditional, or is not INSTEAD, then the system will still reject
+    attempts to perform the update action, because it thinks it might end up
+    trying to perform the action on the dummy table in some cases.
+    If you want to
+    handle all the useful cases in conditional rules, you can; just add an
+    unconditional DO INSTEAD NOTHING rule to ensure that the system
+    understands it will never be called on to update the dummy table.  Then
+    make the conditional rules non-INSTEAD; in the cases where they fire,
+    they add to the default INSTEAD NOTHING action.
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATERULE-4">
+   <refsect2info>
+    <date>2001-01-05</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
    <para>
     You must have rule definition access to a table in order
     to define a rule on it. Use <command>GRANT</command>
@@ -267,7 +301,7 @@ UPDATE mytable SET name = 'foo' WHERE id = 42;
    Compatibility
   </title>
 
-  <refsect2 id="R2-SQL-CREATERULE-4">
+  <refsect2 id="R2-SQL-CREATERULE-5">
    <refsect2info>
     <date>1998-09-11</date>
    </refsect2info>
