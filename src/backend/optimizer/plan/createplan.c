@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.145 2003/06/15 22:51:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.146 2003/06/16 02:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,7 +583,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	{
 		List	   *sortList;
 
-		sortList = addAllTargetsToSortList(NIL, my_tlist);
+		sortList = addAllTargetsToSortList(NULL, NIL, my_tlist, false);
 		plan = (Plan *) make_sort_from_sortclauses(root, my_tlist,
 												   subplan, sortList);
 		plan = (Plan *) make_unique(my_tlist, plan, sortList);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.154 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.155 2003/06/16 02:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -894,6 +894,24 @@ grouping_planner(Query *parse, double tuple_fraction)
 		if (parse->groupClause)
 		{
 			List   *groupExprs;
+			double	cheapest_path_rows;
+			int		cheapest_path_width;
+
+			/*
+			 * Beware in this section of the possibility that
+			 * cheapest_path->parent is NULL.  This could happen if user
+			 * does something silly like SELECT 'foo' GROUP BY 1;
+			 */
+			if (cheapest_path->parent)
+			{
+				cheapest_path_rows = cheapest_path->parent->rows;
+				cheapest_path_width = cheapest_path->parent->width;
+			}
+			else
+			{
+				cheapest_path_rows = 1;	/* assume non-set result */
+				cheapest_path_width = 100; /* arbitrary */
+			}
 
 			/*
 			 * Always estimate the number of groups.  We can't do this until
@@ -903,7 +921,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 												 parse->targetList);
 			dNumGroups = estimate_num_groups(parse,
 											 groupExprs,
-											 cheapest_path->parent->rows);
+											 cheapest_path_rows);
 			/* Also want it as a long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 
@@ -936,8 +954,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 				 * assume it is 100 bytes.  Also set the overhead per hashtable
 				 * entry at 64 bytes.
 				 */
-				int		hashentrysize = cheapest_path->parent->width + 64 +
-					numAggs * 100;
+				int		hashentrysize = cheapest_path_width + 64 + numAggs * 100;
 
 				if (hashentrysize * dNumGroups <= SortMem * 1024L)
 				{
@@ -964,13 +981,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 							 numGroupCols, dNumGroups,
 							 cheapest_path->startup_cost,
 							 cheapest_path->total_cost,
-							 cheapest_path->parent->rows);
+							 cheapest_path_rows);
 					/* Result of hashed agg is always unsorted */
 					if (sort_pathkeys)
 						cost_sort(&hashed_p, parse, sort_pathkeys,
 								  hashed_p.total_cost,
 								  dNumGroups,
-								  cheapest_path->parent->width);
+								  cheapest_path_width);
 
 					if (sorted_path)
 					{
@@ -989,8 +1006,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 					{
 						cost_sort(&sorted_p, parse, group_pathkeys,
 								  sorted_p.total_cost,
-								  cheapest_path->parent->rows,
-								  cheapest_path->parent->width);
+								  cheapest_path_rows,
+								  cheapest_path_width);
 						current_pathkeys = group_pathkeys;
 					}
 					if (parse->hasAggs)
@@ -999,13 +1016,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 								 numGroupCols, dNumGroups,
 								 sorted_p.startup_cost,
 								 sorted_p.total_cost,
-								 cheapest_path->parent->rows);
+								 cheapest_path_rows);
 					else
 						cost_group(&sorted_p, parse,
 								   numGroupCols, dNumGroups,
 								   sorted_p.startup_cost,
 								   sorted_p.total_cost,
-								   cheapest_path->parent->rows);
+								   cheapest_path_rows);
 					/* The Agg or Group node will preserve ordering */
 					if (sort_pathkeys &&
 						!pathkeys_contained_in(sort_pathkeys,
@@ -1014,7 +1031,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 						cost_sort(&sorted_p, parse, sort_pathkeys,
 								  sorted_p.total_cost,
 								  dNumGroups,
-								  cheapest_path->parent->width);
+								  cheapest_path_width);
 					}
 
 					/*

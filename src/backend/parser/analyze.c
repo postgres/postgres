@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.274 2003/06/15 16:42:07 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.275 2003/06/16 02:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1793,7 +1793,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
-										  qry->targetList);
+										  qry->targetList,
+										  true /* fix unknowns */);
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
@@ -2002,7 +2003,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
-										  qry->targetList);
+										  qry->targetList,
+										  false /* no unknowns expected */);
 
 	pstate->p_namespace = sv_namespace;
 	pstate->p_rtable = sv_rtable;

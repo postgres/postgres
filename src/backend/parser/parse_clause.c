@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.115 2003/06/15 16:42:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.116 2003/06/16 02:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,9 @@ static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
-static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
-					List *targetlist, List *opname);
+static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
+								 List *sortlist, List *targetlist,
+								 List *opname, bool resolveUnknown);
 
 
 /*
@@ -1133,6 +1134,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 	foreach(gl, grouplist)
 	{
 		TargetEntry *tle;
+		Oid			restype;
 		Oid			ordering_op;
 		GroupClause *grpcl;
 
@@ -1142,6 +1144,19 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		/* avoid making duplicate grouplist entries */
 		if (targetIsInSortList(tle, glist))
 			continue;
+
+		/* if tlist item is an UNKNOWN literal, change it to TEXT */
+		restype = tle->resdom->restype;
+
+		if (restype == UNKNOWNOID)
+		{
+			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
+											 restype, TEXTOID,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST);
+			restype = tle->resdom->restype = TEXTOID;
+			tle->resdom->restypmod = -1;
+		}
 
 		/*
 		 * If the GROUP BY clause matches the ORDER BY clause, we want to
@@ -1160,7 +1175,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		}
 		else
 		{
-			ordering_op = ordering_oper_opid(tle->resdom->restype);
+			ordering_op = ordering_oper_opid(restype);
 			sortClause = NIL;	/* disregard ORDER BY once match fails */
 		}
 
@@ -1180,7 +1195,8 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 List *
 transformSortClause(ParseState *pstate,
 					List *orderlist,
-					List *targetlist)
+					List *targetlist,
+					bool resolveUnknown)
 {
 	List	   *sortlist = NIL;
 	List	   *olitem;
@@ -1193,8 +1209,9 @@ transformSortClause(ParseState *pstate,
 		tle = findTargetlistEntry(pstate, sortby->node,
 								  targetlist, ORDER_CLAUSE);
 
-		sortlist = addTargetToSortList(tle, sortlist, targetlist,
-									   sortby->useOp);
+		sortlist = addTargetToSortList(pstate, tle,
+									   sortlist, targetlist,
+									   sortby->useOp, resolveUnknown);
 	}
 
 	return sortlist;
@@ -1232,7 +1249,10 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * the user's ORDER BY spec alone, and just add additional sort
 		 * keys to it to ensure that all targetlist items get sorted.)
 		 */
-		*sortClause = addAllTargetsToSortList(*sortClause, targetlist);
+		*sortClause = addAllTargetsToSortList(pstate,
+											  *sortClause,
+											  targetlist,
+											  true);
 
 		/*
 		 * Now, DISTINCT list consists of all non-resjunk sortlist items.
@@ -1291,8 +1311,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			}
 			else
 			{
-				*sortClause = addTargetToSortList(tle, *sortClause,
-												  targetlist, NIL);
+				*sortClause = addTargetToSortList(pstate, tle,
+												  *sortClause, targetlist,
+												  NIL, true);
 
 				/*
 				 * Probably, the tle should always have been added at the
@@ -1323,10 +1344,13 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
  *		ORDER BY list, adding the not-yet-sorted ones to the end of the list.
  *		This is typically used to help implement SELECT DISTINCT.
  *
+ * See addTargetToSortList for info about pstate and resolveUnknown inputs.
+ *
  * Returns the updated ORDER BY list.
  */
 List *
-addAllTargetsToSortList(List *sortlist, List *targetlist)
+addAllTargetsToSortList(ParseState *pstate, List *sortlist,
+						List *targetlist, bool resolveUnknown)
 {
 	List	   *i;
 
@@ -1335,7 +1359,9 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
 		TargetEntry *tle = (TargetEntry *) lfirst(i);
 
 		if (!tle->resdom->resjunk)
-			sortlist = addTargetToSortList(tle, sortlist, targetlist, NIL);
+			sortlist = addTargetToSortList(pstate, tle,
+										   sortlist, targetlist,
+										   NIL, resolveUnknown);
 	}
 	return sortlist;
 }
@@ -1346,26 +1372,44 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
  *		add it to the end of the list, using the sortop with given name
  *		or the default sort operator if opname == NIL.
  *
+ * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
+ * do nothing (which implies the search for a sort operator will fail).
+ * pstate should be provided if resolveUnknown is TRUE, but can be NULL
+ * otherwise.
+ *
  * Returns the updated ORDER BY list.
  */
 static List *
-addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
-					List *opname)
+addTargetToSortList(ParseState *pstate, TargetEntry *tle,
+					List *sortlist, List *targetlist,
+					List *opname, bool resolveUnknown)
 {
 	/* avoid making duplicate sortlist entries */
 	if (!targetIsInSortList(tle, sortlist))
 	{
 		SortClause *sortcl = makeNode(SortClause);
+		Oid			restype = tle->resdom->restype;
+
+		/* if tlist item is an UNKNOWN literal, change it to TEXT */
+		if (restype == UNKNOWNOID && resolveUnknown)
+		{
+			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
+											 restype, TEXTOID,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST);
+			restype = tle->resdom->restype = TEXTOID;
+			tle->resdom->restypmod = -1;
+		}
 
 		sortcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 
 		if (opname)
 			sortcl->sortop = compatible_oper_opid(opname,
-												  tle->resdom->restype,
-												  tle->resdom->restype,
+												  restype,
+												  restype,
 												  false);
 		else
-			sortcl->sortop = ordering_oper_opid(tle->resdom->restype);
+			sortcl->sortop = ordering_oper_opid(restype);
 
 		sortlist = lappend(sortlist, sortcl);
 	}
