@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.9 1998/01/07 21:04:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.10 1998/01/09 05:48:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,8 +598,12 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		 */
 		Query	   *other;
 
-		other = copyObject(parsetree);	/* ApplyRetrieveRule changes the
-										 * range table */
+		/*
+		 *	ApplyRetrieveRule changes the range table
+		 *	XXX Unions are copied again.
+		 */
+		other = copyObject(parsetree);
+
 		return
 			ProcessRetrieveQuery(other, parsetree->rtable,
 								 instead_flag, FALSE);

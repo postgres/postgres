@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.27 1998/01/04 04:31:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.28 1998/01/09 05:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1520,6 +1520,16 @@ _copyQuery(Query *from)
 	int i;
 	
 	newnode->commandType = from->commandType;
+	if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt)
+	{
+		NotifyStmt *from_notify = (NotifyStmt *) from->utilityStmt;
+		NotifyStmt *n = makeNode(NotifyStmt);
+		int			length = strlen(from_notify->relname);
+
+		n->relname = palloc(length + 1);
+		strcpy(n->relname, from_notify->relname);
+		newnode->utilityStmt = (Node *) n;
+	}
 	newnode->resultRelation = from->resultRelation;
 	/* probably should dup this string instead of just pointing */
 	/* to the old one  --djm */
@@ -1532,17 +1542,8 @@ _copyQuery(Query *from)
 		newnode->into = (char *) 0;
 	}
 	newnode->isPortal = from->isPortal;
-	Node_Copy(from, newnode, rtable);
-	if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt)
-	{
-		NotifyStmt *from_notify = (NotifyStmt *) from->utilityStmt;
-		NotifyStmt *n = makeNode(NotifyStmt);
-		int			length = strlen(from_notify->relname);
-
-		n->relname = palloc(length + 1);
-		strcpy(n->relname, from_notify->relname);
-		newnode->utilityStmt = (Node *) n;
-	}
+	newnode->isBinary = from->isBinary;
+	newnode->unionall = from->unionall;
 	if (from->uniqueFlag)
 	{
 		newnode->uniqueFlag = (char *) palloc(strlen(from->uniqueFlag) + 1);
@@ -1551,6 +1552,7 @@ _copyQuery(Query *from)
 	else
 		newnode->uniqueFlag = NULL;
 	Node_Copy(from, newnode, sortClause);
+	Node_Copy(from, newnode, rtable);
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, qual);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.59 1998/01/07 21:06:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.60 1998/01/09 05:48:22 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -439,6 +439,8 @@ pg_parse_and_plan(char *query_string,		/* string to execute */
 								 * rewrites */
 	for (i = 0; i < querytree_list->len; i++)
 	{
+		List *union_result, *union_list, *rewritten_list;
+		
 		querytree = querytree_list->qtrees[i];
 
 
@@ -465,6 +467,19 @@ pg_parse_and_plan(char *query_string,		/* string to execute */
 
 		/* rewrite queries (retrieve, append, delete, replace) */
 		rewritten = QueryRewrite(querytree);
+
+		/*
+		 *	Rewrite the UNIONS.
+		 */
+		foreach(rewritten_list, rewritten)
+		{
+			Query *qry = (Query *)lfirst(rewritten_list);
+			union_result = NIL;
+			foreach(union_list, qry->unionClause)
+				union_result = nconc(union_result, QueryRewrite((Query *)lfirst(union_list)));
+			qry->unionClause = union_result;
+		}
+
 		if (rewritten != NULL)
 		{
 			int			len,
@@ -1372,7 +1387,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.59 $ $Date: 1998/01/07 21:06:00 $");
+		puts("$Revision: 1.60 $ $Date: 1998/01/09 05:48:22 $");
 	}
 
 	/* ----------------
