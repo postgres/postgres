@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.50 2000/02/15 18:17:33 tgl Exp $
+ * $Id: user.c,v 1.51 2000/03/15 07:02:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1090,7 +1090,6 @@ DropGroup(DropGroupStmt *stmt)
     if (!gro_exists)
     {
         heap_close(pg_group_rel, AccessExclusiveLock);
-		UserAbortTransactionBlock();
 		elog(ERROR, "DROP GROUP: group \"%s\" does not exist", stmt->name);
     }
 
