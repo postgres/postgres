@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.92 2004/09/27 23:38:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.93 2004/09/28 00:06:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,7 +749,7 @@ fe_getauthname(char *PQerrormsg)
 		if (GetUserName(username, &namesize))
 			name = username;
 #else
-		char		pwdbuf[sizeof(struct passwd)];
+		char		pwdbuf[BUFSIZ];
 		struct passwd pwdstr;
 		struct passwd *pw = NULL;
 
