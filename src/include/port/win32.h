@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.30 2004/08/31 11:25:33 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.31 2004/08/31 11:29:56 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -206,7 +206,7 @@ int			setitimer(int which, const struct itimerval * value, struct itimerval * ov
 /*
  * Supplement to <sys/stat.h>.
  */
-#define lstat stat
+#define lstat(path, sb)	stat((path), (sb))
 
 /*
  * Supplement to <errno.h>.
