@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.16 1996/08/14 04:56:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.17 1996/08/14 16:44:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -999,7 +999,8 @@ PQprint(FILE *fout,
 		{
 			if ((fs_len==1 && (*p==*(po->fieldSep))) || *p=='\\')
 				*(o++)='\\';
-			if (po->align && !((*p >='0' && *p<='9') || *p=='.' || *p=='E' || *p=='e' || *p==' ' || *p=='-'))
+			if (po->align && (*pval=='E' || *pval=='e' ||
+				!((*p>='0' && *p<='9') || *p=='.' || *p=='E' || *p=='e' || *p==' ' || *p=='-')))
 				fieldNotNum[j]=1;
 		}
 		*o='\0';
