@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar  8 11:52:56 EST 2001
+Last updated:		Sat Mar 10 13:18:12 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -237,6 +237,7 @@ EXOTIC FEATURES
 * Allow queries across multiple databases
 * Allow nested transactions (Vadim)
 * Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
+* Convert non-Ansi feature to PostgreSQL features
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database 
   to clients
 * Incremental backups
