@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.2 2003/12/06 22:55:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.3 2003/12/07 05:44:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,12 @@ static bool TopoSort(DumpableObject **objs,
 					 int *nOrdering);
 static void addHeapElement(int val, int *heap, int heapLength);
 static int	removeHeapElement(int *heap, int heapLength);
+static void findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs);
 static bool findLoop(DumpableObject *obj,
+					 DumpId startPoint,
+					 DumpableObject **workspace,
 					 int depth,
-					 DumpableObject **ordering,
-					 int *nOrdering);
+					 int *newDepth);
 static void repairDependencyLoop(DumpableObject **loop,
 								 int nLoop);
 static void describeDumpableObject(DumpableObject *obj,
@@ -104,12 +106,15 @@ sortDumpableObjects(DumpableObject **objs, int numObjs)
 	DumpableObject  **ordering;
 	int			nOrdering;
 
+	if (numObjs <= 0)
+		return;
+
 	ordering = (DumpableObject **) malloc(numObjs * sizeof(DumpableObject *));
 	if (ordering == NULL)
 		exit_horribly(NULL, modulename, "out of memory\n");
 
 	while (!TopoSort(objs, numObjs, ordering, &nOrdering))
-		repairDependencyLoop(ordering, nOrdering);
+		findDependencyLoops(ordering, nOrdering, numObjs);
 
 	memcpy(objs, ordering, numObjs * sizeof(DumpableObject *));
 
@@ -133,10 +138,12 @@ sortDumpableObjects(DumpableObject **objs, int numObjs)
  * On success (TRUE result), ordering[] is filled with a sorted array of
  * DumpableObject pointers, of length equal to the input list length.
  *
- * On failure (FALSE result), ordering[] is filled with an array of
- * DumpableObject pointers of length *nOrdering, representing a circular set
- * of dependency constraints.  (If there is more than one cycle in the given
- * constraints, one is picked at random to return.)
+ * On failure (FALSE result), ordering[] is filled with an unsorted array of
+ * DumpableObject pointers of length *nOrdering, listing the objects that
+ * prevented the sort from being completed.  In general, these objects either
+ * participate directly in a dependency cycle, or are depended on by objects
+ * that are in a cycle.  (The latter objects are not actually problematic,
+ * but it takes further analysis to identify which are which.)
  *
  * The caller is responsible for allocating sufficient space at *ordering.
  */
@@ -262,28 +269,18 @@ TopoSort(DumpableObject **objs,
 	}
 
 	/*
-	 * If we failed, report one of the circular constraint sets.  We do
-	 * this by scanning beforeConstraints[] to locate the items that have
-	 * not yet been output, and for each one, trying to trace a constraint
-	 * loop leading back to it.  (There may be items that depend on items
-	 * involved in a loop, but aren't themselves part of the loop, so not
-	 * every nonzero beforeConstraints entry is necessarily a useful
-	 * starting point.  We keep trying till we find a loop.)
+	 * If we failed, report the objects that couldn't be output; these are
+	 * the ones with beforeConstraints[] still nonzero.
 	 */
 	if (i != 0)
 	{
+		k = 0;
 		for (j = 1; j <= maxDumpId; j++)
 		{
 			if (beforeConstraints[j] != 0)
-			{
-				ordering[0] = obj = objs[idMap[j]];
-				if (findLoop(obj, 1, ordering, nOrdering))
-					break;
-			}
+				ordering[k++] = objs[idMap[j]];
 		}
-		if (j > maxDumpId)
-			exit_horribly(NULL, modulename,
-						  "could not find dependency loop\n");
+		*nOrdering = k;
 	}
 
 	/* Done */
@@ -361,46 +358,156 @@ removeHeapElement(int *heap, int heapLength)
 }
 
 /*
- * Recursively search for a circular dependency loop
+ * findDependencyLoops - identify loops in TopoSort's failure output,
+ *		and pass each such loop to repairDependencyLoop() for action
+ *
+ * In general there may be many loops in the set of objects returned by
+ * TopoSort; for speed we should try to repair as many loops as we can
+ * before trying TopoSort again.  We can safely repair loops that are
+ * disjoint (have no members in common); if we find overlapping loops
+ * then we repair only the first one found, because the action taken to
+ * repair the first might have repaired the other as well.  (If not,
+ * we'll fix it on the next go-round.)
+ *
+ * objs[] lists the objects TopoSort couldn't sort
+ * nObjs is the number of such objects
+ * totObjs is the total number of objects in the universe
+ */
+static void
+findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
+{
+	/*
+	 * We use a workspace array, the initial part of which stores
+	 * objects already processed, and the rest of which is used as
+	 * temporary space to try to build a loop in.  This is convenient
+	 * because we do not care about loops involving already-processed
+	 * objects (see notes above); we can easily reject such loops in
+	 * findLoop() because of this representation.  After we identify
+	 * and process a loop, we can add it to the initial part of the
+	 * workspace just by moving the boundary pointer.
+	 *
+	 * When we determine that an object is not part of any interesting
+	 * loop, we also add it to the initial part of the workspace.  This
+	 * is not necessary for correctness, but saves later invocations of
+	 * findLoop() from uselessly chasing references to such an object.
+	 *
+	 * We make the workspace large enough to hold all objects in the
+	 * original universe.  This is probably overkill, but it's provably
+	 * enough space...
+	 */
+	DumpableObject  **workspace;
+	int			initiallen;
+	bool		fixedloop;
+	int			i;
+
+	workspace = (DumpableObject **) malloc(totObjs * sizeof(DumpableObject *));
+	if (workspace == NULL)
+		exit_horribly(NULL, modulename, "out of memory\n");
+	initiallen = 0;
+	fixedloop = false;
+
+	for (i = 0; i < nObjs; i++)
+	{
+		DumpableObject *obj = objs[i];
+		int		newlen;
+
+		workspace[initiallen] = NULL; /* see test below */
+
+		if (findLoop(obj, obj->dumpId, workspace, initiallen, &newlen))
+		{
+			/* Found a loop of length newlen - initiallen */
+			repairDependencyLoop(&workspace[initiallen], newlen - initiallen);
+			/* Add loop members to workspace */
+			initiallen = newlen;
+			fixedloop = true;
+		}
+		else
+		{
+			/*
+			 * Didn't find a loop, but add this object to workspace anyway,
+			 * unless it's already present.  We piggyback on the test that
+			 * findLoop() already did: it won't have tentatively added obj
+			 * to workspace if it's already present.
+			 */
+			if (workspace[initiallen] == obj)
+				initiallen++;
+		}
+	}
+
+	/* We'd better have fixed at least one loop */
+	if (!fixedloop)
+		exit_horribly(NULL, modulename, "could not identify dependency loop\n");
+
+	free(workspace);
+}
+
+/*
+ * Recursively search for a circular dependency loop that doesn't include
+ * any existing workspace members.
+ *
+ *	obj: object we are examining now
+ *	startPoint: dumpId of starting object for the hoped-for circular loop
+ *	workspace[]: work array for previously processed and current objects
+ *	depth: number of valid entries in workspace[] at call
+ *	newDepth: if successful, set to new number of workspace[] entries
+ *
+ * On success, *newDepth is set and workspace[] entries depth..*newDepth-1
+ * are filled with pointers to the members of the loop.
+ *
+ * Note: it is possible that the given starting object is a member of more
+ * than one cycle; if so, we will find an arbitrary one of the cycles.
  */
 static bool
 findLoop(DumpableObject *obj,
+		 DumpId startPoint,
+		 DumpableObject **workspace,
 		 int depth,
-		 DumpableObject **ordering,		/* output argument */
-		 int *nOrdering)			/* output argument */
+		 int *newDepth)
 {
-	DumpId		startPoint = ordering[0]->dumpId;
-	int			j;
-	int			k;
+	int			i;
 
-	/* See if we've found a loop back to the starting point */
-	for (j = 0; j < obj->nDeps; j++)
+	/*
+	 * Reject if obj is already present in workspace.  This test serves
+	 * three purposes: it prevents us from finding loops that overlap
+	 * previously-processed loops, it prevents us from going into infinite
+	 * recursion if we are given a startPoint object that links to a cycle
+	 * it's not a member of, and it guarantees that we can't overflow the
+	 * allocated size of workspace[].
+	 */
+	for (i = 0; i < depth; i++)
 	{
-		if (obj->dependencies[j] == startPoint)
+		if (workspace[i] == obj)
+			return false;
+	}
+	/*
+	 * Okay, tentatively add obj to workspace
+	 */
+	workspace[depth++] = obj;
+	/*
+	 * See if we've found a loop back to the desired startPoint; if so, done
+	 */
+	for (i = 0; i < obj->nDeps; i++)
+	{
+		if (obj->dependencies[i] == startPoint)
 		{
-			*nOrdering = depth;
+			*newDepth = depth;
 			return true;
 		}
 	}
-	/* Try each outgoing branch */
-	for (j = 0; j < obj->nDeps; j++)
+	/*
+	 * Recurse down each outgoing branch
+	 */
+	for (i = 0; i < obj->nDeps; i++)
 	{
-		DumpableObject *nextobj = findObjectByDumpId(obj->dependencies[j]);
+		DumpableObject *nextobj = findObjectByDumpId(obj->dependencies[i]);
 
 		if (!nextobj)
 			continue;			/* ignore dependencies on undumped objects */
-		for (k = 0; k < depth; k++)
-		{
-			if (ordering[k] == nextobj)
-				break;
-		}
-		if (k < depth)
-			continue;			/* ignore loops not including start point */
-		ordering[depth] = nextobj;
 		if (findLoop(nextobj,
-					 depth + 1,
-					 ordering,
-					 nOrdering))
+					 startPoint,
+					 workspace,
+					 depth,
+					 newDepth))
 			return true;
 	}
 
