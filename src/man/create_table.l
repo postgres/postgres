@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.11 1997/10/09 04:59:37 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.12 1997/10/17 11:35:33 vadim Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table \(em create a new class
@@ -29,8 +29,6 @@ Each attribute may be specified to be non-null and
 each may have a default value, specified by the
 .IR default
 clause which is the keyword "default" followed by a constant or expression.
-\fBNote\fR: DEFAULT in version 6.2 works like constraint - there is no
-way to insert NULL into an attribute having DEFAULT value.
 .PP
 Each array attribute stores arrays that must have the same number of
 dimensions but may have different sizes and array index bounds.  An
