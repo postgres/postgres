@@ -137,7 +137,9 @@ am running? <BR>
 large obj descriptor.</I>  Why?<BR>
 <A HREF="#4.22">4.22</A>) 	How do I create a column that will default to the
 current time?<BR>
-<A HREF="#4.23">4.23</A>) 	Why are my subqueries using <CODE>IN</CODE> so slow?<BR>
+<A HREF="#4.23">4.23</A>) Why are my subqueries using <CODE>IN</CODE> so
+slow?<BR>
+<A HREF="#4.24">4.24</A>) How do I do an <i>outer</i> join?<BR>
 
 <H2><CENTER>Extending PostgreSQL</CENTER></H2>
 
@@ -1205,6 +1207,22 @@ to:
 	WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
 </PRE></CODE>
 We hope to fix this limitation in a future release.
+
+<H4><A NAME="4.24">4.24</A>) How do I do an <i>outer</i> join?<BR></H4><P>
+PostgreSQL does not support outer joins in the current release. They can
+be simulated using <small>UNION</small> and <small>NOT IN</small>. For
+example, when joining <i>tab1</i> and <i>tab2,</i> the following query
+does an <i>outer</i> join of the two tables:
+<PRE>
+	SELECT tab1.col1, tab2.col2
+	FROM tab1, tab2
+	WHERE tab1.col1 = tab2.col1
+	UNION ALL
+	SELECT tab1.col1, NULL
+	FROM tab1
+	WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+	ORDER BY tab1.col1
+</PRE>
 
 <HR>
 

@@ -179,7 +179,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-    return ("6.5.2");
+    return ("7.1");
   }
   
   /**
