@@ -5,17 +5,17 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Di., den 26.10.2004,
+   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 17.12.2004,
    22:30 MEZ
    
-   Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
-   Website:
-     * http://www.PostgreSQL.org/docs/faqs/FAQ.html (engl.)
-     * http://www.PostgreSQL.org/docs/faqs/FAQ_german.html (dt.)
+   Die aktuellste Version dieses Dokuments liegt auf der
+   PostgreSQL-Website:
+     * http://www.postgresql.org/docs/faqs/FAQ.html (engl.)
+     * http://www.postgresql.org/docs/faqs/FAQ_german.html (dt.)
        
    Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
    spezifische FAQs können unter
-   http://www.PostgreSQL.org/docs/index.html#faqs eingesehen werden.
+   http://www.postgresql.org/docs/index.html#faqs eingesehen werden.
      _________________________________________________________________
    
                              Allgemeine Fragen
@@ -77,8 +77,9 @@
    Datenbank?
    4.6) Wieviel Plattenplatz wird benötigt, um die Daten aus einer
    typischen Textdatei abzuspeichern?
-   4.7) Wie finde ich heraus, welche Indizes oder Operationen in der
-   Datenbank definiert sind?
+   4.7) Wie finde ich heraus, welche Tabellen, Indizes, Datenbanken oder
+   Benutzer in der Datenbank definiert sind?Wie finde ich heraus, welche
+   Indizes oder Operationen in der Datenbank definiert sind?
    4.8) Meine Abfragen sind langsam oder nutzen die Indizes nicht. Warum?
    4.9) Auf welche Weise kann ich sehen, wie der Abfrage-Optimierer
    ("GEQO") meine Abfrage auswertet?
@@ -92,8 +93,7 @@
    4.15.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung
    des Wertes?
    4.15.2) Wie bekomme ich den Wert einer SERIAL-Sequenz?
-   4.15.3) Führen currval() und nextval() zu einer Race-Condition mit
-   anderen Nutzern?
+   4.15.3) Führt currval() zu einer Race-Condition mit anderen Nutzern?
    4.15.4) Warum werden die Sequenzwerte nach einem Transaktionsabbruch
    nicht zurückgesetzt? Warum gibt es Lücken in der Nummerierung meiner
    Sequenz-/SERIAL-Spalte?
@@ -150,11 +150,11 @@
    Die PostgreSQL-Entwicklung wird von einem Entwickler-Team
    durchgeführt, die alle Teilnehmer der
    PostgreSQL-Entwicklungs-Mailingliste sind. Der aktuelle Koordinator
-   ist Marc G. Fournier (scrappy@PostgreSQL.org) (Anmeldemöglichkeit:
+   ist Marc G. Fournier (scrappy@postgresql.org) (Anmeldemöglichkeit:
    siehe unten). Dieses Team ist für die Gesamtentwicklung von PostgreSQL
    verantwortlich. Es handelt sich um ein Gemeinschaftsprojekt, das nicht
    von einer bestimmten Firma kontrolliert wird. Lesen Sie die
-   Entwickler-FAQ: http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html wenn
+   Entwickler-FAQ: http://www.postgresql.org/docs/faqs/FAQ_DEV.html wenn
    Sie an einer Mitarbeit interessiert sind.
    
    Die Autoren von PostgreSQL 1.01 waren Andrew Yu und Jolly Chen. Viele
@@ -167,7 +167,7 @@
    
    Der ursprüngliche Name der Software in Berkeley war Postgres. Als die
    SQL-Funktionalität 1995 hinzugefügt wurde, wurde sein Name zu
-   Postgres95 geändert. Der Name wurde Ende 1996 in PostgreSQL geändert.
+   Postgres95 erweitert. Der Name wurde Ende 1996 in PostgreSQL geändert.
    
     1.2).Welchem Copyright unterliegt PostgreSQL?
     
@@ -223,7 +223,7 @@
    Unter Windows 95/98/ME ist es nur möglich, den Datenbankserver mit
    Hilfe der Cygwin-Umgebung (Unix-Portierungsbibliotheken) zu betreiben.
    Weitere Informationen hierzu gibt es in der CYGWIN-FAQ:
-   http://www.PostgreSQL.org/docs/faqs/text/FAQ_CYGWIN.
+   http://www.postgresql.org/docs/faqs/text/FAQ_CYGWIN.
    
    Eine Portierung für Novell Netware 6 gibt es unter
    http://forge.novell.com.
@@ -231,53 +231,53 @@
     1.5) Woher bekomme ich PostgreSQL?
     
    Der zentrale FTP-Server für PostgreSQL ist der ftp-Server
-   ftp://ftp.postgreSQL.org/pub. Weitere Mirror-Sites sind auf der
+   ftp://ftp.postgresql.org/pub/. Weitere Mirror-Sites sind auf der
    PostgreSQL-Website aufgelistet.
    
     1.6) Wo bekomme ich Support für PostgreSQL?
     
    Die zentrale (englischsprachige) Mailing-Liste ist:
-   mailto:pgsql-general@PostgreSQL.org .
+   mailto:pgsql-general@postgresql.org .
    
    Die Liste ist Themen vorbehalten, die PostgreSQL betreffen. Die
    Anmeldung erfolgt mit einer Email an die Adresse
-   pgsql-general-request@PostgreSQL.org mit folgenden Zeilen im Text
+   pgsql-general-request@postgresql.org mit folgenden Zeilen im Text
    (nicht in der Betreffzeile):
     subscribe
     end
 
    Es gibt auch eine Digest-Liste (eine Liste, die Mails zusammengefasst
    sendet). Um sich an dieser Digest-Liste anzumelden, senden Sie eine
-   Email an pgsql-general-digest-request@PostgreSQL.org mit folgendem
+   Email an pgsql-general-digest-request@postgresql.org mit folgendem
    Text:
     subscribe
     end
 
    Es gibt noch die Bug-Mailingliste. Die Anmeldung für diese Liste
-   erfolgt durch eine Email an bugs-request@PostgreSQL.org mit folgendem
+   erfolgt durch eine Email an bugs-request@postgresql.org mit folgendem
    Text:
     subscribe
     end
 
    Die Entwickler-Mailingliste kann mit einer Email an
-   pgsql-hackers-request@PostgreSQL.org abonniert werden. Die Email muß
+   pgsql-hackers-request@postgresql.org abonniert werden. Die Email muß
    ebenfalls folgenden Text enthalten:
     subscribe
     end
 
-   Eine deutschsprachige Mailing-Liste gibt es bei Yahoo Groups:
-   http://de.groups.yahoo.com/group/postgres/; die Liste kann mit einer
-   leeren E-Mail an postgres-subscribe@yahoogroups.de abonniert werden.
+   Eine deutschsprachige Mailing-Liste gibt es ebenfalls:
+   http://archives.postgresql.org/pgsql-de-allgemein/; die Liste kann
+   hier abonniert werden.
    
    Weitere Mailinglisten und Informationen zu PostgreSQL befinden sich
    auf der PostgreSQL-Homepage:
    
-     http://www.PostgreSQL.org
+     http://www.postgresql.org
      
    Es gibt außerdem einen IRC-Channel bei EFNet und bei Freenode, Channel
    #PostgreSQL. Unter UNIX/Linux können Sie mit z.B. irc -c '#PostgreSQL'
-   "$USER" irc.phoenix.net bzw. irc -c '#PostgreSQL' "$USER"
-   irc.freenode.net. daran teilnehmen.
+   "$USER" irc.freenode.net. bzw. irc -c '#PostgreSQL' "$USER"
+   irc.phoenix.net daran teilnehmen.
    
    Eine Liste von Unternehmen, die Support für PostgreSQL auf
    kommerzieller Basis leisten, kann unter
@@ -294,16 +294,16 @@
     
    Einige Handbücher, Man-Pages und einige kleine Testprogramme sind in
    der Distribution enthalten. Siehe das /doc-Verzeichnis. Ausserdem sind
-   alle Handbücher online unter http://www.PostgreSQL.org/docs/
+   alle Handbücher online unter http://www.postgresql.org/docs/
    verfügbar.
    
    Zwei Bücher zu PostgreSQL sind online verfügbar unter
-   http://www.PostgreSQL.org/docs/awbook.html und
+   http://www.postgresql.org/docs/awbook.html und
    http://www.commandprompt.com/ppbook/ .
    
    Eine Liste lieferbarer PostgreSQL-Bücher befindet sich unter
-   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php Diverse
-   technische Artikel befinden sich unter http://techdocs.PostgreSQL.org/
+   http://techdocs.postgresql.org/techdocs/bookreviews.php Diverse
+   technische Artikel befinden sich unter http://techdocs.postgresql.org/
    .
    
    psql hat einige nützliche \d-Befehle, um Informationen über Typen,
@@ -312,13 +312,13 @@
     1.9) Wie erfahre ich von bekannten Bugs oder fehlenden Features?
     
    PostgreSQL unterstützt eine erweiterte Teilmenge von SQL-92. Siehe
-   unsere TODO-Liste unter http://developer.PostgreSQL.org/todo.php für
+   unsere TODO-Liste unter http://developer.postgresql.org/todo.php für
    eine Auflistung der bekannten Bugs, fehlenden Features und zukünftigen
    Pläne.
    
     1.10) Wie kann ich SQL lernen?
     
-   Das PostgreSQL Book auf http://www.PostgreSQL.org/docs/awbook.html
+   Das PostgreSQL Book auf http://www.postgresql.org/docs/awbook.html
    bietet eine Einführung in SQL. Ein weiteres PostgreSQL-Buch befindet
    sich unter http://www.commandprompt.com/ppbook . Es gibt zudem nette
    Tutorials unter http://www.intermedia.net/support/sql/sqltut.shtm ,
@@ -355,26 +355,26 @@
     1.13) Wie sende ich einen Fehlerbericht?
     
    Bitte besuchen Sie die PostgreSQL-BugTool-Seite
-   http://www.PostgreSQL.org/bugs/, die Hinweise und Anleitungen zur
-   Einreichung von Fehlerberichten enthält.
+   http://www.postgresql.org/bugform.html, die Hinweise und Anleitungen
+   zur Einreichung von Fehlerberichten enthält.
    
-   Überprüfe auch den ftp-Server ftp://ftp.PostgreSQL.org/pub, um
+   Überprüfe auch den ftp-Server ftp://ftp.postgresql.org/pub/, um
    nachzusehen, ob es eine neuere PostgreSQL-Version oder neue Patches
    gibt.
    
     1.14) Wie läuft PostgreSQL im Vergleich zu anderen Datenbanksystemen?
     
    Es gibt verschiedene Methoden, Software zu messen: Eigenschaften,
-   Leistung, Zuverlässigkeit, Support und Preis.
+   Performanz, Zuverlässigkeit, Support und Preis.
    
    Eigenschaften
           PostgreSQL besitt die meisten Eigenschaften - wie
           Transaktionen, Unterabfragen (Subqueries), Trigger, Views und
           verfeinertes Locking - die bei großen kommerziellen DBMS
           vorhanden sind. Es bietet außerdem einige anderen
-          Eigenschaften, die diese nicht haben, wie benutzerbestimmte
-          Typen, Vererbung, Regeln, und die Multi-Versionen-Steuerung zum
-          Verringern konkurrierender Locks.
+          Eigenschaften, die diese nicht immer haben, wie
+          benutzerbestimmte Typen, Vererbung, Regeln, und die
+          Multi-Versionen-Steuerung zum Verringern konkurrierender Locks.
           
    Performanz
           PostgreSQL weist eine Performanz auf, die mit der von
@@ -384,29 +384,23 @@
           
           Im Vergleich zu MySQL oder abgespeckten Datenbank-Systemen ist
           PostgreSQL in Lastsituationen - z.B. bei zeitgleichen Zugriffen
-          durch mehrere Nutzer, komplexen Abfragen oder gleichzeitigen
-          Lese- und Schreibzugriffen schneller. MySQL ist nur bei
-          einfacheren SELECT-Abfragen mit wenigen Nutzern schneller.
-          MySQL hat allerdings wenige der oben erwähnten Eigenschaften.
-          PostgreSQL setzt auf Zuverlässigkeit und Funktionsumfang, dabei
-          wird selbstredend ständig an Performanz-Verbesserungen
-          gearbeitet. Ein interessanter Vergleich zwischen PostgreSQL und
-          MySQL befindet sich unter dieser URL:
-          http://openacs.org/philosophy/why-not-mysql.html Zu beachten
-          ist außerdem, daß die MySQL-Hersteller zwar ihre Produkte als
-          Open-Source vertreiben, beim kommerziellen Einsatz müssen
-          jedoch gemäß den Nutzungsbedingungen Lizenzgebühren entrichtet
-          werden.
+          durch mehrere Nutzer, bei komplexen Abfragen oder
+          gleichzeitigen Lese- und Schreibzugriffen schneller. MySQL ist
+          nur bei einfacheren SELECT-Abfragen mit wenigen Nutzern im
+          Vorteil. MySQL besitzt allerdings nur wenige der im Punkt
+          "Eigenschaften" genannten Features. PostgreSQL setzt auf
+          Zuverlässigkeit und Funktionsumfang, dabei wird selbstredend
+          ständig an Performanz-Verbesserungen gearbeitet.
           
    Zuverlässigkeit
-          Wir stellen fest, dass ein DBMS wertlos ist, wenn es nicht
-          zuverlässig arbeitet. Wir bemühen uns, nur streng geprüften,
-          beständigen Code freizugeben, der nur ein Minimum an
-          Programmfehler aufweist. Jede Freigabe hat mindestens einen
+          Es ist selbstredend, dass ein DBMS wertlos ist, wenn es nicht
+          zuverlässig arbeitet. Daher bemühen wir uns, nur streng
+          geprüften und beständigen Code freizugeben, der nur ein Minimum
+          an Programmfehlern aufweist. Jede Freigabe hat mindestens einen
           Monat Betatest-Phase hinter sich, und unsere Freigabehistorie
-          beweist, dass wir stabile, solide Versionen freigeben, die im
-          Produktionsbetrieb genutzt werden können. Wir glauben, dass wir
-          im Vergleich mit anderer Datenbanksoftware vorteilhaft
+          beweist, dass wir stabile und solide Versionen freigeben, die
+          im Produktionsbetrieb genutzt werden können. Wir glauben, dass
+          wir im Vergleich mit anderer Datenbanksoftware vorteilhaft
           dastehen.
           
    Support
@@ -414,15 +408,15 @@
           einer großen Gruppe von Entwicklern und Benutzern mögliche
           Probleme zu lösen. Wir können nicht immer eine Fehlerbehebung
           garantieren, kommerzielle DBMS tun dies aber auch nicht. Der
-          direkte Kontakt zur Entwickler- und Benutzergemeinschaft, der
-          Zugriff auf die Handbücher und auf den Quellcode ermöglicht
-          einen im Vergleich zu anderen DBMS höherwertigen Support. Es
+          direkte Kontakt zur Entwickler- und Benutzergemeinschaft und
+          der Zugriff auf die Handbücher und den Quellcode ermöglicht
+          einen im Vergleich zu anderen DBMS höherwertigeren Support. Es
           gibt jedoch auch Anbieter von kommerziellen Support-Leistungen
           (siehe FAQ-Punkt 1.6).
           
    Preis
           PostgreSQL ist frei verfügbar, sowohl für die kommerzielle wie
-          für die nicht-kommerzielle Nutzung. Sie können den
+          auch für die nicht-kommerzielle Nutzung. Sie können den
           PostgreSQL-Code ohne Einschränkungen (außer denjenigen, die in
           der oben angegebene BSD-artigen Lizenz erwähnt werden) in Ihr
           Produkt integrieren.
@@ -438,8 +432,8 @@
    Fortschritt des Projekts.
    
    Selbstverständlich ist diese Infrastruktur nicht billig. Es gibt eine
-   Reihe von einmaligen und monatlich wiederkehrenden Kosten, die für den
-   Weiterbetrieb beglichen werden müssen. Falls Sie oder Ihre Firma dazu
+   Reihe von einmaligen und monatlich anfallenden Kosten, die für den
+   Betrieb beglichen werden müssen. Falls Sie oder Ihre Firma dazu
    finanziell beitragen können, besuchen Sie bitte die URL
    http://store.pgsql.com/shopping/ wo Sie eine Spende abgeben können.
    
@@ -452,8 +446,8 @@
    Eine Möglichkeit der nicht-finanziellen Untetstützung besteht übrigens
    darin, für http://advocacy.postgresql.org (en.) bzw.
    http://advocacy.postgresql.org/?lang=de (dt.) einen Bericht über den
-   erfolgreichen Einsatz von PostgreSQL in Ihrem Unternehmen oder
-   Organisation bereitzustellen.
+   erfolgreichen Einsatz von PostgreSQL in Ihrem Unternehmen oder in
+   Ihrer Organisation bereitzustellen.
      _________________________________________________________________
    
                         Fragen zu Benutzerprogrammen
@@ -466,7 +460,7 @@
    http://gborg.postgresql.org/project/psqlodbc/projdisplay.php
    heruntergeladen werden.
    
-   OpenLink ODBC kann unter http://www.openlinksw.com geholt werden. Die
+   OpenLink ODBC kann unter http://www.openlinksw.com bezogen werden. Die
    Software arbeitet mit dem Standard-ODBC-Client dieser Firma, so dass
    PostgreSQL-ODBC auf jeder Client-Plattform zur Verfügung steht, die
    unterstützt wird (Win, Mac, Unix, VMS).
@@ -490,11 +484,11 @@
     2.3) Hat PostgreSQL eine grafische Benutzerschnittstelle?
     
    Es gibt mehrere grafische Schnittstellen für PostgreSQL, darunter
-   PgAccess ( http://www.pgaccess.org), PgAdmin III
+   PgAccess ( http://www.pgaccess.org), pgAdmin III
    (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
-   und Rekall ( http://www.thekompany.com/products/rekall/, proprietär).
-   Es gibt außerdem PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ),
-   eine web-basierte Schnittstelle.
+   und Rekall ( http://www.thekompany.com/products/rekall/,
+   GPL/proprietär). Es gibt außerdem phpPgAdmin (
+   http://phppgadmin.sourceforge.net/ ), eine web-basierte Schnittstelle.
    
     2.4) Welche Programmiersprachen und Schnittstellen gibt es?
     
@@ -537,10 +531,8 @@
    Serverprozesse ab, die Sie für postmaster konfiguriert haben. Bei den
    voreingestellten Werten für Puffer und Prozesse benötigen Sie bei den
    meisten Systemen ein Minimum von ca. 1 MB. Der "PostgreSQL
-   Administrator's Guide"
-   (http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=k
-   ernel-resources.html) enthält weitere Informationen zu Shared Memory
-   und Semaphores.
+   Administrator's Guide" () enthält weitere Informationen zu Shared
+   Memory und Semaphores.
    
     3.4) Wenn ich versuche, den postmaster zu starten, bekomme ich
     "IpcSemaphoreCreate"-Fehlermeldungen. Warum?
@@ -588,25 +580,29 @@
    reduziert den Transaktionsaufwand. Überlegen Sie auch, bei größeren
    Datenänderungen Indizes zu löschen und danach wiederherzustellen.
    
-   Es gibt verschiedene Tuning-Optionen. Sie können fsync() ausschalten,
-   indem Sie beim Starten des postmaster die Optionen -o -F angeben. Das
-   hindert fsync()-Operationen daran, nach jeder Transaktion die Daten
-   direkt auf die Festplatte zu schreiben.
+   Es gibt verschiedene Tuning-Optionen, die im Handbuch dokumentiert
+   sind (Administration Guide/Server Run-time Environment/Run-time
+   Configuration). Sie können fsync() ausschalten, indem Sie beim Starten
+   des postmaster die Optionen -o -F angeben. Das hindert
+   fsync()-Operationen daran, nach jeder Transaktion die Daten direkt auf
+   die Festplatte zu schreiben.
    
-   Sie können auch mit der -B Option des postmaster die Anzahl der Shared
-   Memory Puffer für die Backend-Prozesse erhöhen. Falls Sie diesen Wert
-   jedoch zu hoch setzen, kann es vorkommen, dass der postmaster nicht
-   startet, weil die Obergrenze der Speicherzuweisung für Shared Memory
-   überschritten wird. Jeder Puffer ist 8 kB groß, standardmäßig gibt es
-   64 Puffer.
+   Sie können auch mit der shared_buffers Option des postmaster die
+   Anzahl der Shared Memory Puffer für die Backend-Prozesse erhöhen.
+   Falls Sie diesen Wert jedoch zu hoch setzen, kann es vorkommen, dass
+   der postmaster nicht startet, weil die Obergrenze der
+   Speicherzuweisung für Shared Memory überschritten wird. Jeder Puffer
+   ist 8 kB groß, voreingestellt sind 1000 Puffer.
    
-   Sie können auch die -S Option des Backends nutzen, um die Größe des
-   Speicherplatzes für temporäres Sortieren zu erhöhen. Der -S Wert wird
-   in Kilobyte gemessen und ist standardmäßig auf 512 kB festgelegt.
+   Die sort_mem (ab PostgreSQL 8.0: work_mem)-Optionen des Backends
+   können benutzt werden, um die Größe des Speicherplatzes für temporäres
+   Sortieren zu erhöhen. Die Werte werden in Kilobyte gemessen und sind
+   standardmäßig auf 1024 (d.h. 1MB) festgelegt.
    
    Die CLUSTER-Anweisung kann benutzt werden, um Daten in Basistabellen
-   zu gruppieren, so dass sie auf einen Index zusammengebracht werden.
-   Siehe auch die CLUSTER(l) Man-Page für weitere Details.
+   zu gruppieren, so dass - um einen schnelleren Zugriff zu erreichen -
+   die physikalische Speicherung der Reihenfolge eines der Indexe
+   entspricht. Siehe auch die CLUSTER(l) Man-Page für weitere Details.
    
     3.7) Welche Debugging-Funktionen sind für PostgreSQL verfügbar?
     
@@ -618,9 +614,9 @@
    halten das Programm an, wenn etwas Unerwartetes passiert.
    
    Sowohl der postmaster als auch postgres stellen mehrere Debug-Optionen
-   zur Verfügung. Stellen Sie zuerst sicher, dass Sie den Standard-Output
-   und den Fehlerkanal in eine Datei umleiten, wenn Sie den postmaster
-   starten:
+   zur Verfügung. Zuerst sollten Sie sichergehen, dass Sie die Ausgaben
+   über den Standard-Output und den Standard-Error in eine Datei
+   umleiten, wenn Sie den postmaster starten:
       cd /usr/local/pgsql
       ./bin/postmaster >server.log 2>&1 &
 
@@ -632,28 +628,32 @@
    Information - angibt. Achtung, hohe Debug-Levels erzeugen schnell
    große Logdateien!
    
-   Wenn der postmaster nicht läuft, können Sie sogar den postgres-Backend
+   Wenn der postmaster nicht läuft, können Sie das postgres-Backend sogar
    von der Befehlszeile ausführen und eine SQL-Anweisung direkt eingeben.
-   Dies ist nur für Debugging-Zwecke zu empfehlen. Beachten Sie, dass ein
-   Zeilenumbruch, und nicht das Semikolon die SQL-Anweisung beendet.
-   Falls Sie PostgreSQL mit Debugging-Symbolen kompiliert haben, können
-   Sie mit einem Debugger sehen, was passiert. Da das Backend jedoch
-   nicht vom postmaster gestartet wurde, läuft es nicht in der gleichen
-   Umgebung und deshalb können einige locking/backend Operationen nicht
-   reproduziert werden.
+   Dies ist allerdings nur für Debugging-Zwecke zu empfehlen. Beachten
+   Sie, dass hierbei ein Zeilenumbruch, und nicht - wie sonst üblich -
+   das Semikolon die SQL-Anweisung beendet. Falls Sie PostgreSQL mit
+   Debugging-Symbolen kompiliert haben, können Sie mit einem Debugger
+   sehen, was passiert. Da das Backend jedoch nicht vom postmaster
+   gestartet wurde, läuft es nicht in der gleichen Umgebung und deshalb
+   können einige locking-Vorgänge sowie die Kommunikation zwischen den
+   Backends nicht reproduziert werden.
    
-   Wenn dagegen der postmaster läuft, führen Sie psql in einem Fenster
-   aus, dann ermitteln Sie die Prozessnummer (PID) des
-   postgres-Prozesses, der von psql verwendet wird. Binden Sie einen
-   Debugger an diese PID und führen Sie Abfragen von psql aus. Wenn Sie
-   den postgres-Serverstart analysieren wollen, setzen Sie die
-   Umgebungsvariable PGOPTIONS="-W n", und starten Sie dann psql. Dies
-   verzögert den Start um n Sekunden, damit Sie einen Debugger an den
-   Prozess binden können und ggf. Breakpoints setzen, bevor die
+   Wenn der postmaster hingegen läuft, führen Sie psql in einem Fenster
+   aus, ermitteln Sie die Prozessnummer (PID) des postgres-Prozesses, der
+   von psql verwendet wird (mit
+SELECT pg_backend_pid()
+
+   ). Binden Sie einen Debugger an diese PID und führen Sie Abfragen von
+   psql aus. Wenn Sie den postgres-Serverstart analysieren wollen, setzen
+   Sie die Umgebungsvariable PGOPTIONS="-W n", und starten Sie dann psql.
+   Dies verzögert den Start um n Sekunden, damit Sie einen Debugger an
+   den Prozess binden und ggf. Breakpoints setzen können, bevor die
    Startsequenz begonnen wird.
    
-   Das Programm postgres hat auch die Optionen -s, -A und -t, die bei der
-   Fehlersuche und Performanzmessung sehr nützlich sein können.
+   Es gibt verschiedene Einstellungen (die log_*-Gruppe), die diverse
+   Server-Statistik ausgeben und daher bei der Fehlersuche und
+   Performanzmessung sehr nützlich sein können.
    
    Sie können die Anwendung auch mit Profiling kompilieren, um zu sehen,
    welche Funktionen wieviel Ausführungszeit beanspruchen. Das Backend
@@ -663,14 +663,14 @@
    -DLINUX_PROFILE kompiliert werden muß, um Profiling nutzen zu können.
    
     3.8) Ich bekomme die Meldung "Sorry, too many clients", wenn ich eine
-    Verbindung augzubauen versuche. Warum?
+    Verbindung aufzubauen versuche. Warum?
     
-   Sie müssen die maximale Anzahl der gleichzeitig ausfühbaren Backend-
+   Sie müssen die maximale Anzahl der gleichzeitig ausführbaren Backend-
    Prozesse hochsetzen.
    
-   Die Voreinstellung ist 32 Prozesse. Sie können diese erhöhen, indem
-   Sie den postmaster mit einem entsprechenden -N Parameter starten bzw.
-   die Konfigurationsdatei postgresql.conf anpassen.
+   Die Voreinstellung erlaubt 32 Prozesse. Sie können diese erhöhen,
+   indem Sie den postmaster mit einem entsprechenden -N Parameter starten
+   bzw. die Konfigurationsdatei postgresql.conf anpassen.
    
    Bitte beachten Sie, dass Sie auch -B auf ein Wert größer als die
    Voreinstellung von 64 setzen müssen, wenn Sie -N auf einen Wert höher
@@ -697,15 +697,15 @@
    
    Die temporären Dateien sollten automatisch gelöscht werden. Falls das
    Backend jedoch während einer Sortierung abstürzen sollte, bleiben sie
-   erhalten. Nach einem Neustart des postmaster werden sie auomatisch
-   gelöscht.
+   erhalten. Nach einem Neustart des postmaster werden sie dann aber
+   wieder automatisch gelöscht.
    
     3.10) Warum muß ich bei jeder neuen Hauptversion von PostgreSQL die
     komplette Datenbank exportieren und anschließend reimportieren?
     
    Zwischen "kleinen" PostgreSQL-Versionsänderungen (z.B. zwischen 7.2
    und 7.2.1) werden keine strukturellen Änderungen durchgeführt, wodurch
-   ein erneutes Aus- und Einlesen der Daten nicht benötigt wird.
+   ein erneutes Aus- und Einlesen der Daten nicht erforderlich ist.
    Allerdings wird bei "großen" Versionsänderungen (z.B. zwischen 7.2 und
    7.3) oft das interne Format der Systemtabellen und Datendateien
    angepasst. Diese Änderungen sind oft sehr komplex, wodurch die
@@ -714,7 +714,7 @@
    Format ausgegeben, wodurch die Importierung in das neue interne Format
    ermöglicht wird.
    
-   Bei Versionenwechseln, wo kein Formatänderungen stattgefunden haben,
+   Bei Upgrades, bei denen keine Formatänderungen stattgefunden haben,
    kann das pg_upgrade-Skript benutzt werden, um die Daten ohne Aus- und
    Einlesen zu übertragen. Die jeweilige Dokumentation gibt an, ob für
    die betreffende Version pg_upgrade verfügbar ist.
@@ -744,7 +744,7 @@
    Selbst wenn Sie nur die ersten paar Zeilen einer Tabelle abfragen
    möchten, muß unter Umständen die komplette Abfrage abgearbeitet
    werden. Ziehen Sie also möglichst eine Abfrage in Erwägung, die eine
-   ORDER BY-Anweisung benutzt, die wiederum auf indizierte Spalten
+   ORDER BY-Anweisung benutzt, welche wiederum auf indizierte Spalten
    verweist. In diesem Fall kann PostgreSQL direkt nach den gewünschten
    Zeilen suchen und braucht nicht jede mögliche Ergebniszeile
    abzuarbeiten.
@@ -756,13 +756,13 @@
        SELECT spalte
          FROM tabelle
      ORDER BY random()
-        LIMIT 1;
+        LIMIT 1
 
 
     4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in
     psql sehen kann?
     
-   In psql zeigt der Befehl \dt eine Liste der Datenbanktabellen. Weiter
+   In psql zeigt der Befehl \dt eine Liste der Datenbanktabellen. Weitere
    psql-Befehle lassen sich mit \? anzeigen. Sie können sich die Datei
    pgsql/src/bin/psql/describe.c mit dem Quellcode für psql ansehen. Sie
    enthält die SQL-Abfragen, die die Backslash-Kommandos (\) ausführen.
@@ -794,14 +794,14 @@
        COMMIT;
 
 
-   Um den Platz zu reklamieren, der von der gelöschten Spalte verwendet
-   wurde, führen Sie VACUUM FULL aus.
+   Um den Speicherplatz freizugeben, der von der gelöschten Spalte
+   verwendet wurde, führen Sie VACUUM FULL aus.
    
     4.5) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?
     
    Es bestehen folgende Obergrenzen:
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
-                                               Datenbanken mit 4TB)
+                                               Datenbanken mit 32 TB)
     Maximale Größe einer Tabelle?            32 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
@@ -813,17 +813,17 @@
                                              unbeschränkt
 
    Selbstverständlich sind dies theoretische Werte, die oft durch die
-   verfügbaren Platten- und Speicherressourcen eingeschränkt sind.
-   Extreme Größen können zu Leistungseinbußen führen.
+   verfügbaren Platten- und Speicherressourcen beschränkt werden. Extreme
+   Größen können zu Leistungseinbußen führen.
    
    Die maximale Tabellengröße von 32 TB benötigt keine
    Large-File-Unterstützung im Betriebssystem. Große Tabellen werden in
-   Dateien mit einer Größe von 1 GB aufgeteilt, wodurch etwaige
+   Dateien mit einer Größe von je 1 GB aufgeteilt, wodurch etwaige
    dateisystem-bedingte Beschränkungen nicht relevant sind.
    
    Die maximale Tabellengröße und die maximale Anzahl von Spalten können
-   gesteigert werden, wenn die Default-Blockgröße auf 32 KB heraufgesetzt
-   wird.
+   vervierfacht werden, indem man die Default-Blockgröße auf 32 KB
+   heraufsetzt.
    
     4.6) Wieviel Plattenplatz wird benötigt, um die Daten aus einer typischen
     Textdatei abzuspeichern?
@@ -851,7 +851,7 @@
      64 Bytes pro Zeile
 
    100.000 Datenzeilen
-   -----------------------  =  735 Datenbankseiten (aufgerundet)
+   ------------------------  =  735 Datenbankseiten (aufgerundet)
        128 Zeilen pro Seite
 
    735 Datenbankseiten * 8192 Bytes pro Seite  =  6.021.120 Byte (6 MB)
@@ -862,8 +862,8 @@
    NULL-Werte werden als Bitmaps gespeichert, wodurch sie sehr wenig
    Platz in Anspruch nehmen.
    
-    4.7) Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank
-    definiert sind?
+    4.7) Wie finde ich heraus, welche Tabellen, Indizes, Datenbanken oder
+    Benutzer in der Datenbank definiert sind?
     
    psql hat eine Vielzahl von Backslash-Befehlen, mit denen solche
    Informationen angezeigt werden können. Der Befehl \? zeigt eine
@@ -874,23 +874,25 @@
    SELECT-Anweisungen, mit deren Hilfe man Information über die
    Systemtabellen erhalten kann.
    
-    4.8) Meine Abfragen sind langsam oder nutzen die Indizes nicht. Warum?
+    4.8) Meine Abfragen sind langsam oder benutzen die Indizes nicht. Warum?
     
    Indizes werden nicht automatisch bei jeder Abfrage verwendet. Indizes
    werden nur dann verwendet, wenn die abzufragende Tabelle eine
    bestimmte Größe übersteigt, und die Abfrage nur eine kleine
-   Prozentzahl der Tabellenzeilen abfragt. Grund hierfür ist, dass die
-   durch einen Index verursachten Festplattenzugriffe manchmal langsamer
-   sind als ein einfaches Auslesen aller Tabellenzeilen (sequentieller
-   Scan).
+   Prozentzahl der Tabellenzeilen abfragt. Der Grund hierfür ist der,
+   dass die durch einen Index verursachten Festplattenzugriffe manchmal
+   länger dauern würden als ein einfaches Auslesen aller Tabellenzeilen
+   (sequentieller Scan).
    
    Um festzustellen, ob ein Index verwendet werden soll, braucht
    PostgreSQL Statistiken über die Tabelle. Diese Statistiken werden
    durch die Anweisungen VACUUM ANALYZE bzw. ANALYZE berechnet. Anhand
    der Statistiken kennt der Abfragenoptimierer die Anzahl der
    Tabellenzeilen und kann besser entscheiden, ob Indizes verwendet
-   werden sollen. Statistiken sind auch bei der Feststellung optimaler
-   JOIN-Reihenfolge und -Methoden wertvoll.
+   werden sollen. Statistiken sind auch bei der Ermittlung der optimalen
+   JOIN-Reihenfolgen und -Methoden wertvoll. Daher sollten diese
+   regelmässig durchgeführt werden, da sich der Inhalt einer Tabelle ja
+   auch verändert
    
    In Versionen vor 8.0 werden Indizes oft nicht benutzt, wenn die
    jeweiligen Datentypen nicht genau übereinstimmen. Dies gilt besonders
@@ -917,20 +919,21 @@
    
    Bei der Nutzung von Wildcard-Operatoren wie LIKE oder ~, können
    Indizes nur unter bestimmten Umständen verwendet werden:
-     * Der Anfang des Suchmusters muß mit dem Anfang des Strings
-       verknüpft werden, d.h.:
+     * Das Suchmuster muss sich an Anfang des Strings befinden, d.h.:
           + LIKE-Suchmuster dürfen nicht mit % anfangen;
           + ~ (reguläre Ausdrücke) müssen mit ^ anfangen.
      * Das Suchmuster darf nicht mit einer Zeichenklasse (z.B. [a-e])
-       anfangen
+       beginnen.
        
    Suchmuster, die Gross- und Kleinschreibung nicht berücksichtigen (z.B.
    ILIKE bzw. ~*), verwenden keine Indizes. Stattdessen können
    funktionale Indizes verwendet werden, die im Punkt 4.12 beschrieben
    werden.
    
-   Die C-Locale muß während der Datenbank-Initialisierung mit initdb
-   bestimmt worden sein.
+   Die Standard-Locale "C" muss während der Datenbank-Initialisierung mit
+   initdb verwendet worden sein, da andere locales den nächstgrößten Wert
+   nicht ermitteln können. Es ist allerdings möglich, einen besonderen
+   text_pattern_ops-Index für solche Fälle zu erstellen.
    
     4.9) Auf welche Weise kann ich sehen, wie der Abfrage-Optimierer meine
     Abfrage auswertet?
@@ -942,11 +945,11 @@
    Ein R-Tree Index wird benutzt, um räumliche Daten zu indizieren. Ein
    Hash-Index kann nicht für Bereichssuchen genutzt werden. Ein B-Tree
    Index kann nur für Bereichssuchen in eindimensionalen Daten genutzt
-   werden. R-Trees können multi-dimensionale Daten abhandeln. Ein
-   Beispiel: Wenn ein R-Tree Index auf ein Attribut vom Typ POINT
-   gebildet wird, dann kann das System Abfragen wie z.B. "Zeige alle
-   Punkte, die sich in einem umgebenden Rechteck befinden" effizienter
-   beantworten.
+   werden. R-Trees können hingegen auch mit multi-dimensionalen Daten
+   umgehen. Ein Beispiel: Wenn ein R-Tree Index auf ein Attribut vom Typ
+   POINT gebildet wird, dann kann das System Abfragen wie z.B. "Zeige
+   alle Punkte, die sich in einem umgebenden Rechteck befinden"
+   effizienter beantworten.
    
    Die kanonische Veröffentlichung, die das originale R-Tree Design
    beschreibt, ist:
@@ -960,9 +963,9 @@
    
    Die eingebauten R-Trees können Polygone und Rechtecke verarbeiten.
    Theoretisch können R-Trees auf eine hohe Anzahl von Dimensionen
-   erweitert werden. Praktisch bedingt diese Erweiterung eine Menge
-   Arbeit und wir haben derzeit keinerlei Dokumentation darüber, wie das
-   zu machen wäre.
+   erweitert werden. Für die Praxis bedeutet eine solche Erweiterung
+   allerdings eine Menge Arbeit und wir haben derzeit keinerlei
+   Dokumentation darüber, wie das zu machen wäre.
    
     4.11) Was ist der "Genetic Query Optimizer"?
     
@@ -975,9 +978,9 @@
     Suche, bei der Groß- und Kleinschreibweisen ignoriert werden? Wie verwende
     ich einen Index bei solchen Suchabfragen?
     
-   Der Operator ~ bewirkt die Anwendung eines regulären Ausdrucks. ~*
-   führt zur Anwendung eines regulären Ausdrucks mit Ignorierung der
-   Groß- und Kleinschreibung.
+   Der Operator ~ wendet einen regulären Ausdruck an und ~* wendet ihn
+   an, ohne die Groß- und Kleinschreibung zu beachten. Ebenso beachtet
+   LIKE die Groß- und Kleinschreibung, und ILIKE nicht.
    
    Gleichheitsvergleiche, die Groß- und Kleinschreibung ignorieren,
    werden in der Regel so ausgedruckt:
@@ -985,8 +988,8 @@
         FROM tabelle
        WHERE LOWER(spalte) = 'abc'
 
-   Ein funktionaler Index, der wie folgt erstellt wird, wird auf jeden
-   Fall verwendet:
+   Hier kann kein normaler Index benutzt werden. Legt man hingegen einen
+   funktionalen Index an, so wird er auf jeden Fall verwendet:
       CREATE INDEX tabelle_index ON tabelle (LOWER(spalte))
 
     4.13) Wie ermittle ich in einer Abfrage, ob ein Feld NULL ist?
@@ -998,11 +1001,11 @@
 Typ           interner Name   Bemerkungen
 -------------------------------------------------
 VARCHAR(n)    varchar         die Größe legt die Maximallänge fest; kein
-                               Ausfüllen mit Leerzeichen
+                              Auffüllen mit Leerzeichen
 CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
-TEXT          text            Die Länge wird nur durch die maximale Zeilenlänge
-                               beschränkt
-BYTEA         bytea           Bytearray mit variabler Länge
+TEXT          text            keine obere Schranke für die Länge
+BYTEA         bytea           Bytearray mit variabler Länge (auch für
+                              '\0'-Bytes geeignet)
 "char"        char            1 Zeichen
 
    Der interne Name kommt vor allem in den Systemkatalogen und in manchen
@@ -1028,10 +1031,11 @@ BYTEA         bytea           Bytearray mit variabler Länge
    
    BYTEA ist für binäre Daten, besonders für Werte, die NULL-Bytes haben.
    
-   Die hier erwähnten Typen weisen ähnliche Performanzeigenschaften auf.
+   Alle der hier erwähnten Typen weisen ähnliche Performanzeigenschaften
+   auf.
    
     4.15.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
-    Werts?
+    Werts (serial/auto-increment)?
     
    PostgreSQL bietet einen SERIAL-Datentyp. Dieser erzeugt automatisch
    eine Sequenz auf die angegebene Spalte. Zum Beispiel:
@@ -1082,25 +1086,27 @@ BYTEA         bytea           Bytearray mit variabler Länge
    INSERT-Anweisung zurückgelieferten OID-Wert als einmaligen Wert zu
    verwenden. Dieser Ansatz ist allerdings PostgreSQL-spezifisch;
    außerdem wird nach ca. 4 Milliarden Einträgen der OID-Wert wieder auf
-   eine kleine Zahl gesetzt, ist also nicht garantiert einmalig.
+   eine kleine Zahl gesetzt, ist also nicht garantiert immer einmalig
+   oder aufsteigend.
    
-   In Perl mit dem DBD::Pg-Modul wird der OID-Wert nach einem
-   $sth->excute() über $sth->{pg_oid_status} zurückgeliefert.
+   Mit zum Beispiel dem DBD::Pg-Modul von Perl wird der OID-Wert nach
+   einem $sth->excute() über $sth->{pg_oid_status} zurückgeliefert.
    
     4.15.3) Führen currval() und nextval() zu einer Race-Condition mit anderen
     Nutzern?
     
-   Nein. Die Funktionen liefern einen Wert zurück, der von Ihrem Backend
+   Nein. currval() liefert einen Wert zurück, der von Ihrem Backend
    bestimmt wird, und der anderen Benutzern nicht zur Verfügung steht.
    
     4.15.4) Warum werden die Sequenzwerte nach einem Transaktionsabbruch nicht
     zurückgesetzt? Warum gibt es Lücken in der Nummerierung meiner
     Sequenz-/SERIAL-Spalte?
     
-   Um die konkurrente Verarbeitung zu verbessern, werden Sequenzwerte
-   nach Bedarf an laufende Transaktionen zugeteilt und erst beim Abschluß
-   der Transaktion gesperrt. Durch abgebrochene Transaktionen werden
-   Lücken in der Sequenznummerierung verursacht.
+   Um die gleichzeitige Abarbeitung von Transaktionen zu verbessern,
+   werden Sequenzen gerade nicht für andere Transaktionen gesperrt,
+   sondern die Sequenznummern werden den laufenden Transaktionen sofort
+   zugeteilt. Lücken in der Sequenznummerierung werden durch abgebrochene
+   Transaktionen verursacht.
    
     4.16) Was ist ein OID? Was ist ein TID?
     
@@ -1108,9 +1114,9 @@ BYTEA         bytea           Bytearray mit variabler Länge
    die in PostgreSQL erzeugt wird, bekommt eine eindeutige OID. Alle
    OIDs, die durch initdb erzeugt werden, sind kleiner als 16384 (siehe
    include/access/transam.h). Alle OIDs, die durch den Benutzer erzeugt
-   werden, sind gleich oder größer als dieser Wert. Standardmäßig sind
-   all OIDs nicht nur innerhalb einer Tabelle oder Datenbank, sondern in
-   der gesamten PostgreSQL-Installation einmalig.
+   werden, sind größer oder gleich diesem Wert. Standardmäßig sind all
+   OIDs nicht nur innerhalb einer Tabelle oder Datenbank, sondern in der
+   gesamten PostgreSQL-Installation einmalig.
    
    PostgreSQL benutzt OIDs in seinen internen Systemtabellen, um Zeilen
    in JOINs zwischen Tabellen zu verknüpfen. Es ist möglich, einen Index
@@ -1120,7 +1126,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
    
    OIDs werden allen neuen Zeilen von einem zentralen Bereich, der von
    allen Datenbanken genutzt wird, zugewiesen. Nichts hindert Sie daran,
-   die OID zu ändern, oder eine Kopie der Tabelle mit den originalen Oids
+   die OID zu ändern, oder eine Kopie der Tabelle mit den originalen OIDs
    anzulegen:
         CREATE TABLE new_table(mycol int);
         SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
@@ -1128,6 +1134,16 @@ BYTEA         bytea           Bytearray mit variabler Länge
         COPY new_table WITH OIDS FROM '/tmp/pgtable';
         DROP TABLE tmp_table;
 
+   OIDs werden als 4-Byte Integer gespeichert und laufen bei einem Wert
+   von ungefähr 4 Milliarden über. Niemand hat jemals davon berichtet,
+   dass dies passiert wäre aber wir haben geplant, diese Beschränkung
+   aufzuheben, bevor das jemand ausprobieren kann.
+   
+   TIDs werden benutzt, um bestimmte physikalische Zeilen durch Block und
+   Offset Werte zu identifizieren. TIDs verändern sich, sobald Zeilen
+   verändert oder zurückgeladen werden. Sie werden in Indexeinträgen
+   benutzt um auf die physikalischen Zeilen zu zeigen.
+   
     4.17) Welche Bedeutung haben die verschiedenen Ausdrücke, die in PostgreSQL
     benutzt werden (z.B. attribute, class,...)?
     
@@ -1139,7 +1155,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
      * retrieve, SELECT
      * replace, UPDATE
      * append, INSERT
-     * oid, serial value
+     * OID, serial value
      * portal, cursor
      * range variable, table name, table alias
        
@@ -1200,13 +1216,13 @@ BYTEA         bytea           Bytearray mit variabler Länge
         FROM tabelle_1
        WHERE spalte1 IN (SELECT spalte2 FROM tabelle_2)
 
-   in:
+   ersetzen durch:
       SELECT *
         FROM tabelle_1
        WHERE EXISTS (SELECT spalte2 FROM tabelle_2 WHERE spalte1 = spalte2)
 
    Damit diese Abfrage effizient durchgeführt wird, sollte für 'spalte2'
-   ein Index angelegt worden sein. Ab PostgreSQL 7.4 IN verwendet die
+   ein Index angelegt worden sein. Ab PostgreSQL 7.4 verwendet IN die
    gleichen Methoden wie die normale Tabellenverknüpfung und ist daher
    soger EXISTS vorzuziehen.
    
@@ -1226,13 +1242,14 @@ BYTEA         bytea           Bytearray mit variabler Länge
    Diese identischen Abfragen verknüpfen tabelle_1 mit tabelle_2 über die
    Spalte 'spalte' und geben außerdem alle unverknüpften Zeilen in
    tabelle_1 (diejenigen, die keine Entsprechung in tabelle_2 haben)
-   zurück. Ein FULL JOIN würde dagegen alle verknüpften Zeilen sowie
-   jeweils alle unverknüpften Zeilen aus den beiden Tabellen verknüpfen.
-   Die Angabe von OUTER ist nicht zwingend und kann in LEFT, RIGHT und
-   FULL-Verknüpfungen weggelassen werden. Normale Verknüpfungen sind
-   INNER JOINs.
+   zurück. Ein RIGHT JOIN würde hingegen alle unverknüpften Zeilen in
+   tabelle_2 hinzufügen und ein FULL JOIN würde alle verknüpften Zeilen
+   sowie jeweils alle unverknüpften Zeilen aus den beiden Tabellen
+   zurückliefern. Die Angabe von OUTER ist nicht zwingend und kann in
+   LEFT, RIGHT und FULL-Verknüpfungen weggelassen werden. Normale
+   Verknüpfungen sind INNER JOINs.
    
-   In früheren Versionen von PostgreSQL können OUTER JOINs mittels UNION
+   In früheren Versionen von PostgreSQL konnten OUTER JOINs mittels UNION
    und NOT IN simuliert werden. Zum Beispiel 'tabelle_1' und 'tabelle_2'
    können als LEFT OUTER JOIN auch so verknüpft werden:
       SELECT t1.spalte1, t2.spalte2
@@ -1252,7 +1269,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
    möglich.
    
    contrib/dblink ist eine Erweiterung, die datenbankübergreifende
-   Abfragen ermöglicht.
+   Abfragen über Funktionsaufrufe ermöglicht.
    
    Es ist natürlich möglich, dass eine Client-Anwendung gleichzeitige
    Verbindungen zu verschiedenen Datenbanken aufbaut und selber
@@ -1260,7 +1277,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
    
    Ab 7.3 unterstützt PostgreSQL schemas, die die Aufteilung einer
    Datenbank in mehrere logische Bereiche ermöglichen. Bei vielen
-   Anwendungen könnten dies einen geeigneten Ersatz für den Zugriff auf
+   Anwendungen könnten diese einen geeigneten Ersatz für den Zugriff auf
    eine andere Datenbank bieten.
    
     4.25) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
@@ -1272,17 +1289,16 @@ BYTEA         bytea           Bytearray mit variabler Länge
     4.26) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
     zuverlässig erstellen bzw. löschen?
     
-   PL/PgSQL verarbeitet die Inhalte einer Funktion in einer Cache. Dies
+   PL/PgSQL verarbeitet die Inhalte einer Funktion in eine Cache. Dies
    hat eine unangenehme Nebenwirkung, nämlich dass wenn eine PL/PgSQL-
    Funktion auf eine temporäre Tabelle zugreift, und diese Tabelle
    anschließend gelöscht bzw. neu erstellt wird, die Funktion
-   fehlschlagen wird, da die gecachte Funktionsinhalte noch auf die alte
+   fehlschlagen wird, da die gecachten Funktionsinhalte noch auf die alte
    temporäre Tabelle zeigen.
    
-   Die Lösung für diese Probleme besteht darin, in der Funktion mittels
-   EXECUTE auf temporäre Tabellen zuzugreifen. Diese bewirkt, dass bei
-   jedem Funktionsruf die betreffende Abfrage von PL/PgSQL neu geparst
-   wird.
+   Die Lösung für diese Probleme besteht darin, in der PL/PgSQL Funktion
+   mittels EXECUTE auf temporäre Tabellen zuzugreifen. Diese bewirkt,
+   dass bei jedem Funktionsruf die betreffende Abfrage neu geparst wird.
    
     4.27) Welche Möglichkeiten zur Datenbank-Replikation gibt es?
     
@@ -1290,11 +1306,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
    PostgreSQL. In diesen werden Datenänderungen in der Master-Datenbank
    durchgeführt und an Slave-Datenbanken weitergeleitet. Informationen
    über diese Lösungen befinden sich auf der folgenden Seite (unten):
-   http://gborg.PostgreSQL.org/genpage?replication_research .
-   
-   Eine Multi-Master-Lösung befindet sich in der Entwicklung. Näheres
-   dazu befindet sich hier:
-   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php .
+   http://gborg.postgresql.org/genpage?replication_research .
    
     4.28) Welche Möglichkeiten zur Verschlüsselung gibt es?
     
@@ -1354,7 +1366,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
    liegt die Übersetzung nicht immer auf dem aktuellsten Stand.
    
    Die aktuellste Version der deutschen Übersetzung befindet sich immer
-   unter http://sql-info.de/postgresql/FAQ_german.html. Diese
+   unter http://sql-info.de/de/postgresql/FAQ_german.html. Diese
    "Arbeitsversion" enthält eventuell Änderungen, die noch nicht auf der
    PostgreSQL-Website eingebunden worden sind.
    
