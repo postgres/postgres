@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.33 2000/12/01 20:43:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.34 2001/01/04 02:38:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1951,6 +1951,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_output;
+	int			exec_res;
 
 	/* ----------
 	 * First we evaluate the string expression after the
@@ -1960,7 +1961,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
-		elog(ERROR, "cannot EXECUTE NULL-query");
+		elog(ERROR, "cannot EXECUTE NULL query");
 
 	/* ----------
 	 * Get the C-String representation.
@@ -1986,26 +1987,30 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 
 	/* ----------
 	 * Call SPI_exec() without preparing a saved plan. 
-	 * The returncode can be any OK except for OK_SELECT.
+	 * The returncode can be any standard OK.  Note that
+	 * while a SELECT is allowed, its results will be discarded.
 	 * ----------
 	 */
-	switch(SPI_exec(querystr, 0))
+	exec_res = SPI_exec(querystr, 0);
+	switch (exec_res)
 	{
-		case SPI_OK_UTILITY:
+		case SPI_OK_SELECT:
 		case SPI_OK_SELINTO:
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+		case SPI_OK_UTILITY:
 			break;
 
-		case SPI_OK_SELECT:
-			elog(ERROR, "unexpected SELECT operation in EXECUTE of query '%s'",
-						querystr);
+		case 0:
+			/* Also allow a zero return, which implies the querystring
+			 * contained no commands.
+			 */
 			break;
 
 		default:
-			elog(ERROR, "unexpected error in EXECUTE for query '%s'",
-						querystr);
+			elog(ERROR, "unexpected error %d in EXECUTE of query '%s'",
+				 exec_res, querystr);
 			break;
 	}
 
@@ -2095,7 +2100,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	 * ----------
 	 */
 	if (SPI_exec(querystr, 0) != SPI_OK_SELECT)
-		elog(ERROR, "FOR ... EXECUTE query '%s' was no SELECT", querystr);
+		elog(ERROR, "FOR ... EXECUTE query '%s' was not SELECT", querystr);
 	pfree(querystr);
 
 	n = SPI_processed;
