@@ -25,7 +25,7 @@ int main()
   else cout << "Connected to database '" << dbName << "'..." << endl;
 
   // Create a new table
-  if ( !data.ExecCommandOk("CREATE TABLE foo (a int4, b char16, d float8)") ) {
+  if ( !data.ExecCommandOk("CREATE TABLE foo (a int4, b char(16), d float8)") ) {
       cerr << "CREATE TABLE foo command failed" << endl;
       exit(1);
   }

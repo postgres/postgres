@@ -52,7 +52,7 @@ main(int argc, char **argv)
             afloat  float4, \
             adouble float8, \
             achar   char, \
-            achar16 char16, \
+            achar16 char(16), \
             abpchar char(10), \
             avarchar varchar(50), \
             atext   text, \
