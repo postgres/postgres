@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.4 1996/07/22 22:59:50 scrappy Exp $
+ *    $Id: fd.c,v 1.5 1996/09/22 01:30:52 scrappy Exp $
  *
  * NOTES:
  *
@@ -262,7 +262,7 @@ LruDelete(File file)
     Delete(file);
     
     /* save the seek position */
-    fileP->seekPos = lseek(fileP->fd, 0L, SEEK_CUR);
+    fileP->seekPos = (long) lseek(fileP->fd, 0L, SEEK_CUR);
     Assert( fileP->seekPos != -1);
     
     /* if we have written to the file, sync it */
