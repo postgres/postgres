@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.154 2003/10/11 19:53:45 momjian Exp $
+ * $Id: c.h,v 1.155 2003/10/14 19:08:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -604,8 +604,7 @@ typedef NameData *Name;
 #define MemSet(start, val, len) \
 	do \
 	{ \
-	    /* (void *) used because we check for alignment below */ \
-		int32 * _start = (int32 *) (void *) (start); \
+		int32 * _start = (int32 *) (start); \
 		int		_val = (val); \
 		Size	_len = (len); \
 \
