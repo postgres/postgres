@@ -1730,12 +1730,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		} else if (connection.haveMinimumServerVersion("7.1")) {
 			sql = "SELECT NULL AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, p.proname AS PROCEDURE_NAME, NULL, NULL, NULL, d.description AS REMARKS, "+java.sql.DatabaseMetaData.procedureReturnsResult+" AS PROCEDURE_TYPE "+
 				" FROM pg_proc p "+
-				" LEFT JOIN pg_description d ON (p.oid=d.objoid) "+
-				" LEFT JOIN pg_class c ON (d.classoid=c.oid AND c.relname='pg_proc') ";
-				if (procedureNamePattern != null) {
-					sql += " WHERE p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
-				}
-				sql += " ORDER BY PROCEDURE_NAME ";
+				" LEFT JOIN pg_description d ON (p.oid=d.objoid) ";
+			if (connection.haveMinimumServerVersion("7.2")) {
+				sql += " LEFT JOIN pg_class c ON (d.classoid=c.oid AND c.relname='pg_proc') ";
+			}
+			if (procedureNamePattern != null) {
+				sql += " WHERE p.proname LIKE '"+escapeQuotes(procedureNamePattern)+"' ";
+			}
+			sql += " ORDER BY PROCEDURE_NAME ";
 		} else {
 			sql = "SELECT NULL AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM, p.proname AS PROCEDURE_NAME, NULL, NULL, NULL, NULL AS REMARKS, "+java.sql.DatabaseMetaData.procedureReturnsResult+" AS PROCEDURE_TYPE "+
 				" FROM pg_proc p ";
@@ -1995,9 +1997,6 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			if (schemaPattern != null && !"".equals(schemaPattern)) {
 				select += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 			}
-			if (tableNamePattern != null) {
-				select += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern)+"' ";
-			}
 			orderby = " ORDER BY TABLE_TYPE,TABLE_SCHEM,TABLE_NAME ";
 		} else {
 			useSchemas = "NOSCHEMAS";
@@ -2035,11 +2034,16 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			" ELSE NULL "+
 			" END ";
 			orderby = " ORDER BY TABLE_TYPE,TABLE_NAME ";
-			if (connection.haveMinimumServerVersion("7.1")) {
+			if (connection.haveMinimumServerVersion("7.2")) {
 				select = "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, c.relname AS TABLE_NAME, "+tableType+" AS TABLE_TYPE, d.description AS REMARKS "+
 					" FROM pg_class c "+
 					" LEFT JOIN pg_description d ON (c.oid=d.objoid AND d.objsubid = 0) "+
 					" LEFT JOIN pg_class dc ON (d.classoid = dc.oid AND dc.relname='pg_class') "+
+					" WHERE true ";
+			} else if (connection.haveMinimumServerVersion("7.1")) {
+				select = "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, c.relname AS TABLE_NAME, "+tableType+" AS TABLE_TYPE, d.description AS REMARKS "+
+					" FROM pg_class c "+
+					" LEFT JOIN pg_description d ON (c.oid=d.objoid) "+
 					" WHERE true ";
 			} else {
 				select = "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, c.relname AS TABLE_NAME, "+tableType+" AS TABLE_TYPE, NULL AS REMARKS "+
@@ -2050,6 +2054,9 @@ public abstract class AbstractJdbc1DatabaseMetaData
 
 		if (types == null) {
 			types = defaultTableTypes;
+		}
+		if (tableNamePattern != null) {
+			select += " AND c.relname LIKE '"+escapeQuotes(tableNamePattern)+"' ";
 		}
 		String sql = select;
 		sql += " AND (false ";
@@ -2288,13 +2295,20 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			if (schemaPattern != null && !"".equals(schemaPattern)) {
 				sql += " AND n.nspname LIKE '"+escapeQuotes(schemaPattern)+"' ";
 			}
-		} else if (connection.haveMinimumServerVersion("7.1")) {
+		} else if (connection.haveMinimumServerVersion("7.2")) {
 			sql = "SELECT NULL::text AS nspname,c.relname,a.attname,a.atttypid,a.attnotnull,a.atttypmod,a.attlen,a.attnum,def.adsrc,dsc.description "+
 				" FROM pg_class c "+
 				" JOIN pg_attribute a ON (a.attrelid=c.oid) "+
 				" LEFT JOIN pg_attrdef def ON (a.attrelid=def.adrelid AND a.attnum = def.adnum) "+
 				" LEFT JOIN pg_description dsc ON (c.oid=dsc.objoid AND a.attnum = dsc.objsubid) "+
 				" LEFT JOIN pg_class dc ON (dc.oid=dsc.classoid AND dc.relname='pg_class') "+
+				" WHERE a.attnum > 0 ";
+		} else if (connection.haveMinimumServerVersion("7.1")) {
+			sql = "SELECT NULL::text AS nspname,c.relname,a.attname,a.atttypid,a.attnotnull,a.atttypmod,a.attlen,a.attnum,def.adsrc,dsc.description "+
+				" FROM pg_class c "+
+				" JOIN pg_attribute a ON (a.attrelid=c.oid) "+
+				" LEFT JOIN pg_attrdef def ON (a.attrelid=def.adrelid AND a.attnum = def.adnum) "+
+				" LEFT JOIN pg_description dsc ON (a.oid=dsc.objoid) "+
 				" WHERE a.attnum > 0 ";
 		} else {
 			// if < 7.1 then don't get defaults or descriptions.
