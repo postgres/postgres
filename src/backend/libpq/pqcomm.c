@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.30 1997/11/21 18:10:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.31 1997/12/16 15:58:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,8 +574,12 @@ pq_async_notify()
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 
-static char sock_path[100] = "";
+static char sock_path[MAXPGPATH+1] = "";
 
+/* do_unlink()
+ * Shutdown routine for backend connection
+ * If a Unix socket is used for communication, explicitly close it.
+ */
 static void
 do_unlink()
 {
