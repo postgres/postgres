@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.99 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.100 2002/10/04 17:34:01 tgl Exp $
  *
  * NOTES
  *
@@ -750,7 +750,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 		default:
 			abstime2tm(abstime, &tz, tm, &tzn);
 			if (tm2timestamp(tm, 0, NULL, &result) != 0)
-				elog(ERROR, "Unable convert ABSTIME to TIMESTAMP"
+				elog(ERROR, "Unable to convert ABSTIME to TIMESTAMP"
 					 "\n\tabstime_timestamp() internal error");
 			break;
 	};
@@ -787,7 +787,7 @@ timestamptz_abstime(PG_FUNCTION_ARGS)
 }
 
 /* abstime_timestamptz()
- * Convert abstime to timestamp.
+ * Convert abstime to timestamp with time zone.
  */
 Datum
 abstime_timestamptz(PG_FUNCTION_ARGS)
@@ -818,8 +818,8 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 		default:
 			abstime2tm(abstime, &tz, tm, &tzn);
 			if (tm2timestamp(tm, 0, &tz, &result) != 0)
-				elog(ERROR, "Unable convert ABSTIME to TIMESTAMP WITH TIME ZONE"
-					 "\n\tabstime_timestamp() internal error");
+				elog(ERROR, "Unable to convert ABSTIME to TIMESTAMP WITH TIME ZONE"
+					 "\n\tabstime_timestamptz() internal error");
 			break;
 	};
 
