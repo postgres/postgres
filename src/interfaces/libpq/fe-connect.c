@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.150 2000/11/28 06:53:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.151 2000/11/30 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,9 +129,6 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
-
-	{"unixsocket", "PGUNIXSOCKET", NULL, NULL,
-	"Unix-Socket", "", 80},
 
 	{"tty", "PGTTY", DefaultTty, NULL,
 	"Backend-Debug-TTY", "D", 40},
@@ -308,8 +305,6 @@ PQconnectStart(const char *conninfo)
 	conn->pghost = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "port");
 	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "unixsocket");
-	conn->pgunixsocket = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "tty");
 	conn->pgtty = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "options");
@@ -401,9 +396,6 @@ PQconndefaults(void)
  *
  *	  PGPORT	   identifies TCP port to which to connect if <pgport> argument
  *				   is NULL or a null string.
- *
- *	  PGUNIXSOCKET	   identifies Unix-domain socket to which to connect; default
- *				   is computed from the TCP port.
  *
  *	  PGTTY		   identifies tty to which to send messages if <pgtty> argument
  *				   is NULL or a null string.
@@ -541,6 +533,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 }
 
 
+#ifdef NOT_USED /* because it's broken */
 /*
  * update_db_info -
  * get all additional info out of dbName
@@ -689,6 +682,8 @@ update_db_info(PGconn *conn)
 
 	return 0;
 }
+#endif /* NOT_USED */
+
 
 /* ----------
  * connectMakeNonblocking -
@@ -768,11 +763,13 @@ connectDBStart(PGconn *conn)
 	if (!conn)
 		return 0;
 
+#ifdef NOT_USED
 	/*
 	 * parse dbName to get all additional info in it, if any
 	 */
 	if (update_db_info(conn) != 0)
 		goto connect_errReturn;
+#endif
 
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
