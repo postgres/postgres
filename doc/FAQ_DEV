@@ -6,7 +6,7 @@
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at
-   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html.
+   http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html.
      _________________________________________________________________
    
                              General Questions
@@ -101,7 +101,7 @@
   
    Other than documentation in the source tree itself, you can find some
    papers/presentations discussing the code at
-   http://developers.postgresql.org.
+   http://developer.postgresql.org.
    
   1.6) I've developed a patch, what next?
   
@@ -666,7 +666,7 @@ typedef struct nameData
           a typical code snippet that loops through a List containing Var
           *'s and processes each one:
           
-   List                *list;
+ List                *list;
     ListCell    *i;
 
     foreach(i, list)
