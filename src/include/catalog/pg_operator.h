@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.89 2001/06/07 00:09:29 momjian Exp $
+ * $Id: pg_operator.h,v 1.90 2001/06/10 22:32:35 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -138,7 +138,7 @@ DATA(insert OID = 398 (  "="	   PGUID 0 b t f  1025	1025  16  398 0  0	0 array_e
 DATA(insert OID = 400 (  "="	   PGUID 0 b t f  1027	1027  16  400 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 401 (  "="	   PGUID 0 b t f  1034	1034  16  401 0  0	0 array_eq eqsel eqjoinsel ));
 
-DATA(insert OID = 387 ( "="    PGUID 0 b t t  27  27  16 387  0  0	0 tideq eqsel eqjoinsel ));
+DATA(insert OID = 387 (  "="	   PGUID 0 b t t  27  27  16 387   0   0   0 tideq eqsel eqjoinsel ));
 #define TIDEqualOperator   387
 DATA(insert OID = 388 (  "!"	   PGUID 0 r t f  20   0  20   0   0   0   0 int8fac - - ));
 DATA(insert OID = 389 (  "!!"	   PGUID 0 l t f   0  20  20   0   0   0   0 int8fac - - ));
@@ -659,36 +659,36 @@ DATA(insert OID = 1616 (  "="	  PGUID 0 b t f  628  628	16 1616  0 0 0 line_eq e
 DATA(insert OID = 1617 (  "#"	  PGUID 0 b t f  628  628  600 1617  0 0 0 line_interpt - - ));
 
 /* MAC type */
-DATA(insert OID = 1220 (  "="	   PGUID 0 b t f 829 829	 16 1220 1221 0 0 macaddr_eq eqsel eqjoinsel ));
-DATA(insert OID = 1221 (  "<>"	   PGUID 0 b t f 829 829	 16 1221 1220 0 0 macaddr_ne neqsel neqjoinsel ));
-DATA(insert OID = 1222 (  "<"	   PGUID 0 b t f 829 829	 16 1224 1225 0 0 macaddr_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1223 (  "<="	   PGUID 0 b t f 829 829	 16 1225 1224 0 0 macaddr_le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1224 (  ">"	   PGUID 0 b t f 829 829	 16 1222 1223 0 0 macaddr_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1225 (  ">="	   PGUID 0 b t f 829 829	 16 1223 1222 0 0 macaddr_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1220 (  "="	   PGUID 0 b t f 829 829	 16 1220 1221 1222 1222 macaddr_eq eqsel eqjoinsel ));
+DATA(insert OID = 1221 (  "<>"	   PGUID 0 b t f 829 829	 16 1221 1220    0    0 macaddr_ne neqsel neqjoinsel ));
+DATA(insert OID = 1222 (  "<"	   PGUID 0 b t f 829 829	 16 1224 1225    0    0 macaddr_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1223 (  "<="	   PGUID 0 b t f 829 829	 16 1225 1224    0    0 macaddr_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1224 (  ">"	   PGUID 0 b t f 829 829	 16 1222 1223    0    0 macaddr_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1225 (  ">="	   PGUID 0 b t f 829 829	 16 1223 1222    0    0 macaddr_ge scalargtsel scalargtjoinsel ));
 
 /* INET type */
-DATA(insert OID = 1201 (  "="	   PGUID 0 b t f 869 869	 16 1201 1202 0 0 network_eq eqsel eqjoinsel ));
-DATA(insert OID = 1202 (  "<>"	   PGUID 0 b t f 869 869	 16 1202 1201 0 0 network_ne neqsel neqjoinsel ));
-DATA(insert OID = 1203 (  "<"	   PGUID 0 b t f 869 869	 16 1205 1206 0 0 network_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1204 (  "<="	   PGUID 0 b t f 869 869	 16 1206 1205 0 0 network_le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1205 (  ">"	   PGUID 0 b t f 869 869	 16 1203 1204 0 0 network_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1206 (  ">="	   PGUID 0 b t f 869 869	 16 1204 1203 0 0 network_ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 931  (  "<<"	   PGUID 0 b t f 869 869	 16 933		0 0 0 network_sub - - ));
-DATA(insert OID = 932  (  "<<="    PGUID 0 b t f 869 869	 16 934		0 0 0 network_subeq - - ));
-DATA(insert OID = 933  (  ">>"	   PGUID 0 b t f 869 869	 16 931		0 0 0 network_sup - - ));
-DATA(insert OID = 934  (  ">>="    PGUID 0 b t f 869 869	 16 932		0 0 0 network_supeq - - ));
+DATA(insert OID = 1201 (  "="	   PGUID 0 b t f 869 869	 16 1201 1202 1203 1203 network_eq eqsel eqjoinsel ));
+DATA(insert OID = 1202 (  "<>"	   PGUID 0 b t f 869 869	 16 1202 1201    0    0 network_ne neqsel neqjoinsel ));
+DATA(insert OID = 1203 (  "<"	   PGUID 0 b t f 869 869	 16 1205 1206    0    0 network_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1204 (  "<="	   PGUID 0 b t f 869 869	 16 1206 1205    0    0 network_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1205 (  ">"	   PGUID 0 b t f 869 869	 16 1203 1204    0    0 network_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1206 (  ">="	   PGUID 0 b t f 869 869	 16 1204 1203    0    0 network_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 931  (  "<<"	   PGUID 0 b t f 869 869	 16 933		0    0    0 network_sub - - ));
+DATA(insert OID = 932  (  "<<="    PGUID 0 b t f 869 869	 16 934		0    0    0 network_subeq - - ));
+DATA(insert OID = 933  (  ">>"	   PGUID 0 b t f 869 869	 16 931		0    0    0 network_sup - - ));
+DATA(insert OID = 934  (  ">>="    PGUID 0 b t f 869 869	 16 932		0    0    0 network_supeq - - ));
 
 /* CIDR type */
-DATA(insert OID = 820 (  "="	   PGUID 0 b t f 650 650	 16 820 821 0 0 network_eq eqsel eqjoinsel ));
-DATA(insert OID = 821 (  "<>"	   PGUID 0 b t f 650 650	 16 821 820 0 0 network_ne neqsel neqjoinsel ));
-DATA(insert OID = 822 (  "<"	   PGUID 0 b t f 650 650	 16 824 825 0 0 network_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 823 (  "<="	   PGUID 0 b t f 650 650	 16 825 824 0 0 network_le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 824 (  ">"	   PGUID 0 b t f 650 650	 16 822 823 0 0 network_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 825 (  ">="	   PGUID 0 b t f 650 650	 16 823 822 0 0 network_ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 826 (  "<<"	   PGUID 0 b t f 650 650	 16 828   0 0 0 network_sub - - ));
-DATA(insert OID = 827 (  "<<="	   PGUID 0 b t f 650 650	 16 1004  0 0 0 network_subeq - - ));
-DATA(insert OID = 828 (  ">>"	   PGUID 0 b t f 650 650	 16 826   0 0 0 network_sup - - ));
-DATA(insert OID = 1004 ( ">>="	   PGUID 0 b t f 650 650	 16 827   0 0 0 network_supeq - - ));
+DATA(insert OID = 820 (  "="	   PGUID 0 b t f 650 650	 16 820 821 822 822 network_eq eqsel eqjoinsel ));
+DATA(insert OID = 821 (  "<>"	   PGUID 0 b t f 650 650	 16 821 820   0   0 network_ne neqsel neqjoinsel ));
+DATA(insert OID = 822 (  "<"	   PGUID 0 b t f 650 650	 16 824 825   0   0 network_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 823 (  "<="	   PGUID 0 b t f 650 650	 16 825 824   0   0 network_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 824 (  ">"	   PGUID 0 b t f 650 650	 16 822 823   0   0 network_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 825 (  ">="	   PGUID 0 b t f 650 650	 16 823 822   0   0 network_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 826 (  "<<"	   PGUID 0 b t f 650 650	 16 828   0   0   0 network_sub - - ));
+DATA(insert OID = 827 (  "<<="	   PGUID 0 b t f 650 650	 16 1004  0   0   0 network_subeq - - ));
+DATA(insert OID = 828 (  ">>"	   PGUID 0 b t f 650 650	 16 826   0   0   0 network_sup - - ));
+DATA(insert OID = 1004 ( ">>="	   PGUID 0 b t f 650 650	 16 827   0   0   0 network_supeq - - ));
 
 /* case-insensitive LIKE hacks */
 DATA(insert OID = 1625 (  "~~*"   PGUID 0 b t f  19   25  16 0 1626 0 0 nameiclike iclikesel iclikejoinsel ));
