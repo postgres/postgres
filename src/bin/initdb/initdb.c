@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.67 2004/11/14 23:36:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.68 2004/11/27 18:51:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@
 #include "mb/pg_wchar.h"
 #include "getopt_long.h"
 
-#ifndef HAVE_OPTRESET
+#ifndef HAVE_INT_OPTRESET
 int			optreset;
 #endif
 
