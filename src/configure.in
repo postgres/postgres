@@ -168,7 +168,7 @@ dnl Each can name one or more directories.
 if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
-			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
+			PGSQL_INCLUDES="$PGSQL_INCLUDES -I$dir"
 		else
 			AC_MSG_WARN([*** Include directory $dir does not exist.])
 		fi
@@ -427,7 +427,7 @@ else
 fi
 AC_SUBST(CC_VERSION)
 
-CPPFLAGS="$CPPFLAGS $PGSQL_CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $PGSQL_INCLUDES"
 echo "- setting CPPFLAGS=$CPPFLAGS"
 
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
@@ -476,6 +476,7 @@ AC_SUBST(CPU)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
+AC_SUBST(PGSQL_INCLUDES)
 AC_SUBST(AROPT)
 AC_SUBST(SHARED_LIB)
 AC_SUBST(CFLAGS)
