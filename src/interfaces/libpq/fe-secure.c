@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.31 2003/09/27 15:32:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.32 2003/09/29 16:38:04 petere Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -327,7 +327,7 @@ rloop:
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("Unknown SSL error code\n"));
+							  libpq_gettext("unrecognized SSL error code\n"));
 				n = -1;
 				break;
 		}
@@ -398,7 +398,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("Unknown SSL error code\n"));
+							  libpq_gettext("unrecognized SSL error code\n"));
 				n = -1;
 				break;
 		}
@@ -926,7 +926,7 @@ open_client_SSL(PGconn *conn)
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("Unknown SSL error code\n"));
+							  libpq_gettext("unrecognized SSL error code\n"));
 				close_SSL(conn);
 				return PGRES_POLLING_FAILED;
 		}
