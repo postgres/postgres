@@ -10,7 +10,7 @@
  *  
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.1.1.1 1996/07/09 06:21:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.2 1996/11/03 23:57:42 scrappy Exp $
  *
  * NOTES
  *    At the point the version is defined, 2 physical relations are created
@@ -22,14 +22,12 @@
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <string.h>
 
 #include "postgres.h"
 
-#include "utils/rel.h"
 #include "access/heapam.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"
-#include "nodes/pg_list.h"
 #include "commands/version.h"
 #include "access/xact.h"		/* for GetCurrentXactStartTime */
 #include "tcop/tcopprot.h"

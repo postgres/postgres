@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.1.1.1 1996/07/09 06:21:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.2 1996/11/03 23:57:35 scrappy Exp $
  *
  * Note:
  *	XXX There are many instances of int32 instead of ...Time.  These
@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+#include "postgres.h"
 
 #include "access/heapam.h"
 #include "access/xact.h"
@@ -23,11 +23,8 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
-#include "utils/nabstime.h"
 
-#include "catalog/pg_class.h"
 #include "commands/purge.h"
 #include "utils/builtins.h"	/* for isreltime() */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.3 1996/10/30 02:01:45 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.4 1996/11/03 23:57:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,14 +17,11 @@
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/execnodes.h"
-#include "nodes/pg_list.h"
 #include "nodes/makefuncs.h"
 #include "catalog/pg_type.h"
 #include "commands/recipe.h"
 #include "libpq/libpq-be.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"
-#include "utils/geo-decls.h"
 #include "utils/relcache.h" /* for RelationNameGetRelation*/
 #include "parser/parse_query.h"
 #include "rewrite/rewriteHandler.h"

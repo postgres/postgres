@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.5 1996/10/23 07:40:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.6 1996/11/03 23:57:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/file.h>
+#include <string.h>
 
 #include "postgres.h"
 #include "utils/portal.h"
@@ -22,25 +23,21 @@
 #include "storage/bufmgr.h"
 #include "access/transam.h"
 #include "utils/tqual.h"
-#include "access/htup.h"
 
 #include "catalog/pg_index.h"
 #include "catalog/catname.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 
-#include "storage/fd.h"		/* for O_ */
-#include "storage/itemid.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
 #include "storage/smgr.h"
 #include "storage/lmgr.h"
 
-#include "utils/elog.h"
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
 
 #include "commands/vacuum.h"
+
+#include "storage/bufpage.h"
 
 #ifdef NEED_RUSAGE
 #include "rusagestub.h"

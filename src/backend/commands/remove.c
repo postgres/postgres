@@ -7,31 +7,25 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.3 1996/10/23 07:40:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.4 1996/11/03 23:57:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
-#include "c.h"
 
-#include "access/attnum.h"
+#include "postgres.h"
+
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/skey.h"
 #include "utils/builtins.h"
 #include "utils/tqual.h"	/* for NowTimeQual */
 #include "catalog/catname.h"
 #include "commands/defrem.h"
-#include "utils/elog.h"
 
 #include "miscadmin.h"
 
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "utils/syscache.h"
 #include "parser/catalog_utils.h"
 #include "storage/bufmgr.h"
 #include "fmgr.h"

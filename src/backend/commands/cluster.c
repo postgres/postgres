@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.6 1996/09/26 16:29:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.7 1996/11/03 23:57:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,17 +23,11 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-
-#include "access/attnum.h"
 #include "access/heapam.h"
 #include "access/genam.h"
 #include "access/htup.h"
-#include "access/itup.h"
-#include "access/relscan.h"
 #include "access/skey.h"
 #include "access/xact.h"
-#include "utils/tqual.h"
 
 #include "catalog/catname.h"
 #include "utils/syscache.h"
@@ -45,9 +39,7 @@
 #include "commands/cluster.h"
 #include "commands/rename.h"
 
-#include "storage/buf.h"
 #include "storage/bufmgr.h"
-#include "storage/itemptr.h"
 
 #include "miscadmin.h"
 #include "tcop/dest.h"
@@ -55,12 +47,9 @@
 
 #include "utils/builtins.h"
 #include "utils/excid.h"
-#include "utils/elog.h"
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
-#include "utils/rel.h"
 
-#include "catalog/pg_attribute.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_class.h"
 

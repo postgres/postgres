@@ -7,18 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.2 1996/10/23 07:40:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.3 1996/11/03 23:57:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <string.h>
 
 #include "postgres.h"
 #include "parser/catalog_utils.h"
 #include "parser/parse_query.h"	    /* for MakeTimeRange() */
 #include "nodes/plannodes.h"
 #include "tcop/tcopprot.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "lib/stringinfo.h"
 #include "commands/explain.h"

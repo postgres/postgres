@@ -7,28 +7,26 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.5 1996/10/23 07:39:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.6 1996/11/03 23:57:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
+
 #include "postgres.h"
 
 #include "access/attnum.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/funcindex.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_opclass.h"
-#include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/relcache.h"
 #include "utils/lsyscache.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.3 1996/10/21 09:37:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.4 1996/11/03 23:57:21 scrappy Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -22,32 +22,9 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"  
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"  
-
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include <time.h>
-#include "utils/nabstime.h"
-#include "access/htup.h"
-
-#include "utils/tqual.h"
-#include "storage/buf.h"  
 #include "access/relscan.h"
 
 #include "nodes/memnodes.h"
-#include "nodes/primnodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/params.h"
 #include "access/sdir.h"
@@ -64,9 +41,6 @@
 
 #include "utils/mcxt.h"
 
-#include <stdio.h>
-#include "catalog/pg_index.h"
-#include "access/itup.h" 
 #include "executor/executor.h"
 
 #include "executor/execdefs.h"
@@ -92,7 +66,6 @@
 
 #include "catalog/pg_type.h"
 
-#include "utils/geo-decls.h"
 #include "utils/builtins.h"
 
 /* ----------------

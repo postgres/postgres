@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.2 1996/10/30 02:01:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.3 1996/11/03 23:57:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,8 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "nodes/relation.h"
-#include "nodes/primnodes.h"
 #include "nodes/parsenodes.h"
 #include "parser/catalog_utils.h"
 #include "parser/parse_query.h"

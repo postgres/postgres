@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.4 1996/10/21 09:37:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.5 1996/11/03 23:57:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,34 +61,10 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h" 
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"  
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
-
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include <time.h>
-#include "utils/nabstime.h"
-#include "access/htup.h" 
-
-#include "utils/tqual.h"
-#include "storage/buf.h"  
+#include "utils/syscache.h"
 #include "access/relscan.h"
-
 #include "access/xact.h"
-
 #include "lib/dllist.h"
-
 #include "utils/palloc.h"
 
 #include "tcop/dest.h"
@@ -98,8 +74,6 @@
 
 #include "access/heapam.h" 
 
-#include <stdio.h>
-#include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
 #include "nodes/memnodes.h"
@@ -112,10 +86,8 @@
 #include <errno.h>
 
 #include <netinet/in.h>
-#include "libpq/pqcomm.h"
 #include "libpq/libpq.h"
 
-#include "utils/syscache.h"
 
 static int notifyFrontEndPending = 0;
 static int notifyIssued = 0;

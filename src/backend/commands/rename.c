@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.1.1.1 1996/07/09 06:21:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.2 1996/11/03 23:57:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,8 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "access/attnum.h"
 #include "access/heapam.h"
-#include "access/htup.h"
 #include "access/relscan.h"
-#include "access/skey.h"
 #include "utils/builtins.h"
 #include "utils/tqual.h"
 
@@ -33,7 +29,6 @@
 
 #include "executor/execdefs.h"	/* for EXEC_{FOR,BACK,FDEBUG,BDEBUG} */
 
-#include "storage/buf.h"
 #include "storage/itemptr.h"
 
 #include "miscadmin.h"
@@ -42,10 +37,8 @@
 #include "commands/command.h"
 
 #include "utils/excid.h"
-#include "utils/elog.h"
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
-#include "utils/rel.h"
 
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_proc.h"
@@ -56,7 +49,6 @@
 
 #ifndef NO_SECURITY
 #include "utils/acl.h"
-#include "utils/syscache.h"
 #endif /* !NO_SECURITY */
 
 /*
