@@ -2,18 +2,44 @@
  *
  * PostgreSQL locale utilities
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.17 2002/05/17 01:19:18 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.18 2002/08/09 22:52:04 petere Exp $
  *
  * Portions Copyright (c) 2002, PostgreSQL Global Development Group
  *
  *-----------------------------------------------------------------------
  */
 
+/*
+ * Here is how the locale stuff is handled: LC_COLLATE and LC_CTYPE
+ * are fixed by initdb, stored in pg_control, and cannot be changed.
+ * Thus, the effects of strcoll(), strxfrm(), isupper(), toupper(),
+ * etc. are always in the same fixed locale.
+ *
+ * LC_MESSAGES is settable at run time and will take effect
+ * immediately.
+ *
+ * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are also
+ * settable at run-time.  However, we don't actually set those locale
+ * categories permanently.  This would have bizzare effects like no
+ * longer accepting standard floating-point literals in some locales.
+ * Instead, we only set the locales briefly when needed, cache the
+ * required information obtained from localeconv(), and set them back.
+ * The information is only used by the formatting functions (to_char,
+ * etc.) and the money type.  For the user, this should all be
+ * transparent.  (Actually, LC_TIME doesn't do anything at all right
+ * now.)
+ */
+
+
 #include "postgres.h"
 
 #include <locale.h>
 
 #include "utils/pg_locale.h"
+
+
+/* indicated whether locale information cache is valid */
+static bool CurrentLocaleConvValid = false;
 
 
 /* GUC storage area */
@@ -26,40 +52,32 @@ char *locale_time;
 
 /* GUC assign hooks */
 
+/*
+ * This is common code for several locale categories.  This doesn't
+ * actually set the locale permanently, it only tests if the locale is
+ * valid.  (See explanation at the top of this file.)
+ */
 static const char *
 locale_xxx_assign(int category, const char *value, bool doit, bool interactive)
 {
+	char *save;
+
+	save = setlocale(category, NULL);
+	if (!save)
+		return NULL;
+
+	if (!setlocale(category, value))
+		return NULL;
+
+	setlocale(category, save);
+
+	/* need to reload cache next time */
 	if (doit)
-	{
-		if (!setlocale(category, value))
-			return NULL;
-	}
-	else
-	{
-		char *save;
+		CurrentLocaleConvValid = false;
 
-		save = setlocale(category, NULL);
-		if (!save)
-			return NULL;
-
-		if (!setlocale(category, value))
-			return NULL;
-
-		setlocale(category, save);
-	}
 	return value;
 }
 
-const char *
-locale_messages_assign(const char *value, bool doit, bool interactive)
-{
-	/* LC_MESSAGES category does not exist everywhere, but accept it anyway */
-#ifdef LC_MESSAGES
-	return locale_xxx_assign(LC_MESSAGES, value, doit, interactive);
-#else
-	return value;
-#endif
-}
 
 const char *
 locale_monetary_assign(const char *value, bool doit, bool interactive)
@@ -77,6 +95,37 @@ const char *
 locale_time_assign(const char *value, bool doit, bool interactive)
 {
 	return locale_xxx_assign(LC_TIME, value, doit, interactive);
+}
+
+
+/*
+ * lc_messages takes effect immediately
+ */
+const char *
+locale_messages_assign(const char *value, bool doit, bool interactive)
+{
+	/* LC_MESSAGES category does not exist everywhere, but accept it anyway */
+#ifdef LC_MESSAGES
+	if (doit)
+	{
+		if (!setlocale(LC_MESSAGES, value))
+			return NULL;
+	}
+	else
+	{
+		char *save;
+
+		save = setlocale(LC_MESSAGES, NULL);
+		if (!save)
+			return NULL;
+		
+		if (!setlocale(LC_MESSAGES, value))
+			return NULL;
+		
+		setlocale(LC_MESSAGES, save);
+	}
+#endif
+	return value;
 }
 
 
@@ -108,22 +157,63 @@ lc_collate_is_c(void)
 
 
 /*
+ * Frees the malloced content of a struct lconv.  (But not the struct
+ * itself.)
+ */
+static void
+free_struct_lconv(struct lconv *s)
+{
+	if (s == NULL)
+		return;
+
+	if (s->currency_symbol)
+		free(s->currency_symbol);
+	if (s->decimal_point)
+		free(s->decimal_point);
+	if (s->grouping)
+		free(s->grouping);
+	if (s->thousands_sep)
+		free(s->thousands_sep);
+	if (s->int_curr_symbol)
+		free(s->int_curr_symbol);
+	if (s->mon_decimal_point)
+		free(s->mon_decimal_point);
+	if (s->mon_grouping)
+		free(s->mon_grouping);
+	if (s->mon_thousands_sep)
+		free(s->mon_thousands_sep);
+	if (s->negative_sign)
+		free(s->negative_sign);
+	if (s->positive_sign)
+		free(s->positive_sign);
+}
+
+
+/*
  * Return the POSIX lconv struct (contains number/money formatting
  * information) with locale information for all categories.
  */
 struct lconv *
 PGLC_localeconv(void)
 {
-	static bool CurrentLocaleConvValid = false;
 	static struct lconv CurrentLocaleConv;
-
 	struct lconv *extlconv;
+	char	   *save_lc_monetary;
+	char	   *save_lc_numeric;
 
 	/* Did we do it already? */
 	if (CurrentLocaleConvValid)
 		return &CurrentLocaleConv;
 
-	/* Get formatting information for the external environment */
+	free_struct_lconv(&CurrentLocaleConv);
+
+	save_lc_monetary = setlocale(LC_MONETARY, NULL);
+	save_lc_numeric = setlocale(LC_NUMERIC, NULL);
+
+	setlocale(LC_MONETARY, locale_monetary);
+	setlocale(LC_NUMERIC, locale_numeric);
+
+	/* Get formatting information */
 	extlconv = localeconv();
 
 	/*
@@ -141,6 +231,10 @@ PGLC_localeconv(void)
 	CurrentLocaleConv.mon_thousands_sep = strdup(extlconv->mon_thousands_sep);
 	CurrentLocaleConv.negative_sign = strdup(extlconv->negative_sign);
 	CurrentLocaleConv.positive_sign = strdup(extlconv->positive_sign);
+	CurrentLocaleConv.n_sign_posn = extlconv->n_sign_posn;
+
+	setlocale(LC_MONETARY, save_lc_monetary);
+	setlocale(LC_NUMERIC, save_lc_numeric);
 
 	CurrentLocaleConvValid = true;
 	return &CurrentLocaleConv;

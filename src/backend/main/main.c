@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.52 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.53 2002/08/09 22:52:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,9 +134,11 @@ main(int argc, char *argv[])
 #ifdef LC_MESSAGES
 	setlocale(LC_MESSAGES, "");
 #endif
-	setlocale(LC_MONETARY, "");
-	setlocale(LC_NUMERIC, "");
-	setlocale(LC_TIME, "");
+	/* We don't use these during startup.  See also pg_locale.c about
+	 * why these are set to "C". */
+	setlocale(LC_MONETARY, "C");
+	setlocale(LC_NUMERIC, "C");
+	setlocale(LC_TIME, "C");
 
 #ifdef ENABLE_NLS
 	bindtextdomain("postgres", LOCALEDIR);
