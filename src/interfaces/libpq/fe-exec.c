@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.3 1996/07/18 05:48:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.4 1996/07/19 06:36:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <errno.h>
 #include "postgres.h"
 #include "libpq/pqcomm.h"
@@ -727,6 +728,10 @@ PQprint(FILE *fout,
 	char *border=NULL;
         int numFieldName;
 	int fs_len=strlen(po->fieldSep);
+	int total_line_length = 0;
+	int usePipe = 0;
+	char *pager;
+
     	nTups = PQntuples(res);
 	if (!(fieldNames=(char **)calloc(nFields, sizeof (char *))))
 	{
@@ -758,7 +763,37 @@ PQprint(FILE *fout,
 		len+=fs_len;
 		if (len>fieldMaxLen)
 			fieldMaxLen=len;
+		total_line_length += len;
 	}
+
+	total_line_length += nFields * strlen(po->fieldSep) + 1;
+
+	if (fout == NULL) 
+ 		fout = stdout;
+	if (fout == stdout) {
+	 	/* try to pipe to the pager program if possible */
+		pager=getenv("PAGER");
+		if (pager != NULL &&
+		   isatty(fileno(stdout)) &&
+		   !po->html3 &&
+		   ((po->expanded && nTups * (nFields+1) >= 24) ||
+		    (!po->expanded && nTups * (total_line_length / 80 + 1) *
+			( 1 + (po->standard != 0)) >=
+			24 -
+			(po->header != 0) * (total_line_length / 80 + 1) * 2
+/*			- 1 */ /* newline at end of tuple list */
+/*			- (quiet == 0)
+*/			)))
+		{
+			fout = popen(pager, "w");
+			if (fout) {
+				usePipe = 1;
+				signal(SIGPIPE, SIG_IGN);
+			} else
+				fout = stdout;
+		}
+	}
+
 	if (!po->expanded && (po->align || po->html3))
 	{
 		if (!(fields=(char **)calloc(nFields*(nTups+1), sizeof(char *))))
@@ -977,6 +1012,10 @@ efield:
 			fputc('\n', fout);
 		}
 		free(fields);
+	   	if (usePipe) {
+			pclose(fout);
+			signal(SIGPIPE, SIG_DFL);
+    		}
 	}
 	free(fieldMax);
 	free(fieldNotNum);
