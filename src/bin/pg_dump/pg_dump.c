@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.252 2002/04/24 02:38:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.253 2002/04/24 02:42:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4376,10 +4376,12 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				 */
 				for (j = 0; j < tblinfo[i].numatts; j++)
 				{
-					if (tblinfo[i].adef_expr[j] != NULL && tblinfo[i].inhAttrDef[j] == 0)
-						appendPQExpBuffer(q, "ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s;\n",
-										  tblinfo[i].relname, tblinfo[i].attnames[j],
+					if (tblinfo[i].adef_expr[j] != NULL && tblinfo[i].inhAttrDef[j] == 0) {
+						appendPQExpBuffer(q, "ALTER TABLE %s ", fmtId(tblinfo[i].relname, force_quotes));
+						appendPQExpBuffer(q, "ALTER COLUMN %s SET DEFAULT %s;\n",
+										  fmtId(tblinfo[i].attnames[j], force_quotes),
 										  tblinfo[i].adef_expr[j]);
+					}
 				}
 
 				commentDeps = malloc(sizeof(char *) * 2);
