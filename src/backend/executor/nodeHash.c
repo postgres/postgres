@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.56 2001/03/22 06:16:12 momjian Exp $
+ *	$Id: nodeHash.c,v 1.56.2.1 2001/08/13 19:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,19 +507,23 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	int			bucketno;
 	Datum		keyval;
 	bool		isNull;
+	MemoryContext oldContext;
 
 	/*
-	 * Get the join attribute value of the tuple
-	 *
-	 * We reset the eval context each time to avoid any possibility of memory
-	 * leaks in the hash function.
+	 * We reset the eval context each time to reclaim any memory leaked
+	 * in the hashkey expression or hashFunc itself.
 	 */
 	ResetExprContext(econtext);
 
-	keyval = ExecEvalExprSwitchContext(hashkey, econtext, &isNull, NULL);
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
-	 * compute the hash function
+	 * Get the join attribute value of the tuple
+	 */
+	keyval = ExecEvalExpr(hashkey, econtext, &isNull, NULL);
+
+	/*
+	 * Compute the hash function
 	 */
 	if (isNull)
 		bucketno = 0;
@@ -537,6 +541,8 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	else
 		printf("hash(%ld) = %d\n", (long) keyval, bucketno);
 #endif
+
+	MemoryContextSwitchTo(oldContext);
 
 	return bucketno;
 }
@@ -598,17 +604,18 @@ ExecScanHashBucket(HashJoinState *hjstate,
  *		hashFunc
  *
  *		the hash function, copied from Margo
+ *
+ *		XXX this probably ought to be replaced with datatype-specific
+ *		hash functions, such as those already implemented for hash indexes.
  * ----------------------------------------------------------------
  */
 static int
 hashFunc(Datum key, int len, bool byVal)
 {
 	unsigned int h = 0;
-	unsigned char *k;
 
 	if (byVal)
 	{
-
 		/*
 		 * If it's a by-value data type, use the 'len' least significant
 		 * bytes of the Datum value.  This should do the right thing on
@@ -623,22 +630,29 @@ hashFunc(Datum key, int len, bool byVal)
 	}
 	else
 	{
-
 		/*
-		 * If this is a variable length type, then 'k' points to a "struct
-		 * varlena" and len == -1. NOTE: VARSIZE returns the "real" data
+		 * If this is a variable length type, then 'key' points to a "struct
+		 * varlena" and len == -1.  NOTE: VARSIZE returns the "real" data
 		 * length plus the sizeof the "vl_len" attribute of varlena (the
-		 * length information). 'k' points to the beginning of the varlena
+		 * length information). 'key' points to the beginning of the varlena
 		 * struct, so we have to use "VARDATA" to find the beginning of
-		 * the "real" data.
+		 * the "real" data.  Also, we have to be careful to detoast the
+		 * datum if it's toasted.  (We don't worry about freeing the detoasted
+		 * copy; that happens for free when the per-tuple memory context
+		 * is reset in ExecHashGetBucket.)
 		 */
-		if (len == -1)
+		unsigned char *k;
+
+		if (len < 0)
 		{
-			len = VARSIZE(key) - VARHDRSZ;
-			k = (unsigned char *) VARDATA(key);
+			struct varlena *vkey = PG_DETOAST_DATUM(key);
+
+			len = VARSIZE(vkey) - VARHDRSZ;
+			k = (unsigned char *) VARDATA(vkey);
 		}
 		else
-			k = (unsigned char *) key;
+			k = (unsigned char *) DatumGetPointer(key);
+
 		while (len-- > 0)
 			h = (h * PRIME1) ^ (*k++);
 	}
