@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-hmac.c,v 1.5 2003/11/29 22:39:28 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-hmac.c,v 1.6 2005/03/21 05:19:55 neilc Exp $
  */
 
 
@@ -158,7 +158,7 @@ px_find_hmac(const char *name, PX_HMAC ** res)
 	if (bs < 2)
 	{
 		px_md_free(md);
-		return -1;
+		return PXE_HASH_UNUSABLE_FOR_HMAC;
 	}
 
 	h = px_alloc(sizeof(*h));

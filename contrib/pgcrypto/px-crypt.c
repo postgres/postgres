@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.9 2005/03/21 05:18:45 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.10 2005/03/21 05:19:55 neilc Exp $
  */
 
 #include <postgres.h>
@@ -147,39 +147,40 @@ static struct generator gen_list[] = {
 	{NULL, NULL, 0, 0, 0, 0}
 };
 
-unsigned
+int
 px_gen_salt(const char *salt_type, char *buf, int rounds)
 {
-	int			i,
-				res;
+	int			res;
 	struct generator *g;
 	char	   *p;
 	char		rbuf[16];
 
-	for (i = 0; gen_list[i].name; i++)
+	for (g = gen_list; g->name; g++)
+		if (pg_strcasecmp(g->name, salt_type) == 0)
+			break;
+
+	if (g->name == NULL)
+		return PXE_UNKNOWN_SALT_ALGO;
+
+	if (g->def_rounds)
 	{
-		g = &gen_list[i];
-		if (pg_strcasecmp(g->name, salt_type) != 0)
-			continue;
+		if (rounds == 0)
+			rounds = g->def_rounds;
 
-		if (g->def_rounds)
-		{
-			if (rounds == 0)
-				rounds = g->def_rounds;
-
-			if (rounds < g->min_rounds || rounds > g->max_rounds)
-				return 0;
-		}
-
-		res = px_get_random_bytes(rbuf, g->input_len);
-		if (res != g->input_len)
-			return 0;
-
-		p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
-		memset(rbuf, 0, sizeof(rbuf));
-
-		return p != NULL ? strlen(p) : 0;
+		if (rounds < g->min_rounds || rounds > g->max_rounds)
+			return PXE_BAD_SALT_ROUNDS;
 	}
 
-	return 0;
+	res = px_get_random_bytes(rbuf, g->input_len);
+	if (res < 0)
+		return res;
+
+	p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
+	memset(rbuf, 0, sizeof(rbuf));
+
+	if (p == NULL)
+		return PXE_BAD_SALT_ROUNDS;
+
+	return strlen(p);
 }
+

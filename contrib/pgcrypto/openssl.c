@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.15 2005/03/21 05:18:45 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.16 2005/03/21 05:19:55 neilc Exp $
  */
 
 #include <postgres.h>
@@ -112,7 +112,7 @@ px_find_digest(const char *name, PX_MD ** res)
 
 	md = EVP_get_digestbyname(name);
 	if (md == NULL)
-		return -1;
+		return PXE_NO_HASH;
 
 	ctx = px_alloc(sizeof(*ctx));
 	EVP_DigestInit(ctx, md);
@@ -504,7 +504,7 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 		if (!strcmp(i->name, name))
 			break;
 	if (i->name == NULL)
-		return -1;
+		return PXE_NO_CIPHER;
 
 	od = px_alloc(sizeof(*od));
 	memset(od, 0, sizeof(*od));

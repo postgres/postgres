@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.17 2005/03/21 05:18:45 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.18 2005/03/21 05:19:55 neilc Exp $
  */
 
 #include "postgres.h"
@@ -190,7 +190,7 @@ Datum
 pg_gen_salt(PG_FUNCTION_ARGS)
 {
 	text	   *arg0;
-	unsigned	len;
+	int			len;
 	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
@@ -204,10 +204,10 @@ pg_gen_salt(PG_FUNCTION_ARGS)
 	memcpy(buf, VARDATA(arg0), len);
 	buf[len] = 0;
 	len = px_gen_salt(buf, buf, 0);
-	if (len == 0)
+	if (len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("no such crypt algorithm")));
+				 errmsg("gen_salt: %s", px_strerror(len))));
 
 	res = (text *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(res) = len + VARHDRSZ;
@@ -226,7 +226,7 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 {
 	text	   *arg0;
 	int			rounds;
-	unsigned	len;
+	int			len;
 	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
@@ -241,10 +241,10 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 	memcpy(buf, VARDATA(arg0), len);
 	buf[len] = 0;
 	len = px_gen_salt(buf, buf, rounds);
-	if (len == 0)
+	if (len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("no such crypt algorithm or bad number of rounds")));
+			 errmsg("gen_salt: %s", px_strerror(len))));
 
 	res = (text *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(res) = len + VARHDRSZ;
@@ -360,7 +360,7 @@ pg_encrypt(PG_FUNCTION_ARGS)
 		pfree(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("encrypt error: %d", err)));
+				 errmsg("encrypt error: %s", px_strerror(err))));
 	}
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
@@ -406,7 +406,7 @@ pg_decrypt(PG_FUNCTION_ARGS)
 	if (err)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("decrypt error: %d", err)));
+				 errmsg("decrypt error: %s", px_strerror(err))));
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
@@ -461,7 +461,7 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 	if (err)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("encrypt_iv error: %d", err)));
+				 errmsg("encrypt_iv error: %s", px_strerror(err))));
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
@@ -517,7 +517,7 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 	if (err)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("decrypt_iv error: %d", err)));
+				 errmsg("decrypt_iv error: %s", px_strerror(err))));
 
 	VARATT_SIZEP(res) = VARHDRSZ + rlen;
 
@@ -568,7 +568,7 @@ find_provider(text *name,
 	if (err && !silent)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("%s type does not exist: \"%s\"", desc, buf)));
+				 errmsg("Cannot use \"%s\": %s", buf, px_strerror(err))));
 
 	pfree(buf);
 

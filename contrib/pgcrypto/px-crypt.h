@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.h,v 1.6 2003/11/29 22:39:28 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.h,v 1.7 2005/03/21 05:19:55 neilc Exp $
  */
 
 #ifndef _PX_CRYPT_H
@@ -49,7 +49,7 @@
  * main interface
  */
 char	   *px_crypt(const char *psw, const char *salt, char *buf, unsigned buflen);
-unsigned	px_gen_salt(const char *salt_type, char *dst, int rounds);
+int			px_gen_salt(const char *salt_type, char *dst, int rounds);
 
 /*
  * internal functions

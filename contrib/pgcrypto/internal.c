@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.15 2005/03/21 05:18:45 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.16 2005/03/21 05:19:55 neilc Exp $
  */
 
 
@@ -275,7 +275,7 @@ rj_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 	else if (klen <= 256 / 8)
 		cx->keylen = 256 / 8;
 	else
-		return -1;
+		return PXE_KEY_TOO_BIG;
 
 	memcpy(&cx->keybuf, key, klen);
 
@@ -300,14 +300,14 @@ rj_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 	if (!cx->is_init)
 	{
 		if (rj_real_init(cx, 1))
-			return -1;
+			return PXE_CIPHER_INIT;
 	}
 
 	if (dlen == 0)
 		return 0;
 
 	if (dlen & 15)
-		return -1;
+		return PXE_NOTBLOCKSIZE;
 
 	memcpy(res, data, dlen);
 
@@ -329,13 +329,13 @@ rj_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 
 	if (!cx->is_init)
 		if (rj_real_init(cx, 0))
-			return -1;
+			return PXE_CIPHER_INIT;
 
 	if (dlen == 0)
 		return 0;
 
 	if (dlen & 15)
-		return -1;
+		return PXE_NOTBLOCKSIZE;
 
 	memcpy(res, data, dlen);
 
@@ -422,7 +422,7 @@ bf_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 		return 0;
 
 	if (dlen & 7)
-		return -1;
+		return PXE_NOTBLOCKSIZE;
 
 	memcpy(res, data, dlen);
 	switch (cx->mode)
@@ -446,7 +446,7 @@ bf_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 		return 0;
 
 	if (dlen & 7)
-		return -1;
+		return PXE_NOTBLOCKSIZE;
 
 	memcpy(res, data, dlen);
 	switch (cx->mode)
@@ -556,7 +556,7 @@ px_find_digest(const char *name, PX_MD ** res)
 
 			return 0;
 		}
-	return -1;
+	return PXE_NO_HASH;
 }
 
 int
@@ -575,7 +575,7 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 		}
 
 	if (c == NULL)
-		return -1;
+		return PXE_NO_CIPHER;
 
 	*res = c;
 	return 0;

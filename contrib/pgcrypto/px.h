@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.10 2005/03/21 05:18:46 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.11 2005/03/21 05:19:55 neilc Exp $
  */
 
 #ifndef __PX_H
@@ -63,6 +63,26 @@ void		px_free(void *p);
 /* max salt returned */
 #define PX_MAX_SALT_LEN		128
 
+/*
+ * PX error codes
+ */
+#define PXE_OK						0
+#define PXE_ERR_GENERIC				-1
+#define PXE_NO_HASH					-2
+#define PXE_NO_CIPHER				-3
+#define PXE_NOTBLOCKSIZE			-4
+#define PXE_BAD_OPTION				-5
+#define PXE_BAD_FORMAT				-6
+#define PXE_KEY_TOO_BIG				-7
+#define PXE_CIPHER_INIT				-8
+#define PXE_HASH_UNUSABLE_FOR_HMAC	-9
+#define PXE_DEV_READ_ERROR			-10
+#define PXE_OSSL_RAND_ERROR			-11
+#define PXE_BUG						-12
+#define PXE_ARGUMENT_ERROR			-13
+#define PXE_UNKNOWN_SALT_ALGO		-14
+#define PXE_BAD_SALT_ROUNDS			-15
+#define PXE_MCRYPT_INTERNAL			-16
 
 typedef struct px_digest PX_MD;
 typedef struct px_alias PX_Alias;
@@ -148,6 +168,8 @@ int			px_find_cipher(const char *name, PX_Cipher ** res);
 int			px_find_combo(const char *name, PX_Combo ** res);
 
 int			px_get_random_bytes(uint8 *dst, unsigned count);
+
+const char *px_strerror(int err);
 
 const char *px_resolve_alias(const PX_Alias * aliases, const char *name);
 
