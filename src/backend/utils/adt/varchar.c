@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.60 2000/04/12 17:15:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.60.2.1 2000/07/07 21:29:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,8 @@ bpcharout(char *s)
 	{
 		len = VARSIZE(s) - VARHDRSZ;
 		result = (char *) palloc(len + 1);
-		StrNCpy(result, VARDATA(s), len + 1);	/* these are blank-padded */
+		memcpy(result, VARDATA(s), len);
+		result[len] = '\0';
 	}
 
 #ifdef CYR_RECODE
@@ -249,8 +250,8 @@ bpchar_name(char *s)
 		return NULL;
 
 	len = VARSIZE(s) - VARHDRSZ;
-	if (len > NAMEDATALEN)
-		len = NAMEDATALEN;
+	if (len >= NAMEDATALEN)
+		len = NAMEDATALEN-1;
 
 	while (len > 0)
 	{
@@ -265,7 +266,7 @@ bpchar_name(char *s)
 #endif
 
 	result = (NameData *) palloc(NAMEDATALEN);
-	StrNCpy(NameStr(*result), VARDATA(s), NAMEDATALEN);
+	memcpy(NameStr(*result), VARDATA(s), len);
 
 	/* now null pad to full length... */
 	while (len < NAMEDATALEN)
@@ -297,7 +298,7 @@ name_bpchar(NameData *s)
 #endif
 
 	result = (char *) palloc(VARHDRSZ + len);
-	strncpy(VARDATA(result), NameStr(*s), len);
+	memcpy(VARDATA(result), NameStr(*s), len);
 	VARSIZE(result) = len + VARHDRSZ;
 
 	return result;
@@ -354,7 +355,8 @@ varcharout(char *s)
 	{
 		len = VARSIZE(s) - VARHDRSZ;
 		result = (char *) palloc(len + 1);
-		StrNCpy(result, VARDATA(s), len + 1);
+		memcpy(result, VARDATA(s), len);
+		result[len] = '\0';
 	}
 
 #ifdef CYR_RECODE
