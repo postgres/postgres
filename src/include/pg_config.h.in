@@ -46,6 +46,9 @@
 /* Define if gethostbyname is not thread safe */
 #undef GETHOSTBYNAME_THREADSAFE
 
+/* Define to 1 if getpwuid_r() takes a 5th argument. */
+#undef GETPWUID_R_5ARG
+
 /* Define if getpwuid is not thread safe */
 #undef GETPWUID_THREADSAFE
 
