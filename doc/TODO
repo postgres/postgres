@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jul 20 12:44:41 EDT 2002
+Last updated:		Tue Jul 23 19:28:18 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -142,7 +142,7 @@ Indexes
 * UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
-* Allow UPDATE/DELETE on inherited table
+* -Allow UPDATE/DELETE on inherited table
 * Have UPDATE/DELETE clean out indexes
 * Add UNIQUE capability to non-btree indexes
 * Add btree index support for reltime, tinterval, regproc
