@@ -10,9 +10,11 @@
 /* (of course there is no runtime command for doing that :) */
 #ifdef USE_READLINE
 static bool useReadline;
+
 #endif
 #ifdef USE_HISTORY
 static bool useHistory;
+
 #endif
 
 
@@ -25,29 +27,31 @@ static bool useHistory;
 char *
 gets_interactive(const char *prompt)
 {
-    char * s;
+	char	   *s;
 
 #ifdef USE_READLINE
-    if (useReadline) {
-	s = readline(prompt);
-	fputc('\r', stdout);
-	fflush(stdout);
-    }
-    else {
+	if (useReadline)
+	{
+		s = readline(prompt);
+		fputc('\r', stdout);
+		fflush(stdout);
+	}
+	else
+	{
 #endif
-	fputs(prompt, stdout);
-	fflush(stdout);
-	s = gets_fromFile(stdin);
+		fputs(prompt, stdout);
+		fflush(stdout);
+		s = gets_fromFile(stdin);
 #ifdef USE_READLINE
-    }
+	}
 #endif
 
 #ifdef USE_HISTORY
-    if (useHistory && s && s[0] != '\0')
-	add_history(s);
+	if (useHistory && s && s[0] != '\0')
+		add_history(s);
 #endif
 
-    return s;
+	return s;
 }
 
 
@@ -60,25 +64,27 @@ gets_interactive(const char *prompt)
 char *
 gets_fromFile(FILE *source)
 {
-    PQExpBufferData buffer;
-    char line[1024];
+	PQExpBufferData buffer;
+	char		line[1024];
 
-    initPQExpBuffer(&buffer);
+	initPQExpBuffer(&buffer);
 
-    while (fgets(line, 1024, source) != NULL) {
-	appendPQExpBufferStr(&buffer, line);
-	if (buffer.data[buffer.len-1] == '\n') {
-	    buffer.data[buffer.len-1] = '\0';
-	    return buffer.data;
+	while (fgets(line, 1024, source) != NULL)
+	{
+		appendPQExpBufferStr(&buffer, line);
+		if (buffer.data[buffer.len - 1] == '\n')
+		{
+			buffer.data[buffer.len - 1] = '\0';
+			return buffer.data;
+		}
 	}
-    }
 
-    if (buffer.len > 0)
-	return buffer.data;		/* EOF after reading some bufferload(s) */
+	if (buffer.len > 0)
+		return buffer.data;		/* EOF after reading some bufferload(s) */
 
-    /* EOF, so return null */
-    termPQExpBuffer(&buffer);
-    return NULL;
+	/* EOF, so return null */
+	termPQExpBuffer(&buffer);
+	return NULL;
 }
 
 
@@ -93,28 +99,33 @@ void
 initializeInput(int flags)
 {
 #ifdef USE_READLINE
-    if (flags == 1) {
-	useReadline = true;
-	rl_readline_name = "psql";
-    }
+	if (flags == 1)
+	{
+		useReadline = true;
+		rl_readline_name = "psql";
+	}
 #endif
 
 #ifdef USE_HISTORY
-    if (flags == 1) {
-	const char * home;
+	if (flags == 1)
+	{
+		const char *home;
 
-	useHistory = true;
-	using_history();
-	home = getenv("HOME");
-	if (home) {
-	    char * psql_history = (char *) malloc(strlen(home) + 20);
-	    if (psql_history) {
-		sprintf(psql_history, "%s/.psql_history", home);
-		read_history(psql_history);
-		free(psql_history);
-	    }
+		useHistory = true;
+		using_history();
+		home = getenv("HOME");
+		if (home)
+		{
+			char	   *psql_history = (char *) malloc(strlen(home) + 20);
+
+			if (psql_history)
+			{
+				sprintf(psql_history, "%s/.psql_history", home);
+				read_history(psql_history);
+				free(psql_history);
+			}
+		}
 	}
-    }
 #endif
 }
 
@@ -124,17 +135,19 @@ bool
 saveHistory(const char *fname)
 {
 #ifdef USE_HISTORY
-    if (useHistory) {
-	if (write_history(fname) != 0) {
-	    perror(fname);
-	    return false;
+	if (useHistory)
+	{
+		if (write_history(fname) != 0)
+		{
+			perror(fname);
+			return false;
+		}
+		return true;
 	}
-	return true;
-    }
-    else
-	return false;
+	else
+		return false;
 #else
-    return false;
+	return false;
 #endif
 }
 
@@ -144,19 +157,22 @@ void
 finishInput(void)
 {
 #ifdef USE_HISTORY
-    if (useHistory) {
-	char * home;
-	char * psql_history;
+	if (useHistory)
+	{
+		char	   *home;
+		char	   *psql_history;
 
-	home = getenv("HOME");
-	if (home) {
-	    psql_history = (char *) malloc(strlen(home) + 20);
-	    if (psql_history) {
-		sprintf(psql_history, "%s/.psql_history", home);
-		write_history(psql_history);
-		free(psql_history);
-	    }
+		home = getenv("HOME");
+		if (home)
+		{
+			psql_history = (char *) malloc(strlen(home) + 20);
+			if (psql_history)
+			{
+				sprintf(psql_history, "%s/.psql_history", home);
+				write_history(psql_history);
+				free(psql_history);
+			}
+		}
 	}
-    }
 #endif
 }

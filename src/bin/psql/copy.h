@@ -8,15 +8,15 @@
 
 /* handler for \copy */
 bool
-do_copy(const char *args, PsqlSettings *pset);
+			do_copy(const char *args, PsqlSettings *pset);
 
 
 /* lower level processors for copy in/out streams */
 
 bool
-handleCopyOut(PGconn *conn, FILE *copystream);
+			handleCopyOut(PGconn *conn, FILE *copystream);
 
 bool
-handleCopyIn(PGconn *conn, FILE *copystream, const char * prompt);
+			handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt);
 
 #endif

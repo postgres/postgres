@@ -14,7 +14,7 @@
 #include <signal.h>
 #include <assert.h>
 #ifndef WIN32
-#include <unistd.h> /* for write() */
+#include <unistd.h>				/* for write() */
 #endif
 
 #include <libpq-fe.h>
@@ -39,19 +39,23 @@
  * "Safe" wrapper around strdup()
  * (Using this also avoids writing #ifdef HAVE_STRDUP in every file :)
  */
-char * xstrdup(const char * string)
+char *
+xstrdup(const char *string)
 {
-    char * tmp;
-    if (!string) {
-	fprintf(stderr, "xstrdup: Cannot duplicate null pointer.\n");
-	exit(EXIT_FAILURE);
-    }
-    tmp = strdup(string);
-    if (!tmp) {
-	perror("strdup");
-	exit(EXIT_FAILURE);
-    }
-    return tmp;
+	char	   *tmp;
+
+	if (!string)
+	{
+		fprintf(stderr, "xstrdup: Cannot duplicate null pointer.\n");
+		exit(EXIT_FAILURE);
+	}
+	tmp = strdup(string);
+	if (!tmp)
+	{
+		perror("strdup");
+		exit(EXIT_FAILURE);
+	}
+	return tmp;
 }
 
 
@@ -67,66 +71,67 @@ char * xstrdup(const char * string)
 bool
 setQFout(const char *fname, PsqlSettings *pset)
 {
-    bool status = true;
+	bool		status = true;
 
 #ifdef USE_ASSERT_CHECKING
-    assert(pset);
+	assert(pset);
 #else
-    if (!pset) return false;
+	if (!pset)
+		return false;
 #endif
 
-    /* Close old file/pipe */
-    if (pset->queryFout && pset->queryFout != stdout && pset->queryFout != stderr)
-    {
-	if (pset->queryFoutPipe)
-	    pclose(pset->queryFout);
+	/* Close old file/pipe */
+	if (pset->queryFout && pset->queryFout != stdout && pset->queryFout != stderr)
+	{
+		if (pset->queryFoutPipe)
+			pclose(pset->queryFout);
+		else
+			fclose(pset->queryFout);
+	}
+
+	/* If no filename, set stdout */
+	if (!fname || fname[0] == '\0')
+	{
+		pset->queryFout = stdout;
+		pset->queryFoutPipe = false;
+	}
+	else if (*fname == '|')
+	{
+		const char *pipename = fname + 1;
+
+
+#ifndef __CYGWIN32__
+		pset->queryFout = popen(pipename, "w");
+#else
+		pset->queryFout = popen(pipename, "wb");
+#endif
+		pset->queryFoutPipe = true;
+	}
 	else
-	    fclose(pset->queryFout);
-    }
-
-    /* If no filename, set stdout */
-    if (!fname || fname[0]=='\0')
-    {
-	pset->queryFout = stdout;
-	pset->queryFoutPipe = false;
-    }
-    else if (*fname == '|')
-    {
-	const char * pipename = fname+1;
-
-
+	{
 #ifndef __CYGWIN32__
-	pset->queryFout = popen(pipename, "w");
+		pset->queryFout = fopen(fname, "w");
 #else
-	pset->queryFout = popen(pipename, "wb");
+		pset->queryFout = fopen(fname, "wb");
 #endif
-	pset->queryFoutPipe = true;
-    }
-    else
-    {
-#ifndef __CYGWIN32__
-	pset->queryFout = fopen(fname, "w");
-#else
-	pset->queryFout = fopen(fname, "wb");
-#endif
-	pset->queryFoutPipe = false;
-    }
+		pset->queryFoutPipe = false;
+	}
 
-    if (!pset->queryFout)
-    {
-	perror(fname);
-	pset->queryFout = stdout;
-	pset->queryFoutPipe = false;
-	status = false;
-    }
+	if (!pset->queryFout)
+	{
+		perror(fname);
+		pset->queryFout = stdout;
+		pset->queryFoutPipe = false;
+		status = false;
+	}
 
-    /* Direct signals */
-    if (pset->queryFoutPipe)
-	pqsignal(SIGPIPE, SIG_IGN);
-    else
-	pqsignal(SIGPIPE, SIG_DFL);
+	/* Direct signals */
+	if (pset->queryFoutPipe)
+		pqsignal(SIGPIPE, SIG_IGN);
+	else
+		pqsignal(SIGPIPE, SIG_DFL);
 
-    return status;
+	return status;
 }
 
 
@@ -137,60 +142,67 @@ setQFout(const char *fname, PsqlSettings *pset)
  * Generalized function especially intended for reading in usernames and
  * password interactively. Reads from stdin.
  *
- * prompt:      The prompt to print
- * maxlen:      How many characters to accept
- * echo:        Set to false if you want to hide what is entered (for passwords)
+ * prompt:		The prompt to print
+ * maxlen:		How many characters to accept
+ * echo:		Set to false if you want to hide what is entered (for passwords)
  *
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
 char *
 simple_prompt(const char *prompt, int maxlen, bool echo)
 {
-    int	   length;
-    char * destination;
+	int			length;
+	char	   *destination;
 
 #ifdef HAVE_TERMIOS_H
-    struct termios t_orig, t;
+	struct termios t_orig,
+				t;
+
 #endif
 
-    destination = (char *) malloc(maxlen+2);
-    if (!destination)
-	return NULL;
-    if (prompt) fputs(prompt, stdout);
+	destination = (char *) malloc(maxlen + 2);
+	if (!destination)
+		return NULL;
+	if (prompt)
+		fputs(prompt, stdout);
 
 #ifdef HAVE_TERMIOS_H
-    if (!echo)
-    {
-	tcgetattr(0, &t);
-	t_orig = t;
-	t.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSADRAIN, &t);
-    }
+	if (!echo)
+	{
+		tcgetattr(0, &t);
+		t_orig = t;
+		t.c_lflag &= ~ECHO;
+		tcsetattr(0, TCSADRAIN, &t);
+	}
 #endif
 
-    fgets(destination, maxlen, stdin);
+	fgets(destination, maxlen, stdin);
 
 #ifdef HAVE_TERMIOS_H
-    if (!echo) {
-	tcsetattr(0, TCSADRAIN, &t_orig);
-	puts("");
-    }
+	if (!echo)
+	{
+		tcsetattr(0, TCSADRAIN, &t_orig);
+		puts("");
+	}
 #endif
 
-    length = strlen(destination);
-    if (length > 0 && destination[length - 1] != '\n') {
-	/* eat rest of the line */
-	char   buf[512];
-	do {
-	    fgets(buf, 512, stdin);
-	} while (buf[strlen(buf) - 1] != '\n');
-    }
+	length = strlen(destination);
+	if (length > 0 && destination[length - 1] != '\n')
+	{
+		/* eat rest of the line */
+		char		buf[512];
 
-    if (length > 0 && destination[length - 1] == '\n')
-	/* remove trailing newline */
-	destination[length - 1] = '\0';
+		do
+		{
+			fgets(buf, 512, stdin);
+		} while (buf[strlen(buf) - 1] != '\n');
+	}
 
-    return destination;
+	if (length > 0 && destination[length - 1] == '\n')
+		/* remove trailing newline */
+		destination[length - 1] = '\0';
+
+	return destination;
 }
 
 
@@ -205,68 +217,79 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
  * immediate consumption.
  */
 const char *
-interpolate_var(const char * name, PsqlSettings * pset)
+interpolate_var(const char *name, PsqlSettings *pset)
 {
-    const char * var;
+	const char *var;
 
 #ifdef USE_ASSERT_CHECKING
-    assert(name);
-    assert(pset);
+	assert(name);
+	assert(pset);
 #else
-    if (!name || !pset) return NULL;
+	if (!name || !pset)
+		return NULL;
 #endif
 
-    if (strspn(name, VALID_VARIABLE_CHARS) == strlen(name)) {
-	var = GetVariable(pset->vars, name);
-	if (var)
-	    return var;
-	else
-	    return "";
-    }
+	if (strspn(name, VALID_VARIABLE_CHARS) == strlen(name))
+	{
+		var = GetVariable(pset->vars, name);
+		if (var)
+			return var;
+		else
+			return "";
+	}
 
-    /* otherwise return magic variable */
-    /* (by convention these should be capitalized (but not all caps), to not be
-       shadowed by regular vars or to shadow env vars) */
-    if (strcmp(name, "Version")==0)
-	return PG_VERSION_STR;
+	/* otherwise return magic variable */
 
-    if (strcmp(name, "Database")==0) {
-	if (PQdb(pset->db))
-	    return PQdb(pset->db);
-	else
-	    return "";
-    }
+	/*
+	 * (by convention these should be capitalized (but not all caps), to
+	 * not be shadowed by regular vars or to shadow env vars)
+	 */
+	if (strcmp(name, "Version") == 0)
+		return PG_VERSION_STR;
 
-    if (strcmp(name, "User")==0) {
-	if (PQuser(pset->db))
-	    return PQuser(pset->db);
-	else
-	    return "";
-    }
+	if (strcmp(name, "Database") == 0)
+	{
+		if (PQdb(pset->db))
+			return PQdb(pset->db);
+		else
+			return "";
+	}
 
-    if (strcmp(name, "Host")==0) {
-	if (PQhost(pset->db))
-	    return PQhost(pset->db);
-	else
-	    return "";
-    }
+	if (strcmp(name, "User") == 0)
+	{
+		if (PQuser(pset->db))
+			return PQuser(pset->db);
+		else
+			return "";
+	}
 
-    if (strcmp(name, "Port")==0) {
-	if (PQport(pset->db))
-	    return PQport(pset->db);
-	else
-	    return "";
-    }
+	if (strcmp(name, "Host") == 0)
+	{
+		if (PQhost(pset->db))
+			return PQhost(pset->db);
+		else
+			return "";
+	}
 
-    /* env vars (if env vars are all caps there should be no prob, otherwise
-       you're on your own */
+	if (strcmp(name, "Port") == 0)
+	{
+		if (PQport(pset->db))
+			return PQport(pset->db);
+		else
+			return "";
+	}
 
-    if ((var = getenv(name)))
-	return var;
+	/*
+	 * env vars (if env vars are all caps there should be no prob,
+	 * otherwise you're on your own
+	 */
 
-    return "";
+	if ((var = getenv(name)))
+		return var;
+
+	return "";
 }
-    
+
 
 
 /*
@@ -284,7 +307,7 @@ interpolate_var(const char * name, PsqlSettings * pset)
  * at least avoid trusting printf by using the more primitive fputs().
  */
 
-PGconn * cancelConn;
+PGconn	   *cancelConn;
 
 #ifdef WIN32
 #define safe_write_stderr(String) fputs(s, stderr)
@@ -296,79 +319,84 @@ PGconn * cancelConn;
 static void
 handle_sigint(SIGNAL_ARGS)
 {
-    /* accept signal if no connection */
-    if (cancelConn == NULL)
-	exit(1);
-    /* Try to send cancel request */
-    if (PQrequestCancel(cancelConn))
-	safe_write_stderr("\nCANCEL request sent\n");
-    else {
-	safe_write_stderr("\nCould not send cancel request: ");
-	safe_write_stderr(PQerrorMessage(cancelConn));
-    }
+	/* accept signal if no connection */
+	if (cancelConn == NULL)
+		exit(1);
+	/* Try to send cancel request */
+	if (PQrequestCancel(cancelConn))
+		safe_write_stderr("\nCANCEL request sent\n");
+	else
+	{
+		safe_write_stderr("\nCould not send cancel request: ");
+		safe_write_stderr(PQerrorMessage(cancelConn));
+	}
 }
 
 
 
-/* 
- * PSQLexec 
+/*
+ * PSQLexec
  *
  * This is the way to send "backdoor" queries (those not directly entered
  * by the user). It is subject to -E (echo_secret) but not -e (echo).
  */
-PGresult *
+PGresult   *
 PSQLexec(PsqlSettings *pset, const char *query)
 {
-    PGresult   *res;
-    const char * var;
+	PGresult   *res;
+	const char *var;
 
-    if (!pset->db) {
-	fputs("You are not currently connected to a database.\n", stderr);
-	return NULL;
-    }
-
-    var = GetVariable(pset->vars, "echo_secret");
-    if (var) {
-	printf("********* QUERY *********\n%s\n*************************\n\n", query);
-	fflush(stdout);
-    }
-
-    if (var && strcmp(var, "noexec")==0)
-	return NULL;
-
-    cancelConn = pset->db;
-    pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
-
-    res = PQexec(pset->db, query);
-
-    pqsignal(SIGINT, SIG_DFL);                  /* no control-C is back to normal */
-
-    if (PQstatus(pset->db) == CONNECTION_BAD)
-    {
-	fputs("The connection to the server was lost. Attempting reset: ", stderr);
-	PQreset(pset->db);
-	if (PQstatus(pset->db) == CONNECTION_BAD) {
-	    fputs("Failed.\n", stderr);
-	    PQfinish(pset->db);
-	    PQclear(res);
-	    pset->db = NULL;
-	    return NULL;
+	if (!pset->db)
+	{
+		fputs("You are not currently connected to a database.\n", stderr);
+		return NULL;
 	}
-	else
-	    fputs("Succeeded.\n", stderr);
-    }
 
-    if (res && (PQresultStatus(res) == PGRES_COMMAND_OK ||
-		PQresultStatus(res) == PGRES_TUPLES_OK ||
-		PQresultStatus(res) == PGRES_COPY_IN ||
-		PQresultStatus(res) == PGRES_COPY_OUT)
-	)
-	return res;
-    else {
-	fprintf(stderr, "%s", PQerrorMessage(pset->db));
-	PQclear(res);
-	return NULL;
-    }
+	var = GetVariable(pset->vars, "echo_secret");
+	if (var)
+	{
+		printf("********* QUERY *********\n%s\n*************************\n\n", query);
+		fflush(stdout);
+	}
+
+	if (var && strcmp(var, "noexec") == 0)
+		return NULL;
+
+	cancelConn = pset->db;
+	pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
+
+	res = PQexec(pset->db, query);
+
+	pqsignal(SIGINT, SIG_DFL);	/* no control-C is back to normal */
+
+	if (PQstatus(pset->db) == CONNECTION_BAD)
+	{
+		fputs("The connection to the server was lost. Attempting reset: ", stderr);
+		PQreset(pset->db);
+		if (PQstatus(pset->db) == CONNECTION_BAD)
+		{
+			fputs("Failed.\n", stderr);
+			PQfinish(pset->db);
+			PQclear(res);
+			pset->db = NULL;
+			return NULL;
+		}
+		else
+			fputs("Succeeded.\n", stderr);
+	}
+
+	if (res && (PQresultStatus(res) == PGRES_COMMAND_OK ||
+				PQresultStatus(res) == PGRES_TUPLES_OK ||
+				PQresultStatus(res) == PGRES_COPY_IN ||
+				PQresultStatus(res) == PGRES_COPY_OUT)
+		)
+		return res;
+	else
+	{
+		fprintf(stderr, "%s", PQerrorMessage(pset->db));
+		PQclear(res);
+		return NULL;
+	}
 }
 
 
@@ -388,131 +416,136 @@ PSQLexec(PsqlSettings *pset, const char *query)
 bool
 SendQuery(PsqlSettings *pset, const char *query)
 {
-    bool      success = false;
-    PGresult  *results;
-    PGnotify  *notify;
+	bool		success = false;
+	PGresult   *results;
+	PGnotify   *notify;
 
-    if (!pset->db) {
-	fputs("You are not currently connected to a database.\n", stderr);
-	return false;
-    }
-
-    if (GetVariableBool(pset->vars, "singlestep")) {
-	char buf[3];
-	fprintf(stdout, "***(Single step mode: Verify query)*********************************************\n"
-		        "QUERY: %s\n"
-		        "***(press return to proceed or enter x and return to cancel)********************\n",
-		query);
-	fflush(stdout);
-	fgets(buf, 3, stdin);
-	if (buf[0]=='x')
-	    return false;
-	fflush(stdin);
-    }
-
-    cancelConn = pset->db;
-    pqsignal(SIGINT, handle_sigint);
-
-    results = PQexec(pset->db, query);
-
-    pqsignal(SIGINT, SIG_DFL);
-
-    if (results == NULL)
-    {
-	fputs(PQerrorMessage(pset->db), pset->queryFout);
-	success = false;
-    }
-    else
-    {
-	switch (PQresultStatus(results))
+	if (!pset->db)
 	{
-	case PGRES_TUPLES_OK:
-	    if (pset->gfname)
-	    {
-		PsqlSettings settings_copy = *pset;
+		fputs("You are not currently connected to a database.\n", stderr);
+		return false;
+	}
 
-		settings_copy.queryFout = stdout;
-		if (!setQFout(pset->gfname, &settings_copy)) {
-		    success = false;
-		    break;
+	if (GetVariableBool(pset->vars, "singlestep"))
+	{
+		char		buf[3];
+
+		fprintf(stdout, "***(Single step mode: Verify query)*********************************************\n"
+				"QUERY: %s\n"
+				"***(press return to proceed or enter x and return to cancel)********************\n",
+				query);
+		fflush(stdout);
+		fgets(buf, 3, stdin);
+		if (buf[0] == 'x')
+			return false;
+		fflush(stdin);
+	}
+
+	cancelConn = pset->db;
+	pqsignal(SIGINT, handle_sigint);
+
+	results = PQexec(pset->db, query);
+
+	pqsignal(SIGINT, SIG_DFL);
+
+	if (results == NULL)
+	{
+		fputs(PQerrorMessage(pset->db), pset->queryFout);
+		success = false;
+	}
+	else
+	{
+		switch (PQresultStatus(results))
+		{
+			case PGRES_TUPLES_OK:
+				if (pset->gfname)
+				{
+					PsqlSettings settings_copy = *pset;
+
+					settings_copy.queryFout = stdout;
+					if (!setQFout(pset->gfname, &settings_copy))
+					{
+						success = false;
+						break;
+					}
+
+					printQuery(results, &settings_copy.popt, settings_copy.queryFout);
+
+					/* close file/pipe */
+					setQFout(NULL, &settings_copy);
+
+					free(pset->gfname);
+					pset->gfname = NULL;
+
+					success = true;
+					break;
+				}
+				else
+				{
+					success = true;
+					printQuery(results, &pset->popt, pset->queryFout);
+					fflush(pset->queryFout);
+				}
+				break;
+			case PGRES_EMPTY_QUERY:
+				success = true;
+				break;
+			case PGRES_COMMAND_OK:
+				success = true;
+				fprintf(pset->queryFout, "%s\n", PQcmdStatus(results));
+				break;
+
+			case PGRES_COPY_OUT:
+				if (pset->cur_cmd_interactive && !GetVariable(pset->vars, "quiet"))
+					puts("Copy command returns:");
+
+				success = handleCopyOut(pset->db, pset->queryFout);
+				break;
+
+			case PGRES_COPY_IN:
+				if (pset->cur_cmd_interactive && !GetVariable(pset->vars, "quiet"))
+					puts("Enter data to be copied followed by a newline.\n"
+						 "End with a backslash and a period on a line by itself.");
+
+				success = handleCopyIn(pset->db, pset->cur_cmd_source,
+									   pset->cur_cmd_interactive ? get_prompt(pset, PROMPT_COPY) : NULL);
+				break;
+
+			case PGRES_NONFATAL_ERROR:
+			case PGRES_FATAL_ERROR:
+			case PGRES_BAD_RESPONSE:
+				success = false;
+				fputs(PQerrorMessage(pset->db), pset->queryFout);
+				break;
 		}
 
-		printQuery(results, &settings_copy.popt, settings_copy.queryFout);
+		if (PQstatus(pset->db) == CONNECTION_BAD)
+		{
+			fputs("The connection to the server was lost. Attempting reset: ", stderr);
+			PQreset(pset->db);
+			if (PQstatus(pset->db) == CONNECTION_BAD)
+			{
+				fputs("Failed.\n", stderr);
+				PQfinish(pset->db);
+				PQclear(results);
+				pset->db = NULL;
+				return false;
+			}
+			else
+				fputs("Succeeded.\n", stderr);
+		}
 
-		/* close file/pipe */
-		setQFout(NULL, &settings_copy);
+		/* check for asynchronous notification returns */
+		while ((notify = PQnotifies(pset->db)) != NULL)
+		{
+			fprintf(pset->queryFout, "Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n",
+					notify->relname, notify->be_pid);
+			free(notify);
+		}
 
-		free(pset->gfname);
-		pset->gfname = NULL;
-
-		success = true;
-		break;
-	    }
-	    else
-	    {
-		success = true;
-		printQuery(results, &pset->popt, pset->queryFout);
-		fflush(pset->queryFout);
-	    }
-	    break;
-	case PGRES_EMPTY_QUERY:
-	    success = true;
-	    break;
-	case PGRES_COMMAND_OK:
-	    success = true;
-	    fprintf(pset->queryFout, "%s\n", PQcmdStatus(results));
-	    break;
-
-	case PGRES_COPY_OUT:
-	    if (pset->cur_cmd_interactive && !GetVariable(pset->vars, "quiet"))
-		puts("Copy command returns:");
-
-	    success = handleCopyOut(pset->db, pset->queryFout);
-	    break;
-
-	case PGRES_COPY_IN:
-	    if (pset->cur_cmd_interactive && !GetVariable(pset->vars, "quiet"))
-		puts("Enter data to be copied followed by a newline.\n"
-		     "End with a backslash and a period on a line by itself.");
-
-	    success = handleCopyIn(pset->db, pset->cur_cmd_source,
-				   pset->cur_cmd_interactive ? get_prompt(pset, PROMPT_COPY) : NULL);
-	    break;
-
-	case PGRES_NONFATAL_ERROR:
-	case PGRES_FATAL_ERROR:
-	case PGRES_BAD_RESPONSE:
-	    success = false;
-	    fputs(PQerrorMessage(pset->db), pset->queryFout);
-	    break;
+		if (results)
+			PQclear(results);
 	}
 
-	if (PQstatus(pset->db) == CONNECTION_BAD)
-	{
-	    fputs("The connection to the server was lost. Attempting reset: ", stderr);
-	    PQreset(pset->db);
-	    if (PQstatus(pset->db) == CONNECTION_BAD) {
-		fputs("Failed.\n", stderr);
-		PQfinish(pset->db);
-		PQclear(results);
-		pset->db = NULL;
-		return false;
-	    }
-	    else
-		fputs("Succeeded.\n", stderr);
-	}
-
-	/* check for asynchronous notification returns */
-	while ((notify = PQnotifies(pset->db)) != NULL)
-	{
-	    fprintf(pset->queryFout, "Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n",
-		   notify->relname, notify->be_pid);
-	    free(notify);
-	}
-
-	if (results)
-	    PQclear(results);
-    }
-
-    return success;
+	return success;
 }

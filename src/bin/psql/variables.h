@@ -13,21 +13,22 @@
 
 #define VALID_VARIABLE_CHARS "abcdefghijklmnopqrstuvwxyz0123456789_"
 
-struct _variable {
-    char * name;
-    char * value;
-    struct _variable * next;
+struct _variable
+{
+	char	   *name;
+	char	   *value;
+	struct _variable *next;
 };
 
-typedef struct _variable * VariableSpace;
+typedef struct _variable *VariableSpace;
 
 
 VariableSpace CreateVariableSpace(void);
-const char * GetVariable(VariableSpace space, const char * name);
-bool GetVariableBool(VariableSpace space, const char * name);
-bool SetVariable(VariableSpace space, const char * name, const char * value);
-bool DeleteVariable(VariableSpace space, const char * name);
-void DestroyVariableSpace(VariableSpace space);
+const char *GetVariable(VariableSpace space, const char *name);
+bool		GetVariableBool(VariableSpace space, const char *name);
+bool		SetVariable(VariableSpace space, const char *name, const char *value);
+bool		DeleteVariable(VariableSpace space, const char *name);
+void		DestroyVariableSpace(VariableSpace space);
 
 
-#endif /* VARIABLES_H */
+#endif	 /* VARIABLES_H */

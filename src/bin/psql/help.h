@@ -3,14 +3,13 @@
 
 #include "settings.h"
 
-void usage(void);
+void		usage(void);
 
-void slashUsage(PsqlSettings *pset);
+void		slashUsage(PsqlSettings *pset);
 
-void helpSQL(const char *topic);
+void		helpSQL(const char *topic);
 
-void print_copyright(void);
+void		print_copyright(void);
 
 
 #endif
-

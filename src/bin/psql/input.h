@@ -38,19 +38,19 @@
 
 
 char *
-gets_interactive(const char *prompt);
+			gets_interactive(const char *prompt);
 
 char *
-gets_fromFile(FILE *source);
+			gets_fromFile(FILE *source);
 
 
 void
-initializeInput(int flags);
+			initializeInput(int flags);
 
 bool
-saveHistory(const char *fname);
+			saveHistory(const char *fname);
 
 void
-finishInput(void);
+			finishInput(void);
 
 #endif

@@ -5,6 +5,6 @@
 #include "settings.h"
 
 int
-MainLoop(PsqlSettings *pset, FILE *source);
+			MainLoop(PsqlSettings *pset, FILE *source);
 
-#endif MAINLOOP_H
+#endif	 /* MAINLOOP_H */

@@ -5,38 +5,38 @@
 
 /* \da */
 bool
-describeAggregates(const char * name, PsqlSettings * pset);
+			describeAggregates(const char *name, PsqlSettings *pset);
 
 /* \df */
 bool
-describeFunctions(const char * name, PsqlSettings * pset);
+			describeFunctions(const char *name, PsqlSettings *pset);
 
 /* \dT */
 bool
-describeTypes(const char * name, PsqlSettings * pset);
+			describeTypes(const char *name, PsqlSettings *pset);
 
 /* \do */
 bool
-describeOperators(const char * name, PsqlSettings * pset);
+			describeOperators(const char *name, PsqlSettings *pset);
 
 /* \dp (formerly \z) */
 bool
-permissionsList(const char * name, PsqlSettings *pset);
+			permissionsList(const char *name, PsqlSettings *pset);
 
 /* \dd */
 bool
-objectDescription(const char * object, PsqlSettings *pset);
+			objectDescription(const char *object, PsqlSettings *pset);
 
 /* \d foo */
 bool
-describeTableDetails(const char * name, PsqlSettings * pset);
+			describeTableDetails(const char *name, PsqlSettings *pset);
 
 /* \l */
 bool
-listAllDbs(PsqlSettings *pset);
+			listAllDbs(PsqlSettings *pset);
 
 /* \dt, \di, \dS, etc. */
 bool
-listTables(const char * infotype, const char * name, PsqlSettings * pset);
+			listTables(const char *infotype, const char *name, PsqlSettings *pset);
 
-#endif /* DESCRIBE_H */
+#endif	 /* DESCRIBE_H */

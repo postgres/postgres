@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.80 1999/10/29 23:52:22 momjian Exp $
+ * $Id: psqlHelp.h,v 1.81 1999/11/04 23:14:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,5 +384,6 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 \tVACUUM [VERBOSE] [ANALYZE] [table]\n\
 \tor\n\
 \tVACUUM [VERBOSE]  ANALYZE  [table [(column_name1, ...column_nameN)]];"},
-	{NULL, NULL, NULL}			/* important to keep a NULL terminator here!*/
+	{NULL, NULL, NULL}			/* important to keep a NULL terminator
+								 * here! */
 };

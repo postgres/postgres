@@ -20,24 +20,27 @@
 
 typedef struct _psqlSettings
 {
-    PGconn *db;		          /* connection to backend */
-    FILE   *queryFout;	          /* where to send the query results */
-    bool   queryFoutPipe;	  /* queryFout is from a popen() */
+	PGconn	   *db;				/* connection to backend */
+	FILE	   *queryFout;		/* where to send the query results */
+	bool		queryFoutPipe;	/* queryFout is from a popen() */
 
-    printQueryOpt popt;
-    VariableSpace vars;            /* "shell variable" repository */
+	printQueryOpt popt;
+	VariableSpace vars;			/* "shell variable" repository */
 
-    char       *gfname;		   /* one-shot file output argument for \g */
+	char	   *gfname;			/* one-shot file output argument for \g */
 
-    bool       notty;		   /* stdin or stdout is not a tty (as determined on startup) */
-    bool       useReadline;	   /* use libreadline routines */
-    bool       useHistory;
-    bool       getPassword;	   /* prompt the user for a username and
-				      password */
-    FILE * cur_cmd_source;         /* describe the status of the current main loop */
-    bool cur_cmd_interactive;
+	bool		notty;			/* stdin or stdout is not a tty (as
+								 * determined on startup) */
+	bool		useReadline;	/* use libreadline routines */
+	bool		useHistory;
+	bool		getPassword;	/* prompt the user for a username and
+								 * password */
+	FILE	   *cur_cmd_source; /* describe the status of the current main
+								 * loop */
+	bool		cur_cmd_interactive;
 
-    bool has_client_encoding;      /* was PGCLIENTENCODING set on startup? */
+	bool		has_client_encoding;	/* was PGCLIENTENCODING set on
+										 * startup? */
 } PsqlSettings;
 
 
