@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.19 2001/09/06 04:57:29 ishii Exp $
+ * $Id: wchar.c,v 1.20 2001/09/11 04:50:36 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -458,24 +458,24 @@ pg_big5_mblen(const unsigned char *s)
 }
 
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_ascii_mblen},	/* 0; PG_SQL_ASCII  */
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen},	/* 1; PG_EUC_JP */
-	{pg_euccn2wchar_with_len, pg_euccn_mblen},	/* 2; PG_EUC_CN */
-	{pg_euckr2wchar_with_len, pg_euckr_mblen},	/* 3; PG_EUC_KR */
-	{pg_euctw2wchar_with_len, pg_euctw_mblen},	/* 4; PG_EUC_TW */
-	{pg_utf2wchar_with_len, pg_utf_mblen},		/* 5; PG_UNICODE */
-	{pg_mule2wchar_with_len, pg_mule_mblen},	/* 6; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 7; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 8; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 9; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 10; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 11; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 12; PG_KOI8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 13; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 14; PG_ALT */
-	{0, pg_sjis_mblen},				/* 15; PG_SJIS */
-	{0, pg_big5_mblen},				/* 17; PG_BIG5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen} 	/* 18; PG_WIN1250 */
+	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},	/* 0; PG_SQL_ASCII  */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},	/* 1; PG_EUC_JP */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen, 3},	/* 2; PG_EUC_CN */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen, 3},	/* 3; PG_EUC_KR */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen, 3},	/* 4; PG_EUC_TW */
+	{pg_utf2wchar_with_len, pg_utf_mblen, 3},	/* 5; PG_UNICODE */
+	{pg_mule2wchar_with_len, pg_mule_mblen, 3},	/* 6; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 7; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 8; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 9; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 10; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 11; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 12; PG_KOI8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 13; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},	/* 14; PG_ALT */
+	{0, pg_sjis_mblen, 2},				/* 15; PG_SJIS */
+	{0, pg_big5_mblen, 2},				/* 17; PG_BIG5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, 1} 	/* 18; PG_WIN1250 */
 };
 
 /* returns the byte length of a word for mule internal code */
@@ -498,3 +498,68 @@ pg_encoding_mblen(int encoding, const unsigned char *mbstr)
 			((*pg_wchar_table[encoding].mblen) (mbstr)) : 
 			((*pg_wchar_table[PG_SQL_ASCII].mblen) (mbstr)));
 }
+
+#ifndef FRONTEND
+/*
+ * Verify mbstr to make sure that it has a valid character sequence.
+ * mbstr is not necessarily NULL terminated. length of mbstr is
+ * specified by len. If an error was found, returns an error message.
+ * Note that the message is kept in a static buffer, the next invocation
+ * might break the message.
+ * If no error was found, this function returns NULL.
+ */
+char *
+pg_verifymbstr(const unsigned char *mbstr, int len)
+{
+	int	l;
+	int	i, j;
+	static char	buf[256];
+	int	slen = 0;
+
+	/* we do not check single byte encodings */
+	if (pg_wchar_table[GetDatabaseEncoding()].maxmblen <= 1)
+	    return NULL;
+
+	while (len > 0 && *mbstr)
+	{
+		l = pg_mblen(mbstr);
+
+		/* multi-byte letter? */
+		if (l > 1)
+		{
+		    for (i=1;i<l;i++)
+		    {
+			if (i > len || *(mbstr+i) == '\0' ||
+			    /* we assume that every muti-byte letter
+			     * consists of bytes being the 8th bit set
+			     */
+			    ((*(mbstr+i) & 0x80) == 0))
+			{
+			    int remains = sizeof(buf);
+			    char *p = buf;
+
+			    slen = snprintf(p, remains, "Invalid %s character sequence found (0x",
+				     GetDatabaseEncodingName());
+			    p += slen;
+			    remains -= slen;
+
+			    i = ((*(mbstr+i) & 0x80) == 0)?l:i;
+
+			    for (j=0;j<i;j++)
+			    {
+				slen = snprintf(p, remains, "%02x",
+						*(mbstr+j));
+				p += slen;
+				remains -= slen;
+			    }
+			    snprintf(p, remains, ")");
+			    return(buf);
+			}
+		    }
+		}
+		len -= l;
+		mbstr += l;
+	}
+	return NULL;
+}
+#endif

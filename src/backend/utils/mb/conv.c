@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.27 2001/09/06 04:57:29 ishii Exp $
+ * $Id: conv.c,v 1.28 2001/09/11 04:50:36 ishii Exp $
  *
  *
  */
@@ -1633,48 +1633,48 @@ big5_to_utf(unsigned char *euc, unsigned char *utf, int len)
  */
 pg_enconv pg_enconv_tbl[] = 
 {
-	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, ascii2utf, utf2ascii },
-	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp },
-	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, euc_cn_to_utf, utf_to_euc_cn },
-	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, euc_kr_to_utf, utf_to_euc_kr },
-	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw },
-	{ PG_UTF8, 	0, 0, 0, 0 },
-	{ PG_MULE_INTERNAL, 0, 0, 0, 0 },
-	{ PG_LATIN1,	latin12mic, mic2latin1, latin1_to_utf, utf_to_latin1 },
-	{ PG_LATIN2,	latin22mic, mic2latin2, latin2_to_utf, utf_to_latin2 },
-	{ PG_LATIN3,	latin32mic, mic2latin3, latin3_to_utf, utf_to_latin3 },
-	{ PG_LATIN4,	latin42mic, mic2latin4, latin4_to_utf, utf_to_latin4 },
-	{ PG_LATIN5,	iso2mic, mic2iso, latin5_to_utf, utf_to_latin5 },
-	{ PG_KOI8R,	koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R },
-	{ PG_WIN1251,	win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251 },
-	{ PG_ALT,	alt2mic, mic2alt, ALT_to_utf, utf_to_ALT },
-	{ PG_SJIS,	sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis },
+	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, ascii2utf, utf2ascii},
+	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp},
+	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, euc_cn_to_utf, utf_to_euc_cn},
+	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, euc_kr_to_utf, utf_to_euc_kr},
+	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw},
+	{ PG_UTF8, 	0, 0, 0, 0},
+	{ PG_MULE_INTERNAL, 0, 0, 0, 0},
+	{ PG_LATIN1,	latin12mic, mic2latin1, latin1_to_utf, utf_to_latin1},
+	{ PG_LATIN2,	latin22mic, mic2latin2, latin2_to_utf, utf_to_latin2},
+	{ PG_LATIN3,	latin32mic, mic2latin3, latin3_to_utf, utf_to_latin3},
+	{ PG_LATIN4,	latin42mic, mic2latin4, latin4_to_utf, utf_to_latin4},
+	{ PG_LATIN5,	iso2mic, mic2iso, latin5_to_utf, utf_to_latin5},
+	{ PG_KOI8R,	koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R},
+	{ PG_WIN1251,	win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251},
+	{ PG_ALT,	alt2mic, mic2alt, ALT_to_utf, utf_to_ALT},
+	{ PG_SJIS,	sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis},
 	{ PG_BIG5,	big52mic, mic2big5, big5_to_utf, utf_to_big5},
-	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0 },
+	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
 };
 
 #else
 
 pg_enconv pg_enconv_tbl[] = 
 {
-	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, 0, 0 },
-	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, 0, 0 },
-	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, 0, 0 },
-	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, 0, 0 },
-	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, 0, 0 },
-	{ PG_UTF8, 	0, 0, 0, 0 },
-	{ PG_MULE_INTERNAL, 0, 0, 0, 0 },
-	{ PG_LATIN1,	latin12mic, mic2latin1, 0, 0 },
-	{ PG_LATIN2,	latin22mic, mic2latin2, 0, 0 },
-	{ PG_LATIN3,	latin32mic, mic2latin3, 0, 0 },
-	{ PG_LATIN4,	latin42mic, mic2latin4, 0, 0 },
-	{ PG_LATIN5,	iso2mic, mic2iso, 0, 0 },
-	{ PG_KOI8R,	koi8r2mic, mic2koi8r, 0, 0 },
-	{ PG_WIN1251,	win12512mic, mic2win1251, 0, 0 },
-	{ PG_ALT,	alt2mic, mic2alt, 0, 0 },
-	{ PG_SJIS,	sjis2mic, mic2sjis, 0, 0 },
-	{ PG_BIG5,	big52mic, mic2big5, 0, 0 },
-	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0 },
+	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, 0, 0},
+	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, 0, 0},
+	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, 0, 0},
+	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, 0, 0},
+	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, 0, 0},
+	{ PG_UTF8, 	0, 0, 0, 0},
+	{ PG_MULE_INTERNAL, 0, 0, 0, 0},
+	{ PG_LATIN1,	latin12mic, mic2latin1, 0, 0},
+	{ PG_LATIN2,	latin22mic, mic2latin2, 0, 0},
+	{ PG_LATIN3,	latin32mic, mic2latin3, 0, 0},
+	{ PG_LATIN4,	latin42mic, mic2latin4, 0, 0},
+	{ PG_LATIN5,	iso2mic, mic2iso, 0, 0},
+	{ PG_KOI8R,	koi8r2mic, mic2koi8r, 0, 0},
+	{ PG_WIN1251,	win12512mic, mic2win1251, 0, 0},
+	{ PG_ALT,	alt2mic, mic2alt, 0, 0},
+	{ PG_SJIS,	sjis2mic, mic2sjis, 0, 0},
+	{ PG_BIG5,	big52mic, mic2big5, 0, 0},
+	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
 };
 
 #endif	 /* UNICODE_CONVERSION */
