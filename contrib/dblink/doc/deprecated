@@ -1,0 +1,105 @@
+==================================================================
+Name
+
+*DEPRECATED* use new dblink syntax
+dblink -- Returns a resource id for a data set from a remote database
+
+Synopsis
+
+dblink(text connstr, text sql)
+
+Inputs
+
+  connstr
+
+    standard libpq format connection srting, 
+    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
+
+  sql
+
+    sql statement that you wish to execute on the remote host
+    e.g. "select * from pg_class"
+
+Outputs
+
+  Returns setof int (res_id)
+
+Example usage
+
+  select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+               ,'select f1, f2 from mytable');
+
+==================================================================
+
+Name
+
+*DEPRECATED* use new dblink syntax
+dblink_tok -- Returns individual select field results from a dblink remote query
+
+Synopsis
+
+dblink_tok(int res_id, int fnumber)
+
+Inputs
+
+  res_id
+
+    a resource id returned by a call to dblink()
+
+  fnumber
+
+    the ordinal position (zero based) of the field to be returned from the dblink result set
+
+Outputs
+
+  Returns text
+
+Example usage
+
+  select dblink_tok(t1.dblink_p,0) as f1, dblink_tok(t1.dblink_p,1) as f2
+  from (select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+                     ,'select f1, f2 from mytable') as dblink_p) as t1;
+
+
+==================================================================
+*DEPRECATED* use new dblink syntax
+A more convenient way to use dblink may be to create a view:
+
+ create view myremotetable as
+ select dblink_tok(t1.dblink_p,0) as f1, dblink_tok(t1.dblink_p,1) as f2
+ from (select dblink('hostaddr=127.0.0.1 port=5432 dbname=template1 user=postgres password=postgres'
+                    ,'select proname, prosrc from pg_proc') as dblink_p) as t1;
+
+Then you can simply write:
+
+   select f1, f2 from myremotetable where f1 like 'bytea%';
+
+==================================================================
+Name
+*DEPRECATED* use new dblink_exec syntax
+dblink_last_oid -- Returns last inserted oid
+
+Synopsis
+
+dblink_last_oid(int res_id) RETURNS oid
+
+Inputs
+
+  res_id
+
+    any resource id returned by dblink function;
+
+Outputs
+
+  Returns oid of last inserted tuple
+
+Example usage
+
+test=# select dblink_last_oid(dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+               ,'insert into mytable (f1, f2) values (1,2)'));
+
+ dblink_last_oid
+----------------
+ 16553
+(1 row)
+

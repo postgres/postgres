@@ -1,0 +1,53 @@
+==================================================================
+Name
+
+dblink_connect -- Opens a persistent connection to a remote database
+
+Synopsis
+
+dblink_connect(text connstr)
+
+Inputs
+
+  connstr
+
+    standard libpq format connection string, 
+    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
+
+Outputs
+
+  Returns status = "OK"
+
+Example usage
+
+test=# select dblink_connect('dbname=template1');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+==================================================================
+Name
+
+dblink_disconnect -- Closes the persistent connection to a remote database
+
+Synopsis
+
+dblink_disconnect()
+
+Inputs
+
+  none
+
+Outputs
+
+  Returns status = "OK"
+
+Example usage
+
+test=# select dblink_disconnect();
+ dblink_disconnect
+-------------------
+ OK
+(1 row)
+

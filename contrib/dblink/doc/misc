@@ -1,0 +1,140 @@
+==================================================================
+Name
+
+dblink_current_query -- returns the current query string
+
+Synopsis
+
+dblink_current_query () RETURNS text
+
+Inputs
+
+  None
+
+Outputs
+
+  Returns text -- a copy of the currently executing query
+
+Example usage
+
+test=# select dblink_current_query() from (select dblink('dbname=template1','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
+                                                                dblink_current_query
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ select dblink_current_query() from (select dblink('dbname=template1','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
+(1 row)
+
+==================================================================
+Name
+
+dblink_get_pkey -- returns the position and field names of a relation's
+                   primary key fields
+
+Synopsis
+
+dblink_get_pkey(text relname) RETURNS setof dblink_pkey_results
+
+Inputs
+
+  relname
+
+    any relation name;
+    e.g. 'foobar'
+
+Outputs
+
+  Returns setof dblink_pkey_results -- one row for each primary key field,
+    in order of position in the key. dblink_pkey_results is defined as follows:
+       CREATE TYPE dblink_pkey_results AS (position int4, colname text);
+
+Example usage
+
+test=# select * from dblink_get_pkey('foobar');
+ position | colname
+----------+---------
+        1 | f1
+        2 | f2
+        3 | f3
+        4 | f4
+        5 | f5
+
+==================================================================
+Name
+
+dblink_build_sql_insert -- builds an insert statement using a local
+                           tuple, replacing the selection key field
+                           values with alternate supplied values
+dblink_build_sql_delete -- builds a delete statement using supplied
+                           values for selection key field values
+dblink_build_sql_update -- builds an update statement using a local
+                           tuple, replacing the selection key field
+                           values with alternate supplied values
+
+
+Synopsis
+
+dblink_build_sql_insert(text relname
+                         ,int2vector primary_key_attnums
+                         ,int2 num_primary_key_atts
+                         ,_text src_pk_att_vals_array
+                         ,_text tgt_pk_att_vals_array) RETURNS text
+dblink_build_sql_delete(text relname
+                         ,int2vector primary_key_attnums
+                         ,int2 num_primary_key_atts
+                         ,_text tgt_pk_att_vals_array) RETURNS text
+dblink_build_sql_update(text relname
+                         ,int2vector primary_key_attnums
+                         ,int2 num_primary_key_atts
+                         ,_text src_pk_att_vals_array
+                         ,_text tgt_pk_att_vals_array) RETURNS text
+
+Inputs
+
+  relname
+
+    any relation name;
+    e.g. 'foobar'
+
+  primary_key_attnums
+
+    vector of primary key attnums (1 based, see pg_index.indkey);
+    e.g. '1 2'
+
+  num_primary_key_atts
+
+    number of primary key attnums in the vector; e.g. 2
+
+  src_pk_att_vals_array
+
+    array of primary key values, used to look up the local matching
+    tuple, the values of which are then used to construct the SQL
+    statement
+
+  tgt_pk_att_vals_array
+
+    array of primary key values, used to replace the local tuple
+    values in the SQL statement
+
+Outputs
+
+  Returns text -- requested SQL statement
+
+Example usage
+
+test=# select dblink_build_sql_insert('foo','1 2',2,'{"1", "a"}','{"1", "b''a"}');
+             dblink_build_sql_insert
+--------------------------------------------------
+ INSERT INTO foo(f1,f2,f3) VALUES('1','b''a','1')
+(1 row)
+
+test=# select dblink_build_sql_delete('MyFoo','1 2',2,'{"1", "b"}');
+           dblink_build_sql_delete
+---------------------------------------------
+ DELETE FROM "MyFoo" WHERE f1='1' AND f2='b'
+(1 row)
+
+test=# select dblink_build_sql_update('foo','1 2',2,'{"1", "a"}','{"1", "b"}');
+                   dblink_build_sql_update
+-------------------------------------------------------------
+ UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
+(1 row)
+
