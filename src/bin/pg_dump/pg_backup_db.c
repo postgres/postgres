@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.29 2001/10/25 05:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.30 2002/01/18 17:13:51 tgl Exp $
  *
  * NOTES
  *
@@ -16,6 +16,14 @@
  * Modifications - 19-Mar-2001 - pjw@rhyme.com.au
  *
  *	  - Avoid forcing table name to lower case in FixupBlobXrefs!
+ *
+ *
+ * Modifications - 18-Jan-2002 - pjw@rhyme.com.au
+ *
+ *    - Split ExecuteSqlCommandBuf into 3 routines for (slightly) improved 
+ *		clarity. Modify loop to cater for COPY commands buried in the SQL
+ *		command buffer (prev version assumed COPY command was executed
+ *		in prior call). This was to fix the buf in the 'set max oid' code.
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +51,8 @@ static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
 static int	_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc);
 static void notice_processor(void *arg, const char *message);
+static char* _sendSQLLine( ArchiveHandle *AH, char *qry, char *eos);
+static char* _sendCopyLine( ArchiveHandle *AH, char *qry, char *eos);
 
 
 /*
@@ -534,15 +544,214 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 	return strlen(qry->data);
 }
 
+/* 
+ * Used by ExecuteSqlCommandBuf to send one buffered line when running a COPY command.
+ */
+static char*
+_sendCopyLine( ArchiveHandle *AH, char *qry, char *eos) 
+{
+	int			loc; /* Location of next newline */
+    int			pos = 0; /* Current position */ 
+	int 		sPos = 0; /* Last pos of a slash char */
+    int         isEnd = 0;
+
+	/* loop to find unquoted newline ending the line of COPY data */
+    for (;;) {
+		loc = strcspn(&qry[pos], "\n") + pos;
+
+		/* If no match, then wait */
+		if (loc >= (eos - qry))		/* None found */
+		{
+			appendBinaryPQExpBuffer(AH->pgCopyBuf, qry, (eos - qry));
+			return eos;
+		}
+
+		/*
+		 * fprintf(stderr, "Found cr at %d, prev char was %c, next was
+		 * %c\n", loc, qry[loc-1], qry[loc+1]);
+		 */
+
+		/* Count the number of preceding slashes */
+		sPos = loc;
+		while (sPos > 0 && qry[sPos - 1] == '\\')
+			sPos--;
+
+		sPos = loc - sPos;
+
+		/*
+		 * If an odd number of preceding slashes, then \n was escaped
+		 * so set the next search pos, and loop (if any left).
+		 */
+		if ((sPos & 1) == 1)
+		{
+			/* fprintf(stderr, "cr was escaped\n"); */
+			pos = loc + 1;
+			if (pos >= (eos - qry))
+			{
+				appendBinaryPQExpBuffer(AH->pgCopyBuf, qry, (eos - qry));
+				return eos;
+			}
+		} else {
+			break;
+		}
+	}
+
+	/* We found an unquoted newline */
+	qry[loc] = '\0';
+	appendPQExpBuffer(AH->pgCopyBuf, "%s\n", qry);
+	isEnd = (strcmp(AH->pgCopyBuf->data, "\\.\n") == 0);
+
+	/*---------
+	 * fprintf(stderr, "Sending '%s' via
+	 *		COPY (at end = %d)\n\n", AH->pgCopyBuf->data, isEnd);
+	 *---------
+	 */
+
+	if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
+		die_horribly(AH, modulename, "error returned by PQputline\n");
+
+	resetPQExpBuffer(AH->pgCopyBuf);
+
+	/*
+	 * fprintf(stderr, "Buffer is '%s'\n",
+	 * AH->pgCopyBuf->data);
+	 */
+
+	if (isEnd)
+	{
+		if (PQendcopy(AH->connection) != 0)
+			die_horribly(AH, modulename, "error returned by PQendcopy\n");
+
+		AH->pgCopyIn = 0;
+	}
+
+	return qry + loc + 1;
+}
+
+/* 
+ * Used by ExecuteSqlCommandBuf to send one buffered line of SQL (not data for the copy command).
+ */
+static char*
+_sendSQLLine( ArchiveHandle *AH, char *qry, char *eos) 
+{
+    int			pos = 0; /* Current position */ 
+
+	/*
+	 * The following is a mini state machine to assess the end of an
+	 * SQL statement. It really only needs to parse good SQL, or at
+	 * least that's the theory... End-of-statement is assumed to be an
+	 * unquoted, un commented semi-colon.
+	 */
+
+	/*
+	 * fprintf(stderr, "Buffer at start is: '%s'\n\n",
+	 * AH->sqlBuf->data);
+	 */
+
+	for (pos = 0; pos < (eos - qry); pos++)
+	{
+		appendPQExpBufferChar(AH->sqlBuf, qry[pos]);
+		/* fprintf(stderr, " %c",qry[pos]); */
+
+		switch (AH->sqlparse.state)
+		{
+
+			case SQL_SCAN:	/* Default state == 0, set in _allocAH */
+
+				if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
+				{
+					/* Send It & reset the buffer */
+
+					/*
+					 * fprintf(stderr, "    sending: '%s'\n\n",
+					 * AH->sqlBuf->data);
+					 */
+					ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query", false);
+					resetPQExpBuffer(AH->sqlBuf);
+					AH->sqlparse.lastChar = '\0';
+
+					/* Remove any following newlines - so that embedded COPY commands don't get a 
+					 * starting newline.
+					 */
+					pos++;
+					for ( ; pos < (eos - qry) && qry[pos] == '\n' ; pos++ ) ;
+
+					/* We've got our line, so exit */
+					return qry + pos;
+				}
+				else
+				{
+					if (qry[pos] == '"' || qry[pos] == '\'')
+					{
+						/* fprintf(stderr,"[startquote]\n"); */
+						AH->sqlparse.state = SQL_IN_QUOTE;
+						AH->sqlparse.quoteChar = qry[pos];
+						AH->sqlparse.backSlash = 0;
+					}
+					else if (qry[pos] == '-' && AH->sqlparse.lastChar == '-')
+						AH->sqlparse.state = SQL_IN_SQL_COMMENT;
+					else if (qry[pos] == '*' && AH->sqlparse.lastChar == '/')
+						AH->sqlparse.state = SQL_IN_EXT_COMMENT;
+					else if (qry[pos] == '(')
+						AH->sqlparse.braceDepth++;
+					else if (qry[pos] == ')')
+						AH->sqlparse.braceDepth--;
+
+					AH->sqlparse.lastChar = qry[pos];
+				}
+
+				break;
+
+			case SQL_IN_SQL_COMMENT:
+
+				if (qry[pos] == '\n')
+					AH->sqlparse.state = SQL_SCAN;
+				break;
+
+			case SQL_IN_EXT_COMMENT:
+
+				if (AH->sqlparse.lastChar == '*' && qry[pos] == '/')
+					AH->sqlparse.state = SQL_SCAN;
+				break;
+
+			case SQL_IN_QUOTE:
+
+				if (!AH->sqlparse.backSlash && AH->sqlparse.quoteChar == qry[pos])
+				{
+					/* fprintf(stderr,"[endquote]\n"); */
+					AH->sqlparse.state = SQL_SCAN;
+				}
+				else
+				{
+
+					if (qry[pos] == '\\')
+					{
+						if (AH->sqlparse.lastChar == '\\')
+							AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
+						else
+							AH->sqlparse.backSlash = 1;
+					}
+					else
+						AH->sqlparse.backSlash = 0;
+				}
+				break;
+
+		}
+		AH->sqlparse.lastChar = qry[pos];
+		/* fprintf(stderr, "\n"); */
+	}
+
+    /* If we get here, we've processed entire string with no complete SQL stmt */
+    return eos;
+
+}
+
+
 /* Convenience function to send one or more queries. Monitors result to handle COPY statements */
 int
 ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 {
-	int			loc;
-	int			pos = 0;
-	int			sPos = 0;
 	char	   *qry = (char *) qryv;
-	int			isEnd = 0;
 	char	   *eos = qry + bufLen;
 
 	/*
@@ -550,190 +759,14 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 	 * Buffer:\n\n%s\n*******************\n\n", qry);
 	 */
 
-	/* If we're in COPY IN mode, then just break it into lines and send... */
-	if (AH->pgCopyIn)
+	/* Could switch between command and COPY IN mode at each line */
+	while (qry < eos)
 	{
-		for (;;)
-		{
-
-			/* Find a lf */
-			loc = strcspn(&qry[pos], "\n") + pos;
-			pos = 0;
-
-			/* If no match, then wait */
-			if (loc >= (eos - qry))		/* None found */
-			{
-				appendBinaryPQExpBuffer(AH->pgCopyBuf, qry, (eos - qry));
-				break;
-			};
-
-			/*
-			 * fprintf(stderr, "Found cr at %d, prev char was %c, next was
-			 * %c\n", loc, qry[loc-1], qry[loc+1]);
-			 */
-
-			/* Count the number of preceding slashes */
-			sPos = loc;
-			while (sPos > 0 && qry[sPos - 1] == '\\')
-				sPos--;
-
-			sPos = loc - sPos;
-
-			/*
-			 * If an odd number of preceding slashes, then \n was escaped
-			 * so set the next search pos, and restart (if any left).
-			 */
-			if ((sPos & 1) == 1)
-			{
-				/* fprintf(stderr, "cr was escaped\n"); */
-				pos = loc + 1;
-				if (pos >= (eos - qry))
-				{
-					appendBinaryPQExpBuffer(AH->pgCopyBuf, qry, (eos - qry));
-					break;
-				}
-			}
-			else
-			{
-				/* We got a good cr */
-				qry[loc] = '\0';
-				appendPQExpBuffer(AH->pgCopyBuf, "%s\n", qry);
-				qry += loc + 1;
-				isEnd = (strcmp(AH->pgCopyBuf->data, "\\.\n") == 0);
-
-				/*---------
-				 * fprintf(stderr, "Sending '%s' via
-				 *		COPY (at end = %d)\n\n", AH->pgCopyBuf->data, isEnd);
-				 *---------
-				 */
-
-				if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
-					die_horribly(AH, modulename, "error returned by PQputline\n");
-
-				resetPQExpBuffer(AH->pgCopyBuf);
-
-				/*
-				 * fprintf(stderr, "Buffer is '%s'\n",
-				 * AH->pgCopyBuf->data);
-				 */
-
-				if (isEnd)
-				{
-					if (PQendcopy(AH->connection) != 0)
-						die_horribly(AH, modulename, "error returned by PQendcopy\n");
-
-					AH->pgCopyIn = 0;
-					break;
-				}
-
-			}
-
-			/* Make sure we're not past the original buffer end */
-			if (qry >= eos)
-				break;
-
+		if (AH->pgCopyIn) {
+			qry = _sendCopyLine(AH, qry, eos);
+		} else {
+			qry = _sendSQLLine(AH, qry, eos);
 		}
-	}
-
-	/* We may have finished Copy In, and have a non-empty buffer */
-	if (!AH->pgCopyIn)
-	{
-		/*
-		 * The following is a mini state machine to assess then of of an
-		 * SQL statement. It really only needs to parse good SQL, or at
-		 * least that's the theory... End-of-statement is assumed to be an
-		 * unquoted, un commented semi-colon.
-		 */
-
-		/*
-		 * fprintf(stderr, "Buffer at start is: '%s'\n\n",
-		 * AH->sqlBuf->data);
-		 */
-
-		for (pos = 0; pos < (eos - qry); pos++)
-		{
-			appendPQExpBufferChar(AH->sqlBuf, qry[pos]);
-			/* fprintf(stderr, " %c",qry[pos]); */
-
-			switch (AH->sqlparse.state)
-			{
-
-				case SQL_SCAN:	/* Default state == 0, set in _allocAH */
-
-					if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
-					{
-						/* Send It & reset the buffer */
-
-						/*
-						 * fprintf(stderr, "    sending: '%s'\n\n",
-						 * AH->sqlBuf->data);
-						 */
-						ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query", false);
-						resetPQExpBuffer(AH->sqlBuf);
-						AH->sqlparse.lastChar = '\0';
-					}
-					else
-					{
-						if (qry[pos] == '"' || qry[pos] == '\'')
-						{
-							/* fprintf(stderr,"[startquote]\n"); */
-							AH->sqlparse.state = SQL_IN_QUOTE;
-							AH->sqlparse.quoteChar = qry[pos];
-							AH->sqlparse.backSlash = 0;
-						}
-						else if (qry[pos] == '-' && AH->sqlparse.lastChar == '-')
-							AH->sqlparse.state = SQL_IN_SQL_COMMENT;
-						else if (qry[pos] == '*' && AH->sqlparse.lastChar == '/')
-							AH->sqlparse.state = SQL_IN_EXT_COMMENT;
-						else if (qry[pos] == '(')
-							AH->sqlparse.braceDepth++;
-						else if (qry[pos] == ')')
-							AH->sqlparse.braceDepth--;
-
-						AH->sqlparse.lastChar = qry[pos];
-					}
-
-					break;
-
-				case SQL_IN_SQL_COMMENT:
-
-					if (qry[pos] == '\n')
-						AH->sqlparse.state = SQL_SCAN;
-					break;
-
-				case SQL_IN_EXT_COMMENT:
-
-					if (AH->sqlparse.lastChar == '*' && qry[pos] == '/')
-						AH->sqlparse.state = SQL_SCAN;
-					break;
-
-				case SQL_IN_QUOTE:
-
-					if (!AH->sqlparse.backSlash && AH->sqlparse.quoteChar == qry[pos])
-					{
-						/* fprintf(stderr,"[endquote]\n"); */
-						AH->sqlparse.state = SQL_SCAN;
-					}
-					else
-					{
-
-						if (qry[pos] == '\\')
-						{
-							if (AH->sqlparse.lastChar == '\\')
-								AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
-							else
-								AH->sqlparse.backSlash = 1;
-						}
-						else
-							AH->sqlparse.backSlash = 0;
-					}
-					break;
-
-			}
-			AH->sqlparse.lastChar = qry[pos];
-			/* fprintf(stderr, "\n"); */
-		}
-
 	}
 
 	return 1;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.38 2001/11/08 04:05:12 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.39 2002/01/18 17:13:50 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -61,6 +61,11 @@
  *	  - Fix handling of {data/schema}-only restores when using a full
  *		backup file; prior version was restoring schema in data-only
  *		restores. Added enum to make code easier to understand.
+ *
+ * Modifications - 18-Jan-2002 - pjw@rhyme.com.au
+ *	  - Modified _tocEntryRequired to handle '<Init>/Max OID' as a special
+ * 		case (ie. as a DATA item) as per bugs reported by Bruce Momjian
+ *		around 17-Jan-2002.
  *
  *-------------------------------------------------------------------------
  */
@@ -1915,6 +1920,13 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 			res = res & REQ_DATA;
 		else
 			res = res & ~REQ_DATA;
+	}
+
+    /* Special case: <Init> type with <Max OID> name; this is part of
+     * a DATA restore even though it has SQL.
+     */
+	if (  ( strcmp(te->desc, "<Init>") == 0 ) && ( strcmp(te->name, "Max OID") == 0) ) {
+		res = REQ_DATA;
 	}
 
 	/* Mask it if we only want schema */
