@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.69 2000/02/22 09:55:20 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.70 2000/02/24 04:36:01 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.69 2000/02/22 09:55:20 inoue Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.70 2000/02/24 04:36:01 inoue Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -481,10 +481,28 @@ ProcQueueInit(PROC_QUEUE *queue)
 }
 
 
+/*
+ *	Handling cancel request while waiting for lock
+ *
+ */
 static bool	lockWaiting = false;
 void	SetWaitingForLock(bool waiting)
 {
+	if (waiting == lockWaiting)
+		return;
 	lockWaiting = waiting;
+	if (lockWaiting)
+	{
+		Assert(MyProc->links.next != INVALID_OFFSET);
+		if (QueryCancel) /* cancel request pending */
+		{
+			if (GetOffWaitqueue(MyProc))
+			{
+				lockWaiting = false;
+				elog(ERROR, "Query cancel requested while waiting lock");
+			}
+		}
+	}
 }
 void	LockWaitCancel(void)
 {
@@ -610,7 +628,7 @@ ins:;
 	timeval.it_value.tv_sec = \
 		(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
 
-	lockWaiting = true;
+	SetWaitingForLock(true);
 	do
 	{
 		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
