@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Aug 29 21:40:10 EDT 2003</P>
+    <P>Last updated: Mon Sep  1 12:47:42 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1152,7 +1152,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
-    default value, though this is probably the least portable approach.
+    default value, though this is probably the least portable approach,
+    and the oid value will wrap around when it reaches 4 billion.
     In Perl, using DBI with Edmund Mergl's DBD::Pg module, the oid
     value is made available via <I>$sth-&gt;{pg_oid_status}</I> after
     <I>$sth-&gt;execute()</I>.
