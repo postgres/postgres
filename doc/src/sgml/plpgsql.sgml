@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.45 2004/08/08 22:40:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.46 2004/08/16 17:52:06 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1098,6 +1098,52 @@ PERFORM create_mv('cs_session_page_requests_mv', my_query);
     </para>
    </sect2>
 
+   <sect2 id="plpgsql-statements-null">
+    <title>Doing Nothing At All</title>
+
+    <para>
+     Sometimes a placeholder statement that does nothing is useful.
+     For example, it can indicate that one arm of an if/then/else
+     chain is deliberately empty.  For this purpose, use the
+     <command>NULL</command> statement:
+
+<synopsis>
+NULL;
+</synopsis>
+    </para>
+
+    <para>
+     For example, the following two fragments of code are equivalent:
+<programlisting>
+    BEGIN
+        y := x / 0;
+    EXCEPTION
+        WHEN division_by_zero THEN
+            NULL;  -- ignore the error
+    END;
+</programlisting>
+
+<programlisting>
+    BEGIN
+        y := x / 0;
+    EXCEPTION
+        WHEN division_by_zero THEN  -- ignore the error
+    END;
+</programlisting>
+     Which is preferable is a matter of taste.
+    </para>
+
+    <note>
+     <para>
+      In Oracle's PL/SQL, empty statement lists are not allowed, and so
+      <command>NULL</> statements are <emphasis>required</> for situations
+      such as this.  <application>PL/pgSQL</application> allows you to
+      just write nothing, instead.
+     </para>
+    </note>
+
+   </sect2>
+
    <sect2 id="plpgsql-statements-executing-dyn">
     <title>Executing Dynamic Commands</title>
 
@@ -1129,7 +1175,7 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     <para>
     When working with dynamic commands you will often have to handle escaping
     of single quotes.  The recommended method for quoting fixed text in your
-    function body is dollar quoting.  If you have legacy code which does
+    function body is dollar quoting.  If you have legacy code that does
     not use dollar quoting, please refer to the
     overview in <xref linkend="plpgsql-quote-tips">, which can save you
     some effort when translating said code to a more reasonable scheme.
@@ -1158,14 +1204,15 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     </para>
 
     <para>
-     An example (this assumes that you are using dollar quoting, so the
-     quote marks need not be doubled):
+     An example (this assumes that you are using dollar quoting for the
+     function as a whole, so the quote marks need not be doubled):
 <programlisting>
 EXECUTE 'UPDATE tbl SET '
         || quote_ident(colname)
         || ' = '
         || quote_literal(newvalue)
-        || ' WHERE ...';
+        || ' WHERE key = '
+        || quote_literal(keyvalue);
 </programlisting>
     </para>
 
@@ -1193,7 +1240,8 @@ EXECUTE 'UPDATE tbl SET '
         || quote_ident(colname)
         || ' = $$'
         || newvalue
-        || '$$ WHERE ...';
+        || '$$ WHERE key = '
+        || quote_literal(keyvalue);
 </programlisting>
      because it would break if the contents of <literal>newvalue</>
      happened to contain <literal>$$</>.  The same objection would

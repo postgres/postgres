@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.59 2004/07/31 23:04:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.60 2004/08/16 17:52:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -132,7 +132,7 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <stmt>	stmt_return stmt_return_next stmt_raise stmt_execsql
 %type <stmt>	stmt_for stmt_select stmt_perform
 %type <stmt>	stmt_dynexecute stmt_getdiag
-%type <stmt>	stmt_open stmt_fetch stmt_close
+%type <stmt>	stmt_open stmt_fetch stmt_close stmt_null
 
 %type <exceptions>	exception_sect proc_exceptions
 %type <exception>	proc_exception
@@ -592,29 +592,31 @@ proc_sect		:
 
 proc_stmts		: proc_stmts proc_stmt
 						{
+							if ($2 != NULL)
+							{
 								if ($1->stmts_used == $1->stmts_alloc)
 								{
 									$1->stmts_alloc *= 2;
 									$1->stmts = realloc($1->stmts, sizeof(PLpgSQL_stmt *) * $1->stmts_alloc);
 								}
 								$1->stmts[$1->stmts_used++] = $2;
-
-								$$ = $1;
+							}
+							$$ = $1;
 						}
 				| proc_stmt
 						{
-								PLpgSQL_stmts	*new;
+							PLpgSQL_stmts	*new;
 
-								new = malloc(sizeof(PLpgSQL_stmts));
-								memset(new, 0, sizeof(PLpgSQL_stmts));
+							new = malloc(sizeof(PLpgSQL_stmts));
+							memset(new, 0, sizeof(PLpgSQL_stmts));
 
-								new->stmts_alloc = 64;
-								new->stmts_used  = 1;
-								new->stmts = malloc(sizeof(PLpgSQL_stmt *) * new->stmts_alloc);
-								new->stmts[0] = $1;
+							new->stmts_alloc = 32;
+							new->stmts = malloc(sizeof(PLpgSQL_stmt *) * new->stmts_alloc);
 
-								$$ = new;
+							if ($1 != NULL)
+								new->stmts[new->stmts_used++] = $1;
 
+							$$ = new;
 						}
 				;
 
@@ -653,6 +655,8 @@ proc_stmt		: pl_block ';'
 				| stmt_fetch
 						{ $$ = $1; }
 				| stmt_close
+						{ $$ = $1; }
+				| stmt_null
 						{ $$ = $1; }
 				;
 
@@ -1490,6 +1494,13 @@ stmt_close		: K_CLOSE lno cursor_variable ';'
 						new->curvar = $3;
 
 						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+stmt_null		: K_NULL ';'
+					{
+						/* We do not bother building a node for NULL */
+						$$ = NULL;
 					}
 				;
 
