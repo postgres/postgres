@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.1 1997/02/19 12:57:05 scrappy Exp $
+ * $Id: geqo_main.c,v 1.2 1997/02/19 14:51:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@
 Rel *
 geqo(Query *root)
 {
- int        i,j;
  int        generation;
  Chromosome  *momma;
  Chromosome  *daddy;
@@ -76,21 +75,26 @@ geqo(Query *root)
  int edge_failures=0;
  float      difference;
 
+#if defined(CX) || defined(PX) || defined(QX1) || defined(QX2)
  City *city_table; /* list of cities */
- int cycle_diffs=0;
+#endif
 
+#if defined(CX)
+ int cycle_diffs=0;
+#endif 
+
+#if defined(CX) && defined(GEQO_DEBUG)
  int mutations=0;
+#endif
 
  int number_of_rels;
- List *r = NIL;
- List *rel_list = (List *) root->base_relation_list_;
 
  Pool *pool;
  int pool_size, number_generations, status_interval;
 
  Gene *best_tour;
  Rel *best_rel;
- Plan *best_plan;
+/*  Plan *best_plan; */
 
 
 /* set tour size */

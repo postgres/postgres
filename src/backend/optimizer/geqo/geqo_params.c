@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.1 1997/02/19 12:57:20 scrappy Exp $
+* $Id: geqo_params.c,v 1.2 1997/02/19 14:52:04 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <ctype.h>
 
 #include "postgres.h"
 #include "miscadmin.h"
@@ -166,7 +167,7 @@ geqo_params(int string_length)
 	
 				if (i != EOF)
 				{
-					if (sscanf (buf, "%f", &SelectionBias) == 1) selection_bias = 1;
+					if (sscanf (buf, "%lf", &SelectionBias) == 1) selection_bias = 1;
 				}
 	
 			}

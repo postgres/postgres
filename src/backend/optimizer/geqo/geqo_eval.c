@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.3 1997/02/19 14:29:22 scrappy Exp $
+ * $Id: geqo_eval.c,v 1.4 1997/02/19 14:51:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/tlist.h"
+#include "optimizer/joininfo.h"
 
 #include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"

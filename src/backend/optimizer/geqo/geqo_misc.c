@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.1 1997/02/19 12:57:09 scrappy Exp $
+ * $Id: geqo_misc.c,v 1.2 1997/02/19 14:52:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 {
     char *ptype = NULL;
     JoinPath *jp;
-    bool join;
+    bool join = false;
     int i;
 
     for(i=0; i < indent; i++)

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.1 1997/02/19 12:57:25 scrappy Exp $
+ * $Id: geqo_paths.c,v 1.2 1997/02/19 14:52:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ void
 geqo_rel_paths(Rel *rel)
 {
     List *y = NIL;
-    Path *path;
+    Path *path = (Path*)NULL;
     JoinPath *cheapest = (JoinPath*)NULL;
     
 	foreach(y, rel->pathlist) {
