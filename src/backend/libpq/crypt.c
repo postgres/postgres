@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.34 2001/08/15 21:08:21 momjian Exp $
+ * $Id: crypt.c,v 1.35 2001/08/17 02:59:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 #include "libpq/crypt.h"
+#include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/nabstime.h"
@@ -276,22 +277,33 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 		return STATUS_ERROR;
 	}
 
+	/* If they encrypt their password, force MD5 */
+	if (isMD5(passwd) && port->auth_method != uaMD5)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		 	"Password is stored MD5 encrypted.  "
+			"Only pg_hba.conf's MD5 protocol can be used for this user.\n");
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return STATUS_ERROR;
+	}
+
 	/*
 	 * Compare with the encrypted or plain password depending on the
 	 * authentication method being used for this connection.
 	 */
-	 switch (port->auth_method)
-	 {
+	switch (port->auth_method)
+	{
 		case uaCrypt:
-			crypt_pwd = crypt(passwd, port->salt);
+			crypt_pwd = crypt(passwd, port->cryptSalt);
 			break;
 		case uaMD5:
 			crypt_pwd = palloc(MD5_PASSWD_LEN+1);
-
 			if (isMD5(passwd))
 			{
 				if (!EncryptMD5(passwd + strlen("md5"),
-								(char *)port->salt, crypt_pwd))
+								(char *)port->md5Salt,
+								sizeof(port->md5Salt), crypt_pwd))
 				{
 					pfree(crypt_pwd);
 					return STATUS_ERROR;
@@ -301,14 +313,15 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 			{
 				char *crypt_pwd2 = palloc(MD5_PASSWD_LEN+1);
 
-				if (!EncryptMD5(passwd, port->user, crypt_pwd2))
+				if (!EncryptMD5(passwd, port->user, strlen(port->user),
+								crypt_pwd2))
 				{
 					pfree(crypt_pwd);
 					pfree(crypt_pwd2);
 					return STATUS_ERROR;
 				}
-				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), port->salt,
-								crypt_pwd))
+				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), port->md5Salt,
+								sizeof(port->md5Salt), crypt_pwd))
 				{
 					pfree(crypt_pwd);
 					pfree(crypt_pwd2);
@@ -324,7 +337,6 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 
 	if (!strcmp(pgpass, crypt_pwd))
 	{
-
 		/*
 		 * check here to be sure we are not past valuntil
 		 */

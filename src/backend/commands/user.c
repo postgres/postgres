@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.81 2001/08/15 21:08:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.82 2001/08/17 02:59:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,8 @@ CreateUser(CreateUserStmt *stmt)
 				DirectFunctionCall1(textin, CStringGetDatum(password));
 		else
 		{
-			if (!EncryptMD5(password, stmt->user, encrypted_password))
+			if (!EncryptMD5(password, stmt->user, strlen(stmt->user),
+				encrypted_password))
 				elog(ERROR, "CREATE USER: password encryption failed");
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
@@ -583,7 +584,8 @@ AlterUser(AlterUserStmt *stmt)
 				DirectFunctionCall1(textin, CStringGetDatum(password));
 		else
 		{
-			if (!EncryptMD5(password, stmt->user, encrypted_password))
+			if (!EncryptMD5(password, stmt->user, strlen(stmt->user),
+				encrypted_password))
 				elog(ERROR, "CREATE USER: password encryption failed");
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));

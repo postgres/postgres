@@ -295,16 +295,18 @@ md5_hash(const void *buff, size_t len, char *hexsum)
  * puts  md5(username+passwd)  in buf provided buflen is at least 36 bytes
  * returns 1 on success, 0 on any kind of failure and sets errno accordingly
  */
-bool EncryptMD5(const char *passwd, const char *salt, char *buf)
+bool EncryptMD5(const char *passwd, const char *salt, size_t salt_len,
+				char *buf)
 {
 	char crypt_buf[128];
 
-	if (strlen(salt) + strlen(passwd) > 127)
+	if (salt_len + strlen(passwd) > 127)
 		return false;
 
 	strcpy(buf, "md5");
 	memset(crypt_buf, 0, 128);
-	sprintf(crypt_buf,"%s%s", salt, passwd);
+	memcpy(crypt_buf, salt, salt_len);
+	memcpy(crypt_buf+salt_len, passwd, strlen(passwd));
 
-	return md5_hash(crypt_buf, strlen(crypt_buf), buf + 3);
+	return md5_hash(crypt_buf, salt_len + strlen(passwd), buf + 3);
 }

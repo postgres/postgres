@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.235 2001/08/05 02:06:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.236 2001/08/17 02:59:19 momjian Exp $
  *
  * NOTES
  *
@@ -243,7 +243,7 @@ static void	processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
 static char *canAcceptConnections(void);
 static long PostmasterRandom(void);
-static void RandomSalt(char *salt);
+static void RandomSalt(char *cryptSalt, char *md5Salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
@@ -1211,7 +1211,7 @@ ConnCreate(int serverFd)
 	}
 	else
 	{
-		RandomSalt(port->salt);
+		RandomSalt(port->cryptSalt, port->md5Salt);
 		port->pktInfo.state = Idle;
 	}
 
@@ -2099,12 +2099,19 @@ CharRemap(long int ch)
  * RandomSalt
  */
 static void
-RandomSalt(char *salt)
+RandomSalt(char *cryptSalt, char *md5Salt)
 {
 	long		rand = PostmasterRandom();
 
-	*salt = CharRemap(rand % 62);
-	*(salt + 1) = CharRemap(rand / 62);
+	cryptSalt[0] = CharRemap(rand % 62);
+	cryptSalt[1] = CharRemap(rand / 62);
+	/* Grab top 16-bits of two random runs so as not to send full
+	   random value over the network.  The high-order bits are more random. */
+	md5Salt[0] = rand & 0xff000000;
+	md5Salt[1] = rand & 0x00ff0000;
+	rand = PostmasterRandom();
+	md5Salt[2] = rand & 0xff000000;
+	md5Salt[3] = rand & 0x00ff0000;
 }
 
 /*

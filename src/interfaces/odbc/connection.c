@@ -507,7 +507,7 @@ CC_connect(ConnectionClass *self, char do_password)
 	int			areq = -1;
 	int			beresp;
 	char		msgbuffer[ERROR_MSG_LENGTH];
-	char		salt[2];
+	char		salt[5];
 	static char *func = "CC_connect";
 
 	mylog("%s: entering...\n", func);
@@ -677,7 +677,9 @@ CC_connect(ConnectionClass *self, char do_password)
 						mylog("auth got 'R'\n");
 
 						areq = SOCK_get_int(sock, 4);
-						if (areq == AUTH_REQ_CRYPT || areq == AUTH_REQ_MD5)
+						if (areq == AUTH_REQ_MD5)
+							SOCK_get_n_char(sock, salt, 4);
+						if (areq == AUTH_REQ_CRYPT)
 							SOCK_get_n_char(sock, salt, 2);
 
 						mylog("areq = %d\n", areq);
