@@ -16,7 +16,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.15 2003/03/07 18:39:45 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.16 2003/03/08 06:06:55 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -188,6 +188,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 		current_row = internalIndex;
 		this_row = (byte[][]) rows.elementAt(internalIndex);
+
+		rowBuffer = new byte[this_row.length][];
+		System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
+
 		return true;
 	}
 
@@ -1319,18 +1323,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		else
 		{
 			// otherwise go and get the primary keys and create a hashtable of keys
-			// if the user has supplied a quoted table name
-			// remove the quotes, but preserve the case.
-			// otherwise fold to lower case.
-			String quotelessTableName;
-			if (tableName.startsWith("\"") && tableName.endsWith("\"")) {
-				quotelessTableName = tableName.substring(1,tableName.length()-1);
-			} else {
-				quotelessTableName = tableName.toLowerCase();
-			}
-			java.sql.ResultSet rs = ((java.sql.Connection) connection).getMetaData().getPrimaryKeys("", "", quotelessTableName);
-
-
+			String[] s = quotelessTableName(tableName);
+			String quotelessTableName = s[0];
+			String quotelessSchemaName = s[1];
+			java.sql.ResultSet rs = ((java.sql.Connection) connection).getMetaData().getPrimaryKeys("", quotelessSchemaName, quotelessTableName);
 			for (; rs.next(); i++ )
 			{
 				String columnName = rs.getString(4);	// get the columnName
@@ -1363,7 +1359,56 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		return updateable;
 	}
 
-
+	/** Cracks out the table name and schema (if it exists) from a fully
+	 * qualified table name.
+	 * @param fullname string that we are trying to crack.	Test cases:<pre>
+	 * Table: table ()
+	 * "Table": Table ()
+	 * Schema.Table: table (schema)
+	 * "Schema"."Table": Table (Schema)
+	 * "Schema"."Dot.Table": Dot.Table (Schema)
+	 * Schema."Dot.Table": Dot.Table (schema)
+	 * </pre>
+	 * @return String array with element zero always being the tablename and
+	 * element 1 the schema name which may be a zero length string.
+	 */
+	public static String[] quotelessTableName(String fullname) {
+		StringBuffer buf = new StringBuffer(fullname);
+		String[] parts = new String[] {null, ""};
+		StringBuffer acc = new StringBuffer();
+		boolean betweenQuotes = false;
+		for (int i = 0; i < buf.length(); i++) {
+			char c = buf.charAt(i);
+			switch (c) {
+				case '"':
+					if ((i < buf.length() - 1) && (buf.charAt(i+1) == '"')) {
+						// two consecutive quotes - keep one
+						i++;
+						acc.append(c);	// keep the quote
+					}
+					else {	// Discard it
+						betweenQuotes = !betweenQuotes;
+					}
+					break;
+				case '.':
+					if (betweenQuotes) {   // Keep it
+						acc.append(c);
+					}
+					else {	   // Have schema name
+						parts[1] = acc.toString();
+						acc = new StringBuffer();
+					}
+					break;
+				default:
+					acc.append((betweenQuotes) ? c : Character.toLowerCase(c));
+					break;
+			}
+		}
+		// Always put table in slot 0
+		parts[0] = acc.toString();
+		return parts;
+	}
+ 
 	public void parseQuery()
 	{
 		String[] l_sqlFragments = ((AbstractJdbc2Statement)statement).getSqlFragments();

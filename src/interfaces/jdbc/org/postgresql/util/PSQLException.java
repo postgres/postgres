@@ -7,7 +7,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PSQLException.java,v 1.9 2003/03/07 18:39:46 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PSQLException.java,v 1.10 2003/03/08 06:06:55 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,6 @@ public class PSQLException extends SQLException
 	 */
 	public String toString()
 	{
-		return message;
+		return message != null ? message : "";
 	}
 }

@@ -1,5 +1,19 @@
+/*-------------------------------------------------------------------------
+ *
+ * AbstractJdbc1ResultSet.java
+ *     This class defines methods of the jdbc1 specification.  This class is
+ *     extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the
+ *     jdbc2 methods.  The real ResultSet class (for jdbc1) is 
+ *     org.postgresql.jdbc1.Jdbc1ResultSet
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.11 2003/03/08 06:06:55 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.jdbc1;
-
 
 import java.math.BigDecimal;
 import java.io.*;
@@ -19,11 +33,6 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.10 2003/03/07 18:39:44 barry Exp $
- * This class defines methods of the jdbc1 specification.  This class is
- * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
- * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
- */
 public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 {
 
@@ -46,6 +55,10 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 
 	private StringBuffer sbuf = null;
 	public byte[][] rowBuffer = null;
+
+ 	private SimpleDateFormat m_tsFormat = null;
+ 	private SimpleDateFormat m_tstzFormat = null;
+ 	private SimpleDateFormat m_dateFormat = null;
 
 	public abstract ResultSetMetaData getMetaData() throws SQLException;
 
@@ -1020,7 +1033,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 						l_sbuf.append(":00");
 
 					// we'll use this dateformat string to parse the result.
-					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+					df = rs.getTimestampTZFormat();
 				}
 				else
 				{
@@ -1029,11 +1042,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 					if (pgDataType.equals("timestamptz"))
 					{
 						l_sbuf.append(" GMT");
-						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+						df = rs.getTimestampTZFormat();
 					}
 					else
 					{
-						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+						df = rs.getTimestampFormat();
 					}
 				}
 			}
@@ -1044,11 +1057,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 				if (pgDataType.equals("timestamptz"))
 				{
 					l_sbuf.append(" GMT");
-					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+					df = rs.getTimestampTZFormat();
 				}
 				else
 				{
-					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					df = rs.getTimestampFormat();
 				}
 			}
 			else
@@ -1065,7 +1078,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 				// We must just have a date. This case is
 				// needed if this method is called on a date
 				// column
-				df = new SimpleDateFormat("yyyy-MM-dd");
+				df = rs.getDateFormat();
 			}
 
 			try
@@ -1075,8 +1088,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 					Driver.debug("the data after parsing is " 
                      + l_sbuf.toString() + " with " + nanos + " nanos");
 
-				Timestamp result = 
-					new Timestamp(df.parse(l_sbuf.toString()).getTime());
+ 				Timestamp result = new Timestamp(df.parse(l_sbuf.toString()).getTime());
 				result.setNanos(nanos);
 				return result;
 			}
@@ -1087,7 +1099,23 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		}
 	}
 
-
-
+	public SimpleDateFormat getTimestampTZFormat() {
+		if (m_tstzFormat == null) {
+			m_tstzFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+		}
+		return m_tstzFormat;
+	}
+	public SimpleDateFormat getTimestampFormat() {
+		if (m_tsFormat == null) {
+			m_tsFormat = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss");
+		}
+		return m_tsFormat;
+	}
+	public SimpleDateFormat getDateFormat() {
+		if (m_dateFormat == null) {
+			m_dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		}
+		return m_dateFormat;
+	}
 }
 
