@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.13 1997/01/24 17:59:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.1 1997/04/01 09:26:49 scrappy Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh,v 1.13 1997/01/24 17:59:58 scrappy Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.1 1997/04/01 09:26:49 scrappy Exp $
  *
  * NOTES
  *	******************************
@@ -152,7 +152,7 @@ extern void load_file(char *filename);
 
 FuNkYfMgRsTuFf
 awk '{ print $2, $1; }' $RAWFILE | \
-tr '[a-z]' '[A-Z]' | \
+@TR@ '[a-z]' '[A-Z]' | \
 sed -e 's/^/#define F_/' >> $HFILE
 cat >> $HFILE <<FuNkYfMgRsTuFf
 
@@ -175,7 +175,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.13 1997/01/24 17:59:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.1 1997/04/01 09:26:49 scrappy Exp $
  *
  * NOTES
  *
