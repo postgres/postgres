@@ -83,7 +83,15 @@ CLEAN :
 	-@erase "$(OUTDIR)\psql.exe"
 
 pg_config_paths.h: win32.mak
-	echo #define SYSCONFDIR "" >pg_config_paths.h
+	echo "#define PGBINDIR "">$@
+	echo "#define PGSHAREDIR "" >>$@
+	echo "#define SYSCONFDIR "" >>$@
+	echo "#define INCLUDEDIR "" >>$@
+	echo "#define PKGINCLUDEDIR "" >>$@
+	echo "#define INCLUDEDIRSERVER "" >>$@
+	echo "#define LIBDIR "" >>$@
+	echo "#define PKGLIBDIR "" >>$@
+	echo "#define LOCALEDIR "" >>$@
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
