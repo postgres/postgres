@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.1 1998/10/03 05:40:49 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.2 1998/10/04 15:35:09 momjian Exp $";
 
 #endif
 
@@ -31,6 +31,9 @@ static const char rcsid[] = "$Id: inet_net_pton.c,v 1.1 1998/10/03 05:40:49 momj
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <postgres.h>
+#include <utils/builtins.h>
 
 #ifdef SPRINTF_CHAR
 #define SPRINTF(x) strlen(sprintf/**/x)

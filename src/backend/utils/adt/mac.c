@@ -1,14 +1,14 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.1 1998/10/03 05:40:50 momjian Exp $
+ *	$Id: mac.c,v 1.2 1998/10/04 15:35:12 momjian Exp $
  */
 
 #include <stdio.h>
 
 #include <postgres.h>
 #include <utils/palloc.h>
-
+#include <utils/builtins.h>
 #include <utils/mac.h>
 
 manufacturer manufacturers[] = {

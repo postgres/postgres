@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: ip.c,v 1.2 1998/10/04 15:31:06 momjian Exp $
+ *	$Id: ip.c,v 1.3 1998/10/04 15:35:10 momjian Exp $
  */
 
 #include <sys/types.h>
@@ -17,6 +17,7 @@
 
 #include <postgres.h>
 #include <utils/palloc.h>
+#include <utils/builtins.h>
 #include <utils/mac.h>
 
 /*
