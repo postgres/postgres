@@ -534,7 +534,7 @@ six|reltime      |timespan
 QUERY: DROP TABLE TEMP_DATETIME;
 QUERY: SET DateStyle TO 'US,Postgres';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 QUERY: SELECT '' AS sixty_two, d1 AS us_postgres FROM DATETIME_TBL;
 sixty_two|us_postgres                    
 ---------+-------------------------------
@@ -698,7 +698,7 @@ eight|us_iso
 
 QUERY: SET DateStyle TO 'US,SQL';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is SQL with US (NonEuropean) conventions
+NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
 QUERY: SELECT '' AS sixty_two, d1 AS us_sql FROM DATETIME_TBL;
 sixty_two|us_sql                    
 ---------+--------------------------
@@ -781,7 +781,7 @@ eight|us_sql
 
 QUERY: SET DateStyle TO 'European,Postgres';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is Postgres with European conventions
+NOTICE:  DateStyle is Postgres with European conventions
 QUERY: INSERT INTO DATETIME_TBL VALUES('13/06/1957');
 QUERY: SELECT count(*) as one FROM DATETIME_TBL WHERE d1 = 'Jun 13 1957';
 one
@@ -872,7 +872,7 @@ eight|european_postgres
 
 QUERY: SET DateStyle TO 'European,ISO';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is ISO with European conventions
+NOTICE:  DateStyle is ISO with European conventions
 QUERY: SELECT '' AS sixty_three, d1 AS european_iso FROM DATETIME_TBL;
 sixty_three|european_iso             
 -----------+-------------------------
@@ -956,7 +956,7 @@ eight|european_iso
 
 QUERY: SET DateStyle TO 'European,SQL';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is SQL with European conventions
+NOTICE:  DateStyle is SQL with European conventions
 QUERY: SELECT '' AS sixty_three, d1 AS european_sql FROM DATETIME_TBL;
 sixty_three|european_sql              
 -----------+--------------------------
@@ -1040,10 +1040,10 @@ eight|european_sql
 
 QUERY: RESET DateStyle;
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 QUERY: SET DateStyle TO 'US,Postgres';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 QUERY: SELECT '' AS sixty_two, d1 AS us_postgres FROM DATETIME_TBL;
 sixty_two|us_postgres                    
 ---------+-------------------------------
@@ -1209,7 +1209,7 @@ eight|us_iso
 
 QUERY: SET DateStyle TO 'US,SQL';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is SQL with US (NonEuropean) conventions
+NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
 QUERY: SELECT '' AS sixty_two, d1 AS us_sql FROM DATETIME_TBL;
 sixty_two|us_sql                    
 ---------+--------------------------
@@ -1293,7 +1293,7 @@ eight|us_sql
 
 QUERY: SET DateStyle TO 'European,Postgres';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is Postgres with European conventions
+NOTICE:  DateStyle is Postgres with European conventions
 QUERY: INSERT INTO DATETIME_TBL VALUES('13/06/1957');
 QUERY: SELECT count(*) as one FROM DATETIME_TBL WHERE d1 = 'Jun 13 1957';
 one
@@ -1385,7 +1385,7 @@ eight|european_postgres
 
 QUERY: SET DateStyle TO 'European,ISO';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is ISO with European conventions
+NOTICE:  DateStyle is ISO with European conventions
 QUERY: SELECT '' AS sixty_three, d1 AS european_iso FROM DATETIME_TBL;
 sixty_three|european_iso             
 -----------+-------------------------
@@ -1470,7 +1470,7 @@ eight|european_iso
 
 QUERY: SET DateStyle TO 'European,SQL';
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is SQL with European conventions
+NOTICE:  DateStyle is SQL with European conventions
 QUERY: SELECT '' AS sixty_three, d1 AS european_sql FROM DATETIME_TBL;
 sixty_three|european_sql              
 -----------+--------------------------
@@ -1555,4 +1555,4 @@ eight|european_sql
 
 QUERY: RESET DateStyle;
 QUERY: SHOW DateStyle;
-NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions

@@ -41,9 +41,9 @@ ERROR:  renameatt: attribute "manager" exists
 QUERY: alter table emp rename column salary to oid;
 ERROR:  renameatt: attribute "oid" exists
 QUERY: abort;
-NOTICE:UserAbortTransactionBlock and not in in-progress state
+NOTICE:  UserAbortTransactionBlock and not in in-progress state
 QUERY: end;
-NOTICE:EndTransactionBlock and not inprogress/abort state 
+NOTICE:  EndTransactionBlock and not inprogress/abort state 
 QUERY: create aggregate newavg1 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,

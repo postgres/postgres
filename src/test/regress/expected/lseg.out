@@ -23,9 +23,9 @@ s
 (5 rows)
 
 QUERY: SELECT * FROM LSEG_TBL WHERE s <= '[(1,2),(3,4)]'::lseg;
-NOTICE:there is no operator <= for types lseg and lseg
-NOTICE:You will either have to retype this query using an
-NOTICE:explicit cast, or you will have to define the operator
+NOTICE:  there is no operator <= for types lseg and lseg
+NOTICE:  You will either have to retype this query using an
+NOTICE:  explicit cast, or you will have to define the operator
 ERROR:  <= for lseg and lseg using CREATE OPERATOR
 QUERY: SELECT * FROM LSEG_TBL WHERE (s <-> '[(1,2),(3,4)]'::lseg) < 10;
 s                 
