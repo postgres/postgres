@@ -240,7 +240,10 @@ class pgdbCursor:
 			size = self.arraysize
 		if keep == 1:
 			self.arraysize = size
-		res = self.__source.fetch(size)
+
+		try: res = self.__source.fetch(size)
+		except _pg.error, e: raise DatabaseError, str(e)
+
 		result = []
 		for r in res:
 			row = []
@@ -252,6 +255,9 @@ class pgdbCursor:
 				)
 			result.append(row)
 		return result
+
+	def nextset(self):
+		raise NotSupportedError, "nextset() is not supported"
 
 	def setinputsizes(self, sizes):
 		pass
