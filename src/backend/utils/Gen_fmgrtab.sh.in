@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.18 2000/01/10 20:46:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.19 2000/01/11 01:42:08 tgl Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -83,7 +83,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.18 2000/01/10 20:46:23 momjian Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.19 2000/01/11 01:42:08 tgl Exp $
  *
  * NOTES
  *	******************************
@@ -100,15 +100,8 @@ cat > $HFILE <<FuNkYfMgRsTuFf
 
 #include "postgres.h"
 
-/*
- *	Maximum number of arguments for a built-in function.
- *
- *	XXX note that you cannot call a function with more than 8 
- *	    arguments from the user level since the catalogs only 
- *	    store 8 argument type values for type-checking ...
- */
 typedef struct {
-    char *data[FUNC_MAX_ARGS];  /* function name is arg0 */
+    char *data[FUNC_MAX_ARGS];
 } FmgrValues;
 
 typedef struct {
@@ -204,7 +197,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.18 2000/01/10 20:46:23 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.19 2000/01/11 01:42:08 tgl Exp $
  *
  * NOTES
  *
