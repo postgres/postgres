@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-03 20:48-0400\n"
+"POT-Creation-Date: 2003-10-20 00:51-0300\n"
 "PO-Revision-Date: 2003-10-03 21:17-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@dcc.uchile.cl>\n"
 "Language-Team: Castellano <pgsql-ayuda@tlali.iztacala.unam.mx>\n"
@@ -66,7 +66,7 @@ msgstr "El búfer de consulta ha sido reiniciado (limpiado)."
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Se escribió historial a archivo \"%s\".\n"
 
-#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:81
+#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
 #: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -86,7 +86,7 @@ msgstr "Mostrar tiempos está desactivado."
 
 #: command.c:793 command.c:813 command.c:1011 command.c:1024 command.c:1035
 #: command.c:1606 command.c:1619 command.c:1631 command.c:1644 command.c:1658
-#: command.c:1680 command.c:1710 common.c:130 copy.c:378
+#: command.c:1680 command.c:1710 common.c:135 copy.c:378
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -104,7 +104,7 @@ msgstr "error de procesamiento en el fin de línea\n"
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: command.c:1389 common.c:176 common.c:346 common.c:400 common.c:614
+#: command.c:1389 common.c:181 common.c:351 common.c:405 common.c:652
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -183,20 +183,20 @@ msgstr "El separador de campos es \"%s\".\n"
 
 #: command.c:1846
 msgid "Record separator is <newline>."
-msgstr "El separador de registros es <salto de línea>."
+msgstr "El separador de filas es <salto de línea>."
 
 #: command.c:1848
 #, c-format
 msgid "Record separator is \"%s\".\n"
-msgstr "El separador de registros es \"%s\".\n"
+msgstr "El separador de filas es \"%s\".\n"
 
 #: command.c:1859
 msgid "Showing only tuples."
-msgstr "Mostrando sólo registros."
+msgstr "Mostrando sólo filas."
 
 #: command.c:1861
 msgid "Tuples only is off."
-msgstr "Mostrar sólo registros está desactivado."
+msgstr "Mostrar sólo filas está desactivado."
 
 #: command.c:1877
 #, c-format
@@ -245,39 +245,39 @@ msgstr "\\pset: opción desconocida: %s\n"
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
-#: common.c:74
+#: common.c:79
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: no se puede duplicar puntero nulo (error interno)\n"
 
-#: common.c:258
+#: common.c:263
 msgid "connection to server was lost\n"
 msgstr "se ha perdido la conexión al servidor\n"
 
-#: common.c:262
+#: common.c:267
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "La conexión al servidor se ha perdido. Intentando reiniciar: "
 
-#: common.c:267
+#: common.c:272
 msgid "Failed.\n"
 msgstr "falló.\n"
 
-#: common.c:274
+#: common.c:279
 msgid "Succeeded.\n"
 msgstr "con éxito.\n"
 
-#: common.c:376 common.c:582
+#: common.c:381 common.c:620
 msgid "You are currently not connected to a database.\n"
 msgstr "No está conectado a una base de datos.\n"
 
-#: common.c:431
+#: common.c:436
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Notificación asíncrona \"%s\" recibida del proceso de servidor con PID %d.\n"
 
-#: common.c:534
+#: common.c:516
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -285,12 +285,7 @@ msgstr ""
 "Ingrese los datos a ser copiados seguidos de un fin de línea.\n"
 "Termine con un backslash y un punto."
 
-#: common.c:553
-#, c-format
-msgid "Time: %.2f ms\n"
-msgstr "Duración: %.2f ms\n"
-
-#: common.c:590
+#: common.c:628
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -304,6 +299,11 @@ msgstr ""
 "%s\n"
 "***(presione enter para continuar, o x y enter para cancelar)"
 "*******************\n"
+
+#: common.c:679
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Duración: %.3f ms\n"
 
 #: copy.c:110
 msgid "\\copy: arguments required\n"
@@ -375,15 +375,15 @@ msgstr ""
 
 #: help.c:94
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
-msgstr "-c COMANDO         ejecutar sólo un comando (SQL o interno) y salir"
+msgstr "  -c COMANDO       ejecutar sólo un comando (SQL o interno) y salir"
 
 #: help.c:95
 msgid "  -f FILENAME     execute commands from file, then exit"
-msgstr "-f ARCHIVO         ejecutar comandos desde archivo, luego salir"
+msgstr "  -f ARCHIVO       ejecutar comandos desde archivo, luego salir"
 
 #: help.c:96
 msgid "  -l              list available databases, then exit"
-msgstr "-l                 listar bases de datos, luego salir"
+msgstr "  -l               listar bases de datos, luego salir"
 
 #: help.c:97
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
@@ -391,15 +391,15 @@ msgstr "  -v NOMBRE=VALOR  definir variable NOMBRE de psql a VALOR"
 
 #: help.c:98
 msgid "  -X              do not read startup file (~/.psqlrc)"
-msgstr "-X                 no leer archivo de configuración (~/.psqlrc)"
+msgstr "  -X               no leer archivo de configuración (~/.psqlrc)"
 
 #: help.c:99
 msgid "  --help          show this help, then exit"
-msgstr "--help             mostrar esta ayuda, luego salir"
+msgstr "  --help           mostrar esta ayuda, luego salir"
 
 #: help.c:100
 msgid "  --version       output version information, then exit"
-msgstr "--version          mostrar información de versión, luego salir"
+msgstr "  --version        mostrar información de versión, luego salir"
 
 #: help.c:102
 msgid ""
@@ -411,11 +411,11 @@ msgstr ""
 
 #: help.c:103
 msgid "  -a              echo all input from script"
-msgstr "-a                 mostrar los comandos del script"
+msgstr "  -a               mostrar los comandos del script"
 
 #: help.c:104
 msgid "  -e              echo commands sent to server"
-msgstr "-e                 mostrar comandos enviados al servidor"
+msgstr "  -e               mostrar comandos enviados al servidor"
 
 #: help.c:105
 msgid "  -E              display queries that internal commands generate"
@@ -455,23 +455,24 @@ msgstr ""
 
 #: help.c:113
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr "  -A               modo de tablas no alineadas"
+msgstr "  -A               modo de salida desalineado"
 
 #: help.c:114
 msgid "  -H              HTML table output mode (-P format=html)"
-msgstr "  -H               modo de salida en tablas HTML (-P format=html)"
+msgstr "  -H               modo de salida en tablas HTML\n"
+       "                   (-P format=html)"
 
 #: help.c:115
 msgid "  -t              print rows only (-P tuples_only)"
-msgstr "  -t               mostrar sólo registros (-P tuples_only)"
+msgstr "  -t               mostrar sólo filas (-P tuples_only)"
 
 #: help.c:116
 msgid ""
 "  -T TEXT         set HTML table tag attributes (width, border) (-P "
 "tableattr=)"
 msgstr ""
-"  -T TEXTO         definir atributos de marcas de tabla HTML (ancho, borde) "
-"(-P tableattr=)"
+"  -T TEXTO         definir atributos de marcas de tabla HTML (ancho, borde)\n"
+"                   (-P tableattr=)"
 
 #: help.c:117
 msgid "  -x              turn on expanded table output (-P expanded)"
@@ -481,23 +482,22 @@ msgstr ""
 #: help.c:118
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
 msgstr ""
-"  -P VAR[=ARG]     definir opción de impresión VAR en ARG (ver comando "
-"\\pset)"
+"  -P VAR[=ARG]     definir opción de impresión VAR en ARG (ver comando \\pset)"
 
 #: help.c:119
 #, c-format
 msgid ""
 "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
 msgstr ""
-"  -F CADENA        definir separados de campos (por omisión: \"%s\") (-P "
-"fieldsep=)\n"
+"  -F CADENA        definir separador de columnas (por omisión: \"%s\")\n"
+"                   (-P fieldsep=)\n"
 
 #: help.c:121
 msgid ""
 "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr ""
-"  -R CADENA        definir separador de registros (por omisión: salto de "
-"línea) (-P recordsep=)"
+"  -R CADENA        definir separador de filas (por omisión: salto de línea)\n"
+"                   (-P recordsep=)"
 
 #: help.c:123
 msgid ""
@@ -513,8 +513,8 @@ msgid ""
 "  -h HOSTNAME     database server host or socket directory (default: \"%s"
 "\")\n"
 msgstr ""
-"  -h ANFITRIÓN     nombre del anfitrión o directorio de socket (por omisión: "
-"\"%s\")\n"
+"  -h ANFITRIÓN     nombre del anfitrión o directorio de socket\n"
+"                   (por omisión: \"%s\")\n"
 
 #: help.c:127
 msgid "local socket"
@@ -549,8 +549,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Para obtener más ayuda, digite \"\\?\" (para comandos internos) o \"\\help"
-"\"\n"
+"Para obtener más ayuda, digite \"\\?\" (para comandos internos) o \"\\help\"\n"
 "(para comandos SQL) dentro de psql, o consulte la sección de psql\n"
 "en la documentación de PostgreSQL.\n"
 "\n"
@@ -590,7 +589,7 @@ msgstr ""
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
 msgstr ""
 "  \\h [NOMBRE]     mostrar ayuda de sintaxis de comandos SQL,\n"
-"                   * para todos los comandos\n"
+"                  * para todos los comandos\n"
 
 #: help.c:183
 msgid "  \\q             quit psql\n"
@@ -797,7 +796,7 @@ msgstr ""
 #: help.c:239
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
-msgstr "  \\t              mostrar sólo registros (actualmente %s)\n"
+msgstr "  \\t              mostrar sólo filas (actualmente %s)\n"
 
 #: help.c:241
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
@@ -880,7 +879,7 @@ msgid "%s: unknown transaction status\n"
 msgstr "%s: estado de transacción desconocido\n"
 
 #: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
-#: describe.c:339 describe.c:438 describe.c:718 describe.c:1343
+#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
 msgid "Description"
 msgstr "Descripción"
 
@@ -895,16 +894,16 @@ msgstr "Use \"\\q\" para salir de %s.\n"
 
 #: print.c:421
 msgid "(No rows)\n"
-msgstr "(Sin registros)\n"
+msgstr "(Sin filas)\n"
 
 #: print.c:1186
 msgid "(1 row)"
-msgstr "(1 registro)"
+msgstr "(1 fila)"
 
 #: print.c:1188
 #, c-format
 msgid "(%d rows)"
-msgstr "(%d registros)"
+msgstr "(%d filas)"
 
 #: startup.c:132 startup.c:574
 #, c-format
@@ -977,13 +976,13 @@ msgid ""
 msgstr "conexión SSL (cifrado: %s, bits: %i)\n"
 
 #: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:384
-#: describe.c:438 describe.c:1336 describe.c:1442 describe.c:1490
+#: describe.c:438 describe.c:1338 describe.c:1444 describe.c:1492
 msgid "Schema"
 msgstr "Schema"
 
 #: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:332
-#: describe.c:438 describe.c:1336 describe.c:1443 describe.c:1491
-#: describe.c:1586
+#: describe.c:438 describe.c:1338 describe.c:1445 describe.c:1493
+#: describe.c:1588
 msgid "Name"
 msgstr "Nombre"
 
@@ -1007,7 +1006,7 @@ msgstr "Tipo de dato de salida"
 msgid "Argument data types"
 msgstr "Tipos de datos de argumentos"
 
-#: describe.c:156 describe.c:332 describe.c:1338 describe.c:1587
+#: describe.c:156 describe.c:332 describe.c:1340 describe.c:1589
 msgid "Owner"
 msgstr "Dueño"
 
@@ -1037,11 +1036,11 @@ msgstr "Listado de tipos de dato"
 
 #: describe.c:291
 msgid "Left arg type"
-msgstr "Tipo de 1er arg"
+msgstr "Tipo arg izq"
 
 #: describe.c:291
 msgid "Right arg type"
-msgstr "Tipo de 2o arg"
+msgstr "Tipo arg der"
 
 #: describe.c:292
 msgid "Result type"
@@ -1059,7 +1058,7 @@ msgstr "Codificación"
 msgid "List of databases"
 msgstr "Listado de base de datos"
 
-#: describe.c:384 describe.c:1353
+#: describe.c:384 describe.c:1355
 msgid "Table"
 msgstr "Tabla"
 
@@ -1092,19 +1091,19 @@ msgstr "operador"
 msgid "data type"
 msgstr "tipo de dato"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "table"
 msgstr "tabla"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "view"
 msgstr "vista"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "index"
 msgstr "índice"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "sequence"
 msgstr "secuencia"
 
@@ -1134,7 +1133,7 @@ msgstr "No se encontró relación con OID %s.\n"
 msgid "Column"
 msgstr "Columna"
 
-#: describe.c:705 describe.c:1338 describe.c:1444
+#: describe.c:705 describe.c:1340 describe.c:1446
 msgid "Type"
 msgstr "Tipo"
 
@@ -1200,165 +1199,161 @@ msgstr "de tabla \"%s.%s\""
 msgid ""
 "View definition:\n"
 "%s"
-msgstr "Definición de vista:\n"
+msgstr ""
+"Definición de vista:\n"
 "%s"
 
 #: describe.c:935
 msgid "Rules"
 msgstr "Reglas"
 
-#: describe.c:1084
+#: describe.c:1086
 msgid "Indexes:"
 msgstr "Índices:"
 
-#: describe.c:1092
+#: describe.c:1094
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1098
+#: describe.c:1100
 msgid " primary key,"
 msgstr " llave primaria,"
 
-#: describe.c:1100
+#: describe.c:1102
 msgid " unique,"
 msgstr " único,"
 
-#: describe.c:1118
+#: describe.c:1120
 msgid "Check constraints:"
 msgstr "Restricciones CHECK:"
 
-#: describe.c:1122
-#, c-format
-msgid "    \"%s\" CHECK %s"
-msgstr "    \"%s\" CHECK %s"
-
-#: describe.c:1133
-msgid "Foreign-key constraints:"
-msgstr "Restricciones de llave foránea:"
-
-#: describe.c:1137
+#: describe.c:1124 describe.c:1139
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
-#: describe.c:1148
+#: describe.c:1135
+msgid "Foreign-key constraints:"
+msgstr "Restricciones de llave foránea:"
+
+#: describe.c:1150
 msgid "Rules:"
 msgstr "Reglas:"
 
-#: describe.c:1167
+#: describe.c:1169
 msgid "Triggers:"
 msgstr "Triggers:"
 
-#: describe.c:1189
+#: describe.c:1191
 msgid "Inherits"
 msgstr "Hereda"
 
-#: describe.c:1275
+#: describe.c:1277
 msgid "User name"
 msgstr "Nombre de usuario"
 
-#: describe.c:1275
+#: describe.c:1277
 msgid "User ID"
 msgstr "ID de usuario"
 
-#: describe.c:1276
+#: describe.c:1278
 msgid "superuser, create database"
 msgstr "superusuario, crea bases de datos"
 
-#: describe.c:1277
+#: describe.c:1279
 msgid "superuser"
 msgstr "superusuario"
 
-#: describe.c:1277
+#: describe.c:1279
 msgid "create database"
 msgstr "crea bases de datos"
 
-#: describe.c:1278
+#: describe.c:1280
 msgid "Attributes"
 msgstr "Atributos"
 
-#: describe.c:1291
+#: describe.c:1293
 msgid "List of database users"
 msgstr "Listado de usuarios de la base de datos"
 
-#: describe.c:1338
+#: describe.c:1340
 msgid "special"
 msgstr "especial"
 
-#: describe.c:1399
+#: describe.c:1401
 msgid "No matching relations found.\n"
 msgstr "No se encontraron relaciones coincidentes.\n"
 
-#: describe.c:1401
+#: describe.c:1403
 msgid "No relations found.\n"
 msgstr "No se encontraron relaciones.\n"
 
-#: describe.c:1406
+#: describe.c:1408
 msgid "List of relations"
 msgstr "Listado de relaciones"
 
-#: describe.c:1445
+#: describe.c:1447
 msgid "Modifier"
 msgstr "Modificador"
 
-#: describe.c:1459
+#: describe.c:1461
 msgid "List of domains"
 msgstr "Listado de dominios"
 
-#: describe.c:1492
+#: describe.c:1494
 msgid "Source"
 msgstr "Fuente"
 
-#: describe.c:1493
+#: describe.c:1495
 msgid "Destination"
 msgstr "Destino"
 
-#: describe.c:1494 describe.c:1551
+#: describe.c:1496 describe.c:1553
 msgid "yes"
 msgstr "sí"
 
-#: describe.c:1495 describe.c:1549
+#: describe.c:1497 describe.c:1551
 msgid "no"
 msgstr "no"
 
-#: describe.c:1496
+#: describe.c:1498
 msgid "Default?"
 msgstr "Por omisión?"
 
-#: describe.c:1510
+#: describe.c:1512
 msgid "List of conversions"
 msgstr "Listado de conversiones"
 
-#: describe.c:1545
+#: describe.c:1547
 msgid "Source type"
 msgstr "Tipo fuente"
 
-#: describe.c:1546
+#: describe.c:1548
 msgid "Target type"
 msgstr "Tipo destino"
 
-#: describe.c:1547
+#: describe.c:1549
 msgid "(binary compatible)"
 msgstr "(binario-compatible)"
 
-#: describe.c:1548
+#: describe.c:1550
 msgid "Function"
 msgstr "Función"
 
-#: describe.c:1550
+#: describe.c:1552
 msgid "in assignment"
 msgstr "en asignación"
 
-#: describe.c:1552
+#: describe.c:1554
 msgid "Implicit?"
 msgstr "Implícito?"
 
-#: describe.c:1560
+#: describe.c:1562
 msgid "List of casts"
 msgstr "Listado de conversiones de tipo (casts)"
 
-#: describe.c:1601
+#: describe.c:1603
 msgid "List of schemas"
 msgstr "Listado de schemas"
 
@@ -2202,7 +2197,7 @@ msgstr ""
 
 #: sql_help.h:201
 msgid "delete rows of a table"
-msgstr "elimina registros de una tabla"
+msgstr "elimina filas de una tabla"
 
 #: sql_help.h:202
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
@@ -2386,7 +2381,7 @@ msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 
 #: sql_help.h:293
 msgid "retrieve rows from a query using a cursor"
-msgstr "recupera registros de una consulta usando un cursor"
+msgstr "recupera filas de una consulta usando un cursor"
 
 #: sql_help.h:294
 msgid ""
@@ -2486,7 +2481,7 @@ msgstr ""
 
 #: sql_help.h:301
 msgid "create new rows in a table"
-msgstr "crea nuevos registros en una tabla"
+msgstr "crea nuevas filas en una tabla"
 
 #: sql_help.h:302
 msgid ""
@@ -2650,7 +2645,7 @@ msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
 #: sql_help.h:345
 msgid "retrieve rows from a table or view"
-msgstr "recupera registros desde una tabla o vista"
+msgstr "recupera filas desde una tabla o vista"
 
 #: sql_help.h:346
 msgid ""
@@ -2750,8 +2745,9 @@ msgstr "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
-msgstr "define el identificador del usuario de sesión y el identificador del "
-"usuario actual de la sesión en curso"
+msgstr ""
+"define el identificador del usuario de sesión y el identificador del usuario "
+"actual de la sesión en curso"
 
 #: sql_help.h:362
 msgid ""
@@ -2821,7 +2817,7 @@ msgstr "UNLISTEN { name | * }"
 
 #: sql_help.h:385
 msgid "update rows of a table"
-msgstr "actualiza registros de una tabla"
+msgstr "actualiza filas de una tabla"
 
 #: sql_help.h:386
 msgid ""
@@ -2842,6 +2838,7 @@ msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
 "[, ...] ) ] ]"
-msgstr """VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+msgstr ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
 "[, ...] ) ] ]"
