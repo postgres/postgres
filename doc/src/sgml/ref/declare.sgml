@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.21 2003/03/27 16:51:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.22 2003/04/06 22:41:52 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -355,7 +355,6 @@ DECLARE liahona CURSOR
    <title>
     SQL92
    </title>
-   <para>
    <para>
     <acronym>SQL92</acronym> allows cursors only in embedded
     <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</>
