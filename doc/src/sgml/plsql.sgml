@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.7 2000/05/16 21:16:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.8 2000/05/17 00:15:48 momjian Exp $
 -->
 
  <chapter>
@@ -435,7 +435,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS datetime AS '
 	An assignment of a complete selection into a record or row can
 	be done by
 	<programlisting>
-SELECT <replaceable>expressions</replaceable> INTO <replaceable>target</replaceable> FROM ...;
+SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replaceable> FROM ...;
 	</programlisting>
 	<replaceable>target</replaceable> can be a record, a row variable or a
 	comma separated list of variables and record-/row-fields.
@@ -451,7 +451,7 @@ SELECT <replaceable>expressions</replaceable> INTO <replaceable>target</replacea
 	immediately after a SELECT INTO to check if an assignment had success.
 
 	<programlisting>
-SELECT * INTO myrec FROM EMP WHERE empname = myname;
+SELECT INTO myrec * FROM EMP WHERE empname = myname;
 IF NOT FOUND THEN
     RAISE EXCEPTION ''employee % not found'', myname;
 END IF;
