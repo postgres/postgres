@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.96 2003/04/03 21:25:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.97 2003/04/12 22:28:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,13 @@ static char *tokenize_inc_file(const char *inc_filename);
 
 /*
  * Some standard C libraries, including GNU, have an isblank() function.
- * Others, including Solaris, do not.  So we have our own.
+ * Others, including Solaris, do not.  So we have our own.  Watch out for
+ * macro-ized versions, too.
  */
+#ifdef isblank
+#undef isblank
+#endif
+
 static bool
 isblank(const char c)
 {
