@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.4 1997/09/08 02:26:23 momjian Exp $
+ * $Id: port-protos.h,v 1.5 1997/12/19 22:45:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,5 @@
 extern int	init_address_fixup(void);
 extern double rint(double x);
 extern double cbrt(double x);
-extern long random(void);
-extern void srandom(unsigned seed);
-extern int	getrusage(int who, struct rusage * ru);
 
 #endif							/* PORT_PROTOS_H */

@@ -58,6 +58,9 @@
 
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME
+#ifndef GETHOSTNAME
+extern int  gethostname(char *name, int namelen);
+#endif
 
 /* Set to 1 if you have int timezone */
 #undef HAVE_INT_TIMEZONE
@@ -67,6 +70,9 @@
 
 /* Set to 1 if you have inet_aton() */
 #undef HAVE_INET_ATON
+#ifndef HAVE_INET_ATON
+extern int  inet_aton(const char *cp, struct in_addr * addr);
+#endif
 
 /* Set to 1 if you have fcvt() */
 #undef HAVE_FCVT
@@ -104,14 +110,29 @@
 /* Set to 1 if you have sigprocmask() */
 #undef HAVE_SIGPROCMASK
 
+/* Set to 1 if you have sigprocmask() */
+#undef HAVE_STRCASECMP
+#ifndef HAVE_STRCASECMP
+extern int  strcasecmp(char *s1, char *s2);
+#endif
+
 /* Set to 1 if you have strdup() */
 #undef HAVE_STRDUP
+#ifndef HAVE_STRDUP
+extern char *strdup(char const *);
+#endif
 
 /* Set to 1 if you have random() */
 #undef HAVE_RANDOM
+#ifndef HAVE_RANDOM
+extern long random(void);
+#endif
 
 /* Set to 1 if you have srandom() */
 #undef HAVE_SRANDOM
+#ifndef HAVE_SRANDOM
+extern void srandom(int seed);
+#endif
 
 /* Set to 1 if you have libreadline.a */
 #undef HAVE_LIBREADLINE

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.7 1997/09/18 16:09:14 scrappy Exp $
+ * $Id: port-protos.h,v 1.8 1997/12/19 22:46:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,23 +34,5 @@
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
-
-/* port.c */
-#ifndef HAVE_RANDOM
-extern long random(void);
-#endif
-#ifndef HAVE_SRANDOM
-extern void srandom(int seed);
-#endif
-
-/* inet_aton.c in backend/port directory */
-extern int	inet_aton(const char *cp, struct in_addr * addr);
-
-/* In system library, but can't find prototype in system library .h files */
-extern int	gethostname(char *name, int namelen);
-
-/* In system library, but can't find prototype in system library .h files */
-#include <sys/resource.h>
-extern int	getrusage(int who, struct rusage * rusage);
 
 #endif							/* PORT_PROTOS_H */

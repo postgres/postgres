@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.7 1997/09/08 02:27:36 momjian Exp $
+ * $Id: port-protos.h,v 1.8 1997/12/19 22:46:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,16 +39,5 @@ extern int	dl_init(char *);
 extern int	syscall();
 
 extern void init_address_fixup(void);
-
-/* strdup.c: strdup() is not part of libc on Ultrix */
-extern char *strdup(char const *);
-
-/* inet_aton() is not part of libc on Ultrix.  The following is from
-   backend/port/inet_aton.h
-*/
-
-struct in_addr;
-int
-			inet_aton(const char *cp, struct in_addr * addr);
 
 #endif							/* PORT_PORTOS_H */

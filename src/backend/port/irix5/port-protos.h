@@ -31,7 +31,4 @@
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
 
-/* port.c */
-extern long random(void);
-
 #endif							/* PORT_PROTOS_H */
