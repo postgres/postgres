@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.4 2000/07/27 19:49:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.5 2000/11/16 05:50:01 momjian Exp $
  */
 
 %{
@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "miscadmin.h"
 #include "storage/fd.h"
@@ -32,6 +33,7 @@ enum {
 	GUC_INTEGER = 3,
 	GUC_REAL = 4,
 	GUC_EQUALS = 5,
+	GUC_UNQUOTED_STRING = 6,
 	GUC_EOL = 99,
 	GUC_ERROR = 100
 };
@@ -45,7 +47,7 @@ enum {
 
 /* prototype, so compiler is happy with our high warnings setting */
 int GUC_yylex(void);
-
+char *GUC_scanstr(char *);
 %}
 
 SIGN            ("-"|"+")
@@ -61,16 +63,9 @@ LETTER          [A-Za-z_\200-\377]
 LETTER_OR_DIGIT [A-Za-z_0-9\200-\377]
 
 ID              {LETTER}{LETTER_OR_DIGIT}*
-/*
- * FIXME: This string syntax is nice and all but of course the quotes
- * need to be stripped before we can make any use of the string value.
- * There is a function in parser/scansup.c that does this but it uses
- * palloc and there might be a little more magic needed to get it to
- * work right. Now there are no string options, and if there were then
- * the unquoted (`ID') tokens should still work. Of course this only
- * affects the configuration file.
- */
-STRING          \'([^'\n]|\\.)*'
+
+UNQUOTED_STRING {LETTER}({LETTER_OR_DIGIT}|[-._:/])*
+STRING          \'([^'"\n]|\\.)*\'
 
 %%
 
@@ -80,6 +75,7 @@ STRING          \'([^'\n]|\\.)*'
 
 {ID}            return GUC_ID;
 {STRING}        return GUC_STRING;
+{UNQUOTED_STRING} return GUC_UNQUOTED_STRING;
 {INTEGER}       return GUC_INTEGER;
 {REAL}          return GUC_REAL;
 =               return GUC_EQUALS;
@@ -139,7 +135,8 @@ ProcessConfigFile(GucContext context)
 	int elevel;
 	FILE * fp;
 
-	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND || context == PGC_SIGHUP);
+	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND 
+		|| context == PGC_SIGHUP);
 	Assert(DataDir);
 	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
 
@@ -210,11 +207,24 @@ ProcessConfigFile(GucContext context)
                 if (token == GUC_EQUALS)
                     token = yylex();
 
-                if (token != GUC_ID && token != GUC_STRING && token != GUC_INTEGER && token != GUC_REAL)
+                if (token != GUC_ID && token != GUC_STRING && 
+			token != GUC_INTEGER && token != GUC_REAL && 
+			token != GUC_UNQUOTED_STRING)
                     goto parse_error;
                 opt_value = strdup(yytext);
 				if (opt_value == NULL)
 					goto out_of_memory;
+		if (token == GUC_STRING)
+		{
+			/* remove the beginning and ending quote/apostrophe */
+			/* first: shift the whole shooting match down one
+ 			character */
+			memmove(opt_value,opt_value+1,strlen(opt_value)-1);
+			/* second: null out the 2 characters we shifted */
+                        opt_value[strlen(opt_value)-2]='\0';
+			/* do the escape thing.  free()'s the strdup above */
+			opt_value=GUC_scanstr(opt_value);
+		}
                 parse_state = 2;
                 break;
 
@@ -266,7 +276,8 @@ ProcessConfigFile(GucContext context)
 	FreeFile(fp);
 	free(filename);
 	free_name_value_list(head);
-	elog(elevel, CONFIG_FILENAME ":%u: syntax error", ConfigFileLineno);
+	elog(elevel, CONFIG_FILENAME ":%u: syntax error, token=\"%s\"", 
+		ConfigFileLineno,yytext);
 	return;
 
  out_of_memory:
@@ -283,4 +294,89 @@ int
 yywrap(void)
 {
 	return 1;
+}
+
+/* ----------------
+ *		scanstr
+ *
+ * if the string passed in has escaped codes, map the escape codes to actual
+ * chars
+ *
+ * the string returned is malloc'd and should eventually be free'd by the
+ * caller!
+ * ----------------
+ */
+
+char *
+GUC_scanstr(char *s)
+{
+	char	   *newStr;
+	int			len,
+				i,
+				j;
+
+	if (s == NULL || s[0] == '\0')
+	{
+		if (s != NULL) free (s);
+		return strdup("");
+
+	}
+	len = strlen(s);
+
+	newStr = malloc(len + 1);	/* string cannot get longer */
+
+	for (i = 0, j = 0; i < len; i++)
+	{
+		if (s[i] == '\\')
+		{
+			i++;
+			switch (s[i])
+			{
+				case 'b':
+					newStr[j] = '\b';
+					break;
+				case 'f':
+					newStr[j] = '\f';
+					break;
+				case 'n':
+					newStr[j] = '\n';
+					break;
+				case 'r':
+					newStr[j] = '\r';
+					break;
+				case 't':
+					newStr[j] = '\t';
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					{
+						int			k;
+						long		octVal = 0;
+
+						for (k = 0;
+							 s[i + k] >= '0' && s[i + k] <= '7' && k < 3;
+							 k++)
+							octVal = (octVal << 3) + (s[i + k] - '0');
+						i += k - 1;
+						newStr[j] = ((char) octVal);
+					}
+					break;
+				default:
+					newStr[j] = s[i];
+					break;
+				}
+			}					/* switch */
+		else
+			newStr[j] = s[i];
+		j++;
+	}
+	newStr[j] = '\0';
+	free(s);
+	return newStr;
 }
