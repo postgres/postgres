@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.52 1999/11/22 02:06:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.53 1999/12/30 23:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,15 +111,9 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev == ERROR || lev == FATAL)
 	{
+		/* this is probably redundant... */
 		if (IsInitProcessingMode())
-		{
-			extern TransactionState	CurrentTransactionState;
-
-			if (CurrentTransactionState->state != TRANS_DEFAULT && 
-				CurrentTransactionState->state != TRANS_DISABLED)
-				abort();
 			lev = FATAL;
-		}
 	}
 
 	/* choose message prefix and indent level */
