@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.26 1998/01/20 22:11:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.27 1998/01/25 04:07:52 scrappy Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -102,7 +102,7 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
 	appendStringInfo(str, " :lossy ");
-	appendStringInfo(str, (*node->lossy ? "true": "false"));
+	appendStringInfo(str, (node->lossy ? "true": "false"));
 	appendStringInfo(str, " :unique ");
 	appendStringInfo(str, (node->unique ? "true": "false"));
 }
