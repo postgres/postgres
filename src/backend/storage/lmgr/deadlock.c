@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.1 2001/01/25 03:31:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.2 2001/01/25 03:45:50 tgl Exp $
  *
  *	Interface:
  *
@@ -207,6 +207,9 @@ DeadLockCheck(PROC *proc)
 #ifdef DEBUG_DEADLOCK
 		PrintLockQueue(lock, "rearranged to:");
 #endif
+
+		/* See if any waiters for the lock can be woken up now */
+		ProcLockWakeup(GetLocksMethodTable(lock), lock);
 	}
 	return false;
 }
