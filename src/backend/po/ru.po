@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.25 2004/09/27 20:28:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.26 2004/10/12 17:55:45 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - September 24, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - October 6, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-09-20 13:10+0100\n"
-"PO-Revision-Date: 2004-09-24 18:31-0500\n"
+"POT-Creation-Date: 2004-10-02 01:12+0100\n"
+"PO-Revision-Date: 2004-10-06 05:00-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -898,7 +898,7 @@ msgstr "схема \"%s\" не существует"
 #: commands/user.c:1454
 #: commands/user.c:1691
 #: commands/user.c:1726
-#: libpq/pqcomm.c:475
+#: libpq/pqcomm.c:498
 #, c-format
 msgid "group \"%s\" does not exist"
 msgstr "группа \"%s\" не существует"
@@ -1338,7 +1338,7 @@ msgstr "оператор %s уже существует"
 
 #: catalog/pg_operator.c:726
 msgid "operator cannot be its own negator or sort operator"
-msgstr ""
+msgstr "оператор не может быть своим собственным негатором или оператором сортировки"
 
 #: catalog/pg_proc.c:92
 #: commands/functioncmds.c:150
@@ -1350,7 +1350,7 @@ msgstr "функции не могут иметь число аргументов более %d"
 #: catalog/pg_proc.c:117
 #: catalog/pg_proc.c:540
 msgid "A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type."
-msgstr ""
+msgstr "Функция возвращающая \"anyarray\" или \"anyelement\" должна иметь как минимум один аргумент одного из них."
 
 #: catalog/pg_proc.c:172
 #, c-format
@@ -1447,7 +1447,7 @@ msgstr "SQL-функции не могут иметь аргументы типа %s"
 #: catalog/pg_type.c:201
 #, c-format
 msgid "invalid type internal size %d"
-msgstr ""
+msgstr "неверный внутренний размер типа: %d"
 
 #: catalog/pg_type.c:208
 msgid "fixed-size types must have storage PLAIN"
@@ -1736,7 +1736,7 @@ msgstr "нужно быть администратором чтобы создавать базы для других пользователей
 
 #: commands/dbcommands.c:203
 msgid "cannot use an alternative location on this platform"
-msgstr ""
+msgstr "нельзя использовать алтернативное распололжение базы на данной платформе"
 
 #: commands/dbcommands.c:217
 #: commands/dbcommands.c:405
@@ -1833,11 +1833,11 @@ msgstr "доступ запрещён по переименованию базы"
 
 #: commands/dbcommands.c:884
 msgid "relative paths are not allowed as database locations"
-msgstr ""
+msgstr "относительные пути не дозволены для расположения баз"
 
 #: commands/dbcommands.c:888
 msgid "absolute paths are not allowed as database locations"
-msgstr ""
+msgstr "абслютные пути не дозволены для расположения баз"
 
 #: commands/dbcommands.c:900
 #, c-format
@@ -1916,11 +1916,11 @@ msgstr "транзакция установлена \"только для чтения\""
 
 #: commands/copy.c:769
 msgid "must be superuser to COPY to or from a file"
-msgstr ""
+msgstr "нужно быть администратором для использования COPY с файлами"
 
 #: commands/copy.c:770
 msgid "Anyone can COPY to stdout or from stdin. psql's \\copy command also works for anyone."
-msgstr ""
+msgstr "Каждый может COPY в stdout или из stdin. Команда psql \\copy также работает для всех."
 
 #: commands/copy.c:779
 msgid "COPY delimiter must be a single character"
@@ -1974,7 +1974,7 @@ msgstr "нельзя копировать из не-таблицы \"%s\""
 
 #: commands/copy.c:899
 msgid "relative path not allowed for COPY to file"
-msgstr ""
+msgstr "относительный путь не дозволен для COPY в файл"
 
 #: commands/copy.c:908
 #, c-format
@@ -2112,7 +2112,7 @@ msgstr "тип \"%s\" ещё не определён"
 
 #: commands/functioncmds.c:115
 msgid "Creating a shell type definition."
-msgstr ""
+msgstr "Создание определения типа-оболочки."
 
 #: commands/functioncmds.c:162
 #, c-format
@@ -2244,7 +2244,7 @@ msgstr ""
 
 #: commands/functioncmds.c:931
 msgid "must be superuser to create a cast WITHOUT FUNCTION"
-msgstr ""
+msgstr "нужно быть администратором для создания преобразования типов WITHOUT FUNCTION"
 
 #: commands/functioncmds.c:946
 msgid "source and target data types are not physically compatible"
@@ -2306,12 +2306,12 @@ msgstr "метод доступа \"%s\" не существует"
 
 #: commands/opclasscmds.c:112
 msgid "must be superuser to create an operator class"
-msgstr ""
+msgstr "нужно быть администратором для создания класса операторов"
 
 #: commands/opclasscmds.c:154
 #, c-format
 msgid "invalid operator number %d, must be between 1 and %d"
-msgstr ""
+msgstr "неверный номер оператора: %d, должен быть между 1 и %d"
 
 #: commands/opclasscmds.c:160
 #, c-format
@@ -2321,7 +2321,7 @@ msgstr "номер оператора %d указан больше одного раза"
 #: commands/opclasscmds.c:192
 #, c-format
 msgid "invalid procedure number %d, must be between 1 and %d"
-msgstr ""
+msgstr "неверный номер процедуры: %d, должен быть между 1 и %d"
 
 #: commands/opclasscmds.c:198
 #, c-format
@@ -2438,7 +2438,7 @@ msgstr "тип данных %s не имеет класса операторов по умолчанию для метода доступа
 
 #: commands/indexcmds.c:441
 msgid "You must specify an operator class for the index or define a default operator class for the data type."
-msgstr ""
+msgstr "Вы должны указать класс операторов для индекса или определить класс операторов по умолчанию для этого типа данных."
 
 #: commands/indexcmds.c:494
 #, c-format
@@ -2449,7 +2449,7 @@ msgstr "класс операторов \"%s\" не принимает тип данных %s"
 #: utils/cache/typcache.c:286
 #, c-format
 msgid "there are multiple default operator classes for data type %s"
-msgstr ""
+msgstr "имеется болдее одного класса операторов по умолчанию для типа данных %s"
 
 #: commands/indexcmds.c:651
 #, c-format
@@ -2548,7 +2548,7 @@ msgstr "заготовленная команда \"%s\" не существует"
 
 #: commands/proclang.c:64
 msgid "must be superuser to create procedural language"
-msgstr ""
+msgstr "нужно быть администратором для создания процедурного языка"
 
 #: commands/proclang.c:77
 #: commands/proclang.c:265
@@ -2568,11 +2568,11 @@ msgstr "функция %s должна возвращать тип \"language_handler\""
 
 #: commands/proclang.c:188
 msgid "must be superuser to drop procedural language"
-msgstr ""
+msgstr "нужно быть администратором для удаления процедурного языка"
 
 #: commands/proclang.c:271
 msgid "must be superuser to rename procedural language"
-msgstr ""
+msgstr "нужно быть администратором для переименования процедурного языка"
 
 #: commands/schemacmds.c:84
 #: commands/user.c:832
@@ -2583,7 +2583,7 @@ msgstr "доступ запрещён"
 #: commands/schemacmds.c:85
 #, c-format
 msgid "\"%s\" is not a superuser, so cannot create a schema for \"%s\""
-msgstr ""
+msgstr "\"%s\" не является администратором, поэтому не может создать схему для  \"%s\""
 
 #: commands/schemacmds.c:100
 #: commands/schemacmds.c:272
@@ -3228,7 +3228,7 @@ msgstr "ID пользователя должен быть положительным"
 
 #: commands/user.c:604
 msgid "must be superuser to create users"
-msgstr ""
+msgstr "нужно быть администратором для создания пользователей"
 
 #: commands/user.c:609
 #, c-format
@@ -3259,7 +3259,7 @@ msgstr "пользователь \"%s\" не существует"
 
 #: commands/user.c:1026
 msgid "must be superuser to drop users"
-msgstr ""
+msgstr "нужно быть администратором для удаления пользователей"
 
 #: commands/user.c:1060
 msgid "current user cannot be dropped"
@@ -3285,7 +3285,7 @@ msgstr "пользователь сессии не может быть переименован"
 
 #: commands/user.c:1197
 msgid "must be superuser to rename users"
-msgstr ""
+msgstr "нужно быть администратором для переименования пользователей"
 
 #: commands/user.c:1230
 #, c-format
@@ -3307,7 +3307,7 @@ msgstr "ID группы должен быть положительным"
 
 #: commands/user.c:1310
 msgid "must be superuser to create groups"
-msgstr ""
+msgstr "нужно быть администратором для создания групп"
 
 #: commands/user.c:1315
 #, c-format
@@ -3327,7 +3327,7 @@ msgstr "ID группы %d  уже присвоено"
 
 #: commands/user.c:1437
 msgid "must be superuser to alter groups"
-msgstr ""
+msgstr "нужно быть администратором для изменения групп"
 
 #: commands/user.c:1516
 #, c-format
@@ -3341,11 +3341,11 @@ msgstr "пользователь \"%s\" не принадлежит группе \"%s\""
 
 #: commands/user.c:1676
 msgid "must be superuser to drop groups"
-msgstr ""
+msgstr "нужно быть администратором для удаления групп"
 
 #: commands/user.c:1740
 msgid "must be superuser to rename groups"
-msgstr ""
+msgstr "нужно быть администратором для переименования групп"
 
 #: commands/vacuum.c:466
 msgid "oldest xmin is far in the past"
@@ -3441,7 +3441,7 @@ msgstr ""
 #: commands/vacuumlazy.c:774
 #: nodes/print.c:87
 #: storage/lmgr/deadlock.c:888
-#: tcop/postgres.c:3199
+#: tcop/postgres.c:3202
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -3624,7 +3624,6 @@ msgstr "функции и операторы принимают только один аргумент-множество (set)"
 #: executor/execQual.c:2996
 #: executor/functions.c:583
 #: executor/functions.c:622
-#: utils/adt/pgstatfuncs.c:191
 #: utils/adt/sets.c:207
 #: utils/fmgr/funcapi.c:39
 msgid "set-valued function called in context that cannot accept a set"
@@ -3783,7 +3782,7 @@ msgstr ""
 
 #: libpq/be-fsstubs.c:375
 msgid "must be superuser to use server-side lo_import()"
-msgstr ""
+msgstr "нужно быть администратором для использования server-side lo_import()"
 
 #: libpq/be-fsstubs.c:376
 msgid "Anyone can use the client-side lo_import() provided by libpq."
@@ -3801,7 +3800,7 @@ msgstr "не получилось считать файл сервера \"%s\": %m"
 
 #: libpq/be-fsstubs.c:442
 msgid "must be superuser to use server-side lo_export()"
-msgstr ""
+msgstr "нужно быть администратором для использования server-side lo_export()"
 
 #: libpq/be-fsstubs.c:443
 msgid "Anyone can use the client-side lo_export() provided by libpq."
@@ -4146,104 +4145,104 @@ msgstr "локальный пользователь с ID %d не существует"
 msgid "Ident authentication is not supported on local connections on this platform"
 msgstr ""
 
-#: libpq/pqcomm.c:248
+#: libpq/pqcomm.c:271
 #, c-format
 msgid "could not translate host name \"%s\", service \"%s\" to address: %s"
 msgstr "не получилось перевести имя хоста \"%s\", сервис \"%s\" в адрес: %s"
 
-#: libpq/pqcomm.c:252
+#: libpq/pqcomm.c:275
 #, c-format
 msgid "could not translate service \"%s\" to address: %s"
 msgstr ""
 
-#: libpq/pqcomm.c:285
+#: libpq/pqcomm.c:308
 msgid "IPv4"
 msgstr "IPv4"
 
-#: libpq/pqcomm.c:289
+#: libpq/pqcomm.c:312
 msgid "IPv6"
 msgstr "IPv6"
 
-#: libpq/pqcomm.c:294
+#: libpq/pqcomm.c:317
 msgid "Unix"
 msgstr "Unix"
 
-#: libpq/pqcomm.c:299
+#: libpq/pqcomm.c:322
 #, c-format
 msgid "unrecognized address family %d"
 msgstr ""
 
 #. translator: %s is IPv4, IPv6, or Unix
-#: libpq/pqcomm.c:310
+#: libpq/pqcomm.c:333
 #, c-format
 msgid "could not create %s socket: %m"
 msgstr "не получилось создать сокет %s: %m"
 
-#: libpq/pqcomm.c:322
+#: libpq/pqcomm.c:345
 #, c-format
 msgid "setsockopt(SO_REUSEADDR) failed: %m"
 msgstr "setsockopt(SO_REUSEADDR) не удался: %m"
 
-#: libpq/pqcomm.c:336
+#: libpq/pqcomm.c:359
 #, c-format
 msgid "setsockopt(IPV6_V6ONLY) failed: %m"
 msgstr "setsockopt(IPV6_V6ONLY) не удался: %m"
 
 #. translator: %s is IPv4, IPv6, or Unix
-#: libpq/pqcomm.c:355
+#: libpq/pqcomm.c:378
 #, c-format
 msgid "could not bind %s socket: %m"
 msgstr ""
 
-#: libpq/pqcomm.c:358
+#: libpq/pqcomm.c:381
 #, c-format
 msgid "Is another postmaster already running on port %d? If not, remove socket file \"%s\" and retry."
 msgstr ""
 
-#: libpq/pqcomm.c:361
+#: libpq/pqcomm.c:384
 #, c-format
 msgid "Is another postmaster already running on port %d? If not, wait a few seconds and retry."
 msgstr ""
 
 #. translator: %s is IPv4, IPv6, or Unix
-#: libpq/pqcomm.c:395
+#: libpq/pqcomm.c:418
 #, c-format
 msgid "could not listen on %s socket: %m"
 msgstr ""
 
-#: libpq/pqcomm.c:485
+#: libpq/pqcomm.c:508
 #, c-format
 msgid "could not set group of file \"%s\": %m"
 msgstr "не получилось установить группу файла \"%s\": %m"
 
-#: libpq/pqcomm.c:496
+#: libpq/pqcomm.c:519
 #, c-format
 msgid "could not set permissions of file \"%s\": %m"
 msgstr "не получилось установить права доступа для файла \"%s\": %m"
 
-#: libpq/pqcomm.c:526
+#: libpq/pqcomm.c:549
 #, c-format
 msgid "could not accept new connection: %m"
 msgstr "не получилось принять новое подсоединение: %m"
 
-#: libpq/pqcomm.c:678
+#: libpq/pqcomm.c:701
 #, c-format
 msgid "could not receive data from client: %m"
 msgstr "не удалось получить данные от клиента: %m"
 
-#: libpq/pqcomm.c:841
+#: libpq/pqcomm.c:864
 msgid "unexpected EOF within message length word"
 msgstr "нержиданный конец файла (EOF) в слове длины сообщения"
 
-#: libpq/pqcomm.c:853
+#: libpq/pqcomm.c:876
 msgid "invalid message length"
 msgstr "неверная длина сообщения"
 
-#: libpq/pqcomm.c:867
+#: libpq/pqcomm.c:890
 msgid "incomplete message from client"
 msgstr "неполное сообщение от клиента"
 
-#: libpq/pqcomm.c:946
+#: libpq/pqcomm.c:1000
 #, c-format
 msgid "could not send data to client: %m"
 msgstr "не получилось послать данные клиенту: %m"
@@ -5670,7 +5669,7 @@ msgstr ""
 
 #: postmaster/postmaster.c:1208
 msgid "invalid length of startup packet"
-msgstr ""
+msgstr "неверная длина начального пакета"
 
 #: postmaster/postmaster.c:1260
 #, c-format
@@ -5881,7 +5880,7 @@ msgstr ""
 
 #: postmaster/pgstat.c:814
 msgid "must be superuser to reset statistics counters"
-msgstr ""
+msgstr "нужно быть администратором для сброса счётчиков статистики"
 
 #: postmaster/pgstat.c:1295
 #, c-format
@@ -6326,42 +6325,11 @@ msgstr ""
 msgid "could not unlink %u/%u: %m"
 msgstr ""
 
-#: tcop/fastpath.c:106
-#: tcop/fastpath.c:450
-#: tcop/fastpath.c:573
-#, c-format
-msgid "invalid argument size %d in function call message"
-msgstr ""
-
-#: tcop/fastpath.c:305
-#: tcop/postgres.c:794
-#: tcop/postgres.c:1114
-#: tcop/postgres.c:1572
-msgid "current transaction is aborted, commands ignored until end of transaction block"
-msgstr ""
-
-#: tcop/fastpath.c:420
-#: tcop/fastpath.c:543
-#, c-format
-msgid "function call message contains %d arguments but function requires %d"
-msgstr ""
-
-#: tcop/fastpath.c:428
-#, c-format
-msgid "function call message contains %d argument formats but %d arguments"
-msgstr ""
-
-#: tcop/fastpath.c:511
-#: tcop/fastpath.c:596
-#, c-format
-msgid "incorrect binary data format in function argument %d"
-msgstr ""
-
 #: tcop/postgres.c:331
 #: tcop/postgres.c:343
 #: tcop/postgres.c:354
 #: tcop/postgres.c:366
-#: tcop/postgres.c:3076
+#: tcop/postgres.c:3079
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr ""
@@ -6370,6 +6338,13 @@ msgstr ""
 #, c-format
 msgid "statement: %s"
 msgstr "команда: %s"
+
+#: tcop/fastpath.c:305
+#: tcop/postgres.c:794
+#: tcop/postgres.c:1114
+#: tcop/postgres.c:1572
+msgid "current transaction is aborted, commands ignored until end of transaction block"
+msgstr ""
 
 #: tcop/postgres.c:957
 #, c-format
@@ -6548,16 +6523,40 @@ msgstr "%s: неверные аргументы командной строки"
 #: tcop/postgres.c:2589
 #, c-format
 msgid "%s: no database nor user name specified"
-msgstr ""
+msgstr "%s: ни база ни пользователь не указаны"
 
-#: tcop/postgres.c:2989
+#: tcop/postgres.c:2992
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr ""
 
-#: tcop/postgres.c:3019
+#: tcop/postgres.c:3022
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
+msgstr ""
+
+#: tcop/fastpath.c:106
+#: tcop/fastpath.c:450
+#: tcop/fastpath.c:573
+#, c-format
+msgid "invalid argument size %d in function call message"
+msgstr ""
+
+#: tcop/fastpath.c:420
+#: tcop/fastpath.c:543
+#, c-format
+msgid "function call message contains %d arguments but function requires %d"
+msgstr ""
+
+#: tcop/fastpath.c:428
+#, c-format
+msgid "function call message contains %d argument formats but %d arguments"
+msgstr ""
+
+#: tcop/fastpath.c:511
+#: tcop/fastpath.c:596
+#, c-format
+msgid "incorrect binary data format in function argument %d"
 msgstr ""
 
 #: tcop/pquery.c:352
@@ -6627,11 +6626,11 @@ msgstr "Используйте DROP TYPE для удаления типа."
 #: tcop/utility.c:602
 #: tcop/utility.c:664
 msgid "must be superuser to alter owner"
-msgstr ""
+msgstr "нужно быть администратором для изменения владельцев"
 
 #: tcop/utility.c:984
 msgid "must be superuser to do CHECKPOINT"
-msgstr ""
+msgstr "нужно быть администратором для выполнения CHECKPOINT"
 
 #: utils/adt/array_userfuncs.c:50
 msgid "could not determine input data types"
@@ -6682,12 +6681,12 @@ msgstr "неверный OID типа элементов массива: %u"
 #: utils/adt/arrayfuncs.c:2239
 #, c-format
 msgid "invalid number of dimensions: %d"
-msgstr ""
+msgstr "неверное число размерностей: %d"
 
 #: utils/adt/acl.c:102
 #: utils/adt/name.c:90
 msgid "identifier too long"
-msgstr ""
+msgstr "идентификатор слишком длинен"
 
 #: utils/adt/acl.c:103
 #: utils/adt/name.c:91
@@ -6779,7 +6778,7 @@ msgstr ""
 #: utils/adt/arrayfuncs.c:219
 #: utils/adt/arrayfuncs.c:231
 msgid "missing dimension value"
-msgstr ""
+msgstr "отсутствует значение размерности"
 
 #: utils/adt/arrayfuncs.c:241
 msgid "missing \"]\" in array dimensions"
@@ -7457,19 +7456,19 @@ msgstr ""
 
 #: utils/adt/network.c:199
 msgid "invalid bits in external \"inet\" value"
-msgstr ""
+msgstr "неверные биты во внешнем значении \"inet\""
 
 #: utils/adt/network.c:205
 msgid "invalid type in external \"inet\" value"
-msgstr ""
+msgstr "неверный тип во внешнем значении \"inet\""
 
 #: utils/adt/network.c:210
 msgid "invalid length in external \"inet\" value"
-msgstr ""
+msgstr "неверная длина во внешнем значении \"inet\""
 
 #: utils/adt/network.c:228
 msgid "invalid external \"cidr\" value"
-msgstr ""
+msgstr "неверное внешнее значение \"cidr\""
 
 #: utils/adt/network.c:315
 #, c-format
@@ -7486,19 +7485,19 @@ msgstr "ошибка синтаксиса имени"
 
 #: utils/adt/not_in.c:65
 msgid "Must provide \"relationname.columnname\"."
-msgstr ""
+msgstr "Нужно предоставить \"имя_отношения.имя_колонки\"."
 
 #: utils/adt/numeric.c:403
 msgid "invalid length in external \"numeric\" value"
-msgstr ""
+msgstr "неверная длина во внешнем значении \"numeric\""
 
 #: utils/adt/numeric.c:414
 msgid "invalid sign in external \"numeric\" value"
-msgstr ""
+msgstr "неверный знак во внешнем значении \"numeric\""
 
 #: utils/adt/numeric.c:424
 msgid "invalid digit in external \"numeric\" value"
-msgstr ""
+msgstr "неверная цифра во внешнем значении \"numeric\""
 
 #: utils/adt/numeric.c:1592
 #: utils/adt/numeric.c:1648
@@ -7517,11 +7516,11 @@ msgstr "неверный входной синтаксис для типа numeric: \"%s\""
 
 #: utils/adt/numeric.c:2905
 msgid "value overflows numeric format"
-msgstr ""
+msgstr "значение переполняет формат numeric"
 
 #: utils/adt/numeric.c:2975
 msgid "numeric field overflow"
-msgstr ""
+msgstr "переполнение поля numeric"
 
 #: utils/adt/numeric.c:2976
 #, c-format
@@ -7530,7 +7529,7 @@ msgstr ""
 
 #: utils/adt/numeric.c:4125
 msgid "argument for function \"exp\" too big"
-msgstr ""
+msgstr "аргумент для функции \"exp\" слишком велик"
 
 #: utils/adt/numeric.c:4501
 msgid "zero raised to zero is undefined"
@@ -7662,7 +7661,7 @@ msgstr "слишком много аргументов"
 
 #: utils/adt/regproc.c:645
 msgid "Provide two argument types for operator."
-msgstr ""
+msgstr "Предоставте два типа аргументов для оператора."
 
 #: utils/adt/regproc.c:1174
 msgid "expected a left parenthesis"
@@ -7759,7 +7758,7 @@ msgstr ""
 #: utils/adt/ri_triggers.c:3210
 #, c-format
 msgid "No rows were found in \"%s\"."
-msgstr ""
+msgstr "Строк в \"%s\" не найдено."
 
 #: utils/adt/ri_triggers.c:3247
 #, c-format
@@ -7853,14 +7852,14 @@ msgstr "неверный входной синтаксис для типа interval: \"%s\""
 #: utils/adt/timestamp.c:3125
 #, c-format
 msgid "timestamp units \"%s\" not recognized"
-msgstr ""
+msgstr "единицы timestamp \"%s\" не распознаны"
 
 #: utils/adt/timestamp.c:2610
 #: utils/adt/timestamp.c:3058
 #: utils/adt/timestamp.c:3115
 #, c-format
 msgid "timestamp units \"%s\" not supported"
-msgstr ""
+msgstr "единицы timestamp \"%s\" не поддерживаются"
 
 #: utils/adt/timestamp.c:2656
 #: utils/adt/timestamp.c:2733
@@ -7868,14 +7867,14 @@ msgstr ""
 #: utils/adt/timestamp.c:3325
 #, c-format
 msgid "timestamp with time zone units \"%s\" not recognized"
-msgstr ""
+msgstr "единицы timestamp with time zone \"%s\" не распознаны"
 
 #: utils/adt/timestamp.c:2717
 #: utils/adt/timestamp.c:3278
 #: utils/adt/timestamp.c:3316
 #, c-format
 msgid "timestamp with time zone units \"%s\" not supported"
-msgstr ""
+msgstr "единицы timestamp with time zone \"%s\" не поддерживаются"
 
 #: utils/adt/timestamp.c:2765
 #: utils/adt/timestamp.c:2836
@@ -7883,17 +7882,17 @@ msgstr ""
 #: utils/adt/timestamp.c:3469
 #, c-format
 msgid "interval units \"%s\" not recognized"
-msgstr ""
+msgstr "единицы interval \"%s\" не распознаны"
 
 #: utils/adt/timestamp.c:2820
 #: utils/adt/timestamp.c:3439
 #, c-format
 msgid "interval units \"%s\" not supported"
-msgstr ""
+msgstr "единицы interval \"%s\" не поддерживаются"
 
 #: utils/adt/timestamp.c:2860
 msgid "cannot calculate week number without year information"
-msgstr ""
+msgstr "нельзя вычислить номер недели без информации о годе"
 
 #: utils/adt/timestamp.c:3552
 #: utils/adt/timestamp.c:3703
@@ -7927,7 +7926,7 @@ msgstr ""
 
 #: utils/adt/varbit.c:472
 msgid "invalid length in external bit string"
-msgstr ""
+msgstr "неверная длина во внешней строке битов"
 
 #: utils/adt/varbit.c:905
 msgid "cannot AND bit strings of different sizes"
@@ -7950,13 +7949,13 @@ msgstr "64-битные целые не поддерживаются на этой платформе"
 #: utils/adt/varchar.c:225
 #, c-format
 msgid "value too long for type character(%d)"
-msgstr ""
+msgstr "значение велико для типа character(%d)"
 
 #: utils/adt/varchar.c:383
 #: utils/adt/varchar.c:475
 #, c-format
 msgid "value too long for type character varying(%d)"
-msgstr ""
+msgstr "значение велико для типа character varying(%d)"
 
 #: utils/adt/varlena.c:580
 #: utils/adt/varlena.c:644
@@ -7978,7 +7977,7 @@ msgstr "новый бит должен быть 0 или 1"
 
 #: utils/adt/varlena.c:2015
 msgid "field position must be greater than zero"
-msgstr ""
+msgstr "позиция поля должна быть больше нуля"
 
 #: utils/cache/lsyscache.c:1624
 #: utils/cache/lsyscache.c:1660
@@ -8248,12 +8247,12 @@ msgstr "неверный синтаксис для параметра \"preload_libraries\""
 #: utils/init/miscinit.c:932
 #, c-format
 msgid "preloaded library \"%s\" with initialization function \"%s\""
-msgstr ""
+msgstr "подзагруженная библиотека \"%s\" с функцией инициализации \"%s\""
 
 #: utils/init/miscinit.c:936
 #, c-format
 msgid "preloaded library \"%s\""
-msgstr ""
+msgstr "подзагруженная библиотека \"%s\""
 
 #: utils/init/postinit.c:116
 #, c-format
@@ -8329,7 +8328,7 @@ msgstr "неверное имя кодировки назначения: \"%s\""
 
 #: utils/mb/wchar.c:640
 msgid "Unicode characters greater than or equal to 0x10000 are not supported"
-msgstr ""
+msgstr "Символы Unicode более или равные 0x10000 не поддерживаются"
 
 #: utils/mb/wchar.c:669
 #, c-format
@@ -9028,11 +9027,11 @@ msgstr ""
 
 #: utils/misc/guc.c:1456
 msgid "Sets the regular expression \"flavor\"."
-msgstr ""
+msgstr "Устанавливает тип регулярных выражений."
 
 #: utils/misc/guc.c:1457
 msgid "This can be set to advanced, extended, or basic."
-msgstr ""
+msgstr "Это значение можно установить в advanced, extended или basic."
 
 #: utils/misc/guc.c:1465
 msgid "Sets the schema search order for names that are not schema-qualified."
@@ -9135,7 +9134,7 @@ msgstr "параметр \"%s\" требует булевское значение"
 
 #: utils/misc/guc.c:2562
 msgid "Must be superuser to change this value to false."
-msgstr ""
+msgstr "Нужно быть администратором для изменения этого значения на false."
 
 #: utils/misc/guc.c:2584
 #: utils/misc/guc.c:2681
@@ -9155,7 +9154,7 @@ msgstr "%d вне диапазона для параметра \"%s\" (%d .. %d)"
 
 #: utils/misc/guc.c:2659
 msgid "Must be superuser to increase this value or set it to zero."
-msgstr ""
+msgstr "Нужно быть администратором для увеличения этого значения или установки его в ноль."
 
 #: utils/misc/guc.c:2733
 #, c-format
@@ -9170,7 +9169,7 @@ msgstr "%g вне диапазона для параметра \"%s\" (%g .. %g)"
 #: utils/misc/guc.c:2755
 #: utils/misc/guc.c:2854
 msgid "Must be superuser to increase this value."
-msgstr ""
+msgstr "Нужно быть администратором для увеличения этого значения."
 
 #: utils/misc/guc.c:2777
 #, c-format
