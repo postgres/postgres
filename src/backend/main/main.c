@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.89 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.90 2004/09/24 06:29:07 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,18 +71,23 @@ main(int argc, char *argv[])
 
 #if defined(__alpha)			/* no __alpha__ ? */
 #ifdef NOFIXADE
-	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
-#endif   /* NOFIXADE */
-#ifdef NOPRINTADE
-	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
-#endif   /* NOPRINTADE */
+	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
+#endif
 #endif   /* __alpha */
 
 #ifdef WIN32
 	char	   *env_locale;
 #endif
 
-#if defined(NOFIXADE) || defined(NOPRINTADE)
+	/*
+	 * On some platforms, unaligned memory accesses result in a kernel
+	 * trap; the default kernel behavior is to emulate the memory
+	 * access, but this results in a significant performance
+	 * penalty. We ought to fix PG not to make such unaligned memory
+	 * accesses, so this code disables the kernel emulation: unaligned
+	 * accesses will result in SIGBUS instead.
+	 */
+#ifdef NOFIXADE
 
 #if defined(ultrix4)
 	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
@@ -94,7 +99,7 @@ main(int argc, char *argv[])
 		write_stderr("%s: setsysinfo failed: %s\n",
 					 argv[0], strerror(errno));
 #endif
-#endif   /* NOFIXADE || NOPRINTADE */
+#endif   /* NOFIXADE */
 
 #if defined(WIN32)
 	{
