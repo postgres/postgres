@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.86 2001/09/28 08:09:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.87 2001/10/01 02:31:33 ishii Exp $
  *
  * NOTES
  *
@@ -190,7 +190,9 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 {
 	time_t now;
 	struct timeval tp;
-//	struct timezone tpz;
+#ifdef NOT_USED
+	struct timezone tpz;
+#endif
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tm;
 #else
