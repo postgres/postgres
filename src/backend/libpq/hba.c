@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.118 2003/12/05 15:50:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.119 2003/12/25 03:44:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,16 +87,19 @@ pg_isblank(const char c)
  *	 token or EOF, whichever comes first. If no more tokens on line,
  *	 return null string as *buf and position file to beginning of
  *	 next line or EOF, whichever comes first. Allow spaces in quoted
- *	 strings. Terminate on unquoted commas. Handle comments.
+ *	 strings. Terminate on unquoted commas. Handle comments. Treat
+ *   unquoted keywords that might be user names or database names 
+ *   specially, by appending a newline to them.
  */
 void
 next_token(FILE *fp, char *buf, const int bufsz)
 {
 	int			c;
 	char	   *start_buf = buf;
-	char	   *end_buf = buf + (bufsz - 1);
+	char	   *end_buf = buf + (bufsz - 2);
 	bool		in_quote = false;
 	bool		was_quote = false;
+	bool        saw_quote = false;
 
 	/* Move over initial whitespace and commas */
 	while ((c = getc(fp)) != EOF && (pg_isblank(c) || c == ','))
@@ -149,7 +152,10 @@ next_token(FILE *fp, char *buf, const int bufsz)
 				was_quote = false;
 
 			if (c == '"')
+			{
 				in_quote = !in_quote;
+				saw_quote = true;
+			}
 
 			c = getc(fp);
 		}
@@ -161,7 +167,22 @@ next_token(FILE *fp, char *buf, const int bufsz)
 		if (c != EOF)
 			ungetc(c, fp);
 	}
+
+
+	if ( !saw_quote && 
+	     (
+			 strncmp(start_buf,"all",3) == 0  ||
+			 strncmp(start_buf,"sameuser",8) == 0  ||
+			 strncmp(start_buf,"samegroup",9) == 0 
+		 )
+		)
+	{
+		/* append newline to a magical keyword */
+		*buf++ = '\n';
+	}
+
 	*buf = '\0';
+
 }
 
 /*
@@ -446,7 +467,7 @@ check_user(char *user, char *param_str)
 				return true;
 		}
 		else if (strcmp(tok, user) == 0 ||
-				 strcmp(tok, "all") == 0)
+				 strcmp(tok, "all\n") == 0)
 			return true;
 	}
 
@@ -463,14 +484,14 @@ check_db(char *dbname, char *user, char *param_str)
 
 	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
-		if (strcmp(tok, "all") == 0)
+		if (strcmp(tok, "all\n") == 0)
 			return true;
-		else if (strcmp(tok, "sameuser") == 0)
+		else if (strcmp(tok, "sameuser\n") == 0)
 		{
 			if (strcmp(dbname, user) == 0)
 				return true;
 		}
-		else if (strcmp(tok, "samegroup") == 0)
+		else if (strcmp(tok, "samegroup\n") == 0)
 		{
 			if (check_group(dbname, user))
 				return true;
@@ -1068,7 +1089,7 @@ check_ident_usermap(const char *usermap_name,
 		errmsg("cannot use Ident authentication without usermap field")));
 		found_entry = false;
 	}
-	else if (strcmp(usermap_name, "sameuser") == 0)
+	else if (strcmp(usermap_name, "sameuser\n") == 0)
 	{
 		if (strcmp(pg_user, ident_user) == 0)
 			found_entry = true;
