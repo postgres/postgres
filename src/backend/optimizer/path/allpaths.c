@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.74 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.75 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 */
 
 	/* Consider sequential scan */
-	add_path(rel, create_seqscan_path(rel));
+	add_path(rel, create_seqscan_path(root, rel));
 
 	/* Consider TID scans */
 	create_tidscan_paths(root, rel);

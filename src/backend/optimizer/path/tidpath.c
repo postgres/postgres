@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.8 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.9 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/lsyscache.h"
 
-static void create_tidscan_joinpaths(RelOptInfo *rel);
+static void create_tidscan_joinpaths(Query *root, RelOptInfo *rel);
 static List *TidqualFromRestrictinfo(List *relids, List *restrictinfo);
 static bool isEvaluable(int varno, Node *node);
 static Node *TidequalClause(int varno, Expr *node);
@@ -243,7 +243,7 @@ TidqualFromRestrictinfo(List *relids, List *restrictinfo)
  * XXX does this actually work?
  */
 static void
-create_tidscan_joinpaths(RelOptInfo *rel)
+create_tidscan_joinpaths(Query *root, RelOptInfo *rel)
 {
 	List	   *rlst = NIL,
 			   *lst;
@@ -266,7 +266,7 @@ create_tidscan_joinpaths(RelOptInfo *rel)
 			pathnode->tideval = tideval;
 			pathnode->unjoined_relids = joininfo->unjoined_relids;
 
-			cost_tidscan(&pathnode->path, rel, tideval);
+			cost_tidscan(&pathnode->path, root, rel, tideval);
 
 			rlst = lappend(rlst, pathnode);
 		}
@@ -286,6 +286,6 @@ create_tidscan_paths(Query *root, RelOptInfo *rel)
 												  rel->baserestrictinfo);
 
 	if (tideval)
-		add_path(rel, (Path *) create_tidscan_path(rel, tideval));
-	create_tidscan_joinpaths(rel);
+		add_path(rel, (Path *) create_tidscan_path(root, rel, tideval));
+	create_tidscan_joinpaths(root, rel);
 }

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.90 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.91 2001/06/05 05:26:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,14 +514,14 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
 		return false;
-
-	/*
-	 * ignore eval_cost, left/right_pathkey, and left/right_bucketsize,
-	 * since they may not be set yet, and should be derivable from the
-	 * clause anyway
-	 */
 	if (a->ispusheddown != b->ispusheddown)
 		return false;
+	/*
+	 * We ignore eval_cost, this_selec, left/right_pathkey, and
+	 * left/right_bucketsize, since they may not be set yet, and should be
+	 * derivable from the clause anyway.  Probably it's not really necessary
+	 * to compare any of these remaining fields ...
+	 */
 	if (!equal(a->subclauseindices, b->subclauseindices))
 		return false;
 	if (a->mergejoinoperator != b->mergejoinoperator)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.56 2001/05/20 20:28:20 tgl Exp $
+ * $Id: relation.h,v 1.57 2001/06/05 05:26:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,7 +492,7 @@ typedef struct HashPath
  * path is responsible for identifying the restrict clauses it can use
  * and ignoring the rest.  Clauses not implemented by an indexscan,
  * mergejoin, or hashjoin will be placed in the plan qual or joinqual field
- * of the final Plan node, where they will be enforced by general-purpose
+ * of the finished Plan node, where they will be enforced by general-purpose
  * qual-expression-evaluation code.  (But we are still entitled to count
  * their selectivity when estimating the result tuple count, if we
  * can guess what it is...)
@@ -504,13 +504,15 @@ typedef struct RestrictInfo
 
 	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
 
-	Cost		eval_cost;		/* eval cost of clause; -1 if not yet set */
-
 	bool		ispusheddown;	/* TRUE if clause was pushed down in level */
 
 	/* only used if clause is an OR clause: */
 	List	   *subclauseindices;		/* indexes matching subclauses */
 	/* subclauseindices is a List of Lists of IndexOptInfos */
+
+	/* cache space for costs (currently only used for join clauses) */
+	Cost		eval_cost;		/* eval cost of clause; -1 if not yet set */
+	Selectivity	this_selec;		/* selectivity; -1 if not yet set */
 
 	/* valid if clause is mergejoinable, else InvalidOid: */
 	Oid			mergejoinoperator;		/* copy of clause operator */

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.142 2001/05/20 20:28:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.143 2001/06/05 05:26:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1361,9 +1361,10 @@ _copyRestrictInfo(RestrictInfo *from)
 	 * copy remainder of node
 	 */
 	Node_Copy(from, newnode, clause);
-	newnode->eval_cost = from->eval_cost;
 	newnode->ispusheddown = from->ispusheddown;
 	Node_Copy(from, newnode, subclauseindices);
+	newnode->eval_cost = from->eval_cost;
+	newnode->this_selec = from->this_selec;
 	newnode->mergejoinoperator = from->mergejoinoperator;
 	newnode->left_sortop = from->left_sortop;
 	newnode->right_sortop = from->right_sortop;

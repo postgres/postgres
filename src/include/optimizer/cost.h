@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.39 2001/05/07 00:43:26 tgl Exp $
+ * $Id: cost.h,v 1.40 2001/06/05 05:26:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,20 +52,27 @@ extern bool enable_nestloop;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;
 
-extern void cost_seqscan(Path *path, RelOptInfo *baserel);
+extern void cost_seqscan(Path *path, Query *root,
+						 RelOptInfo *baserel);
 extern void cost_index(Path *path, Query *root,
-		   RelOptInfo *baserel, IndexOptInfo *index,
-		   List *indexQuals, bool is_injoin);
-extern void cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval);
-extern void cost_sort(Path *path, List *pathkeys, double tuples, int width);
-extern void cost_nestloop(Path *path, Path *outer_path, Path *inner_path,
-			  List *restrictlist);
-extern void cost_mergejoin(Path *path, Path *outer_path, Path *inner_path,
-			   List *restrictlist,
-			   List *outersortkeys, List *innersortkeys);
-extern void cost_hashjoin(Path *path, Path *outer_path, Path *inner_path,
-			  List *restrictlist, Selectivity innerbucketsize);
-extern Selectivity estimate_hash_bucketsize(Query *root, Var *var);
+					   RelOptInfo *baserel, IndexOptInfo *index,
+					   List *indexQuals, bool is_injoin);
+extern void cost_tidscan(Path *path, Query *root,
+						 RelOptInfo *baserel, List *tideval);
+extern void cost_sort(Path *path, Query *root,
+					  List *pathkeys, double tuples, int width);
+extern void cost_nestloop(Path *path, Query *root,
+						  Path *outer_path, Path *inner_path,
+						  List *restrictlist);
+extern void cost_mergejoin(Path *path, Query *root,
+						   Path *outer_path, Path *inner_path,
+						   List *restrictlist,
+						   List *mergeclauses,
+						   List *outersortkeys, List *innersortkeys);
+extern void cost_hashjoin(Path *path, Query *root,
+						  Path *outer_path, Path *inner_path,
+						  List *restrictlist,
+						  List *hashclauses);
 extern Cost cost_qual_eval(List *quals);
 extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
@@ -84,5 +91,8 @@ extern Selectivity restrictlist_selectivity(Query *root,
 extern Selectivity clauselist_selectivity(Query *root,
 					   List *clauses,
 					   int varRelid);
+extern Selectivity clause_selectivity(Query *root,
+									  Node *clause,
+									  int varRelid);
 
 #endif	 /* COST_H */

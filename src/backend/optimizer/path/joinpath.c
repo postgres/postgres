@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.64 2001/05/07 00:43:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.65 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,8 @@ sort_inner_and_outer(Query *root,
 		 * paths later, and only if they don't need a sort.
 		 */
 		add_path(joinrel, (Path *)
-				 create_mergejoin_path(joinrel,
+				 create_mergejoin_path(root,
+									   joinrel,
 									   jointype,
 									   outerrel->cheapest_total_path,
 									   innerrel->cheapest_total_path,
@@ -357,7 +358,8 @@ match_unsorted_outer(Query *root,
 			 * innerjoin indexpath.
 			 */
 			add_path(joinrel, (Path *)
-					 create_nestloop_path(joinrel,
+					 create_nestloop_path(root,
+										  joinrel,
 										  jointype,
 										  outerpath,
 										  innerrel->cheapest_total_path,
@@ -366,7 +368,8 @@ match_unsorted_outer(Query *root,
 			if (innerrel->cheapest_startup_path !=
 				innerrel->cheapest_total_path)
 				add_path(joinrel, (Path *)
-						 create_nestloop_path(joinrel,
+						 create_nestloop_path(root,
+											  joinrel,
 											  jointype,
 											  outerpath,
 										 innerrel->cheapest_startup_path,
@@ -374,7 +377,8 @@ match_unsorted_outer(Query *root,
 											  merge_pathkeys));
 			if (bestinnerjoin != NULL)
 				add_path(joinrel, (Path *)
-						 create_nestloop_path(joinrel,
+						 create_nestloop_path(root,
+											  joinrel,
 											  jointype,
 											  outerpath,
 											  bestinnerjoin,
@@ -405,7 +409,8 @@ match_unsorted_outer(Query *root,
 		 * innerrel->cheapest_total_path is already correctly sorted.)
 		 */
 		add_path(joinrel, (Path *)
-				 create_mergejoin_path(joinrel,
+				 create_mergejoin_path(root,
+									   joinrel,
 									   jointype,
 									   outerpath,
 									   innerrel->cheapest_total_path,
@@ -464,7 +469,8 @@ match_unsorted_outer(Query *root,
 				else
 					newclauses = mergeclauses;
 				add_path(joinrel, (Path *)
-						 create_mergejoin_path(joinrel,
+						 create_mergejoin_path(root,
+											   joinrel,
 											   jointype,
 											   outerpath,
 											   innerpath,
@@ -507,7 +513,8 @@ match_unsorted_outer(Query *root,
 							newclauses = mergeclauses;
 					}
 					add_path(joinrel, (Path *)
-							 create_mergejoin_path(joinrel,
+							 create_mergejoin_path(root,
+												   joinrel,
 												   jointype,
 												   outerpath,
 												   innerpath,
@@ -605,7 +612,8 @@ match_unsorted_inner(Query *root,
 		 */
 		merge_pathkeys = build_join_pathkeys(root, joinrel, outersortkeys);
 		add_path(joinrel, (Path *)
-				 create_mergejoin_path(joinrel,
+				 create_mergejoin_path(root,
+									   joinrel,
 									   jointype,
 									   outerrel->cheapest_total_path,
 									   innerpath,
@@ -633,7 +641,8 @@ match_unsorted_inner(Query *root,
 		merge_pathkeys = build_join_pathkeys(root, joinrel,
 											 totalouterpath->pathkeys);
 		add_path(joinrel, (Path *)
-				 create_mergejoin_path(joinrel,
+				 create_mergejoin_path(root,
+									   joinrel,
 									   jointype,
 									   totalouterpath,
 									   innerpath,
@@ -651,7 +660,8 @@ match_unsorted_inner(Query *root,
 			merge_pathkeys = build_join_pathkeys(root, joinrel,
 											 startupouterpath->pathkeys);
 			add_path(joinrel, (Path *)
-					 create_mergejoin_path(joinrel,
+					 create_mergejoin_path(root,
+										   joinrel,
 										   jointype,
 										   startupouterpath,
 										   innerpath,
@@ -718,10 +728,8 @@ hash_inner_and_outer(Query *root,
 	foreach(i, restrictlist)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
-		Expr	   *clause;
 		Var		   *left,
 				   *right;
-		Selectivity innerbucketsize;
 		List	   *hashclauses;
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
@@ -734,42 +742,22 @@ hash_inner_and_outer(Query *root,
 		if (isouterjoin && restrictinfo->ispusheddown)
 			continue;
 
-		clause = restrictinfo->clause;
 		/* these must be OK, since check_hashjoinable accepted the clause */
-		left = get_leftop(clause);
-		right = get_rightop(clause);
+		left = get_leftop(restrictinfo->clause);
+		right = get_rightop(restrictinfo->clause);
 
 		/*
-		 * Check if clause is usable with these sub-rels, find inner side,
-		 * estimate bucketsize of inner var for costing purposes.
-		 *
-		 * Since we tend to visit the same clauses over and over when
-		 * planning a large query, we cache the bucketsize estimates in
-		 * the RestrictInfo node to avoid repeated lookups of statistics.
+		 * Check if clause is usable with these input rels.
 		 */
 		if (intMember(left->varno, outerrelids) &&
 			intMember(right->varno, innerrelids))
 		{
 			/* righthand side is inner */
-			innerbucketsize = restrictinfo->right_bucketsize;
-			if (innerbucketsize < 0)
-			{
-				/* not cached yet */
-				innerbucketsize = estimate_hash_bucketsize(root, right);
-				restrictinfo->right_bucketsize = innerbucketsize;
-			}
 		}
 		else if (intMember(left->varno, innerrelids) &&
 				 intMember(right->varno, outerrelids))
 		{
 			/* lefthand side is inner */
-			innerbucketsize = restrictinfo->left_bucketsize;
-			if (innerbucketsize < 0)
-			{
-				/* not cached yet */
-				innerbucketsize = estimate_hash_bucketsize(root, left);
-				restrictinfo->left_bucketsize = innerbucketsize;
-			}
 		}
 		else
 			continue;			/* no good for these input relations */
@@ -783,22 +771,22 @@ hash_inner_and_outer(Query *root,
 		 * any but the cheapest-total-cost inner path, however.
 		 */
 		add_path(joinrel, (Path *)
-				 create_hashjoin_path(joinrel,
+				 create_hashjoin_path(root,
+									  joinrel,
 									  jointype,
 									  outerrel->cheapest_total_path,
 									  innerrel->cheapest_total_path,
 									  restrictlist,
-									  hashclauses,
-									  innerbucketsize));
+									  hashclauses));
 		if (outerrel->cheapest_startup_path != outerrel->cheapest_total_path)
 			add_path(joinrel, (Path *)
-					 create_hashjoin_path(joinrel,
+					 create_hashjoin_path(root,
+										  joinrel,
 										  jointype,
 										  outerrel->cheapest_startup_path,
 										  innerrel->cheapest_total_path,
 										  restrictlist,
-										  hashclauses,
-										  innerbucketsize));
+										  hashclauses));
 	}
 }
 

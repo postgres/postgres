@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.65 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.66 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ subplanner(Query *root,
 	{
 		Path		sort_path;	/* dummy for result of cost_sort */
 
-		cost_sort(&sort_path, root->query_pathkeys,
+		cost_sort(&sort_path, root, root->query_pathkeys,
 				  final_rel->rows, final_rel->width);
 		sort_path.startup_cost += cheapestpath->total_cost;
 		sort_path.total_cost += cheapestpath->total_cost;

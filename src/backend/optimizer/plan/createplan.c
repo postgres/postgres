@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.106 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.107 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ static NestLoop *create_nestloop_plan(NestPath *best_path, List *tlist,
 					 List *joinclauses, List *otherclauses,
 					 Plan *outer_plan, List *outer_tlist,
 					 Plan *inner_plan, List *inner_tlist);
-static MergeJoin *create_mergejoin_plan(MergePath *best_path, List *tlist,
+static MergeJoin *create_mergejoin_plan(Query *root,
+					  MergePath *best_path, List *tlist,
 					  List *joinclauses, List *otherclauses,
 					  Plan *outer_plan, List *outer_tlist,
 					  Plan *inner_plan, List *inner_tlist);
@@ -244,7 +245,8 @@ create_join_plan(Query *root, JoinPath *best_path)
 	switch (best_path->path.pathtype)
 	{
 		case T_MergeJoin:
-			plan = (Join *) create_mergejoin_plan((MergePath *) best_path,
+			plan = (Join *) create_mergejoin_plan(root,
+												  (MergePath *) best_path,
 												  join_tlist,
 												  joinclauses,
 												  otherclauses,
@@ -673,7 +675,8 @@ create_nestloop_plan(NestPath *best_path,
 }
 
 static MergeJoin *
-create_mergejoin_plan(MergePath *best_path,
+create_mergejoin_plan(Query *root,
+					  MergePath *best_path,
 					  List *tlist,
 					  List *joinclauses,
 					  List *otherclauses,
@@ -720,13 +723,15 @@ create_mergejoin_plan(MergePath *best_path,
 	 */
 	if (best_path->outersortkeys)
 		outer_plan = (Plan *)
-			make_sort_from_pathkeys(outer_tlist,
+			make_sort_from_pathkeys(root,
+									outer_tlist,
 									outer_plan,
 									best_path->outersortkeys);
 
 	if (best_path->innersortkeys)
 		inner_plan = (Plan *)
-			make_sort_from_pathkeys(inner_tlist,
+			make_sort_from_pathkeys(root,
+									inner_tlist,
 									inner_plan,
 									best_path->innersortkeys);
 
@@ -1367,14 +1372,15 @@ make_mergejoin(List *tlist,
  * each key number from 1 to keycount), or the executor will get confused!
  */
 Sort *
-make_sort(List *tlist, Plan *lefttree, int keycount)
+make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-	cost_sort(&sort_path, NIL, lefttree->plan_rows, lefttree->plan_width);
+	cost_sort(&sort_path, root, NIL,
+			  lefttree->plan_rows, lefttree->plan_width);
 	plan->startup_cost = sort_path.startup_cost + lefttree->total_cost;
 	plan->total_cost = sort_path.total_cost + lefttree->total_cost;
 	plan->state = (EState *) NULL;
@@ -1399,7 +1405,8 @@ make_sort(List *tlist, Plan *lefttree, int keycount)
  * of resdom nodes in the sort plan's target list.
  */
 Sort *
-make_sort_from_pathkeys(List *tlist, Plan *lefttree, List *pathkeys)
+make_sort_from_pathkeys(Query *root, List *tlist,
+						Plan *lefttree, List *pathkeys)
 {
 	List	   *sort_tlist;
 	List	   *i;
@@ -1455,10 +1462,10 @@ make_sort_from_pathkeys(List *tlist, Plan *lefttree, List *pathkeys)
 
 	Assert(numsortkeys > 0);
 
-	return make_sort(sort_tlist, lefttree, numsortkeys);
+	return make_sort(root, sort_tlist, lefttree, numsortkeys);
 }
 
-Material   *
+Material *
 make_material(List *tlist, Plan *lefttree)
 {
 	Material   *node = makeNode(Material);

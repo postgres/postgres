@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.74 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.75 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,9 @@ bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 
 
+static Selectivity estimate_hash_bucketsize(Query *root, Var *var);
 static bool cost_qual_eval_walker(Node *node, Cost *total);
+static Selectivity approx_selectivity(Query *root, List *quals);
 static void set_rel_width(Query *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
@@ -99,7 +101,8 @@ static double page_size(double tuples, int width);
  * parameters, even though much of it could be extracted from the Path.
  */
 void
-cost_seqscan(Path *path, RelOptInfo *baserel)
+cost_seqscan(Path *path, Query *root,
+			 RelOptInfo *baserel)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -356,10 +359,11 @@ cost_index(Path *path, Query *root,
 
 /*
  * cost_tidscan
- *	  Determines and returns the cost of scanning a relation using tid-s.
+ *	  Determines and returns the cost of scanning a relation using TIDs.
  */
 void
-cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval)
+cost_tidscan(Path *path, Query *root,
+			 RelOptInfo *baserel, List *tideval)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -417,7 +421,8 @@ cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval)
  * but if it ever does, it should react gracefully to lack of key data.
  */
 void
-cost_sort(Path *path, List *pathkeys, double tuples, int width)
+cost_sort(Path *path, Query *root,
+		  List *pathkeys, double tuples, int width)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -479,7 +484,7 @@ cost_sort(Path *path, List *pathkeys, double tuples, int width)
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
  */
 void
-cost_nestloop(Path *path,
+cost_nestloop(Path *path, Query *root,
 			  Path *outer_path,
 			  Path *inner_path,
 			  List *restrictlist)
@@ -510,7 +515,8 @@ cost_nestloop(Path *path,
 	run_cost += outer_path->parent->rows *
 		(inner_path->total_cost - inner_path->startup_cost);
 	if (outer_path->parent->rows > 1)
-		run_cost += (outer_path->parent->rows - 1) * inner_path->startup_cost;
+		run_cost += (outer_path->parent->rows - 1) *
+			inner_path->startup_cost * 0.5;
 
 	/*
 	 * Number of tuples processed (not number emitted!).  If inner path is
@@ -540,15 +546,18 @@ cost_nestloop(Path *path,
  * 'outer_path' is the path for the outer relation
  * 'inner_path' is the path for the inner relation
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
+ * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
+ *		(this should be a subset of the restrictlist)
  * 'outersortkeys' and 'innersortkeys' are lists of the keys to be used
  *				to sort the outer and inner relations, or NIL if no explicit
  *				sort is needed because the source path is already ordered
  */
 void
-cost_mergejoin(Path *path,
+cost_mergejoin(Path *path, Query *root,
 			   Path *outer_path,
 			   Path *inner_path,
 			   List *restrictlist,
+			   List *mergeclauses,
 			   List *outersortkeys,
 			   List *innersortkeys)
 {
@@ -573,6 +582,7 @@ cost_mergejoin(Path *path,
 	{
 		startup_cost += outer_path->total_cost;
 		cost_sort(&sort_path,
+				  root,
 				  outersortkeys,
 				  outer_path->parent->rows,
 				  outer_path->parent->width);
@@ -589,6 +599,7 @@ cost_mergejoin(Path *path,
 	{
 		startup_cost += inner_path->total_cost;
 		cost_sort(&sort_path,
+				  root,
 				  innersortkeys,
 				  inner_path->parent->rows,
 				  inner_path->parent->width);
@@ -602,12 +613,24 @@ cost_mergejoin(Path *path,
 	}
 
 	/*
-	 * Estimate the number of tuples to be processed in the mergejoin
-	 * itself as one per tuple in the two source relations.  This could be
-	 * a drastic underestimate if there are many equal-keyed tuples in
-	 * either relation, but we have no good way of estimating that...
+	 * The number of tuple comparisons needed depends drastically on the
+	 * number of equal keys in the two source relations, which we have no
+	 * good way of estimating.  Somewhat arbitrarily, we charge one
+	 * tuple comparison (one cpu_operator_cost) for each tuple in the
+	 * two source relations.  This is probably a lower bound.
 	 */
-	ntuples = outer_path->parent->rows + inner_path->parent->rows;
+	run_cost += cpu_operator_cost *
+		(outer_path->parent->rows + inner_path->parent->rows);
+
+	/*
+	 * For each tuple that gets through the mergejoin proper, we charge
+	 * cpu_tuple_cost plus the cost of evaluating additional restriction
+	 * clauses that are to be applied at the join.  It's OK to use an
+	 * approximate selectivity here, since in most cases this is a minor
+	 * component of the cost.
+	 */
+	ntuples = approx_selectivity(root, mergeclauses) *
+		outer_path->parent->rows * inner_path->parent->rows;
 
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + cost_qual_eval(restrictlist);
@@ -625,15 +648,15 @@ cost_mergejoin(Path *path,
  * 'outer_path' is the path for the outer relation
  * 'inner_path' is the path for the inner relation
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'innerbucketsize' is an estimate of the bucketsize statistic
- *				for the inner hash key.
+ * 'hashclauses' is a list of the hash join clause (always a 1-element list)
+ *		(this should be a subset of the restrictlist)
  */
 void
-cost_hashjoin(Path *path,
+cost_hashjoin(Path *path, Query *root,
 			  Path *outer_path,
 			  Path *inner_path,
 			  List *restrictlist,
-			  Selectivity innerbucketsize)
+			  List *hashclauses)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -644,6 +667,10 @@ cost_hashjoin(Path *path,
 	double		innerbytes = relation_byte_size(inner_path->parent->rows,
 											  inner_path->parent->width);
 	long		hashtablebytes = SortMem * 1024L;
+	RestrictInfo *restrictinfo;
+	Var		   *left,
+			   *right;
+	Selectivity innerbucketsize;
 
 	if (!enable_hashjoin)
 		startup_cost += disable_cost;
@@ -658,6 +685,46 @@ cost_hashjoin(Path *path,
 	run_cost += cpu_operator_cost * outer_path->parent->rows;
 
 	/*
+	 * Determine bucketsize fraction for inner relation.  First we have
+	 * to figure out which side of the hashjoin clause is the inner side.
+	 */
+	Assert(length(hashclauses) == 1);
+	Assert(IsA(lfirst(hashclauses), RestrictInfo));
+	restrictinfo = (RestrictInfo *) lfirst(hashclauses);
+	/* these must be OK, since check_hashjoinable accepted the clause */
+	left = get_leftop(restrictinfo->clause);
+	right = get_rightop(restrictinfo->clause);
+
+	/*
+	 * Since we tend to visit the same clauses over and over when
+	 * planning a large query, we cache the bucketsize estimate in
+	 * the RestrictInfo node to avoid repeated lookups of statistics.
+	 */
+	if (intMember(right->varno, inner_path->parent->relids))
+	{
+		/* righthand side is inner */
+		innerbucketsize = restrictinfo->right_bucketsize;
+		if (innerbucketsize < 0)
+		{
+			/* not cached yet */
+			innerbucketsize = estimate_hash_bucketsize(root, right);
+			restrictinfo->right_bucketsize = innerbucketsize;
+		}
+	}
+	else
+	{
+		Assert(intMember(left->varno, inner_path->parent->relids));
+		/* lefthand side is inner */
+		innerbucketsize = restrictinfo->left_bucketsize;
+		if (innerbucketsize < 0)
+		{
+			/* not cached yet */
+			innerbucketsize = estimate_hash_bucketsize(root, left);
+			restrictinfo->left_bucketsize = innerbucketsize;
+		}
+	}
+
+	/*
 	 * The number of tuple comparisons needed is the number of outer
 	 * tuples times the typical number of tuples in a hash bucket,
 	 * which is the inner relation size times its bucketsize fraction.
@@ -667,14 +734,14 @@ cost_hashjoin(Path *path,
 		ceil(inner_path->parent->rows * innerbucketsize);
 
 	/*
-	 * Estimate the number of tuples that get through the hashing filter
-	 * as one per tuple in the two source relations.  This could be a
-	 * drastic underestimate if there are many equal-keyed tuples in
-	 * either relation, but we have no simple way of estimating that;
-	 * and since this is only a second-order parameter, it's probably
-	 * not worth expending a lot of effort on the estimate.
+	 * For each tuple that gets through the hashjoin proper, we charge
+	 * cpu_tuple_cost plus the cost of evaluating additional restriction
+	 * clauses that are to be applied at the join.  It's OK to use an
+	 * approximate selectivity here, since in most cases this is a minor
+	 * component of the cost.
 	 */
-	ntuples = outer_path->parent->rows + inner_path->parent->rows;
+	ntuples = approx_selectivity(root, hashclauses) *
+		outer_path->parent->rows * inner_path->parent->rows;
 
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + cost_qual_eval(restrictlist);
@@ -718,10 +785,6 @@ cost_hashjoin(Path *path,
  * divided by total tuples in relation) if the specified Var is used
  * as a hash key.
  *
- * This statistic is used by cost_hashjoin.  We split out the calculation
- * because it's useful to cache the result for re-use across multiple path
- * cost calculations.
- *
  * XXX This is really pretty bogus since we're effectively assuming that the
  * distribution of hash keys will be the same after applying restriction
  * clauses as it was in the underlying relation.  However, we are not nearly
@@ -747,7 +810,7 @@ cost_hashjoin(Path *path,
  * which is what we want.  We do not want to hash unless we know that the
  * inner rel is well-dispersed (or the alternatives seem much worse).
  */
-Selectivity
+static Selectivity
 estimate_hash_bucketsize(Query *root, Var *var)
 {
 	Oid			relid;
@@ -997,6 +1060,65 @@ cost_qual_eval_walker(Node *node, Cost *total)
 	}
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) total);
+}
+
+
+/*
+ * approx_selectivity
+ *		Quick-and-dirty estimation of clause selectivities.
+ *		The input can be either an implicitly-ANDed list of boolean
+ *		expressions, or a list of RestrictInfo nodes (typically the latter).
+ *
+ * The "quick" part comes from caching the selectivity estimates so we can
+ * avoid recomputing them later.  (Since the same clauses are typically
+ * examined over and over in different possible join trees, this makes a
+ * big difference.)
+ *
+ * The "dirty" part comes from the fact that the selectivities of multiple
+ * clauses are estimated independently and multiplied together.  Currently,
+ * clauselist_selectivity can seldom do any better than that anyhow, but
+ * someday it might be smarter.
+ *
+ * Since we are only using the results to estimate how many potential
+ * output tuples are generated and passed through qpqual checking, it
+ * seems OK to live with the approximation.
+ */
+static Selectivity
+approx_selectivity(Query *root, List *quals)
+{
+	Selectivity	total = 1.0;
+	List	   *l;
+
+	foreach(l, quals)
+	{
+		Node	   *qual = (Node *) lfirst(l);
+		Selectivity	selec;
+
+		/*
+		 * RestrictInfo nodes contain a this_selec field reserved for this
+		 * routine's use, so that it's not necessary to evaluate the qual
+		 * clause's selectivity more than once.  If the clause's selectivity
+		 * hasn't been computed yet, the field will contain -1.
+		 */
+		if (qual && IsA(qual, RestrictInfo))
+		{
+			RestrictInfo *restrictinfo = (RestrictInfo *) qual;
+
+			if (restrictinfo->this_selec < 0)
+				restrictinfo->this_selec =
+					clause_selectivity(root,
+									   (Node *) restrictinfo->clause,
+									   0);
+			selec = restrictinfo->this_selec;
+		}
+		else
+		{
+			/* If it's a bare expression, must always do it the hard way */
+			selec = clause_selectivity(root, qual, 0);
+		}
+		total *= selec;
+	}
+	return total;
 }
 
 

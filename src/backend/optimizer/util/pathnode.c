@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.73 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.74 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,7 +297,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
  *	  pathnode.
  */
 Path *
-create_seqscan_path(RelOptInfo *rel)
+create_seqscan_path(Query *root, RelOptInfo *rel)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -305,7 +305,7 @@ create_seqscan_path(RelOptInfo *rel)
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
 
-	cost_seqscan(pathnode, rel);
+	cost_seqscan(pathnode, root, rel);
 
 	return pathnode;
 }
@@ -371,10 +371,9 @@ create_index_path(Query *root,
  * create_tidscan_path
  *	  Creates a path corresponding to a tid_direct scan, returning the
  *	  pathnode.
- *
  */
-TidPath    *
-create_tidscan_path(RelOptInfo *rel, List *tideval)
+TidPath *
+create_tidscan_path(Query *root, RelOptInfo *rel, List *tideval)
 {
 	TidPath    *pathnode = makeNode(TidPath);
 
@@ -385,7 +384,7 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
 												 * necessary? */
 	pathnode->unjoined_relids = NIL;
 
-	cost_tidscan(&pathnode->path, rel, tideval);
+	cost_tidscan(&pathnode->path, root, rel, tideval);
 
 	/*
 	 * divide selectivity for each clause to get an equal selectivity as
@@ -461,10 +460,10 @@ create_subqueryscan_path(RelOptInfo *rel)
  * 'pathkeys' are the path keys of the new join path
  *
  * Returns the resulting path node.
- *
  */
-NestPath   *
-create_nestloop_path(RelOptInfo *joinrel,
+NestPath *
+create_nestloop_path(Query *root,
+					 RelOptInfo *joinrel,
 					 JoinType jointype,
 					 Path *outer_path,
 					 Path *inner_path,
@@ -481,7 +480,8 @@ create_nestloop_path(RelOptInfo *joinrel,
 	pathnode->joinrestrictinfo = restrict_clauses;
 	pathnode->path.pathkeys = pathkeys;
 
-	cost_nestloop(&pathnode->path, outer_path, inner_path, restrict_clauses);
+	cost_nestloop(&pathnode->path, root, outer_path, inner_path,
+				  restrict_clauses);
 
 	return pathnode;
 }
@@ -501,10 +501,10 @@ create_nestloop_path(RelOptInfo *joinrel,
  *		(this should be a subset of the restrict_clauses list)
  * 'outersortkeys' are the sort varkeys for the outer relation
  * 'innersortkeys' are the sort varkeys for the inner relation
- *
  */
-MergePath  *
-create_mergejoin_path(RelOptInfo *joinrel,
+MergePath *
+create_mergejoin_path(Query *root,
+					  RelOptInfo *joinrel,
 					  JoinType jointype,
 					  Path *outer_path,
 					  Path *inner_path,
@@ -539,9 +539,11 @@ create_mergejoin_path(RelOptInfo *joinrel,
 	pathnode->innersortkeys = innersortkeys;
 
 	cost_mergejoin(&pathnode->jpath.path,
+				   root,
 				   outer_path,
 				   inner_path,
 				   restrict_clauses,
+				   mergeclauses,
 				   outersortkeys,
 				   innersortkeys);
 
@@ -559,17 +561,15 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
  *		(this should be a subset of the restrict_clauses list)
- * 'innerbucketsize' is an estimate of the bucketsize of the inner hash key
- *
  */
-HashPath   *
-create_hashjoin_path(RelOptInfo *joinrel,
+HashPath *
+create_hashjoin_path(Query *root,
+					 RelOptInfo *joinrel,
 					 JoinType jointype,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-					 List *hashclauses,
-					 Selectivity innerbucketsize)
+					 List *hashclauses)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 
@@ -584,10 +584,11 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->path_hashclauses = hashclauses;
 
 	cost_hashjoin(&pathnode->jpath.path,
+				  root,
 				  outer_path,
 				  inner_path,
 				  restrict_clauses,
-				  innerbucketsize);
+				  hashclauses);
 
 	return pathnode;
 }

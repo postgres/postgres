@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.91 2001/05/27 17:37:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.92 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1132,10 +1132,12 @@ eqjoinsel(PG_FUNCTION_ARGS)
 				totalsel2 += otherfreq2 * (otherfreq1 + unmatchfreq1) /
 					(nd1 - nmatches);
 			/*
-			 * For robustness, we average the two estimates.  (Can a case
-			 * be made for taking the min or max instead?)
+			 * Use the smaller of the two estimates.  This can be justified
+			 * in essentially the same terms as given below for the no-stats
+			 * case: to a first approximation, we are estimating from the
+			 * point of view of the relation with smaller nd.
 			 */
-			selec = (totalsel1 + totalsel2) * 0.5;
+			selec = (totalsel1 < totalsel2) ? totalsel1 : totalsel2;
 		}
 		else
 		{

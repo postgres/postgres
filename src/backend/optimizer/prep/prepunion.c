@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.64 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.65 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 
 		tlist = new_unsorted_tlist(plan->targetlist);
 		sortList = addAllTargetsToSortList(NIL, tlist);
-		plan = make_sortplan(tlist, plan, sortList);
+		plan = make_sortplan(parse, tlist, plan, sortList);
 		plan = (Plan *) make_unique(tlist, plan, copyObject(sortList));
 	}
 	return plan;
@@ -290,7 +290,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 */
 	tlist = new_unsorted_tlist(plan->targetlist);
 	sortList = addAllTargetsToSortList(NIL, tlist);
-	plan = make_sortplan(tlist, plan, sortList);
+	plan = make_sortplan(parse, tlist, plan, sortList);
 	switch (op->op)
 	{
 		case SETOP_INTERSECT:
@@ -688,7 +688,8 @@ adjust_inherited_attrs_mutator(Node *node,
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
 		newinfo->subclauseindices = NIL;
-		newinfo->eval_cost = -1;		/* reset this too */
+		newinfo->eval_cost = -1;		/* reset these too */
+		newinfo->this_selec = -1;
 		newinfo->left_pathkey = NIL;	/* and these */
 		newinfo->right_pathkey = NIL;
 		newinfo->left_bucketsize = -1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.109 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.110 2001/06/05 05:26:04 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1792,6 +1792,8 @@ _readRestrictInfo(void)
 
 	/* eval_cost is not part of saved representation; compute on first use */
 	local_node->eval_cost = -1;
+	/* ditto for this_selec */
+	local_node->this_selec = -1;
 	/* ditto for cached pathkeys and bucketsize */
 	local_node->left_pathkey = NIL;
 	local_node->right_pathkey = NIL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.107 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.108 2001/06/05 05:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,8 @@ static Plan *inheritance_planner(Query *parse, List *inheritlist);
 static Plan *grouping_planner(Query *parse, double tuple_fraction);
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);
-static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
+static Plan *make_groupplan(Query *parse,
+			   List *group_tlist, bool tuplePerGroup,
 			   List *groupClause, AttrNumber *grpColIdx,
 			   bool is_presorted, Plan *subplan);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
@@ -1153,7 +1154,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 			current_pathkeys = group_pathkeys;
 		}
 
-		result_plan = make_groupplan(group_tlist,
+		result_plan = make_groupplan(parse,
+									 group_tlist,
 									 tuplePerGroup,
 									 parse->groupClause,
 									 groupColIdx,
@@ -1186,7 +1188,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 	if (parse->sortClause)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
-			result_plan = make_sortplan(tlist, result_plan,
+			result_plan = make_sortplan(parse, tlist, result_plan,
 										parse->sortClause);
 	}
 
@@ -1329,7 +1331,8 @@ make_subplanTargetList(Query *parse,
  *		first add an explicit Sort node.
  */
 static Plan *
-make_groupplan(List *group_tlist,
+make_groupplan(Query *parse,
+			   List *group_tlist,
 			   bool tuplePerGroup,
 			   List *groupClause,
 			   AttrNumber *grpColIdx,
@@ -1374,7 +1377,7 @@ make_groupplan(List *group_tlist,
 
 		Assert(keyno > 0);
 
-		subplan = (Plan *) make_sort(sort_tlist, subplan, keyno);
+		subplan = (Plan *) make_sort(parse, sort_tlist, subplan, keyno);
 	}
 
 	return (Plan *) make_group(group_tlist, tuplePerGroup, numCols,
@@ -1386,7 +1389,7 @@ make_groupplan(List *group_tlist,
  *	  Add a Sort node to implement an explicit ORDER BY clause.
  */
 Plan *
-make_sortplan(List *tlist, Plan *plannode, List *sortcls)
+make_sortplan(Query *parse, List *tlist, Plan *plannode, List *sortcls)
 {
 	List	   *sort_tlist;
 	List	   *i;
@@ -1419,7 +1422,7 @@ make_sortplan(List *tlist, Plan *plannode, List *sortcls)
 
 	Assert(keyno > 0);
 
-	return (Plan *) make_sort(sort_tlist, plannode, keyno);
+	return (Plan *) make_sort(parse, sort_tlist, plannode, keyno);
 }
 
 /*
