@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.42 1998/06/15 19:28:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.43 1998/07/15 14:54:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,11 +162,11 @@ _copyAppend(Append *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	Node_Copy(from, newnode, unionplans);
-	Node_Copy(from, newnode, unionrts);
-	newnode->unionrelid = from->unionrelid;
-	Node_Copy(from, newnode, unionrtentries);
-	Node_Copy(from, newnode, unionstate);
+	Node_Copy(from, newnode, appendplans);
+	Node_Copy(from, newnode, unionrtables);
+	newnode->inheritrelid = from->inheritrelid;
+	Node_Copy(from, newnode, inheritrtable);
+	Node_Copy(from, newnode, appendstate);
 
 	return newnode;
 }

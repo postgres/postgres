@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.19 1998/04/27 16:57:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.20 1998/07/15 14:54:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <tcop/tcopprot.h>
 #include <lib/stringinfo.h>
 #include <commands/explain.h>
+#include <parser/parsetree.h>
 #include <parser/parse_node.h>
 #include <optimizer/planner.h>
 #include <access/xact.h>
@@ -266,6 +267,40 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
 			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
+		}
+		es->rtable = saved_rtable;
+	}
+
+	if (nodeTag(plan) == T_Append)
+	{
+		List	   *saved_rtable = es->rtable;
+		List	   *lst;
+		int			whichplan = 0;
+		Append	   *appendplan = (Append *)plan;
+
+		foreach(lst, appendplan->appendplans)
+		{
+			Plan *subnode = (Plan *)lfirst(lst);
+
+			if (appendplan->inheritrelid > 0)
+			{
+				ResTarget  *rtentry;
+
+				es->rtable = appendplan->inheritrtable;
+				rtentry = nth(whichplan, appendplan->inheritrtable);
+				Assert(rtentry != NULL);
+				rt_store(appendplan->inheritrelid, es->rtable, rtentry);
+			}
+			else
+				es->rtable = nth(whichplan, appendplan->unionrtables);
+
+			for (i = 0; i < indent; i++)
+				appendStringInfo(str, "  ");
+			appendStringInfo(str, "    ->  ");
+
+			explain_outNode(str, subnode, indent + 4, es);
+
+			whichplan++;
 		}
 		es->rtable = saved_rtable;
 	}

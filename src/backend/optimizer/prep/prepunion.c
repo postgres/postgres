@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.24 1998/06/15 19:28:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.25 1998/07/15 14:54:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ static void
 fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
 static Append *
-make_append(List *unionplans, List *unionrts, Index rt_index,
-			List *union_rt_entries, List *tlist);
+make_append(List *appendplans, List *unionrtables, Index rt_index,
+			List *inheritrtable, List *tlist);
 
 
 /*
@@ -224,7 +224,7 @@ plan_inherit_queries(Query *parse, Index rt_index)
 
 	List	   *rangetable = parse->rtable;
 	RangeTblEntry *rt_entry = rt_fetch(rt_index, rangetable);
-	List	   *union_rt_entries = NIL;
+	List	   *inheritrtable = NIL;
 	List	   *union_relids = NIL;
 
 	union_relids =
@@ -239,12 +239,12 @@ plan_inherit_queries(Query *parse, Index rt_index)
 	rt_fetch(rt_index, rangetable)->inh = false;
 
 	union_plans = plan_inherit_query(union_relids, rt_index, rt_entry,
-									 parse, &union_rt_entries);
+									 parse, &inheritrtable);
 
 	return (make_append(union_plans,
 						NULL,
 						rt_index,
-						union_rt_entries,
+						inheritrtable,
 						((Plan *) lfirst(union_plans))->targetlist));
 }
 
@@ -494,19 +494,22 @@ fix_parsetree_attnums(Index rt_index,
 }
 
 static Append *
-make_append(List *unionplans,
-			List *unionrts,
+make_append(List *appendplans,
+			List *unionrtables,
 			Index rt_index,
-			List *union_rt_entries,
+			List *inheritrtable,
 			List *tlist)
 {
 	Append	   *node = makeNode(Append);
-
-	node->unionplans = unionplans;
-	node->unionrts = unionrts;
-	node->unionrelid = rt_index;
-	node->unionrtentries = union_rt_entries;
+	List	   *subnode;
+	
+	node->appendplans = appendplans;
+	node->unionrtables = unionrtables;
+	node->inheritrelid = rt_index;
+	node->inheritrtable = inheritrtable;
 	node->plan.cost = 0.0;
+	foreach(subnode, appendplans)
+		node->plan.cost += ((Plan *)lfirst(subnode))->cost;
 	node->plan.state = (EState *) NULL;
 	node->plan.targetlist = tlist;
 	node->plan.qual = NIL;

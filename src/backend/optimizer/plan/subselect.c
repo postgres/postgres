@@ -432,7 +432,7 @@ SS_finalize_plan(Plan *plan)
 			break;
 
 		case T_Append:
-			foreach(lst, ((Append *) plan)->unionplans)
+			foreach(lst, ((Append *) plan)->appendplans)
 				param_list = set_unioni(param_list,
 								 SS_finalize_plan((Plan *) lfirst(lst)));
 			break;

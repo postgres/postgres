@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.15 1998/06/15 19:28:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.16 1998/07/15 14:54:33 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -387,6 +387,23 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 		printf("\n");
 	print_plan_recursive(p->lefttree, parsetree, indentLevel + 3, "l: ");
 	print_plan_recursive(p->righttree, parsetree, indentLevel + 3, "r: ");
+
+	if (nodeTag(p) == T_Append)
+	{
+		List	   *lst;
+		int			whichplan = 0;
+		Append	   *appendplan = (Append *)p;
+		
+		foreach(lst, appendplan->appendplans)
+		{
+			Plan *subnode = (Plan *)lfirst(lst);
+
+			/* I don't think we need to fiddle with the range table here, bjm */
+			print_plan_recursive(subnode, parsetree, indentLevel + 3, "a: ");
+
+			whichplan++;
+		}
+	}
 }
 
 /* print_plan

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.15 1998/02/26 04:42:01 momjian Exp $
+ * $Id: plannodes.h,v 1.16 1998/07/15 14:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  * control nodes
  *
  *		Result					ResultState				resstate;
- *		Append					AppendState				unionstate;
+ *		Append					AppendState				appendstate;
  *
  * scan nodes
  *
@@ -138,11 +138,17 @@ typedef struct Result
 typedef struct Append
 {
 	Plan		plan;
-	List	   *unionplans;
-	List	   *unionrts;
-	Index		unionrelid;
-	List	   *unionrtentries;
-	AppendState *unionstate;
+	List	   *appendplans;
+	List	   *unionrtables;	/*
+								 *	List of range tables, one for each
+								 *	union query.
+								 */
+	Index		inheritrelid;	/*
+								 *	The range table has to be changed for
+								 *	inheritance.
+								 */
+	List	   *inheritrtable;
+	AppendState *appendstate;
 } Append;
 
 /*
