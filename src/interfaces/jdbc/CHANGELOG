@@ -1,3 +1,6 @@
+Wed Jan 24 09:18:00 GMT 2001 peter@retep.org.uk
+	- Removed the 8k limit by setting it to 64k
+
 Fri Jan 19 08:47:00 GMT 2001 peter@retep.org.uk
         - Applied patch submitted by John Schutz <schutz@austin.rr.com> that
           fixed a bug with ANT's SQL functions (not needed for building but nice

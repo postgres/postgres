@@ -1093,7 +1093,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxCharLiteralLength() throws SQLException
   {
-    return 8190;
+    return 65535;
   }
   
   /**
@@ -1210,14 +1210,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * (in which case its 8192, the size of a row) or does it mean
    * the number of rows it can access (in which case it 2^32 - 
    * a 4 byte OID number)?  I think its the length of an index
-   * element, personally, so Im setting it to 8192.
+   * element, personally, so Im setting it to 65535.
    *
    * @return max index length in bytes
    * @exception SQLException if a database access error occurs
    */
   public int getMaxIndexLength() throws SQLException
   {
-    return 8192;
+    return 65535;
   }
   
   public int getMaxSchemaNameLength() throws SQLException
@@ -1247,14 +1247,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   
   /**
    * What is the maximum length of a single row?  (not including
-   * blobs).  8192 is defined in PostgreSQL.
+   * blobs).  65535 is defined in PostgreSQL.
    *
    * @return max row size in bytes
    * @exception SQLException if a database access error occurs
    */
   public int getMaxRowSize() throws SQLException
   {
-    return 8192;
+    return 65535;
   }
   
   /**
@@ -1277,7 +1277,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxStatementLength() throws SQLException
   {
-    return 8192;
+    return 65535;
   }
   
   /**
@@ -1315,7 +1315,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * since the number of tables is limited by the statement, we
    * return 1024 here - this is just a number I came up with (being
    * the number of tables roughly of three characters each that you
-   * can fit inside a 8192 character buffer with comma separators).
+   * can fit inside a 65535 character buffer with comma separators).
    *
    * @return the maximum
    * @exception SQLException if a database access error occurs
