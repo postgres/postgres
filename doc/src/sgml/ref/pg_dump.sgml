@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.55 2003/01/19 00:13:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.56 2003/02/13 04:54:15 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -284,6 +284,28 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-n <replaceable class="parameter">namespace</replaceable></option></term>
+      <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Dump the contents of <replaceable class="parameter">schema</>
+        only. If this option is not specified, all non-system schemas
+        in the target database will be dumped.
+       </para>
+
+       <note>
+        <para>
+         In this mode, <application>pg_dump</application> makes no
+         attempt to dump any other database objects that may depend
+         upon objects in the selected schema. Therefore, there is no
+         guarantee that the results of a single schema dump can be
+         successfully restored by themselves into a clean database.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-o</></term>
       <term><option>--oids</></term>
       <listitem>
@@ -380,8 +402,22 @@ PostgreSQL documentation
       <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
-	Dump data for <replaceable class="parameter">table</replaceable> only.
+	Dump data for <replaceable class="parameter">table</replaceable>
+	only. If <literal>*</literal> is specified, all tables in the
+	specified database will be dumped. It is possible for there to be
+	multiple tables with the same name in different schemas; if that
+	is the case, all matching tables will be dumped.
        </para>
+
+       <note>
+        <para>
+         In this mode, <application>pg_dump</application> makes no
+         attempt to dump any other database objects that may depend
+         upon the selected table. Therefore, there is no guarantee
+         that the results of a single table dump can be successfully
+         restored by themselves into a clean database.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
@@ -495,10 +531,9 @@ PostgreSQL documentation
       <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If host begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+	Specifies the host name of the machine on which the server is
+	running.  If the host name begins with a slash, it is used as the
+	directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -551,7 +586,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default connection parameters
+      Default connection parameters.
      </para>
     </listitem>
    </varlistentry>
@@ -578,11 +613,10 @@ connectDBStart() -- connect() failed: No such file or directory
 
     <msgexplan>
        <para>
-	<application>pg_dump</application> could not attach to the 
-	PostgreSQL server on the specified host and port.  If you see this message,
-	ensure that the server
-	is running on the proper host and that you have specified the proper
-	port.
+	<application>pg_dump</application> could not connect to the
+	PostgreSQL server on the specified host and port.  If you see this
+	message, ensure that the server is running on the proper host and
+	that you have specified the proper port.
        </para>
     </msgexplan>
    </msgentry>
@@ -630,7 +664,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
     <listitem>
      <para>
-      When doing a data only dump, <application>pg_dump</application> emits queries
+      When doing a data-only dump, <application>pg_dump</application> emits queries
       to disable triggers on user tables before inserting the data and queries to
       re-enable them after the data has been inserted.  If the restore is stopped
       in the middle, the system catalogs may be left in the wrong state.

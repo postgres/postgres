@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.44 2003/02/01 22:06:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.45 2003/02/13 04:54:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	myversion = _parse_version(AH, PG_VERSION);
 
 	/*
-	 *	Autocommit could be off.  We turn it off later but we have to check
+	 *	Autocommit could be off.  We turn it on later but we have to check
 	 *	the database version first.
 	 */
 

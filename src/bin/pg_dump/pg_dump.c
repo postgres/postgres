@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.316 2003/02/11 21:06:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.317 2003/02/13 04:54:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ typedef struct _dumpContext
 } DumpContext;
 
 static void help(const char *progname);
+static void formatIdentifierArg(char *identifier);
 static NamespaceInfo *findNamespace(const char *nsoid, const char *objoid);
 static void dumpClasses(const TableInfo *tblinfo, const int numTables,
 			Archive *fout, const bool oids);
@@ -144,7 +145,8 @@ bool		aclsSkip;
 /* obsolete as of 7.3: */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 
-static char *selectTablename = NULL;	/* name of a single table to dump */
+static char *selectTableName = NULL;	/* name of a single table to dump */
+static char *selectSchemaName = NULL;	/* name of a single schema to dump */
 
 char		g_opaque_type[10];	/* name for the opaque type */
 
@@ -202,6 +204,7 @@ main(int argc, char **argv)
 		{"oids", no_argument, NULL, 'o'},
 		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
+		{"schema", required_argument, NULL, 'n'},
 		{"schema-only", no_argument, NULL, 's'},
 		{"superuser", required_argument, NULL, 'S'},
 		{"table", required_argument, NULL, 't'},
@@ -265,7 +268,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:Z:",
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:in:oOp:RsS:t:uU:vWxX:Z:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -313,6 +316,11 @@ main(int argc, char **argv)
 				ignore_version = true;
 				break;
 
+			case 'n':			/* Dump data for this schema only */
+				selectSchemaName = strdup(optarg);
+				formatIdentifierArg(selectSchemaName);
+				break;
+
 			case 'o':			/* Dump oids */
 				oids = true;
 				break;
@@ -339,39 +347,18 @@ main(int argc, char **argv)
 				break;
 
 			case 't':			/* Dump data for this table only */
-				{
-					int			i;
+				selectTableName = strdup(optarg);
 
-					selectTablename = strdup(optarg);
+				/*
+				 * '*' is a special case meaning ALL tables, but
+				 * only if unquoted
+				 */
+				if (selectTableName[0] != '"' &&
+					strcmp(selectTableName, "*") == 0)
+					selectTableName[0] = '\0';
+				else
+					formatIdentifierArg(selectTableName);
 
-					/*
-					 * quoted string? Then strip quotes and preserve
-					 * case...
-					 */
-					if (selectTablename[0] == '"')
-					{
-						char	   *endptr;
-
-						endptr = selectTablename + strlen(selectTablename) - 1;
-						if (*endptr == '"')
-							*endptr = '\0';
-						strcpy(selectTablename, &selectTablename[1]);
-					}
-					else
-					{
-						/* otherwise, convert table name to lowercase... */
-						for (i = 0; selectTablename[i]; i++)
-							if (isupper((unsigned char) selectTablename[i]))
-								selectTablename[i] = tolower((unsigned char) selectTablename[i]);
-
-						/*
-						 * '*' is a special case meaning ALL tables, but
-						 * only if unquoted
-						 */
-						if (strcmp(selectTablename, "*") == 0)
-							selectTablename[0] = '\0';
-					}
-				}
 				break;
 
 			case 'u':
@@ -456,10 +443,24 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (outputBlobs && selectTablename != NULL && strlen(selectTablename) > 0)
+	if (outputBlobs && selectTableName != NULL && strlen(selectTableName) > 0)
 	{
 		write_msg(NULL, "Large object output is not supported for a single table.\n");
 		write_msg(NULL, "Use all tables or a full dump instead.\n");
+		exit(1);
+	}
+
+	if (outputBlobs && selectSchemaName != NULL)
+	{
+		write_msg(NULL, "Large object output is not supported for a single schema.\n");
+		write_msg(NULL, "Use a full dump instead.\n");
+		exit(1);
+	}
+
+	if (selectTableName != NULL && selectSchemaName != NULL)
+	{
+		write_msg(NULL, "Single table and single schema dumps cannot be used simultaneously.\n");
+		write_msg(NULL, "Use one option or the other, not both.\n");
 		exit(1);
 	}
 
@@ -480,7 +481,6 @@ main(int argc, char **argv)
 	/* open the output file */
 	switch (format[0])
 	{
-
 		case 'c':
 		case 'C':
 			g_fout = CreateArchive(filename, archCustom, compressLevel);
@@ -528,7 +528,8 @@ main(int argc, char **argv)
 	 * Open the database using the Archiver, so it knows about it. Errors
 	 * mean death.
 	 */
-	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, username, force_password, ignore_version);
+	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport,
+							 username, force_password, ignore_version);
 
 	/*
 	 * Start serializable transaction to dump consistent data.
@@ -667,6 +668,7 @@ help(const char *progname)
 	printf(_("  -C, --create             include commands to create database in dump\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
+	printf(_("  -n, --schema=SCHEMA      dump this schema only\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
 	printf(_("  -O, --no-owner           do not output \\connect commands in plain\n"
 			 "                           text format\n"));
@@ -694,6 +696,38 @@ help(const char *progname)
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
+/*
+ * Accepts an identifier as specified as a command-line argument, and
+ * converts it into a form acceptable to the PostgreSQL backend. The
+ * input string is modified in-place.
+ */
+static void
+formatIdentifierArg(char *identifier)
+{
+	/*
+	 * quoted string? Then strip quotes and preserve
+	 * case...
+	 */
+	if (identifier[0] == '"')
+	{
+		char	   *endptr;
+
+		endptr = identifier + strlen(identifier) - 1;
+		if (*endptr == '"')
+			*endptr = '\0';
+		strcpy(identifier, &identifier[1]);
+	}
+	else
+	{
+		int i;
+
+		/* otherwise, convert identifier name to lowercase... */
+		for (i = 0; identifier[i]; i++)
+			if (isupper((unsigned char) identifier[i]))
+				identifier[i] = tolower((unsigned char) identifier[i]);
+	}
+}
+
 void
 exit_nicely(void)
 {
@@ -712,10 +746,18 @@ selectDumpableNamespace(NamespaceInfo *nsinfo)
 {
 	/*
 	 * If a specific table is being dumped, do not dump any complete
-	 * namespaces.	Otherwise, dump all non-system namespaces.
+	 * namespaces.  If a specific namespace is being dumped, dump just
+	 * that namespace. Otherwise, dump all non-system namespaces. 
 	 */
-	if (selectTablename != NULL)
+	if (selectTableName != NULL)
 		nsinfo->dump = false;
+	else if (selectSchemaName != NULL)
+	{
+		if (strcmp(nsinfo->nspname, selectSchemaName) == 0)
+			nsinfo->dump = true;
+		else
+			nsinfo->dump = false;
+	}
 	else if (strncmp(nsinfo->nspname, "pg_", 3) == 0 ||
 			 strcmp(nsinfo->nspname, "information_schema") == 0)
 		nsinfo->dump = false;
@@ -737,8 +779,8 @@ selectDumpableTable(TableInfo *tbinfo)
 	 */
 	if (tbinfo->relnamespace->dump)
 		tbinfo->dump = true;
-	else if (selectTablename != NULL)
-		tbinfo->dump = (strcmp(tbinfo->relname, selectTablename) == 0);
+	else if (selectTableName != NULL)
+		tbinfo->dump = (strcmp(tbinfo->relname, selectTableName) == 0);
 	else
 		tbinfo->dump = false;
 }
@@ -1442,6 +1484,25 @@ getNamespaces(int *numNamespaces)
 		if (strlen(nsinfo[i].usename) == 0)
 			write_msg(NULL, "WARNING: owner of namespace %s appears to be invalid\n",
 					  nsinfo[i].nspname);
+	}
+
+	/*
+	 * If the user attempted to dump a specific namespace, check to
+	 * ensure that the specified namespace actually exists.
+	 */
+	if (selectSchemaName)
+	{
+		for (i = 0; i < ntups; i++)
+			if (strcmp(nsinfo[i].nspname, selectSchemaName) == 0)
+				break;
+
+		/* Didn't find a match */
+		if (i == ntups)
+		{
+			write_msg(NULL, "Specified schema \"%s\" does not exist.\n",
+					  selectSchemaName);
+			exit_nicely();
+		}
 	}
 
 	PQclear(res);
@@ -2245,6 +2306,27 @@ getTables(int *numTables)
 					  tblinfo[i].relname);
 	}
 
+	/*
+	 * If the user is attempting to dump a specific table, check to
+	 * ensure that the specified table actually exists (and is a table
+	 * or a view, not a sequence).
+	 */
+	if (selectTableName)
+	{
+		for (i = 0; i < ntups; i++)
+			if (strcmp(tblinfo[i].relname, selectTableName) == 0 &&
+				tblinfo[i].relkind != 'S')
+				break;
+
+		/* Didn't find a match */
+		if (i == ntups)
+		{
+			write_msg(NULL, "Specified table \"%s\" does not exist.\n",
+					  selectTableName);
+			exit_nicely();
+		}
+	}
+
 	PQclear(res);
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(delqry);
@@ -2602,7 +2684,7 @@ dumpComment(Archive *fout, const char *target,
 	 * setting, instead.
 	 */
 
-	/*** Build query to find comment ***/
+	/* Build query to find comment */
 
 	query = createPQExpBuffer();
 
@@ -2628,7 +2710,7 @@ dumpComment(Archive *fout, const char *target,
 		appendPQExpBuffer(query, "SELECT description FROM pg_description WHERE objoid = '%s'::oid", oid);
 	}
 
-	/*** Execute query ***/
+	/* Execute query */
 
 	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -2638,7 +2720,7 @@ dumpComment(Archive *fout, const char *target,
 		exit_nicely();
 	}
 
-	/*** If a comment exists, build COMMENT ON statement ***/
+	/* If a comment exists, build COMMENT ON statement */
 
 	if (PQntuples(res) == 1)
 	{
@@ -2685,7 +2767,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 	 * setting, instead.
 	 */
 
-	/*** Build query to find comments ***/
+	/* Build query to find comments */
 
 	query = createPQExpBuffer();
 	target = createPQExpBuffer();
@@ -2712,7 +2794,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 		appendPQExpBuffer(query, "SELECT description, 0 as objsubid FROM pg_description WHERE objoid = '%s'::oid", tbinfo->oid);
 	}
 
-	/*** Execute query ***/
+	/* Execute query */
 
 	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -2724,7 +2806,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 	i_description = PQfnumber(res, "description");
 	i_objsubid = PQfnumber(res, "objsubid");
 
-	/*** If comments exist, build COMMENT ON statements ***/
+	/* If comments exist, build COMMENT ON statements */
 
 	ntups = PQntuples(res);
 	for (i = 0; i < ntups; i++)
@@ -2789,13 +2871,13 @@ dumpDBComment(Archive *fout)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	/*** Build query to find comment ***/
+	/* Build query to find comment */
 
 	query = createPQExpBuffer();
 	appendPQExpBuffer(query, "SELECT oid FROM pg_database WHERE datname = ");
 	appendStringLiteral(query, PQdb(g_conn), true);
 
-	/*** Execute query ***/
+	/* Execute query */
 
 	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -2805,7 +2887,7 @@ dumpDBComment(Archive *fout)
 		exit_nicely();
 	}
 
-	/*** If a comment exists, build COMMENT ON statement ***/
+	/* If a comment exists, build COMMENT ON statement */
 
 	if (PQntuples(res) != 0)
 	{
@@ -2873,7 +2955,7 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 						 nspinfo->usename, "SCHEMA", NULL,
 						 q->data, delq->data, NULL, NULL, NULL);
 
-			/*** Dump Schema Comments ***/
+			/* Dump Schema Comments */
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "SCHEMA %s", qnspname);
 			dumpComment(fout, q->data,
@@ -3092,7 +3174,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 				 tinfo->usename, "TYPE", deps,
 				 q->data, delq->data, NULL, NULL, NULL);
 
-	/*** Dump Type Comments ***/
+	/* Dump Type Comments */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname));
@@ -3231,7 +3313,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 				 tinfo->usename, "DOMAIN", deps,
 				 q->data, delq->data, NULL, NULL, NULL);
 
-	/*** Dump Domain Comments ***/
+	/* Dump Domain Comments */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "DOMAIN %s", fmtId(tinfo->typname));
@@ -3328,7 +3410,7 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 				 tinfo->usename, "TYPE", NULL,
 				 q->data, delq->data, NULL, NULL, NULL);
 
-	/*** Dump Type Comments ***/
+	/* Dump Type Comments */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname));
@@ -3775,7 +3857,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 				 q->data, delqry->data,
 				 NULL, NULL, NULL);
 
-	/*** Dump Function Comments ***/
+	/* Dump Function Comments */
 
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "FUNCTION %s", funcsig);
@@ -4153,7 +4235,7 @@ dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 				 q->data, delq->data,
 				 NULL, NULL, NULL);
 
-	/*** Dump Operator Comments ***/
+	/* Dump Operator Comments */
 
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "OPERATOR %s", oprid->data);
@@ -4754,7 +4836,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 				 q->data, delq->data,
 				 NULL, NULL, NULL);
 
-	/*** Dump Aggregate Comments ***/
+	/* Dump Aggregate Comments */
 
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "AGGREGATE %s", aggsig);
