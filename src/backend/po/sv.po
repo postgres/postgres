@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-06-25 15:07+0200\n"
-"PO-Revision-Date: 2004-06-26 09:02+0200\n"
+"PO-Revision-Date: 2004-06-27 11:33+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1679,11 +1679,11 @@ msgid "analyzing \"%s.%s\""
 msgstr "analyserar \"%s.%s\""
 
 #: commands/analyze.c:913
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\"%s\": scanned %d of %u pages, containing %.0f live rows and %.0f dead "
 "rows; %d rows in sample, %.0f estimated total rows"
-msgstr "\"%s\": skannade %d av %u sidor, innehåller %.0f levande rader och %.0f döda rader; %d rader utvalda, %.0f uppskattat antal rader"
+msgstr "\"%s\": skannade %d av %u sidor, innehåller %.0f levande rader och %.0f döda rader; %d rader samplade, %.0f uppskattat antal rader"
 
 #: commands/cluster.c:133
 #, c-format
@@ -1929,43 +1929,43 @@ msgstr "COPY-avdelaren måste vara exakt ett tecken"
 
 #: commands/copy.c:832
 msgid "COPY quote available only in CSV mode"
-msgstr ""
+msgstr "COPY-quote kan bara användas i CSV-läge"
 
 #: commands/copy.c:837
 msgid "COPY quote must be a single character"
-msgstr ""
+msgstr "COPY-quote måste vara exakt ett tecken"
 
 #: commands/copy.c:845
 msgid "COPY escape available only in CSV mode"
-msgstr ""
+msgstr "COPY-escape kan bara användas i CSV-läge"
 
 #: commands/copy.c:850
 msgid "COPY escape must be a single character"
-msgstr ""
+msgstr "COPY-escape måste vara exakt ett tecken"
 
 #: commands/copy.c:858
 msgid "COPY force quote available only in CSV mode"
-msgstr ""
+msgstr "COPY-force-quote kan bara användas i CSV-läge"
 
 #: commands/copy.c:862
 msgid "COPY force quote only available using COPY TO"
-msgstr ""
+msgstr "COPY-force-quote kan bara användas med COPY TO"
 
 #: commands/copy.c:870
 msgid "COPY force not null available only in CSV mode"
-msgstr ""
+msgstr "COPY-force-not-null kan bara användas i CSV-läge"
 
 #: commands/copy.c:874
 msgid "COPY force not null only available using COPY FROM"
-msgstr ""
+msgstr "COPY-force-not-null kan bara används med COPY FROM"
 
 #: commands/copy.c:882
 msgid "COPY delimiter must not appear in the NULL specification"
-msgstr ""
+msgstr "COPY-avdelaren kan inte vara i NULL-specificationen"
 
 #: commands/copy.c:890
 msgid "CSV quote character must not appear in the NULL specification"
-msgstr ""
+msgstr "CSV-citattecken kan inte vara i NULL-specificationen"
 
 #: commands/copy.c:901 executor/execMain.c:468 tcop/utility.c:283
 msgid "transaction is read-only"
@@ -1989,12 +1989,12 @@ msgstr "tabell \"%s\" har inte OID:er"
 #: commands/copy.c:948
 #, c-format
 msgid "FORCE QUOTE column \"%s\" not referenced by COPY"
-msgstr ""
+msgstr "FORCE QUOTE-kolumnen \"%s\" refereras inte till av COPY"
 
 #: commands/copy.c:971
 #, c-format
 msgid "FORCE NOT NULL column \"%s\" not referenced by COPY"
-msgstr ""
+msgstr "FORCE NOT NULL-kolumnen \"%s\" refereras inte till av COPY"
 
 #: commands/copy.c:998
 #, c-format
@@ -2067,7 +2067,7 @@ msgstr "COPY %s, rad %d: \"%s\""
 
 #: commands/copy.c:1598
 msgid "COPY file signature not recognized"
-msgstr ""
+msgstr "COPY-filsignaturen känns inte igen"
 
 #: commands/copy.c:1604
 msgid "invalid COPY file header (missing flags)"
@@ -2075,7 +2075,7 @@ msgstr "trasigt COPY-filhuvud (flaggor saknas)"
 
 #: commands/copy.c:1610
 msgid "unrecognized critical flags in COPY file header"
-msgstr ""
+msgstr "okända kritiska flaggor i COPY-filhuvudet"
 
 #: commands/copy.c:1616
 msgid "invalid COPY file header (missing length)"
@@ -2100,7 +2100,7 @@ msgstr "saknar data för kolumn \"%s\""
 
 #: commands/copy.c:1742
 msgid "unterminated CSV quoted field"
-msgstr ""
+msgstr "icketerminerat citerat CSV-fält"
 
 #: commands/copy.c:1777
 msgid "extra data after last expected column"
@@ -2113,7 +2113,7 @@ msgstr "fälträknaren är %d, förväntades vara %d"
 
 #: commands/copy.c:2012 commands/copy.c:2030
 msgid "literal carriage return found in data"
-msgstr ""
+msgstr "hittade asciitecknet vagnretur i data"
 
 #: commands/copy.c:2013 commands/copy.c:2031
 msgid "Use \"\\r\" to represent carriage return."
@@ -2121,7 +2121,7 @@ msgstr "Använd \"\\r\" för att representera vagnretur (carriage return)."
 
 #: commands/copy.c:2048
 msgid "literal newline found in data"
-msgstr ""
+msgstr "hittade asciitecknet nyrad i data"
 
 #: commands/copy.c:2049
 msgid "Use \"\\n\" to represent newline."
@@ -2129,11 +2129,11 @@ msgstr "Använd \"\\n\" för att representera en ny rad."
 
 #: commands/copy.c:2069 commands/copy.c:2085
 msgid "end-of-copy marker does not match previous newline style"
-msgstr ""
+msgstr "slut-på-copy-markeringen matchar inte tidigare nyradsmetod"
 
 #: commands/copy.c:2073 commands/copy.c:2079
 msgid "end-of-copy marker corrupt"
-msgstr ""
+msgstr "slut-på-copy-markeringen felaktig"
 
 #: commands/copy.c:2442 commands/copy.c:2464
 msgid "unexpected EOF in COPY data"
@@ -2145,7 +2145,7 @@ msgstr "ogiltig fältstorlek"
 
 #: commands/copy.c:2478
 msgid "incorrect binary data format"
-msgstr ""
+msgstr "felaktigt binärt dataformat"
 
 #: commands/copy.c:2663 parser/parse_target.c:648 parser/parse_target.c:658
 #, c-format
@@ -2222,7 +2222,7 @@ msgstr "Systemkommandot som misslyckades var: %s"
 
 #: commands/dbcommands.c:375 commands/dbcommands.c:946
 msgid "Look in the postmaster's stderr log for more information."
-msgstr ""
+msgstr "Titta i postmaster:ns stderr-logg för mer information."
 
 #: commands/dbcommands.c:478
 msgid "cannot drop the currently open database"
@@ -2247,7 +2247,7 @@ msgstr "rättighet saknas för att döpa om databas"
 
 #: commands/dbcommands.c:799
 msgid "must be superuser to change owner's database for another user"
-msgstr ""
+msgstr "måste vara superanvändare för att byta ägare på databasen till en annan användare"
 
 #: commands/dbcommands.c:943
 #, c-format
@@ -2308,12 +2308,12 @@ msgstr "typen \"%s\" är inte definierad ännu"
 
 #: commands/functioncmds.c:116
 msgid "Creating a shell type definition."
-msgstr ""
+msgstr "Skapar en skaltypsdefinition."
 
 #: commands/functioncmds.c:166
 #, c-format
 msgid "SQL function cannot accept shell type %s"
-msgstr ""
+msgstr "SQL-funktioner kan inte hantera skaltyp %s"
 
 #: commands/functioncmds.c:171
 #, c-format
@@ -2327,7 +2327,7 @@ msgstr "typen %s existerar inte"
 
 #: commands/functioncmds.c:186
 msgid "functions cannot accept set arguments"
-msgstr ""
+msgstr "funktioner kan inte hantera mängder som argument"
 
 #: commands/functioncmds.c:273
 msgid "no function body specified"
@@ -2396,7 +2396,7 @@ msgstr "typomvandlingsfunktioner måste ha mellan ett och tre argument"
 
 #: commands/functioncmds.c:892
 msgid "argument of cast function must match source data type"
-msgstr ""
+msgstr "argumentet till typomvandlingsfunktionen måste matcha källdatatypen"
 
 #: commands/functioncmds.c:896
 msgid "second argument of cast function must be type integer"
@@ -2408,7 +2408,7 @@ msgstr "tredje argumentet till en typomvandlingsfunktion måste vara av typ boole
 
 #: commands/functioncmds.c:904
 msgid "return data type of cast function must match target data type"
-msgstr ""
+msgstr "returvärdet från typomvandlingsfunktionen måste matcha måldatatypen"
 
 #: commands/functioncmds.c:915
 msgid "cast function must not be volatile"
@@ -2416,7 +2416,7 @@ msgstr "typomvandlingsfunktioner får inte vara volatile"
 
 #: commands/functioncmds.c:920
 msgid "cast function must not be an aggregate function"
-msgstr ""
+msgstr "typomvandlingsgfunktionen kan inte vara en aggregatfunktion"
 
 #: commands/functioncmds.c:924
 msgid "cast function must not return a set"
@@ -2424,11 +2424,11 @@ msgstr "typomvandlingsfunktioner får inte returnera en mängd"
 
 #: commands/functioncmds.c:948
 msgid "must be superuser to create a cast WITHOUT FUNCTION"
-msgstr ""
+msgstr "måste vara superanvändaren för att skapa en typomvandling WITHOUT FUNCTION"
 
 #: commands/functioncmds.c:963
 msgid "source and target data types are not physically compatible"
-msgstr ""
+msgstr "käll- och måldatatypen är inte kompatibla rent tekniskt"
 
 #: commands/functioncmds.c:973
 msgid "source data type and target data type are the same"
@@ -2521,7 +2521,7 @@ msgstr "datatyp %s har ingen standardoperatorklass för accessmetod \"%s\""
 msgid ""
 "You must specify an operator class for the index or define a default "
 "operator class for the data type."
-msgstr ""
+msgstr "Du måste ange en operatorklass för indexet eller definiera en standardoperatorklass för datatypen."
 
 #: commands/indexcmds.c:620
 #, c-format
@@ -2531,12 +2531,12 @@ msgstr "operatorklass \"%s\" accepterar inte datatypen %s"
 #: commands/indexcmds.c:677 utils/cache/typcache.c:367
 #, c-format
 msgid "there are multiple default operator classes for data type %s"
-msgstr ""
+msgstr "det finns flera standardoperatorklasser för datatypen %s"
 
 #: commands/indexcmds.c:946
 #, c-format
 msgid "shared table \"%s\" can only be reindexed in stand-alone mode"
-msgstr ""
+msgstr "delad tabell \"%s\" kan bara omindexeras i \"stand-alone\"-läge"
 
 #: commands/indexcmds.c:953
 #, c-format
@@ -2545,7 +2545,7 @@ msgstr "tabell \"%s\" har inga index"
 
 #: commands/indexcmds.c:981
 msgid "can only reindex the currently open database"
-msgstr ""
+msgstr "kan bara omindexera den aktiva databasen"
 
 #: commands/indexcmds.c:1064
 #, c-format
@@ -3677,7 +3677,7 @@ msgstr ""
 #: commands/vacuumlazy.c:486
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
-msgstr ""
+msgstr "\"%s\": tog bort %d radversioner i %d sidor"
 
 #: commands/variable.c:65
 msgid "invalid list syntax for parameter \"datestyle\""
@@ -3896,7 +3896,7 @@ msgstr ""
 
 #: executor/execQual.c:1526
 msgid "IS DISTINCT FROM does not support set arguments"
-msgstr ""
+msgstr "IS DISTINCT FROM stödjer inte mängd-argument"
 
 #: executor/execQual.c:1600
 msgid "op ANY/ALL (array) does not support set arguments"
@@ -3920,7 +3920,7 @@ msgstr ""
 
 #: executor/execQual.c:2244
 msgid "NULLIF does not support set arguments"
-msgstr ""
+msgstr "NULLIF stödjer inte mängd-argument"
 
 #: executor/execQual.c:2425
 #, c-format
@@ -4075,7 +4075,7 @@ msgstr ""
 #: libpq/auth.c:394
 #, c-format
 msgid "%s authentication failed for user \"%s\""
-msgstr ""
+msgstr "%s-autentisering misslyckades för användare \"%s\""
 
 #: libpq/auth.c:418
 msgid "missing or erroneous pg_hba.conf file"
@@ -4289,7 +4289,7 @@ msgstr ""
 #: libpq/be-secure.c:726
 #, c-format
 msgid "could not initialize SSL connection: %s"
-msgstr ""
+msgstr "kunde inte initiera SSL-uppkoppling: %s"
 
 #: libpq/be-secure.c:750
 #, c-format
@@ -4299,7 +4299,7 @@ msgstr "SSL-uppkoppling från \"%s\""
 #: libpq/crypt.c:62
 msgid ""
 "cannot use authentication method \"crypt\" because password is MD5-encrypted"
-msgstr ""
+msgstr "kan inte använda autentiseringsmetoden \"crypt\" eftersom lösenordet är MD5-krypterat"
 
 #: libpq/hba.c:158
 #, c-format
@@ -4473,7 +4473,7 @@ msgstr "kunde inte lyssna på %s-uttag (socket): %m"
 #: libpq/pqcomm.c:486
 #, c-format
 msgid "could not set group of file \"%s\": %m"
-msgstr ""
+msgstr "kunde inte sätta gruppen på filen \"%s\": %m"
 
 #: libpq/pqcomm.c:497
 #, c-format
@@ -4554,7 +4554,6 @@ msgid "%s: real and effective user IDs must match\n"
 msgstr "%s: riktig och effektiv användar-ID måste matcha varandra\n"
 
 #: main/main.c:241
-#, fuzzy
 msgid ""
 "execution of PostgreSQL by a user with administrative permissions is not "
 "permitted.\n"
@@ -4562,12 +4561,10 @@ msgid ""
 "possible system security compromise.  See the documentation for\n"
 "more information on how to properly start the server.\n"
 msgstr ""
-"Att köra PostgreSQL-servern som \"root\" tillåts inte.\n"
-"Servern måste starts av ett icke priviligerat användare-ID för att "
-"förhindra\n"
-"ev. säkehetsproblem. Se dokumentationen för mer information om hur man\n"
-"startar servern på rätt sätt.\n"
-"\n"
+"Det är inte tillåtet för en användare med administratörsrättigheter att köra\n"
+"PostgreSQL. Servern måste starts av ett icke priviligerat användare-ID för att\n"
+"förhindra ev. säkehetsproblem. Se dokumentationen för mer information om hur\n"
+"man startar servern på rätt sätt.\n"
 
 #: main/main.c:301
 #, c-format
@@ -4577,7 +4574,7 @@ msgstr "%s: ogiltig effektiv UID: %d\n"
 #: main/main.c:314
 #, c-format
 msgid "%s: could not determine user name (GetUserName failed)\n"
-msgstr ""
+msgstr "%s: kunde inte lista ut användarnamnet (GetUserName misslyckades)\n"
 
 #: optimizer/path/allpaths.c:224
 msgid "SELECT FOR UPDATE is not supported for inheritance queries"
@@ -4730,7 +4727,7 @@ msgstr "kan inte ange både SCROLL och NO SCROLL"
 #: parser/analyze.c:2651
 #, c-format
 msgid "wrong number of parameters for prepared statement \"%s\""
-msgstr ""
+msgstr "fel antal parametrar för en förberedd sats \"%s\""
 
 #: parser/analyze.c:2653
 #, c-format
@@ -4798,7 +4795,7 @@ msgstr ""
 
 #: parser/analyze.c:2898
 msgid "misplaced INITIALLY DEFERRED clause"
-msgstr ""
+msgstr "felplacerad klausul INITIALLY DEFERRED"
 
 #: parser/analyze.c:2902 parser/analyze.c:2926
 msgid "multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
@@ -4806,7 +4803,7 @@ msgstr ""
 
 #: parser/analyze.c:2922
 msgid "misplaced INITIALLY IMMEDIATE clause"
-msgstr ""
+msgstr "felplacerad klausul INITIALLY IMMEDIATE"
 
 #: parser/analyze.c:2975
 #, c-format
@@ -5086,7 +5083,7 @@ msgstr ""
 
 #: parser/parse_expr.c:1809
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
-msgstr ""
+msgstr "IS DISTINCT FROM kräver att operatorn = ger tillbaka en boolean"
 
 #: parser/parse_func.c:88
 #, c-format
@@ -5202,13 +5199,13 @@ msgstr ""
 #: parser/parse_oper.c:778
 #, c-format
 msgid "operator is not unique: %s"
-msgstr ""
+msgstr "operatorn är inte unik: %s"
 
 #: parser/parse_oper.c:780
 msgid ""
 "Could not choose a best candidate operator. You may need to add explicit "
 "type casts."
-msgstr ""
+msgstr "Kunde inte välja en bästa kandidatoperator. Du behöver troligen lägga till en explicit typomvandling."
 
 #: parser/parse_oper.c:787
 msgid ""
@@ -5266,7 +5263,7 @@ msgstr ""
 #: parser/parse_relation.c:1023
 #, c-format
 msgid "too many column aliases specified for function %s"
-msgstr ""
+msgstr "för många kolumnalias angivna för funktion %s"
 
 #: parser/parse_relation.c:1046
 #, c-format
@@ -5321,15 +5318,15 @@ msgid "cannot assign to a column of type %s because it is not a composite type"
 msgstr ""
 
 #: parser/parse_target.c:565
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "array assignment to \"%s\" requires type %s but expression is of type %s"
-msgstr "kolumn \"%s\" har typ %s men uttrycket är av typ %s"
+msgstr "array-tilldelning till \"%s\" kräver typ %s men uttrycket har typ %s"
 
 #: parser/parse_target.c:574
-#, fuzzy, c-format
+#, c-format
 msgid "subfield \"%s\" is of type %s but expression is of type %s"
-msgstr "kolumn \"%s\" har typ %s men uttrycket är av typ %s"
+msgstr "underfält \"%s\" har typ %s men uttrycket har typ %s"
 
 #: parser/parse_target.c:797
 msgid "SELECT * with no tables specified is not valid"
@@ -5353,7 +5350,7 @@ msgstr ""
 #: parser/parse_type.c:206 parser/parse_type.c:237 utils/cache/typcache.c:155
 #, c-format
 msgid "type \"%s\" is only a shell"
-msgstr ""
+msgstr "typ \"%s\" är bara ett skal"
 
 #: parser/parse_type.c:372 parser/parse_type.c:466
 #, c-format
@@ -5976,14 +5973,14 @@ msgid ""
 msgstr ""
 
 #: postmaster/postmaster.c:954
-#, fuzzy, c-format
+#, c-format
 msgid "%s: could not fork background process: %s\n"
-msgstr "%s kan inte konvertera typ %s till %s"
+msgstr "%s: kunde inte starta bakgrundsprocessen: %s\n"
 
 #: postmaster/postmaster.c:976
-#, fuzzy, c-format
+#, c-format
 msgid "%s: could not dissociate from controlling TTY: %s\n"
-msgstr "kunde inte läsa från kontrollfil: %m"
+msgstr "%s: kunde inte koppla loss från TTY:en: %s\n"
 
 #: postmaster/postmaster.c:999
 #, c-format
@@ -6273,22 +6270,22 @@ msgstr "kunde inte köra arbetsprocess \"%s\": %m"
 #: postmaster/postmaster.c:3094
 #, c-format
 msgid "could not fork startup process: %m"
-msgstr ""
+msgstr "kunde inte starta startup-processen: %m"
 
 #: postmaster/postmaster.c:3098
-#, fuzzy, c-format
+#, c-format
 msgid "could not fork background writer process: %m"
-msgstr "kunde inte skriva låsfil \"%s\": %m"
+msgstr "kunde inte starta process för bakgrundsskrivare: %m"
 
 #: postmaster/postmaster.c:3102
 #, c-format
 msgid "could not fork process: %m"
-msgstr ""
+msgstr "kunde inte starta process: %m"
 
 #: postmaster/postmaster.c:3283
-#, fuzzy, c-format
+#, c-format
 msgid "could not read from backend variables file \"%s\": %m"
-msgstr "kunde inte läsa från fil \"%s\": %m"
+msgstr "kunde inte läsa från backändans variabelfil \"%s\": %m"
 
 #: postmaster/postmaster.c:3336
 #, c-format
@@ -6490,9 +6487,9 @@ msgid "Multiple failures --- write error may be permanent."
 msgstr ""
 
 #: storage/buffer/bufmgr.c:1914
-#, fuzzy, c-format
+#, c-format
 msgid "writing block %u of relation %u/%u/%u"
-msgstr "skriver block %u i relation %u/%u"
+msgstr "skriver block %u i relation %u/%u/%u"
 
 #: storage/buffer/localbuf.c:98
 msgid "no empty local buffer available"
@@ -7021,9 +7018,8 @@ msgid "extra garbage at the end of the ACL specification"
 msgstr ""
 
 #: utils/adt/acl.c:788
-#, fuzzy
 msgid "grant options cannot be granted back to your own grantor"
-msgstr "grant options kan bara ges till enskilda användare"
+msgstr "\"grant options\" kan inte ges tillbaka till den som givit dig det"
 
 #: utils/adt/acl.c:847
 msgid "dependent privileges exist"
@@ -7499,7 +7495,7 @@ msgstr "\"E\" stödjs inte ännu"
 #: utils/adt/formatting.c:1422
 #, c-format
 msgid "\"%s\" is not a number"
-msgstr "\"%s\" är inte et nummer"
+msgstr "\"%s\" är inte ett nummer"
 
 #: utils/adt/formatting.c:1685
 msgid "invalid AM/PM string"
@@ -7845,9 +7841,8 @@ msgid "oidvector has too many elements"
 msgstr "oidvector har för många element"
 
 #: utils/adt/oracle_compat.c:99 utils/adt/oracle_compat.c:138
-#, fuzzy
 msgid "invalid multibyte character for locale"
-msgstr "typnamn måste ha %d characters eller mindre"
+msgstr "ogiltigt multibyte-tecken för lokalen"
 
 #: utils/adt/oracle_compat.c:402 utils/adt/oracle_compat.c:499
 #: utils/adt/oracle_compat.c:1123
@@ -8659,19 +8654,19 @@ msgstr ""
 
 #: utils/misc/guc.c:268
 msgid "Resource Usage"
-msgstr ""
+msgstr "Resursanvändning"
 
 #: utils/misc/guc.c:270
 msgid "Resource Usage / Memory"
-msgstr ""
+msgstr "Resursanvändning / Minne"
 
 #: utils/misc/guc.c:272
 msgid "Resource Usage / Free Space Map"
-msgstr ""
+msgstr "Resursanvändning / Free Space Map"
 
 #: utils/misc/guc.c:274
 msgid "Resource Usage / Kernel Resources"
-msgstr ""
+msgstr "Resursanvändning / Kärnresurser"
 
 #: utils/misc/guc.c:276
 msgid "Write-Ahead Log"
@@ -8707,19 +8702,19 @@ msgstr ""
 
 #: utils/misc/guc.c:292
 msgid "Reporting and Logging"
-msgstr ""
+msgstr "Rapportering och loggning"
 
 #: utils/misc/guc.c:294
 msgid "Reporting and Logging / Where to Log"
-msgstr ""
+msgstr "Rapportering och loggning / Logga var?"
 
 #: utils/misc/guc.c:296
 msgid "Reporting and Logging / When to Log"
-msgstr ""
+msgstr "Rapportering och loggning / Logga när?"
 
 #: utils/misc/guc.c:298
 msgid "Reporting and Logging / What to Log"
-msgstr ""
+msgstr "Rapportering och loggning / Logga vad?"
 
 #: utils/misc/guc.c:300
 msgid "Statistics"
@@ -8751,7 +8746,7 @@ msgstr ""
 
 #: utils/misc/guc.c:314
 msgid "Lock Management"
-msgstr ""
+msgstr "Låshantering"
 
 #: utils/misc/guc.c:316
 msgid "Version and Platform Compatibility"
