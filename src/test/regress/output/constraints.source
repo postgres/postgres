@@ -213,10 +213,11 @@ x|y            |z
 (2 rows)
 
 QUERY: CREATE TABLE PRIMARY_TBL (i int PRIMARY KEY, t text);
+NOTICE:CREATE TABLE/PRIMARY KEY will create implicit index primary_tbl_pkey for table primary_tbl
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
-WARN:Cannot insert a duplicate key into a unique index.
+WARN:Cannot insert a duplicate key into a unique index
 QUERY: INSERT INTO PRIMARY_TBL VALUES (4, 'three');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 QUERY: INSERT INTO PRIMARY_TBL (t) VALUES ('six');
@@ -233,6 +234,7 @@ four|i|t
 QUERY: DROP TABLE PRIMARY_TBL;
 QUERY: CREATE TABLE PRIMARY_TBL (i int, t text,
 	PRIMARY KEY(i,t));
+NOTICE:CREATE TABLE/PRIMARY KEY will create implicit index primary_tbl_pkey for table primary_tbl
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -252,10 +254,11 @@ three|i|t
 
 QUERY: DROP TABLE PRIMARY_TBL;
 QUERY: CREATE TABLE UNIQUE_TBL (i int UNIQUE, t text);
+NOTICE:CREATE TABLE/UNIQUE will create implicit index unique_tbl_i_key for table unique_tbl
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
-WARN:Cannot insert a duplicate key into a unique index.
+WARN:Cannot insert a duplicate key into a unique index
 QUERY: INSERT INTO UNIQUE_TBL VALUES (4, 'four');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('six');
@@ -274,11 +277,12 @@ five|i|t
 QUERY: DROP TABLE UNIQUE_TBL;
 QUERY: CREATE TABLE UNIQUE_TBL (i int, t text,
 	UNIQUE(i,t));
+NOTICE:CREATE TABLE/UNIQUE will create implicit index unique_tbl_i_key for table unique_tbl
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
-WARN:Cannot insert a duplicate key into a unique index.
+WARN:Cannot insert a duplicate key into a unique index
 QUERY: INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 QUERY: SELECT '' AS five, * FROM UNIQUE_TBL;
