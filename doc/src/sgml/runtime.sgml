@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.62 2001/05/04 02:54:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.63 2001/05/04 23:11:37 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1225,6 +1225,35 @@ env PGOPTIONS='-c geqo=off' psql
         Maximum time between automatic WAL checkpoints, in seconds.
 	This option can only be set at server start or in the
 	<filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>COMMIT_DELAY (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Time delay between writing a commit record to the WAL buffer and
+	flushing the buffer out to disk, in microseconds.  A nonzero delay
+	allows multiple transactions to be committed with only one fsync,
+	if system load is high enough that additional transactions become
+	ready to commit within the given interval.  But the delay is just
+	wasted time if no other transactions become ready to commit.
+	Therefore, the delay is only performed if at least COMMIT_SIBLINGS
+	other transactions are active at the instant that a backend has
+	written its commit record.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>COMMIT_SIBLINGS (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Minimum number of concurrent open transactions to require before
+	performing the COMMIT_DELAY delay.  A larger value makes it more
+	probable that at least one other transaction will become ready to
+	commit during the delay interval.
        </para>
       </listitem>
      </varlistentry>
