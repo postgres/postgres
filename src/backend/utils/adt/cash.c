@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  * 
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.6 1997/04/24 20:30:41 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.7 1997/04/28 16:15:13 scrappy Exp $
  */
 
 #include <stdio.h>
@@ -125,7 +125,7 @@ cash_in(const char *str)
 	}
     }
 
-    while (isspace(*s) || *s == ')') s++;
+    while (isspace(*s) || *s == '0' || *s == ')') s++;
 
     if (*s != '\0')
 	elog(WARN,"Bad money external representation %s",str);
