@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.70 2003/05/14 14:37:35 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.71 2003/05/27 14:36:00 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -137,7 +137,11 @@ main(int argc, char *const argv[])
 		switch (c)
 		{
 			case 'o':
-				yyout = fopen(optarg, PG_BINARY_W);
+				if (strcmp(optarg, "-") == 0) 
+					yyout = stdout;
+				else
+					yyout = fopen(optarg, PG_BINARY_W);
+				
 				if (yyout == NULL)
 					perror(optarg);
 				else
@@ -219,47 +223,62 @@ main(int argc, char *const argv[])
 			char	   *output_filename = NULL,
 					   *ptr2ext;
 
-			input_filename = mm_alloc(strlen(argv[fnr]) + 5);
-
-			strcpy(input_filename, argv[fnr]);
-
-			/* take care of relative paths */
-			ptr2ext = last_path_separator(input_filename);
-			ptr2ext = (ptr2ext ? strrchr(ptr2ext, '.') : strrchr(input_filename, '.'));
-
-			/* no extension? */
-			if (ptr2ext == NULL)
+			/* If argv[fnr] is "-" we have to read from stdin */
+			if (strcmp(argv[fnr], "-") == 0)
 			{
-				ptr2ext = input_filename + strlen(input_filename);
+				input_filename = mm_alloc(strlen("stdin")+1);
+				strcpy(input_filename, "stdin");
+				yyin = stdin;
+			}
+			else
+			{
+				input_filename = mm_alloc(strlen(argv[fnr]) + 5);
+				strcpy(input_filename, argv[fnr]);
 
-				/* no extension => add .pgc */
-				ptr2ext[0] = '.';
-				ptr2ext[1] = 'p';
-				ptr2ext[2] = 'g';
-				ptr2ext[3] = 'c';
-				ptr2ext[4] = '\0';
+				/* take care of relative paths */
+				ptr2ext = last_path_separator(input_filename);
+				ptr2ext = (ptr2ext ? strrchr(ptr2ext, '.') : strrchr(input_filename, '.'));
+
+				/* no extension? */
+				if (ptr2ext == NULL)
+				{
+					ptr2ext = input_filename + strlen(input_filename);
+
+					/* no extension => add .pgc */
+					ptr2ext[0] = '.';
+					ptr2ext[1] = 'p';
+					ptr2ext[2] = 'g';
+					ptr2ext[3] = 'c';
+					ptr2ext[4] = '\0';
+				}
+				
+				yyin = fopen(input_filename, PG_BINARY_R);
 			}
 
 			if (out_option == 0)	/* calculate the output name */
 			{
-				output_filename = strdup(input_filename);
-
-				ptr2ext = strrchr(output_filename, '.');
-				/* make extension = .c */
-				ptr2ext[1] = 'c';
-				ptr2ext[2] = '\0';
-
-				yyout = fopen(output_filename, PG_BINARY_W);
-				if (yyout == NULL)
+				if (strcmp(input_filename, "stdin") == 0)
+					yyout = stdout;
+				else
 				{
-					perror(output_filename);
-					free(output_filename);
-					free(input_filename);
-					continue;
+					output_filename = strdup(input_filename);
+
+					ptr2ext = strrchr(output_filename, '.');
+					/* make extension = .c */
+					ptr2ext[1] = 'c';
+					ptr2ext[2] = '\0';
+
+					yyout = fopen(output_filename, PG_BINARY_W);
+					if (yyout == NULL)
+					{
+						perror(output_filename);
+						free(output_filename);
+						free(input_filename);
+						continue;
+					}
 				}
 			}
 
-			yyin = fopen(input_filename, PG_BINARY_R);
 			if (yyin == NULL)
 				perror(argv[fnr]);
 			else
@@ -341,7 +360,7 @@ main(int argc, char *const argv[])
 
 				/* finally the actual connection */
 				connection = NULL;
-
+				
 				/* initialize lex */
 				lex_init();
 
@@ -355,9 +374,9 @@ main(int argc, char *const argv[])
 				/* and parse the source */
 				yyparse();
 
-				if (yyin != NULL)
+				if (yyin != NULL && yyin != stdin)
 					fclose(yyin);
-				if (out_option == 0)
+				if (out_option == 0 && yyout != stdout)
 					fclose(yyout);
 			}
 

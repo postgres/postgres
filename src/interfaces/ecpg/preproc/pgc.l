@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.110 2003/05/22 07:58:41 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.111 2003/05/27 14:36:00 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,14 +399,6 @@ cppline			{space}*#(.*\\{space})+.*
 						BEGIN(state_before);
 						if (literallen == 0)
 							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
-						if (literallen >= NAMEDATALEN)
-						{
-							snprintf(errortext, sizeof(errortext), "identifier \"%s\" will be truncated to \"%.*s\"",
-									literalbuf, NAMEDATALEN-1, literalbuf);
-							literalbuf[NAMEDATALEN-1] = '\0';
-							mmerror(PARSE_ERROR, ET_WARNING, errortext);
-						}
-					
 						yylval.str = mm_strdup(literalbuf);
 						return CSTRING;
 					}
