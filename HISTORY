@@ -1,4 +1,4 @@
-   ------------------------------------------------------------------------
+  ------------------------------------------------------------------------
                                 Release 7.1
   ------------------------------------------------------------------------
 
@@ -11,32 +11,34 @@ PostgreSQL code for many years.
 
 Major changes in this release:
 
-	Write-ahead Log (WAL) - To maintain database consistency in case
-of an operating system crash, previous releases of PostgreSQL have
-forced all data modifications to disk before each transaction commit. 
-With WAL, only one log file must be flushed to disk, greatly improving
-performance.  If you have been using -F in previous releases to disable
-disk flushes, you may want to consider discontinuing its use.
+	Write-ahead Log (WAL) - To maintain database consistency in
+case of an operating system crash, previous releases of PostgreSQL
+have forced all data modifications to disk before each transaction
+commit.  With WAL, only one log file must be flushed to disk, greatly
+improving performance.  If you have been using -F in previous releases
+to disable disk flushes, you may want to consider discontinuing its
+use.
 
 	TOAST - Previous releases had a compiled-in row length limit,
-typically 8k - 32k. This limit made storage of long text fields
-difficult.  With TOAST, long rows of any length can be stored with good
-performance.
+typically 8 - 32 kB.  This limit made storage of long text fields
+difficult.  With TOAST, long rows of any length can be stored with
+good performance.
 
 	Outer Joins - We now support outer joins.  The UNION/NOT IN
 workaround for outer joins is no longer required.  We use the SQL92
 outer join syntax.
 
-	Function Manager - The previous C function manager did not handle NULLs properly,
-nor did it support 64-bit CPU's (Alpha).  The new function manager does.  You can continue
-using your old custom functions, but you may want to rewrite them in the future to use the
+	Function Manager - The previous C function manager did not
+handle NULLs properly, nor did it support 64-bit CPU's (Alpha).  The
+new function manager does.  You can continue using your old custom
+functions, but you may want to rewrite them in the future to use the
 new function manager call interface.
 
 	Complex Queries - A large number of complex queries that were
-unsupported in previous releases now work.  Many combinations of views,
-aggregates, UNION, LIMIT, cursors, subqueries, and inherited tables
-now work properly. Inherited tables are now accessed by default. 
-Subqueries in FROM are now supported.
+unsupported in previous releases now work.  Many combinations of
+views, aggregates, UNION, LIMIT, cursors, subqueries, and inherited
+tables now work properly. Inherited tables are now accessed by
+default.  Subqueries in FROM are now supported.
 
 Migration to 7.1
 
