@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.14 1998/03/18 15:47:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.15 1998/03/31 04:43:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,13 @@ transformSortClause(ParseState *pstate,
 				{
 					SortClause *sortcl = lfirst(s);
 
-					if (sortcl->resdom == tlelt->resdom)
+					/*
+					 *	We use equal() here because we are called for UNION
+					 *	from the optimizer, and at that point, the sort clause
+					 *	resdom pointers don't match the target list resdom
+					 *	pointers
+					 */
+					if (equal(sortcl->resdom, tlelt->resdom))
 						break;
 					s = lnext(s);
 				}

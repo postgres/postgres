@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.21 1998/03/30 19:04:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.22 1998/03/31 04:43:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,12 +64,13 @@ plan_union_queries(Query *parse)
 {
 	List	   *union_plans = NIL,
 			   *ulist,
-			   *unionall_queries,
+			   *union_all_queries,
 			   *union_rts,
-			   *last_union = NIL;
+			   *last_union = NIL,
+			   *hold_sortClause = parse->sortClause;
 	bool		union_all_found = false,
 				union_found = false,
-				last_unionall_flag = false;
+				last_union_all_flag = false;
 
 	/*------------------------------------------------------------------
 	 *
@@ -120,16 +121,24 @@ plan_union_queries(Query *parse)
 			union_found = true;
 			last_union = ulist;
 		}
-		last_unionall_flag = union_query->unionall;
+		last_union_all_flag = union_query->unionall;
 	}
 
 	/* Is this a simple one */
 	if (!union_all_found ||
 		!union_found ||
 	/* A trailing UNION negates the affect of earlier UNION ALLs */
-		!last_unionall_flag)
+		!last_union_all_flag)
 	{
 		List	   *hold_unionClause = parse->unionClause;
+
+		/* we will do this later, so don't do it now */
+		if (!union_all_found ||
+			!last_union_all_flag)
+		{
+			parse->sortClause = NIL;
+			parse->uniqueFlag = NULL;
+		}
 
 		parse->unionClause = NIL;		/* prevent recursion */
 		union_plans = lcons(union_planner(parse), NIL);
@@ -154,7 +163,7 @@ plan_union_queries(Query *parse)
 		 */
 
 		/* save off everthing past the last UNION */
-		unionall_queries = lnext(last_union);
+		union_all_queries = lnext(last_union);
 
 		/* clip off the list to remove the trailing UNION ALLs */
 		lnext(last_union) = NIL;
@@ -167,21 +176,21 @@ plan_union_queries(Query *parse)
 		union_rts = lcons(parse->rtable, NIL);
 
 		/* Append the remainging UNION ALLs */
-		foreach(ulist, unionall_queries)
+		foreach(ulist, union_all_queries)
 		{
-			Query	   *unionall_query = lfirst(ulist);
+			Query	   *union_all_query = lfirst(ulist);
 
-			union_plans = lappend(union_plans, union_planner(unionall_query));
-			union_rts = lappend(union_rts, unionall_query->rtable);
+			union_plans = lappend(union_plans, union_planner(union_all_query));
+			union_rts = lappend(union_rts, union_all_query->rtable);
 		}
 	}
 
 	/* We have already split UNION and UNION ALL and we made it consistent */
-	if (!last_unionall_flag)
+	if (!last_union_all_flag)
 	{
 		parse->uniqueFlag = "*";
 		parse->sortClause = transformSortClause(NULL, NIL,
-												parse->sortClause,
+												hold_sortClause,
 												parse->targetList, "*");
 	}
 	else
@@ -195,7 +204,7 @@ plan_union_queries(Query *parse)
 						union_rts,
 						0,
 						NULL,
-						((Plan *) lfirst(union_plans))->targetlist));
+						parse->targetList));
 }
 
 
