@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.25 2000/11/03 20:27:40 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.26 2000/12/15 18:50:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -93,6 +93,8 @@ endif
 ifeq ($(TCL_SHARED_BUILD), 1)
 
 all: $(INFILES)
+
+pltcl$(DLSUFFIX): pltcl.o
 
 install: all installdirs
 	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(libdir)/$(DLOBJS)
