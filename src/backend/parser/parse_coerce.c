@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.33 2000/02/27 18:54:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.34 2000/03/11 23:19:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,6 +297,7 @@ TypeCategory(Oid inType)
 			break;
 
 		case (CHAROID):
+		case (NAMEOID):
 		case (BPCHAROID):
 		case (VARCHAROID):
 		case (TEXTOID):
@@ -331,17 +332,22 @@ TypeCategory(Oid inType)
 
 		case (POINTOID):
 		case (LSEGOID):
-		case (LINEOID):
-		case (BOXOID):
 		case (PATHOID):
-		case (CIRCLEOID):
+		case (BOXOID):
 		case (POLYGONOID):
+		case (LINEOID):
+		case (CIRCLEOID):
 			result = GEOMETRIC_TYPE;
 			break;
 
 		case (INETOID):
 		case (CIDROID):
 			result = NETWORK_TYPE;
+			break;
+
+		case (UNKNOWNOID):
+		case (InvalidOid):
+			result = UNKNOWN_TYPE;
 			break;
 
 		default:
