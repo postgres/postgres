@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.53 2001/02/19 00:01:18 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.54 2001/02/21 23:15:24 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -2198,6 +2198,17 @@ reasonable at all for that matter.
        </row>
 
        <row>
+	<entry>timeofday()</entry>
+	<entry>text</entry>
+	<entry>
+	 returns high-precision date and time; see also <link
+	 linkend="functions-datetime-current">below</link>
+	</entry>
+	<entry>timeofday()</entry>
+	<entry>Wed Feb 21 17:01:13.000126 2001 EST</entry>
+       </row>
+
+       <row>
 	<entry>timestamp(date)</entry>
 	<entry>timestamp</entry>
 	<entry>convert date to timestamp</entry>
@@ -2627,7 +2638,8 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    <title>Current Date/Time</title>
 
    <para>
-    The following functions are available to select the current date and/or time:
+    The following functions are available to obtain the current date and/or
+    time:
 <synopsis>
 CURRENT_TIME
 CURRENT_DATE
@@ -2641,13 +2653,13 @@ CURRENT_TIMESTAMP
    <informalexample>
 <screen>
 SELECT CURRENT_TIME;
-<computeroutput>19:07:13</computeroutput>
+<computeroutput>19:07:32</computeroutput>
 
 SELECT CURRENT_DATE;
 <computeroutput>2001-02-17</computeroutput>
 
 SELECT CURRENT_TIMESTAMP;
-<computeroutput>2001-02-17 19:07:32+00</computeroutput>
+<computeroutput>2001-02-17 19:07:32-05</computeroutput>
 </screen>
    </informalexample>
 
@@ -2655,9 +2667,42 @@ SELECT CURRENT_TIMESTAMP;
     The function <function>now()</function> is the traditional
     <productname>Postgres</productname> equivalent to
     <function>CURRENT_TIMESTAMP</function>.
-    <productname>Postgres</productname> furthermore has special
-    date/time <quote>constants</quote> that can be used to specify the
-    current time.  The following three all return the same result:
+   </para>
+
+   <para>
+    There is also <function>timeofday()</function>, which returns current
+    time to higher precision than the <function>CURRENT_TIMESTAMP</function>
+    family does:
+   </para>
+
+   <informalexample>
+<screen>
+SELECT timeofday();
+ Sat Feb 17 19:07:32.000126 2001 EST
+</screen>
+   </informalexample>
+
+   <para>
+    <function>timeofday()</function> uses the operating system call
+    <function>gettimeofday(2)</function>, which may have resolution as
+    good as microseconds (depending on your platform); the other functions
+    rely on <function>time(2)</function> which is restricted to one-second
+    resolution.  For historical reasons, <function>timeofday()</function>
+    returns its result as a text string rather than a timestamp value.
+   </para>
+
+   <para>
+    It is quite important to realize that
+    <function>CURRENT_TIMESTAMP</function> and related functions all return
+    the time as of the start of the current transaction; their values do not
+    increment while a transaction is running.  But
+    <function>timeofday()</function> returns the actual current time.
+   </para>
+
+   <para>
+    All the date/time datatypes also accept the special literal value
+    <literal>now</> to specify the current date and time.  Thus,
+    the following three all return the same result:
 <programlisting>
 SELECT CURRENT_TIMESTAMP;
 SELECT now();
@@ -2666,11 +2711,13 @@ SELECT TIMESTAMP 'now';
     <note>
      <para>
       You do not want to use the third form when specifying a DEFAULT
-      value when creating a table.  The system will immediately
-      evaluate the constant, thus when the default value is needed,
+      value while creating a table.  The system will convert <literal>now</>
+      to a timestamp as soon as the constant is parsed, so that when
+      the default value is needed,
       the time of the table creation would be used!  The first two
       forms will not be evaluated until the default value is used,
-      because they are function calls.
+      because they are function calls.  Thus they will give the desired
+      behavior of defaulting to the time of row insertion.
      </para>
     </note>
    </para>
