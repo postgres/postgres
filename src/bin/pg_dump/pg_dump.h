@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.54 2000/11/14 18:37:46 tgl Exp $
+ * $Id: pg_dump.h,v 1.55 2000/11/27 20:51:40 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -117,6 +117,7 @@ typedef struct _tableInfo
 	int			ntrig;			/* # of triggers */
 	TrigInfo	*triggers;		/* Triggers on the table */
 	char	   *primary_key;	/* PRIMARY KEY of the table, if any */
+	char	   *primary_key_name;	/* PRIMARY KEY name, if any */
 } TableInfo;
 
 typedef struct _inhInfo

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.181 2000/11/24 22:32:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.182 2000/11/27 20:51:40 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1544,6 +1544,8 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 			free(tblinfo[i].notnull);
 		if (tblinfo[i].primary_key)
 			free(tblinfo[i].primary_key);
+		if (tblinfo[i].primary_key_name)
+			free(tblinfo[i].primary_key_name);
 	}
 	free(tblinfo);
 }
@@ -2143,6 +2145,49 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		}
 		else
 			tblinfo[i].primary_key = NULL;
+
+		/* Get primary key name (if primary key exist) */
+		if (tblinfo[i].primary_key)
+		{
+			PGresult   *res2;
+			int		   n;
+
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query,
+							  "SELECT c.relname "
+							  "FROM pg_index i, pg_class c "
+							  "WHERE i.indrelid = %s"
+							  "AND   i.indisprimary "
+							  "AND   c.oid = i.indexrelid ",
+							  tblinfo[i].oid);
+			res2 = PQexec(g_conn, query->data);
+			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
+			{
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY NAME) failed.  Explanation from backend: %s",
+						PQerrorMessage(g_conn));
+				exit_nicely(g_conn);
+			}
+
+			n = PQntuples(res2);
+			if (n != 1)
+			{
+				fprintf(stderr,
+						"getTables(): SELECT (for PRIMARY KEY NAME) failed. This is impossible but object with OID == %s have %d primary keys.\n",
+						tblinfo[i].oid,
+						n);
+				exit_nicely(g_conn);
+			}
+
+			tblinfo[i].primary_key_name =
+				strdup(fmtId(PQgetvalue(res2, 0, 0), force_quotes));
+			if (tblinfo[i].primary_key_name == NULL)
+			{
+				perror("strdup");
+				exit(1);
+			}
+		}
+		else
+			tblinfo[i].primary_key_name = NULL;
 
 		/* Get Triggers */
 		if (tblinfo[i].ntrig > 0)
@@ -3558,7 +3603,10 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				{
 					if (actual_atts + tblinfo[i].ncheck > 0)
 						appendPQExpBuffer(q, ",\n\t");
-					appendPQExpBuffer(q, "PRIMARY KEY (%s)", tblinfo[i].primary_key);
+					appendPQExpBuffer(q,
+									  "CONSTRAINT %s PRIMARY KEY (%s)",
+									  tblinfo[i].primary_key_name,
+									  tblinfo[i].primary_key);
 				}
 
 				appendPQExpBuffer(q, "\n)");
