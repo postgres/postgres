@@ -791,8 +791,12 @@ fi
 
 dnl If we found "long int" is 64 bits, assume snprintf handles it.
 dnl If we found we need to use "long long int", better check.
+dnl We cope with snprintfs that use either %lld or %qd as the format.
+dnl If neither works, fall back to our own snprintf emulation (which we
+dnl know uses %lld).
 
-if [[ x$SNPRINTF = x -a $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
+if [[ $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
+  if [[ x$SNPRINTF = x ]] ; then
     AC_MSG_CHECKING(whether snprintf handles 'long long int' as %lld)
     AC_TRY_RUN([#include <stdio.h>
 typedef long long int int64;
@@ -819,7 +823,8 @@ main() {
   exit(! does_int64_snprintf_work());
 }],
 	[ AC_MSG_RESULT(yes)
-    AC_DEFINE(HAVE_INT64_AS_LLD) ],
+	  INT64_FORMAT='"%lld"'
+	],
   [ AC_MSG_RESULT(no)
     AC_MSG_CHECKING(whether snprintf handles 'long long int' as %qd) 
     AC_TRY_RUN([#include <stdio.h>
@@ -846,18 +851,34 @@ int does_int64_snprintf_work()
 main() {
   exit(! does_int64_snprintf_work());
 }],
-  [ AC_MSG_RESULT(yes)   
-    AC_DEFINE(HAVE_INT64_AS_QD) ],
-  [ SNPRINTF='snprintf.o' 
-    AC_MSG_RESULT(no)],
-  [ SNPRINTF='snprintf.o' 
-    AC_MSG_RESULT(assuming not on target machine)]) ],
-
-	[ SNPRINTF='snprintf.o' 
-    AC_MSG_RESULT(no)],
-	[ SNPRINTF='snprintf.o' 
-    AC_MSG_RESULT(assuming not on target machine)])
+  [ AC_MSG_RESULT(yes)
+    INT64_FORMAT='"%qd"'
+  ],
+  [ AC_MSG_RESULT(no)
+	# Force usage of our own snprintf, since system snprintf is broken
+	SNPRINTF='snprintf.o'
+	INT64_FORMAT='"%lld"'
+  ],
+  [ AC_MSG_RESULT(assuming not on target machine)
+	# Force usage of our own snprintf, since we cannot test foreign snprintf
+	SNPRINTF='snprintf.o'
+	INT64_FORMAT='"%lld"'
+  ]) ],
+  [ AC_MSG_RESULT(assuming not on target machine)
+	# Force usage of our own snprintf, since we cannot test foreign snprintf
+	SNPRINTF='snprintf.o'
+	INT64_FORMAT='"%lld"'
+  ])
+  else
+    # here if we previously decided we needed to use our own snprintf
+    INT64_FORMAT='"%lld"'
+  fi
+else
+  # Here if we are not using 'long long int' at all
+  INT64_FORMAT='"%ld"'
 fi
+
+AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT)
 
 
 dnl Check to see if platform has POSIX signal interface.

@@ -281,17 +281,14 @@ extern void srandom(unsigned int seed);
 /* Set to 1 if your DBL_MIN is problematic */
 #undef HAVE_DBL_MIN_PROBLEM
 
-/* Set to 1 if your snprintf has %lld for 'long long int' */
-#undef HAVE_INT64_AS_LLD
-
-/* Set to 1 if your snprintf has %qd for 'long long int' */
-#undef HAVE_INT64_AS_QD
-
 /* Set to 1 if type "long int" works and is 64 bits */
 #undef HAVE_LONG_INT_64
 
 /* Set to 1 if type "long long int" works and is 64 bits */
 #undef HAVE_LONG_LONG_INT_64
+
+/* Define this as the appropriate snprintf format for 64-bit ints, if any */
+#undef INT64_FORMAT
 
 /* Define as the base type of the last arg to accept */
 #undef SOCKET_SIZE_TYPE
