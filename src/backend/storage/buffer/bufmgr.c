@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.13 1997/04/18 08:30:08 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.14 1997/07/24 20:13:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1131,7 +1131,6 @@ BufferPoolCheckLeak()
 {
     register int i;
     int error = 0;
-    void PrintBufferDescs();
     
     for (i = 1; i <= NBuffers; i++) {
 	if (BufferIsValid(i)) {

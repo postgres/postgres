@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.17 1997/05/22 00:15:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.18 1997/07/24 20:15:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,7 +476,6 @@ ProcessUtility(Node *parsetree,
 		{
 		    char *viewName = stmt->name;
 		    char *ruleName;
-		    extern char *RewriteGetRuleEventRel();
 
 #ifndef NO_SECURITY
 		
@@ -587,7 +586,7 @@ ProcessUtility(Node *parsetree,
     case T_LoadStmt:
 	{
 	    LoadStmt *stmt = (LoadStmt *)parsetree;
-	    FILE *fp, *fopen();
+	    FILE *fp;
 	    char *filename;
 
 	    commandTag = "LOAD";

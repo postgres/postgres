@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.2 1997/02/19 14:52:04 scrappy Exp $
+* $Id: geqo_params.c,v 1.3 1997/07/24 20:12:15 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -22,6 +22,7 @@
 #include <time.h>
 #include <math.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "postgres.h"
 #include "miscadmin.h"

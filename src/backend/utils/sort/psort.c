@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.4 1997/05/20 11:35:50 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.5 1997/07/24 20:18:07 momjian Exp $
  *
  * NOTES
  *	Sorts the first relation into the second relation.  The sort may
@@ -525,7 +525,6 @@ gettape()
     register struct	tapelst	*tp;
     FILE		*file;
     static	int	tapeinit = 0;
-    char		*mktemp();
     
     tp = (struct tapelst *)palloc((unsigned)sizeof (struct tapelst));
     if (!tapeinit) {

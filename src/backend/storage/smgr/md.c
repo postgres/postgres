@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.13 1997/05/22 17:08:33 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.14 1997/07/24 20:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,6 @@ mdcreate(Relation reln)
 {
     int fd, vfd;
     char *path;
-    extern bool IsBootstrapProcessingMode();
 
     path = relpath(&(reln->rd_rel->relname.data[0]));
     fd = FileNameOpenFile(path, O_RDWR|O_CREAT|O_EXCL, 0600);

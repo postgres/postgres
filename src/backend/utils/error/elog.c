@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.15 1997/03/18 21:40:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.16 1997/07/24 20:16:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@ elog(int lev, const char *fmt, ... )
 #ifndef PG_STANDALONE
     extern	FILE	*Pfout;
 #endif /* !PG_STANDALONE */
-    time_t	time();
 #ifdef ELOG_TIMESTAMPS
     time_t	tim;
 #endif

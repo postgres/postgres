@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.6 1997/02/14 04:18:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.7 1997/07/24 20:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
     Form_pg_proc procedureStruct;
     char        *proname;
     char        *probinattr, *probinstring;
-    func_ptr    user_fn, handle_load();
+    func_ptr    user_fn;
     Relation    rdesc;
     bool     isnull;
     

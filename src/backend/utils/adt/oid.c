@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.6 1997/03/14 23:20:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.7 1997/07/24 20:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,15 +84,11 @@ char *oid8out(Oid	(*oidArray)[])
 
 Oid oidin(char *s)
 {
-    extern int32 int4in();
-    
     return(int4in(s));
 }
 
 char *oidout(Oid o)
 {
-    extern char *int4out();
-    
     return(int4out(o));
 }
 

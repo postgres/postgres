@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.18 1997/05/22 00:14:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.19 1997/07/24 20:13:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1477,7 +1477,6 @@ op_error(char *op, Oid arg1, Oid arg2)
 void
 func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 {
-    Type get_id_type();
     char p[(NAMEDATALEN+2)*MAXFMGRARGS], *ptr;
     int i;
 	

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.6 1997/02/14 04:17:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.7 1997/07/24 20:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 char *
 filename_in(char *file)
 {
-    char *str, *getenv();
+    char *str;
     int ind = 0;
     
     /*

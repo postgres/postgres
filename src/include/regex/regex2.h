@@ -87,26 +87,26 @@ typedef long sopno;
 #define	SOP(op, opnd)	((op)|(opnd))
 /* operators			   meaning	operand			*/
 /*						(back, fwd are offsets)	*/
-#define	OEND	(1<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	(2<<OPSHIFT)	/* character	unsigned char		*/
-#define	OBOL	(3<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	(4<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	(5<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	(6<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	(7<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	(8<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	(9<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	(10<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	(11<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	(12<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	(13<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	(14<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	(15<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	(16<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	(17<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	(18<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	(19<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	(20<<OPSHIFT)	/* end word	-			*/
+#define	OEND	((size_t)1<<OPSHIFT)	/* endmarker	-			*/
+#define	OCHAR	((size_t)2<<OPSHIFT)	/* character	unsigned char		*/
+#define	OBOL	((size_t)3<<OPSHIFT)	/* left anchor	-			*/
+#define	OEOL	((size_t)4<<OPSHIFT)	/* right anchor	-			*/
+#define	OANY	((size_t)5<<OPSHIFT)	/* .		-			*/
+#define	OANYOF	((size_t)6<<OPSHIFT)	/* [...]	set number		*/
+#define	OBACK_	((size_t)7<<OPSHIFT)	/* begin \d	paren number		*/
+#define	O_BACK	((size_t)8<<OPSHIFT)	/* end \d	paren number		*/
+#define	OPLUS_	((size_t)9<<OPSHIFT)	/* + prefix	fwd to suffix		*/
+#define	O_PLUS	((size_t)10<<OPSHIFT)	/* + suffix	back to prefix		*/
+#define	OQUEST_	((size_t)11<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
+#define	O_QUEST	((size_t)12<<OPSHIFT)	/* ? suffix	back to prefix		*/
+#define	OLPAREN	((size_t)13<<OPSHIFT)	/* (		fwd to )		*/
+#define	ORPAREN	((size_t)14<<OPSHIFT)	/* )		back to (		*/
+#define	OCH_	((size_t)15<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
+#define	OOR1	((size_t)16<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	((size_t)17<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	((size_t)18<<OPSHIFT)	/* end choice	back to OOR1		*/
+#define	OBOW	((size_t)19<<OPSHIFT)	/* begin word	-			*/
+#define	OEOW	((size_t)20<<OPSHIFT)	/* end word	-			*/
 
 /*
  * Structure for [] character-set representation.  Character sets are

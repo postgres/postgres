@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.9 1997/07/10 02:27:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.10 1997/07/24 20:15:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 {
     HeapTuple htp;
     char name[NAMEDATALEN+1];
-    extern AclId get_grosysid();
     
     Assert(s && aip && modechg);
     

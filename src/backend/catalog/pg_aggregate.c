@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.4 1996/11/08 00:44:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.5 1997/07/24 20:11:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,6 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
     Oid	transtype;
     text	*textInitVal;
     char	*strInitVal, *initVal;
-    extern char	*textout();
     
     Assert(PointerIsValid(aggName));
     Assert(PointerIsValid(isNull));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.3 1996/11/06 06:49:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.4 1997/07/24 20:14:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,12 +481,6 @@ SISetDataEntry(SISeg *segP, SharedInvalidData  *data)
 {
     Offset  	    offsetToNewData;
     SISegEntry 	    *eP, *lastP;
-    bool    	    SISegFull();
-    Offset  	    SIEntryOffset();
-    Offset  	    SIGetStartFreeSpace();
-    SISegEntry 	    *SIGetFirstDataEntry();
-    SISegEntry 	    *SIGetNextDataEntry();
-    SISegEntry 	    *SIGetLastDataEntry();
     
     if (!SIIncNumEntries(segP, 1)) 
 	return(false);  /* no space */
@@ -542,7 +536,6 @@ bool
 SIDelDataEntry(SISeg *segP)
 {
     SISegEntry 	    *e1P;
-    SISegEntry 	    *SIGetFirstDataEntry();
     
     if (!SIDecNumEntries(segP, 1))  {
     	/* no entries in buffer */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.8 1997/02/14 04:18:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.9 1997/07/24 20:17:34 momjian Exp $
  *
  * NOTES
  *      InitPostgres() is the function called from PostgresMain
@@ -354,7 +354,6 @@ InitUserid()
 void
 InitCommunication()
 {
-    char *getenv();     /* XXX style */
     char *postid;
     char *postport;
     IPCKey      key = 0;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.2 1996/11/10 03:01:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.3 1997/07/24 20:13:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,8 +191,6 @@ DefineQueryRewrite(RuleStmt *stmt)
     int event_attno 	= 0;
     Oid event_attype	= 0;
     char *actionP, *event_qualP;
-    
-    extern Oid att_typeid();
     
     if (event_obj->attrs)
 	eslot_string = strVal(lfirst(event_obj->attrs));
