@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.1.1.1 1996/07/09 06:21:07 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.2 1996/07/20 07:52:36 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
 #
 #-------------------------------------------------------------------------
 
-SUBDIR= backend libpq bin
+SUBDIR= backend libpq bin ../doc
 
 FIND = find
 # assuming gnu tar and split here
