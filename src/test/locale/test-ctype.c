@@ -39,7 +39,7 @@ flag(int b)
 void
 describe_char(int c)
 {
-	char		cp = c,
+	unsigned char		cp = c,
 				up = toupper(c),
 				lo = tolower(c);
 
