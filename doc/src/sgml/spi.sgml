@@ -2833,7 +2833,7 @@ execq
 
 vac=> INSERT INTO a VALUES (execq('INSERT INTO a VALUES (0)',0));
 INSERT 167631 1
-vac=> select execq('SELECT * FROM a',0);
+vac=> SELECT execq('SELECT * FROM a',0);
 NOTICE:EXECQ:  0 <<< inserted by execq
 
 NOTICE:EXECQ:  1 <<< value returned by execq and inserted by upper INSERT

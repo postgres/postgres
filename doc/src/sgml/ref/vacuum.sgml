@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.19 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.20 2001/10/12 23:34:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -252,7 +252,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    in the regression database:
 
    <programlisting>
-regression=> vacuum verbose analyze onek;
+regression=> VACUUM VERBOSE ANALYZE onek;
 NOTICE:  --Relation onek--
 NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
          Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
