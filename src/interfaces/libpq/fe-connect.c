@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.131 2000/07/09 13:14:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.132 2000/08/20 10:55:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -738,7 +738,7 @@ connectDBStart(PGconn *conn)
 		conn->raddr.in.sin_port = htons((unsigned short) (portno));
 		conn->raddr_len = sizeof(struct sockaddr_in);
 	}
-#if !defined(WIN32) && !defined(__CYGWIN32__)
+#ifdef HAVE_UNIX_SOCKETS
 	else
 		conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
 #endif

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.159 2000/08/07 00:51:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.160 2000/08/20 10:55:33 petere Exp $
  *
  * NOTES
  *
@@ -169,14 +169,12 @@ static volatile bool got_SIGHUP = false;
  */
 static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
-
 #endif
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;		/* Global SSL context */
-
 #endif
 
 /*
@@ -589,7 +587,7 @@ PostmasterMain(int argc, char *argv[])
 		}
 	}
 
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, (unsigned short)PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
@@ -856,7 +854,7 @@ ServerLoop(void)
 
 		/* new connection pending on our well-known port's socket */
 
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 		if (ServerSock_UNIX != INVALID_SOCK &&
 			FD_ISSET(ServerSock_UNIX, &rmask) &&
 			(port = ConnCreate(ServerSock_UNIX)) != NULL)
@@ -1015,7 +1013,7 @@ initMasks(fd_set *rmask, fd_set *wmask)
 	FD_ZERO(rmask);
 	FD_ZERO(wmask);
 
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 	if (ServerSock_UNIX != INVALID_SOCK)
 	{
 		FD_SET(ServerSock_UNIX, rmask);
@@ -1832,7 +1830,7 @@ DoBackend(Port *port)
 	if (NetServer)
 		StreamClose(ServerSock_INET);
 	ServerSock_INET = INVALID_SOCK;
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 	StreamClose(ServerSock_UNIX);
 	ServerSock_UNIX = INVALID_SOCK;
 #endif
@@ -1962,7 +1960,7 @@ ExitPostmaster(int status)
 	if (ServerSock_INET != INVALID_SOCK)
 		StreamClose(ServerSock_INET);
 	ServerSock_INET = INVALID_SOCK;
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 	if (ServerSock_UNIX != INVALID_SOCK)
 		StreamClose(ServerSock_UNIX);
 	ServerSock_UNIX = INVALID_SOCK;
@@ -2134,7 +2132,7 @@ SSDataBase(bool startup)
 		if (NetServer)
 			StreamClose(ServerSock_INET);
 		ServerSock_INET = INVALID_SOCK;
-#if !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 		StreamClose(ServerSock_UNIX);
 		ServerSock_UNIX = INVALID_SOCK;
 #endif

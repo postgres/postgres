@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.12 2000/04/12 17:16:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.13 2000/08/20 10:55:34 petere Exp $
  */
 #include "postgres.h"
 #include "prompt.h"
@@ -19,9 +19,9 @@
 #include <win32.h>
 #endif
 
-#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
-#include <unistd.h>
-#include <netdb.h>
+#ifdef HAVE_UNIX_SOCKETS
+# include <unistd.h>
+# include <netdb.h>
 #endif
 
 /*--------------------------
@@ -64,7 +64,7 @@
 /*
  * We need hostname information, only if connection is via UNIX socket
  */
-#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 
 #define DOMAINNAME	1
 #define HOSTNAME	2
@@ -104,7 +104,8 @@ localhost(int type, char *buf, int siz)
 	return buf;
 }
 
-#endif
+#endif /* HAVE_UNIX_SOCKETS */
+
 
 char *
 get_prompt(promptStatus_t status)
@@ -173,7 +174,7 @@ get_prompt(promptStatus_t status)
 								buf[strcspn(buf, ".")] = '\0';
 						}
 						/* UNIX socket */
-#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
+#ifdef HAVE_UNIX_SOCKETS
 						else
 						{
 							if (*p == 'm')
@@ -181,7 +182,7 @@ get_prompt(promptStatus_t status)
 							else
 								localhost(DOMAINNAME, buf, MAX_PROMPT_SIZE);
 						}
-#endif
+#endif /* HAVE_UNIX_SOCKETS */
 					}
 					break;
 					/* DB server port number */
