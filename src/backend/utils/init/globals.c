@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.42 2000/04/12 17:16:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.43 2000/05/05 03:09:43 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -25,6 +25,7 @@
 #include "postgres.h"
 
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -115,6 +116,8 @@ char		Ps_status_buffer[1024];
 char	   *SharedSystemRelationNames[] = {
 	DatabaseRelationName,
 	GroupRelationName,
+	GroupNameIndex,
+	GroupSysidIndex,
 	LogRelationName,
 	ShadowRelationName,
 	VariableRelationName,
