@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.141 2001/05/27 09:59:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.142 2001/05/27 20:48:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,12 +598,19 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	}
 
 	/*
-	 * initialize the executor "tuple" table.
+	 * initialize the executor "tuple" table.  We need slots for all the
+	 * plan nodes, plus possibly output slots for the junkfilter(s).
+	 * At this point we aren't sure if we need junkfilters, so just add
+	 * slots for them unconditionally.
 	 */
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
 
-		estate->es_tupleTable = ExecCreateTupleTable(nSlots + 10); /* why add ten? - jolly */
+		if (parseTree->resultRelations != NIL)
+			nSlots += length(parseTree->resultRelations);
+		else
+			nSlots += 1;
+		estate->es_tupleTable = ExecCreateTupleTable(nSlots);
 	}
 
 	/* mark EvalPlanQual not active */
@@ -686,7 +693,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 					JunkFilter *j;
 
 					j = ExecInitJunkFilter(subplan->targetlist,
-										   ExecGetTupType(subplan));
+										   ExecGetTupType(subplan),
+										   ExecAllocTableSlot(estate->es_tupleTable));
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;
 					subplans = lnext(subplans);
@@ -702,9 +710,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			else
 			{
 				/* Normal case with just one JunkFilter */
-				JunkFilter *j = ExecInitJunkFilter(plan->targetlist,
-												   tupType);
+				JunkFilter *j;
 
+				j = ExecInitJunkFilter(plan->targetlist,
+									   tupType,
+									   ExecAllocTableSlot(estate->es_tupleTable));
 				estate->es_junkFilter = j;
 				if (estate->es_result_relation_info)
 					estate->es_result_relation_info->ri_junkFilter = j;
@@ -986,7 +996,9 @@ lnext:	;
 		 * if we have a junk filter, then project a new tuple with the
 		 * junk removed.
 		 *
-		 * Store this new "clean" tuple in the place of the original tuple.
+		 * Store this new "clean" tuple in the junkfilter's resultSlot.
+		 * (Formerly, we stored it back over the "dirty" tuple, which is
+		 * WRONG because that tuple slot has the wrong descriptor.)
 		 *
 		 * Also, extract all the junk information we need.
 		 */
@@ -1088,7 +1100,7 @@ lnext:	;
 			newTuple = ExecRemoveJunk(junkfilter, slot);
 
 			slot = ExecStoreTuple(newTuple,		/* tuple to store */
-								  slot, /* destination slot */
+								  junkfilter->jf_resultSlot, /* dest slot */
 								  InvalidBuffer,		/* this tuple has no
 														 * buffer */
 								  true);		/* tuple should be pfreed */
@@ -1467,7 +1479,9 @@ lreplace:;
 				{
 					*tupleid = ctid;
 					tuple = ExecRemoveJunk(estate->es_junkFilter, epqslot);
-					slot = ExecStoreTuple(tuple, slot, InvalidBuffer, true);
+					slot = ExecStoreTuple(tuple,
+										  estate->es_junkFilter->jf_resultSlot,
+										  InvalidBuffer, true);
 					goto lreplace;
 				}
 			}
