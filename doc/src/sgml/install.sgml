@@ -1,548 +1,581 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.38 2000/03/31 15:00:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.39 2000/04/07 13:30:58 thomas Exp $
 -->
 
- <Chapter Id="install">
-  <Title>Installation</Title>
+ <chapter id="install">
+  <title>Installation</title>
 
-  <Abstract>
-   <Para>
+  <abstract>
+   <para>
     Installation instructions for 
-    <ProductName>PostgreSQL</ProductName> 7.0.
-   </Para>
-  </Abstract>
+    <productname>PostgreSQL</productname> 7.0.
+   </para>
+  </abstract>
 
-  <Para>
-   If you haven't gotten the <ProductName>PostgreSQL</ProductName> distribution,
-   get it from <ULink url="ftp://ftp.postgresql.org">ftp.postgresql.org</ULink>,
+  <para>
+   If you haven't gotten the <productname>PostgreSQL</productname> distribution,
+   get it from <ulink url="ftp://ftp.postgresql.org">ftp.postgresql.org</ulink>,
    then unpack it:
-   <ProgramListing>
-gunzip postgresql-7.0.tar.gz
-tar -xf postgresql-7.0.tar
-mv postgresql-7.0 /usr/src
-   </ProgramListing>
-  </Para>
 
-  <Sect1>
-   <Title>Before you start</Title>
+   <programlisting>
+&gt; gunzip postgresql-7.0.tar.gz
+&gt; tar -xf postgresql-7.0.tar
+&gt; mv postgresql-7.0 /usr/src
+   </programlisting>
+  </para>
 
-   <Para>
-    Building <Productname>PostgreSQL</Productname> requires <acronym>GNU</acronym>
-    <Application>make</Application>.  It will <Emphasis>not</Emphasis>
-    work with other <Application>make</Application> programs. On GNU/Linux systems
+  <sect1>
+   <title>Before you start</title>
+
+   <para>
+    Building <productname>PostgreSQL</productname> requires <acronym>GNU</acronym>
+    <application>make</application>.  It will <emphasis>not</emphasis>
+    work with other <application>make</application> programs. On GNU/Linux systems
     GNU make is the default tool, on other systems you may find that
-    GNU <Application>make</Application> is installed under the name <Quote>gmake</Quote>.
+    GNU <application>make</application> is installed under the name
+    <quote>gmake</quote>.
     We will use that name from now on to indicate <acronym>GNU</acronym>
-    <Application>make</Application>, no matter what name it has on your system.
-    To test for <acronym>GNU</acronym> <Application>make</Application> enter
+    <application>make</application>, no matter what name it has on your system.
+    To test for <acronym>GNU</acronym> <application>make</application> enter
     <programlisting>
-<userinput>gmake --version</userinput>
+&gt; <userinput>gmake --version</userinput>
     </programlisting>
-    If you need to get <acronym>GNU</acronym> <Application>make</Application>, you can
-    find it at <ULink url="ftp://ftp.gnu.org">ftp://ftp.gnu.org</ULink>.
-   </Para>
+    If you need to get <acronym>GNU</acronym>
+    <application>make</application>, you can
+    find it at <ulink url="ftp://ftp.gnu.org">ftp://ftp.gnu.org</ulink>.
+   </para>
 
-   <Para>
+   <para>
     Up to date information on supported platforms is at
     <ulink url="http://www.postgresql.org/docs/admin/ports.htm">
      http://www.postgresql.org/docs/admin/ports.htm</ulink>.
-    In general, most Unix-compatible platforms with modern libraries should be able to run
-    <ProductName>PostgreSQL</ProductName>. In the <filename>doc</filename> subdirectory
+    In general, most Unix-compatible platforms with modern libraries
+    should be able to run
+    <productname>PostgreSQL</productname>. In the
+    <filename>doc</filename> subdirectory
     of the distribution are several platform-specific FAQ and README documents you
     might wish to consult if you are having trouble.
    </para>
 
    <para>
-    Although the minimum required memory for running <ProductName>PostgreSQL</ProductName>
-    can be as little as 8MB, there are noticeable speed improvements when expanding memory
+    Although the minimum required memory for running
+    <productname>PostgreSQL</productname> 
+    can be as little as 8MB, there are noticeable speed improvements
+    when expanding memory
     up to 96MB or beyond. The rule is you can never have too much memory.
    </para>
-   <Para>
+   <para>
     Check that you have sufficient disk space.  You will need about
     30 Mbytes for the source tree during compilation and about 5 Mbytes for
     the installation directory. An empty database takes about 1 Mbyte, otherwise
     they take about five times the amount of space that a flat text file with the
     same data would take. If you run the regression tests you will temporarily need
     an extra 20MB.
-   </Para>
+   </para>
 
-   <Para>
+   <para>
     To check for disk space, use 
 <programlisting>
-df -k
+&gt; df -k
 </programlisting>
    </para>
 
    <para>
-    Considering today's prices for hard disks, getting a large and fast hard disk should
+    Considering today's prices for hard disks, getting a large and
+    fast hard disk should
     probably be in your plans before putting a database into production use.
    </para>
-  </Sect1>
+  </sect1>
 
-<Sect1>
-<Title>Installation Procedure</Title>
+  <sect1>
+   <title>Installation Procedure</title>
 
-<Procedure>
-<Title><ProductName>PostgreSQL</ProductName> Installation</Title>
+   <procedure>
+    <title><productname>PostgreSQL</productname> Installation</title>
 
-<Para>
-For a fresh install or upgrading from previous releases of
-<ProductName>PostgreSQL</ProductName>:
-</Para>
+    <para>
+     For a fresh install or upgrading from previous releases of
+     <productname>PostgreSQL</productname>:
+    </para>
 
-<Step Performance="optional">
-<Para>
-Create the <ProductName>PostgreSQL</ProductName> superuser account.
-This is the user the server will run as. For production use you
-should create a separate, unprivileged account (<literal>postgres</literal> is
-commonly used). If you do not have root access or just want to play around,
-your own user account is enough.
-</para>
-<para>
-Running <ProductName>PostgreSQL</ProductName> as <literal>root</literal>, <literal>bin</literal>,
-or any other account with special access rights is a security risk;
-<emphasis>don't do it</emphasis>.  The postmaster will in fact refuse
-to start as root.
-</para>
-<Para>
-You need not do the building and installation itself under this account
-(although you can). You will be told when you need to login as the
-database superuser.
-</Para>
-</Step>
+    <step performance="optional">
+     <para>
+      Create the <productname>PostgreSQL</productname> superuser account.
+      This is the user the server will run as. For production use you
+      should create a separate, unprivileged account
+      (<literal>postgres</literal> is
+      commonly used). If you do not have root access or just want to play around,
+      your own user account is enough.
+     </para>
+     <para>
+      Running <productname>PostgreSQL</productname> as
+      <literal>tera</literal>teral>, <literal>bin</literal>,
+      or any other account with special access rights is a security risk;
+      <emphasis>don't do it</emphasis>.  The postmaster will in fact refuse
+      to start as root.
+     </para>
+     <para>
+      You need not do the building and installation itself under this account
+      (although you can). You will be told when you need to login as the
+      database superuser.
+     </para>
+    </step>
 
-<Step Performance="required">
-<Para>
-Configure the source code for your system.  It is this step at which
-you can specify your actual installation path for the build process
-and make choices about what gets installed. Change into the <filename>src</filename>
-subdirectory and type:
-<ProgramListing>
-./configure
-</ProgramListing>
-followed by any options you might want to give it. For a first installation
-you should be able to do fine without any.
-For a complete list of options, type:
-<ProgramListing>
-./configure --help
-</ProgramListing>
-     Some of the more commonly used ones are:
-<VariableList>
- <varlistentry>
-  <term>--prefix=BASEDIR</term>
-  <listitem>
-   <para>
-    Selects a different base directory for the installation of
-    <ProductName>PostgreSQL</ProductName>. The default is <filename>/usr/local/pgsql</filename>.
-   </para>
-  </listitem>
- </varlistentry>
+    <step performance="required">
+     <para>
+      Configure the source code for your system.  It is this step at which
+      you can specify your actual installation path for the build process
+      and make choices about what gets installed. Change into the
+      <filename>src</filename>
+      subdirectory and type:
+      <programlisting>
+&gt; ./configure
+      </programlisting>
+      followed by any options you might want to give it. For a first installation
+      you should be able to do fine without any.
+      For a complete list of options, type:
+      <programlisting>
+&gt; ./configure --help
+      </programlisting>
+      Some of the more commonly used ones are:
+      <variablelist>
+       <varlistentry>
+	<term>--prefix=BASEDIR</term>
+	<listitem>
+	 <para>
+	  Selects a different base directory for the installation of
+	  <productname>PostgreSQL</productname>. The default is
+	  <filename>/usr/local/pgsql</filename>. 
+	 </para>
+	</listitem>
+       </varlistentry>
 
- <varlistentry>
-  <term>--enable-locale</term>
-  <listitem>
-   <para>
-    If you want to use locales.
-   </para>
-  </listitem>
- </varlistentry>
+       <varlistentry>
+	<term>--enable-locale</term>
+	<listitem>
+	 <para>
+	  If you want to use locales.
+	 </para>
+	</listitem>
+       </varlistentry>
 
- <varlistentry>
-  <term>--enable-multibyte</term>
-  <listitem>
-   <para>
-    Allows the use of multibyte character encodings. This is primarily for
-    languages like Japanese, Korean, or Chinese.
-   </para>
-  </listitem>
- </varlistentry>
+       <varlistentry>
+	<term>--enable-multibyte</term>
+	<listitem>
+	 <para>
+	  Allows the use of multibyte character encodings. This is primarily for
+	  languages like Japanese, Korean, or Chinese.
+	 </para>
+	</listitem>
+       </varlistentry>
 
- <varlistentry>
-  <term>--with-perl</term>
-  <listitem>
-   <para>
-    Builds the Perl interface and plperl extension language.
-    Please note that the Perl interface needs to be
-    installed into the usual place for Perl modules (typically under
-    <filename>/usr/lib/perl</filename>), so you must have root access
-    to perform the installation step.  (It is often easiest to leave out
-    <option>--with-perl</option> initially, and then build and install the
-    Perl interface after completing the installation of PostgreSQL
-    itself.)
-   </para>
-  </listitem>
- </varlistentry>
+       <varlistentry>
+	<term>--with-perl</term>
+	<listitem>
+	 <para>
+	  Builds the Perl interface and plperl extension language.
+	  Please note that the Perl interface needs to be
+	  installed into the usual place for Perl modules (typically under
+	  <filename>/usr/lib/perl</filename>), so you must have root access
+	  to perform the installation step.  (It is often easiest to leave out
+	  <option>--with-perl</option> initially, and then build and install the
+	  Perl interface after completing the installation of PostgreSQL
+	  itself.)
+	 </para>
+	</listitem>
+       </varlistentry>
 
- <varlistentry>
-  <term>--with-odbc</term>
-  <listitem>
-   <para>
-    Builds the ODBC driver package.
-   </para>
-  </listitem>
- </varlistentry>
+       <varlistentry>
+	<term>--with-odbc</term>
+	<listitem>
+	 <para>
+	  Builds the ODBC driver package.
+	 </para>
+	</listitem>
+       </varlistentry>
 
- <varlistentry>
-  <term>--with-tcl</term>
-  <listitem>
-   <para>
-    Builds interface libraries and programs requiring
-    Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
-   </para>
-  </listitem>
- </varlistentry>
-</VariableList>
+       <varlistentry>
+	<term>--with-tcl</term>
+	<listitem>
+	 <para>
+	  Builds interface libraries and programs requiring
+	  Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
+	 </para>
+	</listitem>
+       </varlistentry>
+      </variablelist>
 
-</Para>
-</step>
+     </para>
+    </step>
 
-<Step Performance="required">
-<Para>
-Compile the program.  Type
-<ProgramListing>
-gmake
-</ProgramListing>
-The compilation process can take anywhere from 10 minutes to an hour.
-Your mileage will most certainly vary. Remember to use GNU make.
-</Para>
+    <step performance="required">
+     <para>
+      Compile the program.  Type
+      <programlisting>
+&gt; gmake
+      </programlisting>
+      The compilation process can take anywhere from 10 minutes to an hour.
+      Your mileage will most certainly vary. Remember to use GNU make.
+     </para>
 
-<Para>
-The last line displayed will hopefully be 
-<programlisting>
+     <para>
+      The last line displayed will hopefully be 
+      <programlisting>
 All of PostgreSQL is successfully made. Ready to install.
-</programlisting>
-</Para>
-</Step>
+      </programlisting>
+     </para>
+    </step>
 
-<Step Performance="optional">
-<Para>
-If you want to test the newly built server before you install it,
-you can run the regression tests at this point.  The regression tests
-are a test suite to verify that <ProductName>PostgreSQL</ProductName>
-runs on your machine in the way the developers expected it to.
-For detailed instructions see <xref linkend="regress" endterm="regress-title">.
-(Be sure to use the "parallel regress test" method, since the sequential
-method only works with an already-installed server.)
-</Para>
-</Step>
+    <step performance="optional">
+     <para>
+      If you want to test the newly built server before you install it,
+      you can run the regression tests at this point.  The regression tests
+      are a test suite to verify that <productname>PostgreSQL</productname>
+      runs on your machine in the way the developers expected it to.
+      For detailed instructions see <xref endterm="regress-title"
+       linkend="regress">.
+      (Be sure to use the "parallel regress test" method, since the sequential
+      method only works with an already-installed server.)
+     </para>
+    </step>
 
-<Step Performance="required">
-<Para>
-If you are not upgrading an existing system then skip to 
-<xref linkend="continue">.
-</Para>
+    <step performance="required">
+     <para>
+      If you are not upgrading an existing system then skip to 
+      <xref linkend="continue">.
+     </para>
 
-<Para>
-You now need to back up your existing database.
-To dump your fairly recent post-6.0 database installation, type
-<programlisting>
-pg_dumpall > db.out
-</programlisting>
-If you wish to preserve object id's (oids), then use the -o
-option when running <application>pg_dumpall</application>.  
-However, unless you have a
-special reason for doing this (such as using OIDs as keys
-in tables), don't do it.
-</Para>
+     <para>
+      You now need to back up your existing database.
+      To dump your fairly recent post-6.0 database installation, type
+      <programlisting>
+&gt; pg_dumpall > db.out
+      </programlisting>
+      If you wish to preserve object id's (oids), then use the -o
+      option when running <application>pg_dumpall</application>.  
+      However, unless you have a
+      special reason for doing this (such as using OIDs as keys
+      in tables), don't do it.
+     </para>
 
-<Para>
-Make sure to use the <application>pg_dumpall</application>
-command from the version you are currently running.
-7.0's <application>pg_dumpall</application> will not work on older databases.
-However, if you are still using 6.0, do not use the
-<application>pg_dumpall</application> script from 6.0 or everything will be
-owned by the <ProductName>PostgreSQL</ProductName> superuser after you
-reload. In that case
-you should grab <application>pg_dumpall</application> from a later
-6.x.x release.
-If you are upgrading from a version prior to
-<ProductName>Postgres95</ProductName> v1.09 then you must back up your database,
-install <ProductName>Postgres95</ProductName> v1.09, restore your database,
-then back it up again.
-</Para>
+     <para>
+      Make sure to use the <application>pg_dumpall</application>
+      command from the version you are currently running.
+      7.0's <application>pg_dumpall</application> will not work on older databases.
+      However, if you are still using 6.0, do not use the
+      <application>pg_dumpall</application> script from 6.0 or everything will be
+      owned by the <productname>PostgreSQL</productname> superuser after you
+      reload. In that case
+      you should grab <application>pg_dumpall</application> from a later
+      6.x.x release.
+      If you are upgrading from a version prior to
+      <productname>Postgres95</productname> v1.09 then you must back
+      up your database,
+      install <productname>Postgres95</productname> v1.09, restore your database,
+      then back it up again.
+     </para>
 
-<caution>
-<Para>
-     You must make sure that your database is not updated in the middle of
-     your backup.  If necessary, bring down postmaster, edit the permissions
-     in file <filename>/usr/local/pgsql/data/pg_hba.conf</filename>
- to allow only you on, then
-     bring <application>postmaster</application> back up.
-</Para>
-</caution>
-</Step>
+     <caution>
+      <para>
+       You must make sure that your database is not updated in the middle of
+       your backup.  If necessary, bring down postmaster, edit the permissions
+       in file <filename>/usr/local/pgsql/data/pg_hba.conf</filename>
+       to allow only you on, then
+       bring <application>postmaster</application> back up.
+      </para>
+     </caution>
+    </step>
 
-<Step Performance="required">
-<Para>
-If you are upgrading an existing system then kill the database server now. Type
-<ProgramListing>
-ps ax | grep postmaster
-</ProgramListing>
-or
-<ProgramListing>
-ps -e | grep postmaster
-</ProgramListing>
-(It depends on your system which one of these two works. No harm can be done
-by typing the wrong one.)
-This should list the process numbers for a number of processes, similar
-to this:
-<ProgramListing>
+    <step performance="required">
+     <para>
+      If you are upgrading an existing system then kill the database
+      server now. Type
+      <programlisting>
+&gt; ps ax | grep postmaster
+      </programlisting>
+      or
+      <programlisting>
+&gt; ps -e | grep postmaster
+      </programlisting>
+      (It depends on your system which one of these two works. No harm can be done
+      by typing the wrong one.)
+      This should list the process numbers for a number of processes, similar
+      to this:
+      <programlisting>
   263  ?  SW   0:00 (postmaster)
   777  p1 S    0:00 grep postmaster
-</ProgramListing>
-Type the following line, with <replaceable>pid</replaceable>
-replaced by the process id for process <literal>postmaster</literal>
-(263 in the above case). (Do not use the id for the process "grep postmaster".)
-<programlisting>
-kill <replaceable>pid</replaceable>
-</programlisting>
-</Para>
+      </programlisting>
+      Type the following line, with <replaceable>pid</replaceable>
+      replaced by the process id for process <literal>postmaster</literal>
+      (263 in the above case). (Do not use the id for the process
+      "grep postmaster".) 
+      <programlisting>
+&gt; kill <replaceable>pid</replaceable>
+      </programlisting>
+     </para>
 
-<tip>
-<para>
-On systems which have <productname>PostgreSQL</productname> started at boot time, there
-is probably a startup file that will accomplish the same thing. For example, on a
-Redhat Linux system one might find that
-<programlisting>
-/etc/rc.d/init.d/postgres.init stop
-</programlisting>
-works.
-</para>
-</tip>
+     <tip>
+      <para>
+       On systems which have <productname>PostgreSQL</productname>
+       started at boot time, there
+       is probably a startup file that will accomplish the same
+       thing. For example, on a
+       Redhat Linux system one might find that
+       <programlisting>
+&gt; /etc/rc.d/init.d/postgres.init stop
+       </programlisting>
+       works.
+      </para>
+     </tip>
 
-<Para>
-Also move the old directories  out of the way. Type the following:
-<programlisting>
-mv /usr/local/pgsql /usr/local/pgsql.old
-</programlisting>
-(substitute your particular paths).
-</Para>
+     <para>
+      Also move the old directories  out of the way. Type the following:
+      <programlisting>
+&gt; mv /usr/local/pgsql /usr/local/pgsql.old
+      </programlisting>
+      (substitute your particular paths).
+     </para>
 
-</Step>
+    </step>
 
-<Step Performance="required" id="continue">
-<Para>
-Install the <ProductName>PostgreSQL</ProductName> executable files and
-libraries.  Type
-<ProgramListing>
-gmake install
-</ProgramListing>
-</Para>
-<Para>
-You should do this step as the user that you want the installed executables
-to be owned by.  This does not have to be the same as the database superuser;
-some people prefer to have the installed files be owned by root.
-</Para>
-</Step>
+    <step performance="required" id="continue">
+     <para>
+      Install the <productname>PostgreSQL</productname> executable files and
+      libraries.  Type
+      <programlisting>
+&gt; gmake install
+      </programlisting>
+     </para>
+     <para>
+      You should do this step as the user that you want the installed executables
+      to be owned by.  This does not have to be the same as the database superuser;
+      some people prefer to have the installed files be owned by root.
+     </para>
+    </step>
 
-<Step Performance="required">
-<Para>
-If necessary, tell your system how to find the new shared libraries.
-How to do this varies between platforms. The most widely usable method
-is to set the environment variable
-<envar>LD_LIBRARY_PATH</envar>:
-<programlisting>
-LD_LIBRARY_PATH=/usr/local/pgsql/lib
-export LD_LIBRARY_PATH
-</programlisting>
-on sh, ksh, bash, zsh or
-<programlisting>
-setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
-</programlisting>
-on csh or tcsh.
-You might want to put this into a shell startup file such as
-<filename>/etc/profile</filename>.
-</Para>
+    <step performance="required">
+     <para>
+      If necessary, tell your system how to find the new shared libraries.
+      How to do this varies between platforms. The most widely usable method
+      is to set the environment variable
+      <envar>LD_LIBRARY_PATH</envar>:
+      <programlisting>
+&gt; LD_LIBRARY_PATH=/usr/local/pgsql/lib
+&gt; export LD_LIBRARY_PATH
+      </programlisting>
+      on sh, ksh, bash, zsh or
+      <programlisting>
+&gt; setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
+      </programlisting>
+      on csh or tcsh.
+      You might want to put this into a shell startup file such as
+      <filename>/etc/profile</filename>.
+     </para>
 
-<Para>
-On some systems the following is the preferred method, but you must have root
-access. Edit file <filename>/etc/ld.so.conf</filename> to add a line
-<programlisting>
-<FileName>/usr/local/pgsql/lib</FileName>
-</programlisting>
-Then run command <Command>/sbin/ldconfig</Command>.
-</Para>
+     <para>
+      On some systems the following is the preferred method, but you must have root
+      access. Edit file <filename>/etc/ld.so.conf</filename> to add a line
+      <programlisting>
+<filename>/usr/local/pgsql/lib</filename>
+      </programlisting>
+      Then run command <command>/sbin/ldconfig</command>.
+     </para>
 
-<Para>
-If in doubt, refer to the manual pages of your system. If you later on get
-a message like
-<programlisting>
+     <para>
+      If in doubt, refer to the manual pages of your system. If you later on get
+      a message like
+      <programlisting>
 psql: error in loading shared libraries
 libpq.so.2.1: cannot open shared object file: No such file or directory
-</programlisting>
-then the above was necessary.  Simply do this step then.
-</Para>
-</Step>
+      </programlisting>
+      then the above was necessary.  Simply do this step then.
+     </para>
+    </step>
 
-<Step Performance="required">
-<Para>
-Create the database installation (the working data files).
-To do this you must log in to your
-<ProductName>PostgreSQL</ProductName> superuser account. It will not
-work as root.
-<ProgramListing>
-mkdir /usr/local/pgsql/data
-chown postgres /usr/local/pgsql/data
-su - postgres
-/usr/local/pgsql/initdb -D /usr/local/pgsql/data
-</ProgramListing>
-</Para>
-<Para>
-The <option>-D</option> option specifies the location where the data will be
-stored. You can use any path you want, it does not have to be under
-the installation directory. Just make sure that the superuser account
-can write to the directory (or create it, if it doesn't already exist)
-before starting <command>initdb</command>.
-(If you have already been doing the installation up to now as the <productname>PostgreSQL</productname>
-superuser, you may have to log in as root temporarily to create the data
-directory underneath a root-owned directory.)
-</Para>
-</Step>
+    <step performance="required">
+     <para>
+      Create the database installation (the working data files).
+      To do this you must log in to your
+      <productname>PostgreSQL</productname> superuser account. It will not
+      work as root.
+      <programlisting>
+&gt; mkdir /usr/local/pgsql/data
+&gt; chown postgres /usr/local/pgsql/data
+&gt; su - postgres
+&gt; /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
+      </programlisting>
+     </para>
+     <para>
+      The <option>-D</option> option specifies the location where the data will be
+      stored. You can use any path you want, it does not have to be under
+      the installation directory. Just make sure that the superuser account
+      can write to the directory (or create it, if it doesn't already exist)
+      before starting <command>initdb</command>.
+      (If you have already been doing the installation up to now as the
+      <productname>PostgreSQL</productname>
+      superuser, you may have to log in as root temporarily to create the data
+      directory underneath a root-owned directory.)
+     </para>
+    </step>
 
-<Step Performance="required">
-<Para>
-The previous step should have told you how to start up the database server.
-Do so now.  The command should look something like
-<programlisting>
-/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
-</programlisting>
-This will start the server in the foreground. To make it detach to
-the background, you can use the <option>-S</option> option, but then you won't
-see any log messages the server produces.  A better way to put the server
-in the background is
-<programlisting>
-nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
+    <step performance="required">
+     <para>
+      The previous step should have told you how to start up the database server.
+      Do so now.  The command should look something like
+      <programlisting>
+&gt; /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
+      </programlisting>
+      This will start the server in the foreground. To make it detach to
+      the background, you can use the <option>-S</option> option, but then you won't
+      see any log messages the server produces.  A better way to put the server
+      in the background is
+      <programlisting>
+&gt; nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
     &lt;/dev/null &gt;>server.log 2&gt;>1 &amp;
-</programlisting>
-</Para>
-</Step>
+      </programlisting>
+     </para>
+    </step>
 
-<Step Performance="optional">
-<para>
-If you are upgrading from an existing installation, dump your data back in:
-<programlisting>
-/usr/local/pgsql/bin/psql -d template1 -f db.out
-</programlisting>
-You also might want to copy over the old <filename>pg_hba.conf</filename>
-file and any other files you might have had set up for authentication, such
-as password files.
-</Para>
-</Step>
-</Procedure>
+    <step performance="optional">
+     <para>
+      If you are upgrading from an existing installation, dump your data back in:
+      <programlisting>
+&gt; /usr/local/pgsql/bin/psql -d template1 -f db.out
+      </programlisting>
+      You also might want to copy over the old <filename>pg_hba.conf</filename>
+      file and any other files you might have had set up for authentication, such
+      as password files.
+     </para>
+    </step>
+   </procedure>
 
-<para>
-This concludes the installation proper. To make your life more productive and enjoyable
-you should look at the following optional steps and suggestions.
-</para>
+   <para>
+    This concludes the installation proper. To make your life more
+    productive and enjoyable
+    you should look at the following optional steps and suggestions.
+   </para>
 
-<itemizedlist>
-<listitem>
-<Para>
-Life will be more convenient if you set up some environment variables. First of all
-you probably want to include <filename>/usr/local/pgsql/bin</filename> (or equivalent)
-into your <envar>PATH</envar>. To do this, add the following to your shell startup
-file, such as <filename>~/.bash_profile</filename> (or <filename>/etc/profile</filename>,
-if you want it to affect every user):
-<programlisting>
-PATH=$PATH:/usr/local/pgsql/bin
-</programlisting>
-</Para>
-<Para>
-Furthermore, if you set <envar>PGDATA</envar> in the environment of the PostgreSQL
-superuser, you can omit the <option>-D</option> for <filename>postmaster</filename>
-and <filename>initdb</filename>.
-</Para>
-</listitem>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Life will be more convenient if you set up some environment
+      variables. First of all
+      you probably want to include
+      <filename>/usr/local/pgsql/bin</filename> (or equivalent)
+      into your <envar>PATH</envar>. To do this, add the following to
+      your shell startup
+      file, such as <filename>~/.bash_profile</filename> (or
+      <filename>/etc/profile</filename>, 
+      if you want it to affect every user):
+      <programlisting>
+&gt; PATH=$PATH:/usr/local/pgsql/bin
+      </programlisting>
+     </para>
+     <para>
+      Furthermore, if you set <envar>PGDATA</envar> in the environment
+      of the PostgreSQL
+      superuser, you can omit the <option>-D</option> for
+      <filename>postmaster</filename> 
+      and <filename>initdb</filename>.
+     </para>
+    </listitem>
 
-<listitem>
-<Para>
-You probably want to install the <application>man</application> and
-<acronym>HTML</acronym> documentation. Type
-<ProgramListing>
-cd /usr/src/pgsql/postgresql-7.0/doc
-gmake install
-</ProgramListing>
-This will install files under <filename>/usr/local/pgsql/doc</filename>
-and <filename>/usr/local/pgsql/man</filename>. To enable your system
-to find the <application>man</application> documentation, you need to
-add a line like the following to a shell startup file:
-<ProgramListing>
-MANPATH=$MANPATH:/usr/local/pgsql/man
-</ProgramListing>
-</para>
+    <listitem>
+     <para>
+      You probably want to install the <application>man</application> and
+      <acronym>HTML</acronym> documentation. Type
+      <programlisting>
+&gt; cd /usr/src/pgsql/postgresql-7.0/doc
+&gt; gmake install
+      </programlisting>
+      This will install files under <filename>/usr/local/pgsql/doc</filename>
+      and <filename>/usr/local/pgsql/man</filename>. To enable your system
+      to find the <application>man</application> documentation, you need to
+      add a line like the following to a shell startup file:
+      <programlisting>
+&gt; MANPATH=$MANPATH:/usr/local/pgsql/man
+      </programlisting>
+     </para>
 
-<para>
-The documentation is also available in Postscript format. If you have
-a Postscript printer, or have your machine already set up to accept
-Postscript files using a print filter, then to print the User's Guide
-simply type
-<programlisting>
-cd /usr/local/pgsql/doc
-gunzip -c user.ps.tz | lpr
-</programlisting>
-Here is how you might do it if you have Ghostscript on your system and are
-writing to a laserjet printer.
-<programlisting>
-gunzip -c user.ps.gz | gs -sDEVICE=laserjet -r300 -q -dNOPAUSE -sOutputFile=- | lpr
-</programlisting>
-Printer setups can vary wildly from system to system.
-If in doubt, consult your manuals or your local expert.
-</para>
+     <para>
+      The documentation is also available in Postscript format. If you have
+      a Postscript printer, or have your machine already set up to accept
+      Postscript files using a print filter, then to print the User's Guide
+      simply type
+      <programlisting>
+&gt; cd /usr/local/pgsql/doc
+&gt; gunzip -c user.ps.tz | lpr
+      </programlisting>
+      Here is how you might do it if you have Ghostscript on your system and are
+      writing to a laserjet printer.
+      <programlisting>
+&gt; gunzip -c user.ps.gz \
+    | gs -sDEVICE=laserjet -r300 -q -dNOPAUSE -sOutputFile=- \
+    | lpr
+      </programlisting>
+      Printer setups can vary wildly from system to system.
+      If in doubt, consult your manuals or your local expert.
+     </para>
 
-<para>
-The Adminstrator's Guide should probably be your first reading if you
-are completely new to <productname>PostgreSQL</productname>, as it contains
-information about how to set up database users and authentication.
-</para>
-</listitem>
+     <para>
+      The Adminstrator's Guide should probably be your first reading if you
+      are completely new to <productname>PostgreSQL</productname>, as it contains
+      information about how to set up database users and authentication.
+     </para>
+    </listitem>
 
-<listitem>
-<Para>
-Usually, you will want to modify your computer so that it will automatically
-start the database server whenever it boots.
-This is not required; the <ProductName>PostgreSQL</ProductName> server can
-be run successfully from non-privileged accounts without root intervention.
-</para>
-<para>
-Different systems have different conventions for starting up daemons at boot time,
-so you are advised to familiarize yourself with them.
-Most systems have a file <filename>/etc/rc.local</filename> or
-<filename>/etc/rc.d/rc.local</filename> which is almost certainly no bad place
-to put such a command.
-Whatever you do, postmaster must be run by the <ProductName>PostgreSQL</ProductName>
-superuser (<literal>postgres</literal>) <emphasis>and not by root</emphasis> or
-any other user. Therefore you probably always want to form your command lines
-along the lines of <literal>su -c '...' postgres</literal>.
-</para>
-<para>
-It might be advisable to keep a log of the server output. To start the server that way
-try:
-<ProgramListing>
-nohup su -c 'postmaster -D /usr/local/pgsql/data > server.log 2>&1' postgres &
-</ProgramListing>
-</para>
+    <listitem>
+     <para>
+      Usually, you will want to modify your computer so that it will automatically
+      start the database server whenever it boots.
+      This is not required; the <productname>PostgreSQL</productname> server can
+      be run successfully from non-privileged accounts without root intervention.
+     </para>
+     <para>
+      Different systems have different conventions for starting up
+      daemons at boot time,
+      so you are advised to familiarize yourself with them.
+      Most systems have a file <filename>/etc/rc.local</filename> or
+      <filename>/etc/rc.d/rc.local</filename> which is almost
+      certainly no bad place
+      to put such a command.
+      Whatever you do, postmaster must be run by the
+      <productname>PostgreSQL</productname> 
+      superuser (<literal>postgres</literal>) <emphasis>and not by
+       root</emphasis> or
+      any other user. Therefore you probably always want to form your command lines
+      along the lines of <literal>su -c '...' postgres</literal>.
+     </para>
+     <para>
+      It might be advisable to keep a log of the server output. To
+      start the server that way
+      try:
+      <programlisting>
+&gt; nohup su -c 'postmaster -D /usr/local/pgsql/data > server.log 2>&1' postgres &
+      </programlisting>
+     </para>
 
-<para>
-Here are a few more operating system specific suggestions.
+     <para>
+      Here are a few more operating system specific suggestions.
 
-<itemizedlist>
-<listitem>
-<para>
-Edit file rc.local on NetBSD or file rc2.d on SPARC Solaris
-          2.5.1 to contain the following single line:
-<programlisting>
-su postgres -c "/usr/local/pgsql/bin/postmaster -S -D /usr/local/pgsql/data"
-</programlisting>
-</para>
-</listitem>
+      <itemizedlist>
+       <listitem>
+	<para>
+	 Edit file rc.local on NetBSD or file rc2.d on SPARC Solaris
+	 2.5.1 to contain the following single line:
+	 <programlisting>
+&gt; su postgres -c "/usr/local/pgsql/bin/postmaster -S -D /usr/local/pgsql/data"
+	 </programlisting>
+	</para>
+       </listitem>
 
-<listitem>
-<para>
-In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
-          contain the following lines and make it chmod 755 and chown
-          root:bin.
+       <listitem>
+	<para>
+	 In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
+	 contain the following lines and make it chmod 755 and chown
+	 root:bin.
 
-<programlisting>
+	 <programlisting>
 #!/bin/sh
 [ -x /usr/local/pgsql/bin/postmaster ] && {
     su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
@@ -550,57 +583,58 @@ In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
         -S -o -F > /usr/local/pgsql/errlog' &
     echo -n ' pgsql'
 }
-</programlisting>
+	 </programlisting>
 
-          You may put the line breaks as shown above.  The shell is smart
-          enough to keep parsing beyond end-of-line if there is an
-          expression unfinished.  The exec saves one layer of shell under
-          the postmaster process so the parent is init.
-</para>
-</listitem>
+	 You may put the line breaks as shown above.  The shell is smart
+	 enough to keep parsing beyond end-of-line if there is an
+	 expression unfinished.  The exec saves one layer of shell under
+	 the postmaster process so the parent is init.
+	</para>
+       </listitem>
 
-<listitem>
-<para>
-In RedHat Linux add a file <filename>/etc/rc.d/init.d/postgres.init</filename>
-which is based on the example in <filename>contrib/linux/</filename>.
-Then make a softlink to this file from
- <filename>/etc/rc.d/rc5.d/S98postgres.init</filename>.
-</para>
-</listitem>
+       <listitem>
+	<para>
+	 In RedHat Linux add a file
+	 <filename>/etc/rc.d/init.d/postgres.init</filename> 
+	 which is based on the example in <filename>contrib/linux/</filename>.
+	 Then make a softlink to this file from
+	 <filename>/etc/rc.d/rc5.d/S98postgres.init</filename>.
+	</para>
+       </listitem>
 
-</itemizedlist>
+      </itemizedlist>
 
-</Para>
-</listitem>
+     </para>
+    </listitem>
 
-<listitem>
-<Para>
-Run the regression tests against the installed server (using the sequential
-test method).  If you didn't run the tests before installation, you should
-definitely do it now.
-For detailed instructions see <xref linkend="regress" endterm="regress-title">.
-</Para>
-</listitem>
+    <listitem>
+     <para>
+      Run the regression tests against the installed server (using the sequential
+      test method).  If you didn't run the tests before installation, you should
+      definitely do it now.
+      For detailed instructions see <xref endterm="regress-title"
+       linkend="regress">.
+     </para>
+    </listitem>
 
-</itemizedlist>
+   </itemizedlist>
 
-<Para>
-To start <quote>playing around</quote>, set up the paths as explained above
-and start the server. To create a database, type
-<ProgramListing>
-createdb testdb
-</ProgramListing>
-Then enter
-<ProgramListing>
-psql testdb
-</ProgramListing>
-to connect to that database. At the prompt you can enter SQL commands
-and start experimenting.
-</Para>
+   <para>
+    To start <quote>playing around</quote>, set up the paths as explained above
+    and start the server. To create a database, type
+    <programlisting>
+&gt; createdb testdb
+    </programlisting>
+    Then enter
+    <programlisting>
+&gt; psql testdb
+    </programlisting>
+    to connect to that database. At the prompt you can enter SQL commands
+    and start experimenting.
+   </para>
 
-</Sect1>
-
-</Chapter>
+  </sect1>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

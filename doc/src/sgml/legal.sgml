@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.7 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.8 2000/04/07 13:30:58 thomas Exp $
 -->
 
 <sect1 id="copyright">
@@ -7,7 +7,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.7 2000/03/31 03:27:40 thomas
 
  <para>
   <productname>PostgreSQL</productname> is Copyright &copy; 1996-2000
-  by the PostgreSQL Inc.
+  by PostgreSQL Inc.
   and is distributed under the terms of the Berkeley license.
  </para>
 
@@ -35,13 +35,21 @@ $Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.7 2000/03/31 03:27:40 thomas
   maintainance, support, updates, enhancements, or modifications.
  </para>
 
+<!--
+How to keep track of all the trademarks? I'll try the strategy used at
+www.qnx.com - thomas
  <para>
   <acronym>Unix</acronym> is a trademark of X/Open, Ltd.  Sun4,  SPARC,  SunOS
   and  Solaris  are trademarks of Sun Microsystems, Inc.  DEC,
-  DECstation, Alpha AXP and ULTRIX are trademarks  of  Digital
+  DECstation, Alpha AXP and ULTRIX are trademarks  of Compaq, formerly Digital
   Equipment   Corp.   PA-RISC  and  HP-UX  are  trademarks  of
   Hewlett-Packard Co.  OSF/1 is a trademark of the Open  
   Software Foundation.
+ </para>
+-->
+
+ <para>
+  All trademarks are the property of their respective owners.
  </para>
 </sect1>
 

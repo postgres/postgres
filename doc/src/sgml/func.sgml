@@ -88,10 +88,10 @@
 	<entry>abs(-17.4)</entry>
        </row>
        <row>
-	<entry>sqrt(float8)</entry>
+	<entry>degrees(float8)</entry>
 	<entry>float8</entry>
-	<entry>square root</entry>
-	<entry>sqrt(2.0)</entry>
+	<entry>radians to degrees</entry>
+	<entry>degrees(0.5)</entry>
        </row>
        <row>
 	<entry>exp(float8)</entry>
@@ -112,16 +112,34 @@
 	<entry>log(2.0)</entry>
        </row>
        <row>
+	<entry>pi()</entry>
+	<entry>float8</entry>
+	<entry>fundamental constant</entry>
+	<entry>pi()</entry>
+       </row>
+       <row>
 	<entry>pow(float8,float8)</entry>
 	<entry>float8</entry>
 	<entry>raise a number to the specified exponent</entry>
 	<entry>pow(2.0, 16.0)</entry>
        </row>
        <row>
+	<entry>radians(float8)</entry>
+	<entry>float8</entry>
+	<entry>degrees to radians</entry>
+	<entry>radians(45.0)</entry>
+       </row>
+       <row>
 	<entry>round(float8)</entry>
 	<entry>float8</entry>
 	<entry>round to nearest integer</entry>
 	<entry>round(42.4)</entry>
+       </row>
+       <row>
+	<entry>sqrt(float8)</entry>
+	<entry>float8</entry>
+	<entry>square root</entry>
+	<entry>sqrt(2.0)</entry>
        </row>
        <row>
 	<entry>trunc(float8)</entry>
@@ -156,6 +174,88 @@
     Most of the functions listed for FLOAT8 are also available for
     type NUMERIC.
    </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Transcendental Mathematical Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>acos(float8)</entry>
+	<entry>float8</entry>
+	<entry>arccosine</entry>
+	<entry>acos(10.0)</entry>
+       </row>
+       <row>
+	<entry>asin(float8)</entry>
+	<entry>float8</entry>
+	<entry>arcsine</entry>
+	<entry>asin(10.0)</entry>
+       </row>
+       <row>
+	<entry>atan(float8)</entry>
+	<entry>float8</entry>
+	<entry>arctangent</entry>
+	<entry>atan(10.0)</entry>
+       </row>
+       <row>
+	<entry>atan2(float8,float8)</entry>
+	<entry>float8</entry>
+	<entry>arctangent</entry>
+	<entry>atan3(10.0,20.0)</entry>
+       </row>
+       <row>
+	<entry>cos(float8)</entry>
+	<entry>float8</entry>
+	<entry>cosine</entry>
+	<entry>cos(0.4)</entry>
+       </row>
+       <row>
+	<entry>cot(float8)</entry>
+	<entry>float8</entry>
+	<entry>cotangent</entry>
+	<entry>cot(20.0)</entry>
+       </row>
+       <row>
+	<entry>sin(float8)</entry>
+	<entry>float8</entry>
+	<entry>sine</entry>
+	<entry>cos(0.4)</entry>
+       </row>
+       <row>
+	<entry>cos(float8)</entry>
+	<entry>float8</entry>
+	<entry>cosine</entry>
+	<entry>cos(0.4)</entry>
+       </row>
+       <row>
+	<entry>cos(float8)</entry>
+	<entry>float8</entry>
+	<entry>cosine</entry>
+	<entry>cos(0.4)</entry>
+       </row>
+       <row>
+	<entry>cos(float8)</entry>
+	<entry>float8</entry>
+	<entry>cosine</entry>
+	<entry>cos(0.4)</entry>
+       </row>
+       <row>
+	<entry>cos(float8)</entry>
+	<entry>float8</entry>
+	<entry>cosine</entry>
+	<entry>cos(0.4)</entry>
+       </row>
+
+
   </sect1>
 
   <sect1>

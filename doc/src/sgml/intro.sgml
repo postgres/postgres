@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.10 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.11 2000/04/07 13:30:58 thomas Exp $
 -->
 
  <chapter id="intro">
@@ -16,7 +16,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.10 2000/03/31 03:27:40 thoma
     <productname>Postgres release 4.2</productname></ulink>. 
    The <productname>Postgres</productname> project, 
    led by Professor Michael Stonebraker, was sponsored  by  the
-   Defense  Advanced Research Projects Agency (<acronym>DARPA</acronym>), the
+   Defense  Advanced Research Projects Agency
+   (<acronym>DARPA</acronym>), the
    Army Research Office (<acronym>ARO</acronym>), the National Science  
    Foundation (<acronym>NSF</acronym>), and ESL, Inc.
   </para>
@@ -37,7 +38,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.10 2000/03/31 03:27:40 thoma
     models  in  part  because  of its "Spartan simplicity".
     However, as mentioned, this simplicity often makes  the
     implementation  of  certain applications very difficult.
-    <productname>Postgres</productname> offers  substantial  additional
+    <productname>Postgres</productname> offers  substantial additional
     power  by  incorporating  the following four additional
     basic concepts in such a way that  users  can  easily
     extend the system:
@@ -62,13 +63,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.10 2000/03/31 03:27:40 thoma
    </para>
 
    <para>
-    These features put <productname>Postgres</productname> into the category of databases
-    referred to as <firstterm>object-relational</firstterm>. Note that this is distinct
-    from those referred to as <firstterm>object-oriented</firstterm>, which in general
-    are not as well suited to supporting the traditional relational database languages.
-    So, although <productname>Postgres</productname> has some object-oriented features,
-    it is firmly in the relational database world. In fact, some commercial databases
-    have recently incorporated features pioneered by <productname>Postgres</productname>.
+    These features put <productname>Postgres</productname> into the
+    category of databases referred to as
+    <firstterm>object-relational</firstterm>. Note that this is distinct
+    from those referred to as <firstterm>object-oriented</firstterm>,
+    which in general are not as well suited to supporting the
+    traditional relational database languages.
+    So, although <productname>Postgres</productname> has some
+    object-oriented features, it is firmly in the relational database
+    world. In fact, some commercial databases have recently
+    incorporated features pioneered by <productname>Postgres</productname>.
    </para>
 
   </sect1>

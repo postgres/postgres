@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.8 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.9 2000/04/07 13:30:58 thomas Exp $
 -->
 
 <sect1 id="terminology">
@@ -25,13 +25,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.8 2000/03/31 03:27:41 tho
   binaries and database files.  As the database superuser, all
   protection mechanisms may be bypassed and any data accessed
   arbitrarily.  
-  In addition, the <Productname>Postgres</Productname> superuser is allowed to execute
+  In addition, the <Productname>Postgres</Productname> superuser is
+  allowed to execute
   some support programs which are generally not available to all users.
   Note that the <Productname>Postgres</Productname> superuser is
   <emphasis>not</emphasis>
-  the same as the Unix superuser (which will be referred to as <firstterm>root</firstterm>).
-  The superuser should have a non-zero user identifier (<firstterm>UID</firstterm>)
-  for security reasons.
+  the same as the Unix superuser (which will be referred to as
+  <firstterm>root</firstterm>).
+  The superuser should have a non-zero user identifier
+  (<firstterm>UID</firstterm>) for security reasons.
  </para>
 
  <para>
@@ -82,18 +84,21 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.8 2000/03/31 03:27:41 tho
   In a command synopsis, brackets
   (<quote>[</quote> and <quote>]</quote>) indicate an optional phrase or keyword.
   Anything in braces
-  (<quote>{</quote> and <quote>}</quote>) and containing vertical bars (<quote>|</quote>)
+  (<quote>{</quote> and <quote>}</quote>) and containing vertical bars
+  (<quote>|</quote>)
   indicates that you must choose one.
  </para>
 
  <para>
-  In examples, parentheses (<quote>(</quote> and <quote>)</quote>) are used to group boolean
+  In examples, parentheses (<quote>(</quote> and <quote>)</quote>) are
+  used to group boolean
   expressions.  <quote>|</quote> is the boolean operator OR.
  </para>
 
  <para>
   Examples will show commands executed from various accounts and programs.
-  Commands executed from the root account will be preceeded with <quote>&gt;</quote>.
+  Commands executed from the root account will be preceeded with
+  <quote>&gt;</quote>.
   Commands executed from the <Productname>Postgres</Productname>
   superuser account will be preceeded with <quote>%</quote>, while commands
   executed from an unprivileged user's account will be preceeded with
@@ -104,8 +109,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.8 2000/03/31 03:27:41 tho
 
  <note>
   <para>
-   At the time of writing (<Productname>Postgres</Productname> v6.5) the notation for
-   flagging commands is not universally consistant throughout the documentation set.
+   At the time of writing (<Productname>Postgres</Productname> v7.0)
+   the notation for
+   flagging commands is not universally consistant throughout the
+   documentation set.
    Please report problems to
    <ulink url="mailto:docs@postgresql.org">the Documentation Mailing List</ulink>.
   </para>

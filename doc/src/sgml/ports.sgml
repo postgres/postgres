@@ -32,15 +32,15 @@
        <row>
 	<entry>AIX 4.3.2</entry>
 	<entry>RS6000</entry>
-	<entry>v6.5</entry>
-	<entry>1999-05-26</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-05</entry>
 	<entry>(<ulink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ulink>)</entry>
        </row>
        <row>
-	<entry>BSDI</entry>
+	<entry>BSDI 4.01</entry>
 	<entry>x86</entry>
-	<entry>v6.5</entry>
-	<entry>1999-05-25</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-04</entry>
 	<entry>(<ulink url="mailto:maillist@candle.pha.pa.us">Bruce Momjian</ulink></entry>
        </row>
        <row>
@@ -60,12 +60,11 @@
 	 (<ulink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ulink>)</entry>
        </row>
        <row>
-	<entry>FreeBSD 2.2.x-4.0</entry>
+	<entry>FreeBSD 4.0</entry>
 	<entry>x86</entry>
-	<entry>v6.5</entry>
-	<entry>1999-05-25</entry>
-	<entry>(<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>,
-	 <ulink url="mailto:scrappy@hub.org">Marc Fournier</ulink>)</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-04</entry>
+	<entry>(<ulink url="mailto:scrappy@hub.org">Marc Fournier</ulink>)</entry>
        </row>
        <row>
 	<entry>HPUX</entry>
@@ -136,17 +135,17 @@
 	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
        <row>
-	<entry>Linux 2.0.x</entry>
+	<entry>Linux 2.2.5</entry>
 	<entry>Sparc</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-25</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-02</entry>
 	<entry>(<ulink url="mailto:szybist@boxhill.com">Tom Szybist</ulink>)</entry>
        </row>
        <row>
-	<entry>LinuxPPC R4 2.2.1/libc5</entry>
+	<entry>LinuxPPC R4</entry>
 	<entry>PPC603e</entry>
 	<entry>v7.0</entry>
-	<entry>2000-03-26</entry>
+	<entry>2000-04-04</entry>
 	<entry>Powerbook 2400c
 	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
@@ -250,20 +249,20 @@
 	 (<ulink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ulink>)</entry>
        </row>
        <row>
-	<entry>Windows</entry>
+	<entry>Windows/Win32</entry>
 	<entry>x86</entry>
-	<entry>v6.4</entry>
-	<entry>1999-01-06</entry>
-	<entry>Client-side libraries or ODBC/JDBC. No server yet.
+	<entry>v7.0</entry>
+	<entry>2000-04-02</entry>
+	<entry>Client-side libraries or ODBC/JDBC. No server-side.
 	 (<ulink url="mha@sollentuna.net">Magnus Hagander</ulink></entry>
        </row>
        <row>
-	<entry>Windows NT</entry>
+	<entry>WinNT/Cygwin</entry>
 	<entry>x86</entry>
-	<entry>v6.5</entry>
-	<entry>1999-05-26</entry>
+	<entry>v7.0</entry>
+	<entry>2000-03-30</entry>
 	<entry>Working with the Cygwin library.
-	 (<ulink url="mailto:Dan.Horak@email.cz">Daniel Horak</ulink>) </entry>
+	 (<ulink url="mailto:horak@sit.plzen-city.cz">Daniel Horak</ulink>) </entry>
        </row>
       </tbody>
      </tgroup>
@@ -273,8 +272,9 @@
    <note>
     <para>
      For <productname>Windows NT</productname>, 
-     the server-side port of <productname>Postgres</productname> has recently been
-     accomplished.  The Cygnus library is required to compile it.
+     the server-side port of <productname>Postgres</productname> uses
+     the RedHat/Cygnus <productname>Cygwin</productname> library and
+     toolset. 
     </para>
    </note>
   </sect1>
@@ -289,7 +289,8 @@
    </para>
 
    <para>
-    At the time of publication, the following platforms have been tested:
+    At the time of publication, the following platforms have not been
+    tested for v7.0:
 
     <table tocentry="1">
      <title>Obsolete Platforms</title>

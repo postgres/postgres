@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.9 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.10 2000/04/07 13:30:58 thomas Exp $
 -->
 
  <chapter id="advanced">
@@ -106,10 +106,10 @@ SELECT c.name, c.altitude
     Here the <quote>*</quote> after cities indicates that the query should
     be  run over cities and all classes below cities in the
     inheritance hierarchy.  Many of the  commands  that  we
-    have  already discussed (<command>select</command>,
-    <command>update</command> and <command>delete</command>)
+    have  already discussed (<command>SELECT</command>,
+    <command>UPDATE</command> and <command>DELETE</command>)
     support this <quote>*</quote> notation, as do others, like
-    <command>alter</command>.
+    <command>ALTER</command>.
    </para>
   </sect1>
 
@@ -118,7 +118,8 @@ SELECT c.name, c.altitude
 
    <para>
     One  of  the tenets of the relational model is that the
-    attributes of a relation are atomic.  <productname>Postgres</productname> does not
+    attributes of a relation are atomic.
+    <productname>Postgres</productname> does not
     have  this  restriction; attributes can themselves contain 
     sub-values that can be  accessed  from  the  query
     language.   For example, you can create attributes that
@@ -129,7 +130,8 @@ SELECT c.name, c.altitude
     <title>Arrays</title>
 
     <para>
-     <productname>Postgres</productname> allows attributes of an instance to be defined
+     <productname>Postgres</productname> allows attributes of an
+     instance to be defined
      as  fixed-length  or  variable-length multi-dimensional
      arrays. Arrays of any base type  or  user-defined  type
      can  be created. To illustrate their use, we first create a 
@@ -149,11 +151,14 @@ CREATE TABLE SAL_EMP (
      a  <firstterm>text</firstterm>  string (name), a one-dimensional
      array of <firstterm>int4</firstterm>
      (pay_by_quarter),  which  represents   the   employee's
-     salary by quarter and a two-dimensional array of <firstterm>text</firstterm>
+     salary by quarter and a two-dimensional array of
+     <firstterm>text</firstterm>
      (schedule),  which  represents  the  employee's  weekly
-     schedule.   Now  we  do  some  <firstterm>INSERTS</firstterm>s; note that when
+     schedule.   Now  we  do  some  <firstterm>INSERTS</firstterm>s;
+     note that when
      appending to an array, we  enclose  the  values  within
-     braces  and  separate  them  by commas.  If you know <firstterm>C</firstterm>,
+     braces  and  separate  them  by commas.  If you know
+     <firstterm>C</firstterm>,
      this is not unlike the syntax for  initializing  structures.
 
      <programlisting>
@@ -168,7 +173,8 @@ INSERT INTO SAL_EMP
     '{{"talk", "consult"}, {"meeting"}}');
      </programlisting>
 
-     By  default,  <productname>Postgres</productname>  uses  the "one-based" numbering
+     By  default,  <productname>Postgres</productname>  uses  the
+     "one-based" numbering
      convention for arrays -- that is, an array  of  n  elements
      starts with array[1] and ends with array[n].
      Now,  we  can  run  some queries on SAL_EMP.  First, we
@@ -228,6 +234,11 @@ SELECT SAL_EMP.schedule[1:2][1:1]
    </sect2>
   </sect1>
 
+<!--
+
+We haven't had Time Travel for two or three years, so let's stop
+mentioning it. - thomas 2000-04-02
+
   <sect1>
    <title>Time Travel</title>
 
@@ -240,21 +251,27 @@ SELECT SAL_EMP.schedule[1:2][1:1]
    </para>
 
    <para>
-    New features such as triggers allow one to mimic the behavior of time travel when desired, without
-    incurring the overhead when it is not needed (for most users, this is most of the time).
-    See examples in the <filename>contrib</filename> directory for more information.
+    New features such as triggers allow one to mimic the behavior of
+    time travel when desired, without
+    incurring the overhead when it is not needed (for most users, this
+    is most of the time).
+    See examples in the <filename>contrib</filename> directory for
+    more information.
    </para>
 
    <note>
     <title>Time travel is deprecated</title>
     <para>
-     The remaining text in this section is retained only until it can be rewritten in the context
-     of new techniques to accomplish the same purpose. Volunteers? - thomas 1998-01-12
+     The remaining text in this section is retained only until it can
+     be rewritten in the context
+     of new techniques to accomplish the same purpose.
+     Volunteers? - thomas 1998-01-12
     </para>
    </note>
 
    <para>
-    <productname>Postgres</productname> supports the notion of time travel.  This feature 
+    <productname>Postgres</productname> supports the notion of time
+    travel.  This feature 
     allows a user  to  run  historical  queries.   For
     example,  to  find  the  current population of Mariposa
     city, one would query:
@@ -269,7 +286,8 @@ SELECT * FROM cities WHERE name = 'Mariposa';
 +---------+------------+----------+
     </programlisting>
 
-    <productname>Postgres</productname> will automatically find the version  of  Mariposa's 
+    <productname>Postgres</productname> will automatically find the
+    version  of  Mariposa's 
     record valid at the current time.
     One can also give a time range.  For example to see the
     past and present populations  of  Mariposa,  one  would
@@ -313,18 +331,22 @@ SELECT name, population
     abbreviated as ``[,].''
    </para>
   </sect1>
+-->
 
   <sect1>
    <title>More Advanced Features</title>
 
    <para>
-    <productname>Postgres</productname> has many features not touched upon in this
+    <productname>Postgres</productname> has many features not touched
+    upon in this
     tutorial introduction, which has been oriented toward newer users of
     <acronym>SQL</acronym>.
-    These are discussed in more detail in both the User's and Programmer's Guides.
+    These are discussed in more detail in both the User's and
+    Programmer's Guides.
    </para>
 
   </sect1>
+
  </chapter>
 
 <!-- Keep this comment at the end of the file

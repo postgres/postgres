@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.8 2000/04/07 13:30:58 thomas Exp $
 -->
 
  <chapter id="sql">
@@ -7,18 +7,28 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
 
   <abstract>
    <para>
-    This chapter originally appeared as a part of
+    This chapter introduces the mathematical concepts behind
+    relational databases. It is not required reading, so if you bog
+    down or want to get straight to some simple examples feel free to
+    jump ahead to the next chapter and come back when you have more
+    time and patience. This stuff is supposed to be fun!
+   </para>
+
+   <para>
+    This material originally appeared as a part of
     Stefan Simkovics' Master's Thesis
     (<xref linkend="SIM98" endterm="SIM98">).
    </para>
   </abstract>
 
   <para>
-   <acronym>SQL</acronym> has become the most popular relational query language.
+   <acronym>SQL</acronym> has become the most popular relational query 
+   language.
    The name <quote><acronym>SQL</acronym></quote> is an abbreviation for
    <firstterm>Structured Query Language</firstterm>. 
    In 1974 Donald Chamberlin and others defined the
-   language SEQUEL (<firstterm>Structured English Query Language</firstterm>) at IBM
+   language SEQUEL (<firstterm>Structured English Query
+    Language</firstterm>) at IBM
    Research. This language was first implemented in an IBM
    prototype called SEQUEL-XRM in 1974-75. In 1976-77 a revised version
    of SEQUEL called SEQUEL/2 was defined and the name was changed to
@@ -28,13 +38,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
 
   <para>
    A new prototype called System R was developed by IBM in 1977. System R
-   implemented a large subset of SEQUEL/2 (now <acronym>SQL</acronym>) and a number of
+   implemented a large subset of SEQUEL/2 (now <acronym>SQL</acronym>)
+   and a number of
    changes were made to <acronym>SQL</acronym> during the project.
    System R was installed in
    a number of user sites, both internal IBM sites and also some selected
    customer sites. Thanks to the success and acceptance of System R at
    those user sites IBM started to develop commercial products that
-   implemented the <acronym>SQL</acronym> language based on the System R technology.
+   implemented the <acronym>SQL</acronym> language based on the System
+   R technology.
   </para>
 
   <para>
@@ -48,16 +60,20 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
   </para>
 
   <para>
-   <acronym>SQL</acronym> is also an official standard now. In 1982 the American National
-   Standards Institute (<acronym>ANSI</acronym>) chartered its Database Committee X3H2 to
+   <acronym>SQL</acronym> is also an official standard now. In 1982
+   the American National
+   Standards Institute (<acronym>ANSI</acronym>) chartered its
+   Database Committee X3H2 to
    develop a proposal for a standard relational language. This proposal
    was ratified in 1986 and consisted essentially of the IBM dialect of
    <acronym>SQL</acronym>. In 1987 this <acronym>ANSI</acronym> 
    standard was also accepted as an international
    standard by the International Organization for Standardization
    (<acronym>ISO</acronym>).
-   This original standard version of <acronym>SQL</acronym> is often referred to,
-   informally, as "<abbrev>SQL/86</abbrev>". In 1989 the original standard was extended
+   This original standard version of <acronym>SQL</acronym> is often
+   referred to,
+   informally, as "<abbrev>SQL/86</abbrev>". In 1989 the original
+   standard was extended
    and this new standard is often, again informally, referred to as
    "<abbrev>SQL/89</abbrev>". Also in 1989, a related standard called
    <firstterm>Database Language Embedded <acronym>SQL</acronym></firstterm>
@@ -73,12 +89,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
    ratified standard - "International Standard ISO/IEC 9075:1992,
    Database Language <acronym>SQL</acronym>" - in late 1992.
    <acronym>SQL/92</acronym> is the version
-   normally meant when people refer to "the <acronym>SQL</acronym> standard". A detailed
+   normally meant when people refer to "the <acronym>SQL</acronym>
+   standard". A detailed
    description of <acronym>SQL/92</acronym> is given in 
    <xref linkend="DATE97" endterm="DATE97">. At the time of
    writing this document a new standard informally referred to
    as <firstterm><acronym>SQL3</acronym></firstterm>
-   is under development. It is planned to make <acronym>SQL</acronym> a Turing-complete
+   is under development. It is planned to make <acronym>SQL</acronym>
+   a Turing-complete
    language, i.e. all computable queries (e.g. recursive queries) will be
    possible. This is a very complex task and therefore the completion of
    the new standard can not be expected before 1999.
@@ -100,8 +118,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
   </para>
 
   <para>
-    A <firstterm>relational database</firstterm> is a database that is perceived by its
-    users as a <firstterm>collection of tables</firstterm> (and nothing else but tables).
+    A <firstterm>relational database</firstterm> is a database that is 
+    perceived by its
+    users as a <firstterm>collection of tables</firstterm> (and
+    nothing else but tables).
     A table consists of rows and columns where each row represents a
     record and each column represents an attribute of the records
     contained in the table.
@@ -154,13 +174,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
    </para>
 
    <para>
-    The tables PART and SUPPLIER may be regarded as <firstterm>entities</firstterm> and
-    SELLS may be regarded as a <firstterm>relationship</firstterm> between a particular
+    The tables PART and SUPPLIER may be regarded as
+    <firstterm>entities</firstterm> and
+    SELLS may be regarded as a <firstterm>relationship</firstterm>
+    between a particular
     part and a particular supplier. 
    </para>
 
    <para>
-    As we will see later, <acronym>SQL</acronym> operates on tables like the ones just
+    As we will see later, <acronym>SQL</acronym> operates on tables
+    like the ones just
     defined but before that we will study the theory of the relational
     model.
    </para>
@@ -171,7 +194,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
 
    <para>
     The mathematical concept underlying the relational model is the
-    set-theoretic <firstterm>relation</firstterm> which is a subset of the Cartesian
+    set-theoretic <firstterm>relation</firstterm> which is a subset of
+    the Cartesian
     product of a list of domains. This set-theoretic relation gives
     the model its name (do not confuse it with the relationship from the
     <firstterm>Entity-Relationship model</firstterm>).
@@ -184,7 +208,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas E
    <para>
 <!--
 \begin{definition}
-The <firstterm>Cartesian product</firstterm> of domains $D_{1}, D_{2},\ldots, D_{k}$ written
+The <firstterm>Cartesian product</firstterm> of domains $D_{1},
+    D_{2},\ldots, D_{k}$ written
 \mbox{$D_{1} \times D_{2} \times \ldots \times D_{k}$} is the set of
 all $k$-tuples $(v_{1},v_{2},\ldots,v_{k})$ such that \mbox{$v_{1} \in
 D_{1}, v_{2} \in D_{2}, \ldots, v_{k} \in D_{k}$}.
@@ -304,8 +329,10 @@ attributes are taken from. We often write a relation scheme as
     <note>
      <para>
       A <firstterm>relation scheme</firstterm> is just a kind of template
-       whereas a <firstterm>relation</firstterm> is an instance of a <firstterm>relation
-       scheme</firstterm>. The relation consists of tuples (and can therefore be
+      whereas a <firstterm>relation</firstterm> is an instance of a
+      <firstterm>relation
+       scheme</firstterm>. The relation consists of tuples (and can
+      therefore be
       viewed as a table); not so the relation scheme.
      </para>
     </note>
@@ -332,8 +359,10 @@ attributes are taken from. We often write a relation scheme as
      <type>VARCHAR(20)</type> (this is the <acronym>SQL</acronym> type
      for character strings of length &lt;= 20),
      the type of <classname>SNO</classname> will be
-     <type>INTEGER</type>. With the assignment of a data type we also have selected
-     a domain for an attribute. The domain of <classname>SNAME</classname> is the set of all
+     <type>INTEGER</type>. With the assignment of a data type we also
+     have selected
+     a domain for an attribute. The domain of
+     <classname>SNAME</classname> is the set of all
      character strings of length &lt;= 20,
      the domain of <classname>SNO</classname> is the set of
      all integer numbers.
@@ -345,7 +374,8 @@ attributes are taken from. We often write a relation scheme as
    <title id="operations">Operations in the Relational Data Model</title>
 
    <para>
-    In the previous section (<xref linkend="formal-notion" endterm="formal-notion">)
+    In the previous section
+    (<xref linkend="formal-notion" endterm="formal-notion">)
     we defined the mathematical notion of
     the relational model. Now we know how the data can be stored using a
     relational data model but we do not know what to do with all these
@@ -357,7 +387,8 @@ attributes are taken from. We often write a relation scheme as
     <itemizedlist>
      <listitem>
       <para>
-       The <firstterm>Relational Algebra</firstterm> which is an algebraic notation,
+       The <firstterm>Relational Algebra</firstterm> which is an
+       algebraic notation,
        where queries are expressed by applying specialized operators to the
        relations.
       </para>
@@ -365,7 +396,8 @@ attributes are taken from. We often write a relation scheme as
 
      <listitem>
       <para>
-       The <firstterm>Relational Calculus</firstterm> which is a logical notation,
+       The <firstterm>Relational Calculus</firstterm> which is a
+       logical notation,
        where queries are expressed by formulating some logical restrictions
        that the tuples in the answer must satisfy.
       </para>
@@ -383,7 +415,8 @@ attributes are taken from. We often write a relation scheme as
      <itemizedlist>
       <listitem>
        <para>
-	SELECT (&sigma;): extracts <firstterm>tuples</firstterm> from a relation that
+	SELECT (&sigma;): extracts <firstterm>tuples</firstterm> from
+	a relation that
 	satisfy a given restriction. Let <parameter>R</parameter> be a 
 	table that contains an attribute
 	<parameter>A</parameter>.
@@ -441,10 +474,12 @@ attributes are taken from. We often write a relation scheme as
 	INTERSECT (&cap;): builds the set-theoretic intersection of two
 	tables. Given the tables <classname>R</classname> and
 	<classname>S</classname>,
-	<classname>R</classname> &cup; <classname>S</classname> is the set of tuples
+	<classname>R</classname> &cup; <classname>S</classname> is the
+	set of tuples
 	that are in <classname>R</classname> and in
 	<classname>S</classname>.
-	We again require that <classname>R</classname> and <classname>S</classname> have the
+	We again require that <classname>R</classname> and 
+	<classname>S</classname> have the
 	same arity.
        </para>
       </listitem>
@@ -455,7 +490,8 @@ attributes are taken from. We often write a relation scheme as
 	two tables. Let <classname>R</classname> and <classname>S</classname>
 	again be two tables with the same
 	arity. <classname>R</classname> - <classname>S</classname>
-	is the set of tuples in <classname>R</classname> but not in <classname>S</classname>.
+	is the set of tuples in <classname>R</classname> but not in
+	<classname>S</classname>.
        </para>
       </listitem>
 
@@ -672,9 +708,9 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      the one underlying the most relational languages. For a detailed
      discussion on <acronym>DRC</acronym> (and also
      <acronym>TRC</acronym>) see
-     [<xref linkend="DATE94" endterm="DATE94">]
+     <xref linkend="DATE94" endterm="DATE94">
      or
-     [<xref linkend="ULL88" endterm="ULL88">].
+     <xref linkend="ULL88" endterm="ULL88">.
     </para>
    </sect2>
 
@@ -727,9 +763,9 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      algorithm</quote>) by which an arbitrary expression of the relational
      calculus can be reduced to a semantically equivalent expression of
      relational algebra. For a more detailed discussion on that refer to
-     [<xref linkend="DATE94" endterm="DATE94">]
+     <xref linkend="DATE94" endterm="DATE94">
      and
-     [<xref linkend="ULL88" endterm="ULL88">].
+     <xref linkend="ULL88" endterm="ULL88">.
     </para>
 
     <para>
@@ -750,9 +786,11 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
     <acronym>SQL</acronym> is based on the tuple
     relational calculus. As a result every query that can be formulated
     using the tuple relational calculus (or equivalently, relational
-    algebra) can also be formulated using <acronym>SQL</acronym>. There are, however,
+    algebra) can also be formulated using
+    <acronym>SQL</acronym>. There are, however,
     capabilities beyond the scope of relational algebra or calculus. Here
-    is a list of some additional features provided by <acronym>SQL</acronym> that are not
+    is a list of some additional features provided by
+    <acronym>SQL</acronym> that are not
     part of relational algebra or calculus:
 
     <itemizedlist>
@@ -764,7 +802,8 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 
      <listitem>
       <para>
-       Arithmetic capability: In <acronym>SQL</acronym> it is possible to involve
+       Arithmetic capability: In <acronym>SQL</acronym> it is possible
+       to involve
        arithmetic operations as well as comparisons, e.g.
 
        A &lt; B + 3.
@@ -787,7 +826,8 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       <para>
        Aggregate Functions: Operations such as
        <firstterm>average</firstterm>, <firstterm>sum</firstterm>,
-       <firstterm>max</firstterm>, etc. can be applied to columns of a relation to
+       <firstterm>max</firstterm>, etc. can be applied to columns of a 
+       relation to
        obtain a single quantity.
       </para>
      </listitem>
@@ -918,7 +958,8 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 
 	Note that the word DOUBLE after the keyword AS is the new title of the
 	second column. This technique can be used for every element of the
-	target list to assign a new title to the resulting column. This new title
+	target list to assign a new title to the resulting
+	column. This new title
 	is often referred to as alias. The alias cannot be used throughout the
 	rest of the query.
        </para>
@@ -1508,8 +1549,10 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
      <para>
       A view may be regarded as a <firstterm>virtual table</firstterm>,
       i.e. a table that
-      does not <emphasis>physically</emphasis> exist in the database but looks to the user
-      as if it does. By contrast, when we talk of a <firstterm>base table</firstterm> there is
+      does not <emphasis>physically</emphasis> exist in the database
+      but looks to the user
+      as if it does. By contrast, when we talk of a
+      <firstterm>base table</firstterm> there is
       really a physically stored counterpart of each row of the table
       somewhere in the physical storage.
      </para>
@@ -1550,7 +1593,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
      <para>
       Let the following view definition be given (we use
-      the tables from <xref linkend="supplier-fig" endterm="supplier-fig"> again):
+      the tables from
+      <xref linkend="supplier-fig" endterm="supplier-fig"> again):
 
       <programlisting>
    CREATE VIEW London_Suppliers
@@ -1587,7 +1631,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       <emphasis>hidden</emphasis>
       access to the base tables SUPPLIER, SELLS and PART first. It
       does so by executing the query given in the view definition against
-      those base tables. After that the additional qualifications (given in the
+      those base tables. After that the additional qualifications
+      (given in the
       query against the view) can be applied to obtain the resulting
       table.
      </para>
@@ -1746,11 +1791,12 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 <!--
       section
       <xref linkend="view-impl" endterm="view-impl">.
+    <citetitle>SIM98</citetitle>
 -->
-     <citetitle>SIM98</citetitle>
+     <xref linkend="SIM98" endterm="SIM98">
      for a more detailed
      description). For more information about system catalogs refer to
-     <citetitle>DATE</citetitle>.
+     <xref linkend="DATE94" endterm="DATE94">.
     </para>
    </sect2>
 
@@ -1815,10 +1861,10 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
     <para>
      For a detailed discussion on embedded <acronym>SQL</acronym>
      refer to
-     [<xref linkend="DATE97" endterm="DATE97">],
-     [<xref linkend="DATE94" endterm="DATE94">],
+     <xref linkend="DATE97" endterm="DATE97">,
+     <xref linkend="DATE94" endterm="DATE94">,
      or
-     [<xref linkend="ULL88" endterm="ULL88">].
+     <xref linkend="ULL88" endterm="ULL88">.
     </para>
    </sect2>
   </sect1>

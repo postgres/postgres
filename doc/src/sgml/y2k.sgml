@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.5 2000/03/31 03:27:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.6 2000/04/07 13:30:58 thomas Exp $
 -->
 
 <sect1 id="y2k">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.5 2000/03/31 03:27:42 th
   <para>
    Written by 
    <ulink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ulink>
-   on 1998-10-22.
+   on 1998-10-22. Updated 2000-03-31.
   </para>
  </note>
 
@@ -25,7 +25,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.5 2000/03/31 03:27:42 th
  <itemizedlist>
   <listitem>
    <para>
-    The author of this statement, a volunteer on the <productname>Postgres</productname>
+    The author of this statement, a volunteer on the
+    <productname>Postgres</productname>
     support team since November, 1996, is not aware of 
     any problems in the <productname>Postgres</productname> code base related
     to time transitions around Jan 1, 2000 (Y2K).

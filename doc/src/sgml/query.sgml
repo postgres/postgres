@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.9 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.10 2000/04/07 13:30:58 thomas Exp $
 -->
 
  <chapter id="query">
@@ -8,20 +8,21 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.9 2000/03/31 03:27:41 thomas
   <para>
    The  <productname>Postgres</productname>  query language is a variant of
    the <acronym>SQL3</acronym> draft next-generation standard. It
-   has many extensions such as an extensible type  system,
+   has many extensions to <acronym>SQL92</acronym> such as an
+   extensible type  system,
    inheritance,  functions and production rules. These are
-   features carried over from the original <productname>Postgres</productname>  query
-   language,  <productname>PostQuel</productname>.  This section provides an overview
+   features carried over from the original
+   <productname>Postgres</productname>  query
+   language,  <productname>PostQuel</productname>.
+   This section provides an overview
    of how to use <productname>Postgres</productname>
    <acronym>SQL</acronym>  to  perform  simple  operations.
    This manual is only intended to give you an idea of our
    flavor of <acronym>SQL</acronym> and is in no way a complete  tutorial  on
    <acronym>SQL</acronym>.  Numerous  books  have  been  written  on
-   <acronym>SQL</acronym>, including
-<!--
-<XRef LinkEnd="MELT93"> and <XRef LinkEnd="DATE97">.
--->
-[MELT93] and [DATE97].
+   <acronym>SQL92</acronym>, including
+   <xref linkend="MELT93" endterm="MELT93-title"> and
+   <xref linkend="DATE97" endterm="DATE97-title">.
    You should be  aware  that  some language features 
    are extensions to the <acronym>ANSI</acronym> standard.
   </para>
@@ -111,22 +112,26 @@ CREATE TABLE weather (
    </para>
 
    <para>
-    Note that both keywords and identifiers are case-insensitive; identifiers can become
-    case-sensitive by surrounding them with double-quotes as allowed
+    Note that both keywords and identifiers are case-insensitive;
+    identifiers can preserve case by surrounding them with
+    double-quotes as allowed
     by <acronym>SQL92</acronym>.
-    <productname>Postgres</productname>  <acronym>SQL</acronym> supports the usual
+    <productname>Postgres</productname>  <acronym>SQL</acronym>
+    supports the usual
     <acronym>SQL</acronym> types <type>int</type>,
     <type>float</type>,  <type>real</type>,  <type>smallint</type>,
 <type>char(N)</type>,  
     <type>varchar(N)</type>,  <type>date</type>, <type>time</type>,
     and <type>timestamp</type>, as well as other types of general utility and
     a rich set of geometric types.  As we will 
-    see later, <productname>Postgres</productname> can be customized  with  an  
+    see later, <productname>Postgres</productname> can be customized
+    with an  
     arbitrary  number  of
     user-defined  data types.  Consequently, type names are
     not syntactical keywords, except where required to support special
     cases in the <acronym>SQL92</acronym> standard.
-    So far, the <productname>Postgres</productname> <command>CREATE</command> command
+    So far, the <productname>Postgres</productname>
+    <command>CREATE</command> command
     looks exactly  like
     the  command  used  to  create a table in a traditional
     relational system.  However, we will presently see that
@@ -139,7 +144,7 @@ CREATE TABLE weather (
    <title>Populating a Class with Instances</title>
 
    <para>
-    The <command>insert</command> statement is used to populate a  class  with
+    The <command>INSERT</command> statement is used to populate a  class  with
     instances:
 
     <programlisting>
@@ -149,9 +154,10 @@ INSERT INTO weather
    </para>
 
    <para>
-    You can also use the <command>copy</command> command to perform load large
+    You can also use the <command>COPY</command> command to perform load large
     amounts of data from flat (<acronym>ASCII</acronym>) files.
-    This is usually faster because the data is read (or written) as a single atomic
+    This is usually faster because the data is read (or written) as a
+    single atomic
     transaction directly to or from the target table. An example would be:
 
     <programlisting>
@@ -159,7 +165,8 @@ COPY weather FROM '/home/user/weather.txt'
     USING DELIMITERS '|';
     </programlisting>
 
-    where the path name for the source file must be available to the backend server
+    where the path name for the source file must be available to the
+    backend server
     machine, not the client, since the backend server reads the file directly.
    </para>
   </sect1>
@@ -170,7 +177,7 @@ COPY weather FROM '/home/user/weather.txt'
    <para>
     The weather class can be queried with normal relational
     selection  and projection queries.  A <acronym>SQL</acronym>
-    <command>select</command> 
+    <command>SELECT</command> 
     statement is used to do this.  The statement is divided into
     a target list (the part that lists the attributes to be
     returned) and a qualification (the part that  specifies
@@ -192,7 +199,8 @@ SELECT * FROM weather;
 |Hayward       | 37      | 54      |      | 11-29-1994 |
 +--------------+---------+---------+------+------------+
     </programlisting>
-    You may specify any arbitrary expressions in the  target list. For example, you can do:
+    You may specify any arbitrary expressions in the  target list. For 
+    example, you can do:
     <programlisting>
 SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
     </programlisting>
@@ -200,7 +208,8 @@ SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
 
    <para>
     Arbitrary  Boolean  operators
-    (<command>and</command>,  <command>or</command> and <command>not</command>) are
+    (<command>AND</command>,  <command>OR</command> and 
+    <command>NOT</command>) are
     allowed in the qualification of any query.   For  example,
 
     <programlisting>
@@ -235,16 +244,16 @@ SELECT DISTINCT city
    <title>Redirecting SELECT Queries</title>
 
    <para>
-    Any select query can be redirected to a new class
+    Any <command>SELECT</command> query can be redirected to a new class
     <programlisting>
 SELECT * INTO TABLE temp FROM weather;
     </programlisting>
    </para>
 
    <para>
-    This forms an implicit <command>create</command> command, creating a new
+    This forms an implicit <command>CREATE</command> command, creating a new
     class temp with the attribute names and types specified
-    in  the target list of the <command>select into</command> command.  We can
+    in  the target list of the <command>SELECT INTO</command> command.  We can
     then, of course, perform any operations on the  resulting 
     class that we can perform on other classes.
    </para>
@@ -269,7 +278,8 @@ SELECT * INTO TABLE temp FROM weather;
     <note>
      <para>
       This  is only a conceptual model.  The actual join may
-      be performed in a more efficient manner, but this is invisible to the user.
+      be performed in a more efficient manner, but this is invisible
+      to the user.
      </para>
     </note>
 
@@ -307,16 +317,18 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
       sometimes recomputes the same target list several times;
       this frequently happens when Boolean expressions are connected 
       with an "or".  To remove such duplicates, you must  use
-      the <command>select distinct</command> statement.
+      the <command>SELECT DISTINCT</command> statement.
      </para>
     </note>
    </para>
 
    <para>
-    In this case, both W1 and  W2  are  surrogates for  an
+    In this case, both <literal>W1</literal> and
+    <literal>W2</literal>  are  surrogates for  an
     instance  of the class weather, and both range over all
     instances of the class.  (In the  terminology  of  most
-    database  systems,  W1 and W2 are known as <firstterm>range variables</firstterm>.)  
+    database  systems, <literal>W1</literal> and <literal>W2</literal> 
+    are known as <firstterm>range variables</firstterm>.)  
     A query can contain an  arbitrary  number  of
     class names and surrogates.
    </para>
@@ -326,7 +338,8 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
    <title>Updates</title>
 
    <para>
-    You can update existing instances using the update command. 
+    You can update existing instances using the
+    <command>UPDATE</command> command. 
     Suppose you discover the temperature readings are
     all  off  by 2 degrees as of Nov 28, you may update the
     data as follow:
@@ -343,7 +356,7 @@ UPDATE weather
    <title>Deletions</title>
 
    <para>
-    Deletions are performed using the <command>delete</command> command:
+    Deletions are performed using the <command>DELETE</command> command:
     <programlisting>
 DELETE FROM weather WHERE city = 'Hayward';
     </programlisting>
@@ -354,7 +367,7 @@ DELETE FROM weather WHERE city = 'Hayward';
 DELETE FROM classname;
     </programlisting>
 
-    Without a qualification, <command>delete</command> will simply
+    Without a qualification, <command>DELETE</command> will simply
     remove  all  instances  of  the given class, leaving it
     empty.  The system will not request confirmation before
     doing this.
@@ -365,7 +378,7 @@ DELETE FROM classname;
    <title>Using Aggregate Functions</title>
 
    <para>
-    Like  most  other  query  languages, 
+    Like  most  other relational database products, 
     <productname>PostgreSQL</productname> supports
     aggregate functions.
     An aggregate function computes a single result from multiple input rows.
@@ -377,20 +390,20 @@ DELETE FROM classname;
 
    <para>
     It is important to understand the interaction between aggregates and
-    SQL's <command>where</command> and <command>having</command> clauses.
-    The fundamental difference between <command>where</command> and
-    <command>having</command> is this: <command>where</command> selects
+    SQL's <command>WHERE</command> and <command>HAVING</command> clauses.
+    The fundamental difference between <command>WHERE</command> and
+    <command>HAVING</command> is this: <command>WHERE</command> selects
     input rows before groups and aggregates are computed (thus, it controls
     which rows go into the aggregate computation), whereas
-    <command>having</command> selects group rows after groups and
+    <command>HAVING</command> selects group rows after groups and
     aggregates are computed.  Thus, the
-    <command>where</command> clause may not contain aggregate functions;
+    <command>WHERE</command> clause may not contain aggregate functions;
     it makes no sense to try to use an aggregate to determine which rows
     will be inputs to the aggregates.  On the other hand,
-    <command>having</command> clauses always contain aggregate functions.
-    (Strictly speaking, you are allowed to write a <command>having</command>
+    <command>HAVING</command> clauses always contain aggregate functions.
+    (Strictly speaking, you are allowed to write a <command>HAVING</command>
     clause that doesn't use aggregates, but it's wasteful; the same condition
-    could be used more efficiently at the <command>where</command> stage.)
+    could be used more efficiently at the <command>WHERE</command> stage.)
    </para>
 
    <para>
@@ -408,13 +421,17 @@ SELECT max(temp_lo) FROM weather;
 SELECT city FROM weather WHERE temp_lo = max(temp_lo);
     </programlisting>
 
-    but this will not work since the aggregate max() can't be used in
-    <command>where</command>. However, as is often the case the query can be
+    but this will not work since the aggregate
+    <function>max</function> can't be used in
+    <command>WHERE</command>. However, as is often the case the query can be
     restated to accomplish the intended result; here by using a
     <firstterm>subselect</firstterm>:
+
     <programlisting>
-SELECT city FROM weather WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
+SELECT city FROM weather
+    WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
     </programlisting>
+
     This is OK because the sub-select is an independent computation that
     computes its own aggregate separately from what's happening in the outer
     select.
@@ -422,24 +439,29 @@ SELECT city FROM weather WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
 
    <para>
     Aggregates are also very useful in combination with
-    <firstterm>group by</firstterm> clauses.  For example, we can get the
+    <command>GROUP BY</command> clauses.  For example, we can get the
     maximum low temperature observed in each city with
+
     <programlisting>
 SELECT city, max(temp_lo)
     FROM weather
     GROUP BY city;
     </programlisting>
+
     which gives us one output row per city.  We can filter these grouped
-    rows using <command>having</command>:
+    rows using <command>HAVING</command>:
+
     <programlisting>
 SELECT city, max(temp_lo)
     FROM weather
     GROUP BY city
     HAVING min(temp_lo) < 0;
     </programlisting>
+
     which gives us the same results for only the cities that have some
     below-zero readings.  Finally, if we only care about cities whose
-    names begin with 'P', we might do
+    names begin with "<literal>P</literal>", we might do
+
     <programlisting>
 SELECT city, max(temp_lo)
     FROM weather
@@ -447,11 +469,12 @@ SELECT city, max(temp_lo)
     GROUP BY city
     HAVING min(temp_lo) < 0;
     </programlisting>
+
     Note that we can apply the city-name restriction in
-    <command>where</command>, since it needs no aggregate.  This is
-    more efficient than adding the restriction to <command>having</command>,
+    <command>WHERE</command>, since it needs no aggregate.  This is
+    more efficient than adding the restriction to <command>HAVING</command>,
     because we avoid doing the grouping and aggregate calculations
-    for all rows that fail the <command>where</command> check.
+    for all rows that fail the <command>WHERE</command> check.
    </para>
   </sect1>
  </chapter>

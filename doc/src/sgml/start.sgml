@@ -1,250 +1,333 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.9 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.10 2000/04/07 13:30:58 thomas Exp $
 -->
 
-<Chapter Id="start">
-<Title>Getting Started</Title>
+ <chapter id="start">
+  <title>Getting Started</title>
 
-<Abstract>
-<Para>
-How to begin work with <ProductName>Postgres</ProductName> for a new user.
-</Para>
-</Abstract>
+  <abstract>
+   <para>
+    How to begin work with <productname>Postgres</productname> for a new user.
+   </para>
+  </abstract>
 
-<Para>
-     Some  of the steps required to use <ProductName>Postgres</ProductName>
-     can be performed by any Postgres user, and some must be done by
-     the site database administrator.  This site administrator 
-     is the person who installed the  software,  created
-     the  database  directories  and  started the <Application>postmaster</Application>
-     process.  This person does not  have  to  be  the  Unix
-     superuser (<Quote>root</Quote>)
- or the computer system administrator; a person can install and use
-<ProductName>Postgres</ProductName> without any special accounts or privileges.
-</Para>
+  <para>
+   Some  of the steps required to use <productname>Postgres</productname>
+   can be performed by any Postgres user, and some must be done by
+   the site database administrator.  This site administrator 
+   is the person who installed the  software,  created
+   the  database  directories  and  started the
+   <application>postmaster</application>
+   process.  This person does not  have  to  be  the  Unix
+   superuser (<quote>root</quote>)
+   or the computer system administrator; a person can install and use
+   <productname>Postgres</productname> without any special accounts or 
+   privileges.
+  </para>
 
-<Para>
-If you are installing <ProductName>Postgres</ProductName> yourself, then
-refer to the Administrator's Guide for instructions on installation, and return
-to this guide when the installation is complete.
-</Para>
+  <para>
+   If you are installing <productname>Postgres</productname> yourself, then
+   refer to the Administrator's Guide for instructions on
+   installation, and return
+   to this guide when the installation is complete.
+  </para>
 
-<Para>
-     Throughout this manual, any examples  that  begin  with
-     the  character  <Quote>%</Quote> are commands that should be typed
-     at the Unix shell prompt.  Examples that begin with the
-     character <Quote>*</Quote> are commands in the Postgres query 
-     language, Postgres <Acronym>SQL</Acronym>.
-</Para>
+  <para>
+   Throughout this manual, any examples  that  begin  with
+   the  character  <quote>%</quote> are commands that should be typed
+   at the Unix shell prompt.  Examples that begin with the
+   character <quote>*</quote> are commands in the Postgres query 
+   language, Postgres <acronym>SQL</acronym>.
+  </para>
 
-<Sect1>
-<Title>Setting Up Your Environment</Title>
+  <sect1>
+   <title>Setting Up Your Environment</title>
 
-<Para>
-     This section discusses how to set up
-     your own environment  so  that  you  can  use  frontend
-     applications.  We assume <ProductName>Postgres</ProductName> has already been 
-     successfully installed and started; refer to the Administrator's Guide
-and the installation  notes
-     for how to install Postgres.
-</Para>
+   <para>
+    This section discusses how to set up
+    your own environment  so  that  you  can  use  frontend
+    applications.  We assume <productname>Postgres</productname> has
+    already been 
+    successfully installed and started; refer to the Administrator's Guide
+    and the installation  notes
+    for how to install Postgres.
+   </para>
 
-<Para>
-<ProductName>Postgres</ProductName> is a client/server application. As a user,
-you only need access to the client portions of the installation (an example
-of a client application is the interactive monitor <Application>psql</Application>).
-     For simplicity,
-     we will assume that <ProductName>Postgres</ProductName> has been installed in  the
-     directory  <FileName>/usr/local/pgsql</FileName>.   Therefore, wherever
-     you see the directory <FileName>/usr/local/pgsql</FileName> you  should
-     substitute  the name of the directory where <ProductName>Postgres</ProductName> is
-     actually installed.
-     All <ProductName>Postgres</ProductName> commands are installed  in  the  directory
-     <FileName>/usr/local/pgsql/bin</FileName>.   Therefore,  you should add
-     this directory to your shell command path.  If you  use
-     a variant of the Berkeley C shell, such as csh or tcsh,
-     you would add
-<ProgramListing>
+   <para>
+    <productname>Postgres</productname> is a client/server
+    application. As a user,
+    you only need access to the client portions of the installation
+    (an example
+    of a client application is the interactive monitor
+    <application>psql</application>).
+    For simplicity,
+    we will assume that <productname>Postgres</productname> has been
+    installed in the
+    directory  <filename>/usr/local/pgsql</filename>.   Therefore, wherever
+    you see the directory <filename>/usr/local/pgsql</filename> you  should
+    substitute  the name of the directory where
+    <productname>Postgres</productname> is
+    actually installed.
+    All <productname>Postgres</productname> commands are installed  in
+    the directory
+    <filename>/usr/local/pgsql/bin</filename>.   Therefore,  you should add
+    this directory to your shell command path.  If you  use
+    a variant of the Berkeley C shell, such as csh or tcsh,
+    you would add
+
+    <programlisting>
 % set path = ( /usr/local/pgsql/bin path )
-</ProgramListing>
-     in the <FileName>.login</FileName> file in your home directory.  If you  use
-     a  variant  of  the  Bourne  shell, such as sh, ksh, or
-     bash, then you would add
-<ProgramListing>
+    </programlisting>
+
+    in the <filename>.login</filename> file in your home directory.
+    If you use
+    a  variant  of  the  Bourne  shell, such as sh, ksh, or
+    bash, then you would add
+
+    <programlisting>
 % PATH=/usr/local/pgsql/bin:$PATH
 % export PATH
-</ProgramListing>
-     to the .profile file in your home directory.
-     From now on, we will assume that  you  have  added  the
-     <ProductName>Postgres</ProductName>  bin  directory to your path.  In addition, we
-     will make frequent reference to <Quote>setting a shell  
-     variable</Quote>  or  <Quote>setting an environment variable</Quote> throughout
-     this document.  If you did  not  fully  understand  the
-     last  paragraph  on  modifying  your  search  path, you
-     should consult the Unix manual pages that describe your
-     shell before going any further.
-</Para>
+    </programlisting>
 
-<Para>
-If your site administrator has not set things up in the
-default  way,  you may have some more work to do.  For example, if the database
- server machine is a remote machine, you
-will need to set the <Acronym>PGHOST</Acronym> environment variable to the name
-of the database server machine.   The  environment  variable
-<Acronym>PGPORT</Acronym> may also have to be set.  The bottom line is this: if
-you try to start an application  program  and  it  complains
-that it cannot connect to the <Application>postmaster</Application>,
- you should immediately consult your site administrator to make sure that your
-environment is properly set up.
-</Para>
+    to the .profile file in your home directory.
+    From now on, we will assume that  you  have  added  the
+    <productname>Postgres</productname>  bin  directory to your path.
+    In addition, we
+    will make frequent reference to <quote>setting a shell  
+     variable</quote>  or  <quote>setting an environment
+     variable</quote> throughout
+    this document.  If you did  not  fully  understand  the
+    last  paragraph  on  modifying  your  search  path, you
+    should consult the Unix manual pages that describe your
+    shell before going any further.
+   </para>
 
-</Sect1>
+   <para>
+    If your site administrator has not set things up in the
+    default  way,  you may have some more work to do.  For example, if
+    the database
+    server machine is a remote machine, you
+    will need to set the <acronym>PGHOST</acronym> environment
+    variable to the name
+    of the database server machine.   The  environment  variable
+    <acronym>PGPORT</acronym> may also have to be set.  The bottom
+    line is this: if
+    you try to start an application  program  and  it  complains
+    that it cannot connect to the <application>postmaster</application>,
+    you should immediately consult your site administrator to make
+    sure that your
+    environment is properly set up.
+   </para>
 
-<Sect1>
-<Title>Starting the Interactive Monitor (psql)</Title>
+  </sect1>
 
-<Para>
-     Assuming that  your  site  administrator  has  properly
-     started  the  <Application>postmaster</Application>  process and authorized you to
-     use the database, you (as a user) may begin to start up
-     applications.   As previously mentioned, you should add
-     <FileName>/usr/local/pgsql/bin</FileName> to your  shell  search  path.
-     In  most  cases,  this  is all you should have to do in
-     terms of preparation.
-</Para>
+  <sect1>
+   <title>Starting the Interactive Monitor (psql)</title>
 
-<Para>
-As of <ProductName>Postgres</ProductName> v6.3, two different styles of connections
-are supported. The site administrator will have chosen to allow TCP/IP network connections
-or will have restricted database access to local (same-machine) socket connections only.
-These choices become significant if you encounter problems in connecting to a database.
-</Para>
+   <para>
+    Assuming that  your  site  administrator  has  properly
+    started  the  <application>postmaster</application>  process and
+    authorized you to
+    use the database, you (as a user) may begin to start up
+    applications.   As previously mentioned, you should add
+    <filename>/usr/local/pgsql/bin</filename> to your  shell  search path.
+    In  most  cases,  this  is all you should have to do in
+    terms of preparation.
+   </para>
 
-<Para>
-     If  you get the following error message from a <ProductName>Postgres</ProductName>
-     command (such as <Application>psql</Application> or <Application>createdb</Application>):
+   <para>
+    Two different styles of connections
+    are supported. The site administrator will have chosen to allow
+    TCP/IP network connections
+    or will have restricted database access to local (same-machine)
+    socket connections only.
+    These choices become significant if you encounter problems in
+    connecting to a database, since you will want to confirm that you
+    are choosing an allowed connection option.
+   </para>
 
-<ProgramListing>
+   <para>
+    If  you get the following error message from a
+    <productname>Postgres</productname>
+    command (such as <application>psql</application> or
+    <application>createdb</application>):
+
+    <programlisting>
 % psql template1
 Connection to database 'postgres' failed.
 connectDB() failed: Is the postmaster running and accepting connections
     at 'UNIX Socket' on port '5432'?
-</ProgramListing>
+    </programlisting>
 
-or
+    or
 
-<ProgramListing>
+    <programlisting>
 % psql -h localhost template1
 Connection to database 'postgres' failed.
 connectDB() failed: Is the postmaster running and accepting TCP/IP
     (with -i) connections at 'localhost' on port '5432'?
-</ProgramListing>
+    </programlisting>
 
-     it is usually because (1) the <Application>postmaster</Application>  is  not  running,
- or (2) you are attempting to connect to the wrong server host.
-     If you get the following error message:
+    it is usually because
 
-<ProgramListing>
+    <itemizedlist mark="bullet" spacing="compact">
+     <listitem>
+      <para>
+       the <application>postmaster</application>  is  not  running,
+       or
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       you are attempting to connect to the wrong server host.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    If you get the following error message:
+
+    <programlisting>
 FATAL 1:Feb 17 23:19:55:process userid (2360) != database owner (268)
-</ProgramListing>
+    </programlisting>
 
-     it means that the site administrator started the  <Application>postmaster</Application>
-  as  the  wrong user.  Tell him to restart it as
-     the <ProductName>Postgres</ProductName> superuser.
-</Para>
-</Sect1>
+    it means that the site administrator started the
+    <application>postmaster</application>
+    as  the  wrong user.  Tell him to restart it as
+    the <productname>Postgres</productname> superuser.
+   </para>
+  </sect1>
 
-<Sect1>
-<Title>Managing a Database</Title>
+  <sect1>
+   <title>Managing a Database</title>
 
-<Para>
-     Now that <ProductName>Postgres</ProductName> is up and running we can create  some
-     databases  to  experiment  with.  Here, we describe the
-     basic commands for managing a database.
-</Para>
+   <para>
+    Now that <productname>Postgres</productname> is up and running we
+    can create  some
+    databases  to  experiment  with.  Here, we describe the
+    basic commands for managing a database.
+   </para>
 
-<Para>
-Most <ProductName>Postgres</ProductName>
-applications assume that the database name, if not specified, is the same as the name on your computer
-account.
-</Para>
+   <para>
+    Most <productname>Postgres</productname>
+    applications assume that the database name, if not specified, is
+    the same as the name on your computer
+    account.
+   </para>
 
-<Para>
-If your database administrator has set up your account without database creation privileges,
-then she should have told you what the name of your database is. If this is the case, then you
-can skip the sections on creating and destroying databases.
-</Para>
+   <para>
+    If your database administrator has set up your account without
+    database creation privileges,
+    then she should have told you what the name of your database is. If
+    this is the case, then you
+    can skip the sections on creating and destroying databases.
+   </para>
 
-<Sect2>
-<Title>Creating a Database</Title>
+   <sect2>
+    <title>Creating a Database</title>
 
-<Para>
-     Let's say you want to create  a  database  named  <Database>mydb</Database>.
+    <para>
+     Let's say you want to create  a  database  named
+     <database>mydb</database>.
      You can do this with the following command:
-<ProgramListing>
+     <programlisting>
 % createdb mydb
-</ProgramListing>
-</Para>
+     </programlisting>
+    </para>
 
-<Para>
-If you do not have the privileges required to create a database, you will see
-the following:
-<ProgramListing>
+    <para>
+     If you do not have the privileges required to create a database,
+     you will see
+     the following:
+     <programlisting>
 % createdb mydb
 WARN:user "your username" is not allowed to create/destroy databases
 createdb: database creation failed on mydb.
-</ProgramListing>
-</Para>
+     </programlisting>
+    </para>
 
-<Para>
-     <ProductName>Postgres</ProductName>  allows  you to create any number of databases
+    <para>
+     <productname>Postgres</productname>  allows  you to create any
+     number of databases
      at a  given  site  and  you  automatically  become  the
-     database  administrator  of  the database you just created.  Database names must  have  an  alphabetic  first
+     database  administrator  of  the database you just created.
+     Database names must  have  an  alphabetic  first
      character and are limited to 32 characters in length.
      Not  every  user has authorization to become a database
-     administrator.  If <ProductName>Postgres</ProductName> refuses to create databases
+     administrator.  If <productname>Postgres</productname> refuses to 
+     create databases
      for you, then the site administrator needs to grant you
      permission to  create  databases.   Consult  your  site
      administrator if this occurs.
-</Para>
-</Sect2>
+    </para>
+   </sect2>
 
-<Sect2>
-<Title>Accessing a Database</Title>
+   <sect2>
+    <title>Accessing a Database</title>
 
-<Para>
+    <para>
      Once you have constructed a database, you can access it
      by:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-running the <ProductName>Postgres</ProductName>  terminal  monitor  programs
- (e.g. <Application>psql</Application>) which allows you to interactively
-        enter, edit, and execute <Acronym>SQL</Acronym> commands.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-      writing a <Acronym>C</Acronym>  program  using  the  LIBPQ  subroutine
-        library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
-        from <Acronym>C</Acronym> and get answers and status messages  back  to
+     <itemizedlist spacing="compact" mark="bullet">
+      <listitem>
+       <para>
+	Running the <productname>Postgres</productname>  terminal
+	monitor  programs
+	(e.g. <application>psql</application>) which allows you to
+	interactively
+        enter, edit, and execute <acronym>SQL</acronym> commands.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Using an existing native frontend tool like
+	<application>pgaccess</application> or
+	<application>ApplixWare</application> (via
+	<acronym>ODBC</acronym>) to create and manipulate a 
+	database.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Using a language like perl or tcl which has a supported
+	interface for <productname>Postgres</productname>. Some of
+	these languages also have convenient and powerful GUI toolkits 
+	which can help you construct custom
+	applications. <application>pgaccess</application>, mentioned
+	above, is one such application written in tk/tcl and can be
+	used as an example.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Writing a <acronym>C</acronym>  program  using
+	the  LIBPQ  subroutine
+        library.   This  allows  you  to submit
+	<acronym>SQL</acronym> commands
+        from <acronym>C</acronym> and get answers and
+	status messages  back  to
         your  program.   This interface is discussed further
         in <citetitle>The PostgreSQL Programmer's Guide</citetitle>.
-</Para>
-</ListItem>
-</ItemizedList>
+       </para>
+      </listitem>
+     </itemizedlist>
 
-You might want to start up <Application>psql</Application>, 
-to try out the examples in this manual.
- It can be activated for the <Database>mydb</Database>
+     You might want to start up <application>psql</application>, 
+     to try out the examples in this manual.
+     It can be activated for the <database>mydb</database>
      database by typing the command:
-<ProgramListing>
+     <programlisting>
 % psql mydb
-</ProgramListing>
+     </programlisting>
 
      You will be greeted with the following message:
-<ProgramListing>
+     <programlisting>
 Welcome to the POSTGRESQL interactive sql monitor:
   Please read the file COPYRIGHT for copyright terms of POSTGRESQL
 
@@ -254,71 +337,79 @@ Welcome to the POSTGRESQL interactive sql monitor:
  You are currently connected to the database: template1
 
 mydb=>
-</ProgramListing>
-</Para>
+     </programlisting>
+    </para>
 
-<Para>
-This prompt indicates that the terminal monitor is listening
-  to you and that you can type <Acronym>SQL</Acronym> queries into a
+    <para>
+     This prompt indicates that the terminal monitor is listening
+     to you and that you can type <acronym>SQL</acronym> queries into a
      workspace maintained by the terminal monitor.
-     The <Application>psql</Application> program responds to escape  codes  that  begin
-     with  the  backslash  character, <Quote>\</Quote>  For example, you
+     The <application>psql</application> program responds to escape
+     codes  that  begin
+     with  the  backslash  character, <quote>\</quote>  For example, you
      can get help on the syntax of various
- <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> commands by typing:
-<ProgramListing>
+     <productname>Postgres</productname> <acronym>SQL</acronym>
+     commands by typing:
+     <programlisting>
 mydb=> \h
-</ProgramListing>
+     </programlisting>
+    </para>
 
+    <para>
      Once  you  have finished entering your queries into the
      workspace, you can pass the contents of  the  workspace
-     to the <ProductName>Postgres</ProductName> server by typing:
-<ProgramListing>
+     to the <productname>Postgres</productname> server by typing:
+     <programlisting>
 mydb=> \g
-</ProgramListing>
+     </programlisting>
 
      This  tells  the  server  to process the query.  If you
-     terminate your query with a semicolon, the  <Quote>\g</Quote> is  not
+     terminate your query with a semicolon, the  <quote>\g</quote> is  not
      necessary.
-     <Application>psql</Application> will automatically process semicolon terminated queries.
+     <application>psql</application> will automatically process
+     semicolon terminated queries.
      To read queries from a file,  say  myFile,  instead  of
      entering them interactively, type:
-<ProgramListing>
+     <programlisting>
 mydb=> \i fileName
-</ProgramListing>
+     </programlisting>
 
-     To get out of <Application>psql</Application> and return to Unix, type
-<ProgramListing>
+     To get out of <application>psql</application> and return to Unix, type
+     <programlisting>
 mydb=> \q
-</ProgramListing>
+     </programlisting>
 
-     and  <Application>psql</Application>  will  quit  and  return  you to your command
-     shell. (For more escape codes, type <Command>\h</Command> at  the  monitor
-     prompt.)
+     and  <application>psql</application>  will  quit  and  return
+     you to your command
+     shell. (For more escape codes, type <command>\h</command> at  the 
+     monitor prompt.)
      White  space  (i.e.,  spaces, tabs and newlines) may be
-     used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by
-     <Quote>--</Quote>.   Everything  after the dashes up to the end of the
+     used freely in <acronym>SQL</acronym> queries.  Single-line
+     comments  are  denoted  by
+     <quote>--</quote>.   Everything  after the dashes up to the end of the
      line is ignored. Multiple-line comments, and comments within a line,
-     are denoted by <Quote>/* ... */</Quote>
-</Para>
-</Sect2>
-     
-<Sect2>
-<Title>Destroying a Database</Title>
+     are denoted by <quote>/* ... */</quote>
+    </para>
+   </sect2>
 
-<Para>
+   <sect2>
+    <title>Destroying a Database</title>
+
+    <para>
      If you are the database administrator for the  database
-     <Database>mydb</Database>,  you can destroy it using the following Unix command:
-<ProgramListing>
+     <database>mydb</database>,  you can destroy it using the
+     following Unix command:
+     <programlisting>
 % dropdb mydb
-</ProgramListing>
+     </programlisting>
      This action physically removes all of  the  Unix  files
      associated  with  the database and cannot be undone, so
      this should only be done with a  great  deal  of  forethought.
-</Para>
-</Sect2>
-</Sect1>
+    </para>
+   </sect2>
+  </sect1>
 
-</Chapter>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
