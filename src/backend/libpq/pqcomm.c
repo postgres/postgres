@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.98 2000/06/14 18:17:28 petere Exp $
+ *	$Id: pqcomm.c,v 1.99 2000/07/03 20:45:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@
  *		StreamServerPort	- Open postmaster's server port
  *		StreamConnection	- Create new connection with client
  *		StreamClose			- Close a client/backend connection
- *		pq_getport		- return the PGPORT setting
  *		pq_init			- initialize libpq at backend startup
  *		pq_close		- shutdown libpq at backend exit
  *

@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.2 2000/06/22 22:31:24 petere Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.3 2000/07/03 20:46:10 petere Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -51,7 +51,7 @@ void         SetConfigOption(const char * name, const char * value, GucContext c
 const char * GetConfigOption(const char * name);
 void         ProcessConfigFile(GucContext context);
 void         ResetAllOptions(void);
-
+void         ParseLongOption(const char * string, char ** name, char ** value);
 bool         set_config_option(const char * name, const char * value, GucContext context, bool DoIt);
 
 

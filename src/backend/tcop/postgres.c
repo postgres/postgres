@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.163 2000/06/29 07:35:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.164 2000/07/03 20:46:00 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1167,18 +1167,16 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case '-':
 			{
-				/* A little 'long argument' simulation */
-				/* (copy&pasted from PostmasterMain() */
-				size_t equal_pos = strcspn(optarg, "=");
-				char *cp;
+				char *name, *value;
 
-				if (optarg[equal_pos] != '=')
+				ParseLongOption(optarg, &name, &value);
+				if (!value)
 					elog(ERROR, "--%s requires argument", optarg);
-				optarg[equal_pos] = '\0';
-				for(cp = optarg; *cp; cp++)
-					if (*cp == '-')
-						*cp = '_';
-				SetConfigOption(optarg, optarg + equal_pos + 1, PGC_BACKEND);
+
+				SetConfigOption(name, value, PGC_BACKEND);
+				free(name);
+				if (value)
+					free(value);
 				break;
 			}
 
@@ -1408,7 +1406,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.163 $ $Date: 2000/06/29 07:35:57 $\n");
+		puts("$Revision: 1.164 $ $Date: 2000/07/03 20:46:00 $\n");
 	}
 
 	/*

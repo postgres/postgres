@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.151 2000/07/02 15:20:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.152 2000/07/03 20:45:58 petere Exp $
  *
  * NOTES
  *
@@ -383,9 +383,6 @@ PostmasterMain(int argc, char *argv[])
 	if (getenv("PGDATA"))
 		DataDir = strdup(getenv("PGDATA")); /* default value */
 
-	if (getenv("PGPORT"))
-		PostPortName = atoi(getenv("PGPORT"));
-
 	ResetAllOptions();
 
 	/*
@@ -504,7 +501,6 @@ PostmasterMain(int argc, char *argv[])
 				strcpy(original_extraoptions, optarg);
 				break;
 			case 'p':
-				/* Set PGPORT by hand. */
 				PostPortName = atoi(optarg);
 				break;
 			case 'S':
@@ -529,17 +525,16 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case '-':
 			{
-				/* A little 'long argument' simulation */
-				size_t equal_pos = strcspn(optarg, "=");
-				char *cp;
+				char *name, *value;
 
-				if (optarg[equal_pos] != '=')
+				ParseLongOption(optarg, &name, &value);
+				if (!value)
 					elog(ERROR, "--%s requires argument", optarg);
-				optarg[equal_pos] = '\0';
-				for(cp = optarg; *cp; cp++)
-					if (*cp == '-')
-						*cp = '_';
-				SetConfigOption(optarg, optarg + equal_pos + 1, PGC_POSTMASTER);
+
+				SetConfigOption(name, value, PGC_POSTMASTER);
+				free(name);
+				if (value)
+					free(value);
 				break;
 			}
 			default:

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.4 2000/06/22 22:31:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.5 2000/07/03 20:46:05 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -354,6 +354,9 @@ ResetAllOptions(void)
 		}
 		ConfigureNamesString[i].variable = str;
 	}
+
+	if (getenv("PGPORT"))
+		PostPortName = atoi(getenv("PGPORT"));
 }
 
 
@@ -718,3 +721,49 @@ GetConfigOption(const char * name)
     }
     return NULL;
 }    
+
+
+
+/*
+ * A little "long argument" simulation, although not quite GNU
+ * compliant. Takes a string of the form "some-option=some value" and
+ * returns name = "some_option" and value = "some value" in malloc'ed
+ * storage. Note that '-' is converted to '_' in the option name. If
+ * there is no '=' in the input string then value will be NULL.
+ */
+void
+ParseLongOption(const char * string, char ** name, char ** value)
+{
+	size_t equal_pos;
+	char *cp;
+
+	AssertArg(string);
+	AssertArg(name);
+	AssertArg(value);
+
+	equal_pos = strcspn(string, "=");
+
+	if (string[equal_pos] == '=')
+	{
+		*name = malloc(equal_pos + 1);
+		if (!*name)
+			elog(FATAL, "out of memory");
+		strncpy(*name, string, equal_pos);
+		(*name)[equal_pos] = '\0';
+
+		*value = strdup(&string[equal_pos + 1]);
+		if (!*value)
+			elog(FATAL, "out of memory");
+	}
+	else						/* no equal sign in string */
+	{
+		*name = strdup(string);
+		if (!*name)
+			elog(FATAL, "out of memory");
+		*value = NULL;
+	}
+
+	for(cp = *name; *cp; cp++)
+		if (*cp == '-')
+			*cp = '_';
+}
