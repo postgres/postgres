@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.11 1997/03/16 01:16:31 scrappy Exp $
+ * $Id: pg_proc.h,v 1.12 1997/03/16 20:40:52 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -768,15 +768,20 @@ DATA(insert OID =  1310 (  timestample      PGUID 11 f t f 2 f 16 "1296 1296" 10
 DATA(insert OID =  1311 (  timestampge      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
-DATA(insert OID =  870 (  LOWER             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
-DATA(insert OID =  871 (  UPPER             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
-DATA(insert OID =  872 (  INITCAP           PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
-DATA(insert OID =  873 (  LPAD              PGUID 11 f t f 3 f 25 "25 23 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  874 (  RPAD              PGUID 11 f t f 3 f 25 "25 23 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  875 (  LTRIM             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  876 (  RTRIM             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
-DATA(insert OID =  877 (  SUBSTR            PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
-DATA(insert OID =  878 (  TRANSLATE         PGUID 11 f t f 3 f 25 "25 18 18" 100 0 0 100  foo bar ));
+DATA(insert OID =  870 (  lower             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  871 (  upper             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  872 (  initcap           PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  873 (  lpad              PGUID 11 f t f 3 f 25 "25 23 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  874 (  rpad              PGUID 11 f t f 3 f 25 "25 23 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  875 (  ltrim             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  876 (  rtrim             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  877 (  substr            PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
+DATA(insert OID =  878 (  translate         PGUID 11 f t f 3 f 25 "25 18 18" 100 0 0 100  foo bar ));
+DATA(insert OID =  879 (  lpad              PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select lpad($1, $2, \' \')" - ));
+DATA(insert OID =  880 (  rpad              PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select rpad($1, $2, \' \')" - ));
+DATA(insert OID =  881 (  ltrim             PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select ltrim($1, \' \')" - ));
+DATA(insert OID =  882 (  rtrim             PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select rtrim($1, \' \')" - ));
+DATA(insert OID =  883 (  substr            PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, 10000)" - ));
 
 /* 
  * prototypes for functions pg_proc.c 
