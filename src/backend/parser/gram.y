@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.66 1999/03/19 23:48:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.67 1999/03/21 02:26:56 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3698,6 +3698,10 @@ a_expr:  attr opt_indirection
 				}
 		| '-' a_expr %prec UMINUS
 				{	$$ = doNegate($2); }
+		| '%' a_expr %prec UMINUS
+				{	$$ = makeA_Expr(OP, "%", NULL, $2); }
+		| a_expr %prec UMINUS '%'
+				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| a_expr '+' a_expr
 				{	$$ = makeA_Expr(OP, "+", $1, $3); }
 		| a_expr '-' a_expr
