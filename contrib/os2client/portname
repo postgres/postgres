@@ -1,0 +1,2 @@
+#undef PORTNAME 
+#define PORTNAME OS2 
