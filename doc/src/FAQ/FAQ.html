@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Feb 14 23:35:09 EST 2005</P>
+    <P>Last updated: Thu Feb 24 19:32:04 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -85,7 +85,8 @@
     searches and case-insensitive regular expression searches? How do I
     use an index for case-insensitive searches?<BR>
      <A href="#4.9">4.9</A>) In a query, how do I detect if a field
-    is <SMALL>NULL</SMALL>?<BR>
+    is <SMALL>NULL</SMALL>?  How can I sort on whether a field is <SMALL>
+    NULL</SMALL> or not?<BR>
      <A href="#4.10">4.10</A>) What is the difference between the
     various character types?<BR>
      <A href="#4.11.1">4.11.1</A>) How do I create a
@@ -162,7 +163,7 @@
     <P>PostgreSQL Data Base Management System</P>
 
     <P>Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
-    Portions Copyright (c) 1994-6 Regents of the University of California</P>
+    Portions Copyright (c) 1994-1996 Regents of the University of California</P>
 
     <P>Permission to use, copy, modify, and distribute this software
     and its documentation for any purpose, without fee, and without a
@@ -206,7 +207,7 @@
     <H4><A name="1.4">1.4</A>) Where can I get PostgreSQL?</H4>
 
     <P>The primary anonymous ftp site for PostgreSQL is <A href=
-    "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>.
+    "ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>.
     For mirror sites, see our main web site.</P>
 
     <H4><A name="1.5">1.5</A>) Where can I get support?</H4>
@@ -225,8 +226,8 @@
     (<I>#postgresqlfr</I>).  There is also a PostgreSQL channel on EFNet.
 
     <P>A list of commercial support companies is available at <A href=
-    "http://techdocs.postgresql.org/companies.php">http://techdocs.postg
-    resql.org/companies.php</A>.</P>
+    "http://techdocs.postgresql.org/companies.php">
+    http://techdocs.postgresql.org/companies.php</A>.</P>
 
     <H4><A name="1.6">1.6</A>) How do I submit a bug report?</H4>
 
@@ -235,7 +236,7 @@
     http://www.postgresql.org/support/submitbug</A>.</P>
 
     <P>Also check out our ftp site <A href=
-    "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A> to
+    "ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A> to
     see if there is a more recent PostgreSQL version.</P>
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
@@ -411,7 +412,8 @@
     href="http://www.php.net">http://www.php.net</A>) is an excellent
     interface.</P>
 
-    <P>For complex cases, many use the Perl and CGI.pm or mod_perl.</P>
+    <P>For complex cases, many use the Perl DBD::Pg with CGI.pm or
+    mod_perl.</P>
 
     <H4><A name="2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface?</H4>
@@ -421,10 +423,9 @@
     href="http://www.pgadmin.org">http://www.pgadmin.org</a>, PgAccess
     <a href="http://www.pgaccess.org"> http://www.pgaccess.org</a>),
     RHDB Admin (<a
-    href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhd
-    b/ </a>), TORA (<a
-    href="http://www.globecom.net/tora/">http://www.globecom.net/tora/</a>, 
-    partly commercial), and Rekall (<a
+    href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
+    </a>), TORA (<a href="http://www.globecom.net/tora/">
+    http://www.globecom.net/tora/</a>, partly commercial), and Rekall (<a
     href="http://www.rekallrevealed.org/">
     http://www.rekallrevealed.org/</a>). There is also PhpPgAdmin (<a
     href="http://phppgadmin.sourceforge.net/">
@@ -815,10 +816,28 @@ table?</TD><TD>unlimited</TD></TR>
 </PRE>
 
     <H4><A name="4.9">4.9</A>) In a query, how do I detect if a field
-    is <SMALL>NULL</SMALL>?</H4>
+    is <SMALL>NULL</SMALL>?  How can I sort on whether a field is <SMALL>
+    NULL</SMALL> or not?</H4>
 
     <P>You test the column with <SMALL>IS NULL</SMALL> and <SMALL>IS
     NOT NULL</SMALL>.</P>
+
+<PRE>
+   SELECT *
+   FROM tab
+   WHERE col IS NULL;
+</PRE>
+
+   <P>To sort by the <SMALL>NULL</SMALL status, use the <SMALL>IS NULL</SMALL>
+   and <SMALL>IS NOT NULL</SMALL> modifiers in your <SMALL>WHERE</SMALL> clause.
+   Things that are <I>true</I> will sort higher than things that are <I>false</I>,
+   so the following will put NULL entries at the top of the resulting list:</P>
+
+<PRE>
+   SELECT *
+   FROM tab
+   ORDER BY (col IS NOT NULL)
+</PRE>
 
     <H4><A name="4.10">4.10</A>) What is the difference between the
     various character types?</H4>

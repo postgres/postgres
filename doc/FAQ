@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Feb 14 23:35:09 EST 2005
+   Last updated: Thu Feb 24 19:32:04 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -59,7 +59,8 @@
    4.8) How do I perform regular expression searches and case-insensitive
    regular expression searches? How do I use an index for
    case-insensitive searches?
-   4.9) In a query, how do I detect if a field is NULL?
+   4.9) In a query, how do I detect if a field is NULL? How can I sort on
+   whether a field is NULL or not?
    4.10) What is the difference between the various character types?
    4.11.1) How do I create a serial/auto-incrementing field?
    4.11.2) How do I get the value of a SERIAL insert?
@@ -119,7 +120,8 @@
    PostgreSQL Data Base Management System
    
    Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
-   Portions Copyright (c) 1994-6 Regents of the University of California
+   Portions Copyright (c) 1994-1996 Regents of the University of
+   California
    
    Permission to use, copy, modify, and distribute this software and its
    documentation for any purpose, without fee, and without a written
@@ -160,7 +162,8 @@
     1.4) Where can I get PostgreSQL?
     
    The primary anonymous ftp site for PostgreSQL is
-   ftp://ftp.PostgreSQL.org/pub. For mirror sites, see our main web site.
+   ftp://ftp.PostgreSQL.org/pub/. For mirror sites, see our main web
+   site.
    
     1.5) Where can I get support?
     
@@ -177,14 +180,14 @@
    EFNet.
    
    A list of commercial support companies is available at
-   http://techdocs.postg resql.org/companies.php.
+   http://techdocs.postgresql.org/companies.php.
    
     1.6) How do I submit a bug report?
     
    Visit the PostgreSQL bug form at
    http://www.postgresql.org/support/submitbug.
    
-   Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
+   Also check out our ftp site ftp://ftp.PostgreSQL.org/pub/ to see if
    there is a more recent PostgreSQL version.
    
     1.7) What is the latest release?
@@ -318,15 +321,15 @@
    For Web integration, PHP (http://www.php.net) is an excellent
    interface.
    
-   For complex cases, many use the Perl and CGI.pm or mod_perl.
+   For complex cases, many use the Perl DBD::Pg with CGI.pm or mod_perl.
    
     2.3) Does PostgreSQL have a graphical user interface?
     
    Yes, there are several graphical interfaces to PostgreSQL available.
    These include pgAdmin III (http://www.pgadmin.org, PgAccess
-   http://www.pgaccess.org), RHDB Admin (http://sources.redhat.com/rhd b/
-   ), TORA (http://www.globecom.net/tora/, partly commercial), and Rekall
-   ( http://www.rekallrevealed.org/). There is also PhpPgAdmin (
+   http://www.pgaccess.org), RHDB Admin (http://sources.redhat.com/rhdb/
+   ), TORA ( http://www.globecom.net/tora/, partly commercial), and
+   Rekall ( http://www.rekallrevealed.org/). There is also PhpPgAdmin (
    http://phppgadmin.sourceforge.net/ ), a web-based interface to
    PostgreSQL.
    
@@ -634,10 +637,22 @@
    expresssion index, it will be used:
     CREATE INDEX tabindex ON tab (lower(col));
 
-    4.9) In a query, how do I detect if a field is NULL?
+    4.9) In a query, how do I detect if a field is NULL? How can I sort on
+    whether a field is NULL or not?
     
    You test the column with IS NULL and IS NOT NULL.
-   
+   SELECT *
+   FROM tab
+   WHERE col IS NULL;
+
+   To sort by the NULLIS NULL
+   and IS NOT NULL modifiers in your WHERE clause. Things that are true
+   will sort higher than things that are false, so the following will put
+   NULL entries at the top of the resulting list:
+   SELECT *
+   FROM tab
+   ORDER BY (col IS NOT NULL)
+
     4.10) What is the difference between the various character types?
     
         Type    Internal Name                    Notes
