@@ -1,0 +1,357 @@
+<REFENTRY ID="SQL-ALTERTABLE-1">
+<REFMETA>
+<REFENTRYTITLE>
+ALTER TABLE
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+ALTER TABLE
+</REFNAME>
+<REFPURPOSE>
+Modifies table properties
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-04-15</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    [*] ADD [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    [*] RENAME [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> TO <REPLACEABLE CLASS="PARAMETER">newcolumn</REPLACEABLE>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    RENAME TO <REPLACEABLE CLASS="PARAMETER">newtable</REPLACEABLE>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-ALTERTABLE-1">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER"> table </REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          The name of an existing table to alter.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER"> column </REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          Name of a new or existing column.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER"> type </REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          Type of the new column.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER"> newcolumn </REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          New name for an existing column.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER"> newtable </REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          New name for an existing column.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-ALTERTABLE-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>status</ReturnValue>
+</TERM>
+<LISTITEM>
+<PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>ALTER</ReturnValue>
+</TERM>
+<LISTITEM>
+<PARA>
+          Message returned from column or table renaming.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>NEW</ReturnValue>
+</TERM>
+<LISTITEM>
+<PARA>
+          Message returned from column addition.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>ERROR</ReturnValue>
+</TERM>
+<LISTITEM>
+<PARA>
+          Message returned if table or column is not available.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-ALTERTABLE-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   ALTER TABLE changes the definition of an existing table.
+   The new columns and their types are specified in the same style
+   and with the the same restrictions as in CREATE TABLE.
+   The RENAME clause causes the name of a table or column
+   to change without changing any of the data contained in
+   the affected table. Thus, the table or column will
+   remain of the same type and size after this command is
+   executed.
+<PARA>
+   You must own the table in order to change its schema.
+</PARA>
+
+<REFSECT2 ID="R2-SQL-ALTERTABLE-3">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+The keyword COLUMN is noise and can be omitted.
+
+<PARA>
+ALTER TABLE/RENAME is a PostgreSQL language extension.
+
+<PARA>
+<Quote>[*]</Quote> following a name of a table indicates that statement
+     should be run over that table and all tables below it in the
+     inheritance hierarchy.
+     Refer to PostgreSQL User's Guide for further
+     information on inheritance.
+
+<PARA>
+   Refer to the CREATE TABLE reference for further description
+     of valid arguments.
+
+</REFSECT2>
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-ALTERTABLE-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+   To add a column of type VARCHAR to a table:
+<ProgramListing>
+    ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
+</ProgramListing>
+
+<PARA>
+   To rename an existing column:
+<ProgramListing>
+    ALTER TABLE distributors RENAME COLUMN address TO city;
+</ProgramListing>
+
+<PARA>
+   To rename an existing table:
+<ProgramListing>
+    ALTER TABLE distributors RENAME TO suppliers;
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-ALTERTABLE-3">
+<TITLE>
+Compatibility
+</TITLE>
+
+<REFSECT2 ID="R2-SQL-ALTERTABLE-4">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   SQL92 specifies some additional capabilities for ALTER TABLE
+   statement which are not yet directly supported by <ProductName>Postgres</ProductName>:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<Synopsis>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
+    SET DEFAULT <REPLACEABLE CLASS="PARAMETER">default</REPLACEABLE>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
+    ADD [CONSTRAINT <REPLACEABLE CLASS="PARAMETER">constraint</REPLACEABLE>] <REPLACEABLE CLASS="PARAMETER">table-constraint</REPLACEABLE>
+</Synopsis>
+</TERM>
+<LISTITEM>
+<PARA>
+          Puts the default value or constraint specified into the
+          definition of column in the table. See CREATE TABLE for the
+          syntax of the default and table-constraint clauses.
+          If a default clause already exists, it will be replaced by
+          the new definition. If any constraints on this column already
+          exist, they will be retained using a boolean AND with the new
+          constraint.
+
+<PARA>
+Currently, to set new default constraints on an existing column
+          the table must be recreated and reloaded:
+
+<ProgramListing>
+CREATE TABLE temp AS SELECT * FROM distributors;
+DROP TABLE distributors;
+CREATE TABLE distributors (
+    did      DECIMAL(3) DEFAULT 1,
+    name     VARCHAR(40) NOT NULL,
+    city     VARCHAR(30)
+);
+INSERT INTO distributors SELECT * FROM temp;
+DROP TABLE temp;
+</ProgramListing>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<Synopsis>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    DROP DEFAULT <REPLACEABLE CLASS="PARAMETER">default</REPLACEABLE>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    DROP CONSTRAINT <REPLACEABLE CLASS="PARAMETER">constraint</REPLACEABLE> { RESTRICT | CASCADE }
+</Synopsis>
+</TERM>
+<LISTITEM>
+<PARA>
+          Removes the default value specified by default or the rule
+          specified by constraint from the definition of a table. 
+          If RESTRICT is specified only a constraint with no dependent
+          constraints can be destroyed.
+          If CASCADE is specified, Any constraints that are dependent on
+          this constraint are also dropped.
+
+<PARA>
+Currently, to remove a default value or constraints on an
+          existing column the table must be recreated and reloaded:
+
+<ProgramListing>
+CREATE TABLE temp AS SELECT * FROM distributors;
+DROP TABLE distributors;
+CREATE TABLE distributors AS SELECT * FROM temp;
+DROP TABLE temp;
+</ProgramListing>
+   
+<VARLISTENTRY>
+<TERM>
+<Synopsis>
+ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    DROP [COLUMN] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> { RESTRICT | CASCADE }
+</Synopsis>
+</TERM>
+<LISTITEM>
+<PARA>
+          Removes a column from a table.
+          If RESTRICT is specified only a column with no dependent
+          objects can be destroyed.
+          If CASCADE is specified, all objects that are dependent on
+          this column are also dropped.
+
+<PARA>
+Currently, to remove an existing column the table must be
+          recreated and reloaded:
+
+<ProgramListing>
+CREATE TABLE temp AS SELECT did, city FROM distributors;    
+DROP TABLE distributors;
+CREATE TABLE distributors (
+    did      DECIMAL(3)  DEFAULT 1,
+    name     VARCHAR(40) NOT NULL,
+);
+INSERT INTO distributors SELECT * FROM temp;
+DROP TABLE temp;
+</ProgramListing>
+</PARA>
+</VARIABLELIST>
+</REFENTRY>
+
+<!--
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+<ReturnValue></ReturnValue>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>&bull;
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+<PARA>
+</PARA>
+-->

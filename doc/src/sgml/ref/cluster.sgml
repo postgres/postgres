@@ -1,0 +1,248 @@
+<REFENTRY ID="SQL-CLUSTER-1">
+ <REFMETA>
+ <REFENTRYTITLE>
+  CLUSTER
+ </REFENTRYTITLE>
+ <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+ </REFMETA>
+ <REFNAMEDIV>
+ <REFNAME>
+  CLUSTER
+ </REFNAME>
+ <REFPURPOSE>
+  Gives storage clustering advice to PostgreSQL
+ </REFPURPOSE>
+ 
+ <REFSYNOPSISDIV>
+ <REFSYNOPSISDIVINFO>
+  <DATE>1998-04-15</DATE>
+ </REFSYNOPSISDIVINFO>
+ <SYNOPSIS>
+  CLUSTER <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+ </SYNOPSIS>
+ 
+ <REFSECT2 ID="R2-SQL-CLUSTER-1">
+  <REFSECT2INFO>
+  <DATE>1998-04-15</DATE>
+  </REFSECT2INFO>
+  <TITLE>
+  Inputs
+  </TITLE>
+  <PARA>
+  </PARA>
+  <VARIABLELIST>
+  <VARLISTENTRY>
+   <TERM>
+   <ReturnValue>
+    <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE>
+   </ReturnValue>
+   </TERM>
+   <LISTITEM>
+   <PARA>
+    The name of an index.
+   </PARA>
+   </LISTITEM>
+  </VARLISTENTRY>
+  <VARLISTENTRY>
+   <TERM>
+   <ReturnValue>
+    <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+   </ReturnValue>
+   </TERM>
+   <LISTITEM>
+   <PARA>
+    The name of a table.
+   </PARA>
+   </LISTITEM>
+  </VARLISTENTRY>
+  </VARIABLELIST>
+ </REFSECT2>
+ 
+ <REFSECT2 ID="R2-SQL-CLUSTER-2">
+  <REFSECT2INFO>
+  <DATE>1998-04-15</DATE>
+  </REFSECT2INFO>
+  <TITLE>
+  Outputs
+  </TITLE>
+  <PARA>
+  </PARA>
+  <VARIABLELIST>
+  <VARLISTENTRY>
+   <TERM>
+   </TERM>
+   <LISTITEM>
+   <PARA>
+    <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	 <ReturnValue>CLUSTER</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	 <PARA>
+	  The clustering was done successfully.
+	 </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	 <ReturnValue>ERROR: relation &lt;<REPLACEABLE CLASS="PARAMETER">tablerelation_number</REPLACEABLE>&gt; inherits "invoice"</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	 <PARA>
+	  ???
+	  <comment>
+	  This is not documented anywhere. It seems not to be possible to
+	  cluster a table that is inherited.
+	  </comment>
+	 </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	 <ReturnValue>ERROR: Relation x does not exist!</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	 <PARA>
+	  ???
+	  <comment>
+	  The relation complained of was not shown in the error message,
+	  which contained a random string instead of the relation name.
+	  </comment>
+	 </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+    </variablelist>
+   </LISTITEM>
+  </VARLISTENTRY>
+  </VARIABLELIST>
+  
+ </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
+ <REFSECT1 ID="R1-SQL-CLUSTER-1">
+ <REFSECT1INFO>
+  <DATE>1998-04-15</DATE>
+ </REFSECT1INFO>
+ <TITLE>
+  Description
+ </TITLE>
+ <PARA>
+  This command instructs PostgreSQL to cluster the class specified
+  by <replaceable class="parameter">classname</replaceable> approximately
+  based on the index specified by
+  <replaceable class="parameter">indexname</replaceable>. The index must
+  already have been defined on <replaceable class="parameter">classname</replaceable>.
+ </PARA>
+ <para>
+  When a class is clustered, it is physically reordered
+  based on the index information. The clustering is static.
+  In other words, as the class is updated, the changes are
+  not clustered. No attempt is made to keep new instances or
+  updated tuples clustered.  If he wishes, the user can
+  recluster manually by issuing the command again.
+ </para>
+ 
+ <para>
+  The table is actually copied to a temporary table in index
+  order, then renamed back to the original name.  For this
+  reason, all grant permissions and other indexes are lost
+  when clustering is performed.
+ </para>
+ 
+ <para>
+  In cases where you are accessing single rows randomly
+  within a table, the actual order of the data in the heap
+  table is unimportant. However, if you tend to access some
+  data more than others, and there is an index that groups
+  them together, you will benefit from using the CLUSTER
+  command.
+ </para>
+ 
+ <para> 
+  Another place CLUSTER is good is in cases where you use an
+  index to pull out several rows from a table. If you are
+  requesting a range of indexed values from a table, or a
+  single indexed value that has multiple rows that match,
+  CLUSTER will help because once the index identifies the
+  heap page for the first row that matches, all other rows
+  that match are probably already on the same heap page,
+  saving disk accesses and speeding up the query.
+ </para>
+ 
+ <para>
+  There are two ways to cluster data. The first is with the
+  CLUSTER command, which reorders the original table with
+  the ordering of the index you specify. This can be slow
+  on large tables because the rows are fetched from the heap
+  in index order, and if the heap table is unordered, the
+  entries are on random pages, so there is one disk page
+  retrieved for every row moved. PostgreSQL has a cache,
+  but the majority of a big table will not fit in the cache.
+ </para>
+ 
+ <para> 
+  Another way is to use
+  <programlisting>SELECT ... INTO TABLE temp FROM ... ORDER BY ...</programlisting>
+  This uses the PostgreSQL sorting code in
+  ORDER BY to match the index, and is much faster for
+  unordered data. You then drop the old table, use
+<programlisting>ALTER TABLE RENAME</programlisting>
+ to rename 'temp' to the old name, and
+  recreate the b bindexes. The only problem is that oids
+  will not be preserved. From then on, CLUSTER should be
+  fast because most of the heap data has already been
+  ordered, and the existing index is used.
+ </para>
+ 
+ 
+ <REFSECT1 ID="R1-SQL-CLUSTER-2">
+ <TITLE>
+  Usage
+ </TITLE>
+ <PARA>
+  Cluster the employees relation on the basis of its salary attribute
+ </PARA>
+ <ProgramListing>
+  CLUSTER emp_ind ON emp
+ </ProgramListing>
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-CLUSTER-3">
+ <TITLE>
+  Compatibility
+ </TITLE>
+ <PARA>
+ </PARA>
+ 
+ <REFSECT2 ID="R2-SQL-CLUSTER-4">
+  <REFSECT2INFO>
+  <DATE>1998-04-15</DATE>
+  </REFSECT2INFO>
+  <TITLE>
+  SQL92
+  </TITLE>
+  <PARA>
+  There is no CLUSTER statement in SQL92.
+  </PARA>
+ </refsect2>
+ </refsect1>
+</REFENTRY>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

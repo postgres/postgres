@@ -1,0 +1,553 @@
+<REFENTRY ID="SQL-SELECT-1">
+<REFMETA>
+<REFENTRYTITLE>
+SELECT
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+SELECT
+</REFNAME>
+<REFPURPOSE>
+Retrieve rows from a table or view
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-04-15</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+SELECT [ALL|DISTINCT]
+    <REPLACEABLE CLASS="PARAMETER">expression</REPLACEABLE> [AS <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>] [, ...]
+    [INTO [TABLE] <REPLACEABLE CLASS="PARAMETER">intable</REPLACEABLE>]
+    [FROM <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [<REPLACEABLE CLASS="PARAMETER">alias</REPLACEABLE>] [, ...] ]
+    [WHERE <REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE>]
+    [GROUP BY <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...] ]
+    [HAVING <REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE> [, ...] ]
+    [UNION [ALL] <REPLACEABLE CLASS="PARAMETER">select</REPLACEABLE>]
+    [ORDER BY <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [ASC | DESC] [, ...] ]
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-SELECT-1">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+
+<PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">expression</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          The name of a table's column or an expression.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          Specifies another name for a column or an expression using
+          the AS clause. <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> cannot be used in the WHERE
+          condition. It can, however, be referenced in associated
+          ORDER BY or GROUP BY clauses.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">intable</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          If the INTO TABLE clause is specified, the result of the
+          query will be stored in another table with the indicated
+          name.
+If <REPLACEABLE CLASS="PARAMETER">intable</REPLACEABLE> does not exist, it will be created automatically.
+
+<Note>
+<Para>
+The CREATE TABLE AS statement will also create a new table from a select query.
+</Para>
+</Note>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          The name of an existing table referenced by FROM clause.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">alias</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+An alternate name for the preceeding <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>.
+Used for brevity or to eliminate ambiguity for joins within a single table.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+An expression leading to a boolean (true/false) result.
+See the WHERE clause.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          The name of a table's column.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">select</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+A select statement with all features except the ORDER BY clause.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+</VARIABLELIST>
+</PARA>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-SELECT-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+   Rows
+</TERM>
+<LISTITEM>
+<PARA>
+The complete set of rows resulting from the query specification.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<ReturnValue>count</ReturnValue>
+</TERM>
+<LISTITEM>
+<PARA>
+The count of rows returned by the query.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-SELECT-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   SELECT will get all rows which satisfy the WHERE condition
+   or all rows of a table if WHERE is omitted.
+
+<PARA>
+   The GROUP BY clause allows a user to divide a table
+   conceptually into groups. (See GROUP BY clause).
+
+<PARA>
+   The HAVING clause specifies a grouped table derived by the
+   elimination of groups from the result of the previously
+   specified clause. (See HAVING clause).
+
+<PARA>
+   The ORDER BY clause allows a user to specify that he/she
+   wishes the rows sorted according to the ASCending or 
+   DESCending mode operator. (See ORDER BY clause)
+
+<PARA>
+   The UNION clause specifies a table derived from a Cartesian
+   product union join. (See UNION clause).
+
+<PARA>
+   You must have SELECT privilege to a table to read its values
+   (See GRANT/REVOKE statements).
+
+<REFSECT2 ID="R2-SQL-WHERE-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+WHERE clause
+</TITLE>
+<PARA>
+         The optional WHERE condition has the general form:
+
+<Synopsis>
+WHERE <REPLACEABLE CLASS="PARAMETER">expr</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">cond_op</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">expr</REPLACEABLE> [<REPLACEABLE CLASS="PARAMETER">log_op</REPLACEABLE> ...]
+</Synopsis>
+
+         where <REPLACEABLE CLASS="PARAMETER">cond_op</REPLACEABLE> can be one of: =, &lt;, &lt;=, &gt;, &gt;=, &lt;&gt;
+         or a conditional operator like ALL, ANY, IN, LIKE, et cetera
+         and <REPLACEABLE CLASS="PARAMETER">log_op</REPLACEABLE> can be one of: AND, OR, NOT.
+         The comparison returns either TRUE or FALSE and all
+         instances will be discarded
+         if the expression evaluates to FALSE.
+</PARA>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-GROUPBY-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+GROUP BY clause
+</TITLE>
+<PARA>
+    GROUP BY specifies a grouped table derived by the application
+    of the this clause:
+<SYNOPSIS>
+GROUP BY <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...]
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-HAVING-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+HAVING clause
+</TITLE>
+<PARA>
+         The optional HAVING condition has the general form:
+
+<Synopsis>
+HAVING <REPLACEABLE CLASS="PARAMETER">cond_expr</REPLACEABLE>
+</Synopsis>
+
+         where <REPLACEABLE CLASS="PARAMETER">cond_expr</REPLACEABLE> is the same
+as specified for the WHERE clause.
+
+<Para>
+    HAVING specifies a grouped table derived by the elimination
+    of groups from the result of the previously specified clause
+    that do not meet the <REPLACEABLE CLASS="PARAMETER">cond_expr</REPLACEABLE>.
+
+<Para>
+    Each column referenced in <REPLACEABLE CLASS="PARAMETER">cond_expr</REPLACEABLE> shall unambiguously
+    reference a grouping column.
+</PARA>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-ORDERBYCLAUSE-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+ORDER BY clause
+</TITLE>
+<PARA>
+<Synopsis>
+ORDER BY <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [ASC | DESC] [, ...]
+</Synopsis>
+
+<PARA>
+<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> can be either a column
+name or an ordinal number.
+<PARA>
+    The ordinal numbers refers to the ordinal (left-to-right) position
+    of the column. This feature makes it possible to define an ordering
+    on the basis of a column that does not have a proper name.
+    This is never absolutely necessary because it is always possible assign a name
+    to a calculated column using the AS clause, e.g.:
+<ProgramListing>
+SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
+</ProgramListing>
+
+<PARA>
+    The columns in the ORDER BY must appear in the SELECT clause.
+    Thus the following statement is illegal:
+<ProgramListing>
+SELECT name FROM distributors ORDER BY code;
+</ProgramListing>
+
+<PARA>
+    Optionally one may add the keyword DESC (descending)
+    or ASC (ascending) after each column name in the ORDER BY clause.
+    If not specified, ASC is assumed by default.
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-UNION-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+UNION clause
+</TITLE>
+<PARA>
+<Synopsis>
+<REPLACEABLE CLASS="PARAMETER">table_query</REPLACEABLE> UNION [ALL] <REPLACEABLE CLASS="PARAMETER">table_query</REPLACEABLE>
+    [ORDER BY <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [ASC | DESC] [, ...] ]
+</Synopsis>
+
+where
+   <REPLACEABLE CLASS="PARAMETER">table_query</REPLACEABLE>
+         specifies any select expression without an ORDER BY clause.
+
+<PARA>
+   The UNION operator specifies a table derived from a Cartesian product.
+   The two tables that represent the direct operands of the UNION must
+   have the same number of columns, and corresponding columns must be
+   of compatible data types.
+
+<PARA>
+   By default, the result of UNION does not contain any duplicate rows
+   unless the ALL clause is specified.
+
+<Para>
+Multiple UNION operators in the same SELECT statement are evaluated left to right.
+Note that the ALL keyword is not global in nature, being applied only for the current pair of
+table results.
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-SELECT-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+</PARA>
+<ProgramListing>
+    --Join table films with their distributors:
+    --
+    SELECT f.title, f.did, d.name, f.date_prod, f.kind
+        FROM distributors d, films f
+        WHERE f.did = d.did;
+
+    title                    |did|name            | date_prod|kind
+    -------------------------+---+----------------+----------+----------
+    The Third Man            |101|British Lion    |1949-12-23|Drama
+    The African Queen        |101|British Lion    |1951-08-11|Romantic
+    Une Femme est une Femme  |102|Jean Luc Godard |1961-03-12|Romantic
+    Vertigo                  |103|Paramount       |1958-11-14|Action
+    Becket                   |103|Paramount       |1964-02-03|Drama
+    48 Hrs                   |103|Paramount       |1982-10-22|Action
+    War and Peace            |104|Mosfilm         |1967-02-12|Drama
+    West Side Story          |105|United Artists  |1961-01-03|Musical
+    Bananas                  |105|United Artists  |1971-07-13|Comedy
+    Yojimbo                  |106|Toho            |1961-06-16|Drama
+    There's a Girl in my Soup|107|Columbia        |1970-06-11|Comedy
+    Taxi Driver              |107|Columbia        |1975-05-15|Action
+    Absence of Malice        |107|Columbia        |1981-11-15|Action
+    Storia di una donna      |108|Westward        |1970-08-15|Romantic
+    The King and I           |109|20th Century Fox|1956-08-11|Musical
+    Das Boot                 |110|Bavaria Atelier |1981-11-11|Drama
+    Bed Knobs and Broomsticks|111|Walt Disney     |          |Musical
+</ProgramListing>
+    
+<ProgramListing>
+    --sum column "len" of all films group by "kind":
+    --
+    SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
+
+    kind      |total
+    ----------+------
+    Action    | 07:34
+    Comedy    | 02:58
+    Drama     | 14:28
+    Musical   | 06:42
+    Romantic  | 04:38
+</ProgramListing>
+
+<ProgramListing>
+    --sum column length of all films group by "kind"
+    --having total duration < 5 hours:
+    --
+    SELECT kind, SUM(len) AS total
+        FROM films
+        GROUP BY kind
+        HAVING SUM(len) < INTERVAL '5 hour';
+
+    kind      |total
+    ----------+------
+    Comedy    | 02:58
+    Romantic  | 04:38
+</ProgramListing>
+
+<ProgramListing>
+    --The following two examples are identicals:
+    --
+    SELECT * FROM distributors ORDER BY name;
+    SELECT * FROM distributors ORDER BY 2;
+
+    did|name
+    ---+----------------
+    109|20th Century Fox
+    110|Bavaria Atelier
+    101|British Lion
+    107|Columbia
+    102|Jean Luc Godard
+    113|Luso films
+    104|Mosfilm
+    103|Paramount
+    106|Toho
+    105|United Artists
+    111|Walt Disney
+    112|Warner Bros.
+    108|Westward
+</ProgramListing>
+
+<ProgramListing>
+    --union of table distributors and table actors:
+    -- (only those that begin with letter W):
+    --
+    -- distributors:                     actors:
+    --        did|name                     id|name
+    --        ---+------------             --+--------------
+    --        108|Westward                  1|Woody Allen
+    --        111|Walt Disney               2|Warren Beatty
+    --        112|Warner Bros.              3|Walter Matthau
+    --        ...                           ...
+    --
+    --select only distinct rows (without ALL):
+    --
+    SELECT distributors.name
+    FROM   distributors
+    WHERE  distributors.name LIKE 'W%'
+    UNION
+           SELECT actors.name
+           FROM   actors
+           WHERE  actors.name LIKE 'W%';
+
+    name
+    --------------
+    Walt Disney
+    Walter Matthau
+    Warner Bros.
+    Warren Beatty
+    Westward
+    Woody Allen
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-SELECT-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-SELECT-4">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+<Acronym>SQL92</Acronym>
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT3 ID="R3-SQL-SELECT-1">
+<REFSECT3INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT3INFO>
+<TITLE>
+SELECT clause
+</TITLE>
+<PARA>
+In the <Acronym>SQL92</Acronym> standard, the optional keyword "AS" is just noise and can be 
+omitted without affecting the meaning.
+The <ProductName>Postgres</ProductName> parser requires this keyword when
+renaming columns because the type extensibility features lead to parsing ambiguities
+in this context.
+
+<PARA>
+In the <Acronym>SQL92</Acronym> standard, the new column name specified in an
+"AS" clause may be referenced in GROUP BY and HAVING clauses. This is not currently
+allowed in <ProductName>Postgres</ProductName>.
+</PARA>
+</REFSECT3>
+
+<REFSECT3 ID="R3-SQL-UNION-1">
+<REFSECT3INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT3INFO>
+<TITLE>
+UNION clause
+</TITLE>
+<PARA>
+The <Acronym>SQL92</Acronym> syntax for UNION allows an additional CORRESPONDING BY clause:
+<Synopsis> 
+<REPLACEABLE CLASS="PARAMETER">table_query</REPLACEABLE> UNION [ALL]
+    [CORRESPONDING [BY (<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [,...])]]
+    <REPLACEABLE CLASS="PARAMETER">table_query</REPLACEABLE>
+</Synopsis>
+
+<Para>
+The CORRESPONDING BY clause is not supported by <ProductName>Postgres</ProductName>.
+</PARA>
+</REFSECT3>
+
+</REFSECT2>
+</REFSECT1>
+</REFENTRY>
+
+<!--
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+<ReturnValue></ReturnValue>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>&bull;
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+<PARA>
+</PARA>
+-->

@@ -1,0 +1,300 @@
+<REFENTRY ID="SQL-CREATEAGGREGATE-1">
+ <REFMETA>
+  <REFENTRYTITLE>
+   CREATE AGGREGATE
+  </REFENTRYTITLE>
+  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+ </REFMETA>
+
+<comment>This entry needs a lot of work, especially some
+usefully complex examples.  Since I don't yet understand it, I
+haven't done this.</comment>
+
+ <REFNAMEDIV>
+  <REFNAME>
+   CREATE AGGREGATE
+  </REFNAME>
+  <REFPURPOSE>
+   Defines a new aggregate function
+  </REFPURPOSE>
+ <REFSYNOPSISDIV>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-04-15</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   CREATE AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [AS]
+       ([  SFUNC1    = <REPLACEABLE CLASS="PARAMETER">state_transition_function1</REPLACEABLE>
+       , BASETYPE  = <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>
+       , STYPE1    = <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE> ]
+       [, SFUNC2    = <REPLACEABLE CLASS="PARAMETER">state_transition_function2</REPLACEABLE>
+       , STYPE2    = <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE> ]
+       [, FINALFUNC = <REPLACEABLE CLASS="PARAMETER">final_function</REPLACEABLE> ]
+       [, INITCOND1 = <REPLACEABLE CLASS="PARAMETER">initial_condition1</REPLACEABLE> ]
+       [, INITCOND2 = <REPLACEABLE CLASS="PARAMETER">initial_condition2</REPLACEABLE> ]
+       )
+  </SYNOPSIS>
+
+  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-1">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <variablelist>
+    <varlistentry>
+     <term></term>
+     <listitem>
+   <PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+      <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+     </TERM>
+     <LISTITEM>
+      <para>
+       The name of an aggregate function to create.
+      </para>
+     </LISTITEM>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">state_transition_function1</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">state-transition_function2</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">final_function</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">initial_condition1</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <REPLACEABLE CLASS="PARAMETER">initial_condition2</REPLACEABLE>
+     </term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+   </PARA>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </REFSECT2>
+
+  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-2">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Outputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>CREATE</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          Message returned if the command completes successfully.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </VARIABLELIST>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+
+ <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-1">
+  <REFSECT1INFO>
+   <DATE>1998-04-15</DATE>
+  </REFSECT1INFO>
+  <TITLE>
+   Description
+  </TITLE>
+  <PARA>
+   An  aggregate  function can use up to three functions, two
+   state transition functions, X1 and X2:
+   X1( internal-state1, next-data_item ) ---> next-internal-state1
+   X2( internal-state2 ) ---> next-internal-state2
+   and a final calculation function, F:
+   F(internal-state1, internal-state2) ---> aggregate-value
+   These functions are required to have the following properties:
+   <itemizedlist>
+    <listitem>
+     <para>
+      The  arguments  to state-transition-function-1 must
+      be (stype1,basetype), and its return value must  be
+      stype1.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      The  argument and return value of state-transition-
+      function-2 must be stype2.
+     </para>
+    </listitem>
+    <listitem>     
+     <para>
+      The  arguments  to  the  final-calculation-function
+      must  be (stype1,stype2), and its return value must
+      be a POSTGRES base type (not necessarily  the  same
+      as basetype.
+     </para>
+    </listitem>
+    <listitem>
+     <para>	
+      The  final-calculation-function should be specified
+      if and only if both state-transition functions  are
+      specified. 
+     </para
+    </listitem>
+   </itemizedlist>
+  </PARA>  
+  <para>
+   Note  that  it  is possible to specify aggregate functions
+   that have varying combinations of state  and  final  functions. 
+   For example, the "count" aggregate requires sfunc2
+   (an incrementing function) but not  sfunc1  or  finalfunc,
+   whereas  the  "sum" aggregate requires sfunc1 (an addition
+   function) but not sfunc2 or finalfunc  and  the  "average"
+   aggregate  requires  both  of the above state functions as
+   well as a finalfunc (a division function) to  produce  its
+   answer.   In any case, at least one state function must be
+   defined, and any sfunc2 must have  a  corresponding  initcond2.
+  </para>
+  <para>	
+   Aggregates  also  require  two initial conditions, one for
+   each transition function.  These are specified and  stored
+   in the database as fields of type text.
+  </para>
+  
+  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-3">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+   <PARA>
+    CREATE AGGREGATE function is a PostgreSQL language extension.
+   </PARA>
+   
+   <para>
+    Refer to DROP AGGREGATE function to drop aggregate functions.
+   </para>
+  </REFSECT2>
+  
+ <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-2">
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>
+  </PARA>
+  <ProgramListing>
+  </ProgramListing>
+  
+  
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-3">
+  <TITLE>
+   Compatibility
+  </TITLE>
+  <PARA>
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-4">
+   <REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+    There is no CREATE AGGREGATE function on SQL92.
+   </PARA>
+   
+</REFENTRY>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
