@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.41 2001/11/05 17:46:31 momjian Exp $
+ * $Id: xact.h,v 1.42 2002/04/01 03:34:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,9 +97,7 @@ typedef struct xl_xact_abort
  *		extern definitions
  * ----------------
  */
-extern int	TransactionFlushEnabled(void);
-extern void SetTransactionFlushEnabled(bool state);
-
+extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern TransactionId GetCurrentTransactionId(void);
 extern CommandId GetCurrentCommandId(void);

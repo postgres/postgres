@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.101 2002/03/31 06:26:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.102 2002/04/01 03:34:26 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -24,10 +24,11 @@
 #include "catalog/catalog.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "commands/trigger.h"
-#include "commands/variable.h"	/* for set_default_client_encoding() */
+#include "commands/variable.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -372,17 +373,25 @@ InitPostgres(const char *dbname, const char *username)
 	if (!bootstrap)
 		ReverifyMyDatabase(dbname);
 
-#ifdef MULTIBYTE
-	/* set default client encoding --- uses info from ReverifyMyDatabase */
-	set_default_client_encoding();
-#endif
-
 	/*
 	 * Final phase of relation cache startup: write a new cache file
 	 * if necessary.  This is done after ReverifyMyDatabase to avoid
 	 * writing a cache file into a dead database.
 	 */
 	RelationCacheInitializePhase3();
+
+	/*
+	 * Initialize various default states that can't be set up until
+	 * we've selected the active user and done ReverifyMyDatabase.
+	 */
+
+	/* set default namespace search path */
+	InitializeSearchPath();
+
+#ifdef MULTIBYTE
+	/* set default client encoding --- uses info from ReverifyMyDatabase */
+	set_default_client_encoding();
+#endif
 
 	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This should

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.4 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.5 2002/04/01 03:34:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,9 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "storage/backendid.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -70,6 +72,12 @@ static Oid	defaultCreationNamespace = PG_CATALOG_NAMESPACE;
  * command is first executed).  Thereafter it's the OID of the temp namespace.
  */
 static Oid	myTempNamespace = InvalidOid;
+
+/*
+ * This is the text equivalent of the search path --- it's the value
+ * of the GUC variable 'search_path'.
+ */
+char *namespace_search_path = NULL;
 
 
 /*
@@ -701,4 +709,203 @@ RemoveTempRelationsCallback(void)
 
 		CommitTransactionCommand();
 	}
+}
+
+/*
+ * Routines for handling the GUC variable 'search_path'.
+ */
+
+/* parse_hook: is proposed value valid? */
+bool
+check_search_path(const char *proposed)
+{
+	char	   *rawname;
+	List	   *namelist;
+	List	   *l;
+
+	/* Need a modifiable copy of string */
+	rawname = pstrdup(proposed);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		pfree(rawname);
+		freeList(namelist);
+		return false;
+	}
+
+	/*
+	 * If we aren't inside a transaction, we cannot do database access so
+	 * cannot verify the individual names.  Must accept the list on faith.
+	 * (This case can happen, for example, when the postmaster reads a
+	 * search_path setting from postgresql.conf.)
+	 */
+	if (!IsTransactionState())
+	{
+		pfree(rawname);
+		freeList(namelist);
+		return true;
+	}
+
+	/*
+	 * Verify that all the names are either valid namespace names or "$user".
+	 * (We do not require $user to correspond to a valid namespace; should we?)
+	 */
+	foreach(l, namelist)
+	{
+		char   *curname = (char *) lfirst(l);
+
+		if (strcmp(curname, "$user") == 0)
+			continue;
+		if (!SearchSysCacheExists(NAMESPACENAME,
+								  CStringGetDatum(curname),
+								  0, 0, 0))
+		{
+			pfree(rawname);
+			freeList(namelist);
+			return false;
+		}
+	}
+
+	pfree(rawname);
+	freeList(namelist);
+
+	return true;
+}
+
+/* assign_hook: do extra actions needed when assigning to search_path */
+void
+assign_search_path(const char *newval)
+{
+	char	   *rawname;
+	List	   *namelist;
+	List	   *oidlist;
+	List	   *newpath;
+	List	   *l;
+	MemoryContext oldcxt;
+
+	/*
+	 * If we aren't inside a transaction, we cannot do database access so
+	 * cannot look up the names.  In this case, do nothing; the internal
+	 * search path will be fixed later by InitializeSearchPath.  (We assume
+	 * this situation can only happen in the postmaster or early in backend
+	 * startup.)
+	 */
+	if (!IsTransactionState())
+		return;
+
+	/* Need a modifiable copy of string */
+	rawname = pstrdup(newval);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		/* this should not happen if GUC checked check_search_path */
+		elog(ERROR, "assign_search_path: invalid list syntax");
+	}
+
+	/*
+	 * Convert the list of names to a list of OIDs.  If any names are not
+	 * recognizable, just leave them out of the list.  (This is our only
+	 * reasonable recourse when the already-accepted default is bogus.)
+	 */
+	oidlist = NIL;
+	foreach(l, namelist)
+	{
+		char   *curname = (char *) lfirst(l);
+		Oid		namespaceId;
+
+		if (strcmp(curname, "$user") == 0)
+		{
+			/* $user --- substitute namespace matching user name, if any */
+			HeapTuple	tuple;
+
+			tuple = SearchSysCache(SHADOWSYSID,
+								   ObjectIdGetDatum(GetSessionUserId()),
+								   0, 0, 0);
+			if (HeapTupleIsValid(tuple))
+			{
+				char   *uname;
+
+				uname = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
+				namespaceId = GetSysCacheOid(NAMESPACENAME,
+											 CStringGetDatum(uname),
+											 0, 0, 0);
+				if (OidIsValid(namespaceId))
+					oidlist = lappendi(oidlist, namespaceId);
+				ReleaseSysCache(tuple);
+			}
+		}
+		else
+		{
+			/* normal namespace reference */
+			namespaceId = GetSysCacheOid(NAMESPACENAME,
+										 CStringGetDatum(curname),
+										 0, 0, 0);
+			if (OidIsValid(namespaceId))
+				oidlist = lappendi(oidlist, namespaceId);
+		}
+	}
+
+	/*
+	 * Now that we've successfully built the new list of namespace OIDs,
+	 * save it in permanent storage.
+	 */
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	newpath = listCopy(oidlist);
+	MemoryContextSwitchTo(oldcxt);
+
+	/* Now safe to assign to state variable. */
+	freeList(namespaceSearchPath);
+	namespaceSearchPath = newpath;
+
+	/*
+	 * Update info derived from search path.
+	 */
+	pathContainsSystemNamespace = intMember(PG_CATALOG_NAMESPACE,
+											namespaceSearchPath);
+
+	if (namespaceSearchPath == NIL)
+		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
+	else
+		defaultCreationNamespace = (Oid) lfirsti(namespaceSearchPath);
+
+	/* Clean up. */
+	pfree(rawname);
+	freeList(namelist);
+	freeList(oidlist);
+}
+
+/*
+ * InitializeSearchPath: initialize module during InitPostgres.
+ *
+ * This is called after we are up enough to be able to do catalog lookups.
+ */
+void
+InitializeSearchPath(void)
+{
+	/*
+	 * In normal multi-user mode, we want the default search path to be
+	 * '$user,public' (or as much of that as exists, anyway; see the
+	 * error handling in assign_search_path); which is what guc.c has as
+	 * the wired-in default value.  But in bootstrap or standalone-backend
+	 * mode, the default search path must be empty so that initdb correctly
+	 * creates everything in PG_CATALOG_NAMESPACE.  Accordingly, adjust the
+	 * default setting if we are not running under postmaster.  (If a
+	 * non-default setting has been supplied, this will not overwrite it.)
+	 */
+	if (!IsUnderPostmaster)
+	{
+		SetConfigOption("search_path", "",
+						PGC_POSTMASTER, PGC_S_DEFAULT);
+	}
+	/*
+	 * If a search path setting was provided before we were able to execute
+	 * lookups, establish the internal search path now.
+	 */
+	if (namespace_search_path && *namespace_search_path &&
+		namespaceSearchPath == NIL)
+		assign_search_path(namespace_search_path);
 }

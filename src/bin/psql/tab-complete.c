@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.46 2002/03/24 04:31:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.47 2002/04/01 03:34:27 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -267,6 +267,7 @@ psql_completion(char *text, int start, int end)
 		"geqo_selection_bias",
 
 		"default_transaction_isolation",
+		"search_path",
 
 		NULL
 	};

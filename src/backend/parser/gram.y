@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.297 2002/03/29 19:06:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.298 2002/04/01 03:34:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -94,6 +94,7 @@ static void insertSelectOptions(SelectStmt *stmt,
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
+static bool set_name_needs_quotes(const char *name);
 
 #define MASK(b) (1 << (b))
 
@@ -909,19 +910,26 @@ var_value:  opt_boolean						{ $$ = $1; }
 				if ($1 == NIL)
 					elog(ERROR, "SET must have at least one argument");
 
+				/* compute space needed; allow for quotes and comma */
 				foreach (n, $1)
 				{
 					Value *p = (Value *) lfirst(n);
 					Assert(IsA(p, String));
-					/* keep track of room for string and trailing comma */
-					slen += (strlen(p->val.str) + 1);
+					slen += (strlen(p->val.str) + 3);
 				}
 				result = palloc(slen + 1);
 				*result = '\0';
 				foreach (n, $1)
 				{
 					Value *p = (Value *) lfirst(n);
-					strcat(result, p->val.str);
+					if (set_name_needs_quotes(p->val.str))
+					{
+						strcat(result, "\"");
+						strcat(result, p->val.str);
+						strcat(result, "\"");
+					}
+					else
+						strcat(result, p->val.str);
 					strcat(result, ",");
 				}
 				/* remove the trailing comma from the last element */
@@ -6567,4 +6575,26 @@ doNegateFloat(Value *v)
 		strcpy(newval+1, oldval);
 		v->val.str = newval;
 	}
+}
+
+/*
+ * Decide whether to put double quotes around a name appearing in a SET
+ * name_list.  Presently, do so if the name contains whitespace, commas,
+ * or uppercase characters.  (This is correct assuming that the result
+ * will be deparsed by SplitIdentifierString or similar logic.)
+ */
+static bool
+set_name_needs_quotes(const char *name)
+{
+	if (*name == '\0')
+		return true;			/* empty name does need quotes */
+	while (*name)
+	{
+		if (*name == ',' ||
+			isspace((unsigned char) *name) ||
+			isupper((unsigned char) *name))
+			return true;
+		name++;
+	}
+	return false;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.119 2002/03/31 06:26:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.120 2002/04/01 03:34:25 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -241,8 +241,10 @@ bool		AMI_OVERRIDE = false;
  * ----------------------------------------------------------------
  */
 
+#ifdef NOT_USED
+
 /* --------------------------------
- *		TranactionFlushEnabled()
+ *		TransactionFlushEnabled()
  *		SetTransactionFlushEnabled()
  *
  *		These are used to test and set the "TransactionFlushState"
@@ -261,12 +263,13 @@ TransactionFlushEnabled(void)
 	return TransactionFlushState;
 }
 
-#ifdef NOT_USED
 void
 SetTransactionFlushEnabled(bool state)
 {
 	TransactionFlushState = (state == true);
 }
+
+#endif
 
 
 /* --------------------------------
@@ -300,7 +303,6 @@ IsTransactionState(void)
 	 */
 	return false;
 }
-#endif
 
 /* --------------------------------
  *		IsAbortedTransactionBlockState

@@ -191,6 +191,7 @@
 #	Misc
 #
 #dynamic_library_path = '$libdir'
+#search_path = '$user,public'
 #australian_timezones = false
 #authentication_timeout = 60	# min 1, max 600
 #deadlock_timeout = 1000

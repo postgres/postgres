@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.80 2002/03/30 01:02:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.81 2002/04/01 03:34:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1046,28 +1046,82 @@ name_text(PG_FUNCTION_ARGS)
  * functions that take a text parameter representing a qualified name.
  * We split the name at dots, downcase if not double-quoted, and
  * truncate names if they're too long.
- *
- * This is a kluge, really, and exists only for historical reasons.
- * A better notation for such functions would be nextval(relname).
  */
 List *
 textToQualifiedNameList(text *textval, const char *caller)
 {
 	char	   *rawname;
-	char	   *nextp;
 	List	   *result = NIL;
+	List	   *namelist;
+	List	   *l;
 
 	/* Convert to C string (handles possible detoasting). */
 	/* Note we rely on being able to modify rawname below. */
 	rawname = DatumGetCString(DirectFunctionCall1(textout,
 												  PointerGetDatum(textval)));
-	nextp = rawname;
 
+	if (!SplitIdentifierString(rawname, '.', &namelist))
+		elog(ERROR, "%s: invalid name syntax", caller);
+
+	if (namelist == NIL)
+		elog(ERROR, "%s: invalid name syntax", caller);
+
+	foreach(l, namelist)
+	{
+		char   *curname = (char *) lfirst(l);
+
+		result = lappend(result, makeString(pstrdup(curname)));
+	}
+
+	pfree(rawname);
+	freeList(namelist);
+
+	return result;
+}
+
+/*
+ * SplitIdentifierString --- parse a string containing identifiers
+ *
+ * This is the guts of textToQualifiedNameList, and is exported for use in
+ * other situations such as parsing GUC variables.  In the GUC case, it's
+ * important to avoid memory leaks, so the API is designed to minimize the
+ * amount of stuff that needs to be allocated and freed.
+ *
+ * Inputs:
+ *	rawstring: the input string; must be overwritable!  On return, it's
+ *			   been modified to contain the separated identifiers.
+ *	separator: the separator punctuation expected between identifiers
+ *			   (typically '.' or ',').  Whitespace may also appear around
+ *			   identifiers.
+ * Outputs:
+ *	namelist: filled with a palloc'd list of pointers to identifiers within
+ *			  rawstring.  Caller should freeList() this even on error return.
+ *
+ * Returns TRUE if okay, FALSE if there is a syntax error in the string.
+ *
+ * Note that an empty string is considered okay here, though not in
+ * textToQualifiedNameList.
+ */
+bool
+SplitIdentifierString(char *rawstring, char separator,
+					  List **namelist)
+{
+	char	   *nextp = rawstring;
+	bool		done = false;
+
+	*namelist = NIL;
+
+	while (isspace((unsigned char) *nextp))
+		nextp++;				/* skip leading whitespace */
+
+	if (*nextp == '\0')
+		return true;			/* allow empty string */
+
+	/* At the top of the loop, we are at start of a new identifier. */
 	do
 	{
 		char	   *curname;
 		char	   *endp;
-		char	   *cp;
 		int			curlen;
 
 		if (*nextp == '\"')
@@ -1078,55 +1132,53 @@ textToQualifiedNameList(text *textval, const char *caller)
 			{
 				endp = strchr(nextp + 1, '\"');
 				if (endp == NULL)
-					elog(ERROR, "%s: invalid quoted name: mismatched quotes",
-						 caller);
+					return false; /* mismatched quotes */
 				if (endp[1] != '\"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
 				memmove(endp, endp+1, strlen(endp));
 				nextp = endp;
 			}
-			*endp = '\0';
+			/* endp now points at the terminating quote */
 			nextp = endp + 1;
-			if (*nextp)
-			{
-				if (*nextp != '.')
-					elog(ERROR, "%s: invalid name syntax",
-						 caller);
-				nextp++;
-				if (*nextp == '\0')
-					elog(ERROR, "%s: invalid name syntax",
-						 caller);
-			}
 		}
 		else
 		{
-			/* Unquoted name --- extends to next dot */
-			if (*nextp == '\0')				/* empty name not okay here */
-				elog(ERROR, "%s: invalid name syntax",
-					 caller);
+			/* Unquoted name --- extends to separator or whitespace */
 			curname = nextp;
-			endp = strchr(nextp, '.');
-			if (endp)
+			while (*nextp && *nextp != separator &&
+				   !isspace((unsigned char) *nextp))
 			{
-				*endp = '\0';
-				nextp = endp + 1;
-				if (*nextp == '\0')
-					elog(ERROR, "%s: invalid name syntax",
-						 caller);
+				/*
+				 * It's important that this match the identifier downcasing
+				 * code used by backend/parser/scan.l.
+				 */
+				if (isupper((unsigned char) *nextp))
+					*nextp = tolower((unsigned char) *nextp);
+				nextp++;
 			}
-			else
-				nextp = nextp + strlen(nextp);
-			/*
-			 * It's important that this match the identifier downcasing code
-			 * used by backend/parser/scan.l.
-			 */
-			for (cp = curname; *cp; cp++)
-			{
-				if (isupper((unsigned char) *cp))
-					*cp = tolower((unsigned char) *cp);
-			}
+			endp = nextp;
+			if (curname == nextp)
+				return false;	/* empty unquoted name not allowed */
 		}
+
+		while (isspace((unsigned char) *nextp))
+			nextp++;			/* skip trailing whitespace */
+
+		if (*nextp == separator)
+		{
+			nextp++;
+			while (isspace((unsigned char) *nextp))
+				nextp++;		/* skip leading whitespace for next */
+			/* we expect another name, so done remains false */
+		}
+		else if (*nextp == '\0')
+			done = true;
+		else
+			return false;		/* invalid syntax */
+
+		/* Now safe to overwrite separator with a null */
+		*endp = '\0';
 
 		/* Truncate name if it's overlength; again, should match scan.l */
 		curlen = strlen(curname);
@@ -1143,15 +1195,12 @@ textToQualifiedNameList(text *textval, const char *caller)
 		/*
 		 * Finished isolating current name --- add it to list
 		 */
-		result = lappend(result, makeString(pstrdup(curname)));
-		/*
-		 * Loop back if we found a dot
-		 */
-	} while (*nextp);
+		*namelist = lappend(*namelist, curname);
 
-	pfree(rawname);
+		/* Loop back if we didn't reach end of string */
+	} while (!done);
 
-	return result;
+	return true;
 }
 
 
