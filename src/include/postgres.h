@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.22 1999/05/03 19:10:14 momjian Exp $
+ * $Id: postgres.h,v 1.23 1999/06/10 22:59:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,21 @@ typedef Oid regproc;
 typedef Oid RegProcedure;
 
 /* ptr to func returning (char *) */
+#if defined(__mc68000__) && defined(__ELF__)
+/* The m68k SVR4 ABI defines that pointers are returned in %a0 instead of
+ * %d0. So if a function pointer is declared to return a pointer, the
+ * compiler may look only into %a0, but if the called function was declared
+ * to return return an integer type, it puts its value only into %d0. So the
+ * caller doesn't pink up the correct return value. The solution is to
+ * declare the function pointer to return int, so the compiler picks up the
+ * return value from %d0. (Functions returning pointers put their value
+ * *additionally* into %d0 for compability.) The price is that there are
+ * some warnings about int->pointer conversions...
+ */
+typedef int32 ((*func_ptr) ());
+#else 
 typedef char *((*func_ptr) ());
+#endif
 
 
 #define RegProcedureIsValid(p)	OidIsValid(p)
