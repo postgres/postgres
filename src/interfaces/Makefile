@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.15 1998/08/26 16:43:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.16 1998/10/07 06:41:40 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,6 +34,9 @@ ifeq ($(USE_TCL), true)
 endif
 ifeq ($(USE_PERL), true)
 	$(MAKE) -C perl5 $@
+endif
+ifeq ($(USE_ODBC), true)
+	$(MAKE) -C odbc $@
 endif
 
 perl5/Makefile: perl5/Makefile.PL
