@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.39 2002/06/11 15:41:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.40 2002/06/15 02:49:47 thomas Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -53,7 +53,7 @@ struct cached_re_str
 static int	rec = 0;			/* # of cached re's */
 static struct cached_re_str rev[MAX_CACHED_RES];		/* cached re's */
 static unsigned long lru;		/* system lru tag */
-static int pg_lastre = 0;
+static int pg_lastrec = 0;
 
 /* attempt to compile `re' as an re, then match it against text */
 /* cflags - flag to regcomp indicates case sensitivity */
@@ -70,13 +70,19 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 	re = DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(text_re)));
 
-	if ((i = pg_lastre) < rec)
+	/* Find a previously compiled regular expression.
+	 * Run the cache as a ring buffer, starting the search
+	 * from the previous match if any.
+	 */
+	i = pg_lastrec;
+	while (i < rec)
 	{
-		if (rev[i].cre_s)
+		if (rev[i].cre_s != NULL)
 		{
 			if (strcmp(rev[i].cre_s, re) == 0 &&
 				rev[i].cre_type == cflags)
 			{
+				pg_lastrec = i;
 				rev[i].cre_lru = ++lru;
 				pfree(re);
 				return (pg_regexec(&rev[i].cre_re,
@@ -84,29 +90,26 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 								   pmatch, 0) == 0);
 			}
 		}
-	}
+		i++;
 
-	/* find a previously compiled regular expression */
-	for (i = 0; i < rec; i++)
-	{
-		if (i == pg_lastre) continue;
-
-		if (rev[i].cre_s)
+		/* If we were not at the first slot to start,
+		 * then think about wrapping if necessary.
+		 */
+		if (pg_lastrec != 0)
 		{
-			if (strcmp(rev[i].cre_s, re) == 0 &&
-				rev[i].cre_type == cflags)
+			if (i >= rec)
 			{
-				rev[i].cre_lru = ++lru;
-				pfree(re);
-				return (pg_regexec(&rev[i].cre_re,
-								   text, nmatch,
-								   pmatch, 0) == 0);
+				i = 0;
+			}
+			else if (i == pg_lastrec)
+			{
+				break;
 			}
 		}
 	}
 
 	/* we didn't find it - make room in the cache for it */
-	if (rec == MAX_CACHED_RES)
+	if (rec >= MAX_CACHED_RES)
 	{
 		/* cache is full - find the oldest entry */
 		for (oldest = 0, i = 1; i < rec; i++)
@@ -116,13 +119,16 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 		}
 	}
 	else
+	{
 		oldest = rec++;
+	}
 
 	/* if there was an old re, then de-allocate the space it used */
 	if (rev[oldest].cre_s != (char *) NULL)
 	{
 		for (lru = i = 0; i < rec; i++)
 		{
+			/* downweight all of the other cached entries */
 			rev[i].cre_lru = (rev[i].cre_lru - rev[oldest].cre_lru) / 2;
 			if (rev[i].cre_lru > lru)
 				lru = rev[i].cre_lru;
@@ -141,6 +147,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 	regcomp_result = pg_regcomp(&rev[oldest].cre_re, re, cflags);
 	if (regcomp_result == 0)
 	{
+		pg_lastrec = oldest;
 		/*
 		 * use malloc/free for the cre_s field because the storage has to
 		 * persist across transactions
@@ -311,7 +318,6 @@ textregexsubstr(PG_FUNCTION_ARGS)
 {
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *result;
 	char	   *sterm;
 	int			len;
 	bool		match;
@@ -339,16 +345,6 @@ textregexsubstr(PG_FUNCTION_ARGS)
 									Int32GetDatum(pmatch.rm_so+1),
 									Int32GetDatum(pmatch.rm_eo-pmatch.rm_so)));
 	}
-#if 0
-	/* otherwise, return a zero-length string */
-	else
-	{
-		result = palloc(VARHDRSZ);
-		VARATT_SIZEP(result) = VARHDRSZ;
-		PG_RETURN_TEXT_P(result);
-	}
-#endif
 
-	/* not reached */
 	PG_RETURN_NULL();
 }
