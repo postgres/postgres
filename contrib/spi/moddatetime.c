@@ -64,8 +64,10 @@ moddatetime(PG_FUNCTION_ARGS)
 	tupdesc = rel->rd_att;
 
 	/* Get the current datetime. */
-	newdt = DirectFunctionCall1(timestamp_in,
-								CStringGetDatum("now"));
+	newdt = DirectFunctionCall3(timestamp_in,
+								CStringGetDatum("now"),
+								ObjectIdGetDatum(InvalidOid),
+								Int32GetDatum(-1));
 
 	/*
 	 * This gets the position in the turple of the field we want. args[0]
