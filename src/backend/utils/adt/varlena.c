@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.79 2002/03/05 05:33:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.80 2002/03/30 01:02:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1036,6 +1036,122 @@ name_text(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(result), NameStr(*s), len);
 
 	PG_RETURN_TEXT_P(result);
+}
+
+
+/*
+ * textToQualifiedNameList - convert a text object to list of names
+ *
+ * This implements the input parsing needed by nextval() and other
+ * functions that take a text parameter representing a qualified name.
+ * We split the name at dots, downcase if not double-quoted, and
+ * truncate names if they're too long.
+ *
+ * This is a kluge, really, and exists only for historical reasons.
+ * A better notation for such functions would be nextval(relname).
+ */
+List *
+textToQualifiedNameList(text *textval, const char *caller)
+{
+	char	   *rawname;
+	char	   *nextp;
+	List	   *result = NIL;
+
+	/* Convert to C string (handles possible detoasting). */
+	/* Note we rely on being able to modify rawname below. */
+	rawname = DatumGetCString(DirectFunctionCall1(textout,
+												  PointerGetDatum(textval)));
+	nextp = rawname;
+
+	do
+	{
+		char	   *curname;
+		char	   *endp;
+		char	   *cp;
+		int			curlen;
+
+		if (*nextp == '\"')
+		{
+			/* Quoted name --- collapse quote-quote pairs, no downcasing */
+			curname = nextp + 1;
+			for (;;)
+			{
+				endp = strchr(nextp + 1, '\"');
+				if (endp == NULL)
+					elog(ERROR, "%s: invalid quoted name: mismatched quotes",
+						 caller);
+				if (endp[1] != '\"')
+					break;		/* found end of quoted name */
+				/* Collapse adjacent quotes into one quote, and look again */
+				memmove(endp, endp+1, strlen(endp));
+				nextp = endp;
+			}
+			*endp = '\0';
+			nextp = endp + 1;
+			if (*nextp)
+			{
+				if (*nextp != '.')
+					elog(ERROR, "%s: invalid name syntax",
+						 caller);
+				nextp++;
+				if (*nextp == '\0')
+					elog(ERROR, "%s: invalid name syntax",
+						 caller);
+			}
+		}
+		else
+		{
+			/* Unquoted name --- extends to next dot */
+			if (*nextp == '\0')				/* empty name not okay here */
+				elog(ERROR, "%s: invalid name syntax",
+					 caller);
+			curname = nextp;
+			endp = strchr(nextp, '.');
+			if (endp)
+			{
+				*endp = '\0';
+				nextp = endp + 1;
+				if (*nextp == '\0')
+					elog(ERROR, "%s: invalid name syntax",
+						 caller);
+			}
+			else
+				nextp = nextp + strlen(nextp);
+			/*
+			 * It's important that this match the identifier downcasing code
+			 * used by backend/parser/scan.l.
+			 */
+			for (cp = curname; *cp; cp++)
+			{
+				if (isupper((unsigned char) *cp))
+					*cp = tolower((unsigned char) *cp);
+			}
+		}
+
+		/* Truncate name if it's overlength; again, should match scan.l */
+		curlen = strlen(curname);
+		if (curlen >= NAMEDATALEN)
+		{
+#ifdef MULTIBYTE
+			curlen = pg_mbcliplen(curname, curlen, NAMEDATALEN - 1);
+			curname[curlen] = '\0';
+#else
+			curname[NAMEDATALEN - 1] = '\0';
+#endif
+		}
+
+		/*
+		 * Finished isolating current name --- add it to list
+		 */
+		result = lappend(result, makeString(pstrdup(curname)));
+		/*
+		 * Loop back if we found a dot
+		 */
+	} while (*nextp);
+
+	pfree(rawname);
+
+	return result;
 }
 
 

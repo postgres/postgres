@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.27 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.28 2002/03/30 01:02:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,9 @@
  */
 
 #include "postgres.h"
+
 #include "access/heapam.h"
+#include "catalog/namespace.h"
 #include "utils/builtins.h"
 
 static int	my_varattno(Relation rd, char *a);
@@ -39,43 +41,39 @@ int4notin(PG_FUNCTION_ARGS)
 {
 	int32		not_in_arg = PG_GETARG_INT32(0);
 	text	   *relation_and_attr = PG_GETARG_TEXT_P(1);
+	List	   *names;
+	int			nnames;
+	RangeVar   *relrv;
+	char	   *attribute;
 	Relation	relation_to_scan;
 	int32		integer_value;
 	HeapTuple	current_tuple;
 	HeapScanDesc scan_descriptor;
 	bool		isNull,
 				retval;
-	int			attrid,
-				strlength;
-	char	   *relation,
-			   *attribute;
-	char		my_copy[NAMEDATALEN * 2 + 2];
+	int			attrid;
 	Datum		value;
 
-	/* make a null-terminated copy of text */
-	strlength = VARSIZE(relation_and_attr) - VARHDRSZ;
-	if (strlength >= sizeof(my_copy))
-		strlength = sizeof(my_copy) - 1;
-	memcpy(my_copy, VARDATA(relation_and_attr), strlength);
-	my_copy[strlength] = '\0';
+	/* Parse the argument */
 
-	relation = (char *) strtok(my_copy, ".");
-	attribute = (char *) strtok(NULL, ".");
-	if (attribute == NULL)
+	names = textToQualifiedNameList(relation_and_attr, "int4notin");
+	nnames = length(names);
+	if (nnames < 2)
 		elog(ERROR, "int4notin: must provide relationname.attributename");
+	attribute = strVal(nth(nnames-1, names));
+	names = ltruncate(nnames-1, names);
+	relrv = makeRangeVarFromNameList(names);
 
 	/* Open the relation and get a relation descriptor */
 
-	relation_to_scan = heap_openr(relation, AccessShareLock);
+	relation_to_scan = heap_openrv(relrv, AccessShareLock);
 
 	/* Find the column to search */
 
 	attrid = my_varattno(relation_to_scan, attribute);
 	if (attrid < 0)
-	{
 		elog(ERROR, "int4notin: unknown attribute %s for relation %s",
-			 attribute, relation);
-	}
+			 attribute, RelationGetRelationName(relation_to_scan));
 
 	scan_descriptor = heap_beginscan(relation_to_scan, false, SnapshotNow,
 									 0, (ScanKey) NULL);

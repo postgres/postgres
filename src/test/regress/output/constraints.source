@@ -216,7 +216,6 @@ INSERT INTO tmp VALUES (null, 'Y', null);
 INSERT INTO tmp VALUES (5, '!check failed', null);
 INSERT INTO tmp VALUES (null, 'try again', null);
 INSERT INTO INSERT_TBL(y) select yd from tmp;
-WARNING:  insert_seq.nextval: sequence was re-created
 SELECT '' AS three, * FROM INSERT_TBL;
  three | x |       y       | z  
 -------+---+---------------+----

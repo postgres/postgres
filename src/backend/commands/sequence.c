@@ -8,15 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.75 2002/03/29 19:06:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.76 2002/03/30 01:02:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <ctype.h>
-
 #include "access/heapam.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/creatinh.h"
 #include "commands/sequence.h"
@@ -24,9 +23,6 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
-#ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
-#endif
 
 
 #define SEQ_MAGIC	  0x1717
@@ -57,7 +53,6 @@ typedef struct sequence_magic
 
 typedef struct SeqTableData
 {
-	char	   *name;
 	Oid			relid;
 	Relation	rel;			/* NULL if rel is not open in cur xact */
 	int64		cached;
@@ -70,12 +65,11 @@ typedef SeqTableData *SeqTable;
 
 static SeqTable seqtab = NULL;
 
-static char *get_seq_name(text *seqin);
-static SeqTable init_sequence(char *caller, char *name);
+static SeqTable init_sequence(char *caller, RangeVar *relation);
 static Form_pg_sequence read_info(char *caller, SeqTable elm, Buffer *buf);
 static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static int64 get_param(DefElem *def);
-static void do_setval(char *seqname, int64 next, bool iscalled);
+static void do_setval(RangeVar *sequence, int64 next, bool iscalled);
 
 /*
  * DefineSequence
@@ -285,7 +279,7 @@ Datum
 nextval(PG_FUNCTION_ARGS)
 {
 	text	   *seqin = PG_GETARG_TEXT_P(0);
-	char	   *seqname = get_seq_name(seqin);
+	RangeVar   *sequence;
 	SeqTable	elm;
 	Buffer		buf;
 	Page		page;
@@ -302,14 +296,15 @@ nextval(PG_FUNCTION_ARGS)
 				rescnt = 0;
 	bool		logit = false;
 
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
+																"nextval"));
+
 	/* open and AccessShareLock sequence */
-	elm = init_sequence("nextval", seqname);
+	elm = init_sequence("nextval", sequence);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
-			 seqname, seqname);
-
-	pfree(seqname);
+			 sequence->relname, sequence->relname);
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
@@ -379,7 +374,7 @@ nextval(PG_FUNCTION_ARGS)
 					break;		/* stop fetching */
 				if (!seq->is_cycled)
 					elog(ERROR, "%s.nextval: reached MAXVALUE (" INT64_FORMAT ")",
-						 elm->name, maxv);
+						 sequence->relname, maxv);
 				next = minv;
 			}
 			else
@@ -395,7 +390,7 @@ nextval(PG_FUNCTION_ARGS)
 					break;		/* stop fetching */
 				if (!seq->is_cycled)
 					elog(ERROR, "%s.nextval: reached MINVALUE (" INT64_FORMAT ")",
-						 elm->name, minv);
+						 sequence->relname, minv);
 				next = maxv;
 			}
 			else
@@ -456,7 +451,7 @@ nextval(PG_FUNCTION_ARGS)
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ERROR, "%s.nextval: WriteBuffer failed", elm->name);
+		elog(ERROR, "%s.nextval: WriteBuffer failed", sequence->relname);
 
 	PG_RETURN_INT64(result);
 }
@@ -465,24 +460,25 @@ Datum
 currval(PG_FUNCTION_ARGS)
 {
 	text	   *seqin = PG_GETARG_TEXT_P(0);
-	char	   *seqname = get_seq_name(seqin);
+	RangeVar   *sequence;
 	SeqTable	elm;
 	int64		result;
 
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
+																"currval"));
+
 	/* open and AccessShareLock sequence */
-	elm = init_sequence("currval", seqname);
+	elm = init_sequence("currval", sequence);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
 		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
-			 seqname, seqname);
+			 sequence->relname, sequence->relname);
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
 		elog(ERROR, "%s.currval is not yet defined in this session",
-			 seqname);
+			 sequence->relname);
 
 	result = elm->last;
-
-	pfree(seqname);
 
 	PG_RETURN_INT64(result);
 }
@@ -501,25 +497,25 @@ currval(PG_FUNCTION_ARGS)
  * sequence.
  */
 static void
-do_setval(char *seqname, int64 next, bool iscalled)
+do_setval(RangeVar *sequence, int64 next, bool iscalled)
 {
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
 
 	/* open and AccessShareLock sequence */
-	elm = init_sequence("setval", seqname);
+	elm = init_sequence("setval", sequence);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
-			 seqname, seqname);
+			 sequence->relname, sequence->relname);
 
 	/* lock page' buffer and read tuple */
 	seq = read_info("setval", elm, &buf);
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 		elog(ERROR, "%s.setval: value " INT64_FORMAT " is out of bounds (" INT64_FORMAT "," INT64_FORMAT ")",
-			 seqname, next, seq->min_value, seq->max_value);
+			 sequence->relname, next, seq->min_value, seq->max_value);
 
 	/* save info in local cache */
 	elm->last = next;			/* last returned number */
@@ -562,9 +558,7 @@ do_setval(char *seqname, int64 next, bool iscalled)
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ERROR, "%s.setval: WriteBuffer failed", seqname);
-
-	pfree(seqname);
+		elog(ERROR, "%s.setval: WriteBuffer failed", sequence->relname);
 }
 
 /*
@@ -576,9 +570,12 @@ setval(PG_FUNCTION_ARGS)
 {
 	text	   *seqin = PG_GETARG_TEXT_P(0);
 	int64		next = PG_GETARG_INT64(1);
-	char	   *seqname = get_seq_name(seqin);
+	RangeVar   *sequence;
 
-	do_setval(seqname, next, true);
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
+																"setval"));
+
+	do_setval(sequence, next, true);
 
 	PG_RETURN_INT64(next);
 }
@@ -593,65 +590,14 @@ setval_and_iscalled(PG_FUNCTION_ARGS)
 	text	   *seqin = PG_GETARG_TEXT_P(0);
 	int64		next = PG_GETARG_INT64(1);
 	bool		iscalled = PG_GETARG_BOOL(2);
-	char	   *seqname = get_seq_name(seqin);
+	RangeVar   *sequence;
 
-	do_setval(seqname, next, iscalled);
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
+																"setval"));
+
+	do_setval(sequence, next, iscalled);
 
 	PG_RETURN_INT64(next);
-}
-
-/*
- * Given a 'text' parameter to a sequence function, extract the actual
- * sequence name.  We downcase the name if it's not double-quoted,
- * and truncate it if it's too long.
- *
- * This is a kluge, really --- should be able to write nextval(seqrel).
- */
-static char *
-get_seq_name(text *seqin)
-{
-	char	   *rawname = DatumGetCString(DirectFunctionCall1(textout,
-												PointerGetDatum(seqin)));
-	int			rawlen = strlen(rawname);
-	char	   *seqname;
-
-	if (rawlen >= 2 &&
-		rawname[0] == '\"' && rawname[rawlen - 1] == '\"')
-	{
-		/* strip off quotes, keep case */
-		rawname[rawlen - 1] = '\0';
-		seqname = pstrdup(rawname + 1);
-		pfree(rawname);
-	}
-	else
-	{
-		seqname = rawname;
-
-		/*
-		 * It's important that this match the identifier downcasing code
-		 * used by backend/parser/scan.l.
-		 */
-		for (; *rawname; rawname++)
-		{
-			if (isupper((unsigned char) *rawname))
-				*rawname = tolower((unsigned char) *rawname);
-		}
-	}
-
-	/* Truncate name if it's overlength; again, should match scan.l */
-	if (strlen(seqname) >= NAMEDATALEN)
-	{
-#ifdef MULTIBYTE
-		int			len;
-
-		len = pg_mbcliplen(seqname, rawlen, NAMEDATALEN - 1);
-		seqname[len] = '\0';
-#else
-		seqname[NAMEDATALEN - 1] = '\0';
-#endif
-	}
-
-	return seqname;
 }
 
 static Form_pg_sequence
@@ -665,11 +611,12 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 
 	if (elm->rel->rd_nblocks > 1)
 		elog(ERROR, "%s.%s: invalid number of blocks in sequence",
-			 elm->name, caller);
+			 RelationGetRelationName(elm->rel), caller);
 
 	*buf = ReadBuffer(elm->rel, 0);
 	if (!BufferIsValid(*buf))
-		elog(ERROR, "%s.%s: ReadBuffer failed", elm->name, caller);
+		elog(ERROR, "%s.%s: ReadBuffer failed",
+			 RelationGetRelationName(elm->rel), caller);
 
 	LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
 
@@ -677,7 +624,8 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 
 	if (sm->magic != SEQ_MAGIC)
-		elog(ERROR, "%s.%s: bad magic (%08X)", elm->name, caller, sm->magic);
+		elog(ERROR, "%s.%s: bad magic (%08X)",
+			 RelationGetRelationName(elm->rel), caller, sm->magic);
 
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsUsed(lp));
@@ -692,16 +640,17 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 
 
 static SeqTable
-init_sequence(char *caller, char *name)
+init_sequence(char *caller, RangeVar *relation)
 {
+	Oid			relid = RangeVarGetRelid(relation, false);
 	SeqTable	elm,
 				prev = (SeqTable) NULL;
 	Relation	seqrel;
-
-	/* Look to see if we already have a seqtable entry for name */
+	
+	/* Look to see if we already have a seqtable entry for relation */
 	for (elm = seqtab; elm != (SeqTable) NULL; elm = elm->next)
 	{
-		if (strcmp(elm->name, name) == 0)
+		if (elm->relid == relid)
 			break;
 		prev = elm;
 	}
@@ -711,24 +660,22 @@ init_sequence(char *caller, char *name)
 		return elm;
 
 	/* Else open and check it */
-	seqrel = heap_openr(name, AccessShareLock);
+	seqrel = heap_open(relid, AccessShareLock);
 	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
-		elog(ERROR, "%s.%s: %s is not a sequence", name, caller, name);
+		elog(ERROR, "%s.%s: %s is not a sequence",
+			 relation->relname, caller, relation->relname);
 
+	/*
+	 * If elm exists but elm->rel is NULL, the seqtable entry is left over
+	 * from a previous xact -- update the entry and reuse it.
+	 *
+	 * NOTE: seqtable entries remain in the list for the life of a backend.
+	 * If the sequence itself is deleted then the entry becomes wasted memory,
+	 * but it's small enough that this should not matter.
+	 */ 
 	if (elm != (SeqTable) NULL)
 	{
-		/*
-		 * We are using a seqtable entry left over from a previous xact;
-		 * must check for relid change.
-		 */
 		elm->rel = seqrel;
-		if (RelationGetRelid(seqrel) != elm->relid)
-		{
-			elog(WARNING, "%s.%s: sequence was re-created",
-				 name, caller);
-			elm->relid = RelationGetRelid(seqrel);
-			elm->cached = elm->last = elm->increment = 0;
-		}
 	}
 	else
 	{
@@ -739,11 +686,8 @@ init_sequence(char *caller, char *name)
 		elm = (SeqTable) malloc(sizeof(SeqTableData));
 		if (elm == NULL)
 			elog(ERROR, "Memory exhausted in init_sequence");
-		elm->name = strdup(name);
-		if (elm->name == NULL)
-			elog(ERROR, "Memory exhausted in init_sequence");
 		elm->rel = seqrel;
-		elm->relid = RelationGetRelid(seqrel);
+		elm->relid = relid;
 		elm->cached = elm->last = elm->increment = 0;
 		elm->next = (SeqTable) NULL;
 

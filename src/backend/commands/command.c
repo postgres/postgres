@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.167 2002/03/29 19:06:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.168 2002/03/30 01:02:41 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1755,13 +1755,13 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	tupdesc->attrs[2]->attstorage = 'p';
 
 	/*
-	 * Note: the toast relation is considered a "normal" relation even if
-	 * its master relation is a temp table.  There cannot be any naming
-	 * collision, and the toast rel will be destroyed when its master is,
-	 * so there's no need to handle the toast rel as temp.
+	 * Note: the toast relation is placed in the regular pg_toast namespace
+	 * even if its master relation is a temp table.  There cannot be any
+	 * naming collision, and the toast rel will be destroyed when its master
+	 * is, so there's no need to handle the toast rel as temp.
 	 */
 	toast_relid = heap_create_with_catalog(toast_relname,
-										   RelationGetNamespace(rel),
+										   PG_TOAST_NAMESPACE,
 										   tupdesc,
 										   RELKIND_TOASTVALUE, false,
 										   false, true);

@@ -33,7 +33,7 @@ NOTICE:  physical length: 0.08MB live tuples: 20 (0.00MB, 1.17%) dead tuples: 32
 
    pgstattuple can be called as a function:
 
-   pgstattuple(NAME) RETURNS FLOAT8
+   pgstattuple(TEXT) RETURNS FLOAT8
 
    The argument is the table name.  pgstattuple returns the percentage
    of the "dead" tuples of a table.

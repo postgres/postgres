@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.4 2002/03/06 06:09:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.5 2002/03/30 01:02:41 tgl Exp $
  *
  * Copyright (c) 2001  Tatsuo Ishii
  *
@@ -27,6 +27,9 @@
 #include "fmgr.h"
 #include "access/heapam.h"
 #include "access/transam.h"
+#include "catalog/namespace.h"
+#include "utils/builtins.h"
+
 
 PG_FUNCTION_INFO_V1(pgstattuple);
 
@@ -43,8 +46,8 @@ extern Datum pgstattuple(PG_FUNCTION_ARGS);
 Datum
 pgstattuple(PG_FUNCTION_ARGS)
 {
-	Name		p = PG_GETARG_NAME(0);
-
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	RangeVar   *relrv;
 	Relation	rel;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
@@ -59,11 +62,13 @@ pgstattuple(PG_FUNCTION_ARGS)
 	uint64		dead_tuple_count = 0;
 	double		tuple_percent;
 	double		dead_tuple_percent;
-
 	uint64		free_space = 0; /* free/reusable space in bytes */
 	double		free_percent;	/* free/reusable space in % */
 
-	rel = heap_openr(NameStr(*p), AccessShareLock);
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
+														"pgstattuple"));
+	rel = heap_openrv(relrv, AccessShareLock);
+
 	nblocks = RelationGetNumberOfBlocks(rel);
 	scan = heap_beginscan(rel, false, SnapshotAny, 0, NULL);
 
