@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.20 1999/07/17 20:16:59 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.21 1999/08/31 01:28:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "postgres.h"
 #include "lib/stringinfo.h"
 
-#ifdef NOT_USED
 /*
  * makeStringInfo
  *
@@ -36,7 +35,6 @@ makeStringInfo(void)
 
 	return res;
 }
-#endif
 
 /*
  * initStringInfo
@@ -49,7 +47,7 @@ initStringInfo(StringInfo str)
 {
 	int			size = 256;		/* initial default buffer size */
 
-	str->data = palloc(size);
+	str->data = (char *) palloc(size);
 	if (str->data == NULL)
 		elog(ERROR,
 			 "initStringInfo: Out of memory (%d bytes requested)", size);
@@ -68,7 +66,6 @@ static void
 enlargeStringInfo(StringInfo str, int needed)
 {
 	int			newlen;
-	char	   *newdata;
 
 	needed += str->len + 1;		/* total space required now */
 	if (needed <= str->maxlen)
@@ -84,15 +81,11 @@ enlargeStringInfo(StringInfo str, int needed)
 	while (needed > newlen)
 		newlen = 2 * newlen;
 
-	newdata = palloc(newlen);
-	if (newdata == NULL)
+	str->data = (char *) repalloc(str->data, newlen);
+	if (str->data == NULL)
 		elog(ERROR,
-		"enlargeStringInfo: Out of memory (%d bytes requested)", newlen);
+			 "enlargeStringInfo: Out of memory (%d bytes requested)", newlen);
 
-	/* OK, transfer data into new buffer, and release old buffer */
-	memcpy(newdata, str->data, str->len + 1);
-	pfree(str->data);
-	str->data = newdata;
 	str->maxlen = newlen;
 }
 
@@ -103,29 +96,41 @@ enlargeStringInfo(StringInfo str, int needed)
  * and append it to whatever is already in str.  More space is allocated
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
- *
- * CAUTION: the current implementation has a 1K limit on the amount of text
- * generated in a single call (not on the total string length).
  */
 void
 appendStringInfo(StringInfo str, const char *fmt,...)
 {
 	va_list		args;
-	char		buffer[1024];
-	int			buflen;
+	int			avail,
+				nprinted;
 
 	Assert(str != NULL);
 
-	va_start(args, fmt);
-	buflen = vsnprintf(buffer, sizeof(buffer), fmt, args);
-	va_end(args);
-
-	/* Make more room if needed */
-	enlargeStringInfo(str, buflen);
-
-	/* OK, append the data, including the trailing null */
-	memcpy(str->data + str->len, buffer, buflen + 1);
-	str->len += buflen;
+	for (;;)
+	{
+		/*----------
+		 * Try to format the given string into the available space;
+		 * but if there's hardly any space, don't bother trying,
+		 * just fall through to enlarge the buffer first.
+		 *----------
+		 */
+		avail = str->maxlen - str->len - 1;
+		if (avail > 16)
+		{
+			va_start(args, fmt);
+			nprinted = vsnprintf(str->data + str->len, avail,
+								 fmt, args);
+			va_end(args);
+			if (nprinted < avail-1)
+			{
+				/* Success.  Note nprinted does not include trailing null. */
+				str->len += nprinted;
+				break;
+			}
+		}
+		/* Double the buffer size and try again. */
+		enlargeStringInfo(str, str->maxlen);
+	}
 }
 
 /*------------------------

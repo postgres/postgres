@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.45 1999/08/16 23:47:23 tgl Exp $
+ *	  $Id: explain.c,v 1.46 1999/08/31 01:28:28 tgl Exp $
  *
  */
 
@@ -30,6 +30,9 @@ typedef struct ExplainState
 static char *Explain_PlanToString(Plan *plan, ExplainState *es);
 static void printLongNotice(const char *header, const char *message);
 static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
+
+/* Convert a null string pointer into "<>" */
+#define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
 
 
 /*

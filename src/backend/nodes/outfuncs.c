@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.94 1999/08/21 03:48:58 tgl Exp $
+ *	$Id: outfuncs.c,v 1.95 1999/08/31 01:28:32 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -41,6 +41,10 @@
 
 static void _outDatum(StringInfo str, Datum value, Oid type);
 static void _outNode(StringInfo str, void *obj);
+
+/* Convert a null string pointer into "<>" */
+#define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
+
 
 /*
  * _outIntList -

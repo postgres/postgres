@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.13 1999/05/26 12:56:27 momjian Exp $
+ * $Id: stringinfo.h,v 1.14 1999/08/31 01:28:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,13 +60,11 @@ typedef StringInfoData *StringInfo;
  *-------------------------
  */
 
-#ifdef NOT_USED
 /*------------------------
  * makeStringInfo
  * Create an empty 'StringInfoData' & return a pointer to it.
  */
 extern StringInfo makeStringInfo(void);
-#endif
 
 /*------------------------
  * initStringInfo
@@ -81,8 +79,6 @@ extern void initStringInfo(StringInfo str);
  * and append it to whatever is already in str.  More space is allocated
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
- * CAUTION: the current implementation has a 1K limit on the amount of text
- * generated in a single call (not on the total string length).
  */
 extern void appendStringInfo(StringInfo str, const char *fmt,...);
 
@@ -100,12 +96,5 @@ extern void appendStringInfoChar(StringInfo str, char ch);
  */
 extern void appendBinaryStringInfo(StringInfo str,
 					   const char *data, int datalen);
-
-/*------------------------
- * stringStringInfo
- * Return the string itself or "<>" if it is NULL.
- * This is just a convenience macro used by many callers of appendStringInfo.
- */
-#define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
 
 #endif	 /* STRINGINFO_H */
