@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Oct 14 00:22:05 EDT 2000
+Last updated:		Sat Oct 14 17:55:58 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -61,7 +61,7 @@ URGENT
 
 ADMIN
 
-* -More access control over who can create tables and use locks(Karel)
+* More access control over who can create tables and use locks(Karel)
 * -Test syslog functionality
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes
