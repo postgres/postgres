@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.79 2000/01/26 05:57:59 momjian Exp $
+ * $Id: pg_type.h,v 1.80 2000/02/15 03:28:31 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -329,7 +329,7 @@ DATA(insert OID = 1012 (  _cid		 PGUID -1  -1 f b t \054 0	29 array_in array_out
 DATA(insert OID = 1013 (  _oidvector PGUID -1  -1 f b t \054 0	30 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1014 (  _bpchar	 PGUID -1  -1 f b t \054 0 1042 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1015 (  _varchar	 PGUID -1  -1 f b t \054 0 1043 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1016 (  _int8          PGUID -1  -1 f b t \054 0  20 array_in array_out array_in array_out d _null_ ));
+DATA(insert OID = 1016 (  _int8		 PGUID -1  -1 f b t \054 0  20 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1017 (  _point	 PGUID -1  -1 f b t \054 0 600 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1018 (  _lseg		 PGUID -1  -1 f b t \054 0 601 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1019 (  _path		 PGUID -1  -1 f b t \054 0 602 array_in array_out array_in array_out d _null_ ));
