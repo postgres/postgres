@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.29 1998/10/06 14:22:12 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.30 1998/10/07 06:50:33 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -116,19 +116,19 @@ endif
 # We need to compile this with special options for shared libs,
 # so we can't use the object in $(SRCDIR)/backend
 dllist.c:	$(SRCDIR)/backend/lib/dllist.c
-	-ln -s $(SRCDIR)/backend/lib/dllist.c .
+	-$(LN_S) $(SRCDIR)/backend/lib/dllist.c .
 
 ifdef MULTIBYTE
 # We need to compile this with special options for shared libs,
 # so we can't use the object in $(SRCDIR)/backend
 common.c: $(SRCDIR)/backend/utils/mb/common.c
-	-ln -s $(SRCDIR)/backend/utils/mb/common.c .
+	-$(LN_S) $(SRCDIR)/backend/utils/mb/common.c .
 
 wchar.c: $(SRCDIR)/backend/utils/mb/wchar.c
-	-ln -s $(SRCDIR)/backend/utils/mb/wchar.c .
+	-$(LN_S) $(SRCDIR)/backend/utils/mb/wchar.c .
 
 conv.c: $(SRCDIR)/backend/utils/mb/conv.c
-	-ln -s $(SRCDIR)/backend/utils/mb/conv.c .
+	-$(LN_S) $(SRCDIR)/backend/utils/mb/conv.c .
 endif
 
 # The following rules cause dependencies in the backend directory to 
@@ -141,7 +141,7 @@ $(SRCDIR)/backend/fmgr.h:
 
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) 
-	ln -sf $@ libpq.so
+	$(LN_S) -f $@ libpq.so
 
 
 .PHONY: beforeinstall-headers install-headers
@@ -216,7 +216,7 @@ install-libpq: libpq.a
 install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
 	rm -f $(LIBDIR)/libpq.so
-	ln -s $(shlib) $(LIBDIR)/libpq.so
+	$(LN_S) $(shlib) $(LIBDIR)/libpq.so
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -49,7 +49,7 @@ all: libecpg.a $(shlib)
 
 $(shlib): ecpglib.sho typename.sho
 	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.sho typename.sho
-	ln -sf $@ libecpg.so
+	$(LN_S) -f $@ libecpg.so
 
 clean:
 	rm -f *.o *.sho *.a core a.out *~ $(shlib) libecpg.so
@@ -61,7 +61,7 @@ install: libecpg.a $(shlib) $(install-shlib-dep)
 
 install-shlib:
 	$(INSTALL) $(INSTLOPTS) $(shlib) $(LIBDIR)
-	ln -sf $(shlib) $(LIBDIR)/libecpg.so
+	$(LN_S) -f $(shlib) $(LIBDIR)/libecpg.so
 
 uninstall::
 	rm -f $(LIBDIR)/libecpg.a $(LIBDIR)/$(shlib)
