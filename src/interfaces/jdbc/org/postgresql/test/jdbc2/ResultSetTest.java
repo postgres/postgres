@@ -4,6 +4,7 @@ import org.postgresql.test.TestUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.SQLException;
 
 import junit.framework.TestCase;
 
@@ -285,5 +286,48 @@ public class ResultSetTest extends TestCase
 				fail("Exception expected.");
 		}
 	}
-       
+
+	public void testZeroRowResultPositioning() throws SQLException
+	{
+		Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+		ResultSet rs = stmt.executeQuery("SELECT * FROM pg_database WHERE datname='nonexistantdatabase'");
+		assertEquals(rs.previous(),false);
+		assertEquals(rs.previous(),false);
+		assertEquals(rs.next(),false);
+		assertEquals(rs.next(),false);
+		assertEquals(rs.next(),false);
+		assertEquals(rs.next(),false);
+		assertEquals(rs.next(),false);
+		assertEquals(rs.previous(),false);
+		assertEquals(rs.first(),false);
+		assertEquals(rs.last(),false);
+		assertEquals(rs.getRow(),0);
+		assertEquals(rs.absolute(1),false);
+		assertEquals(rs.relative(1),false);
+		assertEquals(rs.isBeforeFirst(),false);
+		assertEquals(rs.isAfterLast(),false);
+		assertEquals(rs.isFirst(),false);
+		assertEquals(rs.isLast(),false);
+		rs.close();
+		stmt.close();
+	}
+
+	public void testRowResultPositioning() throws SQLException
+	{
+		Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+		// Create a one row result set.
+		ResultSet rs = stmt.executeQuery("SELECT * FROM pg_database WHERE datname='template1'");
+		assertTrue(rs.isBeforeFirst());
+		assertTrue(rs.next());
+		assertTrue(rs.isFirst());
+		assertTrue(rs.isLast());
+		assertTrue(!rs.next());
+		assertTrue(rs.isAfterLast());
+		assertTrue(rs.previous());
+		assertTrue(rs.absolute(1));
+		rs.close();
+		stmt.close();
+	}
+
 }
+

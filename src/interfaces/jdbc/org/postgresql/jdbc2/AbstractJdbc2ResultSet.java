@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.2 2003/12/18 03:35:55 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.3 2004/02/03 05:25:37 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,8 +490,12 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 	public boolean previous() throws SQLException
 	{
-		if (--current_row < 0)
+		if (current_row-1 < 0) {
+			current_row = -1;
 			return false;
+		} else {
+			current_row--;
+		}
 		this_row = (byte[][]) rows.elementAt(current_row);
 		rowBuffer = new byte[this_row.length][];
 		System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
