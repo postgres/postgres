@@ -14,7 +14,7 @@ clean:
 	rm -f *.o core a.out ecpg y.tab.h y.tab.c *~
 
 install: all
-	install -c -m 755 ecpg $(DESTDIR)$(BINDIR)
+	$(INSTALL) $(INSTLOPTS) ecpg $(DESTDIR)$(BINDIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/ecpg
