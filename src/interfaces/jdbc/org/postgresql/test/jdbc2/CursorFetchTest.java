@@ -82,7 +82,7 @@ public class CursorFetchTest extends TestCase
 		PreparedStatement stmt = con.prepareStatement("select * from test_fetch order by value");
 		stmt.setFetchSize(0);
 		ResultSet rs = stmt.executeQuery();
-		stmt.setFetchSize(50); // Should have no effect.
+		rs.setFetchSize(50); // Should have no effect.
 
 		int count = 0;		
 		while (rs.next()) {
@@ -108,7 +108,7 @@ public class CursorFetchTest extends TestCase
 		PreparedStatement stmt = con.prepareStatement("select * from test_fetch order by value");
 		stmt.setFetchSize(25);
 		ResultSet rs = stmt.executeQuery();
-		stmt.setFetchSize(0);
+		rs.setFetchSize(0);
 
 		int count = 0;
 		while (rs.next()) {
@@ -136,7 +136,7 @@ public class CursorFetchTest extends TestCase
 		PreparedStatement stmt = con.prepareStatement("select * from test_fetch order by value");
 		stmt.setFetchSize(25);
 		ResultSet rs = stmt.executeQuery();
-		stmt.setFetchSize(50);
+		rs.setFetchSize(50);
 
 		int count = 0;
 		while (rs.next()) {
@@ -164,7 +164,7 @@ public class CursorFetchTest extends TestCase
 		PreparedStatement stmt = con.prepareStatement("select * from test_fetch order by value");
 		stmt.setFetchSize(50);
 		ResultSet rs = stmt.executeQuery();
-		stmt.setFetchSize(25);
+		rs.setFetchSize(25);
 
 		int count = 0;
 		while (rs.next()) {
