@@ -1,6 +1,6 @@
 
 This increases the number of typedef's understood by BSD indent from 100
-to 1000.  The second patch allows it to understand 0x7fU and 0LL constants.
+to 4096.  The second patch allows it to understand 0x7fU and 0LL constants.
 
 ---------------------------------------------------------------------------
 
@@ -32,26 +32,6 @@ to 1000.  The second patch allows it to understand 0x7fU and 0LL constants.
   		*e_token++ = *buf_ptr++;
   	}
   	else
---- 186,193 ----
-  				*e_token++ = *buf_ptr++;
-  			}
-  		}
-! 	    if (*buf_ptr == 'L' || *buf_ptr == 'U' ||
-! 		*buf_ptr == 'l' || *buf_ptr == 'u')
-  		*e_token++ = *buf_ptr++;
-  	}
-  	else
-***************
-*** 186,194 ****
-  				*e_token++ = *buf_ptr++;
-  			}
-  		}
-! 	    if (*buf_ptr == 'L' || *buf_ptr == 'U' ||
-! 		*buf_ptr == 'l' || *buf_ptr == 'u')
-! 		*e_token++ = *buf_ptr++;
-  	}
-  	else
-  	    while (chartype[*buf_ptr] == alphanum) {	/* copy it over */
 --- 186,203 ----
   				*e_token++ = *buf_ptr++;
   			}
