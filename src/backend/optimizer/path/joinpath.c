@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.33 1999/04/03 00:18:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.34 1999/05/01 19:47:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,7 +348,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 				(mergeinnerpath->path_cost <
 				 (cheapest_inner->path_cost +
 				  cost_sort(matchedJoinKeys, innerrel->size,
-							innerrel->width, false))));
+							innerrel->width))));
 			if (!path_is_cheaper_than_sort)
 			{
 				varkeys = make_pathkeys_from_joinkeys(matchedJoinKeys,
@@ -464,8 +464,7 @@ match_unsorted_inner(RelOptInfo *joinrel,
 		if (clauses && matchedJoinKeys)
 		{
 			temp1 = outerrel->cheapestpath->path_cost +
-				cost_sort(matchedJoinKeys, outerrel->size, outerrel->width,
-						  false);
+				cost_sort(matchedJoinKeys, outerrel->size, outerrel->width);
 
 			temp2 = (bool) (FLOAT_IS_ZERO(innerpath->outerjoincost)
 							|| (innerpath->outerjoincost > temp1));

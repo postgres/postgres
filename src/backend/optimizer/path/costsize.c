@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.35 1999/04/30 04:01:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.36 1999/05/01 19:47:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,28 +167,23 @@ cost_index(Oid indexid,
 /*
  * cost_sort
  *	  Determines and returns the cost of sorting a relation by considering
- *	  1. the cost of doing an external sort:	XXX this is probably too low
+ *	  the cost of doing an external sort:	XXX this is probably too low
  *				disk = (p lg p)
  *				cpu = *CPU-PAGE-WEIGHT* * (t lg t)
- *	  2. the cost of reading the sort result into memory (another seqscan)
- *		 unless 'noread' is set
  *
  * 'pathkeys' is a list of sort keys
  * 'tuples' is the number of tuples in the relation
  * 'width' is the average tuple width in bytes
- * 'noread' is a flag indicating that the cost of reading the sort
- *				source data should not be included (i.e., the caller
- *				will account for it separately).
  *
  * NOTE: some callers currently pass NULL for pathkeys because they
- * can't conveniently supply sort keys.  Since this routine doesn't
+ * can't conveniently supply the sort keys.  Since this routine doesn't
  * currently do anything with pathkeys anyway, that doesn't matter...
+ * but if it ever does, it should react gracefully to lack of key data.
  *
  * Returns a flonum.
- *
  */
 Cost
-cost_sort(List *pathkeys, int tuples, int width, bool noread)
+cost_sort(List *pathkeys, int tuples, int width)
 {
 	Cost		temp = 0;
 	int			npages = page_size(tuples, width);
@@ -200,6 +195,8 @@ cost_sort(List *pathkeys, int tuples, int width, bool noread)
 	/* We want to be sure the cost of a sort is never estimated as zero,
 	 * even if passed-in tuple count is zero.  Besides, mustn't do log(0)...
 	 */
+	if (tuples <= 0)
+		tuples = 1;
 	if (npages <= 0)
 		npages = 1;
 
@@ -210,13 +207,10 @@ cost_sort(List *pathkeys, int tuples, int width, bool noread)
 	temp += npages * log_npages;
 
 	/*
-	 * could be base_log(pages, NBuffers), but we are only doing 2-way
+	 * could be base_log(tuples, NBuffers), but we are only doing 2-way
 	 * merges
 	 */
-	temp += _cpu_page_wight_ * tuples * log_npages;
-
-	if (!noread)
-		temp += cost_seqscan(_NONAME_RELATION_ID_, npages, tuples);
+	temp += _cpu_page_wight_ * tuples * base_log((double) tuples, 2.0);
 
 	Assert(temp > 0);
 
@@ -282,7 +276,8 @@ cost_nestloop(Cost outercost,
  *	  'outercost' and 'innercost' are the (disk+cpu) costs of scanning the
  *				outer and inner relations
  *	  'outersortkeys' and 'innersortkeys' are lists of the keys to be used
- *				to sort the outer and inner relations
+ *				to sort the outer and inner relations (or NIL if no explicit
+ *				sort is needed because the source path is already ordered)
  *	  'outertuples' and 'innertuples' are the number of tuples in the outer
  *				and inner relations
  *	  'outerwidth' and 'innerwidth' are the (typical) widths (in bytes)
@@ -309,9 +304,9 @@ cost_mergejoin(Cost outercost,
 	temp += outercost;
 	temp += innercost;
 	if (outersortkeys)			/* do we need to sort? */
-		temp += cost_sort(outersortkeys, outersize, outerwidth, true);
+		temp += cost_sort(outersortkeys, outersize, outerwidth);
 	if (innersortkeys)			/* do we need to sort? */
-		temp += cost_sort(innersortkeys, innersize, innerwidth, true);
+		temp += cost_sort(innersortkeys, innersize, innerwidth);
 	temp += _cpu_page_wight_ * (outersize + innersize);
 
 	Assert(temp >= 0);
