@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.182 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_proc.h,v 1.183 2001/02/27 20:34:10 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1258,17 +1258,17 @@ DESCR("horizontal?");
 DATA(insert OID = 999 (  lseg_eq		   PGUID 12 f t t t 2 f 16 "601 601" 100 0 0 100	lseg_eq - ));
 DESCR("equal");
 
-DATA(insert OID =  748 (  date			   PGUID 12 f t t t 1 f	1082 "25" 100 0 0 100 text_date - ));
+DATA(insert OID =  748 (  date			   PGUID 12 f t f t 1 f	1082 "25" 100 0 0 100 text_date - ));
 DESCR("convert text to date");
-DATA(insert OID =  749 (  text			   PGUID 12 f t t t 1 f	25 "1082" 100 0 0 100 date_text - ));
+DATA(insert OID =  749 (  text			   PGUID 12 f t f t 1 f	25 "1082" 100 0 0 100 date_text - ));
 DESCR("convert date to text");
-DATA(insert OID =  837 (  time			   PGUID 12 f t t t 1 f	1083 "25" 100 0 0 100 text_time - ));
-DESCR("convert text to date");
-DATA(insert OID =  948 (  text			   PGUID 12 f t t t 1 f	25 "1083" 100 0 0 100 time_text - ));
+DATA(insert OID =  837 (  time			   PGUID 12 f t f t 1 f	1083 "25" 100 0 0 100 text_time - ));
+DESCR("convert text to time");
+DATA(insert OID =  948 (  text			   PGUID 12 f t f t 1 f	25 "1083" 100 0 0 100 time_text - ));
 DESCR("convert time to text");
-DATA(insert OID =  938 (  timetz		   PGUID 12 f t t t 1 f	1266 "25" 100 0 0 100 text_timetz - ));
-DESCR("convert text to date");
-DATA(insert OID =  939 (  text			   PGUID 12 f t t t 1 f	25 "1266" 100 0 0 100 timetz_text - ));
+DATA(insert OID =  938 (  timetz		   PGUID 12 f t f t 1 f	1266 "25" 100 0 0 100 text_timetz - ));
+DESCR("convert text to timetz");
+DATA(insert OID =  939 (  text			   PGUID 12 f t f t 1 f	25 "1266" 100 0 0 100 timetz_text - ));
 DESCR("convert timetz to text");
 
 /* OIDS 1000 - 1999 */
