@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.13 1997/01/26 20:15:26 momjian Exp $
+ * $Id: ipc.h,v 1.14 1997/02/06 05:30:50 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -43,7 +43,7 @@ extern int S_LOCK_FREE(slock_t *lock);
 
 #endif /* HAS_TEST_AND_SET */
 
-#ifdef NEED_UNION_SEMUN
+#ifndef HAVE_UNION_SEMUN
 union semun {
     int val;
     struct semid_ds *buf;
