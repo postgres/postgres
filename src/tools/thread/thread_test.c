@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.12 2004/04/05 02:22:14 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.13 2004/04/05 05:43:06 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -40,6 +40,9 @@ char myhostname[MAXHOSTNAMELEN];
 volatile int errno1_set = 0;
 volatile int errno2_set = 0;
 
+volatile int thread1_done = 0;
+volatile int thread2_done = 0;
+
 char *strerror_p1;
 char *strerror_p2;
 
@@ -49,9 +52,8 @@ struct passwd *passwd_p2;
 struct hostent *hostent_p1;
 struct hostent *hostent_p2;
 
-pthread_mutex_t singlethread_lock1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t singlethread_lock2 = PTHREAD_MUTEX_INITIALIZER;
-                            
+pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int main(int argc, char *argv[])
 {
 	pthread_t		thread1,
@@ -73,10 +75,15 @@ int main(int argc, char *argv[])
 Make sure you have added any needed 'THREAD_CPPFLAGS' and 'THREAD_LIBS'\n\
 defines to your template/$port file before compiling this program.\n\n"
 );
+
+	/* Hold lock until we are ready for the child threads to exit. */
+	pthread_mutex_lock(&init_mutex);	
+	    
 	pthread_create(&thread1, NULL, (void * (*)(void *)) func_call_1, NULL);
 	pthread_create(&thread2, NULL, (void * (*)(void *)) func_call_2, NULL);
-	pthread_join(thread1, NULL);
-	pthread_join(thread2, NULL);
+
+	while (thread1_done == 0 || thread2_done == 0)
+		getpid();	/* force system call */
 
 	printf("Add this to your template/$port file:\n\n");
 
@@ -94,7 +101,12 @@ defines to your template/$port file before compiling this program.\n\n"
 		printf("GETHOSTBYNAME_THREADSAFE=yes\n");
 	else
 		printf("GETHOSTBYNAME_THREADSAFE=no\n");
+
+	pthread_mutex_unlock(&init_mutex);	/* let children exit  */
 	
+	pthread_join(thread1, NULL);	/* clean up children */
+	pthread_join(thread2, NULL);
+
 	return 0;
 }
 
@@ -110,7 +122,11 @@ void func_call_1(void) {
 			fprintf(stderr, "could not generate failure for create file in /tmp, exiting\n");
 			exit(1);
 	}
-	/* wait for other thread to set errno */
+	/*
+	 *	Wait for other thread to set errno.
+	 *	We can't use thread-specific locking here because it might
+	 *	affect errno.
+	 */
 	errno1_set = 1;
 	while (errno2_set == 0)
 		getpid();	/* force system call */
@@ -144,6 +160,10 @@ void func_call_1(void) {
 		printf("Your gethostbyname() changes the static memory area between calls\n");
 		hostent_p1 = NULL;	/* force thread-safe failure report */
 	}
+
+	thread1_done = 1;
+	pthread_mutex_lock(&init_mutex);	/* wait for parent to test */
+	pthread_mutex_unlock(&init_mutex);
 }
 
 
@@ -157,7 +177,11 @@ void func_call_2(void) {
 			fprintf(stderr, "Read-only open succeeded without create, exiting\n");
 			exit(1);
 	}
-	/* wait for other thread to set errno */
+	/*
+	 *	Wait for other thread to set errno.
+	 *	We can't use thread-specific locking here because it might
+	 *	affect errno.
+	 */
 	errno2_set = 1;
 	while (errno1_set == 0)
 		getpid();	/* force system call */
@@ -191,4 +215,8 @@ void func_call_2(void) {
 		printf("Your gethostbyname() changes the static memory area between calls\n");
 		hostent_p2 = NULL;	/* force thread-safe failure report */
 	}
+
+	thread2_done = 1;
+	pthread_mutex_lock(&init_mutex);	/* wait for parent to test */
+	pthread_mutex_unlock(&init_mutex);
 }
