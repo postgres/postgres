@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.146 2002/02/23 21:46:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.147 2002/02/24 02:32:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,7 +337,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
       
       fstat(fileno(fp),&st);
       if( S_ISDIR(st.st_mode) ){
-        fclose(fp);
+		FreeFile(fp);
         elog(ERROR,"COPY: %s is a directory.",filename);
       }
 		}
@@ -389,7 +389,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 					 (int) geteuid(), filename, strerror(errno), errno);
       fstat(fileno(fp),&st);
       if( S_ISDIR(st.st_mode) ){
-        fclose(fp);
+		FreeFile(fp);
         elog(ERROR,"COPY: %s is a directory.",filename);
       }
 		}
