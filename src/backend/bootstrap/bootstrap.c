@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.98 2000/11/09 11:25:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.99 2000/11/21 09:39:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,32 +341,33 @@ BootstrapMain(int argc, char *argv[])
 	/*
 	 * XLOG operations
 	 */
-	if (xlogop != BS_XLOG_NOP)
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+	SetProcessingMode(NormalProcessing);
+	if (xlogop == BS_XLOG_NOP)
+		StartupXLOG();
+	else if (xlogop == BS_XLOG_BOOTSTRAP)
 	{
-		snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
-		snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
-		if (xlogop == BS_XLOG_BOOTSTRAP)
-			BootStrapXLOG();
-		else
-		{
-			SetProcessingMode(NormalProcessing);
-			if (xlogop == BS_XLOG_STARTUP)
-				StartupXLOG();
-			else if (xlogop == BS_XLOG_CHECKPOINT)
-			{
-#ifdef XLOG
-				extern void CreateDummyCaches(void);
-				CreateDummyCaches();
-#endif
-				CreateCheckPoint(false);
-			}
-			else if (xlogop == BS_XLOG_SHUTDOWN)
-				ShutdownXLOG();
-			else
-				elog(STOP, "Unsupported XLOG op %d", xlogop);
-			proc_exit(0);
-		}
+		BootStrapXLOG();
+		StartupXLOG();
 	}
+	else
+	{
+		if (xlogop == BS_XLOG_CHECKPOINT)
+		{
+			extern void CreateDummyCaches(void);
+			CreateDummyCaches();
+			CreateCheckPoint(false);
+		}
+		else if (xlogop == BS_XLOG_STARTUP)
+			StartupXLOG();
+		else if (xlogop == BS_XLOG_SHUTDOWN)
+			ShutdownXLOG();
+		else
+			elog(STOP, "Unsupported XLOG op %d", xlogop);
+		proc_exit(0);
+	}
+	SetProcessingMode(BootstrapProcessing);
 
 	/*
 	 * backend initialization
@@ -407,9 +408,9 @@ BootstrapMain(int argc, char *argv[])
 	 */
 	Int_yyparse();
 
-#ifdef XLOG
-	FlushBufferPool();
-#endif
+	SetProcessingMode(NormalProcessing);
+	CreateCheckPoint(true);
+	SetProcessingMode(BootstrapProcessing);
 
 	/* clean up processing */
 	StartTransactionCommand();

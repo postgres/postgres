@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.29 2000/11/21 02:11:06 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.30 2000/11/21 09:39:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 	if (len == 0 || len > MAXLOGRECSZ)
 		elog(STOP, "XLogInsert: invalid record len %u", len);
 
-	if (IsBootstrapProcessingMode())
+	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
 		RecPtr.xlogid = 0;
 		RecPtr.xrecoff = SizeOfXLogPHD;	/* start of 1st checkpoint record */
@@ -506,7 +506,7 @@ XLogFlush(XLogRecPtr record)
 		fflush(stderr);
 	}
 
-	if (IsBootstrapProcessingMode() || InRedo)
+	if (InRedo)
 		return;
 	if (XLByteLE(record, LgwrResult.Flush))
 		return;
@@ -1326,8 +1326,7 @@ BootStrapXLOG()
 
 #endif
 
-	memset(buffer, 0, BLCKSZ);
-	ControlFile = (ControlFileData *) buffer;
+	memset(ControlFile, 0, BLCKSZ);
 	ControlFile->logId = 0;
 	ControlFile->logSeg = 1;
 	ControlFile->checkPoint = checkPoint.redo;
@@ -1337,7 +1336,7 @@ BootStrapXLOG()
 	ControlFile->relseg_size = RELSEG_SIZE;
 	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
 
-	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+	if (write(fd, ControlFile, BLCKSZ) != BLCKSZ)
 		elog(STOP, "BootStrapXLOG failed to write control file: %d", errno);
 
 	if (fsync(fd) != 0)
