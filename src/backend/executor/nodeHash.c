@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.82 2004/02/03 17:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.83 2004/03/17 01:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,6 +532,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 
 	foreach(hk, hashkeys)
 	{
+		ExprState  *keyexpr = (ExprState *) lfirst(hk);
 		Datum		keyval;
 		bool		isNull;
 
@@ -541,8 +542,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		/*
 		 * Get the join attribute value of the tuple
 		 */
-		keyval = ExecEvalExpr((ExprState *) lfirst(hk),
-							  econtext, &isNull, NULL);
+		keyval = ExecEvalExpr(keyexpr, econtext, &isNull, NULL);
 
 		/*
 		 * Compute the hash function

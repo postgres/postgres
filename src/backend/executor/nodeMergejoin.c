@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.63 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.64 2004/03/17 01:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,6 +191,8 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 	eqclause = eqQual;
 	foreach(clause, compareQual)
 	{
+		ExprState  *clauseexpr = (ExprState *) lfirst(clause);
+		ExprState  *eqclauseexpr = (ExprState *) lfirst(eqclause);
 		Datum		const_value;
 		bool		isNull;
 
@@ -200,10 +202,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 		 *
 		 * A NULL result is considered false.
 		 */
-		const_value = ExecEvalExpr((ExprState *) lfirst(clause),
-								   econtext,
-								   &isNull,
-								   NULL);
+		const_value = ExecEvalExpr(clauseexpr, econtext, &isNull, NULL);
 
 		if (DatumGetBool(const_value) && !isNull)
 		{
@@ -217,10 +216,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 		 * key1 = key2 so we move on to the next pair of keys.
 		 *-----------
 		 */
-		const_value = ExecEvalExpr((ExprState *) lfirst(eqclause),
-								   econtext,
-								   &isNull,
-								   NULL);
+		const_value = ExecEvalExpr(eqclauseexpr, econtext, &isNull, NULL);
 
 		if (!DatumGetBool(const_value) || isNull)
 			break;				/* return false */
