@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.30 1997/07/29 14:07:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.31 1997/07/29 16:09:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3174,6 +3174,7 @@ printf( "DecodeDateDelta- field[%d] is %s (type %d)\n", ii, field[ii], ftype[ii]
 #endif
 	if (ftype[ii] == DTK_TIME) {
 	    if (DecodeTime(field[ii], fmask, &tmask, tm, fsec) != 0) return -1;
+	    fmask |= tmask;
 
 	} else {
 	    break;
