@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.13 1999/02/13 23:18:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.14 1999/02/22 06:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 
-#include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/rel.h"
 #include "utils/memutils.h"
@@ -565,36 +564,20 @@ int
 MMShmemSize()
 {
 	int			size = 0;
-	int			nbuckets;
-	int			nsegs;
-	int			tmp;
 
 	/*
 	 * first compute space occupied by the (dbid,relid,blkno) hash table
 	 */
-
-	nbuckets = 1 << (int) my_log2((MMNBUFFERS - 1) / DEF_FFACTOR + 1);
-	nsegs = 1 << (int) my_log2((nbuckets - 1) / DEF_SEGSIZE + 1);
-
-	size += MAXALIGN(my_log2(MMNBUFFERS) * sizeof(void *));
-	size += MAXALIGN(sizeof(HHDR));
-	size += nsegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	tmp = (int) ceil((double) MMNBUFFERS / BUCKET_ALLOC_INCR);
-	size += tmp * BUCKET_ALLOC_INCR *
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(MMHashEntry)));		/* contains hash key */
+	size += hash_estimate_size(MMNBUFFERS,
+				   0, /* MMHashEntry includes key */
+				   sizeof(MMHashEntry));
 
 	/*
 	 * now do the same for the rel hash table
 	 */
-
-	size += MAXALIGN(my_log2(MMNRELATIONS) * sizeof(void *));
-	size += MAXALIGN(sizeof(HHDR));
-	size += nsegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	tmp = (int) ceil((double) MMNRELATIONS / BUCKET_ALLOC_INCR);
-	size += tmp * BUCKET_ALLOC_INCR *
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(MMRelHashEntry)));		/* contains hash key */
+	size += hash_estimate_size(MMNRELATIONS,
+				   0, /* MMRelHashEntry includes key */
+				   sizeof(MMRelHashEntry));
 
 	/*
 	 * finally, add in the memory block we use directly

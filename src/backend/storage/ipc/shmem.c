@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.36 1999/02/13 23:18:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.37 1999/02/22 06:16:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,6 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
-#include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "access/xact.h"
@@ -215,7 +214,7 @@ InitShmem(unsigned int key, unsigned int size)
 	/* create OR attach to the shared memory shmem index */
 	info.keysize = SHMEM_INDEX_KEYSIZE;
 	info.datasize = SHMEM_INDEX_DATASIZE;
-	hash_flags = (HASH_ELEM);
+	hash_flags = HASH_ELEM;
 
 	/* This will acquire the shmem index lock, but not release it. */
 	ShmemIndex = ShmemInitHash("ShmemIndex",
@@ -340,8 +339,8 @@ ShmemIsValid(unsigned long addr)
  */
 HTAB *
 ShmemInitHash(char *name,		/* table string name for shmem index */
-			  long init_size,	/* initial size */
-			  long max_size,	/* max size of the table */
+			  long init_size,	/* initial table size */
+			  long max_size,	/* max size of the table (NOT USED) */
 			  HASHCTL *infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {
@@ -349,17 +348,20 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	long	   *location;
 
 	/*
-	 * shared memory hash tables have a fixed max size so that the control
-	 * structures don't try to grow.  The segbase is for calculating
-	 * pointer values.	The shared memory allocator must be specified.
+	 * Hash tables allocated in shared memory have a fixed directory;
+	 * it can't grow or other backends wouldn't be able to find it.
+	 * The segbase is for calculating pointer values.
+	 * The shared memory allocator must be specified too.
 	 */
+	infoP->dsize = infoP->max_dsize = DEF_DIRSIZE;
 	infoP->segbase = (long *) ShmemBase;
 	infoP->alloc = ShmemAlloc;
-	infoP->max_size = max_size;
-	hash_flags |= HASH_SHARED_MEM;
+	hash_flags |= HASH_SHARED_MEM | HASH_DIRSIZE;
 
 	/* look it up in the shmem index */
-	location = ShmemInitStruct(name, my_log2(max_size) + sizeof(HHDR), &found);
+	location = ShmemInitStruct(name,
+							   sizeof(HHDR) + DEF_DIRSIZE * sizeof(SEG_OFFSET),
+							   &found);
 
 	/*
 	 * shmem index is corrupted.	Let someone else give the error
@@ -375,13 +377,11 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	if (found)
 		hash_flags |= HASH_ATTACH;
 
-	/* these structures were allocated or bound in ShmemInitStruct */
-	/* control information and parameters */
+	/* Now provide the header and directory pointers */
 	infoP->hctl = (long *) location;
-	/* directory for hash lookup */
-	infoP->dir = (long *) (location + sizeof(HHDR));
+	infoP->dir = (long *) (((char*) location) + sizeof(HHDR));
 
-	return hash_create(init_size, infoP, hash_flags);;
+	return hash_create(init_size, infoP, hash_flags);
 }
 
 /*

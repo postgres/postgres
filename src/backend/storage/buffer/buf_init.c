@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.21 1999/02/13 23:17:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.22 1999/02/22 06:16:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "executor/execdebug.h" /* for NDirectFileRead */
@@ -261,21 +260,11 @@ int
 BufferShmemSize()
 {
 	int			size = 0;
-	int			nbuckets;
-	int			nsegs;
-	int			tmp;
 
-	nbuckets = 1 << (int) my_log2((NBuffers - 1) / DEF_FFACTOR + 1);
-	nsegs = 1 << (int) my_log2((nbuckets - 1) / DEF_SEGSIZE + 1);
-
-	/* size of shmem index table */
-	size += MAXALIGN(my_log2(SHMEM_INDEX_SIZE) * sizeof(void *));		/* HTAB->dir */
-	size += MAXALIGN(sizeof(HHDR));		/* HTAB->hctl */
-	size += MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += BUCKET_ALLOC_INCR *
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(SHMEM_INDEX_KEYSIZE) +
-		 MAXALIGN(SHMEM_INDEX_DATASIZE));
+	/* size of shmem index hash table */
+	size += hash_estimate_size(SHMEM_INDEX_SIZE,
+							   SHMEM_INDEX_KEYSIZE,
+							   SHMEM_INDEX_DATASIZE);
 
 	/* size of buffer descriptors */
 	size += MAXALIGN((NBuffers + 1) * sizeof(BufferDesc));
@@ -284,17 +273,13 @@ BufferShmemSize()
 	size += NBuffers * MAXALIGN(BLCKSZ);
 
 	/* size of buffer hash table */
-	size += MAXALIGN(my_log2(NBuffers) * sizeof(void *));		/* HTAB->dir */
-	size += MAXALIGN(sizeof(HHDR));		/* HTAB->hctl */
-	size += nsegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	tmp = (int) ceil((double) NBuffers / BUCKET_ALLOC_INCR);
-	size += tmp * BUCKET_ALLOC_INCR *
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(BufferTag)) +
-		 MAXALIGN(sizeof(Buffer)));
+	size += hash_estimate_size(NBuffers,
+							   sizeof(BufferTag),
+							   sizeof(Buffer));
 
 #ifdef BMTRACE
 	size += (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long);
 #endif
+
 	return size;
 }

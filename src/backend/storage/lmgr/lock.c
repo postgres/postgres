@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.44 1999/02/21 03:49:22 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.45 1999/02/22 06:16:52 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -42,7 +42,6 @@
 #include "storage/spin.h"
 #include "storage/proc.h"
 #include "storage/lock.h"
-#include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/palloc.h"
@@ -1481,36 +1480,21 @@ int
 LockShmemSize(int maxBackends)
 {
 	int			size = 0;
-	int			nLockEnts = NLOCKENTS(maxBackends);
-	int			nLockBuckets,
-				nLockSegs;
-	int			nXidBuckets,
-				nXidSegs;
 
-	nLockBuckets = 1 << (int) my_log2((nLockEnts - 1) / DEF_FFACTOR + 1);
-	nLockSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
-
-	nXidBuckets = 1 << (int) my_log2((NLOCKS_PER_XACT - 1) / DEF_FFACTOR + 1);
-	nXidSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
-
+	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 	size += MAXALIGN(maxBackends * sizeof(PROC)); /* each MyProc */
 	size += MAXALIGN(maxBackends * sizeof(LOCKMETHODCTL));		/* each
 																 * lockMethodTable->ctl */
-	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 
-	size += MAXALIGN(my_log2(nLockEnts) * sizeof(void *));
-	size += MAXALIGN(sizeof(HHDR));
-	size += nLockSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += nLockEnts *			/* XXX not multiple of BUCKET_ALLOC_INCR? */
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(LOCK)));		/* contains hash key */
+	/* lockHash table */
+	size += hash_estimate_size(NLOCKENTS(maxBackends),
+							   sizeof(LOCKTAG),
+							   sizeof(LOCK));
 
-	size += MAXALIGN(my_log2(maxBackends) * sizeof(void *));
-	size += MAXALIGN(sizeof(HHDR));
-	size += nXidSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += maxBackends *		/* XXX not multiple of BUCKET_ALLOC_INCR? */
-		(MAXALIGN(sizeof(BUCKET_INDEX)) +
-		 MAXALIGN(sizeof(XIDLookupEnt)));		/* contains hash key */
+	/* xidHash table */
+	size += hash_estimate_size(maxBackends,
+							   XID_TAGSIZE,
+							   sizeof(XIDLookupEnt));
 
 	return size;
 }
