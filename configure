@@ -1391,7 +1391,8 @@ case $host_os in
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;
     irix*) template=irix ;;
-   linux*) template=linux ;;
+ linux*|gnu*|k*bsd*-gnu)
+           template=linux ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
 nextstep*) template=nextstep ;;
