@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.16 1998/08/04 16:44:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.17 1998/08/11 14:32:01 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -43,7 +43,7 @@
  *
  */
 bool
-op_class(Oid opno, int32 opclass, Oid amopid)
+op_class(Oid oprno, int32 opclass, Oid amopid)
 {
 	FormData_pg_amop amoptup;
 
