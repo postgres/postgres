@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.56 2000/12/05 19:15:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.57 2001/01/13 03:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,14 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (attr->atttypid != resdom->restype)
 				elog(ERROR, "select rule's target entry %d has different type from attribute %s", i, attname);
 
-			if (attr->atttypmod != resdom->restypmod)
+			/*
+			 * Allow typmods to be different only if one of them is -1,
+			 * ie, "unspecified".  This is necessary for cases like "numeric",
+			 * where the table will have a filled-in default length but the
+			 * select rule's expression will probably have typmod = -1.
+			 */
+			if (attr->atttypmod != resdom->restypmod &&
+				attr->atttypmod != -1 && resdom->restypmod != -1)
 				elog(ERROR, "select rule's target entry %d has different size from attribute %s", i, attname);
 		}
 
