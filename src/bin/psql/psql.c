@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.73 1997/06/11 01:03:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.74 1997/06/20 02:20:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,10 +153,12 @@ on(bool f)
 static void
 slashUsage(PsqlSettings * ps)
 {
+    int ch;
+    
     fprintf(stderr, " \\?           -- help\n");
     fprintf(stderr, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
     fprintf(stderr, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
-    fprintf(stderr, " \\connect <dbname> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
+    fprintf(stderr, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
     fprintf(stderr, " \\copy table {from | to} <fname>\n");
     fprintf(stderr, " \\d [<table>] -- list tables and indicies in database or columns in <table>, * for all\n");
     fprintf(stderr, " \\di          -- list only indicies in database\n");
@@ -172,6 +174,11 @@ slashUsage(PsqlSettings * ps)
     fprintf(stderr, " \\m           -- toggle monitor-like table display (currently %s)\n", on(ps->opt.standard));
     fprintf(stderr, " \\o [<fname>] [|<cmd>] -- send all query results to stdout, <fname>, or pipe\n");
     fprintf(stderr, " \\p           -- print the current query buffer\n");
+
+    fprintf(stderr, "Press ENTER to continue");
+    /* eat up any extra characters typed before ENTER */
+    while ((ch = fgetc(stdin)) != '\r' && ch != '\n')
+    	;
     fprintf(stderr, " \\q           -- quit\n");
     fprintf(stderr, " \\r           -- reset(clear) the query buffer\n");
     fprintf(stderr, " \\s [<fname>] -- print history or save it in <fname>\n");
@@ -858,18 +865,16 @@ do_copy(const char *args, PsqlSettings * settings)
 static void
 do_connect(const char *new_dbname,
 		const char *new_user,
-		PsqlSettings * settings)
+		PsqlSettings *settings)
 {
-
-    char           *dbname = PQdb(settings->db);
     if (!new_dbname)
 	fprintf(stderr, "\\connect must be followed by a database name\n");
     else {
-	PGconn          *olddb = settings->db;
+	PGconn          *olddb =  settings->db;
 	static char	*userenv = NULL;
 	char		*old_userenv = NULL;
+	const char	*dbparam;
 
-	printf("closing connection to database: %s\n", dbname);
 	if (new_user != NULL) {
 		/*
 		   PQsetdb() does not allow us to specify the user,
@@ -885,23 +890,27 @@ do_connect(const char *new_dbname,
 	    if (old_userenv != NULL)
 	    	free(old_userenv);
 	}
+
+	if (strcmp(new_dbname,"-") != 0)
+		dbparam = new_dbname;
+	else	dbparam = PQdb(olddb);
+
 	settings->db = PQsetdb(PQhost(olddb), PQport(olddb),
-			       NULL, NULL, new_dbname);
-	if (!new_user)
-	    printf("connecting to new database: %s\n", new_dbname);
-	else
-	    printf("connecting to new database: %s as user: %s\n",
-							new_dbname,new_user);
+			       NULL, NULL, dbparam);
+	if (!settings->quiet) {
+	    if (!new_user)
+	    	printf("connecting to new database: %s\n", dbparam);
+	    else if (dbparam != new_dbname)
+	    	printf("connecting as new user: %s\n", new_user);
+	    else
+	    	printf("connecting to new database: %s as user: %s\n",
+						dbparam,new_user);
+	}
+
 	if (PQstatus(settings->db) == CONNECTION_BAD) {
 	    fprintf(stderr, "%s\n", PQerrorMessage(settings->db));
-	    printf("reconnecting to %s\n", dbname);
-	    settings->db = PQsetdb(PQhost(olddb), PQport(olddb),
-				   NULL, NULL, dbname);
-	    if (PQstatus(settings->db) == CONNECTION_BAD) {
-		fprintf(stderr,
-			"could not reconnect to %s. exiting\n", dbname);
-		exit(2);
-	    }
+	    fprintf(stderr,"Could not connect to new database. exiting\n");
+	    exit(2);
 	} else {
 	    PQfinish(olddb);
 	    free(settings->prompt);

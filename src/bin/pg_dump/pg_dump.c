@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.32 1997/06/07 05:29:22 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.33 1997/06/20 02:20:17 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -263,7 +263,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
     int tuple;
     int field;
 
-    sprintf(query, "select * from %s;\n", classname);
+    sprintf(query, "select * from %s", classname);
     res = PQexec(g_conn, query);
     if (!res ||
         PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -546,6 +546,7 @@ getTypes(int *numTypes)
     int i_typdefault;
     int i_typrelid;
     int i_typbyval;
+    int i_usename;
 
     res = PQexec(g_conn, "begin");
     if (!res || 
@@ -561,9 +562,10 @@ getTypes(int *numTypes)
    /* we filter out the built-in types when 
       we dump out the types */
 
-    sprintf(query, "SELECT oid, typowner,typname, typlen, typprtlen, "
+    sprintf(query, "SELECT pg_type.oid, typowner,typname, typlen, typprtlen, "
             "typinput, typoutput, typreceive, typsend, typelem, typdelim, "
-            "typdefault, typrelid,typbyval from pg_type");
+            "typdefault, typrelid,typbyval, usename from pg_type, pg_user "
+	    "where typowner = usesysid");
     
     res = PQexec(g_conn,query);
     if (!res || 
@@ -590,6 +592,7 @@ getTypes(int *numTypes)
     i_typdefault = PQfnumber(res,"typdefault");
     i_typrelid = PQfnumber(res,"typrelid");
     i_typbyval = PQfnumber(res,"typbyval");
+    i_usename = PQfnumber(res,"usename");
 
     for (i=0;i<ntups;i++) {
         tinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
@@ -605,6 +608,7 @@ getTypes(int *numTypes)
         tinfo[i].typdelim = strdup(PQgetvalue(res,i,i_typdelim));
         tinfo[i].typdefault = strdup(PQgetvalue(res,i,i_typdefault));
         tinfo[i].typrelid = strdup(PQgetvalue(res,i,i_typrelid));
+        tinfo[i].usename = strdup(PQgetvalue(res,i,i_usename));
 
         if (strcmp(PQgetvalue(res,i,i_typbyval), "f") == 0)
             tinfo[i].passedbyvalue = 0;
@@ -662,6 +666,7 @@ getOperators(int *numOprs)
     int i_oprcanhash;
     int i_oprlsortop;
     int i_oprrsortop;
+    int i_usename;
     
     /* find all operators, including builtin operators,
        filter out system-defined operators at dump-out time */
@@ -673,9 +678,11 @@ getOperators(int *numOprs)
     }
     PQclear(res);
 
-    sprintf(query, "SELECT oid, oprname, oprkind, oprcode, oprleft, "
-            "oprright, oprcom, oprnegate, oprrest, oprjoin, oprcanhash, "
-            "oprlsortop, oprrsortop from pg_operator");
+    sprintf(query, "SELECT pg_operator.oid, oprname, oprkind, oprcode, "
+	    "oprleft, oprright, oprcom, oprnegate, oprrest, oprjoin, "
+	    "oprcanhash, oprlsortop, oprrsortop, usename "
+	    "from pg_operator, pg_user "
+	    "where oprowner = usesysid");
 
     res = PQexec(g_conn, query);
     if (!res || 
@@ -702,6 +709,7 @@ getOperators(int *numOprs)
     i_oprcanhash = PQfnumber(res,"oprcanhash");
     i_oprlsortop = PQfnumber(res,"oprlsortop");
     i_oprrsortop = PQfnumber(res,"oprrsortop");
+    i_usename = PQfnumber(res,"usename");
 
     for (i=0;i<ntups;i++) {
         oprinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
@@ -717,6 +725,7 @@ getOperators(int *numOprs)
         oprinfo[i].oprcanhash = strdup(PQgetvalue(res,i,i_oprcanhash));
         oprinfo[i].oprlsortop = strdup(PQgetvalue(res,i,i_oprlsortop));
         oprinfo[i].oprrsortop = strdup(PQgetvalue(res,i,i_oprrsortop));
+        oprinfo[i].usename = strdup(PQgetvalue(res,i,i_usename));
     }
 
     PQclear(res);
@@ -744,6 +753,7 @@ for(i=0;i<numTypes;++i) {
     if(tp[i].typdelim) free(tp[i].typdelim);
     if(tp[i].typdefault) free(tp[i].typdefault);
     if(tp[i].typrelid) free(tp[i].typrelid);
+    if(tp[i].usename) free(tp[i].usename);
 	}
 free(tp);
 }
@@ -756,7 +766,7 @@ if(!fun) return;
 for(i=0;i<numFuncs;++i) {
     if(fun[i].oid) free(fun[i].oid);
     if(fun[i].proname) free(fun[i].proname);
-    if(fun[i].proowner) free(fun[i].proowner);
+    if(fun[i].usename) free(fun[i].usename);
     for(a=0;a<8;++a)
     if(fun[i].argtypes[a]) free(fun[i].argtypes[a]);
     if(fun[i].prorettype) free(fun[i].prorettype);
@@ -783,6 +793,7 @@ for(i=0;i<numTables;++i) {
     if(tblinfo[i].inhAttrs) free((int *)tblinfo[i].inhAttrs);
     if(tblinfo[i].attnames) free (tblinfo[i].attnames);
     if(tblinfo[i].typnames) free (tblinfo[i].typnames);
+    if(tblinfo[i].usename) free (tblinfo[i].usename);
      }
 free(tblinfo);
 }
@@ -816,6 +827,7 @@ for(i=0;i<numOprs;++i) {
      if(opr[i].oprcanhash) free(opr[i].oprcanhash);
      if(opr[i].oprlsortop) free(opr[i].oprlsortop);
      if(opr[i].oprrsortop) free(opr[i].oprrsortop);
+     if(opr[i].usename) free(opr[i].usename);
 	}
 free(opr);
 }
@@ -854,6 +866,7 @@ for(i=0;i<numArgs;++i) {
     if(agginfo[i].aggtranstype2) free (agginfo[i].aggtranstype2);
     if(agginfo[i].agginitval1) free (agginfo[i].agginitval1);
     if(agginfo[i].agginitval2) free (agginfo[i].agginitval2);
+    if(agginfo[i].usename) free (agginfo[i].usename);
 	}
 free (agginfo);
 }
@@ -886,6 +899,7 @@ getAggregates(int *numAggs)
     int i_aggtranstype2;
     int i_agginitval1;
     int i_agginitval2;
+    int i_usename;
 
     /* find all user-defined aggregates */
 
@@ -898,9 +912,10 @@ getAggregates(int *numAggs)
     PQclear(res);
 
     sprintf(query, 
-            "SELECT oid, aggname, aggtransfn1, aggtransfn2, aggfinalfn, "
-            "aggtranstype1, aggbasetype, aggtranstype2, agginitval1, "
-            "agginitval2 from pg_aggregate;");
+            "SELECT pg_aggregate.oid, aggname, aggtransfn1, aggtransfn2, "
+	    "aggfinalfn, aggtranstype1, aggbasetype, aggtranstype2, "
+	    "agginitval1, agginitval2, usename from pg_aggregate, pg_user "
+	    "where aggowner = usesysid");
 
     res = PQexec(g_conn, query);
     if (!res || 
@@ -924,6 +939,7 @@ getAggregates(int *numAggs)
     i_aggtranstype2 = PQfnumber(res,"aggtranstype2");
     i_agginitval1 = PQfnumber(res,"agginitval1");
     i_agginitval2 = PQfnumber(res,"agginitval2");
+    i_usename = PQfnumber(res,"usename");
 
     for (i=0;i<ntups;i++) {
         agginfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
@@ -936,6 +952,7 @@ getAggregates(int *numAggs)
         agginfo[i].aggtranstype2 = strdup(PQgetvalue(res,i,i_aggtranstype2));
         agginfo[i].agginitval1 = strdup(PQgetvalue(res,i,i_agginitval1));
         agginfo[i].agginitval2 = strdup(PQgetvalue(res,i,i_agginitval2));
+        agginfo[i].usename = strdup(PQgetvalue(res,i,i_usename));
     }
 
     PQclear(res);
@@ -965,7 +982,6 @@ getFuncs(int *numFuncs)
 
     int i_oid;
     int i_proname;
-    int i_proowner;
     int i_prolang;
     int i_pronargs;
     int i_proargtypes;
@@ -973,6 +989,7 @@ getFuncs(int *numFuncs)
     int i_proretset;
     int i_prosrc;
     int i_probin;
+    int i_usename;
 
    /* find all user-defined funcs */
 
@@ -985,9 +1002,10 @@ getFuncs(int *numFuncs)
     PQclear(res);
 
     sprintf(query, 
-            "SELECT oid, proname, proowner, prolang, pronargs, prorettype, "
-            "proretset, proargtypes, prosrc, probin from pg_proc "
-            "where oid > '%d'::oid", 
+            "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
+            "proretset, proargtypes, prosrc, probin, usename "
+	    "from pg_proc, pg_user "
+            "where pg_proc.oid > '%d'::oid and proowner = usesysid", 
             g_last_builtin_oid);
 
     res = PQexec(g_conn, query);
@@ -1005,7 +1023,6 @@ getFuncs(int *numFuncs)
 
     i_oid = PQfnumber(res,"oid");
     i_proname = PQfnumber(res,"proname");
-    i_proowner = PQfnumber(res,"proowner");
     i_prolang = PQfnumber(res,"prolang");
     i_pronargs = PQfnumber(res,"pronargs");
     i_proargtypes = PQfnumber(res,"proargtypes");
@@ -1013,11 +1030,11 @@ getFuncs(int *numFuncs)
     i_proretset = PQfnumber(res,"proretset");
     i_prosrc = PQfnumber(res,"prosrc");
     i_probin = PQfnumber(res,"probin");
+    i_usename = PQfnumber(res,"usename");
     
     for (i=0;i<ntups;i++) {
         finfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
         finfo[i].proname = strdup(PQgetvalue(res,i,i_proname));
-        finfo[i].proowner = strdup(PQgetvalue(res,i,i_proowner));
 
         finfo[i].prosrc = checkForQuote(PQgetvalue(res,i,i_prosrc));
         finfo[i].probin = strdup(PQgetvalue(res,i,i_probin));
@@ -1026,6 +1043,8 @@ getFuncs(int *numFuncs)
         finfo[i].retset = (strcmp(PQgetvalue(res,i,i_proretset),"t") == 0);
         finfo[i].nargs = atoi(PQgetvalue(res,i,i_pronargs));
         finfo[i].lang = (atoi(PQgetvalue(res,i,i_prolang)) == C_PROLANG_OID);
+
+        finfo[i].usename = strdup(PQgetvalue(res,i,i_usename));
 
         parseArgTypes(finfo[i].argtypes, PQgetvalue(res,i,i_proargtypes));
 
@@ -1063,6 +1082,7 @@ getTables(int *numTables)
     int i_relarch;
     int i_relkind;
     int i_relacl;
+    int i_usename;
 
     /* find all the user-defined tables (no indices and no catalogs),
      ordering by oid is important so that we always process the parent
@@ -1079,9 +1099,11 @@ getTables(int *numTables)
     PQclear(res);
 
     sprintf(query, 
-            "SELECT oid, relname, relarch, relkind, relacl from pg_class "
-            "where (relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
-            "and relname !~ '^xin[xv][0-9]+' order by oid;");
+            "SELECT pg_class.oid, relname, relarch, relkind, relacl, usename "
+	    "from pg_class, pg_user "
+            "where relowner = usesysid and "
+	    "(relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
+            "and relname !~ '^xin[xv][0-9]+' order by oid");
 
     res = PQexec(g_conn, query);
     if (!res || 
@@ -1101,6 +1123,7 @@ getTables(int *numTables)
     i_relarch = PQfnumber(res,"relarch");
     i_relkind = PQfnumber(res,"relkind");
     i_relacl = PQfnumber(res,"relacl");
+    i_usename = PQfnumber(res,"usename");
 
     for (i=0;i<ntups;i++) {
         tblinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
@@ -1108,6 +1131,7 @@ getTables(int *numTables)
         tblinfo[i].relarch = strdup(PQgetvalue(res,i,i_relarch));
         tblinfo[i].relacl = strdup(PQgetvalue(res,i,i_relacl));
         tblinfo[i].sequence = (strcmp (PQgetvalue(res,i,i_relkind), "S") == 0);
+        tblinfo[i].usename = strdup(PQgetvalue(res,i,i_usename));
     }
 
     PQclear(res);
@@ -1305,7 +1329,7 @@ getIndices(int *numIndices)
             "from pg_index i, pg_class t1, pg_class t2, pg_am a "
             "where t1.oid = i.indexrelid and t2.oid = i.indrelid "
             "and t1.relam = a.oid and i.indexrelid > '%d'::oid "
-            "and t2.relname !~ '^pg_' and t1.relname !~ '^Xinx' ;",
+            "and t2.relname !~ '^pg_' and t1.relname !~ '^Xinx'",
             g_last_builtin_oid);
 
     res = PQexec(g_conn, query);
@@ -1384,6 +1408,8 @@ dumpTypes(FILE* fout, FuncInfo* finfo, int numFuncs,
         if (funcInd !=  -1) 
             dumpOneFunc(fout,finfo,funcInd,tinfo,numTypes);
 
+	fprintf(fout,"\\connect - %s\n",tinfo[i].usename);
+
         sprintf(q,
                 "CREATE TYPE %s "
                 "( internallength = %s, externallength = %s, input = %s, "
@@ -1448,6 +1474,8 @@ dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
     else
         finfo[i].dumped = 1;
 
+    fprintf(fout,"\\connect - %s\n",finfo[i].usename);
+        
     sprintf(q,"CREATE FUNCTION %s (",finfo[i].proname);
     for (j=0;j<finfo[i].nargs;j++) {
         char* typname;
@@ -1547,6 +1575,8 @@ dumpOprs(FILE* fout, OprInfo* oprinfo, int numOperators,
                                      oprinfo[i].oprlsortop));
         }
 
+	fprintf(fout,"\\connect - %s\n", oprinfo[i].usename);
+
         sprintf(q,
                 "CREATE OPERATOR %s "
                 "(PROCEDURE = %s %s %s %s %s %s %s %s %s);\n ",
@@ -1627,6 +1657,8 @@ dumpAggs(FILE* fout, AggInfo* agginfo, int numAggs,
         } else
             comma2[0] = '\0';
 
+	fprintf(fout,"\\connect - %s\n", agginfo[i].usename);
+
         sprintf(q,"CREATE AGGREGATE %s ( %s %s %s %s %s );\n",
                 agginfo[i].aggname,
                 sfunc1,
@@ -1676,6 +1708,8 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
 
             parentRels = tblinfo[i].parentRels;
             numParents = tblinfo[i].numParents;
+
+	    fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
 
             sprintf(q, "CREATE TABLE %s (", tblinfo[i].relname);
             actual_atts = 0;
@@ -2006,7 +2040,7 @@ findLastBuiltinOid(void)
     int last_oid;
 
     res = PQexec(g_conn, 
-                 "SELECT oid from pg_database where datname = 'template1';");
+                 "SELECT oid from pg_database where datname = 'template1'");
     if (res == NULL ||
         PQresultStatus(res) != PGRES_TUPLES_OK) {
         fprintf(stderr,"pg_dump error in finding the template1 database\n");
@@ -2066,7 +2100,7 @@ static void dumpSequence (FILE* fout, TableInfo tbinfo)
 
     sprintf (query, 
             "SELECT sequence_name, last_value, increment_by, max_value, "
-            "min_value, cache_value, is_cycled, is_called from %s;",
+            "min_value, cache_value, is_cycled, is_called from %s",
             tbinfo.relname);
 
     res = PQexec (g_conn, query);
