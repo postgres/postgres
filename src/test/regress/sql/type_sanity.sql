@@ -59,7 +59,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p1.typtype = 'b' AND
     (p2.pronargs != 1 OR p2.proretset) AND
-    (p2.pronargs < 2 OR p2.pronargs > 3 OR p2.proretset OR p1.typelem = 0);
+    (p2.pronargs != 3 OR p2.proretset OR p1.typelem = 0);
 
 -- Check for bogus typoutput routines
 -- The first OR subclause detects bogus non-array cases,
@@ -83,7 +83,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typreceive = p2.oid AND p1.typtype = 'b' AND
     (p2.pronargs != 1 OR p2.proretset) AND
-    (p2.pronargs < 2 OR p2.pronargs > 3 OR p2.proretset OR p1.typelem = 0);
+    (p2.pronargs != 3 OR p2.proretset OR p1.typelem = 0);
 
 -- Check for bogus typsend routines
 -- The first OR subclause detects bogus non-array cases,

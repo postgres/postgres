@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.35 1999/02/13 23:14:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.36 1999/04/20 03:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,11 +390,6 @@ TypeCreate(char *typeName,
 	values[i++] = (Datum) (typeType == 'c' ? relationOid : InvalidOid); /* 9 */
 	values[i++] = (Datum) elementObjectId;		/* 10 */
 
-	/*
-	 * arguments to type input and output functions must be 0
-	 */
-	MemSet(argList, 0, 8 * sizeof(Oid));
-
 	procs[0] = inputProcedure;
 	procs[1] = outputProcedure;
 	procs[2] = (receiveProcedure) ? receiveProcedure : inputProcedure;
@@ -404,6 +399,12 @@ TypeCreate(char *typeName,
 	{
 		procname = procs[j];
 
+		/*
+		 * First look for a 1-argument func with all argtypes 0.
+		 * This is valid for all four kinds of procedure.
+		 */
+		MemSet(argList, 0, 8 * sizeof(Oid));
+
 		tup = SearchSysCacheTuple(PRONAME,
 								  PointerGetDatum(procname),
 								  Int32GetDatum(1),
@@ -412,17 +413,28 @@ TypeCreate(char *typeName,
 
 		if (!HeapTupleIsValid(tup))
 		{
-
 			/*
-			 * it is possible for the input/output procedure to take two
-			 * arguments, where the second argument is the element type
-			 * (eg array_in/array_out)
+			 * For array types, the input procedures may take 3 args
+			 * (data value, element OID, atttypmod); the pg_proc
+			 * argtype signature is 0,0,INT4OID.  The output procedures
+			 * may take 2 args (data value, element OID).
 			 */
 			if (OidIsValid(elementObjectId))
 			{
+				int nargs;
+				if (j % 2)
+				{
+					/* output proc */
+					nargs = 2;
+				} else
+				{
+					/* input proc */
+					nargs = 3;
+					argList[2] = INT4OID;
+				}
 				tup = SearchSysCacheTuple(PRONAME,
 										  PointerGetDatum(procname),
-										  Int32GetDatum(2),
+										  Int32GetDatum(nargs),
 										  PointerGetDatum(argList),
 										  0);
 			}

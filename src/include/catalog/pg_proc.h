@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.95 1999/04/13 17:28:35 momjian Exp $
+ * $Id: pg_proc.h,v 1.96 1999/04/20 03:51:13 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1001,9 +1001,9 @@ DESCR("array");
 DATA(insert OID = 751 (  array_out		   PGUID 11 f t f 2 f 23 "0 0" 100 0 0 100	array_out - ));
 DESCR("array");
 
-DATA(insert OID = 752 (  filename_in	   PGUID 11 f t f 2 f 605 "0" 100 0 0 100  filename_in - ));
+DATA(insert OID = 752 (  filename_in	   PGUID 11 f t f 1 f 605 "0" 100 0 0 100  filename_in - ));
 DESCR("(internal)");
-DATA(insert OID = 753 (  filename_out	   PGUID 11 f t f 2 f 19  "0" 100 0 0 100  filename_out - ));
+DATA(insert OID = 753 (  filename_out	   PGUID 11 f t f 2 f 19  "0 0" 100 0 0 100  filename_out - ));
 DESCR("(internal)");
 
 DATA(insert OID = 760 (  smgrin			   PGUID 11 f t f 1 f 210 "0" 100 0 0 100  smgrin - ));
@@ -1300,11 +1300,11 @@ DATA(insert OID = 1037 (  aclcontains	   PGUID 11 f t f 2 f 16 "1034 1033" 100 0
 DESCR("matches regex., case-sensitive");
 DATA(insert OID = 1038 (  seteval		   PGUID 11 f t f 1 f 23 "26" 100 0 0 100  seteval - ));
 DESCR("");
-DATA(insert OID = 1044 (  bpcharin		   PGUID 11 f t f 3 f 1042 "0" 100 0 0 100	bpcharin - ));
+DATA(insert OID = 1044 (  bpcharin		   PGUID 11 f t f 3 f 1042 "0 0 23" 100 0 0 100	bpcharin - ));
 DESCR("(internal)");
 DATA(insert OID = 1045 (  bpcharout		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  bpcharout - ));
 DESCR("(internal)");
-DATA(insert OID = 1046 (  varcharin		   PGUID 11 f t f 3 f 1043 "0" 100 0 0 100	varcharin - ));
+DATA(insert OID = 1046 (  varcharin		   PGUID 11 f t f 3 f 1043 "0 0 23" 100 0 0 100	varcharin - ));
 DESCR("(internal)");
 DATA(insert OID = 1047 (  varcharout	   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  varcharout - ));
 DESCR("(internal)");
