@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.186 2000/11/06 22:18:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.187 2000/11/08 17:57:46 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1010,6 +1010,7 @@ usage(char *progname)
 	fprintf(stderr, "\t-A on\t\tenable/disable assert checking\n");
 #endif
 	fprintf(stderr, "\t-B buffers\tset number of buffers in buffer pool\n");
+	fprintf(stderr, "\t-c name=value\tset run-time parameter\n");
 	fprintf(stderr, "\t-C \t\tsuppress version info\n");
 	fprintf(stderr, "\t-D dir\t\tdata directory\n");
 	fprintf(stderr, "\t-E \t\techo query before execution\n");
@@ -1112,7 +1113,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	optind = 1;					/* reset after postmaster's usage */
 
-	while ((flag = getopt(argc, argv,  "A:B:CD:d:Eef:FiLNOPo:p:S:st:v:VW:x:-:?")) != EOF)
+	while ((flag = getopt(argc, argv,  "A:B:c:CD:d:Eef:FiLNOPo:p:S:st:v:VW:x:-:?")) != EOF)
 		switch (flag)
 		{
 			case 'A':
@@ -1383,6 +1384,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 #endif
 				break;
 
+			case 'c':
 			case '-':
 			{
 				char *name, *value;
@@ -1399,7 +1401,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 					exit(0);
 				}
 				if (!value)
-					elog(ERROR, "--%s requires argument", optarg);
+				{
+					if (flag == '-')
+						elog(ERROR, "--%s requires argument", optarg);
+					else
+						elog(ERROR, "-c %s requires argument", optarg);
+				}
 
 				SetConfigOption(name, value, PGC_BACKEND);
 				free(name);
@@ -1639,7 +1646,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.186 $ $Date: 2000/11/06 22:18:08 $\n");
+		puts("$Revision: 1.187 $ $Date: 2000/11/08 17:57:46 $\n");
 	}
 
 	/*

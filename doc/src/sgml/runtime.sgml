@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.31 2000/11/01 21:14:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.32 2000/11/08 17:57:45 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -411,7 +411,7 @@ syslog = 2
     A second way to set these configuration parameters is to give them
     as a command line option to the postmaster, such as
 <programlisting>
-postmaster --log-connections=yes --syslog=2
+postmaster -c log_connections=yes -c syslog=2
 </programlisting>
     which would have the same effect as the previous example.
    </para>
@@ -422,7 +422,7 @@ postmaster --log-connections=yes --syslog=2
     <envar>PGOPTIONS</envar> can be used for this purpose on the
     client side:
 <programlisting>
-env PGOPTIONS='--geqo=off' psql
+env PGOPTIONS='-c geqo=off' psql
 </programlisting>
     (This works for any client application, not just
     <application>psql</application>.) Note that this won't work for

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.179 2000/11/06 22:18:06 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.180 2000/11/08 17:57:46 petere Exp $
  *
  * NOTES
  *
@@ -372,7 +372,7 @@ PostmasterMain(int argc, char *argv[])
 	 * will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:SsV-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Film:MN:no:p:SsV-:?")) != EOF)
 	{
 		switch(opt)
 		{
@@ -428,7 +428,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;
 #endif
-	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:SsV-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Film:MN:no:p:SsV-:?")) != EOF)
 	{
 		switch (opt)
 		{
@@ -530,13 +530,19 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				SendStop = true;
 				break;
+			case 'c':
 			case '-':
 			{
 				char *name, *value;
 
 				ParseLongOption(optarg, &name, &value);
 				if (!value)
-					elog(ERROR, "--%s requires argument", optarg);
+				{
+					if (opt == '-')
+						elog(ERROR, "--%s requires argument", optarg);
+					else
+						elog(ERROR, "-c %s requires argument", optarg);
+				}
 
 				SetConfigOption(name, value, PGC_POSTMASTER);
 				free(name);
@@ -766,6 +772,7 @@ usage(const char *progname)
 	printf("  -A 1|0          enable/disable runtime assert checking\n");
 #endif
 	printf("  -B <buffers>    number of shared buffers\n");
+	printf("  -c <name>=<value> set run-time parameter\n");
 	printf("  -d 1-5          debugging level\n");
 	printf("  -D <directory>  database directory\n");
 	printf("  -F              turn fsync off\n");
@@ -775,7 +782,7 @@ usage(const char *progname)
 #endif
 	printf("  -N <number>     maximum number of allowed connections (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
-	printf("  -o <option>     pass `option' to each backend server\n");
+	printf("  -o <option>     pass 'option' to each backend server\n");
 	printf("  -p <port>       port number to listen on\n");
 	printf("  -S              silent mode (dissociate from tty)\n");
 
@@ -783,7 +790,7 @@ usage(const char *progname)
 	printf("  -n              don't reinitialize shared memory after abnormal exit\n");
 	printf("  -s              send SIGSTOP to all backend servers if one dies\n");
 
-	printf("\nPlease read the documentation for the complete list of runtime\n"
+	printf("\nPlease read the documentation for the complete list of run-time\n"
 		   "configuration settings and how to set them on the command line or in\n"
 		   "the configuration file.\n\n");
 
