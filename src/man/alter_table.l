@@ -1,13 +1,17 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/alter_table.l,v 1.2 1996/12/11 00:26:55 momjian Exp $
-.TH "ALTER TABLE" SQL 11/5/95 PostgreSQL PostgreSQL
+.\" $Header: /cvsroot/pgsql/src/man/Attic/alter_table.l,v 1.3 1997/09/26 15:21:26 thomas Exp $
+.TH "ALTER TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 alter table \(em add attributes to a class
 .SH SYNOPSIS
 .nf
-\fBalter table\fR classname [*]
-	\fBadd column\fR attname type
+\fBalter table\fR classname [ * ]
+	\fBadd\fR [ \fBcolumn\fR ] attname type
+.fi
+.nf
+\fBalter table\fR classname [ * ]
+	\fBadd\fR \fB(\fR attname type \fB)\fR
 	
 .fi
 .SH DESCRIPTION
@@ -18,7 +22,7 @@ causes a new attribute to be added to an existing class,
 .IR classname .
 The new attributes and their types are specified
 in the same style and with the the same restrictions as in
-.IR create table (l).
+.IR "create table" (l).
 .PP
 In order to add an attribute to each class in an entire inheritance
 hierarchy, use the

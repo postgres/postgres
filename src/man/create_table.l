@@ -1,30 +1,32 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.5 1997/08/26 17:39:30 momjian Exp $
-.TH "CREATE TABLE" SQL 11/05/95 PostgreSQL PostgreSQL
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.6 1997/09/26 15:21:27 thomas Exp $
+.TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table \(em create a new class
 .SH SYNOPSIS
 .nf
-\fBcreate table \fR classname \fB(\fPattname-1 type-1 {\fB,\fP attname-i type-i}\fB)\fP
-	[\fBinherits\fR \fB(\fR classname-1 {\fB,\fR classname-i} \fB)\fR]
+\fBcreate table\fR classname \fB(\fPattname type [\fBdefault\fP value] [\fB,\fP attname type \fBdefault\fP value]\fB)\fP
+	[\fBinherits\fR \fB(\fR classname [\fB,\fR classname] \fB)\fR]
+	[\fBconstraint\fR cname \fBcheck\fR \fB(\fR test \fB)\fR [\fB,\fR \fBcheck\fR test]
 	[\fBarchive\fR \fB=\fR archive_mode]
 	[\fBstore\fR \fB=\fR \*(lqsmgr_name\*(rq]
 	[\fBarch_store\fR \fB=\fR \*(lqsmgr_name\*(rq]
 .fi
 .SH DESCRIPTION
-.BR "Create table"
+.BR "Create Table"
 will enter a new class into the current data base.  The class will be
 \*(lqowned\*(rq by the user issuing the command.  The name of the
 class is
 .IR classname
 and the attributes are as specified in the list of
 .IR attname s.
-The 
-.IR i th
-attribute is created with the type specified by
-.IR type "-i."
+Each attribute is created with the type specified by
+.IR type "."
 Each type may be a simple type, a complex type (set) or an array type.
+Each attribute may have a default value, specified by the
+.IR default
+clause which is the keyword "default" followed by a constant or expression.
 .PP
 Each array attribute stores arrays that must have the same number of
 dimensions but may have different sizes and array index bounds.  An
@@ -36,6 +38,8 @@ pairs of square brackets:
 .nf
 att_name type[][]..[]
 .fi
+N.B. As of Postgres version 6.0, consistant array dimensions within an
+attribute are not enforced. This will likely change in a future release.
 .PP
 The optional
 .BR inherits
@@ -50,12 +54,19 @@ Each new class
 .IR classname 
 is automatically created as a type.  Therefore, one or more instances
 from the class are automatically a type and can be used in 
-.IR alter table(l)
+.IR "alter table" (l)
 or other 
 .BR "create table"
 statements.  See 
 .IR pgintro (1)
 for a further discussion of this point.
+.PP
+The optional
+.BR constraint
+clause specifies a list of constraints or tests which new or updated entries
+must satisfy for an insert or update operation to succeed. Each constraint
+must evaluate to a boolean expression. Multiple attributes may be referenced within
+a single constraint.
 .PP
 The optional
 .BR store
@@ -116,6 +127,14 @@ create table emp (name char16, salary float4, bdate abstime)
 --inherits all fields of emp 
 --
 create table permemp (plan char16) inherits (emp)
+.fi
+.nf
+--
+--Create class emppay with attributes name and wage with
+--a default salary and constraints on wage range
+--
+create table emppay (name text not null, wage float4 default 10.00)
+constraint empcon check (wage > 5.30 and wage <= 30.00), check (name <> '')
 .fi
 .nf
 --
