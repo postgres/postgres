@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar 19 22:40:26 EST 2003
+Last updated:		Thu Mar 20 02:00:49 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -176,7 +176,7 @@ Commands
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
 	o -Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
-	o Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
+	o -Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
 	o Have ALTER TABLE rename SERIAL sequences
 
 * CLUSTER
