@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov 22 21:21:59 EST 2001
+Last updated:		Sun Nov 25 22:04:23 PST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -237,14 +237,16 @@ CLIENTS
 	o Error Codes (pending backend implementation)
 	o -Support for binary data/bytea
 	o Move to using 'make' rather than 'ant'(?)
-	o Add MD5 capability
+	o -Add MD5 capability
+	o Fix LargeObject API to handle OIDs as unsigned ints
+	o Implement cancel() method on Statement
+	o Use cursors implicitly to avoid large results (see setCursorName())
 * ECPG
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
 	o Allow variable to specify the connection name
 	o Implement SQLDA
 	o Allow SELECT of array of strings into a auto-sized variable
-	o Use cursors implicitly to avoid large results (see setCursorName())
 	o Solve cardinality > 1 for input descriptors / variables
 	o Understand structure definitions outside a declare section
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
