@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.26 2001/10/18 20:43:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.27 2001/10/31 20:37:39 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -120,27 +120,27 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.26 2001/10/18 20:43:05 momjia
      <itemizedlist>
       <listitem>
        <para>
-	<function>ECPGdebug(int <replaceable>on</replaceable>, FILE
-	*<replaceable>stream</replaceable>)</function> turns on debug
-	logging if called with the first argument non-zero. Debug
-	logging is done on <replaceable>stream</replaceable>. Most
-	<acronym>SQL</acronym> statement log their arguments and results.
+        <function>ECPGdebug(int <replaceable>on</replaceable>, FILE
+        *<replaceable>stream</replaceable>)</function> turns on debug
+        logging if called with the first argument non-zero. Debug
+        logging is done on <replaceable>stream</replaceable>. Most
+        <acronym>SQL</acronym> statement log their arguments and results.
        </para>
 
        <para>
-	The most important function , <function>ECPGdo</function>, logs
-	all <acronym>SQL</acronym> statements with both the expanded
-	string, i.e. the string with all the input variables inserted,
-	and the result from the <productname>Postgres</productname>
-	server. This can be very useful when searching for errors in
-	your <acronym>SQL</acronym> statements.
+        The most important function , <function>ECPGdo</function>, logs
+        all <acronym>SQL</acronym> statements with both the expanded
+        string, i.e. the string with all the input variables inserted,
+        and the result from the <productname>Postgres</productname>
+        server. This can be very useful when searching for errors in
+        your <acronym>SQL</acronym> statements.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	<function>ECPGstatus()</function>
-	This method returns TRUE if we are connected to a database and FALSE if not.
+        <function>ECPGstatus()</function>
+        This method returns TRUE if we are connected to a database and FALSE if not.
        </para>
       </listitem>
      </itemizedlist>
@@ -180,7 +180,7 @@ struct sqlca
  /* 5: empty                                         */
  char sqlwarn[8];
  /* 0: set to 'W' if at least one other is 'W'       */
- /* 1: if 'W' at least one character string	     */
+ /* 1: if 'W' at least one character string          */
  /*    value was truncated when it was               */
  /*    stored into a host variable.                  */
  /* 2: empty                                         */
@@ -216,265 +216,265 @@ struct sqlca
       <varlistentry>
        <term><computeroutput>-12, Out of memory in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 Should not normally occur. This indicates your virtual memory is
-	 exhausted.
-	</para>
+        <para>
+         Should not normally occur. This indicates your virtual memory is
+         exhausted.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-200 (ECPG_UNSUPPORTED): Unsupported type %s on line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 Should not normally occur. This indicates the preprocessor has
-	 generated something that the library does not know about.
-	 Perhaps you are running incompatible versions of the
-	 preprocessor and the library.
-	</para>
+        <para>
+         Should not normally occur. This indicates the preprocessor has
+         generated something that the library does not know about.
+         Perhaps you are running incompatible versions of the
+         preprocessor and the library.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-201 (ECPG_TOO_MANY_ARGUMENTS): Too many arguments line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means that <productname>Postgres</productname> has
-	 returned more arguments than we have matching variables.
-	 Perhaps you have forgotten a couple of the host variables in
-	 the <command>INTO :var1,:var2</command>-list.
-	</para>
+        <para>
+         This means that <productname>Postgres</productname> has
+         returned more arguments than we have matching variables.
+         Perhaps you have forgotten a couple of the host variables in
+         the <command>INTO :var1,:var2</command>-list.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-202 (ECPG_TOO_FEW_ARGUMENTS): Too few arguments line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means that <productname>Postgres</productname> has
-	 returned fewer arguments than we have host variables. Perhaps
-	 you have too many host variables in the <command>INTO
-	 :var1,:var2</command>-list.
-	</para> 
+        <para>
+         This means that <productname>Postgres</productname> has
+         returned fewer arguments than we have host variables. Perhaps
+         you have too many host variables in the <command>INTO
+         :var1,:var2</command>-list.
+        </para> 
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-203 (ECPG_TOO_MANY_MATCHES): Too many matches line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means the query has returned several rows but the
-	 variables specified are not arrays. The
-	 <command>SELECT</command> command was not unique.
-	</para>
+        <para>
+         This means the query has returned several rows but the
+         variables specified are not arrays. The
+         <command>SELECT</command> command was not unique.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-204 (ECPG_INT_FORMAT): Not correctly formatted int type: %s line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means the host variable is of type <type>int</type> and
-	 the field in the <productname>Postgres</productname> database
-	 is of another type and contains a value that cannot be
-	 interpreted as an <type>int</type>. The library uses
-	 <function>strtol()</function> for this conversion.
-	</para>
+        <para>
+         This means the host variable is of type <type>int</type> and
+         the field in the <productname>Postgres</productname> database
+         is of another type and contains a value that cannot be
+         interpreted as an <type>int</type>. The library uses
+         <function>strtol()</function> for this conversion.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-205 (ECPG_UINT_FORMAT): Not correctly formatted unsigned type: %s line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means the host variable is of type <type>unsigned
-	 int</type> and the field in the
-	 <productname>Postgres</productname> database is of another type
-	 and contains a value that cannot be interpreted as an
-	 <type>unsigned int</type>. The library uses
-	 <function>strtoul()</function> for this conversion.
-	</para>
+        <para>
+         This means the host variable is of type <type>unsigned
+         int</type> and the field in the
+         <productname>Postgres</productname> database is of another type
+         and contains a value that cannot be interpreted as an
+         <type>unsigned int</type>. The library uses
+         <function>strtoul()</function> for this conversion.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-206 (ECPG_FLOAT_FORMAT): Not correctly formatted floating point type: %s line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means the host variable is of type <type>float</type> and
-	 the field in the <productname>Postgres</productname> database
-	 is of another type and contains a value that cannot be
-	 interpreted as a <type>float</type>. The library uses
-	 <function>strtod()</function> for this conversion.
-	</para>
+        <para>
+         This means the host variable is of type <type>float</type> and
+         the field in the <productname>Postgres</productname> database
+         is of another type and contains a value that cannot be
+         interpreted as a <type>float</type>. The library uses
+         <function>strtod()</function> for this conversion.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-207 (ECPG_CONVERT_BOOL): Unable to convert %s to bool on line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This means the host variable is of type <type>bool</type> and
-	 the field in the <productname>Postgres</productname> database
-	 is neither <literal>'t'</> nor <literal>'f'</>.
-	</para>
+        <para>
+         This means the host variable is of type <type>bool</type> and
+         the field in the <productname>Postgres</productname> database
+         is neither <literal>'t'</> nor <literal>'f'</>.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-208 (ECPG_EMPTY): Empty query line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 <productname>Postgres</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
-	 because the query indeed was empty.
-	</para>
+        <para>
+         <productname>Postgres</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
+         because the query indeed was empty.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-209 (ECPG_MISSING_INDICATOR): NULL value without indicator in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 <productname>Postgres</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
-	 because a NULL was returned and no NULL indicator variable was supplied.
-	</para>
+        <para>
+         <productname>Postgres</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
+         because a NULL was returned and no NULL indicator variable was supplied.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-210 (ECPG_NO_ARRAY): Variable is not an array in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 <productname>Postgres</productname> returned <symbol>ECPG_NO_ARRAY</symbol>
-	 because an ordinary variable was used in a place that requires
-	 an array.
-	</para>
+        <para>
+         <productname>Postgres</productname> returned <symbol>ECPG_NO_ARRAY</symbol>
+         because an ordinary variable was used in a place that requires
+         an array.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-211 (ECPG_DATA_NOT_ARRAY): Data read from backend is not an array in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 <productname>Postgres</productname> returned <symbol>ECPG_DATA_NOT_ARRAY</symbol>
-	 because the database returned an ordinary variable in a place
-	 that requires array value.
-	</para>
+        <para>
+         <productname>Postgres</productname> returned <symbol>ECPG_DATA_NOT_ARRAY</symbol>
+         because the database returned an ordinary variable in a place
+         that requires array value.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-220 (ECPG_NO_CONN): No such connection %s in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The program tried to access a connection that does not exist.
-	</para>
+        <para>
+         The program tried to access a connection that does not exist.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-221 (ECPG_NOT_CONN): Not connected in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The program tried to access a connection that does exist but is
-	 not open.
-	</para>
+        <para>
+         The program tried to access a connection that does exist but is
+         not open.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-230 (ECPG_INVALID_STMT): Invalid statement name %s in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The statement you are trying to use has not been prepared.
-	</para>
+        <para>
+         The statement you are trying to use has not been prepared.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-240 (ECPG_UNKNOWN_DESCRIPTOR): Descriptor %s not found in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The descriptor specified was not foundstatement you are trying to use has not been prepared.
-	</para>
+        <para>
+         The descriptor specified was not foundstatement you are trying to use has not been prepared.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-241 (ECPG_INVALID_DESCRIPTOR_INDEX): Descriptor index out of range in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The descriptor index specified was out of range.
-	</para>
+        <para>
+         The descriptor index specified was out of range.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-242 (ECPG_UNKNOWN_DESCRIPTOR_ITEM): Descriptor %s not found in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The descriptor specified was not foundstatement you are trying to use has not been prepared.
-	</para>
+        <para>
+         The descriptor specified was not foundstatement you are trying to use has not been prepared.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-243 (ECPG_VAR_NOT_NUMERIC): Variable is not a numeric type in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The database returned a numeric value and the variable was not
-	 numeric.
-	</para>
+        <para>
+         The database returned a numeric value and the variable was not
+         numeric.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-244 (ECPG_VAR_NOT_CHAR): Variable is not a character type in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The database returned a non-numeric value and the variable was
-	 numeric.
-	</para>
+        <para>
+         The database returned a non-numeric value and the variable was
+         numeric.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-400 (ECPG_PGSQL): Postgres error: %s line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 Some <productname>Postgres</productname> error. 
-	 The message contains the error message from the
-	 <productname>Postgres</productname> backend.
-	</para>
+        <para>
+         Some <productname>Postgres</productname> error. 
+         The message contains the error message from the
+         <productname>Postgres</productname> backend.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-401 (ECPG_TRANS): Error in transaction processing line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 <productname>Postgres</productname> signaled that we cannot start,
-	 commit or rollback the transaction.
-	</para>
+        <para>
+         <productname>Postgres</productname> signaled that we cannot start,
+         commit or rollback the transaction.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>-402 (ECPG_CONNECT): Could not connect to database %s in line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 The connect to the database did not work.
-	</para>
+        <para>
+         The connect to the database did not work.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><computeroutput>100 (ECPG_NOT_FOUND): Data not found line %d.</computeroutput></term>
        <listitem>
-	<para>
-	 This is a <quote>normal</quote> error that tells you that what you are querying cannot
-	 be found or you are at the end of the cursor.
-	</para>
+        <para>
+         This is a <quote>normal</quote> error that tells you that what you are querying cannot
+         be found or you are at the end of the cursor.
+        </para>
        </listitem>
       </varlistentry>
 
@@ -486,30 +486,26 @@ struct sqlca
   <sect1 id="ecpg-limitations">
    <title>Limitations</title>
 
-   <abstract>
-    <para>
-     What will never be included and why it cannot be done.
-    </para>
-   </abstract>
-
    <para>
+    What will never be included and why it cannot be done:
+
     <variablelist>
      <varlistentry>
       <term>Oracle's single tasking</term>
       <listitem>
        <para>
-	Oracle version 7.0 on <systemitem class="osname">AIX</> 3 uses OS-supported locks in shared
-	memory that allow an application designer to link an application
-	in a <quote>single tasking</quote> way. Instead of starting one client
-	process per application process, both the database part and the
-	application part run in the same process. In later versions of
-	Oracle this is no longer supported.
+        Oracle version 7.0 on <systemitem class="osname">AIX</> 3 uses OS-supported locks in shared
+        memory that allow an application designer to link an application
+        in a <quote>single tasking</quote> way. Instead of starting one client
+        process per application process, both the database part and the
+        application part run in the same process. In later versions of
+        Oracle this is no longer supported.
        </para>
 
        <para>
-	This would require a total redesign of the
-	<productname>Postgres</productname> access model and the
-	performance gain does not justify the effort.
+        This would require a total redesign of the
+        <productname>Postgres</productname> access model and the
+        performance gain does not justify the effort.
        </para>
       </listitem>
      </varlistentry>
@@ -545,15 +541,15 @@ struct sqlca
       <term>Syntax of FETCH</term>
       <listitem>
        <para>
-	The standard syntax for FETCH is:
+        The standard syntax for FETCH is:
        </para>
        <para>
-	FETCH [direction] [amount] IN|FROM <replaceable>cursor</replaceable>.
+        FETCH [direction] [amount] IN|FROM <replaceable>cursor</replaceable>.
        </para>
        <para>
-	<application>ORACLE</application>, however, does not use the keywords IN
-	or FROM. This feature cannot be added since it would create parsing
-	conflicts.
+        <application>ORACLE</application>, however, does not use the keywords IN
+        or FROM. This feature cannot be added since it would create parsing
+        conflicts.
        </para>
       </listitem>
      </varlistentry>
@@ -580,77 +576,74 @@ struct sqlca
       <varlistentry>
        <term>Library functions</term>
        <listitem>
-	<para>
-	 to_date et al. does not exist. However,
-	 <productname>Postgres</productname> has some good conversion
-	 routines so you probably won't miss them.
-	</para>
+        <para>
+         to_date et al. does not exist. However,
+         <productname>Postgres</productname> has some good conversion
+         routines so you probably won't miss them.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Structures and unions</term>
        <listitem>
-	<para>
-	 Structures and unions have to be defined in the
-	 <command>declare</> section.
-	</para>
+        <para>
+         Structures and unions have to be defined in the
+         <command>declare</> section.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Missing statements</term>
        <listitem>
-	<para>
-	 The following statements are not implemented thus far:
-	 <variablelist>
-	  <varlistentry>
-	   <term><literal>exec sql allocate</></term>
-	   <listitem>
-	    <para>
-	    </para>
-	   </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term><literal>exec sql deallocate</></term>
-	   <listitem>
-	    <para>
-	    </para>
-	   </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term><literal>SQLSTATE</></term>
-	   <listitem>
-	    <para>
-	    </para>
-	   </listitem>
-	  </varlistentry>
-	 </variablelist>
-	</para>
+        <para>
+         The following statements are not implemented thus far:
+
+         <itemizedlist>
+          <listitem>
+           <para>
+            <literal>exec sql allocate</>
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            <literal>exec sql deallocate</></term>
+           </para>
+          </listitem>
+ 
+          <listitem>
+           <para>
+            <literal>SQLSTATE</></term>
+           </para>
+          </listitem>
+         </itemizedlist>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>message 'no data found'</term>
        <listitem>
-	<para>
-	 The error message for <quote>no data</quote> in:
-	 <programlisting>
+        <para>
+         The error message for <quote>no data</quote> in:
+         <programlisting>
 exec sql insert select from statement
-	</programlisting>
-	 has to be <literal>100</>.
-	</para>
+        </programlisting>
+         has to be <literal>100</>.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><literal>sqlwarn[6]</literal></term>
        <listitem>
-	<para>
-	 <literal>sqlwarn[6]</literal> should be <literal>W</> if the <command>PRECISION</>
-	 or <command>SCALE</> value specified in a <command>SET
-	 DESCRIPTOR</> statement was ignored.
-	</para>
+        <para>
+         <literal>sqlwarn[6]</literal> should be <literal>W</> if the <command>PRECISION</>
+         or <command>SCALE</> value specified in a <command>SET
+         DESCRIPTOR</> statement was ignored.
+        </para>
        </listitem>
       </varlistentry>
      </variablelist>
@@ -680,269 +673,341 @@ exec sql insert select from statement
       <varlistentry>
        <term>Declare sections</term>
        <listitem>
-	<para>
-	 <command>Declare</> sections begin with:
-	 <programlisting>
+        <para>
+         <command>Declare</> sections begin with:
+<programlisting>
 exec sql begin declare section;
-	 </programlisting>
-	 and end with:
-	 <programlisting>
+</programlisting>
+         and end with:
+<programlisting>
 exec sql end declare section;
-	 </programlisting>
-	 In this section only variable declarations are allowed. Every
-	 variable declared within this section is stored in a list
-	 of variables indexed by name together with its corresponding
-	 type.
-	</para>
+</programlisting>
+         In this section only variable declarations are allowed. Every
+         variable declared within this section is stored in a list
+         of variables indexed by name together with its corresponding
+         type.
+        </para>
 
-	<para>
-	 In particular the definition of a structure or union also must
-	 be listed inside a <command>declare</> section. Otherwise
-	 <application>ecpg</application> cannot handle these types since
-	 it does not know the definition.
-	</para>
+        <para>
+         In particular the definition of a structure or union also must
+         be listed inside a <command>declare</> section. Otherwise
+         <application>ecpg</application> cannot handle these types since
+         it does not know the definition.
+        </para>
 
-	<para>
-	 The declaration is also echoed to the file to make it a normal
-	 C variable.
-	</para>
+        <para>
+         The declaration is also echoed to the file to make it a normal
+         C variable.
+        </para>
 
-	<para>
-	 The special types <type>VARCHAR</type> and <type>VARCHAR2</type> are converted into a named struct
-	 for every variable. A declaration like:
-	 <programlisting>
+        <para>
+         The special types <type>VARCHAR</type> and <type>VARCHAR2</type> are converted into a named struct
+         for every variable. A declaration like:
+<programlisting>
 VARCHAR var[180];
-	 </programlisting>
-	 is converted into:
-	 <programlisting>
+</programlisting>
+         is converted into:
+<programlisting>
 struct varchar_var { int len; char arr[180]; } var;
-	 </programlisting>
-	</para>
+</programlisting>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Include statements</term>
        <listitem>
-	<para>
-	 An include statement looks like:
-	 <programlisting>
+        <para>
+         An include statement looks like:
+<programlisting>
 exec sql include filename;
-	 </programlisting>
-	 Note that this is NOT the same as:
-	 <programlisting>
+</programlisting>
+         Note that this is NOT the same as:
+<programlisting>
 #include &lt;filename.h&gt;
-	 </programlisting>
-	</para>
+</programlisting>
+        </para>
 
-	<para>
-	 Instead the file specified is parsed by
-	 <application>ecpg</application> so the contents of the file are
-	 included in the resulting C code. This way you are able to
-	 specify EXEC SQL commands in an include file.
-	</para>
+        <para>
+         Instead the file specified is parsed by
+         <application>ecpg</application> so the contents of the file are
+         included in the resulting C code. This way you are able to
+         specify EXEC SQL commands in an include file.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Connect statement</term>
        <listitem>
-	<para>
-	 A connect statement looks like:
-	 <programlisting>
+        <para>
+         A connect statement looks like:
+<programlisting>
 exec sql connect to <replaceable>connection target</replaceable>;
-	 </programlisting>
-	 It creates a connection to the specified database.
-	</para>
+</programlisting>
+         It creates a connection to the specified database.
+        </para>
 
-	<para>
-	 The <replaceable>connection target</replaceable> can be specified in the
-	 following ways:
-	 <variablelist>
-	  <varlistentry>
-	   <term>dbname[@server][:port][as <replaceable>connection
-	     name</replaceable>][user <replaceable>user name</replaceable>]</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
+        <para>
+         The <replaceable>connection target</replaceable> can be specified in the
+         following ways:
+         <itemizedlist>
+          <listitem>
+           <simpara>
+            <literal>dbname[@server][:port][as <replaceable>connection
+            name</replaceable>][user <replaceable>user name</replaceable>]</literal>
+           </simpara>
+          </listitem>
 
-	  <varlistentry>
-	   <term>tcp:postgresql://server[:port][/dbname][as
-	    <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
+          <listitem>
+           <simpara>
+            <literal>tcp:postgresql://server[:port][/dbname][as
+            <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</literal>
+           </simpara>
+          </listitem>
 
-	  <varlistentry>
-	   <term>unix:postgresql://server[:port][/dbname][as
-	    <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
+          <listitem>
+           <simpara>
+            <literal>unix:postgresql://server[:port][/dbname][as
+            <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</literal>
+           </simpara>
+          </listitem>
+ 
+          <listitem>
+           <simpara>
+            <literal><replaceable>character variable</replaceable>[as
+            <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</literal>
+           </simpara>
+          </listitem>
+ 
+          <listitem>
+           <simpara>
+            <literal><replaceable>character string</replaceable>[as
+            <replaceable>connection name</replaceable>][<replaceable>user</replaceable>]</literal>
+           </simpara>
+          </listitem>
+ 
+          <listitem>
+           <simpara>
+            <literal>default</literal>
+           </simpara>
+          </listitem>
+ 
+          <listitem>
+           <simpara>
+            <literal>user</literal>
+           </simpara>
+          </listitem>
+         </itemizedlist>
+        </para>
 
-	  <varlistentry>
-	   <term><replaceable>character variable</replaceable>[as
-	    <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
+        <para>
+         There are also different ways to specify the user name:
 
-	  <varlistentry>
-	   <term><replaceable>character string</replaceable>[as
-	    <replaceable>connection name</replaceable>][<replaceable>user</replaceable>]</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
+         <itemizedlist>
+          <listitem>
+           <simpara>
+            <literal><replaceable>userid</replaceable></literal>
+           </simpara>
+          </listitem>
 
-	  <varlistentry>
-	   <term>default</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
+          <listitem>
+           <simpara>
+            <literal><replaceable>userid</replaceable>/<replaceable>password</replaceable></literal>
+           </simpara>
+          </listitem>
 
-	  <varlistentry>
-	   <term>user</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	 </variablelist>
-	</para>
+          <listitem>
+           <simpara>
+            <literal><replaceable>userid</replaceable> identified by <replaceable>password</replaceable></literal>
+           </simpara>
+          </listitem>
 
-	<para>
-	 There are also different ways to specify the user name:
-	 <variablelist>
-	  <varlistentry>
-	   <term><replaceable>userid</replaceable></term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term><replaceable>userid</replaceable>/<replaceable>password</replaceable></term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term><replaceable>userid</replaceable> identified by <replaceable>password</replaceable></term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term><replaceable>userid</replaceable> using <replaceable>password</replaceable></term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	 </variablelist>
-	</para>
+          <listitem>
+           <simpara>
+            <literal><replaceable>userid</replaceable> using <replaceable>password</replaceable></literal>
+           </simpara>
+          </listitem>
+         </itemizedlist>
+        </para>
 
-	<para> 
-	 Finally, the <replaceable>userid</replaceable> and <replaceable>password</replaceable> may be a constant text, a
-	 character variable, or a character string.
-	</para>
+        <para> 
+         Finally, the <replaceable>userid</replaceable> and <replaceable>password</replaceable> may be a constant text, a
+         character variable, or a character string.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Disconnect statements</term>
        <listitem>
-	<para>
-	 A disconnect statement looks like:
-	 <programlisting>
+        <para>
+         A disconnect statement looks like:
+         <programlisting>
 exec sql disconnect [<replaceable>connection target</replaceable>];
-	 </programlisting>
-	 It closes the connection to the specified database.
-	</para>
+         </programlisting>
+         It closes the connection to the specified database.
+        </para>
 
-	<para>
-	 The <replaceable>connection target</replaceable> can be specified in the
-	 following ways:
-	 <variablelist>
-	  <varlistentry>
-	   <term><replaceable>connection name</replaceable></term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term>default</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term>current</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	  <varlistentry>
-	   <term>all</term>
-	   <listitem><para></para></listitem>
-	  </varlistentry>
-	 </variablelist>
-	</para>
+        <para>
+         The <replaceable>connection target</replaceable> can be specified in the
+         following ways:
+
+         <itemizedlist>
+          <listitem>
+           <simpara>
+            <literal><replaceable>connection name</replaceable></literal>
+           </simpara>
+          </listitem>
+
+          <listitem>
+           <simpara>
+           <literal>default</literal>
+           </simpara>
+          </listitem>
+
+          <listitem>
+           <simpara>
+           <literal>current</literal>
+           </simpara>
+          </listitem>
+
+          <listitem>
+           <simpara>
+           <term>all</term>
+           </simpara>
+          </listitem>
+         </itemizedlist>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Open cursor statement</term>
        <listitem>
-	<para>
-	 An open cursor statement looks like:
-	 <programlisting>
+        <para>
+         An open cursor statement looks like:
+<programlisting>
 exec sql open <replaceable>cursor</replaceable>;
-	 </programlisting>
-	 and is not copied to the output. Instead, the cursor's
-	 <command>DECLARE</> command is used because it opens the cursor
-	 as well.
-	</para>
+</programlisting>
+         and is not copied to the output. Instead, the cursor's
+         <command>DECLARE</> command is used because it opens the cursor
+         as well.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Commit statement</term>
        <listitem>
-	<para>
-	 A commit statement looks like:
-	 <programlisting>
+        <para>
+         A commit statement looks like:
+<programlisting>
 exec sql commit;
-	 </programlisting>
-	</para>
+</programlisting>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Rollback statement</term>
        <listitem>
-	<para>
-	 A rollback statement looks like:
-	 <programlisting>
+        <para>
+         A rollback statement looks like:
+<programlisting>
 exec sql rollback;
-	 </programlisting>
-	</para>
+</programlisting>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Other statements</term>
        <listitem>
-	<para>
-	 Other <acronym>SQL</acronym> statements are used by
-	 starting with <command>exec sql</command> and ending with
-	 <command>;</command>. Everything in between is treated as an
-	 <acronym>SQL</acronym> statement and parsed for variable
-	 substitution.
-	</para>
+        <para>
+         Other <acronym>SQL</acronym> statements are used by
+         starting with <command>exec sql</command> and ending with
+         <command>;</command>. Everything in between is treated as an
+         <acronym>SQL</acronym> statement and parsed for variable
+         substitution.
+        </para>
 
-	<para>
-	 Variable substitution occurs when a symbol starts with a colon
-	 (<command>:</command>). The variable with that name is looked
-	 up among the variables that were previously declared within a
-	 <command>declare</> section. Depending on whether the variable is
-	 being use for input or output, a pointer to the variable is
-	 output to allow access by the function.
-	</para>
+        <para>
+         Variable substitution occurs when a symbol starts with a colon
+         (<command>:</command>). The variable with that name is looked
+         up among the variables that were previously declared within a
+         <command>declare</> section. Depending on whether the variable is
+         being use for input or output, a pointer to the variable is
+         output to allow access by the function.
+        </para>
 
-	<para>
-	 For every variable that is part of the <acronym>SQL</acronym>
-	 query, the function gets other arguments:
+        <para>
+         For every variable that is part of the <acronym>SQL</acronym>
+         query, the function gets other arguments:
 
-	 <simplelist>
-	  <member>The type as a special symbol.</member>
-	  <member>A pointer to the value or a pointer to the pointer.</member>
-	  <member>The size of the variable if it is a <type>char</type> or <type>varchar</type>.</member>
-	  <member>The number of elements in the array (for array fetches).</member>
-	  <member>The offset to the next element in the array (for array fetches).</member>
-	  <member>The type of the indicator variable as a special symbol.</member>
-	  <member>A pointer to the value of the indicator variable or a pointer to the pointer of the indicator variable.</member>
-	  <member>0.</member>
-	  <member>Number of elements in the indicator array (for array fetches).</member>
-	  <member>The offset to the next element in the indicator array
-	  (for array fetches).</member>
-	 </simplelist>
-	</para>
+         <itemizedlist>
+          <listitem>
+           <para>
+            The type as a special symbol.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para> 
+            A pointer to the value or a pointer to the pointer.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            The size of the variable if it is a <type>char</type> or <type>varchar</type>.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            The number of elements in the array (for array fetches).
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            The offset to the next element in the array (for array fetches).
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            The type of the indicator variable as a special symbol.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            A pointer to the value of the indicator variable or a pointer to the pointer of the indicator variable.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            0.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            Number of elements in the indicator array (for array fetches).
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
+            The offset to the next element in the indicator array (for
+            array fetches).
+           </para>
+          </listitem>
+         </itemizedlist>
+        </para>
 
        </listitem>
       </varlistentry>
@@ -956,16 +1021,16 @@ exec sql rollback;
     <para>
      Here is a complete example describing the output of the preprocessor of a
      file <filename>foo.pgc</filename>:
-     <programlisting>
+<programlisting>
 exec sql begin declare section;
 int index;
 int result;
 exec sql end declare section;
 ...
 exec sql select res into :result from mytable where index = :index;
-     </programlisting>
+</programlisting>
      is translated into:
-     <programlisting>
+<programlisting>
 /* Processed by ecpg (2.6.0) */
 /* These two include files are added by the preprocessor */
 #include &lt;ecpgtype.h&gt;;
@@ -980,12 +1045,12 @@ exec sql select res into :result from mytable where index = :index;
 /* exec sql end declare section */
 ...
 ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
-	ECPGt_int,&amp;(index),1L,1L,sizeof(int),
+        ECPGt_int,&amp;(index),1L,1L,sizeof(int),
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT,
         ECPGt_int,&amp;(result),1L,1L,sizeof(int),
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 147 "foo.pgc"
-     </programlisting>
+</programlisting>
      (The indentation in this manual is added for readability and not
      something the preprocessor does.)
     </para>
@@ -1009,60 +1074,60 @@ ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
       <varlistentry>
        <term>A line number</term>
        <listitem>
-	<para>
-	 This is a line number of the original line; used in error messages only.
-	</para>
+        <para>
+         This is a line number of the original line; used in error messages only.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>A string</term>
        <listitem>
-	<para>
-	 This is the <acronym>SQL</acronym> query that is to be issued.
-	 It is modified by the input variables, i.e. the variables that
-	 where not known at compile time but are to be entered in the
-	 query. Where the variables should go the string contains
-	 <literal>?</literal>.
-	</para>
+        <para>
+         This is the <acronym>SQL</acronym> query that is to be issued.
+         It is modified by the input variables, i.e. the variables that
+         where not known at compile time but are to be entered in the
+         query. Where the variables should go the string contains
+         <literal>?</literal>.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Input variables</term>
        <listitem>
-	<para>
-	 As described in the section about the preprocessor, every input variable
-	 gets ten arguments.
-	</para>
+        <para>
+         As described in the section about the preprocessor, every input variable
+         gets ten arguments.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><literal>ECPGt_EOIT</literal></term>
        <listitem>
-	<para>
-	 An enum telling that there are no more input variables.
-	</para>
+        <para>
+         An enum telling that there are no more input variables.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>Output variables</term>
        <listitem>
-	<para>
-	 As described in the section about the preprocessor, every input variable
-	 gets ten arguments. These variables are filled by the function.
-	</para>
+        <para>
+         As described in the section about the preprocessor, every input variable
+         gets ten arguments. These variables are filled by the function.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>ECPGt_EORT</term>
        <listitem>
-	<para>
-	 An enum telling that there are no more variables.
-	</para>
+        <para>
+         An enum telling that there are no more variables.
+        </para>
        </listitem>
       </varlistentry>
      </variablelist>
