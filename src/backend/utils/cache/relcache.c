@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.2 1996/10/23 07:41:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.3 1996/10/24 07:55:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1418,7 +1418,14 @@ RelationPurgeLocalRelation(bool xactCommitted)
 	     * remove the file if we abort. This is so that files for 
 	     * tables created inside a transaction block get removed.
 	     */
-	    smgrunlink(reln->rd_rel->relsmgr, reln);
+	    if(reln->rd_istemp) {
+	        if(!(reln->rd_tmpunlinked)) {
+		    smgrunlink(reln->rd_rel->relsmgr, reln);
+		    reln->rd_tmpunlinked = TRUE;
+		} 
+	    } else {
+		smgrunlink(reln->rd_rel->relsmgr, reln);
+	    }
 	}
 	
 	reln->rd_islocal = FALSE;
