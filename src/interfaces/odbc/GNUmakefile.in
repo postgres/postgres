@@ -7,15 +7,15 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.1 1998/10/06 05:57:56 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.2 1998/10/07 06:49:19 thomas Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
 
 NAME = psqlodbc
-SRCDIR=@srcdir@
+SRCDIR=@top_srcdir@
 ODBCSRCDIR=@srcdir@
-include $(ODBCSRCDIR)/Makefile.global
+include $(SRCDIR)/Makefile.global
 
 include Version.mk
 PORTNAME= @PORTNAME@
@@ -26,20 +26,17 @@ FIND = @find@
 TAR  = @tar@
 SPLIT = @split@
 
+install-shlib-dep := install-shlib
+shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+
 ifeq ($(PORTNAME), linux)
-  install-shlib-dep := install-shlib
-  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -shared -soname lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   LDFLAGS_SL += -Bsymbolic $(LDFLAGS) -lc -lm
-  CFLAGS += -I. $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
-    install-shlib-dep := install-shlib
-    shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     LDFLAGS_SL = -x -Bshareable -Bforcearchive $(LDFLAGS)
-    CFLAGS += -I. $(CFLAGS_SL)
   endif
 endif
 
@@ -54,7 +51,7 @@ OBJECTS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
         gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
 
-CFLAGS += @DEFS@
+CFLAGS += -I. @DEFS@
 
 all: libpsqlodbc.a $(shlib)
 
