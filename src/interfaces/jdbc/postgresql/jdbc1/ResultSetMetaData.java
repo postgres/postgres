@@ -6,9 +6,14 @@ package postgresql.jdbc1;
 // postgresql.jdbc2 package.
 
 import java.lang.*;
-import java.sql.*;
 import java.util.*;
 import postgresql.*;
+
+// We explicitly import classes here as the original line:
+//import java.sql.*;
+// causes javac to get confused.
+import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * A ResultSetMetaData object can be used to find out about the types and

@@ -1,3 +1,12 @@
+Mon Jan 25 19:45:00 GMT 1999
+	- created subfolders example/corba and example/corba/idl to hold the
+	  new example showing how to hook CORBA and PostgreSQL via JDBC
+	- implemented some JDBC2 methods curtesy of Joachim.Gabler@t-online.de
+
+Sat Jan 23 10:30:00 GMT 1999
+	- Changed imports in postgresql.jdbc1.ResultSetMetaData as for some
+	  reason it didn't want to compile under jdk1.1.6
+
 Tue Dec 29 15:45:00 GMT 1998
 	- Refreshed the README (which was way out of date)
 

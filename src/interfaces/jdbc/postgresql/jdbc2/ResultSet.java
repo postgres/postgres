@@ -789,9 +789,12 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     
     // ** JDBC 2 Extensions **
     
-    public boolean absolute(int row) throws SQLException
+    public boolean absolute(int index) throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if (index < 0 || index > rows.size())
+	    return false;
+	this_row = (byte [][])rows.elementAt(index);
+	return true;
     }
     
     public void afterLast() throws SQLException
@@ -816,7 +819,11 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     
     public boolean first() throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if (rows.size() <= 0)
+	    return false;
+	current_row = 0;
+	this_row = (byte [][])rows.elementAt(current_row);
+	return true;
     }
     
     public Array getArray(String colName) throws SQLException
@@ -941,7 +948,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     
     public int getRow() throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	return current_row;
     }
     
     // This one needs some thought, as not all ResultSets come from a statement
@@ -982,7 +989,11 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     
     public boolean last() throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if (rows.size() <= 0)
+	    return false;
+	current_row = rows.size() - 1;
+	this_row = (byte [][])rows.elementAt(current_row);
+	return true;
     }
     
     public void moveToCurrentRow() throws SQLException
@@ -997,7 +1008,10 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     
     public boolean previous() throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if (--current_row < 0)
+	    return false;
+	this_row = (byte [][])rows.elementAt(current_row);
+	return true;
     }
     
     public void refreshRow() throws SQLException

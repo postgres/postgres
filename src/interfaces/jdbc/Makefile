@@ -4,16 +4,18 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.11 1999/01/17 04:51:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.12 1999/01/25 21:22:02 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 FIND		= find
+IDL2JAVA	= idltojava -fno-cpp -fno-tie
 JAR		= jar
 JAVA		= java
 JAVAC		= javac
 JAVADOC		= javadoc
 RM		= rm -f
+TOUCH		= touch
 
 # This defines how to compile a java class
 .java.class:
@@ -44,6 +46,9 @@ all:	makeVersion.class
 	@echo ------------------------------------------------------------
 	@echo To build the examples, type:
 	@echo "  make examples"
+	@echo
+	@echo "To build the CORBA example (requires Java2):"
+	@echo "  make corba"
 	@echo ------------------------------------------------------------
 	@echo
 
@@ -142,7 +147,8 @@ clean:
 	$(FIND) . -name "*~" -exec $(RM) {} \;
 	$(FIND) . -name "*.class" -exec $(RM) {} \;
 	$(FIND) . -name "*.html" -exec $(RM) {} \;
-	$(RM) postgresql.jar
+	-$(RM) -rf stock example/corba/stock.built
+	-$(RM) postgresql.jar
 	-$(RM) -rf Package-postgresql *output
 
 #######################################################################
@@ -219,7 +225,37 @@ example/blobtest.class:			example/blobtest.java
 example/datestyle.class:		example/datestyle.java
 example/psql.class:			example/psql.java
 example/ImageViewer.class:		example/ImageViewer.java
-#example/Objects.class:			example/Objects.java
 example/threadsafe.class:		example/threadsafe.java
 example/metadata.class:			example/metadata.java
+
+#######################################################################
+#
+# CORBA		This extensive example shows how to integrate PostgreSQL
+#		JDBC & CORBA.
+
+CORBASRC = $(wildcard example/corba/*.java)
+CORBAOBJ = $(subst .java,.class,$(CORBASRC))
+
+corba: jdbc2 example/corba/stock.built $(CORBAOBJ)
+	@echo -------------------------------------------------------
+	@echo The corba example has been built. Before running, you
+	@echo will need to read the example/corba/readme file on how
+	@echo to run the example.
+	@echo
+
+#
+# This compiles our idl file and the stubs
+#
+# Note: The idl file is in example/corba, but it builds a directory under
+# the current one. For safety, we delete that directory before running
+# idltojava
+#
+example/corba/stock.built: example/corba/stock.idl
+	-rm -rf stock
+	$(IDL2JAVA) $<
+	$(JAVAC) stock/*.java
+	$(TOUCH) $@
+
+# tip: we cant use $(wildcard stock/*.java) in the above rule as a race
+#      condition occurs, where javac is passed no arguments
 #######################################################################

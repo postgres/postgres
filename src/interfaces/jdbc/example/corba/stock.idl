@@ -1,0 +1,40 @@
+// $Id: stock.idl,v 1.1 1999/01/25 21:22:04 scrappy Exp $
+//
+// This is our CORBA bindings for a very simple stock control
+// system.
+//
+// $Id: stock.idl,v 1.1 1999/01/25 21:22:04 scrappy Exp $
+//
+
+// For some reason, idltojava on my setup doesn't like this to be
+// in caps. It could be a problem with Win95 & Samba, but for now,
+// this is in lowercase
+module stock
+{
+  exception StockException
+    {
+      string reason;
+    };
+  
+  interface StockItem
+      {
+	  void fetchItem(in long id) raises (StockException);
+	  long newItem() raises (StockException);
+	  string getDescription() raises (StockException);
+	  long getAvailable() raises (StockException);
+	  long getOrdered() raises (StockException);
+	  boolean isItemValid() raises (StockException);
+	  void addNewStock(in long amount) raises (StockException);
+	  void removeStock(in long amount) raises (StockException);
+	  void orderStock(in long amount) raises (StockException);
+	  long getLastID() raises (StockException);
+	  string getInstanceName();
+      };
+  
+  interface StockDispenser
+      {
+	  StockItem reserveItem() raises (StockException);
+	  void releaseItem(in StockItem item) raises (StockException);
+      };
+  
+};

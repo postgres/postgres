@@ -1,0 +1,34 @@
+
+The CORBA example is the most complicated of the examples. It
+aims to show how to use JDBC & Java2's ORB to access PostgreSQL.
+
+To compile:
+
+Type "make corba" to build the example. This will create a new directory
+stock which contains the stubs needed by the orb, and all required classes
+under the example/corba directory.
+
+To run:
+
+NOTE: To run, you will need 3 shells on Win32 (under unix you can get away
+with two shells):
+
+1: Start the naming service
+
+Unix:	tnameserv -ORBInitialPort 1050 &
+Win32:	tnameserv -ORBInitialPort 1050
+
+2: Start the StockServer
+
+	java example.corba.StockServer 3 jdbc:postgresql:dbase user passwd -ORBInitialPort 1050
+
+Where:
+	3	Number of concurrent sessions to allow
+	dbase	The database (including a hostname if required)
+	user	The PostgreSQL user name
+	passwd	The password
+
+3: Using a fresh shell, run the client:
+
+	java example.corba.StockClient -ORBInitialPort 1050
+
