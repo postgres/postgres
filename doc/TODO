@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 12 16:26:03 EDT 2000
+Last updated:		Thu Oct 12 21:54:30 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -146,6 +146,7 @@ COMMANDS
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
 * Allow ORDER BY...LIMIT in INSERT INTO ... SELECT
+* Add SHOW command to display locks
 
 CLIENTS
 
