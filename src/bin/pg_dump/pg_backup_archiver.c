@@ -220,6 +220,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 				 */
 				if (!AH->CustomOutPtr)
 					fprintf(stderr, "%s: WARNING - skipping BLOB restoration\n", progname);
+
 			} else {
 
 				_disableTriggers(AH, te, ropt);
@@ -951,6 +952,10 @@ int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH)
 	{
 		res = lo_write(AH->connection, AH->loFd, (void*)ptr, size * nmemb);
 		ahlog(AH, 5, "Wrote %d bytes of BLOB data (result = %d)\n", size * nmemb, res);
+		if (res < size * nmemb)
+			die_horribly(AH, "%s: could not write to large object (result = %d, expected %d)\n", 
+							progname, res, size * nmemb);
+
 		return res;
 	}
     else if (AH->gzOut)

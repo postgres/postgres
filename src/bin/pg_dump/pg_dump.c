@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.172 2000/10/22 05:27:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.173 2000/10/22 18:13:09 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -140,7 +140,7 @@ static char *checkForQuote(const char *s);
 static void clearTableInfo(TableInfo *, int);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes);
-static int	findLastBuiltinOid(void);
+static int	findLastBuiltinOid(const char*);
 static void setMaxOid(Archive *fout);
 
 static void AddAcl(char *aclbuf, const char *keyword);
@@ -954,7 +954,7 @@ main(int argc, char **argv)
 		PQclear(res);
 	}
 
-	g_last_builtin_oid = findLastBuiltinOid();
+	g_last_builtin_oid = findLastBuiltinOid(dbname);
 
 	/* Dump the database definition */
 	if (!dataOnly)
@@ -3888,14 +3888,17 @@ setMaxOid(Archive *fout)
 */
 
 static int
-findLastBuiltinOid(void)
+findLastBuiltinOid(const char* dbname)
 {
 	PGresult   *res;
 	int			ntups;
 	int			last_oid;
+	PQExpBuffer query = createPQExpBuffer();
 
-	res = PQexec(g_conn,
-			  "SELECT oid from pg_database where datname = 'template1'");
+	resetPQExpBuffer(query);
+	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = '%s'", dbname);
+
+	res = PQexec(g_conn, query->data);
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -3916,7 +3919,7 @@ findLastBuiltinOid(void)
 		fprintf(stderr, "There is more than one 'template1' entry in the 'pg_database' table\n");
 		exit_nicely(g_conn);
 	}
-	last_oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "oid")));
+	last_oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "datlastsysoid")));
 	PQclear(res);
 	return last_oid;
 }
