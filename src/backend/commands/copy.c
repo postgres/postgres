@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.18 1996/12/14 04:58:20 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.19 1996/12/19 04:58:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,21 @@ static Oid IsTypeByVal(Oid type);
 static void GetIndexRelations(Oid main_relation_oid,
                               int *n_indices,
                               Relation **index_rels);
+#ifdef COPY_PATCH
+static void CopyReadNewline(FILE *fp, int *newline);
+static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline);
+#else
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
+#endif
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int CountTuples(Relation relation);
 
 extern FILE *Pfout, *Pfin;
 
+#ifdef COPY_DEBUG
+static int lineno;
+#endif
+ 
 /*
  *   DoCopy executes a the SQL COPY statement.
  */
@@ -433,10 +442,24 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
         byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
     }
     
+#ifdef COPY_DEBUG
+    lineno = 0;
+#endif
     while (!done) {
         if (!binary) {
+#ifdef COPY_PATCH
+	    int newline = 0;
+#endif
+#ifdef COPY_DEBUG
+	    lineno++;
+	    elog(DEBUG, "line %d", lineno);
+#endif
             if (oids) {
+#ifdef COPY_PATCH
+		string = CopyReadAttribute(fp, &isnull, delim, &newline);
+#else
                 string = CopyReadAttribute(fp, &isnull, delim);
+#endif
                 if (string == NULL)
                     done = 1;
                 else {
@@ -446,7 +469,11 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
                 }
             }
             for (i = 0; i < attr_count && !done; i++) {
+#ifdef COPY_PATCH
+		string = CopyReadAttribute(fp, &isnull, delim, &newline);
+#else
                 string = CopyReadAttribute(fp, &isnull, delim);
+#endif
                 if (isnull) {
                     values[i] = PointerGetDatum(NULL);
                     nulls[i] = 'n';
@@ -463,10 +490,20 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
                      */
                     if (!PointerIsValid(values[i]) &&
                         !(rel->rd_att->attrs[i]->attbyval)) {
+#ifdef COPY_DEBUG
+			elog(WARN,
+			     "copy from: line %d - Bad file format", lineno);
+#else
                         elog(WARN, "copy from: Bad file format");
+#endif
                     }
                 }
             }
+#ifdef COPY_PATCH
+	    if (!done) {
+		CopyReadNewline(fp, &newline);
+	    }
+#endif
         }else { /* binary */
             fread(&len, sizeof(int32), 1, fp);
             if (feof(fp)) {
@@ -773,6 +810,27 @@ inString(char c, char* s)
     return 0;
 }
 
+#ifdef COPY_PATCH
+/*
+ * Reads input from fp until an end of line is seen.
+ */
+
+void
+CopyReadNewline(FILE *fp, int *newline)
+{
+    if (!*newline) {
+#ifdef COPY_DEBUG
+	elog(NOTICE, "CopyReadNewline: line %d - extra fields ignored",
+	     lineno);
+#else
+	elog(NOTICE, "CopyReadNewline: line - extra fields ignored");
+#endif
+	while (!feof(fp) && (getc(fp) != '\n'));
+    }
+    *newline = 0;
+}
+#endif
+
 /*
  * Reads input from fp until eof is seen.  If we are reading from standard
  * input, AND we see a dot on a line by itself (a dot followed immediately
@@ -781,13 +839,25 @@ inString(char c, char* s)
  */
 
 static char *
+#ifdef COPY_PATCH
+CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
+#else
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
+#endif
 {
     static char attribute[EXT_ATTLEN];
     char c;
     int done = 0;
     int i = 0;
     
+#ifdef COPY_PATCH
+    /* if last delimiter was a newline return a NULL attribute */
+    if (*newline) {
+	*isnull = (bool) true;
+	return(NULL);
+    }
+#endif
+
     *isnull = (bool) false;     /* set default */
     if (feof(fp))
         return(NULL);
@@ -861,6 +931,11 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
                 break;
             }
         }else if (inString(c,delim) || c == '\n') {
+#ifdef COPY_PATCH
+	    if (c == '\n') {
+		*newline = 1;
+	    }
+#endif
             done = 1;
         }
         if (!done) attribute[i++] = c;
