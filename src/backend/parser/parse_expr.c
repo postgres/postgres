@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.131 2002/11/26 03:01:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.132 2002/11/30 21:25:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,6 +277,8 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 							result = (Node *) make_op(a->name,
 													  lexpr,
 													  rexpr);
+							if (((Expr *) result)->typeOid != BOOLOID)
+								elog(ERROR, "IS DISTINCT FROM requires = operator to yield boolean");
 							((Expr *) result)->opType = DISTINCT_EXPR;
 						}
 						break;

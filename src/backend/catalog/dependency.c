@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.12 2002/09/22 00:37:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.13 2002/11/30 21:25:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -803,7 +803,8 @@ find_expr_references_walker(Node *node,
 	{
 		Expr	   *expr = (Expr *) node;
 
-		if (expr->opType == OP_EXPR)
+		if (expr->opType == OP_EXPR ||
+			expr->opType == DISTINCT_EXPR)
 		{
 			Oper	   *oper = (Oper *) expr->oper;
 

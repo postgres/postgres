@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.82 2002/11/19 23:21:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.83 2002/11/30 21:25:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,7 +575,13 @@ fix_opids_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (is_opclause(node))
-		replace_opid((Oper *) ((Expr *) node)->oper);
+	if (IsA(node, Expr))
+	{
+		Expr   *expr = (Expr *) node;
+
+		if (expr->opType == OP_EXPR ||
+			expr->opType == DISTINCT_EXPR)
+			replace_opid((Oper *) expr->oper);
+	}
 	return expression_tree_walker(node, fix_opids_walker, context);
 }

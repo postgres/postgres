@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.113 2002/11/26 03:01:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.114 2002/11/30 21:25:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -98,25 +98,19 @@ make_clause(int type, Node *oper, List *args)
  *
  * Returns t iff the clause is an operator clause:
  *				(op expr expr) or (op expr).
- *
- * [historical note: is_clause has the exact functionality and is used
- *		throughout the code. They're renamed to is_opclause for clarity.
- *												- ay 10/94.]
  */
 bool
 is_opclause(Node *clause)
 {
 	return (clause != NULL &&
 			IsA(clause, Expr) &&
-			((((Expr *) clause)->opType == OP_EXPR) ||
-			 ((Expr *) clause)->opType == DISTINCT_EXPR));
+			((Expr *) clause)->opType == OP_EXPR);
 }
 
 /*
  * make_opclause
- *	  Creates a clause given its operator left operand and right
- *	  operand (if it is non-null).
- *
+ *	  Creates a clause given its operator, left operand, and right
+ *	  operand (pass NULL to create single-operand clause).
  */
 Expr *
 make_opclause(Oper *op, Var *leftop, Var *rightop)
@@ -1191,10 +1185,10 @@ eval_const_expressions_mutator(Node *node, void *context)
 					bool		has_nonconst_input = false;
 
 					/*
-					 * Check for constant inputs and especially
-					 * constant-NULL inputs.
+					 * We must do our own check for NULLs because
+					 * DISTINCT_EXPR has different results for NULL input
+					 * than the underlying operator does.
 					 */
-					Assert(length(args) == 2);
 					foreach(arg, args)
 					{
 						if (IsA(lfirst(arg), Const))
@@ -1205,82 +1199,28 @@ eval_const_expressions_mutator(Node *node, void *context)
 						else
 							has_nonconst_input = true;
 					}
-					/* all nulls? then not distinct */
-					if (all_null_input)
-						return MAKEBOOLCONST(false, false);
 
-					/* one null? then distinct */
-					if (has_null_input)
-						return MAKEBOOLCONST(true, false);
-
-					/* all constants? then optimize this out */
+					/* all constants? then can optimize this out */
 					if (!has_nonconst_input)
 					{
-						Oid			result_typeid;
-						int16		resultTypLen;
-						bool		resultTypByVal;
-						ExprContext *econtext;
-						Datum		const_val;
-						bool		const_is_null;
+						/* all nulls? then not distinct */
+						if (all_null_input)
+							return MAKEBOOLCONST(false, false);
 
-						Oper	   *oper = (Oper *) expr->oper;
+						/* one null? then distinct */
+						if (has_null_input)
+							return MAKEBOOLCONST(true, false);
 
-						replace_opid(oper);		/* OK to scribble on input
-												 * to this extent */
-						result_typeid = oper->opresulttype;
-
-						/*
-						 * OK, looks like we can simplify this
-						 * operator/function.
-						 *
-						 * We use the executor's routine ExecEvalExpr() to
-						 * avoid duplication of code and ensure we get the
-						 * same result as the executor would get.
-						 *
-						 * Build a new Expr node containing the
-						 * already-simplified arguments. The only other
-						 * setup needed here is the replace_opid() that we
-						 * already did for the OP_EXPR case.
-						 */
-						newexpr = makeNode(Expr);
-						newexpr->typeOid = expr->typeOid;
-						newexpr->opType = expr->opType;
-						newexpr->oper = expr->oper;
-						newexpr->args = args;
-
-						/* Get info needed about result datatype */
-						get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
-
-						/*
-						 * It is OK to pass a dummy econtext because none
-						 * of the ExecEvalExpr() code used in this
-						 * situation will use econtext.  That might seem
-						 * fortuitous, but it's not so unreasonable --- a
-						 * constant expression does not depend on context,
-						 * by definition, n'est ce pas?
-						 */
-						econtext = MakeExprContext(NULL, CurrentMemoryContext);
-
-						const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
-												   &const_is_null, NULL);
-
-						/*
-						 * Must copy result out of sub-context used by
-						 * expression eval
-						 */
-						if (!const_is_null)
-							const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
-
-						FreeExprContext(econtext);
-						pfree(newexpr);
-
-						/*
-						 * Make the constant result node.
-						 */
-						return (Node *) makeConst(result_typeid, resultTypLen,
-												  const_val, const_is_null,
-												  resultTypByVal);
+						/* otherwise try to evaluate the '=' operator */
+						newexpr = simplify_op_or_func(expr, args);
+						if (newexpr)	/* successfully simplified it */
+							return (Node *) newexpr;
 					}
+
+					/*
+					 * else fall out to build new Expr node with simplified
+					 * args
+					 */
 					break;
 				}
 			case OR_EXPR:
@@ -1624,20 +1564,20 @@ simplify_op_or_func(Expr *expr, List *args)
 	 * Note we take the result type from the Oper or Func node, not the
 	 * pg_proc tuple; probably necessary for binary-compatibility cases.
 	 */
-	if (expr->opType == OP_EXPR)
+	if (expr->opType == FUNC_EXPR)
+	{
+		Func	   *func = (Func *) expr->oper;
+
+		funcid = func->funcid;
+		result_typeid = func->funcresulttype;
+	}
+	else						/* OP_EXPR or DISTINCT_EXPR */
 	{
 		Oper	   *oper = (Oper *) expr->oper;
 
 		replace_opid(oper);		/* OK to scribble on input to this extent */
 		funcid = oper->opid;
 		result_typeid = oper->opresulttype;
-	}
-	else
-	{
-		Func	   *func = (Func *) expr->oper;
-
-		funcid = func->funcid;
-		result_typeid = func->funcresulttype;
 	}
 
 	/*
@@ -1693,7 +1633,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	 *
 	 * Build a new Expr node containing the already-simplified arguments. The
 	 * only other setup needed here is the replace_opid() that we already
-	 * did for the OP_EXPR case.
+	 * did for the OP_EXPR/DISTINCT_EXPR case.
 	 */
 	newexpr = makeNode(Expr);
 	newexpr->typeOid = expr->typeOid;

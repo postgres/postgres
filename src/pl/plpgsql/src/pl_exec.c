@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.70 2002/11/23 03:59:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.71 2002/11/30 21:25:08 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3509,6 +3509,7 @@ exec_simple_check_node(Node *node)
 				switch (expr->opType)
 				{
 					case OP_EXPR:
+					case DISTINCT_EXPR:
 					case FUNC_EXPR:
 					case OR_EXPR:
 					case AND_EXPR:

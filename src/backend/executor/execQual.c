@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.110 2002/11/25 21:29:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.111 2002/11/30 21:25:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1144,7 +1144,7 @@ ExecEvalFunc(Expr *funcClause,
  * they are NULL; if either is NULL then the result is already
  * known. If neither is NULL, then proceed to evaluate the
  * function. Note that this is *always* derived from the equals
- * operator, but since we've already evaluated the arguments
+ * operator, but since we need special processing of the arguments
  * we can not simply reuse ExecEvalOper() or ExecEvalFunc().
  * ----------------------------------------------------------------
  */
@@ -1154,7 +1154,7 @@ ExecEvalDistinct(Expr *opClause,
 				 bool *isNull,
 				 ExprDoneCond *isDone)
 {
-	bool		result;
+	Datum		result;
 	FunctionCachePtr fcache;
 	FunctionCallInfoData fcinfo;
 	ExprDoneCond argDone;
@@ -1162,10 +1162,7 @@ ExecEvalDistinct(Expr *opClause,
 	List	   *argList;
 
 	/*
-	 * we extract the oid of the function associated with the op and then
-	 * pass the work onto ExecMakeFunctionResult which evaluates the
-	 * arguments and returns the result of calling the function on the
-	 * evaluated arguments.
+	 * extract info from opClause
 	 */
 	op = (Oper *) opClause->oper;
 	argList = opClause->args;
@@ -1181,34 +1178,36 @@ ExecEvalDistinct(Expr *opClause,
 							 econtext->ecxt_per_query_memory);
 		op->op_fcache = fcache;
 	}
-	Assert(fcache->func.fn_retset == FALSE);
+	Assert(!fcache->func.fn_retset);
 
 	/* Need to prep callinfo structure */
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.flinfo = &(fcache->func);
 	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
+	if (argDone != ExprSingleResult)
+		elog(ERROR, "IS DISTINCT FROM does not support set arguments");
 	Assert(fcinfo.nargs == 2);
 
 	if (fcinfo.argnull[0] && fcinfo.argnull[1])
 	{
 		/* Both NULL? Then is not distinct... */
-		result = FALSE;
+		result = BoolGetDatum(FALSE);
 	}
 	else if (fcinfo.argnull[0] || fcinfo.argnull[1])
 	{
-		/* One is NULL? Then is distinct... */
-		result = TRUE;
+		/* Only one is NULL? Then is distinct... */
+		result = BoolGetDatum(TRUE);
 	}
 	else
 	{
 		fcinfo.isnull = false;
 		result = FunctionCallInvoke(&fcinfo);
 		*isNull = fcinfo.isnull;
-
-		result = (!DatumGetBool(result));
+		/* Must invert result of "=" */
+		result = BoolGetDatum(!DatumGetBool(result));
 	}
 
-	return BoolGetDatum(result);
+	return result;
 }
 
 /* ----------------------------------------------------------------

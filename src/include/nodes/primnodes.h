@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.70 2002/11/26 03:01:59 tgl Exp $
+ * $Id: primnodes.h,v 1.71 2002/11/30 21:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,12 @@ typedef enum CoercionForm
 
 /*
  * Expr
+ *
+ * Note: DISTINCT_EXPR implements the "x IS DISTINCT FROM y" construct.
+ * This is similar to an OP_EXPR, except for its handling of NULL inputs.
+ * The oper field is always an Oper node for the "=" operator for x and y.
+ * (We use "=", not the more obvious "<>", because more datatypes have "="
+ * than "<>".  This means the executor must invert the operator result.)
  */
 typedef enum OpType
 {
@@ -183,7 +189,7 @@ typedef struct Expr
 } Expr;
 
 /*
- * Oper - Expr subnode for an OP_EXPR
+ * Oper - Expr subnode for an OP_EXPR (or DISTINCT_EXPR)
  *
  * NOTE: in the good old days 'opno' used to be both (or either, or
  * neither) the pg_operator oid, and/or the pg_proc oid depending
