@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.26.2.1 2002/08/18 14:32:21 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.26.2.2 2002/09/11 08:50:29 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"data", SQL_DATA},
 	{"datetime_interval_code", SQL_DATETIME_INTERVAL_CODE},
 	{"datetime_interval_precision", SQL_DATETIME_INTERVAL_PRECISION},
-	{"deallocate", SQL_DEALLOCATE},
 	{"descriptor", SQL_DESCRIPTOR},
 	{"disconnect", SQL_DISCONNECT},
 	{"enum", SQL_ENUM},
@@ -55,7 +54,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"nullable", SQL_NULLABLE},
 	{"octet_length", SQL_OCTET_LENGTH},
 	{"open", SQL_OPEN},
-	{"prepare", SQL_PREPARE},
 	{"reference", SQL_REFERENCE},
 	{"release", SQL_RELEASE},
 	{"returned_length", SQL_RETURNED_LENGTH},

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190.2.5 2002/09/01 09:31:58 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190.2.6 2002/09/11 08:50:29 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -155,12 +155,12 @@ make_name(void)
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT SQL_CONNECTION
 		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA
 		SQL_DATETIME_INTERVAL_CODE
-		SQL_DATETIME_INTERVAL_PRECISION SQL_DEALLOCATE
+		SQL_DATETIME_INTERVAL_PRECISION 
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM SQL_FOUND
 		SQL_FREE SQL_GO SQL_GOTO SQL_IDENTIFIED
 		SQL_INDICATOR SQL_KEY_MEMBER SQL_LENGTH
 		SQL_LONG SQL_NAME SQL_NULLABLE SQL_OCTET_LENGTH
-		SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
+		SQL_OPEN SQL_RELEASE SQL_REFERENCE
 		SQL_RETURNED_LENGTH SQL_RETURNED_OCTET_LENGTH SQL_SCALE
 		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQL SQL_SQLERROR
 		SQL_SQLPRINT SQL_SQLWARNING SQL_START SQL_STOP
@@ -257,7 +257,6 @@ make_name(void)
 /* precedence: lowest to highest */
 %left		UNION EXCEPT
 %left		INTERSECT
-%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 %left		OR
 %left		AND
 %right		NOT
@@ -266,7 +265,7 @@ make_name(void)
 %nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
-%nonassoc	BETWEEN DISTINCT
+%nonassoc	BETWEEN
 %nonassoc	IN_P
 %left		POSTFIXOP					/* dummy for postfix Op rules */
 %left		Op OPERATOR				/* multi-character ops and user-defined operators */
@@ -283,6 +282,7 @@ make_name(void)
 %left		'(' ')'
 %left		TYPECAST
 %left		'.'
+%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
@@ -371,14 +371,14 @@ make_name(void)
 %type  <str>	execute_param_list opt_sort_clause
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
-%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
+%type  <str>	indicator ECPGExecute ECPGPrepare opt_ecpg_using ecpg_into
 %type  <str>	storage_clause opt_initializer c_anything 
 %type  <str>	variable_list variable c_thing c_term
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
 %type  <str>	stmt ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
-%type  <str>	quoted_ident_stringvar var_type_declarations
+%type  <str>	var_type_declarations quoted_ident_stringvar
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
@@ -2085,13 +2085,13 @@ opt_column:  COLUMN			{ $$ = make_str("column"); }
  *
  *****************************************************************************/
 
-RuleStmt:  CREATE RULE name AS
+RuleStmt:  CREATE opt_or_replace RULE name AS
 		   { QueryIsRule=1; }
 		   ON event TO qualified_name where_clause
 		   DO opt_instead RuleActionList
 		{
 			QueryIsRule=0;
-			$$ = cat_str(10, make_str("create rule"), $3, make_str("as on"), $7, make_str("to"), $9, $10, make_str("do"), $12, $13);
+			$$ = cat_str(12, make_str("create"), $2, make_str("rule"), $4, make_str("as on"), $8, make_str("to"), $10, $11, make_str("do"), $13, $14);
 		}
 		;
 
@@ -2187,8 +2187,8 @@ opt_trans: WORK			{ $$ = EMPTY; }
  *
  *****************************************************************************/
 
-ViewStmt:  CREATE VIEW qualified_name opt_column_list AS SelectStmt
-			{ $$ = cat_str(5, make_str("create view"), $3, $4, make_str("as"), $6); }
+ViewStmt:  CREATE opt_or_replace VIEW qualified_name opt_column_list AS SelectStmt
+			{ $$ = cat_str(7, make_str("create"), $2, make_str("view"), $4, $5, make_str("as"), $7); }
 		;
 
 
@@ -3153,7 +3153,7 @@ r_expr: row IN_P select_with_parens
 		        { $$ = cat2_str($1, make_str("is not null")); }
 		| row OVERLAPS row
 			{ $$ = cat_str(3, $1, make_str("overlaps"), $3); }
-		| row IS DISTINCT FROM row
+		| row IS DISTINCT FROM row %prec IS
 		        { $$ = cat_str(3, $1, make_str("is distinct from"), $5); }
 		;
 
@@ -3331,11 +3331,11 @@ a_expr:  c_expr
 			{ $$ = cat2_str($1, make_str("is unknown")); }
 		| a_expr IS NOT UNKNOWN
 			{ $$ = cat2_str($1, make_str("is not unknown")); }
-		| a_expr IS DISTINCT FROM a_expr %prec DISTINCT
+		| a_expr IS DISTINCT FROM a_expr %prec IS
 			{ $$ = cat_str(3, $1, make_str("is distinct from"), $5); } 
-		| a_expr IS OF '(' type_list ')'
+		| a_expr IS OF '(' type_list ')' %prec IS
 			{ $$ = cat_str(4, $1, make_str("is of ("), $5, make_str(")")); } 
-		| a_expr IS NOT OF '(' type_list ')'
+		| a_expr IS NOT OF '(' type_list ')' %prec IS
 			{ $$ = cat_str(4, $1, make_str("is not of ("), $6, make_str(")")); } 
 		| a_expr BETWEEN b_expr AND b_expr	%prec BETWEEN
 			{ $$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); }
@@ -3399,11 +3399,11 @@ b_expr:  c_expr
 			{ $$ = cat2_str($1, $2); }
 		| b_expr qual_Op		%prec POSTFIXOP
 			{ $$ = cat2_str($1, $2); }
-		| b_expr IS DISTINCT FROM b_expr %prec Op
+		| b_expr IS DISTINCT FROM b_expr %prec IS
 			{ $$ = cat_str(3, $1, make_str("is distinct from"), $5); }
-		| b_expr IS OF '(' b_expr ')'
+		| b_expr IS OF '(' b_expr ')' %prec IS
 			{ $$ = cat_str(4, $1, make_str("is of ("), $5, make_str(")")); }
-		| b_expr IS NOT OF '(' b_expr ')'
+		| b_expr IS NOT OF '(' b_expr ')' %prec IS
 			{ $$ = cat_str(4, $1, make_str("is not of ("), $6, make_str(")")); }
 		;
 
@@ -4111,7 +4111,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
  * the exec sql deallocate prepare command to deallocate a previously
  * prepared statement
  */
-ECPGDeallocate: SQL_DEALLOCATE SQL_PREPARE ident
+ECPGDeallocate: DEALLOCATE PREPARE ident
 			{ $$ = cat_str(3, make_str("ECPGdeallocate(__LINE__, \""), $3, make_str("\");")); };
 
 /*
@@ -4565,7 +4565,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 
 			$$ = make_str("?");
 		}
-		| EXECUTE ident
+		| EXECUTE name 
 		{
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 
@@ -4577,7 +4577,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 
 			add_variable(&argsinsert, thisquery, &no_indicator);
 		}
-		ecpg_using opt_ecpg_into
+		opt_ecpg_using opt_ecpg_into
 		{
 			$$ = make_str("?");
 		}
@@ -4593,14 +4593,14 @@ execstring: char_variable
  * the exec sql free command to deallocate a previously
  * prepared statement
  */
-ECPGFree:	SQL_FREE ident	{ $$ = $2; };
+ECPGFree:	SQL_FREE name	{ $$ = $2; };
 
 /*
  * open is an open cursor, at the moment this has to be removed
  */
-ECPGOpen: SQL_OPEN name ecpg_using { $$ = $2; };
+ECPGOpen: SQL_OPEN name opt_ecpg_using { $$ = $2; };
 
-ecpg_using: /*EMPTY*/		{ $$ = EMPTY; }
+opt_ecpg_using: /*EMPTY*/		{ $$ = EMPTY; }
 		| USING variablelist
 		{
 			/* mmerror ("open cursor with variables not implemented yet"); */
@@ -4633,7 +4633,7 @@ variablelist: variable | variable ',' variablelist;
  * As long as the prepare statement is not supported by the backend, we will
  * try to simulate it here so we get dynamic SQL
  */
-ECPGPrepare: SQL_PREPARE ident FROM execstring
+ECPGPrepare: PREPARE name FROM execstring
 			{ $$ = cat2_str(make3_str(make_str("\""), $2, make_str("\",")), $4); }
 		;
 
@@ -4645,7 +4645,7 @@ ECPGPrepare: SQL_PREPARE ident FROM execstring
 /*
  * deallocate a descriptor
  */
-ECPGDeallocateDescr:	SQL_DEALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
+ECPGDeallocateDescr:	DEALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			drop_descriptor($3,connection);
 			$$ = $3;
@@ -4704,8 +4704,7 @@ ECPGGetDescriptorHeader:	GET SQL_DESCRIPTOR quoted_ident_stringvar
 			{  $$ = $3; }
 		;
 
-ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar
-						SQL_VALUE CVARIABLE ECPGGetDescItems
+ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE CVARIABLE ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		|	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
@@ -5010,7 +5009,6 @@ ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_DATA				{ $$ = make_str("data"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
 		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
-		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
 		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
 		| SQL_FOUND				{ $$ = make_str("found"); }
 		| SQL_GO				{ $$ = make_str("go"); }
@@ -5023,7 +5021,6 @@ ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
 		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
 		| SQL_OPEN				{ $$ = make_str("open"); }
-		| SQL_PREPARE			{ $$ = make_str("prepare"); }
 		| SQL_RELEASE			{ $$ = make_str("release"); }
 		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
 		| SQL_RETURNED_OCTET_LENGTH { $$ = make_str("returned_octet_length"); }
@@ -5485,9 +5482,7 @@ ident: IDENT						{ $$ = $1; }
 		| CSTRING					{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		;
 
-quoted_ident_stringvar: IDENT
-			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
-		| CSTRING
+quoted_ident_stringvar: name 
 			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		| char_variable
 			{ $$ = make3_str(make_str("("), $1, make_str(")")); }
