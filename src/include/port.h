@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.47 2004/08/01 06:56:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.48 2004/08/07 21:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ extern void set_pglocale_pgservice(const char *argv0, const char *app);
 extern int find_my_exec(const char *argv0, char *retpath);
 extern int find_other_exec(const char *argv0, const char *target,
 						   const char *versionstr, char *retpath);
-#if defined(__CYGWIN__) || defined(WIN32)
+#if defined(WIN32) || defined(__CYGWIN__)
 #define EXE ".exe"
 #define DEVNULL "nul"
 #else
@@ -140,14 +140,17 @@ extern int pgkill(int pid, int sig);
 
 extern int pclose_check(FILE *stream);
 
-#if defined(__MINGW32__) || defined(__CYGWIN__)
+#if defined(WIN32) || defined(__CYGWIN__)
 /*
- * Win32 doesn't have reliable rename/unlink during concurrent access
+ *	Win32 doesn't have reliable rename/unlink during concurrent access,
+ *	and we need special code to do symlinks.
  */
 extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
-#define rename(from, to)	pgrename(from, to)
-#define unlink(path)		pgunlink(path)
+extern int	pgsymlink(const char *oldpath, const char *newpath);
+#define rename(from, to)		pgrename(from, to)
+#define unlink(path)			pgunlink(path)
+#define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
 
 extern bool rmtree(char *path, bool rmtopdir);
