@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.41 2001/02/04 12:18:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.42 2001/05/03 17:50:55 tgl Exp $
 Postgres documentation
 -->
 
@@ -26,7 +26,7 @@ Postgres documentation
 CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table_name</replaceable> (
     { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
       | <replaceable>table_constraint</replaceable> }  [, ... ]
-    ) [ INHERITS ( <replaceable>inherited_table</replaceable> [, ... ] ) ]
+    ) [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 
 where <replaceable class="PARAMETER">column_constraint</replaceable> can be:
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
@@ -99,17 +99,11 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">inherited_table</replaceable></term>
+      <term><replaceable class="PARAMETER">parent_table</replaceable></term>
       <listitem>
        <para>
 	The optional INHERITS clause specifies a list of table
 	names from which this table automatically inherits all fields.
-	If any inherited field name appears more than once, 
-	<productname>Postgres</productname>
-	reports an error.
-	<productname>Postgres</productname> automatically allows the created
-	table to inherit functions on tables above it in the inheritance
-	hierarchy.
        </para>
       </listitem>
      </varlistentry>
@@ -259,19 +253,53 @@ ERROR:  Relation '<replaceable class="parameter">table</replaceable>' already ex
   </para>
 
   <para>
-   The optional INHERITS
-   clause specifies a collection of table names from which this table
-   automatically inherits all fields.  If any inherited field name
-   appears more than once, Postgres reports an error.  Postgres automatically
-   allows the created table to inherit functions on tables above it in
-   the inheritance hierarchy.  Inheritance of functions is done according
-   to the conventions of the Common Lisp Object System (CLOS).
-  </para>
-
-  <para>
    A table can have no more than 1600 columns (in practice, the
    effective limit is lower because of tuple-length constraints).
    A table cannot have the same name as a system catalog table.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-INHERITSCLAUSE-1">
+  <title id="R1-SQL-INHERITSCLAUSE-1-TITLE">
+   INHERITS Clause
+  </title>
+  <para>
+   <synopsis>
+INHERITS ( <replaceable class="PARAMETER">parent_table</replaceable> [, ... ] )
+   </synopsis>
+  </para>
+
+  <para>
+   The optional INHERITS
+   clause specifies a list of table names from which the new table
+   automatically inherits all fields.  If the same field name appears in
+   more than one parent table, Postgres reports an error unless the field
+   definitions match in each of the parent tables.  If there is no
+   definition conflict, then the duplicate fields are merged to form a single
+   field of the new table.  If the new table's own field list contains a
+   field name that is also inherited, this declaration must likewise match
+   the inherited field(s), and the field definitions are merged into one.
+  </para>
+
+  <para>
+   Inherited and new field declarations of the same name must specify exactly
+   the same data type to avoid an error.  They need not specify identical
+   constraints --- all constraints provided from any declaration are merged
+   together and all are applied to the new table.  If the new table explicitly
+   specifies a default value for the field, this default overrides any
+   defaults from inherited declarations of the field.  Otherwise, any parents
+   that specify default values for the field must all specify the same
+   default, or an error will be reported.
+  </para>
+
+  <para>
+   Postgres automatically allows the created table to inherit functions on
+   tables above it in the inheritance hierarchy; that is, if we create table
+   <literal>foo</literal> inheriting from <literal>bar</literal>, then
+   functions that accept the tuple type <literal>bar</literal> can also be
+   applied to instances of <literal>foo</literal>.  (Currently, this works
+   reliably for functions on the first or only parent table, but not so well
+   for functions on additional parents.)
   </para>
  </refsect1>
 
