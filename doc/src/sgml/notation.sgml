@@ -1,4 +1,4 @@
-<sect1>
+<sect1 id="terminology">
  <title>Terminology</title>
 
  <para>
@@ -65,7 +65,7 @@
  </para>
 </sect1>
 
-<sect1>
+<sect1 id="notation">
  <title>Notation</title>
 
  <para>

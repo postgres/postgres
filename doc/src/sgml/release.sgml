@@ -1,4 +1,4 @@
- <chapter>
+ <chapter id="release">
   <title>Release Notes</title>
 
   <sect1>
@@ -44,10 +44,18 @@
 	longer are restricted by simple table-level locking;
 	we have something better than row-level locking.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Hot backups from <application>pg_dump</application>
+      </term>
+      <listitem>
        <para>
-	Another big benefit of MVCC is that <application>pg_dump</application>
- 	can now generate consistent backups of live, active databases, without
-	blocking active transactions.
+	<application>pg_dump</application> takes advantage of the new
+	MVCC features to give a consistant database dump/backup while
+	the database stays online and available for queries.
        </para>
       </listitem>
      </varlistentry>
@@ -84,7 +92,7 @@
        <para>
 	We now have CASE, INTERSECT, and EXCEPT statement
 	support.  We have new LIMIT/OFFSET, SET TRANSACTION ISOLATION LEVEL,
-	SELECT ... FOR UPDATE, and an improved LOCK command.
+	SELECT ... FOR UPDATE, and an improved LOCK TABLE command.
        </para>
       </listitem>
      </varlistentry>
@@ -184,7 +192,7 @@
       <command>SELECT</command> it doesn't mean that this row really exists
       at the time it is returned (i.e. sometime after the statement or
       transaction began) nor that the row is protected from deletion or
-      updation by concurrent transactions before the current transaction does
+      update by concurrent transactions before the current transaction does
       a commit or rollback.
      </para>
 

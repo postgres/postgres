@@ -719,14 +719,16 @@ pg_id: can't load library 'libpq.so'
      <Step Performance="required">
       <para>
        Several regression tests could fail if the user's locale collation
-       scheme is different from that of standard C locale.
+       scheme is different from that of the standard <literal>C</literal> locale.
       </para>
       <para>
        If you configure and compile <ProductName>Postgres</ProductName>
-       with the <option>--enable-locale</option> option then
-       set locale environment to C (or unset all LC_* variables)
+       with <option>--enable-locale</option> then you should
+       set the locale environment to <quote><literal>C</literal></quote>
+	(or unset all <quote>LC_*</quote> variables)
        by putting these additional lines to your login environment
-       before starting postmaster:
+       before starting <application>postmaster</application>:
+
        <ProgramListing>
 	LC_COLLATE=C
 	LC_CTYPE=C
