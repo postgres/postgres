@@ -1679,6 +1679,10 @@ Mon Oct  6 08:41:45 CEST 2003
 Tue Oct  7 07:45:09 CEST 2003
 
 	- Fixed error handling in rstrdate.
+	
+Tue Oct  7 20:26:06 CEST 2003
+
+	- Fixed floating point exception in long=>numeric transformation.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

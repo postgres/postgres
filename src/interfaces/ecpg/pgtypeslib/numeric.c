@@ -1338,6 +1338,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	signed long int extract;
 	signed long int reach_limit;
 
+	printf("l=%ld\n", long_val);
 	if (abs_long_val < 0)
 	{
 		abs_long_val *= -1;
@@ -1351,10 +1352,19 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	{
 		size++;
 		reach_limit *= 10;
-	} while ((reach_limit - 1) < abs_long_val);
+	} while ((reach_limit - 1) < abs_long_val && reach_limit <= LONG_MAX/10);
 
-	/* always add a .0 */
-	size++;
+	if (reach_limit <= LONG_MAX/10)
+	{
+		/* add the first digit and a .0 */
+		size += 2;
+	}
+	else
+	{
+		/* always add a .0 */
+		size++;
+		reach_limit /= 10;
+	}
 
 	if (alloc_var(var, size) < 0)
 		return -1;
@@ -1366,11 +1376,11 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	i = 0;
 	do
 	{
-		reach_limit /= 10;
 		extract = abs_long_val - (abs_long_val % reach_limit);
 		var->digits[i] = extract / reach_limit;
 		abs_long_val -= extract;
 		i++;
+		reach_limit /= 10;
 
 		/*
 		 * we can abandon if abs_long_val reaches 0, because the memory is
