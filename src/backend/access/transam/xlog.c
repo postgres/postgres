@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.89 2002/03/06 06:09:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.90 2002/03/15 19:20:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,27 +131,36 @@ bool		InRecovery = false;
 
 /*
  * MyLastRecPtr points to the start of the last XLOG record inserted by the
- * current transaction.  If MyLastRecPtr.xrecoff == 0, then we are not in
- * a transaction or the transaction has not yet made any loggable changes.
+ * current transaction.  If MyLastRecPtr.xrecoff == 0, then the current
+ * xact hasn't yet inserted any transaction-controlled XLOG records.
  *
  * Note that XLOG records inserted outside transaction control are not
- * reflected into MyLastRecPtr.
+ * reflected into MyLastRecPtr.  They do, however, cause MyXactMadeXLogEntry
+ * to be set true.  The latter can be used to test whether the current xact
+ * made any loggable changes (including out-of-xact changes, such as
+ * sequence updates).
  */
 XLogRecPtr	MyLastRecPtr = {0, 0};
+
+bool		MyXactMadeXLogEntry = false;
 
 /*
  * ProcLastRecPtr points to the start of the last XLOG record inserted by the
  * current backend.  It is updated for all inserts, transaction-controlled
- * or not.
+ * or not.  ProcLastRecEnd is similar but points to end+1 of last record.
  */
 static XLogRecPtr ProcLastRecPtr = {0, 0};
+
+XLogRecPtr	ProcLastRecEnd = {0, 0};
 
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
  * (which is almost but not quite the same as a pointer to the most recent
  * CHECKPOINT record).	We update this from the shared-memory copy,
  * XLogCtl->Insert.RedoRecPtr, whenever we can safely do so (ie, when we
- * hold the Insert lock).  See XLogInsert for details.
+ * hold the Insert lock).  See XLogInsert for details.  We are also allowed
+ * to update from XLogCtl->Insert.RedoRecPtr if we hold the info_lck;
+ * see GetRedoRecPtr.
  */
 static XLogRecPtr RedoRecPtr;
 
@@ -272,7 +281,8 @@ typedef struct XLogCtlData
 	StartUpID	ThisStartUpID;
 
 	/* This value is not protected by *any* lock... */
-	XLogRecPtr	RedoRecPtr;		/* see SetRedoRecPtr/GetRedoRecPtr */
+	/* see SetSavedRedoRecPtr/GetSavedRedoRecPtr */
+	XLogRecPtr	SavedRedoRecPtr;
 
 	slock_t		info_lck;		/* locks shared LogwrtRqst/LogwrtResult */
 } XLogCtlData;
@@ -777,6 +787,7 @@ begin:;
 		MyLastRecPtr = RecPtr;
 	ProcLastRecPtr = RecPtr;
 	Insert->PrevRecord = RecPtr;
+	MyXactMadeXLogEntry = true;
 
 	Insert->currpos += SizeOfXLogRecord;
 	freespace -= SizeOfXLogRecord;
@@ -854,6 +865,8 @@ begin:;
 		LogwrtResult = xlogctl->LogwrtResult;
 		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
 	}
+
+	ProcLastRecEnd = RecPtr;
 
 	END_CRIT_SECTION();
 
@@ -2538,7 +2551,7 @@ StartupXLOG(void)
 
 	ThisStartUpID = checkPoint.ThisStartUpID;
 	RedoRecPtr = XLogCtl->Insert.RedoRecPtr =
-		XLogCtl->RedoRecPtr = checkPoint.redo;
+		XLogCtl->SavedRedoRecPtr = checkPoint.redo;
 
 	if (XLByteLT(RecPtr, checkPoint.redo))
 		elog(PANIC, "invalid redo in checkpoint record");
@@ -2824,32 +2837,47 @@ void
 SetThisStartUpID(void)
 {
 	ThisStartUpID = XLogCtl->ThisStartUpID;
-	RedoRecPtr = XLogCtl->RedoRecPtr;
+	RedoRecPtr = XLogCtl->SavedRedoRecPtr;
 }
 
 /*
  * CheckPoint process called by postmaster saves copy of new RedoRecPtr
- * in shmem (using SetRedoRecPtr).	When checkpointer completes, postmaster
- * calls GetRedoRecPtr to update its own copy of RedoRecPtr, so that
- * subsequently-spawned backends will start out with a reasonably up-to-date
- * local RedoRecPtr.  Since these operations are not protected by any lock
- * and copying an XLogRecPtr isn't atomic, it's unsafe to use either of these
- * routines at other times!
- *
- * Note: once spawned, a backend must update its local RedoRecPtr from
- * XLogCtl->Insert.RedoRecPtr while holding the insert lock.  This is
- * done in XLogInsert().
+ * in shmem (using SetSavedRedoRecPtr).  When checkpointer completes,
+ * postmaster calls GetSavedRedoRecPtr to update its own copy of RedoRecPtr,
+ * so that subsequently-spawned backends will start out with a reasonably
+ * up-to-date local RedoRecPtr.  Since these operations are not protected by
+ * any lock and copying an XLogRecPtr isn't atomic, it's unsafe to use either
+ * of these routines at other times!
  */
 void
-SetRedoRecPtr(void)
+SetSavedRedoRecPtr(void)
 {
-	XLogCtl->RedoRecPtr = RedoRecPtr;
+	XLogCtl->SavedRedoRecPtr = RedoRecPtr;
 }
 
 void
+GetSavedRedoRecPtr(void)
+{
+	RedoRecPtr = XLogCtl->SavedRedoRecPtr;
+}
+
+/*
+ * Once spawned, a backend may update its local RedoRecPtr from
+ * XLogCtl->Insert.RedoRecPtr; it must hold the insert lock or info_lck
+ * to do so.  This is done in XLogInsert() or GetRedoRecPtr().
+ */
+XLogRecPtr
 GetRedoRecPtr(void)
 {
-	RedoRecPtr = XLogCtl->RedoRecPtr;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+	Assert(XLByteLE(RedoRecPtr, xlogctl->Insert.RedoRecPtr));
+	RedoRecPtr = xlogctl->Insert.RedoRecPtr;
+	SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+
+	return RedoRecPtr;
 }
 
 /*
@@ -2862,6 +2890,7 @@ ShutdownXLOG(void)
 
 	/* suppress in-transaction check in CreateCheckPoint */
 	MyLastRecPtr.xrecoff = 0;
+	MyXactMadeXLogEntry = false;
 
 	CritSectionCount++;
 	CreateDummyCaches();
@@ -2886,7 +2915,7 @@ CreateCheckPoint(bool shutdown)
 	uint32		_logId;
 	uint32		_logSeg;
 
-	if (MyLastRecPtr.xrecoff != 0)
+	if (MyXactMadeXLogEntry)
 		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
 
 	/*
@@ -2972,9 +3001,16 @@ CreateCheckPoint(bool shutdown)
 
 	/*
 	 * Here we update the shared RedoRecPtr for future XLogInsert calls;
-	 * this must be done while holding the insert lock.
+	 * this must be done while holding the insert lock AND the info_lck.
 	 */
-	RedoRecPtr = XLogCtl->Insert.RedoRecPtr = checkPoint.redo;
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		RedoRecPtr = xlogctl->Insert.RedoRecPtr = checkPoint.redo;
+		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+	}
 
 	/*
 	 * Get UNDO record ptr - this is oldest of PROC->logRec values. We do

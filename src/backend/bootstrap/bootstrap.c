@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.123 2002/03/08 00:42:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.124 2002/03/15 19:20:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,7 +386,7 @@ BootstrapMain(int argc, char *argv[])
 				InitDummyProcess();		/* needed to get LWLocks */
 			CreateDummyCaches();
 			CreateCheckPoint(false);
-			SetRedoRecPtr();
+			SetSavedRedoRecPtr(); /* pass redo ptr back to postmaster */
 			proc_exit(0);		/* done */
 
 		case BS_XLOG_STARTUP:
