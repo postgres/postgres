@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.78 2001/02/09 17:53:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.79 2001/02/09 17:55:48 momjian Exp $
 -->
 
  <appendix id="release">
@@ -296,7 +296,7 @@ Moved macmanuf to /contrib (Larry Rosenman)
 Syslog improvements (Larry Rosenman)
 New template0 database that contains no user additions (Tom)
 New /contrib/cube and /contrib/seg GIST sample code (Gene Selkov)
-Allow *BSD's libedit instead of readline (Peter)
+Allow NetBSD's libedit instead of readline (Peter)
 Improved assembly language source code format (Bruce)
      </programlisting>
     </para>

@@ -220,7 +220,7 @@ Moved macmanuf to /contrib (Larry Rosenman)
 Syslog improvements (Larry Rosenman)
 New template0 database that contains no user additions (Tom)
 New /contrib/cube and /contrib/seg GIST sample code (Gene Selkov)
-Allow *BSD's libedit instead of readline (Peter)
+Allow NetBSD's libedit instead of readline (Peter)
 Improved assembly language source code format (Bruce)
 
 
