@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.8 2004/06/21 03:11:49 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.9 2004/09/13 07:14:26 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -692,7 +692,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	public synchronized void moveToCurrentRow()
 	throws SQLException
 	{
-		if (!updateable)
+		if (!isUpdateable())
 		{
 			throw new PSQLException( "postgresql.updateable.notupdateable" );
 		}
