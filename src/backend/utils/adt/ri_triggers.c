@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.62 2003/10/06 16:38:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.63 2003/10/31 03:58:20 wieck Exp $
  *
  * ----------
  */
@@ -379,7 +379,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
-		if (ri_KeysEqual(fk_rel, old_row, new_row, &qkey,
+		if (HeapTupleHeaderGetXmin(old_row->t_data) !=
+				GetCurrentTransactionId() &&
+				ri_KeysEqual(fk_rel, old_row, new_row, &qkey,
 						 RI_KEYPAIR_FK_IDX))
 		{
 			heap_close(pk_rel, RowShareLock);
