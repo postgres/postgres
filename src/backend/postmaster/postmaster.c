@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.447 2005/03/18 03:48:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.448 2005/03/24 05:19:05 momjian Exp $
  *
  * NOTES
  *
@@ -1246,12 +1246,12 @@ ServerLoop(void)
 			PgStatPID = pgstat_start();
 
 		/*
-		 * Touch the socket and lock file at least every ten minutes, to
+		 * Touch the socket and lock file at least every hour, to
 		 * ensure that they are not removed by overzealous /tmp-cleaning
 		 * tasks.
 		 */
 		now = time(NULL);
-		if (now - last_touch_time >= 10 * 60)
+		if (now - last_touch_time >= 60 * 60)
 		{
 			TouchSocketFile();
 			TouchSocketLockFile();
