@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.27 2001/11/20 01:32:29 ishii Exp $
+ * $Id: mbutils.c,v 1.27.2.1 2002/08/19 04:58:26 ishii Exp $
  */
 #include "postgres.h"
 
@@ -222,7 +222,7 @@ pg_convert(PG_FUNCTION_ARGS)
 	    pg_convert2, string, src_encoding_name, dest_encoding_name);
 
 	/* free memory allocated by namein */
-	pfree((void *)dest_encoding_name);
+	pfree((void *)src_encoding_name);
 
 	PG_RETURN_TEXT_P(result);
 }
