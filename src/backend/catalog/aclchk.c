@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.50 2001/06/09 23:21:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.51 2001/06/18 16:13:21 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -32,6 +32,7 @@
 #include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
 static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
@@ -437,7 +438,7 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	 */
 	if ((mode & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		!allowSystemTableMods && IsSystemRelationName(relname) &&
-		strncmp(relname, "pg_temp.", strlen("pg_temp.")) != 0 &&
+		!is_temp_relname(relname) &&
 		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
 	{
 #ifdef ACLDEBUG

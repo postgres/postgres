@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.167 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.168 2001/06/18 16:13:21 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -281,8 +281,8 @@ heap_create(char *relname,
 		 * replace relname of caller with a unique name for a temp
 		 * relation
 		 */
-		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
-				 (int) MyProcPid, uniqueId++);
+		snprintf(relname, NAMEDATALEN, "%s_%d_%u",
+				PG_TEMP_REL_PREFIX, (int) MyProcPid, uniqueId++);
 	}
 
 	/*
@@ -874,37 +874,6 @@ heap_create_with_catalog(char *relname,
 }
 
 
-/* ----------------------------------------------------------------
- *		heap_drop_with_catalog	- removes all record of named relation from catalogs
- *
- *		1)	open relation, check for existence, etc.
- *		2)	remove inheritance information
- *		3)	remove indexes
- *		4)	remove pg_class tuple
- *		5)	remove pg_attribute tuples and related descriptions
- *				6)		remove pg_description tuples
- *		7)	remove pg_type tuples
- *		8)	RemoveConstraints ()
- *		9)	unlink relation
- *
- * old comments
- *		Except for vital relations, removes relation from
- *		relation catalog, and related attributes from
- *		attribute catalog (needed?).  (Anything else?)
- *
- *		get proper relation from relation catalog (if not arg)
- *		scan attribute catalog deleting attributes of reldesc
- *				(necessary?)
- *		delete relation from relation catalog
- *		(How are the tuples of the relation discarded?)
- *
- *		XXX Must fix to work with indexes.
- *		There may be a better order for doing things.
- *		Problems with destroying a deleted database--cannot create
- *		a struct reldesc without having an open file descriptor.
- * ----------------------------------------------------------------
- */
-
 /* --------------------------------
  *		RelationRemoveInheritance
  *
@@ -1334,10 +1303,35 @@ DeleteTypeTuple(Relation rel)
 	heap_close(pg_type_desc, RowExclusiveLock);
 }
 
-/* --------------------------------
- *		heap_drop_with_catalog
+/* ----------------------------------------------------------------
+ *		heap_drop_with_catalog	- removes all record of named relation from catalogs
  *
- * --------------------------------
+ *		1)	open relation, check for existence, etc.
+ *		2)	remove inheritance information
+ *		3)	remove indexes
+ *		4)	remove pg_class tuple
+ *		5)	remove pg_attribute tuples and related descriptions
+ *				6)		remove pg_description tuples
+ *		7)	remove pg_type tuples
+ *		8)	RemoveConstraints ()
+ *		9)	unlink relation
+ *
+ * old comments
+ *		Except for vital relations, removes relation from
+ *		relation catalog, and related attributes from
+ *		attribute catalog (needed?).  (Anything else?)
+ *
+ *		get proper relation from relation catalog (if not arg)
+ *		scan attribute catalog deleting attributes of reldesc
+ *				(necessary?)
+ *		delete relation from relation catalog
+ *		(How are the tuples of the relation discarded?)
+ *
+ *		XXX Must fix to work with indexes.
+ *		There may be a better order for doing things.
+ *		Problems with destroying a deleted database--cannot create
+ *		a struct reldesc without having an open file descriptor.
+ * ----------------------------------------------------------------
  */
 void
 heap_drop_with_catalog(const char *relname,
@@ -1360,8 +1354,10 @@ heap_drop_with_catalog(const char *relname,
 	 * prevent deletion of system relations
 	 */
 	/* allow temp of pg_class? Guess so. */
-	if (!istemp && !allow_system_table_mods &&
-		IsSystemRelationName(RelationGetRelationName(rel)))
+	if (!istemp &&
+		!allow_system_table_mods &&
+		IsSystemRelationName(RelationGetRelationName(rel)) &&
+		!is_temp_relname(RelationGetRelationName(rel)))
 		elog(ERROR, "System relation \"%s\" may not be dropped",
 			 RelationGetRelationName(rel));
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.81 2001/06/11 04:12:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.82 2001/06/18 16:13:21 momjian Exp $
  *
  * NOTES:
  *
@@ -54,8 +54,8 @@
 
 
 /* Filename components for OpenTemporaryFile */
-#define PG_TEMP_FILES_DIR "pg_tempfiles"
-#define PG_TEMP_FILE_PREFIX "pg_temp"
+#define PG_TEMP_FILES_DIR "pgsql_tmp"
+#define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
 
 /*
