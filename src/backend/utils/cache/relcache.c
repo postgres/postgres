@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.85 2000/01/15 02:59:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.86 2000/01/22 14:20:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@
 static void RelationClearRelation(Relation relation, bool rebuildIt);
 static void RelationFlushRelation(Relation *relationPtr,
 								  bool onlyFlushReferenceCountZero);
-static Relation RelationNameCacheGetRelation(char *relationName);
+static Relation RelationNameCacheGetRelation(const char *relationName);
 static void RelationCacheAbortWalker(Relation *relationPtr,
 									 int dummy);
 static void init_irels(void);
@@ -1067,7 +1067,7 @@ RelationIdCacheGetRelation(Oid relationId)
  * --------------------------------
  */
 static Relation
-RelationNameCacheGetRelation(char *relationName)
+RelationNameCacheGetRelation(const char *relationName)
 {
 	Relation	rd;
 	NameData	name;
@@ -1144,7 +1144,7 @@ RelationIdGetRelation(Oid relationId)
  * --------------------------------
  */
 Relation
-RelationNameGetRelation(char *relationName)
+RelationNameGetRelation(const char *relationName)
 {
 	char	   *temprelname;
 	Relation	rd;
@@ -1180,7 +1180,7 @@ RelationNameGetRelation(char *relationName)
 	 * ----------------
 	 */
 	buildinfo.infotype = INFO_RELNAME;
-	buildinfo.i.info_name = relationName;
+	buildinfo.i.info_name = (char *)relationName;
 
 	rd = RelationBuildDesc(buildinfo, NULL);
 	return rd;
@@ -1727,7 +1727,7 @@ AttrDefaultFetch(Relation relation)
 			if (adform->adnum != attrdef[i].adnum)
 				continue;
 			if (attrdef[i].adbin != NULL)
-				elog(ERROR, "AttrDefaultFetch: second record found for attr %s in rel %s",
+				elog(NOTICE, "AttrDefaultFetch: second record found for attr %s in rel %s",
 				NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 
@@ -1735,7 +1735,7 @@ AttrDefaultFetch(Relation relation)
 												 Anum_pg_attrdef_adbin,
 												 adrel->rd_att, &isnull);
 			if (isnull)
-				elog(ERROR, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
+				elog(NOTICE, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
 				NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 			attrdef[i].adbin = textout(val);
@@ -1744,13 +1744,13 @@ AttrDefaultFetch(Relation relation)
 		ReleaseBuffer(buffer);
 
 		if (i >= ndef)
-			elog(ERROR, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
+			elog(NOTICE, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
 				 adform->adnum,
 				 RelationGetRelationName(relation));
 	}
 
 	if (found < ndef)
-		elog(ERROR, "AttrDefaultFetch: %d record not found for rel %s",
+		elog(NOTICE, "AttrDefaultFetch: %d record not found for rel %s",
 			 ndef - found, RelationGetRelationName(relation));
 
 	index_endscan(sd);

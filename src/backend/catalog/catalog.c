@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.28 2000/01/16 20:04:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.29 2000/01/22 14:20:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ relpath(const char *relname)
 		snprintf(path, bufsize, "%s/%s", DataDir, relname);
 		return path;
 	}
-	return relname;
+	return pstrdup(relname);
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.77 2000/01/17 01:29:07 tgl Exp $
+ * $Id: pg_type.h,v 1.78 2000/01/22 14:20:53 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -410,7 +410,7 @@ extern Oid TypeCreate(char *typeName,
 		   char *elementTypeName,
 		   char *defaultTypeValue,
 		   bool passedByValue, char alignment);
-extern void TypeRename(char *oldTypeName, char *newTypeName);
+extern void TypeRename(const char *oldTypeName, const char *newTypeName);
 extern char *makeArrayTypeName(char *typeName);
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.47 2000/01/17 23:57:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.48 2000/01/22 14:20:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,7 +525,7 @@ TypeCreate(char *typeName,
  * ----------------------------------------------------------------
  */
 void
-TypeRename(char *oldTypeName, char *newTypeName)
+TypeRename(const char *oldTypeName, const char *newTypeName)
 {
 	Relation	pg_type_desc;
 	Relation	idescs[Num_pg_type_indices];

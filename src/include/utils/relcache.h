@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.16 1999/11/21 01:58:20 tgl Exp $
+ * $Id: relcache.h,v 1.17 2000/01/22 14:20:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
  */
 extern Relation RelationIdCacheGetRelation(Oid relationId);
 extern Relation RelationIdGetRelation(Oid relationId);
-extern Relation RelationNameGetRelation(char *relationName);
+extern Relation RelationNameGetRelation(const char *relationName);
 
 extern void RelationClose(Relation relation);
 extern void RelationForgetRelation(Oid rid);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.95 2000/01/10 16:13:22 momjian Exp $
+ * $Id: builtins.h,v 1.96 2000/01/22 14:20:55 petere Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -136,17 +136,17 @@ extern int32 int4larger(int32 arg1, int32 arg2);
 extern int32 int4smaller(int32 arg1, int32 arg2);
 
 /* name.c */
-extern NameData *namein(char *s);
-extern char *nameout(NameData *s);
-extern bool nameeq(NameData *arg1, NameData *arg2);
-extern bool namene(NameData *arg1, NameData *arg2);
-extern bool namelt(NameData *arg1, NameData *arg2);
-extern bool namele(NameData *arg1, NameData *arg2);
-extern bool namegt(NameData *arg1, NameData *arg2);
-extern bool namege(NameData *arg1, NameData *arg2);
+extern NameData *namein(const char *s);
+extern char *nameout(const NameData *s);
+extern bool nameeq(const NameData *arg1, const NameData *arg2);
+extern bool namene(const NameData *arg1, const NameData *arg2);
+extern bool namelt(const NameData *arg1, const NameData *arg2);
+extern bool namele(const NameData *arg1, const NameData *arg2);
+extern bool namegt(const NameData *arg1, const NameData *arg2);
+extern bool namege(const NameData *arg1, const NameData *arg2);
 extern int	namecpy(Name n1, Name n2);
-extern int	namestrcpy(Name name, char *str);
-extern int	namestrcmp(Name name, char *str);
+extern int	namestrcpy(Name name, const char *str);
+extern int	namestrcmp(Name name, const char *str);
 
 /* numutils.c */
 /* XXX hack.  HP-UX has a ltoa (with different arguments) already. */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.63 2000/01/10 06:30:50 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.64 2000/01/22 14:20:43 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -562,7 +562,7 @@ heap_open(Oid relationId, LOCKMODE lockmode)
  * ----------------
  */
 Relation
-heap_openr(char *relationName, LOCKMODE lockmode)
+heap_openr(const char *relationName, LOCKMODE lockmode)
 {
 	Relation	r;
 

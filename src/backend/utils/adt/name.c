@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.25 1999/11/25 19:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.26 2000/01/22 14:20:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *				Now, always NULL terminated
  */
 NameData   *
-namein(char *s)
+namein(const char *s)
 {
 	NameData   *result;
 	int			len;
@@ -54,7 +54,7 @@ namein(char *s)
  *		nameout - converts internal reprsentation to "..."
  */
 char *
-nameout(NameData *s)
+nameout(const NameData *s)
 {
 	if (s == NULL)
 		return "-";
@@ -82,7 +82,7 @@ nameout(NameData *s)
  *
  */
 bool
-nameeq(NameData *arg1, NameData *arg2)
+nameeq(const NameData *arg1, const NameData *arg2)
 {
 	if (!arg1 || !arg2)
 		return 0;
@@ -91,7 +91,7 @@ nameeq(NameData *arg1, NameData *arg2)
 }
 
 bool
-namene(NameData *arg1, NameData *arg2)
+namene(const NameData *arg1, const NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
@@ -99,7 +99,7 @@ namene(NameData *arg1, NameData *arg2)
 }
 
 bool
-namelt(NameData *arg1, NameData *arg2)
+namelt(const NameData *arg1, const NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
@@ -107,7 +107,7 @@ namelt(NameData *arg1, NameData *arg2)
 }
 
 bool
-namele(NameData *arg1, NameData *arg2)
+namele(const NameData *arg1, const NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
@@ -115,7 +115,7 @@ namele(NameData *arg1, NameData *arg2)
 }
 
 bool
-namegt(NameData *arg1, NameData *arg2)
+namegt(const NameData *arg1, const NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
@@ -124,7 +124,7 @@ namegt(NameData *arg1, NameData *arg2)
 }
 
 bool
-namege(NameData *arg1, NameData *arg2)
+namege(const NameData *arg1, const NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) 0;
@@ -163,7 +163,7 @@ namecmp(Name n1, Name n2)
 #endif
 
 int
-namestrcpy(Name name, char *str)
+namestrcpy(Name name, const char *str)
 {
 	if (!name || !str)
 		return -1;
@@ -173,7 +173,7 @@ namestrcpy(Name name, char *str)
 
 #ifdef NOT_USED
 int
-namestrcat(Name name, char *str)
+namestrcat(Name name, const char *str)
 {
 	int			i;
 	char	   *p,
@@ -195,7 +195,7 @@ namestrcat(Name name, char *str)
 #endif
 
 int
-namestrcmp(Name name, char *str)
+namestrcmp(Name name, const char *str)
 {
 	if (!name && !str)
 		return 0;

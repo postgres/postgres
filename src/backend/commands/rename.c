@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.39 1999/12/16 22:19:42 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.40 2000/01/22 14:20:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ renameatt(char *relname,
  *		renamerel		- change the name of a relation
  */
 void
-renamerel(char *oldrelname, char *newrelname)
+renamerel(const char *oldrelname, const char *newrelname)
 {
 	int			i;
 	Relation	targetrelation;

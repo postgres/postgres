@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.31 2000/01/10 17:14:44 momjian Exp $
+ * $Id: rel.h,v 1.32 2000/01/22 14:20:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ typedef Relation *RelationPtr;
  *	  Returns a Relation Name
  */
 /* added to prevent circular dependency.  bjm 1999/11/15 */
-char 	   *get_temp_rel_by_physicalname(char *relname);
+char 	   *get_temp_rel_by_physicalname(const char *relname);
 #define RelationGetRelationName(relation) \
 (\
 	(strncmp(RelationGetPhysicalRelationName(relation), \

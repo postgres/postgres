@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.49 1999/12/16 22:19:58 wieck Exp $
+ * $Id: heapam.h,v 1.50 2000/01/22 14:20:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 /* heapam.c */
 
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
-extern Relation heap_openr(char *relationName, LOCKMODE lockmode);
+extern Relation heap_openr(const char *relationName, LOCKMODE lockmode);
 extern void heap_close(Relation relation, LOCKMODE lockmode);
 extern HeapScanDesc heap_beginscan(Relation relation, int atend,
 			   Snapshot snapshot, unsigned nkeys, ScanKey key);

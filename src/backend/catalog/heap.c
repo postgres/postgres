@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.117 2000/01/17 23:57:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.118 2000/01/22 14:20:44 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -480,7 +480,7 @@ CheckAttributeNames(TupleDesc tupdesc)
  * --------------------------------
  */
 Oid
-RelnameFindRelid(char *relname)
+RelnameFindRelid(const char *relname)
 {
 	HeapTuple	tuple;
 	Oid			relid;
@@ -1441,7 +1441,7 @@ DeleteTypeTuple(Relation rel)
  * --------------------------------
  */
 void
-heap_drop_with_catalog(char *relname)
+heap_drop_with_catalog(const char *relname)
 {
 	Relation	rel;
 	Oid			rid;
