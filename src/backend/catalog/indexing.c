@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.26 1998/09/01 04:27:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.27 1998/09/01 06:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,15 +45,15 @@
  */
 
 char	   *Name_pg_attr_indices[Num_pg_attr_indices] = {AttributeNameIndex,
-	AttributeNumIndex,
-AttributeRelidIndex};
+			AttributeNumIndex,
+			AttributeRelidIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] = {ProcedureNameIndex,
-	ProcedureOidIndex,
-ProcedureSrcIndex};
+			ProcedureOidIndex,
+			ProcedureSrcIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] = {TypeNameIndex,
-TypeOidIndex};
+			TypeOidIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] = {ClassNameIndex,
-ClassOidIndex};
+			ClassOidIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] = {AttrDefaultIndex};
 
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] = {RelCheckIndex};
