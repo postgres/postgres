@@ -36,7 +36,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 	日本語版のこの文書は <a HREF="http://www.PostgreSQL.org/docs/index.html">本家 "Docs" </a> の "Frequently Asked Questions" の
 	ところに "Japanese FAQ" という見出であります。また、以下のサイトにも
 	あります。
-		<A HREF="http://www.PostgreSQL.jp/subcommittee/jpugdoc/">http://www.PostgreSQL.jp/subcommittee/jpugdoc/</A>
+		<A HREF="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</A>
 		<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>
 		<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>
 
@@ -230,26 +230,19 @@ MODIFICATIONS.</P>
 <P>
 <H4><A NAME="1.4">1.4</A>)	Unix以外の移植版で使えるものは？</H4>
 
-<P><STRONG>クライアント</STRONG></P>
-
-<P>バージョン8.0になり、PostgreSQL は、Win2000, WinXP, Win2003などのMicrosoft Windows NTベースのオペレーティングシステムでネイティブに走るようにりました。
+<P>バージョン8.0になり、PostgreSQL は、Win2000, WinXP, Win2003などの Microsoft Windows NTベースのオペレーティングシステムでネイティブに走るようになりました。
 パッケージになったインストーラが、<a href="http://pgfoundry.org/projects/pginstaller">http://pgfoundry.org/projects/pginstaller</a>から入手できます。
 </P>
 
-<P><STRONG>サーバ</STRONG></P>
+<small><pre>
+    [訳注
+	pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
+	    http://www.postgresql.org/mirrors-ftp.html
+    ]
+</pre></small>
 
-<P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、
-<A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>にある MS Windows FAQ をご覧下さい。</P>
-
-<P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版PostgreSQLの近況は、<a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a>と
-<a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">
-http://momjian.postgresql.org/main/writings/pgsql/win32.html</a>
-を見てください。
-</p>
-
-    <p>Novell Netware 6 の移植もあります。
-    <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
-
+    <p>次のサイトに Novell Netware 6 への移植もあります。
+    <a href="http://forge.novell.com">http://forge.novell.com</a></p>
 <BR>
 
 
@@ -374,7 +367,7 @@ PostgreSQL の最新版はバージョン 7.4.5 です。</P>
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
 <SMALL><PRE>
     [訳注:
-	日本ポストグレスユーザー会の<A HREF="http://www.PostgreSQL.jp/subcommittee/psqltrans/">	「PostgreSQL Book翻訳分科会」</A>
+	日本ポストグレスユーザー会の<A HREF="http://www.PostgreSQL.jp/wg/psqltrans/">	「PostgreSQL Book翻訳分科会」</A>
 	にて翻訳されました。
     ]
 </PRE></SMALL>
@@ -419,7 +412,7 @@ http://www.PostgreSQL.org/docs/awbook.html</A>
 
 <SMALL><PRE>
     [訳注:
-	日本ポストグレスユーザー会の<A HREF="http://www.PostgreSQL.jp/subcommittee/psqltrans/">	「PostgreSQL Book翻訳分科会」</A>
+	日本ポストグレスユーザー会の<A HREF="http://www.PostgreSQL.jp/wg/psqltrans/">	「PostgreSQL Book翻訳分科会」</A>
 	にて翻訳され出版されています。
     ]
 </PRE></SMALL>
@@ -1333,13 +1326,19 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 </P>
 
 [訳注
-    JPUG 分散トランザクション開発分科会では、永安悟史さんを中心に２相
-    コミットの実装を行なっています。
-	http://www.postgresql.jp/subcommittee/dt/index.html
-	http://www.snaga.org/jpug-dt/
 
-    三谷篤さんによる双方向リプリケーションPGReplicate
-	http://www.csra.co.jp/~mitani/jpug/pgreplicate/
+    Jan Wieckさんによるカスケード可能なマスター・スレーブ型のレプリケーション Slony-I 
+	http://gborg.postgresql.org/project/slony1/projdisplay.php
+
+    石井達夫さんによるコネクションプール サーバ PGPool
+	http://www2b.biglobe.ne.jp/~caco/pgpool/
+
+    三谷篤さんによるマルチマスタ方式の同期レプリケーション PGCluster
+	http://www.csra.co.jp/~mitani/jpug/pgcluster/index.html
+
+    JPUG 分散トランザクション開発分科会では、永安悟史さんが２相コミット
+    の実装を行いました。
+	http://www.postgresql.jp/wg/dt/index.html
 ]
 
 <H4><A name="4.28">4.28</A>) どのような暗号化オプションを利用できますか?
@@ -1393,7 +1392,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2004年10月18日
+  最終更新日:	2004年10月21日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1421,7 +1420,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 
   日本語版のこの文書は、以下からもたどれます。
 	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>(FAQ和訳 PostgreSQL についてよくある質問)
-	<A HREF="http://www.PostgreSQL.jp/subcommittee/jpugdoc/">http://www.PostgreSQL.jp/subcommittee/jpugdoc/</A>JPUG文書・書籍関連分科会
+	<A HREF="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</A>JPUG文書・書籍関連分科会
 	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>Linux JFプロジェクト
 
   なお、この和訳に関するご意見は(<A HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)までお寄せ下さい。

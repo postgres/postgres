@@ -18,7 +18,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
         日本語版のこの文書は 本家 "Docs"  の "Frequently Asked Questions" の
         ところに "Japanese FAQ" という見出であります。また、以下のサイトにも
         あります。
-                http://www.PostgreSQL.jp/subcommittee/jpugdoc/
+                http://www.PostgreSQL.jp/wg/jpugdoc/
                 http://www.rccm.co.jp/~juk/pgsql/
                 http://www.linux.or.jp/JF/
 
@@ -231,25 +231,17 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 1.4) Unix以外の移植版で使えるものは？
 
-クライアント
+バージョン8.0になり、PostgreSQL は、Win2000, WinXP, Win2003などの Microsoft
+Windows NTベースのオペレーティングシステムでネイティブに走るようになりました。
+パッケージになったインストーラが、http://pgfoundry.org/projects/pginstallerから
+入手できます。
 
-バージョン8.0になり、PostgreSQL は、Win2000, WinXP, Win2003などのMicrosoft
-Windows NTベースのオペレーティングシステムでネイティブに走るようにりました。パ
-ッケージになったインストーラが、http://pgfoundry.org/projects/pginstallerから入
-手できます。
+    [訳注
+        pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
+            http://www.postgresql.org/mirrors-ftp.html
+    ]
 
-サーバ
-
-現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベース
-サーバは Windows NT と Win2k 上で稼働しています。配布に含まれるpgsql/doc/
-FAQ_MSWIN、あるいは、 http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWINにある
-MS Windows FAQ をご覧下さい。
-
-MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版
-PostgreSQLの近況は、http://techdocs.postgresql.org/guides/Windowsと http://
-momjian.postgresql.org/main/writings/pgsql/win32.html を見てください。
-
-Novell Netware 6 の移植もあります。 http://forge.novell.com.
+次のサイトに Novell Netware 6 への移植もあります。 http://forge.novell.com
 
 
 1.5) PostgreSQL はどこから入手できますか？
@@ -1312,10 +1304,13 @@ PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数
 ンは http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php にて作業
 が進められています。
 
-[訳注 JPUG 分散トランザクション開発分科会では、永安悟史さんを中心に２相コミット
-の実装を行なっています。 http://www.postgresql.jp/subcommittee/dt/index.html
-http://www.snaga.org/jpug-dt/ 三谷篤さんによる双方向リプリケーションPGReplicate
-http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
+[訳注 Jan Wieckさんによるカスケード可能なマスター・スレーブ型のレプリケーション
+Slony-I http://gborg.postgresql.org/project/slony1/projdisplay.php 石井達夫さん
+によるコネクションプールサーバ PGPool http://www2b.biglobe.ne.jp/~caco/pgpool/
+三谷篤さんによるマルチマスタ方式の同期レプリケーション PGCluster http://
+www.csra.co.jp/~mitani/jpug/pgcluster/index.html JPUG 分散トランザクション開発
+分科会では、永安悟史さんが２相コミットの実装を行いました。 http://
+www.postgresql.jp/wg/dt/index.html ]
 
 4.28) どのような暗号化オプションを利用できますか?
 
@@ -1365,7 +1360,7 @@ http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2004年10月18日
+  最終更新日:   2004年10月21日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1393,7 +1388,7 @@ http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
 
   日本語版のこの文書は、以下からもたどれます。
         http://www.rccm.co.jp/~juk/pgsql/(FAQ和訳 PostgreSQL についてよくある質問)
-        http://www.PostgreSQL.jp/subcommittee/jpugdoc/JPUG文書・書籍関連分科会
+        http://www.PostgreSQL.jp/wg/jpugdoc/JPUG文書・書籍関連分科会
         http://www.linux.or.jp/JF/Linux JFプロジェクト
 
   なお、この和訳に関するご意見は(juk at PostgreSQL.jp)までお寄せ下さい。

@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: CHetverg 6 maya 23:28:03 EDT 2004
+   Data poslednego obnovleniya: Vtornik 31 avgusta 23:28:03 EDT 2004
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -61,6 +61,7 @@
    3.9) CHto nahoditsya v kataloge pgsql_tmp?
    3.10) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
    PostgreSQL?
+   3.11) Kakoe komp'yuternoe "zhelezo" ya dolzhen ispol'zovat'?
    
                            Voprosy `ekspluatacii
                                       
@@ -204,29 +205,10 @@
    
     1.4) Suschestvuyut li versii perenesennye ne na Unix sistemy?
     
-   Klient
-   
-   Dlya zapuska na platformah MS Windows vozmozhna kompilyaciya C
-   biblioteki libpq, psql, drugih interfesov i klientskih prilozhenij. V
-   `etom sluchae, klient zapuskaetsya na MS Windows i svyazyvaetsya po
-   TCP/IP s serverom, zapuschennym na odnoj iz podderzhivaemyh Unix
-   platform. V distributiv vklyuchaetsya fajl win32.mak dlya togo, chtoby
-   mozhno bylo provesti sborku biblioteki libpq i psql dlya Win32.
-   PostgreSQL takzhe rabotaet cherez ODBC.
-   
-   Server
-   
-   Server BD mozhet byt' zapuschen na Windows NT i Win2k, ispol'zuya
-   biblioteku Cygwin, razrabotannuyu kompaniej Cygnus dlya perenosa
-   programmnogo obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v
-   distributive ili MS Windows FAQ na
-   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
-   
-   PostgreSQL, sportirovannyj special'no dlya MS Win NT/2000/XP v
-   nastoyaschij moment nachal rabotat'. Podrobnosti tekuschego
-   sostoyaniya PostgreSQL dlya Windows smotrite na
-   http://techdocs.postgresql.org/guides/Windows i
-   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
+   Nachinaya s versii 8.0, PostgreSQL bez vsyakih uhischrenij rabotaet na
+   operacionnyh sistemah Microsoft Windows, osnovannyh na NT, takih kak
+   Win2000, WinXP i Win2003. Paket installyatora dostupen po adresu
+   http://pgfoundry.org/projects/pginstaller.
    
    Takzhe suschestvuet versiya sportirovannaya pod Novell Netware 6 na
    http://forge.novell.com.
@@ -287,7 +269,7 @@
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.4.2
+   Poslednij vypusk PostgreSQL - `eto versiya 7.4.5
    
    My planiruem vypuskat' novye versii kazhdye 6-8 mesyacev.
    
@@ -563,11 +545,10 @@
     3.5) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
     
    Po umolchaniyu, PostgreSQL razreshaet tol'ko soedineniya na lokal'noj
-   mashine cherez sokety domena Unix. Drugie mashiny ne smogut
-   podklyuchit'sya k baze poka ne budet vklyuchena opciya tcpip_sockets v
-   postgresql.conf i poka ne budet razreshena host-avtorizaciya v fajle
-   $PGDATA/pg_hba.conf. `Eti dejstviya delayut vozmozhnymi TCP/IP
-   soedineniya.
+   mashine cherez sokety domena Unix ili TCP/IP soedineniya. Drugie
+   mashiny ne smogut podklyuchit'sya k baze poka vy ne izmenite
+   listen_addresses v postgresql.conf i poka ne budet razreshena
+   host-avtorizaciya v fajle $PGDATA/pg_hba.conf.
    
     3.6) Kakie nastrojki mne nuzhno sdelat' dlya uluchsheniya
     proizvoditel'nosti?
@@ -714,6 +695,18 @@
    provedeniya obnovleniya mozhet byt' ispol'zovan scenarij pg_upgrade
    bez ispol'zovaniya dump/restore. Kommentarii k vypusku govorit kogda
    mozhno ispol'zovat' pg_upgrade dlya `etogo vypuska.
+   
+    3.11) Kakoe komp'yuternoe "zhelezo" ya dolzhen ispol'zovat'?
+    
+   Poskol'ku "zhelezo" personal'nyh komp'yuterov yavlyaetsya naibolee
+   sovmestimym, lyudi sklonny verit', chto takoe "zhelezo" imeet
+   odinakovoe kachestvo. `Eto ne tak. Pamyat' ECC, SCSI i kachestvennye
+   materinskie platy yavlyayutsya bolee nadiozhnymi i imeyut bolee
+   luchshuyu proizvoditel'nost', chem menee dorogoe "zhelezo". PostgreSQL
+   budet rabotat' na lyubom "zheleze", no esli dlya vas vazhny
+   nadiozhnost' i proizvoditel'nost', to s vashej storony budet mudro
+   postavit' sootvetstvuyuschee "zhelezo". Obsudit' raznoe "zhelezo"
+   mozhno v nashih spiskah rassylki.
      _________________________________________________________________
    
                            Voprosy `ekspluatacii
@@ -813,23 +806,23 @@ a
    srednem, sostavlyaet 20 bajt. Razmer prostogo fajla sostavit 2.8 MB.
    Razmer bazy PostgreSQL, soderzhaschej `eti zhe dannye sostavit
    priblizitel'no 6.4 MB iz kotoryh:
-    36 bajt: na kazhdyj zagolovok zapisi (priblizitel'no)
+    32 bajt: na kazhdyj zagolovok zapisi (priblizitel'no)
   + 24 bajta: odno pole s celochislennym tipom i odno tekstovoe pole
   +  4 bajta: ukazatel' na stranice dlya vsej zapisi
    ----------------------------------------
-    64 bajt na zapis'
+    60 bajt na zapis'
 
    Razmer stranicy dannyh v PostgreSQL sostavlyaet 8192 bajt (8 KB), tak chto:
 
    8192 bajt na stranicu
-   ---------------------   =  128 zapisej na stranicu BD (s okrugleniem)
-     64 bajta na zapis'
+   ---------------------   =  136 zapisej na stranicu BD (okruglionno)
+     60 bajt na zapis'
 
      100000 strok dannyh
-   ----------------------- =  782 stranicy v BD
+   ----------------------- =  735 stranic v BD (okruglionno)
    128 zapisej na stranicu
 
-   782 stranicy BD * 8192 bajt na stranicu = 6,406,144 bajt (6.4 MB)
+   735 stranic BD * 8192 bajt na stranicu = 6,021,120 bajt (6 MB)
 
    Indeksy ne trebuyut tak mnogo, no poskol'ku oni sozdayutsya dlya
    bol'shogo kolichestva dannyh, oni takzhe mogut byt' veliki.
@@ -902,6 +895,10 @@ a
        opisyvayutsya v sekcii 4.12.
      * Vo vremya initdb dolzhna ispol'zovat'sya lokal' po umolchaniyu C.
        
+   V vypuskah do versii 8.0, indeksy chasto nel'zya bylo ispol'zovat',
+   esli tipy dannyh tochno ne sovpadali s indeksnymi tipami kolonok. `Eto
+   osobenno kasalos' int2, int8 i numeric indeksov kolonok.
+   
     4.9) Kak posmotret' na to, kak optimizator vypolnyaet moj zapros?
     
    Smotrite stranicu rukovodstva posvyaschennuyu EXPLAIN.
@@ -1085,11 +1082,11 @@ t' null-bajt bez opaski)
    oblasti, kotorye ispol'zuyutsya vsemi vsemi bazami dannyh. Esli vy
    hotite izmenit' OID na kakoe-libo drugoe znachenie ili esli vy hotite
    sozdat' kopiyu tablicy s takimizhe OID, to `eto mozhno sdelat' tak:
-        CREATE TABLE new_table(old_oid oid, mycol int);
-        SELECT old_oid, mycol INTO new FROM old;
-        COPY new TO '/tmp/pgtable';
-        DELETE FROM new;
-        COPY new WITH OIDS FROM '/tmp/pgtable';
+        CREATE TABLE new_table(mycol int);
+        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
+        COPY tmp_table TO '/tmp/pgtable';
+        COPY new_table WITH OIDS FROM '/tmp/pgtable';
+        DROP TABLE tmp_table;
 
    OID hranitsya kak 4-h bajtnoe celoe i ne mozhet prevyshat' znachenie v
    4 milliarda. Odnako, esche nikto ne soobschil o tom, chto takoe
