@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.163 2002/12/09 21:03:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.164 2002/12/10 01:57:46 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1048,19 +1048,21 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_MIN_ERROR_STATEMENT</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls for which message levels the SQL statement
-        causing that message is to be recorded in the server log. All
-        statements causing a message of the level of the setting or
-        higher are logged. The default is <literal>PANIC</literal>
-        (effectively turning this feature off). Valid values are
-        <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
-        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>,
-        <literal>DEBUG1</literal>, <literal>INFO</literal>,
-        <literal>NOTICE</literal>, <literal>WARNING</literal>,
-        <literal>ERROR</literal>, <literal>FATAL</literal>, and
-        <literal>PANIC</literal>.  For example, if you set this to
-        <literal>ERROR</literal> then all SQL statements causing
-        errors, fatal errors, or panics will be logged.
+        Controls whether or not the SQL statement that causes an error
+        condition will also be recorded in the server log. All SQL
+        statements that cause an error of the specified level, or a
+        higher level, are logged.  The default is
+        <literal>PANIC</literal> (effectively turning this feature
+        off). Valid values are <literal>DEBUG5</literal>,
+        <literal>DEBUG4</literal>, <literal>DEBUG3</literal>,
+        <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
+        <literal>INFO</literal>, <literal>NOTICE</literal>,
+        <literal>WARNING</literal>, <literal>ERROR</literal>,
+        <literal>FATAL</literal>, and <literal>PANIC</literal>.  For
+        example, if you set this to <literal>ERROR</literal> then all
+        SQL statements causing errors, fatal errors, or panics will be
+        logged. Enabling this option can be helpful in tracking down
+        the source of any errors that appear in the server log.
        </para>
 
        <para>
@@ -1075,7 +1077,7 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_MIN_MESSAGES</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls how much message detail is written to the server
+        Controls how much message detail is written to the server
         logs.  Valid values are <literal>DEBUG5</>,
         <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
         <literal>DEBUG1</>, <literal>INFO</>, <literal>NOTICE</>,
@@ -1083,8 +1085,8 @@ env PGOPTIONS='-c geqo=off' psql
         <literal>FATAL</>, and <literal>PANIC</>. Later values send
         less detail to the logs.  The default is <literal>NOTICE</>.
         Note that <literal>LOG</> has a different precedence here than
-        in <literal>CLIENT_MIN_MESSAGES</>.  Also see that section 
-	for an explanation of the various values.
+        in <literal>CLIENT_MIN_MESSAGES</>.  Also see that section for
+        an explanation of the various values.
        </para>
 
       </listitem>
@@ -1155,11 +1157,12 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>STATS_ROW_LEVEL</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        These flags determine what information backends send to the statistics
-	collector process: current commands, block-level activity statistics,
-	or row-level activity statistics.  All default to off.  Enabling
-	statistics collection costs a small amount of time per query, but
-	is invaluable for debugging and performance tuning.
+        Determines what information backends send to the statistics
+        collector process: current commands, block-level activity
+        statistics, or row-level activity statistics.  All default to
+        off.  Enabling statistics collection costs a small amount of
+        time per query, but is invaluable for debugging and
+        performance tuning.
        </para>
       </listitem>
      </varlistentry>
@@ -1180,10 +1183,11 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>STATS_START_COLLECTOR</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Controls whether the server should start the statistics-collection
-	subprocess.  This is on by default, but may be turned off if you
-	know you have no interest in collecting statistics.  This option
-	can only be set at server start.
+        Controls whether the server should start the
+        statistics-collection subprocess.  This is on by default, but
+        may be turned off if you know you have no interest in
+        collecting statistics.  This option can only be set at server
+        start.
        </para>
       </listitem>
      </varlistentry>
@@ -1209,7 +1213,7 @@ env PGOPTIONS='-c geqo=off' psql
        <listitem>
         <para>
           This option determines the <application>syslog</application>
-          <quote>facility</quote> to be used when
+          <quote>facility</quote> to be used when logging via
           <application>syslog</application> is enabled. You may choose
           from <literal>LOCAL0</>, <literal>LOCAL1</>,
           <literal>LOCAL2</>, <literal>LOCAL3</>, <literal>LOCAL4</>,
@@ -1689,17 +1693,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>MAX_FSM_RELATIONS</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Sets the maximum number of relations (tables) for which free
-        space will be tracked in the shared free-space map. The default
-        is 100. This option can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>MAX_FSM_PAGES</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1711,13 +1704,24 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
+      <term><varname>MAX_FSM_RELATIONS</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Sets the maximum number of relations (tables) for which free
+        space will be tracked in the shared free-space map. The default
+        is 100. This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>MAX_LOCKS_PER_TRANSACTION</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         The shared lock table is sized on the assumption that at most
         <varname>max_locks_per_transaction</> *
         <varname>max_connections</varname> distinct objects will need to
-        be locked at any one time. The default, 64, which has historically
+        be locked at any one time. The default, 64, has historically
         proven sufficient, but you might need to raise this value if you
         have clients that touch many different tables in a single
         transaction. This option can only be set at server start.
