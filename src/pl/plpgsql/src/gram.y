@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.14 2001/02/10 22:42:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.15 2001/02/10 22:53:40 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,20 +54,24 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %union {
 		int32					ival;
 		char					*str;
-		struct {
+		struct
+		{
 			char *name;
 			int  lineno;
 		}						varname;
-		struct {
+		struct
+		{
 			int  nalloc;
 			int  nused;
 			int  *dtnums;
 		}						dtlist;
-		struct {
+		struct
+		{
 			int  reverse;
 			PLpgSQL_expr *expr;
 		}						forilow;
-		struct {
+		struct
+		{
 			char *label;
 			int  n_initvars;
 			int  *initvarnos;
@@ -256,11 +260,10 @@ decl_sect		: opt_label
 				| opt_label decl_start decl_stmts
 					{
 						plpgsql_ns_setlocal(false);
-						if ($3 != NULL) {
+						if ($3 != NULL)
 							$$.label = $3;
-						} else {
+						else
 							$$.label = $1;
-						}
 						$$.n_initvars = plpgsql_add_initdatums(&($$.initvarnos));
 					}
 				;
@@ -272,27 +275,17 @@ decl_start		: K_DECLARE
 				;
 
 decl_stmts		: decl_stmts decl_stmt
-					{
-						$$ = $2;
-					}
+					{	$$ = $2;	}
 				| decl_stmt
-					{
-						$$ = $1;
-					}
+					{	$$ = $1;	}
 				;
 
 decl_stmt		: '<' '<' opt_lblname '>' '>'
-					{
-						$$ = $3;
-					}
+					{	$$ = $3;	}
 				| K_DECLARE
-					{
-						$$ = NULL;
-					}
+					{	$$ = NULL;	}
 				| decl_statement
-					{
-						$$ = NULL;
-					}
+					{	$$ = NULL;	}
 				;
 
 decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
@@ -356,13 +349,11 @@ decl_aliasitem	: T_WORD
 
 						plpgsql_ns_setlocal(false);
 						name = plpgsql_tolower(yytext);
-						if (name[0] != '$') {
+						if (name[0] != '$')
 							elog(ERROR, "can only alias positional parameters");
-						}
 						nsi = plpgsql_ns_lookup(name, NULL);
-						if (nsi == NULL) {
+						if (nsi == NULL)
 							elog(ERROR, "function has no parameter %s", name);
-						}
 
 						plpgsql_ns_setlocal(true);
 
@@ -378,15 +369,15 @@ decl_rowtype	: T_ROW
 
 decl_varname	: T_WORD
 					{
-								/* name should be malloc'd for use as varname */
-								$$.name = strdup(plpgsql_tolower(yytext));
-								$$.lineno  = yylineno;
+						/* name should be malloc'd for use as varname */
+						$$.name = strdup(plpgsql_tolower(yytext));
+						$$.lineno  = yylineno;
 					}
 				;
 
 decl_renname	: T_WORD
 					{
-								/* the result must be palloc'd, see plpgsql_ns_rename */
+						/* the result must be palloc'd, see plpgsql_ns_rename */
 						$$ = plpgsql_tolower(yytext);
 					}
 				;
@@ -398,21 +389,19 @@ decl_const		:
 				;
 
 decl_datatype	: decl_dtypename
-					{
-						$$ = $1;
-					}
+					{ $$ = $1; }
 				;
 
 decl_dtypename	: T_DTYPE
-					{
-						$$ = yylval.dtype;
-					}
+					{ $$ = yylval.dtype; }
 				| T_CHAR decl_atttypmod
 					{
-						if ($2 < 0) {
+						if ($2 < 0)
+						{
 							plpgsql_parse_word("char");
 							$$ = yylval.dtype;
-						} else {
+						} else
+						{
 							plpgsql_parse_word("bpchar");
 							$$ = yylval.dtype;
 							$$->atttypmod = $2;
@@ -433,13 +422,9 @@ decl_dtypename	: T_DTYPE
 				;
 
 decl_atttypmod	:
-					{
-						$$ = -1;
-					}
+					{ $$ = -1; }
 				| '(' decl_atttypmodval ')'
-					{
-						$$ = $2;
-					}
+					{ $$ = $2; }
 				;
 
 decl_atttypmodval		: T_NUMBER
@@ -473,13 +458,15 @@ decl_defval		: ';'
 						expr->nparams = 0;
 
 						tok = yylex();
-						switch (tok) {
+						switch (tok)
+						{
 							case 0:
 								plpgsql_error_lineno = lno;
 								plpgsql_comperrinfo();
 								elog(ERROR, "unexpected end of file");
 							case K_NULL:
-								if (yylex() != ';') {
+								if (yylex() != ';')
+								{
 									plpgsql_error_lineno = lno;
 									plpgsql_comperrinfo();
 									elog(ERROR, "expectec ; after NULL");
@@ -492,15 +479,16 @@ decl_defval		: ';'
 
 							default:
 								plpgsql_dstring_append(&ds, yytext);
-								while ((tok = yylex()) != ';') {
-									if (tok == 0) {
+								while ((tok = yylex()) != ';')
+								{
+									if (tok == 0)
+									{
 										plpgsql_error_lineno = lno;
 										plpgsql_comperrinfo();
 										elog(ERROR, "unterminated default value");
 									}
-									if (plpgsql_SpaceScanned) {
+									if (plpgsql_SpaceScanned)
 										plpgsql_dstring_append(&ds, " ");
-									}
 									plpgsql_dstring_append(&ds, yytext);
 								}
 								expr->query = strdup(plpgsql_dstring_get(&ds));
@@ -516,17 +504,15 @@ decl_defkey		: K_ASSIGN
 				| K_DEFAULT
 
 proc_sect		:
-						{
-								PLpgSQL_stmts	*new;
+					{
+							PLpgSQL_stmts	*new;
 
-								new = malloc(sizeof(PLpgSQL_stmts));
-								memset(new, 0, sizeof(PLpgSQL_stmts));
-								$$ = new;
-						}
+							new = malloc(sizeof(PLpgSQL_stmts));
+							memset(new, 0, sizeof(PLpgSQL_stmts));
+							$$ = new;
+					}
 				| proc_stmts
-						{
-								$$ = $1;
-						}
+					{ $$ = $1; }
 				;
 
 proc_stmts		: proc_stmts proc_stmt
@@ -637,7 +623,8 @@ stmt_getdiag	: K_GET K_DIAGNOSTICS lno K_SELECT getdiag_items K_INTO getdiag_tar
 						memcpy(new->items, $5.dtnums, sizeof(int) * $5.nused);
 						memcpy(new->targets, $7.dtnums, sizeof(int) * $7.nused);
 
-						if (new->nitems != new->ntargets) {
+						if (new->nitems != new->ntargets)
+						{
 							plpgsql_error_lineno = new->lineno;
 							plpgsql_comperrinfo();
 							elog(ERROR, "number of diagnostic items does not match target list");
@@ -649,7 +636,8 @@ stmt_getdiag	: K_GET K_DIAGNOSTICS lno K_SELECT getdiag_items K_INTO getdiag_tar
 
 getdiag_items : getdiag_items ',' getdiag_item
 					{
-						if ($1.nused == $1.nalloc) {
+						if ($1.nused == $1.nalloc)
+						{
 							$1.nalloc *= 2;
 							$1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
 						}
@@ -680,7 +668,8 @@ getdiag_item : K_PROCESSED
 
 getdiag_targets : getdiag_targets ',' getdiag_target
 					{
-						if ($1.nused == $1.nalloc) {
+						if ($1.nused == $1.nalloc)
+						{
 							$1.nalloc *= 2;
 							$1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
 						}
@@ -702,7 +691,8 @@ getdiag_targets : getdiag_targets ',' getdiag_target
 
 getdiag_target	   : T_VARIABLE
 					{
-						if (yylval.var->isconst) {
+						if (yylval.var->isconst)
+						{
 							plpgsql_comperrinfo();
 							elog(ERROR, "%s is declared CONSTANT; can not receive diagnostics", yylval.var->refname);
 						}
@@ -717,7 +707,8 @@ getdiag_target	   : T_VARIABLE
 
 assign_var		: T_VARIABLE
 					{
-						if (yylval.var->isconst) {
+						if (yylval.var->isconst)
+						{
 							plpgsql_comperrinfo();
 							elog(ERROR, "%s is declared CONSTANT", yylval.var->refname);
 						}
@@ -747,15 +738,15 @@ stmt_if			: K_IF lno expr_until_then proc_sect stmt_else K_END K_IF ';'
 				;
 
 stmt_else		:
-						{
-								PLpgSQL_stmts	*new;
+					{
+							PLpgSQL_stmts	*new;
 
-								new = malloc(sizeof(PLpgSQL_stmts));
-								memset(new, 0, sizeof(PLpgSQL_stmts));
-								$$ = new;
-						}
+							new = malloc(sizeof(PLpgSQL_stmts));
+							memset(new, 0, sizeof(PLpgSQL_stmts));
+							$$ = new;
+					}
 				| K_ELSE proc_sect
-						{ $$ = $2; }
+					{ $$ = $2; }
 				;
 
 stmt_loop		: opt_label K_LOOP lno loop_body
@@ -872,19 +863,22 @@ fori_lower		:
 						plpgsql_dstring_append(&ds, "SELECT ");
 
 						$$.reverse = 0;
-						while((tok = yylex()) != K_DOTDOT) {
-							if (firsttok) {
+						while((tok = yylex()) != K_DOTDOT)
+						{
+							if (firsttok)
+							{
 								firsttok = 0;
-								if (tok == K_REVERSE) {
+								if (tok == K_REVERSE)
+								{
 									$$.reverse = 1;
 									continue;
 								}
 							}
 							if (tok == ';') break;
-							if (plpgsql_SpaceScanned) {
+							if (plpgsql_SpaceScanned)
 								plpgsql_dstring_append(&ds, " ");
-							}
-							switch (tok) {
+							switch (tok)
+							{
 								case T_VARIABLE:
 									params[nparams] = yylval.var->varno;
 									sprintf(buf, " $%d ", ++nparams);
@@ -904,7 +898,8 @@ fori_lower		:
 									break;
 
 								default:
-									if (tok == 0) {
+									if (tok == 0)
+									{
 										plpgsql_error_lineno = lno;
 										plpgsql_comperrinfo();
 										elog(ERROR, "missing .. to terminate lower bound of for loop");
@@ -919,9 +914,8 @@ fori_lower		:
 						expr->query				= strdup(plpgsql_dstring_get(&ds));
 						expr->plan				= NULL;
 						expr->nparams	= nparams;
-						while(nparams-- > 0) {
+						while(nparams-- > 0)
 							expr->params[nparams] = params[nparams];
-						}
 						plpgsql_dstring_free(&ds);
 						$$.expr = expr;
 					}
@@ -936,7 +930,8 @@ stmt_fors		: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_
 						new->cmd_type = PLPGSQL_STMT_FORS;
 						new->lineno   = $3;
 						new->label	  = $1;
-						switch ($4->dtype) {
+						switch ($4->dtype)
+						{
 							case PLPGSQL_DTYPE_REC:
 								new->rec = $4;
 								break;
@@ -965,7 +960,8 @@ stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop lo
 						new->cmd_type = PLPGSQL_STMT_DYNFORS;
 						new->lineno   = $3;
 						new->label	  = $1;
-						switch ($4->dtype) {
+						switch ($4->dtype)
+						{
 							case PLPGSQL_DTYPE_REC:
 								new->rec = $4;
 								break;
@@ -985,9 +981,7 @@ stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop lo
 					}
 
 fors_target		: T_RECORD
-					{
-						$$ = yylval.rec;
-					}
+					{ $$ = yylval.rec; }
 				| T_ROW
 					{
 						$$ = (PLpgSQL_rec *)(yylval.row);
@@ -1026,10 +1020,12 @@ stmt_return		: K_RETURN lno
 						new = malloc(sizeof(PLpgSQL_stmt_return));
 						memset(new, 0, sizeof(PLpgSQL_stmt_return));
 
-						if (plpgsql_curr_compile->fn_retistuple) {
+						if (plpgsql_curr_compile->fn_retistuple)
+						{
 							new->retistuple = true;
 							new->retrecno	= -1;
-							switch (tok = yylex()) {
+							switch (tok = yylex())
+							{
 								case K_NULL:
 									expr = NULL;
 									break;
@@ -1047,9 +1043,8 @@ stmt_return		: K_RETURN lno
 									yyerror("return type mismatch in function returning table row");
 									break;
 							}
-							if (yylex() != ';') {
+							if (yylex() != ';')
 								yyerror("expected ';'");
-							}
 						} else {
 							new->retistuple = false;
 							expr = plpgsql_read_expression(';', ";");
@@ -1118,7 +1113,8 @@ raise_level		: K_EXCEPTION
 
 raise_params	: raise_params raise_param
 					{
-						if ($1.nused == $1.nalloc) {
+						if ($1.nused == $1.nalloc)
+						{
 							$1.nalloc *= 2;
 							$1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
 						}
@@ -1263,12 +1259,13 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, sqlstart);
 
-	while((tok = yylex()) != until) {
+	while((tok = yylex()) != until)
+	{
 		if (tok == ';') break;
-		if (plpgsql_SpaceScanned) {
+		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
-		}
-		switch (tok) {
+		switch (tok)
+		{
 			case T_VARIABLE:
 				params[nparams] = yylval.var->varno;
 				sprintf(buf, " $%d ", ++nparams);
@@ -1288,7 +1285,8 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 				break;
 
 			default:
-				if (tok == 0) {
+				if (tok == 0)
+				{
 					plpgsql_error_lineno = lno;
 					plpgsql_comperrinfo();
 					elog(ERROR, "missing %s at end of SQL statement", s);
@@ -1303,9 +1301,8 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 	expr->query			= strdup(plpgsql_dstring_get(&ds));
 	expr->plan			= NULL;
 	expr->nparams		= nparams;
-	while(nparams-- > 0) {
+	while(nparams-- > 0)
 		expr->params[nparams] = params[nparams];
-	}
 	plpgsql_dstring_free(&ds);
 
 	return expr;
@@ -1331,8 +1328,10 @@ make_select_stmt()
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, "SELECT ");
 
-	while((tok = yylex()) != K_INTO) {
-		if (tok == ';') {
+	while((tok = yylex()) != K_INTO)
+	{
+		if (tok == ';')
+		{
 			PLpgSQL_stmt_execsql		*execsql;
 
 			expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - 1);
@@ -1340,9 +1339,8 @@ make_select_stmt()
 			expr->query			= strdup(plpgsql_dstring_get(&ds));
 			expr->plan			= NULL;
 			expr->nparams		= nparams;
-			while(nparams-- > 0) {
+			while(nparams-- > 0)
 				expr->params[nparams] = params[nparams];
-			}
 			plpgsql_dstring_free(&ds);
 
 			execsql = malloc(sizeof(PLpgSQL_stmt_execsql));
@@ -1352,10 +1350,10 @@ make_select_stmt()
 			return (PLpgSQL_stmt *)execsql;
 		}
 
-		if (plpgsql_SpaceScanned) {
+		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
-		}
-		switch (tok) {
+		switch (tok)
+		{
 			case T_VARIABLE:
 				params[nparams] = yylval.var->varno;
 				sprintf(buf, " $%d ", ++nparams);
@@ -1375,7 +1373,8 @@ make_select_stmt()
 				break;
 
 			default:
-				if (tok == 0) {
+				if (tok == 0)
+				{
 					plpgsql_error_lineno = yylineno;
 					plpgsql_comperrinfo();
 					elog(ERROR, "unexpected end of file");
@@ -1386,7 +1385,8 @@ make_select_stmt()
 	}
 
 	tok = yylex();
-	switch (tok) {
+	switch (tok)
+	{
 		case T_ROW:
 			row = yylval.row;
 			break;
@@ -1404,7 +1404,8 @@ make_select_stmt()
 				char			*fieldnames[1024];
 				int				varnos[1024];
 
-				switch (tok) {
+				switch (tok)
+				{	
 					case T_VARIABLE:
 						var = yylval.var;
 						fieldnames[0] = strdup(yytext);
@@ -1418,9 +1419,11 @@ make_select_stmt()
 						break;
 				}
 
-				while ((tok = yylex()) == ',') {
+				while ((tok = yylex()) == ',')
+				{
 					tok = yylex();
-					switch(tok) {
+					switch(tok)
+					{
 						case T_VARIABLE:
 							var = yylval.var;
 							fieldnames[nfields] = strdup(yytext);
@@ -1445,7 +1448,8 @@ make_select_stmt()
 				row->nfields = nfields;
 				row->fieldnames = malloc(sizeof(char *) * nfields);
 				row->varnos = malloc(sizeof(int) * nfields);
-				while (--nfields >= 0) {
+				while (--nfields >= 0)
+				{
 					row->fieldnames[nfields] = fieldnames[nfields];
 					row->varnos[nfields] = varnos[nfields];
 				}
@@ -1458,14 +1462,15 @@ make_select_stmt()
 
 		default:
 			{
-				if (plpgsql_SpaceScanned) {
+				if (plpgsql_SpaceScanned)
 					plpgsql_dstring_append(&ds, " ");
-				}
 				plpgsql_dstring_append(&ds, yytext);
 
-				while(1) {
+				while(1)
+				{
 					tok = yylex();
-					if (tok == ';') {
+					if (tok == ';')
+					{
 						PLpgSQL_stmt_execsql	*execsql;
 
 						expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - 1);
@@ -1485,10 +1490,10 @@ make_select_stmt()
 						return (PLpgSQL_stmt *)execsql;
 					}
 
-					if (plpgsql_SpaceScanned) {
+					if (plpgsql_SpaceScanned)
 						plpgsql_dstring_append(&ds, " ");
-					}
-					switch (tok) {
+					switch (tok)
+					{
 						case T_VARIABLE:
 							params[nparams] = yylval.var->varno;
 							sprintf(buf, " $%d ", ++nparams);
@@ -1508,7 +1513,8 @@ make_select_stmt()
 							break;
 
 						default:
-							if (tok == 0) {
+							if (tok == 0)
+							{
 								plpgsql_error_lineno = yylineno;
 								plpgsql_comperrinfo();
 								elog(ERROR, "unexpected end of file");
@@ -1523,7 +1529,8 @@ make_select_stmt()
 	/************************************************************
 	 * Eat up the rest of the statement after the target fields
 	 ************************************************************/
-	while(1) {
+	while(1)
+	{
 		if (!have_nexttok) {
 			tok = yylex();
 		}
@@ -1532,10 +1539,10 @@ make_select_stmt()
 			break;
 		}
 
-		if (plpgsql_SpaceScanned) {
+		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
-		}
-		switch (tok) {
+		switch (tok)
+		{
 			case T_VARIABLE:
 				params[nparams] = yylval.var->varno;
 				sprintf(buf, " $%d ", ++nparams);
@@ -1555,7 +1562,8 @@ make_select_stmt()
 				break;
 
 			default:
-				if (tok == 0) {
+				if (tok == 0)
+				{
 					plpgsql_error_lineno = yylineno;
 					plpgsql_comperrinfo();
 					elog(ERROR, "unexpected end of file");
@@ -1570,9 +1578,8 @@ make_select_stmt()
 	expr->query			= strdup(plpgsql_dstring_get(&ds));
 	expr->plan			= NULL;
 	expr->nparams		= nparams;
-	while(nparams-- > 0) {
+	while(nparams-- > 0)
 		expr->params[nparams] = params[nparams];
-	}
 	plpgsql_dstring_free(&ds);
 
 	select = malloc(sizeof(PLpgSQL_stmt_select));
@@ -1600,7 +1607,8 @@ make_tupret_expr(PLpgSQL_row *row)
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, "SELECT ");
 
-	for (i = 0; i < row->nfields; i++) {
+	for (i = 0; i < row->nfields; i++)
+	{
 		sprintf(buf, "%s$%d", (i > 0) ? "," : "", i + 1);
 		plpgsql_dstring_append(&ds, buf);
 		expr->params[i] = row->varnos[i];
