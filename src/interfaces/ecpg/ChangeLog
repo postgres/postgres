@@ -1746,5 +1746,10 @@ Mon Feb 16 08:17:19 CET 2004
 	- Cleaned up parser a little bit. It does not make sense to allow a
 	  typename to be typedef'ed that cannot be parsed as variable type.
 	- Allowed some SQL keywords to be used as C variable names.
+
+Tue Feb 24 16:48:57 CET 2004
+
+	- Corrected error handling in PGTYPEStimestamp_from_asc.
+	- Set pgtypeslib version to 1.2.
 	- Set ecpg version to 3.1.1.
 

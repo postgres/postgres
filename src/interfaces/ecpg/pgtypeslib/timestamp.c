@@ -291,7 +291,6 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	char	   *realptr;
 	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
-	errno = 0;
 	if (strlen(str) >= sizeof(lowstr))
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
@@ -338,6 +337,8 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 
 	/* AdjustTimestampForTypmod(&result, typmod); */
 
+	/* Since it's difficult to test for noresult, make sure errno is 0 if no error occured. */
+	errno = 0;
 	return result;
 }
 
