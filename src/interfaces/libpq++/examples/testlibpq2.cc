@@ -24,8 +24,6 @@ INSERT INTO TBL1 values (10);
 main()
 {
   char* dbName;
-  int nFields;
-  int i,j;
 
   /* begin, by creating the parameter environtment for a backend
      connection. When no parameters are given then the system will

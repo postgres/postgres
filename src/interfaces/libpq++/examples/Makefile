@@ -5,7 +5,11 @@
 SRCDIR= ../..
 include ../../Makefile.global
 
-CXXFLAGS= $(CFLAGS)
+# We have to override -Werror, which makes warnings, fatal, because we
+# inevitably get the warning, "abstract declarator used as declaration"
+# because of our inclusion of c.h and we don't know how to stop that.
+
+CXXFLAGS= $(CFLAGS) -Wno-error
 
 INCLUDE_OPT= \
              -I.. \

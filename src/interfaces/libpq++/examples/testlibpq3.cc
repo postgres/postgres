@@ -35,9 +35,8 @@ extern "C" {
 main()
 {
   char* dbName;
-  int nFields;
-  int i,j;
   int i_fnum, d_fnum, p_fnum;
+  int i;
 
   /* begin, by creating the parameter environtment for a backend
      connection. When no parameters are given then the system will

@@ -7,12 +7,9 @@
 #include <stdio.h>
 #include "libpq++.H"
 
-#define DEBUG printf("Got here %d\n", __LINE__);
 main()
 {
   char* dbName;
-  int nFields;
-  int i,j;
 
   /* begin, by creating the parameter environment for a backend
      connection. When no parameters are given then the system will
