@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.254 2001/11/02 18:39:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.255 2001/11/04 19:55:31 tgl Exp $
  *
  * NOTES
  *
@@ -98,6 +98,7 @@
 #include "nodes/nodes.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
@@ -154,9 +155,6 @@ int			MaxBackends = DEF_MAXBACKENDS;
 
 
 static char *progname = (char *) NULL;
-
-/* flag to indicate that SIGHUP arrived during server loop */
-static volatile bool got_SIGHUP = false;
 
 /*
  * Default Values
@@ -239,7 +237,8 @@ static void reset_shared(unsigned short port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
-static void schedule_checkpoint(SIGNAL_ARGS);
+static void sigusr1_handler(SIGNAL_ARGS);
+static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
@@ -722,9 +721,8 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, schedule_checkpoint);		/* start a background
-												 * checkpoint */
-	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
+	pqsignal(SIGUSR1, sigusr1_handler);		/* message from child process */
+	pqsignal(SIGUSR2, dummy_handler);	/* unused, reserve for children */
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
@@ -867,8 +865,19 @@ ServerLoop(void)
 		Port	   *port;
 		fd_set		rmask,
 					wmask;
-		struct timeval *timeout = NULL;
-		struct timeval timeout_tv;
+		struct timeval timeout;
+
+		/*
+		 * The timeout for the select() below is normally set on the basis
+		 * of the time to the next checkpoint.  However, if for some reason
+		 * we don't have a next-checkpoint time, time out after 60 seconds.
+		 * This keeps checkpoint scheduling from locking up when we get new
+		 * connection requests infrequently (since we are likely to detect
+		 * checkpoint completion just after enabling signals below, after
+		 * we've already made the decision about how long to wait this time).
+		 */
+		timeout.tv_sec = 60;
+		timeout.tv_usec = 0;
 
 		if (CheckPointPID == 0 && checkpointed &&
 			Shutdown == NoShutdown && !FatalError && random_seed != 0)
@@ -878,12 +887,9 @@ ServerLoop(void)
 			if (CheckPointTimeout + checkpointed > now)
 			{
 				/*
-				 * Not time for checkpoint yet, so set a timeout for
-				 * select
+				 * Not time for checkpoint yet, so set select timeout
 				 */
-				timeout_tv.tv_sec = CheckPointTimeout + checkpointed - now;
-				timeout_tv.tv_usec = 0;
-				timeout = &timeout_tv;
+				timeout.tv_sec = CheckPointTimeout + checkpointed - now;
 			}
 			else
 			{
@@ -895,7 +901,10 @@ ServerLoop(void)
 				 * delay
 				 */
 				if (CheckPointPID == 0)
-					checkpointed = now - (9 * CheckPointTimeout) / 10;
+				{
+					timeout.tv_sec = CheckPointTimeout / 10;
+					checkpointed = now + timeout.tv_sec - CheckPointTimeout;
+				}
 			}
 		}
 
@@ -907,30 +916,20 @@ ServerLoop(void)
 
 		PG_SETMASK(&UnBlockSig);
 
-		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL, timeout) < 0)
+		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL, &timeout) < 0)
 		{
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
-			elog(DEBUG, "ServerLoop: select failed: %s", strerror(errno));
+			elog(DEBUG, "ServerLoop: select failed: %m");
 			return STATUS_ERROR;
 		}
 
 		/*
-		 * Block all signals until we wait again
+		 * Block all signals until we wait again.  (This makes it safe
+		 * for our signal handlers to do nontrivial work.)
 		 */
 		PG_SETMASK(&BlockSig);
-
-		/*
-		 * Respond to signals, if needed
-		 */
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-			load_hba_and_ident();
-			load_password_cache();
-		}
 
 		/*
 		 * Select a random seed at the time of first receiving a request.
@@ -1382,9 +1381,12 @@ SIGHUP_handler(SIGNAL_ARGS)
 
 	if (Shutdown <= SmartShutdown)
 	{
-		got_SIGHUP = true;
 		SignalChildren(SIGHUP);
+		ProcessConfigFile(PGC_SIGHUP);
+		load_hba_and_ident();
 	}
+
+	PG_SETMASK(&UnBlockSig);
 
 	errno = save_errno;
 }
@@ -1406,20 +1408,6 @@ pmdie(SIGNAL_ARGS)
 
 	switch (postgres_signal_arg)
 	{
-		case SIGUSR2:
-
-			/*
-			 * Send SIGUSR2 to all children (AsyncNotifyHandler)
-			 */
-			if (Shutdown > SmartShutdown)
-			{
-				errno = save_errno;
-				return;
-			}
-			SignalChildren(SIGUSR2);
-			errno = save_errno;
-			return;
-
 		case SIGTERM:
 
 			/*
@@ -1428,27 +1416,18 @@ pmdie(SIGNAL_ARGS)
 			 * Wait for children to end their work and ShutdownDataBase.
 			 */
 			if (Shutdown >= SmartShutdown)
-			{
-				errno = save_errno;
-				return;
-			}
+				break;
 			Shutdown = SmartShutdown;
 			elog(DEBUG, "smart shutdown request");
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
-			{
-				errno = save_errno;
-				return;
-			}
+				break;
 
 			/*
 			 * No children left. Shutdown data base system.
 			 */
 			if (StartupPID > 0 || FatalError)	/* let reaper() handle
 												 * this */
-			{
-				errno = save_errno;
-				return;
-			}
+				break;
 			if (ShutdownPID > 0)
 			{
 				elog(REALLYFATAL, "shutdown process %d already running",
@@ -1457,8 +1436,7 @@ pmdie(SIGNAL_ARGS)
 			}
 
 			ShutdownPID = ShutdownDataBase();
-			errno = save_errno;
-			return;
+			break;
 
 		case SIGINT:
 
@@ -1469,10 +1447,7 @@ pmdie(SIGNAL_ARGS)
 			 * and exit) and ShutdownDataBase when they are gone.
 			 */
 			if (Shutdown >= FastShutdown)
-			{
-				errno = save_errno;
-				return;
-			}
+				break;
 			elog(DEBUG, "fast shutdown request");
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
@@ -1482,14 +1457,12 @@ pmdie(SIGNAL_ARGS)
 					elog(DEBUG, "aborting any active transactions");
 					SignalChildren(SIGTERM);
 				}
-				errno = save_errno;
-				return;
+				break;
 			}
 			if (Shutdown > NoShutdown)
 			{
 				Shutdown = FastShutdown;
-				errno = save_errno;
-				return;
+				break;
 			}
 			Shutdown = FastShutdown;
 
@@ -1498,10 +1471,7 @@ pmdie(SIGNAL_ARGS)
 			 */
 			if (StartupPID > 0 || FatalError)	/* let reaper() handle
 												 * this */
-			{
-				errno = save_errno;
-				return;
-			}
+				break;
 			if (ShutdownPID > 0)
 			{
 				elog(REALLYFATAL, "shutdown process %d already running",
@@ -1510,8 +1480,7 @@ pmdie(SIGNAL_ARGS)
 			}
 
 			ShutdownPID = ShutdownDataBase();
-			errno = save_errno;
-			return;
+			break;
 
 		case SIGQUIT:
 
@@ -1528,11 +1497,13 @@ pmdie(SIGNAL_ARGS)
 				kill(StartupPID, SIGQUIT);
 			if (DLGetHead(BackendList))
 				SignalChildren(SIGQUIT);
+			ExitPostmaster(0);
 			break;
 	}
 
-	/* exit postmaster */
-	ExitPostmaster(0);
+	PG_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 /*
@@ -1542,10 +1513,8 @@ static void
 reaper(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
-
 #else
 	union wait	status;			/* backend exit status */
 #endif
@@ -1553,8 +1522,6 @@ reaper(SIGNAL_ARGS)
 	int			pid;			/* process id of dead backend */
 
 	PG_SETMASK(&BlockSig);
-	/* It's not really necessary to reset the handler each time is it? */
-	pqsignal(SIGCHLD, reaper);
 
 	if (DebugLvl)
 		elog(DEBUG, "reaping dead processes");
@@ -1640,8 +1607,7 @@ reaper(SIGNAL_ARGS)
 			CheckPointPID = 0;
 			checkpointed = time(NULL);
 
-			errno = save_errno;
-			return;
+			goto reaper_done;
 		}
 
 		CleanupProc(pid, exitstatus);
@@ -1654,34 +1620,28 @@ reaper(SIGNAL_ARGS)
 		 * StartupDataBase.
 		 */
 		if (DLGetHead(BackendList) || StartupPID > 0 || ShutdownPID > 0)
-		{
-			errno = save_errno;
-			return;
-		}
+			goto reaper_done;
 		elog(DEBUG, "all server processes terminated; reinitializing shared memory and semaphores");
 
 		shmem_exit(0);
 		reset_shared(PostPortNumber);
 
 		StartupPID = StartupDataBase();
-		errno = save_errno;
-		return;
+
+		goto reaper_done;
 	}
 
 	if (Shutdown > NoShutdown)
 	{
 		if (DLGetHead(BackendList))
-		{
-			errno = save_errno;
-			return;
-		}
+			goto reaper_done;
 		if (StartupPID > 0 || ShutdownPID > 0)
-		{
-			errno = save_errno;
-			return;
-		}
+			goto reaper_done;
 		ShutdownPID = ShutdownDataBase();
 	}
+
+reaper_done:
+	PG_SETMASK(&UnBlockSig);
 
 	errno = save_errno;
 }
@@ -2260,23 +2220,67 @@ ExitPostmaster(int status)
 	proc_exit(status);
 }
 
-/* Request to schedule a checkpoint (no-op if one is currently running) */
+/*
+ * sigusr1_handler - handle signal conditions from child processes
+ */
 static void
-schedule_checkpoint(SIGNAL_ARGS)
+sigusr1_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
 	PG_SETMASK(&BlockSig);
 
-	/* Ignore request if checkpointing is currently disabled */
-	if (CheckPointPID == 0 && checkpointed &&
-		Shutdown == NoShutdown && !FatalError && random_seed != 0)
+	if (CheckPostmasterSignal(PMSIGNAL_DO_CHECKPOINT))
 	{
-		CheckPointPID = CheckPointDataBase();
-		/* note: if fork fails, CheckPointPID stays 0; nothing happens */
+		/*
+		 * Request to schedule a checkpoint
+		 *
+		 * Ignore request if checkpoint is already running or
+		 * checkpointing is currently disabled
+		 */
+		if (CheckPointPID == 0 && checkpointed &&
+			Shutdown == NoShutdown && !FatalError && random_seed != 0)
+		{
+			CheckPointPID = CheckPointDataBase();
+			/* note: if fork fails, CheckPointPID stays 0; nothing happens */
+		}
 	}
 
+	if (CheckPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE))
+	{
+		/*
+		 * Password file has changed.
+		 */
+		load_password_cache();
+	}
+
+	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_CHILDREN))
+	{
+		/*
+		 * Send SIGUSR2 to all children (triggers AsyncNotifyHandler).
+		 * See storage/ipc/sinvaladt.c for the use of this.
+		 */
+		if (Shutdown == NoShutdown)
+			SignalChildren(SIGUSR2);
+	}
+
+	PG_SETMASK(&UnBlockSig);
+
 	errno = save_errno;
+}
+
+
+/*
+ * Dummy signal handler
+ *
+ * We use this for signals that we don't actually use in the postmaster,
+ * but we do use in backends.  If we SIG_IGN such signals in the postmaster,
+ * then a newly started backend might drop a signal that arrives before it's
+ * able to reconfigure its signal processing.  (See notes in postgres.c.)
+ */
+static void
+dummy_handler(SIGNAL_ARGS)
+{
 }
 
 

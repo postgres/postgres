@@ -1,7 +1,7 @@
 #
 # Makefile for storage/ipc
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.16 2001/09/27 19:10:02 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.17 2001/11/04 19:55:31 tgl Exp $
 #
 
 subdir = src/backend/storage/ipc
@@ -15,7 +15,7 @@ override CFLAGS+= -fno-inline
 endif
 endif
 
-OBJS = ipc.o ipci.o shmem.o shmqueue.o sinval.o sinvaladt.o
+OBJS = ipc.o ipci.o pmsignal.o shmem.o shmqueue.o sinval.o sinvaladt.o
 
 all: SUBSYS.o
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.44 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.45 2001/11/04 19:55:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "storage/lwlock.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"
@@ -121,4 +122,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	 * Set up free-space map
 	 */
 	InitFreeSpaceMap();
+
+	/*
+	 * Set up child-to-postmaster signaling mechanism
+	 */
+	PMSignalInit();
 }

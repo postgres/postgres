@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.88 2001/11/02 18:39:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.89 2001/11/04 19:55:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <unistd.h>
 
 #include "access/heapam.h"
@@ -27,6 +26,7 @@
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
+#include "storage/pmsignal.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -180,8 +180,7 @@ write_password_file(Relation rel)
 	/*
 	 * Signal the postmaster to reload its password-file cache.
 	 */
-	if (IsUnderPostmaster)
-		kill(getppid(), SIGHUP);
+	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
 }
 
 
