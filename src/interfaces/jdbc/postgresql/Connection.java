@@ -635,8 +635,11 @@ public class Connection implements java.sql.Connection
    * @return a ResultSet holding the results
    * @exception SQLException if a database error occurs
    */
-  public synchronized ResultSet ExecSQL(String sql) throws SQLException
+  public ResultSet ExecSQL(String sql) throws SQLException
   {
+    // added Oct 7 1998 to give us thread safety.
+    synchronized(pg_stream) {
+      
     Field[] fields = null;
     Vector tuples = new Vector();
     byte[] buf = new byte[sql.length()];
@@ -737,6 +740,7 @@ public class Connection implements java.sql.Connection
       if (final_error != null)
 	throw final_error;
       return new ResultSet(this, fields, tuples, recv_status, 1);
+    }
   }
   
   /**

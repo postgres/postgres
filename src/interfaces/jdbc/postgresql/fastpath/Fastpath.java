@@ -68,6 +68,9 @@ public class Fastpath
    */
   public Object fastpath(int fnid,boolean resulttype,FastpathArg[] args) throws SQLException
   {
+    // added Oct 7 1998 to give us thread safety
+    synchronized(stream) {
+      
     // send the function call
     try {
       // 70 is 'F' in ASCII. Note: don't use SendChar() here as it adds padding
@@ -152,6 +155,7 @@ public class Fastpath
 	default:
 	  throw new SQLException("Fastpath: protocol error. Got '"+((char)in)+"'");
 	}
+    }
     }
   }
   
