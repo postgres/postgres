@@ -5,7 +5,7 @@
 
 #set -x
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.27 2002/01/11 06:33:01 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.28 2002/01/11 06:48:41 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -158,7 +158,7 @@ fi
 # we are done with SQL database access
 # shutdown forces buffers to disk
 
-pg_ctl stop
+pg_ctl -w stop
 if [ "$?" -ne 0 ]
 then	echo "Unable to stop database server.;  exiting" 1>&2
 	exit 1
@@ -271,7 +271,7 @@ fi
 
 # Restart server with moved data
 
-pg_ctl start
+pg_ctl -w start
 if [ "$?" -ne 0 ]
 then	echo "Unable to restart database server.;  exiting" 1>&2
 	exit 1
@@ -283,11 +283,14 @@ if [ "$SRC_VERSION" = "7.1" ]
 then	echo "Set int8 sequence values from 7.1..."
 
 	psql -d template1 -At -c "SELECT datname FROM pg_database" | 
+	grep -v '^template0$' | # no system databases
+	grep -v '^template1$' | # no system databases
 	while read DB
 	do	
 		echo "$DB"
 		# XXX is concurrency a problem here?
 		psql -d "$DB" -At -c "SELECT relname FROM pg_class where relkind = 'S';" |
+		grep -v '^pg_' | # no system tables
 		while read SEQUENCE
 		do
 			psql -d "$DB" -At <<SQL_END
