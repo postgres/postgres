@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.365 2002/09/02 02:13:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.366 2002/09/05 22:52:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -416,7 +416,6 @@ static void doNegateFloat(Value *v);
 /* precedence: lowest to highest */
 %left		UNION EXCEPT
 %left		INTERSECT
-%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 %left		OR
 %left		AND
 %right		NOT
@@ -425,7 +424,7 @@ static void doNegateFloat(Value *v);
 %nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
-%nonassoc	BETWEEN DISTINCT
+%nonassoc	BETWEEN
 %nonassoc	IN_P
 %left		POSTFIXOP		/* dummy for postfix Op rules */
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
@@ -443,6 +442,14 @@ static void doNegateFloat(Value *v);
 %left		COLLATE
 %left		TYPECAST
 %left		'.'
+/*
+ * These might seem to be low-precedence, but actually they are not part
+ * of the arithmetic hierarchy at all in their use as JOIN operators.
+ * We make them high-precedence to support their use as function names.
+ * They wouldn't be given a precedence at all, were it not that we need
+ * left-associativity among the JOIN rules themselves.
+ */
+%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 %%
 
 /*
@@ -5419,6 +5426,7 @@ r_expr:  row IN_P select_with_parens
 					$$ = (Node *)makeOverlaps($1, $3);
 				}
 			| row IS DISTINCT FROM row
+			%prec IS
 				{
 					/* IS DISTINCT FROM has the following rules for non-array types:
 					 * a) the row lengths must be equal
@@ -5736,13 +5744,13 @@ a_expr:		c_expr									{ $$ = $1; }
 					b->booltesttype = IS_NOT_UNKNOWN;
 					$$ = (Node *)b;
 				}
-			| a_expr IS DISTINCT FROM a_expr			%prec DISTINCT
+			| a_expr IS DISTINCT FROM a_expr			%prec IS
 				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
-			| a_expr IS OF '(' type_list ')'
+			| a_expr IS OF '(' type_list ')'			%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(OF, "=", $1, (Node *) $5);
 				}
-			| a_expr IS NOT OF '(' type_list ')'
+			| a_expr IS NOT OF '(' type_list ')'		%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(OF, "!=", $1, (Node *) $6);
 				}
@@ -5890,13 +5898,13 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeA_Expr(OP, $1, NULL, $2); }
 			| b_expr qual_Op					%prec POSTFIXOP
 				{ $$ = (Node *) makeA_Expr(OP, $2, $1, NULL); }
-			| b_expr IS DISTINCT FROM b_expr	%prec Op
+			| b_expr IS DISTINCT FROM b_expr	%prec IS
 				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
-			| b_expr IS OF '(' type_list ')'
+			| b_expr IS OF '(' type_list ')'	%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(OF, "=", $1, (Node *) $5);
 				}
-			| b_expr IS NOT OF '(' type_list ')'
+			| b_expr IS NOT OF '(' type_list ')'	%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(OF, "!=", $1, (Node *) $6);
 				}
