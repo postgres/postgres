@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.12 2001/09/30 22:17:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.13 2002/02/24 23:59:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -161,7 +161,7 @@ if [ "$haveenv" = "t" ]; then
     echo "You can now create a database using"
     echo "  CREATE DATABASE <name> WITH LOCATION = '$Location'"
     echo "in SQL, or"
-    echo "  createdb <name> -D '$Location'"
+    echo "  createdb -D '$Location' <name>"
     echo "from the shell."
 fi
 echo
