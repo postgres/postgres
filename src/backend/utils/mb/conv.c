@@ -2,7 +2,7 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: conv.c,v 1.6 1999/03/24 07:02:16 ishii Exp $
+ * $Id: conv.c,v 1.7 1999/04/25 18:09:54 tgl Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -543,6 +543,7 @@ mic2latin4(unsigned char *mic, unsigned char *p, int len)
 {
 	mic2latin(mic, p, len, LC_ISO8859_4);
 }
+#ifdef NOT_USED
 static void
 latin52mic(unsigned char *l, unsigned char *p, int len)
 {
@@ -553,6 +554,7 @@ mic2latin5(unsigned char *mic, unsigned char *p, int len)
 {
 	mic2latin(mic, p, len, LC_ISO8859_5);
 }
+#endif
 
 /*
  * ASCII ---> MIC
