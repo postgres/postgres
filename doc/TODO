@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 12 15:26:29 EST 2001
+Last updated:		Mon Nov 12 20:14:51 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -253,7 +253,7 @@ REFERENTIAL INTEGRITY
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
-* Make triggers refer to columns by oid, not name
+* Make triggers refer to columns by number, not name
 * Enforce referential integrity for system tables
 * INSERT & UPDATE/DELETE in transaction of primary key fails with
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
