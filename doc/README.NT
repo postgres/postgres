@@ -1,0 +1,55 @@
+From: "Joost Kraaijeveld" <JKraaijeveld@askesis.nl>
+To: "Pgsql-Ports@Postgresql. Org" <pgsql-ports@postgreSQL.org>
+Subject: RE: [PORTS] Re: psql under win32
+Date: Wed, 21 Apr 1999 07:07:47 +0200
+Message-ID: <000001be8bb4$e59b0ab0$0300a8c0@abraracourcix.askesis.nl>
+MIME-Version: 1.0
+
+Installing PostgreSQL on NT:
+
+---------------------------------------------------------------------------
+
+It can be done by done by typing configure, make and make install.
+
+1. Install the Cygwin package
+2. Update to EGCS 1.1.2
+
+1. Install the Andy Piper Tools
+
+1. Download the Cygwin32 IPC Package by Ludovic LANGE.
+2. Untar the package and follow the readme instructions.
+3. I tested 1.03.
+4. I used the \cygwin-b20\h-i568-cygwin32\i586-cygwin32\lib and
+\cygwin-b20\h-i568-cygwin32\i586-cygwin32\include\sys instead of the
+/usr/local/lib and usr/local/include/sys.
+
+1. Download the current snapshot.tar.gz (24-3-98).
+2. Untar the package.
+3. Copy the files from \pgsql\src\win32 according to the readme file.
+3. Edit \pgsql\src\template\cygwin32 if needed (I had to adjust the YFLAGS
+path).
+4. ./configure
+5. make
+6. create the directory /usr/local/pgsql manually: the mkdir cannot create a
+directory 2 levels deep in one step.
+7. make install
+8. cd /usr/lical/pgsql/doc
+9. make install
+10. Set the environmental data
+11. Initdb --username=jkr (do not run this command as administrator)
+
+12. Open a new Cygwin command prompt
+13. Start "ipc-deamon&" (background proces)
+14. Start "postmaster -i 2>&1 > /tmp/postgres.log &" (background proces)
+15. Start "tail -f /tmp/postgres.log" to see the messages
+
+16. cd /usr/src/pgsql/src/test/regress
+17. make all runtest
+
+All test should be run, allthought the latest snapshot I tested (18-4)
+appears to have some problems with locking.
+
+Joost
+
+
+
