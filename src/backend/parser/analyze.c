@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.187 2001/05/22 16:37:15 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.188 2001/06/04 16:17:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1742,13 +1742,15 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	}
 	else
 	{
-		List	   *actions;
+		List	   *oldactions;
+		List	   *newactions = NIL;
 
 		/*
 		 * transform each statement, like parse_analyze()
 		 */
-		foreach(actions, stmt->actions)
+		foreach(oldactions, stmt->actions)
 		{
+			Node	   *action = (Node *) lfirst(oldactions);
 			ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
 			Query	   *sub_qry,
 					   *top_subqry;
@@ -1775,7 +1777,16 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			addRTEtoQuery(sub_pstate, newrte, false, true);
 
 			/* Transform the rule action statement */
-			top_subqry = transformStmt(sub_pstate, lfirst(actions));
+			top_subqry = transformStmt(sub_pstate, action);
+
+			/*
+			 * We cannot support utility-statement actions (eg NOTIFY)
+			 * with nonempty rule WHERE conditions, because there's no
+			 * way to make the utility action execute conditionally.
+			 */
+			if (top_subqry->commandType == CMD_UTILITY &&
+				stmt->whereClause != NULL)
+				elog(ERROR, "Rules with WHERE conditions may only have SELECT, INSERT, UPDATE, or DELETE actions");
 
 			/*
 			 * If the action is INSERT...SELECT, OLD/NEW have been pushed
@@ -1846,11 +1857,13 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
 			}
 
-			lfirst(actions) = top_subqry;
+			newactions = lappend(newactions, top_subqry);
 
 			release_pstate_resources(sub_pstate);
 			pfree(sub_pstate);
 		}
+
+		stmt->actions = newactions;
 	}
 
 	return qry;
