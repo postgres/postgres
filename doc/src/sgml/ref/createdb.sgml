@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.8 1999/12/07 22:41:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.9 2000/02/10 20:08:55 petere Exp $
 Postgres documentation
 -->
 
@@ -121,6 +121,8 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
        <para>
 	Specifies the name of the database to be created.  The name must be
 	unique among all <productname>PostgreSQL</productname> databases in this installation.
+        The default is to create a database with the same name as the
+        current system user.
        </para>
       </listitem>
      </varlistentry>

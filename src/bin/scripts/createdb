@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.7 2000/01/19 20:08:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.8 2000/02/10 20:08:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -126,7 +126,7 @@ fi
 
 if [ -n "$MB" ]
 then
-        mbcode=`pg_encoding "$MB"`
+        mbcode=`${PATHNAME}pg_encoding "$MB"`
         if [ -z "$mbcode" ]
 	then
 		echo "$CMDNAME: \"$MB\" is not a valid encoding name"
@@ -135,9 +135,12 @@ then
 fi
 
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name"
-        echo "Try -? for help."
-	exit 1
+        if [ "$PGUSER" ]; then
+                dbname=$PGUSER
+        else
+                dbname=`${PATHNAME}pg_id -u -n`
+        fi
+        [ $? -ne 0 ] && exit 1
 fi
 
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.23 2000/02/07 23:10:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.24 2000/02/10 20:08:55 petere Exp $
 Postgres documentation
 -->
 
@@ -1645,24 +1645,6 @@ bar
       </varlistentry>
 
       <varlistentry>
-        <term><envar>EXIT_ON_ERROR</envar></term>
-	<listitem>
-	<para>
-	By default, if non-interactive scripts encounter an error, such as a
-	malformed <acronym>SQL</acronym> query or internal meta-command,
-	processing continues. This is has been the traditional behaviour of
-        <application>psql</application>but is often less than desirable. If this variable
-	is set, script processing will immediately terminate. If the script was
-	called from another script it will terminate in the same fashion.
-	If the outermost script was not called from an interactive <application>psql</application>
-	session but rather using the <option>-f</option> option, <application>psql</application>
-	will return error code 3, to distinguish this case from fatal
-	error conditions (error code 1).
-	</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><envar>HISTCONTROL</envar></term>
 	<listitem>
 	<para>
@@ -1762,6 +1744,24 @@ bar
         or a few objects this is fine. However, if you intend to transfer many
         large objects, it might be advisable to provide one explicit transaction
         block around all commands.
+	</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><envar>ON_ERROR_STOP</envar></term>
+	<listitem>
+	<para>
+	By default, if non-interactive scripts encounter an error, such as a
+	malformed <acronym>SQL</acronym> query or internal meta-command,
+	processing continues. This is has been the traditional behaviour of
+        <application>psql</application> but it is sometimes not desirable. If this variable
+	is set, script processing will immediately terminate. If the script was
+	called from another script it will terminate in the same fashion.
+	If the outermost script was not called from an interactive <application>psql</application>
+	session but rather using the <option>-f</option> option, <application>psql</application>
+	will return error code 3, to distinguish this case from fatal
+	error conditions (error code 1).
 	</para>
 	</listitem>
       </varlistentry>
@@ -1886,7 +1886,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
     <para>
     Since colons may legally appear in queries, the following rule applies: If the variable
-    is not set, the character sequence <quote>colon name</quote> is not changed. In any
+    is not set, the character sequence <quote>colon+name</quote> is not changed. In any
     case you can escape a colon with a backslash to protect it from interpretation.
     (The colon syntax for variables is standard <acronym>SQL</acronym> for embedded
     query languages, such as <application>ecpg</application>. The colon syntax for
@@ -1987,8 +1987,8 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
       <varlistentry>
         <term><literal>%:</literal><replaceable class="parameter">name</replaceable><literal>:</literal></term>
 	<listitem><para>
-	The value of the <application>psql</application>, <quote>magic</quote>, or environment
-	variable <replaceable class="parameter">name</replaceable>. See the section
+	The value of the <application>psql</application>, variable <replaceable
+        class="parameter">name</replaceable>. See the section
 	<quote><xref linkend="APP-PSQL-variables" endterm="APP-PSQL-variables-title"></quote>
 	for details.</para>
 	</listitem>
@@ -2024,7 +2024,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     <application>psql</application> returns 0 to the shell if it finished normally,
     1 if a fatal error of its own (out of memory, file not found) occurs, 2 if the
     connection to the backend went bad and the session is not interactive, and 3 if
-    an error occurred in a script and the variable <envar>EXIT_ON_ERROR</envar> was
+    an error occurred in a script and the variable <envar>ON_ERROR_STOP</envar> was
     set.
     </para>
 

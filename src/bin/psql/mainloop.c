@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.17 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.18 2000/02/10 20:08:56 petere Exp $
  */
 #include <c.h>
 #include "mainloop.h"
@@ -138,7 +138,7 @@ MainLoop(FILE *source)
 
 
 		/* Setting this will not have effect until next line. */
-		die_on_error = GetVariableBool(pset.vars, "EXIT_ON_ERROR");
+		die_on_error = GetVariableBool(pset.vars, "ON_ERROR_STOP");
 
 		/*
 		 * query_buf holds query already accumulated.  line is the

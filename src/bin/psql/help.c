@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.16 2000/02/07 23:10:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.17 2000/02/10 20:08:56 petere Exp $
  */
 #include <c.h>
 #include "help.h"
@@ -54,7 +54,7 @@ usage(void)
 	if (!user)
 	{
 #ifndef WIN32
-		pw = getpwuid(getuid());
+		pw = getpwuid(geteuid());
 		if (pw)
 			user = pw->pw_name;
 		else
