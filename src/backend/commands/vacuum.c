@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.148.2.1 2000/09/19 21:01:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.148.2.2 2000/10/17 01:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -815,6 +815,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 											   tuple.t_data->t_cmin))
 					{
 						tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
+						pgchanged = true;
 						tupgone = true;
 					}
 					else
@@ -829,6 +830,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 												tuple.t_data->t_cmin))
 					{
 						tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
+						pgchanged = true;
 						tupgone = true;
 					}
 					else
@@ -876,8 +878,10 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				{
 					if (tuple.t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
 					{
-						pgchanged = true;
 						tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
+						tuple.t_data->t_infomask &=
+							~(HEAP_XMAX_COMMITTED | HEAP_MARKED_FOR_UPDATE);
+						pgchanged = true;
 					}
 					else
 						tupgone = true;
@@ -892,6 +896,8 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					if (tuple.t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
 					{
 						tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
+						tuple.t_data->t_infomask &=
+							~(HEAP_XMAX_COMMITTED | HEAP_MARKED_FOR_UPDATE);
 						pgchanged = true;
 					}
 					else
@@ -905,6 +911,8 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					 * from crashed process. - vadim 06/02/97
 					 */
 					tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
+					tuple.t_data->t_infomask &=
+						~(HEAP_XMAX_COMMITTED | HEAP_MARKED_FOR_UPDATE);
 					pgchanged = true;
 				}
 				else
@@ -964,6 +972,14 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			{
 				ItemId		lpp;
 
+				/*
+				 * Here we are building a temporary copy of the page with
+				 * dead tuples removed.  Below we will apply
+				 * PageRepairFragmentation to the copy, so that we can
+				 * determine how much space will be available after
+				 * removal of dead tuples.  But note we are NOT changing
+				 * the real page yet...
+				 */
 				if (tempPage == (Page) NULL)
 				{
 					Size		pageSize;
@@ -973,14 +989,12 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					memmove(tempPage, page, pageSize);
 				}
 
+				/* mark it unused on the temp page */
 				lpp = &(((PageHeader) tempPage)->pd_linp[offnum - 1]);
-
-				/* mark it unused */
 				lpp->lp_flags &= ~LP_USED;
 
 				vpc->vpd_offsets[vpc->vpd_offsets_free++] = offnum;
 				tups_vacuumed++;
-
 			}
 			else
 			{
@@ -1548,19 +1562,44 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 					tuple.t_datamcxt = NULL;
 					tuple.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
-					/* Get page to move in */
+
+					/*
+					 * make a copy of the source tuple, and then mark the
+					 * source tuple MOVED_OFF.
+					 */
+					heap_copytuple_with_tuple(&tuple, &newtup);
+
+					RelationInvalidateHeapTuple(onerel, &tuple);
+
+					TransactionIdStore(myXID, (TransactionId *) &(tuple.t_data->t_cmin));
+					tuple.t_data->t_infomask &=
+						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
+					tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
+
+					/* Get page to move to */
 					cur_buffer = ReadBuffer(onerel, destvpd->vpd_blkno);
 
 					/*
 					 * We should LockBuffer(cur_buffer) but don't, at the
-					 * moment. If you'll do LockBuffer then UNLOCK it
-					 * before index_insert: unique btree-s call heap_fetch
-					 * to get t_infomask of inserted heap tuple !!!
+					 * moment.  This should be safe enough, since we have
+					 * exclusive lock on the whole relation.
+					 * If you'll do LockBuffer then UNLOCK it before
+					 * index_insert: unique btree-s call heap_fetch to get
+					 * t_infomask of inserted heap tuple !!!
 					 */
 					ToPage = BufferGetPage(cur_buffer);
 
 					/*
 					 * If this page was not used before - clean it.
+					 *
+					 * NOTE: a nasty bug used to lurk here.  It is possible
+					 * for the source and destination pages to be the same
+					 * (since this tuple-chain member can be on a page lower
+					 * than the one we're currently processing in the outer
+					 * loop).  If that's true, then after vc_vacpage() the
+					 * source tuple will have been moved, and tuple.t_data
+					 * will be pointing at garbage.  Therefore we must do
+					 * everything that uses tuple.t_data BEFORE this step!!
 					 *
 					 * This path is different from the other callers of
 					 * vc_vacpage, because we have already incremented the
@@ -1579,8 +1618,11 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 						vc_vacpage(ToPage, destvpd);
 						destvpd->vpd_offsets_used = sv_offsets_used;
 					}
-					heap_copytuple_with_tuple(&tuple, &newtup);
-					RelationInvalidateHeapTuple(onerel, &tuple);
+
+					/*
+					 * Update the state of the copied tuple, and store it
+					 * on the destination page.
+					 */
 					TransactionIdStore(myXID, (TransactionId *) &(newtup.t_data->t_cmin));
 					newtup.t_data->t_infomask &=
 						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
@@ -1601,19 +1643,14 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 						last_move_dest_block = destvpd->vpd_blkno;
 
 					/*
-					 * Set t_ctid pointing to itself for last tuple in
-					 * chain and to next tuple in chain otherwise.
+					 * Set new tuple's t_ctid pointing to itself for last
+					 * tuple in chain, and to next tuple in chain otherwise.
 					 */
 					if (!ItemPointerIsValid(&Ctid))
 						newtup.t_data->t_ctid = newtup.t_self;
 					else
 						newtup.t_data->t_ctid = Ctid;
 					Ctid = newtup.t_self;
-
-					TransactionIdStore(myXID, (TransactionId *) &(tuple.t_data->t_cmin));
-					tuple.t_data->t_infomask &=
-						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
-					tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 
 					num_moved++;
 
@@ -1648,10 +1685,7 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 						}
 					}
 					WriteBuffer(cur_buffer);
-					if (Cbuf == buf)
-						ReleaseBuffer(Cbuf);
-					else
-						WriteBuffer(Cbuf);
+					WriteBuffer(Cbuf);
 				}
 				cur_buffer = InvalidBuffer;
 				pfree(vtmove);
