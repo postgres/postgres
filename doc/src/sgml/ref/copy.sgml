@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.46 2003/05/09 21:19:48 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.47 2003/08/17 04:33:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -380,7 +380,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     The file format used for <command>COPY BINARY</command> changed in
     <application>PostgreSQL</application> 7.4. The new format consists
     of a file header, zero or more tuples containing the row data, and
-    a file trailer.
+    a file trailer. Headers and data are now in network byte order.
    </para>
 
    <refsect3>
@@ -481,6 +481,15 @@ Presently, all data values in a <command>COPY BINARY</command> file are
 assumed to be in binary format (format code one).  It is anticipated that a
 future extension may add a header field that allows per-column format codes
 to be specified.
+    </para>
+
+    <para>
+To determine the appropriate binary format for the actual tuple data you
+should consult the <application>PostgreSQL</application> source, in
+particular the <function>*send</> and <function>*recv</> functions for
+the data type (typically found in the <filename>src/backend/utils/adt</filename>
+directory). The <application>contrib/binarycopy</application> module
+can also be used to create an appropriate format file.
     </para>
 
     <para>
