@@ -1,0 +1,72 @@
+With version 7.1 of PostgreSQL server,  the old naming scheme for
+databases and tables (in $PGDATA/base) has changed.  The databases
+are put in folders for their OID in pg_database and the tables in
+that folder are named for their OIDs in pg_class.  This app connects
+to the database (you can specify host, port, user, pass etc to 
+connect to a host other than localhost) and extracts the OID and 
+table name information.  It has 4 ways it can be run:
+
+ pg_oid2name
+
+  This will connect to the template1 database and display all databases
+   in the system.
+
+  $ ./pg_oid2name                                                                
+  All databases:
+  ---------------------------------
+  18720  = test1
+  1      = template1
+  18719  = template0
+  18721  = test
+  18735  = postgres
+  18736  = cssi
+
+ pg_oid2name -d test [-x]
+
+  This connects to the database test and shows all tables and their OIDs.
+
+  $ ./pg_oid2name -d test                                                        
+  All tables from database "test":
+  ---------------------------------
+  18766  = dns
+  18737  = ips
+  18722  = testdate
+
+ pg_oid2name -d test -o 18737      or
+ pg_oid2name -d test -t testdate
+
+  This will connect to the database test and display the table name for oid
+   18737 and the oid for table name testdate respectivly.
+
+  $ ./pg_oid2name -d test -o 18737
+  Tablename of oid 18737 from database "test":
+  ---------------------------------
+  18737  = ips
+
+
+  $ ./pg_oid2name -d test -t testdate 
+  Oid of table testdate from database "test":
+  _______________________________
+  18722  = testdate
+
+
+There should be a decent amount of error handling in the app,  a lot of it
+ dealt with via the postgres function calls.
+
+  $ ./pg_oid2name -d nothere -t testdate 
+  Oid of table testdate from database "nothere":
+  _______________________________
+  Connection to database 'nothere' failed.
+  FATAL 1:  Database "nothere" does not exist in the system catalog.
+
+  $ ./pg_oid2name -d test -t nothere     
+  Oid of table nothere from database "test":
+  _______________________________
+  No tables with that name found
+
+  
+Mail me with any problems or additions you would like to see.  Clearing 
+ house for the code will be at:  http://www.crimelabs.net
+
+b. palmer, bpalmer@crimelabs.net
+
