@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.326 2002/06/17 20:27:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.327 2002/06/17 20:38:04 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -171,7 +171,7 @@ static void doNegateFloat(Value *v);
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
 
-%type <boolean> TriggerActionTime, TriggerForSpec, opt_trusted, opt_procedural
+%type <boolean> TriggerActionTime, TriggerForSpec, opt_trusted
 %type <str>		opt_lancompiler
 
 %type <str>		TriggerEvents
@@ -223,7 +223,7 @@ static void doNegateFloat(Value *v);
 %type <list>	for_update_clause, opt_for_update_clause, update_list
 %type <boolean> opt_all
 %type <boolean> opt_table
-%type <boolean> opt_chain, opt_trans
+%type <boolean> opt_chain
 
 %type <node>	join_outer, join_qual
 %type <jtype>	join_type
@@ -233,9 +233,9 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_interval
 %type <node>	overlay_placing, substr_from, substr_for
 
-%type <boolean> opt_binary, opt_using, opt_instead, opt_cursor, opt_with
+%type <boolean> opt_binary, opt_instead, opt_cursor
 %type <boolean> opt_with_copy, index_opt_unique, opt_verbose, opt_full
-%type <boolean> opt_freeze, analyze_keyword
+%type <boolean> opt_freeze
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
 				opt_column, event, comment_type
@@ -530,8 +530,8 @@ CreateUserStmt:
 		;
 
 
-opt_with:	WITH									{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = TRUE; }
+opt_with:	WITH									{}
+			| /*EMPTY*/								{}
 		;
 
 /*****************************************************************************
@@ -1318,8 +1318,8 @@ copy_delimiter:
 			| /*EMPTY*/								{ $$ = "\t"; }
 		;
 
-opt_using:	USING									{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = TRUE; }
+opt_using:	USING									{}
+			| /*EMPTY*/								{}
 		;
 
 copy_null:	WITH NULL_P AS Sconst					{ $$ = $4; }
@@ -1902,8 +1902,8 @@ DropPLangStmt:
 		;
 
 opt_procedural:
-			PROCEDURAL								{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = TRUE; }
+			PROCEDURAL								{}
+			| /*EMPTY*/								{}
 		;
 
 /*****************************************************************************
@@ -2498,8 +2498,8 @@ fetch_how_many:
 			| PRIOR									{ $$ = -1; }
 		;
 
-from_in:	IN_P									{ }
-			| FROM									{ }
+from_in:	IN_P									{}
+			| FROM									{}
 		;
 
 
@@ -3296,9 +3296,9 @@ TransactionStmt:
 				}
 		;
 
-opt_trans:	WORK									{ $$ = TRUE; }
-			| TRANSACTION							{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = TRUE; }
+opt_trans:	WORK									{}
+			| TRANSACTION							{}
+			| /*EMPTY*/								{}
 		;
 
 opt_chain:	AND NO CHAIN							{ $$ = FALSE; }
@@ -3631,8 +3631,8 @@ AnalyzeStmt:
 		;
 
 analyze_keyword:
-			ANALYZE									{ $$ = TRUE; }
-			| ANALYSE /* British */					{ $$ = TRUE; }
+			ANALYZE									{}
+			| ANALYSE /* British */					{}
 		;
 
 opt_verbose:
