@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.15 1997/04/25 18:40:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.16 1997/06/11 05:18:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,10 +301,7 @@ text_lt(struct varlena *arg1, struct varlena *arg2)
     int cval;
 #endif
     int len;
-#ifdef UNSIGNED_CHAR_TEXT
-    unsigned
-#endif
-    char *a1p, *a2p;
+    unsigned char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
 	return((bool) FALSE);
@@ -312,11 +309,8 @@ text_lt(struct varlena *arg1, struct varlena *arg2)
     len = (((VARSIZE(arg1) <= VARSIZE(arg2))? VARSIZE(arg1): VARSIZE(arg2))-VARHDRSZ);
     
 #ifdef USE_LOCALE
-    if (!PointerIsValid(a1p = PALLOC(len+1))
-      || !PointerIsValid(a2p = PALLOC(len+1))) {
-	elog(WARN,"Unable to allocate memory for text comparison",NULL);
-	return(FALSE);
-    };
+    a1p = (unsigned char *) palloc (len+1);
+    a2p = (unsigned char *) palloc (len+1);
 
     memcpy(a1p, VARDATA(arg1), len);
     *(a1p+len) = '\0';
@@ -326,8 +320,8 @@ text_lt(struct varlena *arg1, struct varlena *arg2)
     cval = strcoll(a1p,a2p);
     result = ((cval < 0) || ((cval == 0) && (VARSIZE(arg1) < VARSIZE(arg2))));
 
-    PFREE(a1p);
-    PFREE(a2p);
+    pfree (a1p);
+    pfree (a2p);
 #else
     a1p = (unsigned char *)VARDATA(arg1);
     a2p = (unsigned char *)VARDATA(arg2);
@@ -360,10 +354,7 @@ text_le(struct varlena *arg1, struct varlena *arg2)
     int cval;
 #endif
     int len;
-#ifdef UNSIGNED_CHAR_TEXT
-    unsigned
-#endif
-    char *a1p, *a2p;
+    unsigned char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
 	return((bool) 0);
@@ -371,11 +362,8 @@ text_le(struct varlena *arg1, struct varlena *arg2)
     len = (((VARSIZE(arg1) <= VARSIZE(arg2))? VARSIZE(arg1): VARSIZE(arg2))-VARHDRSZ);
     
 #ifdef USE_LOCALE
-    if (!PointerIsValid(a1p = PALLOC(len+1))
-      || !PointerIsValid(a2p = PALLOC(len+1))) {
-	elog(WARN,"Unable to allocate memory for text comparison",NULL);
-	return(FALSE);
-    };
+    a1p = (unsigned char *) palloc (len+1);
+    a2p = (unsigned char *) palloc (len+1);
 
     memcpy(a1p, VARDATA(arg1), len);
     *(a1p+len) = '\0';
@@ -385,8 +373,8 @@ text_le(struct varlena *arg1, struct varlena *arg2)
     cval = strcoll(a1p,a2p);
     result = ((cval < 0) || ((cval == 0) && (VARSIZE(arg1) <= VARSIZE(arg2))));
 
-    PFREE(a1p);
-    PFREE(a2p);
+    pfree (a1p);
+    pfree (a2p);
 #else
     a1p = (unsigned char *)VARDATA(arg1);
     a2p = (unsigned char *)VARDATA(arg2);

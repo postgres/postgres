@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.4 1997/05/17 06:20:34 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.5 1997/06/11 05:17:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,17 +129,10 @@ char *char16out(char *s)
 
 bool chareq(int8 arg1, int8 arg2)	{ return(arg1 == arg2); }
 bool charne(int8 arg1, int8 arg2)	{ return(arg1 != arg2); }
-#ifdef UNSIGNED_CHAR_TEXT
 bool charlt(int8 arg1, int8 arg2)    { return((uint8)arg1 <  (uint8)arg2); }
 bool charle(int8 arg1, int8 arg2)    { return((uint8)arg1 <= (uint8)arg2); }
 bool chargt(int8 arg1, int8 arg2)    { return((uint8)arg1 >  (uint8)arg2); }
 bool charge(int8 arg1, int8 arg2)    { return((uint8)arg1 >= (uint8)arg2); }
-#else
-bool charlt(int8 arg1, int8 arg2)	{ return(arg1 < arg2); }
-bool charle(int8 arg1, int8 arg2)	{ return(arg1 <= arg2); }
-bool chargt(int8 arg1, int8 arg2)	{ return(arg1 > arg2); }
-bool charge(int8 arg1, int8 arg2)	{ return(arg1 >= arg2); }
-#endif
 int8 charpl(int8 arg1, int8 arg2)       { return(arg1 + arg2); }
 int8 charmi(int8 arg1, int8 arg2)	{ return(arg1 - arg2); }
 int8 charmul(int8 arg1, int8 arg2)	{ return(arg1 * arg2); }
