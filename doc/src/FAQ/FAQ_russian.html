@@ -13,7 +13,7 @@
   alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Четверг 13 Февраля 23:07:35 EDT 2002</P>
+    <P>Дата последнего обновления: Пятница 30 Мая 22:24:56 EDT 2003</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -22,12 +22,11 @@
     "mailto:pgman@candle.pha.pa.us">victor_v@permonline.ru</A>)<BR>
     </P>
 
-    <P>Самую свежую английскую версию документа можно найти на <A
-    href=
-    "http://www.postgresql.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</A>.</P>
+    <P>Самую свежую английскую версию документа можно найти на
+    <A href="http://www.postgresql.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
-    <P>Ответы на вопросы специфичные для конкретных платформ можно найти на <A href=
-    "http://www.postgresql.org/users-lounge/docs/faq.html">http://www.PostgreSQL.org/users-lounge/docs/faq.html</A>.</P>
+    <P>Ответы на вопросы специфичные для конкретных платформ можно найти на
+    <A href="http://www.postgresql.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
     <HR>
 
     <H2 align="center">Общие вопросы</H2>
@@ -44,7 +43,7 @@
      <A href="#1.10">1.10</A>) Как научиться <SMALL>SQL</SMALL>?<BR>
      <A href="#1.11">1.11</A>) Решена ли в PostgreSQL проблема 2000-го года (Y2K)?<BR>
      <A href="#1.12">1.12</A>) Как присоединится к команде разработчиков?<BR>
-     <A href="#1.13">1.13</A>) Как отравить сообщение об ошибке?<BR>
+     <A href="#1.13">1.13</A>) Как отправить сообщение об ошибке?<BR>
      <A href="#1.14">1.14</A>) Как сравнивать PostgreSQL с другими
     <SMALL>СУБД</SMALL>?<BR>
      <A href="#1.15">1.15</A>) Как оказать финансовую помощь PostgreSQL?<BR>
@@ -86,10 +85,11 @@
     <A href="#4.1">4.1</A>) В чем отличие между бинарным и нормальным
     курсором?<BR>
      <A href="#4.2">4.2</A>) Как выполнить <SMALL>SELECT</SMALL> только
-     для нескольких первых строчек запроса?<BR>
+     для нескольких первых строчек запроса? Для произвольной строки?<BR>
      <A href="#4.3">4.3</A>) Как получить список таблиц или других
      компонентов в <I>psql</I>?<BR>
-     <A href="#4.4">4.4</A>) Как удалить колонку из таблицы?<BR>
+     <A href="#4.4">4.4</A>) Как удалить колонку из таблицы или изменить
+     её тип данных?<BR>
      <A href="#4.5">4.5</A>) Каковы максимальные размеры для записей,
     таблиц и базы данных?<BR>
      <A href="#4.6">4.6</A>) Как много дискового пространства в базе данных
@@ -247,13 +247,18 @@
     <P><STRONG>Сервер</STRONG></P>
 
     <P>Сервер БД может быть запущен на Windows NT и Win2k, используя
-    библиотеку Cygwin, разработанную для переноса программного обеспечения Unix
-    в NT. Смотрите <I>pgsql/doc/FAQ_MSWIN</I> в дистрибутиве или
-    MS Windows FAQ на <A href="http://www.postgresql.org/docs/faq-mswin.html">
-    http://www.PostgreSQL.org/docs/faq-mswin.html</A>.</P>
+    библиотеку Cygwin, разработанную компанией Cygnus для переноса программного
+    обеспечения Unix в NT. Смотрите <I>pgsql/doc/FAQ_MSWIN</I> в дистрибутиве
+    или MS Windows FAQ на <A href="http://www.postgresql.org/docs/faqs/text/FAQ_MSWIN">
+    http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
 
     <P>PostgreSQL, спортированный специально для MS Win NT/2000/XP в
-    настоящий момент начал работать.</P>
+    настоящий момент начал работать. Подробности текущего состояния PostgreSQL
+    для Windows смотрите на <a href="http://techdocs.postgresql.org/guides/Windows">
+    http://techdocs.postgresql.org/guides/Windows</a>.</P>
+    
+    <P>Также существует версия спортированная под Novell Netware 6 на
+    <a href="http://forge.novell.com/">http://forge.novell.com</a>.</P>
 
     <H4><A name="1.5">1.5</A>) Где можно взять PostgreSQL?</H4>
 
@@ -313,17 +318,16 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>Еще существует IRC канал на EFNet, с названием
+    <P>Еще существует IRC канал на EFNet и OpenProjects, с названием
     <I>#PostgreSQL</I>. Я использую для подключения к этому каналу команду Unix
     <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
     <P>Список коммерческой поддержки компаний доступен на
-    <A href=
-    "http://www.postgresql.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</A>.</P>
+    <A href="http://www.ca.postgresql.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</A>.</P>
 
     <H4><A name="1.7">1.7</A>) Какая последняя версия?</H4>
 
-    <P>Последний выпуск PostgreSQL - это версия 7.3.1.</P>
+    <P>Последний выпуск PostgreSQL - это версия 7.3.2.</P>
 
     <P>Мы планируем выпускать новые версии каждые четыре месяца.</P>
 
@@ -332,8 +336,8 @@
     <P>В дистрибутив включаются различные руководства, страницы
     электронного руководства man и некоторые маленькие тестовые примеры.
     Смотрите в каталог <I>/doc</I>. Вы также можете просматривать
-    документацию в Интернет по адресу <A href=
-    "http://www.PostgreSQL.org/users-lounge/docs/">http://www.PostgreSQL.org/users-lounge/docs/</A>.</P>
+    документацию в Интернет по адресу
+    <A href="http://www.postgresql.org/docs">http://www.PostgreSQL.org/docs</A>.</P>
 
     <P>Существует две книги по PostgreSQL доступные по адресам <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -354,7 +358,7 @@
 
     <P>PostgreSQL поддерживает расширенный подкласс <SMALL>SQL</SMALL>-92.
     Смотрите наш список <A href="http://developer.postgresql.org/todo.php">TODO</A>
-    на предмет известных ошибок, отсутствующих особенностях и будущих
+    на предмет известных ошибок, отсутствующих возможностей и будущих
     планов.</P>
 
     <H4><A name="1.10">1.10</A>) Как мне научиться <SMALL>SQL</SMALL>?</H4>
@@ -384,7 +388,7 @@
 
     <H4><A name="1.11">1.11</A>) Решена ли в PostgreSQL проблема 2000-го года (Y2K)?</H4>
 
-    <P>Да, мы легко манипулируем датами после 2000 года и перед 2000 годом.</P>
+    <P>Да, мы легко работаем с датами после 2000 года и перед 2000 годом.</P>
 
     <H4><A name="1.12">1.12</A>) Как присоединится к команде разработчиков?</H4>
 
@@ -401,7 +405,7 @@
     превилегии вносить изменения, и мы уверены, что те исправления, которые
     они внесут будут высокого качества.</P>
 
-    <H4><A name="1.13">1.13</A>) Как отравить сообщение об ошибке??</H4>
+    <H4><A name="1.13">1.13</A>) Как отправить сообщение об ошибке??</H4>
 
     <P>Пожалуйста посетите страничку PostgreSQL BugTool на <A href=
     "http://www.postgresql.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</A>,
@@ -558,7 +562,7 @@
     http://www.thekompany.com/products/rekall/</A>, коммерческий). Также есть
     PHPPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/</A>) - интерфейс к PostgreSQL, основанный
-    на Web.</p>
+    на Web.</P>
 
     <H4><A name="2.4">2.4</A>) Какие языки могут взаимодействовать с PostgreSQL?</H4>
 
@@ -611,7 +615,7 @@
     с количеством буферов и процессов по умолчанию, необходимый минимум -
     это около 1 мегабайта. Подробности о разделяемой памяти и семафорах
     смотрите в <A href=
-    "http://www.postgresql.org/idocs/index.php?kernel-resources.html">Руководстве
+    "http://www.postgresql.org/docs/viev.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">Руководстве
     администратора PostgreSQL</A>.</P>
 
     <H4><A name="3.4">3.4</A>) Когда я пытаюсь запустить <I>postmaster</I>, я
@@ -808,7 +812,7 @@
     <SMALL>DECLARE</SMALL>.</P>
 
     <H4><A name="4.2">4.2</A>) Как выполнить <SMALL>SELECT</SMALL> только
-     для нескольких первых строчек запроса?</H4>
+     для нескольких первых строчек запроса? Произвольной строки?</H4>
 
     <P>Смотрите станицу руководства посвященную <SMALL>FETCH</SMALL>
     или используйте <SMALL>SELECT</SMALL> ... <SMALL>LIMIT</SMALL>....</P>
@@ -819,6 +823,14 @@
     совпадает с <SMALL>ORDER BY</SMALL>, PostgreSQL может
     выдать только несколько первых запрошенных записей или может
     выполнять запрос пока не будут выданы желаемые записи.</P>
+
+    <p>To <small>SELECT</small> a random row, use:
+</p><pre>    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+</pre>
+</p>
 
     <H4><A name="4.3">4.3</A>) Как получить список таблиц или других
      компонентов в <I>psql</I>?</H4>
@@ -831,10 +843,11 @@
     запросы, которые она использует для выполнения заданных вами
     команд.</P>
 
-    <H4><A name="4.4">4.4</A>) Как удалить колонку из таблицы?</H4>
+    <H4><A name="4.4">4.4</A>) Как удалить колонку из таблицы или
+    изменить ёё тип данных?</H4>
 
-    <P>Эта функциональность была добавлена в выпуск 7.3 с оператором
-    <small>ALTER TABLE DROP COLUMN</small>. В ранних версиях,
+    <P><small>DROP COLUMN</small> функциональность была добавлена в выпуск
+    7.3 с оператором <small>ALTER TABLE DROP COLUMN</small>. В ранних версиях,
     можно сделать так:</P>
 <PRE>
     BEGIN;
@@ -847,12 +860,21 @@
     COMMIT;
 </PRE>
 
+    <P>Для изменения типа данных колонки, сделайте так:</P>
+<PRE>
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
+    UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
+    ALTER TABLE DROP COLUMN old_col;
+    COMMIT;
+</PRE>
+
     <H4><A name="4.5">4.5</A>) Каковы максимальные размеры для записей,
     таблиц и базы данных?</H4>
 
     <P>Существуют следующие ограничения:</P>
 <PRE>
-    Максимальный размер базы?              неограничен (существуют базы на 1 TB)
+    Максимальный размер базы?              неограничен (существуют базы на 4 TB)
     Максимальный размер таблицы?           16 TB
     Максимальный размер записи?            1.6 TB
     Максимальный размер поля?              1 GB
@@ -1058,14 +1080,14 @@
 VARCHAR(n)      varchar         размер задает максимальную длину, нет заполнения
 CHAR(n)         bpchar          заполняется пустотой до фиксированной длины
 TEXT            text            нет задаваемого верхнего ограничения или длины
-"char"          char            один символ
 BYTEA           bytea           массив байт переменной длины (можно использовать null-байт без опаски)
+"char"          char            один символ
 </PRE>
 
     <P>Внутреннее имя вы можете увидеть, когда смотрите системные каталоги
     и в некоторых сообщениях об ошибках.</P>
 
-    <P>Последние четыре типа являются "varlena" типами (т.е., первые
+    <P>Первые четыре типа являются "varlena" типами (т.е., первые
     четыре байта на диске являются длинной, за которой следуют данные).
     Таким образом, фактически используемое пространство больше, чем
     обозначенный размер. Однако, эти типы данных также поддаются сжатию
@@ -1082,8 +1104,8 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
     пустотой до заданной длины, в то время как <SMALL>VARCHAR(n)</SMALL>
     хранит только символы, из которых состоит строка.
     <SMALL>BYTEA</SMALL> используется для хранения бинарных данных, значения
-    которых могут включать <SMALL>NULL</SMALL> байты. Эти типы имеют сходные
-    характеристики производительности.</P>
+    которых могут включать <SMALL>NULL</SMALL> байты. Все типы описанные
+    здесь, имеют сходные характеристики производительности.</P>
 
     <H4><A name="4.15.1">4.15.1</A>) Как мне создать поле
     serial/с-авто-увеличением?</H4>
@@ -1379,11 +1401,10 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
 
     <H4><A name="4.25">4.25</A>) Как мне вернуть из функции несколько записей?</H4>
 
-    <P>Вы можете возвращать из функций PL/pgSQL списки результатов, используя
-    <i>refcursors</i>. Смотрите <A
-     href="http://www.postgresql.org/idocs/index.php?plpgsql-cursors.html">
-     http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</a>,
-     секцию 23.7.3.3.</P>
+    <P>В версии 7.3, вы можете легко вернуть несколько записей или колонок из
+     какой-либо функции,
+     <href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
+     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.</P>
 
     <H4><A name="4.26">4.26</A>) Почему я не могу надежно создавать/удалять
     временные таблицы в функциях PL/PgSQL?</H4>

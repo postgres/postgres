@@ -14,16 +14,16 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: So., den 15.12.2002, 18:00 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Mo., den 02.06.2003, 22:00 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
-      <li><a href="http://www.PostgreSQL.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</a> (engl.)</li>
-      <li><a href="http://www.PostgreSQL.org/docs/faq-german.html">http://www.PostgreSQL.org/docs/faq-german.html</a> (dt.)</li>
+      <li><a href="http://www.PostgreSQL.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</a> (engl.)</li>
+      <li><a href="http://www.PostgreSQL.org/docs/faqs/FAQ_german.html">http://www.PostgreSQL.org/docs/faqs/FAQ_german.html</a> (dt.)</li>
     </ul>
     <p>Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
     spezifische FAQs können unter
-    <a href="http://www.PostgreSQL.org/users-lounge/docs/faq.html">http://www.PostgreSQL.org/users-lounge/docs/faq.html</a>
+    <a href="http://www.PostgreSQL.org/docs/index.html#faqs">http://www.PostgreSQL.org/docs/index.html#faqs</a>
     eingesehen werden.</p>
 
 <hr />
@@ -72,9 +72,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
 <a href="#4.1">4.1</a>) Worin besteht der Unterschied zwischen <em>Binary Cursors</em> und <em>Normal Cursors?</em><br />
 <a href="#4.2">4.2</a>) Wie wähle ich per <small>SELECT</small>-Anweisung nur die
-     ersten paar Zeilen in einer Abfrage aus?<br />
+     ersten paar Zeilen bzw. eine beliebige Zeile in einer Abfrage aus?<br />
 <a href="#4.3">4.3</a>) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in <em>psql</em> sehen kann?<br />
-<a href="#4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle?<br />
+<a href="#4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere 
+    ich den Datentyp einer Spalte?<br />
 <a href="#4.5">4.5</a>) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?<br />
 <a href="#4.6">4.6</a>) Wieviel Plattenplatz wird benötigt, um die Daten aus einer typischen Textdatei abzuspeichern?<br />
 <a href="#4.7">4.7</a>) Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank definiert sind?<br />
@@ -213,10 +214,15 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     (Unix/NT-Portierungsbibliotheken) auf Windows NT/2000 zum Laufen
     gebracht werden. Hierzu bitte lesen Sie die in der Distribution
     enthaltene Datei <em>pgsql/doc/FAQ_MSWIN</em> oder die MS-Windows-FAQ unter
-    <a href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</a>.</p>
+    <a href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</a>.</p>
 
     <p>Eine eigenständige Portierung auf MS Win NT/2000/XP befindet sich
-    in Vorbereitung.</p>
+    in der Vorbereitung.</p>
+
+    <p>Weitere Informationen zum Status von PostgreSQL auf der Microsoft-Plattform
+    befinden sich unter <a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a> (en.).</p>
+
+    <p>Eine Portierung für Novell Netware 6 gibt es unter <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
     <h4><a name="1.5">1.5</a>) Woher bekomme ich PostgreSQL?</h4>
 
@@ -238,7 +244,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 </pre>
     <p>Es gibt auch eine Digest-Liste (eine Liste, die Mails zusammengefasst
     sendet). Um sich an dieser Digest-Liste anzumelden, senden Sie eine Email
-    an <a href="pgsql-general-digest-request@PostgreSQL.org">pgsql-general-digest-request@PostgreSQL.org</a> mit folgendem Text:</p>
+    an <a href="mailto:pgsql-general-digest-request@PostgreSQL.org">pgsql-general-digest-request@PostgreSQL.org</a> mit folgendem Text:</p>
 <pre>
     subscribe
     end
@@ -252,30 +258,33 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 </pre>
 
     <p>Die Entwickler-Mailingliste kann mit einer Email an
-    <a href="mailto:">pgsql-hackers-request@PostgreSQL.org</a> abonniert werden. Die Email muß ebenfalls folgenden Text enthalten:</p>
+    <a href="mailto:pgsql-hackers-request@PostgreSQL.org">pgsql-hackers-request@PostgreSQL.org</a> abonniert werden. Die Email muß ebenfalls folgenden Text enthalten:</p>
 <pre>
     subscribe
     end
 </pre>
 
+    <p>Eine deutschsprachige Mailing-Liste gibt es bei Yahoo Groups:
+    <a href="http://de.groups.yahoo.com/group/postgres/">http://de.groups.yahoo.com/group/postgres/</a>;
+    die Liste kann mit einer leeren E-Mail an <a href="mailto:postgres-subscribe@yahoogroups.de">postgres-subscribe@yahoogroups.de</a>
+    abonniert werden.</p>
 
     <p>Weitere Mailinglisten und Informationen zu PostgreSQL befinden sich auf der PostgreSQL-Homepage:</p>
 <blockquote>
 <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>
 </blockquote>
-    <p>Es gibt außerdem einen IRC-Channel im EFNet, Channel <em>#PostgreSQL</em>. Der
-    FAQ-Autor Bruce Momjian nutzt den Unix-Befehl:
-    <small>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</small>
-    um daran teilzunehmen.</p>
+    <p>Es gibt außerdem einen IRC-Channel bei EFNet und bei OpenProjects, Channel
+    <em>#PostgreSQL</em>. Der FAQ-Autor Bruce Momjian nutzt den Unix-Befehl:
+    <small>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</small> um daran teilzunehmen.</p>
 
     <p>Eine Liste von Unternehmen, die Support für PostgreSQL auf kommerzieller
     Basis leisten, kann unter
-      <a href="http://www.PostgreSQL.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</a>
+      <a href="http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</a>
     eingesehen werden.</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.3.</p>
+    <p>Die neueste Version von PostgreSQL ist 7.3.3 .</p>
 
     <p>Wir planen alle 4 Monate eine neue Version herauszugeben.</p>
 
@@ -283,7 +292,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Einige Handbücher, Man-Pages und einige kleine Testprogramme sind in
     der Distribution enthalten. Siehe das <em>/doc</em>-Verzeichnis. Ausserdem sind
-    alle Handbücher online unter <a href="http://www.PostgreSQL.org/users-lounge/docs/">http://www.PostgreSQL.org/users-lounge/docs/</a>
+    alle Handbücher online unter <a href="http://www.PostgreSQL.org/docs/">http://www.PostgreSQL.org/docs/</a>
     verfügbar.</p>
 
     <p>Zwei Bücher zu PostgreSQL sind online verfügbar unter
@@ -291,7 +300,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a> .</p>
 
     <p>Eine Liste lieferbarer PostgreSQL-Bücher befindet sich unter
-      <a href="http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</a>
+      <a href="http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</a>
     Diverse technische Artikel befinden sich unter
       <a href="http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</a> .</p>
 
@@ -428,6 +437,11 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     einer bestimmten Firma. Sie können auch gerne einen finanziellen Beitrag
     an die Kontaktadresse verschicken.</p>
 
+    <p>Eine Möglichkeit der nicht-finanziellen Untetstützung besteht übrigens
+    darin, für <a href="http://advocacy.postgresql.org">http://advocacy.postgresql.org</a> (en.) bzw. <a href="http://advocacy.postgresql.org/?lang=de">http://advocacy.postgresql.org/?lang=de</a> (dt.)
+    einen Bericht über den erfolgreichen Einsatz von PostgreSQL in Ihrem 
+    Unternehmen oder Organisation bereitzustellen.</p>
+
     <hr />
 
     <h2 align="center">Fragen zu Benutzerprogrammen</h2>
@@ -519,7 +533,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     ab, die Sie für <em>postmaster</em> konfiguriert haben. Bei den voreingestellten
     Werten für Puffer und Prozesse benötigen Sie bei den meisten Systemen
     ein Minimum von ca. 1 MB. Der "PostgreSQL Administrator's Guide"
-    (<a href="http://www.PostgreSQL.org/idocs/index.php?kernel-resources.html">http://www.PostgreSQL.org/idocs/index.php?kernel-resources.html</a>)
+    (<a href="http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html</a>)
     enthält weitere Informationen zu Shared Memory und Semaphores.</p>
 
 
@@ -665,11 +679,6 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     erlaubter Backend-Prozesse wird verhindert, dass System-Ressourcen
     durch PostgreSQL aufgebraucht werden.</p>
 
-    <p>In den PostgreSQL-Versionen vor 6.5 war die maximale Anzahl von Backends
-    auf 64 festgelegt und eine Änderung setzte eine erneute Kompilierung
-    voraus, bei der die Konstante <em>MaxBackendId</em> in <em>include/storage/sinvaladt.h</em>
-    entsprechend angepasst werden mußte.
-
     <h4><a name="3.9">3.9</a>) Was befindet sich im Verzeichnis <em>pgsql_tmp/</em>?</h4>
 
     <p>Dieses Verzeichnis enthält temporäre Dateien, die durch den <em>query executor</em>
@@ -712,7 +721,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Vgl. die <small>DECLARE</small> Man-Page für eine Beschreibung.</p>
 
     <h4><a name="4.2">4.2</a>) Wie wähle ich per <small>SELECT</small>-Anweisung nur die ersten paar
-    Zeilen in einer Abfrage aus?</h4>
+    Zeilen bzw. eine beliebige Zeile in einer Abfrage aus?</h4>
 
     <p>Vgl. die <small>FETCH</small> Man-Page, oder benutzen Sie <small>SELECT ... LIMIT...</small> .
 
@@ -726,6 +735,13 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Bitte beachten Sie, dass mit PostgreSQL 7.3 die Syntax <small>LIMIT <em>n</em>, <em>m</em></small>
     durch <small>LIMIT <em>n</em> OFFSET <em>m</em></small> ersetzt wurde.</p>
 
+    <p>Um eine beliebige Zeile auszuwählen, nutzen Sie <small>ORDER BY random()</small>:</p>
+   <pre>
+       SELECT spalte
+         FROM tabelle
+     ORDER BY random()
+        LIMIT 1;
+   </pre>
 
     <h4><a name="4.3">4.3</a>) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich
     in <em>psql</em> sehen kann?</h4>
@@ -736,9 +752,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     Option starten. Danach gibt <em>psql</em> die Abfragen aus, die es bei der Ausführung der Befehle
     benutzt.</p>
 
-    <h4><a name="4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle?</h4>
+    <h4><a name="4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere 
+    ich den Datentyp einer Spalte?</h4>
 
-    <p>Der Syntax <small>ALTER TABLE DROP COLUMN</small> wird erst ab PostgreSQL 7.3 unterstützt.</p>
+    <p>Der Syntax <small>ALTER TABLE DROP COLUMN</small> wird ab PostgreSQL 7.3 unterstützt.</p>
 
     <p>Bei früheren Versionen bietet das folgende Verfahren Ersatz:</p>
 <pre>
@@ -751,13 +768,23 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
       ALTER TABLE new_table RENAME TO old_table;
       COMMIT;
 </pre>
+     <p>Um den Datentyp einer Spalte zu ändern, gehen Sie wie folgt vor:</p>
+     <pre>
+       BEGIN;
+       ALTER TABLE <em>tabelle</em> ADD COLUMN <em>neue_spalte</em> <em>neuer_datentyp</em>;
+       UPDATE <em>tabelle</em> SET <em>neue_spalte</em> = CAST(<em>alte_spalte</em> AS <em>neuer_datentyp</em>);
+       ALTER TABLE <em>tabelle</em> DROP COLUMN <em>alte_spalte</em>;
+       COMMIT;
+    </pre>
+    <p>Um den Platz zu reklamieren, der von der gelöschten Spalte verwendet 
+    wurde, führen Sie <small>VACUUM FULL</small> aus.</p>
 
     <h4><a name="4.5">4.5</a>) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?</h4>
 
     <p>Es bestehen folgende Obergrenzen:</p>
 <pre>
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
-                                               Datenbanken mit >1TB)
+                                               Datenbanken mit 4TB)
     Maximale Größe einer Tabelle?            16 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
@@ -861,6 +888,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 </pre>
     <p>(Die Aggregatfunktionen MIN() und MAX() verwenden keine Indizes). </p>
 
+    <p>Sollte es danach aussehen, also ob der Optimierer irrtümlich einen sequentiellen 
+    Scan ausführt, führen Sie <small>SET enable_seqscan TO 'off'</small> aus und prüfen
+    Sie, ob die Indexabfrage dadurch scheller geworden ist.</p>
+
     <p>Bei der Nutzung von Wildcard-Operatoren wie <small>LIKE</small> oder <small>~</small>, können
     Indizes nur unter bestimmten Umständen verwendet werden:</p>
   <ul>
@@ -946,30 +977,36 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <h4><a name="4.14">4.14</a>) Was ist der Unterschied zwischen den verschiedenen <small>CHAR</small>-Typen?</h4><pre>
 Typ           interner Name   Bemerkungen
 -------------------------------------------------
-"char"        char            1 Zeichen
-CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 VARCHAR(n)    varchar         die Größe legt die Maximallänge fest; kein
                                Ausfüllen mit Leerzeichen
+CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 TEXT          text            Die Länge wird nur durch die maximale Zeilenlänge
                                beschränkt
 BYTEA         bytea           Bytearray mit variabler Länge
+"char"        char            1 Zeichen
 </pre>
     <p>Der <em>interne Name</em> kommt vor allem in den Systemkatalogen und in manchen
     Fehlermeldungen vor.</p>
 
-    <p>Die letzten vier Typen sind "<em>varlena</em>"-Typen (d.h. die ersten vier
+    <p>Die ersten vier Typen sind "<em>varlena</em>"-Typen (d.h. die ersten vier
     Bytes geben die Länge an, gefolgt von den Daten). Daher ist der tatsächlich
     belegte Platz immer etwas mehr als die deklarierte Feldgröße. Allerdings
     wird unter Umständen auf diese Datentypen Datenkompression durch das <small>TOAST</small>-
     Verfahren angewendet, womit der tatsächlich belegte Platz auch geringer
     als erwartet ausfallen kann.</p>
 
-    <p><small>CHAR(n)</small> ist geeignet für die Speicherung von Zeichenketten ähnlicher Länge.
-    VARCHAR(n) ist geeignet für Zeichenketten abweichender Längen, setzt jedoch
-    eine maximale Länge. <small>TEXT</small> setzt keine Längengrenze, allerdings gibt es
-    eine systembedingte Obergrenze von 1 GB. <small>BYTEA</small> ist für binäre Daten,
-    besonders für Werte, die <small>NULL</small>-Bytes haben. Die erwähnten Typen weisen
-    ähnliche Performanzeigenschaften auf.</p>
+    <p>Für die Speicherung von Zeichenketten variabler Länge empfiehlt sich <small>VARCHAR(n)</small>. 
+    Die maximale Länge eines <small>VARCHAR(n)</small>-Felds wird bei der Tabellendefinition
+    festgelegt. <small>TEXT</small> setzt keine Längengrenze, allerdings gibt es
+    eine systembedingte Obergrenze von 1 GB. </p>
+
+    <p><small>CHAR(n)</small> ist geeignet für die Speicherung von Zeichenketten, die alle 
+    die gleiche Länge haben. Bitte beachten Sie, dass <small>CHAR(n)</small> automatisch Zeichenketten
+    bis zur definierten Feldlänge mit Leerzeichen ausfüllt, während bei <small>VARCHAR(n)</small> nur
+    die tatsächlich eingegebene Zeichenkette gespeichert wird.</p>
+
+    <p><small>BYTEA</small> ist für binäre Daten, besonders für Werte, die <small>NULL</small>-Bytes haben. </p>
+    <p>Die hier erwähnten Typen weisen ähnliche Performanzeigenschaften auf.</p>
 
     <h4><a name="4.15.1">4.15.1</a>) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
     Werts?</h4>
@@ -1043,7 +1080,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
     Lücken in der Sequenznummerierung verursacht.</p>
 
 
-    <h4><a name="4.17">4.16</a>) Was ist ein <small>OID</small>? Was ist ein <small>TID</small>?</h4>
+    <h4><a name="4.16">4.16</a>) Was ist ein <small>OID</small>? Was ist ein <small>TID</small>?</h4>
 
     <p>OIDs sind PostgreSQLs Antwort auf eindeutige Zeilen-IDs. Jede Zeile,
     die in PostgreSQL erzeugt wird, bekommt eine eindeutige OID. Alle
@@ -1156,7 +1193,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
 </pre>
     <p> Damit diese Abfrage effizient durchgeführt wird, sollte für '<em>spalte2</em>'
     ein Index angelegt worden sein. Die Einschränkung von Abfragen mit <small>IN</small>
-    soll in einer künftigen PotsgreSQL-Version behoben werden.</p>
+    wird in der nächsten PostgreSQL-Version (7.4) behoben werden.</p>
 
     <h4><a name="4.23">4.23</a>) Wie führe ich einen <small>OUTER JOIN</small> durch?</h4>
 
@@ -1202,18 +1239,21 @@ BYTEA         bytea           Bytearray mit variabler Länge
     zuzugreifen. Da PostgreSQL datenbank-spezifische Systemkataloge lädt, ist
     eine datenbankübergreifende Abfrage nicht möglich.</p>
 
-    <p><em>contrib/dblink</em> ermöglicht datenbankübergreifende Abfragen.</p>
+    <p><em>contrib/dblink</em> ist eine Erweiterung, die datenbankübergreifende Abfragen
+    ermöglicht.</p>
 
     <p>Es ist natürlich möglich, dass eine Client-Anwendung gleichzeitige Verbindungen
     zu verschiedenen Datenbanken aufbaut und selber Datensätze zusammenfügt.</p>
 
+    <p>Ab 7.3 unterstützt PostgreSQL <em>schemas</em>, die die Aufteilung einer Datenbank
+    in mehrere logische Bereiche ermöglichen. Bei vielen Anwendungen könnten dies 
+    einen geeigneten Ersatz für den Zugriff auf eine andere Datenbank bieten.</p>
+
     <h4><a name="4.25">4.25</a>) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
     zurückgeben lassen?</h4>
 
-    <p>"<em>Result sets</em>" können mittels <em>refcursors</em> von <small>PL/PgSQL</small>-Funktionen zurückgegeben
-    werden. Vgl.:
-    <a href="http://www.postgresql.org/idocs/index.php?plpgsql-cursors.html">http://www.postgresql.org/idocs/index.php?plpgsql-cursors.html</a>
-    (Abschnitt 23.7.3.3).</p>
+    <p>Ab 7.3 können Funktionen mehrere Zeilen und Spalten zurückgeben, vgl.:
+     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.</p>
 
     <h4><a name="4.26">4.26</a>) Warum kann ich temporäre Tabellen in <small>PL/PgSQL</small>-Funktionen nicht
     zuverlässig erstellen bzw. löschen?</h4>
@@ -1291,7 +1331,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
     <h4>Anmerkungen des Übersetzers</h4>
 
     <p>Die englische Vorlage dieser FAQ wird ständig überarbeitet. Daher liegt
-    die Übersetzung nicht immer auf dem aktuellsten Stand.
+    die Übersetzung nicht immer auf dem aktuellsten Stand.</p>
 
     <p>Über Verbesserungshinweise und Korrekturvorschläge sowie Verständnisfragen
     zum Inhalt der FAQ freue ich mich. Ich nehme auch allgemeine Fragen zu PostgreSQL gerne

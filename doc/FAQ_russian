@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: CHetverg 13 Fevralya 23:07:35 EDT 2002
+   Data poslednego obnovleniya: Pyatnica 30 Maya 22:24:56 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -9,10 +9,10 @@
    Perevel na russkij: Viktor Vislobokov (victor_v@permonline.ru)
    
    Samuyu svezhuyu anglijskuyu versiyu dokumenta mozhno najti na
-   http://www.PostgreSQL.org/docs/faq-english.html.
+   http://www.PostgreSQL.org/docs/faqs/FAQ.html.
    
    Otvety na voprosy specifichnye dlya konkretnyh platform mozhno najti
-   na http://www.PostgreSQL.org/users-lounge/docs/faq.html.
+   na http://www.PostgreSQL.org/docs/index.html.
      _________________________________________________________________
    
                               Obschie voprosy
@@ -30,7 +30,7 @@
    1.10) Kak nauchit'sya SQL?
    1.11) Reshena li v PostgreSQL problema 2000-go goda (Y2K)?
    1.12) Kak prisoedinitsya k komande razrabotchikov?
-   1.13) Kak otravit' soobschenie ob oshibke?
+   1.13) Kak otpravit' soobschenie ob oshibke?
    1.14) Kak sravnivat' PostgreSQL s drugimi SUBD?
    1.15) Kak okazat' finansovuyu pomosch' PostgreSQL?
    
@@ -66,9 +66,9 @@
                                       
    4.1) V chem otlichie mezhdu binarnym i normal'nym kursorom?
    4.2) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek
-   zaprosa?
+   zaprosa? Dlya proizvol'noj stroki?
    4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
-   4.4) Kak udalit' kolonku iz tablicy?
+   4.4) Kak udalit' kolonku iz tablicy ili izmenit' eio tip dannyh?
    4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
    4.6) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya
    sohraneniya dannyh iz obychnogo tekstovogo fajla?
@@ -213,12 +213,18 @@
    Server
    
    Server BD mozhet byt' zapuschen na Windows NT i Win2k, ispol'zuya
-   biblioteku Cygwin, razrabotannuyu dlya perenosa programmnogo
-   obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v distributive
-   ili MS Windows FAQ na http://www.PostgreSQL.org/docs/faq-mswin.html.
+   biblioteku Cygwin, razrabotannuyu kompaniej Cygnus dlya perenosa
+   programmnogo obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v
+   distributive ili MS Windows FAQ na
+   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
    
    PostgreSQL, sportirovannyj special'no dlya MS Win NT/2000/XP v
-   nastoyaschij moment nachal rabotat'.
+   nastoyaschij moment nachal rabotat'. Podrobnosti tekuschego
+   sostoyaniya PostgreSQL dlya Windows smotrite na
+   http://techdocs.postgresql.org/guides/Windows.
+   
+   Takzhe suschestvuet versiya sportirovannaya pod Novell Netware 6 na
+   http://forge.novell.com.
    
     1.5) Gde mozhno vzyat' PostgreSQL?
     
@@ -266,16 +272,16 @@
    
      http://www.PostgreSQL.org
      
-   Esche suschestvuet IRC kanal na EFNet, s nazvaniem #PostgreSQL. YA
-   ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu Unix irc -c
-   '#PostgreSQL' "$USER" irc.phoenix.net.
+   Esche suschestvuet IRC kanal na EFNet i OpenProjects, s nazvaniem
+   #PostgreSQL. YA ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu
+   Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    Spisok kommercheskoj podderzhki kompanij dostupen na
-   http://www.PostgreSQL.org/users-lounge/commercial-support.html.
+   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html.
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.3.1.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.3.2.
    
    My planiruem vypuskat' novye versii kazhdye chetyre mesyaca.
    
@@ -284,7 +290,7 @@
    V distributiv vklyuchayutsya razlichnye rukovodstva, stranicy
    `elektronnogo rukovodstva man i nekotorye malen'kie testovye primery.
    Smotrite v katalog /doc. Vy takzhe mozhete prosmatrivat' dokumentaciyu
-   v Internet po adresu http://www.PostgreSQL.org/users-lounge/docs/.
+   v Internet po adresu http://www.PostgreSQL.org/docs.
    
    Suschestvuet dve knigi po PostgreSQL dostupnye po adresam
    http://www.PostgreSQL.org/docs/awbook.html i
@@ -304,7 +310,7 @@
     
    PostgreSQL podderzhivaet rasshirennyj podklass SQL-92. Smotrite nash
    spisok TODO na predmet izvestnyh oshibok, otsutstvuyuschih
-   osobennostyah i buduschih planov.
+   vozmozhnostej i buduschih planov.
    
     1.10) Kak mne nauchit'sya SQL?
     
@@ -325,7 +331,7 @@
    
     1.11) Reshena li v PostgreSQL problema 2000-go goda (Y2K)?
     
-   Da, my legko manipuliruem datami posle 2000 goda i pered 2000 godom.
+   Da, my legko rabotaem s datami posle 2000 goda i pered 2000 godom.
    
     1.12) Kak prisoedinitsya k komande razrabotchikov?
     
@@ -342,7 +348,7 @@
    previlegii vnosit' izmeneniya, i my uvereny, chto te ispravleniya,
    kotorye oni vnesut budut vysokogo kachestva.
    
-    1.13) Kak otravit' soobschenie ob oshibke??
+    1.13) Kak otpravit' soobschenie ob oshibke??
     
    Pozhalujsta posetite stranichku PostgreSQL BugTool na
    http://www.PostgreSQL.org/bugs/bugs.php, na kotoroj predostavleny
@@ -703,6 +709,7 @@
    Smotrite opisanie na stranicah rukovodstva posvyaschennym DECLARE.
    
     4.2) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek zaprosa?
+    Proizvol'noj stroki?
     
    Smotrite stanicu rukovodstva posvyaschennuyu FETCH ili ispol'zujte
    SELECT ... LIMIT....
@@ -713,6 +720,12 @@
    mozhet vydat' tol'ko neskol'ko pervyh zaproshennyh zapisej ili mozhet
    vypolnyat' zapros poka ne budut vydany zhelaemye zapisi.
    
+   To SELECT a random row, use:
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+
     4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
     
    Vy mozhete posmotret' ishodnyj kod psql v fajle
@@ -722,10 +735,10 @@
    chtoby `eta programma vydavala zaprosy, kotorye ona ispol'zuet dlya
    vypolneniya zadannyh vami komand.
    
-    4.4) Kak udalit' kolonku iz tablicy?
+    4.4) Kak udalit' kolonku iz tablicy ili izmenit' ioio tip dannyh?
     
-   `Eta funkcional'nost' byla dobavlena v vypusk 7.3 s operatorom ALTER
-   TABLE DROP COLUMN. V rannih versiyah, mozhno sdelat' tak:
+   DROP COLUMN funkcional'nost' byla dobavlena v vypusk 7.3 s operatorom
+   ALTER TABLE DROP COLUMN. V rannih versiyah, mozhno sdelat' tak:
     BEGIN;
     LOCK TABLE old_table;
     SELECT ...  -- vyborka vseh kolonok za isklyucheniem toj, kotoruyu hotite u
@@ -736,11 +749,18 @@ dalit'
     ALTER TABLE new_table RENAME TO old_table;
     COMMIT;
 
+   Dlya izmeneniya tipa dannyh kolonki, sdelajte tak:
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col new_data_type;
+    UPDATE tab SET new_col = CAST(old_col AS new_data_type);
+    ALTER TABLE DROP COLUMN old_col;
+    COMMIT;
+
     4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
     
    Suschestvuyut sleduyuschie ogranicheniya:
     Maksimal'nyj razmer bazy?              neogranichen (suschestvuyut bazy na
-1 TB)
+4 TB)
     Maksimal'nyj razmer tablicy?           16 TB
     Maksimal'nyj razmer zapisi?            1.6 TB
     Maksimal'nyj razmer polya?              1 GB
@@ -931,14 +951,14 @@ iya
 CHAR(n)         bpchar          zapolnyaetsya pustotoj do fiksirovannoj dliny
 TEXT            text            net zadavaemogo verhnego ogranicheniya ili dlin
 y
-"char"          char            odin simvol
 BYTEA           bytea           massiv bajt peremennoj dliny (mozhno ispol'zova
 t' null-bajt bez opaski)
+"char"          char            odin simvol
 
    Vnutrennee imya vy mozhete uvidet', kogda smotrite sistemnye katalogi
    i v nekotoryh soobscheniyah ob oshibkah.
    
-   Poslednie chetyre tipa yavlyayutsya "varlena" tipami (t.e., pervye
+   Pervye chetyre tipa yavlyayutsya "varlena" tipami (t.e., pervye
    chetyre bajta na diske yavlyayutsya dlinnoj, za kotoroj sleduyut
    dannye). Takim obrazom, fakticheski ispol'zuemoe prostranstvo bol'she,
    chem oboznachennyj razmer. Odnako, `eti tipy dannyh takzhe poddayutsya
@@ -954,8 +974,8 @@ t' null-bajt bez opaski)
    imeyut odinakovuyu dlinu. CHAR(n) zapolnyaetsya pustotoj do zadannoj
    dliny, v to vremya kak VARCHAR(n) hranit tol'ko simvoly, iz kotoryh
    sostoit stroka. BYTEA ispol'zuetsya dlya hraneniya binarnyh dannyh,
-   znacheniya kotoryh mogut vklyuchat' NULL bajty. `Eti tipy imeyut
-   shodnye harakteristiki proizvoditel'nosti.
+   znacheniya kotoryh mogut vklyuchat' NULL bajty. Vse tipy opisannye
+   zdes', imeyut shodnye harakteristiki proizvoditel'nosti.
    
     4.15.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
     
@@ -1194,10 +1214,10 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    
     4.25) Kak mne vernut' iz funkcii neskol'ko zapisej?
     
-   Vy mozhete vozvraschat' iz funkcij PL/pgSQL spiski rezul'tatov,
-   ispol'zuya refcursors. Smotrite
-   http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html,
-   sekciyu 23.7.3.3.
+   V versii 7.3, vy mozhete legko vernut' neskol'ko zapisej ili kolonok
+   iz kakoj-libo funkcii,
+   http://techdocs.postgresql.org/guides/SetReturningFunctions
+   .
    
     4.26) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy v
     funkciyah PL/PgSQL?

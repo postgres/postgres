@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Feb 14 09:03:00 EST 2003</P>
+    <P>Last updated: Wed Jul 23 00:11:07 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -18,10 +18,10 @@
 
     <P>The most recent version of this document can be viewed at <A
     href=
-    "http://www.ca.PostgreSQL.org/docs/faq-english.html">http://www.ca.PostgreSQL.org/docs/faq-english.html</A>.</P>
+    "http://www.PostgreSQL.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
     <P>Platform-specific questions are answered at <A href=
-    "http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html">http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html</A>.</P>
+    "http://www.PostgreSQL.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
     <HR>
 
     <H2 align="center">General Questions</H2>
@@ -83,11 +83,11 @@
     <A href="#4.1">4.1</A>) What is the difference between binary
     cursors and normal cursors?<BR>
      <A href="#4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
-    first few rows of a query?<BR>
+    first few rows of a query?  A random row?<BR>
      <A href="#4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql</I>?<BR>
      <A href="#4.4">4.4</A>) How do you remove a column from a
-    table?<BR>
+    table, or change it's data type?<BR>
      <A href="#4.5">4.5</A>) What is the maximum size for a row, a
     table, and a database?<BR>
      <A href="#4.6">4.6</A>) How much database disk space is required
@@ -245,11 +245,16 @@
     <P>The database server can run on Windows NT and Win2k using
     Cygwin, the Cygnus Unix/NT porting library. See
     <I>pgsql/doc/FAQ_MSWIN</I> in the distribution or the MS Windows FAQ
-    at <A href="http://www.PostgreSQL.org/docs/faq-mswin.html">
-    http://www.PostgreSQL.org/docs/faq-mswin.html</A>.</P>
+    at <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">
+    http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
 
     <p>A native port to MS Win NT/2000/XP is currently being worked
-    on.</p>
+    on. For more details on the current status of PostgreSQL on Windows see
+    <a href="http://techdocs.postgresql.org/guides/Windows">
+    http://techdocs.postgresql.org/guides/Windows</a>.</p>
+
+    <p>There is also a Novell Netware 6 port at
+    <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
     <H4><A name="1.5">1.5</A>) Where can I get PostgreSQL?</H4>
 
@@ -309,12 +314,12 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>There is also an IRC channel on EFNet, channel
-    <I>#PostgreSQL</I>. I use the Unix command <CODE>irc -c
+    <P>There is also an IRC channel on EFNet and OpenProjects,
+    channel <I>#PostgreSQL</I>. I use the Unix command <CODE>irc -c
     '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
     <P>A list of commercial support companies is available at <A href=
-    "http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</A>.</P>
+    "http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
 
@@ -326,8 +331,8 @@
 
     <P>Several manuals, manual pages, and some small test examples are
     included in the distribution. See the <I>/doc</I> directory. You
-    can also browse the manual online at <A href=
-    "http://www.ca.PostgreSQL.org/users-lounge/docs/">http://www.ca.PostgreSQL.org/users-lounge/docs/</A>.</P>
+    can also browse the manuals online at <A href=
+    "http://www.PostgreSQL.org/docs">http://www.PostgreSQL.org/docs</A>.</P>
 
     <P>There are two PostgreSQL books available online at <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -335,7 +340,7 @@
     "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</A>.
     There is a list of PostgreSQL books available for purchase at <A
     href=
-    "http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</A>.
+    "http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</A>.
     There is also a collection of PostgreSQL technical articles at <A
     href=
     "http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</A>.</P>
@@ -498,6 +503,11 @@
     send a check to the contact address.</P>
     <HR>
 
+    <P>Also, if you have a success story about PostgreSQL, please submit
+    it to our advocacy site at <a href="http://advocacy.postgresql.org">
+    http://advocacy.postgresql.org</a>.</P>
+
+
     <H2 align="center">User Client Questions</H2>
 
     <H4><A name="2.1">2.1</A>) Are there <SMALL>ODBC</SMALL> drivers
@@ -535,7 +545,7 @@
     <H4><A name="2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface?</H4>
 
-    Yes, there are several graphical interfaces to PostgreSQL available.
+    <P>Yes, there are several graphical interfaces to PostgreSQL available.
     These include PgAccess <a href="http://www.pgaccess.org">
     http://www.pgaccess.org</a>), PgAdmin II (<a
     href="http://www.pgadmin.org">http://www.pgadmin.org</a>,
@@ -545,7 +555,9 @@
     http://www.thekompany.com/products/rekall/</a>, proprietary). There is 
     also PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </a>), a web-based interface to 
-    PostgreSQL.
+    PostgreSQL.</P>
+
+    <P>See <a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a> for a more detailed list.</P>
 
     <H4><A name="2.4">2.4</A>) What languages are able to communicate with 
     PostgreSQL?</H4>
@@ -600,7 +612,7 @@
     <I>postmaster</I>. For most systems, with default numbers of
     buffers and processes, you need a minimum of ~1 MB. See the <A
     href=
-    "http://www.postgresql.org/idocs/index.php?kernel-resources.html">PostgreSQL
+    "http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">PostgreSQL
     Administrator's Guide</A> for more detailed information about
     shared memory and semaphores.</P>
 
@@ -792,7 +804,7 @@
     description.</P>
 
     <H4><A name="4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
-    first few rows of a query?</H4>
+    first few rows of a query?  A random row?</H4>
 
     <P>See the <SMALL>FETCH</SMALL> manual page, or use
     <SMALL>SELECT</SMALL> ... <SMALL>LIMIT</SMALL>....</P>
@@ -803,6 +815,14 @@
     BY</SMALL>, PostgreSQL may be able to evaluate only the first few
     records requested, or the entire query may have to be evaluated
     until the desired rows have been generated.</P>
+
+    <P>To <SMALL>SELECT</SMALL> a random row, use:
+<PRE>
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+</PRE>
 
     <H4><A name="4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql</I>?</H4>
@@ -815,9 +835,9 @@
     execute the commands you give.</P>
 
     <H4><A name="4.4">4.4</A>) How do you remove a column from a
-    table?</H4>
+    table, or change its data type?</H4>
 
-    <P>This functionality was added in release 7.3 with
+    <P><SMALL>DROP COLUMN</SMALL> functionality was added in release 7.3 with
     <SMALL>ALTER TABLE DROP COLUMN</SMALL>.  In earlier versions,
     you can do this:</P>
 <PRE>
@@ -831,12 +851,23 @@
     COMMIT;
 </PRE>
 
+    <P>To change the data type of a column, do this:</P>
+<PRE>
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
+    UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
+    ALTER TABLE tab DROP COLUMN old_col;
+    COMMIT;
+</PRE>
+    <P>You might then want to do <I>VACUUM FULL tab</I> to reclaim the
+    disk space used by the expired rows.</P>
+    
     <H4><A name="4.5">4.5</A>) What is the maximum size for a row, a
     table, and a database?</H4>
 
     <P>These are the limits:</P>
 <PRE>
-    Maximum size for a database?             unlimited (1 TB databases exist)
+    Maximum size for a database?             unlimited (4 TB databases exist)
     Maximum size for a table?                16 TB
     Maximum size for a row?                  1.6TB
     Maximum size for a field?                1 GB
@@ -1037,14 +1068,14 @@ Type            Internal Name   Notes
 VARCHAR(n)      varchar         size specifies maximum length, no padding
 CHAR(n)         bpchar          blank padded to the specified fixed length
 TEXT            text            no specific upper limit on length
-"char"          char            one character
 BYTEA           bytea           variable-length byte array (null-byte safe)
+"char"          char            one character
 </PRE>
 
     <P>You will see the internal name when examining system catalogs
     and in some error messages.</P>
 
-    <P>The last four types above are "varlena" types (i.e., the first
+    <P>The first four types above are "varlena" types (i.e., the first
     four bytes on disk are the length, followed by the data). Thus the
     actual space used is slightly greater than the declared size.
     However, these data types are also subject to compression or being
@@ -1058,8 +1089,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     same length. <SMALL>CHAR(n)</SMALL> pads with blanks to the specified
     length, while <SMALL>VARCHAR(n)</SMALL> only stores the characters
     supplied.  <SMALL>BYTEA</SMALL> is for storing binary data,
-    particularly values that include <SMALL>NULL</SMALL> bytes. These
-    types have similar performance characteristics.</P>
+    particularly values that include <SMALL>NULL</SMALL> bytes. All the
+    types described here have similar performance characteristics.</P>
 
     <H4><A name="4.15.1">4.15.1</A>) How do I create a
     serial/auto-incrementing field?</H4>
@@ -1340,11 +1371,10 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <H4><A name="4.25">4.25</A>) How do I return multiple rows or
     columns from a function?</H4>
 
-    <P>You can return result sets from PL/pgSQL functions using
-    <I>refcursors</I>. See <A href=
-    "http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html">
-    http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</A>,
-    section 23.7.3.3.</P>
+    <P>In 7.3, you can easily return multiple rows or columns from a
+    function,
+    <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
+    http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
     <H4><A name="4.26">4.26</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>

@@ -5,18 +5,17 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: So., den 15.12.2002,
-   18:00 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Mo., den 02.06.2003,
+   22:00 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
-     * http://www.PostgreSQL.org/docs/faq-english.html (engl.)
-     * http://www.PostgreSQL.org/docs/faq-german.html (dt.)
+     * http://www.PostgreSQL.org/docs/faqs/FAQ.html (engl.)
+     * http://www.PostgreSQL.org/docs/faqs/FAQ_german.html (dt.)
        
    Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
    spezifische FAQs können unter
-   http://www.PostgreSQL.org/users-lounge/docs/faq.html eingesehen
-   werden.
+   http://www.PostgreSQL.org/docs/index.html#faqs eingesehen werden.
      _________________________________________________________________
    
                              Allgemeine Fragen
@@ -67,11 +66,12 @@
                                       
    4.1) Worin besteht der Unterschied zwischen Binary Cursors und Normal
    Cursors?
-   4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen in
-   einer Abfrage aus?
+   4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen
+   bzw. eine beliebige Zeile in einer Abfrage aus?
    4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die
    ich in psql sehen kann?
-   4.4) Wie entferne ich eine Spalte aus einer Tabelle?
+   4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich
+   den Datentyp einer Spalte?
    4.5) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine
    Datenbank?
    4.6) Wieviel Plattenplatz wird benötigt, um die Daten aus einer
@@ -222,10 +222,17 @@
    (Unix/NT-Portierungsbibliotheken) auf Windows NT/2000 zum Laufen
    gebracht werden. Hierzu bitte lesen Sie die in der Distribution
    enthaltene Datei pgsql/doc/FAQ_MSWIN oder die MS-Windows-FAQ unter
-   http://www.PostgreSQL.org/docs/faq-mswin.html.
+   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
    
    Eine eigenständige Portierung auf MS Win NT/2000/XP befindet sich in
-   Vorbereitung.
+   der Vorbereitung.
+   
+   Weitere Informationen zum Status von PostgreSQL auf der
+   Microsoft-Plattform befinden sich unter
+   http://techdocs.postgresql.org/guides/Windows (en.).
+   
+   Eine Portierung für Novell Netware 6 gibt es unter
+   http://forge.novell.com.
    
     1.5) Woher bekomme ich PostgreSQL?
     
@@ -264,23 +271,28 @@
     subscribe
     end
 
+   Eine deutschsprachige Mailing-Liste gibt es bei Yahoo Groups:
+   http://de.groups.yahoo.com/group/postgres/; die Liste kann mit einer
+   leeren E-Mail an postgres-subscribe@yahoogroups.de abonniert werden.
+   
    Weitere Mailinglisten und Informationen zu PostgreSQL befinden sich
    auf der PostgreSQL-Homepage:
    
      http://www.PostgreSQL.org
      
-   Es gibt außerdem einen IRC-Channel im EFNet, Channel #PostgreSQL. Der
-   FAQ-Autor Bruce Momjian nutzt den Unix-Befehl: irc -c '#PostgreSQL'
-   "$USER" irc.phoenix.net um daran teilzunehmen.
+   Es gibt außerdem einen IRC-Channel bei EFNet und bei OpenProjects,
+   Channel #PostgreSQL. Der FAQ-Autor Bruce Momjian nutzt den
+   Unix-Befehl: irc -c '#PostgreSQL' "$USER" irc.phoenix.net um daran
+   teilzunehmen.
    
    Eine Liste von Unternehmen, die Support für PostgreSQL auf
    kommerzieller Basis leisten, kann unter
-   http://www.PostgreSQL.org/users-lounge/commercial-support.html
+   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html
    eingesehen werden.
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.3.
+   Die neueste Version von PostgreSQL ist 7.3.3 .
    
    Wir planen alle 4 Monate eine neue Version herauszugeben.
    
@@ -288,16 +300,17 @@
     
    Einige Handbücher, Man-Pages und einige kleine Testprogramme sind in
    der Distribution enthalten. Siehe das /doc-Verzeichnis. Ausserdem sind
-   alle Handbücher online unter
-   http://www.PostgreSQL.org/users-lounge/docs/ verfügbar.
+   alle Handbücher online unter http://www.PostgreSQL.org/docs/
+   verfügbar.
    
    Zwei Bücher zu PostgreSQL sind online verfügbar unter
    http://www.PostgreSQL.org/docs/awbook.html und
    http://www.commandprompt.com/ppbook/ .
    
    Eine Liste lieferbarer PostgreSQL-Bücher befindet sich unter
-   http://www.ca.PostgreSQL.org/books/ Diverse technische Artikel
-   befinden sich unter http://techdocs.PostgreSQL.org/ .
+   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php Diverse
+   technische Artikel befinden sich unter http://techdocs.PostgreSQL.org/
+   .
    
    psql hat einige nützliche \d-Befehle, um Informationen über Typen,
    Operatoren, Funktionen, Aggregate, usw. zu zeigen.
@@ -433,6 +446,12 @@
    Unterstützung des PostgreSQL-Projekts da und nicht für die
    Finanzierung einer bestimmten Firma. Sie können auch gerne einen
    finanziellen Beitrag an die Kontaktadresse verschicken.
+   
+   Eine Möglichkeit der nicht-finanziellen Untetstützung besteht übrigens
+   darin, für http://advocacy.postgresql.org (en.) bzw.
+   http://advocacy.postgresql.org/?lang=de (dt.) einen Bericht über den
+   erfolgreichen Einsatz von PostgreSQL in Ihrem Unternehmen oder
+   Organisation bereitzustellen.
      _________________________________________________________________
    
                         Fragen zu Benutzerprogrammen
@@ -518,8 +537,9 @@
    voreingestellten Werten für Puffer und Prozesse benötigen Sie bei den
    meisten Systemen ein Minimum von ca. 1 MB. Der "PostgreSQL
    Administrator's Guide"
-   (http://www.PostgreSQL.org/idocs/index.php?kernel-resources.html)
-   enthält weitere Informationen zu Shared Memory und Semaphores.
+   (http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=k
+   ernel-resources.html) enthält weitere Informationen zu Shared Memory
+   und Semaphores.
    
     3.4) Wenn ich versuche, den postmaster zu starten, bekomme ich
     "IpcSemaphoreCreate"-Fehlermeldungen. Warum?
@@ -664,11 +684,6 @@
    wird verhindert, dass System-Ressourcen durch PostgreSQL aufgebraucht
    werden.
    
-   In den PostgreSQL-Versionen vor 6.5 war die maximale Anzahl von
-   Backends auf 64 festgelegt und eine Änderung setzte eine erneute
-   Kompilierung voraus, bei der die Konstante MaxBackendId in
-   include/storage/sinvaladt.h entsprechend angepasst werden mußte.
-   
     3.9) Was befindet sich im Verzeichnis pgsql_tmp/?
     
    Dieses Verzeichnis enthält temporäre Dateien, die durch den query
@@ -710,8 +725,8 @@
     
    Vgl. die DECLARE Man-Page für eine Beschreibung.
    
-    4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen in einer
-    Abfrage aus?
+    4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen bzw.
+    eine beliebige Zeile in einer Abfrage aus?
     
    Vgl. die FETCH Man-Page, oder benutzen Sie SELECT ... LIMIT... .
    
@@ -726,6 +741,13 @@
    Bitte beachten Sie, dass mit PostgreSQL 7.3 die Syntax LIMIT n, m
    durch LIMIT n OFFSET m ersetzt wurde.
    
+   Um eine beliebige Zeile auszuwählen, nutzen Sie ORDER BY random():
+       SELECT spalte
+         FROM tabelle
+     ORDER BY random()
+        LIMIT 1;
+
+
     4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in
     psql sehen kann?
     
@@ -735,10 +757,10 @@
    Option starten. Danach gibt psql die Abfragen aus, die es bei der
    Ausführung der Befehle benutzt.
    
-    4.4) Wie entferne ich eine Spalte aus einer Tabelle?
+    4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich den
+    Datentyp einer Spalte?
     
-   Der Syntax ALTER TABLE DROP COLUMN wird erst ab PostgreSQL 7.3
-   unterstützt.
+   Der Syntax ALTER TABLE DROP COLUMN wird ab PostgreSQL 7.3 unterstützt.
    
    Bei früheren Versionen bietet das folgende Verfahren Ersatz:
       BEGIN;
@@ -750,11 +772,22 @@
       ALTER TABLE new_table RENAME TO old_table;
       COMMIT;
 
+   Um den Datentyp einer Spalte zu ändern, gehen Sie wie folgt vor:
+       BEGIN;
+       ALTER TABLE tabelle ADD COLUMN neue_spalte neuer_datentyp;
+       UPDATE tabelle SET neue_spalte = CAST(alte_spalte AS neuer_datentyp);
+       ALTER TABLE tabelle DROP COLUMN alte_spalte;
+       COMMIT;
+
+
+   Um den Platz zu reklamieren, der von der gelöschten Spalte verwendet
+   wurde, führen Sie VACUUM FULL aus.
+   
     4.5) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?
     
    Es bestehen folgende Obergrenzen:
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
-                                               Datenbanken mit >1TB)
+                                               Datenbanken mit 4TB)
     Maximale Größe einer Tabelle?            16 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
@@ -860,6 +893,10 @@
 
    (Die Aggregatfunktionen MIN() und MAX() verwenden keine Indizes).
    
+   Sollte es danach aussehen, also ob der Optimierer irrtümlich einen
+   sequentiellen Scan ausführt, führen Sie SET enable_seqscan TO 'off'
+   aus und prüfen Sie, ob die Indexabfrage dadurch scheller geworden ist.
+   
    Bei der Nutzung von Wildcard-Operatoren wie LIKE oder ~, können
    Indizes nur unter bestimmten Umständen verwendet werden:
      * Der Anfang des Suchmusters muß mit dem Anfang des Strings
@@ -942,30 +979,38 @@
     
 Typ           interner Name   Bemerkungen
 -------------------------------------------------
-"char"        char            1 Zeichen
-CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 VARCHAR(n)    varchar         die Größe legt die Maximallänge fest; kein
                                Ausfüllen mit Leerzeichen
+CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 TEXT          text            Die Länge wird nur durch die maximale Zeilenlänge
                                beschränkt
 BYTEA         bytea           Bytearray mit variabler Länge
+"char"        char            1 Zeichen
 
    Der interne Name kommt vor allem in den Systemkatalogen und in manchen
    Fehlermeldungen vor.
    
-   Die letzten vier Typen sind "varlena"-Typen (d.h. die ersten vier
-   Bytes geben die Länge an, gefolgt von den Daten). Daher ist der
-   tatsächlich belegte Platz immer etwas mehr als die deklarierte
-   Feldgröße. Allerdings wird unter Umständen auf diese Datentypen
-   Datenkompression durch das TOAST- Verfahren angewendet, womit der
-   tatsächlich belegte Platz auch geringer als erwartet ausfallen kann.
+   Die ersten vier Typen sind "varlena"-Typen (d.h. die ersten vier Bytes
+   geben die Länge an, gefolgt von den Daten). Daher ist der tatsächlich
+   belegte Platz immer etwas mehr als die deklarierte Feldgröße.
+   Allerdings wird unter Umständen auf diese Datentypen Datenkompression
+   durch das TOAST- Verfahren angewendet, womit der tatsächlich belegte
+   Platz auch geringer als erwartet ausfallen kann.
    
-   CHAR(n) ist geeignet für die Speicherung von Zeichenketten ähnlicher
-   Länge. VARCHAR(n) ist geeignet für Zeichenketten abweichender Längen,
-   setzt jedoch eine maximale Länge. TEXT setzt keine Längengrenze,
-   allerdings gibt es eine systembedingte Obergrenze von 1 GB. BYTEA ist
-   für binäre Daten, besonders für Werte, die NULL-Bytes haben. Die
-   erwähnten Typen weisen ähnliche Performanzeigenschaften auf.
+   Für die Speicherung von Zeichenketten variabler Länge empfiehlt sich
+   VARCHAR(n). Die maximale Länge eines VARCHAR(n)-Felds wird bei der
+   Tabellendefinition festgelegt. TEXT setzt keine Längengrenze,
+   allerdings gibt es eine systembedingte Obergrenze von 1 GB.
+   
+   CHAR(n) ist geeignet für die Speicherung von Zeichenketten, die alle
+   die gleiche Länge haben. Bitte beachten Sie, dass CHAR(n) automatisch
+   Zeichenketten bis zur definierten Feldlänge mit Leerzeichen ausfüllt,
+   während bei VARCHAR(n) nur die tatsächlich eingegebene Zeichenkette
+   gespeichert wird.
+   
+   BYTEA ist für binäre Daten, besonders für Werte, die NULL-Bytes haben.
+   
+   Die hier erwähnten Typen weisen ähnliche Performanzeigenschaften auf.
    
     4.15.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
     Werts?
@@ -1142,7 +1187,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
 
    Damit diese Abfrage effizient durchgeführt wird, sollte für 'spalte2'
    ein Index angelegt worden sein. Die Einschränkung von Abfragen mit IN
-   soll in einer künftigen PotsgreSQL-Version behoben werden.
+   wird in der nächsten PostgreSQL-Version (7.4) behoben werden.
    
     4.23) Wie führe ich einen OUTER JOIN durch?
     
@@ -1185,19 +1230,23 @@ BYTEA         bytea           Bytearray mit variabler Länge
    Systemkataloge lädt, ist eine datenbankübergreifende Abfrage nicht
    möglich.
    
-   contrib/dblink ermöglicht datenbankübergreifende Abfragen.
+   contrib/dblink ist eine Erweiterung, die datenbankübergreifende
+   Abfragen ermöglicht.
    
    Es ist natürlich möglich, dass eine Client-Anwendung gleichzeitige
    Verbindungen zu verschiedenen Datenbanken aufbaut und selber
    Datensätze zusammenfügt.
    
+   Ab 7.3 unterstützt PostgreSQL schemas, die die Aufteilung einer
+   Datenbank in mehrere logische Bereiche ermöglichen. Bei vielen
+   Anwendungen könnten dies einen geeigneten Ersatz für den Zugriff auf
+   eine andere Datenbank bieten.
+   
     4.25) Wie kann ich mehrere Zeilen bzw. Spalten von einer Funktion
     zurückgeben lassen?
     
-   "Result sets" können mittels refcursors von PL/PgSQL-Funktionen
-   zurückgegeben werden. Vgl.:
-   http://www.postgresql.org/idocs/index.php?plpgsql-cursors.html
-   (Abschnitt 23.7.3.3).
+   Ab 7.3 können Funktionen mehrere Zeilen und Spalten zurückgeben, vgl.:
+   http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
     4.26) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
     zuverlässig erstellen bzw. löschen?
