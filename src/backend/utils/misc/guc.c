@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.17 2000/11/13 15:18:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.18 2000/11/13 21:35:03 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -39,6 +39,11 @@ extern bool Log_connections;
 extern int CheckPointTimeout;
 extern int XLOGbuffers;
 extern int XLOG_DEBUG;
+#ifdef ENABLE_SYSLOG
+extern char *Syslog_facility;
+extern char *Syslog_progid;
+       bool check_facility(const char *facility);
+#endif
 
 /*
  * Debugging options
@@ -303,6 +308,12 @@ ConfigureNamesString[] =
 
 	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
 	 "", NULL},
+#ifdef ENABLE_SYSLOG
+	{"syslog_facility",           PGC_SIGHUP,	    &Syslog_facility, 
+	"LOCAL0", check_facility},	 
+	{"syslog_progid",             PGC_SIGHUP,	    &Syslog_progid, 
+	"postgres", NULL},	 
+#endif
 
 	{"unixsocket",         		  PGC_POSTMASTER,       &UnixSocketName,
 	 "", NULL},
@@ -813,3 +824,18 @@ ParseLongOption(const char * string, char ** name, char ** value)
 		if (*cp == '-')
 			*cp = '_';
 }
+#ifdef ENABLE_SYSLOG
+bool 
+check_facility(const char *facility)
+{
+	if (strcasecmp(facility,"LOCAL0") == 0) return true;
+	if (strcasecmp(facility,"LOCAL1") == 0) return true;
+	if (strcasecmp(facility,"LOCAL2") == 0) return true;
+	if (strcasecmp(facility,"LOCAL3") == 0) return true;
+	if (strcasecmp(facility,"LOCAL4") == 0) return true;
+	if (strcasecmp(facility,"LOCAL5") == 0) return true;
+	if (strcasecmp(facility,"LOCAL6") == 0) return true;
+	if (strcasecmp(facility,"LOCAL7") == 0) return true;
+	return false;
+}
+#endif

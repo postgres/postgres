@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.65 2000/10/30 06:48:36 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.66 2000/11/13 21:35:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,8 @@ extern CommandDest whereToSendOutput;
  * ... in theory anyway
  */
 int Use_syslog = 0;
+char *Syslog_facility = "LOCAL0";
+char *Syslog_progid = "postgres";
 
 static void write_syslog(int level, const char *line);
 
@@ -620,6 +622,7 @@ write_syslog(int level, const char *line)
 
 	static bool	openlog_done = false;
 	static unsigned long seq = 0;
+	static int	syslog_fac = LOG_LOCAL0;
 	int len = strlen(line);
 
 	if (Use_syslog == 0)
@@ -627,7 +630,23 @@ write_syslog(int level, const char *line)
 
 	if (!openlog_done)
 	{
-		openlog("postgres", LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+		if (strcasecmp(Syslog_facility,"LOCAL0") == 0) 
+			syslog_fac = LOG_LOCAL0;
+		if (strcasecmp(Syslog_facility,"LOCAL1") == 0)
+			syslog_fac = LOG_LOCAL1;
+		if (strcasecmp(Syslog_facility,"LOCAL2") == 0)
+			syslog_fac = LOG_LOCAL2;
+		if (strcasecmp(Syslog_facility,"LOCAL3") == 0)
+			syslog_fac = LOG_LOCAL3;
+		if (strcasecmp(Syslog_facility,"LOCAL4") == 0)
+			syslog_fac = LOG_LOCAL4;
+		if (strcasecmp(Syslog_facility,"LOCAL5") == 0)
+			syslog_fac = LOG_LOCAL5;
+		if (strcasecmp(Syslog_facility,"LOCAL6") == 0)
+			syslog_fac = LOG_LOCAL6;
+		if (strcasecmp(Syslog_facility,"LOCAL7") == 0)
+			syslog_fac = LOG_LOCAL7;
+		openlog(Syslog_progid, LOG_PID | LOG_NDELAY, syslog_fac);
 		openlog_done = true;
 	}
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.33 2000/11/10 16:32:09 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.34 2000/11/13 21:35:02 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -820,6 +820,30 @@ env PGOPTIONS='-c geqo=off' psql
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>SYSLOG_FACILITY (<type>string</type>)</term>
+       <listitem>
+        <para>
+          If the SYSLOG option is set to 1 or greater, this option determines
+          the <application>syslog</application> facility used.  You may choose
+          from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.
+          the default is LOCAL0
+        </para>
+       </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>SYSLOG_PROGID (<type>string</type>)</term>
+       <listitem>
+        <para>
+         If the SYSLOG option is set to 1 or greater, this option determines
+         the program id used to identify <product>PostgreSQL</product> messages
+         in <application>syslog</application> log messages.  The default is
+         postgres.
+        </para>
+       </listitem>
+      </varlistentry>
 
      <varlistentry>
       <term>TRACE_NOTIFY (<type>boolean</type>)</term>
