@@ -485,6 +485,7 @@ insert_seq
 insert_tbl     
 int2_tbl       
 int4_tbl       
+int8_tbl       
 iportaltest    
 lseg_tbl       
 onek           
@@ -511,5 +512,5 @@ tinterval_tbl
 toyemp         
 varchar_tbl    
 xacttest       
-(69 rows)
+(70 rows)
 
