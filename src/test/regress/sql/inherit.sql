@@ -142,3 +142,10 @@ CREATE TABLE inhf (LIKE inhx, LIKE inhx); /* Throw error */
 CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS);
 INSERT INTO inhf DEFAULT VALUES;
 SELECT * FROM inhf; /* Single entry with value 'text' */
+
+-- Test changing the type of inherited columns
+insert into d values('test','one','two','three');
+
+alter table a alter column aa type integer using bit_length(aa);
+
+select * from d;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.228 2004/02/15 21:01:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.229 2004/05/05 04:48:45 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -470,7 +470,8 @@ index_create(Oid heapRelationId,
 			 Oid *classObjectId,
 			 bool primary,
 			 bool isconstraint,
-			 bool allow_system_table_mods)
+			 bool allow_system_table_mods,
+			 bool skip_build)
 {
 	Relation	heapRelation;
 	Relation	indexRelation;
@@ -721,21 +722,31 @@ index_create(Oid heapRelationId,
 	 * If this is bootstrap (initdb) time, then we don't actually fill in
 	 * the index yet.  We'll be creating more indexes and classes later,
 	 * so we delay filling them in until just before we're done with
-	 * bootstrapping.  Otherwise, we call the routine that constructs the
-	 * index.
+	 * bootstrapping.  Similarly, if the caller specified skip_build then
+	 * filling the index is delayed till later (ALTER TABLE can save work
+	 * in some cases with this).  Otherwise, we call the AM routine that
+	 * constructs the index.
 	 *
-	 * In normal processing mode, the heap and index relations are closed by
-	 * index_build() --- but we continue to hold the ShareLock on the heap
-	 * and the exclusive lock on the index that we acquired above, until
-	 * end of transaction.
+	 * In normal processing mode, the heap and index relations are closed,
+	 * but we continue to hold the ShareLock on the heap and the exclusive
+	 * lock on the index that we acquired above, until end of transaction.
 	 */
 	if (IsBootstrapProcessingMode())
 	{
 		index_register(heapRelationId, indexoid, indexInfo);
 		/* XXX shouldn't we close the heap and index rels here? */
 	}
+	else if (skip_build)
+	{
+		/* caller is responsible for filling the index later on */
+		relation_close(indexRelation, NoLock);
+		heap_close(heapRelation, NoLock);
+	}
 	else
+	{
 		index_build(heapRelation, indexRelation, indexInfo);
+		/* index_build closes the passed rels */
+	}
 
 	return indexoid;
 }

@@ -9,7 +9,7 @@ COMMENT ON TABLE tmp_wrong IS 'table comment';
 COMMENT ON TABLE tmp IS 'table comment';
 COMMENT ON TABLE tmp IS NULL;
 
-ALTER TABLE tmp ADD COLUMN a int4;
+ALTER TABLE tmp ADD COLUMN a int4 default 3;
 
 ALTER TABLE tmp ADD COLUMN b name;
 
@@ -918,3 +918,60 @@ select * from foo;
 update foo set f3 = 'zz';
 select * from foo;
 select f3,max(f1) from foo group by f3;
+
+-- Simple tests for alter table column type
+alter table foo alter f1 TYPE integer; -- fails
+alter table foo alter f1 TYPE varchar(10);
+
+create table anothertab (atcol1 serial8, atcol2 boolean,
+	constraint anothertab_chk check (atcol1 <= 3));
+
+insert into anothertab (atcol1, atcol2) values (default, true);
+insert into anothertab (atcol1, atcol2) values (default, false);
+select * from anothertab;
+
+alter table anothertab alter column atcol1 type boolean; -- fails
+alter table anothertab alter column atcol1 type integer;
+
+select * from anothertab;
+
+insert into anothertab (atcol1, atcol2) values (45, null); -- fails
+insert into anothertab (atcol1, atcol2) values (default, null);
+
+select * from anothertab;
+
+alter table anothertab alter column atcol2 type text
+      using case when atcol2 is true then 'IT WAS TRUE' 
+                 when atcol2 is false then 'IT WAS FALSE'
+                 else 'IT WAS NULL!' end;
+
+select * from anothertab;
+alter table anothertab alter column atcol1 type boolean
+        using case when atcol1 % 2 = 0 then true else false end; -- fails
+alter table anothertab alter column atcol1 drop default;
+alter table anothertab alter column atcol1 type boolean
+        using case when atcol1 % 2 = 0 then true else false end; -- fails
+alter table anothertab drop constraint anothertab_chk;
+
+alter table anothertab alter column atcol1 type boolean
+        using case when atcol1 % 2 = 0 then true else false end;
+
+select * from anothertab;
+
+drop table anothertab;
+
+create table another (f1 int, f2 text);
+
+insert into another values(1, 'one');
+insert into another values(2, 'two');
+insert into another values(3, 'three');
+
+select * from another;
+
+alter table another
+  alter f1 type text using f2 || ' more',
+  alter f2 type bigint using f1 * 10;
+
+select * from another;
+
+drop table another;

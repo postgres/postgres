@@ -613,3 +613,12 @@ SELECT * FROM inhf; /* Single entry with value 'text' */
  text
 (1 row)
 
+-- Test changing the type of inherited columns
+insert into d values('test','one','two','three');
+alter table a alter column aa type integer using bit_length(aa);
+select * from d;
+ aa | bb  | cc  |  dd   
+----+-----+-----+-------
+ 32 | one | two | three
+(1 row)
+

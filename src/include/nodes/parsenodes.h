@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.254 2004/03/11 01:47:41 ishii Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.255 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,44 +762,58 @@ typedef enum DropBehavior
 
 /* ----------------------
  *	Alter Table
- *
- * The fields are used in different ways by the different variants of
- * this command.
  * ----------------------
  */
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
-	char		subtype;		/*------------
-								 *	A = add column
-								 *	T = alter column default
-								 *	N = alter column drop not null
-								 *	n = alter column set not null
-								 *	S = alter column statistics
-								 *	M = alter column storage
-								 *	D = drop column
-								 *	C = add constraint
-								 *	c = pre-processed add constraint
-								 *		(local in parser/analyze.c)
-								 *	X = drop constraint
-								 *	E = create toast table
-								 *	U = change owner
-								 *	L = CLUSTER ON
-								 *	o = DROP OIDS
-								 *------------
-								 */
 	RangeVar   *relation;		/* table to work on */
+	List	   *cmds;			/* list of subcommands */
+} AlterTableStmt;
+
+typedef enum AlterTableType
+{
+	AT_AddColumn,				/* add column */
+	AT_ColumnDefault,			/* alter column default */
+	AT_DropNotNull,				/* alter column drop not null */
+	AT_SetNotNull,				/* alter column set not null */
+	AT_SetStatistics,			/* alter column statistics */
+	AT_SetStorage,				/* alter column storage */
+	AT_DropColumn,				/* drop column */
+	AT_DropColumnRecurse,		/* internal to commands/tablecmds.c */
+	AT_AddIndex,				/* add index */
+	AT_ReAddIndex,				/* internal to commands/tablecmds.c */
+	AT_AddConstraint,			/* add constraint */
+	AT_ProcessedConstraint,		/* pre-processed add constraint
+								 * (local in parser/analyze.c) */
+	AT_DropConstraint,			/* drop constraint */
+	AT_DropConstraintQuietly,	/* drop constraint, no error/warning
+								 * (local in commands/tablecmds.c) */
+	AT_AlterColumnType,			/* alter column type */
+	AT_ToastTable,				/* create toast table */
+	AT_ChangeOwner,				/* change owner */
+	AT_ClusterOn,				/* CLUSTER ON */
+	AT_DropOids					/* SET WITHOUT OIDS */
+} AlterTableType;
+
+typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
+{
+	NodeTag		type;
+	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column or constraint name to act on, or
 								 * new owner */
-	Node	   *def;			/* definition of new column or constraint */
+	Node	   *def;			/* definition of new column, column type,
+								 * index, or constraint */
+	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
-} AlterTableStmt;
+} AlterTableCmd;
+
 
 /* ----------------------
  *	Alter Domain
  *
  * The fields are used in different ways by the different variants of
- * this command. Subtypes should match AlterTable subtypes where possible.
+ * this command.
  * ----------------------
  */
 typedef struct AlterDomainStmt
@@ -814,7 +828,7 @@ typedef struct AlterDomainStmt
 								 *	U = change owner
 								 *------------
 								 */
-	List	   *typename;		/* table to work on */
+	List	   *typename;		/* domain to work on */
 	char	   *name;			/* column or constraint name to act on, or
 								 * new owner */
 	Node	   *def;			/* definition of default or constraint */
@@ -922,6 +936,8 @@ typedef struct CreateStmt
  * Definitions for plain (non-FOREIGN KEY) constraints in CreateStmt
  *
  * XXX probably these ought to be unified with FkConstraints at some point?
+ * To this end we include CONSTR_FOREIGN in the ConstrType enum, even though
+ * the parser does not generate it.
  *
  * For constraints that use expressions (CONSTR_DEFAULT, CONSTR_CHECK)
  * we may have the expression in either "raw" form (an untransformed
@@ -944,6 +960,7 @@ typedef enum ConstrType			/* types of constraints */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
 	CONSTR_CHECK,
+	CONSTR_FOREIGN,
 	CONSTR_PRIMARY,
 	CONSTR_UNIQUE,
 	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
@@ -1291,7 +1308,7 @@ typedef struct FetchStmt
 typedef struct IndexStmt
 {
 	NodeTag		type;
-	char	   *idxname;		/* name of the index */
+	char	   *idxname;		/* name of new index, or NULL for default */
 	RangeVar   *relation;		/* relation to build index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	List	   *indexParams;	/* a list of IndexElem */

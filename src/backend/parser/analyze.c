@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.298 2004/04/02 21:05:32 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.299 2004/05/05 04:48:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ typedef struct
 	RangeVar   *relation;		/* relation to create */
 	List	   *inhRelations;	/* relations to inherit from */
 	bool		hasoids;		/* does relation have an OID column? */
-	Oid			relOid;			/* OID of table, if ALTER TABLE case */
+	bool		isalter;		/* true if altering existing table */
 	List	   *columns;		/* ColumnDef items */
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
@@ -131,18 +131,17 @@ static void transformIndexConstraints(ParseState *pstate,
 						  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
 					   CreateStmtContext *cxt,
+					   bool skipValidation,
 					   bool isAddConstraint);
 static void applyColumnNames(List *dst, List *src);
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
-static bool relationHasPrimaryKey(Oid relationOid);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 static bool check_parameter_resolution_walker(Node *node,
 							check_parameter_resolution_context *context);
-static char *makeObjectName(char *name1, char *name2, char *typename);
 
 
 /*
@@ -346,7 +345,8 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			break;
 
 		case T_AlterTableStmt:
-			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree,
+			result = transformAlterTableStmt(pstate,
+											 (AlterTableStmt *) parseTree,
 											 extras_before, extras_after);
 			break;
 
@@ -733,8 +733,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
  *	from the truncated characters.	Currently it seems best to keep it simple,
  *	so that the generated names are easily predictable by a person.
  */
-static char *
-makeObjectName(char *name1, char *name2, char *typename)
+char *
+makeObjectName(const char *name1, const char *name2, const char *typename)
 {
 	char	   *name;
 	int			overhead = 0;	/* chars needed for type and underscores */
@@ -795,48 +795,6 @@ makeObjectName(char *name1, char *name2, char *typename)
 	return name;
 }
 
-static char *
-CreateIndexName(char *table_name, char *column_name,
-				char *label, List *indices)
-{
-	int			pass = 0;
-	char	   *iname = NULL;
-	List	   *ilist;
-	char		typename[NAMEDATALEN];
-
-	/*
-	 * The type name for makeObjectName is label, or labelN if that's
-	 * necessary to prevent collisions among multiple indexes for the same
-	 * table.  Note there is no check for collisions with already-existing
-	 * indexes, only among the indexes we're about to create now; this
-	 * ought to be improved someday.
-	 */
-	strncpy(typename, label, sizeof(typename));
-
-	for (;;)
-	{
-		iname = makeObjectName(table_name, column_name, typename);
-
-		foreach(ilist, indices)
-		{
-			IndexStmt  *index = lfirst(ilist);
-
-			if (index->idxname != NULL &&
-				strcmp(iname, index->idxname) == 0)
-				break;
-		}
-		/* ran through entire list? then no name conflict found so done */
-		if (ilist == NIL)
-			break;
-
-		/* found a conflict, so try a new name component */
-		pfree(iname);
-		snprintf(typename, sizeof(typename), "%s%d", label, ++pass);
-	}
-
-	return iname;
-}
-
 /*
  * transformCreateStmt -
  *	  transforms the "create table" statement
@@ -857,7 +815,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	cxt.stmtType = "CREATE TABLE";
 	cxt.relation = stmt->relation;
 	cxt.inhRelations = stmt->inhRelations;
-	cxt.relOid = InvalidOid;
+	cxt.isalter = false;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -914,7 +872,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	/*
 	 * Postprocess foreign-key constraints.
 	 */
-	transformFKConstraints(pstate, &cxt, false);
+	transformFKConstraints(pstate, &cxt, true, false);
 
 	/*
 	 * Output results.
@@ -1326,24 +1284,23 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		index->primary = (constraint->contype == CONSTR_PRIMARY);
 		if (index->primary)
 		{
-			/* In ALTER TABLE case, a primary index might already exist */
-			if (cxt->pkey != NULL ||
-				(OidIsValid(cxt->relOid) &&
-				 relationHasPrimaryKey(cxt->relOid)))
+			if (cxt->pkey != NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("multiple primary keys for table \"%s\" are not allowed",
 								cxt->relation->relname)));
 			cxt->pkey = index;
+			/*
+			 * In ALTER TABLE case, a primary index might already exist,
+			 * but DefineIndex will check for it.
+			 */
 		}
 		index->isconstraint = true;
 
 		if (constraint->name != NULL)
 			index->idxname = pstrdup(constraint->name);
-		else if (constraint->contype == CONSTR_PRIMARY)
-			index->idxname = makeObjectName(cxt->relation->relname, NULL, "pkey");
 		else
-			index->idxname = NULL;		/* will set it later */
+			index->idxname = NULL;		/* DefineIndex will choose name */
 
 		index->relation = cxt->relation;
 		index->accessMethod = DEFAULT_INDEX_TYPE;
@@ -1431,25 +1388,14 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						break;
 				}
 			}
-			else if (OidIsValid(cxt->relOid))
-			{
-				/* ALTER TABLE case: does column already exist? */
-				HeapTuple	atttuple;
 
-				atttuple = SearchSysCacheAttName(cxt->relOid, key);
-				if (HeapTupleIsValid(atttuple))
-				{
-					found = true;
-
-					/*
-					 * If it's not already NOT NULL, leave it to
-					 * DefineIndex to fix later.
-					 */
-					ReleaseSysCache(atttuple);
-				}
-			}
-
-			if (!found)
+			/*
+			 * In the ALTER TABLE case, don't complain about index keys
+			 * not created in the command; they may well exist already.
+			 * DefineIndex will complain about them if not, and will also
+			 * take care of marking them NOT NULL.
+			 */
+			if (!found && !cxt->isalter)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 					  errmsg("column \"%s\" named in key does not exist",
@@ -1537,51 +1483,36 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 		indexlist = lnext(indexlist);
 	}
-
-	/*
-	 * Finally, select unique names for all not-previously-named indices,
-	 * and display NOTICE messages.
-	 *
-	 * XXX in ALTER TABLE case, we fail to consider name collisions against
-	 * pre-existing indexes.
-	 */
-	foreach(indexlist, cxt->alist)
-	{
-		index = lfirst(indexlist);
-
-		if (index->idxname == NULL && index->indexParams != NIL)
-		{
-			iparam = (IndexElem *) lfirst(index->indexParams);
-			/* we should never see an expression item here */
-			Assert(iparam->expr == NULL);
-			index->idxname = CreateIndexName(cxt->relation->relname,
-											 iparam->name,
-											 "key",
-											 cxt->alist);
-		}
-		if (index->idxname == NULL)		/* should not happen */
-			elog(ERROR, "failed to make implicit index name");
-
-		ereport(NOTICE,
-				(errmsg("%s / %s%s will create implicit index \"%s\" for table \"%s\"",
-						cxt->stmtType,
-			   (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
-						(index->primary ? "PRIMARY KEY" : "UNIQUE"),
-						index->idxname, cxt->relation->relname)));
-	}
 }
 
 static void
 transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
-					   bool isAddConstraint)
+					   bool skipValidation, bool isAddConstraint)
 {
+	List	   *fkclist;
+
 	if (cxt->fkconstraints == NIL)
 		return;
 
 	/*
-	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE or
-	 * ALTER TABLE ADD COLUMN, gin up an ALTER TABLE ADD CONSTRAINT
-	 * command to execute after the basic command is complete.
+	 * If CREATE TABLE or adding a column with NULL default, we can safely
+	 * skip validation of the constraint.
+	 */
+	if (skipValidation)
+	{
+		foreach(fkclist, cxt->fkconstraints)
+		{
+			FkConstraint *fkconstraint = (FkConstraint *) lfirst(fkclist);
+
+			fkconstraint->skip_validation = true;
+		}
+	}
+
+	/*
+	 * For CREATE TABLE or ALTER TABLE ADD COLUMN, gin up an ALTER TABLE
+	 * ADD CONSTRAINT command to execute after the basic command is complete.
+	 * (If called from ADD CONSTRAINT, that routine will add the FK constraints
+	 * to its own subcommand list.)
 	 *
 	 * Note: the ADD CONSTRAINT command must also execute after any index
 	 * creation commands.  Thus, this should run after
@@ -1591,22 +1522,22 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 	if (!isAddConstraint)
 	{
 		AlterTableStmt *alterstmt = makeNode(AlterTableStmt);
-		List	   *fkclist;
 
-		alterstmt->subtype = 'c';		/* preprocessed add constraint */
 		alterstmt->relation = cxt->relation;
-		alterstmt->name = NULL;
-		alterstmt->def = (Node *) cxt->fkconstraints;
+		alterstmt->cmds = NIL;
 
-		/* Don't need to scan the table contents in this case */
 		foreach(fkclist, cxt->fkconstraints)
 		{
 			FkConstraint *fkconstraint = (FkConstraint *) lfirst(fkclist);
+			AlterTableCmd  *altercmd = makeNode(AlterTableCmd);
 
-			fkconstraint->skip_validation = true;
+			altercmd->subtype = AT_ProcessedConstraint;
+			altercmd->name = NULL;
+			altercmd->def = (Node *) fkconstraint;
+			alterstmt->cmds = lappend(alterstmt->cmds, altercmd);
 		}
 
-		cxt->alist = lappend(cxt->alist, (Node *) alterstmt);
+		cxt->alist = lappend(cxt->alist, alterstmt);
 	}
 }
 
@@ -2554,110 +2485,157 @@ static Query *
 transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 						List **extras_before, List **extras_after)
 {
-	Relation	rel;
 	CreateStmtContext cxt;
 	Query	   *qry;
+	List	   *lcmd,
+			   *l;
+	List	   *newcmds = NIL;
+	bool		skipValidation = true;
+	AlterTableCmd  *newcmd;
+
+	cxt.stmtType = "ALTER TABLE";
+	cxt.relation = stmt->relation;
+	cxt.inhRelations = NIL;
+	cxt.isalter = true;
+	cxt.hasoids = false;		/* need not be right */
+	cxt.columns = NIL;
+	cxt.ckconstraints = NIL;
+	cxt.fkconstraints = NIL;
+	cxt.ixconstraints = NIL;
+	cxt.blist = NIL;
+	cxt.alist = NIL;
+	cxt.pkey = NULL;
 
 	/*
 	 * The only subtypes that currently require parse transformation
-	 * handling are 'A'dd column and Add 'C'onstraint.	These largely
+	 * handling are ADD COLUMN and ADD CONSTRAINT.	These largely
 	 * re-use code from CREATE TABLE.
-	 *
-	 * If we need to do any parse transformation, get exclusive lock on the
-	 * relation to make sure it won't change before we execute the
-	 * command.
 	 */
-	switch (stmt->subtype)
+	foreach(lcmd, stmt->cmds)
 	{
-		case 'A':
-			rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+		AlterTableCmd  *cmd = (AlterTableCmd *) lfirst(lcmd);
 
-			cxt.stmtType = "ALTER TABLE";
-			cxt.relation = stmt->relation;
-			cxt.inhRelations = NIL;
-			cxt.relOid = RelationGetRelid(rel);
-			cxt.hasoids = SearchSysCacheExists(ATTNUM,
-											ObjectIdGetDatum(cxt.relOid),
-								  Int16GetDatum(ObjectIdAttributeNumber),
-											   0, 0);
-			cxt.columns = NIL;
-			cxt.ckconstraints = NIL;
-			cxt.fkconstraints = NIL;
-			cxt.ixconstraints = NIL;
-			cxt.blist = NIL;
-			cxt.alist = NIL;
-			cxt.pkey = NULL;
+		switch (cmd->subtype)
+		{
+			case AT_AddColumn:
+			{
+				ColumnDef *def = (ColumnDef *) cmd->def;
 
-			Assert(IsA(stmt->def, ColumnDef));
-			transformColumnDefinition(pstate, &cxt,
-									  (ColumnDef *) stmt->def);
+				Assert(IsA(cmd->def, ColumnDef));
+				transformColumnDefinition(pstate, &cxt,
+										  (ColumnDef *) cmd->def);
 
-			transformIndexConstraints(pstate, &cxt);
-			transformFKConstraints(pstate, &cxt, false);
+				/*
+				 * If the column has a non-null default, we can't skip
+				 * validation of foreign keys.
+				 */
+				if (((ColumnDef *) cmd->def)->raw_default != NULL)
+					skipValidation = false;
 
-			((ColumnDef *) stmt->def)->constraints = cxt.ckconstraints;
-			*extras_before = nconc(*extras_before, cxt.blist);
-			*extras_after = nconc(cxt.alist, *extras_after);
+				newcmds = lappend(newcmds, cmd);
 
-			heap_close(rel, NoLock);	/* close rel, keep lock */
-			break;
+				/*
+				 * Convert an ADD COLUMN ... NOT NULL constraint to a separate
+				 * command
+				 */
+				if (def->is_not_null)
+				{
+					/* Remove NOT NULL from AddColumn */
+					def->is_not_null = false;
 
-		case 'C':
-			rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+					/* Add as a separate AlterTableCmd */
+					newcmd = makeNode(AlterTableCmd);
+					newcmd->subtype = AT_SetNotNull;
+					newcmd->name = pstrdup(def->colname);
+					newcmds = lappend(newcmds, newcmd);
+				}
 
-			cxt.stmtType = "ALTER TABLE";
-			cxt.relation = stmt->relation;
-			cxt.inhRelations = NIL;
-			cxt.relOid = RelationGetRelid(rel);
-			cxt.hasoids = SearchSysCacheExists(ATTNUM,
-											ObjectIdGetDatum(cxt.relOid),
-								  Int16GetDatum(ObjectIdAttributeNumber),
-											   0, 0);
-			cxt.columns = NIL;
-			cxt.ckconstraints = NIL;
-			cxt.fkconstraints = NIL;
-			cxt.ixconstraints = NIL;
-			cxt.blist = NIL;
-			cxt.alist = NIL;
-			cxt.pkey = NULL;
+				/*
+				 * All constraints are processed in other ways.
+				 * Remove the original list
+				 */
+				def->constraints = NIL;
 
-			if (IsA(stmt->def, Constraint))
-				transformTableConstraint(pstate, &cxt,
-										 (Constraint *) stmt->def);
-			else if (IsA(stmt->def, FkConstraint))
-				cxt.fkconstraints = lappend(cxt.fkconstraints, stmt->def);
-			else
-				elog(ERROR, "unrecognized node type: %d",
-					 (int) nodeTag(stmt->def));
+				break;
+			}
+			case AT_AddConstraint:
+				/* The original AddConstraint cmd node doesn't go to newcmds */
 
-			transformIndexConstraints(pstate, &cxt);
-			transformFKConstraints(pstate, &cxt, true);
+				if (IsA(cmd->def, Constraint))
+					transformTableConstraint(pstate, &cxt,
+											 (Constraint *) cmd->def);
+				else if (IsA(cmd->def, FkConstraint))
+				{
+					cxt.fkconstraints = lappend(cxt.fkconstraints, cmd->def);
+					skipValidation = false;
+				}
+				else
+					elog(ERROR, "unrecognized node type: %d",
+						 (int) nodeTag(cmd->def));
+				break;
 
-			Assert(cxt.columns == NIL);
-			/* fkconstraints should be put into my own stmt in this case */
-			stmt->def = (Node *) nconc(cxt.ckconstraints, cxt.fkconstraints);
-			*extras_before = nconc(*extras_before, cxt.blist);
-			*extras_after = nconc(cxt.alist, *extras_after);
+			case AT_ProcessedConstraint:
 
-			heap_close(rel, NoLock);	/* close rel, keep lock */
-			break;
+				/*
+				 * Already-transformed ADD CONSTRAINT, so just make it look
+				 * like the standard case.
+				 */
+				cmd->subtype = AT_AddConstraint;
+				newcmds = lappend(newcmds, cmd);
+				break;
 
-		case 'c':
-
-			/*
-			 * Already-transformed ADD CONSTRAINT, so just make it look
-			 * like the standard case.
-			 */
-			stmt->subtype = 'C';
-			break;
-
-		default:
-			break;
+			default:
+				newcmds = lappend(newcmds, cmd);
+				break;
+		}
 	}
+
+	/* Postprocess index and FK constraints */
+	transformIndexConstraints(pstate, &cxt);
+
+	transformFKConstraints(pstate, &cxt, skipValidation, true);
+
+	/*
+	 * Push any index-creation commands into the ALTER, so that
+	 * they can be scheduled nicely by tablecmds.c.
+	 */
+	foreach(l, cxt.alist)
+	{
+		Node   *idxstmt = (Node *) lfirst(l);
+
+		Assert(IsA(idxstmt, IndexStmt));
+		newcmd = makeNode(AlterTableCmd);
+		newcmd->subtype = AT_AddIndex;
+		newcmd->def = idxstmt;
+		newcmds = lappend(newcmds, newcmd);
+	}
+	cxt.alist = NIL;
+
+	/* Append any CHECK or FK constraints to the commands list */
+	foreach(l, cxt.ckconstraints)
+	{
+		newcmd = makeNode(AlterTableCmd);
+		newcmd->subtype = AT_AddConstraint;
+		newcmd->def = (Node *) lfirst(l);
+		newcmds = lappend(newcmds, newcmd);
+	}
+	foreach(l, cxt.fkconstraints)
+	{
+		newcmd = makeNode(AlterTableCmd);
+		newcmd->subtype = AT_AddConstraint;
+		newcmd->def = (Node *) lfirst(l);
+		newcmds = lappend(newcmds, newcmd);
+	}
+
+	/* Update statement's commands list */
+	stmt->cmds = newcmds;
 
 	qry = makeNode(Query);
 	qry->commandType = CMD_UTILITY;
 	qry->utilityStmt = (Node *) stmt;
+
+	*extras_before = nconc(*extras_before, cxt.blist);
+	*extras_after = nconc(cxt.alist, *extras_after);
 
 	return qry;
 }
@@ -2945,51 +2923,6 @@ transformForUpdate(Query *qry, List *forUpdate)
 	qry->rowMarks = rowMarks;
 }
 
-
-/*
- * relationHasPrimaryKey -
- *
- *	See whether an existing relation has a primary key.
- */
-static bool
-relationHasPrimaryKey(Oid relationOid)
-{
-	bool		result = false;
-	Relation	rel;
-	List	   *indexoidlist,
-			   *indexoidscan;
-
-	rel = heap_open(relationOid, AccessShareLock);
-
-	/*
-	 * Get the list of index OIDs for the table from the relcache, and
-	 * look up each one in the pg_index syscache until we find one marked
-	 * primary key (hopefully there isn't more than one such).
-	 */
-	indexoidlist = RelationGetIndexList(rel);
-
-	foreach(indexoidscan, indexoidlist)
-	{
-		Oid			indexoid = lfirsto(indexoidscan);
-		HeapTuple	indexTuple;
-
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexoid),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
-			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
-		ReleaseSysCache(indexTuple);
-		if (result)
-			break;
-	}
-
-	freeList(indexoidlist);
-
-	heap_close(rel, AccessShareLock);
-
-	return result;
-}
 
 /*
  * Preprocess a list of column constraint clauses

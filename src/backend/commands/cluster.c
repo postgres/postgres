@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.120 2004/03/23 19:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.121 2004/05/05 04:48:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,11 +64,7 @@ typedef struct
 
 
 static void cluster_rel(RelToCluster *rv, bool recheck);
-static Oid	make_new_heap(Oid OIDOldHeap, const char *NewName);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
-static List *get_indexattr_list(Relation OldHeap, Oid OldIndex);
-static void rebuild_indexes(Oid OIDOldHeap, List *indexes);
-static void swap_relfilenodes(Oid r1, Oid r2);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
@@ -479,7 +475,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 /*
  * Create the new table that we will fill with correctly-ordered data.
  */
-static Oid
+Oid
 make_new_heap(Oid OIDOldHeap, const char *NewName)
 {
 	TupleDesc	OldHeapDesc,
@@ -578,7 +574,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
  * Get the necessary info about the indexes of the relation and
  * return a list of IndexAttrs structures.
  */
-static List *
+List *
 get_indexattr_list(Relation OldHeap, Oid OldIndex)
 {
 	List	   *indexes = NIL;
@@ -621,7 +617,7 @@ get_indexattr_list(Relation OldHeap, Oid OldIndex)
  * Create new indexes and swap the filenodes with old indexes.	Then drop
  * the new index (carrying the old index filenode along).
  */
-static void
+void
 rebuild_indexes(Oid OIDOldHeap, List *indexes)
 {
 	List	   *elem;
@@ -646,10 +642,15 @@ rebuild_indexes(Oid OIDOldHeap, List *indexes)
 		 * matter: after the filenode swap the index will keep the
 		 * constraint status of the old index.
 		 */
-		newIndexOID = index_create(OIDOldHeap, newIndexName,
-								attrs->indexInfo, attrs->accessMethodOID,
-								   attrs->classOID, false,
-								   false, allowSystemTableMods);
+		newIndexOID = index_create(OIDOldHeap,
+								   newIndexName,
+								   attrs->indexInfo,
+								   attrs->accessMethodOID,
+								   attrs->classOID,
+								   false,
+								   false,
+								   allowSystemTableMods,
+								   false);
 		CommandCounterIncrement();
 
 		/* Swap the filenodes. */
@@ -698,7 +699,7 @@ rebuild_indexes(Oid OIDOldHeap, List *indexes)
  * Also swap any TOAST links, so that the toast data moves along with
  * the main-table data.
  */
-static void
+void
 swap_relfilenodes(Oid r1, Oid r2)
 {
 	Relation	relRelation,
@@ -789,9 +790,9 @@ swap_relfilenodes(Oid r1, Oid r2)
 	 * their new owning relations.	Otherwise the wrong one will get
 	 * dropped ...
 	 *
-	 * NOTE: for now, we can assume the new table will have a TOAST table if
-	 * and only if the old one does.  This logic might need work if we get
-	 * smarter about dropped columns.
+	 * NOTE: it is possible that only one table has a toast table; this
+	 * can happen in CLUSTER if there were dropped columns in the old table,
+	 * and in ALTER TABLE when adding or changing type of columns.
 	 *
 	 * NOTE: at present, a TOAST table's only dependency is the one on its
 	 * owning table.  If more are ever created, we'd need to use something
@@ -804,35 +805,43 @@ swap_relfilenodes(Oid r1, Oid r2)
 					toastobject;
 		long		count;
 
-		if (!(relform1->reltoastrelid && relform2->reltoastrelid))
-			elog(ERROR, "expected both swapped tables to have TOAST tables");
-
 		/* Delete old dependencies */
-		count = deleteDependencyRecordsFor(RelOid_pg_class,
-										   relform1->reltoastrelid);
-		if (count != 1)
-			elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-				 count);
-		count = deleteDependencyRecordsFor(RelOid_pg_class,
-										   relform2->reltoastrelid);
-		if (count != 1)
-			elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-				 count);
+		if (relform1->reltoastrelid)
+		{
+			count = deleteDependencyRecordsFor(RelOid_pg_class,
+											   relform1->reltoastrelid);
+			if (count != 1)
+				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
+					 count);
+		}
+		if (relform2->reltoastrelid)
+		{
+			count = deleteDependencyRecordsFor(RelOid_pg_class,
+											   relform2->reltoastrelid);
+			if (count != 1)
+				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
+					 count);
+		}
 
 		/* Register new dependencies */
 		baseobject.classId = RelOid_pg_class;
-		baseobject.objectId = r1;
 		baseobject.objectSubId = 0;
 		toastobject.classId = RelOid_pg_class;
-		toastobject.objectId = relform1->reltoastrelid;
 		toastobject.objectSubId = 0;
 
-		recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		if (relform1->reltoastrelid)
+		{
+			baseobject.objectId = r1;
+			toastobject.objectId = relform1->reltoastrelid;
+			recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		}
 
-		baseobject.objectId = r2;
-		toastobject.objectId = relform2->reltoastrelid;
-
-		recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		if (relform2->reltoastrelid)
+		{
+			baseobject.objectId = r2;
+			toastobject.objectId = relform2->reltoastrelid;
+			recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+		}
 	}
 
 	/*

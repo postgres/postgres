@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.452 2004/04/21 00:34:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.453 2004/05/05 04:48:46 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -158,8 +158,11 @@ static void doNegateFloat(Value *v);
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select
 
-%type <node>	alter_column_default opclass_item
+%type <node>	alter_column_default opclass_item alter_using
 %type <ival>	add_drop
+
+%type <node>	alter_table_cmd
+%type <list>	alter_table_cmds
 
 %type <dbehavior>	opt_drop_behavior
 
@@ -199,7 +202,7 @@ static void doNegateFloat(Value *v);
 
 %type <range>	qualified_name OptConstrFromTable
 
-%type <str>		all_Op MathOp opt_name SpecialRuleRelation
+%type <str>		all_Op MathOp SpecialRuleRelation
 
 %type <str>		iso_level opt_encoding
 %type <node>	grantee
@@ -1127,127 +1130,139 @@ CheckPointStmt:
  *****************************************************************************/
 
 AlterTableStmt:
-			/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
-			ALTER TABLE relation_expr ADD opt_column columnDef
+			ALTER TABLE relation_expr alter_table_cmds
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'A';
 					n->relation = $3;
-					n->def = $6;
+					n->cmds = $4;
+					$$ = (Node *)n;
+				}
+		;
+
+alter_table_cmds:
+			alter_table_cmd							{ $$ = makeList1($1); }
+			| alter_table_cmds ',' alter_table_cmd	{ $$ = lappend($1, $3); }
+		;
+
+alter_table_cmd:
+			/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
+			ADD opt_column columnDef
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AddColumn;
+					n->def = $3;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
-			| ALTER TABLE relation_expr ALTER opt_column ColId alter_column_default
+			| ALTER opt_column ColId alter_column_default
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'T';
-					n->relation = $3;
-					n->name = $6;
-					n->def = $7;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ColumnDefault;
+					n->name = $3;
+					n->def = $4;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> DROP NOT NULL */
-			| ALTER TABLE relation_expr ALTER opt_column ColId DROP NOT NULL_P
+			| ALTER opt_column ColId DROP NOT NULL_P
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'N';
-					n->relation = $3;
-					n->name = $6;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropNotNull;
+					n->name = $3;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET NOT NULL */
-			| ALTER TABLE relation_expr ALTER opt_column ColId SET NOT NULL_P
+			| ALTER opt_column ColId SET NOT NULL_P
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'n';
-					n->relation = $3;
-					n->name = $6;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetNotNull;
+					n->name = $3;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
-			| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS IntegerOnly
+			| ALTER opt_column ColId SET STATISTICS IntegerOnly
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'S';
-					n->relation = $3;
-					n->name = $6;
-					n->def = (Node *) $9;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetStatistics;
+					n->name = $3;
+					n->def = (Node *) $6;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
-			| ALTER TABLE relation_expr ALTER opt_column ColId
-			SET STORAGE ColId
+			| ALTER opt_column ColId SET STORAGE ColId
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'M';
-					n->relation = $3;
-					n->name = $6;
-					n->def = (Node *) makeString($9);
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetStorage;
+					n->name = $3;
+					n->def = (Node *) makeString($6);
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> DROP [COLUMN] <colname> [RESTRICT|CASCADE] */
-			| ALTER TABLE relation_expr DROP opt_column ColId opt_drop_behavior
+			| DROP opt_column ColId opt_drop_behavior
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'D';
-					n->relation = $3;
-					n->name = $6;
-					n->behavior = $7;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropColumn;
+					n->name = $3;
+					n->behavior = $4;
+					$$ = (Node *)n;
+				}
+			/*
+			 * ALTER TABLE <relation> ALTER [COLUMN] <colname> TYPE <typename>
+			 *		[ USING <expression> ]
+			 */
+			| ALTER opt_column ColId TYPE_P Typename alter_using
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AlterColumnType;
+					n->name = $3;
+					n->def = (Node *) $5;
+					n->transform = $6;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> ADD CONSTRAINT ... */
-			| ALTER TABLE relation_expr ADD TableConstraint
+			| ADD TableConstraint
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'C';
-					n->relation = $3;
-					n->def = $5;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AddConstraint;
+					n->def = $2;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
-			| ALTER TABLE relation_expr DROP CONSTRAINT name opt_drop_behavior
+			| DROP CONSTRAINT name opt_drop_behavior
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'X';
-					n->relation = $3;
-					n->name = $6;
-					n->behavior = $7;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropConstraint;
+					n->name = $3;
+					n->behavior = $4;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <relation> SET WITHOUT OIDS  */
-			| ALTER TABLE relation_expr SET WITHOUT OIDS
+			| SET WITHOUT OIDS
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->relation = $3;
-					n->subtype = 'o';
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropOids;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> CREATE TOAST TABLE */
-			| ALTER TABLE qualified_name CREATE TOAST TABLE
+			/* ALTER TABLE <name> CREATE TOAST TABLE -- ONLY */
+			| CREATE TOAST TABLE
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'E';
-					$3->inhOpt = INH_NO;
-					n->relation = $3;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ToastTable;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> OWNER TO UserId */
-			| ALTER TABLE qualified_name OWNER TO UserId
+			|  OWNER TO UserId
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'U';
-					$3->inhOpt = INH_NO;
-					n->relation = $3;
-					n->name = $6;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ChangeOwner;
+					n->name = $3;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> CLUSTER ON <indexname> */
-			| ALTER TABLE qualified_name CLUSTER ON name
+			| CLUSTER ON name
 				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'L';
-					n->relation = $3;
-					n->name = $6;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ClusterOn;
+					n->name = $3;
 					$$ = (Node *)n;
 				}
 		;
@@ -1261,7 +1276,7 @@ alter_column_default:
 					else
 						$$ = $3;
 				}
-			| DROP DEFAULT					{ $$ = NULL; }
+			| DROP DEFAULT				{ $$ = NULL; }
 		;
 
 opt_drop_behavior:
@@ -1270,6 +1285,10 @@ opt_drop_behavior:
 			| /* EMPTY */				{ $$ = DROP_RESTRICT; /* default */ }
 		;
 
+alter_using:
+			USING a_expr				{ $$ = $2; }
+			| /* EMPTY */				{ $$ = NULL; }
+		;
 
 /*****************************************************************************
  *
@@ -3525,16 +3544,22 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TABLE relation_expr RENAME opt_column opt_name TO name
+			| ALTER TABLE relation_expr RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TABLE;
+					n->relation = $3;
+					n->subname = NULL;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLE relation_expr RENAME opt_column name TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_COLUMN;
 					n->relation = $3;
 					n->subname = $6;
 					n->newname = $8;
-					if ($6 == NULL)
-						n->renameType = OBJECT_TABLE;
-					else
-						n->renameType = OBJECT_COLUMN;
 					$$ = (Node *)n;
 				}
 			| ALTER TRIGGER name ON relation_expr RENAME TO name
@@ -3554,10 +3579,6 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
-		;
-
-opt_name:	name									{ $$ = $1; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 opt_column: COLUMN									{ $$ = COLUMN; }

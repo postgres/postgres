@@ -7,7 +7,7 @@ COMMENT ON TABLE tmp_wrong IS 'table comment';
 ERROR:  relation "tmp_wrong" does not exist
 COMMENT ON TABLE tmp IS 'table comment';
 COMMENT ON TABLE tmp IS NULL;
-ALTER TABLE tmp ADD COLUMN a int4;
+ALTER TABLE tmp ADD COLUMN a int4 default 3;
 ALTER TABLE tmp ADD COLUMN b name;
 ALTER TABLE tmp ADD COLUMN c text;
 ALTER TABLE tmp ADD COLUMN d float8;
@@ -419,7 +419,6 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
 ERROR:  column "test" contains null values
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -1143,3 +1142,96 @@ select f3,max(f1) from foo group by f3;
  zz | qq
 (1 row)
 
+-- Simple tests for alter table column type
+alter table foo alter f1 TYPE integer; -- fails
+ERROR:  column "f1" cannot be cast to type "pg_catalog.int4"
+alter table foo alter f1 TYPE varchar(10);
+create table anothertab (atcol1 serial8, atcol2 boolean,
+	constraint anothertab_chk check (atcol1 <= 3));
+NOTICE:  CREATE TABLE will create implicit sequence "anothertab_atcol1_seq" for "serial" column "anothertab.atcol1"
+insert into anothertab (atcol1, atcol2) values (default, true);
+insert into anothertab (atcol1, atcol2) values (default, false);
+select * from anothertab;
+ atcol1 | atcol2 
+--------+--------
+      1 | t
+      2 | f
+(2 rows)
+
+alter table anothertab alter column atcol1 type boolean; -- fails
+ERROR:  column "atcol1" cannot be cast to type "pg_catalog.bool"
+alter table anothertab alter column atcol1 type integer;
+select * from anothertab;
+ atcol1 | atcol2 
+--------+--------
+      1 | t
+      2 | f
+(2 rows)
+
+insert into anothertab (atcol1, atcol2) values (45, null); -- fails
+ERROR:  new row for relation "anothertab" violates check constraint "anothertab_chk"
+insert into anothertab (atcol1, atcol2) values (default, null);
+select * from anothertab;
+ atcol1 | atcol2 
+--------+--------
+      1 | t
+      2 | f
+      3 | 
+(3 rows)
+
+alter table anothertab alter column atcol2 type text
+      using case when atcol2 is true then 'IT WAS TRUE' 
+                 when atcol2 is false then 'IT WAS FALSE'
+                 else 'IT WAS NULL!' end;
+select * from anothertab;
+ atcol1 |    atcol2    
+--------+--------------
+      1 | IT WAS TRUE
+      2 | IT WAS FALSE
+      3 | IT WAS NULL!
+(3 rows)
+
+alter table anothertab alter column atcol1 type boolean
+        using case when atcol1 % 2 = 0 then true else false end; -- fails
+ERROR:  default for column "atcol1" cannot be cast to type "pg_catalog.bool"
+alter table anothertab alter column atcol1 drop default;
+alter table anothertab alter column atcol1 type boolean
+        using case when atcol1 % 2 = 0 then true else false end; -- fails
+ERROR:  operator does not exist: boolean <= integer
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+alter table anothertab drop constraint anothertab_chk;
+alter table anothertab alter column atcol1 type boolean
+        using case when atcol1 % 2 = 0 then true else false end;
+select * from anothertab;
+ atcol1 |    atcol2    
+--------+--------------
+ f      | IT WAS TRUE
+ t      | IT WAS FALSE
+ f      | IT WAS NULL!
+(3 rows)
+
+drop table anothertab;
+create table another (f1 int, f2 text);
+insert into another values(1, 'one');
+insert into another values(2, 'two');
+insert into another values(3, 'three');
+select * from another;
+ f1 |  f2   
+----+-------
+  1 | one
+  2 | two
+  3 | three
+(3 rows)
+
+alter table another
+  alter f1 type text using f2 || ' more',
+  alter f2 type bigint using f1 * 10;
+select * from another;
+     f1     | f2 
+------------+----
+ one more   | 10
+ two more   | 20
+ three more | 30
+(3 rows)
+
+drop table another;

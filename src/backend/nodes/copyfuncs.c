@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.279 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.280 2004/05/05 04:48:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1674,10 +1674,21 @@ _copyAlterTableStmt(AlterTableStmt *from)
 {
 	AlterTableStmt *newnode = makeNode(AlterTableStmt);
 
-	COPY_SCALAR_FIELD(subtype);
 	COPY_NODE_FIELD(relation);
+	COPY_NODE_FIELD(cmds);
+
+	return newnode;
+}
+
+static AlterTableCmd *
+_copyAlterTableCmd(AlterTableCmd *from)
+{
+	AlterTableCmd *newnode = makeNode(AlterTableCmd);
+
+	COPY_SCALAR_FIELD(subtype);
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(def);
+	COPY_NODE_FIELD(transform);
 	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
@@ -2772,6 +2783,9 @@ copyObject(void *from)
 			break;
 		case T_AlterTableStmt:
 			retval = _copyAlterTableStmt(from);
+			break;
+		case T_AlterTableCmd:
+			retval = _copyAlterTableCmd(from);
 			break;
 		case T_AlterDomainStmt:
 			retval = _copyAlterDomainStmt(from);

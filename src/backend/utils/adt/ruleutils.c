@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.163 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.164 2004/05/05 04:48:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -149,15 +149,16 @@ static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_c
 static char *deparse_expression_pretty(Node *expr, List *dpcontext,
 						  bool forceprefix, bool showimplicit,
 						  int prettyFlags, int startIndent);
-static text *pg_do_getviewdef(Oid viewoid, int prettyFlags);
+static char *pg_get_viewdef_worker(Oid viewoid, int prettyFlags);
 static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
-static Datum pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
-static Datum pg_get_indexdef_worker(Oid indexrelid, int colno,
-					   int prettyFlags);
-static Datum pg_get_constraintdef_worker(Oid constraintId, int prettyFlags);
-static Datum pg_get_expr_worker(text *expr, Oid relid, char *relname,
-				   int prettyFlags);
+static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
+static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
+									int prettyFlags);
+static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
+										 int prettyFlags);
+static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
+								int prettyFlags);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -208,6 +209,7 @@ static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static void print_operator_name(StringInfo buf, List *opname);
+static text *string_to_text(char *str);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -223,7 +225,7 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 {
 	Oid			ruleoid = PG_GETARG_OID(0);
 
-	return pg_get_ruledef_worker(ruleoid, 0);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_ruledef_worker(ruleoid, 0)));
 }
 
 
@@ -235,21 +237,24 @@ pg_get_ruledef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	return pg_get_ruledef_worker(ruleoid, prettyFlags);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_ruledef_worker(ruleoid, prettyFlags)));
 }
 
 
-static Datum
+static char *
 pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 {
-	text	   *ruledef;
 	Datum		args[1];
 	char		nulls[1];
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
 	StringInfoData buf;
-	int			len;
+
+	/*
+	 * Do this first so that string is alloc'd in outer context not SPI's.
+	 */
+	initStringInfo(&buf);
 
 	/*
 	 * Connect to SPI manager
@@ -283,28 +288,16 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for rule %u", ruleoid);
 	if (SPI_processed != 1)
+		appendStringInfo(&buf, "-");
+	else
 	{
-		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed");
-		ruledef = palloc(VARHDRSZ + 1);
-		VARATT_SIZEP(ruledef) = VARHDRSZ + 1;
-		VARDATA(ruledef)[0] = '-';
-		PG_RETURN_TEXT_P(ruledef);
+		/*
+		 * Get the rules definition and put it into executors memory
+		 */
+		ruletup = SPI_tuptable->vals[0];
+		rulettc = SPI_tuptable->tupdesc;
+		make_ruledef(&buf, ruletup, rulettc, prettyFlags);
 	}
-
-	ruletup = SPI_tuptable->vals[0];
-	rulettc = SPI_tuptable->tupdesc;
-
-	/*
-	 * Get the rules definition and put it into executors memory
-	 */
-	initStringInfo(&buf);
-	make_ruledef(&buf, ruletup, rulettc, prettyFlags);
-	len = buf.len + VARHDRSZ;
-	ruledef = SPI_palloc(len);
-	VARATT_SIZEP(ruledef) = len;
-	memcpy(VARDATA(ruledef), buf.data, buf.len);
-	pfree(buf.data);
 
 	/*
 	 * Disconnect from SPI manager
@@ -312,10 +305,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
 
-	/*
-	 * Easy - isn't it?
-	 */
-	PG_RETURN_TEXT_P(ruledef);
+	return buf.data;
 }
 
 
@@ -329,10 +319,8 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 {
 	/* By OID */
 	Oid			viewoid = PG_GETARG_OID(0);
-	text	   *ruledef;
 
-	ruledef = pg_do_getviewdef(viewoid, 0);
-	PG_RETURN_TEXT_P(ruledef);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, 0)));
 }
 
 
@@ -342,12 +330,10 @@ pg_get_viewdef_ext(PG_FUNCTION_ARGS)
 	/* By OID */
 	Oid			viewoid = PG_GETARG_OID(0);
 	bool		pretty = PG_GETARG_BOOL(1);
-	text	   *ruledef;
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	ruledef = pg_do_getviewdef(viewoid, prettyFlags);
-	PG_RETURN_TEXT_P(ruledef);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags)));
 }
 
 Datum
@@ -357,14 +343,12 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 	text	   *viewname = PG_GETARG_TEXT_P(0);
 	RangeVar   *viewrel;
 	Oid			viewoid;
-	text	   *ruledef;
 
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
 														 "get_viewdef"));
 	viewoid = RangeVarGetRelid(viewrel, false);
 
-	ruledef = pg_do_getviewdef(viewoid, 0);
-	PG_RETURN_TEXT_P(ruledef);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, 0)));
 }
 
 
@@ -377,31 +361,32 @@ pg_get_viewdef_name_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	RangeVar   *viewrel;
 	Oid			viewoid;
-	text	   *ruledef;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
 														 "get_viewdef"));
 	viewoid = RangeVarGetRelid(viewrel, false);
 
-	ruledef = pg_do_getviewdef(viewoid, prettyFlags);
-	PG_RETURN_TEXT_P(ruledef);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags)));
 }
 
 /*
  * Common code for by-OID and by-name variants of pg_get_viewdef
  */
-static text *
-pg_do_getviewdef(Oid viewoid, int prettyFlags)
+static char *
+pg_get_viewdef_worker(Oid viewoid, int prettyFlags)
 {
-	text	   *ruledef;
 	Datum		args[2];
 	char		nulls[2];
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
 	StringInfoData buf;
-	int			len;
+
+	/*
+	 * Do this first so that string is alloc'd in outer context not SPI's.
+	 */
+	initStringInfo(&buf);
 
 	/*
 	 * Connect to SPI manager
@@ -437,7 +422,6 @@ pg_do_getviewdef(Oid viewoid, int prettyFlags)
 	spirc = SPI_execp(plan_getviewrule, args, nulls, 2);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for view %u", viewoid);
-	initStringInfo(&buf);
 	if (SPI_processed != 1)
 		appendStringInfo(&buf, "Not a view");
 	else
@@ -449,11 +433,6 @@ pg_do_getviewdef(Oid viewoid, int prettyFlags)
 		rulettc = SPI_tuptable->tupdesc;
 		make_viewdef(&buf, ruletup, rulettc, prettyFlags);
 	}
-	len = buf.len + VARHDRSZ;
-	ruledef = SPI_palloc(len);
-	VARATT_SIZEP(ruledef) = len;
-	memcpy(VARDATA(ruledef), buf.data, buf.len);
-	pfree(buf.data);
 
 	/*
 	 * Disconnect from SPI manager
@@ -461,7 +440,7 @@ pg_do_getviewdef(Oid viewoid, int prettyFlags)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
 
-	return ruledef;
+	return buf.data;
 }
 
 /* ----------
@@ -472,10 +451,8 @@ Datum
 pg_get_triggerdef(PG_FUNCTION_ARGS)
 {
 	Oid			trigid = PG_GETARG_OID(0);
-	text	   *trigdef;
 	HeapTuple	ht_trig;
 	Form_pg_trigger trigrec;
-	int			len;
 	StringInfoData buf;
 	Relation	tgrel;
 	ScanKeyData skey[1];
@@ -597,21 +574,12 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 	/* We deliberately do not put semi-colon at end */
 	appendStringInfo(&buf, ")");
 
-	/*
-	 * Create the result as a TEXT datum, and free working data
-	 */
-	len = buf.len + VARHDRSZ;
-	trigdef = (text *) palloc(len);
-	VARATT_SIZEP(trigdef) = len;
-	memcpy(VARDATA(trigdef), buf.data, buf.len);
-
-	pfree(buf.data);
-
+	/* Clean up */
 	systable_endscan(tgscan);
 
 	heap_close(tgrel, AccessShareLock);
 
-	PG_RETURN_TEXT_P(trigdef);
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
 
 /* ----------
@@ -627,7 +595,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 {
 	Oid			indexrelid = PG_GETARG_OID(0);
 
-	return pg_get_indexdef_worker(indexrelid, 0, 0);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0, 0)));
 }
 
 Datum
@@ -639,13 +607,19 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	return pg_get_indexdef_worker(indexrelid, colno, prettyFlags);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno, prettyFlags)));
 }
 
-static Datum
+/* Internal version that returns a palloc'd C string */
+char *
+pg_get_indexdef_string(Oid indexrelid)
+{
+	return pg_get_indexdef_worker(indexrelid, 0, 0);
+}
+
+static char *
 pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 {
-	text	   *indexdef;
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
 	HeapTuple	ht_am;
@@ -655,7 +629,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	List	   *indexprs;
 	List	   *context;
 	Oid			indrelid;
-	int			len;
 	int			keyno;
 	Oid			keycoltype;
 	StringInfoData buf;
@@ -817,21 +790,12 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		}
 	}
 
-	/*
-	 * Create the result as a TEXT datum, and free working data
-	 */
-	len = buf.len + VARHDRSZ;
-	indexdef = (text *) palloc(len);
-	VARATT_SIZEP(indexdef) = len;
-	memcpy(VARDATA(indexdef), buf.data, buf.len);
-
-	pfree(buf.data);
-
+	/* Clean up */
 	ReleaseSysCache(ht_idx);
 	ReleaseSysCache(ht_idxrel);
 	ReleaseSysCache(ht_am);
 
-	PG_RETURN_TEXT_P(indexdef);
+	return buf.data;
 }
 
 
@@ -846,7 +810,8 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 {
 	Oid			constraintId = PG_GETARG_OID(0);
 
-	return pg_get_constraintdef_worker(constraintId, 0);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
+																false, 0)));
 }
 
 Datum
@@ -857,16 +822,22 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	return pg_get_constraintdef_worker(constraintId, prettyFlags);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
+																false, prettyFlags)));
 }
 
-
-static Datum
-pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
+/* Internal version that returns a palloc'd C string */
+char *
+pg_get_constraintdef_string(Oid constraintId)
 {
-	text	   *result;
+	return pg_get_constraintdef_worker(constraintId, true, 0);
+}
+
+static char *
+pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
+							int prettyFlags)
+{
 	StringInfoData buf;
-	int			len;
 	Relation	conDesc;
 	SysScanDesc conscan;
 	ScanKeyData skey[1];
@@ -893,6 +864,13 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 	conForm = (Form_pg_constraint) GETSTRUCT(tup);
 
 	initStringInfo(&buf);
+
+	if (fullCommand && OidIsValid(conForm->conrelid))
+	{
+		appendStringInfo(&buf, "ALTER TABLE ONLY %s ADD CONSTRAINT %s ",
+						 generate_relation_name(conForm->conrelid),
+						 quote_identifier(NameStr(conForm->conname)));
+	}
 
 	switch (conForm->contype)
 	{
@@ -1087,18 +1065,11 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 			break;
 	}
 
-	/* Record the results */
-	len = buf.len + VARHDRSZ;
-	result = (text *) palloc(len);
-	VARATT_SIZEP(result) = len;
-	memcpy(VARDATA(result), buf.data, buf.len);
-
 	/* Cleanup */
-	pfree(buf.data);
 	systable_endscan(conscan);
 	heap_close(conDesc, AccessShareLock);
 
-	PG_RETURN_TEXT_P(result);
+	return buf.data;
 }
 
 
@@ -1157,7 +1128,7 @@ pg_get_expr(PG_FUNCTION_ARGS)
 	if (relname == NULL)
 		PG_RETURN_NULL();		/* should we raise an error? */
 
-	return pg_get_expr_worker(expr, relid, relname, 0);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_expr_worker(expr, relid, relname, 0)));
 }
 
 Datum
@@ -1176,13 +1147,12 @@ pg_get_expr_ext(PG_FUNCTION_ARGS)
 	if (relname == NULL)
 		PG_RETURN_NULL();		/* should we raise an error? */
 
-	return pg_get_expr_worker(expr, relid, relname, prettyFlags);
+	PG_RETURN_TEXT_P(string_to_text(pg_get_expr_worker(expr, relid, relname, prettyFlags)));
 }
 
-static Datum
+static char *
 pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 {
-	text	   *result;
 	Node	   *node;
 	List	   *context;
 	char	   *exprstr;
@@ -1200,11 +1170,7 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 	str = deparse_expression_pretty(node, context, false, false,
 									prettyFlags, 0);
 
-	/* Pass the result back as TEXT */
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(str)));
-
-	PG_RETURN_TEXT_P(result);
+	return str;
 }
 
 
@@ -4363,4 +4329,26 @@ print_operator_name(StringInfo buf, List *opname)
 		}
 		appendStringInfo(buf, "%s)", strVal(lfirst(opname)));
 	}
+}
+
+/*
+ * Given a C string, produce a TEXT datum.
+ *
+ * We assume that the input was palloc'd and may be freed.
+ */
+static text *
+string_to_text(char *str)
+{
+	text	   *result;
+	int			slen = strlen(str);
+	int			tlen;
+
+	tlen = slen + VARHDRSZ;
+	result = (text *) palloc(tlen);
+	VARATT_SIZEP(result) = tlen;
+	memcpy(VARDATA(result), str, slen);
+
+	pfree(str);
+
+	return result;
 }

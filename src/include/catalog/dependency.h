@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.11 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.12 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "nodes/parsenodes.h"	/* for DropBehavior */
 
 
-/*
+/*----------
  * Precise semantics of a dependency relationship are specified by the
  * DependencyType code (which is stored in a "char" field in pg_depend,
  * so we assign ASCII-code values to the enumeration members).
@@ -56,6 +56,7 @@
  * contain zeroes.
  *
  * Other dependency flavors may be needed in future.
+ *----------
  */
 
 typedef enum DependencyType
@@ -79,6 +80,28 @@ typedef struct ObjectAddress
 } ObjectAddress;
 
 
+/*
+ * This enum covers all system catalogs whose OIDs can appear in classId.
+ */
+typedef enum ObjectClass
+{
+	OCLASS_CLASS,				/* pg_class */
+	OCLASS_PROC,				/* pg_proc */
+	OCLASS_TYPE,				/* pg_type */
+	OCLASS_CAST,				/* pg_cast */
+	OCLASS_CONSTRAINT,			/* pg_constraint */
+	OCLASS_CONVERSION,			/* pg_conversion */
+	OCLASS_DEFAULT,				/* pg_attrdef */
+	OCLASS_LANGUAGE,			/* pg_language */
+	OCLASS_OPERATOR,			/* pg_operator */
+	OCLASS_OPCLASS,				/* pg_opclass */
+	OCLASS_REWRITE,				/* pg_rewrite */
+	OCLASS_TRIGGER,				/* pg_trigger */
+	OCLASS_SCHEMA,				/* pg_namespace */
+	MAX_OCLASS					/* MUST BE LAST */
+} ObjectClass;
+
+
 /* in dependency.c */
 
 extern void performDeletion(const ObjectAddress *object,
@@ -95,6 +118,10 @@ extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 								Node *expr, Oid relId,
 								DependencyType behavior,
 								DependencyType self_behavior);
+
+extern ObjectClass getObjectClass(const ObjectAddress *object);
+
+extern char *getObjectDescription(const ObjectAddress *object);
 
 /* in pg_depend.c */
 

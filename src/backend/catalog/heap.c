@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.262 2004/04/01 21:28:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.263 2004/05/05 04:48:45 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -72,7 +72,6 @@ static void AddNewRelationType(const char *typeName,
 				   char new_rel_kind,
 				   Oid new_type_oid);
 static void RelationRemoveInheritance(Relation relation);
-static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
 static void SetRelationNumChecks(Relation rel, int numchecks);
@@ -1246,7 +1245,7 @@ heap_drop_with_catalog(Oid rid)
  * Store a default expression for column attnum of relation rel.
  * The expression must be presented as a nodeToString() string.
  */
-static void
+void
 StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 {
 	Node	   *expr;
@@ -1483,16 +1482,20 @@ StoreConstraints(Relation rel, TupleDesc tupdesc)
  * will be processed only if they are CONSTR_CHECK type and contain a "raw"
  * expression.
  *
+ * Returns a list of CookedConstraint nodes that shows the cooked form of
+ * the default and constraint expressions added to the relation.
+ *
  * NB: caller should have opened rel with AccessExclusiveLock, and should
  * hold that lock till end of transaction.	Also, we assume the caller has
  * done a CommandCounterIncrement if necessary to make the relation's catalog
  * tuples visible.
  */
-void
+List *
 AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints)
 {
+	List	   *cookedConstraints = NIL;
 	char	   *relname = RelationGetRelationName(rel);
 	TupleDesc	tupleDesc;
 	TupleConstr *oldconstr;
@@ -1504,6 +1507,7 @@ AddRelationRawConstraints(Relation rel,
 	int			constr_name_ctr = 0;
 	List	   *listptr;
 	Node	   *expr;
+	CookedConstraint *cooked;
 
 	/*
 	 * Get info about existing constraints.
@@ -1544,7 +1548,15 @@ AddRelationRawConstraints(Relation rel,
 		expr = cookDefault(pstate, colDef->raw_default,
 						   atp->atttypid, atp->atttypmod,
 						   NameStr(atp->attname));
+
 		StoreAttrDefault(rel, colDef->attnum, nodeToString(expr));
+
+		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+		cooked->contype = CONSTR_DEFAULT;
+		cooked->name = NULL;
+		cooked->attnum = colDef->attnum;
+		cooked->expr = expr;
+		cookedConstraints = lappend(cookedConstraints, cooked);
 	}
 
 	/*
@@ -1672,6 +1684,13 @@ AddRelationRawConstraints(Relation rel,
 		StoreRelCheck(rel, ccname, nodeToString(expr));
 
 		numchecks++;
+
+		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+		cooked->contype = CONSTR_CHECK;
+		cooked->name = ccname;
+		cooked->attnum = 0;
+		cooked->expr = expr;
+		cookedConstraints = lappend(cookedConstraints, cooked);
 	}
 
 	/*
@@ -1682,6 +1701,8 @@ AddRelationRawConstraints(Relation rel,
 	 * (This is critical if we added defaults but not constraints.)
 	 */
 	SetRelationNumChecks(rel, numchecks);
+
+	return cookedConstraints;
 }
 
 /*

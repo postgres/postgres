@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.34 2003/11/29 19:51:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.35 2004/05/05 04:48:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,25 +47,6 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-
-/* This enum covers all system catalogs whose OIDs can appear in classid. */
-typedef enum ObjectClasses
-{
-	OCLASS_CLASS,				/* pg_class */
-	OCLASS_PROC,				/* pg_proc */
-	OCLASS_TYPE,				/* pg_type */
-	OCLASS_CAST,				/* pg_cast */
-	OCLASS_CONSTRAINT,			/* pg_constraint */
-	OCLASS_CONVERSION,			/* pg_conversion */
-	OCLASS_DEFAULT,				/* pg_attrdef */
-	OCLASS_LANGUAGE,			/* pg_language */
-	OCLASS_OPERATOR,			/* pg_operator */
-	OCLASS_OPCLASS,				/* pg_opclass */
-	OCLASS_REWRITE,				/* pg_rewrite */
-	OCLASS_TRIGGER,				/* pg_trigger */
-	OCLASS_SCHEMA,				/* pg_namespace */
-	MAX_OCLASS					/* MUST BE LAST */
-} ObjectClasses;
 
 /* expansible list of ObjectAddresses */
 typedef struct
@@ -113,7 +94,7 @@ static bool find_expr_references_walker(Node *node,
 static void eliminate_duplicate_dependencies(ObjectAddresses *addrs);
 static int	object_address_comparator(const void *a, const void *b);
 static void init_object_addresses(ObjectAddresses *addrs);
-static void add_object_address(ObjectClasses oclass, Oid objectId, int32 subId,
+static void add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
 				   ObjectAddresses *addrs);
 static void add_exact_object_address(const ObjectAddress *object,
 						 ObjectAddresses *addrs);
@@ -121,8 +102,6 @@ static bool object_address_present(const ObjectAddress *object,
 					   ObjectAddresses *addrs);
 static void term_object_addresses(ObjectAddresses *addrs);
 static void init_object_classes(void);
-static ObjectClasses getObjectClass(const ObjectAddress *object);
-static char *getObjectDescription(const ObjectAddress *object);
 static void getRelationDescription(StringInfo buffer, Oid relid);
 
 
@@ -1238,7 +1217,7 @@ init_object_addresses(ObjectAddresses *addrs)
  * by catalog OID.
  */
 static void
-add_object_address(ObjectClasses oclass, Oid objectId, int32 subId,
+add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
 				   ObjectAddresses *addrs)
 {
 	ObjectAddress *item;
@@ -1350,7 +1329,7 @@ init_object_classes(void)
  * This function is needed just because some of the system catalogs do
  * not have hardwired-at-compile-time OIDs.
  */
-static ObjectClasses
+ObjectClass
 getObjectClass(const ObjectAddress *object)
 {
 	/* Easy for the bootstrapped catalogs... */
@@ -1435,7 +1414,7 @@ getObjectClass(const ObjectAddress *object)
  *
  * The result is a palloc'd string.
  */
-static char *
+char *
 getObjectDescription(const ObjectAddress *object)
 {
 	StringInfoData buffer;
@@ -1447,18 +1426,18 @@ getObjectDescription(const ObjectAddress *object)
 		case OCLASS_CLASS:
 			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)
-				appendStringInfo(&buffer, " column %s",
+				appendStringInfo(&buffer, gettext(" column %s"),
 								 get_relid_attribute_name(object->objectId,
 														  object->objectSubId));
 			break;
 
 		case OCLASS_PROC:
-			appendStringInfo(&buffer, "function %s",
+			appendStringInfo(&buffer, gettext("function %s"),
 							 format_procedure(object->objectId));
 			break;
 
 		case OCLASS_TYPE:
-			appendStringInfo(&buffer, "type %s",
+			appendStringInfo(&buffer, gettext("type %s"),
 							 format_type_be(object->objectId));
 			break;
 
@@ -1488,7 +1467,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				castForm = (Form_pg_cast) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, "cast from %s to %s",
+				appendStringInfo(&buffer, gettext("cast from %s to %s"),
 								 format_type_be(castForm->castsource),
 								 format_type_be(castForm->casttarget));
 
@@ -1525,13 +1504,13 @@ getObjectDescription(const ObjectAddress *object)
 
 				if (OidIsValid(con->conrelid))
 				{
-					appendStringInfo(&buffer, "constraint %s on ",
+					appendStringInfo(&buffer, gettext("constraint %s on "),
 									 NameStr(con->conname));
 					getRelationDescription(&buffer, con->conrelid);
 				}
 				else
 				{
-					appendStringInfo(&buffer, "constraint %s",
+					appendStringInfo(&buffer, gettext("constraint %s"),
 									 NameStr(con->conname));
 				}
 
@@ -1550,7 +1529,7 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(conTup))
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "conversion %s",
+				appendStringInfo(&buffer, gettext("conversion %s"),
 								 NameStr(((Form_pg_conversion) GETSTRUCT(conTup))->conname));
 				ReleaseSysCache(conTup);
 				break;
@@ -1587,7 +1566,7 @@ getObjectDescription(const ObjectAddress *object)
 				colobject.objectId = attrdef->adrelid;
 				colobject.objectSubId = attrdef->adnum;
 
-				appendStringInfo(&buffer, "default for %s",
+				appendStringInfo(&buffer, gettext("default for %s"),
 								 getObjectDescription(&colobject));
 
 				systable_endscan(adscan);
@@ -1605,14 +1584,14 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(langTup))
 					elog(ERROR, "cache lookup failed for language %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "language %s",
+				appendStringInfo(&buffer, gettext("language %s"),
 								 NameStr(((Form_pg_language) GETSTRUCT(langTup))->lanname));
 				ReleaseSysCache(langTup);
 				break;
 			}
 
 		case OCLASS_OPERATOR:
-			appendStringInfo(&buffer, "operator %s",
+			appendStringInfo(&buffer, gettext("operator %s"),
 							 format_operator(object->objectId));
 			break;
 
@@ -1632,16 +1611,6 @@ getObjectDescription(const ObjectAddress *object)
 						 object->objectId);
 				opcForm = (Form_pg_opclass) GETSTRUCT(opcTup);
 
-				/* Qualify the name if not visible in search path */
-				if (OpclassIsVisible(object->objectId))
-					nspname = NULL;
-				else
-					nspname = get_namespace_name(opcForm->opcnamespace);
-
-				appendStringInfo(&buffer, "operator class %s",
-								 quote_qualified_identifier(nspname,
-											 NameStr(opcForm->opcname)));
-
 				amTup = SearchSysCache(AMOID,
 									   ObjectIdGetDatum(opcForm->opcamid),
 									   0, 0, 0);
@@ -1650,7 +1619,15 @@ getObjectDescription(const ObjectAddress *object)
 						 opcForm->opcamid);
 				amForm = (Form_pg_am) GETSTRUCT(amTup);
 
-				appendStringInfo(&buffer, " for %s",
+				/* Qualify the name if not visible in search path */
+				if (OpclassIsVisible(object->objectId))
+					nspname = NULL;
+				else
+					nspname = get_namespace_name(opcForm->opcnamespace);
+
+				appendStringInfo(&buffer, gettext("operator class %s for %s"),
+								 quote_qualified_identifier(nspname,
+											 NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));
 
 				ReleaseSysCache(amTup);
@@ -1684,7 +1661,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				rule = (Form_pg_rewrite) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, "rule %s on ",
+				appendStringInfo(&buffer, gettext("rule %s on "),
 								 NameStr(rule->rulename));
 				getRelationDescription(&buffer, rule->ev_class);
 
@@ -1719,7 +1696,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				trig = (Form_pg_trigger) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, "trigger %s on ",
+				appendStringInfo(&buffer, gettext("trigger %s on "),
 								 NameStr(trig->tgname));
 				getRelationDescription(&buffer, trig->tgrelid);
 
@@ -1736,7 +1713,7 @@ getObjectDescription(const ObjectAddress *object)
 				if (!nspname)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "schema %s", nspname);
+				appendStringInfo(&buffer, gettext("schema %s"), nspname);
 				break;
 			}
 
@@ -1780,40 +1757,40 @@ getRelationDescription(StringInfo buffer, Oid relid)
 	switch (relForm->relkind)
 	{
 		case RELKIND_RELATION:
-			appendStringInfo(buffer, "table %s",
+			appendStringInfo(buffer, gettext("table %s"),
 							 relname);
 			break;
 		case RELKIND_INDEX:
-			appendStringInfo(buffer, "index %s",
+			appendStringInfo(buffer, gettext("index %s"),
 							 relname);
 			break;
 		case RELKIND_SPECIAL:
-			appendStringInfo(buffer, "special system relation %s",
+			appendStringInfo(buffer, gettext("special system relation %s"),
 							 relname);
 			break;
 		case RELKIND_SEQUENCE:
-			appendStringInfo(buffer, "sequence %s",
+			appendStringInfo(buffer, gettext("sequence %s"),
 							 relname);
 			break;
 		case RELKIND_UNCATALOGED:
-			appendStringInfo(buffer, "uncataloged table %s",
+			appendStringInfo(buffer, gettext("uncataloged table %s"),
 							 relname);
 			break;
 		case RELKIND_TOASTVALUE:
-			appendStringInfo(buffer, "toast table %s",
+			appendStringInfo(buffer, gettext("toast table %s"),
 							 relname);
 			break;
 		case RELKIND_VIEW:
-			appendStringInfo(buffer, "view %s",
+			appendStringInfo(buffer, gettext("view %s"),
 							 relname);
 			break;
 		case RELKIND_COMPOSITE_TYPE:
-			appendStringInfo(buffer, "composite type %s",
+			appendStringInfo(buffer, gettext("composite type %s"),
 							 relname);
 			break;
 		default:
 			/* shouldn't get here */
-			appendStringInfo(buffer, "relation %s",
+			appendStringInfo(buffer, gettext("relation %s"),
 							 relname);
 			break;
 	}

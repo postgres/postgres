@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.236 2004/04/01 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.237 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,9 +463,11 @@ extern Datum pg_get_viewdef_name(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef_name_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef_ext(PG_FUNCTION_ARGS);
+extern char *pg_get_indexdef_string(Oid indexrelid);
 extern Datum pg_get_triggerdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef_ext(PG_FUNCTION_ARGS);
+extern char *pg_get_constraintdef_string(Oid constraintId);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern Datum pg_get_expr(PG_FUNCTION_ARGS);
 extern Datum pg_get_expr_ext(PG_FUNCTION_ARGS);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.54 2004/02/21 00:34:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.55 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,15 @@ extern void DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			char *accessMethodName,
 			List *attributeList,
+			Expr *predicate,
+			List *rangetable,
 			bool unique,
 			bool primary,
 			bool isconstraint,
-			Expr *predicate,
-			List *rangetable);
+			bool is_alter_table,
+			bool check_rights,
+			bool skip_build,
+			bool quiet);
 extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
 extern void ReindexIndex(RangeVar *indexRelation, bool force);
 extern void ReindexTable(RangeVar *relation, bool force);

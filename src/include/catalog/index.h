@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.54 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.55 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ extern Oid index_create(Oid heapRelationId,
 			 Oid *classObjectId,
 			 bool primary,
 			 bool isconstraint,
-			 bool allow_system_table_mods);
+			 bool allow_system_table_mods,
+			 bool skip_build);
 
 extern void index_drop(Oid indexId);
 

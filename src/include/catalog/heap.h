@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.65 2004/03/23 19:35:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.66 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,14 @@ typedef struct RawColumnDefault
 	Node	   *raw_default;	/* default value (untransformed parse
 								 * tree) */
 } RawColumnDefault;
+
+typedef struct CookedConstraint
+{
+	ConstrType	contype;		/* CONSTR_DEFAULT or CONSTR_CHECK */
+	char	   *name;			/* name, or NULL if none */
+	AttrNumber	attnum;			/* which attr (only for DEFAULT) */
+	Node	   *expr;			/* transformed default or check expr */
+} CookedConstraint;
 
 extern Relation heap_create(const char *relname,
 			Oid relnamespace,
@@ -52,9 +60,11 @@ extern void heap_truncate(Oid rid);
 
 extern void heap_truncate_check_FKs(Relation rel);
 
-extern void AddRelationRawConstraints(Relation rel,
+extern List *AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints);
+
+extern void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 
 extern Node *cookDefault(ParseState *pstate,
 			Node *raw_default,

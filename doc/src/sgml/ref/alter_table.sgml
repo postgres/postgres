@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.68 2004/03/24 09:49:20 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.69 2004/05/05 04:48:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,31 +21,26 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable class="PARAMETER">expression</replaceable> | DROP DEFAULT }
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    SET WITHOUT OIDS
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
-    class="PARAMETER">new_column</replaceable>
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+
+where <replaceable class="PARAMETER">action</replaceable> is one of:
+
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TYPE <replaceable class="PARAMETER">type</replaceable> [ USING <replaceable class="PARAMETER">expression</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    SET WITHOUT OIDS
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -77,6 +72,23 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       dropped as well.  You will need to say <literal>CASCADE</> if
       anything outside the table depends on the column, for example,
       foreign key references or views.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALTER COLUMN TYPE</literal></term>
+    <listitem>
+     <para>
+      This form changes the type of a column of a table. Indexes and
+      simple table constraints involving the column will be automatically
+      converted to use the new column type by reparsing the originally
+      supplied expression.  The optional <literal>USING</literal>
+      clause specifies how to compute the new column value from the old;
+      if omitted, the default conversion is the same as an assignment
+      cast from old data type to new.  A  <literal>USING</literal>
+      clause must be provided if there is no implicit or assignment
+      cast from old to new type.
      </para>
     </listitem>
    </varlistentry>
@@ -147,6 +159,28 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form adds a new constraint to a table using the same syntax as
+      <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">. 
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DROP CONSTRAINT</literal></term>
+    <listitem>
+     <para>
+      This form drops constraints on a table.
+      Currently, constraints on tables are not required to have unique
+      names, so there may be more than one constraint matching the specified
+      name.  All matching constraints will be dropped.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
@@ -166,39 +200,6 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RENAME</literal></term>
-    <listitem>
-     <para>
-      The <literal>RENAME</literal> forms change the name of a table
-      (or an index, sequence, or view) or the name of an individual column in
-      a table. There is no effect on the stored data.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal></term>
-    <listitem>
-     <para>
-      This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">. 
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>DROP CONSTRAINT</literal></term>
-    <listitem>
-     <para>
-      This form drops constraints on a table.
-      Currently, constraints on tables are not required to have unique
-      names, so there may be more than one constraint matching the specified
-      name.  All such constraints will be dropped.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><literal>OWNER</literal></term>
     <listitem>
      <para>
@@ -212,13 +213,32 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <term><literal>CLUSTER</literal></term>
     <listitem>
      <para>
-      This form marks a table for future <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      This form selects the default controlling index for future <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
       operations.
      </para>
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><literal>RENAME</literal></term>
+    <listitem>
+     <para>
+      The <literal>RENAME</literal> forms change the name of a table
+      (or an index, sequence, or view) or the name of an individual column in
+      a table. There is no effect on the stored data.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
+  </para>
+
+  <para>
+   All the actions except <literal>RENAME</literal> can be combined into
+   a list of multiple alterations to apply in parallel.  For example, it
+   is possible to add several columns and/or alter the type of several
+   columns in a single command.  This is particularly useful with large
+   tables, since only one pass over the table need be made.
   </para>
 
   <para>
@@ -262,7 +282,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">type</replaceable></term>
       <listitem>
        <para>
-	Data type of the new column.
+	Data type of the new column, or new data type for an existing
+	column.
        </para>
       </listitem>
      </varlistentry>
@@ -352,16 +373,27 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </para>
 
    <para>
-    In the current implementation of <literal>ADD COLUMN</literal>,
-    default and <literal>NOT NULL</> clauses for the new column are not supported.
-    The new column always comes into being with all values null.
-    You can use the <literal>SET DEFAULT</literal> form
-    of <command>ALTER TABLE</command> to set the default afterward.
-    (You may also want to update the already existing rows to the
-    new default value, using
-    <xref linkend="sql-update" endterm="sql-update-title">.)
-    If you want to mark the column non-null, use the <literal>SET NOT NULL</>
-    form after you've entered non-null values for the column in all rows.
+    When a column is added with <literal>ADD COLUMN</literal>, all existing
+    rows in the table are initialized with the column's default value
+    (NULL if no <literal>DEFAULT</> clause is specified).
+   </para>
+
+   <para>
+    Adding a column with a non-null default or changing the type of an
+    existing column will require the entire table to be rewritten.  This
+    may take a significant amount of time for a large table; and it will
+    temporarily require double the disk space.
+   </para>
+
+   <para>
+    Adding a <literal>CHECK</> or <literal>NOT NULL</> constraint requires
+    scanning the table to verify that existing rows meet the constraint.
+   </para>
+
+   <para>
+    The main reason for providing the option to specify multiple changes
+    in a single <command>ALTER TABLE</> is that multiple table scans or
+    rewrites can thereby be combined into a single pass over the table.
    </para>
 
    <para>
@@ -381,9 +413,9 @@ VACUUM FULL table;
    </para>
 
    <para>
-    If a table has any descendant tables, it is not permitted to add
-    or rename a column in the parent table without doing the same to
-    the descendants.  That is, <command>ALTER TABLE ONLY</command>
+    If a table has any descendant tables, it is not permitted to add,
+    rename, or change the type of a column in the parent table without doing
+    the same to the descendants.  That is, <command>ALTER TABLE ONLY</command>
     will be rejected.  This ensures that the descendants always have
     columns matching the parent.
    </para>
@@ -424,6 +456,15 @@ ALTER TABLE distributors ADD COLUMN address varchar(30);
    To drop a column from a table:
 <programlisting>
 ALTER TABLE distributors DROP COLUMN address RESTRICT;
+</programlisting>
+  </para>
+
+  <para>
+   To change the types of two existing columns in one operation:
+<programlisting>
+ALTER TABLE distributors
+    ALTER COLUMN address TYPE varchar(80),
+    ALTER COLUMN name TYPE varchar(100);
 </programlisting>
   </para>
 
@@ -493,15 +534,11 @@ ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
   <title>Compatibility</title>
 
   <para>
-   The <literal>ADD COLUMN</literal> form conforms with the SQL
-   standard, with the exception that it does not support defaults and
-   not-null constraints, as explained above.  The <literal>ALTER
-   COLUMN</literal> form is in full conformance.
-  </para>
-
-  <para>
-   The clauses to rename tables, columns, indexes, views, and sequences are
+   The <literal>ADD</literal>, <literal>DROP</>, and <literal>SET DEFAULT</>
+   forms conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
+   Also, the ability to specify more than one manipulation in a single
+   <command>ALTER TABLE</> command is an extension.
   </para>
 
   <para>

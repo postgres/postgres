@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.25 2004/01/23 02:13:12 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.26 2004/05/05 04:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@ extern List *parse_analyze_varparams(Node *parseTree, Oid **paramTypes,
 						int *numParams);
 extern List *parse_sub_analyze(Node *parseTree, ParseState *parentParseState);
 extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
+
+extern char *makeObjectName(const char *name1, const char *name2,
+							const char *typename);
 
 extern void CheckSelectForUpdate(Query *qry);
 

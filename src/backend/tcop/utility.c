@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.213 2004/04/22 02:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.214 2004/05/05 04:48:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@
 #include "commands/view.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "rewrite/rewriteDefine.h"
@@ -497,126 +496,8 @@ ProcessUtility(Node *parsetree,
 			ExecRenameStmt((RenameStmt *) parsetree);
 			break;
 
-			/* various Alter Table forms */
-
 		case T_AlterTableStmt:
-			{
-				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
-				Oid			relid;
-
-				relid = RangeVarGetRelid(stmt->relation, false);
-
-				/*
-				 * Some or all of these functions are recursive to cover
-				 * inherited things, so permission checks are done there.
-				 */
-				switch (stmt->subtype)
-				{
-					case 'A':	/* ADD COLUMN */
-
-						/*
-						 * Recursively add column to table and, if
-						 * requested, to descendants
-						 */
-						AlterTableAddColumn(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-											(ColumnDef *) stmt->def);
-						break;
-					case 'T':	/* ALTER COLUMN DEFAULT */
-
-						/*
-						 * Recursively alter column default for table and,
-						 * if requested, for descendants
-						 */
-						AlterTableAlterColumnDefault(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-													 stmt->name,
-													 stmt->def);
-						break;
-					case 'N':	/* ALTER COLUMN DROP NOT NULL */
-						AlterTableAlterColumnDropNotNull(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-														 stmt->name);
-						break;
-					case 'n':	/* ALTER COLUMN SET NOT NULL */
-						AlterTableAlterColumnSetNotNull(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-														stmt->name);
-						break;
-					case 'S':	/* ALTER COLUMN STATISTICS */
-					case 'M':	/* ALTER COLUMN STORAGE */
-
-						/*
-						 * Recursively alter column statistics for table
-						 * and, if requested, for descendants
-						 */
-						AlterTableAlterColumnFlags(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-												   stmt->name,
-												   stmt->def,
-												   &(stmt->subtype));
-						break;
-					case 'D':	/* DROP COLUMN */
-
-						/*
-						 * Recursively drop column from table and, if
-						 * requested, from descendants
-						 */
-						AlterTableDropColumn(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-											 false,
-											 stmt->name,
-											 stmt->behavior);
-						break;
-					case 'C':	/* ADD CONSTRAINT */
-
-						/*
-						 * Recursively add constraint to table and, if
-						 * requested, to descendants
-						 */
-						AlterTableAddConstraint(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-												(List *) stmt->def);
-						break;
-					case 'X':	/* DROP CONSTRAINT */
-
-						/*
-						 * Recursively drop constraint from table and, if
-						 * requested, from descendants
-						 */
-						AlterTableDropConstraint(relid,
-							  interpretInhOption(stmt->relation->inhOpt),
-												 stmt->name,
-												 stmt->behavior);
-						break;
-					case 'E':	/* CREATE TOAST TABLE */
-						AlterTableCreateToastTable(relid, false);
-						break;
-					case 'U':	/* ALTER OWNER */
-						/* check that we are the superuser */
-						if (!superuser())
-							ereport(ERROR,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							errmsg("must be superuser to alter owner")));
-						/* get_usesysid raises an error if no such user */
-						AlterTableOwner(relid,
-										get_usesysid(stmt->name));
-						break;
-					case 'L':	/* CLUSTER ON */
-						AlterTableClusterOn(relid, stmt->name);
-						break;
-					case 'o':	/* SET WITHOUT OIDS */
-						AlterTableAlterOids(relid,
-											false,
-							  interpretInhOption(stmt->relation->inhOpt),
-											DROP_RESTRICT);
-						break;
-					default:	/* oops */
-						elog(ERROR, "unrecognized alter table type: %d",
-							 (int) stmt->subtype);
-						break;
-				}
-			}
+			AlterTable((AlterTableStmt *) parsetree);
 			break;
 
 		case T_AlterDomainStmt:
@@ -736,11 +617,15 @@ ProcessUtility(Node *parsetree,
 							stmt->idxname,		/* index name */
 							stmt->accessMethod, /* am name */
 							stmt->indexParams,	/* parameters */
+							(Expr *) stmt->whereClause,
+							stmt->rangetable,
 							stmt->unique,
 							stmt->primary,
 							stmt->isconstraint,
-							(Expr *) stmt->whereClause,
-							stmt->rangetable);
+							false,				/* is_alter_table */
+							true,				/* check_rights */
+							false,				/* skip_build */
+							false);				/* quiet */
 			}
 			break;
 

@@ -97,6 +97,12 @@ UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
 -- Check FKTABLE for update of matched row
 SELECT * FROM FKTABLE;
 
+-- Try altering the column type where foreign keys are involved
+ALTER TABLE PKTABLE ALTER COLUMN ptest1 TYPE bigint;
+ALTER TABLE FKTABLE ALTER COLUMN ftest1 TYPE bigint;
+SELECT * FROM PKTABLE;
+SELECT * FROM FKTABLE;
+
 DROP TABLE PKTABLE CASCADE;
 DROP TABLE FKTABLE;
 
