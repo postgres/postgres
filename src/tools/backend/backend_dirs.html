@@ -10,7 +10,9 @@ PostgreSQL Backend Directories
 by Bruce Momjian
 </H2 ALIGN=CENTER>
 <H2>
-<A HREF="../backend//bootstrap">bootstrap</A> - creates initial template database via initdb
+<A NAME="bootstrap">
+<A HREF="../../backend/bootstrap">bootstrap</A></A>
+- creates initial template database via initdb
 </H2>
 <P>
 Because PostgreSQL requires access to system tables for almost every
@@ -22,14 +24,18 @@ This code <I>jams</I> the data directly into tables using a
 special syntax used only by the bootstrap procedure.
 </P>
 <H2>
-<A HREF="../backend//main">main</A> - passes control to postmaster or postgres
+<A NAME="main">
+<A HREF="../../backend/main">main</A></A>
+- passes control to postmaster or postgres
 </H2>
 <P>
 This checks the process name(argv[0]) and various flags, and passes
 control to the postmaster or postgres backend code.
 </P>
 <H2>
-<A HREF="../backend//postmaster">postmaster</A> - controls postgres server startup/termination
+<A NAME="postmaster">
+<A HREF="../../backend/postmaster">postmaster</A></A>
+- controls postgres server startup/termination
 </H2>
 <P>
 This creates shared memory, and then goes into a loop waiting for
@@ -38,13 +44,17 @@ When a connection request arrives, a <I>postgres</I> backend is started,
 and the connection is passed to it.
 </P>
 <H2>
-<A HREF="../backend//libpq">libpq</A> - backend libpq library routines
+<A NAME="libpq">
+<A HREF="../../backend/libpq">libpq</A></A>
+- backend libpq library routines
 </H2>
 <P>
 This handles communication to the client processes.
 </P>
 <H2>
-<A HREF="../backend//tcop">tcop</A> - traffic cop, dispatches request to proper module
+<A NAME="tcop">
+<A HREF="../../backend/tcop">tcop</A></A>
+- traffic cop, dispatches request to proper module
 </H2>
 <P>
 This contains the <I>postgres</I> backend main handler, as well as the
@@ -52,7 +62,9 @@ code that makes calls to the parser, optimizer, executor, and
 <I>/commands</I> functions.
 </P>
 <H2>
-<A HREF="../backend//parser">parser</A> - converts SQL query to query tree
+<A NAME="parser">
+<A HREF="../../backend/parser">parser</A></A>
+- converts SQL query to query tree
 </H2>
 <P>
 This converts SQL queries coming from <I>libpq</I> into command-specific
@@ -67,14 +79,18 @@ The command-specific structures are then broken apart, checked, and passed to
 <I>Nodes</I> to be handled by the optimizer and executor.
 </P>
 <H2>
-<A HREF="../backend//optimizer">optimizer</A> - creates path and plan
+<A NAME="optimizer">
+<A HREF="../../backend/optimizer">optimizer</A></A>
+- creates path and plan
 </H2>
 <P>
 This uses the parser output to generate an optimal plan for the
 executor.
 </P>
 <H4>
-<A HREF="../backend//optimizer/path">optimizer/path</A> - creates path from parser output
+<A NAME="optimizer/path">
+<A HREF="../../backend/optimizer/path">optimizer/path</A></A>
+- creates path from parser output
 </H4>
 <P>
 This takes the parser query output, and generates all possible methods of
@@ -84,7 +100,9 @@ and optimizer table statistics to evaluate each possible execution
 method, and assigns a cost to each.
 </P>
 <H4>
-<A HREF="../backend//optimizer/geqo">optimizer/geqo</A> - genetic query optimizer
+<A NAME="optimizer/geqo">
+<A HREF="../../backend/optimizer/geqo">optimizer/geqo</A></A>
+- genetic query optimizer
 </H4>
 <P>
 <I>optimizer/path</I> evaluates all possible ways to join the requested tables.
@@ -97,26 +115,34 @@ tables, it is faster.
 There is an option to control when this feature is used.
 </P>
 <H4>
-<A HREF="../backend//optimizer/plan">optimizer/plan</A> - optimizes path output
+<A NAME="optimizer/plan">
+<A HREF="../../backend/optimizer/plan">optimizer/plan</A></A>
+- optimizes path output
 </H4>
 <P>
 This takes the <I>optimizer/path</I> output, chooses the path with the
 least cost, and creates a plan for the executor.
 </P>
 <H4>
-<A HREF="../backend//optimizer/prep">optimizer/prep</A> - handle special plan cases
+<A NAME="optimizer/prep">
+<A HREF="../../backend/optimizer/prep">optimizer/prep</A></A>
+- handle special plan cases
 </H4>
 <P>
 This does special plan processing.
 </P>
 <H4>
-<A HREF="../backend//optimizer/util">optimizer/util</A> - optimizer support routines
+<A NAME="optimizer/util">
+<A HREF="../../backend/optimizer/util">optimizer/util</A></A>
+- optimizer support routines
 </H4>
 <P>
 This contains support routines used by other parts of the optimizer.
 </P>
 <H2>
-<A HREF="../backend//executor">executor</A> - executes complex node plans from optimizer
+<A NAME="executor">
+<A HREF="../../backend/executor">executor</A></A>
+- executes complex node plans from optimizer
 </H2>
 <P>
 This handles <I>select, insert, update,</I> and <I>delete</I> statements.
@@ -125,7 +151,9 @@ heap scans, index scans, sorting, joining tables, grouping, aggregates,
 and uniqueness.
 </P>
 <H2>
-<A HREF="../backend//commands">commands</A> - commands that do not require the executor
+<A NAME="commands">
+<A HREF="../../backend/commands">commands</A></A>
+- commands that do not require the executor
 </H2>
 <P>
 These process SQL commands that do not require complex handling.
@@ -136,7 +164,9 @@ Most of the routines do some processing, then call lower-level functions
 in the catalog directory to do the actual work.
 </P>
 <H2>
-<A HREF="../backend//catalog">catalog</A> - system catalog manipulation
+<A NAME="catalog">
+<A HREF="../../backend/catalog">catalog</A></A>
+- system catalog manipulation
 </H2>
 <P>
 This contains functions that manipulate the system tables or catalogs.
@@ -146,56 +176,92 @@ These are low-level routines, and are usually called by upper routines
 that pre-format user requests into a predefined format.
 </P>
 <H2>
-<A HREF="../backend//storage">storage</A> - manages various storage systems
+<A NAME="storage">
+<A HREF="../../backend/storage">storage</A></A>
+- manages various storage systems
 </H2>
 <P>
 These allow uniform resource access by the backend.
 <BR>
 <BR>
-<A HREF="../backend//storage/buffer">storage/buffer</A> - shared buffer pool manager
+<A NAME="storage/buffer">
+<A HREF="../../backend/storage/buffer">storage/buffer</A></A>
+- shared buffer pool manager
 <BR>
-<A HREF="../backend//storage/file">storage/file</A> - file manager
+<A NAME="storage/file">
+<A HREF="../../backend/storage/file">storage/file</A></A>
+- file manager
 <BR>
-<A HREF="../backend//storage/ipc">storage/ipc</A> - semaphores and shared memory
+<A NAME="storage/ipc">
+<A HREF="../../backend/storage/ipc">storage/ipc</A></A>
+- semaphores and shared memory
 <BR>
-<A HREF="../backend//storage/large_object">storage/large_object</A> - large objects
+<A NAME="storage/large_object">
+<A HREF="../../backend/storage/large_object">storage/large_object</A></A>
+- large objects
 <BR>
-<A HREF="../backend//storage/lmgr">storage/lmgr</A> - lock manager
+<A NAME="storage/lmgr">
+<A HREF="../../backend/storage/lmgr">storage/lmgr</A></A>
+- lock manager
 <BR>
-<A HREF="../backend//storage/page">storage/page</A> - page manager
+<A NAME="storage/page">
+<A HREF="../../backend/storage/page">storage/page</A></A>
+- page manager
 <BR>
-<A HREF="../backend//storage/smgr">storage/smgr</A> - storage/disk manager
+<A NAME="storage/smgr">
+<A HREF="../../backend/storage/smgr">storage/smgr</A></A>
+- storage/disk manager
 <BR>
 <BR>
 </P>
 <H2>
-<A HREF="../backend//access">access</A> - various data access methods
+<A NAME="access">
+<A HREF="../../backend/access">access</A></A>
+- various data access methods
 </H2>
 <P>
 These control the way data is accessed in heap, indexes, and
 transactions.
 <BR>
 <BR>
-<A HREF="../backend//access/common">access/common</A> - common access routines
+<A NAME="access/common">
+<A HREF="../../backend/access/common">access/common</A></A>
+- common access routines
 <BR>
-<A HREF="../backend//access/gist">access/gist</A> - easy-to-define access method system
+<A NAME="access/gist">
+<A HREF="../../backend/access/gist">access/gist</A></A>
+- easy-to-define access method system
 <BR>
-<A HREF="../backend//access/hash">access/hash</A> - hash
+<A NAME="access/hash">
+<A HREF="../../backend/access/hash">access/hash</A></A>
+- hash
 <BR>
-<A HREF="../backend//access/heap">access/heap</A> - heap is use to store data rows
+<A NAME="access/heap">
+<A HREF="../../backend/access/heap">access/heap</A></A>
+- heap is use to store data rows
 <BR>
-<A HREF="../backend//access/index">access/index</A> - used by all index types
+<A NAME="access/index">
+<A HREF="../../backend/access/index">access/index</A></A>
+- used by all index types
 <BR>
-<A HREF="../backend//access/nbtree">access/nbtree</A> - Lehman and Yao's btree management algorithm 
+<A NAME="access/nbtree">
+<A HREF="../../backend/access/nbtree">access/nbtree</A></A>
+- Lehman and Yao's btree management algorithm 
 <BR>
-<A HREF="../backend//access/rtree">access/rtree</A> - used for indexing of 2-dimensional data
+<A NAME="access/rtree">
+<A HREF="../../backend/access/rtree">access/rtree</A></A>
+- used for indexing of 2-dimensional data
 <BR>
-<A HREF="../backend//access/transam">access/transam</A> - transaction manager (BEGIN/ABORT/COMMIT)
+<A NAME="access/transam">
+<A HREF="../../backend/access/transam">access/transam</A></A>
+- transaction manager (BEGIN/ABORT/COMMIT)
 <BR>
 <BR>
 </P>
 <H2>
-<A HREF="../backend//nodes">nodes</A> - creation/manipulation of nodes and lists
+<A NAME="nodes">
+<A HREF="../../backend/nodes">nodes</A></A>
+- creation/manipulation of nodes and lists
 </H2>
 <P>
 PostgreSQL stores information about SQL queries in structures called
@@ -212,16 +278,22 @@ These are used extensively in the parser, optimizer, and executor to
 store requests and data.
 </P>
 <H2>
-<A HREF="../backend//utils">utils</A> - support routines
+<A NAME="utils">
+<A HREF="../../backend/utils">utils</A></A>
+- support routines
 </H2>
 <H4>
-<A HREF="../backend//utils/adt">utils/adt</A> - built-in data type routines
+<A NAME="utils/adt">
+<A HREF="../../backend/utils/adt">utils/adt</A></A>
+- built-in data type routines
 </H4>
 <P>
 This contains all the PostgreSQL builtin data types.
 </P>
 <H4>
-<A HREF="../backend//utils/cache">utils/cache</A> - system/relation/function cache routines
+<A NAME="utils/cache">
+<A HREF="../../backend/utils/cache">utils/cache</A></A>
+- system/relation/function cache routines
 </H4>
 <P>
 PostgreSQL supports arbitrary data types, so no data types are hard-coded
@@ -236,20 +308,26 @@ This last cache maintains information about all recently-accessed
 tables, not just system ones.
 </P>
 <H4>
-<A HREF="../backend//utils/error">utils/error</A> - error reporting routines
+<A NAME="utils/error">
+<A HREF="../../backend/utils/error">utils/error</A></A>
+- error reporting routines
 </H4>
 <P>
 Reports backend errors to the front end.
 </P>
 <H4>
-<A HREF="../backend//utils/fmgr">utils/fmgr</A> - function manager
+<A NAME="utils/fmgr">
+<A HREF="../../backend/utils/fmgr">utils/fmgr</A></A>
+- function manager
 </H4>
 <P>
 This handles the calling of dynamically-loaded functions, and the calling
 of functions defined in the system tables.
 </P>
 <H4>
-<A HREF="../backend//utils/hash">utils/hash</A> - hash routines for internal algorithms
+<A NAME="utils/hash">
+<A HREF="../../backend/utils/hash">utils/hash</A></A>
+- hash routines for internal algorithms
 </H4>
 <P>
 These hash routines are used by the cache and memory-manager routines to
@@ -257,13 +335,19 @@ do quick lookups of dynamic data storage structures maintained by the
 backend.
 </P>
 <H4>
-<A HREF="../backend//utils/init">utils/init</A> - various initialization stuff
+<A NAME="utils/init">
+<A HREF="../../backend/utils/init">utils/init</A></A>
+- various initialization stuff
 </H4>
 <H4>
-<A HREF="../backend//utils/misc">utils/misc</A> - miscellaneous stuff
+<A NAME="utils/misc">
+<A HREF="../../backend/utils/misc">utils/misc</A></A>
+- miscellaneous stuff
 </H4>
 <H4>
-<A HREF="../backend//utils/mmgr">utils/mmgr</A> - memory manager(process-local memory)
+<A NAME="utils/mmgr">
+<A HREF="../../backend/utils/mmgr">utils/mmgr</A></A>
+- memory manager(process-local memory)
 </H4>
 <P>
 When PostgreSQL allocates memory, it does so in an explicit context.
@@ -273,14 +357,18 @@ By doing this, the backend can easily free memory once a statement or
 transaction completes.
 </P>
 <H4>
-<A HREF="../backend//utils/sort">utils/sort</A> - sort routines for internal algorithms
+<A NAME="utils/sort">
+<A HREF="../../backend/utils/sort">utils/sort</A></A>
+- sort routines for internal algorithms
 </H4>
 <P>
 When statement output must be sorted as part of a backend operation,
 this code sorts the tuples, either in memory or using disk files.
 </P>
 <H4>
-<A HREF="../backend//utils/time">utils/time</A> - transaction time qualification routines
+<A NAME="utils/time">
+<A HREF="../../backend/utils/time">utils/time</A></A>
+- transaction time qualification routines
 </H4>
 <P>
 These routines do checking of tuple internal columns to determine if the
@@ -288,31 +376,41 @@ current row is still valid, or is part of a non-committed transaction or
 superseded by a new row.
 </P>
 <H2>
-<A HREF="../backend//include">include</A> - include files
+<A NAME="include">
+<A HREF="../../backend/include">include</A></A>
+- include files
 </H2>
 <P>
 There are include directories for each subsystem.
 </P>
 <H2>
-<A HREF="../backend//lib">lib</A> - support library
+<A NAME="lib">
+<A HREF="../../backend/lib">lib</A></A>
+- support library
 </H2>
 <P>
 This houses several generic routines.
 </P>
 <H2>
-<A HREF="../backend//regex">regex</A> - regular expression library
+<A NAME="regex">
+<A HREF="../../backend/regex">regex</A></A>
+- regular expression library
 </H2>
 <P>
 This is used for regular expression handling in the backend, i.e. '~'.
 </P>
 <H2>
-<A HREF="../backend//rewrite">rewrite</A> - rules system
+<A NAME="rewrite">
+<A HREF="../../backend/rewrite">rewrite</A></A>
+- rules system
 </H2>
 <P>
 This does processing for the rules system.
 </P>
 <H2>
-<A HREF="../backend//tioga">tioga</A> - unused (array handling?)
+<A NAME="tioga">
+<A HREF="../../backend/tioga">tioga</A></A>
+- unused (array handling?)
 </H2>
 <HR>
 <ADDRESS>
