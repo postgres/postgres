@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.46 1998/11/27 19:51:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.47 1999/01/24 22:53:25 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -311,13 +311,13 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
  *
  *		This caches attribute offsets in the attribute descriptor.
  *
- *		an alternate way to speed things up would be to cache offsets
+ *		An alternate way to speed things up would be to cache offsets
  *		with the tuple, but that seems more difficult unless you take
  *		the storage hit of actually putting those offsets into the
  *		tuple you send to disk.  Yuck.
  *
  *		This scheme will be slightly slower than that, but should
- *		preform well for queries which hit large #'s of tuples.  After
+ *		perform well for queries which hit large #'s of tuples.  After
  *		you cache the offsets once, examining all the other tuples using
  *		the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
@@ -331,8 +331,8 @@ nocachegetattr(HeapTuple tuple,
 	char			   *tp;						/* ptr to att in tuple */
 	HeapTupleHeader		tup = tuple->t_data;
 	bits8			   *bp = tup->t_bits;		/* ptr to att in tuple */
-	int					slow;					/* do we have to walk nulls? */
 	Form_pg_attribute  *att = tupleDesc->attrs;
+	int					slow = 0;				/* do we have to walk nulls? */
 
 
 #if IN_MACRO
@@ -342,6 +342,8 @@ nocachegetattr(HeapTuple tuple,
 	if (isnull)
 		*isnull = false;
 #endif
+
+	attnum--;
 
 	/* ----------------
 	 *	 Three cases:
@@ -354,8 +356,6 @@ nocachegetattr(HeapTuple tuple,
 
 	if (HeapTupleNoNulls(tuple))
 	{
-		attnum--;
-
 #if IN_MACRO
 /* This is handled in the macro */
 		if (att[attnum]->attcacheoff != -1)
@@ -373,19 +373,12 @@ nocachegetattr(HeapTuple tuple,
 			return (Datum) fetchatt(&(att[0]), (char *) tup + tup->t_hoff);
 		}
 #endif
-
-		slow = 0;
 	}
 	else
 	{
-
 		/*
 		 * there's a null somewhere in the tuple
 		 */
-
-		tp = (char *) tup + tup->t_hoff;
-		slow = 0;
-		attnum--;
 
 		/* ----------------
 		 *		check to see if desired att is null
@@ -403,34 +396,27 @@ nocachegetattr(HeapTuple tuple,
 #endif
 
 		/* ----------------
-		 *		Now check to see if any preceeding bits are null...
+		 *		Now check to see if any preceding bits are null...
 		 * ----------------
 		 */
 		{
-			int			i = 0;	/* current offset in bp */
-			int			mask;	/* bit in byte we're looking at */
-			char		n;		/* current byte in bp */
-			int			byte,
-						finalbit;
+			int			byte = attnum >> 3;
+			int			finalbit = attnum & 0x07;
 
-			byte = attnum >> 3;
-			finalbit = attnum & 0x07;
-
-			for (; i <= byte && !slow; i++)
+			/* check for nulls "before" final bit of last byte */
+			if ((~ bp[byte]) & ((1 << finalbit) - 1))
+				slow = 1;
+			else
 			{
-				n = bp[i];
-				if (i < byte)
+				/* check for nulls in any "earlier" bytes */
+				int		i;
+				for (i = 0; i < byte; i++)
 				{
-					/* check for nulls in any "earlier" bytes */
-					if ((~n) != 0)
+					if (bp[i] != 0xFF)
+					{
 						slow = 1;
-				}
-				else
-				{
-					/* check for nulls "before" final bit of last byte */
-					mask = (1 << finalbit) - 1;
-					if ((~n) & mask)
-						slow = 1;
+						break;
+					}
 				}
 			}
 		}
@@ -449,24 +435,29 @@ nocachegetattr(HeapTuple tuple,
 									tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
-			return (Datum) fetchatt(&(att[0]), (char *) tp);
+			return (Datum) fetchatt(&(att[0]), tp);
 		else if (!HeapTupleAllFixed(tuple))
 		{
-			int			j = 0;
-
+			int			j;
 			/*
 			 * In for(), we make this <= and not < because we want to test
 			 * if we can go past it in initializing offsets.
 			 */
-			for (j = 0; j <= attnum && !slow; j++)
+			for (j = 0; j <= attnum; j++)
+			{
 				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
+				{
 					slow = 1;
+					break;
+				}
+			}
 		}
 	}
 
 	/*
-	 * if slow is zero, and we got here, we know that we have a tuple with
-	 * no nulls.  We also have to initialize the remainder of the
+	 * If slow is zero, and we got here, we know that we have a tuple with
+	 * no nulls or varlenas before the target attribute.
+	 * If possible, we also want to initialize the remainder of the
 	 * attribute cached offset values.
 	 */
 	if (!slow)
@@ -550,7 +541,8 @@ nocachegetattr(HeapTuple tuple,
 
 			off = att_addlength(off, att[i]->attlen, tp + off);
 
-			if (att[i]->attlen == -1 && !VARLENA_FIXED_SIZE(att[i]))
+			if (usecache &&
+				att[i]->attlen == -1 && !VARLENA_FIXED_SIZE(att[i]))
 				usecache = false;
 		}
 
