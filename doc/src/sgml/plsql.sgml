@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.21 2001/02/21 17:50:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.22 2001/03/09 19:09:00 petere Exp $
 -->
 
- <chapter id="plsql">
+ <chapter id="plpgsql">
   <title>PL/pgSQL - <acronym>SQL</acronym> Procedural Language</title>
 
   <para>
@@ -14,7 +14,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.21 2001/02/21 17:50:38
    This package was originally written by Jan Wieck.
   </para>
 
-  <sect1 id="plsql-overview">
+  <sect1 id="plpgsql-overview">
    <title>Overview</title>
 
    <para>
@@ -418,7 +418,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
 
    <!-- **** PL/pgSQL statements **** -->
 
-   <sect2>
+   <sect2 id="plpgsql-statements">
     <title>Statements</title>
 
     <para>
@@ -991,7 +991,907 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     </para>
    </example>
   </sect1>
- </chapter>
+
+ <sect1 id="plpgsql-porting">
+
+  <sect1info>
+   <date>
+    February 2001
+   </date>
+   <author>
+    <firstname>Roberto</firstname>
+    <surname>Mello</surname>
+    <affiliation>
+     <address>
+      <email>rmello@fslc.usu.edu</email>
+     </address>
+    </affiliation>
+   </author>
+
+   <legalnotice>
+    <para>
+     Except for portions of this document quoted from other sources,
+     this document is licensed under the BSD License.
+    </para>
+   </legalnotice>
+  </sect1info> 
+
+  <title>Porting from Oracle PL/SQL</title>
+
+  <note>
+   <title>Author</title>
+   <para>
+    Roberto Mello (<email>rmello@fslc.usu.edu</email>)
+   </para>
+  </note>
+
+  <para>
+   This section explains differences between Oracle's PL/SQL and
+   PostgreSQL's PL/pgSQL languages in the hopes of helping developers
+   port applications from Oracle to PostgreSQL.  Most of the code here
+   is from the <ulink url="http://www.arsdigita.com">ArsDigita</ulink>
+   <ulink url="http://www.arsdigita.com/asj/clickstream">Clickstream
+   module</ulink> that I ported to PostgreSQL when I took an
+   internship with <ulink url="http://www.openforce.net">OpenForce
+   Inc.</ulink> in the Summer of 2000.
+  </para>
+
+  <para>
+   PL/pgSQL is similar to PL/SQL in many aspects. It is a block
+   structured, imperative language (all variables have to be
+   declared). PL/SQL has many more features than its PostgreSQL
+   counterpart, but PL/pgSQL allows for a great deal of functionality
+   and it is being improved constantly.
+  </para>
+
+  <sect2>
+   <title>Main Differences</title>
+
+   <para>
+    Some things you should keep in mind when porting from Oracle to PostgreSQL:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       No default parameters in PostgreSQL.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       You can overload functions in PostgreSQL. This is often used to work 
+       around the lack of default parameters.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Assignments, loops and conditionals are similar. 
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       No need for cursors in PostgreSQL, just put the query in the FOR 
+       statement (see example below)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In PostgreSQL you <emphasis>need</emphasis> to escape single
+       quotes. See <xref linkend="plpgsql-quote">.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <sect3 id="plpgsql-quote">
+    <title>Quote Me on That: Escaping Single Quotes</title>
+
+    <para>
+     In PostgreSQL you need to escape single quotes inside your
+     function definition. This can lead to quite amusing code at
+     times, especially if you are creating a function that generates
+     other function(s), as in <xref
+     linkend="plpgsql-porting-nastyquote">.  One thing to keep in mind
+     when escaping lots of single quotes is that, except for the
+     beginning/ending quotes, all the others will come in even
+     quantity.
+    </para>
+
+    <para>
+     <xref linkend="plpgsql-quoting-table"> gives the scoop.  (You'll
+     love this little chart.)
+    </para>
+
+    <table id="plpgsql-quoting-table">
+     <title>Single Quotes Escaping Chart</title>
+
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>No. of Quotes</entry>
+        <entry>Usage</entry>
+        <entry>Example</entry>
+        <entry>Result</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry>1</entry>
+        <entry>To begin/terminate function bodies</entry>
+        <entry><programlisting>
+CREATE FUNCTION foo() RETURNS INTEGER AS '...'
+LANGUAGE 'plpgsql';
+</programlisting></entry>
+        <entry>as is</entry>
+       </row>
+
+       <row>
+        <entry>2</entry>
+        <entry>In assignments, SELECTs, to delimit strings, etc.</entry>
+        <entry><programlisting>
+a_output := ''Blah'';
+SELECT * FROM users WHERE f_name=''foobar'';
+</programlisting></entry>
+        <entry><literal>SELECT * FROM users WHERE f_name='foobar';</literal></entry>
+       </row>
+
+       <row>
+        <entry>4</entry>
+        <entry>
+         When you need two single quotes in your resulting string
+         without terminating that string.
+        </entry>
+        <entry><programlisting>
+a_output := a_output || '' AND name 
+    LIKE ''''foobar'''' AND ...''
+</programlisting></entry>
+        <entry><literal>AND name LIKE 'foobar' AND ...</literal></entry>
+       </row>
+
+       <row>
+        <entry>6</entry>
+        <entry>
+         When you want double quotes in your resulting string
+         <emphasis>and</emphasis> terminate that string.
+        </entry>
+        <entry><programlisting>
+a_output := a_output || '' AND name 
+    LIKE ''''foobar''''''
+</programlisting></entry>
+        <entry>
+         <literal>AND name LIKE 'foobar'</literal>
+        </entry>
+       </row>
+
+       <row>
+        <entry>10</entry>
+        <entry>
+         When you want two single quotes in the resulting string
+         (which accounts for 8 quotes) <emphasis>and</emphasis>
+         terminate that string (2 more).  You will probably only need
+         that if you were using a function to generate other functions
+         (like in <xref linkend="plpgsql-porting-nastyquote">).
+        </entry>
+        <entry><programlisting>
+a_output := a_output || '' if v_'' || 
+    referrer_keys.kind || '' like '''''''''' 
+    || referrer_keys.key_string || '''''''''' 
+    then return ''''''  || referrer_keys.referrer_type 
+    || ''''''; end if;''; 
+</programlisting></entry>
+        <entry>
+         <literal>if v_<...> like ''<...>'' then return ''<...>''; end if;</literal>
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </sect3>
+  </sect2>  
+
+  <sect2 id="plpgsql-porting-functions">
+   <title>
+    Porting Functions
+   </title>
+
+   <example>
+    <title>
+     A Simple Function
+    </title>
+
+    <para>
+     Here is an Oracle function:
+<programlisting>
+CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name IN varchar, v_version IN varchar)
+RETURN varchar IS
+BEGIN
+    IF v_version IS NULL THEN
+        RETURN v_name;
+    END IF;
+    RETURN v_name || '/' || v_version;
+END;
+/
+SHOW ERRORS;
+</programlisting>
+    </para>
+
+    <para>
+     Let's go through this function and see the differences to PL/pgSQL:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+        The <literal>OR REPLACE</literal> clause is not allowed. You
+        will have to explicitly drop the function before creating it
+        to achieve similar results.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        <productname>PostgreSQL</productname> does not have named
+        parameters. You have to explicitly alias them inside your
+        function.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Oracle can have <literal>IN</literal>, <literal>OUT</literal>,
+        and <literal>INOUT</literal> parameters passed to functions.
+        The <literal>INOUT</literal>, for example, means that the
+        parameter will receive a value and return another. PostgreSQL
+        only has <quote>IN</quote> parameters and functions can return
+        only a single value.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        The <literal>RETURN</literal> key word in the function
+        prototype (not the function body) becomes
+        <literal>RETURNS</literal> in PostgreSQL.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        On PostgreSQL functions are created using single quotes as
+        delimiters, so you have to escape single quotes inside your
+        functions (which can be quite annoying at times; see <xref
+        linkend="plpgsql-quote">).
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        The <literal>/show errors</literal> command does not exist in
+        PostgreSQL.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     So let's see how this function would be look like ported to
+     PostgreSQL:
+
+<programlisting>
+DROP FUNCTION cs_fmt_browser_version(varchar, varchar);
+CREATE FUNCTION cs_fmt_browser_version(varchar, varchar)
+RETRUNS varchar AS '
+DECLARE
+    v_name ALIAS FOR $1;
+    v_version ALIAS FOR $2;
+BEGIN
+    IF v_version IS NULL THEN
+        return v_name;
+    END IF;
+    RETURN v_name || ''/'' || v_version;
+END;
+' LANGUAGE 'plpgsql';
+</programlisting>
+    </para>
+   </example>
+ 
+   <example id="plpgsql-porting-nastyquote">
+    <title>
+     A Function that Creates Another Function
+    </title>
+
+    <para>
+     The following procedure grabs rows from a
+     <literal>SELECT</literal> statement and builds a large function
+     with the results in <literal>IF</literal> statements, for the
+     sake of efficiency. Notice particularly the differences in
+     cursors, <literal>FOR</literal> loops, and the need to escape
+     single quotes in PostgreSQL.
+
+<programlisting>
+create or replace procedure cs_update_referrer_type_proc is 
+    cursor referrer_keys is 
+        select * from cs_referrer_keys 
+        order by try_order;
+
+    a_output varchar(4000); 
+begin 
+    a_output := 'create or replace function cs_find_referrer_type(v_host IN varchar, v_domain IN varchar, 
+v_url IN varchar) return varchar is begin'; 
+
+    for referrer_key in referrer_keys loop 
+        a_output := a_output || ' if v_' || referrer_key.kind || ' like ''' || 
+referrer_key.key_string || ''' then return ''' || referrer_key.referrer_type || 
+'''; end if;'; 
+    end loop; 
+
+    a_output := a_output || ' return null; end;'; 
+    execute immediate a_output; 
+end; 
+/ 
+show errors
+</programlisting>
+    </para>
+
+    <para>
+     Here is how this function would end up in PostgreSQL:
+
+<programlisting>
+CREATE FUNCTION cs_update_referrer_type_proc() RETURNS integer AS '
+DECLARE
+    referrer_keys RECORD;  -- Declare a generic record to be used in a FOR
+    a_output varchar(4000);
+BEGIN 
+    a_output := ''CREATE FUNCTION cs_find_referrer_type(varchar,varchar,varchar) 
+                  RETURNS varchar AS '''' 
+                     DECLARE 
+                         v_host ALIAS FOR $1; 
+                         v_domain ALIAS FOR $2; 
+                         v_url ALIAS FOR $3; ''; 
+
+    -- 
+    -- Notice how we scan through the results of a query in a FOR loop
+    -- using the FOR &lt;record&gt; construct.
+    --
+
+    FOR referrer_keys IN select * from cs_referrer_keys order by try_order LOOP
+        a_output := a_output || '' if v_'' || referrer_keys.kind || '' like '''''''''' 
+                 || referrer_keys.key_string || '''''''''' then return '''''' 
+                 || referrer_keys.referrer_type || ''''''; end if;''; 
+    END LOOP; 
+  
+    a_output := a_output || '' return null; end; '''' language ''''plpgsql'''';''; 
+ 
+    -- This works because we are not substituting any variables
+    -- Otherwise it would fail. Look at PERFORM for another way to run functions
+    
+    EXECUTE a_output; 
+end; 
+' LANGUAGE 'plpgsql';
+</programlisting>
+    </para>
+   </example>
+ 
+   <example>
+    <title>
+     A Procedure with a lot of String Manipulation and OUT Parameters
+    </title>
+
+    <para>
+     The following Oracle PL/SQL procedure is used to parse a URL and
+     return several elements (host, path and query). It is an
+     procedure because in functions only one value can be returned
+     (see <xref linkend="plpgsql-porting-procedures">).  In
+     PostgreSQL, one way to work around this is to split the procedure
+     in three different functions: one to return the host, another for
+     the path and another for the query.
+    </para>
+
+<programlisting>
+create or replace procedure cs_parse_url(
+    v_url IN varchar,
+    v_host OUT varchar,  -- This will be passed back
+    v_path OUT varchar,  -- This one too
+    v_query OUT varchar) -- And this one
+is
+    a_pos1 integer;
+    a_pos2 integer;
+begin
+    v_host := NULL;
+    v_path := NULL;
+    v_query := NULL;
+    a_pos1 := instr(v_url, '//'); -- PostgreSQL doesn't have an instr function
+
+    if a_pos1 = 0 then
+        return;
+    end if;
+    a_pos2 := instr(v_url, '/', a_pos1 + 2);
+    if a_pos2 = 0 then
+        v_host := substr(v_url, a_pos1 + 2);
+        v_path := '/';
+        return;
+    end if;
+
+    v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2);
+    a_pos1 := instr(v_url, '?', a_pos2 + 1);
+
+    if a_pos1 = 0 then
+        v_path := substr(v_url, a_pos2);
+        return;
+    end if;
+
+    v_path := substr(v_url, a_pos2, a_pos1 - a_pos2);
+    v_query := substr(v_url, a_pos1 + 1);
+end;
+/
+show errors;
+</programlisting>
+
+    <para>
+     Here is how this procedure could be translated for PostgreSQL:
+
+<programlisting>
+ drop function cs_parse_url_host(varchar); 
+ create function cs_parse_url_host(varchar) returns varchar as ' 
+ declare 
+     v_url ALIAS FOR $1; 
+     v_host varchar; 
+     v_path varchar; 
+     a_pos1 integer; 
+     a_pos2 integer; 
+     a_pos3 integer; 
+ begin 
+     v_host := NULL; 
+     a_pos1 := instr(v_url,''//''); 
+   
+     if a_pos1 = 0 then 
+         return '''';  -- Return a blank
+     end if; 
+ 
+     a_pos2 := instr(v_url,''/'',a_pos1 + 2); 
+     if a_pos2 = 0 then 
+         v_host := substr(v_url, a_pos1 + 2); 
+         v_path := ''/''; 
+         return v_host; 
+     end if; 
+ 
+     v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2 ); 
+     return v_host; 
+ end; 
+ ' language 'plpgsql';
+</programlisting>
+    </para>
+   </example>
+
+   <note>
+    <para>
+     PostgreSQL does not have an <function>instr</function> function,
+     so you can work around it using a combination of other functions.
+     I got tired of doing this and created my own
+     <function>instr</function> functions that behave exactly like
+     Oracle's (it makes life easier). See the <xref
+     linkend="plpgsql-porting-appendix"> for the code.
+    </para>
+   </note>
+  </sect2>
+
+  <sect2 id="plpgsql-porting-procedures">
+   <title>
+    Procedures
+   </title>
+
+   <para>
+    Oracle procedures give a little more flexibility to the developer
+    because nothing needs to be explicitly returned, but it can be
+    through the use of INOUT or OUT parameters.
+   </para>
+
+   <para>
+    An example:
+
+<programlisting>
+create or replace procedure cs_create_job(v_job_id in integer)
+is
+    a_running_job_count integer;
+    pragma autonomous_transaction;<co id="co.plpgsql-porting-pragma">
+begin
+    lock table cs_jobs in exclusive mode;<co id="co.plpgsql-porting-locktable">
+
+    select count(*) into a_running_job_count from cs_jobs
+    where end_stamp is null;
+
+    if a_running_job_count > 0 then
+        commit; -- free lock<co id="co.plpgsql-porting-commit">
+        raise_application_error(-20000, 'Unable to create a new job: a job is currently running.');
+    end if;
+
+    delete from cs_active_job;
+    insert into cs_active_job(job_id) values(v_job_id);
+
+    begin
+        insert into cs_jobs(job_id, start_stamp) values(v_job_id, sysdate);
+        exception when dup_val_on_index then null; -- don't worry if it already exists<co id="co.plpgsql-porting-exception">
+    end;
+    commit;
+end;
+/
+show errors
+</programlisting>
+   </para>
+
+   <para>
+    Procedures like this can be easily converted into PostgreSQL
+    functions returning an <type>INTEGER</type>. This procedure in
+    particular is interesting because it can teach us some things:
+
+    <calloutlist>
+     <callout arearefs="co.plpgsql-porting-pragma">
+      <para>
+       There is no <literal>pragma</literal> statement in PostgreSQL.
+      </para>
+     </callout>
+
+     <callout arearefs="co.plpgsql-porting-locktable">
+      <para>
+       If you do a <literal>LOCK TABLE</literal> in PL/pgSQL, the lock
+       will not be released until the calling transaction is finished.
+      </para>
+     </callout>
+
+     <callout arearefs="co.plpgsql-porting-commit">
+      <para>
+       You also cannot have transactions in PL/pgSQL procedures. The
+       entire function (and other functions called from therein) is
+       executed in a transaction and PostgreSQL rolls back the results if
+       something goes wrong. Therefore only one
+       <literal>BEGIN</literal> statement is allowed.
+      </para>
+     </callout>
+
+     <callout arearefs="co.plpgsql-porting-exception">
+      <para>
+       The exception when would have to be replaced by an
+       <literal>IF</literal> statement.
+      </para>
+     </callout>
+    </calloutlist>
+   </para>
+
+   <para>
+    So let's see one of the ways we could port this procedure to PL/pgSQL:
+
+<programlisting>
+drop function cs_create_job(integer);
+create function cs_create_job(integer) returns integer as ' declare
+    v_job_id alias for $1;
+    a_running_job_count integer;
+    a_num integer;
+    -- pragma autonomous_transaction;
+begin
+    lock table cs_jobs in exclusive mode;
+    select count(*) into a_running_job_count from cs_jobs where end_stamp is null;
+
+    if a_running_job_count > 0 then
+        -- commit; -- free lock
+        raise exception ''Unable to create a new job: a job is currently running.'';
+    end if;
+
+    delete from cs_active_job;
+    insert into cs_active_job(job_id) values(v_job_id);
+
+    SELECT count(*) into a_num FROM cs_jobs WHERE job_id=v_job_id;
+    IF NOT FOUND THEN  -- If nothing was returned in the last query
+        -- This job is not in the table so lets insert it.
+        insert into cs_jobs(job_id, start_stamp) values(v_job_id, sysdate());
+        return 1;
+    ELSE
+        raise NOTICE ''Job already running.'';<co id="co.plpgsql-porting-raise">
+    END IF;
+
+    return 0;
+end;
+' language 'plpgsql';
+</programlisting>
+
+    <calloutlist>
+     <callout arearefs="co.plpgsql-porting-raise">
+      <para>
+       Notice how you can raise notices (or errors) in PL/pgSQL.
+      </para>
+     </callout>
+    </calloutlist>
+   </para>
+  </sect2>
+
+  <sect2 id="plpgsql-porting-packages">
+   <title>
+    Packages
+   </title>
+
+   <note>
+    <para>
+     I haven't done much with packages myself, so if there are
+     mistakes here, please let me know.
+    </para>
+   </note>
+
+   <para>
+    Packages are a way Oracle gives you to encapsulate PL/SQL
+    statements and functions into one entity, like Java classes, where
+    you define methods and objects. You can access these
+    objects/methods with a <quote><literal>.</literal></quote>
+    (dot). Here is an example of an Oracle package from ACS 4 (the
+    <ulink url="http://www.arsdigita.com/doc/">ArsDigita Community
+    System</ulink>):
+
+<programlisting>
+create or replace package body acs
+as
+  function add_user (
+    user_id     in users.user_id%TYPE default null,
+    object_type     in acs_objects.object_type%TYPE
+               default 'user',
+    creation_date   in acs_objects.creation_date%TYPE
+               default sysdate,
+    creation_user   in acs_objects.creation_user%TYPE
+               default null,
+    creation_ip     in acs_objects.creation_ip%TYPE default null,
+  ...
+  ) return users.user_id%TYPE
+  is
+    v_user_id       users.user_id%TYPE;
+    v_rel_id        membership_rels.rel_id%TYPE;
+  begin
+    v_user_id := acs_user.new (user_id, object_type, creation_date,
+                creation_user, creation_ip, email,
+    ...
+    return v_user_id;
+  end;
+end acs;
+/
+show errors
+</programlisting>
+   </para>
+
+   <para>
+    We port this to PostgreSQL by creating the different objects of
+    the Oracle package as functions with a standard naming
+    convention. We have to pay attention to some other details, like
+    the lack of default parameters in PostgreSQL functions. The above
+    package would become something like this:
+ 
+<programlisting>
+CREATE FUNCTION acs__add_user(integer,integer,varchar,datetime,integer,integer,...)
+RETURNS integer AS '
+DECLARE
+    user_id ALIAS FOR $1;
+    object_type ALIAS FOR $2;
+    creation_date ALIAS FOR $3;
+    creation_user ALIAS FOR $4;
+    creation_ip ALIAS FOR $5;
+    ...
+    v_user_id users.user_id%TYPE;
+    v_rel_id membership_rels.rel_id%TYPE;
+BEGIN
+    v_user_id := acs_user__new(user_id,object_type,creation_date,creation_user,creation_ip, ...);
+    ...
+
+    return v_user_id;
+END;
+' LANGUAGE 'plpgsql';
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2 id="plpgsql-porting-other">
+   <title>
+    Other Things to Watch For
+   </title>
+
+   <sect3>
+    <title>EXECUTE</title>
+
+    <para>
+     The PostgreSQL version of <literal>EXECUTE</literal> works
+     nicely, but you have to remember to use
+     <function>quote_literal(TEXT)</function> and
+     <function>quote_string(TEXT)</function> as described in <xref
+     linkend="plpgsql-statements">.  Constructs of the type
+     <literal>EXECUTE ''SELECT * from $1'';</literal> will not work
+     unless you use these functions.
+    </para>
+   </sect3>
+
+   <sect3 id="plpgsql-porting-optimization">
+    <title>Optimizing PL/pgSQL Functions</title>
+
+    <para>
+     PostgreSQL gives you two function creation modifiers to optimize
+     execution: <literal>iscachable</literal> (function always returns
+     the same result when given the same arguments) and
+     <literal>isstrict</literal> (function returns NULL if any
+     argument is NULL).  Consult the <literal>CREATE
+     FUNCTION</literal> reference for details.
+    </para>
+
+    <para>
+     To make use of these optimization attributes, you have to use the
+     <literal>WITH</literal> modifier in your <literal>CREATE
+     FUNCTION</literal> statement.  Something like:
+
+<programlisting>
+CREATE FUNCTION foo(...) RETURNS integer AS '
+...
+' LANGUAGE 'plpgsql'
+WITH (isstrict, iscachable);
+</programlisting>
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="plpgsql-porting-appendix">
+   <title>
+    Appendix
+   </title>
+
+   <sect3>
+    <title>
+     Code for my <function>instr</function> functions
+    </title>
+
+    <comment>
+     This function should probably be integrated into the core.
+    </comment>
+
+    <para>
+     The third function (that takes 4 parameters) is implemented in
+     PL/Tcl but I plan on porting it to PL/pgSQL so in case we want to
+     include it in OpenACS we don't need to require PL/Tcl. Plus
+     PL/pgSQL should be more efficient.
+    </para>
+
+<programlisting>
+--
+-- instr functions that mimic Oracle's counterpart
+-- Syntax: instr(string1,string2,[n],[m]) where [] denotes optional params.
+-- 
+-- Searches string1 beginning at the nth character for the mth
+-- occurrence of string2. If n is negative, search backwards. If m is
+-- not passed, assume 1 (search starts at first character).
+--
+-- by Roberto Mello (rmello@fslc.usu.edu)
+-- Licensed under the GPL v2 or later.
+--
+
+DROP FUNCTION instr(varchar, varchar);
+CREATE FUNCTION instr(varchar, varchar) RETURNS integer AS '
+DECLARE
+    pos integer;
+BEGIN
+    pos:= instr($1, $2, 1);
+    RETURN pos;
+END;
+' LANGUAGE 'plpgsql';
+
+DROP FUNCTION instr(varchar, varchar, integer);
+CREATE FUNCTION instr(varchar, varchar, integer) RETURNS integer AS '
+DECLARE
+    string ALIAS FOR $1;
+    string_to_search ALIAS FOR $2;
+    beg_index ALIAS FOR $3;
+    pos integer NOT NULL DEFAULT 0;
+    ending integer;
+    temp_str varchar;
+    beg integer;
+    length integer;
+    temp_int integer;
+BEGIN
+    IF beg_index > 0 THEN
+        -- Get substring from 1 to beg_index
+
+        temp_str := substring(string FROM beg_index); 
+        pos := position(string_to_search IN temp_str);
+
+        IF pos = 0 THEN
+            RETURN 0;
+        ELSE
+            RETURN pos + beg_index - 1;
+        END IF;
+
+    ELSE
+        length := char_length(string);
+
+        IF beg_index = -1 THEN
+            ending := length;
+            beg := ending;
+            temp_int := 1;
+        ELSE
+            ending := length - abs(beg_index);
+            beg := ending;
+            temp_int := ending - beg;
+        END IF;
+
+        WHILE pos = 0 AND beg &lt;&gt; 1 LOOP
+
+            temp_str := substring(string FROM beg FOR temp_int);
+            pos := position(string_to_search IN temp_str);
+
+            -- Keep moving left
+
+            beg := beg - 1;
+            temp_int := (ending - beg) + 1;
+        END LOOP;
+    END IF;
+
+    IF pos = 0 THEN
+        RETURN 0;
+    ELSE
+        RETURN beg + 1;
+    END IF;
+END;
+' LANGUAGE 'plpgsql';
+
+--
+-- The next one (where all four params are passed) is in PL/Tcl
+-- because I had no more patience to do it in PL/pgSQL.
+-- It'd probably be faster in PL/pgSQL (that being the reason why
+-- I implemented the first two functions in PL/pgSQL) so someday I'll do it.
+--
+
+DROP FUNCTION instr(varchar, varchar, integer, integer);
+CREATE FUNCTION instr(varchar, varchar, integer, integer) RETURNS integer AS '
+    set string1 $1
+    set string2 $2
+    set n $3
+    set m $4
+
+    if { $n > 0 } {
+        set pos [string first $string2 $string1 [expr $n -1]]
+        if { $pos < 0 } {
+            return 0
+        } else {
+            for { set i 1 } { $i < $m } { incr i } {
+                set pos [string first $string2 $string1 [expr $pos + 1]]
+                if { $pos < 0 } {
+                    return 0
+                }
+            }
+        }
+    }
+
+    if { $n < 0 } {
+        set pos [string last $string2 $string1 [expr [string length $string1] + $n]]
+
+        if { $pos < 0 } {
+            return 0
+        } else {
+            for { set i 1 } { $i < $m } { incr i } {
+                # n is negative so we add
+                set pos [string last $string2 $string1 [expr $pos - 1]]
+                if { $pos < 0 } {
+                    return 0
+                }
+            }
+        }
+    }
+
+    if { $pos < 0 } {
+        return 0
+    } else {
+        return [expr $pos + 1]
+    }
+' LANGUAGE 'pltcl';
+ 
+    </programlisting>
+   </sect3>
+  </sect2>
+  
+ </sect1>
+
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
