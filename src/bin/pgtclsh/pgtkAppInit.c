@@ -12,8 +12,8 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "tk.h"
-#include "libpgtcl.h"
+#include <tk.h>
+#include <libpgtcl.h>
 
 /*
  * The following variable is a special hack that is needed in order for
