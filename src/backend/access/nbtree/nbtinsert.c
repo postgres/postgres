@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.84 2001/07/15 22:48:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.85 2001/08/23 23:06:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,8 +149,8 @@ top:
 /*
  *	_bt_check_unique() -- Check for violation of unique index constraint
  *
- * Returns NullTransactionId if there is no conflict, else an xact ID we
- * must wait for to see if it commits a conflicting tuple.	If an actual
+ * Returns InvalidTransactionId if there is no conflict, else an xact ID
+ * we must wait for to see if it commits a conflicting tuple.	If an actual
  * conflict is detected, no return --- just elog().
  */
 static TransactionId
@@ -275,7 +275,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	if (nbuf != InvalidBuffer)
 		_bt_relbuf(rel, nbuf);
 
-	return NullTransactionId;
+	return InvalidTransactionId;
 }
 
 /*----------

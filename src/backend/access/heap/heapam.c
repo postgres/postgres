@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.124 2001/08/10 18:57:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.125 2001/08/23 23:06:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1206,7 +1206,7 @@ l1:
 		 * update then some other xaction could update this tuple before
 		 * we got to this point.
 		 */
-		if (tp.t_data->t_xmax != xwait)
+		if (!TransactionIdEquals(tp.t_data->t_xmax, xwait))
 			goto l1;
 		if (!(tp.t_data->t_infomask & HEAP_XMAX_COMMITTED))
 		{
@@ -1398,7 +1398,7 @@ l2:
 		 * update then some other xaction could update this tuple before
 		 * we got to this point.
 		 */
-		if (oldtup.t_data->t_xmax != xwait)
+		if (!TransactionIdEquals(oldtup.t_data->t_xmax, xwait))
 			goto l2;
 		if (!(oldtup.t_data->t_infomask & HEAP_XMAX_COMMITTED))
 		{
@@ -1694,7 +1694,7 @@ l3:
 		 * update then some other xaction could update this tuple before
 		 * we got to this point.
 		 */
-		if (tuple->t_data->t_xmax != xwait)
+		if (!TransactionIdEquals(tuple->t_data->t_xmax, xwait))
 			goto l3;
 		if (!(tuple->t_data->t_infomask & HEAP_XMAX_COMMITTED))
 		{
@@ -2123,7 +2123,8 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_hoff = xlhdr.t_hoff;
 		htup->t_xmin = record->xl_xid;
 		htup->t_cmin = FirstCommandId;
-		htup->t_xmax = htup->t_cmax = 0;
+		htup->t_xmax = InvalidTransactionId;
+		htup->t_cmax = FirstCommandId;
 		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
@@ -2310,7 +2311,8 @@ newsame:;
 		{
 			htup->t_xmin = record->xl_xid;
 			htup->t_cmin = FirstCommandId;
-			htup->t_xmax = htup->t_cmax = 0;
+			htup->t_xmax = InvalidTransactionId;
+			htup->t_cmax = FirstCommandId;
 			htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		}
 
@@ -2366,7 +2368,7 @@ _heap_unlock_tuple(void *data)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (htup->t_xmax != GetCurrentTransactionId() ||
+	if (!TransactionIdEquals(htup->t_xmax, GetCurrentTransactionId()) ||
 		htup->t_cmax != GetCurrentCommandId())
 		elog(STOP, "_heap_unlock_tuple: invalid xmax/cmax in rollback");
 	htup->t_infomask &= ~HEAP_XMAX_UNLOGGED;

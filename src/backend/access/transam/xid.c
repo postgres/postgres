@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.31 2001/07/12 04:11:13 tgl Exp $
+ *	$Id: xid.c,v 1.32 2001/08/23 23:06:37 tgl Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -23,11 +23,8 @@
 
 #include "access/xact.h"
 
-/*
- * TransactionId is typedef'd as uint32, so...
- */
-#define PG_GETARG_TRANSACTIONID(n)	PG_GETARG_UINT32(n)
-#define PG_RETURN_TRANSACTIONID(x)	PG_RETURN_UINT32(x)
+#define PG_GETARG_TRANSACTIONID(n)	DatumGetTransactionId(PG_GETARG_DATUM(n))
+#define PG_RETURN_TRANSACTIONID(x)	return TransactionIdGetDatum(x)
 
 
 Datum
@@ -42,7 +39,6 @@ Datum
 xidout(PG_FUNCTION_ARGS)
 {
 	TransactionId transactionId = PG_GETARG_TRANSACTIONID(0);
-
 	/* maximum 32 bit unsigned integer representation takes 10 chars */
 	char	   *representation = palloc(11);
 

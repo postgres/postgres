@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.32 2001/07/12 04:11:13 tgl Exp $
+ * $Id: tqual.h,v 1.33 2001/08/23 23:06:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ extern bool ReferentialIntegritySnapshotOverride;
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot) \
 ( \
-	TransactionIdEquals((tuple)->t_data->t_xmax, AmiTransactionId) ? \
+	TransactionIdEquals((tuple)->t_data->t_xmax, BootstrapTransactionId) ? \
 		false \
 	: \
 	( \

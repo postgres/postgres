@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.73 2001/08/10 18:57:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.74 2001/08/23 23:06:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2349,7 +2349,7 @@ BootStrapXLOG(void)
 	checkPoint.redo.xrecoff = SizeOfXLogPHD;
 	checkPoint.undo = checkPoint.redo;
 	checkPoint.ThisStartUpID = 0;
-	checkPoint.nextXid = FirstTransactionId;
+	checkPoint.nextXid = FirstNormalTransactionId;
 	checkPoint.nextOid = BootstrapObjectIdData;
 	checkPoint.time = time(NULL);
 
@@ -2508,7 +2508,7 @@ StartupXLOG(void)
 		 wasShutdown ? "TRUE" : "FALSE");
 	elog(LOG, "next transaction id: %u; next oid: %u",
 		 checkPoint.nextXid, checkPoint.nextOid);
-	if (checkPoint.nextXid < FirstTransactionId)
+	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		elog(STOP, "invalid next transaction id");
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
@@ -2550,8 +2550,10 @@ StartupXLOG(void)
 		if (XLByteLT(checkPoint.redo, RecPtr))
 			record = ReadRecord(&(checkPoint.redo), STOP, buffer);
 		else
-/* read past CheckPoint record */
+		{
+			/* read past CheckPoint record */
 			record = ReadRecord(NULL, LOG, buffer);
+		}
 
 		if (record != NULL)
 		{
@@ -2560,8 +2562,13 @@ StartupXLOG(void)
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
 			{
-				if (record->xl_xid >= ShmemVariableCache->nextXid)
-					ShmemVariableCache->nextXid = record->xl_xid + 1;
+				/* nextXid must be beyond record's xid */
+				if (TransactionIdFollowsOrEquals(record->xl_xid,
+												 ShmemVariableCache->nextXid))
+				{
+					ShmemVariableCache->nextXid = record->xl_xid;
+					TransactionIdAdvance(ShmemVariableCache->nextXid);
+				}
 				if (XLOG_DEBUG)
 				{
 					char		buf[8192];
@@ -3101,7 +3108,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In an ONLINE checkpoint, treat the counters like NEXTOID */
-		if (ShmemVariableCache->nextXid < checkPoint.nextXid)
+		if (TransactionIdPrecedes(ShmemVariableCache->nextXid,
+								  checkPoint.nextXid))
 			ShmemVariableCache->nextXid = checkPoint.nextXid;
 		if (ShmemVariableCache->nextOid < checkPoint.nextOid)
 		{

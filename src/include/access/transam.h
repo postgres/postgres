@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.37 2001/08/10 18:57:39 tgl Exp $
+ * $Id: transam.h,v 1.38 2001/08/23 23:06:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,29 +24,37 @@
  * 128 bytes of pg_log available for special purposes such as version number
  * storage.  (Currently, we do not actually use them for anything.)
  *
- * AmiTransactionId is the XID for "bootstrap" operations.  It should always
- * be considered valid.
+ * BootstrapTransactionId is the XID for "bootstrap" operations.  It should
+ * always be considered valid.
  *
- * FirstTransactionId is the first "normal" transaction id.
+ * FirstNormalTransactionId is the first "normal" transaction id.
  * ----------------
  */
-#define NullTransactionId		((TransactionId) 0)
-#define DisabledTransactionId	((TransactionId) 1)
-#define AmiTransactionId		((TransactionId) 512)
-#define FirstTransactionId		((TransactionId) 514)
+#define InvalidTransactionId		((TransactionId) 0)
+#define DisabledTransactionId		((TransactionId) 1)
+#define BootstrapTransactionId		((TransactionId) 512)
+#define FirstNormalTransactionId	((TransactionId) 514)
 
 /* ----------------
  *		transaction ID manipulation macros
  * ----------------
  */
-#define TransactionIdIsValid(xid)		((bool) ((xid) != NullTransactionId))
-#define TransactionIdIsSpecial(xid)		((bool) ((xid) < FirstTransactionId))
-#define TransactionIdEquals(id1, id2)	((bool) ((id1) == (id2)))
-#define TransactionIdPrecedes(id1, id2)	((bool) ((id1) < (id2)))
-#define TransactionIdStore(xid, dest)	\
-	(*((TransactionId*) (dest)) = (TransactionId) (xid))
-#define StoreInvalidTransactionId(dest) \
-	(*((TransactionId*) (dest)) = NullTransactionId)
+#define TransactionIdIsValid(xid)		((xid) != InvalidTransactionId)
+#define TransactionIdIsNormal(xid)		((xid) >= FirstNormalTransactionId)
+#define TransactionIdEquals(id1, id2)			((id1) == (id2))
+#define TransactionIdPrecedes(id1, id2)			((id1) < (id2))
+#define TransactionIdPrecedesOrEquals(id1, id2)	((id1) <= (id2))
+#define TransactionIdFollows(id1, id2)			((id1) > (id2))
+#define TransactionIdFollowsOrEquals(id1, id2)	((id1) >= (id2))
+#define TransactionIdStore(xid, dest)	(*(dest) = (xid))
+#define StoreInvalidTransactionId(dest)	(*(dest) = InvalidTransactionId)
+/* advance a transaction ID variable, handling wraparound correctly */
+#define TransactionIdAdvance(dest)	\
+	do { \
+		(dest)++; \
+		if ((dest) < FirstNormalTransactionId) \
+			(dest) = FirstNormalTransactionId; \
+	} while(0)
 
 /* ----------------
  *		transaction status values

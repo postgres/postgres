@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.16 2001/06/29 21:08:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.17 2001/08/23 23:06:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	Assert(PageGetSUI(page) == ThisStartUpID);
-	if (htup->t_xmin != xid || htup->t_cmin != cid)
+	if (!TransactionIdEquals(htup->t_xmin, xid) || htup->t_cmin != cid)
 	{
 		UnlockAndReleaseBuffer(buffer);
 		return (-1);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.72 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.73 2001/08/23 23:06:37 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -441,20 +441,16 @@ heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
 			result = ObjectIdGetDatum(tup->t_data->t_oid);
 			break;
 		case MinTransactionIdAttributeNumber:
-			/* XXX should have a TransactionIdGetDatum macro */
-			result = (Datum) (tup->t_data->t_xmin);
+			result = TransactionIdGetDatum(tup->t_data->t_xmin);
 			break;
 		case MinCommandIdAttributeNumber:
-			/* XXX should have a CommandIdGetDatum macro */
-			result = (Datum) (tup->t_data->t_cmin);
+			result = CommandIdGetDatum(tup->t_data->t_cmin);
 			break;
 		case MaxTransactionIdAttributeNumber:
-			/* XXX should have a TransactionIdGetDatum macro */
-			result = (Datum) (tup->t_data->t_xmax);
+			result = TransactionIdGetDatum(tup->t_data->t_xmax);
 			break;
 		case MaxCommandIdAttributeNumber:
-			/* XXX should have a CommandIdGetDatum macro */
-			result = (Datum) (tup->t_data->t_cmax);
+			result = CommandIdGetDatum(tup->t_data->t_cmax);
 			break;
 		case TableOidAttributeNumber:
 			result = ObjectIdGetDatum(tup->t_tableOid);

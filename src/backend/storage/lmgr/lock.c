@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.91 2001/07/09 22:18:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.92 2001/08/23 23:06:38 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1277,7 +1277,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			goto next_item;
 
 		/* If not allxids, ignore items that are of the wrong xid */
-		if (!allxids && xid != holder->tag.xid)
+		if (!allxids && !TransactionIdEquals(xid, holder->tag.xid))
 			goto next_item;
 
 		HOLDER_PRINT("LockReleaseAll", holder);

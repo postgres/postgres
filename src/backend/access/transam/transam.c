@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.45 2001/07/12 04:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.46 2001/08/23 23:06:37 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -44,7 +44,7 @@ Relation	LogRelation = (Relation) NULL;
  *		Single-item cache for results of TransactionLogTest.
  * ----------------
  */
-static TransactionId cachedTestXid = NullTransactionId;
+static TransactionId cachedTestXid = InvalidTransactionId;
 static XidStatus	cachedTestXidStatus;
 
 /* ----------------
@@ -333,18 +333,19 @@ InitializeTransactionLog(void)
 
 	/*
 	 * if we have a virgin database, we initialize the log relation by
-	 * committing the AmiTransactionId and we initialize the
+	 * committing the BootstrapTransactionId and we initialize the
 	 * variable relation by setting the next available transaction id to
-	 * FirstTransactionId.  OID initialization happens as a side
+	 * FirstNormalTransactionId.  OID initialization happens as a side
 	 * effect of bootstrapping in varsup.c.
 	 */
 	SpinAcquire(OidGenLockId);
-	if (!TransactionIdDidCommit(AmiTransactionId))
+	if (!TransactionIdDidCommit(BootstrapTransactionId))
 	{
-		TransactionLogUpdate(AmiTransactionId, XID_COMMIT);
+		TransactionLogUpdate(BootstrapTransactionId, XID_COMMIT);
 		Assert(!IsUnderPostmaster &&
-			   ShmemVariableCache->nextXid <= FirstTransactionId);
-		ShmemVariableCache->nextXid = FirstTransactionId;
+			   TransactionIdEquals(ShmemVariableCache->nextXid,
+								   FirstNormalTransactionId));
+		ShmemVariableCache->nextXid = FirstNormalTransactionId;
 	}
 	else if (RecoveryCheckingEnabled())
 	{

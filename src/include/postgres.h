@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.50 2001/08/10 18:57:41 tgl Exp $
+ * $Id: postgres.h,v 1.51 2001/08/23 23:06:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,6 +260,34 @@ typedef Datum *DatumPtr;
  */
 
 #define ObjectIdGetDatum(X) ((Datum) SET_4_BYTES(X))
+
+/*
+ * DatumGetTransactionId
+ *		Returns transaction identifier value of a datum.
+ */
+
+#define DatumGetTransactionId(X) ((TransactionId) GET_4_BYTES(X))
+
+/*
+ * TransactionIdGetDatum
+ *		Returns datum representation for a transaction identifier.
+ */
+
+#define TransactionIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
+
+/*
+ * DatumGetCommandId
+ *		Returns command identifier value of a datum.
+ */
+
+#define DatumGetCommandId(X) ((CommandId) GET_4_BYTES(X))
+
+/*
+ * CommandIdGetDatum
+ *		Returns datum representation for a command identifier.
+ */
+
+#define CommandIdGetDatum(X) ((Datum) SET_4_BYTES(X))
 
 /*
  * DatumGetPointer

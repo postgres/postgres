@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.43 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.44 2001/08/23 23:06:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ GetNewTransactionId(TransactionId *xid)
 	 */
 	if (AMI_OVERRIDE)
 	{
-		*xid = AmiTransactionId;
+		*xid = BootstrapTransactionId;
 		return;
 	}
 
@@ -49,7 +49,7 @@ GetNewTransactionId(TransactionId *xid)
 
 	*xid = ShmemVariableCache->nextXid;
 
-	(ShmemVariableCache->nextXid)++;
+	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
 	 * Must set MyProc->xid before releasing XidGenLock.  This ensures that
@@ -89,7 +89,7 @@ ReadNewTransactionId(TransactionId *xid)
 	 */
 	if (AMI_OVERRIDE)
 	{
-		*xid = AmiTransactionId;
+		*xid = BootstrapTransactionId;
 		return;
 	}
 
