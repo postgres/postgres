@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.40 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.41 2003/11/02 12:58:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -327,8 +327,8 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <para>
-    <xref linkend="app-pgdump">, <xref linkend="app-psql">.  Check
-    there for details on possible error conditions.
+    <xref linkend="app-pgdump">.  Check there for details on possible
+    error conditions.
   </para>
  </refsect1>   
 
