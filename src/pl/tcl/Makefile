@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.9 1998/10/18 19:41:00 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.10 1998/12/13 23:46:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,14 +38,25 @@ endif
 endif
 
 
-# Change following to how shared library that contain
-# correct references to libtcl must get built on your system.
+# Change following to how shared library that contains
+# references to libtcl must get built on your system.
 # Since these definitions come from the tclConfig.sh script,
 # they should work if the shared build of tcl was successful
-# on this system.
-#
+# on this system.  However, tclConfig.sh lies to us a little bit
+# (at least in versions 7.6 through 8.0.4) --- it doesn't mention -lc
+# in TCL_LIBS, but you still need it on systems that want to hear about
+# dependent libraries...
+
+ifneq ($(TCL_SHLIB_LD_LIBS),)
+# link command for a shared lib must mention shared libs it uses
+SHLIB_EXTRA_LIBS=$(TCL_LIBS) -lc
+else
+# link command for a shared lib must NOT mention shared libs it uses
+SHLIB_EXTRA_LIBS=
+endif
+
 %$(TCL_SHLIB_SUFFIX):	%.o
-	$(TCL_SHLIB_LD) -o $@ $< $(TCL_SHLIB_LD_LIBS) $(TCL_LIB_SPEC) $(TCL_LIBS)
+	$(TCL_SHLIB_LD) -o $@ $< $(TCL_LIB_SPEC) $(SHLIB_EXTRA_LIBS)
 
 
 #
