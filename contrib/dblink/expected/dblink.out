@@ -175,7 +175,9 @@ SELECT dblink_close('rmt_foo_cursor');
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
-ERROR:  cursor "rmt_foo_cursor" does not exist
+ERROR:  sql error
+DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
+
 -- close the persistent connection
 SELECT dblink_disconnect();
  dblink_disconnect 
@@ -375,7 +377,9 @@ SELECT dblink_close('myconn','rmt_foo_cursor');
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
-ERROR:  cursor "rmt_foo_cursor" does not exist
+ERROR:  sql error
+DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
+
 -- close the named persistent connection
 SELECT dblink_disconnect('myconn');
  dblink_disconnect 
