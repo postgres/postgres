@@ -1,31 +1,31 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/release.sgml,v 1.1 2004/08/01 17:32:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.1 2004/08/12 19:12:21 tgl Exp $
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-RELEASE">
+<refentry id="SQL-RELEASE-SAVEPOINT">
  <refmeta>
-  <refentrytitle id="SQL-RELEASE-TITLE">RELEASE</refentrytitle>
+  <refentrytitle id="SQL-RELEASE-SAVEPOINT-TITLE">RELEASE SAVEPOINT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>RELEASE</refname>
+  <refname>RELEASE SAVEPOINT</refname>
   <refpurpose>destroy a previously defined savepoint</refpurpose>
  </refnamediv>
 
- <indexterm zone="sql-release">
-  <primary>RELEASE</primary>
+ <indexterm zone="sql-release-savepoint">
+  <primary>RELEASE SAVEPOINT</primary>
  </indexterm>
 
- <indexterm zone="sql-release">
+ <indexterm zone="sql-release-savepoint">
   <primary>savepoints</primary>
   <secondary>releasing</secondary>
  </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
-RELEASE <replaceable>savepoint_name</replaceable>
+RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -33,7 +33,7 @@ RELEASE <replaceable>savepoint_name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>RELEASE</command> destroys a savepoint previously defined
+   <command>RELEASE SAVEPOINT</command> destroys a savepoint previously defined
    in the current transaction.
   </para>
 
@@ -48,7 +48,7 @@ RELEASE <replaceable>savepoint_name</replaceable>
   </para>
 
   <para>
-   <command>RELEASE</command> also destroys all savepoints that were
+   <command>RELEASE SAVEPOINT</command> also destroys all savepoints that were
    established after the named savepoint was established.
   </para>
  </refsect1>
@@ -97,7 +97,7 @@ BEGIN;
     INSERT INTO table VALUES (3);
     SAVEPOINT my_savepoint;
     INSERT INTO table VALUES (4);
-    RELEASE my_savepoint;
+    RELEASE SAVEPOINT my_savepoint;
 COMMIT;
 </programlisting>
    The above transaction will insert both 3 and 4.
@@ -108,7 +108,9 @@ COMMIT;
   <title>Compatibility</title>
   
   <para>
-   RELEASE is fully conforming to the SQL standard.
+   The SQL2003 standard specifies that the keyword SAVEPOINT is mandatory.
+   <productname>PostgreSQL</productname> allows the SAVEPOINT keyword to be
+   omitted. Otherwise, this command is fully conforming.
   </para>
  </refsect1>
 

@@ -1,21 +1,21 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.1 2004/08/01 17:32:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.2 2004/08/12 19:12:21 tgl Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK-TO">
  <refmeta>
-  <refentrytitle id="SQL-ROLLBACK-TO-TITLE">ROLLBACK TO</refentrytitle>
+  <refentrytitle id="SQL-ROLLBACK-TO-TITLE">ROLLBACK TO SAVEPOINT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>ROLLBACK TO</refname>
+  <refname>ROLLBACK TO SAVEPOINT</refname>
   <refpurpose>roll back to a savepoint</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-rollback-to">
-  <primary>ROLLBACK TO</primary>
+  <primary>ROLLBACK TO SAVEPOINT</primary>
  </indexterm>
 
  <indexterm zone="sql-rollback-to">
@@ -25,7 +25,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ROLLBACK TO <replaceable>savepoint_name</replaceable>
+ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,7 +39,7 @@ ROLLBACK TO <replaceable>savepoint_name</replaceable>
   </para>
 
   <para>
-   <command>ROLLBACK TO</> implicitly destroys all savepoints that
+   <command>ROLLBACK TO SAVEPOINT</> implicitly destroys all savepoints that
    were established after the named savepoint.
   </para>
  </refsect1>
@@ -63,9 +63,9 @@ ROLLBACK TO <replaceable>savepoint_name</replaceable>
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-RELEASE" endterm="SQL-RELEASE-TITLE"> to
-   destroy a savepoint without discarding the effects of commands executed
-   after it was established.
+   Use <xref linkend="SQL-RELEASE-SAVEPOINT"
+   endterm="SQL-RELEASE-SAVEPOINT-TITLE"> to destroy a savepoint without
+   discarding the effects of commands executed after it was established.
   </para>
 
   <para>
@@ -81,7 +81,7 @@ ROLLBACK TO <replaceable>savepoint_name</replaceable>
    left it pointing to (that is, <command>FETCH</> is not rolled back).
    A cursor whose execution causes a transaction to abort is put in a
    can't-execute state, so while the transaction can be restored using
-   <command>ROLLBACK TO</>, the cursor can no longer be used.
+   <command>ROLLBACK TO SAVEPOINT</>, the cursor can no longer be used.
   </para>
  </refsect1>
 
@@ -92,7 +92,7 @@ ROLLBACK TO <replaceable>savepoint_name</replaceable>
    To undo the effects of the commands executed after <literal>my_savepoint</literal>
    was established:
 <programlisting>
-ROLLBACK TO my_savepoint;
+ROLLBACK TO SAVEPOINT my_savepoint;
 </programlisting>
   </para>
 
@@ -110,7 +110,7 @@ FETCH 1 FROM foo;
 ----------
         1
 
-ROLLBACK TO foo;
+ROLLBACK TO SAVEPOINT foo;
 
 FETCH 1 FROM foo;
  ?column? 
@@ -128,7 +128,13 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   This command is fully SQL standard conforming.
+   The SQL2003 standard specifies that the keyword SAVEPOINT is mandatory.
+   <productname>PostgreSQL</productname> and <productname>Oracle</productname>
+   allow the SAVEPOINT keyword to be omitted.  SQL2003 allows only
+   WORK, not TRANSACTION, as a noise word after ROLLBACK.  Also, SQL2003
+   has an optional clause AND [ NO ] CHAIN which is not currently supported
+   by <productname>PostgreSQL</productname>.  Otherwise, this command is
+   fully conforming.
   </para>
  </refsect1>
 
@@ -139,7 +145,7 @@ COMMIT;
    <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
    <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
    <member><xref linkend="sql-savepoint" endterm="sql-savepoint-title"></member>
-   <member><xref linkend="sql-release" endterm="sql-release-title"></member>
+   <member><xref linkend="sql-release-savepoint" endterm="sql-release-savepoint-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
   </simplelist>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.1 2004/08/01 17:32:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.2 2004/08/12 19:12:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -64,8 +64,8 @@ SAVEPOINT <replaceable>savepoint_name</replaceable>
 
   <para>
    Use <xref linkend="SQL-ROLLBACK-TO" endterm="SQL-ROLLBACK-TO-TITLE"> to
-   rollback to a savepoint.  Use <xref linkend="SQL-RELEASE"
-   endterm="SQL-RELEASE-TITLE"> to destroy a savepoint, keeping
+   rollback to a savepoint.  Use <xref linkend="SQL-RELEASE-SAVEPOINT"
+   endterm="SQL-RELEASE-SAVEPOINT-TITLE"> to destroy a savepoint, keeping
    the effects of commands executed after it was established.
   </para>
 
@@ -86,7 +86,7 @@ BEGIN;
     INSERT INTO table VALUES (1);
     SAVEPOINT my_savepoint;
     INSERT INTO table VALUES (2);
-    ROLLBACK TO my_savepoint;
+    ROLLBACK TO SAVEPOINT my_savepoint;
     INSERT INTO table VALUES (3);
 COMMIT;
 </programlisting>
@@ -100,7 +100,7 @@ BEGIN;
     INSERT INTO table VALUES (3);
     SAVEPOINT my_savepoint;
     INSERT INTO table VALUES (4);
-    RELEASE my_savepoint;
+    RELEASE SAVEPOINT my_savepoint;
 COMMIT;
 </programlisting>
    The above transaction will insert both 3 and 4.
@@ -116,8 +116,8 @@ COMMIT;
    <productname>PostgreSQL</>, the old savepoint is kept, though only the more
    recent one will be used when rolling back or releasing.  (Releasing the
    newer savepoint will cause the older one to again become accessible to
-   <command>ROLLBACK TO</> and <command>RELEASE</>.)
-   Other than that, <command>SAVEPOINT</command> is fully SQL conforming.
+   <command>ROLLBACK TO SAVEPOINT</> and <command>RELEASE SAVEPOINT</>.)
+   Otherwise, <command>SAVEPOINT</command> is fully SQL conforming.
   </para>
  </refsect1>
 
@@ -128,7 +128,7 @@ COMMIT;
    <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
    <member><xref linkend="sql-rollback-to" endterm="sql-rollback-to-title"></member>
-   <member><xref linkend="sql-release" endterm="sql-release-title"></member>
+   <member><xref linkend="sql-release-savepoint" endterm="sql-release-savepoint-title"></member>
    <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
   </simplelist>
  </refsect1>

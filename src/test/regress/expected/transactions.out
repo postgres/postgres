@@ -77,11 +77,11 @@ BEGIN;
 	SAVEPOINT one;
 		DROP TABLE foo;
 		CREATE TABLE bar (a int);
-	ROLLBACK TO one;
-	RELEASE one;
+	ROLLBACK TO SAVEPOINT one;
+	RELEASE SAVEPOINT one;
 	SAVEPOINT two;
 		CREATE TABLE baz (a int);
-	RELEASE two;
+	RELEASE SAVEPOINT two;
 	drop TABLE foobar;
 	CREATE TABLE barbaz (a int);
 COMMIT;
@@ -110,16 +110,16 @@ BEGIN;
 		INSERT into bar VALUES (1);
 ERROR:  relation "bar" does not exist
 	ROLLBACK TO one;
-	RELEASE one;
+	RELEASE SAVEPOINT one;
 	SAVEPOINT two;
 		INSERT into barbaz VALUES (1);
 	RELEASE two;
 	SAVEPOINT three;
 		SAVEPOINT four;
 			INSERT INTO foo VALUES (2);
-		RELEASE four;
-	ROLLBACK TO three;
-	RELEASE three;
+		RELEASE SAVEPOINT four;
+	ROLLBACK TO SAVEPOINT three;
+	RELEASE SAVEPOINT three;
 	INSERT INTO foo VALUES (3);
 COMMIT;
 SELECT * FROM foo;		-- should have 1 and 3
@@ -140,8 +140,8 @@ BEGIN;
 	SAVEPOINT one;
 		SELECT foo;
 ERROR:  column "foo" does not exist
-	ROLLBACK TO one;
-	RELEASE one;
+	ROLLBACK TO SAVEPOINT one;
+	RELEASE SAVEPOINT one;
 	SAVEPOINT two;
 		CREATE TABLE savepoints (a int);
 		SAVEPOINT three;
@@ -150,7 +150,7 @@ ERROR:  column "foo" does not exist
 				INSERT INTO savepoints VALUES (2);
 				SAVEPOINT five;
 					INSERT INTO savepoints VALUES (3);
-				ROLLBACK TO five;
+				ROLLBACK TO SAVEPOINT five;
 COMMIT;
 COMMIT;		-- should not be in a transaction block
 WARNING:  there is no transaction in progress
@@ -165,7 +165,7 @@ SELECT * FROM savepoints;
 BEGIN;
 	SAVEPOINT one;
 		DELETE FROM savepoints WHERE a=1;
-	RELEASE one;
+	RELEASE SAVEPOINT one;
 	SAVEPOINT two;
 		DELETE FROM savepoints WHERE a=1;
 		SAVEPOINT three;
@@ -200,7 +200,7 @@ BEGIN;
 	INSERT INTO savepoints VALUES (6);
 	SAVEPOINT one;
 		INSERT INTO savepoints VALUES (7);
-	RELEASE one;
+	RELEASE SAVEPOINT one;
 	INSERT INTO savepoints VALUES (8);
 COMMIT;
 -- rows 6 and 8 should have been created by the same xact
@@ -221,7 +221,7 @@ BEGIN;
 	INSERT INTO savepoints VALUES (9);
 	SAVEPOINT one;
 		INSERT INTO savepoints VALUES (10);
-	ROLLBACK TO one;
+	ROLLBACK TO SAVEPOINT one;
 		INSERT INTO savepoints VALUES (11);
 COMMIT;
 SELECT a FROM savepoints WHERE a in (9, 10, 11);
@@ -244,7 +244,7 @@ BEGIN;
 		INSERT INTO savepoints VALUES (13);
 		SAVEPOINT two;
 			INSERT INTO savepoints VALUES (14);
-	ROLLBACK TO one;
+	ROLLBACK TO SAVEPOINT one;
 		INSERT INTO savepoints VALUES (15);
 		SAVEPOINT two;
 			INSERT INTO savepoints VALUES (16);
@@ -266,9 +266,9 @@ BEGIN;
 		INSERT INTO savepoints VALUES (19);
 		SAVEPOINT two;
 			INSERT INTO savepoints VALUES (20);
-	ROLLBACK TO one;
+	ROLLBACK TO SAVEPOINT one;
 		INSERT INTO savepoints VALUES (21);
-	ROLLBACK TO one;
+	ROLLBACK TO SAVEPOINT one;
 		INSERT INTO savepoints VALUES (22);
 COMMIT;
 SELECT a FROM savepoints WHERE a BETWEEN 18 AND 22;
@@ -282,10 +282,10 @@ DROP TABLE savepoints;
 -- only in a transaction block:
 SAVEPOINT one;
 ERROR:  SAVEPOINT may only be used in transaction blocks
-ROLLBACK TO one;
-ERROR:  ROLLBACK TO may only be used in transaction blocks
-RELEASE one;
-ERROR:  RELEASE may only be used in transaction blocks
+ROLLBACK TO SAVEPOINT one;
+ERROR:  ROLLBACK TO SAVEPOINT may only be used in transaction blocks
+RELEASE SAVEPOINT one;
+ERROR:  RELEASE SAVEPOINT may only be used in transaction blocks
 -- Only "rollback to" allowed in aborted state
 BEGIN;
   SAVEPOINT one;
@@ -293,9 +293,9 @@ BEGIN;
 ERROR:  division by zero
   SAVEPOINT two;    -- ignored till the end of ...
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
-  RELEASE one;      -- ignored till the end of ...
+  RELEASE SAVEPOINT one;      -- ignored till the end of ...
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
-  ROLLBACK TO one;
+  ROLLBACK TO SAVEPOINT one;
   SELECT 1;
  ?column? 
 ----------
@@ -328,7 +328,7 @@ BEGIN;
        9
 (10 rows)
 
-	ROLLBACK TO one;
+	ROLLBACK TO SAVEPOINT one;
 		FETCH 10 FROM c;
  unique2 
 ---------
@@ -344,7 +344,7 @@ BEGIN;
       19
 (10 rows)
 
-	RELEASE one;
+	RELEASE SAVEPOINT one;
 	FETCH 10 FROM c;
  unique2 
 ---------
@@ -365,12 +365,12 @@ BEGIN;
 	SAVEPOINT two;
 		FETCH 10 FROM c;
 ERROR:  division by zero
-	ROLLBACK TO two;
+	ROLLBACK TO SAVEPOINT two;
 	-- c is now dead to the world ...
 		FETCH 10 FROM c;
 ERROR:  portal "c" cannot be run
-	ROLLBACK TO two;
-	RELEASE two;
+	ROLLBACK TO SAVEPOINT two;
+	RELEASE SAVEPOINT two;
 	FETCH 10 FROM c;
 ERROR:  portal "c" cannot be run
 COMMIT;

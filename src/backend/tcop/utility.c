@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.223 2004/08/02 01:30:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.224 2004/08/12 19:12:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,12 +388,12 @@ ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_RELEASE:
-						RequireTransactionChain((void *)stmt, "RELEASE");
+						RequireTransactionChain((void *)stmt, "RELEASE SAVEPOINT");
 						ReleaseSavepoint(stmt->options);
 						break;
 
 					case TRANS_STMT_ROLLBACK_TO:
-						RequireTransactionChain((void *)stmt, "ROLLBACK TO");
+						RequireTransactionChain((void *)stmt, "ROLLBACK TO SAVEPOINT");
 						RollbackToSavepoint(stmt->options);
 						/*
 						 * CommitTransactionCommand is in charge
