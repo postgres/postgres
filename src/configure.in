@@ -82,7 +82,7 @@ if test "$ECHO_N_OUT" -eq 0; then
 else
   if test "ECHO_C_OUT" -eq 0; then
     DASH_N=
-    BACKSLASH_C= '\\\\c'
+    BACKSLASH_C='\\\\c'
   else
     AC_MSG_ERROR("echo behaviour undetermined")
   fi
