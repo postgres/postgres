@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.78 2002/06/15 02:41:56 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.79 2002/08/30 17:14:30 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -629,12 +629,7 @@ su - postgres
        <term><option>--with-perl</option></term>
        <listitem>
         <para>
-         Build the Perl interface module. The Perl interface
-         will be installed at the usual place for Perl modules
-         (typically under <filename>/usr/lib/perl</filename>), so you
-         must have root access to perform the installation step (see
-         <xref linkend="install">). You need to have Perl 5 installed to
-         use this option.
+         Build the PL/Perl server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -1021,18 +1016,17 @@ All of PostgreSQL is successfully made. Ready to install.
    </para>
 
    <para>
-    If you built the Perl or Python interfaces and you were not the
+    If you built the Python interfaces and you were not the
     root user when you executed the above command then that part of
     the installation probably failed. In that case you should become
     the root user and then do
 <screen>
-<userinput>gmake -C src/interfaces/perl5 install</userinput>
 <userinput>gmake -C src/interfaces/python install</userinput>
 </screen>
-    If you do not have superuser
-    access you are on your own: you can still take the required files
-    and place them in other directories where Perl or Python can find
-    them, but how to do that is left as an exercise.
+    If you do not have superuser access you are on your own: 
+    you can still take the required files and place them in 
+    other directories where Python can find them, but how to 
+    do that is left as an exercise.
    </para>
 
    <para>
