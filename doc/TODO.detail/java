@@ -2244,3 +2244,483 @@ TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
 
+From pgsql-hackers-owner+M31158@postgresql.org Wed Oct 30 14:31:27 2002
+Return-path: <pgsql-hackers-owner+M31158@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g9UJVQU07194
+	for <pgman@candle.pha.pa.us>; Wed, 30 Oct 2002 14:31:26 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 353C9476C3C; Wed, 30 Oct 2002 14:30:18 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id D8787476C72; Wed, 30 Oct 2002 14:30:06 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id A8D81476C42
+	for <pgsql-hackers@postgreSQL.org>; Wed, 30 Oct 2002 14:29:57 -0500 (EST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 04987476C71
+	for <pgsql-hackers@postgreSQL.org>; Wed, 30 Oct 2002 14:29:57 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.5/8.12.5) with ESMTP id g9UJTvhR000820
+	for <pgsql-hackers@postgreSQL.org>; Wed, 30 Oct 2002 14:29:57 -0500 (EST)
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] PG functions in Java: maybe use gcj?
+Date: Wed, 30 Oct 2002 14:29:57 -0500
+Message-ID: <819.1036006197@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+I had an interesting conversation today with Tom Tromey and Andrew Haley
+of Red Hat about how to implement "pljava" for Postgres.  Rather than
+futzing with an external JVM, their thought is to use gcj (gcc compiling
+Java).  It sounds like this approach would mostly just work, modulo
+needing to use a small amount of C++ code to call the defined APIs for
+gcj.
+
+This would not be a perfect solution: gcj isn't yet ported everywhere,
+and it would probably not play nice on machines where the standard C
+library isn't thread-safe.  But it seems a lot more within reach than
+the approaches we've discussed in the past.
+
+I'm not volunteering to try to do this, but I wanted to toss the idea
+up in the air and see if anyone wants to try it.  Tom and Andrew
+indicated they'd be willing to help out with advice etc for anyone
+who wants to take on the project.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M31173@postgresql.org Wed Oct 30 22:51:48 2002
+Return-path: <pgsql-hackers-owner+M31173@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g9V3pkU27163
+	for <pgman@candle.pha.pa.us>; Wed, 30 Oct 2002 22:51:46 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id CC02B476CE9; Wed, 30 Oct 2002 22:51:42 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 30D78476087; Wed, 30 Oct 2002 22:51:25 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 49189475A1E
+	for <pgsql-hackers@postgresql.org>; Wed, 30 Oct 2002 22:51:18 -0500 (EST)
+Received: from mail.xythos.com (sdsl-216-36-77-241.dsl.sjc.megapath.net [216.36.77.241])
+	by postgresql.org (Postfix) with ESMTP id B9C5B474E5C
+	for <pgsql-hackers@postgresql.org>; Wed, 30 Oct 2002 22:51:17 -0500 (EST)
+Received: from ravms by mail.xythos.com with mail-ok (Exim 3.36 #3)
+	id 1876OD-0006U9-00; Thu, 31 Oct 2002 03:53:01 +0000
+Received: from h-66-166-17-184.snvacaid.covad.net ([66.166.17.184] helo=xythos.com)
+	by mail.xythos.com with asmtp (Exim 3.36 #3)
+	id 1876OC-0006Ty-00; Thu, 31 Oct 2002 03:53:00 +0000
+Message-ID: <3DC0AA42.4000205@xythos.com>
+Date: Wed, 30 Oct 2002 19:57:54 -0800
+From: Barry Lind <blind@xythos.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1) Gecko/20020826
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] PG functions in Java: maybe use gcj?
+References: <819.1036006197@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Envelope-To: tgl@sss.pgh.pa.us,
+	pgsql-hackers@postgreSQL.org
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+I am not sure I follow.  Are you suggesting:
+
+1)  create function takes java source and then calls gcj to compile it 
+to native and build a .so from it that would get called at runtime?
+
+or
+
+2)  create function takes java source and just compiles to java .class 
+files and the runtime invokes the gcj java interpreter.
+
+or I guess you could do both at the same time.
+
+In either case I am concerned about licensing issues.  gcj is not under 
+a BSD style license.  Depending on what you need you are either dealing 
+with regular GPL, LGPL, or LGPL with a special java exception.
+
+I beleive (without giving it too much thought) that doing either 1 or 2 
+above would end up linking GPL code into postgres.  This can be worked 
+around by requiring the the necessary gcj libraries be installed 
+separately and detected at configure time (like is done elsewhere).  But 
+is does (I think) present a problem for commercial products that would 
+like to redistribute postgres with pljava.
+
+
+Another challenge here it that the java code is going to want to use the 
+jdbc api when communicating with the database.  One difficulty here is 
+getting jdbc to be part of the same transaction as the calling java 
+function.  Such that if the java stored procedure selects or updates 
+data it is doing it in the same transaction as the caller of the 
+function.  Today the jdbc driver only knows how to communicate via the 
+FE/BE protocol which will end up creating a new process and transaction. 
+  The jdbc driver would need to not use the FE/BE protocol but instead 
+probably use jni calls.
+
+thanks,
+--Barry
+
+
+Tom Lane wrote:
+> I had an interesting conversation today with Tom Tromey and Andrew Haley
+> of Red Hat about how to implement "pljava" for Postgres.  Rather than
+> futzing with an external JVM, their thought is to use gcj (gcc compiling
+> Java).  It sounds like this approach would mostly just work, modulo
+> needing to use a small amount of C++ code to call the defined APIs for
+> gcj.
+> 
+> This would not be a perfect solution: gcj isn't yet ported everywhere,
+> and it would probably not play nice on machines where the standard C
+> library isn't thread-safe.  But it seems a lot more within reach than
+> the approaches we've discussed in the past.
+> 
+> I'm not volunteering to try to do this, but I wanted to toss the idea
+> up in the air and see if anyone wants to try it.  Tom and Andrew
+> indicated they'd be willing to help out with advice etc for anyone
+> who wants to take on the project.
+> 
+> 			regards, tom lane
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 2: you can get off all lists at once with the unregister command
+>     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+> 
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M31175@postgresql.org Wed Oct 30 23:10:42 2002
+Return-path: <pgsql-hackers-owner+M31175@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g9V4AeU28809
+	for <pgman@candle.pha.pa.us>; Wed, 30 Oct 2002 23:10:41 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 8C73B476AD5; Wed, 30 Oct 2002 23:10:33 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 2E9DC4761DF; Wed, 30 Oct 2002 23:10:31 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 1A441475A1E
+	for <pgsql-hackers@postgreSQL.org>; Wed, 30 Oct 2002 23:10:25 -0500 (EST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 7D378474E5C
+	for <pgsql-hackers@postgreSQL.org>; Wed, 30 Oct 2002 23:10:24 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.5/8.12.5) with ESMTP id g9V4AThR003716;
+	Wed, 30 Oct 2002 23:10:29 -0500 (EST)
+To: Barry Lind <blind@xythos.com>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] PG functions in Java: maybe use gcj? 
+In-Reply-To: <3DC0AA42.4000205@xythos.com> 
+References: <819.1036006197@sss.pgh.pa.us> <3DC0AA42.4000205@xythos.com>
+Comments: In-reply-to Barry Lind <blind@xythos.com>
+	message dated "Wed, 30 Oct 2002 19:57:54 -0800"
+Date: Wed, 30 Oct 2002 23:10:28 -0500
+Message-ID: <3715.1036037428@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Barry Lind <blind@xythos.com> writes:
+> I am not sure I follow.  Are you suggesting:
+> 1)  create function takes java source and then calls gcj to compile it 
+> to native and build a .so from it that would get called at runtime?
+> or
+> 2)  create function takes java source and just compiles to java .class 
+> files and the runtime invokes the gcj java interpreter.
+> or I guess you could do both at the same time.
+
+The impression I had (after not looking very closely) was that you could
+expect to compile to bytecodes on the fly and then run the gcj
+interpreter.  But the .so alternative might be a good fallback if that
+doesn't work.
+
+> In either case I am concerned about licensing issues.  gcj is not under 
+> a BSD style license.  Depending on what you need you are either dealing 
+> with regular GPL, LGPL, or LGPL with a special java exception.
+> I beleive (without giving it too much thought) that doing either 1 or 2 
+> above would end up linking GPL code into postgres.  This can be worked 
+> around by requiring the the necessary gcj libraries be installed 
+> separately and detected at configure time (like is done elsewhere).  But 
+> is does (I think) present a problem for commercial products that would 
+> like to redistribute postgres with pljava.
+
+Good point, but unless you want to build a BSD-license Java
+implementation, there will never be a pljava that doesn't have different
+licensing restrictions than PG itself does.  gcj is at least more free
+than either Sun's or IBM's JVM ...
+
+> Another challenge here it that the java code is going to want to use the 
+> jdbc api when communicating with the database.
+
+Yes.  I think we'd need a new implementation of jdbc that sits atop SPI
+(invoked via jni I guess) rather than a FE/BE connection.  How well
+layered is our jdbc code --- would this mean a large rewrite, or just
+rolling in a new bottom layer?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M31202@postgresql.org Thu Oct 31 21:18:38 2002
+Return-path: <pgsql-hackers-owner+M31202@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gA12ILU00147
+	for <pgman@candle.pha.pa.us>; Thu, 31 Oct 2002 21:18:37 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id g9VHv8h08054
+	for <pgman@candle.pha.pa.us>; Thu, 31 Oct 2002 12:57:08 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 5CA844768F1; Thu, 31 Oct 2002 12:54:18 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 973E1476060; Thu, 31 Oct 2002 12:54:11 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 9A45F47668B
+	for <pgsql-hackers@postgresql.org>; Thu, 31 Oct 2002 12:54:05 -0500 (EST)
+Received: from mail.xythos.com (sdsl-216-36-77-241.dsl.sjc.megapath.net [216.36.77.241])
+	by postgresql.org (Postfix) with ESMTP id 0D7F5476684
+	for <pgsql-hackers@postgresql.org>; Thu, 31 Oct 2002 12:54:05 -0500 (EST)
+Received: from ravms by mail.xythos.com with mail-ok (Exim 3.36 #3)
+	id 187JXx-0006Pc-00; Thu, 31 Oct 2002 17:55:57 +0000
+Received: from sdsl-216-36-77-241.dsl.sjc.megapath.net ([216.36.77.241] helo=xythos.com)
+	by mail.xythos.com with asmtp (Exim 3.36 #3)
+	id 187JXx-0006PR-00; Thu, 31 Oct 2002 17:55:57 +0000
+Message-ID: <3DC175F7.90901@xythos.com>
+Date: Thu, 31 Oct 2002 10:27:03 -0800
+From: Barry Lind <blind@xythos.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1) Gecko/20020826
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] PG functions in Java: maybe use gcj?
+References: <819.1036006197@sss.pgh.pa.us> <3DC0AA42.4000205@xythos.com> <3715.1036037428@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Envelope-To: tgl@sss.pgh.pa.us,
+	pgsql-hackers@postgreSQL.org
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+
+
+Tom Lane wrote:
+> Barry Lind <blind@xythos.com> writes:
+> 
+>>In either case I am concerned about licensing issues.  gcj is not under 
+>>a BSD style license.  Depending on what you need you are either dealing 
+>>with regular GPL, LGPL, or LGPL with a special java exception.
+>>I beleive (without giving it too much thought) that doing either 1 or 2 
+>>above would end up linking GPL code into postgres.  This can be worked 
+>>around by requiring the the necessary gcj libraries be installed 
+>>separately and detected at configure time (like is done elsewhere).  But 
+>>is does (I think) present a problem for commercial products that would 
+>>like to redistribute postgres with pljava.
+> 
+> 
+> Good point, but unless you want to build a BSD-license Java
+> implementation, there will never be a pljava that doesn't have different
+> licensing restrictions than PG itself does.  gcj is at least more free
+> than either Sun's or IBM's JVM ...
+> 
+
+It depends on what you mean by more free.  An architecture that 
+interacts with an external jvm would let you use any jvm (free ones as 
+well as others).  From a licensing standpoint it is generally easy to 
+redistribute a jvm or expect the user to have one installed (most java 
+based products out there today do this).
+
+However in the proposal here we are talking about requiring a specific 
+jvm (gcj) and actually linking parts of it into postgres.  To the extent 
+that GPL code is linked in the GPL extends to the entire code base.  As 
+I said previously there are ways to work around this, but it becomes 
+tricky.  Especially when a commercial product wants to bundle postgres 
+and pljava.  That resulting bundle is probably entirely under the GPL 
+and then any changes to it are also GPL.  So it could be the case that 
+this company would be prevented from submitting improvements they made 
+back to the core product because their improvements are GPLed as a 
+result of pljava.
+
+Now having said all that, I have been monitoring the progres of gcj for 
+some time because I think there are very interesting possibilities.  And 
+I am all for anyone who wants to look into it further and investigate 
+the possiblities.  I just want to raise the licensing issue because it 
+can cause problems and it is better to think about them up front than 
+after the fact.
+
+> 
+>>Another challenge here it that the java code is going to want to use the 
+>>jdbc api when communicating with the database.
+> 
+> 
+> Yes.  I think we'd need a new implementation of jdbc that sits atop SPI
+> (invoked via jni I guess) rather than a FE/BE connection.  How well
+> layered is our jdbc code --- would this mean a large rewrite, or just
+> rolling in a new bottom layer?
+> 
+
+It isn't as well layered as it could be, but it isn't too bad.  Overall 
+it shouldn't be too much work, but not a little project either.  One 
+area that isn't well layered is the assumption that the raw data from 
+the server is in text format, since that is what the FE/BE protocol 
+provides.  So all the conversion functions that convert to/from java 
+datatypes do so in this format.  This assumption runs deep into the 
+code.  As a first pass it would be easiest to get raw data from SPI 
+convert to text and then convert to java datatypes instead of going 
+directly from the internal SPI format directly to java datatypes.  This 
+could be improved upon later.
+
+> 			regards, tom lane
+> 
+
+thanks,
+--Barry
+
+
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M31223@postgresql.org Fri Nov  1 07:34:24 2002
+Return-path: <pgsql-hackers-owner+M31223@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gA1CYKU23527
+	for <pgman@candle.pha.pa.us>; Fri, 1 Nov 2002 07:34:21 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id C48C44762EE; Fri,  1 Nov 2002 07:34:13 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 1F69C475F34; Fri,  1 Nov 2002 07:34:11 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 06581474E53
+	for <pgsql-hackers@postgresql.org>; Fri,  1 Nov 2002 07:34:07 -0500 (EST)
+Received: from anchor-post-39.mail.demon.net (anchor-post-39.mail.demon.net [194.217.242.80])
+	by postgresql.org (Postfix) with ESMTP id 7D34D474E44
+	for <pgsql-hackers@postgresql.org>; Fri,  1 Nov 2002 07:34:06 -0500 (EST)
+Received: from lfix.demon.co.uk ([158.152.59.127] helo=linda.lfix.co.uk)
+	by anchor-post-39.mail.demon.net with esmtp (Exim 3.36 #2)
+	id 187b04-0002Pj-0U
+	for pgsql-hackers@postgresql.org; Fri, 01 Nov 2002 12:34:08 +0000
+Received: from localhost
+	([127.0.0.1] helo=localhost.localdomain ident=olly)
+	by linda.lfix.co.uk with esmtp (Exim 3.36 #1 (Debian))
+	id 187b04-0007zb-00
+	for <pgsql-hackers@postgresql.org>; Fri, 01 Nov 2002 12:34:08 +0000
+Subject: Re: [HACKERS] PG functions in Java: maybe use gcj?
+From: Oliver Elphick <olly@lfix.co.uk>
+To: pgsql-hackers@postgresql.org
+In-Reply-To: <3DC175F7.90901@xythos.com>
+References: <819.1036006197@sss.pgh.pa.us> <3DC0AA42.4000205@xythos.com>
+	<3715.1036037428@sss.pgh.pa.us>  <3DC175F7.90901@xythos.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Ximian Evolution 1.0.8 
+Date: 01 Nov 2002 12:34:08 +0000
+Message-ID: <1036154048.7925.73.camel@linda>
+MIME-Version: 1.0
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Thu, 2002-10-31 at 18:27, Barry Lind wrote:
+
+> However in the proposal here we are talking about requiring a specific 
+> jvm (gcj) and actually linking parts of it into postgres.  To the extent 
+> that GPL code is linked in the GPL extends to the entire code base.  As 
+> I said previously there are ways to work around this, but it becomes 
+> tricky.  Especially when a commercial product wants to bundle postgres 
+> and pljava.  That resulting bundle is probably entirely under the GPL 
+> and then any changes to it are also GPL.  So it could be the case that 
+> this company would be prevented from submitting improvements they made 
+> back to the core product because their improvements are GPLed as a 
+> result of pljava.
+
+Nothing that company does can affect the licensing of PostgreSQL itself
+- it doesn't belong to them, so they cannot change its licence.
+
+Nothing in the GPL forces them to put GPL copyright on their own
+alterations.
+
+What they cannot do is to _distribute_ binary code that links to GPL
+code while giving fewer rights to their distributees than they
+themselves received with the GPL code, whether in respect of their own
+code or the GPL code.  Therefore they would be required to make their
+source changes available to anyone to whom they gave a binary, and they
+would not be able to restrict the further distribution of those
+changes.  They can contribute those changes to the project under
+whatever licence they wish that is acceptable to the project.
+
+Furthermore, gcj is part of the GNU compiler collection, like gcc, and
+using it does not in itself cause code compiled under it to be subject
+to the GPL.  Linking to its runtime library would normally cause that,
+but the gcj-3.0 copyright contains the following text:
+
+========================================================================
+The libgcj library is licensed under the terms of the GNU General
+Public License, with this special exception:
+
+    As a special exception, if you link this library with other files
+    to produce an executable, this library does not by itself cause
+    the resulting executable to be covered by the GNU General Public
+    License.  This exception does not however invalidate any other
+    reasons why the executable file might be covered by the GNU
+    General Public License.
+========================================================================
+
+-- 
+Oliver Elphick                                Oliver.Elphick@lfix.co.uk
+Isle of Wight, UK                            
+http://www.lfix.co.uk/oliver
+GPG: 1024D/3E1D0C1C: CA12 09E0 E8D5 8870 5839  932A 614D 4C34 3E1D 0C1C
+                 ========================================
+     "But they that wait upon the LORD shall renew their 
+      strength; they shall mount up with wings as eagles; 
+      they shall run, and not be weary; and they shall walk,
+      and not faint."            Isaiah 40:31 
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
