@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.36 2001/09/10 06:30:43 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.37 2001/09/10 06:35:34 ishii Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2000,7 +2000,7 @@ SHOW ERRORS;
 <programlisting>
 DROP FUNCTION cs_fmt_browser_version(varchar, varchar);
 CREATE FUNCTION cs_fmt_browser_version(varchar, varchar)
-RETRUNS varchar AS '
+RETURNS varchar AS '
 DECLARE
     v_name ALIAS FOR $1;
     v_version ALIAS FOR $2;
