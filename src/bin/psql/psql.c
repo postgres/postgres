@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.15 1996/07/31 02:11:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.16 1996/08/06 00:40:12 julian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1064,10 +1064,14 @@ MainLoop(PsqlSettings *settings, FILE *source)
 	  slashCmdStatus = HandleSlashCmds(settings,
 					   line, 
 					   query);
-	if (slashCmdStatus == 1)
+	if (slashCmdStatus == 1) {
+	  free(line);
 	  continue;
-	if (slashCmdStatus == 2)
+	}
+	if (slashCmdStatus == 2) {
+	  free(line);
 	  break;
+	}
 	if (slashCmdStatus == 0)
 	  sendQuery = 1;
       }
