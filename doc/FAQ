@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 10 15:47:38 EDT 2002
+   Last updated: Mon Jun 10 15:49:44 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -1024,7 +1024,6 @@ SELECT *
    
    Of course, a client can make simultaneous connections to different
    databases and merge the information that way.
-     _________________________________________________________________
    
     4.25) How do I return multiple rows or columns from a function?
     
@@ -1043,6 +1042,7 @@ SELECT *
    the old temporary table. The solution is to use EXECUTE for temporary
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
+     _________________________________________________________________
    
                             Extending PostgreSQL
                                       

@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jun 10 15:47:38 EDT 2002</P>
+    <P>Last updated: Mon Jun 10 15:49:44 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1307,7 +1307,6 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <P>Of course, a client can make simultaneous connections to
     different databases and merge the information that way.</P>
-    <HR>
 
     <H4><A name="4.25">4.25</A>) How do I return multiple rows or
     columns from a function?</H4>
@@ -1327,6 +1326,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     still point to the old temporary table. The solution is to use
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time. 
+
+    <HR>
 
     <H2 align="center">Extending PostgreSQL</H2>
 
