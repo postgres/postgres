@@ -28,6 +28,7 @@
 #include "utils/inval.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "executor/executor.h"
 
 #ifndef NO_SECURITY
 #include "miscadmin.h"
@@ -790,6 +791,8 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	return;
 }
 
+extern	TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
+
 static HeapTuple
 GetTupleForTrigger(EState *estate, ItemPointer tid, bool before)
 {
@@ -806,6 +809,7 @@ GetTupleForTrigger(EState *estate, ItemPointer tid, bool before)
 		 *	mark tuple for update
 		 */
 		tuple.t_self = *tid;
+ltrmark:;
 		test = heap_mark4update(relation, &tuple, &buffer);
 		switch (test)
 		{
@@ -820,8 +824,23 @@ GetTupleForTrigger(EState *estate, ItemPointer tid, bool before)
 				ReleaseBuffer(buffer);
 				if (XactIsoLevel == XACT_SERIALIZABLE)
 					elog(ERROR, "Can't serialize access due to concurrent update");
-				else
-					elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
+				{
+					TupleTableSlot *slot = EvalPlanQual(estate, 
+						estate->es_result_relation_info->ri_RangeTableIndex, 
+						&(tuple.t_self));
+
+					if (!(TupIsNull(slot)))
+					{
+						*tid = tuple.t_self;
+						goto ltrmark;
+					}
+				}
+				/* 
+				 * if tuple was deleted or PlanQual failed
+				 * for updated tuple - we have not process
+				 * this tuple!
+				 */
 				return(NULL);
 
 			default:

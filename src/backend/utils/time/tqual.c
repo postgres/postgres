@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.23 1998/12/18 09:10:39 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.24 1999/01/29 09:23:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,6 +368,7 @@ bool
 HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 {
 	SnapshotDirty->xmin = SnapshotDirty->xmax = InvalidTransactionId;
+	ItemPointerSetInvalid(&(SnapshotDirty->tid));
 
 	if (AMI_OVERRIDE)
 		return true;
@@ -413,6 +414,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 	{
 		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 			return true;
+		SnapshotDirty->tid = tuple->t_ctid;
 		return false;							/* updated by other */
 	}
 
@@ -437,6 +439,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 		return true;
 
+	SnapshotDirty->tid = tuple->t_ctid;
 	return false;								/* updated by other */
 }
 

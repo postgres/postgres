@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.28 1998/12/18 09:10:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.29 1999/01/29 09:22:53 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -194,7 +194,7 @@ TransactionStateData CurrentTransactionStateData = {
 TransactionState CurrentTransactionState =
 &CurrentTransactionStateData;
 
-int	DefaultXactIsoLevel = XACT_SERIALIZABLE;
+int	DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int	XactIsoLevel;
 
 /* ----------------

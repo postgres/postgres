@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.65 1999/01/27 16:48:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.66 1999/01/29 09:22:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,10 +64,9 @@ static TupleDesc InitPlan(CmdType operation, Query *parseTree,
 		 Plan *plan, EState *estate);
 static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
-			Query *parseTree, CmdType operation,
-			int numberTuples, ScanDirection direction,
-			DestReceiver *destfunc);
-static void ExecRetrieve(TupleTableSlot *slot,
+			CmdType operation, int numberTuples, ScanDirection direction,
+			void (*printfunc) ());
+static void ExecRetrieve(TupleTableSlot *slot, 
 						 DestReceiver *destfunc,
 						 EState *estate);
 static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
@@ -75,7 +74,11 @@ static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
-			EState *estate, Query *parseTree);
+			EState *estate);
+
+TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
+static TupleTableSlot *EvalPlanQualNext(EState *estate);
+
 
 /* end of local decls */
 
@@ -168,11 +171,10 @@ TupleTableSlot *
 ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 {
 	CmdType		operation;
-	Query	   *parseTree;
 	Plan	   *plan;
 	TupleTableSlot *result;
 	CommandDest dest;
-	DestReceiver   *destfunc;
+	void		(*destination) ();
 
 	/******************
 	 *	sanity checks
@@ -186,21 +188,11 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 	 ******************
 	 */
 	operation = queryDesc->operation;
-	parseTree = queryDesc->parsetree;
 	plan = queryDesc->plantree;
 	dest = queryDesc->dest;
-	destfunc = DestToFunction(dest);
+	destination = (void (*) ()) DestToFunction(dest);
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
-
-	/******************
-	 *	FIXME: the dest setup function ought to be handed the tuple desc
-	 *  for the tuples to be output, but I'm not quite sure how to get that
-	 *  info at this point.  For now, passing NULL is OK because no existing
-	 *  dest setup function actually uses the pointer.
-	 ******************
-	 */
-	(*destfunc->setup) (destfunc, (TupleDesc) NULL);
 
 	switch (feature)
 	{
@@ -208,20 +200,18 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 		case EXEC_RUN:
 			result = ExecutePlan(estate,
 								 plan,
-								 parseTree,
 								 operation,
 								 ALL_TUPLES,
 								 ForwardScanDirection,
-								 destfunc);
+								 destination);
 			break;
 		case EXEC_FOR:
 			result = ExecutePlan(estate,
 								 plan,
-								 parseTree,
 								 operation,
 								 count,
 								 ForwardScanDirection,
-								 destfunc);
+								 destination);
 			break;
 
 			/******************
@@ -231,11 +221,10 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 		case EXEC_BACK:
 			result = ExecutePlan(estate,
 								 plan,
-								 parseTree,
 								 operation,
 								 count,
 								 BackwardScanDirection,
-								 destfunc);
+								 destination);
 			break;
 
 			/******************
@@ -246,19 +235,16 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 		case EXEC_RETONE:
 			result = ExecutePlan(estate,
 								 plan,
-								 parseTree,
 								 operation,
 								 ONE_TUPLE,
 								 ForwardScanDirection,
-								 destfunc);
+								 destination);
 			break;
 		default:
 			result = NULL;
 			elog(DEBUG, "ExecutorRun: Unknown feature %d", feature);
 			break;
 	}
-
-	(*destfunc->cleanup) (destfunc);
 
 	return result;
 }
@@ -413,8 +399,17 @@ ExecCheckPerms(CmdType operation,
 typedef struct execRowMark
 {
 	Relation	relation;
+	Index		rti;
 	char		resname[32];
 } execRowMark;
+
+typedef struct evalPlanQual
+{
+	Plan				   *plan;
+	Index					rti;
+	EState					estate;
+	struct evalPlanQual	   *free;
+} evalPlanQual;
 
 /* ----------------------------------------------------------------
  *		InitPlan
@@ -426,13 +421,12 @@ typedef struct execRowMark
 static TupleDesc
 InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 {
-	List	   *rangeTable;
-	int			resultRelation;
-	Relation	intoRelationDesc;
-
-	TupleDesc	tupType;
-	List	   *targetList;
-	int			len;
+	List		   *rangeTable;
+	int				resultRelation;
+	Relation		intoRelationDesc;
+	TupleDesc		tupType;
+	List		   *targetList;
+	int				len;
 
 	/******************
 	 *	get information from query descriptor
@@ -537,6 +531,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				continue;
 			erm = (execRowMark*) palloc(sizeof(execRowMark));
 			erm->relation = relation;
+			erm->rti = rm->rti;
 			sprintf(erm->resname, "ctid%u", rm->rti);
 			estate->es_rowMark = lappend(estate->es_rowMark, erm);
 		}
@@ -669,6 +664,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 	estate->es_into_relation_descriptor = intoRelationDesc;
 
+	estate->es_origPlan = plan;
+	estate->es_evalPlanQual = NULL;
+	estate->es_evTuple = NULL;
+	estate->es_useEvalPlan = false;
+
 	return tupType;
 }
 
@@ -753,11 +753,10 @@ EndPlan(Plan *plan, EState *estate)
 static TupleTableSlot *
 ExecutePlan(EState *estate,
 			Plan *plan,
-			Query *parseTree,
 			CmdType operation,
 			int numberTuples,
 			ScanDirection direction,
-			DestReceiver* destfunc)
+			void (*printfunc) ())
 {
 	JunkFilter *junkfilter;
 
@@ -794,7 +793,15 @@ ExecutePlan(EState *estate,
 		 ******************
 		 */
 		/* at the top level, the parent of a plan (2nd arg) is itself */
-		slot = ExecProcNode(plan, plan);
+lnext:;
+		if (estate->es_useEvalPlan)
+		{
+			slot = EvalPlanQualNext(estate);
+			if (TupIsNull(slot))
+				slot = ExecProcNode(plan, plan);
+		}
+		else
+			slot = ExecProcNode(plan, plan);
 
 		/******************
 		 *	if the tuple is null, then we assume
@@ -821,8 +828,6 @@ ExecutePlan(EState *estate,
 		if ((junkfilter = estate->es_junkFilter) != (JunkFilter *) NULL)
 		{
 			Datum		datum;
-
-/*			NameData	attrName; */
 			HeapTuple	newTuple;
 			bool		isNull;
 
@@ -853,8 +858,10 @@ ExecutePlan(EState *estate,
 				execRowMark	   *erm;
 				Buffer			buffer;
 				HeapTupleData	tuple;
+				TupleTableSlot *newSlot;
 				int				test;
 
+lmark:;
 				foreach (l, estate->es_rowMark)
 				{
 					erm = lfirst(l);
@@ -879,10 +886,27 @@ ExecutePlan(EState *estate,
 
 						case HeapTupleUpdated:
 							if (XactIsoLevel == XACT_SERIALIZABLE)
+							{
 								elog(ERROR, "Can't serialize access due to concurrent update");
-							else
-								elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
-							return(NULL);
+								return(NULL);
+							}
+							else if (!(ItemPointerEquals(&(tuple.t_self), 
+										(ItemPointer)DatumGetPointer(datum))))
+							{
+ 								newSlot = EvalPlanQual(estate, erm->rti, &(tuple.t_self));
+								if (!(TupIsNull(newSlot)))
+								{
+									slot = newSlot;
+									estate->es_useEvalPlan = true;
+									goto lmark;
+								}
+							}
+							/* 
+							 * if tuple was deleted or PlanQual failed
+							 * for updated tuple - we have not return
+							 * this tuple!
+							 */
+							goto lnext;
 
 						default:
 							elog(ERROR, "Unknown status %u from heap_mark4update", test);
@@ -917,7 +941,7 @@ ExecutePlan(EState *estate,
 		{
 			case CMD_SELECT:
 				ExecRetrieve(slot,		/* slot containing tuple */
-							 destfunc,	/* destination's tuple-receiver obj */
+							 printfunc, /* print function */
 							 estate);	/* */
 				result = slot;
 				break;
@@ -933,7 +957,7 @@ ExecutePlan(EState *estate,
 				break;
 
 			case CMD_UPDATE:
-				ExecReplace(slot, tupleid, estate, parseTree);
+				ExecReplace(slot, tupleid, estate);
 				result = NULL;
 				break;
 
@@ -973,7 +997,7 @@ ExecutePlan(EState *estate,
  */
 static void
 ExecRetrieve(TupleTableSlot *slot,
-			 DestReceiver *destfunc,
+			 void (*printfunc) (),
 			 EState *estate)
 {
 	HeapTuple	tuple;
@@ -1000,7 +1024,7 @@ ExecRetrieve(TupleTableSlot *slot,
 	 *	send the tuple to the front end (or the screen)
 	 ******************
 	 */
-	(*destfunc->receiveTuple) (tuple, attrtype, destfunc);
+	(*printfunc) (tuple, attrtype);
 	IncrRetrieved();
 	(estate->es_processed)++;
 }
@@ -1115,7 +1139,8 @@ ExecDelete(TupleTableSlot *slot,
 {
 	RelationInfo	   *resultRelationInfo;
 	Relation			resultRelationDesc;
-	ItemPointerData		ctid;
+	ItemPointerData		ctid,
+						oldtid;
 	int					result;
 
 	/******************
@@ -1140,6 +1165,7 @@ ExecDelete(TupleTableSlot *slot,
 	/*
 	 *	delete the tuple
 	 */
+ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid, &ctid);
 	switch (result)
 	{
@@ -1152,8 +1178,18 @@ ExecDelete(TupleTableSlot *slot,
 		case HeapTupleUpdated:
 			if (XactIsoLevel == XACT_SERIALIZABLE)
 				elog(ERROR, "Can't serialize access due to concurrent update");
-			else
-				elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+			else if (!(ItemPointerEquals(tupleid, &ctid)))
+			{
+				TupleTableSlot *slot = EvalPlanQual(estate, 
+						resultRelationInfo->ri_RangeTableIndex, &ctid);
+
+				if (!TupIsNull(slot))
+				{
+					tupleid = &oldtid;
+					*tupleid = ctid;
+					goto ldelete;
+				}
+			}
 			return;
 
 		default:
@@ -1197,13 +1233,13 @@ ExecDelete(TupleTableSlot *slot,
 static void
 ExecReplace(TupleTableSlot *slot,
 			ItemPointer tupleid,
-			EState *estate,
-			Query *parseTree)
+			EState *estate)
 {
 	HeapTuple			tuple;
 	RelationInfo	   *resultRelationInfo;
 	Relation			resultRelationDesc;
-	ItemPointerData		ctid;
+	ItemPointerData		ctid,
+						oldtid;
 	int					result;
 	int					numIndices;
 
@@ -1270,6 +1306,7 @@ ExecReplace(TupleTableSlot *slot,
 	/*
 	 *	replace the heap tuple
 	 */
+lreplace:;
 	result = heap_replace(resultRelationDesc, tupleid, tuple, &ctid);
 	switch (result)
 	{
@@ -1282,8 +1319,18 @@ ExecReplace(TupleTableSlot *slot,
 		case HeapTupleUpdated:
 			if (XactIsoLevel == XACT_SERIALIZABLE)
 				elog(ERROR, "Can't serialize access due to concurrent update");
-			else
-				elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+			else if (!(ItemPointerEquals(tupleid, &ctid)))
+			{
+				TupleTableSlot *slot = EvalPlanQual(estate, 
+						resultRelationInfo->ri_RangeTableIndex, &ctid);
+
+				if (!TupIsNull(slot))
+				{
+					tupleid = &oldtid;
+					*tupleid = ctid;
+					goto lreplace;
+				}
+			}
 			return;
 
 		default:
@@ -1479,4 +1526,257 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 	}
 
 	return;
+}
+
+TupleTableSlot*
+EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
+{
+	evalPlanQual	   *epq = (evalPlanQual*) estate->es_evalPlanQual;
+	evalPlanQual	   *oldepq;
+	EState			   *epqstate = NULL;
+	Relation			relation;
+	Buffer				buffer;
+	HeapTupleData		tuple;
+	bool				endNode = true;
+
+	Assert(rti != 0);
+
+	if (epq != NULL && epq->rti == 0)
+	{
+		Assert(!(estate->es_useEvalPlan) && 
+				epq->estate.es_evalPlanQual == NULL);
+		epq->rti = rti;
+		endNode = false;
+	}
+
+	/*
+	 * If this is request for another RTE - Ra, - then we have to check
+	 * wasn't PlanQual requested for Ra already and if so then Ra' row 
+	 * was updated again and we have to re-start old execution for Ra 
+	 * and forget all what we done after Ra was suspended. Cool? -:))
+	 */
+	if (epq != NULL && epq->rti != rti && 
+		epq->estate.es_evTuple[rti - 1] != NULL)
+	{
+		do
+		{
+			/* pop previous PlanQual from the stack */
+			epqstate = &(epq->estate);
+			oldepq = (evalPlanQual*) epqstate->es_evalPlanQual;
+			Assert(oldepq->rti != 0);
+			/* stop execution */
+			ExecEndNode(epq->plan, epq->plan);
+			pfree(epqstate->es_evTuple[epq->rti - 1]);
+			epqstate->es_evTuple[epq->rti - 1] = NULL;
+			/* push current PQ to freePQ stack */
+			oldepq->free = epq;
+			epq = oldepq;
+		} while (epq->rti != rti);
+		estate->es_evalPlanQual = (Pointer) epq;
+	}
+
+	/* 
+	 * If we are requested for another RTE then we have to suspend
+	 * execution of current PlanQual and start execution for new one.
+	 */
+	if (epq == NULL || epq->rti != rti)
+	{
+		/* try to reuse plan used previously */
+		evalPlanQual   *newepq = (epq != NULL) ? epq->free : NULL;
+
+		if (newepq == NULL)
+		{
+			newepq = (evalPlanQual*) palloc(sizeof(evalPlanQual));
+			/* Init EState */
+			epqstate = &(newepq->estate);
+			memset(epqstate, 0, sizeof(EState));
+			epqstate->type = T_EState; 
+			epqstate->es_direction = ForwardScanDirection;
+			epqstate->es_snapshot = estate->es_snapshot;
+			epqstate->es_range_table = estate->es_range_table;
+			epqstate->es_param_list_info = estate->es_param_list_info;
+			if (estate->es_origPlan->nParamExec > 0)
+				epqstate->es_param_exec_vals = (ParamExecData *)
+							palloc(estate->es_origPlan->nParamExec * 
+									sizeof(ParamExecData));
+			epqstate->es_tupleTable = 
+				ExecCreateTupleTable(estate->es_tupleTable->size);
+			epqstate->es_refcount = estate->es_refcount;
+			/* ... rest */
+			newepq->plan = copyObject(estate->es_origPlan);
+			newepq->free = NULL;
+			if (epq == NULL)
+			{
+				epqstate->es_evTuple = (HeapTuple*) 
+					palloc(length(estate->es_range_table) * sizeof(HeapTuple));
+				memset(epqstate->es_evTuple, 0, 
+					length(estate->es_range_table) * sizeof(HeapTuple));
+				epqstate->es_evTupleNull = (bool*) 
+					palloc(length(estate->es_range_table) * sizeof(bool));
+				memset(epqstate->es_evTupleNull, false, 
+					length(estate->es_range_table) * sizeof(bool));
+			}
+			else
+			{
+				epqstate->es_evTuple = epq->estate.es_evTuple;
+				epqstate->es_evTupleNull = epq->estate.es_evTupleNull;
+			}
+		}
+		else
+		{
+			epqstate = &(newepq->estate);
+		}
+		/* push current PQ to the stack */
+		epqstate->es_evalPlanQual = (Pointer) epq;
+		estate->es_evalPlanQual = (Pointer) epq = newepq;
+		epq->rti = rti;
+		endNode = false;
+	}
+
+	epqstate = &(epq->estate);
+
+	/*
+	 * Ok - we're requested for the same RTE (-:)).
+	 * I'm not sure about ability to use ExecReScan instead of
+	 * ExecInitNode, so...
+	 */
+	if (endNode)
+		ExecEndNode(epq->plan, epq->plan);
+
+	/* free old RTE' tuple */
+	if (epqstate->es_evTuple[epq->rti - 1] != NULL)
+	{
+		pfree(epqstate->es_evTuple[epq->rti - 1]);
+		epqstate->es_evTuple[epq->rti - 1] = NULL;
+	}
+
+	/* ** fetch tid tuple ** */
+	if (estate->es_result_relation_info != NULL && 
+		estate->es_result_relation_info->ri_RangeTableIndex == rti)
+		relation = estate->es_result_relation_info->ri_RelationDesc;
+	else
+	{
+		List   *l;
+
+		foreach (l, estate->es_rowMark)
+		{
+			if (((execRowMark*) lfirst(l))->rti == rti)
+				break;
+		}
+		relation = ((execRowMark*) lfirst(l))->relation;
+	}
+	tuple.t_self = *tid;
+	for ( ; ; )
+	{
+		heap_fetch(relation, SnapshotDirty, &tuple, &buffer);
+		if (tuple.t_data != NULL)
+		{
+			TransactionId xwait = SnapshotDirty->xmax;
+
+			if (TransactionIdIsValid(SnapshotDirty->xmin))
+				elog(ERROR, "EvalPlanQual: t_xmin is uncommitted ?!");
+			/*
+			 * If tuple is being updated by other transaction then 
+			 * we have to wait for its commit/abort.
+			 */
+			if (TransactionIdIsValid(xwait))
+			{
+				ReleaseBuffer(buffer);
+				XactLockTableWait(xwait);
+				continue;
+			}
+			/*
+			 * Nice! We got tuple - now copy it.
+			 */
+			epqstate->es_evTuple[epq->rti - 1] = heap_copytuple(&tuple);
+			epqstate->es_evTupleNull[epq->rti - 1] = false;
+			ReleaseBuffer(buffer);
+			break;
+		}
+		/*
+		 * Ops! Invalid tuple. Have to check is it updated or deleted.
+		 * Note that it's possible to get invalid SnapshotDirty->tid
+		 * if tuple updated by this transaction. Have we to check this ?
+		 */
+		if (ItemPointerIsValid(&(SnapshotDirty->tid)) && 
+			!(ItemPointerEquals(&(tuple.t_self), &(SnapshotDirty->tid))))
+		{
+			tuple.t_self = SnapshotDirty->tid;	/* updated ... */
+			continue;
+		}
+		/*
+		 * Deleted or updated by this transaction. Do not
+		 * (re-)start execution of this PQ. Continue previous PQ.
+		 */
+		oldepq = (evalPlanQual*) epqstate->es_evalPlanQual;
+		if (oldepq != NULL)
+		{
+			Assert(oldepq->rti != 0);
+			/* push current PQ to freePQ stack */
+			oldepq->free = epq;
+			epq = oldepq;
+			epqstate = &(epq->estate);
+			estate->es_evalPlanQual = (Pointer) epq;
+		}
+		else
+		{									/* this is the first (oldest) PQ
+			epq->rti = 0;					 * - mark as free and 
+			estate->es_useEvalPlan = false;	 * continue Query execution
+			return (NULL);					 */
+		}
+	}
+
+	if (estate->es_origPlan->nParamExec > 0)
+		memset(epqstate->es_param_exec_vals, 0, 
+				estate->es_origPlan->nParamExec * sizeof(ParamExecData));
+	ExecInitNode(epq->plan, epqstate, NULL);
+
+	/*
+	 * For UPDATE/DELETE we have to return tid of actual row
+	 * we're executing PQ for.
+	 */
+	*tid = tuple.t_self;
+
+	return (EvalPlanQualNext(estate));
+}
+
+static TupleTableSlot* 
+EvalPlanQualNext(EState *estate)
+{
+	evalPlanQual	   *epq = (evalPlanQual*) estate->es_evalPlanQual;
+	EState			   *epqstate = &(epq->estate);
+	evalPlanQual	   *oldepq;
+	TupleTableSlot	   *slot;
+
+	Assert(epq->rti != 0);
+
+lpqnext:;
+	slot = ExecProcNode(epq->plan, epq->plan);
+
+	/*
+	 * No more tuples for this PQ. Continue previous one.
+	 */
+	if (TupIsNull(slot))
+	{
+		ExecEndNode(epq->plan, epq->plan);
+		pfree(epqstate->es_evTuple[epq->rti - 1]);
+		epqstate->es_evTuple[epq->rti - 1] = NULL;
+		/* pop old PQ from the stack */
+		oldepq = (evalPlanQual*) epqstate->es_evalPlanQual;
+		if (oldepq == (evalPlanQual*) NULL)
+		{									/* this is the first (oldest) */
+			epq->rti = 0;					/* PQ - mark as free and      */
+			estate->es_useEvalPlan = false;	/* continue Query execution   */
+			return (NULL);
+		}
+		Assert(oldepq->rti != 0);
+		/* push current PQ to freePQ stack */
+		oldepq->free = epq;
+		epq = oldepq;
+		epqstate = &(epq->estate);
+		estate->es_evalPlanQual = (Pointer) epq;
+		goto lpqnext;
+	}
+
+	return (slot);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.15 1998/09/25 13:38:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.16 1999/01/29 09:22:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,34 @@ SeqNext(SeqScan *node)
 	scanstate = node->scanstate;
 	scandesc = scanstate->css_currentScanDesc;
 	direction = estate->es_direction;
+	slot = scanstate->css_ScanTupleSlot;
+
+	/*
+	 * Check if we are evaluating PlanQual for tuple of this relation.
+	 * Additional checking is not good, but no other way for now.
+	 * We could introduce new nodes for this case and handle
+	 * SeqScan --> NewNode switching in Init/ReScan plan...
+	 */
+	if (estate->es_evTuple != NULL && 
+		estate->es_evTuple[node->scanrelid - 1] != NULL)
+	{
+		slot->ttc_buffer = InvalidBuffer;
+		slot->ttc_shouldFree = false;
+		if (estate->es_evTupleNull[node->scanrelid - 1])
+		{
+			slot->val = NULL;	/* must not free tuple! */
+			return (slot);
+		}
+		slot->val = estate->es_evTuple[node->scanrelid - 1];
+		/*
+		 * Note that unlike IndexScan, SeqScan never use keys
+		 * in heap_beginscan (and this is very bad) - so, here
+		 * we have not check are keys ok or not.
+		 */
+		/* Flag for the next call that no more tuples */
+		estate->es_evTupleNull[node->scanrelid - 1] = true;
+		return (slot);
+	}
 
 	/* ----------------
 	 *	get the next tuple from the access methods
@@ -79,7 +107,6 @@ SeqNext(SeqScan *node)
 	 *	be pfree()'d.
 	 * ----------------
 	 */
-	slot = scanstate->css_ScanTupleSlot;
 
 	slot = ExecStoreTuple(tuple,/* tuple to store */
 						  slot, /* slot to store in */
@@ -374,9 +401,15 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 		outerPlan = outerPlan((Plan *) node);
 		ExecReScan(outerPlan, exprCtxt, parent);
 	}
-	else
+	else	/* otherwise, we are scanning a relation */
 	{
-		/* otherwise, we are scanning a relation */
+		/* If this is re-scanning of PlanQual ... */
+		if (estate->es_evTuple != NULL && 
+			estate->es_evTuple[node->scanrelid - 1] != NULL)
+		{
+			estate->es_evTupleNull[node->scanrelid - 1] = false;
+			return;
+		}
 		rel = scanstate->css_currentRelation;
 		scan = scanstate->css_currentScanDesc;
 		direction = estate->es_direction;

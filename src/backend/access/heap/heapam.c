@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.39 1998/12/15 12:45:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.40 1999/01/29 09:22:51 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1373,6 +1373,7 @@ l3:
 	if (result != HeapTupleMayBeUpdated)
 	{
 		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated);
+		tuple->t_self = tuple->t_data->t_ctid;
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 		return result;
 	}

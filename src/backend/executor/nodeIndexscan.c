@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.29 1998/11/27 19:52:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.30 1999/01/29 09:22:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,40 @@ IndexNext(IndexScan *node)
 	heapRelation = scanstate->css_currentRelation;
 	numIndices = indexstate->iss_NumIndices;
 	slot = scanstate->css_ScanTupleSlot;
+
+	/*
+	 * Check if we are evaluating PlanQual for tuple of this relation.
+	 * Additional checking is not good, but no other way for now.
+	 * We could introduce new nodes for this case and handle
+	 * IndexScan --> NewNode switching in Init/ReScan plan...
+	 */
+	if (estate->es_evTuple != NULL && 
+		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
+	{
+		int		iptr;
+
+		slot->ttc_buffer = InvalidBuffer;
+		slot->ttc_shouldFree = false;
+		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
+		{
+			slot->val = NULL;	/* must not free tuple! */
+			return (slot);
+		}
+		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
+		for (iptr = 0; iptr < numIndices; iptr++)
+		{
+			scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
+			if (ExecQual(nth(iptr, node->indxqualorig),
+						 scanstate->cstate.cs_ExprContext))
+				break;
+		}
+		if (iptr == numIndices)	/* would not be returned by indices */
+			slot->val = NULL;
+		/* Flag for the next call that no more tuples */
+		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
+		return (slot);
+	}
+
 	tuple = &(indexstate->iss_htup);
 
 	/* ----------------
@@ -261,6 +295,14 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	indxqual = node->indxqual;
 	numScanKeys = indexstate->iss_NumScanKeys;
 	indexstate->iss_IndexPtr = 0;
+
+	/* If this is re-scanning of PlanQual ... */
+	if (estate->es_evTuple != NULL && 
+		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
+	{
+		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
+		return;
+	}
 
 	/* it's possible in subselects */
 	if (exprCtxt == NULL)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.55 1999/01/25 18:02:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.56 1999/01/29 09:22:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->plan_size = from->plan_size;
 	newnode->plan_width = from->plan_width;
 	newnode->plan_tupperpage = from->plan_tupperpage;
-	newnode->state = from->state;
 	newnode->targetlist = copyObject(from->targetlist);
 	newnode->qual = copyObject(from->qual);
 	newnode->lefttree = copyObject(from->lefttree);
@@ -138,7 +137,6 @@ _copyResult(Result *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, resconstantqual);
-	Node_Copy(from, newnode, resstate);
 
 	return newnode;
 }
@@ -166,7 +164,6 @@ _copyAppend(Append *from)
 	Node_Copy(from, newnode, unionrtables);
 	newnode->inheritrelid = from->inheritrelid;
 	Node_Copy(from, newnode, inheritrtable);
-	Node_Copy(from, newnode, appendstate);
 
 	return newnode;
 }
@@ -183,7 +180,6 @@ static void
 CopyScanFields(Scan *from, Scan *newnode)
 {
 	newnode->scanrelid = from->scanrelid;
-	Node_Copy(from, newnode, scanstate);
 	return;
 }
 
@@ -248,7 +244,6 @@ _copyIndexScan(IndexScan *from)
 	newnode->indxid = listCopy(from->indxid);
 	Node_Copy(from, newnode, indxqual);
 	Node_Copy(from, newnode, indxqualorig);
-	Node_Copy(from, newnode, indxstate);
 
 	return newnode;
 }
@@ -304,12 +299,6 @@ _copyNestLoop(NestLoop *from)
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyJoinFields((Join *) from, (Join *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	Node_Copy(from, newnode, nlstate);
-
 	return newnode;
 }
 
@@ -346,8 +335,6 @@ _copyMergeJoin(MergeJoin *from)
 	newnode->mergeleftorder[0] = from->mergeleftorder[0];
 	newnode->mergeleftorder[1] = 0;
 
-	Node_Copy(from, newnode, mergestate);
-
 	return newnode;
 }
 
@@ -375,12 +362,9 @@ _copyHashJoin(HashJoin *from)
 
 	newnode->hashjoinop = from->hashjoinop;
 
-	Node_Copy(from, newnode, hashjoinstate);
-
-	newnode->hashjointable = from->hashjointable;
+	/* both are unused !.. */
 	newnode->hashjointablekey = from->hashjointablekey;
 	newnode->hashjointablesize = from->hashjointablesize;
-	newnode->hashdone = from->hashdone;
 
 	return newnode;
 }
@@ -437,12 +421,6 @@ _copyMaterial(Material *from)
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyTempFields((Temp *) from, (Temp *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	Node_Copy(from, newnode, matstate);
-
 	return newnode;
 }
 
@@ -463,14 +441,6 @@ _copySort(Sort *from)
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyTempFields((Temp *) from, (Temp *) newnode);
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	Node_Copy(from, newnode, sortstate);
-	Node_Copy(from, newnode, psortstate);
-	newnode->cleaned = from->cleaned;
-
 	return newnode;
 }
 
@@ -490,7 +460,6 @@ _copyGroup(Group *from)
 	newnode->numCols = from->numCols;
 	newnode->grpColIdx = palloc(from->numCols * sizeof(AttrNumber));
 	memcpy(newnode->grpColIdx, from->grpColIdx, from->numCols * sizeof(AttrNumber));
-	Node_Copy(from, newnode, grpstate);
 
 	return newnode;
 }
@@ -507,7 +476,6 @@ _copyAgg(Agg *from)
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
 	newnode->aggs = get_agg_tlist_references(newnode);
-	Node_Copy(from, newnode, aggstate);
 
 	return newnode;
 }
@@ -553,7 +521,6 @@ _copyUnique(Unique *from)
 	else
 		newnode->uniqueAttr = NULL;
 	newnode->uniqueAttrNum = from->uniqueAttrNum;
-	Node_Copy(from, newnode, uniquestate);
 
 	return newnode;
 }
@@ -579,9 +546,8 @@ _copyHash(Hash *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, hashkey);
-	Node_Copy(from, newnode, hashstate);
 
-	newnode->hashtable = from->hashtable;
+	/* both are unused !.. */
 	newnode->hashtablekey = from->hashtablekey;
 	newnode->hashtablesize = from->hashtablesize;
 
@@ -599,7 +565,6 @@ _copySubPlan(SubPlan *from)
 	newnode->setParam = listCopy(from->setParam);
 	newnode->parParam = listCopy(from->parParam);
 	Node_Copy(from, newnode, sublink);
-	newnode->shutdown = from->shutdown;
 
 	return newnode;
 }
@@ -1901,7 +1866,7 @@ copyObject(void *from)
 			}
 			break;
 		default:
-			elog(NOTICE, "copyObject: don't know how to copy %d", nodeTag(from));
+			elog(ERROR, "copyObject: don't know how to copy %d", nodeTag(from));
 			retval = from;
 			break;
 	}

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.18 1998/12/18 09:09:55 vadim Exp $
+ * $Id: tqual.h,v 1.19 1999/01/29 09:23:17 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@ typedef struct SnapshotData
 	TransactionId	xmax;			/* XID >= xmax are invisible to me */
 	uint32			xcnt;			/* # of xact below */
 	TransactionId  *xip;			/* array of xacts in progress */
+	ItemPointerData	tid;			/* required for Dirty snapshot -:( */
 }			SnapshotData;
 
 typedef SnapshotData *Snapshot;

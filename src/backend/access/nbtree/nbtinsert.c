@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.32 1998/12/15 12:45:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.33 1999/01/29 09:22:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,7 @@ l1:
 					 * If this tuple is being updated by other transaction
 					 * then we have to wait for its commit/abort.
 					 */
+					ReleaseBuffer(buffer);
 					if (TransactionIdIsValid(xwait))
 					{
 						if (nbuf != InvalidBuffer)
