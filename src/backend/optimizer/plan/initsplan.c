@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.4 1997/03/12 21:05:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.5 1997/04/24 16:04:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
 	    find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
 				other_rels);
 	joininfo->jinfoclauseinfo =
-	    lcons(clauseinfo, joininfo->jinfoclauseinfo);	
+	    lcons(copyObject((void*)clauseinfo), joininfo->jinfoclauseinfo);	
 
     }
 }
