@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.13 2000/11/18 16:18:41 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.14 2000/11/22 13:35:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,6 +764,9 @@ bitsubstr(PG_FUNCTION_ARGS)
 			   *ps;
 
 	bitlen = VARBITLEN(arg);
+	/* If we do not have an upper bound, set bitlen */
+	if (l==-1)
+		l = bitlen;
 	e = s + l;
 	s1 = Max(s, 1);
 	e1 = Min(e, bitlen + 1);
