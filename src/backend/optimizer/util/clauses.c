@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.123 2003/01/17 02:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.124 2003/01/17 03:25:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,7 +20,6 @@
 #include "postgres.h"
 
 #include "catalog/pg_language.h"
-#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -28,10 +27,8 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
-#include "parser/parsetree.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -47,12 +44,6 @@
 
 typedef struct
 {
-	Query	   *query;
-	List	   *groupClauses;
-} check_subplans_for_ungrouped_vars_context;
-
-typedef struct
-{
 	int			nargs;
 	List	   *args;
 	int		   *usecounts;
@@ -64,8 +55,6 @@ static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool expression_returns_set_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
-static bool check_subplans_for_ungrouped_vars_walker(Node *node,
-					 check_subplans_for_ungrouped_vars_context *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
@@ -550,157 +539,6 @@ pull_subplans_walker(Node *node, List **listptr)
 	}
 	return expression_tree_walker(node, pull_subplans_walker,
 								  (void *) listptr);
-}
-
-/*
- * check_subplans_for_ungrouped_vars
- *		Check for subplans that are being passed ungrouped variables as
- *		parameters; generate an error message if any are found.
- *
- * In most contexts, ungrouped variables will be detected by the parser (see
- * parse_agg.c, check_ungrouped_columns()). But that routine currently does
- * not check subplans, because the necessary info is not computed until the
- * planner runs.  So we do it here, after we have processed sublinks into
- * subplans.  This ought to be cleaned up someday.
- *
- * A deficiency in this scheme is that any outer reference var must be
- * grouped by itself; we don't recognize groupable expressions within
- * subselects.	For example, consider
- *		SELECT
- *			(SELECT x FROM bar where y = (foo.a + foo.b))
- *		FROM foo
- *		GROUP BY a + b;
- * This query will be rejected although it could be allowed.
- */
-void
-check_subplans_for_ungrouped_vars(Query *query)
-{
-	check_subplans_for_ungrouped_vars_context context;
-	List	   *gl;
-
-	context.query = query;
-
-	/*
-	 * Build a list of the acceptable GROUP BY expressions for use in the
-	 * walker (to avoid repeated scans of the targetlist within the
-	 * recursive routine).
-	 */
-	context.groupClauses = NIL;
-	foreach(gl, query->groupClause)
-	{
-		GroupClause *grpcl = lfirst(gl);
-		Node	   *expr;
-
-		expr = get_sortgroupclause_expr(grpcl, query->targetList);
-		context.groupClauses = lcons(expr, context.groupClauses);
-	}
-
-	/*
-	 * Recursively scan the targetlist and the HAVING clause. WHERE and
-	 * JOIN/ON conditions are not examined, since they are evaluated
-	 * before grouping.
-	 */
-	check_subplans_for_ungrouped_vars_walker((Node *) query->targetList,
-											 &context);
-	check_subplans_for_ungrouped_vars_walker(query->havingQual,
-											 &context);
-
-	freeList(context.groupClauses);
-}
-
-static bool
-check_subplans_for_ungrouped_vars_walker(Node *node,
-					  check_subplans_for_ungrouped_vars_context *context)
-{
-	List	   *gl;
-
-	if (node == NULL)
-		return false;
-	if (IsA(node, Const) ||
-		IsA(node, Param))
-		return false;			/* constants are always acceptable */
-
-	/*
-	 * If we find an aggregate function, do not recurse into its
-	 * arguments.  Subplans invoked within aggregate calls are allowed to
-	 * receive ungrouped variables.  (This test and the next one should
-	 * match the logic in parse_agg.c's check_ungrouped_columns().)
-	 */
-	if (IsA(node, Aggref))
-		return false;
-
-	/*
-	 * Check to see if subexpression as a whole matches any GROUP BY item.
-	 * We need to do this at every recursion level so that we recognize
-	 * GROUPed-BY expressions before reaching variables within them.
-	 */
-	foreach(gl, context->groupClauses)
-	{
-		if (equal(node, lfirst(gl)))
-			return false;		/* acceptable, do not descend more */
-	}
-
-	/*
-	 * We can ignore Vars other than in subplan args lists, since the
-	 * parser already checked 'em.
-	 */
-	if (is_subplan(node))
-	{
-		/*
-		 * The args list of the subplan node represents attributes from
-		 * outside passed into the sublink.
-		 */
-		List	   *t;
-
-		foreach(t, ((SubPlan *) node)->args)
-		{
-			Node	   *thisarg = lfirst(t);
-			Var		   *var;
-			bool		contained_in_group_clause;
-
-			/*
-			 * We do not care about args that are not local variables;
-			 * params or outer-level vars are not our responsibility to
-			 * check.  (The outer-level query passing them to us needs to
-			 * worry, instead.)
-			 */
-			if (!IsA(thisarg, Var))
-				continue;
-			var = (Var *) thisarg;
-			if (var->varlevelsup > 0)
-				continue;
-
-			/*
-			 * Else, see if it is a grouping column.
-			 */
-			contained_in_group_clause = false;
-			foreach(gl, context->groupClauses)
-			{
-				if (equal(thisarg, lfirst(gl)))
-				{
-					contained_in_group_clause = true;
-					break;
-				}
-			}
-
-			if (!contained_in_group_clause)
-			{
-				/* Found an ungrouped argument.  Complain. */
-				RangeTblEntry *rte;
-				char	   *attname;
-
-				Assert(var->varno > 0 &&
-					 (int) var->varno <= length(context->query->rtable));
-				rte = rt_fetch(var->varno, context->query->rtable);
-				attname = get_rte_attribute_name(rte, var->varattno);
-				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
-					 rte->eref->aliasname, attname);
-			}
-		}
-	}
-	return expression_tree_walker(node,
-								check_subplans_for_ungrouped_vars_walker,
-								  (void *) context);
 }
 
 

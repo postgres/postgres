@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.259 2003/01/02 19:29:22 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.260 2003/01/17 03:25:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,7 +354,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry, qual);
+		parseCheckAggregates(pstate, qry);
 
 	return qry;
 }
@@ -575,7 +575,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry, NULL);
+		parseCheckAggregates(pstate, qry);
 
 	return qry;
 }
@@ -1671,13 +1671,13 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->limitOffset = stmt->limitOffset;
 	qry->limitCount = stmt->limitCount;
 
+	qry->rtable = pstate->p_rtable;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry, qual);
-
-	qry->rtable = pstate->p_rtable;
-	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
+		parseCheckAggregates(pstate, qry);
 
 	if (stmt->forUpdate != NIL)
 		transformForUpdate(qry, stmt->forUpdate);
@@ -1900,13 +1900,13 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->limitOffset = limitOffset;
 	qry->limitCount = limitCount;
 
+	qry->rtable = pstate->p_rtable;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry, NULL);
-
-	qry->rtable = pstate->p_rtable;
-	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
+		parseCheckAggregates(pstate, qry);
 
 	if (forUpdate != NIL)
 		transformForUpdate(qry, forUpdate);
@@ -2146,7 +2146,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry, qual);
+		parseCheckAggregates(pstate, qry);
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
