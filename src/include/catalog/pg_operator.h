@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.85 2000/12/03 14:51:09 thomas Exp $
+ * $Id: pg_operator.h,v 1.86 2000/12/31 22:34:04 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -167,7 +167,7 @@ DATA(insert OID = 488 (  ">>"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_
 DATA(insert OID = 489 (  "@"	   PGUID 0 b t f 604 604  16 490   0   0   0 poly_contained contsel contjoinsel ));
 DATA(insert OID = 490 (  "~"	   PGUID 0 b t f 604 604  16 489   0   0   0 poly_contain contsel contjoinsel ));
 DATA(insert OID = 491 (  "~="	   PGUID 0 b t f 604 604  16 491   0   0   0 poly_same eqsel eqjoinsel ));
-DATA(insert OID = 492 (  "&&"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_overlap areasel areajoinsel ));
+DATA(insert OID = 492 (  "&&"	   PGUID 0 b t f 604 604  16 492   0   0   0 poly_overlap areasel areajoinsel ));
 DATA(insert OID = 493 (  "<<"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_left positionsel positionjoinsel ));
 DATA(insert OID = 494 (  "&<"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_overleft positionsel positionjoinsel ));
 DATA(insert OID = 495 (  "&>"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_overright positionsel positionjoinsel ));
@@ -175,7 +175,7 @@ DATA(insert OID = 496 (  ">>"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_r
 DATA(insert OID = 497 (  "@"	   PGUID 0 b t f 603 603  16 498   0   0   0 box_contained contsel contjoinsel ));
 DATA(insert OID = 498 (  "~"	   PGUID 0 b t f 603 603  16 497   0   0   0 box_contain contsel contjoinsel ));
 DATA(insert OID = 499 (  "~="	   PGUID 0 b t f 603 603  16 499   0   0   0 box_same eqsel eqjoinsel ));
-DATA(insert OID = 500 (  "&&"	   PGUID 0 b t f 603 603  16   0   0   0   0 box_overlap areasel areajoinsel ));
+DATA(insert OID = 500 (  "&&"	   PGUID 0 b t f 603 603  16 500   0   0   0 box_overlap areasel areajoinsel ));
 DATA(insert OID = 501 (  ">="	   PGUID 0 b t f 603 603  16 505 504   0   0 box_ge areasel areajoinsel ));
 DATA(insert OID = 502 (  ">"	   PGUID 0 b t f 603 603  16 504 505   0   0 box_gt areasel areajoinsel ));
 DATA(insert OID = 503 (  "="	   PGUID 0 b t f 603 603  16 503   0 504 504 box_eq eqsel eqjoinsel ));
@@ -249,7 +249,7 @@ DATA(insert OID = 570 (  "<="	   PGUID 0 b t f 703 703  16 571 569 0 0 reltimele
 DATA(insert OID = 571 (  ">="	   PGUID 0 b t f 703 703  16 570 568 0 0 reltimege scalargtsel scalargtjoinsel ));
 DATA(insert OID = 572 (  "~="	   PGUID 0 b t f 704 704  16 572   0   0   0 tintervalsame eqsel eqjoinsel ));
 DATA(insert OID = 573 (  "<<"	   PGUID 0 b t f 704 704  16   0   0   0   0 tintervalct - - ));
-DATA(insert OID = 574 (  "&&"	   PGUID 0 b t f 704 704  16   0   0   0   0 tintervalov - - ));
+DATA(insert OID = 574 (  "&&"	   PGUID 0 b t f 704 704  16 574   0   0   0 tintervalov - - ));
 DATA(insert OID = 575 (  "#="	   PGUID 0 b t f 704 703  16   0 576   0   0 tintervalleneq - - ));
 DATA(insert OID = 576 (  "#<>"	   PGUID 0 b t f 704 703  16   0 575   0   0 tintervallenne - - ));
 DATA(insert OID = 577 (  "#<"	   PGUID 0 b t f 704 703  16   0 580   0   0 tintervallenlt - - ));
@@ -596,7 +596,7 @@ DATA(insert OID = 1509 (  ">>"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle
 DATA(insert OID = 1510 (  "@"	  PGUID 0 b t f  718  718	16 1511    0	0	 0 circle_contained contsel contjoinsel ));
 DATA(insert OID = 1511 (  "~"	  PGUID 0 b t f  718  718	16 1510    0	0	 0 circle_contain contsel contjoinsel ));
 DATA(insert OID = 1512 (  "~="	  PGUID 0 b t f  718  718	16 1512    0	0	 0 circle_same eqsel eqjoinsel ));
-DATA(insert OID = 1513 (  "&&"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_overlap areasel areajoinsel ));
+DATA(insert OID = 1513 (  "&&"	  PGUID 0 b t f  718  718	16 1513    0	0	 0 circle_overlap areasel areajoinsel ));
 DATA(insert OID = 1514 (  ">^"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_above positionsel positionjoinsel ));
 DATA(insert OID = 1515 (  "<^"	  PGUID 0 b t f  718  718	16	  0    0	0	 0 circle_below positionsel positionjoinsel ));
 
