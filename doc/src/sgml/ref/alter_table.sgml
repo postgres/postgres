@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.76 2005/01/10 00:04:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.77 2005/01/14 01:16:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -534,6 +534,17 @@ ALTER TABLE distributors DROP COLUMN address RESTRICT;
 ALTER TABLE distributors
     ALTER COLUMN address TYPE varchar(80),
     ALTER COLUMN name TYPE varchar(100);
+</programlisting>
+  </para>
+
+  <para>
+   To change an integer column containing UNIX timestamps to <type>timestamp
+   with time zone</type> via a <literal>USING</literal> clause:
+<programlisting>
+ALTER TABLE foo
+    ALTER COLUMN foo_timestamp TYPE timestamp with time zone
+    USING
+        timestamp with time zone 'epoch' + foo_timestamp * interval '1 second';
 </programlisting>
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.12 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.13 2005/01/14 01:16:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -202,6 +202,16 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
   <para>
    The <literal>OPERATOR</>, <literal>FUNCTION</>, and <literal>STORAGE</>
    clauses may appear in any order.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The operators should not be defined by SQL functions.  A SQL function
+   is likely to be inlined into the calling query, which will prevent
+   the optimizer from recognizing that the query matches an index.
   </para>
  </refsect1>
   
