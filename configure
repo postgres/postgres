@@ -17926,8 +17926,12 @@ cat conftest.$ac_ext >&5
 ( exit $ac_status )
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-  { { echo "$as_me:$LINENO: error: Thread test program failed.  Your platform is not thread-safe.  See 'config.log" >&5
-echo "$as_me: error: Thread test program failed.  Your platform is not thread-safe.  See 'config.log" >&2;}
+  { { echo "$as_me:$LINENO: error:
+*** Thread test program failed.  Your platform is not thread-safe.
+*** Check the file 'config.log'for the exact reason." >&5
+echo "$as_me: error:
+*** Thread test program failed.  Your platform is not thread-safe.
+*** Check the file 'config.log'for the exact reason." >&2;}
    { (exit 1); exit 1; }; }
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
