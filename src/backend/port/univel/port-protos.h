@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * port-protos.h--
- *	  port-specific prototypes for Intel x86/Intel SVR4
+ *	  port-specific prototypes for Intel x86/UNIXWARE
  *
  *
  * Copyright (c) 1994, Regents of the University of California

@@ -1,10 +1,10 @@
 AROPT:crs
-CFLAGS:-I$(SRCDIR)/backend/port/univel
-SHARED_LIB:-fPIC
-ALL:-DHAVE_RUSAGE -m486 -Dsvr4
+CFLAGS:-I$(SRCDIR)/backend/port/univel -Xa -v -DHAVE_RUSAGE -O -K i486,host,inline,loop_unroll -Dsvr4
+SHARED_LIB:-K PIC
 SRCH_INC:
 SRCH_LIB:
 USE_LOCALE:no
 DLSUFFIX:.so
 YFLAGS:-d
-YACC:bison -y
+YACC:yacc
+CC:cc

@@ -25,13 +25,13 @@ nextstep*) os=nextstep;;
     hpux*) os=hpux;;
      osf*) os=alpha;;
      sco*) os=sco;;
-   sysv4*) os=svr4;;
  machten*) os=machten;;
  sysv4.2*) 
        case "$host_vendor" in
                univel) os=univel;;
                     *) os=unknown;;
        esac ;;
+   sysv4*) os=svr4;;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
@@ -120,16 +120,17 @@ fi
 export TEMPLATE
 echo ""
 
-AROPT=`grep AROPT $TEMPLATE | awk -F: '{print $2}'`
-SHARED_LIB=`grep SHARED_LIB $TEMPLATE | awk -F: '{print $2}'`
-CFLAGS=`grep CFLAGS $TEMPLATE | awk -F: '{print $2}'`
-SRCH_INC=`grep SRCH_INC $TEMPLATE | awk -F: '{print $2}'`
-SRCH_LIB=`grep SRCH_LIB $TEMPLATE | awk -F: '{print $2}'`
-USE_LOCALE=`grep USE_LOCALE $TEMPLATE | awk -F: '{print $2}'`
-DLSUFFIX=`grep DLSUFFIX $TEMPLATE | awk -F: '{print $2}'`
-DL_LIB=`grep DL_LIB $TEMPLATE | awk -F: '{print $2}'`
-YACC=`grep YACC $TEMPLATE | awk -F: '{print $2}'`
-YFLAGS=`grep YFLAGS $TEMPLATE | awk -F: '{print $2}'`
+AROPT=`grep '^AROPT:' $TEMPLATE | awk -F: '{print $2}'`
+SHARED_LIB=`grep '^SHARED_LIB:' $TEMPLATE | awk -F: '{print $2}'`
+CFLAGS=`grep '^CFLAGS:' $TEMPLATE | awk -F: '{print $2}'`
+SRCH_INC=`grep '^SRCH_INC:' $TEMPLATE | awk -F: '{print $2}'`
+SRCH_LIB=`grep '^SRCH_LIB:' $TEMPLATE | awk -F: '{print $2}'`
+USE_LOCALE=`grep '^USE_LOCALE:' $TEMPLATE | awk -F: '{print $2}'`
+DLSUFFIX=`grep '^DLSUFFIX:' $TEMPLATE | awk -F: '{print $2}'`
+DL_LIB=`grep '^DL_LIB:' $TEMPLATE | awk -F: '{print $2}'`
+YACC=`grep '^YACC:' $TEMPLATE | awk -F: '{print $2}'`
+YFLAGS=`grep '^YFLAGS:' $TEMPLATE | awk -F: '{print $2}'`
+CC=`grep '^CC:' $TEMPLATE | awk -F: '{print $2}'`
 
 
 dnl We now need to check for additional directories (include
