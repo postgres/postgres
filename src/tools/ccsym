@@ -8,6 +8,6 @@ for i in `cc -v -c $$.c 2>&1`
 do
         case "$i" in
         -D*) echo "$i" | sed 's/^-D//';;
-        -A*) test "2.7.2.1" && echo "$i" | sed 's/^-A\(.*\)(\(.*\))/\1=\2/';;
+        -A*) echo "$i" | sed 's/^-A\(.*\)(\(.*\))/\1=\2/';;
         esac
 done
