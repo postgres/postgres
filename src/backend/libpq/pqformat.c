@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.13 2000/04/12 17:15:14 momjian Exp $
+ *	$Id: pqformat.c,v 1.14 2000/07/08 05:30:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,19 +44,21 @@
  * Use the raw pqcomm.c routines pq_getstring or pq_getbytes
  * to fetch data without conversion.
  */
+
 #include "postgres.h"
+
+#include <errno.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 #ifdef HAVE_ENDIAN_H
 #include "endian.h"
-#endif
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
 #endif
 
 #ifndef BYTE_ORDER
