@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.11 1998/09/01 03:22:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.12 1998/11/08 19:22:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,27 +31,22 @@ StringInfo
 makeStringInfo()
 {
 	StringInfo	res;
-	long		size;
+	int			size;
 
 	res = (StringInfo) palloc(sizeof(StringInfoData));
 	if (res == NULL)
 		elog(ERROR, "makeStringInfo: Out of memory!");
 
-	size = 100;
+	size = 256;					/* initial default size */
 	res->data = palloc(size);
 	if (res->data == NULL)
 	{
 		elog(ERROR,
-		   "makeStringInfo: Out of memory! (%ld bytes requested)", size);
+		   "makeStringInfo: Out of memory! (%d bytes requested)", size);
 	}
 	res->maxlen = size;
 	res->len = 0;
-
-	/*
-	 * NOTE: we must initialize `res->data' to the empty string because we
-	 * use 'strcat' in 'appendStringInfo', which of course it always
-	 * expects a null terminated string.
-	 */
+	/* Make sure the string is empty initially. */
 	res->data[0] = '\0';
 
 	return res;
@@ -71,7 +66,8 @@ void
 appendStringInfo(StringInfo str, char *buffer)
 {
 	int			buflen,
-				newlen;
+				newlen,
+				needed;
 	char	   *s;
 
 	Assert(str != NULL);
@@ -84,15 +80,16 @@ appendStringInfo(StringInfo str, char *buffer)
 	 * some more.
 	 */
 	buflen = strlen(buffer);
-	if (buflen + str->len >= str->maxlen - 1)
+	needed = str->len + buflen + 1;
+	if (needed > str->maxlen)
 	{
 
 		/*
 		 * how much more space to allocate ? Let's say double the current
 		 * space... However we must check if this is enough!
 		 */
-		newlen = 2 * str->len;
-		while (buflen + str->len >= newlen - 1)
+		newlen = 2 * str->maxlen;
+		while (needed > newlen)
 			newlen = 2 * newlen;
 
 		/*
@@ -105,7 +102,11 @@ appendStringInfo(StringInfo str, char *buffer)
 				 "appendStringInfo: Out of memory (%d bytes requested)",
 				 newlen);
 		}
-		memmove(s, str->data, str->len + 1);
+		/*
+		 * transfer the data.  strcpy() would work, but is probably a tad
+		 * slower than memcpy(), and since we know the string length...
+		 */
+		memcpy(s, str->data, str->len + 1);
 		pfree(str->data);
 		str->maxlen = newlen;
 		str->data = s;
@@ -113,10 +114,10 @@ appendStringInfo(StringInfo str, char *buffer)
 
 	/*
 	 * OK, we have enough space now, append 'buffer' at the end of the
-	 * string & update the string length. NOTE: this is a text string
-	 * (i.e. printable characters) so 'strcat' will do the job (no need to
-	 * use 'bcopy' et all...)
+	 * string & update the string length. NOTE: strcat() would work,
+	 * but is certainly slower than just memcpy'ing the data to the right
+	 * place.
 	 */
-	strcat(str->data, buffer);
+	memcpy(str->data + str->len, buffer, buflen + 1);
 	str->len += buflen;
 }
