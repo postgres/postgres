@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.22 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.23 2003/01/12 18:42:59 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -600,7 +600,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
 SELECT * FROM a CROSS JOIN b CROSS JOIN c WHERE a.id = b.id AND b.ref = c.id;
 SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
 </programlisting>
-   but the second and third take less time to plan than the first.  This effect
+   the second and third take less time to plan than the first.  This effect
    is not worth worrying about for only three tables, but it can be a
    lifesaver with many tables.
   </para>
@@ -628,8 +628,8 @@ SELECT * FROM d LEFT JOIN
         (SELECT * FROM a, b, c WHERE ...) AS ss
         ON (...);
 </programlisting>
-   Here, joining D must be the last step in the query plan, but the
-   planner is free to consider various join orders for A, B, C.
+   Here, joining to D must be the last step in the query plan, but the
+   planner is free to consider various join orders for A, B, and C.
   </para>
 
   <para>
