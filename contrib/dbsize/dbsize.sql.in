@@ -1,0 +1,7 @@
+CREATE FUNCTION database_size (name) RETURNS bigint
+    AS '@MODULE_FILENAME@', 'database_size'
+    LANGUAGE C WITH (isstrict);
+
+CREATE FUNCTION relation_size (name) RETURNS bigint
+    AS '@MODULE_FILENAME@', 'relation_size'
+    LANGUAGE C WITH (isstrict);

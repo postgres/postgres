@@ -48,7 +48,11 @@ dbase -
 
 dblink -
 	Allows remote query execution
-	by  Joe Conway, joe.conway@mail.com
+	by  Joe Conway <joe.conway@mail.com>
+
+dbsize -
+	Reports database and table disk space
+	by Peter Eisentraut <peter_e@gmx.net>
 
 earthdistance -
 	Operator for computing earth distance for two points
