@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.39 2003/08/04 00:43:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.40 2003/09/04 15:16:39 tgl Exp $
  *
  **********************************************************************/
 
@@ -757,6 +757,10 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
+		/* ignore dropped attributes */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
