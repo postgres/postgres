@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.327 2004/05/02 13:38:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.328 2004/05/07 16:57:16 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1315,7 +1315,7 @@ DESCR("convert timetz to text");
 
 /* OIDS 1000 - 1999 */
 
-DATA(insert OID = 1026 (  timezone		   PGNSP PGUID 12 f f t f s 2 1114 "1186 1184" _null_	timestamptz_izone - _null_ ));
+DATA(insert OID = 1026 (  timezone		   PGNSP PGUID 12 f f t f i 2 1114 "1186 1184" _null_	timestamptz_izone - _null_ ));
 DESCR("adjust timestamp to new time zone");
 
 DATA(insert OID = 1029 (  nullvalue		   PGNSP PGUID 12 f f f f i 1 16 "2276" _null_ nullvalue - _null_ ));
@@ -1437,7 +1437,7 @@ DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 f f t f i 2 16 "1184 1
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 f f t f i 2 16 "1184 1184" _null_	timestamp_gt - _null_ ));
 DESCR("greater-than");
-DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 f f t f s 2 1114 "25 1184" _null_  timestamptz_zone - _null_ ));
+DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 f f t f i 2 1114 "25 1184" _null_  timestamptz_zone - _null_ ));
 DESCR("adjust timestamp to new time zone");
 
 DATA(insert OID = 1160 (  interval_in	   PGNSP PGUID 12 f f t f s 3 1186 "2275 26 23" _null_ interval_in - _null_ ));
@@ -2891,7 +2891,7 @@ DATA(insert OID = 2035 (  timestamp_smaller PGNSP PGUID 12 f f t f i 2 1114 "111
 DESCR("smaller of two");
 DATA(insert OID = 2036 (  timestamp_larger	PGNSP PGUID 12 f f t f i 2 1114 "1114 1114" _null_  timestamp_larger - _null_ ));
 DESCR("larger of two");
-DATA(insert OID = 2037 (  timezone			PGNSP PGUID 12 f f t f s 2 1266 "25 1266" _null_  timetz_zone - _null_ ));
+DATA(insert OID = 2037 (  timezone			PGNSP PGUID 12 f f t f i 2 1266 "25 1266" _null_  timetz_zone - _null_ ));
 DESCR("adjust time with time zone to new zone");
 DATA(insert OID = 2038 (  timezone			PGNSP PGUID 12 f f t f i 2 1266 "1186 1266" _null_  timetz_izone - _null_ ));
 DESCR("adjust time with time zone to new zone");
@@ -2934,9 +2934,9 @@ DESCR("date difference preserving months and years");
 DATA(insert OID = 2059 (  age				PGNSP PGUID 14 f f t f s 1 1186 "1114" _null_	"select pg_catalog.age(cast(current_date as timestamp without time zone), $1)" - _null_ ));
 DESCR("date difference from today preserving months and years");
 
-DATA(insert OID = 2069 (  timezone			PGNSP PGUID 12 f f t f s 2 1184 "25 1114" _null_  timestamp_zone - _null_ ));
+DATA(insert OID = 2069 (  timezone			PGNSP PGUID 12 f f t f i 2 1184 "25 1114" _null_  timestamp_zone - _null_ ));
 DESCR("adjust timestamp to new time zone");
-DATA(insert OID = 2070 (  timezone			PGNSP PGUID 12 f f t f s 2 1184 "1186 1114" _null_  timestamp_izone - _null_ ));
+DATA(insert OID = 2070 (  timezone			PGNSP PGUID 12 f f t f i 2 1184 "1186 1114" _null_  timestamp_izone - _null_ ));
 DESCR("adjust timestamp to new time zone");
 DATA(insert OID = 2071 (  date_pl_interval	PGNSP PGUID 12 f f t f i 2 1114 "1082 1186" _null_  date_pl_interval - _null_ ));
 DESCR("add");
