@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.100 2002/06/11 15:32:32 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.101 2002/06/11 16:00:17 thomas Exp $
 PostgreSQL documentation
 -->
 
@@ -1419,7 +1419,7 @@ PostgreSQL documentation
    <para>
     Both <function>LIKE</function> and <function>SIMILAR TO</function>
     are SQL-standard operators which are also available in alternate
-    forms as <product>PostgreSQL</product> operators; look at
+    forms as <productname>PostgreSQL</productname> operators; look at
     <literal>~</literal> and <literal>~~</literal> for examples.
    </para>
 
