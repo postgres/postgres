@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.44 1999/06/10 14:17:05 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.45 1999/07/02 03:21:37 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1145,7 +1145,7 @@ l1:
 	{
 		TransactionId xwait = tp.t_data->t_xmax;
 
-		/* sleep untill concurrent transaction ends */
+		/* sleep until concurrent transaction ends */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		XactLockTableWait(xwait);
 
