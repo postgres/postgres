@@ -798,7 +798,7 @@ the command line.
      Start the postmaster daemon running in the background by typing
 <ProgramListing>
 $ cd
-$ postmaster -i
+$ nohup postmaster -i > pgserver.log 2>&1 &
 </ProgramListing>
 </Para>
 </Step>
