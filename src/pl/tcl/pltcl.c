@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.66.2.3 2003/05/16 13:37:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.66.2.4 2003/10/30 02:00:44 wieck Exp $
  *
  **********************************************************************/
 
@@ -1777,13 +1777,33 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	for (i = 0; i < nargs; i++)
 	{
-		/* XXX should extend this to allow qualified type names */
-		typeTup = typenameType(makeTypeName(args[i]));
+		char		   *argcopy;
+		List		   *names = NIL;
+		List		   *lp;
+		TypeName	   *typename;
+
+		/************************************************************
+		 * Use SplitIdentifierString() on a copy of the type name,
+		 * turn the resulting pointer list into a TypeName node
+		 * and call typenameType() to get the pg_type tuple.
+		 ************************************************************/
+		argcopy  = pstrdup(args[i]);
+		SplitIdentifierString(argcopy, '.', &names);
+		typename = makeNode(TypeName);
+		foreach (lp, names)
+			typename->names = lappend(typename->names, makeString(lfirst(lp)));
+
+		typeTup = typenameType(typename);
 		qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
 		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 					   &(qdesc->arginfuncs[i]));
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);
+
+		freeList(typename->names);
+		pfree(typename);
+		freeList(names);
+		pfree(argcopy);
 	}
 
 	/************************************************************
