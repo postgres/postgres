@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.1 2001/01/24 23:15:19 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.2 2001/02/18 04:50:43 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -290,15 +290,15 @@
   </para>
 
   <para>
-   The <varname>COMMIT_DELAY</varname> parameter defines for how long
-   the backend will be forced to sleep after writing a commit record
-   to the log with <function>LogInsert</function> call but before
+   The <varname>COMMIT_DELAY</varname> parameter defines for how many
+   microseconds the backend will sleep after writing a commit
+   record to the log with <function>LogInsert</function> but before
    performing a <function>LogFlush</function>. This delay allows other
    backends to add their commit records to the log so as to have all
    of them flushed with a single log sync. Unfortunately, this
    mechanism is not fully implemented at release 7.1, so there is at
-   present no point in changing this parameter from its default value
-   of 5 microseconds.
+   present usually no benefit to be gained from increasing this parameter
+   above its default value of zero.
   </para>
  </sect1>
 </chapter>

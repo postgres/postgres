@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.29 2001/02/07 23:36:22 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.30 2001/02/18 04:50:43 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -291,7 +291,7 @@ ConfigureNamesInt[] =
 	 0, 0, 16},
 
 	{"commit_delay",		PGC_USERSET,			&CommitDelay,
-	 5, 0, 1000},
+	 0, 0, 100000},
 
 	{NULL, 0, NULL, 0, 0, 0}
 };
