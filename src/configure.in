@@ -14,6 +14,7 @@ case "$host_os" in
      aix*) PORTNAME='aix';;
 nextstep*) PORTNAME='nextstep';;
   ultrix*) PORTNAME='ultrix4';;
+    irix*) PORTNAME='irix5';;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
