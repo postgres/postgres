@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.131 2002/11/21 23:31:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.132 2002/11/23 04:04:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5400,7 +5400,7 @@ SELECT NULLIF(value, '(none)') ...
       </row>
 
       <row>
-       <entry><function>version</function></entry>
+       <entry><function>version()</function></entry>
        <entry><type>text</type></entry>
        <entry>PostgreSQL version information</entry>
       </row>
@@ -5469,8 +5469,8 @@ SELECT NULLIF(value, '(none)') ...
    </indexterm>
 
    <para>
-    <function>version()</function> returns a string describing the PostgreSQL
-    server's version.
+    <function>version()</function> returns a string describing the
+    <productname>PostgreSQL</productname> server's version.
    </para>
 
   <para>
