@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.16 2004/06/11 16:36:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.17 2004/06/24 18:23:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,10 @@ typedef enum
 	RESTART_COMMAND,
 	RELOAD_COMMAND,
 	STATUS_COMMAND,
-	KILL_COMMAND
+	KILL_COMMAND,
+	REGISTER_COMMAND,
+	UNREGISTER_COMMAND,
+	RUN_AS_SERVICE_COMMAND
 }	CtlCommand;
 
 
@@ -63,14 +66,20 @@ static bool silence_echo = false;
 static ShutdownMode shutdown_mode = SMART_MODE;
 static int	sig = SIGTERM;	/* default */
 static CtlCommand ctl_command = NO_COMMAND;
-static char *pg_data_opts = NULL;
 static char *pg_data = NULL;
 static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
 static char *postgres_path = NULL;
+static char *register_servicename = "PostgreSQL"; /* FIXME: + version ID? */
+static char *register_username = NULL;
+static char *register_password = NULL;
 static char *argv0 = NULL;
 
+static void write_stderr(const char *fmt,...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(printf, 1, 2)));
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
 static void do_advice(void);
@@ -83,6 +92,16 @@ static void do_restart(void);
 static void do_reload(void);
 static void do_status(void);
 static void do_kill(pgpid_t pid);
+#ifdef WIN32
+static bool  pgwin32_IsInstalled(SC_HANDLE);
+static char* pgwin32_CommandLine(bool);
+static void pgwin32_doRegister();
+static void pgwin32_doUnregister();
+static void pgwin32_SetServiceStatus(DWORD);
+static void WINAPI pgwin32_ServiceHandler(DWORD);
+static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR*);
+static void pgwin32_doRunAsService();
+#endif
 static pgpid_t get_pgpid(void);
 static char **readfile(char *path);
 static int start_postmaster(void);
@@ -92,6 +111,63 @@ static char def_postopts_file[MAXPGPATH];
 static char postopts_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char conf_file[MAXPGPATH];
+
+
+#ifdef WIN32
+static void
+write_eventlog(int level, const char *line)
+{
+	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
+
+	if (evtHandle == INVALID_HANDLE_VALUE) {
+		evtHandle = RegisterEventSource(NULL,"PostgreSQL");
+		if (evtHandle == NULL) {
+			evtHandle = INVALID_HANDLE_VALUE;
+			return;
+		}
+	}
+
+	ReportEvent(evtHandle,
+				level,
+				0,
+				0, /* All events are Id 0 */
+				NULL,
+				1,
+				0,
+				&line,
+				NULL);
+}
+#endif
+
+/*
+ * Write errors to stderr (or by equal means when stderr is
+ * not available).
+ */
+static void
+write_stderr(const char *fmt,...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+#ifndef WIN32
+	/* On Unix, we just fprintf to stderr */
+	vfprintf(stderr, fmt, ap);
+#else
+	/* On Win32, we print to stderr if running on a console, or write to
+	 * eventlog if running as a service */
+	if (!isatty(fileno(stderr))) /* Running as a service */
+	{
+		char errbuf[2048]; /* Arbitrary size? */
+
+		vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
+
+		write_eventlog(EVENTLOG_ERROR_TYPE, errbuf);
+	}
+	else /* Not running as service, write to stderr */
+		vfprintf(stderr, fmt, ap);
+#endif
+	va_end(ap);
+}
 
 /*
  * routines to check memory allocations and fail noisily.
@@ -105,7 +181,7 @@ xmalloc(size_t size)
 	result = malloc(size);
 	if (!result)
 	{
-		fprintf(stderr, _("%s: out of memory\n"), progname);
+		write_stderr(_("%s: out of memory\n"), progname);
 		exit(1);
 	}
 	return result;
@@ -121,7 +197,7 @@ xstrdup(const char *s)
 	result = strdup(s);
 	if (!result)
 	{
-		fprintf(stderr, _("%s: out of memory\n"), progname);
+		write_stderr(_("%s: out of memory\n"), progname);
 		exit(1);
 	}
 	return result;
@@ -352,10 +428,9 @@ do_start(void)
 	{
 		old_pid = get_pgpid();
 		if (old_pid != 0)
-			fprintf(stderr,
-					_("%s: Another postmaster may be running. "
-					"Trying to start postmaster anyway.\n"),
-					progname);
+			write_stderr(_("%s: Another postmaster may be running. "
+						   "Trying to start postmaster anyway.\n"),
+						 progname);
 	}
 
 	if (post_opts == NULL)
@@ -371,13 +446,13 @@ do_start(void)
 				post_opts = "";
 			else
 			{
-				fprintf(stderr, _("%s: cannot read %s\n"), progname, postopts_file);
+				write_stderr(_("%s: cannot read %s\n"), progname, postopts_file);
 				exit(1);
 			}
 		}
 		else if (optlines[0] == NULL || optlines[1] != NULL)
 		{
-			fprintf(stderr, _("%s: option file %s must have exactly 1 line\n"),
+			write_stderr(_("%s: option file %s must have exactly 1 line\n"),
 					progname, ctl_command == RESTART_COMMAND ?
 					postopts_file : def_postopts_file);
 			exit(1);
@@ -419,18 +494,16 @@ do_start(void)
 								   postmaster_path)) < 0)
 		{
 			if (ret == -1)
-				fprintf(stderr,
-						_("The program \"postmaster\" is needed by %s "
-						  "but was not found in the same directory as "
-						  "\"%s\".\n"
-						  "Check your installation.\n"),
-						progname, progname);
+				write_stderr(_("The program \"postmaster\" is needed by %s "
+							   "but was not found in the same directory as "
+							   "\"%s\".\n"
+							   "Check your installation.\n"),
+							 progname, progname);
 			else
-				fprintf(stderr,
-						_("The program \"postmaster\" was found by %s "
-						  "but was not the same version as \"%s\".\n"
-						  "Check your installation.\n"),
-						progname, progname);
+				write_stderr(_("The program \"postmaster\" was found by %s "
+							   "but was not the same version as \"%s\".\n"
+							   "Check your installation.\n"),
+							 progname, progname);
 			exit(1);
 		}
 		postgres_path = postmaster_path;
@@ -438,7 +511,7 @@ do_start(void)
 
 	if (start_postmaster() != 0)
 	{
-		fprintf(stderr, _("Unable to run the postmaster binary\n"));
+		write_stderr(_("Unable to run the postmaster binary\n"));
 		exit(1);
 	}
 
@@ -448,10 +521,9 @@ do_start(void)
 		pid = get_pgpid();
 		if (pid == old_pid)
 		{
-			fprintf(stderr,
-					_("%s: cannot start postmaster\n"
-					"Examine the log output\n"),
-					progname);
+			write_stderr(_("%s: cannot start postmaster\n"
+						   "Examine the log output\n"),
+						 progname);
 			exit(1);
 		}
 	}
@@ -485,23 +557,22 @@ do_stop(void)
 
 	if (pid == 0)				/* no pid file */
 	{
-		fprintf(stderr, _("%s: could not find %s\n"), progname, pid_file);
-		fprintf(stderr, _("Is postmaster running?\n"));
+		write_stderr(_("%s: could not find %s\n"), progname, pid_file);
+		write_stderr(_("Is postmaster running?\n"));
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		fprintf(stderr,
-				_("%s: cannot stop postmaster; "
-				"postgres is running (PID: %ld)\n"),
-				progname, pid);
+		write_stderr(_("%s: cannot stop postmaster; "
+					   "postgres is running (PID: %ld)\n"),
+					 progname, pid);
 		exit(1);
 	}
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("stop signal failed (PID: %ld): %s\n"), pid,
+		write_stderr(_("stop signal failed (PID: %ld): %s\n"), pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -540,7 +611,7 @@ do_stop(void)
 			if (!silence_echo)
 				printf(_(" failed\n"));
 	
-			fprintf(stderr, _("%s: postmaster does not shut down\n"), progname);
+			write_stderr(_("%s: postmaster does not shut down\n"), progname);
 			exit(1);
 		}
 		if (!silence_echo)
@@ -565,25 +636,24 @@ do_restart(void)
 
 	if (pid == 0)				/* no pid file */
 	{
-		fprintf(stderr, _("%s: could not find %s\n"), progname, pid_file);
-		fprintf(stderr, _("Is postmaster running?\nstarting postmaster anyway\n"));
+		write_stderr(_("%s: could not find %s\n"), progname, pid_file);
+		write_stderr(_("Is postmaster running?\nstarting postmaster anyway\n"));
 		do_start();
 		return;
 	}
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		fprintf(stderr,
-				_("%s: cannot restart postmaster; "
-				"postgres is running (PID: %ld)\n"),
-				progname, pid);
-		fprintf(stderr, _("Please terminate postgres and try again.\n"));
+		write_stderr(_("%s: cannot restart postmaster; "
+					   "postgres is running (PID: %ld)\n"),
+					 progname, pid);
+		write_stderr(_("Please terminate postgres and try again.\n"));
 		exit(1);
 	}
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("stop signal failed (PID: %ld): %s\n"), pid,
+		write_stderr(_("stop signal failed (PID: %ld): %s\n"), pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -616,7 +686,7 @@ do_restart(void)
 		if (!silence_echo)
 			printf(_(" failed\n"));
 
-		fprintf(stderr, _("%s: postmaster does not shut down\n"), progname);
+		write_stderr(_("%s: postmaster does not shut down\n"), progname);
 		exit(1);
 	}
 
@@ -636,24 +706,23 @@ do_reload(void)
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
 	{
-		fprintf(stderr, _("%s: could not find %s\n"), progname, pid_file);
-		fprintf(stderr, _("Is postmaster running?\n"));
+		write_stderr(_("%s: could not find %s\n"), progname, pid_file);
+		write_stderr(_("Is postmaster running?\n"));
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		fprintf(stderr,
-				_("%s: cannot reload postmaster; "
-				"postgres is running (PID: %ld)\n"),
-				progname, pid);
-		fprintf(stderr, _("Please terminate postgres and try again.\n"));
+		write_stderr(_("%s: cannot reload postmaster; "
+					   "postgres is running (PID: %ld)\n"),
+					 progname, pid);
+		write_stderr(_("Please terminate postgres and try again.\n"));
 		exit(1);
 	}
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("reload signal failed (PID: %ld): %s\n"), pid,
+		write_stderr(_("reload signal failed (PID: %ld): %s\n"), pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -674,7 +743,7 @@ do_status(void)
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
 	{
-		fprintf(stderr, _("%s: postmaster or postgres not running\n"), progname);
+		write_stderr(_("%s: postmaster or postgres not running\n"), progname);
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend */
@@ -702,18 +771,244 @@ do_kill(pgpid_t pid)
 {
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("signal %d failed (PID: %ld): %s\n"), sig, pid,
+		write_stderr(_("signal %d failed (PID: %ld): %s\n"), sig, pid,
 				strerror(errno));
 		exit(1);
 	}
 }
 
+#ifdef WIN32
 
+static bool pgwin32_IsInstalled(SC_HANDLE hSCM)
+{
+	SC_HANDLE hService = OpenService(hSCM, register_servicename, SERVICE_QUERY_CONFIG);
+	bool bResult = (hService != NULL);
+	if (bResult)
+		CloseServiceHandle(hService);
+	return bResult;
+}
+
+static char* pgwin32_CommandLine(bool registration)
+{
+	static char cmdLine[MAXPGPATH];
+	int ret;
+	if (registration)
+		ret = find_my_exec(argv0, cmdLine);
+	else
+		ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR, cmdLine);
+	if (ret != 0)
+	{
+		write_stderr(_("Unable to find exe"));
+		exit(1);
+	}
+
+	if (registration)
+	{
+		if (strcasecmp(cmdLine+strlen(cmdLine)-4,".exe"))
+		{
+			/* If commandline does not end in .exe, append it */
+			strcat(cmdLine,".exe");
+		}
+		strcat(cmdLine," runservice -N \"");
+		strcat(cmdLine,register_servicename);
+		strcat(cmdLine,"\"");
+	}
+
+	if (pg_data)
+	{
+		strcat(cmdLine," -D \"");
+		strcat(cmdLine,pg_data);
+		strcat(cmdLine,"\"");
+	}
+
+	if (post_opts)
+	{
+		strcat(cmdLine," ");
+		if (registration)
+			strcat(cmdLine," -o \"");
+		strcat(cmdLine,post_opts);
+		if (registration)
+			strcat(cmdLine,"\"");
+	}
+
+	return cmdLine;
+}
+
+static void
+pgwin32_doRegister()
+{
+	SC_HANDLE hService;
+	SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (hSCM == NULL)
+	{
+		write_stderr(_("Unable to open service manager\n"));
+		exit(1);
+	}
+	if (pgwin32_IsInstalled(hSCM))
+	{
+		CloseServiceHandle(hSCM);
+		write_stderr(_("Service \"%s\" already registered\n"),register_servicename);
+		exit(1);
+	}
+
+	if ((hService = CreateService(hSCM, register_servicename, register_servicename,
+								  SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+								  SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+								  pgwin32_CommandLine(true),
+								  NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
+	{
+		CloseServiceHandle(hSCM);
+		write_stderr(_("Unable to register service \"%s\" [%d]\n"), register_servicename, (int)GetLastError());
+		exit(1);
+	}
+	CloseServiceHandle(hService);
+	CloseServiceHandle(hSCM);
+}
+
+static void
+pgwin32_doUnregister()
+{
+	SC_HANDLE hService;
+	SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (hSCM == NULL)
+	{
+		write_stderr(_("Unable to open service manager\n"));
+		exit(1);
+	}
+	if (!pgwin32_IsInstalled(hSCM))
+	{
+		CloseServiceHandle(hSCM);
+		write_stderr(_("Service \"%s\" not registered\n"),register_servicename);
+		exit(1);
+	}
+
+	if ((hService = OpenService(hSCM, register_servicename, DELETE)) == NULL)
+	{
+		CloseServiceHandle(hSCM);
+		write_stderr(_("Unable to open service \"%s\" [%d]\n"), register_servicename, (int)GetLastError());
+		exit(1);
+	}
+	if (!DeleteService(hService)) {
+		CloseServiceHandle(hService);
+		CloseServiceHandle(hSCM);
+		write_stderr(_("Unable to unregister service \"%s\" [%d]\n"), register_servicename, (int)GetLastError());
+		exit(1);
+	}
+	CloseServiceHandle(hService);
+	CloseServiceHandle(hSCM);
+}
+
+
+static SERVICE_STATUS status;
+static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE)0;
+static HANDLE shutdownHandles[2];
+static pid_t postmasterPID = -1;
+#define shutdownEvent     shutdownHandles[0]
+#define postmasterProcess shutdownHandles[1]
+
+static void pgwin32_SetServiceStatus(DWORD currentState)
+{
+	status.dwCurrentState = currentState;
+	SetServiceStatus(hStatus, (LPSERVICE_STATUS)&status);
+}
+
+static void WINAPI pgwin32_ServiceHandler(DWORD request)
+{
+	switch (request)
+	{
+		case SERVICE_CONTROL_STOP:
+		case SERVICE_CONTROL_SHUTDOWN:
+			pgwin32_SetServiceStatus(SERVICE_STOP_PENDING);
+			SetEvent(shutdownEvent);
+			return;
+
+		case SERVICE_CONTROL_PAUSE:
+			/* Win32 config reloading */
+			kill(postmasterPID,SIGHUP);
+			return;
+
+		/* FIXME: These could be used to replace other signals etc */
+		case SERVICE_CONTROL_CONTINUE:
+		case SERVICE_CONTROL_INTERROGATE:
+		default:
+			break;
+	}
+}
+
+static void WINAPI pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	DWORD ret;
+
+	/* Initialize variables */
+	status.dwWin32ExitCode	= S_OK;
+	status.dwCheckPoint		= 0;
+	status.dwWaitHint		= 0;
+	status.dwServiceType	= SERVICE_WIN32_OWN_PROCESS;
+	status.dwControlsAccepted			= SERVICE_ACCEPT_STOP|SERVICE_ACCEPT_PAUSE_CONTINUE;
+	status.dwServiceSpecificExitCode	= 0;
+	status.dwCurrentState = SERVICE_START_PENDING;
+
+	memset(&pi,0,sizeof(pi));
+	memset(&si,0,sizeof(si));
+	si.cb = sizeof(si);
+
+	/* Register the control request handler */
+	if ((hStatus = RegisterServiceCtrlHandler(register_servicename, pgwin32_ServiceHandler)) == (SERVICE_STATUS_HANDLE)0)
+		return;
+
+	if ((shutdownEvent = CreateEvent(NULL,true,false,NULL)) == NULL)
+		return;
+
+	/* Start the postmaster */
+	pgwin32_SetServiceStatus(SERVICE_START_PENDING);
+	if (!CreateProcess(NULL,pgwin32_CommandLine(false),NULL,NULL,TRUE,0,NULL,NULL,&si,&pi))
+	{
+		pgwin32_SetServiceStatus(SERVICE_STOPPED);
+		return;
+	}
+	postmasterPID		= pi.dwProcessId;
+	postmasterProcess	= pi.hProcess;
+	CloseHandle(pi.hThread);
+	pgwin32_SetServiceStatus(SERVICE_RUNNING);
+
+	/* Wait for quit... */
+	ret = WaitForMultipleObjects(2,shutdownHandles,FALSE,INFINITE);
+	pgwin32_SetServiceStatus(SERVICE_STOP_PENDING);
+	switch (ret)
+	{
+		case WAIT_OBJECT_0: /* shutdown event */
+			kill(postmasterPID,SIGINT);
+			WaitForSingleObject(postmasterProcess,INFINITE);
+			break;
+
+		case (WAIT_OBJECT_0+1): /* postmaster went down */
+			break;
+
+		default:
+			/* assert(false); */
+	}
+
+	CloseHandle(shutdownEvent);
+	CloseHandle(postmasterProcess);
+
+	pgwin32_SetServiceStatus(SERVICE_STOPPED);
+}
+
+static void pgwin32_doRunAsService()
+{
+	SERVICE_TABLE_ENTRY st[] = {{ register_servicename, pgwin32_ServiceMain },
+								{ NULL, NULL }};
+	StartServiceCtrlDispatcher(st);
+}
+
+#endif
 
 static void
 do_advice(void)
 {
-	fprintf(stderr, _("\nTry \"%s --help\" for more information.\n"), progname);
+	write_stderr(_("\nTry \"%s --help\" for more information.\n"), progname);
 }
 
 
@@ -730,9 +1025,18 @@ do_help(void)
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PROCESSID\n"), progname);
+#ifdef WIN32
+	printf(_("  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s unregister [-N servicename]\n"), progname);
+#endif
 	printf(_("Common options:\n"));
 	printf(_("  -D, --pgdata DATADIR   location of the database storage area\n"));
 	printf(_("  -s, --silent only print errors, no informational messages\n"));
+#ifdef WIN32
+	printf(_("  -N       service name with which to register PostgreSQL server\n"));
+	printf(_("  -P       user name of account to register PostgreSQL server\n"));
+	printf(_("  -U       password  of account to register PostgreSQL server\n"));
+#endif
 	printf(_("  -w           wait until operation completes\n"));
 	printf(_("  -W           do not wait until operation completes\n"));
 	printf(_("  --help       show this help, then exit\n"));
@@ -778,7 +1082,7 @@ set_mode(char *modeopt)
 	}
 	else
 	{
-		fprintf(stderr, _("%s: invalid shutdown mode %s\n"), progname, modeopt);
+		write_stderr(_("%s: invalid shutdown mode %s\n"), progname, modeopt);
 		do_advice();
 		exit(1);
 	}
@@ -811,7 +1115,7 @@ set_sig(char *signame)
 		sig = SIGUSR2;
 	else
 	{
-		fprintf(stderr, _("%s: invalid signal \"%s\"\n"), progname, signame);
+		write_stderr(_("%s: invalid signal \"%s\"\n"), progname, signame);
 		do_advice();
 		exit(1);
 	}
@@ -879,19 +1183,17 @@ main(int argc, char **argv)
 	/* process command-line options */
 	while (optind < argc)
 	{
-		while ((c = getopt_long(argc, argv, "D:l:m:o:p:swW", long_options, &option_index)) != -1)
+		while ((c = getopt_long(argc, argv, "D:l:m:N:o:p:P:sU:wW", long_options, &option_index)) != -1)
 		{
 			switch (c)
 			{
 				case 'D':
 				{
-					int			len = strlen(optarg) + 4;
+					int			len = strlen(optarg);
 					char	   *env_var;
 		
-					pg_data_opts = xmalloc(len);
-					snprintf(pg_data_opts, len, "-D %s", optarg);
-					env_var = xmalloc(len + sizeof("PGDATA="));
-					snprintf(env_var, len + sizeof("PGDATA="), "PGDATA=%s", optarg);
+					env_var = xmalloc(len + 8);
+					snprintf(env_var, len + 8, "PGDATA=%s", optarg);
 					putenv(env_var);
 					break;
 				}
@@ -901,14 +1203,35 @@ main(int argc, char **argv)
 				case 'm':
 					set_mode(optarg);
 					break;
+				case 'N':
+					register_servicename = xstrdup(optarg);
+					break;
 				case 'o':
 					post_opts = xstrdup(optarg);
 					break;
 				case 'p':
 					postgres_path = xstrdup(optarg);
 					break;
+				case 'P':
+					register_password  = xstrdup(optarg);
+					break;
 				case 's':
 					silence_echo = true;
+					break;
+				case 'U':
+					if (strchr(optarg,'\\'))
+						register_username  = xstrdup(optarg);
+					else /* Prepend .\ for local accounts */
+					{
+						register_username = malloc(strlen(optarg)+3);
+						if (!register_username)
+						{
+							write_stderr(_("%s: out of memory\n"), progname);
+							exit(1);
+						}
+						strcpy(register_username,".\\");
+						strcat(register_username,optarg);
+					}
 					break;
 				case 'w':
 					do_wait = true;
@@ -919,7 +1242,7 @@ main(int argc, char **argv)
 					wait_set = true;
 					break;
 				default:
-					fprintf(stderr, _("%s: invalid option %s\n"), progname, optarg);
+					write_stderr(_("%s: invalid option %s\n"), progname, optarg);
 					do_advice();
 					exit(1);
 			}
@@ -930,7 +1253,7 @@ main(int argc, char **argv)
 		{
 			if (ctl_command != NO_COMMAND)
 			{
-				fprintf(stderr, _("%s: extra operation mode %s\n"), progname, argv[optind]);
+				write_stderr(_("%s: extra operation mode %s\n"), progname, argv[optind]);
 				do_advice();
 				exit(1);
 			}
@@ -949,7 +1272,7 @@ main(int argc, char **argv)
 			{
 				if (argc - optind < 3)
 				{
-					fprintf(stderr, _("%s: invalid kill syntax\n"), progname);
+					write_stderr(_("%s: invalid kill syntax\n"), progname);
 					do_advice();
 					exit(1);
 				}
@@ -957,32 +1280,45 @@ main(int argc, char **argv)
 				set_sig(argv[++optind]);
 				killproc = atol(argv[++optind]);
 			}
+#ifdef WIN32
+			else if (strcmp(argv[optind], "register") == 0)
+				ctl_command = REGISTER_COMMAND;
+			else if (strcmp(argv[optind], "unregister") == 0)
+				ctl_command = UNREGISTER_COMMAND;
+			else if (strcmp(argv[optind], "runservice") == 0)
+				ctl_command = RUN_AS_SERVICE_COMMAND;
+#endif
 			else
 			{
-				fprintf(stderr, _("%s: invalid operation mode %s\n"), progname, argv[optind]);
+				write_stderr(_("%s: invalid operation mode %s\n"), progname, argv[optind]);
 				do_advice();
 				exit(1);
 			}
 			optind++;
 		}
 	}
-	
+
 	if (ctl_command == NO_COMMAND)
 	{
-		fprintf(stderr, _("%s: no operation specified\n"), progname);
+		write_stderr(_("%s: no operation specified\n"), progname);
 		do_advice();
 		exit(1);
 	}
 
+	/* Note we put any -D switch into the env var above */
 	pg_data = getenv("PGDATA");
-	canonicalize_path(pg_data);
-
-	if (pg_data == NULL && ctl_command != KILL_COMMAND)
+	if (pg_data)
 	{
-		fprintf(stderr,
-				_("%s: no database directory specified "
-				"and environment variable PGDATA unset\n"),
-				progname);
+		/* XXX modifies environment var in-place ... ugly ... */
+		canonicalize_path(pg_data);
+	}
+
+	if (pg_data == NULL &&
+		ctl_command != KILL_COMMAND && ctl_command != UNREGISTER_COMMAND)
+	{
+		write_stderr(_("%s: no database directory specified "
+					   "and environment variable PGDATA unset\n"),
+					 progname);
 		do_advice();
 		exit(1);
 	}
@@ -1034,6 +1370,17 @@ main(int argc, char **argv)
 		case KILL_COMMAND:
 			do_kill(killproc);
 			break;
+#ifdef WIN32
+ 		case REGISTER_COMMAND:
+ 			pgwin32_doRegister();
+ 			break;
+ 		case UNREGISTER_COMMAND:
+ 			pgwin32_doUnregister();
+ 			break;
+ 		case RUN_AS_SERVICE_COMMAND:
+ 			pgwin32_doRunAsService();
+ 			break;
+#endif
 		default:
 			break;
 	}
