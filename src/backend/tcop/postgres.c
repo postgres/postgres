@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.53 1997/11/09 04:47:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.54 1997/11/10 15:24:55 thomas Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -728,8 +728,9 @@ pg_eval_dest(char *query_string,/* string to execute */
  *		handle_warn() is used to catch kill(getpid(),1) which
  *		occurs when elog(WARN) is called.
  *
- *		quickdie() occurs when signalled by the postmaster, some backend
- *		has bought the farm we need to stop what we're doing and exit.
+ *		quickdie() occurs when signalled by the postmaster.
+ *		Some backend has bought the farm,
+ *		so we need to stop what we're doing and exit.
  *
  *		die() preforms an orderly cleanup via ExitPostgres()
  * --------------------------------
@@ -744,12 +745,12 @@ handle_warn(SIGNAL_ARGS)
 static void
 quickdie(SIGNAL_ARGS)
 {
-	elog(NOTICE, "Message from PostgreSQL backend:  The Postmaster has ");
-	elog(NOTICE, "informed me that some other backend died abnormally and ");
-	elog(NOTICE, "possibly corrupted shared memory.  I have rolled back ");
-	elog(NOTICE, "the current transaction and am going to terminate your ");
-	elog(NOTICE, "database system connection and exit.  Please reconnect to");
-	elog(NOTICE, "the database system and repeat your query.");
+	elog(NOTICE, "Message from PostgreSQL backend:"
+		"\n\tThe Postmaster has informed me that some other backend"
+		" died abnormally and possibly corrupted shared memory."
+		"\n\tI have rolled back the current transaction and am"
+		" going to terminate your database system connection and exit."
+		"\n\tPlease reconnect to the database system and repeat your query.");
 
 
 	/*
@@ -771,8 +772,9 @@ die(SIGNAL_ARGS)
 static void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
-	elog(WARN, "floating point exception! the last floating point operation eit\
-her exceeded legal ranges or was a divide by zero");
+	elog(WARN, "floating point exception!"
+		" The last floating point operation either exceeded legal ranges"
+		" or was a divide by zero");
 }
 
 
@@ -1339,7 +1341,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.53 $ $Date: 1997/11/09 04:47:09 $");
+		puts("$Revision: 1.54 $ $Date: 1997/11/10 15:24:55 $");
 	}
 
 	/* ----------------

@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.19 1997/11/07 06:43:16 thomas Exp $
+ * $Id: variable.c,v 1.20 1997/11/10 15:24:56 thomas Exp $
  *
  */
 
@@ -431,8 +431,13 @@ reset_date()
 	return TRUE;
 }
 
+/* Timezone support
+ * Working storage for strings is allocated with an arbitrary size of 64 bytes.
+ */
+
 static char *defaultTZ = NULL;
-static char TZvalue[10];
+static char TZvalue[64];
+static char tzbuf[64];
 
 bool
 parse_timezone(const char *value)
@@ -447,20 +452,30 @@ parse_timezone(const char *value)
 
 	while ((value = get_token(&tok, NULL, value)) != 0)
 	{
-		if ((defaultTZ == NULL) && (getenv("TZ") != NULL))
+		/* Not yet tried to save original value from environment? */
+		if (defaultTZ == NULL)
 		{
-			defaultTZ = getenv("TZ");
-			if (defaultTZ == NULL)
+			/* found something? then save it for later */
+			if (getenv("TZ") != NULL)
+			{
+				defaultTZ = getenv("TZ");
+				if (defaultTZ == NULL)
+					defaultTZ = (char *) -1;
+				else
+					strcpy(TZvalue, defaultTZ);
+			}
+			/* found nothing so mark with an invalid pointer */
+			else
 			{
 				defaultTZ = (char *) -1;
 			}
-			else
-			{
-				strcpy(TZvalue, defaultTZ);
-			}
 		}
 
-		setenv("TZ", tok, TRUE);
+		strcpy(tzbuf, "TZ=");
+		strcat(tzbuf, tok);
+		if (putenv(tzbuf) != 0)
+			elog(WARN, "Unable to set TZ environment variable to %s", tok);
+
 		tzset();
 		PFREE(tok);
 	}
@@ -471,29 +486,39 @@ parse_timezone(const char *value)
 bool
 show_timezone()
 {
-	char		buf[64];
 	char	   *tz;
 
 	tz = getenv("TZ");
 
-	strcpy(buf, "Time zone is ");
-	strcat(buf, ((tz != NULL)? tz: "unknown"));
-
-	elog(NOTICE, buf, NULL);
+	elog(NOTICE, "Time zone is %s", ((tz != NULL)? tz: "unknown"));
 
 	return TRUE;
 } /* show_timezone() */
 
+/* reset_timezone()
+ * Set TZ environment variable to original value.
+ * Note that if TZ was originally not set, TZ should be cleared.
+ * unsetenv() works fine, but is BSD, not POSIX, and is not available
+ * under Solaris, among others. Apparently putenv() called as below
+ * clears the process-specific environment variables.
+ * Other reasonable arguments to putenv() (e.g. "TZ=", "TZ", "") result
+ * in a core dump (under Linux anyway).
+ */
 bool
 reset_timezone()
 {
 	if ((defaultTZ != NULL) && (defaultTZ != (char *) -1))
 	{
-		setenv("TZ", TZvalue, TRUE);
+		strcpy(tzbuf, "TZ=");
+		strcat(tzbuf, TZvalue);
+		if (putenv(tzbuf) != 0)
+			elog(WARN, "Unable to set TZ environment variable to %s", TZvalue);
 	}
 	else
 	{
-		unsetenv("TZ");
+		strcpy(tzbuf, "=");
+		if (putenv(tzbuf) != 0)
+			elog(WARN, "Unable to clear TZ environment variable", NULL);
 	}
 	tzset();
 
