@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.129 2003/06/11 18:01:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.130 2003/06/11 18:49:00 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -738,7 +738,7 @@ static struct config_int
 	},
 
 	{
-		{"log_min_duration_statement", PGC_USERSET}, &log_min_duration_statement,
+		{"log_min_duration_statement", PGC_SUSET}, &log_min_duration_statement,
 		0, 0, INT_MAX / 1000, NULL, NULL
 	},
 
