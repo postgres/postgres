@@ -163,7 +163,7 @@ AC_ARG_WITH(includes,
 	INCLUDE_DIRS="$withval"
     ])
 
-if test "$INCLUDE_DIRS"; then
+if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
 			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"

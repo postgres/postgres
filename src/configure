@@ -766,7 +766,7 @@ if test "${with_includes+set}" = set; then
 fi
 
 
-if test "$INCLUDE_DIRS"; then
+if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
 			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
