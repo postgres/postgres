@@ -23,7 +23,7 @@ use POSIX qw(locale_h);
 setlocale(LC_NUMERIC,"C");
 
 
-$VERSION = "1.9";
+$VERSION = "1.12";
 $PSQL = "psql";
 
 =head1 NAME
@@ -106,6 +106,9 @@ to your schema name:
 This schema definition can also be needed when you want to export data. If export
 failed and complain that the table doesn't exists use this to prefix the table name
 by the schema name.
+
+If you want to use PostgreSQL 7.3 schema support activate the init option
+'export_schema' set to 1. Default is no schema export
 
 To know at which indices tables can be found during extraction use the option:
 
@@ -215,6 +218,7 @@ Features must include:
 	  with unique, primary and foreign key.
 	- Grants/privileges export by user and group.
 	- Table selection (by name and max table) export.
+	- Export Oracle schema to PostgreSQL 7.3 schema.
 	- Predefined functions/triggers/procedures/packages export.
 	- Data export.
 	- Sql query converter (todo)
@@ -244,11 +248,12 @@ Supported options are:
 	- type		: Type of data to extract, can be TABLE,VIEW,GRANT,SEQUENCE,
 			  TRIGGER,FUNCTION,PROCEDURE,DATA,COPY,PACKAGE
 	- debug		: Print the current state of the parsing
+	- export_schema	: Export Oracle schema to PostgreSQL 7.3 schema
 	- tables	: Extract only the given tables (arrayref)
 	- showtableid	: Display only the table indice during extraction
 	- min		: Indice to begin extraction. Default to 0
 	- max		: Indice to end extraction. Default to 0 mean no limits
-	- data_limit	: Number max of tuples to return during data extraction (default 10)
+	- data_limit	: Number max of tuples to return during data extraction (default 0 no limit)
 
 Attempt that this list should grow a little more because all initialization is
 done by this way.
@@ -398,6 +403,9 @@ sub _init
 	$self->{limited} = ();
 	$self->{limited} = $options{tables} if ($options{tables});
 
+	$self->{export_schema} = 0;
+	$self->{export_schema} = $options{export_schema} if ($options{export_schema});
+
 	$self->{schema} = '';
 	$self->{schema} = $options{schema} if ($options{schema});
 
@@ -413,12 +421,13 @@ sub _init
 	$self->{dbh}->{LongReadLen} = 0;
 	#$self->{dbh}->{LongTruncOk} = 1;
 
-	$self->{data_limit} = 10;
+	$self->{data_limit} = 0;
 	$self->{data_current} = 0;
 	$self->{data_limit} = $options{data_limit} if (exists $options{data_limit});
 
 	# Retreive all table informations
 	if (!exists $options{type} || ($options{type} eq 'TABLE') || ($options{type} eq 'DATA') || ($options{type} eq 'COPY')) {
+		$self->{dbh}->{LongReadLen} = 100000;
 		$self->_tables();
 	} elsif ($options{type} eq 'VIEW') {
 		$self->{dbh}->{LongReadLen} = 100000;
@@ -572,10 +581,10 @@ main hash of the database structure :
 It also call these other private subroutine to affect the main hash
 of the database structure :
 
-    @{$self->{tables}{$class_name}{column_info}} = $self->_column_info($class_name);
-    @{$self->{tables}{$class_name}{primary_key}} = $self->_primary_key($class_name);
-    @{$self->{tables}{$class_name}{unique_key}}  = $self->_unique_key($class_name);
-    @{$self->{tables}{$class_name}{foreign_key}} = $self->_foreign_key($class_name);
+    @{$self->{tables}{$class_name}{column_info}} = $self->_column_info($class_name, $owner);
+    @{$self->{tables}{$class_name}{primary_key}} = $self->_primary_key($class_name, $owner);
+    @{$self->{tables}{$class_name}{unique_key}}  = $self->_unique_key($class_name, $owner);
+    @{$self->{tables}{$class_name}{foreign_key}} = $self->_foreign_key($class_name, $owner);
 
 =cut
 
@@ -605,27 +614,27 @@ print STDERR "Min table dump set to $self->{min}.\n" if ($self->{debug} && $self
 print STDERR "Max table dump set to $self->{max}.\n" if ($self->{debug} && $self->{max});
 		foreach my $t (@$table) {
 			# Jump to desired extraction
-if (grep(/^${@$t}[2]$/, @done)) {
-print STDERR "Duplicate entry found: ${@$t}[0] - ${@$t}[1] - ${@$t}[2]\n";
+if (grep(/^$t->[2]$/, @done)) {
+print STDERR "Duplicate entry found: $t->[0] - $t->[1] - $t->[2]\n";
 } else {
-push(@done, ${@$t}[2]);
+push(@done, $t->[2]);
 }
 			$i++, next if ($self->{min} && ($i < $self->{min}));
 			last if ($self->{max} && ($i > $self->{max}));
-			next if (($#{$self->{limited}} >= 0) && !grep(/^${@$t}[2]$/, @{$self->{limited}}));
+			next if (($#{$self->{limited}} >= 0) && !grep(/^$t->[2]$/, @{$self->{limited}}));
 print STDERR "[$i] " if ($self->{max} || $self->{min});
-print STDERR "Scanning ${@$t}[2] (@$t)...\n" if ($self->{debug});
+print STDERR "Scanning $t->[2] (@$t)...\n" if ($self->{debug});
 			
 			# Check of uniqueness of the table
-			if (exists $self->{tables}{${@$t}[2]}{field_name}) {
-				print STDERR "Warning duplicate table ${@$t}[2], SYNONYME ? Skipped.\n";
+			if (exists $self->{tables}{$t->[2]}{field_name}) {
+				print STDERR "Warning duplicate table $t->[2], SYNONYME ? Skipped.\n";
 				next;
 			}
 
 			# usually OWNER,TYPE. QUALIFIER is omitted until I know what to do with that
-			$self->{tables}{${@$t}[2]}{table_info} = [(${@$t}[1],${@$t}[3])];
+			$self->{tables}{$t->[2]}{table_info} = [($t->[1],$t->[3])];
 			# Set the fields information
-			my $sth = $self->{dbh}->prepare("SELECT * FROM ${@$t}[1].${@$t}[2] WHERE 1=0");
+			my $sth = $self->{dbh}->prepare("SELECT * FROM $t->[1].$t->[2] WHERE 1=0");
 			if (!defined($sth)) {
 				warn "Can't prepare statement: $DBI::errstr";
 				next;
@@ -635,14 +644,14 @@ print STDERR "Scanning ${@$t}[2] (@$t)...\n" if ($self->{debug});
 				warn "Can't execute statement: $DBI::errstr";
 				next;
 			}
-			$self->{tables}{${@$t}[2]}{field_name} = $sth->{NAME};
-			$self->{tables}{${@$t}[2]}{field_type} = $sth->{TYPE};
+			$self->{tables}{$t->[2]}{field_name} = $sth->{NAME};
+			$self->{tables}{$t->[2]}{field_type} = $sth->{TYPE};
 
-			@{$self->{tables}{${@$t}[2]}{column_info}} = $self->_column_info(${@$t}[2]);
-			@{$self->{tables}{${@$t}[2]}{primary_key}} = $self->_primary_key(${@$t}[2]);
-			@{$self->{tables}{${@$t}[2]}{unique_key}} = $self->_unique_key(${@$t}[2]);
-			($self->{tables}{${@$t}[2]}{foreign_link}, $self->{tables}{${@$t}[2]}{foreign_key}) = $self->_foreign_key(${@$t}[2]);
-			($self->{tables}{${@$t}[2]}{uniqueness}, $self->{tables}{${@$t}[2]}{indexes}) = $self->_get_indexes(${@$t}[2]);
+			@{$self->{tables}{$t->[2]}{column_info}} = $self->_column_info($t->[2],$t->[1]);
+			@{$self->{tables}{$t->[2]}{primary_key}} = $self->_primary_key($t->[2],$t->[1]);
+			@{$self->{tables}{$t->[2]}{unique_key}} = $self->_unique_key($t->[2],$t->[1]);
+			($self->{tables}{$t->[2]}{foreign_link}, $self->{tables}{$t->[2]}{foreign_key}) = $self->_foreign_key($t->[2],$t->[1]);
+			($self->{tables}{$t->[2]}{uniqueness}, $self->{tables}{$t->[2]}{indexes}) = $self->_get_indexes($t->[2],$t->[1]);
 			$i++;
 		}
 	}
@@ -725,9 +734,13 @@ sub _get_sql_data
 	# Process view only
 	if ($self->{type} eq 'VIEW') {
 print STDERR "Add views definition...\n" if ($self->{debug});
+		if ($self->{export_schema}) {
+			$sql_output .= "SET search_path = $self->{schema}, pg_catalog;\n\n";
+		}
 		foreach my $view (sort keys %{$self->{views}}) {
+			$self->{views}{$view}{text} =~ s/\s*WITH\s+.*$//s;
 			if (!@{$self->{views}{$view}{alias}}) {
-				$sql_output .= "CREATE VIEW \"\L$view\E\" AS $self->{views}{$view}{text};\n";
+				$sql_output .= "CREATE VIEW \"\L$view\E\" AS \L$self->{views}{$view}{text};\n";
 			} else {
 				$sql_output .= "CREATE VIEW \"\L$view\E\" (";
 				my $count = 0;
@@ -737,9 +750,9 @@ print STDERR "Add views definition...\n" if ($self->{debug});
 					} else {
 						$sql_output .= ", "
 					}
-					$sql_output .= "$d->[0]";
+					$sql_output .= "\"\L$d->[0]\E\"";
 				}
-				$sql_output .= ") AS $self->{views}{$view}{text};\n";
+				$sql_output .= ") AS \L$self->{views}{$view}{text};\n";
 			}
 		}
 
@@ -755,6 +768,9 @@ print STDERR "Add views definition...\n" if ($self->{debug});
 	# Process grant only
 	if ($self->{type} eq 'GRANT') {
 print STDERR "Add groups/users privileges...\n" if ($self->{debug});
+		if ($self->{export_schema}) {
+			$sql_output .= "SET search_path = $self->{schema}, pg_catalog;\n\n";
+		}
 		# Add groups definition
 		my $groups = '';
 		my @users = ();
@@ -817,7 +833,10 @@ print STDERR "Add sequences definition...\n" if ($self->{debug});
 			if ($seq->[1] < -2147483647) {
 				$seq->[1] = -2147483647;
 			}
-			$sql_output .= "CREATE SEQUENCE \L$seq->[0]\E INCREMENT $seq->[3] MINVALUE $seq->[1] MAXVALUE $seq->[2] START $seq->[4] CACHE $cache$cycle;\n";
+			if ($self->{export_schema}) {
+				$sql_output .= "SET search_path = $self->{schema}, pg_catalog;\n\n";
+			}
+			$sql_output .= "CREATE SEQUENCE \"\L$seq->[0]\E\" INCREMENT $seq->[3] MINVALUE $seq->[1] MAXVALUE $seq->[2] START $seq->[4] CACHE $cache$cycle;\n";
 		}
 
 		if (!$sql_output) {
@@ -838,7 +857,7 @@ print STDERR "Add triggers definition...\n" if ($self->{debug});
 			chomp($trig->[4]);
 			# Check if it's a pg rule
 			if ($trig->[1] =~ /INSTEAD OF/) {
-				$sql_output .= "CREATE RULE \L$trig->[0]\E AS\n\tON \L$trig->[3]\E\n\tDO INSTEAD\n(\n\t$trig->[4]\n);\n\n";
+				$sql_output .= "CREATE RULE \"\L$trig->[0]\E\" AS\n\tON \L$trig->[3]\E\n\tDO INSTEAD\n(\n\t$trig->[4]\n);\n\n";
 			} else {
 
 				#--------------------------------------------
@@ -859,8 +878,11 @@ print STDERR "Add triggers definition...\n" if ($self->{debug});
 				# Escaping Single Quotes
 				#$trig->[4] =~ s/'/''/sg;
 
+				if ($self->{export_schema}) {
+					$sql_output .= "SET search_path = $self->{schema}, pg_catalog;\n\n";
+				}
 				$sql_output .= "CREATE FUNCTION pg_fct_\L$trig->[0]\E () RETURNS OPAQUE AS '\n$trig->[4]\n' LANGUAGE 'plpgsql'\n\n";
-				$sql_output .= "CREATE TRIGGER \L$trig->[0]\E\n\t$trig->[1] $trig->[2] ON \L$trig->[3]\E FOR EACH ROW\n\tEXECUTE PROCEDURE pg_fct_\L$trig->[0]\E();\n\n";
+				$sql_output .= "CREATE TRIGGER \L$trig->[0]\E\n\t$trig->[1] $trig->[2] ON \"\L$trig->[3]\E\" FOR EACH ROW\n\tEXECUTE PROCEDURE pg_fct_\L$trig->[0]\E();\n\n";
 			}
 		}
 
@@ -941,31 +963,52 @@ print STDERR "Add packages definition...\n" if ($self->{debug});
 			}
 		}
 
+		if ($self->{export_schema}) {
+			if ($self->{dbhdest}) {
+				if ($self->{type} ne 'COPY') {
+					my $s = $self->{dbhdest}->prepare("SET search_path = $self->{schema}, pg_catalog") or die $self->{dbhdest}->errstr . "\n";
+					$s->execute or die $s->errstr . "\n";
+				} else {
+					print DBH "SET search_path = $self->{schema}, pg_catalog;\n";
+				}
+			} else {
+				if ($outfile) {
+					print FILE "SET search_path = $self->{schema}, pg_catalog;\n";
+				} else {
+					print "SET search_path = $self->{schema}, pg_catalog;\n";
+				}
+			}
+		}
+
 		foreach my $table (keys %{$self->{tables}}) {
 print STDERR "Dumping table $table...\n" if ($self->{debug});
 			my @tt = ();
 			my @nn = ();
 			my $s_out = "INSERT INTO \"\L$table\E\" (";
 			if ($self->{type} eq 'COPY') {
-				$s_out = "COPY \"\L$table\E\" FROM stdin;\n";
+				$s_out = "\nCOPY \"\L$table\E\" ";
 			}
-
+			my @fname = ();
 			foreach my $i ( 0 .. $#{$self->{tables}{$table}{field_name}} ) {
 				my $fieldname = ${$self->{tables}{$table}{field_name}}[$i];
 				if (exists $self->{modify}{"\L$table\E"}) {
-					next if (!grep(/\L$fieldname\E/, @{$self->{modify}{"\L$table\E"}}));
+					next if (!grep(/$fieldname/i, @{$self->{modify}{"\L$table\E"}}));
 				}
+				push(@fname, lc($fieldname));
 				foreach my $f (@{$self->{tables}{$table}{column_info}}) {
-					next if (${$f}[0] ne "$fieldname");
-					my $type = $self->_sql_type(${$f}[1], ${$f}[2], ${$f}[5], ${$f}[6]);
-					$type = "${$f}[1], ${$f}[2]" if (!$type);
+					next if ($f->[0] ne "$fieldname");
+					my $type = $self->_sql_type($f->[1], $f->[2], $f->[5], $f->[6]);
+					$type = "$f->[1], $f->[2]" if (!$type);
 					push(@tt, $type);
-					push(@nn, ${$f}[0]);
+					push(@nn, $f->[0]);
 					if ($self->{type} ne 'COPY') {
-						$s_out .= "\"\L${$f}[0]\E\",";
+						$s_out .= "\"\L$f->[0]\E\",";
 					}
 					last;
 				}
+			}
+			if ($self->{type} eq 'COPY') {
+				$s_out .= '(' . join(',', @fname) . ") FROM stdin;\n";
 			}
 
 			if ($self->{type} ne 'COPY') {
@@ -1048,6 +1091,9 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 								}
 							}
 						} else {
+							# remove end of line
+							$row->[$i] =~ s/\n/\\n/gs;
+
 							if ($tt[$i] !~ /(char|date|time|text)/) {
 								$row->[$i] =~ s/,/./;
 							}
@@ -1144,9 +1190,14 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 
 		return;
 	}
+	
 
 
 	# Dump the database structure
+	if ($self->{export_schema}) {
+		$sql_output .= "CREATE SCHEMA \L$self->{schema}\E;\n\n";
+		$sql_output .= "SET search_path = $self->{schema}, pg_catalog;\n\n";
+	}
 	foreach my $table (keys %{$self->{tables}}) {
 print STDERR "Dumping table $table...\n" if ($self->{debug});
 		$sql_output .= "CREATE ${$self->{tables}{$table}{table_info}}[1] \"\L$table\E\" (\n";
@@ -1154,24 +1205,24 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 		my $sql_pkey = "";
 		foreach my $i ( 0 .. $#{$self->{tables}{$table}{field_name}} ) {
 			foreach my $f (@{$self->{tables}{$table}{column_info}}) {
-				next if (${$f}[0] ne "${$self->{tables}{$table}{field_name}}[$i]");
-				my $type = $self->_sql_type(${$f}[1], ${$f}[2], ${$f}[5], ${$f}[6]);
-				$type = "${$f}[1], ${$f}[2]" if (!$type);
-				$sql_output .= "\t\"\L${$f}[0]\E\" $type";
+				next if ($f->[0] ne "${$self->{tables}{$table}{field_name}}[$i]");
+				my $type = $self->_sql_type($f->[1], $f->[2], $f->[5], $f->[6]);
+				$type = "$f->[1], $f->[2]" if (!$type);
+				$sql_output .= "\t\"\L$f->[0]\E\" $type";
 				# Set the primary key definition 
 				foreach my $k (@{$self->{tables}{$table}{primary_key}}) {
-					next if ($k ne "${$f}[0]");
+					next if ($k ne "$f->[0]");
 					$sql_pkey .= "\"\L$k\E\",";
 					last;
 				}
-				if (${$f}[4] ne "") {
-					$sql_output .= " DEFAULT ${$f}[4]";
-				} elsif (!${$f}[3] || (${$f}[3] eq 'N')) {
+				if ($f->[4] ne "") {
+					$sql_output .= " DEFAULT $f->[4]";
+				} elsif (!$f->[3] || ($f->[3] eq 'N')) {
 					$sql_output .= " NOT NULL";
 				}
 				# Set the unique key definition 
 				foreach my $k (@{$self->{tables}{$table}{unique_key}}) {
-					next if ( ($k ne "${$f}[0]") || (grep(/^$k$/, @{$self->{tables}{$table}{primary_key}})) );
+					next if ( ($k ne "$f->[0]") || (grep(/^$k$/, @{$self->{tables}{$table}{primary_key}})) );
 					$sql_ukey .= "\"\L$k\E\",";
 					last;
 				}
@@ -1183,6 +1234,23 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 		$sql_pkey =~ s/,$//;
 		$sql_output .= "\tUNIQUE ($sql_ukey),\n" if ($sql_ukey);
 		$sql_output .= "\tPRIMARY KEY ($sql_pkey),\n" if ($sql_pkey);
+		$sql_output =~ s/,$//;
+		$sql_output .= ");\n";
+		foreach my $idx (keys %{$self->{tables}{$table}{indexes}}) {
+			map { s/^/"/ } @{$self->{tables}{$table}{indexes}{$idx}};
+			map { s/$/"/ } @{$self->{tables}{$table}{indexes}{$idx}};
+			my $columns = join(',', @{$self->{tables}{$table}{indexes}{$idx}});
+			my $unique = '';
+			$unique = ' UNIQUE' if ($self->{tables}{$table}{uniqueness}{$idx} eq 'UNIQUE');
+			$sql_output .= "CREATE$unique INDEX \L$idx\E ON \"\L$table\E\" (\L$columns\E);\n";
+		}
+		$sql_output .= "\n";
+	}
+
+	foreach my $table (keys %{$self->{tables}}) {
+print STDERR "Dumping RI $table...\n" if ($self->{debug});
+		my $sql_ukey = "";
+		my $sql_pkey = "";
 
 		# Add constraint definition
 		my @done = ();
@@ -1193,24 +1261,13 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 				$desttable .= "$_";
 			}
 			push(@done, $h->[0]);
-			$sql_output .= "\tCONSTRAINT \L$h->[0]\E FOREIGN KEY (" . lc(join(',', @{$self->{tables}{$table}{foreign_link}{$h->[0]}{local}})) . ") REFERENCES \L$desttable\E (" . lc(join(',', @{$self->{tables}{$table}{foreign_link}{$h->[0]}{remote}{$desttable}})) . ")";
+			$sql_output .= "ALTER TABLE \"\L$table\E\" ADD CONSTRAINT \L$h->[0]\E FOREIGN KEY (" . lc(join(',', @{$self->{tables}{$table}{foreign_link}{$h->[0]}{local}})) . ") REFERENCES \L$desttable\E (" . lc(join(',', @{$self->{tables}{$table}{foreign_link}{$h->[0]}{remote}{$desttable}})) . ")";
 			$sql_output .= " MATCH $h->[2]" if ($h->[2]);
 			$sql_output .= " ON DELETE $h->[3]";
 			$sql_output .= " $h->[4]";
-			$sql_output .= " INITIALLY $h->[5],\n";
+			$sql_output .= " INITIALLY $h->[5];\n";
 			
 		}
-		$sql_output =~ s/,$//;
-		$sql_output .= ");\n";
-		foreach my $idx (keys %{$self->{tables}{$table}{indexes}}) {
-			map { s/^/"/ } @{$self->{tables}{$table}{indexes}{$idx}};
-			map { s/$/"/ } @{$self->{tables}{$table}{indexes}{$idx}};
-			my $columns = join(',', @{$self->{tables}{$table}{indexes}{$idx}});
-			my $unique = '';
-			$unique = ' UNIQUE' if ($self->{tables}{$table}{uniqueness}{$idx} eq 'UNIQUE');
-			$sql_output .= "CREATE$unique INDEX \"\L$idx\E\" ON \"\L$table\E\" (\L$columns\E);\n";
-		}
-		$sql_output .= "\n";
 	}
 
 	if (!$sql_output) {
@@ -1287,7 +1344,7 @@ sub _sql_type
         my %TYPE = (
 		# Oracle only has one flexible underlying numeric type, NUMBER.
 		# Without precision and scale it is set to PG type float8 to match all needs
-                'NUMBER' => 'float8',
+                'NUMBER' => 'numeric',
 		# CHAR types limit of 2000 bytes with default to 1 if no length is given.
 		# PG char type has max length set to 8104 so it should match all needs
                 'CHAR' => 'char',
@@ -1299,8 +1356,8 @@ sub _sql_type
                 'VARCHAR2' => 'varchar',
                 'NVARCHAR2' => 'varchar',
 		# The DATE data type is used to store the date and time information.
-		# Pg type datetime should match all needs
-                'DATE' => 'datetime',
+		# Pg type timestamp should match all needs
+                'DATE' => 'timestamp',
 		# Type LONG is like VARCHAR2 but with up to 2Gb.
 		# PG type text should match all needs or if you want you could use blob
                 'LONG' => 'text', # Character data of variable length
@@ -1315,7 +1372,7 @@ sub _sql_type
 		# Pg type text should match all needs or if you want you could use blob (large object)
                 'RAW' => 'text',
                 'ROWID' => 'oid',
-                'LONG RAW' => 'binary',
+                'LONG RAW' => 'text',
                 'FLOAT' => 'float8'
         );
 
@@ -1354,7 +1411,7 @@ sub _sql_type
 }
 
 
-=head2 _column_info TABLE
+=head2 _column_info TABLE OWNER
 
 This function implements a Oracle-native column information.
 
@@ -1373,12 +1430,14 @@ for each column the given a table
 
 sub _column_info
 {
-	my ($self, $table) = @_;
+	my ($self, $table, $owner) = @_;
 
+	$owner = "AND OWNER='$owner' " if ($owner);
 	my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
 SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE, DATA_DEFAULT, DATA_PRECISION, DATA_SCALE
 FROM DBA_TAB_COLUMNS
-WHERE TABLE_NAME='$table'
+WHERE TABLE_NAME='$table' $owner
+ORDER BY COLUMN_ID
 END
 	$sth->execute or die $sth->errstr;
 	my $data = $sth->fetchall_arrayref();
@@ -1393,7 +1452,7 @@ print STDERR "\t$d->[0] => type:$d->[1] , length:$d->[2], precision:$d->[5], sca
 }
 
 
-=head2 _primary_key TABLE
+=head2 _primary_key TABLE OWNER
 
 This function implements a Oracle-native primary key column
 information.
@@ -1405,27 +1464,28 @@ for the given table.
 
 sub _primary_key
 {
-	my($self, $table) = @_;
+	my ($self, $table, $owner) = @_;
 
+	$owner = "AND all_constraints.OWNER='$owner' AND all_cons_columns.OWNER=all_constraints.OWNER" if ($owner);
 	my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
-select   all_cons_columns.COLUMN_NAME
-from     all_constraints, all_cons_columns
-where    all_constraints.CONSTRAINT_TYPE='P'
-and      all_constraints.constraint_name=all_cons_columns.constraint_name
-and      all_constraints.STATUS='ENABLED'
-and      all_constraints.TABLE_NAME='$table'
-order by all_cons_columns.position
+SELECT   all_cons_columns.COLUMN_NAME
+FROM     all_constraints, all_cons_columns
+WHERE    all_constraints.CONSTRAINT_TYPE='P'
+AND      all_constraints.constraint_name=all_cons_columns.constraint_name
+AND      all_constraints.STATUS='ENABLED'
+AND      all_constraints.TABLE_NAME='$table' $owner
+ORDER BY all_cons_columns.position
 END
 	$sth->execute or die $sth->errstr;
 	my @data = ();
 	while (my $row = $sth->fetch) {
-		push(@data, ${@$row}[0]) if (${@$row}[0] !~ /\$/);
+		push(@data, $row->[0]) if ($row->[0] !~ /\$/);
 	}
 	return @data;
 }
 
 
-=head2 _unique_key TABLE
+=head2 _unique_key TABLE OWNER
 
 This function implements a Oracle-native unique key column
 information.
@@ -1437,28 +1497,29 @@ for the given table.
 
 sub _unique_key
 {
-	my($self, $table) = @_;
+	my($self, $table, $owner) = @_;
 
+	$owner = "AND all_constraints.OWNER='$owner'" if ($owner);
 	my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
-select   all_cons_columns.COLUMN_NAME
-from     all_constraints, all_cons_columns
-where    all_constraints.CONSTRAINT_TYPE='U'
-and      all_constraints.constraint_name=all_cons_columns.constraint_name
-and      all_constraints.STATUS='ENABLED'
-and      all_constraints.TABLE_NAME='$table'
-order by all_cons_columns.position
+SELECT   all_cons_columns.COLUMN_NAME
+FROM     all_constraints, all_cons_columns
+WHERE    all_constraints.CONSTRAINT_TYPE='U'
+AND      all_constraints.constraint_name=all_cons_columns.constraint_name
+AND      all_constraints.STATUS='ENABLED'
+AND      all_constraints.TABLE_NAME='$table' $owner
+ORDER BY all_cons_columns.position
 END
 	$sth->execute or die $sth->errstr;
 
 	my @data = ();
 	while (my $row = $sth->fetch) {
-		push(@data, ${@$row}[0]) if (${@$row}[0] !~ /\$/);
+		push(@data, $row->[0]) if ($row->[0] !~ /\$/);
 	}
 	return @data;
 }
 
 
-=head2 _foreign_key TABLE
+=head2 _foreign_key TABLE OWNER
 
 This function implements a Oracle-native foreign key reference
 information.
@@ -1483,10 +1544,16 @@ Just like this:
 
 sub _foreign_key
 {
-	my ($self, $table) = @_;
+	my ($self, $table, $owner) = @_;
 
-	my $str = "SELECT CONSTRAINT_NAME,R_CONSTRAINT_NAME,SEARCH_CONDITION,DELETE_RULE,DEFERRABLE,DEFERRED FROM DBA_CONSTRAINTS WHERE CONSTRAINT_TYPE='R' AND STATUS='ENABLED' AND TABLE_NAME='$table'";
-	my $sth = $self->{dbh}->prepare($str) or die $self->{dbh}->errstr;
+	$owner = "AND OWNER='$owner'" if ($owner);
+	my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
+SELECT CONSTRAINT_NAME,R_CONSTRAINT_NAME,SEARCH_CONDITION,DELETE_RULE,DEFERRABLE,DEFERRED,R_OWNER
+FROM DBA_CONSTRAINTS
+WHERE CONSTRAINT_TYPE='R'
+AND STATUS='ENABLED'
+AND TABLE_NAME='$table' $owner
+END
 	$sth->execute or die $sth->errstr;
 
 	my @data = ();
@@ -1496,7 +1563,7 @@ sub _foreign_key
 		next if (grep(/^$row->[0]$/, @tab_done));
 		push(@data, [ @$row ]);
 		push(@tab_done, $row->[0]);
-		my $sql = "SELECT DISTINCT COLUMN_NAME FROM DBA_CONS_COLUMNS WHERE CONSTRAINT_NAME='$row->[0]'";
+		my $sql = "SELECT DISTINCT COLUMN_NAME FROM DBA_CONS_COLUMNS WHERE CONSTRAINT_NAME='$row->[0]' $owner";
 		my $sth2 = $self->{dbh}->prepare($sql) or die $self->{dbh}->errstr;
 		$sth2->execute or die $sth2->errstr;
 		my @done = ();
@@ -1506,7 +1573,8 @@ sub _foreign_key
 				push(@done, $r->[0]);
 			}
 		}
-		$sql = "SELECT DISTINCT TABLE_NAME,COLUMN_NAME FROM DBA_CONS_COLUMNS WHERE CONSTRAINT_NAME='$row->[1]'";
+		$owner = "AND OWNER = '$row->[6]'" if ($owner);
+		$sql = "SELECT DISTINCT TABLE_NAME,COLUMN_NAME FROM DBA_CONS_COLUMNS WHERE CONSTRAINT_NAME='$row->[1]' $owner";
 		$sth2 = $self->{dbh}->prepare($sql) or die $self->{dbh}->errstr;
 		$sth2->execute or die $sth2->errstr;
 		@done = ();
@@ -1515,6 +1583,7 @@ sub _foreign_key
 				push(@{$link{$row->[0]}{remote}{$r->[0]}}, $r->[1]);
 				push(@done, $r->[1]);
 			}
+
 		}
 	}
 
@@ -1624,7 +1693,7 @@ sub _get_all_grants
 
 
 
-=head2 _get_indexes TABLE
+=head2 _get_indexes TABLE OWNER
 
 This function implements a Oracle-native indexes information.
 
@@ -1636,11 +1705,21 @@ given table.
 
 sub _get_indexes
 {
-	my($self, $table) = @_;
+	my ($self, $table, $owner) = @_;
 
+	my $sub_owner = '';
+	if ($owner) {
+		$owner = "AND dba_indexes.OWNER='$owner' AND dba_ind_columns.INDEX_OWNER=dba_indexes.OWNER";
+		$sub_owner = "AND OWNER=dba_indexes.TABLE_OWNER";
+	}
 	# Retrieve all indexes 
-	my $str = "SELECT DISTINCT DBA_IND_COLUMNS.INDEX_NAME, DBA_IND_COLUMNS.COLUMN_NAME, DBA_INDEXES.UNIQUENESS FROM DBA_IND_COLUMNS, DBA_INDEXES WHERE DBA_IND_COLUMNS.TABLE_NAME='$table' AND DBA_INDEXES.INDEX_NAME=DBA_IND_COLUMNS.INDEX_NAME AND DBA_IND_COLUMNS.INDEX_NAME NOT IN (SELECT CONSTRAINT_NAME FROM ALL_CONSTRAINTS WHERE TABLE_NAME='$table')";
-	my $sth = $self->{dbh}->prepare($str) or die $self->{dbh}->errstr;
+	my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
+SELECT DISTINCT dba_ind_columns.INDEX_NAME, dba_ind_columns.COLUMN_NAME, dba_indexes.UNIQUENESS
+FROM dba_ind_columns, dba_indexes
+WHERE dba_ind_columns.TABLE_NAME='$table' $owner
+AND dba_indexes.INDEX_NAME=dba_ind_columns.INDEX_NAME
+AND dba_ind_columns.INDEX_NAME NOT IN (SELECT CONSTRAINT_NAME FROM all_constraints WHERE TABLE_NAME='$table' $sub_owner)
+END
 	$sth->execute or die $sth->errstr;
 
 	my %data = ();
@@ -1852,7 +1931,7 @@ sub _get_packages
 print STDERR "\tFound Package: $row->[0]\n" if ($self->{debug});
 		next if (grep(/^$row->[0]$/, @fct_done));
 		push(@fct_done, $row->[0]);
-		my $sql = "SELECT TEXT FROM DBA_SOURCE WHERE OWNER='$row->[1]' AND NAME='$row->[0]' ORDER BY LINE";
+		my $sql = "SELECT TEXT FROM DBA_SOURCE WHERE OWNER='$row->[1]' AND NAME='$row->[0]' AND (TYPE='PACKAGE' OR TYPE='PACKAGE BODY') ORDER BY TYPE, LINE";
 		my $sth2 = $self->{dbh}->prepare($sql) or die $self->{dbh}->errstr;
 		$sth2->execute or die $sth2->errstr;
 		while (my $r = $sth2->fetch) {

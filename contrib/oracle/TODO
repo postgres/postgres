@@ -1,6 +1,5 @@
 The following need your contribution :
 
-	- Fix problem regarding table/constraint output order.
 	- SQL queries converter.
 	- PL/SQL code converter.
 
