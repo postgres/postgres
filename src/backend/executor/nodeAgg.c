@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.122 2004/06/06 00:41:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.123 2004/07/10 18:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,7 +674,6 @@ agg_retrieve_direct(AggState *aggstate)
 	AggStatePerGroup pergroup;
 	TupleTableSlot *outerslot;
 	TupleTableSlot *firstSlot;
-	TupleTableSlot *resultSlot;
 	int			aggno;
 
 	/*
@@ -696,11 +695,8 @@ agg_retrieve_direct(AggState *aggstate)
 	 * We loop retrieving groups until we find one matching
 	 * aggstate->ss.ps.qual
 	 */
-	do
+	while (!aggstate->agg_done)
 	{
-		if (aggstate->agg_done)
-			return NULL;
-
 		/*
 		 * If we don't already have the first tuple of the new group,
 		 * fetch it from the outer plan.
@@ -815,7 +811,7 @@ agg_retrieve_direct(AggState *aggstate)
 		/*
 		 * If we have no first tuple (ie, the outerPlan didn't return
 		 * anything), create a dummy all-nulls input tuple for use by
-		 * ExecProject. 99.44% of the time this is a waste of cycles,
+		 * ExecQual/ExecProject. 99.44% of the time this is a waste of cycles,
 		 * because ordinarily the projected output tuple's targetlist
 		 * cannot contain any direct (non-aggregated) references to input
 		 * columns, so the dummy tuple will not be referenced. However
@@ -857,22 +853,28 @@ agg_retrieve_direct(AggState *aggstate)
 		}
 
 		/*
-		 * Form a projection tuple using the aggregate results and the
-		 * representative input tuple.	Store it in the result tuple slot.
-		 * Note we do not support aggregates returning sets ...
+		 * Use the representative input tuple for any references to
+		 * non-aggregated input columns in the qual and tlist.
 		 */
 		econtext->ecxt_scantuple = firstSlot;
-		resultSlot = ExecProject(projInfo, NULL);
 
 		/*
-		 * If the completed tuple does not match the qualifications, it is
-		 * ignored and we loop back to try to process another group.
-		 * Otherwise, return the tuple.
+		 * Check the qual (HAVING clause); if the group does not match,
+		 * ignore it and loop back to try to process another group.
 		 */
+		if (ExecQual(aggstate->ss.ps.qual, econtext, false))
+		{
+			/*
+			 * Form and return a projection tuple using the aggregate results
+			 * and the representative input tuple.  Note we do not support
+			 * aggregates returning sets ...
+			 */
+			return ExecProject(projInfo, NULL);
+		}
 	}
-	while (!ExecQual(aggstate->ss.ps.qual, econtext, false));
 
-	return resultSlot;
+	/* No more groups */
+	return NULL;
 }
 
 /*
@@ -934,7 +936,6 @@ agg_retrieve_hash_table(AggState *aggstate)
 	AggStatePerGroup pergroup;
 	AggHashEntry entry;
 	TupleTableSlot *firstSlot;
-	TupleTableSlot *resultSlot;
 	int			aggno;
 
 	/*
@@ -952,11 +953,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 	 * We loop retrieving groups until we find one satisfying
 	 * aggstate->ss.ps.qual
 	 */
-	do
+	while (!aggstate->agg_done)
 	{
-		if (aggstate->agg_done)
-			return NULL;
-
 		/*
 		 * Find the next entry in the hash table
 		 */
@@ -999,22 +997,28 @@ agg_retrieve_hash_table(AggState *aggstate)
 		}
 
 		/*
-		 * Form a projection tuple using the aggregate results and the
-		 * representative input tuple.	Store it in the result tuple slot.
-		 * Note we do not support aggregates returning sets ...
+		 * Use the representative input tuple for any references to
+		 * non-aggregated input columns in the qual and tlist.
 		 */
 		econtext->ecxt_scantuple = firstSlot;
-		resultSlot = ExecProject(projInfo, NULL);
 
 		/*
-		 * If the completed tuple does not match the qualifications, it is
-		 * ignored and we loop back to try to process another group.
-		 * Otherwise, return the tuple.
+		 * Check the qual (HAVING clause); if the group does not match,
+		 * ignore it and loop back to try to process another group.
 		 */
+		if (ExecQual(aggstate->ss.ps.qual, econtext, false))
+		{
+			/*
+			 * Form and return a projection tuple using the aggregate results
+			 * and the representative input tuple.  Note we do not support
+			 * aggregates returning sets ...
+			 */
+			return ExecProject(projInfo, NULL);
+		}
 	}
-	while (!ExecQual(aggstate->ss.ps.qual, econtext, false));
 
-	return resultSlot;
+	/* No more groups */
+	return NULL;
 }
 
 /* -----------------
