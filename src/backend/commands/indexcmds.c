@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.118 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.119 2004/05/08 00:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,7 +826,7 @@ ReindexTable(RangeVar *relation, bool force /* currently unused */ )
 
 	ReleaseSysCache(tuple);
 
-	if (!reindex_relation(heapOid))
+	if (!reindex_relation(heapOid, true))
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
@@ -936,7 +936,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 		StartTransactionCommand();
 		SetQuerySnapshot();		/* might be needed for functions in
 								 * indexes */
-		if (reindex_relation(relid))
+		if (reindex_relation(relid, true))
 			ereport(NOTICE,
 					(errmsg("table \"%s\" was reindexed",
 							get_rel_name(relid))));

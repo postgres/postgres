@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.122 2004/05/06 16:10:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.123 2004/05/08 00:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,20 +38,6 @@
 
 
 /*
- * We need one of these structs for each index in the relation to be
- * clustered.  It's basically the data needed by index_create() so
- * we can rebuild the indexes on the new heap.
- */
-typedef struct
-{
-	Oid			indexOID;
-	char	   *indexName;
-	IndexInfo  *indexInfo;
-	Oid			accessMethodOID;
-	Oid		   *classOID;
-} IndexAttrs;
-
-/*
  * This struct is used to pass around the information on tables to be
  * clustered. We need this so we can make a list of them when invoked without
  * a specific table/index pair.
@@ -64,6 +50,7 @@ typedef struct
 
 
 static void cluster_rel(RelToCluster *rv, bool recheck);
+static void rebuild_relation(Relation OldHeap, Oid indexOid);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
@@ -411,30 +398,99 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid)
 }
 
 /*
- * rebuild_relation: rebuild an existing relation
+ * mark_index_clustered: mark the specified index as the one clustered on
  *
- * This is shared code between CLUSTER and TRUNCATE.  In the TRUNCATE
- * case, the new relation is built and left empty.	In the CLUSTER case,
- * it is filled with data read from the old relation in the order specified
- * by the index.
+ * With indexOid == InvalidOid, will mark all indexes of rel not-clustered.
+ */
+void
+mark_index_clustered(Relation rel, Oid indexOid)
+{
+	HeapTuple	indexTuple;
+	Form_pg_index indexForm;
+	Relation	pg_index;
+	List	   *index;
+
+	/*
+	 * If the index is already marked clustered, no need to do anything.
+	 */
+	if (OidIsValid(indexOid))
+	{
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexOid),
+									0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "cache lookup failed for index %u", indexOid);
+		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		if (indexForm->indisclustered)
+		{
+			ReleaseSysCache(indexTuple);
+			return;
+		}
+
+		ReleaseSysCache(indexTuple);
+	}
+
+	/*
+	 * Check each index of the relation and set/clear the bit as needed.
+	 */
+	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
+
+	foreach(index, RelationGetIndexList(rel))
+	{
+		Oid		thisIndexOid = lfirsto(index);
+
+		indexTuple = SearchSysCacheCopy(INDEXRELID,
+										ObjectIdGetDatum(thisIndexOid),
+										0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "cache lookup failed for index %u", thisIndexOid);
+		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		/*
+		 * Unset the bit if set.  We know it's wrong because we checked
+		 * this earlier.
+		 */
+		if (indexForm->indisclustered)
+		{
+			indexForm->indisclustered = false;
+			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
+			CatalogUpdateIndexes(pg_index, indexTuple);
+			/* Ensure we see the update in the index's relcache entry */
+			CacheInvalidateRelcacheByRelid(thisIndexOid);
+		}
+		else if (thisIndexOid == indexOid)
+		{
+			indexForm->indisclustered = true;
+			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
+			CatalogUpdateIndexes(pg_index, indexTuple);
+			/* Ensure we see the update in the index's relcache entry */
+			CacheInvalidateRelcacheByRelid(thisIndexOid);
+		}
+		heap_freetuple(indexTuple);
+	}
+
+	heap_close(pg_index, RowExclusiveLock);
+}
+
+/*
+ * rebuild_relation: rebuild an existing relation in index order
  *
  * OldHeap: table to rebuild --- must be opened and exclusive-locked!
- * indexOid: index to cluster by, or InvalidOid in TRUNCATE case
+ * indexOid: index to cluster by
  *
  * NB: this routine closes OldHeap at the right time; caller should not.
  */
-void
+static void
 rebuild_relation(Relation OldHeap, Oid indexOid)
 {
 	Oid			tableOid = RelationGetRelid(OldHeap);
-	Oid			oldClusterIndex;
-	List	   *indexes;
 	Oid			OIDNewHeap;
 	char		NewHeapName[NAMEDATALEN];
 	ObjectAddress object;
 
-	/* Save the information about all indexes on the relation. */
-	indexes = get_indexattr_list(OldHeap, &oldClusterIndex);
+	/* Mark the correct index as clustered */
+	mark_index_clustered(OldHeap, indexOid);
 
 	/* Close relcache entry, but keep lock until transaction commit */
 	heap_close(OldHeap, NoLock);
@@ -459,8 +515,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/*
 	 * Copy the heap data into the new table in the desired order.
 	 */
-	if (OidIsValid(indexOid))
-		copy_heap_data(OIDNewHeap, tableOid, indexOid);
+	copy_heap_data(OIDNewHeap, tableOid, indexOid);
 
 	/* To make the new heap's data visible (probably not needed?). */
 	CommandCounterIncrement();
@@ -484,11 +539,11 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/* performDeletion does CommandCounterIncrement at end */
 
 	/*
-	 * Recreate each index on the relation.  We do not need
-	 * CommandCounterIncrement() because rebuild_indexes does it.
+	 * Rebuild each index on the relation (but not the toast table,
+	 * which is all-new at this point).  We do not need
+	 * CommandCounterIncrement() because reindex_relation does it.
 	 */
-	rebuild_indexes(tableOid, indexes,
-					(OidIsValid(indexOid) ? indexOid : oldClusterIndex));
+	reindex_relation(tableOid, false);
 }
 
 /*
@@ -587,138 +642,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	index_close(OldIndex);
 	heap_close(OldHeap, NoLock);
 	heap_close(NewHeap, NoLock);
-}
-
-/*
- * Get the necessary info about the indexes of the relation and
- * return a list of IndexAttrs structures.  Also, *OldClusterIndex
- * is set to the OID of the existing clustered index, or InvalidOid
- * if there is none.
- */
-List *
-get_indexattr_list(Relation OldHeap, Oid *OldClusterIndex)
-{
-	List	   *indexes = NIL;
-	List	   *indlist;
-
-	*OldClusterIndex = InvalidOid;
-
-	/* Ask the relcache to produce a list of the indexes of the old rel */
-	foreach(indlist, RelationGetIndexList(OldHeap))
-	{
-		Oid			indexOID = lfirsto(indlist);
-		Relation	oldIndex;
-		IndexAttrs *attrs;
-
-		oldIndex = index_open(indexOID);
-
-		attrs = (IndexAttrs *) palloc(sizeof(IndexAttrs));
-		attrs->indexOID = indexOID;
-		attrs->indexName = pstrdup(NameStr(oldIndex->rd_rel->relname));
-		attrs->accessMethodOID = oldIndex->rd_rel->relam;
-		attrs->indexInfo = BuildIndexInfo(oldIndex);
-		attrs->classOID = (Oid *)
-			palloc(sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
-		memcpy(attrs->classOID, oldIndex->rd_index->indclass,
-			   sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
-		if (oldIndex->rd_index->indisclustered)
-			*OldClusterIndex = indexOID;
-
-		index_close(oldIndex);
-
-		indexes = lappend(indexes, attrs);
-	}
-
-	return indexes;
-}
-
-/*
- * Create new indexes and swap the filenodes with old indexes.	Then drop
- * the new index (carrying the old index filenode along).
- *
- * OIDClusterIndex is the OID of the index to be marked as clustered, or
- * InvalidOid if none should be marked clustered.
- */
-void
-rebuild_indexes(Oid OIDOldHeap, List *indexes, Oid OIDClusterIndex)
-{
-	List	   *elem;
-
-	foreach(elem, indexes)
-	{
-		IndexAttrs *attrs = (IndexAttrs *) lfirst(elem);
-		Oid			oldIndexOID = attrs->indexOID;
-		Oid			newIndexOID;
-		char		newIndexName[NAMEDATALEN];
-		bool		isclustered;
-		ObjectAddress object;
-		Form_pg_index index;
-		HeapTuple	tuple;
-		Relation	pg_index;
-
-		/* Create the new index under a temporary name */
-		snprintf(newIndexName, sizeof(newIndexName),
-				 "pg_temp_%u", oldIndexOID);
-
-		/*
-		 * The new index will have primary and constraint status set to
-		 * false, but since we will only use its filenode it doesn't
-		 * matter: after the filenode swap the index will keep the
-		 * constraint status of the old index.
-		 */
-		newIndexOID = index_create(OIDOldHeap,
-								   newIndexName,
-								   attrs->indexInfo,
-								   attrs->accessMethodOID,
-								   attrs->classOID,
-								   false,
-								   false,
-								   allowSystemTableMods,
-								   false);
-		CommandCounterIncrement();
-
-		/* Swap the filenodes. */
-		swap_relfilenodes(oldIndexOID, newIndexOID);
-
-		CommandCounterIncrement();
-
-		/*
-		 * Make sure that indisclustered is correct: it should be set only
-		 * for the index specified by the caller.
-		 */
-		isclustered = (oldIndexOID == OIDClusterIndex);
-
-		pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
-		tuple = SearchSysCacheCopy(INDEXRELID,
-								   ObjectIdGetDatum(oldIndexOID),
-								   0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for index %u", oldIndexOID);
-		index = (Form_pg_index) GETSTRUCT(tuple);
-		if (index->indisclustered != isclustered)
-		{
-			index->indisclustered = isclustered;
-			simple_heap_update(pg_index, &tuple->t_self, tuple);
-			CatalogUpdateIndexes(pg_index, tuple);
-			/* Ensure we see the update in the index's relcache entry */
-			CacheInvalidateRelcacheByRelid(oldIndexOID);
-		}
-		heap_freetuple(tuple);
-		heap_close(pg_index, RowExclusiveLock);
-
-		/* Destroy new index with old filenode */
-		object.classId = RelOid_pg_class;
-		object.objectId = newIndexOID;
-		object.objectSubId = 0;
-
-		/*
-		 * The relation is local to our transaction and we know nothing
-		 * depends on it, so DROP_RESTRICT should be OK.
-		 */
-		performDeletion(&object, DROP_RESTRICT);
-
-		/* performDeletion does CommandCounterIncrement() at its end */
-	}
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.105 2004/05/07 00:24:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.106 2004/05/08 00:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,14 +490,13 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
 /*
  * TruncateRelation
  *		Removes all the rows from a relation.
- *
- * Note: This routine only does safety and permissions checks;
- * rebuild_relation in cluster.c does the actual work.
  */
 void
 TruncateRelation(const RangeVar *relation)
 {
 	Relation	rel;
+	Oid			heap_relid;
+	Oid			toast_relid;
 
 	/* Grab exclusive lock in preparation for truncate */
 	rel = heap_openrv(relation, AccessExclusiveLock);
@@ -521,6 +520,16 @@ TruncateRelation(const RangeVar *relation)
 						RelationGetRelationName(rel))));
 
 	/*
+	 * We can never allow truncation of shared or nailed-in-cache relations,
+	 * because we can't support changing their relfilenode values.
+	 */
+	if (rel->rd_rel->relisshared || rel->rd_isnailed)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot truncate system relation \"%s\"",
+						RelationGetRelationName(rel))));
+
+	/*
 	 * Don't allow truncate on temp tables of other backends ... their
 	 * local buffer manager is not going to cope.
 	 */
@@ -535,17 +544,31 @@ TruncateRelation(const RangeVar *relation)
 	heap_truncate_check_FKs(rel);
 
 	/*
-	 * Do the real work using the same technique as cluster, but without
-	 * the data-copying portion
+	 * Okay, here we go: create a new empty storage file for the relation,
+	 * and assign it as the relfilenode value.  The old storage file is
+	 * scheduled for deletion at commit.
 	 */
-	rebuild_relation(rel, InvalidOid);
+	setNewRelfilenode(rel);
 
-	/* NB: rebuild_relation does heap_close() */
+	heap_relid = RelationGetRelid(rel);
+	toast_relid = rel->rd_rel->reltoastrelid;
+
+	heap_close(rel, NoLock);
 
 	/*
-	 * You might think we need to truncate the rel's toast table here too,
-	 * but actually we don't; it will have been rebuilt in an empty state.
+	 * The same for the toast table, if any.
 	 */
+	if (OidIsValid(toast_relid))
+	{
+		rel = relation_open(toast_relid, AccessExclusiveLock);
+		setNewRelfilenode(rel);
+		heap_close(rel, NoLock);
+	}
+
+	/*
+	 * Reconstruct the indexes to match, and we're done.
+	 */
+	reindex_relation(heap_relid, true);
 }
 
 /*----------
@@ -2098,14 +2121,31 @@ ATRewriteTables(List **wqueue)
 			/* Build a temporary relation and copy data */
 			Oid			OIDNewHeap;
 			char		NewHeapName[NAMEDATALEN];
-			List	   *indexes;
-			Oid			oldClusterIndex;
 			Relation	OldHeap;
 			ObjectAddress	object;
 
-			/* Save the information about all indexes on the relation. */
 			OldHeap = heap_open(tab->relid, NoLock);
-			indexes = get_indexattr_list(OldHeap, &oldClusterIndex);
+
+			/*
+			 * We can never allow rewriting of shared or nailed-in-cache
+			 * relations, because we can't support changing their relfilenode
+			 * values.
+			 */
+			if (OldHeap->rd_rel->relisshared || OldHeap->rd_isnailed)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot rewrite system relation \"%s\"",
+								RelationGetRelationName(OldHeap))));
+
+			/*
+			 * Don't allow rewrite on temp tables of other backends ... their
+			 * local buffer manager is not going to cope.
+			 */
+			if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot rewrite temporary tables of other sessions")));
+
 			heap_close(OldHeap, NoLock);
 
 			/*
@@ -2146,10 +2186,11 @@ ATRewriteTables(List **wqueue)
 			/* performDeletion does CommandCounterIncrement at end */
 
 			/*
-			 * Rebuild each index on the relation.  We do not need
-			 * CommandCounterIncrement() because rebuild_indexes does it.
+			 * Rebuild each index on the relation (but not the toast table,
+			 * which is all-new anyway).  We do not need
+			 * CommandCounterIncrement() because reindex_relation does it.
 			 */
-			rebuild_indexes(tab->relid, indexes, oldClusterIndex);
+			reindex_relation(tab->relid, false);
 		}
 		else
 		{
@@ -4991,11 +5032,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 static void
 ATExecClusterOn(Relation rel, const char *indexName)
 {
-	Relation	pg_index;
-	List	   *index;
 	Oid			indexOid;
-	HeapTuple	indexTuple;
-	Form_pg_index indexForm;
 
 	indexOid = get_relname_relid(indexName, rel->rd_rel->relnamespace);
 
@@ -5008,67 +5045,8 @@ ATExecClusterOn(Relation rel, const char *indexName)
 	/* Check index is valid to cluster on */
 	check_index_is_clusterable(rel, indexOid);
 
-	indexTuple = SearchSysCache(INDEXRELID,
-								ObjectIdGetDatum(indexOid),
-								0, 0, 0);
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexOid);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	/*
-	 * If this is the same index the relation was previously clustered on,
-	 * no need to do anything.
-	 */
-	if (indexForm->indisclustered)
-	{
-		ReleaseSysCache(indexTuple);
-		return;
-	}
-
-	ReleaseSysCache(indexTuple);
-
-	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
-
-	/*
-	 * Now check each index in the relation and set the bit where needed.
-	 */
-	foreach(index, RelationGetIndexList(rel))
-	{
-		HeapTuple	idxtuple;
-		Form_pg_index idxForm;
-
-		indexOid = lfirsto(index);
-		idxtuple = SearchSysCacheCopy(INDEXRELID,
-									  ObjectIdGetDatum(indexOid),
-									  0, 0, 0);
-		if (!HeapTupleIsValid(idxtuple))
-			elog(ERROR, "cache lookup failed for index %u", indexOid);
-		idxForm = (Form_pg_index) GETSTRUCT(idxtuple);
-
-		/*
-		 * Unset the bit if set.  We know it's wrong because we checked
-		 * this earlier.
-		 */
-		if (idxForm->indisclustered)
-		{
-			idxForm->indisclustered = false;
-			simple_heap_update(pg_index, &idxtuple->t_self, idxtuple);
-			CatalogUpdateIndexes(pg_index, idxtuple);
-			/* Ensure we see the update in the index's relcache entry */
-			CacheInvalidateRelcacheByRelid(indexOid);
-		}
-		else if (idxForm->indexrelid == indexForm->indexrelid)
-		{
-			idxForm->indisclustered = true;
-			simple_heap_update(pg_index, &idxtuple->t_self, idxtuple);
-			CatalogUpdateIndexes(pg_index, idxtuple);
-			/* Ensure we see the update in the index's relcache entry */
-			CacheInvalidateRelcacheByRelid(indexOid);
-		}
-		heap_freetuple(idxtuple);
-	}
-
-	heap_close(pg_index, RowExclusiveLock);
+	/* And do the work */
+	mark_index_clustered(rel, indexOid);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.229 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.230 2004/05/08 00:34:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1729,12 +1729,13 @@ reindex_index(Oid indexId)
 
 /*
  * reindex_relation - This routine is used to recreate all indexes
- * of a relation (and its toast relation too, if any).
+ * of a relation (and optionally its toast relation too, if any).
  *
- * Returns true if any indexes were rebuilt.
+ * Returns true if any indexes were rebuilt.  Note that a
+ * CommandCounterIncrement will occur after each index rebuild.
  */
 bool
-reindex_relation(Oid relid)
+reindex_relation(Oid relid, bool toast_too)
 {
 	Relation	rel;
 	Oid			toast_relid;
@@ -1810,8 +1811,8 @@ reindex_relation(Oid relid)
 	 * If the relation has a secondary toast rel, reindex that too while we
 	 * still hold the lock on the master table.
 	 */
-	if (toast_relid != InvalidOid)
-		result |= reindex_relation(toast_relid);
+	if (toast_too && OidIsValid(toast_relid))
+		result |= reindex_relation(toast_relid, false);
 
 	return result;
 }
