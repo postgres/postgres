@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.22 1999/02/05 19:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.23 1999/02/05 20:34:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ prune_joinrels(List *rel_list)
 static List *
 prune_joinrel(RelOptInfo *rel, List *other_rels)
 {
-	List	   *r1 = NIL;
+	List	   *i = NIL;
 	List	   *result = NIL;
 
 	foreach(i, other_rels)
