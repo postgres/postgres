@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.208 2004/12/19 02:16:18 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.209 2005/01/26 19:23:59 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -384,9 +384,10 @@ override LDFLAGS := -L$(top_builddir)/src/port $(LDFLAGS)
 endif
 endif
 
-# to make ws2_32.lib the last library
+# to make ws2_32.lib the last library, and always link with shfolder,
+# so SHGetFolderName isn't picked up from shell32.dll
 ifeq ($(PORTNAME),win32)
-LIBS += -lws2_32
+LIBS += -lws2_32 -lshfolder
 endif
 
 # Not really standard libc functions, used by the backend.
