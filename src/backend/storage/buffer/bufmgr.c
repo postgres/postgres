@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.75 2000/02/21 18:49:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.76 2000/03/14 22:46:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2072,12 +2072,14 @@ void
 LockBuffer(Buffer buffer, int mode)
 {
 	BufferDesc *buf;
+	bits8 *buflock;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
 		return;
 
 	buf = &(BufferDescriptors[buffer - 1]);
+	buflock = &(BufferLocks[buffer - 1]);
 
 #ifdef HAS_TEST_AND_SET
 	S_LOCK(&(buf->cntx_lock));
@@ -2087,21 +2089,21 @@ LockBuffer(Buffer buffer, int mode)
 
 	if (mode == BUFFER_LOCK_UNLOCK)
 	{
-		if (BufferLocks[buffer - 1] & BL_R_LOCK)
+		if (*buflock & BL_R_LOCK)
 		{
 			Assert(buf->r_locks > 0);
 			Assert(!(buf->w_lock));
-			Assert(!(BufferLocks[buffer - 1] & (BL_W_LOCK | BL_RI_LOCK)))
-				(buf->r_locks)--;
-			BufferLocks[buffer - 1] &= ~BL_R_LOCK;
+			Assert(!(*buflock & (BL_W_LOCK | BL_RI_LOCK)));
+			(buf->r_locks)--;
+			*buflock &= ~BL_R_LOCK;
 		}
-		else if (BufferLocks[buffer - 1] & BL_W_LOCK)
+		else if (*buflock & BL_W_LOCK)
 		{
 			Assert(buf->w_lock);
 			Assert(buf->r_locks == 0);
-			Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_RI_LOCK)))
-				buf->w_lock = false;
-			BufferLocks[buffer - 1] &= ~BL_W_LOCK;
+			Assert(!(*buflock & (BL_R_LOCK | BL_RI_LOCK)));
+			buf->w_lock = false;
+			*buflock &= ~BL_W_LOCK;
 		}
 		else
 			elog(ERROR, "UNLockBuffer: buffer %lu is not locked", buffer);
@@ -2110,7 +2112,7 @@ LockBuffer(Buffer buffer, int mode)
 	{
 		unsigned	i = 0;
 
-		Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
+		Assert(!(*buflock & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
 		while (buf->ri_lock || buf->w_lock)
 		{
 #ifdef HAS_TEST_AND_SET
@@ -2124,16 +2126,16 @@ LockBuffer(Buffer buffer, int mode)
 #endif
 		}
 		(buf->r_locks)++;
-		BufferLocks[buffer - 1] |= BL_R_LOCK;
+		*buflock |= BL_R_LOCK;
 	}
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
 	{
 		unsigned	i = 0;
 
-		Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
+		Assert(!(*buflock & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
 		while (buf->r_locks > 0 || buf->w_lock)
 		{
-			if (buf->r_locks > 3 || (BufferLocks[buffer - 1] & BL_RI_LOCK))
+			if (buf->r_locks > 3 || (*buflock & BL_RI_LOCK))
 			{
 				/*
 				 * Our RI lock might be removed by concurrent W lock
@@ -2141,7 +2143,7 @@ LockBuffer(Buffer buffer, int mode)
 				 * when our own W acquiring succeeded) and so
 				 * we set RI lock again if we already did this.
 				 */
-				BufferLocks[buffer - 1] |= BL_RI_LOCK;
+				*buflock |= BL_RI_LOCK;
 				buf->ri_lock = true;
 			}
 #ifdef HAS_TEST_AND_SET
@@ -2155,15 +2157,15 @@ LockBuffer(Buffer buffer, int mode)
 #endif
 		}
 		buf->w_lock = true;
-		BufferLocks[buffer - 1] |= BL_W_LOCK;
-		if (BufferLocks[buffer - 1] & BL_RI_LOCK)
+		*buflock |= BL_W_LOCK;
+		if (*buflock & BL_RI_LOCK)
 		{
 			/*
 			 * It's possible to remove RI locks acquired by another
 			 * W lockers here, but they'll take care about it.
 			 */
 			buf->ri_lock = false;
-			BufferLocks[buffer - 1] &= ~BL_RI_LOCK;
+			*buflock &= ~BL_RI_LOCK;
 		}
 	}
 	else
