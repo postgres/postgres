@@ -37,6 +37,12 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpq.pch"
 	-@erase "$(OUTDIR)\libpqdll.exp"
 	-@erase "$(OUTDIR)\libpqdll.lib"
+!IFDEF MULTIBYTE
+	-@erase "$(INTDIR)\common.obj"
+	-@erase "$(INTDIR)\wchar.obj"
+	-@erase "$(INTDIR)\conv.obj"
+	-@erase "$(INTDIR)\big5.obj"
+!ENDIF
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -67,7 +73,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-print.obj"
 
 !IFDEF MULTIBYTE
-LIB32_OBJS = $(LIB32_OBJS) $(INTDIR)\common.obj $(INTDIR)\wchar.obj $(INTDIR)\conv.obj
+LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\common.obj" "$(INTDIR)\wchar.obj" "$(INTDIR)\conv.obj" "$(INTDIR)\big5.obj"
 !ENDIF
 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
@@ -103,7 +109,30 @@ LINK32_OBJS= \
     $(CPP) @<<
     $(CPP_PROJ) ..\..\backend\lib\dllist.c
 <<
+
     
+!IFDEF MULTIBYTE
+"$(INTDIR)\common.obj" : ..\..\backend\utils\mb\common.c
+    $(CPP) @<<
+    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\common.c
+<<
+
+"$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
+    $(CPP) @<<
+    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
+<<
+
+"$(INTDIR)\conv.obj" : ..\..\backend\utils\mb\conv.c
+    $(CPP) @<<
+    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\conv.c
+<<
+
+"$(INTDIR)\big5.obj" : ..\..\backend\utils\mb\big5.c
+    $(CPP) @<<
+    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\big5.c
+<<
+!ENDIF
+
 
 .c{$(CPP_OBJS)}.obj::
    $(CPP) @<<
