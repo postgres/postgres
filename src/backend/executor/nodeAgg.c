@@ -117,8 +117,7 @@ ExecAgg(Agg *node)
 	 */
 
 	/*
-	 * We loop retrieving groups until we find one matching
-	 * node->plan.qual
+	 * We loop retrieving groups until we find one matching node->plan.qual
 	 */
 	do
 	{
@@ -141,14 +140,14 @@ ExecAgg(Agg *node)
 		MemSet(aggFuncInfo, 0, sizeof(AggFuncInfo) * nagg);
 
 		noInitValue = (int *) palloc(sizeof(int) * nagg);
-		MemSet(noInitValue, 0, sizeof(noInitValue) * nagg);
+		MemSet(noInitValue, 0, sizeof(int) * nagg);
 
 		outerPlan = outerPlan(node);
 		oneTuple = NULL;
 
 		projInfo = aggstate->csstate.cstate.cs_ProjInfo;
 
-		aggno = 0;
+		aggno = -1;
 		foreach(alist, node->aggs)
 		{
 			Aggref	   *aggref = lfirst(alist);
@@ -159,6 +158,8 @@ ExecAgg(Agg *node)
 						xfn2_oid,
 						finalfn_oid;
 
+			aggno++;
+			
 			/* ---------------------
 			 *	find transfer functions of all the aggregates and initialize
 			 *	their initial values
@@ -226,7 +227,6 @@ ExecAgg(Agg *node)
 					nulls[aggno] = 1;
 				}
 			}
-			aggno++;
 		}
 
 		/* ----------------
@@ -257,7 +257,7 @@ ExecAgg(Agg *node)
 					tupValue = projInfo->pi_tupValue;
 
 					/* initially, set all the values to NULL */
-					null_array = palloc(tupType->natts);
+					null_array = palloc(sizeof(char) * tupType->natts);
 					for (aggno = 0; aggno < tupType->natts; aggno++)
 						null_array[aggno] = 'n';
 					oneTuple = heap_formtuple(tupType, tupValue, null_array);
@@ -266,14 +266,14 @@ ExecAgg(Agg *node)
 				break;
 			}
 
-			aggno = 0;
+			aggno = -1;
 			foreach(alist, node->aggs)
 			{
 				Aggref	   *aggref = lfirst(alist);
 				AttrNumber	attnum;
 				int2		attlen = 0;
 				Datum		newVal = (Datum) NULL;
-				AggFuncInfo *aggfns = &aggFuncInfo[aggno];
+				AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
 				Datum		args[2];
 				Node	   *tagnode = NULL;
 
@@ -388,7 +388,6 @@ ExecAgg(Agg *node)
 									 (FmgrValues *) &xfn2_val, &isNull2);
 					Assert(!isNull2);
 				}
-				aggno++;
 			}
 
 			/*
@@ -407,11 +406,11 @@ ExecAgg(Agg *node)
 		 * --------------
 		 */
 
-		aggno = 0;
+		aggno = -1;
 		foreach(alist, node->aggs)
 		{
 			char	   *args[2];
-			AggFuncInfo *aggfns = &aggFuncInfo[aggno];
+			AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
 
 			if (noInitValue[aggno])
 			{
@@ -450,7 +449,6 @@ ExecAgg(Agg *node)
 				value1[aggno] = value2[aggno];
 			else
 				elog(ERROR, "ExecAgg: no valid transition functions??");
-			aggno++;
 		}
 
 		/*
@@ -539,10 +537,10 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
 	econtext->ecxt_values =
-		(Datum *) palloc(sizeof(Datum) * length(node->aggs));
+					(Datum *) palloc(sizeof(Datum) * length(node->aggs));
 	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
-	econtext->ecxt_nulls = (char *) palloc(length(node->aggs));
-	MemSet(econtext->ecxt_nulls, 0, length(node->aggs));
+	econtext->ecxt_nulls = (char *) palloc(sizeof(char) * length(node->aggs));
+	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(node->aggs));
 
 	/*
 	 * initializes child nodes
@@ -583,8 +581,8 @@ int
 ExecCountSlotsAgg(Agg *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
-	ExecCountSlotsNode(innerPlan(node)) +
-	AGG_NSLOTS;
+			ExecCountSlotsNode(innerPlan(node)) +
+			AGG_NSLOTS;
 }
 
 /* ------------------------
@@ -654,8 +652,8 @@ aggGetAttr(TupleTableSlot *slot,
 		tempSlot = makeNode(TupleTableSlot);
 		tempSlot->ttc_shouldFree = false;
 		tempSlot->ttc_descIsNew = true;
-		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL,
-			tempSlot->ttc_buffer = InvalidBuffer;
+		tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL;
+		tempSlot->ttc_buffer = InvalidBuffer;
 		tempSlot->ttc_whichplan = -1;
 
 		tup = heap_copytuple(heapTuple);
@@ -691,7 +689,7 @@ ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
 
 	aggstate->agg_done = FALSE;
 	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
-	MemSet(econtext->ecxt_nulls, 0, length(node->aggs));
+	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(node->aggs));
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
