@@ -1,13 +1,15 @@
 #
-# Example PostgreSQL host access control file.
+#
+#                   PostgreSQL HOST ACCESS CONTROL FILE
 #
 # 
 # This file controls what hosts are allowed to connect to what databases
-# and specifies some options on how users on a particular host are identified.
-# It is read each time a host tries to make a connection to a database.
-# 
-# Each line (terminated by a newline character) is a record.  A record cannot
-# be continued across two lines.
+# and specifies some options on how users on a particular host are
+# identified. It is read each time a host tries to make a connection to a
+# database.
+#
+# Each line (terminated by a newline character) is a record. A record
+# cannot be continued across two lines.
 # 
 # There are 3 kinds of records:
 # 
@@ -15,81 +17,50 @@
 # 
 #   2) empty:  Contains nothing excepting spaces and tabs.
 # 
-#   3) content: anything else.  
+#   3) record: anything else.  
 # 
-# Unless specified otherwise, "record" from here on means a content
-# record.
-# 
-# A record consists of tokens separated by spaces or tabs.  Spaces and
+# Only record lines are significant.
+#
+# A record consists of tokens separated by spaces or tabs. Spaces and
 # tabs at the beginning and end of a record are ignored as are extra
 # spaces and tabs between two tokens.
-# 
-# The first token in a record is the record type.  The interpretation of the
-# rest of the record depends on the record type.
-# 
+#
+# The first token in a record is the record type. The interpretation of
+# the rest of the record depends on the record type.
+
+
 # Record type "host"
 # ------------------
 # 
-# This record identifies a set of network hosts that are permitted to connect
-# to databases.  No network hosts are permitted to connect except as specified
-# by a "host" record.  See the record type "local" to specify permitted
-# connections using UNIX sockets.
+# This record identifies a set of network hosts that are permitted to
+# connect to databases. No network hosts are permitted to connect except
+# as specified by a "host" record. See the record type "local" to specify
+# permitted connections for local users via UNIX domain sockets.
 #
 # Format:
 # 
 #   host DBNAME IP_ADDRESS ADDRESS_MASK AUTHTYPE [AUTH_ARGUMENT]
 # 
-# DBNAME is the name of a PostgreSQL database, "all" to indicate all 
-# databases, or "sameuser" to restrict a user's access to a database
-# with the same user name.
-# 
-# IP_ADDRESS and ADDRESS_MASK are a standard dotted decimal IP address and
-# mask to identify a set of hosts.  These hosts are allowed to connect to 
-# Database DBNAME. 
-# 
-# AUTHTYPE is a keyword indicating the method used to authenticate the 
-# user, i.e. to determine that the principal is authorized to connect
-# under the PostgreSQL username he supplies in his connection parameters.
+# DBNAME is the name of a PostgreSQL database, "all" to indicate all
+# databases, or "sameuser" to restrict a user's access to a database with
+# the same user name.
 #
-#   ident:  Authentication is done by the ident server on the remote
-#           host, via the ident (RFC 1413) protocol.  AUTH_ARGUMENT, if
-#           specified, is a map name to be found in the pg_ident.conf file.
-#           That table maps from ident usernames to PostgreSQL usernames.  The
-#           special map name "sameuser" indicates an implied map (not found
-#           in pg_ident.conf) that maps every ident username to the identical
-#           PostgreSQL username.
-#
-#   trust:  No authentication is done.  Trust that the user has the 
-#           authority to use whatever username he specifies.  Before 
-#           PostgreSQL version 6, all authentication was done this way.
-#
-#   reject: Reject the connection.
-#
-#   password:  Authentication is done by matching a password supplied in clear
-#	       by the host.  If AUTH_ARGUMENT is specified then the password
-#              is compared with the user's entry in that file (in the $PGDATA
-#	       directory).  See pg_passwd(1).  If it is omitted then the
-#	       password is compared with the user's entry in the pg_shadow
-#	       table.
-#
-#   crypt:  Authentication is done by matching an encrypted password supplied
-#	    by the host with that held for the user in the pg_shadow table.
-#
-#   krb4:   Kerberos V4 authentication is used.
-#
-#   krb5:   Kerberos V5 authentication is used.
+# IP_ADDRESS and ADDRESS_MASK are a standard dotted decimal IP address
+# and mask to identify a set of hosts. These hosts are allowed to connect
+# to Database DBNAME. There is a separate section about AUTHTYPE below.
+
 
 # Record type "hostssl"
 # ---------------------
 #
+# The format of this record is identical to that of "host".
+#
 # This record identifies the authentication to use when connecting to a
 # particular database via TCP/IP sockets over SSL. Note that normal
 # "host" records are also matched - "hostssl" records can be used to
-# require a SSL connection.
-# This keyword is only available if the server is compiled with SSL support
-# enabled.
-#
-# The format of this record is identical to that of "host".
+# require a SSL connection. This keyword is only available if the server
+# is compiled with SSL support enabled.
+
 
 # Record type "local"
 # ------------------
@@ -101,43 +72,86 @@
 # 
 #   local DBNAME AUTHTYPE [AUTH_ARGUMENT]
 #
-# The format is the same as that of the "host" record type except that the
-# IP_ADDRESS and ADDRESS_MASK are omitted and the "ident", "krb4" and "krb5"
-# values of AUTHTYPE are not allowed.
+# The format is the same as that of the "host" record type except that
+# the IP_ADDRESS and ADDRESS_MASK are omitted. Local supports only
+# AUTHTYPEs "trust", "password", "crypt", and "reject".
 
-# For backwards compatibility, PostgreSQL also accepts pre-version 6 records,
-# which look like:
-# 
-#   all         127.0.0.1    0.0.0.0
 
+# Authentication Types (AUTHTYPE)
+# -------------------------------
+#
+# AUTHTYPE is a keyword indicating the method used to authenticate the
+# user, i.e. to determine that the user is authorized to connect under
+# the PostgreSQL username supplied in his connection parameters.
+#
+#   trust:  	No authentication is done. Trust that the user has the
+#   		authority to use whatever username he specifies.
+#
+#   password:	Authentication is done by matching a password supplied
+#   		in clear by the host. If AUTH_ARGUMENT is specified then
+#   		the password is compared with the user's entry in that
+#   		file (in the $PGDATA directory). See pg_passwd(1). If it
+#   		is omitted then the password is compared with the user's
+#   		entry in the pg_shadow table.
+#
+#   crypt:  	Same as 'password', but authentication is done by
+#   		encrypting the password sent over the network.
+#
+#   ident:  	Authentication is done by the ident server on the remote
+#   		host, via the ident (RFC 1413) protocol. AUTH_ARGUMENT,
+#   		if specified, is a map name to be found in the
+#   		pg_ident.conf file. That table maps from ident usernames
+#   		to PostgreSQL usernames. The special map name "sameuser"
+#   		indicates an implied map (not found in pg_ident.conf)
+#   		that maps every ident username to the identical
+#   		PostgreSQL username.
+#
+#   krb4:   	Kerberos V4 authentication is used.
+#
+#   krb5:   	Kerberos V5 authentication is used.
+#
+#   reject: 	Reject the connection.
+
+
+# Examples
+# --------
+#
 # TYPE       DATABASE    IP_ADDRESS    MASK                AUTHTYPE  MAP
- 
+# 
 #host         all         127.0.0.1    255.255.255.255     trust     
- 
-# The above allows any user on the local system to connect to any database
-# under any username.
- 
+# 
+# The above allows any user on the local system to connect to any
+# database under any username.
+#
 #host         template1   192.168.93.0 255.255.255.0       ident     sameuser
- 
+# 
 # The above allows any user from any host with IP address 192.168.93.x to
-# connect to database template1 as the same username that ident on that host
-# identifies him as (typically his Unix username).  
-
+# connect to database template1 as the same username that ident on that
+# host identifies him as (typically his Unix username).
+#
+#host         template1   192.168.12.10 255.255.255.255    crypt
+# 
+# The above allows a user from host 192.168.12.10 to connect to
+# database template1 if the password assigned to that user is
+# supplied. User passwords are optionally assigned when a 
+# user is created.
+#
 #host         all        192.168.54.1  255.255.255.255     reject
 #host         all        0.0.0.0       0.0.0.0             trust
-
-# The above would allow anyone anywhere except from 192.168.54.1 to connect to
-# any database under any username.
-
+#
+# The above would allow anyone anywhere except from 192.168.54.1 to
+# connect to any database under any username.
+#
 #host         all        192.168.77.0  255.255.255.0       ident     omicron
 #
 # The above would allow users from 192.168.77.x hosts to connect to any
 # database, but if Ident says the user is "bryanh" and he requests to
 # connect as PostgreSQL user "guest1", the connection is only allowed if
-# there is an entry for map "omicron" in pg_ident.conf that says "bryanh" is 
-# allowed to connect as "guest1".
+# there is an entry for map "omicron" in pg_ident.conf that says "bryanh"
+# is allowed to connect as "guest1".
+#
+
 
 # By default, allow anything over UNIX domain sockets and localhost.
-
 local        all                                           trust
 host         all         127.0.0.1     255.255.255.255     trust
