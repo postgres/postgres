@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.18 2001/03/22 04:00:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.19 2001/05/06 17:21:11 petere Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -32,9 +32,9 @@
  * (might not be completely multibyte safe)
  *
  * Defined interpolations are:
- * %M - database server "hostname.domainname" (or "localhost" if this
- *	information is not available)
- * %m - like %M, but hostname only (before first dot)
+ * %M - database server "hostname.domainname", "[local]" for AF_UNIX
+ *      sockets, "[local:/dir/name]" if not default
+ * %m - like %M, but hostname only (before first dot), or always "[local]"
  * %> - database server port number
  * %n - database user name
  * %/ - current database
@@ -60,52 +60,6 @@
  * will be empty (not NULL!).
  *--------------------------
  */
-
-/*
- * We need hostname information, only if connection is via UNIX socket
- */
-#ifdef HAVE_UNIX_SOCKETS
-
-#define DOMAINNAME	1
-#define HOSTNAME	2
-
-/*
- * Return full hostname for localhost.
- *	- informations are init only in firts time - not queries DNS or NIS
- *	  for every localhost() call
- */
-static char *
-localhost(int type, char *buf, int siz)
-{
-	static struct hostent *hp = NULL;
-	static int	err = 0;
-
-	if (hp == NULL && err == 0)
-	{
-		char		hname[256];
-
-		if (gethostname(hname, 256) == 0)
-		{
-			if (!(hp = gethostbyname(hname)))
-				err = 1;
-		}
-		else
-			err = 1;
-	}
-
-	if (hp == NULL)
-		return strncpy(buf, "localhost", siz);
-
-	strncpy(buf, hp->h_name, siz);		/* full aaa.bbb.ccc */
-
-	if (type == HOSTNAME)
-		buf[strcspn(buf, ".")] = '\0';
-
-	return buf;
-}
-
-#endif	 /* HAVE_UNIX_SOCKETS */
-
 
 char *
 get_prompt(promptStatus_t status)
@@ -166,23 +120,25 @@ get_prompt(promptStatus_t status)
 				case 'm':
 					if (pset.db)
 					{
+						const char * host = PQhost(pset.db);
+
 						/* INET socket */
-						if (PQhost(pset.db))
+						if (host && host[0] && host[0] != '/')
 						{
-							strncpy(buf, PQhost(pset.db), MAX_PROMPT_SIZE);
+							strncpy(buf, host, MAX_PROMPT_SIZE);
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
 						/* UNIX socket */
-#ifdef HAVE_UNIX_SOCKETS
 						else
 						{
-							if (*p == 'm')
-								localhost(HOSTNAME, buf, MAX_PROMPT_SIZE);
+							if (!host
+								|| strcmp(host, DEFAULT_PGSOCKET_DIR)==0
+								|| *p == 'm')
+								strncpy(buf, "[local]", MAX_PROMPT_SIZE);
 							else
-								localhost(DOMAINNAME, buf, MAX_PROMPT_SIZE);
+								snprintf(buf, MAX_PROMPT_SIZE, "[local:%s]", host);
 						}
-#endif	 /* HAVE_UNIX_SOCKETS */
 					}
 					break;
 					/* DB server port number */
