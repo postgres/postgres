@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.18 2000/02/07 03:39:13 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.19 2000/03/11 06:19:00 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2510,30 +2510,35 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	if (plan == NULL)			/* utility statement produces this */
 		return;
 
-	if (nodeTag(plan) != T_Result)
+	if (! IsA(plan, Result))
 		return;
 
 	/* ----------
-	 * 3. The plan must have a single attribute as result
+	 * 3. Can't have any subplan or qual clause, either
+	 * ----------
+	 */
+	if (plan->lefttree != NULL ||
+		plan->righttree != NULL ||
+		plan->initPlan != NULL ||
+		plan->subPlan != NULL ||
+		plan->qual != NULL ||
+		((Result *) plan)->resconstantqual != NULL)
+		return;
+
+	/* ----------
+	 * 4. The plan must have a single attribute as result
 	 * ----------
 	 */
 	if (length(plan->targetlist) != 1)
 		return;
 
-	/* ----------
-	 * 4. Don't know if all these can break us, so let SPI handle
-	 *	  those plans
-	 * ----------
-	 */
-	if (plan->qual != NULL || plan->lefttree != NULL || plan->righttree != NULL)
-		return;
+	tle = (TargetEntry *) lfirst(plan->targetlist);
 
 	/* ----------
 	 * 5. Check that all the nodes in the expression are one of
 	 *	  Expr, Param or Const.
 	 * ----------
 	 */
-	tle = (TargetEntry *) lfirst(plan->targetlist);
 	if (!exec_simple_check_node(tle->expr))
 		return;
 
@@ -2563,8 +2568,6 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 		default:
 			expr->plan_simple_type = InvalidOid;
 	}
-
-	return;
 }
 
 
