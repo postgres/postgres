@@ -70,7 +70,7 @@ do
 			if (line1 ~ "^extern[ 	]*\"C\"" &&
 			    line2 ~ "^{[ 	]*$")
 			{
-				# don't print first line
+				# do not print first line
 				print "/* Open extern \"C\" */";
 				line2 = "";
 				skips = 2;
