@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.97 2002/06/22 02:04:45 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.98 2002/08/04 06:36:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static char *litbufdup(void);
  * When we parse a token that requires multiple lexer rules to process,
  * we set token_start to point at the true start of the token, for use
  * by yyerror().  yytext will point at just the text consumed by the last
- * rule, so it's not very helpful (eg, it might contain just the last
+ * rule, so it's not very helpful (e.g., it might contain just the last
  * quote mark of a quoted identifier).  But to avoid cluttering every rule
  * with setting token_start, we allow token_start = NULL to denote that
  * it's okay to use yytext.
@@ -93,10 +93,10 @@ unsigned char unescape_single_char(unsigned char c);
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
  *  <xb> bit string literal
- *  <xc> extended C-style comments - thomas 1997-07-12
- *  <xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
- *  <xh> hexadecimal numeric string - thomas 1997-11-16
- *  <xq> quoted strings - thomas 1997-07-30
+ *  <xc> extended C-style comments
+ *  <xd> delimited identifiers (double-quoted identifiers)
+ *  <xh> hexadecimal numeric string
+ *  <xq> quoted strings
  */
 
 %x xb
@@ -106,6 +106,13 @@ unsigned char unescape_single_char(unsigned char c);
 %x xq
 
 /* Bit string
+ * It is tempting to scan the string for only those characters
+ * which are allowed. However, this leads to silently swallowed
+ * characters if illegal characters are included in the string.
+ * For example, if xbinside is [01] then B'ABCD' is interpreted
+ * as a zero-length string, and the ABCD' is lost!
+ * Better to pass the string forward and let the input routines
+ * validate the contents.
  */
 xbstart			[bB]{quote}
 xbstop			{quote}
@@ -116,7 +123,7 @@ xbcat			{quote}{whitespace_with_newline}{quote}
  */
 xhstart			[xX]{quote}
 xhstop			{quote}
-xhinside		[^']+
+xhinside		[^']*
 xhcat			{quote}{whitespace_with_newline}{quote}
 
 /* National character
@@ -244,7 +251,7 @@ other			.
  *  style of two adjacent single quotes "''" and in the Postgres/Java style
  *  of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
- *  backslash is dropped from the string. - thomas 1997-09-24
+ *  backslash is dropped from the string.
  * Note that xcstart must appear before operator, as explained above!
  *  Also whitespace (comment) must appear before operator.
  */
@@ -291,8 +298,10 @@ other			.
 
 {xbstart}		{
 					/* Binary bit type.
-					 * Should be passing the type forward into the parser
-					 * rather than trying to embed it into the string.
+					 * At some point we should simply pass the string
+					 * forward to the parser and label it there.
+					 * In the meantime, place a leading "b" on the string
+					 * to mark it for the input routine as a binary string.
 					 */
 					token_start = yytext;
 					BEGIN(xb);
@@ -301,10 +310,8 @@ other			.
 				}
 <xb>{xbstop}	{
 					BEGIN(INITIAL);
-					if (literalbuf[strspn(literalbuf + 1, "01") + 1] != '\0')
-						yyerror("invalid bit string input");
 					yylval.str = litbufdup();
-					return BITCONST;
+					return BCONST;
 				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
@@ -314,44 +321,43 @@ other			.
 <xb>{xbcat}		{
 					/* ignore */
 				}
-<xb><<EOF>>		{ yyerror("unterminated bit string literal"); }
-
+<xb><<EOF>>		{
+					yyerror("unterminated bit string literal");
+				}
 {xhstart}		{
 					/* Hexadecimal bit type.
-					 * Should be passing the type forward into the parser
-					 * rather than trying to embed it into the string.
+					 * At some point we should simply pass the string
+					 * forward to the parser and label it there.
+					 * In the meantime, place a leading "x" on the string
+					 * to mark it for the input routine as a hex string.
 					 */
 					token_start = yytext;
 					BEGIN(xh);
 					startlit();
+					addlitchar('x');
 				}
 <xh>{xhstop}	{
-					long val;
-					char* endptr;
-
 					BEGIN(INITIAL);
-					errno = 0;
-					val = strtol(literalbuf, &endptr, 16);
-					if (*endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64
-						/* if long > 32 bits, check for overflow of int4 */
-						|| val != (long) ((int32) val)
-#endif
-						)
-						yyerror("bad hexadecimal integer input");
-					yylval.ival = val;
-					return ICONST;
+					yylval.str = litbufdup();
+					return XCONST;
 				}
-<xh><<EOF>>		{ yyerror("unterminated hexadecimal integer"); }
+<xh><<EOF>>		{ yyerror("unterminated hexadecimal string literal"); }
 
 {xnstart}		{
 					/* National character.
-					 * Need to remember type info to flow it forward into the parser.
-					 * Not yet implemented. - thomas 2002-06-17
+					 * We will pass this along as a normal character string,
+					 * but preceded with an internally-generated "NCHAR".
 					 */
+					const ScanKeyword *keyword;
+
+					/* This had better be a keyword! */
+					keyword = ScanKeywordLookup("nchar");
+					Assert(keyword != NULL);
+					yylval.keyword = keyword->name;
 					token_start = yytext;
 					BEGIN(xq);
 					startlit();
+					return keyword->value;
 				}
 
 
