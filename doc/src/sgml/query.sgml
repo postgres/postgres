@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.35 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.36 2004/08/08 01:51:05 momjian Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -284,8 +284,10 @@ COPY weather FROM '/home/user/weather.txt';
 <programlisting>
 SELECT * FROM weather;
 </programlisting>
-    (here <literal>*</literal> means <quote>all columns</quote>) and
-    the output should be:
+    (here <literal>*</literal> means <quote>all columns</quote>.
+    Note: While <literal>SELECT *</literal> is useful for off-the-cuff
+    queries, it is considered bad style in production code for
+    maintenance reasons) and the output should be:
 <screen>
      city      | temp_lo | temp_hi | prcp |    date
 ---------------+---------+---------+------+------------

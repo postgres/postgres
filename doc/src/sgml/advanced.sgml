@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.43 2004/08/07 19:53:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.44 2004/08/08 01:51:05 momjian Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -108,7 +108,7 @@ CREATE TABLE cities (
 );
 
 CREATE TABLE weather (
-	city      varchar(80) references cities,
+	city      varchar(80) references cities(city),
 	temp_lo   int,
 	temp_hi   int,
 	prcp      real,
@@ -327,16 +327,97 @@ COMMIT;
    </indexterm>
 
    <para>
-    Inheritance is a concept from object-oriented databases.  It opens
-    up interesting new possibilities of database design.
+    Inheritance is a concept from object-oriented databases.  Although
+    it opens up interesting new possibilities of database design,
+    this feature is currently unmaintained and known to have serious
+    gotchas in its foreign key implementation, which you should take
+    care to avoid.  The fixes below are probably version-specific and may
+    require updates in the future.
+   </para>
+   <para>
+    The example below illustrates the gotcha.
+   </para>
+   <para>
+<programlisting>
+BEGIN;
+CREATE TABLE foo (
+  foo_id SERIAL PRIMARY KEY
+);
+
+CREATE TABLE parent (
+  parent_id SERIAL PRIMARY KEY
+, foo_id INTEGER NOT NULL REFERENCES foo(foo_id) ON DELETE CASCADE
+, parent_1_text TEXT NOT NULL
+);
+
+CREATE TABLE child_1 (
+  child_1_text TEXT NOT NULL
+) INHERITS(parent);
+
+CREATE TABLE child_2 (
+  child_2_text TEXT NOT NULL
+) INHERITS(parent);
+
+INSERT INTO foo VALUES(DEFAULT);
+INSERT INTO child_1 (foo_id, parent_1_text, child_1_text)
+VALUES (currval('public.foo_foo_id_seq'), 'parent text 1', 'child_1 text 1');
+
+INSERT INTO foo VALUES(DEFAULT);
+INSERT INTO child_1 (foo_id, parent_1_text, child_1_text)
+VALUES (currval('public.foo_foo_id_seq'), 'parent text 2', 'child_1 text 2');
+
+INSERT INTO foo VALUES(DEFAULT);
+INSERT INTO child_2 (foo_id, parent_1_text, child_2_text)
+VALUES (currval('foo_foo_id_seq'), 'parent text 3', 'child_2 text 1');
+
+DELETE FROM foo WHERE foo_id = 1;
+
+SELECT * FROM parent;
+ parent_id | foo_id | parent_1_text 
+-----------+--------+---------------
+         1 |      1 | parent text 1
+         2 |      2 | parent text 2
+         3 |      3 | parent text 3
+(3 rows)
+
+SELECT * FROM child_1;
+ parent_id | foo_id | parent_1_text |  child_1_text  
+-----------+--------+---------------+----------------
+         1 |      1 | parent text 1 | child_1 text 1
+         2 |      2 | parent text 2 | child_1 text 2
+(2 rows)
+ROLLBACK;
+</programlisting>
+
+   </para>
+   <para>
+   Oops!!  None of parent, child or foo should have any rows with
+foo_id = 1 in them.  Here is a way to fix the above tables.
    </para>
 
    <para>
-    Let's create two tables:  A table <classname>cities</classname>
-    and a table <classname>capitals</classname>.  Naturally, capitals
-    are also cities, so you want some way to show the capitals
-    implicitly when you list all cities.  If you're really clever you
-    might invent some scheme like this:
+    To fix the gotcha, you must put foreign key constraints on each of
+    the child tables, as they will not be automatically inherited as
+    you might expect.
+   </para>
+
+   <para>
+<programlisting>
+ALTER TABLE child_1 ADD CONSTRAINT cascade_foo 
+FOREIGN KEY (foo_id) REFERENCES foo(foo_id) ON DELETE CASCADE;
+
+ALTER TABLE child_2 ADD CONSTRAINT cascade_foo 
+FOREIGN KEY (foo_id) REFERENCES foo(foo_id) ON DELETE CASCADE;
+</programlisting>
+   </para>
+
+   <para>
+    That caveat out of the way, let's create two tables:  A table
+    <classname>cities</classname> and a table
+    <classname>capitals</classname>.  Naturally, capitals are also cities,
+    so you want some way to show the capitals implicitly when you list all
+    cities.  If you're really clever you might invent some scheme like
+    this:
 
 <programlisting>
 CREATE TABLE capitals (
@@ -359,7 +440,7 @@ CREATE VIEW cities AS
 </programlisting>
 
     This works OK as far as querying goes, but it gets ugly when you
-    need to update several rows, to name one thing.
+    need to update several rows, for one thing.
    </para>
 
    <para>
