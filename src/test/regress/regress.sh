@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.41 2000/02/15 03:30:57 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.42 2000/03/01 19:11:06 momjian Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -11,7 +11,7 @@ hostname=$1
 shift
 extratests="$*"
 
-if [ "x$hostname" = "xwin" -o "x$hostname" = "xqnx4" ]
+if [ "x$hostname" = "xwin" -o "x$hostname" = "xi386-pc-qnx4" ]
 then
 	HOSTLOC="-h localhost"
 else
@@ -40,8 +40,8 @@ FRONTEND="psql $HOSTLOC -a -q"
 # it is a standard regular expression with an implicit ^ at the start.
 # ----------
 SUBSTLIST=""
-exec 4<resultmap
-while read LINE <&4
+RESULTMAP=`cat resultmap`
+for LINE in $RESULTMAP
 do
 	HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
 	if [ `expr "$hostname" : "$HOSTPAT"` -ne 0 ]
@@ -49,7 +49,6 @@ do
 		SUBSTLIST="$SUBSTLIST $LINE"
 	fi
 done
-exec 4<&-
 
 if [ -d ./obj ]; then
 	cd ./obj
@@ -82,7 +81,7 @@ if [ $? -ne 0 ]; then
      exit 1
 fi
 
-if [ "x$hostname" != "xqnx4" ]
+if [ "x$hostname" != "xi386-pc-qnx4" ]
 then
 echo "=============== installing PL/pgSQL...                ================="
 createlang $HOSTLOC plpgsql regression
@@ -95,7 +94,7 @@ fi
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
 
-if [ "x$hostname" = "xqnx4" ]
+if [ "x$hostname" = "xi386-pc-qnx4" ]
 then
 	DIFFOPT="-b"
 else

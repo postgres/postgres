@@ -109,10 +109,11 @@ see backend/Makefile and backend/bootstrap/Makefile.
 libpgsql.a currently cannot be generated because of the same problem. But this
 doesn't matter since shared libraries are not supported.
 
-Currently yacc fails on interfaces/ecpg/preproc/preproc.y because of
-exceeded maximum table size. You can generate the preproc.h and preproc.c
-files on another platform and use them. This is only a problem when you use
-the current source tree since preproc.h and preporc.c are included in official
+Currently yacc fails on backend/parser/gram.y and 
+interfaces/ecpg/preproc/preproc.y due to exceeded maximum table size. You can
+generate the gram.h, parse.h, preproc.h and preproc.c files on another platform
+and use them. This is only a problem when you use the current source tree since
+parse.h, gram.c, preproc.h and preporc.c are included in official
 distributions.
 
 Regression tests:
@@ -120,23 +121,11 @@ Regression tests:
 
 The majority of regression tests succeeded. The following tests failed:
 
-int2, int4:
-Error message "Result too large" instead of "Numerical result out of range".
-Can be ignored.
-
-int8, float4: 
-Exponent expression "e+nnn" instead of "e+nn". Can be ignored.
-
-float8:
-Exponent expression "e+nnn" instead of "e+nn" and some slight difference
-in the last digit.
-Can be ignored.
-
 geometry:
 Some slight deviation in the last digit and "0" instead of "-0".
 Can be ignored.
 
-datetime, abstime, tinterval, horology:
+timestamp, tinterval, abstime, horology:
 Differences for years outside the normal Unix range, e.g. 1968
 instead of 2105
 Can be ignored.
@@ -144,13 +133,13 @@ Can be ignored.
 create_function_2, triggers, misc, plpgsql:
 Error messages due to the lack of shared library support.
 
-rules:
-Subject of further investigation.
-
-numeric, numeric_big:
-ERROR:  Cannot create unique index. Table contains non-unique values
+numeric, numeric_big, sanity_check:
+"ERROR:  Cannot create unique index. Table contains non-unique values"
+This error occurs for indices of tables num_exp_add, num_exp_sub,
+num_exp_div and num_exp_mul only.
 Subject of further investigation. Probably because of the missing indices
-these tests take a long time.
+these numeric tests take a long time.
+The diffence in sanity_check.out is a consequence of this problem only.
 
 The reached state of this port should be sufficient for lot of applications.
 
@@ -158,7 +147,7 @@ Have fun!
 
 Andreas Kardos
 kardos@repas-aeg.de
-1999-12-16
+2000-02-28
 
 
 ---------------------------------------------------------------------------
