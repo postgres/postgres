@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 18 13:52:09 EST 2001
+Last updated:		Thu Jan 18 21:05:41 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -95,6 +95,7 @@ TYPES
 	o -Tables that start with xinv confused to be large objects
 * Add IPv6 capability to INET/CIDR types
 * -Fix improper masking of some inet/cidr types [cidr]
+* Add conversion function from text to inet
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
 * -Add support for & operator (Peter E)
