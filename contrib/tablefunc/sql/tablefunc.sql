@@ -94,14 +94,20 @@ AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_start
 --
 
 -- test connectby with text based hierarchy
-CREATE TABLE connectby_text(keyid text, parent_keyid text);
+CREATE TABLE connectby_text(keyid text, parent_keyid text, pos int);
 \copy connectby_text from 'data/connectby_text.data'
 
--- with branch
+-- with branch, without orderby
 SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text);
 
--- without branch
+-- without branch, without orderby
 SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0) AS t(keyid text, parent_keyid text, level int);
+
+-- with branch, with orderby
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text, pos int) ORDER BY t.pos;
+
+-- without branch, with orderby
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0) AS t(keyid text, parent_keyid text, level int, pos int) ORDER BY t.pos;
 
 -- test connectby with int based hierarchy
 CREATE TABLE connectby_int(keyid int, parent_keyid int);

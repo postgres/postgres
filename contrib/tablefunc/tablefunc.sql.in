@@ -64,3 +64,15 @@ CREATE OR REPLACE FUNCTION connectby(text,text,text,text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','connectby_text'
 LANGUAGE 'C' STABLE STRICT;
+
+-- These 2 take the name of a field to ORDER BY as 4th arg (for sorting siblings)
+
+CREATE OR REPLACE FUNCTION connectby(text,text,text,text,text,int,text)
+RETURNS setof record
+AS 'MODULE_PATHNAME','connectby_text_serial'
+LANGUAGE 'C' STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION connectby(text,text,text,text,text,int)
+RETURNS setof record
+AS 'MODULE_PATHNAME','connectby_text_serial'
+LANGUAGE 'C' STABLE STRICT;

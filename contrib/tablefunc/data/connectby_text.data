@@ -1,9 +1,9 @@
-row1	\N
-row2	row1
-row3	row1
-row4	row2
-row5	row2
-row6	row4
-row7	row3
-row8	row6
-row9	row5
+row1	\N	0
+row2	row1	0
+row3	row1	0
+row4	row2	1
+row5	row2	0
+row6	row4	0
+row7	row3	0
+row8	row6	0
+row9	row5	0

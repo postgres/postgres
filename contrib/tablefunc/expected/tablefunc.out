@@ -197,9 +197,9 @@ ERROR:  provided "categories" SQL must return 1 column of at least one row
 -- connectby
 --
 -- test connectby with text based hierarchy
-CREATE TABLE connectby_text(keyid text, parent_keyid text);
+CREATE TABLE connectby_text(keyid text, parent_keyid text, pos int);
 \copy connectby_text from 'data/connectby_text.data'
--- with branch
+-- with branch, without orderby
 SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text);
  keyid | parent_keyid | level |       branch        
 -------+--------------+-------+---------------------
@@ -211,7 +211,7 @@ SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0, '~
  row9  | row5         |     2 | row2~row5~row9
 (6 rows)
 
--- without branch
+-- without branch, without orderby
 SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0) AS t(keyid text, parent_keyid text, level int);
  keyid | parent_keyid | level 
 -------+--------------+-------
@@ -221,6 +221,30 @@ SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0) AS
  row8  | row6         |     3
  row5  | row2         |     1
  row9  | row5         |     2
+(6 rows)
+
+-- with branch, with orderby
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text, pos int) ORDER BY t.pos;
+ keyid | parent_keyid | level |       branch        | pos 
+-------+--------------+-------+---------------------+-----
+ row2  |              |     0 | row2                |   1
+ row5  | row2         |     1 | row2~row5           |   2
+ row9  | row5         |     2 | row2~row5~row9      |   3
+ row4  | row2         |     1 | row2~row4           |   4
+ row6  | row4         |     2 | row2~row4~row6      |   5
+ row8  | row6         |     3 | row2~row4~row6~row8 |   6
+(6 rows)
+
+-- without branch, with orderby
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0) AS t(keyid text, parent_keyid text, level int, pos int) ORDER BY t.pos;
+ keyid | parent_keyid | level | pos 
+-------+--------------+-------+-----
+ row2  |              |     0 |   1
+ row5  | row2         |     1 |   2
+ row9  | row5         |     2 |   3
+ row4  | row2         |     1 |   4
+ row6  | row4         |     2 |   5
+ row8  | row6         |     3 |   6
 (6 rows)
 
 -- test connectby with int based hierarchy

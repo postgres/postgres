@@ -4,6 +4,8 @@
  * Sample to demonstrate C functions which return setof scalar
  * and setof composite.
  * Joe Conway <mail@joeconway.com>
+ * And contributors:
+ * Nabil Sayegh <postgresql@e-trolley.de>
  *
  * Copyright 2002 by PostgreSQL Global Development Group
  *
@@ -45,7 +47,7 @@ static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 												int num_categories,
 												TupleDesc tupdesc,
 												MemoryContext per_query_ctx);
-static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch);
+static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void get_normal_pair(float8 *x1, float8 *x2);
@@ -54,21 +56,26 @@ static TupleDesc make_crosstab_tupledesc(TupleDesc spi_tupdesc,
 static Tuplestorestate *connectby(char *relname,
 		  char *key_fld,
 		  char *parent_key_fld,
+			char *orderby_fld,
 		  char *branch_delim,
 		  char *start_with,
 		  int max_depth,
 		  bool show_branch,
+		  bool show_serial,
 		  MemoryContext per_query_ctx,
 		  AttInMetadata *attinmeta);
 static Tuplestorestate *build_tuplestore_recursively(char *key_fld,
 							 char *parent_key_fld,
 							 char *relname,
+							 char *orderby_fld,
 							 char *branch_delim,
 							 char *start_with,
 							 char *branch,
 							 int level,
+							 int *serial,
 							 int max_depth,
 							 bool show_branch,
+							 bool show_serial,
 							 MemoryContext per_query_ctx,
 							 AttInMetadata *attinmeta,
 							 Tuplestorestate *tupstore);
@@ -1017,31 +1024,32 @@ get_crosstab_tuplestore(char *sql,
  *
  * e.g. given table foo:
  *
- *			keyid	parent_keyid
- *			------+--------------
- *			row1	NULL
- *			row2	row1
- *			row3	row1
- *			row4	row2
- *			row5	row2
- *			row6	row4
- *			row7	row3
- *			row8	row6
- *			row9	row5
+ *			keyid	parent_keyid pos
+ *			------+------------+--
+ *			row1	NULL         0
+ *			row2	row1         0
+ *			row3	row1         0
+ *			row4	row2         1
+ *			row5	row2         0
+ *			row6	row4         0
+ *			row7	row3         0
+ *			row8	row6         0
+ *			row9	row5         0
  *
  *
- * connectby(text relname, text keyid_fld, text parent_keyid_fld,
- *						text start_with, int max_depth [, text branch_delim])
- * connectby('foo', 'keyid', 'parent_keyid', 'row2', 0, '~') returns:
+ * connectby(text relname, text keyid_fld, text parent_keyid_fld
+ *            [, text orderby_fld], text start_with, int max_depth
+ *            [, text branch_delim])
+ * connectby('foo', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~') returns:
  *
- *		keyid	parent_id	level	 branch
+ *		keyid	parent_id	level	 branch             serial
  *		------+-----------+--------+-----------------------
- *		row2	NULL		  0		  row2
- *		row4	row2		  1		  row2~row4
- *		row6	row4		  2		  row2~row4~row6
- *		row8	row6		  3		  row2~row4~row6~row8
- *		row5	row2		  1		  row2~row5
- *		row9	row5		  2		  row2~row5~row9
+ *		row2	NULL		  0		  row2                1
+ *		row5	row2		  1		  row2~row5           2
+ *		row9	row5		  2		  row2~row5~row9      3
+ *		row4	row2		  1		  row2~row4           4
+ *		row6	row4		  2		  row2~row4~row6      5
+ *		row8	row6		  3		  row2~row4~row6~row8 6
  *
  */
 PG_FUNCTION_INFO_V1(connectby_text);
@@ -1059,6 +1067,7 @@ connectby_text(PG_FUNCTION_ARGS)
 	int			max_depth = PG_GETARG_INT32(4);
 	char	   *branch_delim = NULL;
 	bool		show_branch = false;
+	bool		show_serial = false;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	AttInMetadata *attinmeta;
@@ -1088,7 +1097,7 @@ connectby_text(PG_FUNCTION_ARGS)
 	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/* does it meet our needs */
-	validateConnectbyTupleDesc(tupdesc, show_branch);
+	validateConnectbyTupleDesc(tupdesc, show_branch, show_serial);
 
 	/* OK, use it then */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
@@ -1105,10 +1114,12 @@ connectby_text(PG_FUNCTION_ARGS)
 	rsinfo->setResult = connectby(relname,
 								  key_fld,
 								  parent_key_fld,
+									NULL,
 								  branch_delim,
 								  start_with,
 								  max_depth,
 								  show_branch,
+								  show_serial,
 								  per_query_ctx,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
@@ -1125,6 +1136,85 @@ connectby_text(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
+PG_FUNCTION_INFO_V1(connectby_text_serial);
+Datum
+connectby_text_serial(PG_FUNCTION_ARGS)
+{
+	char	   *relname = GET_STR(PG_GETARG_TEXT_P(0));
+	char	   *key_fld = GET_STR(PG_GETARG_TEXT_P(1));
+	char	   *parent_key_fld = GET_STR(PG_GETARG_TEXT_P(2));
+	char	   *orderby_fld = GET_STR(PG_GETARG_TEXT_P(3));
+	char	   *start_with = GET_STR(PG_GETARG_TEXT_P(4));
+	int			max_depth = PG_GETARG_INT32(5);
+	char	   *branch_delim = NULL;
+	bool		show_branch = false;
+	bool		show_serial = true;
+	
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	AttInMetadata *attinmeta;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
+		elog(ERROR, "connectby: materialize mode required, but it is not "
+			 "allowed in this context");
+
+	if (fcinfo->nargs == 7)
+	{
+		branch_delim = GET_STR(PG_GETARG_TEXT_P(6));
+		show_branch = true;
+	}
+	else
+		/* default is no show, tilde for the delimiter */
+		branch_delim = pstrdup("~");
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/* get the requested return tuple description */
+	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+
+	/* does it meet our needs */
+	validateConnectbyTupleDesc(tupdesc, show_branch, show_serial);
+
+	/* OK, use it then */
+	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (!rsinfo->allowedModes & SFRM_Materialize)
+		elog(ERROR, "connectby requires Materialize mode, but it is not "
+			 "allowed in this context");
+
+	/* OK, go to work */
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = connectby(relname,
+								  key_fld,
+								  parent_key_fld,
+									orderby_fld,
+								  branch_delim,
+								  start_with,
+								  max_depth,
+								  show_branch,
+								  show_serial,
+								  per_query_ctx,
+								  attinmeta);
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
+	 * tuples are in our tuplestore and passed back through
+	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
+	 * that we actually used to build our tuples with, so the caller can
+	 * verify we did what it was expecting.
+	 */
+	return (Datum) 0;
+}
+
+
 /*
  * connectby - does the real work for connectby_text()
  */
@@ -1132,16 +1222,20 @@ static Tuplestorestate *
 connectby(char *relname,
 		  char *key_fld,
 		  char *parent_key_fld,
+			char *orderby_fld,
 		  char *branch_delim,
 		  char *start_with,
 		  int max_depth,
 		  bool show_branch,
+			bool show_serial,
 		  MemoryContext per_query_ctx,
 		  AttInMetadata *attinmeta)
 {
 	Tuplestorestate *tupstore = NULL;
 	int			ret;
 	MemoryContext oldcontext;
+
+	int serial = 1;
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -1160,12 +1254,15 @@ connectby(char *relname,
 	tupstore = build_tuplestore_recursively(key_fld,
 											parent_key_fld,
 											relname,
+											orderby_fld,
 											branch_delim,
 											start_with,
 											start_with, /* current_branch */
 											0,	/* initial level is 0 */
+											&serial,	/* initial serial is 1 */
 											max_depth,
 											show_branch,
+											show_serial,
 											per_query_ctx,
 											attinmeta,
 											tupstore);
@@ -1179,12 +1276,15 @@ static Tuplestorestate *
 build_tuplestore_recursively(char *key_fld,
 							 char *parent_key_fld,
 							 char *relname,
+							 char *orderby_fld,
 							 char *branch_delim,
 							 char *start_with,
 							 char *branch,
 							 int level,
+							 int *serial,
 							 int max_depth,
 							 bool show_branch,
+							 bool show_serial,
 							 MemoryContext per_query_ctx,
 							 AttInMetadata *attinmeta,
 							 Tuplestorestate *tupstore)
@@ -1194,18 +1294,35 @@ build_tuplestore_recursively(char *key_fld,
 	StringInfo	sql = makeStringInfo();
 	int			ret;
 	int			proc;
+	int			serial_column;
 
 	if (max_depth > 0 && level > max_depth)
 		return tupstore;
 
 	/* Build initial sql statement */
-	appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL",
+	if (!show_serial)
+	{
+		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL",
 					 key_fld,
 					 parent_key_fld,
 					 relname,
 					 parent_key_fld,
 					 start_with,
 					 key_fld);
+					 serial_column=0;
+	}
+	else
+	{
+		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL ORDER BY %s",
+					 key_fld,
+					 parent_key_fld,
+					 relname,
+					 parent_key_fld,
+					 start_with,
+					 key_fld,
+					 orderby_fld);		
+					 serial_column=1;
+	}
 
 	/* Retrieve the desired rows */
 	ret = SPI_exec(sql->data, 0);
@@ -1222,6 +1339,7 @@ build_tuplestore_recursively(char *key_fld,
 		char	   *current_key;
 		char	   *current_key_parent;
 		char		current_level[INT32_STRLEN];
+		char		serial_str[INT32_STRLEN];
 		char	   *current_branch;
 		char	  **values;
 		StringInfo	branchstr = NULL;
@@ -1236,9 +1354,9 @@ build_tuplestore_recursively(char *key_fld,
 		chk_current_key = makeStringInfo();
 
 		if (show_branch)
-			values = (char **) palloc(CONNECTBY_NCOLS * sizeof(char *));
+			values = (char **) palloc((CONNECTBY_NCOLS + serial_column) * sizeof(char *));
 		else
-			values = (char **) palloc(CONNECTBY_NCOLS_NOBRANCH * sizeof(char *));
+			values = (char **) palloc((CONNECTBY_NCOLS_NOBRANCH + serial_column) * sizeof(char *));
 
 		/* First time through, do a little setup */
 		if (level == 0)
@@ -1269,6 +1387,16 @@ build_tuplestore_recursively(char *key_fld,
 			/* root branch is just starting root value */
 			if (show_branch)
 				values[3] = start_with;
+
+			/* root starts the serial with 1 */
+			if (show_serial)
+			{
+				sprintf(serial_str, "%d", (*serial)++);
+				if (show_branch)
+					values[4] = serial_str;
+				else
+					values[3] = serial_str;					
+			}
 
 			/* construct the tuple */
 			tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -1317,6 +1445,14 @@ build_tuplestore_recursively(char *key_fld,
 			values[2] = current_level;
 			if (show_branch)
 				values[3] = current_branch;
+			if (show_serial)
+			{
+				sprintf(serial_str, "%d", (*serial)++);
+				if (show_branch)
+					values[4] = serial_str;
+				else
+					values[3] = serial_str;
+			}
 
 			tuple = BuildTupleFromCStrings(attinmeta, values);
 
@@ -1338,12 +1474,15 @@ build_tuplestore_recursively(char *key_fld,
 			tupstore = build_tuplestore_recursively(key_fld,
 													parent_key_fld,
 													relname,
+													orderby_fld,
 													branch_delim,
 													values[0],
 													current_branch,
 													level + 1,
+													serial,
 													max_depth,
 													show_branch,
+													show_serial,
 													per_query_ctx,
 													attinmeta,
 													tupstore);
@@ -1367,12 +1506,17 @@ build_tuplestore_recursively(char *key_fld,
  * Check expected (query runtime) tupdesc suitable for Connectby
  */
 static void
-validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch)
+validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial)
 {
+	int serial_column=0;
+
+	if (show_serial)
+		serial_column=1;
+		
 	/* are there the correct number of columns */
 	if (show_branch)
 	{
-		if (tupdesc->natts != CONNECTBY_NCOLS)
+		if (tupdesc->natts != (CONNECTBY_NCOLS + serial_column))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid return type"),
@@ -1381,7 +1525,7 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch)
 	}
 	else
 	{
-		if (tupdesc->natts != CONNECTBY_NCOLS_NOBRANCH)
+		if (tupdesc->natts != CONNECTBY_NCOLS_NOBRANCH + serial_column)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid return type"),
@@ -1412,6 +1556,16 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch)
 				 errdetail("Fourth column must be type %s.",
 						 format_type_be(TEXTOID))));
 
+	/* check that the type of the fifth column is INT4 */
+	if (show_branch && show_serial && tupdesc->attrs[4]->atttypid != INT4OID)
+		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
+			 "fifth column must be type %s", format_type_be(INT4OID));
+
+	/* check that the type of the fifth column is INT4 */
+	if (!show_branch && show_serial && tupdesc->attrs[3]->atttypid != INT4OID)
+		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
+			 "fourth column must be type %s", format_type_be(INT4OID));
+			 
 	/* OK, the tupdesc is valid for our purposes */
 }
 

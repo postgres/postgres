@@ -4,6 +4,8 @@
  * Sample to demonstrate C functions which return setof scalar
  * and setof composite.
  * Joe Conway <mail@joeconway.com>
+ * And contributors:
+ * Nabil Sayegh <postgresql@e-trolley.de>
  *
  * Copyright 2002 by PostgreSQL Global Development Group
  *
@@ -36,5 +38,6 @@ extern Datum normal_rand(PG_FUNCTION_ARGS);
 extern Datum crosstab(PG_FUNCTION_ARGS);
 extern Datum crosstab_hash(PG_FUNCTION_ARGS);
 extern Datum connectby_text(PG_FUNCTION_ARGS);
+extern Datum connectby_text_serial(PG_FUNCTION_ARGS);
 
 #endif   /* TABLEFUNC_H */

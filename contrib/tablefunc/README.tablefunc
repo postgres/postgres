@@ -4,6 +4,8 @@
  * Sample to demonstrate C functions which return setof scalar
  * and setof composite.
  * Joe Conway <mail@joeconway.com>
+ * And contributors:
+ * Nabil Sayegh <postgresql@e-trolley.de>
  *
  * Copyright 2002 by PostgreSQL Global Development Group
  *
@@ -60,9 +62,11 @@ Installation:
       - requires anonymous composite type syntax in the FROM clause. See
         the instructions in the documentation below.
 
-    connectby(text relname, text keyid_fld, text parent_keyid_fld,
-                text start_with, int max_depth [, text branch_delim])
+    connectby(text relname, text keyid_fld, text parent_keyid_fld
+                [, text orderby_fld], text start_with, int max_depth
+								[, text branch_delim])
       - returns keyid, parent_keyid, level, and an optional branch string
+        and an optional serial column for ordering siblings
       - requires anonymous composite type syntax in the FROM clause. See
         the instructions in the documentation below.
 
@@ -452,13 +456,14 @@ AS
 ==================================================================
 Name
 
-connectby(text, text, text, text, int[, text]) - returns a set
+connectby(text, text, text[, text], text, text, int[, text]) - returns a set
     representing a hierarchy (tree structure)
 
 Synopsis
 
-connectby(text relname, text keyid_fld, text parent_keyid_fld,
-            text start_with, int max_depth [, text branch_delim])
+connectby(text relname, text keyid_fld, text parent_keyid_fld
+            [, text orderby_fld], text start_with, int max_depth
+						[, text branch_delim])
 
 Inputs
 
@@ -473,6 +478,11 @@ Inputs
   parent_keyid_fld
 
     Name of the key_parent field
+
+  orderby_fld
+
+    If optional ordering of siblings is desired:
+    Name of the field to order siblings
 
   start_with
 
@@ -500,6 +510,16 @@ Outputs
 
     SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
       AS t(keyid text, parent_keyid text, level int);
+			
+		- or -
+
+    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~')
+      AS t(keyid text, parent_keyid text, level int, branch text, pos int);
+
+		- or -
+
+    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0)
+      AS t(keyid text, parent_keyid text, level int, pos int);
     
 Notes
 
@@ -520,22 +540,25 @@ Notes
   5. The parameters representing table and field names must include double
      quotes if the names are mixed-case or contain special characters.
 
+  6. If sorting of siblings is desired, the orderby_fld input parameter *and*
+     a name for the resulting serial field (type INT32) in the query column
+     definition must be given.
 
 Example usage
 
-CREATE TABLE connectby_tree(keyid text, parent_keyid text);
+CREATE TABLE connectby_tree(keyid text, parent_keyid text, pos int);
 
-INSERT INTO connectby_tree VALUES('row1',NULL);
-INSERT INTO connectby_tree VALUES('row2','row1');
-INSERT INTO connectby_tree VALUES('row3','row1');
-INSERT INTO connectby_tree VALUES('row4','row2');
-INSERT INTO connectby_tree VALUES('row5','row2');
-INSERT INTO connectby_tree VALUES('row6','row4');
-INSERT INTO connectby_tree VALUES('row7','row3');
-INSERT INTO connectby_tree VALUES('row8','row6');
-INSERT INTO connectby_tree VALUES('row9','row5');
+INSERT INTO connectby_tree VALUES('row1',NULL, 0);
+INSERT INTO connectby_tree VALUES('row2','row1', 0);
+INSERT INTO connectby_tree VALUES('row3','row1', 0);
+INSERT INTO connectby_tree VALUES('row4','row2', 1);
+INSERT INTO connectby_tree VALUES('row5','row2', 0);
+INSERT INTO connectby_tree VALUES('row6','row4', 0);
+INSERT INTO connectby_tree VALUES('row7','row3', 0);
+INSERT INTO connectby_tree VALUES('row8','row6', 0);
+INSERT INTO connectby_tree VALUES('row9','row5', 0);
 
--- with branch
+-- with branch, without orderby_fld
 SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~')
  AS t(keyid text, parent_keyid text, level int, branch text);
  keyid | parent_keyid | level |       branch
@@ -548,7 +571,7 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0, '~
  row9  | row5         |     2 | row2~row5~row9
 (6 rows)
 
--- without branch
+-- without branch, without orderby_fld
 SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
  AS t(keyid text, parent_keyid text, level int);
  keyid | parent_keyid | level
@@ -559,6 +582,32 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'row2', 0)
  row8  | row6         |     3
  row5  | row2         |     1
  row9  | row5         |     2
+(6 rows)
+
+-- with branch, with orderby_fld (notice that row5 comes before row4)
+SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~')
+ AS t(keyid text, parent_keyid text, level int, branch text, pos int) ORDER BY t.pos;
+ keyid | parent_keyid | level |       branch        | pos 
+-------+--------------+-------+---------------------+-----
+ row2  |              |     0 | row2                |   1
+ row5  | row2         |     1 | row2~row5           |   2
+ row9  | row5         |     2 | row2~row5~row9      |   3
+ row4  | row2         |     1 | row2~row4           |   4
+ row6  | row4         |     2 | row2~row4~row6      |   5
+ row8  | row6         |     3 | row2~row4~row6~row8 |   6
+(6 rows)
+
+-- without branch, with orderby_fld (notice that row5 comes before row4)
+SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0)
+ AS t(keyid text, parent_keyid text, level int, pos int) ORDER BY t.pos;
+ keyid | parent_keyid | level | pos
+-------+--------------+-------+-----
+ row2  |              |     0 |   1
+ row5  | row2         |     1 |   2
+ row9  | row5         |     2 |   3
+ row4  | row2         |     1 |   4
+ row6  | row4         |     2 |   5
+ row8  | row6         |     3 |   6
 (6 rows)
 
 ==================================================================
