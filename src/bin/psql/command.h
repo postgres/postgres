@@ -3,15 +3,14 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.18 2003/11/29 19:52:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.19 2004/02/19 19:40:09 tgl Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "pqexpbuffer.h"
-
 #include "settings.h"
 #include "print.h"
+#include "psqlscan.h"
 
 
 typedef enum _backslashResult
@@ -26,10 +25,8 @@ typedef enum _backslashResult
 } backslashResult;
 
 
-extern backslashResult HandleSlashCmds(const char *line,
-				PQExpBuffer query_buf,
-				const char **end_of_cmd,
-				volatile int *paren_level);
+extern backslashResult HandleSlashCmds(PsqlScanState scan_state,
+									   PQExpBuffer query_buf);
 
 extern int	process_file(char *filename);
 

@@ -3,18 +3,19 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.61 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.62 2004/02/19 19:40:09 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
 
 #include "pqexpbuffer.h"
 
-#include "settings.h"
-#include "prompt.h"
-#include "input.h"
-#include "common.h"
 #include "command.h"
+#include "common.h"
+#include "input.h"
+#include "prompt.h"
+#include "psqlscan.h"
+#include "settings.h"
 
 #ifndef WIN32
 #include <setjmp.h>
@@ -28,48 +29,39 @@ sigjmp_buf	main_loop_jmp;
  *
  * This loop is re-entrant. May be called by \i command
  *	which reads input from a file.
- *
- * FIXME: rewrite this whole thing with flex
  */
 int
 MainLoop(FILE *source)
 {
+	PsqlScanState scan_state;	/* lexer working state */
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	PQExpBuffer previous_buf;	/* if there isn't anything in the new
 								 * buffer yet, use this one for \e, etc. */
 	char	   *line;			/* current line of input */
-	int			len;			/* length of the line */
+	int			added_nl_pos;
+	bool		success;
 	volatile int successResult = EXIT_SUCCESS;
 	volatile backslashResult slashCmdStatus = CMD_UNKNOWN;
-
-	bool		success;
-	volatile char in_quote = 0; /* == 0 for no in_quote */
-	volatile int in_xcomment = 0;		/* in extended comment */
-	volatile int paren_level = 0;
-	unsigned int query_start;
+	volatile promptStatus_t prompt_status = PROMPT_READY;
 	volatile int count_eof = 0;
-	volatile unsigned int bslash_count = 0;
-
-	int			i,
-				prevlen,
-				thislen;
-
+	volatile bool die_on_error = false;
 	/* Save the prior command source */
 	FILE	   *prev_cmd_source;
 	bool		prev_cmd_interactive;
-
 	unsigned int prev_lineno;
-	volatile bool die_on_error = false;
-
 
 	/* Save old settings */
 	prev_cmd_source = pset.cur_cmd_source;
 	prev_cmd_interactive = pset.cur_cmd_interactive;
+	prev_lineno = pset.lineno;
 
 	/* Establish new source */
 	pset.cur_cmd_source = source;
 	pset.cur_cmd_interactive = ((source == stdin) && !pset.notty);
+	pset.lineno = 0;
 
+	/* Create working state */
+	scan_state = psql_scan_create();
 
 	query_buf = createPQExpBuffer();
 	previous_buf = createPQExpBuffer();
@@ -78,10 +70,6 @@ MainLoop(FILE *source)
 		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
-
-	prev_lineno = pset.lineno;
-	pset.lineno = 0;
-
 
 	/* main loop to get queries and execute them */
 	while (successResult == EXIT_SUCCESS)
@@ -110,17 +98,17 @@ MainLoop(FILE *source)
 		{
 			/* got here with longjmp */
 
+			/* reset parsing state */
+			resetPQExpBuffer(query_buf);
+			psql_scan_finish(scan_state);
+			psql_scan_reset(scan_state);
+			count_eof = 0;
+			slashCmdStatus = CMD_UNKNOWN;
+			prompt_status = PROMPT_READY;
+
 			if (pset.cur_cmd_interactive)
 			{
 				putc('\n', stdout);
-				resetPQExpBuffer(query_buf);
-
-				/* reset parsing state */
-				in_xcomment = 0;
-				in_quote = 0;
-				paren_level = 0;
-				count_eof = 0;
-				slashCmdStatus = CMD_UNKNOWN;
 			}
 			else
 			{
@@ -145,48 +133,30 @@ MainLoop(FILE *source)
 			 * input buffer
 			 */
 			line = pg_strdup(query_buf->data);
-			resetPQExpBuffer(query_buf);
 			/* reset parsing state since we are rescanning whole line */
-			in_xcomment = 0;
-			in_quote = 0;
-			paren_level = 0;
+			resetPQExpBuffer(query_buf);
+			psql_scan_reset(scan_state);
 			slashCmdStatus = CMD_UNKNOWN;
+			prompt_status = PROMPT_READY;
 		}
 
 		/*
-		 * otherwise, set interactive prompt if necessary and get another
-		 * line
+		 * otherwise, get another line
 		 */
 		else if (pset.cur_cmd_interactive)
 		{
-			int			prompt_status;
-
-			if (in_quote && in_quote == '\'')
-				prompt_status = PROMPT_SINGLEQUOTE;
-			else if (in_quote && in_quote == '"')
-				prompt_status = PROMPT_DOUBLEQUOTE;
-			else if (in_xcomment)
-				prompt_status = PROMPT_COMMENT;
-			else if (paren_level)
-				prompt_status = PROMPT_PAREN;
-			else if (query_buf->len > 0)
-				prompt_status = PROMPT_CONTINUE;
-			else
+			/* May need to reset prompt, eg after \r command */
+			if (query_buf->len == 0)
 				prompt_status = PROMPT_READY;
-
 			line = gets_interactive(get_prompt(prompt_status));
 		}
 		else
 			line = gets_fromFile(source);
 
-		/* Setting this will not have effect until next line. */
-		die_on_error = GetVariableBool(pset.vars, "ON_ERROR_STOP");
-
 		/*
 		 * query_buf holds query already accumulated.  line is the
 		 * malloc'd new line of input (note it must be freed before
-		 * looping around!) query_start is the next command start location
-		 * within the line.
+		 * looping around!)
 		 */
 
 		/* No more input.  Time to quit, or \i done */
@@ -214,165 +184,52 @@ MainLoop(FILE *source)
 		pset.lineno++;
 
 		/* nothing left on line? then ignore */
-		if (line[0] == '\0' && !in_quote)
+		if (line[0] == '\0' && !psql_scan_in_quote(scan_state))
 		{
 			free(line);
 			continue;
 		}
 
 		/* echo back if flag is set */
-		if (!pset.cur_cmd_interactive && VariableEquals(pset.vars, "ECHO", "all"))
+		if (!pset.cur_cmd_interactive &&
+			VariableEquals(pset.vars, "ECHO", "all"))
 			puts(line);
 		fflush(stdout);
 
-		len = strlen(line);
-		query_start = 0;
+		/* insert newlines into query buffer between source lines */
+		if (query_buf->len > 0)
+		{
+			appendPQExpBufferChar(query_buf, '\n');
+			added_nl_pos = query_buf->len;
+		}
+		else
+			added_nl_pos = -1;	/* flag we didn't add one */
+
+		/* Setting this will not have effect until next line. */
+		die_on_error = GetVariableBool(pset.vars, "ON_ERROR_STOP");
 
 		/*
 		 * Parse line, looking for command separators.
-		 *
-		 * The current character is at line[i], the prior character at line[i
-		 * - prevlen], the next character at line[i + thislen].
 		 */
-#define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i, pset.encoding))
-
+		psql_scan_setup(scan_state, line, strlen(line));
 		success = true;
-		prevlen = 0;
-		thislen = ((len > 0) ? PQmblen(line, pset.encoding) : 0);
 
-		for (i = 0; (i < len) && (success || !die_on_error); ADVANCE_1)
+		while (success || !die_on_error)
 		{
-			/* was the previous character a backslash? */
-			if (i > 0 && line[i - prevlen] == '\\')
-				bslash_count++;
-			else
-				bslash_count = 0;
+			PsqlScanResult scan_result;
+			promptStatus_t prompt_tmp = prompt_status;
 
-	rescan:
+			scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
+			prompt_status = prompt_tmp;
 
 			/*
-			 * It is important to place the in_* test routines before the
-			 * in_* detection routines. i.e. we have to test if we are in
-			 * a quote before testing for comments. bjm  2000-06-30
+			 * Send command if semicolon found, or if end of line and
+			 * we're in single-line mode.
 			 */
-
-			/* in quote? */
-			if (in_quote)
+			if (scan_result == PSCAN_SEMICOLON ||
+				(scan_result == PSCAN_EOL &&
+				 GetVariableBool(pset.vars, "SINGLELINE")))
 			{
-				/*
-				 * end of quote if matching non-backslashed character.
-				 * backslashes don't count for double quotes, though.
-				 */
-				if (line[i] == in_quote &&
-					(bslash_count % 2 == 0 || in_quote == '"'))
-					in_quote = 0;
-			}
-
-			/* start of extended comment? */
-			else if (line[i] == '/' && line[i + thislen] == '*')
-			{
-				in_xcomment++;
-				if (in_xcomment == 1)
-					ADVANCE_1;
-			}
-
-			/* in or end of extended comment? */
-			else if (in_xcomment)
-			{
-				if (line[i] == '*' && line[i + thislen] == '/' &&
-					!--in_xcomment)
-					ADVANCE_1;
-			}
-
-			/* start of quote? */
-			else if (line[i] == '\'' || line[i] == '"')
-				in_quote = line[i];
-
-			/* single-line comment? truncate line */
-			else if (line[i] == '-' && line[i + thislen] == '-')
-			{
-				line[i] = '\0'; /* remove comment */
-				break;
-			}
-
-			/* count nested parentheses */
-			else if (line[i] == '(')
-				paren_level++;
-
-			else if (line[i] == ')' && paren_level > 0)
-				paren_level--;
-
-			/* colon -> substitute variable */
-			/* we need to be on the watch for the '::' operator */
-			else if (line[i] == ':' && !bslash_count
-				  && strspn(line + i + thislen, VALID_VARIABLE_CHARS) > 0
-					 && !(prevlen > 0 && line[i - prevlen] == ':')
-				)
-			{
-				size_t		in_length,
-							out_length;
-				const char *value;
-				char	   *new;
-				char		after;		/* the character after the
-										 * variable name will be
-										 * temporarily overwritten */
-
-				in_length = strspn(&line[i + thislen], VALID_VARIABLE_CHARS);
-				/* mark off the possible variable name */
-				after = line[i + thislen + in_length];
-				line[i + thislen + in_length] = '\0';
-
-				value = GetVariable(pset.vars, &line[i + thislen]);
-
-				/* restore overwritten character */
-				line[i + thislen + in_length] = after;
-
-				if (value)
-				{
-					/* It is a variable, perform substitution */
-					out_length = strlen(value);
-
-					new = pg_malloc(len + out_length - in_length + 1);
-					sprintf(new, "%.*s%s%s", i, line, value,
-							&line[i + thislen + in_length]);
-
-					free(line);
-					line = new;
-					len = strlen(new);
-
-					if (i < len)
-					{
-						thislen = PQmblen(line + i, pset.encoding);
-						goto rescan;	/* reparse the just substituted */
-					}
-				}
-				else
-				{
-					/*
-					 * if the variable doesn't exist we'll leave the
-					 * string as is ... move on ...
-					 */
-				}
-			}
-
-			/* semicolon? then send query */
-			else if (line[i] == ';' && !bslash_count && !paren_level)
-			{
-				line[i] = '\0';
-				/* is there anything else on the line? */
-				if (line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
-				{
-					/*
-					 * insert a cosmetic newline, if this is not the first
-					 * line in the buffer
-					 */
-					if (query_buf->len > 0)
-						appendPQExpBufferChar(query_buf, '\n');
-					/* append the line to the query buffer */
-					appendPQExpBufferStr(query_buf, line + query_start);
-					appendPQExpBufferChar(query_buf, ';');
-				}
-
 				/* execute query */
 				success = SendQuery(query_buf->data);
 				slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
@@ -380,46 +237,26 @@ MainLoop(FILE *source)
 				resetPQExpBuffer(previous_buf);
 				appendPQExpBufferStr(previous_buf, query_buf->data);
 				resetPQExpBuffer(query_buf);
-				query_start = i + thislen;
+				added_nl_pos = -1;
+				/* we need not do psql_scan_reset() here */
 			}
-
-			/*
-			 * if you have a burning need to send a semicolon or colon to
-			 * the backend ...
-			 */
-			else if (bslash_count && (line[i] == ';' || line[i] == ':'))
+			else if (scan_result == PSCAN_BACKSLASH)
 			{
-				/* remove the backslash */
-				memmove(line + i - prevlen, line + i, len - i + 1);
-				len--;
-				i--;
-			}
-
-			/* backslash command */
-			else if (bslash_count)
-			{
-				const char *end_of_cmd = NULL;
-
-				line[i - prevlen] = '\0';		/* overwrites backslash */
-
-				/* is there anything else on the line for the command? */
-				if (line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
-				{
-					/*
-					 * insert a cosmetic newline, if this is not the first
-					 * line in the buffer
-					 */
-					if (query_buf->len > 0)
-						appendPQExpBufferChar(query_buf, '\n');
-					/* append the line to the query buffer */
-					appendPQExpBufferStr(query_buf, line + query_start);
-				}
-
 				/* handle backslash command */
-				slashCmdStatus = HandleSlashCmds(&line[i],
-						   query_buf->len > 0 ? query_buf : previous_buf,
-												 &end_of_cmd,
-												 &paren_level);
+
+				/*
+				 * If we added a newline to query_buf, and nothing else has
+				 * been inserted in query_buf by the lexer, then strip off
+				 * the newline again.  This avoids any change to query_buf
+				 * when a line contains only a backslash command.
+				 */
+				if (query_buf->len == added_nl_pos)
+					query_buf->data[--query_buf->len] = '\0';
+				added_nl_pos = -1;
+
+				slashCmdStatus = HandleSlashCmds(scan_state,
+												 query_buf->len > 0 ?
+												 query_buf : previous_buf);
 
 				success = slashCmdStatus != CMD_ERROR;
 
@@ -433,49 +270,32 @@ MainLoop(FILE *source)
 				if (slashCmdStatus == CMD_SEND)
 				{
 					success = SendQuery(query_buf->data);
-					query_start = i + thislen;
 
 					resetPQExpBuffer(previous_buf);
 					appendPQExpBufferStr(previous_buf, query_buf->data);
 					resetPQExpBuffer(query_buf);
+
+					/* flush any paren nesting info after forced send */
+					psql_scan_reset(scan_state);
 				}
 
-				if (query_buf->len == 0 && previous_buf->len == 0)
-					paren_level = 0;
-
-				/* process anything left after the backslash command */
-				i = end_of_cmd - line;
-				query_start = i;
+				if (slashCmdStatus == CMD_TERMINATE)
+					break;
 			}
-		}						/* for (line) */
 
+			/* fall out of loop if lexer reached EOL */
+			if (scan_result == PSCAN_INCOMPLETE ||
+				scan_result == PSCAN_EOL)
+				break;
+		}
+
+		psql_scan_finish(scan_state);
+		free(line);
 
 		if (slashCmdStatus == CMD_TERMINATE)
 		{
 			successResult = EXIT_SUCCESS;
 			break;
-		}
-
-
-		/* Put the rest of the line in the query buffer. */
-		if (in_quote || line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
-		{
-			if (query_buf->len > 0)
-				appendPQExpBufferChar(query_buf, '\n');
-			appendPQExpBufferStr(query_buf, line + query_start);
-		}
-
-		free(line);
-
-
-		/* In single line mode, send off the query if any */
-		if (query_buf->data[0] != '\0' && GetVariableBool(pset.vars, "SINGLELINE"))
-		{
-			success = SendQuery(query_buf->data);
-			slashCmdStatus = (success ? CMD_SEND : CMD_ERROR);
-			resetPQExpBuffer(previous_buf);
-			appendPQExpBufferStr(previous_buf, query_buf->data);
-			resetPQExpBuffer(query_buf);
 		}
 
 		if (!pset.cur_cmd_interactive)
@@ -514,6 +334,8 @@ MainLoop(FILE *source)
 
 	destroyPQExpBuffer(query_buf);
 	destroyPQExpBuffer(previous_buf);
+
+	psql_scan_destroy(scan_state);
 
 	pset.cur_cmd_source = prev_cmd_source;
 	pset.cur_cmd_interactive = prev_cmd_interactive;
