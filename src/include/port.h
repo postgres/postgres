@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.65 2004/11/06 01:16:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.66 2004/11/08 16:34:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,8 @@ extern void get_parent_directory(char *path);
 /*
  *	is_absolute_path
  *
- *	This capability is needed by libpq and initdb.c
- *	On Win32, you can't reference the same object file that is
- *	in two different libraries (pgport and libpq), so a macro is best.
+ *	By making this a macro we prevent the need for libpq to include
+ *	path.c which uses exec.c.
  */
 #ifndef WIN32
 #define is_absolute_path(filename) \
