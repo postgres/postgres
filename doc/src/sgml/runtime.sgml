@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.126 2002/08/18 03:03:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.127 2002/08/22 04:52:17 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1608,6 +1608,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </para>
 
        <para>
+	 <indexterm>
+	  <primary>schemas</primary>
+	  <secondary>current schema</secondary>
+	 </indexterm>
         The current effective value of the search path can be examined
 	via the SQL function <function>current_schemas()</>.  This is not
 	quite the same as examining the value of

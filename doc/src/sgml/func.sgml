@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.115 2002/08/21 16:08:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.116 2002/08/22 04:52:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5142,6 +5142,17 @@ SELECT NULLIF(value, '(none)') ...
     schemas presently in the search path.  The boolean option determines whether or not
     implicitly included system schemas such as pg_catalog are included in the search 
     path returned.
+   </para>
+
+   <para id=set-search-path xreflabel="SET SEARCH_PATH">
+    <indexterm>
+     <primary>search path</primary>
+     <secondary>changing at runtime</secondary>
+    </indexterm>
+    The search path may be altered by a runtime-alterable GUC setting.  The
+    command to use is <command>
+     SET SEARCH_PATH '<varname>schema</varname>'[,'<varname>schema</varname>']...
+    </command>
    </para>
 
    <table>

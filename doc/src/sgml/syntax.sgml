@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.66 2002/08/13 20:40:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.67 2002/08/22 04:52:17 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -965,6 +965,11 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     place <literal>pg_catalog</> at the end of your search path if you
     prefer to have user-defined names override built-in names.
    </para>
+
+    <para>
+     The search path is determined by the GUC variable SEARCH_PATH and
+     may be changed at any time.  See <xref linkend="set-search-path">.
+    </para>
   </sect2>
 
   <sect2 id="sql-reserved-names">
