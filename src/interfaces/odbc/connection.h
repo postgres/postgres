@@ -274,6 +274,10 @@ struct ConnectionClass_
 	float		pg_version_number;
 	Int2		pg_version_major;
 	Int2		pg_version_minor;
+#ifdef	MULTIBYTE
+	char		*client_encoding;
+	char		*server_encoding;
+#endif /* MULTIBYTE */
 };
 
 

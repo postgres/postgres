@@ -131,6 +131,7 @@ typedef struct
 {
 	TABLE_INFO *ti;				/* resolve to explicit table names */
 	int			precision;
+	int			scale;
 	int			display_size;
 	int			length;
 	int			type;

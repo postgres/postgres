@@ -227,12 +227,17 @@ QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 void
 getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 {
+	char *str;
 	if (fi->name[0] == '\0')
 		strcpy(fi->name, QR_get_value_manual(col_info->result, k, 3));
 
 	fi->type = atoi(QR_get_value_manual(col_info->result, k, 13));
 	fi->precision = atoi(QR_get_value_manual(col_info->result, k, 6));
 	fi->length = atoi(QR_get_value_manual(col_info->result, k, 7));
+	if (str = QR_get_value_manual(col_info->result, k, 8), str)
+		fi->scale = atoi(str);
+	else
+		fi->scale = -1;
 	fi->nullable = atoi(QR_get_value_manual(col_info->result, k, 10));
 	fi->display_size = atoi(QR_get_value_manual(col_info->result, k, 12));
 }

@@ -14,6 +14,10 @@
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
 #include "connection.h"
 
 #include "environ.h"
@@ -26,9 +30,6 @@
 #ifdef MULTIBYTE
 #include "multibyte.h"
 #endif
-
-#include <stdio.h>
-#include <string.h>
 
 #ifdef WIN32
 #include <odbcinst.h>
@@ -277,6 +278,10 @@ memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
 		rv->pg_version_number = .0;
 		rv->pg_version_major = 0;
 		rv->pg_version_minor = 0;
+#ifdef	MULTIBYTE
+		rv->client_encoding = NULL;
+		rv->server_encoding = NULL;
+#endif	/* MULTIBYTE */
 
 
 		/* Initialize statement options to defaults */
@@ -302,6 +307,12 @@ CC_Destructor(ConnectionClass *self)
 
 	mylog("after CC_Cleanup\n");
 
+#ifdef	MULTIBYTE
+	if (self->client_encoding)
+		free(self->client_encoding);
+	if (self->server_encoding)
+		free(self->server_encoding);
+#endif	/* MULTIBYTE */
 	/* Free up statement holders */
 	if (self->stmts)
 	{
@@ -510,6 +521,9 @@ CC_connect(ConnectionClass *self, char do_password)
 	char		msgbuffer[ERROR_MSG_LENGTH];
 	char		salt[5];
 	static char *func = "CC_connect";
+#ifdef	MULTIBYTE
+	char	*encoding;
+#endif /* MULTIBYTE */
 
 	mylog("%s: entering...\n", func);
 
@@ -537,7 +551,9 @@ CC_connect(ConnectionClass *self, char do_password)
 			 ci->drivers.bools_as_char);
 
 #ifdef MULTIBYTE
-		check_client_encoding(ci->drivers.conn_settings);
+		encoding = check_client_encoding(ci->drivers.conn_settings);
+		if (encoding && strcmp(encoding, "OTHER"))
+			self->client_encoding = strdup(encoding);
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s' conn_encoding='%s'\n",
 			 ci->drivers.extra_systable_prefixes,
 			 ci->drivers.conn_settings,
@@ -1041,7 +1057,6 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					CC_set_no_trans(self);
 					ReadyToReturn = TRUE;
 					retres = NULL;
-					break;
 				}
 				else
 				{
@@ -1059,6 +1074,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 						QR_set_status(res, PGRES_COMMAND_OK);
 					QR_set_command(res, cmdbuffer);
 					query_completed = TRUE;
+					mylog("send_query: returning res = %u\n", res);
 					if (!before_64)
 						break;
 					/*
@@ -1069,71 +1085,14 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					 * an 'I' is received
 					 */
 
-
 					if (empty_reqs == 0)
 					{
 						SOCK_put_string(sock, "Q ");
 						SOCK_flush_output(sock);
 						empty_reqs++;
 					}
-					break;
-
-					while (!clear)
-					{
-						id = SOCK_get_char(sock);
-						mylog("got clear id = '%c'\n", id);
-						switch (id)
-						{
-							case 'I':
-								(void) SOCK_get_char(sock);
-								clear = TRUE;
-								break;
-							case 'Z':
-								break;
-							case 'C':
-								SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-								qlog("Command response: '%s'\n", cmdbuffer);
-								break;
-							case 'N':
-								msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-								if (QR_command_successful(res))
-									QR_set_status(res, PGRES_NONFATAL_ERROR);
-								QR_set_notice(res, cmdbuffer);	/* will dup this string */
-								qlog("NOTICE from backend during clear: '%s'\n", cmdbuffer);
-								while (msg_truncated)
-									msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-								break;
-							case 'E':
-								msg_truncated = SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
-								mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
-								qlog("ERROR from backend during clear: '%s'\n", msgbuffer);
-
-								/*
-								 * We must report this type of error as
-								 * well (practically for reference
-								 * integrity violation error reporting,
-								 * from PostgreSQL 7.0). (Zoltan Kovacs,
-								 * 04/26/2000)
-								 */
-								self->errormsg = msgbuffer;
-								if (!strncmp(self->errormsg, "FATAL", 5))
-								{
-									self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
-									CC_set_no_trans(self);
-								}
-								else
-									self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
-								QR_set_status(res, PGRES_FATAL_ERROR);
-								QR_set_aborted(res, TRUE);
-								while (msg_truncated)
-									msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-								break;
-						}
-					}
-
-					mylog("send_query: returning res = %u\n", res);
-					break;
 				}
+				break;
 			case 'Z':			/* Backend is ready for new query (6.4) */
 				if (empty_reqs == 0)
 				{

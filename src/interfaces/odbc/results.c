@@ -199,7 +199,7 @@ PGAPI_DescribeCol(
 	QResultClass *res;
 	char	   *col_name = NULL;
 	Int4		fieldtype = 0;
-	int			precision = 0;
+	int		precision = 0, scale = 0;
 	ConnInfo   *ci;
 	char		parse_ok;
 	char		buf[255];
@@ -250,6 +250,7 @@ PGAPI_DescribeCol(
 			fieldtype = stmt->fi[icol]->type;
 			col_name = stmt->fi[icol]->name;
 			precision = stmt->fi[icol]->precision;
+			scale = stmt->fi[icol]->scale;
 
 			mylog("PARSE: fieldtype=%d, col_name='%s', precision=%d\n", fieldtype, col_name, precision);
 			if (fieldtype > 0)
@@ -292,6 +293,7 @@ PGAPI_DescribeCol(
 
 		/* atoi(ci->unknown_sizes) */
 		precision = pgtype_precision(stmt, fieldtype, icol, ci->drivers.unknown_sizes);
+		scale = pgtype_scale(stmt, fieldtype, icol);
 	}
 
 	mylog("describeCol: col %d fieldname = '%s'\n", icol, col_name);
@@ -348,10 +350,7 @@ PGAPI_DescribeCol(
 	 */
 	if (pibScale)
 	{
-		Int2		scale;
-
-		scale = pgtype_scale(stmt, fieldtype, icol);
-		if (scale == -1)
+		if (scale < 0)
 			scale = 0;
 
 		*pibScale = scale;
