@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.32 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.33 2001/10/03 20:54:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
+#include "parser/parse_agg.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse.h"
@@ -568,7 +569,7 @@ static void
 CommentAggregate(char *aggregate, List *arguments, char *comment)
 {
 	TypeName   *aggtype = (TypeName *) lfirst(arguments);
-	char	   *aggtypename = NULL;
+	char	   *aggtypename;
 	Oid			baseoid,
 				oid;
 	Oid			classoid;
@@ -590,12 +591,12 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 
 	if (!pg_aggr_ownercheck(GetUserId(), aggregate, baseoid))
 	{
-		if (aggtypename)
-			elog(ERROR, "you are not permitted to comment on aggregate '%s' with type '%s'",
-				 aggregate, aggtypename);
-		else
-			elog(ERROR, "you are not permitted to comment on aggregate '%s'",
+		if (baseoid == InvalidOid)
+			elog(ERROR, "you are not permitted to comment on aggregate '%s' for all types",
 				 aggregate);
+		else
+			elog(ERROR, "you are not permitted to comment on aggregate '%s' for type %s",
+				 aggregate, format_type_be(baseoid));
 	}
 
 	/* Now, attempt to find the actual tuple in pg_aggregate */
@@ -605,13 +606,7 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 						 ObjectIdGetDatum(baseoid),
 						 0, 0);
 	if (!OidIsValid(oid))
-	{
-		if (aggtypename)
-			elog(ERROR, "aggregate type '%s' does not exist for aggregate '%s'",
-				 aggtypename, aggregate);
-		else
-			elog(ERROR, "aggregate '%s' does not exist", aggregate);
-	}
+		agg_error("CommentAggregate", aggregate, baseoid);
 
 	/* pg_aggregate doesn't have a hard-coded OID, so must look it up */
 

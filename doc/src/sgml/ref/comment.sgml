@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.9 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.10 2001/10/03 20:54:20 tgl Exp $
 Postgres documentation
 -->
 
@@ -25,11 +25,10 @@ Postgres documentation
   <synopsis>
 COMMENT ON
 [
-  [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ]
-  <replaceable class="PARAMETER">object_name</replaceable> |
-  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable>|
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> <replaceable class="PARAMETER">agg_type</replaceable>|
-  FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1</replaceable>, <replaceable class="PARAMETER">arg2</replaceable>, ...)|
+  [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] <replaceable class="PARAMETER">object_name</replaceable> |
+  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
+  FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1</replaceable>, <replaceable class="PARAMETER">arg2</replaceable>, ...) |
   OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable> <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable>
 ] IS <replaceable class="PARAMETER">'text'</replaceable>
@@ -102,7 +101,7 @@ COMMENT
    <command>COMMENT</command> adds a comment to an object that can be 
     easily retrieved with <command>psql</command>'s
     <command>\dd</command>, <command>\d+</command>, or <command>\l+</command> commands.
-    To remove a comment, use <literal>NULL</literal>.
+    To remove a comment, write <literal>NULL</literal>.
     Comments are automatically dropped when the object is dropped.
   </para>
  </refsect1>

@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.9 2001/08/21 16:36:06 tgl Exp $
+-- $Id: complex.source,v 1.10 2001/10/03 20:54:22 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -285,6 +285,6 @@ DROP OPERATOR <= (complex, complex);
 DROP OPERATOR = (complex, complex);
 DROP OPERATOR >= (complex, complex);
 DROP OPERATOR > (complex, complex);
-DROP AGGREGATE complex_sum complex;
+DROP AGGREGATE complex_sum (complex);
 DROP TYPE complex;
 DROP TABLE test_complex, complex_ops_tmp;

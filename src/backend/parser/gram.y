@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.257 2001/10/03 05:29:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.258 2001/10/03 20:54:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -217,8 +217,7 @@ static void doNegateFloat(Value *v);
 %type <boolean>	opt_freeze, analyze_keyword
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
-		opt_column, event, comment_type, comment_cl,
-		comment_ag, comment_fn, comment_op, comment_tg
+		opt_column, event, comment_type
 
 %type <ival>	fetch_how_many
 
@@ -2011,7 +2010,7 @@ TruncateStmt:  TRUNCATE opt_table relation_name
  *  the object associated with the comment. The form of the statement is:
  *
  *  COMMENT ON [ [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] 
- *               <objname> | AGGREGATE <aggname> <aggtype> | FUNCTION 
+ *               <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION 
  *		 <funcname> (arg1, arg2, ...) | OPERATOR <op> 
  *		 (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
  *		 <relname> ] IS 'text'
@@ -2028,50 +2027,61 @@ CommentStmt:	COMMENT ON comment_type name IS comment_text
 				n->comment = $6;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_cl relation_name '.' attr_name IS comment_text
+		| COMMENT ON COLUMN relation_name '.' attr_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = $3;
+				n->objtype = COLUMN;
 				n->objname = $4;
 				n->objproperty = $6;
 				n->objlist = NULL;
 				n->comment = $8;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_ag name aggr_argtype IS comment_text
+		| COMMENT ON AGGREGATE name '(' aggr_argtype ')' IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = $3;
+				n->objtype = AGGREGATE;
+				n->objname = $4;
+				n->objproperty = NULL;
+				n->objlist = makeList1($6);
+				n->comment = $9;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON AGGREGATE name aggr_argtype IS comment_text
+			{
+				/* Obsolete syntax, but must support for awhile */
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = AGGREGATE;
 				n->objname = $4;
 				n->objproperty = NULL;
 				n->objlist = makeList1($5);
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_fn func_name func_args IS comment_text
+		| COMMENT ON FUNCTION func_name func_args IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = $3;
+				n->objtype = FUNCTION;
 				n->objname = $4;
 				n->objproperty = NULL;
 				n->objlist = $5;
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS comment_text
+		| COMMENT ON OPERATOR all_Op '(' oper_argtypes ')' IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = $3;
+				n->objtype = OPERATOR;
 				n->objname = $4;
 				n->objproperty = NULL;
 				n->objlist = $6;
 				n->comment = $9;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_tg name ON relation_name IS comment_text
+		| COMMENT ON TRIGGER name ON relation_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = $3;
+				n->objtype = TRIGGER;
 				n->objname = $4;
 				n->objproperty = $6;
 				n->objlist = NULL;
@@ -2088,21 +2098,6 @@ comment_type:	DATABASE { $$ = DATABASE; }
 		| TYPE_P { $$ = TYPE_P; }
 		| VIEW { $$ = VIEW; }
 		;		
-
-comment_cl:	COLUMN { $$ = COLUMN; }
-		;
-
-comment_ag:	AGGREGATE { $$ = AGGREGATE; }
-		;
-
-comment_fn:	FUNCTION { $$ = FUNCTION; }
-		;
-
-comment_op:	OPERATOR { $$ = OPERATOR; }
-		;
-
-comment_tg:	TRIGGER { $$ = TRIGGER; }
-		; 
 
 comment_text:	Sconst { $$ = $1; }
 		| NULL_P { $$ = NULL; }
@@ -2601,7 +2596,7 @@ func_type:	Typename
  *		QUERY:
  *
  *		DROP FUNCTION funcname (arg1, arg2, ...)
- *		DROP AGGREGATE aggname aggtype
+ *		DROP AGGREGATE aggname (aggtype)
  *		DROP OPERATOR opname (leftoperand_typ rightoperand_typ)
  *
  *****************************************************************************/
@@ -2615,8 +2610,16 @@ RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				}
 		;
 
-RemoveAggrStmt:  DROP AGGREGATE func_name aggr_argtype
+RemoveAggrStmt:  DROP AGGREGATE func_name '(' aggr_argtype ')'
 				{
+						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
+						n->aggname = $3;
+						n->aggtype = (Node *) $5;
+						$$ = (Node *)n;
+				}
+		| DROP AGGREGATE func_name aggr_argtype
+				{
+						/* Obsolete syntax, but must support for awhile */
 						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
 						n->aggname = $3;
 						n->aggtype = (Node *) $4;

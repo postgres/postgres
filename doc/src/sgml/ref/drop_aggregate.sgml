@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.12 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.13 2001/10/03 20:54:20 tgl Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">type</replaceable>
+DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> )
   </synopsis>
 
   <refsect2 id="R2-SQL-DROPAGGREGATE-1">
@@ -81,7 +81,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceable>' for '<replaceable class="parameter">name</replaceable>' does not exist
+ERROR: RemoveAggregate: aggregate '<replaceable class="parameter">name</replaceable>' for type <replaceable class="parameter">type</replaceable> does not exist
        </computeroutput></term>
       <listitem>
        <para>
@@ -133,7 +133,7 @@ ERROR: RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceab
    <literal>int4</literal>:
   </para>
   <programlisting>
-DROP AGGREGATE myavg int4;
+DROP AGGREGATE myavg(int4);
   </programlisting>
  </refsect1>
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.199 2001/10/03 05:29:12 thomas Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.200 2001/10/03 20:54:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2811,8 +2811,10 @@ transformTypeRefsList(ParseState *pstate, List *l)
 
 	foreach(ele, l)
 	{
-		if (IsA(lfirst(ele), TypeName))
-			transformTypeRef(pstate, (TypeName *) lfirst(ele));
+		Node   *elem = lfirst(ele);
+
+		if (elem && IsA(elem, TypeName))
+			transformTypeRef(pstate, (TypeName *) elem);
 	}
 }
 

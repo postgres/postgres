@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.62 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.63 2001/10/03 20:54:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,11 @@
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "parser/parse_agg.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 
@@ -354,7 +356,7 @@ RemoveAggregate(char *aggName, char *aggType)
 {
 	Relation	relation;
 	HeapTuple	tup;
-	Oid			basetypeID = InvalidOid;
+	Oid			basetypeID;
 	bool		defined;
 
 	/*
@@ -363,8 +365,7 @@ RemoveAggregate(char *aggName, char *aggType)
 	 *
 	 * else if the basetype is blank, then attempt to find an aggregate with
 	 * a basetype of zero.	This is valid. It means that the aggregate is
-	 * to apply to all basetypes.  ie, a counter of some sort.
-	 *
+	 * to apply to all basetypes (eg, COUNT).
 	 */
 
 	if (aggType)
@@ -374,20 +375,16 @@ RemoveAggregate(char *aggName, char *aggType)
 			elog(ERROR, "RemoveAggregate: type '%s' does not exist", aggType);
 	}
 	else
-		basetypeID = 0;
+		basetypeID = InvalidOid;
 
 	if (!pg_aggr_ownercheck(GetUserId(), aggName, basetypeID))
 	{
-		if (aggType)
-		{
-			elog(ERROR, "RemoveAggregate: aggregate '%s' on type '%s': permission denied",
-				 aggName, aggType);
-		}
-		else
-		{
-			elog(ERROR, "RemoveAggregate: aggregate '%s': permission denied",
+		if (basetypeID == InvalidOid)
+			elog(ERROR, "RemoveAggregate: aggregate '%s' for all types: permission denied",
 				 aggName);
-		}
+		else
+			elog(ERROR, "RemoveAggregate: aggregate '%s' for type %s: permission denied",
+				 aggName, format_type_be(basetypeID));
 	}
 
 	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
@@ -398,19 +395,7 @@ RemoveAggregate(char *aggName, char *aggType)
 						 0, 0);
 
 	if (!HeapTupleIsValid(tup))
-	{
-		heap_close(relation, RowExclusiveLock);
-		if (aggType)
-		{
-			elog(ERROR, "RemoveAggregate: aggregate '%s' for '%s' does not exist",
-				 aggName, aggType);
-		}
-		else
-		{
-			elog(ERROR, "RemoveAggregate: aggregate '%s' for all types does not exist",
-				 aggName);
-		}
-	}
+		agg_error("RemoveAggregate", aggName, basetypeID);
 
 	/* Remove any comments related to this aggregate */
 	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));

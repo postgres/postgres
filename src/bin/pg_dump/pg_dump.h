@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.71 2001/10/01 21:31:52 tgl Exp $
+ * $Id: pg_dump.h,v 1.72 2001/10/03 20:54:21 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -223,6 +223,7 @@ typedef enum _OidOptions
 {
 	zeroAsOpaque = 1,
 	zeroAsAny = 2,
+	zeroAsStar = 4,
 	useBaseTypeName = 1024
 } OidOptions;
 

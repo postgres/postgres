@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.232 2001/10/03 05:23:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.233 2001/10/03 20:54:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3706,7 +3706,9 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 
 		resetPQExpBuffer(aggSig);
 		appendPQExpBuffer(aggSig, "%s(%s)", agginfo[i].aggname,
-						  findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsOpaque + useBaseTypeName));
+						  findTypeByOid(tinfo, numTypes,
+										agginfo[i].aggbasetype,
+										zeroAsStar + useBaseTypeName));
 
 		if (!agginfo[i].convertok)
 		{
@@ -3721,7 +3723,8 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 			continue;
 		}
 
-		name = findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsAny + useBaseTypeName);
+		name = findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype,
+							 zeroAsAny + useBaseTypeName);
 		if (name == NULL)
 		{
 			write_msg(NULL, "WARNING: aggregate function \"%s\" (oid %s) not dumped\n",
@@ -3738,7 +3741,8 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		}
 		appendPQExpBuffer(details, "BASETYPE = %s, ", name);
 
-		name = findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype, zeroAsOpaque + useBaseTypeName);
+		name = findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype,
+							 zeroAsOpaque + useBaseTypeName);
 		if (name == NULL)
 		{
 			write_msg(NULL, "WARNING: aggregate function \"%s\" (oid %s) not dumped\n",
@@ -3781,8 +3785,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		/*** Dump Aggregate Comments ***/
 
 		resetPQExpBuffer(q);
-		appendPQExpBuffer(q, "AGGREGATE %s %s", agginfo[i].aggname,
-						  findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsOpaque + useBaseTypeName));
+		appendPQExpBuffer(q, "AGGREGATE %s", aggSig->data);
 		dumpComment(fout, q->data, agginfo[i].oid, "pg_aggregate", 0, NULL);
 	}
 

@@ -327,15 +327,15 @@ make_name(void)
 %type  <str>	createdb_opt_list opt_encoding OptInherit Geometric
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation PosAllConst
-%type  <str>	opt_cursor ConstraintsSetStmt comment_tg AllConst
+%type  <str>	opt_cursor ConstraintsSetStmt AllConst
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value ReindexStmt join_type opt_boolean
 %type  <str>	join_qual update_list AlterSchemaStmt joined_table
 %type  <str>	opt_level opt_lock lock_type OptGroupList OptGroupElem
-%type  <str>    OptConstrFromTable comment_op OptTempTableName StringConst
-%type  <str>    constraints_set_list constraints_set_namelist comment_fn
-%type  <str>	constraints_set_mode comment_type comment_cl comment_ag
+%type  <str>    OptConstrFromTable OptTempTableName StringConst
+%type  <str>    constraints_set_list constraints_set_namelist
+%type  <str>	constraints_set_mode comment_type
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
 %type  <str>    IntConst PosIntConst grantee_list func_type opt_or_replace
@@ -1635,7 +1635,7 @@ from_in:   IN 	{ $$ = make_str("in"); }
  *  the object associated with the comment. The form of the statement is:
  *
  *  COMMENT ON [ [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ]
- *               <objname> | AGGREGATE <aggname> <aggtype> | FUNCTION
+ *               <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION
  *              <funcname> (arg1, arg2, ...) | OPERATOR <op>
  *              (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
  *              <relname> ] IS 'text'
@@ -1645,25 +1645,29 @@ CommentStmt:   COMMENT ON comment_type name IS comment_text
                         {
                                 $$ = cat_str(5, make_str("comment on"), $3, $4, make_str("is"), $6);
                         }
-                | COMMENT ON comment_cl relation_name '.' attr_name IS comment_text
+                | COMMENT ON COLUMN relation_name '.' attr_name IS comment_text
                         { 
-                                $$ = cat_str(7, make_str("comment on"), $3, $4, make_str("."), $6, make_str("is"), $8);
+                                $$ = cat_str(6, make_str("comment on column"), $4, make_str("."), $6, make_str("is"), $8);
 			}
-                | COMMENT ON comment_ag name aggr_argtype IS comment_text
+                | COMMENT ON AGGREGATE name '(' aggr_argtype ')' IS comment_text
                         {
-                                $$ = cat_str(6, make_str("comment on"), $3, $4, $5, make_str("is"), $7);
+                                $$ = cat_str(6, make_str("comment on aggregate"), $4, make_str("("), $6, make_str(") is"), $9);
 			}
-		| COMMENT ON comment_fn func_name func_args IS comment_text
-			{
-                                $$ = cat_str(6, make_str("comment on"), $3, $4, $5, make_str("is"), $7);
-			}
-		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS comment_text
-			{
-				$$ = cat_str(7, make_str("comment on"), $3, $4, make_str("("), $6, make_str(") is"), $9);
-			}
-		| COMMENT ON comment_tg name ON relation_name IS comment_text
+                | COMMENT ON AGGREGATE name aggr_argtype IS comment_text
                         {
-                                $$ = cat_str(7, make_str("comment on"), $3, $4, make_str("on"), $6, make_str("is"), $8);
+                                $$ = cat_str(5, make_str("comment on aggregate"), $4, $5, make_str("is"), $7);
+			}
+		| COMMENT ON FUNCTION func_name func_args IS comment_text
+			{
+                                $$ = cat_str(5, make_str("comment on function"), $4, $5, make_str("is"), $7);
+			}
+		| COMMENT ON OPERATOR all_Op '(' oper_argtypes ')' IS comment_text
+			{
+				$$ = cat_str(6, make_str("comment on operator"), $4, make_str("("), $6, make_str(") is"), $9);
+			}
+		| COMMENT ON TRIGGER name ON relation_name IS comment_text
+                        {
+                                $$ = cat_str(6, make_str("comment on trigger"), $4, make_str("on"), $6, make_str("is"), $8);
 			}
 			;
 
@@ -1675,16 +1679,6 @@ comment_type:  DATABASE 	{ $$ = make_str("database"); }
                 | TYPE_P	{ $$ = make_str("type"); }
                 | VIEW		{ $$ = make_str("view"); }
 		;
-
-comment_cl:    COLUMN		{ $$ = make_str("column"); }
-
-comment_ag:    AGGREGATE	{ $$ = make_str("aggregate"); }
-
-comment_fn:    FUNCTION		{ $$ = make_str("function"); }
-
-comment_op:    OPERATOR		{ $$ = make_str("operator"); }
-
-comment_tg:    TRIGGER		{ $$ = make_str("trigger"); }
 
 comment_text:    StringConst		{ $$ = $1; }
                | NULL_P		{ $$ = make_str("null"); }
@@ -1967,7 +1961,7 @@ func_type:	Typename
  *		QUERY:
  *
  *             DROP FUNCTION funcname (arg1, arg2, ...)
- *             DROP AGGREGATE aggname aggtype
+ *             DROP AGGREGATE aggname (aggtype)
  *             DROP OPERATOR opname (leftoperand_typ rightoperand_typ) 
  *
  *****************************************************************************/
@@ -1978,8 +1972,13 @@ RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				}
 		;
 
-RemoveAggrStmt:  DROP AGGREGATE func_name aggr_argtype
+RemoveAggrStmt:  DROP AGGREGATE func_name '(' aggr_argtype ')'
 				{
+						$$ = cat_str(5, make_str("drop aggregate"), $3, make_str("("), $5, make_str(")"));
+				}
+		| DROP AGGREGATE func_name aggr_argtype
+				{
+						/* Obsolete syntax, but must support for awhile */
 						$$ = cat_str(3, make_str("drop aggregate"), $3, $4);
 				}
 		;

@@ -147,20 +147,20 @@ drop index nonesuch;
 -- missing aggregate name 
 drop aggregate;
 
--- bad aggregate name 
-drop aggregate 314159;
-
--- no such aggregate 
-drop aggregate nonesuch;
-
 -- missing aggregate type
 drop aggregate newcnt1;
 
+-- bad aggregate name 
+drop aggregate 314159 (int);
+
 -- bad aggregate type
-drop aggregate newcnt nonesuch;
+drop aggregate newcnt (nonesuch);
+
+-- no such aggregate 
+drop aggregate nonesuch (int4);
 
 -- no such aggregate for type
-drop aggregate newcnt float4;
+drop aggregate newcnt (float4);
 
 
 --
