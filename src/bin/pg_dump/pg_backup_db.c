@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.57 2004/08/29 05:06:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.58 2004/09/10 20:05:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,8 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
  * Reconnect to the server.  If dbname is not NULL, use that database,
  * else the one associated with the archive handle.  If username is
  * not NULL, use that user name, else the one from the handle.	If
- * both the database and the user and match the existing connection
- * already, nothing will be done.
+ * both the database and the user match the existing connection already,
+ * nothing will be done.
  *
  * Returns 1 in any case.
  */
@@ -111,8 +111,8 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 		newusername = username;
 
 	/* Let's see if the request is already satisfied */
-	if (strcmp(newusername, PQuser(AH->connection)) == 0
-		&& strcmp(newdbname, PQdb(AH->connection)) == 0)
+	if (strcmp(newdbname, PQdb(AH->connection)) == 0 &&
+		strcmp(newusername, PQuser(AH->connection)) == 0)
 		return 1;
 
 	newConn = _connectDB(AH, newdbname, newusername);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.96 2004/08/30 19:44:14 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.97 2004/09/10 20:05:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _doSetWithOids(ArchiveHandle *AH, const bool withOids);
-static void _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user);
+static void _reconnectToDB(ArchiveHandle *AH, const char *dbname);
 static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
@@ -277,8 +277,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			/* If we created a DB, connect to it... */
 			if (strcmp(te->desc, "DATABASE") == 0)
 			{
-				ahlog(AH, 1, "connecting to new database \"%s\" as user \"%s\"\n", te->tag, te->owner);
-				_reconnectToDB(AH, te->tag, te->owner);
+				ahlog(AH, 1, "connecting to new database \"%s\"\n", te->tag);
+				_reconnectToDB(AH, te->tag);
 			}
 		}
 
@@ -2151,26 +2151,25 @@ _doSetWithOids(ArchiveHandle *AH, const bool withOids)
 
 
 /*
- * Issue the commands to connect to the specified database
- * as the specified user.
+ * Issue the commands to connect to the specified database.
  *
  * If we're currently restoring right into a database, this will
  * actually establish a connection. Otherwise it puts a \connect into
  * the script output.
+ *
+ * NULL dbname implies reconnecting to the current DB (pretty useless).
  */
 static void
-_reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user)
+_reconnectToDB(ArchiveHandle *AH, const char *dbname)
 {
 	if (RestoringToDB(AH))
-		ReconnectToServer(AH, dbname, user);
+		ReconnectToServer(AH, dbname, NULL);
 	else
 	{
 		PQExpBuffer qry = createPQExpBuffer();
 
-		appendPQExpBuffer(qry, "\\connect %s",
+		appendPQExpBuffer(qry, "\\connect %s\n\n",
 						  dbname ? fmtId(dbname) : "-");
-		appendPQExpBuffer(qry, " %s\n\n",
-						  fmtId(user));
 
 		ahprintf(AH, qry->data);
 
@@ -2179,12 +2178,12 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user)
 
 	/*
 	 * NOTE: currUser keeps track of what the imaginary session user in
-	 * our script is
+	 * our script is.  It's now effectively reset to the original userID.
 	 */
 	if (AH->currUser)
 		free(AH->currUser);
 
-	AH->currUser = strdup(user);
+	AH->currUser = strdup("");
 
 	/* don't assume we still know the output schema */
 	if (AH->currSchema)
@@ -2448,6 +2447,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 &&
 		(strcmp(te->desc, "AGGREGATE") == 0 ||
 		 strcmp(te->desc, "CONVERSION") == 0 ||
+		 strcmp(te->desc, "DATABASE") == 0 ||
 		 strcmp(te->desc, "DOMAIN") == 0 ||
 		 strcmp(te->desc, "FUNCTION") == 0 ||
 		 strcmp(te->desc, "OPERATOR") == 0 ||
