@@ -623,6 +623,15 @@ char temp[128];
 		globals.unknown_sizes = atoi(temp);
 
 
+	//	Lie about supported functions?
+	SQLGetPrivateProfileString(DBMS_NAME, INI_LIE, "", 
+				temp, sizeof(temp), ODBCINST_INI);
+	if ( temp[0] == '\0') 
+		globals.lie = DEFAULT_LIE;
+	else
+		globals.lie = atoi(temp);
+
+
 	//	Readonly is stored in the driver section AND per datasource
 	SQLGetPrivateProfileString(DBMS_NAME, INI_READONLY, "", 
 				temp, sizeof(temp), ODBCINST_INI);

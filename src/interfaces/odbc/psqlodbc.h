@@ -88,6 +88,7 @@ typedef struct GlobalValues_
 	char				text_as_longvarchar;
 	char				unknowns_as_longvarchar;
 	char				bools_as_char;
+	char				lie;
 	char				extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char				conn_settings[LARGE_REGISTRY_LEN];
 } GLOBAL_VALUES;

@@ -200,7 +200,12 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 
 //      -       -       -       -       -       -       -       -       -
 
-//      Returns the description of a parameter marker.
+//  Returns the description of a parameter marker.
+//	This function is listed as not being supported by SQLGetFunctions() because it is 
+//	used to describe "parameter markers" (not bound parameters), in which case, 
+//	the dbms should return info on the markers.  Since Postgres doesn't support that,
+//	it is best to say this function is not supported and let the application assume a 
+//	data type (most likely varchar).
 
 RETCODE SQL_API SQLDescribeParam(
         HSTMT      hstmt,
@@ -223,6 +228,8 @@ StatementClass *stmt = (StatementClass *) hstmt;
 
 	ipar--;
 
+	//	This implementation is not very good, since it is supposed to describe
+	//	parameter markers, not bound parameters. 
 	if(pfSqlType)
 		*pfSqlType = stmt->parameters[ipar].SQLType;
 
@@ -252,25 +259,50 @@ RETCODE SQL_API SQLParamOptions(
 
 //      -       -       -       -       -       -       -       -       -
 
-//      Returns the number of parameters in an SQL statement
-
+//	This function should really talk to the dbms to determine the number of 
+//	"parameter markers" (not bound parameters) in the statement.  But, since
+//	Postgres doesn't support that, the driver should just count the number of markers
+//	and return that.  The reason the driver just can't say this function is unsupported
+//	like it does for SQLDescribeParam is that some applications don't care and try 
+//	to call it anyway.
+//	If the statement does not have parameters, it should just return 0.
 RETCODE SQL_API SQLNumParams(
         HSTMT      hstmt,
         SWORD  FAR *pcpar)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
+char in_quote = FALSE;
+unsigned int i;
 
 
 	if(!stmt)
 		return SQL_INVALID_HANDLE;
 
-	//	If the statement does not have parameters, it should just return 0.
+	if (pcpar)
+		*pcpar = 0;
+	else
+		return SQL_ERROR;
 
-	if (pcpar) {
-		*pcpar = stmt->parameters_allocated;
+
+	if(!stmt->statement) {
+		// no statement has been allocated
+		stmt->errormsg = "SQLNumParams called with no statement ready.";
+		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		return SQL_ERROR;
+	} else {
+
+		for(i=0; i < strlen(stmt->statement); i++) {
+
+			if(stmt->statement[i] == '?' && !in_quote)
+				(*pcpar)++;
+			else {
+				if (stmt->statement[i] == '\'')
+					in_quote = (in_quote ? FALSE : TRUE);
+			}
+		}
+
+		return SQL_SUCCESS;
 	}
-
-	return SQL_SUCCESS;
 }
 
 /********************************************************************

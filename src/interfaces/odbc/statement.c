@@ -151,6 +151,7 @@ StatementClass *rv;
 		rv->status = STMT_ALLOCATED;
 		rv->maxRows = 0;			// driver returns all rows
 		rv->rowset_size = 1;
+		rv->keyset_size = 0;		// fully keyset driven is the default
 		rv->scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		rv->cursor_type = SQL_CURSOR_FORWARD_ONLY;
 		rv->errormsg = NULL;

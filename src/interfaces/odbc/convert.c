@@ -365,7 +365,12 @@ struct tm *tim;
 		//	truncate the data.
         // return COPY_RESULT_TRUNCATED;
 
-		*pcbValue = cbValueMax -1;
+		//	LongVarBinary types do handle truncated multiple get calls
+		//	through convert_lo().
+
+		if (pcbValue)
+			*pcbValue = cbValueMax -1;
+
 		return COPY_OK;
 
     } else {

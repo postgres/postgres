@@ -56,6 +56,7 @@
 #define INI_FAKEOIDINDEX			"FakeOidIndex"
 #define INI_SHOWOIDCOLUMN			"ShowOidColumn"
 #define INI_SHOWSYSTEMTABLES		"ShowSystemTables"
+#define INI_LIE						"Lie"
 #define INI_EXTRASYSTABLEPREFIXES	"ExtraSysTablePrefixes"
 
 /*	Connection Defaults */
@@ -74,6 +75,7 @@
 #define DEFAULT_FAKEOIDINDEX			0
 #define DEFAULT_SHOWOIDCOLUMN			0
 #define DEFAULT_SHOWSYSTEMTABLES		0		// dont show system tables
+#define DEFAULT_LIE						0
 
 #define DEFAULT_EXTRASYSTABLEPREFIXES	"dd_;"
 

@@ -163,14 +163,28 @@ char changed = FALSE;
 
 		break;
 
+	case SQL_KEYSET_SIZE:
+		mylog("SetStmtOption(): SQL_KEYSET_SIZE = %d\n", vParam);
+		if (globals.lie)
+			stmt->keyset_size = vParam;
+		else {
+			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			stmt->errormsg = "Driver does not support keyset size option";
+			return SQL_ERROR;
+		}
+		break;
+
 	case SQL_CONCURRENCY:
 		//	positioned update isn't supported so cursor concurrency is read-only
 		mylog("SetStmtOption(): SQL_CONCURRENCY = %d\n", vParam);
 
-		stmt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
-		if (vParam != SQL_CONCUR_READ_ONLY)
-			changed = TRUE;
-
+		if (globals.lie)
+			stmt->scroll_concurrency = vParam;
+		else {
+			stmt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
+			if (vParam != SQL_CONCUR_READ_ONLY)
+				changed = TRUE;
+		}
 		break;
 		
 	case SQL_CURSOR_TYPE:
@@ -178,25 +192,28 @@ char changed = FALSE;
 		//	otherwise, it can only be forward or static.
 		mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d\n", vParam);
 
-		if (globals.use_declarefetch) {
-			stmt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
-			if (vParam != SQL_CURSOR_FORWARD_ONLY) 
-				changed = TRUE;
-		}
+		if (globals.lie)
+			stmt->cursor_type = vParam;
 		else {
-			if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
-				stmt->cursor_type = vParam;		// valid type
+			if (globals.use_declarefetch) {
+				stmt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
+				if (vParam != SQL_CURSOR_FORWARD_ONLY) 
+					changed = TRUE;
+			}
 			else {
-				stmt->cursor_type = SQL_CURSOR_STATIC;
-				changed = TRUE;
+				if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
+					stmt->cursor_type = vParam;		// valid type
+				else {
+					stmt->cursor_type = SQL_CURSOR_STATIC;
+					changed = TRUE;
+				}
 			}
 		}
-
 		break;
 
 	case SQL_SIMULATE_CURSOR:
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Simulated positioned update/delete not supported";
+		stmt->errormsg = "Simulated positioned update/delete not supported.  Use the cursor library.";
 		return SQL_ERROR;
 
     default:
@@ -254,6 +271,11 @@ StatementClass *stmt = (StatementClass *) hstmt;
 		*((SDWORD *)pvParam) = stmt->rowset_size;
 		break;
 
+	case SQL_KEYSET_SIZE:
+		mylog("GetStmtOption(): SQL_KEYSET_SIZE\n");
+		*((SDWORD *)pvParam) = stmt->keyset_size;
+		break;
+
 	case SQL_CONCURRENCY:
 		mylog("GetStmtOption(): SQL_CONCURRENCY\n");
 		*((SDWORD *)pvParam) = stmt->scroll_concurrency;
@@ -266,7 +288,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 
 	case SQL_SIMULATE_CURSOR:
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Simulated positioned update/delete not supported";
+		stmt->errormsg = "Simulated positioned update/delete not supported. Use the cursor library.";
 		return SQL_ERROR;
 
 	default:

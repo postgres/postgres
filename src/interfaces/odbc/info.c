@@ -307,7 +307,7 @@ char *p;
     case SQL_LOCK_TYPES: /* ODBC 2.0 */
         // which lock types does SQLSetPos support? (bitmask)
         // SQLSetPos doesn't exist yet
-        *((DWORD *)rgbInfoValue) = 0;
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : 0;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -424,9 +424,9 @@ char *p;
         break;
 
     case SQL_MULT_RESULT_SETS: /* ODBC 1.0 */
-        // do we support multiple result sets?
+        // do we support multiple result sets?  Not really, but say yes anyway?
         if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
         break;
 
     case SQL_MULTIPLE_ACTIVE_TXN: /* ODBC 1.0 */
@@ -442,9 +442,7 @@ char *p;
         break;
 
     case SQL_NON_NULLABLE_COLUMNS: /* ODBC 1.0 */
-        // I think you can have NOT NULL columns with one of dal Zotto's
-        // patches, but for now we'll say no.
-        *((WORD *)rgbInfoValue) = (WORD)SQL_NNC_NULL;
+        *((WORD *)rgbInfoValue) = (WORD)SQL_NNC_NON_NULL;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -516,13 +514,15 @@ char *p;
     case SQL_POS_OPERATIONS: /* ODBC 2.0 */
         // what functions does SQLSetPos support? (bitmask)
         // SQLSetPos does not exist yet
-        *((DWORD *)rgbInfoValue) = 0;
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : 0;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
     case SQL_POSITIONED_STATEMENTS: /* ODBC 2.0 */
         // what 'positioned' functions are supported? (bitmask)
-        *((DWORD *)rgbInfoValue) = 0;
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_PS_POSITIONED_DELETE | 
+											SQL_PS_POSITIONED_UPDATE | 
+											SQL_PS_SELECT_FOR_UPDATE) : 0;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -577,12 +577,15 @@ char *p;
         //  Driver doesn't support keyset-driven or mixed cursors, so
 		//	not much point in saying row updates are supported
         if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+        strncpy_null((char *)rgbInfoValue, globals.lie ? "Y" : "N", (size_t)cbInfoValueMax);
         break;
 
     case SQL_SCROLL_CONCURRENCY: /* ODBC 1.0 */
         // what concurrency options are supported BY THE CURSOR? (bitmask)
-        *((DWORD *)rgbInfoValue) = (SQL_SCCO_READ_ONLY);
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_SCCO_READ_ONLY | 
+									SQL_SCCO_LOCK | 
+									SQL_SCCO_OPT_ROWVER | 
+									SQL_SCCO_OPT_VALUES) : (SQL_SCCO_READ_ONLY);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -590,7 +593,11 @@ char *p;
         // what options are supported for scrollable cursors? (bitmask)
 		// for declare/fetch, only FORWARD scrolling is allowed
 		// otherwise, the result set is STATIC (to SQLExtendedFetch for example)
-        *((DWORD *)rgbInfoValue) = globals.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC);
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_SO_FORWARD_ONLY | 
+									SQL_SO_STATIC | 
+									SQL_SO_KEYSET_DRIVEN | 
+									SQL_SO_DYNAMIC | 
+									SQL_SO_MIXED) : (globals.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -620,7 +627,7 @@ char *p;
         // can changes made inside a cursor be detected? (or something like that)
         // (bitmask)
         // only applies to SQLSetPos, which doesn't exist yet.
-        *((DWORD *)rgbInfoValue) = 0;
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -805,149 +812,152 @@ RETCODE SQL_API SQLGetFunctions(
 {
     if (fFunction == SQL_API_ALL_FUNCTIONS) {
 
+		if (globals.lie) {
+			int i;
+			memset(pfExists, 0, sizeof(UWORD)*100);
 
-#ifdef GETINFO_LIE
-        int i;
-        memset(pfExists, 0, sizeof(UWORD)*100);
+			pfExists[SQL_API_SQLALLOCENV] = TRUE;
+			pfExists[SQL_API_SQLFREEENV] = TRUE;
+			for (i = SQL_API_SQLALLOCCONNECT; i <= SQL_NUM_FUNCTIONS; i++)
+				pfExists[i] = TRUE;
+			for (i = SQL_EXT_API_START; i <= SQL_EXT_API_LAST; i++)
+				pfExists[i] = TRUE;
+		}
+		else {
+			memset(pfExists, 0, sizeof(UWORD)*100);
 
-        pfExists[SQL_API_SQLALLOCENV] = TRUE;
-        pfExists[SQL_API_SQLFREEENV] = TRUE;
-        for (i = SQL_API_SQLALLOCCONNECT; i <= SQL_NUM_FUNCTIONS; i++)
-            pfExists[i] = TRUE;
-        for (i = SQL_EXT_API_START; i <= SQL_EXT_API_LAST; i++)
-            pfExists[i] = TRUE;
-#else
-        memset(pfExists, 0, sizeof(UWORD)*100);
+			// ODBC core functions
+			pfExists[SQL_API_SQLALLOCCONNECT]     = TRUE;
+			pfExists[SQL_API_SQLALLOCENV]         = TRUE;
+			pfExists[SQL_API_SQLALLOCSTMT]        = TRUE;
+			pfExists[SQL_API_SQLBINDCOL]          = TRUE;  
+			pfExists[SQL_API_SQLCANCEL]           = TRUE;
+			pfExists[SQL_API_SQLCOLATTRIBUTES]    = TRUE;
+			pfExists[SQL_API_SQLCONNECT]          = TRUE;
+			pfExists[SQL_API_SQLDESCRIBECOL]      = TRUE;  // partial
+			pfExists[SQL_API_SQLDISCONNECT]       = TRUE;
+			pfExists[SQL_API_SQLERROR]            = TRUE;
+			pfExists[SQL_API_SQLEXECDIRECT]       = TRUE;
+			pfExists[SQL_API_SQLEXECUTE]          = TRUE;
+			pfExists[SQL_API_SQLFETCH]            = TRUE;
+			pfExists[SQL_API_SQLFREECONNECT]      = TRUE;
+			pfExists[SQL_API_SQLFREEENV]          = TRUE;
+			pfExists[SQL_API_SQLFREESTMT]         = TRUE;
+			pfExists[SQL_API_SQLGETCURSORNAME]    = TRUE;
+			pfExists[SQL_API_SQLNUMRESULTCOLS]    = TRUE;
+			pfExists[SQL_API_SQLPREPARE]          = TRUE;  // complete?
+			pfExists[SQL_API_SQLROWCOUNT]         = TRUE;
+			pfExists[SQL_API_SQLSETCURSORNAME]    = TRUE;
+			pfExists[SQL_API_SQLSETPARAM]         = FALSE; // odbc 1.0
+			pfExists[SQL_API_SQLTRANSACT]         = TRUE;
 
-        // ODBC core functions
-        pfExists[SQL_API_SQLALLOCCONNECT]     = TRUE;
-        pfExists[SQL_API_SQLALLOCENV]         = TRUE;
-        pfExists[SQL_API_SQLALLOCSTMT]        = TRUE;
-        pfExists[SQL_API_SQLBINDCOL]          = TRUE;  
-        pfExists[SQL_API_SQLCANCEL]           = TRUE;
-        pfExists[SQL_API_SQLCOLATTRIBUTES]    = TRUE;
-        pfExists[SQL_API_SQLCONNECT]          = TRUE;
-        pfExists[SQL_API_SQLDESCRIBECOL]      = TRUE;  // partial
-        pfExists[SQL_API_SQLDISCONNECT]       = TRUE;
-        pfExists[SQL_API_SQLERROR]            = TRUE;
-        pfExists[SQL_API_SQLEXECDIRECT]       = TRUE;
-        pfExists[SQL_API_SQLEXECUTE]          = TRUE;
-        pfExists[SQL_API_SQLFETCH]            = TRUE;
-        pfExists[SQL_API_SQLFREECONNECT]      = TRUE;
-        pfExists[SQL_API_SQLFREEENV]          = TRUE;
-        pfExists[SQL_API_SQLFREESTMT]         = TRUE;
-        pfExists[SQL_API_SQLGETCURSORNAME]    = TRUE;
-        pfExists[SQL_API_SQLNUMRESULTCOLS]    = TRUE;
-        pfExists[SQL_API_SQLPREPARE]          = TRUE;  // complete?
-        pfExists[SQL_API_SQLROWCOUNT]         = TRUE;
-        pfExists[SQL_API_SQLSETCURSORNAME]    = TRUE;
-        pfExists[SQL_API_SQLSETPARAM]         = FALSE; // odbc 1.0
-        pfExists[SQL_API_SQLTRANSACT]         = TRUE;
+			// ODBC level 1 functions
+			pfExists[SQL_API_SQLBINDPARAMETER]    = TRUE;
+			pfExists[SQL_API_SQLCOLUMNS]          = TRUE;
+			pfExists[SQL_API_SQLDRIVERCONNECT]    = TRUE;
+			pfExists[SQL_API_SQLGETCONNECTOPTION] = TRUE;  // partial
+			pfExists[SQL_API_SQLGETDATA]          = TRUE;
+			pfExists[SQL_API_SQLGETFUNCTIONS]     = TRUE;                                                       
+			pfExists[SQL_API_SQLGETINFO]          = TRUE;
+			pfExists[SQL_API_SQLGETSTMTOPTION]    = TRUE;  // partial
+			pfExists[SQL_API_SQLGETTYPEINFO]      = TRUE;
+			pfExists[SQL_API_SQLPARAMDATA]        = TRUE;
+			pfExists[SQL_API_SQLPUTDATA]          = TRUE;
+			pfExists[SQL_API_SQLSETCONNECTOPTION] = TRUE;  // partial
+			pfExists[SQL_API_SQLSETSTMTOPTION]    = TRUE;
+			pfExists[SQL_API_SQLSPECIALCOLUMNS]   = TRUE;
+			pfExists[SQL_API_SQLSTATISTICS]       = TRUE;
+			pfExists[SQL_API_SQLTABLES]           = TRUE;
 
-        // ODBC level 1 functions
-        pfExists[SQL_API_SQLBINDPARAMETER]    = TRUE;
-        pfExists[SQL_API_SQLCOLUMNS]          = TRUE;
-        pfExists[SQL_API_SQLDRIVERCONNECT]    = TRUE;
-        pfExists[SQL_API_SQLGETCONNECTOPTION] = TRUE;  // partial
-        pfExists[SQL_API_SQLGETDATA]          = TRUE;
-        pfExists[SQL_API_SQLGETFUNCTIONS]     = TRUE;                                                       
-        pfExists[SQL_API_SQLGETINFO]          = TRUE;
-        pfExists[SQL_API_SQLGETSTMTOPTION]    = TRUE;  // partial
-        pfExists[SQL_API_SQLGETTYPEINFO]      = TRUE;
-        pfExists[SQL_API_SQLPARAMDATA]        = TRUE;
-        pfExists[SQL_API_SQLPUTDATA]          = TRUE;
-        pfExists[SQL_API_SQLSETCONNECTOPTION] = TRUE;  // partial
-        pfExists[SQL_API_SQLSETSTMTOPTION]    = TRUE;
-        pfExists[SQL_API_SQLSPECIALCOLUMNS]   = TRUE;
-        pfExists[SQL_API_SQLSTATISTICS]       = TRUE;
-        pfExists[SQL_API_SQLTABLES]           = TRUE;
-
-        // ODBC level 2 functions
-        pfExists[SQL_API_SQLBROWSECONNECT]    = FALSE;
-        pfExists[SQL_API_SQLCOLUMNPRIVILEGES] = FALSE;
-        pfExists[SQL_API_SQLDATASOURCES]      = FALSE;  // only implemented by DM
-        pfExists[SQL_API_SQLDESCRIBEPARAM]    = TRUE;
-        pfExists[SQL_API_SQLDRIVERS]          = FALSE;  // only implemented by DM
-        pfExists[SQL_API_SQLEXTENDEDFETCH]    = globals.use_declarefetch ? FALSE : TRUE;
-        pfExists[SQL_API_SQLFOREIGNKEYS]      = TRUE;
-        pfExists[SQL_API_SQLMORERESULTS]      = FALSE;
-        pfExists[SQL_API_SQLNATIVESQL]        = TRUE;
-        pfExists[SQL_API_SQLNUMPARAMS]        = TRUE;
-        pfExists[SQL_API_SQLPARAMOPTIONS]     = FALSE;
-        pfExists[SQL_API_SQLPRIMARYKEYS]      = TRUE;
-        pfExists[SQL_API_SQLPROCEDURECOLUMNS] = FALSE;
-        pfExists[SQL_API_SQLPROCEDURES]       = FALSE;
-        pfExists[SQL_API_SQLSETPOS]           = FALSE;
-        pfExists[SQL_API_SQLSETSCROLLOPTIONS] = FALSE;	// odbc 1.0
-        pfExists[SQL_API_SQLTABLEPRIVILEGES]  = FALSE;
-#endif
+			// ODBC level 2 functions
+			pfExists[SQL_API_SQLBROWSECONNECT]    = FALSE;
+			pfExists[SQL_API_SQLCOLUMNPRIVILEGES] = FALSE;
+			pfExists[SQL_API_SQLDATASOURCES]      = FALSE;  // only implemented by DM
+			pfExists[SQL_API_SQLDESCRIBEPARAM]    = FALSE;	// not properly implemented
+			pfExists[SQL_API_SQLDRIVERS]          = FALSE;  // only implemented by DM
+			pfExists[SQL_API_SQLEXTENDEDFETCH]    = globals.use_declarefetch ? FALSE : TRUE;
+			pfExists[SQL_API_SQLFOREIGNKEYS]      = TRUE;
+			pfExists[SQL_API_SQLMORERESULTS]      = TRUE;
+			pfExists[SQL_API_SQLNATIVESQL]        = TRUE;
+			pfExists[SQL_API_SQLNUMPARAMS]        = TRUE;
+			pfExists[SQL_API_SQLPARAMOPTIONS]     = FALSE;
+			pfExists[SQL_API_SQLPRIMARYKEYS]      = TRUE;
+			pfExists[SQL_API_SQLPROCEDURECOLUMNS] = FALSE;
+			pfExists[SQL_API_SQLPROCEDURES]       = FALSE;
+			pfExists[SQL_API_SQLSETPOS]           = FALSE;
+			pfExists[SQL_API_SQLSETSCROLLOPTIONS] = FALSE;	// odbc 1.0
+			pfExists[SQL_API_SQLTABLEPRIVILEGES]  = FALSE;
+		}
     } else {
-#ifdef GETINFO_LIE
-        *pfExists = TRUE;
-#else
-        switch(fFunction) {
-        case SQL_API_SQLALLOCCONNECT:     *pfExists = TRUE; break;
-        case SQL_API_SQLALLOCENV:         *pfExists = TRUE; break;
-        case SQL_API_SQLALLOCSTMT:        *pfExists = TRUE; break;
-        case SQL_API_SQLBINDCOL:          *pfExists = TRUE; break;
-        case SQL_API_SQLCANCEL:           *pfExists = TRUE; break;
-        case SQL_API_SQLCOLATTRIBUTES:    *pfExists = TRUE; break;
-        case SQL_API_SQLCONNECT:          *pfExists = TRUE; break;
-        case SQL_API_SQLDESCRIBECOL:      *pfExists = TRUE; break;  // partial
-        case SQL_API_SQLDISCONNECT:       *pfExists = TRUE; break;
-        case SQL_API_SQLERROR:            *pfExists = TRUE; break;
-        case SQL_API_SQLEXECDIRECT:       *pfExists = TRUE; break;
-        case SQL_API_SQLEXECUTE:          *pfExists = TRUE; break;
-        case SQL_API_SQLFETCH:            *pfExists = TRUE; break;
-        case SQL_API_SQLFREECONNECT:      *pfExists = TRUE; break;
-        case SQL_API_SQLFREEENV:          *pfExists = TRUE; break;
-        case SQL_API_SQLFREESTMT:         *pfExists = TRUE; break;
-        case SQL_API_SQLGETCURSORNAME:    *pfExists = TRUE; break;
-        case SQL_API_SQLNUMRESULTCOLS:    *pfExists = TRUE; break;
-        case SQL_API_SQLPREPARE:          *pfExists = TRUE; break;
-        case SQL_API_SQLROWCOUNT:         *pfExists = TRUE; break;
-        case SQL_API_SQLSETCURSORNAME:    *pfExists = TRUE; break;
-        case SQL_API_SQLSETPARAM:         *pfExists = FALSE; break; // odbc 1.0
-        case SQL_API_SQLTRANSACT:         *pfExists = TRUE; break;
 
-            // ODBC level 1 functions
-        case SQL_API_SQLBINDPARAMETER:    *pfExists = TRUE; break;
-        case SQL_API_SQLCOLUMNS:          *pfExists = TRUE; break;
-        case SQL_API_SQLDRIVERCONNECT:    *pfExists = TRUE; break;
-        case SQL_API_SQLGETCONNECTOPTION: *pfExists = TRUE; break;  // partial
-        case SQL_API_SQLGETDATA:          *pfExists = TRUE; break;
-        case SQL_API_SQLGETFUNCTIONS:     *pfExists = TRUE; break;
-        case SQL_API_SQLGETINFO:          *pfExists = TRUE; break;
-        case SQL_API_SQLGETSTMTOPTION:    *pfExists = TRUE; break;  // partial
-        case SQL_API_SQLGETTYPEINFO:      *pfExists = TRUE; break;
-        case SQL_API_SQLPARAMDATA:        *pfExists = TRUE; break;
-        case SQL_API_SQLPUTDATA:          *pfExists = TRUE; break;
-        case SQL_API_SQLSETCONNECTOPTION: *pfExists = TRUE; break;  // partial
-        case SQL_API_SQLSETSTMTOPTION:    *pfExists = TRUE; break;
-        case SQL_API_SQLSPECIALCOLUMNS:   *pfExists = TRUE; break;
-        case SQL_API_SQLSTATISTICS:       *pfExists = TRUE; break;
-        case SQL_API_SQLTABLES:           *pfExists = TRUE; break;
+		if (globals.lie)
+			*pfExists = TRUE;
 
-            // ODBC level 2 functions
-        case SQL_API_SQLBROWSECONNECT:    *pfExists = FALSE; break;
-        case SQL_API_SQLCOLUMNPRIVILEGES: *pfExists = FALSE; break;
-        case SQL_API_SQLDATASOURCES:      *pfExists = FALSE; break;  // only implemented by DM
-        case SQL_API_SQLDESCRIBEPARAM:    *pfExists = TRUE; break;
-        case SQL_API_SQLDRIVERS:          *pfExists = FALSE; break;  // only implemented by DM
-        case SQL_API_SQLEXTENDEDFETCH:    *pfExists = globals.use_declarefetch ? FALSE : TRUE; break;
-        case SQL_API_SQLFOREIGNKEYS:      *pfExists = TRUE; break;
-        case SQL_API_SQLMORERESULTS:      *pfExists = FALSE; break;
-        case SQL_API_SQLNATIVESQL:        *pfExists = TRUE; break;
-        case SQL_API_SQLNUMPARAMS:        *pfExists = TRUE; break;
-        case SQL_API_SQLPARAMOPTIONS:     *pfExists = FALSE; break;
-        case SQL_API_SQLPRIMARYKEYS:      *pfExists = TRUE; break;
-        case SQL_API_SQLPROCEDURECOLUMNS: *pfExists = FALSE; break;
-        case SQL_API_SQLPROCEDURES:       *pfExists = FALSE; break;
-        case SQL_API_SQLSETPOS:           *pfExists = FALSE; break;
-        case SQL_API_SQLSETSCROLLOPTIONS: *pfExists = FALSE; break;	// odbc 1.0
-        case SQL_API_SQLTABLEPRIVILEGES:  *pfExists = FALSE; break;
-        }
-#endif
+		else {
+
+			switch(fFunction) {
+			case SQL_API_SQLALLOCCONNECT:     *pfExists = TRUE; break;
+			case SQL_API_SQLALLOCENV:         *pfExists = TRUE; break;
+			case SQL_API_SQLALLOCSTMT:        *pfExists = TRUE; break;
+			case SQL_API_SQLBINDCOL:          *pfExists = TRUE; break;
+			case SQL_API_SQLCANCEL:           *pfExists = TRUE; break;
+			case SQL_API_SQLCOLATTRIBUTES:    *pfExists = TRUE; break;
+			case SQL_API_SQLCONNECT:          *pfExists = TRUE; break;
+			case SQL_API_SQLDESCRIBECOL:      *pfExists = TRUE; break;  // partial
+			case SQL_API_SQLDISCONNECT:       *pfExists = TRUE; break;
+			case SQL_API_SQLERROR:            *pfExists = TRUE; break;
+			case SQL_API_SQLEXECDIRECT:       *pfExists = TRUE; break;
+			case SQL_API_SQLEXECUTE:          *pfExists = TRUE; break;
+			case SQL_API_SQLFETCH:            *pfExists = TRUE; break;
+			case SQL_API_SQLFREECONNECT:      *pfExists = TRUE; break;
+			case SQL_API_SQLFREEENV:          *pfExists = TRUE; break;
+			case SQL_API_SQLFREESTMT:         *pfExists = TRUE; break;
+			case SQL_API_SQLGETCURSORNAME:    *pfExists = TRUE; break;
+			case SQL_API_SQLNUMRESULTCOLS:    *pfExists = TRUE; break;
+			case SQL_API_SQLPREPARE:          *pfExists = TRUE; break;
+			case SQL_API_SQLROWCOUNT:         *pfExists = TRUE; break;
+			case SQL_API_SQLSETCURSORNAME:    *pfExists = TRUE; break;
+			case SQL_API_SQLSETPARAM:         *pfExists = FALSE; break; // odbc 1.0
+			case SQL_API_SQLTRANSACT:         *pfExists = TRUE; break;
+
+				// ODBC level 1 functions
+			case SQL_API_SQLBINDPARAMETER:    *pfExists = TRUE; break;
+			case SQL_API_SQLCOLUMNS:          *pfExists = TRUE; break;
+			case SQL_API_SQLDRIVERCONNECT:    *pfExists = TRUE; break;
+			case SQL_API_SQLGETCONNECTOPTION: *pfExists = TRUE; break;  // partial
+			case SQL_API_SQLGETDATA:          *pfExists = TRUE; break;
+			case SQL_API_SQLGETFUNCTIONS:     *pfExists = TRUE; break;
+			case SQL_API_SQLGETINFO:          *pfExists = TRUE; break;
+			case SQL_API_SQLGETSTMTOPTION:    *pfExists = TRUE; break;  // partial
+			case SQL_API_SQLGETTYPEINFO:      *pfExists = TRUE; break;
+			case SQL_API_SQLPARAMDATA:        *pfExists = TRUE; break;
+			case SQL_API_SQLPUTDATA:          *pfExists = TRUE; break;
+			case SQL_API_SQLSETCONNECTOPTION: *pfExists = TRUE; break;  // partial
+			case SQL_API_SQLSETSTMTOPTION:    *pfExists = TRUE; break;
+			case SQL_API_SQLSPECIALCOLUMNS:   *pfExists = TRUE; break;
+			case SQL_API_SQLSTATISTICS:       *pfExists = TRUE; break;
+			case SQL_API_SQLTABLES:           *pfExists = TRUE; break;
+
+				// ODBC level 2 functions
+			case SQL_API_SQLBROWSECONNECT:    *pfExists = FALSE; break;
+			case SQL_API_SQLCOLUMNPRIVILEGES: *pfExists = FALSE; break;
+			case SQL_API_SQLDATASOURCES:      *pfExists = FALSE; break;  // only implemented by DM
+			case SQL_API_SQLDESCRIBEPARAM:    *pfExists = FALSE; break;  // not properly implemented
+			case SQL_API_SQLDRIVERS:          *pfExists = FALSE; break;  // only implemented by DM
+			case SQL_API_SQLEXTENDEDFETCH:    *pfExists = globals.use_declarefetch ? FALSE : TRUE; break;
+			case SQL_API_SQLFOREIGNKEYS:      *pfExists = TRUE; break;
+			case SQL_API_SQLMORERESULTS:      *pfExists = TRUE; break;
+			case SQL_API_SQLNATIVESQL:        *pfExists = TRUE; break;
+			case SQL_API_SQLNUMPARAMS:        *pfExists = TRUE; break;
+			case SQL_API_SQLPARAMOPTIONS:     *pfExists = FALSE; break;
+			case SQL_API_SQLPRIMARYKEYS:      *pfExists = TRUE; break;
+			case SQL_API_SQLPROCEDURECOLUMNS: *pfExists = FALSE; break;
+			case SQL_API_SQLPROCEDURES:       *pfExists = FALSE; break;
+			case SQL_API_SQLSETPOS:           *pfExists = FALSE; break;
+			case SQL_API_SQLSETSCROLLOPTIONS: *pfExists = FALSE; break;	// odbc 1.0
+			case SQL_API_SQLTABLEPRIVILEGES:  *pfExists = FALSE; break;
+			}
+		}
     }
 
     return SQL_SUCCESS;
@@ -974,7 +984,7 @@ RETCODE result;
 char *tableType;
 char tables_query[MAX_STATEMENT_LEN];
 char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
-SDWORD table_name_len, table_owner_len, relhasrules_len;
+// SDWORD table_name_len, table_owner_len, relhasrules_len;
 ConnInfo *ci;
 char *prefix[32], prefixes[MEDIUM_REGISTRY_LEN];
 char *table_type[32], table_types[MAX_INFO_STRING];
@@ -1082,7 +1092,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	}
 
     result = SQLBindCol(htbl_stmt, 1, SQL_C_CHAR,
-                        table_name, MAX_INFO_STRING, &table_name_len);
+                        table_name, MAX_INFO_STRING, NULL /* &table_name_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1091,7 +1101,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(htbl_stmt, 2, SQL_C_CHAR,
-                        table_owner, MAX_INFO_STRING, &table_owner_len);
+                        table_owner, MAX_INFO_STRING, NULL /* &table_owner_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1099,7 +1109,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
     result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
-                        relhasrules, MAX_INFO_STRING, &relhasrules_len);
+                        relhasrules, MAX_INFO_STRING, NULL /* &relhasrules_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1229,9 +1239,11 @@ RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
 Int2 field_number, field_length, mod_length;
 Int4 field_type;
-SDWORD table_owner_len, table_name_len, field_name_len,
+char not_null[2];
+/* SDWORD table_owner_len, table_name_len, field_name_len,
     field_type_len, field_type_name_len, field_number_len,
-	field_length_len, mod_length_len;
+	field_length_len, mod_length_len, not_null_len;
+*/
 ConnInfo *ci;
 
 
@@ -1249,7 +1261,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 	// **********************************************************************
 	//	Create the query to find out the columns (Note: pre 6.3 did not have the atttypmod field)
 	// **********************************************************************
-	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid,t.typname, a.attnum, a.attlen, %s from pg_user u, pg_class c, pg_attribute a, pg_type t where "
+	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid,t.typname, a.attnum, a.attlen, %s, a.attnotnull from pg_user u, pg_class c, pg_attribute a, pg_type t where "
 		"int4out(u.usesysid) = int4out(c.relowner) and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
 		PROTOCOL_62(ci) ? "a.attlen" : "a.atttypmod");
 
@@ -1280,7 +1292,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 1, SQL_C_CHAR,
-                        table_owner, MAX_INFO_STRING, &table_owner_len);
+                        table_owner, MAX_INFO_STRING, NULL /* &table_owner_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1289,7 +1301,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 2, SQL_C_CHAR,
-                        table_name, MAX_INFO_STRING, &table_name_len);
+                        table_name, MAX_INFO_STRING, NULL /* &table_name_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1298,7 +1310,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 3, SQL_C_CHAR,
-                        field_name, MAX_INFO_STRING, &field_name_len);
+                        field_name, MAX_INFO_STRING, NULL /* &field_name_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1307,7 +1319,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 4, SQL_C_DEFAULT,
-                        &field_type, 4, &field_type_len);
+                        &field_type, 4, NULL /* &field_type_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1316,7 +1328,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 5, SQL_C_CHAR,
-                        field_type_name, MAX_INFO_STRING, &field_type_name_len);
+                        field_type_name, MAX_INFO_STRING, NULL /* &field_type_name_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1325,7 +1337,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 6, SQL_C_DEFAULT,
-                        &field_number, MAX_INFO_STRING, &field_number_len);
+                        &field_number, MAX_INFO_STRING, NULL /* &field_number_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1334,7 +1346,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 7, SQL_C_DEFAULT,
-                        &field_length, MAX_INFO_STRING, &field_length_len);
+                        &field_length, MAX_INFO_STRING, NULL /* &field_length_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1343,7 +1355,16 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 8, SQL_C_DEFAULT,
-                        &mod_length, MAX_INFO_STRING, &mod_length_len);
+                        &mod_length, MAX_INFO_STRING, NULL /* &mod_length_len */);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = col_stmt->errormsg;
+		stmt->errornumber = col_stmt->errornumber;
+		SQLFreeStmt(hcol_stmt, SQL_DROP);
+        return SQL_ERROR;
+    }
+
+    result = SQLBindCol(hcol_stmt, 9, SQL_C_CHAR,
+                        &not_null, MAX_INFO_STRING, NULL /* &not_null_len */);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1458,7 +1479,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
 		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type));
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, field_type));
-		set_tuplefield_int2(&row->tuple[10], pgtype_nullable(stmt, field_type));
+		set_tuplefield_int2(&row->tuple[10], (Int2) (not_null[0] == '1' ? SQL_NO_NULLS : pgtype_nullable(stmt, field_type)));
 		set_tuplefield_string(&row->tuple[11], "");
 
         QR_add_tuple(stmt->result, row);

@@ -77,6 +77,7 @@ struct StatementClass_ {
     int errornumber;
 	int maxRows;
 	int rowset_size;
+	int keyset_size;
 	int cursor_type;
 	int scroll_concurrency;
 
