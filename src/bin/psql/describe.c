@@ -18,10 +18,7 @@
  * Handlers for various slash commands displaying some sort of list
  * of things in the database.
  *
- * If you add something here, consider this:
- * - If (and only if) the variable "description" is set, the description/
- *	 comment for the object should be displayed.
- * - Try to format the query to look nice in -E output.
+ * If you add something here, try to format the query to look nice in -E output.
  *----------------
  */
 
@@ -34,7 +31,7 @@
  * takes an optional regexp to match specific aggregates by name
  */
 bool
-describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc)
+describeAggregates(const char *name, PsqlSettings *pset)
 {
 	char		buf[384 + 2 * REGEXP_CUTOFF];
 	PGresult   *res;
@@ -45,17 +42,11 @@ describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc
 	 * types ones that work on all
 	 */
 	strcpy(buf,
-		   "SELECT a.aggname AS \"Name\", t.typname AS \"Type\"");
-    if (verbose)
-	strcat(buf, " ,u.usename as \"Owner\"");
-	if (desc)
-		strcat(buf, ",\n       obj_description(a.oid) as \"Description\"");
-	strcat(buf, !verbose ?
-		   ("\nFROM pg_aggregate a, pg_type t\n"
-	    "WHERE a.aggbasetype = t.oid\n") :
-		   ("\nFROM pg_aggregate a, pg_type t, pg_user u\n"
-	    "WHERE a.aggbasetype = t.oid AND a.aggowner = u.usesysid\n")
-	);
+		   "SELECT a.aggname AS \"Name\", t.typname AS \"Type\",\n"
+           "  obj_description(a.oid) as \"Description\"\n"
+           "FROM pg_aggregate a, pg_type t\n"
+           "WHERE a.aggbasetype = t.oid\n"
+        );
 
 	if (name)
 	{
@@ -66,18 +57,12 @@ describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc
 
 	strcat(buf,
 		   "UNION\n"
-		   "SELECT a.aggname AS \"Name\", '(all types)' as \"Type\"");
-    if (verbose)
-	strcat(buf, " ,u.usename as \"Owner\"");
-	if (desc)
-		strcat(buf,
-			   ",\n       obj_description(a.oid) as \"Description\"");
-	strcat(buf, !verbose ?
-		   ("\nFROM pg_aggregate a\n"
-	    "WHERE a.aggbasetype = 0\n") :
-		   ("\nFROM pg_aggregate a, pg_user u\n"
-	    "WHERE a.aggbasetype = 0 AND a.aggowner = u.usesysid\n")
-	);
+		   "SELECT a.aggname AS \"Name\", '(all types)' as \"Type\",\n"
+           "  obj_description(a.oid) as \"Description\"\n"
+		   "FROM pg_aggregate a\n"
+           "WHERE a.aggbasetype = 0\n"
+        );
+
 	if (name)
 	{
 		strcat(buf, "  AND a.aggname ~* '");
@@ -91,7 +76,6 @@ describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc
 	if (!res)
 		return false;
 
-	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = "List of aggregates";
 
@@ -106,7 +90,7 @@ describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc
  * Takes an optional regexp to narrow down the function name
  */
 bool
-describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
+describeFunctions(const char *name, PsqlSettings *pset, bool verbose)
 {
 	char		buf[384 + REGEXP_CUTOFF];
 	PGresult   *res;
@@ -117,12 +101,11 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 	 * arguments, but have no types defined for those arguments
 	 */
 	strcpy(buf,
-	   "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
+           "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
 		   "       oidvectortypes(p.proargtypes) as \"Arguments\"");
     if (verbose)
-	strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\"");
-	if (desc)
-		strcat(buf, ",\n       obj_description(p.oid) as \"Description\"");
+	strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\",\n"
+           "       obj_description(p.oid) as \"Description\"");
 
     if (!verbose)
 	strcat(buf,
@@ -146,7 +129,6 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 	if (!res)
 		return false;
 
-	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = "List of functions";
 
@@ -163,7 +145,7 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
  * describe types
  */
 bool
-describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
+describeTypes(const char *name, PsqlSettings *pset, bool verbose)
 {
 	char		buf[256 + REGEXP_CUTOFF];
 	PGresult   *res;
@@ -171,25 +153,13 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 
 	strcpy(buf, "SELECT t.typname AS \"Type\"");
     if (verbose)
-	strcat(buf,
-	       ",\n       (CASE WHEN t.typlen=-1 THEN 'var'::text ELSE t.typlen::text END) as \"Length\""
-	       ",\n       u.usename as \"Owner\""
-	    );
-    /*
-	 *	Let's always show descriptions for this.  There is room.
-	 *	bjm 1999/12/31
-     */
-	strcat(buf, ",\n       obj_description(t.oid) as \"Description\"");
+        strcat(buf, ",\n  (CASE WHEN t.typlen = -1 THEN 'var'::text ELSE t.typlen::text END) as \"Size\"");
+	strcat(buf, ",\n  obj_description(t.oid) as \"Description\"");
     /*
      * do not include array types (start with underscore),
      * do not include user relations (typrelid!=0)
      */
-	strcat(buf, !verbose ?
-	   ("\nFROM pg_type t\n"
-	    "WHERE t.typrelid = 0 AND t.typname !~ '^_.*'\n") :
-	   ("\nFROM pg_type t, pg_user u\n"
-	    "WHERE t.typrelid = 0 AND t.typname !~ '^_.*' AND t.typowner = u.usesysid\n")
-	);
+	strcat(buf, "\nFROM pg_type t\nWHERE t.typrelid = 0 AND t.typname !~ '^_.*'\n");
 
 	if (name)
 	{
@@ -203,7 +173,6 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 	if (!res)
 		return false;
 
-	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = "List of types";
 
@@ -218,26 +187,19 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 /* \do
  */
 bool
-describeOperators(const char *name, PsqlSettings *pset, bool verbose, bool desc)
+describeOperators(const char *name, PsqlSettings *pset)
 {
 	char		buf[1536 + 3 * REGEXP_CUTOFF];
 	PGresult   *res;
 	printQueryOpt myopt = pset->popt;
 
-    /* Not used right now. Maybe later. */
-    (void)verbose;
-
-    /* FIXME: Use outer joins here when ready */
-
 	strcpy(buf,
-	   "SELECT o.oprname AS \"Op\",\n"
+           "SELECT o.oprname AS \"Op\",\n"
 		   "       t1.typname AS \"Left arg\",\n"
 		   "       t2.typname AS \"Right arg\",\n"
-		   "       t0.typname AS \"Result\"");
-	if (desc)
-		strcat(buf, ",\n       obj_description(p.oid) as \"Description\"");
-	strcat(buf,
-	   "\nFROM   pg_proc p, pg_type t0,\n"
+		   "       t0.typname AS \"Result\",\n"
+		   "       obj_description(p.oid) as \"Description\"\n"
+           "FROM   pg_proc p, pg_type t0,\n"
 		   "       pg_type t1, pg_type t2,\n"
 		   "       pg_operator o\n"
 		   "WHERE  p.prorettype = t0.oid AND\n"
@@ -256,10 +218,9 @@ describeOperators(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 		   "SELECT o.oprname as \"Op\",\n"
 		   "       ''::name AS \"Left arg\",\n"
 		   "       t1.typname AS \"Right arg\",\n"
-		   "       t0.typname AS \"Result\"");
-	if (desc)
-		strcat(buf, ",\n       obj_description(p.oid) as \"Description\"");
-	strcat(buf, "\nFROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
+		   "       t0.typname AS \"Result\",\n"
+           "       obj_description(p.oid) as \"Description\"\n"
+           "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
 		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
 		   "       o.oprresult = t0.oid AND\n"
 		   "       o.oprkind = 'l' AND\n"
@@ -275,10 +236,9 @@ describeOperators(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 		   "SELECT o.oprname  as \"Op\",\n"
 		   "       t1.typname AS \"Left arg\",\n"
 		   "       ''::name AS \"Right arg\",\n"
-		   "       t0.typname AS \"Result\"");
-	if (desc)
-		strcat(buf, ",\n       obj_description(p.oid) as \"Description\"");
-	strcat(buf, "\nFROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
+		   "       t0.typname AS \"Result\",\n"
+           "       obj_description(p.oid) as \"Description\"\n"
+           "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
 		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
 		   "       o.oprresult = t0.oid AND\n"
 		   "       o.oprkind = 'r' AND\n"
@@ -295,7 +255,6 @@ describeOperators(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 	if (!res)
 		return false;
 
-	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = "List of operators";
 
@@ -315,11 +274,11 @@ bool
 listAllDbs(PsqlSettings *pset, bool desc)
 {
 	PGresult   *res;
-	char		buf[256];
+	char		buf[512];
 	printQueryOpt myopt = pset->popt;
 
 	strcpy(buf,
-	   "SELECT pg_database.datname as \"Database\",\n"
+           "SELECT pg_database.datname as \"Database\",\n"
 		   "       pg_user.usename as \"Owner\"");
 #ifdef MULTIBYTE
 	strcat(buf,
@@ -328,14 +287,29 @@ listAllDbs(PsqlSettings *pset, bool desc)
 	if (desc)
 		strcat(buf, ",\n       obj_description(pg_database.oid) as \"Description\"\n");
 	strcat(buf, "FROM pg_database, pg_user\n"
-		   "WHERE pg_database.datdba = pg_user.usesysid\n"
-		   "ORDER BY \"Database\"");
+		   "WHERE pg_database.datdba = pg_user.usesysid\n");
+
+    /* Also include databases that have no valid owner. */
+    strcat(buf, "\nUNION\n\n");
+
+	strcat(buf,
+           "SELECT pg_database.datname as \"Database\",\n"
+		   "       NULL as \"Owner\"");
+#ifdef MULTIBYTE
+	strcat(buf,
+		   ",\n       pg_database.encoding as \"Encoding\"");
+#endif
+	if (desc)
+		strcat(buf, ",\n       obj_description(pg_database.oid) as \"Description\"\n");
+	strcat(buf, "FROM pg_database\n"
+		   "WHERE pg_database.datdba NOT IN (SELECT usesysid FROM pg_user)\n");
+
+    strcat(buf, "ORDER BY \"Database\"");
 
 	res = PSQLexec(pset, buf);
 	if (!res)
 		return false;
 
-	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = "List of databases";
 
@@ -376,22 +350,15 @@ permissionsList(const char *name, PsqlSettings *pset)
 	if (!res)
 		return false;
 
-	if (PQntuples(res) == 0)
-		fputs("Couldn't find any tables.\n", pset->queryFout);
-	else
-	{
-		myopt.topt.tuples_only = false;
-		myopt.nullPrint = NULL;
-		sprintf(descbuf, "Access permissions for database \"%s\"", PQdb(pset->db));
-		myopt.title = descbuf;
+    myopt.nullPrint = NULL;
+    sprintf(descbuf, "Access permissions for database \"%s\"", PQdb(pset->db));
+    myopt.title = descbuf;
 
-		printQuery(res, &myopt, pset->queryFout);
-	}
+    printQuery(res, &myopt, pset->queryFout);
 
 	PQclear(res);
 	return true;
 }
-
 
 
 
@@ -413,7 +380,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 	descbuf[0] = '\0';
 
 	/* Aggregate descriptions */
-	strcat(descbuf, "SELECT DISTINCT a.aggname as \"Name\", 'aggregate'::text as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT a.aggname as \"Name\", 'aggregate'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_aggregate a, pg_description d\n"
 		   "WHERE a.oid = d.objoid\n");
 	if (object)
@@ -425,7 +392,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 
 	/* Function descriptions (except in/outs for datatypes) */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT p.proname as \"Name\", 'function'::text as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT p.proname as \"Name\", 'function'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_proc p, pg_description d\n"
 		   "WHERE p.oid = d.objoid AND (p.pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
 	if (object)
@@ -437,7 +404,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 
 	/* Operator descriptions */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT o.oprname as \"Name\", 'operator'::text as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT o.oprname as \"Name\", 'operator'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_operator o, pg_description d\n"
 		   /* must get comment via associated function */
 		   "WHERE RegprocToOid(o.oprcode) = d.objoid\n");
@@ -450,7 +417,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 
 	/* Type description */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT t.typname as \"Name\", 'type'::text as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT t.typname as \"Name\", 'type'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_type t, pg_description d\n"
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
@@ -462,7 +429,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 
 	/* Relation (tables, views, indices, sequences) descriptions */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT c.relname as \"Name\", 'relation'::text||'('||c.relkind||')' as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT c.relname as \"Name\", 'relation'::text||'('||c.relkind||')' as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_class c, pg_description d\n"
 		   "WHERE c.oid = d.objoid\n");
 	if (object)
@@ -474,7 +441,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 
 	/* Rule description (ignore rules for views) */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT r.rulename as \"Name\", 'rule'::text as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT r.rulename as \"Name\", 'rule'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_rewrite r, pg_description d\n"
 		   "WHERE r.oid = d.objoid AND r.rulename !~ '^_RET'\n");
 	if (object)
@@ -486,7 +453,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 
 	/* Trigger description */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT t.tgname as \"Name\", 'trigger'::text as \"What\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT t.tgname as \"Name\", 'trigger'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_trigger t, pg_description d\n"
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
@@ -518,11 +485,12 @@ objectDescription(const char *object, PsqlSettings *pset)
 /*
  * describeTableDetails (for \d)
  *
- * Unfortunately, the information presented here is so complicated that it
+ * Unfortunately, the information presented here is so complicated that it cannot
  * be done in a single query. So we have to assemble the printed table by hand
  * and pass it to the underlying printTable() function.
  *
  */
+
 static void *
 xmalloc(size_t size)
 {
@@ -576,7 +544,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 	if (PQntuples(res) == 0)
 	{
 		if (!GetVariableBool(pset->vars, "quiet"))
-			fprintf(stdout, "Did not find any relation named \"%s\".\n", name);
+			fprintf(stderr, "Did not find any relation named \"%s\".\n", name);
 		PQclear(res);
 		return false;
 	}
@@ -932,6 +900,10 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
  * s - sequences
  * S - systems tables (~ '^pg_')
  * (any order of the above is fine)
+ *
+ * Note: For some reason it always happens to people that their tables have owners
+ * that are no longer in pg_user; consequently they wouldn't show up here. The code
+ * tries to fix this the painful way, hopefully outer joins will be done sometime.
  */
 bool
 listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc)
@@ -942,7 +914,7 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 	bool		showSeq = strchr(infotype, 's') != NULL;
 	bool		showSystem = strchr(infotype, 'S') != NULL;
 
-	char		buf[1536 + 4 * REGEXP_CUTOFF];
+	char		buf[3072 + 8 * REGEXP_CUTOFF];
 	PGresult   *res;
 	printQueryOpt myopt = pset->popt;
 
@@ -964,6 +936,22 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
+
+        strcat(buf, "UNION\n");
+		strcat(buf, "SELECT c.relname as \"Name\", 'table'::text as \"Type\", NULL as \"Owner\"");
+		if (desc)
+			strcat(buf, ", obj_description(c.oid) as \"Description\"");
+		strcat(buf, "\nFROM pg_class c\n"
+			   "WHERE c.relkind = 'r'\n"
+			   "  AND not exists (select 1 from pg_views where viewname = c.relname)\n"
+               "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
+		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
+		if (name)
+		{
+			strcat(buf, "  AND c.relname ~ '");
+			strncat(buf, name, REGEXP_CUTOFF);
+			strcat(buf, "'\n");
+		}
 	}
 
 	/* views */
@@ -978,6 +966,22 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 		strcat(buf, "\nFROM pg_class c, pg_user u\n"
 			   "WHERE c.relowner = u.usesysid AND c.relkind = 'r'\n"
 			   "  AND exists (select 1 from pg_views where viewname = c.relname)\n");
+		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
+		if (name)
+		{
+			strcat(buf, "  AND c.relname ~ '");
+			strncat(buf, name, REGEXP_CUTOFF);
+			strcat(buf, "'\n");
+		}
+
+        strcat(buf, "UNION\n");
+		strcat(buf, "SELECT c.relname as \"Name\", 'view'::text as \"Type\", NULL as \"Owner\"");
+		if (desc)
+			strcat(buf, ", obj_description(c.oid) as \"Description\"");
+		strcat(buf, "\nFROM pg_class c\n"
+			   "WHERE c.relkind = 'r'\n"
+			   "  AND exists (select 1 from pg_views where viewname = c.relname)\n"
+               "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
@@ -1021,19 +1025,63 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
+
+        strcat(buf, "UNION\n");
+		strcat(buf,
+	       "SELECT c.relname as \"Name\",\n"
+			   "  (CASE WHEN relkind = 'S' THEN 'sequence'::text ELSE 'index'::text END) as \"Type\",\n"
+	       "  NULL as \"Owner\""
+	    );
+		if (desc)
+			strcat(buf, ", obj_description(c.oid) as \"Description\"");
+		strcat(buf, "\nFROM pg_class c\n"
+			   "WHERE not exists (select 1 from pg_user where usesysid = c.relowner) AND relkind in (");
+		if (showIndices && showSeq)
+			strcat(buf, "'i', 'S'");
+		else if (showIndices)
+			strcat(buf, "'i'");
+		else
+			strcat(buf, "'S'");
+		strcat(buf, ")\n");
+
+		/* ignore large-obj indices */
+		if (showIndices)
+			strcat(buf, "  AND (c.relkind != 'i' OR c.relname !~ '^xinx')\n");
+
+		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
+		if (name)
+		{
+			strcat(buf, "  AND c.relname ~ '");
+			strncat(buf, name, REGEXP_CUTOFF);
+			strcat(buf, "'\n");
+		}
 	}
 
-	/* real system catalogue tables */
+	/* special system tables */
 	if (showSystem && showTables)
 	{
 		if (buf[0])
 			strcat(buf, "\nUNION\n\n");
 
-		strcat(buf, "SELECT c.relname as \"Name\", 'system'::text as \"Type\", u.usename as \"Owner\"");
+		strcat(buf, "SELECT c.relname as \"Name\", 'special'::text as \"Type\", u.usename as \"Owner\"");
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c, pg_user u\n"
 			   "WHERE c.relowner = u.usesysid AND c.relkind = 's'\n");
+		if (name)
+		{
+			strcat(buf, "  AND c.relname ~ '");
+			strncat(buf, name, REGEXP_CUTOFF);
+			strcat(buf, "'\n");
+		}
+
+        strcat(buf, "UNION\n");
+		strcat(buf, "SELECT c.relname as \"Name\", 'special'::text as \"Type\", NULL as \"Owner\"");
+		if (desc)
+			strcat(buf, ", obj_description(c.oid) as \"Description\"");
+		strcat(buf, "\nFROM pg_class c\n"
+			   "WHERE c.relkind = 's'\n"
+               "  AND not exists (select 1 from pg_user where usesysid = c.relowner)");
 		if (name)
 		{
 			strcat(buf, "  AND c.relname ~ '");
@@ -1064,6 +1112,3 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 	PQclear(res);
 	return true;
 }
-
-
-/* end of file */

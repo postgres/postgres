@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.7 1999/12/07 22:41:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.8 2000/01/12 19:36:34 petere Exp $
 Postgres documentation
 -->
 
@@ -177,7 +177,7 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>createuser: Creation of user "<replaceable class="parameter">username</replaceable>" failed.</computeroutput></term>
+      <term><computeroutput>createuser: creation of user "<replaceable class="parameter">username</replaceable>" failed</computeroutput></term>
       <listitem>
        <para>
         Something went wrong. The user was not created.

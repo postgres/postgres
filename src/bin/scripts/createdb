@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.5 2000/01/12 13:08:55 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.6 2000/01/12 19:36:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,6 +28,7 @@ do
     case "$1" in
 	--help|-\?)
 		usage=t
+                break
 		;;
 # options passed on to psql
 	--host|-h)
@@ -89,7 +90,8 @@ do
                 MB=`echo $1 | sed 's/^--encoding=//'`
                 ;;
 	-*)
-		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		echo "$CMDNAME: unrecognized option: $1"
+                echo "Try -? for help."
 		exit 1
 		;;
 	*)
@@ -104,20 +106,17 @@ do
 done
 
 if [ "$usage" ]; then
-	echo ""
 	echo "Usage: $CMDNAME [options] dbname [description]"
 	echo ""
-	echo "    -h HOSTNAME, --host=HOSTNAME     "
-	echo "    -p PORT,     --port=PORT         "
-	echo "    -U USERNAME, --username=USERNAME "
-	echo "    -W,          --password          "
-	echo "    -e,          --echo              "
-        echo "    -q,          --quiet             "   
-	echo "    -D PATH,     --location=PATH     "     
-	echo "    -E ENCODING  --encoding=ENCODING "
-	echo "    -?,          --help              "
-	echo ""
-	exit 1
+	echo "  -D, --location=PATH             Alternative place to store the database"
+	echo "  -E, --encoding=ENCODING         Multibyte encoding for the database"
+	echo "  -h, --host=HOSTNAME             Database server host"
+	echo "  -p, --port=PORT                 Database server port"
+	echo "  -U, --username=USERNAME         Username to connect as"
+	echo "  -W, --password                  Prompt for password"
+#???	echo "  -e,          --echo             "
+        echo "  -q,          --quiet            Don't write any messages"
+	exit 0
 fi
 
 
@@ -126,17 +125,19 @@ then
         mbcode=`pg_encoding "$MB"`
         if [ -z "$mbcode" ]
 	then
-		echo "$CMDNAME: \"$MB\" is not a valid encoding name."
+		echo "$CMDNAME: \"$MB\" is not a valid encoding name"
 		exit 1
 	fi
 fi
 
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: Missing required argument database name. Try -? for help."
+	echo "$CMDNAME: missing required argument database name"
+        echo "Try -? for help."
 	exit 1
 fi
 
 
+# escape the quotes
 dbpath=`echo $dbpath | sed "s/'/\\\\\'/g"`
 dbname=`echo $dbname | sed 's/\"/\\\"/g'`
 
@@ -147,7 +148,7 @@ withstring=
 
 psql $PSQLOPT -d template1 -c "CREATE DATABASE \"$dbname\"$withstring"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: Database creation failed."
+	echo "$CMDNAME: database creation failed"
 	exit 1
 fi
 
@@ -158,7 +159,7 @@ dbcomment=`echo $dbcomment | sed "s/'/\\\\\'/g"`
 
 psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: Comment creation failed. (Database was created.)"
+	echo "$CMDNAME: comment creation failed (database was created)"
 	exit 1
 fi
 

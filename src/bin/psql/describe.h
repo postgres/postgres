@@ -5,16 +5,16 @@
 #include "settings.h"
 
 /* \da */
-bool describeAggregates(const char *name, PsqlSettings *pset, bool verbose, bool desc);
+bool describeAggregates(const char *name, PsqlSettings *pset);
 
 /* \df */
-bool describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc);
+bool describeFunctions(const char *name, PsqlSettings *pset, bool verbose);
 
 /* \dT */
-bool describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc);
+bool describeTypes(const char *name, PsqlSettings *pset, bool verbose);
 
 /* \do */
-bool describeOperators(const char *name, PsqlSettings *pset, bool verbose, bool desc);
+bool describeOperators(const char *name, PsqlSettings *pset);
 
 /* \z (or \dp) */
 bool permissionsList(const char *name, PsqlSettings *pset);

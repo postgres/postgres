@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.4 1999/12/16 20:10:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.5 2000/01/12 19:36:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -96,23 +96,21 @@ done
 
 
 if [ "$usage" ]; then
-	echo ""
 	echo "Usage: $CMDNAME [options] dbname"
 	echo ""
-	echo "    -h HOSTNAME, --host=HOSTNAME     "
-	echo "    -p PORT,     --port=PORT         "
-	echo "    -u USERNAME, --username=USERNAME "
-	echo "    -W,          --password          "
-	echo "    -e,          --echo              "
-        echo "    -q,          --quiet             "   
-	echo "    -i,          --interactive       "
-	echo "    -?,          --help              "
-	echo ""
-	exit 1
+	echo "  -h, --host=HOSTNAME             Database server host"
+	echo "  -p, --port=PORT                 Database server port"
+	echo "  -U, --username=USERNAME         Username to connect as"
+	echo "  -W, --password                  Prompt for password"
+	echo "  -i, --interactive               Prompt before deleting anything"
+#???	echo "  -e,          --echo             "
+        echo "  -q,          --quiet            Don't write any messages"
+	exit 0
 fi
 
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: Missing required argument database name. Try -? for help."
+	echo "$CMDNAME: missing required argument database name"
+        echo "Try -? for help."
 	exit 1
 fi
 
@@ -131,7 +129,7 @@ dbname=`echo $dbname | sed 's/\"/\\\"/g'`
 
 psql $PSQLOPT -d template1 -c "DROP DATABASE \"$dbname\""
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: Database removal failed."
+	echo "$CMDNAME: database removal failed"
 	exit 1
 fi
 

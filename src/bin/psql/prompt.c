@@ -52,8 +52,7 @@
  *
  *
  * If the application-wide prompts became NULL somehow, the returned string
- * will be empty (not NULL!). Do not free() the result of this function unless
- * you want trouble.
+ * will be empty (not NULL!).
  *--------------------------
  */
 const char *
@@ -65,9 +64,6 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 	bool		esc = false;
 	const char *p;
 	const char *prompt_string;
-
-	if (GetVariable(pset->vars, "quiet"))
-		return "";
 
 	if (status == PROMPT_READY)
 		prompt_string = GetVariable(pset->vars, "prompt1");
@@ -130,13 +126,8 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 					break;
 					/* DB server port number */
 				case '>':
-					if (pset->db)
-					{
-						if (PQhost(pset->db))
-							strncpy(buf, PQport(pset->db), MAX_PROMPT_SIZE);
-						else
-							buf[0] = '.';
-					}
+					if (pset->db && PQport(pset->db))
+                        strncpy(buf, PQport(pset->db), MAX_PROMPT_SIZE);
 					break;
 					/* DB server user name */
 				case 'n':

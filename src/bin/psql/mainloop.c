@@ -124,10 +124,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		}
 
 
-		/* Setting this will not have effect until next line. (Faster.
-           Also think about what happens if there is an error processing
-           _this_ command.)
-        */
+		/* Setting this will not have effect until next line. */
 		die_on_error = GetVariableBool(pset->vars, "die_on_error");
 
 		/*
@@ -143,7 +140,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			if (GetVariableBool(pset->vars, "echo") && !GetVariableBool(pset->vars, "quiet"))
 				puts("EOF");
 			else if (pset->cur_cmd_interactive)
-				puts(""); /* just newline */
+				putc('\n', stdout); /* just newline */
 
 			eof = true;
 			continue;
@@ -269,6 +266,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 				free(line);
 				line = new;
+                len = strlen(new);
                 continue; /* reparse the just substituted */
             }
 

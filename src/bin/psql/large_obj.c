@@ -90,7 +90,9 @@ do_lo_export(PsqlSettings *pset, const char *loid_arg, const char *filename_arg)
 
 	if (!pset->db)
 	{
-		fputs("You are not connected to a database.\n", stderr);
+        if (!pset->cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset->progname);
+		fputs("\\lo_export: not connected to a database\n", stderr);
 		return false;
 	}
 
@@ -157,7 +159,9 @@ do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_a
 
 	if (!pset->db)
 	{
-		fputs("You are not connected to a database.\n", stderr);
+        if (!pset->cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset->progname);
+		fputs("\\lo_import: not connected to a database\n", stderr);
 		return false;
 	}
 
@@ -247,7 +251,9 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
 
 	if (!pset->db)
 	{
-		fputs("You are not connected to a database.\n", stderr);
+        if (!pset->cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset->progname);
+		fputs("\\lo_unlink: not connected to a database\n", stderr);
 		return false;
 	}
 
@@ -309,20 +315,25 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
 /*
  * do_lo_list()
  *
- * Show all large objects in database, with comments if desired
+ * Show all large objects in database with comments
  */
 bool
-do_lo_list(PsqlSettings *pset, bool desc)
+do_lo_list(PsqlSettings *pset)
 {
 	PGresult   *res;
-	char		buf[512];
+	char		buf[1024];
 	printQueryOpt myopt = pset->popt;
 
-	strcpy(buf, "SELECT usename as \"Owner\", substring(relname from 5) as \"ID\"");
-	if (desc)
-		strcat(buf, ",\n  obj_description(pg_class.oid) as \"Description\"");
-	strcat(buf, "\nFROM pg_class, pg_user\n"
+	strcpy(buf,
+           "SELECT usename as \"Owner\", substring(relname from 5) as \"ID\",\n"
+           "  obj_description(pg_class.oid) as \"Description\"\n"
+           "FROM pg_class, pg_user\n"
 		   "WHERE usesysid = relowner AND relkind = 'l'\n"
+           "UNION\n"
+           "SELECT NULL as \"Owner\", substring(relname from 5) as \"ID\",\n"
+           "  obj_description(pg_class.oid) as \"Description\"\n"
+           "FROM pg_class\n"
+		   "WHERE not exists (select 1 from pg_user where usesysid = relowner) AND relkind = 'l'\n"
 		   "ORDER BY \"ID\"");
 
 	res = PSQLexec(pset, buf);

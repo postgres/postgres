@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.18 1999/11/26 04:24:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.19 2000/01/12 19:36:34 petere Exp $
 Postgres documentation
 -->
 
@@ -352,7 +352,7 @@ testdb=>
 	</para>
 
 	<para>
-	The command form <literal>\d?</literal> is identical, but any comments
+	The command form <literal>\d+</literal> is identical, but any comments
         associated with the table columns are shown as well.
 	</para>
 
@@ -375,10 +375,6 @@ testdb=>
         Lists all available aggregate functions, together with the data type they operate on.
 	If <replaceable class="parameter">pattern</replaceable>
 	(a regular expression) is specified, only matching aggregates are shown.
-        If the alternative command form <literal>\da?</literal> is used,
-        comments are listed for each function as well. The command form
-        <literal>\da+</literal> will show more information about each aggregate
-        function, which is usually not of general interest.
         </para>
         </listitem>
       </varlistentry>
@@ -426,8 +422,7 @@ testdb=>
         If <replaceable class="parameter">pattern</replaceable>
         (a regular expression) is specified, only matching functions are shown.
         If the form <literal>\df+</literal> is used, additional information about
-        each function is shown. Comments for each function can be shown with
-        the <literal>\df?</literal> form.
+        each function, including language and description is shown.
         </para>
         </listitem>
       </varlistentry>
@@ -447,7 +442,7 @@ testdb=>
 	<para>
 	If <replaceable class="parameter">pattern</replaceable> is specified,
 	it is a regular expression restricts the listing to those objects
-	whose name matches. If one appends a <quote>?</quote> to the command name,
+	whose name matches. If one appends a <quote>+</quote> to the command name,
 	each object is listed with its associated description, if any.
 	</para>
 	</listitem>
@@ -476,10 +471,6 @@ testdb=>
         interpretation of the backslash as a new command, you might also
         wish to quote the argument.)
         </para>
-        <para>
-        If the form <literal>\do?</literal> is used, comments are listed for
-        each operator.
-        </para>
         </listitem>
       </varlistentry>
 
@@ -500,8 +491,7 @@ testdb=>
         <listitem>
         <para>
         Lists all data types or only those that match <replaceable class="parameter">pattern</replaceable>.
-        The command forms <literal>\dT+</literal> and <literal>\dT?</literal> show extra information
-        and the associated descriptions of the types, respectively.
+        The command form <literal>\dT+</literal> shows extra information.
         </para>
         </listitem>
       </varlistentry>
@@ -648,7 +638,7 @@ Tue Oct 26 21:40:57 CEST 1999
         <listitem>
         <para>
         List all the databases in the server as well as their owners. Append a
-        <quote>?</quote> (question mark) to the command name to see any descriptions
+        <quote>+</quote> to the command name to see any descriptions
         for the databases as well. If your <productname>PostgreSQL</productname>
 	installation was
 	compiled with multibyte encoding support, the encoding scheme of each
@@ -723,8 +713,6 @@ lo_import 152801
 	<para>
 	Shows a list of all <productname>PostgreSQL</productname> <quote>large
 	objects</quote> currently stored in the database along with their owners.
-	Append a question mark to the command name (<literal>\lo_list?</literal>) to
-        see the the associated comments as well.
 	</para>
 	</listitem>
       </varlistentry>
@@ -1203,11 +1191,9 @@ Access permissions for database "test"
 
   <para>
   If so configured, <application>psql</application> understands both standard
-  Unix short options, and <acronym>GNU</acronym>-style long options. Since the
-  latter are not available on all systems, you are advised to consider carefully
-  whether to use them, if you are writing scripts, etc. For support on the
-  <productname>PostgreSQL</productname> mailing lists, you are asked to only
-  use the standard short options.
+  Unix short options, and <acronym>GNU</acronym>-style long options. The latter
+  are not available on all systems, so you are advised to consider carefully
+  whether to use them.
   </para>
 
   <para>
@@ -1301,7 +1287,7 @@ Access permissions for database "test"
 
 
     <varlistentry>
-      <term>-F, --field-sep <replaceable class="parameter">separator</replaceable></term>
+      <term>-F, --field-separator <replaceable class="parameter">separator</replaceable></term>
       <listitem>
       <para>
       Use <replaceable class="parameter">separator</replaceable> as the field separator.
@@ -1358,7 +1344,7 @@ Access permissions for database "test"
 
 
     <varlistentry>
-      <term>-o, --out <replaceable class="parameter">filename</replaceable></term>
+      <term>-o, --output <replaceable class="parameter">filename</replaceable></term>
       <listitem>
       <para>
       Put all query output into file <replaceable class="parameter">filename</replaceable>.
@@ -1400,8 +1386,7 @@ Access permissions for database "test"
       <listitem>
       <para>
       Specifies that <application>psql</application> should do its work quietly.
-      By default, it prints welcome messages, various informational output and
-      prompts for each query.
+      By default, it prints welcome messages and various informational output.
       If this option is used, none of this happens. This is useful with the
       <option>-c</option> option. Within <application>psql</application> you can
       also set the <envar>quiet</envar> variable to achieve the same effect.
@@ -1511,35 +1496,7 @@ Access permissions for database "test"
       <term>-V, --version</term>
       <listitem>
       <para>
-      Shows version information about <application>psql</application> and your
-      <productname>PostgreSQL</productname> database server, if it could be reached.
-      </para>
-
-      <para>
-      The output looks similar to this:
-<programlisting>
-~$ <userinput>psql -V</userinput>
-Server: PostgreSQL 6.5.2 on i586-pc-linux-gnu, compiled by egcs
-psql 6.6.0 on i586-pc-linux-gnu, compiled by gcc 2.8.1 (Oct 27 1999 15:15:04), long options,
-readline, history, locale, assert checks
-</programlisting>
-      The <quote>Server</quote> line is identical to the one returned by the
-      backend function <function>version()</function> and thus might vary
-      if you query different servers by using different connection
-      options.
-      </para>
-
-      <para>
-      The <quote>psql</quote> line is compiled into the <application>psql</application>
-      binary. It shows you which <productname>PostgreSQL</productname> release
-      it was distributed with and what optional features were compiled into it.
-      Although in general (as in the example above) you can use <application>psql</application>
-      and database servers from different versions (if they don't differ too much)
-      this is not recommended or
-      even necessary. The optional features indicate only <application>psql</application>'s
-      capabilities but if <application>psql</application> was configured with
-      the same source tree as the rest of the distribution, it gives you an
-      indication about other parts of the installation as well.
+      Shows the <application>psql</application> version.
       </para>
       </listitem>
     </varlistentry>
@@ -2147,26 +2104,6 @@ Field separator is "oo".
       </listitem>
     </itemizedlist>
 
-  </refsect2>
-
-  <refsect2>
-    <title>History and Lineage</title>
-
-    <para>
-    <application>psql</application> first appeared in <productname>Postgres95</productname>
-    to complement and later replace the <application>monitor</application> program. (You see this
-    name here or there in really old files. The author has never had the pleasure to use this
-    program though.) An uncountable number of people have added features since to reflect
-    the enhancements in the actual database server.
-    </para>
-
-    <para>
-    The present version is the result of a major clean-up and re-write in 1999 by
-    <ulink URL="mailto:peter_e@gmx.net">Peter Eisentraut</ulink> in preparation for release 7.0.
-    Many people had again contributed their ideas. A bunch of features were stolen
-    from various shells (in case you hadn't noticed), in particular
-    <application>tcsh</application>.
-    </para>
   </refsect2>
 
   <refsect2>

@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.7 1999/12/18 08:46:44 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.8 2000/01/12 19:36:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,6 +29,7 @@ do
     case "$1" in
 	--help|-\?)
 		usage=t
+                break
 		;;
 # options passed on to psql
 	--host|-h)
@@ -86,7 +87,7 @@ do
 	--analyze|-z)
 		analyze="ANALYZE "
 		;;
-	--alldb|-a)
+	--all|-a)
 		alldb=Y
 		;;
 	--table|-t)
@@ -103,7 +104,8 @@ do
 		;;
 
 	-*)
-		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		echo "$CMDNAME: unrecognized option: $1"
+                echo "Try -? for help."
 		exit 1
 		;;
 	*)
@@ -114,42 +116,43 @@ do
 done
 
 if [ "$usage" ]; then	
-	echo ""
 	echo "Usage: $CMDNAME [options] [dbname]"
 	echo ""
-	echo "    -h HOSTNAME,         --host=HOSTNAME     "
-	echo "    -p PORT,             --port=PORT         "
-	echo "    -u USERNAME,         --username=USERNAME "
-	echo "    -W,                  --password          "
-	echo "    -d DBNAME,           --database=DBNAME   "
-	echo "    -z,                  --analyze           "
-	echo "    -a,                  --alldb             "
-	echo "    -t TABLE[(columns)], --table=TABLE[(columns)]"
-	echo "    -v,                  --verbose           "
-	echo "    -e,                  --echo              "
-        echo "    -q,                  --quiet             "   
-	echo "    -?,                  --help              "
-	echo ""
-	exit 1
+	echo "  -h, --host=HOSTNAME             Database server host"
+	echo "  -p, --port=PORT                 Database server port"
+	echo "  -U, --username=USERNAME         Username to connect as"
+	echo "  -W, --password                  Prompt for password"
+	echo "  -d, --dbname=DBNAME             Database to vacuum"
+	echo "  -a, --all                       Vacuum all databases"
+	echo "  -z, --analyze                   Update optimizer hints"
+	echo "  -t, --table='TABLE[(columns)]'  Vacuum specific table only"
+	echo "  -v, --verbose                   Write a lot of output"
+#???	echo "  -e, --echo                      "
+        echo "  -q, --quiet                     Don't write any output"
+	exit 0
 fi
 
-if [ ! -z "$alldb" ]; then
-	dbname="`psql $PASSWDOPT $AUTHOPT $PGHOSTOPT $PGPORTOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`"
+if [ "$alldb" ]; then
+        if [ "$dbname" -o "$table" ]; then
+                echo "$CMDNAME: cannot vacuum all databases and a specific one at the same time"
+                exit 1
+        fi
+	dbname="`psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`"
 fi
 
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: Missing required argument database name. Try -? for help."
+	echo "$CMDNAME: missing required argument database name"
+        echo "Try -? for help."
 	exit 1
 fi
 
 for db in $dbname
 do
-	psql $PASSWDOPT -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "vacuum $verbose $analyze $table" $db
+	psql $PSQLOPT -c "vacuum $verbose $analyze $table" -d $dbname
 done
 
-if [ $? -ne 0 ]
-then
-	echo "$CMDNAME: Vacuum failed."
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: vacuum failed"
 	exit 1
 fi
 

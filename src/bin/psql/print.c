@@ -204,7 +204,7 @@ print_aligned_text(const char *title, const char * const * headers,
 	if (opt_border == 0)
 		total_w = col_count - 1;
 	else if (opt_border == 1)
-		total_w = col_count * 3 - 2;
+		total_w = col_count * 3 - 1;
 	else
 		total_w = col_count * 3 + 1;
 

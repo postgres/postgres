@@ -491,9 +491,6 @@ SendQuery(PsqlSettings *pset, const char *query)
 				break;
 
 			case PGRES_COPY_OUT:
-				if (pset->cur_cmd_interactive && !GetVariableBool(pset->vars, "quiet"))
-					puts("Copy command returns:");
-
 				success = handleCopyOut(pset->db, pset->queryFout);
 				break;
 
@@ -510,7 +507,7 @@ SendQuery(PsqlSettings *pset, const char *query)
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
 				success = false;
-				fputs(PQerrorMessage(pset->db), pset->queryFout);
+				fputs(PQerrorMessage(pset->db), stderr);
 				break;
 		}
 
@@ -518,6 +515,11 @@ SendQuery(PsqlSettings *pset, const char *query)
 
 		if (PQstatus(pset->db) == CONNECTION_BAD)
 		{
+            if (!pset->cur_cmd_interactive)
+            {
+                fprintf(stderr, "%s: connection to server was lost", pset->progname);
+                exit(EXIT_BADCONN);
+            }
 			fputs("The connection to the server was lost. Attempting reset: ", stderr);
 			PQreset(pset->db);
 			if (PQstatus(pset->db) == CONNECTION_BAD)

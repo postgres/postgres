@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.4 1999/12/16 20:10:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.5 2000/01/12 19:36:36 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -41,6 +41,7 @@ do
     case "$1" in
 	--help|-\?)
 		usage=t
+                break
 		;;
 # options passed on to psql
 	--host|-h)
@@ -110,7 +111,8 @@ do
 		PwPrompt=t
 		;;
 	-*)
-		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		echo "$CMDNAME: unrecognized option: $1"
+                echo "Try -? for help."
 		exit 1
 		;;
          *)
@@ -121,29 +123,26 @@ do
 done
 
 if [ "$usage" ]; then	
-	echo ""
 	echo "Usage: $CMDNAME [options] [username]"
 	echo ""
-	echo "    -h HOSTNAME, --host=HOSTNAME     "
-	echo "    -p PORT,     --port=PORT         "
-	echo "    -d,          --createdb          "
-	echo "    -D,          --no-createdb       "
-	echo "    -a,          --adduser           "
-	echo "    -A,          --no-adduser        "
-	echo "    -i SYSID,    --sysid=SYSID       "     
-	echo "    -P,          --pwprompt          "
-	echo "    -U USERNAME, --username=USERNAME (for connect to db)"
-	echo "    -W,          --password          (for connect to db)"
-	echo "    -e,          --echo              "
-        echo "    -q,          --quiet             "   
-	echo "    -?,          --help              "
-	echo ""
-	exit 1
+	echo "  -d, --createdb                  User can create new databases"
+	echo "  -D, --no-createdb               User cannot create databases"
+	echo "  -a, --adduser                   User can add new users"
+	echo "  -A, --no-adduser                User cannot add new users"
+	echo "  -i, --sysid=SYSID               Select sysid for new user"     
+	echo "  -P, --pwprompt                  Assign a password to new user"
+	echo "  -h, --host=HOSTNAME             Database server host"
+	echo "  -p, --port=PORT                 Database server port"
+	echo "  -U, --username=USERNAME         Username to connect as (not the one to create)"
+	echo "  -W, --password                  Prompt for password to connect"
+#???	echo "  -e,          --echo             "
+        echo "  -q,          --quiet            Don't write any messages"
+	exit 0
 fi
 
 if [ "$SysID" ]; then
         if [ "$SysID" != "`echo $SysID | sed 's/[^0-9]//g'`" ]; then
-                echo "$CMDNAME: User sysid must be a positive number."
+                echo "$CMDNAME: user sysid must be a positive number"
                 exit 1
         fi
 fi
@@ -204,7 +203,7 @@ SUBQUERY=
 
 psql $PSQLOPT -d template1 -c "$QUERY"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: Creation of user \"$NewUser\" failed."
+	echo "$CMDNAME: creation of user \"$NewUser\" failed"
 	exit 1
 fi
 		

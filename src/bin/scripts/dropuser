@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.4 1999/12/16 20:10:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.5 2000/01/12 19:36:36 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -36,6 +36,7 @@ do
     case "$1" in
 	--help|-\?)
 		usage=t
+                break
 		;;
 # options passed on to psql
 	--host|-h)
@@ -99,16 +100,14 @@ if [ "$usage" ]; then
 	echo ""
 	echo "Usage: $CMDNAME [options] [username]"
 	echo ""
-	echo "    -h HOSTNAME, --host=HOSTNAME     "
-	echo "    -p PORT,     --port=PORT         "
-	echo "    -u USERNAME, --username=USERNAME (for connect to db)"
-	echo "    -W,          --password          "
-	echo "    -e,          --echo              "
-        echo "    -q,          --quiet             "
-	echo "    -i,          --interactive       "   
-	echo "    -?,          --help              "
-	echo ""
-	exit 1
+	echo "  -h, --host=HOSTNAME             Database server host"
+	echo "  -p, --port=PORT                 Database server port"
+	echo "  -U, --username=USERNAME         Username to connect as (not the one to drop)"
+	echo "  -W, --password                  Prompt for password to connect"
+	echo "  -i, --interactive               Prompt before deleting anything"
+#???	echo "  -e,          --echo             "
+        echo "  -q,          --quiet            Don't write any messages"
+	exit 0
 fi
 
 # Prompt for username if missing
@@ -135,7 +134,7 @@ DelUser=`echo $DelUser | sed 's/\"/\\\"/g'`
 psql $PSQLOPT -d template1 -c "DROP USER \"$DelUser\""
 
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: Deletion of user \"$DelUser\" failed."
+	echo "$CMDNAME: deletion of user \"$DelUser\" failed"
 	exit 1
 fi
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.2 1999/12/07 22:41:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.3 2000/01/12 19:36:34 petere Exp $
 Postgres documentation
 -->
 
@@ -127,7 +127,7 @@ dropuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>dropuser: Deletion of user "<replaceable class="parameter">username</replaceable>" failed.</computeroutput></term>
+      <term><computeroutput>dropuser: deletion of user "<replaceable class="parameter">username</replaceable>" failed</computeroutput></term>
       <listitem>
        <para>
         Something went wrong. The user was not removed.

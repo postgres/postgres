@@ -40,7 +40,7 @@ static void
 process_psqlrc(PsqlSettings *pset);
 
 static void
-showVersion(PsqlSettings *pset);
+showVersion(void);
 
 
 /* Structures to pass information between the option parsing routine
@@ -51,7 +51,6 @@ enum _actions
 	ACT_NOTHING = 0,
 	ACT_SINGLE_SLASH,
 	ACT_LIST_DB,
-	ACT_SHOW_VER,
 	ACT_SINGLE_QUERY,
 	ACT_FILE
 };
@@ -90,6 +89,11 @@ main(int argc, char **argv)
 
 	memset(&settings, 0, sizeof settings);
 
+    if (!strrchr(argv[0], SEP_CHAR))
+        settings.progname = argv[0];
+    else
+        settings.progname = strrchr(argv[0], SEP_CHAR) + 1;
+
 	settings.cur_cmd_source = stdin;
 	settings.cur_cmd_interactive = false;
 
@@ -119,7 +123,7 @@ main(int argc, char **argv)
 
 	parse_options(argc, argv, &settings, &options);
 
-	if (options.action == ACT_LIST_DB || options.action == ACT_SHOW_VER)
+	if (options.action == ACT_LIST_DB)
 		options.dbname = "template1";
 
 	if (options.username)
@@ -152,9 +156,10 @@ main(int argc, char **argv)
 	free(username);
 	free(password);
 
-	if (PQstatus(settings.db) == CONNECTION_BAD && options.action != ACT_SHOW_VER)
+	if (PQstatus(settings.db) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n%s\n", PQdb(settings.db), PQerrorMessage(settings.db));
+		fprintf(stderr, "%s: connection to database '%s' failed - %s",
+                settings.progname, PQdb(settings.db), PQerrorMessage(settings.db));
 		PQfinish(settings.db);
 		exit(EXIT_BADCONN);
 	}
@@ -167,22 +172,15 @@ main(int argc, char **argv)
 		exit(!success);
 	}
 
-	if (options.action == ACT_SHOW_VER)
-	{
-		showVersion(&settings);
-		PQfinish(settings.db);
-		exit(EXIT_SUCCESS);
-	}
-
 
 	if (!GetVariable(settings.vars, "quiet") && !settings.notty && !options.action)
 	{
-		puts("Welcome to psql, the PostgreSQL interactive terminal.\n\n"
-		     "Type:  \\copyright for distribution terms\n"
-		     "       \\h for help with SQL commands\n"
-		     "       \\? for help on internal slash commands\n"
-		     "       \\g or terminate with semicolon to execute query\n"
-		     "       \\q to quit\n");
+		printf("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
+               "Type:  \\copyright for distribution terms\n"
+               "       \\h for help with SQL commands\n"
+               "       \\? for help on internal slash commands\n"
+               "       \\g or terminate with semicolon to execute query\n"
+               "       \\q to quit\n", settings.progname);
 	}
 
 	process_psqlrc(&settings);
@@ -239,13 +237,12 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 		{"echo-all", no_argument, NULL, 'E'},
 		{"echo-all-queries", no_argument, NULL, 'E'},
 		{"file", required_argument, NULL, 'f'},
-		{"field-sep", required_argument, NULL, 'F'},
+		{"field-separator", required_argument, NULL, 'F'},
 		{"host", required_argument, NULL, 'h'},
 		{"html", no_argument, NULL, 'H'},
 		{"list", no_argument, NULL, 'l'},
 		{"no-readline", no_argument, NULL, 'n'},
-		{"out", required_argument, NULL, 'o'},
-		{"to-file", required_argument, NULL, 'o'},
+		{"output", required_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
 		{"pset", required_argument, NULL, 'P'},
 		{"quiet", no_argument, NULL, 'q'},
@@ -390,7 +387,8 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 					{
 						if (!DeleteVariable(pset->vars, value))
 						{
-							fprintf(stderr, "Couldn't delete variable %s.\n", value);
+							fprintf(stderr, "%s: could not delete variable %s\n",
+                                    pset->progname, value);
 							exit(EXIT_FAILURE);
 						}
 					}
@@ -399,7 +397,8 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 						*equal_loc = '\0';
 						if (!SetVariable(pset->vars, value, equal_loc + 1))
 						{
-							fprintf(stderr, "Couldn't set variable %s to %s.\n", value, equal_loc);
+							fprintf(stderr, "%s: Couldn't set variable %s to %s\n",
+                                    pset->progname, value, equal_loc);
 							exit(EXIT_FAILURE);
 						}
 					}
@@ -408,8 +407,8 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 					break;
 				}
 			case 'V':
-				options->action = ACT_SHOW_VER;
-				break;
+				showVersion();
+				exit(EXIT_SUCCESS);
 			case 'W':
 				pset->getPassword = true;
 				break;
@@ -419,8 +418,8 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 				break;
 #ifndef HAVE_GETOPT_LONG
 			case '-':
-				fprintf(stderr, "This version of psql was compiled without support for long options.\n"
-						"Use -? for help on invocation options.\n");
+				fprintf(stderr, "%s was compiled without support for long options.\n"
+						"Use -? for help on invocation options.\n", pset->progname);
 				exit(EXIT_FAILURE);
 				break;
 #endif
@@ -442,7 +441,8 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 		else if (!options->username)
 			options->username = argv[optind];
 		else
-			fprintf(stderr, "Warning: extra option %s ignored.\n", argv[optind]);
+			fprintf(stderr, "%s: warning: extra option %s ignored\n",
+                    pset->progname, argv[optind]);
 
 		optind++;
 	}
@@ -498,73 +498,46 @@ process_psqlrc(PsqlSettings *pset)
 
 /* showVersion
  *
- * Displays the database backend version.
- * Also checks against the version psql was compiled for and makes
- * sure that there are no problems.
- *
- * Returns false if there was a problem retrieving the information
- * or a mismatch was detected.
+ * This output format is intended to match GNU standards.
  */
 static void
-showVersion(PsqlSettings *pset)
+showVersion(void)
 {
-	PGresult   *res = NULL;
-	const char *versionstr = NULL;
-	long int	release = 0,
-				version = 0,
-				subversion = 0;
+    puts("psql (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
 
-	/* get backend version */
-	if (pset->db && PQstatus(pset->db) == CONNECTION_OK) {
-	    res = PSQLexec(pset, "SELECT version()");
-	    if (PQresultStatus(res) == PGRES_TUPLES_OK)
-		versionstr = PQgetvalue(res, 0, 0);
-	}
+#if defined(USE_READLINE) || defined (USE_HISTORY) || defined(MULTIBYTE)
+    fputs("contains ", stdout);
 
-	if (versionstr && strncmp(versionstr, "PostgreSQL ", 11) == 0)
-	{
-		char	   *tmp;
+#ifdef USE_READLINE
+    fputs("readline", stdout);
+#define _Feature
+#endif
 
-		release = strtol(&versionstr[11], &tmp, 10);
-		version = strtol(tmp + 1, &tmp, 10);
-		subversion = strtol(tmp + 1, &tmp, 10);
-	}
-
-	printf("Server: %s\npsql", versionstr ? versionstr : "(could not connect)");
-
-	if (!versionstr || strcmp(versionstr, PG_VERSION_STR) != 0)
-		printf(&PG_VERSION_STR[strcspn(PG_VERSION_STR, " ")]);
-	printf(" (" __DATE__ " " __TIME__ ")");
+#ifdef USE_HISTORY
+#ifdef _Feature
+    fputs(", ", stdout);
+#else
+#define _Feature
+#endif
+    fputs("history", stdout);
+#endif
 
 #ifdef MULTIBYTE
-	printf(", multibyte");
+#ifdef _Feature
+    fputs(", ", stdout);
+#else
+#define _Feature
 #endif
-#ifdef HAVE_GETOPT_LONG
-	printf(", long options");
+    fputs("multibyte");
 #endif
-#ifdef USE_READLINE
-	printf(", readline");
-#endif
-#ifdef USE_HISTORY
-	printf(", history");
-#endif
-#ifdef USE_LOCALE
-	printf(", locale");
-#endif
-#ifdef PSQL_ALWAYS_GET_PASSWORDS
-	printf(", always password");
-#endif
-#ifdef USE_ASSERT_CHECKING
-	printf(", assert checks");
+    
+#undef _Feature
+
+    puts(" support");
 #endif
 
-	puts("");
-
-	if (versionstr && (release < 6 || (release == 6 && version < 5)))
-		puts("\nWarning: The server you are connected to is potentially too old for this client\n"
-			 "version. You should ideally be using clients and servers from the same\n"
-			 "distribution.");
-
-	if (res)
-	    PQclear(res);
+    puts("Copyright (C) 2000 PostgreSQL Global Development Team");
+    puts("Copyright (C) 1996 Regents of the University of California");
+    puts("Read the file COPYING or use the command \\copyright to see the");
+    puts("usage and distribution terms.");
 }

@@ -97,14 +97,12 @@ void initialize_readline(PGconn ** conn)
     rl_readline_name = "psql";
     rl_attempted_completion_function = psql_completion;
 
-    rl_filename_quoting_function = quote_file_name;
-	/*rl_filename_dequoting_function = dequote_file_name;*/
-    rl_filename_quote_characters = "qwertyuioplkjhgfdsazxcvbnm";
-
     rl_special_prefixes = "()'";
     rl_basic_word_break_characters = "\t\n\"'`@$><=;|&{ ";
 
-    completion_max_records = rl_completion_query_items + 1;
+    completion_max_records = 100;
+    /* There is a variable rl_completion_query_items for this but apparently
+       it's not defined everywhere. */
 
     database_connection = conn;
 }
@@ -202,8 +200,6 @@ char ** psql_completion(char *text, int start, int end)
     };
 
     (void)end; /* not used */
-
-    rl_completion_append_character = ' ';
 
     /* Clear a few things. */
     completion_charp = NULL;
@@ -721,8 +717,10 @@ PGresult * exec_query(char * query)
     result = PQexec(*database_connection, query);
 
     if (result != NULL && PQresultStatus(result) != PGRES_TUPLES_OK) {
+#ifdef NOT_USED
         fprintf(stderr, "\nThe completion query \"%s\" failed thus: %s\n",
                 query, PQresStatus(PQresultStatus(result)));
+#endif
         PQclear(result);
         result = NULL;
     }
@@ -777,6 +775,9 @@ char * previous_word(int point, int skip) {
 }
 
 
+
+#ifdef NOT_USED
+
 /* Surround a string with single quotes. This works for both SQL and
    psql internal. Doesn't work so well yet.
 */
@@ -798,7 +799,7 @@ char * quote_file_name(char *text, int match_type, char * quote_pointer)
 }
 
 
-#ifdef NOT_USED
+
 static char * dequote_file_name(char *text, char quote_char)
 {
     char *s;
@@ -814,6 +815,7 @@ static char * dequote_file_name(char *text, char quote_char)
 
     return s;
 }
-#endif
+
+#endif /* NOT_USED */
 
 #endif /* USE_READLINE */

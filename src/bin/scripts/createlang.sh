@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.4 1999/12/17 18:05:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.5 2000/01/12 19:36:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,16 +32,6 @@ else
 fi
 
 
-# ----------
-# Find the default PGLIB directory
-# ----------
-postconfig_result="`sh -c postconfig 2>/dev/null`"
-if [ "$postconfig_result" ]; then
-        set -a
-        eval "$postconfig_result"
-        set +a
-fi
-
 
 # ----------
 # Get options, language name and dbname
@@ -51,6 +41,7 @@ do
     case "$1" in 
 	--help|-\?)
 		usage=t
+                break
 		;;
         --list|-l)
                 list=t
@@ -115,6 +106,11 @@ do
                 PGLIB=`echo $1 | sed 's/^--pglib=//'`
                 ;;
 
+	-*)
+		echo "$CMDNAME: unrecognized option: $1"
+                echo "Try -? for help."
+		exit 1
+		;;
 	 *)
  		langname="$1"
                 if [ "$2" ]; then
@@ -130,18 +126,15 @@ if [ "$usage" ]; then
 	echo ""
 	echo "Usage: $CMDNAME [options] [langname [dbname]]"
 	echo ""
-	echo "    -h HOSTNAME, --host=HOSTNAME     "
-	echo "    -p PORT,     --port=PORT         "
-	echo "    -U USERNAME, --username=USERNAME "
-	echo "    -l,          --list              "
-	echo "    -W,          --password          "
-	echo "    -d DBNAME,   --database=DBNAME   "
-	echo "    -e,          --echo              "
-	echo "    -D PATH,     --location=PATH     "     
-	echo "    -L PGLIB     --pglib=PGLIB       "
-	echo "    -?,          --help              "
-	echo ""
-	exit 1
+	echo "  -h, --host=HOSTNAME             Database server host"
+	echo "  -p, --port=PORT                 Database server port"
+	echo "  -U, --username=USERNAME         Username to connect as"
+	echo "  -W, --password                  Prompt for password"
+	echo "  -d, --dbname=DBNAME             Database to install language in"
+	echo "  -e, --echo                      Create some output about what is happening"
+	echo "  -L, --pglib=PGLIB               Find language interpreter in directory PGLIB"
+	echo "  -l, --list                      Show a list of currently installed languages"
+	exit 0
 fi
 
 if [ "$list" ]; then
@@ -154,7 +147,8 @@ fi
 # Check that we have a database
 # ----------
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: Missing required argument database name. Try -? for help."
+	echo "$CMDNAME: missing required argument database name"
+        echo "Try -? for help."
 	exit 1
 fi
 
@@ -163,9 +157,10 @@ fi
 # Check that we have PGLIB
 # ----------
 if [ -z "$PGLIB" ]; then
-	echo "Cannot determine the PostgreSQL lib directory (PGLIB). You must"
-        echo "identify it either with a --pglib option or by setting the PGLIB"
-        echo "environment variable."
+	echo "$CMDNAME: missing required argument PGLIB directory"
+        echo "(This is the directory where the interpreter for the procedural"
+        echo "language is stored. Traditionally, these are installed in whatever"
+        echo "'lib' directory was specified at configure time.)"
 	exit 1
 fi
 
@@ -191,7 +186,7 @@ case "$langname" in
 		trusted="TRUSTED "
 		handler="pltcl_call_handler";;
 	*)
-		echo "$CMDNAME: Unsupported language '$langname'."
+		echo "$CMDNAME: unsupported language '$langname'"
 		echo "Supported languages are 'plpgsql' and 'pltcl'."
 		exit 1
         ;;
@@ -203,7 +198,7 @@ esac
 # in PGLIB
 # ----------
 if [ ! -f $PGLIB/${langname}__DLSUFFIX__ ]; then
-	echo "Cannot find the file $PGLIB/${langname}__DLSUFFIX__."
+	echo "$CMDNAME: cannot find the file $PGLIB/${langname}__DLSUFFIX__"
         echo ""
 	echo "This file contains the call handler for $lancomp. By default,"
         echo "only PL/pgSQL is built and installed; other languages must be"
@@ -228,12 +223,12 @@ PSQL="psql -A -t $PSQLOPT -d $dbname -c"
 # ----------
 res=`$PSQL "SELECT oid FROM pg_language WHERE lanname = '$langname'"`
 if [ $? -ne 0 ]; then
-	echo "Language installation failed."
+	echo "$CMDNAME: external error"
 	exit 1
 fi
 if [ "$res" ]; then
-	echo "The language '$langname' is already installed in database $dbname."
-	exit 2
+	echo "$CMDNAME: '$langname' is already installed in database $dbname"
+	exit 1
 fi
 
 # ----------
@@ -241,9 +236,7 @@ fi
 # ----------
 res=`$PSQL "SELECT oid FROM pg_proc WHERE proname = '$handler'"`
 if [ ! -z "$res" ]; then
-	echo "The language $lancomp isn't created up to now but there is"
-        echo "already a function named '$handler' declared."
-	echo "Language installation aborted."
+	echo "$CMDNAME: A function named '$handler' already exists. Installation aborted."
 	exit 1
 fi
 
@@ -252,12 +245,12 @@ fi
 # ----------
 $PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${langname}__DLSUFFIX__' LANGUAGE 'C'"
 if [ $? -ne 0 ]; then
-	echo "Language installation failed."
+	echo "$CMDNAME: language installation failed"
 	exit 1
 fi
 $PSQL "CREATE ${trusted}PROCEDURAL LANGUAGE '$langname' HANDLER $handler LANCOMPILER '$lancomp'"
 if [ $? -ne 0 ]; then
-	echo "Language installation failed."
+	echo "$CMDNAME: language installation failed"
 	exit 1
 fi
 

@@ -45,6 +45,7 @@ typedef struct _psqlSettings
 										 * startup? */
     Oid         lastOid;        /* saves oid from insert command
                                    because people want it so badly */
+    char       *progname;       /* in case you renamed psql */
 } PsqlSettings;
 
 

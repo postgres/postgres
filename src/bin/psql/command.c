@@ -243,7 +243,10 @@ HandleSlashCmds(PsqlSettings *pset,
 
 	if (status == CMD_UNKNOWN)
 	{
-		fprintf(stderr, "Unrecognized command: \\%s. Try \\? for help.\n", cmd);
+        if (pset->cur_cmd_interactive)
+            fprintf(stderr, "Invalid command \\%s. Try \\? for help.\n", cmd);
+        else
+            fprintf(stderr, "%s: invalid command \\%s", pset->progname, cmd);
 		status = CMD_ERROR;
 	}
 
@@ -341,38 +344,37 @@ exec_command(const char *cmd,
 	else if (cmd[0] == 'd')
 	{
         bool show_verbose = strchr(cmd, '+') ? true : false;
-        bool show_desc = strchr(cmd, '?') ? true : false;
 
 		switch (cmd[1])
 		{
 			case '\0':
             case '?':
 				if (options[0])
-					success = describeTableDetails(options[0], pset, show_desc);
+					success = describeTableDetails(options[0], pset, show_verbose);
 				else
                     /* standard listing of interesting things */
-					success = listTables("tvs", NULL, pset, show_desc);
+					success = listTables("tvs", NULL, pset, show_verbose);
 				break;
 			case 'a':
-				success = describeAggregates(options[0], pset, show_verbose, show_desc);
+				success = describeAggregates(options[0], pset);
 				break;
 			case 'd':
 				success = objectDescription(options[0], pset);
 				break;
 			case 'f':
-				success = describeFunctions(options[0], pset, show_verbose, show_desc);
+				success = describeFunctions(options[0], pset, show_verbose);
 				break;
 			case 'l':
-				success = do_lo_list(pset, show_desc);
+				success = do_lo_list(pset);
 				break;
 			case 'o':
-				success = describeOperators(options[0], pset, show_verbose, show_desc);
+				success = describeOperators(options[0], pset);
 				break;
 			case 'p':
 				success = permissionsList(options[0], pset);
 				break;
 			case 'T':
-				success = describeTypes(options[0], pset, show_verbose, show_desc);
+				success = describeTypes(options[0], pset, show_verbose);
 				break;
 			case 't':
 			case 'v':
@@ -380,9 +382,9 @@ exec_command(const char *cmd,
 			case 's':
 			case 'S':
 				if (cmd[1] == 'S' && cmd[2] == '\0')
-					success = listTables("Stvs", NULL, pset, show_desc);
+					success = listTables("Stvs", NULL, pset, show_verbose);
 				else
-					success = listTables(&cmd[1], options[0], pset, show_desc);
+					success = listTables(&cmd[1], options[0], pset, show_verbose);
 				break;
 			default:
 				status = CMD_UNKNOWN;
@@ -452,7 +454,10 @@ exec_command(const char *cmd,
 	{
 		if (!options[0])
 		{
-			fputs("Usage: \\i <filename>\n", stderr);
+            if (pset->cur_cmd_interactive)
+                fprintf(stderr, "\\%s: missing required argument\n", cmd);
+            else
+                fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
 			success = false;
 		}
 		else
@@ -463,7 +468,7 @@ exec_command(const char *cmd,
 	/* \l is list databases */
 	else if (strcmp(cmd, "l") == 0 || strcmp(cmd, "list") == 0)
 		success = listAllDbs(pset, false);
-	else if (strcmp(cmd, "l?") == 0 || strcmp(cmd, "list?") == 0)
+	else if (strcmp(cmd, "l+") == 0 || strcmp(cmd, "list+") == 0)
 		success = listAllDbs(pset, true);
 
 
@@ -474,7 +479,10 @@ exec_command(const char *cmd,
 		{
 			if (!options[1])
 			{
-				fputs("Usage: \\lo_export <loid> <filename>\n", stderr);
+                if (pset->cur_cmd_interactive)
+                    fprintf(stderr, "\\%s: missing required argument", cmd);
+                else
+                    fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
 				success = false;
 			}
 			else
@@ -485,7 +493,10 @@ exec_command(const char *cmd,
 		{
 			if (!options[0])
 			{
-				fputs("Usage: \\lo_import <filename> [<description>]\n", stderr);
+                if (pset->cur_cmd_interactive)
+                    fprintf(stderr, "\\%s: missing required argument", cmd);
+                else
+                    fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
 				success = false;
 			}
 			else
@@ -493,15 +504,16 @@ exec_command(const char *cmd,
 		}
 
 		else if (strcmp(cmd + 3, "list") == 0)
-			success = do_lo_list(pset, false);
-		else if (strcmp(cmd + 3, "list?") == 0)
-			success = do_lo_list(pset, true);
+			success = do_lo_list(pset);
 
 		else if (strcmp(cmd + 3, "unlink") == 0)
 		{
 			if (!options[0])
 			{
-				fputs("Usage: \\lo_unlink <loid>\n", stderr);
+                if (pset->cur_cmd_interactive)
+                    fprintf(stderr, "\\%s: missing required argument", cmd);
+                else
+                    fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
 				success = false;
 			}
 			else
@@ -522,7 +534,7 @@ exec_command(const char *cmd,
 	{
 		if (query_buf && query_buf->len > 0)
 			puts(query_buf->data);
-		else if (!GetVariableBool(pset->vars, "quiet"))
+		else if (!quiet)
 			puts("Query buffer is empty.");
 		fflush(stdout);
 	}
@@ -532,7 +544,10 @@ exec_command(const char *cmd,
 	{
 		if (!options[0])
 		{
-			fputs("Usage: \\pset <parameter> [<value>]\n", stderr);
+            if (pset->cur_cmd_interactive)
+                fprintf(stderr, "\\%s: missing required argument", cmd);
+            else
+                fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
 			success = false;
 		}
 		else
@@ -600,7 +615,11 @@ exec_command(const char *cmd,
 		{
 			if (!SetVariable(pset->vars, options[0], options[1]))
 			{
-				fprintf(stderr, "Set variable failed.\n");
+                if (pset->cur_cmd_interactive)
+                    fprintf(stderr, "\\%s: failed\n", cmd);
+                else
+                    fprintf(stderr, "%s: \\%s: failed\n", pset->progname, cmd);
+
 				success = false;
 			}
 		}
@@ -624,7 +643,10 @@ exec_command(const char *cmd,
 
 		if (!options[0])
 		{
-			fprintf(stderr, "Usage: \\%s <filename>\n", cmd);
+            if (pset->cur_cmd_interactive)
+                fprintf(stderr, "\\%s: missing required argument", cmd);
+            else
+                fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
 			success = false;
 		}
 		else
@@ -932,20 +954,27 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 	 */
 	if (!pset->db || PQstatus(pset->db) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "Could not establish database connection.\n%s", PQerrorMessage(pset->db));
-		PQfinish(pset->db);
-		if (!oldconn || !pset->cur_cmd_interactive)
-		{						/* we don't want unpredictable things to
-								 * happen in scripting mode */
-			fputs("Terminating.\n", stderr);
+        if (pset->cur_cmd_interactive)
+        {
+            fprintf(stderr, "\\connect: %s", PQerrorMessage(pset->db));
+            PQfinish(pset->db);
+            if (oldconn)
+            {
+                fputs("Previous connection kept\n", stderr);
+                pset->db = oldconn;
+            }
+            else
+                pset->db = NULL;
+        }
+        else
+        {
+            /* we don't want unpredictable things to
+             * happen in scripting mode */
+            fprintf(stderr, "%s: \\connect: %s", pset->progname, PQerrorMessage(pset->db));
+            PQfinish(pset->db);
 			if (oldconn)
 				PQfinish(oldconn);
-			pset->db = NULL;
-		}
-		else
-		{
-			fputs("Keeping old connection.\n", stderr);
-			pset->db = oldconn;
+            pset->db = NULL;
 		}
 	}
 	else
@@ -956,8 +985,7 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 				printf("You are now connected to database %s.\n", dbparam);
 			else if (dbparam != new_dbname)		/* no new db */
 				printf("You are now connected as new user %s.\n", new_user);
-			else
-/* both new */
+			else /* both new */
 				printf("You are now connected to database %s as user %s.\n",
 					   PQdb(pset->db), PQuser(pset->db));
 		}
@@ -1020,7 +1048,7 @@ editFile(const char *fname)
 static bool
 do_edit(const char *filename_arg, PQExpBuffer query_buf)
 {
-	char		fnametmp[64];
+	char		fnametmp[MAXPGPATH];
 	FILE	   *stream;
 	const char *fname;
 	bool		error = false;
@@ -1047,8 +1075,11 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		/* make a temp file to edit */
 #ifndef WIN32
 		mode_t		oldumask;
+        const char *tmpdirenv = getenv("TMPDIR");
 
-		sprintf(fnametmp, "/tmp/psql.edit.%ld.%ld", (long) geteuid(), (long) getpid());
+		sprintf(fnametmp, "%s/psql.edit.%ld.%ld",
+                tmpdirenv ? tmpdirenv : "/tmp",
+                (long) geteuid(), (long) getpid());
 #else
 		GetTempFileName(".", "psql", 0, fnametmp);
 #endif

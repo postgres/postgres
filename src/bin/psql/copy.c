@@ -27,7 +27,7 @@
  * parse_slash_copy
  * -- parses \copy command line
  *
- * Accepted syntax: \copy [binary] table|"table" [with oids] from|to filename|'filename' using delimiters ['<char>']
+ * Accepted syntax: \copy [binary] table|"table" [with oids] from|to filename|'filename' using delimiters ['<char>'] [ with null as 'string' ]
  * (binary is not here yet)
  *
  * returns a malloc'ed structure with the options, or NULL on parsing error
@@ -41,6 +41,7 @@ struct copy_options
 	bool		binary;
 	bool		oids;
 	char	   *delim;
+    char       *null;
 };
 
 
@@ -52,12 +53,13 @@ free_copy_options(struct copy_options * ptr)
 	free(ptr->table);
 	free(ptr->file);
 	free(ptr->delim);
+    free(ptr->null);
 	free(ptr);
 }
 
 
 static struct copy_options *
-parse_slash_copy(const char *args)
+parse_slash_copy(const char *args, PsqlSettings *pset)
 {
 	struct copy_options *result;
 	char	   *line;
@@ -78,7 +80,9 @@ parse_slash_copy(const char *args)
 		error = true;
 	else
 	{
-		if (!quote && strcasecmp(token, "binary") == 0)
+#ifdef NOT_USED
+        /* this is not implemented yet */
+        if (!quote && strcasecmp(token, "binary") == 0)
 		{
 			result->binary = true;
 			token = strtokx(NULL, " \t", "\"", '\\', &quote, NULL);
@@ -86,6 +90,7 @@ parse_slash_copy(const char *args)
 				error = true;
 		}
 		if (token)
+#endif
 			result->table = xstrdup(token);
 	}
 
@@ -143,9 +148,7 @@ parse_slash_copy(const char *args)
 		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
 		if (token)
 		{
-			if (strcasecmp(token, "using") != 0)
-				error = true;
-			else
+			if (strcasecmp(token, "using") == 0)
 			{
 				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
 				if (!token || strcasecmp(token, "delimiters") != 0)
@@ -154,11 +157,36 @@ parse_slash_copy(const char *args)
 				{
 					token = strtokx(NULL, " \t", "'", '\\', NULL, NULL);
 					if (token)
+                    {
 						result->delim = xstrdup(token);
+                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+                    }
 					else
 						error = true;
 				}
 			}
+
+            if (!error && token)
+            {
+                if (strcasecmp(token, "with") == 0)
+                {
+                    token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+                    if (!token || strcasecmp(token, "null") != 0)
+                        error = true;
+                    else
+                    {
+                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL);
+                        if (!token || strcasecmp(token, "as") != 0)
+                            error = true;
+                        else
+                        {
+                            token = strtokx(NULL, " \t", "'", '\\', NULL, NULL);
+                            if (token)
+                                result->null = xstrdup(token);
+                        }
+                    }
+                }
+            }
 		}
 	}
 
@@ -166,11 +194,13 @@ parse_slash_copy(const char *args)
 
 	if (error)
 	{
-		fputs("Parse error at ", stderr);
+        if (!pset->cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset->progname);
+        fputs("\\copy: parse error at ", stderr);
 		if (!token)
-			fputs("end of line.", stderr);
+			fputs("end of line", stderr);
 		else
-			fprintf(stderr, "'%s'.", token);
+			fprintf(stderr, "'%s'", token);
 		fputs("\n", stderr);
 		free(result);
 		return NULL;
@@ -196,15 +226,14 @@ do_copy(const char *args, PsqlSettings *pset)
 	bool		success;
 
 	/* parse options */
-	options = parse_slash_copy(args);
+	options = parse_slash_copy(args, pset);
 
 	if (!options)
 		return false;
 
 	strcpy(query, "COPY ");
 	if (options->binary)
-		fputs("Warning: \\copy binary is not implemented. Resorting to text output.\n", stderr);
-/*	strcat(query, "BINARY "); */
+        strcat(query, "BINARY ");
 
 	strcat(query, "\"");
 	strncat(query, options->table, NAMEDATALEN);
@@ -220,13 +249,7 @@ do_copy(const char *args, PsqlSettings *pset)
 
 	if (options->delim)
 	{
-
-		/*
-		 * backend copy only uses the first character here, but that might
-		 * be the escape backslash (makes me wonder though why it's called
-		 * delimiterS)
-		 */
-		strncat(query, " USING DELIMITERS '", 2);
+		strcat(query, " USING DELIMITERS '");
 		strcat(query, options->delim);
 		strcat(query, "'");
 	}
@@ -247,9 +270,11 @@ do_copy(const char *args, PsqlSettings *pset)
 
 	if (!copystream)
 	{
+        if (!pset->cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset->progname);
 		fprintf(stderr,
-				"Unable to open file %s which to copy: %s\n",
-				options->from ? "from" : "to", strerror(errno));
+				"unable to open file %s: %s\n",
+				options->file, strerror(errno));
 		free_copy_options(options);
 		return false;
 	}
@@ -272,7 +297,9 @@ do_copy(const char *args, PsqlSettings *pset)
 			break;
 		default:
 			success = false;
-			fprintf(stderr, "Unexpected response (%d)\n", PQresultStatus(result));
+            if (!pset->cur_cmd_interactive)
+                fprintf(stderr, "%s: ", pset->progname);
+			fprintf(stderr, "\\copy: unexpected response (%d)\n", PQresultStatus(result));
 	}
 
 	PQclear(result);
@@ -280,9 +307,9 @@ do_copy(const char *args, PsqlSettings *pset)
 	if (!GetVariable(pset->vars, "quiet"))
 	{
 		if (success)
-			puts("Successfully copied.");
+			puts("Successfully copied");
 		else
-			puts("Copy failed.");
+			puts("Copy failed");
 	}
 
 	fclose(copystream);
