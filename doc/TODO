@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Mar 22 19:36:14 EST 2005
+Last updated:		Tue Mar 22 20:25:09 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -132,6 +132,10 @@ Administration
 	  multiple servers, you need multi-master replication like pgcluster.
 
 	o Allow replication over unreliable or non-persistent links
+
+* Support table partitioning that allows a single table to be stored
+  in subtables that are partitioned based on the primary key or a WHERE
+  clause
 
 
 Data Types
