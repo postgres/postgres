@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.218 2004/12/24 18:37:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.219 2004/12/24 19:12:36 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -146,7 +146,7 @@ su - postgres
       <filename>libperl</filename> library must be a shared library
       also on most platforms.  This appears to be the default in
       recent <productname>Perl</productname> versions, but it was not
-      in earlier versions, and in general it is the choice of whomever
+      in earlier versions, and in any case it is the choice of whomever
       installed Perl at your site.
      </para>
 
@@ -238,8 +238,9 @@ su - postgres
 
     <listitem>
      <para>
-      <application>Kerberos</>, <productname>OpenSSL</>, or <application>PAM</>,
-      if you want to support authentication using these services.
+      <application>Kerberos</>, <productname>OpenSSL</>, or
+      <application>PAM</>, if you want to support authentication or
+      encryption using these services.
      </para>
     </listitem>
    </itemizedlist>
@@ -393,23 +394,27 @@ su - postgres
      old one then shut down the old server, at the latest before you
      install the new files:
 <screen>
-<userinput>kill -INT `cat /usr/local/pgsql/data/postmaster.pid | sed 1q`</>
+<userinput>pg_ctl stop</>
 </screen>
-     Versions prior to 7.0 do not have this
-     <filename>postmaster.pid</> file. If you are using such a version
-     you must find out the process ID of the server yourself, for
-     example by typing <userinput>ps ax | grep postmaster</>, and
-     supply it to the <command>kill</> command.
-    </para>
-
-    <para>
-     On systems that have <productname>PostgreSQL</> started at boot time, there is
-     probably a start-up file that will accomplish the same thing. For
-     example, on a <systemitem class="osname">Red Hat Linux</> system one might find that
+     On systems that have <productname>PostgreSQL</> started at boot time,
+     there is probably a start-up file that will accomplish the same thing. For
+     example, on a <systemitem class="osname">Red Hat Linux</> system one
+     might find that
 <screen>
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
-     works.  Another possibility is <userinput>pg_ctl stop</>.
+     works.
+    </para>
+
+    <para>
+     Very old versions might not have <application>pg_ctl</>.  If you
+     can't find it or it doesn't work, find out the process ID of the
+     old server, for
+     example by typing <userinput>ps ax | grep postmaster</>, and
+     signal it to stop this way:
+<screen>
+<userinput>kill -INT <replaceable>processID</></userinput>
+</screen>
     </para>
    </step>
 
@@ -443,10 +448,10 @@ su - postgres
   </para>
 
   <para>
-   These topics are discussed at length in <![%standalone-include[the
-   documentation,]]> <![%standalone-ignore[<xref
-   linkend="migration">,]]> which you are encouraged to read in any
-   case.
+   Further discussion appears in
+   <![%standalone-include[the documentation,]]>
+   <![%standalone-ignore[<xref linkend="migration">,]]>
+   which you are encouraged to read in any case.
   </para>
  </sect1>
 
@@ -691,7 +696,7 @@ su - postgres
          Enables Native Language Support (<acronym>NLS</acronym>),
          that is, the ability to display a program's messages in a
          language other than English.
-         <replaceable>LANGUAGES</replaceable> is a space separated
+         <replaceable>LANGUAGES</replaceable> is a space-separated
          list of codes of the languages that you want supported, for
          example <literal>--enable-nls='de fr'</>.  (The intersection
          between your list and the set of actually provided
@@ -825,7 +830,7 @@ su - postgres
        <term><option>--without-readline</option></term>
        <listitem>
         <para>
-         Prevents the use of the <application>Readline</> library.  This disables
+         Prevents use of the <application>Readline</> library.  This disables
          command-line editing and history in
          <application>psql</application>, so it is not recommended.
         </para>
@@ -836,7 +841,8 @@ su - postgres
        <term><option>--with-rendezvous</option></term>
        <listitem>
         <para>
-         Build with Rendezvous support.
+         Build with Rendezvous support.  This requires Rendezvous support
+         in your operating system.  Recommended on Mac OS X.
         </para>
        </listitem>
       </varlistentry>
@@ -864,7 +870,8 @@ su - postgres
          Make the client libraries thread-safe.  This allows
          concurrent threads in <application>libpq</application> and
          <application>ECPG</application> programs to safely control
-         their private connection handles.
+         their private connection handles.  This option requires adequate
+         threading support in your operating system.
         </para>
        </listitem>
       </varlistentry>
@@ -873,8 +880,12 @@ su - postgres
        <term><option>--without-zlib</option></term>
        <listitem>
         <para>
-         Prevents the use of the <application>Zlib</> library.  This disables
-         compression support in <application>pg_dump</application>.
+         <indexterm>
+          <primary>zlib</primary>
+         </indexterm>
+         Prevents use of the <application>Zlib</> library.  This disables
+         support for compressed archives in <application>pg_dump</application>
+         and <application>pg_restore</application>.
          This option is only intended for those rare systems where this
          library is not available.
         </para>
@@ -936,12 +947,12 @@ su - postgres
 
     <para>
      If you prefer a C compiler different from the one
-     <filename>configure</filename> picks then you can set the
+     <filename>configure</filename> picks, you can set the
      environment variable <envar>CC</> to the program of your choice.
      By default, <filename>configure</filename> will pick
-     <filename>gcc</filename> unless this is inappropriate for the
-     platform.  Similarly, you can override the default compiler flags
-     with the <envar>CFLAGS</envar> variable.
+     <filename>gcc</filename> if available, else the platform's
+     default (usually <filename>cc</>).  Similarly, you can override the
+     default compiler flags if needed with the <envar>CFLAGS</envar> variable.
     </para>
 
     <para>
@@ -1002,8 +1013,8 @@ All of PostgreSQL is successfully made. Ready to install.
    <note>
     <para>
      If you are upgrading an existing system and are going to install
-     the new files over the old ones, then you should have backed up
-     your data and shut down the old server by now, as explained in
+     the new files over the old ones, be sure to back up
+     your data and shut down the old server before proceeding, as explained in
      <xref linkend="install-upgrading"> above.
     </para>
    </note>
@@ -1036,8 +1047,11 @@ All of PostgreSQL is successfully made. Ready to install.
 
    <para>
     The standard installation provides all the header files needed for client
-    application development as well as for any server-side program
-    development (such as custom functions or data types written in C).
+    application development as well as for server-side program
+    development, such as custom functions or data types written in C.
+    (Prior to <productname>PostgreSQL</> 8.0, a separate <literal>gmake
+    install-all-headers</> command was needed for the latter, but this
+    step has been folded into the standard install.)
    </para>
 
    <formalpara>
