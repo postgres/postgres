@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.280 2004/08/31 04:53:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.281 2004/09/17 22:40:46 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1929,16 +1929,16 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_filename</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-          When <varname>redirect_stderr</> is enabled, this option
+          When <varname>redirect_stderr</varname> is enabled, this option
           sets the file names of the created log files.  The value
-          is treated as a <systemitem>strftime</> pattern,
-          so <literal>%</>-escapes
+          is treated as a <systemitem>strftime</systemitem> pattern,
+          so <literal>%</literal>-escapes
           can be used to specify time-varying file names.
-          If no <literal>%</>-escapes are present,
+          If no <literal>%</literal>-escapes are present,
           <productname>PostgreSQL</productname> will
           append the epoch of the new log file's open time.  For example,
-          if <varname>log_filename</> were <literal>server_log</>, then the
-          chosen file name would be <literal>server_log.1093827753</>
+          if <varname>log_filename</varname> were <literal>server_log</literal>, then the
+          chosen file name would be <literal>server_log.1093827753</literal>
           for a log starting at Sun Aug 29 19:02:33 2004 MST.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
@@ -1950,7 +1950,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_rotation_age</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-          When <varname>redirect_stderr</> is enabled, this option
+          When <varname>redirect_stderr</varname> is enabled, this option
           determines the maximum lifetime of an individual log file.
           After this many minutes have elapsed, a new log file will
           be created.  Set to zero to disable time-based creation of
@@ -1965,7 +1965,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_rotation_size</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-          When <varname>redirect_stderr</> is enabled, this option
+          When <varname>redirect_stderr</varname> is enabled, this option
           determines the maximum size of an individual log file.
           After this many kilobytes have been emitted into a log file,
           a new log file will be created.  Set to zero to disable size-based
@@ -1980,18 +1980,37 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_truncate_on_rotation</varname> (<type>boolean</type>)</term>
        <listitem>
         <para>
-          When <varname>redirect_stderr</> is enabled, this option will cause
+          When <varname>redirect_stderr</varname> is enabled, this option will cause
           <productname>PostgreSQL</productname> to truncate (overwrite),
           rather than append to, any existing log file of the same name.
           However, truncation will occur only when a new file is being opened
           due to time-based rotation, not during server startup or size-based
           rotation.  When false, pre-existing files will be appended to in
           all cases.  For example, using this option in combination with
-          a <varname>log_filename</> like <literal>postgresql-%H.log</>
+          a <varname>log_filename</varname> like <literal>postgresql-%H.log</literal>
           would result in generating twenty-four hourly log files and then
           cyclically overwriting them.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
+        </para>
+        <para>
+          Example:  To keep 7 days of logs, one log file per day named
+          <literal>server_log.Mon</literal>, <literal>server_log.Tue</literal>, 
+          etc, and automatically overwrite last week's log with this week's log,
+          set <varname>log_filename</varname> to <literal>server_log.%a</literal>, 
+          <varname>log_truncate_on_rotation</varname> to <literal>true</literal>, and 
+          <varname>log_rotation_age</varname> to <literal>1440</literal>.
+        </para>
+        <para>
+          Example: To keep 24 hours of logs, one log file per hour, but 
+          also rotate sooner if the log file size exceeds 1GB, set 
+          <varname>log_filename</varname> to <literal>server_log.%H%M</literal>, 
+          <varname>log_truncate_on_rotation</varname> to <literal>true</literal>, 
+          <varname>log_rotation_age</varname> to <literal>60</literal>, and 
+          <varname>log_rotation_size</varname> to <literal>1000000</literal>.
+          Including <literal>%M</> in <varname>log_filename</varname> allows
+          any size-driven rotations that may occur to select a filename
+          different from the hour's initial filename.
         </para>
        </listitem>
      </varlistentry>
