@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.101 2002/09/02 02:47:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.102 2002/09/02 05:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,16 +33,9 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
+#include "utils/guc.h"
 
 #include "mb/pg_wchar.h"
-
-int			server_min_messages;
-char	   *server_min_messages_str = NULL;
-const char	server_min_messages_str_default[] = "notice";
-
-int			client_min_messages;
-char	   *client_min_messages_str = NULL;
-const char	client_min_messages_str_default[] = "notice";
 
 #ifdef HAVE_SYSLOG
 /*
@@ -345,6 +338,7 @@ elog(int lev, const char *fmt,...)
 		}
 	}
 
+
 	/*
 	 * Message prepared; send it where it should go
 	 */
@@ -432,6 +426,14 @@ elog(int lev, const char *fmt,...)
 		free(fmt_buf);
 	if (msg_buf != msg_fixedbuf)
 		free(msg_buf);
+
+	/* If the user wants this elog() generating query logged,
+	 * do so. We only want to log if the query has been
+	 * written to debug_query_string. Also, avoid infinite loops.
+	 */
+
+	if(lev != LOG && lev >= log_min_error_statement && debug_query_string)
+		elog(LOG,"statement: %s",debug_query_string);
 
 	/*
 	 * Perform error recovery action as specified by lev.
@@ -835,71 +837,4 @@ elog_message_prefix(int lev)
 }
 
 
-/*
- * GUC support routines
- */
-const char *
-assign_server_min_messages(const char *newval,
-						   bool doit, bool interactive)
-{
-	if (strcasecmp(newval, "debug") == 0)
-		{ if (doit) server_min_messages = DEBUG1; }
-	else if (strcasecmp(newval, "debug5") == 0)
-		{ if (doit) server_min_messages = DEBUG5; }
-	else if (strcasecmp(newval, "debug4") == 0)
-		{ if (doit) server_min_messages = DEBUG4; }
-	else if (strcasecmp(newval, "debug3") == 0)
-		{ if (doit) server_min_messages = DEBUG3; }
-	else if (strcasecmp(newval, "debug2") == 0)
-		{ if (doit) server_min_messages = DEBUG2; }
-	else if (strcasecmp(newval, "debug1") == 0)
-		{ if (doit) server_min_messages = DEBUG1; }
-	else if (strcasecmp(newval, "info") == 0)
-		{ if (doit) server_min_messages = INFO; }
-	else if (strcasecmp(newval, "notice") == 0)
-		{ if (doit) server_min_messages = NOTICE; }
-	else if (strcasecmp(newval, "warning") == 0)
-		{ if (doit) server_min_messages = WARNING; }
-	else if (strcasecmp(newval, "error") == 0)
-		{ if (doit) server_min_messages = ERROR; }
-	else if (strcasecmp(newval, "log") == 0)
-		{ if (doit) server_min_messages = LOG; }
-	else if (strcasecmp(newval, "fatal") == 0)
-		{ if (doit) server_min_messages = FATAL; }
-	else if (strcasecmp(newval, "panic") == 0)
-		{ if (doit) server_min_messages = PANIC; }
-	else
-		return NULL;			/* fail */
-	return newval;				/* OK */
-}
 
-const char *
-assign_client_min_messages(const char *newval,
-						   bool doit, bool interactive)
-{
-	if (strcasecmp(newval, "debug") == 0)
-		{ if (doit) client_min_messages = DEBUG1; }
-	else if (strcasecmp(newval, "debug5") == 0)
-		{ if (doit) client_min_messages = DEBUG5; }
-	else if (strcasecmp(newval, "debug4") == 0)
-		{ if (doit) client_min_messages = DEBUG4; }
-	else if (strcasecmp(newval, "debug3") == 0)
-		{ if (doit) client_min_messages = DEBUG3; }
-	else if (strcasecmp(newval, "debug2") == 0)
-		{ if (doit) client_min_messages = DEBUG2; }
-	else if (strcasecmp(newval, "debug1") == 0)
-		{ if (doit) client_min_messages = DEBUG1; }
-	else if (strcasecmp(newval, "log") == 0)
-		{ if (doit) client_min_messages = LOG; }
-	else if (strcasecmp(newval, "info") == 0)
-		{ if (doit) client_min_messages = INFO; }
-	else if (strcasecmp(newval, "notice") == 0)
-		{ if (doit) client_min_messages = NOTICE; }
-	else if (strcasecmp(newval, "warning") == 0)
-		{ if (doit) client_min_messages = WARNING; }
-	else if (strcasecmp(newval, "error") == 0)
-		{ if (doit) client_min_messages = ERROR; }
-	else
-		return NULL;			/* fail */
-	return newval;				/* OK */
-}

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.132 2002/09/01 23:26:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.133 2002/09/02 05:42:54 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -942,7 +942,6 @@ env PGOPTIONS='-c geqo=off' psql
        </para>
       </listitem>
      </varlistentry>
-
      <varlistentry>
       <term><varname>EXPLAIN_PRETTY_PRINT</varname> (<type>boolean</type>)</term>
       <listitem>
@@ -979,6 +978,28 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <term><varname>LOG_MIN_ERROR_STATEMENT</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This controls which log messages are accompanied by the original
+        query which generated the message. All queries matching the setting
+        or which are of a higher severity than the setting are logged. The
+        default is <literal>ERROR</literal>. Valid values are
+        <literal>DEBUG5</literal>, <literal>DEBUG4</literal>, 
+        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, 
+        <literal>DEBUG1</literal>, <literal>INFO</literal>,
+        <literal>NOTICE</literal>, <literal>WARNING</literal>
+        and <literal>ERROR</literal>.
+       </para>
+       <para>
+        It is recommended you enable <literal>LOG_PID</literal> as well
+        so you can more easily match the error statement with the error
+        message.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>LOG_PID</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1005,8 +1026,8 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         Prints the duration of every completed query.  To use this option, 
-        enable LOG_STATEMENT and LOG_PID so you can link the original query
-        to the duration using the process id.
+        enable <literal>LOG_STATEMENT</> and <literal>LOG_PID</> so you 
+        can link the original query to the duration using the process id.
        </para>
       </listitem>
      </varlistentry>

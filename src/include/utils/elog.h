@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.38 2002/06/20 20:29:52 momjian Exp $
+ * $Id: elog.h,v 1.39 2002/09/02 05:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,22 +47,12 @@ extern int	Use_syslog;
 extern bool Log_timestamp;
 extern bool Log_pid;
 
-extern char	   *server_min_messages_str;
-extern char	   *client_min_messages_str;
-extern const char server_min_messages_str_default[];
-extern const char client_min_messages_str_default[];
-
 extern void
 elog(int lev, const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 2, 3)));
 
-extern int	DebugFileOpen(void);
-
-extern const char *assign_server_min_messages(const char *newval,
-											  bool doit, bool interactive);
-extern const char *assign_client_min_messages(const char *newval,
-											  bool doit, bool interactive);
+extern int  DebugFileOpen(void);
 
 #endif   /* ELOG_H */

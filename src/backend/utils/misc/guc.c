@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.91 2002/09/02 01:05:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.92 2002/09/02 05:42:54 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -71,6 +71,9 @@ static const char *assign_facility(const char *facility,
 								   bool doit, bool interactive);
 #endif
 
+static const char *assign_msglvl(int *var, const char *newval,
+									bool doit, bool interactive);
+
 /*
  * Debugging options
  */
@@ -98,6 +101,19 @@ bool		SQL_inheritance = true;
 bool		Australian_timezones = false;
 
 bool		Password_encryption = true;
+
+int			log_min_error_statement;
+char		*log_min_error_statement_str = NULL;
+const char	log_min_error_statement_str_default[] = "error";
+
+int         server_min_messages;
+char       *server_min_messages_str = NULL;
+const char  server_min_messages_str_default[] = "notice";
+
+int         client_min_messages;
+char       *client_min_messages_str = NULL;
+const char  client_min_messages_str_default[] = "notice";
+
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -724,6 +740,11 @@ static struct config_string
 	{
 		{ "client_min_messages", PGC_USERSET }, &client_min_messages_str,
 		client_min_messages_str_default, assign_client_min_messages, NULL
+	},
+
+	{
+		{ "log_min_error_statement", PGC_USERSET }, &log_min_error_statement_str,
+		log_min_error_statement_str_default, assign_min_error_statement, NULL
 	},
 
 	{
@@ -2877,3 +2898,54 @@ GUCArrayDelete(ArrayType *array, const char *name)
 
 	return newarray;
 }
+
+const char *
+assign_server_min_messages(const char *newval,
+						   bool doit, bool interactive)
+{
+	return(assign_msglvl(&server_min_messages,newval,doit,interactive));
+}
+
+const char *
+assign_client_min_messages(const char *newval,
+						   bool doit, bool interactive)
+{
+	return(assign_msglvl(&client_min_messages,newval,doit,interactive));
+}
+
+const char *
+assign_min_error_statement(const char *newval, bool doit, bool interactive)
+{
+	return(assign_msglvl(&log_min_error_statement,newval,doit,interactive));
+}
+
+static const char *
+assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
+{
+	if (strcasecmp(newval, "debug") == 0)
+		{ if (doit) (*var) = DEBUG1; }
+	else if (strcasecmp(newval, "debug5") == 0)
+		{ if (doit) (*var) = DEBUG5; }
+	else if (strcasecmp(newval, "debug4") == 0)
+		{ if (doit) (*var) = DEBUG4; }
+	else if (strcasecmp(newval, "debug3") == 0)
+		{ if (doit) (*var) = DEBUG3; }
+	else if (strcasecmp(newval, "debug2") == 0)
+		{ if (doit) (*var) = DEBUG2; }
+	else if (strcasecmp(newval, "debug1") == 0)
+		{ if (doit) (*var) = DEBUG1; }
+	else if (strcasecmp(newval, "log") == 0)
+		{ if (doit) (*var) = LOG; }
+	else if (strcasecmp(newval, "info") == 0)
+		{ if (doit) (*var) = INFO; }
+	else if (strcasecmp(newval, "notice") == 0)
+		{ if (doit) (*var) = NOTICE; }
+	else if (strcasecmp(newval, "warning") == 0)
+		{ if (doit) (*var) = WARNING; }
+	else if (strcasecmp(newval, "error") == 0)
+		{ if (doit) (*var) = ERROR; }
+	else
+		return NULL;			/* fail */
+	return newval;				/* OK */
+}
+
