@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.24 2000/01/18 06:10:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.25 2000/02/02 16:22:45 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -220,161 +220,164 @@ Add a note on sgml-tools that they are now working with jade and so
 
  </sect1>
 
-<sect1>
-<title>Documentation Sources</title>
+ <sect1>
+  <title>Documentation Sources</title>
 
-<para>
-Documentation sources include plain text files, man pages, and html. However,
-most new <productname>Postgres</productname> documentation will be written using the
-<firstterm>Standard Generalized Markup Language</firstterm>
-(<acronym>SGML</acronym>) 
-<ulink url="http://www.ora.com/davenport/"> <productname>DocBook</productname></ulink>
- <firstterm>Document Type Definition</firstterm> (<acronym>DTD</acronym>).
-Much of the existing documentation has been or will be converted to <acronym>SGML</acronym>.
-</para>
+  <para>
+   Documentation sources include plain text files, man pages, and html. However,
+   most new <productname>Postgres</productname> documentation will be written using the
+   <firstterm>Standard Generalized Markup Language</firstterm>
+   (<acronym>SGML</acronym>) 
+   <ulink url="http://www.ora.com/davenport/"> <productname>DocBook</productname></ulink>
+   <firstterm>Document Type Definition</firstterm> (<acronym>DTD</acronym>).
+   Much of the existing documentation has been or will be converted to <acronym>SGML</acronym>.
+  </para>
 
-<para>
-The purpose of <acronym>SGML</acronym> is to allow an author to
-specify the structure and content of a document (e.g. using the
-<productname>DocBook</productname> <acronym>DTD</acronym>),  and to
-have the document style define how that content is rendered into a
-final form (e.g. using Norm Walsh's stylesheets).
-</para>
+  <para>
+   The purpose of <acronym>SGML</acronym> is to allow an author to
+   specify the structure and content of a document (e.g. using the
+   <productname>DocBook</productname> <acronym>DTD</acronym>),  and to
+   have the document style define how that content is rendered into a
+   final form (e.g. using Norm Walsh's stylesheets).
+  </para>
 
-<para>
-Documentation has accumulated from several sources. As we integrate
-and assimilate existing documentation into a coherent documentation set,
-the older versions will become obsolete and will be removed from the
-distribution. However, this will not happen immediately, and will not
-happen to all documents at the same time. To ease the transition, and
-to help guide developers and writers, we have defined a transition roadmap.
-</para>
+  <para>
+   Documentation has accumulated from several sources. As we integrate
+   and assimilate existing documentation into a coherent documentation set,
+   the older versions will become obsolete and will be removed from the
+   distribution. However, this will not happen immediately, and will not
+   happen to all documents at the same time. To ease the transition, and
+   to help guide developers and writers, we have defined a transition roadmap.
+  </para>
 
-<para>
-Here is the documentation plan for v6.5:
+<!--
+  <para>
+   Here is the documentation plan for v6.5:
 
-<itemizedlist>
-<listitem>
-<para>
-Start compiling index information for the User's and Administrator's Guides.
-</para>
-</listitem>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Start compiling index information for the User's and Administrator's Guides.
+     </para>
+    </listitem>
 
-<listitem>
-<para>
-Write more sections for the User's Guide covering areas outside the reference pages.
-This would include introductory information and suggestions for approaches to typical
-design problems.
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Write more sections for the User's Guide covering areas outside the reference pages.
+      This would include introductory information and suggestions for approaches to typical
+      design problems.
+     </para>
+    </listitem>
 
-<listitem>
-<para>
-Merge information in the existing man pages into the reference pages and User's Guide.
-Condense the man pages down to reminder information, with references into the
-primary doc set.
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Merge information in the existing man pages into the reference pages and User's Guide.
+      Condense the man pages down to reminder information, with references into the
+      primary doc set.
+     </para>
+    </listitem>
 
-<listitem>
-<para>
-Convert the new sgml reference pages to new man pages, replacing the existing man pages.
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Convert the new sgml reference pages to new man pages, replacing the existing man pages.
+     </para>
+    </listitem>
 
-<listitem>
-<para>
-Convert all source graphics to CGM format files for portability. Currently we mostly have
-Applix Graphics sources from which we can generate .gif output. One graphic is only
-available in .gif and .ps, and should be redrawn or removed.
-</para>
-</listitem>
+    <listitem>
+     <para>
+      Convert all source graphics to CGM format files for portability. Currently we mostly have
+      Applix Graphics sources from which we can generate .gif output. One graphic is only
+      available in .gif and .ps, and should be redrawn or removed.
+     </para>
+    </listitem>
 
-</itemizedlist>
-</para>
+   </itemizedlist>
+  </para>
+-->
 
-<sect2>
-<title>Document Structure</title>
+  <sect2>
+   <title>Document Structure</title>
 
-<para>
-There are currently five separate documents written in DocBook. Each document
-has a container source document which defines the DocBook environment and other
-document source files. These primary source files are located in 
-<filename>doc/src/sgml/</filename>, along with many of the other source files
-used for the documentation. The primary source files are:
+   <para>
+    There are currently five separate documents written in DocBook. Each document
+    has a container source document which defines the DocBook environment and other
+    document source files. These primary source files are located in 
+    <filename>doc/src/sgml/</filename>, along with many of the other source files
+    used for the documentation. The primary source files are:
 
-<variablelist>
-<varlistentry>
-<term>postgres.sgml</term>
-<listitem>
-<para>
-This is the integrated document, including all other documents as parts.
-Output is generated in <acronym>HTML</acronym> since the browser interface
-makes it easy to move around all of the documentation by just clicking.
-The other documents are available in both <acronym>HTML</acronym> and hardcopy.
-</para>
-</listitem>
-</varlistentry>
+    <variablelist>
+     <varlistentry>
+      <term>postgres.sgml</term>
+      <listitem>
+       <para>
+	This is the integrated document, including all other documents as parts.
+	Output is generated in <acronym>HTML</acronym> since the browser interface
+	makes it easy to move around all of the documentation by just clicking.
+	The other documents are available in both <acronym>HTML</acronym> and hardcopy.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<varlistentry>
-<term>tutorial.sgml</term>
-<listitem>
-<para>
-The introductory tutorial, with examples. Does not include programming topics,
-and is intended to help a reader unfamiliar with <acronym>SQL</acronym>.
-This is the "getting started" document.
-</para>
-</listitem>
-</varlistentry>
+     <varlistentry>
+      <term>tutorial.sgml</term>
+      <listitem>
+       <para>
+	The introductory tutorial, with examples. Does not include programming topics,
+	and is intended to help a reader unfamiliar with <acronym>SQL</acronym>.
+	This is the "getting started" document.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<varlistentry>
-<term>user.sgml</term>
-<listitem>
-<para>
-The User's Guide. Includes information on data types and user-level interfaces.
-This is the place to put information on "why".
-</para>
-</listitem>
-</varlistentry>
+     <varlistentry>
+      <term>user.sgml</term>
+      <listitem>
+       <para>
+	The User's Guide. Includes information on data types and user-level interfaces.
+	This is the place to put information on "why".
+       </para>
+      </listitem>
+     </varlistentry>
 
-<varlistentry>
-<term>reference.sgml</term>
-<listitem>
-<para>
-The Reference Manual. Includes <productname>Postgres</productname> <acronym>SQL</acronym> syntax.
-This is the place to put information on "how".
-</para>
-</listitem>
-</varlistentry>
+     <varlistentry>
+      <term>reference.sgml</term>
+      <listitem>
+       <para>
+	The Reference Manual. Includes <productname>Postgres</productname> <acronym>SQL</acronym> syntax.
+	This is the place to put information on "how".
+       </para>
+      </listitem>
+     </varlistentry>
 
-<varlistentry>
-<term>programming.sgml</term>
-<listitem>
-<para>
-The Programmer's Guide. Includes information on <productname>Postgres</productname>
-extensibility and on the programming interfaces.
-</para>
-</listitem>
-</varlistentry>
+     <varlistentry>
+      <term>programming.sgml</term>
+      <listitem>
+       <para>
+	The Programmer's Guide. Includes information on <productname>Postgres</productname>
+	extensibility and on the programming interfaces.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<varlistentry>
-<term>admin.sgml</term>
-<listitem>
-<para>
-The Administrator's Guide. Include installation and release notes.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
-</para>
+     <varlistentry>
+      <term>admin.sgml</term>
+      <listitem>
+       <para>
+	The Administrator's Guide. Include installation and release notes.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+</sect2>
 
 <!--
 Disable for the hardcopy production release.
 Too much tabular info and not very helpful in hardcopy.
 - thomas 1998-10-27
 -->
-</sect2>
 
+<!--
 <sect2>
 <title>Documentation Files</title>
 
@@ -677,83 +680,6 @@ Status
 <row><entry> ./src/interfaces/python/tutorial/pgtools.pyc	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/interfaces/python/tutorial/syscat.py	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/interfaces/python/tutorial/syscat.pyc	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/README	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/abort.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/alter_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/alter_user.l	</entry><entry>	Split into Reference and Admin Guide	</entry></row>
-<row><entry> ./src/man/begin.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/catalogs.3	</entry><entry>	Catalog synopsis. Move to Programmer's Guide?	</entry></row>
-<row><entry> ./src/man/cleardbdir.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/close.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/cluster.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/commit.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/copy.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_aggregate.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_database.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_function.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_index.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_language.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_operator.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_rule.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_sequence.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_trigger.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_type.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_user.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_version.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/create_view.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/createdb.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/createuser.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/declare.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/delete.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/destroydb.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/destroyuser.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_aggregate.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_database.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_function.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_index.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_language.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_operator.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_rule.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_sequence.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_trigger.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_type.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_user.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/drop_view.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/end.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/ecpg.1	</entry><entry>	Short man page. Retain	</entry></row>
-<row><entry> ./src/man/explain.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/fetch.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/grant.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/initdb.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/initlocation.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/insert.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/ipcclean.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/listen.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/load.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/lock.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/move.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/notify.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/pg_dump.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry> ./src/man/pg_dumpall.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry> ./src/man/pg_upgrade.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry> ./src/man/pg_hba.conf.5	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry> ./src/man/pg_passwd.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry> ./src/man/pgintro.1	</entry><entry>	Assimilate into User's Guide?	</entry></row>
-<row><entry> ./src/man/postgres.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
-<row><entry> ./src/man/postmaster.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
-<row><entry> ./src/man/psql.1	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/reset.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/revoke.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/rollback.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/select.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/set.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/show.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/sql.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/update.l	</entry><entry>	Not converted	</entry></row>
-<row><entry> ./src/man/vacuum.l	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/pl/tcl/INSTALL	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/pl/tcl/modules/README	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/pl/tcl/license.terms	</entry><entry>	Not converted	</entry></row>
@@ -788,20 +714,22 @@ Status
 </para>
 </sect2>
 
-<sect2>
-<title>Styles and Conventions</title>
+-->
 
-<para>
-<productname>DocBook</productname> has a rich set of tags and
-constructs, and a suprisingly large percentage are directly and
-obviously useful for well-formed documentation. The
-<productname>Postgres</productname> documentation set has only
-recently been adapted to <acronym>SGML</acronym>, and in the near
-future several sections of the set will be selected and maintained as
-prototypical examples of <productname>DocBook</productname> usage.
-Also, a short summary of <productname>DocBook</productname> tags will
-be included below.
-</para>
+  <sect2>
+   <title>Styles and Conventions</title>
+
+   <para>
+    <productname>DocBook</productname> has a rich set of tags and
+    constructs, and a suprisingly large percentage are directly and
+    obviously useful for well-formed documentation. The
+    <productname>Postgres</productname> documentation set has only
+    recently been adapted to <acronym>SGML</acronym>, and in the near
+    future several sections of the set will be selected and maintained as
+    prototypical examples of <productname>DocBook</productname> usage.
+    Also, a short summary of <productname>DocBook</productname> tags will
+    be included below.
+   </para>
 
 <!--
 <para>
@@ -833,61 +761,63 @@ be included below.
 </table>
 </para>
 -->
-</sect2>
+  </sect2>
 
-<sect2>
-<title>SGML Authoring Tools</title>
+  <sect2>
+   <title>SGML Authoring Tools</title>
 
-<para>
-The current <acronym>Postgres</acronym> documentation set was written using
-a plain text editor (or emacs/psgml; see below) with the content marked up using 
-<acronym>SGML</acronym> DocBook tags.
-</para>
+   <para>
+    The current <acronym>Postgres</acronym> documentation set was written using
+    a plain text editor (or emacs/psgml; see below) with the content marked up using 
+    <acronym>SGML</acronym> DocBook tags.
+   </para>
 
-<para>
-<acronym>SGML</acronym> and <productname>DocBook</productname> do not suffer
-from an oversupply of open-source authoring tools. The most common toolset is
-the emacs/xemacs editing package with the psgml feature extension.
-On some systems (e.g. RedHat Linux) these tools are provided in a typical full installation.
-</para>
+   <para>
+    <acronym>SGML</acronym> and <productname>DocBook</productname> do not suffer
+    from an oversupply of open-source authoring tools. The most common toolset is
+    the emacs/xemacs editing package with the psgml feature extension.
+    On some systems (e.g. RedHat Linux) these tools are provided in a typical full installation.
+   </para>
 
-<sect3>
-<title>emacs/psgml</title>
+   <sect3>
+    <title>emacs/psgml</title>
 
-<para>
-<application>emacs</application> (and <application>xemacs</application>) have
-an <acronym>SGML</acronym> <firstterm>major mode</firstterm>. When properly configured,
-this will allow you to use <application>emacs</application> to insert tags and
-check markup consistancy.
-</para>
+    <para>
+     <application>emacs</application> (and <application>xemacs</application>) have
+     an <acronym>SGML</acronym> <firstterm>major mode</firstterm>. When properly configured,
+     this will allow you to use <application>emacs</application> to insert tags and
+     check markup consistancy.
+    </para>
 
-<para>
-     Put the following in your <filename>~/.emacs</filename> environment file:
+    <para>
+     Put the following in your <filename>~/.emacs</filename>
+     environment file (adjusting the path names to be appropriate for
+     your system):
 
-<programlisting>
+     <programlisting>
 ; ********** for SGML mode (psgml)
 
 (setq sgml-catalog-files "/usr/lib/sgml/CATALOG")
 (setq sgml-local-catalogs "/usr/lib/sgml/CATALOG")
 
 (autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t )
-</programlisting>
+     </programlisting>
 
-and add an entry in the same file
-for <acronym>SGML</acronym> into the (existing) definition for
-auto-mode-alist:
+     and add an entry in the same file
+     for <acronym>SGML</acronym> into the (existing) definition for
+     auto-mode-alist:
 
-<programlisting>
+     <programlisting>
 (setq
   auto-mode-alist
   '(("\\.sgml$" . sgml-mode)
    ))
-</programlisting>
+     </programlisting>
 
-Each <acronym>SGML</acronym> source file has the following block at the
-end of the file:
+     Each <acronym>SGML</acronym> source file has the following block at the
+     end of the file:
 
-<programlisting>
+     <programlisting>
 <sgmltag>!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
@@ -900,37 +830,37 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 --</sgmltag>
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
+    <para>
      The <productname>Postgres</productname> distribution includes a
      parsed DTD definitions file <filename>reference.ced</filename>.
-You may find that
-</para>
+     You may find that
+    </para>
 
-<para>
-When using <application>emacs</application>/psgml, a comfortable way of working with
-these separate files of book parts is to insert a proper DOCTYPE
-declaration while you're editing them.  If you are working on this source, for instance,
-it's an appendix chapter, so you would specify the document as an "appendix" instance of
-a DocBook document by making the first line look like this:
+    <para>
+     When using <application>emacs</application>/psgml, a comfortable way of working with
+     these separate files of book parts is to insert a proper DOCTYPE
+     declaration while you're editing them.  If you are working on this source, for instance,
+     it's an appendix chapter, so you would specify the document as an "appendix" instance of
+     a DocBook document by making the first line look like this:
 
-<programlisting>
-<sgmltag>!doctype appendix PUBLIC "-//Davenport//DTD DocBook V3.0//EN"</sgmltag>
-</programlisting>
+     <programlisting>
+      <sgmltag>!doctype appendix PUBLIC "-//Davenport//DTD DocBook V3.0//EN"</sgmltag>
+     </programlisting>
 
-This means that anything and everything that reads <acronym>SGML</acronym> will get it
-right, and I can verify the document with "nsgmls -s docguide.sgml".
-</para>
+     This means that anything and everything that reads <acronym>SGML</acronym> will get it
+     right, and I can verify the document with "nsgmls -s docguide.sgml".
+    </para>
 
-</sect3>
-</sect2>
-</sect1>
+   </sect3>
+  </sect2>
+ </sect1>
 
  <sect1>
   <title>Building Documentation</title>
@@ -955,8 +885,8 @@ YFLAGS+= -v
 
 # documentation
 
-HSTYLE= /home/tgl/SGML/db107.d/docbook/html
-PSTYLE= /home/tgl/SGML/db107.d/docbook/print
+HSTYLE= /home/lockhart/SGML/db143.d/docbook/html
+PSTYLE= /home/lockhart/SGML/db143.d/docbook/print
    </programlisting>
 
    where HSTYLE and PSTYLE determine the path to
@@ -995,36 +925,6 @@ PSTYLE= /home/tgl/SGML/db107.d/docbook/print
 % make install
    </programlisting>
   </para>
- <sect2>
-  <title>FreeBSD specific howto</title>
-  <para>
-  To build the documentation on FreeBSD a number of ports will need to
-  be installed.
-   <programlisting>
-% cd /usr/ports/devel/gmake && make install
-% cd /usr/ports/textproc/docproj && make install
-% cd /usr/ports/textproc/docbook && make install
-% cd /usr/ports/textproc/dsssl-docbook-modular && make install
-   </programlisting>
-  Some enviornment variables need to be set (assumes you are running a sh 
-  based shell):
-   <programlisting>
-export SMGL_ROOT=/usr/local/share/sgml                                          
-SGML_CATALOG_FILES=/usr/local/share/sgml/jade/catalog                           
-SGML_CATALOG_FILES=/usr/local/share/sgml/html/catalog:$SGML_CATALOG_FILES       
-SGML_CATALOG_FILES=/usr/local/share/sgml/iso8879/catalog:$SGML_CATALOG_FILES    
-SGML_CATALOG_FILES=/usr/local/share/sgml/transpec/catalog:$SGML_CATALOG_FILES   
-SGML_CATALOG_FILES=/usr/local/share/sgml/docbook/catalog:$SGML_CATALOG_FILES    
-export SGML_CATALOG_FILES                                                          </programlisting>
-  Make needs some special arguments, or these need to be added to your 
-Makefile.custom:
-   <programlisting>
-HSTYLE=/usr/local/share/sgml/docbook/dsssl/modular/html/ 
-PSTYLE=/usr/local/share/sgml/docbook/dsssl/modular/print/
-   </programlisting>
-  Of course you'll need to use gmake rather than just plain 'make' to build.
-  </para>
- </sect2>
  </sect1>
 
  <sect1>
@@ -1203,8 +1103,9 @@ $ make man
    <title>Postscript Hardcopy</title>
 
    <para>
-    Several items must be addressed in generating Postscript
-    hardcopy:</para>
+    Several areas are addressed while generating Postscript
+    hardcopy.
+   </para>
 
    <procedure>
     <title>Applixware <acronym>RTF</acronym> Cleanup</title>
@@ -1314,34 +1215,193 @@ $ make man
   <title>Toolsets</title>
 
   <para>
-   We have documented experience with two installation methods for the
+   We have documented experience with three installation methods for the
    various tools that are needed to process the documentation.  One is
    installation from <acronym>RPM</acronym>s on
-   <productname>Linux</productname>, the other is a general installation
-   from original distributions of the individual tools.  Both will be
+   <productname>Linux</productname>, the second is installation from
+   FreeBSD <firstterm>port</firstterm>, and the last is a general installation
+   from original distributions of the individual tools.  These will be
    described below.
   </para>
 
   <para>
-   We understand that there are some other packaged distributions for
-   these tools.  <productname>FreeBSD</productname> seems to have them
-   available.  Please report package status to the docs mailing list and
+   There may be some other packaged distributions for
+   these tools. Please report package status to the docs mailing list and
    we will include that information here.
   </para>
 
   <sect2>
-   <title><acronym>RPM</acronym> installation on
-    <productname>Linux</productname></title>
+   <title><productname>Linux</productname> <acronym>RPM</acronym> Installation</title>
 
    <para>
-    Install <ulink url="ftp://ftp.cygnus.com/pub/home/rosalia/">
-     <acronym>RPM</acronym>s</ulink> for <productname>Jade</productname>
-    and related packages.
+    The simplest installation for a RedHat-compatible Linux system
+    uses the <acronym>RPM</acronym> set developed by Mark Galassi at
+    Cygnus. It should also be possible to install from sources, as
+    described in a subsequent section.
    </para>
+
+   <procedure>
+    <title>Installing RPMs</title>
+
+    <step performance="required">
+     <para>
+      Install <ulink url="ftp://ftp.cygnus.com/pub/home/rosalia/">
+       <acronym>RPM</acronym>s</ulink> for <productname>Jade</productname>
+      and related packages.
+     </para>
+    </step>
+
+    <step performance="optional">
+     <para>
+      Install Norm Walsh's latest style sheets. Depending on the age
+      of the RPMs, the latest style sheets may be substantially
+      improved from those contained in the <acronym>RPM</acronym>s.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Update your <filename>src/Makefile.custom</filename> to include
+      HSTYLE and PSTYLE definitions pointing to the style sheets.
+     </para>
+    </step>
+   </procedure>
   </sect2>
 
   <sect2>
-   <title>Manual installation of tools</title>
+   <title>FreeBSD Installation</title>
+
+   <para>
+    There is a full set of <firstterm>ports</firstterm> of the
+    documentation tools available on FreeBSD. In fact, postgresql.org, 
+    on which documentation is automatically updated every evening, is
+    a FreeBSD machine.
+   </para>
+
+   <procedure>
+    <title>Installing FreeBSD Ports</title>
+
+    <step performance="required">
+     <para>
+      To build the documentation on FreeBSD a number of ports will need to
+      be installed.
+      <programlisting>
+% cd /usr/ports/devel/gmake && make install
+% cd /usr/ports/textproc/docproj && make install
+% cd /usr/ports/textproc/docbook && make install
+% cd /usr/ports/textproc/dsssl-docbook-modular && make install
+      </programlisting>
+     </para>
+    </step>
+
+    <step performance="optional">
+     <para>
+      Set environment variables
+      to access the <application>jade</application>
+      toolset.
+
+      <note>
+       <para>
+	This was not required for the FreeBSD machine at
+	postgresql.org, so you may not have to do this.
+       </para>
+      </note>
+
+      <programlisting>
+export SMGL_ROOT=/usr/local/share/sgml                                          
+SGML_CATALOG_FILES=/usr/local/share/sgml/jade/catalog                           
+SGML_CATALOG_FILES=/usr/local/share/sgml/html/catalog:$SGML_CATALOG_FILES       
+SGML_CATALOG_FILES=/usr/local/share/sgml/iso8879/catalog:$SGML_CATALOG_FILES    
+SGML_CATALOG_FILES=/usr/local/share/sgml/transpec/catalog:$SGML_CATALOG_FILES   
+SGML_CATALOG_FILES=/usr/local/share/sgml/docbook/catalog:$SGML_CATALOG_FILES    
+export SGML_CATALOG_FILES
+      </programlisting>
+
+      (this is sh/bash syntax; adjust accordingly for csh/tcsh).
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Make needs some special arguments, or these need to be added to your 
+      Makefile.custom:
+      <programlisting>
+HSTYLE=/usr/local/share/sgml/docbook/dsssl/modular/html/ 
+PSTYLE=/usr/local/share/sgml/docbook/dsssl/modular/print/
+      </programlisting>
+
+      Of course you'll need to use gmake rather than just plain 'make' to build.
+     </para>
+    </step>
+   </procedure>
+  </sect2>
+
+  <sect2>
+   <title>Debian Installation</title>
+
+   <para>
+    There is a full set of packages of the
+    documentation tools available for Debian.
+   </para>
+
+   <procedure>
+    <title>Installing Debian Packages</title>
+
+    <step performance="required">
+     <para>
+      Install jade, docbook, and unzip:
+
+      <programlisting>
+apt-get install jade
+apt-get install docbook
+apt-get install docbook-stylesheets
+      </programlisting>
+     </para>
+    </step>
+
+    <step performance="optional">
+     <para>
+      Install the latest style sheets.
+     </para>
+
+     <substeps>
+      <step performance="optional">
+       <para>
+	Verify that <application>unzip</application> is installed, or
+	install the  package:
+
+	<programlisting>
+apt-get install unzip
+	</programlisting>
+       </para>
+      </step>
+
+      <step performance="required">
+       <para>
+	Grab the latest stylesheet zipballs from 
+	<ulink url="http://www.nwalsh.com/docbook/dsssl">http://www.nwalsh.com/docbook/dsssl</ulink>
+	and unzip it somewhere (possibly /usr/share).
+       </para>
+      </step>
+     </substeps>
+    </step>
+
+    <step performance="required">
+     <para>
+      Edit src/Makefile.custom to add appropriate HSTYLE and PSTYLE
+      definitions:
+
+      <programlisting>
+HSTYLE= /usr/share/docbook/html
+PSTYLE= /usr/share/docbook/print
+      </programlisting>
+     </para>
+    </step>
+   </procedure>
+  </sect2>
+
+  <sect2>
+   <title>Manual Installation of Tools</title>
 
    <para>
     This is a brief run-through of the process of obtaining and
@@ -1882,10 +1942,8 @@ dvips postgres.dvi
 
   <para>
    <productname>sgml-tools</productname> v2.x
-   now supports <application>jade</application>
-   and <productname>DocBook</productname>. It may be the preferred toolset
-   for working with <acronym>SGML</acronym> but we have not had a chance to
-   evaluate the new package.
+   supports <application>jade</application>
+   and <productname>DocBook</productname>.
   </para>
 
 <!--
@@ -1954,12 +2012,13 @@ Run <productname>texhash</productname> to update the tex database.
 </para></sect2></sect1>
 
 -->
-</sect1>
+
+ </sect1>
 </appendix>
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -1969,7 +2028,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
