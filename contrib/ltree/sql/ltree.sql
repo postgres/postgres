@@ -47,7 +47,7 @@ SELECT 'Top_0'::ltree || 'Top.Child1.Child2'::ltree;
 SELECT 'Top.Child1.Child2'::ltree || ''::ltree;
 SELECT ''::ltree || 'Top.Child1.Child2'::ltree;
 
-SELECT lca('{la.2.3,1.2.3.4.5.6,}') IS NULL;
+SELECT lca('{la.2.3,1.2.3.4.5.6,""}') IS NULL;
 SELECT lca('{la.2.3,1.2.3.4.5.6}') IS NULL;
 SELECT lca('{1.la.2.3,1.2.3.4.5.6}');
 SELECT lca('{1.2.3,1.2.3.4.5.6}');
