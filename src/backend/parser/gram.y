@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.373 2002/11/02 18:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.374 2002/11/09 23:56:39 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -54,6 +54,7 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
@@ -224,6 +225,7 @@ static void doNegateFloat(Value *v);
 %type <typnam>	func_arg func_return func_type aggr_argtype
 
 %type <boolean> opt_arg TriggerForType OptTemp OptWithOids
+%type <chr>		OptEOXact
 
 %type <list>	for_update_clause opt_for_update_clause update_list
 %type <boolean>	opt_all
@@ -370,10 +372,11 @@ static void doNegateFloat(Value *v);
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
-	PRECISION PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
+	PRECISION PRESERVE PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL
+    PROCEDURE
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
-	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW
+	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS
 	RULE
 
 	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
@@ -1372,15 +1375,20 @@ opt_using:
  *****************************************************************************/
 
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-			OptInherit OptWithOids
+			OptInherit OptWithOids OptEOXact
 				{
 					CreateStmt *n = makeNode(CreateStmt);
+
+					if($2 == FALSE && $10 != ATEOXACTNOOP)
+						elog(ERROR,"ON COMMIT can only be used on TEMP tables"); 
+
 					$4->istemp = $2;
 					n->relation = $4;
 					n->tableElts = $6;
 					n->inhRelations = $8;
 					n->constraints = NIL;
 					n->hasoids = $9;
+					n->ateoxact = $10;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF qualified_name
@@ -1799,7 +1807,11 @@ OptWithOids:
 			| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
-
+OptEOXact:    ON COMMIT DROP       			{ $$ = ATEOXACTDROP; }
+			| ON COMMIT DELETE_P ROWS 		{ $$ = ATEOXACTDELETE; }
+			| ON COMMIT PRESERVE ROWS		{ $$ = ATEOXACTPRESERVE; }
+			| /*EMPTY*/         { $$ = ATEOXACTNOOP; }
+       ;
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
  * SELECT ... INTO.
@@ -7074,6 +7086,7 @@ unreserved_keyword:
 			| PENDANT
 			| PRECISION
 			| PREPARE
+			| PRESERVE
 			| PRIOR
 			| PRIVILEGES
 			| PROCEDURAL
@@ -7089,6 +7102,7 @@ unreserved_keyword:
 			| RETURNS
 			| REVOKE
 			| ROLLBACK
+			| ROWS
 			| RULE
 			| SCHEMA
 			| SCROLL

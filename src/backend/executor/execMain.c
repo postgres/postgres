@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.180 2002/10/14 16:51:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.181 2002/11/09 23:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -732,6 +732,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 											 tupdesc,
 											 RELKIND_RELATION,
 											 false,
+											 ATEOXACTNOOP,
 											 allowSystemTableMods);
 
 				FreeTupleDesc(tupdesc);

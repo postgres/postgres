@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.210 2002/11/06 00:00:44 tgl Exp $
+ * $Id: parsenodes.h,v 1.211 2002/11/09 23:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -919,6 +919,7 @@ typedef struct CreateStmt
 	List	   *inhRelations;	/* relations to inherit from */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	bool		hasoids;		/* should it have OIDs? */
+	char		ateoxact;		/* what do we do at COMMIT for TEMP ? */
 } CreateStmt;
 
 /* ----------

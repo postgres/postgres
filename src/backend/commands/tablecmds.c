@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.51 2002/11/02 22:02:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.52 2002/11/09 23:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "access/genam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
@@ -48,9 +49,10 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 
+static List *temprels = NIL;
 
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, bool *supHasOids);
@@ -115,6 +117,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	List	   *listptr;
 	int			i;
 	AttrNumber	attnum;
+
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time,
@@ -222,6 +225,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  descriptor,
 										  relkind,
 										  false,
+										  stmt->ateoxact,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -3783,11 +3787,18 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * when its master is, so there's no need to handle the toast rel as
 	 * temp.
 	 */
+
+	/*
+	 * Pass ATEOXACTNOOP for ateoxact since we want heap_drop_with_catalog()
+	 * to remove TOAST tables for temp tables, not AtEOXact_temp_relations()
+	 */
+
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,
+										   ATEOXACTNOOP,
 										   true);
 
 	/* make the toast relation visible, else index creation will fail */
@@ -3922,3 +3933,206 @@ needs_toast_table(Relation rel)
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
+
+/*
+ * To handle ON COMMIT { DROP | PRESERVE ROWS | DELETE ROWS }
+ */
+void
+AtEOXact_temp_relations(bool iscommit, int bstate)
+{
+	List	   *l,
+			   *prev;
+	MemoryContext oldctx;
+
+	if (temprels == NIL)
+		return;
+
+	/*
+	 *	These loops are tricky because we are removing items from the List
+	 *	while we are traversing it.
+	 */
+
+
+	/* Remove 'dead' entries on commit and clear 'dead' status on abort */
+	l = temprels;
+	prev = NIL;
+	while (l != NIL)
+	{
+		TempTable  *t = lfirst(l);
+
+		if (t->dead)
+		{
+			if (iscommit)
+			{
+				/* Remove from temprels, since the user has DROP'd */
+				oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+				if (prev == NIL)
+				{
+					pfree(t);
+					temprels = lnext(l);
+					pfree(l);
+					l = temprels;
+				}
+				else
+				{
+					pfree(t);
+					lnext(prev) = lnext(l);
+					pfree(l);
+					l = lnext(prev);
+				}
+				MemoryContextSwitchTo(oldctx);
+				continue;
+			}
+			else
+				/* user dropped but now we're aborted */
+				t->dead = false;
+		}
+		prev = l;
+		l = lnext(l);
+	}
+
+	if ((iscommit && bstate != TBLOCK_END) ||
+		(!iscommit && bstate != TBLOCK_ABORT))
+		return;
+
+	/* Perform per-xact actions */
+	l = temprels;
+	prev = NIL;
+
+	if (iscommit)
+	{
+		while (l != NIL)
+		{
+			TempTable  *t = lfirst(l);
+
+			if (t->ateoxact == ATEOXACTDROP)
+			{
+				ObjectAddress object;
+
+				object.classId = RelOid_pg_class;
+				object.objectId = t->relid;
+				object.objectSubId = 0;
+
+				performDeletion(&object, DROP_CASCADE);
+				oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+
+				if (prev == NIL)
+				{
+					pfree(t);
+					temprels = lnext(l);
+					pfree(l);
+					l = temprels;
+				}
+				else
+				{
+					pfree(t);
+					lnext(prev) = lnext(l);
+					pfree(l);
+					l = lnext(prev);
+				}
+
+				MemoryContextSwitchTo(oldctx);
+				CommandCounterIncrement();
+				continue;
+			}
+			else if (t->ateoxact == ATEOXACTDELETE)
+			{
+				heap_truncate(t->relid);
+				CommandCounterIncrement();
+			}
+			prev = l;
+			l = lnext(l);
+		}
+	}
+	else
+	{
+		/* Abort --- remove entries added by this xact */
+		TransactionId curtid = GetCurrentTransactionId();
+
+		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+
+		while (l != NIL)
+		{
+			TempTable  *t = lfirst(l);
+
+			if (t->tid == curtid)
+			{
+				if (prev == NIL)
+				{
+					pfree(t);
+					temprels = lnext(l);
+					pfree(l);
+					l = temprels;
+				}
+				else
+				{
+					pfree(t);
+					lnext(prev) = lnext(l);
+					pfree(l);
+					l = lnext(prev);
+				}
+				continue;
+			}
+			prev = l;
+			l = lnext(l);
+		}
+		MemoryContextSwitchTo(oldctx);
+	}
+}
+
+/*
+ * Register a temp rel in temprels
+ */
+
+void
+reg_temp_rel(TempTable * t)
+{
+	temprels = lcons(t, temprels);
+}
+
+/*
+ * return the ON COMMIT/ateoxact value for a given temp rel
+ */
+
+void
+free_temp_rels(void)
+{
+	MemoryContext oldctx;
+
+	oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+	while (temprels != NIL)
+	{
+		List	   *l = temprels;
+
+		temprels = lnext(temprels);
+		pfree(lfirst(l));
+		pfree(l);
+	}
+	MemoryContextSwitchTo(oldctx);
+}
+
+/*
+ * Remove (actually just mark for deletion, in case we abort)
+ * Relid from the temprels list
+ */
+
+void
+rm_temp_rel(Oid relid)
+{
+	List	   *l;
+
+	foreach(l, temprels)
+	{
+		TempTable  *t = lfirst(l);
+
+		if (t->relid == relid)
+		{
+			t->dead = true;
+			return;
+		}
+	}
+
+	/* If we get here, we're in trouble */
+	Assert(1==1);
+}
+

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.127 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.128 2002/11/09 23:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,6 +232,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"prepare", PREPARE},
+	{"preserve", PRESERVE},
 	{"primary", PRIMARY},
 	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
@@ -252,6 +253,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"right", RIGHT},
 	{"rollback", ROLLBACK},
 	{"row", ROW},
+	{"rows",ROWS},
 	{"rule", RULE},
 	{"schema", SCHEMA},
 	{"scroll", SCROLL},

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.232 2002/10/21 22:06:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.233 2002/11/09 23:56:39 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -31,17 +31,20 @@
 
 #include "access/heapam.h"
 #include "access/genam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -670,12 +673,14 @@ AddNewRelationType(const char *typeName,
  *		creates a new cataloged relation.  see comments above.
  * --------------------------------
  */
+
 Oid
 heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
+						 char ateoxact,  /* Only used for temp relations */
 						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
@@ -716,6 +721,25 @@ heap_create_with_catalog(const char *relname,
 
 	/* Assign an OID for the relation's tuple type */
 	new_type_oid = newoid();
+
+
+	/*
+	 *  Add to temprels if we are a temp relation now that we have oid
+	 */
+
+	if(isTempNamespace(relnamespace)) {
+		TempTable	*t;
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+		t = (TempTable *) palloc(sizeof(TempTable));
+		t->relid = new_rel_oid;
+		t->ateoxact = ateoxact;
+		t->tid = GetCurrentTransactionId();
+		t->dead = false;
+		reg_temp_rel(t);
+		MemoryContextSwitchTo(oldcxt);
+	}
 
 	/*
 	 * now create an entry in pg_class for the relation.
@@ -1146,6 +1170,14 @@ heap_drop_with_catalog(Oid rid)
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 		smgrunlink(DEFAULT_SMGR, rel);
+
+	/*
+	 * Keep temprels up to date so that we don't have ON COMMIT execution
+	 * problems at the end of the next transaction block
+	 */
+
+	if(isTempNamespace(RelationGetNamespace(rel)))
+		rm_temp_rel(rid);
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
