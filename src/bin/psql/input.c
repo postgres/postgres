@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.30 2003/09/05 02:31:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.31 2003/09/12 02:40:09 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -98,15 +98,6 @@ gets_interactive(const char *prompt)
 		s = readline((char *) prompt);
 	else
 		s = gets_basic(prompt);
-
-#ifdef WIN32
-	 /*
-	  * translate DOS console character set into ANSI, needed e.g. for German
-	  * umlauts
-	  */
-	if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
-		OemToChar(s, s);
-#endif
 
 	if (useHistory && s && s[0])
 	{

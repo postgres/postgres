@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.11 2003/09/07 03:43:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.12 2003/09/12 02:40:09 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -337,15 +337,6 @@ mbvalidate(unsigned char *pwcs, int encoding)
 		return mb_utf_validate(pwcs);
 	else
 	{
-#if defined(WIN32) && !defined(PGSCRIPTS)
-		/*
-		 * translate characters to DOS console encoding, e.g. needed for
-		 * German umlauts
-		 */
-		if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
-			CharToOem(pwcs, pwcs);
-#endif
-
 		/*
 		 * other encodings needing validation should add their own
 		 * routines here
