@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.64 2004/08/29 05:06:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.65 2004/09/17 18:28:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -603,12 +603,14 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	}
 
 	/*
-	 * We can skip over any batches that are empty on either side. Release
-	 * associated temp files right away.
+	 * Normally we can skip over any batches that are empty on either side
+	 * --- but for JOIN_LEFT, can only skip when left side is empty.
+	 * Release associated temp files right away.
 	 */
 	while (newbatch <= nbatch &&
-		   (innerBatchSize[newbatch - 1] == 0L ||
-			outerBatchSize[newbatch - 1] == 0L))
+		   (outerBatchSize[newbatch - 1] == 0L ||
+			(innerBatchSize[newbatch - 1] == 0L &&
+			 hjstate->js.jointype != JOIN_LEFT)))
 	{
 		BufFileClose(hashtable->innerBatchFile[newbatch - 1]);
 		hashtable->innerBatchFile[newbatch - 1] = NULL;
