@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.74 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.75 2004/09/11 15:56:46 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -65,6 +65,16 @@ static int	cookies_size = 0;
 
 static MemoryContext fscxt = NULL;
 
+#define CreateFSContext() \
+	do { \
+		if (fscxt == NULL) \
+			fscxt = AllocSetContextCreate(TopMemoryContext, \
+										  "Filesystem", \
+										  ALLOCSET_DEFAULT_MINSIZE, \
+										  ALLOCSET_DEFAULT_INITSIZE, \
+										  ALLOCSET_DEFAULT_MAXSIZE); \
+	} while (0)
+			 
 
 static int	newLOfd(LargeObjectDesc *lobjCookie);
 static void deleteLOfd(int fd);
@@ -87,12 +97,7 @@ lo_open(PG_FUNCTION_ARGS)
 	elog(DEBUG4, "lo_open(%u,%d)", lobjId, mode);
 #endif
 
-	if (fscxt == NULL)
-		fscxt = AllocSetContextCreate(TopMemoryContext,
-									  "Filesystem",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+	CreateFSContext();
 
 	currentContext = MemoryContextSwitchTo(fscxt);
 
@@ -236,12 +241,7 @@ lo_creat(PG_FUNCTION_ARGS)
 	MemoryContext currentContext;
 	Oid			lobjId;
 
-	if (fscxt == NULL)
-		fscxt = AllocSetContextCreate(TopMemoryContext,
-									  "Filesystem",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+	CreateFSContext();
 
 	currentContext = MemoryContextSwitchTo(fscxt);
 
@@ -380,6 +380,12 @@ lo_import(PG_FUNCTION_ARGS)
 #endif
 
 	/*
+	 * We don't actually need to switch into fscxt, but create it anyway
+	 * to ensure that AtEOXact_LargeObject knows there is state to clean up
+	 */
+	CreateFSContext();
+
+	/*
 	 * open the file to be read in
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
@@ -445,6 +451,12 @@ lo_export(PG_FUNCTION_ARGS)
 			  errmsg("must be superuser to use server-side lo_export()"),
 				 errhint("Anyone can use the client-side lo_export() provided by libpq.")));
 #endif
+
+	/*
+	 * We don't actually need to switch into fscxt, but create it anyway
+	 * to ensure that AtEOXact_LargeObject knows there is state to clean up
+	 */
+	CreateFSContext();
 
 	/*
 	 * open the inversion object (no need to test for failure)
