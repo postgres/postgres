@@ -62,7 +62,7 @@ parse_cfgdict(text *in, Map **m) {
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
 						 errdetail("Syntax error in position %d near \"%c\"",
-									ptr-VARDATA(in), *ptr)));
+								   (int) (ptr-VARDATA(in)), *ptr)));
 		} else if (state==CS_INKEY) {
 			if ( isspace(*ptr) ) {
 				mptr->key=nstrdup(begin, ptr-begin);
@@ -75,7 +75,7 @@ parse_cfgdict(text *in, Map **m) {
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
 						 errdetail("Syntax error in position %d near \"%c\"",
-									ptr-VARDATA(in), *ptr)));
+								   (int) (ptr-VARDATA(in)), *ptr)));
 		} else if ( state==CS_WAITEQ ) {
 			if ( *ptr=='=' )
 				state=CS_WAITVALUE;
@@ -84,7 +84,7 @@ parse_cfgdict(text *in, Map **m) {
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
 						 errdetail("Syntax error in position %d near \"%c\"",
-									ptr-VARDATA(in), *ptr)));
+								   (int) (ptr-VARDATA(in)), *ptr)));
 		} else if ( state==CS_WAITVALUE ) {
 			if ( *ptr=='"' ) {
 				begin=ptr+1;
@@ -115,7 +115,7 @@ parse_cfgdict(text *in, Map **m) {
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
 						 errdetail("Syntax error in position %d near \"%c\"",
-									ptr-VARDATA(in), *ptr)));
+								   (int) (ptr-VARDATA(in)), *ptr)));
 		} else if ( state == CS_INESC ) {
 			state=CS_INVALUE;
 		} else if ( state == CS_IN2ESC ) {
@@ -125,7 +125,7 @@ parse_cfgdict(text *in, Map **m) {
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("bad parser state"),
 					 errdetail("%d at position %d near \"%c\"",
-								state, ptr-VARDATA(in), *ptr)));
+								state, (int) (ptr-VARDATA(in)), *ptr)));
 		ptr++;
 	}
 
