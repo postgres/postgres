@@ -211,35 +211,39 @@ sizebitvec(BITVECP sign)
 	return size;
 }
 
+static int                      
+hemdistsign(BITVECP  a, BITVECP b) {
+	int i,dist=0;
+                 
+	ALOOPBIT(
+		if ( GETBIT(a,i) != GETBIT(b,i) )
+			dist++;
+	);
+	return dist;
+}
+
+static int
+hemdist(ltree_gist   *a, ltree_gist   *b) {
+        if ( LTG_ISALLTRUE(a) ) {   
+                if (LTG_ISALLTRUE(b))
+                        return 0;
+                else
+                        return ASIGLENBIT-sizebitvec(LTG_SIGN(b));
+        } else if (LTG_ISALLTRUE(b))
+                return ASIGLENBIT-sizebitvec(LTG_SIGN(a));
+ 
+        return hemdistsign( LTG_SIGN(a), LTG_SIGN(b) );
+}
+
+
 Datum
 _ltree_penalty(PG_FUNCTION_ARGS)
 {
 	ltree_gist *origval = (ltree_gist *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	ltree_gist *newval = (ltree_gist *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
-	BITVECP		orig = LTG_SIGN(origval);
 
-	if (LTG_ISALLTRUE(origval))
-	{
-		*penalty = 0.1;
-		PG_RETURN_POINTER(penalty);
-	}
-
-	if (LTG_ISALLTRUE(newval))
-		*penalty = (float) (ASIGLENBIT - sizebitvec(orig));
-	else
-	{
-		unsigned char valtmp;
-		BITVECP		nval = LTG_SIGN(newval);
-		int4		i,
-					unionsize = 0;
-
-		ALOOPBYTE(
-				  valtmp = nval[i] | orig[i];
-		unionsize += SUMBIT(valtmp) - SUMBIT(orig[i]);
-		);
-		*penalty = (float) unionsize;
-	}
+	*penalty=hemdist(origval,newval);
 	PG_RETURN_POINTER(penalty);
 }
 
@@ -264,28 +268,19 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 				j;
 	ltree_gist *datum_l,
 			   *datum_r;
-	ABITVEC		union_l,
+	BITVECP		union_l,
 				union_r;
-	bool		firsttime = true;
-	int4		size_alpha,
-				size_beta,
-				sizeu,
-				sizei;
+	int4		size_alpha, size_beta;
 	int4		size_waste,
-				waste = 0.0;
-	int4		size_l,
-				size_r;
+				waste = -1;
 	int4		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
 			   *right;
 	OffsetNumber maxoff;
-	BITVECP		ptra,
-				ptrb,
-				ptrc;
+	BITVECP		ptr;
 	int			i;
-	unsigned char valtmp;
 	SPLITCOST  *costvector;
 	ltree_gist *_k,
 			   *_j;
@@ -295,57 +290,14 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
-	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
-	{
+	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k)) {
 		_k = GETENTRY(entryvec, k);
-		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
-		{
-			_j = GETENTRY(entryvec, j);
-			if (LTG_ISALLTRUE(_k) || LTG_ISALLTRUE(_j))
-			{
-				sizeu = ASIGLENBIT;
-				if (LTG_ISALLTRUE(_k) && LTG_ISALLTRUE(_j))
-					sizei = ASIGLENBIT;
-				else
-					sizei = (LTG_ISALLTRUE(_k)) ?
-						sizebitvec(LTG_SIGN(_j)) : sizebitvec(LTG_SIGN(_k));
-			}
-			else
-			{
-				sizeu = sizei = 0;
-				ptra = LTG_SIGN(_j);
-				ptrb = LTG_SIGN(_k);
-				/* critical section for bench !!! */
-
-#define COUNT(pos) do { \
-	if ( GETBITBYTE(*(char*)ptra,pos) ) { \
-		sizeu++; \
-		if ( GETBITBYTE(*(char*)ptrb, pos) ) \
-			sizei++; \
-	} else if ( GETBITBYTE(*(char*)ptrb, pos) ) \
-		sizeu++; \
-} while(0)
-
-				ALOOPBYTE(
-						  COUNT(0);
-				COUNT(1);
-				COUNT(2);
-				COUNT(3);
-				COUNT(4);
-				COUNT(5);
-				COUNT(6);
-				COUNT(7);
-				ptra = (BITVECP) (((char *) ptra) + 1);
-				ptrb = (BITVECP) (((char *) ptrb) + 1);
-				);
-			}
-			size_waste = sizeu - sizei;
-			if (size_waste > waste || firsttime)
-			{
+		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j)) {
+			size_waste=hemdist(_k, GETENTRY(entryvec, j));
+			if (size_waste > waste ) {
 				waste = size_waste;
 				seed_1 = k;
 				seed_2 = j;
-				firsttime = false;
 			}
 		}
 	}
@@ -367,7 +319,6 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 		datum_l = (ltree_gist *) palloc(LTG_HDRSIZE);
 		datum_l->len = LTG_HDRSIZE;
 		datum_l->flag = LTG_ALLTRUE;
-		size_l = ASIGLENBIT;
 	}
 	else
 	{
@@ -375,14 +326,12 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 		datum_l->len = LTG_HDRSIZE + ASIGLEN;
 		datum_l->flag = 0;
 		memcpy((void *) LTG_SIGN(datum_l), (void *) LTG_SIGN(GETENTRY(entryvec, seed_1)), sizeof(ABITVEC));
-		size_l = sizebitvec(LTG_SIGN(datum_l));
 	}
 	if (LTG_ISALLTRUE(GETENTRY(entryvec, seed_2)))
 	{
 		datum_r = (ltree_gist *) palloc(LTG_HDRSIZE);
 		datum_r->len = LTG_HDRSIZE;
 		datum_r->flag = LTG_ALLTRUE;
-		size_r = ASIGLENBIT;
 	}
 	else
 	{
@@ -390,7 +339,6 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 		datum_r->len = LTG_HDRSIZE + ASIGLEN;
 		datum_r->flag = 0;
 		memcpy((void *) LTG_SIGN(datum_r), (void *) LTG_SIGN(GETENTRY(entryvec, seed_2)), sizeof(ABITVEC));
-		size_r = sizebitvec(LTG_SIGN(datum_r));
 	}
 
 	maxoff = OffsetNumberNext(maxoff);
@@ -400,55 +348,18 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	{
 		costvector[j - 1].pos = j;
 		_j = GETENTRY(entryvec, j);
-		if (LTG_ISALLTRUE(_j))
-		{
-			size_alpha = ASIGLENBIT - size_l;
-			size_beta = ASIGLENBIT - size_r;
-		}
-		else
-		{
-			ptra = LTG_SIGN(datum_l);
-			ptrb = LTG_SIGN(datum_r);
-			ptrc = LTG_SIGN(_j);
-			size_beta = size_alpha = 0;
-			if (LTG_ISALLTRUE(datum_l))
-			{
-				if (!LTG_ISALLTRUE(datum_r))
-				{
-					ALOOPBIT(
-							 if (GETBIT(ptrc, i) && !GETBIT(ptrb, i))
-							 size_beta++;
-					);
-				}
-			}
-			else if (LTG_ISALLTRUE(datum_r))
-			{
-				if (!LTG_ISALLTRUE(datum_l))
-				{
-					ALOOPBIT(
-							 if (GETBIT(ptrc, i) && !GETBIT(ptra, i))
-							 size_alpha++;
-					);
-				}
-			}
-			else
-			{
-				ALOOPBIT(
-						 if (GETBIT(ptrc, i) && !GETBIT(ptra, i))
-						 size_alpha++;
-				if (GETBIT(ptrc, i) && !GETBIT(ptrb, i))
-					size_beta++;
-				);
-			}
-		}
+		size_alpha = hemdist(datum_l,_j);
+		size_beta  = hemdist(datum_r,_j);
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
+	union_l=LTG_SIGN(datum_l);
+	union_r=LTG_SIGN(datum_r);
+	
 	for (k = 0; k < maxoff; k++)
 	{
 		j = costvector[k].pos;
-		_j = GETENTRY(entryvec, j);
 		if (j == seed_1)
 		{
 			*left++ = j;
@@ -461,62 +372,35 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			v->spl_nright++;
 			continue;
 		}
+		_j = GETENTRY(entryvec, j);
+		size_alpha = hemdist(datum_l,_j);
+		size_beta  = hemdist(datum_r,_j);
 
-		if (LTG_ISALLTRUE(datum_l) || LTG_ISALLTRUE(_j))
-			size_alpha = ASIGLENBIT;
-		else
+		if (size_alpha < size_beta  + WISH_F(v->spl_nleft, v->spl_nright, 0.00001))
 		{
-			ptra = LTG_SIGN(_j);
-			ptrb = LTG_SIGN(datum_l);
-			size_alpha = 0;
-			ALOOPBYTE(
-					  valtmp = union_l[i] = ptra[i] | ptrb[i];
-			size_alpha += SUMBIT(valtmp);
-			);
-		}
-
-		if (LTG_ISALLTRUE(datum_r) || LTG_ISALLTRUE(_j))
-			size_beta = ASIGLENBIT;
-		else
-		{
-			ptra = LTG_SIGN(_j);
-			ptrb = LTG_SIGN(datum_r);
-			size_beta = 0;
-			ALOOPBYTE(
-					  valtmp = union_r[i] = ptra[i] | ptrb[i];
-			size_beta += SUMBIT(valtmp);
-			);
-		}
-
-		if (size_alpha - size_l < size_beta - size_r + WISH_F(v->spl_nleft, v->spl_nright, 0.00001))
-		{
-			if (!LTG_ISALLTRUE(datum_l))
-			{
-				if (size_alpha == ASIGLENBIT)
-				{
-					if (size_alpha != size_l)
-						MemSet((void *) LTG_SIGN(datum_l), 0xff, sizeof(ABITVEC));
-				}
-				else
-					memcpy((void *) LTG_SIGN(datum_l), (void *) union_l, sizeof(ABITVEC));
+			if (LTG_ISALLTRUE(datum_l) || LTG_ISALLTRUE(_j) ) {
+				if (!LTG_ISALLTRUE(datum_l))
+					MemSet((void *) union_l, 0xff, sizeof(ABITVEC)); 
+			} else {
+				ptr=LTG_SIGN(_j);
+				ALOOPBYTE(
+					union_l[i] |= ptr[i];
+				);
 			}
-			size_l = size_alpha;
 			*left++ = j;
 			v->spl_nleft++;
 		}
 		else
 		{
-			if (!LTG_ISALLTRUE(datum_r))
-			{
-				if (size_beta == ASIGLENBIT)
-				{
-					if (size_beta != size_r)
-						MemSet((void *) LTG_SIGN(datum_r), 0xff, sizeof(ABITVEC));
-				}
-				else
-					memcpy((void *) LTG_SIGN(datum_r), (void *) union_r, sizeof(ABITVEC));
+			if (LTG_ISALLTRUE(datum_r) || LTG_ISALLTRUE(_j) ) {
+				if (!LTG_ISALLTRUE(datum_r))
+					MemSet((void *) union_r, 0xff, sizeof(ABITVEC)); 
+			} else {
+				ptr=LTG_SIGN(_j);
+				ALOOPBYTE(
+					union_r[i] |= ptr[i];
+				);
 			}
-			size_r = size_beta;
 			*right++ = j;
 			v->spl_nright++;
 		}

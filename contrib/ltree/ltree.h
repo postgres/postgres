@@ -239,7 +239,7 @@ typedef struct
 
 /* GiST support for ltree[] */
 
-#define ASIGLENINT	(2*SIGLENINT)
+#define ASIGLENINT	(7)
 #define ASIGLEN		(sizeof(int4)*ASIGLENINT)
 #define ASIGLENBIT (ASIGLEN*BITBYTE)
 typedef unsigned char ABITVEC[ASIGLEN];
