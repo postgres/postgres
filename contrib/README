@@ -89,6 +89,10 @@ pg_dumplo -
 	Dump large objects
 	by Karel Zak <zakkr@zf.jcu.cz>
 
+pg_logger -
+	Stdin-to-syslog gateway for PostgreSQL
+	by Nathan Myers <ncm@nospam.cantrip.org>
+
 pgbench -
 	TPC-B like benchmarking tool
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
