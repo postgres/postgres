@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.19 2001/11/14 22:26:02 tgl Exp $
+-->
+
 <Chapter id="spi">
 <DocInfo>
 <AuthorGroup>
@@ -16,9 +20,14 @@ The <FirstTerm>Server Programming Interface</FirstTerm>
 (<Acronym>SPI</Acronym>) gives users the
 ability to run <Acronym>SQL</Acronym> queries inside user-defined 
 <Acronym>C</Acronym> functions.
-The available Procedural Languages (<Acronym>PL</Acronym>) give an alternate
-means to access these capabilities.
 </Para>
+
+<note>
+<para>
+The available Procedural Languages (<Acronym>PL</Acronym>) give an alternate
+means to build functions that can execute queries.
+</para>
+</note>
 
 <Para>
 In fact, <Acronym>SPI</Acronym> is just a set of native interface functions
@@ -42,15 +51,15 @@ recursively, it may itself call procedures which may make
 </Para>
 
 <Para>
-Note, that if during execution of a query from a procedure the transaction
-is aborted then control will not be returned to your procedure. Rather, all work
+Note that if during execution of a query from a procedure the transaction is
+aborted, then control will not be returned to your procedure. Rather, all work
 will be rolled back and the server will wait for the next command from the
-client.  This will be changed in future versions.
+client.  This will probably be changed in future versions.
 </Para>
 
 <Para>
-Other restrictions are the inability to execute BEGIN, END and ABORT
-(transaction control statements) and cursor operations.  This will also be
+A related restriction is the inability to execute BEGIN, END and ABORT
+(transaction control statements).  This will also be
 changed in the future.
 </Para>
 
@@ -142,8 +151,9 @@ Return status
 <TITLE>Description
 </TITLE>
 <PARA>
-<FUNCTION>SPI_connect</FUNCTION> opens a connection to the <ProductName>Postgres</ProductName> backend.
-   You should call this function if you will need to execute queries. Some
+<FUNCTION>SPI_connect</FUNCTION> opens a connection from a procedure
+invocation to the SPI manager.
+   You must call this function if you will need to execute queries. Some
    utility SPI functions may be called from un-connected procedures.
 </PARA>
 <PARA>
@@ -259,8 +269,10 @@ SPI_finish(void)
 <TITLE>Description
 </TITLE>
 <PARA>
-<FUNCTION>SPI_finish</FUNCTION> closes an existing connection to the <ProductName>Postgres</ProductName> backend.
-   You should call this function after completing operations through the SPI manager.
+<FUNCTION>SPI_finish</FUNCTION> closes an existing connection to the
+SPI manager.
+   You must call this function after completing the SPI operations needed
+   during your procedure's current invocation.
 </para>
 <PARA>
    You may get the error return <ReturnValue>SPI_ERROR_UNCONNECTED</ReturnValue> if <Function>SPI_finish</Function> is
@@ -273,10 +285,11 @@ SPI_finish(void)
 <TITLE>Usage
 </TITLE>
 <PARA>
-   <Function>SPI_finish</Function> <Emphasis>must</Emphasis> be called as a final step by a connected procedure
+   <Function>SPI_finish</Function> <Emphasis>must</Emphasis> be called as a final step by a connected procedure,
  or you may get
-   unpredictable results! Note that you can safely skip the call to <Function>SPI_finish</Function>
-   if you abort the transaction (via elog(ERROR)).
+   unpredictable results!  However, you do not need to worry about making
+this happen if the transaction is aborted via elog(ERROR).  In that case
+SPI will clean itself up.
 
 </PARA>
 </REFSECT1>
@@ -370,9 +383,6 @@ Maximum number of tuples to return
 <PARA>
 <SimpleList>
 <Member>
-   <ReturnValue>SPI_OK_EXEC</ReturnValue> if properly disconnected
-</Member>
-<Member>
    <ReturnValue>SPI_ERROR_UNCONNECTED</ReturnValue> if called from an un-connected procedure
 </Member>
 <Member>
@@ -444,7 +454,7 @@ Maximum number of tuples to return
   This should only be called from a connected procedure.
    If <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE> is zero then it executes the query for all tuples returned by the
    query scan. Using <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE> > 0 you may restrict the number of tuples for
-   which the query will be executed. For example,
+   which the query will be executed (much like a LIMIT clause). For example,
 
 <ProgramListing>
 SPI_exec ("INSERT INTO tab SELECT * FROM tab", 5);
@@ -456,7 +466,7 @@ will allow at most 5 tuples to be inserted into table.
 
 <Note>
 <Para>
-You may pass many queries in one string or query string may be
+You may pass multiple queries in one string or query string may be
    re-written by RULEs. <Function>SPI_exec</Function> returns the result for the last query
    executed.
 </Para>
@@ -466,11 +476,8 @@ You may pass many queries in one string or query string may be
    The actual number of tuples for which the (last) query was executed is
    returned in the global variable SPI_processed (if not <ReturnValue>SPI_OK_UTILITY</ReturnValue>).
 
-   If <ReturnValue>SPI_OK_SELECT</ReturnValue> returned and SPI_processed &gt; 0 then you may use global
-   pointer SPITupleTable *SPI_tuptable to access the selected tuples:
-
-   Also NOTE, that <Function>SPI_finish</Function> frees and makes all SPITupleTables
-   unusable! (See Memory management).
+   If <ReturnValue>SPI_OK_SELECT</ReturnValue> is returned and SPI_processed &gt; 0 then you may use global
+   pointer SPITupleTable *SPI_tuptable to access the result tuples.
 </Para>
 
 <Para>
@@ -498,51 +505,61 @@ You may pass many queries in one string or query string may be
 
 </PARA>
 </REFSECT1>
+<!--
 <REFSECT1 ID="R1-SPI-SPIEXEC-3">
 <TITLE>Algorithm
 </TITLE>
-<PARA><FUNCTION>SPI_exec</FUNCTION> performs the following:
-   Disconnects your procedure from the SPI manager and frees all memory
-   allocations made by your procedure via <Function>palloc</Function> since the <Function>SPI_connect</Function>. 
-   These allocations can't be used any more! See Memory management.
+<PARA>
 </PARA>
 </REFSECT1>
-<!--
+-->
 <REFSECT1 ID="R1-SPI-SPIEXEC-4">
 <TITLE>Structures
 </TITLE>
-<PARA>
-   If <ReturnValue>SPI_OK_SELECT</ReturnValue> returned and SPI_processed > 0 then you may use the global
+<Para>
+   If <ReturnValue>SPI_OK_SELECT</ReturnValue> is returned and SPI_processed &gt; 0 then you may use the global
    pointer SPITupleTable *SPI_tuptable to access the selected tuples.
+</Para>
 
 <Para>
    Structure SPITupleTable is defined in spi.h:
 <ProgramListing>
    typedef struct
    {
+       MemoryContext tuptabcxt;    /* memory context of result table */
        uint32      alloced;        /* # of alloced vals */
        uint32      free;           /* # of free vals */
        TupleDesc   tupdesc;        /* tuple descriptor */
        HeapTuple  *vals;           /* tuples */
    } SPITupleTable;
 </ProgramListing>
+</Para>
 
 <Para>
-   HeapTuple *vals is an array of pointers to tuples. TupleDesc tupdesc is
+   vals is an array of pointers to tuples (the number of useful entries
+   is given by SPI_processed). TupleDesc tupdesc is
    a tuple descriptor which you may pass to SPI functions dealing with
-   tuples.
+   tuples.  tuptabcxt, alloced, and free are internal fields not intended
+   for use by SPI callers.
+</Para>
+
+<note>
+<Para>
+   Functions <Function>SPI_exec</Function>, <Function>SPI_execp</Function> and
+   <Function>SPI_prepare</Function> change both SPI_processed and SPI_tuptable
+   (just the pointer, not the contents of the structure).
+   Save these two global variables into local procedure variables if you need
+   to access the result of one <Function>SPI_exec</Function> or
+   <Function>SPI_execp</Function> across later calls.
+</Para>
+</note>
 
 <Para>
-   NOTE! Functions <Function>SPI_exec</Function>, <Function>SPI_execp</Function> and <Function>SPI_prepare</Function> change both
-   SPI_processed and SPI_tuptable (just the pointer, not the contents of the
-   structure)!  So, save them in local procedure variables if you need them.
-
-<Para>
-   Also NOTE, that <Function>SPI_finish</Function> frees and makes all SPITupleTables
-   unusable! (See Memory management).
-</PARA>
+   <Function>SPI_finish</Function> frees all SPITupleTables allocated during
+   the current procedure.  You can free a particular result table earlier,
+   if you are done with it, by calling <Function>SPI_freetuptable</Function>.
+</Para>
 </REFSECT1>
--->
 </REFENTRY>
 
 <!-- *********************************************** -->
@@ -558,7 +575,7 @@ You may pass many queries in one string or query string may be
 <REFNAME>SPI_prepare
 </REFNAME>
 <REFPURPOSE>
-   Connects your procedure to the SPI manager.
+   Prepares a plan for a query, without executing it yet
 </REFPURPOSE>
 <INDEXTERM ID="IX-SPI-SPIPREPARE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-SPI-SPIPREPARE-2"><PRIMARY>SPI_prepare</PRIMARY></INDEXTERM>
@@ -604,7 +621,7 @@ Number of input parameters ($1 ... $nargs - as in SQL-functions)
 </TERM>
 <LISTITEM>
 <PARA>
-Pointer list of type <Acronym>OID</Acronym>s to input arguments
+Pointer to array of type <Acronym>OID</Acronym>s for input parameter types
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -647,18 +664,35 @@ Pointer to an execution plan (parser+planner+optimizer)
 <REFSECT1 ID="R1-SPI-SPIPREPARE-2">
 <TITLE>Usage
 </TITLE>
-<PARA>
-   nargs is number of parameters ($1 ... $nargs - as in SQL-functions),
-   and nargs may be 0 only if there is not any $1 in query.
-</para>
 <Para>
-   Execution of prepared execution plans is sometimes much faster so this
-   feature may be useful if the same query will be executed many times.
+   When the same or similar query is to be executed repeatedly, it may
+   be advantageous to perform query planning only once.
+   <FUNCTION>SPI_prepare</FUNCTION> converts a query string into an execution
+   plan that can be passed repeatedly to <FUNCTION>SPI_execp</FUNCTION>.
+</para>
+<PARA>
+   A prepared query can be generalized by writing parameters ($1, $2, etc)
+   in place of what would be constants in a normal query.  The values of
+   the parameters are then specified when <FUNCTION>SPI_execp</FUNCTION>
+   is called.  This allows the prepared query to be used over a wider
+   range of situations than would be possible without parameters.
+</para>
+<note>
+<PARA>
+   However, there is a disadvantage: since the planner does not know the
+   values that will be supplied for the parameters, it may make worse
+   query planning choices than it would make for a simple query with
+   all constants visible.
+</para>
+</note>
+<PARA>
+   If the query uses parameters, their number and datatypes must be
+   specified in the call to <FUNCTION>SPI_prepare</FUNCTION>.
 </para>
 <Para>
 The plan returned by <Function>SPI_prepare</Function> may be used only in current
    invocation of the procedure since <Function>SPI_finish</Function> frees memory allocated for a plan. 
-   See <Function>SPI_saveplan</Function>.
+   But see <Function>SPI_saveplan</Function> to save a plan for longer.
 </para>
 <Para>
    If successful, a non-null pointer will be returned. Otherwise, you'll get
@@ -683,6 +717,779 @@ TBD
 <TITLE>Structures
 </TITLE>
 <PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPIEXECP">
+<REFMETA>
+<REFENTRYTITLE>SPI_execp</REFENTRYTITLE>
+<REFMISCINFO>SPI - Plan Execution</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_execp
+</REFNAME>
+<REFPURPOSE>
+Executes a plan from <Function>SPI_prepare</Function>
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPIEXECP-1"><PRIMARY>SPI</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPIEXECP-2"><PRIMARY>SPI_execp</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1997-12-24</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_execp(<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPIEXECP-1">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+void *<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Execution plan
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+Datum *<REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Actual parameter values
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+char *<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Array describing which parameters are NULLs
+<SimpleList>
+<Member><literal>n</literal> indicates NULL (values[] entry ignored)</Member>
+<Member>space indicates not NULL (values[] entry is valid)</Member>
+</SimpleList>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+int <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Number of tuples for which plan is to be executed
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPIEXECP-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>int
+</TERM>
+<LISTITEM>
+<PARA>
+   Returns the same value as <Function>SPI_exec</Function> as well as
+<SimpleList>
+<Member>
+ <ReturnValue>SPI_ERROR_ARGUMENT</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
+ is NULL or <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE> &lt; 0
+</Member>
+<Member>
+   <ReturnValue>SPI_ERROR_PARAM</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>
+ is NULL
+ and <REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
+ was prepared with some parameters.
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>SPI_tuptable
+</TERM>
+<LISTITEM>
+<PARA>
+initialized as in
+   <Function>SPI_exec</Function> if successful
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>SPI_processed
+</TERM>
+<LISTITEM>
+<PARA>
+initialized as in
+   <Function>SPI_exec</Function> if successful
+</para>
+</listitem>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPIEXECP-1">
+<REFSECT1INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_execp</FUNCTION> 
+   executes a plan prepared by <Function>SPI_prepare</Function>.
+   <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE> has the same
+   interpretation as in <Function>SPI_exec</Function>.
+</para>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPIEXECP-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+   If <REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
+is NULL then 
+   <Function>SPI_execp</Function> 
+assumes that all parameters (if any) are NOT NULL.
+
+<Note>
+<Para>
+   If one of the objects (a relation, function, etc.) referenced by the prepared
+   plan is dropped during your session (by your backend or another process) then the
+   results of <Function>SPI_execp</Function> for this plan will be unpredictable.
+</Para>
+</Note>
+
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPIEXECP-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA><FUNCTION>SPI_execp</FUNCTION> performs the following:
+TBD
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPIEXECP-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICURSOR-OPEN">
+<REFMETA>
+<REFENTRYTITLE>SPI_cursor_open</REFENTRYTITLE>
+<REFMISCINFO>SPI - Cursor Support</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_cursor_open
+</REFNAME>
+<REFPURPOSE>
+Sets up a cursor using a plan created with <Function>SPI_prepare</Function>
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICURSOR-OPEN-1"><PRIMARY>SPI</PRIMARY><SECONDARY>cursors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICURSOR-OPEN-2"><PRIMARY>SPI_cursor_open</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_cursor_open(<REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-OPEN-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+char *<REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Name for portal, or NULL to let the system select a name
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+void *<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Execution plan
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+Datum *<REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Actual parameter values
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+char *<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Array describing which parameters are NULLs
+<SimpleList>
+<Member><literal>n</literal> indicates NULL (values[] entry ignored)</Member>
+<Member>space indicates not NULL (values[] entry is valid)</Member>
+</SimpleList>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-OPEN-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>Portal
+</TERM>
+<LISTITEM>
+<PARA>
+   Pointer to Portal containing cursor, or NULL on error
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICURSOR-OPEN-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_cursor_open</FUNCTION> 
+   sets up a cursor (internally, a Portal) that will execute a plan
+   prepared by <Function>SPI_prepare</Function>.
+</para>
+<para>
+   Using a cursor instead of executing the plan directly has two
+   benefits.  First, the result rows can be retrieved a few at a time,
+   avoiding memory overrun for queries that return many rows.  Second,
+   a Portal can outlive the current procedure (it can, in fact, live to
+   the end of the current transaction).  Returning the portal name to
+   the procedure's caller provides a way of returning a rowset result.
+</para>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICURSOR-OPEN-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+   If <REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
+is NULL then 
+   <Function>SPI_cursor_open</Function> 
+assumes that all parameters (if any) are NOT NULL.
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-OPEN-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA><FUNCTION>SPI_cursor_open</FUNCTION> performs the following:
+TBD
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICURSOR-FIND">
+<REFMETA>
+<REFENTRYTITLE>SPI_cursor_find</REFENTRYTITLE>
+<REFMISCINFO>SPI - Cursor Support</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_cursor_find
+</REFNAME>
+<REFPURPOSE>
+Finds an existing cursor (Portal) by name
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICURSOR-FIND-1"><PRIMARY>SPI</PRIMARY><SECONDARY>cursors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICURSOR-FIND-2"><PRIMARY>SPI_cursor_find</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_cursor_find(<REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-FIND-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+char *<REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Name of portal
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-FIND-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>Portal
+</TERM>
+<LISTITEM>
+<PARA>
+   Pointer to Portal with given name, or NULL if not found
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICURSOR-FIND-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_cursor_find</FUNCTION> 
+   finds a pre-existing Portal by name.  This is primarily useful
+   to resolve a cursor name returned as text by some other function.
+</para>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-FIND-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-FIND-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA><FUNCTION>SPI_cursor_find</FUNCTION> performs the following:
+TBD
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICURSOR-FETCH">
+<REFMETA>
+<REFENTRYTITLE>SPI_cursor_fetch</REFENTRYTITLE>
+<REFMISCINFO>SPI - Cursor Support</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_cursor_fetch
+</REFNAME>
+<REFPURPOSE>
+Fetches some rows from a cursor
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICURSOR-FETCH-1"><PRIMARY>SPI</PRIMARY><SECONDARY>cursors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICURSOR-FETCH-2"><PRIMARY>SPI_cursor_fetch</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_cursor_fetch(<REPLACEABLE CLASS="PARAMETER">portal</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">forward</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-FETCH-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+Portal <REPLACEABLE CLASS="PARAMETER">portal</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Portal containing cursor
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+bool <REPLACEABLE CLASS="PARAMETER">forward</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+True for fetch forward, false for fetch backward
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+int <REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Maximum number of rows to fetch
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-FETCH-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>SPI_tuptable
+</TERM>
+<LISTITEM>
+<PARA>
+initialized as in
+   <Function>SPI_exec</Function> if successful
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>SPI_processed
+</TERM>
+<LISTITEM>
+<PARA>
+initialized as in
+   <Function>SPI_exec</Function> if successful
+</para>
+</listitem>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICURSOR-FETCH-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_cursor_fetch</FUNCTION> 
+   fetches some (more) rows from a cursor.  This is equivalent to the
+   SQL command <command>FETCH</>.
+</para>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-FETCH-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-FETCH-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA><FUNCTION>SPI_cursor_fetch</FUNCTION> performs the following:
+TBD
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICURSOR-MOVE">
+<REFMETA>
+<REFENTRYTITLE>SPI_cursor_move</REFENTRYTITLE>
+<REFMISCINFO>SPI - Cursor Support</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_cursor_move
+</REFNAME>
+<REFPURPOSE>
+Moves a cursor
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICURSOR-MOVE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>cursors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICURSOR-MOVE-2"><PRIMARY>SPI_cursor_move</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_cursor_move(<REPLACEABLE CLASS="PARAMETER">portal</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">forward</REPLACEABLE>,
+<REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-MOVE-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+Portal <REPLACEABLE CLASS="PARAMETER">portal</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Portal containing cursor
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+bool <REPLACEABLE CLASS="PARAMETER">forward</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+True for move forward, false for move backward
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+int <REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Maximum number of rows to move
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-MOVE-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>None
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICURSOR-MOVE-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_cursor_move</FUNCTION> 
+   skips over some number of rows in a cursor.  This is equivalent to the
+   SQL command <command>MOVE</>.
+</para>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-MOVE-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-MOVE-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA><FUNCTION>SPI_cursor_move</FUNCTION> performs the following:
+TBD
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICURSOR-CLOSE">
+<REFMETA>
+<REFENTRYTITLE>SPI_cursor_close</REFENTRYTITLE>
+<REFMISCINFO>SPI - Cursor Support</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_cursor_close
+</REFNAME>
+<REFPURPOSE>
+Closes a cursor
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICURSOR-CLOSE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>cursors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICURSOR-CLOSE-2"><PRIMARY>SPI_cursor_close</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_cursor_close(<REPLACEABLE CLASS="PARAMETER">portal</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-CLOSE-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+Portal <REPLACEABLE CLASS="PARAMETER">portal</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Portal containing cursor
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICURSOR-CLOSE-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>None
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICURSOR-CLOSE-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_cursor_close</FUNCTION> 
+   closes a previously created cursor and releases its Portal storage.
+</para>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICURSOR-CLOSE-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+   All open cursors are closed implicitly at transaction end.
+   <FUNCTION>SPI_cursor_close</FUNCTION> need only be invoked if
+   it is desirable to release resources sooner.
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICURSOR-CLOSE-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA><FUNCTION>SPI_cursor_close</FUNCTION> performs the following:
+TBD
 </PARA>
 </REFSECT1>
 -->
@@ -788,7 +1595,7 @@ Execution plan location. NULL if unsuccessful.
    in future versions.
 
    As an alternative, there is the ability to reuse prepared plans in the
-   consequent invocations of your procedure in the current session.
+   subsequent invocations of your procedure in the current session.
    Use <Function>SPI_execp</Function> to execute this saved plan.
 </PARA>
 </REFSECT1>
@@ -831,758 +1638,21 @@ TBD
 -->
 </REFENTRY>
 
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-
-<REFENTRY ID="SPI-SPIEXECP">
-<REFMETA>
-<REFENTRYTITLE>SPI_execp</REFENTRYTITLE>
-<REFMISCINFO>SPI - Plan Execution</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>SPI_execp
-</REFNAME>
-<REFPURPOSE>
-Executes a plan from <Function>SPI_saveplan</Function>
-</REFPURPOSE>
-<INDEXTERM ID="IX-SPI-SPIEXECP-1"><PRIMARY>SPI</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-SPI-SPIEXECP-2"><PRIMARY>SPI_execp</PRIMARY></INDEXTERM>
-</REFNAMEDIV>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1997-12-24</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-SPI_execp(<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>,
-<REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>,
-<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>,
-<REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE>)
-</SYNOPSIS>
-
-<REFSECT2 ID="R2-SPI-SPIEXECP-1">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Inputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-void *<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Execution plan
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-Datum *<REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Actual parameter values
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-char *<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Array describing what parameters get NULLs
-<SimpleList>
-<Member><literal>n</literal> indicates NULL allowed</Member>
-<Member>A space indicates NULL not allowed</Member>
-</SimpleList>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-int <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Number of tuples for which plan is to be executed
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-SPI-SPIEXECP-2">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Outputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>int
-</TERM>
-<LISTITEM>
-<PARA>
-   Returns the same value as <Function>SPI_exec</Function> as well as
-<SimpleList>
-<Member>
- <ReturnValue>SPI_ERROR_ARGUMENT</ReturnValue>
- if <REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
- is NULL or <REPLACEABLE CLASS="PARAMETER">tcount</REPLACEABLE> &lt; 0
-</Member>
-<Member>
-   <ReturnValue>SPI_ERROR_PARAM</ReturnValue>
- if <REPLACEABLE CLASS="PARAMETER">values</REPLACEABLE>
- is NULL
- and <REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
- was prepared with some parameters.
-</Member>
-</SimpleList>
-</para>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>SPI_tuptable
-</TERM>
-<LISTITEM>
-<PARA>
-initialized as in
-   <Function>SPI_exec</Function> if successful
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>SPI_processed
-</TERM>
-<LISTITEM>
-<PARA>
-initialized as in
-   <Function>SPI_exec</Function> if successful
-</para>
-</listitem>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SPI-SPIEXECP-1">
-<REFSECT1INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT1INFO>
-<TITLE>Description
-</TITLE>
-<PARA>
-<FUNCTION>SPI_execp</FUNCTION> 
-   stores a plan prepared by <Function>SPI_prepare</Function> in safe memory
-   protected from freeing by <Function>SPI_finish</Function> or the transaction manager.
-</para>
-<Para>
-   In the current version of <ProductName>Postgres</ProductName> there is no ability to
- store prepared plans in the system
-   catalog and fetch them from there for execution. This will be implemented
-   in future versions.
-
-   As a work arround, there is the ability to reuse prepared plans in the
-   consequent invocations of your procedure in the current session.
-   Use <Function>SPI_execp</Function> to execute this saved plan.
-</PARA>
-</REFSECT1>
-<REFSECT1 ID="R1-SPI-SPIEXECP-2">
-<TITLE>Usage
-</TITLE>
-<Para>
-   If <REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
-is NULL then 
-   <Function>SPI_execp</Function> 
-assumes that all values (if any) are NOT NULL.
-
-<Note>
-<Para>
-   If one of the objects (a relation, function, etc.) referenced by the prepared
-   plan is dropped during your session (by your backend or another process) then the
-   results of <Function>SPI_execp</Function> for this plan will be unpredictable.
-</Para>
-</Note>
-
-</PARA>
-</REFSECT1>
-<!--
-<REFSECT1 ID="R1-SPI-SPIEXECP-3">
-<TITLE>Algorithm
-</TITLE>
-<PARA><FUNCTION>SPI_execp</FUNCTION> performs the following:
-TBD
-</PARA>
-</REFSECT1>
--->
-<!--
-<REFSECT1 ID="R1-SPI-SPIEXECP-4">
-<TITLE>Structures
-</TITLE>
-<PARA>None
-</PARA>
-</REFSECT1>
--->
-</REFENTRY>
-
 </Sect1>
 
 <Sect1 id="spi-interface-support">
 <Title>Interface Support Functions</Title>
 
 <Para>
-All functions described below may be used by connected and unconnected
-procedures.
+The functions described here provide convenient interfaces for extracting
+information from tuple sets returned by <function>SPI_exec</> and other
+SPI interface functions.
 </Para>
 
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-
-<REFENTRY ID="SPI-SPICOPYTUPLE">
-<REFMETA>
-<REFENTRYTITLE>SPI_copytuple</REFENTRYTITLE>
-<REFMISCINFO>SPI - Tuple Copy</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>SPI_copytuple
-</REFNAME>
-<REFPURPOSE>
-Makes copy of tuple in upper Executor context
-</REFPURPOSE>
-<INDEXTERM ID="IX-SPI-SPICOPYTUPLE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuples</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-SPI-SPICOPYTUPLE-2"><PRIMARY>SPI_copytuple</PRIMARY></INDEXTERM>
-</REFNAMEDIV>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1997-12-24</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-SPI_copytuple(<REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>)
-</SYNOPSIS>
-
-<REFSECT2 ID="R2-SPI-SPICOPYTUPLE-1">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Inputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Input tuple to be copied
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-SPI-SPICOPYTUPLE-2">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Outputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-HeapTuple
-</TERM>
-<LISTITEM>
-<PARA>
-Copied tuple
-<SimpleList>
-<Member>
- <ReturnValue>non-NULL</ReturnValue>
- if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
- is not NULL and the copy was successful
-</Member>
-<Member>
-   <ReturnValue>NULL</ReturnValue>
- only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
- is NULL
-</Member>
-</SimpleList>
-</para>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-1">
-<REFSECT1INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT1INFO>
-<TITLE>Description
-</TITLE>
-<PARA>
-<FUNCTION>SPI_copytuple</FUNCTION> 
-   makes a copy of tuple in upper Executor context. See the section on Memory Management.
-</PARA>
-</REFSECT1>
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-2">
-<TITLE>Usage
-</TITLE>
 <Para>
-TBD
-</PARA>
-</REFSECT1>
-<!--
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-3">
-<TITLE>Algorithm
-</TITLE>
-<PARA>
-</PARA>
-</REFSECT1>
--->
-<!--
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-4">
-<TITLE>Structures
-</TITLE>
-<PARA>None
-</PARA>
-</REFSECT1>
--->
-</REFENTRY>
-
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-
-<REFENTRY ID="SPI-SPICOPYTUPLEDESC">
-<REFMETA>
-<REFENTRYTITLE>SPI_copytupledesc</REFENTRYTITLE>
-<REFMISCINFO>SPI - Tuple Descriptor Copy</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>SPI_copytupledesc
-</REFNAME>
-<REFPURPOSE>
-Makes copy of tuple descriptor in upper Executor context
-</REFPURPOSE>
-<INDEXTERM ID="IX-SPI-SPICOPYTUPLEDESC-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuple descriptors</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-SPI-SPICOPYTUPLEDESC-2"><PRIMARY>SPI_copytupledesc</PRIMARY></INDEXTERM>
-</REFNAMEDIV>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>2001-08-02</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-SPI_copytupledesc(<REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>)
-</SYNOPSIS>
-
-<REFSECT2 ID="R2-SPI-SPICOPYTUPLEDESC-1">
-<REFSECT2INFO>
-<DATE>2001-08-02</DATE>
-</REFSECT2INFO>
-<TITLE>Inputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-TupleDesc <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Input tuple descriptor to be copied
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-SPI-SPICOPYTUPLEDESC-2">
-<REFSECT2INFO>
-<DATE>2001-08-02</DATE>
-</REFSECT2INFO>
-<TITLE>Outputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-TupleDesc
-</TERM>
-<LISTITEM>
-<PARA>
-Copied tuple descriptor
-<SimpleList>
-<Member>
- <ReturnValue>non-NULL</ReturnValue>
- if <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
- is not NULL and the copy was successful
-</Member>
-<Member>
-   <ReturnValue>NULL</ReturnValue>
- only if <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
- is NULL
-</Member>
-</SimpleList>
-</para>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-1">
-<REFSECT1INFO>
-<DATE>2001-08-02</DATE>
-</REFSECT1INFO>
-<TITLE>Description
-</TITLE>
-<PARA>
-<FUNCTION>SPI_copytupledesc</FUNCTION> 
-   makes a copy of tupdesc in upper Executor context. See the section on Memory Management.
-</PARA>
-</REFSECT1>
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-2">
-<TITLE>Usage
-</TITLE>
-<Para>
-TBD
-</PARA>
-</REFSECT1>
-<!--
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-3">
-<TITLE>Algorithm
-</TITLE>
-<PARA>
-</PARA>
-</REFSECT1>
--->
-<!--
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-4">
-<TITLE>Structures
-</TITLE>
-<PARA>None
-</PARA>
-</REFSECT1>
--->
-</REFENTRY>
-
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-
-<REFENTRY ID="SPI-SPICOPYTUPLEINTOSLOT">
-<REFMETA>
-<REFENTRYTITLE>SPI_copytupleintoslot</REFENTRYTITLE>
-<REFMISCINFO>SPI - Tuple and Descriptor Copy</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>SPI_copytupleintoslot
-</REFNAME>
-<REFPURPOSE>
-Makes copy of tuple and descriptor in upper Executor context
-</REFPURPOSE>
-<INDEXTERM ID="IX-SPI-SPICOPYTUPLEINTOSLOT-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuples</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-SPI-SPICOPYTUPLEINTOSLOT-2"><PRIMARY>SPI_copytupleintoslot</PRIMARY></INDEXTERM>
-</REFNAMEDIV>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1997-12-24</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-SPI_copytupleintoslot(<REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>)
-</SYNOPSIS>
-
-<REFSECT2 ID="R2-SPI-SPICOPYTUPLEINTOSLOT-1">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Inputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Input tuple to be copied
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-TupleDesc <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Input tuple descriptor to be copied
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-SPI-SPICOPYTUPLEINTOSLOT-2">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Outputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-TupleTableSlot *
-</TERM>
-<LISTITEM>
-<PARA>
-Tuple slot containing copied tuple and descriptor
-<SimpleList>
-<Member>
- <ReturnValue>non-NULL</ReturnValue>
- if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
- and <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
- are not NULL and the copy was successful
-</Member>
-<Member>
-   <ReturnValue>NULL</ReturnValue>
- only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
- or <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
- is NULL
-</Member>
-</SimpleList>
-</para>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-1">
-<REFSECT1INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT1INFO>
-<TITLE>Description
-</TITLE>
-<PARA>
-<FUNCTION>SPI_copytupleintoslot</FUNCTION> 
-   makes a copy of tuple in upper Executor context, returning it in the
-   form of a filled-in TupleTableSlot.
-   See the section on Memory Management.
-</PARA>
-</REFSECT1>
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-2">
-<TITLE>Usage
-</TITLE>
-<Para>
-TBD
-</PARA>
-</REFSECT1>
-<!--
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-3">
-<TITLE>Algorithm
-</TITLE>
-<PARA>
-</PARA>
-</REFSECT1>
--->
-<!--
-<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-4">
-<TITLE>Structures
-</TITLE>
-<PARA>None
-</PARA>
-</REFSECT1>
--->
-</REFENTRY>
-
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-<!-- *********************************************** -->
-
-<REFENTRY ID="SPI-SPIMODIFYTUPLE">
-<REFMETA>
-<REFENTRYTITLE>SPI_modifytuple</REFENTRYTITLE>
-<REFMISCINFO>SPI - Tuple Modify</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>SPI_modifytuple
-</REFNAME>
-<REFPURPOSE>
-Modifies tuple of relation
-</REFPURPOSE>
-<INDEXTERM ID="IX-SPI-SPIMODIFYTUPLE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>modifying tuples</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-SPI-SPIMODIFYTUPLE-2"><PRIMARY>SPI_modifytuple</PRIMARY></INDEXTERM>
-</REFNAMEDIV>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1997-12-24</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-SPI_modifytuple(<REPLACEABLE CLASS="PARAMETER">rel</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE> , <REPLACEABLE CLASS="PARAMETER">nattrs</REPLACEABLE>
-, <REPLACEABLE CLASS="PARAMETER">attnum</REPLACEABLE> , <REPLACEABLE CLASS="PARAMETER">Values</REPLACEABLE> , <REPLACEABLE CLASS="PARAMETER">Nulls</REPLACEABLE>)
-</SYNOPSIS>
-
-<REFSECT2 ID="R2-SPI-SPIMODIFYTUPLE-1">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Inputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-Relation <REPLACEABLE CLASS="PARAMETER">rel</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Input tuple to be modified
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-int <REPLACEABLE CLASS="PARAMETER">nattrs</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Number of attribute numbers in attnum
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-int * <REPLACEABLE CLASS="PARAMETER">attnum</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Array of numbers of the attributes that are to be changed
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-Datum * <REPLACEABLE CLASS="PARAMETER">Values</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-New values for the attributes specified
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-char * <REPLACEABLE CLASS="PARAMETER">Nulls</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-Which attributes are NULL, if any
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-SPI-SPIMODIFYTUPLE-2">
-<REFSECT2INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT2INFO>
-<TITLE>Outputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-HeapTuple
-</TERM>
-<LISTITEM>
-<PARA>
-New tuple with modifications
-<SimpleList>
-<Member>
- <ReturnValue>non-NULL</ReturnValue>
- if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
- is not NULL and the modify was successful
-</Member>
-<Member>
-   <ReturnValue>NULL</ReturnValue>
- only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
- is NULL
-</Member>
-</SimpleList>
-</para>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-SPI_result
-</TERM>
-<LISTITEM>
-<PARA>
-<SimpleList>
-<Member>
-   <ReturnValue>SPI_ERROR_ARGUMENT</ReturnValue> if rel is NULL or tuple is NULL or natts &le; 0 or
-   attnum is NULL or Values is NULL.
-</Member>
-<Member>
-   <ReturnValue>SPI_ERROR_NOATTRIBUTE</ReturnValue> if there is an invalid 
-   attribute number in attnum (attnum &le; 0 or &gt; number of
-   attributes in tuple)
-</Member>
-</SimpleList>
-</para>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-1">
-<REFSECT1INFO>
-<DATE>1997-12-24</DATE>
-</REFSECT1INFO>
-<TITLE>Description
-</TITLE>
-<PARA>
-<FUNCTION>SPI_modifytuple</FUNCTION> 
-Modifies a tuple in upper Executor context. See the section on Memory Management.
-</PARA>
-</REFSECT1>
-<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-2">
-<TITLE>Usage
-</TITLE>
-<Para>
-If successful, a pointer to the new tuple is returned. The new tuple is
-allocated in upper Executor context (see Memory management). Passed tuple
-is not changed.
-</PARA>
-</REFSECT1>
-<!--
-<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-3">
-<TITLE>Algorithm
-</TITLE>
-<PARA>
-</PARA>
-</REFSECT1>
--->
-<!--
-<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-4">
-<TITLE>Structures
-</TITLE>
-<PARA>None
-</PARA>
-</REFSECT1>
--->
-</REFENTRY>
+All functions described in this section may be used by both connected and
+unconnected procedures.
+</Para>
 
 <!-- *********************************************** -->
 <!-- *********************************************** -->
@@ -1597,7 +1667,7 @@ is not changed.
 <REFNAME>SPI_fnumber
 </REFNAME>
 <REFPURPOSE>
-Finds the attribute number for specified attribute
+Finds the attribute number for specified attribute name
 </REFPURPOSE>
 <INDEXTERM ID="IX-SPI-SPIFNUMBER-1"><PRIMARY>SPI</PRIMARY><SECONDARY>decoding tuples</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-SPI-SPIFNUMBER-2"><PRIMARY>SPI_fnumber</PRIMARY></INDEXTERM>
@@ -1685,7 +1755,15 @@ Valid one-based index number of attribute
 </TITLE>
 <Para>
 Attribute numbers are 1 based.
-</PARA>
+</Para>
+<Para>
+If the given fname refers to a system attribute (eg, <literal>oid</>)
+then the appropriate negative attribute number will be returned.
+The caller should be careful to test for exact equality to 
+<ReturnValue>SPI_ERROR_NOATTRIBUTE</ReturnValue> to detect error;
+testing for result &lt;= 0 is not correct unless system attributes
+should be rejected.
+</Para>
 </REFSECT1>
 <!--
 <REFSECT1 ID="R1-SPI-SPIFNUMBER-3">
@@ -1718,7 +1796,7 @@ Attribute numbers are 1 based.
 <REFNAME>SPI_fname
 </REFNAME>
 <REFPURPOSE>
-Finds the attribute name for the specified attribute
+Finds the attribute name for the specified attribute number
 </REFPURPOSE>
 <INDEXTERM ID="IX-SPI-SPIFNAME-1"><PRIMARY>SPI</PRIMARY><SECONDARY>decoding tuples</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-SPI-SPIFNAME-2"><PRIMARY>SPI_fname</PRIMARY></INDEXTERM>
@@ -1728,7 +1806,7 @@ Finds the attribute name for the specified attribute
 <DATE>1997-12-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-SPI_fname(<REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">fname</REPLACEABLE>)
+SPI_fname(<REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">fnumber</REPLACEABLE>)
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-SPI-SPIFNAME-1">
@@ -1814,6 +1892,7 @@ Attribute numbers are 1 based.
 </TITLE>
 <PARA>
 Returns a newly-allocated copy of the attribute name.
+(Use pfree() to release the copy when done with it.)
 </PARA>
 </REFSECT1>
 <!--
@@ -1950,7 +2029,8 @@ Attribute numbers are 1 based.
 <TITLE>Algorithm
 </TITLE>
 <PARA>
-Allocates memory as required by the value.
+The result is returned as a palloc'd string.
+(Use pfree() to release the string when done with it.)
 </PARA>
 </REFSECT1>
 <!--
@@ -2082,7 +2162,7 @@ SPI_result
 </TITLE>
 <PARA>
 <FUNCTION>SPI_getbinval</FUNCTION> 
-   returns the binary value of the specified attribute.
+   returns the specified attribute's value in internal form (as a Datum).
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-SPI-SPIGETBINVAL-2">
@@ -2096,7 +2176,8 @@ Attribute numbers are 1 based.
 <TITLE>Algorithm
 </TITLE>
 <PARA>
-Does not allocate new space for the binary value.
+Does not allocate new space for the datum.  In the case of a pass-by-
+reference datatype, the Datum will be a pointer into the given tuple.
 </PARA>
 </REFSECT1>
 <!--
@@ -2208,7 +2289,8 @@ SPI_result
 </TITLE>
 <PARA>
 <FUNCTION>SPI_gettype</FUNCTION> 
-   returns a copy of the type name for the specified attribute.
+   returns a copy of the type name for the specified attribute,
+   or NULL on error.
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-SPI-SPIGETTYPE-2">
@@ -2222,7 +2304,8 @@ Attribute numbers are 1 based.
 <TITLE>Algorithm
 </TITLE>
 <PARA>
-Does not allocate new space for the binary value.
+Returns a newly-allocated copy of the type name.
+(Use pfree() to release the copy when done with it.)
 </PARA>
 </REFSECT1>
 <!--
@@ -2344,6 +2427,7 @@ SPI_result
 Attribute numbers are 1 based.
 </PARA>
 </REFSECT1>
+<!--
 <REFSECT1 ID="R1-SPI-SPIGETTYPEID-3">
 <TITLE>Algorithm
 </TITLE>
@@ -2351,6 +2435,7 @@ Attribute numbers are 1 based.
 TBD
 </PARA>
 </REFSECT1>
+-->
 <!--
 <REFSECT1 ID="R1-SPI-SPIGETTYPEID-4">
 <TITLE>Structures
@@ -2439,6 +2524,7 @@ The name of the specified relation
    returns the name of the specified relation.
 </PARA>
 </REFSECT1>
+<!--
 <REFSECT1 ID="R1-SPI-SPIGETRELNAME-2">
 <TITLE>Usage
 </TITLE>
@@ -2446,15 +2532,637 @@ The name of the specified relation
 TBD
 </PARA>
 </REFSECT1>
+-->
 <REFSECT1 ID="R1-SPI-SPIGETRELNAME-3">
 <TITLE>Algorithm
 </TITLE>
 <PARA>
-Copies the relation name into new storage.
+Returns a newly-allocated copy of the rel name.
+(Use pfree() to release the copy when done with it.)
 </PARA>
 </REFSECT1>
 <!--
 <REFSECT1 ID="R1-SPI-SPIGETRELNAME-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+</Sect1>
+
+<Sect1 id="spi-memory">
+<Title>Memory Management</Title>
+
+<Para>
+<ProductName>Postgres</ProductName> allocates memory within memory
+<firstterm>contexts</firstterm>, which provide a convenient method of
+managing allocations made in many different places that need to live
+for differing amounts of time.  Destroying a context releases all the
+memory that was allocated in it.  Thus, it is not necessary to keep track
+of individual objects to avoid memory leaks --- only a relatively small number
+of contexts have to be managed.  <Function>palloc</Function> and related
+functions allocate memory from the <quote>current</> context.
+</Para>
+<Para>
+<Function>SPI_connect</Function> creates a new memory context and makes
+it current.  <Function>SPI_finish</Function> restores the previous
+current memory context and destroys the context created by
+<Function>SPI_connect</Function>.  These actions ensure that transient
+memory allocations made inside your procedure are reclaimed at procedure
+exit, avoiding memory leakage.
+</Para>
+<Para>
+However, if your procedure needs to return an allocated memory object
+(such as a value of a pass-by-reference datatype), you can't allocate
+the return object using <Function>palloc</Function>, at least not while
+you are connected to SPI.  If you try, the object will be deallocated
+during <Function>SPI_finish</Function>, and your procedure will not
+work reliably!
+</Para>
+<Para>
+To solve this problem, use <Function>SPI_palloc</Function> to allocate
+your return object.  <Function>SPI_palloc</Function> allocates space
+from <quote>upper Executor</> memory --- that is, the memory context
+that was current when <Function>SPI_connect</Function> was called,
+which is precisely the right context for return values of your procedure.
+</Para>
+<Para>
+If called while not connected to SPI, <Function>SPI_palloc</Function>
+acts the same as plain <Function>palloc</Function>.
+</Para>
+<Para>
+   Before a procedure connects to the SPI manager, the current memory context
+is the upper Executor context, so all allocations made by the procedure via
+<Function>palloc</Function> or by SPI utility functions are
+made in this context.
+</Para>
+<Para>
+   After <Function>SPI_connect</Function> is called, the current context is
+   the procedure's private context made by <Function>SPI_connect</Function>.
+   All allocations made via
+<Function>palloc</Function>/<Function>repalloc</Function> or by SPI utility
+functions (except for <Function>SPI_copytuple</Function>,
+<Function>SPI_copytupledesc</Function>,
+<Function>SPI_copytupleintoslot</Function>,
+<Function>SPI_modifytuple</Function>,
+and <Function>SPI_palloc</Function>) are
+made in this context.
+</Para>
+<Para>
+When a procedure disconnects from the SPI manager (via
+<Function>SPI_finish</Function>) the
+current context is restored to the upper Executor context, and all allocations
+made in the procedure memory context are freed and can't be used any more!
+</Para>
+
+<Para>
+All functions described in this section may be used by both connected and
+unconnected procedures.  In an unconnected procedure, they act the same
+as the underlying ordinary backend functions (<function>palloc</> etc).
+</Para>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICOPYTUPLE">
+<REFMETA>
+<REFENTRYTITLE>SPI_copytuple</REFENTRYTITLE>
+<REFMISCINFO>SPI - Tuple Copy</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_copytuple
+</REFNAME>
+<REFPURPOSE>
+Makes copy of tuple in upper Executor context
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuples</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLE-2"><PRIMARY>SPI_copytuple</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1997-12-24</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_copytuple(<REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLE-1">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLE-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+HeapTuple
+</TERM>
+<LISTITEM>
+<PARA>
+Copied tuple
+<SimpleList>
+<Member>
+ <ReturnValue>non-NULL</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ is not NULL and the copy was successful
+</Member>
+<Member>
+   <ReturnValue>NULL</ReturnValue>
+ only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ is NULL
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-1">
+<REFSECT1INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_copytuple</FUNCTION> 
+   makes a copy of tuple in upper Executor context.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+TBD
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLE-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICOPYTUPLEDESC">
+<REFMETA>
+<REFENTRYTITLE>SPI_copytupledesc</REFENTRYTITLE>
+<REFMISCINFO>SPI - Tuple Descriptor Copy</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_copytupledesc
+</REFNAME>
+<REFPURPOSE>
+Makes copy of tuple descriptor in upper Executor context
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEDESC-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuple descriptors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEDESC-2"><PRIMARY>SPI_copytupledesc</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-08-02</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_copytupledesc(<REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEDESC-1">
+<REFSECT2INFO>
+<DATE>2001-08-02</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+TupleDesc <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple descriptor to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEDESC-2">
+<REFSECT2INFO>
+<DATE>2001-08-02</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+TupleDesc
+</TERM>
+<LISTITEM>
+<PARA>
+Copied tuple descriptor
+<SimpleList>
+<Member>
+ <ReturnValue>non-NULL</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ is not NULL and the copy was successful
+</Member>
+<Member>
+   <ReturnValue>NULL</ReturnValue>
+ only if <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ is NULL
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-1">
+<REFSECT1INFO>
+<DATE>2001-08-02</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_copytupledesc</FUNCTION> 
+   makes a copy of tupdesc in upper Executor context.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+TBD
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPICOPYTUPLEINTOSLOT">
+<REFMETA>
+<REFENTRYTITLE>SPI_copytupleintoslot</REFENTRYTITLE>
+<REFMISCINFO>SPI - Tuple and Descriptor Copy</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_copytupleintoslot
+</REFNAME>
+<REFPURPOSE>
+Makes copy of tuple and descriptor in upper Executor context
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEINTOSLOT-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuples</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEINTOSLOT-2"><PRIMARY>SPI_copytupleintoslot</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1997-12-24</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_copytupleintoslot(<REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEINTOSLOT-1">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+TupleDesc <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple descriptor to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEINTOSLOT-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+TupleTableSlot *
+</TERM>
+<LISTITEM>
+<PARA>
+Tuple slot containing copied tuple and descriptor
+<SimpleList>
+<Member>
+ <ReturnValue>non-NULL</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ and <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ are not NULL and the copy was successful
+</Member>
+<Member>
+   <ReturnValue>NULL</ReturnValue>
+ only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ or <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ is NULL
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-1">
+<REFSECT1INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_copytupleintoslot</FUNCTION> 
+   makes a copy of tuple in upper Executor context, returning it in the
+   form of a filled-in TupleTableSlot.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+TBD
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPIMODIFYTUPLE">
+<REFMETA>
+<REFENTRYTITLE>SPI_modifytuple</REFENTRYTITLE>
+<REFMISCINFO>SPI - Tuple Modify</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_modifytuple
+</REFNAME>
+<REFPURPOSE>
+Creates a tuple by replacing selected fields of a given tuple
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPIMODIFYTUPLE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>modifying tuples</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPIMODIFYTUPLE-2"><PRIMARY>SPI_modifytuple</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1997-12-24</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_modifytuple(<REPLACEABLE CLASS="PARAMETER">rel</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">nattrs</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">attnum</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">Values</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">Nulls</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPIMODIFYTUPLE-1">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+Relation <REPLACEABLE CLASS="PARAMETER">rel</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Used only as source of tuple descriptor for tuple.  (Passing a relation
+rather than a tuple descriptor is a misfeature.)
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple to be modified
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+int <REPLACEABLE CLASS="PARAMETER">nattrs</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Number of attribute numbers in attnum array
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+int * <REPLACEABLE CLASS="PARAMETER">attnum</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Array of numbers of the attributes that are to be changed
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+Datum * <REPLACEABLE CLASS="PARAMETER">Values</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+New values for the attributes specified
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+char * <REPLACEABLE CLASS="PARAMETER">Nulls</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Which new values are NULL, if any
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPIMODIFYTUPLE-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+HeapTuple
+</TERM>
+<LISTITEM>
+<PARA>
+New tuple with modifications
+<SimpleList>
+<Member>
+ <ReturnValue>non-NULL</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ is not NULL and the modify was successful
+</Member>
+<Member>
+   <ReturnValue>NULL</ReturnValue>
+ only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ is NULL
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+SPI_result
+</TERM>
+<LISTITEM>
+<PARA>
+<SimpleList>
+<Member>
+   <ReturnValue>SPI_ERROR_ARGUMENT</ReturnValue> if rel is NULL or tuple is NULL or natts &lt;= 0 or
+   attnum is NULL or Values is NULL.
+</Member>
+<Member>
+   <ReturnValue>SPI_ERROR_NOATTRIBUTE</ReturnValue> if there is an invalid 
+   attribute number in attnum (attnum &lt;= 0 or &gt; number of
+   attributes in tuple)
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-1">
+<REFSECT1INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_modifytuple</FUNCTION> 
+creates a new tuple by substituting new values for selected attributes,
+copying the original tuple's attributes at other positions.  The input
+tuple is not modified.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+If successful, a pointer to the new tuple is returned. The new tuple is
+allocated in upper Executor context.
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPIMODIFYTUPLE-4">
 <TITLE>Structures
 </TITLE>
 <PARA>None
@@ -2538,7 +3246,7 @@ New storage space of specified size
 </TITLE>
 <PARA>
 <FUNCTION>SPI_palloc</FUNCTION> 
-   allocates memory in upper Executor context. See section on memory management.
+   allocates memory in upper Executor context.
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-SPI-SPIPALLOC-2">
@@ -2652,14 +3360,15 @@ New storage space of specified size with contents copied from existing area
 </TITLE>
 <PARA>
 <FUNCTION>SPI_repalloc</FUNCTION> 
-   re-allocates memory in upper Executor context. See section on memory management.
+   re-allocates memory in upper Executor context.
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-SPI-SPIREPALLOC-2">
 <TITLE>Usage
 </TITLE>
 <Para>
-TBD
+This function is no longer different from plain <FUNCTION>repalloc</FUNCTION>.
+It's kept just for backward compatibility of existing code.
 </PARA>
 </REFSECT1>
 <!--
@@ -2694,7 +3403,7 @@ TBD
 <REFNAME>SPI_pfree
 </REFNAME>
 <REFPURPOSE>
-Frees memory from upper Executor context
+Frees memory in upper Executor context
 </REFPURPOSE>
 <INDEXTERM ID="IX-SPI-SPIPFREE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>allocating space</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-SPI-SPIPFREE-2"><PRIMARY>SPI_pfree</PRIMARY></INDEXTERM>
@@ -2755,105 +3464,280 @@ None
 </TITLE>
 <PARA>
 <FUNCTION>SPI_pfree</FUNCTION> 
-   frees memory in upper Executor context. See section on memory management.
+   frees memory in upper Executor context.
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-SPI-SPIPFREE-2">
 <TITLE>Usage
 </TITLE>
 <Para>
-TBD
+This function is no longer different from plain <FUNCTION>pfree</FUNCTION>.
+It's kept just for backward compatibility of existing code.
 </PARA>
 </REFSECT1>
-<!--
-<REFSECT1 ID="R1-SPI-SPIPFREE-3">
-<TITLE>Algorithm
-</TITLE>
-<PARA>
-TBD
-</PARA>
-</REFSECT1>
--->
-<!--
-<REFSECT1 ID="R1-SPI-SPIPFREE-4">
-<TITLE>Structures
-</TITLE>
-<PARA>None
-</PARA>
-</REFSECT1>
--->
 </REFENTRY>
 
-</Sect1>
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
 
-<Sect1 id="spi-memory">
-<Title>Memory Management</Title>
+<REFENTRY ID="SPI-SPIFREETUPLE">
+<REFMETA>
+<REFENTRYTITLE>SPI_freetuple</REFENTRYTITLE>
+<REFMISCINFO>SPI - Memory Management</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_freetuple
+</REFNAME>
+<REFPURPOSE>
+Frees a tuple allocated in upper Executor context
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPIFREETUPLE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>allocating space</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPIFREETUPLE-2"><PRIMARY>SPI_freetuple</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1997-12-24</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_freetuple(<REPLACEABLE CLASS="PARAMETER">pointer</REPLACEABLE>)
+</SYNOPSIS>
 
+<REFSECT2 ID="R2-SPI-SPIFREETUPLE-1">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+HeapTuple <REPLACEABLE CLASS="PARAMETER">pointer</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Pointer to allocated tuple
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPIFREETUPLE-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+None
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPIFREETUPLE-1">
+<REFSECT1INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_freetuple</FUNCTION> 
+   frees a tuple previously allocated in upper Executor context.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPIFREETUPLE-2">
+<TITLE>Usage
+</TITLE>
 <Para>
-   Server allocates memory in memory contexts in such way that allocations
-made in one context may be freed by context destruction without affecting
-allocations made in other contexts. All allocations (via <Function>palloc</Function>, etc) are
-made in the context that is chosen as the current one. You'll get
-unpredictable results if you'll try to free (or reallocate) memory allocated
-not in current context.
-</Para>
+This function is no longer different from plain <FUNCTION>heap_freetuple</FUNCTION>.
+It's kept just for backward compatibility of existing code.
+</PARA>
+</REFSECT1>
+</REFENTRY>
 
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
+<REFENTRY ID="SPI-SPIFREETUPTABLE">
+<REFMETA>
+<REFENTRYTITLE>SPI_freetuptable</REFENTRYTITLE>
+<REFMISCINFO>SPI - Memory Management</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_freetuptable
+</REFNAME>
+<REFPURPOSE>
+Frees a tuple set created by <function>SPI_exec</> or similar function
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPIFREETUPTABLE-1"><PRIMARY>SPI</PRIMARY><SECONDARY>allocating space</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPIFREETUPTABLE-2"><PRIMARY>SPI_freetuptable</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_freetuptable(<REPLACEABLE CLASS="PARAMETER">tuptable</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPIFREETUPTABLE-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+SPITupleTable * <REPLACEABLE CLASS="PARAMETER">tuptable</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Pointer to tuple table
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPIFREETUPTABLE-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+None
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPIFREETUPTABLE-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_freetuptable</FUNCTION> 
+   frees a tuple set created by a prior SPI query function, such as
+   <function>SPI_exec</>.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPIFREETUPTABLE-2">
+<TITLE>Usage
+</TITLE>
 <Para>
-   Creation and switching between memory contexts are subject of SPI manager
-memory management.
-</Para>
+This function is useful if a SPI procedure needs to execute multiple
+queries and does not want to keep the results of earlier queries around
+until it ends.  Note that any unfreed tuple sets will be freed anyway
+at <function>SPI_finish</>.
+</PARA>
+</REFSECT1>
+</REFENTRY>
 
-<Para>
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
 
-   SPI procedures deal with two memory contexts: upper Executor memory
-context and procedure memory context (if connected). 
-</Para>
+<REFENTRY ID="SPI-SPIFREEPLAN">
+<REFMETA>
+<REFENTRYTITLE>SPI_freeplan</REFENTRYTITLE>
+<REFMISCINFO>SPI - Memory Management</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_freeplan
+</REFNAME>
+<REFPURPOSE>
+   Releases a previously saved plan
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPIFREEPLAN-1"><PRIMARY>SPI</PRIMARY><SECONDARY>allocating space</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPIFREEPLAN-2"><PRIMARY>SPI_freeplan</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-11-14</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_freeplan(<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>)
+</SYNOPSIS>
 
-<Para>
+<REFSECT2 ID="R2-SPI-SPIFREEPLAN-1">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+void *<REPLACEABLE CLASS="PARAMETER">plan</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Passed plan
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
 
-   Before a procedure is connected to the SPI manager, current memory context
-is upper Executor context so all allocation made by the procedure itself via
-<Function>palloc</Function>/<Function>repalloc</Function> or by SPI utility functions before connecting to SPI are
-made in this context.
-</Para>
+<REFSECT2 ID="R2-SPI-SPIFREEPLAN-2">
+<REFSECT2INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>int
+</TERM>
+<LISTITEM>
+<PARA>
+<SimpleList>
+<Member>
+   <ReturnValue>SPI_ERROR_ARGUMENT</ReturnValue> if plan is NULL
+</Member>
+</SimpleList>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
 
-<Para>
-
-   After <Function>SPI_connect</Function> is called current context is the
-   procedure's one.  All allocations made via
-<Function>palloc</Function>/<Function>repalloc</Function> or by SPI utility
-functions (except for <Function>SPI_copytuple</Function>,
-<Function>SPI_copytupledesc</Function>,
-<Function>SPI_copytupleintoslot</Function>,
-<Function>SPI_modifytuple</Function>,
-<Function>SPI_palloc</Function> and <Function>SPI_repalloc</Function>) are
-made in this context.
-</Para>
-
-<Para>
-
-   When a procedure disconnects from the SPI manager (via <Function>SPI_finish</Function>) the
-current context is restored to the upper Executor context and all allocations
-made in the procedure memory context are freed and can't be used any more!
-</Para>
-
-<Para>
-
-   If you want to return something to the upper Executor then you have to
-allocate memory for this in the upper context!
-</Para>
-
-<Para>
-
-   SPI has no ability to automatically free allocations in the upper Executor
-context!
-</Para>
-
-<Para>
-
-   SPI automatically frees memory allocated during execution of a query when
-this query is done!
-</Para>
+<REFSECT1 ID="R1-SPI-SPIFREEPLAN-1">
+<REFSECT1INFO>
+<DATE>2001-11-14</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_freeplan</FUNCTION> 
+   releases a query plan previously returned by
+   <Function>SPI_prepare</Function> or saved by
+   <Function>SPI_saveplan</Function>.
+</para>
+</REFSECT1>
+</REFENTRY>
 
 </Sect1>
 
@@ -2864,9 +3748,9 @@ this query is done!
 <ProductName>Postgres</ProductName> data changes visibility rule: during a query execution, data
 changes made by the query itself (via SQL-function, SPI-function, triggers)
 are invisible to the query scan.  For example, in query
-
+<programlisting>
    INSERT INTO a SELECT * FROM a
-
+</programlisting>
    tuples inserted are invisible for SELECT's scan.  In effect, this
 duplicates the database table within itself (subject to unique index
 rules, of course) without recursing.
