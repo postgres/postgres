@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.51.2.1 2004/02/21 00:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.51.2.2 2005/02/14 06:18:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ RenameLanguage(const char *oldname, const char *newname)
 	HeapTuple	tup;
 	Relation	rel;
 
-	rel = heap_openr(ShadowRelationName, RowExclusiveLock);
+	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(LANGNAME,
 							 CStringGetDatum(oldname),
