@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.39 2004/10/16 03:10:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.40 2004/10/16 03:32:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 
 #if defined(__CYGWIN__)
 #include <windows.h>
+/* Cygwin defines WIN32 in windows.h, but we don't want it. */
+#undef WIN32
 #endif
 
 #ifndef HAVE_OPTRESET
@@ -333,7 +335,7 @@ start_postmaster(void)
 	 * http://dev.remotenetworktechnology.com/cmd/cmdfaq.htm
 	 */
 	if (log_file != NULL)
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)	/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 #else
 		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
@@ -341,7 +343,7 @@ start_postmaster(void)
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
 	else
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)	/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 #else
 		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
