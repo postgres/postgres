@@ -1,14 +1,14 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Thu Oct  2 14:08:20 EDT 1997
+last updated:		Fri Oct 17 08:18:16 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the postgreSQL WWW site, http://www.postgreSQL.org.
 
-THE CHANGES FOR 6.2 APPEAR AT THE END OF THIS DOCUMENT
+THE CHANGES FOR 6.2 and 6.2.1 APPEAR AT THE END OF THIS DOCUMENT
 
 Developers who have claimed items are:
 	Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
@@ -70,6 +70,7 @@ PRIMARY KEY during table creation
 Add SERIAL type
 Preserve GRANT/REVOKE/pg_group in pg_dump
 Transaction log
+More access control over who can create tables and access the database
 Add full ANSI SQL capabilities (Stefan)
 	add subselects, possibility using temporary SQL functions
 	Implement HAVING clause
@@ -135,6 +136,8 @@ make NULL's come out at the beginning or end depending on the ORDER BY direction
 change the library/backend interface to use network byte order
 allow unix domain sockets for local connections for performance and security
 Add PAGER for psql's \dt and \d tablename
+Make timezone set-able by client applications(Thomas)
+Restore unused oid's on backend exit if no one else has gotten oids
 
 PERFORMANCE
 -----------
@@ -163,6 +166,23 @@ PORTABILITY
  
 
 ---------------------------------------------------------------------------
+
+                     CHANGES IN THE 6.2.1 RELEASE
+
+Changes in this release
+-----------------------
+Allow TIME and TYPE column names(Thomas)
+Allow larger range of true/false as boolean values(Thomas)
+Support output of "now" and "current"(Thomas)
+Handle DEFAULT with INSERT of NULL properly(Vadim)
+Fix for relation reference counts problem in buffer manager(Vadim)
+Allow strings to span lines, like ANSI(Thomas)
+Fix for backward cursor with ORDER BY(Vadim)
+Fix avg(cash) computation(Thomas)
+Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
+Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
+Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
+
 
                      CHANGES IN THE 6.2 RELEASE
 
