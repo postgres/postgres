@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Dec 13 09:21:27 EST 2004
+Last updated:		Mon Dec 13 13:00:27 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -890,7 +890,6 @@ Source Code
 
 
 * Win32
-	o Remove per-backend parameter file and move into shared memory
 	o Remove configure.in check for link failure when cause is found
 	o Remove readdir() errno patch when runtime/mingwex/dirent.c rev
 	  1.4 is released
@@ -902,6 +901,8 @@ Source Code
 	  shorter timezone string is available
 	o Improve dlerror() reporting string
 	o Fix problem with shared memory on the Win32 Terminal Server
+	o Allow the shared memory address to be configured via GUC
+
 
 * Wire Protocol Changes
 	o Allow dynamic character set handling
