@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: Connection.java,v 1.14 2001/11/25 23:26:58 barry Exp $
+ * $Id: Connection.java,v 1.15 2002/01/15 06:55:13 barry Exp $
  *
  * A Connection represents a session with a specific database.	Within the
  * context of a Connection, SQL statements are executed and results are
@@ -180,7 +180,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 				"bool",
 				"date",
 				"time",
-				"abstime", "timestamp"
+				"abstime", "timestamp", "timestamptz"
 			};
 
 	/*
@@ -204,7 +204,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 												Types.BIT,
 												Types.DATE,
 												Types.TIME,
-												Types.TIMESTAMP, Types.TIMESTAMP
+												Types.TIMESTAMP, Types.TIMESTAMP, Types.TIMESTAMP
 											};
 
 
