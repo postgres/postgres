@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.26 2004/12/27 22:30:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.27 2005/01/08 22:13:36 tgl Exp $
 -->
 
 <chapter id="user-manag">
@@ -39,15 +39,15 @@ $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.26 2004/12/27 22:30:10 tgl E
    operating system users. In practice it might be convenient to
    maintain a correspondence, but this is not required. Database user
    names are global across a database cluster installation (and not
-   per individual database). To create a user use the <command>CREATE
-   USER</command> SQL command:
+   per individual database). To create a user use the <xref
+   linkend="sql-createuser" endterm="sql-createuser-title"> SQL command:
 <synopsis>
 CREATE USER <replaceable>name</replaceable>;
 </synopsis>
    <replaceable>name</replaceable> follows the rules for SQL
    identifiers: either unadorned without special characters, or
    double-quoted. To remove an existing user, use the analogous
-   <command>DROP USER</command> command:
+   <xref linkend="sql-dropuser" endterm="sql-dropuser-title"> command:
 <synopsis>
 DROP USER <replaceable>name</replaceable>;
 </synopsis>
@@ -62,14 +62,24 @@ DROP USER <replaceable>name</replaceable>;
   </indexterm>
 
   <para>
-   For convenience, the programs <command>createuser</command>
-   and <command>dropuser</command> are provided as wrappers
+   For convenience, the programs <xref linkend="app-createuser">
+   and <xref linkend="app-dropuser"> are provided as wrappers
    around these SQL commands that can be called from the shell command
    line:
 <synopsis>
 createuser <replaceable>name</replaceable>
 dropuser <replaceable>name</replaceable>
 </synopsis>
+  </para>
+
+  <para>
+   To determine the set of existing users, examine the <structname>pg_user</>
+   system catalog, for example
+<synopsis>
+SELECT usename FROM pg_user;
+</synopsis>
+   The <xref linkend="app-psql"> program's <literal>\du</> meta-command
+   is also useful for listing the existing users.
   </para>
 
   <para>
@@ -102,8 +112,8 @@ dropuser <replaceable>name</replaceable>
    is determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
    necessarily limited to connect as the user with the same name as
-   its operating system user, in the same way a person is not
-   constrained in its login name by her real name.)  Since the user
+   its operating system user, just as a person's login name 
+   need not match her real name.)  Since the user
    identity determines the set of privileges available to a connected
    client, it is important to carefully configure this when setting up
    a multiuser environment.
@@ -195,15 +205,35 @@ ALTER USER myname SET enable_indexscan TO off;
   <para>
    As in Unix, groups are a way of logically grouping users to ease
    management of privileges: privileges can be granted to, or revoked
-   from, a group as a whole.  To create a group, use
+   from, a group as a whole.  To create a group, use the <xref
+   linkend="sql-creategroup" endterm="sql-creategroup-title"> SQL command:
 <synopsis>
 CREATE GROUP <replaceable>name</replaceable>;
 </synopsis>
-   To add users to or remove users from a group, use
+
+   To add users to or remove users from an existing group, use <xref
+   linkend="sql-altergroup" endterm="sql-altergroup-title">:
 <synopsis>
 ALTER GROUP <replaceable>name</replaceable> ADD USER <replaceable>uname1</replaceable>, ... ;
 ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</replaceable>, ... ;
 </synopsis>
+
+   To destroy a group, use <xref
+   linkend="sql-dropgroup" endterm="sql-dropgroup-title">:
+<synopsis>
+DROP GROUP <replaceable>name</replaceable>;
+</synopsis>
+   This only drops the group, not its member users.
+  </para>
+
+  <para>
+   To determine the set of existing groups, examine the <structname>pg_group</>
+   system catalog, for example
+<synopsis>
+SELECT groname FROM pg_group;
+</synopsis>
+   The <xref linkend="app-psql"> program's <literal>\dg</> meta-command
+   is also useful for listing the existing groups.
   </para>
  </sect1>
 

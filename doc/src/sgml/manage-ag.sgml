@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.39 2004/12/27 22:30:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.40 2005/01/08 22:13:34 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -52,6 +52,21 @@ $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.39 2004/12/27 22:30:10 tgl Ex
    into separate schemas.  Schemas are a purely logical structure and who can
    access what is managed by the privilege system.  More information about
    managing schemas is in <xref linkend="ddl-schemas">.
+  </para>
+
+  <para>
+   Databases are created with the <command>CREATE DATABASE</> command
+   (see <xref linkend="manage-ag-createdb">) and destroyed with the
+   <command>DROP DATABASE</> command
+   (see <xref linkend="manage-ag-dropdb">).
+   To determine the set of existing databases, examine the
+   <structname>pg_database</> system catalog, for example
+<synopsis>
+SELECT datname FROM pg_database;
+</synopsis>
+   The <xref linkend="app-psql"> program's <literal>\l</> meta-command
+   and <option>-l</> command-line option are also useful for listing the
+   existing databases.
   </para>
 
   <note>
@@ -444,8 +459,23 @@ CREATE TABLE foo(i int);
    </para>
 
    <para>
-    To simplify the implementation of tablespaces, 
-    <productname>PostgreSQL</> makes extensive use of symbolic links. This
+    To remove an empty tablespace, use the <xref linkend="sql-droptablespace">
+    command.  
+   </para>
+
+   <para>
+    To determine the set of existing tablespaces, examine the
+    <structname>pg_tablespace</> system catalog, for example
+<synopsis>
+SELECT spcname FROM pg_tablespace;
+</synopsis>
+    The <xref linkend="app-psql"> program's <literal>\db</> meta-command
+    is also useful for listing the existing tablespaces.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> makes extensive use of symbolic links
+    to simplify the implementation of tablespaces. This
     means that tablespaces can be used <emphasis>only</> on systems
     that support symbolic links.
    </para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.224 2005/01/08 09:54:47 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.225 2005/01/08 22:13:26 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -12,7 +12,11 @@
   This <![%standalone-include;[document]]>
   <![%standalone-ignore;[chapter]]> describes the installation of
   <productname>PostgreSQL</productname> from the source code
-  distribution.
+  distribution.  (If you are installing a pre-packaged distribution,
+  such as an RPM or Debian package, ignore this
+  <![%standalone-include;[document]]>
+  <![%standalone-ignore;[chapter]]>
+  and read the packager's instructions instead.)
  </para>
 
  <sect1 id="install-short">

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.94 2005/01/07 23:08:44 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.95 2005/01/08 22:13:36 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -161,7 +161,15 @@ SELECT clean_emp();
     refers to the first argument, <literal>$2</> to the second, and so on.
     If an argument is of a composite type, then the dot notation,
     e.g., <literal>$1.name</literal>, may be used to access attributes
-    of the argument.
+    of the argument.  The arguments can only be used as data values,
+    not as identifiers.  Thus for example this is reasonable:
+<programlisting>
+INSERT INTO mytable VALUES ($1);
+</programlisting>
+but this will not work:
+<programlisting>
+INSERT INTO $1 VALUES (42);
+</programlisting>
    </para>
 
    <sect2>

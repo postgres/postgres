@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.300 2005/01/04 00:05:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301 2005/01/08 22:13:35 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -69,7 +69,8 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.300 2005/01/04 00:05:44 momjian
    default, although locations such as
    <filename>/usr/local/pgsql/data</filename> or
    <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
-   database cluster, use the command <command>initdb</command>,<indexterm><primary>initdb</></> which is
+   database cluster, use the command <xref
+   linkend="app-initdb">,<indexterm><primary>initdb</></> which is
    installed with <productname>PostgreSQL</productname>. The desired
    file system location of your database cluster is indicated by the
    <option>-D</option> option, for example
@@ -148,6 +149,12 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    the data. There is also a performance impact for using locales
    other than <literal>C</> or <literal>POSIX</>. Therefore, it is
    important to make this choice correctly the first time.
+  </para>
+
+  <para>
+   <command>initdb</command> also sets the default character set encoding
+   for the database cluster.  Normally this should be chosen to match the
+   locale setting.  For details see <xref linkend="multibyte">.
   </para>
  </sect1>
 
@@ -3474,7 +3481,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         present.  The default is <literal>true</> for compatibility with
         previous releases of <productname>PostgreSQL</>.  However, this
         behavior is not SQL-standard, and many people dislike it because it
-        can mask mistakes.  Set to <literal>false</> for the SQL-standard
+        can mask mistakes (such as referencing a table where you should have
+        referenced its alias).  Set to <literal>false</> for the SQL-standard
         behavior of rejecting references to tables that are not listed in
         <literal>FROM</>.
        </para>

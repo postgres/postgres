@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.48 2004/12/23 23:07:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.49 2005/01/08 22:13:25 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -106,8 +106,13 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>PostgreSQL</productname> provides several index types:
-   B-tree, R-tree, GiST, and Hash.  Each index type uses a different
+   B-tree, R-tree, Hash, and GiST.  Each index type uses a different
    algorithm that is best suited to different types of queries.
+   By default, the <command>CREATE INDEX</command> command will create a
+   B-tree index, which fits the most common situations.
+  </para>
+
+  <para>
    <indexterm>
     <primary>index</primary>
     <secondary>B-tree</secondary>
@@ -116,21 +121,24 @@ CREATE INDEX test1_id_index ON test1 (id);
     <primary>B-tree</primary>
     <see>index</see>
    </indexterm>
-   By default, the <command>CREATE INDEX</command> command will create a
-   B-tree index, which fits the most common situations.  B-trees can
-   handle equality and range queries on data that can be sorted into
-   some ordering.  In
-   particular, the <productname>PostgreSQL</productname> query planner
+   B-trees can handle equality and range queries on data that can be sorted
+   into some ordering.
+   In particular, the <productname>PostgreSQL</productname> query planner
    will consider using a B-tree index whenever an indexed column is
    involved in a comparison using one of these operators:
 
-   <simplelist type="inline">
+   <simplelist>
     <member><literal>&lt;</literal></member>
     <member><literal>&lt;=</literal></member>
     <member><literal>=</literal></member>
     <member><literal>&gt;=</literal></member>
     <member><literal>&gt;</literal></member>
    </simplelist>
+
+   Constructs equivalent to combinations of these operators, such as
+   <literal>BETWEEN</> and <literal>IN</>, can also be implemented with
+   a B-tree index search.  (But note that <literal>IS NULL</> is not
+   equivalent to <literal>=</> and is not indexable.)
   </para>
 
   <para>
@@ -142,8 +150,8 @@ CREATE INDEX test1_id_index ON test1 (id);
    'foo%'</literal> or <literal>col ~ '^foo'</literal>, but not
    <literal>col LIKE '%bar'</literal>.  However, if your server does
    not use the C locale you will need to create the index with a
-   special operator class.  See <xref linkend="indexes-opclass">
-   below.
+   special operator class to support indexing of pattern-matching queries.
+   See <xref linkend="indexes-opclass"> below.
   </para>
 
   <para>
@@ -164,7 +172,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    consider using an R-tree index whenever an indexed column is
    involved in a comparison using one of these operators:
 
-   <simplelist type="inline">
+   <simplelist>
     <member><literal>&lt;&lt;</literal></member>
     <member><literal>&amp;&lt;</literal></member>
     <member><literal>&amp;&gt;</literal></member>
@@ -173,7 +181,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <member><literal>~=</literal></member>
     <member><literal>&amp;&amp;</literal></member>
    </simplelist>
-   (Refer to <xref linkend="functions-geometry"> about the meaning of
+
+   (See <xref linkend="functions-geometry"> for the meaning of
    these operators.)
   </para>
 
@@ -202,6 +211,14 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
      these reasons, hash index use is presently discouraged.
     </para>
    </note>  
+  </para>
+
+  <para>
+   GiST indexes are not a single kind of index, but rather an infrastructure
+   within which many different indexing strategies can be implemented.
+   Accordingly, the particular operators with which a GiST index can be
+   used vary depending on the indexing strategy (the <firstterm>operator
+   class</>).  For more information see <xref linkend="GiST">.
   </para>
 
   <para>

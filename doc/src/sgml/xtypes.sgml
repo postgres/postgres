@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.23 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.24 2005/01/08 22:13:38 tgl Exp $
 -->
 
  <sect1 id="xtypes">
@@ -240,8 +240,9 @@ CREATE TYPE complex (
   data: the first four bytes must be an <type>int32</type> containing
   the total length in bytes of the datum (including itself).  The C
   functions operating on the data type must be careful to unpack any
-  toasted values they are handed (this detail can normally be hidden in the
-  <function>GETARG</function> macros).  Then,
+  toasted values they are handed, by using <function>PG_DETOAST_DATUM</>.
+  (This detail is customarily hidden by defining type-specific
+  <function>GETARG</function> macros.) Then, 
   when running the <command>CREATE TYPE</command> command, specify the
   internal length as <literal>variable</> and select the appropriate
   storage option.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.34 2004/12/28 22:47:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.35 2005/01/08 22:13:33 tgl Exp $
 -->
 
  <chapter id="largeObjects">
@@ -122,15 +122,17 @@ Oid lo_creat(PGconn *conn, int mode);
      or'ing together the bits <symbol>INV_READ</symbol>  and
      <symbol>INV_WRITE</symbol>.  The low-order sixteen bits of the mask have
      historically been used at Berkeley to designate the storage  manager  number on which the large object
-     should reside.  These
-     bits should always be zero now.
-     The return value is the OID that was assigned to the new large object.
+     should reside.  These bits should always be zero now.  (The access type
+     does not actually do anything anymore either, but one or both flag bits
+     must be set to avoid an error.)
+     The return value is the OID that was assigned to the new large object,
+     or InvalidOid (zero) on failure.
     </para>
 
     <para>
      An example:
 <programlisting>
-inv_oid = lo_creat(INV_READ|INV_WRITE);
+inv_oid = lo_creat(conn, INV_READ|INV_WRITE);
 </programlisting>
     </para>
    </sect2>
@@ -147,7 +149,8 @@ Oid lo_import(PGconn *conn, const char *filename);
      <replaceable class="parameter">filename</replaceable> 
      specifies the operating system name of
      the file to be imported as a large object.
-     The return value is the OID that was assigned to the new large object.
+     The return value is the OID that was assigned to the new large object,
+     or InvalidOid (zero) on failure.
      Note that the file is read by the client interface library, not by
      the server; so it must exist in the client filesystem and be readable
      by the client application.
@@ -164,11 +167,11 @@ Oid lo_import(PGconn *conn, const char *filename);
 int lo_export(PGconn *conn, Oid lobjId, const char *filename);
 </synopsis>
      <indexterm><primary>lo_export</></>
-     The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
-     object  to  export  and the <parameter>filename</parameter> argument specifies
-     the operating system name of the file.
-     Note that the file is written by the client interface library, not by
-     the server.
+     The <parameter>lobjId</parameter> argument specifies the OID of the large
+     object to export and the <parameter>filename</parameter> argument
+     specifies the operating system name of the file.  Note that the file is
+     written by the client interface library, not by the server.  Returns 1
+     on success, -1 on failure.
     </para>
    </sect2>
 
@@ -176,7 +179,7 @@ int lo_export(PGconn *conn, Oid lobjId, const char *filename);
     <title>Opening an Existing Large Object</title>
 
     <para>
-     To open an existing large object, call
+     To open an existing large object for reading or writing, call
 <synopsis>
 int lo_open(PGconn *conn, Oid lobjId, int mode);
 </synopsis>
@@ -186,11 +189,13 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      object is opened  for  reading  (<symbol>INV_READ</>),  writing (<symbol>INV_WRITE</symbol>),  or
      both.
      A  large  object cannot be opened before it is created.
-     <function>lo_open</function> returns a large object descriptor
-     for later use in <function>lo_read</function>, <function>lo_write</function>,
-     <function>lo_lseek</function>, <function>lo_tell</function>, and
-     <function>lo_close</function>.  The descriptor is only valid for
+     <function>lo_open</function> returns a (non-negative) large object
+     descriptor for later use in <function>lo_read</function>,
+     <function>lo_write</function>, <function>lo_lseek</function>,
+     <function>lo_tell</function>, and <function>lo_close</function>.
+     The descriptor is only valid for 
      the duration of the current transaction.
+     On failure, -1 is returned.
 </para>
 </sect2>
 
@@ -246,7 +251,7 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
      are <symbol>SEEK_SET</> (seek from object start),
      <symbol>SEEK_CUR</> (seek from current position), and
      <symbol>SEEK_END</> (seek from object end).  The return value is
-     the new location pointer.
+     the new location pointer, or -1 on error.
 </para>
 </sect2>
 
@@ -294,30 +299,36 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 </synopsis>
      <indexterm><primary>lo_unlink</></> The
      <parameter>lobjId</parameter> argument specifies the OID of the
-     large object to remove.  In the event of an error, the return
-     value is negative.
+     large object to remove.  Returns 1 if successful, -1 on failure.
     </para>
    </sect2>
-
 
 </sect1>
 
 <sect1 id="lo-funcs">
 <title>Server-Side Functions</title>
 
-<para>
-     There are two built-in server-side functions,
-     <function>lo_import</function><indexterm><primary>lo_import</></>
-     and
-     <function>lo_export</function>,<indexterm><primary>lo_export</></>
-     for large object access, which are available for use in
-     <acronym>SQL</acronym> commands.  Here is an example of their
-     use:
+  <para>
+   There are server-side functions callable from SQL that correspond to
+   each of the client-side functions described above; indeed, for the
+   most part the client-side functions are simply interfaces to the
+   equivalent server-side functions.  The ones that are actually useful
+   to call via SQL commands are
+   <function>lo_creat</function><indexterm><primary>lo_creat</></>,
+   <function>lo_unlink</function><indexterm><primary>lo_unlink</></>,
+   <function>lo_import</function><indexterm><primary>lo_import</></>, and
+   <function>lo_export</function><indexterm><primary>lo_export</></>.
+   Here are examples of their use:
+
 <programlisting>
 CREATE TABLE image (
     name            text,
     raster          oid
 );
+
+SELECT lo_creat(-1);       -- returns OID of new, empty large object
+
+SELECT lo_unlink(173454);  -- deletes large object with OID 173454
 
 INSERT INTO image (name, raster)
     VALUES ('beautiful image', lo_import('/etc/motd'));
@@ -325,15 +336,19 @@ INSERT INTO image (name, raster)
 SELECT lo_export(image.raster, '/tmp/motd') FROM image
     WHERE name = 'beautiful image';
 </programlisting>
-</para>
+  </para>
 
-<para>
-These functions read and write files in the server's file system, using the
-permissions of the database's owning user.  Therefore, their use is restricted
-to superusers.  (In contrast, the client-side import and export functions
-read and write files in the client's file system, using the permissions of
-the client program.  Their use is not restricted.)
-</para>
+  <para>
+    The server-side <function>lo_import</function> and
+    <function>lo_export</function> functions behave considerably differently
+    from their client-side analogs.  These two functions read and write files
+    in the server's file system, using the permissions of the database's
+    owning user.  Therefore, their use is restricted to superusers.  In
+    contrast, the client-side import and export functions read and write files
+    in the client's file system, using the permissions of the client program.
+    The client-side functions can be used by any
+    <productname>PostgreSQL</productname> user.
+  </para>
 </sect1>
 
 <sect1 id="lo-examplesect">

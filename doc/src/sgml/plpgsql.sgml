@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.54 2004/12/30 21:45:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.55 2005/01/08 22:13:34 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2713,6 +2713,14 @@ AFTER INSERT OR UPDATE OR DELETE ON emp
       <para>
        Instead of packages, use schemas to organize your functions
        into groups.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Since there are no packages, there are no package-level variables
+       either. This is somewhat annoying.  You may be able to keep per-session
+       state in temporary tables, instead.
       </para>
      </listitem>
     </itemizedlist>
