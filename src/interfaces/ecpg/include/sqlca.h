@@ -50,7 +50,7 @@ struct sqlca_t
 	/* 6: empty						*/
 	/* 7: empty						*/
 
-	char		sqlext[8];
+	char		sqlstate[5];
 };
 
 struct sqlca_t *ECPGget_sqlca(void);

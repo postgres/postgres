@@ -6,7 +6,8 @@
 #ifndef _ECPGLIB_H
 #define _ECPGLIB_H
 
-#include <stdio.h>
+#include "postgres_fe.h"
+#include "libpq-fe.h"
 
 #ifndef __BEOS__
 #ifndef __cplusplus
@@ -71,7 +72,8 @@ bool ECPGdo_descriptor(int line, const char *connection,
 				  const char *descriptor, const char *query);
 bool		ECPGdeallocate_desc(int line, const char *name);
 bool		ECPGallocate_desc(int line, const char *name);
-void		ECPGraise(int line, int code, const char *str, int);
+void		ECPGraise(int line, int code, const char *sqlstate, const char *str);
+void		ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat);
 bool		ECPGget_desc_header(int, char *, int *);
 bool		ECPGget_desc(int, char *, int,...);
 

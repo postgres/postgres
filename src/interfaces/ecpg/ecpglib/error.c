@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.4 2003/08/01 08:21:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.5 2003/08/01 13:53:36 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -11,11 +11,13 @@
 #include "extern.h"
 #include "sqlca.h"
 
+
 void
-ECPGraise(int line, int code, const char *str, int compat)
+ECPGraise(int line, int code, const char * sqlstate, const char *str)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	sqlca->sqlcode = code;
+	strncpy(sqlca->sqlstate, sqlstate, sizeof(sqlca->sqlstate));
 
 	switch (code)
 	{
@@ -129,23 +131,6 @@ ECPGraise(int line, int code, const char *str, int compat)
 				   "Variable is not a character type in line %d.", line);
 			break;
 
-		case ECPG_PGSQL:
-			{
-				int			slen = strlen(str);
-
-				/* strip trailing newline */
-				if (slen > 0 && str[slen - 1] == '\n')
-					slen--;
-				snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-						 "'%.*s' in line %d.", slen, str, line);
-				if (strncmp(str, "ERROR:  Cannot insert a duplicate key", strlen("ERROR:  Cannot insert a duplicate key")) == 0)
-					sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_DUPLICATE_KEY : ECPG_DUPLICATE_KEY;
-				else if (strncmp(str, "ERROR:  More than one tuple returned by a subselect", strlen("ERROR:  More than one tuple returned by a subselect")) == 0)
-					sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_SUBSELECT_NOT_ONE : ECPG_SUBSELECT_NOT_ONE;
-				
-				break;
-			}
-
 		case ECPG_TRANS:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 					 "Error in transaction processing in line %d.", line);
@@ -164,6 +149,38 @@ ECPGraise(int line, int code, const char *str, int compat)
 
 	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 	ECPGlog("raising sqlcode %d in line %d, '%s'.\n", code, line, sqlca->sqlerrm.sqlerrmc);
+
+	/* free all memory we have allocated for the user */
+	ECPGfree_auto_mem();
+}
+
+void
+ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
+{
+	struct sqlca_t *sqlca = ECPGget_sqlca();
+
+	/* copy error message */
+	snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
+			 "'%s' in line %d.", 
+			 result ? PQresultErrorField(result, 'M') : PQerrorMessage(conn),
+			 line);
+	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
+
+	/* copy SQLSTATE */
+	strncpy(sqlca->sqlstate,
+			result ? PQresultErrorField(result, 'C') : ECPG_SQLSTATE_ECPG_INTERNAL_ERROR,
+			sizeof(sqlca->sqlstate));
+
+	/* assign SQLCODE for backward compatibility */
+	if (strncmp(sqlca->sqlstate, "23505", sizeof(sqlca->sqlstate))==0)
+		sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_DUPLICATE_KEY : ECPG_DUPLICATE_KEY;
+	if (strncmp(sqlca->sqlstate, "21000", sizeof(sqlca->sqlstate))==0)
+		sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_SUBSELECT_NOT_ONE : ECPG_SUBSELECT_NOT_ONE;
+	else
+		sqlca->sqlcode = ECPG_PGSQL;
+
+	ECPGlog("raising sqlstate %.*s in line %d, '%s'.\n",
+			sqlca->sqlstate, sizeof(sqlca->sqlstate), line, sqlca->sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
 	ECPGfree_auto_mem();

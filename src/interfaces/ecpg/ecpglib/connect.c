@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.13 2003/08/01 08:21:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.14 2003/08/01 13:53:36 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -116,7 +116,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		{
 			if ((results = PQexec(con->connection, "begin transaction")) == NULL)
 			{
-				ECPGraise(lineno, ECPG_TRANS, NULL, ECPG_COMPAT_PGSQL);
+				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
 				return false;
 			}
 			PQclear(results);
@@ -130,7 +130,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		{
 			if ((results = PQexec(con->connection, "commit")) == NULL)
 			{
-				ECPGraise(lineno, ECPG_TRANS, NULL, ECPG_COMPAT_PGSQL);
+				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
 				return false;
 			}
 			PQclear(results);
@@ -154,150 +154,46 @@ ECPGsetconn(int lineno, const char *connection_name)
 	return true;
 }
 
+
 static void
-ECPGnoticeProcessor_raise(int code, const char *message)
+ECPGnoticeReceiver(void *arg, const PGresult *result)
 {
+	char *sqlstate = PQresultErrorField(result, 'C');
+	char *message = PQresultErrorField(result, 'M');
 	struct sqlca_t *sqlca = ECPGget_sqlca();
-	sqlca->sqlcode = code;
+
+	int sqlcode;
+
+	/* these are not warnings */
+	if (strncmp(sqlstate, "00", 2)==0)
+		return;
+
+	ECPGlog("%s", message);
+
+	/* map to SQLCODE for backward compatibility */
+	if (strcmp(sqlstate, ECPG_SQLSTATE_INVALID_CURSOR_NAME)==0)
+		sqlcode = ECPG_WARNING_UNKNOWN_PORTAL;
+	else if (strcmp(sqlstate, ECPG_SQLSTATE_ACTIVE_SQL_TRANSACTION)==0)
+		sqlcode = ECPG_WARNING_IN_TRANSACTION;
+	else if (strcmp(sqlstate, ECPG_SQLSTATE_NO_ACTIVE_SQL_TRANSACTION)==0)
+		sqlcode = ECPG_WARNING_NO_TRANSACTION;
+	else if (strcmp(sqlstate, ECPG_SQLSTATE_DUPLICATE_CURSOR)==0)
+		sqlcode = ECPG_WARNING_PORTAL_EXISTS;
+	else
+		sqlcode = 0;
+
+	strncpy(sqlca->sqlstate, sqlstate, sizeof(sqlca->sqlstate));
+	sqlca->sqlcode = sqlcode;
+	sqlca->sqlwarn[2] = 'W';
+	sqlca->sqlwarn[0] = 'W';
+
 	strncpy(sqlca->sqlerrm.sqlerrmc, message, sizeof(sqlca->sqlerrm.sqlerrmc));
 	sqlca->sqlerrm.sqlerrmc[sizeof(sqlca->sqlerrm.sqlerrmc) - 1] = 0;
 	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 
-	/* remove trailing newline */
-	if (sqlca->sqlerrm.sqlerrml
-		&& sqlca->sqlerrm.sqlerrmc[sqlca->sqlerrm.sqlerrml - 1] == '\n')
-	{
-		sqlca->sqlerrm.sqlerrmc[sqlca->sqlerrm.sqlerrml - 1] = 0;
-		sqlca->sqlerrm.sqlerrml--;
-	}
-
-	ECPGlog("raising sqlcode %d\n", code);
+	ECPGlog("raising sqlcode %d\n", sqlcode);
 }
 
-/*
- * I know this is a mess, but we can't redesign the backend
- */
-
-static void
-ECPGnoticeProcessor(void *arg, const char *message)
-{
-	struct sqlca_t *sqlca = ECPGget_sqlca();
-
-	/* these notices raise an error */
-	if (strncmp(message, "WARNING: ", 9) && strncmp(message, "NOTICE: ", 8))
-	{
-		ECPGlog("ECPGnoticeProcessor: strange warning '%s'\n", message);
-		ECPGnoticeProcessor_raise(ECPG_WARNING_UNRECOGNIZED, message);
-		return;
-	}
-
-	message += 8;
-	while (*message == ' ')
-		message++;
-	ECPGlog("WARNING: %s", message);
-
-	/* WARNING: (transaction aborted): queries ignored until END */
-
-	/*
-	 * WARNING: current transaction is aborted, queries ignored until end
-	 * of transaction block
-	 */
-	if (strstr(message, "queries ignored") && strstr(message, "transaction")
-		&& strstr(message, "aborted"))
-	{
-		ECPGnoticeProcessor_raise(ECPG_WARNING_QUERY_IGNORED, message);
-		return;
-	}
-
-	/* WARNING: PerformPortalClose: portal "*" not found */
-	if ((!strncmp(message, "PerformPortalClose: portal", 26)
-		 || !strncmp(message, "PerformPortalFetch: portal", 26))
-		&& strstr(message + 26, "not found"))
-	{
-		ECPGnoticeProcessor_raise(ECPG_WARNING_UNKNOWN_PORTAL, message);
-		return;
-	}
-
-	/* WARNING: BEGIN: already a transaction in progress */
-	if (!strncmp(message, "BEGIN: already a transaction in progress", 40))
-	{
-		ECPGnoticeProcessor_raise(ECPG_WARNING_IN_TRANSACTION, message);
-		return;
-	}
-
-	/* WARNING: AbortTransaction and not in in-progress state */
-	/* WARNING: COMMIT: no transaction in progress */
-	/* WARNING: ROLLBACK: no transaction in progress */
-	if (!strncmp(message, "AbortTransaction and not in in-progress state", 45)
-		|| !strncmp(message, "COMMIT: no transaction in progress", 34)
-		|| !strncmp(message, "ROLLBACK: no transaction in progress", 36))
-	{
-		ECPGnoticeProcessor_raise(ECPG_WARNING_NO_TRANSACTION, message);
-		return;
-	}
-
-	/* WARNING: BlankPortalAssignName: portal * already exists */
-	if (!strncmp(message, "BlankPortalAssignName: portal", 29)
-		&& strstr(message + 29, "already exists"))
-	{
-		ECPGnoticeProcessor_raise(ECPG_WARNING_PORTAL_EXISTS, message);
-		return;
-	}
-
-	/* these are harmless - do nothing */
-
-	/*
-	 * WARNING: CREATE TABLE / PRIMARY KEY will create implicit index '*'
-	 * for table '*'
-	 */
-
-	/*
-	 * WARNING: ALTER TABLE ... ADD CONSTRAINT will create implicit
-	 * trigger(s) for FOREIGN KEY check(s)
-	 */
-
-	/*
-	 * WARNING: CREATE TABLE will create implicit sequence '*' for SERIAL
-	 * column '*.*'
-	 */
-
-	/*
-	 * WARNING: CREATE TABLE will create implicit trigger(s) for FOREIGN
-	 * KEY check(s)
-	 */
-	if ((!strncmp(message, "CREATE TABLE", 12) || !strncmp(message, "ALTER TABLE", 11))
-		&& strstr(message + 11, "will create implicit"))
-		return;
-
-	/* WARNING: QUERY PLAN: */
-	if (!strncmp(message, "QUERY PLAN:", 11))	/* do we really see these? */
-		return;
-
-	/*
-	 * WARNING: DROP TABLE implicitly drops referential integrity trigger
-	 * from table "*"
-	 */
-	if (!strncmp(message, "DROP TABLE implicitly drops", 27))
-		return;
-
-	/*
-	 * WARNING: Caution: DROP INDEX cannot be rolled back, so don't abort
-	 * now
-	 */
-	if (strstr(message, "cannot be rolled back"))
-		return;
-
-	/* these and other unmentioned should set sqlca->sqlwarn[2] */
-	/* WARNING: The ':' operator is deprecated.  Use exp(x) instead. */
-	/* WARNING: Rel *: Uninitialized page 0 - fixing */
-	/* WARNING: PortalHeapMemoryFree: * not in alloc set! */
-	/* WARNING: Too old parent tuple found - can't continue vc_repair_frag */
-	/* WARNING: identifier "*" will be truncated to "*" */
-	/* WARNING: InvalidateSharedInvalid: cache state reset */
-	/* WARNING: RegisterSharedInvalid: SI buffer overflow */
-	sqlca->sqlwarn[2] = 'W';
-	sqlca->sqlwarn[0] = 'W';
-}
 
 /* this contains some quick hacks, needs to be cleaned up, but it works */
 bool
@@ -406,7 +302,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 					if (strncmp(dbname, "unix:", 5) != 0)
 					{
 						ECPGlog("connect: socketname %s given for TCP connection in line %d\n", host, lineno);
-						ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>", ECPG_COMPAT_PGSQL);
+						ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
 						if (host)
 							ECPGfree(host);
 						if (port)
@@ -429,7 +325,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				if (strcmp(dbname + offset, "localhost") != 0 && strcmp(dbname + offset, "127.0.0.1") != 0)
 				{
 					ECPGlog("connect: non-localhost access via sockets in line %d\n", lineno);
-					ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>", ECPG_COMPAT_PGSQL);
+					ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
 					if (host)
 						ECPGfree(host);
 					if (port)
@@ -497,7 +393,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				user ? "for user " : "", user ? user : "",
 				lineno, errmsg);
         
-		ECPGraise(lineno, ECPG_CONNECT, db, ECPG_COMPAT_PGSQL);
+		ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, db);
 		if (host)
 			ECPGfree(host);
 		if (port)
@@ -528,7 +424,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	this->committed = true;
 	this->autocommit = autocommit;
 
-	PQsetNoticeProcessor(this->connection, &ECPGnoticeProcessor, (void *) this);
+	PQsetNoticeReceiver(this->connection, &ECPGnoticeReceiver, (void *) this);
 
 	return true;
 }

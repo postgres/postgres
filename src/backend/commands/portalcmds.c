@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.18 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.19 2003/08/01 13:53:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,8 +169,7 @@ PerformPortalFetch(FetchStmt *stmt,
 		/* FIXME: shouldn't this be an ERROR? */
 		ereport(WARNING,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
-				 errmsg("portal \"%s\" does not exist", stmt->portalname),
-				 errfunction("PerformPortalFetch"))); /* for ecpg */
+				 errmsg("portal \"%s\" does not exist", stmt->portalname)));
 		if (completionTag)
 			strcpy(completionTag, stmt->ismove ? "MOVE 0" : "FETCH 0");
 		return;

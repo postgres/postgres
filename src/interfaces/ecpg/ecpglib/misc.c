@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.11 2003/08/01 08:21:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.12 2003/08/01 13:53:36 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -47,7 +47,7 @@ static struct sqlca_t sqlca_init =
 		0, 0, 0, 0, 0, 0, 0, 0
 	},
 	{
-		0, 0, 0, 0, 0, 0, 0, 0
+		'0', '0', '0', '0', '0'
 	}
 };
 
@@ -78,7 +78,7 @@ static struct sqlca_t sqlca =
 		0, 0, 0, 0, 0, 0, 0, 0
 	},
 	{
-		0, 0, 0, 0, 0, 0, 0, 0
+		'0', '0', '0', '0', '0'
 	}
 };
 #endif
@@ -103,7 +103,8 @@ ECPGinit(const struct connection * con, const char *connection_name, const int l
 	ECPGinit_sqlca(sqlca);
 	if (con == NULL)
 	{
-		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL", ECPG_COMPAT_PGSQL);
+		ECPGraise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
+				  connection_name ? connection_name : "NULL");
 		return (false);
 	}
 
@@ -150,7 +151,7 @@ ECPGstatus(int lineno, const char *connection_name)
 	/* are we connected? */
 	if (con->connection == NULL)
 	{
-		ECPGraise(lineno, ECPG_NOT_CONN, con->name, ECPG_COMPAT_PGSQL);
+		ECPGraise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, con->name);
 		return false;
 	}
 
@@ -179,7 +180,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		{
 			if ((res = PQexec(con->connection, transaction)) == NULL)
 			{
-				ECPGraise(lineno, ECPG_TRANS, NULL, ECPG_COMPAT_PGSQL);
+				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
 				return FALSE;
 			}
 			PQclear(res);

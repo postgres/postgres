@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.14 2003/08/01 08:21:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.15 2003/08/01 13:53:36 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -34,7 +34,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	{
 		if (*pval != '{')
 		{
-			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, NULL, compat);
+			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
 			return (false);
 		}
 
@@ -90,13 +90,13 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				}
 				else
 				{
-					ECPGraise(lineno, ECPG_MISSING_INDICATOR, NULL, compat);
+					ECPGraise(lineno, ECPG_MISSING_INDICATOR, ECPG_SQLSTATE_NULL_VALUE_NO_INDICATOR_PARAMETER, NULL);
 					return (false);
 				}
 			}
 			break;
 		default:
-			ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(ind_type), compat);
+			ECPGraise(lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, ECPGtype_name(ind_type));
 			return (false);
 			break;
 	}
@@ -126,7 +126,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_INT_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_INT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -159,7 +159,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_UINT_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -192,7 +192,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_INT_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_INT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -209,7 +209,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_UINT_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -235,7 +235,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_FLOAT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -266,7 +266,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						else if (offset == sizeof(int))
 							*((int *) (var + offset * act_tuple)) = false;
 						else
-							ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size", compat);
+							ECPGraise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, "different size");
 						break;
 					}
 					else if (pval[0] == 't' && pval[1] == '\0')
@@ -276,7 +276,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						else if (offset == sizeof(int))
 							*((int *) (var + offset * act_tuple)) = true;
 						else
-							ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size", compat);
+							ECPGraise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, "different size");
 						break;
 					}
 					else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))
@@ -286,7 +286,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 				}
 
-				ECPGraise(lineno, ECPG_CONVERT_BOOL, pval, compat);
+				ECPGraise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 				return (false);
 				break;
 
@@ -396,7 +396,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_NUMERIC_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_NUMERIC_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -423,7 +423,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_INTERVAL_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_INTERVAL_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 				}
@@ -446,7 +446,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_DATE_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_DATE_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 
@@ -468,7 +468,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
-						ECPGraise(lineno, ECPG_TIMESTAMP_FORMAT, pval, compat);
+						ECPGraise(lineno, ECPG_TIMESTAMP_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
 					}
 
@@ -477,7 +477,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				break;
 				
 			default:
-				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(type), compat);
+				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, ECPGtype_name(type));
 				return (false);
 				break;
 		}

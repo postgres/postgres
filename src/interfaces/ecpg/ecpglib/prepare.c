@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.7 2003/08/01 08:21:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.8 2003/08/01 13:53:36 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -120,7 +120,7 @@ ECPGdeallocate(int lineno, int c, char *name)
 	}
 	
 	if (!ret) 
-		ECPGraise(lineno, ECPG_INVALID_STMT, name, ECPG_COMPAT_PGSQL);
+		ECPGraise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, name);
 
 	return ret;
 }
