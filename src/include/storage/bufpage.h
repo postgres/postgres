@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.56 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.57 2003/12/11 21:21:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ typedef uint16 LocationIndex;
  * there was no concept of a page version number, and doing it this way
  * lets us pretend that pre-7.3 databases have page version number zero.
  * We constrain page sizes to be multiples of 256, leaving the low eight
- * bytes available for a version number.
+ * bits available for a version number.
  *
  * Minimum possible page size is perhaps 64B to fit page header, opaque space
  * and a minimal tuple; of course, in reality you want it much bigger, so
