@@ -7,11 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.1.1.1 1996/07/09 06:21:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.2 1996/10/31 10:42:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+
+#include <sys/types.h> 
+
+#include "postgres.h"
 
 #include "nodes/primnodes.h"
 #include "nodes/plannodes.h"
