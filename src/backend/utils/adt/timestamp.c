@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.82 2003/04/04 04:50:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.83 2003/04/07 15:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,8 +911,6 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 			if (tzn != NULL)
 				*tzn = NULL;
 #endif
-
-			dt = dt2local(dt, *tzp);
 		}
 		else
 		{
