@@ -129,7 +129,7 @@ PGAPI_Connect(
 
 	qlog("conn = %u, %s(DSN='%s', UID='%s', PWD='%s')\n", conn, func, ci->dsn, ci->username, ci->password);
 
-	if (CC_connect(conn, FALSE) <= 0)
+	if (CC_connect(conn, AUTH_REQ_OK, NULL) <= 0)
 	{
 		/* Error messages are filled in */
 		CC_log_error(func, "Error on CC_connect", conn);
@@ -608,7 +608,7 @@ md5_auth_send(ConnectionClass *self, const char *salt)
 }
 
 char
-CC_connect(ConnectionClass *self, char do_password)
+CC_connect(ConnectionClass *self, char password_req, char *salt_para)
 {
 	StartupPacket sp;
 	StartupPacket6_2 sp62;
@@ -627,7 +627,7 @@ CC_connect(ConnectionClass *self, char do_password)
 
 	mylog("%s: entering...\n", func);
 
-	if (do_password)
+	if (password_req != AUTH_REQ_OK)
 
 		sock = self->sock;		/* already connected, just authenticate */
 
@@ -780,7 +780,7 @@ another_version_retry:
 
 		do
 		{
-			if (do_password)
+			if (password_req != AUTH_REQ_OK)
 				beresp = 'R';
 			else
 			{
@@ -811,11 +811,13 @@ another_version_retry:
 					return 0;
 				case 'R':
 
-					if (do_password)
+					if (password_req != AUTH_REQ_OK)
 					{
-						mylog("in 'R' do_password\n");
-						areq = AUTH_REQ_PASSWORD;
-						do_password = FALSE;
+						mylog("in 'R' password_req=%s\n", ci->password);
+						areq = password_req;
+						if (salt_para)
+							memcpy(salt, salt_para, sizeof(salt));
+						password_req = AUTH_REQ_OK;
 					}
 					else
 					{
@@ -823,7 +825,7 @@ another_version_retry:
 						areq = SOCK_get_int(sock, 4);
 						if (areq == AUTH_REQ_MD5)
 							SOCK_get_n_char(sock, salt, 4);
-						if (areq == AUTH_REQ_CRYPT)
+						else if (areq == AUTH_REQ_CRYPT)
 							SOCK_get_n_char(sock, salt, 2);
 
 						mylog("areq = %d\n", areq);
@@ -850,7 +852,7 @@ another_version_retry:
 							{
 								self->errornumber = CONNECTION_NEED_PASSWORD;
 								self->errormsg = "A password is required for this connection.";
-								return -1;		/* need password */
+								return -areq;		/* need password */
 							}
 
 							mylog("past need password\n");
@@ -872,7 +874,9 @@ another_version_retry:
 							{
 								self->errornumber = CONNECTION_NEED_PASSWORD;
 								self->errormsg = "A password is required for this connection.";
-								return -1; /* need password */
+								if (salt_para)
+									memcpy(salt_para, salt, sizeof(salt));
+								return -areq; /* need password */
 							}
 							if (md5_auth_send(self, salt))
 							{
@@ -1478,7 +1482,10 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 						self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 						self->errormsg = QR_get_message(res);
 						ReadyToReturn = TRUE;
-						retres = NULL;
+						if (PGRES_FATAL_ERROR == QR_get_status(res))
+							retres = cmdres;
+						else
+							retres = NULL;
 						break;
 					}
 					query_completed = TRUE;

@@ -78,7 +78,8 @@ PGAPI_DriverConnect(
 	char		connStrIn[MAX_CONNECT_STRING];
 	char		connStrOut[MAX_CONNECT_STRING];
 	int			retval;
-	char		password_required = FALSE;
+	char		salt[5];
+	char		password_required = AUTH_REQ_OK;
 	int			len = 0;
 	SWORD		lenStrout;
 
@@ -114,6 +115,7 @@ PGAPI_DriverConnect(
 	getDSNdefaults(ci);
 	/* initialize pg_version */
 	CC_initialize_pg_version(conn);
+	salt[0] = '\0';
 
 #ifdef WIN32
 dialog:
@@ -173,7 +175,7 @@ dialog:
 	}
 
 	/* do the actual connect */
-	retval = CC_connect(conn, password_required);
+	retval = CC_connect(conn, password_required, salt);
 	if (retval < 0)
 	{							/* need a password */
 		if (fDriverCompletion == SQL_DRIVER_NOPROMPT)
@@ -185,7 +187,7 @@ dialog:
 		else
 		{
 #ifdef WIN32
-			password_required = TRUE;
+			password_required = -retval;
 			goto dialog;
 #else
 			return SQL_ERROR;	/* until a better solution is found. */

@@ -267,6 +267,43 @@ driver_optionsProc(HWND hdlg,
 }
 
 int			CALLBACK
+global_optionsProc(HWND hdlg,
+				   UINT wMsg,
+				   WPARAM wParam,
+				   LPARAM lParam)
+{
+
+	switch (wMsg)
+	{
+		case WM_INITDIALOG:
+			CheckDlgButton(hdlg, DRV_COMMLOG, globals.commlog);
+#ifndef Q_LOG
+			EnableWindow(GetDlgItem(hdlg, DRV_COMMLOG), FALSE);
+#endif /* Q_LOG */
+			CheckDlgButton(hdlg, DRV_DEBUG, globals.debug);
+#ifndef MY_LOG
+			EnableWindow(GetDlgItem(hdlg, DRV_DEBUG), FALSE);
+#endif /* MY_LOG */
+			break;
+
+		case WM_COMMAND:
+			switch (GET_WM_COMMAND_ID(wParam, lParam))
+			{
+				case IDOK:
+					globals.commlog = IsDlgButtonChecked(hdlg, DRV_COMMLOG);
+					globals.debug = IsDlgButtonChecked(hdlg, DRV_DEBUG);
+					driver_options_update(hdlg, NULL, TRUE);
+
+				case IDCANCEL:
+					EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
+					return TRUE;
+			}
+	}
+
+	return FALSE;
+}
+
+int			CALLBACK
 ds_options1Proc(HWND hdlg,
 				   UINT wMsg,
 				   WPARAM wParam,

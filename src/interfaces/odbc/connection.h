@@ -328,7 +328,7 @@ char		CC_begin(ConnectionClass *self);
 char		CC_commit(ConnectionClass *self);
 char		CC_abort(ConnectionClass *self);
 int			CC_set_translation(ConnectionClass *self);
-char		CC_connect(ConnectionClass *self, char do_password);
+char		CC_connect(ConnectionClass *self, char password_req, char *salt);
 char		CC_add_statement(ConnectionClass *self, StatementClass *stmt);
 char		CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
 char		CC_get_error(ConnectionClass *self, int *number, char **message);

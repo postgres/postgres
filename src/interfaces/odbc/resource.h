@@ -6,6 +6,7 @@
 #define IDS_MSGTITLE					2
 #define DLG_OPTIONS_DRV					102
 #define DLG_OPTIONS_DS					103
+#define DLG_OPTIONS_GLOBAL				104
 #define IDC_DSNAME						400
 #define IDC_DSNAMETEXT					401
 #define IDC_DESC						404

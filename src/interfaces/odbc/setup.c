@@ -290,9 +290,8 @@ ConfigDlgProc(HWND hdlg,
 
 				case IDC_DRIVER:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
-
-					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-						 hdlg, driver_optionsProc, (LPARAM) &lpsetupdlg->ci);
+					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_GLOBAL),
+						 hdlg, global_optionsProc, (LPARAM) &lpsetupdlg->ci);
 
 					return TRUE;
 			}

@@ -174,6 +174,10 @@ int CALLBACK driver_optionsProc(HWND hdlg,
 				   UINT wMsg,
 				   WPARAM wParam,
 				   LPARAM lParam);
+int CALLBACK global_optionsProc(HWND hdlg,
+				   UINT wMsg,
+				   WPARAM wParam,
+				   LPARAM lParam);
 int CALLBACK ds_options1Proc(HWND hdlg,
 			   UINT wMsg,
 			   WPARAM wParam,

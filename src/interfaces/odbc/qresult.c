@@ -456,6 +456,7 @@ QR_next_tuple(QResultClass *self)
 	char		fetch[128];
 	QueryInfo	qi;
 	ConnInfo   *ci = NULL;
+	BOOL		msg_truncated;
 	UDWORD		abort_opt;
 
 	if (fetch_count < num_backend_rows)
@@ -665,9 +666,12 @@ QR_next_tuple(QResultClass *self)
 				}
 
 			case 'E':			/* Error */
-				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
-				QR_set_message(self, msgbuffer);
-				self->status = PGRES_FATAL_ERROR;
+				msg_truncated = SOCK_get_string(sock, msgbuffer,
+ ERROR_MSG_LENGTH);
+
+				/* Remove a newline */
+				if (msgbuffer[0] != '\0' && msgbuffer[strlen(msgbuffer) - 1] == '\n')
+					msgbuffer[strlen(msgbuffer) - 1] = '\0';
 
 				abort_opt = 0;
 				if (!strncmp(msgbuffer, "FATAL", 5))
@@ -679,14 +683,19 @@ QR_next_tuple(QResultClass *self)
 
 				mylog("ERROR from backend in next_tuple: '%s'\n", msgbuffer);
 				qlog("ERROR from backend in next_tuple: '%s'\n", msgbuffer);
+				while (msg_truncated)
+					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
 				return FALSE;
 
 			case 'N':			/* Notice */
-				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
-				QR_set_message(self, msgbuffer);
-				self->status = PGRES_NONFATAL_ERROR;
+				msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+				QR_set_notice(self, cmdbuffer);
+				if (QR_command_successful(self))
+					QR_set_status(self, PGRES_NONFATAL_ERROR);
 				qlog("NOTICE from backend in next_tuple: '%s'\n", msgbuffer);
+				while (msg_truncated)
+					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 				continue;
 
 			default:			/* this should only happen if the backend

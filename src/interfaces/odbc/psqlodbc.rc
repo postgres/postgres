@@ -79,7 +79,7 @@ BEGIN
     GROUPBOX        "Options (Advanced):",IDC_OPTIONS,141,72,140,35,
                     BS_CENTER
     PUSHBUTTON      "DataSource",IDC_DATASOURCE,149,89,50,14
-    PUSHBUTTON      "Default",IDC_DRIVER,221,88,50,14
+    PUSHBUTTON      "Global",IDC_DRIVER,221,88,50,14
     CTEXT           "Please supply any missing information needed to connect.",
                     DRV_MSG_LABEL,25,4,238,10
 END
@@ -195,6 +195,21 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,126,195,50,14
     PUSHBUTTON      "Apply",IDAPPLY,201,195,50,14
 END
+
+DLG_OPTIONS_GLOBAL DIALOG DISCARDABLE  0, 0, 306, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Global settings"
+FONT 10, "Terminal"
+BEGIN
+    CTEXT	"Logging before establishing connections(the default for new DSNs also)",
+                    DRV_MSG_LABEL,25,15,238,10
+    CONTROL         "Comm&Log (C:\\psqlodbc.log)",DRV_COMMLOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,30,120,10
+    CONTROL         "Mylog(C:\\mylog_xxxx.log Detailed debug output)",DRV_DEBUG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,45,200,10
+    DEFPUSHBUTTON   "Save",IDOK,39,70,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,104,70,50,15
+END
 #else
 DLG_CONFIG DIALOG DISCARDABLE  65, 43, 292, 116
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
@@ -221,7 +236,7 @@ BEGIN
     GROUPBOX        "Options (Advanced):",IDC_OPTIONS,140,74,140,35,
                     BS_CENTER
     PUSHBUTTON      "DataSource",IDC_DATASOURCE,160,90,50,14
-    PUSHBUTTON      "Default",IDC_DRIVER,220,90,50,14
+    PUSHBUTTON      "Global",IDC_DRIVER,220,90,50,14
     CTEXT           "Please supply any missing information needed to connect.",
                     DRV_MSG_LABEL,36,5,220,15
 END
@@ -336,6 +351,21 @@ BEGIN
     DEFPUSHBUTTON   "Close",IDOK,51,196,50,14,WS_GROUP
     PUSHBUTTON      "Cancel",IDCANCEL,126,196,50,14
     PUSHBUTTON      "Apply",IDAPPLY,201,196,50,14
+END
+
+DLG_OPTIONS_GLOBAL DIALOG DISCARDABLE  0, 0, 306, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Global settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CTEXT	"Logging before establishing connections(the default for new DSNs also)",
+                    DRV_MSG_LABEL,25,15,238,10
+    CONTROL         "Comm&Log (C:\\psqlodbc.log)",DRV_COMMLOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,30,120,10
+    CONTROL         "Mylog(C:\\mylog_xxxx.log Detailed debug output)",
+		    DRV_DEBUG,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,13,45,200,10
+    DEFPUSHBUTTON   "Save",IDOK,39,70,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,104,70,50,15
 END
 #endif
 
