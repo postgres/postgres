@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.85 2003/09/07 03:43:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.86 2003/10/17 00:57:04 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -986,9 +986,11 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.checks)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT consrc, conname\n"
+							  "SELECT "
+							  "pg_catalog.pg_get_constraintdef(r.oid, true), "
+							  "conname\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-						   "WHERE r.conrelid = '%s' AND r.contype = 'c'",
+							  "WHERE r.conrelid = '%s' AND r.contype = 'c'",
 							  oid);
 			result2 = PSQLexec(buf.data, false);
 			if (!result2)
@@ -1119,7 +1121,7 @@ describeOneTableDetails(const char *schemaname,
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < check_count; i++)
 			{
-				printfPQExpBuffer(&buf, _("    \"%s\" CHECK %s"),
+				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
 								  PQgetvalue(result2, i, 1),
 								  PQgetvalue(result2, i, 0));
 
