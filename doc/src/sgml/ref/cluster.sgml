@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.16 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.17 2002/08/10 20:43:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -75,19 +75,6 @@ CLUSTER
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: relation &lt;<replaceable class="PARAMETER">tablerelation_number</replaceable>&gt; inherits "<replaceable class="PARAMETER">table</replaceable>"
-       </computeroutput></term>
-      <listitem>
-       <para>
-	<comment>
-	 This is not documented anywhere. It seems not to be possible to
-	 cluster a table that is inherited.
-	</comment>
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
 ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exist!
        </computeroutput></term>
       <listitem>
@@ -139,13 +126,6 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
    </title>
 
    <para>
-    The table is actually copied to a temporary table in index
-    order, then renamed back to the original name.  For this
-    reason, all grant permissions and other indexes are lost
-    when clustering is performed.
-   </para>
-
-   <para>
     In cases where you are accessing single rows randomly
     within a table, the actual order of the data in the heap
     table is unimportant. However, if you tend to access some
@@ -194,6 +174,20 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
     fast because most of the heap data has already been
     ordered, and the existing index is used.
    </para>
+
+   <para>
+    During the cluster operation, a temporal table is created that contains
+    the table in the index order. Due to this, you need to have free space
+    on disk at least the size of the table itself, or the biggest index if
+    you have one that is larger than the table.
+   </para>
+
+   <para>
+    As opposed to previous releases, CLUSTER does not lose GRANT,
+    inheritance or foreign key information, and preserves indexes
+    other than the one being used for the CLUSTER.
+   </para>
+
   </refsect2>
  </refsect1>
 
