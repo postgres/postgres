@@ -10,7 +10,7 @@ create table inttmp (b int4);
 
 \copy inttmp from 'data/test_btree.data'
 
-create table tstmp ( t datetime );
+create table tstmp ( t timestamp without time zone );
 
 \copy tstmp from 'data/test_btree_ts.data'
 
@@ -18,7 +18,7 @@ create table tstmp ( t datetime );
 
 select count(*) from inttmp where b <=10;
 
-select count(*) from tstmp where t < '2001-05-29 08:33:09+04';
+select count(*) from tstmp where t < '2001-05-29 08:33:09';
 
 -- create idx
 
@@ -32,5 +32,5 @@ set enable_seqscan=off;
 
 select count(*) from inttmp where b <=10;
 
-select count(*) from tstmp where t < '2001-05-29 08:33:09+04';
+select count(*) from tstmp where t < '2001-05-29 08:33:09';
 
