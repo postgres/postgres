@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.37 1998/03/20 04:17:34 momjian Exp $
+ * $Id: c.h,v 1.38 1998/03/31 15:53:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,7 +703,15 @@ typedef struct Exception
  */
 /* we do this so if the macro is used in an if action, it will work */
 #define StrNCpy(dst,src,len)	\
-	(strncpy((dst),(src),(len)),(len > 0) ? *((dst)+(len)-1)='\0' : (dummyret)NULL,(void)(dst))
+( \
+	((len) > 0) ? \
+	( \
+		strncpy((dst),(src),(len)-1), \
+		*((dst)+(len)-1)='\0' \
+	) \
+	: \
+		(dummyret)NULL,(void)(dst) \
+)
 
 /* Get a bit mask of the bits set in non-int32 aligned addresses */
 #define INT_ALIGN_MASK (sizeof(int32) - 1)
