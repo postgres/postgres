@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb 20 13:35:13 EST 2004
+Last updated:		Fri Feb 20 15:37:09 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -264,6 +264,7 @@ Clients
 * Allow fastpast to pass values in portable format
 * Allow libpq to return information about prepared queries
 * Make pg_restore continue after errors, so it acts more like pg_dump scripts
+* Have psql show more information about sequences
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
