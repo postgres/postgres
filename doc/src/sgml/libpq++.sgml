@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.13 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.14 2000/04/14 15:10:57 thomas Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -355,6 +355,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.13 2000/03/31 03:27:
        Returns the number of tuples (instances) in the query result. 
        <synopsis>
 	int PgDatabase::Tuples()
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>CmdTuples</function>
+              Returns the number of rows affected after an INSERT, UPDATE or DELETE. 
+              If the command was anything else, it returns -1. 
+       <synopsis>
+      int PgDatabase::CmdTuples()
        </synopsis>
       </para>
      </listitem>
