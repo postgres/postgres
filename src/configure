@@ -2633,7 +2633,7 @@ if { (eval echo configure:2632: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && t
   cat >> confdefs.h <<\EOF
 #define HAVE_INT_TIMEZONE 1
 EOF
-, echo "$ac_t""yes" 1>&6
+ echo "$ac_t""yes" 1>&6
 else
   echo "configure: failed program was:" >&5
   cat conftest.$ac_ext >&5

@@ -140,7 +140,7 @@ dnl Check for any "odd" conditions
 AC_MSG_CHECKING(for int timezone)
 AC_TRY_LINK([#include <time.h>], 
             [int res = timezone / 60; ], 
-            [AC_DEFINE(HAVE_INT_TIMEZONE), AC_MSG_RESULT(yes)],
+            [AC_DEFINE(HAVE_INT_TIMEZONE) AC_MSG_RESULT(yes)],
             AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(for union semun)
