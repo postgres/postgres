@@ -6,7 +6,7 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $Id: pg_config_manual.h,v 1.2 2003/04/18 01:03:42 momjian Exp $
+ * $Id: pg_config_manual.h,v 1.3 2003/05/15 16:35:29 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -130,7 +130,7 @@
  * Define this if your operating system supports AF_UNIX family
  * sockets.
  */
-#if !defined(__QNX__) && !defined(__BEOS__)
+#if !defined(__QNX__) && !defined(__BEOS__) && !defined(WIN32)
 # define HAVE_UNIX_SOCKETS 1
 #endif
 

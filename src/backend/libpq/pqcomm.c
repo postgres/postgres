@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.152 2003/04/25 01:24:00 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.153 2003/05/15 16:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,6 +357,9 @@ Setup_AF_UNIX(void)
 	Assert(Unix_socket_group);
 	if (Unix_socket_group[0] != '\0')
 	{
+#ifdef WIN32
+		elog(FATAL, "Config value 'unix_socket_group' not supported on this platform");
+#else
 		char	   *endptr;
 		unsigned long int val;
 		gid_t		gid;
@@ -385,6 +388,7 @@ Setup_AF_UNIX(void)
 				 sock_path, strerror(errno));
 			return STATUS_ERROR;
 		}
+#endif
 	}
 
 	if (chmod(sock_path, Unix_socket_permissions) == -1)

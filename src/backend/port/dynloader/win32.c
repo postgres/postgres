@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/win.c,v 1.2 2003/03/21 17:18:34 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/backend/port/dynloader/win32.c,v 1.1 2003/05/15 16:35:29 momjian Exp $ */
 
 #include <windows.h>
 

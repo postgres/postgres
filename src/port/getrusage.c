@@ -1,7 +1,9 @@
-/* $Id: getrusage.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
+/* $Id: getrusage.c,v 1.2 2003/05/15 16:35:30 momjian Exp $ */
 
 #include <stdio.h>
 #include <errno.h>
+
+#include "postgres.h"
 #include "rusagestub.h"
 
 /* This code works on:
@@ -19,6 +21,10 @@
 int
 getrusage(int who, struct rusage * rusage)
 {
+#ifdef WIN32
+	if (rusage)
+		memset(rusage, 0, sizeof(rusage));
+#else
 	struct tms	tms;
 	int			tick_rate = CLK_TCK;	/* ticks per second */
 	clock_t		u,
@@ -54,5 +60,6 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_utime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	rusage->ru_stime.tv_sec = TICK_TO_SEC(s, tick_rate);
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
+#endif
 	return 0;
 }

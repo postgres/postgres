@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.144 2003/05/09 16:59:43 momjian Exp $
+ * $Id: c.h,v 1.145 2003/05/15 16:35:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-#include "pg_config_os.h"
 #include "postgres_ext.h"
 
 #include <stdio.h>
@@ -66,10 +65,13 @@
 #include <sys/types.h>
 
 #include <errno.h>
-#include <sys/fcntl.h>			/* ensure O_BINARY is available */
+#include <fcntl.h>			/* ensure O_BINARY is available */
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
 #endif
+
+/* Must be here so we can redefine some functions on Win32 */
+#include "pg_config_os.h"
 
 /* Must be before gettext() games below */
 #include <locale.h>
@@ -696,64 +698,23 @@ typedef NameData *Name;
 #define PG_BINARY_W "w"
 #endif
 
+#if !defined(WIN32) && !defined(__BEOS__)
+#define FCNTL_NONBLOCK(sock)	fcntl(sock, F_SETFL, O_NONBLOCK)
+#else
+extern long ioctlsocket_ret;
+/* Returns non-0 on failure, while fcntl() returns -1 on failure */
+#ifdef WIN32
+#define FCNTL_NONBLOCK(sock)	((ioctlsocket(sock, FIONBIO, &ioctlsocket_ret) == 0) ? 0 : -1)
+#endif
+#ifdef __BEOS__
+#define FCNTL_NONBLOCK(sock)	((ioctl(sock, FIONBIO, &ioctlsocket_ret) == 0) ? 0 : -1)
+#endif
+#endif
+
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #include <unistd.h>
 #endif
 
-/* Portable path handling for Unix/Win32 */
-bool is_absolute_path(const char *filename);
-char *first_path_separator(const char *filename);
-char *last_path_separator(const char *filename);
-char *get_progname(char *argv0);
-
-#if defined(bsdi) || defined(netbsd)
-int fseeko(FILE *stream, off_t offset, int whence);
-off_t ftello(FILE *stream);
-#endif
-
-/*
- * Win32 doesn't have reliable rename/unlink during concurrent access
- */
-#if defined(WIN32) && !defined(FRONTEND)
-int pgrename(const char *from, const char *to);
-int pgunlink(const char *path);      
-#define rename(path)		pgrename(path)
-#define unlink(from, to)	pgunlink(from, to)
-#endif
-
-/*
- * Win32 doesn't have opendir/readdir/closedir()
- */
-#ifdef WIN32
-struct dirent {
-	ino_t d_ino;					/* inode (always 1 on WIN32) */
-	char d_name[MAX_PATH + 1];	/* filename (null terminated) */
-};
-
-typedef struct {
-	HANDLE handle;				/* handle for FindFirstFile or
-								 * FindNextFile */
-	long offset;				/* offset into directory */
-	int finished;				/* 1 if there are not more files */
-	WIN32_FIND_DATA finddata;	/* file data FindFirstFile or FindNextFile
-								 * returns */
-	char *dir;					/* the directory path we are reading */
-	struct dirent ent;			/* the dirent to return */
-} DIR;
-
-extern DIR *opendir(const char *);
-extern struct dirent *readdir(DIR *);
-extern int closedir(DIR *);
-#endif
-
-/*
- *	Win32 requires a special close for sockets and pipes, while on Unix
- *	close() does them all.
- */
-#ifndef WIN32
-#define	closesocket close
-#endif
-  
 /* These are for things that are one way on Unix and another on NT */
 #define NULL_DEV		"/dev/null"
 
@@ -795,37 +756,6 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #endif
 
 /*
- * Default "extern" declarations or macro substitutes for library routines.
- * When necessary, these routines are provided by files in src/port/.
- */
-#ifndef HAVE_CRYPT
-char *crypt(const char *key, const char *setting);
-#endif
-
-#ifndef HAVE_FSEEKO
-#define fseeko(a, b, c) fseek((a), (b), (c))
-#define ftello(a) ftell((a))
-#endif
-
-#ifndef HAVE_ISINF
-extern int isinf(double x);
-#endif
-
-#ifndef HAVE_GETHOSTNAME
-extern int gethostname(char *name, int namelen);
-#endif
-
-#ifndef HAVE_RINT
-extern double rint(double x);
-#endif
-
-#ifndef HAVE_INET_ATON
-# include <netinet/in.h>
-# include <arpa/inet.h>
-extern int inet_aton(const char *cp, struct in_addr * addr);
-#endif
-
-/*
  * When there is no sigsetjmp, its functionality is provided by plain
  * setjmp. Incidentally, nothing provides setjmp's functionality in
  * that case.
@@ -834,22 +764,6 @@ extern int inet_aton(const char *cp, struct in_addr * addr);
 # define sigjmp_buf jmp_buf
 # define sigsetjmp(x,y)	setjmp(x)
 # define siglongjmp longjmp
-#endif
-
-#ifndef HAVE_STRCASECMP
-extern int strcasecmp(char *s1, char *s2);
-#endif
-
-#ifndef HAVE_STRDUP
-extern char *strdup(char const *);
-#endif
-
-#ifndef HAVE_RANDOM
-extern long random(void);
-#endif
-
-#ifndef HAVE_SRANDOM
-extern void srandom(unsigned int seed);
 #endif
 
 #if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
@@ -867,5 +781,8 @@ extern int fdatasync(int fildes);
 # define strtoull strtouq
 # define HAVE_STRTOULL 1
 #endif
+
+/* /port compatibility functions */
+#include "port.h"
 
 #endif   /* C_H */

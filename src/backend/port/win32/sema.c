@@ -10,7 +10,6 @@
 
 #include "postgres.h"
 #include "storage/shmem.h"
-#include "sema.h"
 
 #include <errno.h>
 
@@ -131,7 +130,8 @@ semget(int semKey, int semNum, int flags)
 	Size		sem_set_size = sizeof(win32_sem_set_hdr) + semNum * (sizeof(HANDLE) + sizeof(int));
 	HANDLE	   *sem_handles = NULL;
 	int		   *sem_counts = NULL;
-
+	int			i;
+	
 	sec_attrs.nLength = sizeof(sec_attrs);
 	sec_attrs.lpSecurityDescriptor = NULL;
 	sec_attrs.bInheritHandle = TRUE;
@@ -158,7 +158,7 @@ semget(int semKey, int semNum, int flags)
 	sem_handles = (HANDLE *) ((off_t) new_set + new_set->m_semaphoreHandles);
 	sem_counts = (int *) ((off_t) new_set + new_set->m_semaphoreCounts);
 
-	for (int i = 0; i < semNum && ans; ++i)
+	for (i = 0; i < semNum && ans; ++i)
 	{
 		strcpy(num_part, _itoa(i, cur_num, 10));
 
@@ -186,8 +186,9 @@ semget(int semKey, int semNum, int flags)
 		return MAKE_OFFSET(new_set);
 	else
 	{
+		int i;
 		/* Blow away what we've got right now... */
-		for (int i = 0; i < semNum; ++i)
+		for (i = 0; i < semNum; ++i)
 		{
 			if (sem_handles[i])
 				CloseHandle(sem_handles[i]);

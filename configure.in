@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.249 2003/05/10 04:03:37 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.250 2003/05/15 16:35:27 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -65,7 +65,7 @@ case $host_os in
     hpux*) template=hpux ;;
     irix*) template=irix5 ;;
    linux*) template=linux ;;
-   mingw*) template=win ;;
+   mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
 nextstep*) template=nextstep ;;
  openbsd*) template=openbsd ;;
@@ -318,7 +318,6 @@ for dir in $LIBRARY_DIRS $SRCH_LIB; do
   fi
 done
 IFS=$ac_save_IFS
-
 
 #
 # Tcl/Tk
@@ -607,6 +606,7 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
+AC_CHECK_LIB(wsock32,   main)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 # QNX:
 AC_CHECK_LIB(unix, main)
@@ -639,6 +639,7 @@ fi
 if test "$with_krb4" = yes ; then
   AC_CHECK_LIB(des, des_encrypt, [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
   AC_CHECK_LIB(krb, krb_sendauth, [], [AC_MSG_ERROR([library 'krb' is required for Kerberos 4])])
+  AC_REPLACE_FUNCS([gethostname])
 fi
 
 if test "$with_krb5" = yes ; then
@@ -839,7 +840,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-AC_REPLACE_FUNCS([crypt fseeko gethostname getopt_long getrusage inet_aton random rint srandom strcasecmp strdup strerror strtol strtoul])
+AC_REPLACE_FUNCS([crypt fseeko getopt getopt_long getrusage inet_aton random rint srandom strcasecmp strdup strerror strtol strtoul])
 
 # system's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h
@@ -862,9 +863,8 @@ AC_LIBOBJ(qsort) ;;
 esac
 
 # Win32 can't to rename or unlink on an open file
-case $host_os in win32*) 
-AC_LIBOBJ(dirmod)
-AC_LIBOBJ(opendir) ;;
+case $host_os in win32*|mingw*)
+AC_LIBOBJ(dirmod) ;;
 esac
 
 if test "$with_readline" = yes; then

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.76 2003/04/19 00:02:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.77 2003/05/15 16:35:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,10 +386,10 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 	/*
 	 * libpq uses a non-blocking socket. But kerberos needs a blocking
 	 * socket, and we have to block somehow to do mutual authentication
-	 * anyway. So we temporarily make it blocking.
+	 * anyway. So we temporarily make it blocking.  Win32 doesn't support this.
 	 */
 	flags = fcntl(sock, F_GETFL);
-	if (flags < 0 || fcntl(sock, F_SETFL, (long) (flags & ~O_NONBLOCK)))
+	if (flags < 0 || fcntl(sock, F_SETFL, flags & ~O_NONBLOCK)))
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("could not set socket to blocking mode: %s\n"), strerror(errno));

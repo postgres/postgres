@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.138 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.139 2003/05/15 16:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 static const ScanKeyword ScanKeywords[] = {
 	/* name, value */
 	{"abort", ABORT_P},
-	{"absolute", ABSOLUTE},
+	{"absolute", ABSOLUTE_P},
 	{"access", ACCESS},
 	{"action", ACTION},
 	{"add", ADD},
@@ -57,7 +57,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"bigint", BIGINT},
 	{"binary", BINARY},
 	{"bit", BIT},
-	{"boolean", BOOLEAN},
+	{"boolean", BOOLEAN_P},
 	{"both", BOTH},
 	{"by", BY},
 	{"cache", CACHE},
@@ -99,7 +99,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"day", DAY_P},
 	{"deallocate", DEALLOCATE},
 	{"dec", DEC},
-	{"decimal", DECIMAL},
+	{"decimal", DECIMAL_P},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
 	{"deferrable", DEFERRABLE},
@@ -112,7 +112,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"distinct", DISTINCT},
 	{"do", DO},
 	{"domain", DOMAIN_P},
-	{"double", DOUBLE},
+	{"double", DOUBLE_P},
 	{"drop", DROP},
 	{"each", EACH},
 	{"else", ELSE},
@@ -157,11 +157,11 @@ static const ScanKeyword ScanKeywords[] = {
 	{"initially", INITIALLY},
 	{"inner", INNER_P},
 	{"inout", INOUT},
-	{"input", INPUT},
+	{"input", INPUT_P},
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
-	{"int", INT},
+	{"int", INT_P},
 	{"integer", INTEGER},
 	{"intersect", INTERSECT},
 	{"interval", INTERVAL},
@@ -246,7 +246,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
-	{"relative", RELATIVE},
+	{"relative", RELATIVE_P},
 	{"rename", RENAME},
 	{"replace", REPLACE},
 	{"reset", RESET},
@@ -283,7 +283,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
 	{"storage", STORAGE},
-	{"strict", STRICT},
+	{"strict", STRICT_P},
 	{"substring", SUBSTRING},
 	{"sysid", SYSID},
 	{"table", TABLE},

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.327 2003/05/10 18:15:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.328 2003/05/15 16:35:29 momjian Exp $
  *
  * NOTES
  *
@@ -210,6 +210,11 @@ bool		log_hostname;		/* for ps display */
 bool		LogSourcePort;
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
+
+/* For FNCTL_NONBLOCK */
+#if defined(WIN32) || defined(__BEOS__)
+long ioctlsocket_ret;
+#endif
 
 /* list of library:init-function to be preloaded */
 char       *preload_libraries_string = NULL;
@@ -1708,6 +1713,9 @@ reaper(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
+#ifdef WIN32
+#warning fix waidpid for Win32
+#else
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
 
@@ -1807,6 +1815,7 @@ reaper(SIGNAL_ARGS)
 		CleanupProc(pid, exitstatus);
 
 	} /* loop over pending child-death reports */
+#endif
 
 	if (FatalError)
 	{
@@ -2141,23 +2150,14 @@ report_fork_failure_to_client(Port *port, int errnum)
 {
 	char		buffer[1000];
 
-#ifdef __BEOS__
-	int			on = 1;
-#endif
-
 	/* Format the error message packet */
 	snprintf(buffer, sizeof(buffer), "E%s%s\n",
 			 gettext("Server process fork() failed: "),
 			 strerror(errnum));
 
 	/* Set port to non-blocking.  Don't do send() if this fails */
-#ifdef __BEOS__
-	if (ioctl(port->sock, FIONBIO, &on) != 0)
+	if (FCNTL_NONBLOCK(port->sock) < 0)
 		return;
-#else
-	if (fcntl(port->sock, F_SETFL, O_NONBLOCK) < 0)
-		return;
-#endif
 
 	send(port->sock, buffer, strlen(buffer) + 1, 0);
 }

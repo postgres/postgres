@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.35 2003/04/27 20:09:44 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.36 2003/05/15 16:35:29 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -217,7 +217,7 @@ pgstat_init(void)
 	 * messages will be discarded; backends won't block waiting to send
 	 * messages to the collector.
 	 */
-	if (fcntl(pgStatSock, F_SETFL, O_NONBLOCK) < 0)
+	if (FCNTL_NONBLOCK(pgStatSock) < 0)
 	{
 		elog(LOG, "PGSTAT: fcntl() failed: %m");
 		goto startup_failed;
@@ -1520,7 +1520,7 @@ pgstat_recvbuffer(void)
 	 * Set the write pipe to nonblock mode, so that we cannot block when
 	 * the collector falls behind.
 	 */
-	if (fcntl(writePipe, F_SETFL, O_NONBLOCK) < 0)
+	if (FCNTL_NONBLOCK(writePipe) < 0)
 	{
 		elog(LOG, "PGSTATBUFF: fcntl() failed: %m");
 		exit(1);

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.56 2002/11/08 20:23:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.57 2003/05/15 16:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,13 +159,14 @@ main(int argc, char *argv[])
 			  strcmp(argv[1], "--version") == 0 ||
 			  strcmp(argv[1], "-V") == 0)))
 	{
+#ifndef WIN32
+#ifndef __BEOS__
 		/*
 		 * Make sure we are not running as root.
 		 *
 		 * BeOS currently runs everything as root :-(, so this check must be
 		 * temporarily disabled there...
 		 */
-#ifndef __BEOS__
 		if (geteuid() == 0)
 		{
 			fprintf(stderr, gettext(
@@ -176,7 +177,7 @@ main(int argc, char *argv[])
 									));
 			exit(1);
 		}
-#endif   /* __BEOS__ */
+#endif   /* !__BEOS__ */
 
 		/*
 		 * Also make sure that real and effective uids are the same.
@@ -193,6 +194,7 @@ main(int argc, char *argv[])
 					argv[0]);
 			exit(1);
 		}
+#endif	/* !WIN32 */
 	}
 
 	/*
@@ -221,6 +223,7 @@ main(int argc, char *argv[])
 	 * specifying current userid as the "authenticated" Postgres user
 	 * name.
 	 */
+#ifndef WIN32
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
@@ -230,6 +233,18 @@ main(int argc, char *argv[])
 	}
 	/* Allocate new memory because later getpwuid() calls can overwrite it */
 	pw_name_persist = strdup(pw->pw_name);
+#else
+	{
+		long namesize = 256 /* UNLEN */ + 1;	
+
+		pw_name_persist = malloc(namesize);
+		if (!GetUserName(pw_name_persist, &namesize))
+		{
+			fprintf(stderr, "%s: GetUserName failed\n", argv[0]);
+			exit(1);
+		}
+	}
+#endif
 
 	exit(PostgresMain(argc, new_argv, pw_name_persist));
 }

@@ -1,4 +1,15 @@
-/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.9 2003/04/29 18:25:54 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.10 2003/05/15 16:35:29 momjian Exp $ */
+
+/* undefine and redefine after #include */
+#undef mkdir
+
+#undef ERROR
+#include <windows.h>
+#undef near
+
+/* Must be here to avoid conflicting with prototype in windows.h */
+#define mkdir(a,b)	mkdir(a)
+
 
 #define USES_WINSOCK
 #define NOFILE		  100
@@ -33,6 +44,9 @@
 /*
  *	IPC defines
  */
+#undef HAVE_UNION_SEMUN
+#define HAVE_UNION_SEMUN 1
+
 #define IPC_RMID 256
 #define IPC_CREAT 512
 #define IPC_EXCL 1024
@@ -40,6 +54,14 @@
 #define IPC_NOWAIT	2048
 #define IPC_STAT 4096
 
+#define EACCESS 2048
+#define EIDRM 4096
+
+#define SETALL 8192
+#define GETNCNT 16384
+#define GETVAL 65536
+#define SETVAL 131072
+#define GETPID 262144
 
 /*
  *	Shared memory
@@ -77,6 +99,30 @@ int	  semctl(int semId, int semNum, int flag, union semun);
 int	  semget(int semKey, int semNum, int flags);
 int	  semop(int semId, struct sembuf * sops, int flag);
 
+#define sleep(sec)	(Sleep(sec * 1000), /* no return value */ 0)
+
+/* Some extra signals */
+#define SIGHUP				1
+#define SIGQUIT 			3
+#define SIGTRAP 			5
+#define SIGABRT 			22	  /* Set to match W32 value -- not UNIX value */
+#define SIGKILL 			9
+#define SIGPIPE 			13
+#define SIGALRM 			14
+#define SIGSTOP 			17
+#define SIGCONT 			19
+#define SIGCHLD 			20
+#define SIGTTIN 			21
+#define SIGTTOU 			22	  /* Same as SIGABRT -- no problem, I hope */
+#define SIGWINCH	  		28
+#define SIGUSR1 			30
+#define SIGUSR2 			31
+
+struct timezone
+{
+    int tz_minuteswest;         /* Minutes west of GMT.  */
+    int tz_dsttime;             /* Nonzero if DST is ever in effect.  */
+};
 
 /* FROM SRA */
 
@@ -130,5 +176,3 @@ extern double rint(double x);
  */
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
-
-

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.31 2003/04/25 04:37:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.32 2003/05/15 16:35:28 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -85,16 +85,12 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 
-#ifdef WIN32
-#include "win32.h"
-#else
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
-#endif
 #include <arpa/inet.h>
 #endif
 

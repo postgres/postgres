@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.12 2003/03/10 22:28:18 tgl Exp $
+ * $Id: encnames.c,v 1.13 2003/05/15 16:35:29 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -13,11 +13,7 @@
 #include "utils/builtins.h"
 #endif
 
-#ifdef WIN32
-#include "win32.h"
-#else
 #include <unistd.h>
-#endif
 
 #include "mb/pg_wchar.h"
 #include <ctype.h>

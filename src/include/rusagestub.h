@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.10 2002/06/20 20:29:42 momjian Exp $
+ * $Id: rusagestub.h,v 1.11 2003/05/15 16:35:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,9 @@
 #define RUSAGESTUB_H
 
 #include <sys/time.h>			/* for struct timeval */
+#ifndef WIN32
 #include <sys/times.h>			/* for struct tms */
+#endif
 #include <limits.h>				/* for CLK_TCK */
 
 #define RUSAGE_SELF		0

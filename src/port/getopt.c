@@ -30,8 +30,10 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
+
+#include "postgres.h"
+
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
@@ -92,7 +94,7 @@ const char *ostr;
 			++optind;
 		if (opterr && *ostr != ':')
 			(void) fprintf(stderr,
-					   "%s: illegal option -- %c\n", argv[0], optopt);
+					   "illegal option -- %c\n", optopt);
 		return BADCH;
 	}
 	if (*++oli != ':')
@@ -112,8 +114,8 @@ const char *ostr;
 				return BADARG;
 			if (opterr)
 				(void) fprintf(stderr,
-							   "%s: option requires an argument -- %c\n",
-							   argv[0], optopt);
+							   "option requires an argument -- %c\n",
+							   optopt);
 			return BADCH;
 		}
 		else

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.413 2003/05/04 00:03:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.414 2003/05/15 16:35:28 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -322,12 +322,12 @@ static void doNegateFloat(Value *v);
  */
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_P ABSOLUTE ACCESS ACTION ADD AFTER
+%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD AFTER
 	AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
-	BOOLEAN BOTH BY
+	BOOLEAN_P BOTH BY
 
 	CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
@@ -336,9 +336,9 @@ static void doNegateFloat(Value *v);
 	CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-	DATABASE DAY_P DEALLOCATE DEC DECIMAL DECLARE DEFAULT
+	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-    DESC DISTINCT DO DOMAIN_P DOUBLE DROP
+    DESC DISTINCT DO DOMAIN_P DOUBLE_P DROP
 
 	EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
@@ -351,8 +351,8 @@ static void doNegateFloat(Value *v);
 	HANDLER HAVING HOLD HOUR_P
 
 	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT
-	INDEX INHERITS INITIALLY INNER_P INOUT INPUT
-	INSENSITIVE INSERT INSTEAD INT INTEGER INTERSECT
+	INDEX INHERITS INITIALLY INNER_P INOUT INPUT_P
+	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
 	JOIN
@@ -373,18 +373,17 @@ static void doNegateFloat(Value *v);
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
-	PRECISION PRESERVE PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL
-    PROCEDURE
+	PRECISION PRESERVE PREPARE PRIMARY 
+	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
-	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
+	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RENAME REPLACE
 	RESET RESTART RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS
 	RULE
 
 	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
-	STATISTICS STDIN STDOUT STORAGE STRICT SUBSTRING
-	SYSID
+	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYSID
 
 	TABLE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
 	TO TOAST TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
@@ -2675,14 +2674,14 @@ fetch_direction:
 					n->howMany = -1;
 					$$ = (Node *)n;
 				}
-			| ABSOLUTE fetch_count
+			| ABSOLUTE_P fetch_count
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_ABSOLUTE;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| RELATIVE fetch_count
+			| RELATIVE_P fetch_count
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_RELATIVE;
@@ -3146,15 +3145,15 @@ createfunc_opt_item:
 				{
 					$$ = makeDefElem("volatility", (Node *)makeString("volatile"));
 				}
-			| CALLED ON NULL_P INPUT
+			| CALLED ON NULL_P INPUT_P
 				{
 					$$ = makeDefElem("strict", (Node *)makeInteger(FALSE));
 				}
-			| RETURNS NULL_P ON NULL_P INPUT
+			| RETURNS NULL_P ON NULL_P INPUT_P
 				{
 					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
-			| STRICT
+			| STRICT_P
 				{
 					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
@@ -5077,7 +5076,7 @@ GenericType:
  * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
  */
-Numeric:	INT
+Numeric:	INT_P
 				{
 					$$ = SystemTypeName("int4");
 				}
@@ -5101,11 +5100,11 @@ Numeric:	INT
 				{
 					$$ = $2;
 				}
-			| DOUBLE PRECISION
+			| DOUBLE_P PRECISION
 				{
 					$$ = SystemTypeName("float8");
 				}
-			| DECIMAL opt_decimal
+			| DECIMAL_P opt_decimal
 				{
 					$$ = SystemTypeName("numeric");
 					$$->typmod = $2;
@@ -5120,7 +5119,7 @@ Numeric:	INT
 					$$ = SystemTypeName("numeric");
 					$$->typmod = $2;
 				}
-			| BOOLEAN
+			| BOOLEAN_P
 				{
 					$$ = SystemTypeName("bool");
 				}
@@ -7179,7 +7178,7 @@ ColLabel:	IDENT									{ $$ = $1; }
  */
 unreserved_keyword:
 			  ABORT_P
-			| ABSOLUTE
+			| ABSOLUTE_P
 			| ACCESS
 			| ACTION
 			| ADD
@@ -7222,7 +7221,7 @@ unreserved_keyword:
 			| DELIMITER
 			| DELIMITERS
 			| DOMAIN_P
-			| DOUBLE
+			| DOUBLE_P
 			| DROP
 			| EACH
 			| ENCODING
@@ -7248,7 +7247,7 @@ unreserved_keyword:
 			| INDEX
 			| INHERITS
 			| INOUT
-			| INPUT
+			| INPUT_P
 			| INSENSITIVE
 			| INSERT
 			| INSTEAD
@@ -7299,7 +7298,7 @@ unreserved_keyword:
 			| READ
 			| RECHECK
 			| REINDEX
-			| RELATIVE
+			| RELATIVE_P
 			| RENAME
 			| REPLACE
 			| RESET
@@ -7328,8 +7327,8 @@ unreserved_keyword:
 			| STDIN
 			| STDOUT
 			| STORAGE
-			| STRICT
 			| SYSID
+			| STRICT_P
 			| TEMP
 			| TEMPLATE
 			| TEMPORARY
@@ -7374,17 +7373,17 @@ unreserved_keyword:
 col_name_keyword:
 			  BIGINT
 			| BIT
-			| BOOLEAN
+			| BOOLEAN_P
 			| CHAR_P
 			| CHARACTER
 			| COALESCE
 			| CONVERT
 			| DEC
-			| DECIMAL
+			| DECIMAL_P
 			| EXISTS
 			| EXTRACT
 			| FLOAT_P
-			| INT
+			| INT_P
 			| INTEGER
 			| INTERVAL
 			| NCHAR

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.32 2003/04/04 20:42:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.33 2003/05/15 16:35:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,11 @@ static int
 ValidateBinary(char *path)
 {
 	struct stat buf;
+#ifndef WIN32
 	uid_t		euid;
 	struct group *gp;
 	struct passwd *pwp;
+#endif
 	int			i;
 	int			is_r = 0;
 	int			is_x = 0;
@@ -82,6 +84,11 @@ ValidateBinary(char *path)
 	 * Ensure that the file is both executable and readable (required for
 	 * dynamic loading).
 	 */
+#ifdef WIN32
+		is_r = buf.st_mode & S_IRUSR;
+		is_x = buf.st_mode & S_IXUSR;
+		return is_x ? (is_r ? 0 : -2) : -1;
+#else
 	euid = geteuid();
 	if (euid == buf.st_uid)
 	{
@@ -125,6 +132,7 @@ ValidateBinary(char *path)
 		elog(DEBUG2, "ValidateBinary: \"%s\" is not other read/execute",
 			 path);
 	return is_x ? (is_r ? 0 : -2) : -1;
+#endif
 }
 
 /*

@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.18 2002/07/27 20:10:05 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.19 2003/05/15 16:35:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,13 +26,16 @@ OBJS+=dynloader.o pg_sema.o pg_shmem.o
 OBJS+=$(TAS)
 
 ifeq ($(PORTNAME), qnx4)
-OBJS+=getrusage.o qnx4/SUBSYS.o
+OBJS+=qnx4/SUBSYS.o
 endif
 ifeq ($(PORTNAME), beos)
 OBJS+=beos/SUBSYS.o
 endif
 ifeq ($(PORTNAME), darwin)
 OBJS+=darwin/SUBSYS.o
+endif
+ifeq ($(PORTNAME), win32)
+OBJS+=win32/SUBSYS.o
 endif
 
 all: SUBSYS.o
@@ -55,6 +58,11 @@ darwin/SUBSYS.o: darwin.dir
 darwin.dir:
 	$(MAKE) -C darwin all
 
+win32/SUBSYS.o: win32.dir
+
+win32.dir:
+	$(MAKE) -C win32 all
+
 tas.o: tas.s
 	$(CC) $(CFLAGS) -c $<
 
@@ -67,3 +75,5 @@ distclean clean:
 	$(MAKE) -C beos clean
 	$(MAKE) -C darwin clean
 	$(MAKE) -C qnx4 clean
+	$(MAKE) -C win32 clean
+

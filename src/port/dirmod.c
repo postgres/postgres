@@ -6,6 +6,8 @@
  
 #ifndef TEST_VERSION
 
+#include "postgres.h"
+
 #undef rename
 #undef unlink
 
