@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.45 2001/12/28 05:01:05 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.46 2002/02/18 05:57:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -447,7 +447,6 @@ MainLoop(FILE *source)
 			{
 				const char *end_of_cmd = NULL;
 
-				paren_level = 0;
 				line[i - prevlen] = '\0';		/* overwrites backslash */
 
 				/* is there anything else on the line for the command? */
@@ -473,7 +472,7 @@ MainLoop(FILE *source)
 				if ((slashCmdStatus == CMD_SEND || slashCmdStatus == CMD_NEWEDIT) &&
 					query_buf->len == 0)
 				{
-					/* copy previous buffer to current for for handling */
+					/* copy previous buffer to current for handling */
 					appendPQExpBufferStr(query_buf, previous_buf->data);
 				}
 
@@ -486,6 +485,9 @@ MainLoop(FILE *source)
 					appendPQExpBufferStr(previous_buf, query_buf->data);
 					resetPQExpBuffer(query_buf);
 				}
+
+				if (query_buf->len == 0 && previous_buf->len == 0)
+					paren_level = 0;
 
 				/* process anything left after the backslash command */
 				i += end_of_cmd - &line[i];
