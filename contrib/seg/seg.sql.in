@@ -7,12 +7,12 @@ SET search_path = public;
 CREATE FUNCTION seg_in(cstring)
 RETURNS seg
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE STRICT;
 
 CREATE FUNCTION seg_out(seg)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE STRICT;
 
 CREATE TYPE seg (
 	INTERNALLENGTH = 12,
@@ -137,6 +137,13 @@ COMMENT ON FUNCTION seg_different(seg, seg) IS
 'different';
 
 -- support routines for indexing
+
+CREATE OR REPLACE FUNCTION seg_cmp(seg, seg)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' STRICT;
+
+COMMENT ON FUNCTION seg_cmp(seg, seg) IS 'btree comparison function';
 
 CREATE FUNCTION seg_union(seg, seg)
 RETURNS seg
@@ -263,8 +270,7 @@ CREATE OPERATOR = (
 	NEGATOR = '<>',
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
-	SORT1 = '<',
-	SORT2 = '<'
+	MERGES
 );
 
 CREATE OPERATOR <> (
@@ -333,7 +339,16 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
 
--- Create the operator class for indexing
+-- Create the operator classes for indexing
+
+CREATE OPERATOR CLASS seg_ops
+    DEFAULT FOR TYPE seg USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       seg_cmp(seg, seg);
 
 CREATE OPERATOR CLASS gist_seg_ops
 DEFAULT FOR TYPE seg USING gist 

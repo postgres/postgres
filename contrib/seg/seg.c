@@ -23,8 +23,10 @@
 #define GIST_QUERY_DEBUG
 */
 
-extern void set_parse_buffer(char *str);
 extern int	seg_yyparse();
+extern void seg_yyerror(const char *message);
+extern void seg_scanner_init(const char *str);
+extern void seg_scanner_finish(void);
 
 /*
 extern int	 seg_yydebug;
@@ -99,16 +101,13 @@ seg_in(char *str)
 {
 	SEG		   *result = palloc(sizeof(SEG));
 
-	set_parse_buffer(str);
+	seg_scanner_init(str);
 
-	/*
-	 * seg_yydebug = 1;
-	 */
 	if (seg_yyparse(result) != 0)
-	{
-		pfree(result);
-		return NULL;
-	}
+		seg_yyerror("bogus input");
+
+	seg_scanner_finish();
+
 	return (result);
 }
 
@@ -879,7 +878,6 @@ seg_gt(SEG * a, SEG * b)
 {
 	return seg_cmp(a, b) > 0;
 }
-
 
 bool
 seg_ge(SEG * a, SEG * b)

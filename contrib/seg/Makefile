@@ -1,11 +1,11 @@
-# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.9 2003/05/14 03:27:22 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.10 2003/09/14 02:18:49 tgl Exp $
 
 subdir = contrib/seg
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 MODULE_big = seg
-OBJS = seg.o segparse.o buffer.o
+OBJS = seg.o segparse.o
 DATA_built = seg.sql
 DOCS = README.seg
 REGRESS = seg
@@ -27,7 +27,7 @@ endif
 
 segscan.c: segscan.l
 ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -Pseg_yy -o'$@' $<
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif

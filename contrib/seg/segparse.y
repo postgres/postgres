@@ -6,7 +6,6 @@
 #include <math.h>
 
 #include "segdata.h"
-#include "buffer.h"
   
 #ifdef __CYGWIN__
 #define HUGE HUGE_VAL
@@ -19,7 +18,7 @@
   extern int yylex();           /* defined as seg_yylex in segscan.c */
   extern int significant_digits( char *str );    /* defined in seg.c */
   
-  int seg_yyerror( char *msg );
+  void seg_yyerror(const char *message);
   int seg_yyparse( void *result );
 
   float seg_atof( char *value );
@@ -72,7 +71,6 @@ range:
 	    ((SEG *)result)->lower = $1.val;
 	    ((SEG *)result)->upper = $3.val;
 	    if ( ((SEG *)result)->lower > ((SEG *)result)->upper ) {
-	      reset_parse_buffer();     
 	      ereport(ERROR,
 				  (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				   errmsg("swapped boundaries: %g is greater than %g",
@@ -145,7 +143,6 @@ float seg_atof ( char *value ) {
 
   if ( errno ) {
     snprintf(buf, 256, "numeric value %s unrepresentable", value);
-    reset_parse_buffer();     
     ereport(ERROR,
 		    (errcode(ERRCODE_SYNTAX_ERROR),
 		     errmsg("syntax error"),
@@ -155,36 +152,5 @@ float seg_atof ( char *value ) {
   return result;
 }
 
-
-int seg_yyerror ( char *msg ) {
-  char *buf = (char *) palloc(256);
-  int position;
-
-  yyclearin;
-
-  if ( !strcmp(msg, "parse error, expecting `$'") ) {
-    msg = "expecting end of input";
-  }
-
-  position = parse_buffer_pos() > parse_buffer_size() ? parse_buffer_pos() - 1 : parse_buffer_pos();
-
-  snprintf(
-	  buf, 
-	  256,
-	  "%s at or near position %d, character ('%c', \\%03o), input: '%s'\n", 
-	  msg,
-	  position,
-	  parse_buffer()[position - 1],
-	  parse_buffer()[position - 1],
-	  parse_buffer()
-	  );
-
-  reset_parse_buffer();     
-  ereport(ERROR,
-		  (errcode(ERRCODE_SYNTAX_ERROR),
-		   errmsg("syntax error"),
-		   errdetail("%s", buf)));
-  return 0;
-}
 
 #include "segscan.c"

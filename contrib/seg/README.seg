@@ -56,12 +56,6 @@ Makefile		building instructions for the shared library
 
 README.seg		the file you are now reading
 
-buffer.c		global variables and buffer access utilities 
-			shared between the parser (segparse.y) and the
-			scanner (segscan.l)
-
-buffer.h		function prototypes for buffer.c
-
 seg.c			the implementation of this data type in c
 
 seg.sql.in		SQL code needed to register this type with postgres

@@ -394,35 +394,29 @@ SELECT '100(+-)1'::seg AS seg;
 
 -- invalid input
 SELECT ''::seg AS seg;
-ERROR:  can't parse an empty string
+ERROR:  bad seg representation
+DETAIL:  syntax error at end of input
 SELECT 'ABC'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 1, character ('A', \101), input: 'ABC'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near "A"
 SELECT '1ABC'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 2, character ('A', \101), input: '1ABC'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near "A"
 SELECT '1.'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 2, character ('.', \056), input: '1.'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near "."
 SELECT '1.....'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 6, character ('.', \056), input: '1.....'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near ".."
 SELECT '.1'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 2, character ('1', \061), input: '.1'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near "."
 SELECT '1..2.'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 5, character ('.', \056), input: '1..2.'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near "."
 SELECT '1 e7'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  syntax error at or near position 3, character ('e', \145), input: '1 e7'
-
+ERROR:  bad seg representation
+DETAIL:  syntax error at or near "e"
 SELECT '1e700'::seg AS seg;
 ERROR:  syntax error
 DETAIL:  numeric value 1e700 unrepresentable
