@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252 2005/01/01 05:43:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.253 2005/03/01 20:23:34 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1080,7 +1080,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&Trace_lock_oidmin,
-		BootstrapObjectIdData, 1, INT_MAX, NULL, NULL
+		BootstrapObjectIdData, 0, INT_MAX, NULL, NULL
 	},
 	{
 		{"trace_lock_table", PGC_SUSET, DEVELOPER_OPTIONS,
