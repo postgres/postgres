@@ -13,21 +13,17 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.38 2002/11/02 18:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.38.2.1 2003/02/07 01:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/xact.h"
-#include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
-#include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_conversion.h"
-#include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -42,10 +38,9 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
-#include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
@@ -1608,50 +1603,19 @@ AtEOXact_Namespace(bool isCommit)
 static void
 RemoveTempRelations(Oid tempNamespaceId)
 {
-	Relation	pgclass;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	ScanKeyData key;
 	ObjectAddress object;
 
 	/*
-	 * Scan pg_class to find all the relations in the target namespace.
-	 * Ignore indexes, though, on the assumption that they'll go away when
-	 * their tables are deleted.
-	 *
-	 * NOTE: if there are deletion constraints between temp relations, then
-	 * our CASCADE delete call may cause as-yet-unvisited objects to go
-	 * away.  This is okay because we are using SnapshotNow; when the scan
-	 * does reach those pg_class tuples, they'll be ignored as already
-	 * deleted.
+	 * We want to get rid of everything in the target namespace, but not
+	 * the namespace itself (deleting it only to recreate it later would be
+	 * a waste of cycles).  We do this by finding everything that has a
+	 * dependency on the namespace.
 	 */
-	ScanKeyEntryInitialize(&key, 0x0,
-						   Anum_pg_class_relnamespace,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(tempNamespaceId));
+	object.classId = get_system_catalog_relid(NamespaceRelationName);
+	object.objectId = tempNamespaceId;
+	object.objectSubId = 0;
 
-	pgclass = heap_openr(RelationRelationName, AccessShareLock);
-	scan = heap_beginscan(pgclass, SnapshotNow, 1, &key);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		switch (((Form_pg_class) GETSTRUCT(tuple))->relkind)
-		{
-			case RELKIND_RELATION:
-			case RELKIND_SEQUENCE:
-			case RELKIND_VIEW:
-				object.classId = RelOid_pg_class;
-				object.objectId = HeapTupleGetOid(tuple);
-				object.objectSubId = 0;
-				performDeletion(&object, DROP_CASCADE);
-				break;
-			default:
-				break;
-		}
-	}
-
-	heap_endscan(scan);
-	heap_close(pgclass, AccessShareLock);
+	deleteWhatDependsOn(&object);
 }
 
 /*

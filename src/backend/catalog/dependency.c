@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.12.2.1 2002/12/04 20:00:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.12.2.2 2003/02/07 01:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,11 @@ static bool recursiveDeletion(const ObjectAddress *object,
 				  const ObjectAddress *callingObject,
 				  ObjectAddresses *oktodelete,
 				  Relation depRel);
+static bool deleteDependentObjects(const ObjectAddress *object,
+								   const char *objDescription,
+								   DropBehavior behavior,
+								   ObjectAddresses *oktodelete,
+								   Relation depRel);
 static void doDeletion(const ObjectAddress *object);
 static bool find_expr_references_walker(Node *node,
 							find_expr_references_context *context);
@@ -162,6 +167,64 @@ performDeletion(const ObjectAddress *object,
 		elog(ERROR, "Cannot drop %s because other objects depend on it"
 			 "\n\tUse DROP ... CASCADE to drop the dependent objects too",
 			 objDescription);
+
+	term_object_addresses(&oktodelete);
+
+	heap_close(depRel, RowExclusiveLock);
+
+	pfree(objDescription);
+}
+
+
+/*
+ * deleteWhatDependsOn: attempt to drop everything that depends on the
+ * specified object, though not the object itself.  Behavior is always
+ * CASCADE.
+ *
+ * This is currently used only to clean out the contents of a schema
+ * (namespace): the passed object is a namespace.
+ */
+void
+deleteWhatDependsOn(const ObjectAddress *object)
+{
+	char	   *objDescription;
+	Relation	depRel;
+	ObjectAddresses oktodelete;
+
+	/*
+	 * Get object description for possible use in failure messages
+	 */
+	objDescription = getObjectDescription(object);
+
+	/*
+	 * We save some cycles by opening pg_depend just once and passing the
+	 * Relation pointer down to all the recursive deletion steps.
+	 */
+	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+
+	/*
+	 * Construct a list of objects that are reachable by AUTO or INTERNAL
+	 * dependencies from the target object.  These should be deleted silently,
+	 * even if the actual deletion pass first reaches one of them via a
+	 * non-auto dependency.
+	 */
+	init_object_addresses(&oktodelete);
+
+	findAutoDeletableObjects(object, &oktodelete, depRel);
+
+	/*
+	 * Now invoke only step 2 of recursiveDeletion: just recurse to the
+	 * stuff dependent on the given object.
+	 */
+	if (!deleteDependentObjects(object, objDescription,
+								DROP_CASCADE, &oktodelete, depRel))
+		elog(ERROR, "Failed to drop all objects depending on %s",
+			 objDescription);
+
+	/*
+	 * We do not need CommandCounterIncrement here, since if step 2 did
+	 * anything then each recursive call will have ended with one.
+	 */
 
 	term_object_addresses(&oktodelete);
 
@@ -475,22 +538,90 @@ recursiveDeletion(const ObjectAddress *object,
 
 	/*
 	 * Step 2: scan pg_depend records that link to this object, showing
-	 * the things that depend on it.  Recursively delete those things. (We
-	 * don't delete the pg_depend records here, as the recursive call will
-	 * do that.)  Note it's important to delete the dependent objects
+	 * the things that depend on it.  Recursively delete those things.
+	 * Note it's important to delete the dependent objects
 	 * before the referenced one, since the deletion routines might do
 	 * things like try to update the pg_class record when deleting a check
 	 * constraint.
-	 *
-	 * Again, when dropping a whole object (subId = 0), find pg_depend
-	 * records for its sub-objects too.
-	 *
-	 * NOTE: because we are using SnapshotNow, if a recursive call deletes
-	 * any pg_depend tuples that our scan hasn't yet visited, we will not
-	 * see them as good when we do visit them.	This is essential for
-	 * correct behavior if there are multiple dependency paths between two
-	 * objects --- else we might try to delete an already-deleted object.
 	 */
+	if (!deleteDependentObjects(object, objDescription,
+								behavior, oktodelete, depRel))
+		ok = false;
+
+	/*
+	 * We do not need CommandCounterIncrement here, since if step 2 did
+	 * anything then each recursive call will have ended with one.
+	 */
+
+	/*
+	 * Step 3: delete the object itself.
+	 */
+	doDeletion(object);
+
+	/*
+	 * Delete any comments associated with this object.  (This is a
+	 * convenient place to do it instead of having every object type know
+	 * to do it.)
+	 */
+	DeleteComments(object->objectId, object->classId, object->objectSubId);
+
+	/*
+	 * CommandCounterIncrement here to ensure that preceding changes are
+	 * all visible.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * And we're done!
+	 */
+	pfree(objDescription);
+
+	return ok;
+}
+
+
+/*
+ * deleteDependentObjects - find and delete objects that depend on 'object'
+ *
+ * Scan pg_depend records that link to the given object, showing
+ * the things that depend on it.  Recursively delete those things. (We
+ * don't delete the pg_depend records here, as the recursive call will
+ * do that.)  Note it's important to delete the dependent objects
+ * before the referenced one, since the deletion routines might do
+ * things like try to update the pg_class record when deleting a check
+ * constraint.
+ *
+ * When dropping a whole object (subId = 0), find pg_depend records for
+ * its sub-objects too.
+ *
+ *	object: the object to find dependencies on
+ *	objDescription: description of object (only used for error messages)
+ *	behavior: desired drop behavior
+ *	oktodelete: stuff that's AUTO-deletable
+ *	depRel: already opened pg_depend relation
+ *
+ * Returns TRUE if all is well, false if any problem found.
+ *
+ * NOTE: because we are using SnapshotNow, if a recursive call deletes
+ * any pg_depend tuples that our scan hasn't yet visited, we will not
+ * see them as good when we do visit them.	This is essential for
+ * correct behavior if there are multiple dependency paths between two
+ * objects --- else we might try to delete an already-deleted object.
+ */
+static bool
+deleteDependentObjects(const ObjectAddress *object,
+					   const char *objDescription,
+					   DropBehavior behavior,
+					   ObjectAddresses *oktodelete,
+					   Relation depRel)
+{
+	bool		ok = true;
+	ScanKeyData key[3];
+	int			nkeys;
+	SysScanDesc scan;
+	HeapTuple	tup;
+	ObjectAddress otherObject;
+
 	ScanKeyEntryInitialize(&key[0], 0x0,
 						   Anum_pg_depend_refclassid, F_OIDEQ,
 						   ObjectIdGetDatum(object->classId));
@@ -579,34 +710,6 @@ recursiveDeletion(const ObjectAddress *object,
 	}
 
 	systable_endscan(scan);
-
-	/*
-	 * We do not need CommandCounterIncrement here, since if step 2 did
-	 * anything then each recursive call will have ended with one.
-	 */
-
-	/*
-	 * Step 3: delete the object itself.
-	 */
-	doDeletion(object);
-
-	/*
-	 * Delete any comments associated with this object.  (This is a
-	 * convenient place to do it instead of having every object type know
-	 * to do it.)
-	 */
-	DeleteComments(object->objectId, object->classId, object->objectSubId);
-
-	/*
-	 * CommandCounterIncrement here to ensure that preceding changes are
-	 * all visible.
-	 */
-	CommandCounterIncrement();
-
-	/*
-	 * And we're done!
-	 */
-	pfree(objDescription);
 
 	return ok;
 }
