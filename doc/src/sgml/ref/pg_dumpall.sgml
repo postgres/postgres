@@ -20,7 +20,7 @@ Extract all <productname>Postgres</productname> databases into a script file
 <SYNOPSIS>
 pg_dumpall
 pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
-    [ -a ] [ -d ] [ -D ] [ -o ] [ -s ] [ -u ] [ -v ] [ -z ]
+    [ -a ] [ -d ] [ -D ] [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
 </SYNOPSIS>
 
     <REFSECT2 ID="R2-APP-PG-DUMPALL-1">
@@ -125,11 +125,11 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
 	  
 	  <varlistentry>
 	    <term>
-	      -z
+	      -x
 	    </term>
 	    <listitem>
 	      <para>
-		Include ACLs (grant/revoke commands) and table ownership information.
+		Prevent dumping ACLs (grant/revoke commands) and table ownership information.
 	      </para>
 	    </listitem>
 	  </varlistentry>

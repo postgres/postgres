@@ -34,7 +34,7 @@ Description
  PostgreSQL release without reloading all the data.  First,
  to be safe, back up your data directory.  Then, use:
 <programlisting>
-% pg_dumpall -s -z >db.out
+% pg_dumpall -s >db.out
 </programlisting>
 to dump out your old  database definitions without any
 data.  Stop the postmaster and all backends.

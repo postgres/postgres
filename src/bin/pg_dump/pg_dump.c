@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.112 1999/05/26 21:51:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.113 1999/05/27 16:29:03 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -116,7 +116,7 @@ bool		dumpData;			/* dump data using proper insert strings */
 bool		attrNames;			/* put attr names into insert strings */
 bool		schemaOnly;
 bool		dataOnly;
-bool		aclsOption;
+bool		aclsSkip;
 bool		dropSchema;
 
 char		g_opaque_type[10];	/* name for the opaque type */
@@ -549,7 +549,7 @@ main(int argc, char **argv)
 	char		tmp_string[128];
 	char		username[100];
 	char		password[100];
-	int			use_password = 0;
+	bool		use_password = false;
 
 	g_verbose = false;
 	force_quotes = true;
@@ -563,7 +563,7 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "acdDf:h:nNop:st:vzu")) != EOF)
+	while ((c = getopt(argc, argv, "acdDf:h:nNop:st:uvxz")) != EOF)
 	{
 		switch (c)
 		{
@@ -630,14 +630,19 @@ main(int argc, char **argv)
 					}
 				}
 				break;
+			case 'u':
+				use_password = true;
+				break;
 			case 'v':			/* verbose */
 				g_verbose = true;
 				break;
-			case 'z':			/* Dump ACLs and table ownership info */
-				aclsOption = true;
+			case 'x':			/* skip ACL dump */
+				aclsSkip = true;
 				break;
-			case 'u':
-				use_password = 1;
+			case 'z':			/* Old ACL option bjm 1999/05/27 */
+				fprintf(stderr,
+				 "%s: The -z option(dump ACLs) is now the default, continuing.\n",
+					progname);
 				break;
 			default:
 				usage(progname);
@@ -726,10 +731,10 @@ main(int argc, char **argv)
 		if (g_verbose)
 			fprintf(stderr, "%s last builtin oid is %u %s\n",
 					g_comment_start, g_last_builtin_oid, g_comment_end);
-		tblinfo = dumpSchema(g_fout, &numTables, tablename, aclsOption);
+		tblinfo = dumpSchema(g_fout, &numTables, tablename, aclsSkip);
 	}
 	else
-		tblinfo = dumpSchema(NULL, &numTables, tablename, aclsOption);
+		tblinfo = dumpSchema(NULL, &numTables, tablename, aclsSkip);
 
 	if (!schemaOnly)
 		dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
@@ -2689,7 +2694,7 @@ void
 dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 		   InhInfo *inhinfo, int numInherits,
 		   TypeInfo *tinfo, int numTypes, const char *tablename,
-		   const bool acls)
+		   const bool aclsSkip)
 {
 	int			i,
 				j,
@@ -2723,7 +2728,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 		{
 			becomeUser(fout, tblinfo[i].usename);
 			dumpSequence(fout, tblinfo[i]);
-			if (acls)
+			if (!aclsSkip)
 				dumpACL(fout, tblinfo[i]);
 		}
 	}
@@ -2847,7 +2852,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			strcat(q, ";\n");
 			fputs(q, fout);
-			if (acls)
+			if (!aclsSkip)
 				dumpACL(fout, tblinfo[i]);
 
 		}
@@ -3380,7 +3385,7 @@ becomeUser(FILE *fout, const char *username)
 {
 	static const char *lastusername = "";
 
-	if (!aclsOption)
+	if (aclsSkip)
 		return;
 
 	if (strcmp(lastusername, username) == 0)

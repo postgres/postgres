@@ -259,7 +259,7 @@ script from v6.0 or everything
 To dump your fairly recent post-v6.0 database installation, type
 
 <programlisting>
-$ pg_dumpall -z > db.out
+$ pg_dumpall > db.out
 </programlisting>
 </para>
 <para>
@@ -273,7 +273,7 @@ $ cd
 $ gunzip -c postgresql-v6.5.tar.gz \
     | tar xvf - src/bin/pg_dump/pg_dumpall
 $ chmod a+x src/bin/pg_dump/pg_dumpall
-$ src/bin/pg_dump/pg_dumpall -z > db.out
+$ src/bin/pg_dump/pg_dumpall > db.out
 $ rm -rf src
 </ProgramListing>
 </Para>
