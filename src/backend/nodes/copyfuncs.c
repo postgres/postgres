@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.25 1997/12/23 21:49:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.26 1997/12/24 06:05:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1566,7 +1566,18 @@ _copyQuery(Query *from)
 	}
 	else
 		newnode->qry_aggs = NULL;
-		
+
+	if (from->unionClause)
+	{
+		List *ulist, *temp_list = NIL;
+
+		foreach(ulist, from->unionClause)
+			temp_list = lappend(temp_list,copyObject(lfirst(ulist)));
+		newnode->unionClause = temp_list;
+	}
+	else
+		newnode->unionClause = NULL;
+ 				
 	return newnode;
 }
 

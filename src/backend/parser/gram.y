@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.80 1997/12/23 19:47:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.81 1997/12/24 06:06:26 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -120,10 +120,12 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
-		CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
-		ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
+		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
+		ReplaceStmt, AppendStmt, RetrieveStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt
+
+%type <rtstmt> 
 
 %type <str>		opt_database, location
 
@@ -132,7 +134,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>   user_valid_clause
 %type <list>  user_group_list, user_group_clause
 
-%type <node>	SubSelect
 %type <str>		join_expr, join_outer, join_spec
 %type <boolean> TriggerActionTime, TriggerForSpec, PLangTrusted
 
@@ -1049,19 +1050,10 @@ OptArchiveType:  ARCHIVE '=' NONE						{ }
 
 CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
 				{
-					RetrieveStmt *n = makeNode(RetrieveStmt);
-					SubSelect *s = (SubSelect *)$6;
-					n->unique = s->unique;
-					n->targetList = s->targetList;
+					RetrieveStmt *n = (RetrieveStmt *)$6;
 					if ($4 != NIL)
 						mapTargetColumns($4, n->targetList);
 					n->into = $3;
-					n->fromClause = s->fromClause;
-					n->whereClause = s->whereClause;
-					n->groupClause = s->groupClause;
-					n->havingClause = s->havingClause;
-					n->unionClause = NULL;
-					n->sortClause = NULL;
 					$$ = (Node *)n;
 				}
 		;
@@ -2291,7 +2283,7 @@ RetrieveStmt:  SELECT opt_unique res_target_list2
 
 union_clause:  UNION opt_union select_list
 				{
-					SubSelect *n = lfirst($3);
+					RetrieveStmt *n = (RetrieveStmt *)lfirst($3);
 					n->unionall = $2;
 					$$ = $3;
 				}
@@ -2301,7 +2293,7 @@ union_clause:  UNION opt_union select_list
 
 select_list:  select_list UNION opt_union SubSelect
 				{
-					SubSelect *n = (SubSelect *)$4;
+					RetrieveStmt *n = (RetrieveStmt *)$4;
 					n->unionall = $3;
 					$$ = lappend($1, $4);
 				}
@@ -2313,7 +2305,7 @@ SubSelect:	SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
 				{
-					SubSelect *n = makeNode(SubSelect);
+					RetrieveStmt *n = makeNode(RetrieveStmt);
 					n->unique = $2;
 					n->unionall = FALSE;
 					n->targetList = $3;
