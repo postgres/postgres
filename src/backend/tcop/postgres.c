@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.422 2004/07/01 00:51:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.423 2004/07/11 00:18:44 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2164,7 +2164,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 {
 	int			flag;
 	const char *dbname = NULL;
-	char	   *potential_DataDir = NULL;
+	char	   *userPGDATA = NULL;
 	bool		secure;
 	int			errs = 0;
 	int			debug_flag = 0;
@@ -2235,7 +2235,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		InitializeGUCOptions();
-		potential_DataDir = getenv("PGDATA");
+		userPGDATA = getenv("PGDATA");
 	}
 
 	/* ----------------
@@ -2283,7 +2283,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'D':			/* PGDATA directory */
 				if (secure)
-					potential_DataDir = optarg;
+					userPGDATA = optarg;
 				break;
 
 			case 'd':			/* debug level */
@@ -2574,12 +2574,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * set up handler to log session end.
 		 */
 		if (IsUnderPostmaster && Log_disconnections)
-			on_proc_exit(log_disconnections,0);
+			on_proc_exit(log_disconnections, 0);
 	}
 
 	if (!IsUnderPostmaster)
 	{
-		if (!potential_DataDir)
+		if (!userPGDATA)
 		{
 			write_stderr("%s does not know where to find the database system data.\n"
 						 "You must specify the directory that contains the database system\n"
@@ -2588,7 +2588,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						 argv[0]);
 			proc_exit(1);
 		}
-		SetDataDir(potential_DataDir);
+		SetDataDir(userPGDATA);
 	}
 	Assert(DataDir);
 

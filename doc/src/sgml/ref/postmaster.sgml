@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.50 2004/06/21 04:06:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.51 2004/07/11 00:18:41 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -67,14 +67,27 @@ PostgreSQL documentation
    One <command>postmaster</command> always manages the data
    from exactly one database cluster.  A database cluster is a
    collection of databases that is stored at a common file system
-   location.  When the <command>postmaster</command> starts it needs to know the location
-   of the database cluster files (<quote>data area</quote>).  This is
-   done with the <option>-D</option> invocation option or the
-   <envar>PGDATA</envar> environment variable; there is no default.
-   More than one <command>postmaster</command> process can run on a system at one time,
-   as long as they use different data areas and different
+   location.  When the <command>postmaster</command> starts it needs 
+   to know the location of the database cluster files (<quote>data 
+   area</quote>).  
+   More than one <command>postmaster</command> process can run on a system
+   at one time as long as they use different data areas and different
    communication ports (see below).  A data area is created with <xref
    linkend="app-initdb">.
+  </para>
+
+  <para>
+   The <quote>data area</> is specified by the <option>-D</option> option
+   or the <envar>PGDATA</envar> environment variable; there is no default.
+   Typically, it points to a directory created by <application>
+   initdb</>.  However, for administrative flexibility, you can
+   point to a directory containing only configuration files:
+   <filename>postgresql.conf</>, <filename>pg_hba.conf</>, and
+   <filename>pg_ident.conf</>. You can then set
+   <filename>postgresql.conf</>'s <varname>pgdata</> to point to the
+   data directory. You can also point just to the server configuration file
+   like <filename>postgresql.conf</> and set its variables to point to the
+   other configuration files and the data directory.
   </para>
  </refsect1>
 

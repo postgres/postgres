@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.125 2004/05/30 23:40:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.126 2004/07/11 00:18:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "storage/fd.h"
+#include "utils/guc.h"
 
 
 /* Max size of username ident server can return */
@@ -1029,17 +1030,22 @@ load_user(void)
 void
 load_hba(void)
 {
-	int			bufsize;
 	FILE	   *file;			/* The config file we have to read */
 	char	   *conf_file;		/* The name of the config file */
 
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
 
-	/* Put together the full pathname to the config file. */
-	bufsize = (strlen(DataDir) + strlen(CONF_FILE) + 2) * sizeof(char);
-	conf_file = (char *) palloc(bufsize);
-	snprintf(conf_file, bufsize, "%s/%s", DataDir, CONF_FILE);
+	/* HBA filename in config file */
+	if (guc_hbafile)
+		conf_file = pstrdup(guc_hbafile);
+	else
+	{
+		char *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
+		/* put together the full pathname to the config file */
+		conf_file = palloc(strlen(confloc) + strlen(CONF_FILE) + 2);
+		sprintf(conf_file, "%s/%s", confloc, CONF_FILE);
+	}
 
 	file = AllocateFile(conf_file, "r");
 	if (file == NULL)
@@ -1178,16 +1184,20 @@ load_ident(void)
 	FILE	   *file;			/* The map file we have to read */
 	char	   *map_file;		/* The name of the map file we have to
 								 * read */
-	int			bufsize;
-
 	if (ident_lines || ident_line_nums)
 		free_lines(&ident_lines, &ident_line_nums);
 
-	/* put together the full pathname to the map file */
-	bufsize = (strlen(DataDir) + strlen(USERMAP_FILE) + 2) * sizeof(char);
-	map_file = (char *) palloc(bufsize);
-	snprintf(map_file, bufsize, "%s/%s", DataDir, USERMAP_FILE);
-
+	/* IDENT filename in config file */
+	if (guc_identfile)
+		map_file = pstrdup(guc_identfile);
+	else
+	{
+		/* put together the full pathname to the map file */
+		char *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
+		map_file = (char *) palloc(strlen(confloc) + strlen(USERMAP_FILE) + 2);
+		sprintf(map_file, "%s/%s", confloc, USERMAP_FILE);
+	}
+  
 	file = AllocateFile(map_file, "r");
 	if (file == NULL)
 	{

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.406 2004/07/10 23:29:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.407 2004/07/11 00:18:43 momjian Exp $
  *
  * NOTES
  *
@@ -233,6 +233,7 @@ extern int	optreset;
  * postmaster.c - function prototypes
  */
 static void checkDataDir(const char *checkdir);
+static bool onlyConfigSpecified(const char *checkdir);
 #ifdef USE_RENDEZVOUS
 static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode,
 					  void *context);
@@ -306,7 +307,7 @@ PostmasterMain(int argc, char *argv[])
 {
 	int			opt;
 	int			status;
-	char	   *potential_DataDir = NULL;
+	char	   *userPGDATA = NULL;
 	int			i;
 
 	progname = get_progname(argv[0]);
@@ -370,7 +371,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	InitializeGUCOptions();
 
-	potential_DataDir = getenv("PGDATA");		/* default value */
+	userPGDATA = getenv("PGDATA");		/* default value */
 
 	opterr = 1;
 
@@ -395,7 +396,7 @@ PostmasterMain(int argc, char *argv[])
 				/* Can no longer set the backend executable file to use. */
 				break;
 			case 'D':
-				potential_DataDir = optarg;
+				userPGDATA = optarg;
 				break;
 			case 'd':
 				{
@@ -524,13 +525,49 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
-	/*
-	 * Now we can set the data directory, and then read postgresql.conf.
-	 */
-	checkDataDir(potential_DataDir);	/* issues error messages */
-	SetDataDir(potential_DataDir);
+	if (onlyConfigSpecified(userPGDATA))
+	{
+		/*
+		 *	It is either a file name or a directory with no
+		 *	global/pg_control file, and hence not a data directory.
+		 */
+		user_pgconfig = userPGDATA;
+		ProcessConfigFile(PGC_POSTMASTER);
 
-	ProcessConfigFile(PGC_POSTMASTER);
+		if (!guc_pgdata)	/* Got a pgdata from the config file? */
+		{
+			write_stderr("%s does not know where to find the database system data.\n"
+						 "This should be specified as 'pgdata' in %s%s.\n",
+						 progname, userPGDATA,
+						 user_pgconfig_is_dir ? "/postgresql.conf" : "");
+			ExitPostmaster(2);
+		}
+		checkDataDir(guc_pgdata);
+		SetDataDir(guc_pgdata);
+	}
+	else
+	{
+		/* Now we can set the data directory, and then read postgresql.conf. */
+		checkDataDir(userPGDATA);
+		SetDataDir(userPGDATA);
+		ProcessConfigFile(PGC_POSTMASTER);
+	}
+
+	if (external_pidfile)
+	{
+		FILE *fpidfile = fopen(external_pidfile, "w");
+
+		if (fpidfile)
+		{
+			fprintf(fpidfile, "%d\n", MyProcPid);
+			fclose(fpidfile);
+			/* Should we remove the pid file on postmaster exit? */
+		}
+		else
+			fprintf(stderr,
+				gettext("%s could not write to external pid file %s\n"),
+				progname, external_pidfile);
+	}
 
 	/* If timezone is not set, determine what the OS uses */
 	pg_timezone_initialize();
@@ -848,6 +885,32 @@ PostmasterMain(int argc, char *argv[])
 }
 
 
+
+static bool
+onlyConfigSpecified(const char *checkdir)
+{
+	char	path[MAXPGPATH];
+	struct stat stat_buf;
+
+	if (checkdir == NULL)			/* checkDataDir handles this */
+		return FALSE;
+
+	if (stat(checkdir, &stat_buf) == -1)	/* ditto */
+		return FALSE;
+
+	if (S_ISREG(stat_buf.st_mode))		/* It's a regular file, so assume it's explict */
+		return TRUE;
+	else if (S_ISDIR(stat_buf.st_mode))	/* It's a directory, is it a config or system dir? */
+	{
+		snprintf(path, MAXPGPATH, "%s/global/pg_control", checkdir);
+		/* If this is not found, it is a config-only directory */
+		if (stat(path, &stat_buf) == -1)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+
 /*
  * Validate the proposed data directory
  */
@@ -862,8 +925,8 @@ checkDataDir(const char *checkdir)
 	{
 		write_stderr("%s does not know where to find the database system data.\n"
 					 "You must specify the directory that contains the database system\n"
-					 "either by specifying the -D invocation option or by setting the\n"
-					 "PGDATA environment variable.\n",
+					 "or configuration files by either specifying the -D invocation option\n"
+					 "or by setting the PGDATA environment variable.\n",
 					 progname);
 		ExitPostmaster(2);
 	}
@@ -873,12 +936,12 @@ checkDataDir(const char *checkdir)
 		if (errno == ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("data directory \"%s\" does not exist",
+					 errmsg("data or configuration location \"%s\" does not exist",
 							checkdir)));
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
-			 errmsg("could not read permissions of directory \"%s\": %m",
+			 errmsg("could not read permissions of \"%s\": %m",
 					checkdir)));
 	}
 

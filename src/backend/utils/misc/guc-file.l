@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.22 2004/05/26 15:07:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.23 2004/07/11 00:18:44 momjian Exp $
  */
 
 %{
@@ -129,43 +129,24 @@ free_name_value_list(struct name_value_pair * list)
  * function does not return if an error occurs. If an error occurs, no
  * values will be changed.
  */
-void
-ProcessConfigFile(GucContext context)
+static void
+ReadConfigFile(char *filename, GucContext context)
 {
 	int token, parse_state;
 	char *opt_name, *opt_value;
-	char *filename;
 	struct name_value_pair *item, *head, *tail;
 	int elevel;
 	FILE * fp;
 
-	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND 
-		|| context == PGC_SIGHUP);
-	Assert(DataDir);
 	elevel = (context == PGC_SIGHUP) ? DEBUG4 : ERROR;
-
-	/*
-	 * Open file
-	 */
-	filename = malloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
-	if (filename == NULL)
-	{
-		ereport(elevel,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return;
-	}
-	sprintf(filename, "%s/" CONFIG_FILENAME, DataDir);
 
     fp = AllocateFile(filename, "r");
     if (!fp)
     {
 		free(filename);
-        /* File not found is fine */
-        if (errno != ENOENT)
-            ereport(elevel,
-					(errcode_for_file_access(),
-					 errmsg("could not open configuration file \"%s\": %m", CONFIG_FILENAME)));
+		ereport(elevel,
+			(errcode_for_file_access(),
+			 errmsg("could not open configuration file \"%s\": %m", filename)));
 		return;
     }
 
@@ -197,7 +178,8 @@ ProcessConfigFile(GucContext context)
                     token = yylex();
 
                 if (token != GUC_ID && token != GUC_STRING && 
-					token != GUC_INTEGER && token != GUC_REAL && 
+					token != GUC_INTEGER && 
+					token != GUC_REAL && 
 					token != GUC_UNQUOTED_STRING)
                     goto parse_error;
                 opt_value = strdup(yytext);
@@ -259,7 +241,6 @@ ProcessConfigFile(GucContext context)
         }
 
 	FreeFile(fp);
-	free(filename);
 
 	/*
 	 * Check if all options are valid
@@ -282,12 +263,11 @@ ProcessConfigFile(GucContext context)
 
  parse_error:
 	FreeFile(fp);
-	free(filename);
 	free_name_value_list(head);
 	ereport(elevel,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
-					CONFIG_FILENAME, ConfigFileLineno, yytext)));
+					filename, ConfigFileLineno, yytext)));
 	return;
 
  out_of_memory:
@@ -298,6 +278,65 @@ ProcessConfigFile(GucContext context)
 			(errcode(ERRCODE_OUT_OF_MEMORY),
 			 errmsg("out of memory")));
 	return;
+}
+
+/*
+ * Function to read and process the configuration file. The
+ * parameter indicates the context that the file is being read
+ * (postmaster startup, backend startup, or SIGHUP). All options
+ * mentioned in the configuration file are set to new values. This
+ * function does not return if an error occurs. If an error occurs, no
+ * values will be changed.
+ */
+void
+ProcessConfigFile(GucContext context)
+{
+	char *filename;
+
+	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND || context == PGC_SIGHUP);
+
+	/* Added for explicit config file */
+	if (user_pgconfig)
+	{
+		struct stat sb;
+
+		if (stat(user_pgconfig, &sb) != 0)
+		{
+			int elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
+			elog(elevel, "Configuration file \"%s\" does not exist", user_pgconfig);
+			return;
+		}
+
+		if (S_ISDIR(sb.st_mode))
+		{
+			/* This will cause a small one time memory leak
+			 * if the user also specifies hba_conf,
+			 * ident_conf, and data_dir
+			 */
+			filename = malloc(strlen(user_pgconfig) + strlen(CONFIG_FILENAME) + 2);
+			sprintf(filename, "%s/%s", user_pgconfig, CONFIG_FILENAME);
+			user_pgconfig_is_dir = true;
+		}
+		else
+			filename = strdup(user_pgconfig);	/* Use explicit file */
+	}
+	else
+	{
+		/* Use datadir for config */
+		filename = malloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
+		sprintf(filename, "%s/%s", DataDir, CONFIG_FILENAME);
+	}
+
+	if (filename == NULL)
+	{
+		int elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
+		elog(elevel, "out of memory");
+		return;
+	}
+
+	ReadConfigFile(filename, context);
+
+	free(filename);
 }
 
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.185 2004/06/24 21:02:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.186 2004/07/11 00:18:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,7 +212,7 @@ BootstrapMain(int argc, char *argv[])
 	char	   *dbname;
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
-	char	   *potential_DataDir = NULL;
+	char	   *userPGDATA = NULL;
 
 	/*
 	 * initialize globals
@@ -236,8 +236,7 @@ BootstrapMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 	{
 		InitializeGUCOptions();
-		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
-												 * variable */
+		userPGDATA = getenv("PGDATA");	/* Null if no PGDATA variable */
 	}
 
 	/* Ignore the initial -boot argument, if present */
@@ -252,7 +251,7 @@ BootstrapMain(int argc, char *argv[])
 		switch (flag)
 		{
 			case 'D':
-				potential_DataDir = optarg;
+				userPGDATA = optarg;
 				break;
 			case 'd':
 				{
@@ -326,7 +325,7 @@ BootstrapMain(int argc, char *argv[])
 
 	if (!IsUnderPostmaster)
 	{
-		if (!potential_DataDir)
+		if (!userPGDATA)
 		{
 			write_stderr("%s does not know where to find the database system data.\n"
 						 "You must specify the directory that contains the database system\n"
@@ -335,7 +334,7 @@ BootstrapMain(int argc, char *argv[])
 						 argv[0]);
 			proc_exit(1);
 		}
-		SetDataDir(potential_DataDir);
+		SetDataDir(userPGDATA);
 	}
 
 	/* Validate we have been given a reasonable-looking DataDir */

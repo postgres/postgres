@@ -22,6 +22,16 @@
 
 
 #---------------------------------------------------------------------------
+# CONFIGURATION FILES
+#---------------------------------------------------------------------------
+
+# pgdata = '/usr/local/pgsql/data'		# use data in another directory
+# hba_conf = '/etc/pgsql/pg_hba.conf' 		# use hba info in another directory
+# ident_conf = '/etc/pgsql/pg_ident.conf'	# use ident info in another directory
+# external_pidfile= '/var/run/postgresql.pid'	# write an extra pid file
+
+
+#---------------------------------------------------------------------------
 # CONNECTIONS AND AUTHENTICATION
 #---------------------------------------------------------------------------
 

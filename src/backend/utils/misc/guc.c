@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.213 2004/07/05 23:14:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.214 2004/07/11 00:18:44 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -57,6 +57,13 @@
 #include "utils/pg_locale.h"
 #include "pgstat.h"
 
+char *guc_pgdata;
+char *guc_hbafile;
+char *guc_identfile;
+char *external_pidfile;
+
+char *user_pgconfig = NULL;
+bool user_pgconfig_is_dir = false;
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -107,6 +114,7 @@ static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 
+static void ReadConfigFile(char *filename, GucContext context);
 
 /*
  * Debugging options
@@ -1701,15 +1709,40 @@ static struct config_string ConfigureNamesString[] =
 		NULL, assign_custom_variable_classes, NULL
 	},
 
+	{
+		{"pgdata", PGC_POSTMASTER, 0, gettext_noop("Sets the location of the data directory"), NULL}, 
+		&guc_pgdata,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"hba_conf", PGC_SIGHUP, 0, gettext_noop("Sets the location of the \"hba\" configuration file"), NULL}, 
+		&guc_hbafile,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"ident_conf", PGC_SIGHUP, 0, gettext_noop("Sets the location of the \"ident\" configuration file"), NULL}, 
+		&guc_identfile,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"external_pidfile", PGC_POSTMASTER, 0, gettext_noop("Writes the postmaster PID to the specified file"), NULL},
+		&external_pidfile,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL
 	}
 };
 
+
 /******** end of options list ********/
 
-
+  
 /*
  * To allow continued support of obsolete names for GUC variables, we apply
  * the following mappings to any unrecognized name.  Note that an old name

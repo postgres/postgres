@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.268 2004/06/27 22:58:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.269 2004/07/11 00:18:40 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -563,6 +563,54 @@ SET ENABLE_SEQSCAN TO OFF;
     any desired selection condition.
    </para>
     
+   <sect2 id="runtime-config-configuration-files">
+    <title>Configuration Files</title>
+
+     <variablelist>
+
+     <varlistentry id="guc-pgdata" xreflabel="pgdata">
+      <term><varname>pgdata</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+         Specifies the directory to use for data storage (everything except
+         configuration files).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-hba-conf" xreflabel="hba-conf">
+      <term><varname>hba_conf</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+         Specifies the file name to use for configuration of host-based 
+         authentication (HBA).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ident-conf" xreflabel="ident-conf">
+      <term><varname>ident_conf</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+         Specifies the file name to use for configuration of 
+         <application>ident</> authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="external-pidfile" xreflabel="external-pidfile">
+      <term><varname>external_pidfile</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+         Specifies the location of an additional <application>postmaster</>
+         process-id (PID) file for use by server administration programs.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+   </sect2>
+
    <sect2 id="runtime-config-connection">
     <title>Connections and Authentication</title>
 
