@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.8 1997/01/16 07:53:26 vadim Exp $
+ * $Id: buf_internals.h,v 1.9 1997/01/20 04:06:13 vadim Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -38,6 +38,7 @@ extern int Num_Descriptors;
 #define BM_FREE			(1 << 4)
 #define BM_IO_IN_PROGRESS	(1 << 5)
 #define BM_IO_ERROR		(1 << 6)
+#define BM_JUST_DIRTIED		(1 << 7)
 
 typedef bits16 BufFlags;
 
