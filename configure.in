@@ -677,6 +677,7 @@ AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
+AC_CHECK_LIB(resolv,   main)
 AC_SEARCH_LIBS(crypt,  crypt)
 AC_CHECK_LIB(bind,     __inet_ntoa)
 dnl only consider libz to be present if we find <zlib.h> as well

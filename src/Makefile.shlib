@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.37 2000/12/06 19:37:08 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.38 2001/02/04 14:09:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -171,7 +171,7 @@ ifeq ($(PORTNAME), solaris)
   else
     LINK.shared		+= -Wl,-h,$(soname)
   endif
-  SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
+  SHLIB_LINK		+= -lm -lc
 endif
 
 ifeq ($(PORTNAME), osf)

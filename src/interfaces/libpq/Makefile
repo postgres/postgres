@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.48 2001/01/20 23:07:27 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.49 2001/02/04 14:09:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ endif
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
-SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl, $(LIBS))
+SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv, $(LIBS))
 
 
 all: all-lib
