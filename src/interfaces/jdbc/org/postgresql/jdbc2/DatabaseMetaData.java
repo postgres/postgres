@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.52 2002/04/16 13:28:44 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.53 2002/06/05 19:12:01 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -760,8 +760,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsANSI92EntryLevelSQL() throws SQLException
 	{
-		Driver.debug("supportsANSI92EntryLevelSQL false ");
-		return false;
+		boolean schemas = connection.haveMinimumServerVersion("7.3");
+		Driver.debug("supportsANSI92EntryLevelSQL " + schemas);
+		return schemas;
+
 	}
 
 	/*
@@ -941,8 +943,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInTableDefinitions() throws SQLException
 	{
-		Driver.debug("supportsSchemasInTableDefinitions false");
-		return false;
+		boolean schemas = connection.haveMinimumServerVersion("7.3");
+
+		Driver.debug("supportsSchemasInTableDefinitions " + schemas);
+		return schemas;
 	}
 
 	/*
@@ -2410,6 +2414,71 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 				" ORDER BY table_name, pk_name, key_seq"
 														);
 	}
+/*
+ SELECT
+        c.relname as primary,
+        c2.relname as foreign,
+        t.tgconstrname,
+        ic.relname as fkeyname,
+        af.attnum as fkeyseq,
+        ipc.relname as pkeyname,
+        ap.attnum as pkeyseq,
+        t.tgdeferrable,
+        t.tginitdeferred,
+        t.tgnargs,t.tgargs,
+        p1.proname as updaterule,
+        p2.proname as deleterule
+FROM
+        pg_trigger t,
+        pg_trigger t1,
+        pg_class c,
+        pg_class c2,
+        pg_class ic,
+        pg_class ipc,
+        pg_proc p1,
+        pg_proc p2,
+        pg_index if,
+        pg_index ip,
+        pg_attribute af,
+        pg_attribute ap
+WHERE
+        (t.tgrelid=c.oid
+        AND t.tgisconstraint
+        AND t.tgconstrrelid=c2.oid
+        AND t.tgfoid=p1.oid
+        and p1.proname like '%%upd')
+
+        and
+        (t1.tgrelid=c.oid
+        and t1.tgisconstraint
+        and t1.tgconstrrelid=c2.oid
+        AND t1.tgfoid=p2.oid
+        and p2.proname like '%%del')
+
+        AND c2.relname='users'
+
+        AND
+        (if.indrelid=c.oid
+        AND if.indexrelid=ic.oid
+        and ic.oid=af.attrelid
+        AND if.indisprimary)
+
+        and
+        (ip.indrelid=c2.oid
+        and ip.indexrelid=ipc.oid
+        and ipc.oid=ap.attrelid
+        and ip.indisprimary)
+
+*/
+/**
+ *
+ * @param catalog
+ * @param schema
+ * @param primaryTable if provided will get the keys exported by this table
+ * @param foreignTable if provided will get the keys imported by this table
+ * @return ResultSet
+ * @throws SQLException
+ */
 
 	private java.sql.ResultSet getImportedExportedKeys(String catalog, String schema, String primaryTable, String foreignTable) throws SQLException
 	{
@@ -2430,120 +2499,203 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
 		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
-		java.sql.ResultSet rs = connection.ExecSQL("SELECT c.relname,c2.relname,"
-								+ "t.tgconstrname,ic.relname,"
-								+ "t.tgdeferrable,t.tginitdeferred,"
-								+ "t.tgnargs,t.tgargs,p.proname "
-								+ "FROM pg_trigger t,pg_class c,pg_class c2,"
-								+ "pg_class ic,pg_proc p, pg_index i "
-								+ "WHERE t.tgrelid=c.oid AND t.tgconstrrelid=c2.oid "
-								+ "AND t.tgfoid=p.oid AND tgisconstraint "
-								+ ((primaryTable != null) ? "AND c.relname='" + primaryTable + "' " : "")
-								+ ((foreignTable != null) ? "AND c2.relname='" + foreignTable + "' " : "")
-								+ "AND i.indrelid=c.oid "
-								+ "AND i.indexrelid=ic.oid AND i.indisprimary "
-								+ "ORDER BY c.relname,c2.relname"
-												  );
+		java.sql.ResultSet rs = connection.ExecSQL(
+                "SELECT "
+                  + "c.relname as prelname, "
+                  + "c2.relname as frelname, "
+                  + "t.tgconstrname, "
+                  + "a.attnum as keyseq, "
+                  + "ic.relname as fkeyname, "
+                  + "t.tgdeferrable, "
+                  + "t.tginitdeferred, "
+                  + "t.tgnargs,t.tgargs, "
+                  + "p1.proname as updaterule, "
+                  + "p2.proname as deleterule "
+          + "FROM "
+                  + "pg_trigger t, "
+                  + "pg_trigger t1, "
+                  + "pg_class c, "
+                  + "pg_class c2, "
+                  + "pg_class ic, "
+                  + "pg_proc p1, "
+                  + "pg_proc p2, "
+                  + "pg_index i, "
+                  + "pg_attribute a "
+          + "WHERE "
+                   // isolate the update rule
+                  + "(t.tgrelid=c.oid "
+                  + "AND t.tgisconstraint "
+                  + "AND t.tgconstrrelid=c2.oid "
+                  + "AND t.tgfoid=p1.oid "
+                  + "and p1.proname like '%%upd') "
+
+                  + "and "
+                  // isolate the delete rule
+                  + "(t1.tgrelid=c.oid "
+                  + "and t1.tgisconstraint "
+                  + "and t1.tgconstrrelid=c2.oid "
+                  + "AND t1.tgfoid=p2.oid "
+                  + "and p2.proname like '%%del') "
+
+                  // if we are looking for exported keys then primary table will be used
+								  + ((primaryTable != null) ? "AND c.relname='" + primaryTable + "' " : "")
+
+                  // if we are looking for imported keys then the foreign table will be used
+								  + ((foreignTable != null) ? "AND c2.relname='" + foreignTable + "' " : "")
+                  + "AND i.indrelid=c.oid "
+                  + "AND i.indexrelid=ic.oid "
+                  + "AND ic.oid=a.attrelid "
+                  + "AND i.indisprimary "
+          + "ORDER BY "
+
+                   // orderby is as follows getExported, orders by FKTABLE,
+                   // getImported orders by PKTABLE
+                   // getCrossReference orders by FKTABLE, so this should work for both,
+                   // since when getting crossreference, primaryTable will be defined
+
+                  +   (primaryTable != null ? "frelname" : "prelname") + ",keyseq");
+
+// returns the following columns
+// and some example data with a table defined as follows
+
+// create table people ( id int primary key);
+// create table policy ( id int primary key);
+// create table users  ( id int primary key, people_id int references people(id), policy_id int references policy(id))
+
+// prelname | frelname | tgconstrname | keyseq | fkeyName    | tgdeferrable | tginitdeferred
+//    1     |    2     |      3       |    4   |     5       |       6      |    7
+
+//  people  | users    | <unnamed>    |    1   | people_pkey |       f      |    f
+
+// | tgnargs |                        tgargs                                      | updaterule           | deleterule
+// |    8    |                          9                                         |    10                |    11
+// |    6    | <unnamed>\000users\000people\000UNSPECIFIED\000people_id\000id\000 | RI_FKey_noaction_upd | RI_FKey_noaction_del
+
 		Vector tuples = new Vector();
-		short seq = 0;
-		if (rs.next())
+
+
+		while ( rs.next() )
 		{
-			boolean hasMore;
-			do
-			{
-				byte tuple[][] = new byte[14][0];
-				for (int k = 0;k < 14;k++)
-					tuple[k] = null;
+			byte tuple[][] = new byte[14][];
 
-				String fKeyName = rs.getString(3);
-				boolean foundRule = false;
-				do
-				{
-					String proname = rs.getString(9);
-					if (proname != null && proname.startsWith("RI_FKey_"))
-					{
-						int col = -1;
-						if (proname.endsWith("_upd"))
-							col = 9; // UPDATE_RULE
-						else if (proname.endsWith("_del"))
-							col = 10; // DELETE_RULE
-						if (col > -1)
-						{
-							String rule = proname.substring(8, proname.length() - 4);
-							int action = importedKeyNoAction;
-							if ("cascade".equals(rule))
-								action = importedKeyCascade;
-							else if ("setnull".equals(rule))
-								action = importedKeySetNull;
-							else if ("setdefault".equals(rule))
-								action = importedKeySetDefault;
-							tuple[col] = Integer.toString(action).getBytes();
+      tuple[2] = rs.getBytes(1); //PKTABLE_NAME
+      tuple[6] = rs.getBytes(2); //FKTABLE_NAME
+      String fKeyName = rs.getString(3);
+      String updateRule = rs.getString(10);
 
-							if (!foundRule)
-							{
-								tuple[2] = rs.getBytes(1); //PKTABLE_NAME
-								tuple[6] = rs.getBytes(2); //FKTABLE_NAME
+      if (updateRule != null )
+      {
+        // Rules look like this RI_FKey_noaction_del so we want to pull out the part between the 'Key_' and the last '_' s
 
-								// Parse the tgargs data
-								StringBuffer fkeyColumns = new StringBuffer();
-								StringBuffer pkeyColumns = new StringBuffer();
-								int numColumns = (rs.getInt(7) >> 1) - 2;
-								String s = rs.getString(8);
-								int pos = s.lastIndexOf("\\000");
-								for (int c = 0;c < numColumns;c++)
-								{
-									if (pos > -1)
-									{
-										int pos2 = s.lastIndexOf("\\000", pos - 1);
-										if (pos2 > -1)
-										{
-											if (pkeyColumns.length() > 0)
-											        pkeyColumns.insert(0, ',');
-											pkeyColumns.insert(0, s.substring(pos2 + 4, pos)); //PKCOLUMN_NAME
-											pos = s.lastIndexOf("\\000", pos2 - 1);
-											if (pos > -1)
-											{
-												if (fkeyColumns.length() > 0)
-												    fkeyColumns.insert(0, ',');
-												fkeyColumns.insert(0, s.substring(pos + 4, pos2)); //FKCOLUMN_NAME
-											}
-										}
-									}
-								}
-								tuple[3] = pkeyColumns.toString().getBytes(); //PKCOLUMN_NAME
-								tuple[7] = fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
+        String rule = updateRule.substring(8, updateRule.length() - 4);
 
-								tuple[8] = Integer.toString(seq++).getBytes(); //KEY_SEQ
-								tuple[11] = fKeyName.getBytes(); //FK_NAME
-								tuple[12] = rs.getBytes(4); //PK_NAME
+        int action = importedKeyNoAction;
 
-								// DEFERRABILITY
-								int deferrability = importedKeyNotDeferrable;
-								boolean deferrable = rs.getBoolean(5);
-								boolean initiallyDeferred = rs.getBoolean(6);
-								if (deferrable)
-								{
-									if (initiallyDeferred)
-									        deferrability = importedKeyInitiallyDeferred;
-									else
-									        deferrability = importedKeyInitiallyImmediate;
-								}
-								tuple[13] = Integer.toString(deferrability).getBytes();
+        if ( rule == null || "noaction".equals(rule) )
+           action = importedKeyNoAction;
+        if ("cascade".equals(rule))
+          action = importedKeyCascade;
+        else if ("setnull".equals(rule))
+          action = importedKeySetNull;
+        else if ("setdefault".equals(rule))
+          action = importedKeySetDefault;
+        else if ("restrict".equals(rule))
+          action = importedKeyRestrict;
 
-								foundRule = true;
-							}
-						}
-					}
-				}
-				while ((hasMore = rs.next()) && fKeyName.equals(rs.getString(3)));
+        tuple[9] = Integer.toString(action).getBytes();
 
-				if(foundRule) tuples.addElement(tuple);
+      }
 
-			}
-			while (hasMore);
-		}
+      String deleteRule = rs.getString(11);
 
-		return new ResultSet(connection, f, tuples, "OK", 1);
+      if ( deleteRule != null )
+      {
+
+        String rule = updateRule.substring(8, updateRule.length() - 4);
+
+        int action = importedKeyNoAction;
+        if ("cascade".equals(rule))
+          action = importedKeyCascade;
+        else if ("setnull".equals(rule))
+          action = importedKeySetNull;
+        else if ("setdefault".equals(rule))
+          action = importedKeySetDefault;
+        tuple[10] = Integer.toString(action).getBytes();
+      }
+
+
+      // Parse the tgargs data
+      StringBuffer fkeyColumns = new StringBuffer();
+      StringBuffer pkeyColumns = new StringBuffer();
+
+
+      // Note, I am guessing at most of this, but it should be close
+      // if not, please correct
+      // the keys are in pairs and start after the first four arguments
+      // the arguments are seperated by \000
+
+      int numColumns = (rs.getInt(8) >> 1) - 2;
+
+
+
+      // get the args
+      String targs = rs.getString(9);
+
+      // start parsing from the end
+      int pos = targs.lastIndexOf("\\000");
+
+      for (int c = 0;c < numColumns;c++)
+      {
+        // this should never be, since we should never get to the beginning of the string
+        // as the number of columns should override this, but it is a safe test
+        if (pos > -1)
+        {
+          int pos2 = targs.lastIndexOf("\\000", pos - 1);
+          if (pos2 > -1)
+          {
+            // seperate the pkColumns by ',' s
+            if (pkeyColumns.length() > 0)
+                    pkeyColumns.insert(0, ',');
+
+            // extract the column name out 4 characters ahead essentially removing the /000
+            pkeyColumns.insert(0, targs.substring(pos2 + 4, pos)); //PKCOLUMN_NAME
+
+            // now find the associated fkColumn
+            pos = targs.lastIndexOf("\\000", pos2 - 1);
+            if (pos > -1)
+            {
+              if (fkeyColumns.length() > 0)
+                  fkeyColumns.insert(0, ',');
+              fkeyColumns.insert(0, targs.substring(pos + 4, pos2)); //FKCOLUMN_NAME
+            }
+          }
+        }
+      }
+
+      tuple[3] = pkeyColumns.toString().getBytes(); //PKCOLUMN_NAME
+      tuple[7] = fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
+
+      tuple[8] =  rs.getBytes(4); //KEY_SEQ
+      tuple[11] = rs.getBytes(5); //FK_NAME
+      tuple[12] = rs.getBytes(3); //PK_NAME
+
+      // DEFERRABILITY
+      int deferrability = importedKeyNotDeferrable;
+      boolean deferrable = rs.getBoolean(6);
+      boolean initiallyDeferred = rs.getBoolean(7);
+      if (deferrable)
+      {
+        if (initiallyDeferred)
+                deferrability = importedKeyInitiallyDeferred;
+        else
+                deferrability = importedKeyInitiallyImmediate;
+      }
+      tuple[13] = Integer.toString(deferrability).getBytes();
+
+      tuples.addElement(tuple);
+    }
+
+    return new ResultSet(connection, f, tuples, "OK", 1);
 	}
 
 	/*

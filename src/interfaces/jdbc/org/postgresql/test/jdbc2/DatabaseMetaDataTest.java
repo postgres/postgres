@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.7 2002/05/30 16:39:26 davec Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.8 2002/06/05 19:12:01 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -235,6 +235,7 @@ public class DatabaseMetaDataTest extends TestCase
 		  Connection con1 = JDBC2Tests.openDB();
 		  JDBC2Tests.createTable( con1, "people", "id int4 primary key, name text" );
 		  JDBC2Tests.createTable( con1, "policy", "id int4 primary key, name text" );
+
 		  JDBC2Tests.createTable( con1, "users", "id int4 primary key, people_id int4, policy_id int4,"+
                                     "CONSTRAINT people FOREIGN KEY (people_id) references people(id),"+
                                     "constraint policy FOREIGN KEY (policy_id) references policy(id)" );
@@ -261,9 +262,10 @@ public class DatabaseMetaDataTest extends TestCase
          assertTrue( fkColumnName.equals( "people_id" ) || fkColumnName.equals( "policy_id" ) ) ;
 
          String fkName = rs.getString( "FK_NAME" );
-         assertTrue( fkName.equals( "people") || fkName.equals( "policy" ) );
+         assertTrue( fkName.equals( "people_pkey") || fkName.equals( "policy_pkey" ) );
 
          String pkName = rs.getString( "PK_NAME" );
+//         assertTrue( pkName.equals("users") );
 
       }
 
@@ -280,7 +282,7 @@ public class DatabaseMetaDataTest extends TestCase
       assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
       assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
 
-      assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
+      assertTrue( rs.getString( "FK_NAME" ).equals( "people_pkey" ) );
 
 
       JDBC2Tests.dropTable( con1, "users" );
