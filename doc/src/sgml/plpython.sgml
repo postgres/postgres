@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.12 2002/09/21 18:32:53 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.13 2002/09/22 18:47:24 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -221,12 +221,14 @@ plan = plpy.prepare("SOME OTHER QUERY")
    execution environment, further restricts it to prevent the use of
    the file <function>open</> call, and allows only modules from a
    specific list to be imported.  Presently, that list includes:
-   <literal>array</>, <>bisect</>, <>binascii</>, <>calendar</>,
-   <>cmath</>, <>codecs</>, <>errno</>, <>marshal</>, <>math</>,
-   <>md5</>, <>mpz</>, <>operator</>, <>pcre</>, <>pickle</>,
-   <>random</>, <>re</>, <>regex</>, <>sre</>, <>sha</>, <>string</>,
-   <>StringIO</>, <>struct</>, <>time</>, <>whrandom</>, and
-   <>zlib</>.
+   <literal>array</>, <literal>bisect</>, <literal>binascii</>,
+   <literal>calendar</>, <literal>cmath</>, <literal>codecs</>,
+   <literal>errno</>, <literal>marshal</>, <literal>math</>, <literal>md5</>,
+   <literal>mpz</>, <literal>operator</>, <literal>pcre</>,
+   <literal>pickle</>, <literal>random</>, <literal>re</>, <literal>regex</>,
+   <literal>sre</>, <literal>sha</>, <literal>string</>, <literal>StringIO</>,
+   <literal>struct</>, <literal>time</>, <literal>whrandom</>, and
+   <literal>zlib</>.
   </para>
  </sect1>
 
