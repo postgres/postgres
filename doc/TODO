@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Nov 11 23:10:40 EST 2003
+Last updated:		Sun Nov 16 21:01:56 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -220,7 +220,7 @@ Commands
 	  rows with DEFAULT value
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
-	o --Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
+	o -Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
 	o -Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
 	o Have ALTER TABLE rename SERIAL sequences
 	o Allow columns to be reordered using ALTER ... POSITION i col1 [,col2];
@@ -522,7 +522,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1167 2003/11/12 04:10:43 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1167 2003/11/12 04:10:43 momjian Exp $
+* Change CVS $Id: TODO,v 1.1168 2003/11/17 02:01:56 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1168 2003/11/17 02:01:56 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
