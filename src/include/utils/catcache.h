@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.42 2002/04/06 06:59:24 tgl Exp $
+ * $Id: catcache.h,v 1.43 2002/06/19 13:46:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ typedef struct catcacheheader
 
 
 /* this extern duplicates utils/memutils.h... */
-extern MemoryContext CacheMemoryContext;
+extern DLLIMPORT MemoryContext CacheMemoryContext;
 
 extern void CreateCacheMemoryContext(void);
 extern void AtEOXact_CatCache(bool isCommit);
