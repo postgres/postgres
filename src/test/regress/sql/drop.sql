@@ -1,7 +1,7 @@
 --
--- destroy.source
+-- drop.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/drop.sql,v 1.1 1999/12/10 17:31:30 momjian Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/drop.sql,v 1.2 1999/12/10 17:32:57 momjian Exp $
 --
 
 --
