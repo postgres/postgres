@@ -1,5 +1,5 @@
 # This makefile will build the new XML and XSLT routines.
-subdir = contrib/xml
+subdir = contrib/xml2
 top_builddir = ../../
 include $(top_builddir)/src/Makefile.global
 
