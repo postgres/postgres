@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.c,v 1.1 2001/08/21 01:32:01 momjian Exp $
+ * $Id: px.c,v 1.2 2001/09/06 03:21:39 momjian Exp $
  */
 
 #include <postgres.h>
@@ -208,7 +208,7 @@ combo_free(PX_Combo *cx)
 
 /* PARSER */
 
-static void
+static int
 parse_cipher_name(char *full, char **cipher, char **pad)
 {
 	char *p, *p2, *q;
@@ -229,14 +229,16 @@ parse_cipher_name(char *full, char **cipher, char **pad)
 		p2 = strchr(p, ':');
 		if (p2 != NULL) {
 			*p2++ = 0;
-			if (!strcmp(p, "pad")) {
+			if (!strcmp(p, "pad"))
 				*pad = p2;
-			} else {
-				elog(ERROR, "Unknown component: '%s'", p);
-			}
-		}
+			else
+				return -1;
+		} else
+			return -1;
+		
 		p = q;
 	}
+	return 0;
 }
 
 /* provider */
@@ -255,11 +257,11 @@ px_find_combo(const char *name, PX_Combo **res)
 	buf = px_alloc(strlen(name) + 1);
 	strcpy(buf, name);
 
-	parse_cipher_name(buf, &s_cipher, &s_pad);
-	if (s_cipher == NULL) {
+	err = parse_cipher_name(buf, &s_cipher, &s_pad);
+	if (err) {
 		px_free(buf);
 		px_free(cx);
-		return -1;
+		return err;
 	}
 
 	err = px_find_cipher(s_cipher, &cx->cipher);
