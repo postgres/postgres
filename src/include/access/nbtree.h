@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.44 2000/10/13 02:03:02 vadim Exp $
+ * $Id: nbtree.h,v 1.45 2000/10/13 12:05:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,8 +259,9 @@ typedef struct xl_btree_insert
 
 /* 
  * This is what we need to know about insert with split - 
- * 22 + [4+8] + [btitem] + right sibling btitems. Note that we need in
- * CommandID and HeapNode (4 + 8 bytes) only for leaf page insert.
+ * 22 + {4 + 8 | left hi-key} + [btitem] + right sibling btitems. Note that
+ * we need in CommandID and HeapNode (4 + 8 bytes) for leaf pages
+ * and in left page hi-key for non-leaf ones.
  */
 typedef struct xl_btree_split
 {
@@ -271,8 +272,8 @@ typedef struct xl_btree_split
 	/* 
 	 * We log all btitems from the right sibling. If new btitem goes on
 	 * the left sibling then we log it too and it will be the first
-	 * BTItemData at the end of this struct, but after (for the leaf
-	 * pages) CommandId and HeapNode.
+	 * BTItemData at the end of this struct after CommandId and HeapNode
+	 * on the leaf pages and left page hi-key on non-leaf ones.
 	 */
 } xl_btree_split;
 

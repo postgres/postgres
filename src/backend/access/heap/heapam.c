@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.87 2000/10/13 02:02:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.88 2000/10/13 12:05:20 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2198,7 +2198,8 @@ void heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	HeapTupleHeader	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	/* is it our tuple ? */
-	if (htup->t_xmin != record->xl_xid || htup->t_cmin != xlrec->target.cid)
+	if (PageGetSUI(page) != ThisStartUpID || 
+		htup->t_xmin != record->xl_xid || htup->t_cmin != xlrec->target.cid)
 	{
 		if (!InRecovery)
 			elog(STOP, "heap_insert_undo: invalid target tuple in rollback");
@@ -2394,7 +2395,8 @@ newt:;
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	/* is it our tuple ? */
-	if (htup->t_xmin != record->xl_xid || htup->t_cmin != xlrec->target.cid)
+	if (PageGetSUI(page) != ThisStartUpID || 
+		htup->t_xmin != record->xl_xid || htup->t_cmin != xlrec->target.cid)
 	{
 		if (!InRecovery)
 			elog(STOP, "heap_update_undo: invalid new tuple in rollback");
