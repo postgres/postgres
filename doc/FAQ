@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 22:51:43 EST 2005
+   Last updated: Sat Jan 29 22:59:12 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -38,20 +38,14 @@
                                       
    3.1) How do I install PostgreSQL somewhere other than
    /usr/local/pgsql?
-   3.2) When I start postmaster, I get a Bad System Call or core dumped
-   message. Why?
-   3.3) When I try to start postmaster, I get IpcMemoryCreate errors.
-   Why?
-   3.4) When I try to start postmaster, I get IpcSemaphoreCreate errors.
-   Why?
-   3.5) How do I control connections from other hosts?
-   3.6) How do I tune the database engine for better performance?
-   3.7) What debugging features are available?
-   3.8) Why do I get "Sorry, too many clients" when trying to connect?
-   3.9) What is in the pgsql_tmp directory?
-   3.10) Why do I need to do a dump and restore to upgrade PostgreSQL
+   3.2) How do I control connections from other hosts?
+   3.3) How do I tune the database engine for better performance?
+   3.4) What debugging features are available?
+   3.5) Why do I get "Sorry, too many clients" when trying to connect?
+   3.6) What is in the pgsql_tmp directory?
+   3.7) Why do I need to do a dump and restore to upgrade PostgreSQL
    releases?
-   3.11) What computer hardware should I use?
+   3.8) What computer hardware should I use?
    
                            Operational Questions
                                       
@@ -419,43 +413,7 @@
     
    Specify the --prefix option when running configure.
    
-    3.2) When I start postmaster, I get a Bad System Call or core dumped
-    message. Why?
-    
-   It could be a variety of problems, but first check to see that you
-   have System V extensions installed in your kernel. PostgreSQL requires
-   kernel support for shared memory and semaphores.
-   
-    3.3) When I try to start postmaster, I get IpcMemoryCreate errors. Why?
-    
-   You either do not have shared memory configured properly in your
-   kernel or you need to enlarge the shared memory available in the
-   kernel. The exact amount you need depends on your architecture and how
-   many buffers and backend processes you configure for postmaster. For
-   most systems, with default numbers of buffers and processes, you need
-   a minimum of ~1 MB. See the PostgreSQL Administrator's Guide/Server
-   Run-time Environment/Managing Kernel Resources section for more
-   detailed information about shared memory and semaphores.
-   
-    3.4) When I try to start postmaster, I get IpcSemaphoreCreate errors. Why?
-    
-   If the error message is IpcSemaphoreCreate: semget failed (No space
-   left on device) then your kernel is not configured with enough
-   semaphores. Postgres needs one semaphore per potential backend
-   process. A temporary solution is to start postmaster with a smaller
-   limit on the number of backend processes. Use -N with a parameter less
-   than the default of 32. A more permanent solution is to increase your
-   kernel's SEMMNS and SEMMNI parameters.
-   
-   Inoperative semaphores can also cause crashes during heavy database
-   access.
-   
-   If the error message is something else, you might not have semaphore
-   support configured in your kernel at all. See the PostgreSQL
-   Administrator's Guide for more detailed information about shared
-   memory and semaphores.
-   
-    3.5) How do I control connections from other hosts?
+    3.2) How do I control connections from other hosts?
     
    By default, PostgreSQL only allows connections from the local machine
    using Unix domain sockets or TCP/IP connections. Other machines will
@@ -463,7 +421,7 @@
    postgresql.conf and enable host-based authentication by modifying the
    file $PGDATA/pg_hba.conf accordingly.
    
-    3.6) How do I tune the database engine for better performance?
+    3.3) How do I tune the database engine for better performance?
     
    Certainly, indexes can speed up queries. The EXPLAIN ANALYZE command
    allows you to see how PostgreSQL is interpreting your query, and which
@@ -495,7 +453,7 @@
    You can also use the CLUSTER command to group data in tables to match
    an index. See the CLUSTER manual page for more details.
    
-    3.7) What debugging features are available?
+    3.4) What debugging features are available?
     
    PostgreSQL has several features that report status information that
    can be valuable for debugging purposes.
@@ -550,7 +508,7 @@ log_*
    in the client's current directory. Linux requires a compile with
    -DLINUX_PROFILE for proper profiling.
    
-    3.8) Why do I get "Sorry, too many clients" when trying to connect?
+    3.5) Why do I get "Sorry, too many clients" when trying to connect?
     
    You need to increase postmaster's limit on how many concurrent backend
    processes it can start.
@@ -570,7 +528,7 @@ log_*
    that PostgreSQL has a limit on the number of allowed backend processes
    is so your system won't run out of resources.
    
-    3.9) What is in the pgsql_tmp directory?
+    3.6) What is in the pgsql_tmp directory?
     
    This directory contains temporary files generated by the query
    executor. For example, if a sort needs to be done to satisfy an ORDER
@@ -581,7 +539,7 @@ log_*
    remain if a backend crashes during a sort. A stop and restart of the
    postmaster will remove files from those directories.
    
-    3.10) Why do I need to do a dump and restore to upgrade between major
+    3.7) Why do I need to do a dump and restore to upgrade between major
     PostgreSQL releases?
     
    The PostgreSQL team makes only small changes between minor releases,
@@ -596,7 +554,7 @@ log_*
    script can be used to upgrade without a dump/restore. The release
    notes mention whether pg_upgrade is available for the release.
    
-    3.11) What computer hardware should I use?
+    3.8) What computer hardware should I use?
     
    Because PC hardware is mostly compatible, people tend to believe that
    all PC hardware is of equal quality. It is not. ECC RAM, SCSI, and

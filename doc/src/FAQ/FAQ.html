@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Jan 29 22:51:43 EST 2005</P>
+    <P>Last updated: Sat Jan 29 22:59:12 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -56,24 +56,18 @@
     <H2 align="center">Administrative Questions</H2>
     <A href="#3.1">3.1</A>) How do I install PostgreSQL somewhere other
     than <I>/usr/local/pgsql</I>?<BR>
-     <A href="#3.2">3.2</A>) When I start <I>postmaster</I>, I get a
-    <I>Bad System Call</I> or core dumped message. Why?<BR>
-     <A href="#3.3">3.3</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcMemoryCreate</I> errors. Why?<BR>
-     <A href="#3.4">3.4</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcSemaphoreCreate</I> errors. Why?<BR>
-     <A href="#3.5">3.5</A>) How do I control connections from other
+     <A href="#3.2">3.2</A>) How do I control connections from other
     hosts?<BR>
-     <A href="#3.6">3.6</A>) How do I tune the database engine for
+     <A href="#3.3">3.3</A>) How do I tune the database engine for
     better performance?<BR>
-     <A href="#3.7">3.7</A>) What debugging features are available?<BR>
-     <A href="#3.8">3.8</A>) Why do I get <I>"Sorry, too many
+     <A href="#3.4">3.4</A>) What debugging features are available?<BR>
+     <A href="#3.5">3.5</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?<BR>
-     <A href="#3.9">3.9</A>) What is in the  <I>pgsql_tmp</I>
+     <A href="#3.6">3.6</A>) What is in the  <I>pgsql_tmp</I>
     directory?<BR>
-     <A href="#3.10">3.10</A>) Why do I need to do a dump and restore
+     <A href="#3.7">3.7</A>) Why do I need to do a dump and restore
     to upgrade PostgreSQL releases?<BR>
-     <A href="#3.11">3.11</A>) What computer hardware should I use?<BR>
+     <A href="#3.8">3.8</A>) What computer hardware should I use?<BR>
 
 
     <H2 align="center">Operational Questions</H2>
@@ -544,47 +538,7 @@
     <P>Specify the <I>--prefix</I> option when running
     <I>configure</I>.</P>
 
-    <H4><A name="3.2">3.2</A>) When I start <I>postmaster</I>, I get a
-    <I>Bad System Call</I> or core dumped message. Why?</H4>
-
-    <P>It could be a variety of problems, but first check to see that
-    you have System V extensions installed in your kernel. PostgreSQL
-    requires kernel support for shared memory and semaphores.</P>
-
-    <H4><A name="3.3">3.3</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcMemoryCreate</I> errors. Why?</H4>
-
-    <P>You either do not have shared memory configured properly in your
-    kernel or you need to enlarge the shared memory available in the
-    kernel. The exact amount you need depends on your architecture and
-    how many buffers and backend processes you configure for
-    <I>postmaster</I>. For most systems, with default numbers of
-    buffers and processes, you need a minimum of ~1 MB. See the <A
-    href="http://www.postgresql.org/docs/current/static/kernel-resources.html">PostgreSQL
-    Administrator's Guide/Server Run-time Environment/Managing Kernel Resources</A>
-    section for more detailed information about shared memory and semaphores.</P>
-
-    <H4><A name="3.4">3.4</A>) When I try to start <I>postmaster</I>, I
-    get <I>IpcSemaphoreCreate</I> errors. Why?</H4>
-
-    <P>If the error message is <I>IpcSemaphoreCreate: semget failed (No
-    space left on device)</I> then your kernel is not configured with
-    enough semaphores. Postgres needs one semaphore per potential
-    backend process. A temporary solution is to start <I>postmaster</I>
-    with a smaller limit on the number of backend processes. Use
-    <I>-N</I> with a parameter less than the default of 32. A more
-    permanent solution is to increase your kernel's
-    <SMALL>SEMMNS</SMALL> and <SMALL>SEMMNI</SMALL> parameters.</P>
-
-    <P>Inoperative semaphores can also cause crashes during heavy
-    database access.</P>
-
-    <P>If the error message is something else, you might not have
-    semaphore support configured in your kernel at all. See the
-    PostgreSQL Administrator's Guide for more detailed information
-    about shared memory and semaphores.</P>
-
-    <H4><A name="3.5">3.5</A>) How do I control connections from other
+    <H4><A name="3.2">3.2</A>) How do I control connections from other
     hosts?</H4>
 
     <P>By default, PostgreSQL only allows connections from the local
@@ -594,7 +548,7 @@
     host-based authentication by modifying the file
     <I>$PGDATA/pg_hba.conf</I> accordingly.</P>
 
-    <H4><A name="3.6">3.6</A>) How do I tune the database engine for
+    <H4><A name="3.3">3.3</A>) How do I tune the database engine for
     better performance?</H4>
 
     <P>Certainly, indexes can speed up queries. The
@@ -633,7 +587,7 @@
     data in tables to match an index. See the <SMALL>CLUSTER</SMALL>
     manual page for more details.</P>
 
-    <H4><A name="3.7">3.7</A>) What debugging features are
+    <H4><A name="3.4">3.4</A>) What debugging features are
     available?</H4>
 
     <P>PostgreSQL has several features that report status information
@@ -691,7 +645,7 @@
     file will be put in the client's current directory. Linux requires
     a compile with <I>-DLINUX_PROFILE</I> for proper profiling.</P>
 
-    <H4><A name="3.8">3.8</A>) Why do I get <I>"Sorry, too many
+    <H4><A name="3.5">3.5</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?</H4>
 
     <P>You need to increase <I>postmaster</I>'s limit on how many
@@ -716,7 +670,7 @@
     the number of allowed backend processes is so your system won't run
     out of resources.</P>
 
-    <H4><A name="3.9">3.9</A>) What is in the <I>pgsql_tmp</I> directory?</H4>
+    <H4><A name="3.6">3.6</A>) What is in the <I>pgsql_tmp</I> directory?</H4>
 
     <P>This directory contains temporary files generated by the query 
     executor. For example, if a sort needs to be done to satisfy an 
@@ -728,7 +682,7 @@
     remain if a backend crashes during a sort. A stop and restart of the
     <I>postmaster</I> will remove files from those directories.</P>
 
-    <H4><A name="3.10">3.10</A>) Why do I need to do a dump and restore
+    <H4><A name="3.7">3.7</A>) Why do I need to do a dump and restore
     to upgrade between major PostgreSQL releases?</H4>
 
     <P>The PostgreSQL team makes only small changes between minor releases,
@@ -744,7 +698,7 @@
     The release notes mention whether <I>pg_upgrade</I> is available for the
     release.</P>
 
-    <H4><A name="3.11">3.11</A>) What computer hardware should I use?</H4>
+    <H4><A name="3.8">3.8</A>) What computer hardware should I use?</H4>
 
     <P>Because PC hardware is mostly compatible, people tend to believe that
     all PC hardware is of equal quality.  It is not.  ECC RAM, SCSI, and
