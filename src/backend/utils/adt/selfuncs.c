@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.58 2000/03/20 04:02:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.59 2000/03/20 04:26:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,7 +536,7 @@ convert_to_scalar(Datum value, Oid typid,
 		}
 		case BPCHAROID:
 		case VARCHAROID:
-	case BYTEA:
+		case BYTEAOID:
 		case TEXTOID:
 			if (VARSIZE(DatumGetPointer(value)) > VARHDRSZ)
 			{
