@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.44 2004/02/25 18:10:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.45 2004/03/19 18:58:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -620,7 +620,8 @@ extern PLpgSQL_function *plpgsql_curr_compile;
  * Functions in pl_comp.c
  * ----------
  */
-extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo);
+extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
+										 bool forValidator);
 extern int	plpgsql_parse_word(char *word);
 extern int	plpgsql_parse_dblword(char *word);
 extern int	plpgsql_parse_tripword(char *word);
@@ -633,7 +634,6 @@ extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
 extern PLpgSQL_row *plpgsql_build_rowtype(Oid classOid);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
-extern void plpgsql_yyerror(const char *s);
 extern void plpgsql_HashTableInit(void);
 
 /* ----------
@@ -642,6 +642,7 @@ extern void plpgsql_HashTableInit(void);
  */
 extern void plpgsql_init(void);
 extern Datum plpgsql_call_handler(PG_FUNCTION_ARGS);
+extern Datum plpgsql_validator(PG_FUNCTION_ARGS);
 
 /* ----------
  * Functions in pl_exec.c
@@ -691,6 +692,7 @@ extern int	plpgsql_yyparse(void);
 extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
+extern void plpgsql_yyerror(const char *message);
 extern int	plpgsql_scanner_lineno(void);
 extern void plpgsql_scanner_init(const char *str, int functype);
 extern void plpgsql_scanner_finish(void);

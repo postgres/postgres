@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.32 2004/02/25 18:10:51 tgl Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.33 2004/03/19 18:58:07 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -37,6 +37,8 @@
  **********************************************************************/
 
 #include "plpgsql.h"
+
+#include "mb/pg_wchar.h"
 
 
 /* No reason to constrain amount of data slurped */
@@ -410,6 +412,38 @@ plpgsql_push_back_token(int token)
 }
 
 /*
+ * Report a syntax error.
+ */
+void
+plpgsql_yyerror(const char *message)
+{
+	const char *loc = yytext;
+	int			cursorpos;
+
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+
+	/* in multibyte encodings, return index in characters not bytes */
+	cursorpos = pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
+
+	if (*loc == YY_END_OF_BUFFER_CHAR)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 /* translator: %s is typically "syntax error" */
+				 errmsg("%s at end of input", message),
+				 errposition(cursorpos)));
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 /* translator: first %s is typically "syntax error" */
+				 errmsg("%s at or near \"%s\"", message, loc),
+				 errposition(cursorpos)));
+	}
+}
+
+/*
  * Get the line number at which the current token ends.  This substitutes
  * for flex's very poorly implemented yylineno facility.
  *
@@ -439,19 +473,6 @@ plpgsql_scanner_init(const char *str, int functype)
 {
 	Size	slen;
 
-	/*----------
-	 * Hack: skip any initial newline, so that in the common coding layout
-	 *		CREATE FUNCTION ... AS '
-	 *			code body
-	 *		' LANGUAGE 'plpgsql';
-	 * we will think "line 1" is what the programmer thinks of as line 1.
-	 *----------
-	 */
-    if (*str == '\r')
-        str++;
-    if (*str == '\n')
-        str++;
-
 	slen = strlen(str);
 
 	/*
@@ -477,6 +498,19 @@ plpgsql_scanner_init(const char *str, int functype)
 
 	cur_line_start = scanbuf;
 	cur_line_num = 1;
+
+	/*----------
+	 * Hack: skip any initial newline, so that in the common coding layout
+	 *		CREATE FUNCTION ... AS '
+	 *			code body
+	 *		' LANGUAGE 'plpgsql';
+	 * we will think "line 1" is what the programmer thinks of as line 1.
+	 *----------
+	 */
+    if (*cur_line_start == '\r')
+        cur_line_start++;
+    if (*cur_line_start == '\n')
+        cur_line_start++;
 
 	BEGIN(INITIAL);
 }

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.7 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.8 2004/03/19 18:58:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,10 @@ main(int argc, char *argv[])
 
 	char	   *p;
 	bool		handlerexists;
+	bool		validatorexists;
 	bool		trusted;
 	char	   *handler;
+	char	   *validator = NULL;
 	char	   *object;
 
 	PQExpBufferData sql;
@@ -169,6 +171,7 @@ main(int argc, char *argv[])
 	{
 		trusted = true;
 		handler = "plpgsql_call_handler";
+		validator = "plpgsql_validator";
 		object = "plpgsql";
 	}
 	else if (strcmp(langname, "pltcl") == 0)
@@ -229,13 +232,26 @@ main(int argc, char *argv[])
 	/*
 	 * Check whether the call handler exists
 	 */
-	printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' AND prorettype = (SELECT oid FROM pg_type WHERE typname = 'language_handler') AND pronargs = 0;", handler);
+	printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' AND prorettype = 'pg_catalog.language_handler'::regtype AND pronargs = 0;", handler);
 	result = executeQuery(conn, sql.data, progname, echo);
 	handlerexists = (PQntuples(result) > 0);
 	PQclear(result);
 
 	/*
-	 * Create the call handler and the language
+	 * Check whether the validator exists
+	 */
+	if (validator)
+	{
+		printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' AND proargtypes[0] = 'pg_catalog.oid'::regtype AND pronargs = 1;", validator);
+		result = executeQuery(conn, sql.data, progname, echo);
+		validatorexists = (PQntuples(result) > 0);
+		PQclear(result);
+	}
+	else
+		validatorexists = true;			/* don't try to create it */
+
+	/*
+	 * Create the function(s) and the language
 	 */
 	resetPQExpBuffer(&sql);
 
@@ -244,9 +260,19 @@ main(int argc, char *argv[])
 						  "CREATE FUNCTION \"%s\" () RETURNS language_handler AS '%s/%s' LANGUAGE C;\n",
 						  handler, pglib, object);
 
+	if (!validatorexists)
+		appendPQExpBuffer(&sql,
+						  "CREATE FUNCTION \"%s\" (oid) RETURNS void AS '%s/%s' LANGUAGE C;\n",
+						  validator, pglib, object);
+
 	appendPQExpBuffer(&sql,
-					  "CREATE %sLANGUAGE \"%s\" HANDLER \"%s\";\n",
+					  "CREATE %sLANGUAGE \"%s\" HANDLER \"%s\"",
 					  (trusted ? "TRUSTED " : ""), langname, handler);
+
+	if (validator)
+		appendPQExpBuffer(&sql, " VALIDATOR \"%s\"", validator);
+
+	appendPQExpBuffer(&sql, ";\n");
 
 	if (echo)
 		printf("%s", sql.data);

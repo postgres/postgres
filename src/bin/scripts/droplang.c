@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.6 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.7 2004/03/19 18:58:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,6 +13,8 @@
 #include "postgres_fe.h"
 #include "common.h"
 #include "print.h"
+
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 
 static void help(const char *progname);
@@ -46,9 +48,12 @@ main(int argc, char *argv[])
 	char	   *langname = NULL;
 
 	char	   *p;
-	char	   *lanplcallfoid;
+	Oid			lanplcallfoid;
+	Oid			lanvalidator;
 	char	   *handler;
+	char	   *validator;
 	bool		keephandler;
+	bool		keepvalidator;
 
 	PQExpBufferData sql;
 
@@ -159,10 +164,10 @@ main(int argc, char *argv[])
 	conn = connectDatabase(dbname, host, port, username, password, progname);
 
 	/*
-	 * Make sure the language is installed and find the OID of the handler
-	 * function
+	 * Make sure the language is installed and find the OIDs of the handler
+	 * and validator functions
 	 */
-	printfPQExpBuffer(&sql, "SELECT lanplcallfoid FROM pg_language WHERE lanname = '%s' AND lanispl;", langname);
+	printfPQExpBuffer(&sql, "SELECT lanplcallfoid, lanvalidator FROM pg_language WHERE lanname = '%s' AND lanispl;", langname);
 	result = executeQuery(conn, sql.data, progname, echo);
 	if (PQntuples(result) == 0)
 	{
@@ -171,8 +176,9 @@ main(int argc, char *argv[])
 				progname, langname, dbname);
 		exit(1);
 	}
-	lanplcallfoid = PQgetvalue(result, 0, 0);
-	/* result not cleared! */
+	lanplcallfoid = atooid(PQgetvalue(result, 0, 0));
+	lanvalidator = atooid(PQgetvalue(result, 0, 1));
+	PQclear(result);
 
 	/*
 	 * Check that there are no functions left defined in that language
@@ -192,7 +198,7 @@ main(int argc, char *argv[])
 	/*
 	 * Check that the handler function isn't used by some other language
 	 */
-	printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language WHERE lanplcallfoid = %s AND lanname <> '%s';", lanplcallfoid, langname);
+	printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language WHERE lanplcallfoid = %u AND lanname <> '%s';", lanplcallfoid, langname);
 	result = executeQuery(conn, sql.data, progname, echo);
 	if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
 		keephandler = false;
@@ -205,20 +211,51 @@ main(int argc, char *argv[])
 	 */
 	if (!keephandler)
 	{
-		printfPQExpBuffer(&sql, "SELECT proname FROM pg_proc WHERE oid = %s;", lanplcallfoid);
+		printfPQExpBuffer(&sql, "SELECT proname FROM pg_proc WHERE oid = %u;", lanplcallfoid);
 		result = executeQuery(conn, sql.data, progname, echo);
-		handler = PQgetvalue(result, 0, 0);
-		/* result not cleared! */
+		handler = strdup(PQgetvalue(result, 0, 0));
+		PQclear(result);
 	}
 	else
 		handler = NULL;
 
 	/*
-	 * Drop the language
+	 * Check that the validator function isn't used by some other language
+	 */
+	if (OidIsValid(lanvalidator))
+	{
+		printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language WHERE lanvalidator = %u AND lanname <> '%s';", lanvalidator, langname);
+		result = executeQuery(conn, sql.data, progname, echo);
+		if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
+			keepvalidator = false;
+		else
+			keepvalidator = true;
+		PQclear(result);
+	}
+	else
+		keepvalidator = true;	/* don't try to delete it */
+
+	/*
+	 * Find the validator name
+	 */
+	if (!keepvalidator)
+	{
+		printfPQExpBuffer(&sql, "SELECT proname FROM pg_proc WHERE oid = %u;", lanvalidator);
+		result = executeQuery(conn, sql.data, progname, echo);
+		validator = strdup(PQgetvalue(result, 0, 0));
+		PQclear(result);
+	}
+	else
+		validator = NULL;
+
+	/*
+	 * Drop the language and the functions
 	 */
 	printfPQExpBuffer(&sql, "DROP LANGUAGE \"%s\";\n", langname);
 	if (!keephandler)
 		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\" ();\n", handler);
+	if (!keepvalidator)
+		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\" (oid);\n", validator);
 	if (echo)
 		printf("%s", sql.data);
 	result = PQexec(conn, sql.data);

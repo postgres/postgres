@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.73 2004/01/07 18:56:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.74 2004/03/19 18:58:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -101,13 +101,15 @@ typedef struct plpgsql_hashent
  */
 static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey *hashkey);
+		   PLpgSQL_func_hashkey *hashkey,
+		   bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
 static char **fetchArgNames(HeapTuple procTup, int nargs);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey *hashkey);
+						 PLpgSQL_func_hashkey *hashkey,
+						 bool forValidator);
 static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
 static void plpgsql_HashTableInsert(PLpgSQL_function *function,
 						PLpgSQL_func_hashkey *func_key);
@@ -134,12 +136,15 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 /* ----------
  * plpgsql_compile		Make an execution tree for a PL/pgSQL function.
  *
+ * If forValidator is true, we're only compiling for validation purposes,
+ * and so some checks are skipped.
+ *
  * Note: it's important for this to fall through quickly if the function
  * has already been compiled.
  * ----------
  */
 PLpgSQL_function *
-plpgsql_compile(FunctionCallInfo fcinfo)
+plpgsql_compile(FunctionCallInfo fcinfo, bool forValidator)
 {
 	Oid			funcOid = fcinfo->flinfo->fn_oid;
 	HeapTuple	procTup;
@@ -171,7 +176,7 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 			plpgsql_HashTableInit();
 
 		/* Compute hashkey using function signature and actual arg types */
-		compute_function_hashkey(fcinfo, procStruct, &hashkey);
+		compute_function_hashkey(fcinfo, procStruct, &hashkey, forValidator);
 		hashkey_valid = true;
 
 		/* And do the lookup */
@@ -205,12 +210,13 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 		 * the completed function.
 		 */
 		if (!hashkey_valid)
-			compute_function_hashkey(fcinfo, procStruct, &hashkey);
+			compute_function_hashkey(fcinfo, procStruct, &hashkey,
+									 forValidator);
 
 		/*
 		 * Do the hard part.
 		 */
-		function = do_compile(fcinfo, procTup, &hashkey);
+		function = do_compile(fcinfo, procTup, &hashkey, forValidator);
 	}
 
 	ReleaseSysCache(procTup);
@@ -232,7 +238,8 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 static PLpgSQL_function *
 do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey *hashkey)
+		   PLpgSQL_func_hashkey *hashkey,
+		   bool forValidator)
 {
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	int			functype = CALLED_AS_TRIGGER(fcinfo) ? T_TRIGGER : T_FUNCTION;
@@ -308,7 +315,8 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Check for a polymorphic returntype. If found, use the
 			 * actual returntype type from the caller's FuncExpr node, if
-			 * we have one.
+			 * we have one.  (In validation mode we arbitrarily assume we
+			 * are dealing with integers.)
 			 *
 			 * Note: errcode is FEATURE_NOT_SUPPORTED because it should
 			 * always work; if it doesn't we're in some context that fails
@@ -317,7 +325,15 @@ do_compile(FunctionCallInfo fcinfo,
 			rettypeid = procStruct->prorettype;
 			if (rettypeid == ANYARRAYOID || rettypeid == ANYELEMENTOID)
 			{
-				rettypeid = get_fn_expr_rettype(fcinfo->flinfo);
+				if (forValidator)
+				{
+					if (rettypeid == ANYARRAYOID)
+						rettypeid = INT4ARRAYOID;
+					else
+						rettypeid = INT4OID;
+				}
+				else
+					rettypeid = get_fn_expr_rettype(fcinfo->flinfo);
 				if (!OidIsValid(rettypeid))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1758,22 +1774,6 @@ plpgsql_add_initdatums(int **varnos)
 }
 
 
-/* ---------
- * plpgsql_yyerror			Handle parser error
- * ---------
- */
-
-void
-plpgsql_yyerror(const char *s)
-{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-	/* translator: first %s is a phrase like "syntax error" */
-			 errmsg("%s at or near \"%s\"", s, plpgsql_yytext)));
-}
-
-
 /*
  * Compute the hashkey for a given function invocation
  *
@@ -1782,7 +1782,8 @@ plpgsql_yyerror(const char *s)
 static void
 compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey *hashkey)
+						 PLpgSQL_func_hashkey *hashkey,
+						 bool forValidator)
 {
 	int			i;
 
@@ -1792,8 +1793,12 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 	/* get function OID */
 	hashkey->funcOid = fcinfo->flinfo->fn_oid;
 
-	/* if trigger, get relation OID */
-	if (CALLED_AS_TRIGGER(fcinfo))
+	/*
+	 * if trigger, get relation OID.  In validation mode we do not know what
+	 * relation is intended to be used, so we leave trigrelOid zero; the
+	 * hash entry built in this case will never really be used.
+	 */
+	if (CALLED_AS_TRIGGER(fcinfo) && !forValidator)
 	{
 		TriggerData *trigdata = (TriggerData *) fcinfo->context;
 
@@ -1808,6 +1813,9 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 		/*
 		 * Check for polymorphic arguments. If found, use the actual
 		 * parameter type from the caller's FuncExpr node, if we have one.
+		 * (In validation mode we arbitrarily assume we are dealing with
+		 * integers.  This lets us build a valid, if possibly useless,
+		 * function hashtable entry.)
 		 *
 		 * We can support arguments of type ANY the same way as normal
 		 * polymorphic arguments.
@@ -1815,7 +1823,15 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 		if (argtypeid == ANYARRAYOID || argtypeid == ANYELEMENTOID ||
 			argtypeid == ANYOID)
 		{
-			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, i);
+			if (forValidator)
+			{
+				if (argtypeid == ANYARRAYOID)
+					argtypeid = INT4ARRAYOID;
+				else
+					argtypeid = INT4OID;
+			}
+			else
+				argtypeid = get_fn_expr_argtype(fcinfo->flinfo, i);
 			if (!OidIsValid(argtypeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
