@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.io.*;
 import java.sql.*;
@@ -20,7 +20,7 @@ public class CallableStmtTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
+		con = TestUtil.openDB();
 		Statement stmt = con.createStatement ();
 		stmt.execute ("CREATE OR REPLACE FUNCTION testspg__getString (varchar) " + 
 					  "RETURNS varchar AS ' DECLARE inString alias for $1; begin "+
@@ -44,7 +44,7 @@ public class CallableStmtTest extends TestCase
 		stmt.execute ("drop FUNCTION testspg__getDouble (float);");
 		stmt.execute ("drop FUNCTION testspg__getInt (int);");
 		stmt.execute ("drop FUNCTION testspg__getNumeric (numeric);");
-		JDBC2Tests.closeDB(con);
+		TestUtil.closeDB(con);
 	}
 
 

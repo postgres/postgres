@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.27 2002/07/30 13:22:02 davec Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.28 2002/08/14 20:35:39 barry Exp $
 
 -->
 
@@ -46,6 +46,25 @@
     </condition>
     <available property="datasource" classname="javax.sql.DataSource"/>
     <available property="junit" classname="junit.framework.Test" />
+    <condition property="jdbc2tests">
+      <and>
+        <isset property="jdbc2"/>
+        <isset property="junit"/>
+      </and>
+    </condition>
+    <condition property="jdbc2optionaltests">
+      <and>
+        <isset property="jdbc2"/>
+        <isset property="datasource"/>
+        <isset property="junit"/>
+      </and>
+    </condition>
+    <condition property="jdbc3tests">
+      <and>
+        <isset property="jdbc3"/>
+        <isset property="junit"/>
+      </and>
+    </condition>
   </target>
 
 
@@ -89,18 +108,10 @@
       <exclude name="${package}/jdbc2/**" unless="jdbc2"/>
       <exclude name="${package}/jdbc3/**" unless="jdbc3"/>
 
-      <exclude name="${package}/largeobject/PGblob.java" if="jdbc1" />
-      <exclude name="${package}/largeobject/PGclob.java" if="jdbc1" />
-
+      <exclude name="${package}/jdbc2/optional/**" unless="jdbc2" />
       <exclude name="${package}/jdbc2/optional/**" unless="datasource" />
 
-      <exclude name="${package}/PostgresqlDataSource.java" />
-      <exclude name="${package}/xa/**" />
-
-      <exclude name="${package}/test/**" unless="junit" />
-      <exclude name="${package}/test/jdbc2/**" if="jdbc1" />
-      <exclude name="${package}/test/jdbc2/optional/**" unless="datasource" />
-      <exclude name="${package}/test/JDBC2Tests.java" if="jdbc1" />
+      <exclude name="${package}/test/**"/>
     </javac>
   </target>
 
@@ -128,8 +139,15 @@
     </condition>
 
     <!-- determine the connection class -->
-    <property name="connectclass" value="org.postgresql.jdbc1.Jdbc1Connection" />
-    <available property="connectclass" value="org.postgresql.jdbc2.Jdbc2Connection" classname="java.lang.ThreadLocal" />
+    <condition property="connectclass" value="org.postgresql.jdbc1.Jdbc1Connection">
+        <equals arg1="${jdbc1}" arg2="true"/>
+    </condition>
+    <condition property="connectclass" value="org.postgresql.jdbc2.Jdbc2Connection">
+        <equals arg1="${jdbc2}" arg2="true"/>
+    </condition>
+    <condition property="connectclass" value="org.postgresql.jdbc3.Jdbc3Connection">
+        <equals arg1="${jdbc3}" arg2="true"/>
+    </condition>
 
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
@@ -222,14 +240,15 @@
   <property name="junit.ui" value="textui" />
 
 
-  <target name="test" depends="jar" if="junit">
-    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
-      <include name="${package}/test/jdbc2/**" if="jdbc2" />
-      <include name="${package}/test/jdbc2/**" if="jdbc3" />
-    </javac>
+  <target name="test" depends="testjdbc2,testjdbc2optional,testjdbc3">
+   </target>
 
-    <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
-      <arg value="org.postgresql.test.JDBC2Tests" />
+  <target name="testjdbc2" depends="jar" if="jdbc2tests">
+    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
+      <include name="${package}/test/jdbc2/*" />
+    </javac>
+   <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
+      <arg value="org.postgresql.test.jdbc2.Jdbc2TestSuite" />
       <sysproperty key="database" value="${database}" />
       <sysproperty key="username" value="${username}" />
       <sysproperty key="password" value="${password}" />
@@ -239,5 +258,38 @@
       </classpath>
     </java>
   </target>
+
+  <target name="testjdbc2optional" depends="jar" if="jdbc2optionaltests">
+    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
+      <include name="${package}/test/jdbc2/optional/**" />
+    </javac>
+    <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
+      <arg value="org.postgresql.test.jdbc2.optional.OptionalTestSuite" />
+      <sysproperty key="database" value="${database}" />
+      <sysproperty key="username" value="${username}" />
+      <sysproperty key="password" value="${password}" />
+      <classpath>
+        <pathelement location="${builddir}" />
+        <pathelement path="${java.class.path}" />
+      </classpath>
+    </java>
+  </target>
+
+  <target name="testjdbc3" depends="jar" if="jdbc3tests">
+    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
+      <include name="${package}/test/jdbc3/*" />
+    </javac>
+    <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
+      <arg value="org.postgresql.test.jdbc3.Jdbc3TestSuite" />
+      <sysproperty key="database" value="${database}" />
+      <sysproperty key="username" value="${username}" />
+      <sysproperty key="password" value="${password}" />
+      <classpath>
+        <pathelement location="${builddir}" />
+        <pathelement path="${java.class.path}" />
+      </classpath>
+    </java>
+  </target>
+
 
 </project>

@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.10 2002/07/30 13:22:38 davec Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.11 2002/08/14 20:35:40 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -26,14 +26,14 @@ public class DatabaseMetaDataTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
-		JDBC2Tests.createTable( con, "testmetadata", "id int4, name text, updated timestamp" );
+		con = TestUtil.openDB();
+		TestUtil.createTable( con, "testmetadata", "id int4, name text, updated timestamp" );
 	}
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable( con, "testmetadata" );
+		TestUtil.dropTable( con, "testmetadata" );
 
-		JDBC2Tests.closeDB( con );
+		TestUtil.closeDB( con );
 	}
 	/*
 	 * The spec says this may return null, but we always do!
@@ -233,11 +233,11 @@ public class DatabaseMetaDataTest extends TestCase
   {
 		try
 		{
-		  Connection con1 = JDBC2Tests.openDB();
+		  Connection con1 = TestUtil.openDB();
 
-		  JDBC2Tests.createTable( con1, "vv", "a int not null, b int not null, primary key ( a, b )" );
+		  TestUtil.createTable( con1, "vv", "a int not null, b int not null, primary key ( a, b )" );
 
-		  JDBC2Tests.createTable( con1, "ww", "m int not null, n int not null, primary key ( m, n ), foreign key ( m, n ) references vv ( a, b )" );
+		  TestUtil.createTable( con1, "ww", "m int not null, n int not null, primary key ( m, n ), foreign key ( m, n ) references vv ( a, b )" );
 
 
 			DatabaseMetaData dbmd = con.getMetaData();
@@ -271,8 +271,8 @@ public class DatabaseMetaDataTest extends TestCase
       }
 
 
-      JDBC2Tests.dropTable( con1, "vv" );
-      JDBC2Tests.dropTable( con1, "ww" );
+      TestUtil.dropTable( con1, "vv" );
+      TestUtil.dropTable( con1, "ww" );
 
 		}
 		catch (SQLException ex)
@@ -284,11 +284,11 @@ public class DatabaseMetaDataTest extends TestCase
   {
 		try
 		{
-		  Connection con1 = JDBC2Tests.openDB();
-		  JDBC2Tests.createTable( con1, "people", "id int4 primary key, name text" );
-		  JDBC2Tests.createTable( con1, "policy", "id int4 primary key, name text" );
+		  Connection con1 = TestUtil.openDB();
+		  TestUtil.createTable( con1, "people", "id int4 primary key, name text" );
+		  TestUtil.createTable( con1, "policy", "id int4 primary key, name text" );
 
-		  JDBC2Tests.createTable( con1, "users", "id int4 primary key, people_id int4, policy_id int4,"+
+		  TestUtil.createTable( con1, "users", "id int4 primary key, people_id int4, policy_id int4,"+
                                     "CONSTRAINT people FOREIGN KEY (people_id) references people(id),"+
                                     "constraint policy FOREIGN KEY (policy_id) references policy(id)" );
 
@@ -337,9 +337,9 @@ public class DatabaseMetaDataTest extends TestCase
       assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
 
 
-      JDBC2Tests.dropTable( con1, "users" );
-      JDBC2Tests.dropTable( con1, "people" );
-      JDBC2Tests.dropTable( con1, "policy" );
+      TestUtil.dropTable( con1, "users" );
+      TestUtil.dropTable( con1, "people" );
+      TestUtil.dropTable( con1, "policy" );
 
 		}
 		catch (SQLException ex)
@@ -405,8 +405,8 @@ public class DatabaseMetaDataTest extends TestCase
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
-			assertTrue(dbmd.getURL().equals(JDBC2Tests.getURL()));
-			assertTrue(dbmd.getUserName().equals(JDBC2Tests.getUser()));
+			assertTrue(dbmd.getURL().equals(TestUtil.getURL()));
+			assertTrue(dbmd.getUserName().equals(TestUtil.getUser()));
 
 		}
 		catch (SQLException ex)

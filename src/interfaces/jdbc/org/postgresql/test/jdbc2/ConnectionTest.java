@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.8 2002/07/23 03:59:55 barry Exp $
+ * $Id: ConnectionTest.java,v 1.9 2002/08/14 20:35:40 barry Exp $
  */
 
 public class ConnectionTest extends TestCase
@@ -27,23 +27,23 @@ public class ConnectionTest extends TestCase
 	// Set up the fixture for this testcase: the tables for this test.
 	protected void setUp() throws Exception
 	{
-		Connection con = JDBC2Tests.openDB();
+		Connection con = TestUtil.openDB();
 
-		JDBC2Tests.createTable(con, "test_a", "imagename name,image oid,id int4");
-		JDBC2Tests.createTable(con, "test_c", "source text,cost money,imageid int4");
+		TestUtil.createTable(con, "test_a", "imagename name,image oid,id int4");
+		TestUtil.createTable(con, "test_c", "source text,cost money,imageid int4");
 
-		JDBC2Tests.closeDB(con);
+		TestUtil.closeDB(con);
 	}
 
 	// Tear down the fixture for this test case.
 	protected void tearDown() throws Exception
 	{
-		Connection con = JDBC2Tests.openDB();
+		Connection con = TestUtil.openDB();
 
-		JDBC2Tests.dropTable(con, "test_a");
-		JDBC2Tests.dropTable(con, "test_c");
+		TestUtil.dropTable(con, "test_a");
+		TestUtil.dropTable(con, "test_c");
 
-		JDBC2Tests.closeDB(con);
+		TestUtil.closeDB(con);
 	}
 
 	/*
@@ -53,7 +53,7 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			java.sql.Connection conn = JDBC2Tests.openDB();
+			java.sql.Connection conn = TestUtil.openDB();
 
 			// A standard Statement
 			java.sql.Statement stat = conn.createStatement();
@@ -79,7 +79,7 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			java.sql.Connection conn = JDBC2Tests.openDB();
+			java.sql.Connection conn = TestUtil.openDB();
 
 			String sql = "select source,cost,imageid from test_c";
 
@@ -121,7 +121,7 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			java.sql.Connection con = JDBC2Tests.openDB();
+			java.sql.Connection con = TestUtil.openDB();
 			java.sql.Statement st;
 			java.sql.ResultSet rs;
 
@@ -155,7 +155,7 @@ public class ConnectionTest extends TestCase
 			assertEquals(9876, rs.getInt(1)); // Should not change!
 			rs.close();
 
-			JDBC2Tests.closeDB(con);
+			TestUtil.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -170,12 +170,12 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
+			Connection con = TestUtil.openDB();
 
 			// Should not say closed
 			assertTrue(!con.isClosed());
 
-			JDBC2Tests.closeDB(con);
+			TestUtil.closeDB(con);
 
 			// Should now say closed
 			assertTrue(con.isClosed());
@@ -194,7 +194,7 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
+			Connection con = TestUtil.openDB();
 
 			String testStr = "This Is OuR TeSt message";
 
@@ -216,7 +216,7 @@ public class ConnectionTest extends TestCase
 			con.clearWarnings();
 			assertTrue(con.getWarnings() == null);
 
-			JDBC2Tests.closeDB(con);
+			TestUtil.closeDB(con);
 		}
 		catch (SQLException ex)
 		{
@@ -231,7 +231,7 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
+			Connection con = TestUtil.openDB();
 
 			// PostgreSQL defaults to READ COMMITTED
 			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
@@ -301,7 +301,7 @@ public class ConnectionTest extends TestCase
 			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
 						 con.getTransactionIsolation());
 
-			JDBC2Tests.closeDB(con);
+			TestUtil.closeDB(con);
 		}
 		catch ( SQLException ex )
 		{
@@ -316,7 +316,7 @@ public class ConnectionTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
+			Connection con = TestUtil.openDB();
 
 			// preserve the current map
 			java.util.Map oldmap = con.getTypeMap();
@@ -330,7 +330,7 @@ public class ConnectionTest extends TestCase
 			con.setTypeMap(oldmap);
 			assertEquals(oldmap, con.getTypeMap());
 
-			JDBC2Tests.closeDB(con);
+			TestUtil.closeDB(con);
 		}
 		catch (SQLException ex)
 		{

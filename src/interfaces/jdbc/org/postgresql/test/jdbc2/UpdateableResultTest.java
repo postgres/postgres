@@ -3,7 +3,7 @@ package org.postgresql.test.jdbc2;
 import java.sql.*;
 import junit.framework.TestCase;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 /**
  * <p>Title: </p>
  * <p>Description: </p>
@@ -25,12 +25,12 @@ public class UpdateableResultTest extends TestCase
   {
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
-      JDBC2Tests.createTable(con, "updateable","id int primary key, name text, notselected text");
-      JDBC2Tests.createTable(con, "second","id1 int primary key, name1 text");
+			Connection con = TestUtil.openDB();
+      TestUtil.createTable(con, "updateable","id int primary key, name text, notselected text");
+      TestUtil.createTable(con, "second","id1 int primary key, name1 text");
       Statement st1 = con.createStatement();
       boolean retVal = st1.execute( "insert into updateable ( id, name, notselected ) values (1, 'jake', 'avalue')" );
-      assert( retVal== false );
+      assertTrue(!retVal);
 
       retVal = st1.execute( "insert into second (id1, name1) values (1, 'jake')" );
       assertTrue( !retVal );
@@ -121,8 +121,8 @@ public class UpdateableResultTest extends TestCase
 
 			st.close();
 
-      JDBC2Tests.dropTable( con,"updateable" );
-			JDBC2Tests.closeDB( con );
+      TestUtil.dropTable( con,"updateable" );
+			TestUtil.closeDB( con );
 		}
 		catch (Exception ex)
 		{

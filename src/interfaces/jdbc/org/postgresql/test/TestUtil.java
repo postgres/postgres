@@ -1,17 +1,12 @@
 package org.postgresql.test;
 
-import junit.framework.TestSuite;
-import junit.framework.TestCase;
-import junit.framework.Test;
-
-import org.postgresql.test.jdbc2.*;
 import java.sql.*;
-import java.lang.reflect.Method;
+import junit.framework.TestCase;
 
 /*
- * Executes all known tests for JDBC2 and includes some utility methods.
+ * Utility class for JDBC tests
  */
-public class JDBC2Tests extends TestSuite
+public class TestUtil
 {
 	/*
 	 * Returns the Test database JDBC URL
@@ -45,7 +40,7 @@ public class JDBC2Tests extends TestSuite
 		try
 		{
 			Class.forName("org.postgresql.Driver");
-			return java.sql.DriverManager.getConnection(JDBC2Tests.getURL(), JDBC2Tests.getUser(), JDBC2Tests.getPassword());
+			return java.sql.DriverManager.getConnection(getURL(), getUser(), getPassword());
 		}
 		catch (ClassNotFoundException ex)
 		{
@@ -179,69 +174,5 @@ public class JDBC2Tests extends TestSuite
 	{
 		String s = "0000000000".substring(0, l) + Integer.toString(v);
 		return s.substring(s.length() - l);
-	}
-
-	/*
-	 * The main entry point for JUnit
-	 */
-	public static TestSuite suite()
-	{
-		TestSuite suite = new TestSuite();
-
-		//
-		// Add one line per class in our test cases. These should be in order of
-		// complexity.
-
-		// ANTTest should be first as it ensures that test parameters are
-		// being sent to the suite. It also initialises the database (if required)
-		// with some simple global tables (will make each testcase use its own later).
-		//
-		suite.addTestSuite(ANTTest.class);
-
-		// Basic Driver internals
-		suite.addTestSuite(DriverTest.class);
-		suite.addTestSuite(ConnectionTest.class);
-		suite.addTestSuite(DatabaseMetaDataTest.class);
-		suite.addTestSuite(EncodingTest.class);
-
-		// Connectivity/Protocols
-
-		// ResultSet
-		suite.addTestSuite(ResultSetTest.class);
-
-		// Time, Date, Timestamp
-		suite.addTestSuite(DateTest.class);
-		suite.addTestSuite(TimeTest.class);
-		suite.addTestSuite(TimestampTest.class);
-
-		// PreparedStatement
-
-		// BatchExecute
-		suite.addTestSuite(BatchExecuteTest.class);
-
-		// MetaData
-
-		// Other misc tests, based on previous problems users have had or specific
-		// features some applications require.
-		suite.addTestSuite(JBuilderTest.class);
-		suite.addTestSuite(MiscTest.class);
-
-		// Fastpath/LargeObject
-		suite.addTestSuite(BlobTest.class);
-		suite.addTestSuite( UpdateableResultTest.class );
-
-		suite.addTestSuite( CallableStmtTest.class );
-		
-		// try to load the optional test classes
-		try {
-		    Class cls = Class.forName("org.postgresql.test.jdbc2.optional.OptionalTestSuite");
-		    Method meth = cls.getMethod("suite", new Class[0]);
-		    suite.addTest((Test)meth.invoke(null, new Object[0]));
-		} catch (Exception e) {
-		    System.err.println("Excluding JDBC 2 Optional Package (DataSource) tests");
-		}
-
-		// That's all folks
-		return suite;
 	}
 }

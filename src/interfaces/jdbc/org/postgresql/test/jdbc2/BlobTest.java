@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.io.*;
 import java.sql.*;
@@ -8,7 +8,7 @@ import java.sql.*;
 import org.postgresql.largeobject.*;
 
 /*
- * $Id: BlobTest.java,v 1.6 2002/07/23 03:59:55 barry Exp $
+ * $Id: BlobTest.java,v 1.7 2002/08/14 20:35:40 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -30,14 +30,14 @@ public class BlobTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
-		JDBC2Tests.createTable(con, "testblob", "id name,lo oid");
+		con = TestUtil.openDB();
+		TestUtil.createTable(con, "testblob", "id name,lo oid");
 	}
 
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable(con, "testblob");
-		JDBC2Tests.closeDB(con);
+		TestUtil.dropTable(con, "testblob");
+		TestUtil.closeDB(con);
 	}
 
 	/*
@@ -131,7 +131,7 @@ public class BlobTest extends TestCase
 
 			case JDBC_STREAM:
 				File f = new File(file);
-				PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testblob", "?"));
+				PreparedStatement ps = con.prepareStatement(TestUtil.insertSQL("testblob", "?"));
 				ps.setBinaryStream(1, fis, (int) f.length());
 				ps.execute();
 				break;
@@ -145,7 +145,7 @@ public class BlobTest extends TestCase
 
 		// Insert into the table
 		Statement st = con.createStatement();
-		st.executeUpdate(JDBC2Tests.insertSQL("testblob", "id,lo", "'" + file + "'," + oid));
+		st.executeUpdate(TestUtil.insertSQL("testblob", "id,lo", "'" + file + "'," + oid));
 		con.commit();
 		st.close();
 
@@ -163,7 +163,7 @@ public class BlobTest extends TestCase
 		LargeObjectManager lom = ((org.postgresql.PGConnection)con).getLargeObjectAPI();
 
 		Statement st = con.createStatement();
-		ResultSet rs = st.executeQuery(JDBC2Tests.selectSQL("testblob", "id,lo"));
+		ResultSet rs = st.executeQuery(TestUtil.selectSQL("testblob", "id,lo"));
 		assertNotNull(rs);
 
 		while (rs.next())

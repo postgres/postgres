@@ -1,11 +1,11 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: TimestampTest.java,v 1.7 2002/07/23 03:59:55 barry Exp $
+ * $Id: TimestampTest.java,v 1.8 2002/08/14 20:35:40 barry Exp $
  *
  * Test get/setTimestamp for both timestamp with time zone and 
  * timestamp without time zone datatypes
@@ -23,18 +23,18 @@ public class TimestampTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
+		con = TestUtil.openDB();
 		Statement stmt = con.createStatement();
 
-		JDBC2Tests.createTable(con, TSWTZ_TABLE, "ts timestamp with time zone");
-		JDBC2Tests.createTable(con, TSWOTZ_TABLE, "ts timestamp without time zone");
+		TestUtil.createTable(con, TSWTZ_TABLE, "ts timestamp with time zone");
+		TestUtil.createTable(con, TSWOTZ_TABLE, "ts timestamp without time zone");
 	}
 
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable(con, TSWTZ_TABLE);
-		JDBC2Tests.dropTable(con, TSWOTZ_TABLE);
-		JDBC2Tests.closeDB(con);
+		TestUtil.dropTable(con, TSWTZ_TABLE);
+		TestUtil.dropTable(con, TSWOTZ_TABLE);
+		TestUtil.closeDB(con);
 	}
 
 	/*
@@ -49,9 +49,9 @@ public class TimestampTest extends TestCase
 			Statement stmt = con.createStatement();
 
                         //Insert the three timestamp values in raw pg format
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWTZ_TABLE,"'" + TS1WTZ_PGFORMAT + "'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWTZ_TABLE,"'" + TS2WTZ_PGFORMAT + "'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWTZ_TABLE,"'" + TS3WTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE,"'" + TS1WTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE,"'" + TS2WTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE,"'" + TS3WTZ_PGFORMAT + "'")));
 
 			// Fall through helper
                         timestampTestWTZ();
@@ -77,7 +77,7 @@ public class TimestampTest extends TestCase
 		try
 		{
 			Statement stmt = con.createStatement();
-			PreparedStatement pstmt = con.prepareStatement(JDBC2Tests.insertSQL(TSWTZ_TABLE, "?"));
+			PreparedStatement pstmt = con.prepareStatement(TestUtil.insertSQL(TSWTZ_TABLE, "?"));
 
 			pstmt.setTimestamp(1, TS1WTZ);
                         assertEquals(1, pstmt.executeUpdate());
@@ -114,9 +114,9 @@ public class TimestampTest extends TestCase
 			Statement stmt = con.createStatement();
 
                         //Insert the three timestamp values in raw pg format
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWOTZ_TABLE,"'" + TS1WOTZ_PGFORMAT + "'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWOTZ_TABLE,"'" + TS2WOTZ_PGFORMAT + "'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL(TSWOTZ_TABLE,"'" + TS3WOTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE,"'" + TS1WOTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE,"'" + TS2WOTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE,"'" + TS3WOTZ_PGFORMAT + "'")));
 
 			// Fall through helper
 			timestampTestWOTZ();
@@ -143,7 +143,7 @@ public class TimestampTest extends TestCase
 		try
 		{
 			Statement stmt = con.createStatement();
-			PreparedStatement pstmt = con.prepareStatement(JDBC2Tests.insertSQL(TSWOTZ_TABLE, "?"));
+			PreparedStatement pstmt = con.prepareStatement(TestUtil.insertSQL(TSWOTZ_TABLE, "?"));
 
 			pstmt.setTimestamp(1, TS1WOTZ);
                         assertEquals(1, pstmt.executeUpdate());
@@ -240,12 +240,12 @@ public class TimestampTest extends TestCase
             java.text.DateFormat l_df;
 	    try {
    	        String l_ts;
-                l_ts = JDBC2Tests.fix(y, 4) + "-" +
-		   JDBC2Tests.fix(m, 2) + "-" +
-		   JDBC2Tests.fix(d, 2) + " " +
-		   JDBC2Tests.fix(h, 2) + ":" +
-		   JDBC2Tests.fix(mn, 2) + ":" +
-		   JDBC2Tests.fix(se, 2) + " ";
+                l_ts = TestUtil.fix(y, 4) + "-" +
+		   TestUtil.fix(m, 2) + "-" +
+		   TestUtil.fix(d, 2) + " " +
+		   TestUtil.fix(h, 2) + ":" +
+		   TestUtil.fix(mn, 2) + ":" +
+		   TestUtil.fix(se, 2) + " ";
 
                 if (tz == null) {
                     l_df = new java.text.SimpleDateFormat("y-M-d H:m:s");

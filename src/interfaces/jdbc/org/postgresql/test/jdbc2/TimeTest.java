@@ -1,11 +1,11 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: TimeTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
+ * $Id: TimeTest.java,v 1.5 2002/08/14 20:35:40 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -23,14 +23,14 @@ public class TimeTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
-		JDBC2Tests.createTable(con, "testtime", "tm time");
+		con = TestUtil.openDB();
+		TestUtil.createTable(con, "testtime", "tm time");
 	}
 
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable(con, "testtime");
-		JDBC2Tests.closeDB(con);
+		TestUtil.dropTable(con, "testtime");
+		TestUtil.closeDB(con);
 	}
 
 	/*
@@ -42,8 +42,8 @@ public class TimeTest extends TestCase
 		{
 			Statement stmt = con.createStatement();
 
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtime", "'01:02:03'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtime", "'23:59:59'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL("testtime", "'01:02:03'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL("testtime", "'23:59:59'")));
 
 			// Fall through helper
 			timeTest();
@@ -64,7 +64,7 @@ public class TimeTest extends TestCase
 	{
 		try
 		{
-			PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testtime", "?"));
+			PreparedStatement ps = con.prepareStatement(TestUtil.insertSQL("testtime", "?"));
 			Statement stmt = con.createStatement();
 
 			ps.setTime(1, makeTime(1, 2, 3));
@@ -95,7 +95,7 @@ public class TimeTest extends TestCase
 		ResultSet rs;
 		java.sql.Time t;
 
-		rs = st.executeQuery(JDBC2Tests.selectSQL("testtime", "tm"));
+		rs = st.executeQuery(TestUtil.selectSQL("testtime", "tm"));
 		assertNotNull(rs);
 
 		assertTrue(rs.next());
@@ -115,8 +115,8 @@ public class TimeTest extends TestCase
 
 	private java.sql.Time makeTime(int h, int m, int s)
 	{
-		return java.sql.Time.valueOf(JDBC2Tests.fix(h, 2) + ":" +
-									 JDBC2Tests.fix(m, 2) + ":" +
-									 JDBC2Tests.fix(s, 2));
+		return java.sql.Time.valueOf(TestUtil.fix(h, 2) + ":" +
+									 TestUtil.fix(m, 2) + ":" +
+									 TestUtil.fix(s, 2));
 	}
 }

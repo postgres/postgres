@@ -124,33 +124,33 @@ public class Array implements java.sql.Array
 			case Types.BIT:
 				retVal = new boolean[ count ];
 				for ( ; count > 0; count-- )
-					((boolean[])retVal)[i++] = Jdbc2ResultSet.toBoolean( arrayContents[(int)index++] );
+					((boolean[])retVal)[i++] = AbstractJdbc2ResultSet.toBoolean( arrayContents[(int)index++] );
 				break;
 			case Types.SMALLINT:
 			case Types.INTEGER:
 				retVal = new int[ count ];
 				for ( ; count > 0; count-- )
-					((int[])retVal)[i++] = Jdbc2ResultSet.toInt( arrayContents[(int)index++] );
+					((int[])retVal)[i++] = AbstractJdbc2ResultSet.toInt( arrayContents[(int)index++] );
 				break;
 			case Types.BIGINT:
 				retVal = new long[ count ];
 				for ( ; count > 0; count-- )
-					((long[])retVal)[i++] = Jdbc2ResultSet.toLong( arrayContents[(int)index++] );
+					((long[])retVal)[i++] = AbstractJdbc2ResultSet.toLong( arrayContents[(int)index++] );
 				break;
 			case Types.NUMERIC:
 				retVal = new BigDecimal[ count ];
 				for ( ; count > 0; count-- )
-					((BigDecimal[])retVal)[i++] = Jdbc2ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
+					((BigDecimal[])retVal)[i++] = AbstractJdbc2ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
 				break;
 			case Types.REAL:
 				retVal = new float[ count ];
 				for ( ; count > 0; count-- )
-					((float[])retVal)[i++] = Jdbc2ResultSet.toFloat( arrayContents[(int)index++] );
+					((float[])retVal)[i++] = AbstractJdbc2ResultSet.toFloat( arrayContents[(int)index++] );
 				break;
 			case Types.DOUBLE:
 				retVal = new double[ count ];
 				for ( ; count > 0; count-- )
-					((double[])retVal)[i++] = Jdbc2ResultSet.toDouble( arrayContents[(int)index++] );
+					((double[])retVal)[i++] = AbstractJdbc2ResultSet.toDouble( arrayContents[(int)index++] );
 				break;
 			case Types.CHAR:
 			case Types.VARCHAR:
@@ -161,18 +161,18 @@ public class Array implements java.sql.Array
 			case Types.DATE:
 				retVal = new java.sql.Date[ count ];
 				for ( ; count > 0; count-- )
-					((java.sql.Date[])retVal)[i++] = Jdbc2ResultSet.toDate( arrayContents[(int)index++] );
+					((java.sql.Date[])retVal)[i++] = AbstractJdbc2ResultSet.toDate( arrayContents[(int)index++] );
 				break;
 			case Types.TIME:
 				retVal = new java.sql.Time[ count ];
 				for ( ; count > 0; count-- )
-					((java.sql.Time[])retVal)[i++] = Jdbc2ResultSet.toTime( arrayContents[(int)index++], rs, getBaseTypeName() );
+					((java.sql.Time[])retVal)[i++] = AbstractJdbc2ResultSet.toTime( arrayContents[(int)index++], rs, getBaseTypeName() );
 				break;
 			case Types.TIMESTAMP:
 				retVal = new Timestamp[ count ];
 				StringBuffer sbuf = null;
 				for ( ; count > 0; count-- )
-					((java.sql.Timestamp[])retVal)[i++] = Jdbc2ResultSet.toTimestamp( arrayContents[(int)index++], rs, getBaseTypeName() );
+					((java.sql.Timestamp[])retVal)[i++] = AbstractJdbc2ResultSet.toTimestamp( arrayContents[(int)index++], rs, getBaseTypeName() );
 				break;
 
 				// Other datatypes not currently supported.  If you are really using other types ask
@@ -340,7 +340,7 @@ public class Array implements java.sql.Array
 			default:
 				throw org.postgresql.Driver.notImplemented();
 		}
-		return ((Jdbc2Connection)conn).getResultSet(null, fields, rows, "OK", 1 );
+		return ((AbstractJdbc2Connection)conn).getResultSet(null, fields, rows, "OK", 1 );
 	}
 
 	public String toString()

@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
@@ -26,12 +26,12 @@ public class BatchExecuteTest extends TestCase
 	// a table for this test.
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
+		con = TestUtil.openDB();
 		Statement stmt = con.createStatement();
 
 		// Drop the test table if it already exists for some reason. It is
 		// not an error if it doesn't exist.
-		JDBC2Tests.createTable(con, "testbatch", "pk INTEGER, col1 INTEGER");
+		TestUtil.createTable(con, "testbatch", "pk INTEGER, col1 INTEGER");
 
 		stmt.executeUpdate("INSERT INTO testbatch VALUES (1, 0)");
 
@@ -45,8 +45,8 @@ public class BatchExecuteTest extends TestCase
 	{
 		con.setAutoCommit(true);
 
-		JDBC2Tests.dropTable(con, "testbatch");
-		JDBC2Tests.closeDB(con);
+		TestUtil.dropTable(con, "testbatch");
+		TestUtil.closeDB(con);
 	}
 
 	public void testSupportsBatchUpdates() throws Exception

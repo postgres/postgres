@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.io.*;
 import java.sql.*;
@@ -19,10 +19,10 @@ public class ResultSetTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
+		con = TestUtil.openDB();
 		Statement stmt = con.createStatement();
 
-		JDBC2Tests.createTable(con, "testrs", "id integer");
+		TestUtil.createTable(con, "testrs", "id integer");
 
 		stmt.executeUpdate("INSERT INTO testrs VALUES (1)");
 		stmt.executeUpdate("INSERT INTO testrs VALUES (2)");
@@ -36,8 +36,8 @@ public class ResultSetTest extends TestCase
 
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable(con, "testrs");
-		JDBC2Tests.closeDB(con);
+		TestUtil.dropTable(con, "testrs");
+		TestUtil.closeDB(con);
 	}
 
 	public void testAbsolute() throws Exception

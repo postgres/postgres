@@ -1,11 +1,11 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: DriverTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
+ * $Id: DriverTest.java,v 1.5 2002/08/14 20:35:40 barry Exp $
  *
  * Tests the dynamically created class org.postgresql.Driver
  *
@@ -63,12 +63,12 @@ public class DriverTest extends TestCase
 			Class.forName("org.postgresql.Driver");
 
 			// Test with the url, username & password
-			con = DriverManager.getConnection(JDBC2Tests.getURL(), JDBC2Tests.getUser(), JDBC2Tests.getPassword());
+			con = DriverManager.getConnection(TestUtil.getURL(), TestUtil.getUser(), TestUtil.getPassword());
 			assertNotNull(con);
 			con.close();
 
 			// Test with the username in the url
-			con = DriverManager.getConnection(JDBC2Tests.getURL() + "?user=" + JDBC2Tests.getUser() + "&password=" + JDBC2Tests.getPassword());
+			con = DriverManager.getConnection(TestUtil.getURL() + "?user=" + TestUtil.getUser() + "&password=" + TestUtil.getPassword());
 			assertNotNull(con);
 			con.close();
 		}

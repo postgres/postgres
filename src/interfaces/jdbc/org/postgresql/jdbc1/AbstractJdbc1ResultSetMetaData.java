@@ -10,6 +10,7 @@ import java.sql.Types;
 
 public abstract class AbstractJdbc1ResultSetMetaData 
 {
+
 	protected Vector rows;
 	protected Field[] fields;
 

@@ -1,11 +1,11 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: DateTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
+ * $Id: DateTest.java,v 1.5 2002/08/14 20:35:40 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -23,14 +23,14 @@ public class DateTest extends TestCase
 
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
-		JDBC2Tests.createTable(con, "testdate", "dt date");
+		con = TestUtil.openDB();
+		TestUtil.createTable(con, "testdate", "dt date");
 	}
 
 	protected void tearDown() throws Exception
 	{
-		JDBC2Tests.dropTable(con, "testdate");
-		JDBC2Tests.closeDB(con);
+		TestUtil.dropTable(con, "testdate");
+		TestUtil.closeDB(con);
 	}
 
 	/*
@@ -42,10 +42,10 @@ public class DateTest extends TestCase
 		{
 			Statement stmt = con.createStatement();
 
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1950-02-07'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1970-06-02'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1999-08-11'")));
-			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'2001-02-13'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL("testdate", "'1950-02-07'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL("testdate", "'1970-06-02'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL("testdate", "'1999-08-11'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL("testdate", "'2001-02-13'")));
 
 			/* dateTest() contains all of the tests */
 			dateTest();
@@ -67,7 +67,7 @@ public class DateTest extends TestCase
 		try
 		{
 			Statement stmt = con.createStatement();
-			PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testdate", "?"));
+			PreparedStatement ps = con.prepareStatement(TestUtil.insertSQL("testdate", "?"));
 
 			ps.setDate(1, makeDate(1950, 2, 7));
 			assertEquals(1, ps.executeUpdate());
@@ -104,7 +104,7 @@ public class DateTest extends TestCase
 		ResultSet rs;
 		java.sql.Date d;
 
-		rs = st.executeQuery(JDBC2Tests.selectSQL("testdate", "dt"));
+		rs = st.executeQuery(TestUtil.selectSQL("testdate", "dt"));
 		assertNotNull(rs);
 
 		assertTrue(rs.next());
@@ -135,8 +135,8 @@ public class DateTest extends TestCase
 
 	private java.sql.Date makeDate(int y, int m, int d)
 	{
-		return java.sql.Date.valueOf(JDBC2Tests.fix(y, 4) + "-" +
-									 JDBC2Tests.fix(m, 2) + "-" +
-									 JDBC2Tests.fix(d, 2));
+		return java.sql.Date.valueOf(TestUtil.fix(y, 4) + "-" +
+									 TestUtil.fix(m, 2) + "-" +
+									 TestUtil.fix(d, 2));
 	}
 }

@@ -1,9 +1,4 @@
-package org.postgresql.largeobject;
-
-// IMPORTANT NOTE: This file implements the JDBC 2 version of the driver.
-// If you make any modifications to this file, you must make sure that the
-// changes are also made (if relevent) to the related JDBC 1 class in the
-// org.postgresql.jdbc1 package.
+package org.postgresql.jdbc2;
 
 
 import java.lang.*;
@@ -13,22 +8,15 @@ import java.text.*;
 import java.util.*;
 import java.sql.*;
 import org.postgresql.Field;
-import org.postgresql.largeobject.*;
+import org.postgresql.PGConnection;
 import org.postgresql.largeobject.*;
 
-/*
- * This implements the Blob interface, which is basically another way to
- * access a LargeObject.
- *
- * $Id: PGclob.java,v 1.4 2002/07/23 03:59:55 barry Exp $
- *
- */
-public class PGclob implements java.sql.Clob
+public class AbstractJdbc2Clob
 {
 	private int oid;
 	private LargeObject lo;
 
-	public PGclob(org.postgresql.PGConnection conn, int oid) throws SQLException
+	public AbstractJdbc2Clob(PGConnection conn, int oid) throws SQLException
 	{
 		this.oid = oid;
 		LargeObjectManager lom = conn.getLargeObjectAPI();

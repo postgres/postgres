@@ -1,11 +1,11 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: MiscTest.java,v 1.6 2002/06/14 10:56:13 davec Exp $
+ * $Id: MiscTest.java,v 1.7 2002/08/14 20:35:40 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -30,7 +30,7 @@ public class MiscTest extends TestCase
 	{
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
+			Connection con = TestUtil.openDB();
 
 			Statement st = con.createStatement();
 			ResultSet rs = st.executeQuery("select datname from pg_database");
@@ -44,7 +44,7 @@ public class MiscTest extends TestCase
 			rs.close();
 			st.close();
 
-			JDBC2Tests.closeDB(con);
+			TestUtil.closeDB(con);
 		}
 		catch (Exception ex)
 		{
@@ -54,7 +54,7 @@ public class MiscTest extends TestCase
 
   public void testError()
   {
-    Connection con = JDBC2Tests.openDB();
+    Connection con = TestUtil.openDB();
 		try
 		{
 
@@ -81,17 +81,17 @@ public class MiscTest extends TestCase
 		System.out.println("testing lock");
 		try
 		{
-			Connection con = JDBC2Tests.openDB();
-			Connection con2 = JDBC2Tests.openDB();
+			Connection con = TestUtil.openDB();
+			Connection con2 = TestUtil.openDB();
 
-			JDBC2Tests.createTable(con, "test_lock", "name text");
+			TestUtil.createTable(con, "test_lock", "name text");
 			Statement st = con.createStatement();
 			Statement st2 = con2.createStatement();
 			con.setAutoCommit(false);
 			st.execute("lock table test_lock");
 			st2.executeUpdate( "insert into test_lock ( name ) values ('hello')" );
  			con.commit();
-			JDBC2Tests.dropTable(con, "test_lock");
+			TestUtil.dropTable(con, "test_lock");
 			con.close();
 		}
 		catch ( Exception ex )

@@ -8,6 +8,7 @@ import org.postgresql.util.PSQLException;
 
 public abstract class AbstractJdbc1DatabaseMetaData 
 {
+
 	protected AbstractJdbc1Connection connection; // The connection association
 
 	// These define various OID's. Hopefully they will stay constant.
