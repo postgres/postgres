@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.93 2003/05/09 18:08:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.94 2003/05/13 04:38:58 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -44,8 +44,8 @@ bool
 op_in_opclass(Oid opno, Oid opclass)
 {
 	return SearchSysCacheExists(AMOPOPID,
-								ObjectIdGetDatum(opclass),
 								ObjectIdGetDatum(opno),
+								ObjectIdGetDatum(opclass),
 								0, 0);
 }
 
@@ -67,8 +67,8 @@ op_requires_recheck(Oid opno, Oid opclass)
 	bool		result;
 
 	tp = SearchSysCache(AMOPOPID,
-						ObjectIdGetDatum(opclass),
 						ObjectIdGetDatum(opno),
+						ObjectIdGetDatum(opclass),
 						0, 0);
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "op_requires_recheck: op %u is not a member of opclass %u",

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.136 2003/03/23 01:49:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.137 2003/05/13 04:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,27 +17,22 @@
 
 #include <math.h>
 
-#include "access/heapam.h"
 #include "access/nbtree.h"
-#include "catalog/catname.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
-#include "parser/parse_coerce.h"
-#include "parser/parse_expr.h"
-#include "parser/parse_oper.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
+#include "utils/catcache.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
@@ -1120,18 +1115,18 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 				clause_op,
 				test_op;
 	Oid			opclass_id = InvalidOid;
+	bool		found = false;
 	StrategyNumber pred_strategy = 0,
-				clause_strategy,
+				clause_strategy = 0,
 				test_strategy;
 	Expr	   *test_expr;
 	ExprState  *test_exprstate;
 	Datum		test_result;
 	bool		isNull;
-	Relation	relation;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	ScanKeyData entry[1];
-	Form_pg_amop aform;
+	HeapTuple	test_tuple;
+	Form_pg_amop test_form;
+	CatCList   *catlist;
+	int			i;
 	EState	   *estate;
 	MemoryContext oldcontext;
 
@@ -1141,7 +1136,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	/*
 	 * Can't do anything more unless they are both binary opclauses with a
-	 * Var on the left and a Const on the right.
+	 * Var on the left and a Const on the right.  (XXX someday try to
+	 * commute Const/Var cases?)
 	 */
 	if (!is_opclause(predicate))
 		return false;
@@ -1174,101 +1170,95 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	clause_op = ((OpExpr *) clause)->opno;
 
 	/*
-	 * 1. Find a "btree" strategy number for the pred_op
+	 * 1. Find "btree" strategy numbers for the pred_op and clause_op.
 	 *
-	 * The following assumes that any given operator will only be in a single
-	 * btree operator class.  This is true at least for all the
-	 * pre-defined operator classes.  If it isn't true, then whichever
-	 * operator class happens to be returned first for the given operator
-	 * will be used to find the associated strategy numbers for the test.
-	 * --Nels, Jan '93
+	 * We must find a btree opclass that contains both operators, else the
+	 * implication can't be determined.  If there are multiple such opclasses,
+	 * assume we can use any one to determine the logical relationship of the
+	 * two operators and the correct corresponding test operator.  This should
+	 * work for any logically consistent opclasses.
 	 */
-	ScanKeyEntryInitialize(&entry[0], 0x0,
-						   Anum_pg_amop_amopopr,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(pred_op));
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(pred_op),
+								 0, 0, 0);
 
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, SnapshotNow, 1, entry);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	for (i = 0; i < catlist->n_members; i++)
 	{
-		aform = (Form_pg_amop) GETSTRUCT(tuple);
-		if (opclass_is_btree(aform->amopclaid))
-		{
-			/* Get the predicate operator's btree strategy number (1 to 5) */
-			pred_strategy = (StrategyNumber) aform->amopstrategy;
-			Assert(pred_strategy >= 1 && pred_strategy <= 5);
+		HeapTuple	pred_tuple = &catlist->members[i]->tuple;
+		Form_pg_amop pred_form = (Form_pg_amop) GETSTRUCT(pred_tuple);
+		HeapTuple	clause_tuple;
 
-			/*
-			 * Remember which operator class this strategy number came
-			 * from
-			 */
-			opclass_id = aform->amopclaid;
+		if (!opclass_is_btree(pred_form->amopclaid))
+			continue;
+
+		/* Get the predicate operator's btree strategy number */
+		pred_strategy = (StrategyNumber) pred_form->amopstrategy;
+		Assert(pred_strategy >= 1 && pred_strategy <= 5);
+
+		/*
+		 * Remember which operator class this strategy number came from
+		 */
+		opclass_id = pred_form->amopclaid;
+
+		/*
+		 * From the same opclass, find a strategy num for the clause_op,
+		 * if possible
+		 */
+		clause_tuple = SearchSysCache(AMOPOPID,
+									  ObjectIdGetDatum(clause_op),
+									  ObjectIdGetDatum(opclass_id),
+									  0, 0);
+		if (HeapTupleIsValid(clause_tuple))
+		{
+			Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);
+
+			/* Get the restriction clause operator's strategy number */
+			clause_strategy = (StrategyNumber) clause_form->amopstrategy;
+			Assert(clause_strategy >= 1 && clause_strategy <= 5);
+
+			ReleaseSysCache(clause_tuple);
+			found = true;
 			break;
 		}
 	}
 
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
+	ReleaseSysCacheList(catlist);
 
-	if (!OidIsValid(opclass_id))
+	if (!found)
 	{
-		/* predicate operator isn't btree-indexable */
+		/* couldn't find a btree opclass to interpret the operators */
 		return false;
 	}
 
 	/*
-	 * 2. From the same opclass, find a strategy num for the clause_op
-	 */
-	tuple = SearchSysCache(AMOPOPID,
-						   ObjectIdGetDatum(opclass_id),
-						   ObjectIdGetDatum(clause_op),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		/* clause operator isn't btree-indexable, or isn't in this opclass */
-		return false;
-	}
-	aform = (Form_pg_amop) GETSTRUCT(tuple);
-
-	/* Get the restriction clause operator's strategy number (1 to 5) */
-	clause_strategy = (StrategyNumber) aform->amopstrategy;
-	Assert(clause_strategy >= 1 && clause_strategy <= 5);
-
-	ReleaseSysCache(tuple);
-
-	/*
-	 * 3. Look up the "test" strategy number in the implication table
+	 * 2. Look up the "test" strategy number in the implication table
 	 */
 	test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
 	if (test_strategy == 0)
-	{
 		return false;			/* the implication cannot be determined */
-	}
 
 	/*
-	 * 4. From the same opclass, find the operator for the test strategy
+	 * 3. From the same opclass, find the operator for the test strategy
 	 */
-	tuple = SearchSysCache(AMOPSTRATEGY,
-						   ObjectIdGetDatum(opclass_id),
-						   Int16GetDatum(test_strategy),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
+	test_tuple = SearchSysCache(AMOPSTRATEGY,
+								ObjectIdGetDatum(opclass_id),
+								Int16GetDatum(test_strategy),
+								0, 0);
+	if (!HeapTupleIsValid(test_tuple))
 	{
-		/* this probably shouldn't fail? */
-		elog(DEBUG1, "pred_test_simple_clause: unknown test_op");
-		return false;
+		/* This should not fail, else pg_amop entry is missing */
+		elog(ERROR, "Missing pg_amop entry for opclass %u strategy %d",
+			 opclass_id, test_strategy);
 	}
-	aform = (Form_pg_amop) GETSTRUCT(tuple);
+	test_form = (Form_pg_amop) GETSTRUCT(test_tuple);
 
 	/* Get the test operator */
-	test_op = aform->amopopr;
+	test_op = test_form->amopopr;
 
-	ReleaseSysCache(tuple);
+	ReleaseSysCache(test_tuple);
 
 	/*
-	 * 5. Evaluate the test.  For this we need an EState.
+	 * 4. Evaluate the test.  For this we need an EState.
 	 */
 	estate = CreateExecutorState();
 
@@ -1298,6 +1288,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	if (isNull)
 	{
+		/* Treat a null result as false ... but it's a tad fishy ... */
 		elog(DEBUG1, "pred_test_simple_clause: null test result");
 		return false;
 	}

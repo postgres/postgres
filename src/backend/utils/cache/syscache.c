@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.87 2002/09/04 20:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.88 2003/05/13 04:38:58 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -128,8 +128,8 @@ static const struct cachedesc cacheinfo[] = {
 		0,
 		2,
 		{
-			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopopr,
+			Anum_pg_amop_amopclaid,
 			0,
 			0
 	}},

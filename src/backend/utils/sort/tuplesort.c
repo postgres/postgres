@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.32 2002/11/13 00:39:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.33 2003/05/13 04:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,17 +87,17 @@
 
 #include "access/heapam.h"
 #include "access/nbtree.h"
-#include "catalog/catname.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_operator.h"
 #include "miscadmin.h"
+#include "utils/catcache.h"
 #include "utils/datum.h"
-#include "utils/fmgroids.h"
 #include "utils/logtape.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
+
 
 /*
  * Possible states of a Tuplesort object.  These denote the states that
@@ -1708,32 +1708,30 @@ SelectSortFunction(Oid sortOperator,
 				   RegProcedure *sortFunction,
 				   SortFunctionKind *kind)
 {
-	Relation	relation;
-	HeapScanDesc scan;
-	ScanKeyData skey[1];
+	CatCList   *catlist;
+	int			i;
 	HeapTuple	tuple;
 	Form_pg_operator optup;
 	Oid			opclass = InvalidOid;
 
 	/*
-	 * Scan pg_amop to see if the target operator is registered as the "<"
+	 * Search pg_amop to see if the target operator is registered as the "<"
 	 * or ">" operator of any btree opclass.  It's possible that it might
 	 * be registered both ways (eg, if someone were to build a "reverse
 	 * sort" opclass for some reason); prefer the "<" case if so. If the
 	 * operator is registered the same way in multiple opclasses, assume
 	 * we can use the associated comparator function from any one.
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   Anum_pg_amop_amopopr,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(sortOperator));
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(sortOperator),
+								 0, 0, 0);
 
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, SnapshotNow, 1, skey);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	for (i = 0; i < catlist->n_members; i++)
 	{
-		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+		Form_pg_amop aform;
+
+		tuple = &catlist->members[i]->tuple;
+		aform = (Form_pg_amop) GETSTRUCT(tuple);
 
 		if (!opclass_is_btree(aform->amopclaid))
 			continue;
@@ -1751,8 +1749,7 @@ SelectSortFunction(Oid sortOperator,
 		}
 	}
 
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
+	ReleaseSysCacheList(catlist);
 
 	if (OidIsValid(opclass))
 	{
