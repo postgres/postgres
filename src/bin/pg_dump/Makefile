@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.50 2004/05/22 02:14:28 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.51 2004/05/24 01:01:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) -DFRONTEND
 OBJS=	pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
 	pg_backup_files.o pg_backup_null.o pg_backup_tar.o \
 	dumputils.o
-PG_DUMPALL_OBJS = $(filter exec.o, $(LIBOBJS))
+PG_DUMPALL_OBJS = exec.o
 
 EXTRA_OBJS = $(top_builddir)/src/backend/parser/keywords.o
 

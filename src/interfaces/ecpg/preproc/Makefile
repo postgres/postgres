@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.106 2004/05/19 17:15:21 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.107 2004/05/24 01:01:38 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -20,7 +20,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS=	preproc.o type.o ecpg.o ecpg_keywords.o output.o\
 	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
-	$(filter exec.o, $(LIBOBJS))
+	exec.o
 
 all: submake-libpgport ecpg
 

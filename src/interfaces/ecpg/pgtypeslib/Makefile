@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.19 2004/05/07 13:42:48 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.20 2004/05/24 01:01:38 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,8 @@ override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include \
 SHLIB_LINK += -lm
 
 OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o interval.o \
-      $(filter rint.o, $(LIBOBJS)) $(filter pgstrcasecmp.o, $(LIBOBJS))
+	pgstrcasecmp.o \
+	$(filter rint.o, $(LIBOBJS))
 
 all: all-lib
 
