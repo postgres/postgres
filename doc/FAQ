@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 30 20:59:07 EST 2005
+   Last updated: Sun Jan 30 21:08:44 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -190,9 +190,9 @@
    
     1.7) What documentation is available?
     
-   Several manuals, manual pages, and some small test examples are
-   included in the distribution. See the /doc directory. You can also
-   browse the manuals online at http://www.PostgreSQL.org/docs.
+   PostgreSQL includes extensive documentation, including a large manual,
+   manual pages, and some test examples. See the /doc directory. You can
+   also browse the manuals online at http://www.PostgreSQL.org/docs.
    
    There are two PostgreSQL books available online at
    http://www.PostgreSQL.org/docs/awbook.html and
@@ -232,7 +232,7 @@
     1.10) How do I join the development team?
     
    First, download the latest source and read the PostgreSQL Developers
-   documentation on our web site, or in the distribution. Second,
+   FAQ and documentation on our web site, or in the distribution. Second,
    subscribe to the pgsql-hackers and pgsql-patches mailing lists. Third,
    submit high quality patches to pgsql-patches.
    
