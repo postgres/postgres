@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.19 1999/03/28 20:31:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.20 1999/04/22 08:19:59 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -494,24 +494,37 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
-	if (maxoff >= stack->bts_offset)
+	if (stack->bts_offset == InvalidOffsetNumber || 
+		maxoff >= stack->bts_offset)
 	{
-		itemid = PageGetItemId(page, stack->bts_offset);
-		item = (BTItem) PageGetItem(page, itemid);
-
-		/* if the item is where we left it, we're done */
-		if (BTItemSame(item, stack->bts_btitem))
+		/*
+		 * _bt_insertonpg set bts_offset to InvalidOffsetNumber
+		 * in the case of concurrent ROOT page split
+		 */
+		if (stack->bts_offset == InvalidOffsetNumber)
 		{
-			pfree(stack->bts_btitem);
-			item_nbytes = ItemIdGetLength(itemid);
-			item_save = (BTItem) palloc(item_nbytes);
-			memmove((char *) item_save, (char *) item, item_nbytes);
-			stack->bts_btitem = item_save;
-			return buf;
+			i = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+		}
+		else
+		{
+			itemid = PageGetItemId(page, stack->bts_offset);
+			item = (BTItem) PageGetItem(page, itemid);
+
+			/* if the item is where we left it, we're done */
+			if (BTItemSame(item, stack->bts_btitem))
+			{
+				pfree(stack->bts_btitem);
+				item_nbytes = ItemIdGetLength(itemid);
+				item_save = (BTItem) palloc(item_nbytes);
+				memmove((char *) item_save, (char *) item, item_nbytes);
+				stack->bts_btitem = item_save;
+				return buf;
+			}
+			i = OffsetNumberNext(stack->bts_offset);
 		}
 
 		/* if the item has just moved right on this page, we're done */
-		for (i = OffsetNumberNext(stack->bts_offset);
+		for ( ;
 			 i <= maxoff;
 			 i = OffsetNumberNext(i))
 		{

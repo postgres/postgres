@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.37 1999/04/12 16:56:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.38 1999/04/22 08:19:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,6 +398,7 @@ _bt_insertonpg(Relation rel,
 		OffsetNumber maxoff;
 		bool		shifted = false;
 		bool		left_chained = (lpageop->btpo_flags & BTP_CHAIN) ? true : false;
+		bool		is_root = lpageop->btpo_flags & BTP_ROOT;
 
 		/*
 		 * If we have to split leaf page in the chain of duplicates by new
@@ -570,9 +571,20 @@ _bt_insertonpg(Relation rel,
 		 * reasoning).
 		 */
 
+l_spl:;
 		if (stack == (BTStack) NULL)
 		{
-
+			if (!is_root)	/* if this page was not root page */
+			{
+				elog(DEBUG, "btree: concurrent ROOT page split");
+				stack = (BTStack) palloc(sizeof(BTStackData));
+				stack->bts_blkno = lpageop->btpo_parent;
+				stack->bts_offset = InvalidOffsetNumber;
+				stack->bts_btitem = (BTItem) palloc(sizeof(BTItemData));
+				/* bts_btitem will be initialized below */
+				stack->bts_parent = NULL;
+				goto l_spl;
+			}
 			/* create a new root node and release the split buffers */
 			_bt_newroot(rel, buf, rbuf);
 			_bt_relbuf(rel, buf, BT_WRITE);
