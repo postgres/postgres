@@ -8,24 +8,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.2 1996/10/19 03:28:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.3 1996/10/19 04:51:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "nodes/nodes.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "catalog/pg_attribute.h"
-#include "access/tupdesc.h"
 #include "access/itup.h"
-
-#include "utils/memutils.h"
 #include "access/ibit.h"
 
 static Size IndexInfoFindDataOffset(unsigned short t_info);
