@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.18 2002/12/18 13:15:15 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.19 2003/01/08 22:56:58 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -714,7 +714,7 @@ initialize_SSL(PGconn *conn)
 	{
 		SSL_library_init();
 		SSL_load_error_strings();
-		SSL_context = SSL_CTX_new(SSLv23_method());
+		SSL_context = SSL_CTX_new(TLSv1_method());
 		if (!SSL_context)
 		{
 			printfPQExpBuffer(&conn->errorMessage,

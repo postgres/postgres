@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.21 2002/12/23 22:19:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.22 2003/01/08 22:56:58 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -637,7 +637,7 @@ initialize_SSL(void)
 
 	/* set up empheral DH keys */
 	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);
-	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE);
+	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE | SSL_OP_NO_SSLv2);
 
 	/* accept client certificates, but don't require them. */
 	snprintf(fnbuf, sizeof fnbuf, "%s/root.crt", DataDir);
