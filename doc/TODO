@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Mar 23 00:50:54 EST 2005
+Last updated:		Wed Mar 23 01:11:57 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -514,6 +514,7 @@ Commands
 	o Allow PL/pgSQL EXECUTE query_var INTO record_var;
 	o Add capability to create and call PROCEDURES
 	o Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[]
+	o Add MOVE to PL/pgSQL
 
 
 Clients
