@@ -314,7 +314,7 @@ CREATE FUNCTION reverse_c16(char16)
 --
 -- FUNCTION DYNAMIC LOADING
 --
-LOAD '_OBJWD_/regress_DLSUFFIX_'
+LOAD '_OBJWD_/regress_DLSUFFIX_';
 
 --
 -- CLASS POPULATION
@@ -385,7 +385,7 @@ INSERT INTO shighway
    WHERE name ~ 'State Hwy.*';
 
 UPDATE shighway
-   SET surface = 'asphalt'
+   SET surface = 'asphalt';
 
 INSERT INTO a_star (class, a) VALUES ('a', 1);
 
@@ -425,7 +425,7 @@ INSERT INTO d_star (class, b, c, d)
    VALUES ('d', 'crumble'::text, 'hi boris'::char16, '100.001'::float8);
 
 INSERT INTO d_star (class, a, b)
-   VALUES ('d', 11, 'fumble'::text)
+   VALUES ('d', 11, 'fumble'::text);
 
 INSERT INTO d_star (class, a, c)
    VALUES ('d', 12, 'hi avi'::char16);
