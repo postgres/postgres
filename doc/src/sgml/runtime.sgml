@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.264 2004/05/26 15:07:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.265 2004/05/26 18:51:43 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3611,6 +3611,26 @@ sysctl -w kern.sysv.shmall
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><systemitem class="osname">AIX</></term>
+      <indexterm><primary>AIX</><secondary>IPC configuration</></>
+      <listitem>
+       <para>
+        At least as of version 5.1, it should not be necessary to do
+        any special configuration for such parameters as
+        <varname>SHMMAX</varname>, as it appears this is configured to
+        allow all memory to be used as shared memory.  That is the
+        sort of configuration commonly used for other databases such
+        as <application>DB/2</application>.</para>
+
+       <para> It may, however, be necessary to modify the global
+       <command>ulimit</command> information in
+       <filename>/etc/security/limits</filename>, as the default hard
+       limits for filesizes (<varname>fsize</varname>) and numbers of
+       files (<varname>nofiles</varname>) may be too low.
+       </para>
+      </listitem>
+     </varlistentry>      
 
      <varlistentry>
       <term><systemitem class="osname">Solaris</></term>
