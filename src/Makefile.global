@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.61 1996/11/11 12:19:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.62 1996/11/11 13:24:43 bryanh Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -37,29 +37,30 @@
 # of the port.
 
 #  The name of the port.  Valid choices are:
-#	alpha		-	DEC Alpha AXP on OSF/1 2.0
-#	hpux		-	HP PA-RISC on HP-UX 9.0
-#	i386_solaris	-	i386 Solaris
-#	sparc_solaris	-	SUN SPARC on Solaris 2.4
-#	sparc		-	SUN SPARC on SunOS 4.1.3
-#	ultrix4		-	DEC MIPS on Ultrix 4.4
-#	linux		-	Intel x86 on Linux 1.2 and Linux ELF
-#				(For non-ELF Linux, see LINUX_ELF below).
-#	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
-#       bsdi            -       BSD/OS 2.0, 2.01, 2.1
-#	aix		-	IBM on AIX 3.2.5
-#	irix5		-	SGI MIPS on IRIX 5.3
-#	dgux            -       DG/UX 5.4R3.10
+#   alpha          DEC Alpha AXP on OSF/1 2.0
+#   hpux           HP PA-RISC on HP-UX 9.0
+#   i386_solaris   i386 Solaris
+#   sparc_solaris  SUN SPARC on Solaris 2.4
+#   sparc          SUN SPARC on SunOS 4.1.3
+#   ultrix4        DEC MIPS on Ultrix 4.4
+#   linux          Intel x86 on Linux 1.2 and Linux ELF
+#                  (For non-ELF Linux, see LINUX_ELF below).
+#   BSD44_derived  OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
+#   bsdi           BSD/OS 2.0, 2.01, 2.1
+#   aix            IBM on AIX 3.2.5
+#   irix5          SGI MIPS on IRIX 5.3
+#   dgux           DG/UX 5.4R3.10
 #  Some hooks are provided for
-#	svr4		-	Intel x86 on Intel SVR4
-#	next		-	Motorola MC68K or Intel x86 on NeXTSTEP 3.2
+#   svr4           Intel x86 on Intel SVR4
+#   next           Motorola MC68K or Intel x86 on NeXTSTEP 3.2
 #  but these are guaranteed not to work as of yet.
 #
-#  	Note that portname is defined here to be UNDEFINED to remind you
-#	to change it in Makefile.custom.
+#  Note that portname is defined here to be UNDEFINED to remind you
+#  to change it in Makefile.custom.
+#
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	UNKNOWN
+PORTNAME= UNDEFINED
 
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
@@ -69,50 +70,52 @@ LINUX_ELF= 1
 # SRCDIR specifies where the source files are.  It should be defined before
 # we are included, but for transition purposes, we put this default here.
 ifdef SRCDIR
-MKDIR= $(SRCDIR)/mk
+MKDIR:= $(SRCDIR)/mk
 else
-SRCDIR=		/usr/local/pgsql/src
+SRCDIR:= $(MKDIR)/..
 endif
+
+LIBPQDIR:= $(SRCDIR)/libpq
 
 # For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
-POSTGRESDIR=	/usr/local/pgsql
+POSTGRESDIR= /usr/local/pgsql
 
 # POSTGRESLOGIN is the login name of the user who gets special
 # privileges within the database.  By default it is "postgres", but
 # you can change it to any existing login name (such as your own 
 # login if you are compiling a private version or don't have root
 # access).
-POSTGRESLOGIN=	postgres
+POSTGRESLOGIN= postgres
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
 # variable.
-DATADIR=	$(POSTGRESDIR)/data
+DATADIR= $(POSTGRESDIR)/data
 
 # Where the postgres executables live (changeable by just putting them
 # somewhere else and putting that directory in your shell PATH)
-BINDIR=		$(POSTGRESDIR)/bin
+BINDIR= $(POSTGRESDIR)/bin
 
 # Where libpq.a gets installed.  You must put it where your loader will
 # look for it if you wish to use the -lpq convention.  Otherwise you
 # can just put the absolute pathname to the library at the end of your
 # command line.
-LIBDIR=		$(POSTGRESDIR)/lib
+LIBDIR= $(POSTGRESDIR)/lib
 
 # This is the directory where IPC utilities ipcs and ipcrm are located
 #
-IPCSDIR=	/usr/bin
+IPCSDIR= /usr/bin
 
 # Where the man pages (suitable for use with "man") get installed.
-POSTMANDIR=	$(POSTGRESDIR)/man
+POSTMANDIR= $(POSTGRESDIR)/man
 
 # Where the formatted documents (e.g., the reference manual) get installed.
-POSTDOCDIR=	$(POSTGRESDIR)/doc
+POSTDOCDIR= $(POSTGRESDIR)/doc
 
 # Where the header files necessary to build frontend programs get installed.
-HEADERDIR=	$(POSTGRESDIR)/include
+HEADERDIR= $(POSTGRESDIR)/include
 
 # The port to run the postmaster on
 POSTPORT= 5432
@@ -130,9 +133,9 @@ POSTPORT= 5432
 # THERE ARE REDUNDANT DEFINITIONS OF THESE VALUES IN config.h.
 # Don't change anything here without changing it there too.
 
-NAMEDATALEN = 32
+NAMEDATALEN= 32
 # OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
-OIDNAMELEN = 36
+OIDNAMELEN= 36
  
 ##############################################################################
 #
@@ -171,29 +174,29 @@ ENFORCE_ALIGNMENT= true
 #USE_READLINE= true
 
 # directories for the readline and history libraries.
-READLINE_INC=  -I/home/tools/include
-READLINE_LIB=  -L/home/tools/lib -lreadline
+READLINE_INC= -I/home/tools/include
+READLINE_LIB= -L/home/tools/lib -lreadline
 
 # use the following if your readline has a separate history lib
-#HISTORY_INC=   -I/home/tools/include -I/home/tools/include/readline
-#HISTORY_LIB=   -L/home/tools/lib -lhistory
+#HISTORY_INC= -I/home/tools/include -I/home/tools/include/readline
+#HISTORY_LIB= -L/home/tools/lib -lhistory
 
 # If you plan to use Kerberos for authentication...
 #
 # Comment out KRBVERS if you do not use Kerberos.
-# 	Set KRBVERS to "4" for Kerberos v4, "5" for Kerberos v5.
-#	XXX Edit the default Kerberos variables below!
+# Set KRBVERS to "4" for Kerberos v4, "5" for Kerberos v5.
+# XXX Edit the default Kerberos variables below!
 #
-#KRBVERS=	5
+#KRBVERS= 5
 
 # Globally pass Kerberos file locations.
-#	these are used in the postmaster and all libpq applications.
+# these are used in the postmaster and all libpq applications.
 #
-#	Adjust KRBINCS and KRBLIBS to reflect where you have Kerberos
-#		include files and libraries installed.
-#	PG_KRB_SRVNAM is the name under which POSTGRES is registered in
-#		the Kerberos database (KDC).
-#	PG_KRB_SRVTAB is the location of the server's keytab file.
+# Adjust KRBINCS and KRBLIBS to reflect where you have Kerberos
+# include files and libraries installed.
+# PG_KRB_SRVNAM is the name under which POSTGRES is registered in
+# the Kerberos database (KDC).
+# PG_KRB_SRVTAB is the location of the server's keytab file.
 #
 ifdef KRBVERS
 KRBINCS= -I/usr/athena/include
@@ -221,35 +224,50 @@ endif
 #
 TCL_INCDIR= /home/tools/include
 TCL_LIBDIR= /home/tools/lib
-TCL_LIB = -ltcl7.5
-TK_INCDIR=  /home/tools/include
-TK_LIBDIR=  /home/tools/lib
-TK_LIB = -ltk4.1
+TCL_LIB= -ltcl7.5
+TK_INCDIR= /home/tools/include
+TK_LIBDIR= /home/tools/lib
+TK_LIB= -ltk4.1
 
-X11_INCDIR = /usr/include
-X11_LIBDIR = /usr/lib
-X11_LIB = -lX11 -lsocket -lnsl
+X11_INCDIR= /usr/include
+X11_LIBDIR= /usr/lib
+X11_LIB= -lX11 -lsocket -lnsl
 
 ##############################################################################
 #
 #  YACC
 
-YFLAGS = -d
+YFLAGS= -d
 
 ##############################################################################
 #
 # Installation. 
 #
 # For many ports, INSTALL is overridden below.
-INSTALL = install
-RANLIB = ranlib 
+INSTALL= install
+RANLIB= ranlib 
 
-INSTLOPTS = -c -m 444
-INSTL_EXE_OPTS = -c -m 555
-INSTL_LIB_OPTS = -c -m 664
+INSTLOPTS= -c -m 444
+INSTL_EXE_OPTS= -c -m 555
+INSTL_LIB_OPTS= -c -m 664
+
+##############################################################################
+#
+# For building shell scripts:
+# 
+# For many ports, these are overridden below.
+
+# DASH_N is what we put before the text on an echo command when we don't
+# want a trailing newline.  BACKSLASH_C is what we put at the end of the
+# string on a echo command when we don't want a trailing newline.  On
+# some systems, you do echo -n "no newline after this", while on others
+# you do echo "no newline after this\c".
+
+DASH_N= -n
+BACKSLASH_C=
 
 
-objdir=		obj
+objdir= obj
 
 ##############################################################################
 #
@@ -305,25 +323,25 @@ endif
 
 #----------------------------------------------------------------------
 ifeq ($PORTNAME, BSD44_derived)
-MK_PORT=	BSD44_derived
+MK_PORT= BSD44_derived
 
 # cc is gcc, but never mind about that...
-CC=		gcc
+CC= gcc
 
-INSTALL=	/usr/bin/install
-RANLIB=		/usr/bin/ranlib
+INSTALL= /usr/bin/install
+RANLIB=	/usr/bin/ranlib
 
 # FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
-LEX = flex
+LEX= flex
 LDADD+= -L/usr/local/lib -lfl
 
 #
 # for postgres.user.mk
 #
-CFLAGS_SL = -fpic -DPIC
+CFLAGS_SL= -fpic -DPIC
 
 ifneq ($(HOSTTYPE), mips)
-SLSUFF=		.so
+SLSUFF=	.so
 endif
 
 %.so: %.o
@@ -334,13 +352,13 @@ endif
 	${RANLIB} $(objdir)/$(@F).pic
 	@rm -f $(objdir)/$(@F)
 	$(LD) -x -Bshareable -Bforcearchive \
-		    -o $(objdir)/$(@F) $(objdir)/$(@F).pic
+	  -o $(objdir)/$(@F) $(objdir)/$(@F).pic
 endif
 
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), aix)
-MK_PORT=	aix
+MK_PORT= aix
 
 # might want to try installbsd instead 
 INSTALL= /usr/ucb/install
@@ -350,7 +368,7 @@ INSTALL= /usr/ucb/install
 #
 
 # the -lm is because "pow" is defined in libbsd.a and we want pow(3m)
-LDADD_BE=	-lm -lbsd
+LDADD_BE= -lm -lbsd
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
@@ -370,8 +388,8 @@ CFLAGS_BE+= -qchars=signed -qmaxmem=4000 -DHAVE_ANSI_CPP
 #
 # for postgres.user.mk
 #
-EXPSUFF=	.exp
-SLSUFF=		.so
+EXPSUFF= .exp
+SLSUFF=	.so
 
 MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 
@@ -381,22 +399,22 @@ MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 %.so: %.o %$(EXPSUFF)
 	@echo The link stage here:
 	$(LD) -H512 -T512 -o $(objdir)/$(@F) -e _nostart \
-		-bI:$(LIBDIR)/postgres$(EXPSUFF) -bE:$*$(EXPSUFF) \
-		$*.o -lm -lc 2>/dev/null
+	  -bI:$(LIBDIR)/postgres$(EXPSUFF) -bE:$*$(EXPSUFF) \
+	  $*.o -lm -lc 2>/dev/null
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), alpha)
-MK_PORT=	alpha
+MK_PORT= alpha
 #
 # for postgres.mk
 #
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # NOFIXADE disallows unaligned access.
-#	on Ultrix and OSF/1 it invokes an explicit syscall.
-#	on HP-UX it turns off certain compiler options.
+#   on Ultrix and OSF/1 it invokes an explicit syscall.
+#   on HP-UX it turns off certain compiler options.
 # This is defined here because a bunch of clients include tmp/c.h,
 # which is where the work is done on HP-UX.  It only affects the
 # backend on Ultrix and OSF/1.
@@ -407,33 +425,30 @@ CFLAGS_BE+= -DNOPRINTADE
 endif
 
 # use the regex library
-USE_REGEX = 1
+USE_REGEX= 1
 
 #
 # for postgres.user.mk
 #
-SLSUFF=		.so
+SLSUFF= .so
 
 # cd into objdir so that so_locations is also in obj
 %.so:  %.o
 	cd $(objdir); $(LD) -shared -expect_unresolved '*' -o $(@F) $(<F)
 
-CLEANFILES+=	so_locations
+CLEANFILES+= so_locations
 
-#
-# for postgres.shell.mk
-#
 DASH_N=
-BACKSLASH_C='\\\\c'
+BACKSLASH_C= '\\\\c'
 
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), bsdi)
-MK_PORT=	bsdi
+MK_PORT= bsdi
 
-CC=			gcc
+CC= gcc
 
 PRE_BSDI_2_1= false
 ifeq ($(shell uname -r), 2.0)
@@ -446,48 +461,48 @@ endif
 ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
-  LEX=		lex
-  LD_ADD+=	-ltermcap
+  LEX= lex
+  LD_ADD+= -ltermcap
 else
 # cc is gcc v1.42
 # gcc is gcc v2.6.3
-  LEX=		flex
+  LEX= flex
 # use the regex library
-  USE_REGEX = 1
-  CFLAGS_BE = -DPRE_BSDI_2_1
-  LDADD_BE = -ldld -lcompat
+  USE_REGEX= 1
+  CFLAGS_BE= -DPRE_BSDI_2_1
+  LDADD_BE= -ldld -lcompat
 endif
 
 #
 # for postgres.user.mk
 #
-SLSUFF=		.o
+SLSUFF= .o
 
 endif
 
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), dgux)
-MK_PORT=	linux
+MK_PORT= linux
 
-SLSUFF=		.so
-#LDFLAGS+=	-rdynamic
+SLSUFF=	.so
+#LDFLAGS+= -rdynamic
 
 
-CFLAGS_SL=	-fpic
-%.so:  %.o
+CFLAGS_SL= -fpic
+%.so: %.o
 	cd $(objdir); $(CC) -shared -o $(@F) $(<F)
 
 #
 # for postgres.mk
 #
-CC=		gcc
+CC= gcc
 
 CFLAGS_BE= -D__USE_POSIX_SIGNALS -DUSE_POSIX_SIGNALS
 LDADD_BE= -ldl -lfl
 
-LEX = flex
-YACC = bison -y
+LEX= flex
+YACC= bison -y
 
 INSTALL=/usr/bin/X11/bsdinst
 
@@ -496,19 +511,19 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), hpux)
-MK_PORT=	hpux
+MK_PORT= hpux
 
 #
 # for postgres.mk
 #
-LDADD_BE=	-lBSD
+LDADD_BE= -lBSD
 
 ifdef ENFORCE_ALIGNMENT
 CFLAGS_BE= -DNOFIXADE
 else
 HPUX_VERS:= $(shell uname -r)
-HPUX_MAJOR=${HPUX_VERS:R:E}
-HPUX_MINOR=${HPUX_VERS:E}
+HPUX_MAJOR= ${HPUX_VERS:R:E}
+HPUX_MINOR= ${HPUX_VERS:E}
    ifeq ($(HPUX_MAJOR), 08)
       CFLAGS_BE+= +u -DHP_S500_ALIGN
       LDFLAGS_BE+= +u
@@ -531,32 +546,29 @@ endif
 INSTALL= bsdinst
 
 # RANLIB is not used on HP-UX
-RANLIB=touch
+RANLIB= touch
 
 #
 # for postgres.user.mk
 #
-CFLAGS_SL=	+z
-SLSUFF=		.sl
+CFLAGS_SL= +z
+SLSUFF= .sl
 
 %.sl: %.o
 	$(LD) -b -o $(objdir)/$(@F) $(objdir)/$(<F)
 
-#
-# for postgres.shell.mk
-#
 DASH_N= ''
-BACKSLASH_C='\\\\c'
+BACKSLASH_C= '\\\\c'
 
 endif
 
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), i386_solaris)
-MK_PORT=	i386_solaris
+MK_PORT= i386_solaris
 
 # cc won't work!
-CC=		gcc
+CC= gcc
 
 #
 # for postgres.mk
@@ -564,9 +576,9 @@ CC=		gcc
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on solaris
-RANLIB=touch
+RANLIB= touch
 
-INSTALL=/usr/ucb/install
+INSTALL= /usr/ucb/install
 
 #
 # Random things that must be passed everywhere to enable 
@@ -582,19 +594,16 @@ LD_ADD+= $(LDADD_BE)
 # for postgres.user.mk
 #
 ifeq ($(CC), cc)
-CFLAGS_SL=	-K PIC
+CFLAGS_SL= -K PIC
 else
-CFLAGS_SL=	-fPIC
+CFLAGS_SL= -fPIC
 endif
 
-SLSUFF=		.so
+SLSUFF=	.so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
 
-#
-# for postgres.shell.mk
-#
 DASH_N=''
 BACKSLASH_C='\\\\c'
 
@@ -603,9 +612,9 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), irix5)
-MK_PORT=	irix5
+MK_PORT= irix5
 
-CC=		cc
+CC= cc
 
 #
 # for postgres.mk
@@ -613,9 +622,9 @@ CC=		cc
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on IRIX 5
-RANLIB=touch
+RANLIB= touch
 
-INSTALL=/sbin/bsdinst
+INSTALL= /sbin/bsdinst
 
 INSTLOPTS=      -m 444
 INSTL_EXE_OPTS= -m 555
@@ -629,14 +638,11 @@ CFLAGS_BE+= -DSYSV_DIRENT
 
 LD_ADD+= $(LDADD_BE)
 
-SLSUFF=		.so
+SLSUFF= .so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
 
-#
-# for postgres.shell.mk
-#
 DASH_N=''
 BACKSLASH_C='\\\\c'
 
@@ -645,24 +651,24 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), linux)
-MK_PORT=	linux
+MK_PORT= linux
 
 ifndef LINUX_ELF
-SLSUFF=		.o
+SLSUFF= .o
 else
-SLSUFF=		.so
-LDFLAGS+=	-rdynamic
+SLSUFF= .so
+LDFLAGS+= -rdynamic
 endif
-MK_NO_LORDER=	true
+MK_NO_LORDER= true
 
 # use the regex library
-USE_REGEX = 1
+USE_REGEX= 1
 
 #
 # for postgres.user.mk
 #
-CFLAGS_SL=	-fpic
-%.so:  %.o
+CFLAGS_SL= -fpic
+%.so: %.o
 	cd $(objdir); $(CC) -shared -o $(@F) $(<F)
 
 #
@@ -674,44 +680,43 @@ CFLAGS_SL=	-fpic
 CFLAGS_BE= -D__USE_BSD -D__USE_BSD_SIGNAL
 LDADD_BE= -lbsd
 
-LEX = flex
+LEX= flex
 
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc)
-MK_PORT=	sparc
+MK_PORT= sparc
 
 # cc won't work!
-CC=		gcc
+CC= gcc
 
-INSTALL=	/usr/bin/install
-RANLIB=		/usr/bin/ranlib
+INSTALL= /usr/bin/install
+RANLIB= /usr/bin/ranlib
 
 #
 # for postgres.user.mk
 #
 ifeq ($(CC), cc)
-CFLAGS_SL=	-PIC
+CFLAGS_SL= -PIC
 else
-CFLAGS_SL=	-fPIC
+CFLAGS_SL= -fPIC
 endif
 
-SLSUFF=		.so
+SLSUFF= .so
 
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
-
 endif
 
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc_solaris)
-MK_PORT=	sparc_solaris
+MK_PORT= sparc_solaris
 
 # cc won't work!
-CC=		gcc
+CC= gcc
 
 #
 # for postgres.mk
@@ -719,9 +724,9 @@ CC=		gcc
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on solaris
-RANLIB=touch
+RANLIB= touch
 
-INSTALL=/usr/ucb/install
+INSTALL= /usr/ucb/install
 
 #
 # Random things that must be passed everywhere to enable 
@@ -737,33 +742,28 @@ LD_ADD+= $(LDADD_BE)
 # for postgres.user.mk
 #
 ifeq ($(CC), cc)
-CFLAGS_SL=	-K PIC
+CFLAGS_SL= -K PIC
 else
-CFLAGS_SL=	-fPIC
+CFLAGS_SL= -fPIC
 endif
 
-SLSUFF=		.so
+SLSUFF= .so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
 
-#
-# for postgres.shell.mk
-#
-DASH_N=''
-BACKSLASH_C='\\\\c'
+DASH_N= ''
+BACKSLASH_C= '\\\\c'
 
 endif
 
 #-----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), svr4)
-MK_PORT=	svr4
+MK_PORT= svr4
 
-# cc won't work?
-#CC=	gcc
-CC=	cc -W0
-YACC=	bison -y
+CFLAGS+= -W0
+YACC= bison -y
 
 #
 # for postgres.mk
@@ -775,10 +775,10 @@ CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 MAKE_EXPORTS= true
 
 # RANLIB is not used on svr4
-RANLIB=touch
+RANLIB= touch
 
 # GNU install
-INSTALL=/home/tools/bin/install
+INSTALL= /home/tools/bin/install
 
 #
 # Random things that must be passed everywhere to enable
@@ -791,37 +791,29 @@ LDADD_BE+= -lsocket -lnsl -lc /usr/ucblib/libucb.a
 LD_ADD+= $(LDADD_BE)
 
 #
-# for postgres.mk
-#
-
-#
 # for postgres.user.mk
 #
-#CFLAGS_SL=	-K pic
 ifeq ($(CC), cc)
-#CFLAGS_SL=	-K PIC
+#CFLAGS_SL= -K PIC
 else
-#CFLAGS_SL=	-fPIC
+#CFLAGS_SL= -fPIC
 endif
 
-SLSUFF=		.so
+SLSUFF= .so
 
-#%.so:  %.o
+#%.so: %.o
 #	$(LD) -G $(LDFLAGS) -o $(objdir)/$(@F) $(objdir)/$(<F)
 %.so: %.o
 	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
 
-#
-# for postgres.shell.mk
-#
-DASH_N=''
-BACKSLASH_C='\\\\c'
+DASH_N= ''
+BACKSLASH_C= '\\\\c'
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), ultrix4)
-MK_PORT=	ultrix4
+MK_PORT= ultrix4
 
 #
 # for postgres.mk
@@ -831,16 +823,16 @@ CFLAGS_BE= -DNOFIXADE
 endif
 
 # install creates intermediate directories
-NO_BEFOREINSTL=	true
+NO_BEFOREINSTL= true
 
-INSTALL=	/usr/bin/install
-RANLIB=		/usr/bin/ranlib
+INSTALL= /usr/bin/install
+RANLIB= /usr/bin/ranlib
 
 #
 # for postgres.user.mk
 #
-CFLAGS_SL=	-G 0
-SLSUFF=		.o
+CFLAGS_SL= -G 0
+SLSUFF= .o
 
 endif
 
@@ -851,18 +843,17 @@ endif
 # Miscellaneous configuration
 #
 
-srcdir=		$(SRCDIR)
-includedir=	$(HEADERDIR)
+srcdir= $(SRCDIR)
+includedir= $(HEADERDIR)
 
 
-# This goes here so that customizations in Makefile.custom and port
-# specific changes above are effective
+# This goes here so that customization in Makefile.custom is effective
 ##############################################################################
 #
 # Flags for CC and LD. (depend on COPT and PROFILE)
 #
 # PostgreSQL should *always* compile with these enabled
-CFLAGS+=	-Wall -Wmissing-prototypes
+CFLAGS+= -Wall -Wmissing-prototypes
 
 # Globally pass debugging/optimization/profiling flags based
 # on the options selected above.
@@ -894,8 +885,4 @@ CFLAGS+= -D$(PORTNAME)
 CFLAGS+= $(CFLAGS_BE)
 LDADD+= $(LDADD_BE)
 LDFLAGS+= $(LDFLAGS_BE)
-
-ifeq ($(USE_READLINE), false)
-CFLAGS += -DNOREADLINE
-endif
 
