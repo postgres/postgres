@@ -129,9 +129,10 @@
 #log_duration = false
 #log_timestamp = false
 
-#log_min_error_statement = error	# Values in order of increasing severity:
-									# debug5, debug4, debug3, debug2, debug1,
-					                # info, notice, warning, error
+#log_min_error_statement = error # Values in order of increasing severity:
+				 #   debug5, debug4, debug3, debug2, debug1,
+				 #   info, notice, warning, error
+
 #debug_print_parse = false
 #debug_print_rewritten = false
 #debug_print_plan = false
