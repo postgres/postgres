@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.72 2001/11/20 15:42:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.73 2001/11/21 03:17:22 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -984,7 +984,7 @@ SELECT b, char_length(b) FROM test2;
      <tbody>
       <row>
        <entry>bytea</entry>
-       <entry>4 bytes plus the actual string</entry>
+       <entry>4 bytes plus the actual binary string</entry>
        <entry>Variable (not specifically limited)
               length binary string</entry>
       </row>
@@ -994,29 +994,28 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     A binary string is a sequence of octets that does not have either a
-    character set or collation associated with it.  Bytea specifically
-    allows storage of NULLs and other 'non-printable' <acronym>ASCII
-    </acronym> characters.
+    character set or collation associated with it.  <type>Bytea</type>
+    specifically allows storing octets of zero value and other
+    <quote>non-printable</quote> octets.
    </para>
 
    <para>
-    Certain <acronym>ASCII</acronym> characters MUST be escaped (but all
-    characters MAY be escaped) when used as part of a string literal in an
-    <acronym>SQL</acronym> statement. In general, to escape a character, it
-    is converted into the three digit octal number equal to the decimal
-    <acronym>ASCII</acronym> value, and preceeded by two backslashes. The
-    single quote (') and backslash (\) characters have special alternate
-    escape sequences. Details are in
+    Octets of certain values <emphasis>must</emphasis> be escaped (but all
+    octet values <emphasis>may</emphasis> be escaped) when used as part of
+    a string literal in an <acronym>SQL</acronym> statement. In general,
+    to escape an octet, it is converted into the three digit octal number
+    equivalent of its decimal octet value, and preceeded by two
+    backslashes. Octets with the decimal values 39 (single quote), and 92
+    (backslash), have special alternate escape sequences. Details are in
     <xref linkend="datatype-binary-sqlesc">.
    </para>
 
    <table id="datatype-binary-sqlesc">
-    <title><acronym>SQL</acronym> Literal Escaped <acronym>ASCII</acronym>
-           Characters</title>
+    <title><acronym>SQL</acronym> Literal Escaped Octets</title>
     <tgroup cols="5">
      <thead>
       <row>
-       <entry>Decimal <acronym>ASCII</acronym> Value</entry>
+       <entry>Decimal Octet Value</entry>
        <entry>Description</entry>
        <entry>Input Escaped Representation</entry>
        <entry>Example</entry>
@@ -1027,7 +1026,7 @@ SELECT b, char_length(b) FROM test2;
      <tbody>
       <row>
        <entry> <literal> 0 </literal> </entry>
-       <entry> null byte </entry>
+       <entry> zero octet </entry>
        <entry> <literal> '\\000' </literal> </entry>
        <entry> <literal> select '\\000'::bytea; </literal> </entry>
        <entry> <literal> \000 </literal></entry>
@@ -1055,24 +1054,23 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     Note that the result in each of the examples above was exactly one
-    byte in length, even though the output representation of the null byte
-    and backslash are more than one character. Bytea output characters
-    are also escaped. In general, each "non-printable" character is
-    converted into the three digit octal number equal to its decimal
-    <acronym>ASCII</acronym> value, and preceeded by one backslash. Most
-    "printable" characters are represented by their standard
-    <acronym>ASCII</acronym> representation. The backslash (\) character
-    has a special alternate output representation. Details are in
-    <xref linkend="datatype-binary-resesc">.
+    octet in length, even though the output representation of the zero
+    octet and backslash are more than one character. <type>Bytea</type>
+    output octets are also escaped. In general, each
+    <quote>non-printable</quote> octet decimal value is converted into
+    its equivalent three digit octal value, and preceeded by one backslash.
+    Most <quote>printable</quote> octets are represented by their standard
+    representation in the client character set. The octet with decimal
+    value 92 (backslash) has a special alternate output representation.
+    Details are in <xref linkend="datatype-binary-resesc">.
    </para>
 
    <table id="datatype-binary-resesc">
-    <title><acronym>SQL</acronym> Output Escaped <acronym>ASCII</acronym>
-           Characters</title>
+    <title><acronym>SQL</acronym> Output Escaped Octets</title>
     <tgroup cols="5">
      <thead>
       <row>
-       <entry>Decimal <acronym>ASCII</acronym> Value</entry>
+       <entry>Decimal Octet Value</entry>
        <entry>Description</entry>
        <entry>Output Escaped Representation</entry>
        <entry>Example</entry>
@@ -1100,7 +1098,7 @@ SELECT b, char_length(b) FROM test2;
 
       <row>
        <entry> <literal> 0 to 31 and 127 to 255 </literal> </entry>
-       <entry> non-printable characters </entry>
+       <entry> <quote>non-printable</quote> octets </entry>
        <entry> <literal> \### (octal value) </literal> </entry>
        <entry> <literal> select '\\001'::bytea; </literal> </entry>
        <entry> <literal> \001 </literal></entry>
@@ -1108,8 +1106,8 @@ SELECT b, char_length(b) FROM test2;
 
       <row>
        <entry> <literal> 32 to 126 </literal> </entry>
-       <entry> printable characters </entry>
-       <entry> ASCII representation </entry>
+       <entry> <quote>printable</quote> octets </entry>
+       <entry> client character set representation </entry>
        <entry> <literal>  select '\\176'::bytea; </literal> </entry>
        <entry> <literal> ~ </literal></entry>
       </row>
@@ -1123,76 +1121,81 @@ SELECT b, char_length(b) FROM test2;
     preceeded with two backslashes due to the fact that they must pass
     through two parsers in the PostgreSQL backend. The first backslash
     is interpreted as an escape character by the string literal parser,
-    and therefore is consumed, leaving the characters that follow it.
-    The second backslash is recognized by <type>bytea</> input function
+    and therefore is consumed, leaving the octets that follow.
+    The second backslash is recognized by <type>bytea</type> input function
     as the prefix of a three digit octal value. For example, a string
     literal passed to the backend as <literal>'\\001'</literal> becomes
     <literal>'\001'</literal> after passing through the string literal
-    parser. The <literal>'\001'</literal> is then sent to the bytea
-    input function, where it is converted to a single byte with a decimal
-    <acronym>ASCII</acronym> value of 1.
+    parser. The <literal>'\001'</literal> is then sent to the
+    <type>bytea</type> input function, where it is converted to a single
+    octet with a decimal value of 1.
    </para>
 
    <para>
     For a similar reason, a backslash must be input as
     <literal>'\\\\'</literal> (or <literal>'\\134'</literal>). The first
-    and third backslashes are interpreted as escape characters by the
+    and third backslashes are interpreted as escape octets by the
     string literal parser, and therefore are consumed, leaving the
     second and forth backslashes untouched. The second and forth
-    backslashes are recognized by <type>bytea</> input function as a single
-    backslash. For example, a string literal passed to the backend as
-    <literal>'\\\\'</literal> becomes <literal>'\\'</literal> after passing
-    through the string literal parser. The <literal>'\\'</literal> is then
-    sent to the bytea input function, where it is converted to a single
-    byte with a decimal <acronym>ASCII</acronym> value of 92.
+    backslashes are recognized by the <type>bytea</type> input function
+    as a single backslash. For example, a string literal passed to the
+    backend as <literal>'\\\\'</literal> becomes <literal>'\\'</literal>
+    after passing through the string literal parser. The
+    <literal>'\\'</literal> is then sent to the <type>bytea</type> input
+    function, where it is converted to a single octet with a decimal
+    value of 92.
    </para>
 
    <para>
     A single quote is a bit different in that it must be input as
-    <literal>'\''</literal> (or <literal>'\\134'</literal>), NOT as
-    <literal>'\\''</literal>. This is because, while the literal parser
-    interprets the single quote as a special character, and will consume
-    the single backslash, the bytea input function does NOT recognize
-    a single quote as a special character. Therefore a string
+    <literal>'\''</literal> (or <literal>'\\134'</literal>),
+    <emphasis>not</emphasis> as <literal>'\\''</literal>. This is because,
+    while the literal parser interprets the single quote as a special
+    character, and will consume the single backslash, the
+    <type>bytea</type> input function does <emphasis>not</emphasis>
+    recognize a single quote as a special octet. Therefore a string
     literal passed to the backend as <literal>'\''</literal> becomes
     <literal>'''</literal> after passing through the string literal
-    parser. The <literal>'''</literal> is then sent to the bytea
-    input function, where it is retains its single byte decimal
-    <acronym>ASCII</acronym> value of 39.
+    parser. The <literal>'''</literal> is then sent to the
+    <type>bytea</type> input function, where it is retains its single
+    octet decimal value of 39.
    </para>
 
    <para>
     Depending on the front end to PostgreSQL you use, you may have
-    additional work to do in terms of escaping and unescaping bytea
-    strings. For example, you may also have to escape line feeds and
-    carriage return if your interface automatically translates these.
-    Or you may have to double up on backslashes if the parser for your
-    language or choice also treats them as an escape character.
+    additional work to do in terms of escaping and unescaping
+    <type>bytea</type> strings. For example, you may also have to escape
+    line feeds and carriage returns if your interface automatically
+    translates these. Or you may have to double up on backslashes if
+    the parser for your language or choice also treats them as an
+    escape octet.
    </para>
 
    <sect2 id="datatype-binary-compat">
     <title>Compatibility</title>
     <para>
-     Bytea provides most of the functionality of the SQL99 binary string
-     type per SQL99 section 4.3. A comparison of PostgreSQL bytea and SQL99
-     Binary Strings is presented in
+     <type>Bytea</type> provides most of the functionality of the binary
+     string type per SQL99 section 4.3. A comparison of SQL99 Binary
+     Strings and PostgreSQL <type>bytea</type> is presented in
      <xref linkend="datatype-binary-compat-comp">.
     </para>
 
     <table id="datatype-binary-compat-comp">
-     <title>Comparison of SQL99 Binary String and BYTEA types</title>
+     <title>Comparison of SQL99 Binary String and PostgreSQL
+     <type>BYTEA</type> types</title>
      <tgroup cols="2">
       <thead>
        <row>
         <entry>SQL99</entry>
-        <entry>BYTEA</entry>
+        <entry><type>BYTEA</type></entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-        <entry> Name of data type BINARY LARGE OBJECT or BLOB </entry>
-        <entry> Name of data type BYTEA </entry>
+        <entry> Name of data type <type>BINARY LARGE OBJECT</type>
+                or <type>BLOB</type> </entry>
+        <entry> Name of data type <type>BYTEA</type> </entry>
        </row>
 
        <row>
@@ -1242,9 +1245,9 @@ SELECT b, char_length(b) FROM test2;
 
        <row>
         <entry> A binary string literal is comprised of an even number of
-                hexidecimal digits, in single quotes, preceeded by "X",
-                e.g. X'1a43fe'</entry>
-        <entry> A binary string literal is comprised of ASCII characters
+                hexidecimal digits, in single quotes, preceeded by <quote>X</quote>,
+                e.g. <literal>X'1a43fe'</literal></entry>
+        <entry> A binary string literal is comprised of octets
                 escaped according to the rules shown in 
                 <xref linkend="datatype-binary-sqlesc"> </entry>
        </row>
