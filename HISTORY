@@ -116,7 +116,7 @@ Add ALTER TABLE ... CLUSTER ON (Alvaro Herrera)
 Improve DOMAIN automatic type casting (Rod, Tom)
 Allow dollar signs in identifiers, except as first character (Tom)
 Disallow dollar signs in operator names, so x=$1 works (Tom)
-Allow SQL200X inheritance syntax LIKE <subtable>, INCLUDING DEFAULTS? (Rod)
+Allow SQL200X inheritance syntax LIKE <subtable>, INCLUDING DEFAULTS (Rod)
 Add WITH GRANT OPTION clause to GRANT, per SQL spec (Peter)
 
      _________________________________________________________________
@@ -159,7 +159,7 @@ Allow pg_ctl to better handle non-standard ports (Greg)
 Functional indexes now support indexes on column expressions (Tom)
 Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)
 Have SHOW TRANSACTION_ISOLATION match input to SET TRANSACTION_ISOLATION (Tom)
-Have COMMENT ON DATABASE on non-local database generate a warning
+Have COMMENT ON DATABASE on non-local database generate a warning (Rod)
 
      _________________________________________________________________
 
