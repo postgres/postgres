@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.21 1999/02/18 00:49:47 momjian Exp $
+ * $Id: paths.h,v 1.22 1999/02/18 04:45:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,13 +77,13 @@ extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
  * joinrels.h
  *	  routines to determine which relations to join
  */
-extern List *make_rels_by_joins(Query *root, List *outer_rels);
-extern List *make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
+extern List *make_rels_by_joins(Query *root, List *old_rels);
+extern List *make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 								List *joininfo_list, Relids only_relids);
-extern List *make_rels_by_clauseless_joins(RelOptInfo *outer_rel,
+extern List *make_rels_by_clauseless_joins(RelOptInfo *old_rel,
 												List *inner_rels);
 extern RelOptInfo *make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo);
-extern List *new_join_tlist(List *tlist, List *other_relids,int first_resdomno);
+extern List *new_join_tlist(List *tlist, int first_resdomno);
 extern RelOptInfo *get_cheapest_complete_rel(List *join_rel_list);
 
 /*

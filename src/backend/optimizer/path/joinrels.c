@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.27 1999/02/18 00:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.28 1999/02/18 04:45:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,37 +46,35 @@ static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel,
  *	  of these exist for a given relation, all remaining possibilities are
  *	  considered.
  *
- * 'outer_rels' is the list of rel nodes
- *
  * Returns a list of rel nodes corresponding to the new join relations.
  */
 List *
-make_rels_by_joins(Query *root, List *outer_rels)
+make_rels_by_joins(Query *root, List *old_rels)
 {
-	List	   *joins = NIL;
+	List	   *joined_rels = NIL;
 	List	   *join_list = NIL;
 	List	   *r = NIL;
 
-	foreach(r, outer_rels)
+	foreach(r, old_rels)
 	{
-		RelOptInfo *outer_rel = (RelOptInfo *) lfirst(r);
+		RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
 
-		if (!(joins = make_rels_by_clause_joins(root, outer_rel,
-													outer_rel->joininfo,
+		if (!(joined_rels = make_rels_by_clause_joins(root, old_rel,
+													old_rel->joininfo,
 													NIL)))
 		{
 			/*
 			 * Oops, we have a relation that is not joined to any other
 			 * relation.  Cartesian product time.
 			 */
-			if (!BushyPlanFlag)
-				joins = make_rels_by_clauseless_joins(outer_rel,
-													  root->base_rel_list);
-			else
-				joins = make_rels_by_clauseless_joins(outer_rel, outer_rels);
+			joined_rels = make_rels_by_clauseless_joins(old_rel,
+														root->base_rel_list);
+			if (BushyPlanFlag)
+				joined_rels = make_rels_by_clauseless_joins(old_rel,
+															old_rels);
 		}
 
-		join_list = nconc(join_list, joins);
+		join_list = nconc(join_list, joined_rels);
 	}
 
 	return join_list;
@@ -98,7 +96,7 @@ make_rels_by_joins(Query *root, List *outer_rels)
  * Returns a list of new join relations.
  */
 List *
-make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
+make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 				 				List *joininfo_list, Relids only_relids)
 {
 	List	   *join_list = NIL;
@@ -107,7 +105,7 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 	foreach(i, joininfo_list)
  	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		RelOptInfo *rel;
+		RelOptInfo *joined_rel;
 		Relids		unjoined_relids = joininfo->unjoined_relids;
 
 		if (unjoined_relids != NIL)
@@ -117,20 +115,21 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 				/* geqo only wants certain relids to make new rels */
 				 intMember(lfirsti(unjoined_relids), only_relids)))
 			{
-				rel = make_join_rel(outer_rel,
-								get_base_rel(root, lfirsti(unjoined_relids)),
+				joined_rel = make_join_rel(old_rel,
+									get_base_rel(root,
+												 lfirsti(unjoined_relids)),
 									joininfo);
-				join_list = lappend(join_list, rel);
+				join_list = lappend(join_list, joined_rel);
 
 				/* Right-sided plan */
 				if (_use_right_sided_plans_ &&
-					length(outer_rel->relids) > 1)
+					length(old_rel->relids) > 1)
 				{
-					rel = make_join_rel(
+					joined_rel = make_join_rel(
 								get_base_rel(root, lfirsti(unjoined_relids)),
-										outer_rel,
-										joininfo);
-					join_list = lappend(join_list, rel);
+											old_rel,
+											joininfo);
+					join_list = lappend(join_list, joined_rel);
 				}
 			}
 
@@ -144,22 +143,12 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 
 					Assert(length(join_rel->relids) > 1);
 					if (is_subset(unjoined_relids, join_rel->relids) &&
-						nonoverlap_sets(outer_rel->relids, join_rel->relids))
+						nonoverlap_sets(old_rel->relids, join_rel->relids))
 					{
-						rel = make_join_rel(outer_rel,
-												join_rel,
-												joininfo);
-						join_list = lappend(join_list, rel);
-
-						/* Right-sided plan */
-						if (_use_right_sided_plans_ &&
-							length(outer_rel->relids) > 1)
-						{
-							rel = make_join_rel(join_rel,
-												outer_rel,
-												joininfo);
-							join_list = lappend(join_list, rel);
-						}							
+						joined_rel = make_join_rel(old_rel,
+													join_rel,
+													joininfo);
+						join_list = lappend(join_list, joined_rel);
 					}
 				}
 			}
@@ -178,7 +167,7 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
  * Returns a list of new join relations.
  */
 List *
-make_rels_by_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
+make_rels_by_clauseless_joins(RelOptInfo *old_rel, List *inner_rels)
 {
 	RelOptInfo *inner_rel;
 	List	   *t_list = NIL;
@@ -187,10 +176,10 @@ make_rels_by_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 	foreach(i, inner_rels)
 	{
 		inner_rel = (RelOptInfo *) lfirst(i);
-		if (nonoverlap_sets(inner_rel->relids, outer_rel->relids))
+		if (nonoverlap_sets(inner_rel->relids, old_rel->relids))
 		{
 			t_list = lappend(t_list,
-							 make_join_rel(outer_rel,
+							 make_join_rel(old_rel,
 										   inner_rel,
 										   (JoinInfo *) NULL));
 		}
@@ -223,11 +212,9 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 	 * of the outer and inner join relations and then merging the results
 	 * together.
 	 */
-	new_outer_tlist = new_join_tlist(outer_rel->targetlist,	/* XXX 1-based attnos */
-					   inner_rel->relids, 1);
-	new_inner_tlist = new_join_tlist(inner_rel->targetlist,	/* XXX 1-based attnos */
-					   outer_rel->relids,
-					   length(new_outer_tlist) + 1);
+	new_outer_tlist = new_join_tlist(outer_rel->targetlist,	1);
+	new_inner_tlist = new_join_tlist(inner_rel->targetlist,
+									 length(new_outer_tlist) + 1);
 
 	joinrel->relids = NIL;
 	joinrel->indexed = false;
@@ -286,7 +273,6 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
  */
 List *
 new_join_tlist(List *tlist,
-			   Relids other_relids,
 			   int first_resdomno)
 {
 	int			resdomno = first_resdomno - 1;
