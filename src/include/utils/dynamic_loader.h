@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.1 1996/08/28 01:58:49 scrappy Exp $
+ * $Id: dynamic_loader.h,v 1.2 1996/11/04 08:14:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DYNAMIC_LOADER_H
 #define DYNAMIC_LOADER_H
+
+#include <sys/types.h>
 
 #ifdef MIN
 #undef MIN
@@ -22,10 +24,7 @@
 #define MAXPATHLEN    250
 #endif
 
-#include <sys/param.h>			/* for MAXPATHLEN */
-#include <sys/types.h>			/* for dev_t, ino_t, etc. */
 #ifdef WIN32
-#include <wchar.h>
 #endif
 
 /*
