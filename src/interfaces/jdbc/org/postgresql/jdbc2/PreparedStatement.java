@@ -251,7 +251,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException
 	{
+	    if (x == null) {
+		setNull(parameterIndex, Types.OTHER);
+            } else {
 		set(parameterIndex, x.toString());
+	    }
 	}
 
 	/*

@@ -140,7 +140,7 @@ public class Array implements java.sql.Array
 			case Types.NUMERIC:
 				retVal = new BigDecimal[ count ];
 				for ( ; count > 0; count-- )
-					((BigDecimal[])retVal)[i] = ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
+					((BigDecimal[])retVal)[i++] = ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
 				break;
 			case Types.REAL:
 				retVal = new float[ count ];
