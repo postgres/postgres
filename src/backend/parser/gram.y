@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.100 1998/02/01 19:43:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.101 1998/02/03 01:53:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3328,6 +3328,16 @@ a_expr:  attr opt_indirection
 					n->useor = false;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr Op '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons($2,NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
 					$$ = (Node *)n;
 				}
 		| a_expr AND a_expr

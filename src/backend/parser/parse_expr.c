@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.14 1998/02/01 22:20:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.15 1998/02/03 01:53:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				Value	   *val = &con->val;
 
 				if (con->typename != NULL)
-					result = parser_typecast(val, con->typename, 0);
+					result = parser_typecast(val, con->typename, -1);
 				else
 					result = (Node *) make_const(val);
 				break;
