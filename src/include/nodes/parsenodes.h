@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.22 1997/09/01 06:04:59 thomas Exp $
+ * $Id: parsenodes.h,v 1.23 1997/09/01 08:11:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,10 @@ typedef struct CreateTrigStmt {
     List		*args;		/* list of (T_String) Values or NULL */
     bool		before;		/* BEFORE/AFTER */
     bool		row;		/* ROW/STATEMENT */
+    char		actions[4];	/* Insert, Update, Delete */
     char		*lang;		/* NULL (which means Clanguage) */
     char		*text;		/* AS 'text' */
-    List		*upattr;	/* UPDATE OF a, b,... (NI) or NULL */
+    List		*attr;		/* UPDATE OF a, b,... (NI) or NULL */
     char		*when;		/* WHEN 'a > 10 ...' (NI) or NULL */
 } CreateTrigStmt;
 
