@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.141 2001/02/23 09:26:14 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.142 2001/02/23 09:31:52 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2088,8 +2088,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 #ifndef OLD_FILE_NAMING
 	if (!inplace)
         {
-                inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relna
-me));
+                inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relname));
 		if (!inplace)
 			setNewRelfilenode(iRel);
 	}
