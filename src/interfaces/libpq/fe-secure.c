@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.36 2004/01/09 02:17:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.37 2004/02/10 15:21:24 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -1122,6 +1122,11 @@ PQinSend(void)
 	return (pthread_getspecific(thread_in_send) /* has it been set? */ &&
 			*(char *)pthread_getspecific(thread_in_send) == 't') ? true : false;
 #else
-	return false;	/* No threading, so we can't be in send() */
+	/*
+	 *	No threading: our code ignores SIGPIPE around send().
+	 *	Therefore, we can't be in send() if we are checking
+	 *	from a SIGPIPE signal handler.
+	 */
+	return false;	
 #endif
 }
