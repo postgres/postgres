@@ -1,0 +1,74 @@
+PostgreSQL type extensions for IP and MAC addresses.
+---------------------------------------------------
+
+$Id: README.ipaddr,v 1.1 1998/10/03 05:40:41 momjian Exp $
+
+I needed to record IP and MAC level ethernet addresses in a data
+base, and I really didn't want to store them as plain strings, with
+no enforced error checking, so I put together the accompanying code
+as my first experiment with adding a data type to PostgreSQL.  I
+then thought that this might be useful to others, both directly and
+as a very simple example of how to do this sort of thing, so I
+submitted it to the PostgreSQL project for inclusion in the contrib
+directory.  Since then, that directory has been modified to contain
+Aleksei Roudnev's implementation, which is based on mine.
+
+For those who have seen my previous contribution of these types, note
+that much has changed: I've modified the IP address type to work the
+way Paul Vixie did with his CIDR type.  In fact, I've pretty much just
+stolen his solution, modifying it into my framework in such a way as
+to facilitate the addition of IPV6 handling code in the future.  I've
+pretty much ignored Aleksei's C code, but I've added his SQL code to
+enter the necessary operators into the various system tables needed to
+make the types indexable.
+
+IP addresses are implemented as a struct of fixed in-memory length,
+but variable on-disk storage size.  For IPV4, it contains the address
+family (AF_INET), the CIDR prefix length and four byte address.  For
+IPV6, the address family will be different, and the address longer.
+
+The external representation of an IP address generally looks like
+'158.37.96.15/32'.  This address happens to be part of a subnet where
+I work; '158.37.96.0/24', which itself is a part of the larger subnet
+allocated to our site, which is '158.37.96.0/21', which again, if you
+go by the old book, is part of the class "B" net '158.37.0.0/16'.
+
+Input and output functions are supplied, along with the "normal" <,
+<=, =, >=, > and <> operators, which all do what you expect.  In
+addition, there are operators to check for networks or addresses being
+subnets of or addresses contained within other networks.  << tests
+whether the left operand is contained within the right, <<= includes
+equality, >> and >>= do the same things the opposite way.
+
+The input and output functions use routines from Paul Vixie's BIND,
+and I've snarfed the source files inet_net_ntop.c and inet_net_pton.c
+directly from a recent distribution of that code.  They are included
+here to avoid the need to fetch and install the BIND libraries to be
+able to use this code.  IANAL, but it looks from the copyright
+messages in the files as if this should be acceptable.  Read the
+documentation in inet_net_pton.c to see the legal input formats.
+
+MAC level ethernet addresses are implemented as a 6 byte struct that
+contains the address as unsigned chars.  Several input forms are
+accepted; the following are all the same address: '08002b:010203',
+'08002b-010203', '0800.2b01.0203', '08-00-2b-01-02-03' and
+'08:00:2b:01:02:03'.  Upper and lower case is accepted for the digits
+'a' through 'f'.  Output is always in the latter of the given forms.
+
+As with IP addresses, input and output functions are supplied as well
+as the "normal" operators, which do what you expect.  As an extra
+feature, a function macaddr_manuf() is defined, which returns the name
+of the manufacturer as a string.  This is currently held in a
+hard-coded struct internal to the C module -- it might be smarter to
+put this information into an actual data base table, and look up the
+manufacturer there.
+
+Many thanks to Aleksei Roudnev and Paul Vixie for their fine work!
+
+I don't know what changes are needed to the Makefile for other systems
+than the one I'm running (NetBSD 1.3), but anyway: to install on a BSD
+system: fix the path names in the Makefile if you need to, then make,
+make install, slurp the SQL files into psql or whatever, and you're
+off.  Enjoy!
+
+Bergen, Norway, 1998-08-09, Tom Ivar Helbekkmo (tih@nhh.no).

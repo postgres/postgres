@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.70 1998/10/02 16:27:55 momjian Exp $
+ * $Id: pg_proc.h,v 1.71 1998/10/03 05:40:56 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2044,6 +2044,59 @@ DATA(insert OID = 1642 (  pg_get_userbyid	   PGUID 11 f t f 1 f 19 "23" 100 0 0 
 DESCR("user name by UID (with fallback)");
 DATA(insert OID = 1643 (  pg_get_indexdef	   PGUID 11 f t f 1 f 25 "26" 100 0 0 100  foo bar ));
 DESCR("index description");
+
+/* for mac type support */
+DATA(insert OID = 436 (  macaddr_in			PGUID 11 f t f 1 f 829 "0" 100 0 0 100	foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 437 (  macaddr_out		PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+
+DATA(insert OID = 830 (  macaddr_eq		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  foo bar ));
+DESCR("equal");
+DATA(insert OID = 831 (  macaddr_lt		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  foo bar ));
+DESCR("less-than");
+DATA(insert OID = 832 (  macaddr_le		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  foo bar ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 833 (  macaddr_gt		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  foo bar ));
+DESCR("greater-than");
+DATA(insert OID = 834 (  macaddr_ge		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 835 (  macaddr_ne		   PGUID 11 f t f 2 f 16 "829 829" 100 0 0 100  foo bar ));
+DESCR("not equal");
+DATA(insert OID = 836 (  macaddr_cmp	   PGUID 11 f t f 2 f 23 "829 829" 100 0 0 100  foo bar ));
+DESCR("less-equal-greater");
+DATA(insert OID = 837 (  macaddr_manuf	   PGUID 11 f t f 1 f 25 "829" 100 0 0 100  foo bar ));
+DESCR("MAC manufacturer");
+
+/* for ip type support */
+DATA(insert OID = 910 (  ipaddr_in			PGUID 11 f t f 1 f 869 "0" 100 0 0 100	foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 911 (  ipaddr_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+
+DATA(insert OID = 920 (  ipaddr_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("equal");
+DATA(insert OID = 921 (  ipaddr_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("less-than");
+DATA(insert OID = 922 (  ipaddr_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 923 (  ipaddr_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("greater-than");
+DATA(insert OID = 924 (  ipaddr_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 925 (  ipaddr_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("not equal");
+DATA(insert OID = 926 (  ipaddr_cmp	   	   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100  foo bar ));
+DESCR("less-equal-greater");
+DATA(insert OID = 927 (  ipaddr_sub	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("is-subnet");
+DATA(insert OID = 928 (  ipaddr_subeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("is-subnet-or-equal");
+DATA(insert OID = 929 (  ipaddr_sup	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("is-supernet");
+DATA(insert OID = 930 (  ipaddr_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DESCR("is-supernet-or-equal");
+
 
 /*
  * prototypes for functions pg_proc.c

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.55 1998/09/22 20:28:13 momjian Exp $
+ * $Id: builtins.h,v 1.56 1998/10/03 05:40:59 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -28,6 +28,7 @@
 #include <utils/nabstime.h>
 #include <utils/int8.h>
 #include <utils/cash.h>
+#include <utils/mac.h>
 #include <utils/rel.h>
 
 /*
@@ -510,5 +511,41 @@ extern text *substr(text *string, int4 m, int4 n);
 extern text *translate(text *string, char from, char to);
 
 /* acl.c */
+
+/* inet_net_ntop.c */
+char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
+
+/* inet_net_pton.c */
+int inet_net_pton(int af, const char *src, void *dst, size_t size);
+
+/* ip.c */
+ipaddr	   *ipaddr_in(char *str);
+char	   *ipaddr_out(ipaddr * addr);
+bool		ipaddr_lt(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_le(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_eq(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_ge(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_gt(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_ne(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_sub(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_subeq(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_sup(ipaddr * a1, ipaddr * a2);
+bool		ipaddr_supeq(ipaddr * a1, ipaddr * a2);
+int4		ipaddr_cmp(ipaddr * a1, ipaddr * a2);
+int			v4bitncmp(u_int32_t a1, u_int32_t a2, int bits);
+
+
+/* mac.c */
+macaddr    *macaddr_in(char *str);
+char	   *macaddr_out(macaddr * addr);
+bool		macaddr_lt(macaddr * a1, macaddr * a2);
+bool		macaddr_le(macaddr * a1, macaddr * a2);
+bool		macaddr_eq(macaddr * a1, macaddr * a2);
+bool		macaddr_ge(macaddr * a1, macaddr * a2);
+bool		macaddr_gt(macaddr * a1, macaddr * a2);
+bool		macaddr_ne(macaddr * a1, macaddr * a2);
+int4		macaddr_cmp(macaddr * a1, macaddr * a2);
+text	   *macaddr_manuf(macaddr * addr);
+
 
 #endif	 /* BUILTINS_H */

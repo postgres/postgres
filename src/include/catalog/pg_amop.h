@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.15 1998/09/01 04:34:48 momjian Exp $
+ * $Id: pg_amop.h,v 1.16 1998/10/03 05:40:51 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -297,6 +297,26 @@ DATA(insert OID = 0 (  403 1313 1333 2 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 1313 1330 3 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 1313 1335 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 1313 1334 5 btreesel btreenpage ));
+
+/*
+ *	nbtree macaddr
+ */
+
+DATA(insert OID = 0 (  403 810 1222 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 810 1223 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 810 1220 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 810 1225 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 810 1224 5 btreesel btreenpage ));
+
+/*
+ *	nbtree ip
+ */
+
+DATA(insert OID = 0 (  403 935 1203 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 935 1204 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 935 1201 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 935 1206 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 935 1205 5 btreesel btreenpage ));
 
 /*
  *	hash table _ops
