@@ -83,3 +83,7 @@ userlock -
 vacuumlo -
 	Remove orphaned large objects
 	by Peter T Mount <peter@retep.org.uk>
+
+pgbench -
+	TPC-B like benchmarking tool
+	by Tatsuo Ishii <t-ishii@sra.co.jp>
