@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.27 1997/01/26 20:15:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.28 1997/01/27 22:37:52 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -753,6 +753,7 @@ static void usage(char* progname)
     fprintf(stderr, "    C: supress version info\n");
     fprintf(stderr, "    d: set debug level\n");
     fprintf(stderr, "    E: echo query before execution\n");
+    fprintf(stderr, "    e  turn on European date format\n");
     fprintf(stderr, "    F: turn off fsync\n");
     fprintf(stderr, "    f: forbid plantype generation\n");
     fprintf(stderr, "    i: don't execute the query, just show the plan tree\n");
@@ -1282,7 +1283,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.27 $ $Date: 1997/01/26 20:15:06 $");
+        puts("$Revision: 1.28 $ $Date: 1997/01/27 22:37:52 $");
     }
     
     /* ----------------
