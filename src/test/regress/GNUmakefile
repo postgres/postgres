@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.12 1997/10/17 09:57:49 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.13 1998/01/01 05:37:29 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,3 +58,4 @@ clean:
 	$(MAKE) -C sql clean
 	$(MAKE) -C expected clean
 	$(MAKE) -C results clean
+	$(MAKE) -C ../../../contrib/spi clean
