@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.26 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.27 2000/04/11 03:56:19 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -652,7 +652,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
      specifies the variant <quote>month before day</quote>, the command
      <literal>SET DateStyle TO 'European'</literal> sets the variant
-     <quote>day before month</quote>. The <literal>US</literal> style
+     <quote>day before month</quote>. The <literal>ISO</literal> style
      is the default but this default can be changed at compile time or at run time.
     </para>
 
