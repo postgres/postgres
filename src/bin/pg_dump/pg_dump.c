@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.304 2002/10/18 22:05:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,6 @@ main(int argc, char **argv)
 				break;
 
 			case 'C':			/* Create DB */
-
 				outputCreate = 1;
 				break;
 
@@ -325,7 +324,6 @@ main(int argc, char **argv)
 			case 'o':			/* Dump oids */
 				oids = true;
 				break;
-
 
 			case 'O':			/* Don't reconnect to match owner */
 				outputNoOwner = 1;
@@ -1093,7 +1091,6 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 			}
 			archprintf(fout, ");\n");
 		}
-
 	} while (PQntuples(res) > 0);
 
 	archprintf(fout, "\n\n");

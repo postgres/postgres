@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.58 2002/10/16 05:46:54 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.59 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,9 +671,11 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	}
 
 	ahprintf(AH, ";     Dump Version: %d.%d-%d\n", AH->vmaj, AH->vmin, AH->vrev);
-	ahprintf(AH, ";     Format: %s\n;\n", fmtName);
+	ahprintf(AH, ";     Format: %s\n", fmtName);
+	ahprintf(AH, ";     Integer: %d bytes\n", AH->intSize);
+	ahprintf(AH, ";     Offset: %d bytes\n", AH->offSize);
 
-	ahprintf(AH, ";\n; Selected TOC Entries:\n;\n");
+	ahprintf(AH, ";\n;\n; Selected TOC Entries:\n;\n");
 
 	while (te != AH->toc)
 	{
@@ -1369,6 +1371,87 @@ TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt)
 }
 
 size_t
+WriteOffset(ArchiveHandle *AH, off_t o, int wasSet)
+{
+	int 			off;
+
+	/* Save the flag */
+	(*AH->WriteBytePtr) (AH, wasSet);
+
+	/* Write out off_t smallest byte first, prevents endian mismatch */
+	for (off = 0; off < sizeof(off_t); off++)
+	{
+	    (*AH->WriteBytePtr) (AH, o & 0xFF);
+		o >>= 8;
+	}
+	return sizeof(off_t) + 1;
+}
+
+int
+ReadOffset(ArchiveHandle *AH, off_t *o)
+{
+	int				i;
+	int 			off;
+	int				offsetFlg;
+
+	/* Initialize to zero */
+	*o = 0;
+
+	/* Check for old version */
+	if (AH->version < K_VERS_1_7)
+	{
+		/* Prior versions wrote offsets using WriteInt */
+		i = ReadInt(AH);
+		/* -1 means not set */
+		if (i < 0)
+		    return K_OFFSET_POS_NOT_SET;
+		else if (i == 0)
+		    return K_OFFSET_NO_DATA;
+
+		/* Cast to off_t because it was written as an int. */
+		*o = (off_t)i;
+		return K_OFFSET_POS_SET;
+	}
+
+	/*
+	 * Read the flag indicating the state of the data pointer.
+	 * Check if valid and die if not.
+	 *
+	 * This used to be handled by a negative or zero pointer,
+	 * now we use an extra byte specifically for the state.
+	 */
+	offsetFlg = (*AH->ReadBytePtr) (AH) & 0xFF;
+
+	switch (offsetFlg)
+	{
+		case K_OFFSET_POS_NOT_SET:
+		case K_OFFSET_NO_DATA:
+		case K_OFFSET_POS_SET:
+
+				break;
+
+		default:
+				die_horribly(AH, modulename, "Unexpected data offset flag %d\n", offsetFlg);
+	}
+
+	/*
+	 * Read the bytes
+	 */
+	for (off = 0; off < AH->offSize; off++)
+	{
+		if (off < sizeof(off_t))
+			*o |= ((*AH->ReadBytePtr) (AH)) << (off * 8);
+		else
+		{
+			if ((*AH->ReadBytePtr) (AH) != 0)
+	    	    die_horribly(AH, modulename, "file offset in dump file is too large\n");
+		}
+	}
+
+	return offsetFlg;
+}
+
+size_t
 WriteInt(ArchiveHandle *AH, int i)
 {
 	int			b;
@@ -1528,14 +1611,22 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		else
 			AH->vrev = 0;
 
+		/* Make a convenient integer <maj><min><rev>00 */
+		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
+
 		AH->intSize = fgetc(fh);
 		AH->lookahead[AH->lookaheadLen++] = AH->intSize;
 
+		if (AH->version >= K_VERS_1_7)
+		{
+			AH->offSize = fgetc(fh);
+			AH->lookahead[AH->lookaheadLen++] = AH->offSize;
+		}
+		else
+			AH->offSize = AH->intSize;
+
 		AH->format = fgetc(fh);
 		AH->lookahead[AH->lookaheadLen++] = AH->format;
-
-		/* Make a convenient integer <maj><min><rev>00 */
-		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
 	}
 	else
 	{
@@ -1599,6 +1690,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	if (!AH)
 		die_horribly(AH, modulename, "out of memory\n");
 
+	/* AH->debugLevel = 100; */
+
 	AH->vmaj = K_VERS_MAJOR;
 	AH->vmin = K_VERS_MINOR;
 	AH->vrev = K_VERS_REV;
@@ -1606,6 +1699,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->createDate = time(NULL);
 
 	AH->intSize = sizeof(int);
+	AH->offSize = sizeof(off_t);
 	AH->lastID = 0;
 	if (FileSpec)
 	{
@@ -1784,7 +1878,7 @@ ReadToc(ArchiveHandle *AH)
 
 		/* Sanity check */
 		if (te->id <= 0 || te->id > AH->tocCount)
-			die_horribly(AH, modulename, "entry id out of range - perhaps a corrupt TOC\n");
+			die_horribly(AH, modulename, "entry id %d out of range - perhaps a corrupt TOC\n", te->id);
 
 		te->hadDumper = ReadInt(AH);
 		te->oid = ReadStr(AH);
@@ -2133,6 +2227,7 @@ WriteHead(ArchiveHandle *AH)
 	(*AH->WriteBytePtr) (AH, AH->vmin);
 	(*AH->WriteBytePtr) (AH, AH->vrev);
 	(*AH->WriteBytePtr) (AH, AH->intSize);
+	(*AH->WriteBytePtr) (AH, AH->offSize);
 	(*AH->WriteBytePtr) (AH, AH->format);
 
 #ifndef HAVE_LIBZ
@@ -2194,6 +2289,11 @@ ReadHead(ArchiveHandle *AH)
 
 		if (AH->intSize > sizeof(int))
 			write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations may fail\n");
+
+		if (AH->version >= K_VERS_1_7)
+		    AH->offSize = (*AH->ReadBytePtr) (AH);
+		else
+		    AH->offSize = AH->intSize;
 
 		fmt = (*AH->ReadBytePtr) (AH);
 

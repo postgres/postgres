@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.30 2002/09/10 18:22:20 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.31 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,6 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		ReadToc(AH);
 		tarClose(AH, ctx->FH);	/* Nothing else in the file... */
 	}
-
 }
 
 /*
@@ -354,7 +353,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		/* tm->zFH = gzdopen(dup(fileno(ctx->tarFH)), "rb"); */
 
 #else
-
 		tm->nFH = ctx->tarFH;
 #endif
 
@@ -708,9 +706,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 
 		th = tarOpen(AH, NULL, 'r');
 	}
-
 	EndRestoreBlobs(AH);
-
 }
 
 
@@ -832,7 +828,6 @@ _CloseArchive(ArchiveHandle *AH)
 				die_horribly(AH, modulename,
 				   "could not write null block at end of tar archive\n");
 		}
-
 	}
 
 	AH->FH = NULL;
@@ -868,7 +863,6 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 
 	sprintf(fname, "blobs.toc");
 	ctx->blobToc = tarOpen(AH, fname, 'w');
-
 }
 
 /*
@@ -899,7 +893,6 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	tarPrintf(AH, ctx->blobToc, "%u %s\n", oid, fname);
 
 	tctx->TH = tarOpen(AH, fname, 'w');
-
 }
 
 /*
@@ -931,7 +924,6 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 	/* WriteInt(AH, 0); */
 
 	tarClose(AH, ctx->blobToc);
-
 }
 
 

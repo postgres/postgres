@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.42 2002/10/16 05:46:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.43 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	 *	Autocommit could be off.  We turn it off later but we have to check
 	 *	the database version first.
 	 */
-	
+
 	res = PQexec(conn, "BEGIN;SELECT version();");
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK ||
@@ -208,7 +208,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 				die_horribly(AH, modulename, "could not reconnect to database: %s",
 							 PQerrorMessage(newConn));
 		}
-
 	} while (need_pass);
 
 	if (password)
@@ -469,7 +468,6 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 		{
 
 			case SQL_SCAN:		/* Default state == 0, set in _allocAH */
-
 				if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
 				{
 					/* Send It & reset the buffer */
@@ -512,23 +510,19 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 
 					AH->sqlparse.lastChar = qry[pos];
 				}
-
 				break;
 
 			case SQL_IN_SQL_COMMENT:
-
 				if (qry[pos] == '\n')
 					AH->sqlparse.state = SQL_SCAN;
 				break;
 
 			case SQL_IN_EXT_COMMENT:
-
 				if (AH->sqlparse.lastChar == '*' && qry[pos] == '/')
 					AH->sqlparse.state = SQL_SCAN;
 				break;
 
 			case SQL_IN_QUOTE:
-
 				if (!AH->sqlparse.backSlash && AH->sqlparse.quoteChar == qry[pos])
 				{
 					/* fprintf(stderr,"[endquote]\n"); */
@@ -559,7 +553,6 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 	 * stmt
 	 */
 	return eos;
-
 }
 
 

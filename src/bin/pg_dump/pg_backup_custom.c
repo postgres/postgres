@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.21 2002/09/04 20:31:34 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.22 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,8 @@ typedef struct
 
 typedef struct
 {
+	int			dataState;
 	off_t		dataPos;
-	size_t		dataLen;
 } lclTocEntry;
 
 
@@ -171,7 +171,6 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	 */
 	if (AH->mode == archModeWrite)
 	{
-
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)
 			AH->FH = fopen(AH->fSpec, PG_BINARY_W);
 		else
@@ -181,11 +180,9 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
-
 	}
 	else
 	{
-
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)
 			AH->FH = fopen(AH->fSpec, PG_BINARY_R);
 		else
@@ -216,12 +213,11 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 
 	ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
 	if (te->dataDumper)
-		ctx->dataPos = -1;
+		ctx->dataState = K_OFFSET_POS_NOT_SET;
 	else
-		ctx->dataPos = 0;
-	ctx->dataLen = 0;
-	te->formatData = (void *) ctx;
+		ctx->dataState = K_OFFSET_NO_DATA;
 
+	te->formatData = (void *) ctx;
 }
 
 /*
@@ -238,8 +234,7 @@ _WriteExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
-	WriteInt(AH, ctx->dataPos);
-	WriteInt(AH, ctx->dataLen);
+	WriteOffset(AH, ctx->dataPos, ctx->dataState);
 }
 
 /*
@@ -253,6 +248,7 @@ _WriteExtraToc(ArchiveHandle *AH, TocEntry *te)
 static void
 _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
+	int	junk;
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
 	if (ctx == NULL)
@@ -261,8 +257,14 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 		te->formatData = (void *) ctx;
 	}
 
-	ctx->dataPos = ReadInt(AH);
-	ctx->dataLen = ReadInt(AH);
+	ctx->dataState = ReadOffset(AH, &(ctx->dataPos) );
+
+	/*
+	 * Prior to V1.7 (pg7.3), we dumped the data size as an int
+	 * now we don't dump it at all.
+	 */
+	if (AH->version < K_VERS_1_7)
+		junk = ReadInt(AH);
 }
 
 /*
@@ -277,8 +279,8 @@ _PrintExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
-	ahprintf(AH, "-- Data Pos: " INT64_FORMAT " (Length %lu)\n",
-			 (int64) ctx->dataPos, (unsigned long) ctx->dataLen);
+	ahprintf(AH, "-- Data Pos: " INT64_FORMAT "\n",
+			 (int64) ctx->dataPos);
 }
 
 /*
@@ -298,12 +300,12 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	tctx->dataPos = _getFilePos(AH, ctx);
+	tctx->dataState = K_OFFSET_POS_SET;
 
 	_WriteByte(AH, BLK_DATA);	/* Block type */
 	WriteInt(AH, te->id);		/* For sanity check */
 
 	_StartDataCompressor(AH, te);
-
 }
 
 /*
@@ -343,12 +345,10 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 static void
 _EndData(ArchiveHandle *AH, TocEntry *te)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
-	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
+/*	lclContext *ctx = (lclContext *) AH->formatData; */
+/*	lclTocEntry *tctx = (lclTocEntry *) te->formatData; */
 
 	_EndDataCompressor(AH, te);
-
-	tctx->dataLen = _getFilePos(AH, ctx) - tctx->dataPos;
 }
 
 /*
@@ -368,10 +368,10 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	tctx->dataPos = _getFilePos(AH, ctx);
+	tctx->dataState = K_OFFSET_POS_SET;
 
 	_WriteByte(AH, BLK_BLOBS);	/* Block type */
 	WriteInt(AH, te->id);		/* For sanity check */
-
 }
 
 /*
@@ -428,12 +428,11 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	int			blkType;
 	int			found = 0;
 
-	if (tctx->dataPos == 0)
+	if (tctx->dataState == K_OFFSET_NO_DATA)
 		return;
 
-	if (!ctx->hasSeek || tctx->dataPos < 0)
+	if (!ctx->hasSeek || tctx->dataState == K_OFFSET_POS_NOT_SET)
 	{
-
 		/* Skip over unnecessary blocks until we get the one we want. */
 
 		found = 0;
@@ -442,7 +441,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 		while (id != te->id)
 		{
-
 			if ((TocIDRequired(AH, id, ropt) & 2) != 0)
 				die_horribly(AH, modulename,
 							 "Dumping a specific TOC data block out of order is not supported"
@@ -450,40 +448,30 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 			switch (blkType)
 			{
-
 				case BLK_DATA:
-
 					_skipData(AH);
 					break;
 
 				case BLK_BLOBS:
-
 					_skipBlobs(AH);
 					break;
 
 				default:		/* Always have a default */
-
 					die_horribly(AH, modulename,
 								 "unrecognized data block type (%d) while searching archive\n",
 								 blkType);
 					break;
 			}
-
 			_readBlockHeader(AH, &blkType, &id);
-
 		}
-
 	}
 	else
 	{
-
 		/* Grab it */
-
 		if (fseeko(AH->FH, tctx->dataPos, SEEK_SET) != 0)
 			die_horribly(AH, modulename, "error during file seek: %s\n", strerror(errno));
 
 		_readBlockHeader(AH, &blkType, &id);
-
 	}
 
 	/* Are we sane? */
@@ -493,14 +481,11 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 	switch (blkType)
 	{
-
 		case BLK_DATA:
-
 			_PrintData(AH);
 			break;
 
 		case BLK_BLOBS:
-
 			if (!AH->connection)
 				die_horribly(AH, modulename, "large objects cannot be loaded without a database connection\n");
 
@@ -508,7 +493,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			break;
 
 		default:				/* Always have a default */
-
 			die_horribly(AH, modulename, "unrecognized data block type %d while restoring archive\n",
 						 blkType);
 			break;
@@ -579,7 +563,6 @@ _PrintData(ArchiveHandle *AH)
 
 		if (AH->compression != 0)
 		{
-
 			while (zp->avail_in != 0)
 			{
 				zp->next_out = out;
@@ -602,9 +585,7 @@ _PrintData(ArchiveHandle *AH)
 #ifdef HAVE_LIBZ
 		}
 #endif
-
 		blkLen = ReadInt(AH);
-
 	}
 
 #ifdef HAVE_LIBZ
@@ -627,7 +608,6 @@ _PrintData(ArchiveHandle *AH)
 			die_horribly(AH, modulename, "could not close compression library: %s\n", zp->msg);
 	}
 #endif
-
 }
 
 static void
@@ -647,7 +627,6 @@ _LoadBlobs(ArchiveHandle *AH)
 	}
 
 	EndRestoreBlobs(AH);
-
 }
 
 /*
@@ -702,7 +681,6 @@ _skipData(ArchiveHandle *AH)
 
 		blkLen = ReadInt(AH);
 	}
-
 }
 
 /*
@@ -862,8 +840,12 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 		pos = ftello(AH->FH);
 		if (pos != ctx->filePos)
 		{
-			write_msg(modulename, "WARNING: ftell mismatch with expected position -- ftell ignored\n");
-			pos = ctx->filePos;
+			write_msg(modulename, "WARNING: ftell mismatch with expected position -- ftell used\n");
+			/*
+			 * Prior to 1.7 (pg7.3) we relied on the internally maintained pointer.
+			 * Now we rely on off_t always.
+			 * pos = ctx->filePos;
+			 */
 		}
 	}
 	else
@@ -986,8 +968,6 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 				res = Z_STREAM_END;
 #endif
 		}
-
-
 	}
 
 #ifdef HAVE_LIBZ
@@ -995,7 +975,6 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 #else
 	return 1;
 #endif
-
 }
 
 /*

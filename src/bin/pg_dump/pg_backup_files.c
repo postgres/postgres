@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.19 2002/09/10 18:25:13 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.20 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,6 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		if (fclose(AH->FH) != 0)
 			die_horribly(AH, modulename, "could not close TOC file: %s\n", strerror(errno));
 	}
-
 }
 
 /*
@@ -244,7 +243,6 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 
 	if (tctx->FH == NULL)
 		die_horribly(AH, modulename, "could not open data file for output\n");
-
 }
 
 static size_t
@@ -298,7 +296,6 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 
 	if (GZCLOSE(AH->FH) != 0)
 		die_horribly(AH, modulename, "could not close data file after reading\n");
-
 }
 
 
@@ -473,7 +470,6 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 	if (ctx->blobToc == NULL)
 		die_horribly(AH, modulename,
 					 "could not open large object TOC for output: %s\n", strerror(errno));
-
 }
 
 /*

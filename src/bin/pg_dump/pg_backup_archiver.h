@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.47 2002/09/04 20:31:34 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.48 2002/10/22 19:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typedef z_stream *z_streamp;
 #include "libpq-fe.h"
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 6
+#define K_VERS_MINOR 7
 #define K_VERS_REV 0
 
 /* Data block types */
@@ -73,10 +73,16 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0)		/* Date & name in header */
 #define K_VERS_1_5 (( (1 * 256 + 5) * 256 + 0) * 256 + 0)		/* Handle dependencies */
 #define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
-#define K_VERS_MAX (( (1 * 256 + 6) * 256 + 255) * 256 + 0)
+#define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in header */
+#define K_VERS_MAX (( (1 * 256 + 7) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
 #define BLOB_BATCH_SIZE 100
+
+/* Flags to indicate disposition of offsets stored in files */
+#define K_OFFSET_POS_NOT_SET 1
+#define K_OFFSET_POS_SET 2
+#define K_OFFSET_NO_DATA 3
 
 struct _archiveHandle;
 struct _tocEntry;
@@ -148,6 +154,7 @@ typedef struct _archiveHandle
 	int			debugLevel;		/* Used for logging (currently only by
 								 * --verbose) */
 	size_t		intSize;		/* Size of an integer in the archive */
+	size_t		offSize;		/* Size of a file offset in the archive - Added V1.7 */
 	ArchiveFormat format;		/* Archive format */
 
 	sqlparseInfo sqlparse;
@@ -286,6 +293,9 @@ extern size_t WriteInt(ArchiveHandle *AH, int i);
 extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
 extern size_t WriteStr(ArchiveHandle *AH, const char *s);
+
+int ReadOffset(ArchiveHandle*, off_t*);
+size_t WriteOffset(ArchiveHandle*, off_t, int);
 
 extern void StartRestoreBlobs(ArchiveHandle *AH);
 extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid);
