@@ -337,7 +337,8 @@ PostgreSQL:
      type control-C to get out of tail.
 
  14) If necessary, tell UNIX how to find your shared libraries.  If you
-     are using Linux-ELF do ONE of the following, preferably the first:
+     are using Linux/ELF or any ELF-based system, do ONE of the following,
+     preferably the first:
 
        a) As root, edit file /etc/ld.so.conf.  Add line
              /usr/local/pgsql/lib
