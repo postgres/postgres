@@ -16,7 +16,7 @@ extern		"C"
 {
 #endif
 
-struct sqlca
+struct sqlca_t
 {
 	char		sqlcaid[8];
 	long		sqlabc;
@@ -53,8 +53,11 @@ struct sqlca
 	char		sqlext[8];
 };
 
-extern DLLIMPORT struct sqlca sqlca;
+struct sqlca_t *ECPGget_sqlca(void);
 
+#ifndef POSTGRES_ECPG_INTERNAL
+# define sqlca (*ECPGget_sqlca())
+#endif
 
 #ifdef __cplusplus
 }

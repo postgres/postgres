@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.43 2003/03/25 16:15:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.44 2003/06/15 04:07:58 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -747,6 +747,13 @@ EXEC SQL INCLUDE <replaceable>filename</replaceable>;
    from the arguments, perform the <acronym>SQL</acronym> command using
    the <application>libpq</application> interface, and put the result
    in the arguments specified for output.
+  </para>
+
+  <para>
+   <application>ecpg</application> is thread-safe if it is compiled using
+   the <literal>--with-threads</> <filename>configure</filename>
+   command-line option.  (You might need to use other threading
+   command-line options to compile your client code.)
   </para>
 
   <para>

@@ -1,29 +1,53 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.6 2003/06/13 10:50:57 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.7 2003/06/15 04:07:58 momjian Exp $ */
 
+#define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
+#ifdef USE_THREADS
+#include <pthread.h>
+#endif
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
 #include "extern.h"
 #include "sqlca.h"
 
-static struct connection *all_connections = NULL,
-		   *actual_connection = NULL;
+#ifdef USE_THREADS
+static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+static struct connection *all_connections   = NULL;
+static struct connection *actual_connection = NULL;
 
 struct connection *
 ECPGget_connection(const char *connection_name)
 {
-	struct connection *con = all_connections;
+  struct connection *ret = NULL;
 
-	if (connection_name == NULL || strcmp(connection_name, "CURRENT") == 0)
-		return actual_connection;
+#ifdef USE_THREADS
+  pthread_mutex_lock(&connections_mutex);
+#endif
 
-	for (; con && strcmp(connection_name, con->name) != 0; con = con->next);
-	if (con)
-		return con;
-	else
-		return NULL;
+  if( (connection_name == NULL) || (strcmp(connection_name, "CURRENT") == 0) )
+    {
+      ret = actual_connection;
+    }
+  else
+    {
+      struct connection *con;
+      
+      for( con = all_connections; con != NULL; con = con->next)
+	{
+	  if( strcmp(connection_name, con->name) == 0 )
+	    break;
+	}
+      ret = con;
+    }
+
+#ifdef USE_THREADS
+  pthread_mutex_unlock(&connections_mutex);
+#endif
+
+  return( ret );
 }
 
 static void
@@ -36,6 +60,10 @@ ecpg_finish(struct connection * act)
 
 		ECPGlog("ecpg_finish: finishing %s.\n", act->name);
 		PQfinish(act->connection);
+
+		/* no need to lock connections_mutex - we're always called
+		   by ECPGdisconnect or ECPGconnect, which are holding
+		   the lock */
 
 		/* remove act from the list */
 		if (act == all_connections)
@@ -118,17 +146,18 @@ ECPGsetconn(int lineno, const char *connection_name)
 static void
 ECPGnoticeProcessor_raise(int code, const char *message)
 {
-	sqlca.sqlcode = code;
-	strncpy(sqlca.sqlerrm.sqlerrmc, message, sizeof(sqlca.sqlerrm.sqlerrmc));
-	sqlca.sqlerrm.sqlerrmc[sizeof(sqlca.sqlerrm.sqlerrmc) - 1] = 0;
-	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
+	struct sqlca_t *sqlca = ECPGget_sqlca();
+	sqlca->sqlcode = code;
+	strncpy(sqlca->sqlerrm.sqlerrmc, message, sizeof(sqlca->sqlerrm.sqlerrmc));
+	sqlca->sqlerrm.sqlerrmc[sizeof(sqlca->sqlerrm.sqlerrmc) - 1] = 0;
+	sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 
 	/* remove trailing newline */
-	if (sqlca.sqlerrm.sqlerrml
-		&& sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml - 1] == '\n')
+	if (sqlca->sqlerrm.sqlerrml
+		&& sqlca->sqlerrm.sqlerrmc[sqlca->sqlerrm.sqlerrml - 1] == '\n')
 	{
-		sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml - 1] = 0;
-		sqlca.sqlerrm.sqlerrml--;
+		sqlca->sqlerrm.sqlerrmc[sqlca->sqlerrm.sqlerrml - 1] = 0;
+		sqlca->sqlerrm.sqlerrml--;
 	}
 
 	ECPGlog("raising sqlcode %d\n", code);
@@ -141,6 +170,8 @@ ECPGnoticeProcessor_raise(int code, const char *message)
 static void
 ECPGnoticeProcessor(void *arg, const char *message)
 {
+	struct sqlca_t *sqlca = ECPGget_sqlca();
+
 	/* these notices raise an error */
 	if (strncmp(message, "WARNING: ", 9))
 	{
@@ -245,7 +276,7 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	if (strstr(message, "cannot be rolled back"))
 		return;
 
-	/* these and other unmentioned should set sqlca.sqlwarn[2] */
+	/* these and other unmentioned should set sqlca->sqlwarn[2] */
 	/* WARNING: The ':' operator is deprecated.  Use exp(x) instead. */
 	/* WARNING: Rel *: Uninitialized page 0 - fixing */
 	/* WARNING: PortalHeapMemoryFree: * not in alloc set! */
@@ -253,14 +284,15 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	/* WARNING: identifier "*" will be truncated to "*" */
 	/* WARNING: InvalidateSharedInvalid: cache state reset */
 	/* WARNING: RegisterSharedInvalid: SI buffer overflow */
-	sqlca.sqlwarn[2] = 'W';
-	sqlca.sqlwarn[0] = 'W';
+	sqlca->sqlwarn[2] = 'W';
+	sqlca->sqlwarn[0] = 'W';
 }
 
 /* this contains some quick hacks, needs to be cleaned up, but it works */
 bool
 ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
 {
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 	struct connection *this;
 	char	   *dbname = strdup(name),
 			   *host = NULL,
@@ -269,7 +301,7 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			   *realname = NULL,
 			   *options = NULL;
 
-	ECPGinit_sqlca();
+	ECPGinit_sqlca(sqlca);
 
 	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
@@ -394,6 +426,9 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 		realname = strdup(dbname);
 
 	/* add connection to our list */
+#ifdef USE_THREADS
+	pthread_mutex_lock(&connections_mutex);
+#endif
 	if (connection_name != NULL)
 		this->name = ECPGstrdup(connection_name, lineno);
 	else
@@ -424,6 +459,9 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 
         set_backend_err(errmsg, lineno);
 		ecpg_finish(this);
+#ifdef USE_THREADS
+		pthread_mutex_unlock(&connections_mutex);
+#endif
 		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
                 db,
 				host ? host : "<DEFAULT>",
@@ -445,6 +483,9 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			ECPGfree(dbname);
 		return false;
 	}
+#ifdef USE_THREADS
+	pthread_mutex_unlock(&connections_mutex);
+#endif
 
 	if (host)
 		ECPGfree(host);
@@ -468,11 +509,16 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 bool
 ECPGdisconnect(int lineno, const char *connection_name)
 {
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 	struct connection *con;
+
+#ifdef USE_THREADS
+	pthread_mutex_lock(&connections_mutex);
+#endif
 
 	if (strcmp(connection_name, "ALL") == 0)
 	{
-		ECPGinit_sqlca();
+		ECPGinit_sqlca(sqlca);
 		for (con = all_connections; con;)
 		{
 			struct connection *f = con;
@@ -486,10 +532,19 @@ ECPGdisconnect(int lineno, const char *connection_name)
 		con = ECPGget_connection(connection_name);
 
 		if (!ECPGinit(con, connection_name, lineno))
-			return (false);
+		  {
+#ifdef USE_THREADS
+		    pthread_mutex_unlock(&connections_mutex);
+#endif
+		    return (false);
+		  }
 		else
-			ecpg_finish(con);
+		  ecpg_finish(con);
 	}
+
+#ifdef USE_THREADS
+	pthread_mutex_unlock(&connections_mutex);
+#endif
 
 	return true;
 }

@@ -1,8 +1,9 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.2 2003/05/30 13:22:02 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.3 2003/06/15 04:07:58 momjian Exp $
  */
 
+#define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 #include "pg_type.h"
 
@@ -51,14 +52,15 @@ bool
 ECPGget_desc_header(int lineno, char *desc_name, int *count)
 {
 	PGresult   *ECPGresult;
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 
-	ECPGinit_sqlca();
+	ECPGinit_sqlca(sqlca);
 	ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
 	if (!ECPGresult)
 		return false;
 
 	*count = PQnfields(ECPGresult);
-	sqlca.sqlerrd[2] = 1;
+	sqlca->sqlerrd[2] = 1;
 	ECPGlog("ECPGget_desc_header: found %d attributes.\n", *count);
 	return true;
 }
@@ -149,9 +151,10 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	int			ntuples,
 				act_tuple;
 	struct variable data_var;
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	va_start(args, index);
-	ECPGinit_sqlca();
+	ECPGinit_sqlca(sqlca);
 	ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
 	if (!ECPGresult)
 		return (false);
@@ -378,7 +381,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 			ECPGlog("ECPGget_desc: INDICATOR[%d] = %d\n", act_tuple, -PQgetisnull(ECPGresult, act_tuple, index));
 		}
 	}
-	sqlca.sqlerrd[2] = ntuples;
+	sqlca->sqlerrd[2] = ntuples;
 	return (true);
 }
 
@@ -387,8 +390,9 @@ ECPGdeallocate_desc(int line, const char *name)
 {
 	struct descriptor *i;
 	struct descriptor **lastptr = &all_descriptors;
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 
-	ECPGinit_sqlca();
+	ECPGinit_sqlca(sqlca);
 	for (i = all_descriptors; i; lastptr = &i->next, i = i->next)
 	{
 		if (!strcmp(name, i->name))
@@ -408,8 +412,9 @@ bool
 ECPGallocate_desc(int line, const char *name)
 {
 	struct descriptor *new;
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 
-	ECPGinit_sqlca();
+	ECPGinit_sqlca(sqlca);
 	new = (struct descriptor *) ECPGalloc(sizeof(struct descriptor), line);
 	if (!new)
 		return false;

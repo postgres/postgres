@@ -1,5 +1,6 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.3 2003/03/27 14:29:17 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.4 2003/06/15 04:07:58 momjian Exp $ */
 
+#define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #include <stdlib.h>

@@ -1,5 +1,6 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.1 2003/03/16 10:42:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.2 2003/06/15 04:07:58 momjian Exp $ */
 
+#define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #include "ecpgtype.h"

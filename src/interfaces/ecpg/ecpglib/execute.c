@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.9 2003/06/13 10:50:57 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.10 2003/06/15 04:07:58 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -13,6 +13,7 @@
 /* Taken over as part of PostgreSQL by Michael Meskes <meskes@postgresql.org>
    on Feb. 5th, 1998 */
 
+#define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #include <stdio.h>
@@ -30,34 +31,6 @@
 #include "pgtypes_date.h"
 #include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
-
-/* variables visible to the programs */
-struct sqlca sqlca =
-{
-	{
-		'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '
-	},
-	sizeof(struct sqlca),
-	0,
-	{
-		0,
-		{
-			0
-		}
-	},
-	{
-		'N', 'O', 'T', ' ', 'S', 'E', 'T', ' '
-	},
-	{
-		0, 0, 0, 0, 0, 0
-	},
-	{
-		0, 0, 0, 0, 0, 0, 0, 0
-	},
-	{
-		0, 0, 0, 0, 0, 0, 0, 0
-	}
-};
 
 /* This function returns a newly malloced string that has the  \
    in the argument quoted with \ and the ' quoted with ' as SQL92 says.
@@ -1130,6 +1103,8 @@ ECPGexecute(struct statement * stmt)
 		 */
 	{
 		bool		clear_result = TRUE;
+		struct sqlca_t *sqlca = ECPGget_sqlca();
+
 		errmsg = PQresultErrorMessage(results);
 		set_backend_err(errmsg, stmt->lineno);
 		
@@ -1142,7 +1117,7 @@ ECPGexecute(struct statement * stmt)
 
 			case PGRES_TUPLES_OK:
 				nfields = PQnfields(results);
-				sqlca.sqlerrd[2] = ntuples = PQntuples(results);
+				sqlca->sqlerrd[2] = ntuples = PQntuples(results);
 				status = true;
 
 				if (ntuples < 1)
@@ -1199,10 +1174,10 @@ ECPGexecute(struct statement * stmt)
 			case PGRES_COMMAND_OK:
 				status = true;
 				cmdstat = PQcmdStatus(results);
-				sqlca.sqlerrd[1] = PQoidValue(results);
-				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
+				sqlca->sqlerrd[1] = PQoidValue(results);
+				sqlca->sqlerrd[2] = atol(PQcmdTuples(results));
 				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, cmdstat);
-				if (!sqlca.sqlerrd[2] && (   !strncmp(cmdstat, "UPDATE", 6)
+				if (!sqlca->sqlerrd[2] && (   !strncmp(cmdstat, "UPDATE", 6)
 							  || !strncmp(cmdstat, "INSERT", 6)
 							  || !strncmp(cmdstat, "DELETE", 6)))
 					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
