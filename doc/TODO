@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Dec 20 17:01:06 EST 2001
+Last updated:		Thu Dec 20 22:55:17 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -376,10 +376,10 @@ MISCELLANEOUS
 * Allow logging of query durations
 * Add hash for evaluating GROUP BY aggregates
 * -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
-* Have pre-page WAL write()'s write only modified data to kernel
-* Reduce number of pre-page WAL writes; they exist only to gaurd against
+* Have after-change WAL write()'s write only modified data to kernel
+* Reduce number of after-change WAL writes; they exist only to gaurd against
   partial page writes
-* Turn off pre-page writes if fsync is disabled (?)
+* Turn off after-change writes if fsync is disabled (?)
 * -Improve spinlock code [performance] (Tom)
 * Do listen() in postmaster and accept() in pre-forked backend
 * Have pre-forked backend pre-connect to last requested database or pass
