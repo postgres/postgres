@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.25 2003/09/27 00:10:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.26 2003/09/28 01:19:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -120,8 +120,11 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    </para>
 
    <para>
-    While access to tables in the view is controlled entirely by permissions
-    on the view, functions called by the view are checked independently.
+    Access to tables referenced in the view is determined by permissions of
+    the view owner.  However, functions called in the view are treated the
+    same as if they had been called directly from the query using the view.
+    Therefore the user of a view must have permissions to call all functions
+    used by the view.
    </para>
 
  </refsect1>
