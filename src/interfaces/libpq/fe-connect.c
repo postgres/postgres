@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.166 2001/07/06 19:04:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.167 2001/07/15 13:45:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,7 +488,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	{
 		error = TRUE;
 		printfPQExpBuffer(&conn->errorMessage,
-						  "FATAL: PQsetdbLogin(): Unable to determine a Postgres username!\n");
+						  libpq_gettext("could not determine the PostgreSQL user name to use\n"));
 	}
 
 	if (pwd)
@@ -710,8 +710,8 @@ connectMakeNonblocking(PGconn *conn)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			  "connectMakeNonblocking -- fcntl() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("could not socket to non-blocking mode: %s\n"),
+						  strerror(errno));
 		return 0;
 	}
 
@@ -734,8 +734,8 @@ connectNoDelay(PGconn *conn)
 				   sizeof(on)) < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				 "connectNoDelay() -- setsockopt failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
+						  strerror(errno));
 #ifdef WIN32
 		printf("Winsock error: %i\n", WSAGetLastError());
 #endif
@@ -752,26 +752,30 @@ connectNoDelay(PGconn *conn)
  * ----------
  */
 static void
-connectFailureMessage(PGconn *conn, const char *caller, int errorno)
+connectFailureMessage(PGconn *conn, int errorno)
 {
-#ifdef HAVE_UNIX_SOCKETS
 	if (conn->raddr.sa.sa_family == AF_UNIX)
 		printfPQExpBuffer(&conn->errorMessage,
-						  "%s -- connect() failed: %s\n"
-						  "\tIs the postmaster running locally\n"
-					"\tand accepting connections on Unix socket '%s'?\n",
-						  caller,
+						  libpq_gettext(
+							  "could not connect to server: %s\n"
+							  "\tIs the server running locally and accepting\n"
+							  "\tconnections on Unix domain socket \"%s\"?\n"
+							  ),
 						  strerror(errorno),
 						  conn->raddr.un.sun_path);
 	else
-#endif
 		printfPQExpBuffer(&conn->errorMessage,
-						  "%s -- connect() failed: %s\n"
-						"\tIs the postmaster running (with -i) at '%s'\n"
-					  "\tand accepting connections on TCP/IP port %s?\n",
-						  caller,
+						  libpq_gettext(
+							  "could not connect to server: %s\n"
+							  "\tIs the server running on host %s and accepting\n"
+							  "\tTCP/IP connections on port %s?\n"
+							  ),
 						  strerror(errorno),
-						  conn->pghost ? conn->pghost : "localhost",
+						  conn->pghost
+						  ? conn->pghost
+						  : (conn->pghostaddr
+							 ? conn->pghostaddr
+							 : "???"),
 						  conn->pgport);
 }
 
@@ -827,8 +831,8 @@ connectDBStart(PGconn *conn)
 		if (!inet_aton(conn->pghostaddr, &addr))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  "connectDBStart() -- "
-						 "invalid host address: %s\n", conn->pghostaddr);
+							  libpq_gettext("invalid host address: %s\n"),
+							  conn->pghostaddr);
 			goto connect_errReturn;
 		}
 
@@ -846,7 +850,7 @@ connectDBStart(PGconn *conn)
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-						   "connectDBStart() --  unknown hostname: %s\n",
+							  libpq_gettext("unknown host name: %s\n"),
 							  conn->pghost);
 			goto connect_errReturn;
 		}
@@ -858,7 +862,7 @@ connectDBStart(PGconn *conn)
 	}
 	else
 	{
-		/* pghostaddr and pghost are NULL, so use UDP */
+		/* pghostaddr and pghost are NULL, so use Unix domain socket */
 		family = AF_UNIX;
 	}
 
@@ -888,9 +892,8 @@ connectDBStart(PGconn *conn)
 	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "connectDBStart() -- "
-						  "socket() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("could not create socket: %s\n"),
+						  strerror(errno));
 		goto connect_errReturn;
 	}
 
@@ -950,7 +953,7 @@ connectDBStart(PGconn *conn)
 		else
 		{
 			/* Something's gone wrong */
-			connectFailureMessage(conn, "connectDBStart()", errno);
+			connectFailureMessage(conn, errno);
 			goto connect_errReturn;
 		}
 	}
@@ -969,15 +972,16 @@ connectDBStart(PGconn *conn)
 		if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  "connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
-							  errno, strerror(errno));
+							  libpq_gettext("could not send SSL negotiation packet: %s\n"),
+							  strerror(errno));
 			goto connect_errReturn;
 		}
 		/* Now receive the postmasters response */
 		if (recv(conn->sock, &SSLok, 1, 0) != 1)
 		{
-			printfPQExpBuffer(&conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
-							  errno, strerror(errno));
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
+							  strerror(errno));
 			goto connect_errReturn;
 		}
 		if (SSLok == 'S')
@@ -990,8 +994,8 @@ connectDBStart(PGconn *conn)
 				if (!SSL_context)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-					  "connectDB() -- couldn't create SSL context: %s\n",
-							   ERR_reason_error_string(ERR_get_error()));
+									  libpq_gettext("could not create SSL context: %s\n"),
+									  ERR_reason_error_string(ERR_get_error()));
 					goto connect_errReturn;
 				}
 			}
@@ -1000,8 +1004,8 @@ connectDBStart(PGconn *conn)
 				SSL_connect(conn->ssl) <= 0)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
-				"connectDB() -- couldn't establish SSL connection: %s\n",
-							   ERR_reason_error_string(ERR_get_error()));
+								  libpq_gettext("could not establish SSL connection: %s\n"),
+								  ERR_reason_error_string(ERR_get_error()));
 				goto connect_errReturn;
 			}
 			/* SSL connection finished. Continue to send startup packet */
@@ -1018,7 +1022,8 @@ connectDBStart(PGconn *conn)
 		else if (SSLok != 'N')
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  "Received invalid negotiation response.\n");
+							  libpq_gettext("received invalid response to SSL negotiation: %c\n"),
+							  SSLok);
 			goto connect_errReturn;
 		}
 	}
@@ -1026,7 +1031,7 @@ connectDBStart(PGconn *conn)
 	{
 		/* Require SSL, but server does not support/want it */
 		printfPQExpBuffer(&conn->errorMessage,
-				 "Server does not support SSL when SSL was required.\n");
+						  libpq_gettext("server does not support SSL, but SSL was required\n"));
 		goto connect_errReturn;
 	}
 #endif
@@ -1194,8 +1199,10 @@ PQconnectPoll(PGconn *conn)
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-						 "PQconnectPoll() -- unknown connection state - "
-						  "probably indicative of memory corruption!\n");
+							  libpq_gettext(
+								  "invalid connection state, "
+								  "probably indicative of memory corruption\n"
+								  ));
 			goto error_return;
 	}
 
@@ -1231,9 +1238,8 @@ keep_going:						/* We will come back to here until there
 							   (char *) &optval, &optlen) == -1)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-							   "PQconnectPoll() -- getsockopt() failed: "
-									  "errno=%d\n%s\n",
-									  errno, strerror(errno));
+									  libpq_gettext("could not get socket error status: %s\n"),
+									  strerror(errno));
 					goto error_return;
 				}
 				else if (optval != 0)
@@ -1244,7 +1250,7 @@ keep_going:						/* We will come back to here until there
 					 * see connect failures at this point, so provide a
 					 * friendly error message.
 					 */
-					connectFailureMessage(conn, "PQconnectPoll()", optval);
+					connectFailureMessage(conn, optval);
 					goto error_return;
 				}
 
@@ -1253,9 +1259,8 @@ keep_going:						/* We will come back to here until there
 				if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-							  "PQconnectPoll() -- getsockname() failed: "
-									  "errno=%d\n%s\n",
-									  errno, strerror(errno));
+									  libpq_gettext("could not get client address from socket: %s\n"),
+									  strerror(errno));
 					goto error_return;
 				}
 
@@ -1293,10 +1298,8 @@ keep_going:						/* We will come back to here until there
 								 sizeof(StartupPacket)) != STATUS_OK)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  "PQconnectPoll() --  "
-									  "couldn't send startup packet: "
-									  "errno=%d\n%s\n",
-									  errno, strerror(errno));
+									  libpq_gettext("could not send startup packet: %s\n"),
+									  strerror(errno));
 					goto error_return;
 				}
 
@@ -1350,8 +1353,11 @@ keep_going:						/* We will come back to here until there
 				if (beresp != 'R')
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  "PQconnectPoll() -- expected "
-									  "authentication request\n");
+									  libpq_gettext(
+										  "expected authentication request from "
+										  "server, but received %c\n"
+										  ),
+									  beresp);
 					goto error_return;
 				}
 
@@ -1451,8 +1457,7 @@ keep_going:						/* We will come back to here until there
 				{
 					if (res->resultStatus != PGRES_FATAL_ERROR)
 						printfPQExpBuffer(&conn->errorMessage,
-								 "PQconnectPoll() -- unexpected message "
-										  "during startup\n");
+										  libpq_gettext("unexpected message from server during startup\n"));
 
 					/*
 					 * if the resultStatus is FATAL, then
@@ -1510,8 +1515,11 @@ keep_going:						/* We will come back to here until there
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-						 "PQconnectPoll() -- unknown connection state - "
-						  "probably indicative of memory corruption!\n");
+							  libpq_gettext(
+								  "invalid connection state %c, "
+								  "probably indicative of memory corruption\n"
+								  ),
+							  conn->status);
 			goto error_return;
 	}
 
@@ -1611,8 +1619,11 @@ PQsetenvPoll(PGconn *conn)
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-							  "PQsetenvPoll() -- unknown state - "
-						  "probably indicative of memory corruption!\n");
+							  libpq_gettext(
+								  "invalid setenv state %c, "
+								  "probably indicative of memory corruption\n"
+								  ),
+							  conn->setenv_state);
 			goto error_return;
 	}
 
@@ -1649,8 +1660,9 @@ keep_going:						/* We will come back to here until there
 
 					if (encoding < 0)
 					{
-						strcpy(conn->errorMessage.data,
-						"PGCLIENTENCODING has no valid encoding name.\n");
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("invalid encoding name in PGCLIENTENCODING: %s\n"),
+										  env);
 						goto error_return;
 					}
 					conn->client_encoding = encoding;
@@ -1774,8 +1786,9 @@ keep_going:						/* We will come back to here until there
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-							  "PQsetenvPoll() -- unknown state - "
-						  "probably indicative of memory corruption!\n");
+							  libpq_gettext("invalid state %c, "
+											"probably indicative of memory corruption\n"),
+							  conn->setenv_state);
 			goto error_return;
 	}
 
@@ -2386,7 +2399,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	if (options == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
-		"FATAL: cannot allocate memory for copy of PQconninfoOptions\n");
+						  libpq_gettext("out of memory\n"));
 		return NULL;
 	}
 	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
@@ -2395,7 +2408,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	if ((buf = strdup(conninfo)) == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
-		  "FATAL: cannot allocate memory for copy of conninfo string\n");
+						  libpq_gettext("out of memory\n"));
 		PQconninfoFree(options);
 		return NULL;
 	}
@@ -2434,7 +2447,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (*cp != '=')
 		{
 			printfPQExpBuffer(errorMessage,
-						   "ERROR: Missing '=' after '%s' in conninfo\n",
+							  libpq_gettext("missing \"=\" after \"%s\" in connection info string\n"),
 							  pname);
 			PQconninfoFree(options);
 			free(buf);
@@ -2483,7 +2496,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 				if (*cp == '\0')
 				{
 					printfPQExpBuffer(errorMessage,
-									  "ERROR: PQconnectdb() - unterminated quoted string in conninfo\n");
+									  libpq_gettext("unterminated quoted string in connection info string\n"));
 					PQconninfoFree(options);
 					free(buf);
 					return NULL;
@@ -2517,7 +2530,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (option->keyword == NULL)
 		{
 			printfPQExpBuffer(errorMessage,
-							  "ERROR: Unknown conninfo option '%s'\n",
+							  libpq_gettext("invalid connection option \"%s\"\n"),
 							  pname);
 			PQconninfoFree(options);
 			free(buf);
@@ -2702,7 +2715,7 @@ char *
 PQerrorMessage(const PGconn *conn)
 {
 	if (!conn)
-		return "PQerrorMessage: conn pointer is NULL\n";
+		return libpq_gettext("connection pointer is NULL\n");
 
 	return conn->errorMessage.data;
 }

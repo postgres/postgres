@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.50 2001/07/06 17:58:53 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.51 2001/07/15 13:45:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,9 +128,8 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 		if (nbytes > Max(conn->outBufSize - conn->outCount, 0))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-						   "pqPutBytes --  pqFlush couldn't flush enough"
-						 " data: space available: %d, space needed %d\n",
-					  Max(conn->outBufSize - conn->outCount, 0), nbytes);
+							  libpq_gettext("could not flush enough data (space available: %d, space needed %d)\n"),
+							  Max(conn->outBufSize - conn->outCount, 0), nbytes);
 			return EOF;
 		}
 		/* fixup avail for while loop */
@@ -276,8 +275,9 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			*result = (int) ntohl(tmp4);
 			break;
 		default:
-			sprintf(noticeBuf,
-					"pqGetInt: int size %lu not supported\n", (unsigned long) bytes);
+			snprintf(noticeBuf, sizeof(noticeBuf),
+					 libpq_gettext("integer of size %lu not supported by pqGetInt\n"),
+					 (unsigned long) bytes);
 			DONOTICE(conn, noticeBuf);
 			return EOF;
 	}
@@ -313,8 +313,9 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 				return EOF;
 			break;
 		default:
-			sprintf(noticeBuf,
-					"pqPutInt: int size %lu not supported\n", (unsigned long) bytes);
+			snprintf(noticeBuf, sizeof(noticeBuf),
+					 libpq_gettext("integer of size %lu not supported by pqPutInt\n"),
+					 (unsigned long) bytes);
 			DONOTICE(conn, noticeBuf);
 			return EOF;
 	}
@@ -351,8 +352,8 @@ retry:
 			goto retry;
 
 		printfPQExpBuffer(&conn->errorMessage,
-					  "pqReadReady() -- select() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("select() failed: %s\n"),
+						  strerror(errno));
 		return -1;
 	}
 
@@ -385,8 +386,8 @@ retry:
 			goto retry;
 
 		printfPQExpBuffer(&conn->errorMessage,
-					 "pqWriteReady() -- select() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("select() failed: %s\n"),
+						  strerror(errno));
 		return -1;
 	}
 	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
@@ -411,7 +412,7 @@ pqReadData(PGconn *conn)
 	if (conn->sock < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "pqReadData() -- connection not open\n");
+						  libpq_gettext("connection not open\n"));
 		return -1;
 	}
 
@@ -482,8 +483,8 @@ tryAgain:
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
-						"pqReadData() --  read() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("could not receive data from server: %s\n"),
+						  strerror(errno));
 		return -1;
 	}
 	if (nread > 0)
@@ -568,8 +569,8 @@ tryAgain2:
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
-						"pqReadData() --  read() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
+						  libpq_gettext("could not receive data from server: %s\n"),
+						  strerror(errno));
 		return -1;
 	}
 	if (nread > 0)
@@ -584,9 +585,10 @@ tryAgain2:
 	 */
 definitelyFailed:
 	printfPQExpBuffer(&conn->errorMessage,
-			 "pqReadData() -- backend closed the channel unexpectedly.\n"
-			  "\tThis probably means the backend terminated abnormally\n"
-					  "\tbefore or while processing the request.\n");
+					  libpq_gettext(
+						  "server closed the connection unexpectedly\n"
+						  "\tThis probably means the server terminated abnormally\n"
+						  "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 #ifdef WIN32
 	closesocket(conn->sock);
@@ -610,7 +612,7 @@ pqFlush(PGconn *conn)
 	if (conn->sock < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "pqFlush() -- connection not open\n");
+						  libpq_gettext("connection not open\n"));
 		return EOF;
 	}
 
@@ -627,7 +629,6 @@ pqFlush(PGconn *conn)
 		/* Prevent being SIGPIPEd if backend has closed the connection. */
 #ifndef WIN32
 		pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-
 #endif
 
 		int			sent;
@@ -669,9 +670,10 @@ pqFlush(PGconn *conn)
 				case ECONNRESET:
 #endif
 					printfPQExpBuffer(&conn->errorMessage,
-									  "pqFlush() -- backend closed the channel unexpectedly.\n"
-									  "\tThis probably means the backend terminated abnormally"
-						   " before or while processing the request.\n");
+									  libpq_gettext(
+										  "server closed the connection unexpectedly\n"
+										  "\tThis probably means the server terminated abnormally\n"
+										  "\tbefore or while processing the request.\n"));
 
 					/*
 					 * We used to close the socket here, but that's a bad
@@ -685,8 +687,8 @@ pqFlush(PGconn *conn)
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
-									  errno, strerror(errno));
+									  libpq_gettext("could not send data to server: %s\n"),
+									  strerror(errno));
 					/* We don't assume it's a fatal error... */
 					return EOF;
 			}
@@ -751,7 +753,7 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 	if (conn->sock < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "pqWait() -- connection not open\n");
+						  libpq_gettext("connection not open\n"));
 		return EOF;
 	}
 
@@ -772,8 +774,8 @@ retry:
 			if (errno == EINTR)
 				goto retry;
 			printfPQExpBuffer(&conn->errorMessage,
-							  "pqWait() -- select() failed: errno=%d\n%s\n",
-							  errno, strerror(errno));
+							  libpq_gettext("select() failed: %s\n"),
+							  strerror(errno));
 			return EOF;
 		}
 	}
@@ -831,3 +833,20 @@ PQenv2encoding(void)
 }
 
 #endif	 /* MULTIBYTE */
+
+
+#ifdef ENABLE_NLS
+char *
+libpq_gettext(const char *msgid)
+{
+	static int already_bound = 0;
+
+	if (!already_bound)
+	{
+		already_bound = 1;
+		bindtextdomain("libpq", LOCALEDIR);
+	}
+
+	return dgettext("libpq", msgid);
+}
+#endif /* ENABLE_NLS */

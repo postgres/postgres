@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.56 2001/06/10 03:46:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.57 2001/07/15 13:45:03 petere Exp $
 Postgres documentation
 -->
 
@@ -2349,7 +2349,7 @@ Field separator is "oo",
       <para>
       Pressing Control-C during a <quote>copy in</quote> (data sent to the
       server) doesn't show the most ideal of behaviors. If you get a message
-      such as <quote>PQexec: you gotta get out of a COPY state yourself</quote>,
+      such as <quote>COPY state must be terminated first</quote>,
       simply reset the connection by entering <literal>\c - -</literal>.
       </para>
       </listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.72 2001/06/30 22:03:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.73 2001/07/15 13:45:03 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -392,9 +392,9 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
 
     <para>
 <screen>
-PQconnectPoll() -- connect() failed: Connection refused
-	Is the postmaster running (with -i) at 'server.joe.com'
-	and accepting connections on TCP/IP port 5432?
+psql: could not connect to server: Connection refused
+        Is the server running on host server.joe.com and accepting
+        TCP/IP connections on port 5432?
 </screen>
      This is the generic <quote>I couldn't find a server to talk
      to</quote> failure. It looks like the above when TCP/IP
@@ -407,9 +407,9 @@ PQconnectPoll() -- connect() failed: Connection refused
      Alternatively, you'll get this when attempting
      Unix-socket communication to a local postmaster:
 <screen>
-connectDBstart() -- connect() failed: No such file or directory
-	Is the postmaster running locally
-	and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
+psql: could not connect to server: Connection refused
+        Is the server running locally and accepting
+        connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
 </screen>
     </para>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.102 2001/07/06 17:58:53 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.103 2001/07/15 13:45:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,7 +509,7 @@ PQsendQuery(PGconn *conn, const char *query)
 	if (!query)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "PQsendQuery() -- query pointer is null.\n");
+						  libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
 
@@ -517,15 +517,14 @@ PQsendQuery(PGconn *conn, const char *query)
 	if (conn->status != CONNECTION_OK)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "PQsendQuery() -- There is no connection "
-						  "to the backend.\n");
+						  libpq_gettext("no connection to the server\n"));
 		return 0;
 	}
 	/* Can't send while already busy, either. */
 	if (conn->asyncStatus != PGASYNC_IDLE)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				"PQsendQuery() -- another query already in progress.\n");
+						  libpq_gettext("another command is already in progress\n"));
 		return 0;
 	}
 
@@ -727,9 +726,9 @@ parseInput(PGconn *conn)
 			}
 			else
 			{
-				sprintf(noticeWorkspace,
-					  "Backend message type 0x%02x arrived while idle\n",
-						id);
+				snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+						 libpq_gettext("message type 0x%02x arrived from server while idle\n"),
+						 id);
 				DONOTICE(conn, noticeWorkspace);
 				/* Discard the unexpected message; good idea?? */
 				conn->inStart = conn->inEnd;
@@ -770,9 +769,9 @@ parseInput(PGconn *conn)
 						return;
 					if (id != '\0')
 					{
-						sprintf(noticeWorkspace,
-								"unexpected character %c following 'I'\n",
-								id);
+						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+								 libpq_gettext("unexpected character %c following empty query response (\"I\" message)\n"),
+								 id);
 						DONOTICE(conn, noticeWorkspace);
 					}
 					if (conn->result == NULL)
@@ -828,8 +827,8 @@ parseInput(PGconn *conn)
 					}
 					else
 					{
-						sprintf(noticeWorkspace,
-							 "Backend sent D message without prior T\n");
+						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+								 libpq_gettext("server sent data (\"D\" message) without prior row description (\"T\" message)\n"));
 						DONOTICE(conn, noticeWorkspace);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
@@ -845,8 +844,8 @@ parseInput(PGconn *conn)
 					}
 					else
 					{
-						sprintf(noticeWorkspace,
-							 "Backend sent B message without prior T\n");
+						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+								 libpq_gettext("server sent binary data (\"B\" message) without prior row description (\"T\" message)\n"));
 						DONOTICE(conn, noticeWorkspace);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
@@ -861,9 +860,8 @@ parseInput(PGconn *conn)
 					break;
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-					"Unknown protocol character '%c' read from backend.  "
-					"(The protocol character is the first character the "
-									  "backend sends in response to a query it receives).\n",
+									  libpq_gettext(
+										  "unexpected response from server; first received character was \"%c\"\n"),
 									  id);
 					/* build an error result holding the error message */
 					saveErrorResult(conn);
@@ -1069,7 +1067,7 @@ outOfMemory:
 	 */
 	pqClearAsyncResult(conn);
 	printfPQExpBuffer(&conn->errorMessage,
-					  "getAnotherTuple() -- out of memory for result\n");
+					  libpq_gettext("out of memory\n"));
 	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 	conn->asyncStatus = PGASYNC_READY;
 	/* Discard the failed message --- good idea? */
@@ -1157,7 +1155,7 @@ PQgetResult(PGconn *conn)
 			break;
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-							  "PQgetResult: Unexpected asyncStatus %d\n",
+							  libpq_gettext("unexpected asyncStatus: %d\n"),
 							  (int) conn->asyncStatus);
 			res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			break;
@@ -1207,7 +1205,7 @@ PQexec(PGconn *conn, const char *query)
 		{
 			PQclear(result);
 			printfPQExpBuffer(&conn->errorMessage,
-				"PQexec: you gotta get out of a COPY state yourself.\n");
+							  libpq_gettext("COPY state must be terminated first\n"));
 			/* restore blocking status */
 			goto errout;
 		}
@@ -1545,7 +1543,7 @@ PQendcopy(PGconn *conn)
 		conn->asyncStatus != PGASYNC_COPY_OUT)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		   "PQendcopy() -- I don't think there's a copy in progress.\n");
+						  libpq_gettext("no COPY in progress\n"));
 		return 1;
 	}
 
@@ -1584,7 +1582,7 @@ PQendcopy(PGconn *conn)
 	if (conn->errorMessage.len > 0)
 		DONOTICE(conn, conn->errorMessage.data);
 
-	DONOTICE(conn, "PQendcopy: resetting connection\n");
+	DONOTICE(conn, libpq_gettext("lost synchronization with server, resetting connection\n"));
 
 	/*
 	 * Users doing non-blocking connections need to handle the reset
@@ -1649,7 +1647,7 @@ PQfn(PGconn *conn,
 		conn->result != NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "PQfn() -- connection in wrong state\n");
+						  libpq_gettext("connection in wrong state\n"));
 		return NULL;
 	}
 
@@ -1751,7 +1749,7 @@ PQfn(PGconn *conn,
 				{
 					/* The backend violates the protocol. */
 					printfPQExpBuffer(&conn->errorMessage,
-								"FATAL: PQfn: protocol error: id=0x%x\n",
+									  libpq_gettext("protocol error: id=0x%x\n"),
 									  id);
 					saveErrorResult(conn);
 					conn->inStart = conn->inCursor;
@@ -1785,7 +1783,7 @@ PQfn(PGconn *conn,
 			default:
 				/* The backend violates the protocol. */
 				printfPQExpBuffer(&conn->errorMessage,
-								"FATAL: PQfn: protocol error: id=0x%x\n",
+								  libpq_gettext("protocol error: id=0x%x\n"),
 								  id);
 				saveErrorResult(conn);
 				conn->inStart = conn->inCursor;
@@ -1820,7 +1818,7 @@ char *
 PQresStatus(ExecStatusType status)
 {
 	if (status < 0 || status >= sizeof pgresStatus / sizeof pgresStatus[0])
-		return "Invalid ExecStatusType code";
+		return libpq_gettext("invalid ExecStatusType code");
 	return pgresStatus[status];
 }
 
@@ -1862,7 +1860,7 @@ PQbinaryTuples(const PGresult *res)
  */
 
 static int
-check_field_number(const char *routineName, const PGresult *res, int field_num)
+check_field_number(const PGresult *res, int field_num)
 {
 	char		noticeBuf[128];
 
@@ -1872,9 +1870,9 @@ check_field_number(const char *routineName, const PGresult *res, int field_num)
 	{
 		if (res->noticeHook)
 		{
-			sprintf(noticeBuf,
-					"%s: ERROR! field number %d is out of range 0..%d\n",
-					routineName, field_num, res->numAttributes - 1);
+			snprintf(noticeBuf, sizeof(noticeBuf),
+					 libpq_gettext("column number %d is out of range 0..%d\n"),
+					 field_num, res->numAttributes - 1);
 			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
@@ -1883,7 +1881,7 @@ check_field_number(const char *routineName, const PGresult *res, int field_num)
 }
 
 static int
-check_tuple_field_number(const char *routineName, const PGresult *res,
+check_tuple_field_number(const PGresult *res,
 						 int tup_num, int field_num)
 {
 	char		noticeBuf[128];
@@ -1894,9 +1892,9 @@ check_tuple_field_number(const char *routineName, const PGresult *res,
 	{
 		if (res->noticeHook)
 		{
-			sprintf(noticeBuf,
-					"%s: ERROR! tuple number %d is out of range 0..%d\n",
-					routineName, tup_num, res->ntups - 1);
+			snprintf(noticeBuf, sizeof(noticeBuf),
+					libpq_gettext("row number %d is out of range 0..%d\n"),
+					tup_num, res->ntups - 1);
 			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
@@ -1905,9 +1903,9 @@ check_tuple_field_number(const char *routineName, const PGresult *res,
 	{
 		if (res->noticeHook)
 		{
-			sprintf(noticeBuf,
-					"%s: ERROR! field number %d is out of range 0..%d\n",
-					routineName, field_num, res->numAttributes - 1);
+			snprintf(noticeBuf, sizeof(noticeBuf),
+					libpq_gettext("column number %d is out of range 0..%d\n"),
+					field_num, res->numAttributes - 1);
 			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
@@ -1921,7 +1919,7 @@ check_tuple_field_number(const char *routineName, const PGresult *res,
 char *
 PQfname(const PGresult *res, int field_num)
 {
-	if (!check_field_number("PQfname", res, field_num))
+	if (!check_field_number(res, field_num))
 		return NULL;
 	if (res->attDescs)
 		return res->attDescs[field_num].name;
@@ -1972,7 +1970,7 @@ PQfnumber(const PGresult *res, const char *field_name)
 Oid
 PQftype(const PGresult *res, int field_num)
 {
-	if (!check_field_number("PQftype", res, field_num))
+	if (!check_field_number(res, field_num))
 		return InvalidOid;
 	if (res->attDescs)
 		return res->attDescs[field_num].typid;
@@ -1983,7 +1981,7 @@ PQftype(const PGresult *res, int field_num)
 int
 PQfsize(const PGresult *res, int field_num)
 {
-	if (!check_field_number("PQfsize", res, field_num))
+	if (!check_field_number(res, field_num))
 		return 0;
 	if (res->attDescs)
 		return res->attDescs[field_num].typlen;
@@ -1994,7 +1992,7 @@ PQfsize(const PGresult *res, int field_num)
 int
 PQfmod(const PGresult *res, int field_num)
 {
-	if (!check_field_number("PQfmod", res, field_num))
+	if (!check_field_number(res, field_num))
 		return 0;
 	if (res->attDescs)
 		return res->attDescs[field_num].atttypmod;
@@ -2085,8 +2083,8 @@ PQcmdTuples(PGresult *res)
 		{
 			if (res->noticeHook)
 			{
-				sprintf(noticeBuf,
-						"PQcmdTuples (%s) -- bad input from server\n",
+				snprintf(noticeBuf, sizeof(noticeBuf),
+						libpq_gettext("could not interpret result from server: %s\n"),
 						res->cmdStatus);
 				DONOTICE(res, noticeBuf);
 			}
@@ -2101,8 +2099,8 @@ PQcmdTuples(PGresult *res)
 		{
 			if (res->noticeHook)
 			{
-				sprintf(noticeBuf,
-					 "PQcmdTuples (INSERT) -- there's no # of tuples\n");
+				snprintf(noticeBuf, sizeof(noticeBuf),
+						 libpq_gettext("no row count available\n"));
 				DONOTICE(res, noticeBuf);
 			}
 			return "";
@@ -2126,7 +2124,7 @@ PQcmdTuples(PGresult *res)
 char *
 PQgetvalue(const PGresult *res, int tup_num, int field_num)
 {
-	if (!check_tuple_field_number("PQgetvalue", res, tup_num, field_num))
+	if (!check_tuple_field_number(res, tup_num, field_num))
 		return NULL;
 	return res->tuples[tup_num][field_num].value;
 }
@@ -2140,7 +2138,7 @@ PQgetvalue(const PGresult *res, int tup_num, int field_num)
 int
 PQgetlength(const PGresult *res, int tup_num, int field_num)
 {
-	if (!check_tuple_field_number("PQgetlength", res, tup_num, field_num))
+	if (!check_tuple_field_number(res, tup_num, field_num))
 		return 0;
 	if (res->tuples[tup_num][field_num].len != NULL_LEN)
 		return res->tuples[tup_num][field_num].len;
@@ -2154,7 +2152,7 @@ PQgetlength(const PGresult *res, int tup_num, int field_num)
 int
 PQgetisnull(const PGresult *res, int tup_num, int field_num)
 {
-	if (!check_tuple_field_number("PQgetisnull", res, tup_num, field_num))
+	if (!check_tuple_field_number(res, tup_num, field_num))
 		return 1;				/* pretend it is null */
 	if (res->tuples[tup_num][field_num].len == NULL_LEN)
 		return 1;

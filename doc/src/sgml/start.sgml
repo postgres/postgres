@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.15 2000/11/30 23:20:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.16 2001/07/15 13:45:03 petere Exp $
 -->
 
  <chapter id="start">
@@ -154,18 +154,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.15 2000/11/30 23:20:50 tgl E
 
     <programlisting>
 % psql template1
-psql: connectDBStart() -- connect() failed: No such file or directory
-        Is the postmaster running locally
-        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
+psql: could not connect to server: Connection refused
+        Is the server running locally and accepting
+        connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
     </programlisting>
 
     or
 
     <programlisting>
 % psql -h localhost template1
-psql: PQconnectPoll() -- connect() failed: Connection refused
-        Is the postmaster running (with -i) at 'localhost'
-        and accepting connections on TCP/IP port 5432?
+psql: could not connect to server: Connection refused
+        Is the server running on host localhost and accepting
+        TCP/IP connections on port 5432?
     </programlisting>
 
     it is usually because
