@@ -38,7 +38,7 @@
 
 #unix_socket_directory = ''
 #unix_socket_group = ''
-#unix_socket_permissions = 0777
+#unix_socket_permissions = 0777	# octal
 
 #virtual_host = ''
 
@@ -48,28 +48,28 @@
 #
 #	Shared Memory Size
 #
-#shared_buffers = 64		# 2*max_connections, min 16
+#shared_buffers = 64		# 2*max_connections, min 16, 8K each
 #max_fsm_relations = 100	# min 10, fsm is free space map
 #max_fsm_pages = 10000		# min 1000, fsm is free space map
 #max_locks_per_transaction = 64	# min 10
-#wal_buffers = 8		# min 4
+#wal_buffers = 8		# min 4, 8K each
 
 #
 #	Non-shared Memory Sizes
 #
-#sort_mem = 1024		# min 64
-#vacuum_mem = 8192		# min 1024
+#sort_mem = 1024		# min 64, size in KB
+#vacuum_mem = 8192		# min 1024, size in KB
 
 
 #
 #	Write-ahead log (WAL)
 #
-#checkpoint_segments = 3	# in logfile segments (16MB each), min 1
-#checkpoint_timeout = 300	# in seconds, range 30-3600
+#checkpoint_segments = 3	# in logfile segments, min 1, 16MB each
+#checkpoint_timeout = 300	# range 30-3600, in seconds
 #
 #wal_files = 0	# range 0-64
 #
-#commit_delay = 0		# range 0-100000
+#commit_delay = 0		# range 0-100000, in microseconds
 #commit_siblings = 5		# range 1-1000
 #
 #fsync = true
@@ -89,7 +89,7 @@
 #enable_mergejoin = true
 #enable_hashjoin = true
 
-#effective_cache_size = 1000	# default in 8k pages
+#effective_cache_size = 1000	# 8K each
 #random_page_cost = 4
 #cpu_tuple_cost = 0.01
 #cpu_index_tuple_cost = 0.001
@@ -191,13 +191,14 @@
 #timezone = unknown		# actually, defaults to TZ environment setting
 #australian_timezones = false
 #client_encoding = sql_ascii	# actually, defaults to database encoding
-#authentication_timeout = 60	# min 1, max 600
-#deadlock_timeout = 1000
+#authentication_timeout = 60	# 1-600, in seconds
+#deadlock_timeout = 1000	# in milliseconds
 #default_transaction_isolation = 'read committed'
 #max_expr_depth = 10000		# min 10
 #max_files_per_process = 1000	# min 25
 #password_encryption = true
 #sql_inheritance = true
 #transform_null_equals = false
-#statement_timeout = 0				# 0 is disabled
+#statement_timeout = 0		# 0 is disabled, in milliseconds
 #db_user_namespace = false
+ 
