@@ -514,6 +514,9 @@ EN_Destructor(EnvironmentClass *self)
 	free(self);
 
 	mylog("exit EN_Destructor: rv = %d\n", rv);
+#ifdef	_MEMORY_DEBUG_
+debug_memory_inouecheck();
+#endif /* _MEMORY_DEBUG_ */
 	return rv;
 }
 

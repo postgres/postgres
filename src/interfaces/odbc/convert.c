@@ -1013,7 +1013,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else if (!stmt->ti || stmt->ntab != 1)
     			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-		else search_from_pos = TRUE;
+		else
+			search_from_pos = TRUE;
 	}
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.49 2001/09/22 22:54:33 petere Exp $
+ * $Id: psqlodbc.h,v 1.50 2001/09/24 00:05:59 inoue Exp $
  *
  */
 
@@ -21,7 +21,11 @@
 #include <stdio.h>				/* for FILE* pointers: see GLOBAL_VALUES */
 
 /* Must come before sql.h */
+#ifdef	ODBCVER_REP
+#define ODBCVER						ODBCVER_REP
+#else
 #define ODBCVER						0x0250
+#endif	/* ODBCVER_REP */
 
 
 #if defined(WIN32) || defined(WITH_UNIXODBC) || defined(WITH_IODBC)
@@ -232,4 +236,15 @@ queries used in info.c inoue 2001/05/17 */
 
 #include "misc.h"
 
+#ifdef	_MEMORY_DEBUG_
+void * debug_alloc(size_t);
+void * debug_realloc(void *, size_t);
+char * debug_strdup(const char *);
+void	debug_free(void *);
+void	debug_memory_check(void);
+#define	malloc	debug_alloc
+#define	realloc	debug_realloc
+#define	strdup	debug_strdup
+#define	free	debug_free
+#endif /* _MEMORY_DEBUG_ */
 #endif

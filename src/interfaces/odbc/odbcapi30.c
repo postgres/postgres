@@ -18,9 +18,8 @@
  *-------
  */
 
+#define ODBCVER_REP 0x0300
 #include "psqlodbc.h"
-#undef ODBCVER
-#define ODBCVER 0x0300
 #include <stdio.h>
 #include <string.h>
 

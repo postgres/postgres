@@ -26,11 +26,10 @@
  *-------
  */
 
-#include "psqlodbc.h"
 #ifdef	WIN32
-#undef	ODBCVER
-#define	ODBCVER	0x3000
+#define	ODBCVER_REP	0x3000
 #endif
+#include "psqlodbc.h"
 #include <stdio.h>
 #include <string.h>
 
