@@ -1,37 +1,67 @@
 How to install PostgreSQL on Windows
 ====================================
-$Date: 2002/11/11 20:04:05 $
+$Date: 2003/11/09 03:47:51 $
 
-1.  Install the latest Cygwin package, available at http://cygwin.com/.
-    The Cygwin package provides a UNIX-like API on top of the Win32
-    API.
+PostgreSQL requires the Cygwin set of libraries to be installed in
+order that it functions under Windows.
 
-    A pre-built PostgreSQL is part of the standard Cygwin distribution
-    and is installed by Cygwin's setup.exe.  You are encouraged to use
-    this version unless it does not meet your needs.  Please read the
-    README file, /usr/doc/Cygwin/postgresql-${version}.README, where
-    "${version}" is the version (e.g., 7.2).
+This document assumes that you do not have Cygwin already installed
+on your system.  If that is not the case, then you will need to
+adjust these instructions accordingly.
 
-2.  Install the latest cygipc package, available at
-    http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/.
-    Do not use versions prior to 1.04, they will not work.
+1.  Download and run the Cygwin installer.  Visit http://cygwin.com/ and
+    click on the "Install Cygwin now' link.  This will prompt you
+    to download a "setup.exe".  Save this file somewhere on your
+    system and then execute it.
 
-    Use the following command to install the cygipc package:
+2.  Proceed through the Cygwin install wizard.  Choose 'Install from
+    Internet', specify a Local Package Directory and choose a mirror
+    site that's close to you.  Leave everything else as-is.
 
-        $ tar -C / -xjf cygipc-${version}.tar.bz2
+    When you come to the point of choosing which packages to install,
+    expand the 'Database' section and click 'Skip' next to PostgreSQL
+    to change it to the latest version of PostgreSQL available for
+    Cygwin.
 
-    where "${version}" is the version (e.g., 1.11-1).
+3.  Once the download and install process is complete, open a Cygwin
+    shell and do the following:
 
-3.  The Cygwin bin directory has to be placed in the path before the
-    Windows program directories, because the sort.exe has to be taken
-    from Cygwin, not Windows.
+    3a.  Start ipc-daemon2 for shared memory support. Use 
+         "net start ipc-daemon2", if you want ipc-daemon2 installed 
+         as a service; otherwise, use "ipc-daemon2 &".  This program 
+         needs to be running anytime you start the PostgreSQL server 
+         (postmaster) or initialize a database (initdb).
 
-4.  Start ipc-daemon from the cygipc package.  Use "net start ipc-daemon",
-    if ipc-daemon is installed as a service; otherwise, use "ipc-daemon &".
-    This program needs to be running anytime you start the PostgreSQL
-    server (postmaster) or initialize a database (initdb).
+    3b.  Use the initdb command to create a new database cluster.  An
+         example command would be:
 
-5.  Proceed according to the INSTALL file (i.e., ./configure; make; etc.)
+            initdb -D /usr/local/pgsql/data -W -E LATIN1 
+
+         Which will create a cluster in the /usr/local/pgsql/data
+         directory, will prompt for a superuser password and will
+         set the default database encoding to LATIN1.
+
+    3c.  Start up the postmaster.  Use a command similar to the
+         following:
+
+            postmaster -D /usr/local/pgsql/data 
+
+         This will start the postmaster, and if successful you will
+         see some initial log entries, and an entry "LOG: database
+         system is ready".
+
+4.  You are now running a PostgreSQL server on your Windows machine.
+
+Building from source
+--------------------
+
+There are some points that are only relevant if you are building Cygwin
+PostgreSQL from source:
+
+1.  Set your path to use the Cygwin bin directory before the Windows
+    utilities.  Cygwin sort must be used in preference to Windows sort.exe. 
+
+2.  Proceed according to the INSTALL file (i.e., ./configure; make; etc.)
     noting the following Cygwin specific differences:
 
         o The GNU make command is called "make" not "gmake".
@@ -44,13 +74,19 @@ $Date: 2002/11/11 20:04:05 $
     Alternatively, proceed according to the README file supplied with
     the Cygwin PostgreSQL package.
 
-NOTE:  The following are known issues with PostgreSQL on Windows:
+Known issues
+------------
 
 1.  Cygwin's AF_UNIX sockets are really implemented as AF_INET sockets
     so they are inherently insecure.
 
-2.  make check can generate spurious regression test failures due to
+2.  "make check" can generate spurious regression test failures due to
     overflowing the listen() backlog queue which causes connection
-    refused errors.
+    refused errors or hangs. You can limit the number of connections 
+    using the MAX_CONNECTIONS option thus:
+
+       make MAX_CONNECTIONS=5 check
+
+    (On some systems you can have up to about 10 simultaneous connections).
 
 Problem reports can be sent to pgsql-cygwin@postgresql.org.
