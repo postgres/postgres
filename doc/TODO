@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 21 16:34:56 EDT 2002
+Last updated:		Fri Oct 25 15:02:55 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -69,6 +69,7 @@ Administration
 * -Reserve last few process slots for super-user if max_connections reached
 * -Add GUC parameter to print queries that generate errors
 * Add start time to pg_stat_activity
+* Allow limits on per-db/user connections
 
 
 Data Types
