@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.34 2000/11/13 21:35:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.35 2000/11/14 18:11:30 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -930,7 +930,34 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>KRB_SERVER_KEYFILE</>
+      <term>HOSTNAME (<type>string</type>)</term>
+      <listitem>
+       <para>
+	Specifies the TCP/IP hostname or address on which the
+	<application>postmaster</application> is to listen for
+	connections from client applications.  Defaults to the value
+	of the <envar>PGHOST</envar> environment variable, or if
+	<envar>PGHOST</envar> is not set, it defaults to listening on
+	all configured addresses (including localhost).
+       </para>
+       <para>
+	If you use a hostname do not try to run multiple instances of
+	<application>postmaster</application> on the same IP address
+	but different ports.  Doing so will result in them attempting
+	(incorrectly) to use the same shared memory segments.  Also,
+	if you use a hostname, all of the host's IP addresses on which
+	<application>postmaster</application> instances are listening
+	must be distinct in the two last octets.
+       </para>
+       <para>
+	If you do not use this option, then each instance must listen
+	on a different port.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>KRB_SERVER_KEYFILE (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
@@ -1052,6 +1079,21 @@ env PGOPTIONS='-c geqo=off' psql
         connections. Otherwise only local Unix domain socket
         connections are accepted. It is off by default. This option
         can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>UNIXSOCKET (<type>string</type>)</term>
+      <listitem>
+       <para>
+	Specifies the Unix domain socket file name on which the
+	<application>postmaster</application> is to listen for
+	connections from client applications.  Defaults to the value
+	of the <envar>PGUNIXSOCKET</envar> environment variable, or if
+	<envar>PGUNIXSOCKET</envar> is not set, then defaults to a
+	file in <filename>/tmp</filename> constructed from the port
+	number.
        </para>
       </listitem>
      </varlistentry>

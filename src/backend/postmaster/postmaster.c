@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.185 2000/11/14 01:15:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.186 2000/11/14 18:11:31 petere Exp $
  *
  * NOTES
  *
@@ -790,30 +790,30 @@ static void
 usage(const char *progname)
 {
 	printf("%s is the PostgreSQL server.\n\n", progname);
-	printf("Usage:\n  %s [options]\n\n", progname);
+	printf("Usage:\n  %s [options...]\n\n", progname);
 	printf("Options:\n");
 #ifdef USE_ASSERT_CHECKING
-	printf("  -A 1|0          enable/disable runtime assert checking\n");
+	printf("  -A 1|0          enable/disable run-time assert checking\n");
 #endif
-	printf("  -B <buffers>    number of shared buffers\n");
-	printf("  -c <name>=<value> set run-time parameter\n");
+	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
+	printf("  -c NAME=VALUE   set run-time parameter\n");
 	printf("  -d 1-5          debugging level\n");
-	printf("  -D <directory>  database directory\n");
+	printf("  -D DATADIR      database directory\n");
 	printf("  -F              turn fsync off\n");
-	printf("  -h hostname     specify hostname or IP address\n");
+	printf("  -h HOSTNAME     host name or IP address to listen to\n");
 	printf("  -i              enable TCP/IP connections\n");
-	printf("  -k path         specify Unix-domain socket name\n");
+	printf("  -k FILENAME     Unix domain socket location\n");
 #ifdef USE_SSL
 	printf("  -l              enable SSL connections\n");
 #endif
-	printf("  -N <number>     maximum number of allowed connections (1..%d, default %d)\n",
+	printf("  -N MAX-CONNECT  maximum number of allowed connections (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
-	printf("  -o <option>     pass 'option' to each backend server\n");
-	printf("  -p <port>       port number to listen on\n");
-	printf("  -S              silent mode (dissociate from tty)\n");
+	printf("  -o OPTIONS      pass 'OPTIONS' to each backend server\n");
+	printf("  -p PORT         port number to listen on (default %d)\n", DEF_PGPORT);
+	printf("  -S              silent mode (start in background without logging output)\n");
 
 	printf("\nDeveloper options:\n");
-	printf("  -n              don't reinitialize shared memory after abnormal exit\n");
+	printf("  -n              do not reinitialize shared memory after abnormal exit\n");
 	printf("  -s              send SIGSTOP to all backend servers if one dies\n");
 
 	printf("\nPlease read the documentation for the complete list of run-time\n"

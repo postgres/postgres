@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.187 2000/11/08 17:57:46 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.188 2000/11/14 18:11:32 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1001,37 +1001,40 @@ SigHupHandler(SIGNAL_ARGS)
 }
 
 
+
 static void
 usage(char *progname)
 {
-	fprintf(stderr,
-			"Usage: %s [options] [dbname]\n", progname);
+	printf("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n", progname);
+
+	printf("Usage:\n  %s [options...] [dbname]\n\n", progname);
+	printf("Options:\n");
 #ifdef USE_ASSERT_CHECKING
-	fprintf(stderr, "\t-A on\t\tenable/disable assert checking\n");
+	printf("  -A 1|0          enable/disable run-time assert checking\n");
 #endif
-	fprintf(stderr, "\t-B buffers\tset number of buffers in buffer pool\n");
-	fprintf(stderr, "\t-c name=value\tset run-time parameter\n");
-	fprintf(stderr, "\t-C \t\tsuppress version info\n");
-	fprintf(stderr, "\t-D dir\t\tdata directory\n");
-	fprintf(stderr, "\t-E \t\techo query before execution\n");
-	fprintf(stderr, "\t-F \t\tturn fsync off\n");
-	fprintf(stderr, "\t-L \t\tturn off locking\n");
-	fprintf(stderr, "\t-N \t\tdon't use newline as interactive query delimiter\n");
-	fprintf(stderr, "\t-O \t\tallow system table structure changes\n");
-	fprintf(stderr, "\t-Q \t\tsuppress informational messages\n");
-	fprintf(stderr, "\t-S kbytes\tset amount of memory for sorts (in kbytes)\n");
-	fprintf(stderr, "\t-T options\tspecify pg_options\n");
-	fprintf(stderr, "\t-W sec\t\twait N seconds to allow attach from a debugger\n");
-	fprintf(stderr, "\t-d [1-5]\tset debug level\n");
-	fprintf(stderr, "\t-e \t\tturn on European date format\n");
-	fprintf(stderr, "\t-f [s|i|n|m|h]\tforbid use of some plan types\n");
-	fprintf(stderr, "\t-i \t\tdon't execute queries\n");
-	fprintf(stderr, "\t-o file\t\tsend stdout and stderr to given filename\n");
-	fprintf(stderr, "\t-p database\tbackend is started under a postmaster\n");
-	fprintf(stderr, "\t-s \t\tshow stats after each query\n");
-	fprintf(stderr, "\t-t [pa|pl|ex]\tshow timings after each query\n");
-	fprintf(stderr, "\t-v version\tset protocol version being used by frontend\n");
+	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
+	printf("  -c NAME=VALUE   set run-time parameter\n");
+	printf("  -d 1-5          debugging level\n");
+	printf("  -D DATADIR      database directory\n");
+	printf("  -e              use European date format\n");
+	printf("  -E              echo query before execution\n");
+	printf("  -F              turn fsync off\n");
+	printf("  -N              do not use newline as interactive query delimiter\n");
+	printf("  -o FILENAME     send stdout and stderr to given file\n");
+    printf("  -P              disable system indexes\n");
+	printf("  -s              show statistics after each query\n");
+	printf("  -S SORT-MEM     set amount of memory for sorts (in kbytes)\n");
+	printf("Developer options:\n");
+	printf("  -f [s|i|n|m|h]  forbid use of some plan types\n");
+	printf("  -i              do not execute queries\n");
+	printf("  -L              turn off locking\n");
+	printf("  -O              allow system table structure changes\n");
+	printf("  -t [pa|pl|ex]   show timings after each query\n");
+	printf("  -W NUM          wait NUM seconds to allow attach from a debugger\n");
+	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
+
+
 
 /* ----------------------------------------------------------------
  * PostgresMain
@@ -1646,7 +1649,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.187 $ $Date: 2000/11/08 17:57:46 $\n");
+		puts("$Revision: 1.188 $ $Date: 2000/11/14 18:11:32 $\n");
 	}
 
 	/*
