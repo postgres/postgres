@@ -1,7 +1,15 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.26 2003/04/15 22:51:18 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.27 2003/04/16 20:53:38 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
+
+   <caution>
+    <para>
+     This is currently a <emphasis>DRAFT</> description of FE/BE protocol
+     version 3.0.  Details are still subject to change.
+     In particular, the representation of binary data is still under debate.
+    </para>
+   </caution>
 
  <para>
   <application>PostgreSQL</application> uses a message-based protocol
@@ -504,11 +512,12 @@
    </Para>
 
    <Para>
-    The response to a <command>SELECT</> or <command>FETCH</> query
+    The response to a <command>SELECT</>, <command>FETCH</>, or
+    <command>SHOW</> query
     normally consists of RowDescription, zero or more
     DataRow or BinaryRow messages, and then CommandComplete.
     <command>COPY</> to or from the frontend invokes special protocol
-    as described below.
+    as described in <xref linkend="protocol-copy">.
     All other query types normally produce only
     a CommandComplete message.
    </Para>
@@ -524,7 +533,6 @@
    <Para>
     If a completely empty (no contents other than whitespace) query string
     is received, the response is EmptyQueryResponse followed by ReadyForQuery.
-    (The need to specially distinguish this case is historical.)
    </Para>
 
    <Para>
@@ -621,7 +629,10 @@
     The possible
     responses to Execute are the same as those described above for queries
     issued via simple query protocol, except that Execute doesn't cause
-    ReadyForQuery to be issued.
+    ReadyForQuery to be issued.  Also, the choice between text and binary
+    output (DataRow or BinaryRow messages) is determined by Execute's
+    format field, regardless of the command; the <literal>BINARY</> attribute
+    in cursor declarations is irrelevant when using this protocol.
    </para>
 
    <para>
@@ -630,8 +641,11 @@
     PortalSuspended message; the appearance of this message tells the frontend
     that another Execute should be issued against the same portal to
     complete the operation.  The CommandComplete message indicating
-    completion of the source SELECT or FETCH command is not sent until
-    the command is completed.
+    completion of the source SQL command is not sent until
+    the portal's execution is completed.  Therefore, an Execute phase is
+    always terminated by the appearance of exactly one of these messages:
+    CommandComplete, EmptyQueryResponse (if the portal was created from
+    an empty query string), ErrorResponse, or PortalSuspended.
    </para>
 
    <para>
@@ -715,7 +729,16 @@
   <Sect2>
    <Title>Function Call</Title>
 
-   <Para>
+   <note>
+    <para>
+     The Function Call sub-protocol is a legacy feature that is probably best
+     avoided in new code.  Similar results can be accomplished by setting up
+     a prepared statement that does <literal>SELECT function($1, ...)</>.
+     The Function Call cycle can then be replaced with Bind/Execute.
+    </para>
+   </note>
+
+   <para>
     A Function Call cycle is initiated by the frontend sending a
     FunctionCall message to the backend.  The backend then sends one
     or more response messages depending on the results of the function
@@ -724,7 +747,7 @@
     function call.
    </para>
 
-   <Para>
+   <para>
     The possible response messages from the backend are:
 
     <VariableList>
@@ -741,7 +764,9 @@
       <Term>FunctionResultResponse</Term>
       <ListItem>
        <Para>
-        The function call was executed and returned a result.
+        The function call was executed and returned a non-null result.
+	(Note that the Function Call protocol can only handle a single
+	scalar result, not a rowtype or set of results.)
        </Para>
       </ListItem>
      </VarListEntry>
@@ -750,7 +775,7 @@
       <Term>FunctionVoidResponse</Term>
       <ListItem>
        <Para>
-        The function call was executed and returned no result.
+        The function call was executed and returned a NULL value.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -800,8 +825,9 @@
     message (allowing successful termination) or a CopyFail message (which
     will cause the <command>COPY</> SQL statement to fail with an
     error).  The backend then reverts to the command-processing mode it was
-    in before the <command>COPY</> started (which will be either simple or
-    extended query protocol).
+    in before the <command>COPY</> started, which will be either simple or
+    extended query protocol.  It will next send either CommandComplete
+    (if successful) or ErrorResponse (if not).
    </para>
 
    <para>
@@ -826,7 +852,8 @@
     zero or more CopyDataRow messages, one per row, followed by CopyDone.
     (For <command>COPY BINARY</>, CopyBinaryRow messages are sent instead.)
     The backend then reverts to the command-processing mode it was
-    in before the <command>COPY</> started.  The frontend cannot abort
+    in before the <command>COPY</> started, and sends CommandComplete.
+    The frontend cannot abort
     the transfer (short of closing the connection), but it can discard
     unwanted CopyDataRow, CopyBinaryRow, and CopyDone messages.
    </para>
@@ -1668,7 +1695,7 @@ Bind (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int16
+        Int32
 </Term>
 <ListItem>
 <Para>
@@ -2195,11 +2222,22 @@ CopyInResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32(4)
+        Int32(5)
 </Term>
 <ListItem>
 <Para>
                 Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int8
+</Term>
+<ListItem>
+<Para>
+                0 for textual copy (CopyDataRow is expected), 1 for
+		binary copy (CopyBinaryRow is expected).
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2231,11 +2269,22 @@ CopyOutResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32(4)
+        Int32(5)
 </Term>
 <ListItem>
 <Para>
                 Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int8
+</Term>
+<ListItem>
+<Para>
+                0 for textual copy (CopyDataRow will follow), 1 for
+		binary copy (CopyBinaryRow will follow).
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2402,26 +2451,17 @@ EmptyQueryResponse (B)
 <ListItem>
 <Para>
                 Identifies the message as a response to an empty query string.
+		(This substitutes for CommandComplete.)
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32(5)
+        Int32(4)
 </Term>
 <ListItem>
 <Para>
                 Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        String("")
-</Term>
-<ListItem>
-<Para>
-                Unused.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3014,7 +3054,7 @@ ParameterDescription (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int16
+        Int32
 </Term>
 <ListItem>
 <Para>
@@ -3147,7 +3187,7 @@ Parse (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int16
+        Int32
 </Term>
 <ListItem>
 <Para>
