@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.9 1997/01/03 18:48:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.10 1997/01/11 14:24:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1129,9 +1129,9 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
     int r;
     size_t tupno, column, ncols;
 	Tcl_DString headers;
+	char	buffer[2048];
 	struct {
 		char    *cname;
-		char    *data;
 		int     change;
 	} *info;
 
@@ -1166,24 +1166,23 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 	for (column = 0; column < ncols; column++)
 	{
 		info[column].cname = PQfname(result, column);
-		info[column].data = malloc(2000);
 		info[column].change = 0;
 		Tcl_DStringAppendElement(&headers, info[column].cname);
 	}
 
 	Tcl_SetVar2(interp, argv[3], ".headers", Tcl_DStringValue(&headers), 0);
-	sprintf(info[0].data, "%d", ncols);
-	Tcl_SetVar2(interp, argv[3], ".numcols", info[0].data, 0);
+	sprintf(buffer, "%d", ncols);
+	Tcl_SetVar2(interp, argv[3], ".numcols", buffer, 0);
 
 	for (tupno = 0; tupno < PQntuples(result); tupno++)
 	{
-		sprintf(info[0].data, "%d", tupno);
-		Tcl_SetVar2(interp, argv[3], ".tupno", info[0].data, 0);
+		sprintf(buffer, "%d", tupno);
+		Tcl_SetVar2(interp, argv[3], ".tupno", buffer, 0);
 
 		for (column = 0; column < ncols; column++)
 		{
-			strcpy(info[column].data, PQgetvalue(result, tupno, column));
-			Tcl_SetVar2(interp, argv[3], info[column].cname, info[column].data, 0);
+			strcpy(buffer, PQgetvalue(result, tupno, column));
+			Tcl_SetVar2(interp, argv[3], info[column].cname, buffer, 0);
 		}
 
 		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
@@ -1206,6 +1205,8 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 
+	free(info);
+	Tcl_UnsetVar(interp, argv[3], 0);
 	Tcl_AppendResult(interp, "", 0);
 	return TCL_OK;
 }
