@@ -91,12 +91,16 @@ SQLError(
 	char	   *msg;
 	int			status;
 
-	mylog("**** SQLError: henv=%u, hdbc=%u, hstmt=%u\n", henv, hdbc, hstmt);
+	mylog("**** SQLError: henv=%u, hdbc=%u, hstmt=%u <%d>\n", henv, hdbc, hstmt, cbErrorMsgMax);
 
+	if (cbErrorMsgMax < 0)
+		return SQL_ERROR;
 	if (SQL_NULL_HSTMT != hstmt)
 	{
 		/* CC: return an error of a hstmt  */
 		StatementClass *stmt = (StatementClass *) hstmt;
+		SWORD	msglen;
+		BOOL	once_again = FALSE;
 
 		if (SC_get_error(stmt, &status, &msg))
 		{
@@ -112,8 +116,18 @@ SQLError(
 
 				return SQL_NO_DATA_FOUND;
 			}
+			msglen = (SWORD) strlen(msg);
 			if (NULL != pcbErrorMsg)
-				*pcbErrorMsg = (SWORD) strlen(msg);
+			{
+				*pcbErrorMsg = msglen;
+				if (cbErrorMsgMax == 0)
+					once_again = TRUE;
+				else if (msglen >= cbErrorMsgMax)
+				{
+					once_again = TRUE;
+					*pcbErrorMsg = cbErrorMsgMax - 1;
+				}
+			}
 
 			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
 				strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
@@ -238,7 +252,27 @@ SQLError(
 			return SQL_NO_DATA_FOUND;
 		}
 
-		return SQL_SUCCESS;
+		if (once_again)
+		{
+			int	outlen;
+			stmt->errornumber = status;
+			if (cbErrorMsgMax > 0)
+				outlen = *pcbErrorMsg;
+			else
+				outlen = 0;
+			if (!stmt->errormsg_malloced || !stmt->errormsg)
+			{
+				stmt->errormsg = malloc(msglen - outlen + 1);
+				stmt->errormsg_malloced = TRUE;
+			}
+			memmove(stmt->errormsg, msg + outlen, msglen - outlen + 1);
+		}
+		else if (stmt->errormsg_malloced)
+			SC_clear_error(stmt);
+		if (cbErrorMsgMax == 0)
+			return SQL_SUCCESS_WITH_INFO;
+		else
+			return SQL_SUCCESS;
 	}
 	else if (SQL_NULL_HDBC != hdbc)
 	{

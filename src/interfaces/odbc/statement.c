@@ -248,6 +248,7 @@ SC_Constructor(void)
 		rv->errormsg = NULL;
 		rv->errornumber = 0;
 		rv->errormsg_created = FALSE;
+		rv->errormsg_malloced = FALSE;
 
 		rv->statement = NULL;
 		rv->stmt_with_params = NULL;
@@ -530,9 +531,12 @@ SC_recycle_statement(StatementClass *self)
 	self->bind_row = 0;
 	self->last_fetch_count = 0;
 
+	if (self->errormsg_malloced && self->errormsg)
+		free(self->errormsg);
 	self->errormsg = NULL;
 	self->errornumber = 0;
 	self->errormsg_created = FALSE;
+	self->errormsg_malloced = FALSE;
 
 	self->lobj_fd = -1;
 
@@ -610,9 +614,12 @@ SC_unbind_cols(StatementClass *self)
 void
 SC_clear_error(StatementClass *self)
 {
+	if (self->errormsg_malloced && self->errormsg)
+		free(self->errormsg);
 	self->errornumber = 0;
 	self->errormsg = NULL;
 	self->errormsg_created = FALSE;
+	self->errormsg_malloced = FALSE;
 }
 
 
@@ -675,7 +682,8 @@ SC_get_error(StatementClass *self, int *number, char **message)
 	{
 		*number = self->errornumber;
 		*message = self->errormsg;
-		self->errormsg = NULL;
+		if (!self->errormsg_malloced)
+			self->errormsg = NULL;
 	}
 
 	rv = (self->errornumber != 0);
