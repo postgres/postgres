@@ -127,15 +127,17 @@
     <SMALL>TID</SMALL>?<BR>
      <A href="#4.18">4.18</A>) What is the meaning of some of the terms
     used in PostgreSQL?<BR>
-     <A href="#4.19">4.19</A>) How do I tell what PostgreSQL version I
+     <A href="#4.19">4.19</A>) Why do I get the error <I>"ERROR: 
+     Memory exhausted in AllocSetAlloc()?"</I><BR>
+     <A href="#4.20">4.20</A>) How do I tell what PostgreSQL version I
     am running? <BR>
-     <A href="#4.20">4.20</A>) My large-object operations get
+     <A href="#4.21">4.21</A>) My large-object operations get
     <I>invalid large obj descriptor.</I> Why?<BR>
-     <A href="#4.21">4.21</A>) How do I create a column that will
+     <A href="#4.22">4.22</A>) How do I create a column that will
     default to the current time?<BR>
-     <A href="#4.22">4.22</A>) Why are my subqueries using
+     <A href="#4.23">4.23</A>) Why are my subqueries using
     <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
-     <A href="#4.23">4.23</A>) How do I perform an outer join?<BR>
+     <A href="#4.24">4.24</A>) How do I perform an outer join?<BR>
      
 
     <CENTER>
@@ -147,7 +149,7 @@
     and functions to PostgreSQL?<BR>
      <A href="#5.3">5.3</A>) How do I write a C function to return a
     tuple?<BR>
-     <A href="#5.4">5.4</A>) I have changed a source file. Why does the
+     <A href="#5.4">5.3</A>) I have changed a source file. Why does the
     recompile not see the change?<BR>
      
     <HR>
@@ -1132,13 +1134,32 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <P>A list of general database terms can be found at: <A href=
     "http://www.comptechnews.com/~reaster/dbdesign.html">http://www.comptechnews.com/~reaster/dbdesign.html</A></P>
 
-    <H4><A name="4.19">4.19</A>) How do I tell what PostgreSQL version
+    <H4><A name="4.19">4.19</A>) Why do I get the error <I>"ERROR: 
+     Memory exhausted in AllocSetAlloc()?"</I><BR>
+    </H4>
+
+    <P>It is possible you have run out of virtual memory on your
+    system, or your kernel has a low limit for certain resources. Try
+    this before starting the <I>postmaster:</I></P>
+<PRE>
+    ulimit -d 262144
+    limit datasize 256m
+</PRE>
+    Depending on your shell, only one of these may succeed, but it will
+    set your process data segment limit much higher and perhaps allow
+    the query to complete. This command applies to the current process,
+    and all subprocesses created after the command is run. If you are
+    having a problem with the <SMALL>SQL</SMALL> client because the
+    backend is returning too much data, try it before starting the
+    client. 
+
+    <H4><A name="4.20">4.20</A>) How do I tell what PostgreSQL version
     I am running?<BR>
     </H4>
 
     <P>From <I>psql,</I> type <CODE>select version();</CODE></P>
 
-    <H4><A name="4.20">4.20</A>) My large-object operations get
+    <H4><A name="4.21">4.21</A>) My large-object operations get
     <I>invalid large obj descriptor.</I> Why?<BR>
     </H4>
 
@@ -1155,7 +1176,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <P>If you are using a client interface like <SMALL>ODBC</SMALL> you
     may need to set <CODE>auto-commit off.</CODE></P>
 
-    <H4><A name="4.21">4.21</A>) How do I create a column that will
+    <H4><A name="4.22">4.22</A>) How do I create a column that will
     default to the current time?<BR>
     </H4>
 
@@ -1165,7 +1186,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
 </CODE>
 </PRE>
 
-    <H4><A name="4.22">4.22</A>) Why are my subqueries using
+    <H4><A name="4.23">4.23</A>) Why are my subqueries using
     <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
     </H4>
 
@@ -1188,7 +1209,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
 </PRE>
     We hope to fix this limitation in a future release. 
 
-    <H4><A name="4.23">4.23</A>) How do I perform an outer join?<BR>
+    <H4><A name="4.24">4.24</A>) How do I perform an outer join?<BR>
     </H4>
 
     <P>PostgreSQL 7.1 and later supports outer joins using the SQL
