@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.30 2001/02/04 12:23:11 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.31 2001/02/13 21:27:05 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -22,16 +22,6 @@ include $(top_builddir)/src/Makefile.global
 ifndef DOCBOOKSTYLE
 DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db143.d/docbook
 endif
-
-ifndef HSTYLE
-HSTYLE = $(DOCBOOKSTYLE)/html
-endif
-ifndef PSTYLE
-PSTYLE = $(DOCBOOKSTYLE)/print
-endif
-
-HDSL=$(HSTYLE)/docbook.dsl
-PDSL=$(PSTYLE)/docbook.dsl
 
 ifndef JADE
 JADE = jade
@@ -62,6 +52,15 @@ ALLBOOKS = admin developer programmer reference tutorial user
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml)
 
 
+catalog: Makefile $(top_builddir)/src/Makefile.global $(top_builddir)/src/Makefile.custom
+	(echo "PUBLIC \"-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN\" \"$(DOCBOOKSTYLE)/html/docbook.dsl\""; \
+	echo "PUBLIC \"-//Norman Walsh//DOCUMENT DocBook Print Stylesheet//EN\" \"$(DOCBOOKSTYLE)/print/docbook.dsl\"") > $@
+
+ifeq "$(origin DOCBOOKSTYLE)" "command line"
+.PHONY: catalog
+endif
+
+
 ##
 ## Man pages
 ##
@@ -85,20 +84,17 @@ man: $(ALLSGML)
 ## HTML
 ##
 
-JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(HDSL) -V %use-id-as-filename% -V %generate-legalnotice-link% -t sgml
+JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -i output-html -t sgml
 
-postgres.html: postgres.sgml $(ALLSGML)
-	@rm -f *.htm
+postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl catalog
+	@rm -f *.html
 	$(JADE.html) $<
-# Include some softlinks to the generic default file names
-	ln -sf postgres.htm index.html
-	ln -sf postgres.htm postgres.html
+	ln -sf $@ index.html
 
-$(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML)
-	@rm -f *.htm
+$(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl catalog
+	@rm -f *.html
 	$(JADE.html) book-decl.sgml $<
-	ln -sf $*.htm index.html
-	ln -sf $*.htm $*.html
+	ln -sf $@ index.html
 
 
 ##
@@ -106,12 +102,12 @@ $(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML)
 ##
 
 # RTF to allow minor editing for hardcopy
-$(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML)
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t rtf -V rtf-backend book-decl.sgml $<
+$(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl catalog
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
 
 # TeX and DVI
-$(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML)
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t tex -V tex-backend book-decl.sgml $<
+$(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl catalog
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -t tex -V tex-backend -i output-print book-decl.sgml $<
 
 %.dvi: %.tex
 	jadetex $<
@@ -182,9 +178,10 @@ check-postgres: postgres.sgml
 ##
 
 clean distclean maintainer-clean:
+	rm -f catalog
 # HTML
-	rm -f HTML.manifest *.html *.htm
+	rm -f HTML.manifest *.html
 # man
-	rm -rf *.1 *.l man1 manl manpage.refs manpage.links manpage.log
+	rm -rf *.1 *.$(DEFAULTSECTION) man1 man$(DEFAULTSECTION) manpage.refs manpage.links manpage.log
 # print
 	rm -f *.rtf *.tex *.dvi *.aux *.log *.ps *.pdf
