@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.107 2003/07/23 23:30:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.108 2003/07/26 13:50:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,10 +595,12 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (port->raddr.addr.ss_family != AF_UNIX)
 			return;
 	}
-	else if (strcmp(token, "host") == 0 || strcmp(token, "hostssl") == 0)
+	else if (strcmp(token, "host") == 0
+			|| strcmp(token, "hostssl") == 0
+			|| strcmp(token, "hostnossl") == 0)
 	{
 
-		if (strcmp(token, "hostssl") == 0)
+		if (token[4] == 's')  /* "hostssl" */
 		{
 #ifdef USE_SSL
 			/* Record does not match if we are not on an SSL connection */
@@ -614,6 +616,14 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 #endif
 		}
+#ifdef USE_SSL
+		else if (token[4] == 'n')  /* "hostnossl" */
+		{
+			/* Record does not match if we are on an SSL connection */
+			if (port->ssl)
+				return;
+		}
+#endif
 
 		/* Get the database. */
 		line = lnext(line);

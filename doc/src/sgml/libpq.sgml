@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.128 2003/07/23 17:27:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.129 2003/07/26 13:50:01 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -207,13 +207,43 @@ PGconn *PQconnectdb(const char *conninfo);
     </varlistentry>
 
     <varlistentry>
+     <term><literal>sslmode</literal></term>
+     <listitem>
+	 <para>
+      This option determines whether or with what priority an <acronym>SSL</>
+      connection will be negotiated with the server. There are four
+      modes: <literal>disable</> will attempt only an unencrypted
+      <acronym>SSL</> connection; <literal>allow</> will negotiate,
+      trying first a non-<acronym>SSL</> connection, then if that fails,
+      trying an <acronym>SSL</> connection; <literal>prefer</>
+	  (the default) will negotiate, trying first an <acronym>SSL</> connection,
+	  then if that fails, trying a regular non-<acronym>SSL</> connection;
+      <literal>require</> will try only an <acronym>SSL</> connection.
+	 </para>
+	 <para>
+	  If <productname>PostgreSQL</> is compiled without SSL support,
+	  using option <literal>require</> will cause an error, and options
+	  <literal>allow</> and <literal>prefer</> will be tolerated but
+	  <application>libpq</> will be unable to negotiate an <acronym>SSL</>
+	  connection.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>requiressl</literal></term>
      <listitem>
      <para>
-      If set to 1, an <acronym>SSL</acronym> connection to the server is required.
+	  This option is deprecated in favor of the <literal>sslmode</>
+	  setting.
+	 </para>
+	 <para>
+      If set to 1, an <acronym>SSL</acronym> connection to the server is required
+	  (this is equivalent to <literal>sslmode</> <literal>require</>).
       <application>libpq</> will then refuse to connect if the server does not
       accept an <acronym>SSL</acronym> connection.
-      If set to 0 (default), <application>libpq</> will negotiate the connection type with server.
+      If set to 0 (default), <application>libpq</> will negotiate the connection
+	  type with the server (equivalent to <literal>sslmode</> <literal>prefer</>).
       This option is only available if
       <productname>PostgreSQL</> is compiled with SSL support.
      </para>
@@ -3141,14 +3171,37 @@ the <productname>PostgreSQL</productname> server.
 <listitem>
 <para>
 <indexterm>
+ <primary><envar>PGSSLMODE</envar></primary>
+</indexterm>
+<envar>PGSSLMODE</envar> determines whether and with what priority an
+<acronym>SSL</> connection will be negotiated with the server. There are
+four modes: <literal>disable</> will attempt only an unencrypted
+<acronym>SSL</> connection; <literal>allow</> will negotiate,
+trying first a non-<acronym>SSL</> connection, then if that fails,
+trying an <acronym>SSL</> connection; <literal>prefer</>
+(the default) will negotiate, trying first an <acronym>SSL</>
+connection, then if that fails, trying a regular non-<acronym>SSL</>
+connection; <literal>require</> will try only an <acronym>SSL</>
+connection. If <productname>PostgreSQL</> is compiled without SSL support,
+using option <literal>require</> will cause an error, and options
+<literal>allow</> and <literal>prefer</> will be tolerated but
+<application>libpq</> will be unable to negotiate an <acronym>SSL</>
+connection.
+</para>
+</listitem>
+<listitem>
+<para>
+<indexterm>
  <primary><envar>PGREQUIRESSL</envar></primary>
 </indexterm>
 <envar>PGREQUIRESSL</envar> sets whether or not the connection must be
 made over <acronym>SSL</acronym>. If set to
 <quote>1</quote>, <application>libpq</>
 will refuse to connect if the server does not accept
-an <acronym>SSL</acronym> connection.
-This option is only available if
+an <acronym>SSL</acronym> connection (equivalent to <literal>sslmode</>
+<literal>prefer</>).
+This option is deprecated in favor of the <literal>sslmode</>
+setting, and is only available if
 <productname>PostgreSQL</> is compiled with SSL support.
 </para>
 </listitem>

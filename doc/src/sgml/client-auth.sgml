@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.52 2003/06/25 01:20:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.53 2003/07/26 13:50:01 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -83,13 +83,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.52 2003/06/25 01:20:50
   </para>
 
   <para>
-   A record may have one of the five formats
+   A record may have one of the seven formats
 <synopsis>
 local   <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -132,6 +134,17 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
        with SSL support enabled. Furthermore, SSL must be enabled by
        enabling the <varname>ssl</varname> configuration parameter
        (see <xref linkend="runtime-config"> for more information).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>hostnossl</literal></term>
+     <listitem>
+      <para>
+       This record is similar to <literal>hostssl</> but with the
+	   opposite logic: it matches only regular connection attempts not
+	   using SSL.
       </para>
      </listitem>
     </varlistentry>
@@ -196,8 +209,8 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
       </para>
 
       <para>
-       These fields only apply to <literal>host</literal> and
-       <literal>hostssl</literal> records.
+       These fields only apply to <literal>host</literal>,
+       <literal>hostssl</literal>, and <literal>hostnossl</> records.
       </para>
      </listitem>
     </varlistentry>
@@ -224,8 +237,8 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
       </para>
 
       <para>
-       This field only applies to <literal>host</literal> and
-       <literal>hostssl</literal> records.
+       This field only applies to <literal>host</literal>,
+       <literal>hostssl</literal>, and <literal>hostnossl</> records.
       </para>
      </listitem>
     </varlistentry>  

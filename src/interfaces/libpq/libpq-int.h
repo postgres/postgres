@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.76 2003/06/23 19:20:25 tgl Exp $
+ * $Id: libpq-int.h,v 1.77 2003/07/26 13:50:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,9 +316,11 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
 
+	char	   *sslmode;		/* SSL mode option string */
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
-	bool		require_ssl;	/* Require SSL to make connection */
+	bool		wait_ssl_try;	/* Delay SSL negotiation until after
+								   attempting normal connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
 	char		peer_dn[256 + 1];		/* peer distinguished name */
