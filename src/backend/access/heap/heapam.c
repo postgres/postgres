@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129.2.2 2003/01/26 23:09:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129.2.3 2004/10/13 22:22:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1155,6 +1155,7 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	PageHeader	dp;
 	Buffer		buffer;
 	int			result;
+	uint16		sv_infomask;
 
 	/* increment access statistics */
 	IncrHeapAccessStat(local_delete);
@@ -1178,7 +1179,10 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	tp.t_tableOid = relation->rd_id;
 
 l1:
+	sv_infomask = tp.t_data->t_infomask;
 	result = HeapTupleSatisfiesUpdate(&tp);
+	if (sv_infomask != tp.t_data->t_infomask)
+		SetBufferCommitInfoNeedsSave(buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1195,7 +1199,7 @@ l1:
 		XactLockTableWait(xwait);
 
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (TransactionIdDidAbort(xwait))
+		if (!TransactionIdDidCommit(xwait))
 			goto l1;
 
 		/*
@@ -1345,6 +1349,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Size		newtupsize,
 				pagefree;
 	int			result;
+	uint16		sv_infomask;
 
 	/* increment access statistics */
 	IncrHeapAccessStat(local_replace);
@@ -1373,7 +1378,10 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 
 l2:
+	sv_infomask = oldtup.t_data->t_infomask;
 	result = HeapTupleSatisfiesUpdate(&oldtup);
+	if (sv_infomask != oldtup.t_data->t_infomask)
+		SetBufferCommitInfoNeedsSave(buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1390,7 +1398,7 @@ l2:
 		XactLockTableWait(xwait);
 
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (TransactionIdDidAbort(xwait))
+		if (!TransactionIdDidCommit(xwait))
 			goto l2;
 
 		/*
@@ -1651,6 +1659,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 	ItemId		lp;
 	PageHeader	dp;
 	int			result;
+	uint16		sv_infomask;
 
 	/* increment access statistics */
 	IncrHeapAccessStat(local_mark4update);
@@ -1670,7 +1679,10 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 	tuple->t_len = ItemIdGetLength(lp);
 
 l3:
+	sv_infomask = tuple->t_data->t_infomask;
 	result = HeapTupleSatisfiesUpdate(tuple);
+	if (sv_infomask != tuple->t_data->t_infomask)
+		SetBufferCommitInfoNeedsSave(*buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1687,7 +1699,7 @@ l3:
 		XactLockTableWait(xwait);
 
 		LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (TransactionIdDidAbort(xwait))
+		if (!TransactionIdDidCommit(xwait))
 			goto l3;
 
 		/*
