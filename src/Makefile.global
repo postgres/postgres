@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.99 1997/01/25 19:19:35 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.100 1997/01/25 19:23:43 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -761,7 +761,7 @@ ifneq ($(CUSTOM_COPT),)
   COPT= $(CUSTOM_COPT)
 else
   ifeq ($(CC), gcc)
-    COPT= -O2 -Werror
+    COPT= -O2 # -Werror
   else
     COPT= -O
   endif
