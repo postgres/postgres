@@ -13325,18 +13325,32 @@ acx_pthread_ok=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
+        if test "x$acx_pthread_ok" = xyes; then
+            # Don't use options that are ignored by the compiler.
+            # We find them by checking stderror.
+            cat >conftest.$ac_ext <<_ACEOF
+int
+main ()
+{
+  return 0;
+}
+_ACEOF
+            rm -f conftest.$ac_objext conftest$ac_exeext
+            if test "`(eval $ac_link 2>&1 >/dev/null)`" = ""; then
+                # we continue with more flags because Linux needs -lpthread
+                # for libpq builds on PostgreSQL.  The test above only
+                # tests for building binaries, not shared libraries.
+                PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
+                PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
+            else   acx_pthread_ok=no
+            fi
+        fi
+
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
         echo "$as_me:$LINENO: result: $acx_pthread_ok" >&5
 echo "${ECHO_T}$acx_pthread_ok" >&6
-        if test "x$acx_pthread_ok" = xyes; then
-            # we continue with more flags because Linux needs -lpthread
-            # for libpq builds on PostgreSQL.  The test above only
-            # tests for building binaries, not shared libraries.
-            PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
-            PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
-        fi
 done
 fi
 
