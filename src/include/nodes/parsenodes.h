@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.208 2002/09/22 19:42:52 tgl Exp $
+ * $Id: parsenodes.h,v 1.209 2002/10/14 22:14:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,17 @@
 #define PARSENODES_H
 
 #include "nodes/primnodes.h"
+
+
+/* Possible sources of a Query */
+typedef enum QuerySource
+{
+	QSRC_ORIGINAL,				/* original parsetree (explicit query) */
+	QSRC_PARSER,				/* added by parse analysis */
+	QSRC_INSTEAD_RULE,			/* added by unconditional INSTEAD rule */
+	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
+	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
+} QuerySource;
 
 
 /*****************************************************************************
@@ -37,6 +48,8 @@ typedef struct Query
 
 	CmdType		commandType;	/* select|insert|update|delete|utility */
 
+	QuerySource	querySource;	/* where did I come from? */
+
 	Node	   *utilityStmt;	/* non-null if this is a non-optimizable
 								 * statement */
 
@@ -48,8 +61,6 @@ typedef struct Query
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
-
-	bool		originalQuery;	/* marks original query through rewriting */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE

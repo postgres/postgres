@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.213 2002/09/22 19:42:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.214 2002/10/14 22:14:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1778,6 +1778,7 @@ _copyQuery(Query *from)
 	Query	   *newnode = makeNode(Query);
 
 	newnode->commandType = from->commandType;
+	newnode->querySource = from->querySource;
 	Node_Copy(from, newnode, utilityStmt);
 	newnode->resultRelation = from->resultRelation;
 	Node_Copy(from, newnode, into);
@@ -1785,7 +1786,6 @@ _copyQuery(Query *from)
 	newnode->isBinary = from->isBinary;
 	newnode->hasAggs = from->hasAggs;
 	newnode->hasSubLinks = from->hasSubLinks;
-	newnode->originalQuery = from->originalQuery;
 
 	Node_Copy(from, newnode, rtable);
 	Node_Copy(from, newnode, jointree);

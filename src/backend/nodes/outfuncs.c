@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.175 2002/09/22 19:42:51 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.176 2002/10/14 22:14:34 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -229,7 +229,8 @@ _outIndexElem(StringInfo str, IndexElem *node)
 static void
 _outQuery(StringInfo str, Query *node)
 {
-	appendStringInfo(str, " QUERY :command %d :utility ", node->commandType);
+	appendStringInfo(str, " QUERY :command %d :source %d :utility ",
+					 (int) node->commandType, (int) node->querySource);
 
 	/*
 	 * Hack to work around missing outfuncs routines for a lot of the
@@ -299,6 +300,8 @@ _outQuery(StringInfo str, Query *node)
 
 	appendStringInfo(str, " :resultRelations ");
 	_outIntList(str, node->resultRelations);
+
+	/* planner-internal fields are not written out */
 }
 
 static void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.134 2002/09/22 19:42:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.135 2002/10/14 22:14:34 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -123,6 +123,10 @@ _readQuery(void)
 	token = pg_strtok(&length); /* get commandType */
 	local_node->commandType = atoi(token);
 
+	token = pg_strtok(&length); /* skip :source */
+	token = pg_strtok(&length); /* get querySource */
+	local_node->querySource = atoi(token);
+
 	token = pg_strtok(&length); /* skip :utility */
 	local_node->utilityStmt = nodeRead(true);
 
@@ -148,9 +152,6 @@ _readQuery(void)
 	token = pg_strtok(&length); /* skip the :hasSubLinks */
 	token = pg_strtok(&length); /* get hasSubLinks */
 	local_node->hasSubLinks = strtobool(token);
-
-	/* we always want originalQuery to be false in a read-in query */
-	local_node->originalQuery = false;
 
 	token = pg_strtok(&length); /* skip :rtable */
 	local_node->rtable = nodeRead(true);
@@ -187,6 +188,8 @@ _readQuery(void)
 
 	token = pg_strtok(&length); /* skip :resultRelations */
 	local_node->resultRelations = toIntList(nodeRead(true));
+
+	/* planner-internal fields are left zero */
 
 	return local_node;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.250 2002/09/22 00:37:09 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.251 2002/10/14 22:14:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,13 +164,13 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 	/*
 	 * Make sure that only the original query is marked original. We have
 	 * to do this explicitly since recursive calls of parse_analyze will
-	 * have set originalQuery in some of the added-on queries.
+	 * have marked some of the added-on queries as "original".
 	 */
 	foreach(listscan, result)
 	{
 		Query	   *q = lfirst(listscan);
 
-		q->originalQuery = (q == query);
+		q->querySource = (q == query ? QSRC_ORIGINAL : QSRC_PARSER);
 	}
 
 	pfree(pstate);

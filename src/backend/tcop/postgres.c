@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.301 2002/10/13 16:55:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.302 2002/10/14 22:14:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -621,6 +621,8 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
+		CmdType		origCmdType;
+		bool		foundOriginalQuery = false;
 		List	   *querytree_list,
 				   *querytree_item;
 
@@ -631,6 +633,26 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		 * start-of-SQL-command processing needed by the destination.
 		 */
 		commandTag = CreateCommandTag(parsetree);
+
+		switch (nodeTag(parsetree))
+		{
+			case T_InsertStmt:
+				origCmdType = CMD_INSERT;
+				break;
+			case T_DeleteStmt:
+				origCmdType = CMD_DELETE;
+				break;
+			case T_UpdateStmt:
+				origCmdType = CMD_UPDATE;
+				break;
+			case T_SelectStmt:
+				origCmdType = CMD_SELECT;
+				break;
+			default:
+				/* Otherwise, never match commandType */
+				origCmdType = CMD_UNKNOWN;
+				break;
+		}
 
 		set_ps_display(commandTag);
 
@@ -694,6 +716,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		{
 			Query	   *querytree = (Query *) lfirst(querytree_item);
 			bool		endTransactionBlock = false;
+			bool		canSetTag;
 
 			/* Make sure we are in a transaction command */
 			if (!xact_started)
@@ -707,6 +730,24 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 			 * quit
 			 */
 			CHECK_FOR_INTERRUPTS();
+
+			/*
+			 * This query can set the completion tag if it is the original
+			 * query, or if it is an INSTEAD query of the same kind as the
+			 * original and we haven't yet seen the original query.
+			 */
+			if (querytree->querySource == QSRC_ORIGINAL)
+			{
+				canSetTag = true;
+				foundOriginalQuery = true;
+			}
+			else if (!foundOriginalQuery &&
+					 querytree->commandType == origCmdType &&
+					 (querytree->querySource == QSRC_INSTEAD_RULE ||
+					  querytree->querySource == QSRC_QUAL_INSTEAD_RULE))
+				canSetTag = true;
+			else
+				canSetTag = false;
 
 			if (querytree->commandType == CMD_UTILITY)
 			{
@@ -736,7 +777,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 					IsA(utilityStmt, VariableResetStmt))
 					endTransactionBlock = true;
 
-				if (querytree->originalQuery)
+				if (canSetTag)
 				{
 					/* utility statement can override default tag string */
 					ProcessUtility(utilityStmt, dest, completionTag);
@@ -785,9 +826,9 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 				{
 					elog(DEBUG2, "ProcessQuery");
 
-					if (querytree->originalQuery || length(querytree_list) == 1)
+					if (canSetTag)
 					{
-						/* original stmt can override default tag string */
+						/* statement can override default tag string */
 						ProcessQuery(querytree, plan, dest, completionTag);
 						commandTag = completionTag;
 					}
@@ -853,17 +894,21 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 
 		/*
 		 * It is possible that the original query was removed due to a DO
-		 * INSTEAD rewrite rule.  In that case we will still have the
-		 * default completion tag, which is fine for most purposes, but it
+		 * INSTEAD rewrite rule.  If so, and if we found no INSTEAD query
+		 * matching the command type, we will still have the default
+		 * completion tag.  This is fine for most purposes, but it
 		 * may confuse clients if it's INSERT/UPDATE/DELETE. Clients
 		 * expect those tags to have counts after them (cf. ProcessQuery).
 		 */
-		if (strcmp(commandTag, "INSERT") == 0)
-			commandTag = "INSERT 0 0";
-		else if (strcmp(commandTag, "UPDATE") == 0)
-			commandTag = "UPDATE 0";
-		else if (strcmp(commandTag, "DELETE") == 0)
-			commandTag = "DELETE 0";
+		if (!foundOriginalQuery)
+		{
+			if (strcmp(commandTag, "INSERT") == 0)
+				commandTag = "INSERT 0 0";
+			else if (strcmp(commandTag, "UPDATE") == 0)
+				commandTag = "UPDATE 0";
+			else if (strcmp(commandTag, "DELETE") == 0)
+				commandTag = "DELETE 0";
+		}
 
 		/*
 		 * Tell client that we're done with this query.  Note we emit
@@ -1724,7 +1769,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.301 $ $Date: 2002/10/13 16:55:05 $\n");
+		puts("$Revision: 1.302 $ $Date: 2002/10/14 22:14:35 $\n");
 	}
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.110 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.111 2002/10/14 22:14:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -942,6 +942,7 @@ fireRules(Query *parsetree,
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
 		Node	   *event_qual;
 		List	   *actions;
+		QuerySource	qsrc;
 		List	   *r;
 
 		/* multiple rule action time */
@@ -949,7 +950,18 @@ fireRules(Query *parsetree,
 		event_qual = rule_lock->qual;
 		actions = rule_lock->actions;
 
-		if (event_qual != NULL && *instead_flag)
+		/* Determine correct QuerySource value for actions */
+		if (rule_lock->isInstead)
+		{
+			if (event_qual != NULL)
+				qsrc = QSRC_QUAL_INSTEAD_RULE;
+			else
+				qsrc = QSRC_INSTEAD_RULE;
+		}
+		else
+			qsrc = QSRC_NON_INSTEAD_RULE;
+
+		if (qsrc == QSRC_QUAL_INSTEAD_RULE)
 		{
 			Query	   *qual_product;
 
@@ -976,6 +988,7 @@ fireRules(Query *parsetree,
 			*qual_products = makeList1(qual_product);
 		}
 
+		/* Now process the rule's actions and add them to the result list */
 		foreach(r, actions)
 		{
 			Query	   *rule_action = lfirst(r);
@@ -986,6 +999,8 @@ fireRules(Query *parsetree,
 			rule_action = rewriteRuleAction(parsetree, rule_action,
 											event_qual, rt_index, event);
 
+			rule_action->querySource = qsrc;
+
 			results = lappend(results, rule_action);
 		}
 
@@ -993,9 +1008,10 @@ fireRules(Query *parsetree,
 		 * If this was an unqualified instead rule, throw away an
 		 * eventually saved 'default' parsetree
 		 */
-		if (event_qual == NULL && *instead_flag)
+		if (qsrc == QSRC_INSTEAD_RULE)
 			*qual_products = NIL;
 	}
+
 	return results;
 }
 

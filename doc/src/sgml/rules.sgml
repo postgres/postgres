@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.24 2002/09/21 18:32:53 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.25 2002/10/14 22:14:34 tgl Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -189,7 +189,10 @@
         In INSERT queries the target list describes the new rows that
 	should go into the result relation. It is the expressions in the VALUES
 	clause or the ones from the SELECT clause in INSERT ... SELECT.
-	Missing columns of the result relation will be filled in by the
+	The first step of the rewrite process adds target list entries
+	for any columns that were not assigned to by the original query
+	and have defaults.  Any remaining columns (with neither a given
+	value nor a default) will be filled in by the
 	planner with a constant NULL expression.
     </Para>
 
@@ -197,7 +200,7 @@
         In UPDATE queries, the target list describes the new rows that should
 	replace the old ones. In the rule system, it contains just the
 	expressions from the SET attribute = expression part of the query.
-	The planner will add missing columns by inserting expressions that
+	The planner will handle missing columns by inserting expressions that
 	copy the values from the old row into the new one. And it will add
 	the special <acronym>CTID</> entry just as for DELETE too.
     </Para>
@@ -278,8 +281,8 @@
 
 <Para>
     Views in <ProductName>PostgreSQL</ProductName> are implemented
-    using the rule system. In fact there is absolutely no difference
-    between a
+    using the rule system. In fact there is essentially no difference
+    between
 
 <ProgramListing>
 CREATE VIEW myview AS SELECT * FROM mytab;
@@ -1133,7 +1136,7 @@ int4ne(NEW.sl_avail, OLD.sl_avail)
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        *NEW*.sl_name, *NEW*.sl_avail,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data *NEW*, shoelace_data *OLD*;
 </ProgramListing>
 
@@ -1153,7 +1156,7 @@ INSERT INTO shoelace_log VALUES(
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        *NEW*.sl_name, *NEW*.sl_avail,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data *NEW*, shoelace_data *OLD*,
        <emphasis>shoelace_data shoelace_data</emphasis>;
 </ProgramListing>
@@ -1164,7 +1167,7 @@ INSERT INTO shoelace_log VALUES(
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        *NEW*.sl_name, *NEW*.sl_avail,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data *NEW*, shoelace_data *OLD*,
        shoelace_data shoelace_data
  <emphasis>WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)</emphasis>;
@@ -1174,7 +1177,9 @@ INSERT INTO shoelace_log VALUES(
     a WHERE clause either, but the planner and executor will have no
     difficulty with it.  They need to support this same functionality
     anyway for INSERT ... SELECT.
+   </para>
 
+   <para>
     In step 3 the original parse tree's qualification is added,
     restricting the result set further to only the rows touched
     by the original parse tree.
@@ -1182,21 +1187,21 @@ INSERT INTO shoelace_log VALUES(
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        *NEW*.sl_name, *NEW*.sl_avail,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data *NEW*, shoelace_data *OLD*,
        shoelace_data shoelace_data
  WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)
    <emphasis>AND bpchareq(shoelace_data.sl_name, 'sl7')</emphasis>;
 </ProgramListing>
 
-    Step 4 substitutes NEW references by the target list entries from the
-    original parse tree or with the matching variable references
+    Step 4 replaces NEW references by the target list entries from the
+    original parse tree or by the matching variable references
     from the result relation.
 
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        <emphasis>shoelace_data.sl_name</emphasis>, <emphasis>6</emphasis>,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data *NEW*, shoelace_data *OLD*,
        shoelace_data shoelace_data
  WHERE int4ne(<emphasis>6</emphasis>, *OLD*.sl_avail)
@@ -1208,7 +1213,7 @@ INSERT INTO shoelace_log VALUES(
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        shoelace_data.sl_name, 6,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data *NEW*, shoelace_data *OLD*,
        shoelace_data shoelace_data
  WHERE int4ne(6, <emphasis>shoelace_data.sl_avail</emphasis>)
@@ -1222,7 +1227,7 @@ INSERT INTO shoelace_log VALUES(
 <ProgramListing>
 INSERT INTO shoelace_log VALUES(
        shoelace_data.sl_name, 6,
-       current_user, current_timestamp
+       current_user, current_timestamp)
   FROM shoelace_data
  WHERE 6 != shoelace_data.sl_avail
    AND shoelace_data.sl_name = 'sl7';
@@ -1317,18 +1322,6 @@ CREATE RULE shoe_del_protect AS ON DELETE TO shoe
     parse trees will be empty and the whole query will become
     nothing because there is nothing left to be optimized or
     executed after the rule system is done with it.
-
-    <Note>
-    <Title>Note</Title>
-    <Para>
-    This way might irritate frontend applications because
-    absolutely nothing happened on the database and thus, the
-    backend will not return anything for the query. Not
-    even a <symbol>PGRES_EMPTY_QUERY</symbol> will be available in <application>libpq</>.
-    In <application>psql</application>, nothing happens. This might change in the future.
-    </Para>
-    </Note>
-
 </Para>
 
 <Para>
@@ -1516,7 +1509,7 @@ UPDATE shoelace_data SET
 
     Again an update rule has been applied and so the wheel
     turns on and we are in rewrite round 3. This time rule
-    <literal>log_shoelace</literal> gets applied what produces the extra
+    <literal>log_shoelace</literal> gets applied, producing the extra
     parse tree
 
 <ProgramListing>
@@ -1648,7 +1641,7 @@ sl9       |       0|pink      |    35|inch    |     88.9
 sl10      |    1000|magenta   |    40|inch    |    101.6
 </ProgramListing>
 
-    For the 1000 magenta shoelaces we must debt Al before we can
+    For the 1000 magenta shoelaces we must debit Al before we can
     throw 'em away, but that's another problem. The pink entry we delete.
     To make it a little harder for <ProductName>PostgreSQL</ProductName>,
     we don't delete it directly. Instead we create one more view
@@ -1796,6 +1789,56 @@ GRANT SELECT ON phone_number TO secretary;
     this should get changed quickly.
     </Para>
     </Note>
+</Para>
+</Sect1>
+
+<Sect1 id="rules-status">
+<Title>Rules and Command Status</Title>
+
+<Para>
+    The <ProductName>PostgreSQL</ProductName> server returns a command
+    status string, such as <literal>INSERT 149592 1</>, for each
+    query it receives.  This is simple enough when there are no rules
+    involved, but what happens when the query is rewritten by rules?
+</Para>
+
+<Para>
+    As of <ProductName>PostgreSQL</ProductName> 7.3, rules affect the
+    command status as follows:
+
+    <orderedlist>
+     <listitem>
+      <para>
+       If there is no unconditional INSTEAD rule for the query, then
+       the originally given query will be executed, and its command
+       status will be returned as usual.  (But note that if there were
+       any conditional INSTEAD rules, the negation of their qualifications
+       will have been added to the original query.  This may reduce the
+       number of rows it processes, and if so the reported status will
+       be affected.)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If there is any unconditional INSTEAD rule for the query, then
+       the original query will not be executed at all.  In this case,
+       the server will return the command status for the last query that
+       was inserted by an INSTEAD rule (conditional or unconditional)
+       and is of the same type (INSERT, UPDATE, or DELETE) as the original
+       query.  If no query meeting those requirements is added by any
+       rule, then the returned command status shows the original query
+       type and zeroes for the tuple-count and OID fields.
+      </para>
+     </listitem>
+    </orderedlist>
+</Para>
+
+<Para>
+    The programmer can ensure that any desired INSTEAD rule is the one
+    that sets the command status in the second case, by giving it the
+    alphabetically last rule name among the active rules, so that it
+    fires last.
 </Para>
 </Sect1>
 
