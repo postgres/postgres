@@ -379,3 +379,106 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-hackers-owner+M13750=candle.pha.pa.us=pgman@postgresql.org Mon Oct  1 05:59:15 2001
+Return-path: <pgsql-hackers-owner+M13750=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id f919xF512590
+	for <pgman@candle.pha.pa.us>; Mon, 1 Oct 2001 05:59:15 -0400 (EDT)
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by server1.pgsql.org (8.11.6/8.11.6) with ESMTP id f919xA207817
+	for <pgman@candle.pha.pa.us>; Mon, 1 Oct 2001 04:59:10 -0500 (CDT)
+	(envelope-from pgsql-hackers-owner+M13750=candle.pha.pa.us=pgman@postgresql.org)
+Received: from mrsgntmail01.mediaring.com.sg (mserver.mediaring.com.sg [203.208.141.175])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f919rE320926
+	for <pgsql-hackers@postgreSQL.org>; Mon, 1 Oct 2001 05:53:15 -0400 (EDT)
+	(envelope-from jana-reddy@mediaring.com.sg)
+Received: by MRSGNTMAIL01 with Internet Mail Service (5.5.2650.21)
+	id <PMTCM7SJ>; Mon, 1 Oct 2001 18:03:34 +0800
+Received: from mediaring.com.sg (10.1.0.131 [10.1.0.131]) by mrsgntmail01.mediaring.com.sg with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2650.21)
+	id PMTCM7SH; Mon, 1 Oct 2001 18:03:25 +0800
+From: Janardhana Reddy <jana-reddy@mediaring.com.sg>
+To: Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>,
+   janareddy
+  <jana-reddy@mediaring.com.sg>
+Message-ID: <3BB83DF0.8946973@mediaring.com.sg>
+Date: Mon, 01 Oct 2001 17:57:04 +0800
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.4.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+Subject: Re: [HACKERS] PERFORMANCE IMPROVEMENT by mapping  WAL FILES
+References: <200109282137.f8SLbpm01890@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+     I have just  completed the functional testing  the WAL using mmap  , it is
+
+ working  fine,  I  have tested  by commenting out the  "CreateCheckPoint "
+functionality so that
+   when i kill the postgres and restart it will redo all the records from the
+WAL log file  which
+  is updated  using mmap.
+     Just i need  to  clean code and to do some stress testing.
+ By the end of this week i should able to  complete  the stress test  and
+generate the patch file .
+    As Tom Lane mentioned  i see the  problem in portability  to all platforms,
+
+      what i propose is to use mmap for only WAL  for some platforms like
+  linux,freebsd etc . For  other platforms we can use the existing method by
+slightly modifying the
+ write()  routine to write only the modified part of the page.
+
+Regards
+jana
+
+>
+>
+> OK, I have talked to Tom Lane about this on the phone and we have a few
+> ideas.
+>
+> Historically, we have avoided mmap() because of portability problems,
+> and because using mmap() to write to large tables could consume lots of
+> address space with little benefit.  However, I perhaps can see WAL as
+> being a good use of mmap.
+>
+> First, there is the issue of using mmap().  For OS's that have the
+> mmap() MAP_SHARED flag, different backends could mmap the same file and
+> each see the changes.  However, keep in mind we still have to fsync()
+> WAL, so we need to use msync().
+>
+> So, looking at the benefits of using mmap(), we have overhead of
+> different backends having to mmap something that now sits quite easily
+> in shared memory.  Now, I can see mmap reducing the copy from user to
+> kernel, but there are other ways to fix that.  We could modify the
+> write() routines to write() 8k on first WAL page write and later write
+> only the modified part of the page to the kernel buffers.  The old
+> kernel buffer is probably still around so it is unlikely to require a
+> read from the file system to read in the rest of the page.  This reduces
+> the write from 8k to something probably less than 4k which is better
+> than we can do with mmap.
+>
+> I will add a TODO item to this effect.
+>
+> As far as reducing the write to disk from 8k to 4k, if we have to
+> fsync/msync, we have to wait for the disk to spin to the proper location
+> and at that point writing 4k or 8k doesn't seem like much of a win.
+>
+> In summary, I think it would be nice to reduce the 8k transfer from user
+> to kernel on secondary page writes to only the modified part of the
+> page.  I am uncertain if mmap() or anything else will help the physical
+> write to the disk.
+>
+> --
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
