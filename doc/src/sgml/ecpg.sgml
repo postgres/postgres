@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.57 2003/12/01 22:36:40 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.58 2003/12/16 01:06:39 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -369,7 +369,7 @@ EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
 EXEC SQL SET CONNECTION <replaceable>connection-name</replaceable>;
 </programlisting>
    This option is particularly convenient if many statements are to be
-   executed on the same connection.
+   executed on the same connection.  It is not thread-aware.
   </para>
  </sect1>
 
