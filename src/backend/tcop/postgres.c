@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.401 2004/04/25 18:23:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.402 2004/05/07 01:53:41 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2531,18 +2531,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		if (IsUnderPostmaster && Log_disconnections)
 			on_proc_exit(log_disconnections,0);
-	}
-
-	/*
-	 * Post-processing for command line options.
-	 */
-	if (log_statement_stats &&
-		(log_parser_stats || log_planner_stats || log_executor_stats))
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("statement-level statistics are disabled because parser, planner, or executor statistics are on")));
-		SetConfigOption("log_statement_stats", "false", ctx, gucsource);
 	}
 
 	if (!IsUnderPostmaster || ExecBackend)
