@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.124 2004/01/19 19:04:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.125 2004/02/25 19:41:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1611,6 +1611,10 @@ DetermineLocalTimeZone(struct tm * tm)
 		 * and reassemble to get a representation of local time.
 		 */
 		tx = localtime(&mytime);
+		if (!tx)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
 			UNIX_EPOCH_JDATE;
 		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
@@ -1632,6 +1636,10 @@ DetermineLocalTimeZone(struct tm * tm)
 		mysec += delta1;
 		mytime = (time_t) mysec;
 		tx = localtime(&mytime);
+		if (!tx)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
 			UNIX_EPOCH_JDATE;
 		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
@@ -1653,6 +1661,10 @@ DetermineLocalTimeZone(struct tm * tm)
 			mysec += (delta2 - delta1);
 			mytime = (time_t) mysec;
 			tx = localtime(&mytime);
+			if (!tx)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 			day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
 				UNIX_EPOCH_JDATE;
 			locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;

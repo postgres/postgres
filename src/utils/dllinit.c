@@ -1,4 +1,4 @@
-#ifdef CYGWIN
+#ifdef __CYGWIN__
 #include <cygwin/version.h>
 #endif
 #if CYGWIN_VERSION_DLL_MAJOR < 1001
@@ -88,7 +88,9 @@ DllMain(
 	__hDllInstance_base = hInst;
 #endif   /* __CYGWIN__ */
 
+#ifdef __CYGWIN__
 	_impure_ptr = __imp_reent_data;
+#endif
 
 	switch (reason)
 	{

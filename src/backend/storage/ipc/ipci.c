@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.64 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.65 2004/02/25 19:41:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,10 @@
  *		Creates and initializes shared memory and semaphores.
  *
  * This is called by the postmaster or by a standalone backend.
- * It is NEVER called by a backend forked from the postmaster;
- * for such a backend, the shared memory is already ready-to-go.
+ * It is also called by a backend forked from the postmaster under
+ * the EXEC_BACKEND case
+ *
+ * In the non EXEC_BACKEND case, backends already have shared memory ready-to-go.
  *
  * If "makePrivate" is true then we only need private memory, not shared
  * memory.	This is true for a standalone backend, false for a postmaster.
@@ -47,53 +49,68 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 								int maxBackends,
 								int port)
 {
-	int			size;
-	int			numSemas;
-	PGShmemHeader *seghdr;
+	PGShmemHeader *seghdr = NULL;
+	if (!IsUnderPostmaster)
+	{
+		int	size;
+		int	numSemas;
 
-	/*
-	 * Size of the Postgres shared-memory block is estimated via
-	 * moderately-accurate estimates for the big hogs, plus 100K for the
-	 * stuff that's too small to bother with estimating.
-	 */
-	size = BufferShmemSize();
-	size += LockShmemSize(maxBackends);
-	size += XLOGShmemSize();
-	size += CLOGShmemSize();
-	size += LWLockShmemSize();
-	size += SInvalShmemSize(maxBackends);
-	size += FreeSpaceShmemSize();
+		/*
+		 * Size of the Postgres shared-memory block is estimated via
+		 * moderately-accurate estimates for the big hogs, plus 100K for the
+		 * stuff that's too small to bother with estimating.
+		 */
+		size = BufferShmemSize();
+		size += LockShmemSize(maxBackends);
+		size += XLOGShmemSize();
+		size += CLOGShmemSize();
+		size += LWLockShmemSize();
+		size += SInvalShmemSize(maxBackends);
+		size += FreeSpaceShmemSize();
 #ifdef EXEC_BACKEND
-	size += ShmemBackendArraySize();
+		size += ShmemBackendArraySize();
 #endif
-	size += 100000;
-	/* might as well round it off to a multiple of a typical page size */
-	size += 8192 - (size % 8192);
+		size += 100000;
+		/* might as well round it off to a multiple of a typical page size */
+		size += 8192 - (size % 8192);
 
-	elog(DEBUG3, "invoking IpcMemoryCreate(size=%d)", size);
+		elog(DEBUG3, "invoking IpcMemoryCreate(size=%d)", size);
 
-	/*
-	 * Create the shmem segment
-	 */
-	seghdr = PGSharedMemoryCreate(size, makePrivate, port);
+		/*
+		 * Create the shmem segment
+		 */
+		seghdr = PGSharedMemoryCreate(size, makePrivate, port);
 
-	/*
-	 * Create semaphores
-	 */
-	numSemas = ProcGlobalSemas(maxBackends);
-	numSemas += SpinlockSemas();
-	PGReserveSemaphores(numSemas, port);
+		/*
+		 * Create semaphores
+		 */
+		numSemas = ProcGlobalSemas(maxBackends);
+		numSemas += SpinlockSemas();
+		PGReserveSemaphores(numSemas, port);
+	}
+	else
+	{
+		/*
+		 * Attach to the shmem segment.
+		 * (this should only ever be reached by EXEC_BACKEND code,
+		 *  and only then with makePrivate == false)
+		 */
+		Assert(ExecBackend && !makePrivate);
+		seghdr = PGSharedMemoryCreate(-1, makePrivate, 0);
+	}
+
 
 	/*
 	 * Set up shared memory allocation mechanism
 	 */
-	InitShmemAllocation(seghdr, true);
+	InitShmemAllocation(seghdr, !IsUnderPostmaster);
 
 	/*
 	 * Now initialize LWLocks, which do shared memory allocation and are
 	 * needed for InitShmemIndex.
 	 */
-	CreateLWLocks();
+	if (!IsUnderPostmaster)
+		CreateLWLocks();
 
 	/*
 	 * Set up shmem.c index hashtable
@@ -137,41 +154,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	/*
 	 * Alloc the win32 shared backend array
 	 */
-	ShmemBackendArrayAllocation();
+	if (!IsUnderPostmaster)
+		ShmemBackendArrayAllocation();
 #endif
 }
-
-
-#ifdef EXEC_BACKEND
-/*
- * AttachSharedMemoryAndSemaphores
- *		Attaches to the existing shared resources.
- */
-
-/* FIXME: [fork/exec] This function is starting to look pretty much like
-	CreateSharedMemoryAndSemaphores. Refactor? */
-void
-AttachSharedMemoryAndSemaphores(void)
-{
-	PGShmemHeader *seghdr = PGSharedMemoryCreate(-1,false,-1);
-
-	InitShmemAllocation(seghdr, false);
-
-	InitShmemIndex();
-
-	XLOGShmemInit();
-	CLOGShmemInit();
-	InitBufferPool();
-
-	InitLocks();
-	InitLockTable(MaxBackends);
-
-	InitProcGlobal(MaxBackends);
-
-	CreateSharedInvalidationState(MaxBackends);
-
-	InitFreeSpaceMap();
-
-	PMSignalInit();
-}
-#endif
