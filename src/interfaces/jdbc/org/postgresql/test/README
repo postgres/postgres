@@ -168,7 +168,7 @@ behaviour or the intended implementation of a feature?
 ----------------------
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
 
@@ -185,7 +185,7 @@ public class FooTest extends TestCase {
     }
 
     protected void setUp() throws Exception {
-        con = JDBC2Tests.openDB();
+        con = TestUtil.openDB();
         stmt = con.createStatement();
 
         // Drop the test table if it already exists for some
@@ -214,7 +214,7 @@ public class FooTest extends TestCase {
             stmt.close();
         }
         if (con != null) {
-              JDBC2Tests.closeDB(con);
+              TestUtil.closeDB(con);
         }
     }
        
