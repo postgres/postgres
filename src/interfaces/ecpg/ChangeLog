@@ -1,3 +1,8 @@
+Tue Aug 24 15:53:28 MEST 1999
+
+	- made NULL a valid bool value
+	- check for indicator variables on NULL
+
 Wed Feb 11 10:58:13 CET 1998
 
 	- Added '-d' option to turn on debugging.

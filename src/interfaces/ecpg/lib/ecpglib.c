@@ -766,7 +766,16 @@ ECPGexecute(struct statement * stmt)
 							case ECPGt_unsigned_long:
 								((long *) var->ind_value)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
 								break;
+							case ECPGt_NO_INDICATOR:
+								if (PQgetisnull(results, act_tuple, act_field))
+								{
+									register_error(ECPG_MISSING_INDICATOR, "NULL value without indicator variable on line %d.", stmt->lineno);
+									status = false;
+								}
+								break;
 							default:
+								register_error(ECPG_UNSUPPORTED, "Unsupported indicator type %s on line %d.", ECPGtype_name(var->ind_type), stmt->lineno);
+								status = false;
 								break;
 						}
 
@@ -889,6 +898,11 @@ ECPGexecute(struct statement * stmt)
 									else if (pval[0] == 't' && pval[1] == '\0')
 									{
 										((char *) var->value)[act_tuple] = true;
+										break;
+									}
+									else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))
+									{
+										// NULL is valid
 										break;
 									}
 								}
