@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.59 2001/08/01 23:52:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.60 2001/08/02 14:27:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,26 +290,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/*
-		 * Disallow auth methods that need AF_INET sockets to work.
-		 * Allow "ident" if we can get the identity of the connection
-		 * peer on Unix domain sockets from the OS.
+		 * Disallow auth methods that always need AF_INET sockets to work.
 		 */
 		if (port->auth_method == uaKrb4 ||
 			port->auth_method == uaKrb5)
 			goto hba_syntax;
-#ifndef SO_PEERCRED
-		if (port->auth_method == uaIdent)
-		{
-			/* Give a special error message for this case... */
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 "parse_hba: \"ident\" auth is not supported on local connections on this platform\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-
-			*error_p = true;
-			return;
-		}
-#endif
 
 		/*
 		 * If this record doesn't match the parameters of the connection
@@ -326,10 +311,10 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	{
 		struct in_addr file_ip_addr, mask;
 
-#ifdef USE_SSL
-		/* If SSL, then check that we are on SSL */
 		if (strcmp(token, "hostssl") == 0)
 		{
+#ifdef USE_SSL
+			/* Record does not match if we are not on an SSL connection */
 			if (!port->ssl)
 				return;
 
@@ -337,12 +322,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			/* Or a client certificate */
 
 			/* Since we were on SSL, proceed as with normal 'host' mode */
-		}
 #else
-		/* If not SSL, we don't support this */
-		if (strcmp(token, "hostssl") == 0)
+			/* We don't accept this keyword at all if no SSL support */
 			goto hba_syntax;
 #endif
+		}
 
 		/* Get the database. */
 		line = lnext(line);
@@ -866,8 +850,6 @@ ident_inet(const struct in_addr remote_ip_addr,
 	return ident_return;
 }
 
-#ifdef SO_PEERCRED
-
 /*
  *  Ask kernel about the credentials of the connecting process and
  *  determine the symbolic name of the corresponding user.
@@ -878,25 +860,11 @@ ident_inet(const struct in_addr remote_ip_addr,
 static bool
 ident_unix(int sock, char *ident_user)
 {
+#ifdef SO_PEERCRED
+	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred	peercred;
 	socklen_t		so_len;
 	struct passwd *pass;
-
-#ifdef SO_PASSCRED
-	int passcred = -1;
-
-	so_len = sizeof(passcred);
-	if (setsockopt(sock, SOL_SOCKET, SO_PASSCRED, &passcred, so_len) != 0)
-	{
-		/* We could not set the socket to pass credentials */
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "Could not set the UNIX socket to pass credentials: %s\n",
-				 strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return false;
-	}
-#endif /* SO_PASSCRED */
 
 	errno = 0;
 	so_len = sizeof(peercred);
@@ -928,9 +896,17 @@ ident_unix(int sock, char *ident_user)
 	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX);
 
 	return true;
-}
+
+#else /* not SO_PEERCRED */
+
+	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			 "IDENT auth is not supported on local connections on this platform\n");
+	fputs(PQerrormsg, stderr);
+	pqdebug("%s", PQerrormsg);
+	return false;
 
 #endif /* SO_PEERCRED */
+}
 
 /*
  *  Determine the username of the initiator of the connection described
@@ -954,12 +930,10 @@ authident(hbaPort *port)
 							port->laddr.in.sin_port, ident_user))
 				return STATUS_ERROR;
 			break;
-#ifdef SO_PEERCRED
 		case AF_UNIX:
 			if (!ident_unix(port->sock, ident_user))
 				return STATUS_ERROR;
 			break;
-#endif
 		default:
 			return STATUS_ERROR;
 	}
