@@ -267,6 +267,35 @@ SELECT unique1 FROM tenk1 WHERE unique1 < 5;
        4
 (5 rows)
 
+-- ALTER TABLE ... RENAME on non-table relations
+-- renaming indexes (FIXME: this should probably test the index's functionality)
+ALTER TABLE onek_unique1 RENAME TO tmp_onek_unique1;
+ALTER TABLE tmp_onek_unique1 RENAME TO onek_unique1;
+-- renaming views
+CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
+ALTER TABLE tmp_view RENAME TO tmp_view_new;
+-- 5 values, sorted 
+SELECT unique1 FROM tenk1 WHERE unique1 < 5;
+ unique1 
+---------
+       0
+       1
+       2
+       3
+       4
+(5 rows)
+
+DROP VIEW tmp_view_new;
+-- renaming sequences
+CREATE SEQUENCE foo_seq;
+ALTER TABLE foo_seq RENAME TO foo_seq_new;
+SELECT * FROM foo_seq_new;
+ sequence_name | last_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
+---------------+------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
+  foo_seq       |          1 |            1 | 9223372036854775807 |         1 |     1 |       1 | f         | f
+  (1 row)
+
+DROP SEQUENCE foo_seq_new;
 -- FOREIGN KEY CONSTRAINT adding TEST
 CREATE TABLE tmp2 (a int primary key);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'tmp2_pkey' for table 'tmp2'

@@ -163,6 +163,22 @@ ALTER TABLE ten_k RENAME TO tenk1;
 -- 5 values, sorted 
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 
+-- ALTER TABLE ... RENAME on non-table relations
+-- renaming indexes (FIXME: this should probably test the index's functionality)
+ALTER TABLE onek_unique1 RENAME TO tmp_onek_unique1;
+ALTER TABLE tmp_onek_unique1 RENAME TO onek_unique1;
+-- renaming views
+CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
+ALTER TABLE tmp_view RENAME TO tmp_view_new;
+-- 5 values, sorted 
+SELECT unique1 FROM tenk1 WHERE unique1 < 5;
+DROP VIEW tmp_view_new;
+-- renaming sequences
+CREATE SEQUENCE foo_seq;
+ALTER TABLE foo_seq RENAME TO foo_seq_new;
+SELECT * FROM foo_seq_new;
+DROP SEQUENCE foo_seq_new;
+
 -- FOREIGN KEY CONSTRAINT adding TEST
 
 CREATE TABLE tmp2 (a int primary key);
