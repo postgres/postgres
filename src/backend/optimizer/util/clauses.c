@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154 2003/10/29 18:10:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.1 2003/12/09 01:56:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2960,36 +2960,31 @@ query_tree_mutator(Query *query,
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 		RangeTblEntry *newrte;
 
+		FLATCOPY(newrte, rte, RangeTblEntry);
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
 			case RTE_SPECIAL:
-				/* nothing to do, don't bother to make a copy */
+				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;
 			case RTE_SUBQUERY:
 				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
 				{
-					FLATCOPY(newrte, rte, RangeTblEntry);
 					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
 					MUTATE(newrte->subquery, newrte->subquery, Query *);
-					rte = newrte;
 				}
 				break;
 			case RTE_JOIN:
 				if (!(flags & QTW_IGNORE_JOINALIASES))
 				{
-					FLATCOPY(newrte, rte, RangeTblEntry);
 					MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
-					rte = newrte;
 				}
 				break;
 			case RTE_FUNCTION:
-				FLATCOPY(newrte, rte, RangeTblEntry);
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
-				rte = newrte;
 				break;
 		}
-		FastAppend(&newrt, rte);
+		FastAppend(&newrt, newrte);
 	}
 	query->rtable = FastListValue(&newrt);
 	return query;
