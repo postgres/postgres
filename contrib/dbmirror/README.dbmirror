@@ -1,0 +1,204 @@
+DBMirror - Postgres Database Mirroring
+===================================================
+
+
+DBMirror is a database mirroring system developed for the Postgres
+database Written and maintened by Steven Singer(ssinger@navtechinc.com)
+
+
+(c) 2001-2002 Navtech Systems Support Inc.
+Released under the GNU Public License version 2. See COPYING.
+
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+
+
+Overrview
+--------------------------------------------------------------------
+
+The mirroring system is trigger based and provides the following key features:
+
+-Support for multiple mirror slaves
+-Transactions are maintained
+-Per table selection of what gets mirrored.
+
+
+The system is based on the idea that a master database exist where all
+edits are made to the tables being mirrored.   A trigger attatched to the
+tables being mirrored runs logging information about the edit to 
+the Pending table and  PendingData table. 
+
+A perl script(DBMirror.pl) runs continiously for each slave database(A database
+that the change is supposed to be mirrored to) examining the Pending
+table; searching for transactions that need to be sent to that particular slave 
+database.  Those transactions are then mirrored to the slave database and
+the MirroredTransaction table is updated to reflect that the transaction has
+been sent.
+
+If the transaction has been sent to all know slave hosts (All entries
+in the MirrorHost table) then all records of it are purged from the
+Pending tables.
+
+Installation Instructions
+------------------------------------------------------------------------
+
+1) Compile pending.c
+
+The file pending.c contains the recordchange trigger.  This runs every
+time a row inside of a table being mirrored changes.
+
+
+To build the trigger run  make on the "Makefile" in the DBMirror directory.
+
+The Makefile supplied assumes that the postgres include files are in 
+/usr/local/pgsql/include/server.  
+
+Postgres-7.1.x installations should change this to
+/usr/local/pgsql/include  (The server part is for 7.2+)
+
+If you have installed the postgres include files to another location then
+modify the Makefile to reflect this.
+
+The trigger requires that all postgres headers be installed, this is
+accomplished in postgresql(7.1 or 7.2) by running "make install-all-headers"
+in the postgres source directory.
+
+The Makefile should create a file named pending.so that contains the trigger.
+
+Install this file in /usr/local/pgsql/lib  (or another suitable location).
+
+If you choose a different location the MirrorSetup.sql script will need
+to be modified to reflect your new location.   The CREATE FUNCTION command
+in the MirrorSetup.sql script associates the trigger function with the
+pending.so shared library.  Modify the arguments to this command if you
+choose to install the trigger elsewhere.
+
+2) Run MirroSetup.sql
+
+This file contains SQL commands to setup the Mirroring environment.  
+This includes
+
+-Telling Postgres about the "recordchange" trigger function.
+-Creating the Pending,PendingData, MirrorHost, MirroredTransaction tables
+
+
+To execute the script use psql as follows 
+
+"psql -f MirrorSetup.sql  MyDatabaseName"
+
+where MyDatabaseName is the name of the database you wish to install mirroring
+on(Your master).
+
+
+3) Create slaveDatabase.conf files.
+
+Each slave database needs its own configuration file for the 
+DBMirror.pl script.  See slaveDatabase.conf for a sample.
+
+The master settings refer to the master database(The one that is
+being mirrored).
+
+The slave settings refer to the database that the data is being mirrored to.
+The slaveHost parameter must refer to the machine name of the slave (Either
+a resolvable hostname or an IP address).  The value for slave host
+must match the Hostname field in the MirrorHost table(See step 6).
+
+The master user must have sufficient permissions to modify the Pending
+tables and to read all of the tables being mirrored.
+
+The slave user must have enough permissions on the slave database to
+modify(INSERT,UPDATE,DELETE) any tables on the slave system that are being
+mirrored. 
+
+4) Add the trigger to tables.
+
+Execute the SQL code in AddTrigger.sql once for each table that should
+be mirrored.   Replace MyTableName with the name of the table that should
+be mirrored.
+
+5)  Create the slave database.
+
+The DBMirror system keeps the contents of mirrored tables identical on the
+master and slave databases.  When you first install the mirror triggers the
+master and slave databases must be the same.
+
+If you are starting with an empty master database then the slave should
+be empty as well.  Otherwise use pg_dump to ensure that the slave database
+tables are initially identical to the master.
+
+6) Add entries in the MirrorHost table.
+
+Each slave database must have an entry in the MirrorHost table.
+
+The name of the host in the MirrorHost table must exactly match the
+slaveHost variable for that slave in the configuration file.
+
+For example
+INSERT INTO "MirrorHost" ("HostName") VALUES ('mySlaveMachine.mycompany.com');
+
+
+6)  Start DBMirror.pl
+
+
+DBMirror.pl is the perl script that handles the mirroring.  
+
+It requires the Perl library Pg(See src/interfaces/perl5 in the postgres 
+source distribution).
+
+It takes its configuration file as an argument(The one from step 3)
+One instance of DBMirror.pl runs for each slave machine that is receiving
+mirrored data.
+
+Any errors are printed to standard out and emailed to the address specified in
+the configuration file. 
+
+DBMirror can be run from the master, the slave, or a third machine as long
+as it is able to access both the master and slave databases.
+
+7) Periodically run clean_pending.pl 
+clean_pending.pl cleans out any entries from the Pending tables that
+have already been mirrored to all hosts in the MirrorHost table.
+It uses the same configuration file as DBMirror.pl.
+
+Normally DBMirror.pl will clean these tables as it goes but in some 
+circumstances this will not happen.
+
+For example if a transaction has been mirrored to all slaves except for
+one, then that host is removed from the MirrorHost table(It stops being
+a mirror slave) the transactions that had already been mirrored to 
+all the other hosts will not be deleted from the Pending tables by 
+DBMirror.pl since DBMirror.pl will run against these transactions again
+since they have already been sent to all the other hosts.
+
+clean_pending.pl will remove these transactions.
+
+TODO(Current Limitations)
+----------
+-Support for selective mirroring based on the content of data.
+-Support for BLOB's.
+-Support for conflict resolution.
+-Batching SQL commands in DBMirror for better performance over WAN's.
+-Better support for dealing with Schema changes.
+
+Tested Platforms:
+------------------
+
+DBMirror has been tested on the following configurations but should
+work on any platform with Postgres >= 7.1 and Perl 5.6. 
+
+RedHat Linux 7.1 & 6.2
+ -Postgres 7.1.2
+ -Perl 5.6
+
+Mandrake Linux 8.0(Limited Testing)
+ -Postgres 7.2
+ -Perl 5.6
+
+
+Steven Singer
+Navtech Systems Support Inc.
+ssinger@navtechinc.com
