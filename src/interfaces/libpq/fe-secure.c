@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.40 2004/05/07 00:24:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.41 2004/06/03 00:13:19 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -922,7 +922,7 @@ initialize_SSL(PGconn *conn)
 	char		fnbuf[2048];
 #endif
 
-	if(!init_ssl_system(conn))
+	if(init_ssl_system(conn))
 		return -1;
 
 #ifndef WIN32
