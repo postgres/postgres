@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.292 2004/08/27 02:09:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.293 2004/08/30 00:33:52 tgl Exp $
 -->
 
 <appendix id="release">
@@ -327,11 +327,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.292 2004/08/27 02:09:18 momjian
 
      <listitem>
       <para>
-       Syntax checking of array input processing has been tighened up
+       Syntax checking of array input values has been tightened up
        considerably. Junk that was previously allowed in odd places with
-       odd results now causes an ERROR. Also changed behavior with respect
-       to whitespace surrounding array elements; trailing whitespace is now
-       ignored as well as leading whitespace (which has always been ignored).
+       odd results now causes an ERROR. Empty-string element values must
+       now be written as <literal>""</>, rather than writing nothing.
+       Also changed behavior with respect to whitespace surrounding array
+       elements: trailing whitespace is now ignored, for symmetry with leading
+       whitespace (which has always been ignored).
       </para>
      </listitem>
     </itemizedlist>
@@ -1186,7 +1188,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.292 2004/08/27 02:09:18 momjian
 
     <listitem>
      <para>
-      Reject non-rectangular array literals as erroneous (Joe)
+      Reject non-rectangular array values as erroneous (Joe)
      </para>
      <para>
       Formerly, <literal>array_in</literal> would silently build a
@@ -1196,11 +1198,25 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.292 2004/08/27 02:09:18 momjian
 
     <listitem>
       <para>
-       Syntax checking of array input processing considerably tighened up (Joe)
+       Syntax checking of array input values considerably tightened up (Joe)
       </para>
      <para>
        Junk that was previously allowed in odd places with odd results now
-       causes an ERROR.
+       causes an ERROR: for example, non-whitespace after the closing
+       right brace.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+       Empty-string array element values must now be written as
+       <literal>""</>, rather than writing nothing (Joe)
+      </para>
+     <para>
+       Formerly, both ways of writing an empty-string element value were
+       allowed, but now a quoted empty string is required.  The case where
+       nothing at all appears will probably be taken over to mean a NULL
+       element value in some future release.
       </para>
     </listitem>
 
@@ -1210,14 +1226,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.292 2004/08/27 02:09:18 momjian
       </para>
      <para>
        Formerly leading whitespace was ignored, but trailing whitespace
-       between an element and the delimiter or right brace was significant.
-       Now trailing whitespace is also ignored.
+       between an element value and the delimiter or right brace was
+       significant.  Now trailing whitespace is also ignored.
       </para>
     </listitem>
 
     <listitem>
      <para>
-      Emit array literals with explicit array bounds when lower bound is not one
+      Emit array values with explicit array bounds when lower bound is not one
       (Joe)
      </para>
     </listitem>
