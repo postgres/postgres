@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.71 1999/08/16 02:17:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.72 1999/08/16 23:07:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 
 
 static List *switch_outer(List *clauses);
-static List *set_tlist_sort_info(List *tlist, List *pathkeys);
+static int set_tlist_sort_info(List *tlist, List *pathkeys);
 static Scan *create_scan_node(Path *best_path, List *tlist);
 static Join *create_join_node(JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
@@ -804,40 +804,65 @@ switch_outer(List *clauses)
  *	  Sets the reskey and reskeyop fields of resdom nodes in a target list
  *	  for a sort node.
  *
- * 'tlist' is the target list
+ * 'tlist' is the target list (which is modified in-place).
+ *			tlist's reskey fields must be clear to start with.
  * 'pathkeys' is the desired pathkeys for the sort.  NIL means no sort.
  *
- * Returns the modified-in-place target list.
+ * Returns the number of sort keys assigned (which might be less than
+ * length(pathkeys)!)
  */
-static List *
+static int
 set_tlist_sort_info(List *tlist, List *pathkeys)
 {
-	int			keyno = 1;
+	int			keysassigned = 0;
 	List	   *i;
 
 	foreach(i, pathkeys)
 	{
 		List		   *keysublist = (List *) lfirst(i);
-		PathKeyItem	   *pathkey;
-		Resdom		   *resdom;
+		PathKeyItem	   *pathkey = NULL;
+		Resdom		   *resdom = NULL;
+		List		   *j;
 
 		/*
 		 * We can sort by any one of the sort key items listed in this
-		 * sublist.  For now, we always take the first one --- is there
-		 * any way of figuring out which might be cheapest to execute?
-		 * (For example, int4lt is likely much cheaper to execute than
-		 * numericlt, but both might appear in the same pathkey sublist...)
+		 * sublist.  For now, we take the first one that corresponds to
+		 * an available Var in the tlist.
+		 *
+		 * XXX if we have a choice, is there any way of figuring out which
+		 * might be cheapest to execute?  (For example, int4lt is likely
+		 * much cheaper to execute than numericlt, but both might appear in
+		 * the same pathkey sublist...)  Not clear that we ever will have
+		 * a choice in practice, so it may not matter.
 		 */
-		pathkey = lfirst(keysublist);
-		Assert(IsA(pathkey, PathKeyItem));
-		resdom = tlist_member((Var *) pathkey->key, tlist);
+		foreach(j, keysublist)
+		{
+			pathkey = lfirst(j);
+			Assert(IsA(pathkey, PathKeyItem));
+			resdom = tlist_member((Var *) pathkey->key, tlist);
+			if (resdom)
+				break;
+		}
 		if (!resdom)
 			elog(ERROR, "set_tlist_sort_info: cannot find tlist item to sort");
-		resdom->reskey = keyno;
-		resdom->reskeyop = get_opcode(pathkey->sortop);
-		keyno++;
+
+		/*
+		 * The resdom might be already marked as a sort key, if the pathkeys
+		 * contain duplicate entries.  (This can happen in scenarios where
+		 * multiple mergejoinable clauses mention the same var, for example.)
+		 * In that case the current pathkey is essentially a no-op, because
+		 * only one value can be seen within any subgroup where it would be
+		 * consulted.  We can ignore it.
+		 */
+		if (resdom->reskey == 0)
+		{
+			/* OK, mark it as a sort key and set the sort operator regproc */
+			resdom->reskey = ++keysassigned;
+			resdom->reskeyop = get_opcode(pathkey->sortop);
+		}
 	}
-	return tlist;
+
+	return keysassigned;
 }
 
 /*
@@ -885,34 +910,37 @@ make_noname(List *tlist,
 			Plan *plan_node)
 {
 	List	   *noname_tlist;
+	int			numsortkeys;
+	Plan	   *tmpplan;
 	Noname	   *retval;
 
 	/* Create a new target list for the noname, with sort keys set. */
-	noname_tlist = set_tlist_sort_info(new_unsorted_tlist(tlist),
-									   pathkeys);
+	noname_tlist = new_unsorted_tlist(tlist);
+	numsortkeys = set_tlist_sort_info(noname_tlist, pathkeys);
 
-	if (pathkeys != NIL)
+	if (numsortkeys > 0)
 	{
 		/* need to sort */
-		retval = (Noname *) make_seqscan(tlist,
-										 NIL,
-										 _NONAME_RELATION_ID_,
-										 (Plan *) make_sort(noname_tlist,
-													_NONAME_RELATION_ID_,
-															plan_node,
-															length(pathkeys)));
+		tmpplan = (Plan *) make_sort(noname_tlist,
+									 _NONAME_RELATION_ID_,
+									 plan_node,
+									 numsortkeys);
 	}
 	else
 	{
 		/* no sort */
-		retval = (Noname *) make_seqscan(tlist,
-										 NIL,
+		tmpplan = (Plan *) make_material(noname_tlist,
 										 _NONAME_RELATION_ID_,
-										 (Plan *) make_material(noname_tlist,
-													_NONAME_RELATION_ID_,
-																plan_node,
-																0));
+										 plan_node,
+										 0);
 	}
+
+	/* Return a seqscan using the original tlist */
+	retval = (Noname *) make_seqscan(tlist,
+									 NIL,
+									 _NONAME_RELATION_ID_,
+									 tmpplan);
+
 	return retval;
 }
 
