@@ -1219,25 +1219,21 @@ if test -n "$NSGMLS"; then
   AC_CHECK_PROGS(SGMLSPL, sgmlspl)
 fi
 
-# check whether 'test -ef' works
-if (test "$srcdir" -ef "$srcdir") >/dev/null 2>&1 ; then
-  test_ef_works=yes
-else
-  test_ef_works=no
-fi
-
 abs_top_srcdir=
 AC_SUBST(abs_top_srcdir)
 
-if test "$test_ef_works" = yes ; then
 # prepare build tree if outside source tree
-  if test "$srcdir" -ef . ; then : ; else
+# Note 1: test -ef might not exist, but it's more reliable than `pwd`.
+# Note 2: /bin/pwd might be better than shell's built-in at getting
+#         a symlink-free name.
+if ( test "$srcdir" -ef . ) >/dev/null 2>&1 || test "`cd $srcdir && /bin/pwd`" = "`/bin/pwd`"; then
+    :
+else
     abs_top_srcdir=`cd $srcdir && pwd`
     echo $ac_n "preparing build tree... $ac_c" 1>&6
     /bin/sh "$srcdir/config/prep_buildtree" "$abs_top_srcdir" "." \
       || AC_MSG_ERROR(failed)
     AC_MSG_RESULT(done)
-  fi
 fi
 
 AC_OUTPUT(
