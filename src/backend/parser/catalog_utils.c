@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.14 1996/12/26 17:47:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.15 1997/01/22 01:43:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1403,6 +1403,26 @@ typeid_get_retinfunc(Oid type_id)
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
     infunc = type->typinput;
     return(infunc);
+}
+
+/* Given a type id, returns the out-conversion function of the type */
+Oid
+typeid_get_retoutfunc(Oid type_id)
+{
+    HeapTuple       typeTuple;
+    TypeTupleForm   type;
+    Oid             outfunc;
+    typeTuple = SearchSysCacheTuple(TYPOID,
+				    ObjectIdGetDatum(type_id),
+				    0,0,0);
+    if ( !HeapTupleIsValid ( typeTuple ))
+	elog(WARN,
+	     "typeid_get_retoutfunc: Invalid type - oid = %u",
+	     type_id);
+    
+    type = (TypeTupleForm) GETSTRUCT(typeTuple);
+    outfunc = type->typoutput;
+    return(outfunc);
 }
 
 Oid

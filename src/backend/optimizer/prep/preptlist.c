@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.2 1997/01/22 01:42:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +279,8 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 				   (typedefault == (struct varlena *)NULL),
 				   /* XXX this is bullshit */
 				   false,
-				   false /* not a set */);
+				   false, /* not a set */
+				   false);
 		 
 		temp3 = MakeTLE (makeResdom(attno,
 					    atttype,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.19 1996/12/17 01:53:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.20 1997/01/22 01:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1288,7 +1288,8 @@ make_targetlist_expr(ParseState *pstate,
 					   val,
 					   false,
 					   true,
-					   true /* is set */);
+					   true, /* is set */
+					   false);
 	       } else {
 		    lnext(expr) = 
 			 makeConst(attrtype, 
@@ -1297,7 +1298,8 @@ make_targetlist_expr(ParseState *pstate,
 					       val,get_typelem(attrtype),-1),
 				   false, 
 				   true /* Maybe correct-- 80% chance */,
-				   false /* is not a set */);
+				   false, /* is not a set */
+				   false);
 	       }
 	  } else if((Typecast_ok) && (attrtype != type_id)){
 	       lnext(expr) = 

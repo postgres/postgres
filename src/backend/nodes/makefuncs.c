@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.1.1.1 1996/07/09 06:21:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.2 1997/01/22 01:42:26 momjian Exp $
  *
  * NOTES
  *    Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -102,7 +102,8 @@ makeConst(Oid consttype,
 	  Datum constvalue,
 	  bool constisnull,
 	  bool constbyval,
-	  bool constisset)
+	  bool constisset,
+	  bool constiscast)
 {
     Const *cnst = makeNode(Const);
 
@@ -112,6 +113,7 @@ makeConst(Oid consttype,
     cnst->constisnull = constisnull;
     cnst->constbyval = constbyval;
     cnst->constisset = constisset;
+    cnst->constiscast = constiscast;
     return cnst;
 }
 

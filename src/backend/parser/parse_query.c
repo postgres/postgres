@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.11 1996/12/07 04:38:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.12 1997/01/22 01:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,10 +367,50 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	left = NULL;
 
     }else {
+	char *outstr;
+	Oid infunc, outfunc;
+	Type newtype;
 
+#define CONVERTABLE_TYPE(t) (	(t) == INT2OID || \
+				(t) == INT4OID || \
+				(t) == OIDOID || \
+				(t) == FLOAT4OID || \
+				(t) == FLOAT8OID)
+	
 	/* binary operator */
 	ltypeId = (ltree==NULL) ? UNKNOWNOID : exprType(ltree);
 	rtypeId = (rtree==NULL) ? UNKNOWNOID : exprType(rtree);
+
+	/* convert constant when using a const of a numeric type
+	    and a non-const of another numeric type */
+	if (CONVERTABLE_TYPE(ltypeId) && nodeTag(ltree) != T_Const &&
+	    CONVERTABLE_TYPE(rtypeId) && nodeTag(rtree) == T_Const &&
+	   !((Const *)rtree)->constiscast) {
+	   outfunc = typeid_get_retoutfunc(rtypeId);
+	   infunc = typeid_get_retinfunc(ltypeId);
+	   outstr = (char *)fmgr(outfunc, ((Const *)rtree)->constvalue);
+	   ((Const *)rtree)->constvalue = (Datum)fmgr(infunc, outstr);
+	   pfree(outstr);
+	   ((Const *)rtree)->consttype = rtypeId = ltypeId;
+	   newtype = get_id_type(rtypeId);
+	   ((Const *)rtree)->constlen = tlen(newtype);
+	   ((Const *)rtree)->constbyval = tbyval(newtype);
+	}
+
+	if (CONVERTABLE_TYPE(rtypeId) && nodeTag(rtree) != T_Const &&
+	    CONVERTABLE_TYPE(ltypeId) && nodeTag(ltree) == T_Const &&
+	   !((Const *)ltree)->constiscast) {
+	   outfunc = typeid_get_retoutfunc(ltypeId);
+	   infunc = typeid_get_retinfunc(rtypeId);
+	   outstr = (char *)fmgr(outfunc, ((Const *)ltree)->constvalue);
+	   ((Const *)ltree)->constvalue = (Datum)fmgr(infunc, outstr);
+	   pfree(outstr);
+	   ((Const *)ltree)->consttype = ltypeId = rtypeId;
+	   newtype = get_id_type(ltypeId);
+	   ((Const *)ltree)->constlen = tlen(newtype);
+	   ((Const *)ltree)->constbyval = tbyval(newtype);
+	}
+
 	temp = oper(opname, ltypeId, rtypeId);
 	opform = (OperatorTupleForm) GETSTRUCT(temp);
 	left = make_operand(opname, ltree, ltypeId, opform->oprleft);
@@ -654,7 +694,7 @@ make_const(Value *value)
 		elog(NOTICE,"unknown type : %d\n", nodeTag(value));
 
 	    /* null const */
-	    con = makeConst(0, 0, (Datum)NULL, TRUE, 0, FALSE);
+	    con = makeConst(0, 0, (Datum)NULL, true, false, false, false);
 	    return con;
 	}
     }
@@ -662,9 +702,10 @@ make_const(Value *value)
     con = makeConst(typeid(tp),
 		    tlen(tp),
 		    val,
-		    FALSE,
+		    false,
 		    tbyval(tp),
-		    FALSE); /* not a set */
+		    false, /* not a set */
+		    false);
 
     return (con);
 }

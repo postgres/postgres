@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.2 1996/11/06 09:21:42 scrappy Exp $
+ * $Id: makefuncs.h,v 1.3 1997/01/22 01:43:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ extern Const *makeConst(Oid consttype,
 			Datum constvalue,
 			bool constisnull,
 			bool constbyval,
-			bool constisset);
+			bool constisset,
+			bool constiscast);
 
 #endif	/* MAKEFUNC_H */

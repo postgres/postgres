@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.14 1997/01/13 03:43:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.15 1997/01/22 01:42:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,12 @@
 #include <catalog/pg_index.h>
 #include <catalog/index.h>
 #include <catalog/catname.h>
+#include <catalog/catalog.h>
 #include <catalog/pg_class.h>
 #include <catalog/pg_proc.h>
 #include <storage/smgr.h>
 #include <storage/lmgr.h>
+#include <utils/inval.h>
 #include <utils/mcxt.h>
 #include <utils/syscache.h>
 #include <commands/vacuum.h>
@@ -1429,6 +1431,11 @@ _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex)
  
     /* XXX -- after write, should invalidate relcache in other backends */
     WriteNoReleaseBuffer(buf);	/* heap_endscan release scan' buffers ? */
+
+    /* invalidating system relations confuses the function cache
+       of pg_operator and pg_opclass */
+    if ( !IsSystemRelationName(pgcform->relname.data))
+    	RelationInvalidateHeapTuple(rd, tup);
 
     /* that's all, folks */
     heap_endscan(sdesc);

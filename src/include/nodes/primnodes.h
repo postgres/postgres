@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.6 1996/11/04 07:18:21 scrappy Exp $
+ * $Id: primnodes.h,v 1.7 1997/01/22 01:43:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,6 +175,7 @@ typedef struct Const {
     bool		constisnull;
     bool		constbyval;
     bool        	constisset;
+    bool        	constiscast;
 } Const;
 
 /* ----------------

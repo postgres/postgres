@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.16 1996/12/26 17:47:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.17 1997/01/22 01:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,9 +283,10 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
     adt = makeConst(typeid(tp),
 		    len,
 		    (Datum)lcp ,
-		    0,
+		    false,
 		    tbyvalue(tp), 
-		    0 /* not a set */);
+		    false, /* not a set */
+		    true /* is cast */);
     
     if (string_palloced)
 	pfree(const_string);
@@ -365,8 +366,9 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 			(Size) 0,
 			(Datum) NULL,
 			true, 	/* isnull */
-			0 	/* was omitted */,
-			0 	/* not a set */);
+			false, 	/* was omitted */
+			false, 	/* not a set */
+			true    /* is cast */);
 	return ((Node*) adt);
     }
 
@@ -401,9 +403,10 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
     adt = makeConst(typeid(tp),
 		    (Size)len,
 		    (Datum)lcp,
-		    0, 
-		    0 /*was omitted*/,
-		    0 /* not a set */);
+		    false, 
+		    false, /*was omitted*/
+		    false, /* not a set */
+		    true   /* is cast */);
     /*
       printf("adt %s : %u %d %d\n",CString(expr),typeid(tp) ,
       len,cp);
