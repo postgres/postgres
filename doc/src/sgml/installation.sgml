@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.168 2003/10/26 01:39:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.169 2003/10/26 11:14:39 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1545,7 +1545,7 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">FreeBSD</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.3</entry>
+	<entry>7.4</entry>
 	<entry>2003-10-25,
 	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>4.8</entry>
@@ -1634,7 +1634,7 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>S/390</></entry>
-	<entry>7.3</entry>
+	<entry>7.4</entry>
 	<entry>2003-10-25,
 	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
@@ -1691,7 +1691,7 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">OpenBSD</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.3</entry>
+	<entry>7.4</entry>
 	<entry>2003-10-24,
 	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>3.2</entry>
@@ -1738,7 +1738,7 @@ gunzip -c postgres.ps.gz \
 	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Windows With <application>Cygwin</application></></entry>
+	<entry><systemitem class="osname">Windows with <application>Cygwin</application></></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-24,
