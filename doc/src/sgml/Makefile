@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.60 2003/11/29 19:51:36 pgsql Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.61 2003/12/11 22:10:51 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -21,6 +21,13 @@ ifndef JADE
 JADE = jade
 endif
 SGMLINCLUDE = -D $(srcdir)
+
+# If this is a vpath build, some generated SGML will be in the build
+# tree, so we need to make sure we look there as well as in the
+# source tree
+ifeq ($(vpath_build), yes)
+SGMLINCLUDE += -D .
+endif
 
 ifndef NSGMLS
 NSGMLS = nsgmls
@@ -80,6 +87,9 @@ all: html
 html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml $<
+ifeq ($(vpath_build), yes)
+	@cp $(srcdir)/stylesheet.css .
+endif
 
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
