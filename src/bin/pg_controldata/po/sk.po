@@ -1,0 +1,246 @@
+# translation of pg_controldata-sk.po to slovak
+# translation of pg_controldata.po to
+# , 2004.
+# , 2004.
+# , 2004.
+# Zoltan Bartko <bartko.zoltan@pobox.sk>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_controldata-sk\n"
+"POT-Creation-Date: 2004-08-02 07:22-0300\n"
+"PO-Revision-Date: 2004-08-02 15:53+0200\n"
+"Last-Translator: Zoltan Bartko <bartko.zoltan@pobox.sk>\n"
+"Language-Team: slovak\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.3\n"
+
+#: pg_controldata.c:28
+#, c-format
+msgid ""
+"%s displays control information of a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s zobrazí riadiace informácie o zoskupení databáz PostgreSQL.\n"
+"\n"
+
+#: pg_controldata.c:32
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]\n"
+"\n"
+"Options:\n"
+"  DATADIR        show cluster control information for DATADIR\n"
+"  --help         show this help, then exit\n"
+"  --version      output version information, then exit\n"
+msgstr ""
+"Použitie:\n"
+"  %s [VOĽBA]\n"
+"\n"
+"Voľby:\n"
+"  DÁTOVÝ_ADRESÁR  zobrazí riadiace informácie o adresári DÁTOVÝ_ADRESÁR\n"
+"  --help          zobrazí túto nápovedu, potom ukončí program\n"
+"  --verzia        zobrazí informáciu o verzii programu, potom koniec\n"
+
+#: pg_controldata.c:41
+msgid ""
+"\n"
+"If no data directory is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Ak neurčíte dátový adresár, použije sa premenná prostredia PGDATA\n"
+"\n"
+
+#: pg_controldata.c:42
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Chyby hláste na adresu <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_controldata.c:52
+msgid "starting up"
+msgstr "prebieha spúšťanie"
+
+#: pg_controldata.c:54
+msgid "shut down"
+msgstr "koniec činnosti"
+
+#: pg_controldata.c:56
+msgid "shutting down"
+msgstr "prebieha ukončenie činnosti"
+
+#: pg_controldata.c:58
+msgid "in recovery"
+msgstr "prebieha zotavenie"
+
+#: pg_controldata.c:60
+msgid "in production"
+msgstr "prebieha produkcia"
+
+#: pg_controldata.c:62
+msgid "unrecognized status code"
+msgstr "neznámy kód stavu"
+
+#: pg_controldata.c:104
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: nezadali ste dátový adresár\n"
+
+#: pg_controldata.c:105
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Použite \"%s --help\" pre zobrazenie detailnejších informácií.\n"
+
+#: pg_controldata.c:113
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: nebolo možné otvoriť súbor \"%s\" pre čítanie: %s\n"
+
+#: pg_controldata.c:120
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: nebolo možné načítať súbor: \"%s\": %s\n"
+
+#: pg_controldata.c:134
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"UPOZORNENIE: vypočítaný kontrolný súčet CRC sa nezhoduje s hodnotou uloženou\n"
+"v súbore. Buď je súbor poškodený alebo má iný formát ako ten, ktorý tento \n"
+"program očakáva. Výsledky uvedené nižšie nie sú hodnoverné.\n"
+"\n"
+
+#: pg_controldata.c:153
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "číslo verzie programu pg_control:                %u\n"
+
+#: pg_controldata.c:154
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "číslo verzie katalógu:                           %u\n"
+
+#: pg_controldata.c:155
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "Systémový identifikátor databázy:                %s\n"
+
+#: pg_controldata.c:156
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "Stav zoskupenia databáz:                         %s\n"
+
+#: pg_controldata.c:157
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "Posledná zmena v programe pg_control:            %s\n"
+
+#: pg_controldata.c:158
+#, c-format
+msgid "Current log file ID:                  %u\n"
+msgstr "ID aktuálneho log súboru:                        %u\n"
+
+#: pg_controldata.c:159
+#, c-format
+msgid "Next log file segment:                %u\n"
+msgstr "Nasledujúci segment log súboru:                  %u\n"
+
+#: pg_controldata.c:160
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "Umiestnenie posledného kontrolného bodu:         %X/%X\n"
+
+#: pg_controldata.c:162
+#, c-format
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "Umiestnenie predchádzajúceho kontrolného bodu:   %X/%X\n"
+
+#: pg_controldata.c:164
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "Umiestnenie REDO posledného kontrolného bodu:    %X / %X\n"
+
+#: pg_controldata.c:166
+#, c-format
+msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+msgstr "Umiestnenie UNDO posledného kontrolného bodu:    %X / %X\n"
+
+#: pg_controldata.c:168
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "TimeLineID posledného kontrolného bodu:          %u\n"
+
+#: pg_controldata.c:169
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u\n"
+msgstr "NextXID posledného kontrolného bodu:             %u\n"
+
+#: pg_controldata.c:170
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "NextOID posledného kontrolného bodu:             %u\n"
+
+#: pg_controldata.c:171
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "Čas posledného kontrolného bodu:                 %s\n"
+
+#: pg_controldata.c:172
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "Veľkosť bloku databázy:                         %u\n"
+
+#: pg_controldata.c:173
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "Počet blokov v segmente veľkej relácie:          %u\n"
+
+#: pg_controldata.c:174
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "Počet bajtov v segmente WAL:                     %u\n"
+
+#: pg_controldata.c:175
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "Maximálna dĺžka identifikátorov:                 %u\n"
+
+#: pg_controldata.c:176
+#, c-format
+msgid "Maximum number of function arguments: %u\n"
+msgstr "Maximálny počet argumentov funkcií:              %u\n"
+
+#: pg_controldata.c:177
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "Ukladanie typov dátumu a času:                   %s\n"
+
+#: pg_controldata.c:178
+msgid "64-bit integers"
+msgstr "64-bitové celé čísla"
+
+#: pg_controldata.c:178
+msgid "floating-point numbers"
+msgstr "čísla s pohyblivou rádovou čiarkou"
+
+#: pg_controldata.c:179
+#, c-format
+msgid "Maximum length of locale name:        %u\n"
+msgstr "Maximálna dĺžka názvu lokálnych nastavení:     %u\n"
+
+#: pg_controldata.c:180
+#, c-format
+msgid "LC_COLLATE:                           %s\n"
+msgstr "LC_COLLATE:                                      %s\n"
+
+#: pg_controldata.c:181
+#, c-format
+msgid "LC_CTYPE:                             %s\n"
+msgstr "LC_CTYPE:                                        %s\n"
+

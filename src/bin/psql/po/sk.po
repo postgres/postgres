@@ -1,9 +1,16 @@
+# translation of psql-sk.po to slovak
+# translation of psql-sk-2.po to slovak
+# translation of psql-sk-2.po to
+# translation of psql-sk-2.po to
+# , 2004.
+# , 2004.
+# , 2004.
 # Zoltan Bartko <bartko.zoltan@pobox.sk>, 2004.
 msgid ""
 msgstr ""
-"Project-Id-Version: psql-sk-2\n"
-"POT-Creation-Date: 2004-07-15 19:11-0300\n"
-"PO-Revision-Date: 2004-07-31 08:55+0200\n"
+"Project-Id-Version: psql-sk\n"
+"POT-Creation-Date: 2004-08-02 07:23-0300\n"
+"PO-Revision-Date: 2004-08-02 15:31+0200\n"
 "Last-Translator: Zoltan Bartko <bartko.zoltan@pobox.sk>\n"
 "Language-Team: slovak\n"
 "MIME-Version: 1.0\n"
@@ -379,8 +386,8 @@ msgstr "V¹eobecné prepínaèe:"
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
 msgstr ""
-"  -d DATABÁZA         názov databázy, ku ktorej má by» vytvorené pripojenie "
-"                      (implicitne: %s)\n"
+"  -d DATABÁZA         názov databázy, ku ktorej má by» vytvorené "
+"pripojenie                       (implicitne: %s)\n"
 
 #: help.c:94
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
@@ -399,8 +406,8 @@ msgstr " -l                   vypí¹e zoznam dostupných databáz a ukonèí èinnos»"
 #: help.c:97
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
 msgstr ""
-"  -v NÁZOV=HODNOTA    nastaví premennú programu psql 'MENO' na hodnotu "
-"                      'HODNOTA'"
+"  -v NÁZOV=HODNOTA    nastaví premennú programu psql 'MENO' na "
+"hodnotu                       'HODNOTA'"
 
 #: help.c:98
 msgid "  -X              do not read startup file (~/.psqlrc)"
@@ -481,7 +488,8 @@ msgid ""
 "  -T TEXT         set HTML table tag attributes (width, border) (-P "
 "tableattr=)"
 msgstr ""
-"  -T TEXT             nastavenie atribútov HTML tabuµky (¹írka, ohranièenie)\n"
+"  -T TEXT             nastavenie atribútov HTML tabuµky (¹írka, "
+"ohranièenie)\n"
 "                      (-P tableattr=)"
 
 #: help.c:117
@@ -491,8 +499,8 @@ msgstr "  -x                  re¾im výstupu roz¹íøenej tabuµky (-P expanded)"
 #: help.c:118
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
 msgstr ""
-"  -P VAR[=ARG]        nastaví zobrazovací parameter 'VAR' na 'ARG' (pozri "
-"                      príkaz \\pset)"
+"  -P VAR[=ARG]        nastaví zobrazovací parameter 'VAR' na "
+"'ARG' (pozri                       príkaz \\pset)"
 
 #: help.c:119
 #, c-format
@@ -502,7 +510,8 @@ msgstr "  -F RE«AZEC          oddeµovaè polí (implicitne: \"%s\") (-P fieldsep=)
 #: help.c:121
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr ""
-"  -R RE«AZEC          oddeµovaè záznamov (implicitne: nový riadok (newline))\n"
+"  -R RE«AZEC          oddeµovaè záznamov (implicitne: nový riadok "
+"(newline))\n"
 "                      (-P recordsep=)"
 
 #: help.c:123
@@ -532,7 +541,9 @@ msgstr " -p PORT              urèuje port databázového serveru (implicitne: %s)\
 #: help.c:136
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
-msgstr "  -U MENO             ¹pecifikuje meno pou¾ívateµa databázy (implicitne: %s)\n"
+msgstr ""
+"  -U MENO             ¹pecifikuje meno pou¾ívateµa databázy (implicitne: %"
+"s)\n"
 
 #: help.c:137
 msgid "  -W              prompt for password (should happen automatically)"
@@ -600,8 +611,8 @@ msgid ""
 "  \\set [NAME [VALUE]]\n"
 "                 set internal variable, or list all if no parameters\n"
 msgstr ""
-" \\set [MENO [HODNOTA]] "
-"                      nastavi» interné premenné alebo bez parameterov zobrazí\n"
+" \\set [MENO [HODNOTA]]                       nastavi» interné premenné "
+"alebo bez parameterov zobrazí\n"
 "                      zoznam v¹etkých premenných\n"
 
 #: help.c:186
@@ -626,7 +637,8 @@ msgstr "Pamä» dotazov\n"
 #: help.c:193
 msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
 msgstr ""
-" \\e [SÚBOR]          úprava pamäte dotazov (alebo súboru) pomocou externého\n"
+" \\e [SÚBOR]          úprava pamäte dotazov (alebo súboru) pomocou "
+"externého\n"
 "                      editora\n"
 
 #: help.c:194
@@ -634,7 +646,8 @@ msgid ""
 "  \\g [FILE]      send query buffer to server (and results to file or |"
 "pipe)\n"
 msgstr ""
-" \\g [SÚBOR]          po¹le dotaz SQL na server (a zapí¹e výsledok do súboru\n"
+" \\g [SÚBOR]          po¹le dotaz SQL na server (a zapí¹e výsledok do "
+"súboru\n"
 "                      alebo do |rúry)\n"
 
 #: help.c:195
@@ -691,7 +704,8 @@ msgid ""
 "                 list tables/indexes/sequences/views/system tables\n"
 msgstr ""
 "  \\d{t|i|s|v|S} [VZOR] (pridajte \"+\" pre detailnej¹ie zobrazenie)\n"
-"                      zoznam tabuliek/indexov/sekvencií/pohµadov/systémových \n"
+"                      zoznam tabuliek/indexov/sekvencií/pohµadov/"
+"systémových \n"
 "                      tabulek\n"
 
 #: help.c:213
@@ -773,7 +787,8 @@ msgid ""
 "  \\z [PATTERN]   list table, view and sequence access privileges (same as "
 "\\dp)\n"
 msgstr ""
-"  \\z [VZOR]          zoznam prístupových práv tabuliek, pohµadov a sekvencií\n"
+"  \\z [VZOR]          zoznam prístupových práv tabuliek, pohµadov a "
+"sekvencií\n"
 "                      (ako \\dp)\n"
 
 #: help.c:231
@@ -810,8 +825,8 @@ msgid ""
 "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
-"  \\pset MENO[HODNOTA]  "
-"                      nastavenie parametrov výstupnej tabuµky\n"
+"  \\pset MENO[HODNOTA]                        nastavenie parametrov "
+"výstupnej tabuµky\n"
 "                      (MENO := {format|border|expanded|fieldsep|null| \n"
 "                                recordsep|tuples_only|title|tableattr| \n"
 "                                pager})\n"
@@ -1426,7 +1441,7 @@ msgstr "Zoznam pretypovaní"
 msgid "List of schemas"
 msgstr "Zoznam schém"
 
-#: sql_help.h:25 sql_help.h:365
+#: sql_help.h:25 sql_help.h:369
 msgid "abort the current transaction"
 msgstr "zru¹i» aktuálnu transakciu"
 
@@ -1721,7 +1736,7 @@ msgstr "zber ¹tatistických údajov o databáze"
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ tabuµka [ (ståpec [, ...] ) ] ]"
 
-#: sql_help.h:97 sql_help.h:397
+#: sql_help.h:97 sql_help.h:409
 msgid "start a transaction block"
 msgstr "zaèiatok bloku transakcie"
 
@@ -1873,8 +1888,8 @@ msgstr ""
 "          [ BINARY ] \n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'oddeµovací_znak' ]\n"
-"          [ NULL [ AS ] 're»azec_null' ] ] "
-"          [ CSV [ QUOTE [ AS ] 'úvodzovka' ] \n"
+"          [ NULL [ AS ] 're»azec_null' ] ]           [ CSV [ QUOTE [ AS ] "
+"'úvodzovka' ] \n"
 "                [ ESCAPE [ AS ] 'únikový_znak' ]\n"
 "                [ FORCE QUOTE ståpec [, ...] ]"
 
@@ -2054,8 +2069,7 @@ msgid ""
 msgstr ""
 "CREATE [ UNIQUE ] INDEX názov ON tabuµka [ USING metóda ]\n"
 "    ( { ståpec | ( výraz ) } [ trieda_operátorov ] [, ...] )\n"
-"    [ TABLESPACE tabuµkový_priestor]"
-"    [ WHERE predikát ]"
+"    [ TABLESPACE tabuµkový_priestor]    [ WHERE predikát ]"
 
 #: sql_help.h:161
 msgid "define a new procedural language"
@@ -2142,10 +2156,10 @@ msgid ""
 "CREATE SCHEMA AUTHORIZATION username [ TABLESPACE tablespace ] "
 "[ schema_element [ ... ] ]"
 msgstr ""
-"CREATE SCHEMA názov_schémy [ AUTHORIZATION meno_pou¾ívateµa ] "
-"[ TABLESPACE tabuµkový priestor ] [ element_schémy [ ... ] ]\n"
-"CREATE SCHEMA AUTHORIZATION meno_pou¾ívateµa [ TABLESPACE tabuµkový priestor ]"
-"[ element_schémy [ ... ] ]"
+"CREATE SCHEMA názov_schémy [ AUTHORIZATION meno_pou¾ívateµa ] [ TABLESPACE "
+"tabuµkový priestor ] [ element_schémy [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION meno_pou¾ívateµa [ TABLESPACE tabuµkový "
+"priestor ][ element_schémy [ ... ] ]"
 
 #: sql_help.h:181
 msgid "define a new sequence generator"
@@ -2182,7 +2196,10 @@ msgid ""
 "where column_constraint is:\n"
 "\n"
 "[ CONSTRAINT constraint_name ]\n"
-"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY [ USING INDEX TABLESPACE tablespace ] |\n"
 "  CHECK (expression) |\n"
 "  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
 "SIMPLE ]\n"
@@ -2193,8 +2210,9 @@ msgid ""
 "and table_constraint is:\n"
 "\n"
 "[ CONSTRAINT constraint_name ]\n"
-"{ UNIQUE ( column_name [, ... ] ) |\n"
-"  PRIMARY KEY ( column_name [, ... ] ) |\n"
+"{ UNIQUE ( column_name [, ... ] ) [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) [ USING INDEX TABLESPACE tablespace ] "
+"|\n"
 "  CHECK ( expression ) |\n"
 "  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
 "[, ... ] ) ]\n"
@@ -2217,7 +2235,10 @@ msgstr ""
 "kde obmedzenie_ståpca je:\n"
 "\n"
 "[ CONSTRAINT názov_obmedzenia ]\n"
-"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"{ NOT NULL |\n"
+"  NULL | \n"
+"  UNIQUE [ USING INDEX TABLESPACE tabuµkový_priestor ] |\n"
+"  PRIMARY KEY [ USING INDEX TABLESPACE tabuµkový_priestor ] |\n"
 "  CHECK (výraz) |\n"
 "  REFERENCES ref_tabuµka [ ( ref_ståpec ) ] [ MATCH FULL | MATCH PARTIAL | "
 "MATCH SIMPLE ]\n"
@@ -2228,8 +2249,8 @@ msgstr ""
 "a obmedzenie_tabuµky je:\n"
 "\n"
 "[ CONSTRAINT názov_obmedzenia ]\n"
-"{ UNIQUE ( názov_ståpca [, ... ] ) |\n"
-"  PRIMARY KEY ( názov_ståpca [, ... ] ) |\n"
+"{ UNIQUE ( názov_ståpca [, ... ] ) [ USING INDEX TABLESPACE tabuµkový_priestor ] |\n"
+"  PRIMARY KEY ( názov_ståpca [, ... ] ) [ USING INDEX TABLESPACE tabuµkový_priestor ] |\n"
 "  CHECK ( výraz ) |\n"
 "  FOREIGN KEY ( názov_ståpca [, ... ] ) REFERENCES ref_tabuµka "
 "[ ( ref_ståpec [, ... ] ) ]\n"
@@ -2237,7 +2258,7 @@ msgstr ""
 "UPDATE èinnos» ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
-#: sql_help.h:189 sql_help.h:373
+#: sql_help.h:189 sql_help.h:385
 msgid "create a new table from the results of a query"
 msgstr "vytvori» novú tabuµku na základe výsledkov dotazu"
 
@@ -2257,7 +2278,9 @@ msgstr "definova» nový tabuµkový priestor"
 
 #: sql_help.h:194
 msgid "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
-msgstr "CREATE TABLESPACE názov_tabuµkového_priestoru [ OWNER meno_pou¾ívateµa ] LOCATION 'adresár'"
+msgstr ""
+"CREATE TABLESPACE názov_tabuµkového_priestoru [ OWNER meno_pou¾ívateµa ] "
+"LOCATION 'adresár'"
 
 #: sql_help.h:197
 msgid "define a new trigger"
@@ -2757,10 +2780,18 @@ msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 msgstr "REINDEX { DATABASE | TABLE | INDEX } názov [ FORCE ]"
 
 #: sql_help.h:357
+msgid "destroy a previously defined savepoint"
+msgstr "vyma¾ predtým vytvorený bod ulo¾enia (savepoint)"
+
+#: sql_help.h:358
+msgid "RELEASE savepoint_name"
+msgstr "RELEASE názov_bodu_ulo¾enia"
+
+#: sql_help.h:361
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "obnovi» hodnotu parametra behu systému na pôvodnú hodnotu"
 
-#: sql_help.h:358
+#: sql_help.h:362
 msgid ""
 "RESET name\n"
 "RESET ALL"
@@ -2768,11 +2799,11 @@ msgstr ""
 "RESET názov\n"
 "RESET ALL"
 
-#: sql_help.h:361
+#: sql_help.h:365
 msgid "remove access privileges"
 msgstr "Odobra» prístupové práva"
 
-#: sql_help.h:362
+#: sql_help.h:366
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
@@ -2848,15 +2879,31 @@ msgstr ""
 "    FROM { meno_pou¾ívateµa | GROUP názov_skupiny | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:366
+#: sql_help.h:370
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
-#: sql_help.h:369
+#: sql_help.h:373
+msgid "roll back to a savepoint"
+msgstr "obnovi» stav k bodu ulo¾enia"
+
+#: sql_help.h:374
+msgid "ROLLBACK TO savepoint_name"
+msgstr "ROLLBACK TO názov_bodu_ulo¾enia"
+
+#: sql_help.h:377
+msgid "define a new savepoint within the current transaction"
+msgstr "definova» nový bod ulo¾enia v aktuálnej transkacii"
+
+#: sql_help.h:378
+msgid "SAVEPOINT savepoint_name"
+msgstr "SAVEPOINT názov_bodu_ulo¾enia"
+
+#: sql_help.h:381
 msgid "retrieve rows from a table or view"
 msgstr "získa» riadky z tabuµky alebo pohµadu"
 
-#: sql_help.h:370
+#: sql_help.h:382
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2903,7 +2950,7 @@ msgstr ""
 "    zdrojový_prvok [ NATURAL ] typ_spojenia zdrojový_prvok [ ON "
 "podmienka_spojenia | USING ( ståpec_spojenia [, ...] ) ]"
 
-#: sql_help.h:374
+#: sql_help.h:386
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2931,11 +2978,11 @@ msgstr ""
 "    [ OFFSET poèiatok ]\n"
 "    [ FOR UPDATE [ OF názov_tabuµky [, ...] ] ]"
 
-#: sql_help.h:377
+#: sql_help.h:389
 msgid "change a run-time parameter"
 msgstr "zmeni» parameter behu systému"
 
-#: sql_help.h:378
+#: sql_help.h:390
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
@@ -2943,15 +2990,15 @@ msgstr ""
 "SET [ SESSION | LOCAL ] názov { TO | = } { hodnota | 'hodnota' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { èasová_zóna | LOCAL | DEFAULT }"
 
-#: sql_help.h:381
+#: sql_help.h:393
 msgid "set the constraint mode of the current transaction"
 msgstr "nastavi» re¾im obmedzenia aktuálnej transkacie"
 
-#: sql_help.h:382
+#: sql_help.h:394
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | názov [, ...] } { DEFERRED | IMMEDIATE }"
 
-#: sql_help.h:385
+#: sql_help.h:397
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
@@ -2959,7 +3006,7 @@ msgstr ""
 "nastavi» identifikátor pou¾ívateµa pre sedenie a aktuálny identifikátor "
 "pou¾ívateµa pre aktuálne sedenie"
 
-#: sql_help.h:386
+#: sql_help.h:398
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
@@ -2969,11 +3016,11 @@ msgstr ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
-#: sql_help.h:389
+#: sql_help.h:401
 msgid "set the characteristics of the current transaction"
 msgstr "nastavenie charakteristík aktuálnej transakcie"
 
-#: sql_help.h:390
+#: sql_help.h:402
 msgid ""
 "SET TRANSACTION\n"
 "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
@@ -2995,11 +3042,11 @@ msgstr ""
 "| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
-#: sql_help.h:393
+#: sql_help.h:405
 msgid "show the value of a run-time parameter"
 msgstr "zobrazi» hodnotu parametra behu systému"
 
-#: sql_help.h:394
+#: sql_help.h:406
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
@@ -3007,7 +3054,7 @@ msgstr ""
 "SHOW názov\n"
 "SHOW ALL"
 
-#: sql_help.h:398
+#: sql_help.h:410
 msgid ""
 "START TRANSACTION\n"
 "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
@@ -3019,27 +3066,27 @@ msgstr ""
 "| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
-#: sql_help.h:401
+#: sql_help.h:413
 msgid "empty a table"
 msgstr "vyprázdni» tabuµku"
 
-#: sql_help.h:402
+#: sql_help.h:414
 msgid "TRUNCATE [ TABLE ] name"
 msgstr "TRUNCATE [ TABLE ] názov"
 
-#: sql_help.h:405
+#: sql_help.h:417
 msgid "stop listening for a notification"
 msgstr "ukonèi» èakanie na notifikáciu"
 
-#: sql_help.h:406
+#: sql_help.h:418
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { názov | * }"
 
-#: sql_help.h:409
+#: sql_help.h:421
 msgid "update rows of a table"
 msgstr "aktualizova» riadky tabuµky"
 
-#: sql_help.h:410
+#: sql_help.h:422
 msgid ""
 "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
 "    [ FROM fromlist ]\n"
@@ -3049,11 +3096,11 @@ msgstr ""
 "    [ FROM zoznam_zdrojov ]\n"
 "    [ WHERE podmienka ]"
 
-#: sql_help.h:413
+#: sql_help.h:425
 msgid "garbage-collect and optionally analyze a database"
 msgstr "zozbiera» odpadky a prípadne analyzova» databázu"
 
-#: sql_help.h:414
+#: sql_help.h:426
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "

@@ -1,0 +1,483 @@
+# translation of pg_ctl-sk.po to slovak
+# translation of pg_ctl.po to
+# translation of pg_ctl.po to
+# , 2004.
+# , 2004.
+# , 2004.
+# , 2004.
+# , 2004.
+# , 2004.
+# Zoltan Bartko <bartko.zoltan@pobox.sk>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_ctl-sk\n"
+"POT-Creation-Date: 2004-08-02 07:22-0300\n"
+"PO-Revision-Date: 2004-08-02 16:00+0200\n"
+"Last-Translator: Zoltan Bartko <bartko.zoltan@pobox.sk>\n"
+"Language-Team: slovak\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.3\n"
+
+#: pg_ctl.c:184 pg_ctl.c:200 pg_ctl.c:1230
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: nedostatok pamäte\n"
+
+#: pg_ctl.c:431
+#, c-format
+msgid "%s: Another postmaster may be running. Trying to start postmaster anyway.\n"
+msgstr ""
+"%s: Pravdepodobne beží už iný postmaster. Pokúšam sa spustiť program \n"
+"postmaster napriek tomu.\n"
+
+#: pg_ctl.c:449
+#, c-format
+msgid "%s: cannot read %s\n"
+msgstr "%s: nebolo možné čítať %s\n"
+
+#: pg_ctl.c:455
+#, c-format
+msgid "%s: option file %s must have exactly 1 line\n"
+msgstr "%s: súbor s voľbami %s musí mať práve 1 riadok\n"
+
+#: pg_ctl.c:497
+#, c-format
+msgid ""
+"The program \"postmaster\" is needed by %s but was not found in the same "
+"directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Program \"postmaster\" je vyžadovaný programom %s, avšak sa nenašiel \n"
+"v adresári rovnakom ako \"%s\".\n"
+"Prekontrolujte inštaláciu systému.\n"
+
+#: pg_ctl.c:503
+#, c-format
+msgid ""
+"The program \"postmaster\" was found by %s but was not the same version as "
+"\"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Program \"postmaster\" bol nájdený programom %s, avšak nie vo verzii\n"
+"totožnej s \"%s\".\n"
+"Prekontrolujte inštaláciu systému.\n"
+
+#: pg_ctl.c:514
+msgid "Unable to run the postmaster binary\n"
+msgstr "Nebolo možné spustiť binárny program postmaster\n"
+
+#: pg_ctl.c:524
+#, c-format
+msgid ""
+"%s: cannot start postmaster\n"
+"Examine the log output\n"
+msgstr ""
+"%s: Nebolo možné spustiť program postmaster\n"
+"Prekontrolujte výpisy denníka (log)\n"
+
+#: pg_ctl.c:535
+msgid "waiting for postmaster to start..."
+msgstr "čakám na spustenie programu postmaster..."
+
+#: pg_ctl.c:540
+msgid "could not start postmaster\n"
+msgstr "nebolo možné spustiť program postmaster\n"
+
+#: pg_ctl.c:542
+msgid ""
+"done\n"
+"postmaster started\n"
+msgstr ""
+"hotovo\n"
+"postmaster beží\n"
+
+#: pg_ctl.c:545
+msgid "postmaster starting\n"
+msgstr "spúšťanie programu postmaster\n"
+
+#: pg_ctl.c:560 pg_ctl.c:639 pg_ctl.c:709
+#, c-format
+msgid "%s: could not find %s\n"
+msgstr "%s: nebolo možné nájsť %s\n"
+
+#: pg_ctl.c:561 pg_ctl.c:710
+msgid "Is postmaster running?\n"
+msgstr "Beží postmaster?\n"
+
+#: pg_ctl.c:567
+#, c-format
+msgid "%s: cannot stop postmaster; postgres is running (PID: %ld)\n"
+msgstr "%s: nie je možné zastaviť postmaster - postgres beží (PID: %ld)\n"
+
+#: pg_ctl.c:575 pg_ctl.c:656
+#, c-format
+msgid "stop signal failed (PID: %ld): %s\n"
+msgstr "signál stop bol neúspešný (PID: %ld): %s\n"
+
+#: pg_ctl.c:583
+msgid "postmaster shutting down\n"
+msgstr "postmaster sa vypína\n"
+
+#: pg_ctl.c:590 pg_ctl.c:663
+msgid "waiting for postmaster to shut down..."
+msgstr "čakám na vypnutie postmastera..."
+
+#: pg_ctl.c:612 pg_ctl.c:687
+msgid " failed\n"
+msgstr " neúspešné\n"
+
+#: pg_ctl.c:614 pg_ctl.c:689
+#, c-format
+msgid "%s: postmaster does not shut down\n"
+msgstr "%s: postmaster neukončil svoju činnosť\n"
+
+#: pg_ctl.c:618 pg_ctl.c:694
+msgid "done\n"
+msgstr "hotovo\n"
+
+#: pg_ctl.c:620 pg_ctl.c:696
+msgid "postmaster stopped\n"
+msgstr "postmaster vypnutý\n"
+
+#: pg_ctl.c:640
+msgid ""
+"Is postmaster running?\n"
+"starting postmaster anyway\n"
+msgstr ""
+"Beží ešte postmaster?\n"
+"spúšťam posmaster bez ohľadu na to\n"
+
+#: pg_ctl.c:647
+#, c-format
+msgid "%s: cannot restart postmaster; postgres is running (PID: %ld)\n"
+msgstr "%s: nebolo možné reštartovať program postmaster, postgres beží (PID: %ld)\n"
+
+#: pg_ctl.c:650 pg_ctl.c:719
+msgid "Please terminate postgres and try again.\n"
+msgstr "Prosím, ukončite postgres a skúste znovu.\n"
+
+#: pg_ctl.c:716
+#, c-format
+msgid "%s: cannot reload postmaster; postgres is running (PID: %ld)\n"
+msgstr "%s: nebolo možné opätovne spustiť program postmaster, postgres beží (PID: %ld)\n"
+
+#: pg_ctl.c:725
+#, c-format
+msgid "reload signal failed (PID: %ld): %s\n"
+msgstr "signál reload (načítaj znova) zlyhal (PID: %ld): %s\n"
+
+#: pg_ctl.c:731
+msgid "postmaster signaled\n"
+msgstr "postmaster vydal signál\n"
+
+#: pg_ctl.c:746
+#, c-format
+msgid "%s: postmaster or postgres not running\n"
+msgstr "%s: postmaster alebo postgres nebeží\n"
+
+#: pg_ctl.c:752
+#, c-format
+msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
+msgstr "%s: beží samostatný backend \"postgres\" (PID: %ld)\n"
+
+#: pg_ctl.c:758
+#, c-format
+msgid "%s: postmaster is running (PID: %ld)\n"
+msgstr "%s: postmaster beží (PID: %ld)\n"
+
+#: pg_ctl.c:774
+#, c-format
+msgid "signal %d failed (PID: %ld): %s\n"
+msgstr "signál %d bol neúspešný (PID: %ld): %s\n"
+
+#: pg_ctl.c:801
+msgid "Unable to find exe"
+msgstr "Nebolo možné nájsť spustiteľný súbor"
+
+#: pg_ctl.c:844 pg_ctl.c:875
+msgid "Unable to open service manager\n"
+msgstr "Nebolo možné otvoriť správcu služieb\n"
+
+#: pg_ctl.c:850
+#, c-format
+msgid "Service \"%s\" already registered\n"
+msgstr "Služba \"%s\" je už zaregistrovaná\n"
+
+#: pg_ctl.c:861
+#, c-format
+msgid "Unable to register service \"%s\" [%d]\n"
+msgstr "Nebolo možné zaregistrovať službu \"%s\" [%d]\n"
+
+#: pg_ctl.c:881
+#, c-format
+msgid "Service \"%s\" not registered\n"
+msgstr "Služba \"%s\" nie je registrovaná\n"
+
+#: pg_ctl.c:888
+#, c-format
+msgid "Unable to open service \"%s\" [%d]\n"
+msgstr "Nebolo možné otvoriť službu \"%s\" [%d]\n"
+
+#: pg_ctl.c:894
+#, c-format
+msgid "Unable to unregister service \"%s\" [%d]\n"
+msgstr "Nebolo možné zmazať registráciu služby \"%s\" [%d]\n"
+
+#: pg_ctl.c:1012
+#, c-format
+msgid ""
+"\n"
+"Try \"%s --help\" for more information.\n"
+msgstr ""
+"\n"
+"Použite príkaz \"%s --help\" pre získanie detailnejších informácií.\n"
+
+#: pg_ctl.c:1020
+#, c-format
+msgid ""
+"%s is a utility to start, stop, restart, reload configuration files,\n"
+"report the status of a PostgreSQL server, or kill a PostgreSQL process\n"
+"\n"
+msgstr ""
+"%s je program pre spustenie, zastavenie, opätovné spustenie, opätovné \n"
+"načítanie konfiguračných súborov, hlásenie stavu servera PostgreSQL alebo\n"
+"pre ukončenie procesu PostgreSQL\n"
+"\n"
+
+#: pg_ctl.c:1022
+msgid "Usage:\n"
+msgstr "Použitie:\n"
+
+#: pg_ctl.c:1023
+#, c-format
+msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+msgstr "  %s start   [-w] [-D DÁTOVÝ_ADRESÁR] [-s] [-l SÚBOR] [-o \"VOĽBY\"]\n"
+
+#: pg_ctl.c:1024
+#, c-format
+msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+msgstr "  %s stop    [-W] [-D DÁTOVÝ_ADRESÁR] [-s] [-m REŽIM_VYPNUTIA]\n"
+
+#: pg_ctl.c:1025
+#, c-format
+msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
+msgstr ""
+"  %s restart [-w] [-D DÁTOVÝ_ADRESÁR] [-s] [-m REŽIM_VYPNUTIA] [-o \"VOĽBY"
+"\"]\n"
+
+#: pg_ctl.c:1026
+#, c-format
+msgid "  %s reload  [-D DATADIR] [-s]\n"
+msgstr "  %s reload  [-D DÁTOVÝ_ADRESÁR] [-s]\n"
+
+#: pg_ctl.c:1027
+#, c-format
+msgid "  %s status  [-D DATADIR]\n"
+msgstr "  %s status  [-D DÁTOVÝ_ADRESÁR]\n"
+
+#: pg_ctl.c:1028
+#, c-format
+msgid "  %s kill    SIGNALNAME PROCESSID\n"
+msgstr "  %s kill    SIGNÁL ID_PROCESU\n"
+
+#: pg_ctl.c:1030
+#, c-format
+msgid ""
+"  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-"
+"o \"OPTIONS\"]\n"
+msgstr ""
+"  %s register   [-N názov_služby] [-U meno_užívateľa] [-P heslo] [-D "
+"DÁTOVÝ_ADRESÁR] [-o \"VOĽBY\"]\n"
+
+#: pg_ctl.c:1031
+#, c-format
+msgid "  %s unregister [-N servicename]\n"
+msgstr "  %s unregister [-N názov_služby]\n"
+
+#: pg_ctl.c:1033
+msgid "Common options:\n"
+msgstr "Často používané voľby:\n"
+
+#: pg_ctl.c:1034
+msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
+msgstr "  -D, --pgdata DÁTOVÝ_ADRESÁR   umiestnenie úložného priestoru databázy\n"
+
+#: pg_ctl.c:1035
+msgid "  -s, --silent only print errors, no informational messages\n"
+msgstr "  -s, --silent                  vypíš iba chyby, žiadne informatívne správy\n"
+
+#: pg_ctl.c:1037
+msgid "  -N       service name with which to register PostgreSQL server\n"
+msgstr ""
+"  -N                            názov služby, pod ktorým sa má server \n"
+"                                PostgreSQL registrovať\n"
+
+#: pg_ctl.c:1038
+msgid "  -P       password of account to register PostgreSQL server\n"
+msgstr ""
+"  -P                            heslo účtu, pod ktorým sa server PostgreSQL\n"
+"                                registruje\n"
+
+#: pg_ctl.c:1039
+msgid "  -U       user name of account to register PostgreSQL server\n"
+msgstr ""
+"  -U                            meno užívateľa účtu, pod ktorým sa server\n"
+"                                PostgreSQL registruje\n"
+
+#: pg_ctl.c:1041
+msgid "  -w           wait until operation completes\n"
+msgstr "  -w                            počkaj, kým operácia neskončí\n"
+
+#: pg_ctl.c:1042
+msgid "  -W           do not wait until operation completes\n"
+msgstr "  -W                            nepočkaj do ukončenia operácie\n"
+
+#: pg_ctl.c:1043
+msgid "  --help       show this help, then exit\n"
+msgstr "  --help                        vypíš túto nápovedu, potom ukonč činnosť\n"
+
+#: pg_ctl.c:1044
+msgid "  --version    output version information, then exit\n"
+msgstr "  --version                     vypíš informácie o verzii, potom koniec\n"
+
+#: pg_ctl.c:1045
+msgid ""
+"(The default is to wait for shutdown, but not for start or restart.)\n"
+"\n"
+msgstr ""
+"(Implicitne sa čaká v prípade vypnutia, ale nie v prípade spustenia alebo \n"
+"opätovného spustenia)\n"
+"\n"
+
+#: pg_ctl.c:1046
+msgid ""
+"If the -D option is omitted, the environment variable PGDATA is used.\n"
+"\n"
+msgstr "Ak sa vynechá voľba -D, použije sa premenná prostredia PGDATA.\n"
+
+#: pg_ctl.c:1047
+msgid "Options for start or restart:\n"
+msgstr "Voľby pre spustenie alebo opätovné spustenie:\n"
+
+#: pg_ctl.c:1048
+msgid ""
+"  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
+"                          use of this option is highly recommended.\n"
+msgstr ""
+"  -l, --log SÚBOR               zapíš (alebo pripíš na koniec) log servera \n"
+"                                do SÚBORu. Použitie tejto voľby sa veľmi \n"
+"                                odporúča.\n"
+
+#: pg_ctl.c:1050
+msgid ""
+"  -o OPTIONS              command line options to pass to the postmaster\n"
+"                          (PostgreSQL server executable)\n"
+msgstr ""
+"  -o VOĽBY                      voľby príkazového riadku, ktoré majú byť \n"
+"                                odovzdané programu postmaster (spustiteľný\n"
+"                                súbor servera PostgreSQL)\n"
+
+#: pg_ctl.c:1052
+msgid ""
+"  -p PATH-TO-POSTMASTER   normally not necessary\n"
+"\n"
+msgstr ""
+"  -p CESTA_K_POSTMASTERU        obyčajne nepotrebné\n"
+"\n"
+
+#: pg_ctl.c:1053
+msgid "Options for stop or restart:\n"
+msgstr "Voľby pre zastavenie alebo opätovné spustenie:\n"
+
+#: pg_ctl.c:1054
+msgid ""
+"  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n"
+"\n"
+msgstr ""
+"  -m REŽIM_VYPNUTIA  môže byť 'smart' (múdro), 'fast' (rýchlo), alebo "
+"'immediate' (ihneď)\n"
+"\n"
+
+#: pg_ctl.c:1055
+msgid "Allowed signal names for kill:\n"
+msgstr "Povolené názvy signálov pre príkaz kill (ukončenie):\n"
+
+#: pg_ctl.c:1056
+msgid ""
+"  HUP INT QUIT ABRT TERM USR1 USR2\n"
+"\n"
+msgstr ""
+"  HUP INT QUIT ABRT TERM USR1 USR2\n"
+"\n"
+
+#: pg_ctl.c:1057
+msgid "Shutdown modes are:\n"
+msgstr "Režimy vypnutia sú:\n"
+
+#: pg_ctl.c:1058
+msgid "  smart       quit after all clients have disconnected\n"
+msgstr "  smart       ukončenie po odpojení všetkých klientov\n"
+
+#: pg_ctl.c:1059
+msgid "  fast        quit directly, with proper shutdown\n"
+msgstr "  fast        priame ukončenie, s riadnym vypnutím\n"
+
+#: pg_ctl.c:1060
+msgid ""
+"  immediate   quit without complete shutdown; will lead to recovery on "
+"restart\n"
+"\n"
+msgstr ""
+"  immediate   koniec bez kompletného vypnutia. Spôsobí obnovu pri opätovnom \n"
+"              spustení\n"
+"\n"
+
+#: pg_ctl.c:1061
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Chyby hláste na adresu <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_ctl.c:1086
+#, c-format
+msgid "%s: invalid shutdown mode %s\n"
+msgstr "%s: neplatný režim vypnutia %s\n"
+
+#: pg_ctl.c:1119
+#, c-format
+msgid "%s: invalid signal \"%s\"\n"
+msgstr "%s: neplatný signál \"%s\"\n"
+
+#: pg_ctl.c:1246
+#, c-format
+msgid "%s: invalid option %s\n"
+msgstr "%s: neplatná voľba \"%s\"\n"
+
+#: pg_ctl.c:1257
+#, c-format
+msgid "%s: extra operation mode %s\n"
+msgstr "%s: nadbytočný režim operácie %s\n"
+
+#: pg_ctl.c:1276
+#, c-format
+msgid "%s: invalid kill syntax\n"
+msgstr "%s: neplatná syntax príkazu kill\n"
+
+#: pg_ctl.c:1294
+#, c-format
+msgid "%s: invalid operation mode %s\n"
+msgstr "%s: neplatný režim činnosti %s\n"
+
+#: pg_ctl.c:1304
+#, c-format
+msgid "%s: no operation specified\n"
+msgstr "%s: nebola určená operácia\n"
+
+#: pg_ctl.c:1320
+#, c-format
+msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr ""
+"%s: nebol určený adresár databázy a premenná prostredia PGDATA nie je \n"
+"nastavená\n"
+
