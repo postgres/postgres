@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun  7 15:55:54 EDT 2002
+Last updated:		Mon Jun 10 11:52:17 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -503,7 +503,7 @@ Developers who have claimed items are:
 --------------------------------------
 * Barry is Barry Lind <barry@xythos.com>
 * Billy is Billy G. Allie <Bill.Allie@mug.org>
-* Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
+* Bruce is Bruce Momjian <pgman@candle.pha.pa.us>
 * Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au>
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
 * Dave is Dave Cramer <dave@fastcrypt.com>
@@ -519,7 +519,7 @@ Developers who have claimed items are:
 * Neil is Neil Conway <nconway@klamath.dyndns.org>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
 * Peter M is Peter T Mount <peter@retep.org.uk>
-* Peter E is Peter Eisentraut<peter_e@gmx.net>
+* Peter E is Peter Eisentraut <peter_e@gmx.net>
 * Philip is Philip Warner <pjw@rhyme.com.au>
 * Rod is Rod Taylor <rbt@zort.ca>
 * Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
