@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.14 2001/07/09 23:50:32 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.15 2001/09/10 21:58:47 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
@@ -43,7 +43,7 @@
 [<XRef LinkEnd="STON90b" EndTerm="STON90b">].
 </para>
 <Sect1 id="querytree">
-<Title>What is a Querytree?</Title>
+<Title>What is a Query Tree?</Title>
 
 <Para>
     To understand how the rule system works it is necessary to know
@@ -52,32 +52,32 @@
 
 <Para>
     The rule system is located between the query parser and the planner.
-    It takes the output of the parser, one querytree, and the rewrite
+    It takes the output of the parser, one query tree, and the rewrite
     rules from the <FileName>pg_rewrite</FileName> catalog, which are
-    querytrees too with some extra information, and creates zero or many
-    querytrees as result. So its input and output are always things
+    query trees too with some extra information, and creates zero or many
+    query trees as result. So its input and output are always things
     the parser itself could have produced and thus, anything it sees
     is basically representable as an <Acronym>SQL</Acronym> statement.
 </Para>
 
 <Para>
-    Now what is a querytree? It is an internal representation of an
+    Now what is a query tree? It is an internal representation of an
     <Acronym>SQL</Acronym> statement where the single parts that built
-    it are stored separately. These querytrees are visible when starting
-    the <ProductName>Postgres</ProductName> backend with debuglevel 4
+    it are stored separately. These query trees are visible when starting
+    the <ProductName>Postgres</ProductName> backend with debug level 4
     and typing queries into the interactive backend interface. The rule
     actions in the <FileName>pg_rewrite</FileName> system catalog are
-    also stored as querytrees. They are not formatted like the debug
+    also stored as query trees. They are not formatted like the debug
     output, but they contain exactly the same information.
 </Para>
 
 <Para>
-    Reading a querytree requires some experience and it was a hard
+    Reading a query tree requires some experience and it was a hard
     time when I started to work on the rule system. I can remember
     that I was standing at the coffee machine and I saw the cup
-    in a targetlist, water and coffee powder in a rangetable and all
+    in a target list, water and coffee powder in a range table and all
     the buttons in a qualification expression. Since 
-    <Acronym>SQL</Acronym> representations of querytrees are
+    <Acronym>SQL</Acronym> representations of query trees are
     sufficient to understand the rule system, this document will
     not teach how to read them. It might help to learn
     it and the naming conventions are required in the later following
@@ -85,47 +85,45 @@
 </Para>
 
 <Sect2>
-<Title>The Parts of a Querytree</Title>
+<Title>The Parts of a Query tree</Title>
 
 <Para>
     When reading the <Acronym>SQL</Acronym> representations of the 
-    querytrees in this document it is necessary to be able to identify
-    the parts the statement is broken into when it is in the querytree
-    structure. The parts of a querytree are
-</Para>
+    query trees in this document it is necessary to be able to identify
+    the parts the statement is broken into when it is in the query tree
+    structure. The parts of a query tree are
 
-<Para>
 <VariableList>
     <VarListEntry>
     <Term>
-        the commandtype
+        the command type
     </Term>
     <ListItem>
     <Para>
         This is a simple value telling which command
-	(SELECT, INSERT, UPDATE, DELETE) produced the parsetree.
+	(SELECT, INSERT, UPDATE, DELETE) produced the parse tree.
     </Para>
     </ListItem>
     </VarListEntry>
 
     <VarListEntry>
     <Term>
-        the rangetable
+        the range table
     </Term>
     <ListItem>
     <Para>
-        The rangetable is a list of relations that are used in the query.
+        The range table is a list of relations that are used in the query.
 	In a SELECT statement these are the relations given after
 	the FROM keyword.
     </Para>
 
     <Para>
-        Every rangetable entry identifies a table or view and tells
+        Every range table entry identifies a table or view and tells
 	by which name it is called in the other parts of the query.
-	In the querytree the rangetable entries are referenced by
+	In the query tree the range table entries are referenced by
 	index rather than by name, so here it doesn't matter if there
 	are duplicate names as it would in an <Acronym>SQL</Acronym>
-	statement. This can happen after the rangetables of rules
+	statement. This can happen after the range tables of rules
 	have been merged in. The examples in this document will not have
 	this situation.
     </Para>
@@ -134,11 +132,11 @@
 
     <VarListEntry>
     <Term>
-        the resultrelation
+        the result relation
     </Term>
     <ListItem>
     <Para>
-        This is an index into the rangetable that identifies the
+        This is an index into the range table that identifies the
 	relation where the results of the query go.
     </Para>
 
@@ -151,7 +149,7 @@
     </Para>
 
     <Para>
-        On INSERT, UPDATE and DELETE queries the resultrelation
+        On INSERT, UPDATE and DELETE queries the result relation
 	is the table (or view!) where the changes take effect.
     </Para>
     </ListItem>
@@ -159,11 +157,11 @@
 
     <VarListEntry>
     <Term>
-        the targetlist
+        the target list
     </Term>
     <ListItem>
     <Para>
-        The targetlist is a list of expressions that define the result
+        The target list is a list of expressions that define the result
 	of the query. In the case of a SELECT, the expressions are what
 	builds the final output of the query. They are the expressions
 	between the SELECT and the FROM keywords.  (* is just an
@@ -173,23 +171,23 @@
     </Para>
 
     <Para>
-        DELETE queries don't need a targetlist because they don't
+        DELETE queries don't need a target list because they don't
 	produce any result. In fact the planner will add a special CTID
-	entry to the empty targetlist. But this is after the rule
+	entry to the empty target list. But this is after the rule
 	system and will be discussed later. For the rule system the
-	targetlist is empty.
+	target list is empty.
     </Para>
 
     <Para>
-        In INSERT queries the targetlist describes the new rows that
-	should go into the resultrelation. It is the expressions in the VALUES
+        In INSERT queries the target list describes the new rows that
+	should go into the result relation. It is the expressions in the VALUES
 	clause or the ones from the SELECT clause in INSERT ... SELECT.
-	Missing columns of the resultrelation will be filled in by the
+	Missing columns of the result relation will be filled in by the
 	planner with a constant NULL expression.
     </Para>
 
     <Para>
-        In UPDATE queries, the targetlist describes the new rows that should
+        In UPDATE queries, the target list describes the new rows that should
 	replace the old ones. In the rule system, it contains just the
 	expressions from the SET attribute = expression part of the query.
 	The planner will add missing columns by inserting expressions that
@@ -198,9 +196,9 @@
     </Para>
 
     <Para>
-        Every entry in the targetlist contains an expression that can
+        Every entry in the target list contains an expression that can
 	be a constant value, a variable pointing to an attribute of one
-	of the relations in the rangetable, a parameter, or an expression
+	of the relations in the range table, a parameter, or an expression
 	tree made of function calls, constants, variables, operators etc.
     </Para>
     </ListItem>
@@ -213,8 +211,8 @@
     <ListItem>
     <Para>
         The query's qualification is an expression much like one of those
-	contained in the targetlist entries. The result value of this
-	expression is a boolean that tells if the operation
+	contained in the target list entries. The result value of this
+	expression is a Boolean that tells if the operation
 	(INSERT, UPDATE, DELETE or SELECT) for the final result row should be
 	executed or not. It is the WHERE clause of an
 	<Acronym>SQL</Acronym> statement.
@@ -232,7 +230,7 @@
 	For a simple query like SELECT FROM a, b, c the join tree is just
 	a list of the FROM items, because we are allowed to join them in
 	any order.  But when JOIN expressions --- particularly outer joins
-	--- are used, we have to join in the order shown by the JOINs.
+	--- are used, we have to join in the order shown by the joins.
 	The join tree shows the structure of the JOIN expressions.  The
 	restrictions associated with particular JOIN clauses (from ON or
 	USING expressions) are stored as qualification expressions attached
@@ -250,7 +248,7 @@
     </Term>
     <ListItem>
     <Para>
-        The other parts of the querytree like the ORDER BY 
+        The other parts of the query tree like the ORDER BY 
 	clause aren't of interest here. The rule system
 	substitutes entries there while applying rules, but that
 	doesn't have much to do with the fundamentals of the rule
@@ -304,7 +302,7 @@
     Rules ON SELECT are applied to all queries as the
     last step, even if the command
     given is an INSERT, UPDATE or DELETE. And they have different
-    semantics from the others in that they modify the parsetree in
+    semantics from the others in that they modify the parse tree in
     place instead of creating a new one.
     So SELECT rules are described first.
 </Para>
@@ -329,9 +327,9 @@
 </Para>
 
 <Para>
-    The database needed to play with the examples is named al_bundy.
+    The database needed to play with the examples is named <literal>al_bundy</literal>.
     You'll see soon why this is the database name. And it needs the
-    procedural language PL/pgSQL installed, because
+    procedural language <application>PL/pgSQL</> installed, because
     we need a little min() function returning the lower of 2
     integer values. We create that as
 
@@ -424,7 +422,7 @@
     will create a relation shoelace and an entry 
     in <FileName>pg_rewrite</FileName>
     that tells that there is a rewrite rule that must be applied
-    whenever the relation shoelace is referenced in a query's rangetable.
+    whenever the relation shoelace is referenced in a query's range table.
     The rule has no rule qualification (discussed later, with the
     non SELECT rules, since SELECT rules currently cannot have them) and
     it is INSTEAD. Note that rule qualifications are not the same as
@@ -432,7 +430,7 @@
 </Para>
 
 <Para>
-    The rule's action is one querytree that is a copy of the
+    The rule's action is one query tree that is a copy of the
     SELECT statement in the view creation command.
     
     <Note>
@@ -440,7 +438,7 @@
     <Para>
     The two extra range
     table entries for NEW and OLD (named *NEW* and *CURRENT* for
-    historical reasons in the printed querytree) you can see in
+    historical reasons in the printed query tree) you can see in
     the <Filename>pg_rewrite</Filename> entry aren't of interest
     for SELECT rules.
     </Para>
@@ -508,10 +506,10 @@
 </ProgramListing>
 
     and this is given to the rule system. The rule system walks through the
-    rangetable and checks if there are rules in <Filename>pg_rewrite</Filename>
-    for any relation. When processing the rangetable entry for
+    range table and checks if there are rules in <Filename>pg_rewrite</Filename>
+    for any relation. When processing the range table entry for
     <Filename>shoelace</Filename> (the only one up to now) it finds the
-    rule '_RETshoelace' with the parsetree
+    rule <literal>_RETshoelace</literal> with the parse tree
 
 <ProgramListing>
     <FirstTerm>SELECT s.sl_name, s.sl_avail,
@@ -530,8 +528,8 @@
 <Para>
     To expand the view, the rewriter simply creates a subselect rangetable
     entry containing the rule's action parsetree, and substitutes this
-    rangetable entry for the original one that referenced the view.  The 
-    resulting rewritten parsetree is almost the same as if Al had typed
+    range table entry for the original one that referenced the view.  The 
+    resulting rewritten parse tree is almost the same as if Al had typed
 
 <ProgramListing>
     SELECT shoelace.sl_name, shoelace.sl_avail,
@@ -547,10 +545,10 @@
              WHERE s.sl_unit = u.un_name) shoelace;
 </ProgramListing>
 
-     There is one difference however: the sub-query's rangetable has two
+     There is one difference however: the sub-query's range table has two
      extra entries shoelace *OLD*, shoelace *NEW*.  These entries don't
      participate directly in the query, since they aren't referenced by
-     the sub-query's join tree or targetlist.  The rewriter uses them
+     the sub-query's join tree or target list.  The rewriter uses them
      to store the access permission check info that was originally present
      in the rangetable entry that referenced the view.  In this way, the
      executor will still check that the user has proper permissions to access
@@ -598,7 +596,7 @@
 </Para>
 
 <Para>
-    The output of the parser this time is the parsetree
+    The output of the parser this time is the parse tree
 
 <ProgramListing>
     SELECT shoe_ready.shoename, shoe_ready.sh_avail,
@@ -610,7 +608,7 @@
 
     The first rule applied will be the one for the 
     <Filename>shoe_ready</Filename> view and it results in the
-    parsetree
+    parse tree
 
 <ProgramListing>
     SELECT shoe_ready.shoename, shoe_ready.sh_avail,
@@ -629,8 +627,8 @@
 </ProgramListing>
 
     Similarly, the rules for <Filename>shoe</Filename> and
-    <Filename>shoelace</Filename> are substituted into the rangetable of
-    the sub-query, leading to a three-level final querytree:
+    <Filename>shoelace</Filename> are substituted into the range table of
+    the sub-query, leading to a three-level final query tree:
 
 <ProgramListing>
     SELECT shoe_ready.shoename, shoe_ready.sh_avail,
@@ -666,7 +664,7 @@
 </ProgramListing>
 
     It turns out that the planner will collapse this tree into a two-level
-    querytree: the bottommost selects will be "pulled up" into the middle
+    query tree: the bottommost selects will be "pulled up" into the middle
     select since there's no need to process them separately.  But the
     middle select will remain separate from the top, because it contains
     aggregate functions.  If we pulled those up it would change the behavior
@@ -698,18 +696,18 @@
 <Title>View Rules in Non-SELECT Statements</Title>
 
 <Para>
-    Two details of the parsetree aren't touched in the description of
-    view rules above. These are the commandtype and the resultrelation.
+    Two details of the parse tree aren't touched in the description of
+    view rules above. These are the command type and the result relation.
     In fact, view rules don't need this information.
 </Para>
 
 <Para>
-    There are only a few differences between a parsetree for a SELECT
-    and one for any other command. Obviously they have another commandtype
-    and this time the resultrelation points to the rangetable entry where
+    There are only a few differences between a parse tree for a SELECT
+    and one for any other command. Obviously they have another command type
+    and this time the result relation points to the range table entry where
     the result should go. Everything else is absolutely the same. 
     So having two tables t1 and t2 with attributes
-    a and b, the parsetrees for the two statements
+    a and b, the parse trees for the two statements
 
 <ProgramListing>
     SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
@@ -722,14 +720,14 @@
     <ItemizedList>
         <ListItem>
 	<Para>
-	    The rangetables contain entries for the tables t1 and t2.
+	    The range tables contain entries for the tables t1 and t2.
 	</Para>
         </ListItem>
 
         <ListItem>
 	<Para>
-	    The targetlists contain one variable that points to attribute
-	    b of the rangetable entry for table t2.
+	    The target lists contain one variable that points to attribute
+	    b of the range table entry for table t2.
 	</Para>
         </ListItem>
 
@@ -742,15 +740,15 @@
 
         <ListItem>
 	<Para>
-	    The jointrees show a simple join between t1 and t2.
+	    The join trees show a simple join between t1 and t2.
 	</Para>
         </ListItem>
     </ItemizedList>
 
-    The consequence is, that both parsetrees result in similar execution
+    The consequence is, that both parse trees result in similar execution
     plans. They are both joins over the two tables. For the UPDATE
-    the missing columns from t1 are added to the targetlist by the planner 
-    and the final parsetree will read as
+    the missing columns from t1 are added to the target list by the planner 
+    and the final parse tree will read as
 
 <ProgramListing>
     UPDATE t1 SET a = t1.a, b = t2.b WHERE t1.a = t2.a;
@@ -768,18 +766,18 @@
     for. It just produces a result set of rows. The difference that one
     is a SELECT command and the other is an UPDATE is handled in the
     caller of the executor. The caller still knows (looking at the
-    parsetree) that this is an UPDATE, and he knows that this result
+    parse tree) that this is an UPDATE, and he knows that this result
     should go into table t1. But which of the rows that are there
     has to be replaced by the new row?
 </Para>
 
 <Para>
-    To resolve this problem, another entry is added to the targetlist
+    To resolve this problem, another entry is added to the target list
     in UPDATE (and also in DELETE) statements: the current tuple ID (ctid).
     This is a system attribute containing the file
     block number and position in the block for the row. Knowing the table,
     the ctid can be used to retrieve the original t1 row to be updated.
-    After adding the ctid to the targetlist, the query actually looks like
+    After adding the ctid to the target list, the query actually looks like
 
 <ProgramListing>
     SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
@@ -791,7 +789,7 @@
     into the table (after stripping ctid) and in the tuple header of the row 
     that ctid pointed to the cmax and xmax entries are set to the current
     command counter and current transaction ID. Thus the old row is hidden
-    and after the transaction commited the vacuum cleaner can really move
+    and after the transaction committed the vacuum cleaner can really move
     it out.
 </Para>
 
@@ -806,8 +804,8 @@
 
 <Para>
     The above demonstrates how the rule system incorporates
-    view definitions into the original parsetree. In the second example
-    a simple SELECT from one view created a final parsetree that is
+    view definitions into the original parse tree. In the second example
+    a simple SELECT from one view created a final parse tree that is
     a join of 4 tables (unit is used twice with different names).
 </Para>
 
@@ -821,7 +819,7 @@
     relationships between these tables plus the restrictive
     qualifications from the views plus the qualifications from
     the original query
-    in one single parsetree. And this is still the situation
+    in one single parse tree. And this is still the situation
     when the original query is already a join over views.
     Now the planner has to decide which is
     the best path to execute the query. The more information
@@ -839,13 +837,13 @@
 <Para>
     What happens if a view is named as the target relation for an INSERT,
     UPDATE, or DELETE?  After doing the substitutions described above,
-    we will have a querytree in which the resultrelation points at a
-    subquery rangetable entry.  This will not work, so the rewriter throws
+    we will have a query tree in which the result relation points at a
+    subquery range table entry.  This will not work, so the rewriter throws
     an error if it sees it has produced such a thing.
 </Para>
 
 <Para>
-    To change this we can define rules that modify the behaviour
+    To change this we can define rules that modify the behavior
     of non-SELECT queries. This is the topic of the next section.
 </Para>
 </Sect2>
@@ -896,8 +894,8 @@
 	</ListItem>
     </ItemizedList>
 
-    Second, they don't modify the parsetree in place. Instead they
-    create zero or many new parsetrees and can throw away the
+    Second, they don't modify the parse tree in place. Instead they
+    create zero or many new parse trees and can throw away the
     original one.
 </Para>
 </sect2>
@@ -920,10 +918,10 @@
 
 <Para>
     Update rules get applied by the rule system when the result
-    relation and the commandtype of a parsetree are equal to the
+    relation and the command type of a parse tree are equal to the
     object and event given in the CREATE RULE command.
-    For update rules, the rule system creates a list of parsetrees.
-    Initially the parsetree list is empty.
+    For update rules, the rule system creates a list of parse trees.
+    Initially the parse tree list is empty.
     There can be zero (NOTHING keyword), one or multiple actions.
     To simplify, we look at a rule with one action. This rule
     can have a qualification or not and it can be INSTEAD or not.
@@ -938,7 +936,7 @@
 </Para>
 
 <Para>
-    So we have four cases that produce the following parsetrees for
+    So we have four cases that produce the following parse trees for
     a one-action rule.
 </Para>
 <Para>
@@ -949,8 +947,8 @@
         <ItemizedList>
 	    <ListItem>
 	    <Para>
-	        The parsetree from the rule action where the
-		original parsetree's qualification has been added.
+	        The parse tree from the rule action where the
+		original parse tree's qualification has been added.
 	    </Para>
 	    </ListItem>
 	</ItemizedList>
@@ -963,8 +961,8 @@
         <ItemizedList>
 	    <ListItem>
 	    <Para>
-	        The parsetree from the rule action where the
-		original parsetree's qualification has been added.
+	        The parse tree from the rule action where the
+		original parse tree's qualification has been added.
 	    </Para>
 	    </ListItem>
 	</ItemizedList>
@@ -977,8 +975,8 @@
         <ItemizedList>
 	    <ListItem>
 	    <Para>
-	        The parsetree from the rule action where the rule
-		qualification and the original parsetree's 
+	        The parse tree from the rule action where the rule
+		qualification and the original parse tree's 
 		qualification have been added.
 	    </Para>
 	    </ListItem>
@@ -992,15 +990,15 @@
         <ItemizedList>
 	    <ListItem>
 	    <Para>
-	        The parsetree from the rule action where the rule
-		qualification and the original parsetree's 
+	        The parse tree from the rule action where the rule
+		qualification and the original parse tree's 
 		qualification have been added.
 	    </Para>
 	    </ListItem>
 
 	    <ListItem>
 	    <Para>
-	        The original parsetree where the negated rule
+	        The original parse tree where the negated rule
 		qualification has been added.
 	    </Para>
 	    </ListItem>
@@ -1010,9 +1008,9 @@
     </ItemizedList>
 </para>
 <Para>
-    Finally, if the rule is not INSTEAD, the unchanged original parsetree is
+    Finally, if the rule is not INSTEAD, the unchanged original parse tree is
     added to the list. Since only qualified INSTEAD rules already add the
-    original parsetree, we end up with either one or two output parsetrees
+    original parse tree, we end up with either one or two output parse trees
     for a rule with one action.
 </Para>
 
@@ -1027,11 +1025,11 @@
 </Para>
 
 <Para>
-    The parsetrees generated from rule actions are thrown into the
+    The parse trees generated from rule actions are thrown into the
     rewrite system again and maybe more rules get applied resulting
-    in more or less parsetrees.
-    So the parsetrees in the rule actions must have either another commandtype
-    or another resultrelation. Otherwise this recursive process will end up in a loop.
+    in more or less parse trees.
+    So the parse trees in the rule actions must have either another command type
+    or another result relation. Otherwise this recursive process will end up in a loop.
     There is a compiled in recursion limit of currently 10 iterations.
     If after 10 iterations there are still update rules to apply the
     rule system assumes a loop over multiple rule definitions and reports
@@ -1138,9 +1136,9 @@
 
 <Para>
     The rule is a qualified non-INSTEAD rule, so the rule system
-    has to return two parsetrees: the modified rule action and the original
-    parsetree. In the first step the rangetable of the original query is
-    incorporated into the rule's action parsetree. This results in
+    has to return two parse trees: the modified rule action and the original
+    parsetree. In the first step the range table of the original query is
+    incorporated into the rule's action parse tree. This results in
 
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
@@ -1167,9 +1165,9 @@
     difficulty with it.  They need to support this same functionality
     anyway for INSERT ... SELECT.
 
-    In step 3 the original parsetree's qualification is added,
-    restricting the resultset further to only the rows touched
-    by the original parsetree.
+    In step 3 the original parse tree's qualification is added,
+    restricting the result set further to only the rows touched
+    by the original parse tree.
 
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
@@ -1181,8 +1179,8 @@
        <FirstTerm>AND bpchareq(shoelace_data.sl_name, 'sl7')</FirstTerm>;
 </ProgramListing>
 
-    Step 4 substitutes NEW references by the targetlist entries from the
-    original parsetree or with the matching variable references
+    Step 4 substitutes NEW references by the target list entries from the
+    original parse tree or with the matching variable references
     from the result relation.
 
 <ProgramListing>
@@ -1195,7 +1193,7 @@
        AND bpchareq(shoelace_data.sl_name, 'sl7');
 </ProgramListing>
 
-    Step 5 changes OLD references into resultrelation references.
+    Step 5 changes OLD references into result relation references.
 
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
@@ -1208,8 +1206,8 @@
 </ProgramListing>
 
     That's it.  Since the rule is not INSTEAD, we also output the
-    original parsetree.  In short, the output from the rule system
-    is a list of two parsetrees that are the same as the statements:
+    original parse tree.  In short, the output from the rule system
+    is a list of two parse trees that are the same as the statements:
 
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
@@ -1233,7 +1231,7 @@
 </ProgramListing>
 
     no log entry would get written.  This
-    time the original parsetree does not contain a targetlist
+    time the original parse tree does not contain a target list
     entry for sl_avail, so NEW.sl_avail will get replaced by
     shoelace_data.sl_avail resulting in the extra query
 
@@ -1257,8 +1255,8 @@
 
     four rows in fact get updated (sl1, sl2, sl3 and sl4).
     But sl3 already has sl_avail = 0. This time, the original
-    parsetrees qualification is different and that results
-    in the extra parsetree
+    parse trees qualification is different and that results
+    in the extra parse tree
 
 <ProgramListing>
     INSERT INTO shoelace_log SELECT
@@ -1269,12 +1267,12 @@
        AND <FirstTerm>shoelace_data.sl_color = 'black'</FirstTerm>;
 </ProgramListing>
 
-    This parsetree will surely insert three new log entries. And
+    This parse tree will surely insert three new log entries. And
     that's absolutely correct.
 </Para>
 
 <Para>
-    Here we can see why it is important that the original parsetree is
+    Here we can see why it is important that the original parse tree is
     executed last.
     If the UPDATE would have been executed first, all the rows
     are already set to zero, so the logging INSERT
@@ -1290,7 +1288,7 @@
 <Para>
     A simple way to protect view relations from the mentioned
     possibility that someone can try to INSERT, UPDATE and DELETE
-    on them is to let those parsetrees get
+    on them is to let those parse trees get
     thrown away. We create the rules
 
 <ProgramListing>
@@ -1306,7 +1304,7 @@
     relation <Filename>shoe</Filename>, the rule system will
     apply the rules. Since the rules have
     no actions and are INSTEAD, the resulting list of
-    parsetrees will be empty and the whole query will become
+    parse trees will be empty and the whole query will become
     nothing because there is nothing left to be optimized or
     executed after the rule system is done with it.
 
@@ -1316,8 +1314,8 @@
     This way might irritate frontend applications because
     absolutely nothing happened on the database and thus, the
     backend will not return anything for the query. Not
-    even a PGRES_EMPTY_QUERY will be available in libpq.
-    In psql, nothing happens. This might change in the future.
+    even a <symbol>PGRES_EMPTY_QUERY</symbol> will be available in <application>libpq</>.
+    In <application>psql</application>, nothing happens. This might change in the future.
     </Para>
     </Note>
 
@@ -1325,7 +1323,7 @@
 
 <Para>
     A more sophisticated way to use the rule system is to
-    create rules that rewrite the parsetree into one that
+    create rules that rewrite the parse tree into one that
     does the right operation on the real tables. To do that
     on the <Filename>shoelace</Filename> view, we create
     the following rules:
@@ -1357,10 +1355,10 @@
 </ProgramListing>
 
     Now there is a pack of shoelaces arriving in Al's shop and it has
-    a big partlist. Al is not that good in calculating and so
+    a big part list. Al is not that good in calculating and so
     we don't want him to manually update the shoelace view.
     Instead we setup two little tables, one where he can
-    insert the items from the partlist and one with a special
+    insert the items from the part list and one with a special
     trick. The create commands for these are:
 
 <ProgramListing>
@@ -1445,7 +1443,7 @@
 
     It's a long way from the one INSERT ... SELECT to these
     results. And its description will be the last in this
-    document (but not the last example :-). First there was the parsers output
+    document (but not the last example :-). First there was the parser's output
 
 <ProgramListing>
     INSERT INTO shoelace_ok SELECT
@@ -1467,7 +1465,7 @@
 
     and throws away the original INSERT on <Filename>shoelace_ok</Filename>.
     This rewritten query is passed to the rule system again and
-    the second applied rule 'shoelace_upd' produced
+    the second applied rule <literal>shoelace_upd</literal> produced
 
 <ProgramListing>
     UPDATE shoelace_data SET
@@ -1484,10 +1482,10 @@
        AND bpchareq(shoelace_data.sl_name, shoelace.sl_name);
 </ProgramListing>
 
-    Again it's an INSTEAD rule and the previous parsetree is trashed.
+    Again it's an INSTEAD rule and the previous parse tree is trashed.
     Note that this query still uses the view <Filename>shoelace</Filename>.
     But the rule system isn't finished with this loop so it continues
-    and applies the rule '_RETshoelace' on it and we get
+    and applies the rule <literal>_RETshoelace</literal> on it and we get
 
 <ProgramListing>
     UPDATE shoelace_data SET
@@ -1508,8 +1506,8 @@
 
     Again an update rule has been applied and so the wheel
     turns on and we are in rewrite round 3. This time rule
-    'log_shoelace' gets applied what produces the extra
-    parsetree
+    <literal>log_shoelace</literal> gets applied what produces the extra
+    parse tree
 
 <ProgramListing>
     INSERT INTO shoelace_log SELECT
@@ -1532,8 +1530,8 @@
 </ProgramListing>
     
     After that the rule system runs out of rules and returns the 
-    generated parsetrees.
-    So we end up with two final parsetrees that are equal to the
+    generated parse trees.
+    So we end up with two final parse trees that are equal to the
     <Acronym>SQL</Acronym> statements
 
 <ProgramListing>
@@ -1566,7 +1564,7 @@
 <Para>
     There is a little detail that's a bit ugly. Looking at
     the two queries turns out, that the <Filename>shoelace_data</Filename>
-    relation appears twice in the rangetable where it could definitely
+    relation appears twice in the range table where it could definitely
     be reduced to one. The planner does not handle it and so the
     execution plan for the rule systems output of the INSERT will be
 
@@ -1582,7 +1580,7 @@ Nested Loop
   ->  Seq Scan on shoelace_data
 </ProgramListing>
 
-    while omitting the extra rangetable entry would result in a
+    while omitting the extra range table entry would result in a
 
 <ProgramListing>
 Merge Join
@@ -1659,7 +1657,7 @@ Merge Join
                  WHERE sl_name = shoelace.sl_name);
 </ProgramListing>
 
-    Voila:
+    Voilà:
 
 <ProgramListing>
     al_bundy=> SELECT * FROM shoelace;
@@ -1682,7 +1680,7 @@ Merge Join
     itself has a subselect qualification containing a view
     and where calculated view columns are used,
     gets rewritten into 
-    one single parsetree that deletes the requested data
+    one single parse tree that deletes the requested data
     from a real table.
 </Para>
 
@@ -1718,7 +1716,7 @@ Merge Join
     a relation (table or view) is automatically the owner of the
     rewrite rules that are defined for it.
     The <ProductName>Postgres</ProductName> rule system changes the
-    behaviour of the default access control system. Relations that
+    behavior of the default access control system. Relations that
     are used due to rules get checked against the
     permissions of the rule owner, not the user invoking the rule.
     This means, that a user does only need the required permissions
@@ -1822,7 +1820,7 @@ Merge Join
     For the things that can be implemented by both,
     it depends on the usage of the database, which is the best.
     A trigger is fired for any row affected once. A rule manipulates
-    the parsetree or generates an additional one. So if many
+    the parse tree or generates an additional one. So if many
     rows are affected in one statement, a rule issuing one extra
     query would usually do a better job than a trigger that is
     called for any single row and must execute his operations
@@ -1845,8 +1843,8 @@ Merge Join
 </ProgramListing>
 
     Both tables have many
-    thousands of rows and the index on hostname is unique.
-    The hostname column contains the full qualified domain
+    thousands of rows and the index on <structfield>hostname</> is unique.
+    The <structfield>hostname</> column contains the full qualified domain
     name of the computer. The rule/trigger should constraint
     delete rows from software that reference the deleted host.
     Since the trigger is called for each individual row
@@ -1856,7 +1854,7 @@ Merge Join
     DELETE FROM software WHERE hostname = $1;
 </ProgramListing>
 
-    in a prepared and saved plan and pass the hostname in
+    in a prepared and saved plan and pass the <structfield>hostname</> in
     the parameter. The rule would be written as
 
 <ProgramListing>
@@ -1890,7 +1888,7 @@ Merge Join
 
     So there would be not that much difference in speed between
     the trigger and the rule implementation. With the next delete
-    we want to get rid of all the 2000 computers where the hostname starts
+    we want to get rid of all the 2000 computers where the <structfield>hostname</> starts
     with 'old'. There are two possible queries to do that. One is
 
 <ProgramListing>
@@ -1922,7 +1920,7 @@ Merge Join
 </ProgramListing>
 
     This shows, that the planner does not realize that the
-    qualification for the hostname on computer could also be
+    qualification for the <structfield>hostname</> on computer could also be
     used for an index scan on software when there are
     multiple qualification expressions combined with AND, what
     he does in the regexp version of the query. The trigger will
@@ -1931,7 +1929,7 @@ Merge Join
     over computer and 2000 index scans for the software. The
     rule implementation will do it with two queries over indexes.
     And it depends on the overall size of the software table if
-    the rule will still be faster in the seqscan situation. 2000
+    the rule will still be faster in the sequential scan situation. 2000
     query executions over the SPI manager take some time, even
     if all the index blocks to look them up will soon appear in
     the cache.
@@ -1946,8 +1944,8 @@ Merge Join
 
     Again this could result in many rows to be deleted from
     computer. So the trigger will again fire many queries into
-    the executor. But the rule plan will again be the Nestloop over
-    two IndexScan's. Only using another index on computer:
+    the executor. But the rule plan will again be the nested loop over
+    two index scans. Only using another index on computer:
 
 <ProgramListing>
     Nestloop
@@ -1977,7 +1975,7 @@ Merge Join
     create a rule as in the shoelace_log example is to do it with
     a rule qualification. That results in an extra query that is
     performed always, even if the attribute of interest cannot
-    change at all because it does not appear in the targetlist
+    change at all because it does not appear in the target list
     of the initial query. When this is enabled again, it will be
     one more advantage of rules over triggers. Optimization of
     a trigger must fail by definition in this case, because the
@@ -1986,7 +1984,7 @@ Merge Join
     a trigger only allows to specify it on row level, so whenever a
     row is touched, the trigger must be called to make its
     decision. The rule system will know it by looking up the
-    targetlist and will suppress the additional query completely
+    target list and will suppress the additional query completely
     if the attribute isn't touched. So the rule, qualified or not,
     will only do its scans if there ever could be something to do.
 </Para>

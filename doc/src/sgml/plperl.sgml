@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.9 2001/06/22 21:37:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.10 2001/09/10 21:58:47 petere Exp $
 -->
 
 <chapter id="plperl">
@@ -21,10 +21,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.9 2001/06/22 21:37:14 momji
 
  <para>
   The PL/Perl interpreter (when installed as trusted interpreter with 
-  default name 'plperl') intepreter is a full Perl interpreter. However, certain
+  default name <literal>plperl</>) interpreter is a full Perl interpreter. However, certain
   operations have been disabled in order to maintain the security of
   the system.  In general, the operations that are restricted are
-  those that interact with the environment. This includes filehandle
+  those that interact with the environment. This includes file handle
   operations, <literal>require</literal>, and <literal>use</literal>
   (for external modules).  It should be noted that this security is
   not absolute. Indeed, several Denial-of-Service attacks are still
@@ -32,8 +32,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.9 2001/06/22 21:37:14 momji
 
  </para>
  <para>
-  When PL/Perl is installed as 'untrusted' interpreter (with name 'plperlu'),
-  everything is permitted, and any perl code can be loaded (by superuser only).
+  When PL/Perl is installed as <quote>untrusted</> interpreter (with name <literal>plperlu</literal>),
+  everything is permitted, and any Perl code can be loaded (by superuser only).
  </para>
 
  <sect1 id="plperl-install">
@@ -170,13 +170,13 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
    The creation of the function will succeed, but executing it will not.
 
    Note that if same function was created by superuser using language 
-   'plperlu', execution would succeed.
+   <literal>plperlu</>, execution would succeed.
   </para>
   <para>
-   Access to database itself from your perl function can be done via 
-   an experimental module DBD::PgSPI, available at <ulink url="http://www.formenos.org/PgSPI/">this site</ulink>. This module makes available a DBI-compliant
-   database-handle named $pg_dbh, and you can use that to make queries with
-   normal DBI syntax.
+   Access to database itself from your Perl function can be done via 
+   an experimental module <ulink url="http://www.formenos.org/PgSPI/"><literal>DBD::PgSPI</literal></ulink>. This module makes available a <acronym>DBI</>-compliant
+   database-handle named <varname>$pg_dbh</varname>, and you can use that to make queries with
+   normal <acronym>DBI</> syntax.
   </para>
 
  </sect1>

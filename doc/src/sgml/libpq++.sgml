@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.31 2001/09/10 21:58:46 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
-  <title>libpq++ - C++ Binding Library</title>
+  <title><application>libpq++</application> - C++ Binding Library</title>
   
   <para>
    <filename>libpq++</filename> is the C++ API to 
@@ -74,7 +74,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
       <para>
        <filename>libpq++</filename> uses only environment variables or
        <filename>libpq</>'s <function>PQconnectdb</>
-       conninfo style strings.
+       <parameter>conninfo</parameter> style strings.
       </para>
      </note>
 	  
@@ -84,7 +84,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
 	<envar>PGHOST</envar> sets the default server name.
         If this begins with a slash, it specifies Unix-domain communication
         rather than TCP/IP communication; the value is the name of the
-	directory in which the socket file is stored (default "/tmp").
+	directory in which the socket file is stored (default <filename>/tmp</filename>).
        </para>
       </listitem>
       <listitem>
@@ -103,7 +103,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
       <listitem>
        <para>
 	<envar>PGUSER</envar>
-	sets the username used to connect to the database and for authentication.
+	sets the user name used to connect to the database and for authentication.
        </para>
       </listitem>
       <listitem>
@@ -133,7 +133,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
       </listitem>
       <listitem>
        <para>
-	<envar>PGTTY</envar> sets the file or tty on which  debugging  
+	<envar>PGTTY</envar> sets the file or <acronym>tty</acronym> on which  debugging  
 	messages from the backend server are displayed.
        </para>
       </listitem>
@@ -182,7 +182,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
   </sect1>
 
   <sect1 id="libpqpp-classes">
-   <title>libpq++ Classes</title>
+   <title><application>libpq++</application> Classes</title>
 
    <sect2>
     <title>Connection Class: <classname>PgConnection</classname></title>
@@ -199,7 +199,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
     <para>
      The database class provides C++ objects that have a connection
      to a backend server. To create such an object one first needs
-     the apropriate environment for the backend to access.
+     the appropriate environment for the backend to access.
      The following constructors deal with making a connection to a backend
      server from a C++ program.
     </para>
@@ -218,7 +218,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
 	PgConnection::PgConnection(const char *conninfo)
        </synopsis>
        Although typically called from one of the access classes, a connection to
-       a backend server is possible by creating a PgConnection object.
+       a backend server is possible by creating a <classname>PgConnection</> object.
       </para>
      </listitem>
      <listitem>
@@ -250,10 +250,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
        <synopsis>
 	PgDatabase(const char *conninfo)
        </synopsis>
-       After a PgDatabase has been created it should be checked to make sure
-       the connection to the database succeded before sending
+       After a <classname>PgDatabase</classname> has been created it should be checked to make sure
+       the connection to the database succeeded before sending
        queries to the object. This can easily be done by
-       retrieving the current status of the PgDatabase object with the
+       retrieving the current status of the <classname>PgDatabase</classname> object with the
        <function>Status</function> or <function>ConnectionBad</function> methods.
       </para>
      </listitem>
@@ -274,7 +274,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
        <synopsis>
 	PGnotify* PgConnection::Notifies()
        </synopsis>
-       See PQnotifies() for details.
+       See <function>PQnotifies</function> for details.
       </para>
      </listitem>
     </itemizedlist>
@@ -300,28 +300,28 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
        
        <simplelist>
 	<member>
-	 PGRES_EMPTY_QUERY
+	 <symbol>PGRES_EMPTY_QUERY</symbol>
 	</member>
 	<member>
-	 PGRES_COMMAND_OK, if the query was a command
+	 <symbol>PGRES_COMMAND_OK</symbol>, if the query was a command
 	</member>
 	<member>
-	 PGRES_TUPLES_OK, if the query successfully returned tuples
+	 <symbol>PGRES_TUPLES_OK</symbol>, if the query successfully returned tuples
 	</member>
 	<member>
-	 PGRES_COPY_OUT
+	 <symbol>PGRES_COPY_OUT</symbol>
 	</member>
 	<member>
-	 PGRES_COPY_IN
+	 <symbol>PGRES_COPY_IN</symbol>
 	</member>
 	<member>
-	 PGRES_BAD_RESPONSE, if an unexpected response was received
+	 <symbol>PGRES_BAD_RESPONSE</symbol>, if an unexpected response was received
 	</member>
 	<member>
-	 PGRES_NONFATAL_ERROR
+	 <symbol>PGRES_NONFATAL_ERROR</symbol>
 	</member>
 	<member>
-	 PGRES_FATAL_ERROR
+	 <symbol>PGRES_FATAL_ERROR</symbol>
 	</member>
        </simplelist>
       </para>
@@ -394,7 +394,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
      <listitem>
       <para>
        <function>FieldNum</function>
-       PQfnumber Returns the field (attribute) index associated with 
+       <function>PQfnumber</function> Returns the field (attribute) index associated with 
        the given field name. 
        <synopsis>
 	int PgDatabase::FieldNum(const char* field_name) const
@@ -463,41 +463,41 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
      <listitem>
       <para>
        <function>GetValue</function>
-       Returns a single field (attribute) value of one tuple of a PGresult. 
+       Returns a single field (attribute) value of one tuple of a <structname>PGresult</structname>.
        Tuple and field indices start at 0. 
        <synopsis>
 	const char *PgDatabase::GetValue(int tup_num, int field_num) const
        </synopsis>
-       For most queries, the value returned by GetValue is a null-terminated 
-       ASCII string representation of the attribute value. But if BinaryTuples() 
-       is TRUE, the value returned by GetValue is the binary representation 
+       For most queries, the value returned by <function>GetValue</function> is a null-terminated 
+       string representation of the attribute value. But if <function>BinaryTuples</function>
+       is TRUE, the value returned by <function>GetValue</function> is the binary representation 
        of the type in the internal format of the backend server (but not including 
        the size word, if the field is variable-length). It is then the programmer's 
        responsibility to cast and convert the data to the correct C type. The 
-       pointer returned by GetValue points to storage that is part of the 
-       PGresult structure. One should not modify it, and one must explicitly 
+       pointer returned by <function>GetValue</function> points to storage that is part of the 
+       <structname>PGresult</structname> structure. One should not modify it, and one must explicitly 
        copy the value into other storage if it is to be used past the lifetime 
-       of the PGresult structure itself.  BinaryTuples() is not yet implemented.
+       of the <structname>PGresult</structname> structure itself.  <function>BinaryTuples</function> is not yet implemented.
       </para>
      </listitem>
      <listitem>
       <para>
        <function>GetValue</function>
-       Returns a single field (attribute) value of one tuple of a PGresult. 
+       Returns a single field (attribute) value of one tuple of a <structname>PGresult</structname>. 
        Tuple and field indices start at 0. 
        <synopsis>
 	const char *PgDatabase::GetValue(int tup_num, const char *field_name) const
        </synopsis>
-       For most queries, the value returned by GetValue is a null-terminated 
-       ASCII string representation of the attribute value. But if BinaryTuples() 
-       is TRUE, the value returned by GetValue is the binary representation 
+       For most queries, the value returned by <function>GetValue</function> is a null-terminated 
+       string representation of the attribute value. But if <function>BinaryTuples</function> 
+       is TRUE, the value returned by <function>GetValue</function> is the binary representation 
        of the type in the internal format of the backend server (but not including 
        the size word, if the field is variable-length). It is then the programmer's 
        responsibility to cast and convert the data to the correct C type. The 
-       pointer returned by GetValue points to storage that is part of the 
-       PGresult structure. One should not modify it, and one must explicitly 
+       pointer returned by <function>GetValue</function> points to storage that is part of the 
+       <structname>PGresult</structname> structure. One should not modify it, and one must explicitly 
        copy the value into other storage if it is to be used past the lifetime 
-       of the PGresult structure itself.  BinaryTuples() is not yet implemented.
+       of the <structname>PGresult</structname> structure itself.  <function>BinaryTuples</function> is not yet implemented.
       </para>
      </listitem>
      <listitem>
@@ -509,9 +509,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
 	int PgDatabase::GetLength(int tup_num, int field_num) const
        </synopsis>
        This is the actual data length for the particular data value, that 
-       is the size of the object pointed to by GetValue. Note that for
+       is the size of the object pointed to by <function>GetValue</function>. Note that for
        ASCII-represented values, this size has little to do with the binary 
-       size reported by PQfsize.
+       size reported by <function>PQfsize</function>.
       </para>
      </listitem>
      <listitem>
@@ -523,9 +523,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
 	int PgDatabase::GetLength(int tup_num, const char* field_name) const
        </synopsis>
        This is the actual data length for the particular data value, that 
-       is the size of the object pointed to by GetValue. Note that for
+       is the size of the object pointed to by <function>GetValue</function>. Note that for
        ASCII-represented values, this size has little to do with the binary 
-       size reported by PQfsize.
+       size reported by <function>PQfsize</function>.
       </para>
      </listitem>
      <listitem>
@@ -535,7 +535,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
        <synopsis>
         bool GetIsNull(int tup_num, int field_num) const
        </synopsis>
-       Note that GetValue will return the empty string for null fields, not
+       Note that <function>GetValue</function> will return the empty string for null fields, not
        the NULL pointer.
       </para>
      </listitem>
@@ -546,7 +546,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
        <synopsis>
         bool GetIsNull(int tup_num, const char *field_name) const
        </synopsis>
-       Note that GetValue will return the empty string for null fields, not
+       Note that <function>GetValue</function> will return the empty string for null fields, not
        the NULL pointer.
       </para>
      </listitem>
@@ -652,7 +652,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:
     
     <note>
      <para>
-      In the past, the documentation has associated the names used for asyncronous
+      In the past, the documentation has associated the names used for asynchronous
       notification with relations or classes. However, there is in fact no
       direct linkage of the two concepts in the implementation, and the
       named semaphore in fact does not need to have a corresponding relation

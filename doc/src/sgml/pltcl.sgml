@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.12 2001/08/02 15:45:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.13 2001/09/10 21:58:47 petere Exp $
 -->
 
  <chapter id="pltcl">
-  <title>PL/Tcl - TCL Procedural Language</title>
+  <title>PL/Tcl - Tcl Procedural Language</title>
 
   <indexterm zone="pltcl">
    <primary>PL/Tcl</primary>
@@ -37,7 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.12 2001/08/02 15:45:55 momji
     The good restriction is that everything is executed in a safe
     Tcl interpreter. In addition to the limited command set of safe Tcl, only
     a few commands are available to access the database via SPI and to raise
-    messages via elog(). There is no way to access internals of the
+    messages via <function>elog()</>. There is no way to access internals of the
     database backend or to gain OS-level access under the permissions of the
     <productname>Postgres</productname> user ID, as a C function can do.
     Thus, any unprivileged database user may be
@@ -157,7 +157,7 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
     </para>
     <para>
      To help protect PL/Tcl procedures from unwanted side effects,
-     an array is made available to each procedure via the upvar
+     an array is made available to each procedure via the <function>upvar</>
      command. The global name of this variable is the procedure's internal
      name and the local name is GD.  It is recommended that GD be used
      for private status data of a procedure.  Use regular Tcl global variables
@@ -210,7 +210,7 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
        <listitem>
 	<para>
 	 A Tcl list of the tables field names prefixed with an empty list element.
-	 So looking up an element name in the list with the lsearch Tcl command
+	 So looking up an element name in the list with the <function>lsearch</> Tcl command
 	 returns the same positive number starting from 1 as the fields are numbered
 	 in the pg_attribute system catalog.
 	</para>
@@ -344,7 +344,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
       <indexterm>
        <primary>elog</primary>
       </indexterm>
-      <term>elog <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
+      <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
        <para>
 	Fire a log message. Possible levels are NOTICE, ERROR,
@@ -355,7 +355,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
      </varlistentry>
 
      <varlistentry>
-      <term>quote <replaceable>string</replaceable></term>
+      <term><function>quote</> <replaceable>string</replaceable></term>
       <listitem>
        <para>
 	Duplicates all occurrences of single quote and backslash characters.
@@ -398,7 +398,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
       <indexterm>
        <primary>spi_lastoid</primary>
       </indexterm>
-      <term>spi_lastoid</term>
+      <term><function>spi_lastoid</></term>
       <listitem>
        <para>
 	Returns the OID of the last query if it was an INSERT.
@@ -407,7 +407,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
      </varlistentry>
 
      <varlistentry>
-      <term>spi_exec ?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? <replaceable>query</replaceable> ?<replaceable>loop-body</replaceable>?</term>
+      <term><function>spi_exec</function> <literal>?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? <replaceable>query</replaceable> ?<replaceable>loop-body</replaceable>?</literal></term>
       <listitem>
        <para>
 	Call parser/planner/optimizer/executor for query.
@@ -446,45 +446,45 @@ spi_exec -array C "SELECT * FROM pg_class" {
      </varlistentry>
 
      <varlistentry>
-      <term>spi_prepare <replaceable>query</replaceable> <replaceable>typelist</replaceable></term>
+      <term><function>spi_prepare</function> <replaceable>query</replaceable> <replaceable>typelist</replaceable></term>
       <listitem>
        <para>
 	Prepares AND SAVES a query plan for later execution. It is a bit different
 	from the C level SPI_prepare in that the plan is automatically copied to the
-	toplevel memory context. Thus, there is currently no way of preparing a
+	top-level memory context. Thus, there is currently no way of preparing a
 	plan without saving it.
        </para>
        <para>
 	If the query references arguments, the type names must be given as a Tcl
-	list. The return value from spi_prepare is a query ID to be used in
-	subsequent calls to spi_execp. See spi_execp for a sample.
+	list. The return value from <function>spi_prepare</function> is a query ID to be used in
+	subsequent calls to <function>spi_execp</function>. See <function>spi_execp</function> for a sample.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>spi_exec ?-count <replaceable>n</replaceable>? ?-array<replaceable>name</replaceable>? ?-nulls<replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</term>
+      <term><function>spi_exec</> <literal>?-count <replaceable>n</replaceable>? ?-array<replaceable>name</replaceable>? ?-nulls<replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</literal></term>
       <listitem>
        <para>
-	Execute a prepared plan from spi_prepare with variable substitution.
-	The optional -count value tells spi_execp the maximum number of rows
+	Execute a prepared plan from <function>spi_prepare</> with variable substitution.
+	The optional <literal>-count</literal> value tells <function>spi_execp</> the maximum number of rows
 	to be processed by the query.
        </para>
        <para>
-	The optional value for -nulls is a string of spaces and 'n' characters
-	telling spi_execp which of the values are NULL's. If given, it must
+	The optional value for <literal>-nulls</> is a string of spaces and 'n' characters
+	telling <function>spi_execp</function> which of the values are NULL's. If given, it must
 	have exactly the length of the number of values.
        </para>
        <para>
-	The queryid is the ID returned by the spi_prepare call.
+	The <parameter>queryid</> is the ID returned by the <function>spi_prepare</function> call.
        </para>
        <para>
-	If there was a typelist given to spi_prepare, a Tcl list of values of
+	If there was a <parameter>typelist</> given to <function>spi_prepare</function>, a Tcl list of values of
 	exactly the same length must be given to spi_execp after the query. If
 	the type list on spi_prepare was empty, this argument must be omitted.
        </para>
        <para>
-	If the query is a SELECT statement, the same as described for spi_exec
+	If the query is a SELECT statement, the same as described for <function>spi_exec</>
 	happens for the loop-body and the variables for the fields selected.
        </para>
        <para>
@@ -506,7 +506,7 @@ CREATE FUNCTION t1_count(int4, int4) RETURNS int4 AS '
 	Note that each backslash that Tcl should see must be doubled in
 	the query creating the function, since the main parser processes
 	backslashes too on CREATE FUNCTION.
-	Inside the query string given to spi_prepare should
+	Inside the query string given to <function>spi_prepare</> should
 	really be dollar signs to mark the parameter positions and to not let
 	$1 be substituted by the value given in the first function call.
        </para>
@@ -515,18 +515,20 @@ CREATE FUNCTION t1_count(int4, int4) RETURNS int4 AS '
 
      <varlistentry>
       <term>
-       Modules and the unknown command
+       Modules and the <function>unknown</> command
       </term>
       <listitem>
        <para>
-	PL/Tcl has a special support for things often used. It recognizes two
-	magic tables, pltcl_modules and pltcl_modfuncs.
-	If these exist, the module 'unknown' is loaded into the interpreter
-	right after creation. Whenever an unknown Tcl procedure is called,
-	the unknown proc is asked to check if the procedure is defined in one
-	of the modules. If this is true, the module is loaded on demand.
-	To enable this behavior, the PL/Tcl call handler must be compiled
-	with -DPLTCL_UNKNOWN_SUPPORT set.
+	PL/Tcl has a special support for things often used. It
+	recognizes two magic tables, <literal>pltcl_modules</> and
+	<literal>pltcl_modfuncs</>.  If these exist, the module
+	'unknown' is loaded into the interpreter right after
+	creation. Whenever an unknown Tcl procedure is called, the
+	unknown proc is asked to check if the procedure is defined in
+	one of the modules. If this is true, the module is loaded on
+	demand.  To enable this behavior, the
+	<productname>PostgreSQL</> must be configured with the option
+	<option>--enable-pltcl-unknown</option>.
        </para>
        <para>
 	There are support scripts to maintain these tables in the modules

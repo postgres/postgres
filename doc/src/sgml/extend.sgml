@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.10 2001/05/17 21:50:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.11 2001/09/10 21:58:46 petere Exp $
 -->
 
  <chapter id="extend">
@@ -236,7 +236,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.10 2001/05/17 21:50:15 pete
        <note>
 	<para>
 	 We  use  the words <firstterm>procedure</firstterm>
-	 and <firstterm>function</firstterm> more or less interchangably.
+	 and <firstterm>function</firstterm> more or less interchangeably.
 	</para>
        </note>
 

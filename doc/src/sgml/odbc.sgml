@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.22 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.23 2001/09/10 21:58:47 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -53,10 +53,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.22 2001/05/12 22:51:35 
 
    <para>
     The backend access come from <acronym>ODBC</acronym> drivers, 
-    or vendor specifc drivers that
+    or vendor-specific drivers that
     allow data access.   <productname>psqlODBC</productname> is such a driver,
     along with others that are
-    available, such as the OpenLink <acronym>ODBC</acronym> drivers.
+    available, such as the <productname>OpenLink</productname> <acronym>ODBC</acronym> drivers.
    </para>
 
    <para>
@@ -133,8 +133,8 @@ psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
     <title>Supported Platforms</title>
     <para>
      <productname>psqlODBC</productname> has been built and tested
-     on <productname>Linux</productname>. There have been reports of success
-     with FreeBSD and with Solaris. There are no known restrictions
+     on <systemitem class="osname">Linux</>. There have been reports of success
+     with <systemitem class="osname">FreeBSD</> and with <systemitem class="osname">Solaris</>. There are no known restrictions
      on the basic code for other platforms which already support
      <productname>Postgres</productname>.
     </para>
@@ -248,9 +248,9 @@ InstallDir = /opt/applix/axdata/axshlib
 
      <listitem>
       <para>
-       In Visual C++, you can use the CRecordSet class, which wraps the 
+       In Visual C++, you can use the <classname>CRecordSet</classname> class, which wraps the 
        <acronym>ODBC</acronym> <acronym>API</acronym>
-       set within an MFC 4.2 class.  This is the easiest route if you are doing
+       set within an <application>MFC</application> 4.2 class.  This is the easiest route if you are doing
        Windows C++ development under Windows NT.
       </para>
      </listitem>
@@ -277,7 +277,7 @@ InstallDir = /opt/applix/axdata/axshlib
     </para>
 
     <para>
-     Visual Basic and the other RAD tools have Recordset objects 
+     Visual Basic and the other <acronym>RAD</acronym> tools have <classname>Recordset</classname> objects 
      that use <acronym>ODBC</acronym>
      directly to access data.  Using the data-aware controls, you can quickly
      link to the <acronym>ODBC</acronym> back end database 
@@ -291,7 +291,7 @@ InstallDir = /opt/applix/axdata/axshlib
 
     <tip>
      <para>
-      You'll have to set up a DSN first.
+      You'll have to set up a <acronym>DSN</acronym> first.
      </para>
     </tip>
 
@@ -299,7 +299,7 @@ InstallDir = /opt/applix/axdata/axshlib
   </sect1>
 
   <sect1 id="odbc-applixware">
-   <title>ApplixWare</title>
+   <title><application>ApplixWare</application></title>
 
    <indexterm zone="odbc-applixware">
     <primary>ApplixWare</primary>
@@ -326,7 +326,7 @@ InstallDir = /opt/applix/axdata/axshlib
     </para>
 
     <procedure>
-     <title>Enabling ApplixWare Database Access</title>
+     <title>Enabling <application>ApplixWare</application> Database Access</title>
 
      <para>
       These instructions are for the <literal>4.4.2</literal> release of
@@ -341,7 +341,7 @@ InstallDir = /opt/applix/axdata/axshlib
        <filename>elfodbc</filename> can
        find <filename>libodbc.so</filename>
        (the <acronym>ODBC</acronym> driver manager) shared library.
-       This library is included with the ApplixWare distribution,
+       This library is included with the <application>ApplixWare</application> distribution,
        but <filename>axnet.cnf</filename> needs to be modified to point to the 
        correct location.
       </para>
@@ -371,7 +371,7 @@ InstallDir = /opt/applix/axdata/axshlib
 libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
 	 </programlisting>
 
-	 which will tell elfodbc to look in this directory
+	 which will tell <literal>elfodbc</literal> to look in this directory
 	 for the <acronym>ODBC</acronym> support library.
 	 Typically <productname>Applix</productname> is installed in
 	 <filename>/opt</filename> so the full path would be
@@ -399,7 +399,7 @@ TextAsLongVarchar=0
     </procedure>
 
     <procedure>
-     <title>Testing ApplixWare ODBC Connections</title>
+     <title>Testing <application>ApplixWare</application> ODBC Connections</title>
 
      <step performance="required">
       <para>
@@ -424,7 +424,7 @@ TextAsLongVarchar=0
 	 Select <acronym>ODBC</acronym>, and click <command>Browse</command>.
 	 The database you configured in <filename>.odbc.ini</filename>
 	 should be shown.  Make sure that the <option>Host: field</option>
-	 is empty (if it is not, axnet will try to contact axnet on another machine
+	 is empty (if it is not, <literal>axnet</> will try to contact <literal>axnet</> on another machine
 	 to look for the database).
 	</para>
        </step>
@@ -436,14 +436,14 @@ TextAsLongVarchar=0
        </step>
        <step performance="required">
 	<para>
-	 Enter username and password in the login identification dialog,
+	 Enter user name and password in the login identification dialog,
 	 and click <command>OK</command>.
 	</para>
        </step>
       </substeps>
 
       <para>
-       You should see "<literal>Starting elfodbc server</literal>"
+       You should see <literal>Starting elfodbc server</literal>
        in the lower left corner of the
        data window.  If you get an error dialog box, see the debugging section
        below.
@@ -476,7 +476,7 @@ TextAsLongVarchar=0
      <variablelist>
       <varlistentry>
        <term>
-	Cannot launch gateway on server
+	<computeroutput>Cannot launch gateway on server</computeroutput>
        </term>
        <listitem>
 	<para>
@@ -487,9 +487,9 @@ TextAsLongVarchar=0
       </varlistentry>
 
       <varlistentry>
-       <term>
+       <term><computeroutput>
 	Error from ODBC Gateway:
-	IM003::[iODBC][Driver Manager]Specified driver could not be loaded
+	IM003::[iODBC][Driver Manager]Specified driver could not be loaded</computeroutput>
        </term>
        <listitem>
 	<para>
@@ -501,7 +501,7 @@ TextAsLongVarchar=0
 
       <varlistentry>
        <term>
-	Server: Broken Pipe
+	<computeroutput>Server: Broken Pipe</computeroutput>
        </term>
 
        <listitem>
@@ -516,15 +516,15 @@ TextAsLongVarchar=0
 
       <varlistentry>
        <term>
-	setuid to 256: failed to launch gateway
+	<computeroutput>setuid to 256: failed to launch gateway</computeroutput>
        </term>
 
        <listitem>
 	<para>
-	 The September release of ApplixWare v4.4.1 (the first release with official
-	 <acronym>ODBC</acronym> support under Linux) shows problems when usernames
+	 The September release of <application>ApplixWare</application> v4.4.1 (the first release with official
+	 <acronym>ODBC</acronym> support under Linux) shows problems when user names
 	 exceed eight (8) characters in length.
-	 Problem description ontributed by Steve Campbell
+	 Problem description contributed by Steve Campbell
 	 (<email>scampbell@lear.com</email>).
 	</para>
        </listitem>
@@ -554,24 +554,24 @@ TextAsLongVarchar=0
    </sect2>
 
    <sect2>
-    <title>Debugging ApplixWare ODBC Connections</title>
+    <title>Debugging <application>ApplixWare</application> ODBC Connections</title>
 
     <para>
      One good tool for debugging connection problems uses the Unix system
      utility <application>strace</application>.
     </para>
     <procedure>
-     <title>Debugging with strace</title>
+     <title>Debugging with <command>strace</command></title>
 
      <step performance="required">
       <para>
-       Start applixware.
+       Start <application>ApplixWare</application>.
       </para>
      </step>
      <step performance="required">
       <para>
        Start an <application>strace</application> on
-       the axnet process.  For example, if
+       the <literal>axnet</literal> process.  For example, if
 
        <programlisting>
 % ps -aucx | grep ax 
@@ -596,7 +596,7 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
 
      <step performance="required">
       <para>
-       Check the strace output.
+       Check the <command>strace</command> output.
       </para>
       <note>
        <title>Note from Cary</title>
@@ -613,24 +613,24 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
 
     <para>
      For example, after getting
-     a "<literal>Cannot launch gateway on server</literal>", 
-     I ran strace on axnet and got
+     a <literal>Cannot launch gateway on server</literal>, 
+     I ran <command>strace</command> on <literal>axnet</literal> and got
 
-     <programlisting>
+<programlisting>
 [pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
 (No such file or directory)
 [pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
 (No such file or directory)
 [pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
 can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
-     </programlisting>  
-     So what is happening is that applix elfodbc is searching for libodbc.so, but it
-     can't find it.  That is why axnet.cnf needed to be changed.
+</programlisting>  
+     So what is happening is that <literal>applix elfodbc</literal> is searching for <filename>libodbc.so</filename>, but it
+     cannot find it.  That is why <filename>axnet.cnf</filename> needed to be changed.
     </para>
    </sect2>
 
    <sect2>
-    <title>Running the ApplixWare Demo</title>
+    <title>Running the <application>ApplixWare</application> Demo</title>
 
     <para>
      In order to go through the 
@@ -645,7 +645,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
     </para>
 
     <procedure>
-     <title>Modifying the ApplixWare Demo</title>
+     <title>Modifying the <application>ApplixWare</application> Demo</title>
 
      <step performance="required">
       <para>
@@ -683,7 +683,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
      <step performance="required">
       <para>
-       Open the sqldemo.am file from the <application>Macro Editor</application>.
+       Open the <filename>sqldemo.am</filename> file from the <application>Macro Editor</application>.
       </para>
      </step>
 
@@ -734,7 +734,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
     <para>
      You can add information about your
-     database login and password to the standard Applix start-up
+     database login and password to the standard <application>Applix</application> start-up
      macro file. This is an example 
      <filename>~/axhome/macros/login.am</filename> file:
 
@@ -748,7 +748,7 @@ endmacro
      <caution>
       <para>
        You should be careful about the file protections on any file containing
-       username and password information.
+       user name and password information.
       </para>
      </caution>
     </para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.1 2001/05/12 17:49:32 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.2 2001/09/10 21:58:47 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -49,9 +49,9 @@ def __plpython_procedure_myfunc_23456():
   <para>
    PostgreSQL function variables are available in the global
    <varname>args</varname> list.  In the <function>myfunc</function>
-   example, args[0] contains whatever was passed in as the text
-   argument.  For <literal>myfunc2(text, int4)</literal>, args[0]
-   would contain the text variable and args[1] the int4 variable.
+   example, <varname>args[0]</> contains whatever was passed in as the text
+   argument.  For <literal>myfunc2(text, integer)</literal>, <varname>args[0]</>
+   would contain the <type>text</type> variable and <varname>args[1]</varname> the <type>integer</type> variable.
   </para>
 
   <para>
@@ -59,12 +59,12 @@ def __plpython_procedure_myfunc_23456():
    function calls.  This variable is private static data.  The global
    dictionary GD is public data, available to all python functions
    within a backend.  Use with care.  When the function is used in a
-   trigger, the triggers tuples are in TD["new"] and/or TD["old"]
+   trigger, the triggers tuples are in <literal>TD["new"]</literal> and/or <literal>TD["old"]</literal>
    depending on the trigger event.  Return 'None' or "OK" from the
    python function to indicate the tuple is unmodified, "SKIP" to
    abort the event, or "MODIFIED" to indicate you've modified the
    tuple.  If the trigger was called with arguments they are available
-   in TD["args"][0] to TD["args"][(n -1)]
+   in <literal>TD["args"][0] to TD["args"][(n -1)]</literal>.
   </para>
 
   <para>
@@ -98,7 +98,7 @@ def __plpython_procedure_myfunc_23456():
   </para>
 
   <para>
-   Additionally, the plpy module provides two functions called
+   Additionally, the <literal>plpy</literal> module provides two functions called
    <function>execute</function> and <function>prepare</function>.
    Calling <function>plpy.execute</function> with a query string, and
    an optional limit argument, causes that query to be run, and the

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.21 2001/09/06 00:23:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.22 2001/09/10 21:58:46 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -153,12 +153,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.21 2001/09/06 00:23:42 momjia
     <para>
      To detect errors from the <productname>Postgres</productname>
      server, include a line like: 
-     <programlisting>
+<programlisting>
 exec sql include sqlca; 
-     </programlisting>
+</programlisting>
      in the include section of your file. This will define a struct and
      a variable with the name <parameter>sqlca</parameter> as follows:
-     <programlisting>
+<programlisting>
 struct sqlca
 {
  char sqlcaid[8];
@@ -191,11 +191,11 @@ struct sqlca
  /* 7: empty                                         */
  char sqlext[8];
 } sqlca;
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
-     If an error occured in the last <acronym>SQL</acronym> statement.
+     If an error occurred in the last <acronym>SQL</acronym> statement.
      <parameter>sqlca.sqlcode</parameter> will be non-zero. If
      <parameter>sqlca.sqlcode</parameter> is less that 0, this is a
      serious error, like the database definition does not match the
@@ -214,7 +214,7 @@ struct sqlca
 
      <variablelist>
       <varlistentry>
-       <term>-12, Out of memory in line %d.</term>
+       <term><computeroutput>-12, Out of memory in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 Should not normally occur. This indicates your virtual memory is
@@ -224,7 +224,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-200, Unsupported type %s on line %d.</term>
+       <term><computeroutput>-200, Unsupported type %s on line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 Should not normally occur. This indicates the preprocessor has
@@ -236,7 +236,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-201, Too many arguments line %d.</term>
+       <term><computeroutput>-201, Too many arguments line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means that <productname>Postgres</productname> has
@@ -248,7 +248,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-202, Too few arguments line %d.</term>
+       <term><computeroutput>-202, Too few arguments line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means that <productname>Postgres</productname> has
@@ -260,7 +260,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-203, Too many matches line %d.</term>
+       <term><computeroutput>-203, Too many matches line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the query has returned several rows but the
@@ -271,7 +271,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-204, Not correctly formatted int type: %s line %d.</term>
+       <term><computeroutput>-204, Not correctly formatted int type: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>int</type> and
@@ -284,7 +284,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-205, Not correctly formatted unsigned type: %s line %d.</term>
+       <term><computeroutput>-205, Not correctly formatted unsigned type: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>unsigned
@@ -298,7 +298,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-206, Not correctly formatted floating point type: %s line %d.</term>
+       <term><computeroutput>-206, Not correctly formatted floating point type: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>float</type> and
@@ -311,7 +311,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-207, Unable to convert %s to bool on line %d.</term>
+       <term><computeroutput>-207, Unable to convert %s to bool on line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>bool</type> and
@@ -322,17 +322,17 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-208, Empty query line %d.</term>
+       <term><computeroutput>-208, Empty query line %d.</computeroutput></term>
        <listitem>
 	<para>
-	 <productname>Postgres</productname> returned PGRES_EMPTY_QUERY, probably
+	 <productname>Postgres</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
 	 because the query indeed was empty.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>-220, No such connection %s in line %d.</term>
+       <term><computeroutput>-220, No such connection %s in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The program tried to access a connection that does not exist.
@@ -341,7 +341,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-221, Not connected in line %d.</term>
+       <term><computeroutput>-221, Not connected in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The program tried to access a connection that does exist but is
@@ -351,7 +351,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-230, Invalid statement name %s in line %d.</term>
+       <term><computeroutput>-230, Invalid statement name %s in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The statement you are trying to use has not been prepared.
@@ -360,7 +360,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-400, Postgres error: %s line %d.</term>
+       <term><computeroutput>-400, Postgres error: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 Some <productname>Postgres</productname> error. 
@@ -371,7 +371,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-401, Error in transaction processing line %d. </term>
+       <term><computeroutput>-401, Error in transaction processing line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 <productname>Postgres</productname> signaled that we cannot start,
@@ -381,7 +381,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>-402, connect: could not open database %s.</term>
+       <term><computeroutput>-402, connect: could not open database %s.</computeroutput></term>
        <listitem>
 	<para>
 	 The connect to the database did not work.
@@ -390,10 +390,10 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term>100, Data not found line %d.</term>
+       <term><computeroutput>100, Data not found line %d.</computeroutput></term>
        <listitem>
 	<para>
-	 This is a "normal" error that tells you that what you are quering cannot
+	 This is a "normal" error that tells you that what you are querying cannot
 	 be found or you are at the end of the cursor.
 	</para>
        </listitem>
@@ -419,7 +419,7 @@ struct sqlca
       <term>Oracle's single tasking</term>
       <listitem>
        <para>
-	Oracle version 7.0 on AIX 3 uses OS-supported locks in shared
+	Oracle version 7.0 on <systemitem class="osname">AIX</> 3 uses OS-supported locks in shared
 	memory that allow an application designer to link an application
 	in a "single tasking" way. Instead of starting one client
 	process per application process, both the database part and the
@@ -526,21 +526,21 @@ struct sqlca
 	 The following statements are not implemented thus far:
 	 <variablelist>
 	  <varlistentry>
-	   <term> exec sql allocate</term>
+	   <term><literal>exec sql allocate</></term>
 	   <listitem>
 	    <para>
 	    </para>
 	   </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	   <term> exec sql deallocate</term>
+	   <term><literal>exec sql deallocate</></term>
 	   <listitem>
 	    <para>
 	    </para>
 	   </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	   <term> SQLSTATE</term>
+	   <term><literal>SQLSTATE</></term>
 	   <listitem>
 	    <para>
 	    </para>
@@ -565,10 +565,10 @@ exec sql insert select from statement
       </varlistentry>
 
       <varlistentry>
-       <term>sqlwarn[6]</term>
+       <term><literal>sqlwarn[6]</literal></term>
        <listitem>
 	<para>
-	 sqlwarn[6] should be <literal>W</> if the <command>PRECISION</>
+	 <literal>sqlwarn[6]</literal> should be <literal>W</> if the <command>PRECISION</>
 	 or <command>SCALE</> value specified in a <command>SET
 	 DESCRIPTOR</> statement was ignored.
 	</para>
@@ -582,7 +582,7 @@ exec sql insert select from statement
     <title>The Preprocessor</title>
 
     <para>
-     The first four lines written by ecpg to the output are fixed lines.
+     The first four lines written by <command>ecpg</command> to the output are fixed lines.
      Two are comments and two are include lines necessary to interface
      to the library.
     </para>
@@ -629,7 +629,7 @@ exec sql end declare section;
 	</para>
 
 	<para>
-	 The special types VARCHAR and VARCHAR2 are converted into a named struct
+	 The special types <type>VARCHAR</type> and <type>VARCHAR2</type> are converted into a named struct
 	 for every variable. A declaration like:
 	 <programlisting>
 VARCHAR var[180];
@@ -745,7 +745,7 @@ exec sql connect to <replaceable>connection target</replaceable>;
 	</para>
 
 	<para> 
-	 Finally, the userid and password may be a constant text, a
+	 Finally, the <replaceable>userid</replaceable> and <replaceable>password</replaceable> may be a constant text, a
 	 character variable, or a character string.
 	</para>
        </listitem>
@@ -853,7 +853,7 @@ exec sql rollback;
 	 <simplelist>
 	  <member>The type as a special symbol.</member>
 	  <member>A pointer to the value or a pointer to the pointer.</member>
-	  <member>The size of the variable if it is a char or varchar.</member>
+	  <member>The size of the variable if it is a <type>char</type> or <type>varchar</type>.</member>
 	  <member>The number of elements in the array (for array fetches).</member>
 	  <member>The offset to the next element in the array (for array fetches).</member>
 	  <member>The type of the indicator variable as a special symbol.</member>
@@ -876,7 +876,7 @@ exec sql rollback;
 
     <para>
      Here is a complete example describing the output of the preprocessor of a
-     file foo.pgc:
+     file <filename>foo.pgc</filename>:
      <programlisting>
 exec sql begin declare section;
 int index;
@@ -919,7 +919,7 @@ ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
      The most important function in the library is
      <function>ECPGdo</function>. It takes a variable number of
      arguments. Hopefully there are no computers that limit the
-     number of variables that can be accepted by a varargs() function. This
+     number of variables that can be accepted by a <function>varargs()</function> function. This
      can easily add up to 50 or so arguments.
     </para>
 
@@ -960,7 +960,7 @@ ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
       </varlistentry>
 
       <varlistentry>
-       <term>ECPGt_EOIT</term>
+       <term><literal>ECPGt_EOIT</literal></term>
        <listitem>
 	<para>
 	 An enum telling that there are no more input variables.

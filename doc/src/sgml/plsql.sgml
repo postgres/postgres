@@ -1,16 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.37 2001/09/10 06:35:34 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.38 2001/09/10 21:58:47 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
-  <title>PL/pgSQL - <acronym>SQL</acronym> Procedural Language</title>
+  <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
 
  <indexterm zone="plpgsql">
   <primary>PL/pgSQL</primary>
  </indexterm>
 
  <para>
-  PL/pgSQL is a loadable procedural language for the
+  <application>PL/pgSQL</application> is a loadable procedural language for the
   <productname>Postgres</productname> database system.
  </para>
    
@@ -24,7 +24,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.37 2001/09/10 06:35:34
    <title>Overview</title>
 
    <para>
-    The design goals of PL/pgSQL were to create a loadable procedural
+    The design goals of <application>PL/pgSQL</> were to create a loadable procedural
     language that
     <itemizedlist>
      <listitem>
@@ -60,7 +60,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.37 2001/09/10 06:35:34
     </itemizedlist>
    </para>
    <para>
-    The PL/pgSQL call handler parses the function's source text and
+    The <application>PL/pgSQL</> call handler parses the function's source text and
     produces an internal binary instruction tree the first time the
     function is called. The produced bytecode is identified
     in the call handler by the object ID of the function. This ensures
@@ -69,12 +69,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.37 2001/09/10 06:35:34
    </para>
    <para>
     For all expressions and <acronym>SQL</acronym> statements used in
-    the function, the PL/pgSQL bytecode interpreter creates a
+    the function, the <application>PL/pgSQL</> bytecode interpreter creates a
     prepared execution plan using the <acronym>SPI</acronym> manager's 
     <function>SPI_prepare()</function> and
     <function>SPI_saveplan()</function> functions. This is done the 
     first time the individual
-    statement is processed in the PL/pgSQL function. Thus, a function with
+    statement is processed in the <application>PL/pgSQL</> function. Thus, a function with
     conditional code that contains many statements for which execution
     plans would be required, will only prepare and save those plans
     that are really used during the lifetime of the database
@@ -102,18 +102,18 @@ END;
    </para>
 
    <para>
-    Because PL/pgSQL saves execution plans in this way, queries that appear
-    directly in a PL/pgSQL function must refer to the same tables and fields
+    Because <application>PL/pgSQL</application> saves execution plans in this way, queries that appear
+    directly in a <application>PL/pgSQL</application> function must refer to the same tables and fields
     on every execution; that is, you cannot use a parameter as the name of
     a table or field in a query.  To get around
-    this restriction, you can construct dynamic queries using the PL/pgSQL
+    this restriction, you can construct dynamic queries using the <application>PL/pgSQL</application>
     EXECUTE statement --- at the price of constructing a new query plan
     on every execution.
    </para>
    <para>
     Except for input/output conversion and calculation functions
     for user defined types, anything that can be defined in C language
-    functions can also be done with PL/pgSQL. It is possible to
+    functions can also be done with <application>PL/pgSQL</application>. It is possible to
     create complex conditional computation functions and later use
     them to define operators or use them in functional indexes.
    </para>
@@ -162,13 +162,13 @@ END;
     </para>
 
     <para>
-     With PL/pgSQL you can group a block of computation and a
+     With <application>PL/pgSQL</application> you can group a block of computation and a
      series of queries <emphasis>inside</emphasis> the
      database server, thus having the power of a procedural
      language and the ease of use of SQL, but saving lots of
      time because you don't have the whole client/server
      communication overhead. Your application will enjoy a
-     considerable performance increase by using PL/pgSQL. 
+     considerable performance increase by using <application>PL/pgSQL</application>. 
     </para>
    </sect3>
 
@@ -176,9 +176,9 @@ END;
     <title>SQL Support</title>
 
     <para>
-     PL/pgSQL adds the power of a procedural language to the
+     <application>PL/pgSQL</application> adds the power of a procedural language to the
      flexibility and ease of <acronym>SQL</acronym>. With
-     PL/pgSQL you can use all the datatypes, columns, operators
+     <application>PL/pgSQL</application> you can use all the data types, columns, operators
      and functions of SQL.    
     </para>
    </sect3>
@@ -187,7 +187,7 @@ END;
     <title>Portability</title>
 
     <para>
-     Because PL/pgSQL functions run inside PostgreSQL, these
+     Because <application>PL/pgSQL</application> functions run inside PostgreSQL, these
      functions will run on any platform where PostgreSQL
      runs. Thus you can reuse code and have less development costs.
     </para>
@@ -195,13 +195,13 @@ END;
   </sect2>
 
   <sect2 id="plpgsql-overview-developing-in-plpgsql">
-   <title>Developing in PL/pgSQL</title>
+   <title>Developing in <application>PL/pgSQL</application></title>
 
    <para>
-    Developing in PL/pgSQL is pretty straight forward, especially
+    Developing in <application>PL/pgSQL</application> is pretty straight forward, especially
     if you have developed in other database procedural languages,
-    such as Oracle's PL/SQL. Two good ways of developing in
-    PL/pgSQL are:
+    such as Oracle's <application>PL/SQL</application>. Two good ways of developing in
+    <application>PL/pgSQL</application> are:
 
     <itemizedlist>
      <listitem>
@@ -212,18 +212,18 @@ END;
 
      <listitem>
       <para>
-       Using PostgreSQL's GUI Tool: pgaccess
+       Using PostgreSQL's GUI Tool: <application>PgAccess</>
       </para>
      </listitem>
     </itemizedlist>
    </para>
 
    <para>
-    One good way to develop in PL/pgSQL is to simply use the text
+    One good way to develop in <application>PL/pgSQL</> is to simply use the text
     editor of your choice to create your functions, and in another
     console, use <command>psql</command> (PostgreSQL's interactive monitor) to load
     those functions. If you are doing it this way (and if you are
-    a PL/pgSQL novice or in debugging stage), it is a good idea to 
+    a <application>PL/pgSQL</> novice or in debugging stage), it is a good idea to 
     always <command>DROP</command> your function before creating it. That way
     when you reload the file, it'll drop your functions and then
     re-create them. For example:
@@ -240,15 +240,15 @@ end;
     When you load the file for the first time,
     <productname>PostgreSQL</> will raise a warning saying this
     function doesn't exist and go on to create it. To load an SQL
-    file (filename.sql) into a database named "dbname", use the command:
+    file (e.g., <filename>filename.sql</filename>) into a database named <literal>dbname</literal>, use the command:
 <programlisting>
 psql -f filename.sql dbname
 </programlisting>
    </para>
 
    <para>
-    Another good way to develop in PL/pgSQL is using
-    <productname>PostgreSQL</>'s GUI tool: pgaccess. It does some
+    Another good way to develop in <application>PL/pgSQL</> is using
+    <productname>PostgreSQL</>'s GUI tool: <application>PgAccess</>. It does some
     nice things for you, like escaping single-quotes, and making
     it easy to recreate and debug functions.
    </para>
@@ -263,10 +263,10 @@ psql -f filename.sql dbname
    <!-- **** PL/pgSQL structure **** -->
 
    <sect2>
-    <title>Structure of PL/pgSQL</title>
+    <title>Structure of <application>PL/pgSQL</application></title>
 
     <para>
-     PL/pgSQL is a <emphasis>block structured</emphasis> language. All
+     <application>PL/pgSQL</application> is a <emphasis>block structured</emphasis> language. All
      keywords and identifiers can be used in mixed upper and
      lower-case. A block is defined as:
 
@@ -316,8 +316,8 @@ END;
 
     <para>
      It is important not to confuse the use of BEGIN/END for
-     grouping statements in PL/pgSQL with the database commands for
-     transaction control.  PL/pgSQL's BEGIN/END are only for grouping;
+     grouping statements in <application>PL/pgSQL</> with the database commands for
+     transaction control.  <application>PL/pgSQL</>'s BEGIN/END are only for grouping;
      they do not start or end a transaction.  Functions and trigger procedures
      are always executed within a transaction established by an outer query
      --- they cannot start or commit transactions, since
@@ -329,7 +329,7 @@ END;
     <title>Comments</title>
 
     <para>
-     There are two types of comments in PL/pgSQL. A double dash <literal>--</literal>
+     There are two types of comments in <application>PL/pgSQL</>. A double dash <literal>--</literal>
      starts a comment that extends to the end of the line. A <literal>/*</literal>
      starts a block comment that extends to the next occurrence of <literal>*/</literal>.
      Block comments cannot be nested, but double dash comments can be
@@ -350,7 +350,7 @@ END;
     </para>
 
     <para>
-     PL/pgSQL variables can have any SQL datatype, such as
+     <application>PL/pgSQL</> variables can have any SQL data type, such as
      <type>INTEGER</type>, <type>VARCHAR</type> and
      <type>CHAR</type>. All variables have as default value the
      <acronym>SQL</acronym> NULL value. 
@@ -437,7 +437,7 @@ END;
      <para>
       Using the <type>%TYPE</type> and <type>%ROWTYPE</type>
       attributes, you can declare variables with the same
-      datatype or structure of another database item (e.g: a
+      data type or structure of another database item (e.g: a
       table field).
      </para>
 
@@ -448,13 +448,13 @@ END;
        </term>
        <listitem>
         <para>
-         <type>%TYPE</type> provides the datatype of a
+         <type>%TYPE</type> provides the data type of a
          variable or database column. You can use this to
          declare variables that will hold database
          values. For example, let's say you have a column
          named <type>user_id</type> in your
          <type>users</type> table. To declare a variable with
-         the same datatype as users.user_id you write:
+         the same data type as <structname>users</>.<structfield>user_id</> you write:
 <programlisting>
 user_id   users.user_id%TYPE;
 </programlisting>
@@ -462,8 +462,8 @@ user_id   users.user_id%TYPE;
 
         <para>
          By using <type>%TYPE</type> you don't need to know
-         the datatype of the structure you are referencing,
-         and most important, if the datatype of the
+         the data type of the structure you are referencing,
+         and most important, if the data type of the
          referenced item changes in the future (e.g: you
          change your table definition of user_id to become a
          REAL), you won't need to change your function
@@ -474,11 +474,11 @@ user_id   users.user_id%TYPE;
 
       <varlistentry>
        <term>
-        <replaceable>table</replaceable>%ROWTYPE
+        <literal><replaceable>table</replaceable>%ROWTYPE</literal>
        </term>
        <listitem>
         <para>
-	 <type>%ROWTYPE</type> provides the composite datatype corresponding
+	 <type>%ROWTYPE</type> provides the composite data type corresponding
 	 to a whole row of the specified table.
 	 <replaceable>table</replaceable> must be an existing
 	 table or view name of the database. The fields of the row are
@@ -560,12 +560,12 @@ RENAME this_var TO that_var;
     <title>Expressions</title>
 
     <para>
-     All expressions used in PL/pgSQL statements are processed using
-     the backend's executor. Expressions that appear to contain
+     All expressions used in <application>PL/pgSQL</application> statements are processed using
+     the executor of the server. Expressions that appear to contain
      constants may in fact require run-time evaluation
      (e.g. <literal>'now'</literal>  for the 
      <type>timestamp</type> type) so
-     it is impossible for the PL/pgSQL parser
+     it is impossible for the <application>PL/pgSQL</application> parser
      to identify real constant values other than the NULL keyword. All
      expressions are evaluated internally by executing a query
 <synopsis>
@@ -574,7 +574,7 @@ SELECT <replaceable>expression</replaceable>
      using the <acronym>SPI</acronym> manager. In the expression, occurrences of variable
      identifiers are substituted by parameters and the actual values from
      the variables are passed to the executor in the parameter array. All
-     expressions used in a PL/pgSQL function are only prepared and
+     expressions used in a <application>PL/pgSQL</application> function are only prepared and
      saved once.  The only exception to this rule is an EXECUTE statement
      if parsing of a query is needed each time it is encountered.
     </para>
@@ -615,7 +615,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
      <productname>Postgres</productname> main parser knows when 
      preparing the plan for the INSERT, that the string 
      <literal>'now'</literal> should be interpreted as 
-     <type>timestamp</type> because the target field of logtable
+     <type>timestamp</type> because the target field of <classname>logtable</classname>
      is of that type. Thus, it will make a constant from it at this
      time and this constant value is then used in all invocations of 
      <function>logfunc1()</function> during the lifetime of the
@@ -629,19 +629,19 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
      what type <literal>'now'</literal> should become and therefore 
      it returns a data type of <type>text</type> containing the string 
      <literal>'now'</literal>. During the assignment
-     to the local variable curtime, the PL/pgSQL interpreter casts this
-     string to the timestamp type by calling the
+     to the local variable <varname>curtime</varname>, the <application>PL/pgSQL</application> interpreter casts this
+     string to the <type>timestamp</type> type by calling the
      <function>text_out()</function> and <function>timestamp_in()</function>
      functions for the conversion.
     </para>
 
     <para>
      This type checking done by the <productname>Postgres</productname> main
-     parser got implemented after PL/pgSQL was nearly done.
+     parser got implemented after <application>PL/pgSQL</application> was nearly done.
      It is a difference between 6.3 and 6.4 and affects all functions
      using the prepared plan feature of the <acronym>SPI</acronym> manager.
      Using a local
-     variable in the above manner is currently the only way in PL/pgSQL to get
+     variable in the above manner is currently the only way in <application>PL/pgSQL</application> to get
      those values interpreted correctly.
     </para>
 
@@ -659,7 +659,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
    <title>Statements</title>
 
    <para>
-    Anything not understood by the PL/pgSQL parser as specified below
+    Anything not understood by the <application>PL/pgSQL</application> parser as specified below
     will be put into a query and sent down to the database engine
     to execute. The resulting query should not return any data.
    </para>
@@ -675,8 +675,8 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
 
      If the expressions result data type doesn't match the variables
      data type, or the variable has a size/precision that is known
-     (as for <type>char(20)</type>), the result value will be implicitly casted by
-     the PL/pgSQL bytecode interpreter using the result types output- and
+     (as for <type>char(20)</type>), the result value will be implicitly cast by
+     the <application>PL/pgSQL</application> bytecode interpreter using the result types output- and
      the variables type input-functions. Note that this could potentially
      result in runtime errors generated by the types input functions.
     </para>
@@ -694,7 +694,7 @@ tax := subtotal * 0.06;
      All functions defined in a <productname>Postgres</productname>
      database return a value. Thus, the normal way to call a function
      is to execute a SELECT query or doing an assignment (resulting
-     in a PL/pgSQL internal SELECT). 
+     in a <application>PL/pgSQL</application> internal SELECT). 
     </para>
 
     <para>
@@ -722,8 +722,8 @@ PERFORM create_mv(''cs_session_page_requests_mv'',''
     
     <para>
      Often times you will want to generate dynamic queries inside
-     your PL/pgSQL functions. Or you have functions that will
-     generate other functions. PL/pgSQL provides the EXECUTE
+     your <application>PL/pgSQL</application> functions. Or you have functions that will
+     generate other functions. <application>PL/pgSQL</application> provides the EXECUTE
      statement for these occasions.
     </para>
 
@@ -738,13 +738,13 @@ EXECUTE <replaceable class="command">query-string</replaceable>
 
     <para>
     When working with dynamic queries you will have to face
-    escaping of single quotes in PL/pgSQL. Please refer to the
+    escaping of single quotes in <application>PL/pgSQL</>. Please refer to the
     table available at the "Porting from Oracle PL/SQL" chapter
     for a detailed explanation that will save you some effort.
     </para>
      
     <para>
-     Unlike all other queries in PL/pgSQL, a
+     Unlike all other queries in <application>PL/pgSQL</>, a
      <replaceable>query</replaceable> run by an EXECUTE statement is
      not prepared and saved just once during the life of the server.
      Instead, the <replaceable>query</replaceable> is prepared each
@@ -834,7 +834,7 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
      This command allows retrieval of system status indicators.  Each
      <replaceable>item</replaceable> is a keyword identifying a state
      value to be assigned to the specified variable (which should be
-     of the right datatype to receive it).  The currently available
+     of the right data type to receive it).  The currently available
      status items are <varname>ROW_COUNT</>, the number of rows
      processed by the last <acronym>SQL</acronym> query sent down to
      the <acronym>SQL</acronym> engine; and <varname>RESULT_OID</>,
@@ -873,7 +873,7 @@ RETURN <replaceable>expression</replaceable>
    <title>Control Structures</title>
    <para>
     Control structures are probably the most useful (and
-    important) part of PL/SQL. With PL/pgSQL's control structures,
+    important) part of PL/SQL. With <application>PL/pgSQL</>'s control structures,
     you can manipulate <productname>PostgreSQL</> data in a very
     flexible and powerful way. 
    </para>
@@ -1022,8 +1022,8 @@ END IF;
 
     <para>
      With the LOOP, WHILE, FOR and EXIT statements, you can
-     control the flow of execution of your PL/pgSQL program
-     iteratively.
+     control the flow of execution of your <application>PL/pgSQL</application> program
+     iteractively.
     </para>
 
     <variablelist>
@@ -1208,7 +1208,7 @@ SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replace
      record-/row-fields. Note that this is quite different from
      Postgres' normal interpretation of SELECT INTO, which is that the
      INTO target is a newly created table.  (If you want to create a
-     table from a SELECT result inside a PL/pgSQL function, use the
+     table from a SELECT result inside a <application>PL/pgSQL</application> function, use the
      equivalent syntax <command>CREATE TABLE AS SELECT</command>.)
     </para>
 
@@ -1344,7 +1344,7 @@ END LOOP;
 
    <para>
     Use the RAISE statement to throw messages into the 
-    <productname>Postgres</productname> elog mechanism.
+    <productname>Postgres</productname> <function>elog</function> mechanism.
 
 <synopsis>
 RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
@@ -1407,7 +1407,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
     </para>
 
     <para>
-     Thus, the only thing PL/pgSQL currently does when it encounters
+     Thus, the only thing <application>PL/pgSQL</application> currently does when it encounters
      an abort during execution of a function or trigger
      procedure is to write some additional NOTICE level log messages
      telling in which function and where (line number and type of
@@ -1423,7 +1423,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
   <title>Trigger Procedures</title>
 
   <para>
-   PL/pgSQL can be used to define trigger procedures. They are created
+   <application>PL/pgSQL</application> can be used to define trigger procedures. They are created
    with the usual <command>CREATE FUNCTION</command> command as a function with no
    arguments and a return type of <type>OPAQUE</type>.
   </para>
@@ -1559,7 +1559,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
    </para>
 
    <example>
-    <title>A PL/pgSQL Trigger Procedure Example</title>
+    <title>A <application>PL/pgSQL</application> Trigger Procedure Example</title>
 
     <para>
      This trigger ensures, that any time a row is inserted or updated
@@ -1611,13 +1611,13 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
 
    <para>
     Here are only a few functions to demonstrate how easy it is to
-    write PL/pgSQL
+    write <application>PL/pgSQL</>
     functions. For more complex examples the programmer
-    might look at the regression test for PL/pgSQL.
+    might look at the regression test for <application>PL/pgSQL</>.
    </para>
 
    <para>
-    One painful detail in writing functions in PL/pgSQL is the handling
+    One painful detail in writing functions in <application>PL/pgSQL</application> is the handling
     of single quotes. The function's source text on <command>CREATE FUNCTION</command> must
     be a literal string. Single quotes inside of literal strings must be
     either doubled or quoted with a backslash. We are still looking for
@@ -1633,10 +1633,10 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
    </para>
 
    <example>
-    <title>A Simple PL/pgSQL Function to Increment an Integer</title>
+    <title>A Simple <application>PL/pgSQL</application> Function to Increment an Integer</title>
 
     <para>
-     The following two PL/pgSQL functions are identical to their
+     The following two <application>PL/pgSQL</application> functions are identical to their
      counterparts from the C language function discussion. This
      function receives an <type>integer</type> and increments it by
      one, returning the incremented value.
@@ -1652,7 +1652,7 @@ CREATE FUNCTION add_one (integer) RETURNS integer AS '
    </example>
 
    <example>
-    <title>A Simple PL/pgSQL Function to Concatenate Text</title>
+    <title>A Simple <application>PL/pgSQL</application> Function to Concatenate Text</title>
 
     <para>
      This function receives two <type>text</type> parameters and
@@ -1669,16 +1669,16 @@ CREATE FUNCTION concat_text (text, text) RETURNS text AS '
    </example>
 
    <example>
-    <title>A PL/pgSQL Function on Composite Type</title>
+    <title>A <application>PL/pgSQL</application> Function on Composite Type</title>
 
     <para>
-     In this example, we take EMP (a table) and an
+     In this example, we take <literal>EMP</> (a table) and an
      <type>integer</type> as arguments to our function, which returns
-     a <type>boolean</type>. If the "salary" field of the EMP table is
-     <literal>NULL</literal>, we return "f". Otherwise we compare with
+     a <type>boolean</type>. If the <structfield>salary</> field of the <structname>EMP</> table is
+     <literal>NULL</literal>, we return <literal>f</>. Otherwise we compare with
      that field with the <type>integer</type> passed to the function
      and return the <type>boolean</type> result of the comparison (t
-     or f). This is the PL/pgSQL equivalent to the example from the C
+     or f). This is the <application>PL/pgSQL</application> equivalent to the example from the C
      functions.
     </para>
 
@@ -1743,7 +1743,7 @@ CREATE FUNCTION c_overpaid (EMP, integer) RETURNS boolean AS '
 
   <para>
    This section explains differences between Oracle's PL/SQL and
-   PostgreSQL's PL/pgSQL languages in the hopes of helping developers
+   PostgreSQL's <application>PL/pgSQL</application> languages in the hopes of helping developers
    port applications from Oracle to PostgreSQL.  Most of the code here
    is from the <ulink url="http://www.arsdigita.com">ArsDigita</ulink>
    <ulink url="http://www.arsdigita.com/asj/clickstream">Clickstream
@@ -1753,10 +1753,10 @@ CREATE FUNCTION c_overpaid (EMP, integer) RETURNS boolean AS '
   </para>
 
   <para>
-   PL/pgSQL is similar to PL/SQL in many aspects. It is a block
+   <application>PL/pgSQL</application> is similar to PL/SQL in many aspects. It is a block
    structured, imperative language (all variables have to be
    declared). PL/SQL has many more features than its PostgreSQL
-   counterpart, but PL/pgSQL allows for a great deal of functionality
+   counterpart, but <application>PL/pgSQL</application> allows for a great deal of functionality
    and it is being improved constantly.
   </para>
 
@@ -1937,7 +1937,7 @@ SHOW ERRORS;
     </para>
 
     <para>
-     Let's go through this function and see the differences to PL/pgSQL:
+     Let's go through this function and see the differences to <application>PL/pgSQL</>:
 
      <itemizedlist>
       <listitem>
@@ -2100,7 +2100,7 @@ end;
     <para>
      The following Oracle PL/SQL procedure is used to parse a URL and
      return several elements (host, path and query). It is an
-     procedure because in PL/pgSQL functions only one value can be returned
+     procedure because in <application>PL/pgSQL</application> functions only one value can be returned
      (see <xref linkend="plpgsql-porting-procedures">).  In
      PostgreSQL, one way to work around this is to split the procedure
      in three different functions: one to return the host, another for
@@ -2203,7 +2203,7 @@ end;
    <para>
     Oracle procedures give a little more flexibility to the developer
     because nothing needs to be explicitly returned, but it can be
-    through the use of INOUT or OUT parameters.
+    through the use of <literal>INOUT</> or <literal>OUT</> parameters.
    </para>
 
    <para>
@@ -2253,14 +2253,14 @@ show errors
 
      <callout arearefs="co.plpgsql-porting-locktable">
       <para>
-       If you do a <literal>LOCK TABLE</literal> in PL/pgSQL, the lock
+       If you do a <literal>LOCK TABLE</literal> in <application>PL/pgSQL</>, the lock
        will not be released until the calling transaction is finished.
       </para>
      </callout>
 
      <callout arearefs="co.plpgsql-porting-commit">
       <para>
-       You also cannot have transactions in PL/pgSQL procedures. The
+       You also cannot have transactions in <application>PL/pgSQL</application> procedures. The
        entire function (and other functions called from therein) is
        executed in a transaction and PostgreSQL rolls back the results if
        something goes wrong. Therefore only one
@@ -2278,7 +2278,7 @@ show errors
    </para>
 
    <para>
-    So let's see one of the ways we could port this procedure to PL/pgSQL:
+    So let's see one of the ways we could port this procedure to <application>PL/pgSQL</>:
 
 <programlisting>
 drop function cs_create_job(integer);
@@ -2316,7 +2316,7 @@ end;
     <calloutlist>
      <callout arearefs="co.plpgsql-porting-raise">
       <para>
-       Notice how you can raise notices (or errors) in PL/pgSQL.
+       Notice how you can raise notices (or errors) in <application>PL/pgSQL</>.
       </para>
      </callout>
     </calloutlist>
@@ -2423,7 +2423,7 @@ END;
    </sect3>
 
    <sect3 id="plpgsql-porting-optimization">
-    <title>Optimizing PL/pgSQL Functions</title>
+    <title>Optimizing <application>PL/pgSQL</application> Functions</title>
 
     <para>
      PostgreSQL gives you two function creation modifiers to optimize

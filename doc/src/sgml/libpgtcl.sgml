@@ -1,5 +1,5 @@
 <chapter id="pgtcl">
- <title>pgtcl - Tcl Binding Library</title>
+ <title><application>pgtcl</application> - Tcl Binding Library</title>
 
  <indexterm zone="pgtcl">
   <primary>libpgtcl</primary>
@@ -10,10 +10,10 @@
  </indexterm>
 
 <Para>
-<literal>pgtcl</literal> is a tcl package for front-end programs 
+<literal>pgtcl</literal> is a Tcl package for front-end programs 
 to interface with <ProductName>Postgres</ProductName>
 backends.  It makes most of the functionality of <literal>libpq</literal> available to
-tcl scripts.
+Tcl scripts.
 </Para>
 
 <Para>
@@ -35,72 +35,72 @@ This package was originally written by Jolly Chen.
 </THEAD>
 <TBODY>
   <ROW>
-    <ENTRY>pg_connect</ENTRY>
+    <ENTRY><function>pg_connect</function></ENTRY>
     <ENTRY>opens a connection to the backend server</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_disconnect</ENTRY>
+    <ENTRY><function>pg_disconnect</function></ENTRY>
     <ENTRY>closes a connection</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_conndefaults</ENTRY>
+    <ENTRY><function>pg_conndefaults</function></ENTRY>
     <ENTRY>get connection options and their defaults</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_exec</ENTRY>
+    <ENTRY><function>pg_exec</function></ENTRY>
     <ENTRY>send a query to the backend</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_result</ENTRY>
+    <ENTRY><function>pg_result</function></ENTRY>
     <ENTRY>manipulate the results of a query</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_select</ENTRY>
+    <ENTRY><function>pg_select</function></ENTRY>
     <ENTRY>loop over the result of a SELECT statement</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_listen</ENTRY>
+    <ENTRY><function>pg_listen</function></ENTRY>
     <ENTRY>establish a callback for NOTIFY messages</ENTRY>
   </ROW>
 
   <ROW>
-    <ENTRY>pg_lo_creat</ENTRY>
+    <ENTRY><function>pg_lo_creat</function></ENTRY>
     <ENTRY>create a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_open</ENTRY>
+    <ENTRY><function>pg_lo_open</function></ENTRY>
     <ENTRY>open a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_close</ENTRY>
+    <ENTRY><function>pg_lo_close</function></ENTRY>
     <ENTRY>close a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_read</ENTRY>
+    <ENTRY><function>pg_lo_read</function></ENTRY>
     <ENTRY>read a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_write</ENTRY>
+    <ENTRY><function>pg_lo_write</function></ENTRY>
     <ENTRY>write a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_lseek</ENTRY>
+    <ENTRY><function>pg_lo_lseek</function></ENTRY>
     <ENTRY>seek to a position in a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_tell</ENTRY>
+    <ENTRY><function>pg_lo_tell</function></ENTRY>
     <ENTRY>return the current seek position of a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_unlink</ENTRY>
+    <ENTRY><function>pg_lo_unlink</function></ENTRY>
     <ENTRY>delete a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_import</ENTRY>
+    <ENTRY><function>pg_lo_import</function></ENTRY>
     <ENTRY>import a Unix file into a large object</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_lo_export</ENTRY>
+    <ENTRY><function>pg_lo_export</function></ENTRY>
     <ENTRY>export a large object into a Unix file</ENTRY>
   </ROW>
 </TBODY>
@@ -154,7 +154,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 </Sect1>
 
 <Sect1 id="libpgtcl-ref">
-<Title>pgtcl Command Reference Information</Title>
+<Title><application>pgtcl</application> Command Reference Information</Title>
 
 <REFENTRY ID="PGTCL-PGCONNECT">
 <REFMETA>
@@ -243,7 +243,7 @@ A list of valid options can be found in <filename>libpq</>'s
   <OPTIONAL>-tty <REPLACEABLE CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL>
 </TERM>
 <LISTITEM>
-<PARA>Specifies file or tty for optional debug output from backend.
+<PARA>Specifies file or <acronym>tty</acronym> for optional debug output from backend.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -273,7 +273,7 @@ A list of valid options can be found in <filename>libpq</>'s
 <LISTITEM>
 <PARA>
 If successful, a handle for a database connection is returned.
-Handles start with the prefix "pgsql".
+Handles start with the prefix <literal>pgsql</literal>.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -304,8 +304,9 @@ for info about the available options in the newer syntax.
 <REFSECT1 ID="R1-PGTCL-PGCONNECT-2">
 <TITLE>Usage
 </TITLE>
-<PARA>XXX thomas 1997-12-24
-</PARA>
+<comment>
+ XXX thomas 1997-12-24
+</comment>
 </REFSECT1>
 </REFENTRY>
 
@@ -433,11 +434,11 @@ The result is a list describing the possible connection options and their
 current default values.
 Each entry in the list is a sublist of the format:
 </Para>
-<para>
-	 {optname label dispchar dispsize value}
-</Para>
+<screen>
+{optname label dispchar dispsize value}
+</screen>
 <Para>
-where the optname is usable as an option in
+where the <replaceable>optname</> is usable as an option in
 <FUNCTION>pg_connect -conninfo</FUNCTION>.
 </PARA>
 </LISTITEM>
@@ -462,7 +463,7 @@ current default value for each option.
 <REFSECT1 ID="R1-PGTCL-PGCONNDEFAULTS-2">
 <TITLE>Usage
 </TITLE>
-<PARA>pg_conndefaults
+<PARA><literal>pg_conndefaults</>
 </PARA>
 </REFSECT1>
 </REFENTRY>
@@ -532,7 +533,7 @@ pg_exec <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS
 </TERM>
 <LISTITEM>
 <PARA>
-A Tcl error will be returned if Pgtcl was unable to obtain a backend
+A Tcl error will be returned if <application>pgtcl</application> was unable to obtain a backend
 response.  Otherwise, a query result object is created and a handle for
 it is returned.  This handle can be passed to <FUNCTION>pg_result</FUNCTION>
 to obtain the results of the query.
@@ -620,7 +621,7 @@ Specifies one of several possible options.
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
--status  
+<option>-status</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -630,7 +631,7 @@ the status of the result.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--error
+<option>-error</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -640,7 +641,7 @@ the error message, if the status indicates error; otherwise an empty string.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--conn
+<option>-conn</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -650,7 +651,7 @@ the connection that produced the result.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--oid
+<option>-oid</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -661,7 +662,7 @@ inserted tuple; otherwise an empty string.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--numTuples
+<option>-numTuples</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -671,7 +672,7 @@ the number of tuples returned by the query.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--numAttrs
+<option>-numAttrs</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -681,7 +682,7 @@ the number of attributes in each tuple.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--list VarName
+<option>-list VarName</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -691,32 +692,32 @@ assign the results to a list of lists.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--assign arrayName
+<option>-assign arrayName</option>
 </TERM>
 <LISTITEM>
 <PARA>
 assign the results to an array, using subscripts of the form
-(tupno,attributeName).
+<literal>(tupno,attributeName)</literal>.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--assignbyidx arrayName ?appendstr?
+<option>-assignbyidx arrayName ?appendstr?</option>
 </TERM>
 <LISTITEM>
 <PARA>
 assign the results to an array using the first attribute's value and
-the remaining attributes' names as keys.  If appendstr is given then
+the remaining attributes' names as keys.  If <parameter>appendstr</> is given then
 it is appended to each key.  In short, all but the first field of each
 tuple are stored into the array, using subscripts of the form
-(firstFieldValue,fieldNameAppendStr).
+<literal>(firstFieldValue,fieldNameAppendStr)</literal>.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--getTuple tupleNumber
+<option>-getTuple tupleNumber</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -727,18 +728,18 @@ start at zero.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--tupleArray tupleNumber arrayName
+<option>-tupleArray tupleNumber arrayName</option>
 </TERM>
 <LISTITEM>
 <PARA>
-stores the fields of the tuple in array arrayName, indexed by field names.
+stores the fields of the tuple in array <parameter>arrayName</parameter>, indexed by field names.
 Tuple numbers start at zero.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--attributes
+<option>-attributes</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -748,17 +749,17 @@ returns a list of the names of the tuple attributes.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--lAttributes
+<option>-lAttributes</option>
 </TERM>
 <LISTITEM>
 <PARA>
-returns a list of sublists, {name ftype fsize} for each tuple attribute.
+returns a list of sublists, <literal>{name ftype fsize}</literal> for each tuple attribute.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
--clear 
+<option>-clear</option>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -796,7 +797,7 @@ created by a prior <FUNCTION>pg_exec</FUNCTION>.
 You can keep a query result around for as long as you need it, but when
 you are done with it, be sure to free it by
 executing <FUNCTION>pg_result -clear</FUNCTION>.  Otherwise, you have
-a memory leak, and Pgtcl will eventually start complaining that you've
+a memory leak, and <application>Pgtcl</> will eventually start complaining that you've
 created too many query result objects.
 </PARA>
 </REFSECT1>
@@ -1021,9 +1022,9 @@ when a matching notification arrives.
 </TITLE>
 <PARA><FUNCTION>pg_listen</FUNCTION> creates, changes, or cancels a request
 to listen for asynchronous NOTIFY messages from the
-<ProductName>Postgres</ProductName> backend.  With a callbackCommand
+<ProductName>Postgres</ProductName> backend.  With a <parameter>callbackCommand</>
 parameter, the request is established, or the command string of an already
-existing request is replaced.  With no callbackCommand parameter, a prior
+existing request is replaced.  With no <parameter>callbackCommand</> parameter, a prior
 request is canceled.
 </PARA>
 
@@ -1041,8 +1042,8 @@ the idle loop to be entered.
 </Para>
 
 <para>
-You should not invoke the SQL statements LISTEN or UNLISTEN directly when
-using <FUNCTION>pg_listen</FUNCTION>.  Pgtcl takes care of issuing those
+You should not invoke the SQL statements <command>LISTEN</command> or <command>UNLISTEN</command> directly when
+using <FUNCTION>pg_listen</FUNCTION>.  <application>Pgtcl</application> takes care of issuing those
 statements for you.  But if you want to send a NOTIFY message yourself,
 invoke the SQL NOTIFY statement using <FUNCTION>pg_exec</FUNCTION>.
 </PARA>
@@ -1754,7 +1755,9 @@ pg_lo_unlink <REPLACEABLE CLASS="PARAMETER">conn</REPLACEABLE> <REPLACEABLE CLAS
 <LISTITEM>
 <PARA>
 Identifier for a large object.
-XXX Is this the same as objOid in other calls?? - thomas 1998-01-11
+<comment>
+ XXX Is this the same as <parameter>objOid</parameter> in other calls?? - thomas 1998-01-11
+</comment>
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -1850,7 +1853,9 @@ Unix file name.
 </TITLE>
 <PARA>
 None
-XXX Does this return a lobjId? Is that the same as the objOid in other calls? thomas - 1998-01-11
+<comment>
+ XXX Does this return a lobjId? Is that the same as the objOid in other calls? thomas - 1998-01-11
+</comment>
 </PARA>
 </REFSECT2>
 </REFSYNOPSISDIV>
@@ -1919,7 +1924,9 @@ pg_lo_export <REPLACEABLE CLASS="PARAMETER">conn</REPLACEABLE> <REPLACEABLE CLAS
 <LISTITEM>
 <PARA>
 Large object identifier.
-XXX Is this the same as the objOid in other calls?? thomas - 1998-01-11
+<comment>
+ XXX Is this the same as the objOid in other calls?? thomas - 1998-01-11
+</comment>
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -1944,7 +1951,9 @@ Unix file name.
 </TITLE>
 <PARA>
 None
-XXX Does this return a lobjId? Is that the same as the objOid in other calls? thomas - 1998-01-11
+<comment>
+ XXX Does this return a lobjId? Is that the same as the objOid in other calls? thomas - 1998-01-11
+</comment>
 </PARA>
 </REFSECT2>
 </REFSYNOPSISDIV>

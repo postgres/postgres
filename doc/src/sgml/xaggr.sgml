@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.12 2001/05/12 22:51:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.13 2001/09/10 21:58:47 petere Exp $
 -->
 
  <chapter id="xaggr">
@@ -17,7 +17,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.12 2001/05/12 22:51:36 peter
    That is,  an  aggregate  can  be
    defined  in terms of state that is modified whenever an
    input item is processed.  To define a new aggregate
-   function, one selects a datatype for the state value,
+   function, one selects a data type for the state value,
    an initial value for the state, and a state transition
    function.  The state transition function is just an
    ordinary function that could also be used outside the
@@ -28,8 +28,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.12 2001/05/12 22:51:36 peter
   </para>
 
   <para>
-   Thus, in addition to the input and result datatypes seen by a user
-   of the aggregate, there is an internal state-value datatype that
+   Thus, in addition to the input and result data types seen by a user
+   of the aggregate, there is an internal state-value data type that
    may be different from both the input and result types.
   </para>
 
@@ -40,8 +40,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.12 2001/05/12 22:51:36 peter
    example  of  this  kind  of aggregate.  "Sum" starts at
    zero and always adds the current  row's  value  to
    its  running  total.  For example, if we want to make a Sum
-   aggregate to work on a datatype for complex numbers,
-   we only need the addition function for that datatype.
+   aggregate to work on a data type for complex numbers,
+   we only need the addition function for that data type.
    The aggregate definition is:
    
    <programlisting>
@@ -71,8 +71,8 @@ SELECT complex_sum(a) FROM test_complex;
    state condition) if there are no non-null input values.
    Perhaps we want to return NULL in that case instead --- SQL92
    expects "Sum" to behave that way.  We can do this simply by
-   omitting the "initcond" phrase, so that the initial state
-   condition is NULL.  Ordinarily this would mean that the sfunc
+   omitting the <literal>initcond</literal> phrase, so that the initial state
+   condition is NULL.  Ordinarily this would mean that the <literal>sfunc</literal>
    would need to check for a NULL state-condition input, but for
    "Sum" and some other simple aggregates like "Max" and "Min",
    it's sufficient to insert the first non-null input value into

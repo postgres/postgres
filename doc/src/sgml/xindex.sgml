@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.17 2001/08/31 04:17:13 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.18 2001/09/10 21:58:47 petere Exp $
 Postgres documentation
 -->
 
@@ -70,7 +70,7 @@ Postgres documentation
       </row>
       <row>
        <entry>amcanmulticol</entry>
-       <entry>does AM support multi-column indexes?</entry>
+       <entry>does AM support multicolumn indexes?</entry>
       </row>
       <row>
        <entry>amindexnulls</entry>
@@ -288,7 +288,7 @@ SELECT oid, *
 
   <para>
    The above example assumes that you want to make this new opclass the
-   default B-tree opclass for the <filename>complex</filename> datatype.
+   default B-tree opclass for the <filename>complex</filename> data type.
    If you don't, just set <filename>opcdefault</filename> to false instead.
    <filename>opckeytype</filename> is not described here; it should always
    be zero for B-tree opclasses.
@@ -354,24 +354,24 @@ CREATE FUNCTION complex_abs_eq(complex, complex)
    are being defined.  We can only have one operator named, say, = and
    taking type <filename>complex</filename> for both operands.  In this case
    we don't have any other operator = for <filename>complex</filename>,
-   but if we were building a practical datatype we'd probably want = to
+   but if we were building a practical data type we'd probably want = to
    be the ordinary equality operation for complex numbers.  In that case,
    we'd need to use some other operator name for complex_abs_eq.
   </para>
 
   <para>
    Second, although Postgres can cope with operators having
-   the same name as long as they have different input datatypes, C can only
+   the same name as long as they have different input data types, C can only
    cope with one global routine having a given name, period.  So we shouldn't
    name the C function something simple like <filename>abs_eq</filename>.
-   Usually it's a good practice to include the datatype name in the C
-   function name, so as not to conflict with functions for other datatypes.
+   Usually it's a good practice to include the data type name in the C
+   function name, so as not to conflict with functions for other data types.
   </para>
 
   <para>
    Third, we could have made the Postgres name of the function
    <filename>abs_eq</filename>, relying on Postgres to distinguish it
-   by input datatypes from any other Postgres function of the same name.
+   by input data types from any other Postgres function of the same name.
    To keep the example simple, we make the function have the same names
    at the C level and Postgres level.
   </para>

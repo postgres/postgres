@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.21 2001/08/16 16:24:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.22 2001/09/10 21:58:46 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -514,7 +514,7 @@ mycon.setAutoCommit(false);
     There are two methods of using Large Objects. The first is the
     standard <acronym>JDBC</acronym> way, and is documented here. The
     other, uses <productname>PostgreSQL</productname> extensions to
-    the <acronym>API</acronym>, which presents the libpq large object
+    the <acronym>API</acronym>, which presents the <application>libpq</application> large object
     <acronym>API</acronym> to Java, providing even better access to
     large objects than the standard. Internally, the driver uses the
     extension to provide large object support.
@@ -674,7 +674,7 @@ import org.postgresql.fastpath.*;
 ...
 Fastpath fp = ((org.postgresql.Connection)myconn).getFastpathAPI();
 </programlisting>
-        where myconn is an open Connection to <productname>PostgreSQL</productname>.
+        where <varname>myconn</> is an open <classname>Connection</> to <productname>PostgreSQL</productname>.
        </para>
 
        <formalpara>
@@ -709,21 +709,21 @@ import org.postgresql.largeobject.*;
 ...
 LargeObjectManager lo = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
 </programlisting>
-        where myconn is an open Connection to
+        where <varname>myconn</> is an open <classname>Connection</> to
         <productname>PostgreSQL</productname>.
        </para>
 
        <formalpara>
         <title>Returns:</title>
         <para>
-         LargeObject object that implements the <acronym>API</acronym>
+         <classname>LargeObject</classname> object that implements the <acronym>API</acronym>
         </para>
        </formalpara>
 
        <formalpara>
         <title>Throws:</title>
         <para>
-         SQLException by LargeObject when initializing for first time
+         <classname>SQLException</classname> by <classname>LargeObject</classname> when initializing for first time
         </para>
        </formalpara>
       </listitem>
@@ -735,9 +735,9 @@ public void addDataType(String type, String name)
 </synopsis>
         This allows client code to add a handler for one of
         PostgreSQL's more unique data types. Normally, a data type not
-        known by the driver is returned by ResultSet.getObject() as a
-        PGobject instance.  This method allows you to write a class
-        that extends PGobject, and tell the driver the type name, and
+        known by the driver is returned by <literal>ResultSet.getObject()</literal> as a
+        <classname>PGobject</> instance.  This method allows you to write a class
+        that extends <classname>PGobject</>, and tell the driver the type name, and
         class name to use. The down side to this, is that you must
         call this method each time a connection is made.
        </para>
@@ -749,7 +749,7 @@ public void addDataType(String type, String name)
 ((org.postgresql.Connection)myconn).addDataType("mytype","my.class.name");
  ...
 </programlisting>
-        where myconn is an open Connection to
+        where <varname>myconn</varname> is an open <classname>Connection</> to
         <productname>PostgreSQL</productname>.  The handling class must
         extend <classname>org.postgresql.util.PGobject</classname>.
        </para>
@@ -772,7 +772,7 @@ java.lang.Object
 
     <para>
      <classname>Fastpath</classname> is an <acronym>API</acronym> that
-     exists within the libpq C interface, and allows a client machine
+     exists within the <application>libpq</application> C interface, and allows a client machine
      to execute a function on the database backend.  Most client code
      will not need to use this method, but it is provided because the
      Large Object <acronym>API</acronym> uses it.
@@ -825,11 +825,11 @@ public Object fastpath(int fnid,
        <formalpara>
         <title>Parameters:</title>
         <para>
-                fnid - Function id
-                resulttype - True if the result is an integer, false 
+                <parameter>fnid</> - Function id
+                <parameter>resulttype</> - True if the result is an integer, false 
 for
                 other results
-                args - FastpathArguments to pass to fastpath
+                <parameter>args</> - <classname>FastpathArguments</classname> to pass to fastpath
         </para>
        </formalpara>
 
@@ -855,7 +855,7 @@ public Object fastpath(String name,
        <note>
         <para>
          The mapping for the procedure name to function id needs to
-         exist, usually to an earlier call to addfunction(). This is
+         exist, usually to an earlier call to <function>addfunction()</function>. This is
          the preferred method to call, as function id's can/may change
          between versions of the backend. For an example of how this
          works, refer to org.postgresql.LargeObject
@@ -865,11 +865,11 @@ public Object fastpath(String name,
        <formalpara>
         <title>Parameters:</title>
         <para>
-                name - Function name
-                resulttype - True if the result is an integer, false 
+                <parameter>name</> - Function name
+                <parameter>resulttype</> - True if the result is an integer, false 
 for
                 other results
-                args - FastpathArguments to pass to fastpath
+                <parameter>args</> - <classname>FastpathArguments</classname> to pass to fastpath
         </para>
        </formalpara>
 
@@ -899,8 +899,8 @@ public int getInteger(String name,
        <formalpara>
         <title>Parameters:</title>
         <para>
-                name - Function name
-                args - Function arguments
+                <parameter>name</parameter> - Function name
+                <parameter>args</parameter> - Function arguments
         </para>
        </formalpara>
 
@@ -912,7 +912,7 @@ public int getInteger(String name,
        <formalpara>
         <title>Throws:</title>
         <para>
-         SQLException if a database-access error occurs or no result
+         <classname>SQLException</classname> if a database-access error occurs or no result
         </para>
        </formalpara>
       </listitem>
@@ -930,8 +930,8 @@ public byte[] getData(String name,
        <formalpara>
         <title>Parameters:</title>
         <para>
-                name - Function name
-                args - Function arguments
+                <parameter>name</parameter> - Function name
+                <parameter>args</parameter> - Function arguments
         </para>
        </formalpara>
 
@@ -943,7 +943,7 @@ public byte[] getData(String name,
        <formalpara>
         <title>Throws:</title>
         <para>
-         SQLException if a database-access error occurs or no result
+         <classname>SQLException</classname> if a database-access error occurs or no result
         </para>
        </formalpara>
       </listitem>
@@ -984,7 +984,7 @@ public void addFunctions(ResultSet rs) throws SQLException
 
         <para>
          PostgreSQL stores the function id's and their corresponding
-         names in the pg_proc table. To speed things up locally,
+         names in the <classname>pg_proc</> table. To speed things up locally,
          instead of querying each function from that table when
          required, a <classname>Hashtable</classname> is used. Also, only the function's
          required are entered into this table, keeping connection
@@ -1002,7 +1002,7 @@ public void addFunctions(ResultSet rs) throws SQLException
 
         <para>
          Do not think that manually converting them to the oid's will
-         work. Okay, they will for now, but they can change during
+         work. OK, they will for now, but they can change during
          development (there was some discussion about this for V7.0),
          so this is implemented to prevent any unwarranted headaches
          in the future.
@@ -1023,8 +1023,8 @@ public int getID(String name) throws SQLException
 </synopsis>
        <para>
         This returns the function id associated by its name If
-        addFunction() or addFunctions() have not been called for this
-        name, then an SQLException is thrown.
+        <function>addFunction()</function> or <function>addFunctions()</function> have not been called for this
+        name, then an <classname>SQLException</classname> is thrown.
        </para>
       </listitem>
      </itemizedlist>
@@ -1112,21 +1112,21 @@ public FastpathArg(byte buf[],
         <para>
          <variablelist>
           <varlistentry>
-           <term>buf</term>
+           <term><parameter>buf</></term>
            <listitem>
             <simpara>source array</simpara>
            </listitem>
           </varlistentry>
 
           <varlistentry>
-           <term>off</term>
+           <term><parameter>off</parameter></term>
            <listitem>
             <simpara>offset within array</simpara>
            </listitem>
           </varlistentry>
 
           <varlistentry>
-           <term>len</term>
+           <term><parameter>len</parameter></term>
            <listitem>
             <simpara>length of data to include</simpara>
            </listitem>
@@ -1880,7 +1880,7 @@ Methods
    </para>
 
    <para>
-    The org.postgresql.largeobject package provides to Java the libpq
+    The org.postgresql.largeobject package provides to Java the <application>libpq</application>
     C interface's large object <acronym>API</acronym>. It consists of
     two classes, <classname>LargeObjectManager</classname>, which deals with creating,
     opening and deleting large objects, and <classname>LargeObject</classname> which deals

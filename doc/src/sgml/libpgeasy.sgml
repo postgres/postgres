@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.5 2001/04/20 15:52:33 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.6 2001/09/10 21:58:46 petere Exp $
 -->
 
  <chapter id="pgeasy-chapter">
-  <title id="pgeasy">libpgeasy - Simplified C Library</title>
+  <title id="pgeasy"><application>libpgeasy</application> - Simplified C Library</title>
 
   <note>
    <title>Author</title>
@@ -23,74 +23,74 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.5 2001/04/20 15:52
 
   <para>
    It consists of set of simplified C functions that encapsulate the
-   functionality of libpq.
+   functionality of <application>libpq</application>.
    The functions are:
 
    <itemizedlist>
     <listitem>
-     <para>
+<synopsis>
 PGresult   *doquery(char *query);
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 PGconn     *connectdb(char *options);
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 void        disconnectdb();
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 int         fetch(void *param,...);
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 int         fetchwithnulls(void *param,...);
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 void        reset_fetch();
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 void        on_error_continue();
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 void        on_error_stop();
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 PGresult   *get_result();
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 void        set_result(PGresult *newres);
-     </para>
+</synopsis>
     </listitem>
 
     <listitem>
-     <para>
+<synopsis>
 void        unset_result(PGresult *oldres);
-     </para>
+</synopsis>
     </listitem>
    </itemizedlist>
   </para>
@@ -118,7 +118,7 @@ void        unset_result(PGresult *oldres);
    <function>fetchwithnulls</function> allows you to retrieve the NULL
    status of the field by passing an <literal>int*</literal>
    after each result pointer, which returns true or false if the field is null.
-   You can always use libpq functions on the PGresult pointer returned
+   You can always use <application>libpq</application> functions on the <structname>PGresult</structname> pointer returned
    by <function>doquery</function>.
    <function>reset_fetch</function> starts the fetch back at the beginning.
   </para>
