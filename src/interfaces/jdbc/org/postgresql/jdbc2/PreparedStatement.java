@@ -613,7 +613,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		else if (x instanceof PGobject)
 			setString(parameterIndex, ((PGobject)x).getValue());
 		else
-			setLong(parameterIndex, connection.putObject(x));
+			// Try to store java object in database
+			setSerialize(parameterIndex, connection.putObject(x), x.getClass().getName() );
 	}
 
 	/**
@@ -673,6 +674,29 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			throw new PSQLException("postgresql.prep.range");
 		inStrings[paramIndex - 1] = s;
 	}
+
+	/**
+	 * Set a parameter to a tablerow-type oid reference.
+	 *
+	 * @param parameterIndex the first parameter is 1...
+	 * @param x the oid of the object from org.postgresql.util.Serialize.store
+	 * @param classname the classname of the java object x
+	 * @exception SQLException if a database access error occurs
+	 */
+	private void setSerialize(int parameterIndex, long x, String classname) throws SQLException
+	{
+		// converts . to _, toLowerCase, and ensures length<32
+		String tablename = Serialize.toPostgreSQL( classname );
+		DriverManager.println("setSerialize: setting " + x + "::" + tablename );
+
+		// OID reference to tablerow-type must be cast like:  <oid>::<tablename>
+		// Note that postgres support for tablerow data types is incomplete/broken.
+		// This cannot be just a plain OID because then there would be ambiguity
+		// between when you want the oid itself and when you want the object
+		// an oid references.
+		set(parameterIndex, Long.toString(x) + "::" + tablename );
+	}
+
 
     // ** JDBC 2 Extensions **
 
@@ -803,3 +827,4 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
 }
+
