@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.4 2001/10/31 05:14:32 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.5 2001/10/31 05:16:31 momjian Exp $
 #
 # Use these quotes: »%s«
 #
@@ -6575,11 +6575,11 @@ msgid "CREATE TABLE/AS SELECT may not specify INTO"
 msgstr ""
 
 #: gram.y:2121
-msgid "FETCH/RELATIVE at current position is not supported"
+msgid "FETCH / RELATIVE at current position is not supported"
 msgstr ""
 
 #: gram.y:2249
-msgid "FETCH/ABSOLUTE not supported, using RELATIVE"
+msgid "FETCH / ABSOLUTE not supported, using RELATIVE"
 msgstr ""
 
 #: gram.y:2366
@@ -6600,7 +6600,7 @@ msgid "parser: argument type missing (use NONE for unary operators)"
 msgstr ""
 
 #: gram.y:2895
-msgid "COMMIT/CHAIN not yet supported"
+msgid "COMMIT / CHAIN not yet supported"
 msgstr ""
 
 #: gram.y:3015
