@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.54 2001/02/21 23:15:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.55 2001/03/15 01:07:51 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1387,9 +1387,9 @@
     provide a powerful set of tools for converting various data types
     (date/time, integer, floating point, numeric) to formatted strings
     and for converting from formatted strings to specific data types.
-    These functions all follow a common calling convention:  The first
+    These functions all follow a common calling convention: the first
     argument is the value to be formatted and the second argument is a
-    template that defines the output format.
+    template that defines the output or input format.
    </para>
 
    <para>
@@ -1437,7 +1437,7 @@
        </row>
        <row>
 	<entry>to_timestamp(text, text)</entry>
-	<entry>date</entry>
+	<entry>timestamp</entry>
 	<entry>convert string to timestamp</entry>
 	<entry>to_timestamp('05 Dec 2000', 'DD Mon YYYY')</entry>
        </row>
@@ -1453,12 +1453,21 @@
    </para>
 
    <para>
+    In an output template string, there are certain patterns that are
+    recognized and replaced with appropriately-formatted data from the value
+    to be formatted.  Any text that is not a template pattern is simply
+    copied verbatim.  Similarly, in an input template string template patterns
+    identify the parts of the input data string to be looked at and the
+    values to be found there.
+   </para>
+
+   <para>
     <table tocentry="1">
-     <title>Templates for date/time conversions</title>
+     <title>Template patterns for date/time conversions</title>
      <tgroup cols="2">
       <thead>
        <row>
-	<entry>Template</entry>
+	<entry>Pattern</entry>
 	<entry>Description</entry>
        </row>
       </thead>
@@ -1525,19 +1534,19 @@
        </row>
        <row>
 	<entry>MONTH</entry>
-	<entry>full upper case month name (9 chars)</entry>
+	<entry>full upper case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry>Month</entry>
-	<entry>full mixed case month name (9 chars)</entry>
+	<entry>full mixed case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry>month</entry>
-	<entry>full lower case month name (9 chars)</entry>
+	<entry>full lower case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry>MON</entry>
-	<entry>upper case abbreviated month name (3 chars)</entry>
+	<entry>abbreviated upper case month name (3 chars)</entry>
        </row>
        <row>
 	<entry>Mon</entry>
@@ -1549,19 +1558,19 @@
        </row>
        <row>
 	<entry>MM</entry>
-	<entry>month (01-12)</entry>
+	<entry>month number (01-12)</entry>
        </row>
        <row>
 	<entry>DAY</entry>
-	<entry>full upper case day name (9 chars)</entry>
+	<entry>full upper case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry>Day</entry>
-	<entry>full mixed case day name (9 chars)</entry>
+	<entry>full mixed case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry>day</entry>
-	<entry>full lower case day name (9 chars)</entry>
+	<entry>full lower case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry>DY</entry>
@@ -1621,11 +1630,11 @@
        </row>
        <row>
 	<entry>TZ</entry>
-	<entry>timezone string - upper case</entry>
+	<entry>timezone name - upper case</entry>
        </row>
        <row>
 	<entry>tz</entry>
-	<entry>timezone string - lower case</entry>
+	<entry>timezone name - lower case</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1633,45 +1642,46 @@
    </para>
 
    <para>
-    All templates allow the use of prefix and suffix modifiers. Modifiers are
-    always valid for use in templates. The prefix
-    <quote><literal>FX</literal></quote> is a global modifier only.      
+    Certain modifiers may be applied to any template pattern to alter its
+    behavior.  For example, <quote><literal>FMMonth</literal></quote>
+    is the <quote><literal>Month</literal></quote> pattern with the
+    <quote><literal>FM</literal></quote> prefix.
    </para>
 
    <para>
     <table tocentry="1">
-     <title>Suffixes for templates for date/time to_char()</title>
+     <title>Template pattern modifiers for date/time conversions</title>
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>Suffix</entry>
+	<entry>Modifier</entry>
 	<entry>Description</entry>
 	<entry>Example</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>FM</entry>
-	<entry>fill mode prefix</entry>
+	<entry><literal>FM</literal> prefix</entry>
+	<entry>fill mode (suppress padding blanks and zeroes)</entry>
 	<entry>FMMonth</entry>
        </row>
        <row>
-	<entry>TH</entry>
-	<entry>upper ordinal number suffix</entry>
+	<entry><literal>TH</literal> suffix</entry>
+	<entry>add upper-case ordinal number suffix</entry>
 	<entry>DDTH</entry>
        </row>	
        <row>
-	<entry>th</entry>
-	<entry>lower ordinal number suffix</entry>
-	<entry>DDTH</entry>
+	<entry><literal>th</literal> suffix</entry>
+	<entry>add lower-case ordinal number suffix</entry>
+	<entry>DDth</entry>
        </row>
        <row>
-	<entry>FX</entry>
+	<entry><literal>FX</literal> prefix</entry>
 	<entry>FiXed format global option (see below)</entry>
 	<entry>FX Month DD Day</entry>
        </row>	
        <row>
-	<entry>SP</entry>
+	<entry><literal>SP</literal> suffix</entry>
 	<entry>spell mode (not yet implemented)</entry>
 	<entry>DDSP</entry>
        </row>       
@@ -1686,13 +1696,21 @@
     <itemizedlist>
      <listitem>
       <para>
+       <literal>FM</literal> suppresses leading zeroes or trailing blanks
+       that would otherwise be added to make the output of a pattern be
+       fixed-width.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        <function>to_timestamp</function> and <function>to_date</function>
-       skip multiple blank space in converted string if the <literal>FX</literal> option 
+       skip multiple blank spaces in the input string if the <literal>FX</literal> option 
        is not used. <literal>FX</literal> must be specified as the first item
        in the template; for example 
        <literal>to_timestamp('2000    JUN','YYYY MON')</literal> is right, but
-       <literal>to_timestamp('2000    JUN','FXYYYY MON')</literal> returns error,
-       because to_timestamp() expects one blank space only.
+       <literal>to_timestamp('2000    JUN','FXYYYY MON')</literal> returns an error,
+       because <function>to_timestamp</function> expects one blank space only.
       </para>
      </listitem>
 
@@ -1709,19 +1727,20 @@
      <listitem>
       <para>
        Ordinary text is allowed in <function>to_char</function>
-       templates but any string between double quotes is guaranteed
-       that it will not be interpreted as a template keyword and it is
-       also processed faster.  (Example: <literal>'"Hello Year:
-       "YYYY'</literal>).
+       templates and will be output literally.  You can put a substring
+       in double quotes to force it to be interpreted as literal text
+       even if it contains pattern keywords.  For example, in
+       <literal>'"Hello Year: "YYYY'</literal>, the <literal>YYYY</literal>
+       will be replaced by year data, but the single <literal>Y</literal>
+       will not be.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       A double quote (<quote><literal>"</literal></quote>) between
-       quotation marks is skipped and is not parsed.  If you want to
+       If you want to
        have a double quote in the output you must precede it with a
-       double backslash, for example <literal>'\\"YYYY
+       backslash, for example <literal>'\\"YYYY
        Month\\"'</literal>. <!-- " font-lock sanity :-) -->
       </para>
      </listitem>
@@ -1745,11 +1764,11 @@
 
    <para>
     <table tocentry="1">
-     <title>Templates for to_char(<replaceable>numeric</replaceable>)</title>
+     <title>Template patterns for numeric conversions</title>
      <tgroup cols="2">
       <thead>
        <row>
-	<entry>Template</entry>
+	<entry>Pattern</entry>
 	<entry>Description</entry>
        </row>
       </thead>
@@ -1843,14 +1862,6 @@
 
      <listitem>
       <para>
-       <literal>PL</literal>, <literal>SG</literal>, and
-       <literal>TH</literal> are <productname>Postgres</productname>
-       extensions. 
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        <literal>9</literal> specifies a value with the same number of 
        digits as there are <literal>9</literal>s. If a digit is
        not available use blank space.
@@ -1860,8 +1871,15 @@
      <listitem>
       <para>
        <literal>TH</literal> does not convert values less than zero
-       and does not convert decimal numbers. <literal>TH</literal> is
-       a <productname>Postgres</productname> extension.
+       and does not convert decimal numbers.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>PL</literal>, <literal>SG</literal>, and
+       <literal>TH</literal> are <productname>Postgres</productname>
+       extensions. 
       </para>
      </listitem>
 
@@ -1892,12 +1910,12 @@
       </thead>
       <tbody>
        <row>
-        <entry>to_char(now(),'Day, HH12:MI:SS')</entry>
-        <entry><literal>'Tuesday  , 05:39:18'</literal></entry>
+        <entry>to_char(now(),'Day, DD  HH12:MI:SS')</entry>
+        <entry><literal>'Tuesday  , 06  05:39:18'</literal></entry>
        </row>
        <row>
-        <entry>to_char(now(),'FMDay, HH12:MI:SS')</entry>
-        <entry><literal>'Tuesday, 05:39:18'</literal></entry>
+        <entry>to_char(now(),'FMDay, FMDD  HH12:MI:SS')</entry>
+        <entry><literal>'Tuesday, 6  05:39:18'</literal></entry>
        </row>          
        <row>
         <entry>to_char(-0.1,'99.99')</entry>
