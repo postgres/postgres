@@ -34,10 +34,11 @@ using <Acronym>SPI</Acronym>.
 </Para>
 
 <Para>
-<Acronym>SPI</Acronym> procedures are always called by some (upper) 
-Executor and the <Acronym>SPI</Acronym>
-manager uses the Executor to run your queries. Other procedures may be
-called by the Executor running queries from your procedure.
+Procedures which use <Acronym>SPI</Acronym> are called by the
+Executor.  The <Acronym>SPI</Acronym> calls recursively invoke the
+Executor in turn to run queries.  When the Executor is invoked
+recursively, it may itself call procedures which may make
+<Acronym>SPI</Acronym> calls.
 </Para>
 
 <Para>
@@ -146,12 +147,17 @@ Return status
    utility SPI functions may be called from un-connected procedures.
 </PARA>
 <PARA>
-   You may get <ReturnValue>SPI_ERROR_CONNECT</ReturnValue> error if <Function>SPI_connect</Function> is
-   called from an already connected procedure - e.g. if you directly call one
-   procedure from another connected one.  Actually, while the child procedure
-   will be able to use SPI, your parent procedure will not be able to continue
-   to use SPI after the child returns (if <Function>SPI_finish</Function> is called by the child).
-   It's bad practice.
+   If your procedure is already connected,
+   <Function>SPI_connect</Function> will return an
+   <ReturnValue>SPI_ERROR_CONNECT</ReturnValue> error.  Note that this
+   may happen if a procedure which has called
+   <Function>SPI_connect</Function> directly calls another procedure
+   which itself calls <Function>SPI_connect</Function>.  While
+   recursive calls to the <Acronym>SPI</Acronym> manager are permitted
+   when an <Acronym>SPI</Acronym> query invokes another function which
+   uses <Acronym>SPI</Acronym>, directly nested calls to
+   <Function>SPI_connect</Function> and
+   <Function>SPI_finish</Function> are forbidden.
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-SPI-SPICONNECT-2">
