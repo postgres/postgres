@@ -1,9 +1,9 @@
 How to install PostgreSQL on Windows
 ====================================
 
-$Date: 2003/11/13 03:53:00 $
+$Date: 2003/11/28 20:22:18 $
 
-PostgreSQL requires the appropriate subset of Cygwin DLLs to be 
+PostgreSQL requires the appropriate subset of Cygwin DLLs to be
 installed in order that it functions under Windows.
 
 This document assumes that you do not have Cygwin already installed
@@ -18,7 +18,7 @@ adjust these instructions accordingly.
 2.  Proceed through the Cygwin install wizard.  Choose 'Install from
     Internet', specify a Local Package Directory and choose a mirror
     site that's close to you.  Answer the other installer questions
-    appropriately for your configuration. 
+    appropriately for your configuration.
 
     When you come to the point of choosing which packages to install,
     expand the 'Database' section and click 'Skip' next to PostgreSQL
@@ -28,15 +28,15 @@ adjust these instructions accordingly.
 3.  Once the download and install process is complete, open a Cygwin
     shell and do the following for a basic installation:
 
-    3a.  Start ipc-daemon2 for shared memory support.  To do this, 
-         enter the command "ipc-daemon2 &".  This program 
-         needs to be running anytime you start the PostgreSQL server 
+    3a.  Start ipc-daemon2 for shared memory support.  To do this,
+         enter the command "ipc-daemon2 &".  This program
+         needs to be running anytime you start the PostgreSQL server
          (postmaster) or initialize a database (initdb).
 
     3b.  Use the initdb command to create a new database cluster.  An
          example command would be:
 
-            initdb -D /usr/local/pgsql/data -W -E LATIN1 
+            initdb -D /usr/local/pgsql/data -W -E LATIN1
 
          Which will create a cluster in the /usr/local/pgsql/data
          directory, will prompt for a superuser password and will
@@ -45,7 +45,7 @@ adjust these instructions accordingly.
     3c.  Start up the postmaster.  Use a command similar to the
          following:
 
-            postmaster -D /usr/local/pgsql/data 
+            postmaster -D /usr/local/pgsql/data
 
          This will start the postmaster, and if successful you will
          see some initial log entries, and an entry "LOG: database
@@ -88,7 +88,7 @@ Known issues
 
 2.  "make check" can generate spurious regression test failures due to
     overflowing the listen() backlog queue which causes connection
-    refused errors or hangs. You can limit the number of connections 
+    refused errors or hangs. You can limit the number of connections
     using the MAX_CONNECTIONS option thus:
 
        make MAX_CONNECTIONS=5 check
