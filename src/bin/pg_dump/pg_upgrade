@@ -1,9 +1,9 @@
 #!/bin/sh
 #
 # pg_upgrade: update a database without needing a full dump/reload cycle.
-# CAUTION: read the manual page before trying to use this!
+# CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.24 2002/01/11 04:39:19 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.25 2002/01/11 05:54:59 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -107,7 +107,7 @@ fi
 
 if ! pg_resetxlog -x | grep -q XID
 then	echo "Old version of pg_resetxlog found in path.
-Install a newer version from pgsql/contrib/pg_resetxlog and continue.;  exiting" 1>&2
+Install a newer version from pgsql/contrib/pg_resetxlog.;  exiting" 1>&2
 	exit 1
 fi
 
@@ -122,26 +122,9 @@ fi
 
 # Checking done.  Ready to proceed.
 
-# Execute the schema script to create everything, except modify any
-# sequences with int4 maximums if we are upgrading from 7.1.
+# Execute the schema script to create everything
 
-cat $SCHEMA | awk -F' ' '{
-				if ("'"$SRC_VERSION"'" == "7.1" &&
-				    $1 == "CREATE" &&
-				    $2 == "SEQUENCE" &&
-				    ($9 >= 2147483646 && # handle OS rounding
-				    ($9 <= 2147483648))
-				{
-					for(i=1; i < NF; i++)
-						if (i != 9)
-							printf "%s ", $i;
-						else
-							printf "%s ", "9223372036854775807";
-					print;
-				}
-				else	print $0;
-			}' |
-psql "template1"
+psql "template1" < "$SCHEMA"
 if [ $? -ne 0 ]
 then	echo "There were errors in the input script $SCHEMA.
 $0 aborted." 1>&2
@@ -154,17 +137,14 @@ echo "Input script $SCHEMA complete, fixing row commit statuses..."
 # Now vacuum each result database because our movement of transaction log
 # causes some committed transactions to appear as non-committed
 
-psql -d template1 -At -c "SELECT datname FROM pg_database" | while read DB
-do
-	echo "VACUUM;" | psql "$DB"
-	if [ $? -ne 0 ]
-	then	echo "There were errors during VACUUM.
+vacuumdb -a
+if [ $? -ne 0 ]
+then	echo "There were errors during VACUUM.
 $0 aborted." 1>&2
-		exit 1
-	fi
-done
+	exit 1
+fi
 
-# Used for scans looking for a database/tablename match
+# Used for scans looking for a database/table name match
 # New oid is looked up
 pg_dumpall -s > $TMPFILE 2>/dev/null
 if [ "$?" -ne 0 ]
@@ -198,16 +178,7 @@ do
 	if echo "$LINE" | grep -q "^-- TOC Entry ID [0-9]* (OID "
 	then	OID="`echo \"$LINE\" | cut -d' ' -f7 | tr -d ')'`"
 	fi
-	if echo "$LINE" | egrep -q "^-- Name: [^ ]* Type: (TABLE|INDEX) "
-	then	TABLE="`echo \"$LINE\" | cut -d' ' -f3`"
-		# skip system tables
-		if [ "`echo \"$TABLE\" | cut -c 1-3`" = "pg_" ]
-		then	TABLE=""
-		fi
-	fi
-	# 7.1 sequences were handled earlier because they were int4.
-	if test "$SRC_VERSION" != "7.1" &&
-	   echo "$LINE" | egrep -q "^-- Name: [^ ]* Type: SEQUENCE "
+	if echo "$LINE" | egrep -q "^-- Name: [^ ]* Type: (TABLE|INDEX|SEQUENCE) "
 	then	TABLE="`echo \"$LINE\" | cut -d' ' -f3`"
 		# skip system tables
 		if [ "`echo \"$TABLE\" | cut -c 1-3`" = "pg_" ]
@@ -278,7 +249,7 @@ fi
 
 # set last checkpoint location from old database
 
-CHKPOINT=`pg_resetxlog -n "$OLDDIR" | grep "checkpoint location" | 
+CHKPOINT=`pg_resetxlog -n "$OLDDIR" | grep "checkpoint location:" |
 	awk -F'  *' '{print $4}'`
 if [ "$CHKPOINT" = "" ]
 then	echo "Unable to get old checkpoint location.;  exiting" 1>&2
@@ -314,7 +285,7 @@ else	echo "Set int8 sequence values from 7.1..."
 			psql -d "$DB" -At <<SQL_END
 
 -- This table matches the 7.1 sequence schema
-CREATE TABLE temp_seq_int4 (
+CREATE TABLE pg_upgrade_temp_seq_int4 (
 	sequence_name name
 	last_value    integer
 	increment_by  integer
@@ -326,40 +297,51 @@ CREATE TABLE temp_seq_int4 (
 	is_called     "char"
 );
 
--- Move int8 version of sequence out of the way
+-- Move int8 columns of sequence out of the way
 UPDATE pg_attribute
 SET attrelid = 1 -- OID of template1, not used anywhere else  XXX correct?
 WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE');
 
--- Replace with int4 sequence schema
+-- Replace with int4 sequence columns
 UPDATE pg_attribute
-SET attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE')
-WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = 'temp_seq_int4');
+SET attrelid = 
+	(SELECT oid FROM pg_class WHERE relname = '$SEQUENCE')
+WHERE attrelid = 
+	(SELECT oid FROM pg_class WHERE relname = 'pg_upgrade_temp_seq_int4');
 
--- Select sequence value into temp table
-CREATE TEMP TABLE hold_sequence AS
-SELECT last_value
-FROM "$SEQUENCE"
+-- Mark sequence as ordinary table so we can do COPY
+UPDATE pg_class
+SET relkind = 't'
+WHERE relname = '$SEQUENCE';
+
+-- COPY sequence out
+COPY "$SEQUENCE" TO '/tmp/$$';
+
+-- Delete int4 row from sequence
+-- XXX truncate ok?
+TRUNCATE "$SEQUENCE";
 
 -- Prepare int4 sequence table for removal and remove it
 UPDATE pg_attribute
-SET attrelid = (SELECT oid FROM pg_class WHERE relname = 'temp_seq_int4')
-WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE');
+SET attrelid = 
+	(SELECT oid FROM pg_class WHERE relname = 'pg_upgrade_temp_seq_int4')
+WHERE attrelid = 
+	(SELECT oid FROM pg_class WHERE relname = '$SEQUENCE');
 
-DROP TABLE temp_seq_int4;
+DROP TABLE pg_upgrade_temp_seq_int4;
 
 -- Restore int8 version of sequence
 UPDATE pg_attribute
 SET attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE')
 WHERE attrelid = 1;
 
--- Mark sequence as ordinary table and update it
-UPDATE pg_class
-SET relkind = 't'
-WHERE relname = '$SEQUENCE';
+-- Load new values
+COPY "$SEQUENCE" FROM '/tmp/$$';
 
+-- If previous max was int4, make it int8
 UPDATE "$SEQUENCE"
-SET last_value = (SELECT last_value FROM hold_sequence);
+SET max_value = 9223372036854775807
+WHERE max_value BETWEEN 2147483646 AND 2147483648; -- OS rounding
 
 -- Restore sequence flag
 UPDATE pg_class
