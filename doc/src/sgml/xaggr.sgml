@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.10 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.11 2001/03/24 23:03:26 petere Exp $
 -->
 
  <chapter id="xaggr">
@@ -74,7 +74,7 @@ SELECT complex_sum(a) FROM test_complex;
    the state variable and then start applying the transition function
    at the second non-null input value.  <productname>Postgres</productname>
    will do that automatically if the initial condition is NULL and
-   the transition function is marked "strict" (ie, not to be called
+   the transition function is marked "strict" (i.e., not to be called
    for NULL inputs).
   </para>
   

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.46 2001/02/03 19:09:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.47 2001/03/24 23:03:26 petere Exp $
 Postgres documentation
 -->
 
@@ -1923,7 +1923,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     Observe the correct number of backslashes (6)! You can resolve it this way: After
     <application>psql</application> has parsed this line, it passes
     <literal>sed -e "s/'/\\\'/g" < my_file.txt</literal> to the shell. The shell
-    will do it's own thing inside the double quotes and execute <filename>sed</filename>
+    will do its own thing inside the double quotes and execute <filename>sed</filename>
     with the arguments <literal>-e</literal> and <literal>s/'/\\'/g</literal>.
     When <application>sed</application> parses this it will replace the two
     backslashes with a single one and then do the substitution. Perhaps at

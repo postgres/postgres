@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.13 2000/12/22 18:57:49 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.14 2001/03/24 23:03:26 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -1841,7 +1841,7 @@
        Possible values are:
        <itemizedlist>
         <listitem>
-         <para>'c' = CHAR alignment, ie no alignment needed.</para>
+         <para>'c' = CHAR alignment, i.e., no alignment needed.</para>
         </listitem>
         <listitem>
          <para>'s' = SHORT alignment (2 bytes on most machines).</para>

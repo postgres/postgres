@@ -396,7 +396,7 @@ The possible response messages from the backend are:
 <ListItem>
 <Para>
 		A warning message has been issued in relation to the query.
-		Notices are in addition to other responses, ie. the backend
+		Notices are in addition to other responses, i.e., the backend
 		will continue processing the command.
 </Para>
 </ListItem>
@@ -489,7 +489,7 @@ The possible response messages from the backend are:
 <Para>
 		A warning message has been issued in relation to the function
 		call.
-		Notices are in addition to other responses, ie. the backend
+		Notices are in addition to other responses, i.e., the backend
 		will continue processing the command.
 </Para>
 </ListItem>

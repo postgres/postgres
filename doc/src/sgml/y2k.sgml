@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.9 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.10 2001/03/24 23:03:26 petere Exp $
 -->
 
 <sect1 id="y2k">
@@ -18,7 +18,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.9 2001/02/03 19:03:27 pe
  <para>
   The <productname>PostgreSQL</productname> Global Development Group provides
   the <productname>PostgreSQL</productname> software code tree as a public service,
-  without warranty and without liability for it's behavior or performance.
+  without warranty and without liability for its behavior or performance.
   However, at the time of writing:
  </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.19 2001/02/15 04:10:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.20 2001/03/24 23:03:26 petere Exp $
 -->
 
  <chapter id="sql">
@@ -1410,7 +1410,7 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
 
      <para>
       Also observe that it makes no sense to ask for an aggregate of an
-      aggregate, eg, AVG(MAX(sno)), because a SELECT only does one pass
+      aggregate, e.g., AVG(MAX(sno)), because a SELECT only does one pass
       of grouping and aggregation.  You can get a result of this kind by
       using a temporary table or a sub-SELECT in the FROM clause to
       do the first level of aggregation.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.51 2001/03/10 21:16:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.52 2001/03/24 23:03:26 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -397,7 +397,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    <note>
     <title>Deprecated</title>
     <para>
-     The <type>money</type> is now deprecated. Use
+     The <type>money</type> type is deprecated. Use
      <type>numeric</type> or <type>decimal</type> instead, in
      combination with the <function>to_char</function> function.  The
      money type may become a locale-aware layer over the

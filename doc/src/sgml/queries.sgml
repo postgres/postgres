@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.5 2001/02/15 04:10:54 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.6 2001/03/24 23:03:26 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -146,7 +146,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
       <listitem>
 
 <synopsis>
-<replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> ON <replaceable>boolean expression</replaceable>
+<replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> ON <replaceable>boolean_expression</replaceable>
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> USING ( <replaceable>join column list</replaceable> )
 <replaceable>T1</replaceable> NATURAL { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable>
 </synopsis>
@@ -403,9 +403,9 @@ FROM (SELECT * FROM T1) DT1, T2, T3
    <para>
     The syntax of the WHERE clause is
 <synopsis>
-WHERE <replaceable>search condition</replaceable>
+WHERE <replaceable>search_condition</replaceable>
 </synopsis>
-    where <replaceable>search condition</replaceable> is any value
+    where <replaceable>search_condition</replaceable> is any value
     expression as defined in <xref linkend="sql-expressions"> that
     returns a value of type <type>boolean</type>.
    </para>
@@ -579,10 +579,11 @@ SELECT pid    AS "Products",
   <title>Select Lists</title>
 
   <para>
-   The table expression in the <command>SELECT</command> command
+   As shown in the previous section,
+   the table expression in the <command>SELECT</command> command
    constructs an intermediate virtual table by possibly combining
    tables, views, eliminating rows, grouping, etc.  This table is
-   finally passed on to processing by the select list.  The select
+   finally passed on to processing by the <firstterm>select list</firstterm>.  The select
    list determines which <emphasis>columns</emphasis> of the
    intermediate table are actually output.  The simplest kind of select list
    is <literal>*</literal> which emits all columns that the table
