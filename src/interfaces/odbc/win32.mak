@@ -67,6 +67,7 @@ CLEAN :
 	-@erase "$(INTDIR)\gpps.obj"
 	-@erase "$(INTDIR)\info.obj"
 	-@erase "$(INTDIR)\lobj.obj"
+	-@erase "$(INTDIR)\win_md5.obj"
 	-@erase "$(INTDIR)\misc.obj"
 !IF "$(CFG)" == "MultibyteRelease"
 	-@erase "$(INTDIR)\multibyte.obj"
@@ -152,6 +153,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\gpps.obj" \
 	"$(INTDIR)\info.obj" \
 	"$(INTDIR)\lobj.obj" \
+	"$(INTDIR)\win_md5.obj" \
 	"$(INTDIR)\misc.obj" \
 !IF "$(CFG)" == "MultibyteRelease"
 	"$(INTDIR)\multibyte.obj" \
@@ -200,6 +202,7 @@ CLEAN :
 	-@erase "$(INTDIR)\gpps.obj"
 	-@erase "$(INTDIR)\info.obj"
 	-@erase "$(INTDIR)\lobj.obj"
+	-@erase "$(INTDIR)\win_md5.obj"
 	-@erase "$(INTDIR)\misc.obj"
 !IF "$(CFG)" == "MultibyteDebug" 
 	-@erase "$(INTDIR)\multibyte.obj"
@@ -288,6 +291,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\gpps.obj" \
 	"$(INTDIR)\info.obj" \
 	"$(INTDIR)\lobj.obj" \
+	"$(INTDIR)\win_md5.obj"
 	"$(INTDIR)\misc.obj" \
 !IF "$(CFG)" == "MultibyteDebug" 
 	"$(INTDIR)\multibyte.obj" \
@@ -483,6 +487,12 @@ SOURCE=tuple.c
 SOURCE=tuplelist.c
 
 "$(INTDIR)\tuplelist.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=win_md5.c
+
+"$(INTDIR)\win_md5.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

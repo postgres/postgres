@@ -32,6 +32,7 @@
 #endif
 
 #include "pgapifunc.h"
+#include "md5.h"
 
 #define STMT_INCREMENT 16		/* how many statement holders to allocate
 								 * at a time */
@@ -508,6 +509,39 @@ CC_set_translation(ConnectionClass *self)
 	return TRUE;
 }
 
+static	int
+md5_auth_send(ConnectionClass *self, const char *salt)
+{
+	char	*pwd1 = NULL, *pwd2 = NULL;
+	ConnInfo   *ci = &(self->connInfo);
+	SocketClass	*sock = self->sock;
+
+mylog("MD5 user=%s password=%s\n", ci->username, ci->password); 
+	if (!(pwd1 = malloc(MD5_PASSWD_LEN + 1)))
+		return 1;
+	if (!EncryptMD5(ci->password, ci->username, strlen(ci->username), pwd1))
+	{
+		free(pwd1);
+		return 1;
+	} 
+	if (!(pwd2 = malloc(MD5_PASSWD_LEN + 1)))
+	{
+		free(pwd1);
+		return 1;
+	} 
+	if (!EncryptMD5(pwd1 + strlen("md5"), salt, 4, pwd2))
+	{
+		free(pwd2);
+		free(pwd1);
+		return 1;
+	}
+	free(pwd1);
+	SOCK_put_int(sock, 4 + strlen(pwd2) + 1, 4);
+	SOCK_put_n_char(sock, pwd2, strlen(pwd2) + 1);
+	SOCK_flush_output(sock);
+	free(pwd2);
+	return 0; 
+}
 
 char
 CC_connect(ConnectionClass *self, char do_password)
@@ -763,10 +797,24 @@ another_version_retry:
 							break;
 
 						case AUTH_REQ_CRYPT:
-						case AUTH_REQ_MD5:
 							self->errormsg = "Password crypt authentication not supported";
 							self->errornumber = CONN_AUTH_TYPE_UNSUPPORTED;
 							return 0;
+						case AUTH_REQ_MD5:
+							mylog("in AUTH_REQ_MD5\n");
+							if (ci->password[0] == '\0')
+							{
+								self->errornumber = CONNECTION_NEED_PASSWORD;
+								self->errormsg = "A password is required for this connection.";
+								return -1; /* need password */
+							}
+							if (md5_auth_send(self, salt))
+							{
+								self->errormsg = "md5 hashing failed";
+								self->errornumber = CONN_INVALID_AUTHENTICATION;
+								return 0;
+							}
+							break;
 
 						case AUTH_REQ_SCM_CREDS:
 							self->errormsg = "Unix socket credential authentication not supported";
