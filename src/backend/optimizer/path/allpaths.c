@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.5 1997/02/19 12:58:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.6 1997/04/29 04:37:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,13 @@
 
 #include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
+
+#ifdef GEQO
+bool _use_geqo_ = true;
+#else
+bool _use_geqo_ = false;
+#endif
+
 
 static void find_rel_paths(Query *root, List *rels);
 static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
@@ -166,10 +173,9 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
      *    <utesch@aut.tu-freiberg.de>          *
      *******************************************/
 
-#ifdef GEQO
-    return lcons(geqo(root), NIL); /* returns *one* Rel, so lcons it */
-#endif
- 
+    if ( _use_geqo_ )
+    	return lcons(geqo(root), NIL); /* returns *one* Rel, so lcons it */
+
      /*******************************************
       * rest will be deprecated in case of GEQO * 
       *******************************************/
