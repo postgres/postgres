@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.115 2000/06/17 21:48:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.116 2000/06/28 06:05:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,10 +475,11 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 
 		if (oids && !binary)
 		{
-			CopySendString(DatumGetCString(DirectFunctionCall1(oidout,
-									ObjectIdGetDatum(tuple->t_data->t_oid))),
-						   fp);
+			string = DatumGetCString(DirectFunctionCall1(oidout,
+									 ObjectIdGetDatum(tuple->t_data->t_oid)));
+			CopySendString(string, fp);
 			CopySendChar(delim[0], fp);
+			pfree(string);
 		}
 
 		for (i = 0; i < attr_count; i++)
