@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.86 2001/10/28 06:25:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.87 2001/11/01 18:09:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,10 @@ extern bool Password_encryption;
  *
  * This function set is both a trigger function for direct updates to pg_shadow
  * as well as being called directly from create/alter/drop user.
+ *
+ * We raise an error to force transaction rollback if we detect an illegal
+ * username or password --- illegal being defined as values that would
+ * mess up the pg_pwd parser.
  *---------------------------------------------------------------------
  */
 static void
@@ -85,26 +89,51 @@ write_password_file(Relation rel)
 		bool		null_n,
 					null_p,
 					null_v;
+		char	   *str_n,
+				   *str_p,
+				   *str_v;
+		int			i;
 
 		datum_n = heap_getattr(tuple, Anum_pg_shadow_usename, dsc, &null_n);
 		if (null_n)
-			continue;			/* don't allow empty users */
-		datum_p = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &null_p);
+			continue;			/* ignore NULL usernames */
+		str_n = DatumGetCString(DirectFunctionCall1(nameout, datum_n));
 
+		datum_p = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &null_p);
 		/*
-		 * It could be argued that people having a null password shouldn't
-		 * be allowed to connect, because they need to have a password set
-		 * up first. If you think assuming an empty password in that case
-		 * is better, erase the following line.
+		 * It can be argued that people having a null password shouldn't
+		 * be allowed to connect under password authentication, because
+		 * they need to have a password set up first. If you think assuming an
+		 * empty password in that case is better, change this logic to look
+		 * something like the code for valuntil.
 		 */
 		if (null_p)
+		{
+			pfree(str_n);
 			continue;
+		}
+		str_p = DatumGetCString(DirectFunctionCall1(textout, datum_p));
+
 		datum_v = heap_getattr(tuple, Anum_pg_shadow_valuntil, dsc, &null_v);
+		if (null_v)
+			str_v = pstrdup("\\N");
+		else
+			str_v = DatumGetCString(DirectFunctionCall1(nabstimeout, datum_v));
 
 		/*
-		 * These fake entries are not really necessary. To remove them,
-		 * the parser in backend/libpq/crypt.c would need to be adjusted.
-		 * Initdb might also need adjustments.
+		 * Check for illegal characters in the username and password.
+		 */
+		i = strcspn(str_n, CRYPT_PWD_FILE_SEPSTR "\n");
+		if (str_n[i] != '\0')
+			elog(ERROR, "Invalid user name '%s'", str_n);
+		i = strcspn(str_p, CRYPT_PWD_FILE_SEPSTR "\n");
+		if (str_p[i] != '\0')
+			elog(ERROR, "Invalid user password '%s'", str_p);
+
+		/*
+		 * The extra columns we emit here are not really necessary. To remove
+		 * them, the parser in backend/libpq/crypt.c would need to be
+		 * adjusted.  Initdb might also need adjustments.
 		 */
 		fprintf(fp,
 				"%s"
@@ -122,12 +151,13 @@ write_password_file(Relation rel)
 				"%s"
 				CRYPT_PWD_FILE_SEPSTR
 				"%s\n",
-				DatumGetCString(DirectFunctionCall1(nameout, datum_n)),
-				null_p ? "" :
-				DatumGetCString(DirectFunctionCall1(textout, datum_p)),
-				null_v ? "\\N" :
-				DatumGetCString(DirectFunctionCall1(nabstimeout, datum_v))
-			);
+				str_n,
+				str_p,
+				str_v);
+
+		pfree(str_n);
+		pfree(str_p);
+		pfree(str_v);
 	}
 	heap_endscan(scan);
 
@@ -137,8 +167,7 @@ write_password_file(Relation rel)
 	FreeFile(fp);
 
 	/*
-	 * And rename the temp file to its final name, deleting the old
-	 * pg_pwd.
+	 * Rename the temp file to its final name, deleting the old pg_pwd.
 	 */
 	if (rename(tempname, filename))
 		elog(ERROR, "rename %s to %s: %m", tempname, filename);
