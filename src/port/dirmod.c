@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.34 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.35 2005/02/13 16:50:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,6 +350,7 @@ fnames(char *path)
 	return filenames;
 }
 
+
 /*
  *	fnames_cleanup
  *
@@ -365,6 +366,7 @@ fnames_cleanup(char **filenames)
 
 	pfree(filenames);
 }
+
 
 /*
  *	rmtree
@@ -398,16 +400,14 @@ rmtree(char *path, bool rmtopdir)
 		snprintf(filepath, MAXPGPATH, "%s/%s", path, *filename);
 
 		if (stat(filepath, &statbuf) != 0)
-		{
-			fnames_cleanup(filenames);
-			return false;
-		}
+			goto report_and_fail;
 
 		if (S_ISDIR(statbuf.st_mode))
 		{
 			/* call ourselves recursively for a directory */
 			if (!rmtree(filepath, true))
 			{
+				/* we already reported the error */
 				fnames_cleanup(filenames);
 				return false;
 			}
@@ -415,22 +415,26 @@ rmtree(char *path, bool rmtopdir)
 		else
 		{
 			if (unlink(filepath) != 0)
-			{
-				fnames_cleanup(filenames);
-				return false;
-			}
+				goto report_and_fail;
 		}
 	}
 
 	if (rmtopdir)
 	{
 		if (rmdir(path) != 0)
-		{
-			fnames_cleanup(filenames);
-			return false;
-		}
+			goto report_and_fail;
 	}
 
 	fnames_cleanup(filenames);
 	return true;
+
+report_and_fail:
+
+#ifndef FRONTEND
+	elog(WARNING, "could not remove file or directory \"%s\": %m", filepath);
+#else
+	fprintf(stderr, "could not remove file or directory \"%s\": %s\n", filepath, strerror(errno));
+#endif
+	fnames_cleanup(filenames);
+	return false;
 }
