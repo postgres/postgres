@@ -1,6 +1,8 @@
 
 This increases the number of typedef's understood by BSD indent from 100
-to 1000.
+to 1000.  The second patch allows it to understand 0x7fU constants.
+
+---------------------------------------------------------------------------
 
 *** ./lexi.c.orig	Mon Sep  8 17:55:47 1997
 --- ./lexi.c	Mon Sep  8 17:02:10 1997
@@ -17,7 +19,28 @@ to 1000.
       int         rwcode;
   };
   
-! struct templ specials[1000] =
+! struct templ specials[4096] =
   {
       "switch", 1,
       "case", 2,
+
+*** ./lexi.c.orig	Wed May 26 10:50:54 1999
+--- ./lexi.c	Wed May 26 10:51:08 1999
+***************
+*** 186,192 ****
+  				*e_token++ = *buf_ptr++;
+  			}
+  		}
+! 	    if (*buf_ptr == 'L' || *buf_ptr == 'l')
+  		*e_token++ = *buf_ptr++;
+  	}
+  	else
+--- 186,193 ----
+  				*e_token++ = *buf_ptr++;
+  			}
+  		}
+! 	    if (*buf_ptr == 'L' || *buf_ptr == 'U' ||
+! 		*buf_ptr == 'l' || *buf_ptr == 'u')
+  		*e_token++ = *buf_ptr++;
+  	}
+  	else
