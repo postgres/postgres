@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Dec  5 15:30:28 EST 2002
+Last updated:		Mon Dec  9 13:09:27 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -159,6 +159,7 @@ Commands
 * Allow REINDEX to rebuild all indexes, remove /contrib/reindex
 * Make a transaction-safe TRUNCATE
 * Fix SELECT ... INTO and CREATE TABLE AS to have appopriate OID column
+* Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 
 
 * ALTER
