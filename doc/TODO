@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Mar 30 20:01:37 EST 2004
+Last updated:		Tue Mar 30 20:04:46 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -118,7 +118,6 @@ Views / Rules
 * Allow NOTIFY in rules involving conditionals
 * Have views on temporary tables exist in the temporary namespace
 * Allow temporary views on non-temporary tables
-* Move psql backslash information into views
 * Allow RULE recompilation
 
 
@@ -268,6 +267,8 @@ Clients
 * Have psql show more information about sequences
 * Allow pg_dumpall to use non-text output formats
 * Have pg_dump use multi-statement transactions for INSERT dumps
+* Move psql backslash database information into the backend, use nmumonic
+  commands? [psql]
 
 
 * JDBC
