@@ -7,11 +7,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.5 1996/07/25 00:26:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.6 1996/07/25 01:11:15 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
-CFLAGS+= -I$(srcdir)/backend/include -I$(srcdir)/libpq 
+CFLAGS+= -I$(srcdir)/backend -I$(srcdir)/backend/include -I$(srcdir)/libpq 
 
 #
 # link with libpq, so we put it here.
