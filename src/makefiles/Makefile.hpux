@@ -30,7 +30,7 @@ AROPT = crs
 
 DLSUFFIX = .sl
 ifeq ($(GCC), yes)
-CFLAGS_SL = -fPIC
+CFLAGS_SL = -fpic
 else
 CFLAGS_SL = +z
 endif
