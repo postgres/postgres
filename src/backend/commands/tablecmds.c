@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.42 2002/09/22 00:37:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.43 2002/09/22 19:42:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,6 +609,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 						 attributeName,
 						 TypeNameToString(def->typename),
 						 format_type_be(attribute->atttypid));
+				def->inhcount++;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= attribute->attnotnull;
 				/* Default and other constraints are handled below */
@@ -625,7 +626,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				typename->typeid = attribute->atttypid;
 				typename->typmod = attribute->atttypmod;
 				def->typename = typename;
-				def->is_inherited = true;
+				def->inhcount = 1;
+				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
@@ -758,6 +760,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 						 attributeName,
 						 TypeNameToString(def->typename),
 						 TypeNameToString(newdef->typename));
+				/* Mark the column as locally defined */
+				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= newdef->is_not_null;
 				/* If new def has a default, override previous default */
@@ -1155,7 +1159,7 @@ renameatt(Oid myrelid,
 	 * if the attribute is inherited, forbid the renaming, unless we are
 	 * already inside a recursive rename.
 	 */
-	if (attform->attisinherited && !recursing)
+	if (attform->attinhcount > 0 && !recursing)
 		elog(ERROR, "renameatt: inherited attribute \"%s\" may not be renamed",
 			 oldattname);
 
@@ -1628,7 +1632,8 @@ AlterTableAddColumn(Oid myrelid,
 				   *children;
 		ColumnDef  *colDefChild = copyObject(colDef);
 
-		colDefChild->is_inherited = true;
+		colDefChild->inhcount = 1;
+		colDefChild->is_local = false;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(myrelid);
@@ -1742,7 +1747,8 @@ AlterTableAddColumn(Oid myrelid,
 	attribute->atthasdef = (colDef->raw_default != NULL ||
 							colDef->cooked_default != NULL);
 	attribute->attisdropped = false;
-	attribute->attisinherited = colDef->is_inherited;
+	attribute->attislocal = colDef->is_local;
+	attribute->attinhcount = colDef->inhcount;
 
 	ReleaseSysCache(typeTuple);
 
@@ -2373,13 +2379,14 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 			 RelationGetRelationName(rel));
 
 	/* Don't drop inherited columns */
-	if (tupleDesc->attrs[attnum - 1]->attisinherited && !recursing)
+	if (tupleDesc->attrs[attnum - 1]->attinhcount > 0 && !recursing)
 		elog(ERROR, "ALTER TABLE: Cannot drop inherited column \"%s\"",
 			 colName);
 
 	/*
 	 * If we are asked to drop ONLY in this table (no recursion), we need
-	 * to mark the inheritors' attribute as non-inherited.
+	 * to mark the inheritors' attribute as locally defined rather than
+	 * inherited.
 	 */
 	if (!recurse && !recursing)
 	{
@@ -2396,6 +2403,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 			Oid			childrelid = lfirsti(child);
 			Relation	childrel;
 			HeapTuple	tuple;
+			Form_pg_attribute childatt;
 
 			childrel = heap_open(childrelid, AccessExclusiveLock);
 
@@ -2403,13 +2411,20 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 				elog(ERROR, "ALTER TABLE: relation %u has no column \"%s\"",
 					 childrelid, colName);
+			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			((Form_pg_attribute) GETSTRUCT(tuple))->attisinherited = false;
+			if (childatt->attinhcount <= 0)
+				elog(ERROR, "ALTER TABLE: relation %u has non-inherited column \"%s\"",
+					 childrelid, colName);
+			childatt->attinhcount--;
+			childatt->attislocal = true;
 
 			simple_heap_update(attr_rel, &tuple->t_self, tuple);
 
 			/* keep the system catalog indexes current */
 			CatalogUpdateIndexes(attr_rel, tuple);
+
+			heap_freetuple(tuple);
 
 			heap_close(childrel, NoLock);
 		}
@@ -2417,29 +2432,63 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	}
 
 	/*
-	 * Propagate to children if desired
+	 * Propagate to children if desired.  Unlike most other ALTER routines,
+	 * we have to do this one level of recursion at a time; we can't use
+	 * find_all_inheritors to do it in one pass.
 	 */
 	if (recurse)
 	{
+		Relation	attr_rel;
 		List	   *child,
 				   *children;
 
-		/* this routine is actually in the planner */
-		children = find_all_inheritors(myrelid);
+		/* We only want direct inheritors in this case */
+		children = find_inheritance_children(myrelid);
 
-		/*
-		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all of
-		 * the relids in the list that it returns.
-		 */
+		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
+			Relation	childrel;
+			HeapTuple	tuple;
+			Form_pg_attribute childatt;
 
 			if (childrelid == myrelid)
 				continue;
-			AlterTableDropColumn(childrelid, false, true, colName, behavior);
+
+			childrel = heap_open(childrelid, AccessExclusiveLock);
+
+			tuple = SearchSysCacheCopyAttName(childrelid, colName);
+			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
+				elog(ERROR, "ALTER TABLE: relation %u has no column \"%s\"",
+					 childrelid, colName);
+			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
+
+			if (childatt->attinhcount <= 0)
+				elog(ERROR, "ALTER TABLE: relation %u has non-inherited column \"%s\"",
+					 childrelid, colName);
+
+			if (childatt->attinhcount == 1 && !childatt->attislocal)
+			{
+				/* Time to delete this child column, too */
+				AlterTableDropColumn(childrelid, true, true, colName, behavior);
+			}
+			else
+			{
+				/* Child column must survive my deletion */
+				childatt->attinhcount--;
+
+				simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+				/* keep the system catalog indexes current */
+				CatalogUpdateIndexes(attr_rel, tuple);
+			}
+
+			heap_freetuple(tuple);
+
+			heap_close(childrel, NoLock);
 		}
+		heap_close(attr_rel, RowExclusiveLock);
 	}
 
 	/*

@@ -764,3 +764,83 @@ alter table renameColumn add column w int;
 
 -- this should fail
 alter table only renameColumn add column x int;
+
+
+-- Test corner cases in dropping of inherited columns
+
+create table p1 (f1 int, f2 int);
+create table c1 (f1 int not null) inherits(p1);
+
+-- should be rejected since c1.f1 is inherited
+alter table c1 drop column f1;
+-- should work
+alter table p1 drop column f1;
+-- c1.f1 is still there, but no longer inherited
+select f1 from c1;
+alter table c1 drop column f1;
+select f1 from c1;
+
+drop table p1 cascade;
+
+create table p1 (f1 int, f2 int);
+create table c1 () inherits(p1);
+
+-- should be rejected since c1.f1 is inherited
+alter table c1 drop column f1;
+alter table p1 drop column f1;
+-- c1.f1 is dropped now, since there is no local definition for it
+select f1 from c1;
+
+drop table p1 cascade;
+
+create table p1 (f1 int, f2 int);
+create table c1 () inherits(p1);
+
+-- should be rejected since c1.f1 is inherited
+alter table c1 drop column f1;
+alter table only p1 drop column f1;
+-- c1.f1 is NOT dropped, but must now be considered non-inherited
+alter table c1 drop column f1;
+
+drop table p1 cascade;
+
+create table p1 (f1 int, f2 int);
+create table c1 (f1 int not null) inherits(p1);
+
+-- should be rejected since c1.f1 is inherited
+alter table c1 drop column f1;
+alter table only p1 drop column f1;
+-- c1.f1 is still there, but no longer inherited
+alter table c1 drop column f1;
+
+drop table p1 cascade;
+
+create table p1(id int, name text);
+create table p2(id2 int, name text, height int);
+create table c1(age int) inherits(p1,p2);
+create table gc1() inherits (c1);
+
+select relname, attname, attinhcount, attislocal
+from pg_class join pg_attribute on (pg_class.oid = pg_attribute.attrelid)
+where relname in ('p1','p2','c1','gc1') and attnum > 0 and not attisdropped
+order by relname, attnum;
+
+-- should work
+alter table only p1 drop column name;
+-- should work. Now c1.name is local and inhcount is 0.
+alter table p2 drop column name;
+-- should be rejected since its inherited
+alter table gc1 drop column name;
+-- should work, and drop gc1.name along
+alter table c1 drop column name;
+-- should fail: column does not exist
+alter table gc1 drop column name;
+-- should work and drop the attribute in all tables
+alter table p2 drop column height;
+
+select relname, attname, attinhcount, attislocal
+from pg_class join pg_attribute on (pg_class.oid = pg_attribute.attrelid)
+where relname in ('p1','p2','c1','gc1') and attnum > 0 and not attisdropped
+order by relname, attnum;
+
+drop table p1, p2 cascade;

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.60 2002/09/18 21:35:20 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.61 2002/09/22 19:42:50 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -822,12 +822,22 @@
      </row>
 
      <row>
-      <entry>attisinherited</entry>
+      <entry>attislocal</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This column is inherited from some other relation.  An inherited
-       column cannot be dropped nor renamed.
+       This column is defined locally in the relation.  Note that a column may
+       be locally defined and inherited simultaneously.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attinhcount</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       The number of direct ancestors this column has.  A column with a 
+       nonzero number of ancestors cannot be dropped nor renamed.
       </entry>
      </row>
 
@@ -1213,8 +1223,8 @@
       <entry></entry>
       <entry>
         'c' = check constraint,
-	'f' = foreign key constraint,
-	'p' = primary key constraint,
+        'f' = foreign key constraint,
+        'p' = primary key constraint,
         'u' = unique constraint
       </entry>
      </row>
@@ -3316,7 +3326,7 @@
        when storing a value of this type.  It applies to storage on
        disk as well as most representations of the value inside
        <productname>PostgreSQL</>.
-	When multiple values are stored consecutively, such
+       When multiple values are stored consecutively, such
        as in the representation of a complete row on disk, padding is
        inserted before a datum of this type so that it begins on the
        specified boundary.  The alignment reference is the beginning

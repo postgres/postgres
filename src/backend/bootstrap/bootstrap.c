@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.141 2002/09/04 20:31:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.142 2002/09/22 19:42:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,7 +587,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
 	elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-	attrtypes[attnum]->attnum = 1 + attnum;		/* fillatt */
+	attrtypes[attnum]->attnum = attnum + 1;		/* fillatt */
 
 	typeoid = gettype(type);
 
@@ -640,6 +640,7 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
+	attrtypes[attnum]->attislocal = true;
 
 	/*
 	 * Mark as "not null" if type is fixed-width and prior columns are

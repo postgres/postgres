@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.73 2002/09/04 20:31:37 momjian Exp $
+ * $Id: pg_class.h,v 1.74 2002/09/22 19:42:52 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -136,7 +136,7 @@ typedef FormData_pg_class *Form_pg_class;
 
 DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 f f r 20 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 f f r 17 0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 f f r 18 0 0 0 0 0 f f f f _null_ ));
 DESCR("");
 DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 f f r 15 0 0 0 0 0 t f f f _null_ ));
 DESCR("");

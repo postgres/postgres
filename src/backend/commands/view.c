@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.71 2002/09/04 20:31:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.72 2002/09/22 19:42:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 			typename->typmod = res->restypmod;
 			def->typename = typename;
 
-			def->is_inherited = false;
+			def->inhcount = 0;
+			def->is_local = true;
 			def->is_not_null = false;
 			def->raw_default = NULL;
 			def->cooked_default = NULL;

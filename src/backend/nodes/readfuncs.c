@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.133 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.134 2002/09/22 19:42:51 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1526,9 +1526,13 @@ _readColumnDef(void)
 	token = pg_strtok(&length); /* eat :typename */
 	local_node->typename = nodeRead(true);		/* now read it */
 
-	token = pg_strtok(&length); /* eat :is_inherited */
-	token = pg_strtok(&length); /* get :is_inherited */
-	local_node->is_inherited = strtobool(token);
+	token = pg_strtok(&length); /* eat :inhcount */
+	token = pg_strtok(&length); /* get :inhcount */
+	local_node->inhcount = atoi(token);
+
+	token = pg_strtok(&length); /* eat :is_local */
+	token = pg_strtok(&length); /* get :is_local */
+	local_node->is_local = strtobool(token);
 
 	token = pg_strtok(&length); /* eat :is_not_null */
 	token = pg_strtok(&length); /* get :is_not_null */

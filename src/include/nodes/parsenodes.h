@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.207 2002/09/18 21:35:24 tgl Exp $
+ * $Id: parsenodes.h,v 1.208 2002/09/22 19:42:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,8 @@ typedef struct ColumnDef
 	NodeTag		type;
 	char	   *colname;		/* name of column */
 	TypeName   *typename;		/* type of column */
-	bool		is_inherited;	/* column is inherited? */
+	int			inhcount;		/* number of times column is inherited */
+	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
 	Node	   *raw_default;	/* default value (untransformed parse
 								 * tree) */

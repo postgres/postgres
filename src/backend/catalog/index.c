@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.197 2002/09/22 00:37:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.198 2002/09/22 19:42:50 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -165,10 +165,11 @@ BuildFuncTupleDesc(Oid funcOid,
 	funcTupDesc->attrs[0]->atttypid = keyType;
 	funcTupDesc->attrs[0]->attlen = typeTup->typlen;
 	funcTupDesc->attrs[0]->attbyval = typeTup->typbyval;
-	funcTupDesc->attrs[0]->attcacheoff = -1;
-	funcTupDesc->attrs[0]->atttypmod = -1;
 	funcTupDesc->attrs[0]->attstorage = typeTup->typstorage;
 	funcTupDesc->attrs[0]->attalign = typeTup->typalign;
+	funcTupDesc->attrs[0]->attcacheoff = -1;
+	funcTupDesc->attrs[0]->atttypmod = -1;
+	funcTupDesc->attrs[0]->attislocal = true;
 
 	ReleaseSysCache(tuple);
 
@@ -259,7 +260,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 		to->attcacheoff = -1;
 		to->attnotnull = false;
 		to->atthasdef = false;
-		to->attisinherited = false;
+		to->attislocal = true;
+		to->attinhcount = 0;
 
 		/*
 		 * We do not yet have the correct relation OID for the index, so

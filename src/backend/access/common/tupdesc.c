@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.89 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.90 2002/09/22 19:42:50 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -271,7 +271,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attisdropped != attr2->attisdropped)
 			return false;
-		if (attr1->attisinherited != attr2->attisinherited)
+		if (attr1->attislocal != attr2->attislocal)
+			return false;
+		if (attr1->attinhcount != attr2->attinhcount)
 			return false;
 	}
 	if (tupdesc1->constr != NULL)
@@ -396,7 +398,8 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attnotnull = false;
 	att->atthasdef = false;
 	att->attisdropped = false;
-	att->attisinherited = false;
+	att->attislocal = true;
+	att->attinhcount = 0;
 
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(oidtypeid),
@@ -543,7 +546,8 @@ BuildDescForRelation(List *schema)
 			desc->attrs[attnum - 1]->atthasdef = true;
 		}
 
-		desc->attrs[attnum - 1]->attisinherited = entry->is_inherited;
+		desc->attrs[attnum - 1]->attislocal = entry->is_local;
+		desc->attrs[attnum - 1]->attinhcount = entry->inhcount;
 	}
 
 	if (constr->has_not_null || ndef > 0)

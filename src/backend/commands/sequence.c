@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.87 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.88 2002/09/22 19:42:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,8 @@ DefineSequence(CreateSeqStmt *seq)
 
 		coldef = makeNode(ColumnDef);
 		coldef->typename = typnam;
-		coldef->is_inherited = false;
+		coldef->inhcount = 0;
+		coldef->is_local = true;
 		coldef->is_not_null = true;
 		coldef->raw_default = NULL;
 		coldef->cooked_default = NULL;
