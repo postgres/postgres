@@ -7,38 +7,50 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110.2.1 1999/08/02 05:57:00 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110.2.2 1999/08/25 11:27:06 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <sys/file.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/transam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
+#include "catalog/pg_class.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/vacuum.h"
-#include "miscadmin.h"
+#include "fmgr.h"
 #include "parser/parse_oper.h"
+#include "storage/bufmgr.h"
+#include "storage/bufpage.h"
+#include "storage/shmem.h"
 #include "storage/smgr.h"
+#include "storage/itemptr.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
+#include "utils/mcxt.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
 #ifndef HAVE_GETRUSAGE
-#include "rusagestub.h"
+#include <rusagestub.h>
 #else
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -1282,9 +1294,9 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						to_item = i;
 						to_vpd = fraged_pages->vpl_pagedesc[to_item];
 					}
-					to_vpd->vpd_free -= MAXALIGN(tlen);
+					to_vpd->vpd_free -= DOUBLEALIGN(tlen);
 					if (to_vpd->vpd_offsets_used >= to_vpd->vpd_offsets_free)
-						to_vpd->vpd_free -= MAXALIGN(sizeof(ItemIdData));
+						to_vpd->vpd_free -= DOUBLEALIGN(sizeof(ItemIdData));
 					(to_vpd->vpd_offsets_used)++;
 					if (free_vtmove == 0)
 					{
@@ -2507,12 +2519,19 @@ vc_reappage(VPageList vpl, VPageDescr vpc)
 static void
 vc_vpinsert(VPageList vpl, VPageDescr vpnew)
 {
+#define PG_NPAGEDESC 1024
 
 	/* allocate a VPageDescr entry if needed */
 	if (vpl->vpl_num_pages == 0)
-		vpl->vpl_pagedesc = (VPageDescr *) palloc(100 * sizeof(VPageDescr));
-	else if (vpl->vpl_num_pages % 100 == 0)
-		vpl->vpl_pagedesc = (VPageDescr *) repalloc(vpl->vpl_pagedesc, (vpl->vpl_num_pages + 100) * sizeof(VPageDescr));
+	{
+		vpl->vpl_pagedesc = (VPageDescr *) palloc(PG_NPAGEDESC * sizeof(VPageDescr));
+		vpl->vpl_num_allocated_pages = PG_NPAGEDESC;
+	}
+	else if (vpl->vpl_num_pages >= vpl->vpl_num_allocated_pages)
+	{
+		vpl->vpl_num_allocated_pages *= 2;
+		vpl->vpl_pagedesc = (VPageDescr *) repalloc(vpl->vpl_pagedesc, vpl->vpl_num_allocated_pages * sizeof(VPageDescr));
+	}
 	vpl->vpl_pagedesc[vpl->vpl_num_pages] = vpnew;
 	(vpl->vpl_num_pages)++;
 
@@ -2790,7 +2809,7 @@ static bool
 vc_enough_space(VPageDescr vpd, Size len)
 {
 
-	len = MAXALIGN(len);
+	len = DOUBLEALIGN(len);
 
 	if (len > vpd->vpd_free)
 		return false;
@@ -2800,7 +2819,7 @@ vc_enough_space(VPageDescr vpd, Size len)
 		return true;			/* and len <= free_space */
 
 	/* ok. noff_usd >= noff_free and so we'll have to allocate new itemid */
-	if (len + MAXALIGN(sizeof(ItemIdData)) <= vpd->vpd_free)
+	if (len + DOUBLEALIGN(sizeof(ItemIdData)) <= vpd->vpd_free)
 		return true;
 
 	return false;
