@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.6 2003/07/23 23:34:31 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.7 2003/08/07 17:56:27 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -914,22 +914,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 				sbuf.setLength(0);
 				sbuf.ensureCapacity(x.length());
 				sbuf.append('\'');
-				escapeString(x, sbuf, true);
+				escapeString(x, sbuf);
 				sbuf.append('\'');
 				bind(parameterIndex, sbuf.toString(), type);
 			}
-		}
-	}
-
-	private String escapeString(String p_input) {
-		// use the shared buffer object. Should never clash but this makes
-		// us thread safe!
-		synchronized (sbuf)
-		{
-			sbuf.setLength(0);
-			sbuf.ensureCapacity(p_input.length());
-			escapeString(p_input, sbuf, false);
-			return sbuf.toString();
 		}
 	}
 
@@ -940,7 +928,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * passed by value to the server via a bind thus bypassing the sql parser
 	 * on the server.
 	 */
-	private void escapeString(String p_input, StringBuffer p_output, boolean p_allowStatementTerminator) {
+	private void escapeString(String p_input, StringBuffer p_output) {
 		for (int i = 0 ; i < p_input.length() ; ++i)
 		{
 			char c = p_input.charAt(i);
@@ -953,9 +941,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 					break;
 			    case '\0':
 					throw new IllegalArgumentException("\\0 not allowed");
-			    case ';':
-					if (!p_allowStatementTerminator)
-						throw new IllegalArgumentException("semicolon not allowed");
 				default:
 					p_output.append(c);
 			}
@@ -1375,7 +1360,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		switch (targetSqlType)
 		{
 			case Types.INTEGER:
-				bind(parameterIndex, escapeString(x.toString()), PG_INTEGER);
+				if (x instanceof Integer || x instanceof Long || 
+					x instanceof Double || x instanceof Short ||
+					x instanceof Number || x instanceof Float )
+					bind(parameterIndex, x.toString(), PG_INTEGER);
+				else
+					//ensure the value is a valid numeric value to avoid
+					//sql injection attacks
+					bind(parameterIndex, new BigDecimal(x.toString()).toString(), PG_INTEGER);
 				break;
 			case Types.TINYINT:
 			case Types.SMALLINT:
@@ -1387,8 +1379,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			case Types.NUMERIC:
 				if (x instanceof Boolean)
 					bind(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0", PG_BOOLEAN);
+				else if (x instanceof Integer || x instanceof Long || 
+					x instanceof Double || x instanceof Short ||
+					x instanceof Number || x instanceof Float )
+					bind(parameterIndex, x.toString(), PG_NUMERIC);
 				else
-					bind(parameterIndex, escapeString(x.toString()), PG_NUMERIC);
+					//ensure the value is a valid numeric value to avoid
+					//sql injection attacks
+					bind(parameterIndex, new BigDecimal(x.toString()).toString(), PG_NUMERIC);
 				break;
 			case Types.CHAR:
 			case Types.VARCHAR:
