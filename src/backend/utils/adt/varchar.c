@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.104 2004/02/01 06:27:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.105 2004/08/02 16:51:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ bpcharin(PG_FUNCTION_ARGS)
 			len = mbmaxlen;
 		else
 			ereport(ERROR,
-					(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 					 errmsg("value too long for type character(%d)",
 							(int) maxlen)));
 
@@ -221,7 +221,7 @@ bpchar(PG_FUNCTION_ARGS)
 			for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
 				if (*(VARDATA(source) + i) != ' ')
 					ereport(ERROR,
-							(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 						  errmsg("value too long for type character(%d)",
 								 maxlen - VARHDRSZ)));
 		}
@@ -379,7 +379,7 @@ varcharin(PG_FUNCTION_ARGS)
 			len = mbmaxlen;
 		else
 			ereport(ERROR,
-					(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 				  errmsg("value too long for type character varying(%d)",
 						 (int) maxlen)));
 	}
@@ -471,7 +471,7 @@ varchar(PG_FUNCTION_ARGS)
 		for (i = maxmblen; i < len - VARHDRSZ; i++)
 			if (*(VARDATA(source) + i) != ' ')
 				ereport(ERROR,
-						(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 				  errmsg("value too long for type character varying(%d)",
 						 maxlen - VARHDRSZ)));
 	}

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.39 2004/06/16 01:26:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.40 2004/08/02 16:51:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,7 +344,7 @@ varbit_in(PG_FUNCTION_ARGS)
 		atttypmod = bitlen;
 	else if (bitlen > atttypmod)
 		ereport(ERROR,
-				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 				 errmsg("bit string too long for type bit varying(%d)",
 						atttypmod)));
 
@@ -528,7 +528,7 @@ varbit(PG_FUNCTION_ARGS)
 
 	if (!isExplicit)
 		ereport(ERROR,
-				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 				 errmsg("bit string too long for type bit varying(%d)",
 						len)));
 
