@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.33 2001/10/11 14:20:35 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.34 2001/10/16 10:09:17 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -141,7 +141,7 @@ typedef unsigned int pg_wchar;
  * Encoding numeral identificators
  *
  * WARNING: the order of this table must be same as order 
- *          in the pg_enconv[] (mb/conv.c) and pg_enc2name[] (mb/names.c) array!
+ *          in the pg_enconv[] (mb/conv.c) and pg_enc2name[] (mb/encnames.c) array!
  *
  *          If you add some encoding don'y forget check  
  *          PG_ENCODING_[BE|FE]_LAST macros.
@@ -157,11 +157,16 @@ typedef enum pg_enc
 	PG_EUC_TW,				/* EUC for Taiwan */
 	PG_UTF8,				/* Unicode UTF-8 */
 	PG_MULE_INTERNAL,			/* Mule internal code */
-	PG_LATIN1,				/* ISO-8859 Latin 1 */
-	PG_LATIN2,				/* ISO-8859 Latin 2 */
-	PG_LATIN3,				/* ISO-8859 Latin 3 */
-	PG_LATIN4,				/* ISO-8859 Latin 4 */
+	PG_LATIN1,				/* ISO-8859-1 Latin 1 */
+	PG_LATIN2,				/* ISO-8859-2 Latin 2 */
+	PG_LATIN3,				/* ISO-8859-3 Latin 3 */
+	PG_LATIN4,				/* ISO-8859-4 Latin 4 */
 	PG_LATIN5,				/* ISO-8859-9 Latin 5 */
+	PG_LATIN6,				/* ISO-8859-10 Latin6 */
+	PG_LATIN7,				/* ISO-8859-13 Latin7 */
+	PG_LATIN8,				/* ISO-8859-14 Latin8 */
+	PG_LATIN9,				/* ISO-8859-15 Latin9 */
+	PG_LATIN10,				/* ISO-8859-16 Latin10 */
 	PG_KOI8R,				/* KOI8-R */
 	PG_WIN1251,				/* windows-1251 (was: WIN) */
 	PG_ALT,					/* (MS-DOS CP866) */
@@ -169,12 +174,7 @@ typedef enum pg_enc
 	PG_ISO_8859_6,				/* ISO-8859-6 */
 	PG_ISO_8859_7,				/* ISO-8859-7 */
 	PG_ISO_8859_8,				/* ISO-8859-8 */
-	PG_ISO_8859_10,				/* ISO-8859-10 Latin6 */
-	PG_ISO_8859_13,				/* ISO-8859-13 Latin7 */
-	PG_ISO_8859_14,				/* ISO-8859-14 Latin8 */
-	PG_ISO_8859_15,				/* ISO-8859-15 Latin9 */
-	PG_ISO_8859_16,				/* ISO-8859-16 */
-	
+
 	/* followings are for client encoding only */
 	PG_SJIS,				/* Shift JIS */
 	PG_BIG5,				/* Big5 */
@@ -184,7 +184,7 @@ typedef enum pg_enc
 
 } pg_enc;
 
-#define PG_ENCODING_BE_LAST	PG_ISO_8859_16
+#define PG_ENCODING_BE_LAST	PG_ISO_8859_8
 #define PG_ENCODING_FE_LAST	PG_WIN1250
 
 

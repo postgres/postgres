@@ -895,16 +895,16 @@ if test x"${enable_multibyte+set}" = xset; then
       enable_multibyte=yes
 
   case $enableval in
-    SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT|ISO_8859_5|ISO_8859_6|ISO_8859_7|ISO_8859_8|ISO_8859_10|ISO_8859_13|ISO_8859_14|ISO_8859_15|ISO_8859_16)
+    SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|LATIN6|LATIN7|LATIN8|LATIN9|LATIN10|KOI8|WIN|ALT|ISO_8859_5|ISO_8859_6|ISO_8859_7|ISO_8859_8)
       MULTIBYTE=$enableval;;
     *)
       { echo "configure: error: argument to --enable-multibyte must be one of:
   SQL_ASCII, EUC_JP, EUC_CN, EUC_KR, EUC_TW,
   UNICODE, MULE_INTERNAL,
   LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
+  LATIN6, LATIN7, LATIN8, LATIN9, LATIN10,
   KOI8, WIN, ALT,
-  ISO_8859_6, ISO_8859_7, ISO_8859_8,
-  ISO_8859_10, ISO_8859_13, ISO_8859_14, ISO_8859_15, ISO_8859_16
+  ISO_8859_5, ISO_8859_6, ISO_8859_7, ISO_8859_8
 Or do not specify an argument to the option to use the default." 1>&2; exit 1; };;
   esac
 
@@ -2718,7 +2718,7 @@ echo "using CPPFLAGS=$CPPFLAGS"
 echo "using LDFLAGS=$LDFLAGS"
 
 
-for ac_prog in mawk gawk nawk awk
+for ac_prog in gawk mawk nawk awk
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -5542,7 +5542,7 @@ else
 int main() {
 
 /* Ultrix mips cc rejects this.  */
-typedef int charset[2]; const charset x;
+typedef int charset[2]; const charset x={0,0};
 /* SunOS 4.1.1 cc rejects this.  */
 char const *const *ccp;
 char **p;
@@ -5617,7 +5617,7 @@ for ac_kw in inline __inline__ __inline; do
 #include "confdefs.h"
 
 int main() {
-} $ac_kw foo() {
+} $ac_kw int foo() {
 ; return 0; }
 EOF
 if { (eval echo configure:5624: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then

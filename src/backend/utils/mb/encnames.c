@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.3 2001/10/11 14:20:35 ishii Exp $
+ * $Id: encnames.c,v 1.4 2001/10/16 10:09:17 ishii Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -38,16 +38,16 @@ pg_encname pg_encname_tbl[] =
 {
 	{ "alt",	PG_ALT },		/* IBM866 */
 	{ "big5",	PG_BIG5 },		/* Big5; Chinese for Taiwan Multi-byte set */
-	{ "euccn",	PG_EUC_CN },		/* EUC-CN; ??? */
-	{ "eucjp",	PG_EUC_JP },		/* EUC-JP; Extended UNIX Code Fixed Width for Japanese, stdandard OSF */
+	{ "euccn",	PG_EUC_CN },		/* EUC-CN; Extended Unix Code for simplified Chinese */
+	{ "eucjp",	PG_EUC_JP },		/* EUC-JP; Extended UNIX Code fixed Width for Japanese, stdandard OSF */
 	{ "euckr",	PG_EUC_KR },		/* EUC-KR; RFC1557,Choi */
-	{ "euctw",	PG_EUC_TW },		/* EUC-TW; ???  */
+	{ "euctw",	PG_EUC_TW },		/* EUC-TW; Extended Unix Code for traditional Chinese */
 	{ "iso88591",	PG_LATIN1 },		/* ISO-8859-1; RFC1345,KXS2 */
-	{ "iso885910",	PG_ISO_8859_10 },	/* ISO-8859-10; RFC1345,KXS2 */
-	{ "iso885913",	PG_ISO_8859_13 },	/* ISO-8859-13; RFC1345,KXS2 */
-	{ "iso885914",	PG_ISO_8859_14 },	/* ISO-8859-14; RFC1345,KXS2 */
-	{ "iso885915",	PG_ISO_8859_15 },	/* ISO-8859-15; RFC1345,KXS2 */
-	{ "iso885916",	PG_ISO_8859_16 },	/* ISO-8859-15; RFC1345,KXS2 */
+	{ "iso885910",	PG_LATIN6 },	/* ISO-8859-10; RFC1345,KXS2 */
+	{ "iso885913",	PG_LATIN7 },	/* ISO-8859-13; RFC1345,KXS2 */
+	{ "iso885914",	PG_LATIN8 },	/* ISO-8859-14; RFC1345,KXS2 */
+	{ "iso885915",	PG_LATIN9 },	/* ISO-8859-15; RFC1345,KXS2 */
+	{ "iso885916",	PG_LATIN10 },	/* ISO-8859-16; RFC1345,KXS2 */
 	{ "iso88592",	PG_LATIN2 },		/* ISO-8859-2; RFC1345,KXS2 */
 	{ "iso88593",	PG_LATIN3 },		/* ISO-8859-3; RFC1345,KXS2 */
 	{ "iso88594",	PG_LATIN4 },		/* ISO-8859-4; RFC1345,KXS2 */
@@ -59,14 +59,15 @@ pg_encname pg_encname_tbl[] =
 	{ "koi8",	PG_KOI8R },		/* _dirty_ alias for KOI8-R (backward compatibility) */
 	{ "koi8r",	PG_KOI8R },		/* KOI8-R; RFC1489 */
 	{ "latin1",	PG_LATIN1 },		/* alias for ISO-8859-1 */
+	{ "latin10",	PG_LATIN10},		/* alias for ISO-8859-16 */
 	{ "latin2",	PG_LATIN2 },		/* alias for ISO-8859-2 */
 	{ "latin3",	PG_LATIN3 },		/* alias for ISO-8859-3 */
 	{ "latin4",	PG_LATIN4 },		/* alias for ISO-8859-4 */
 	{ "latin5",	PG_LATIN5 },		/* alias for ISO-8859-9 */
-	{ "latin6",	PG_ISO_8859_10},	/* alias for ISO-8859-10 */
-	{ "latin7",	PG_ISO_8859_13},	/* alias for ISO-8859-13 */
-	{ "latin8",	PG_ISO_8859_14},	/* alias for ISO-8859-14 */
-	{ "latin9",	PG_ISO_8859_15},	/* alias for ISO-8859-15 */
+	{ "latin6",	PG_LATIN6},		/* alias for ISO-8859-10 */
+	{ "latin7",	PG_LATIN7},		/* alias for ISO-8859-13 */
+	{ "latin8",	PG_LATIN8},		/* alias for ISO-8859-14 */
+	{ "latin9",	PG_LATIN9},		/* alias for ISO-8859-15 */
 	{ "mskanji",	PG_SJIS },		/* alias for Shift_JIS */
 	{ "muleinternal",PG_MULE_INTERNAL },
 	{ "shiftjis",	PG_SJIS },		/* Shift_JIS; JIS X 0202-1991 */
@@ -87,7 +88,8 @@ unsigned int pg_encname_tbl_sz = \
 		sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) -1;
 
 /* ----------
- * WARNING: sorted by pg_enc enum (pg_wchar.h)!
+ * These are "official" encoding names.
+ * XXX must be sorted by the same order as pg_enc type (see mb/pg_wchar.h)
  * ----------
  */
 pg_enc2name pg_enc2name_tbl[] =
@@ -104,6 +106,11 @@ pg_enc2name pg_enc2name_tbl[] =
 	{ "LATIN3",	PG_LATIN3 },
 	{ "LATIN4",	PG_LATIN4 },
 	{ "LATIN5",	PG_LATIN5 },
+	{ "LATIN6",	PG_LATIN6 },
+	{ "LATIN7",	PG_LATIN7 },
+	{ "LATIN8",	PG_LATIN8 },
+	{ "LATIN9",	PG_LATIN9 },
+	{ "LATIN10",	PG_LATIN10 },
 	{ "KOI8",	PG_KOI8R },
 	{ "WIN",	PG_WIN1251 },
 	{ "ALT",	PG_ALT },
@@ -111,11 +118,6 @@ pg_enc2name pg_enc2name_tbl[] =
 	{ "ISO_8859_6", PG_ISO_8859_6 },
 	{ "ISO_8859_7", PG_ISO_8859_7 },
 	{ "ISO_8859_8", PG_ISO_8859_8 },
-	{ "ISO_8859_10", PG_ISO_8859_10 },
-	{ "ISO_8859_13", PG_ISO_8859_13 },
-	{ "ISO_8859_14", PG_ISO_8859_14 },
-	{ "ISO_8859_15", PG_ISO_8859_15 },
-	{ "ISO_8859_16", PG_ISO_8859_16 },
 	{ "SJIS",	PG_SJIS },
 	{ "BIG5",	PG_BIG5 },
 	{ "WIN1250",	PG_WIN1250 }

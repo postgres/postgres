@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.31 2001/10/11 14:20:35 ishii Exp $
+ * $Id: conv.c,v 1.32 2001/10/16 10:09:17 ishii Exp $
  *
  *
  */
@@ -1692,6 +1692,11 @@ pg_enconv pg_enconv_tbl[] =
 	{ PG_LATIN3,	latin32mic, mic2latin3, iso8859_3_to_utf, utf_to_iso8859_3},
 	{ PG_LATIN4,	latin42mic, mic2latin4, iso8859_4_to_utf, utf_to_iso8859_4},
 	{ PG_LATIN5,	iso2mic, mic2iso, iso8859_9_to_utf, utf_to_iso8859_9},
+	{ PG_LATIN6,	0, 0, iso8859_10_to_utf, utf_to_iso8859_10},
+	{ PG_LATIN7,	0, 0, iso8859_13_to_utf, utf_to_iso8859_13},
+	{ PG_LATIN8,	0, 0, iso8859_14_to_utf, utf_to_iso8859_14},
+	{ PG_LATIN9,	0, 0, iso8859_15_to_utf, utf_to_iso8859_15},
+	{ PG_LATIN10,	0, 0, iso8859_16_to_utf, utf_to_iso8859_16},
 	{ PG_KOI8R,	koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R},
 	{ PG_WIN1251,	win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251},
 	{ PG_ALT,	alt2mic, mic2alt, ALT_to_utf, utf_to_ALT},
@@ -1699,11 +1704,7 @@ pg_enconv pg_enconv_tbl[] =
 	{ PG_ISO_8859_6,	0, 0, iso8859_6_to_utf, utf_to_iso8859_6},
 	{ PG_ISO_8859_7,	0, 0, iso8859_7_to_utf, utf_to_iso8859_7},
 	{ PG_ISO_8859_8,	0, 0, iso8859_8_to_utf, utf_to_iso8859_8},
-	{ PG_ISO_8859_10,	0, 0, iso8859_10_to_utf, utf_to_iso8859_10},
-	{ PG_ISO_8859_13,	0, 0, iso8859_13_to_utf, utf_to_iso8859_13},
-	{ PG_ISO_8859_14,	0, 0, iso8859_14_to_utf, utf_to_iso8859_14},
-	{ PG_ISO_8859_15,	0, 0, iso8859_15_to_utf, utf_to_iso8859_15},
-	{ PG_ISO_8859_16,	0, 0, iso8859_16_to_utf, utf_to_iso8859_16},
+
 	{ PG_SJIS,	sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis},
 	{ PG_BIG5,	big52mic, mic2big5, big5_to_utf, utf_to_big5},
 	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
@@ -1725,6 +1726,11 @@ pg_enconv pg_enconv_tbl[] =
 	{ PG_LATIN3,	latin32mic, mic2latin3, 0, 0},
 	{ PG_LATIN4,	latin42mic, mic2latin4, 0, 0},
 	{ PG_LATIN5,	iso2mic, mic2iso, 0, 0},
+	{ PG_LATIN6,	0, 0, 0, 0},
+	{ PG_LATIN7,	0, 0, 0, 0},
+	{ PG_LATIN8,	0, 0, 0, 0},
+	{ PG_LATIN9,	0, 0, 0, 0},
+	{ PG_LATIN10,	0, 0, 0, 0},
 	{ PG_KOI8R,	koi8r2mic, mic2koi8r, 0, 0},
 	{ PG_WIN1251,	win12512mic, mic2win1251, 0, 0},
 	{ PG_ALT,	alt2mic, mic2alt, 0, 0},
@@ -1732,11 +1738,6 @@ pg_enconv pg_enconv_tbl[] =
 	{ PG_ISO_8859_6,	0, 0, 0, 0},
 	{ PG_ISO_8859_7,	0, 0, 0, 0},
 	{ PG_ISO_8859_8,	0, 0, 0, 0},
-	{ PG_ISO_8859_10,	0, 0, 0, 0},
-	{ PG_ISO_8859_13,	0, 0, 0, 0},
-	{ PG_ISO_8859_14,	0, 0, 0, 0},
-	{ PG_ISO_8859_15,	0, 0, 0, 0},
-	{ PG_ISO_8859_16,	0, 0, 0, 0},
 	{ PG_SJIS,	sjis2mic, mic2sjis, 0, 0},
 	{ PG_BIG5,	big52mic, mic2big5, 0, 0},
 	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
