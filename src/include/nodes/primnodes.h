@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.86 2003/06/29 00:33:44 tgl Exp $
+ * $Id: primnodes.h,v 1.87 2003/07/03 16:34:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,6 +674,19 @@ typedef struct CoerceToDomainValue
 	int32		typeMod;		/* typemod for substituted value */
 } CoerceToDomainValue;
 
+/*
+ * Placeholder node for a DEFAULT marker in an INSERT or UPDATE command.
+ *
+ * This is not an executable expression: it must be replaced by the actual
+ * column default expression during rewriting.  But it is convenient to
+ * treat it as an expression node during parsing and rewriting.
+ */
+typedef struct SetToDefault
+{
+	Expr		xpr;
+	Oid			typeId;			/* type for substituted value */
+	int32		typeMod;		/* typemod for substituted value */
+} SetToDefault;
 
 /*
  * TargetEntry -

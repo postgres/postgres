@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.143 2003/06/29 00:33:44 tgl Exp $
+ * $Id: nodes.h,v 1.144 2003/07/03 16:34:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@ typedef enum NodeTag
 	T_BooleanTest,
 	T_CoerceToDomain,
 	T_CoerceToDomainValue,
+	T_SetToDefault,
 	T_TargetEntry,
 	T_RangeTblRef,
 	T_JoinExpr,
@@ -279,7 +280,6 @@ typedef enum NodeTag
 	T_PrivGrantee,
 	T_FuncWithArgs,
 	T_PrivTarget,
-	T_SetToDefault,
 	T_CreateOpClassItem,
 	T_CompositeTypeStmt,
 	T_InhRelation,

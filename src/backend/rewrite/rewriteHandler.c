@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.121 2003/06/25 04:19:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.122 2003/07/03 16:34:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,9 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * attributes that have defaults and are not assigned to in the given tlist.
  * (We do not insert anything for default-less attributes, however.  The
  * planner will later insert NULLs for them, but there's no reason to slow
- * down rewriter processing with extra tlist nodes.)
+ * down rewriter processing with extra tlist nodes.)  Also, for both INSERT
+ * and UPDATE, replace explicit DEFAULT specifications with column default
+ * expressions.
  *
  * 2. Merge multiple entries for the same target attribute, or declare error
  * if we can't.  Presently, multiple entries are only allowed for UPDATE of
@@ -307,39 +309,48 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			{
 				Assert(strcmp(resdom->resname,
 							  NameStr(att_tup->attname)) == 0);
-
-				if (old_tle->expr != NULL && IsA(old_tle->expr, SetToDefault))
-				{
-					/* Set to the default value of the column, as requested */
-					Node	   *new_expr;
-
-					new_expr = build_column_default(target_relation, attrno);
-
-					new_tle = makeTargetEntry(makeResdom(attrno,
-														 att_tup->atttypid,
-														 att_tup->atttypmod,
-											  pstrdup(NameStr(att_tup->attname)),
-														 false),
-											  (Expr *) new_expr);
-				}
-				else
-					/* Normal Case */
-					new_tle = process_matched_tle(old_tle, new_tle);
-
+				new_tle = process_matched_tle(old_tle, new_tle);
 				/* keep scanning to detect multiple assignments to attr */
 			}
 		}
 
-		if (new_tle == NULL && commandType == CMD_INSERT)
+		/*
+		 * Handle the two cases where we need to insert a default expression:
+		 * it's an INSERT and there's no tlist entry for the column, or the
+		 * tlist entry is a DEFAULT placeholder node.
+		 */
+		if ((new_tle == NULL && commandType == CMD_INSERT) ||
+			(new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
 		{
-			/*
-			 * Didn't find a matching tlist entry; if it's an INSERT, look
-			 * for a default value, and add a tlist entry computing the
-			 * default if we find one.
-			 */
 			Node	   *new_expr;
 
 			new_expr = build_column_default(target_relation, attrno);
+
+			/*
+			 * If there is no default (ie, default is effectively NULL),
+			 * we can omit the tlist entry in the INSERT case, since the
+			 * planner can insert a NULL for itself, and there's no point
+			 * in spending any more rewriter cycles on the entry.  But in the
+			 * UPDATE case we've got to explicitly set the column to NULL.
+			 */
+			if (!new_expr)
+			{
+				if (commandType == CMD_INSERT)
+					new_tle = NULL;
+				else
+				{
+					new_expr = (Node *) makeConst(att_tup->atttypid,
+												  att_tup->attlen,
+												  (Datum) 0,
+												  true, /* isnull */
+												  att_tup->attbyval);
+					/* this is to catch a NOT NULL domain constraint */
+					new_expr = coerce_to_domain(new_expr,
+												InvalidOid,
+												att_tup->atttypid,
+												COERCE_IMPLICIT_CAST);
+				}
+			}
 
 			if (new_expr)
 				new_tle = makeTargetEntry(makeResdom(attrno,

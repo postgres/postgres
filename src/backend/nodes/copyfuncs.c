@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.258 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.259 2003/07/03 16:32:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1042,6 +1042,20 @@ _copyCoerceToDomainValue(CoerceToDomainValue *from)
 }
 
 /*
+ * _copySetToDefault
+ */
+static SetToDefault *
+_copySetToDefault(SetToDefault *from)
+{
+	SetToDefault *newnode = makeNode(SetToDefault);
+
+	COPY_SCALAR_FIELD(typeId);
+	COPY_SCALAR_FIELD(typeMod);
+
+	return newnode;
+}
+
+/*
  * _copyTargetEntry
  */
 static TargetEntry *
@@ -1665,14 +1679,6 @@ _copyFuncWithArgs(FuncWithArgs *from)
 
 	COPY_NODE_FIELD(funcname);
 	COPY_NODE_FIELD(funcargs);
-
-	return newnode;
-}
-
-static SetToDefault *
-_copySetToDefault(SetToDefault *from)
-{
-	SetToDefault *newnode = makeNode(SetToDefault);
 
 	return newnode;
 }
@@ -2607,6 +2613,9 @@ copyObject(void *from)
 		case T_CoerceToDomainValue:
 			retval = _copyCoerceToDomainValue(from);
 			break;
+		case T_SetToDefault:
+			retval = _copySetToDefault(from);
+			break;
 		case T_TargetEntry:
 			retval = _copyTargetEntry(from);
 			break;
@@ -2954,9 +2963,6 @@ copyObject(void *from)
 			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
-			break;
-		case T_SetToDefault:
-			retval = _copySetToDefault(from);
 			break;
 
 		default:

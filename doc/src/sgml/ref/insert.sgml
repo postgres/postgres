@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.22 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.23 2003/07/03 16:32:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -33,7 +33,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   <para>
    The columns in the target list may be listed in any order.
    Each column not present in the target list will be inserted
-   using a default value, either a declared default value
+   using a default value, either its declared default value
    or null.
   </para>
 
@@ -77,7 +77,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
     <term><literal>DEFAULT VALUES</literal></term>
     <listitem>
      <para>
-      All columns will be filled their default values.
+      All columns will be filled with their default values.
      </para>
     </listitem>
    </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.157 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.158 2003/07/03 16:32:39 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -761,6 +761,20 @@ _readCoerceToDomainValue(void)
 }
 
 /*
+ * _readSetToDefault
+ */
+static SetToDefault *
+_readSetToDefault(void)
+{
+	READ_LOCALS(SetToDefault);
+
+	READ_OID_FIELD(typeId);
+	READ_INT_FIELD(typeMod);
+
+	READ_DONE();
+}
+
+/*
  * _readTargetEntry
  */
 static TargetEntry *
@@ -1005,6 +1019,8 @@ parseNodeString(void)
 		return_value = _readCoerceToDomain();
 	else if (MATCH("COERCETODOMAINVALUE", 19))
 		return_value = _readCoerceToDomainValue();
+	else if (MATCH("SETTODEFAULT", 12))
+		return_value = _readSetToDefault();
 	else if (MATCH("TARGETENTRY", 11))
 		return_value = _readTargetEntry();
 	else if (MATCH("RANGETBLREF", 11))

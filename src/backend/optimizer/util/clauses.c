@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.144 2003/07/01 19:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.145 2003/07/03 16:33:07 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2157,6 +2157,7 @@ expression_tree_walker(Node *node,
 		case T_Const:
 		case T_Param:
 		case T_CoerceToDomainValue:
+		case T_SetToDefault:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			break;
@@ -2514,6 +2515,7 @@ expression_tree_mutator(Node *node,
 		case T_Const:
 		case T_Param:
 		case T_CoerceToDomainValue:
+		case T_SetToDefault:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			return (Node *) copyObject(node);

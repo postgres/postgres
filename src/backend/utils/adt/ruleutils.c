@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.143 2003/06/29 00:33:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.144 2003/07/03 16:34:25 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2604,6 +2604,10 @@ get_rule_expr(Node *node, deparse_context *context,
 
 		case T_CoerceToDomainValue:
 			appendStringInfo(buf, "VALUE");
+			break;
+
+		case T_SetToDefault:
+			appendStringInfo(buf, "DEFAULT");
 			break;
 
 		default:

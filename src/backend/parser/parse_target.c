@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.105 2003/06/27 17:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.106 2003/07/03 16:34:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,24 +178,9 @@ transformTargetList(ParseState *pstate, List *targetlist)
 														false));
 			}
 		}
-		else if (IsA(res->val, SetToDefault))
-		{
-			/*
-			 * If this is a DEFAULT element, we make a standard entry using
-			 * the default for the target expression.  rewriteTargetList will
-			 * substitute the columns default for this expression.
-			 */
-			p_target = lappend(p_target,
-							   makeTargetEntry(makeResdom((AttrNumber) pstate->p_next_resno++,
-														  UNKNOWNOID,
-														  -1,
-														  res->name,
-														  false),
-											   (Expr *) res->val));
-		}
 		else
 		{
-			/* Everything else but ColumnRef and SetToDefault */
+			/* Everything else but ColumnRef */
 			p_target = lappend(p_target,
 							   transformTargetEntry(pstate,
 													res->val,
@@ -330,7 +315,6 @@ updateTargetListEntry(ParseState *pstate,
 	Oid			type_id; 		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
-	bool		isDefault = false;
 	Resdom	   *resnode = tle->resdom;
 	Relation	rd = pstate->p_target_relation;
 
@@ -340,16 +324,26 @@ updateTargetListEntry(ParseState *pstate,
 	attrtype = attnumTypeId(rd, attrno);
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
 
-	/* The type of the default column is equivalent to that of the column */
-	if (tle->expr != NULL && IsA(tle->expr, SetToDefault))
+	/*
+	 * If the expression is a DEFAULT placeholder, insert the attribute's
+	 * type/typmod into it so that exprType will report the right things.
+	 * (We expect that the eventually substituted default expression will
+	 * in fact have this type and typmod.)  Also, reject trying to update
+	 * an array element with DEFAULT, since there can't be any default for
+	 * individual elements of a column.
+	 */
+	if (tle->expr && IsA(tle->expr, SetToDefault))
 	{
-		type_id = attrtype;
-		isDefault = true;
+		SetToDefault   *def = (SetToDefault *) tle->expr;
+
+		def->typeId = attrtype;
+		def->typeMod = attrtypmod;
+		if (indirection)
+			elog(ERROR, "cannot set an array element to DEFAULT");
 	}
 
-	/* Otherwise the expression holds the type */
-	else
-		type_id = exprType((Node *) tle->expr);
+	/* Now we can use exprType() safely. */
+	type_id = exprType((Node *) tle->expr);
 
 	/*
 	 * If there are subscripts on the target column, prepare an array
@@ -401,7 +395,7 @@ updateTargetListEntry(ParseState *pstate,
 		 * coercion.  But accept InvalidOid, which indicates the source is
 		 * a NULL constant.  (XXX is that still true?)
 		 */
-		if (!isDefault && type_id != InvalidOid)
+		if (type_id != InvalidOid)
 		{
 			tle->expr = (Expr *)
 				coerce_to_target_type(pstate,

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.201 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.202 2003/07/03 16:32:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,6 +486,15 @@ _equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 }
 
 static bool
+_equalSetToDefault(SetToDefault *a, SetToDefault *b)
+{
+	COMPARE_SCALAR_FIELD(typeId);
+	COMPARE_SCALAR_FIELD(typeMod);
+
+	return true;
+}
+
+static bool
 _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
 	COMPARE_NODE_FIELD(resdom);
@@ -737,12 +746,6 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(funcargs);
 
-	return true;
-}
-
-static bool
-_equalSetToDefault(SetToDefault *a, SetToDefault *b)
-{
 	return true;
 }
 
@@ -1727,6 +1730,9 @@ equal(void *a, void *b)
 		case T_CoerceToDomainValue:
 			retval = _equalCoerceToDomainValue(a, b);
 			break;
+		case T_SetToDefault:
+			retval = _equalSetToDefault(a, b);
+			break;
 		case T_TargetEntry:
 			retval = _equalTargetEntry(a, b);
 			break;
@@ -2072,9 +2078,6 @@ equal(void *a, void *b)
 			break;
 		case T_FuncWithArgs:
 			retval = _equalFuncWithArgs(a, b);
-			break;
-		case T_SetToDefault:
-			retval = _equalSetToDefault(a, b);
 			break;
 
 		default:

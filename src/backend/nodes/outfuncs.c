@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.211 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.212 2003/07/03 16:32:38 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -850,6 +850,15 @@ _outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node)
 }
 
 static void
+_outSetToDefault(StringInfo str, SetToDefault *node)
+{
+	WRITE_NODE_TYPE("SETTODEFAULT");
+
+	WRITE_OID_FIELD(typeId);
+	WRITE_INT_FIELD(typeMod);
+}
+
+static void
 _outTargetEntry(StringInfo str, TargetEntry *node)
 {
 	WRITE_NODE_TYPE("TARGETENTRY");
@@ -1684,6 +1693,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CoerceToDomainValue:
 				_outCoerceToDomainValue(str, obj);
+				break;
+			case T_SetToDefault:
+				_outSetToDefault(str, obj);
 				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);

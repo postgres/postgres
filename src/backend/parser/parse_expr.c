@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.154 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.155 2003/07/03 16:34:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -914,6 +914,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_RelabelType:
 		case T_CoerceToDomain:
 		case T_CoerceToDomainValue:
+		case T_SetToDefault:
 			{
 				result = (Node *) expr;
 				break;
@@ -1291,6 +1292,9 @@ exprType(Node *expr)
 		case T_CoerceToDomainValue:
 			type = ((CoerceToDomainValue *) expr)->typeId;
 			break;
+		case T_SetToDefault:
+			type = ((SetToDefault *) expr)->typeId;
+			break;
 		case T_RangeVar:
 			/*
 			 * If someone uses a bare relation name in an expression,
@@ -1420,6 +1424,8 @@ exprTypmod(Node *expr)
 			return ((CoerceToDomain *) expr)->resulttypmod;
 		case T_CoerceToDomainValue:
 			return ((CoerceToDomainValue *) expr)->typeMod;
+		case T_SetToDefault:
+			return ((SetToDefault *) expr)->typeMod;
 		default:
 			break;
 	}
