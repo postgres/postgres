@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.193 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.194 2004/10/08 01:36:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ BootstrapMain(int argc, char *argv[])
 	char	   *dbname;
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
-	char	   *userPGDATA = NULL;
+	char	   *userDoption = NULL;
 
 	/*
 	 * initialize globals
@@ -240,10 +240,7 @@ BootstrapMain(int argc, char *argv[])
 	/* Set defaults, to be overriden by explicit options below */
 	dbname = NULL;
 	if (!IsUnderPostmaster)
-	{
 		InitializeGUCOptions();
-		userPGDATA = getenv("PGDATA");	/* Null if no PGDATA variable */
-	}
 
 	/* Ignore the initial -boot argument, if present */
 	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
@@ -257,7 +254,7 @@ BootstrapMain(int argc, char *argv[])
 		switch (flag)
 		{
 			case 'D':
-				userPGDATA = optarg;
+				userDoption = optarg;
 				break;
 			case 'd':
 				{
@@ -328,24 +325,6 @@ BootstrapMain(int argc, char *argv[])
 	if (!dbname || argc != optind)
 		usage();
 
-	if (!IsUnderPostmaster)
-	{
-		if (!userPGDATA)
-		{
-			write_stderr("%s does not know where to find the database system data.\n"
-						 "You must specify the directory that contains the database system\n"
-						 "either by specifying the -D invocation option or by setting the\n"
-						 "PGDATA environment variable.\n",
-						 argv[0]);
-			proc_exit(1);
-		}
-		SetDataDir(userPGDATA);
-	}
-
-	/* Validate we have been given a reasonable-looking DataDir */
-	Assert(DataDir);
-	ValidatePgVersion(DataDir);
-
 	/*
 	 * Identify myself via ps
 	 */
@@ -372,11 +351,13 @@ BootstrapMain(int argc, char *argv[])
 	/* Acquire configuration parameters, unless inherited from postmaster */
 	if (!IsUnderPostmaster)
 	{
-		ProcessConfigFile(PGC_POSTMASTER);
-
-		/* If timezone is not set, determine what the OS uses */
-		pg_timezone_initialize();
+		if (!SelectConfigFiles(userDoption, argv[0]))
+			proc_exit(1);
 	}
+
+	/* Validate we have been given a reasonable-looking DataDir */
+	Assert(DataDir);
+	ValidatePgVersion(DataDir);
 
 	/* If standalone, create lockfile for data directory */
 	if (!IsUnderPostmaster)

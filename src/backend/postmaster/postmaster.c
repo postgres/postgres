@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.429 2004/10/07 17:04:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.430 2004/10/08 01:36:34 tgl Exp $
  *
  * NOTES
  *
@@ -236,8 +236,7 @@ extern int	optreset;
 /*
  * postmaster.c - function prototypes
  */
-static void checkDataDir(const char *checkdir);
-static bool onlyConfigSpecified(const char *checkdir);
+static void checkDataDir(void);
 
 #ifdef USE_RENDEZVOUS
 static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode,
@@ -311,7 +310,7 @@ PostmasterMain(int argc, char *argv[])
 {
 	int			opt;
 	int			status;
-	char	   *userPGDATA = NULL;
+	char	   *userDoption = NULL;
 	int			i;
 
 	progname = get_progname(argv[0]);
@@ -375,8 +374,6 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	InitializeGUCOptions();
 
-	userPGDATA = getenv("PGDATA");		/* default value */
-
 	opterr = 1;
 
 	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
@@ -400,7 +397,7 @@ PostmasterMain(int argc, char *argv[])
 				/* Can no longer set the backend executable file to use. */
 				break;
 			case 'D':
-				userPGDATA = optarg;
+				userDoption = optarg;
 				break;
 			case 'd':
 				{
@@ -530,61 +527,15 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
-	if (userPGDATA)
-	{
-		userPGDATA = strdup(userPGDATA);
-		canonicalize_path(userPGDATA);
-	}
+	/*
+	 * Locate the proper configuration files and data directory, and
+	 * read postgresql.conf for the first time.
+	 */
+	if (!SelectConfigFiles(userDoption, progname))
+		ExitPostmaster(2);
 
-	if (onlyConfigSpecified(userPGDATA))
-	{
-		/*
-		 * It is either a file name or a directory with no
-		 * global/pg_control file, and hence not a data directory.
-		 */
-		user_pgconfig = userPGDATA;
-		ProcessConfigFile(PGC_POSTMASTER);
-
-		if (!guc_pgdata)		/* Got a pgdata from the config file? */
-		{
-			write_stderr("%s does not know where to find the database system data.\n"
-					 "This should be specified as \"pgdata\" in %s%s.\n",
-						 progname, userPGDATA,
-						 user_pgconfig_is_dir ? "/postgresql.conf" : "");
-			ExitPostmaster(2);
-		}
-		checkDataDir(guc_pgdata);
-		SetDataDir(guc_pgdata);
-	}
-	else
-	{
-		/*
-		 * Now we can set the data directory, and then read
-		 * postgresql.conf.
-		 */
-		checkDataDir(userPGDATA);
-		SetDataDir(userPGDATA);
-		ProcessConfigFile(PGC_POSTMASTER);
-	}
-
-	if (external_pidfile)
-	{
-		FILE	   *fpidfile = fopen(external_pidfile, "w");
-
-		if (fpidfile)
-		{
-			fprintf(fpidfile, "%d\n", MyProcPid);
-			fclose(fpidfile);
-			/* Should we remove the pid file on postmaster exit? */
-		}
-		else
-			fprintf(stderr,
-				 gettext("%s could not write to external pid file %s\n"),
-					progname, external_pidfile);
-	}
-
-	/* If timezone is not set, determine what the OS uses */
-	pg_timezone_initialize();
+	/* Verify that DataDir looks reasonable */
+	checkDataDir();
 
 #ifdef EXEC_BACKEND
 	write_nondefault_variables(PGC_POSTMASTER);
@@ -832,6 +783,24 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 
 	/*
+	 * Write the external PID file if requested
+	 */
+	if (external_pidfile)
+	{
+		FILE	   *fpidfile = fopen(external_pidfile, "w");
+
+		if (fpidfile)
+		{
+			fprintf(fpidfile, "%d\n", MyProcPid);
+			fclose(fpidfile);
+			/* Should we remove the pid file on postmaster exit? */
+		}
+		else
+			write_stderr("%s: could not write external pid file \"%s\": %s\n",
+						 progname, external_pidfile, strerror(errno));
+	}
+
+	/*
 	 * Set up signal handlers for the postmaster process.
 	 *
 	 * CAUTION: when changing this list, check for side-effects on the signal
@@ -907,66 +876,30 @@ PostmasterMain(int argc, char *argv[])
 }
 
 
-
-static bool
-onlyConfigSpecified(const char *checkdir)
-{
-	char		path[MAXPGPATH];
-	struct stat stat_buf;
-
-	if (checkdir == NULL)		/* checkDataDir handles this */
-		return FALSE;
-
-	if (stat(checkdir, &stat_buf) == -1)		/* ditto */
-		return FALSE;
-
-	if (S_ISREG(stat_buf.st_mode))		/* It's a regular file, so assume
-										 * it's explict */
-		return TRUE;
-	else if (S_ISDIR(stat_buf.st_mode)) /* It's a directory, is it a
-										 * config or system dir? */
-	{
-		snprintf(path, MAXPGPATH, "%s/global/pg_control", checkdir);
-		/* If this is not found, it is a config-only directory */
-		if (stat(path, &stat_buf) == -1)
-			return TRUE;
-	}
-	return FALSE;
-}
-
-
 /*
  * Validate the proposed data directory
  */
 static void
-checkDataDir(const char *checkdir)
+checkDataDir(void)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
 	struct stat stat_buf;
 
-	if (checkdir == NULL)
-	{
-		write_stderr("%s does not know where to find the database system data.\n"
-					 "You must specify the directory that contains the database system\n"
-					 "either by specifying the -D invocation option or by setting the\n"
-					 "PGDATA environment variable.\n",
-					 progname);
-		ExitPostmaster(2);
-	}
+	Assert(DataDir);
 
-	if (stat(checkdir, &stat_buf) == -1)
+	if (stat(DataDir, &stat_buf) != 0)
 	{
 		if (errno == ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("data directory \"%s\" does not exist",
-							checkdir)));
+							DataDir)));
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
 			 errmsg("could not read permissions of directory \"%s\": %m",
-					checkdir)));
+					DataDir)));
 	}
 
 	/*
@@ -981,14 +914,14 @@ checkDataDir(const char *checkdir)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("data directory \"%s\" has group or world access",
-						checkdir),
+						DataDir),
 				 errdetail("Permissions should be u=rwx (0700).")));
 #endif
 
 	/* Look for PG_VERSION before looking for pg_control */
-	ValidatePgVersion(checkdir);
+	ValidatePgVersion(DataDir);
 
-	snprintf(path, sizeof(path), "%s/global/pg_control", checkdir);
+	snprintf(path, sizeof(path), "%s/global/pg_control", DataDir);
 
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)
@@ -996,7 +929,7 @@ checkDataDir(const char *checkdir)
 		write_stderr("%s: could not find the database system\n"
 					 "Expected to find it in the directory \"%s\",\n"
 					 "but could not open file \"%s\": %s\n",
-					 progname, checkdir, path, strerror(errno));
+					 progname, DataDir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
 	FreeFile(fp);
@@ -3457,6 +3390,12 @@ write_backend_variables(char *filename, Port *port)
 	StrNCpy(str_buf, DataDir, MAXPGPATH);
 	write_array_var(str_buf, fp);
 
+	StrNCpy(str_buf, ConfigDir, MAXPGPATH);
+	write_array_var(str_buf, fp);
+
+	StrNCpy(str_buf, ConfigFileName, MAXPGPATH);
+	write_array_var(str_buf, fp);
+
 	write_array_var(ListenSocket, fp);
 
 	write_var(MyCancelKey, fp);
@@ -3530,6 +3469,12 @@ read_backend_variables(char *filename, Port *port)
 
 	read_array_var(str_buf, fp);
 	SetDataDir(str_buf);
+
+	read_array_var(str_buf, fp);
+	ConfigDir = strdup(str_buf);
+
+	read_array_var(str_buf, fp);
+	ConfigFileName = strdup(str_buf);
 
 	read_array_var(ListenSocket, fp);
 

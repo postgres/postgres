@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.52 2004/09/20 00:04:19 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.53 2004/10/08 01:36:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -67,27 +67,22 @@ PostgreSQL documentation
    One <command>postmaster</command> always manages the data
    from exactly one database cluster.  A database cluster is a
    collection of databases that is stored at a common file system
-   location.  When the <command>postmaster</command> starts it needs 
-   to know the location of the database cluster files (<quote>data 
-   area</quote>).  
+   location (the <quote>data area</quote>).
    More than one <command>postmaster</command> process can run on a system
-   at one time as long as they use different data areas and different
+   at one time, so long as they use different data areas and different
    communication ports (see below).  A data area is created with <xref
    linkend="app-initdb">.
   </para>
 
   <para>
-   The <quote>data area</> is specified by the <option>-D</option> option
+   When the <command>postmaster</command> starts it needs 
+   to know the location of the data area.
+   The location must be specified by the <option>-D</option> option
    or the <envar>PGDATA</envar> environment variable; there is no default.
-   Typically, it points to a directory created by <application>
-   initdb</>.  However, for administrative flexibility, you can
-   point to a directory containing only configuration files:
-   <filename>postgresql.conf</>, <filename>pg_hba.conf</>, and
-   <filename>pg_ident.conf</>. You can then set
-   <filename>postgresql.conf</>'s <varname>pgdata</> variable to point to the
-   data directory. You can also point just to the server configuration file
-   like <filename>postgresql.conf</> and set its variables to point to the
-   other configuration files and the data directory.
+   Typically, <option>-D</option> or <envar>PGDATA</envar> points
+   directly to the data area directory created by <application>initdb</>.
+   Other possible file layouts are discussed in
+   <xref linkend="runtime-config-file-locations">.
   </para>
  </refsect1>
 
@@ -154,8 +149,9 @@ PostgreSQL documentation
       <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the file system location of the data directory.  See
-	discussion above.
+        Specifies the file system location of the data directory or
+        configuration file(s).  See
+        <xref linkend="runtime-config-file-locations"> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -394,7 +390,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default data direction location
+      Default data directory location
      </para>
     </listitem>
    </varlistentry>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.130 2004/09/18 01:22:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.131 2004/10/08 01:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,16 +1044,16 @@ load_hba(void)
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
 
-	/* HBA filename in config file */
 	if (guc_hbafile)
+	{
+		/* HBA filename specified in config file */
 		conf_file = pstrdup(guc_hbafile);
+	}
 	else
 	{
-		char	   *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
-
 		/* put together the full pathname to the config file */
-		conf_file = palloc(strlen(confloc) + strlen(CONF_FILE) + 2);
-		sprintf(conf_file, "%s/%s", confloc, CONF_FILE);
+		conf_file = palloc(strlen(ConfigDir) + strlen(CONF_FILE) + 2);
+		sprintf(conf_file, "%s/%s", ConfigDir, CONF_FILE);
 	}
 
 	file = AllocateFile(conf_file, "r");
@@ -1198,16 +1198,15 @@ load_ident(void)
 	if (ident_lines || ident_line_nums)
 		free_lines(&ident_lines, &ident_line_nums);
 
-	/* IDENT filename in config file */
 	if (guc_identfile)
+	{
+		/* IDENT filename specified in config file */
 		map_file = pstrdup(guc_identfile);
+	}
 	else
 	{
-		/* put together the full pathname to the map file */
-		char	   *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
-
-		map_file = (char *) palloc(strlen(confloc) + strlen(USERMAP_FILE) + 2);
-		sprintf(map_file, "%s/%s", confloc, USERMAP_FILE);
+		map_file = palloc(strlen(ConfigDir) + strlen(USERMAP_FILE) + 2);
+		sprintf(map_file, "%s/%s", ConfigDir, USERMAP_FILE);
 	}
 
 	file = AllocateFile(map_file, "r");

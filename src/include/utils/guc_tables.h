@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.16 2004/08/29 05:06:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.17 2004/10/08 01:36:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ union config_var_value
 enum config_group
 {
 	UNGROUPED,
+	FILE_LOCATIONS,
 	CONN_AUTH,
 	CONN_AUTH_SETTINGS,
 	CONN_AUTH_SECURITY,
@@ -69,9 +70,9 @@ enum config_group
 	COMPAT_OPTIONS,
 	COMPAT_OPTIONS_PREVIOUS,
 	COMPAT_OPTIONS_CLIENT,
-	DEVELOPER_OPTIONS,
-	COMPILE_OPTIONS,
-	CUSTOM_OPTIONS
+	PRESET_OPTIONS,
+	CUSTOM_OPTIONS,
+	DEVELOPER_OPTIONS
 };
 
 /*

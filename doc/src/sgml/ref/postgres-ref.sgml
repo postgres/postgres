@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.43 2004/02/03 17:34:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.44 2004/10/08 01:36:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -357,7 +357,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default data direction location
+      Default data directory location
      </para>
     </listitem>
    </varlistentry>

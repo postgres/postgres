@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.285 2004/09/29 06:27:11 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.286 2004/10/08 01:36:31 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -564,17 +564,16 @@ SET ENABLE_SEQSCAN TO OFF;
     any desired selection condition.
    </para>
     
-   <sect2 id="runtime-config-configuration-files">
-    <title>Configuration Files</title>
+   <sect2 id="runtime-config-file-locations">
+    <title>File Locations</title>
 
      <variablelist>
-
      <varlistentry id="guc-pgdata" xreflabel="pgdata">
       <term><varname>pgdata</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-         Specifies the directory to use for data storage (everything except
-         configuration files).
+         Specifies the directory to use for data storage.
+         This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -585,6 +584,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the file name to use for configuration of host-based 
          authentication (HBA).
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
@@ -595,6 +596,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the file name to use for configuration of 
          <application>ident</> authentication.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
@@ -605,11 +608,50 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the location of an additional <application>postmaster</>
          process-id (PID) file for use by server administration programs.
+         This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
-
      </variablelist>
+
+     <para>
+      In a default installation, none of the above options is set explicitly
+      in the <filename>postgresql.conf</filename> file.  In this case, the
+      data directory is specified by the <option>-D</option> command-line
+      option or the <envar>PGDATA</envar> environment variable; there is no
+      default for it.  The configuration files are all placed within the
+      data directory.
+     </para>
+
+     <para>
+      It is also possible to separate the configuration files from the data
+      directory, which can ease administration.  (In particular it is often
+      easier to ensure that the configuration files are properly backed-up
+      when they are kept separate.)  To do this, the <option>-D</option>
+      command-line option or <envar>PGDATA</envar> environment variable
+      must point to the directory containing the configuration files,
+      and the <varname>pgdata</> option is set in
+      <filename>postgresql.conf</filename> (or on the command line) to show
+      where the data directory is actually located.
+     </para>
+
+     <para>
+      If you wish, you can also make the <option>-D</option>
+      command-line option or <envar>PGDATA</envar> environment variable
+      point directly to the master configuration file (which then need not be
+      named <filename>postgresql.conf</filename>).  The <varname>pgdata</>
+      option must be set to determine the data directory location.
+      The other configuration files will by default be sought
+      in the data directory.
+     </para>
+
+     <para>
+      With any of these approaches, you can specify the locations of the
+      secondary configuration files (<filename>pg_hba.conf</> and
+      <filename>pg_ident.conf</>) by setting <varname>hba_conf</> and/or
+      <varname>ident_conf</> in the master configuration file.  These options
+      override the normal locations and names of the secondary files.
+     </para>
    </sect2>
 
    <sect2 id="runtime-config-connection">

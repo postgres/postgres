@@ -26,13 +26,17 @@
 
 
 #---------------------------------------------------------------------------
-# CONFIGURATION FILES
+# FILE LOCATIONS
 #---------------------------------------------------------------------------
 
-# pgdata = '/usr/local/pgsql/data'		# use data in another directory
-# hba_conf = '/etc/pgsql/pg_hba.conf' 		# use hba info in another directory
-# ident_conf = '/etc/pgsql/pg_ident.conf'	# use ident info in another directory
-# external_pidfile= '/var/run/postgresql.pid'	# write an extra pid file
+# The default values of these variables are driven from the -D command line
+# switch or PGDATA environment variable, represented here as $PGDATA.
+# pgdata = '$PGDATA'			# use data in another directory
+# hba_conf = '$PGDATA/pg_hba.conf'	# the host-based authentication file
+# ident_conf = '$PGDATA/pg_ident.conf'	# the IDENT configuration file
+
+# If external_pidfile is not explicitly set, no extra pid file is written.
+# external_pidfile = '(none)'		# write an extra pid file
 
 
 #---------------------------------------------------------------------------

@@ -4,14 +4,13 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.25 2004/08/31 22:43:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.26 2004/10/08 01:36:35 tgl Exp $
  */
 
 %{
 
 #include "postgres.h"
 
-#include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
 
@@ -21,8 +20,6 @@
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
-
-#define CONFIG_FILENAME "postgresql.conf"
 
 static unsigned ConfigFileLineno;
 
@@ -128,7 +125,6 @@ void
 ProcessConfigFile(GucContext context)
 {
 	int			elevel;
-	char	   *filename;
 	int			token, parse_state;
 	char	   *opt_name, *opt_value;
 	struct name_value_pair *item, *head, *tail;
@@ -147,46 +143,13 @@ ProcessConfigFile(GucContext context)
 	else
 		elevel = ERROR;
 
-	/*
-	 * Handle the various possibilities for config file location
-	 */
-	if (user_pgconfig)
-	{
-		struct stat sb;
-
-		if (stat(user_pgconfig, &sb) != 0)
-		{
-			ereport(elevel,
-					(errcode_for_file_access(),
-					 errmsg("could not access configuration file \"%s\": %m",
-							user_pgconfig)));
-			return;
-		}
-
-		if (S_ISDIR(sb.st_mode))
-		{
-			filename = palloc(strlen(user_pgconfig) + strlen(CONFIG_FILENAME) + 2);
-			sprintf(filename, "%s/%s", user_pgconfig, CONFIG_FILENAME);
-			user_pgconfig_is_dir = true;
-		}
-		else
-			filename = pstrdup(user_pgconfig);	/* Use explicit file */
-	}
-	else
-	{
-		/* Find config in datadir */
-		filename = palloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
-		sprintf(filename, "%s/%s", DataDir, CONFIG_FILENAME);
-	}
-
-    fp = AllocateFile(filename, "r");
+    fp = AllocateFile(ConfigFileName, "r");
     if (!fp)
     {
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
-						filename)));
-		pfree(filename);
+						ConfigFileName)));
 		return;
     }
 
@@ -273,7 +236,6 @@ ProcessConfigFile(GucContext context)
 	}
 
 	FreeFile(fp);
-	pfree(filename);
 
 	/*
 	 * Check if all options are valid
@@ -303,13 +265,12 @@ ProcessConfigFile(GucContext context)
 		ereport(elevel,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("syntax error in file \"%s\" line %u, near end of line",
-						filename, ConfigFileLineno - 1)));
+						ConfigFileName, ConfigFileLineno - 1)));
 	else
 		ereport(elevel,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
-						filename, ConfigFileLineno, yytext)));
-	pfree(filename);
+						ConfigFileName, ConfigFileLineno, yytext)));
 }
 
 

@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.51 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.52 2004/10/08 01:36:36 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -135,13 +135,12 @@ extern int	log_min_messages;
 extern int	client_min_messages;
 extern int	log_min_duration_statement;
 
-extern char *guc_pgdata;
+extern char *ConfigDir;
+extern char *ConfigFileName;
 extern char *guc_hbafile;
 extern char *guc_identfile;
 extern char *external_pidfile;
 
-extern char *user_pgconfig;
-extern bool user_pgconfig_is_dir;
 
 extern void SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source);
@@ -188,6 +187,7 @@ extern const char *GetConfigOption(const char *name);
 extern const char *GetConfigOptionResetString(const char *name);
 extern void ProcessConfigFile(GucContext context);
 extern void InitializeGUCOptions(void);
+extern bool SelectConfigFiles(const char *userDoption, const char *progname);
 extern void ResetAllOptions(void);
 extern void AtEOXact_GUC(bool isCommit, bool isSubXact);
 extern void BeginReportingGUCOptions(void);

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.239 2004/09/24 19:43:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.240 2004/10/08 01:36:35 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <float.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
@@ -58,17 +59,12 @@
 #include "utils/pg_locale.h"
 #include "pgstat.h"
 
-char	   *guc_pgdata;
-char	   *guc_hbafile;
-char	   *guc_identfile;
-char	   *external_pidfile;
-
-char	   *user_pgconfig = NULL;
-bool		user_pgconfig_is_dir = false;
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
 #endif
+
+#define CONFIG_FILENAME "postgresql.conf"
 
 #ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
@@ -118,7 +114,14 @@ static const char *assign_canonical_path(const char *newval, bool doit, GucSourc
 
 
 /*
- * Debugging options
+ * These are initialized by SelectConfigFiles.
+ */
+char	   *ConfigDir = NULL;
+char	   *ConfigFileName = NULL;
+
+
+/*
+ * GUC option variables that are exported from this module
  */
 #ifdef USE_ASSERT_CHECKING
 bool		assert_enabled = true;
@@ -151,6 +154,10 @@ int			client_min_messages = NOTICE;
 
 int			log_min_duration_statement = -1;
 
+char	   *guc_hbafile;
+char	   *guc_identfile;
+char	   *external_pidfile;
+
 
 /*
  * These variables are all dummies that don't do anything, except in some
@@ -176,6 +183,7 @@ static char *server_encoding_string;
 static char *server_version_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
+static char *guc_pgdata;
 static char *custom_variable_classes;
 static int	max_function_args;
 static int	max_index_keys;
@@ -231,6 +239,8 @@ const char *const config_group_names[] =
 {
 	/* UNGROUPED */
 	gettext_noop("Ungrouped"),
+	/* FILE_LOCATIONS */
+	gettext_noop("File Locations"),
 	/* CONN_AUTH */
 	gettext_noop("Connections and Authentication"),
 	/* CONN_AUTH_SETTINGS */
@@ -291,10 +301,12 @@ const char *const config_group_names[] =
 	gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
 	/* COMPAT_OPTIONS_CLIENT */
 	gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
+	/* PRESET_OPTIONS */
+	gettext_noop("Preset Options"),
+	/* CUSTOM_OPTIONS */
+	gettext_noop("Customized Options"),
 	/* DEVELOPER_OPTIONS */
 	gettext_noop("Developer Options"),
-	/* COMPILE_OPTIONS */
-	gettext_noop("Compiled-in Options"),
 	/* help_config wants this array to be null-terminated */
 	NULL
 };
@@ -833,7 +845,7 @@ static struct config_bool ConfigureNamesBool[] =
 #endif
 
 	{
-		{"integer_datetimes", PGC_INTERNAL, COMPILE_OPTIONS,
+		{"integer_datetimes", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Datetimes are integer based"),
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -1282,7 +1294,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_function_args", PGC_INTERNAL, COMPILE_OPTIONS,
+		{"max_function_args", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the maximum number of function arguments"),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -1292,7 +1304,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_index_keys", PGC_INTERNAL, COMPILE_OPTIONS,
+		{"max_index_keys", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the maximum number of index keys"),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -1302,7 +1314,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_identifier_length", PGC_INTERNAL, COMPILE_OPTIONS,
+		{"max_identifier_length", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the maximum identifier length"),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -1312,7 +1324,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"block_size", PGC_INTERNAL, COMPILE_OPTIONS,
+		{"block_size", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows size of a disk block"),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -1640,7 +1652,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		/* Can't be set in postgresql.conf */
-		{"server_version", PGC_INTERNAL, UNGROUPED,
+		{"server_version", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the server version."),
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -1777,25 +1789,37 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"pgdata", PGC_POSTMASTER, 0, gettext_noop("Sets the location of the data directory"), NULL},
+		{"pgdata", PGC_POSTMASTER, FILE_LOCATIONS,
+		 gettext_noop("Sets the location of the data directory"),
+		 NULL
+		},
 		&guc_pgdata,
 		NULL, assign_canonical_path, NULL
 	},
 
 	{
-		{"hba_conf", PGC_SIGHUP, 0, gettext_noop("Sets the location of the \"hba\" configuration file"), NULL},
+		{"hba_conf", PGC_SIGHUP, FILE_LOCATIONS,
+		 gettext_noop("Sets the location of the \"hba\" configuration file"),
+		 NULL
+		},
 		&guc_hbafile,
 		NULL, assign_canonical_path, NULL
 	},
 
 	{
-		{"ident_conf", PGC_SIGHUP, 0, gettext_noop("Sets the location of the \"ident\" configuration file"), NULL},
+		{"ident_conf", PGC_SIGHUP, FILE_LOCATIONS,
+		 gettext_noop("Sets the location of the \"ident\" configuration file"),
+		 NULL
+		},
 		&guc_identfile,
 		NULL, assign_canonical_path, NULL
 	},
 
 	{
-		{"external_pidfile", PGC_POSTMASTER, 0, gettext_noop("Writes the postmaster PID to the specified file"), NULL},
+		{"external_pidfile", PGC_POSTMASTER, FILE_LOCATIONS,
+		 gettext_noop("Writes the postmaster PID to the specified file"),
+		 NULL
+		},
 		&external_pidfile,
 		NULL, assign_canonical_path, NULL
 	},
@@ -2247,6 +2271,9 @@ guc_name_compare(const char *namea, const char *nameb)
 
 /*
  * Initialize GUC options during program startup.
+ *
+ * Note that we cannot read the config file yet, since we have not yet
+ * processed command-line switches.
  */
 void
 InitializeGUCOptions(void)
@@ -2409,6 +2436,102 @@ InitializeGUCOptions(void)
 	env = getenv("PGCLIENTENCODING");
 	if (env != NULL)
 		SetConfigOption("client_encoding", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
+}
+
+
+/*
+ * Select the configuration files and data directory to be used, and
+ * do the initial read of postgresql.conf.
+ *
+ * This is called after processing command-line switches.
+ *		userDoption is the -D switch value if any (NULL if unspecified).
+ *		progname is just for use in error messages.
+ *
+ * Returns true on success; on failure, prints a suitable error message
+ * to stderr and returns false.
+ */
+bool
+SelectConfigFiles(const char *userDoption, const char *progname)
+{
+	char   *Doption;
+	struct stat stat_buf;
+
+	/* If user did not specify -D, it defaults to $PGDATA */
+	if (!userDoption)
+		userDoption = getenv("PGDATA");
+
+	/* If no PGDATA either, we are completely lost */
+	if (!userDoption)
+	{
+		write_stderr("%s does not know where to find the database system data.\n"
+					 "You must specify the -D invocation option or set the "
+					 "PGDATA environment variable.\n",
+					 progname);
+		return false;
+	}
+
+	/* Get a writable copy and canonicalize the path */
+	Doption = guc_strdup(FATAL, userDoption);
+	canonicalize_path(Doption);
+
+	/*
+	 * If it is a directory, point ConfigDir to it, and expect to
+	 * find postgresql.conf within.  Otherwise it had better be
+	 * the actual config file, and the file had better set "pgdata".
+	 */
+	if (stat(Doption, &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode))
+	{
+		ConfigDir = Doption;
+		ConfigFileName = guc_malloc(FATAL,
+							strlen(ConfigDir) + strlen(CONFIG_FILENAME) + 2);
+		sprintf(ConfigFileName, "%s/%s", ConfigDir, CONFIG_FILENAME);
+	}
+	else
+	{
+		ConfigFileName = Doption;
+	}
+
+	if (stat(ConfigFileName, &stat_buf) != 0)
+	{
+		write_stderr("%s cannot access the data directory or configuration file \"%s\": %s\n",
+					 progname, ConfigFileName, strerror(errno));
+		return false;
+	}
+
+	ProcessConfigFile(PGC_POSTMASTER);
+
+	/*
+	 * If the config file specified pgdata, use that as DataDir;
+	 * otherwise use ConfigDir (the original Doption) if set;
+	 * else punt.
+	 *
+	 * Note: SetDataDir will copy and canonicalize its argument,
+	 * so we don't have to.
+	 */
+	if (guc_pgdata)
+		SetDataDir(guc_pgdata);
+	else if (ConfigDir)
+		SetDataDir(ConfigDir);
+	else
+	{
+		write_stderr("%s does not know where to find the database system data.\n"
+					 "This should be specified as \"pgdata\" in \"%s\".\n",
+					 progname, ConfigFileName);
+		return false;
+	}
+
+	/*
+	 * Set ConfigDir as DataDir unless we had another value (which is to say,
+	 * Doption pointed to a directory).  This determines the default location
+	 * of secondary configuration files that will be read later.
+	 */
+	if (!ConfigDir)
+		ConfigDir = DataDir;
+
+	/* If timezone is not set, determine what the OS uses */
+	pg_timezone_initialize();
+
+	return true;
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.433 2004/09/26 00:26:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.434 2004/10/08 01:36:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2156,7 +2156,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 {
 	int			flag;
 	const char *dbname = NULL;
-	char	   *userPGDATA = NULL;
+	char	   *userDoption = NULL;
 	bool		secure;
 	int			errs = 0;
 	int			debug_flag = 0;
@@ -2226,10 +2226,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	EchoQuery = false;
 
 	if (!IsUnderPostmaster)
-	{
 		InitializeGUCOptions();
-		userPGDATA = getenv("PGDATA");
-	}
 
 	/* ----------------
 	 *	parse command line arguments
@@ -2274,9 +2271,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 				SetConfigOption("shared_buffers", optarg, ctx, gucsource);
 				break;
 
-			case 'D':			/* PGDATA directory */
+			case 'D':			/* PGDATA or config directory */
 				if (secure)
-					userPGDATA = optarg;
+					userDoption = optarg;
 				break;
 
 			case 'd':			/* debug level */
@@ -2571,28 +2568,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 			on_proc_exit(log_disconnections, 0);
 	}
 
-	if (!IsUnderPostmaster)
-	{
-		if (!userPGDATA)
-		{
-			write_stderr("%s does not know where to find the database system data.\n"
-						 "You must specify the directory that contains the database system\n"
-						 "either by specifying the -D invocation option or by setting the\n"
-						 "PGDATA environment variable.\n",
-						 argv[0]);
-			proc_exit(1);
-		}
-		SetDataDir(userPGDATA);
-	}
-	Assert(DataDir);
-
 	/* Acquire configuration parameters, unless inherited from postmaster */
 	if (!IsUnderPostmaster)
 	{
-		ProcessConfigFile(PGC_POSTMASTER);
-
-		/* If timezone is not set, determine what the OS uses */
-		pg_timezone_initialize();
+		if (!SelectConfigFiles(userDoption, argv[0]))
+			proc_exit(1);
 	}
 
 	/*
@@ -2685,6 +2665,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * Validate we have been given a reasonable-looking DataDir (if
 		 * under postmaster, assume postmaster did this already).
 		 */
+		Assert(DataDir);
 		ValidatePgVersion(DataDir);
 
 		/*
