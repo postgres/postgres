@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.15 1999/05/25 16:12:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.16 1999/05/25 22:04:41 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1394,7 +1394,7 @@ get_rule_expr(QryHier * qh, int rt_index, Node *node, bool varprefix)
 			break;
 
 		case T_SubLink:
-				return get_sublink_expr(qh, rt_index, node, varprefix);
+			return get_sublink_expr(qh, rt_index, node, varprefix);
 			break;
 
 		case T_Const:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.39 1999/05/25 18:20:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.40 1999/05/25 22:04:13 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -402,9 +402,9 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 	else
 		res = _bt_first(scan, dir);
 
-	/* 
-	 * Save heap TID to use it in _bt_restscan.
-	 * Unlock buffer before leaving index !
+	/*
+	 * Save heap TID to use it in _bt_restscan. Unlock buffer before
+	 * leaving index !
 	 */
 	if (res)
 	{
@@ -565,7 +565,7 @@ btmarkpos(IndexScanDesc scan)
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
 		so->btso_mrkbuf = ReadBuffer(scan->relation,
-									 BufferGetBlockNumber(so->btso_curbuf));
+								  BufferGetBlockNumber(so->btso_curbuf));
 		scan->currentMarkData = scan->currentItemData;
 		so->mrkHeapIptr = so->curHeapIptr;
 	}
@@ -594,7 +594,7 @@ btrestrpos(IndexScanDesc scan)
 	if (ItemPointerIsValid(&(scan->currentMarkData)))
 	{
 		so->btso_curbuf = ReadBuffer(scan->relation,
-									 BufferGetBlockNumber(so->btso_mrkbuf));
+								  BufferGetBlockNumber(so->btso_mrkbuf));
 
 		scan->currentItemData = scan->currentMarkData;
 		so->curHeapIptr = so->mrkHeapIptr;
@@ -628,6 +628,7 @@ _bt_restscan(IndexScanDesc scan)
 	BlockNumber blkno;
 
 	LockBuffer(buf, BT_READ);
+
 	/*
 	 * We use this as flag when first index tuple on page is deleted but
 	 * we do not move left (this would slowdown vacuum) - so we set

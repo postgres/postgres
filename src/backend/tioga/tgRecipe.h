@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.9 1999/05/25 16:11:46 momjian Exp $
+ * $Id: tgRecipe.h,v 1.10 1999/05/25 22:04:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ typedef struct
 				y;
 } Point;						/* this should match whatever is in
 
+								 *
 								 *
 								 *
 								 *

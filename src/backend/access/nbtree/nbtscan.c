@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.22 1999/05/25 18:20:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.23 1999/05/25 22:04:14 momjian Exp $
  *
  *
  * NOTES
@@ -133,9 +133,10 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 			ItemPointerSetInvalid(&(so->curHeapIptr));
 		else
 		{
-			/* 
-			 * We have to lock buffer before _bt_step 
-			 * and unlock it after that.
+
+			/*
+			 * We have to lock buffer before _bt_step and unlock it after
+			 * that.
 			 */
 			LockBuffer(buf, BT_READ);
 			_bt_step(scan, &buf, BackwardScanDirection);

@@ -2,7 +2,7 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: conv.c,v 1.8 1999/05/25 16:12:41 momjian Exp $
+ * $Id: conv.c,v 1.9 1999/05/25 22:04:47 momjian Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -384,7 +384,7 @@ big52mic(unsigned char *big5, unsigned char *p, int len)
 
 	while (len > 0 && (c1 = *big5++))
 	{
-		if (c1 <= 0x007f U)
+		if (c1 <= (unsigned)0x7f)
 		{						/* ASCII */
 			len--;
 			*p++ = c1;

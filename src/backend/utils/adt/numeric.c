@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.14 1999/05/25 16:12:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.15 1999/05/25 22:04:40 momjian Exp $
  *
  * ----------
  */
@@ -2506,10 +2506,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-								 * ABS(var1) == ABS(var2)
-								 * result = ZERO
-								 * ----------
-								 */
+										 * ABS(var1) == ABS(var2)
+										 * result = ZERO
+										 * ----------
+										 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2522,10 +2522,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-								 * ABS(var1) > ABS(var2)
-								 * result = +(ABS(var1) - ABS(var2))
-								 * ----------
-								 */
+										 * ABS(var1) > ABS(var2)
+										 * result = +(ABS(var1) - ABS(var2))
+										 * ----------
+										 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2553,10 +2553,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-								 * ABS(var1) == ABS(var2)
-								 * result = ZERO
-								 * ----------
-								 */
+										 * ABS(var1) == ABS(var2)
+										 * result = ZERO
+										 * ----------
+										 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2569,10 +2569,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-								 * ABS(var1) > ABS(var2)
-								 * result = -(ABS(var1) - ABS(var2))
-								 * ----------
-								 */
+										 * ABS(var1) > ABS(var2)
+										 * result = -(ABS(var1) - ABS(var2))
+										 * ----------
+										 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -2637,10 +2637,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-								 * ABS(var1) == ABS(var2)
-								 * result = ZERO
-								 * ----------
-								 */
+										 * ABS(var1) == ABS(var2)
+										 * result = ZERO
+										 * ----------
+										 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2653,10 +2653,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-								 * ABS(var1) > ABS(var2)
-								 * result = +(ABS(var1) - ABS(var2))
-								 * ----------
-								 */
+										 * ABS(var1) > ABS(var2)
+										 * result = +(ABS(var1) - ABS(var2))
+										 * ----------
+										 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2684,10 +2684,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-								 * ABS(var1) == ABS(var2)
-								 * result = ZERO
-								 * ----------
-								 */
+										 * ABS(var1) == ABS(var2)
+										 * result = ZERO
+										 * ----------
+										 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2700,10 +2700,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-								 * ABS(var1) > ABS(var2)
-								 * result = -(ABS(var1) - ABS(var2))
-								 * ----------
-								 */
+										 * ABS(var1) > ABS(var2)
+										 * result = -(ABS(var1) - ABS(var2))
+										 * ----------
+										 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;

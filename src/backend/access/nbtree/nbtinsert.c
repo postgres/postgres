@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.41 1999/05/25 18:20:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.42 1999/05/25 22:04:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	LockBuffer(buf, BT_WRITE);
 
 l1:
+
 	/*
 	 * If the page was split between the time that we surrendered our read
 	 * lock and acquired our write lock, then this page may no longer be
@@ -96,13 +97,13 @@ l1:
 		/* key on the page before trying to compare it */
 		if (!PageIsEmpty(page) && offset <= maxoff)
 		{
-			TupleDesc		itupdesc;
-			BTItem			cbti;
-			HeapTupleData	htup;
-			BTPageOpaque 	opaque;
-			Buffer			nbuf;
-			BlockNumber 	nblkno;
-			bool			chtup = true;
+			TupleDesc	itupdesc;
+			BTItem		cbti;
+			HeapTupleData htup;
+			BTPageOpaque opaque;
+			Buffer		nbuf;
+			BlockNumber nblkno;
+			bool		chtup = true;
 
 			itupdesc = RelationGetDescr(rel);
 			nbuf = InvalidBuffer;
@@ -155,7 +156,7 @@ l1:
 						_bt_relbuf(rel, buf, BT_WRITE);
 						XactLockTableWait(xwait);
 						buf = _bt_getbuf(rel, blkno, BT_WRITE);
-						goto l1;	/* continue from the begin */
+						goto l1;/* continue from the begin */
 					}
 					elog(ERROR, "Cannot insert a duplicate key into a unique index");
 				}
@@ -178,7 +179,7 @@ l1:
 					nblkno = opaque->btpo_next;
 					if (nbuf != InvalidBuffer)
 						_bt_relbuf(rel, nbuf, BT_READ);
-					for (nbuf = InvalidBuffer; ; )
+					for (nbuf = InvalidBuffer;;)
 					{
 						nbuf = _bt_getbuf(rel, nblkno, BT_READ);
 						page = BufferGetPage(nbuf);

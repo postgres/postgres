@@ -7,7 +7,7 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $Id: big5.c,v 1.2 1999/05/25 16:12:40 momjian Exp $
+ * $Id: big5.c,v 1.3 1999/05/25 22:04:45 momjian Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -218,7 +218,7 @@ static unsigned short BinarySearchRange
 		{
 			if (0 == array[mid].peer)
 				return 0;
-			if (code >= 0xa140 U)
+			if (code >= (unsigned)0xa140)
 			{
 				/* big5 to cns */
 				tmp = ((code & 0xff00) - (array[mid].code & 0xff00)) >> 8;
@@ -292,7 +292,7 @@ BIG5toCNS(unsigned short big5, unsigned char *lc)
 	unsigned short cns = 0;
 	int			i;
 
-	if (big5 < 0xc940 U)
+	if (big5 < (unsigned)0xc940)
 	{
 		/* level 1 */
 
@@ -301,14 +301,14 @@ BIG5toCNS(unsigned short big5, unsigned char *lc)
 			if (b1c4[i][0] == big5)
 			{
 				*lc = LC_CNS11643_4;
-				return (b1c4[i][1] | 0x8080 U);
+				return (b1c4[i][1] | (unsigned)0x8080);
 			}
 		}
 
 		if (0 < (cns = BinarySearchRange(big5Level1ToCnsPlane1, 23, big5)))
 			*lc = LC_CNS11643_1;
 	}
-	else if (big5 == 0xc94a U)
+	else if (big5 == (unsigned)0xc94a)
 	{
 		/* level 2 */
 		*lc = LC_CNS11643_1;

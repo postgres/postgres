@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.108 1999/05/25 16:10:10 momjian Exp $
+ *	$Id: analyze.c,v 1.109 1999/05/25 22:04:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1187,7 +1187,7 @@ A_Expr_to_Expr(Node *ptr, bool *intersect_present)
 				break;
 			}
 		default:
-				result = ptr;
+			result = ptr;
 	}
 	return result;
 }

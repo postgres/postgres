@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.22 1999/05/25 18:20:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.23 1999/05/25 22:04:12 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -315,9 +315,10 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 	}
 	else
 	{
+
 		/*
-		 * Extend bufmgr code is unclean and so we have to
-		 * use locking here.
+		 * Extend bufmgr code is unclean and so we have to use locking
+		 * here.
 		 */
 		LockPage(rel, 0, ExclusiveLock);
 		buf = ReadBuffer(rel, blkno);
@@ -416,7 +417,7 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
 	Assert(metaopaque->btpo_flags & BTP_META);
 	metad = BTPageGetMeta(metap);
 	metad->btm_root = rootbknum;
-	if (level == 0)						/* called from _do_insert */
+	if (level == 0)				/* called from _do_insert */
 		metad->btm_level += 1;
 	else
 		metad->btm_level = level;		/* called from btsort */

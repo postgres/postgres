@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.26 1999/05/25 18:31:28 vadim Exp $
+ * $Id: nbtree.h,v 1.27 1999/05/25 22:04:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,8 @@
 #include <storage/page.h>
 #include <access/funcindex.h>
 #include <access/itup.h>
-#include <storage/bufmgr.h>	/* don't remove, required by BT_READ/BT_WRITE */
+#include <storage/bufmgr.h>		/* don't remove, required by
+								 * BT_READ/BT_WRITE */
 #include <storage/itemptr.h>
 
 /*
