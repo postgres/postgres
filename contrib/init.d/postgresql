@@ -61,7 +61,7 @@ case "$1" in
   *)
 	# Print help.
 	N=/etc/init.d/$FILE
-	echo "Usage: $N {start|stop|restart|status}" >&2
+	echo "Usage: $N {start|stop|restart|status}" 1>&2
 	exit 1
 	;;
 esac
