@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.92 1997/01/14 16:06:03 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.93 1997/01/14 16:10:54 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -701,11 +701,15 @@ DLSUFFIX= .o
 endif
 
 
+#---------------------------------------------------------------------------
 ifeq ($(PORTNAME), nextstep)
 LDADD_BE+= -lipc
 AROPT= rc
 DLSUFFIX= .o
 endif
+
+#---------------------------------------------------------------------------
+# All others need -lm
 
 ifneq ($(PORTNAME), nextstep)
 LD_ADD+= -lm
