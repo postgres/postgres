@@ -60,6 +60,7 @@ import exceptions
 import types
 import DateTime
 import time
+import types
 
 ### module constants
 
@@ -175,9 +176,14 @@ class pgdbCursor:
 		self.rowcount = -1
 
 	def execute(self, operation, params = None):
-		if type(params) == types.TupleType or type(params) == types.ListType:
+		# "The parameters may also be specified as list of
+		# tuples to e.g. insert multiple rows in a single
+		# operation, but this kind of usage is depreciated:
+		if params and type(params) == types.ListType and \
+					type(params[0]) == types.TupleType:
 			self.executemany(operation, params)
 		else:
+			# not a list of tuples
 			self.executemany(operation, (params,))
 
 	def executemany(self, operation, param_seq):
@@ -190,7 +196,7 @@ class pgdbCursor:
 		try:
 			for params in param_seq:
 				if params != None:
-					sql = operation % params
+					sql = _quoteparams(operation, params)
 				else:
 					sql = operation
 				rows = self.__source.execute(sql)
@@ -250,6 +256,34 @@ class pgdbCursor:
 
 	def setoutputsize(self, size, col = 0):
 		pass
+
+
+def _quote(x):
+	if type(x) == types.StringType:
+		x = "'" + string.replace(
+				string.replace(str(x), '\\', '\\\\'), "'", "''") + "'"
+
+   elif type(x) in (types.IntType, types.LongType, types.FloatType):
+		pass
+   elif x is None:
+		x = 'NULL'
+   elif hasattr(x, '__pg_repr__'):
+		x = x.__pg_repr__()
+   else:
+		raise InterfaceError, 'do not know how to handle type %s' % type(x)
+
+   return x
+
+def _quoteparams(s, params):
+	if hasattr(params, 'has_key'):
+		x = {}
+		for k, v in params.items():
+			x[k] = _quote(v)
+		params = x
+	else:
+		params = tuple(map(_quote, params))
+
+	return s % params
 
 ### connection object
 
