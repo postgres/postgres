@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.72 1999/08/16 23:07:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.73 1999/08/18 04:15:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -895,9 +895,7 @@ copy_costsize(Plan *dest, Plan *src)
 
 /*
  * make_noname
- *	  Create plan nodes to sort or materialize relations into noname. The
- *	  result returned for a sort will look like (SEQSCAN(SORT(plan_node)))
- *	  or (SEQSCAN(MATERIAL(plan_node)))
+ *	  Create plan node to sort or materialize relations into noname.
  *
  *	  'tlist' is the target list of the scan to be sorted or materialized
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
@@ -911,8 +909,7 @@ make_noname(List *tlist,
 {
 	List	   *noname_tlist;
 	int			numsortkeys;
-	Plan	   *tmpplan;
-	Noname	   *retval;
+	Plan	   *retval;
 
 	/* Create a new target list for the noname, with sort keys set. */
 	noname_tlist = new_unsorted_tlist(tlist);
@@ -921,27 +918,21 @@ make_noname(List *tlist,
 	if (numsortkeys > 0)
 	{
 		/* need to sort */
-		tmpplan = (Plan *) make_sort(noname_tlist,
-									 _NONAME_RELATION_ID_,
-									 plan_node,
-									 numsortkeys);
+		retval = (Plan *) make_sort(noname_tlist,
+									_NONAME_RELATION_ID_,
+									plan_node,
+									numsortkeys);
 	}
 	else
 	{
 		/* no sort */
-		tmpplan = (Plan *) make_material(noname_tlist,
-										 _NONAME_RELATION_ID_,
-										 plan_node,
-										 0);
+		retval = (Plan *) make_material(noname_tlist,
+										_NONAME_RELATION_ID_,
+										plan_node,
+										0);
 	}
 
-	/* Return a seqscan using the original tlist */
-	retval = (Noname *) make_seqscan(tlist,
-									 NIL,
-									 _NONAME_RELATION_ID_,
-									 tmpplan);
-
-	return retval;
+	return (Noname *) retval;
 }
 
 

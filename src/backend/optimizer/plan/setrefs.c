@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.54 1999/08/09 00:56:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.55 1999/08/18 04:15:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,10 +82,10 @@ set_tlist_references(Plan *plan)
 
 	if (IsA_Join(plan))
 		set_join_tlist_references((Join *) plan);
-	else if (IsA(plan, SeqScan) &&plan->lefttree &&
+	else if (IsA(plan, SeqScan) && plan->lefttree &&
 			 IsA_Noname(plan->lefttree))
 		set_nonamescan_tlist_references((SeqScan *) plan);
-	else if (IsA(plan, Sort))
+	else if (IsA_Noname(plan))
 		set_noname_tlist_references((Noname *) plan);
 	else if (IsA(plan, Result))
 		set_result_tlist_references((Result *) plan);
@@ -112,12 +112,12 @@ set_tlist_references(Plan *plan)
 static void
 set_join_tlist_references(Join *join)
 {
-	Plan	   *outer = ((Plan *) join)->lefttree;
-	Plan	   *inner = ((Plan *) join)->righttree;
+	Plan	   *outer = join->lefttree;
+	Plan	   *inner = join->righttree;
 	List	   *outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
 	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
 	List	   *new_join_targetlist = NIL;
-	List	   *qptlist = ((Plan *) join)->targetlist;
+	List	   *qptlist = join->targetlist;
 	List	   *entry;
 
 	foreach(entry, qptlist)
@@ -130,18 +130,16 @@ set_join_tlist_references(Join *join)
 		new_join_targetlist = lappend(new_join_targetlist,
 									  makeTargetEntry(xtl->resdom, joinexpr));
 	}
+	join->targetlist = new_join_targetlist;
 
-	((Plan *) join)->targetlist = new_join_targetlist;
-	if (outer != NULL)
-		set_tlist_references(outer);
-	if (inner != NULL)
-		set_tlist_references(inner);
+	set_tlist_references(outer);
+	set_tlist_references(inner);
 }
 
 /*
  * set_nonamescan_tlist_references
  *	  Modifies the target list of a node that scans a noname relation (i.e., a
- *	  sort or hash node) so that the varnos refer to the child noname.
+ *	  sort or materialize node) so that the varnos refer to the child noname.
  *
  * 'nonamescan' is a seqscan node
  *
@@ -151,10 +149,13 @@ set_join_tlist_references(Join *join)
 static void
 set_nonamescan_tlist_references(SeqScan *nonamescan)
 {
-	Noname	   *noname = (Noname *) ((Plan *) nonamescan)->lefttree;
+	Noname	   *noname = (Noname *) nonamescan->plan.lefttree;
 
-	((Plan *) nonamescan)->targetlist = tlist_noname_references(noname->nonameid,
-									  ((Plan *) nonamescan)->targetlist);
+	nonamescan->plan.targetlist = tlist_noname_references(noname->nonameid,
+									  nonamescan->plan.targetlist);
+	/* since we know child is a Noname, skip recursion through
+	 * set_tlist_references() and just get the job done
+	 */
 	set_noname_tlist_references(noname);
 }
 
@@ -164,7 +165,7 @@ set_nonamescan_tlist_references(SeqScan *nonamescan)
  *	  modified version of the target list of the node from which noname node
  *	  receives its tuples.
  *
- * 'noname' is a noname (e.g., sort, hash) plan node
+ * 'noname' is a noname (e.g., sort, materialize) plan node
  *
  * Returns nothing of interest, but modifies internal fields of nodes.
  *
@@ -172,13 +173,13 @@ set_nonamescan_tlist_references(SeqScan *nonamescan)
 static void
 set_noname_tlist_references(Noname *noname)
 {
-	Plan	   *source = ((Plan *) noname)->lefttree;
+	Plan	   *source = noname->plan.lefttree;
 
 	if (source != NULL)
 	{
 		set_tlist_references(source);
-		((Plan *) noname)->targetlist = copy_vars(((Plan *) noname)->targetlist,
-												  (source)->targetlist);
+		noname->plan.targetlist = copy_vars(noname->plan.targetlist,
+											source->targetlist);
 	}
 	else
 		elog(ERROR, "calling set_noname_tlist_references with empty lefttree");
