@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct  1 21:21:07 EDT 2001
+Last updated:		Wed Oct  3 12:05:36 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -93,6 +93,7 @@ MULTILANGUAGE SUPPORT
 * -Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes (Tatsuo)
 * Allow setting database character set without multibyte enabled
 * Improve Unicode combined character handling
+* Use wide characters to evaluate regular expressions, for performance (Tatsuo)
 
 VIEWS
 
