@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.33 2003/07/30 17:08:47 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.34 2003/07/31 19:20:41 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -287,6 +287,10 @@ then
     fi
     PGPORT=65432
     export PGPORT
+
+    # Get rid of environment stuff that might cause psql to misbehave
+    # while contacting our temp installation
+    unset PGDATABASE PGUSER PGSERVICE PGSSLMODE PGREQUIRESSL PGCONNECT_TIMEOUT
 
     # ----------
     # Set up shared library paths, needed by psql and pg_encoding
