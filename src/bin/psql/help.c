@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.60 2002/10/24 01:33:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.61 2002/11/08 19:12:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -159,7 +159,7 @@ struct winsize
 #endif
 
 void
-slashUsage(bool pager)
+slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 

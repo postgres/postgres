@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.68 2002/10/18 22:05:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.69 2002/11/08 19:12:21 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 	pset.popt.topt.format = PRINT_ALIGNED;
 	pset.queryFout = stdout;
 	pset.popt.topt.border = 1;
-	pset.popt.topt.pager = true;
+	pset.popt.topt.pager = 1;
 	pset.popt.default_footer = true;
 
 	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);

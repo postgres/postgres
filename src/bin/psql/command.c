@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.84 2002/10/23 19:23:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.85 2002/11/08 19:12:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1873,11 +1873,18 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* toggle use of pager */
 	else if (strcmp(param, "pager") == 0)
 	{
-		popt->topt.pager = !popt->topt.pager;
+		if (value && strcasecmp(value, "always") == 0)
+				popt->topt.pager = 2;
+		else if (popt->topt.pager == 1)
+				popt->topt.pager = 0;
+		else
+				popt->topt.pager = 1;
 		if (!quiet)
 		{
-			if (popt->topt.pager)
+			if (popt->topt.pager == 1)
 				puts(gettext("Using pager is on."));
+			else if (popt->topt.pager == 2)
+				puts(gettext("Using pager is always."));
 			else
 				puts(gettext("Using pager is off."));
 		}

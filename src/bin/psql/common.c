@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.51 2002/10/29 19:35:33 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.52 2002/11/08 19:12:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -548,7 +548,7 @@ PageOutput(int lines, bool pager)
 		struct winsize screen_size;
 
 		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
-		if (result == -1 || lines > screen_size.ws_row)
+		if (result == -1 || lines > screen_size.ws_row || pager > 1)
 		{
 #endif
 			pagerprog = getenv("PAGER");

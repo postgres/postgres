@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.79 2002/10/19 00:22:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.80 2002/11/08 19:12:21 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1456,21 +1456,21 @@ lo_import 152801
 	  <term><literal>pager</literal></term>
 	  <listitem>
 	  <para>
-	  Toggles the use of a pager for query and <application>psql</> help output. If the
-	  environment variable <envar>PAGER</envar> is set, the output
-	  is piped to the specified program. Otherwise a platform-dependent default (such as
+	  Controls use of a pager for query and <application>psql</>
+	  help output. If the environment variable <envar>PAGER</envar>
+	  is set, the output is piped to the specified program.
+	  Otherwise a platform-dependent default (such as
 	  <filename>more</filename>) is used.
 	  </para>
 
 	  <para>
-	  In any case, <application>psql</application> only uses the
-	  pager if it seems appropriate. That means among other things
-	  that the output is to a terminal and that the table would
-	  normally not fit on the screen. Because of the modular nature
-	  of the printing routines it is not always possible to predict
-	  the number of lines that will actually be printed. For that
-	  reason <application>psql</application> might not appear very
-	  discriminating about when to use the pager.
+	  When the pager is off, the pager is not used. When the pager
+	  is on, the pager is used only when appropriate, i.e. the
+	  output is to a terminal and will not fit on the screen.
+	  (<application>psql</> does not do a perfect job of estimating
+	  when to use the pager.) <literal>\pset pager</> turns the
+	  pager on and off. Pager can also be set to <literal>always</>,
+	  which causes the pager to be always used.
 	  </para>
 	  </listitem>
 	  </varlistentry>
