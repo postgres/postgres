@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.16 2001/01/06 11:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.17 2001/02/12 14:21:27 momjian Exp $
 Date/time details
 -->
 
@@ -266,7 +266,7 @@ Date/time details
       <row>
        <entry>GMT</entry>
        <entry>0:00</entry>
-       <entry>Greenwish Mean Time</entry>
+       <entry>Greenwich Mean Time</entry>
       </row>
       <row>
        <entry>WET</entry>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.50 2001/02/05 19:21:45 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.51 2001/02/12 14:21:27 momjian Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -914,6 +914,7 @@
        argument order)
       </entry>
       <entry>strpos('high','ig')</entry>
+      <entry>2</entry>
      </row>
 
      <row>
@@ -931,7 +932,7 @@
       <entry><type>text</type></entry>
       <entry>Converts text from multibyte encoding to <acronym>ASCII</acronym>.</entry>
       <entry>to_ascii('Karel')</entry>
-      <entry></entry>
+      <entry>Karel</entry>
      </row>
 
      <row>
