@@ -75,7 +75,7 @@ typedef long long long_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.10 1998/10/08 00:34:47 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.11 1998/12/12 21:30:57 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -121,7 +121,13 @@ vsnprintf(char *str, size_t count, const char *fmt,...)
  */
 
 static void fmtstr __P((char *value, int ljust, int len, int zpad, int maxwidth));
+
+#ifndef HAVE_LONG_INT_64
 static void fmtnum __P((long value, int base, int dosign, int ljust, int len, int zpad));
+#else
+static void fmtnum __P((long_long value, int base, int dosign, int ljust, int len, int zpad));
+#endif
+
 static void dostr __P((char *, int));
 static char *output;
 static void dopr_outch __P((int c));
