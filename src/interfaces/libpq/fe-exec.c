@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.108 2001/08/21 20:39:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.109 2001/09/06 02:54:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1343,6 +1343,20 @@ PQnotifies(PGconn *conn)
 	event = (PGnotify *) DLE_VAL(e);
 	DLFreeElem(e);
 	return event;
+}
+
+/*
+ * PQfreeNotify - free's the memory associated with a PGnotify
+ *
+ * This function is needed on Windows when using libpq.dll and
+ * for example libpgtcl.dll: All memory allocated inside a dll
+ * should be freed in the context of the same dll.
+ *
+ */
+void
+PQfreeNotify(PGnotify *notify)
+{
+	free(notify);
 }
 
 /*

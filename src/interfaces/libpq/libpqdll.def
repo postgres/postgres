@@ -87,4 +87,4 @@ EXPORTS
 	PQresetStart		@ 84
 	PQsetClientEncoding	@ 85
 	PQsetnonblocking	@ 86
-
+	PQfreeNotify		@ 87

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.72 2001/08/21 20:39:54 momjian Exp $
+ * $Id: libpq-fe.h,v 1.73 2001/09/06 02:54:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,7 @@ extern		"C"
 	/* Simple synchronous query */
 	extern PGresult *PQexec(PGconn *conn, const char *query);
 	extern PGnotify *PQnotifies(PGconn *conn);
+	extern void      PQfreeNotify(PGnotify *notify);
 
 	/* Interface for multiple-result or asynchronous queries */
 	extern int	PQsendQuery(PGconn *conn, const char *query);

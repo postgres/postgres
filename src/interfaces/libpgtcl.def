@@ -1,0 +1,8 @@
+;libpgtcl.def
+; The LIBRARY entry must be same as the name of your DLL, the name of 
+; our DLL is libpgtcl.dll
+LIBRARY libpgtcl
+EXPORTS 
+   
+       Pgtcl_Init  
+       Pgtcl_SafeInit

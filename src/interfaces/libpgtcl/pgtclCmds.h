@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.21 2001/03/22 04:01:24 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.22 2001/09/06 02:54:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,11 @@ typedef struct Pg_ConnectionId_s
 
 	Pg_TclNotifies *notify_list;/* head of list of notify info */
 	int			notifier_running;		/* notify event source is live */
+#if TCL_MAJOR_VERSION >= 8
+	Tcl_Channel notifier_channel;/* Tcl_Channel on which notifier is listening */
+#else
 	int			notifier_socket;/* PQsocket on which notifier is listening */
+#endif
 }			Pg_ConnectionId;
 
 /* Values of res_copyStatus */

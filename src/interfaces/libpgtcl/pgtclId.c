@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.25 2001/02/10 02:31:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.26 2001/09/06 02:54:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,9 +174,15 @@ PgSetConnectionId(Tcl_Interp *interp, PGconn *conn)
 		connid->results[i] = NULL;
 	connid->notify_list = NULL;
 	connid->notifier_running = 0;
-	connid->notifier_socket = -1;
 
 	sprintf(connid->id, "pgsql%d", PQsocket(conn));
+
+#if TCL_MAJOR_VERSION >= 8
+	connid->notifier_channel = Tcl_MakeTcpClientChannel((ClientData) PQsocket(conn));
+	Tcl_RegisterChannel(interp, connid->notifier_channel);
+#else
+	connid->notifier_socket = -1;
+#endif
 
 #if TCL_MAJOR_VERSION == 7 && TCL_MINOR_VERSION == 5
 	/* Original signature (only seen in Tcl 7.5) */
@@ -581,7 +587,7 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
 		event->info = *notify;
 		event->connid = connid;
 		Tcl_QueueEvent((Tcl_Event *) event, TCL_QUEUE_TAIL);
-		free(notify);
+		PQfreeNotify(notify);
 	}
 
 	/*
@@ -688,18 +694,17 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 		if (pqsock >= 0)
 		{
 #if TCL_MAJOR_VERSION >= 8
-			/* In Tcl 8, Tcl_CreateFileHandler takes a socket directly. */
-			Tcl_CreateFileHandler(pqsock, TCL_READABLE,
-							 Pg_Notify_FileHandler, (ClientData) connid);
+			Tcl_CreateChannelHandler(connid->notifier_channel, TCL_READABLE,
+							Pg_Notify_FileHandler, (ClientData) connid);
 #else
 			/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
 			Tcl_File	tclfile = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
 
 			Tcl_CreateFileHandler(tclfile, TCL_READABLE,
 							 Pg_Notify_FileHandler, (ClientData) connid);
+			connid->notifier_socket = pqsock;
 #endif
 			connid->notifier_running = 1;
-			connid->notifier_socket = pqsock;
 		}
 	}
 }
@@ -711,8 +716,8 @@ PgStopNotifyEventSource(Pg_ConnectionId * connid)
 	if (connid->notifier_running)
 	{
 #if TCL_MAJOR_VERSION >= 8
-		/* In Tcl 8, Tcl_DeleteFileHandler takes a socket directly. */
-		Tcl_DeleteFileHandler(connid->notifier_socket);
+		Tcl_DeleteChannelHandler(connid->notifier_channel,
+								Pg_Notify_FileHandler, (ClientData) connid);
 #else
 		/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
 		Tcl_File	tclfile = Tcl_GetFile((ClientData) connid->notifier_socket,
