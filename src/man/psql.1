@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.9 1997/06/03 03:35:46 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.10 1997/07/30 17:21:29 momjian Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql \(em run the interactive query front-end
@@ -33,9 +33,6 @@ hostname]
 .BR "-H"
 ]
 [\c
-.BR "-T"
-table-options]
-[\c
 .BR "-l"
 port]
 [\c
@@ -59,6 +56,10 @@ port]
 ]
 [\c
 .BR "-t"
+]
+[\c
+.BR "-T"
+table-options
 ]
 [\c
 .BR "-x"
@@ -148,19 +149,14 @@ Turns on
 .SM HTML3.0
 tabular output.
 .TP
-.BR "-T" " table-options"
-Allows you to specify options to be placed within the <table ...> tag
-for
-.SM HTML3.0
-tabular output. For example
-.BR border
-will give you tables with borders.
-.TP
 .BR "-l"
 Lists all available databases
 .TP
 .BR "-n"
 Do not use the readline library for input line editing and command history.
+.TP
+.BR "-o" " filename"
+Put all output into filename
 .TP
 .BR "-p" " port"
 Specifies the Internet TCP port on which the
@@ -192,6 +188,14 @@ Turn off printing of column names.
 This is useful with the
 .BR -c
 option in shell scripts.
+.TP
+.BR "-T" " table-options"
+Allows you to specify options to be placed within the <table ...> tag
+for
+.SM HTML3.0
+tabular output. For example
+.BR border
+will give you tables with borders.
 .TP
 .BR "-x"
 Turns on extended row format mode. When enabled each row will have its column
