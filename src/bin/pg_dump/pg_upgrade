@@ -61,7 +61,7 @@ fi
 # then shouldn't be in there anyway
 
 cat $INPUT | awk '	{
-				if (toupper($1) != "COPY" && $2 != "pg_shadow")
+				if (toupper($1) == "COPY" && $2 != "pg_shadow")
 					while (getline $0 > 0 && $0 != "\\.")
 						;
 				else	print $0;
