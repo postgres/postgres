@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.155 2004/01/05 23:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.156 2004/01/07 22:02:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -918,13 +918,18 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
 
 /*
  * Define an "operator implication table" for btree operators ("strategies").
- * The "strategy numbers" are:	(1) <	(2) <=	 (3) =	 (4) >=   (5) >
+ *
+ * The strategy numbers defined by btree indexes (see access/skey.h) are:
+ *		(1) <	(2) <=	 (3) =	 (4) >=   (5) >
+ * and in addition we use (6) to represent <>.  <> is not a btree-indexable
+ * operator, but we assume here that if the equality operator of a btree
+ * opclass has a negator operator, the negator behaves as <> for the opclass.
  *
  * The interpretation of:
  *
  *		test_op = BT_implic_table[given_op-1][target_op-1]
  *
- * where test_op, given_op and target_op are strategy numbers (from 1 to 5)
+ * where test_op, given_op and target_op are strategy numbers (from 1 to 6)
  * of btree operators, is as follows:
  *
  *	 If you know, for some ATTR, that "ATTR given_op CONST1" is true, and you
@@ -933,17 +938,30 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
  *	 then the target expression must be true; if the test returns false, then
  *	 the target expression may be false.
  *
- * An entry where test_op==0 means the implication cannot be determined, i.e.,
- * this test should always be considered false.
+ * An entry where test_op == 0 means the implication cannot be determined,
+ * i.e., this test should always be considered false.
  */
 
+#define BTLT BTLessStrategyNumber
+#define BTLE BTLessEqualStrategyNumber
+#define BTEQ BTEqualStrategyNumber
+#define BTGE BTGreaterEqualStrategyNumber
+#define BTGT BTGreaterStrategyNumber
+#define BTNE 6
+
 static const StrategyNumber
-			BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
-	{4, 4, 0, 0, 0},
-	{5, 4, 0, 0, 0},
-	{5, 4, 3, 2, 1},
-	{0, 0, 0, 2, 1},
-	{0, 0, 0, 2, 2}
+			BT_implic_table[6][6] = {
+/*
+ *			The target operator:
+ *
+ *	   LT   LE     EQ    GE    GT    NE
+ */
+	{BTGE, BTGE,    0,    0,    0, BTGE},		/* LT */
+	{BTGT, BTGE,    0,    0,    0, BTGT},		/* LE */
+	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},		/* EQ */
+	{   0,    0,    0, BTLE, BTLT, BTLT},		/* GE */
+	{   0,    0,    0, BTLE, BTLE, BTLE},		/* GT */
+	{   0,    0,    0,    0,    0, BTEQ}		/* NE */
 };
 
 
@@ -969,12 +987,19 @@ static const StrategyNumber
 static bool
 pred_test_simple_clause(Expr *predicate, Node *clause)
 {
-	Var		   *pred_var,
+	Node	   *leftop,
+			   *rightop;
+	Node	   *pred_var,
 			   *clause_var;
 	Const	   *pred_const,
 			   *clause_const;
+	bool		pred_var_on_left,
+				clause_var_on_left,
+				pred_op_negated;
 	Oid			pred_op,
 				clause_op,
+				pred_op_negator,
+				clause_op_negator,
 				test_op = InvalidOid;
 	Oid			opclass_id;
 	bool		found = false;
@@ -997,40 +1022,89 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	/*
 	 * Can't do anything more unless they are both binary opclauses with a
-	 * Var on the left and a Const on the right.  (XXX someday try to
-	 * commute Const/Var cases?)  Note we don't have to think about binary
-	 * relabeling of the Const node, since that would have been folded right
-	 * into the Const.
+	 * Const on one side, and identical subexpressions on the other sides.
+	 * Note we don't have to think about binary relabeling of the Const node,
+	 * since that would have been folded right into the Const.
+	 *
+	 * If either Const is null, we also fail right away; this assumes that
+	 * the test operator will always be strict.
 	 */
 	if (!is_opclause(predicate))
 		return false;
-	pred_var = (Var *) get_leftop(predicate);
-	pred_const = (Const *) get_rightop(predicate);
+	leftop = get_leftop(predicate);
+	rightop = get_rightop(predicate);
+	if (rightop == NULL)
+		return false;			/* not a binary opclause */
+	if (IsA(rightop, Const))
+	{
+		pred_var = leftop;
+		pred_const = (Const *) rightop;
+		pred_var_on_left = true;
+	}
+	else if (IsA(leftop, Const))
+	{
+		pred_var = rightop;
+		pred_const = (Const *) leftop;
+		pred_var_on_left = false;
+	}
+	else
+		return false;			/* no Const to be found */
+	if (pred_const->constisnull)
+		return false;
 
 	if (!is_opclause(clause))
 		return false;
-	clause_var = (Var *) get_leftop((Expr *) clause);
-	clause_const = (Const *) get_rightop((Expr *) clause);
-
-	if (!IsA(clause_var, Var) ||
-		clause_const == NULL ||
-		!IsA(clause_const, Const) ||
-		!IsA(pred_var, Var) ||
-		pred_const == NULL ||
-		!IsA(pred_const, Const))
+	leftop = get_leftop((Expr *) clause);
+	rightop = get_rightop((Expr *) clause);
+	if (rightop == NULL)
+		return false;			/* not a binary opclause */
+	if (IsA(rightop, Const))
+	{
+		clause_var = leftop;
+		clause_const = (Const *) rightop;
+		clause_var_on_left = true;
+	}
+	else if (IsA(leftop, Const))
+	{
+		clause_var = rightop;
+		clause_const = (Const *) leftop;
+		clause_var_on_left = false;
+	}
+	else
+		return false;			/* no Const to be found */
+	if (clause_const->constisnull)
 		return false;
 
 	/*
-	 * The implication can't be determined unless the predicate and the
-	 * clause refer to the same attribute.
+	 * Check for matching subexpressions on the non-Const sides.  We used to
+	 * only allow a simple Var, but it's about as easy to allow any
+	 * expression.  Remember we already know that the pred expression does
+	 * not contain any non-immutable functions, so identical expressions
+	 * should yield identical results.
 	 */
-	if (clause_var->varno != pred_var->varno ||
-		clause_var->varattno != pred_var->varattno)
+	if (!equal(pred_var, clause_var))
 		return false;
 
-	/* Get the operators for the two clauses we're comparing */
+	/*
+	 * Okay, get the operators in the two clauses we're comparing.
+	 * Commute them if needed so that we can assume the variables are
+	 * on the left.
+	 */
 	pred_op = ((OpExpr *) predicate)->opno;
+	if (!pred_var_on_left)
+	{
+		pred_op = get_commutator(pred_op);
+		if (!OidIsValid(pred_op))
+			return false;
+	}
+
 	clause_op = ((OpExpr *) clause)->opno;
+	if (!clause_var_on_left)
+	{
+		clause_op = get_commutator(clause_op);
+		if (!OidIsValid(clause_op))
+			return false;
+	}
 
 	/*
 	 * Try to find a btree opclass containing the needed operators.
@@ -1052,6 +1126,28 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 								 ObjectIdGetDatum(pred_op),
 								 0, 0, 0);
 
+	/*
+	 * If we couldn't find any opclass containing the pred_op, perhaps it
+	 * is a <> operator.  See if it has a negator that is in an opclass.
+	 */
+	pred_op_negated = false;
+	if (catlist->n_members == 0)
+	{
+		pred_op_negator = get_negator(pred_op);
+		if (OidIsValid(pred_op_negator))
+		{
+			pred_op_negated = true;
+			ReleaseSysCacheList(catlist);
+			catlist = SearchSysCacheList(AMOPOPID, 1,
+										 ObjectIdGetDatum(pred_op_negator),
+										 0, 0, 0);
+		}
+	}
+
+	/* Also may need the clause_op's negator */
+	clause_op_negator = get_negator(clause_op);
+
+	/* Now search the opclasses */
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple	pred_tuple = &catlist->members[i]->tuple;
@@ -1071,6 +1167,14 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		pred_strategy = (StrategyNumber) pred_form->amopstrategy;
 		Assert(pred_strategy >= 1 && pred_strategy <= 5);
 
+		if (pred_op_negated)
+		{
+			/* Only consider negators that are = */
+			if (pred_strategy != BTEqualStrategyNumber)
+				continue;
+			pred_strategy = BTNE;
+		}
+
 		/*
 		 * From the same opclass, find a strategy number for the clause_op,
 		 * if possible
@@ -1087,31 +1191,65 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 			clause_strategy = (StrategyNumber) clause_form->amopstrategy;
 			Assert(clause_strategy >= 1 && clause_strategy <= 5);
 			clause_subtype = clause_form->amopsubtype;
-
-			/* done with clause_tuple */
 			ReleaseSysCache(clause_tuple);
-
-			/*
-			 * Look up the "test" strategy number in the implication table
-			 */
-			test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
-			if (test_strategy == 0)
+		}
+		else if (OidIsValid(clause_op_negator))
+		{
+			clause_tuple = SearchSysCache(AMOPOPID,
+										  ObjectIdGetDatum(clause_op_negator),
+										  ObjectIdGetDatum(opclass_id),
+										  0, 0);
+			if (HeapTupleIsValid(clause_tuple))
 			{
-				/* Can't determine implication using this interpretation */
-				continue;
-			}
+				Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);
 
-			/*
-			 * See if opclass has an operator for the test strategy and the
-			 * clause datatype.
-			 */
+				/* Get the restriction clause operator's strategy/subtype */
+				clause_strategy = (StrategyNumber) clause_form->amopstrategy;
+				Assert(clause_strategy >= 1 && clause_strategy <= 5);
+				clause_subtype = clause_form->amopsubtype;
+				ReleaseSysCache(clause_tuple);
+
+				/* Only consider negators that are = */
+				if (clause_strategy != BTEqualStrategyNumber)
+					continue;
+				clause_strategy = BTNE;
+			}
+			else
+				continue;
+		}
+		else
+			continue;
+
+		/*
+		 * Look up the "test" strategy number in the implication table
+		 */
+		test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
+		if (test_strategy == 0)
+		{
+			/* Can't determine implication using this interpretation */
+			continue;
+		}
+
+		/*
+		 * See if opclass has an operator for the test strategy and the
+		 * clause datatype.
+		 */
+		if (test_strategy == BTNE)
+		{
+			test_op = get_opclass_member(opclass_id, clause_subtype,
+										 BTEqualStrategyNumber);
+			if (OidIsValid(test_op))
+				test_op = get_negator(test_op);
+		}
+		else
+		{
 			test_op = get_opclass_member(opclass_id, clause_subtype,
 										 test_strategy);
-			if (OidIsValid(test_op))
-			{
-				found = true;
-				break;
-			}
+		}
+		if (OidIsValid(test_op))
+		{
+			found = true;
+			break;
 		}
 	}
 
@@ -1143,7 +1281,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	/* And execute it. */
 	test_result = ExecEvalExprSwitchContext(test_exprstate,
-										  GetPerTupleExprContext(estate),
+											GetPerTupleExprContext(estate),
 											&isNull, NULL);
 
 	/* Get back to outer memory context */
