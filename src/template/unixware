@@ -1,6 +1,8 @@
 AROPT=crs
-CFLAGS='-O -K i486,host,inline,loop_unroll,alloca -Dsvr4'
+CFLAGS='-O -K host,inline,loop_unroll,alloca -Dsvr4'
 SHARED_LIB='-K PIC'
 SRCH_INC='/opt/include'
 SRCH_LIB='/opt/lib'
 DLSUFFIX=.so
+CC=cc
+CXX=CC

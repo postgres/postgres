@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.26 2000/10/21 01:08:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.27 2000/10/21 15:50:32 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -98,7 +98,7 @@ su - postgres
       To build on <productname>Windows NT</> or <productname>Windows
       2000</> you need the <productname>Cygwin</> and
       <productname>cygipc</> packages. See the file
-      <filename>doc/INSTALL_WIN</> for details.
+      <filename>doc/FAQ_MSWIN</> for details.
      </para>
     </listitem>
    </itemizedlist>
