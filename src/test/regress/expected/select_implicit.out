@@ -176,12 +176,7 @@ QUERY: SELECT a%2, count(a) FROM test_missing_target GROUP BY test_missing_targe
        1|    5
 (2 rows)
 
-QUERY: /*
-	NOTE: as of 1998-08-01 a bug was detected unrelated to this feature which
-	requires the aggragate function argument to be the same as some non-agragate
-	in the target list.   (i.e. count(*) and count(b) crash the backend.)
-*/
-SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
+QUERY: SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
 count
 -----
     2
