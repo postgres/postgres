@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.9 1996/10/09 20:33:53 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.10 1996/10/11 03:06:28 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -142,7 +142,7 @@ ENFORCE_ALIGNMENT= true
 
 # turn this on if you prefer European style dates instead of American
 # style dates
-EUROPEAN_DATES = 0
+#EUROPEAN_DATES = 0
 
 # Comment out PROFILE to disable profiling.
 #
