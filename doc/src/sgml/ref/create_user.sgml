@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.23 2002/02/27 21:14:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.24 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -34,10 +34,9 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 
   <para>
    <command>CREATE USER</command> will add a new user to an instance
-   of <productname>PostgreSQL</productname>. Refer to the
-   <citetitle>Administrator's Guide</citetitle> for information about
-   managing users and authentication.  You must be a database
-   superuser to use this command.
+   of <productname>PostgreSQL</productname>. Refer to the &cite-admin;
+   for information about managing users and authentication.  You must
+   be a database superuser to use this command.
   </para>
 
   <refsect2>
@@ -102,12 +101,11 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
        </para>
 
        <para>
-        See the chapter on client authentication in the
-        <citetitle>Administrator's Guide</citetitle> for details on
-        how to set up authentication mechanisms.  Note that older
-        clients may lack support for the MD5 authentication mechanism
-        that is needed to work with passwords that are stored
-        encrypted.
+        See the chapter on client authentication in the &cite-admin;
+        for details on how to set up authentication mechanisms.  Note
+        that older clients may lack support for the MD5 authentication
+        mechanism that is needed to work with passwords that are
+        stored encrypted.
        </para>
       </listitem>
      </varlistentry>

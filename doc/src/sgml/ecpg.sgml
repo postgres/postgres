@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.40 2002/11/15 03:11:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.41 2003/01/19 00:13:28 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -879,7 +879,7 @@ ECPG = ecpg
 FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></> IN|FROM <replaceable>cursor</replaceable>
 </synopsis>
       <indexterm><primary>Oracle</></>
-      <application>Oracle</application>, however, does not use the
+      <productname>Oracle</productname>, however, does not use the
       keywords <literal>IN</literal> or <literal>FROM</literal>. This
       feature cannot be added since it would create parsing conflicts.
      </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.54 2003/01/06 18:53:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.55 2003/01/19 00:13:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -705,7 +705,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <member><xref linkend="app-pg-dumpall"></member>
    <member><xref linkend="app-pgrestore"></member>
    <member><xref linkend="app-psql"></member>
-   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+   <member>&cite-admin;</member>
   </simplelist>
  </refsect1>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.11 2003/01/11 00:00:03 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.12 2003/01/19 00:13:31 momjian Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <docinfo>
   <date>2000-11-24</date>
@@ -109,9 +109,8 @@ SET SESSION CHARACTERISTICS AS TRANSACTION
 <programlisting>
 SET default_transaction_isolation = '<replaceable>value</replaceable>'
 </programlisting>
-   and in the
-   configuration file.  Consult the <citetitle>Administrator's
-   Guide</citetitle> for more information.
+   and in the configuration file.  Consult the &cite-admin; for more
+   information.
   </para>
  </refsect1>
 
@@ -127,8 +126,7 @@ SET default_transaction_isolation = '<replaceable>value</replaceable>'
     not provide the isolation levels <option>READ UNCOMMITTED</option> 
     and <option>REPEATABLE READ</option>. Because of multiversion
     concurrency control, the <option>SERIALIZABLE</option> level is not
-    truly serializable. See the <citetitle>User's Guide</citetitle> for
-    details.
+    truly serializable. See the &cite-user; for details.
    </para>
 
    <para>

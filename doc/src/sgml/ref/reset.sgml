@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.17 2002/10/13 16:55:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.18 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -64,7 +64,7 @@ SET <replaceable class="parameter">variable</replaceable> TO DEFAULT
    current session.  The actual source of this value might be a
    compiled-in default, the postmaster's configuration file or command-line
    switches, or per-database or per-user default settings.  See the
-   <citetitle>Administrator's Guide</citetitle> for details.
+   &cite-admin; for details.
   </para>
 
   <para>

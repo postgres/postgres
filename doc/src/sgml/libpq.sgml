@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.105 2003/01/07 04:25:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.106 2003/01/19 00:13:28 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -952,7 +952,7 @@ strings overlap.
    escape a character, it is converted into the three digit octal number
    equal to the decimal <acronym>ASCII</acronym> value, and preceded by
    two backslashes. The single quote (') and backslash (\) characters have
-   special alternate escape sequences. See the <citetitle>User's Guide</citetitle>
+   special alternate escape sequences. See the &cite-user;
    for more information. <function>PQescapeBytea
    </function> performs this operation, escaping only the minimally
    required characters.

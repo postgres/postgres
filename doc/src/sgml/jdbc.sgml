@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.41 2002/11/15 03:11:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.42 2003/01/19 00:13:28 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -124,9 +124,9 @@ java Finder
    <para>
     Also, the client authentication setup in the
     <filename>pg_hba.conf</filename> file may need to be configured.
-    Refer to the <citetitle>Administrator's Guide</citetitle> for
-    details.  The <acronym>JDBC</acronym> Driver supports the trust,
-    ident, password, md5, and crypt authentication methods.
+    Refer to the &cite-admin; for details.  The
+    <acronym>JDBC</acronym> Driver supports the trust, ident,
+    password, md5, and crypt authentication methods.
    </para>
   </sect2>
  </sect1>

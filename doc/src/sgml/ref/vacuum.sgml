@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.27 2002/10/09 16:27:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.28 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -206,7 +206,7 @@ INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    intended usage is in connection with preparation of user-defined template
    databases, or other databases that are completely read-only and will not
    receive routine maintenance <command>VACUUM</> operations.
-   See the <citetitle>Administrator's Guide</> for details.
+   See the &cite-admin; for details.
   </para>
 
   <refsect2 id="R2-SQL-VACUUM-3">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.22 2002/10/21 04:33:39 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.23 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -271,9 +271,8 @@ CREATE AGGREGATE
    Usage
   </title>
   <para>
-   Refer to the chapter on aggregate functions
-   in the <citetitle>PostgreSQL Programmer's Guide</citetitle> for
-   complete examples of usage.
+   Refer to the chapter on aggregate functions in the
+   &cite-programmer; for complete examples of usage.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.17 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.18 2003/01/19 00:13:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -368,7 +368,7 @@ Command line was:
   <title>See Also</title>
 
   <para>
-   <xref linkend="app-postmaster">, <citetitle>PostgreSQL Administrator's Guide</citetitle>
+   <xref linkend="app-postmaster">, &cite-admin;
   </para>
  </refsect1>
 

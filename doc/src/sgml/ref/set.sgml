@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.71 2003/01/12 01:33:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.72 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -80,11 +80,11 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   <para>
    The <command>SET</command> command changes run-time configuration
    parameters.  Many of the run-time parameters listed in the
-   <citetitle>Administrator's Guide</citetitle> can be changed on-the-fly
-   with <command>SET</command>.  (But some require superuser privileges
-   to change, and others cannot be changed after server or session start.)
-   Note that <command>SET</command> only affects the value used by the
-   current session.
+   &cite-admin; can be changed on-the-fly with <command>SET</command>.
+   (But some require superuser privileges to change, and others cannot
+   be changed after server or session start.)  Note that
+   <command>SET</command> only affects the value used by the current
+   session.
   </para>
 
   <para>
@@ -109,10 +109,9 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   </para>
 
   <para>
-   Even with <literal>autocommit</> set to <literal>off</>, <command>SET</>
+   Even with <varname>autocommit</> set to <literal>off</>, <command>SET</>
    does not start a new transaction block. See the
-   <literal>autocommit</> section of the <citetitle>Administrator's
-   Guide</citetitle> for details.
+   <varname>autocommit</> section of the &cite-admin; for details.
   </para>
 
   <para>
@@ -517,8 +516,8 @@ SELECT CURRENT_TIMESTAMP AS today;
 
   <para>
     The function <function>set_config</function> provides the equivalent
-    capability. See <citetitle>Miscellaneous Functions</citetitle> in the
-    <citetitle>PostgreSQL User's Guide</citetitle>.
+    capability. See <citetitle>Miscellaneous Functions</citetitle> in
+    the &cite-user;.
   </para>
  </refsect1>
 </refentry>

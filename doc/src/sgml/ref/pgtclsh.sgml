@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtclsh.sgml,v 1.5 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtclsh.sgml,v 1.6 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -55,7 +55,7 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-pgtksh"></member>
    <member>
-    <citetitle>PostgreSQL Programmer's Guide</citetitle> (description of <filename>libpgtcl</filename>)
+    &cite-programmer; (description of <filename>libpgtcl</filename>)
    </member>
    <member>
     <citerefentry><refentrytitle>tclsh</refentrytitle> <manvolnum>1</manvolnum></citerefentry>

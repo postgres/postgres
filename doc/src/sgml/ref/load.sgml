@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.14 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.15 2003/01/19 00:13:29 momjian Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -37,8 +37,8 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
    The file name is specified in the same way as for shared library
    names in <xref linkend="sql-createfunction" endterm="sql-createfunction-title">; in particular, one
    may rely on a search path and automatic addition of the system's standard
-   shared library file name extension.  See the
-   <citetitle>Programmer's Guide</citetitle> for more detail.
+   shared library file name extension.  See the &cite-programmer; for
+   more information on this topic.
   </para>
  </refsect1>
 
@@ -57,7 +57,7 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
 
   <para>
    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">,
-   <citetitle>PostgreSQL Programmer's Guide</citetitle>
+   &cite-programmer;
   </para>
  </refsect1>
 </refentry>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.34 2003/01/06 18:53:24 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.35 2003/01/19 00:13:31 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -697,7 +697,7 @@ CREATE DATABASE foo WITH TEMPLATE = template0;
    <member><xref linkend="app-pgdump"></member>
    <member><xref linkend="app-pg-dumpall"></member>
    <member><xref linkend="app-psql"></member>
-   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+   <member>&cite-admin;</member>
   </simplelist>
  </refsect1>
 </refentry>

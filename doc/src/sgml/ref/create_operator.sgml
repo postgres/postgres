@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.32 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.33 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -436,8 +436,7 @@ MYBOXES.description === box '((0,0), (1,1))'
     Notes
    </title>
    <para>
-    Refer to the chapter on operators in the
-    <citetitle>PostgreSQL User's Guide</citetitle>
+    Refer to the chapter on operators in the &cite-user;
     for further information.
     Refer to <command>DROP OPERATOR</command> to delete
     user-defined operators from a database.

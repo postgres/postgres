@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.127 2002/12/11 22:27:26 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.128 2003/01/19 00:13:28 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -656,8 +656,8 @@ JAVACMD=$JAVA_HOME/bin/java
        internal header files and the server header files are installed
        into private directories under
        <varname>includedir</varname>.
-       See the <citetitle>Programmer's Guide</citetitle> for
-       information about how to get at the header files for each interface.
+       See the &cite-programmer; for information about how to get at
+       the header files for each interface.
        Finally, a private subdirectory will also be created, if appropriate,
        under <varname>libdir</varname> for dynamically loadable modules.       
       </para>
@@ -1311,8 +1311,7 @@ export MANPATH
 
   <para>
    The following is a quick summary of how to get <productname>PostgreSQL</> up and
-   running once installed. The <citetitle>Administrator's Guide</>
-   contains more information.
+   running once installed. The &cite-admin; contains more information.
   </para>
 
   <procedure>
@@ -1418,12 +1417,11 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      </para>
 
      <para>
-      The <citetitle>Tutorial</> should be your first reading if you
-      are completely new to <acronym>SQL</> databases.
-      If you are familiar with database concepts then you want to
-      proceed with the <citetitle>Administrator's Guide</citetitle>,
-      which contains information about how to set up the database
-      server, database users, and authentication.
+      The &cite-tutorial; should be your first reading if you are
+      completely new to <acronym>SQL</> databases.  If you are
+      familiar with database concepts then you want to proceed with
+      the &cite-admin;, which contains information about how to set up
+      the database server, database users, and authentication.
      </para>
     </listitem>
 
@@ -1431,8 +1429,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      <para>
       Usually, you will want to modify your computer so that it will
       automatically start the database server whenever it boots. Some
-      suggestions for this are in the <citetitle>Administrator's
-      Guide</citetitle>.
+      suggestions for this are in the &cite-admin;.
      </para>
     </listitem>
 
@@ -1441,7 +1438,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       Run the regression tests against the installed server (using the
       sequential test method). If you didn't run the tests before
       installation, you should definitely do it now. This is also
-      explained in the <citetitle>Administrator's Guide</citetitle>.
+      explained in the &cite-admin;.
      </para>
     </listitem>
 

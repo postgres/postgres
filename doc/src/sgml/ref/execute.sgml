@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.1 2002/08/27 04:55:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.2 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>2002-08-12</date>
   </refsynopsisdivinfo>
   <synopsis>
-   EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ]
+   EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ] [ INTO [ TEMPORARY | TEMP ] <replaceable class="PARAMETER">table</replaceable> ]
   </synopsis>
 
   <refsect2 id="R2-SQL-EXECUTE-1">
@@ -42,16 +42,28 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="PARAMETER">parameter</replaceable></term>
       <listitem>
        <para>
-		The actual value of a parameter to the prepared query.
-		This must be an expression yielding a value of a type
-		compatible with
-		the data-type specified for this parameter position in the
-		<command>PREPARE</command> statement that created the prepared
-		query.
+		The actual value of a parameter to the prepared query.  This
+		must be an expression yielding a value of a type compatible
+		with the data-type specified for this parameter position in
+		the <command>PREPARE</command> statement that created the
+		prepared query.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <listitem>
+       <para>
+        The name of the table in which to store the results of
+        executing the query (if it is a <command>SELECT</command>). If
+        no table is specified, the results are returned to the client
+        (as normal).
        </para>
       </listitem>
      </varlistentry>
@@ -83,6 +95,13 @@ PostgreSQL documentation
    error is raised. Note that (unlike functions) prepared queries are
    not overloaded based on the type or number of their parameters: the
    name of a prepared query must be unique within a database session.
+  </para>
+
+  <para>
+   Like <command>SELECT INTO</command>, <command>EXECUTE</command> can
+   be used to store the results of executing the query in a table by
+   specifying an INTO clause. For more information on this behabior,
+   consult the reference for <xref linkend="sql-selectinto">.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.23 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.24 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -253,7 +253,7 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-postgres"></member>
    <member><xref linkend="app-postmaster"></member>
-   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+   <member>&cite-admin;</member>
   </simplelist>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.29 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.30 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -37,9 +37,8 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
   <para>
    <command>CREATE LANGUAGE</command> effectively associates the
    language name with a call handler that is responsible for executing
-   functions written in the language.  Refer to the
-   <citetitle>Programmer's Guide</citetitle> for more information
-   about language call handlers.
+   functions written in the language.  Refer to the &cite-programmer;
+   for more information about language call handlers.
   </para>
 
   <para>
@@ -301,7 +300,7 @@ CREATE LANGUAGE plsample
     <member><xref linkend="sql-droplanguage" endterm="sql-droplanguage-title"></member>
     <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
     <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
-    <member><citetitle>PostgreSQL Programmer's Guide</citetitle></member>
+    <member>&cite-programmer;</member>
    </simplelist>
   </para>
  </refsect1>

@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.19 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.20 2003/01/19 00:13:28 momjian Exp $
 -->
 
 <sect1 id="history">
- <title>A Short History of <productname>PostgreSQL</productname></title>
+ <title>A Brief History of <productname>PostgreSQL</productname></title>
 
  <para>
   The object-relational database management system now known as 
@@ -54,7 +54,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.19 2002/01/07 02:29:12 pet
    released  in  June 1990 with the new rule system.  
    Version 3 appeared in 1991 and added support for  multiple
    storage  managers,  an  improved  query executor, and a
-   rewritten rewrite rule  system.   For  the  most  part, subsequent
+   rewritten rule  system.   For  the  most  part, subsequent
    releases  until <productname>Postgres95</productname> (see below)
    focused on portability and reliability.
   </para>

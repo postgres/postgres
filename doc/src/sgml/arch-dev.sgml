@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.16 2001/11/21 05:53:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.17 2003/01/19 00:13:28 momjian Exp $
 -->
 
  <chapter id="overview">
@@ -478,8 +478,8 @@ current context are performed.
 
    <para>
     For information on the syntax and creation of rules in the
-    <productname>PostgreSQL</productname> system refer to
-    <citetitle>The PostgreSQL User's Guide</citetitle>.
+    <productname>PostgreSQL</productname> system refer to the
+    &cite-user;.
    </para>
 
    <sect2>

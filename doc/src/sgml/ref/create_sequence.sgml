@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.29 2002/11/10 00:10:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.30 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -256,7 +256,7 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
    <function>currval</function> and
    <function>setval</function>
    to operate on the sequence.  These functions are documented in
-   the <citetitle>User's Guide</citetitle>.
+   the &cite-user;.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.21 2002/11/15 03:11:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.22 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -87,9 +87,10 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
 
    <note>
     <para>
-     Prior to <productname>PostgreSQL</productname> 7.3, the query plan
-     was emitted in the form of a NOTICE message.  Now it appears as a
-     query result (formatted like a table with a single text column).
+     Prior to <productname>PostgreSQL</productname> 7.3, the query
+     plan was emitted in the form of a <literal>NOTICE</literal>
+     message.  Now it appears as a query result (formatted like a
+     table with a single text column).
     </para>
    </note>
   </refsect2>
@@ -127,12 +128,26 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
    costs to estimate which plan is really the cheapest.
   </para>
 
+  <note>
+   <para>
+    In order to allow the <productname>PostgreSQL</productname> query
+    planner to make reasonably informed decisions when optimizing
+    queries, the <command>ANALYZE</command> statement should be used
+    to record statistics about the distribution of data within the
+    table. If you have not done this (or the statistical distribution
+    of the data in the table has changed significantly since the last
+    time <command>ANALYZE</command> was run), the estimated costs and
+    the resulting query plan displayed by <command>EXPLAIN</command>
+    are unlikely to conform to the real properties of the query.
+   </para>
+  </note>
+
   <para>
    The ANALYZE option causes the query to be actually executed, not only
    planned.  The total elapsed time expended within each plan node (in
    milliseconds) and total number of rows it actually returned are added to
    the display.  This is useful for seeing whether the planner's estimates
-   are close to reality.
+   are close to the actual performance of the query.
   </para>
 
   <caution>
@@ -171,8 +186,7 @@ ROLLBACK;
    <para>
     There is only sparse documentation on the optimizer's use of cost
     information in <productname>PostgreSQL</productname>.
-    Refer to the <citetitle>User's Guide</citetitle> and
-    <citetitle>Programmer's Guide</citetitle> for more information.
+    Refer to the &cite-user; and &cite-programmer; for more information.
    </para>
   </refsect2>
  </refsect1>
@@ -233,7 +247,12 @@ EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
   <para>
    Note that the specific numbers shown, and even the selected query
    strategy, may vary between <productname>PostgreSQL</productname>
-   releases due to planner improvements.
+   releases due to planner improvements. In addition, the algorithm
+   used by <command>ANALYZE</command> to generate statistics is not
+   completely deterministic; therefore, it is possible (although not
+   likely) for cost estimations to change between runs of
+   <command>ANALYZE</command>, even if the actual distribution of data
+   in the table has not changed.
   </para>
  </refsect1>
 

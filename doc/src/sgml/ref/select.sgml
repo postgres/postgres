@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.63 2002/10/24 21:19:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.64 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -291,19 +291,17 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
   </para>
 
   <para>
-   <command>DISTINCT</command> will eliminate duplicate rows from the
-   result.
-   <command>ALL</command> (the default) will return all candidate rows,
-   including duplicates.
+   DISTINCT will eliminate duplicate rows from the result.  ALL (the
+   default) will return all candidate rows, including duplicates.
   </para>
 
   <para>
-   <command>DISTINCT ON</command> eliminates rows that match on all the
+   DISTINCT ON eliminates rows that match on all the
    specified expressions, keeping only the first row of each set of
    duplicates.  The DISTINCT ON expressions are interpreted using the
    same rules as for ORDER BY items; see below.
    Note that the <quote>first row</quote> of each set is unpredictable
-   unless <command>ORDER BY</command> is used to ensure that the desired
+   unless ORDER BY is used to ensure that the desired
    row appears first.  For example,
    <programlisting>
         SELECT DISTINCT ON (location) location, time, report
@@ -336,9 +334,9 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
   </para>
    
   <para>
-   SELECT queries can be combined using UNION, INTERSECT, and EXCEPT
-   operators.  Use parentheses if necessary to determine the ordering
-   of these operators.
+   <command>SELECT</command> queries can be combined using UNION,
+   INTERSECT, and EXCEPT operators.  Use parentheses if necessary to
+   determine the ordering of these operators.
   </para>
    
   <para>
@@ -368,8 +366,8 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
   </para>
 
   <para>
-   The FOR UPDATE clause causes the SELECT statement to lock the selected
-   rows against concurrent updates.
+   The FOR UPDATE clause causes the <command>SELECT</command>
+   statement to lock the selected rows against concurrent updates.
   </para>
    
   <para>
@@ -387,11 +385,12 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    </title>
 
    <para>
-    The FROM clause specifies one or more source tables for the SELECT.
-    If multiple sources are specified, the result is conceptually the
-    Cartesian product of all the rows in all the sources --- but usually
-    qualification conditions are added to restrict the returned rows to
-    a small subset of the Cartesian product.
+    The FROM clause specifies one or more source tables for the
+    <command>SELECT</command>.  If multiple sources are specified, the
+    result is conceptually the Cartesian product of all the rows in
+    all the sources --- but usually qualification conditions are added
+    to restrict the returned rows to a small subset of the Cartesian
+    product.
    </para>
 
    <para>
@@ -407,10 +406,11 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    </para>
 
    <para>
-    A FROM item can also be a parenthesized sub-SELECT (note that an
-    alias clause is required for a sub-SELECT!).  This is an extremely
-    handy feature since it's the only way to get multiple levels of
-    grouping, aggregation, or sorting in a single query.
+    A FROM item can also be a parenthesized
+    sub-<command>SELECT</command> (note that an alias clause is
+    required for a sub-<command>SELECT</command>!).  This is an
+    extremely useful feature since it's the only way to get multiple
+    levels of grouping, aggregation, or sorting in a single query.
    </para>
 
    <para>
@@ -542,23 +542,25 @@ GROUP BY <replaceable class="PARAMETER">expression</replaceable> [, ...]
    </para>
 
    <para>
-    GROUP BY will condense into a single row all selected rows that share the
-    same values for the grouped columns.  Aggregate functions, if any,
-    are computed across all rows making up each group, producing a
-    separate value for each group (whereas without GROUP BY, an
-    aggregate produces a single value computed across all the selected
-    rows).  When GROUP BY is present, it is not valid for the SELECT
-    output expression(s) to refer to
+    GROUP BY will condense into a single row all selected rows that
+    share the same values for the grouped columns.  Aggregate
+    functions, if any, are computed across all rows making up each
+    group, producing a separate value for each group (whereas without
+    GROUP BY, an aggregate produces a single value computed across all
+    the selected rows).  When GROUP BY is present, it is not valid for
+    the <command>SELECT</command> output expression(s) to refer to
     ungrouped columns except within aggregate functions, since there
-    would be more than one possible value to return for an ungrouped column.
+    would be more than one possible value to return for an ungrouped
+    column.
    </para>
 
    <para>
-    A GROUP BY item can be an input column name, or the name or ordinal
-    number of an output column (SELECT expression), or it can be an arbitrary
-    expression formed from input-column values.  In case of ambiguity, a GROUP
-    BY name will 
-    be interpreted as an input-column name rather than an output column name.
+    A GROUP BY item can be an input column name, or the name or
+    ordinal number of an output column (<command>SELECT</command>
+    expression), or it can be an arbitrary expression formed from
+    input-column values.  In case of ambiguity, a GROUP BY name will
+    be interpreted as an input-column name rather than an output
+    column name.
    </para>
   </refsect2>
 
@@ -610,10 +612,11 @@ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | 
     </synopsis></para>
     
    <para>
-    An ORDER BY item can be the name or ordinal
-    number of an output column (SELECT expression), or it can be an arbitrary
-    expression formed from input-column values.  In case of ambiguity, an
-    ORDER BY name will be interpreted as an output-column name.
+    An ORDER BY item can be the name or ordinal number of an output
+    column (<command>SELECT</command> expression), or it can be an
+    arbitrary expression formed from input-column values.  In case of
+    ambiguity, an ORDER BY name will be interpreted as an
+    output-column name.
    </para>
    <para>
     The ordinal number refers to the ordinal (left-to-right) position
@@ -697,10 +700,10 @@ SELECT name FROM distributors ORDER BY code;
     
    <para>
     The UNION operator computes the collection (set union) of the rows
-    returned by the queries involved.
-    The two SELECT statements that represent the direct operands of the UNION must
-    produce the same number of columns, and corresponding columns must be
-    of compatible data types.
+    returned by the queries involved.  The two
+    <command>SELECT</command> statements that represent the direct
+    operands of the UNION must produce the same number of columns, and
+    corresponding columns must be of compatible data types.
    </para>
     
    <para>
@@ -710,8 +713,9 @@ SELECT name FROM distributors ORDER BY code;
    </para>
     
    <para>
-    Multiple UNION operators in the same SELECT statement are
-    evaluated left to right, unless otherwise indicated by parentheses.
+    Multiple UNION operators in the same <command>SELECT</command>
+    statement are evaluated left to right, unless otherwise indicated
+    by parentheses.
    </para>
     
    <para>
@@ -864,22 +868,26 @@ SELECT name FROM distributors ORDER BY code;
    </para>
 
    <para>
-    FOR UPDATE causes the rows retrieved by the query to be locked as though
-    for update.  This prevents them from being modified or deleted by other
-    transactions until the current transaction ends; that is, other
-    transactions that attempt UPDATE, DELETE, or SELECT FOR UPDATE of these
-    rows will be blocked until the current transaction ends.  Also, if an
-    UPDATE, DELETE, or SELECT FOR UPDATE from another transaction has already
-    locked a selected row or rows, SELECT FOR UPDATE will wait for the other
-    transaction to complete, and will then lock and return the updated row
-    (or no row, if the row was deleted).  For further discussion see the
-    concurrency chapter of the <citetitle>User's Guide</citetitle>.
+    FOR UPDATE causes the rows retrieved by the query to be locked as
+    though for update.  This prevents them from being modified or
+    deleted by other transactions until the current transaction ends;
+    that is, other transactions that attempt
+    <command>UPDATE</command>, <command>DELETE</command>, or
+    <command>SELECT FOR UPDATE</command> of these rows will be blocked
+    until the current transaction ends.  Also, if an
+    <command>UPDATE</command>, <command>DELETE</command>, or
+    <command>SELECT FOR UPDATE</command> from another transaction has
+    already locked a selected row or rows, <command>SELECT FOR
+    UPDATE</command> will wait for the other transaction to complete,
+    and will then lock and return the updated row (or no row, if the
+    row was deleted).  For further discussion see the concurrency
+    chapter of the &cite-user;.
    </para>
 
    <para>
-    If specific tables are named in FOR UPDATE, then only rows coming from
-    those tables are locked; any other tables used in the SELECT are simply
-    read as usual.
+    If specific tables are named in FOR UPDATE, then only rows coming
+    from those tables are locked; any other tables used in the
+    <command>SELECT</command> are simply read as usual.
    </para>
 
    <para>
@@ -1097,9 +1105,9 @@ SELECT 2+2;
         4
   </programlisting>
 
-Some other SQL databases cannot do this except by introducing a dummy one-row
-table to do the select from.  A less obvious use is to abbreviate a
-normal select from one or more tables:
+Some other <acronym>SQL</acronym> databases cannot do this except by
+introducing a dummy one-row table to do the select from.  A less
+obvious use is to abbreviate a normal select from one or more tables:
 
   <programlisting>
 SELECT distributors.* WHERE distributors.name = 'Westward';

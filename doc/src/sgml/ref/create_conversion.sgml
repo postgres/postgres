@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.5 2002/11/02 02:33:03 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.6 2003/01/19 00:13:29 momjian Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -158,7 +158,7 @@ CREATE CONVERSION myconv FOR 'UNICODE' TO 'LATIN1' FROM myfunc;
   <para>
    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">,
    <xref linkend="sql-dropconversion" endterm="sql-dropconversion-title">,
-   <citetitle>PostgreSQL Programmer's Guide</citetitle>
+   &cite-programmer;
   </para>
  </refsect1>
 

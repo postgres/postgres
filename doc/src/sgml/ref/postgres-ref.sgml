@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.29 2002/10/23 23:33:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.30 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -123,11 +123,11 @@ PostgreSQL documentation
 
    <para>
     You can avoid having to type these options by setting up a
-    configuration file.  See the <citetitle>Administrator's
-    Guide</citetitle> for details.  Some (safe) options can also be
-    set from the connecting client in an application-dependent way.
-    For example, if the environment variable <envar>PGOPTIONS</envar>
-    is set, then <application>libpq</>-based clients will pass that string to the
+    configuration file.  See the &cite-admin; for details.  Some
+    (safe) options can also be set from the connecting client in an
+    application-dependent way.  For example, if the environment
+    variable <envar>PGOPTIONS</envar> is set, then
+    <application>libpq</>-based clients will pass that string to the
     server, which will interpret it as
     <application>postgres</application> command-line options.
    </para>
@@ -153,8 +153,7 @@ PostgreSQL documentation
 	means that the <quote>day before month</quote> (rather than
 	month before day) rule is used to interpret ambiguous date
 	input, and that the day is printed before the month in certain
-	date output formats.  See the <citetitle>PostgreSQL User's
-	Guide</citetitle> for more information.
+	date output formats.  See the &cite-user; for more information.
        </para>
       </listitem>
      </varlistentry>

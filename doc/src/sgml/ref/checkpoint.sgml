@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.6 2002/04/21 19:02:39 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.7 2003/01/19 00:13:29 momjian Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -34,8 +34,7 @@ CHECKPOINT
    A checkpoint is a point in the transaction log sequence at which
    all data files have been updated to reflect the information in the
    log.  All data files will be flushed to disk.  Refer to the
-   <citetitle>PostgreSQL Administrator's Guide</citetitle> for more
-   information about the WAL system.
+   &cite-admin; for more information about the WAL system.
   </para>
 
   <para>
@@ -48,7 +47,7 @@ CHECKPOINT
   <title>See Also</title>
 
   <para>
-   <citetitle>PostgreSQL Administrator's Guide</citetitle>
+   &cite-admin;
   </para>
  </refsect1>
 
@@ -61,3 +60,20 @@ CHECKPOINT
   </para>
  </refsect1>
 </refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

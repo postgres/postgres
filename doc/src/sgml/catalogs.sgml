@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.64 2002/12/17 17:41:30 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.65 2003/01/19 00:13:28 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -288,9 +288,9 @@
 
   <para>
    New aggregate functions are registered with the <command>CREATE
-   AGGREGATE</command> command.  See the <citetitle>Programmer's
-   Guide</citetitle> for more information about writing aggregate
-   functions and the meaning of the transition functions, etc.
+   AGGREGATE</command> command.  See the &cite-programmer; for more
+   information about writing aggregate functions and the meaning of
+   the transition functions, etc.
   </para>
 
  </sect1>
@@ -1446,8 +1446,8 @@
    The <structname>pg_database</structname> catalog stores information
    about the available databases.  Databases are created with the
    <command>CREATE DATABASE</command> command.  Consult the
-   <citetitle>Administrator's Guide</citetitle> for details about the
-   meaning of some of the parameters.
+   &cite-admin; for details about the meaning of some of the
+   parameters.
   </para>
 
   <para>
@@ -1791,8 +1791,8 @@
   <para>
    This catalog defines groups and stores what users belong to what
    groups.  Groups are created with the <command>CREATE
-   GROUP</command> command.  Consult the <citetitle>Administrator's
-   Guide</citetitle> for information about user permission management.
+   GROUP</command> command.  Consult the &cite-admin; for information
+   about user permission management.
   </para>
 
   <para>
@@ -2022,8 +2022,7 @@
    <structname>pg_language</structname> registers call interfaces or
    languages in which you can write functions or stored procedures.
    See under <command>CREATE LANGUAGE</command> and in the
-   <citetitle>Programmer's Guide</citetitle> for more information
-   about language handlers.
+   &cite-programmer; for more information about language handlers.
   </para>
 
   <table>
@@ -2298,8 +2297,7 @@
   </para>
 
   <para>
-   Operator classes are described at length in the
-   <citetitle>Programmer's Guide</citetitle>.
+   Operator classes are described at length in the &cite-programmer;.
   </para>
 
   <table>
@@ -2387,9 +2385,8 @@
   <title>pg_operator</title>
 
   <para>
-   See <command>CREATE OPERATOR</command> and the
-   <citetitle>Programmer's Guide</citetitle> for details on these
-   operator parameters.
+   See <command>CREATE OPERATOR</command> and the &cite-programmer;
+   for details on these operator parameters.
   </para>
 
   <table>
@@ -2559,8 +2556,8 @@
   <para>
    This catalog stores information about functions (or procedures).
    The description of <command>CREATE FUNCTION</command> and the
-   <citetitle>Programmer's Guide</citetitle> contain more information
-   about the meaning of some fields.
+   &cite-programmer; contain more information about the meaning of
+   some fields.
   </para>
 
   <para>
@@ -2832,8 +2829,8 @@
   </para>
 
   <para>
-   The <citetitle>Administrator's Guide</citetitle> contains detailed
-   information about user and permission management.
+   The &cite-admin; contains detailed information about user and
+   permission management.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.17 2002/11/15 03:11:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.18 2003/01/19 00:13:28 momjian Exp $
 -->
 
 <sect1 id="resources">
@@ -71,8 +71,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.17 2002/11/15 03:11:16 momjia
       Information for <productname>PostgreSQL</productname>
       developers.  This is intended for those who are contributing to
       the <productname>PostgreSQL</productname> project; application
-      development information appears in the <citetitle>Programmer's
-      Guide</citetitle>.
+      development information appears in the &cite-programmer;.
      </para>
     </listitem>
    </varlistentry>
@@ -88,8 +87,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.17 2002/11/15 03:11:16 momjia
     <term>man pages</term>
     <listitem>
      <para>
-      The <citetitle>Reference Manual</citetitle>'s pages in the
-      traditional Unix man format.  There is no difference in content.
+      The &cite-reference;'s pages in the traditional Unix man
+      format. There is no difference in content.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.13 2003/01/15 16:40:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.14 2003/01/19 00:13:28 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -230,7 +230,7 @@ END;
    <para>
     Developing in <application>PL/pgSQL</application> is pretty
     straight forward, especially if you have developed in other
-    database procedural languages, such as Oracle's
+    database procedural languages, such as <productname>Oracle</>'s
     <application>PL/SQL</application>.  One good way to develop in
     <application>PL/pgSQL</> is to simply use the text editor of your
     choice to create your functions, and in another window, use
@@ -1155,84 +1155,109 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
     <title>Returning from a function</title>
 
     <para>
+     There are two commands available that allow you to return data
+     from a function: <command>RETURN</command> and <command>RETURN
+     NEXT</command>.
+    </para>
+
+    <sect3>
+     <title><command>RETURN</></title>
+
+     <para>
 <synopsis>
 RETURN <replaceable>expression</replaceable>;
 </synopsis>
 
-     <command>RETURN</command> with an expression is used to return
-     from a <application>PL/pgSQL</> function that does not return a
-     set.  The function terminates and the value of
-     <replaceable>expression</replaceable> is returned to the caller.
-    </para>
+      <command>RETURN</command> with an expression is used to return
+      from a <application>PL/pgSQL</> function that does not return a
+      set.  The function terminates and the value of
+      <replaceable>expression</replaceable> is returned to the caller.
+     </para>
 
-    <para>
-     To return a composite (row) value, you must write a record or row
-     variable as the <replaceable>expression</replaceable>.  When
-     returning a scalar type, any expression can be used.
-     The expression's result will be automatically cast into the
-     function's return type as described for assignments.
-     (If you have declared the function to return <type>void</>,
-     then the expression can be omitted, and will be ignored in any case.)
-    </para>
+     <para>
+      To return a composite (row) value, you must write a record or row
+      variable as the <replaceable>expression</replaceable>.  When
+      returning a scalar type, any expression can be used.
+      The expression's result will be automatically cast into the
+      function's return type as described for assignments.
+     </para>
 
-    <para>
-     The return value of a function cannot be left undefined. If
-     control reaches the end of the top-level block of the function
-     without hitting a <command>RETURN</command> statement, a run-time
-     error will occur.
-    </para>
+     <para>
+      The return value of a function cannot be left undefined. If
+      control reaches the end of the top-level block of the function
+      without hitting a <command>RETURN</command> statement, a run-time
+      error will occur. Note that if you have declared the function to
+      return <type>void</type>, a <command>RETURN</command> statement
+      must still be specified; however, the expression following
+      <command>RETURN</command> is optional, and will be ignored in
+      any case.
+     </para>
+    </sect3>
 
-    <para>
-     When a <application>PL/pgSQL</> function is declared to return
-     <literal>SETOF</literal> <replaceable>sometype</>, the procedure
-     to follow is slightly different.  In that case, the individual
-     items to return are specified in <command>RETURN NEXT</command>
-     commands, and then a final <command>RETURN</command> command with
-     no arguments is used to indicate that the function has finished
-     executing.  <command>RETURN NEXT</command> can be used with both
-     scalar and composite data types; in the later case, an entire
-     "table" of results will be returned.  Functions that use
-     <command>RETURN NEXT</command> should be called in the following
-     fashion:
-
-<programlisting>
-SELECT * FROM some_func();
-</programlisting>
-
-     That is, the function is used as a table source in a FROM clause.
+    <sect3>
+     <title><command>RETURN NEXT</></title>
 
 <synopsis>
 RETURN NEXT <replaceable>expression</replaceable>;
 </synopsis>
 
-     <command>RETURN NEXT</command> does not actually return from the
-     function; it simply saves away the value of the expression (or
-     record or row variable, as appropriate for the data type being
-     returned).  Execution then continues with the next statement in
-     the <application>PL/pgSQL</> function.  As successive
-     <command>RETURN NEXT</command> commands are executed, the result
-     set is built up.  A final <command>RETURN</command>, which need
-     have no argument, causes control to exit the function.
-    </para>
+     <para>
+      When a <application>PL/pgSQL</> function is declared to return
+      <literal>SETOF</literal> <replaceable>sometype</>, the procedure
+      to follow is slightly different.  In that case, the individual
+      items to return are specified in <command>RETURN NEXT</command>
+      commands, and then a final <command>RETURN</command> command
+      with no arguments is used to indicate that the function has
+      finished executing.  <command>RETURN NEXT</command> can be used
+      with both scalar and composite data types; in the later case, an
+      entire <quote>table</quote> of results will be returned.
+      Functions that use <command>RETURN NEXT</command> should be
+      called in the following fashion:
 
-   <note>
-    <para>
-     The current implementation of <command>RETURN NEXT</command> for
-     <application>PL/pgSQL</> stores the entire result set before
-     returning from the function, as discussed above.  That means that
-     if a <application>PL/pgSQL</> function produces a very large result set,
-     performance may be poor: data will be written to disk to avoid
-     memory exhaustion, but the function itself will not return until
-     the entire result set has been generated.  A future version of
-     <application>PL/pgSQL</> may allow users to allow users to define set-returning
-     functions that do not have this limitation.  Currently, the point
-     at which data begins being written to disk is controlled by the
-     <varname>SORT_MEM</> configuration variable.  Administrators who
-     have sufficient memory to store larger result sets in memory
-     should consider increasing this parameter.
-    </para>
-   </note>
-  </sect2>
+<programlisting>
+SELECT * FROM some_func();
+</programlisting>
+
+      That is, the function is used as a table source in a FROM
+      clause.
+     </para>
+
+     <para>
+      <command>RETURN NEXT</command> does not actually return from the
+      function; it simply saves away the value of the expression (or
+      record or row variable, as appropriate for the data type being
+      returned).  Execution then continues with the next statement in
+      the <application>PL/pgSQL</> function.  As successive
+      <command>RETURN NEXT</command> commands are executed, the result
+      set is built up.  A final <command>RETURN</command>, which should
+      have no argument, causes control to exit the function.
+     </para>
+
+     <para>
+      For more information on using set-returning functions in
+      <productname>PostgreSQL</productname>, refer to XXX.
+     </para
+
+     <note>
+      <para>
+       The current implementation of <command>RETURN NEXT</command>
+       for <application>PL/pgSQL</> stores the entire result set
+       before returning from the function, as discussed above.  That
+       means that if a <application>PL/pgSQL</> function produces a
+       very large result set, performance may be poor: data will be
+       written to disk to avoid memory exhaustion, but the function
+       itself will not return until the entire result set has been
+       generated.  A future version of <application>PL/pgSQL</> may
+       allow users to allow users to define set-returning functions
+       that do not have this limitation.  Currently, the point at
+       which data begins being written to disk is controlled by the
+       <varname>SORT_MEM</> configuration variable.  Administrators
+       who have sufficient memory to store larger result sets in
+       memory should consider increasing this parameter.
+      </para>
+     </note>
+    </sect3>
+   </sect2>
     
    <sect2 id="plpgsql-conditionals">
     <title>Conditionals</title>
@@ -1267,9 +1292,11 @@ IF <replaceable>boolean-expression</replaceable> THEN
 END IF;
 </synopsis>
 
-        IF-THEN statements are the simplest form of IF. The
-        statements between THEN and END IF will be executed if
-        the condition is true. Otherwise, they are skipped.
+        <literal>IF-THEN</literal> statements are the simplest form of
+        <literal>IF</literal>. The statements between
+        <literal>THEN</literal> and <literal>END IF</literal> will be
+        executed if the condition is true. Otherwise, they are
+        skipped.
 
 <programlisting>
 IF v_user_id &lt;&gt; 0 THEN
@@ -1291,9 +1318,10 @@ ELSE
 END IF;
 </synopsis>
 
-        IF-THEN-ELSE statements add to IF-THEN by letting you
-        specify an alternative set of statements that should be executed if
-	the condition evaluates to FALSE.
+        <literal>IF-THEN-ELSE</literal> statements add to
+        <literal>IF-THEN</literal> by letting you specify an
+        alternative set of statements that should be executed if the
+        condition evaluates to FALSE.
 
 <programlisting>
 IF parentid IS NULL or parentid = ''''
@@ -1311,14 +1339,16 @@ ELSE
     return ''f'';
 END IF;
 </programlisting>
-       </para>
-     </sect3>
+     </para>
+    </sect3>
 
      <sect3>
       <title><literal>IF-THEN-ELSE IF</></title>
 
        <para>
-        IF statements can be nested, as in the following example:
+        <literal>IF</literal> statements can be nested, as in the
+        following example:
+
 <programlisting>
 IF demo_row.sex = ''m'' THEN
   pretty_sex := ''man'';
@@ -1331,12 +1361,13 @@ END IF;
        </para>
 
        <para>
-        When you use this form, you are actually
-        nesting an IF statement inside the ELSE part of an outer IF
-        statement. Thus you need one END IF statement for each
-        nested IF and one for the parent IF-ELSE.
-        This is workable but grows tedious when there are many
-	alternatives to be checked.
+        When you use this form, you are actually nesting an
+        <literal>IF</literal> statement inside the
+        <literal>ELSE</literal> part of an outer <literal>IF</literal>
+        statement. Thus you need one <literal>END IF</literal>
+        statement for each nested IF and one for the parent
+        <literal>IF-ELSE</literal>.  This is workable but grows
+        tedious when there are many alternatives to be checked.
        </para>
      </sect3>
 
@@ -1384,7 +1415,7 @@ END IF;
        </para>
 
        <para>
-        The final ELSE section is optional.
+        The final <literal>ELSE</literal> statement is optional.
        </para>
 
      </sect3>
@@ -1399,10 +1430,10 @@ END IF;
      a series of commands.
     </para>
 
-     <sect3>
-      <title>LOOP</title>
+    <sect3>
+     <title>LOOP</title>
 
-       <para>
+     <para>
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
 LOOP
@@ -1410,13 +1441,13 @@ LOOP
 END LOOP;
 </synopsis>
 
-        LOOP defines an unconditional loop that is repeated indefinitely
-	until terminated by an EXIT or RETURN statement.
-	The optional label can be used by
-        EXIT statements in nested loops to specify which level of
-        nesting should be terminated.
-       </para>
-     </sect3>
+      LOOP defines an unconditional loop that is repeated indefinitely
+      until terminated by an EXIT or <command>RETURN</command>
+      statement.  The optional label can be used by EXIT statements in
+      nested loops to specify which level of nesting should be
+      terminated.
+     </para>
+    </sect3>
 
      <sect3>
       <title>EXIT</title>
@@ -1547,9 +1578,9 @@ FOR <replaceable>record | row</replaceable> IN <replaceable>select_query</replac
     <replaceable>statements</replaceable>
 END LOOP;
 </synopsis>
-     The record or row variable is successively assigned all the rows 
-     resulting from the SELECT query and the loop body is executed 
-     for each row. Here is an example:
+     The record or row variable is successively assigned all the rows
+     resulting from the <command>SELECT</command> query and the loop
+     body is executed for each row. Here is an example:
     </para>
 
     <para>
@@ -1639,11 +1670,12 @@ END LOOP;
 <synopsis>
 <replaceable>name</replaceable> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>select_query</replaceable> ;
 </synopsis>
-     (<literal>FOR</> may be replaced by <literal>IS</> for Oracle
-     compatibility.)  <replaceable>arguments</replaceable>, if any,
-     are a comma-separated list of <replaceable>name</replaceable>
-     <replaceable>datatype</replaceable> pairs that define names to
-     be replaced by parameter values in the given query.  The actual
+     (<literal>FOR</> may be replaced by <literal>IS</> for
+     <productname>Oracle</productname> compatibility.)
+     <replaceable>arguments</replaceable>, if any, are a
+     comma-separated list of <replaceable>name</replaceable>
+     <replaceable>datatype</replaceable> pairs that define names to be
+     replaced by parameter values in the given query.  The actual
      values to substitute for these names will be specified later,
      when the cursor is opened.
     </para>
@@ -1685,13 +1717,14 @@ DECLARE
 OPEN <replaceable>unbound-cursor</replaceable> FOR SELECT ...;
 </synopsis>
 
-        The cursor variable is opened and given the specified query
-	to execute.  The cursor cannot be open already, and it must
-	have been declared as an unbound cursor (that is, as a simple
-	<type>refcursor</> variable).  The SELECT query is treated
-	in the same way as other SELECT statements in <application>PL/pgSQL</>:
-	<application>PL/pgSQL</> variable names are substituted,
-	and the query plan is cached for possible re-use.
+    The cursor variable is opened and given the specified query to
+	execute.  The cursor cannot be open already, and it must have been
+	declared as an unbound cursor (that is, as a simple
+	<type>refcursor</> variable).  The <command>SELECT</command> query
+	is treated in the same way as other <command>SELECT</command>
+	statements in <application>PL/pgSQL</>: <application>PL/pgSQL</>
+	variable names are substituted, and the query plan is cached for
+	possible re-use.
 
 <programlisting>
 OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
@@ -1799,8 +1832,8 @@ FETCH curs2 INTO foo,bar,baz;
 CLOSE <replaceable>cursor</replaceable>;
 </synopsis>
 
-        CLOSE closes the Portal underlying an open cursor.
-	This can be used to release resources earlier than end of
+    <command>CLOSE</command> closes the Portal underlying an open
+	cursor.  This can be used to release resources earlier than end of
 	transaction, or to free up the cursor variable to be opened again.
 
 <programlisting>
@@ -1815,11 +1848,12 @@ CLOSE curs1;
        <para>
 
         <application>PL/pgSQL</> functions can return cursors to the
-        caller. This is used to return multiple rows or columns from the
-        function. The function opens the cursor and returns the cursor
-        name to the caller. The caller can then FETCH rows from the
-        cursor. The cursor can be closed by the caller, or it will be
-        closed automatically when the transaction closes.
+        caller. This is used to return multiple rows or columns from
+        the function. The function opens the cursor and returns the
+        cursor name to the caller. The caller can then
+        <command>FETCH</command> rows from the cursor. The cursor can
+        be closed by the caller, or it will be closed automatically
+        when the transaction closes.
 
        </para>
 
@@ -1879,7 +1913,8 @@ COMMIT;
    <title>Errors and Messages</title>
 
    <para>
-    Use the RAISE statement to report messages and raise errors.
+    Use the <command>RAISE</command> statement to report messages and
+    raise errors.
 
 <synopsis>
 RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
@@ -1896,8 +1931,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     written to the server log, or both is controlled by the
     <option>LOG_MIN_MESSAGES</option> and
     <option>CLIENT_MIN_MESSAGES</option> configuration variables. See
-    the <citetitle>PostgreSQL Administrator's Guide</citetitle> for more
-    information.
+    the &cite-admin; for more information.
    </para>
 
    <para>
@@ -2029,9 +2063,9 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      <term><varname>TG_LEVEL</varname></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string of either 
-              <literal>ROW</literal> or <literal>STATEMENT</literal> depending on the
-       trigger's definition.
+       Data type <type>text</type>; a string of either
+       <literal>ROW</literal> or <literal>STATEMENT</literal>
+       depending on the trigger's definition.
       </para>
      </listitem>
     </varlistentry>
@@ -2040,10 +2074,10 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      <term><varname>TG_OP</varname></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string of 
-              <literal>INSERT</literal>, <literal>UPDATE</literal> 
-              or <literal>DELETE</literal> telling
-       for which operation the trigger is fired.
+       Data type <type>text</type>; a string of
+       <literal>INSERT</literal>, <literal>UPDATE</literal> or
+       <literal>DELETE</literal> telling for which operation the
+       trigger is fired.
       </para>
      </listitem>
     </varlistentry>
@@ -2282,7 +2316,7 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
 -->
   </sect1info> 
 
-  <title>Porting from Oracle PL/SQL</title>
+  <title>Porting from <productname>Oracle</productname> PL/SQL</title>
 
   <indexterm zone="plpgsql-porting">
    <primary>Oracle</primary>
@@ -2300,7 +2334,7 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
   </note>
 
   <para>
-   This section explains differences between Oracle's PL/SQL and
+   This section explains differences between <productname>Oracle</>'s PL/SQL and
    <productname>PostgreSQL</>'s <application>PL/pgSQL</application> languages in the hopes of helping developers
    port applications from Oracle to <productname>PostgreSQL</>.  Most of the code here
    is from the <ulink url="http://www.arsdigita.com">ArsDigita</ulink>
@@ -2322,7 +2356,8 @@ CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
    <title>Main Differences</title>
 
    <para>
-    Some things you should keep in mind when porting from Oracle to <productname>PostgreSQL</>:
+    Some things you should keep in mind when porting from
+    <productname>Oracle</productname> to <productname>PostgreSQL</>:
 
     <itemizedlist>
      <listitem>
@@ -2479,7 +2514,7 @@ a_output := a_output || '' if v_'' ||
     </title>
 
     <para>
-     Here is an Oracle function:
+     Here is an <productname>Oracle</productname> function:
 <programlisting>
 CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name IN varchar, v_version IN varchar)
 RETURN varchar IS
@@ -2508,12 +2543,13 @@ SHOW ERRORS;
 
       <listitem>
        <para>
-        Oracle can have <literal>IN</literal>, <literal>OUT</literal>,
-        and <literal>INOUT</literal> parameters passed to functions.
-        The <literal>INOUT</literal>, for example, means that the
-        parameter will receive a value and return another. <productname>PostgreSQL</>
-        only has <quote>IN</quote> parameters and functions can return
-        only a single value.
+        <productname>Oracle</productname> can have
+        <literal>IN</literal>, <literal>OUT</literal>, and
+        <literal>INOUT</literal> parameters passed to functions.  The
+        <literal>INOUT</literal>, for example, means that the
+        parameter will receive a value and return
+        another. <productname>PostgreSQL</> only has <quote>IN</quote>
+        parameters and functions can return only a single value.
        </para>
       </listitem>
 
@@ -2644,11 +2680,11 @@ END;
  
    <example>
     <title>
-     A Procedure with a lot of String Manipulation and OUT Parameters
+     A Procedure with a lot of String Manipulation and <literal>OUT</> Parameters
     </title>
 
     <para>
-     The following Oracle PL/SQL procedure is used to parse a URL and
+     The following <productname>Oracle</productname> PL/SQL procedure is used to parse a URL and
      return several elements (host, path and query). It is an
      procedure because in <application>PL/pgSQL</application> functions only one value can be returned
      (see <xref linkend="plpgsql-porting-procedures">).  In
@@ -2738,7 +2774,7 @@ END;
      so you can work around it using a combination of other functions.
      I got tired of doing this and created my own
      <function>instr</function> functions that behave exactly like
-     Oracle's (it makes life easier). See the <xref
+     <productname>Oracle</productname>'s (it makes life easier). See the <xref
      linkend="plpgsql-porting-appendix"> for the code.
     </para>
    </note>
@@ -2750,9 +2786,10 @@ END;
    </title>
 
    <para>
-    Oracle procedures give a little more flexibility to the developer
-    because nothing needs to be explicitly returned, but it can be
-    through the use of <literal>INOUT</> or <literal>OUT</> parameters.
+    <productname>Oracle</productname> procedures give a little more
+    flexibility to the developer because nothing needs to be
+    explicitly returned, but it can be through the use of
+    <literal>INOUT</> or <literal>OUT</> parameters.
    </para>
 
    <para>
@@ -2890,12 +2927,13 @@ END;
    </note>
 
    <para>
-    Packages are a way Oracle gives you to encapsulate PL/SQL
-    statements and functions into one entity, like Java classes, where
-    you define methods and objects. You can access these
-    objects/methods with a <quote><literal>.</literal></quote>
-    (dot). Here is an example of an Oracle package from ACS 4 (the
-    <ulink url="http://www.arsdigita.com/doc/">ArsDigita Community
+    Packages are a way <productname>Oracle</productname> gives you to
+    encapsulate PL/SQL statements and functions into one entity, like
+    Java classes, where you define methods and objects. You can access
+    these objects/methods with a <quote><literal>.</literal></quote>
+    (dot). Here is an example of an <productname>Oracle</productname>
+    package from ACS 4 (the <ulink
+    url="http://www.arsdigita.com/doc/">ArsDigita Community
     System</ulink>):
 
 <programlisting>
@@ -2924,10 +2962,11 @@ show errors
    </para>
 
    <para>
-    We port this to <productname>PostgreSQL</> by creating the different objects of
-    the Oracle package as functions with a standard naming
-    convention. We have to pay attention to some other details, like
-    the lack of default parameters in <productname>PostgreSQL</> functions. The above
+    We port this to <productname>PostgreSQL</> by creating the
+    different objects of the <productname>Oracle</productname> package
+    as functions with a standard naming convention. We have to pay
+    attention to some other details, like the lack of default
+    parameters in <productname>PostgreSQL</> functions. The above
     package would become something like this:
  
 <programlisting>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.43 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.44 2003/01/19 00:13:29 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -281,8 +281,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
    <para>
-    Refer to the chapter in the
-    <citetitle>PostgreSQL Programmer's Guide</citetitle>
+    Refer to the chapter in the &cite-programmer;
     on the topic of extending
     <productname>PostgreSQL</productname> via functions 
     for further information on writing external functions.
@@ -470,7 +469,7 @@ Point * complex_to_point (Complex *z)
    <xref linkend="sql-load" endterm="sql-load-title">,
    <xref linkend="sql-revoke" endterm="sql-revoke-title">,
    <xref linkend="app-createlang">,
-   <citetitle>PostgreSQL Programmer's Guide</citetitle>
+   &cite-programmer;
   </para>
  </refsect1>
 

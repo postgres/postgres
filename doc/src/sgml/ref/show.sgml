@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.22 2002/10/13 16:55:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.23 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -62,10 +62,9 @@ SHOW ALL
   </para>
 
   <para>
-   Even with <literal>autocommit</> set to <literal>off</>, <command>SHOW</>
+   Even with <varname>autocommit</> set to <literal>off</>, <command>SHOW</>
    does not start a new transaction block. See the
-   <literal>autocommit</> section of the <citetitle>Administrator's
-   Guide</citetitle> for details.
+   <varname>autocommit</> section of the &cite-admin; for details.
   </para>
  </refsect1>
 
@@ -91,7 +90,7 @@ SHOW ALL
  <refsect1 id="R1-SQL-SHOW-2">
   <title>Examples</title>
   <para>
-   Show the current <literal>DateStyle</literal> setting:
+   Show the current <varname>DateStyle</varname> setting:
 
 <programlisting>
 SHOW DateStyle;
@@ -103,7 +102,8 @@ SHOW DateStyle;
   </para>
 
   <para>
-   Show the current genetic optimizer (<literal>geqo</literal>) setting:
+   Show whether the genetic query optimizer is enabled by displaying
+   the <varname>geqo</varname> setting:
 <programlisting>
 SHOW GEQO;
  geqo
@@ -148,7 +148,7 @@ SHOW ALL;
   <para>
     The function <function>current_setting</function> produces equivalent
     output. See <citetitle>Miscellaneous Functions</citetitle> in the
-    <citetitle>PostgreSQL User's Guide</citetitle>.
+    &cite-user;.
   </para>
  </refsect1>
 </refentry>

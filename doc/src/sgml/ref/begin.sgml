@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.21 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -121,8 +121,7 @@ WARNING:  BEGIN: already a transaction in progress
    <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
    just after <command>BEGIN</command> if you need more rigorous transaction
    isolation.  (Alternatively, you can change the default transaction
-   isolation level; see the <citetitle>PostgreSQL Administrator's
-   Guide</citetitle> for details.)
+   isolation level; see the &cite-admin; for details.)
    In SERIALIZABLE mode queries will see only changes committed before
    the entire
    transaction began (actually, before execution of the first <acronym>DML</> statement
@@ -161,7 +160,7 @@ WARNING:  BEGIN: already a transaction in progress
    </para>
    
    <para>
-    If you turn <literal>autocommit</> mode off, then <command>BEGIN</>
+    If you turn <varname>autocommit</> mode off, then <command>BEGIN</>
     is not required: any SQL command automatically starts a transaction.
    </para>
   </refsect2>

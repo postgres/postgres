@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.17 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.18 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+   <member>&cite-admin;</member>
   </simplelist>
  </refsect1>
 

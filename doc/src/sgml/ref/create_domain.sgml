@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.9 2002/12/12 20:35:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.10 2003/01/19 00:13:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -58,7 +58,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
        <para>
         The underlying data type of the domain. This may include array
 	specifiers.
-        Refer to the <citetitle>User's Guide</citetitle> for further
+        Refer to the &cite-user; for further
         information about data types and arrays.
        </para>
       </listitem>
@@ -224,7 +224,7 @@ CREATE TABLE countrylist (id INT4, country country_code);
 
   <simplelist type="inline">
    <member><xref linkend="sql-dropdomain" endterm="sql-dropdomain-title"></member>
-   <member><citetitle>PostgreSQL Programmer's Guide</citetitle></member>
+   <member>&cite-programmer;</member>
   </simplelist>
  </refsect1>
 

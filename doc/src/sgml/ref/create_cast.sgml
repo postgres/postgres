@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.7 2002/11/15 03:11:17 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.8 2003/01/19 00:13:29 momjian Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -241,7 +241,7 @@ CREATE CAST (text AS int4) WITH FUNCTION int4(text);
    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">,
    <xref linkend="sql-createtype" endterm="sql-createtype-title">,
    <xref linkend="sql-dropcast" endterm="sql-dropcast-title">,
-   <citetitle>PostgreSQL Programmer's Guide</citetitle>
+   &cite-programmer;
   </para>
  </refsect1>
 

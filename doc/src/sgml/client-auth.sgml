@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.43 2003/01/06 03:18:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.44 2003/01/19 00:13:28 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -110,8 +110,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
        This record matches connection attempts using TCP/IP networks.
        Note that TCP/IP connections are disabled unless the server is
        started with the <option>-i</option> option or the
-       <literal>tcpip_socket</> <filename>postgresql.conf</>
-       configuration parameter is enabled.
+       <varname>tcpip_socket</> configuration parameter is enabled.
       </para>
      </listitem>
     </varlistentry>
@@ -129,9 +128,8 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
       <para>
        To be able make use of this option the server must be built
        with SSL support enabled. Furthermore, SSL must be enabled by
-       enabling the option <literal>ssl</literal> in
-       <filename>postgresql.conf</filename> (see <xref
-       linkend="runtime-config">).
+       enabling the <varname>ssl</varname> configuration parameter
+       (see <xref linkend="runtime-config"> for more information).
       </para>
      </listitem>
     </varlistentry>
@@ -191,8 +189,8 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
        must be zero for the record to match.  (Of course IP addresses
        can be spoofed but this consideration is beyond the scope of
        <productname>PostgreSQL</productname>.) If you machine supports
-       IPv6, the default <filename>pg_hba.conf</> will have an IPv6
-       entry for <literal>localhost</>. You can add your own IPv6
+       IPv6, the default <filename>pg_hba.conf</> file will have an
+       IPv6 entry for <literal>localhost</>. You can add your own IPv6
        entries to the file. IPv6 entries are used only for IPv6
        connections.
       </para>
@@ -486,17 +484,18 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
    <para>
-    <literal>trust</> authentication is appropriate and very convenient
-    for local connections on a single-user workstation.  It is usually
-    <emphasis>not</> appropriate by itself on a multiuser machine.
-    However, you may be able to use <literal>trust</> even on a multiuser
-    machine, if you restrict access to the postmaster's socket file using
-    file-system permissions.  To do this, set the parameter
+    <literal>trust</> authentication is appropriate and very
+    convenient for local connections on a single-user workstation.  It
+    is usually <emphasis>not</> appropriate by itself on a multiuser
+    machine.  However, you may be able to use <literal>trust</> even
+    on a multiuser machine, if you restrict access to the postmaster's
+    socket file using file-system permissions.  To do this, set the
     <varname>unix_socket_permissions</varname> (and possibly
-    <varname>unix_socket_group</varname>) in <filename>postgresql.conf</>,
-    as described in <xref linkend="runtime-config-general">.  Or you could
-    set <varname>unix_socket_directory</varname> to place the socket file
-    in a suitably restricted directory.
+    <varname>unix_socket_group</varname>) configuration parameters as
+    described in <xref linkend="runtime-config-general">.  Or you
+    could set the <varname>unix_socket_directory</varname>
+    configuration parameter to place the socket file in a suitably
+    restricted directory.
    </para>
 
    <para>

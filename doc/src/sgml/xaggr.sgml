@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.17 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.18 2003/01/19 00:13:28 momjian Exp $
 -->
 
  <chapter id="xaggr">
@@ -114,8 +114,7 @@ CREATE AGGREGATE avg (
 
   <para>
    For further details see the description of the <command>CREATE
-   AGGREGATE</command> command in the <citetitle>Reference
-   Manual</citetitle>.
+   AGGREGATE</command> command in the &cite-reference;.
   </para>
  </chapter>
 

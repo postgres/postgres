@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.33 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.34 2003/01/19 00:13:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -80,9 +80,8 @@ PostgreSQL documentation
    <para>
     <application>postmaster</application> accepts the following
     command line arguments.  For a detailed discussion of the options
-    consult the <citetitle>Administrator's Guide</citetitle>.  You can
-    also save typing most of these options by setting up a
-    configuration file.
+    consult the &cite-admin;.  You can also save typing most of these
+    options by setting up a configuration file.
     
     <variablelist>
      <varlistentry>
@@ -111,11 +110,11 @@ PostgreSQL documentation
       <term>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></term>
       <listitem>
        <para>
-        Sets a named run-time parameter. Consult the
-        <citetitle>Administrator's Guide</citetitle> for a list and
-        descriptions.  Most of the other command line options are in
-        fact short forms of such a parameter assignment.  <option>-c</>
-	can appear multiple times to set multiple parameters.
+        Sets a named run-time parameter. Consult the &cite-admin; for
+        a list and descriptions.  Most of the other command line
+        options are in fact short forms of such a parameter
+        assignment.  <option>-c</> can appear multiple times to set
+        multiple parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -219,9 +218,9 @@ PostgreSQL documentation
 	default, this value is 32, but it can be set as high as your
 	system will support.  (Note that
 	<option>-B</option> is required to be at least twice
-	<option>-N</option>.  See the <citetitle>Administrator's
-	Guide</citetitle> for a discussion of system resource requirements
-	for large numbers of client connections.)
+	<option>-N</option>.  See the &cite-admin; for a discussion of
+	system resource requirements for large numbers of client
+	connections.)
        </para>
       </listitem>
      </varlistentry>
@@ -404,8 +403,8 @@ PostgreSQL documentation
     <listitem>
      <para>
       Other environment variables may be used to designate alternative
-      data storage locations.  See the <citetitle>Administrator's
-      Guide</citetitle> for more information.
+      data storage locations.  See the &cite-admin; for more
+      information.
      </para>
     </listitem>
    </varlistentry>
