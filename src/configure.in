@@ -461,8 +461,11 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(isinf tzset vfork memmove sigsetjmp kill sysconf)
+AC_CHECK_FUNCS(tzset vfork memmove sigsetjmp kill sysconf)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+AC_CHECK_FUNC(isinf, 
+              AC_DEFINE(HAVE_ISINF), 
+              ISINF='isinf.o')
 AC_CHECK_FUNC(getrusage, 
               AC_DEFINE(HAVE_GETRUSAGE), 
               GETRUSAGE='getrusage.o')
