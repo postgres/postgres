@@ -1,9 +1,49 @@
 /*
  * Routines for handling of SET var TO statements
  *
- * $Id: variable.c,v 1.3 1997/04/17 13:50:30 scrappy Exp $
+ * $Id: variable.c,v 1.4 1997/04/23 03:17:16 scrappy Exp $
  *
  * $Log: variable.c,v $
+ * Revision 1.4  1997/04/23 03:17:16  scrappy
+ * To: Thomas Lockhart <Thomas.G.Lockhart@jpl.nasa.gov>
+ * Subject: Re: [PATCHES] SET DateStyle patches
+ *
+ * On Tue, 22 Apr 1997, Thomas Lockhart wrote:
+ *
+ * > Some more patches! These (try to) finish implementing SET variable TO value
+ * > for "DateStyle" (changed the name from simply "date" to be more descriptive).
+ * > This is based on code from Martin and Bruce (?), which was easy to modify.
+ * > The syntax is
+ * >
+ * > SET DateStyle TO 'iso'
+ * > SET DateStyle TO 'postgres'
+ * > SET DateStyle TO 'sql'
+ * > SET DateStyle TO 'european'
+ * > SET DateStyle TO 'noneuropean'
+ * > SET DateStyle TO 'us'         (same as "noneuropean")
+ * > SET DateStyle TO 'default'    (current same as "postgres,us")
+ * >
+ * > ("european" is just compared for the first 4 characters, and "noneuropean"
+ * > is compared for the first 7 to allow less typing).
+ * >
+ * > Multiple arguments are allowed, so SET datestyle TO 'sql,euro' is valid.
+ * >
+ * > My mods also try to implement "SHOW variable" and "RESET variable", but
+ * > that part just core dumps at the moment. I would guess that my errors
+ * > are obvious to someone who knows what they are doing with the parser stuff,
+ * > so if someone (Bruce and/or Martin??) could have it do the right thing
+ * > we will have a more complete set of what we need.
+ * >
+ * > Also, I would like to have a floating point precision global variable to
+ * > implement "SET precision TO 10" and perhaps "SET precision TO 10,2" for
+ * > float8 and float4, but I don't know how to do that for integer types rather
+ * > than strings. If someone is fixing the SHOW and RESET code, perhaps they can
+ * > add some hooks for me to do the floats while they are at it.
+ * >
+ * > I've left some remnants of variable structures in the source code which
+ * > I did not use in the interests of getting something working for v6.1.
+ * > We'll have time to clean things up for the next release...
+ *
  * Revision 1.3  1997/04/17 13:50:30  scrappy
  * From: "Martin J. Laubach" <mjl@CSlab.tuwien.ac.at>
  * Subject: [HACKERS] Patch: set date to euro/us postgres/iso/sql
@@ -24,8 +64,10 @@
  */
 /*-----------------------------------------------------------------------*/
 
+#include <stdio.h>
 #include <string.h>
 #include "postgres.h"
+#include "miscadmin.h"
 #include "tcop/variable.h"
 
 /*-----------------------------------------------------------------------*/
@@ -70,38 +112,55 @@ static bool parse_null(const char *value)
 	return TRUE;
 	}
 	
+static bool show_null(const char *value)
+	{
+	return TRUE;
+	}
+	
+static bool reset_null(const char *value)
+	{
+	return TRUE;
+	}
+	
 static bool parse_date(const char *value)
 	{
 	char tok[32];
 	int dcnt = 0, ecnt = 0;
 	
-	while(value = get_token(tok, sizeof(tok), value))
+	while((value = get_token(tok, sizeof(tok), value)) != 0)
 		{
 		/* Ugh. Somebody ought to write a table driven version -- mjl */
 		
 		if(!strcasecmp(tok, "iso"))
 			{
-			PGVariables.date.format = Date_ISO;
+			DateStyle = USE_ISO_DATES;
 			dcnt++;
 			}
 		else if(!strcasecmp(tok, "sql"))
 			{
-			PGVariables.date.format = Date_SQL;
+			DateStyle = USE_SQL_DATES;
 			dcnt++;
 			}
 		else if(!strcasecmp(tok, "postgres"))
 			{
-			PGVariables.date.format = Date_Postgres;
+			DateStyle = USE_POSTGRES_DATES;
 			dcnt++;
 			}
-		else if(!strcasecmp(tok, "euro"))
+		else if(!strncasecmp(tok, "euro", 4))
 			{
-			PGVariables.date.euro = TRUE;
+			EuroDates = TRUE;
 			ecnt++;
 			}
-		else if(!strcasecmp(tok, "us"))
+		else if((!strcasecmp(tok, "us"))
+		     || (!strncasecmp(tok, "noneuro", 7)))
 			{
-			PGVariables.date.euro = FALSE;
+			EuroDates = FALSE;
+			ecnt++;
+			}
+		else if(!strcasecmp(tok, "default"))
+			{
+			DateStyle = USE_POSTGRES_DATES;
+			EuroDates = FALSE;
 			ecnt++;
 			}
 		else
@@ -116,16 +175,39 @@ static bool parse_date(const char *value)
 	return TRUE;
 	}
 	
+static bool show_date()
+	{
+	char buf[64];
+
+	sprintf( buf, "Date style is %s with%s European conventions",
+	  ((DateStyle == USE_ISO_DATES)? "iso": ((DateStyle == USE_ISO_DATES)? "sql": "postgres")),
+	  ((EuroDates)? "": "out"));
+
+	elog(NOTICE, buf, NULL);
+
+	return TRUE;
+	}
+	
+static bool reset_date()
+	{
+	DateStyle = USE_POSTGRES_DATES;
+	EuroDates = FALSE;
+
+	return TRUE;
+	}
+	
 /*-----------------------------------------------------------------------*/
 struct VariableParsers
 	{
 	const char *name;
 	bool (*parser)(const char *);
+	bool (*show)();
+	bool (*reset)();
 	} VariableParsers[] =
 	{
-		{ "date", 		parse_date },
-		{ "timezone", 	parse_null },
-		{ NULL }
+		{ "datestyle",	parse_date,	show_date,	reset_date },
+		{ "timezone", 	parse_null,	show_null,	reset_null },
+		{ NULL, NULL, NULL }
 	};
 
 /*-----------------------------------------------------------------------*/
@@ -139,14 +221,39 @@ bool SetPGVariable(const char *name, const char *value)
 			return (vp->parser)(value);
 		}
 		
-	elog(NOTICE, "No such variable %s", name);
+	elog(NOTICE, "Unrecognized variable %s", name);
 
 	return TRUE;
 	}
 
 /*-----------------------------------------------------------------------*/
-const char *GetPGVariable(const char *varName)
+bool GetPGVariable(const char *name)
 	{
-	return NULL;
+	struct VariableParsers *vp;
+	
+	for(vp = VariableParsers; vp->name; vp++)
+		{
+		if(!strcasecmp(vp->name, name))
+			return (vp->show)();
+		}
+		
+	elog(NOTICE, "Unrecognized variable %s", name);
+
+	return TRUE;
 	}
+
 /*-----------------------------------------------------------------------*/
+bool ResetPGVariable(const char *name)
+	{
+	struct VariableParsers *vp;
+	
+	for(vp = VariableParsers; vp->name; vp++)
+		{
+		if(!strcasecmp(vp->name, name))
+			return (vp->reset)();
+		}
+		
+	elog(NOTICE, "Unrecognized variable %s", name);
+
+	return TRUE;
+	}

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.30 1997/04/05 06:25:59 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.31 1997/04/23 03:17:00 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -108,7 +108,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
         RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 	CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
 	ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
-	ExplainStmt, VariableSetStmt
+	ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt
 
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
@@ -190,8 +190,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	NONE, NOT, NOTHING, NOTIFY, NOTNULL, 
         OIDS, ON, OPERATOR, OPTION, OR, ORDER, 
         PNULL, PRIVILEGES, PUBLIC, PURGE, P_TYPE, 
-        RENAME, REPLACE, RETRIEVE, RETURNS, REVOKE, ROLLBACK, RULE, 
-        SELECT, SET, SETOF, STDIN, STDOUT, STORE, 
+        RENAME, REPLACE, RESET, RETRIEVE, RETURNS, REVOKE, ROLLBACK, RULE, 
+        SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE, 
 	TABLE, TO, TRANSACTION, UNIQUE, UPDATE, USING, VACUUM, VALUES
 	VERBOSE, VERSION, VIEW, WHERE, WITH, WORK
 %token	EXECUTE, RECIPE, EXPLAIN, LIKE, SEQUENCE
@@ -275,6 +275,8 @@ stmt :	  AddAttrStmt
 	| DestroydbStmt
 	| VacuumStmt
 	| VariableSetStmt
+	| VariableShowStmt
+	| VariableResetStmt
 	;
 
 /*****************************************************************************
@@ -289,12 +291,32 @@ VariableSetStmt: SET var_name TO var_value
 		VariableSetStmt *n = makeNode(VariableSetStmt);
 		n->name  = $2;
 		n->value = $4;
-		
+
 		$$ = (Node *) n;
 		}
 	;
 
 var_value:	Sconst		{ $$ = $1; }
+	;
+
+VariableShowStmt: SHOW var_name
+		{
+		VariableSetStmt *n = makeNode(VariableSetStmt);
+		n->name  = $2;
+		n->value = NULL;
+
+		$$ = (Node *) n;
+		}
+	;
+
+VariableResetStmt: RESET var_name
+		{
+		VariableSetStmt *n = makeNode(VariableSetStmt);
+		n->name  = $2;
+		n->value = NULL;
+		
+		$$ = (Node *) n;
+		}
 	;
 
 /*****************************************************************************

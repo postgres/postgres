@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/built-in.3,v 1.4 1997/04/02 18:31:22 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/built-in.3,v 1.5 1997/04/23 03:18:27 scrappy Exp $
 .TH BUILT-INS INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -46,15 +46,17 @@ described in this section.
 	float4	single-precision floating-point number
 	float8	double-precision floating-point number
 	lseg	2-dimensional line segment
+	money	decimal type with fixed precision
 	name	a multi-character type for storing system identifiers
 	oid	object identifier type
 	oid8	array of 8 oid
 	oidchar16	oid and char16 composed
 	oidint2	oid and int2 composed
 	oidint4	oid and int4 composed
-	path	variable-length array of lseg
+	path	open or closed line segments
 	point	2-dimensional geometric point
-	polygon	2-dimensional polygon
+	polygon	2-dimensional polygon (same as a closed path)
+	circle	2-dimensional circle (center and radius)
 	real	alias for float4
 	regproc	registered procedure
 	reltime	(relative) date and time span (duration)
@@ -72,10 +74,9 @@ described in this section.
 .fi
 .in
 .PP
-As a rule, the built-in types are all either (1) internal types, in
-which case the user should not worry about their external format, or
-(2) have obvious formats.  The exceptions to this rule are the date and
-time types.
+Many of the built-in types have obvious external formats. However, several
+types are either unique to Postgres, such as open and closed paths, or have
+several possibilities for formats, such as date and time types.
 
 .SH "Syntax of date and time types"
 .SH "DATETIME"
@@ -229,6 +230,142 @@ where
 is a time in the absolute time format.  Special abstime values such as 
 \*(lqcurrent\*(rq, \*(lqinfinity\*(rq and \*(lq-infinity\*(rq can be used.
 
+.SH "Syntax of geometric types"
+.SH "POINT"
+Points are specified using the following syntax:
+.PP
+.nf
+( x , y )
+.nf
+  x , y
+.sp
+where
+	x is the x-axis coordinate as a floating point number
+	y is the y-axis coordinate as a floating point number
+.fi
+.PP
+.SH "LSEG"
+Line segments are represented by pairs of points.
+.PP
+lseg is specified using the following syntax:
+.PP
+.nf
+( ( x1 , y1 ) , ( x2 , y2 ) )
+.nf
+  ( x1 , y1 ) , ( x2 , y2 )  
+.nf
+    x1 , y1   ,   x2 , y2    
+.sp
+where
+	(x1,y1) and (x2,y2) are the endpoints of the segment
+.fi
+.PP
+.SH "BOX"
+Boxes are represented by pairs of points which are opposite
+corners of the box.
+.PP
+box is specified using the following syntax:
+.PP
+.nf
+( ( x1 , y1 ) , ( x2 , y2 ) )
+.nf
+  ( x1 , y1 ) , ( x2 , y2 )  
+.nf
+    x1 , y1   ,   x2 , y2    
+.sp
+where
+	(x1,y1) and (x2,y2) are opposite corners
+.fi
+.PP
+Boxes are output using the first syntax.
+The corners are reordered on input to store
+the lower left corner first and the upper right corner last.
+Other corners of the box can be entered, but the lower
+left and upper right corners are determined from the input and stored.
+.SH "PATH"
+Paths are represented by sets of points. Paths can be "open", where
+the first and last points in the set are not connected, and "closed",
+where the first and last point are connected. Functions
+.IR popen(p)
+and
+.IR pclose(p)
+are supplied to force a path to be open or closed, and functions
+.IR isopen(p)
+and
+.IR isclosed(p)
+are supplied to select either type in a query.
+.PP
+path is specified using the following syntax:
+.PP
+.nf
+( ( x1 , y1 ) , ... , ( xn , yn ) )
+.nf
+[ ( x1 , y1 ) , ... , ( xn , yn ) ]
+.nf
+  ( x1 , y1 ) , ... , ( xn , yn )  
+.nf
+    x1 , y1   , ... ,   xn , yn    
+.nf
+( closed, n, x1 , y1   , ... ,   xn , yn )  
+.sp
+where
+	(x1,y1),...,(xn,yn) are points 1 through n
+	a leading "[" indicates an open path
+	a leading "(" indicates a closed path
+	a single leading "(" indicates a v6.0-compatible format
+	closed is an integer flag which is zero for an open path
+	n is the number of points in the path
+.fi
+.PP
+Paths are output using the first syntax.
+The last format is supplied to be backward compatible with v6.0 and earlier
+path formats and will not be supported in future versions of Postgres.
+.SH "POLYGON"
+Polygons are represented by sets of points. Polygons should probably be
+considered 
+equivalent to closed paths, but are stored differently and have their own
+set of support routines.
+.PP
+polygon is specified using the following syntax:
+.PP
+.nf
+( ( x1 , y1 ) , ... , ( xn , yn ) )
+.nf
+  ( x1 , y1 ) , ... , ( xn , yn )  
+.nf
+    x1 , y1   , ... ,   xn , yn    
+.nf
+( x1 , ... , xn , y1 , ... , yn )  
+.sp
+where
+	(x1,y1),...,(xn,yn) are points 1 through n
+	a single leading "(" indicates a v6.0-compatible format
+.fi
+.PP
+Polygons are output using the first syntax.
+The last format is supplied to be backward compatible with v6.0 and earlier
+path formats and will not be supported in future versions of Postgres.
+.SH "CIRCLE"
+Circles are represented by a center point and a radius.
+.PP
+circle is specified using the following syntax:
+.PP
+.nf
+< ( x , y ) , r >
+.nf
+( ( x , y ) , r )
+.nf
+  ( x , y ) , r  
+.nf
+    x , y   , r  
+.sp
+where
+	(x,y) is the center of the circle
+	r is the radius of the circle
+.fi
+.PP
+Circles are output using the first syntax.
+
 .SH "Built-in operators and functions"
 .SH OPERATORS
 Postgres provides a large number of built-in operators on system types.
@@ -276,6 +413,7 @@ general
 	/	division
 	%	modulus
 	@	absolute value
+	<===>	distance between
 
 float8	
 	^	exponentiation
@@ -293,7 +431,6 @@ point
 	\(eq|\(eq	equality
 	===>	point inside box
 	===`	point on path
-	<===>	distance between points
 
 box
 	&&	boxes overlap
@@ -314,6 +451,17 @@ box
 
 polygon	
 	&&	polygons overlap
+	&<	A overlaps B but does not extend to right of B
+	&>	A overlaps B but does not extend to left of B
+	<<	A is left of B
+	>>	A is right of B
+	@	A is contained by B
+	~\(eq	equality
+	~=	A same as B
+	~	A contains B
+
+circle	
+	&&	circles overlap
 	&<	A overlaps B but does not extend to right of B
 	&>	A overlaps B but does not extend to left of B
 	<<	A is left of B
@@ -369,6 +517,22 @@ timespan
 	float8   date_part(text,timespan) specified portion of time field
 	bool     isfinite(timespan)       TRUE if this is a finite time
 	reltime  reltime(timespan)        convert to reltime
+
+box
+	box      box(point,point)         convert points to box
+	float8   area(box)                area of box
+
+path
+	bool     isopen(path)             TRUE if this is an open path
+	bool     isclosed(path)           TRUE if this is a closed path
+
+circle
+	circle   circle(point,float8)     convert to circle
+	polygon  polygon(npts,circle)     convert to polygon with npts points
+	float8   center(circle)           radius of circle
+	float8   radius(circle)           radius of circle
+	float8   diameter(circle)         diameter of circle
+	float8   area(circle)             area of circle
 .fi
 
 .PP
@@ -400,6 +564,7 @@ These operations are cast in terms of SQL types and so are
 .BR not
 directly usable as C function prototypes.
 
+.nf
 result   |left_type |right_type|operatr|func_name      
 ---------+----------+----------+-------+---------------
 _aclitem |_aclitem  |aclitem   |+      |aclinsert      
@@ -750,14 +915,14 @@ left_unary|operand  |return_type
 ;         |float8   |float8     
 :         |float8   |float8     
 %         |float8   |float8     
-\|\|/     |float8   |float8     
-\|/       |float8   |float8     
+||/       |float8   |float8     
+|/        |float8   |float8     
 @         |float8   |float8     
 -         |float8   |float8     
 -         |int2     |int2       
 -         |int4     |int4       
 !!        |int4     |int4       
-\|        |tinterval|abstime    
+|         |tinterval|abstime    
 
 .fi
 .in

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.8 1997/04/02 04:49:13 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.9 1997/04/23 03:17:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,6 +116,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "recipe",             RECIPE          },
 	{ "rename",		RENAME		},
 	{ "replace",		REPLACE		},
+	{ "reset",		RESET		},
 	{ "retrieve",		RETRIEVE	},
 	{ "returns",		RETURNS		},
         { "revoke",             REVOKE          },
@@ -125,6 +126,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "sequence",		SEQUENCE	},
 	{ "set",		SET		},
 	{ "setof",		SETOF		},
+	{ "show",		SHOW		},
 	{ "stdin",		STDIN		},
 	{ "stdout",		STDOUT		},
 	{ "store",		STORE		},

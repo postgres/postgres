@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.14 1997/04/02 18:23:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.15 1997/04/23 03:17:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,7 +643,23 @@ ProcessUtility(Node *parsetree,
 	{
 	    VariableSetStmt *n = (VariableSetStmt *) parsetree;
 	    SetPGVariable(n->name, n->value);
-	    commandTag = "SET_VARIABLE";
+	    commandTag = "SET VARIABLE";
+	}
+	break;
+      
+    case T_VariableShowStmt:
+	{
+	    VariableSetStmt *n = (VariableSetStmt *) parsetree;
+	    GetPGVariable(n->name);
+	    commandTag = "SHOW VARIABLE";
+	}
+	break;
+      
+    case T_VariableResetStmt:
+	{
+	    VariableSetStmt *n = (VariableSetStmt *) parsetree;
+	    ResetPGVariable(n->name);
+	    commandTag = "RESET VARIABLE";
 	}
 	break;
       

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.7 1997/04/02 18:24:38 scrappy Exp $
+ * $Id: nodes.h,v 1.8 1997/04/23 03:17:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,8 @@ typedef enum NodeTag {
     T_ExplainStmt,
     T_CreateSeqStmt,
     T_VariableSetStmt,
+    T_VariableShowStmt,
+    T_VariableResetStmt,
 
     T_A_Expr = 700,
     T_Attr,
