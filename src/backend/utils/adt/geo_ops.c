@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.58 2001/03/22 03:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.59 2001/10/13 17:40:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -948,7 +948,7 @@ line_construct_pts(LINE *line, Point *pt1, Point *pt2)
 	}
 	else if (FPeq(pt1->y, pt2->y))
 	{							/* horizontal */
-		/* use "x = C" */
+		/* use "y = C" */
 		line->A = 0;
 		line->B = -1;
 		line->C = pt1->y;
@@ -1376,6 +1376,9 @@ path_inter(PG_FUNCTION_ARGS)
 	LSEG		seg1,
 				seg2;
 
+	if (p1->npts <= 0 || p2->npts <= 0)
+		PG_RETURN_BOOL(false);
+
 	b1.high.x = b1.low.x = p1->p[0].x;
 	b1.high.y = b1.low.y = p1->p[0].y;
 	for (i = 1; i < p1->npts; i++)
@@ -1398,12 +1401,34 @@ path_inter(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	/* pairwise check lseg intersections */
-	for (i = 0; i < p1->npts - 1; i++)
+	for (i = 0; i < p1->npts; i++)
 	{
-		for (j = 0; j < p2->npts - 1; j++)
+		int	iprev;
+
+		if (i > 0)
+			iprev = i-1;
+		else
 		{
-			statlseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
-			statlseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
+			if (!p1->closed)
+				continue;
+			iprev = p1->npts-1;	/* include the closure segment */
+		}
+
+		for (j = 0; j < p2->npts; j++)
+		{
+			int	jprev;
+
+			if (j > 0)
+				jprev = j-1;
+			else
+			{
+				if (!p2->closed)
+					continue;
+				jprev = p2->npts-1;	/* include the closure segment */
+			}
+
+			statlseg_construct(&seg1, &p1->p[iprev], &p1->p[i]);
+			statlseg_construct(&seg2, &p2->p[jprev], &p2->p[j]);
 			if (lseg_intersect_internal(&seg1, &seg2))
 				PG_RETURN_BOOL(true);
 		}
@@ -1422,20 +1447,42 @@ path_distance(PG_FUNCTION_ARGS)
 {
 	PATH	   *p1 = PG_GETARG_PATH_P(0);
 	PATH	   *p2 = PG_GETARG_PATH_P(1);
-	bool		have_min = false;
 	float8		min = 0.0;		/* initialize to keep compiler quiet */
+	bool		have_min = false;
 	float8		tmp;
 	int			i,
 				j;
 	LSEG		seg1,
 				seg2;
 
-	for (i = 0; i < p1->npts - 1; i++)
+	for (i = 0; i < p1->npts; i++)
 	{
-		for (j = 0; j < p2->npts - 1; j++)
+		int	iprev;
+
+		if (i > 0)
+			iprev = i-1;
+		else
 		{
-			statlseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
-			statlseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
+			if (!p1->closed)
+				continue;
+			iprev = p1->npts-1;	/* include the closure segment */
+		}
+
+		for (j = 0; j < p2->npts; j++)
+		{
+			int	jprev;
+
+			if (j > 0)
+				jprev = j-1;
+			else
+			{
+				if (!p2->closed)
+					continue;
+				jprev = p2->npts-1;	/* include the closure segment */
+			}
+
+			statlseg_construct(&seg1, &p1->p[iprev], &p1->p[i]);
+			statlseg_construct(&seg2, &p2->p[jprev], &p2->p[j]);
 
 			tmp = DatumGetFloat8(DirectFunctionCall2(lseg_distance,
 													 LsegPGetDatum(&seg1),
@@ -1463,12 +1510,24 @@ Datum
 path_length(PG_FUNCTION_ARGS)
 {
 	PATH	   *path = PG_GETARG_PATH_P(0);
-	float8		result;
+	float8		result = 0.0;
 	int			i;
 
-	result = 0.0;
-	for (i = 0; i < (path->npts - 1); i++)
-		result += point_dt(&path->p[i], &path->p[i + 1]);
+	for (i = 0; i < path->npts; i++)
+	{
+		int	iprev;
+
+		if (i > 0)
+			iprev = i-1;
+		else
+		{
+			if (!path->closed)
+				continue;
+			iprev = path->npts-1;	/* include the closure segment */
+		}
+
+		result += point_dt(&path->p[iprev], &path->p[i]);
+	}
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -2133,17 +2192,18 @@ dist_ppath(PG_FUNCTION_ARGS)
 	Point	   *pt = PG_GETARG_POINT_P(0);
 	PATH	   *path = PG_GETARG_PATH_P(1);
 	float8		result = 0.0;	/* keep compiler quiet */
+	bool		have_min = false;
 	float8		tmp;
 	int			i;
 	LSEG		lseg;
 
 	switch (path->npts)
 	{
-			/* no points in path? then result is undefined... */
 		case 0:
+			/* no points in path? then result is undefined... */
 			PG_RETURN_NULL();
-			/* one point in path? then get distance between two points... */
 		case 1:
+			/* one point in path? then get distance between two points... */
 			result = point_dt(pt, &path->p[0]);
 			break;
 		default:
@@ -2154,12 +2214,26 @@ dist_ppath(PG_FUNCTION_ARGS)
 			 * the distance from a point to a path is the smallest
 			 * distance from the point to any of its constituent segments.
 			 */
-			for (i = 0; i < path->npts - 1; i++)
+			for (i = 0; i < path->npts; i++)
 			{
-				statlseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
+				int	iprev;
+
+				if (i > 0)
+					iprev = i-1;
+				else
+				{
+					if (!path->closed)
+						continue;
+					iprev = path->npts-1;	/* include the closure segment */
+				}
+
+				statlseg_construct(&lseg, &path->p[iprev], &path->p[i]);
 				tmp = dist_ps_internal(pt, &lseg);
-				if (i == 0 || tmp < result)
+				if (!have_min || tmp < result)
+				{
 					result = tmp;
+					have_min = true;
+				}
 			}
 			break;
 	}
@@ -2824,8 +2898,6 @@ on_pb(PG_FUNCTION_ARGS)
  *				but not cross.
  *				(we can do p-in-p in lg(n), but it takes preprocessing)
  */
-#define NEXT(A) (((A)+1) % path->npts)	/* cyclic "i+1" */
-
 Datum
 on_ppath(PG_FUNCTION_ARGS)
 {
