@@ -77,9 +77,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 	size_t		aReturnLength = 0;
 	BOOL		aSectionFound = FALSE;
 	BOOL		aKeyFound = FALSE;
-	size_t		aReturnLength = 0;
-	BOOL		aSectionFound = FALSE;
-	BOOL		aKeyFound = FALSE;
 
 	ptr = (char *) getpwuid(getuid());	/* get user info */
 
