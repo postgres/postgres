@@ -469,6 +469,35 @@ Add /contrib/ltree data type for tree structures (Teodor Sigaev, Oleg Bartunov)
 Move /contrib/pg_controldata into main tree (Bruce)
 Fixes to /contrib/cube (Bruno Wolff)
 Improve /contrib/fulltextindex (Christopher)
+
+
+     ----------------------------------------------------------------------
+
+                                 Release 7.2.3
+
+     Release date: 2002-10-01
+
+   This has a variety of fixes from 7.2.2, including fixes to prevent
+   possible data loss.
+
+     ----------------------------------------------------------------------
+
+Migration to version 7.2.3
+
+   A dump/restore is *not* required for those running 7.2.X.
+
+     ----------------------------------------------------------------------
+
+Changes
+
+ Prevent possible compressed transaction log loss (Tom)
+ Prevent non-superuser from increasing most recent vacuum info (Tom)
+ Handle pre-1970 date values in newer versions of glibc (Tom)
+ Fix possible hang during server shutdown
+ Prevent spinlock hangs on SMP PPC machines (Tomoyuki Niijima)
+ Fix pg_dump to properly dump FULL JOIN USING (Tom)
+
+
      ----------------------------------------------------------------------
 
                                  Release 7.2.2
