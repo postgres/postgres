@@ -20,7 +20,7 @@
   <synopsis>
 SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
 SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT }
-SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
+SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
   </synopsis>
 
   <refsect2 id="R2-SQL-SET-1">
@@ -34,9 +34,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 		
     <variablelist>
      <varlistentry>
-      <term>
-<replaceable class="PARAMETER">variable</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
        <para>
 	Settable global parameter.
@@ -44,9 +42,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-<replaceable class="PARAMETER">value</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">value</replaceable></term>
       <listitem>
        <para>
 	New value of parameter.
@@ -61,18 +57,14 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 		
     <variablelist>
      <varlistentry>
-      <term>
-CLIENT_ENCODING | NAMES
-      </term>
+      <term>CLIENT_ENCODING | NAMES</term>
       <listitem>
        <para>
 	Sets the multi-byte client encoding. Parameters are:
 	
 	<variablelist>
 	 <varlistentry>
-	  <term>
-<replaceable class="parameter">value</replaceable>
-	  </term>
+	  <term><replaceable class="parameter">value</replaceable></term>
 	  <listitem>
 	   <para>
 	    Sets the multi-byte client encoding to
@@ -83,9 +75,7 @@ CLIENT_ENCODING | NAMES
 	 </varlistentry>
 	 
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    Sets the multi-byte client encoding to the default value.
@@ -102,9 +92,7 @@ DEFAULT
      </varlistentry>
 
      <varlistentry>
-      <term>
-DateStyle
-      </term>
+      <term>DateStyle</term>
       <listitem>
        <para>
 	Set the date/time representation style. Affects the output format,
@@ -112,9 +100,7 @@ DateStyle
 
 	<variablelist>
 	 <varlistentry>
-	  <term>
-ISO
-	  </term>
+	  <term>ISO</term>
 	  <listitem>
 	   <para>
 	    use ISO 8601-style dates and times
@@ -122,9 +108,7 @@ ISO
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-SQL
-	  </term>
+	  <term>SQL</term>
 	  <listitem>
 	   <para>
 	    use Oracle/Ingres-style dates and times
@@ -132,9 +116,7 @@ SQL
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-Postgres
-	  </term>
+	  <term>Postgres</term>
 	  <listitem>
 	   <para>
 	    use traditional <productname>Postgres</productname> format
@@ -142,9 +124,7 @@ Postgres
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-European
-	  </term>
+	  <term>European</term>
 	  <listitem>
 	   <para>
 	    use dd/mm/yyyy for numeric date representations.
@@ -152,9 +132,7 @@ European
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-NonEuropean
-	  </term>
+	  <term>NonEuropean</term>
 	  <listitem>
 	   <para>
 	    use mm/dd/yyyy for numeric date representations.
@@ -162,9 +140,7 @@ NonEuropean
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-German
-	  </term>
+	  <term>German</term>
 	  <listitem>
 	   <para>
 	    use dd.mm.yyyy for numeric date representations.
@@ -172,9 +148,7 @@ German
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-US
-	  </term>
+	  <term>US</term>
 	  <listitem>
 	   <para>
 	    same as 'NonEuropean'
@@ -182,9 +156,7 @@ US
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-default
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    restores the default values ('US,Postgres')
@@ -227,18 +199,14 @@ default
      </varlistentry>
 
      <varlistentry>
-      <term>
-SERVER_ENCODING
-      </term>
+      <term>SERVER_ENCODING</term>
       <listitem>
        <para>
 	Sets the multi-byte server encoding
 	
 	<variablelist>
 	 <varlistentry>
-	  <term>
-<replaceable class="parameter">value</replaceable>
-	  </term>
+	  <term><replaceable class="parameter">value</replaceable></term>
 	  <listitem>
 	   <para>
 	    Sets the multi-byte server encoding.
@@ -247,9 +215,7 @@ SERVER_ENCODING
 	 </varlistentry>
 	 
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    Sets the multi-byte server encoding.
@@ -265,9 +231,7 @@ DEFAULT
      </varlistentry>
 
      <varlistentry>
-      <term>
-TIMEZONE
-      </term>
+      <term>TIMEZONE</term>
       <listitem>
        <para>
 	The possible values for timezone depends on your operating
@@ -279,9 +243,7 @@ TIMEZONE
 				
 	<variablelist>
 	 <varlistentry>
-	  <term>
-'PST8PDT'
-	  </term>
+	  <term>'PST8PDT'</term>
 	  <listitem>
 	   <para>
 	    set the timezone for California
@@ -289,9 +251,7 @@ TIMEZONE
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-'Portugal'
-	  </term>
+	  <term>'Portugal'</term>
 	  <listitem>
 	   <para>
 	    set time zone for Portugal.
@@ -299,9 +259,7 @@ TIMEZONE
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-'Europe/Rome'
-	  </term>
+	  <term>'Europe/Rome'</term>
 	  <listitem>
 	   <para>
 	    set time zone for Italy.
@@ -309,9 +267,7 @@ TIMEZONE
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    set time zone to your local timezone
@@ -339,18 +295,14 @@ DEFAULT
      </varlistentry>
 
      <varlistentry>
-      <term>
-TRANSACTION ISOLATION LEVEL
-      </term>
+      <term>TRANSACTION ISOLATION LEVEL</term>
       <listitem>
        <para>
 	Sets the isolation level for the current transaction.
 	
 	<variablelist>
 	 <varlistentry>
-	  <term>
-READ COMMITTED
-	  </term>
+	  <term>READ COMMITTED</term>
 	  <listitem>
 	   <para>
 	    The current transaction queries read only rows committed
@@ -367,9 +319,7 @@ READ COMMITTED
 	 </varlistentry>
 	 
 	 <varlistentry>
-	  <term>
-SERIALIZABLE
-	  </term>
+	  <term>SERIALIZABLE</term>
 	  <listitem>
 	   <para>
 	    The current transaction queries read only rows committed
@@ -394,18 +344,14 @@ SERIALIZABLE
     
     <variablelist>
      <varlistentry>
-      <term>
-COST_HEAP
-      </term>
+      <term>COST_HEAP</term>
       <listitem>
        <para>
 	Sets the default cost of a heap scan for use by the optimizer.
 	
 	<variablelist>
 	 <varlistentry>
-	  <term>
-<replaceable class="parameter">float4</replaceable>
-	  </term>
+	  <term><replaceable class="parameter">float4</replaceable></term>
 	  <listitem>
 	   <para>
 	    Set the cost of a heap scan to the specified floating point value.
@@ -414,9 +360,7 @@ COST_HEAP
 	 </varlistentry>
 	 
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    Sets the cost of a heap scan to the default value.
@@ -433,18 +377,14 @@ DEFAULT
      </varlistentry>
 
      <varlistentry>
-      <term>
-COST_INDEX
-      </term>
+      <term>COST_INDEX</term>
       <listitem>
        <para>
 	Sets the default cost of an index scan for use by the optimizer.
 
 	<variablelist>     
 	 <varlistentry>
-	  <term>
-<replaceable class="parameter">float4</replaceable>
-	  </term>
+	  <term><replaceable class="parameter">float4</replaceable></term>
 	  <listitem>
 	   <para>
 	    Set the cost of an index scan to the specified floating point value.
@@ -453,9 +393,7 @@ COST_INDEX
 	 </varlistentry>
 	 
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    Sets the cost of an index scan to the default value.
@@ -473,18 +411,14 @@ DEFAULT
      </varlistentry>
 
      <varlistentry>
-      <term>
-GEQO
-      </term>
+      <term>GEQO</term>
       <listitem>
        <para>
 	Sets the threshold for using the genetic optimizer algorithm.
-       
+
 	<variablelist>
 	 <varlistentry>
-	  <term>
-ON
-	  </term>
+	  <term>ON</term>
 	  <listitem>
 	   <para>
 	    enables the genetic optimizer algorithm
@@ -492,10 +426,9 @@ ON
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
 	 <varlistentry>
-	  <term>
-ON=<replaceable class="parameter">#</replaceable>
-	  </term>
+	  <term>ON=<replaceable class="parameter">#</replaceable></term>
 	  <listitem>
 	   <para>
 	    Takes an integer argument to enable the genetic optimizer algorithm
@@ -504,10 +437,9 @@ ON=<replaceable class="parameter">#</replaceable>
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
 	 <varlistentry>
-	  <term>
-OFF
-	  </term>
+	  <term>OFF</term>
 	  <listitem>
 	   <para>
 	    disables the genetic optimizer algorithm.
@@ -515,9 +447,7 @@ OFF
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    Equivalent to specifying <command>SET GEQO='ON'</command>
@@ -546,9 +476,7 @@ DEFAULT
      </varlistentry>
 
      <varlistentry>
-      <term>
-KSQO
-      </term>
+      <term>KSQO</term>
       <listitem>
        <para>
 	<firstterm>Key Set Query Optimizer</firstterm> forces the query optimizer
@@ -557,9 +485,7 @@ KSQO
        
 	<variablelist>
 	 <varlistentry>
-	  <term>
-ON
-	  </term>
+	  <term>ON</term>
 	  <listitem>
 	   <para>
 	    enables this optimization.
@@ -568,9 +494,7 @@ ON
 	 </varlistentry>
 	
 	 <varlistentry>
-	  <term>
-OFF
-	  </term>
+	  <term>OFF</term>
 	  <listitem>
 	   <para>
 	    disables this optimization.
@@ -579,9 +503,7 @@ OFF
 	 </varlistentry>
 	 
 	 <varlistentry>
-	  <term>
-DEFAULT
-	  </term>
+	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
 	    Equivalent to specifying <command>SET KSQO='OFF'</command>.
@@ -618,9 +540,9 @@ DEFAULT
     
     <variablelist>
      <varlistentry>
-      <term>
-<returnvalue>SET VARIABLE</returnvalue>
-      </term>
+      <term><computeroutput>
+SET VARIABLE
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if successfully.
@@ -629,9 +551,9 @@ DEFAULT
      </varlistentry>
      
      <varlistentry>
-      <term>
-<returnvalue>WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)</returnvalue>
-      </term>
+      <term><computeroutput>
+WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)
+       </computeroutput></term>
       <listitem>
        <para>
 	If the command fails to set the specified variable.
@@ -697,26 +619,26 @@ DEFAULT
    Set the style of date to ISO:
    
    <programlisting>
-   SET DATESTYLE TO 'ISO';
+SET DATESTYLE TO 'ISO';
    </programlisting>
 
    Enable GEQO for queries with 4 or more tables:
 
    <programlisting> 
-   SET GEQO ON=4;
+SET GEQO ON=4;
    </programlisting>
 
    Set GEQO to default:
 
    <programlisting> 
-   SET GEQO = DEFAULT;
+SET GEQO = DEFAULT;
    </programlisting>
 
    Set the timezone for Berkeley, California:
 
    <programlisting> 
-   SET TIME ZONE 'PST8PDT';
-   SELECT CURRENT_TIMESTAMP AS today;
+SET TIME ZONE 'PST8PDT';
+SELECT CURRENT_TIMESTAMP AS today;
    
    today
    ----------------------
@@ -726,8 +648,8 @@ DEFAULT
    Set the timezone for Italy:
 
    <programlisting> 
-   SET TIME ZONE 'Europe/Rome';
-   SELECT CURRENT_TIMESTAMP AS today;
+SET TIME ZONE 'Europe/Rome';
+SELECT CURRENT_TIMESTAMP AS today;
    
    today
    ----------------------
@@ -751,17 +673,18 @@ DEFAULT
     SQL92
    </title>
    <para>
-    There is no
+    There is no general
     <command>SET <replaceable class="parameter">variable</replaceable></command>
-    in <acronym>SQL92</acronym> (except for SET TRANSACTION ISOLATION LEVEL).
-    
+    in <acronym>SQL92</acronym> (with the exception of
+    <command>SET TRANSACTION ISOLATION LEVEL</command>).
+
     The <acronym>SQL92</acronym> syntax for <command>SET TIME ZONE</command>
     is slightly different,
     allowing only a single integer value for time zone specification:
     
-    <programlisting>
-     SET TIME ZONE { interval_value_expression | LOCAL }
-    </programlisting>
+    <synopsis>
+SET TIME ZONE { interval_value_expression | LOCAL }
+    </synopsis>
    </para>
   </refsect2>
  </refsect1>
@@ -779,7 +702,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
 sgml-local-ecat-files:nil
 End:
 -->
