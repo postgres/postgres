@@ -64,7 +64,7 @@ Fix problem with LIMIT and subqueries (Tom)
 Fix for LIMIT, DISTINCT ON pushed into subqueryies (Tom)
 PL/pgSQL memory leak fix (Jan, Tom)
 Fix nested EXCEPT/INTERSECT (Tom)
-Python fix fetchone() (Gerhard Häring)
+Python fix fetchone() (Gerhard Haring)
 ECPG fixes (Michael, Christof Petig)
 
 
