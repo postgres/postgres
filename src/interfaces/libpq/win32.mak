@@ -4,17 +4,49 @@
 #        and a Win32 dynamic library (non-debug) libpq.dll with import library libpqdll.lib
 
 
+!MESSAGE Building the Win32 static library...
+!MESSAGE
+!IF "$(CFG)" == ""
+CFG=Release
+!MESSAGE No configuration specified. Defaulting to Release.
+!MESSAGE
+!ELSE
+!MESSAGE Configuration "$(CFG)"
+!MESSAGE
+!ENDIF
+
+!IF "$(CFG)" != "Release" && "$(CFG)" != "MultibyteRelease"
+!MESSAGE Invalid configuration "$(CFG)" specified.
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE
+!MESSAGE NMAKE /f win32.mak CFG=[Release | MultibyteRelease ]
+!MESSAGE
+!MESSAGE Possible choices for configuration are:
+!MESSAGE
+!MESSAGE "Release" (Win32 Release DLL)
+!MESSAGE "MultibyteRelease" (Win32 Release DLL with Multibyte support)
+!MESSAGE
+!ERROR An invalid configuration was specified.
+!ENDIF
+
+
 !IF "$(OS)" == "Windows_NT"
 NULL=
 !ELSE 
 NULL=nul
 !ENDIF 
 
+!IF "$(CFG)" == "MultibyteRelease"
+MULTIBYTE=1
+!ENDIF
+
 CPP=cl.exe
 RSC=rc.exe
 
 OUTDIR=.\Release
 INTDIR=.\Release
+
 # Begin Custom Macros
 OutDir=.\Release
 # End Custom Macros
@@ -39,16 +71,13 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpqdll.exp"
 	-@erase "$(OUTDIR)\libpqdll.lib"
 !IFDEF MULTIBYTE
-	-@erase "$(INTDIR)\common.obj"
 	-@erase "$(INTDIR)\wchar.obj"
-	-@erase "$(INTDIR)\conv.obj"
-	-@erase "$(INTDIR)\big5.obj"
 !ENDIF
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\..\include" /D "NDEBUG" /D\
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\..\include" /D "FRONTEND" /D "NDEBUG" /D\
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
@@ -75,7 +104,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\pqexpbuffer.obj"
 
 !IFDEF MULTIBYTE
-LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\common.obj" "$(INTDIR)\wchar.obj" "$(INTDIR)\conv.obj" "$(INTDIR)\big5.obj"
+LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\wchar.obj"
 !ENDIF
 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
@@ -114,24 +143,9 @@ LINK32_OBJS= \
 
     
 !IFDEF MULTIBYTE
-"$(INTDIR)\common.obj" : ..\..\backend\utils\mb\common.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\common.c
-<<
-
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
     $(CPP) @<<
     $(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
-<<
-
-"$(INTDIR)\conv.obj" : ..\..\backend\utils\mb\conv.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\conv.c
-<<
-
-"$(INTDIR)\big5.obj" : ..\..\backend\utils\mb\big5.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\big5.c
 <<
 !ENDIF
 
