@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.18 2000/05/18 16:11:39 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.19 2000/05/24 22:32:59 tgl Exp $
 
 # ----------
 # Check call syntax
@@ -104,18 +104,27 @@ FRONTEND="$BINDIR/psql $HOSTLOC -a -q -X"
 #		testname/hostnamepattern=substitutefile
 # where the hostnamepattern is evaluated per the rules of expr(1) --- namely,
 # it is a standard regular expression with an implicit ^ at the start.
+#
+# The tempfile hackery is needed because some shells will run the loop
+# inside a subshell, whereupon shell variables set therein aren't seen
+# outside the loop :-(
 # ----------
-SUBSTLIST=""
-exec 4<resultmap
-while read LINE <&4
+TMPFILE="matches.$$"
+cat /dev/null > $TMPFILE
+while read LINE
 do
 	HOSTPAT=`expr "$LINE" : '.*/\(.*\)='`
 	if [ `expr "$hostname" : "$HOSTPAT"` -ne 0 ]
 	then
-		SUBSTLIST="$SUBSTLIST $LINE"
+		# remove hostnamepattern from line so that there are no shell
+		# wildcards in SUBSTLIST; else later 'for' could expand them!
+		TESTNAME=`expr "$LINE" : '\(.*\)/'`
+		SUBST=`echo "$LINE" | sed 's/^.*=//'`
+		echo "$TESTNAME=$SUBST" >> $TMPFILE
 	fi
-done
-exec 4<&-
+done <resultmap
+SUBSTLIST=`cat $TMPFILE`
+rm -f $TMPFILE
 
 # ----------
 # Catch SIGINT and SIGTERM to shutdown the postmaster
@@ -258,8 +267,8 @@ fi
 # Run the regression tests specified in the ./sql/run_check.tests file
 # ----------
 echo "=============== Running regression queries...          ================"
-echo "" > regression.diffs
-echo "" > regress.out
+cat /dev/null > regression.diffs
+cat /dev/null > regress.out
 
 if [ "x$hostname" = "xi386-pc-qnx" ]; then
         DIFFOPT="-b"
@@ -439,7 +448,7 @@ lno=0
 		EXPECTED="expected/${name}.out"
 		for LINE in $SUBSTLIST
 		do
-			if [ `expr "$LINE" : "$name/"` -ne 0 ]
+			if [ `expr "$LINE" : "$name="` -ne 0 ]
 			then
 				SUBST=`echo "$LINE" | sed 's/^.*=//'`
 				EXPECTED="expected/${SUBST}.out"
