@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.3 1997/09/10 20:19:23 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.4 1997/10/30 05:38:17 vadim Exp $
 .TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function \(em define a new function
@@ -10,7 +10,7 @@ create function \(em define a new function
 	\fB(\fP[type1 {, type-n}]\fB)\fP
 	\fBreturns\fP type-r
 	\fBas\fP {'/full/path/to/objectfile' | 'sql-queries'}
-	\fBlanguage\fP {'c' \ 'sql' \ 'internal'}
+	\fBlanguage\fP {'c' \ 'sql' \ 'internal' \ 'plname'}
 .fi
 .SH "DESCRIPTION"
 With this command, a Postgres user can register a function with Postgres.
@@ -29,6 +29,12 @@ or
 .IR "\*(lqsql\*(rq" .
 or
 .IR "\*(lqinternal\*(rq" .
+or
+.IR "\*(lqplname\*(rq" .
+(The
+.IR "plname"
+is the language name of a created procedural language. See
+create language(l) for details.)
 (The
 .IR "arg is"
 clause may be left out if the function has no arguments, or
@@ -291,6 +297,12 @@ a $n syntax: $1 refers to the first argument, $2 to the second, and so
 on.  If an argument is complex, then a \*(lqdot\*(rq notation may be
 used to access attributes of the argument (e.g. \*(lq$1.emp\*(rq), or
 to invoke functions via a nested-dot syntax.
+.SH "PL FUNCTIONS"
+Procedural languages aren't builtin to Postgres. They are offered
+by loadable modules. Please refer to the documentation for the
+PL in question for details about the syntax and how the
+.IR "as"
+clause is interpreted by the PL handler.
 .SH "EXAMPLES: C Functions"
 The following command defines a C function, overpaid, of two basetype
 arguments.
@@ -378,7 +390,7 @@ select function hobbies (EMP) returns set of HOBBIES
 	language 'sql'
 .SH "SEE ALSO"
 .PP
-information(1), load(l), drop function(l).
+information(1), load(l), drop function(l), create language(l).
 .SH "NOTES"
 .SH "Name Space Conflicts"
 More than one function may be defined with the same name, as long as
