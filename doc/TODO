@@ -262,17 +262,21 @@ Clients
 	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
 
 * ECPG
+	o Docs
 	o Implement set descriptor, using descriptor
-	o Make casts work in variable initializations
-	o Implement SQLDA
-	o Allow multi-threaded use of SQLCA
 	o Solve cardinality > 1 for input descriptors / variables
-	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o Improve error handling
 	o Add a semantic check level, e.g. check if a table really exists
-	o Fix nested C comments
 	o Add SQLSTATE
 	o fix handling of DB attributes that are arrays
+	o Use backend prepare/execute facility for ecpg where possible
+	o Make casts work in variable initializations
+	o Implement SQLDA (do we really need this?)
+	o Fix nested C comments
+	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
+	o -Allow multi-threaded use of SQLCA
+	o -Understand structure definitions outside a declare section
+	o -Allow :var[:index] or :var[<integer>] as cvariable for an array var
 
 * Python
 	o Allow users to register their own types with pg_
