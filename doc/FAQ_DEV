@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Oct 14 15:04:04 EDT 2004
+   Last updated: Thu Oct 14 15:07:40 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -518,6 +518,7 @@
    Some SQL standards web pages are:
      * http://www.wiscorp.com/SQLStandards.html
      * http://troels.arvin.dk/db/rdbms/links/#standards
+     * http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax
      * http://dbs.uni-leipzig.de/en/lokal/standards.pdf (paper)
        
                             Technical Questions
