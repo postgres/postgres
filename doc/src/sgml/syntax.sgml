@@ -207,7 +207,7 @@ WHENEVER WRITE
     <para>
      <acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
      <firstterm>non-reserved keywords</firstterm> which have
-     a proscribed meaning in the language but which are also allowed
+     a prescribed meaning in the language but which are also allowed
      as identifiers.
      <productname>Postgres</productname> has additional keywords
      which allow similar unrestricted usage.
@@ -324,7 +324,8 @@ We also support C-style block comments, e.g.:
     <programlisting>
 /* multi
    line
-   comment */
+   comment
+ */
     </programlisting>
    </para>
   </sect1>
@@ -336,8 +337,16 @@ We also support C-style block comments, e.g.:
     Names in SQL are sequences of less than NAMEDATALEN alphanumeric characters,
     starting with an alphabetic character.  By default, NAMEDATALEN is set
     to 32, but at the time the system is built, NAMEDATALEN can be changed
-    by changing the #ifdef in src/backend/include/postgres.h.  Underscore
-    ("_") is considered an alphabetic character.
+    by changing the <literal>#define</literal> in
+    src/backend/include/postgres.h.
+    Underscore ("_") is considered an alphabetic character.
+   </para>
+
+   <para>
+    In some contexts, names may contain other characters if surrounded 
+    by double quotes. For example, table or column names may contain otherwise
+    disallowed characters such as spaces, ampersands, etc. using this
+    technique.
    </para>
   </sect1>
 
@@ -356,7 +365,7 @@ We also support C-style block comments, e.g.:
     <para>
      <firstterm>Strings</firstterm>
      in SQL are arbitrary sequences of ASCII characters bounded by single
-     quotes ("'", e.g. 'This is a string').
+     quotes ("'", e.g. <literal>'This is a string'</literal>).
      Uppercase alphabetics within strings are accepted
      literally.  Non-printing characters may be embedded within strings by
      prepending them with a backslash
@@ -385,6 +394,17 @@ We also support C-style block comments, e.g.:
      values range from -2147483648 to +2147483647.  This will vary
      depending on the operating system and host machine.
     </para>
+
+    <para>
+     Note that larger integers can be specified for <type>int8</type>
+     by using <acronym>SQL92</acronym> string notation or
+     <productname>Postgres</productname> type notation:
+
+     <programlisting>
+int8 '4000000000'  -- string style
+'4000000000'::int8 -- Postgres (historical) style
+     </programlisting>
+    </para>
    </sect2>
 
    <sect2>
@@ -403,8 +423,19 @@ We also support C-style block comments, e.g.:
      You must include at least one <replaceable>dig</replaceable> after the
      period and after the [+-] if you use those options.  An exponent with
      a missing mantissa has a mantissa of 1 inserted.  There may be no
-     extra characters embedded in the string.  
-     Floating point constaints are of type float8.
+     extra characters embedded in the string.
+    </para>
+
+    <para>
+     Floating point constaints are of type
+     <type>float8</type>. <type>float4</type> can be specified
+     explicitly by using <acronym>SQL92</acronym> string notation or
+     <productname>Postgres</productname> type notation:
+
+     <programlisting>
+float4 '1.23'  -- string style
+'1.23'::float4 -- Postgres (historical) style
+     </programlisting>
     </para>
    </sect2>
 
@@ -423,7 +454,8 @@ CAST '<replaceable>string</replaceable>' AS <replaceable>type</replaceable>
      </synopsis>
 
      The value inside the string is passed to the input
-     conversion routine for the type called type-name. The result is a
+     conversion routine for the type called
+     <replaceable>type</replaceable>. The result is a
      constant of the indicated type.  The explicit typecast may be omitted
      if there is no ambiguity as to the type the constant must be, in which
      case it is automatically coerced.
