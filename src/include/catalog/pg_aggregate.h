@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.43 2004/05/26 15:26:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.44 2004/05/26 18:14:36 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -155,14 +155,14 @@ DATA(insert ( 2518  boolor_statefunc  	- 				16  _null_ ));
 DATA(insert ( 2519  booland_statefunc	-				16	_null_ ));
 
 /* bitwise integer */
-DATA(insert ( 2535 int2and        -                 21       _null_ ));
-DATA(insert ( 2536 int2or         -                 21       _null_ ));
-DATA(insert ( 2537 int4and        -                 23       _null_ ));
-DATA(insert ( 2538 int4or         -                 23       _null_ ));
-DATA(insert ( 2539 int8and        -                 20       _null_ ));
-DATA(insert ( 2540 int8or         -                 20       _null_ ));
-DATA(insert ( 2541 bitand         -               1560       _null_ ));
-DATA(insert ( 2542 bitor          -               1560       _null_ ));
+DATA(insert ( 2236 int2and        -                 21       _null_ ));
+DATA(insert ( 2237 int2or         -                 21       _null_ ));
+DATA(insert ( 2238 int4and        -                 23       _null_ ));
+DATA(insert ( 2239 int4or         -                 23       _null_ ));
+DATA(insert ( 2240 int8and        -                 20       _null_ ));
+DATA(insert ( 2241 int8or         -                 20       _null_ ));
+DATA(insert ( 2242 bitand         -               1560       _null_ ));
+DATA(insert ( 2243 bitor          -               1560       _null_ ));
 
 /*
  * prototypes for functions in pg_aggregate.c

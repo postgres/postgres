@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.330 2004/05/26 15:26:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.331 2004/05/26 18:14:36 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3552,24 +3552,24 @@ DATA(insert OID = 2519 ( every 					   	   PGNSP PGUID 12 t f f f i 1 16 "16" _n
 DESCR("boolean-and aggregate");
 
 /* bitwise integer aggregates */
-DATA(insert OID = 2535 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 21 "21" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2236 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 21 "21" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and smallint aggregate");
-DATA(insert OID = 2536 ( bit_or						   PGNSP PGUID 12 t f f f i 1 21 "21" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2237 ( bit_or						   PGNSP PGUID 12 t f f f i 1 21 "21" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or smallint aggregate");
 
-DATA(insert OID = 2537 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 23 "23" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2238 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 23 "23" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and integer aggregate");
-DATA(insert OID = 2538 ( bit_or						   PGNSP PGUID 12 t f f f i 1 23 "23" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2239 ( bit_or						   PGNSP PGUID 12 t f f f i 1 23 "23" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or integer aggregate");
 
-DATA(insert OID = 2539 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 20 "20" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2240 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 20 "20" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and bigint aggregate");
-DATA(insert OID = 2540 ( bit_or						   PGNSP PGUID 12 t f f f i 1 20 "20" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2241 ( bit_or						   PGNSP PGUID 12 t f f f i 1 20 "20" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or bigint aggregate");
 
-DATA(insert OID = 2541 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2242 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and bit aggregate");
-DATA(insert OID = 2542 ( bit_or						   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
+DATA(insert OID = 2243 ( bit_or						   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or bit aggregate");
 
 /*
