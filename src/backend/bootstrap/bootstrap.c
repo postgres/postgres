@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.107 2001/05/12 01:48:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.108 2001/06/03 14:53:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,11 +185,13 @@ err_out(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage:\n  postgres -boot [-d] [-D datadir] [-F] [-x num] dbname\n");
-	fprintf(stderr, "  -d               debug mode\n");
-	fprintf(stderr, "  -D datadir       data directory\n");
-	fprintf(stderr, "  -F               turn off fsync\n");
-	fprintf(stderr, "  -x num           internal use\n");
+	fprintf(stderr,
+			gettext("Usage:\n"
+					"  postgres -boot [-d] [-D datadir] [-F] [-x num] dbname\n"
+					"  -d               debug mode\n"
+					"  -D datadir       data directory\n"
+					"  -F               turn off fsync\n"
+					"  -x num           internal use\n"));
 
 	proc_exit(1);
 }
@@ -286,10 +288,11 @@ BootstrapMain(int argc, char *argv[])
 	{
 		if (!potential_DataDir)
 		{
-			fprintf(stderr, "%s does not know where to find the database system "
-			   "data.  You must specify the directory that contains the "
-				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+			fprintf(stderr, 
+					gettext("%s does not know where to find the database system data.\n"
+							"You must specify the directory that contains the database system\n"
+							"either by specifying the -D invocation option or by setting the\n"
+							"PGDATA environment variable.\n\n"),
 					argv[0]);
 			proc_exit(1);
 		}

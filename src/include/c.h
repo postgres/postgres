@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.94 2001/06/02 18:25:18 petere Exp $
+ * $Id: c.h,v 1.95 2001/06/03 14:53:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,9 @@
 #define dummyret	char
 #endif
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
 
 /* ----------------------------------------------------------------
  *				Section 2:	bool, true, false, TRUE, FALSE, NULL

@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.215 2001/05/30 14:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.216 2001/06/03 14:53:56 petere Exp $
  *
  * NOTES
  *
@@ -243,6 +243,7 @@ static void RandomSalt(char *salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
+static void postmaster_error(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 static pid_t SSDataBase(int xlop);
 
@@ -264,10 +265,11 @@ checkDataDir(const char *checkdir)
 
 	if (checkdir == NULL)
 	{
-		fprintf(stderr, "%s does not know where to find the database system "
-				"data.  You must specify the directory that contains the "
-				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+		fprintf(stderr, gettext(
+			"%s does not know where to find the database system data.\n"
+			"You must specify the directory that contains the database system\n"
+			"either by specifying the -D invocation option or by setting the\n"
+			"PGDATA environment variable.\n\n"),
 				progname);
 		ExitPostmaster(2);
 	}
@@ -277,9 +279,10 @@ checkDataDir(const char *checkdir)
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)
 	{
-		fprintf(stderr, "%s does not find the database system."
-				"\n\tExpected to find it in the PGDATA directory \"%s\","
-				"\n\tbut unable to open file \"%s\": %s\n\n",
+		fprintf(stderr, gettext(
+			"%s does not find the database system.\n"
+			"Expected to find it in the PGDATA directory \"%s\",\n"
+			"but unable to open file \"%s\": %s\n\n"),
 				progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
@@ -381,7 +384,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case '?':
-				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 				ExitPostmaster(1);
 		}
 	}
@@ -391,8 +394,8 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (optind < argc)
 	{
-		fprintf(stderr, "%s: invalid argument -- %s\n", progname, argv[optind]);
-		fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+		postmaster_error("invalid argument -- %s", argv[optind]);
+		fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 		ExitPostmaster(1);
 	}
 
@@ -413,7 +416,7 @@ PostmasterMain(int argc, char *argv[])
 		{
 			case 'A':
 #ifndef USE_ASSERT_CHECKING
-				fprintf(stderr, "Assert checking is not compiled in\n");
+				postmaster_error("Assert checking is not compiled in.");
 #else
 				assert_enabled = atoi(optarg);
 #endif
@@ -539,7 +542,7 @@ PostmasterMain(int argc, char *argv[])
 
 			default:
 				/* shouldn't get here */
-				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 				ExitPostmaster(1);
 		}
 	}
@@ -555,8 +558,7 @@ PostmasterMain(int argc, char *argv[])
 		 * for lack of buffers.  The specific choices here are somewhat
 		 * arbitrary.
 		 */
-		fprintf(stderr, "%s: The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.\n",
-				progname);
+		postmaster_error("The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.");
 		ExitPostmaster(1);
 	}
 
@@ -600,8 +602,8 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_SSL
 	if (EnableSSL && !NetServer)
 	{
-		fprintf(stderr, "%s: For SSL, TCP/IP connections must be enabled. See -? for help.\n",
-				progname);
+		postmaster_error("For SSL, TCP/IP connections must be enabled.");
+		fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 		ExitPostmaster(1);
 	}
 	if (EnableSSL)
@@ -615,8 +617,7 @@ PostmasterMain(int argc, char *argv[])
 								  &ServerSock_INET);
 		if (status != STATUS_OK)
 		{
-			fprintf(stderr, "%s: cannot create INET stream port\n",
-					progname);
+			postmaster_error("cannot create INET stream port");
 			ExitPostmaster(1);
 		}
 	}
@@ -627,8 +628,7 @@ PostmasterMain(int argc, char *argv[])
 							  &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
-		fprintf(stderr, "%s: cannot create UNIX stream port\n",
-				progname);
+		postmaster_error("cannot create UNIX stream port");
 		ExitPostmaster(1);
 	}
 #endif
@@ -701,7 +701,7 @@ pmdaemonize(int argc, char *argv[])
 	pid = fork();
 	if (pid == (pid_t) -1)
 	{
-		perror("Failed to fork postmaster");
+		postmaster_error("fork failed: %s", strerror(errno));
 		ExitPostmaster(1);
 		return;					/* not reached */
 	}
@@ -719,8 +719,8 @@ pmdaemonize(int argc, char *argv[])
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		fprintf(stderr, "%s: ", progname);
-		perror("cannot disassociate from controlling TTY");
+		postmaster_error("cannot disassociate from controlling TTY: %s",
+						 strerror(errno));
 		ExitPostmaster(1);
 	}
 #endif
@@ -739,38 +739,37 @@ pmdaemonize(int argc, char *argv[])
 static void
 usage(const char *progname)
 {
-	printf("%s is the PostgreSQL server.\n\n", progname);
-	printf("Usage:\n  %s [options...]\n\n", progname);
-	printf("Options:\n");
+	printf(gettext("%s is the PostgreSQL server.\n\n"), progname);
+	printf(gettext("Usage:\n  %s [options...]\n\n"), progname);
+	printf(gettext("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
-	printf("  -A 1|0          enable/disable run-time assert checking\n");
+	printf(gettext("  -A 1|0          enable/disable run-time assert checking\n"));
 #endif
-	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
-	printf("  -c NAME=VALUE   set run-time parameter\n");
-	printf("  -d 1-5          debugging level\n");
-	printf("  -D DATADIR      database directory\n");
-	printf("  -F              turn fsync off\n");
-	printf("  -h HOSTNAME     host name or IP address to listen on\n");
-	printf("  -i              enable TCP/IP connections\n");
-	printf("  -k DIRECTORY    Unix-domain socket location\n");
+	printf(gettext("  -B NBUFFERS     number of shared buffers (default %d)\n"), DEF_NBUFFERS);
+	printf(gettext("  -c NAME=VALUE   set run-time parameter\n"));
+	printf(gettext("  -d 1-5          debugging level\n"));
+	printf(gettext("  -D DATADIR      database directory\n"));
+	printf(gettext("  -F              turn fsync off\n"));
+	printf(gettext("  -h HOSTNAME     host name or IP address to listen on\n"));
+	printf(gettext("  -i              enable TCP/IP connections\n"));
+	printf(gettext("  -k DIRECTORY    Unix-domain socket location\n"));
 #ifdef USE_SSL
-	printf("  -l              enable SSL connections\n");
+	printf(gettext("  -l              enable SSL connections\n"));
 #endif
-	printf("  -N MAX-CONNECT  maximum number of allowed connections (1..%d, default %d)\n",
+	printf(gettext("  -N MAX-CONNECT  maximum number of allowed connections (1..%d, default %d)\n"),
 		   MAXBACKENDS, DEF_MAXBACKENDS);
-	printf("  -o OPTIONS      pass 'OPTIONS' to each backend server\n");
-	printf("  -p PORT         port number to listen on (default %d)\n", DEF_PGPORT);
-	printf("  -S              silent mode (start in background without logging output)\n");
+	printf(gettext("  -o OPTIONS      pass 'OPTIONS' to each backend server\n"));
+	printf(gettext("  -p PORT         port number to listen on (default %d)\n"), DEF_PGPORT);
+	printf(gettext("  -S              silent mode (start in background without logging output)\n"));
 
-	printf("\nDeveloper options:\n");
-	printf("  -n              do not reinitialize shared memory after abnormal exit\n");
-	printf("  -s              send SIGSTOP to all backend servers if one dies\n");
+	printf(gettext("\nDeveloper options:\n"));
+	printf(gettext("  -n              do not reinitialize shared memory after abnormal exit\n"));
+	printf(gettext("  -s              send SIGSTOP to all backend servers if one dies\n"));
 
-	printf("\nPlease read the documentation for the complete list of run-time\n"
-		   "configuration settings and how to set them on the command line or in\n"
-		   "the configuration file.\n\n");
-
-	printf("Report bugs to <pgsql-bugs@postgresql.org>.\n");
+	printf(gettext("\nPlease read the documentation for the complete list of run-time\n"
+				   "configuration settings and how to set them on the command line or in\n"
+				   "the configuration file.\n\n"
+				   "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 static int
@@ -860,8 +859,7 @@ ServerLoop(void)
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
-			fprintf(stderr, "%s: ServerLoop: select failed: %s\n",
-					progname, strerror(errno));
+			postmaster_error("ServerLoop: select failed: %s", strerror(errno));
 			return STATUS_ERROR;
 		}
 
@@ -941,8 +939,7 @@ ServerLoop(void)
 				)
 			{
 				if (DebugLvl > 1)
-					fprintf(stderr, "%s: ServerLoop:\t\thandling reading %d\n",
-							progname, port->sock);
+					postmaster_error("ServerLoop: handling reading %d", port->sock);
 
 				if (PacketReceiveFragment(port) != STATUS_OK)
 					status = STATUS_ERROR;
@@ -951,8 +948,7 @@ ServerLoop(void)
 			if (FD_ISSET(port->sock, &wmask))
 			{
 				if (DebugLvl > 1)
-					fprintf(stderr, "%s: ServerLoop:\t\thandling writing %d\n",
-							progname, port->sock);
+					postmaster_error("ServerLoop: handling writing %d", port->sock);
 
 				if (PacketSendFragment(port) != STATUS_OK)
 					status = STATUS_ERROR;
@@ -1100,7 +1096,8 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
-			perror("Failed to send SSL negotiation response");
+			postmaster_error("failed to send SSL negotiation response: %s",
+							 strerror(errno));
 			return STATUS_ERROR;/* Close connection */
 		}
 
@@ -1111,8 +1108,8 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 				!SSL_set_fd(port->ssl, port->sock) ||
 				SSL_accept(port->ssl) <= 0)
 			{
-				fprintf(stderr, "Failed to initialize SSL connection: %s, errno: %d (%s)\n",
-						ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
+				postmaster_error("failed to initialize SSL connection: %s, errno: %d (%s)",
+								 ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
 				return STATUS_ERROR;
 			}
 		}
@@ -1216,8 +1213,7 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 	if (backendPID == CheckPointPID)
 	{
 		if (DebugLvl)
-			fprintf(stderr, "%s: processCancelRequest: CheckPointPID in cancel request for process %d\n",
-					progname, backendPID);
+			postmaster_error("processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
 		return STATUS_ERROR;
 	}
 
@@ -1232,16 +1228,14 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 			{
 				/* Found a match; signal that backend to cancel current op */
 				if (DebugLvl)
-					fprintf(stderr, "%s: processCancelRequest: sending SIGINT to process %d\n",
-							progname, bp->pid);
+					postmaster_error("processCancelRequest: sending SIGINT to process %d", bp->pid);
 				kill(bp->pid, SIGINT);
 			}
 			else
 			{
 				/* Right PID, wrong key: no way, Jose */
 				if (DebugLvl)
-					fprintf(stderr, "%s: processCancelRequest: bad key in cancel request for process %d\n",
-							progname, bp->pid);
+					postmaster_error("processCancelRequest: bad key in cancel request for process %d", bp->pid);
 			}
 			return STATUS_ERROR;
 		}
@@ -1249,8 +1243,7 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 
 	/* No matching backend */
 	if (DebugLvl)
-		fprintf(stderr, "%s: processCancelRequest: bad PID in cancel request for process %d\n",
-				progname, backendPID);
+		postmaster_error("processCancelRequest: bad PID in cancel request for process %d", backendPID);
 
 	return STATUS_ERROR;
 }
@@ -1288,8 +1281,7 @@ ConnCreate(int serverFd)
 
 	if (!(port = (Port *) calloc(1, sizeof(Port))))
 	{
-		fprintf(stderr, "%s: ConnCreate: malloc failed\n",
-				progname);
+		postmaster_error("ConnCreate: malloc failed");
 		SignalChildren(SIGQUIT);
 		ExitPostmaster(1);
 	}
@@ -1452,7 +1444,7 @@ pmdie(SIGNAL_ARGS)
 			}
 			Shutdown = SmartShutdown;
 			tnow = time(NULL);
-			fprintf(stderr, "Smart Shutdown request at %s", ctime(&tnow));
+			fprintf(stderr, gettext("Smart Shutdown request at %s"), ctime(&tnow));
 			fflush(stderr);
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
@@ -1490,14 +1482,14 @@ pmdie(SIGNAL_ARGS)
 				return;
 			}
 			tnow = time(NULL);
-			fprintf(stderr, "Fast Shutdown request at %s", ctime(&tnow));
+			fprintf(stderr, gettext("Fast Shutdown request at %s"), ctime(&tnow));
 			fflush(stderr);
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
 				Shutdown = FastShutdown;
 				if (!FatalError)
 				{
-					fprintf(stderr, "Aborting any active transaction...\n");
+					fprintf(stderr, gettext("Aborting any active transaction...\n"));
 					fflush(stderr);
 					SignalChildren(SIGTERM);
 				}
@@ -1537,7 +1529,7 @@ pmdie(SIGNAL_ARGS)
 			 * properly shutdown data base system.
 			 */
 			tnow = time(NULL);
-			fprintf(stderr, "Immediate Shutdown request at %s", ctime(&tnow));
+			fprintf(stderr, gettext("Immediate Shutdown request at %s"), ctime(&tnow));
 			fflush(stderr);
 			if (ShutdownPID > 0)
 				kill(ShutdownPID, SIGQUIT);
@@ -1575,8 +1567,7 @@ reaper(SIGNAL_ARGS)
 	pqsignal(SIGCHLD, reaper);
 
 	if (DebugLvl)
-		fprintf(stderr, "%s: reaping dead processes...\n",
-				progname);
+		postmaster_error("reaping dead processes");
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
@@ -1592,8 +1583,7 @@ reaper(SIGNAL_ARGS)
 				abort();
 			if (exitstatus != 0)
 			{
-				fprintf(stderr, "%s: Shutdown proc %d exited with status %d\n",
-						progname, pid, exitstatus);
+				postmaster_error("Shutdown proc %d exited with status %d", pid, exitstatus);
 				fflush(stderr);
 				ExitPostmaster(1);
 			}
@@ -1605,8 +1595,8 @@ reaper(SIGNAL_ARGS)
 				abort();
 			if (exitstatus != 0)
 			{
-				fprintf(stderr, "%s: Startup proc %d exited with status %d - abort\n",
-						progname, pid, exitstatus);
+				postmaster_error("Startup proc %d exited with status %d - abort",
+								 pid, exitstatus);
 				fflush(stderr);
 				ExitPostmaster(1);
 			}
@@ -1649,8 +1639,8 @@ reaper(SIGNAL_ARGS)
 			return;
 		}
 		tnow = time(NULL);
-		fprintf(stderr, "Server processes were terminated at %s"
-				"Reinitializing shared memory and semaphores\n",
+		fprintf(stderr, gettext("Server processes were terminated at %s"
+				"Reinitializing shared memory and semaphores\n"),
 				ctime(&tnow));
 		fflush(stderr);
 
@@ -1696,8 +1686,8 @@ CleanupProc(int pid,
 	Backend    *bp;
 
 	if (DebugLvl)
-		fprintf(stderr, "%s: CleanupProc: pid %d exited with status %d\n",
-				progname, pid, exitstatus);
+		postmaster_error("CleanupProc: pid %d exited with status %d",
+						 pid, exitstatus);
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1745,8 +1735,8 @@ CleanupProc(int pid,
 	{
 		/* Make log entry unless we did so already */
 		tnow = time(NULL);
-		fprintf(stderr, "Server process (pid %d) exited with status %d at %s"
-				"Terminating any active server processes...\n",
+		fprintf(stderr, gettext("Server process (pid %d) exited with status %d at %s"
+								"Terminating any active server processes...\n"),
 				pid, exitstatus, ctime(&tnow));
 		fflush(stderr);
 	}
@@ -1771,10 +1761,9 @@ CleanupProc(int pid,
 			if (!FatalError)
 			{
 				if (DebugLvl)
-					fprintf(stderr, "%s: CleanupProc: sending %s to process %d\n",
-							progname,
-							(SendStop ? "SIGSTOP" : "SIGQUIT"),
-							bp->pid);
+					postmaster_error("CleanupProc: sending %s to process %d",
+									 (SendStop ? "SIGSTOP" : "SIGQUIT"),
+									 bp->pid);
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
@@ -1895,7 +1884,7 @@ BackendStartup(Port *port)
 
 		if (DoBackend(port))
 		{
-			fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
+			fprintf(stderr, gettext("%s child[%d]: BackendStartup: backend startup failed\n"),
 					progname, (int) getpid());
 			ExitPostmaster(1);
 		}
@@ -1910,13 +1899,13 @@ BackendStartup(Port *port)
 		/* Specific beos backend startup actions */
 		beos_backend_startup_failed();
 #endif
-		fprintf(stderr, "%s: BackendStartup: fork failed: %s\n",
+		fprintf(stderr, gettext("%s: BackendStartup: fork failed: %s\n"),
 				progname, strerror(errno));
 		return STATUS_ERROR;
 	}
 
 	if (DebugLvl)
-		fprintf(stderr, "%s: BackendStartup: pid %d user %s db %s socket %d\n",
+		fprintf(stderr, gettext("%s: BackendStartup: pid %d user %s db %s socket %d\n"),
 				progname, pid, port->user, port->database,
 				port->sock);
 
@@ -1926,7 +1915,7 @@ BackendStartup(Port *port)
 	 */
 	if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
 	{
-		fprintf(stderr, "%s: BackendStartup: malloc failed\n",
+		fprintf(stderr, gettext("%s: BackendStartup: malloc failed\n"),
 				progname);
 		ExitPostmaster(1);
 	}
@@ -2269,24 +2258,28 @@ InitSSL(void)
 	SSL_context = SSL_CTX_new(SSLv23_method());
 	if (!SSL_context)
 	{
-		fprintf(stderr, "Failed to create SSL context: %s\n", ERR_reason_error_string(ERR_get_error()));
+		postmaster_error("failed to create SSL context: %s",
+						 ERR_reason_error_string(ERR_get_error()));
 		ExitPostmaster(1);
 	}
 	snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
 	if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 	{
-		fprintf(stderr, "Failed to load server certificate (%s): %s\n", fnbuf, ERR_reason_error_string(ERR_get_error()));
+		postmaster_error("failed to load server certificate (%s): %s",
+						 fnbuf, ERR_reason_error_string(ERR_get_error()));
 		ExitPostmaster(1);
 	}
 	snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
 	if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 	{
-		fprintf(stderr, "Failed to load private key file (%s): %s\n", fnbuf, ERR_reason_error_string(ERR_get_error()));
+		postmaster_error("failed to load private key file (%s): %s",
+						 fnbuf, ERR_reason_error_string(ERR_get_error()));
 		ExitPostmaster(1);
 	}
 	if (!SSL_CTX_check_private_key(SSL_context))
 	{
-		fprintf(stderr, "Check of private key failed: %s\n", ERR_reason_error_string(ERR_get_error()));
+		postmaster_error("check of private key failed: %s",
+						 ERR_reason_error_string(ERR_get_error()));
 		ExitPostmaster(1);
 	}
 }
@@ -2388,8 +2381,7 @@ SSDataBase(int xlop)
 	{
 		if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
 		{
-			fprintf(stderr, "%s: CheckPointDataBase: malloc failed\n",
-					progname);
+			postmaster_error("CheckPointDataBase: malloc failed");
 			ExitPostmaster(1);
 		}
 
@@ -2429,8 +2421,8 @@ CreateOptsFile(int argc, char *argv[])
 	fp = fopen(filename, "w");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "%s: cannot create file %s: %s\n", progname,
-				filename, strerror(errno));
+		postmaster_error("cannot create file %s: %s",
+						 filename, strerror(errno));
 		return false;
 	}
 
@@ -2441,11 +2433,24 @@ CreateOptsFile(int argc, char *argv[])
 
 	if (ferror(fp))
 	{
-		fprintf(stderr, "%s: writing file %s failed\n", progname, filename);
+		postmaster_error("writing file %s failed", filename);
 		fclose(fp);
 		return false;
 	}
 
 	fclose(fp);
 	return true;
+}
+
+
+static void
+postmaster_error(const char *fmt, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "%s: ", progname);
+	va_start(ap, fmt);
+	fprintf(stderr, gettext(fmt), ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
 }

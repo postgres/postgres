@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.44 2001/06/02 18:25:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.45 2001/06/03 14:53:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,12 +40,6 @@
 #include "bootstrap/bootstrap.h"
 #include "tcop/tcopprot.h"
 
-
-#define NOROOTEXEC "\
-\n\"root\" execution of the PostgreSQL server is not permitted.\n\n\
-The server must be started under an unprivileged userid to prevent\n\
-a possible system security compromise. See the INSTALL file for\n\
-more information on how to properly start the server.\n\n"
 
 
 int
@@ -87,7 +81,7 @@ main(int argc, char *argv[])
 #if defined(__alpha)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
-		fprintf(stderr, "setsysinfo failed: %d\n", errno);
+		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"), argv[0], strerror(errno));
 #endif
 
 #endif	 /* NOFIXADE || NOPRINTADE */
@@ -129,7 +123,12 @@ main(int argc, char *argv[])
 #ifndef __BEOS__
 		if (geteuid() == 0)
 		{
-			fprintf(stderr, "%s", NOROOTEXEC);
+			fprintf(stderr, gettext(
+				"\"root\" execution of the PostgreSQL server is not permitted.\n\n"
+				"The server must be started under an unprivileged user id to prevent\n"
+				"a possible system security compromise.  See the documentation for\n"
+				"more information on how to properly start the server.\n\n"
+				));
 			exit(1);
 		}
 #endif	 /* __BEOS__ */
@@ -145,7 +144,7 @@ main(int argc, char *argv[])
 		 */
 		if (getuid() != geteuid())
 		{
-			fprintf(stderr, "%s: real and effective userids must match\n",
+			fprintf(stderr, gettext("%s: real and effective user ids must match\n"),
 					argv[0]);
 			exit(1);
 		}
@@ -194,7 +193,7 @@ main(int argc, char *argv[])
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
-		fprintf(stderr, "%s: invalid current euid %d\n",
+		fprintf(stderr, gettext("%s: invalid current euid %d\n"),
 				argv[0], (int) geteuid());
 		exit(1);
 	}

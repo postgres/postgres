@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.27 2001/03/22 03:59:33 momjian Exp $
+ * $Id: geqo_main.c,v 1.28 2001/06/03 14:53:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,24 +217,22 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 #if defined(ERX) && defined(GEQO_DEBUG)
 	if (edge_failures != 0)
-		fprintf(stdout, "\nFailures: %d  Avg: %d\n", edge_failures, (int) generation / edge_failures);
-
+		elog(DEBUG, "[GEQO] failures: %d, average: %d",
+			 edge_failures, (int) generation / edge_failures);
 	else
-		fprintf(stdout, "No edge failures detected.\n");
+		elog(DEBUG, "[GEQO] No edge failures detected.");
 #endif
 
 
 #if defined(CX) && defined(GEQO_DEBUG)
 	if (mutations != 0)
-		fprintf(stdout, "\nMutations: %d  Generations: %d\n", mutations, generation);
-
+		elog(DEBUG, "[GEQO] mutations: %d, generations: %d", mutations, generation);
 	else
-		fprintf(stdout, "No mutations processed.\n");
+		elog(DEBUG, "[GEQO] No mutations processed.");
 #endif
 
 
 #ifdef GEQO_DEBUG
-	fprintf(stdout, "\n");
 	print_pool(stdout, pool, 0, pool_size - 1);
 #endif
 
