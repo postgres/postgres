@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May 18 10:39:40 EDT 2001
+Last updated:		Fri May 18 11:17:58 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -46,9 +46,8 @@ URGENT
 
 ADMIN
 
-* More access control over who can  (Karel)
 * Improve control over user privileges, including table creation and
-  lock use [privileges]
+  lock use [privileges] (Karel, others)
 * Permission to DELETE table also allows UPDATE
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages (Peter E) [elog]
