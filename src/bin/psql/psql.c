@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.154 1998/08/17 03:50:17 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.155 1998/08/22 04:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,9 +132,6 @@ static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	objectDescription(PsqlSettings *pset, char *object);
 static int	rightsList(PsqlSettings *pset);
 static void prompt_for_password(char *username, char *password);
-static char *
-make_connect_string(char *host, char *port, char *dbname,
-					char *username, char *password);
 
 static char *gets_noreadline(char *prompt, FILE *source);
 static char *gets_readline(char *prompt, FILE *source);
@@ -1402,35 +1399,28 @@ do_connect(const char *new_dbname,
 	else
 	{
 		PGconn	   *olddb = pset->db;
-		static char *userenv = NULL;
-		char	   *old_userenv = NULL;
 		const char *dbparam;
-
-		if (new_user != NULL)
-		{
-
-			/*
-			 * PQsetdb() does not allow us to specify the user, so we have
-			 * to do it via PGUSER
-			 */
-			if (userenv != NULL)
-				old_userenv = userenv;
-			userenv = malloc(strlen("PGUSER=") + strlen(new_user) + 1);
-			sprintf(userenv, "PGUSER=%s", new_user);
-			/* putenv() may continue to use memory as part of environment */
-			putenv(userenv);
-			/* can delete old memory if we malloc'ed it */
-			if (old_userenv != NULL)
-				free(old_userenv);
-		}
+		const char *userparam;
+		const char *pwparam;
 
 		if (strcmp(new_dbname, "-") != 0)
 			dbparam = new_dbname;
 		else
 			dbparam = PQdb(olddb);
 
-		pset->db = PQsetdb(PQhost(olddb), PQport(olddb),
-						   NULL, NULL, dbparam);
+		if (new_user != NULL && strcmp(new_user, "-") != 0)
+			userparam = new_user;
+		else
+			userparam = PQuser(olddb);
+
+		/* libpq doesn't provide an accessor function for the password,
+		 * so we cheat here.
+		 */
+		pwparam = olddb->pgpass;
+
+		pset->db = PQsetdbLogin(PQhost(olddb), PQport(olddb),
+								NULL, NULL, dbparam, userparam, pwparam);
+
 		if (!pset->quiet)
 		{
 			if (!new_user)
@@ -2765,16 +2755,13 @@ main(int argc, char **argv)
 
 	if (settings.getPassword)
 	{
-		char		username[9];
-		char		password[9];
-		char	   *connect_string;
+		char		username[100];
+		char		password[100];
 
 		prompt_for_password(username, password);
 
-		/* now use PQconnectdb so we can pass these options */
-		connect_string = make_connect_string(host, port, dbname, username, password);
-		settings.db = PQconnectdb(connect_string);
-		free(connect_string);
+		settings.db = PQsetdbLogin(host, port, NULL, NULL, dbname,
+								   username, password);
 	}
 	else
 		settings.db = PQsetdb(host, port, NULL, NULL, dbname);
@@ -2784,7 +2771,7 @@ main(int argc, char **argv)
 	if (PQstatus(settings.db) == CONNECTION_BAD)
 	{
 		fprintf(stderr, "Connection to database '%s' failed.\n", dbname);
-		fprintf(stderr, "%s", PQerrorMessage(settings.db));
+		fprintf(stderr, "%s\n", PQerrorMessage(settings.db));
 		PQfinish(settings.db);
 		exit(1);
 	}
@@ -3018,6 +3005,7 @@ setFout(PsqlSettings *pset, char *fname)
 static void
 prompt_for_password(char *username, char *password)
 {
+	char buf[512];
 	int			length;
 
 #ifdef HAVE_TERMIOS_H
@@ -3027,13 +3015,11 @@ prompt_for_password(char *username, char *password)
 #endif
 
 	printf("Username: ");
-	fgets(username, 9, stdin);
+	fgets(username, 100, stdin);
 	length = strlen(username);
 	/* skip rest of the line */
 	if (length > 0 && username[length - 1] != '\n')
 	{
-		static char buf[512];
-
 		do
 		{
 			fgets(buf, 512, stdin);
@@ -3049,7 +3035,7 @@ prompt_for_password(char *username, char *password)
 	t.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSADRAIN, &t);
 #endif
-	fgets(password, 9, stdin);
+	fgets(password, 100, stdin);
 #ifdef HAVE_TERMIOS_H
 	tcsetattr(0, TCSADRAIN, &t_orig);
 #endif
@@ -3058,8 +3044,6 @@ prompt_for_password(char *username, char *password)
 	/* skip rest of the line */
 	if (length > 0 && password[length - 1] != '\n')
 	{
-		static char buf[512];
-
 		do
 		{
 			fgets(buf, 512, stdin);
@@ -3069,63 +3053,4 @@ prompt_for_password(char *username, char *password)
 		password[length - 1] = '\0';
 
 	printf("\n\n");
-}
-
-static char *
-make_connect_string(char *host, char *port, char *dbname,
-					char *username, char *password)
-{
-	int			connect_string_len = 0;
-	char	   *connect_string;
-
-	if (host)
-		connect_string_len += 6 + strlen(host); /* 6 == "host=" + " " */
-	if (username)
-		connect_string_len += 6 + strlen(username);		/* 6 == "user=" + " " */
-	if (password)
-		connect_string_len += 10 + strlen(password);	/* 10 == "password=" + "
-														 * " */
-	if (port)
-		connect_string_len += 6 + strlen(port); /* 6 == "port=" + " " */
-	if (dbname)
-		connect_string_len += 8 + strlen(dbname);		/* 8 == "dbname=" + " " */
-	connect_string_len += 18;	/* "authtype=password" + null */
-
-	connect_string = (char *) malloc(connect_string_len);
-	if (!connect_string)
-		return 0;
-	connect_string[0] = '\0';
-	if (host)
-	{
-		strcat(connect_string, "host=");
-		strcat(connect_string, host);
-		strcat(connect_string, " ");
-	}
-	if (username)
-	{
-		strcat(connect_string, "user=");
-		strcat(connect_string, username);
-		strcat(connect_string, " ");
-	}
-	if (password)
-	{
-		strcat(connect_string, "password=");
-		strcat(connect_string, password);
-		strcat(connect_string, " ");
-	}
-	if (port)
-	{
-		strcat(connect_string, "port=");
-		strcat(connect_string, port);
-		strcat(connect_string, " ");
-	}
-	if (dbname)
-	{
-		strcat(connect_string, "dbname=");
-		strcat(connect_string, dbname);
-		strcat(connect_string, " ");
-	}
-	strcat(connect_string, "authtype=password");
-
-	return connect_string;
 }
