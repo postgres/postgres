@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.20 2000/01/26 05:56:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.21 2000/04/09 04:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ PinBuffer_Debug(char *file, int line, BufferDesc *buf)
 
 		fprintf(stderr, "PIN(Pin) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
-				buffer, buf->sb_relname, buf->tag.blockNum,
+				buffer, buf->blind.relname, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
@@ -168,7 +168,7 @@ UnpinBuffer_Debug(char *file, int line, BufferDesc *buf)
 
 		fprintf(stderr, "UNPIN(Unpin) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
-				buffer, buf->sb_relname, buf->tag.blockNum,
+				buffer, buf->blind.relname, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
@@ -304,7 +304,7 @@ PrintBufferFreeList()
 		int			i = (buf - BufferDescriptors);
 
 		printf("[%-2d] (%s, %d) flags=0x%x, refcnt=%d %ld, nxt=%ld prv=%ld)\n",
-			   i, buf->sb_relname, buf->tag.blockNum,
+			   i, buf->blind.relname, buf->tag.blockNum,
 			   buf->flags, buf->refcount, PrivateRefCount[i],
 			   buf->freeNext, buf->freePrev);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.54 2000/03/17 02:36:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.55 2000/04/09 04:43:19 tgl Exp $
  *
  * NOTES:
  *
@@ -293,7 +293,7 @@ LruDelete(File file)
 	vfdP->seekPos = (long) lseek(vfdP->fd, 0L, SEEK_CUR);
 	Assert(vfdP->seekPos != -1);
 
-	/* if we have written to the file, sync it */
+	/* if we have written to the file, sync it before closing */
 	if (vfdP->fdstate & FD_DIRTY)
 	{
 		returnValue = pg_fsync(vfdP->fd);
@@ -381,9 +381,6 @@ tryAgain:
 			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
 			Assert(returnValue != -1);
 		}
-
-		/* Update state as appropriate for re-open (needed?) */
-		vfdP->fdstate &= ~FD_DIRTY;
 	}
 
 	/*
@@ -804,7 +801,7 @@ FileWrite(File file, char *buffer, int amount)
 	if (returnCode > 0)
 		VfdCache[file].seekPos += returnCode;
 
-	/* record the write */
+	/* mark the file as needing fsync */
 	VfdCache[file].fdstate |= FD_DIRTY;
 
 	return returnCode;
@@ -873,6 +870,35 @@ FileTruncate(File file, long offset)
 	return returnCode;
 }
 
+/*
+ * FileSync --- if a file is marked as dirty, fsync it.
+ *
+ * The FD_DIRTY bit is slightly misnamed: it doesn't mean that we need to
+ * write the file, but that we *have* written it and need to execute an
+ * fsync() to ensure the changes are down on disk before we mark the current
+ * transaction committed.
+ *
+ * FD_DIRTY is set by FileWrite or by an explicit FileMarkDirty() call.
+ * It is cleared after successfully fsync'ing the file.  FileClose() will
+ * fsync a dirty File that is about to be closed, since there will be no
+ * other place to remember the need to fsync after the VFD is gone.
+ *
+ * Note that the DIRTY bit is logically associated with the actual disk file,
+ * not with any particular kernel FD we might have open for it.  We assume
+ * that fsync will force out any dirty buffers for that file, whether or not
+ * they were written through the FD being used for the fsync call --- they
+ * might even have been written by some other backend!
+ *
+ * Note also that LruDelete currently fsyncs a dirty file that it is about
+ * to close the kernel file descriptor for.  The idea there is to avoid
+ * having to re-open the kernel descriptor later.  But it's not real clear
+ * that this is a performance win; we could end up fsyncing the same file
+ * multiple times in a transaction, which would probably cost more time
+ * than is saved by avoiding an open() call.  This should be studied.
+ *
+ * This routine used to think it could skip the fsync if the file is
+ * physically closed, but that is now WRONG; see comments for FileMarkDirty.
+ */
 int
 FileSync(File file)
 {
@@ -880,22 +906,65 @@ FileSync(File file)
 
 	Assert(FileIsValid(file));
 
-	/*
-	 * If the file isn't open, then we don't need to sync it; we always
-	 * sync files when we close them.  Also, if we haven't done any writes
-	 * that we haven't already synced, we can ignore the request.
-	 */
-
-	if (VfdCache[file].fd < 0 || !(VfdCache[file].fdstate & FD_DIRTY))
-		returnCode = 0;
-	else
+	if (!(VfdCache[file].fdstate & FD_DIRTY))
 	{
-		returnCode = pg_fsync(VfdCache[file].fd);
+		/* Need not sync if file is not dirty. */
+		returnCode = 0;
+	}
+	else if (disableFsync)
+	{
+		/* Don't force the file open if pg_fsync isn't gonna sync it. */
+		returnCode = 0;
 		VfdCache[file].fdstate &= ~FD_DIRTY;
+	}
+	else 
+	{
+		/* We don't use FileAccess() because we don't want to force the
+		 * file to the front of the LRU ring; we aren't expecting to
+		 * access it again soon.
+		 */
+		if (FileIsNotOpen(file))
+		{
+			returnCode = LruInsert(file);
+			if (returnCode != 0)
+				return returnCode;
+		}
+		returnCode = pg_fsync(VfdCache[file].fd);
+		if (returnCode == 0)
+			VfdCache[file].fdstate &= ~FD_DIRTY;
 	}
 
 	return returnCode;
 }
+
+/*
+ * FileMarkDirty --- mark a file as needing fsync at transaction commit.
+ *
+ * Since FileWrite marks the file dirty, this routine is not needed in
+ * normal use.  It is called when the buffer manager detects that some other
+ * backend has written out a shared buffer that this backend dirtied (but
+ * didn't write) in the current xact.  In that scenario, we need to fsync
+ * the file before we can commit.  We cannot assume that the other backend
+ * has fsync'd the file yet; we need to do our own fsync to ensure that
+ * (a) the disk page is written and (b) this backend's commit is delayed
+ * until the write is complete.
+ *
+ * Note we are assuming that an fsync issued by this backend will write
+ * kernel disk buffers that were dirtied by another backend.  Furthermore,
+ * it doesn't matter whether we currently have the file physically open;
+ * we must fsync even if we have to re-open the file to do it.
+ */
+void
+FileMarkDirty(File file)
+{
+	Assert(FileIsValid(file));
+
+	DO_DB(elog(DEBUG, "FileMarkDirty: %d (%s)",
+			   file, VfdCache[file].fileName));
+
+	VfdCache[file].fdstate |= FD_DIRTY;
+}
+
 
 /*
  * Routines that want to use stdio (ie, FILE*) should use AllocateFile
@@ -992,6 +1061,12 @@ closeAllVfds()
  * exit (it doesn't particularly care which).  All still-open temporary-file
  * VFDs are closed, which also causes the underlying files to be deleted.
  * Furthermore, all "allocated" stdio files are closed.
+ *
+ * This routine is not involved in fsync'ing non-temporary files at xact
+ * commit; that is done by FileSync under control of the buffer manager.
+ * During a commit, that is done *before* control gets here.  If we still
+ * have any needs-fsync bits set when we get here, we assume this is abort
+ * and clear them.
  */
 void
 AtEOXact_Files(void)
@@ -1006,6 +1081,8 @@ AtEOXact_Files(void)
 			if ((VfdCache[i].fdstate & FD_TEMPORARY) &&
 				VfdCache[i].fileName != NULL)
 				FileClose(i);
+			else
+				VfdCache[i].fdstate &= ~FD_DIRTY;
 		}
 	}
 

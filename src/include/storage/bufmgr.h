@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.35 2000/03/31 02:43:30 tgl Exp $
+ * $Id: bufmgr.h,v 1.36 2000/04/09 04:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ extern int	FlushBuffer(Buffer buffer, bool release);
 extern void InitBufferPool(IPCKey key);
 extern void PrintBufferUsage(FILE *statfp);
 extern void ResetBufferUsage(void);
-extern void ResetBufferPool(void);
+extern void ResetBufferPool(bool isCommit);
 extern int	BufferPoolCheckLeak(void);
 extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);

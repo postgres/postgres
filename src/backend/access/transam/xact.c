@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.62 2000/03/17 02:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.63 2000/04/09 04:43:16 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -642,7 +642,7 @@ RecordTransactionCommit()
 	{
 		FlushBufferPool();
 		if (leak)
-			ResetBufferPool();
+			ResetBufferPool(true);
 
 		/*
 		 *	have the transaction access methods record the status
@@ -658,7 +658,7 @@ RecordTransactionCommit()
 	}
 
 	if (leak)
-		ResetBufferPool();
+		ResetBufferPool(true);
 }
 
 
@@ -759,7 +759,10 @@ RecordTransactionAbort()
 	if (SharedBufferChanged && !TransactionIdDidCommit(xid))
 		TransactionIdAbort(xid);
 
-	ResetBufferPool();
+	/*
+	 * Tell bufmgr and smgr to release resources.
+	 */
+	ResetBufferPool(false);		/* false -> is abort */
 }
 
 /* --------------------------------

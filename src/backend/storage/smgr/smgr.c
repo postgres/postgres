@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.32 2000/01/26 05:57:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.33 2000/04/09 04:43:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,21 +23,30 @@ static void smgrshutdown(int dummy);
 
 typedef struct f_smgr
 {
-	int			(*smgr_init) ();/* may be NULL */
-	int			(*smgr_shutdown) ();	/* may be NULL */
-	int			(*smgr_create) ();
-	int			(*smgr_unlink) ();
-	int			(*smgr_extend) ();
-	int			(*smgr_open) ();
-	int			(*smgr_close) ();
-	int			(*smgr_read) ();
-	int			(*smgr_write) ();
-	int			(*smgr_flush) ();
-	int			(*smgr_blindwrt) ();
-	int			(*smgr_nblocks) ();
-	int			(*smgr_truncate) ();
-	int			(*smgr_commit) ();		/* may be NULL */
-	int			(*smgr_abort) ();		/* may be NULL */
+	int			(*smgr_init) (void); /* may be NULL */
+	int			(*smgr_shutdown) (void); /* may be NULL */
+	int			(*smgr_create) (Relation reln);
+	int			(*smgr_unlink) (Relation reln);
+	int			(*smgr_extend) (Relation reln, char *buffer);
+	int			(*smgr_open) (Relation reln);
+	int			(*smgr_close) (Relation reln);
+	int			(*smgr_read) (Relation reln, BlockNumber blocknum,
+							  char *buffer);
+	int			(*smgr_write) (Relation reln, BlockNumber blocknum,
+							   char *buffer);
+	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
+							   char *buffer);
+	int			(*smgr_blindwrt) (char *dbname, char *relname,
+								  Oid dbid, Oid relid,
+								  BlockNumber blkno, char *buffer);
+	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
+	int			(*smgr_blindmarkdirty) (char *dbname, char *relname,
+										Oid dbid, Oid relid,
+										BlockNumber blkno);
+	int			(*smgr_nblocks) (Relation reln);
+	int			(*smgr_truncate) (Relation reln, int nblocks);
+	int			(*smgr_commit) (void); /* may be NULL */
+	int			(*smgr_abort) (void); /* may be NULL */
 } f_smgr;
 
 /*
@@ -49,14 +58,14 @@ static f_smgr smgrsw[] = {
 
 	/* magnetic disk */
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-		mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdtruncate,
-	mdcommit, mdabort},
+	 mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
+	 mdnblocks, mdtruncate, mdcommit, mdabort},
 
 #ifdef STABLE_MEMORY_STORAGE
 	/* main memory */
 	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-		mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, NULL,
-	mmcommit, mmabort},
+	 mmread, mmwrite, mmflush, mmblindwrt, mmmarkdirty, mmblindmarkdirty,
+	 mmnblocks, NULL, mmcommit, mmabort},
 
 #endif
 };
@@ -299,6 +308,7 @@ smgrblindwrt(int16 which,
 	char	   *relstr;
 	int			status;
 
+	/* strdup here is probably redundant */
 	dbstr = pstrdup(dbname);
 	relstr = pstrdup(relname);
 
@@ -307,6 +317,67 @@ smgrblindwrt(int16 which,
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot write block %d of %s [%s] blind",
+			 blkno, relstr, dbstr);
+
+	pfree(dbstr);
+	pfree(relstr);
+
+	return status;
+}
+
+/*
+ *	smgrmarkdirty() -- Mark a page dirty (needs fsync).
+ *
+ *		Mark the specified page as needing to be fsync'd before commit.
+ *		Ordinarily, the storage manager will do this implicitly during
+ *		smgrwrite().  However, the buffer manager may discover that some
+ *		other backend has written a buffer that we dirtied in the current
+ *		transaction.  In that case, we still need to fsync the file to be
+ *		sure the page is down to disk before we commit.
+ */
+int
+smgrmarkdirty(int16 which,
+			  Relation reln,
+			  BlockNumber blkno)
+{
+	int			status;
+
+	status = (*(smgrsw[which].smgr_markdirty)) (reln, blkno);
+
+	if (status == SM_FAIL)
+		elog(ERROR, "cannot mark block %d of %s",
+			 blkno, RelationGetRelationName(reln));
+
+	return status;
+}
+
+/*
+ *	smgrblindmarkdirty() -- Mark a page dirty, "blind".
+ *
+ *		Just like smgrmarkdirty, except we don't have a reldesc.
+ */
+int
+smgrblindmarkdirty(int16 which,
+				   char *dbname,
+				   char *relname,
+				   Oid dbid,
+				   Oid relid,
+				   BlockNumber blkno)
+{
+	char	   *dbstr;
+	char	   *relstr;
+	int			status;
+
+	/* strdup here is probably redundant */
+	dbstr = pstrdup(dbname);
+	relstr = pstrdup(relname);
+
+	status = (*(smgrsw[which].smgr_blindmarkdirty)) (dbstr, relstr,
+													 dbid, relid,
+													 blkno);
+
+	if (status == SM_FAIL)
+		elog(ERROR, "cannot mark block %d of %s [%s] blind",
 			 blkno, relstr, dbstr);
 
 	pfree(dbstr);
@@ -378,7 +449,6 @@ smgrcommit()
 	return SM_SUCCESS;
 }
 
-#ifdef NOT_USED
 int
 smgrabort()
 {
@@ -395,8 +465,6 @@ smgrabort()
 
 	return SM_SUCCESS;
 }
-
-#endif
 
 #ifdef NOT_USED
 bool

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.35 2000/01/26 05:58:32 momjian Exp $
+ * $Id: buf_internals.h,v 1.36 2000/04/09 04:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,16 @@ typedef struct buftag
 	(a)->relId = (xx_reln)->rd_lockInfo.lockRelId \
 )
 
+/* If we have to write a buffer "blind" (without a relcache entry),
+ * the BufferTag is not enough information.  BufferBlindId carries the
+ * additional information needed.
+ */
+typedef struct bufblindid
+{
+	char		dbname[NAMEDATALEN]; /* name of db in which buf belongs */
+	char		relname[NAMEDATALEN]; /* name of reln */
+} BufferBlindId;
+
 #define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
 #define INVALID_DESCRIPTOR (-3)
 
@@ -98,8 +108,7 @@ typedef struct sbufdesc
 	bool		ri_lock;		/* read-intent lock */
 	bool		w_lock;			/* context exclusively locked */
 
-	char		sb_dbname[NAMEDATALEN]; /* name of db in which buf belongs */
-	char		sb_relname[NAMEDATALEN];		/* name of reln */
+	BufferBlindId blind;		/* extra info to support blind write */
 } BufferDesc;
 
 /*
@@ -164,7 +173,9 @@ extern BufferDesc *BufferDescriptors;
 extern BufferBlock BufferBlocks;
 extern long *PrivateRefCount;
 extern bits8 *BufferLocks;
-extern long *CommitInfoNeedsSave;
+extern BufferTag *BufferTagLastDirtied;
+extern BufferBlindId *BufferBlindLastDirtied;
+extern bool *BufferDirtiedByMe;
 extern SPINLOCK BufMgrLock;
 
 /* localbuf.c */

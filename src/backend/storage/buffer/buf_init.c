@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.32 2000/01/26 05:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.33 2000/04/09 04:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,9 +65,11 @@ long	   *NWaitIOBackendP;
 extern IpcSemaphoreId WaitIOSemId;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
-bits8	   *BufferLocks;		/* */
-long	   *CommitInfoNeedsSave;/* to write buffers where we have filled
-								 * in t_infomask */
+bits8	   *BufferLocks;		/* flag bits showing locks I have set */
+BufferTag  *BufferTagLastDirtied; /* tag buffer had when last dirtied by me */
+BufferBlindId *BufferBlindLastDirtied; /* and its BlindId too */
+bool	   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
+
 
 /*
  * Data Structures:
@@ -247,7 +249,9 @@ InitBufferPool(IPCKey key)
 #endif
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
-	CommitInfoNeedsSave = (long *) calloc(NBuffers, sizeof(long));
+	BufferTagLastDirtied = (BufferTag *) calloc(NBuffers, sizeof(BufferTag));
+	BufferBlindLastDirtied = (BufferBlindId *) calloc(NBuffers, sizeof(BufferBlindId));
+	BufferDirtiedByMe = (bool *) calloc(NBuffers, sizeof(bool));
 }
 
 /* -----------------------------------------------------
