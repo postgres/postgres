@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.41 2001/01/24 19:43:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.42 2001/02/27 22:07:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ ProcessQuery(Query *parsetree,
 	 * ----------------
 	 */
 	if (isRetrieveIntoRelation)
-		queryDesc->dest = (int) None;
+		queryDesc->dest = None;
 
 	/* ----------------
 	 *	create a default executor state.

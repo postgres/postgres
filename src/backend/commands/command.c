@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.121 2001/02/14 21:35:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.122 2001/02/27 22:07:34 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -107,8 +107,8 @@ PerformPortalFetch(char *name,
 				   CommandDest dest)
 {
 	Portal		portal;
-	int			feature;
 	QueryDesc  *queryDesc;
+	EState	   *estate;
 	MemoryContext oldcontext;
 
 	/* ----------------
@@ -140,19 +140,14 @@ PerformPortalFetch(char *name,
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	/* ----------------
-	 *	setup "feature" to tell the executor which direction to go in.
-	 * ----------------
-	 */
-	if (forward)
-		feature = EXEC_FOR;
-	else
-		feature = EXEC_BACK;
-
-	/* ----------------
-	 *	tell the destination to prepare to receive some tuples
+	 *	tell the destination to prepare to receive some tuples.
+	 *
+	 *	If we've been asked for a MOVE, make a temporary QueryDesc
+	 *	with the appropriate dummy destination.
 	 * ----------------
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
+	estate = PortalGetState(portal);
 
 	if (dest == None)			/* MOVE */
 	{
@@ -165,7 +160,7 @@ PerformPortalFetch(char *name,
 
 	BeginCommand(name,
 				 queryDesc->operation,
-				 portal->attinfo, /* QueryDescGetTypeInfo(queryDesc) */
+				 PortalGetTupleDesc(portal),
 				 false,			/* portal fetches don't end up in
 								 * relations */
 				 false,			/* this is a portal fetch, not a "retrieve
@@ -174,18 +169,45 @@ PerformPortalFetch(char *name,
 				 dest);
 
 	/* ----------------
-	 *	execute the portal fetch operation
+	 *	Determine which direction to go in, and check to see if we're already
+	 *	at the end of the available tuples in that direction.  If so, do
+	 *	nothing.  (This check exists because not all plan node types are
+	 *	robust about being called again if they've already returned NULL
+	 *	once.)  If it's OK to do the fetch, call the executor.  Then,
+	 *	update the atStart/atEnd state depending on the number of tuples
+	 *	that were retrieved.
 	 * ----------------
 	 */
-	ExecutorRun(queryDesc, PortalGetState(portal), feature, (long) count);
+	if (forward)
+	{
+		if (! portal->atEnd)
+		{
+			ExecutorRun(queryDesc, estate, EXEC_FOR, (long) count);
+			if (estate->es_processed > 0)
+				portal->atStart = false; /* OK to back up now */
+			if (count <= 0 || (int) estate->es_processed < count)
+				portal->atEnd = true; /* we retrieved 'em all */
+		}
+	}
+	else
+	{
+		if (! portal->atStart)
+		{
+			ExecutorRun(queryDesc, estate, EXEC_BACK, (long) count);
+			if (estate->es_processed > 0)
+				portal->atEnd = false; /* OK to go forward now */
+			if (count <= 0 || (int) estate->es_processed < count)
+				portal->atStart = true; /* we retrieved 'em all */
+		}
+	}
 
+	/* ----------------
+	 *	Clean up and switch back to old context.
+	 * ----------------
+	 */
 	if (dest == None)			/* MOVE */
 		pfree(queryDesc);
 
-	/* ----------------
-	 * Switch back to old context.
-	 * ----------------
-	 */
 	MemoryContextSwitchTo(oldcontext);
 
 	/* ----------------

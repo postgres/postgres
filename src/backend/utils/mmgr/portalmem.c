@@ -8,43 +8,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.39 2001/01/24 19:43:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.40 2001/02/27 22:07:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * NOTES
- *		Do not confuse "Portal" with "PortalEntry" (or "PortalBuffer").
- *		When a PQexec() routine is run, the resulting tuples
- *		find their way into a "PortalEntry".  The contents of the resulting
- *		"PortalEntry" can then be inspected by other PQxxx functions.
+ *		A "Portal" is a structure used to keep track of cursor queries.
  *
- *		A "Portal" is a structure used to keep track of queries of the
- *		form:
- *				retrieve portal FOO ( blah... ) where blah...
- *
- *		When the backend sees a "retrieve portal" query, it allocates
- *		a "PortalD" structure, plans the query and then stores the query
+ *		When the backend sees a "declare cursor" query, it allocates a
+ *		"PortalData" structure, plans the query and then stores the query
  *		in the portal without executing it.  Later, when the backend
  *		sees a
- *				fetch 1 into FOO
- *
+ *				fetch 1 from FOO
  *		the system looks up the portal named "FOO" in the portal table,
  *		gets the planned query and then calls the executor with a feature of
  *		'(EXEC_FOR 1).  The executor then runs the query and returns a single
  *		tuple.	The problem is that we have to hold onto the state of the
- *		portal query until we see a "close p".	This means we have to be
+ *		portal query until we see a "close".  This means we have to be
  *		careful about memory management.
- *
- *		Having said all that, here is what a PortalD currently looks like:
- *
- * struct PortalD {
- *		char*							name;
- *		classObj(MemoryContext)			heap;
- *		List							queryDesc;
- *		EState							state;
- *		void							(*cleanup) ARGS((Portal portal));
- * };
  *
  *		I hope this makes things clearer to whoever reads this -cim 2/22/91
  */
@@ -188,41 +170,11 @@ PortalSetQuery(Portal portal,
 	AssertArg(IsA((Node *) state, EState));
 
 	portal->queryDesc = queryDesc;
-	portal->state = state;
 	portal->attinfo = attinfo;
+	portal->state = state;
+	portal->atStart = true;		/* Allow fetch forward only */
+	portal->atEnd = false;
 	portal->cleanup = cleanup;
-}
-
-/*
- * PortalGetQueryDesc
- *		Returns query attached to portal.
- *
- * Exceptions:
- *		BadState if called when disabled.
- *		BadArg if portal is invalid.
- */
-QueryDesc  *
-PortalGetQueryDesc(Portal portal)
-{
-	AssertArg(PortalIsValid(portal));
-
-	return portal->queryDesc;
-}
-
-/*
- * PortalGetState
- *		Returns state attached to portal.
- *
- * Exceptions:
- *		BadState if called when disabled.
- *		BadArg if portal is invalid.
- */
-EState *
-PortalGetState(Portal portal)
-{
-	AssertArg(PortalIsValid(portal));
-
-	return portal->state;
 }
 
 /*
@@ -265,7 +217,8 @@ CreatePortal(char *name)
 	portal->queryDesc = NULL;
 	portal->attinfo = NULL;
 	portal->state = NULL;
-
+	portal->atStart = true;		/* disallow fetches until query is set */
+	portal->atEnd = true;
 	portal->cleanup = NULL;
 
 	/* put portal in table */
@@ -314,14 +267,4 @@ void
 AtEOXact_portals(void)
 {
 	HashTableWalk(PortalHashTable, (HashtFunc) PortalDrop, 0);
-}
-
-/*
- * PortalGetHeapMemory
- *		Returns heap memory context for a given portal.
- */
-MemoryContext
-PortalGetHeapMemory(Portal portal)
-{
-	return portal->heap;
 }
