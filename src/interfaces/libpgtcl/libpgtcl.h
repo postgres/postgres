@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpgtcl.h,v 1.1.1.1 1996/07/09 06:22:16 scrappy Exp $
+ * $Id: libpgtcl.h,v 1.2 1996/10/30 06:18:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "tcl.h"
 
-extern int Pg_Init (Tcl_Interp *interp);
+extern int Pgtcl_Init (Tcl_Interp *interp);
+extern int Pgtcl_SafeInit (Tcl_Interp *interp);
 
 #endif /* LIBPGTCL_H */
