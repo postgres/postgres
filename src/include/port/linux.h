@@ -12,7 +12,10 @@
 
 #if defined(PPC)
 typedef unsigned int slock_t;
-
+#elif defined(__alpha__)
+typedef long int slock_t;
+#else
+typedef unsigned char slock_t;
 #endif
 
 #if defined(PPC)
@@ -24,14 +27,6 @@ typedef unsigned int slock_t;
 #undef NEED_I386_TAS_ASM
 #endif
 
-
 #if defined(__alpha__)
 #undef NEED_I386_TAS_ASM
-#endif
-#if defined(__alpha__)
-typedef long int slock_t;
-
-#else
-typedef unsigned char slock_t;
-
 #endif
