@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.13 2004/05/25 01:42:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.14 2004/05/25 18:18:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,7 @@ set_pglocale(const char *argv0, const char *app)
 	if (find_my_exec(argv0, my_exec_path) < 0)
 		return;
 		
-	get_locale_path(argv0, path);
+	get_locale_path(my_exec_path, path);
 	bindtextdomain(app, path);
 	textdomain(app);
 #endif
