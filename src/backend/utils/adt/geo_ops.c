@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.17 1997/09/05 18:11:14 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.18 1997/09/05 19:32:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1909,6 +1909,7 @@ Point *close_pl(Point *pt, LINE *line)
     result = PALLOCTYPE(Point);
 #if FALSE
     if (FPeq(line->A, -1.0) && FPzero(line->B)) {	/* vertical */
+    }
 #endif
     if (line_vertical(line)) {
 	result->x = line->C;

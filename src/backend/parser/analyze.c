@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.37 1997/09/05 18:10:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.38 1997/09/05 19:32:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1357,8 +1357,7 @@ make_targetlist_expr(ParseState *pstate,
                     else if ((attrtype == FLOAT4OID) && (type_id == FLOAT8OID))
 			 lfirst(expr) = lispInteger (FLOAT4OID);
                     else
-			 elog(WARN, "unequal type in tlist : %s \n",
-			      colname));
+			 elog(WARN, "unequal type in tlist : %s \n", colname);
 	       }
 	  
 	  Input_is_string = false;
