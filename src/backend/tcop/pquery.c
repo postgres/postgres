@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.1.1.1 1996/07/09 06:22:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.2 1996/07/30 07:41:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ CreateExecutorState()
      *	initialize the Executor State structure
      * ----------------
      */
-    state->es_direction = EXEC_FRWD;
+    state->es_direction = ForwardScanDirection;
     state->es_range_table = NIL;
 
     state->es_into_relation_descriptor = NULL;
