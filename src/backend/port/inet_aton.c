@@ -57,7 +57,7 @@
 int
 inet_aton(const char *cp, struct in_addr * addr)
 {
-	register u_long val;
+	register uint32 val;
 	register int base,
 				n;
 	register char c;
