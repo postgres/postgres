@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.117 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.118 2002/09/20 03:55:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3376,7 +3376,7 @@ make_greater_string(const Const *str_const)
 		if (datatype != BYTEAOID && pg_database_encoding_max_length() > 1)
 			len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
 		else
-			len -= -1;
+			len -= 1;
 
 		if (datatype != BYTEAOID)
 			workstr[len] = '\0';
