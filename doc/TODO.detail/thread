@@ -1,0 +1,232 @@
+From mscott@sacadia.com Wed Nov 15 14:50:19 2000
+Received: from goldengate.kojoworldwide.com. ([216.133.4.130])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA11583
+	for <pgman@candle.pha.pa.us>; Wed, 15 Nov 2000 14:50:13 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+	by goldengate.kojoworldwide.com. (8.9.1b+Sun/8.9.2) with ESMTP id LAA09998;
+	Wed, 15 Nov 2000 11:35:33 -0800 (PST)
+Date: Wed, 15 Nov 2000 11:35:33 -0800 (PST)
+From: Myron Scott <mscott@sacadia.com>
+X-Sender: mscott@goldengate.kojoworldwide.com.
+To: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>,
+        Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Please help with some advice
+Message-ID: <Pine.GSO.4.10.10011151053260.9940-100000@goldengate.kojoworldwide.com.>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: ORr
+
+Dear Sirs,
+
+I have been lurking on the PostgreSQL hackers list for about 3 months now
+and your names comes up more than any with helpful info about the project
+so I was hoping you could help me.
+
+Let me cut to the chase.  I have been experimenting with 7.0.2 source to
+see if I could create a mutlti-threaded version of the backend so
+I could link directly from java ( I have a fe<->be protocol that I use for
+my apps). Needless to say I got into much more than I bargained for.  I
+now have a version that works and it has some nice benefits that are very
+helpful to a project that I am working on.  What I gained was
+
+prepared statements outside of spi
+batched commits (fsync)
+one connection per thread
+	multiple threads per process
+		multiple processes per installation
+
+I never really intended for anyone else to see the work so I drifted
+pretty far from the original code.  I also ended up using Solaris threads
+rather than pthreads,  I did my own implementation of the bufmgr.c and
+gram.y, and used Solaris implementation of mutex in place of S_LOCK and
+TAS. I grabbed all global variables and put them in an environment
+variable that is thread local.  I also did some really stupid
+things like making TransactionId uint64 and making all my inserts use the
+same oid.
+
+My question is this.  I would like to get some critical feedback and
+suggestions about the work from others.  What is the best way to go about
+this?  I thought about trying to create a project on greatbridge.org
+but I am rather new to open source and the code needs commented properly
+and cleaned up before too many try and look at it.
+
+Any suggestions would be greatly appreciated.
+
+
+Thanks in advance,
+
+Myron Scott
+
+
+
+From mscott@sacadia.com Thu Nov 16 17:19:45 2000
+Received: from goldengate.kojoworldwide.com. ([216.133.4.130])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04315
+	for <pgman@candle.pha.pa.us>; Thu, 16 Nov 2000 17:19:43 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+	by goldengate.kojoworldwide.com. (8.9.1b+Sun/8.9.2) with ESMTP id OAA11449;
+	Thu, 16 Nov 2000 14:05:15 -0800 (PST)
+Date: Thu, 16 Nov 2000 14:05:15 -0800 (PST)
+From: Myron Scott <mscott@sacadia.com>
+X-Sender: mscott@goldengate.kojoworldwide.com.
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: Please help with some advice
+In-Reply-To: <200011160533.AAA27886@candle.pha.pa.us>
+Message-ID: <Pine.GSO.4.10.10011161401570.11441-100000@goldengate.kojoworldwide.com.>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+Bruce Momjian wrote:
+
+>I am curious how you isolated each thread.   It seems we pretty much
+>assume all our memory is controlled by a single query in the process.
+                                                                              
+
+I moved all global variables to a thread global variable which is accessed
+by the method GetEnv().  Which looks like this
+
+Env* GetEnv(void) {
+	Env* env;
+	thr_getspecific(*envkey,(void*)&env);
+	return env;
+}
+
+The Env struct includes the CurrentMemoryContext, TopMemoryContext,
+PortalHeapMemory for each instance of a connection (one thread per
+connection). So, for example,
+EndPortalAllocMode uses GetEnv()->CurrentMemoryContext
+
+void
+EndPortalAllocMode()
+{
+	PortalHeapMemory context;
+
+	AssertState(PortalManagerEnabled);
+	AssertState(IsA(GetEnv()->CurrentMemoryContext,
+PortalHeapMemory));
+
+	context = (PortalHeapMemory) GetEnv()->CurrentMemoryContext;
+	AssertState(PointerIsValid(context->block));		/* XXX
+Trap(...) */
+
+	/* free current mode */
+	AllocSetReset(&HEAPMEMBLOCK(context)->setData);
+	MemoryContextFree((MemoryContext)
+PortalHeapMemoryGetVariableMemory(context),
+					  context->block);
+
+	/* restore previous mode */
+	context->block = FixedStackPop(&context->stackData);
+}
+
+
+
+
+From vmikheev@SECTORBASE.COM Thu Nov 16 17:23:22 2000
+Received: from sectorbase2.sectorbase.com ([208.48.122.131])
+	by candle.pha.pa.us (8.9.0/8.9.0) with SMTP id RAA04562
+	for <pgman@candle.pha.pa.us>; Thu, 16 Nov 2000 17:23:21 -0500 (EST)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2650.21)
+	id <V8XQB5RW>; Thu, 16 Nov 2000 14:05:24 -0800
+Message-ID: <8F4C99C66D04D4118F580090272A7A234D318D@sectorbase1.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'Myron Scott'" <mscott@sacadia.com>,
+        Bruce Momjian
+  <pgman@candle.pha.pa.us>
+Cc: Tom Lane <tgl@sss.pgh.pa.us>
+Subject: RE: Please help with some advice
+Date: Thu, 16 Nov 2000 14:09:30 -0800
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Status: ORr
+
+I think the question do we want to make backend multy-threaded
+should be discussed in hackers.
+
+Vadim
+
+> -----Original Message-----
+> From: Myron Scott [mailto:mscott@sacadia.com]
+> Sent: Thursday, November 16, 2000 2:05 PM
+> To: Bruce Momjian
+> Cc: Mikheev, Vadim; Tom Lane
+> Subject: Re: Please help with some advice
+> 
+> 
+> Bruce Momjian wrote:
+> 
+> >I am curious how you isolated each thread.   It seems we pretty much
+> >assume all our memory is controlled by a single query in the process.
+>                                                               
+>                 
+> 
+> I moved all global variables to a thread global variable 
+> which is accessed
+> by the method GetEnv().  Which looks like this
+> 
+> Env* GetEnv(void) {
+> 	Env* env;
+> 	thr_getspecific(*envkey,(void*)&env);
+> 	return env;
+> }
+> 
+> The Env struct includes the CurrentMemoryContext, TopMemoryContext,
+> PortalHeapMemory for each instance of a connection (one thread per
+> connection). So, for example,
+> EndPortalAllocMode uses GetEnv()->CurrentMemoryContext
+> 
+> void
+> EndPortalAllocMode()
+> {
+> 	PortalHeapMemory context;
+> 
+> 	AssertState(PortalManagerEnabled);
+> 	AssertState(IsA(GetEnv()->CurrentMemoryContext,
+> PortalHeapMemory));
+> 
+> 	context = (PortalHeapMemory) GetEnv()->CurrentMemoryContext;
+> 	AssertState(PointerIsValid(context->block));		/* XXX
+> Trap(...) */
+> 
+> 	/* free current mode */
+> 	AllocSetReset(&HEAPMEMBLOCK(context)->setData);
+> 	MemoryContextFree((MemoryContext)
+> PortalHeapMemoryGetVariableMemory(context),
+> 					  context->block);
+> 
+> 	/* restore previous mode */
+> 	context->block = FixedStackPop(&context->stackData);
+> }
+> 
+> 
+> 
+
+From mscott@sacadia.com Thu Nov 16 22:16:38 2000
+Received: from goldengate.kojoworldwide.com. ([216.133.4.130])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA14638
+	for <pgman@candle.pha.pa.us>; Thu, 16 Nov 2000 22:16:36 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+	by goldengate.kojoworldwide.com. (8.9.1b+Sun/8.9.2) with ESMTP id TAA11874;
+	Thu, 16 Nov 2000 19:04:48 -0800 (PST)
+Date: Thu, 16 Nov 2000 19:04:48 -0800 (PST)
+From: Myron Scott <mscott@sacadia.com>
+X-Sender: mscott@goldengate.kojoworldwide.com.
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: Please help with some advice
+In-Reply-To: <200011170156.UAA11438@candle.pha.pa.us>
+Message-ID: <Pine.GSO.4.10.10011161904140.11870-100000@goldengate.kojoworldwide.com.>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: ORr
+
+Thanks very much, I will post to hackers.
+
+Myron
+
+
+
