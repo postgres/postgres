@@ -47,6 +47,11 @@ print MAKEFILE <<_STATIC_;
 SRCDIR= ../../../src
 include \$(SRCDIR)/Makefile.global
 
+EXTDIR= $Config{privlib}/ExtUtils
+
+XSUBPP= \$(EXTDIR)/xsubpp
+
+TYPEMAP= -typemap \$(EXTDIR)/typemap
 
 # use the same compiler as perl did
 CC= $Config{cc}
@@ -95,11 +100,15 @@ endif
 #
 all:	 plperl
 
-plperl : plperl.o
-	\$(CC) -o plperl.so plperl.o \$(SHLIB_EXTRA_LIBS) \$(LDADD) \$(LDFLAGS)
+plperl : plperl.o SPI.o
+	\$(CC) -o plperl.so plperl.o SPI.o \$(SHLIB_EXTRA_LIBS) \$(LDADD) \$(LDFLAGS)
 
 %.o : %.c
 	\$(CC) -c \$(CFLAGS) \$<
+
+%.o : %.xs
+	\$(XSUBPP} \$(TYPEMAP) \$< > xtmp.c
+	\$(CC) -c \$(CFLAGS) -o \$@ xtmp.c
 
 
 #

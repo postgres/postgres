@@ -218,7 +218,7 @@ static void
 plperl_init_safe_interp(void)
 {
 
-	char *embedding[] = { "", "-e", "BEGIN { use DynaLoader; require Safe;}", "0" };
+	char *embedding[] = { "", "-e", "use DynaLoader; require Safe; SPI::bootstrap()", "0" };
 
 	plperl_safe_interp = perl_alloc();
 	if (!plperl_safe_interp)
@@ -235,10 +235,6 @@ plperl_init_safe_interp(void)
 	 ************************* ***********************************/
 	 plperl_proc_hash = newHV();
 
-	/************************************************************
-	 * Install the commands for SPI support in the safe interpreter
-	 * Someday.
-	 ************************************************************/
 }
 
 
@@ -356,6 +352,7 @@ plperl_create_sub(SV *s) {
 
 extern void boot_DynaLoader _((CV* cv));
 extern void boot_Opcode _((CV* cv));
+extern void boot_SPI _((CV* cv));
 
 extern void
 plperl_init_shared_libs(void)
@@ -363,6 +360,7 @@ plperl_init_shared_libs(void)
 	char *file = __FILE__;
 	newXS("DynaLoader::bootstrap", boot_DynaLoader, file);
 	newXS("Opcode::bootstrap", boot_Opcode, file);
+	newXS("SPI::bootstrap", boot_SPI, file);
 }
 
 /**********************************************************************
@@ -574,6 +572,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 		proc_internal_def = newSVpvf(
 			"$::x = new Safe;" 
 			"$::x->permit_only(':default');"
+			"$::x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
 			"use strict;"
 			"return $::x->reval( q[ sub { %s } ]);", proc_source);
 
