@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.93 2002/11/17 23:01:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.94 2002/12/06 05:20:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
 
+extern bool md5_hash(const void *buff, size_t len, char *hexsum);
 
 typedef struct varlena unknown;
 
@@ -1837,5 +1838,31 @@ to_hex64(PG_FUNCTION_ARGS)
 	} while (ptr > buf && value);
 
 	result_text = PG_STR_GET_TEXT(ptr);
+	PG_RETURN_TEXT_P(result_text);
+}
+
+/*
+ * Create an md5 hash of a text string and return it as hex
+ *
+ * md5 produces a 16 byte (128 bit) hash; double it for hex
+ */
+#define MD5_HASH_LEN  32
+
+Datum
+md5_text(PG_FUNCTION_ARGS)
+{
+	char	   *buff = PG_TEXT_GET_STR(PG_GETARG_TEXT_P(0));
+	size_t		len = strlen(buff);
+	char	   *hexsum;
+	text	   *result_text;
+
+	/* leave room for the terminating '\0' */
+	hexsum = (char *) palloc(MD5_HASH_LEN + 1);
+
+	/* get the hash result */
+	md5_hash((void *) buff, len, hexsum);
+
+	/* convert to text and return it */
+	result_text = PG_STR_GET_TEXT(hexsum);
 	PG_RETURN_TEXT_P(result_text);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.205 2002/11/08 17:37:52 tgl Exp $
+ * $Id: builtins.h,v 1.206 2002/12/06 05:20:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,6 +482,7 @@ extern Datum replace_text(PG_FUNCTION_ARGS);
 extern Datum split_text(PG_FUNCTION_ARGS);
 extern Datum to_hex32(PG_FUNCTION_ARGS);
 extern Datum to_hex64(PG_FUNCTION_ARGS);
+extern Datum md5_text(PG_FUNCTION_ARGS);
 
 extern Datum unknownin(PG_FUNCTION_ARGS);
 extern Datum unknownout(PG_FUNCTION_ARGS);

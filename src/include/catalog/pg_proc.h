@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.278 2002/12/05 04:38:30 momjian Exp $
+ * $Id: pg_proc.h,v 1.279 2002/12/06 05:20:26 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3121,6 +3121,9 @@ DESCR("(internal)");
 DATA(insert OID = 2307 (  opaque_out		PGNSP PGUID 12 f f t f i 1 2275 "2282"	opaque_out - _null_ ));
 DESCR("(internal)");
 
+/* cryptographic */
+DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "25"  md5_text - _null_ ));
+DESCR("calculates md5 hash");
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

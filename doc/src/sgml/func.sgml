@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.133 2002/12/05 04:38:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.134 2002/12/06 05:20:12 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1137,6 +1137,16 @@ PostgreSQL documentation
        </entry>
        <entry><literal>ltrim('zzzytrim','xyz')</literal></entry>
        <entry><literal>trim</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>md5</function>(<parameter>string</parameter> <type>text</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Calculates the MD5 hash of given string, returning the result in hex.
+       </entry>
+       <entry><literal>md5('abc')</literal></entry>
+       <entry><literal>900150983cd24fb0d6963f7d28e17f72</literal></entry>
       </row>
 
       <row>
