@@ -681,3 +681,12 @@ DELETE FROM shoelace WHERE EXISTS
              WHERE sl_name = shoelace.sl_name);
 
 SELECT * FROM shoelace ORDER BY sl_name;
+
+
+--
+-- Check that ruleutils are working
+--
+SELECT * FROM pg_views ORDER BY viewname;
+
+SELECT * FROM pg_rules ORDER BY tablename, rulename;
+

@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.12 1999/05/12 15:01:58 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.13 1999/05/12 17:59:31 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -788,7 +788,7 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
 
 	query = (Query *) lfirst(actions);
 
-	if (ev_type != '1' || ev_attr >= 0 || !is_instead || strcmp(ev_qual, ""))
+	if (ev_type != '1' || ev_attr >= 0 || !is_instead || strcmp(ev_qual, "<>"))
 		return "Not a view";
 
 	strcpy(buf, get_query_def(query, NULL));
