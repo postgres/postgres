@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.3 2002/08/22 00:01:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.4 2002/08/29 04:12:02 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -852,58 +852,10 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replacea
     </para>
 
     <para>
-	 There is a special variable named <literal>FOUND</literal> of
-     type <type>boolean</type>. The initial value of
-     <literal>FOUND</literal> is false; it is set to true when one of
-     the following events occurs:
-	 <itemizedlist>
-	  <listitem>
-	   <para>
-		A SELECT INTO statement is executed, and it returns one or
-		more rows.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A UPDATE, INSERT, or DELETE statement is executed, and it
-		affects one or more rows.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A PERFORM statement is executed, and it discards one or more
-		rows.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A FETCH statement is executed, and it returns an additional
-		row.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A FOR statement is executed, and it iterates one or more
-		times. This applies to all three variants of the FOR statement
-		(integer FOR loops, record-set FOR loops, and dynamic
-		record-set FOR loops). <literal>FOUND</literal> is only set
-		when the FOR loop exits: inside the execution of the loop,
-		<literal>FOUND</literal> is not modified, although it may be
-		set by the execution of other statements.
-	   </para>
-	  </listitem>
-	 </itemizedlist>
-	 If none of these events occur, <literal>FOUND</literal> is set to
-	 false. <literal>FOUND</literal> is a local variable; any changes
-	 to it effect only the current <application>PL/pgSQL</application>
-	 function.
-	</para>
-
-	<para>
-	 You can use <literal>FOUND</literal> immediately after a SELECT
-	 INTO statement to determine whether the assignment was successful
-	 (that is, at least one row was was returned by the SELECT
-	 statement). For example:
+     You can use <literal>FOUND</literal> immediately after a SELECT
+     INTO statement to determine whether the assignment was successful
+     (that is, at least one row was was returned by the SELECT
+     statement). For example:
   
 <programlisting>
 SELECT INTO myrec * FROM EMP WHERE empname = myname;
@@ -1116,6 +1068,58 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
 </programlisting>
 </informalexample>
     </para>
+
+    <para>
+     There is a special variable named <literal>FOUND</literal> of
+     type <type>boolean</type>.  <literal>FOUND</literal> starts out
+     false within each <application>PL/pgSQL</application> function.
+     It is set by each of the following types of statements:
+	 <itemizedlist>
+	  <listitem>
+	   <para>
+		A SELECT INTO statement sets <literal>FOUND</literal>
+		true if it returns a row, false if no row is returned.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A PERFORM statement sets <literal>FOUND</literal>
+		true if it produces (discards) a row, false if no row is
+		produced.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		UPDATE, INSERT, and DELETE statements set
+		<literal>FOUND</literal> true if at least one row is
+		affected, false if no row is affected.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A FETCH statement sets <literal>FOUND</literal>
+		true if it returns a row, false if no row is returned.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A FOR statement sets <literal>FOUND</literal>
+		true if it iterates one or more times, else false.
+		This applies to all three variants of the FOR statement
+		(integer FOR loops, record-set FOR loops, and dynamic
+		record-set FOR loops). <literal>FOUND</literal> is only set
+		when the FOR loop exits: inside the execution of the loop,
+		<literal>FOUND</literal> is not modified by the FOR statement,
+		although it may be changed by the execution of other
+		statements within the loop body.
+	   </para>
+	  </listitem>
+	 </itemizedlist>
+     <literal>FOUND</literal> is a local variable; any changes
+     to it affect only the current <application>PL/pgSQL</application>
+     function.
+    </para>
+
    </sect2>
   </sect1>
 

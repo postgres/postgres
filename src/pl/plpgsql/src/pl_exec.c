@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.58 2002/08/24 15:00:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.59 2002/08/29 04:12:03 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1845,11 +1845,6 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	bool		isnull;
 
 	/*
-	 * Set magic FOUND variable to false
-	 */
-	exec_set_found(estate, false);
-
-	/*
 	 * On the first call for this expression generate the plan
 	 */
 	if (expr->plan == NULL)
@@ -1927,16 +1922,15 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 		case SPI_OK_SELINTO:
 			break;
 
+		case SPI_OK_INSERT:
+		case SPI_OK_DELETE:
+		case SPI_OK_UPDATE:
 			/*
 			 * If the INSERT, DELETE, or UPDATE query affected at least
 			 * one tuple, set the magic 'FOUND' variable to true. This
 			 * conforms with the behavior of PL/SQL.
 			 */
-		case SPI_OK_INSERT:
-		case SPI_OK_DELETE:
-		case SPI_OK_UPDATE:
-			if (SPI_processed > 0)
-				exec_set_found(estate, true);
+			exec_set_found(estate, (SPI_processed != 0));
 			break;
 
 		case SPI_OK_SELECT:
