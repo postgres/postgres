@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.6 1997/01/13 03:44:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.7 1997/03/02 01:03:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,8 +154,7 @@ ScanKeywordLookup(char *text)
     
     while (low <= high) {
 	middle = low + (high - low) / 2;
-	/* keywords case-insensitive (for SQL) -- ay 8/94 */
-	difference = strcasecmp(middle->name, text);	
+	difference = strcmp(middle->name, text);
 	if (difference == 0)
 	    return (middle);
 	else if (difference < 0)
@@ -167,6 +166,7 @@ ScanKeywordLookup(char *text)
     return (NULL);
 }
 
+#ifdef NOT_USED
 char*
 AtomValueGetString(int atomval)
 {
@@ -182,3 +182,4 @@ AtomValueGetString(int atomval)
     elog(WARN,"AtomGetString called with bogus atom # : %d", atomval );
     return(NULL);
 }
+#endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.11 1997/02/28 13:25:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.12 1997/03/02 01:03:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,8 +164,13 @@ other		.
 	                return (SCONST); 
 		    }
 {identifier}	{
+			int i;
 			ScanKeyword	*keyword;
 
+			for(i = 0; i < strlen(yytext); i++)
+				if (isupper(yytext[i]))
+					yytext[i] = tolower(yytext[i]);
+			
 			keyword = ScanKeywordLookup((char*)yytext);
 			if (keyword != NULL) {
 				return (keyword->value);
@@ -207,6 +212,7 @@ init_io()
 #endif /* FLEX_SCANNER */
     BEGIN INITIAL;
 }
+
 
 
 #if !defined(FLEX_SCANNER)
