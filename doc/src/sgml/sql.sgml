@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.17 2001/01/09 16:05:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.18 2001/01/27 05:07:28 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -235,8 +235,8 @@ D_{1}, v_{2} \in D_{2}, \ldots, v_{k} \in D_{k}$}.
     such that
     <parameter>v<subscript>1</subscript></parameter> &isin; 
     <parameter>D<subscript>1</subscript></parameter>,
-    <parameter>v<subscript>1</subscript></parameter> &isin; 
-    <parameter>D<subscript>1</subscript></parameter>,
+    <parameter>v<subscript>2</subscript></parameter> &isin; 
+    <parameter>D<subscript>2</subscript></parameter>,
     ...
     <parameter>v<subscript>k</subscript></parameter> &isin; 
     <parameter>D<subscript>k</subscript></parameter>.
