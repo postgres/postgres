@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.27 2005/01/05 23:42:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.27.4.1 2005/01/22 23:05:47 momjian Exp $
 Genetic Optimizer
 -->
 
@@ -147,7 +147,7 @@ Genetic Optimizer
 
 <literallayout class="monospaced">
 +=========================================+
-|>>>>>>>>>>>  Algorithm GA  <<<<<<<<<<<<<<|
+|&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;  Algorithm GA  &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;|
 +=========================================+
 | INITIALIZE t := 0                       |
 +=========================================+
