@@ -6,7 +6,7 @@
 # programming.  'make install-all-headers' installs the whole contents
 # of src/include.
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.7 2001/02/20 20:37:13 tgl Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.8 2001/03/01 16:17:53 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ remove-old-headers:
 			: ; \
 		else \
 			rm -f $(DESTDIR)$(includedir)/$$file; \
-		fi \
+		fi ; \
 	done
 
 
