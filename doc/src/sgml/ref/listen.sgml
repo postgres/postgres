@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.18 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.19 2003/09/12 23:04:46 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -92,7 +92,9 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Configure and execute a listen/notify sequence from <application>psql</application>:
+   Configure and execute a listen/notify sequence from
+   <application>psql</application>:
+
 <programlisting>
 LISTEN virtual;
 NOTIFY virtual;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.29 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.30 2003/09/12 23:04:46 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -46,16 +46,6 @@ PostgreSQL documentation
    endterm="SQL-DROPUSER-title">.
    There is no effective difference between dropping users via
    this utility and via other methods for accessing the server.
-  </para>
-
-  <para>
-   In case of difficulty, see <xref linkend="SQL-DROPUSER"
-   endterm="sql-dropuser-title"> and <xref linkend="APP-PSQL"> for
-   discussions of potential problems and error messages.
-   The database server must be running at the
-   targeted host.  Also, any default connection settings and environment
-   variables used by the <application>libpq</application> front-end
-   library will apply.
   </para>
 
  </refsect1>
@@ -182,6 +172,22 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-DROPUSER"
+   endterm="sql-dropuser-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
+  </para>
+
  </refsect1>
 
 

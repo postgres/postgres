@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.15 2003/09/11 17:31:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.16 2003/09/12 23:04:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -75,6 +75,16 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Outputs</title>
+
+   <para>
+    When <literal>VERBOSE</> is specified, <command>ANALYZE</> emits
+    progress messages to indicate which table is currently being
+    processed.  Various statistics about the tables are printed as well.
+   </para>
  </refsect1>
 
  <refsect1>

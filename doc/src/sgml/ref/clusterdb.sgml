@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.14 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.15 2003/09/12 23:04:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -49,16 +49,6 @@ PostgreSQL documentation
    command <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">.
    There is no effective difference between clustering databases via
    this utility and via other methods for accessing the server.
-  </para>
-
-  <para>
-   In case of difficulty, see <xref linkend="SQL-CLUSTER"
-   endterm="sql-cluster-title"> and <xref linkend="APP-PSQL"> for
-   discussions of potential problems and error messages.
-   The database server must be running at the
-   targeted host.  Also, any default connection settings and environment
-   variables used by the <application>libpq</application> front-end
-   library will apply.
   </para>
 
  </refsect1>
@@ -200,6 +190,22 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-CLUSTER"
+   endterm="sql-cluster-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
+  </para>
+
  </refsect1>
 
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.35 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.36 2003/09/12 23:04:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -139,7 +139,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
        for syntactical correctness, but it can also look at other
        properties of the function, for example if the language cannot
        handle certain argument types.  To signal an error, the
-       validator function should use the <function>elog()</function>
+       validator function should use the <function>ereport()</function>
        function.  The return value of the function is ignored.
       </para>
      </listitem>

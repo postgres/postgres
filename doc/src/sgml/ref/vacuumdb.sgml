@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.32 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.33 2003/09/12 23:04:46 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -56,24 +56,6 @@ PostgreSQL documentation
    command <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">.
    There is no effective difference between vacuuming databases via
    this utility and via other methods for accessing the server.
-  </para>
-
-  <para>
-   In case of difficulty, see <xref linkend="SQL-VACUUM"
-   endterm="sql-vacuum-title"> and <xref linkend="APP-PSQL"> for
-   discussions of potential problems and error messages.
-   The database server must be running at the
-   targeted host.  Also, any default connection settings and environment
-   variables used by the <application>libpq</application> front-end
-   library will apply.
-  </para>
-
-  <para>
-   <application>vacuumdb</application> might need to connect several
-   times to the <productname>PostgreSQL</productname> server, asking
-   for a password each time. It is convenient to have a
-   <filename>$HOME/.pgpass</> file in such cases. See <xref
-   linkend="libpq-pgpass"> for more information.
   </para>
 
  </refsect1>
@@ -255,6 +237,34 @@ PostgreSQL documentation
   </variablelist>
  </refsect1>
 
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-VACUUM"
+   endterm="sql-vacuum-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
+  </para>
+
+ </refsect1>
+
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>vacuumdb</application> might need to connect several
+   times to the <productname>PostgreSQL</productname> server, asking
+   for a password each time. It is convenient to have a
+   <filename>$HOME/.pgpass</> file in such cases. See <xref
+   linkend="libpq-pgpass"> for more information.
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>Examples</title>
