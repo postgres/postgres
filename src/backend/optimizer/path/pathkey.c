@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.22 1999/02/15 05:56:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/pathkey.c,v 1.1 1999/02/18 19:58:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
