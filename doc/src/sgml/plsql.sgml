@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.27 2001/05/08 00:30:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.28 2001/05/08 02:26:09 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1310,8 +1310,8 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 </synopsis>
 
     Inside the format, <literal>%</literal> is replaced by the next argument's
-    external representation. Double %'s are left unchanged for internal
-    reasons.  Possible levels are DEBUG (silently suppressed in production
+    external representation. Double <literal>%</literal>'s are output as <literal>%</literal>.
+    Possible levels are DEBUG (silently suppressed in production
     running databases), NOTICE (written into the database log and forwarded to
     the client application) and EXCEPTION (written into the database log and
     aborting the transaction).
