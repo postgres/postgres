@@ -49,7 +49,7 @@
 #
 #	Shared Memory Size
 #
-#shared_buffers = 64		# min 2*max_connections or 16, 8KB each
+#shared_buffers = 64		# min max_connections*2 or 16, 8KB each
 #max_fsm_relations = 1000	# min 10, fsm is free space map, ~40 bytes
 #max_fsm_pages = 10000		# min 1000, fsm is free space map, ~6 bytes
 #max_locks_per_transaction = 64	# min 10
