@@ -56,19 +56,13 @@ This is just over half the default system total of 60.
 
 The defaults are in /sys/sys/sem.h:
 
-/* Configuration parameters */
-#ifndef SEMMNI
 #define SEMMNI  10              /* # of semaphore identifiers */
-#endif
-#ifndef SEMMNS
+
 #define SEMMNS  60              /* # of semaphores in system */
-#endif
-#ifndef SEMUME
+
 #define SEMUME  10              /* max # of undo entries per process */
-#endif
-#ifndef SEMMNU
+
 #define SEMMNU  30              /* # of undo structures in system */
-#endif
 
 Set the values you want in your kernel config file, e.g.:
 
