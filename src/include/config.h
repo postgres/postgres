@@ -234,28 +234,28 @@
 #define PQ_NOTIFY_PATCH
 
 /* Debug #defines */
-/* #define IPORTAL_DEBUG /* access/common/printtup.c */
-/* #define HEAPDEBUGALL /* access/heap/heapam.c */
-/* #define ISTRATDEBUG /* access/index/istrat.c */
-/* #define FASTBUILD_DEBUG /* access/nbtree/nbtsort.c */
-#define RTDEBUG /* access/rtree/rtree.c */
-#define GISTDEBUG /* access/gist/gist.c */
-/* #define PURGEDEBUG /* commands/purge.c */
-/* #define DEBUG_RECIPE /* commands/recipe.c */
+/* #define IPORTAL_DEBUG  */
+/* #define HEAPDEBUGALL  */
+/* #define ISTRATDEBUG  */
+/* #define FASTBUILD_DEBUG */
+#define RTDEBUG 
+#define GISTDEBUG 
+/* #define PURGEDEBUG */
+/* #define DEBUG_RECIPE */
 
 
 /* The following don't have any apparent purpose, but are in the
  * code.  someday, will take them out altogether, but for now, 
  * document them here
  */
-/* #define OMIT_PARTIAL_INDEX /* access/hash/hash.c */
-/* #define PERFECT_MMGR       /* access/hash/hash.c */
-/* #define PERFECT_MEM        /* access/hash/hashscan.c */
-/* #define NO_BUFFERISVALID   /* access/heap/heapam.c */
-/* #define NO_SECURITY        /* commands/cluster.c */
-/* #define TIOGA              /* commands/recipe.c */
-/* #define OLD_REWRITE        /* commands/version.c */
-/* #define NOTYET             /* commands/view.c */
+/* #define OMIT_PARTIAL_INDEX */
+/* #define PERFECT_MMGR       */
+/* #define PERFECT_MEM        */
+/* #define NO_BUFFERISVALID   */
+/* #define NO_SECURITY        */
+/* #define TIOGA              */
+/* #define OLD_REWRITE        */
+/* #define NOTYET             */
 
 
 /* Undocumented "features"? */
