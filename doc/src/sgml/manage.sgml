@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.22 2002/08/10 19:35:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.23 2002/08/13 20:40:43 momjian Exp $
 -->
 
  <Chapter Id="manage">
@@ -70,7 +70,7 @@ ERROR:  CREATE DATABASE: Permission denied.
     You  automatically  become  the
     database  administrator  of  the database you just created.  
     Database names must  have  an  alphabetic  first
-    character and are limited to 31 characters in length.
+    character and are limited to 63 characters in length.
     <ProductName>PostgreSQL</ProductName>  allows  you to create any number of
     databases at a  given  site.  
    </Para>

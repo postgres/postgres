@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.23 2002/08/10 19:35:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.24 2002/08/13 20:40:43 momjian Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -231,7 +231,7 @@ createdb: database creation failed
     You can also create databases with other names.
     <productname>PostgreSQL</productname> allows you to create any
     number of databases at a given site.  Database names must have an
-    alphabetic first character and are limited to 31 characters in
+    alphabetic first character and are limited to 63 characters in
     length.  A convenient choice is to create a database with the same
     name as your current user name.  Many tools assume that database
     name as the default, so it can save you some typing.  To create

@@ -57,7 +57,7 @@ import java.sql.*;
  * There are a number of limitations placed on the java class to be
  * used by Serialize:
  * <ul>
- * <li>The class name must be less than 32 chars long and must be all lowercase.
+ * <li>The class name must be less than 64 chars long and must be all lowercase.
  * This is due to limitations in Postgres about the size of table names.
  * The name must be all lowercase since table names in Postgres are
  * case insensitive and the relname is stored in lowercase. Unless some
@@ -577,7 +577,7 @@ public class Serialize
 	 *
 	 * Because of this, a Class name may not have _ in the name.<p>
 	 * Another limitation, is that the entire class name (including packages)
-	 * cannot be longer than 32 characters (a limit forced by PostgreSQL).
+	 * cannot be longer than 64 characters (a limit forced by PostgreSQL).
 	 *
 	 * @param name Class name
 	 * @return PostgreSQL table name
@@ -590,16 +590,16 @@ public class Serialize
 		if (name.indexOf("_") > -1)
 			throw new PSQLException("postgresql.serial.underscore");
 
-		// Postgres table names can only be 32 character long.
-		// Reserve 1 char, so allow only up to 31 chars.
+		// Postgres table names can only be 64 character long.
+		// Reserve 1 char, so allow only up to 63 chars.
 		// If the full class name with package is too long
 		// then just use the class name. If the class name is
 		// too long throw an exception.
 		//
-		if ( name.length() > 31 )
+		if ( name.length() > 63 )
 		{
 			name = name.substring(name.lastIndexOf(".") + 1);
-			if ( name.length() > 31 )
+			if ( name.length() > 63 )
 				throw new PSQLException("postgresql.serial.namelength", name, new Integer(name.length()));
 		}
 		return name.replace('.', '_');

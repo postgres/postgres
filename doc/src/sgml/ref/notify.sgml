@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.17 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.18 2002/08/13 20:40:44 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -180,7 +180,7 @@ NOTIFY
     it need not correspond to the name of any actual table.  If
     <replaceable class="PARAMETER">name</replaceable>
     is enclosed in double-quotes, it need not even be a syntactically
-    valid name, but can be any string up to 31 characters long.
+    valid name, but can be any string up to 63 characters long.
    </para>
    <para>
     In some previous releases of

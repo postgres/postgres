@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_user.sgml,v 1.6 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_user.sgml,v 1.7 2002/08/13 20:40:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ The name of the current user.
     Notes
    </TITLE>
    <PARA>
-    Data type "name" is a non-standard 31-character type for storing
+    Data type "name" is a non-standard 63-character type for storing
     system identifiers.
    </PARA>
   </REFSECT2>

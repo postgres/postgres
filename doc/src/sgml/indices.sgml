@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.35 2002/07/30 17:34:37 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.36 2002/08/13 20:40:43 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -236,7 +236,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    Currently, only the B-tree and GiST implementations support multicolumn
-   indexes.  Up to 16 columns may be specified.  (This limit can be
+   indexes.  Up to 32 columns may be specified.  (This limit can be
    altered when building <productname>PostgreSQL</productname>; see the
    file <filename>pg_config.h</filename>.)
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.65 2002/08/10 19:01:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.66 2002/08/13 20:40:43 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -120,8 +120,8 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     The system uses no more than <symbol>NAMEDATALEN</symbol>-1
     characters of an identifier; longer names can be written in
     commands, but they will be truncated.  By default,
-    <symbol>NAMEDATALEN</symbol> is 32 so the maximum identifier length
-    is 31 (but at the time the system is built,
+    <symbol>NAMEDATALEN</symbol> is 64 so the maximum identifier length
+    is 63 (but at the time the system is built,
     <symbol>NAMEDATALEN</symbol> can be changed in
     <filename>src/include/postgres_ext.h</filename>).
    </para>

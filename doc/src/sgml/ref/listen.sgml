@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.13 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.14 2002/08/13 20:40:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -146,7 +146,7 @@ WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETE
     it need not correspond to the name of any actual table.  If
     <replaceable class="PARAMETER">notifyname</replaceable>
     is enclosed in double-quotes, it need not even be a syntactically
-    valid name, but can be any string up to 31 characters long.
+    valid name, but can be any string up to 63 characters long.
    </para>
    <para>
     In some previous releases of

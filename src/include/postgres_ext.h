@@ -15,7 +15,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $Id: postgres_ext.h,v 1.10 2002/04/30 19:53:03 tgl Exp $
+ * $Id: postgres_ext.h,v 1.11 2002/08/13 20:40:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,6 @@ typedef unsigned int Oid;
  *
  * NOTE that databases with different NAMEDATALEN's cannot interoperate!
  */
-#define NAMEDATALEN 32
+#define NAMEDATALEN 64
 
 #endif

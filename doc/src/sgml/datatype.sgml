@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.97 2002/08/05 19:43:30 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.98 2002/08/13 20:40:43 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -914,7 +914,7 @@ SELECT b, char_length(b) FROM test2;
     <productname>PostgreSQL</productname>.  The <type>name</type> type
     exists <emphasis>only</emphasis> for storage of internal catalog
     names and is not intended for use by the general user.  Its length
-    is currently defined as 32 bytes (31 usable characters plus terminator)
+    is currently defined as 64 bytes (63 usable characters plus terminator)
     but should be referenced using the macro
     <symbol>NAMEDATALEN</symbol>.  The length is set at compile time
     (and is therefore adjustable for special uses); the default
@@ -943,8 +943,8 @@ SELECT b, char_length(b) FROM test2;
        </row>
        <row>
 	<entry>name</entry>
-	<entry>32 bytes</entry>
-	<entry>Thirty-one character internal type</entry>
+	<entry>64 bytes</entry>
+	<entry>Sixty-three character internal type</entry>
        </row>
       </tbody>
      </tgroup>
