@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.86 2001/01/27 05:16:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.87 2001/03/12 23:02:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1152,14 +1152,16 @@ static bool deftrig_all_isdeferred;
 static List *deftrig_trigstates;
 
 /* ----------
- * The list of events during the entire transaction.
+ * The list of events during the entire transaction.  deftrig_events
+ * is the head, deftrig_event_tail is the last entry.
  *
- * XXX This must finally be held in a file because of the huge
- *	   number of events that could occur in the real world.
+ * XXX Need to be able to shove this data out to a file if it grows too
+ *	   large...
  * ----------
  */
 static int	deftrig_n_events;
 static List *deftrig_events;
+static List *deftrig_event_tail;
 
 
 /* ----------
@@ -1235,7 +1237,22 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 static void
 deferredTriggerAddEvent(DeferredTriggerEvent event)
 {
-	deftrig_events = lappend(deftrig_events, event);
+	/*
+	 * Since the event list could grow quite long, we keep track of the
+	 * list tail and append there, rather than just doing a stupid "lappend".
+	 * This avoids O(N^2) behavior for large numbers of events.
+	 */
+	if (deftrig_event_tail == NIL)
+	{
+		/* first list entry */
+		deftrig_events = makeList1(event);
+		deftrig_event_tail = deftrig_events;
+	}
+	else
+	{
+		lnext(deftrig_event_tail) = makeList1(event);
+		deftrig_event_tail = lnext(deftrig_event_tail);
+	}
 	deftrig_n_events++;
 }
 
@@ -1397,7 +1414,6 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	List	   *el;
 	DeferredTriggerEvent event;
 	int			still_deferred_ones;
-	int			eventno = -1;
 	int			i;
 	MemoryContext per_tuple_context;
 
@@ -1421,8 +1437,6 @@ deferredTriggerInvokeEvents(bool immediate_only)
 
 	foreach(el, deftrig_events)
 	{
-		eventno++;
-
 		MemoryContextReset(per_tuple_context);
 
 		/* ----------
@@ -1548,6 +1562,7 @@ DeferredTriggerBeginXact(void)
 
 	deftrig_n_events = 0;
 	deftrig_events = NIL;
+	deftrig_event_tail = NIL;
 }
 
 
