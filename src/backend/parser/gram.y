@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.81 1997/12/24 06:06:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.82 1998/01/01 05:44:53 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -306,10 +306,11 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %left		AND
 %right		NOT
 %right		'='
+%nonassoc	'<' '>'
 %nonassoc	LIKE
 %nonassoc	BETWEEN
 %nonassoc	IN
-%nonassoc	Op
+%nonassoc	Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS
@@ -319,7 +320,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 /* Unary Operators */
 %right		':'
 %left		';'				/* end of statement or natural log */
-%nonassoc	'<' '>'
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
