@@ -4,11 +4,11 @@
 # pg_ctl.sh--
 #    Start/Stop/Restart/Report status of postmaster
 #
-# Copyright (c) 1999, PostgreSQL Global Development Group
+# Copyright (c) 2000, PostgreSQL Global Development Group
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.8 2000/02/06 00:49:03 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.9 2000/02/07 04:31:10 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
@@ -85,6 +85,8 @@ do
 	-m)
 	    shift
 	    case $1 in
+		s|smart)
+		    ;;
 		f|fast)
 		    sig="-INT"
 		    ;;
