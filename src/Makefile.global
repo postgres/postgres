@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.12 1996/10/25 09:24:56 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.13 1996/10/25 09:26:56 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -226,7 +226,10 @@ TK_LIB = -ltk4.1
 
 X11_INCDIR = /usr/include
 X11_LIBDIR = /usr/lib
-X11_LIB = -lX11 -lsocket -lnsl
+# If your OS requires these libraries, they should be put in
+# Makefile.custom with a line similar to:
+# X11_LIB+= -lsocket -lnsl
+X11_LIB = -lX11 
 
 #
 # include port specific rules and variables. For instance:
