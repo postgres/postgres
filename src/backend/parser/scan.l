@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.92 2002/04/20 21:56:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.93 2002/05/01 17:12:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,17 @@ static int		literalalloc;	/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
+
+/*
+ * When we parse a token that requires multiple lexer rules to process,
+ * we set token_start to point at the true start of the token, for use
+ * by yyerror().  yytext will point at just the text consumed by the last
+ * rule, so it's not very helpful (eg, it might contain just the last
+ * quote mark of a quoted identifier).  But to avoid cluttering every rule
+ * with setting token_start, we allow token_start = NULL to denote that
+ * it's okay to use yytext.
+ */
+static char	   *token_start;
 
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
@@ -208,7 +219,7 @@ non_newline		[^\n\r]
 
 comment			("--"{non_newline}*)
 
-whitespace		({space}|{comment})
+whitespace		({space}+|{comment})
 
 /*
  * SQL92 requires at least one newline in the whitespace separating
@@ -235,9 +246,16 @@ other			.
  */
 
 %%
+
+%{
+					/* code to execute during start of each call of yylex() */
+					token_start = NULL;
+%}
+
 {whitespace}	{ /* ignore */ }
 
 {xcstart}		{
+					token_start = yytext;
 					xcdepth = 0;
 					BEGIN(xc);
 					/* Put back any characters past slash-star; see above */
@@ -252,7 +270,11 @@ other			.
 
 <xc>{xcstop}	{
 					if (xcdepth <= 0)
+					{
 						BEGIN(INITIAL);
+						/* reset token_start for next token */
+						token_start = NULL;
+					}
 					else
 						xcdepth--;
 				}
@@ -261,9 +283,10 @@ other			.
 
 <xc>{op_chars}	{ /* ignore */ }
 
-<xc><<EOF>>		{ elog(ERROR, "Unterminated /* comment"); }
+<xc><<EOF>>		{ yyerror("unterminated /* comment"); }
 
 {xbitstart}		{
+					token_start = yytext;
 					BEGIN(xbit);
 					startlit();
 					addlitchar('b');
@@ -271,8 +294,7 @@ other			.
 <xbit>{xbitstop}	{
 					BEGIN(INITIAL);
 					if (literalbuf[strspn(literalbuf + 1, "01") + 1] != '\0')
-						elog(ERROR, "invalid bit string input: '%s'",
-							 literalbuf);
+						yyerror("invalid bit string input");
 					yylval.str = litbufdup();
 					return BITCONST;
 				}
@@ -284,9 +306,10 @@ other			.
 <xbit>{xbitcat}		{
 					/* ignore */
 				}
-<xbit><<EOF>>		{ elog(ERROR, "unterminated bit string literal"); }
+<xbit><<EOF>>		{ yyerror("unterminated bit string literal"); }
 
 {xhstart}		{
+					token_start = yytext;
 					BEGIN(xh);
 					startlit();
 				}
@@ -303,14 +326,14 @@ other			.
 						|| val != (long) ((int32) val)
 #endif
 						)
-						elog(ERROR, "Bad hexadecimal integer input '%s'",
-							 literalbuf);
+						yyerror("bad hexadecimal integer input");
 					yylval.ival = val;
 					return ICONST;
 				}
-<xh><<EOF>>		{ elog(ERROR, "Unterminated hexadecimal integer"); }
+<xh><<EOF>>		{ yyerror("unterminated hexadecimal integer"); }
 
 {xqstart}		{
+					token_start = yytext;
 					BEGIN(xq);
 					startlit();
 				}
@@ -335,30 +358,31 @@ other			.
 <xq>{xqcat}		{
 					/* ignore */
 				}
-<xq><<EOF>>		{ elog(ERROR, "Unterminated quoted string"); }
+<xq><<EOF>>		{ yyerror("unterminated quoted string"); }
 
 
 {xdstart}		{
+					token_start = yytext;
 					BEGIN(xd);
 					startlit();
 				}
 <xd>{xdstop}	{
 					BEGIN(INITIAL);
-					if (strlen(literalbuf) == 0)
-						elog(ERROR, "zero-length delimited identifier");
-					if (strlen(literalbuf) >= NAMEDATALEN)
+					if (literallen == 0)
+						yyerror("zero-length delimited identifier");
+					if (literallen >= NAMEDATALEN)
 					{
-#ifdef MULTIBYTE
 						int len;
-						len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
-						elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
+#ifdef MULTIBYTE
+						len = pg_mbcliplen(literalbuf, literallen,
+										   NAMEDATALEN-1);
+#else
+						len = NAMEDATALEN-1;
+#endif
+						elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
 							 literalbuf, len, literalbuf);
 						literalbuf[len] = '\0';
-#else
-						elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
-							 literalbuf, NAMEDATALEN-1, literalbuf);
-						literalbuf[NAMEDATALEN-1] = '\0';
-#endif
+						literallen = len;
 					}
 					yylval.str = litbufdup();
 					return IDENT;
@@ -369,7 +393,7 @@ other			.
 <xd>{xdinside}	{
 					addlit(yytext, yyleng);
 				}
-<xd><<EOF>>		{ elog(ERROR, "Unterminated quoted identifier"); }
+<xd><<EOF>>		{ yyerror("unterminated quoted identifier"); }
 
 {typecast}		{ return TYPECAST; }
 
@@ -383,8 +407,8 @@ other			.
 					 * character will match a prior rule, not this one.
 					 */
 					int		nchars = yyleng;
-					char   *slashstar = strstr((char*)yytext, "/*");
-					char   *dashdash = strstr((char*)yytext, "--");
+					char   *slashstar = strstr(yytext, "/*");
+					char   *dashdash = strstr(yytext, "--");
 
 					if (slashstar && dashdash)
 					{
@@ -395,7 +419,7 @@ other			.
 					else if (!slashstar)
 						slashstar = dashdash;
 					if (slashstar)
-						nchars = slashstar - ((char*)yytext);
+						nchars = slashstar - yytext;
 
 					/*
 					 * For SQL92 compatibility, '+' and '-' cannot be the
@@ -437,15 +461,15 @@ other			.
 					}
 
 					/* Convert "!=" operator to "<>" for compatibility */
-					if (strcmp((char*)yytext, "!=") == 0)
+					if (strcmp(yytext, "!=") == 0)
 						yylval.str = pstrdup("<>");
 					else
-						yylval.str = pstrdup((char*)yytext);
+						yylval.str = pstrdup(yytext);
 					return Op;
 				}
 
 {param}			{
-					yylval.ival = atol((char*)&yytext[1]);
+					yylval.ival = atol(yytext + 1);
 					return PARAM;
 				}
 
@@ -454,7 +478,7 @@ other			.
 					char* endptr;
 
 					errno = 0;
-					val = strtol((char *)yytext, &endptr, 10);
+					val = strtol(yytext, &endptr, 10);
 					if (*endptr != '\0' || errno == ERANGE
 #ifdef HAVE_LONG_INT_64
 						/* if long > 32 bits, check for overflow of int4 */
@@ -463,28 +487,29 @@ other			.
 						)
 					{
 						/* integer too large, treat it as a float */
-						yylval.str = pstrdup((char*)yytext);
+						yylval.str = pstrdup(yytext);
 						return FCONST;
 					}
 					yylval.ival = val;
 					return ICONST;
 				}
 {decimal}		{
-					yylval.str = pstrdup((char*)yytext);
+					yylval.str = pstrdup(yytext);
 					return FCONST;
 				}
 {real}			{
-					yylval.str = pstrdup((char*)yytext);
+					yylval.str = pstrdup(yytext);
 					return FCONST;
 				}
 
 
 {identifier}	{
 					ScanKeyword	   *keyword;
+					char		   *ident;
 					int				i;
 
 					/* Is it a keyword? */
-					keyword = ScanKeywordLookup((char*) yytext);
+					keyword = ScanKeywordLookup(yytext);
 					if (keyword != NULL)
 						return keyword->value;
 
@@ -496,26 +521,25 @@ other			.
 					 * which seems appropriate under SQL99 rules, whereas
 					 * the keyword comparison was NOT locale-dependent.
 					 */
-					for (i = 0; yytext[i]; i++)
+					ident = pstrdup(yytext);
+					for (i = 0; ident[i]; i++)
 					{
-						if (isupper((unsigned char) yytext[i]))
-							yytext[i] = tolower((unsigned char) yytext[i]);
+						if (isupper((unsigned char) ident[i]))
+							ident[i] = tolower((unsigned char) ident[i]);
 					}
 					if (i >= NAMEDATALEN)
                     {
-#ifdef MULTIBYTE
 						int len;
-						len = pg_mbcliplen(yytext,i,NAMEDATALEN-1);
-                        elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
-                             yytext, len, yytext);
-						yytext[len] = '\0';
+#ifdef MULTIBYTE
+						len = pg_mbcliplen(ident, i, NAMEDATALEN-1);
 #else
-                        elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
-                             yytext, NAMEDATALEN-1, yytext);
-						yytext[NAMEDATALEN-1] = '\0';
+						len = NAMEDATALEN-1;
 #endif
+                        elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+                             ident, len, ident);
+						ident[len] = '\0';
                     }
-					yylval.str = pstrdup((char*) yytext);
+					yylval.str = ident;
 					return IDENT;
 				}
 
@@ -526,7 +550,8 @@ other			.
 void
 yyerror(const char *message)
 {
-	elog(ERROR, "parser: %s at or near \"%s\"", message, yytext);
+	elog(ERROR, "parser: %s at or near \"%s\"", message,
+		 token_start ? token_start : yytext);
 }
 
 
