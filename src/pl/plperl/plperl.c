@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.57 2004/11/17 21:23:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.58 2004/11/18 21:35:42 tgl Exp $
  *
  **********************************************************************/
 
@@ -240,7 +240,6 @@ plperl_init_interp(void)
 	 * Initialize the proc and query hash tables
 	 ************************************************************/
 	plperl_proc_hash = newHV();
-
 }
 
 
@@ -497,10 +496,7 @@ plperl_get_elem(HV *hash, char *key)
 {
 	SV **svp = hv_fetch(hash, key, strlen(key), FALSE);
 	if (!svp)
-	{
 		elog(ERROR, "plperl: key '%s' not found", key);
-		return NULL;
-	}
 	return SvTYPE(*svp) == SVt_NULL ? NULL : SvPV(*svp, PL_na);
 }
 
@@ -659,7 +655,10 @@ plperl_create_sub(char *s, bool trusted)
 	int			count;
 
 	if (trusted && !plperl_safe_init_done)
+	{
 		plperl_safe_init();
+		SPAGAIN;
+	}
 
 	ENTER;
 	SAVETMPS;
@@ -760,50 +759,40 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 	XPUSHs(sv_2mortal(newSVpv("undef", 0)));
 	for (i = 0; i < desc->nargs; i++)
 	{
-		if (desc->arg_is_rowtype[i])
+		if (fcinfo->argnull[i])
+			XPUSHs(&PL_sv_undef);
+		else if (desc->arg_is_rowtype[i])
 		{
-			if (fcinfo->argnull[i])
-				XPUSHs(&PL_sv_undef);
-			else
-			{
-				HeapTupleHeader td;
-				Oid			tupType;
-				int32		tupTypmod;
-				TupleDesc	tupdesc;
-				HeapTupleData tmptup;
-				SV		   *hashref;
+			HeapTupleHeader td;
+			Oid			tupType;
+			int32		tupTypmod;
+			TupleDesc	tupdesc;
+			HeapTupleData tmptup;
+			SV		   *hashref;
 
-				td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
-				/* Extract rowtype info and find a tupdesc */
-				tupType = HeapTupleHeaderGetTypeId(td);
-				tupTypmod = HeapTupleHeaderGetTypMod(td);
-				tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-				/* Build a temporary HeapTuple control structure */
-				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-				tmptup.t_data = td;
+			td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
+			/* Extract rowtype info and find a tupdesc */
+			tupType = HeapTupleHeaderGetTypeId(td);
+			tupTypmod = HeapTupleHeaderGetTypMod(td);
+			tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+			/* Build a temporary HeapTuple control structure */
+			tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+			tmptup.t_data = td;
 
-				/*
-				 * plperl_build_tuple_argument better return a mortal SV.
-				 */
-				hashref = plperl_build_tuple_argument(&tmptup, tupdesc);
-				XPUSHs(hashref);
-			}
+			/* plperl_build_tuple_argument better return a mortal SV */
+			hashref = plperl_build_tuple_argument(&tmptup, tupdesc);
+			XPUSHs(hashref);
 		}
 		else
 		{
-			if (fcinfo->argnull[i])
-				XPUSHs(&PL_sv_undef);
-			else
-			{
-				char	   *tmp;
+			char	   *tmp;
 
-				tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
-													fcinfo->arg[i],
-							   ObjectIdGetDatum(desc->arg_typioparam[i]),
-													Int32GetDatum(-1)));
-				XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
-				pfree(tmp);
-			}
+			tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
+												fcinfo->arg[i],
+									ObjectIdGetDatum(desc->arg_typioparam[i]),
+												Int32GetDatum(-1)));
+			XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
+			pfree(tmp);
 		}
 	}
 	PUTBACK;
@@ -848,6 +837,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, S
 {
 	dSP;
 	SV		   *retval;
+	Trigger    *tg_trigger;
 	int			i;
 	int			count;
 
@@ -856,8 +846,9 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, S
 
 	PUSHMARK(sp);
 	XPUSHs(td);
-	for (i = 0; i < ((TriggerData *) fcinfo->context)->tg_trigger->tgnargs; i++)
-		XPUSHs(sv_2mortal(newSVpv(((TriggerData *) fcinfo->context)->tg_trigger->tgargs[i], 0)));
+	tg_trigger = ((TriggerData *) fcinfo->context)->tg_trigger;
+	for (i = 0; i < tg_trigger->tgnargs; i++)
+		XPUSHs(sv_2mortal(newSVpv(tg_trigger->tgargs[i], 0)));
 	PUTBACK;
 
 	count = perl_call_sv(desc->reference, G_SCALAR | G_EVAL | G_KEEPERR);
