@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.19 1998/02/26 04:32:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.20 1998/03/30 16:36:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,6 +838,7 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		return NIL;
 	}
 }
+
 
 /*
  * del_agg_tlist_references

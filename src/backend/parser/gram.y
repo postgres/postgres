@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.7 1998/03/18 16:50:19 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.8 1998/03/30 16:36:35 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2527,7 +2527,7 @@ groupby:  ColId
 
 having_clause:  HAVING a_expr
 				{
-					elog(NOTICE, "HAVING not yet supported; ignore clause");
+					/***S*H***/ /* elog(NOTICE, "HAVING not yet supported; ignore clause");*/
 					$$ = $2;
 				}
 		| /*EMPTY*/								{ $$ = NULL; }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.26 1998/02/26 04:31:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.27 1998/03/30 16:35:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,8 +203,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 static Datum
 ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
 {
-
-	*isNull = econtext->ecxt_nulls[agg->aggno];
+	*isNull = econtext->ecxt_nulls[agg->aggno];	
 	return econtext->ecxt_values[agg->aggno];
 }
 
@@ -648,6 +647,8 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 						 econtext,
 						 &argIsNull,
 						 argIsDone);
+
+
 		if (!(*argIsDone))
 		{
 			Assert(i == 0);
@@ -1356,8 +1357,11 @@ ExecQual(List *qual, ExprContext *econtext)
 	 * ----------------
 	 */
 	result = false;
+
 	foreach(clause, qual)
 	{
+	 
+	  
 		result = ExecQualClause((Node *) lfirst(clause), econtext);
 		if (result == true)
 			break;

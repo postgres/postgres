@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.71 1998/02/26 04:33:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.72 1998/03/30 16:36:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -781,6 +781,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+
+        /***S*H***/
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->sortClause = transformSortClause(pstate,

@@ -216,7 +216,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.4 1998/03/18 16:50:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.5 1998/03/30 16:36:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6700,7 +6700,7 @@ case 463:
 case 464:
 #line 2529 "gram.y"
 {
-					elog(NOTICE, "HAVING not yet supported; ignore clause");
+					/***S*H***/ /* elog(NOTICE, "HAVING not yet supported; ignore clause");*/
 					yyval.node = yyvsp[0].node;
 				;
     break;}

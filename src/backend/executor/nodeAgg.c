@@ -29,6 +29,7 @@
 #include "storage/bufmgr.h"
 #include "utils/palloc.h"
 #include "utils/syscache.h"
+#include "optimizer/clauses.h"
 
 /*
  * AggFuncInfo -
@@ -109,10 +110,16 @@ ExecAgg(Agg *node)
 				isNull1 = FALSE,
 				isNull2 = FALSE;
 
+
+	/***S*H***/
+	do { 
+
+
 	/* ---------------------
 	 *	get state info from node
 	 * ---------------------
 	 */
+
 	aggstate = node->aggstate;
 	if (aggstate->agg_done)
 		return NULL;
@@ -229,6 +236,7 @@ ExecAgg(Agg *node)
 			}
 		}
 	}
+	  
 
 	/* ----------------
 	 *	 for each tuple from the the outer plan, apply all the aggregates
@@ -477,11 +485,19 @@ ExecAgg(Agg *node)
 	 *	slot and return it.
 	 * ----------------
 	 */
+
+        /***S*H***/
+	}
+	while((ExecQual(fix_opids(node->plan.qual),econtext)!=true) && 
+	      (node->plan.qual!=NULL));
+
+	 
 	ExecStoreTuple(oneTuple,
 				   aggstate->csstate.css_ScanTupleSlot,
 				   InvalidBuffer,
 				   false);
 	econtext->ecxt_scantuple = aggstate->csstate.css_ScanTupleSlot;
+
 	resultSlot = ExecProject(projInfo, &isDone);
 
 	if (oneTuple)
