@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.147 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.148 2002/08/04 20:00:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1607,9 +1607,10 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 		return false;
 	if (!equal(a->alias, b->alias))
 		return false;
+/* FIX ME XXX
 	if (!equal(a->coldeflist, b->coldeflist))
 		return false;
-
+*/
 	return true;
 }
 
