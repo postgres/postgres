@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.29 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.30 2002/06/15 19:52:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -145,7 +145,13 @@ PostgreSQL documentation
        <para>
         Disables <function>fsync</function> calls for performance
         improvement, at the risk of data corruption in event of a
-	system crash.  Read the detailed documentation before using this!
+        system crash.  This parameter corresponds to setting
+        fsync=false in postgresql.conf. Read the detailed
+        documentation before using this!
+       </para>
+       <para>
+        <option>--fsync=true</option> has the opposite effect
+        of this option.
        </para>
       </listitem>
      </varlistentry>
@@ -169,7 +175,12 @@ PostgreSQL documentation
        <para>
         Allows clients to connect via TCP/IP (Internet domain)
 	connections.  Without this option, only local Unix domain
-	socket connections are accepted.
+        socket connections are accepted. This option corresponds
+        to setting tcpip_socket=true in postgresql.conf.
+       </para>
+       <para>
+        <option>--tcpip_socket=false</option> has the opposite
+        effect of this option.
        </para>
       </listitem>
      </varlistentry>
@@ -259,6 +270,10 @@ PostgreSQL documentation
 	probably not what you want, since it makes it very difficult
 	to troubleshoot problems.  See below for a better way to start
 	the <application>postmaster</application> in the background.
+       </para>
+       <para>
+        <option>--silent_mode=false</option> has the opposite effect
+        of this option.
        </para>
       </listitem>
      </varlistentry>
