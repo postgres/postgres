@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.5 1997/03/01 22:22:21 momjian Exp $
+ * $Id: geqo_eval.c,v 1.6 1997/03/03 23:26:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,10 +371,18 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
     List *xjoininfo = NIL;
     
     foreach (xjoininfo, joininfo_list) {
+	List *or;
 	JInfo *joininfo = (JInfo*)lfirst(xjoininfo);
 
 	new_otherrels = joininfo->otherrels;
-	if (nonoverlap_sets(new_otherrels,join_relids)) {
+	foreach (or, new_otherrels)
+	{
+	    if ( intMember (lfirsti(or), join_relids) )
+	    	new_otherrels = lremove ((void*)lfirst(or), new_otherrels);
+	}
+	joininfo->otherrels = new_otherrels;
+	if ( new_otherrels != NIL )
+	{
 	    other_joininfo = joininfo_member(new_otherrels,
 					     current_joininfo_list);
 	    if(other_joininfo) {
