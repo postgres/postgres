@@ -41,34 +41,41 @@ This could be anything from a text file to an Oracle or
 <productname>Postgres</productname> <acronym>RDBMS</acronym>.
 
 <Para>
-The backend access come from <acronym>ODBC</acronym> drivers, or vendor specifc drivers that
-allow data access.   <productname>psqlODBC</productname> is such a driver, along with others that are
+The backend access come from <acronym>ODBC</acronym> drivers, 
+or vendor specifc drivers that
+allow data access.   <productname>psqlODBC</productname> is such a driver,
+ along with others that are
 available, such as the OpenLink <acronym>ODBC</acronym> drivers.
 
 <Para>
-Once you write an <acronym>ODBC</acronym> application, you SHOULD be able to connect to ANY
+Once you write an <acronym>ODBC</acronym> application, 
+you <emphasis>should</emphasis> be able to connect to <emphasis>any</emphasis>
 back end database, regardless of the vendor, as long as the database schema
 is the same.
 
 <Para>
 For example. you could have <productname>MS SQL Server</productname>
  and <productname>Postgres</productname> servers which have
-exactly the same data.  Using <acronym>ODBC</acronym>, your Windows app would make exactly the
-same calls and the back end data source would look the same (to the windows
+exactly the same data.  Using <acronym>ODBC</acronym>, 
+your Windows app would make exactly the
+same calls and the back end data source would look the same (to the Windows
 app).
 
 <para>
-<ulink url="http://www.insightdist.com/">Insight Distributors</ulink> provides active and ongoing
-support for the core <productname>psqlODBC</productname> distribution. They provide a
-<ulink url="http://www.insightdist.com/psqlodbc/"><acronym>FAQ</acronym></ulink>, ongoing development
-on the code base, and actively participate on the 
+<ulink url="http://www.insightdist.com/">Insight Distributors</ulink> 
+provides active and ongoing
+support for the core <productname>psqlODBC</productname> distribution. 
+They provide a
+<ulink url="http://www.insightdist.com/psqlodbc/"><acronym>FAQ</acronym></ulink>,
+ ongoing development on the code base, and actively participate on the 
 <ulink url="mailto:interfaces@postgresql.org">interfaces mailing list</ulink>.
 
 <sect1>
 <title><productname>Windows</productname> Applications</title>
 
 <Para>
-In the real world, differences in drivers and the level of <acronym>ODBC</acronym> support
+In the real world, differences in drivers and the level of 
+<acronym>ODBC</acronym> support
 lessens the potential of <acronym>ODBC</acronym>:
 
 <SimpleList>
@@ -76,7 +83,8 @@ lessens the potential of <acronym>ODBC</acronym>:
 Access, Delphi, and Visual Basic all support <acronym>ODBC</acronym> directly.
 
 <Member>
-Under C++, such as Visual C++, you can use the C++ <acronym>ODBC</acronym> <acronym>API</acronym>.
+Under C++, such as Visual C++, 
+you can use the C++ <acronym>ODBC</acronym> <acronym>API</acronym>.
 
 <Member>
 In Visual C++, you can use the CRecordSet class, which wraps the 
@@ -88,24 +96,27 @@ Windows C++ development under Windows NT.
 <Para>
 If I write an app for <productname>Postgres</productname> 
 can I write it using <acronym>ODBC</acronym> calls
-to the <productname>Postgres</productname> server, or is that only when another database program 
+to the <productname>Postgres</productname> server, 
+or is that only when another database program 
 like MS SQL Server or Access needs to access the data?
 
 <Para>
-Again, the <acronym>ODBC</acronym> <acronym>API</acronym> set is the way to go.
-You can find out more at
-Microsoft's web site or in your Visual C++ docs (if that's what you are using.)
+Again, the <acronym>ODBC</acronym> <acronym>API</acronym> set 
+is the way to go.
+For <productname>Visual C++</productname> you can find out more at
+Microsoft's web site or in your docs.
 
 <Para>
-Visual Basic and the other RAD tools have Recordset objects that use <acronym>ODBC</acronym>
+Visual Basic and the other RAD tools have Recordset objects 
+that use <acronym>ODBC</acronym>
 directly to access data.  Using the data-aware controls, you can quickly
-link to the <acronym>ODBC</acronym> back end database (<Emphasis>very</Emphasis> quickly).
+link to the <acronym>ODBC</acronym> back end database 
+(<Emphasis>very</Emphasis> quickly).
 
 <Para>
 Playing around with MS Access will help you sort this out.  Try using
-File->Get External Data
+<literal>File->Get External Data</literal>.
 
-<Para>
 <Tip>
 <Para>
 You'll have to set up a DSN first.
@@ -125,21 +136,103 @@ The <productname>Postgres</productname> datetime type will break MS Access.
 <title>Unix Applications</title>
 
 <para>
-<productname>ApplixWare</productname> has an <acronym>ODBC</acronym> database interface
-supported on at least some platforms. <productname>ApplixWare</productname> v4.4.1 has been
+<productname>ApplixWare</productname> has an 
+<acronym>ODBC</acronym> database interface
+supported on at least some platforms. 
+<productname>ApplixWare</productname> v4.4.1 has been
 demonstrated under Linux with <productname>Postgres</productname> v6.4 
 using the <productname>psqlODBC</productname>
 driver contained in the <productname>Postgres</productname> distribution.
 
 <sect2>
+<title>Building the Driver</title>
+
+<para>
+The driver can be built in a standalone, client-only installation, or can be 
+built as a part of the main <productname>Postgres</productname> distribution.
+The standalone installation is convenient if you have <acronym>ODBC</acronym>
+client applications on multiple, heterogeneous platforms. The integrated
+installation is convenient when the target client is the same as the
+server, or when the client and server have similar runtime configurations.
+
+<sect3>
+<title>Integrated Installation</title>
+
+<para>
+For an integrated installation, specify the <option>--with-odbc</option>
+command-line argument for src/configure:
+
+<programlisting>
+./configure --with-odbc
+</programlisting>
+
+Once configured, the <acronym>ODBC</acronym> driver will be built and installed
+into the areas defined for the other components of the
+<productname>Postgres</productname> system. The installation-wide
+<acronym>ODBC</acronym> configuration file will be placed into
+the top directory of the Postgres target tree (<envar>POSTGRESDIR</envar>).
+This can be overridden from the <application>make</application> command-line
+as
+<programlisting>
+% make ODBCINST=<replaceable>filename</replaceable>
+</programlisting>
+
+<sect3>
+<title>Standalone Installation</title>
+
+<para>
+A standalone installation is not integrated with or built on the normal
+<productname>Postgres</productname> distribution. It should be best suited
+for building the <acronym>ODBC</acronym> driver for multiple, heterogeneous
+clients who do not have a locally-installed <productname>Postgres</productname>
+source tree.
+
+<para>
+The standalone installation distribution can be built from the
+<productname>Postgres</productname> distribution or may be obtained
+from <ulink url="http://insightdist.com/psqlodbc">Insight Distributors</ulink>,
+the current maintainers of the non-Unix sources.
+
+<para>
+To create a tar file for a complete standalone installation, first
+configure the main <productname>Postgres</productname> distribution.
+Then, create the tar file:
+
+<programlisting>
+% cd interfaces/odbc
+% make standalone
+</programlisting>
+
+<para>
+Copy the output tar file to your target system, unpack it into a clean
+directory, and then:
+
+<programlisting>
+% ./configure --with-odbcinst=<replaceable>instfile</replaceable>
+% make POSTGRESDIR=<replaceable>targettree</replaceable> ODBCINST=<replaceable>instfile</replaceable>
+</programlisting>
+
+<note>
+<para>
+The <envar>ODBCINST</envar> can be specified on either or both command lines.
+</note>
+
+<para>
+If you would like to install components into different trees, then you
+can specify various destinations explicitly:
+
+<programlisting>
+% make BINDIR=<replaceable>bindir</replaceable> LIBDIR=<replaceable>libdir</replaceable> HEADERDIR=<replaceable>headerdir</replaceable> ODBCINST=<replaceable>instfile</replaceable>
+</programlisting>
+
+<sect2>
 <title>Configuration Files</title>
 
 <para>
-The <filename>~/.odbc.ini</filename> contains user-specified access information 
-for the <productname>psqlODBC</productname>
-driver. The file uses conventions typical for <productname>Windows</productname> 
-Registry files, but despite this
-restriction can be made to work.
+<filename>~/.odbc.ini</filename> contains user-specified access information 
+for the <productname>psqlODBC</productname> driver. 
+The file uses conventions typical for <productname>Windows</productname> 
+Registry files, but despite this restriction can be made to work.
 
 <para>
 Here is an example <filename>.odbc.ini</filename> file, 

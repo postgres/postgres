@@ -317,6 +317,40 @@ The POSTGRES Group
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
+<BOOKBIBLIO ID="OLSON93">
+
+2. Olson, Nels Edward.
+     Partial indexing in POSTGRES : research project / by Nels Edward Olson.  
+   1993.
+       UCB   Engin     T7.49.1993 O676
+
+-->
+<TITLE ID="OLSON93-full">
+Partial indexing in POSTGRES : research project
+</TITLE>
+<TITLEABBREV ID="OLSON93">
+Olson, 1993
+</TITLEABBREV>
+<AUTHORGROUP>
+<AUTHOR>
+<FIRSTNAME>Nels</FIRSTNAME>
+<SURNAME>Olson</SURNAME>
+</AUTHOR>
+</AUTHORGROUP>
+<PUBDATE>1993</PUBDATE>
+<ISSN>UCB Engin T7.49.1993 O676</ISSN>
+<PUBLISHER>
+<PUBLISHERNAME>University  of  California, Berkeley CA</PUBLISHERNAME>
+</PUBLISHER>
+<!--
+</BOOKBIBLIO>
+-->
+</BIBLIOENTRY>
+
+<BIBLIOENTRY>
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
 <BOOKBIBLIO ID="ONG90">
 -->
 <TITLE ID="ONG90-full">
@@ -381,6 +415,55 @@ Rowe and Stonebraker, 1987
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
+<BOOKBIBLIO ID="SESHADRI95">
+
+1. CONFERENCE PAPER
+   Seshadri, P.; Swami, A.
+     Generalized partial indexes.
+   IN:  Proceedings of the Eleventh International Conference on Data
+   Engineering (Cat. No.95CH35724). (Proceedings of the Eleventh International
+   Conference on Data Engineering (Cat. No.95CH35724)Proceedings of the
+   Eleventh International Conference on Data Engineering, Taipei, Taiwan, 6-10
+   March 1995). Edited by: Yu, P.S.; Chen, A.L.P. Los Alamitos, CA, USA: IEEE
+   Comput. Soc. Press, 1995. p. 420-7.
+http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z
+
+-->
+<TITLE ID="SESHADRI95-full">
+<ulink url="http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z">
+Generalized partial indexes
+</ulink>
+</TITLE>
+<TITLEABBREV ID="SESHADRI95">
+</TITLEABBREV>
+<AUTHORGROUP>
+<AUTHOR>
+<FIRSTNAME>P.</FIRSTNAME>
+<SURNAME>Seshadri</SURNAME>
+</AUTHOR>
+<AUTHOR>
+<FIRSTNAME>A.</FIRSTNAME>
+<SURNAME>Swami</SURNAME>
+</AUTHOR>
+</AUTHORGROUP>
+<CONFGROUP>
+<CONFDATES>March 1995</CONFDATES>
+<CONFTITLE>Eleventh International Conference on Data Engineering</CONFTITLE>
+</CONFGROUP>
+<PUBDATE>1995</PUBDATE>
+<ISSN>Cat. No.95CH35724</ISSN>
+<PUBLISHER>
+<PUBLISHERNAME>IEEE Computer Society Press</PUBLISHERNAME>
+</PUBLISHER>
+<!--
+</BOOKBIBLIO>
+-->
+</BIBLIOENTRY>
+
+<BIBLIOENTRY>
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
 <BOOKBIBLIO ID="STON86">
 -->
 <TITLE ID="STON86-full">
@@ -388,7 +471,6 @@ The Design of <ProductName>Postgres</ProductName>
 </TITLE>
 <TITLEABBREV ID="STON86">
 Stonebraker and Rowe, 1986
-STON86
 </TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
@@ -503,6 +585,42 @@ Stonebraker et al, 1989</TITLEABBREV>
 <CONFGROUP>
 <CONFDATES>Sept. 1989</CONFDATES>
 <CONFTITLE>Record 18(3)</CONFTITLE>
+<CONFSPONSOR>SIGMOD</CONFSPONSOR>
+<CONFNUM>1989</CONFNUM>
+</CONFGROUP>
+<!--
+</BOOKBIBLIO>
+-->
+</BIBLIOENTRY>
+
+<BIBLIOENTRY>
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
+<BOOKBIBLIO ID="STON89b">
+
+1. Stonebraker, M.
+     The case for partial indexes (DBMS).
+   SIGMOD Record, Dec. 1989, vol.18, (no.4):4-11.
+http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf
+
+-->
+<TITLE ID="STON89b-full">
+<ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf">
+The case for partial indexes (DBMS)
+</ulink>
+</TITLE>
+<TITLEABBREV ID="STON89b">
+Stonebraker, M, 1989b</TITLEABBREV>
+<AUTHORGROUP>
+<AUTHOR>
+<FIRSTNAME>M.</FIRSTNAME>
+<SURNAME>Stonebraker</SURNAME>
+</AUTHOR>
+</AUTHORGROUP>
+<CONFGROUP>
+<CONFDATES>Dec. 1989</CONFDATES>
+<CONFTITLE>Record 18(no.4):4-11</CONFTITLE>
 <CONFSPONSOR>SIGMOD</CONFSPONSOR>
 <CONFNUM>1989</CONFNUM>
 </CONFGROUP>

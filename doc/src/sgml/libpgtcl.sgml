@@ -165,14 +165,13 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 <DATE>1997-12-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
+pg_connect -conninfo <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
 pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <REPLACEABLE CLASS="PARAMETER">hostName</REPLACEABLE></OPTIONAL>
   <OPTIONAL>-port <REPLACEABLE
   CLASS="PARAMETER">portNumber</REPLACEABLE></OPTIONAL> <OPTIONAL>-tty
   <REPLACEABLE CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL>
   <OPTIONAL>-options <REPLACEABLE
   CLASS="PARAMETER">optionalBackendArgs</REPLACEABLE></OPTIONAL>
-<para>
-pg_connect -conninfo <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-PGTCL-PGCONNECT-1">
@@ -438,6 +437,8 @@ where the optname is usable as an option in pg_connect -conninfo.
 </REFSECT1INFO>
 <TITLE>Description
 </TITLE>
+
+<para>
 <FUNCTION>pg_conndefaults</FUNCTION> returns info about the connection
 options available in <FUNCTION>pg_connect -conninfo</FUNCTION> and the
 current default value for each option.

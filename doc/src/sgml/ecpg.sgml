@@ -21,10 +21,12 @@
 <Date>Transcribed 1998-02-12</Date>
 </DocInfo>
 
-<Title><Application>ecpg</Application> - Embedded <Acronym>SQL</Acronym> in <Acronym>C</Acronym></Title>
+<Title><Application>ecpg</Application> - Embedded <Acronym>SQL</Acronym> 
+in <Acronym>C</Acronym></Title>
 
 <Para>
-This describes an embedded <Acronym>SQL</Acronym> in <Acronym>C</Acronym> package for <ProductName>Postgres</ProductName>.
+This describes an embedded <Acronym>SQL</Acronym> in <Acronym>C</Acronym> 
+package for <ProductName>Postgres</ProductName>.
 
 It is written by <ULink url="mailto:linus@epact.se">Linus Tolke</ULink>
 and <ULink url="mailto:meskes@debian.org">Michael Meskes</ULink>.
@@ -40,13 +42,16 @@ to copy and use the rest of the <ProductName>PostgreSQL</ProductName>.
 <Title>Why Embedded <Acronym>SQL</Acronym>?</Title>
 
 <Para>
-Embedded <Acronym>SQL</Acronym> has some small advantages over other ways to handle <Acronym>SQL</Acronym>
+Embedded <Acronym>SQL</Acronym> has some small advantages over other ways 
+to handle <Acronym>SQL</Acronym>
 queries. It takes care of all the tedious moving of information to and
-from variables in your <Acronym>C</Acronym> program. Many <Acronym>RDBMS</Acronym> packages
+from variables in your <Acronym>C</Acronym> program. 
+Many <Acronym>RDBMS</Acronym> packages
 support this embedded language.
 
 <Para> There is an ANSI-standard describing how the embedded language should
-work. <Application>ecpg</Application> was designed to meet this standard as much as possible. So it is
+work. <Application>ecpg</Application> was designed to meet this standard 
+as much as possible. So it is
 possible to port programs with embedded <Acronym>SQL</Acronym> written for
 other <Acronym>RDBMS</Acronym> packages to
 <ProductName>Postgres</ProductName> and thus promoting the spirit of free
@@ -56,28 +61,36 @@ software.
 <Title>The Concept</Title>
 
 <Para>
-You write your program in <Acronym>C</Acronym> with some special <Acronym>SQL</Acronym> things.
-For declaring variables that can be used in <Acronym>SQL</Acronym> statements you need to
+You write your program in <Acronym>C</Acronym> with some 
+special <Acronym>SQL</Acronym> things.
+For declaring variables that can be used in 
+<Acronym>SQL</Acronym> statements you need to
 put them in a special declare section.
 You use a special syntax for the <Acronym>SQL</Acronym> queries.
 
 <Para>
-Before compiling you run the file through the embedded <Acronym>SQL</Acronym> <Acronym>C</Acronym>
-preprocessor and it converts the <Acronym>SQL</Acronym> statements you used to function
+Before compiling you run the file through 
+the embedded <Acronym>SQL</Acronym> <Acronym>C</Acronym>
+preprocessor and it converts the <Acronym>SQL</Acronym> statements you used 
+to function
 calls with the variables used as arguments. Both variables that are used
-as input to the <Acronym>SQL</Acronym> statements and variables that will contain the
+as input to the <Acronym>SQL</Acronym> statements and variables that will 
+contain the
 result are passed.
 
 <Para>
 Then you compile and at link time you link with a special library that
 contains the functions used. These functions (actually it is mostly one
 single function) fetches the information from the arguments, performs
-the <Acronym>SQL</Acronym> query using the ordinary interface (<FileName>libpq</FileName>) and puts back
+the <Acronym>SQL</Acronym> query using the ordinary interface 
+(<FileName>libpq</FileName>) and puts back
 the result in the arguments dedicated for output.
 
 <Para>
-Then you run your program and when the control arrives to the <Acronym>SQL</Acronym>
-statement the <Acronym>SQL</Acronym> statement is performed against the database and you
+Then you run your program and when the control arrives to 
+the <Acronym>SQL</Acronym>
+statement the <Acronym>SQL</Acronym> statement is performed against 
+the database and you
 can continue with the result.
 
 
@@ -91,14 +104,16 @@ This section describes how to use the <Application>egpc</Application> tool.
 <Title>Preprocessor
 
 <Para>
-The preprocessor is called <Application>ecpg</Application>. After installation it resides in
+The preprocessor is called <Application>ecpg</Application>. 
+After installation it resides in
 the <ProductName>Postgres</ProductName> <FileName>bin/</FileName> directory. 
 
 <Sect2>
 <Title>Library
 
 <Para>
-The <Application>ecpg</Application> library is called <FileName>libecpg.a</FileName> or
+The <Application>ecpg</Application> library is called 
+<FileName>libecpg.a</FileName> or
 <FileName>libecpg.so</FileName>. Additionally, the library
 uses the <FileName>libpq</FileName> library for communication to the 
 <ProductName>Postgres</ProductName> server so you will
@@ -108,42 +123,42 @@ have to link your program with <Parameter>-lecpg -lpq</Parameter>.
 The library has some methods that are "hidden" but that could prove very
 useful sometime.
 
-<VariableList>
-<VarListEntry>
-<Term>ECPGdebug(int, FILE *stream)</Term>
-<ListItem>
-<Para>
-If this is called, with the first argument non-zero, then debuglogging is turned
-on. Debuglogging is done on <Function>stream</Function>. Most <Acronym>SQL</Acronym> statement logs its
-arguments and result.
+<itemizedlist>
+<listitem>
+<para>
+<function>ECPGdebug(int <replaceable class="parameter">on</replaceable>, FILE *<replaceable class="parameter">stream</replaceable>)</function>
+turns on debug logging if called with the first argument non-zero.
+Debug logging is done on <replaceable class="parameter">stream</replaceable>.
+ Most <Acronym>SQL</Acronym> statement logs its arguments and result.
 
 <Para>
-The most important one (<Function>ECPGdo</Function>) that is called on all <Acronym>SQL</Acronym>
-statements except <Command>EXEC SQL COMMIT</Command>, <Command>EXEC SQL ROLLBACK</Command>, 
-<Command>EXEC SQL CONNECT</Command> logs both its expanded string, i.e. the string
+The most important one (<Function>ECPGdo</Function>) 
+that is called on all <Acronym>SQL</Acronym>
+statements except <Command>EXEC SQL COMMIT</Command>, 
+<Command>EXEC SQL ROLLBACK</Command>, 
+<Command>EXEC SQL CONNECT</Command> logs both its expanded string,
+ i.e. the string
 with all the input variables inserted, and the result from the
-<ProductName>Postgres</ProductName> server. This can be very useful when searching for errors
+<ProductName>Postgres</ProductName> server.
+ This can be very useful when searching for errors
 in your <Acronym>SQL</Acronym> statements.
 </Para>
 </ListItem>
-</VarListEntry>
 
-<VarListEntry>
-<Term>ECPGstatus()</Term>
-<ListItem>
-<Para>
+<listitem>
+<para>
+<function>ECPGstatus()</function>
 This method returns TRUE if we are connected to a database and FALSE if not.
 </Para>
 </ListItem>
-</VarListEntry>
-</VariableList>
+</itemizedlist>
 
 <Sect2>
 <Title>Error handling
 
 <Para>
-To be able to detect errors from the <ProductName>Postgres</ProductName> server you include a line
-like
+To be able to detect errors from the <ProductName>Postgres</ProductName> 
+server you include a line like
 <ProgramListing>
 exec sql include sqlca;
 </ProgramListing>
@@ -160,8 +175,10 @@ struct sqlca {
 </ProgramListing>
 
 <Para>
-If an error occured in the last <Acronym>SQL</Acronym> statement then <Parameter>sqlca.sqlcode</Parameter>
-will be non-zero. If <Parameter>sqlca.sqlcode</Parameter> is less that 0 then this is
+If an error occured in the last <Acronym>SQL</Acronym> statement 
+then <Parameter>sqlca.sqlcode</Parameter>
+will be non-zero. If <Parameter>sqlca.sqlcode</Parameter> is less that 0
+ then this is
 some kind of serious error, like the database definition does not match
 the query given. If it is bigger than 0 then this is a normal error like
 the table did not contain the requested row.
@@ -209,7 +226,8 @@ The preprocessor has goofed up and generated some incorrect code.
 <Term>-1, Error starting transaction line %d.</Term>
 <ListItem>
 <Para>
-<ProductName>Postgres</ProductName> signalled to us that we cannot open the connection.
+<ProductName>Postgres</ProductName> signalled to us that we cannot open 
+the connection.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -218,7 +236,8 @@ The preprocessor has goofed up and generated some incorrect code.
 <Term>-1, Postgres error: %s line %d.</Term>
 <ListItem>
 <Para>
-Some <ProductName>Postgres</ProductName> error. The message contains the error message from the
+Some <ProductName>Postgres</ProductName> error. 
+The message contains the error message from the
 <ProductName>Postgres</ProductName> backend.
 </Para>
 </ListItem>
@@ -238,8 +257,8 @@ be found or we have gone through the cursor.
 <Term>-1, To many matches line %d.</Term>
 <ListItem>
 <Para>
-This means that the query has returned several lines. The <Command>SELECT</Command>
-you made probably was not unique.
+This means that the query has returned several lines. 
+The <Command>SELECT</Command> you made probably was not unique.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -249,8 +268,9 @@ you made probably was not unique.
 <ListItem>
 <Para>
 This means that the host variable is of an <Type>int</Type> type and the field
-in the <ProductName>Postgres</ProductName> database is of another type and contains a value that
-cannot be interpreted as an <Type>int</Type>. The library uses <Function>strtol</Function>
+in the <ProductName>Postgres</ProductName> database is of another type and 
+contains a value that cannot be interpreted as an <Type>int</Type>. 
+The library uses <Function>strtol</Function>
 for this conversion.
 </Para>
 </ListItem>
@@ -261,7 +281,8 @@ for this conversion.
 <ListItem>
 <Para>
 This means that the host variable is of an <Type>unsigned int</Type> type and
-the field in the <ProductName>Postgres</ProductName> database is of another type and contains a
+the field in the <ProductName>Postgres</ProductName> database is of another 
+type and contains a
 value that cannot be interpreted as an <Type>unsigned int</Type>. The library
 uses <Function>strtoul</Function> for this conversion.
 </Para>
@@ -273,7 +294,8 @@ uses <Function>strtoul</Function> for this conversion.
 <ListItem>
 <Para>
 This means that the host variable is of an <Type>float</Type> type and
-the field in the <ProductName>Postgres</ProductName> database is of another type and contains a
+the field in the <ProductName>Postgres</ProductName> database is of another 
+type and contains a
 value that cannot be interpreted as an <Type>float</Type>. The library
 uses <Function>strtod</Function> for this conversion.
 </Para>
@@ -284,7 +306,8 @@ uses <Function>strtod</Function> for this conversion.
 <Term>-1, Too few arguments line %d.</Term>
 <ListItem>
 <Para>
-This means that <ProductName>Postgres</ProductName> has returned more records than we have
+This means that <ProductName>Postgres</ProductName> has returned more records 
+than we have
 matching variables. Perhaps you have forgotten a couple of the host
 variables in the <Command>INTO :var1,:var2</Command>-list.
 </Para>
@@ -295,7 +318,8 @@ variables in the <Command>INTO :var1,:var2</Command>-list.
 <Term>-1, Too many arguments line %d.</Term>
 <ListItem>
 <Para>
-This means that <ProductName>Postgres</ProductName> has returned fewer records than we have
+This means that <ProductName>Postgres</ProductName> has returned fewer records 
+than we have
 host variables. Perhaps you have to many host variables in the 
 <Command>INTO :var1,:var2</Command>-list.
 </Para>
@@ -326,8 +350,10 @@ and why is explained in the message.
 <Term>-1, Postgres error line %d.</Term>
 <ListItem>
 <Para>
-<ProductName>Postgres</ProductName> returns something that the library does not know how to
-handle. This is probably because the version of <ProductName>Postgres</ProductName> does not
+<ProductName>Postgres</ProductName> returns something that the library does 
+not know how to
+handle. This is probably because the version of 
+<ProductName>Postgres</ProductName> does not
 match the version of the <Application>ecpg</Application> library.
 </Para>
 </ListItem>
@@ -337,8 +363,10 @@ match the version of the <Application>ecpg</Application> library.
 <Term>-1, Error committing line %d.</Term>
 <ListItem>
 <Para>
-Error during <Command>COMMIT</Command>. <Command>EXEC SQL COMMIT</Command> is translated to an
-<Command>end</Command> operation in <ProductName>Postgres</ProductName> and that is the operation that could
+Error during <Command>COMMIT</Command>. <Command>EXEC SQL COMMIT</Command> 
+is translated to an
+<Command>end</Command> operation in <ProductName>Postgres</ProductName> 
+and that is the operation that could
 not be performed.
 </Para>
 </ListItem>
@@ -348,8 +376,10 @@ not be performed.
 <Term>-1, Error rolling back line %d.</Term>
 <ListItem>
 <Para>
-Error during <Command>ROLLBACK</Command>. <Command>EXEC SQL ROLLBACK</Command> is translated to
-an <Command>abort</Command> operation in <ProductName>Postgres</ProductName> and that is the operation that
+Error during <Command>ROLLBACK</Command>. 
+<Command>EXEC SQL ROLLBACK</Command> is translated to
+an <Command>abort</Command> operation in <ProductName>Postgres</ProductName> 
+and that is the operation that
 could not be performed.
 </Para>
 </ListItem>
@@ -398,27 +428,31 @@ that effort can not justify the performance gained.
 <Title>Porting From Other <Acronym>RDBMS</Acronym> Packages</Title>
 
 <Para>
-To be written by persons that knows the different <Acronym>RDBMS</Acronym> packages and that
+To be written by someone who knows the different 
+<Acronym>RDBMS</Acronym> packages and who
 actually does port something...
 
 <Sect1>
 <Title>Installation</Title>
 
 <Para>
-Since version 0.5 <Application>ecpg</Application> is distributed together with <ProductName>Postgres</ProductName>. So you
+Since version 0.5 <Application>ecpg</Application> is distributed 
+together with <ProductName>Postgres</ProductName>. So you
 should get your precompiler, libraries and header files compiled and
-installed on the fly.
+installed by default as a part of your installation.
 
 <Sect1>
 <Title>For the Developer</Title>
 
 <Para>
-This section is for those that wants to develop the <Application>ecpg</Application> interface. It
+This section is for those who want to develop the 
+<Application>ecpg</Application> interface. It
 describes how the things work. The ambition is to make this section
 contain things for those that want to have a look inside and the section
 on How to use it should be enough for all normal questions.
 
-So, read this before looking at the internals of the <Application>ecpg</Application>. If
+So, read this before looking at the internals of the 
+<Application>ecpg</Application>. If
 you are not interested in how it really works, skip this section.
 
 <Sect2>
@@ -433,7 +467,8 @@ This version the preprocessor has some flaws:
 <ListItem>
 <Para>
 The PQ interface, and most of all the PQexec function, that is used by
-the <Application>ecpg</Application> relies on that the request is built up as a string. In some
+the <Application>ecpg</Application> relies on that the request is built 
+up as a string. In some
 cases, like when the data contains the null character, this will be a
 serious problem.
 </Para>
@@ -534,8 +569,8 @@ DESCRIPTOR statement will be ignored.
 <Para>
 To set up a database you need a few scripts with table definitions and
 other configuration parameters. If you have these scripts for an old
-database you would like to just apply them to get a <ProductName>Postgres</ProductName> database
-that works in the same way.
+database you would like to just apply them to get a 
+<ProductName>Postgres</ProductName> database that works in the same way.
 
 <Para>
 To set up a database you need a few scripts with table definitions and
@@ -562,8 +597,8 @@ everything to the output without looking at it further.
 
 <Para>
 When it comes to an <Command>EXEC SQL</Command> statements it interviens and
-changes them depending on what iit is. The <Command>EXEC SQL</Command> statement can
-be one of these:
+changes them depending on what iit is. 
+The <Command>EXEC SQL</Command> statement can be one of these:
 
 <VariableList>
 <VarListEntry>
@@ -682,20 +717,23 @@ ECPGrollback(__LINE__);
 <ListItem>
 <Para>
 Other <Acronym>SQL</Acronym> statements are other statements that start with 
-<Command>exec sql</Command> and ends with <Command>;</Command>. Everything inbetween is treated
+<Command>exec sql</Command> and ends with <Command>;</Command>. 
+Everything inbetween is treated
 as an <Acronym>SQL</Acronym> statement and parsed for variable substitution.
 
 <Para>
 Variable substitution occur when a symbol starts with a colon
-(<Command>:</Command>). Then a variable with that name is found among the variables
+(<Command>:</Command>). 
+Then a variable with that name is found among the variables
 that were previously declared within a declare section and depending on
-whether or not the <Acronym>SQL</Acronym> statements knows it to be a variable for input or
+whether or not the <Acronym>SQL</Acronym> statements knows it to be 
+a variable for input or
 output the pointers to the variables are written to the output to allow
 for access by the function.
 
 <Para>
-For every variable that is part of the <Acronym>SQL</Acronym> request the function gets
-another five arguments.
+For every variable that is part of the <Acronym>SQL</Acronym> request 
+the function gets another five arguments:
 
 <SimpleList>
 <Member>The type as a special symbol</Member>
@@ -776,7 +814,8 @@ This is a line number for the original line used in error messages only.
 <Term>A string</Term>
 <ListItem>
 <Para>
-This is the <Acronym>SQL</Acronym> request that is to be issued. This request is modified
+This is the <Acronym>SQL</Acronym> request that is to be issued. 
+This request is modified
 by the input variables, i.e. the variables that where not known at
 compile time but are to be entered in the request. Where the variables
 should go the string contains <Quote>;</Quote>.
@@ -824,7 +863,8 @@ An enum telling that there are no more variables.
 </VariableList>
 
 <Para>
-All the <Acronym>SQL</Acronym> statements are performed in one transaction unless you issue
+All the <Acronym>SQL</Acronym> statements are performed in one transaction 
+unless you issue
 a commit transaction. This works so that the first transaction or the
 first after a commit or rollback always begins a transaction.
 

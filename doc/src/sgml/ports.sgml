@@ -115,7 +115,7 @@
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>x86</ENTRY>
     <ENTRY>v6.4</ENTRY>
-    <ENTRY>1998-09-14</ENTRY>
+    <ENTRY>1998-10-09</ENTRY>
     <ENTRY>(<ULink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ULink>,
 <ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
   </ROW>
@@ -165,9 +165,9 @@
   <ROW>
     <ENTRY>SVR4</ENTRY>
     <ENTRY>MIPS</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>similar to v6.2.1; "mostly working" (<ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-08</ENTRY>
+    <ENTRY>no 64-bit int support (<ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>SVR4 4.4</ENTRY>
@@ -179,20 +179,26 @@
   <ROW>
     <ENTRY>Unixware</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-04</ENTRY>
     <ENTRY>aka UNIVEL (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>NextStep</ENTRY>
+    <ENTRY>Windows NT</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.x</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>client-only support; v1.0.9 worked with patches (<ULink url="mailto:dave@turbocat.de">David Wetzel</ULink>)</ENTRY>
+    <ENTRY>v6.4</ENTRY>
+    <ENTRY>1998-10-08</ENTRY>
+    <ENTRY>Mostly working with the Cygwin library. No DLLs yet. <ulink url="mailto:horak@mmp.plzen-city.cz">Horak Daniel</ulink> </ENTRY>
   </ROW>
 </TBODY>
 </TGROUP>
 </TABLE>
+
+<note>
+<para>
+For <productname>Windows NT</productname>, look for patches on the
+<ulink url="http://postgresql.org">Postgres web site</ulink>.
+</note>
 
 <Sect1>
 <Title>Unsupported Platforms</Title>
@@ -238,18 +244,18 @@ Others listed here do not provide sufficient library support for an attempt.
     <ENTRY>Amiga, HP300, Mac; not yet working (<ULink url="mailto:hotz@jpl.nasa.gov">Henry Hotz</ULink>)</ENTRY>
   </ROW>
   <ROW>
+    <ENTRY>NextStep</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.x</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>client-only support; v1.0.9 worked with patches (<ULink url="mailto:dave@turbocat.de">David Wetzel</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
     <ENTRY>Ultrix</ENTRY>
     <ENTRY>MIPS,VAX?</ENTRY>
     <ENTRY>v6.x</ENTRY>
     <ENTRY>1998-03-01</ENTRY>
     <ENTRY>no recent reports; obsolete?</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>Windows NT</ENTRY>
-    <ENTRY>all</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>not library compatible; client side maybe; use ODBC/JDBC</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>Windows</ENTRY>
