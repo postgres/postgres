@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.2 1996/10/19 04:46:28 scrappy Exp $
+ * $Id: parsenodes.h,v 1.3 1996/10/19 04:49:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define	PARSENODES_H
 
 #include "nodes/primnodes.h"
+#include "utils/tqual.h"
 
 /*****************************************************************************
  *  Query Tree 
