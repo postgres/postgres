@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.90 2000/02/07 23:10:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.91 2000/02/24 04:50:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,6 +669,13 @@ parseInput(PGconn *conn)
 		/*
 		 * NOTIFY and NOTICE messages can happen in any state besides COPY
 		 * OUT; always process them right away.
+		 *
+		 * Most other messages should only be processed while in BUSY state.
+		 * (In particular, in READY state we hold off further parsing until
+		 * the application collects the current PGresult.)
+		 *
+		 * However, if the state is IDLE then we got trouble; we need to
+		 * deal with the unexpected message somehow.
 		 */
 		if (id == 'A')
 		{
@@ -680,28 +687,40 @@ parseInput(PGconn *conn)
 			if (getNotice(conn))
 				return;
 		}
+		else if (conn->asyncStatus != PGASYNC_BUSY)
+		{
+			/* If not IDLE state, just wait ... */
+			if (conn->asyncStatus != PGASYNC_IDLE)
+				return;
+			/*
+			 * Unexpected message in IDLE state; need to recover somehow.
+			 * ERROR messages are displayed using the notice processor;
+			 * anything else is just dropped on the floor after displaying
+			 * a suitable warning notice.  (An ERROR is very possibly the
+			 * backend telling us why it is about to close the connection,
+			 * so we don't want to just discard it...)
+			 */
+			if (id == 'E')
+			{
+				if (getNotice(conn))
+					return;
+			}
+			else
+			{
+				sprintf(noticeWorkspace,
+						"Backend message type 0x%02x arrived while idle\n",
+						id);
+				DONOTICE(conn, noticeWorkspace);
+				/* Discard the unexpected message; good idea?? */
+				conn->inStart = conn->inEnd;
+				break;
+			}
+		}
 		else
 		{
-
 			/*
-			 * Other messages should only be processed while in BUSY
-			 * state. (In particular, in READY state we hold off further
-			 * parsing until the application collects the current
-			 * PGresult.) If the state is IDLE then we got trouble.
+			 * In BUSY state, we can process everything.
 			 */
-			if (conn->asyncStatus != PGASYNC_BUSY)
-			{
-				if (conn->asyncStatus == PGASYNC_IDLE)
-				{
-					sprintf(noticeWorkspace,
-							"Backend message type 0x%02x arrived while idle\n",
-							id);
-					DONOTICE(conn, noticeWorkspace);
-					/* Discard the unexpected message; good idea?? */
-					conn->inStart = conn->inEnd;
-				}
-				return;
-			}
 			switch (id)
 			{
 				case 'C':		/* command complete */
