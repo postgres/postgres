@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.212 2004/04/19 21:21:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.213 2004/04/22 02:58:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,7 +483,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ExecuteStmt:
-			ExecuteQuery((ExecuteStmt *) parsetree, dest);
+			ExecuteQuery((ExecuteStmt *) parsetree, dest, completionTag);
 			break;
 
 		case T_DeallocateStmt:
