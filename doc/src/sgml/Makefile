@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.34 2001/03/10 16:05:35 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.35 2001/03/25 08:32:24 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ endif
 ifndef JADE
 JADE = jade
 endif
-SGMLINCLUDE = -D ref -D ../graphics
+SGMLINCLUDE = -D $(srcdir) -D $(srcdir)/ref -D $(srcdir)/../graphics
 
 ifndef NSGMLS
 NSGMLS = nsgmls
