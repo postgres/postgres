@@ -1237,6 +1237,11 @@ Sun Apr 14 10:53:14 CEST 2002
 	- Fixed one bug in structure handling resulting in using sizeof
 	  indicator instead of variable.
 	- Synced preproc.y with gram.y.
+
+Mon Apr 22 20:44:56 CEST 2002
+	
+	- Synced preproc.y with gram.y.
+	- Synced keywords.c.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 

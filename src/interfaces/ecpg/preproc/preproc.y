@@ -177,8 +177,8 @@ make_name(void)
 /* Keywords (in SQL92 reserved words) */
 %token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
 		AT, AUTHORIZATION, BEGIN_TRANS, BETWEEN, BOTH, BY,
-		CASCADE, CASE, CAST, CHAIN, CHAR, CHARACTER,
-		CHARACTERISTICS, CHECK, CLOSE, COALESCE, COLLATE,
+		CASCADE, CASE, CAST, CHAR, CHARACTER,
+		CHECK, CLOSE, COALESCE, COLLATE,
 		COLUMN, COMMIT, CONSTRAINT, CONSTRAINTS, CREATE, CROSS,
 		CURRENT, CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP,
 		CURRENT_USER, CURSOR, DAY_P, DEC, DECIMAL, DECLARE,
@@ -193,7 +193,7 @@ make_name(void)
 		NULL_P, NUMERIC, OF, OFF, OLD, ON, ONLY, OPTION, OR,
 		ORDER, OUT, OUTER_P, OVERLAPS, PARTIAL, PATH_P,
 		POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES,
-		PROCEDURE, PUBLIC, READ, REFERENCES, RELATIVE, REVOKE,
+		PROCEDURE, READ, REFERENCES, RELATIVE, REVOKE,
 		RIGHT, ROLLBACK, SCHEMA, SCROLL, SECOND_P, SELECT,
 		SESSION, SESSION_USER, SET, SOME, SUBSTRING, TABLE,
 		TEMPORARY, THEN, TIME, TIMESTAMP TO, TRAILING,
@@ -202,8 +202,9 @@ make_name(void)
 		VARYING, VIEW, WHEN, WHERE, WITH, WITHOUT, WORK,
 		YEAR_P, ZONE
 
-/* Keywords (in SQL3 reserved words) */
-%token	DEFERRABLE, DEFERRED, IMMEDIATE, INITIALLY, PENDANT,
+/* Keywords (in SQL99 reserved words) */
+%token	ASSERTION, CHAIN, CHARACTERISTICS,
+		DEFERRABLE, DEFERRED, IMMEDIATE, INITIALLY, PENDANT,
 		REPLACE, RESTRICT, TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
@@ -284,8 +285,8 @@ make_name(void)
 %type  <str>	ConstraintElem key_actions ColQualList type_name DropSchemaStmt
 %type  <str>	target_list target_el update_target_list alias_clause
 %type  <str>	update_target_el opt_id qualified_name database_name
-%type  <str>	access_method attr_name class index_name name func_name
-%type  <str>	file_name AexprConst c_expr ConstTypename
+%type  <str>	access_method attr_name index_name name func_name
+%type  <str>	file_name AexprConst c_expr ConstTypename var_list
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str>	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_default
@@ -311,7 +312,7 @@ make_name(void)
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
 %type  <str>	func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
-%type  <str>	opt_instead event RuleActionList opt_using
+%type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst
 %type  <str>	MathOp RemoveFuncStmt aggr_argtype for_update_clause
@@ -335,7 +336,7 @@ make_name(void)
 %type  <str>	opt_cursor ConstraintsSetStmt AllConst CreateDomainStmt
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>	select_clause opt_select_limit select_limit_value
-%type  <str>	ConstraintTimeSpec AlterDatabaseSetStmt
+%type  <str>	ConstraintTimeSpec AlterDatabaseSetStmt DropAssertStmt
 %type  <str>	select_offset_value ReindexStmt join_type opt_boolean
 %type  <str>	join_qual update_list AlterSchemaStmt joined_table
 %type  <str>	opt_level opt_lock lock_type OptGroupList OptGroupElem
@@ -348,7 +349,7 @@ make_name(void)
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref dotted_name function_name insert_target_el
-%type  <str>	insert_target_list insert_column_item 
+%type  <str>	insert_target_list insert_column_item DropRuleStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
@@ -431,6 +432,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| CreateGroupStmt	{ output_statement($1, 0, connection); }
 		| CreateSeqStmt		{ output_statement($1, 0, connection); }
 		| CreatePLangStmt	{ output_statement($1, 0, connection); }
+		| CreateAssertStmt	{ output_statement($1, 0, connection); }
 		| CreateTrigStmt	{ output_statement($1, 0, connection); }
 		| CreateUserStmt	{ output_statement($1, 0, connection); }
 		| ClusterStmt		{ output_statement($1, 0, connection); }
@@ -440,7 +442,9 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| TruncateStmt		{ output_statement($1, 0, connection); }
 		| DropGroupStmt		{ output_statement($1, 0, connection); }
 		| DropPLangStmt		{ output_statement($1, 0, connection); }
+		| DropAssertStmt	{ output_statement($1, 0, connection); }
 		| DropTrigStmt		{ output_statement($1, 0, connection); }
+		| DropRuleStmt		{ output_statement($1, 0, connection); }
 		| DropUserStmt		{ output_statement($1, 0, connection); }
 		| ExplainStmt		{ output_statement($1, 0, connection); }
 		| FetchStmt		{ output_statement($1, 1, connection); }
@@ -808,9 +812,9 @@ schema_stmt: CreateStmt		{ $$ = $1; }
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET ColId TO var_value
+VariableSetStmt:  SET ColId TO var_list
 			{ $$ = cat_str(4, make_str("set"), $2, make_str("to"), $4); }
-		| SET ColId '=' var_value
+		| SET ColId '=' var_list
 			{ $$ = cat_str(4, make_str("set"), $2, make_str("="), $4); }
 		| SET TIME ZONE zone_value
 			{ $$ = cat2_str(make_str("set time zone"), $4); }
@@ -824,21 +828,22 @@ VariableSetStmt:  SET ColId TO var_value
 			{ $$ = cat2_str(make_str("set session authorization"), $4); }
 		;
 
+var_list:  var_value
+			{ $$ = $1; }
+		| var_list ',' var_value
+			{ $$ = cat_str(3, $1, make_str(","), $3); }
+		| DEFAULT
+			{ $$ = make_str("default"); }
+		;
+		
 opt_level:	READ COMMITTED	{ $$ = make_str("read committed"); }
 		| SERIALIZABLE		{ $$ = make_str("serializable"); }
 		;
 
 
 var_value:	opt_boolean		{ $$ = $1; }
-		| AllConst			{ $$ = $1; }
-		| name_list
-		{
-			if (strlen($1) == 0)
-			mmerror(PARSE_ERROR, ET_ERROR, "SET must have at least one argument.");
-
-			$$ = $1;
-		}
-		| DEFAULT			{ $$ = make_str("default"); }
+		| NumConst			{ $$ = $1; }
+		| ColId_or_Sconst	{ $$ = $1; }	
 		;
 
 opt_boolean:  TRUE_P		{ $$ = make_str("true"); }
@@ -848,11 +853,15 @@ opt_boolean:  TRUE_P		{ $$ = make_str("true"); }
 		;
 
 /* Timezone values can be:
-* - a string such as 'pst8pdt'
-* - an integer or floating point number
-* - a time interval per SQL99
-*/
+ * - a string such as 'pst8pdt'
+ * - a column identifier such as "pst8pdt"
+ * - an integer or floating point number
+ * - a time interval per SQL99
+ * ConstInterval and ColId give shift/reduce errors,
+ * so use IDENT and reject anything which is a reserved word.
+ */
 zone_value:  AllConst		{ $$ = $1; }
+		| IDENT		{ $$ = $1; }
 		| ConstInterval StringConst opt_interval
 			{ $$ = cat_str(3, $1, $2, $3); }
 		| ConstInterval '(' PosIntConst ')' StringConst opt_interval
@@ -1429,6 +1438,29 @@ DropTrigStmt:  DROP TRIGGER name ON qualified_name
 
 /*****************************************************************************
  *
+ *             QUERIES :
+ *                             CREATE ASSERTION ...
+ *                             DROP ASSERTION ...
+ *
+ *****************************************************************************/
+CreateAssertStmt:  CREATE ASSERTION name
+                       CHECK '(' a_expr ')' ConstraintAttributeSpec
+		        {
+				mmerror(PARSE_ERROR, ET_ERROR, "CREATE ASSERTION is not yet supported");
+		       		$$ = cat_str(6, make_str("create assertion"), $3, make_str("check ("), $6, make_str(")"), $8);
+			}
+		;
+
+DropAssertStmt:  DROP ASSERTION name
+	{
+		mmerror(PARSE_ERROR, ET_ERROR, "DROP ASSERTION is not yet supported");
+		$$ = cat2_str(make_str("drop assertion"), $3);
+	}
+	;
+
+		       
+/*****************************************************************************
+ *
  *		QUERY :
  *				define (type,operator,aggregate)
  *
@@ -1476,7 +1508,6 @@ drop_type:	TABLE		{ $$ = make_str("table"); }
 		| SEQUENCE		{ $$ = make_str("sequence"); }
 		| VIEW			{ $$ = make_str("view"); }
 		| INDEX			{ $$ = make_str("index"); }
-		| RULE			{ $$ = make_str("rule"); }
 		| TYPE_P		{ $$ = make_str("type"); }
 		| DOMAIN_P		{ $$ = make_str("domain"); }
 		;
@@ -1563,11 +1594,11 @@ from_in: IN					{ $$ = make_str("in"); }
  *	The COMMENT ON statement can take different forms based upon the type of
  *	the object associated with the comment. The form of the statement is:
  *
- *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ]
+ *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX |  SEQUENCE | TABLE | TYPE | VIEW ]
  *				 <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION
  *				<funcname> (arg1, arg2, ...) | OPERATOR <op>
  *				(leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
- *				<relname> ] IS 'text'
+ *				<relname> | RULE <rulename> ON <relname> ] IS 'text'
  *
  *****************************************************************************/
 CommentStmt:   COMMENT ON comment_type name IS comment_text
@@ -1584,11 +1615,14 @@ CommentStmt:   COMMENT ON comment_type name IS comment_text
 			{ $$ = cat_str(6, make_str("comment on operator"), $4, make_str("("), $6, make_str(") is"), $9); }
 		| COMMENT ON TRIGGER name ON qualified_name IS comment_text
 			{ $$ = cat_str(6, make_str("comment on trigger"), $4, make_str("on"), $6, make_str("is"), $8); }
+		| COMMENT ON RULE name ON any_name IS comment_text
+			{ $$ = cat_str(6, make_str("comment on rule"), $4, make_str("on"), $6, make_str("is"), $8); }
+		| COMMENT ON RULE name IS comment_text
+			{ $$ = cat_str(4, make_str("comment on rule"), $4, make_str("is"), $6); }
 		;
 
 comment_type:  DATABASE		{ $$ = make_str("database"); }
 		| INDEX		{ $$ = make_str("idnex"); }
-		| RULE		{ $$ = make_str("rule"); }
 		| SEQUENCE	{ $$ = make_str("sequence"); }
 		| TABLE		{ $$ = make_str("table"); }
 		| DOMAIN_P	{ $$ = make_str("domain"); }
@@ -1635,6 +1669,9 @@ privilege:	SELECT			{ $$ = make_str("select"); }
 		| TRIGGER			{ $$ = make_str("trigger"); }
 		| EXECUTE			{ $$ = make_str("execute"); }
 		| USAGE				{ $$ = make_str("usage"); }
+		| CREATE			{ $$ = make_str("create"); }
+		| TEMPORARY			{ $$ = make_str("temporary"); }
+		| TEMP				{ $$ = make_str("temp"); }
 		;
 
 privilege_target: qualified_name_list	
@@ -1643,8 +1680,12 @@ privilege_target: qualified_name_list
 			{ $$ = cat2_str(make_str("table"), $2); }
 		| FUNCTION function_with_argtypes_list
 			{ $$ = cat2_str(make_str("function"), $2); }
+		| DATABASE name_list
+			{ $$ = cat2_str(make_str("database"), $2); }
 		| LANGUAGE name_list			
 			{ $$ = cat2_str(make_str("language") , $2); }
+		| SCHEMA name_list			
+			{ $$ = cat2_str(make_str("schema") , $2); }
 		;
 
 grantee_list: grantee				
@@ -1653,9 +1694,8 @@ grantee_list: grantee
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-grantee:  PUBLIC			{ $$ = make_str("public"); }
+grantee:  ColId			{ $$ = $1; }
 		| GROUP ColId		{ $$ = cat2_str(make_str("group"), $2); }
-		| ColId				{ $$ = $1; }
 		;
 
 opt_grant_grant_option:  WITH GRANT OPTION
@@ -1724,26 +1764,8 @@ index_elem:  attr_name opt_class
 			{ $$ = cat2_str($1, $2); }
 		;
 
-opt_class:	class
-		{
-			/*
-			 * Release 7.0 removed network_ops, timespan_ops, and
-			 * datetime_ops, so we suppress it from being passed to
-			 * the parser so the default *_ops is used.  This can be
-			 * removed in some later release.	bjm 2000/02/07
-			 *
-			 * Release 7.1 removes lztext_ops, so suppress that too
-			 * for a while.  tgl 2000/07/30
-			 */
-			if (strcmp($1, "network_ops") != 0 &&
-				 strcmp($1, "timespan_ops") != 0 &&
-				 strcmp($1, "datetime_ops") != 0 &&
-				 strcmp($1, "lztext_ops") != 0)
-				$$ = $1;
-			else
-				$$ = EMPTY;
-		}
-		| USING class	{ $$ = cat2_str(make_str("using"), $2); }
+opt_class:	any_name 	{ $$ = $1; }
+		| USING any_name	{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
@@ -1974,6 +1996,9 @@ opt_instead:  INSTEAD		{ $$ = make_str("instead"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
+DropRuleStmt:  DROP RULE name ON qualified_name
+		{ $$ = cat_str(4, make_str("drop rule"), $3, make_str("on"), $5);}
+		;
 
 /*****************************************************************************
  *
@@ -3398,7 +3423,6 @@ name:					ColId			{ $$ = $1; };
 database_name:			ColId			{ $$ = $1; };
 access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
-class:					ColId			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 
 file_name:				StringConst		{ $$ = $1; };
@@ -4780,6 +4804,7 @@ unreserved_keyword:
 		| AFTER							{ $$ = make_str("after"); }
 		| AGGREGATE						{ $$ = make_str("aggregate"); }
 		| ALTER							{ $$ = make_str("alter"); }
+		| ASSERTION							{ $$ = make_str("assertion"); }
 		| AT							{ $$ = make_str("at"); }
 		| BACKWARD						{ $$ = make_str("backward"); }
 		| BEFORE						{ $$ = make_str("before"); }
@@ -4993,7 +5018,6 @@ func_name_keyword:
 		| NOTNULL						{ $$ = make_str("notnull"); }
 		| OUTER_P						{ $$ = make_str("outer"); }
 		| OVERLAPS						{ $$ = make_str("overlaps"); }
-		| PUBLIC						{ $$ = make_str("public"); }
 		| RIGHT							{ $$ = make_str("right"); }
 		| VERBOSE						{ $$ = make_str("verbose"); }
 		;

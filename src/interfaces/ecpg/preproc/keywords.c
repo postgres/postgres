@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.46 2001/10/15 00:06:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.47 2002/04/22 18:54:43 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"any", ANY},
 	{"as", AS},
 	{"asc", ASC},
+	{"assertion", ASSERTION},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -97,6 +98,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"desc", DESC},
 	{"distinct", DISTINCT},
 	{"do", DO},
+	{"domain", DOMAIN_P},
 	{"double", DOUBLE},
 	{"drop", DROP},
 	{"each", EACH},
@@ -210,7 +212,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"privileges", PRIVILEGES},
 	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
-	{"public", PUBLIC},
 	{"read", READ},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
@@ -243,6 +244,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"statistics", STATISTICS},
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
+	{"storage", STORAGE},
 	{"substring", SUBSTRING},
 	{"sysid", SYSID},
 	{"table", TABLE},
@@ -269,6 +271,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"unlisten", UNLISTEN},
 	{"until", UNTIL},
 	{"update", UPDATE},
+	{"usage", USAGE},
 	{"user", USER},
 	{"using", USING},
 	{"vacuum", VACUUM},
