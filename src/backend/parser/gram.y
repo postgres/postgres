@@ -1,6 +1,6 @@
 %{ /* -*-text-*- */
 
-#define YYDEBUG 1
+/*#define YYDEBUG 1*/
 /*-------------------------------------------------------------------------
  * 
  * gram.y--
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.17 1996/11/20 22:58:22 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.18 1996/11/28 05:46:08 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -44,7 +44,7 @@
 #include "utils/elog.h"
 #include "access/xact.h"
 
-static char saved_relname[BUFSIZ];  /* need this for complex attributes */
+static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
 
 extern List *parsetree;
@@ -1986,7 +1986,8 @@ opt_id:  Id					{ $$ = $1; }
 relation_name:  SpecialRuleRelation
           	{
                    $$ = $1;
-                   strcpy(saved_relname, $1);
+                   strncpy(saved_relname, $1, NAMEDATALEN);
+                   saved_relname[NAMEDATALEN-1] = '\0';
 	        }
 	| Id
 	  	{
@@ -1999,7 +2000,8 @@ relation_name:  SpecialRuleRelation
 		    } else {
 			$$ = $1;
 		    }
-		    strcpy(saved_relname, $1);
+                    strncpy(saved_relname, $1, NAMEDATALEN);
+                    saved_relname[NAMEDATALEN-1] = '\0';
 		}
 	;
 
