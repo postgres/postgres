@@ -228,15 +228,21 @@ getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 char
 searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
 {
-	int			k;
-	char	   *col;
+	int		k, cmp;
+	char		*col;
 
 
 	for (k = 0; k < QR_get_num_tuples(col_info->result); k++)
 	{
 		col = QR_get_value_manual(col_info->result, k, 3);
-		if (!strcmp(col, fi->name))
+		if (fi->dquote)
+			cmp = strcmp(col, fi->name);
+		else
+			cmp = stricmp(col, fi->name);
+		if (!cmp)
 		{
+			if (!fi->dquote)
+				strcpy(fi->name, col);
 			getColInfo(col_info, fi, k);
 
 			mylog("PARSE: searchColInfo: \n");
@@ -393,6 +399,9 @@ parse_statement(StatementClass *stmt)
 				{
 					blevel--;
 					mylog("blevel-- = %d\n", blevel);
+				}
+				if (blevel == 0)
+				{
 					if (delim == ',')
 					{
 						in_func = FALSE;
@@ -569,6 +578,13 @@ parse_statement(StatementClass *stmt)
 				ti[stmt->ntab]->alias[0] = '\0';
 
 				strcpy(ti[stmt->ntab]->name, token);
+				if (!dquote)
+				{
+					char *ptr;
+					/* lower case table name */
+					for (ptr = ti[stmt->ntab]->name; *ptr; ptr++)
+						*ptr = tolower((unsigned char) *ptr);
+				}
 				mylog("got table = '%s'\n", ti[stmt->ntab]->name);
 
 				if (delim == ',')

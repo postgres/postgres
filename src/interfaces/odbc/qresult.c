@@ -330,7 +330,7 @@ QR_close(QResultClass *self)
 		QR_Destructor(res);
 
 		/* End the transaction if there are no cursors left on this conn */
-		if (CC_cursor_count(self->conn) == 0)
+		if (CC_is_in_autocommit(self->conn) && CC_cursor_count(self->conn) == 0)
 		{
 			mylog("QResult: END transaction on conn=%u\n", self->conn);
 
