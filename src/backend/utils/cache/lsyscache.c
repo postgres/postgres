@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.53 2001/05/07 00:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.54 2001/05/09 00:35:09 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -750,6 +750,56 @@ get_typdefault(Oid typid)
 }
 
 /*
+ * get_typavgwidth
+ *
+ *	  Given a type OID and a typmod value (pass -1 if typmod is unknown),
+ *	  estimate the average width of values of the type.  This is used by
+ *	  the planner, which doesn't require absolutely correct results;
+ *	  it's OK (and expected) to guess if we don't know for sure.
+ */
+int32
+get_typavgwidth(Oid typid, int32 typmod)
+{
+	int			typlen = get_typlen(typid);
+	int32		maxwidth;
+
+	/*
+	 * Easy if it's a fixed-width type
+	 */
+	if (typlen > 0)
+		return typlen;
+	/*
+	 * type_maximum_size knows the encoding of typmod for some datatypes;
+	 * don't duplicate that knowledge here.
+	 */
+	maxwidth = type_maximum_size(typid, typmod);
+	if (maxwidth > 0)
+	{
+		/*
+		 * For BPCHAR, the max width is also the only width.  Otherwise
+		 * we need to guess about the typical data width given the max.
+		 * A sliding scale for percentage of max width seems reasonable.
+		 */
+		if (typid == BPCHAROID)
+			return maxwidth;
+		if (maxwidth <= 32)
+			return maxwidth;	/* assume full width */
+		if (maxwidth < 1000)
+			return 32 + (maxwidth - 32) / 2; /* assume 50% */
+		/*
+		 * Beyond 1000, assume we're looking at something like
+		 * "varchar(10000)" where the limit isn't actually reached often,
+		 * and use a fixed estimate.
+		 */
+		return 32 + (1000 - 32) / 2;
+	}
+	/*
+	 * Ooops, we have no idea ... wild guess time.
+	 */
+	return 32;
+}
+
+/*
  * get_typtype
  *
  *		Given the type OID, find if it is a basic type, a named relation
@@ -781,6 +831,32 @@ get_typtype(Oid typid)
 #endif
 
 /*				---------- STATISTICS CACHE ----------					 */
+
+/*
+ * get_attavgwidth
+ *
+ *	  Given the table and attribute number of a column, get the average
+ *	  width of entries in the column.  Return zero if no data available.
+ */
+int32
+get_attavgwidth(Oid relid, AttrNumber attnum)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(STATRELATT,
+						ObjectIdGetDatum(relid),
+						Int16GetDatum(attnum),
+						0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		int32	stawidth = ((Form_pg_statistic) GETSTRUCT(tp))->stawidth;
+
+		ReleaseSysCache(tp);
+		if (stawidth > 0)
+			return stawidth;
+	}
+	return 0;
+}
 
 /*
  * get_attstatsslot

@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.71 2001/05/07 00:43:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.72 2001/05/09 00:35:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,12 +59,6 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-
-/*
- * The length of a variable-length field in bytes (stupid estimate...)
- */
-#define _DEFAULT_ATTRIBUTE_WIDTH_ 12
 
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
@@ -90,7 +84,6 @@ bool		enable_hashjoin = true;
 
 static bool cost_qual_eval_walker(Node *node, Cost *total);
 static void set_rel_width(Query *root, RelOptInfo *rel);
-static int	compute_attribute_width(TargetEntry *tlistentry);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
 
@@ -1082,36 +1075,54 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 /*
  * set_rel_width
  *		Set the estimated output width of the relation.
+ *
+ * NB: this works best on base relations because it prefers to look at
+ * real Vars.  It will fail to make use of pg_statistic info when applied
+ * to a subquery relation, even if the subquery outputs are simple vars
+ * that we could have gotten info for.  Is it worth trying to be smarter
+ * about subqueries?
  */
 static void
 set_rel_width(Query *root, RelOptInfo *rel)
 {
-	int			tuple_width = 0;
-	List	   *tle;
+	int32		tuple_width = 0;
+	List	   *tllist;
 
-	foreach(tle, rel->targetlist)
-		tuple_width += compute_attribute_width((TargetEntry *) lfirst(tle));
+	foreach(tllist, rel->targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tllist);
+		int32	item_width;
+
+		/*
+		 * If it's a Var, try to get statistical info from pg_statistic.
+		 */
+		if (tle->expr && IsA(tle->expr, Var))
+		{
+			Var	   *var = (Var *) tle->expr;
+			Oid		relid;
+
+			relid = getrelid(var->varno, root->rtable);
+			if (relid != InvalidOid)
+			{
+				item_width = get_attavgwidth(relid, var->varattno);
+				if (item_width > 0)
+				{
+					tuple_width += item_width;
+					continue;
+				}
+			}
+		}
+		/*
+		 * Not a Var, or can't find statistics for it.  Estimate using
+		 * just the type info.
+		 */
+		item_width = get_typavgwidth(tle->resdom->restype,
+									 tle->resdom->restypmod);
+		Assert(item_width > 0);
+		tuple_width += item_width;
+	}
 	Assert(tuple_width >= 0);
 	rel->width = tuple_width;
-}
-
-/*
- * compute_attribute_width
- *	  Given a target list entry, find the size in bytes of the attribute.
- *
- *	  If a field is variable-length, we make a default assumption.	Would be
- *	  better if VACUUM recorded some stats about the average field width...
- *	  also, we have access to the atttypmod, but fail to use it...
- */
-static int
-compute_attribute_width(TargetEntry *tlistentry)
-{
-	int			width = get_typlen(tlistentry->resdom->restype);
-
-	if (width < 0)
-		return _DEFAULT_ATTRIBUTE_WIDTH_;
-	else
-		return width;
 }
 
 /*
@@ -1122,7 +1133,7 @@ compute_attribute_width(TargetEntry *tlistentry)
 static double
 relation_byte_size(double tuples, int width)
 {
-	return tuples * ((double) (width + sizeof(HeapTupleData)));
+	return tuples * ((double) MAXALIGN(width + sizeof(HeapTupleData)));
 }
 
 /*
