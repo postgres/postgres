@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.55 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.55.2.1 2003/11/30 22:24:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,11 @@ replace_var(Var *var)
 	 * well, I believe that this sort of aliasing will cause no trouble.
 	 * The correct field should get stored into the Param slot at
 	 * execution in each part of the tree.
+	 *
+	 * We also need to demand a match on vartypmod.  This does not matter
+	 * for the Param itself, since those are not typmod-dependent, but it
+	 * does matter when make_subplan() instantiates a modified copy of the
+	 * Var for a subplan's args list.
 	 */
 	i = 0;
 	foreach(ppv, PlannerParamVar)
@@ -99,7 +104,8 @@ replace_var(Var *var)
 		if (pvar->varno == var->varno &&
 			pvar->varattno == var->varattno &&
 			pvar->varlevelsup == varlevel &&
-			pvar->vartype == var->vartype)
+			pvar->vartype == var->vartype &&
+			pvar->vartypmod == var->vartypmod)
 			break;
 		i++;
 	}
