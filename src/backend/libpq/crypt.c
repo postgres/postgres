@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.17 1999/05/25 16:08:58 momjian Exp $
+ * $Id: crypt.c,v 1.18 1999/05/27 04:09:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,8 @@ crypt_loadpwdfile()
 		{						/* free the old data only if this is a
 								 * reload */
 			while (pwd_cache_count--)
-				pfree((void *) pwd_cache[pwd_cache_count]);
-			pfree((void *) pwd_cache);
+				free((void *) pwd_cache[pwd_cache_count]);
+			free((void *) pwd_cache);
 			pwd_cache = NULL;
 			pwd_cache_count = 0;
 		}
@@ -170,7 +170,7 @@ crypt_loadpwdfile()
 				buffer[result] = '\0';
 
 			pwd_cache = (char **) realloc((void *) pwd_cache, sizeof(char *) * (pwd_cache_count + 1));
-			pwd_cache[pwd_cache_count++] = pstrdup(buffer);
+			pwd_cache[pwd_cache_count++] = strdup(buffer);
 		}
 		FreeFile(pwd_file);
 
