@@ -29,7 +29,7 @@ adddepend -
 	by Rod Taylor <rbt@rbt.ca>
 
 array -
-	Array iterator functions
+	Array iterator functions (now obsolete due to backend improvements)
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 btree_gist -

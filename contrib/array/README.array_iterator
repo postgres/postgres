@@ -27,6 +27,5 @@ Now do this instead:
     -- select tuples with all txt elements matching '^[A-Z]'
     select * from t where '^[A-Z]' ~ all (t.txt[1:3]);
 
-See the related section in the online documentation for more detail:
-    Table of Contents => Functions and Operators => Row and Array Comparisons
-
+See this section in the PostgreSQL documentation for more detail:
+    The SQL Language => Functions and Operators => Row and Array Comparisons
