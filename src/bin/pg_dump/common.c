@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.54 2001/03/22 04:00:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.55 2001/04/03 08:52:59 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -20,6 +20,10 @@
  *	-	Added enum for findTypeByOid to specify how to handle OID and which
  *		string to return - formatted type, or base type. If the base type
  *		is returned then fmtId is called on the string.
+ *
+ * Modifications 4-Apr-2001 - pjw@rhyme.com.au
+ *	-	Changed flagInhAttrs to check all parent tables for overridden settings
+ *		and set flags accordingly.
  *
  *		BEWARE: Since fmtId uses a static buffer, using 'useBaseTypeName' on more
  *				than one call in a line will cause problems.
@@ -39,7 +43,8 @@
 static char **findParentsByOid(TableInfo *tbinfo, int numTables,
 				 InhInfo *inhinfo, int numInherits,
 				 const char *oid,
-				 int *numParents);
+				 int *numParents,
+				 int (**parentIndices)[]);
 static int	findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
@@ -122,7 +127,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 /*
  * findParentsByOid
  *	  given the oid of a class, return the names of its parent classes
- * and assign the number of parents to the last argument.
+ * and assign the number of parents, and parent indices to the last arguments.
  *
  *
  * returns NULL if none
@@ -131,7 +136,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 static char **
 findParentsByOid(TableInfo *tblinfo, int numTables,
 				 InhInfo *inhinfo, int numInherits, const char *oid,
-				 int *numParentsPtr)
+				 int *numParentsPtr, int (**parentIndices)[])
 {
 	int			i,
 				j;
@@ -152,6 +157,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 	if (numParents > 0)
 	{
 		result = (char **) malloc(sizeof(char *) * numParents);
+		(*parentIndices) = malloc(sizeof(int) * numParents);
 		j = 0;
 		for (i = 0; i < numInherits; i++)
 		{
@@ -169,13 +175,17 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 							oid);
 					exit(2);
 				}
+				(**parentIndices)[j] = parentInd;
 				result[j++] = tblinfo[parentInd].relname;
 			}
 		}
 		return result;
 	}
 	else
+	{
+		(*parentIndices) = NULL;
 		return NULL;
+	}
 }
 
 /*
@@ -415,6 +425,14 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				j,
 				k;
 	int			parentInd;
+	int			inhAttrInd;
+	int			(*parentIndices)[];
+	bool		foundAttr; 		/* Attr was found in a parent */
+	bool		foundNotNull;	/* Attr was NOT NULL in a parent */
+	bool		defaultsMatch;	/* All non-empty defaults match */
+	bool		defaultsFound;	/* Found a default in a parent */
+	char		*attrDef;
+	char		*inhDef;
 
 	/*
 	 * we go backwards because the tables in tblinfo are in OID order,
@@ -423,27 +441,97 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 	 */
 	for (i = numTables - 1; i >= 0; i--)
 	{
+
+		/* Sequences can never have parents, and attr info is undefined */
+		if (tblinfo[i].sequence)
+			continue;
+
+		/* Get all the parents and their indexes. */
 		tblinfo[i].parentRels = findParentsByOid(tblinfo, numTables,
 												 inhinfo, numInherits,
 												 tblinfo[i].oid,
-												 &tblinfo[i].numParents);
-		for (k = 0; k < tblinfo[i].numParents; k++)
+												 &tblinfo[i].numParents,
+												 &parentIndices);
+
+		/*
+	     * For each attr, check the parent info: if no parent has
+		 * an attr with the same name, then it's not inherited. If there
+		 * *is* an attr with the same name, then only dump it if:
+		 *
+		 *     - it is NOT NULL and zero parents are NOT NULL
+		 * OR  
+		 * 	   - it has a default value AND the default value
+		 *		 does not match all parent default values, or
+		 *		 no parents specify a default.
+		 *
+		 * See discussion on -hackers around 2-Apr-2001.
+		 */
+		for (j = 0; j < tblinfo[i].numatts; j++)
 		{
-			parentInd = findTableByName(tblinfo, numTables,
-										tblinfo[i].parentRels[k]);
-			if (parentInd < 0)
+			foundAttr = false;
+			foundNotNull = false;
+			defaultsMatch = true;
+			defaultsFound = false;
+
+			attrDef = tblinfo[i].adef_expr[j];
+
+			for (k = 0; k < tblinfo[i].numParents; k++)
 			{
-				/* shouldn't happen unless findParentsByOid is broken */
-				fprintf(stderr, "failed sanity check, table %s not found by flagInhAttrs\n",
-						tblinfo[i].parentRels[k]);
-				exit(2);
-			}
-			for (j = 0; j < tblinfo[i].numatts; j++)
+				parentInd = (*parentIndices)[k];
+
+				if (parentInd < 0)
+				{
+					/* shouldn't happen unless findParentsByOid is broken */
+					fprintf(stderr, "failed sanity check, table %s not found by flagInhAttrs\n",
+							tblinfo[i].parentRels[k]);
+					exit(2);
+				};
+
+				inhAttrInd = strInArray(tblinfo[i].attnames[j],
+										tblinfo[parentInd].attnames,
+										tblinfo[parentInd].numatts);
+
+				if (inhAttrInd != -1)
+				{
+					foundAttr = true;
+					foundNotNull |= tblinfo[parentInd].notnull[inhAttrInd];
+					if (attrDef != NULL) /* It we have a default, check parent */
+					{
+						inhDef = tblinfo[parentInd].adef_expr[inhAttrInd];
+
+						if (inhDef != NULL)
+						{
+							defaultsFound = true;
+							defaultsMatch &= (strcmp(attrDef, inhDef) == 0);
+						};
+					};
+				};
+			};
+
+			/* 
+			 * Based on the scan of the parents, decide if we
+			 * can rely on the inherited attr
+			 */
+			if (foundAttr) /* Attr was inherited */
 			{
-				if (strInArray(tblinfo[i].attnames[j],
-							   tblinfo[parentInd].attnames,
-							   tblinfo[parentInd].numatts) != -1)
-					tblinfo[i].inhAttrs[j] = 1;
+				/* Set inherited flag by default */
+				tblinfo[i].inhAttrs[j] = 1;
+				tblinfo[i].inhAttrDef[j] = 1;
+				tblinfo[i].inhNotNull[j] = 1;
+
+				/* Clear it if attr had a default, but parents did not, or mismatch */
+				if ( (attrDef != NULL) && (!defaultsFound || !defaultsMatch) )
+				{
+					tblinfo[i].inhAttrs[j] = 0;
+					tblinfo[i].inhAttrDef[j] = 0;
+				}
+
+				/* Clear it if NOT NULL and none of the parents were NOT NULL */
+				if (tblinfo[i].notnull[j] && !foundNotNull)
+				{
+					tblinfo[i].inhAttrs[j] = 0;
+					tblinfo[i].inhNotNull[j] = 0;
+				}
 			}
 		}
 	}

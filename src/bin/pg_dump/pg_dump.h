@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.60 2001/03/23 04:49:56 momjian Exp $
+ * $Id: pg_dump.h,v 1.61 2001/04/03 08:52:59 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -93,6 +93,8 @@ typedef struct _tableInfo
 	int		   *inhAttrs;		/* an array of flags, one for each
 								 * attribute if the value is 1, then this
 								 * attribute is an inherited attribute */
+	int		   *inhAttrDef;		/* Flags indicating if attrdef is inherited */
+	int		   *inhNotNull;		/* Flags indicating if NOT NULL in inherited */
 	char	  **attnames;		/* the attribute names */
 	char	  **attoids;		/* oids of the various attributes */
 	char	  **atttypedefns;	/* formatted column type definitions */

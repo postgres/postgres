@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.198 2001/04/01 05:42:51 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.199 2001/04/03 08:52:59 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1603,6 +1603,10 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 			free((int *) tblinfo[i].atttypmod);
 		if (tblinfo[i].inhAttrs)
 			free((int *) tblinfo[i].inhAttrs);
+		if (tblinfo[i].inhAttrDef)
+			free((int *) tblinfo[i].inhAttrDef);
+		if (tblinfo[i].inhNotNull)
+			free((int *) tblinfo[i].inhNotNull);
 		if (tblinfo[i].attnames)
 			free(tblinfo[i].attnames);
 		if (tblinfo[i].atttypedefns)
@@ -2138,7 +2142,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 							  "   where i.inhrelid = pg_relcheck.rcrelid "
 							  "     and c.rcname = pg_relcheck.rcname "
 							  "     and c.rcsrc = pg_relcheck.rcsrc "
-							  "     and c.rcrelid = i.inhparent) ",
+							  "     and c.rcrelid = i.inhparent) "
+							  " Order By oid ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 ||
@@ -2656,6 +2661,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tblinfo[i].typnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].atttypmod = (int *) malloc(ntups * sizeof(int));
 		tblinfo[i].inhAttrs = (int *) malloc(ntups * sizeof(int));
+		tblinfo[i].inhAttrDef = (int *) malloc(ntups * sizeof(int));
+		tblinfo[i].inhNotNull = (int *) malloc(ntups * sizeof(int));
 		tblinfo[i].notnull = (bool *) malloc(ntups * sizeof(bool));
 		tblinfo[i].adef_expr = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].parentRels = NULL;
@@ -2678,6 +2685,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tblinfo[i].atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tblinfo[i].inhAttrs[j] = 0; /* this flag is set in
 										 * flagInhAttrs() */
+			tblinfo[i].inhAttrDef[j] = 0;
+			tblinfo[i].inhNotNull[j] = 0;
+
 			tblinfo[i].notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't') ? true : false;
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 			{
@@ -3829,12 +3839,12 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 										  tblinfo[i].atttypedefns[j]);
 
 						/* Default value */
-						if (tblinfo[i].adef_expr[j] != NULL)
+						if (tblinfo[i].adef_expr[j] != NULL && tblinfo[i].inhAttrDef[j] == 0)
 							appendPQExpBuffer(q, " DEFAULT %s",
 											  tblinfo[i].adef_expr[j]);
 
 						/* Not Null constraint */
-						if (tblinfo[i].notnull[j])
+						if (tblinfo[i].notnull[j] && tblinfo[i].inhNotNull[j] == 0)
 							appendPQExpBuffer(q, " NOT NULL");
 
 						actual_atts++;
