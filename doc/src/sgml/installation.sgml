@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.14 2000/08/25 10:00:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.15 2000/08/29 04:15:43 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -573,6 +573,24 @@ su - postgres
          The name of the Kerberos service principal.
          <quote>postgres</quote> is the default. There's probably no
          reason to change this.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>--with-openssl=<replaceable>DIRECTORY</></term>
+       <listitem>
+        <para>
+         Build with support for SSL (encrypted) connections. 
+         This requires the OpenSSL library to be installed.
+         The <replaceable>DIRECTORY</> argument specifies the
+         root directory of the OpenSSL installation.
+        </para>
+
+        <para>
+         <filename>configure</> will check for the required header
+         files and libraries to make sure that your OpenSSL
+         installation is sufficient before proceeding.
         </para>
        </listitem>
       </varlistentry>
