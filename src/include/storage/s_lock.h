@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.117 2003/11/29 22:41:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.118 2003/12/22 23:36:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ tas(volatile slock_t *s_lock)
  */
 
 
-#if defined(__alpha)
+#if defined(__alpha) || defined(__alpha__)
 
 /*
  * Correct multi-processor locking methods are explained in section 5.5.3
@@ -435,7 +435,7 @@ tas(volatile slock_t *lock)
 
 #endif	 /* defined(__GNUC__) */
 
-#endif	 /* __alpha */
+#endif	 /* __alpha || __alpha__ */
 
 
 #if defined(__hppa)

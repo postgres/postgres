@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.66 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.67 2003/12/22 23:36:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#if defined(__alpha) && defined(__osf__)
+#if (defined(__alpha) || defined(__alpha__)) && defined(__osf__)
 #include <sys/sysinfo.h>
 #include "machine/hal_sysinfo.h"
 #define ASSEMBLER
@@ -63,14 +63,14 @@ main(int argc, char *argv[])
 	 * without help.  Avoid adding more here, if you can.
 	 */
 
-#if defined(__alpha)
+#if defined(__alpha) || defined(__alpha__)
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 #endif   /* NOFIXADE */
 #ifdef NOPRINTADE
 	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
 #endif   /* NOPRINTADE */
-#endif   /* __alpha */
+#endif   /* __alpha || __alpha__ */
 
 #if defined(NOFIXADE) || defined(NOPRINTADE)
 
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
 #endif
 
-#if defined(__alpha)
+#if defined(__alpha) || defined(__alpha__)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
 		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"),
