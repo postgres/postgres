@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.203 2002/08/19 00:40:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.204 2002/08/19 15:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1435,28 +1435,6 @@ _copyJoinInfo(JoinInfo *from)
 	return newnode;
 }
 
-static Stream *
-_copyStream(Stream *from)
-{
-	Stream	   *newnode = makeNode(Stream);
-
-	newnode->pathptr = from->pathptr;
-	newnode->cinfo = from->cinfo;
-	newnode->clausetype = from->clausetype;
-
-	newnode->upstream = (StreamPtr) NULL;		/* only copy nodes
-												 * downwards! */
-	Node_Copy(from, newnode, downstream);
-	if (newnode->downstream)
-		((Stream *) newnode->downstream)->upstream = (Stream *) newnode;
-
-	newnode->groupup = from->groupup;
-	newnode->groupcost = from->groupcost;
-	newnode->groupsel = from->groupsel;
-
-	return newnode;
-}
-
 /* ****************************************************************
  *					parsenodes.h copy functions
  * ****************************************************************
@@ -1589,16 +1567,6 @@ _copyAConst(A_Const *from)
 	}
 
 	Node_Copy(from, newnode, typename);
-
-	return newnode;
-}
-
-static Ident *
-_copyIdent(Ident *from)
-{
-	Ident	   *newnode = makeNode(Ident);
-
-	newnode->name = pstrdup(from->name);
 
 	return newnode;
 }
@@ -2890,9 +2858,6 @@ copyObject(void *from)
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);
 			break;
-		case T_Stream:
-			retval = _copyStream(from);
-			break;
 		case T_IndexOptInfo:
 			retval = _copyIndexOptInfo(from);
 			break;
@@ -3130,9 +3095,6 @@ copyObject(void *from)
 			break;
 		case T_A_Const:
 			retval = _copyAConst(from);
-			break;
-		case T_Ident:
-			retval = _copyIdent(from);
 			break;
 		case T_FuncCall:
 			retval = _copyFuncCall(from);

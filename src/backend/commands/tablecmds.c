@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.29 2002/08/15 16:36:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.30 2002/08/19 15:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2677,17 +2677,17 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	count = 4;
 	foreach(list, fkconstraint->fk_attrs)
 	{
-		Ident	   *fk_at = lfirst(list);
+		char	   *fk_at = strVal(lfirst(list));
 
-		trig.tgargs[count] = fk_at->name;
+		trig.tgargs[count] = fk_at;
 		count += 2;
 	}
 	count = 5;
 	foreach(list, fkconstraint->pk_attrs)
 	{
-		Ident	   *pk_at = lfirst(list);
+		char	   *pk_at = strVal(lfirst(list));
 
-		trig.tgargs[count] = pk_at->name;
+		trig.tgargs[count] = pk_at;
 		count += 2;
 	}
 	trig.tgnargs = count - 1;
@@ -2746,13 +2746,13 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 	i = 0;
 	foreach(l, fkconstraint->fk_attrs)
 	{
-		Ident *id = (Ident *) lfirst(l);
+		char *id = strVal(lfirst(l));
 		AttrNumber	attno;
 
-		attno = get_attnum(RelationGetRelid(rel), id->name);
+		attno = get_attnum(RelationGetRelid(rel), id);
 		if (attno == InvalidAttrNumber)
 			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-				 RelationGetRelationName(rel), id->name);
+				 RelationGetRelationName(rel), id);
 		fkattr[i++] = attno;
 	}
 
@@ -2762,13 +2762,13 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 	i = 0;
 	foreach(l, fkconstraint->pk_attrs)
 	{
-		Ident *id = (Ident *) lfirst(l);
+		char *id = strVal(lfirst(l));
 		AttrNumber	attno;
 
-		attno = get_attnum(RelationGetRelid(pkrel), id->name);
+		attno = get_attnum(RelationGetRelid(pkrel), id);
 		if (attno == InvalidAttrNumber)
 			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-				 RelationGetRelationName(pkrel), id->name);
+				 RelationGetRelationName(pkrel), id);
 		pkattr[i++] = attno;
 	}
 
@@ -2804,7 +2804,6 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	CreateTrigStmt *fk_trigger;
 	List	   *fk_attr;
 	List	   *pk_attr;
-	Ident	   *id;
 	ObjectAddress trigobj,
 				constrobj;
 
@@ -2867,12 +2866,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 
 	while (fk_attr != NIL)
 	{
-		id = (Ident *) lfirst(fk_attr);
-		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
-
-		id = (Ident *) lfirst(pk_attr);
-		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
-
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
 		fk_attr = lnext(fk_attr);
 		pk_attr = lnext(pk_attr);
 	}
@@ -2942,12 +2937,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	pk_attr = fkconstraint->pk_attrs;
 	while (fk_attr != NIL)
 	{
-		id = (Ident *) lfirst(fk_attr);
-		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
-
-		id = (Ident *) lfirst(pk_attr);
-		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
-
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
 		fk_attr = lnext(fk_attr);
 		pk_attr = lnext(pk_attr);
 	}
@@ -3017,12 +3008,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	pk_attr = fkconstraint->pk_attrs;
 	while (fk_attr != NIL)
 	{
-		id = (Ident *) lfirst(fk_attr);
-		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
-
-		id = (Ident *) lfirst(pk_attr);
-		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
-
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
 		fk_attr = lnext(fk_attr);
 		pk_attr = lnext(pk_attr);
 	}

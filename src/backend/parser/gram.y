@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.359 2002/08/15 16:36:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.360 2002/08/19 15:08:47 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1724,9 +1724,7 @@ columnList:
 
 columnElem: ColId
 				{
-					Ident *id = makeNode(Ident);
-					id->name = $1;
-					$$ = (Node *)id;
+					$$ = (Node *) makeString($1);
 				}
 		;
 

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.167 2002/08/10 20:44:48 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.168 2002/08/19 15:08:46 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1258,24 +1258,6 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 }
 
 static void
-_outStream(StringInfo str, Stream *node)
-{
-	appendStringInfo(str,
-	  " STREAM :pathptr @ %p :cinfo @ %p :clausetype %p :upstream @ %p ",
-					 node->pathptr,
-					 node->cinfo,
-					 node->clausetype,
-					 node->upstream);
-
-	appendStringInfo(str,
-			 " :downstream @ %p :groupup %d :groupcost %f :groupsel %f ",
-					 node->downstream,
-					 node->groupup,
-					 node->groupcost,
-					 node->groupsel);
-}
-
-static void
 _outAExpr(StringInfo str, A_Expr *node)
 {
 	appendStringInfo(str, " AEXPR ");
@@ -1369,13 +1351,6 @@ _outParamRef(StringInfo str, ParamRef *node)
 	_outNode(str, node->fields);
 	appendStringInfo(str, " :indirection ");
 	_outNode(str, node->indirection);
-}
-
-static void
-_outIdent(StringInfo str, Ident *node)
-{
-	appendStringInfo(str, " IDENT ");
-	_outToken(str, node->name);
 }
 
 static void
@@ -1736,9 +1711,6 @@ _outNode(StringInfo str, void *obj)
 			case T_JoinInfo:
 				_outJoinInfo(str, obj);
 				break;
-			case T_Stream:
-				_outStream(str, obj);
-				break;
 			case T_A_Expr:
 				_outAExpr(str, obj);
 				break;
@@ -1750,9 +1722,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ParamRef:
 				_outParamRef(str, obj);
-				break;
-			case T_Ident:
-				_outIdent(str, obj);
 				break;
 			case T_A_Const:
 				_outAConst(str, obj);

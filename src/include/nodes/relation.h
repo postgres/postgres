@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.65 2002/06/20 20:29:51 momjian Exp $
+ * $Id: relation.h,v 1.66 2002/08/19 15:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -602,43 +602,5 @@ typedef struct JoinInfo
 	Relids		unjoined_relids;	/* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
-
-/*
- *	Stream:
- *	A stream represents a root-to-leaf path in a plan tree (i.e. a tree of
- *	JoinPaths and Paths).  The stream includes pointers to all Path nodes,
- *	as well as to any clauses that reside above Path nodes. This structure
- *	is used to make Path nodes and clauses look similar, so that Predicate
- *	Migration can run.
- *
- *	XXX currently, Predicate Migration is dead code, and so is this node type.
- *	Probably should remove support for it.
- *
- *	pathptr -- pointer to the current path node
- *	cinfo -- if NULL, this stream node referes to the path node.
- *			  Otherwise this is a pointer to the current clause.
- *	clausetype -- whether cinfo is in loc_restrictinfo or pathinfo in the
- *			  path node (XXX this is now used only by dead code, which is
- *			  good because the distinction no longer exists...)
- *	upstream -- linked list pointer upwards
- *	downstream -- ditto, downwards
- *	groupup -- whether or not this node is in a group with the node upstream
- *	groupcost -- total cost of the group that node is in
- *	groupsel -- total selectivity of the group that node is in
- */
-typedef struct Stream *StreamPtr;
-
-typedef struct Stream
-{
-	NodeTag		type;
-	Path	   *pathptr;
-	RestrictInfo *cinfo;
-	int		   *clausetype;
-	StreamPtr	upstream;
-	StreamPtr	downstream;
-	bool		groupup;
-	Cost		groupcost;
-	Selectivity groupsel;
-} Stream;
 
 #endif   /* RELATION_H */

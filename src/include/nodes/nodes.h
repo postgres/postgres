@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.115 2002/08/15 16:36:07 momjian Exp $
+ * $Id: nodes.h,v 1.116 2002/08/19 15:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,6 @@ typedef enum NodeTag
 	T_PathKeyItem,
 	T_RestrictInfo,
 	T_JoinInfo,
-	T_Stream,
 	T_IndexOptInfo,
 
 	/*
@@ -93,13 +92,11 @@ typedef enum NodeTag
 	 */
 	T_IndexInfo = 300,
 	T_ResultRelInfo,
-	T_TupleCount,
 	T_TupleTableSlot,
 	T_ExprContext,
 	T_ProjectionInfo,
 	T_JunkFilter,
 	T_EState,
-	T_BaseNode,
 	T_CommonState,
 	T_ResultState,
 	T_AppendState,
@@ -207,7 +204,6 @@ typedef enum NodeTag
 	T_A_Expr = 700,
 	T_ColumnRef,
 	T_ParamRef,
-	T_Ident,
 	T_A_Const,
 	T_FuncCall,
 	T_A_Indices,

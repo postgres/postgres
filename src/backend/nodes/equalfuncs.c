@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.152 2002/08/19 00:40:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.153 2002/08/19 15:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -541,26 +541,6 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
 		return false;
 	return true;
-}
-
-static bool
-_equalStream(Stream *a, Stream *b)
-{
-	if (a->clausetype != b->clausetype)
-		return false;
-	if (a->groupup != b->groupup)
-		return false;
-	if (a->groupcost != b->groupcost)
-		return false;
-	if (a->groupsel != b->groupsel)
-		return false;
-	if (!equal(a->pathptr, b->pathptr))
-		return false;
-	if (!equal(a->cinfo, b->cinfo))
-		return false;
-	if (!equal(a->upstream, b->upstream))
-		return false;
-	return equal(a->downstream, b->downstream);
 }
 
 /*
@@ -1557,15 +1537,6 @@ _equalAConst(A_Const *a, A_Const *b)
 }
 
 static bool
-_equalIdent(Ident *a, Ident *b)
-{
-	if (!equalstr(a->name, b->name))
-		return false;
-
-	return true;
-}
-
-static bool
 _equalFuncCall(FuncCall *a, FuncCall *b)
 {
 	if (!equal(a->funcname, b->funcname))
@@ -2045,9 +2016,6 @@ equal(void *a, void *b)
 		case T_JoinInfo:
 			retval = _equalJoinInfo(a, b);
 			break;
-		case T_Stream:
-			retval = _equalStream(a, b);
-			break;
 		case T_TidPath:
 			retval = _equalTidPath(a, b);
 			break;
@@ -2289,9 +2257,6 @@ equal(void *a, void *b)
 			break;
 		case T_A_Const:
 			retval = _equalAConst(a, b);
-			break;
-		case T_Ident:
-			retval = _equalIdent(a, b);
 			break;
 		case T_FuncCall:
 			retval = _equalFuncCall(a, b);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.240 2002/08/02 18:15:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.241 2002/08/19 15:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,17 +238,14 @@ transformStmt(ParseState *pstate, Node *parseTree,
 					{
 						TargetEntry *te = (TargetEntry *) lfirst(targetList);
 						Resdom	   *rd;
-						Ident	   *id;
 
 						Assert(IsA(te, TargetEntry));
 						rd = te->resdom;
 						Assert(IsA(rd, Resdom));
-						if (rd->resjunk)		/* junk columns don't get
-												 * aliases */
+						/* junk columns don't get aliases */
+						if (rd->resjunk)
 							continue;
-						id = (Ident *) lfirst(aliaslist);
-						Assert(IsA(id, Ident));
-						rd->resname = pstrdup(id->name);
+						rd->resname = pstrdup(strVal(lfirst(aliaslist)));
 						aliaslist = lnext(aliaslist);
 						if (aliaslist == NIL)
 							break;		/* done assigning aliases */
@@ -788,7 +785,6 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	bool		saw_nullable;
 	Constraint *constraint;
 	List	   *clist;
-	Ident	   *key;
 
 	cxt->columns = lappend(cxt->columns, column);
 
@@ -901,17 +897,14 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 		/*
 		 * If this column constraint is a FOREIGN KEY constraint, then we
-		 * fill in the current attributes name and throw it into the list
+		 * fill in the current attribute's name and throw it into the list
 		 * of FK constraints to be processed later.
 		 */
 		if (IsA(constraint, FkConstraint))
 		{
 			FkConstraint *fkconstraint = (FkConstraint *) constraint;
-			Ident	   *id = makeNode(Ident);
 
-			id->name = column->colname;
-			fkconstraint->fk_attrs = makeList1(id);
-
+			fkconstraint->fk_attrs = makeList1(makeString(column->colname));
 			cxt->fkconstraints = lappend(cxt->fkconstraints, fkconstraint);
 			continue;
 		}
@@ -923,7 +916,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			case CONSTR_NULL:
 				if (saw_nullable && column->is_not_null)
 					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
-						 cxt->stmtType, (cxt->relation)->relname, column->colname);
+						 cxt->stmtType, cxt->relation->relname, column->colname);
 				column->is_not_null = FALSE;
 				saw_nullable = true;
 				break;
@@ -931,7 +924,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			case CONSTR_NOTNULL:
 				if (saw_nullable && !column->is_not_null)
 					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
-						 cxt->stmtType, (cxt->relation)->relname, column->colname);
+						 cxt->stmtType, cxt->relation->relname, column->colname);
 				column->is_not_null = TRUE;
 				saw_nullable = true;
 				break;
@@ -939,42 +932,34 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			case CONSTR_DEFAULT:
 				if (column->raw_default != NULL)
 					elog(ERROR, "%s/DEFAULT multiple values specified for '%s.%s'",
-						 cxt->stmtType, (cxt->relation)->relname, column->colname);
+						 cxt->stmtType, cxt->relation->relname, column->colname);
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
 				break;
 
 			case CONSTR_PRIMARY:
 				if (constraint->name == NULL)
-					constraint->name = makeObjectName((cxt->relation)->relname,
+					constraint->name = makeObjectName(cxt->relation->relname,
 													  NULL,
 													  "pkey");
 				if (constraint->keys == NIL)
-				{
-					key = makeNode(Ident);
-					key->name = pstrdup(column->colname);
-					constraint->keys = makeList1(key);
-				}
+					constraint->keys = makeList1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
 
 			case CONSTR_UNIQUE:
 				if (constraint->name == NULL)
-					constraint->name = makeObjectName((cxt->relation)->relname,
+					constraint->name = makeObjectName(cxt->relation->relname,
 													  column->colname,
 													  "key");
 				if (constraint->keys == NIL)
-				{
-					key = makeNode(Ident);
-					key->name = pstrdup(column->colname);
-					constraint->keys = makeList1(key);
-				}
+					constraint->keys = makeList1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
 
 			case CONSTR_CHECK:
 				if (constraint->name == NULL)
-					constraint->name = makeObjectName((cxt->relation)->relname,
+					constraint->name = makeObjectName(cxt->relation->relname,
 													  column->colname,
 													  NULL);
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
@@ -1002,7 +987,7 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
 	{
 		case CONSTR_PRIMARY:
 			if (constraint->name == NULL)
-				constraint->name = makeObjectName((cxt->relation)->relname,
+				constraint->name = makeObjectName(cxt->relation->relname,
 												  NULL,
 												  "pkey");
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
@@ -1069,7 +1054,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				 relationHasPrimaryKey(cxt->relOid)))
 				elog(ERROR, "%s / PRIMARY KEY multiple primary keys"
 					 " for table '%s' are not allowed",
-					 cxt->stmtType, (cxt->relation)->relname);
+					 cxt->stmtType, cxt->relation->relname);
 			cxt->pkey = index;
 		}
 		index->isconstraint = true;
@@ -1077,7 +1062,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		if (constraint->name != NULL)
 			index->idxname = pstrdup(constraint->name);
 		else if (constraint->contype == CONSTR_PRIMARY)
-			index->idxname = makeObjectName((cxt->relation)->relname, NULL, "pkey");
+			index->idxname = makeObjectName(cxt->relation->relname, NULL, "pkey");
 		else
 			index->idxname = NULL;		/* will set it later */
 
@@ -1092,16 +1077,15 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 */
 		foreach(keys, constraint->keys)
 		{
-			Ident	   *key = (Ident *) lfirst(keys);
+			char	   *key = strVal(lfirst(keys));
 			bool		found = false;
 
-			Assert(IsA(key, Ident));
 			column = NULL;
 			foreach(columns, cxt->columns)
 			{
 				column = lfirst(columns);
 				Assert(IsA(column, ColumnDef));
-				if (strcmp(column->colname, key->name) == 0)
+				if (strcmp(column->colname, key) == 0)
 				{
 					found = true;
 					break;
@@ -1113,7 +1097,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				if (constraint->contype == CONSTR_PRIMARY)
 					column->is_not_null = TRUE;
 			}
-			else if (SystemAttributeByName(key->name, cxt->hasoids) != NULL)
+			else if (SystemAttributeByName(key, cxt->hasoids) != NULL)
 			{
 				/*
 				 * column will be a system column in the new table, so
@@ -1145,7 +1129,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 						if (inhattr->attisdropped)
 							continue;
-						if (strcmp(key->name, inhname) == 0)
+						if (strcmp(key, inhname) == 0)
 						{
 							found = true;
 
@@ -1180,7 +1164,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				/* ALTER TABLE case: does column already exist? */
 				HeapTuple	atttuple;
 
-				atttuple = SearchSysCacheAttName(cxt->relOid, key->name);
+				atttuple = SearchSysCacheAttName(cxt->relOid, key);
 				if (HeapTupleIsValid(atttuple))
 				{
 					found = true;
@@ -1192,28 +1176,28 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					if (constraint->contype == CONSTR_PRIMARY &&
 						!((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
 						elog(ERROR, "Existing attribute \"%s\" cannot be a PRIMARY KEY because it is not marked NOT NULL",
-							 key->name);
+							 key);
 					ReleaseSysCache(atttuple);
 				}
 			}
 
 			if (!found)
 				elog(ERROR, "%s: column \"%s\" named in key does not exist",
-					 cxt->stmtType, key->name);
+					 cxt->stmtType, key);
 
 			/* Check for PRIMARY KEY(foo, foo) */
 			foreach(columns, index->indexParams)
 			{
 				iparam = (IndexElem *) lfirst(columns);
-				if (iparam->name && strcmp(key->name, iparam->name) == 0)
+				if (iparam->name && strcmp(key, iparam->name) == 0)
 					elog(ERROR, "%s: column \"%s\" appears twice in %s constraint",
-						 cxt->stmtType, key->name,
+						 cxt->stmtType, key,
 						 index->primary ? "PRIMARY KEY" : "UNIQUE");
 			}
 
 			/* OK, add it to the index definition */
 			iparam = makeNode(IndexElem);
-			iparam->name = pstrdup(key->name);
+			iparam->name = pstrdup(key);
 			iparam->funcname = NIL;
 			iparam->args = NIL;
 			iparam->opclass = NIL;
@@ -1338,13 +1322,12 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		attnum = 0;
 		foreach(fkattrs, fkconstraint->fk_attrs)
 		{
-			Ident	   *fkattr = lfirst(fkattrs);
+			char	   *fkattr = strVal(lfirst(fkattrs));
 
 			if (attnum >= INDEX_MAX_KEYS)
 				elog(ERROR, "Can only have %d keys in a foreign key",
 					 INDEX_MAX_KEYS);
-			fktypoid[attnum++] = transformFkeyGetColType(cxt,
-														 fkattr->name);
+			fktypoid[attnum++] = transformFkeyGetColType(cxt, fkattr);
 		}
 
 		/*
@@ -1353,7 +1336,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 */
 		if (fkconstraint->pk_attrs == NIL)
 		{
-			if (strcmp(fkconstraint->pktable->relname, (cxt->relation)->relname) != 0)
+			if (strcmp(fkconstraint->pktable->relname, cxt->relation->relname) != 0)
 				transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
 			else if (cxt->pkey != NULL)
 			{
@@ -1364,17 +1347,16 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				foreach(attr, cxt->pkey->indexParams)
 				{
 					IndexElem  *ielem = lfirst(attr);
-					Ident	   *pkattr = (Ident *) makeNode(Ident);
+					char	   *iname = ielem->name;
 
-					Assert(ielem->name); /* no func index here */
-					pkattr->name = pstrdup(ielem->name);
+					Assert(iname); /* no func index here */
 					fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
-													 pkattr);
+													 makeString(iname));
 					if (attnum >= INDEX_MAX_KEYS)
 						elog(ERROR, "Can only have %d keys in a foreign key",
 							 INDEX_MAX_KEYS);
 					pktypoid[attnum++] = transformFkeyGetColType(cxt,
-															ielem->name);
+																 iname);
 				}
 			}
 			else
@@ -1390,7 +1372,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		else
 		{
 			/* Validate the specified referenced key list */
-			if (strcmp(fkconstraint->pktable->relname, (cxt->relation)->relname) != 0)
+			if (strcmp(fkconstraint->pktable->relname, cxt->relation->relname) != 0)
 				transformFkeyCheckAttrs(fkconstraint, pktypoid);
 			else
 			{
@@ -1411,7 +1393,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					attnum = 0;
 					foreach(pkattrs, fkconstraint->pk_attrs)
 					{
-						Ident	   *pkattr = lfirst(pkattrs);
+						char	   *pkattr = strVal(lfirst(pkattrs));
 						List	   *indparms;
 
 						found = false;
@@ -1420,7 +1402,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 							IndexElem  *indparm = lfirst(indparms);
 
 							if (indparm->name &&
-								strcmp(indparm->name, pkattr->name) == 0)
+								strcmp(indparm->name, pkattr) == 0)
 							{
 								found = true;
 								break;
@@ -1432,7 +1414,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 							elog(ERROR, "Can only have %d keys in a foreign key",
 								 INDEX_MAX_KEYS);
 						pktypoid[attnum++] = transformFkeyGetColType(cxt,
-														   pkattr->name);
+																	 pkattr);
 					}
 					if (found)
 						break;
@@ -2621,7 +2603,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 
 				foreach(attrl, fkconstraint->pk_attrs)
 				{
-					Ident	   *attr = lfirst(attrl);
+					char	   *attrname = strVal(lfirst(attrl));
 
 					found = false;
 					for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
@@ -2629,7 +2611,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 						int			pkattno = indexStruct->indkey[i];
 
 						if (namestrcmp(attnumAttName(pkrel, pkattno),
-									   attr->name) == 0)
+									   attrname) == 0)
 						{
 							pktypoid[attnum++] = attnumTypeId(pkrel, pkattno);
 							found = true;
@@ -2720,12 +2702,10 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 	{
 		int			pkattno = indexStruct->indkey[i];
-		Ident	   *pkattr = makeNode(Ident);
 
-		pkattr->name = pstrdup(NameStr(*attnumAttName(pkrel, pkattno)));
 		pktypoid[attnum++] = attnumTypeId(pkrel, pkattno);
-
-		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
+		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
+										 makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
 	}
 
 	ReleaseSysCache(indexTuple);

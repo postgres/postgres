@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.200 2002/08/19 00:40:15 tgl Exp $
+ * $Id: parsenodes.h,v 1.201 2002/08/19 15:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,17 +286,6 @@ typedef struct ColumnDef
 	List	   *constraints;	/* other constraints on column */
 	RangeVar   *support;		/* supporting relation, if any */
 } ColumnDef;
-
-/*
- * Ident -
- *	  an unqualified identifier.  This is currently used only in the context
- *	  of column name lists.
- */
-typedef struct Ident
-{
-	NodeTag		type;
-	char	   *name;			/* its name */
-} Ident;
 
 /*
  * FuncCall - a function or aggregate invocation
@@ -869,7 +858,8 @@ typedef struct CopyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
-	List	   *attlist;		/* List of Ident nodes, or NIL for all */
+	List	   *attlist;		/* List of column names (as Strings),
+								 * or NIL for all columns */
 	bool		is_from;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
 	List	   *options;		/* List of DefElem nodes */
@@ -936,7 +926,7 @@ typedef struct Constraint
 	char	   *name;			/* name, or NULL if unnamed */
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	List	   *keys;			/* Ident nodes naming referenced column(s) */
+	List	   *keys;			/* String nodes naming referenced column(s) */
 } Constraint;
 
 /* ----------
