@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.27 2005/03/12 20:25:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.28 2005/03/30 02:08:39 neilc Exp $
 -->
 
  <sect1 id="xaggr">
@@ -173,7 +173,7 @@ SELECT attrelid::regclass, array_accum(atttypid)
    must be a temporary transition value and can therefore safely be modified
    in-place rather than allocating a new copy.  (This is the <emphasis>only</>
    case where it is safe for a function to modify a pass-by-reference input.)
-   See <literal>int8inc()></> for an example.
+   See <literal>int8inc()</> for an example.
   </para>
 
   <para>
