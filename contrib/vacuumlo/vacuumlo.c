@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.17 2002/10/18 18:41:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.18 2002/12/03 07:12:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,7 +471,7 @@ main(int argc, char **argv)
 	}
 
 	/* No database given? Show usage */
-	if (optind >= argc - 1)
+	if (optind >= argc)
 	{
 		fprintf(stderr, "vacuumlo: missing required argument: database name\n");
 		fprintf(stderr, "Try 'vacuumlo -?' for help.\n");
