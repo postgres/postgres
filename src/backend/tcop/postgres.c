@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.6 1996/08/19 13:37:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.7 1996/09/10 06:48:52 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -533,6 +533,19 @@ pg_plan(char *query_string,	/* string to execute */
 		ShowUsage();
 	    }
 	    plan_list = lappend(plan_list, plan);
+#ifdef INDEXSCAN_PATCH
+            /* ----------------
+             *  Print plan if debugging.
+             *  This has been moved here to get debugging output
+             *  also for queries in functions.  DZ - 27-8-1996
+             * ----------------
+             */
+	    if ( DebugPrintPlan == true ) {
+		printf("\nPlan is :\n");
+		nodeDisplay(plan);
+		printf("\n");
+	    }
+#endif
 	}
     }
     
@@ -607,6 +620,11 @@ pg_eval_dest(char *query_string, /* string to execute */
 	    plan = (Plan *) lfirst(plan_list);
 	    plan_list = lnext(plan_list);
 	    
+#ifdef INDEXSCAN_PATCH
+	    /*
+	     *  Print moved in pg_plan.  DZ - 27-8-1996
+	     */
+#else
 	    /* ----------------
 	     *	print plan if debugging
 	     * ----------------
@@ -616,6 +634,7 @@ pg_eval_dest(char *query_string, /* string to execute */
 		nodeDisplay(plan);
 		printf("\n");
 	    }
+#endif
 	    
 	    /* ----------------
 	     *   execute the plan
@@ -1227,7 +1246,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.6 $ $Date: 1996/08/19 13:37:49 $");
+	puts("$Revision: 1.7 $ $Date: 1996/09/10 06:48:52 $");
     }
     
     /* ----------------

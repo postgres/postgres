@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.2 1996/07/25 20:36:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.3 1996/09/10 06:48:41 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -595,6 +595,14 @@ get_relattval(Node *clause,
 	    *flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_NOT_CONSTANT_);
 	
 	} 
+#ifdef INDEXSCAN_PATCH
+    } else if (is_opclause(clause) && IsA(left,Var) && IsA(right,Param)) {
+	/* Function parameter used as index scan arg.  DZ - 27-8-1996 */ 
+	*relid = left->varno;
+	*attno = left->varattno;
+	*constval = 0;
+	*flag = (_SELEC_NOT_CONSTANT_);
+#endif
     }else if (is_opclause(clause) &&
 	      is_funcclause((Node*)left) &&
 	      IsA(right,Const)) {

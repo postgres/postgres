@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.2 1996/08/26 06:31:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.3 1996/09/10 06:48:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -626,6 +626,11 @@ fix_indxqual_references(Node *clause, Path *index_path)
 	}
     } else if(IsA(clause,Const)) {
 	    return(clause);
+#ifdef INDEXSCAN_PATCH
+    } else if(IsA(clause,Param)) {
+	    /* Function parameter used as index scan arg.  DZ - 27-8-1996 */ 
+	    return(clause);
+#endif
     } else if(is_opclause(clause) && 
 	      is_funcclause((Node*)get_leftop((Expr*)clause)) && 
 	      ((Func*)((Expr*)get_leftop((Expr*)clause))->oper)->funcisindex){
