@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.4 1999/09/21 21:19:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.5 1999/09/28 04:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,12 @@ void PgDatabase::PrintTuples(FILE *out, int printAttName, int terseOutput,
 int PgDatabase::Tuples()
 { 
 return PQntuples(pgResult); 
+}
+
+
+int PgDatabase::CmdTuples()
+{
+return PQcmdTuples (PGresult);
 }
 
 

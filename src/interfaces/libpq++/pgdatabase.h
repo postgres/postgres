@@ -13,7 +13,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.3 1999/09/21 21:19:31 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.4 1999/09/28 04:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ public:
   
   // query result access
   int Tuples();
+  int CmdTuples(); 
   int Fields();
   const char* FieldName(int field_num);
   int FieldNum(const char* field_name);
