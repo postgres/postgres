@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.181 2003/11/13 18:01:45 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.182 2003/11/16 17:16:47 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1625,7 +1625,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>2.4</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">MacOS X</></entry>
+        <entry><systemitem class="osname">Mac OS X</></entry>
         <entry><systemitem>PPC</></entry>
         <entry>7.4</entry>
         <entry>2003-10-24,
@@ -1679,7 +1679,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>7.4</entry>
         <entry>2003-10-26,
          Kurt Roeckx (<email>Q@ping.be</email>)</entry>
-        <entry>2.6 see also <filename>doc/FAQ_Solaris</filename></entry>
+        <entry>2.6; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Tru64 UNIX</></entry>
