@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 30 15:48:45 EDT 2001
+Last updated:		Wed May 30 16:17:28 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -229,6 +229,7 @@ MISCELLANEOUS
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and
   vacuuming (Tom)
+* WAL UNDO, overwriting storage manager? [vacuum] (Vadim)
 * Populate backend status area and write program to dump status data (Jan)
 * -Put sort files in their own directory (Bruce)
 * Show location of syntax error in query [yacc]
