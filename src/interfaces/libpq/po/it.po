@@ -1,11 +1,14 @@
-# Italian message translation file for libpq
+# Italian translation file for libpq.
 # Fabrizio Mazzoni <veramente@libero.it>, 2003.
+#
+# Versione 1.00 del 12 Ottobre 2003
+# Revisione 1.01 del 14 Ottobre 2003 a cura di Gaetano Mendola <mendola@bigfoot.com>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "POT-Creation-Date: 2003-10-09 13:30-0300\n"
-"PO-Revision-Date: 2003-10-12 16:02+0100\n"
+"PO-Revision-Date: 2003-10-12 16:07+0100\n"
 "Last-Translator: Fabrizio Mazzoni <veramente@libero.it>\n"
 "Language-Team: Fabrizio Mazzoni <veramente@libero.it>\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +23,7 @@ msgstr "Errore Kerberos 4: %s\n"
 #: fe-auth.c:394
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
-msgstr "impossibile impostare la socket in modalità blocco: %s\n"
+msgstr "impossibile impostare il socket in modalità blocco: %s\n"
 
 #: fe-auth.c:411
 #: fe-auth.c:415
@@ -31,7 +34,7 @@ msgstr "Autenticazione Kerberos 5 negata: %*s\n"
 #: fe-auth.c:441
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr "impossibile ripristinare lo stato non blocking sulla socket: %s\n"
+msgstr "impossibile ripristinare lo stato non blocking sul socket: %s\n"
 
 #: fe-auth.c:509
 msgid "SCM_CRED authentication method not supported\n"
@@ -81,12 +84,12 @@ msgstr "valore sslmode \"%s\" non valido quando il supporto SSL non è compilato\
 #: fe-connect.c:783
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
-msgstr "impossibile settare la socket in stato non-blocking: %s\n"
+msgstr "impossibile settare il socket in stato non-blocking: %s\n"
 
 #: fe-connect.c:810
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr "impossibile impostare la socket in modaltà TCP no delay: %s\n"
+msgstr "impossibile impostare il socket in modaltà TCP no delay: %s\n"
 
 #: fe-connect.c:841
 #, c-format
@@ -97,7 +100,7 @@ msgid ""
 msgstr ""
 "impossibile connettersi al server: %s\n"
 "\tControllare che il server sia in funzione e che\n"
-"\taccetti connessioni sulle Unix domain socket \"%s\"?\n"
+"\taccetti connessioni sui Unix domain socket \"%s\"?\n"
 
 #: fe-connect.c:853
 #, c-format
@@ -118,26 +121,26 @@ msgstr "impossibile convertire l'host name \"%s\" all'indirizzo: %s\n"
 #: fe-connect.c:941
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "impossibile tradurre la Unix-domain socket path \"%s\" nell'indirizzo: %s\n"
+msgstr "impossibile tradurre lo Unix-domain socket path \"%s\" nell'indirizzo: %s\n"
 
 #: fe-connect.c:1144
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "stato connessione errato, probabilmente indica una corruzzione della memoria\n"
+msgstr "stato connessione invalido, probabilmente indica una corruzzione della memoria\n"
 
 #: fe-connect.c:1187
 #, c-format
 msgid "could not create socket: %s\n"
-msgstr "impossibile creare la socket: %s\n"
+msgstr "impossibile creare il socket: %s\n"
 
 #: fe-connect.c:1298
 #, c-format
 msgid "could not get socket error status: %s\n"
-msgstr "impossibile ottenere socket error status: %s\n"
+msgstr "impossibile ottenere un socket error status: %s\n"
 
 #: fe-connect.c:1337
 #, c-format
 msgid "could not get client address from socket: %s\n"
-msgstr "impossibile ottenere l'indirizzo del client dalla socket: %s\n"
+msgstr "impossibile ottenere l'indirizzo del client dal socket: %s\n"
 
 #: fe-connect.c:1382
 #, c-format
@@ -155,7 +158,7 @@ msgstr "memoria esaurita\n"
 #: fe-connect.c:1417
 #, c-format
 msgid "could not send startup packet: %s\n"
-msgstr "impossibile spedire il startup packet: %s\n"
+msgstr "impossibile spedire lo startup packet: %s\n"
 
 #: fe-connect.c:1457
 #, c-format
@@ -176,7 +179,7 @@ msgstr "ricevuta risposta errata alla negoziazione SSL: %c\n"
 #: fe-connect.c:1598
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
-msgstr "prevista richiesta di autenticazione dal server, ricevuto %c\n"
+msgstr "prevista richiesta di autenticazione dal server, ma è stato ricevuto %c\n"
 
 #: fe-connect.c:1834
 msgid "unexpected message from server during startup\n"
@@ -243,7 +246,7 @@ msgstr "asyncStatus imprevisto: %d\n"
 
 #: fe-exec.c:1205
 msgid "COPY terminated by new PQexec"
-msgstr "COPY terminato da PQexec"
+msgstr "COPY terminato da una nuova PQexec"
 
 #: fe-exec.c:1213
 msgid "COPY IN state must be terminated first\n"
@@ -292,7 +295,7 @@ msgstr "impossibile apririe il file \"%s\": %s\n"
 #: fe-lobj.c:414
 #, c-format
 msgid "could not create large object for file \"%s\"\n"
-msgstr "impossibile creare il file per il large object \"%s\"\n"
+msgstr "impossibile creare un large object per il file \"%s\"\n"
 
 #: fe-lobj.c:424
 #: fe-lobj.c:474
@@ -389,7 +392,7 @@ msgstr "timeout scaduto\n"
 
 #: fe-misc.c:950
 msgid "socket not open\n"
-msgstr "socket chiusa\n"
+msgstr "socket non aperto\n"
 
 #: fe-misc.c:973
 #, c-format
@@ -430,7 +433,7 @@ msgstr "codice errore SSL sconosciuto\n"
 #: fe-secure.c:459
 #, c-format
 msgid "error querying socket: %s\n"
-msgstr "errore di query sulla socket: %s\n"
+msgstr "errore di query sul socket: %s\n"
 
 #: fe-secure.c:487
 #, c-format
@@ -515,4 +518,5 @@ msgstr "il certificato non è stato convalidato: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "non è stato possibile otenere il certificato: %s\n"
+
 
