@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.19 2003/05/29 03:21:32 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.20 2003/05/29 21:44:47 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -770,15 +770,26 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 
 		String dbEncoding = resultSet.getString(2);
 		encoding = Encoding.getEncoding(dbEncoding, info.getProperty("charSet"));
+		
+		//TODO: remove this once the set is done as part of V3protocol connection initiation
+		if (haveMinimumServerVersion("7.4")) 
+		{
+			BaseResultSet acRset =
+				execSQL("set client_encoding = 'UNICODE'");
+
+			//set encoding to be unicode
+			encoding = Encoding.getEncoding("UNICODE", null);
+		}
+
 		//In 7.3 we are forced to do a second roundtrip to handle the case 
 		//where a database may not be running in autocommit mode
 		//jdbc by default assumes autocommit is on until setAutoCommit(false)
 		//is called.  Therefore we need to ensure a new connection is 
 		//initialized to autocommit on.
 		//We also set the client encoding so that the driver only needs 
-		//to deal with utf8.  We can only do this in 7.3 because multibyte 
+		//to deal with utf8.  We can only do this in 7.3+ because multibyte 
 		//support is now always included
-		if (haveMinimumServerVersion("7.3")) 
+		if (haveMinimumServerVersion("7.3")  && !haveMinimumServerVersion("7.4")) 
 		{
 			BaseResultSet acRset =
 				execSQL("set client_encoding = 'UNICODE'; show autocommit");
