@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.73 2001/10/12 23:32:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.74 2001/10/31 20:39:30 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -29,11 +29,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.73 2001/10/12 23:32:34 momji
    complete examples of <filename>libpq</filename> applications in the
    following directories:
 
-   <programlisting>
-../src/test/regress
-../src/test/examples
-../src/bin/psql
-   </programlisting>
+   <simplelist>
+    <member><filename>src/test/examples</filename></member>
+    <member><filename>src/bin/psql</filename></member>
+   </simplelist>
   </para>
 
   <para>
@@ -382,21 +381,21 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn)
     particular order, or at all, or on the status always being one of these
     documented values. An application may do something like this:
 <programlisting>
-    switch(PQstatus(conn))
-    {
-        case CONNECTION_STARTED:
-            feedback = "Connecting...";
-	    break;
+switch(PQstatus(conn))
+{
+    case CONNECTION_STARTED:
+        feedback = "Connecting...";
+        break;
 
-        case CONNECTION_MADE:
-            feedback = "Connected to server...";
-            break;
+    case CONNECTION_MADE:
+        feedback = "Connected to server...";
+        break;
 .
 .
 .
-        default:
-	    feedback = "Connecting...";
-    }
+    default:
+        feedback = "Connecting...";
+}
 </programlisting>
   </para>
 

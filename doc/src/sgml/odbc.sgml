@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.25 2001/10/09 22:32:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.26 2001/10/31 20:39:30 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -380,18 +380,18 @@ InstallDir = /opt/applix/axdata/axshlib
 	 At the bottom of <filename>axnet.cnf</filename>,
 	 find the line that starts with
 
-	 <programlisting>
+<programlisting>
 #libFor elfodbc /ax/<replaceable>...</replaceable>
-	 </programlisting>
+</programlisting>
 	</para>
        </step>
        <step performance="required">
 	<para>
 	 Change line to read
 
-	 <programlisting>
+<programlisting>
 libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
-	 </programlisting>
+</programlisting>
 
 	 which will tell <literal>elfodbc</literal> to look in this directory
 	 for the <acronym>ODBC</acronym> support library.
@@ -410,9 +410,9 @@ libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
        Create <filename>.odbc.ini</filename> as 
        described above.  You may also want to add the flag
 
-       <programlisting>
+<programlisting>
 TextAsLongVarchar=0
-       </programlisting>
+</programlisting>
 
        to the database-specific portion of <filename>.odbc.ini</filename>
        so that text fields will not be shown as <literal>**BLOB**</literal>.
@@ -438,34 +438,34 @@ TextAsLongVarchar=0
 
        <step performance="required">
 	<para>
-	 Select <command>Query->Choose Server</command>.  
+	 Select <menuchoice><guimenu>Query</guimenu><guimenuitem>Choose Server</guimenuitem></menuchoice>.  
 	</para>
        </step>
        <step performance="required">
 	<para>
-	 Select <acronym>ODBC</acronym>, and click <command>Browse</command>.
+	 Select <guimenuitem>ODBC</guimenuitem>, and click <guibutton>Browse</guibutton>.
 	 The database you configured in <filename>.odbc.ini</filename>
-	 should be shown.  Make sure that the <option>Host: field</option>
+	 should be shown.  Make sure that the <guilabel>Host:</guilabel> field
 	 is empty (if it is not, <literal>axnet</> will try to contact <literal>axnet</> on another machine
 	 to look for the database).
 	</para>
        </step>
        <step performance="required">
 	<para>
-	 Select the database in the box that was launched by <command>Browse</command>,
-	 then click <command>OK</command>.
+	 Select the database in the box that was launched by <guibutton>Browse</guibutton>,
+	 then click <guibutton>OK</guibutton>.
 	</para>
        </step>
        <step performance="required">
 	<para>
 	 Enter user name and password in the login identification dialog,
-	 and click <command>OK</command>.
+	 and click <guibutton>OK</guibutton>.
 	</para>
        </step>
       </substeps>
 
       <para>
-       You should see <literal>Starting elfodbc server</literal>
+       You should see <guilabel>Starting elfodbc server</guilabel>
        in the lower left corner of the
        data window.  If you get an error dialog box, see the debugging section
        below.
@@ -479,9 +479,12 @@ TextAsLongVarchar=0
      </step>
      <step performance="required">
       <para>
-       Select a table from Query->Choose tables, and then select Query->Query
-       to access the database.  The first 50 or so rows from the table should
-       appear.
+       Select a table from
+       <menuchoice><guimenu>Query</><guimenuitem>Choose
+       tables</></menuchoice>, and then select
+       <menuchoice><guimenu>Query</><guimenuitem>Query</></menuchoice>
+       to access the database.  The first 50 or so rows from the table
+       should appear.
       </para>
      </step>
     </procedure>
@@ -530,7 +533,7 @@ TextAsLongVarchar=0
 	<para>
 	 The driver process has terminated due to some other
 	 problem.  You might not have an up-to-date version
-	 of the <productname>Postgres</productname>
+	 of the <productname>PostgreSQL</productname>
 	 <acronym>ODBC</acronym> package.
 	</para>
        </listitem>
@@ -595,24 +598,24 @@ TextAsLongVarchar=0
        Start an <application>strace</application> on
        the <literal>axnet</literal> process.  For example, if
 
-       <programlisting>
-% ps -aucx | grep ax 
-       </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>ps -aucx | grep ax</userinput>
+</screen>
 
        shows
 
-       <programlisting>
+<screen>
 cary   10432  0.0  2.6  1740   392  ?  S  Oct  9  0:00 axnet
 cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
-       </programlisting>
+</screen>
       </para>
 
       <para>
        Then run
 
-       <programlisting>
-% strace -f -s 1024 -p 10432
-       </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>strace -f -s 1024 -p 10432</userinput>
+</screen>
       </para>
      </step>
 
@@ -638,14 +641,14 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
      a <literal>Cannot launch gateway on server</literal>, 
      I ran <command>strace</command> on <literal>axnet</literal> and got
 
-<programlisting>
+<screen>
 [pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
 (No such file or directory)
 [pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
 (No such file or directory)
 [pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
 can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
-</programlisting>  
+</screen>  
      So what is happening is that <literal>applix elfodbc</literal> is searching for <filename>libodbc.so</filename>, but it
      cannot find it.  That is why <filename>axnet.cnf</filename> needed to be changed.
     </para>

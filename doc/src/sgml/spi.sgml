@@ -2821,11 +2821,13 @@ execq(text *sql, int cnt)
    Now, compile and create the function:
 
 <ProgramListing>
-CREATE FUNCTION execq (TEXT, INT4) RETURNS INT4 AS '...path_to_so' LANGUAGE 'c';
+CREATE FUNCTION execq (text, integer) RETURNS integer
+    AS '...path_to_so'
+    LANGUAGE C;
 </ProgramListing>
 
 <ProgramListing>
-vac=> SELECT execq('CREATE TABLE a (x INT4)', 0);
+vac=> SELECT execq('CREATE TABLE a (x INTEGER)', 0);
 execq
 -----
     0
