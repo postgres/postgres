@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.7 2000/12/30 17:11:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.8 2001/02/07 20:46:55 tgl Exp $
 Postgres documentation
 -->
 
@@ -49,7 +49,7 @@ Postgres documentation
   <para>
    <application>pgaccess</application> provides a graphical interface
    for <productname>Postgres</productname>
-   where you
+   wherein you
    can manage your tables, edit them, define queries, sequences and
    functions.
   </para>
@@ -175,7 +175,7 @@ Postgres documentation
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
-      Define, edit and store <firstterm>user-defined queries</firstterm>.
+      Define, edit and store user-defined queries.
      </para>
     </listitem>
 
@@ -379,23 +379,24 @@ select * from invoices where year=[parameter "Year of selection"]
  </refsect1>
 
  <refsect1>
-  <title>Diagnosistics</title>
+  <title>Diagnostics</title>
 
   <para>
-   If you get output like this:
+   If pgaccess fails to start up, with an error message roughly like this:
 <screen>
 <computeroutput>
 Error in startup script: couldn't load file "libpgtcl.so": libpgtcl.so: cannot open shared object file: No such file or directory
     while executing
-"load libpgtcl[info sharedlibextension]"
-    (procedure "main" line 3)
+"load ${libpgtclpath}[info sharedlibextension]"
+    (procedure "main" line 8)
     invoked from within
 "main $argc $argv"
     (file "/usr/local/pgsql/share/pgaccess/main.tcl" line 249)
 </computeroutput>
 </screen>
    then you need to configure your runtime linker to find the
-   <filename>libpgtcl.so</filename> library, most likely by setting
+   <filename>libpgtcl.so</filename> and <filename>libpq.so</filename>
+   libraries, most likely by setting
    the <envar>LD_LIBRARY_PATH</envar> environment variable.  Consult
    the <productname>PostgreSQL</productname> installation instructions
    for more information.
@@ -408,7 +409,7 @@ Error in startup script: couldn't load file "libpgtcl.so": libpgtcl.so: cannot o
   <para>
    <application>pgaccess</application> is written in Tcl/Tk.  Your
    <productname>PostgreSQL</productname> installation needs to be
-   build with Tcl support for <application>pgaccess</application> to
+   built with Tcl support for <application>pgaccess</application> to
    be available.
   </para>
  </refsect1>
