@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.1 2001/09/07 03:32:11 ishii Exp $
+ * $Id: encnames.c,v 1.2 2001/09/07 15:01:45 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -22,37 +22,23 @@
 #include "mb/pg_wchar.h"
 #include <ctype.h>
 
-/*
- * Debug
- */
-/* #define DEBUG_ENCODING */ 
-#ifdef DEBUG_ENCODING
-#ifdef FRONTEND
-#define encdebug(_format, _a...)	fprintf(stderr, _format, ##_a)
-#else
-#define encdebug(_format, _a...)	elog(NOTICE, _format, ##_a)	
-#endif
-#else
-#define encdebug(_format, _a...)
-#endif
-
 /* ----------
- * All encoding names, sorted:       *** A L P H A B E T I C *** 
+ * All encoding names, sorted:       *** A L P H A B E T I C ***
  *
  * All names must be without irrelevan chars, search routines use
  * isalnum() chars only. It means ISO-8859-1, iso_8859-1 and Iso8859_1
  * are always converted to 'iso88591'. All must be lower case.
  *
- * The table doesn't contain 'cs' aliases (like csISOLatin1). It's needful? 
+ * The table doesn't contain 'cs' aliases (like csISOLatin1). It's needful?
  *
  * Karel Zak, Aug 2001
  * ----------
- */ 
+ */
 pg_encname pg_encname_tbl[] =
 {
 	{ "alt",	PG_ALT },		/* IBM866 */
 	{ "big5",	PG_BIG5 },		/* Big5; Chinese for Taiwan Multi-byte set */
- 	{ "euccn",	PG_EUC_CN },		/* EUC-CN; ??? */
+	{ "euccn",	PG_EUC_CN },		/* EUC-CN; ??? */
 	{ "eucjp",	PG_EUC_JP },		/* EUC-JP; Extended UNIX Code Fixed Width for Japanese, stdandard OSF */
 	{ "euckr",	PG_EUC_KR },		/* EUC-KR; RFC1557,Choi */
 	{ "euctw",	PG_EUC_TW },		/* EUC-TW; ???  */
@@ -88,7 +74,7 @@ unsigned int pg_encname_tbl_sz = \
 		sizeof(pg_encname_tbl) / sizeof(pg_encname_tbl[0]) -1;
 
 /* ----------
- * WARNING: sorted by pg_enc enum (pg_wchar.h)! 
+ * WARNING: sorted by pg_enc enum (pg_wchar.h)!
  * ----------
  */
 pg_enc2name pg_enc2name_tbl[] =
@@ -179,7 +165,7 @@ pg_char_to_encname_struct(const char *name)
 			*key;
 
 	if(name==NULL || *name=='\0')
-		return NULL;	
+		return NULL;
 
 	if (strlen(name) > NAMEDATALEN)
 	{
@@ -192,13 +178,11 @@ pg_char_to_encname_struct(const char *name)
 	}
 	key = clean_encoding_name((char *) name, buff);
 
-	encdebug("Name: %s", key);
-
 	while (last >= base)
-	{	
+	{
 		position = base + ((last - base) >> 1);
 		result = key[0] - position->name[0];
-		
+
 		if (result == 0)
 		{
 			result = strcmp(key, position->name);
@@ -210,8 +194,6 @@ pg_char_to_encname_struct(const char *name)
 		else
 			base = position + 1;
 	}
-
-	encdebug("UNKNOWN! encoding");
 	return NULL;
 }
 
@@ -244,7 +226,7 @@ pg_encoding_to_char(int encoding)
 {
 	if (PG_VALID_ENCODING(encoding))
 	{
-		pg_enc2name *p = &pg_enc2name_tbl[ encoding ];		
+		pg_enc2name *p = &pg_enc2name_tbl[ encoding ];
 		Assert( encoding == p->encoding );
 		return p->name;
 	}
