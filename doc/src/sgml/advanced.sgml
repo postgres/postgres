@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.28 2002/06/11 15:32:32 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.29 2002/10/20 05:05:46 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -130,8 +130,8 @@ ERROR:  &lt;unnamed&gt; referential integrity violation - key referenced from we
    <para>
     The behavior of foreign keys can be finely tuned to your
     application.  We will not go beyond this simple example in this
-    tutorial, but just refer you to the <citetitle>Reference
-    Manual</citetitle> for more information.  Making correct use of
+    tutorial, but just refer you to &cite-reference;
+    for more information.  Making correct use of
     foreign keys will definitely improve the quality of your database
     applications, so you are strongly encouraged to learn about them.
    </para>
@@ -394,9 +394,8 @@ SELECT name, altitude
     <productname>PostgreSQL</productname> has many features not
     touched upon in this tutorial introduction, which has been
     oriented toward newer users of <acronym>SQL</acronym>.  These
-    features are discussed in more detail in both the
-    <citetitle>User's Guide</citetitle> and the
-    <citetitle>Programmer's Guide</citetitle>.
+    features are discussed in more detail in both &cite-user;
+    and &cite-programmer;.
    </para>
 
    <para>

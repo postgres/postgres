@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.5 2002/09/21 18:32:52 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.6 2002/10/20 05:05:46 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -10,7 +10,7 @@
   explaining how tables are created and modified and what features are
   available to control what data is stored in the tables.
   Subsequently, we discuss how tables can be organized into
-  namespaces, and how privileges can be assigned to tables.  Finally,
+  schemas, and how privileges can be assigned to tables.  Finally,
   we will briefly look at other features that affect the data storage,
   such as views, functions, and triggers.  Detailed information on
   these topics is found in &cite-programmer;.
@@ -78,7 +78,7 @@ CREATE TABLE my_first_table (
    <literal>second_column</literal> and the type <type>integer</type>.
    The table and column names follow the identifier syntax explained
    in <xref linkend="sql-syntax-identifiers">.  The type names are
-   also identifiers, but there are some exceptions.  Note that the
+   usually also identifiers, but there are some exceptions.  Note that the
    column list is comma-separated and surrounded by parentheses.
   </para>
 
@@ -101,7 +101,7 @@ CREATE TABLE products (
   <tip>
    <para>
     When you create many interrelated tables it is wise to choose a
-    consistent naming patter for the tables and columns.  For
+    consistent naming pattern for the tables and columns.  For
     instance, there is a choice of using singular or plural nouns for
     table names, both of which are favored by some theorist or other.
    </para>
@@ -287,7 +287,7 @@ CREATE TABLE products (
   </para>
 
   <para>
-   The default value may be a scalar expression, which well be
+   The default value may be a scalar expression, which will be
    evaluated whenever the default value is inserted
    (<emphasis>not</emphasis> when the table is created).
   </para>
@@ -618,7 +618,8 @@ CREATE TABLE example (
 
    <para>
     A foreign key constraint specifies that the values in a column (or
-    a group of columns) must match the values in some other column.
+    a group of columns) must match the values appearing in some row
+    of another table.
     We say this maintains the <firstterm>referential
     integrity</firstterm> between two related tables.
    </para>
@@ -758,7 +759,7 @@ CREATE TABLE order_items (
    <para>
     Restricting and cascading deletes are the two most common options.
     <literal>RESTRICT</literal> can also be written as <literal>NO
-    ACTON</literal> and it's also the default if you don't specify
+    ACTION</literal> and it's also the default if you don't specify
     anything.  There are two other options for what should happen with
     the foreign key columns when a primary key is deleted:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
@@ -981,7 +982,7 @@ SET SQL_Inheritance TO OFF;
      <para>Add columns,</para>
     </listitem>
     <listitem>
-     <para>Remove a column,</para>
+     <para>Remove columns,</para>
     </listitem>
     <listitem>
      <para>Add constraints,</para>
@@ -993,10 +994,10 @@ SET SQL_Inheritance TO OFF;
      <para>Change default values,</para>
     </listitem>
     <listitem>
-     <para>Rename a column,</para>
+     <para>Rename columns,</para>
     </listitem>
     <listitem>
-     <para>Rename the table.</para>
+     <para>Rename tables.</para>
     </listitem>
    </itemizedlist>
 
@@ -1270,7 +1271,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    </itemizedlist>
 
    Schemas are analogous to directories at the operating system level,
-   but schemas cannot be nested.
+   except that schemas cannot be nested.
   </para>
 
   <sect2 id="ddl-schemas-create">
@@ -1341,7 +1342,7 @@ DROP SCHEMA myschema CASCADE;
     (since this is one of the ways to restrict the activities of your
     users to well-defined namespaces).  The syntax for that is:
 <programlisting>
-CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATON <replaceable>username</replaceable>;
+CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATION <replaceable>username</replaceable>;
 </programlisting>
     You can even omit the schema name, in which case the schema name
     will be the same as the user name.  See <xref
@@ -1359,9 +1360,9 @@ CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATON <replaceable>us
 
    <para>
     In the previous sections we created tables without specifying any
-    schema names.  Those tables (and other objects) are automatically
-    put into a schema named <quote>public</quote>.  Every new database
-    contains such a schema.  Thus, the following are equivalent:
+    schema names.  By default, such tables (and other objects) are
+    automatically put into a schema named <quote>public</quote>.  Every new
+    database contains such a schema.  Thus, the following are equivalent:
 <programlisting>
 CREATE TABLE products ( ... );
 </programlisting>
@@ -1550,7 +1551,7 @@ REVOKE CREATE ON public FROM PUBLIC;
 
    <para>
     Schemas can be used to organize your data in many ways.  There are
-    a few usage patterns are recommended and are easily supported by
+    a few usage patterns that are recommended and are easily supported by
     the default configuration:
     <itemizedlist>
      <listitem>
@@ -1558,7 +1559,7 @@ REVOKE CREATE ON public FROM PUBLIC;
        If you do not create any schemas then all users access the
        public schema implicitly.  This simulates the situation where
        schemas are not available at all.  This setup is mainly
-       recommended when there is only a single user or few cooperating
+       recommended when there is only a single user or a few cooperating
        users in a database.  This setup also allows smooth transition
        from the non-schema-aware world.
       </para>
@@ -1586,7 +1587,7 @@ REVOKE CREATE ON public FROM PUBLIC;
        additional functions provided by third parties, etc.), put them
        into separate schemas.  Remember to grant appropriate
        privileges to allow the other users to access them.  Users can
-       then refer to these additional object by qualifying the names
+       then refer to these additional objects by qualifying the names
        with a schema name, or they can put the additional schemas into
        their path, as they choose.
       </para>
@@ -1690,9 +1691,10 @@ ERROR:  Cannot drop table products because other objects depend on it
 <screen>
 DROP TABLE products CASCADE;
 </screen>
-   and all the dependent objects will be removed.  Actually, this
+   and all the dependent objects will be removed.  In this case, it
    doesn't remove the orders table, it only removes the foreign key
-   constraint.
+   constraint.  (If you want to check what DROP ... CASCADE will do,
+   run DROP without CASCADE and read the NOTICEs.)
   </para>
 
   <para>
@@ -1709,7 +1711,8 @@ DROP TABLE products CASCADE;
     According to the SQL standard, specifying either
     <literal>RESTRICT</literal> or <literal>CASCADE</literal> is
     required.  No database system actually implements it that way, but
-    the defaults might be different.
+    whether the default behavior is <literal>RESTRICT</literal> or
+    <literal>CASCADE</literal> varies across systems.
    </para>
   </note>
 
@@ -1718,7 +1721,8 @@ DROP TABLE products CASCADE;
     Foreign key constraint dependencies and serial column dependencies
     from <productname>PostgreSQL</productname> versions prior to 7.3
     are <emphasis>not</emphasis> maintained or created during the
-    upgrade process.  All other dependency types survive the upgrade.
+    upgrade process.  All other dependency types will be properly
+    created during an upgrade.
    </para>
   </note>
  </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.25 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.26 2002/10/20 05:05:46 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -205,7 +205,7 @@ INSERT INTO weather VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
     Constants that are not simple numeric values usually must be
     surrounded by single quotes (<literal>'</>), as in the example.
     The
-    <type>date</type> column is actually quite flexible in what it
+    <type>date</type> type is actually quite flexible in what it
     accepts, but for this tutorial we will stick to the unambiguous
     format shown here.
    </para>
@@ -259,8 +259,7 @@ COPY weather FROM '/home/user/weather.txt';
     where the file name for the source file must be available to the
     backend server machine, not the client, since the backend server
     reads the file directly.  You can read more about the
-    <command>COPY</command> command in the <citetitle>Reference
-    Manual</citetitle>.
+    <command>COPY</command> command in &cite-reference;.
    </para>
   </sect1>
 
@@ -341,10 +340,7 @@ SELECT * FROM weather
     <indexterm><primary>duplicate</primary></indexterm>
 
     As a final note, you can request that the results of a select can
-    be returned in sorted order or with duplicate rows removed.  (Just
-    to make sure the following won't confuse you,
-    <literal>DISTINCT</literal> and <literal>ORDER BY</literal> can be
-    used separately.)
+    be returned in sorted order or with duplicate rows removed:
 
 <programlisting>
 SELECT DISTINCT city
@@ -359,6 +355,9 @@ SELECT DISTINCT city
  San Francisco
 (2 rows)
 </screen>
+
+    <literal>DISTINCT</literal> and <literal>ORDER BY</literal> can be
+    used separately, of course.
    </para>
   </sect1>
 

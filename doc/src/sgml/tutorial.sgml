@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.15 2001/09/02 23:27:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.16 2002/10/20 05:05:46 tgl Exp $
 -->
 
 <book id="tutorial">
@@ -25,13 +25,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.15 2001/09/02 23:27
   </para>
 
   <para>
-   After you have worked through this tutorial you might want to move on
-   to reading the <![%single-book;[<citetitle>User's
-   Guide</citetitle>]]><![%set-of-books;[<xref linkend="user">]]> to
-   gain a more formal knowledge of the SQL language, or the
-   <![%single-book;[<citetitle>Programmer's
-   Guide</citetitle>]]><![%set-of-books;[<xref linkend="programmer">]]>
-   for information about developing applications for
+   After you have worked through this tutorial you might want to move on to
+   reading &cite-user; to gain a more formal knowledge of the SQL language,
+   or &cite-programmer; for information about developing applications for
    <productname>PostgreSQL</productname>.
   </para>
 

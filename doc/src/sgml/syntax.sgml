@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.70 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.71 2002/10/20 05:05:46 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -73,8 +73,8 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    a <token>SET</token> token to appear in a certain position, and
    this particular variation of <command>INSERT</command> also
    requires a <token>VALUES</token> in order to be complete.  The
-   precise syntax rules for each command are described in the
-   <citetitle>Reference Manual</citetitle>.
+   precise syntax rules for each command are described in
+   &cite-reference;.
   </para>
 
   <sect2 id="sql-syntax-identifiers">
@@ -206,9 +206,9 @@ UPDATE "my_table" SET "a" = 5;
    </indexterm>
 
    <para>
-    There are four kinds of <firstterm>implicitly-typed
+    There are three kinds of <firstterm>implicitly-typed
     constants</firstterm> in <productname>PostgreSQL</productname>:
-    strings, bit strings, integers, and floating-point numbers.
+    strings, bit strings, and numbers.
     Constants can also be specified with explicit types, which can
     enable more accurate representation and more efficient handling by
     the system. The implicit constants are described below; explicit
@@ -271,8 +271,9 @@ SELECT 'foobar';
 <programlisting>
 SELECT 'foo'      'bar';
 </programlisting>
-     is not valid syntax, and <productname>PostgreSQL</productname> is
-      consistent with <acronym>SQL9x</acronym> in this regard.
+     is not valid syntax.  (This slightly bizarre behavior is specified
+     by <acronym>SQL9x</acronym>; <productname>PostgreSQL</productname> is
+     following the standard.)
     </para>
    </sect3>
 
@@ -290,52 +291,52 @@ SELECT 'foo'      'bar';
      opening quote (no intervening whitespace), e.g.,
      <literal>B'1001'</literal>.  The only characters allowed within
      bit-string constants are <literal>0</literal> and
-     <literal>1</literal>.  Bit-string constants can be continued
+     <literal>1</literal>.
+    </para>
+
+    <para>
+     Alternatively, bit-string constants can be specified in hexadecimal
+     notation, using a leading <literal>X</literal> (upper or lower case),
+     e.g., <literal>X'1FF'</literal>.  This notation is equivalent to
+     a bit-string constant with four binary digits for each hex digit.
+    </para>
+
+    <para>
+     Both forms of bit-string constant can be continued
      across lines in the same way as regular string constants.
     </para>
    </sect3>
 
    <sect3>
-    <title>Integer Constants</title>
-
-    <para>
-     Integer constants in SQL are sequences of decimal digits (0
-     though 9) with no decimal point and no exponent.  The range of legal values
-     depends on which integer data type is used, but the plain
-     <type>integer</type> type accepts values ranging from -2147483648
-     to +2147483647.  (The optional plus or minus sign is actually a
-     separate unary operator and not part of the integer constant.)
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Floating-Point Constants</title>
+    <title>Numeric Constants</title>
 
     <indexterm>
-     <primary>floating point</primary>
+     <primary>numeric</primary>
      <secondary>constants</secondary>
     </indexterm>
 
     <para>
-     Floating-point constants are accepted in these general forms:
+     Numeric constants are accepted in these general forms:
 <synopsis>
+<replaceable>digits</replaceable>
 <replaceable>digits</replaceable>.<optional><replaceable>digits</replaceable></optional><optional>e<optional>+-</optional><replaceable>digits</replaceable></optional>
 <optional><replaceable>digits</replaceable></optional>.<replaceable>digits</replaceable><optional>e<optional>+-</optional><replaceable>digits</replaceable></optional>
 <replaceable>digits</replaceable>e<optional>+-</optional><replaceable>digits</replaceable>
 </synopsis>
      where <replaceable>digits</replaceable> is one or more decimal
-     digits.  At least one digit must be before or after the decimal
-     point. At least one digit must follow the exponent delimiter
-      (<literal>e</literal>) if that field is present.
-     Thus, a floating-point constant is distinguished from an integer
-     constant by the presence of either the decimal point or the
-     exponent clause (or both).  There must not be a space or other
-     characters embedded in the constant.
+     digits (0 through 9).  At least one digit must be before or after the
+     decimal point, if one is used.  At least one digit must follow the
+     exponent marker (<literal>e</literal>), if one is present.
+     There may not be any spaces or other characters embedded in the
+     constant.  Notice that any leading plus or minus sign is not actually
+     considered part of the constant; it is an operator applied to the
+     constant.
     </para>
 
     <para>
-     These are some examples of valid floating-point constants:
+     These are some examples of valid numeric constants:
 <literallayout>
+42
 3.5
 4.
 .001
@@ -345,14 +346,29 @@ SELECT 'foo'      'bar';
     </para>
 
     <para>
-     Floating-point constants are of type <type>DOUBLE
-     PRECISION</type>. <type>REAL</type> can be specified explicitly
-     by using <acronym>SQL</acronym> string notation or
-     <productname>PostgreSQL</productname> type notation:
+     A numeric constant that contains neither a decimal point nor an
+     exponent is initially presumed to be type <type>integer</> if its
+     value fits in type <type>integer</> (32 bits); otherwise it is
+     presumed to be type <type>bigint</> if its
+     value fits in type <type>bigint</> (64 bits); otherwise it is
+     taken to be type <type>numeric</>.  Constants that contain	decimal
+     points and/or exponents are always initially presumed to be type
+     <type>numeric</>.
+    </para>
+
+    <para>
+     The initially assigned data type of a numeric constant is just a
+     starting point for the type resolution algorithms.  In most
+     cases the constant will be automatically coerced to the most
+     appropriate type depending on context.  When necessary, you
+     can force a numeric value to be interpreted as a specific
+     data type by casting it.  For example, you can force a numeric
+     value to be treated as type <type>real</> (<type>float4</>)
+     by writing
 
 <programlisting>
 REAL '1.23'  -- string style
-'1.23'::REAL -- PostgreSQL (historical) style
+1.23::REAL   -- PostgreSQL (historical) style
 </programlisting>
      </para>
     </sect3>
@@ -921,7 +937,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     table (possibly qualified), or an alias for a table defined by means of a
     FROM clause, or 
     the key words <literal>NEW</literal> or <literal>OLD</literal>.
-    (NEW and OLD can only appear in the action portion of a rule,
+    (NEW and OLD can only appear in rules,
     while other correlation names can be used in any SQL statement.)
     The correlation name and separating dot may be omitted if the column name
     is unique 
@@ -939,8 +955,9 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
    <para>
     A positional parameter reference is used to indicate a parameter
-    in an SQL function.  Typically this is used in SQL function
-    definition statements.  The form of a parameter is:
+    that is supplied externally to an SQL statement.  Parameters are
+    used in SQL function definitions and in prepared queries.
+    The form of a parameter reference is:
 <synopsis>
 $<replaceable>number</replaceable>
 </synopsis>

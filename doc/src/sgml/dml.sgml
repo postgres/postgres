@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.1 2002/08/05 19:44:57 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.2 2002/10/20 05:05:46 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -119,8 +119,8 @@ INSERT INTO products DEFAULT VALUES;
    necessarily possible to directly specify which row to update.
    Instead, you specify which conditions a row must meet in order to
    be updated.  Only if you have a primary key in the table (no matter
-   whether you declared it or not) you can address rows individually
-   by choosing a condition that matches the primary key only.
+   whether you declared it or not) can you reliably address individual rows,
+   by choosing a condition that matches the primary key.
    Graphical database access tools rely on this fact to allow you to
    update rows individually.
   </para>
@@ -194,6 +194,14 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
 <programlisting>
 DELETE FROM products WHERE price = 10;
 </programlisting>
+  </para>
+
+  <para>
+   If you simply write
+<programlisting>
+DELETE FROM products;
+</programlisting>
+   then all rows in the table will be deleted!  Caveat programmer.
   </para>
  </sect1>
 </chapter>

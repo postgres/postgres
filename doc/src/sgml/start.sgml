@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.24 2002/08/13 20:40:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.25 2002/10/20 05:05:46 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -31,8 +31,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.24 2002/08/13 20:40:43 momji
 
    <para>
     If you are installing <productname>PostgreSQL</productname>
-    yourself, then refer to the <citetitle>Administrator's
-    Guide</citetitle> for instructions on installation, and return to
+    yourself, then refer to &cite-admin;
+    for instructions on installation, and return to
     this guide when the installation is complete.  Be sure to follow
     closely the section about setting up the appropriate environment
     variables.
@@ -87,7 +87,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.24 2002/08/13 20:40:43 momji
       <para>
        The user's client (frontend) application that wants to perform
        database operations.  Client applications can be very diverse
-       in nature:  They could be a text-oriented tool, a graphical
+       in nature:  a client could be a text-oriented tool, a graphical
        application, a web server that accesses the database to
        display web pages, or a specialized database maintenance tool.
        Some client applications are supplied with the
@@ -292,8 +292,7 @@ createdb: database creation failed
       <para>
        Writing a custom application, using one of the several
        available language bindings.  These possibilities are discussed
-       further in <citetitle>The PostgreSQL Programmer's
-       Guide</citetitle>.
+       further in &cite-programmer;.
       </para>
      </listitem>
     </itemizedlist>
@@ -353,13 +352,13 @@ mydb=#
 <prompt>mydb=&gt;</prompt> <userinput>SELECT version();</userinput>
                             version
 ----------------------------------------------------------------
- PostgreSQL 7.2devel on i586-pc-linux-gnu, compiled by GCC 2.96
+ PostgreSQL 7.3devel on i586-pc-linux-gnu, compiled by GCC 2.96
 (1 row)
 
 <prompt>mydb=&gt;</prompt> <userinput>SELECT current_date;</userinput>
     date
 ------------
- 2001-08-31
+ 2002-08-31
 (1 row)
 
 <prompt>mydb=&gt;</prompt> <userinput>SELECT 2 + 2;</userinput>
@@ -391,8 +390,8 @@ mydb=#
     and <command>psql</command> will quit and return you to your
     command shell. (For more internal commands, type
     <literal>\?</literal> at the <command>psql</command> prompt.)  The
-    full capabilities of <command>psql</command> are documented in the
-    <citetitle>Reference Manual</citetitle>.  If <productname>PostgreSQL</> is
+    full capabilities of <command>psql</command> are documented in
+    &cite-reference;.  If <productname>PostgreSQL</> is
     installed correctly you can also type <literal>man psql</literal>
     at the operating system shell prompt to see the documentation.  In
     this tutorial we will not use these features explicitly, but you

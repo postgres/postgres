@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.17 2002/09/20 18:39:41 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.18 2002/10/20 05:05:46 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -35,13 +35,12 @@ SELECT * FROM table1;
   <literal>table1</literal>.  (The method of retrieval depends on the
   client application.  For example, the
   <application>psql</application> program will display an ASCII-art
-  table on the screen, client libraries will offer functions to
+  table on the screen, while client libraries will offer functions to
   retrieve individual rows and columns.)  The select list
   specification <literal>*</literal> means all columns that the table
   expression happens to provide.  A select list can also select a
-  subset of the available columns or even make calculations on the
-  columns before retrieving them; see <xref
-  linkend="queries-select-lists">.  For example, if
+  subset of the available columns or make calculations using the
+  columns.  For example, if
   <literal>table1</literal> has columns named <literal>a</>,
   <literal>b</>, and <literal>c</> (and perhaps others) you can make
   the following query:
@@ -50,6 +49,7 @@ SELECT a, b + c FROM table1;
 </programlisting>
   (assuming that <literal>b</> and <literal>c</> are of a numerical
   data type).
+  See <xref linkend="queries-select-lists"> for more details.
  </para>
 
  <para>
@@ -62,7 +62,7 @@ SELECT a, b + c FROM table1;
 SELECT 3 * 4;
 </programlisting>
   This is more useful if the expressions in the select list return
-  varying results.  For example, you could call a function this way.
+  varying results.  For example, you could call a function this way:
 <programlisting>
 SELECT random();
 </programlisting>
@@ -266,7 +266,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an inner join is performed.  Then, for each row in
            T1 that does not satisfy the join condition with any row in
-           T2, a joined row is returned with null values in columns of
+           T2, a joined row is added with null values in columns of
            T2.  Thus, the joined table unconditionally has at least
            one row for each row in T1.
           </para>
@@ -280,7 +280,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an inner join is performed.  Then, for each row in
            T2 that does not satisfy the join condition with any row in
-           T1, a joined row is returned with null values in columns of
+           T1, a joined row is added with null values in columns of
            T1.  This is the converse of a left join: the result table
            will unconditionally have a row for each row in T2.
           </para>
@@ -294,10 +294,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an inner join is performed.  Then, for each row in
            T1 that does not satisfy the join condition with any row in
-           T2, a joined row is returned with null values in columns of
+           T2, a joined row is added with null values in columns of
            T2.  Also, for each row of T2 that does not satisfy the
            join condition with any row in T1, a joined row with null
-           values in the columns of T1 is returned.
+           values in the columns of T1 is added.
           </para>
          </listitem>
         </varlistentry>
@@ -602,7 +602,7 @@ FROM a NATURAL JOIN b WHERE b.val &gt; 5
      <literal>JOIN</> syntax in the <literal>FROM</> clause is
      probably not as portable to other SQL database products.  For
      outer joins there is no choice in any case: they must be done in
-     the <literal>FROM</> clause.  A <literal>ON</>/<literal>USING</>
+     the <literal>FROM</> clause.  An <literal>ON</>/<literal>USING</>
      clause of an outer join is <emphasis>not</> equivalent to a
      <literal>WHERE</> condition, because it determines the addition
      of rows (for unmatched input rows) as well as the removal of rows
@@ -692,11 +692,11 @@ SELECT <replaceable>select_list</replaceable>
 	  
    <para>
     In the second query, we could not have written <literal>SELECT *
-    FROM test1 GROUP BY x;</literal>, because there is no single value
+    FROM test1 GROUP BY x</literal>, because there is no single value
     for the column <literal>y</> that could be associated with each
     group.  In general, if a table is grouped, columns that are not
     used in the grouping cannot be referenced except in aggregate
-    expressions, for example:
+    expressions.  An example with aggregate expressions is:
 <screen>
 <prompt>=></> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x;</>
  x | sum
@@ -717,25 +717,25 @@ SELECT <replaceable>select_list</replaceable>
     they have a known constant value per group.
    </para>
 
-   <note>
+   <tip>
     <para>
      Grouping without aggregate expressions effectively calculates the
      set of distinct values in a column.  This can also be achieved
      using the <literal>DISTINCT</> clause (see <xref
      linkend="queries-distinct">).
     </para>
-   </note>
+   </tip>
 
    <para>
-    Here is another example: A <function>sum(sales)</function> on a
+    Here is another example:  <function>sum(sales)</function> on a
     table grouped by product code gives the total sales for each
     product, not the total sales on all products.
 <programlisting>
 SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     FROM products p LEFT JOIN sales s USING (product_id)
-    GROUP BY pid, p.name, p.price;
+    GROUP BY product_id, p.name, p.price;
 </programlisting>
-    In this example, the columns <literal>pid</literal>,
+    In this example, the columns <literal>product_id</literal>,
     <literal>p.name</literal>, and <literal>p.price</literal> must be
     in the <literal>GROUP BY</> clause since they are referenced in
     the query select list.  (Depending on how exactly the products
@@ -767,7 +767,7 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
 SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</optional> GROUP BY ... HAVING <replaceable>boolean_expression</replaceable>
 </synopsis>
     Expressions in the <literal>HAVING</> clause can refer both to
-    grouped expressions and to ungrouped expression (which necessarily
+    grouped expressions and to ungrouped expressions (which necessarily
     involve an aggregate function).
    </para>
 
@@ -794,7 +794,7 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
     Again, a more realistic example:
 <programlisting>
 SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
-    FROM products p LEFT JOIN sales s USING (pid)
+    FROM products p LEFT JOIN sales s USING (product_id)
     WHERE s.date > CURRENT_DATE - INTERVAL '4 weeks'
     GROUP BY product_id, p.name, p.price, p.cost
     HAVING sum(p.price * s.units) > 5000;
@@ -1093,7 +1093,7 @@ SELECT a AS b FROM table1 ORDER BY a;
   <para>
    If more than one sort column is specified, the later entries are
    used to sort rows that are equal under the order imposed by the
-   earlier sort specifications.
+   earlier sort columns.
   </para>
  </sect1>
 
