@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.15 1999/09/14 05:50:27 peter Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.16 1999/09/15 21:56:16 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -130,8 +130,8 @@ jdbc1:
 	) >postgresql/DriverClass.java
 	@$(MAKE) jdbc1real
 
-jdbc2real: postgresql/DriverClass.class \
-	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar msg
+jdbc1real: postgresql/DriverClass.class \
+	$(OBJ_COMMON) $(OBJ_JDBC1) postgresql.jar msg
 
 # This rule builds the JDBC2 compliant driver
 jdbc2:	
