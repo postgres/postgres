@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /**
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.32 2001/09/10 14:55:08 momjian Exp $
+ * $Id: DatabaseMetaData.java,v 1.33 2001/09/29 03:08:01 momjian Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -1895,21 +1895,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException
   {
-    // the field descriptors for the new ResultSet
-    Field f[] = new Field[18];
-    java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
+	Field f[] = new Field[18];		// The field descriptors for the new ResultSet
 
-    f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
-    f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
-    f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
-    f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
-    f[4] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
-    f[5] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
-    f[6] = new Field(connection, "COLUMN_SIZE", iInt4Oid, 4);
-    f[7] = new Field(connection, "BUFFER_LENGTH", iVarcharOid, 32);
-    f[8] = new Field(connection, "DECIMAL_DIGITS", iInt4Oid, 4);
-    f[9] = new Field(connection, "NUM_PREC_RADIX", iInt4Oid, 4);
+    f[0]  = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
+    f[1]  = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
+    f[2]  = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
+    f[3]  = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+    f[4]  = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
+    f[5]  = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+    f[6]  = new Field(connection, "COLUMN_SIZE", iInt4Oid, 4);
+    f[7]  = new Field(connection, "BUFFER_LENGTH", iVarcharOid, 32);
+    f[8]  = new Field(connection, "DECIMAL_DIGITS", iInt4Oid, 4);
+    f[9]  = new Field(connection, "NUM_PREC_RADIX", iInt4Oid, 4);
     f[10] = new Field(connection, "NULLABLE", iInt4Oid, 4);
     f[11] = new Field(connection, "REMARKS", iVarcharOid, 32);
     f[12] = new Field(connection, "COLUMN_DEF", iVarcharOid, 32);
@@ -1919,93 +1917,105 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[16] = new Field(connection, "ORDINAL_POSITION", iInt4Oid,4);
     f[17] = new Field(connection, "IS_NULLABLE", iVarcharOid, 32);
 
-    // Added by Stefan Andreasen <stefan@linux.kapow.dk>
-    // If the pattern are  null then set them to %
-    if (tableNamePattern == null) tableNamePattern="%";
-    if (columnNamePattern == null) columnNamePattern="%";
+	StringBuffer sql = new StringBuffer(512);
 
-    // Now form the query
-	String query =
-	    "select " +
-		(connection.haveMinimumServerVersion("7.2") ? "a.attrelid" : "a.oid") +
-		",c.relname,a.attname,a.atttypid," +
-		"a.attnum,a.attnotnull,a.attlen,a.atttypmod,d.adsrc " +
-		"from (pg_class c inner join pg_attribute a " +
-		"on (c.oid=a.attrelid) ) " +
-		"left outer join pg_attrdef d " +
-		"on (c.oid=d.adrelid and d.adnum=a.attnum) " +
-		"where " +
-		"c.relname like '"+tableNamePattern.toLowerCase()+"' and " +
-		"a.attname like '"+columnNamePattern.toLowerCase()+"' and " +
-		"a.attnum>0 " +
-		"order by c.relname,a.attnum";
+	/* Build a >= 7.1 SQL statement to list all columns */
+	sql.append("select " +
+		(connection.haveMinimumServerVersion("7.2") ? "a.attrelid, " : "a.oid, ") +
+		"    c.relname, " +
+		"    a.attname, " +
+		"    a.atttypid, " +
+		"    a.attnum, " +
+		"    a.attnotnull, " +
+		"    a.attlen, " +
+		"    a.atttypmod, " +
+		"    d.adsrc, " +
+		"    t.typname, " +
+		/* Use the new col_description in 7.2 or an additional outer join in 7.1 */
+		(connection.haveMinimumServerVersion("7.2") ? "col_description(a.attrelid, a.attnum) " : "e.description ") +
+		"from" +
+		"    (" +
+		"        (pg_class c inner join pg_attribute a on" +
+		"            (" +
+		"                a.attrelid=c.oid");
 
-    r = connection.ExecSQL(query);
+	if ((tableNamePattern != null) && ! tableNamePattern.equals("%")) {
+		sql.append("                and c.relname like \'" + tableNamePattern + "\'");
+	}
 
-    while(r.next()) {
-	byte[][] tuple = new byte[18][0];
+	if ((columnNamePattern != null) && ! columnNamePattern.equals("%")) {
+		sql.append("                and a.attname like \'" + columnNamePattern + "\'");
+	}
 
-	// Fetch the description for the table (if any)
-	String getDescriptionStatement =
-		connection.haveMinimumServerVersion("7.2") ?
-		"select col_description(" + r.getInt(1) + "," + r.getInt(5) + ")" :
-	    "select description from pg_description where objoid=" + r.getInt(1);
+	sql.append(
+		"                and a.attnum > 0" +
+		"            )" +
+		"        ) inner join pg_type t on" +
+		"            (" +
+		"                t.oid = a.atttypid" +
+		"            )" +
+		"    )" +
+		"    left outer join pg_attrdef d on" +
+		"        (" +
+		"            c.oid = d.adrelid" +
+		"            and a.attnum = d.adnum" +
+		"        ) ");
 
-	java.sql.ResultSet dr = connection.ExecSQL(getDescriptionStatement);
+	if (!connection.haveMinimumServerVersion("7.2")) {
+		/* Only for 7.1 */
+		sql.append(
+			"    left outer join pg_description e on" +
+			"        (" +
+			"            e.objoid = a.oid" +
+			"        ) ");
+	}
 
-	if(((org.postgresql.ResultSet)dr).getTupleCount()==1) {
-	  dr.next();
-	  tuple[11] = dr.getBytes(1);
-	} else
-		tuple[11] = null;
-	dr.close();
+	sql.append("order by" +
+		"    c.relname, a.attnum");
 
-	tuple[0] = "".getBytes();	// Catalog name
-	tuple[1] = "".getBytes();	// Schema name
-	tuple[2] = r.getBytes(2);	// Table name
-	tuple[3] = r.getBytes(3);	// Column name
+	java.sql.ResultSet r = connection.ExecSQL(sql.toString());
+	while (r.next()) {
+		byte[][] tuple = new byte[18][0];
 
-	dr = connection.ExecSQL("select typname from pg_type where oid = "+r.getString(4));
-	dr.next();
-	String typname=dr.getString(1);
-	dr.close();
-        tuple[4] = Integer.toString(connection.getSQLType(typname)).getBytes();	// Data type
-	tuple[5] = typname.getBytes();	// Type name
+		String nullFlag = r.getString(6);
+		String typname = r.getString(10);
 
-	// Column size
-	// Looking at the psql source,
-	// I think the length of a varchar as specified when the table was created
-	// should be extracted from atttypmod which contains this length + sizeof(int32)
-	if (typname.equals("bpchar") || typname.equals("varchar")) {
-	  int atttypmod = r.getInt(8);
-	  tuple[6] = Integer.toString(atttypmod != -1 ? atttypmod - VARHDRSZ : 0).getBytes();
-	} else
-	  tuple[6] = r.getBytes(7);
+		tuple[0] = null;						// Catalog name, not supported
+		tuple[1] = null;						// Schema name, not supported
+		tuple[2] = r.getBytes(2);				// Table name
+		tuple[3] = r.getBytes(3);				// Column name
+		tuple[4] = Integer.toString(connection.getSQLType(typname)).getBytes();	// Data type
+		tuple[5] = typname.getBytes();			// Type name
 
-	tuple[7] = null;	// Buffer length
+		// Column size
+		// Looking at the psql source,
+		// I think the length of a varchar as specified when the table was created
+		// should be extracted from atttypmod which contains this length + sizeof(int32)
+		if (typname.equals("bpchar") || typname.equals("varchar")) {
+			int atttypmod = r.getInt(8);
+			tuple[6] = Integer.toString(atttypmod != -1 ? atttypmod - VARHDRSZ : 0).getBytes();
+		} else {
+			tuple[6] = r.getBytes(7);
+		}
 
-	tuple[8] = "0".getBytes();	// Decimal Digits - how to get this?
-	tuple[9] = "10".getBytes();	// Num Prec Radix - assume decimal
+		tuple[7] = null;						// Buffer length
+		tuple[8] = "0".getBytes();				// Decimal Digits - how to get this?
+		tuple[9] = "10".getBytes();				// Num Prec Radix - assume decimal
+		tuple[10] = Integer.toString(nullFlag.equals("f") ?
+			java.sql.DatabaseMetaData.columnNullable :
+			java.sql.DatabaseMetaData.columnNoNulls).getBytes();	// Nullable
+		tuple[11] = r.getBytes(11); 			// Description (if any)
+		tuple[12] = r.getBytes(9);				// Column default
+		tuple[13] = null;						// sql data type (unused)
+		tuple[14] = null;						// sql datetime sub (unused)
+		tuple[15] = tuple[6];					// char octet length
+		tuple[16] = r.getBytes(5);				// ordinal position
+		tuple[17] = (nullFlag.equals("f") ? "YES" : "NO").getBytes();	// Is nullable
 
-	// tuple[10] is below
-	// tuple[11] is above
+		v.addElement(tuple);
+	}
+	r.close();
 
-	tuple[12] = r.getBytes(9);	// column default
-
-	tuple[13] = null;	// sql data type (unused)
-	tuple[14] = null;	// sql datetime sub (unused)
-
-	tuple[15] = tuple[6];	// char octet length
-
-	tuple[16] = r.getBytes(5);	// ordinal position
-
-	String nullFlag = r.getString(6);
-	tuple[10] = Integer.toString(nullFlag.equals("f")?java.sql.DatabaseMetaData.columnNullable:java.sql.DatabaseMetaData.columnNoNulls).getBytes();	// Nullable
-	tuple[17] = (nullFlag.equals("f")?"YES":"NO").getBytes();	// is nullable
-
-	v.addElement(tuple);
-      }
-    r.close();
     return new ResultSet(connection, f, v, "OK", 1);
   }
 
