@@ -510,7 +510,6 @@ ECPGexecute(struct statement * stmt)
 				case ECPGt_char_variable:
 					{
 						int			slen = strlen((char *) var->value);
-						char	   *tmp;
 
 						if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
 							return false;
