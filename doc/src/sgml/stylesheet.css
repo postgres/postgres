@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.css,v 1.1 2001/09/14 20:37:55 petere Exp $ */
+/* $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.css,v 1.2 2001/09/15 00:48:59 petere Exp $ */
 
 /* color scheme similar to www.postgresql.org */
 
@@ -38,6 +38,7 @@ DIV.example {
 	border-width: 0px;
 	border-left-width: 2px;
 	border-color: black;
+	margin: 0.5ex;
 }
 
 /* less dense spacing of TOC */

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.9 2001/09/14 20:37:55 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.10 2001/09/15 00:48:59 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -67,6 +67,42 @@
   (list (list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
 
 (define html-index #t)
+
+;; Block elements are allowed in PARA in DocBook, but not in P in
+;; HTML.  With %fix-para-wrappers% turned on, the stylesheets attempt
+;; to avoid putting block elements in HTML P tags by outputting
+;; additional end/begin P pairs around them.
+(define %fix-para-wrappers% #t)
+
+;; ...but we need to do some extra work to make the above apply to PRE
+;; as well.  (mostly pasted from dbverb.dsl)
+(define ($verbatim-display$ indent line-numbers?)
+  (let ((content (make element gi: "PRE"
+                       attributes: (list
+                                    (list "CLASS" (gi)))
+                       (if (or indent line-numbers?)
+                           ($verbatim-line-by-line$ indent line-numbers?)
+                           (process-children)))))
+    (if %shade-verbatim%
+        (make element gi: "TABLE"
+              attributes: ($shade-verbatim-attr$)
+              (make element gi: "TR"
+                    (make element gi: "TD"
+                          content)))
+	(make sequence
+	  (para-check)
+	  content
+	  (para-check 'restart)))))
+
+;; ...and for notes.
+(element note
+  (make sequence
+    (para-check)
+    ($admonition$)
+    (para-check 'restart)))
+
+;;; XXX The above is very ugly.  It might be better to run 'tidy' on
+;;; the resulting *.html files.
 
 ]]> <!-- %output-html -->
 

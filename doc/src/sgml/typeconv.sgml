@@ -1,34 +1,38 @@
 <chapter Id="typeconv">
 <title>Type Conversion</title>
 
+ <sect1 id="typeconv-intro">
+  <title>Introduction</title>
+
 <para>
 <acronym>SQL</acronym> queries can, intentionally or not, require
 mixing of different data types in the same expression. 
-<productname>Postgres</productname> has extensive facilities for
+<productname>PostgreSQL</productname> has extensive facilities for
 evaluating mixed-type expressions.
 </para>
 
 <para>
 In many cases a user will not need
 to understand the details of the type conversion mechanism.
-However, the implicit conversions done by <productname>Postgres</productname>
+However, the implicit conversions done by <productname>PostgreSQL</productname>
 can affect the results of a query.  When necessary, these results
 can be tailored by a user or programmer
 using <emphasis>explicit</emphasis> type coercion.
 </para>
 
 <para>
-This chapter introduces the <productname>Postgres</productname>
+This chapter introduces the <productname>PostgreSQL</productname>
 type conversion mechanisms and conventions.
-Refer to the relevant sections in the User's Guide and Programmer's Guide
+Refer to the relevant sections in the <xref linkend="datatype"> and <xref linkend="functions">
 for more information on specific data types and allowed functions and
 operators.
 </para>
 
 <para>
-The Programmer's Guide has more details on the exact algorithms used for
+The <citetitle>Programmer's Guide</citetitle> has more details on the exact algorithms used for
 implicit type conversion and coercion.
 </para>
+ </sect1>
 
 <sect1 id="typeconv-overview">
 <title>Overview</title>
@@ -36,29 +40,29 @@ implicit type conversion and coercion.
 <para>
 <acronym>SQL</acronym> is a strongly typed language. That is, every data item
 has an associated data type which determines its behavior and allowed usage.
-<productname>Postgres</productname> has an extensible type system that is
+<productname>PostgreSQL</productname> has an extensible type system that is
 much more general and flexible than other <acronym>RDBMS</acronym> implementations.
-Hence, most type conversion behavior in <productname>Postgres</productname>
+Hence, most type conversion behavior in <productname>PostgreSQL</productname>
 should be governed by general rules rather than by ad-hoc heuristics to allow
 mixed-type expressions to be meaningful, even with user-defined types.
 </para>
 
 <para>
-The <productname>Postgres</productname> scanner/parser decodes lexical
+The <productname>PostgreSQL</productname> scanner/parser decodes lexical
 elements into only five fundamental categories: integers, floats, strings,
 names, and keywords.  Most extended types are first tokenized into
 strings. The <acronym>SQL</acronym> language definition allows specifying type
 names with strings, and this mechanism can be used in
-<productname>Postgres</productname> to start the parser down the correct
+<productname>PostgreSQL</productname> to start the parser down the correct
 path. For example, the query
 
-<programlisting>
+<screen>
 tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
  Label  | Value
 --------+-------
  Origin | (0,0)
 (1 row)
-</programlisting>
+</screen>
 
 has two strings, of type <type>text</type> and <type>point</type>.
 If a type is not specified for a string, then the placeholder type
@@ -68,7 +72,7 @@ stages as described below.
 
 <para>
 There are four fundamental <acronym>SQL</acronym> constructs requiring
-distinct type conversion rules in the <productname>Postgres</productname>
+distinct type conversion rules in the <productname>PostgreSQL</productname>
 parser:
 </para>
 
@@ -79,8 +83,8 @@ Operators
 </term>
 <listitem>
 <para>
-<productname>Postgres</productname> allows expressions with
-left- and right-unary (one argument) operators,
+<productname>PostgreSQL</productname> allows expressions with
+prefix and postfix unary (one argument) operators,
 as well as binary (two argument) operators.
 </para>
 </listitem>
@@ -91,12 +95,12 @@ Function calls
 </term>
 <listitem>
 <para>
-Much of the <productname>Postgres</productname> type system is built around a
+Much of the <productname>PostgreSQL</productname> type system is built around a
 rich set of functions. Function calls have one or more arguments which, for
 any specific query, must be matched to the functions available in the system
-catalog.  Since <productname>Postgres</productname> permits function
+catalog.  Since <productname>PostgreSQL</productname> permits function
 overloading, the function name alone does not uniquely identify the function
-to be called --- the parser must select the right function based on the data
+to be called; the parser must select the right function based on the data
 types of the supplied arguments.
 </para>
 </listitem>
@@ -107,7 +111,7 @@ Query targets
 </term>
 <listitem>
 <para>
-<acronym>SQL</acronym> INSERT and UPDATE statements place the results of
+<acronym>SQL</acronym> <command>INSERT</command> and <command>UPDATE</command> statements place the results of
 expressions into a table. The expressions in the query must be matched up
 with, and perhaps converted to, the types of the target columns.
 </para>
@@ -115,15 +119,15 @@ with, and perhaps converted to, the types of the target columns.
 </varlistentry>
 <varlistentry>
 <term>
-UNION and CASE constructs
+<literal>UNION</literal> and <literal>CASE</literal> constructs
 </term>
 <listitem>
 <para>
-Since all select results from a UNION SELECT statement must appear in a single
+Since all select results from a unionized <literal>SELECT</literal> statement must appear in a single
 set of columns, the types of the results
-of each SELECT clause must be matched up and converted to a uniform set.
-Similarly, the result expressions of a CASE construct must be coerced to
-a common type so that the CASE expression as a whole has a known output type.
+of each <literal>SELECT</> clause must be matched up and converted to a uniform set.
+Similarly, the result expressions of a <literal>CASE</> construct must be coerced to
+a common type so that the <literal>CASE</> expression as a whole has a known output type.
 </para>
 </listitem>
 </varlistentry>
@@ -131,14 +135,14 @@ a common type so that the CASE expression as a whole has a known output type.
 
 <para>
 Many of the general type conversion rules use simple conventions built on
-the <productname>Postgres</productname> function and operator system tables.
+the <productname>PostgreSQL</productname> function and operator system tables.
 There are some heuristics included in the conversion rules to better support
-conventions for the <acronym>SQL92</acronym> standard native types such as
-<type>smallint</type>, <type>integer</type>, and <type>float</type>.
+conventions for the <acronym>SQL</acronym> standard native types such as
+<type>smallint</type>, <type>integer</type>, and <type>real</type>.
 </para>
 
 <para>
-The <productname>Postgres</productname> parser uses the convention that all
+The <productname>PostgreSQL</productname> parser uses the convention that all
 type conversion functions take a single argument of the source type and are
 named with the same name as the target type. Any function meeting these
 criteria is considered to be a valid conversion function, and may be used
@@ -162,9 +166,6 @@ they will raise an error when there are multiple choices for user-defined
 types.
 </para>
 
-<sect2>
-<title>Guidelines</title>
-
 <para>
 All type conversion rules are designed with several principles in mind:
 
@@ -185,7 +186,7 @@ be converted to a user-defined type (of course, only if conversion is necessary)
 
 <listitem>
 <para>
-User-defined types are not related. Currently, <productname>Postgres</productname>
+User-defined types are not related. Currently, <productname>PostgreSQL</productname>
 does not have information available to it on relationships between types, other than
 hardcoded heuristics for built-in types and implicit relationships based on available functions
 in the catalog.
@@ -209,18 +210,25 @@ should use this new function and will no longer do the implicit conversion using
 </listitem>
 </itemizedlist>
 </para>
-</sect2>
+
 </sect1>
 
 <sect1 id="typeconv-oper">
 <title>Operators</title>
 
+  <para>
+   The operand types of an operator invocation are resolved following
+   to the procedure below.  Note that this procedure is indirectly affected
+   by the precedence of the involved operators.  See <xref
+   linkend="sql-precedence"> for more information.
+  </para>
+
 <procedure>
-<title>Operator Type Resolution</title>
+<title>Operand Type Resolution</title>
 
 <step performance="required">
 <para>
-Check for an exact match in the pg_operator system catalog.
+Check for an exact match in the <classname>pg_operator</classname> system catalog.
 </para>
 
 <substeps>
@@ -299,46 +307,45 @@ then fail.
 </step>
 </procedure>
 
-<sect2>
-<title>Examples</title>
+<bridgehead renderas="sect2">Examples</bridgehead>
 
-<sect3>
-<title>Exponentiation Operator</title>
+<example>
+<title>Exponentiation Operator Type Resolution</title>
 
 <para>
 There is only one exponentiation
 operator defined in the catalog, and it takes arguments of type 
 <type>double precision</type>.
-The scanner assigns an initial type of <type>int4</type> to both arguments
+The scanner assigns an initial type of <type>integer</type> to both arguments
 of this query expression:
-<programlisting>
+<screen>
 tgl=> select 2 ^ 3 AS "Exp";
  Exp
 -----
    8
 (1 row)
-</programlisting>
+</screen>
 
 So the parser does a type conversion on both operands and the query
 is equivalent to
 
-<programlisting>
+<screen>
 tgl=> select CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "Exp";
  Exp
 -----
    8
 (1 row)
-</programlisting>
+</screen>
 
 or
 
-<programlisting>
+<screen>
 tgl=> select 2.0 ^ 3.0 AS "Exp";
  Exp
 -----
    8
 (1 row)
-</programlisting>
+</screen>
 
 <note>
 <para>
@@ -348,10 +355,10 @@ have an impact on the performance of queries involving large tables.
 </para>
 </note>
 </para>
-</sect3>
+</example>
 
-<sect3>
-<title>String Concatenation</title>
+<example>
+<title>String Concatenation Operator Type Resolution</title>
 
 <para>
 A string-like syntax is used for working with string types as well as for
@@ -361,13 +368,13 @@ Strings with unspecified type are matched with likely operator candidates.
 
 <para>
 One unspecified argument:
-<programlisting>
+<screen>
 tgl=> SELECT text 'abc' || 'def' AS "Text and Unknown";
  Text and Unknown
 ------------------
  abcdef
 (1 row)
-</programlisting>
+</screen>
 </para>
 
 <para>
@@ -378,13 +385,13 @@ be interpreted as of type <type>text</type>.
 
 <para>
 Concatenation on unspecified types:
-<programlisting>
+<screen>
 tgl=> SELECT 'abc' || 'def' AS "Unspecified";
  Unspecified
 -------------
  abcdef
 (1 row)
-</programlisting>
+</screen>
 </para>
 
 <para>
@@ -396,26 +403,26 @@ that category is selected, and then the
 <quote>preferred type</quote> for strings, <type>text</type>, is used as the specific
 type to resolve the unknown literals to.
 </para>
-</sect3>
+</example>
 
-<sect3>
-<title>Factorial</title>
+<example>
+<title>Factorial Operator Type Resolution</title>
 
 <para>
 This example illustrates an interesting result. Traditionally, the
-factorial operator is defined for integers only. The <productname>Postgres</productname>
+factorial operator is defined for integers only. The <productname>PostgreSQL</productname>
 operator catalog has only one entry for factorial, taking an integer operand.
-If given a non-integer numeric argument, <productname>Postgres</productname>
+If given a non-integer numeric argument, <productname>PostgreSQL</productname>
 will try to convert that argument to an integer for evaluation of the
 factorial.
 
-<programlisting>
+<screen>
 tgl=> select (4.3 !);
  ?column?
 ----------
        24
 (1 row)
-</programlisting>
+</screen>
 
 <note>
 <para>
@@ -423,20 +430,25 @@ Of course, this leads to a mathematically suspect result,
 since in principle the factorial of a non-integer is not defined.
 However, the role of a database is not to teach mathematics, but
 to be a tool for data manipulation. If a user chooses to take the
-factorial of a floating point number, <productname>Postgres</productname>
+factorial of a floating point number, <productname>PostgreSQL</productname>
 will try to oblige.
 </para>
 </note>
 </para>
-</sect3>
-</sect2>
+</example>
+
 </sect1>
 
 <sect1 id="typeconv-func">
 <title>Functions</title>
 
+  <para>
+   The argument types of function calls are resolved according to the
+   following steps.
+  </para>
+
 <procedure>
-<title>Function Call Type Resolution</title>
+<title>Function Argument Type Resolution</title>
 
 <step performance="required">
 <para>
@@ -520,38 +532,37 @@ to the named data type.
 </step>
 </procedure>
 
-<sect2>
-<title>Examples</title>
+<bridgehead renderas="sect2">Examples</bridgehead>
 
-<sect3>
-<title>Factorial Function</title>
+<example>
+<title>Factorial Function Argument Type Resolution</title>
 
 <para>
 There is only one factorial function defined in the <classname>pg_proc</classname> catalog.
 So the following query automatically converts the <type>int2</type> argument
 to <type>int4</type>:
 
-<programlisting>
+<screen>
 tgl=> select int4fac(int2 '4');
  int4fac
 ---------
       24
 (1 row)
-</programlisting>
+</screen>
 
 and is actually transformed by the parser to
-<programlisting>
+<screen>
 tgl=> select int4fac(int4(int2 '4'));
  int4fac
 ---------
       24
 (1 row)
-</programlisting>
+</screen>
 </para>
-</sect3>
+</example>
 
-<sect3>
-<title>Substring Function</title>
+<example>
+<title>Substring Function Type Resolution</title>
 
 <para>
 There are two <function>substr</function> functions declared in <classname>pg_proc</classname>. However,
@@ -561,34 +572,35 @@ only one takes two arguments, of types <type>text</type> and <type>int4</type>.
 <para>
 If called with a string constant of unspecified type, the type is matched up
 directly with the only candidate function type:
-<programlisting>
+<screen>
 tgl=> select substr('1234', 3);
  substr
 --------
      34
 (1 row)
-</programlisting>
+</screen>
 </para>
 
 <para>
 If the string is declared to be of type <type>varchar</type>, as might be the case
 if it comes from a table, then the parser will try to coerce it to become <type>text</type>:
-<programlisting>
+<screen>
 tgl=> select substr(varchar '1234', 3);
  substr
 --------
      34
 (1 row)
-</programlisting>
+</screen>
 which is transformed by the parser to become
-<programlisting>
+<screen>
 tgl=> select substr(text(varchar '1234'), 3);
  substr
 --------
      34
 (1 row)
-</programlisting>
+</screen>
 </para>
+<para>
 <note>
 <para>
 Actually, the parser is aware that <type>text</type> and <type>varchar</type>
@@ -597,30 +609,31 @@ accepts the other without doing any physical conversion.  Therefore, no
 explicit type conversion call is really inserted in this case.
 </para>
 </note>
+</para>
 
 <para>
 And, if the function is called with an <type>int4</type>, the parser will
 try to convert that to <type>text</type>:
-<programlisting>
+<screen>
 tgl=> select substr(1234, 3);
  substr
 --------
      34
 (1 row)
-</programlisting>
+</screen>
 actually executes as
-<programlisting>
+<screen>
 tgl=> select substr(text(1234), 3);
  substr
 --------
      34
 (1 row)
-</programlisting>
+</screen>
 This succeeds because there is a conversion function text(int4) in the
 system catalog.
 </para>
-</sect3>
-</sect2>
+</example>
+
 </sect1>
 
 <sect1 id="typeconv-query">
@@ -654,17 +667,14 @@ passing the column's declared length as the second parameter.
 
 </procedure>
 
-<sect2>
-<title>Examples</title>
-
-<sect3>
-<title><type>varchar</type> Storage</title>
+<example>
+<title><type>varchar</type> Storage Type Conversion</title>
 
 <para>
 For a target column declared as <type>varchar(4)</type> the following query
 ensures that the target is sized correctly:
 
-<programlisting>
+<screen>
 tgl=> CREATE TABLE vv (v varchar(4));
 CREATE
 tgl=> INSERT INTO vv SELECT 'abc' || 'def';
@@ -674,33 +684,32 @@ tgl=> SELECT * FROM vv;
 ------
  abcd
 (1 row)
-</programlisting>
+</screen>
 
-What's really happened here is that the two unknown literals are resolved
-to text by default, allowing the <literal>||</literal> operator to be
-resolved as text concatenation.  Then the text result of the operator
+What has really happened here is that the two unknown literals are resolved
+to <type>text</type> by default, allowing the <literal>||</literal> operator to be
+resolved as <type>text</type> concatenation.  Then the <type>text</type> result of the operator
 is coerced to <type>varchar</type> to match the target column type.  (But, since the
-parser knows that text and <type>varchar</type> are binary-compatible, this coercion
+parser knows that <type>text</type> and <type>varchar</type> are binary-compatible, this coercion
 is implicit and does not insert any real function call.)  Finally, the
-sizing function <literal>varchar(varchar,int4)</literal> is found in the system
+sizing function <literal>varchar(varchar, integer)</literal> is found in the system
 catalogs and applied to the operator's result and the stored column length.
 This type-specific function performs the desired truncation.
 </para>
-</sect3>
-</sect2>
+</example>
 </sect1>
 
 <sect1 id="typeconv-union-case">
-<title>UNION and CASE Constructs</title>
+<title><literal>UNION</> and <literal>CASE</> Constructs</title>
 
 <para>
-The UNION and CASE constructs must match up possibly dissimilar types to
+The <literal>UNION</> and <literal>CASE</> constructs must match up possibly dissimilar types to
 become a single result set.  The resolution algorithm is applied separately to
-each output column of a UNION.  CASE uses the identical algorithm to match
+each output column of a union.  <literal>CASE</> uses the identical algorithm to match
 up its result expressions.
 </para>
 <procedure>
-<title>UNION and CASE Type Resolution</title>
+<title><literal>UNION</> and <literal>CASE</> Type Resolution</title>
 
 <step performance="required">
 <para>
@@ -731,48 +740,47 @@ Coerce all inputs to the selected type.
 </para></step>
 </procedure>
 
-<sect2>
-<title>Examples</title>
+<bridgehead renderas="sect2">Examples</bridgehead>
 
-<sect3>
-<title>Underspecified Types</title>
+<example>
+<title>Underspecified Types in a Union</title>
 
 <para>
-<programlisting>
+<screen>
 tgl=> SELECT text 'a' AS "Text" UNION SELECT 'b';
  Text
 ------
  a
  b
 (2 rows)
-</programlisting>
+</screen>
 Here, the unknown-type literal <literal>'b'</literal> will be resolved as type text.
 </para>
-</sect3>
+</example>
 
-<sect3>
-<title>Simple UNION</title>
+<example>
+<title>Type Conversion in a Simple Union</title>
 
 <para>
-<programlisting>
+<screen>
 tgl=> SELECT 1.2 AS "Double" UNION SELECT 1;
  Double
 --------
       1
     1.2
 (2 rows)
-</programlisting>
+</screen>
 </para>
-</sect3>
+</example>
 
-<sect3>
-<title>Transposed UNION</title>
+<example>
+<title>Type Conversion in a Transposed Union</title>
 
 <para>
 Here the output type of the union is forced to match the type of
 the first/top clause in the union:
 
-<programlisting>
+<screen>
 tgl=> SELECT 1 AS "All integers"
 tgl-> UNION SELECT CAST('2.2' AS REAL);
  All integers
@@ -780,7 +788,7 @@ tgl-> UNION SELECT CAST('2.2' AS REAL);
             1
             2
 (2 rows)
-</programlisting>
+</screen>
 </para>
 <para>
 Since <type>REAL</type> is not a preferred type, the parser sees no reason
@@ -788,11 +796,11 @@ to select it over <type>INTEGER</type> (which is what the 1 is), and instead
 falls back on the use-the-first-alternative rule.
 This example demonstrates that the preferred-type mechanism doesn't encode
 as much information as we'd like.  Future versions of
-<productname>Postgres</productname> may support a more general notion of
+<productname>PostgreSQL</productname> may support a more general notion of
 type preferences.
 </para>
-</sect3>
-</sect2>
+</example>
+
 </sect1>
 </chapter>
 
