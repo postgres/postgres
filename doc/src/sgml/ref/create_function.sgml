@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.53 2003/10/26 04:34:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.54 2003/11/12 22:47:47 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -95,7 +95,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
       <para>
        The data type(s) of the function's arguments (optionally 
        schema-qualified), if any. The argument types may be base, complex, or 
-       domain types, or copy the type of an existing column.
+       domains, or copy the type of an existing column.
       </para>
       <para>
        The type of a column is referenced by writing
@@ -120,8 +120,8 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The return data type (optionally schema-qualified). The return type 
-       may be specified as a base, complex, or domain type,
-       or may copy the type of an existing column. See the description
+       may be a base type, complex type, or a domain,
+       or may be specified to copy the type of an existing column. See the description
        under <literal>argtype</literal> above on how to reference the type
        of an existing column.
       </para>

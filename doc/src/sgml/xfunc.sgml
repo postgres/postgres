@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.77 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.78 2003/11/12 22:47:47 petere Exp $
 -->
 
  <sect1 id="xfunc">
@@ -392,9 +392,9 @@ SELECT name(emp) AS youngster
      result of the first function to it:
 
 <screen>
-CREATE FUNCTION getname(emp) RETURNS text AS
-'SELECT $1.name;'
-LANGUAGE SQL;
+CREATE FUNCTION getname(emp) RETURNS text AS '
+    SELECT $1.name;
+' LANGUAGE SQL;
 
 SELECT getname(new_emp());
  getname
@@ -538,12 +538,12 @@ SELECT name, listchildren(name) FROM nodes;
 
     <para>
      <acronym>SQL</acronym> functions may be declared to accept and
-     return the <quote>polymorphic</> types
-     <type>anyelement</type> and <type>anyarray</type>.
-     See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
-     of polymorphic functions. Here is a polymorphic function
-     <function>make_array</function> that builds up an array from two
-     arbitrary data type elements:
+     return the polymorphic types <type>anyelement</type> and
+     <type>anyarray</type>.  See <xref
+     linkend="extend-types-polymorphic"> for a more detailed
+     explanation of polymorphic functions. Here is a polymorphic
+     function <function>make_array</function> that builds up an array
+     from two arbitrary data type elements:
 <screen>
 CREATE FUNCTION make_array(anyelement, anyelement) RETURNS anyarray AS '
     SELECT ARRAY[$1, $2];
@@ -567,7 +567,7 @@ SELECT make_array(1, 2) AS intarray, make_array('a'::text, 'b') AS textarray;
      Without the typecast, you will get errors like this:
 <screen>
 <computeroutput>
-ERROR:  could not determine ANYARRAY/ANYELEMENT type because input is UNKNOWN
+ERROR:  could not determine "anyarray"/"anyelement" type because input has type "unknown"
 </computeroutput>
 </screen>
     </para>
@@ -576,7 +576,7 @@ ERROR:  could not determine ANYARRAY/ANYELEMENT type because input is UNKNOWN
      It is permitted to have polymorphic arguments with a deterministic
      return type, but the converse is not. For example:
 <screen>
-CREATE FUNCTION is_greater(anyelement, anyelement) RETURNS bool AS '
+CREATE FUNCTION is_greater(anyelement, anyelement) RETURNS boolean AS '
     SELECT $1 > $2;
 ' LANGUAGE SQL;
 
@@ -589,8 +589,8 @@ SELECT is_greater(1, 2);
 CREATE FUNCTION invalid_func() RETURNS anyelement AS '
     SELECT 1;
 ' LANGUAGE SQL;
-ERROR:  cannot determine result datatype
-DETAIL:  A function returning ANYARRAY or ANYELEMENT must have at least one argument of either type.
+ERROR:  cannot determine result data type
+DETAIL:  A function returning "anyarray" or "anyelement" must have at least one argument of either type.
 </screen>
     </para>
    </sect2>
@@ -758,15 +758,13 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     that fails as well, the load will fail.
    </para>
 
-   <note>
-    <para>
-     The user ID the <productname>PostgreSQL</productname> server runs
-     as must be able to traverse the path to the file you intend to
-     load.  Making the file or a higher-level directory not readable
-     and/or not executable by the <systemitem>postgres</systemitem> user is a
-     common mistake.
-    </para>
-   </note>
+   <para>
+    The user ID the <productname>PostgreSQL</productname> server runs
+    as must be able to traverse the path to the file you intend to
+    load.  Making the file or a higher-level directory not readable
+    and/or not executable by the <systemitem>postgres</systemitem>
+    user is a common mistake.
+   </para>
 
    <para>
     In any case, the file name that is given in the
@@ -785,16 +783,14 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     </para>
    </note>
 
-   <note>
-    <para>
-     After it is used for the first time, a dynamically loaded object
-     file is retained in memory.  Future calls in the same session to the
-     function(s) in that file will only incur the small overhead of a symbol
-     table lookup.  If you need to force a reload of an object file, for
-     example after recompiling it, use the <command>LOAD</> command or
-     begin a fresh session.
-    </para>
-   </note>
+   <para>
+    After it is used for the first time, a dynamically loaded object
+    file is retained in memory.  Future calls in the same session to
+    the function(s) in that file will only incur the small overhead of
+    a symbol table lookup.  If you need to force a reload of an object
+    file, for example after recompiling it, use the <command>LOAD</>
+    command or begin a fresh session.
+   </para>
 
    <para>
     It is recommended to locate shared libraries either relative to
@@ -805,17 +801,15 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     command <literal>pg_config --pkglibdir</literal>.
    </para>
 
-   <note>
-    <para>
-     Before <productname>PostgreSQL</productname> release 7.2, only exact
-     absolute paths to object files could be specified in <command>CREATE
-     FUNCTION</>.  This approach is now deprecated since it makes the
-     function definition unnecessarily unportable.  It's best to specify
-     just the shared library name with no path nor extension, and let
-     the search mechanism provide that information instead.
-    </para>
-   </note>
-
+   <para>
+    Before <productname>PostgreSQL</productname> release 7.2, only
+    exact absolute paths to object files could be specified in
+    <command>CREATE FUNCTION</>.  This approach is now deprecated
+    since it makes the function definition unnecessarily unportable.
+    It's best to specify just the shared library name with no path nor
+    extension, and let the search mechanism provide that information
+    instead.
+   </para>
   </sect2>
 
    <sect2 id="xfunc-c-basetype">
@@ -1685,8 +1679,7 @@ c_overpaid(PG_FUNCTION_ARGS)
      <function>c_overpaid</function> in SQL:
 
 <programlisting>
-CREATE FUNCTION c_overpaid(emp, integer) 
-    RETURNS boolean
+CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'c_overpaid'
     LANGUAGE C;
 </programlisting>
@@ -2111,7 +2104,7 @@ CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testp
 
     <para>
      C-language functions may be declared to accept and
-     return the <quote>polymorphic</> types
+     return the polymorphic types
      <type>anyelement</type> and <type>anyarray</type>.
      See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
      of polymorphic functions. When function arguments or return types
@@ -2178,14 +2171,13 @@ make_array(PG_FUNCTION_ARGS)
      <function>make_array</function> in SQL:
 
 <programlisting>
-CREATE FUNCTION make_array(anyelement) 
-    RETURNS anyarray
+CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'make_array'
-    LANGUAGE 'C' STRICT;
+    LANGUAGE C STRICT;
 </programlisting>
 
-     Note the use of STRICT; this is essential since the code is not
-     bothering to test for a NULL input.
+     Note the use of <literal>STRICT</literal>; this is essential
+     since the code is not bothering to test for a null input.
     </para>
    </sect2>
   </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.37 2003/11/04 09:55:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.38 2003/11/12 22:47:47 petere Exp $
 -->
 
 <chapter Id="typeconv">
@@ -289,7 +289,7 @@ candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those with the most exact matches
-on input types.  (Domain types are considered the same as their base type
+on input types.  (Domains are considered the same as their base type
 for this purpose.)  Keep all candidates if none have any exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
@@ -542,7 +542,7 @@ candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those with the most exact matches
-on input types.  (Domain types are considered the same as their base type
+on input types.  (Domains are considered the same as their base type
 for this purpose.)  Keep all candidates if none have any exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>

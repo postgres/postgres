@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.26 2003/09/08 23:02:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.27 2003/11/12 22:47:47 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -136,7 +136,7 @@ CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
 
     <para>
      As shown above,
-     to return a NULL value from a PL/Tcl function, execute
+     to return a null value from a PL/Tcl function, execute
      <literal>return_null</literal>.  This can be done whether the
      function is strict or not.
     </para>

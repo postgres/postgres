@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.20 2003/09/12 22:17:23 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.21 2003/11/12 22:47:47 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -17,24 +17,21 @@
   <literal>createlang plpythonu <replaceable>dbname</></literal>.
  </para>
 
- <note>
-  <para>
-   As of <productname>PostgreSQL</productname> 7.4,
-   PL/Python is only available as an <quote>untrusted</> language
-   (meaning it does not offer any way of restricting what users
-   can do in it).  It has therefore been renamed to <literal>plpythonu</>.
-   The trusted variant <literal>plpython</> may become available again in
-   future, if a new secure execution mechanism is developed by the Python
-   community.
-  </para>
- </note>
-
   <tip>
    <para>
     If a language is installed into <literal>template1</>, all subsequently
     created databases will have the language installed automatically.
    </para>
   </tip>
+
+ <para>
+  As of <productname>PostgreSQL</productname> 7.4, PL/Python is only
+  available as an <quote>untrusted</> language (meaning it does not
+  offer any way of restricting what users can do in it).  It has
+  therefore been renamed to <literal>plpythonu</>.  The trusted
+  variant <literal>plpython</> may become available again in future,
+  if a new secure execution mechanism is developed in Python.
+ </para>
 
  <note>
   <para>

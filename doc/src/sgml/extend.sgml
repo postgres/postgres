@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.25 2003/09/11 21:42:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.26 2003/11/12 22:47:47 petere Exp $
 -->
 
  <chapter id="extend">
@@ -105,52 +105,74 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.25 2003/09/11 21:42:19 momj
 
    <para>
     <productname>PostgreSQL</productname> data types are divided into base
-    types, composite types, domain types, and pseudo-types.
+    types, composite types, domains, and pseudo-types.
    </para>
 
-   <para>
-    Base  types  are those, like <type>int4</type>, that are implemented
-    below the level of the  <acronym>SQL</> language (typically in a low-level
-    language such as C).  They generally correspond  to
-    what are often known as abstract data types.
-    <productname>PostgreSQL</productname>
-    can only operate on such types through functions provided
-    by  the  user and only understands the behavior of such
-    types to the extent that the user describes them.  Base types are
-    further subdivided into scalar and array types.  For each scalar type,
-    a corresponding array type is automatically created that can hold
-    variable-size arrays of that scalar type.
-   </para>
+   <sect2>
+    <title>Base Types</title>
 
-   <para>
-    Composite  types, or row types,  are  created whenever the user creates a
-    table; it's also possible to define a <quote>stand-alone</> composite
-    type with no associated table.  A composite type is simply a list of
-    base types with associated field names.  A value of a composite type
-    is a row or record of field values.  The user can access the component
-    fields from <acronym>SQL</> queries.
-   </para>
+    <para>
+     Base types are those, like <type>int4</type>, that are
+     implemented below the level of the <acronym>SQL</> language
+     (typically in a low-level language such as C).  They generally
+     correspond to what are often known as abstract data types.
+     <productname>PostgreSQL</productname> can only operate on such
+     types through functions provided by the user and only understands
+     the behavior of such types to the extent that the user describes
+     them.  Base types are further subdivided into scalar and array
+     types.  For each scalar type, a corresponding array type is
+     automatically created that can hold variable-size arrays of that
+     scalar type.
+    </para>
+   </sect2>
 
-   <para>
-    A domain type is based on a particular base
-    type and for many purposes is interchangeable with its base type.
-    However, a domain may have constraints that restrict its valid values
-    to a subset of what the underlying base type would allow.  Domains can
-    be created by simple <acronym>SQL</> commands.
-   </para>
+   <sect2>
+    <title>Composite Types</title>
 
-   <para>
-    Finally, there are a few <quote>pseudo-types</> for special purposes.
-    Pseudo-types cannot appear as fields of tables or composite types, but
-    they can be used to declare the argument and result types of functions.
-    This provides a mechanism within the type system to identify special
-    classes of functions.  <xref
-    linkend="datatype-pseudotypes-table"> lists the existing
-    pseudo-types.
-   </para>
+    <para>
+     Composite types, or row types, are created whenever the user
+     creates a table; it's also possible to define a
+     <quote>stand-alone</> composite type with no associated table.  A
+     composite type is simply a list of base types with associated
+     field names.  A value of a composite type is a row or record of
+     field values.  The user can access the component fields from
+     <acronym>SQL</> queries.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Domains</title>
+
+    <para>
+     A domain is based on a particular base type and for many purposes
+     is interchangeable with its base type.  However, a domain may
+     have constraints that restrict its valid values to a subset of
+     what the underlying base type would allow.
+    </para>
+
+    <para>
+     Domains can be created using the <acronym>SQL</> commands
+     <command>CREATE DOMAIN</command>.  Their creation and use is not
+     discussed in this chapter.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Pseudo-Types</title>
+
+    <para>
+     There are a few <quote>pseudo-types</> for special purposes.
+     Pseudo-types cannot appear as columns of tables or attributes of
+     composite types, but they can be used to declare the argument and
+     result types of functions.  This provides a mechanism within the
+     type system to identify special classes of functions.  <xref
+     linkend="datatype-pseudotypes-table"> lists the existing
+     pseudo-types.
+    </para>
+   </sect2>
 
    <sect2 id="extend-types-polymorphic">
-    <title>Polymorphic Types and Functions</title>
+    <title>Polymorphic Types</title>
 
    <indexterm zone="extend-types-polymorphic">
     <primary>polymorphic type</primary>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.237 2003/11/10 22:27:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.238 2003/11/12 22:47:47 petere Exp $
 -->
 
 <appendix id="release">
@@ -878,12 +878,12 @@ zero-row record variable (Tom)</para></listitem>
 
 <itemizedlist>
 <listitem><para>Allow PQcmdTuples() to return row counts for MOVE and FETCH (Neil)</para></listitem>
-<listitem><para>Add PQfreemem() for freeing memory on Win32, suggest for NOTIFY (Bruce)</para>
+<listitem><para>Add PQfreemem() for freeing memory on Windows, suggest for NOTIFY (Bruce)</para>
    <para>
-    Win32 requires that memory allocated in a library be freed by a
+    Windows requires that memory allocated in a library be freed by a
     function in the same library, hence free() doesn't work for freeing
     memory allocated by libpq. PQfreemem() is the proper way to free
-    libpq memory, especially on Win32, and is recommended for other
+    libpq memory, especially on Windows, and is recommended for other
     platforms as well.
    </para>
    </listitem>
@@ -961,8 +961,8 @@ zero-row record variable (Tom)</para></listitem>
 <listitem><para>Convert administration scripts to C (Peter)</para></listitem>
 <listitem><para>Bison >= 1.85 is now required to build the PostgreSQL grammar, if building from CVS</para></listitem>
 <listitem><para>Merge documentation into one book (Peter)</para></listitem>
-<listitem><para>Add Win32 compatibility functions (Bruce)</para></listitem>
-<listitem><para>Allow client interfaces to compile under MinGW/Win32 (Bruce)</para></listitem>
+<listitem><para>Add Windows compatibility functions (Bruce)</para></listitem>
+<listitem><para>Allow client interfaces to compile under MinGW (Bruce)</para></listitem>
 <listitem><para>New ereport() function for error reporting (Tom)</para></listitem>
 <listitem><para>Support Intel Linux compiler (Peter)</para></listitem>
 <listitem><para>Improve Linux startup scripts (Slawomir Sudnik, Darko Prenosil)</para></listitem>
@@ -1794,7 +1794,7 @@ of locale?</para></listitem>
 <listitem><para>Fix for sending large queries over non-blocking connections (Bernhard Herzog)</para></listitem>
 <listitem><para>Fix for libpq using timers on Win9X (David Ford)</para></listitem>
 <listitem><para>Allow libpq notify to handle servers with different-length identifiers (Tom)</para></listitem>
-<listitem><para>Add libpq PQescapeString() and PQescapeBytea() to Win32 (Bruce)</para></listitem>
+<listitem><para>Add libpq PQescapeString() and PQescapeBytea() to Windows (Bruce)</para></listitem>
 <listitem><para>Fix for SSL with non-blocking connections (Jack Bates)</para></listitem>
 <listitem><para>Add libpq connection timeout parameter (Denis A Ustimenko)</para></listitem>
 </itemizedlist>
@@ -1846,7 +1846,7 @@ of locale?</para></listitem>
 <listitem><para>Always enable multibyte in compile, remove --enable-multibyte option (Tatsuo)</para></listitem>
 <listitem><para>Always enable locale in compile, remove --enable-locale option (Peter)</para></listitem>
 <listitem><para>Fix for Win9x DLL creation (Magnus Naeslund)</para></listitem>
-<listitem><para>Fix for link() usage by WAL code on Win32, BeOS (Jason Tishler)</para></listitem>
+<listitem><para>Fix for link() usage by WAL code on Windows, BeOS (Jason Tishler)</para></listitem>
 <listitem><para>Add sys/types.h to c.h, remove from main files (Peter, Bruce)</para></listitem>
 <listitem><para>Fix AIX hang on SMP machines (Tomoyuki Niijima)</para></listitem>
 <listitem><para>AIX SMP hang fix (Tomoyuki Niijima)</para></listitem>
@@ -1871,7 +1871,7 @@ of locale?</para></listitem>
 <listitem><para>New Polish FAQ (Marcin Mazurek)</para></listitem>
 <listitem><para>Add Posix semaphore support (Tom)</para></listitem>
 <listitem><para>Document need for reindex (Bruce)</para></listitem>
-<listitem><para>Rename some internal identifiers to simplify Win32 compile (Jan, Katherine Ward)</para></listitem>
+<listitem><para>Rename some internal identifiers to simplify Windows compile (Jan, Katherine Ward)</para></listitem>
 <listitem><para>Add documentation on computing disk space (Bruce)</para></listitem>
 <listitem><para>Remove KSQO from GUC (Bruce)</para></listitem>
 <listitem><para>Fix memory leak in rtree (Kenneth Been)</para></listitem>
@@ -2588,8 +2588,8 @@ of locale?</para></listitem>
 <itemizedlist>
 <listitem><para>Configure, dynamic loader, and shared library fixes (Peter E)</para></listitem>
 <listitem><para>Fixes in QNX 4 port (Bernd Tegge)</para></listitem>
-<listitem><para>Fixes in Cygwin and Win32 ports (Jason Tishler, Gerhard Haring, Dmitry Yurtaev, Darko Prenosil, Mikhail Terekhov)</para></listitem>
-<listitem><para>Fix for Win32 socket communication failures (Magnus, Mikhail Terekhov)</para></listitem>
+<listitem><para>Fixes in Cygwin and Windows ports (Jason Tishler, Gerhard Haring, Dmitry Yurtaev, Darko Prenosil, Mikhail Terekhov)</para></listitem>
+<listitem><para>Fix for Windows socket communication failures (Magnus, Mikhail Terekhov)</para></listitem>
 <listitem><para>Hurd compile fix (Oliver Elphick)</para></listitem>
 <listitem><para>BeOS fixes (Cyril Velter)</para></listitem>
 <listitem><para>Remove configure --enable-unicode-conversion, now enabled by multibyte (Tatsuo)</para></listitem>
@@ -3675,7 +3675,7 @@ Clean up #include in /include directory (Bruce)
 Add scripts for checking includes (Bruce)
 Remove un-needed #include's from *.c files (Bruce)
 Change #include's to use &lt;&gt; and "" as appropriate (Bruce)
-Enable WIN32 compilation of libpq
+Enable Windows compilation of libpq
 Alpha spinlock fix from Uncle George <email>gatgul@voicenet.com</email>
 Overhaul of optimizer data structures (Tom)
 Fix to cygipc library (Yutaka Tanida)
@@ -3688,7 +3688,7 @@ New platform-specific regression handling (Tom)
 Rename oid8 -&gt; oidvector and int28 -&gt; int2vector (Bruce)
 Included all yacc and lex files into the distribution (Peter E.)
 Remove lextest, no longer needed (Peter E)
-Fix for libpq and psql on Win32 (Magnus)
+Fix for libpq and psql on Windows (Magnus)
 Internally change datetime and timespan into timestamp and interval (Thomas)
 Fix for plpgsql on BSD/OS
 Add SQL_ASCII test case to the regression test (Tatsuo)
@@ -3772,7 +3772,7 @@ Fixes for CASE in WHERE join clauses(Tom)
 Fix BTScan abort(Tom)
 Repair the check for redundant UNIQUE and PRIMARY KEY indexes(Thomas)
 Improve it so that it checks for multicolumn constraints(Thomas)
-Fix for Win32 making problem with MB enabled(Hiroki Kataoka)
+Fix for Windows making problem with MB enabled(Hiroki Kataoka)
 Allow BSD yacc and bison to compile pl code(Bruce)
 Fix SET NAMES working
 int8 fixes(Thomas)
@@ -4230,7 +4230,7 @@ Source Tree Changes
 -------------------
 Improve port matching(Tom)
 Portability fixes for SunOS
-Add NT/Win32 backend port and enable dynamic loading(Magnus and Daniel Horak)
+Add Windows NT backend port and enable dynamic loading(Magnus and Daniel Horak)
 New port to Cobalt Qube(Mips) running Linux(Tatsuo)
 Port to NetBSD/m68k(Mr. Mutsuki Nakajima)
 Port to NetBSD/sun3(Mr. Mutsuki Nakajima)
@@ -4338,7 +4338,7 @@ Timezone fixes(Tom)
 HP-UX fixes(Tom)
 Use implicit type coercion for matching DEFAULT values(Thomas)
 Add routines to help with single-byte (internal) character type(Thomas)
-Compilation of libpq for Win32 fixes(Magnus)
+Compilation of libpq for Windows fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
 </programlisting>
 </para>
@@ -4523,7 +4523,7 @@ New contrib/lo code for large object orphan removal(Peter)
 New psql command "SET CLIENT_ENCODING TO 'encoding'" for multibytes
 feature, see /doc/README.mb(Tatsuo)
 /contrib/noupdate code to revoke update permission on a column
-libpq can now be compiled on win32(Magnus)
+libpq can now be compiled on Windows(Magnus)
 Add PQsetdbLogin() in libpq
 New 8-byte integer type, checked by configure for OS support(Thomas)
 Better support for quoted table/column names(Thomas)
@@ -4586,7 +4586,7 @@ New setval() command to set sequence value(Massimo)
 Auto-remove unix socket file on start-up if no postmaster running(Massimo)
 Conditional trace package(Massimo)
 New UNLISTEN command(Massimo)
-psql and libpq now compile under win32 using win32.mak(Magnus)
+psql and libpq now compile under Windows using win32.mak(Magnus)
 Lo_read no longer stores trailing NULL(Bruce)
 Identifiers are now truncated to 31 characters internally(Bruce)
 Createuser options now availble on the command line
@@ -5551,7 +5551,7 @@ new OS-specific template files(Marc)
 no more need to edit Makefile.global(Marc)
 re-arrange include files(Marc)
 nextstep patches (Gregor Hoffleit)
-removed WIN32-specific code(Bruce)
+removed Windows-specific code(Bruce)
 removed postmaster -e option, now only postgres -e option (Bruce)
 merge duplicate library code in front/backends(Martin)
 now works with eBones, international Kerberos(Jun)

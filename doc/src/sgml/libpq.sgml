@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.141 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.142 2003/11/12 22:47:47 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -355,7 +355,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
    whilst doing so.
    The point of this approach is that the waits for I/O to complete can occur
    in the application's main loop, rather than down inside
-   <function>PQconnectdb()</>, and so the application can manage this
+   <function>PQconnectdb</>, and so the application can manage this
    operation in parallel with other activities.
   </para>
   <para>
@@ -829,8 +829,8 @@ has been sent to the server and not yet completed.
 <caution>
 <para>
 <function>PQtransactionStatus</> will give incorrect results when using
-a <productname>PostgreSQL</> 7.3 server that has <literal>AUTOCOMMIT</>
-set to <literal>OFF</>.  The server-side autocommit feature has been
+a <productname>PostgreSQL</> 7.3 server that has the parameter <literal>autocommit</>
+set to off.  The server-side autocommit feature has been
 deprecated and does not exist in later server versions.
 </para>
 </caution>
@@ -1028,7 +1028,7 @@ PGresult *PQexec(PGconn *conn, const char *command);
 It is allowed to include multiple SQL commands (separated by semicolons) in
 the command string.  Multiple queries sent in a single <function>PQexec</>
 call are processed in a single transaction, unless there are explicit
-BEGIN/COMMIT commands included in the query string to divide it into multiple
+<command>BEGIN</command>/<command>COMMIT</command> commands included in the query string to divide it into multiple
 transactions.  Note however that the returned <structname>PGresult</structname>
 structure describes only the result of the last command executed from the
 string.  Should one of the commands fail, processing of the string stops with
@@ -1737,7 +1737,7 @@ This function is deprecated (except for its use in connection with
 <command>COPY</>), because it is possible for a single
 <structname>PGresult</>
 to contain text data in some columns and binary data in others.
-<function>PQfformat()</> is preferred.  <function>PQbinaryTuples</>
+<function>PQfformat</> is preferred.  <function>PQbinaryTuples</>
 returns 1 only if all columns of the result are binary (format 1).
 </para>
 </listitem>
@@ -2068,7 +2068,7 @@ unsigned char *PQescapeBytea(const unsigned char *from,
    <function>PQescapeBytea</> returns an escaped version of the
    <parameter>from</parameter> parameter binary string in memory
    allocated with <function>malloc()</>.  This memory must be freed
-   using <function>PQfreemem()</> when the result is no longer needed.
+   using <function>PQfreemem</> when the result is no longer needed.
    The return string has all special characters replaced so that they
    can be properly processed by the
    <productname>PostgreSQL</productname> string literal parser, and
@@ -2102,7 +2102,7 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    It returns a pointer to a buffer allocated with
    <function>malloc()</function>, or null on error, and puts the size of
    the buffer in <parameter>to_length</parameter>. The result must be
-   freed using <function>PQfreemem()</> when it is no longer needed.
+   freed using <function>PQfreemem</> when it is no longer needed.
   </para>
   </listitem>
   </varlistentry>
@@ -2122,9 +2122,9 @@ void PQfreemem(void *ptr);
    <function>PQescapeBytea</function>,
    <function>PQunescapeBytea</function>,
    and <function>PQnotifies</function>.
-   It is needed by Win32, which can not free memory across
+   It is needed by Microsoft Windows, which cannot free memory across
    DLLs, unless multithreaded DLLs (<option>/MD</option> in VC6) are used.
-   On other platforms it is the same as <function>free()</>.
+   On other platforms, this function is the same as the standard library function <function>free()</>.
   </para>
   </listitem>
   </varlistentry>
@@ -2420,7 +2420,7 @@ while waiting for input from the database server.  However, it is still
 possible that the application will block waiting to send output to the
 server.  This is relatively uncommon but can happen if very long SQL commands
 or data values are sent.  (It is much more probable if the application
-sends data via COPY IN, however.)  To prevent this possibility and achieve
+sends data via <command>COPY IN</command>, however.)  To prevent this possibility and achieve
 completely nonblocking database operation, the following additional
 functions may be used.
 
@@ -2634,14 +2634,9 @@ After processing a <structname>PGnotify</structname> object returned by
 <structname>PGnotify</structname> pointer; the
 <structfield>relname</structfield> and <structfield>extra</structfield> fields
 do not represent separate allocations.
+(At present, the <structfield>extra</structfield> field is unused and will
+always point to an empty string.)
 </para>
-
-<note>
-<para>
- At present the <structfield>extra</structfield> field is unused and will
- always point to an empty string.
-</para>
-</note>
 
 <note>
 <para>
@@ -2657,28 +2652,28 @@ of asynchronous notification.
 </para>
 
 <para>
-<function>PQnotifies()</function> does not actually read data from the server; it just
+<function>PQnotifies</function> does not actually read data from the server; it just
 returns messages previously absorbed by another <application>libpq</application>
 function.  In prior releases of <application>libpq</application>, the only way
 to ensure timely receipt of <command>NOTIFY</> messages was to constantly submit commands,
-even empty ones, and then check <function>PQnotifies()</function> after each
-<function>PQexec()</function>.  While this still works, it is
+even empty ones, and then check <function>PQnotifies</function> after each
+<function>PQexec</function>.  While this still works, it is
 deprecated as a waste of processing power.
 </para>
 
 <para>
 A better way to check for <command>NOTIFY</>
 messages when you have no useful commands to execute is to call
-<function>PQconsumeInput()</function>, then check
-<function>PQnotifies()</function>.
+<function>PQconsumeInput</function>, then check
+<function>PQnotifies</function>.
 You can use <function>select()</function> to wait for data to
 arrive from the server, thereby using no <acronym>CPU</acronym> power unless there is something
-to do.  (See <function>PQsocket()</function> to obtain the file descriptor
+to do.  (See <function>PQsocket</function> to obtain the file descriptor
 number to use with <function>select()</function>.)
 Note that this will work OK whether you submit commands with
 <function>PQsendQuery</function>/<function>PQgetResult</function> or simply
 use <function>PQexec</function>.  You should, however, remember to
-check <function>PQnotifies()</function> after each
+check <function>PQnotifies</function> after each
 <function>PQgetResult</function> or <function>PQexec</function>, to see
 if any notifications came in during the processing of the command.
 </para>
@@ -2813,7 +2808,7 @@ int PQputCopyData(PGconn *conn,
 </para>
 
 <para>
-Transmits the COPY data in the specified <parameter>buffer</>, of length
+Transmits the <command>COPY</command> data in the specified <parameter>buffer</>, of length
 <parameter>nbytes</>, to the server.  The result is 1 if the data was sent,
 zero if it was not sent because the attempt would block (this case is only
 possible if the connection is in nonblocking mode), or -1 if an error occurred.
@@ -2896,7 +2891,7 @@ int PQgetCopyData(PGconn *conn,
 </para>
 
 <para>
-Attempts to obtain another row of data from the server during a COPY.
+Attempts to obtain another row of data from the server during a <command>COPY</command>.
 Data is always returned one data row at a time; if only a partial row
 is available, it is not returned.  Successful return of a data row
 involves allocating a chunk of memory to hold the data.  The
@@ -2910,17 +2905,17 @@ buffer is returned.  A non-<symbol>NULL</symbol> result buffer must be freed usi
 When a row is successfully returned, the return value is the number of
 data bytes in the row (this will always be greater than zero).  The
 returned string is always null-terminated, though this is probably only
-useful for textual COPY.  A result of zero indicates that the COPY is
+useful for textual <command>COPY</command>.  A result of zero indicates that the <command>COPY</command> is
 still in progress, but no row is yet available (this is only possible
 when <parameter>async</> is true).  A
-result of -1 indicates that the COPY is done.
+result of -1 indicates that the <command>COPY</command> is done.
 A result of -2 indicates that an error occurred (consult
 <function>PQerrorMessage</> for the reason).
 </para>
 
 <para>
 When <parameter>async</> is true (not zero), <function>PQgetCopyData</>
-will not block waiting for input; it will return zero if the COPY is still
+will not block waiting for input; it will return zero if the <command>COPY</command> is still
 in progress but no complete row is available.  (In this case wait for
 read-ready before trying again; it does not matter whether you call
 <function>PQconsumeInput</>.)  When <parameter>async</> is
@@ -2992,7 +2987,7 @@ for a terminator line).
 <term><function>PQgetlineAsync</function><indexterm><primary>PQgetlineAsync</></></term>
 <listitem>
 <para>
-          Reads a row of COPY data
+          Reads a row of <command>COPY</command> data
           (transmitted  by the server) into a buffer
           without blocking.
 <synopsis>
@@ -3031,7 +3026,7 @@ a whole row will be returned at one time.  But if the buffer offered by
 the caller is too small to hold a row sent by the server, then a partial
 data row will be returned.  With textual data this can be detected by testing
 whether the last returned byte is <literal>\n</literal> or not.  (In a binary
-COPY, actual parsing of the COPY data format will be needed to make the
+<command>COPY</>, actual parsing of the <command>COPY</> data format will be needed to make the
 equivalent determination.)
 The returned string is not null-terminated.  (If you want to add a
 terminating null, be sure to pass a <parameter>bufsize</parameter> one smaller
@@ -3065,7 +3060,7 @@ call; it is okay to send a partial line or multiple lines per call.
 Before <productname>PostgreSQL</productname> protocol 3.0, it was necessary
 for the application to explicitly send the two characters
 <literal>\.</literal> as a final line to indicate to the server that it had
-finished sending COPY data.  While this still works, it is deprecated and the
+finished sending <command>COPY</> data.  While this still works, it is deprecated and the
 special meaning of <literal>\.</literal> can be expected to be removed in a
 future release.  It is sufficient to call <function>PQendcopy</function> after
 having sent the actual data.
@@ -3162,17 +3157,19 @@ Determines the verbosity of messages returned by
 <function>PQerrorMessage</> and <function>PQresultErrorMessage</>.
 <synopsis>
 typedef enum {
-    PQERRORS_TERSE, PQERRORS_DEFAULT, PQERRORS_VERBOSE
+    PQERRORS_TERSE,
+    PQERRORS_DEFAULT,
+    PQERRORS_VERBOSE
 } PGVerbosity;
 
 PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
 </synopsis>
 <function>PQsetErrorVerbosity</> sets the verbosity mode, returning the
 connection's previous setting.
-In TERSE mode, returned messages include severity, primary text, and position
-only; this will normally fit on a single line.  The DEFAULT mode produces
+In <firstterm>terse</> mode, returned messages include severity, primary text, and position
+only; this will normally fit on a single line.  The default mode produces
 messages that include the above plus any detail, hint, or context fields
-(these may span multiple lines).  The VERBOSE mode includes all available
+(these may span multiple lines).  The <firstterm>VERBOSE</> mode includes all available
 fields.  Changing the verbosity does not affect the messages available from
 already-existing <structname>PGresult</> objects, only subsequently-created
 ones.
@@ -3568,7 +3565,7 @@ If the permissions are less strict than this, the file will be ignored.
 </sect1>
 
 <sect1 id="libpq-threading">
-<title>Threading Behavior</title>
+<title>Behavior in Threaded Programs</title>
 
 <indexterm zone="libpq-threading">
  <primary>threads</primary>
@@ -3576,11 +3573,14 @@ If the permissions are less strict than this, the file will be ignored.
 </indexterm>
 
 <para>
-<application>libpq</application> is thread-safe if the library is
-compiled using <filename>configure</filename>'s 
-<literal>--enable-thread-safety</> command-line option.  
-(In addition, you might need to use other threading command-line 
-options to compile your client code.)
+<application>libpq</application> is reentrant and thread-safe if the
+<filename>configure</filename> command-line option
+<literal>--enable-thread-safety</> has been used when the PostgreSQL
+distribution was built.
+In addition, you might need to use additional compiler command-line 
+options when you compile your application code.  Refer to your system's
+documentation for information about how to build thread-enabled
+applications.
 </para>
 
 <para>

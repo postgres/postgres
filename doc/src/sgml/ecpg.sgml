@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.53 2003/10/17 18:57:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.54 2003/11/12 22:47:47 petere Exp $
 -->
 
 <chapter id="ecpg">
@@ -284,7 +284,7 @@ EXEC SQL COMMIT;
   </para>
 
   <para>
-   Single-row Select:
+   Single-row select:
 <programlisting>
 EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';
 </programlisting>
@@ -359,7 +359,7 @@ EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
    The second option is to execute a statement to switch the current
    connection.  That statement is:
 <programlisting>
-SET CONNECTION <replaceable>connection-name</replaceable>;
+EXEC SQL SET CONNECTION <replaceable>connection-name</replaceable>;
 </programlisting>
    This option is particularly convenient if many statements are to be
    executed on the same connection.
@@ -392,7 +392,7 @@ SET CONNECTION <replaceable>connection-name</replaceable>;
     write the name of a C variable into the SQL statement, prefixed by
     a colon.  For example:
 <programlisting>
-INSERT INTO sometable VALUES (:v1, 'foo', :v2);
+EXEC SQL INSERT INTO sometable VALUES (:v1, 'foo', :v2);
 </programlisting>
     This statements refers to two C variables named
     <varname>v1</varname> and <varname>v2</varname> and also uses a
@@ -592,7 +592,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 const char *stmt = "CREATE TABLE test1 (...);";
 EXEC SQL END DECLARE SECTION;
 
-EXECUTE IMMEDIATE :stmt;
+EXEC SQL EXECUTE IMMEDIATE :stmt;
 </programlisting>
    You may not execute statements that retrieve data (e.g.,
    <command>SELECT</command>) this way.
@@ -611,9 +611,9 @@ EXEC SQL BEGIN DECLARE SECTION;
 const char *stmt = "INSERT INTO test1 VALUES(?, ?);";
 EXEC SQL END DECLARE SECTION;
 
-PREPARE mystmt FROM :stmt;
+EXEC SQL PREPARE mystmt FROM :stmt;
  ...
-EXECUTE mystmt USING 42, 'foobar';
+EXEC SQL EXECUTE mystmt USING 42, 'foobar';
 </programlisting>
    If the statement you are executing returns values, then add an
    <literal>INTO</literal> clause:
@@ -624,9 +624,9 @@ int v1, v2;
 VARCHAR v3;
 EXEC SQL END DECLARE SECTION;
 
-PREPARE mystmt FROM :stmt;
+EXEC SQL PREPARE mystmt FROM :stmt;
  ...
-EXECUTE mystmt INTO v1, v2, v3 USING 37;
+EXEC SQL EXECUTE mystmt INTO v1, v2, v3 USING 37;
 </programlisting>
    An <command>EXECUTE</command> command may have an
    <literal>INTO</literal> clause, a <literal>USING</literal> clause,
@@ -668,7 +668,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
 EXEC SQL ALLOCATE DESCRIPTOR <replaceable>identifier</replaceable>;
 </programlisting>
    The identifier serves as the <quote>variable name</quote> of the
-   descriptor area.  The scope of the allocated descriptor is WHAT?.
+   descriptor area.  <comment>The scope of the allocated descriptor is WHAT?.</comment>
    When you don't need the descriptor anymore, you should deallocate
    it:
 <programlisting>

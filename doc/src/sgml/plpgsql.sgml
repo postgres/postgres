@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.28 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.29 2003/11/12 22:47:47 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -114,25 +114,25 @@ END;
 
    <para>
     Because <application>PL/pgSQL</application> saves execution plans
-	in this way, SQL commands that appear directly in a
-	<application>PL/pgSQL</application> function must refer to the
-	same tables and columns on every execution; that is, you cannot use
-	a parameter as the name of a table or column in an SQL command.  To get
-	around this restriction, you can construct dynamic commands using
-	the <application>PL/pgSQL</application> <command>EXECUTE</command>
-	statement --- at the price of constructing a new execution plan on
-	every execution.
+        in this way, SQL commands that appear directly in a
+        <application>PL/pgSQL</application> function must refer to the
+        same tables and columns on every execution; that is, you cannot use
+        a parameter as the name of a table or column in an SQL command.  To get
+        around this restriction, you can construct dynamic commands using
+        the <application>PL/pgSQL</application> <command>EXECUTE</command>
+        statement --- at the price of constructing a new execution plan on
+        every execution.
    </para>
 
    <note>
-	<para>
-	 The <application>PL/pgSQL</application>
-	 <command>EXECUTE</command> statement is not related to the
-	 <command>EXECUTE</command> statement supported by the
-	 <productname>PostgreSQL</productname> server. The server's
-	 <command>EXECUTE</command> statement cannot be used within
-	 <application>PL/pgSQL</> functions (and is not needed).
-	</para>
+        <para>
+         The <application>PL/pgSQL</application>
+         <command>EXECUTE</command> statement is not related to the
+         <command>EXECUTE</command> statement supported by the
+         <productname>PostgreSQL</productname> server. The server's
+         <command>EXECUTE</command> statement cannot be used within
+         <application>PL/pgSQL</> functions (and is not needed).
+        </para>
    </note>
 
    <para>
@@ -195,7 +195,7 @@ END;
 
     <para>
      <application>PL/pgSQL</> functions may also be declared to accept
-     and return the <quote>polymorphic</> types
+     and return the polymorphic types
      <type>anyelement</type> and <type>anyarray</type>.  The actual
      data types handled by a polymorphic function can vary from call to
      call, as discussed in <xref linkend="extend-types-polymorphic">.
@@ -230,7 +230,7 @@ END;
     the function definition.  For example:
 <programlisting>
 CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS '
-	  ....
+          ....
 end;
 ' LANGUAGE plpgsql;
 </programlisting>
@@ -255,7 +255,7 @@ end;
    </para>
 
   <sect2 id="plpgsql-quote-tips">
-   <title>Handling of Quote Marks</title>
+   <title>Handling of Quotation Marks</title>
 
   <para>
    Since the code of a <application>PL/pgSQL</> function is specified in
@@ -265,13 +265,13 @@ end;
    rather complicated code at times, especially if you are writing a
    function that generates other functions, as in the example in <xref
    linkend="plpgsql-statements-executing-dyn">.  This chart may be useful
-   as a summary of the needed numbers of quote marks in
+   as a summary of the needed numbers of quotation marks in
    various situations.
   </para>
 
   <variablelist>
    <varlistentry>
-    <term>1 quote mark</term>
+    <term>1 quotation mark</term>
     <listitem>
      <para>
       To begin and end the function body, for example:
@@ -279,14 +279,14 @@ end;
 CREATE FUNCTION foo() RETURNS integer AS '...'
     LANGUAGE plpgsql;
 </programlisting>
-      Anywhere within the function body, quote marks <emphasis>must</>
+      Anywhere within the function body, quotation marks <emphasis>must</>
       appear in pairs.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>2 quote marks</term>
+    <term>2 quotation marks</term>
     <listitem>
      <para>
       For string literals inside the function body, for example:
@@ -303,10 +303,10 @@ SELECT * FROM users WHERE f_name='foobar';
    </varlistentry>
 
    <varlistentry>
-    <term>4 quote marks</term>
+    <term>4 quotation marks</term>
     <listitem>
      <para>
-      When you need a single quote in a string constant inside the function
+      When you need a single quotation mark in a string constant inside the function
       body, for example:
 <programlisting>
 a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
@@ -318,10 +318,10 @@ a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
    </varlistentry>
 
    <varlistentry>
-    <term>6 quote marks</term>
+    <term>6 quotation marks</term>
     <listitem>
      <para>
-      When a single quote in a string inside the function body is
+      When a single quotation mark in a string inside the function body is
       adjacent to the end of that string constant, for example:
 <programlisting>
 a_output := a_output || '' AND name LIKE ''''foobar''''''
@@ -333,11 +333,11 @@ a_output := a_output || '' AND name LIKE ''''foobar''''''
    </varlistentry>
 
    <varlistentry>
-    <term>10 quote marks</term>
+    <term>10 quotation marks</term>
     <listitem>
      <para>
-      When you want two single quotes in a string constant (which
-      accounts for 8 quotes) and this is adjacent to the end of that
+      When you want two single quotation marks in a string constant (which
+      accounts for 8 quotation marks) and this is adjacent to the end of that
       string constant (2 more).  You will probably only need that if
       you are writing a function that generates other functions.  For
       example:
@@ -358,7 +358,7 @@ if v_... like ''...'' then return ''...''; end if;
   </variablelist>
 
    <para>
-    A different approach is to escape quote marks in the function body
+    A different approach is to escape quotation marks in the function body
     with a backslash rather than by doubling them.  With this method
     you'll find yourself writing things like <literal>\'\'</> instead
     of <literal>''''</>.  Some find this easier to keep track of, some
@@ -568,7 +568,7 @@ END;
       linkend="extend-types-polymorphic">).
       This allows the function to access its actual return type
       as shown in <xref linkend="plpgsql-declaration-type">.
-      <literal>$0</literal> is initialized to NULL and can be modified by
+      <literal>$0</literal> is initialized to null and can be modified by
       the function, so it can be used to hold the return value if desired,
       though that is not required.  <literal>$0</literal> can also be
       given an alias.  For example, this function works on any data type
@@ -689,14 +689,12 @@ END;
    </para>
   </sect2>
 
-    <sect2 id="plpgsql-declaration-records">
-     <title>Record Types</title>
+  <sect2 id="plpgsql-declaration-records">
+   <title>Record Types</title>
 
-    <para>
 <synopsis>
 <replaceable>name</replaceable> RECORD;
 </synopsis>
-    </para>
 
    <para>
     Record variables are similar to row-type variables, but they have no
@@ -721,36 +719,38 @@ END;
    </para>
   </sect2>
 
-    <sect2 id="plpgsql-declaration-renaming-vars">
-     <title><literal>RENAME</></title>
+  <sect2 id="plpgsql-declaration-renaming-vars">
+   <title><literal>RENAME</></title>
 
-     <para>
 <synopsis>
 RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
 </synopsis>
 
-      Using the RENAME declaration you can change the name of a variable,
-      record or row. This is primarily useful if NEW or OLD should be
-      referenced by another name inside a trigger procedure.  See also ALIAS.
-     </para>
+   <para>
+    Using the <literal>RENAME</literal> declaration you can change the
+    name of a variable, record or row. This is primarily useful if
+    <literal>NEW</literal> or <literal>OLD</literal> should be
+    referenced by another name inside a trigger procedure.  See also
+    <literal>ALIAS</literal>.
+   </para>
 
-     <para>
-      Examples:
+   <para>
+    Examples:
 <programlisting>
 RENAME id TO user_id;
 RENAME this_var TO that_var;
 </programlisting>
-     </para>
+   </para>
 
     <note>
-    <para>
-	  RENAME appears to be broken as of <productname>PostgreSQL</>
-	  7.3.  Fixing this is of low priority, since ALIAS covers most of
-	  the practical uses of RENAME.
-    </para>
+     <para>
+      <literal>RENAME</literal> appears to be broken as of
+      <productname>PostgreSQL</> 7.3.  Fixing this is of low priority,
+      since <literal>ALIAS</literal> covers most of the practical uses
+      of <literal>RENAME</literal>.
+     </para>
     </note>
-
-    </sect2>
+   </sect2>
   </sect1>
 
   <sect1 id="plpgsql-expressions">
@@ -1159,9 +1159,9 @@ END;
     <title>Obtaining the Result Status</title>
 
     <para>
-	 There are several ways to determine the effect of a command. The
-	 first method is to use the <command>GET DIAGNOSTICS</command>
-	 command, which has the form:
+         There are several ways to determine the effect of a command. The
+         first method is to use the <command>GET DIAGNOSTICS</command>
+         command, which has the form:
 
 <synopsis>
 GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional> ;
@@ -1192,49 +1192,49 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
      type <type>boolean</type>.  <literal>FOUND</literal> starts out
      false within each <application>PL/pgSQL</application> function call.
      It is set by each of the following types of statements:
-	 <itemizedlist>
-	  <listitem>
-	   <para>
-		A <command>SELECT INTO</command> statement sets
-		<literal>FOUND</literal> true if it returns a row, false if no
-		row is returned.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A <command>PERFORM</> statement sets <literal>FOUND</literal>
-		true if it produces (and discards) a row, false if no row is
-		produced.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		<command>UPDATE</>, <command>INSERT</>, and <command>DELETE</>
-		statements set <literal>FOUND</literal> true if at least one
-		row is affected, false if no row is affected.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A <command>FETCH</> statement sets <literal>FOUND</literal>
-		true if it returns a row, false if no row is returned.
-	   </para>
-	  </listitem>
-	  <listitem>
-	   <para>
-		A <command>FOR</> statement sets <literal>FOUND</literal> true
-		if it iterates one or more times, else false.  This applies to
-		all three variants of the <command>FOR</> statement (integer
-		<command>FOR</> loops, record-set <command>FOR</> loops, and
-		dynamic record-set <command>FOR</>
-		loops). <literal>FOUND</literal> is only set when the
-		<command>FOR</> loop exits: inside the execution of the loop,
-		<literal>FOUND</literal> is not modified by the
-		<command>FOR</> statement, although it may be changed by the
-		execution of other statements within the loop body.
-	   </para>
-	  </listitem>
-	 </itemizedlist>
+         <itemizedlist>
+          <listitem>
+           <para>
+                A <command>SELECT INTO</command> statement sets
+                <literal>FOUND</literal> true if it returns a row, false if no
+                row is returned.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+                A <command>PERFORM</> statement sets <literal>FOUND</literal>
+                true if it produces (and discards) a row, false if no row is
+                produced.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+                <command>UPDATE</>, <command>INSERT</>, and <command>DELETE</>
+                statements set <literal>FOUND</literal> true if at least one
+                row is affected, false if no row is affected.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+                A <command>FETCH</> statement sets <literal>FOUND</literal>
+                true if it returns a row, false if no row is returned.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+                A <command>FOR</> statement sets <literal>FOUND</literal> true
+                if it iterates one or more times, else false.  This applies to
+                all three variants of the <command>FOR</> statement (integer
+                <command>FOR</> loops, record-set <command>FOR</> loops, and
+                dynamic record-set <command>FOR</>
+                loops). <literal>FOUND</literal> is only set when the
+                <command>FOR</> loop exits: inside the execution of the loop,
+                <literal>FOUND</literal> is not modified by the
+                <command>FOR</> statement, although it may be changed by the
+                execution of other statements within the loop body.
+           </para>
+          </listitem>
+         </itemizedlist>
      <literal>FOUND</literal> is a local variable; any changes
      to it affect only the current <application>PL/pgSQL</application>
      function.
@@ -1583,7 +1583,7 @@ EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <re
 
        <para>
         If <literal>WHEN</> is present, loop exit occurs only if the specified condition
-	is true, otherwise control passes to the statement after <literal>EXIT</>.
+        is true, otherwise control passes to the statement after <literal>EXIT</>.
        </para>
 
        <para>
@@ -1624,8 +1624,8 @@ END LOOP;
        <para>
         The <literal>WHILE</> statement repeats a
         sequence of statements so long as the condition expression
-	evaluates to true.  The condition is checked just before
-	each entry to the loop body.
+        evaluates to true.  The condition is checked just before
+        each entry to the loop body.
        </para>
 
        <para>
@@ -1654,12 +1654,12 @@ END LOOP;
 
        <para>
         This form of <literal>FOR</> creates a loop that iterates over a range of integer
-	values. The variable 
+        values. The variable 
         <replaceable>name</replaceable> is automatically defined as type
         <type>integer</> and exists only inside the loop. The two expressions giving
         the lower and upper bound of the range are evaluated once when entering
         the loop. The iteration step is normally 1, but is -1 when <literal>REVERSE</> is
-	specified.
+        specified.
        </para>
 
        <para>
@@ -1678,7 +1678,7 @@ END LOOP;
 
        <para>
         If the lower bound is greater than the upper bound (or less than,
-	in the <literal>REVERSE</> case), the loop body is not
+        in the <literal>REVERSE</> case), the loop body is not
         executed at all.  No error is raised.
        </para>
      </sect3>
@@ -1841,13 +1841,13 @@ OPEN <replaceable>unbound-cursor</replaceable> FOR SELECT ...;
 
        <para>
     The cursor variable is opened and given the specified query to
-	execute.  The cursor cannot be open already, and it must have been
-	declared as an unbound cursor (that is, as a simple
-	<type>refcursor</> variable).  The <command>SELECT</command> query
-	is treated in the same way as other <command>SELECT</command>
-	statements in <application>PL/pgSQL</>: <application>PL/pgSQL</>
-	variable names are substituted, and the query plan is cached for
-	possible reuse.
+        execute.  The cursor cannot be open already, and it must have been
+        declared as an unbound cursor (that is, as a simple
+        <type>refcursor</> variable).  The <command>SELECT</command> query
+        is treated in the same way as other <command>SELECT</command>
+        statements in <application>PL/pgSQL</>: <application>PL/pgSQL</>
+        variable names are substituted, and the query plan is cached for
+        possible reuse.
        </para>
 
        <para>
@@ -1865,14 +1865,14 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
 OPEN <replaceable>unbound-cursor</replaceable> FOR EXECUTE <replaceable class="command">query-string</replaceable>;
 </synopsis>
 
-	 <para>
-	  The cursor variable is opened and given the specified query to
-	  execute.  The cursor cannot be open already, and it must have been
-	  declared as an unbound cursor (that is, as a simple
-	  <type>refcursor</> variable).  The query is specified as a string
-	  expression in the same way as in the <command>EXECUTE</command>
-	  command.  As usual, this gives flexibility so the query can vary
-	  from one run to the next.
+         <para>
+          The cursor variable is opened and given the specified query to
+          execute.  The cursor cannot be open already, and it must have been
+          declared as an unbound cursor (that is, as a simple
+          <type>refcursor</> variable).  The query is specified as a string
+          expression in the same way as in the <command>EXECUTE</command>
+          command.  As usual, this gives flexibility so the query can vary
+          from one run to the next.
        </para>
 
        <para>
@@ -1890,14 +1890,14 @@ OPEN curs1 FOR EXECUTE ''SELECT * FROM '' || quote_ident($1);
 OPEN <replaceable>bound-cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
 </synopsis>
 
-	 <para>
-	  This form of <command>OPEN</command> is used to open a cursor
-	  variable whose query was bound to it when it was declared.  The
-	  cursor cannot be open already.  A list of actual argument value
-	  expressions must appear if and only if the cursor was declared to
-	  take arguments.  These values will be substituted in the query.
-	  The query plan for a bound cursor is always considered cacheable;
-	  there is no equivalent of <command>EXECUTE</command> in this case.
+         <para>
+          This form of <command>OPEN</command> is used to open a cursor
+          variable whose query was bound to it when it was declared.  The
+          cursor cannot be open already.  A list of actual argument value
+          expressions must appear if and only if the cursor was declared to
+          take arguments.  These values will be substituted in the query.
+          The query plan for a bound cursor is always considered cacheable;
+          there is no equivalent of <command>EXECUTE</command> in this case.
          </para>
 
     <para>
@@ -1941,13 +1941,13 @@ OPEN curs3(42);
 FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
 </synopsis>
 
-	 <para>
-	  <command>FETCH</command> retrieves the next row from the
-	  cursor into a target, which may be a row variable, a record
-	  variable, or a comma-separated list of simple variables, just like
-	  <command>SELECT INTO</command>.  As with <command>SELECT
-	   INTO</command>, the special variable <literal>FOUND</literal> may
-	  be checked to see whether a row was obtained or not.
+         <para>
+          <command>FETCH</command> retrieves the next row from the
+          cursor into a target, which may be a row variable, a record
+          variable, or a comma-separated list of simple variables, just like
+          <command>SELECT INTO</command>.  As with <command>SELECT
+           INTO</command>, the special variable <literal>FOUND</literal> may
+          be checked to see whether a row was obtained or not.
          </para>
 
     <para>
@@ -1968,8 +1968,8 @@ CLOSE <replaceable>cursor</replaceable>;
 
        <para>
         <command>CLOSE</command> closes the portal underlying an open
-	cursor.  This can be used to release resources earlier than end of
-	transaction, or to free up the cursor variable to be opened again.
+        cursor.  This can be used to release resources earlier than end of
+        transaction, or to free up the cursor variable to be opened again.
        </para>
 
        <para>
@@ -1986,40 +1986,40 @@ CLOSE curs1;
        <para>
         <application>PL/pgSQL</> functions can return cursors to the
         caller. This is useful to return multiple rows or columns,
-	especially with very large result sets.  To do this, the function
-	opens the cursor and returns the cursor name to the caller (or simply
-	opens the cursor using a portal name specified by or otherwise known
-	to the caller).  The caller can then fetch rows from the cursor. The
-	cursor can be closed by the caller, or it will be closed automatically
+        especially with very large result sets.  To do this, the function
+        opens the cursor and returns the cursor name to the caller (or simply
+        opens the cursor using a portal name specified by or otherwise known
+        to the caller).  The caller can then fetch rows from the cursor. The
+        cursor can be closed by the caller, or it will be closed automatically
         when the transaction closes.
        </para>
 
        <para>
         The portal name used for a cursor can be specified by the
-	programmer or automatically generated.  To specify a portal name,
-	simply assign a string to the <type>refcursor</> variable before
-	opening it.  The string value of the <type>refcursor</> variable
-	will be used by <command>OPEN</> as the name of the underlying portal.
-	However, if the <type>refcursor</> variable is NULL,
-	<command>OPEN</> automatically generates a name that does not
-	conflict with any existing portal, and assigns it to the
-	<type>refcursor</> variable.
+        programmer or automatically generated.  To specify a portal name,
+        simply assign a string to the <type>refcursor</> variable before
+        opening it.  The string value of the <type>refcursor</> variable
+        will be used by <command>OPEN</> as the name of the underlying portal.
+        However, if the <type>refcursor</> variable is null,
+        <command>OPEN</> automatically generates a name that does not
+        conflict with any existing portal, and assigns it to the
+        <type>refcursor</> variable.
        </para>
 
        <note>
         <para>
-	 A bound cursor variable is initialized to the string value
-	 representing its name, so that the portal name is the same as
-	 the cursor variable name, unless the programmer overrides it
-	 by assignment before opening the cursor.  But an unbound cursor
-	 variable defaults to an initial value of NULL, so it will receive
-	 an automatically-generated unique name, unless overridden.
+         A bound cursor variable is initialized to the string value
+         representing its name, so that the portal name is the same as
+         the cursor variable name, unless the programmer overrides it
+         by assignment before opening the cursor.  But an unbound cursor
+         variable defaults to the null value initially , so it will receive
+         an automatically-generated unique name, unless overridden.
         </para>
        </note>
 
        <para>
         The following example shows one way a cursor name can be supplied by
-	the caller:
+        the caller:
 
 <programlisting>
 CREATE TABLE test (col text);
@@ -2104,7 +2104,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 
    <!--
    This example should work, but does not:
-   	RAISE NOTICE ''Id number '' || key || '' not found!'';
+        RAISE NOTICE ''Id number '' || key || '' not found!'';
    Put it back when we allow non-string-literal formats.
     -->
 
@@ -2158,14 +2158,14 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
   </indexterm>
 
   <para>
-	<application>PL/pgSQL</application> can be used to define trigger
-	procedures. A trigger procedure is created with the
-	<command>CREATE FUNCTION</> command, declaring it as a function with
-	no arguments and a return type of <type>trigger</type>.  Note that
-	the function must be declared with no arguments even if it expects
-	to receive arguments specified in <command>CREATE TRIGGER</> ---
-	trigger arguments are passed via <varname>TG_ARGV</>, as described
-	below.
+        <application>PL/pgSQL</application> can be used to define trigger
+        procedures. A trigger procedure is created with the
+        <command>CREATE FUNCTION</> command, declaring it as a function with
+        no arguments and a return type of <type>trigger</type>.  Note that
+        the function must be declared with no arguments even if it expects
+        to receive arguments specified in <command>CREATE TRIGGER</> ---
+        trigger arguments are passed via <varname>TG_ARGV</>, as described
+        below.
   </para>
 
   <para>

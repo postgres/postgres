@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.15 2003/11/04 09:55:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.16 2003/11/12 22:47:47 petere Exp $
 -->
 
 <chapter id="install-win32">
@@ -109,7 +109,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.15 2003/11/04 09:55:
 
  <para>
   <application>psql</application> is compiled as a <quote>console
-  application</>. As the Win32 console windows use a different
+  application</>. As the Windows console windows use a different
   encoding than the rest of the system, you must take special care
   when using 8-bit characters at the <application>psql</application>
   prompt. When <application>psql</application> detects a problematic

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.31 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.32 2003/11/12 22:47:47 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -299,7 +299,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 </sect1>
 
 <sect1 id="lo-funcs">
-<title>Server-side Functions</title>
+<title>Server-Side Functions</title>
 
 <para>
      There are two built-in server-side functions,
