@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.55 1998/08/29 04:09:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.56 1998/08/29 05:27:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			}
 			else
 			{
+				/* if we elog() out, the file stays open */
 				fp = AllocateFile(filename, "r");
 				if (fp == NULL)
 					elog(ERROR, "COPY command, running in backend with "
@@ -173,6 +174,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				mode_t		oumask;		/* Pre-existing umask value */
 
 				oumask = umask((mode_t) 0);
+				/* if we elog() out, the file stays open */
 				fp = AllocateFile(filename, "w");
 				umask(oumask);
 				if (fp == NULL)

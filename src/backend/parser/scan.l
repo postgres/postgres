@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.41 1998/08/29 02:36:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.42 1998/08/29 05:27:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,8 +323,8 @@ other			.
 						if (isascii((unsigned char)yytext[i]) &&
 							isupper(yytext[i]))
 							yytext[i] = tolower(yytext[i]);
-					if (i > NAMEDATALEN)
-						yytext[NAMEDATALEN] = '\0';
+					if (i >= NAMEDATALEN)
+						yytext[NAMEDATALEN-1] = '\0';
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
@@ -402,8 +402,8 @@ other			.
 						if (isascii((unsigned char)yytext[i]) &&
 							isupper(yytext[i]))
 							yytext[i] = tolower(yytext[i]);
-					if (i > NAMEDATALEN)
-						yytext[NAMEDATALEN] = '\0';
+					if (i >= NAMEDATALEN)
+						yytext[NAMEDATALEN-1] = '\0';
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
