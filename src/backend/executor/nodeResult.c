@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.15 2000/07/17 03:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.16 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,8 +67,7 @@ ExecResult(Result *node)
 	TupleTableSlot *resultSlot;
 	Plan	   *outerPlan;
 	ExprContext *econtext;
-	bool		isDone;
-	ProjectionInfo *projInfo;
+	ExprDoneCond isDone;
 
 	/* ----------------
 	 *	initialize the result node's state
@@ -76,13 +75,6 @@ ExecResult(Result *node)
 	 */
 	resstate = node->resstate;
 	econtext = resstate->cstate.cs_ExprContext;
-
-	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.
-	 * ----------------
-	 */
-	ResetExprContext(econtext);
 
 	/* ----------------
 	 *	 check constant qualifications like (2 > 1), if not already done
@@ -111,11 +103,19 @@ ExecResult(Result *node)
 	if (resstate->cstate.cs_TupFromTlist)
 	{
 		resultSlot = ExecProject(resstate->cstate.cs_ProjInfo, &isDone);
-		if (!isDone)
+		if (isDone == ExprMultipleResult)
 			return resultSlot;
 		/* Done with that source tuple... */
 		resstate->cstate.cs_TupFromTlist = false;
 	}
+
+	/* ----------------
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	happen until we're done projecting out tuples from a scan tuple.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
 
 	/* ----------------
 	 *	if rs_done is true then it means that we were asked to return
@@ -124,7 +124,7 @@ ExecResult(Result *node)
 	 *	Either way, now we are through.
 	 * ----------------
 	 */
-	if (!resstate->rs_done)
+	while (!resstate->rs_done)
 	{
 		outerPlan = outerPlan(node);
 
@@ -159,13 +159,18 @@ ExecResult(Result *node)
 		}
 
 		/* ----------------
-		 *	 form the result tuple using ExecProject(), and return it.
+		 *	 form the result tuple using ExecProject(), and return it
+		 *	 --- unless the projection produces an empty set, in which case
+		 *	 we must loop back to see if there are more outerPlan tuples.
 		 * ----------------
 		 */
-		projInfo = resstate->cstate.cs_ProjInfo;
-		resultSlot = ExecProject(projInfo, &isDone);
-		resstate->cstate.cs_TupFromTlist = !isDone;
-		return resultSlot;
+		resultSlot = ExecProject(resstate->cstate.cs_ProjInfo, &isDone);
+
+		if (isDone != ExprEndResult)
+		{
+			resstate->cstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+			return resultSlot;
+		}
 	}
 
 	return NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.45 2000/07/06 05:48:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.46 2000/08/24 03:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
+#include "executor/functions.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/syscache.h"
@@ -44,7 +45,6 @@ typedef char *((*func_ptr) ());
 
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_untrusted(PG_FUNCTION_ARGS);
-static Datum fmgr_sql(PG_FUNCTION_ARGS);
 
 
 /*
@@ -111,6 +111,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 
 	finfo->fn_oid = functionId;
 	finfo->fn_extra = NULL;
+	finfo->fn_mcxt = CurrentMemoryContext;
 
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
@@ -119,6 +120,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 		 */
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
+		finfo->fn_retset = false; /* assume no builtins return sets! */
 		if (fbp->oldstyle)
 		{
 			finfo->fn_addr = fmgr_oldstyle;
@@ -142,6 +144,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 
 	finfo->fn_nargs = procedureStruct->pronargs;
 	finfo->fn_strict = procedureStruct->proisstrict;
+	finfo->fn_retset = procedureStruct->proretset;
 
 	if (!procedureStruct->proistrusted)
 	{
@@ -424,21 +427,6 @@ fmgr_untrusted(PG_FUNCTION_ARGS)
 	 * like forking a subprocess to execute 'em.
 	 */
 	elog(ERROR, "Untrusted functions not supported");
-	return 0;					/* keep compiler happy */
-}
-
-/*
- * Handler for SQL-language functions
- */
-static Datum
-fmgr_sql(PG_FUNCTION_ARGS)
-{
-	/*
-	 * XXX It'd be really nice to support SQL functions anywhere that
-	 * builtins are supported.	What would we have to do?  What pitfalls
-	 * are there?
-	 */
-	elog(ERROR, "SQL-language function not supported in this context");
 	return 0;					/* keep compiler happy */
 }
 

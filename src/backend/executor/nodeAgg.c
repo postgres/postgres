@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.70 2000/07/17 03:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.71 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,7 +451,6 @@ ExecAgg(Agg *node)
 	TupleTableSlot *resultSlot;
 	HeapTuple	inputTuple;
 	int			aggno;
-	bool		isDone;
 	bool		isNull;
 
 	/* ---------------------
@@ -523,7 +522,7 @@ ExecAgg(Agg *node)
 				Datum		newVal;
 
 				newVal = ExecEvalExpr(aggref->target, econtext,
-									  &isNull, &isDone);
+									  &isNull, NULL);
 
 				if (aggref->aggdistinct)
 				{
@@ -677,8 +676,9 @@ ExecAgg(Agg *node)
 		/*
 		 * Form a projection tuple using the aggregate results and the
 		 * representative input tuple.	Store it in the result tuple slot.
+		 * Note we do not support aggregates returning sets ...
 		 */
-		resultSlot = ExecProject(projInfo, &isDone);
+		resultSlot = ExecProject(projInfo, NULL);
 
 		/*
 		 * If the completed tuple does not match the qualifications, it is

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.32 2000/07/17 03:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.33 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ ExecHashJoin(HashJoin *node)
 	TupleTableSlot *inntuple;
 	Node	   *outerVar;
 	ExprContext *econtext;
+	ExprDoneCond isDone;
 	HashJoinTable hashtable;
 	HeapTuple	curtuple;
 	TupleTableSlot *outerTupleSlot;
@@ -84,13 +85,6 @@ ExecHashJoin(HashJoin *node)
 	econtext = hjstate->jstate.cs_ExprContext;
 
 	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.
-	 * ----------------
-	 */
-	ResetExprContext(econtext);
-
-	/* ----------------
 	 *	Check to see if we're still projecting out tuples from a previous
 	 *	join tuple (because there is a function-returning-set in the
 	 *	projection expressions).  If so, try to project another one.
@@ -99,14 +93,21 @@ ExecHashJoin(HashJoin *node)
 	if (hjstate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		bool		isDone;
 
 		result = ExecProject(hjstate->jstate.cs_ProjInfo, &isDone);
-		if (!isDone)
+		if (isDone == ExprMultipleResult)
 			return result;
 		/* Done with that source tuple... */
 		hjstate->jstate.cs_TupFromTlist = false;
 	}
+
+	/* ----------------
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	happen until we're done projecting out tuples from a join tuple.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
 
 	/* ----------------
 	 *	if this is the first call, build the hash table for inner relation
@@ -241,15 +242,15 @@ ExecHashJoin(HashJoin *node)
 			 */
 			if (ExecQual(qual, econtext, false))
 			{
-				ProjectionInfo *projInfo;
 				TupleTableSlot *result;
-				bool		isDone;
 
 				hjstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
-				projInfo = hjstate->jstate.cs_ProjInfo;
-				result = ExecProject(projInfo, &isDone);
-				hjstate->jstate.cs_TupFromTlist = !isDone;
-				return result;
+				result = ExecProject(hjstate->jstate.cs_ProjInfo, &isDone);
+				if (isDone != ExprEndResult)
+				{
+					hjstate->jstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+					return result;
+				}
 			}
 		}
 

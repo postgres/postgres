@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.11 2000/08/03 19:19:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.12 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
 	List	   *lst;
 	ItemPointer itemptr;
 	bool		isNull;
-	bool		isDone;
 	int			numTids = 0;
 
 	foreach(lst, evalList)
@@ -47,8 +46,8 @@ TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
 			DatumGetPointer(ExecEvalExprSwitchContext(lfirst(lst),
 													  econtext,
 													  &isNull,
-													  &isDone));
-		if (itemptr && ItemPointerIsValid(itemptr))
+													  NULL));
+		if (!isNull && itemptr && ItemPointerIsValid(itemptr))
 		{
 			tidList[numTids] = itemptr;
 			numTids++;

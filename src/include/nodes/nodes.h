@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.74 2000/08/11 23:46:54 tgl Exp $
+ * $Id: nodes.h,v 1.75 2000/08/24 03:29:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,9 @@ typedef enum NodeTag
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (cf. fmgr.h)
 	 *---------------------
 	 */
-	T_TriggerData = 800			/* in commands/trigger.h */
+	T_TriggerData = 800,		/* in commands/trigger.h */
+	T_ReturnSetInfo				/* in nodes/execnodes.h */
+
 } NodeTag;
 
 /*

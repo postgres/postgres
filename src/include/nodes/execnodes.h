@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.47 2000/08/22 04:06:22 tgl Exp $
+ * $Id: execnodes.h,v 1.48 2000/08/24 03:29:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,31 @@ typedef struct ExprContext
 	/* Range table that Vars in expression refer to --- seldom needed */
 	List	   *ecxt_range_table;
 } ExprContext;
+
+/*
+ * Set-result status returned by ExecEvalExpr()
+ */
+typedef enum
+{
+	ExprSingleResult,			/* expression does not return a set */
+	ExprMultipleResult,			/* this result is an element of a set */
+	ExprEndResult				/* there are no more elements in the set */
+} ExprDoneCond;
+
+/*
+ * When calling a function that might return a set (multiple rows),
+ * a node of this type is passed as fcinfo->resultinfo to allow
+ * return status to be passed back.  A function returning set should
+ * raise an error if no such resultinfo is provided.
+ *
+ * XXX this mechanism is a quick hack and probably needs to be redesigned.
+ */
+typedef struct ReturnSetInfo
+{
+	NodeTag		type;
+	ExprDoneCond isDone;
+} ReturnSetInfo;
+
 
 /* ----------------
  *		ProjectionInfo node information

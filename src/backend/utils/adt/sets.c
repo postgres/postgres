@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.32 2000/06/09 01:11:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.33 2000/08/24 03:29:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
+#include "executor/executor.h"
+#include "utils/fcache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
 
@@ -30,9 +32,9 @@ extern CommandDest whereToSendOutput;	/* defined in tcop/postgres.c */
 /*
  *	  SetDefine		   - converts query string defining set to an oid
  *
- *	  The query string is used to store the set as a function in
- *	  pg_proc.	The name of the function is then changed to use the
- *	  OID of its tuple in pg_proc.
+ *	  We create an SQL function having the given querystring as its body.
+ *	  The name of the function is then changed to use the OID of its tuple
+ *	  in pg_proc.
  */
 Oid
 SetDefine(char *querystr, char *typename)
@@ -57,11 +59,11 @@ SetDefine(char *querystr, char *typename)
 							 querystr,	/* sourceCode */
 							 fileName,	/* fileName */
 							 true,		/* trusted */
-							 false,		/* canCache XXX appropriate? */
-							 false,		/* isStrict XXX appropriate? */
+							 false,		/* canCache (assume unsafe) */
+							 false,		/* isStrict (irrelevant, no args) */
 							 100,		/* byte_pct */
-							 0, /* perbyte_cpu */
-							 0, /* percall_cpu */
+							 0,			/* perbyte_cpu */
+							 0,			/* percall_cpu */
 							 100,		/* outin_ratio */
 							 NIL,		/* argList */
 							 whereToSendOutput);
@@ -74,11 +76,12 @@ SetDefine(char *querystr, char *typename)
 	 * until you start the next command.)
 	 */
 	CommandCounterIncrement();
+
 	tup = SearchSysCacheTuple(PROCOID,
 							  ObjectIdGetDatum(setoid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "setin: unable to define set %s", querystr);
+		elog(ERROR, "SetDefine: unable to define set %s", querystr);
 
 	/*
 	 * We can tell whether the set was already defined by checking the
@@ -86,7 +89,7 @@ SetDefine(char *querystr, char *typename)
 	 * oid>" it's already defined.
 	 */
 	proc = (Form_pg_proc) GETSTRUCT(tup);
-	if (!strcmp((char *) procname, (char *) &(proc->proname)))
+	if (strcmp(procname, NameStr(proc->proname)) == 0)
 	{
 		/* make the real proc name */
 		sprintf(realprocname, "set%u", setoid);
@@ -120,7 +123,7 @@ SetDefine(char *querystr, char *typename)
 			setoid = newtup->t_data->t_oid;
 		}
 		else
-			elog(ERROR, "setin: could not find new set oid tuple");
+			elog(ERROR, "SetDefine: could not find new set oid tuple");
 
 		if (RelationGetForm(procrel)->relhasindex)
 		{
@@ -132,20 +135,79 @@ SetDefine(char *querystr, char *typename)
 		}
 		heap_close(procrel, RowExclusiveLock);
 	}
+
 	return setoid;
 }
 
-/* This function is a placeholder.	The parser uses the OID of this
- * function to fill in the :funcid field  of a set.  This routine is
- * never executed.	At runtime, the OID of the actual set is substituted
- * into the :funcid.
+/*
+ * This function executes set evaluation.  The parser sets up a set reference
+ * as a call to this function with the OID of the set to evaluate as argument.
+ *
+ * We build a new fcache for execution of the set's function and run the
+ * function until it says "no mas".  The fn_extra field of the call's
+ * FmgrInfo record is a handy place to hold onto the fcache.  (Since this
+ * is a built-in function, there is no competing use of fn_extra.)
  */
 Datum
 seteval(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
+	FunctionCachePtr fcache;
+	Datum		result;
+	bool		isNull;
+	ExprDoneCond isDone;
 
-	elog(ERROR, "seteval called for OID %u", funcoid);
+	/*
+	 * If this is the first call, we need to set up the fcache for the
+	 * target set's function.
+	 */
+	fcache = (FunctionCachePtr) fcinfo->flinfo->fn_extra;
+	if (fcache == NULL)
+	{
+		fcache = init_fcache(funcoid, 0, fcinfo->flinfo->fn_mcxt);
+		fcinfo->flinfo->fn_extra = (void *) fcache;
+	}
 
-	PG_RETURN_INT32(0);			/* keep compiler happy */
+	/*
+	 * Evaluate the function.  NOTE: we need no econtext because there
+	 * are no arguments to evaluate.
+	 */
+
+	/* ExecMakeFunctionResult assumes these are initialized at call: */
+	isNull = false;
+	isDone = ExprSingleResult;
+
+	result = ExecMakeFunctionResult(fcache,
+									NIL,
+									NULL, /* no econtext, see above */
+									&isNull,
+									&isDone);
+
+	/*
+	 * If we're done with the results of this set function, get rid of
+	 * its func cache so that we will start from the top next time.
+	 * (Can you say "memory leak"?  This feature is a crock anyway...)
+	 */
+	if (isDone != ExprMultipleResult)
+	{
+		pfree(fcache);
+		fcinfo->flinfo->fn_extra = NULL;
+	}
+
+	/*
+	 * Return isNull/isDone status.
+	 */
+	fcinfo->isnull = isNull;
+
+	if (isDone != ExprSingleResult)
+	{
+		ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+
+		if (rsi && IsA(rsi, ReturnSetInfo))
+			rsi->isDone = isDone;
+		else
+			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+	}
+
+	PG_RETURN_DATUM(result);
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.27 2000/08/13 02:50:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.28 2000/08/24 03:29:15 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2200,7 +2200,6 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	int			fno;
 	int			i;
 	bool		isnull;
-	bool		isdone;
 	ExprContext *econtext;
 	ParamListInfo paramLI;
 
@@ -2274,9 +2273,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * Initialize things
 	 * ----------
 	 */
-	*isNull = FALSE;
 	*rettype = expr->plan_simple_type;
-	isdone = FALSE;
 
 	/* ----------
 	 * Clear the function cache
@@ -2292,14 +2289,17 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	retval = ExecEvalExprSwitchContext(expr->plan_simple_expr,
 									   econtext,
 									   isNull,
-									   &isdone);
+									   NULL);
 	SPI_pop();
 
 	/*
 	 * Copy the result out of the expression-evaluation memory context,
 	 * so that we can free the expression context.
 	 */
-	retval = datumCopy(retval, get_typbyval(*rettype), get_typlen(*rettype));
+	if (! *isNull)
+		retval = datumCopy(retval,
+						   get_typbyval(*rettype),
+						   get_typlen(*rettype));
 
 	FreeExprContext(econtext);
 

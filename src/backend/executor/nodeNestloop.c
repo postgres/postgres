@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.19 2000/08/13 02:50:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.20 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,13 +88,6 @@ ExecNestLoop(NestLoop *node)
 	econtext->ecxt_outertuple = outerTupleSlot;
 
 	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.
-	 * ----------------
-	 */
-	ResetExprContext(econtext);
-
-	/* ----------------
 	 *	Check to see if we're still projecting out tuples from a previous
 	 *	join tuple (because there is a function-returning-set in the
 	 *	projection expressions).  If so, try to project another one.
@@ -103,14 +96,22 @@ ExecNestLoop(NestLoop *node)
 	if (nlstate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		bool		isDone;
+		ExprDoneCond	isDone;
 
 		result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
-		if (!isDone)
+		if (isDone == ExprMultipleResult)
 			return result;
 		/* Done with that source tuple... */
 		nlstate->jstate.cs_TupFromTlist = false;
 	}
+
+	/* ----------------
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	happen until we're done projecting out tuples from a join tuple.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
 
 	/* ----------------
 	 *	Ok, everything is setup for the join so now loop until
@@ -219,16 +220,18 @@ ExecNestLoop(NestLoop *node)
 			 *	using ExecProject().
 			 * ----------------
 			 */
-			ProjectionInfo *projInfo;
 			TupleTableSlot *result;
-			bool		isDone;
+			ExprDoneCond isDone;
 
 			ENL1_printf("qualification succeeded, projecting tuple");
 
-			projInfo = nlstate->jstate.cs_ProjInfo;
-			result = ExecProject(projInfo, &isDone);
-			nlstate->jstate.cs_TupFromTlist = !isDone;
-			return result;
+			result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
+
+			if (isDone != ExprEndResult)
+			{
+				nlstate->jstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+				return result;
+			}
 		}
 
 		/* ----------------

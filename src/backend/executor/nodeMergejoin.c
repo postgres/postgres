@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.36 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.37 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,18 +226,16 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 	{
 		Datum		const_value;
 		bool		isNull;
-		bool		isDone;
 
 		/* ----------------
 		 *	 first test if our compare clause is satisfied.
 		 *	 if so then return true.
 		 *
 		 *	 A NULL result is considered false.
-		 *	 ignore isDone, don't iterate in quals.
 		 * ----------------
 		 */
 		const_value = ExecEvalExpr((Node *) lfirst(clause), econtext,
-								   &isNull, &isDone);
+								   &isNull, NULL);
 
 		if (DatumGetBool(const_value) && !isNull)
 		{
@@ -254,7 +252,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 		const_value = ExecEvalExpr((Node *) lfirst(eqclause),
 								   econtext,
 								   &isNull,
-								   &isDone);
+								   NULL);
 
 		if (! DatumGetBool(const_value) || isNull)
 			break;				/* return false */
@@ -448,13 +446,6 @@ ExecMergeJoin(MergeJoin *node)
 	}
 
 	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.
-	 * ----------------
-	 */
-	ResetExprContext(econtext);
-
-	/* ----------------
 	 *	Check to see if we're still projecting out tuples from a previous
 	 *	join tuple (because there is a function-returning-set in the
 	 *	projection expressions).  If so, try to project another one.
@@ -463,14 +454,22 @@ ExecMergeJoin(MergeJoin *node)
 	if (mergestate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		bool		isDone;
+		ExprDoneCond	isDone;
 
 		result = ExecProject(mergestate->jstate.cs_ProjInfo, &isDone);
-		if (!isDone)
+		if (isDone == ExprMultipleResult)
 			return result;
 		/* Done with that source tuple... */
 		mergestate->jstate.cs_TupFromTlist = false;
 	}
+
+	/* ----------------
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	happen until we're done projecting out tuples from a join tuple.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
 
 	/* ----------------
 	 *	ok, everything is setup.. let's go to work
@@ -599,17 +598,19 @@ ExecMergeJoin(MergeJoin *node)
 					 *	projection tuple and return the slot containing it.
 					 * ----------------
 					 */
-					ProjectionInfo *projInfo;
 					TupleTableSlot *result;
-					bool		isDone;
+					ExprDoneCond isDone;
 
 					MJ_printf("ExecMergeJoin: **** returning tuple ****\n");
 
-					projInfo = mergestate->jstate.cs_ProjInfo;
+					result = ExecProject(mergestate->jstate.cs_ProjInfo,
+										 &isDone);
 
-					result = ExecProject(projInfo, &isDone);
-					mergestate->jstate.cs_TupFromTlist = !isDone;
-					return result;
+					if (isDone != ExprEndResult)
+					{
+						mergestate->jstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+						return result;
+					}
 				}
 				break;
 

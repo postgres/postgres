@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.133 2000/08/23 06:04:49 thomas Exp $
+ * $Id: builtins.h,v 1.134 2000/08/24 03:29:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
+#include "fmgr.h"
 #include "nodes/relation.h"		/* for amcostestimate parameters */
 #include "storage/itemptr.h"
 #include "utils/numeric.h"

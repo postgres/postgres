@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.9 2000/07/29 03:26:47 tgl Exp $
+ * $Id: fmgr.h,v 1.10 2000/08/24 03:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,9 @@ typedef struct
     Oid         fn_oid;     /* OID of function (NOT of handler, if any) */
     short       fn_nargs;   /* 0..FUNC_MAX_ARGS, or -1 if variable arg count */
     bool        fn_strict;  /* function is "strict" (NULL in => NULL out) */
+	bool		fn_retset;	/* function returns a set (over multiple calls) */
     void       *fn_extra;   /* extra space for use by handler */
+	MemoryContext fn_mcxt;	/* memory context to store fn_extra in */
 } FmgrInfo;
 
 /*

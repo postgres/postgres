@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.93 2000/08/13 02:50:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.94 2000/08/24 03:29:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1380,9 +1380,8 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 							  copyObject(clause_const),
 							  copyObject(pred_const));
 
-#ifndef OMIT_PARTIAL_INDEX
 	test_result = ExecEvalExpr((Node *) test_expr, NULL, &isNull, NULL);
-#endif	 /* OMIT_PARTIAL_INDEX */
+
 	if (isNull)
 	{
 		elog(DEBUG, "clause_pred_clause_test: null test result");

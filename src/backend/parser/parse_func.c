@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.88 2000/08/20 00:44:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.89 2000/08/24 03:29:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,13 +560,13 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{							/* we know all of these fields already */
 
 		/*
-		 * We create a funcnode with a placeholder function SetEval.
-		 * SetEval() never actually gets executed.	When the function
-		 * evaluation routines see it, they use the funcid projected out
-		 * from the relation as the actual function to call. Example:
-		 * retrieve (emp.mgr.name) The plan for this will scan the emp
-		 * relation, projecting out the mgr attribute, which is a funcid.
-		 * This function is then called (instead of SetEval) and "name" is
+		 * We create a funcnode with a placeholder function seteval().
+		 * At runtime, seteval() will execute the function identified
+		 * by the funcid it receives as parameter.
+		 *
+		 * Example: retrieve (emp.mgr.name).  The plan for this will scan the
+		 * emp relation, projecting out the mgr attribute, which is a funcid.
+		 * This function is then called (via seteval()) and "name" is
 		 * projected from its result.
 		 */
 		funcid = F_SETEVAL;

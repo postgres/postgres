@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.46 2000/08/08 15:42:59 tgl Exp $
+ * $Id: primnodes.h,v 1.47 2000/08/24 03:29:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,10 @@
 
 #include "access/attnum.h"
 #include "nodes/pg_list.h"
-#include "utils/fcache.h"
+
+/* FunctionCache is declared in utils/fcache.h */
+typedef struct FunctionCache *FunctionCachePtr;
+
 
 /* ----------------------------------------------------------------
  *						node definitions

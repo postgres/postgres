@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.72 2000/08/21 17:22:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.73 2000/08/24 03:29:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1447,7 +1447,6 @@ simplify_op_or_func(Expr *expr, List *args)
 	bool		has_nonconst_input = false;
 	bool		has_null_input = false;
 	bool		const_is_null;
-	bool		isDone;
 
 	/*
 	 * Check for constant inputs and especially constant-NULL inputs.
@@ -1566,8 +1565,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
 	const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
-										  &const_is_null, &isDone);
-	Assert(isDone);				/* if this isn't set, we blew it... */
+										  &const_is_null, NULL);
 
 	/* Must copy result out of sub-context used by expression eval */
 	const_val = datumCopy(const_val, resultTypByVal, resultTypLen);

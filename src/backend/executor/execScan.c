@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.13 2000/07/17 03:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.14 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,11 +50,10 @@ ExecScan(Scan *node,
 {
 	CommonScanState *scanstate;
 	EState	   *estate;
-	List	   *qual;
-	bool		isDone;
-	TupleTableSlot *resultSlot;
 	ExprContext *econtext;
-	ProjectionInfo *projInfo;
+	List	   *qual;
+	ExprDoneCond isDone;
+	TupleTableSlot *resultSlot;
 
 	/* ----------------
 	 *	Fetch data from node
@@ -66,13 +65,6 @@ ExecScan(Scan *node,
 	qual = node->plan.qual;
 
 	/* ----------------
-	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.
-	 * ----------------
-	 */
-	ResetExprContext(econtext);
-
-	/* ----------------
 	 *	Check to see if we're still projecting out tuples from a previous
 	 *	scan tuple (because there is a function-returning-set in the
 	 *	projection expressions).  If so, try to project another one.
@@ -80,13 +72,20 @@ ExecScan(Scan *node,
 	 */
 	if (scanstate->cstate.cs_TupFromTlist)
 	{
-		projInfo = scanstate->cstate.cs_ProjInfo;
-		resultSlot = ExecProject(projInfo, &isDone);
-		if (!isDone)
+		resultSlot = ExecProject(scanstate->cstate.cs_ProjInfo, &isDone);
+		if (isDone == ExprMultipleResult)
 			return resultSlot;
 		/* Done with that source tuple... */
 		scanstate->cstate.cs_TupFromTlist = false;
 	}
+
+	/* ----------------
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	happen until we're done projecting out tuples from a scan tuple.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
 
 	/*
 	 * get a tuple from the access method loop until we obtain a tuple
@@ -121,8 +120,6 @@ ExecScan(Scan *node,
 
 		/* ----------------
 		 *	check that the current tuple satisfies the qual-clause
-		 *	if our qualification succeeds then we may
-		 *	leave the loop.
 		 *
 		 * check for non-nil qual here to avoid a function call to
 		 * ExecQual() when the qual is nil ... saves only a few cycles,
@@ -130,7 +127,22 @@ ExecScan(Scan *node,
 		 * ----------------
 		 */
 		if (!qual || ExecQual(qual, econtext, false))
-			break;
+		{
+			/* ----------------
+			 *	Found a satisfactory scan tuple.
+			 *
+			 *	Form a projection tuple, store it in the result tuple
+			 *	slot and return it --- unless we find we can project no
+			 *	tuples from this scan tuple, in which case continue scan.
+			 * ----------------
+			 */
+			resultSlot = ExecProject(scanstate->cstate.cs_ProjInfo, &isDone);
+			if (isDone != ExprEndResult)
+			{
+				scanstate->cstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+				return resultSlot;
+			}
+		}
 
 		/* ----------------
 		 *	Tuple fails qual, so free per-tuple memory and try again.
@@ -138,18 +150,4 @@ ExecScan(Scan *node,
 		 */
 		ResetExprContext(econtext);
 	}
-
-	/* ----------------
-	 *	Found a satisfactory scan tuple.
-	 *
-	 *	Form a projection tuple, store it in the result tuple
-	 *	slot and return it.
-	 * ----------------
-	 */
-	projInfo = scanstate->cstate.cs_ProjInfo;
-
-	resultSlot = ExecProject(projInfo, &isDone);
-	scanstate->cstate.cs_TupFromTlist = !isDone;
-
-	return resultSlot;
 }

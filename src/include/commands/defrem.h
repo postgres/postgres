@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.19 2000/02/18 09:29:49 inoue Exp $
+ * $Id: defrem.h,v 1.20 2000/08/24 03:29:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@ extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
 extern void DefineOperator(char *name, List *parameters);
 extern void DefineAggregate(char *name, List *parameters);
 extern void DefineType(char *name, List *parameters);
-extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
 
 /*
  * prototypes in remove.c

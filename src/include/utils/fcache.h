@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.13 2000/08/08 15:43:12 tgl Exp $
+ * $Id: fcache.h,v 1.14 2000/08/24 03:29:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,45 +19,50 @@
 #define FCACHE_H
 
 #include "fmgr.h"
+#include "nodes/execnodes.h"
 
+/*
+ * A FunctionCache record is built for all functions regardless of language.
+ *
+ * We store the fmgr lookup info to avoid recomputing it on each call.
+ * We also store a prebuilt FunctionCallInfo struct.  When evaluating a
+ * function-returning-set, fcinfo holds the argument values across calls
+ * so that we need not re-evaluate the arguments for each call.  Even for
+ * non-set functions, fcinfo saves a few cycles per call by allowing us to
+ * avoid redundant setup of its fields.
+ */
 
-typedef struct
+typedef struct FunctionCache
 {
-	FmgrInfo	func;			/* info for fmgr call mechanism */
-	Oid			foid;			/* oid of the function in pg_proc */
-	Oid			language;		/* oid of the language in pg_language */
-	int			typlen;			/* length of the return type */
-	bool		typbyval;		/* true if return type is pass by value */
-
-	bool		returnsTuple;	/* true if return type is a tuple */
-	bool		returnsSet;		/* true if func returns a set (multi rows) */
-
-	bool		hasSetArg;		/* true if func is part of a nested dot
-								 * expr whose argument is func returning a
-								 * set ugh! */
-
-	/* If additional info is added to an existing fcache, be sure to
-	 * allocate it in the fcacheCxt.
+	/*
+	 * Function manager's lookup info for the target function.
 	 */
-	MemoryContext fcacheCxt;	/* context the fcache lives in */
-
-	int			nargs;			/* actual number of arguments */
-	Oid		   *argOidVect;		/* oids of all the argument types */
-
-	char	   *src;			/* source code of the function */
-	char	   *bin;			/* binary object code ?? */
-	char	   *func_state;		/* function_state struct for execution */
-
-	Pointer		funcSlot;		/* if one result we need to copy it before
-								 * we end execution of the function and
-								 * free stuff */
-
-	Datum		setArg;			/* current argument for nested dot
-								 * execution Nested dot expressions mean
-								 * we have funcs whose argument is a set
-								 * of tuples */
+	FmgrInfo	func;
+	/*
+	 * Per-call info for calling the target function.  Unvarying fields
+	 * are set up by init_fcache().  Argument values are filled in as needed.
+	 */
+	FunctionCallInfoData fcinfo;
+	/*
+	 * "Resultinfo" node --- used only if target function returns a set.
+	 */
+	ReturnSetInfo rsinfo;
+	/*
+	 * argsValid is true when we are evaluating a set-valued function and
+	 * we are in the middle of a call series; we want to pass the same
+	 * argument values to the function again (and again, until it returns
+	 * ExprEndResult).
+	 */
+	bool		argsValid;		/* TRUE if fcinfo contains valid arguments */
+	/*
+	 * hasSetArg is true if we found a set-valued argument to the function.
+	 * This causes the function result to be a set as well.
+	 */
+	bool		hasSetArg;		/* some argument returns a set */
 } FunctionCache;
 
-typedef FunctionCache *FunctionCachePtr;
+
+extern FunctionCachePtr init_fcache(Oid foid, int nargs,
+									MemoryContext fcacheCxt);
 
 #endif	 /* FCACHE_H */

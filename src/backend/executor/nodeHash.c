@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.51 2000/08/22 04:06:19 tgl Exp $
+ *	$Id: nodeHash.c,v 1.52 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,6 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	int			bucketno;
 	Datum		keyval;
 	bool		isNull;
-	bool		isDone;
 
 	/* ----------------
 	 *	Get the join attribute value of the tuple
@@ -535,8 +534,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	 */
 	ResetExprContext(econtext);
 
-	keyval = ExecEvalExprSwitchContext(hashkey, econtext,
-									   &isNull, &isDone);
+	keyval = ExecEvalExprSwitchContext(hashkey, econtext, &isNull, NULL);
 
 	/* ------------------
 	 *	compute the hash function

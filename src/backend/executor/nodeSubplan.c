@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.26 2000/07/12 02:37:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.27 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
-	bool		isDone;
 	bool		found = false;	/* TRUE if got at least one subplan tuple */
 	List	   *lst;
 
@@ -67,9 +66,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			prm->value = ExecEvalExprSwitchContext((Node *) lfirst(pvar),
 												   econtext,
 												   &(prm->isnull),
-												   &isDone);
-			if (!isDone)
-				elog(ERROR, "ExecSubPlan: set values not supported for params");
+												   NULL);
 			pvar = lnext(pvar);
 		}
 		plan->chgParam = nconc(plan->chgParam, listCopy(node->parParam));
@@ -189,9 +186,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			 * Now we can eval the combining operator for this column.
 			 */
 			expresult = ExecEvalExprSwitchContext((Node *) expr, econtext,
-												  &expnull, &isDone);
-			if (!isDone)
-				elog(ERROR, "ExecSubPlan: set values not supported for combining operators");
+												  &expnull, NULL);
 
 			/*
 			 * Combine the result into the row result as appropriate.

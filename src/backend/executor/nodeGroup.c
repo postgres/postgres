@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.37 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.38 2000/08/24 03:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,6 @@ ExecGroupEveryTuple(Group *node)
 	TupleTableSlot *outerslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
-	bool		isDone;
 
 	/* ---------------------
 	 *	get state info from node
@@ -163,7 +162,7 @@ ExecGroupEveryTuple(Group *node)
 	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
 
 	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
-	resultSlot = ExecProject(projInfo, &isDone);
+	resultSlot = ExecProject(projInfo, NULL);
 
 	return resultSlot;
 }
@@ -185,7 +184,6 @@ ExecGroupOneTuple(Group *node)
 	TupleTableSlot *outerslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
-	bool		isDone;
 
 	/* ---------------------
 	 *	get state info from node
@@ -258,7 +256,7 @@ ExecGroupOneTuple(Group *node)
 				   grpstate->csstate.css_ScanTupleSlot,
 				   InvalidBuffer, false);
 	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
-	resultSlot = ExecProject(projInfo, &isDone);
+	resultSlot = ExecProject(projInfo, NULL);
 
 	/* save outerTuple if we are not done yet */
 	if (!grpstate->grp_done)
