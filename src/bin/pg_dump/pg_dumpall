@@ -4,22 +4,29 @@
 # dumps all databases to standard output
 # It also dumps the pg_user table
 #
+# to adapt to System V vs. BSD 'echo'
+set -x
+if echo '\\' | grep '\\\\' >/dev/null 2>&1
+then	
+	BS='\'			# BSD
+else
+	BS='\\'			# System V
+fi
 psql -l -A -q -t|cut -d"|" -f1 | grep -v '^template1$' | \
 while read DATABASE
 do
-	/bin/echo '\connect template1'
-	/bin/echo "create database $DATABASE;"
-	/bin/echo '\connect' "$DATABASE"
+	echo "${BS}connect template1"
+	echo "create database $DATABASE;"
+	echo "${BS}connect $DATABASE"
 	pg_dump "$@" $DATABASE
 done
-/bin/echo '\connect template1'
-/bin/echo 'copy pg_user from stdin;'
+echo "${BS}connect template1"
+echo "copy pg_user from stdin;"
 #
 # Dump everyone but the postgres user
 # initdb creates him
 #
-POSTGRES_SUPER_USER_ID="`psql -q template1 <<END
-\\t
+POSTGRES_SUPER_USER_ID="`psql -A -q -t template1 <<END
 select datdba 
 from pg_database
 where datname = 'template1';
@@ -31,4 +38,4 @@ where usesysid <> $POSTGRES_SUPER_USER_ID;
 copy tmp_pg_user to stdout;
 drop table tmp_pg_user;
 END
-/bin/echo '\.'
+echo "${BS}."
