@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.31 1998/09/01 04:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.32 1998/09/03 02:10:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,15 +358,15 @@ Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
 	}
 
-	if (conn->status == CONNECTION_OK)
+    if (PQstatus(conn) == CONNECTION_OK) {
 	{
 		PgSetConnectionId(interp, conn);
 		return TCL_OK;
 	}
 	else
 	{
-		Tcl_AppendResult(interp, "Connection to database failed\n", 0);
-		Tcl_AppendResult(interp, conn->errorMessage, 0);
+		Tcl_AppendResult(interp, "Connection to database failed\n",
+			PQerrorMessage(conn), 0);
 		PQfinish(conn);
 		return TCL_ERROR;
 	}
@@ -423,7 +423,6 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	Pg_ConnectionId *connid;
 	PGconn	   *conn;
 	PGresult   *result;
-	int			connStatus;
 
 	if (argc != 3)
 	{
@@ -442,7 +441,6 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		return TCL_ERROR;
 	}
 
-	connStatus = conn->status;
 	result = PQexec(conn, argv[2]);
 
 	/* Transfer any notify events from libpq to Tcl event queue. */
@@ -452,8 +450,8 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	{
 		int			rId = PgSetResultId(interp, argv[1], result);
 
-		if (result->resultStatus == PGRES_COPY_IN ||
-			result->resultStatus == PGRES_COPY_OUT)
+		ExecStatusType rStat = PQresultStatus(result);
+		if (rStat == PGRES_COPY_IN || rStat == PGRES_COPY_OUT)
 		{
 			connid->res_copyStatus = RES_COPY_INPROGRESS;
 			connid->res_copy = rId;
@@ -463,7 +461,7 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	else
 	{
 		/* error occurred during the query */
-		Tcl_SetResult(interp, conn->errorMessage, TCL_VOLATILE);
+		Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
 		return TCL_ERROR;
 	}
 }
@@ -481,9 +479,12 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  -conn
  the connection that produced the result
  -assign arrayName
- assign the results to an array
- -assignbyidx arrayName
- assign the results to an array using the first field as a key
+ assign the results to an array, using subscripts of the form
+ (tupno,attributeName)
+ -assignbyidx arrayName ?appendstr?
+ assign the results to an array using the first field's value as a key.
+ All but the first field of each tuple are stored, using subscripts of the form
+ (field0value,attributeNameappendstr)
  -numTuples
  the number of tuples in the query
  -attributes
@@ -509,6 +510,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	int			tupno;
 	char	   *arrVar;
 	char		nameBuffer[256];
+    const char *appendstr;
 
 	if (argc < 3 || argc > 5)
 	{
@@ -564,8 +566,9 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 		/*
 		 * this assignment assigns the table of result tuples into a giant
-		 * array with the name given in the argument, the indices of the
-		 * array or (tupno,attrName). Note we expect field names not to
+		 * array with the name given in the argument.
+		 * The indices of the array are of the form (tupno,attrName).
+		 * Note we expect field names not to
 		 * exceed a few dozen characters, so truncating to prevent buffer
 		 * overflow shouldn't be a problem.
 		 */
@@ -589,28 +592,32 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	else if (strcmp(opt, "-assignbyidx") == 0)
 	{
-		if (argc != 4)
+		if (argc != 4 && argc != 5)
 		{
-			Tcl_AppendResult(interp, "-assignbyidx option must be followed by a variable name", 0);
+			Tcl_AppendResult(interp, "-assignbyidx option requires an array name and optionally an append string",0);
 			return TCL_ERROR;
 		}
 		arrVar = argv[3];
+		appendstr = (argc == 5) ? (const char *) argv[4] : "";
 
 		/*
 		 * this assignment assigns the table of result tuples into a giant
-		 * array with the name given in the argument, the indices of the
-		 * array or (tupno,attrName). Here, we still assume PQfname won't
-		 * exceed 200 characters, but we dare not make the same assumption
-		 * about the data in field 0.
+		 * array with the name given in the argument.  The indices of the array
+		 * are of the form (field0Value,attrNameappendstr).
+		 * Here, we still assume PQfname won't exceed 200 characters,
+		 * but we dare not make the same assumption about the data in field 0
+		 * nor the append string.
 		 */
 		for (tupno = 0; tupno < PQntuples(result); tupno++)
 		{
 			const char *field0 = PQgetvalue(result, tupno, 0);
-			char	   *workspace = malloc(strlen(field0) + 210);
+			char * workspace = malloc(strlen(field0) + strlen(appendstr) + 210);
 
 			for (i = 1; i < PQnfields(result); i++)
 			{
-				sprintf(workspace, "%s,%.200s", field0, PQfname(result, i));
+				sprintf(workspace, "%s,%.200s%s", field0, PQfname(result,i),
+					appendstr);
+				sprintf(workspace, "%s,%.200s", field0, PQfname(result,i));
 				if (Tcl_SetVar2(interp, arrVar, workspace,
 								PQgetvalue(result, tupno, i),
 								TCL_LEAVE_ERR_MSG) == NULL)
@@ -701,7 +708,7 @@ Pg_result_errReturn:
 					 "\t-status\n",
 					 "\t-conn\n",
 					 "\t-assign arrayVarName\n",
-					 "\t-assignbyidx arrayVarName\n",
+					 "\t-assignbyidx arrayVarName ?appendstr?\n",
 					 "\t-numTuples\n",
 					 "\t-numAttrs\n"
 					 "\t-attributes\n"
@@ -1238,7 +1245,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	if ((result = PQexec(conn, argv[2])) == 0)
 	{
 		/* error occurred during the query */
-		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+		Tcl_SetResult(interp, PQerrorMessage(conn), TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -1406,11 +1413,10 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 			ckfree(cmd);
 			/* Transfer any notify events from libpq to Tcl event queue. */
 			PgNotifyTransferEvents(connid);
-			if (!result || (result->resultStatus != PGRES_COMMAND_OK))
+			if (PQresultStatus(result) != PGRES_COMMAND_OK) {
 			{
 				/* Error occurred during the execution of command */
-				if (result)
-					PQclear(result);
+				PQclear(result);
 				ckfree(callback);
 				ckfree(caserelname);
 				Tcl_DeleteHashEntry(entry);

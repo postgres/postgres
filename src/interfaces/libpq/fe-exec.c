@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.65 1998/09/01 04:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.66 1998/09/03 02:10:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ const char *const pgresStatus[] = {
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
 
-static PGresult *makeEmptyPGresult(PGconn *conn, ExecStatusType status);
 static void freeTuple(PGresAttValue *tuple, int numAttributes);
 static void addTuple(PGresult *res, PGresAttValue *tup);
 static void parseInput(PGconn *conn);
@@ -60,13 +59,16 @@ static int	getNotice(PGconn *conn);
 
 
 /*
- * PGresult -
- *	 returns a newly allocated, initialized PGresult
+ * PQmakeEmptyPGresult
+ *	 returns a newly allocated, initialized PGresult with given status
  *
+ * Note this is exported --- you wouldn't think an application would need
+ * to build its own PGresults, but this has proven useful in both libpgtcl
+ * and the Perl5 interface, so maybe it's not so unreasonable.
  */
 
-static PGresult *
-makeEmptyPGresult(PGconn *conn, ExecStatusType status)
+PGresult *
+PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 {
 	PGresult   *result;
 
@@ -252,13 +254,15 @@ PQsendQuery(PGconn *conn, const char *query)
 
 /*
  * Consume any available input from the backend
+ * 0 return: some kind of trouble
+ * 1 return: no problem
  */
 
-void
+int
 PQconsumeInput(PGconn *conn)
 {
 	if (!conn)
-		return;
+		return 0;
 
 	/*
 	 * Load more data, if available. We do this no matter what state we
@@ -266,9 +270,12 @@ PQconsumeInput(PGconn *conn)
 	 * application wants to get rid of a read-select condition. Note that
 	 * we will NOT block waiting for more input.
 	 */
-	if (pqReadData(conn) < 0)
+	if (pqReadData(conn) < 0) {
 		strcpy(conn->asyncErrorMessage, conn->errorMessage);
+		return 0;
+	}
 	/* Parsing of the data waits till later. */
+	return 1;
 }
 
 
@@ -346,8 +353,8 @@ parseInput(PGconn *conn)
 			{
 				case 'C':		/* command complete */
 					if (conn->result == NULL)
-						conn->result = makeEmptyPGresult(conn,
-													   PGRES_COMMAND_OK);
+						conn->result = PQmakeEmptyPGresult(conn,
+														   PGRES_COMMAND_OK);
 					if (pqGets(conn->result->cmdStatus, CMDSTATUS_LEN, conn))
 						return;
 					conn->asyncStatus = PGASYNC_READY;
@@ -379,8 +386,8 @@ parseInput(PGconn *conn)
 						DONOTICE(conn, conn->errorMessage);
 					}
 					if (conn->result == NULL)
-						conn->result = makeEmptyPGresult(conn,
-													  PGRES_EMPTY_QUERY);
+						conn->result = PQmakeEmptyPGresult(conn,
+														   PGRES_EMPTY_QUERY);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'K':		/* secret key data from the backend */
@@ -499,7 +506,7 @@ getRowDescriptions(PGconn *conn)
 	int			nfields;
 	int			i;
 
-	result = makeEmptyPGresult(conn, PGRES_TUPLES_OK);
+	result = PQmakeEmptyPGresult(conn, PGRES_TUPLES_OK);
 
 	/* parseInput already read the 'T' label. */
 	/* the next two bytes are the number of fields	*/
@@ -536,7 +543,7 @@ getRowDescriptions(PGconn *conn)
 		}
 		result->attDescs[i].name = strdup(typName);
 		result->attDescs[i].typid = typid;
-		result->attDescs[i].typlen = (short) typlen;
+		result->attDescs[i].typlen = typlen;
 		result->attDescs[i].atttypmod = atttypmod;
 	}
 
@@ -695,7 +702,7 @@ PQgetResult(PGconn *conn)
 			pqClearAsyncResult(conn);
 			conn->asyncStatus = PGASYNC_IDLE;
 			/* conn->errorMessage has been set by pqWait or pqReadData. */
-			return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+			return PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 		}
 		/* Parse it. */
 		parseInput(conn);
@@ -719,22 +726,22 @@ PQgetResult(PGconn *conn)
 			conn->result = NULL;/* handing over ownership to caller */
 			conn->curTuple = NULL;		/* just in case */
 			if (!res)
-				res = makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+				res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			strcpy(conn->errorMessage, conn->asyncErrorMessage);
 			/* Set the state back to BUSY, allowing parsing to proceed. */
 			conn->asyncStatus = PGASYNC_BUSY;
 			break;
 		case PGASYNC_COPY_IN:
-			res = makeEmptyPGresult(conn, PGRES_COPY_IN);
+			res = PQmakeEmptyPGresult(conn, PGRES_COPY_IN);
 			break;
 		case PGASYNC_COPY_OUT:
-			res = makeEmptyPGresult(conn, PGRES_COPY_OUT);
+			res = PQmakeEmptyPGresult(conn, PGRES_COPY_OUT);
 			break;
 		default:
 			sprintf(conn->errorMessage,
 					"PQgetResult: Unexpected asyncStatus %d\n",
 					(int) conn->asyncStatus);
-			res = makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+			res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			break;
 	}
 
@@ -880,6 +887,9 @@ PQnotifies(PGconn *conn)
  * PQgetline reads up to maxlen-1 characters (like fgets(3)) but strips
  * the terminating \n (like gets(3)).
  *
+ * CAUTION: the caller is responsible for detecting the end-of-copy signal
+ * (a line containing just "\.") when using this routine.
+ *
  * RETURNS:
  *		EOF if it is detected or invalid arguments are given
  *		0 if EOL is reached (i.e., \n has been read)
@@ -937,25 +947,113 @@ PQgetline(PGconn *conn, char *s, int maxlen)
 }
 
 /*
+ * PQgetlineAsync - gets a newline-terminated string without blocking.
+ *
+ * This routine is for applications that want to do "COPY <rel> to stdout"
+ * asynchronously, that is without blocking.  Having issued the COPY command
+ * and gotten a PGRES_COPY_OUT response, the app should call PQconsumeInput
+ * and this routine until the end-of-data signal is detected.  Unlike
+ * PQgetline, this routine takes responsibility for detecting end-of-data.
+ *
+ * On each call, PQgetlineAsync will return data if a complete newline-
+ * terminated data line is available in libpq's input buffer, or if the
+ * incoming data line is too long to fit in the buffer offered by the caller.
+ * Otherwise, no data is returned until the rest of the line arrives.
+ *
+ * If -1 is returned, the end-of-data signal has been recognized (and removed
+ * from libpq's input buffer).  The caller *must* next call PQendcopy and
+ * then return to normal processing.
+ *
+ * RETURNS:
+ *   -1    if the end-of-copy-data marker has been recognized
+ *   0     if no data is available
+ *   >0    the number of bytes returned.
+ * The data returned will not extend beyond a newline character.  If possible
+ * a whole line will be returned at one time.  But if the buffer offered by
+ * the caller is too small to hold a line sent by the backend, then a partial
+ * data line will be returned.  This can be detected by testing whether the
+ * last returned byte is '\n' or not.
+ * The returned string is *not* null-terminated.
+ */
+
+int
+PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
+{
+    int		avail;
+
+	if (!conn || conn->asyncStatus != PGASYNC_COPY_OUT)
+		return -1;				/* we are not doing a copy... */
+
+	/*
+	 * Move data from libpq's buffer to the caller's.
+	 * We want to accept data only in units of whole lines,
+	 * not partial lines.  This ensures that we can recognize
+	 * the terminator line "\\.\n".  (Otherwise, if it happened
+	 * to cross a packet/buffer boundary, we might hand the first
+	 * one or two characters off to the caller, which we shouldn't.)
+	 */
+
+	conn->inCursor = conn->inStart;
+
+	avail = bufsize;
+	while (avail > 0 && conn->inCursor < conn->inEnd)
+	{
+		char c = conn->inBuffer[conn->inCursor++];
+		*buffer++ = c;
+		--avail;
+		if (c == '\n')
+		{
+			/* Got a complete line; mark the data removed from libpq */
+			conn->inStart = conn->inCursor;
+			/* Is it the endmarker line? */
+			if (bufsize-avail == 3 && buffer[-3] == '\\' && buffer[-2] == '.')
+				return -1;
+			/* No, return the data line to the caller */
+			return bufsize - avail;
+		}
+	}
+
+	/*
+	 * We don't have a complete line.
+	 * We'd prefer to leave it in libpq's buffer until the rest arrives,
+	 * but there is a special case: what if the line is longer than the
+	 * buffer the caller is offering us?  In that case we'd better hand over
+	 * a partial line, else we'd get into an infinite loop.
+	 * Do this in a way that ensures we can't misrecognize a terminator
+	 * line later: leave last 3 characters in libpq buffer.
+	 */
+	if (avail == 0 && bufsize > 3)
+	{
+		conn->inStart = conn->inCursor - 3;
+		return bufsize - 3;
+	}
+	return 0;
+}
+
+/*
  * PQputline -- sends a string to the backend.
+ * Returns 0 if OK, EOF if not.
  *
  * Chiefly here so that applications can use "COPY <rel> from stdin".
  */
-void
+int
 PQputline(PGconn *conn, const char *s)
 {
-	if (conn && conn->sock >= 0)
-		(void) pqPutnchar(s, strlen(s), conn);
+	if (!conn || conn->sock < 0)
+		return EOF;
+	return pqPutnchar(s, strlen(s), conn);
 }
 
 /*
  * PQputnbytes -- like PQputline, but buffer need not be null-terminated.
+ * Returns 0 if OK, EOF if not.
  */
-void
+int
 PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
 {
-	if (conn && conn->sock >= 0)
-		(void) pqPutnchar(buffer, nbytes, conn);
+	if (!conn || conn->sock < 0)
+		return EOF;
+	return pqPutnchar(buffer, nbytes, conn);
 }
 
 /*
@@ -1155,7 +1253,7 @@ PQfn(PGconn *conn,
 					sprintf(conn->errorMessage,
 							"FATAL: PQfn: protocol error: id=%x\n", id);
 					conn->inStart = conn->inCursor;
-					return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+					return PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 				}
 				break;
 			case 'E':			/* error return */
@@ -1176,13 +1274,13 @@ PQfn(PGconn *conn,
 			case 'Z':			/* backend is ready for new query */
 				/* consume the message and exit */
 				conn->inStart = conn->inCursor;
-				return makeEmptyPGresult(conn, status);
+				return PQmakeEmptyPGresult(conn, status);
 			default:
 				/* The backend violates the protocol. */
 				sprintf(conn->errorMessage,
 						"FATAL: PQfn: protocol error: id=%x\n", id);
 				conn->inStart = conn->inCursor;
-				return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+				return PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 		}
 		/* Completed this message, keep going */
 		conn->inStart = conn->inCursor;
@@ -1190,7 +1288,7 @@ PQfn(PGconn *conn,
 	}
 
 	/* we fall out of the loop only upon failing to read data */
-	return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+	return PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 }
 
 
@@ -1218,6 +1316,14 @@ PQnfields(PGresult *res)
 	if (!res)
 		return 0;
 	return res->numAttributes;
+}
+
+int
+PQbinaryTuples(PGresult *res)
+{
+	if (!res)
+		return 0;
+	return res->binary;
 }
 
 /*
@@ -1332,7 +1438,7 @@ PQftype(PGresult *res, int field_num)
 		return InvalidOid;
 }
 
-short
+int
 PQfsize(PGresult *res, int field_num)
 {
 	if (!check_field_number("PQfsize", res, field_num))

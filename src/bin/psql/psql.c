@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.158 1998/09/01 04:33:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.159 1998/09/03 02:10:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ struct winsize
 /* declarations for functions in this file */
 static void usage(char *progname);
 static void slashUsage();
-static bool handleCopyOut(PGresult *res, FILE *copystream);
+static bool handleCopyOut(PGconn *conn, FILE *copystream);
 static bool handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
 static int tableList(PsqlSettings *pset, bool deep_tablelist,
@@ -1125,20 +1125,20 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 				break;
 			case PGRES_COPY_OUT:
 				if (copy_out)
-					*success_p = handleCopyOut(results, copystream);
+					*success_p = handleCopyOut(pset->db, copystream);
 				else
 				{
 					if (!pset->quiet)
 						printf("Copy command returns...\n");
 
-					*success_p = handleCopyOut(results, stdout);
+					*success_p = handleCopyOut(pset->db, stdout);
 				}
 				break;
 			case PGRES_COPY_IN:
 				if (copy_in)
-					*success_p = handleCopyIn(results, false, copystream);
+					*success_p = handleCopyIn(pset->db, false, copystream);
 				else
-					*success_p = handleCopyIn(results,
+					*success_p = handleCopyIn(pset->db,
 											!pset->quiet && !pset->notty,
 											  stdin);
 				break;
@@ -1437,11 +1437,8 @@ do_connect(const char *new_dbname,
 		else
 			userparam = PQuser(olddb);
 
-		/*
-		 * libpq doesn't provide an accessor function for the password, so
-		 * we cheat here.
-		 */
-		pwparam = olddb->pgpass;
+		/* FIXME: if changing user, ought to prompt for a new password? */
+		pwparam = PQpass(olddb);
 
 		pset->db = PQsetdbLogin(PQhost(olddb), PQport(olddb),
 								NULL, NULL, dbparam, userparam, pwparam);
@@ -2915,7 +2912,7 @@ main(int argc, char **argv)
 #define COPYBUFSIZ	8192
 
 static bool
-handleCopyOut(PGresult *res, FILE *copystream)
+handleCopyOut(PGconn *conn, FILE *copystream)
 {
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];
@@ -2925,7 +2922,7 @@ handleCopyOut(PGresult *res, FILE *copystream)
 
 	while (!copydone)
 	{
-		ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
+		ret = PQgetline(conn, copybuf, COPYBUFSIZ);
 
 		if (copybuf[0] == '\\' &&
 			copybuf[1] == '.' &&
@@ -2950,13 +2947,13 @@ handleCopyOut(PGresult *res, FILE *copystream)
 		}
 	}
 	fflush(copystream);
-	return !PQendcopy(res->conn);
+	return ! PQendcopy(conn);
 }
 
 
 
 static bool
-handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
+handleCopyIn(PGconn *conn, const bool mustprompt, FILE *copystream)
 {
 	bool		copydone = false;
 	bool		firstload;
@@ -2991,12 +2988,12 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 				*s++ = c;
 			if (c == EOF)
 			{
-				PQputline(res->conn, "\\.");
+				PQputline(conn, "\\.");
 				copydone = true;
 				break;
 			}
 			*s = '\0';
-			PQputline(res->conn, copybuf);
+			PQputline(conn, copybuf);
 			if (firstload)
 			{
 				if (!strcmp(copybuf, "\\."))
@@ -3004,9 +3001,9 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 				firstload = false;
 			}
 		}
-		PQputline(res->conn, "\n");
+		PQputline(conn, "\n");
 	}
-	return !PQendcopy(res->conn);
+	return ! PQendcopy(conn);
 }
 
 

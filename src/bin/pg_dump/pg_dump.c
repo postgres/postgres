@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.83 1998/09/01 04:33:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.84 1998/09/03 02:10:36 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -255,7 +255,7 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 			copydone = false;
 			while (!copydone)
 			{
-				ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
+				ret = PQgetline(g_conn, copybuf, COPYBUFSIZ);
 
 				if (copybuf[0] == '\\' &&
 					copybuf[1] == '.' &&
@@ -281,7 +281,7 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 			}
 			fprintf(fout, "\\.\n");
 		}
-		ret = PQendcopy(res->conn);
+		ret = PQendcopy(g_conn);
 		if (ret != 0)
 		{
 			fprintf(stderr, "SQL query to dump the contents of Table '%s' "

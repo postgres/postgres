@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.80 1998/09/01 04:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.81 1998/09/03 02:10:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1385,6 +1385,14 @@ PQuser(PGconn *conn)
 }
 
 char *
+PQpass(PGconn *conn)
+{
+	if (!conn)
+		return (char *) NULL;
+	return conn->pgpass;
+}
+
+char *
 PQhost(PGconn *conn)
 {
 	if (!conn)
@@ -1393,11 +1401,11 @@ PQhost(PGconn *conn)
 }
 
 char *
-PQoptions(PGconn *conn)
+PQport(PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
-	return conn->pgoptions;
+	return conn->pgport;
 }
 
 char *
@@ -1409,11 +1417,11 @@ PQtty(PGconn *conn)
 }
 
 char *
-PQport(PGconn *conn)
+PQoptions(PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
-	return conn->pgport;
+	return conn->pgoptions;
 }
 
 ConnStatusType
@@ -1440,6 +1448,14 @@ PQsocket(PGconn *conn)
 	if (!conn)
 		return -1;
 	return conn->sock;
+}
+
+int
+PQbackendPID(PGconn *conn)
+{
+	if (!conn || conn->status != CONNECTION_OK)
+		return 0;
+	return conn->be_pid;
 }
 
 void

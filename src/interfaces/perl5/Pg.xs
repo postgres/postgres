@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.7 1998/06/01 16:41:19 mergl Exp $
+ * $Id: Pg.xs,v 1.8 1998/09/03 02:10:56 momjian Exp $
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -318,7 +318,7 @@ PQexec(conn, query)
 	char *	query
 	CODE:
 		RETVAL = PQexec(conn, query);
-                if (! RETVAL) { RETVAL = (PGresult *)calloc(1, sizeof(PGresult)); }
+                if (! RETVAL) { RETVAL = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR); }
 	OUTPUT:
 		RETVAL
 
@@ -752,7 +752,7 @@ PQexec(conn, query)
 		if (RETVAL) {
 			RETVAL->result = PQexec((PGconn *)conn, query);
 			if (!RETVAL->result) {
-				RETVAL->result = (PG_result)calloc(1, sizeof(PGresult));
+				RETVAL->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			}
 		}
 	OUTPUT:

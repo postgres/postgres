@@ -814,11 +814,11 @@ ECPGexecute(struct statement * stmt)
 				break;
 			case PGRES_COPY_OUT:
 				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_OUT ... tossing.\n", stmt->lineno);
-				PQendcopy(results->conn);
+				PQendcopy(actual_connection->connection);
 				break;
 			case PGRES_COPY_IN:
 				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_IN ... tossing.\n", stmt->lineno);
-				PQendcopy(results->conn);
+				PQendcopy(actual_connection->connection);
 				break;
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
@@ -995,7 +995,7 @@ ECPGlog(const char *format,...)
 		if (!f)
 			return;
 
-		sprintf(f, "[%d]: %s", getpid(), format);
+		sprintf(f, "[%d]: %s", (int) getpid(), format);
 
 		va_start(ap, format);
 		vfprintf(debugstream, f, ap);

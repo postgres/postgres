@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.14 1998/09/01 04:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.15 1998/09/03 02:10:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,98 +33,62 @@ PgEndCopy(Pg_ConnectionId * connid, int *errorCodePtr)
 	connid->res_copyStatus = RES_COPY_NONE;
 	if (PQendcopy(connid->conn))
 	{
-		connid->results[connid->res_copy]->resultStatus = PGRES_BAD_RESPONSE;
+		PQclear(connid->results[connid->res_copy]);
+		connid->results[connid->res_copy] =
+		PQmakeEmptyPGresult(connid->conn, PGRES_BAD_RESPONSE);
 		connid->res_copy = -1;
 		*errorCodePtr = EIO;
 		return -1;
 	}
 	else
 	{
-		connid->results[connid->res_copy]->resultStatus = PGRES_COMMAND_OK;
+		PQclear(connid->results[connid->res_copy]);
+		connid->results[connid->res_copy] =
+		PQmakeEmptyPGresult(connid->conn, PGRES_COMMAND_OK);
 		connid->res_copy = -1;
 		return 0;
 	}
 }
 
 /*
- *	Called when reading data (via gets) for a copy <rel> to stdout.
- *
- *	NOTE: this routine knows way more than it ought to about libpq's
- *	internal buffering mechanisms.
+ *  Called when reading data (via gets) for a copy <rel> to stdout.
  */
-int
-PgInputProc(DRIVER_INPUT_PROTO)
+int PgInputProc(DRIVER_INPUT_PROTO)
 {
-	Pg_ConnectionId *connid;
-	PGconn	   *conn;
-	char		c;
-	int			avail;
+    Pg_ConnectionId	*connid;
+    PGconn		*conn;
+    int			avail;
 
-	connid = (Pg_ConnectionId *) cData;
-	conn = connid->conn;
+    connid = (Pg_ConnectionId *)cData;
+    conn = connid->conn;
 
-	if (connid->res_copy < 0 ||
-		connid->results[connid->res_copy]->resultStatus != PGRES_COPY_OUT)
+    if (connid->res_copy < 0 ||
+	PQresultStatus(connid->results[connid->res_copy]) != PGRES_COPY_OUT)
 	{
 		*errorCodePtr = EBUSY;
 		return -1;
-	}
+    }
 
-	/* Try to load any newly arrived data */
-	conn->errorMessage[0] = '\0';
-	PQconsumeInput(conn);
-	if (conn->errorMessage[0])
+    /* Read any newly arrived data into libpq's buffer,
+     * thereby clearing the socket's read-ready condition.
+     */
+    if (! PQconsumeInput(conn))
 	{
 		*errorCodePtr = EIO;
 		return -1;
-	}
+    }
 
-	/*
-	 * Move data from libpq's buffer to Tcl's. We want to accept data only
-	 * in units of whole lines, not partial lines.	This ensures that we
-	 * can recognize the terminator line "\\.\n".  (Otherwise, if it
-	 * happened to cross a packet/buffer boundary, we might hand the first
-	 * one or two characters off to Tcl, which we shouldn't.)
-	 */
+    /* Move data from libpq's buffer to Tcl's. */
 
-	conn->inCursor = conn->inStart;
+    avail = PQgetlineAsync(conn, buf, bufSize);
 
-	avail = bufSize;
-	while (avail > 0 && conn->inCursor < conn->inEnd)
+    if (avail < 0)
 	{
-		c = conn->inBuffer[conn->inCursor++];
-		*buf++ = c;
-		--avail;
-		if (c == '\n')
-		{
-			/* Got a complete line; mark the data removed from libpq */
-			conn->inStart = conn->inCursor;
-			/* Is it the endmarker line? */
-			if (bufSize - avail == 3 && buf[-3] == '\\' && buf[-2] == '.')
-			{
-				/* Yes, change state and return 0 */
-				return PgEndCopy(connid, errorCodePtr);
-			}
-			/* No, return the data to Tcl */
-			/* fprintf(stderr, "returning %d chars\n", bufSize - avail); */
-			return bufSize - avail;
-		}
-	}
+      /* Endmarker detected, change state and return 0 */
+      return PgEndCopy(connid, errorCodePtr);
+    }
 
-	/*
-	 * We don't have a complete line. We'd prefer to leave it in libpq's
-	 * buffer until the rest arrives, but there is a special case: what if
-	 * the line is longer than the buffer Tcl is offering us?  In that
-	 * case we'd better hand over a partial line, else we'd get into an
-	 * infinite loop. Do this in a way that ensures we can't misrecognize
-	 * a terminator line later: leave last 3 characters in libpq buffer.
-	 */
-	if (avail == 0 && bufSize > 3)
-	{
-		conn->inStart = conn->inCursor - 3;
-		return bufSize - 3;
-	}
-	return 0;
+    return avail;
 }
 
 /*
@@ -140,17 +104,13 @@ PgOutputProc(DRIVER_OUTPUT_PROTO)
 	conn = connid->conn;
 
 	if (connid->res_copy < 0 ||
-		connid->results[connid->res_copy]->resultStatus != PGRES_COPY_IN)
+		PQresultStatus(connid->results[connid->res_copy]) != PGRES_COPY_IN)
 	{
 		*errorCodePtr = EBUSY;
 		return -1;
 	}
 
-	conn->errorMessage[0] = '\0';
-
-	PQputnbytes(conn, buf, bufSize);
-
-	if (conn->errorMessage[0])
+    if (PQputnbytes(conn, buf, bufSize))
 	{
 		*errorCodePtr = EIO;
 		return -1;
@@ -398,7 +358,7 @@ getresid(Tcl_Interp * interp, char *id, Pg_ConnectionId ** connid_p)
 
 	connid = (Pg_ConnectionId *) Tcl_GetChannelInstanceData(conn_chan);
 
-	if (resid < 0 || resid > connid->res_max || connid->results[resid] == NULL)
+    if (resid < 0 || resid >= connid->res_max || connid->results[resid] == NULL)
 	{
 		Tcl_SetResult(interp, "Invalid result handle", TCL_STATIC);
 		return -1;

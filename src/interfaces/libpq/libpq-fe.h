@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.40 1998/09/01 04:40:10 momjian Exp $
+ * $Id: libpq-fe.h,v 1.41 1998/09/03 02:10:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,20 +20,10 @@ extern		"C"
 #endif
 
 #include <stdio.h>
-/* these wouldn't need to be included if PGSockAddr weren't exported: */
-#ifdef WIN32
-#include <winsock.h>
-#else
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#endif
-/* ----------------
- *		include stuff common to fe and be
- * ----------------
+/* postgres_ext.h defines the backend's externally visible types,
+ * such as Oid.
  */
 #include "postgres_ext.h"
-#include "lib/dllist.h"
 
 /* Application-visible enum types */
 
@@ -46,11 +36,11 @@ extern		"C"
 	typedef enum
 	{
 		PGRES_EMPTY_QUERY = 0,
-		PGRES_COMMAND_OK,		/* a query command that doesn't return */
-		/* anything was executed properly by the backend */
-		PGRES_TUPLES_OK,		/* a query command that returns tuples */
-		/* was executed properly by the backend, PGresult */
-		/* contains the result tuples */
+		PGRES_COMMAND_OK,		/* a query command that doesn't return anything
+								 * was executed properly by the backend */
+		PGRES_TUPLES_OK,		/* a query command that returns tuples
+								 * was executed properly by the backend,
+								 * PGresult contains the result tuples */
 		PGRES_COPY_OUT,			/* Copy Out data transfer in progress */
 		PGRES_COPY_IN,			/* Copy In data transfer in progress */
 		PGRES_BAD_RESPONSE,		/* an unexpected response was recv'd from
@@ -59,193 +49,45 @@ extern		"C"
 		PGRES_FATAL_ERROR
 	} ExecStatusType;
 
-/* string descriptions of the ExecStatusTypes */
-	extern const char *const pgresStatus[];
+/* String descriptions of the ExecStatusTypes */
+	extern const char * const pgresStatus[];
 
-/*
- * POSTGRES backend dependent Constants.
+/* PGconn encapsulates a connection to the backend.
+ * The contents of this struct are not supposed to be known to applications.
  */
+	typedef struct pg_conn PGconn;
 
-/* ERROR_MSG_LENGTH should really be the same as ELOG_MAXLEN in utils/elog.h*/
-#define ERROR_MSG_LENGTH 4096
-#define CMDSTATUS_LEN 40
-
-/* PGresult and the subsidiary types PGresAttDesc, PGresAttValue
- * represent the result of a query (or more precisely, of a single SQL
- * command --- a query string given to PQexec can contain multiple commands).
- * Note we assume that a single command can return at most one tuple group,
- * hence there is no need for multiple descriptor sets.
+/* PGresult encapsulates the result of a query (or more precisely, of a single
+ * SQL command --- a query string given to PQsendQuery can contain multiple
+ * commands and thus return multiple PGresult objects).
+ * The contents of this struct are not supposed to be known to applications.
  */
+	typedef struct pg_result PGresult;
 
-	typedef struct pgresAttDesc
-	{
-		char	   *name;		/* type name */
-		Oid			typid;		/* type id */
-		short		typlen;		/* type size */
-		int			atttypmod;	/* type-specific modifier info */
-	} PGresAttDesc;
-
-/* use char* for Attribute values,
-   ASCII tuples are guaranteed to be null-terminated
-   For binary tuples, the first four bytes of the value is the size,
-   and the bytes afterwards are the value.	The binary value is
-   not guaranteed to be null-terminated.  In fact, it can have embedded nulls
+/* PGnotify represents the occurrence of a NOTIFY message.
+ * Ideally this would be an opaque typedef, but it's so simple that it's
+ * unlikely to change.
  */
-
-#define NULL_LEN		(-1)	/* pg_result len for NULL value */
-
-	typedef struct pgresAttValue
-	{
-		int			len;		/* length in bytes of the value */
-		char	   *value;		/* actual value */
-	} PGresAttValue;
-
-	struct pg_conn;				/* forward reference */
-
-	typedef struct pg_result
-	{
-		int			ntups;
-		int			numAttributes;
-		PGresAttDesc *attDescs;
-		PGresAttValue **tuples; /* each PGresTuple is an array of
-								 * PGresAttValue's */
-		int			tupArrSize; /* size of tuples array allocated */
-		ExecStatusType resultStatus;
-		char		cmdStatus[CMDSTATUS_LEN];	/* cmd status from the
-												 * last insert query */
-		int			binary;		/* binary tuple values if binary == 1,
-								 * otherwise ASCII */
-		struct pg_conn *conn;	/* connection we did the query on */
-	} PGresult;
-
-/* PGnotify represents the occurrence of a NOTIFY message */
 	typedef struct pgNotify
 	{
 		char		relname[NAMEDATALEN];		/* name of relation
 												 * containing data */
-		int			be_pid;		/* process id of backend */
+		int			be_pid;						/* process id of backend */
 	} PGnotify;
 
-/* PQnoticeProcessor is a typedef for a callback function type */
-	typedef void (*PQnoticeProcessor) (void *arg, const char *message);
-
-/* PGAsyncStatusType is private to libpq, really shouldn't be seen by users */
-	typedef enum
-	{
-		PGASYNC_IDLE,			/* nothing's happening, dude */
-		PGASYNC_BUSY,			/* query in progress */
-		PGASYNC_READY,			/* result ready for PQgetResult */
-		PGASYNC_COPY_IN,		/* Copy In data transfer in progress */
-		PGASYNC_COPY_OUT		/* Copy Out data transfer in progress */
-	}			PGAsyncStatusType;
-
-/* generic socket address type for PGconn connection information.
- * Really shouldn't be visible to users */
-	typedef union PGSockAddr
-	{
-		struct sockaddr sa;
-		struct sockaddr_in in;
-#ifndef WIN32
-		struct sockaddr_un un;
-#endif
-	}			PGSockAddr;
-
-/* large-object-access data ... allocated only if large-object code is used.
- * Really shouldn't be visible to users */
-	typedef struct pgLobjfuncs
-	{
-		Oid			fn_lo_open; /* OID of backend function lo_open		*/
-		Oid			fn_lo_close;/* OID of backend function lo_close		*/
-		Oid			fn_lo_creat;/* OID of backend function lo_creat		*/
-		Oid			fn_lo_unlink;		/* OID of backend function
-										 * lo_unlink	*/
-		Oid			fn_lo_lseek;/* OID of backend function lo_lseek		*/
-		Oid			fn_lo_tell; /* OID of backend function lo_tell		*/
-		Oid			fn_lo_read; /* OID of backend function LOread		*/
-		Oid			fn_lo_write;/* OID of backend function LOwrite		*/
-	} PGlobjfuncs;
-
-/* PGconn encapsulates a connection to the backend.
- * XXX contents of this struct really shouldn't be visible to applications,
- * but we might break some existing applications if we tried to make it
- * completely opaque.
+/* PQnoticeProcessor is the function type for the notice-message callback.
  */
-	typedef struct pg_conn
-	{
-		/* Saved values of connection options */
-		char	   *pghost;		/* the machine on which the server is
-								 * running */
-		char	   *pgport;		/* the server's communication port */
-		char	   *pgtty;		/* tty on which the backend messages is
-								 * displayed (NOT ACTUALLY USED???) */
-		char	   *pgoptions;	/* options to start the backend with */
-		char	   *dbName;		/* database name */
-		char	   *pguser;		/* Postgres username and password, if any */
-		char	   *pgpass;
 
-		/* Optional file to write trace info to */
-		FILE	   *Pfdebug;
-
-		/* Callback procedure for notice/error message processing */
-		PQnoticeProcessor noticeHook;
-		void	   *noticeArg;
-
-		/* Status indicators */
-		ConnStatusType status;
-		PGAsyncStatusType asyncStatus;
-		Dllist	   *notifyList; /* Notify msgs not yet handed to
-								 * application */
-
-		/* Connection data */
-		int			sock;		/* Unix FD for socket, -1 if not connected */
-		PGSockAddr	laddr;		/* Local address */
-		PGSockAddr	raddr;		/* Remote address */
-		int			raddr_len;	/* Length of remote address */
-
-		/* Miscellaneous stuff */
-		int			be_pid;		/* PID of backend --- needed for cancels */
-		int			be_key;		/* key of backend --- needed for cancels */
-		char		salt[2];	/* password salt received from backend */
-		PGlobjfuncs *lobjfuncs; /* private state for large-object access
-								 * fns */
-
-		/* Buffer for data received from backend and not yet processed */
-		char	   *inBuffer;	/* currently allocated buffer */
-		int			inBufSize;	/* allocated size of buffer */
-		int			inStart;	/* offset to first unconsumed data in
-								 * buffer */
-		int			inCursor;	/* next byte to tentatively consume */
-		int			inEnd;		/* offset to first position after avail
-								 * data */
-
-		/* Buffer for data not yet sent to backend */
-		char	   *outBuffer;	/* currently allocated buffer */
-		int			outBufSize; /* allocated size of buffer */
-		int			outCount;	/* number of chars waiting in buffer */
-
-		/* Status for asynchronous result construction */
-		PGresult   *result;		/* result being constructed */
-		PGresAttValue *curTuple;/* tuple currently being read */
-
-		/*
-		 * Message space.  Placed last for code-size reasons. errorMessage
-		 * is the message last returned to the application. When
-		 * asyncStatus=READY, asyncErrorMessage is the pending message
-		 * that will be put in errorMessage by PQgetResult.
-		 */
-		char		errorMessage[ERROR_MSG_LENGTH];
-		char		asyncErrorMessage[ERROR_MSG_LENGTH];
-	} PGconn;
-
-	/*
-	 * We can't use the conventional "bool", because we are designed to be
-	 * included in a user's program, and user may already have that type
-	 * defined.  Pqbool, on the other hand, is unlikely to be used.
-	 */
-
-	typedef char pqbool;
+typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 
 /* Print options for PQprint() */
+  
+  	/*
+  	 * We can't use the conventional "bool", because we are designed to be
+  	 * included in a user's program, and user may already have that type
+  	 * defined.  Pqbool, on the other hand, is unlikely to be used.
+  	 */
+  	typedef char pqbool;
 
 	typedef struct _PQprintOpt
 	{
@@ -264,6 +106,26 @@ extern		"C"
 	} PQprintOpt;
 
 /* ----------------
+ * Structure for the conninfo parameter definitions returned by PQconndefaults
+ * ----------------
+ */
+	typedef struct _PQconninfoOption
+	{
+		char	   *keyword;	/* The keyword of the option			*/
+		char	   *environ;	/* Fallback environment variable name	*/
+		char	   *compiled;	/* Fallback compiled in default value	*/
+		char	   *val;		/* Options value						*/
+		char	   *label;		/* Label for field in connect dialog	*/
+		char	   *dispchar;	/* Character to display for this field	*/
+								/* in a connect dialog. Values are:		*/
+								/* ""	Display entered value as is  */
+								/* "*"	Password field - hide value  */
+								/* "D"	Debug options - don't 	 */
+								/* create a field by default	*/
+		int			dispsize;	/* Field size in characters for dialog	*/
+	} PQconninfoOption;
+
+/* ----------------
  * PQArgBlock -- structure for PQfn() arguments
  * ----------------
  */
@@ -277,26 +139,6 @@ extern		"C"
 			int			integer;
 		}			u;
 	} PQArgBlock;
-
-/* ----------------
- * Structure for the conninfo parameter definitions returned by PQconndefaults
- * ----------------
- */
-	typedef struct _PQconninfoOption
-	{
-		char	   *keyword;	/* The keyword of the option			*/
-		char	   *environ;	/* Fallback environment variable name	*/
-		char	   *compiled;	/* Fallback compiled in default value	*/
-		char	   *val;		/* Options value						*/
-		char	   *label;		/* Label for field in connect dialog	*/
-		char	   *dispchar;	/* Character to display for this field	*/
-		/* in a connect dialog. Values are:		*/
-		/* ""	Display entered value as is  */
-		/* "*"	Password field - hide value  */
-		/* "D"	Debug options - don't 	 */
-		/* create a field by default	*/
-		int			dispsize;	/* Field size in characters for dialog	*/
-	} PQconninfoOption;
 
 /* ----------------
  * Exported functions of libpq
@@ -332,13 +174,16 @@ extern		"C"
 	/* Accessor functions for PGconn objects */
 	extern char *PQdb(PGconn *conn);
 	extern char *PQuser(PGconn *conn);
+	extern char *PQpass(PGconn *conn);
 	extern char *PQhost(PGconn *conn);
-	extern char *PQoptions(PGconn *conn);
 	extern char *PQport(PGconn *conn);
 	extern char *PQtty(PGconn *conn);
+	extern char *PQoptions(PGconn *conn);
 	extern ConnStatusType PQstatus(PGconn *conn);
 	extern char *PQerrorMessage(PGconn *conn);
 	extern int	PQsocket(PGconn *conn);
+	extern int	PQsocket(PGconn *conn);
+	extern int	PQbackendPID(PGconn *conn);
 
 	/* Enable/disable tracing */
 	extern void PQtrace(PGconn *conn, FILE *debug_port);
@@ -361,12 +206,13 @@ extern		"C"
 
 	/* Routines for managing an asychronous query */
 	extern int	PQisBusy(PGconn *conn);
-	extern void PQconsumeInput(PGconn *conn);
+	extern int	PQconsumeInput(PGconn *conn);
 
 	/* Routines for copy in/out */
 	extern int	PQgetline(PGconn *conn, char *string, int length);
-	extern void PQputline(PGconn *conn, const char *string);
-	extern void PQputnbytes(PGconn *conn, const char *buffer, int nbytes);
+	extern int	PQputline(PGconn *conn, const char *string);
+	extern int	PQgetlineAsync(PGconn *conn, char *buffer, int bufsize);
+	extern int	PQputnbytes(PGconn *conn, const char *buffer, int nbytes);
 	extern int	PQendcopy(PGconn *conn);
 
 	/*
@@ -385,10 +231,11 @@ extern		"C"
 	extern ExecStatusType PQresultStatus(PGresult *res);
 	extern int	PQntuples(PGresult *res);
 	extern int	PQnfields(PGresult *res);
+	extern int	PQbinaryTuples(PGresult *res);
 	extern char *PQfname(PGresult *res, int field_num);
 	extern int	PQfnumber(PGresult *res, const char *field_name);
 	extern Oid	PQftype(PGresult *res, int field_num);
-	extern short PQfsize(PGresult *res, int field_num);
+	extern int	PQfsize(PGresult *res, int field_num);
 	extern int	PQfmod(PGresult *res, int field_num);
 	extern char *PQcmdStatus(PGresult *res);
 	extern const char *PQoidStatus(PGresult *res);
@@ -399,6 +246,9 @@ extern		"C"
 
 	/* Delete a PGresult */
 	extern void PQclear(PGresult *res);
+
+	/* Make an empty PGresult with given status (some apps find this useful) */
+	extern PGresult * PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 
 /* === in fe-print.c === */
 
