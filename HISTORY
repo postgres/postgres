@@ -66,7 +66,8 @@ Migration to version 7.3
 
    A dump/restore using "pg_dump" is required for those wishing to migrate
    data from any previous release.  A summary of changes needed in client
-   applications is at http://www.ca.postgresql.org/docs/momjian/upgrade_7.3.
+   applications is at 
+   http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3.
 
    Observe the following incompatibilities:
 
