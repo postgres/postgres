@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Sep 7 18:01:28 EDT 2003
+   Last updated: Sun Sep 7 18:02:46 EDT 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -200,7 +200,7 @@
    A native port to MS Win NT/2000/XP is currently being worked on. For
    more details on the current status of PostgreSQL on Windows see
    http://techdocs.postgresql.org/guides/Windows and
-   http://candle.pha.pa.us/main/writings/pgsql/win32.html.
+   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
    
    There is also a Novell Netware 6 port at http://forge.novell.com.
    
