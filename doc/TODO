@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov 29 10:39:07 EST 2001
+Last updated:		Wed Dec  5 13:20:33 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -263,7 +263,7 @@ CLIENTS
 	o Remove space_or_nl and line_end from pgc.l
 	o Fix nested C comments
 	o Add SQLSTATE
-	o Fix variable handling in EXEC SQL AT statement
+	o -Fix variable handling in EXEC SQL AT statement
 
 REFERENTIAL INTEGRITY
 
