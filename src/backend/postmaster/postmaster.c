@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.415 2004/07/24 20:01:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.416 2004/07/27 01:46:03 tgl Exp $
  *
  * NOTES
  *
@@ -1154,12 +1154,13 @@ ServerLoop(void)
 
 		if (selres < 0)
 		{
-			if (errno == EINTR || errno == EWOULDBLOCK)
-				continue;
-			ereport(LOG,
-					(errcode_for_socket_access(),
-					 errmsg("select() failed in postmaster: %m")));
-			return STATUS_ERROR;
+			if (errno != EINTR && errno != EWOULDBLOCK)
+			{
+				ereport(LOG,
+						(errcode_for_socket_access(),
+						 errmsg("select() failed in postmaster: %m")));
+				return STATUS_ERROR;
+			}
 		}
 
 		/*
@@ -2014,6 +2015,11 @@ reaper(SIGNAL_ARGS)
 				 * We expect that it wrote a shutdown checkpoint.  (If
 				 * for some reason it didn't, recovery will occur on next
 				 * postmaster start.)
+				 *
+				 * Note: we do not wait around for exit of the archiver or
+				 * stats processes.  They've been sent SIGQUIT by this
+				 * point, and in any case contain logic to commit hara-kiri
+				 * if they notice the postmaster is gone.
 				 */
 				ExitPostmaster(0);
 			}
@@ -2095,6 +2101,12 @@ reaper(SIGNAL_ARGS)
 		/* And tell it to shut down */
 		if (BgWriterPID != 0)
 			kill(BgWriterPID, SIGUSR2);
+		/* Tell pgarch to shut down too; nothing left for it to do */
+		if (PgArchPID != 0)
+			kill(PgArchPID, SIGQUIT);
+		/* Tell pgstat to shut down too; nothing left for it to do */
+		if (PgStatPID != 0)
+			kill(PgStatPID, SIGQUIT);
 	}
 
 reaper_done:
