@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="operators">
 <Title>Operators</Title>
 
 <Abstract>
@@ -102,22 +102,22 @@ from numeric types to data/time types.
   <ROW>
     <ENTRY> ~ </ENTRY>
     <ENTRY>Match (regex), case sensitive</ENTRY>
-    <ENTRY>'thomas' ~ '*.thomas*.'</ENTRY>
+    <ENTRY>'thomas' ~ '.*thomas.*'</ENTRY>
   </ROW>
   <ROW>
     <ENTRY> ~* </ENTRY>
     <ENTRY>Match (regex), case insensitive</ENTRY>
-    <ENTRY>'thomas' ~* '*.Thomas*.'</ENTRY>
+    <ENTRY>'thomas' ~* '.*Thomas.*'</ENTRY>
   </ROW>
   <ROW>
     <ENTRY> !~ </ENTRY>
     <ENTRY>Does not match (regex), case sensitive</ENTRY>
-    <ENTRY>'thomas' !~ '*.Thomas*.'</ENTRY>
+    <ENTRY>'thomas' !~ '.*Thomas.*'</ENTRY>
   </ROW>
   <ROW>
     <ENTRY> !~* </ENTRY>
     <ENTRY>Does not match (regex), case insensitive</ENTRY>
-    <ENTRY>'thomas' !~ '*.vadim*.'</ENTRY>
+    <ENTRY>'thomas' !~ '.*vadim.*'</ENTRY>
   </ROW>
 </TBODY>
 </TGROUP>

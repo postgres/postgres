@@ -1,4 +1,4 @@
-<Chapter>
+<Chapter Id="functions">
 <Title>Functions</Title>
 
 <Abstract>
@@ -74,7 +74,7 @@ are implemented using other <ProductName>Postgres</ProductName> functions.
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE><Acronym>SQL92</Acronym> Text Functions</TITLE>
+<TITLE><Acronym>SQL92</Acronym> String Functions</TITLE>
 <TGROUP COLS="4">
 <THEAD>
   <ROW>
@@ -139,6 +139,12 @@ Some are used internally to implement the SQL92 string functions listed above.
 <ENTRY> char(varchar 'varchar string') </ENTRY>
   </ROW>
   <ROW>
+<ENTRY> initcap(text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> first letter of each word to upper case </ENTRY>
+<ENTRY> initcap('thomas') </ENTRY>
+  </ROW>
+  <ROW>
 <ENTRY> lower(text) </ENTRY>
 <ENTRY> text </ENTRY>
 <ENTRY> convert text to lower case </ENTRY>
@@ -191,6 +197,12 @@ Some are used internally to implement the SQL92 string functions listed above.
 <ENTRY> text </ENTRY>
 <ENTRY> convert varchar to text type </ENTRY>
 <ENTRY> text(varchar 'varchar string') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> translate(text,from,to) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> convert character in string </ENTRY>
+<ENTRY> translate('12345', '1', 'a') </ENTRY>
   </ROW>
   <ROW>
 <ENTRY> varchar(char) </ENTRY>
