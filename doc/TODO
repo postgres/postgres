@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jul 20 15:52:00 EDT 2004
+Last updated:		Tue Jul 20 17:01:21 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -284,7 +284,7 @@ Clients
   commands? [psql]
 * Allow pg_dump to use multiple -t and -n switches
 * Fix oid2name and dbsize for tablespaces
-
+* Allow psql to display permission information using \df+ and \l+
 
 * ECPG
 	o Docs
