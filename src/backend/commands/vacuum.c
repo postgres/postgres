@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.73 1998/08/19 22:01:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.74 1998/08/19 23:48:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,8 +187,11 @@ vc_init()
 	int			fd;
 
 	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
-		elog(ERROR, "can't create lock file -- another vacuum cleaner running?");
-
+	{
+		elog(ERROR, "Can't create lock file -- another vacuum cleaner running?\n\
+\tIf not, you may remove the pg_vlock file in the pgsql/data/base/your_db\n\
+\tdirectory");
+	}
 	close(fd);
 
 	/*
@@ -1443,13 +1446,13 @@ vc_scanoneind(Relation indrel, int num_tuples)
 
 	getrusage(RUSAGE_SELF, &ru1);
 
-	elog(MESSAGE_LEVEL, "Ind %s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
 		 indrel->rd_rel->relname.data, nipages, nitups,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
 	if (nitups != num_tuples)
-		elog(NOTICE, "Ind %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
 			 indrel->rd_rel->relname.data, nitups, num_tuples);
 
 }	/* vc_scanoneind */
@@ -1502,7 +1505,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples)
 #endif
 			if (vp->vpd_offsets_free == 0)
 			{					/* this is EmptyPage !!! */
-				elog(NOTICE, "Ind %s: pointer to EmptyPage (blk %u off %u) - fixing",
+				elog(NOTICE, "Index %s: pointer to EmptyPage (blk %u off %u) - fixing",
 					 indrel->rd_rel->relname.data,
 					 vp->vpd_blkno, ItemPointerGetOffsetNumber(heapptr));
 			}
@@ -1523,13 +1526,13 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples)
 
 	getrusage(RUSAGE_SELF, &ru1);
 
-	elog(MESSAGE_LEVEL, "Ind %s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
 		 indrel->rd_rel->relname.data, num_pages, num_index_tuples, tups_vacuumed,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
 	if (num_index_tuples != num_tuples)
-		elog(NOTICE, "Ind %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
 			 indrel->rd_rel->relname.data, num_index_tuples, num_tuples);
 
 }	/* vc_vaconeind */

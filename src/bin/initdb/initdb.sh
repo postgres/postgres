@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.47 1998/08/19 19:59:45 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.48 1998/08/19 23:48:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -219,10 +219,10 @@ for PREREQ_FILE in $TEMPLATE $GLOBAL $PG_HBA_SAMPLE; do
     fi
 done
 
-echo "$CMDNAME: using $TEMPLATE as input to create the template database."
+[ "$debug" -ne 0 ] && echo "$CMDNAME: using $TEMPLATE as input to create the template database."
 if [ $template_only -eq 0 ]; then
-    echo "$CMDNAME: using $GLOBAL as input to create the global classes."
-    echo "$CMDNAME: using $PG_HBA_SAMPLE as the host-based authentication" \
+    [ "$debug" -ne 0 ] && echo "$CMDNAME: using $GLOBAL as input to create the global classes."
+    [ "$debug" -ne 0 ] && echo "$CMDNAME: using $PG_HBA_SAMPLE as the host-based authentication" \
          "control file."
     echo
 fi  
