@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile,v 1.2 1997/01/08 07:32:15 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile,v 1.3 1997/01/23 05:16:13 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,6 +26,7 @@ XARGS = xargs
 	  echo You must set the PORTNAME value in Makefile.global before \
 	       you can build Postgres. ;\
 	  false ;\
+        else true;\
 	fi
 	$(MAKE) -C utils $@
 	$(MAKE) -C backend $@
