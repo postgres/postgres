@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.55 2001/05/28 04:27:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.56 2001/06/10 03:46:31 momjian Exp $
 Postgres documentation
 -->
 
@@ -1051,7 +1051,7 @@ lo_import 152801
 
 	<note>
 	<para>
-	As of <application>psql</application> version 7.0 it is no longer
+	In the current version, it is no longer
 	necessary to save the command history, since that will be done
 	automatically on program termination. The history is
 	also loaded automatically every time <application>psql</application>
@@ -1579,7 +1579,7 @@ Access permissions for database "test"
       </para>
 
       <para>
-      As of version 7.0, <application>psql</application> automatically issues a
+      In the current version, <application>psql</application> automatically issues a
       password prompt whenever the backend requests password authentication.
       Because this is currently based on a hack, the automatic
       recognition might mysteriously fail, hence this option to force a prompt.

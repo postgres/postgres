@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.42 2001/05/30 04:32:30 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.43 2001/06/10 03:46:31 momjian Exp $
 Postgres documentation
 -->
 
@@ -122,8 +122,8 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 	table is scanned.  If ONLY is not specified, the table and all its
 	descendant tables (if any) are scanned.  * can be appended to the
 	table name to indicate that descendant tables are to be scanned,
-	but as of <Productname>Postgres</Productname> 7.1 this is the default
-	behavior.  (In releases before 7.1, ONLY was the default behavior.)
+	but in the current version, this is the default behavior.
+	(In releases before 7.1, ONLY was the default behavior.)
        </para>
       </listitem>
      </varlistentry>

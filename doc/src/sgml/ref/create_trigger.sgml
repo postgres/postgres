@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.13 2001/05/27 09:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.14 2001/06/10 03:46:31 momjian Exp $
 Postgres documentation
 -->
 
@@ -150,7 +150,7 @@ CREATE
     Only the relation owner may create a trigger on this relation.
    </para>
    <para>
-    As of the current release (v7.0), STATEMENT triggers are not implemented.
+    As of the current release, STATEMENT triggers are not implemented.
    </para>
    <para>
     Refer to <command>DROP TRIGGER</command> for information on how to 
