@@ -19,7 +19,7 @@ updated CLUSTER manual page
 multi-byte character set support, see doc/README.mb(Tatsuo)
 configure --with-pgport fix
 pg_ident fix
-big-endian fix for backend communications(Tatsuo)
+big-endian fix for backend communications(Kataoka)
 SUBSTR() and substring() fix(Thomas)
 several jdbc fixes(Peter)
 libpgtcl improvements, see libptcl/README(Randy Kunkee)
