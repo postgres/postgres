@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.81 2001/05/18 21:24:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.82 2001/07/15 22:48:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,27 @@
 #include "storage/sinval.h"
 #include "access/xlogutils.h"
 
+
+/* Working state for btbuild and its callback */
+typedef struct
+{
+	bool		usefast;
+	bool		isUnique;
+	bool		haveDead;
+	Relation	heapRel;
+	BTSpool    *spool;
+	/*
+	 * spool2 is needed only when the index is an unique index. Dead
+	 * tuples are put into spool2 instead of spool in order to avoid
+	 * uniqueness check.
+	 */
+	BTSpool    *spool2;
+	double		indtuples;
+} BTBuildState;
+
+
 bool		BuildingBtree = false;		/* see comment in btbuild() */
-bool		FastBuild = true;	/* use sort/build instead */
-
- /* of insertion build */
-
+bool		FastBuild = true;	/* use SORT instead of insertion build */
 
 /*
  * TEMPORARY FLAG FOR TESTING NEW FIX TREE
@@ -41,6 +57,29 @@ bool		FastBuild = true;	/* use sort/build instead */
 bool		FixBTree = true;
 
 static void _bt_restscan(IndexScanDesc scan);
+static void btbuildCallback(Relation index,
+							HeapTuple htup,
+							Datum *attdata,
+							char *nulls,
+							bool tupleIsAlive,
+							void *state);
+
+
+/*
+ * AtEOXact_nbtree() --- clean up nbtree subsystem at xact abort or commit.
+ */
+void
+AtEOXact_nbtree(void)
+{
+	/*
+	 * Note: these actions should only be necessary during xact abort; but
+	 * they can't hurt during a commit.
+	 */
+
+	/* If we were building a btree, we ain't anymore. */
+	BuildingBtree = false;
+}
+
 
 /*
  *	btbuild() -- build a new btree index.
@@ -56,42 +95,10 @@ btbuild(PG_FUNCTION_ARGS)
 	Relation	heap = (Relation) PG_GETARG_POINTER(0);
 	Relation	index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	Node	   *oldPred = (Node *) PG_GETARG_POINTER(3);
-#ifdef NOT_USED
-	IndexStrategy istrat = (IndexStrategy) PG_GETARG_POINTER(4);
-#endif
-	HeapScanDesc hscan;
-	HeapTuple	htup;
-	IndexTuple	itup;
-	TupleDesc	htupdesc,
-				itupdesc;
-	Datum		attdata[INDEX_MAX_KEYS];
-	char		nulls[INDEX_MAX_KEYS];
-	double		nhtups,
-				nitups;
-	Node	   *pred = indexInfo->ii_Predicate;
-#ifndef OMIT_PARTIAL_INDEX
-	TupleTable	tupleTable;
-	TupleTableSlot *slot;
-#endif
-	ExprContext *econtext;
-	InsertIndexResult res = NULL;
-	BTSpool    *spool = NULL;
-	BTItem		btitem;
-	bool		usefast;
-	Snapshot	snapshot;
-	TransactionId XmaxRecent;
+	double		reltuples;
+	BTBuildState buildstate;
 
-	/*
-	 * spool2 is needed only when the index is an unique index. Dead
-	 * tuples are put into spool2 instead of spool in order to avoid
-	 * uniqueness check.
-	 */
-	BTSpool    *spool2 = NULL;
-	bool		tupleIsAlive;
-	int			dead_count;
-
-	/* note that this is a new btree */
+	/* set flag to disable locking */
 	BuildingBtree = true;
 
 	/*
@@ -100,220 +107,63 @@ btbuild(PG_FUNCTION_ARGS)
 	 * look harder at this.  (there is some kind of incremental processing
 	 * going on there.) -- pma 08/29/95
 	 */
-	usefast = (FastBuild && IsNormalProcessingMode());
+	buildstate.usefast = (FastBuild && IsNormalProcessingMode());
+	buildstate.isUnique = indexInfo->ii_Unique;
+	buildstate.haveDead = false;
+	buildstate.heapRel = heap;
+	buildstate.spool = NULL;
+	buildstate.spool2 = NULL;
+	buildstate.indtuples = 0;
 
 #ifdef BTREE_BUILD_STATS
 	if (Show_btree_build_stats)
 		ResetUsage();
 #endif	 /* BTREE_BUILD_STATS */
 
-	/* initialize the btree index metadata page (if this is a new index) */
-	if (oldPred == NULL)
-		_bt_metapinit(index);
-
-	/* get tuple descriptors for heap and index relations */
-	htupdesc = RelationGetDescr(heap);
-	itupdesc = RelationGetDescr(index);
-
 	/*
-	 * If this is a predicate (partial) index, we will need to evaluate
-	 * the predicate using ExecQual, which requires the current tuple to
-	 * be in a slot of a TupleTable.  In addition, ExecQual must have an
-	 * ExprContext referring to that slot.	Here, we initialize dummy
-	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb 92
-	 *
-	 * We construct the ExprContext anyway since we need a per-tuple
-	 * temporary memory context for function evaluation -- tgl July 00
+	 * We expect to be called exactly once for any index relation. If
+	 * that's not the case, big trouble's what we have.
 	 */
-#ifndef OMIT_PARTIAL_INDEX
-	if (pred != NULL || oldPred != NULL)
-	{
-		tupleTable = ExecCreateTupleTable(1);
-		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, htupdesc, false);
+	if (RelationGetNumberOfBlocks(index) != 0)
+		elog(ERROR, "%s already contains data",
+			 RelationGetRelationName(index));
 
+	/* initialize the btree index metadata page */
+	_bt_metapinit(index);
+
+	if (buildstate.usefast)
+	{
+		buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique);
 		/*
-		 * we never want to use sort/build if we are extending an existing
-		 * partial index -- it works by inserting the newly-qualifying
-		 * tuples into the existing index. (sort/build would overwrite the
-		 * existing index with one consisting of the newly-qualifying
-		 * tuples.)
-		 */
-		usefast = false;
-	}
-	else
-	{
-		tupleTable = NULL;
-		slot = NULL;
-	}
-	econtext = MakeExprContext(slot, TransactionCommandContext);
-#else
-	econtext = MakeExprContext(NULL, TransactionCommandContext);
-#endif	 /* OMIT_PARTIAL_INDEX */
-
-	/* build the index */
-	nhtups = nitups = 0.0;
-
-	if (usefast)
-	{
-		spool = _bt_spoolinit(index, indexInfo->ii_Unique);
-
-		/*
-		 * Different from spool,the uniqueness isn't checked for spool2.
+		 * Different from spool, the uniqueness isn't checked for spool2.
 		 */
 		if (indexInfo->ii_Unique)
-			spool2 = _bt_spoolinit(index, false);
+			buildstate.spool2 = _bt_spoolinit(index, false);
 	}
 
-	/* start a heap scan */
-	dead_count = 0;
-	snapshot = (IsBootstrapProcessingMode() ? SnapshotNow : SnapshotAny);
-	hscan = heap_beginscan(heap, 0, snapshot, 0, (ScanKey) NULL);
-	XmaxRecent = 0;
-	if (snapshot == SnapshotAny)
-		GetXmaxRecent(&XmaxRecent);
-
-	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
-	{
-		if (snapshot == SnapshotAny)
-		{
-			tupleIsAlive = HeapTupleSatisfiesNow(htup->t_data);
-			if (!tupleIsAlive)
-			{
-				if ((htup->t_data->t_infomask & HEAP_XMIN_INVALID) != 0)
-					continue;
-				if (htup->t_data->t_infomask & HEAP_XMAX_COMMITTED &&
-					htup->t_data->t_xmax < XmaxRecent)
-					continue;
-			}
-		}
-		else
-			tupleIsAlive = true;
-
-		MemoryContextReset(econtext->ecxt_per_tuple_memory);
-
-		nhtups += 1.0;
-
-#ifndef OMIT_PARTIAL_INDEX
-
-		/*
-		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
-		 * this tuple if it was already in the existing partial index
-		 */
-		if (oldPred != NULL)
-		{
-			slot->val = htup;
-			if (ExecQual((List *) oldPred, econtext, false))
-			{
-				nitups += 1.0;
-				continue;
-			}
-		}
-
-		/*
-		 * Skip this tuple if it doesn't satisfy the partial-index
-		 * predicate
-		 */
-		if (pred != NULL)
-		{
-			slot->val = htup;
-			if (!ExecQual((List *) pred, econtext, false))
-				continue;
-		}
-#endif	 /* OMIT_PARTIAL_INDEX */
-
-		nitups += 1.0;
-
-		/*
-		 * For the current heap tuple, extract all the attributes we use
-		 * in this index, and note which are null.
-		 */
-		FormIndexDatum(indexInfo,
-					   htup,
-					   htupdesc,
-					   econtext->ecxt_per_tuple_memory,
-					   attdata,
-					   nulls);
-
-		/* form an index tuple and point it at the heap tuple */
-		itup = index_formtuple(itupdesc, attdata, nulls);
-
-		/*
-		 * If the single index key is null, we don't insert it into the
-		 * index.  Btrees support scans on <, <=, =, >=, and >. Relational
-		 * algebra says that A op B (where op is one of the operators
-		 * above) returns null if either A or B is null.  This means that
-		 * no qualification used in an index scan could ever return true
-		 * on a null attribute.  It also means that indices can't be used
-		 * by ISNULL or NOTNULL scans, but that's an artifact of the
-		 * strategy map architecture chosen in 1986, not of the way nulls
-		 * are handled here.
-		 */
-
-		/*
-		 * New comments: NULLs handling. While we can't do NULL
-		 * comparison, we can follow simple rule for ordering items on
-		 * btree pages - NULLs greater NOT_NULLs and NULL = NULL is TRUE.
-		 * Sure, it's just rule for placing/finding items and no more -
-		 * keytest'll return FALSE for a = 5 for items having 'a' isNULL.
-		 * Look at _bt_compare for how it works. - vadim 03/23/97
-		 *
-		 * if (itup->t_info & INDEX_NULL_MASK) { pfree(itup); continue; }
-		 */
-
-		itup->t_tid = htup->t_self;
-		btitem = _bt_formitem(itup);
-
-		/*
-		 * if we are doing bottom-up btree build, we insert the index into
-		 * a spool file for subsequent processing.	otherwise, we insert
-		 * into the btree.
-		 */
-		if (usefast)
-		{
-			if (tupleIsAlive || !spool2)
-				_bt_spool(btitem, spool);
-			else
-/* dead tuples are put into spool2 */
-			{
-				dead_count++;
-				_bt_spool(btitem, spool2);
-			}
-		}
-		else
-			res = _bt_doinsert(index, btitem, indexInfo->ii_Unique, heap);
-
-		pfree(btitem);
-		pfree(itup);
-		if (res)
-			pfree(res);
-	}
+	/* do the heap scan */
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
+								   btbuildCallback, (void *) &buildstate);
 
 	/* okay, all heap tuples are indexed */
-	heap_endscan(hscan);
-	if (spool2 && !dead_count)	/* spool2 was found to be unnecessary */
+	if (buildstate.spool2 && !buildstate.haveDead)
 	{
-		_bt_spooldestroy(spool2);
-		spool2 = NULL;
+		/* spool2 turns out to be unnecessary */
+		_bt_spooldestroy(buildstate.spool2);
+		buildstate.spool2 = NULL;
 	}
-
-#ifndef OMIT_PARTIAL_INDEX
-	if (pred != NULL || oldPred != NULL)
-		ExecDropTupleTable(tupleTable, true);
-#endif	 /* OMIT_PARTIAL_INDEX */
-	FreeExprContext(econtext);
 
 	/*
 	 * if we are doing bottom-up btree build, finish the build by (1)
 	 * completing the sort of the spool file, (2) inserting the sorted
 	 * tuples into btree pages and (3) building the upper levels.
 	 */
-	if (usefast)
+	if (buildstate.usefast)
 	{
-		_bt_leafbuild(spool, spool2);
-		_bt_spooldestroy(spool);
-		if (spool2)
-			_bt_spooldestroy(spool2);
+		_bt_leafbuild(buildstate.spool, buildstate.spool2);
+		_bt_spooldestroy(buildstate.spool);
+		if (buildstate.spool2)
+			_bt_spooldestroy(buildstate.spool2);
 	}
 
 #ifdef BTREE_BUILD_STATS
@@ -324,6 +174,9 @@ btbuild(PG_FUNCTION_ARGS)
 		ResetUsage();
 	}
 #endif	 /* BTREE_BUILD_STATS */
+
+	/* all done */
+	BuildingBtree = false;
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
@@ -343,20 +196,63 @@ btbuild(PG_FUNCTION_ARGS)
 
 		heap_close(heap, NoLock);
 		index_close(index);
-		UpdateStats(hrelid, nhtups);
-		UpdateStats(irelid, nitups);
-		if (oldPred != NULL)
-		{
-			if (nitups == nhtups)
-				pred = NULL;
-			UpdateIndexPredicate(irelid, oldPred, pred);
-		}
+		UpdateStats(hrelid, reltuples);
+		UpdateStats(irelid, buildstate.indtuples);
 	}
 
-	/* all done */
-	BuildingBtree = false;
-
 	PG_RETURN_VOID();
+}
+
+/*
+ * Per-tuple callback from IndexBuildHeapScan
+ */
+static void
+btbuildCallback(Relation index,
+				HeapTuple htup,
+				Datum *attdata,
+				char *nulls,
+				bool tupleIsAlive,
+				void *state)
+{
+	BTBuildState   *buildstate = (BTBuildState *) state;
+	IndexTuple	itup;
+	BTItem		btitem;
+	InsertIndexResult res;
+
+	/* form an index tuple and point it at the heap tuple */
+	itup = index_formtuple(RelationGetDescr(index), attdata, nulls);
+	itup->t_tid = htup->t_self;
+
+	btitem = _bt_formitem(itup);
+
+	/*
+	 * if we are doing bottom-up btree build, we insert the index into
+	 * a spool file for subsequent processing.	otherwise, we insert
+	 * into the btree.
+	 */
+	if (buildstate->usefast)
+	{
+		if (tupleIsAlive || buildstate->spool2 == NULL)
+			_bt_spool(btitem, buildstate->spool);
+		else
+		{
+			/* dead tuples are put into spool2 */
+			buildstate->haveDead = true;
+			_bt_spool(btitem, buildstate->spool2);
+		}
+	}
+	else
+	{
+		res = _bt_doinsert(index, btitem,
+						   buildstate->isUnique, buildstate->heapRel);
+		if (res)
+			pfree(res);
+	}
+
+	buildstate->indtuples += 1;
+
+	pfree(btitem);
+	pfree(itup);
 }
 
 /*
@@ -423,8 +319,10 @@ btgettuple(PG_FUNCTION_ARGS)
 
 	/*
 	 * Save heap TID to use it in _bt_restscan.  Then release the read
-	 * lock on the buffer so that we aren't blocking other backends. NOTE:
-	 * we do keep the pin on the buffer!
+	 * lock on the buffer so that we aren't blocking other backends.
+	 *
+	 * NOTE: we do keep the pin on the buffer!  This is essential to ensure
+	 * that someone else doesn't delete the index entry we are stopped on.
 	 */
 	if (res)
 	{
@@ -450,9 +348,6 @@ btbeginscan(PG_FUNCTION_ARGS)
 
 	/* get the scan */
 	scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
-
-	/* register scan in case we change pages it's using */
-	_bt_regscan(scan);
 
 	PG_RETURN_POINTER(scan);
 }
@@ -571,8 +466,6 @@ btendscan(PG_FUNCTION_ARGS)
 		pfree(so->keyData);
 	pfree(so);
 
-	_bt_dropscan(scan);
-
 	PG_RETURN_VOID();
 }
 
@@ -640,20 +533,127 @@ btrestrpos(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/* stubs */
+/*
+ * Bulk deletion of all index entries pointing to a set of heap tuples.
+ * The set of target tuples is specified via a callback routine that tells
+ * whether any given heap tuple (identified by ItemPointer) is being deleted.
+ *
+ * Result: a palloc'd struct containing statistical info for VACUUM displays.
+ */
 Datum
-btdelete(PG_FUNCTION_ARGS)
+btbulkdelete(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	ItemPointer tid = (ItemPointer) PG_GETARG_POINTER(1);
+	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
+	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
+	IndexBulkDeleteResult *result;
+	BlockNumber	num_pages;
+	double		tuples_removed;
+	double		num_index_tuples;
+	RetrieveIndexResult res;
+	IndexScanDesc scan;
+	BTScanOpaque so;
+	ItemPointer current;
 
-	/* adjust any active scans that will be affected by this deletion */
-	_bt_adjscans(rel, tid);
+	tuples_removed = 0;
+	num_index_tuples = 0;
 
-	/* delete the data from the page */
-	_bt_pagedel(rel, tid);
+	/*
+	 * We use a standard IndexScanDesc scan object, but to speed up the loop,
+	 * we skip most of the wrapper layers of index_getnext and instead call
+	 * _bt_step directly.  This implies holding buffer lock on a target page
+	 * throughout the loop over the page's tuples.  Initially, we have a read
+	 * lock acquired by _bt_step when we stepped onto the page.  If we find
+	 * a tuple we need to delete, we trade in the read lock for an exclusive
+	 * write lock; after that, we hold the write lock until we step off the
+	 * page (fortunately, _bt_relbuf doesn't care which kind of lock it's
+	 * releasing).  This should minimize the amount of work needed per page.
+	 */
+	scan = index_beginscan(rel, false, 0, (ScanKey) NULL);
+	so = (BTScanOpaque) scan->opaque;
+	current = &(scan->currentItemData);
 
-	PG_RETURN_VOID();
+	/* Use _bt_first to get started, then _bt_step to remaining tuples */
+	res = _bt_first(scan, ForwardScanDirection);
+
+	if (res != NULL)
+	{
+		Buffer		buf;
+		BlockNumber	lockedBlock = InvalidBlockNumber;
+
+		pfree(res);
+		/* we have the buffer pinned and locked */
+		buf = so->btso_curbuf;
+		Assert(BufferIsValid(buf));
+
+		do
+		{
+			Page		page;
+			BlockNumber	blkno;
+			OffsetNumber offnum;
+			BTItem		btitem;
+			IndexTuple	itup;
+			ItemPointer	htup;
+
+			/* current is the next index tuple */
+			blkno = ItemPointerGetBlockNumber(current);
+			offnum = ItemPointerGetOffsetNumber(current);
+			page = BufferGetPage(buf);
+			btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
+			itup = &btitem->bti_itup;
+			htup = &(itup->t_tid);
+
+			if (callback(htup, callback_state))
+			{
+				/*
+				 * If this is first deletion on this page, trade in read
+				 * lock for a really-exclusive write lock.  Then, step back
+				 * one and re-examine the item, because someone else might
+				 * have inserted an item while we weren't holding the lock!
+				 */
+				if (blkno != lockedBlock)
+				{
+					LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+					LockBufferForCleanup(buf);
+					lockedBlock = blkno;
+				}
+				else
+				{
+					/* Delete the item from the page */
+					_bt_itemdel(rel, buf, current);
+
+					/* Mark buffer dirty, but keep the lock and pin */
+					WriteNoReleaseBuffer(buf);
+
+					tuples_removed += 1;
+				}
+
+				/*
+				 * We need to back up the scan one item so that the next
+				 * cycle will re-examine the same offnum on this page.
+				 *
+				 * For now, just hack the current-item index.  Will need
+				 * to be smarter when deletion includes removal of empty
+				 * index pages.
+				 */
+				current->ip_posid--;
+			}
+			else
+				num_index_tuples += 1;
+		} while (_bt_step(scan, &buf, ForwardScanDirection));
+	}
+
+	index_endscan(scan);
+
+	/* return statistics */
+	num_pages = RelationGetNumberOfBlocks(rel);
+
+	result = (IndexBulkDeleteResult *) palloc(sizeof(IndexBulkDeleteResult));
+	result->num_pages = num_pages;
+	result->tuples_removed = tuples_removed;
+	result->num_index_tuples = num_index_tuples;
+
+	PG_RETURN_POINTER(result);
 }
 
 /*
@@ -676,7 +676,7 @@ _bt_restscan(IndexScanDesc scan)
 
 	/*
 	 * Get back the read lock we were holding on the buffer. (We still
-	 * have a reference-count pin on it, though.)
+	 * have a reference-count pin on it, so need not get that.)
 	 */
 	LockBuffer(buf, BT_READ);
 
@@ -729,7 +729,7 @@ _bt_restscan(IndexScanDesc scan)
 				 "\n\tRecreate index %s.", RelationGetRelationName(rel));
 
 		blkno = opaque->btpo_next;
-		_bt_relbuf(rel, buf, BT_READ);
+		_bt_relbuf(rel, buf);
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		maxoff = PageGetMaxOffsetNumber(page);

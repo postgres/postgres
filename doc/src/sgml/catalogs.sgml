@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.18 2001/06/12 05:55:48 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.19 2001/07/15 22:48:15 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1045,7 +1045,8 @@
       <entry>indpred</entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Query plan for partial index predicate (not functional)</entry>
+      <entry>Expression tree (in the form of a nodeToString representation)
+      for partial index predicate</entry>
      </row>
     </tbody>
    </tgroup>

@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.1 2001/07/13 22:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.2 2001/07/15 22:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 								   ItemPointer itemptr);
 static void lazy_record_free_space(LVRelStats *vacrelstats,
 								   BlockNumber page, Size avail);
-static bool lazy_tid_reaped(ItemPointer itemptr, LVRelStats *vacrelstats);
+static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static void lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats);
 static int	vac_cmp_itemptr(const void *left, const void *right);
 
@@ -371,11 +371,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 		if (pgchanged)
 		{
-			WriteBuffer(buf);
+			SetBufferCommitInfoNeedsSave(buf);
 			changed_pages++;
 		}
-		else
-			ReleaseBuffer(buf);
+
+		ReleaseBuffer(buf);
 	}
 
 	/* If any tuples need to be deleted, perform final vacuum cycle */
@@ -507,64 +507,40 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 static void
 lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 {
-	RetrieveIndexResult res;
-	IndexScanDesc iscan;
-	int			tups_vacuumed;
-	BlockNumber	num_pages;
-	double		num_index_tuples;
+	IndexBulkDeleteResult *stats;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
 
 	/*
-	 * Only btree and hash indexes are currently safe for concurrent access;
-	 * see notes in ExecOpenIndices().  XXX should rely on index AM for this
+	 * If index is unsafe for concurrent access, must lock it.
 	 */
-	if (indrel->rd_rel->relam != BTREE_AM_OID &&
-		indrel->rd_rel->relam != HASH_AM_OID)
+	if (! indrel->rd_am->amconcurrent)
 		LockRelation(indrel, AccessExclusiveLock);
 
-	/* XXX should use a bulk-delete call here */
-
-	/* walk through the entire index */
-	iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
-	tups_vacuumed = 0;
-	num_index_tuples = 0;
-
-	while ((res = index_getnext(iscan, ForwardScanDirection))
-		   != (RetrieveIndexResult) NULL)
-	{
-		ItemPointer heapptr = &res->heap_iptr;
-
-		if (lazy_tid_reaped(heapptr, vacrelstats))
-		{
-			index_delete(indrel, &res->index_iptr);
-			++tups_vacuumed;
-		}
-		else
-			num_index_tuples += 1;
-
-		pfree(res);
-	}
-
-	index_endscan(iscan);
-
-	/* now update statistics in pg_class */
-	num_pages = RelationGetNumberOfBlocks(indrel);
-	vac_update_relstats(RelationGetRelid(indrel),
-						num_pages, num_index_tuples, false);
+	/* Do bulk deletion */
+	stats = index_bulk_delete(indrel, lazy_tid_reaped, (void *) vacrelstats);
 
 	/*
 	 * Release lock acquired above.
 	 */
-	if (indrel->rd_rel->relam != BTREE_AM_OID &&
-		indrel->rd_rel->relam != HASH_AM_OID)
+	if (! indrel->rd_am->amconcurrent)
 		UnlockRelation(indrel, AccessExclusiveLock);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %u.\n\t%s",
-		 RelationGetRelationName(indrel), num_pages,
-		 num_index_tuples, tups_vacuumed,
-		 vac_show_rusage(&ru0));
+	/* now update statistics in pg_class */
+	if (stats)
+	{
+		vac_update_relstats(RelationGetRelid(indrel),
+							stats->num_pages, stats->num_index_tuples,
+							false);
+
+		elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
+			 RelationGetRelationName(indrel), stats->num_pages,
+			 stats->num_index_tuples, stats->tuples_removed,
+			 vac_show_rusage(&ru0));
+
+		pfree(stats);
+	}
 }
 
 /*
@@ -960,11 +936,14 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 /*
  *	lazy_tid_reaped() -- is a particular tid deletable?
  *
+ *		This has the right signature to be an IndexBulkDeleteCallback.
+ *
  *		Assumes dead_tuples array is in sorted order.
  */
 static bool
-lazy_tid_reaped(ItemPointer itemptr, LVRelStats *vacrelstats)
+lazy_tid_reaped(ItemPointer itemptr, void *state)
 {
+	LVRelStats *vacrelstats = (LVRelStats *) state;
 	ItemPointer	res;
 
 	res = (ItemPointer) bsearch((void *) itemptr,

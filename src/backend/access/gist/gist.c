@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.79 2001/06/11 05:00:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.80 2001/07/15 22:48:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,23 @@
 #define RIGHT_ADDED	0x02
 #define BOTH_ADDED	( LEFT_ADDED | RIGHT_ADDED )
 
+
+/* Working state for gistbuild and its callback */
+typedef struct
+{
+	GISTSTATE	giststate;
+	int			numindexattrs;
+	double		indtuples;
+} GISTBuildState;
+
+
 /* non-export function prototypes */
+static void gistbuildCallback(Relation index,
+							  HeapTuple htup,
+							  Datum *attdata,
+							  char *nulls,
+							  bool tupleIsAlive,
+							  void *state);
 static void gistdoinsert(Relation r,
 			 IndexTuple itup,
 			 InsertIndexResult *res,
@@ -89,6 +105,7 @@ static void GISTInitBuffer(Buffer b, uint32 f);
 static OffsetNumber gistchoose(Relation r, Page p,
 		   IndexTuple it,
 		   GISTSTATE *giststate);
+static void gistdelete(Relation r, ItemPointer tid);
 #ifdef GIST_PAGEADDITEM
 static IndexTuple gist_tuple_replacekey(Relation r,
 					  GISTENTRY entry, IndexTuple t);
@@ -116,184 +133,36 @@ gistbuild(PG_FUNCTION_ARGS)
 	Relation	heap = (Relation) PG_GETARG_POINTER(0);
 	Relation	index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	Node	   *oldPred = (Node *) PG_GETARG_POINTER(3);
-
-#ifdef NOT_USED
-	IndexStrategy istrat = (IndexStrategy) PG_GETARG_POINTER(4);
-
-#endif
-	HeapScanDesc hscan;
-	HeapTuple	htup;
-	IndexTuple	itup;
-	TupleDesc	htupdesc,
-				itupdesc;
-	Datum		attdata[INDEX_MAX_KEYS];
-	char		nulls[INDEX_MAX_KEYS];
-	double		nhtups,
-				nitups;
-	Node	   *pred = indexInfo->ii_Predicate;
-
-#ifndef OMIT_PARTIAL_INDEX
-	TupleTable	tupleTable;
-	TupleTableSlot *slot;
-
-#endif
-	ExprContext *econtext;
-	GISTSTATE	giststate;
-	GISTENTRY	tmpcentry;
-	Buffer		buffer = InvalidBuffer;
-	bool	   *compvec;
-	int			i;
+	double		reltuples;
+	GISTBuildState buildstate;
+	Buffer		buffer;
 
 	/* no locking is needed */
 
-	initGISTstate(&giststate, index);
+	initGISTstate(&buildstate.giststate, index);
 
 	/*
 	 * We expect to be called exactly once for any index relation. If
 	 * that's not the case, big trouble's what we have.
 	 */
-	if (oldPred == NULL && RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "%s already contains data", RelationGetRelationName(index));
+	if (RelationGetNumberOfBlocks(index) != 0)
+		elog(ERROR, "%s already contains data",
+			 RelationGetRelationName(index));
 
-	/* initialize the root page (if this is a new index) */
-	if (oldPred == NULL)
-	{
-		buffer = ReadBuffer(index, P_NEW);
-		GISTInitBuffer(buffer, F_LEAF);
-		WriteBuffer(buffer);
-	}
-
-	/* get tuple descriptors for heap and index relations */
-	htupdesc = RelationGetDescr(heap);
-	itupdesc = RelationGetDescr(index);
-
-	/*
-	 * If this is a predicate (partial) index, we will need to evaluate
-	 * the predicate using ExecQual, which requires the current tuple to
-	 * be in a slot of a TupleTable.  In addition, ExecQual must have an
-	 * ExprContext referring to that slot.	Here, we initialize dummy
-	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb 92
-	 *
-	 * We construct the ExprContext anyway since we need a per-tuple
-	 * temporary memory context for function evaluation -- tgl July 00
-	 */
-#ifndef OMIT_PARTIAL_INDEX
-	if (pred != NULL || oldPred != NULL)
-	{
-		tupleTable = ExecCreateTupleTable(1);
-		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, htupdesc, false);
-	}
-	else
-	{
-		tupleTable = NULL;
-		slot = NULL;
-	}
-	econtext = MakeExprContext(slot, TransactionCommandContext);
-#else
-	econtext = MakeExprContext(NULL, TransactionCommandContext);
-#endif	 /* OMIT_PARTIAL_INDEX */
+	/* initialize the root page */
+	buffer = ReadBuffer(index, P_NEW);
+	GISTInitBuffer(buffer, F_LEAF);
+	WriteBuffer(buffer);
 
 	/* build the index */
-	nhtups = nitups = 0.0;
+	buildstate.numindexattrs = indexInfo->ii_NumIndexAttrs;
+	buildstate.indtuples = 0;
 
-	compvec = (bool *) palloc(sizeof(bool) * indexInfo->ii_NumIndexAttrs);
-
-	/* start a heap scan */
-	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
-
-	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
-	{
-		MemoryContextReset(econtext->ecxt_per_tuple_memory);
-
-		nhtups += 1.0;
-
-#ifndef OMIT_PARTIAL_INDEX
-
-		/*
-		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
-		 * this tuple if it was already in the existing partial index
-		 */
-		if (oldPred != NULL)
-		{
-			slot->val = htup;
-			if (ExecQual((List *) oldPred, econtext, false))
-			{
-				nitups += 1.0;
-				continue;
-			}
-		}
-
-		/*
-		 * Skip this tuple if it doesn't satisfy the partial-index
-		 * predicate
-		 */
-		if (pred != NULL)
-		{
-			slot->val = htup;
-			if (!ExecQual((List *) pred, econtext, false))
-				continue;
-		}
-#endif	 /* OMIT_PARTIAL_INDEX */
-
-		nitups += 1.0;
-
-		/*
-		 * For the current heap tuple, extract all the attributes we use
-		 * in this index, and note which are null.
-		 */
-		FormIndexDatum(indexInfo,
-					   htup,
-					   htupdesc,
-					   econtext->ecxt_per_tuple_memory,
-					   attdata,
-					   nulls);
-
-		/* immediately compress keys to normalize */
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
-		{
-			gistcentryinit(&giststate, i, &tmpcentry, attdata[i],
-						   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
-						   -1 /* size is currently bogus */ , TRUE);
-			if (attdata[i] != tmpcentry.key &&
-				!(giststate.keytypbyval))
-				compvec[i] = TRUE;
-			else
-				compvec[i] = FALSE;
-			attdata[i] = tmpcentry.key;
-		}
-
-		/* form an index tuple and point it at the heap tuple */
-		itup = index_formtuple(itupdesc, attdata, nulls);
-		itup->t_tid = htup->t_self;
-
-		/*
-		 * Since we already have the index relation locked, we call
-		 * gistdoinsert directly.  Normal access method calls dispatch
-		 * through gistinsert, which locks the relation for write.	This
-		 * is the right thing to do if you're inserting single tups, but
-		 * not when you're initializing the whole index at once.
-		 */
-		gistdoinsert(index, itup, NULL, &giststate);
-
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
-			if (compvec[i])
-				pfree(DatumGetPointer(attdata[i]));
-
-		pfree(itup);
-	}
+	/* do the heap scan */
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
+								   gistbuildCallback, (void *) &buildstate);
 
 	/* okay, all heap tuples are indexed */
-	heap_endscan(hscan);
-
-	pfree(compvec);
-
-#ifndef OMIT_PARTIAL_INDEX
-	if (pred != NULL || oldPred != NULL)
-		ExecDropTupleTable(tupleTable, true);
-#endif	 /* OMIT_PARTIAL_INDEX */
-	FreeExprContext(econtext);
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
@@ -313,14 +182,8 @@ gistbuild(PG_FUNCTION_ARGS)
 
 		heap_close(heap, NoLock);
 		index_close(index);
-		UpdateStats(hrelid, nhtups);
-		UpdateStats(irelid, nitups);
-		if (oldPred != NULL)
-		{
-			if (nitups == nhtups)
-				pred = NULL;
-			UpdateIndexPredicate(irelid, oldPred, pred);
-		}
+		UpdateStats(hrelid, reltuples);
+		UpdateStats(irelid, buildstate.indtuples);
 	}
 
 #ifdef GISTDEBUG
@@ -328,6 +191,63 @@ gistbuild(PG_FUNCTION_ARGS)
 #endif
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * Per-tuple callback from IndexBuildHeapScan
+ */
+static void
+gistbuildCallback(Relation index,
+				  HeapTuple htup,
+				  Datum *attdata,
+				  char *nulls,
+				  bool tupleIsAlive,
+				  void *state)
+{
+	GISTBuildState   *buildstate = (GISTBuildState *) state;
+	IndexTuple	itup;
+	bool		compvec[INDEX_MAX_KEYS];
+	GISTENTRY	tmpcentry;
+	int			i;
+
+	/* immediately compress keys to normalize */
+	for (i = 0; i < buildstate->numindexattrs; i++)
+	{
+		gistcentryinit(&buildstate->giststate, i, &tmpcentry, attdata[i],
+					   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
+					   -1 /* size is currently bogus */ , TRUE);
+		if (attdata[i] != tmpcentry.key &&
+			!(buildstate->giststate.keytypbyval))
+			compvec[i] = TRUE;
+		else
+			compvec[i] = FALSE;
+		attdata[i] = tmpcentry.key;
+	}
+
+	/* form an index tuple and point it at the heap tuple */
+	itup = index_formtuple(RelationGetDescr(index), attdata, nulls);
+	itup->t_tid = htup->t_self;
+
+	/* GIST indexes don't index nulls, see notes in gistinsert */
+	if (! IndexTupleHasNulls(itup))
+	{
+		/*
+		 * Since we already have the index relation locked, we call
+		 * gistdoinsert directly.  Normal access method calls dispatch
+		 * through gistinsert, which locks the relation for write.	This
+		 * is the right thing to do if you're inserting single tups, but
+		 * not when you're initializing the whole index at once.
+		 */
+		gistdoinsert(index, itup, NULL, &buildstate->giststate);
+
+		buildstate->indtuples += 1;
+	}
+
+	for (i = 0; i < buildstate->numindexattrs; i++)
+		if (compvec[i])
+			pfree(DatumGetPointer(attdata[i]));
+
+	pfree(itup);
 }
 
 /*
@@ -343,25 +263,28 @@ gistinsert(PG_FUNCTION_ARGS)
 	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
-
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
-
 #endif
 	InsertIndexResult res;
 	IndexTuple	itup;
 	GISTSTATE	giststate;
 	GISTENTRY	tmpentry;
 	int			i;
-	bool	   *compvec;
+	bool		compvec[INDEX_MAX_KEYS];
+
+	/*
+	 * Since GIST is not marked "amconcurrent" in pg_am, caller should
+	 * have acquired exclusive lock on index relation.  We need no locking
+	 * here.
+	 */
 
 	initGISTstate(&giststate, r);
 
 	/* immediately compress keys to normalize */
-	compvec = (bool *) palloc(sizeof(bool) * r->rd_att->natts);
 	for (i = 0; i < r->rd_att->natts; i++)
 	{
-		gistcentryinit(&giststate, i,&tmpentry, datum[i],
+		gistcentryinit(&giststate, i, &tmpentry, datum[i],
 					   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
 					   -1 /* size is currently bogus */ , TRUE);
 		if (datum[i] != tmpentry.key && !(giststate.keytypbyval))
@@ -374,18 +297,24 @@ gistinsert(PG_FUNCTION_ARGS)
 	itup->t_tid = *ht_ctid;
 
 	/*
-	 * Notes in ExecUtils:ExecOpenIndices()
-	 *
-	 * RelationSetLockForWrite(r);
+	 * Currently, GIST indexes do not support indexing NULLs; considerable
+	 * infrastructure work would have to be done to do anything reasonable
+	 * with a NULL.
 	 */
+	if (IndexTupleHasNulls(itup))
+	{
+		res = NULL;
+	}
+	else
+	{
+		res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
+		gistdoinsert(r, itup, &res, &giststate);
+	}
 
-	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
-	gistdoinsert(r, itup, &res, &giststate);
 	for (i = 0; i < r->rd_att->natts; i++)
 		if (compvec[i] == TRUE)
 			pfree(DatumGetPointer(datum[i]));
 	pfree(itup);
-	pfree(compvec);
 
 	PG_RETURN_POINTER(res);
 }
@@ -527,9 +456,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 
 		/* key is modified, so old version must be deleted */
 		ItemPointerSet(&oldtid, blkno, child);
-		DirectFunctionCall2(gistdelete,
-							PointerGetDatum(r),
-							PointerGetDatum(&oldtid));
+		gistdelete(r, &oldtid);
 	}
 
 	ret = INSERTED;
@@ -1416,29 +1343,31 @@ gistfreestack(GISTSTACK *s)
 
 
 /*
-** remove an entry from a page
-*/
-Datum
-gistdelete(PG_FUNCTION_ARGS)
+ * Retail deletion of a single tuple.
+ *
+ * NB: this is no longer called externally, but is still needed by
+ * gistlayerinsert().  That dependency will have to be fixed if GIST
+ * is ever going to allow concurrent insertions.
+ */
+static void
+gistdelete(Relation r, ItemPointer tid)
 {
-	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	ItemPointer tid = (ItemPointer) PG_GETARG_POINTER(1);
 	BlockNumber blkno;
 	OffsetNumber offnum;
 	Buffer		buf;
 	Page		page;
 
 	/*
-	 * Notes in ExecUtils:ExecOpenIndices() Also note that only vacuum
-	 * deletes index tuples now...
-	 *
-	 * RelationSetLockForWrite(r);
+	 * Since GIST is not marked "amconcurrent" in pg_am, caller should
+	 * have acquired exclusive lock on index relation.  We need no locking
+	 * here.
 	 */
 
 	blkno = ItemPointerGetBlockNumber(tid);
 	offnum = ItemPointerGetOffsetNumber(tid);
 
 	/* adjust any scans that will be affected by this deletion */
+	/* NB: this works only for scans in *this* backend! */
 	gistadjscans(r, GISTOP_DEL, blkno, offnum);
 
 	/* delete the index tuple */
@@ -1448,9 +1377,92 @@ gistdelete(PG_FUNCTION_ARGS)
 	PageIndexTupleDelete(page, offnum);
 
 	WriteBuffer(buf);
-
-	PG_RETURN_VOID();
 }
+
+/*
+ * Bulk deletion of all index entries pointing to a set of heap tuples.
+ * The set of target tuples is specified via a callback routine that tells
+ * whether any given heap tuple (identified by ItemPointer) is being deleted.
+ *
+ * Result: a palloc'd struct containing statistical info for VACUUM displays.
+ */
+Datum
+gistbulkdelete(PG_FUNCTION_ARGS)
+{
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
+	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
+	IndexBulkDeleteResult *result;
+	BlockNumber	num_pages;
+	double		tuples_removed;
+	double		num_index_tuples;
+	RetrieveIndexResult res;
+	IndexScanDesc iscan;
+
+	tuples_removed = 0;
+	num_index_tuples = 0;
+
+	/*
+	 * Since GIST is not marked "amconcurrent" in pg_am, caller should
+	 * have acquired exclusive lock on index relation.  We need no locking
+	 * here.
+	 */
+
+	/*
+	 * XXX generic implementation --- should be improved!
+	 */
+
+	/* walk through the entire index */
+	iscan = index_beginscan(rel, false, 0, (ScanKey) NULL);
+
+	while ((res = index_getnext(iscan, ForwardScanDirection))
+		   != (RetrieveIndexResult) NULL)
+	{
+		ItemPointer heapptr = &res->heap_iptr;
+
+		if (callback(heapptr, callback_state))
+		{
+			ItemPointer indexptr = &res->index_iptr;
+			BlockNumber blkno;
+			OffsetNumber offnum;
+			Buffer		buf;
+			Page		page;
+
+			blkno = ItemPointerGetBlockNumber(indexptr);
+			offnum = ItemPointerGetOffsetNumber(indexptr);
+
+			/* adjust any scans that will be affected by this deletion */
+			gistadjscans(rel, GISTOP_DEL, blkno, offnum);
+
+			/* delete the index tuple */
+			buf = ReadBuffer(rel, blkno);
+			page = BufferGetPage(buf);
+
+			PageIndexTupleDelete(page, offnum);
+
+			WriteBuffer(buf);
+
+			tuples_removed += 1;
+		}
+		else
+			num_index_tuples += 1;
+
+		pfree(res);
+	}
+
+	index_endscan(iscan);
+
+	/* return statistics */
+	num_pages = RelationGetNumberOfBlocks(rel);
+
+	result = (IndexBulkDeleteResult *) palloc(sizeof(IndexBulkDeleteResult));
+	result->num_pages = num_pages;
+	result->tuples_removed = tuples_removed;
+	result->num_index_tuples = num_index_tuples;
+
+	PG_RETURN_POINTER(result);
+}
+
 
 void
 initGISTstate(GISTSTATE *giststate, Relation index)

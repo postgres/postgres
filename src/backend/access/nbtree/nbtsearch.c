@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.66 2001/03/23 04:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.67 2001/07/15 22:48:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		new_stack->bts_parent = stack_in;
 
 		/* drop the read lock on the parent page, acquire one on the child */
-		_bt_relbuf(rel, *bufP, BT_READ);
+		_bt_relbuf(rel, *bufP);
 		*bufP = _bt_getbuf(rel, blkno, BT_READ);
 
 		/*
@@ -155,7 +155,7 @@ _bt_moveright(Relation rel,
 		/* step right one page */
 		BlockNumber rblkno = opaque->btpo_next;
 
-		_bt_relbuf(rel, buf, access);
+		_bt_relbuf(rel, buf);
 		buf = _bt_getbuf(rel, rblkno, access);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -406,7 +406,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	/* No more items, so close down the current-item info */
 	ItemPointerSetInvalid(current);
 	so->btso_curbuf = InvalidBuffer;
-	_bt_relbuf(rel, buf, BT_READ);
+	_bt_relbuf(rel, buf);
 
 	return (RetrieveIndexResult) NULL;
 }
@@ -760,7 +760,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 nomatches:
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
-		_bt_relbuf(rel, buf, BT_READ);
+		_bt_relbuf(rel, buf);
 		res = (RetrieveIndexResult) NULL;
 	}
 
@@ -815,14 +815,14 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				/* if we're at end of scan, release the buffer and return */
 				if (P_RIGHTMOST(opaque))
 				{
-					_bt_relbuf(rel, *bufP, BT_READ);
+					_bt_relbuf(rel, *bufP);
 					ItemPointerSetInvalid(current);
 					*bufP = so->btso_curbuf = InvalidBuffer;
 					return false;
 				}
 				/* step right one page */
 				blkno = opaque->btpo_next;
-				_bt_relbuf(rel, *bufP, BT_READ);
+				_bt_relbuf(rel, *bufP);
 				*bufP = _bt_getbuf(rel, blkno, BT_READ);
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -846,7 +846,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				/* if we're at end of scan, release the buffer and return */
 				if (P_LEFTMOST(opaque))
 				{
-					_bt_relbuf(rel, *bufP, BT_READ);
+					_bt_relbuf(rel, *bufP);
 					ItemPointerSetInvalid(current);
 					*bufP = so->btso_curbuf = InvalidBuffer;
 					return false;
@@ -854,7 +854,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				/* step left */
 				obknum = BufferGetBlockNumber(*bufP);
 				blkno = opaque->btpo_prev;
-				_bt_relbuf(rel, *bufP, BT_READ);
+				_bt_relbuf(rel, *bufP);
 				*bufP = _bt_getbuf(rel, blkno, BT_READ);
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -868,7 +868,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				while (opaque->btpo_next != obknum)
 				{
 					blkno = opaque->btpo_next;
-					_bt_relbuf(rel, *bufP, BT_READ);
+					_bt_relbuf(rel, *bufP);
 					*bufP = _bt_getbuf(rel, blkno, BT_READ);
 					page = BufferGetPage(*bufP);
 					opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -952,7 +952,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		itup = &(btitem->bti_itup);
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 
-		_bt_relbuf(rel, buf, BT_READ);
+		_bt_relbuf(rel, buf);
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 
 		page = BufferGetPage(buf);
@@ -968,7 +968,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 			do
 			{
 				blkno = opaque->btpo_next;
-				_bt_relbuf(rel, buf, BT_READ);
+				_bt_relbuf(rel, buf);
 				buf = _bt_getbuf(rel, blkno, BT_READ);
 				page = BufferGetPage(buf);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1035,7 +1035,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		/* no tuples in the index match this scan key */
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
-		_bt_relbuf(rel, buf, BT_READ);
+		_bt_relbuf(rel, buf);
 		res = (RetrieveIndexResult) NULL;
 	}
 

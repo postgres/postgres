@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.170 2001/06/29 21:08:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.171 2001/07/15 22:48:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1031,7 +1031,7 @@ RelationTruncateIndexes(Oid heapId)
 		/* Initialize the index and rebuild */
 		InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
 						  currentIndex, accessMethodId);
-		index_build(heapRelation, currentIndex, indexInfo, NULL);
+		index_build(heapRelation, currentIndex, indexInfo);
 
 		/*
 		 * index_build will close both the heap and index relations (but

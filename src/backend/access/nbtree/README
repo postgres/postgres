@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.4 2000/07/25 05:26:40 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.5 2001/07/15 22:48:16 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -109,15 +109,11 @@ In addition, the following things are handy to know:
    is too high a price).  Rebuilding corrupted indexes during restart
    seems more attractive.
 
-+  On deletions, we need to adjust the position of active scans on
-   the index.  The code in nbtscan.c handles this.  We don't need to
-   do this for insertions or splits because _bt_restscan can find the
-   new position of the previously-found item.  NOTE that nbtscan.c
-   only copes with deletions issued by the current backend.  This
-   essentially means that concurrent deletions are not supported, but
-   that's true already in the Lehman and Yao algorithm.  nbtscan.c
-   exists only to support VACUUM and allow it to delete items while
-   it's scanning the index.
++  Deletions are handled by getting a super-exclusive lock on the target
+   page, so that no other backend has a pin on the page when the deletion
+   starts.  This means no scan is pointing at the page.  This is OK for
+   deleting leaf items, probably not OK for deleting internal nodes;
+   will need to think harder when it's time to support index compaction.
 
 +  "ScanKey" data structures are used in two fundamentally different ways
    in this code.  Searches for the initial position for a scan, as well as

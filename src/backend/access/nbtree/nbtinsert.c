@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.83 2001/06/22 19:16:21 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.84 2001/07/15 22:48:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ top:
 		if (TransactionIdIsValid(xwait))
 		{
 			/* Have to wait for the other guy ... */
-			_bt_relbuf(rel, buf, BT_WRITE);
+			_bt_relbuf(rel, buf);
 			XactLockTableWait(xwait);
 			/* start over... */
 			_bt_freestack(stack);
@@ -234,7 +234,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 				if (TransactionIdIsValid(xwait))
 				{
 					if (nbuf != InvalidBuffer)
-						_bt_relbuf(rel, nbuf, BT_READ);
+						_bt_relbuf(rel, nbuf);
 					/* Tell _bt_doinsert to wait... */
 					return xwait;
 				}
@@ -263,7 +263,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 				break;
 			nblkno = opaque->btpo_next;
 			if (nbuf != InvalidBuffer)
-				_bt_relbuf(rel, nbuf, BT_READ);
+				_bt_relbuf(rel, nbuf);
 			nbuf = _bt_getbuf(rel, nblkno, BT_READ);
 			page = BufferGetPage(nbuf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -273,7 +273,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	}
 
 	if (nbuf != InvalidBuffer)
-		_bt_relbuf(rel, nbuf, BT_READ);
+		_bt_relbuf(rel, nbuf);
 
 	return NullTransactionId;
 }
@@ -397,7 +397,7 @@ _bt_insertonpg(Relation rel,
 			/* step right one page */
 			BlockNumber rblkno = lpageop->btpo_next;
 
-			_bt_relbuf(rel, buf, BT_WRITE);
+			_bt_relbuf(rel, buf);
 			buf = _bt_getbuf(rel, rblkno, BT_WRITE);
 			page = BufferGetPage(buf);
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1175,12 +1175,12 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 		 */
 		if (P_RIGHTMOST(opaque))
 		{
-			_bt_relbuf(rel, buf, access);
+			_bt_relbuf(rel, buf);
 			return (InvalidBuffer);
 		}
 
 		blkno = opaque->btpo_next;
-		_bt_relbuf(rel, buf, access);
+		_bt_relbuf(rel, buf);
 		buf = _bt_getbuf(rel, blkno, access);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1449,7 +1449,7 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 							   &itup_off, &itup_blkno);
 			/* Keep lock on new "root" buffer ! */
 			if (buf != rootbuf)
-				_bt_relbuf(rel, buf, BT_WRITE);
+				_bt_relbuf(rel, buf);
 			buf = newbuf;
 			page = BufferGetPage(buf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1525,7 +1525,7 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 			if (P_ISROOT(opaque))
 			{
 				/* Tree is Ok now */
-				_bt_relbuf(rel, buf, BT_WRITE);
+				_bt_relbuf(rel, buf);
 				return;
 			}
 			/* Call _bt_fixroot() if there is no upper level */
@@ -1533,12 +1533,12 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 			{
 				elog(NOTICE, "bt_fixtree[%s]: fixing root page", RelationGetRelationName(rel));
 				buf = _bt_fixroot(rel, buf, true);
-				_bt_relbuf(rel, buf, BT_WRITE);
+				_bt_relbuf(rel, buf);
 				return;
 			}
 			/* Have to go up one level */
 			pblkno = opaque->btpo_parent;
-			_bt_relbuf(rel, buf, BT_WRITE);
+			_bt_relbuf(rel, buf);
 		}
 		blkno = pblkno;
 	}
@@ -1571,7 +1571,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 	page = BufferGetPage(buf);
 	/* copy page to temp storage */
 	memmove(tbuf, page, PageGetPageSize(page));
-	_bt_relbuf(rel, buf, BT_READ);
+	_bt_relbuf(rel, buf);
 
 	page = (Page) tbuf;
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1682,7 +1682,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 					{
 						if (coff[i] != P_FIRSTDATAKEY(newopaque))
 							elog(ERROR, "bt_fixlevel[%s]: invalid item order(3) (need to recreate index)", RelationGetRelationName(rel));
-						_bt_relbuf(rel, buf, BT_WRITE);
+						_bt_relbuf(rel, buf);
 						buf = newbuf;
 						page = newpage;
 						opaque = newopaque;
@@ -1691,7 +1691,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 						continue;
 					}
 					/* unfound - need to insert on current page */
-					_bt_relbuf(rel, newbuf, BT_WRITE);
+					_bt_relbuf(rel, newbuf);
 				}
 				/* insert pointer */
 				ritem = (BTItem) PageGetItem(cpage[i - 1],
@@ -1718,10 +1718,10 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 									   &itup_off, &itup_blkno);
 					/* what buffer we need in ? */
 					if (newitemonleft)
-						_bt_relbuf(rel, newbuf, BT_WRITE);
+						_bt_relbuf(rel, newbuf);
 					else
 					{
-						_bt_relbuf(rel, buf, BT_WRITE);
+						_bt_relbuf(rel, buf);
 						buf = newbuf;
 						page = BufferGetPage(buf);
 						opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1741,7 +1741,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 
 			/* copy page with pointer to cblkno[cidx] to temp storage */
 			memmove(tbuf, page, PageGetPageSize(page));
-			_bt_relbuf(rel, buf, BT_WRITE);
+			_bt_relbuf(rel, buf);
 			page = (Page) tbuf;
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		}
@@ -1751,13 +1751,13 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 			goodbye = false;
 
 		/* Pointers to child pages are Ok - right end of child level ? */
-		_bt_relbuf(rel, cbuf[0], BT_READ);
-		_bt_relbuf(rel, cbuf[1], BT_READ);
+		_bt_relbuf(rel, cbuf[0]);
+		_bt_relbuf(rel, cbuf[1]);
 		if (cidx == 1 ||
 			(cidx == 2 && (P_RIGHTMOST(copaque[2]) || goodbye)))
 		{
 			if (cidx == 2)
-				_bt_relbuf(rel, cbuf[2], BT_READ);
+				_bt_relbuf(rel, cbuf[2]);
 			return;
 		}
 		if (cblkno[0] == limit || cblkno[1] == limit)
@@ -1819,7 +1819,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		{
 			if (offnum <= stack.bts_offset)
 				elog(ERROR, "bt_fixbranch[%s]: invalid item order (need to recreate index)", RelationGetRelationName(rel));
-			_bt_relbuf(rel, buf, BT_READ);
+			_bt_relbuf(rel, buf);
 			return;
 		}
 
@@ -1837,7 +1837,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		if (rbuf == InvalidBuffer)
 			elog(ERROR, "bt_fixbranch[%s]: right pointer unfound(2) (need to recreate index)", RelationGetRelationName(rel));
 		rblkno = BufferGetBlockNumber(rbuf);
-		_bt_relbuf(rel, rbuf, BT_READ);
+		_bt_relbuf(rel, rbuf);
 
 		/*
 		 * If we have parent item in true_stack then go up one level and
@@ -1845,7 +1845,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		 */
 		if (true_stack)
 		{
-			_bt_relbuf(rel, buf, BT_READ);
+			_bt_relbuf(rel, buf);
 			blkno = true_stack->bts_blkno;
 			true_stack = true_stack->bts_parent;
 			continue;
@@ -1860,19 +1860,19 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		if (!BTreeInvalidParent(opaque))
 		{
 			blkno = opaque->btpo_parent;
-			_bt_relbuf(rel, buf, BT_READ);
+			_bt_relbuf(rel, buf);
 			continue;
 		}
 
 		/* Have to switch to excl buf lock and re-check btpo_parent */
-		_bt_relbuf(rel, buf, BT_READ);
+		_bt_relbuf(rel, buf);
 		buf = _bt_getbuf(rel, blkno, BT_WRITE);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (!BTreeInvalidParent(opaque))
 		{
 			blkno = opaque->btpo_parent;
-			_bt_relbuf(rel, buf, BT_WRITE);
+			_bt_relbuf(rel, buf);
 			continue;
 		}
 
@@ -1913,7 +1913,7 @@ _bt_fixup(Relation rel, Buffer buf)
 		if (!BTreeInvalidParent(opaque))
 		{
 			blkno = opaque->btpo_parent;
-			_bt_relbuf(rel, buf, BT_WRITE);
+			_bt_relbuf(rel, buf);
 			elog(NOTICE, "bt_fixup[%s]: checking/fixing upper levels", RelationGetRelationName(rel));
 			_bt_fixtree(rel, blkno);
 			return;
@@ -1921,8 +1921,7 @@ _bt_fixup(Relation rel, Buffer buf)
 		if (P_LEFTMOST(opaque))
 			break;
 		blkno = opaque->btpo_prev;
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buf);
+		_bt_relbuf(rel, buf);
 		buf = _bt_getbuf(rel, blkno, BT_WRITE);
 	}
 
@@ -1932,9 +1931,7 @@ _bt_fixup(Relation rel, Buffer buf)
 	 */
 	elog(NOTICE, "bt_fixup[%s]: fixing root page", RelationGetRelationName(rel));
 	buf = _bt_fixroot(rel, buf, true);
-	_bt_relbuf(rel, buf, BT_WRITE);
-
-	return;
+	_bt_relbuf(rel, buf);
 }
 
 static OffsetNumber

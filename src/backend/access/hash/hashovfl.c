@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.29 2001/03/07 21:20:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.30 2001/07/15 22:48:15 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -112,14 +112,14 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 
 	metap = (HashMetaPage) _hash_chgbufaccess(rel, metabufp, HASH_READ, HASH_WRITE);
 
-	splitnum = metap->OVFL_POINT;
-	max_free = metap->SPARES[splitnum];
+	splitnum = metap->hashm_ovflpoint;
+	max_free = metap->hashm_spares[splitnum];
 
 	free_page = (max_free - 1) >> (metap->hashm_bshift + BYTE_TO_BIT);
 	free_bit = (max_free - 1) & (BMPGSZ_BIT(metap) - 1);
 
 	/* Look through all the free maps to find the first free block */
-	first_page = metap->LAST_FREED >> (metap->hashm_bshift + BYTE_TO_BIT);
+	first_page = metap->hashm_lastfreed >> (metap->hashm_bshift + BYTE_TO_BIT);
 	for (i = first_page; i <= free_page; i++)
 	{
 		Page		mappage;
@@ -138,7 +138,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 
 		if (i == first_page)
 		{
-			bit = metap->LAST_FREED & (BMPGSZ_BIT(metap) - 1);
+			bit = metap->hashm_lastfreed & (BMPGSZ_BIT(metap) - 1);
 			j = bit / BITS_PER_MAP;
 			bit = bit & ~(BITS_PER_MAP - 1);
 		}
@@ -153,10 +153,10 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	}
 
 	/* No Free Page Found - have to allocate a new page */
-	metap->LAST_FREED = metap->SPARES[splitnum];
-	metap->SPARES[splitnum]++;
-	offset = metap->SPARES[splitnum] -
-		(splitnum ? metap->SPARES[splitnum - 1] : 0);
+	metap->hashm_lastfreed = metap->hashm_spares[splitnum];
+	metap->hashm_spares[splitnum]++;
+	offset = metap->hashm_spares[splitnum] -
+		(splitnum ? metap->hashm_spares[splitnum - 1] : 0);
 
 #define OVMSG	"HASH: Out of overflow pages.  Out of luck.\n"
 
@@ -164,9 +164,9 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	{
 		if (++splitnum >= NCACHED)
 			elog(ERROR, OVMSG);
-		metap->OVFL_POINT = splitnum;
-		metap->SPARES[splitnum] = metap->SPARES[splitnum - 1];
-		metap->SPARES[splitnum - 1]--;
+		metap->hashm_ovflpoint = splitnum;
+		metap->hashm_spares[splitnum] = metap->hashm_spares[splitnum - 1];
+		metap->hashm_spares[splitnum - 1]--;
 		offset = 0;
 	}
 
@@ -194,15 +194,15 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 		if (_hash_initbitmap(rel, metap, OADDR_OF(splitnum, offset),
 							 1, free_page))
 			elog(ERROR, "overflow_page: problem with _hash_initbitmap.");
-		metap->SPARES[splitnum]++;
+		metap->hashm_spares[splitnum]++;
 		offset++;
 		if (offset > SPLITMASK)
 		{
 			if (++splitnum >= NCACHED)
 				elog(ERROR, OVMSG);
-			metap->OVFL_POINT = splitnum;
-			metap->SPARES[splitnum] = metap->SPARES[splitnum - 1];
-			metap->SPARES[splitnum - 1]--;
+			metap->hashm_ovflpoint = splitnum;
+			metap->hashm_spares[splitnum] = metap->hashm_spares[splitnum - 1];
+			metap->hashm_spares[splitnum - 1]--;
 			offset = 0;
 		}
 	}
@@ -235,13 +235,13 @@ found:
 	 */
 
 	bit = 1 + bit + (i * BMPGSZ_BIT(metap));
-	if (bit >= metap->LAST_FREED)
-		metap->LAST_FREED = bit - 1;
+	if (bit >= metap->hashm_lastfreed)
+		metap->hashm_lastfreed = bit - 1;
 
 	/* Calculate the split number for this page */
-	for (i = 0; (i < splitnum) && (bit > metap->SPARES[i]); i++)
+	for (i = 0; (i < splitnum) && (bit > metap->hashm_spares[i]); i++)
 		;
-	offset = (i ? bit - metap->SPARES[i - 1] : bit);
+	offset = (i ? bit - metap->hashm_spares[i - 1] : bit);
 	if (offset >= SPLITMASK)
 		elog(ERROR, OVMSG);
 
@@ -355,10 +355,10 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	 * element hashm_mapp[bitmappage].
 	 */
 	splitnum = (addr >> SPLITSHIFT);
-	ovflpgno = (splitnum ? metap->SPARES[splitnum - 1] : 0) + (addr & SPLITMASK) - 1;
+	ovflpgno = (splitnum ? metap->hashm_spares[splitnum - 1] : 0) + (addr & SPLITMASK) - 1;
 
-	if (ovflpgno < metap->LAST_FREED)
-		metap->LAST_FREED = ovflpgno;
+	if (ovflpgno < metap->hashm_lastfreed)
+		metap->hashm_lastfreed = ovflpgno;
 
 	bitmappage = (ovflpgno >> (metap->hashm_bshift + BYTE_TO_BIT));
 	bitmapbit = ovflpgno & (BMPGSZ_BIT(metap) - 1);

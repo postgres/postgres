@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.38 2001/03/22 04:00:27 momjian Exp $
+ * $Id: hash.h,v 1.39 2001/07/15 22:48:18 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -55,7 +55,7 @@ typedef uint32 PageOffset;
 #define OADDR_OF(S,O)	((OverflowPageAddress)((uint32)((uint32)(S) << SPLITSHIFT) + (O)))
 
 #define BUCKET_TO_BLKNO(B) \
-		((Bucket) ((B) + ((B) ? metap->SPARES[_hash_log2((B)+1)-1] : 0)) + 1)
+		((Bucket) ((B) + ((B) ? metap->hashm_spares[_hash_log2((B)+1)-1] : 0)) + 1)
 #define OADDR_TO_BLKNO(B)		 \
 		((BlockNumber) \
 		 (BUCKET_TO_BLKNO ( (1 << SPLITNUM((B))) -1 ) + OPAGENUM((B))));
@@ -165,16 +165,6 @@ typedef struct HashMetaPageData
 
 typedef HashMetaPageData *HashMetaPage;
 
-/* Short hands for accessing structure */
-#define OVFL_POINT		hashm_ovflpoint
-#define LAST_FREED		hashm_lastfreed
-#define MAX_BUCKET		hashm_maxbucket
-#define FFACTOR			hashm_ffactor
-#define HIGH_MASK		hashm_highmask
-#define LOW_MASK		hashm_lowmask
-#define NKEYS			hashm_nkeys
-#define SPARES			hashm_spares
-
 extern bool BuildingHash;
 
 typedef struct HashItemData
@@ -256,7 +246,7 @@ extern Datum hashrescan(PG_FUNCTION_ARGS);
 extern Datum hashendscan(PG_FUNCTION_ARGS);
 extern Datum hashmarkpos(PG_FUNCTION_ARGS);
 extern Datum hashrestrpos(PG_FUNCTION_ARGS);
-extern Datum hashdelete(PG_FUNCTION_ARGS);
+extern Datum hashbulkdelete(PG_FUNCTION_ARGS);
 
 /*
  * Datatype-specific hash functions in hashfunc.c.
@@ -310,6 +300,7 @@ extern void _hash_expandtable(Relation rel, Buffer metabuf);
 extern void _hash_regscan(IndexScanDesc scan);
 extern void _hash_dropscan(IndexScanDesc scan);
 extern void _hash_adjscans(Relation rel, ItemPointer tid);
+extern void AtEOXact_hash(void);
 
 
 /* hashsearch.c */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.20 2001/03/22 03:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.21 2001/07/15 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ datumCopy(Datum value, bool typByVal, int typLen)
  *
  * Free the space occupied by a datum CREATED BY "datumCopy"
  *
- * NOTE: DO NOT USE THIS ROUTINE with datums returned by amgetattr() etc.
+ * NOTE: DO NOT USE THIS ROUTINE with datums returned by heap_getattr() etc.
  * ONLY datums created by "datumCopy" can be freed!
  *-------------------------------------------------------------------------
  */

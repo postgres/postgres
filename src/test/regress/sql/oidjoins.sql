@@ -29,10 +29,6 @@ SELECT	oid, pg_am.aminsert
 FROM	pg_am 
 WHERE	pg_am.aminsert != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.aminsert);
-SELECT	oid, pg_am.amdelete 
-FROM	pg_am 
-WHERE	pg_am.amdelete != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.amdelete);
 SELECT	oid, pg_am.ambeginscan 
 FROM	pg_am 
 WHERE	pg_am.ambeginscan != 0 AND 
@@ -57,6 +53,10 @@ SELECT	oid, pg_am.ambuild
 FROM	pg_am 
 WHERE	pg_am.ambuild != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.ambuild);
+SELECT	oid, pg_am.ambulkdelete 
+FROM	pg_am 
+WHERE	pg_am.ambulkdelete != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.ambulkdelete);
 SELECT	oid, pg_am.amcostestimate 
 FROM	pg_am 
 WHERE	pg_am.amcostestimate != 0 AND 

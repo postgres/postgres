@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.129 2001/06/23 23:29:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.130 2001/07/15 22:48:18 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -813,7 +813,7 @@ echo "UPDATE pg_database SET \
 		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Vacuuming database."
-echo "VACUUM ANALYZE" \
+echo "VACUUM FULL ANALYZE" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Copying template1 to template0."
@@ -824,7 +824,7 @@ echo "UPDATE pg_database SET \
 	datallowconn = 'f' \
         WHERE datname = 'template0'" \
 		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "VACUUM pg_database" \
+echo "VACUUM FULL pg_database" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.59 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.60 2001/07/15 22:48:17 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -402,7 +402,7 @@ OperatorShellMake(char *operatorName,
  *	 rightSortObjectId -- same as for commutatorObjectId
  *	 operatorProcedure -- must access the pg_procedure catalog to get the
  *				   ObjectId of the procedure that actually does the operator
- *				   actions this is required.  Do an amgetattr to find out the
+ *				   actions this is required.  Do a lookup to find out the
  *				   return type of the procedure
  *	 restrictionProcedure -- must access the pg_procedure catalog to get
  *				   the ObjectId but this is optional

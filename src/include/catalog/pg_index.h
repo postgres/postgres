@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.21 2001/07/09 18:35:52 momjian Exp $
+ * $Id: pg_index.h,v 1.22 2001/07/15 22:48:18 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -58,7 +58,9 @@ CATALOG(pg_index)
 	bool		indisprimary;	/* is this index for primary key */
 	Oid			indreference;	/* oid of index of referenced relation (ie
 								 * - this index for foreign key */
-	text		indpred;		/* query plan for partial index predicate */
+	/* VARIABLE LENGTH FIELD: */
+	text		indpred;		/* expression tree for predicate,
+								 * if a partial index */
 } FormData_pg_index;
 
 /* ----------------

@@ -4,7 +4,7 @@
 #    Makefile for access/nbtree
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Makefile,v 1.10 2000/08/31 16:09:41 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Makefile,v 1.11 2001/07/15 22:48:16 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/access/nbtree
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = nbtcompare.o nbtinsert.o nbtpage.o nbtree.o nbtscan.o nbtsearch.o \
+OBJS = nbtcompare.o nbtinsert.o nbtpage.o nbtree.o nbtsearch.o \
        nbtstrat.o nbtutils.o nbtsort.o
 
 all: SUBSYS.o

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.31 2001/06/27 23:31:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.32 2001/07/15 22:48:15 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -18,7 +18,7 @@
  *	  address of the page if it is an overflow page.
  *
  *	  The first page in a hash relation, page zero, is special -- it stores
- *	  information describing the hash table; it is referred to as teh
+ *	  information describing the hash table; it is referred to as the
  *	  "meta page." Pages one and higher store the actual data.
  *
  *-------------------------------------------------------------------------
@@ -48,6 +48,19 @@ static void _hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucket
  *	before the lock table is fully initialized, so we can't use it.
  *	Strictly speaking, this violates 2pl, but we don't do 2pl on the
  *	system catalogs anyway.
+ *
+ *	Note that our page locks are actual lockmanager locks, not buffer
+ *	locks (as are used by btree, for example).  This is a good idea because
+ *	the algorithms are not deadlock-free, and we'd better be able to detect
+ *	and recover from deadlocks.
+ *
+ *	Another important difference from btree is that a hash indexscan
+ *	retains both a lock and a buffer pin on the current index page
+ *	between hashgettuple() calls (btree keeps only a buffer pin).
+ *	Because of this, it's safe to do item deletions with only a regular
+ *	write lock on a hash page --- there cannot be an indexscan stopped on
+ *	the page being deleted, other than an indexscan of our own backend,
+ *	which will be taken care of by _hash_adjscans.
  */
 
 
@@ -350,6 +363,16 @@ _hash_unsetpagelock(Relation rel,
 	}
 }
 
+/*
+ * Delete a hash index item.
+ *
+ * It is safe to delete an item after acquiring a regular WRITE lock on
+ * the page, because no other backend can hold a READ lock on the page,
+ * and that means no other backend currently has an indexscan stopped on
+ * any item of the item being deleted.  Our own backend might have such
+ * an indexscan (in fact *will*, since that's how VACUUM found the item
+ * in the first place), but _hash_adjscans will fix the scan position.
+ */
 void
 _hash_pagedel(Relation rel, ItemPointer tid)
 {
@@ -384,7 +407,7 @@ _hash_pagedel(Relation rel, ItemPointer tid)
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
-	++metap->hashm_nkeys;
+	metap->hashm_nkeys--;
 	_hash_wrtbuf(rel, metabuf);
 }
 
@@ -402,32 +425,32 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	_hash_checkpage((Page) metap, LH_META_PAGE);
 
 	metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_READ, HASH_WRITE);
-	new_bucket = ++metap->MAX_BUCKET;
+	new_bucket = ++metap->hashm_maxbucket;
 	metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_WRITE, HASH_READ);
-	old_bucket = (metap->MAX_BUCKET & metap->LOW_MASK);
+	old_bucket = (metap->hashm_maxbucket & metap->hashm_lowmask);
 
 	/*
-	 * If the split point is increasing (MAX_BUCKET's log base 2 *
+	 * If the split point is increasing (hashm_maxbucket's log base 2 *
 	 * increases), we need to copy the current contents of the spare split
 	 * bucket to the next bucket.
 	 */
-	spare_ndx = _hash_log2(metap->MAX_BUCKET + 1);
-	if (spare_ndx > metap->OVFL_POINT)
+	spare_ndx = _hash_log2(metap->hashm_maxbucket + 1);
+	if (spare_ndx > metap->hashm_ovflpoint)
 	{
 
 		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_READ, HASH_WRITE);
-		metap->SPARES[spare_ndx] = metap->SPARES[metap->OVFL_POINT];
-		metap->OVFL_POINT = spare_ndx;
+		metap->hashm_spares[spare_ndx] = metap->hashm_spares[metap->hashm_ovflpoint];
+		metap->hashm_ovflpoint = spare_ndx;
 		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_WRITE, HASH_READ);
 	}
 
-	if (new_bucket > metap->HIGH_MASK)
+	if (new_bucket > metap->hashm_highmask)
 	{
 
 		/* Starting a new doubling */
 		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_READ, HASH_WRITE);
-		metap->LOW_MASK = metap->HIGH_MASK;
-		metap->HIGH_MASK = new_bucket | metap->LOW_MASK;
+		metap->hashm_lowmask = metap->hashm_highmask;
+		metap->hashm_highmask = new_bucket | metap->hashm_lowmask;
 		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_WRITE, HASH_READ);
 
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.23 2001/05/30 19:53:39 tgl Exp $
+ * $Id: rtree.h,v 1.24 2001/07/15 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ extern void freestack(RTSTACK *s);
  *		Defined in access/rtree/
  */
 extern Datum rtinsert(PG_FUNCTION_ARGS);
-extern Datum rtdelete(PG_FUNCTION_ARGS);
+extern Datum rtbulkdelete(PG_FUNCTION_ARGS);
 
 extern Datum rtgettuple(PG_FUNCTION_ARGS);
 extern Datum rtbeginscan(PG_FUNCTION_ARGS);
@@ -129,6 +129,7 @@ extern void rtree_desc(char *buf, uint8 xl_info, char *rec);
 /* rtscan.c */
 extern void rtadjscans(Relation r, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
+extern void AtEOXact_rtree(void);
 
 /* rtstrat.c */
 extern RegProcedure RTMapOperator(Relation r, AttrNumber attnum,

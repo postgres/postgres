@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.196 2001/07/11 22:14:02 momjian Exp $
+ * $Id: pg_proc.h,v 1.197 2001/07/15 22:48:18 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -209,11 +209,6 @@ DATA(insert OID =  84 (  boolne			   PGUID 12 f t t t 2 f 16 "16 16" 100 0 0 100
 DESCR("not equal");
 DATA(insert OID =  89 (  version		   PGUID 12 f t f t 0 f 25 "" 100 0 0 100 pgsql_version - ));
 DESCR("PostgreSQL version string");
-
-DATA(insert OID = 1265 (  rtcostestimate   PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  rtcostestimate - ));
-DESCR("r-tree cost estimator");
-DATA(insert OID = 1268 (  btcostestimate   PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  btcostestimate - ));
-DESCR("btree cost estimator");
 
 /* OIDS 100 - 199 */
 
@@ -671,11 +666,9 @@ DESCR("convert float4 to int4");
 
 DATA(insert OID = 320 (  rtinsert		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	rtinsert - ));
 DESCR("r-tree(internal)");
-DATA(insert OID = 321 (  rtdelete		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  rtdelete - ));
-DESCR("r-tree(internal)");
 DATA(insert OID = 322 (  rtgettuple		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  rtgettuple - ));
 DESCR("r-tree(internal)");
-DATA(insert OID = 323 (  rtbuild		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	rtbuild - ));
+DATA(insert OID = 323 (  rtbuild		   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100	rtbuild - ));
 DESCR("r-tree(internal)");
 DATA(insert OID = 324 (  rtbeginscan	   PGUID 12 f t f t 4 f 23 "0 0 0 0" 100 0 0 100  rtbeginscan - ));
 DESCR("r-tree(internal)");
@@ -687,12 +680,14 @@ DATA(insert OID = 327 (  rtrestrpos		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	
 DESCR("r-tree(internal)");
 DATA(insert OID = 328 (  rtrescan		   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100	rtrescan - ));
 DESCR("r-tree(internal)");
+DATA(insert OID = 321 (  rtbulkdelete	   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100  rtbulkdelete - ));
+DESCR("r-tree(internal)");
+DATA(insert OID = 1265 (  rtcostestimate   PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  rtcostestimate - ));
+DESCR("r-tree(internal)");
 
 DATA(insert OID = 330 (  btgettuple		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  btgettuple - ));
 DESCR("btree(internal)");
 DATA(insert OID = 331 (  btinsert		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	btinsert - ));
-DESCR("btree(internal)");
-DATA(insert OID = 332 (  btdelete		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  btdelete - ));
 DESCR("btree(internal)");
 DATA(insert OID = 333 (  btbeginscan	   PGUID 12 f t f t 4 f 23 "0 0 0 0" 100 0 0 100  btbeginscan - ));
 DESCR("btree(internal)");
@@ -704,7 +699,11 @@ DATA(insert OID = 336 (  btmarkpos		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	b
 DESCR("btree(internal)");
 DATA(insert OID = 337 (  btrestrpos		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	btrestrpos - ));
 DESCR("btree(internal)");
-DATA(insert OID = 338 (  btbuild		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	btbuild - ));
+DATA(insert OID = 338 (  btbuild		   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100	btbuild - ));
+DESCR("btree(internal)");
+DATA(insert OID = 332 (  btbulkdelete	   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100  btbulkdelete - ));
+DESCR("btree(internal)");
+DATA(insert OID = 1268 (  btcostestimate   PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  btcostestimate - ));
 DESCR("btree(internal)");
 
 DATA(insert OID = 339 (  poly_same		   PGUID 12 f t t t 2 f 16 "604 604" 100 0 0 100  poly_same - ));
@@ -789,14 +788,9 @@ DESCR("convert name to char()");
 DATA(insert OID =  409 (  name			   PGUID 12 f t t t 1 f 19 "1042" 100 0 0 100	bpchar_name - ));
 DESCR("convert char() to name");
 
-DATA(insert OID =  438 (  hashcostestimate PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  hashcostestimate - ));
-DESCR("hash index cost estimator");
-
 DATA(insert OID = 440 (  hashgettuple	   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  hashgettuple - ));
 DESCR("hash(internal)");
 DATA(insert OID = 441 (  hashinsert		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	hashinsert - ));
-DESCR("hash(internal)");
-DATA(insert OID = 442 (  hashdelete		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  hashdelete - ));
 DESCR("hash(internal)");
 DATA(insert OID = 443 (  hashbeginscan	   PGUID 12 f t f t 4 f 23 "0 0 0 0" 100 0 0 100  hashbeginscan - ));
 DESCR("hash(internal)");
@@ -808,8 +802,13 @@ DATA(insert OID = 446 (  hashmarkpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	
 DESCR("hash(internal)");
 DATA(insert OID = 447 (  hashrestrpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	hashrestrpos - ));
 DESCR("hash(internal)");
-DATA(insert OID = 448 (  hashbuild		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	hashbuild - ));
+DATA(insert OID = 448 (  hashbuild		   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100	hashbuild - ));
 DESCR("hash(internal)");
+DATA(insert OID = 442 (  hashbulkdelete	   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100  hashbulkdelete - ));
+DESCR("hash(internal)");
+DATA(insert OID = 438 (  hashcostestimate  PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  hashcostestimate - ));
+DESCR("hash(internal)");
+
 DATA(insert OID = 449 (  hashint2		   PGUID 12 f t t t 1 f 23 "21" 100 0 0 100  hashint2 - ));
 DESCR("hash");
 DATA(insert OID = 450 (  hashint4		   PGUID 12 f t t t 1 f 23 "23" 100 0 0 100  hashint4 - ));
@@ -1014,13 +1013,9 @@ DESCR("larger of two");
 DATA(insert OID = 771 (  int2smaller	   PGUID 12 f t t t 2 f 21 "21 21" 100 0 0 100	int2smaller - ));
 DESCR("smaller of two");
 
-DATA(insert OID = 772 (  gistcostestimate  PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  gistcostestimate - ));
-DESCR("gist cost estimator");
 DATA(insert OID = 774 (  gistgettuple	   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  gistgettuple - ));
 DESCR("gist(internal)");
 DATA(insert OID = 775 (  gistinsert		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	gistinsert - ));
-DESCR("gist(internal)");
-DATA(insert OID = 776 (  gistdelete		   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  gistdelete - ));
 DESCR("gist(internal)");
 DATA(insert OID = 777 (  gistbeginscan	   PGUID 12 f t f t 4 f 23 "0 0 0 0" 100 0 0 100  gistbeginscan - ));
 DESCR("gist(internal)");
@@ -1032,7 +1027,11 @@ DATA(insert OID = 780 (  gistmarkpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	
 DESCR("gist(internal)");
 DATA(insert OID = 781 (  gistrestrpos	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100	gistrestrpos - ));
 DESCR("gist(internal)");
-DATA(insert OID = 782 (  gistbuild		   PGUID 12 f t f t 5 f 23 "0 0 0 0 0" 100 0 0 100	gistbuild - ));
+DATA(insert OID = 782 (  gistbuild		   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100	gistbuild - ));
+DESCR("gist(internal)");
+DATA(insert OID = 776 (  gistbulkdelete	   PGUID 12 f t f t 3 f 23 "0 0 0" 100 0 0 100  gistbulkdelete - ));
+DESCR("gist(internal)");
+DATA(insert OID = 772 (  gistcostestimate  PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  gistcostestimate - ));
 DESCR("gist(internal)");
 
 DATA(insert OID = 784 (  tintervaleq	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervaleq - ));

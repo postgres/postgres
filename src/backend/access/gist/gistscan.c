@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.37 2001/06/28 16:00:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.38 2001/07/15 22:48:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,13 +59,8 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(3);
 	IndexScanDesc s;
 
-	/*
-	 * Let index_beginscan does its work...
-	 *
-	 * RelationSetLockForRead(r);
-	 */
-
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
+
 	gistregscan(s);
 
 	PG_RETURN_POINTER(s);
@@ -281,6 +276,27 @@ gistdropscan(IndexScanDesc s)
 		prev->gsl_next = l->gsl_next;
 
 	pfree(l);
+}
+
+/*
+ * AtEOXact_gist() --- clean up gist subsystem at xact abort or commit.
+ *
+ * This is here because it needs to touch this module's static var GISTScans.
+ */
+void
+AtEOXact_gist(void)
+{
+	/*
+	 * Note: these actions should only be necessary during xact abort; but
+	 * they can't hurt during a commit.
+	 */
+
+	/*
+	 * Reset the active-scans list to empty. We do not need to free the
+	 * list elements, because they're all palloc()'d, so they'll go away
+	 * at end of transaction anyway.
+	 */
+	GISTScans = NULL;
 }
 
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.26 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.27 2001/07/15 22:48:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,9 @@
  */
 int			NIndexTupleProcessed;
 
+
 /* ----------------
- *		index_keytest
- *
- * old comments
- *		May eventually combine with other tests (like timeranges)?
- *		Should have Buffer buffer; as an argument and pass it to amgetattr.
+ *		index_keytest - does this index tuple satisfy the scan key(s)?
  * ----------------
  */
 bool
@@ -38,16 +35,16 @@ index_keytest(IndexTuple tuple,
 			  int scanKeySize,
 			  ScanKey key)
 {
-	bool		isNull;
-	Datum		datum;
-	Datum		test;
-
 	IncrIndexProcessed();
 
 	while (scanKeySize > 0)
 	{
+		Datum		datum;
+		bool		isNull;
+		Datum		test;
+
 		datum = index_getattr(tuple,
-							  key[0].sk_attno,
+							  key->sk_attno,
 							  tupdesc,
 							  &isNull);
 
@@ -57,25 +54,19 @@ index_keytest(IndexTuple tuple,
 			return false;
 		}
 
-		if (key[0].sk_flags & SK_ISNULL)
+		if (key->sk_flags & SK_ISNULL)
 			return false;
 
-		if (key[0].sk_flags & SK_COMMUTE)
-		{
-			test = FunctionCall2(&key[0].sk_func,
-								 key[0].sk_argument, datum);
-		}
+		if (key->sk_flags & SK_COMMUTE)
+			test = FunctionCall2(&key->sk_func, key->sk_argument, datum);
 		else
-		{
-			test = FunctionCall2(&key[0].sk_func,
-								 datum, key[0].sk_argument);
-		}
+			test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
 
-		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
+		if (DatumGetBool(test) == !!(key->sk_flags & SK_NEGATE))
 			return false;
 
-		scanKeySize -= 1;
 		key++;
+		scanKeySize--;
 	}
 
 	return true;

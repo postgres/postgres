@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.51 2001/06/22 19:16:21 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.52 2001/07/15 22:48:15 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -18,23 +18,17 @@
  *		index_rescan	- restart a scan of an index
  *		index_endscan	- end a scan
  *		index_insert	- insert an index tuple into a relation
- *		index_delete	- delete an item from an index relation
  *		index_markpos	- mark a scan position
  *		index_restrpos	- restore a scan position
  *		index_getnext	- get the next tuple from a scan
- * **	index_fetch		- retrieve tuple with tid
- * **	index_replace	- replace a tuple
- * **	index_getattr	- get an attribute from an index tuple
- *		index_getprocid - get a support procedure id from the rel tuple
- *
- *		IndexScanIsValid - check index scan
+ *		index_bulk_delete	- bulk deletion of index tuples
+ *		index_cost_estimator	- fetch amcostestimate procedure OID
+ *		index_getprocid - get a support procedure OID
  *
  * NOTES
  *		This file contains the index_ routines which used
  *		to be a scattered collection of stuff in access/genam.
  *
- *		The ** routines: index_fetch, index_replace, and index_getattr
- *		have not yet been implemented.	They may not be needed.
  *
  * old comments
  *		Scans are implemented as follows:
@@ -211,23 +205,6 @@ index_insert(Relation relation,
 }
 
 /* ----------------
- *		index_delete - delete an item from an index relation
- * ----------------
- */
-void
-index_delete(Relation relation, ItemPointer indexItem)
-{
-	RegProcedure procedure;
-
-	RELATION_CHECKS;
-	GET_REL_PROCEDURE(delete, amdelete);
-
-	OidFunctionCall2(procedure,
-					 PointerGetDatum(relation),
-					 PointerGetDatum(indexItem));
-}
-
-/* ----------------
  *		index_beginscan - start a scan of an index
  * ----------------
  */
@@ -375,6 +352,35 @@ index_getnext(IndexScanDesc scan,
 
 	if (result != NULL)
 		pgstat_count_index_getnext(&scan->xs_pgstat_info);
+	return result;
+}
+
+/* ----------------
+ *		index_bulk_delete - do mass deletion of index entries
+ *
+ *		callback routine tells whether a given main-heap tuple is
+ *		to be deleted
+ *
+ *		return value is an optional palloc'd struct of statistics
+ * ----------------
+ */
+IndexBulkDeleteResult *
+index_bulk_delete(Relation relation,
+				  IndexBulkDeleteCallback callback,
+				  void *callback_state)
+{
+	RegProcedure procedure;
+	IndexBulkDeleteResult *result;
+
+	RELATION_CHECKS;
+	GET_REL_PROCEDURE(bulk_delete, ambulkdelete);
+
+	result = (IndexBulkDeleteResult *)
+		DatumGetPointer(OidFunctionCall3(procedure,
+										 PointerGetDatum(relation),
+										 PointerGetDatum((Pointer) callback),
+										 PointerGetDatum(callback_state)));
+
 	return result;
 }
 

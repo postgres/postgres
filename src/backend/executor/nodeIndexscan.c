@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.61 2001/06/22 19:16:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.62 2001/07/15 22:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -993,7 +993,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	ExecOpenScanR(reloid,		/* relation */
 				  0,			/* nkeys */
 				  (ScanKey) NULL,		/* scan key */
-				  0,			/* is index */
+				  false,		/* is index */
 				  direction,	/* scan direction */
 				  estate->es_snapshot,	/* */
 				  &currentRelation,		/* return: rel desc */
@@ -1023,7 +1023,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			ExecOpenScanR(indexOid,		/* relation */
 						  numScanKeys[i],		/* nkeys */
 						  scanKeys[i],	/* scan key */
-						  true, /* is index */
+						  true,			/* is index */
 						  direction,	/* scan direction */
 						  estate->es_snapshot,
 						  &(relationDescs[i]),	/* return: rel desc */

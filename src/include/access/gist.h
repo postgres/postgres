@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gist.h,v 1.28 2001/05/31 18:16:55 tgl Exp $
+ * $Id: gist.h,v 1.29 2001/07/15 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ typedef struct GISTENTRY
 /* gist.c */
 extern Datum gistbuild(PG_FUNCTION_ARGS);
 extern Datum gistinsert(PG_FUNCTION_ARGS);
-extern Datum gistdelete(PG_FUNCTION_ARGS);
+extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
 extern void _gistdump(Relation r);
 extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);

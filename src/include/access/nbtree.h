@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.55 2001/03/22 04:00:29 momjian Exp $
+ * $Id: nbtree.h,v 1.56 2001/07/15 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,6 +319,8 @@ typedef struct xl_btree_newroot
  */
 extern bool BuildingBtree;		/* in nbtree.c */
 
+extern void AtEOXact_nbtree(void);
+
 extern Datum btbuild(PG_FUNCTION_ARGS);
 extern Datum btinsert(PG_FUNCTION_ARGS);
 extern Datum btgettuple(PG_FUNCTION_ARGS);
@@ -328,7 +330,7 @@ extern void btmovescan(IndexScanDesc scan, Datum v);
 extern Datum btendscan(PG_FUNCTION_ARGS);
 extern Datum btmarkpos(PG_FUNCTION_ARGS);
 extern Datum btrestrpos(PG_FUNCTION_ARGS);
-extern Datum btdelete(PG_FUNCTION_ARGS);
+extern Datum btbulkdelete(PG_FUNCTION_ARGS);
 
 extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void btree_undo(XLogRecPtr lsn, XLogRecord *record);
@@ -346,20 +348,12 @@ extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem,
 extern void _bt_metapinit(Relation rel);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
-extern void _bt_relbuf(Relation rel, Buffer buf, int access);
+extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_wrtbuf(Relation rel, Buffer buf);
 extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, int level);
-extern void _bt_pagedel(Relation rel, ItemPointer tid);
-
-/*
- * prototypes for functions in nbtscan.c
- */
-extern void _bt_regscan(IndexScanDesc scan);
-extern void _bt_dropscan(IndexScanDesc scan);
-extern void _bt_adjscans(Relation rel, ItemPointer tid);
-extern void AtEOXact_nbtree(void);
+extern void _bt_itemdel(Relation rel, Buffer buf, ItemPointer tid);
 
 /*
  * prototypes for functions in nbtsearch.c

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.134 2001/06/14 01:09:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.135 2001/07/15 22:48:17 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -269,7 +269,7 @@ PerformPortalClose(char *name, CommandDest dest)
  *				Initial idea of ordering the tuple attributes so that all
  *		the variable length domains occured last was scratched.  Doing
  *		so would not speed access too much (in general) and would create
- *		many complications in formtuple, amgetattr, and addattribute.
+ *		many complications in formtuple, heap_getattr, and addattribute.
  *
  *		scan attribute catalog for name conflict (within rel)
  *		scan type catalog for absence of data type (if not arg)

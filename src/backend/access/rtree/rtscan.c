@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.37 2001/06/09 18:16:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.38 2001/07/15 22:48:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,13 +60,8 @@ rtbeginscan(PG_FUNCTION_ARGS)
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(3);
 	IndexScanDesc s;
 
-	/*
-	 * Let index_beginscan does its work...
-	 *
-	 * RelationSetLockForRead(r);
-	 */
-
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
+
 	rtregscan(s);
 
 	PG_RETURN_POINTER(s);
@@ -280,6 +275,27 @@ rtdropscan(IndexScanDesc s)
 		prev->rtsl_next = l->rtsl_next;
 
 	pfree(l);
+}
+
+/*
+ * AtEOXact_rtree() --- clean up rtree subsystem at xact abort or commit.
+ *
+ * This is here because it needs to touch this module's static var RTScans.
+ */
+void
+AtEOXact_rtree(void)
+{
+	/*
+	 * Note: these actions should only be necessary during xact abort; but
+	 * they can't hurt during a commit.
+	 */
+
+	/*
+	 * Reset the active-scans list to empty. We do not need to free the
+	 * list elements, because they're all palloc()'d, so they'll go away
+	 * at end of transaction anyway.
+	 */
+	RTScans = NULL;
 }
 
 void

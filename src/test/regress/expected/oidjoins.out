@@ -57,14 +57,6 @@ WHERE	pg_am.aminsert != 0 AND
 -----+----------
 (0 rows)
 
-SELECT	oid, pg_am.amdelete 
-FROM	pg_am 
-WHERE	pg_am.amdelete != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.amdelete);
- oid | amdelete 
------+----------
-(0 rows)
-
 SELECT	oid, pg_am.ambeginscan 
 FROM	pg_am 
 WHERE	pg_am.ambeginscan != 0 AND 
@@ -111,6 +103,14 @@ WHERE	pg_am.ambuild != 0 AND
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.ambuild);
  oid | ambuild 
 -----+---------
+(0 rows)
+
+SELECT	oid, pg_am.ambulkdelete 
+FROM	pg_am 
+WHERE	pg_am.ambulkdelete != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_am.ambulkdelete);
+ oid | ambulkdelete 
+-----+--------------
 (0 rows)
 
 SELECT	oid, pg_am.amcostestimate 

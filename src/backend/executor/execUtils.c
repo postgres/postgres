@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.75 2001/03/22 06:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.76 2001/07/15 22:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,25 +504,26 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		/*
 		 * Open (and lock, if necessary) the index relation
 		 *
-		 * Hack for not btree and hash indices: they use relation level
-		 * exclusive locking on update (i.e. - they are not ready for
-		 * MVCC) and so we have to exclusively lock indices here to
-		 * prevent deadlocks if we will scan them - index_beginscan places
-		 * AccessShareLock, indices update methods don't use locks at all.
-		 * We release this lock in ExecCloseIndices. Note, that hashes use
-		 * page level locking - i.e. are not deadlock-free - let's them be
-		 * on their way -:)) vadim 03-12-1998
+		 * If the index AM is not safe for concurrent updates, obtain
+		 * an exclusive lock on the index to lock out other updaters as
+		 * well as readers (index_beginscan places AccessShareLock).
+		 * We will release this lock in ExecCloseIndices.
 		 *
-		 * If there are multiple not-btree-or-hash indices, all backends must
-		 * lock the indices in the same order or we will get deadlocks
-		 * here during concurrent updates.	This is now guaranteed by
+		 * If the index AM supports concurrent updates, we obtain no lock
+		 * here at all, which is a tad weird, but safe since any critical
+		 * operation on the index (like deleting it) will acquire exclusive
+		 * lock on the parent table.  Perhaps someday we should acquire
+		 * RowExclusiveLock on the index here?
+		 *
+		 * If there are multiple not-concurrent-safe indexes, all backends
+		 * must lock the indexes in the same order or we will get deadlocks
+		 * here during concurrent updates.	This is guaranteed by
 		 * RelationGetIndexList(), which promises to return the index list
-		 * in OID order.  tgl 06-19-2000
+		 * in OID order.
 		 */
 		indexDesc = index_open(indexOid);
 
-		if (indexDesc->rd_rel->relam != BTREE_AM_OID &&
-			indexDesc->rd_rel->relam != HASH_AM_OID)
+		if (! indexDesc->rd_am->amconcurrent)
 			LockRelation(indexDesc, AccessExclusiveLock);
 
 		/*
@@ -560,24 +561,21 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 {
 	int			i;
 	int			numIndices;
-	RelationPtr relationDescs;
+	RelationPtr indexDescs;
 
 	numIndices = resultRelInfo->ri_NumIndices;
-	relationDescs = resultRelInfo->ri_IndexRelationDescs;
+	indexDescs = resultRelInfo->ri_IndexRelationDescs;
 
 	for (i = 0; i < numIndices; i++)
 	{
-		if (relationDescs[i] == NULL)
+		if (indexDescs[i] == NULL)
 			continue;
 
-		/*
-		 * See notes in ExecOpenIndices.
-		 */
-		if (relationDescs[i]->rd_rel->relam != BTREE_AM_OID &&
-			relationDescs[i]->rd_rel->relam != HASH_AM_OID)
-			UnlockRelation(relationDescs[i], AccessExclusiveLock);
+		/* Drop lock, if one was acquired by ExecOpenIndices */
+		if (! indexDescs[i]->rd_am->amconcurrent)
+			UnlockRelation(indexDescs[i], AccessExclusiveLock);
 
-		index_close(relationDescs[i]);
+		index_close(indexDescs[i]);
 	}
 
 	/*

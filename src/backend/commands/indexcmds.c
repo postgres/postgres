@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.50 2001/06/13 21:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.51 2001/07/15 22:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@ DefineIndex(char *heapRelationName,
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
+	HeapTuple	tuple;
+	Form_pg_am	accessMethodForm;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
 	List	   *cnfPred = NIL;
@@ -107,27 +109,25 @@ DefineIndex(char *heapRelationName,
 			 heapRelationName);
 
 	/*
-	 * compute access method id
+	 * look up the access method, verify it can handle the requested features
 	 */
-	accessMethodId = GetSysCacheOid(AMNAME,
-									PointerGetDatum(accessMethodName),
-									0, 0, 0);
-	if (!OidIsValid(accessMethodId))
+	tuple = SearchSysCache(AMNAME,
+						   PointerGetDatum(accessMethodName),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DefineIndex: access method \"%s\" not found",
 			 accessMethodName);
+	accessMethodId = tuple->t_data->t_oid;
+	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 
-	/*
-	 * XXX Hardwired hacks to check for limitations on supported index
-	 * types. We really ought to be learning this info from entries in the
-	 * pg_am table, instead of having it wired-in here!
-	 */
-	if (unique && accessMethodId != BTREE_AM_OID)
-		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
+	if (unique && ! accessMethodForm->amcanunique)
+		elog(ERROR, "DefineIndex: access method \"%s\" does not support UNIQUE indexes",
+			 accessMethodName);
+	if (numberOfAttributes > 1 && ! accessMethodForm->amcanmulticol)
+		elog(ERROR, "DefineIndex: access method \"%s\" does not support multi-column indexes",
+			 accessMethodName);
 
-	if (numberOfAttributes > 1 &&
-		!( accessMethodId == BTREE_AM_OID ||
-		   accessMethodId == GIST_AM_OID))
-		elog(ERROR, "DefineIndex: multi-column indices are only available with the btree or GiST access methods");
+	ReleaseSysCache(tuple);
 
 	/*
 	 * WITH clause reinstated to handle lossy indices. -- JMH, 7/22/96
@@ -298,7 +298,15 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
 					  indexRelation, accessMethodId);
 
-	index_build(heapRelation, indexRelation, indexInfo, oldPred);
+	/*
+	 * XXX currently BROKEN: if we want to support EXTEND INDEX, oldPred
+	 * needs to be passed through to IndexBuildHeapScan.  We could do this
+	 * without help from the index AMs if we added an oldPred field to the
+	 * IndexInfo struct.  Currently I'm expecting that EXTEND INDEX will
+	 * get removed, so I'm not going to do that --- tgl 7/14/01
+	 */
+
+	index_build(heapRelation, indexRelation, indexInfo);
 
 	/* heap and index rels are closed as a side-effect of index_build */
 }

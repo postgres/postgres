@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.52 2001/06/27 23:31:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.53 2001/07/15 22:48:16 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -138,7 +138,7 @@ _bt_getroot(Relation rel, int access)
 		/* If access = BT_READ, caller doesn't want us to create root yet */
 		if (access == BT_READ)
 		{
-			_bt_relbuf(rel, metabuf, BT_READ);
+			_bt_relbuf(rel, metabuf);
 			return InvalidBuffer;
 		}
 
@@ -215,14 +215,14 @@ _bt_getroot(Relation rel, int access)
 			 * guarantee no deadlocks, we have to release the metadata
 			 * page and start all over again.
 			 */
-			_bt_relbuf(rel, metabuf, BT_WRITE);
+			_bt_relbuf(rel, metabuf);
 			return _bt_getroot(rel, access);
 		}
 	}
 	else
 	{
 		rootblkno = metad->btm_root;
-		_bt_relbuf(rel, metabuf, BT_READ);		/* done with the meta page */
+		_bt_relbuf(rel, metabuf);		/* done with the meta page */
 
 		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
 	}
@@ -270,8 +270,8 @@ _bt_getroot(Relation rel, int access)
 					goto check_parent;
 				}
 				else
-/* someone else already fixed root */
 				{
+					/* someone else already fixed root */
 					LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
 					LockBuffer(rootbuf, BT_READ);
 				}
@@ -283,7 +283,7 @@ _bt_getroot(Relation rel, int access)
 			 * chance that parent is root page.
 			 */
 			newrootbuf = _bt_getbuf(rel, rootopaque->btpo_parent, BT_READ);
-			_bt_relbuf(rel, rootbuf, BT_READ);
+			_bt_relbuf(rel, rootbuf);
 			rootbuf = newrootbuf;
 			rootpage = BufferGetPage(rootbuf);
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
@@ -293,7 +293,7 @@ _bt_getroot(Relation rel, int access)
 		}
 
 		/* try again */
-		_bt_relbuf(rel, rootbuf, BT_READ);
+		_bt_relbuf(rel, rootbuf);
 		return _bt_getroot(rel, access);
 	}
 
@@ -350,10 +350,12 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 /*
  *	_bt_relbuf() -- release a locked buffer.
  *
- * Lock and pin (refcount) are both dropped.
+ * Lock and pin (refcount) are both dropped.  Note that either read or
+ * write lock can be dropped this way, but if we modified the buffer,
+ * this is NOT the right way to release a write lock.
  */
 void
-_bt_relbuf(Relation rel, Buffer buf, int access)
+_bt_relbuf(Relation rel, Buffer buf)
 {
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buf);
@@ -449,24 +451,23 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
 }
 
 /*
- * Delete an item from a btree.  It had better be a leaf item...
+ * Delete an item from a btree page.
+ *
+ * This routine assumes that the caller has pinned and locked the buffer,
+ * and will write the buffer afterwards.
  */
 void
-_bt_pagedel(Relation rel, ItemPointer tid)
+_bt_itemdel(Relation rel, Buffer buf, ItemPointer tid)
 {
-	Buffer		buf;
-	Page		page;
-	BlockNumber blkno;
+	Page		page = BufferGetPage(buf);
 	OffsetNumber offno;
 
-	blkno = ItemPointerGetBlockNumber(tid);
 	offno = ItemPointerGetOffsetNumber(tid);
 
-	buf = _bt_getbuf(rel, blkno, BT_WRITE);
-	page = BufferGetPage(buf);
-
 	START_CRIT_SECTION();
+
 	PageIndexTupleDelete(page, offno);
+
 	/* XLOG stuff */
 	{
 		xl_btree_delete xlrec;
@@ -490,8 +491,6 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
-	END_CRIT_SECTION();
 
-	/* write the buffer and release the lock */
-	_bt_wrtbuf(rel, buf);
+	END_CRIT_SECTION();
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.155 2001/06/27 23:31:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.156 2001/07/15 22:48:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,6 +41,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 #include "parser/parse_func.h"
+#include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -73,9 +74,6 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					IndexInfo *indexInfo,
 					Oid *classOids,
 					bool islossy, bool primary);
-static void DefaultBuild(Relation heapRelation, Relation indexRelation,
-			 IndexInfo *indexInfo, Node *oldPred,
-			 IndexStrategy indexStrategy);
 static Oid	IndexGetRelation(Oid indexId);
 static bool activate_index(Oid indexId, bool activate, bool inplace);
 
@@ -656,7 +654,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	}
 
 	replace[Anum_pg_index_indpred - 1] = 'r';
-	values[Anum_pg_index_indpred - 1] = (Datum) predText;
+	values[Anum_pg_index_indpred - 1] = PointerGetDatum(predText);
 
 	newtup = heap_modifytuple(tuple, pg_index, values, nulls, replace);
 
@@ -885,7 +883,7 @@ index_create(char *heapRelationName,
 		/* XXX shouldn't we close the heap and index rels here? */
 	}
 	else
-		index_build(heapRelation, indexRelation, indexInfo, NULL);
+		index_build(heapRelation, indexRelation, indexInfo);
 }
 
 /* ----------------------------------------------------------------
@@ -912,12 +910,13 @@ index_drop(Oid indexId)
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
 	 * table; otherwise there could be other backends using the index!
-	 * Exclusive lock on the index alone is insufficient because the index
-	 * access routines are a little slipshod about obtaining adequate
-	 * locking (see ExecOpenIndices()).  We do grab exclusive lock on the
-	 * index too, just to be safe.	Both locks must be held till end of
-	 * transaction, else other backends will still see this index in
-	 * pg_index.
+	 * Exclusive lock on the index alone is insufficient because another
+	 * backend might be in the midst of devising a query plan that will use
+	 * the index.  The parser and planner take care to hold an appropriate
+	 * lock on the parent table while working, but having them hold locks on
+	 * all the indexes too seems overly complex.  We do grab exclusive lock
+	 * on the index too, just to be safe. Both locks must be held till end of
+	 * transaction, else other backends will still see this index in pg_index.
 	 */
 	heapId = IndexGetRelation(indexId);
 	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
@@ -1075,7 +1074,7 @@ BuildIndexInfo(HeapTuple indexTuple)
 	/*
 	 * If partial index, convert predicate into expression nodetree
 	 */
-	if (VARSIZE(&indexStruct->indpred) != 0)
+	if (VARSIZE(&indexStruct->indpred) > VARHDRSZ)
 	{
 		char	   *predString;
 
@@ -1625,43 +1624,77 @@ UpdateStats(Oid relid, double reltuples)
 }
 
 
-/* ----------------
- *		DefaultBuild
- *
- * NB: this routine is dead code, and likely always has been, because
- * there are no access methods that don't supply their own ambuild procedure.
- *
- * Anyone want to wager whether it would actually work if executed?
- * ----------------
+/*
+ * index_build - invoke access-method-specific index build procedure
  */
-static void
-DefaultBuild(Relation heapRelation,
-			 Relation indexRelation,
-			 IndexInfo *indexInfo,
-			 Node *oldPred,
-			 IndexStrategy indexStrategy)		/* not used */
+void
+index_build(Relation heapRelation,
+			Relation indexRelation,
+			IndexInfo *indexInfo)
+{
+	RegProcedure procedure;
+
+	/*
+	 * sanity checks
+	 */
+	Assert(RelationIsValid(indexRelation));
+	Assert(PointerIsValid(indexRelation->rd_am));
+
+	procedure = indexRelation->rd_am->ambuild;
+	Assert(RegProcedureIsValid(procedure));
+
+	/*
+	 * Call the access method's build procedure
+	 */
+	OidFunctionCall3(procedure,
+					 PointerGetDatum(heapRelation),
+					 PointerGetDatum(indexRelation),
+					 PointerGetDatum(indexInfo));
+}
+
+
+/*
+ * IndexBuildHeapScan - scan the heap relation to find tuples to be indexed
+ *
+ * This is called back from an access-method-specific index build procedure
+ * after the AM has done whatever setup it needs.  The parent heap relation
+ * is scanned to find tuples that should be entered into the index.  Each
+ * such tuple is passed to the AM's callback routine, which does the right
+ * things to add it to the new index.  After we return, the AM's index
+ * build procedure does whatever cleanup is needed; in particular, it should
+ * close the heap and index relations.
+ *
+ * The total count of heap tuples is returned.  This is for updating pg_class
+ * statistics.  (It's annoying not to be able to do that here, but we can't
+ * do it until after the relation is closed.)  Note that the index AM itself
+ * must keep track of the number of index tuples; we don't do so here because
+ * the AM might reject some of the tuples for its own reasons, such as being
+ * unable to store NULLs.
+ */
+double
+IndexBuildHeapScan(Relation heapRelation,
+				   Relation indexRelation,
+				   IndexInfo *indexInfo,
+				   IndexBuildCallback callback,
+				   void *callback_state)
 {
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
 	TupleDesc	heapDescriptor;
-	Datum		datum[INDEX_MAX_KEYS];
-	char		nullv[INDEX_MAX_KEYS];
-	double		reltuples,
-				indtuples;
+	Datum		attdata[INDEX_MAX_KEYS];
+	char		nulls[INDEX_MAX_KEYS];
+	double		reltuples;
 	Node	   *predicate = indexInfo->ii_Predicate;
-
-#ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
-
-#endif
 	ExprContext *econtext;
-	InsertIndexResult insertResult;
+	Snapshot	snapshot;
+	TransactionId XmaxRecent;
 
 	/*
-	 * more & better checking is needed
+	 * sanity checks
 	 */
-	Assert(OidIsValid(indexRelation->rd_rel->relam));	/* XXX */
+	Assert(OidIsValid(indexRelation->rd_rel->relam));
 
 	heapDescriptor = RelationGetDescr(heapRelation);
 
@@ -1675,8 +1708,7 @@ DefaultBuild(Relation heapRelation,
 	 * We construct the ExprContext anyway since we need a per-tuple
 	 * temporary memory context for function evaluation -- tgl July 00
 	 */
-#ifndef OMIT_PARTIAL_INDEX
-	if (predicate != NULL || oldPred != NULL)
+	if (predicate != NULL)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
@@ -1688,155 +1720,158 @@ DefaultBuild(Relation heapRelation,
 		slot = NULL;
 	}
 	econtext = MakeExprContext(slot, TransactionCommandContext);
-#else
-	econtext = MakeExprContext(NULL, TransactionCommandContext);
-#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/*
-	 * Ok, begin our scan of the base relation.
+	 * Ok, begin our scan of the base relation.  We use SnapshotAny
+	 * because we must retrieve all tuples and do our own time qual checks.
 	 */
+	if (IsBootstrapProcessingMode())
+	{
+		snapshot = SnapshotNow;
+		XmaxRecent = InvalidTransactionId;
+	}
+	else
+	{
+		snapshot = SnapshotAny;
+		GetXmaxRecent(&XmaxRecent);
+	}
+
 	scan = heap_beginscan(heapRelation, /* relation */
 						  0,	/* start at end */
-						  SnapshotNow,	/* seeself */
+						  snapshot,	/* seeself */
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
 
-	reltuples = indtuples = 0.0;
+	reltuples = 0;
 
 	/*
-	 * for each tuple in the base relation, we create an index tuple and
-	 * add it to the index relation.  We keep a running count of the
-	 * number of tuples so that we can update pg_class with correct
-	 * statistics when we're done building the index.
+	 * Scan all tuples in the base relation.
 	 */
 	while (HeapTupleIsValid(heapTuple = heap_getnext(scan, 0)))
 	{
-		MemoryContextReset(econtext->ecxt_per_tuple_memory);
+		bool		tupleIsAlive;
 
-		reltuples += 1.0;
-
-#ifndef OMIT_PARTIAL_INDEX
-
-		/*
-		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
-		 * this tuple if it was already in the existing partial index
-		 */
-		if (oldPred != NULL)
+		if (snapshot == SnapshotAny)
 		{
-			slot->val = heapTuple;
-			if (ExecQual((List *) oldPred, econtext, false))
+			/* do our own time qual check */
+			bool	indexIt;
+			uint16	sv_infomask;
+
+			/*
+			 * HeapTupleSatisfiesVacuum may update tuple's hint status bits.
+			 * We could possibly get away with not locking the buffer here,
+			 * since caller should hold ShareLock on the relation, but let's
+			 * be conservative about it.
+			 */
+			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+			sv_infomask = heapTuple->t_data->t_infomask;
+
+			switch (HeapTupleSatisfiesVacuum(heapTuple->t_data, XmaxRecent))
 			{
-				indtuples += 1.0;
-				continue;
+				case HEAPTUPLE_DEAD:
+					indexIt = false;
+					tupleIsAlive = false;
+					break;
+				case HEAPTUPLE_LIVE:
+					indexIt = true;
+					tupleIsAlive = true;
+					break;
+				case HEAPTUPLE_RECENTLY_DEAD:
+					/*
+					 * If tuple is recently deleted then we must index it
+					 * anyway to keep VACUUM from complaining.
+					 */
+					indexIt = true;
+					tupleIsAlive = false;
+					break;
+				case HEAPTUPLE_INSERT_IN_PROGRESS:
+					/*
+					 * This should not happen, if caller holds ShareLock on
+					 * the parent relation.
+					 */
+					elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
+					indexIt = tupleIsAlive = false;	/* keep compiler quiet */
+					break;
+				case HEAPTUPLE_DELETE_IN_PROGRESS:
+					/*
+					 * This should not happen, if caller holds ShareLock on
+					 * the parent relation.
+					 */
+					elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
+					indexIt = tupleIsAlive = false;	/* keep compiler quiet */
+					break;
+				default:
+					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
+					indexIt = tupleIsAlive = false;	/* keep compiler quiet */
+					break;
 			}
+
+			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
+			if (sv_infomask != heapTuple->t_data->t_infomask)
+				SetBufferCommitInfoNeedsSave(scan->rs_cbuf);
+
+			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+
+			if (! indexIt)
+				continue;
+		}
+		else
+		{
+			/* heap_getnext did the time qual check */
+			tupleIsAlive = true;
 		}
 
+		reltuples += 1;
+
+		MemoryContextReset(econtext->ecxt_per_tuple_memory);
+
 		/*
-		 * Skip this tuple if it doesn't satisfy the partial-index
-		 * predicate
+		 * In a partial index, discard tuples that don't satisfy the
+		 * predicate.  We can also discard recently-dead tuples, since
+		 * VACUUM doesn't complain about tuple count mismatch for partial
+		 * indexes.
 		 */
 		if (predicate != NULL)
 		{
-			slot->val = heapTuple;
+			if (! tupleIsAlive)
+				continue;
+			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 			if (!ExecQual((List *) predicate, econtext, false))
 				continue;
 		}
-#endif	 /* OMIT_PARTIAL_INDEX */
-
-		indtuples += 1.0;
 
 		/*
-		 * FormIndexDatum fills in its datum and null parameters with
-		 * attribute information taken from the given heap tuple.
+		 * For the current heap tuple, extract all the attributes we use
+		 * in this index, and note which are null.  This also performs
+		 * evaluation of the function, if this is a functional index.
 		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
 					   heapDescriptor,
 					   econtext->ecxt_per_tuple_memory,
-					   datum,
-					   nullv);
+					   attdata,
+					   nulls);
 
-		insertResult = index_insert(indexRelation, datum, nullv,
-									&(heapTuple->t_self), heapRelation);
+		/*
+		 * You'd think we should go ahead and build the index tuple here,
+		 * but some index AMs want to do further processing on the
+		 * data first.  So pass the attdata and nulls arrays, instead.
+		 */
 
-		if (insertResult)
-			pfree(insertResult);
+		/* Call the AM's callback routine to process the tuple */
+		callback(indexRelation, heapTuple, attdata, nulls, tupleIsAlive,
+				 callback_state);
 	}
 
 	heap_endscan(scan);
 
-#ifndef OMIT_PARTIAL_INDEX
-	if (predicate != NULL || oldPred != NULL)
+	if (predicate != NULL)
 		ExecDropTupleTable(tupleTable, true);
-#endif	 /* OMIT_PARTIAL_INDEX */
 	FreeExprContext(econtext);
 
-	/*
-	 * Since we just counted the tuples in the heap, we update its stats
-	 * in pg_class to guarantee that the planner takes advantage of the
-	 * index we just created.  But, only update statistics during normal
-	 * index definitions, not for indices on system catalogs created
-	 * during bootstrap processing.  We must close the relations before
-	 * updating statistics to guarantee that the relcache entries are
-	 * flushed when we increment the command counter in UpdateStats(). But
-	 * we do not release any locks on the relations; those will be held
-	 * until end of transaction.
-	 */
-	if (IsNormalProcessingMode())
-	{
-		Oid			hrelid = RelationGetRelid(heapRelation);
-		Oid			irelid = RelationGetRelid(indexRelation);
-
-		heap_close(heapRelation, NoLock);
-		index_close(indexRelation);
-		UpdateStats(hrelid, reltuples);
-		UpdateStats(irelid, indtuples);
-		if (oldPred != NULL)
-		{
-			if (indtuples == reltuples)
-				predicate = NULL;
-			UpdateIndexPredicate(irelid, oldPred, predicate);
-		}
-	}
+	return reltuples;
 }
 
-/* ----------------
- *		index_build
- * ----------------
- */
-void
-index_build(Relation heapRelation,
-			Relation indexRelation,
-			IndexInfo *indexInfo,
-			Node *oldPred)
-{
-	RegProcedure procedure;
-
-	/*
-	 * sanity checks
-	 */
-	Assert(RelationIsValid(indexRelation));
-	Assert(PointerIsValid(indexRelation->rd_am));
-
-	procedure = indexRelation->rd_am->ambuild;
-
-	/*
-	 * use the access method build procedure if supplied, else default.
-	 */
-	if (RegProcedureIsValid(procedure))
-		OidFunctionCall5(procedure,
-						 PointerGetDatum(heapRelation),
-						 PointerGetDatum(indexRelation),
-						 PointerGetDatum(indexInfo),
-						 PointerGetDatum(oldPred),
-			   PointerGetDatum(RelationGetIndexStrategy(indexRelation)));
-	else
-		DefaultBuild(heapRelation,
-					 indexRelation,
-					 indexInfo,
-					 oldPred,
-					 RelationGetIndexStrategy(indexRelation));
-}
 
 /*
  * IndexGetRelation: given an index's relation OID, get the OID of the
@@ -1967,7 +2002,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	/* Initialize the index and rebuild */
 	InitIndexStrategy(indexInfo->ii_NumIndexAttrs, iRel, accessMethodId);
-	index_build(heapRelation, iRel, indexInfo, NULL);
+	index_build(heapRelation, iRel, indexInfo);
 
 	/*
 	 * index_build will close both the heap and index relations (but not

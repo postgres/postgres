@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.204 2001/07/13 22:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.205 2001/07/15 22:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ static void vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage);
 static void vacuum_index(VacPageList vacpagelist, Relation indrel,
 						 double num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, double num_tuples);
-static VacPage tid_reaped(ItemPointer itemptr, VacPageList vacpagelist);
+static bool tid_reaped(ItemPointer itemptr, void *state);
 static void vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 						   BlockNumber rel_pages);
 static VacPage copy_vac_page(VacPage vacpage);
@@ -542,17 +542,11 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
-	 *
-	 * XXX for the moment, lazy vac not supported unless CONCURRENT_VACUUM
 	 */
-#ifdef CONCURRENT_VACUUM
 	if (vacstmt->full)
 		full_vacuum_rel(onerel);
 	else
 		lazy_vacuum_rel(onerel, vacstmt);
-#else
-	full_vacuum_rel(onerel);
-#endif
 
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
@@ -1049,7 +1043,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
 Tup %.0f: Vac %.0f, Keep/VTL %.0f/%u, UnUsed %.0f, MinLen %lu, MaxLen %lu; \
-Re-using: Free/Avail. Space %.0f/%.0f; EndEmpty/Avail. Pages %u/%u. %s",
+Re-using: Free/Avail. Space %.0f/%.0f; EndEmpty/Avail. Pages %u/%u.\n\t%s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
 		 nkeep, vacrelstats->num_vtlinks,
@@ -1965,7 +1959,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	}
 	Assert(num_moved == checked_moved);
 
-	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u. %s",
+	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u.\n\t%s",
 		 RelationGetRelationName(onerel),
 		 nblocks, blkno, num_moved,
 		 vac_show_rusage(&ru0));
@@ -2213,7 +2207,7 @@ scan_index(Relation indrel, double num_tuples)
 	nipages = RelationGetNumberOfBlocks(indrel);
 	vac_update_relstats(RelationGetRelid(indrel), nipages, nitups, false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f. %s",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
 		 RelationGetRelationName(indrel), nipages, nitups,
 		 vac_show_rusage(&ru0));
 
@@ -2247,85 +2241,55 @@ static void
 vacuum_index(VacPageList vacpagelist, Relation indrel,
 			 double num_tuples, int keep_tuples)
 {
-	RetrieveIndexResult res;
-	IndexScanDesc iscan;
-	ItemPointer heapptr;
-	int			tups_vacuumed;
-	BlockNumber	num_pages;
-	double		num_index_tuples;
-	VacPage		vp;
+	IndexBulkDeleteResult *stats;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
 
-	/* walk through the entire index */
-	iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
-	tups_vacuumed = 0;
-	num_index_tuples = 0;
+	/* Do bulk deletion */
+	stats = index_bulk_delete(indrel, tid_reaped, (void *) vacpagelist);
 
-	while ((res = index_getnext(iscan, ForwardScanDirection))
-		   != (RetrieveIndexResult) NULL)
-	{
-		heapptr = &res->heap_iptr;
-
-		if ((vp = tid_reaped(heapptr, vacpagelist)) != (VacPage) NULL)
-		{
-#ifdef NOT_USED
-			elog(DEBUG, "<%x,%x> -> <%x,%x>",
-				 ItemPointerGetBlockNumber(&(res->index_iptr)),
-				 ItemPointerGetOffsetNumber(&(res->index_iptr)),
-				 ItemPointerGetBlockNumber(&(res->heap_iptr)),
-				 ItemPointerGetOffsetNumber(&(res->heap_iptr)));
-#endif
-			if (vp->offsets_free == 0)
-			{
-				elog(NOTICE, "Index %s: pointer to EmptyPage (blk %u off %u) - fixing",
-					 RelationGetRelationName(indrel),
-					 vp->blkno, ItemPointerGetOffsetNumber(heapptr));
-			}
-			++tups_vacuumed;
-			index_delete(indrel, &res->index_iptr);
-		}
-		else
-			num_index_tuples += 1;
-
-		pfree(res);
-	}
-
-	index_endscan(iscan);
+	if (!stats)
+		return;
 
 	/* now update statistics in pg_class */
-	num_pages = RelationGetNumberOfBlocks(indrel);
 	vac_update_relstats(RelationGetRelid(indrel),
-						num_pages, num_index_tuples, false);
+						stats->num_pages, stats->num_index_tuples,
+						false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %u. %s",
-		 RelationGetRelationName(indrel), num_pages,
-		 num_index_tuples - keep_tuples, tups_vacuumed,
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
+		 RelationGetRelationName(indrel), stats->num_pages,
+		 stats->num_index_tuples - keep_tuples, stats->tuples_removed,
 		 vac_show_rusage(&ru0));
 
 	/*
 	 * Check for tuple count mismatch.  If the index is partial, then
 	 * it's OK for it to have fewer tuples than the heap; else we got trouble.
 	 */
-	if (num_index_tuples != num_tuples + keep_tuples)
+	if (stats->num_index_tuples != num_tuples + keep_tuples)
 	{
-		if (num_index_tuples > num_tuples + keep_tuples ||
+		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			! is_partial_index(indrel))
 			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
-				 RelationGetRelationName(indrel), num_index_tuples, num_tuples);
+				 RelationGetRelationName(indrel),
+				 stats->num_index_tuples, num_tuples);
 	}
+
+	pfree(stats);
 }
 
 /*
  *	tid_reaped() -- is a particular tid reaped?
  *
+ *		This has the right signature to be an IndexBulkDeleteCallback.
+ *
  *		vacpagelist->VacPage_array is sorted in right order.
  */
-static VacPage
-tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
+static bool
+tid_reaped(ItemPointer itemptr, void *state)
 {
+	VacPageList	vacpagelist = (VacPageList) state;
 	OffsetNumber ioffno;
 	OffsetNumber *voff;
 	VacPage		vp,
@@ -2342,8 +2306,8 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 								  sizeof(VacPage),
 								  vac_cmp_blk);
 
-	if (vpp == (VacPage *) NULL)
-		return (VacPage) NULL;
+	if (vpp == NULL)
+		return false;
 
 	/* ok - we are on a partially or fully reaped page */
 	vp = *vpp;
@@ -2351,7 +2315,7 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 	if (vp->offsets_free == 0)
 	{
 		/* this is EmptyPage, so claim all tuples on it are reaped!!! */
-		return vp;
+		return true;
 	}
 
 	voff = (OffsetNumber *) vac_bsearch((void *) &ioffno,
@@ -2360,11 +2324,11 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 										sizeof(OffsetNumber),
 										vac_cmp_offno);
 
-	if (voff == (OffsetNumber *) NULL)
-		return (VacPage) NULL;
+	if (voff == NULL)
+		return false;
 
 	/* tid is reaped */
-	return vp;
+	return true;
 }
 
 /*
@@ -2595,6 +2559,13 @@ is_partial_index(Relation indrel)
 	HeapTuple	cachetuple;
 	Form_pg_index indexStruct;
 
+	/*
+	 * If the index's AM doesn't support nulls, it's partial for our purposes
+	 */
+	if (! indrel->rd_am->amindexnulls)
+		return true;
+
+	/* Otherwise, look to see if there's a partial-index predicate */
 	cachetuple = SearchSysCache(INDEXRELID,
 								ObjectIdGetDatum(RelationGetRelid(indrel)),
 								0, 0, 0);
@@ -2603,7 +2574,7 @@ is_partial_index(Relation indrel)
 			 RelationGetRelid(indrel));
 	indexStruct = (Form_pg_index) GETSTRUCT(cachetuple);
 
-	result = (VARSIZE(&indexStruct->indpred) != 0);
+	result = (VARSIZE(&indexStruct->indpred) > VARHDRSZ);
 
 	ReleaseSysCache(cachetuple);
 	return result;
