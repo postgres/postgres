@@ -38,8 +38,8 @@ Table of Contents
              Installation                                 
              Operation                                    
        5. Release Notes                                   
-          Release 6.4.1                                     
-             Migration to v6.4.1                            
+          Release 6.4.2                                     
+             Migration to v6.4.2                            
              Detailed Change List                         
 
 List of Tables
@@ -71,7 +71,7 @@ Chapter 1. Introduction
 
 Chapter 2. Ports
 
-       This manual describes version 6.4.1 of Postgres. The 
+       This manual describes version 6.4.2 of Postgres. The 
        Postgres developer community has compiled and tested 
        Postgres on a number of platforms. Check the web site 
        for the latest information.
@@ -83,58 +83,58 @@ Currently Supported Platforms
 
        Table 2-1. Supported Platforms
        OS             Processor     Version  Reported     Remarks
-       AIX 4.2.1      RS6000        v6.4.1     1998-10-27   (Andreas Zeugswetter)
-       BSDI           x86           v6.4.1     1998-10-25   (Bruce Momjian
-       FreeBSD        x86           v6.4.1     1998-10-26   (Tatsuo Ishii, Marc 
+       AIX 4.2.1      RS6000        v6.4.2     1998-10-27   (Andreas Zeugswetter)
+       BSDI           x86           v6.4.2     1998-10-25   (Bruce Momjian
+       FreeBSD        x86           v6.4.2     1998-10-26   (Tatsuo Ishii, Marc 
        2.2.x-3.x                                          Fournier)
-       DGUX 5.4R4.11  m88k          v6.3     1998-03-01   v6.4.1 probably OK. Needs 
+       DGUX 5.4R4.11  m88k          v6.3     1998-03-01   v6.4.2 probably OK. Needs 
                                                           new maintainer. (Brian E 
                                                           Gallew)
-       Digital Unix   Alpha         v6.4.1     1998-10-29   Minor patchable problems 
+       Digital Unix   Alpha         v6.4.2     1998-10-29   Minor patchable problems 
        4.0                                                (Pedro J. Lobo)
-       HPUX           PA-RISC       v6.4.1     1998-10-25   Both 9.0x and 10.20 
+       HPUX           PA-RISC       v6.4.2     1998-10-25   Both 9.0x and 10.20 
                                                           (Tom Lane, Stan Brown)
        IRIX 6.x       MIPS          v6.3     1998-03-01   5.x is different (Andrew 
                                                           Martin)
        linux 2.0.x    Alpha         v6.3.2   1998-04-16   Mostly successful. Needs 
-                                                          work for v6.4.1. (Ryan 
+                                                          work for v6.4.2. (Ryan 
                                                           Kirkpatrick)
-       linux 2.0.x    x86           v6.4.1     1998-10-27   (Thomas Lockhart)
-       linux          x86           v6.4.1     1998-10-25   (Oliver Elphick, Taral)
+       linux 2.0.x    x86           v6.4.2     1998-10-27   (Thomas Lockhart)
+       linux          x86           v6.4.2     1998-10-25   (Oliver Elphick, Taral)
        2.0.x/glibc2
-       linux 2.0.x    Sparc         v6.4.1     1998-10-25   (Tom Szybist)
-       linuxPPC       PPC603e       v6.4.1     1998-10-26   Powerbook 2400c (Tatsuo 
+       linux 2.0.x    Sparc         v6.4.2     1998-10-25   (Tom Szybist)
+       linuxPPC       PPC603e       v6.4.2     1998-10-26   Powerbook 2400c (Tatsuo 
        2.1.24                                             Ishii)
-       mklinux DR3    PPC750        v6.4.1     1998-09-16   PowerMac 7600 (Tatsuo 
+       mklinux DR3    PPC750        v6.4.2     1998-09-16   PowerMac 7600 (Tatsuo 
                                                           Ishii)
-       NetBSD/i386    x86           v6.4.1     1998-10-25   (Brook Milligan)
+       NetBSD/i386    x86           v6.4.2     1998-10-25   (Brook Milligan)
        1.3.2
-       NetBSD-        NS32532       v6.4.1     1998-10-27   (small problems in 
+       NetBSD-        NS32532       v6.4.2     1998-10-27   (small problems in 
        current                                            date/time math 
                                                           (Jon Buller)
-       NetBSD/sparc   Sparc         v6.4.1     1998-10-27   (Tom I Helbekkmo)
+       NetBSD/sparc   Sparc         v6.4.2     1998-10-27   (Tom I Helbekkmo)
        1.3H
        NetBSD 1.3     VAX           v6.3     1998-03-01   (Tom I Helbekkmo)
        SCO UnixWare   x86           v6.3     1998-03-01   aka UNIVEL (Billy G. 
        2.x                                                Allie)
-       SCO UnixWare   x86           v6.4.1     1998-10-04   (Billy G. Allie)
+       SCO UnixWare   x86           v6.4.2     1998-10-04   (Billy G. Allie)
        7
-       Solaris        x86           v6.4.1     1998-10-28   (Marc Fournier)
-       Solaris        Sparc         v6.4.1     1998-10-28   (Tom Szybist, Frank 
+       Solaris        x86           v6.4.2     1998-10-28   (Marc Fournier)
+       Solaris        Sparc         v6.4.2     1998-10-28   (Tom Szybist, Frank 
        2.6-2.7                                            Ridderbusch)
        SunOS 4.1.4    Sparc         v6.3     1998-03-01   patches submitted (Tatsuo 
                                                           Ishii)
-       SVR4           MIPS          v6.4.1     1998-10-28   no 64-bit int support 
+       SVR4           MIPS          v6.4.2     1998-10-28   no 64-bit int support 
                                                           (Frank Ridderbusch)
        SVR4 4.4       m88k          v6.2.1   1998-03-01   confirmed with patching 
                                                           (Doug Winterburn)
-       Windows NT     x86           v6.4.1     1998-10-08   Mostly working with the 
+       Windows NT     x86           v6.4.2     1998-10-08   Mostly working with the 
                                                           Cygwin library. No DLLs 
                                                           yet. (Horak Daniel) 
 
 
        Platforms listed for v6.3.x should also work with 
-       v6.4.1, but we did not receive confirmation of such at 
+       v6.4.2, but we did not receive confirmation of such at 
        the time this list was compiled. 
 
          Note: For Windows NT, the server-side port of 
@@ -174,7 +174,7 @@ Unsupported Platforms
 
 Chapter 3. Installation
 
-       Complete installation instructions for Postgres v6.4.1.
+       Complete installation instructions for Postgres v6.4.2.
        Before installing Postgres, you may wish to visit 
        www.postgresql.org for up to date information, 
        patches, etc.
@@ -270,7 +270,7 @@ Installation Procedure
          happen in this account. 
 
        4. Ftp file 
-         ftp://ftp.postgresql.org/pub/postgresql-v6.4.1.tar.gz
+         ftp://ftp.postgresql.org/pub/postgresql-v6.4.2.tar.gz
          from the Internet. Store it in your home directory.
 
        5. Some platforms use flex. If your system uses flex 
@@ -339,7 +339,7 @@ Installation Procedure
          pull the most recent version of pg_dumpall from 
          the new distribution: 
          $ cd
-         $ gunzip -c postgresql-v6.4.1.tar.gz \
+         $ gunzip -c postgresql-v6.4.2.tar.gz \
              | tar xvf - src/bin/pg_dump/pg_dumpall
          $ chmod a+x src/bin/pg_dump/pg_dumpall
          $ src/bin/pg_dump/pg_dumpall -z > db.out
@@ -435,7 +435,7 @@ Installation Procedure
          $ exit
        10.     Unzip and untar the new source file. Type 
          $ cd /usr/src/pgsql
-         $ gunzip -c ~/postgresql-v6.4.1.tar.gz | tar xvf -
+         $ gunzip -c ~/postgresql-v6.4.2.tar.gz | tar xvf -
        11.     Configure the source code for your system. It 
          is this step at which you can specify your actual 
          installation path for the build process (see the 
@@ -760,7 +760,7 @@ Installation Procedure
               it appears to be a significant issue.
               For example, 
               o   For a i686/Linux-ELF platform, no tests 
-                failed since this is the v6.4.1 regression 
+                failed since this is the v6.4.2 regression 
                 testing reference platform.
               o   For the SPARC/Linux-ELF platform, using the 
                 970525 beta version of Postgres v6.2 the 
@@ -870,7 +870,7 @@ Installation Procedure
          not get Postgres to work on you system. Please 
          send a mail message to pgsql-ports@postgresql.org 
          telling us the following: 
-         o  The version of Postgres (v6.4.1, 6.3.2, beta 981014, etc.). 
+         o  The version of Postgres (v6.4.2, 6.3.2, beta 981014, etc.). 
          o  Your operating system (i.e. RedHat v5.1 Linux v2.0.34). 
          o  Your hardware (SPARC, i486, etc.). 
          o  Did you compile, install and run the regression 
@@ -1296,7 +1296,7 @@ Operation
 
 Chapter 5. Release Notes
 
-Release 6.4.1
+Release 6.4.2
 
        There are many new features and improvements in this 
        release. Thanks to our developers and maintainers, 
@@ -1337,7 +1337,7 @@ Release 6.4.1
         has received some attention, and should be more 
         robust for more platforms than it has ever been. 
 
-Migration to v6.4.1
+Migration to v6.4.2
 
        A dump/restore is not required for those upgrading from 6.4.
        A dump/restore using pg_dump or pg_dumpall is 
