@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: be-fsstubs.h,v 1.8 1999/02/13 23:21:34 momjian Exp $
+ * $Id: be-fsstubs.h,v 1.9 1999/05/31 22:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,6 @@ extern int	lowrite(int fd, struct varlena * wbuf);
 /*
  * Added for buffer leak prevention [ Pascal André <andre@via.ecp.fr> ]
  */
-extern void _lo_commit(void);
+extern void lo_commit(bool isCommit);
 
 #endif	 /* BE_FSSTUBS_H */

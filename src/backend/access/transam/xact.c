@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.36 1999/05/25 16:07:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.37 1999/05/31 22:53:59 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -156,8 +156,6 @@
 #include <miscadmin.h>
 #include <commands/async.h>
 #include <commands/sequence.h>
-
-/* included for _lo_commit [PA, 7/17/98] */
 #include <libpq/be-fsstubs.h>
 
 static void AbortTransaction(void);
@@ -938,7 +936,7 @@ CommitTransaction()
 	 */
 
 	/* handle commit for large objects [ PA, 7/17/98 ] */
-	_lo_commit();
+	lo_commit(true);
 
 	/* NOTIFY commit must also come before lower-level cleanup */
 	AtCommit_Notify();
@@ -1012,6 +1010,7 @@ AbortTransaction()
 	 *	do abort processing
 	 * ----------------
 	 */
+	lo_commit(false);			/* 'false' means it's abort */
 	UnlockBuffers();
 	AtAbort_Notify();
 	CloseSequences();

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.33 1999/05/25 16:08:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.34 1999/05/31 22:53:57 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -15,10 +15,17 @@
  *
  *	  Builtin functions for open/close/read/write operations on large objects.
  *
- *	  These functions operate in the current portal variable context, which
- *	  means the large object descriptors hang around between transactions and
- *	  are not deallocated until explicitly closed, or until the portal is
- *	  closed.
+ *	  These functions operate in a private GlobalMemoryContext, which means
+ *	  that large object descriptors hang around until we destroy the context.
+ *	  That happens in lo_commit().  It'd be possible to prolong the lifetime
+ *	  of the context so that LO FDs are good across transactions (for example,
+ *	  we could release the context only if we see that no FDs remain open).
+ *	  But we'd need additional state in order to do the right thing at the
+ *	  end of an aborted transaction.  FDs opened during an aborted xact would
+ *	  still need to be closed, since they might not be pointing at valid
+ *	  relations at all.  For now, we'll stick with the existing documented
+ *	  semantics of LO FDs: they're only good within a transaction.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -37,6 +44,7 @@
 #include <utils/memutils.h>
 #include <lib/fstack.h>
 #include <utils/mcxt.h>
+#include <catalog/pg_shadow.h>	/* for superuser() */
 #include <storage/fd.h>			/* for O_ */
 #include <storage/large_object.h>
 #include <libpq/be-fsstubs.h>
@@ -91,6 +99,11 @@ lo_open(Oid lobjId, int mode)
 	/* switch context back to orig. */
 	MemoryContextSwitchTo(currentContext);
 
+#if FSDB
+	if (fd < 0)					/* newLOfd couldn't find a slot */
+		elog(NOTICE, "Out of space for large object FDs");
+#endif
+
 	return fd;
 }
 
@@ -144,6 +157,8 @@ lo_read(int fd, char *buf, int len)
 		elog(ERROR, "lo_read: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
+
+	Assert(fscxt != NULL);
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
 	status = inv_read(cookies[fd], buf, len);
@@ -168,6 +183,8 @@ lo_write(int fd, char *buf, int len)
 		elog(ERROR, "lo_write: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
+
+	Assert(fscxt != NULL);
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
 	status = inv_write(cookies[fd], buf, len);
@@ -181,7 +198,7 @@ int
 lo_lseek(int fd, int offset, int whence)
 {
 	MemoryContext currentContext;
-	int			ret;
+	int			status;
 
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
@@ -194,13 +211,14 @@ lo_lseek(int fd, int offset, int whence)
 		return -3;
 	}
 
+	Assert(fscxt != NULL);
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
-	ret = inv_seek(cookies[fd], offset, whence);
+	status = inv_seek(cookies[fd], offset, whence);
 
 	MemoryContextSwitchTo(currentContext);
 
-	return ret;
+	return status;
 }
 
 Oid
@@ -246,12 +264,26 @@ lo_tell(int fd)
 		elog(ERROR, "lo_tell: invalid large object descriptor (%d)", fd);
 		return -3;
 	}
+
+	/*
+	 * We assume we do not need to switch contexts for inv_tell.
+	 * That is true for now, but is probably more than this module
+	 * ought to assume...
+	 */
 	return inv_tell(cookies[fd]);
 }
 
 int
 lo_unlink(Oid lobjId)
 {
+	/*
+	 * inv_destroy does not need a context switch, indeed it doesn't
+	 * touch any LO-specific data structures at all.  (Again, that's
+	 * probably more than this module ought to be assuming.)
+	 *
+	 * XXX there ought to be some code to clean up any open LOs that
+	 * reference the specified relation... as is, they remain "open".
+	 */
 	return inv_destroy(lobjId);
 }
 
@@ -297,16 +329,23 @@ lo_import(text *filename)
 	File		fd;
 	int			nbytes,
 				tmp;
-
 	char		buf[BUFSIZE];
 	char		fnamebuf[FNAME_BUFSIZE];
 	LargeObjectDesc *lobj;
 	Oid			lobjOid;
 
+	if (!superuser())
+		elog(ERROR, "You must have Postgres superuser privilege to use "
+			 "server-side lo_import().\n\tAnyone can use the "
+			 "client-side lo_import() provided by libpq.");
+
 	/*
 	 * open the file to be read in
 	 */
-	StrNCpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ + 1);
+	nbytes = VARSIZE(filename) - VARHDRSZ + 1;
+	if (nbytes > FNAME_BUFSIZE)
+		nbytes = FNAME_BUFSIZE;
+	StrNCpy(fnamebuf, VARDATA(filename), nbytes);
 #ifndef __CYGWIN32__
 	fd = PathNameOpenFile(fnamebuf, O_RDONLY, 0666);
 #else
@@ -314,7 +353,7 @@ lo_import(text *filename)
 #endif
 	if (fd < 0)
 	{							/* error */
-		elog(ERROR, "be_lo_import: can't open unix file \"%s\"\n",
+		elog(ERROR, "lo_import: can't open unix file \"%s\": %m",
 			 fnamebuf);
 	}
 
@@ -341,10 +380,8 @@ lo_import(text *filename)
 	{
 		tmp = inv_write(lobj, buf, nbytes);
 		if (tmp < nbytes)
-		{
 			elog(ERROR, "lo_import: error while reading \"%s\"",
 				 fnamebuf);
-		}
 	}
 
 	FileClose(fd);
@@ -363,11 +400,15 @@ lo_export(Oid lobjId, text *filename)
 	File		fd;
 	int			nbytes,
 				tmp;
-
 	char		buf[BUFSIZE];
 	char		fnamebuf[FNAME_BUFSIZE];
 	LargeObjectDesc *lobj;
 	mode_t		oumask;
+
+	if (!superuser())
+		elog(ERROR, "You must have Postgres superuser privilege to use "
+			 "server-side lo_export().\n\tAnyone can use the "
+			 "client-side lo_export() provided by libpq.");
 
 	/*
 	 * open the inversion "object"
@@ -378,9 +419,16 @@ lo_export(Oid lobjId, text *filename)
 
 	/*
 	 * open the file to be written to
+	 *
+	 * Note: we reduce backend's normal 077 umask to the slightly
+	 * friendlier 022.  This code used to drop it all the way to 0,
+	 * but creating world-writable export files doesn't seem wise.
 	 */
-	StrNCpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ + 1);
-	oumask = umask((mode_t) 0);
+	nbytes = VARSIZE(filename) - VARHDRSZ + 1;
+	if (nbytes > FNAME_BUFSIZE)
+		nbytes = FNAME_BUFSIZE;
+	StrNCpy(fnamebuf, VARDATA(filename), nbytes);
+	oumask = umask((mode_t) 0022);
 #ifndef __CYGWIN32__
 	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 #else
@@ -389,7 +437,7 @@ lo_export(Oid lobjId, text *filename)
 	umask(oumask);
 	if (fd < 0)
 	{							/* error */
-		elog(ERROR, "lo_export: can't open unix file \"%s\"",
+		elog(ERROR, "lo_export: can't open unix file \"%s\": %m",
 			 fnamebuf);
 	}
 
@@ -400,10 +448,8 @@ lo_export(Oid lobjId, text *filename)
 	{
 		tmp = FileWrite(fd, buf, nbytes);
 		if (tmp < nbytes)
-		{
 			elog(ERROR, "lo_export: error while writing \"%s\"",
 				 fnamebuf);
-		}
 	}
 
 	inv_close(lobj);
@@ -417,24 +463,34 @@ lo_export(Oid lobjId, text *filename)
  *		 prepares large objects for transaction commit [PA, 7/17/98]
  */
 void
-_lo_commit(void)
+lo_commit(bool isCommit)
 {
 	int			i;
 	MemoryContext currentContext;
 
 	if (fscxt == NULL)
-		return;
+		return;					/* no LO operations in this xact */
 
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
+	/* Clean out still-open index scans (not necessary if aborting)
+	 * and clear cookies array so that LO fds are no longer good.
+	 */
 	for (i = 0; i < MAX_LOBJ_FDS; i++)
 	{
 		if (cookies[i] != NULL)
-			inv_cleanindex(cookies[i]);
+		{
+			if (isCommit)
+				inv_cleanindex(cookies[i]);
+			cookies[i] = NULL;
+		}
 	}
 
 	MemoryContextSwitchTo(currentContext);
 
+	/* Release the LO memory context to prevent permanent memory leaks. */
+	GlobalMemoryDestroy(fscxt);
+	fscxt = NULL;
 }
 
 
