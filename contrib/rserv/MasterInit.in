@@ -22,6 +22,8 @@ if (defined($opt_help) || (scalar(@ARGV) < 1)) {
     exit ((scalar(@ARGV) < 1)? 1:0);
 }
 
+my $module_filename = '@MODULE_FILENAME@';
+
 my $master = $ARGV[0] || "master";
 
 my $minfo = "dbname=$master";
@@ -90,15 +92,15 @@ $result = $conn->exec("create sequence _rserv_sync_seq_");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("CREATE FUNCTION _rserv_log_() RETURNS trigger" .
-					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
+					  " AS '$module_filename' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("CREATE FUNCTION _rserv_sync_(int4) RETURNS int4" .
-					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
+					  " AS '$module_filename' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("CREATE FUNCTION _rserv_debug_(int4) RETURNS int4" .
-					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
+					  " AS '$module_filename' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
 $result = $conn->exec("COMMIT");
