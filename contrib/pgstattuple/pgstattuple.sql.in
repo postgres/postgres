@@ -14,3 +14,4 @@ CREATE TYPE pgstattuple_type AS (
 CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
   AS 'MODULE_PATHNAME', 'pgstattuple'
   LANGUAGE 'c' WITH (isstrict);
+GRANT EXECUTE ON FUNCTION pgstattuple(text) TO PUBLIC;
