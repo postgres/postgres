@@ -1,8 +1,8 @@
-<!-- $Header -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.3 2000/10/20 13:44:39 thomas Exp $ -->
 
-<refentry id="app-pg_config">
+<refentry id="app-pgconfig">
  <refmeta>
-  <refentrytitle id="app-pg_config-title">pg_config</>
+  <refentrytitle id="app-pgconfig-title">pg_config</>
   <refmiscinfo>Application</>
  </refmeta>
 
