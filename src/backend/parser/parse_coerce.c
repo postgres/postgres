@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.112 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.113 2003/12/17 19:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,6 +153,14 @@ coerce_type(ParseState *pstate, Node *node,
 		/* no conversion needed */
 		return node;
 	}
+	if (targetTypeId == ANYOID ||
+		targetTypeId == ANYARRAYOID ||
+		targetTypeId == ANYELEMENTOID)
+	{
+		/* assume can_coerce_type verified that implicit coercion is okay */
+		/* NB: we do NOT want a RelabelType here */
+		return node;
+	}
 	if (inputTypeId == UNKNOWNOID && IsA(node, Const))
 	{
 		/*
@@ -260,14 +268,6 @@ coerce_type(ParseState *pstate, Node *node,
 		param->paramtype = targetTypeId;
 		return (Node *) param;
 	}
-	if (targetTypeId == ANYOID ||
-		targetTypeId == ANYARRAYOID ||
-		targetTypeId == ANYELEMENTOID)
-	{
-		/* assume can_coerce_type verified that implicit coercion is okay */
-		/* NB: we do NOT want a RelabelType here */
-		return node;
-	}
 	if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 							  &funcId))
 	{
@@ -372,17 +372,6 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		if (!typeidIsValid(targetTypeId))
 			return false;
 
-		/*
-		 * If input is an untyped string constant, assume we can convert
-		 * it to anything except a class type.
-		 */
-		if (inputTypeId == UNKNOWNOID)
-		{
-			if (ISCOMPLEX(targetTypeId))
-				return false;
-			continue;
-		}
-
 		/* accept if target is ANY */
 		if (targetTypeId == ANYOID)
 			continue;
@@ -392,6 +381,17 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 			targetTypeId == ANYELEMENTOID)
 		{
 			have_generics = true;		/* do more checking later */
+			continue;
+		}
+
+		/*
+		 * If input is an untyped string constant, assume we can convert
+		 * it to anything except a class type.
+		 */
+		if (inputTypeId == UNKNOWNOID)
+		{
+			if (ISCOMPLEX(targetTypeId))
+				return false;
 			continue;
 		}
 
