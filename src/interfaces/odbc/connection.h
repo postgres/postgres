@@ -93,11 +93,11 @@ typedef enum
 #define AUTH_REQ_CRYPT		4
 
 /*	Startup Packet sizes */
-#define SM_DATABASE		64
-#define SM_USER			32
-#define SM_OPTIONS		64
-#define SM_UNUSED		64
-#define SM_TTY			64
+#define SM_DATABASE			64
+#define SM_USER				32
+#define SM_OPTIONS			64
+#define SM_UNUSED			64
+#define SM_TTY				64
 
 /*	Old 6.2 protocol defines */
 #define NO_AUTHENTICATION	7
@@ -200,26 +200,26 @@ struct col_info
 #endif
 
 typedef BOOL (FAR WINAPI * DataSourceToDriverProc) (UDWORD,
-													SWORD,
-													PTR,
-													SDWORD,
-													PTR,
-													SDWORD,
-													SDWORD FAR *,
-													UCHAR FAR *,
-													SWORD,
-													SWORD FAR *);
+																SWORD,
+																PTR,
+																SDWORD,
+																PTR,
+																SDWORD,
+															SDWORD FAR *,
+															 UCHAR FAR *,
+																SWORD,
+															SWORD FAR *);
 
 typedef BOOL (FAR WINAPI * DriverToDataSourceProc) (UDWORD,
-													SWORD,
-													PTR,
-													SDWORD,
-													PTR,
-													SDWORD,
-													SDWORD FAR *,
-													UCHAR FAR *,
-													SWORD,
-													SWORD FAR *);
+																SWORD,
+																PTR,
+																SDWORD,
+																PTR,
+																SDWORD,
+															SDWORD FAR *,
+															 UCHAR FAR *,
+																SWORD,
+															SWORD FAR *);
 
 /*******	The Connection handle	************/
 struct ConnectionClass_
@@ -255,12 +255,12 @@ struct ConnectionClass_
 
 
 /* Accessor functions */
-#define CC_get_socket(x)	(x->sock)
-#define CC_get_database(x)	(x->connInfo.database)
-#define CC_get_server(x)	(x->connInfo.server)
-#define CC_get_DSN(x)		(x->connInfo.dsn)
-#define CC_get_username(x)	(x->connInfo.username)
-#define CC_is_onlyread(x)	(x->connInfo.onlyread[0] == '1')
+#define CC_get_socket(x)		(x->sock)
+#define CC_get_database(x)		(x->connInfo.database)
+#define CC_get_server(x)		(x->connInfo.server)
+#define CC_get_DSN(x)			(x->connInfo.dsn)
+#define CC_get_username(x)		(x->connInfo.username)
+#define CC_is_onlyread(x)		(x->connInfo.onlyread[0] == '1')
 
 
 /*	for CC_DSN_info */

@@ -25,7 +25,7 @@
 #define closesocket(xxx) close(xxx)
 #define SOCKETFD int
 
-#ifndef		  INADDR_NONE
+#ifndef INADDR_NONE
 #ifndef _IN_ADDR_T
 #define _IN_ADDR_T
 typedef unsigned int in_addr_t;
@@ -42,15 +42,15 @@ typedef unsigned int in_addr_t;
 #include "psqlodbc.h"
 
 #define SOCKET_ALREADY_CONNECTED		1
-#define SOCKET_HOST_NOT_FOUND 			2
-#define SOCKET_COULD_NOT_CREATE_SOCKET 	3
-#define SOCKET_COULD_NOT_CONNECT 		4
-#define SOCKET_READ_ERROR 				5
-#define SOCKET_WRITE_ERROR 				6
-#define SOCKET_NULLPOINTER_PARAMETER 	7
-#define SOCKET_PUT_INT_WRONG_LENGTH 	8
-#define SOCKET_GET_INT_WRONG_LENGTH 	9
-#define SOCKET_CLOSED 					10
+#define SOCKET_HOST_NOT_FOUND			2
+#define SOCKET_COULD_NOT_CREATE_SOCKET	3
+#define SOCKET_COULD_NOT_CONNECT		4
+#define SOCKET_READ_ERROR				5
+#define SOCKET_WRITE_ERROR				6
+#define SOCKET_NULLPOINTER_PARAMETER	7
+#define SOCKET_PUT_INT_WRONG_LENGTH		8
+#define SOCKET_GET_INT_WRONG_LENGTH		9
+#define SOCKET_CLOSED					10
 
 
 struct SocketClass_

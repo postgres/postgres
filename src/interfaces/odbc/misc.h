@@ -39,7 +39,7 @@
 
 
 #ifdef MY_LOG
-#define MYLOGFILE "mylog_"
+#define MYLOGFILE	"mylog_"
 #ifndef WIN32
 #define MYLOGDIR	"/tmp"
 #else
@@ -56,7 +56,7 @@ extern void mylog(char *fmt,...);
 #endif
 
 #ifdef Q_LOG
-#define QLOGFILE  "psqlodbc_"
+#define QLOGFILE	"psqlodbc_"
 #ifndef WIN32
 #define QLOGDIR		"/tmp"
 #else
@@ -79,13 +79,13 @@ extern void qlog(char *fmt,...);
 #endif
 
 #ifdef WIN32
-#define PG_BINARY	O_BINARY
-#define PG_BINARY_R "rb"
-#define PG_BINARY_W "wb"
+#define PG_BINARY		O_BINARY
+#define PG_BINARY_R		"rb"
+#define PG_BINARY_W		"wb"
 #else
-#define PG_BINARY	0
-#define PG_BINARY_R "r"
-#define PG_BINARY_W "w"
+#define PG_BINARY		0
+#define PG_BINARY_R		"r"
+#define PG_BINARY_W		"w"
 #endif
 
 

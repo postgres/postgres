@@ -57,10 +57,10 @@ typedef int BOOL;
 
 #endif	 /* WIN32 */
 
-#define  SYSERR    (-1)
+#define  SYSERR		(-1)
 
 #ifndef  NULL
-#define  NULL		 ((void FAR*)0UL)
+#define  NULL		((void FAR*)0UL)
 #endif
 
 #endif

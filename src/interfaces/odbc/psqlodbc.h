@@ -6,7 +6,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.35 2001/02/11 05:58:41 momjian Exp $
+ * $Id: psqlodbc.h,v 1.36 2001/02/11 13:53:42 momjian Exp $
  */
 
 #ifndef __PSQLODBC_H__
@@ -36,11 +36,11 @@ typedef double SDOUBLE;
 typedef UInt4 Oid;
 
 /* Driver stuff */
-#define ODBCVER				0x0250
-#define DRIVER_ODBC_VER		"02.50"
+#define ODBCVER					0x0250
+#define DRIVER_ODBC_VER			"02.50"
 
-#define DRIVERNAME			"PostgreSQL ODBC"
-#define DBMS_NAME			"PostgreSQL"
+#define DRIVERNAME				"PostgreSQL ODBC"
+#define DBMS_NAME				"PostgreSQL"
 
 #define POSTGRESDRIVERVERSION	"07.01.0003"
 
@@ -55,18 +55,17 @@ typedef UInt4 Oid;
 #define BLCKSZ					4096
 #endif
 
-#define MAX_MESSAGE_LEN			65536		/* This puts a limit on
-												 * query size but I don't */
+#define MAX_MESSAGE_LEN			65536	/* This puts a limit on query size
+										 * but I don't */
  /* see an easy way round this - DJP 24-1-2001 */
 #define MAX_CONNECT_STRING		4096
 #define ERROR_MSG_LENGTH		4096
-#define FETCH_MAX				100 /* default number of rows to cache
-									 * for declare/fetch */
+#define FETCH_MAX				100		/* default number of rows to cache
+										 * for declare/fetch */
 #define TUPLE_MALLOC_INC		100
-#define SOCK_BUFFER_SIZE		4096		/* default socket buffer
-												 * size */
-#define MAX_CONNECTIONS			128 /* conns per environment
-									 * (arbitrary)	*/
+#define SOCK_BUFFER_SIZE		4096	/* default socket buffer size */
+#define MAX_CONNECTIONS			128		/* conns per environment
+										 * (arbitrary)	*/
 #define MAX_FIELDS				512
 #define BYTELEN					8
 #define VARHDRSZ				sizeof(Int4)
@@ -76,24 +75,25 @@ typedef UInt4 Oid;
 #define MAX_CURSOR_LEN			32
 
 /*	Registry length limits */
-#define LARGE_REGISTRY_LEN		4096		/* used for special cases */
-#define MEDIUM_REGISTRY_LEN		256 /* normal size for
+#define LARGE_REGISTRY_LEN		4096	/* used for special cases */
+#define MEDIUM_REGISTRY_LEN		256		/* normal size for
 										 * user,database,etc. */
-#define SMALL_REGISTRY_LEN		10	/* for 1/0 settings */
+#define SMALL_REGISTRY_LEN		10		/* for 1/0 settings */
 
 
 /*	These prefixes denote system tables */
-#define POSTGRES_SYS_PREFIX 	"pg_"
+#define POSTGRES_SYS_PREFIX		"pg_"
 #define KEYS_TABLE				"dd_fkey"
 
 /*	Info limits */
 #define MAX_INFO_STRING			128
 #define MAX_KEYPARTS			20
-#define MAX_KEYLEN				512 /* max key of the form
-									 * "date+outlet+invoice" */
-#define MAX_ROW_SIZE			0	/* Unlimited rowsize with the Tuple
-									 * Toaster */
-#define MAX_STATEMENT_LEN		0	/* Unlimited statement size with 7.0 */
+#define MAX_KEYLEN				512		/* max key of the form
+										 * "date+outlet+invoice" */
+#define MAX_ROW_SIZE			0		/* Unlimited rowsize with the
+										 * Tuple Toaster */
+#define MAX_STATEMENT_LEN		0		/* Unlimited statement size with
+										 * 7.0 */
 
 /* Previously, numerous query strings were defined of length MAX_STATEMENT_LEN */
 /* Now that's 0, lets use this instead. DJP 24-1-2001 */
@@ -172,17 +172,18 @@ typedef struct QueryInfo_
 } QueryInfo;
 
 
-#define PG_TYPE_LO				-999	/* hack until permanent type
-										 * available */
-#define PG_TYPE_LO_NAME			"lo"
-#define OID_ATTNUM				-2		/* the attnum in pg_index of the
+#define PG_TYPE_LO					-999		/* hack until permanent
+												 * type available */
+#define PG_TYPE_LO_NAME				"lo"
+#define OID_ATTNUM					-2	/* the attnum in pg_index of the
 										 * oid */
 
 /* sizes */
-#define TEXT_FIELD_SIZE			8190	/* size of text fields (not
-										 * including null term) */
-#define NAME_FIELD_SIZE			32		/* size of name fields */
-#define MAX_VARCHAR_SIZE		254		/* maximum size of a varchar (not
+#define TEXT_FIELD_SIZE				8190		/* size of text fields
+												 * (not including null
+												 * term) */
+#define NAME_FIELD_SIZE				32	/* size of name fields */
+#define MAX_VARCHAR_SIZE			254 /* maximum size of a varchar (not
 										 * including null term) */
 
 #define PG_NUMERIC_MAX_PRECISION	1000

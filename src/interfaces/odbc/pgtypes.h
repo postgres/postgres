@@ -55,13 +55,13 @@
 #define PG_TYPE_OIDINT2		810
 #define PG_TYPE_OIDINT4		910
 #define PG_TYPE_OIDNAME		911
-#define PG_TYPE_BPCHAR	   	1042
-#define PG_TYPE_VARCHAR    	1043
-#define PG_TYPE_DATE	   	1082
-#define PG_TYPE_TIME	   	1083
-#define PG_TYPE_DATETIME   	1184
-#define PG_TYPE_TIMESTAMP  	1296
-#define PG_TYPE_NUMERIC    	1700
+#define PG_TYPE_BPCHAR		1042
+#define PG_TYPE_VARCHAR		1043
+#define PG_TYPE_DATE		1082
+#define PG_TYPE_TIME		1083
+#define PG_TYPE_DATETIME	1184
+#define PG_TYPE_TIMESTAMP	1296
+#define PG_TYPE_NUMERIC		1700
 
 /* extern Int4 pgtypes_defined[]; */
 extern Int2 sqlTypes[];
