@@ -1017,6 +1017,11 @@ The following describes the methods and variables of this class.
    values from the database.  This causes the dictionary to be updated
    with values that are modified by rules, triggers, etc.
 
+   Due to the way that this function works you will find inserts taking
+   longer and longer as your table gets bigger.  To overcome this problem
+   simply add an index onto the OID of any table that you think may get
+   large over time.
+
 
  3.8. update
  -----------
