@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.82 2002/09/04 20:31:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.83 2002/09/27 15:04:08 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -617,17 +617,15 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	td->t_natts = numberOfAttributes;
 	td->t_hoff = hoff;
 
+	if (tupleDescriptor->tdhasoid) /* else leave infomask = 0 */
+		td->t_infomask = HEAP_HASOID;
+
 	DataFill((char *) td + hoff,
 			 tupleDescriptor,
 			 value,
 			 nulls,
 			 &td->t_infomask,
 			 (hasnull ? td->t_bits : NULL));
-
-	if (tupleDescriptor->tdhasoid)
-		td->t_infomask |= HEAP_HASOID;
-
-	td->t_infomask |= HEAP_XMAX_INVALID;
 
 	return tuple;
 }
@@ -736,8 +734,12 @@ heap_freetuple(HeapTuple htup)
  *
  * This routine forms a HeapTuple by copying the given structure (tuple
  * data) and adding a generic header.  Note that the tuple data is
- * presumed to contain no null fields.	It is typically only useful
- * for null-free system tables.
+ * presumed to contain no null fields and no varlena fields.
+ *
+ * This routine is really only useful for certain system tables that are
+ * known to be fixed-width and null-free.  It is used in some places for
+ * pg_class, but that is a gross hack (it only works because relacl can
+ * be omitted from the tuple entirely in those places).
  * ----------------
  */
 HeapTuple
@@ -770,9 +772,11 @@ heap_addheader(int natts,		/* max domain index */
 
 	MemSet((char *) td, 0, hoff);
 
-	td->t_hoff = hoff;
 	td->t_natts = natts;
-	td->t_infomask = withoid ? (HEAP_XMAX_INVALID | HEAP_HASOID) : HEAP_XMAX_INVALID;
+	td->t_hoff = hoff;
+
+	if (withoid)				/* else leave infomask = 0 */
+		td->t_infomask = HEAP_HASOID;
 
 	memcpy((char *) td + hoff, structure, structlen);
 
