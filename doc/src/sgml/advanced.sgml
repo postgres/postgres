@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.38 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.39 2004/03/30 21:58:20 momjian Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -65,10 +65,24 @@ SELECT * FROM myview;
 
    <para>
     Views can be used in almost any place a real table can be used.
-    Building views upon other views is not uncommon.
+    Building views upon other views is not uncommon.  You may cut down
+    on the difficulty of building complex queries by constructing them
+    in smaller, easier-to-verify pieces, using views.  Views may be
+    used to reveal specific table columns to users that legitimately
+    need access to some of the data, but who shouldn't be able to look
+    at the whole table.
    </para>
-  </sect1>
 
+   <para>
+    Views differ from <quote> real tables </quote> in that they are
+    not, by default, updatable.  If they join together several tables,
+    it may be troublesome to update certain columns since the
+    <emphasis>real</emphasis> update that must take place requires
+    identifying the relevant rows in the source tables.  This is
+    discussed further in <xref linkend="rules-views-update">.
+    </para>
+
+  </sect1>
 
   <sect1 id="tutorial-fk">
    <title>Foreign Keys</title>
@@ -387,6 +401,169 @@ SELECT name, altitude
    </para>
   </sect1>
 
+  <sect1 id="tutorial-storedprocs">
+   <title> Stored Procedures </title>
+
+   <indexterm zone="tutorial-storedprocs"> 
+     <primary>stored procedures</primary>
+   </indexterm>
+
+   <para> Stored procedures are code that runs inside the database
+   system.  Numerous languages may be used to implement functions and
+   procedures; most built-in code is implemented in C.  The
+   <quote>basic</quote> loadable procedural language for
+   <productname>PostgreSQL</productname> is <xref linkid="plpgsql">.
+   Numerous other languages may also be used, including <xref
+   linkid="plperl">, <xref linkid="pltcl">, and <xref
+   linkid="plpython">.
+   </para>
+  
+   <para> There are several ways that stored procedures are really
+   helpful:
+
+   <itemizedlist>
+
+   <listitem><para> To centralize data validation code into the
+   database </para>
+
+   <para> Your system may use client software written in several
+   languages, perhaps with a <quote>web application</quote>
+   implemented in PHP, a <quote>server application</quote> implemented
+   in Java, and a <quote> report writer</quote> implemented in Perl.
+   In the absence of stored procedures, you will likely find that data
+   validation code must be implemented multiple times, in multiple
+   languages, once for each application.</para>
+
+   <para> By implementing data validation in stored procedures,
+   running in the database, it can behave uniformly for all these
+   systems, and you do not need to worry about synchronizing
+   validation procedures across the languages.</para>
+
+   </listitem>
+
+   <listitem><para> Reducing round trips between client and server
+   </para>
+
+   <para>A stored procedure may submit multiple queries, looking up
+   information and adding in links to additional tables.  This takes
+   place without requiring that the client submit multiple queries,
+   and without requiring any added network traffic.
+   </para>
+
+   <para> As a matter of course, the queries share a single
+   transaction context, and there may also be savings in the
+   evaluation of query plans, that will be similar between invocations
+   of a given stored procedure.  </para></listitem>
+
+   <listitem><para> To simplify queries. </para>
+
+   <para> For instance, if you are commonly checking the TLD on domain
+   names, you might create a stored procedure for this purpose, and so
+   be able to use queries such as <command> select domain, tld(domain)
+   from domains; </command> instead of having to put verbose code
+   using <function>substr()</function> into each query.
+   </para>
+
+   <para> It is particularly convenient to use scripting languages
+   like Perl, Tcl, and Python to <quote>grovel through strings</quote>
+   since they are designed for <quote>text processing.</quote></para>
+
+   <para> The binding to the R statistical language allows
+   implementing complex statistical queries inside the database,
+   instead of having to draw the data out.
+   </listitem>
+
+   <listitem><para> Increasing the level of abstraction</para>
+
+   <para> If data is accessed exclusively through stored procedures,
+   then the structures of tables may be changed without there needing
+   to be any visible change in the API used by programmers.  In some
+   systems, users are <emphasis>only</emphasis> allowed access to
+   stored procedures to update data, and cannot do direct updates to
+   tables.
+   </para>
+
+   </listitem>
+
+   </itemizedlist>
+   </para>
+
+   <para> These benefits build on one another: careful use of stored
+   procedures can simultaneously improve reliability and performance,
+   whilst simplifying database access code and improving portability
+   across client platforms and languages.  For instance, consider that
+   a stored procedure can cheaply query tables in the database to
+   validate the correctness of data provided as input. </para>
+
+   <para> Instead of requiring a whole series of queries to create an
+   object, and to look up parent/subsidiary objects to link it to, a
+   stored procedure can do all of this efficiently in the database
+   server, improving performance, and eliminating whole classes of
+   errors. </para>
+   
+  </sect1>
+
+  <sect1 id="tutorial-triggers">
+   <title> Triggers </title>
+
+   <indexterm zone="tutorial-triggers"> 
+     <primary>triggers</primary>
+   </indexterm>
+
+   <para> Triggers allow running a function either before or after
+   update (<command>INSERT</command>, <command>DELETE</command>,
+   <command>UPDATE</command>) operations, which can allow you to do
+   some very clever things. </para>
+
+   <itemizedlist>
+
+   <listitem><para> Data Validation  </para>
+
+   <para> Instead of explicitly coding validation checks as part of a
+   stored procedure, they may be introduced as <command>BEFORE</command>
+   triggers.  The trigger function checks the input values, raising an
+   exception if it finds invalid input.</para>
+
+   <para> Note that this is how foreign key checks are implemented in
+   <productname>PostgreSQL</productname>; when you define a foreign
+   key, you will see a message similar to the following:
+<screen>
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+</screen></para>
+
+   <para> In some cases, it may be appropriate for a trigger function
+   to insert data in order to <emphasis>make</emphasis> the input valid.  For
+   instance, if a newly created object needs a status code in a status
+   table, the trigger might automatically do that.</para>
+   </listitem>
+
+   <listitem><para> Audit logs </para> 
+
+   <para> One may use <command>AFTER</command> triggers to monitor updates to
+   vital tables, and <command>INSERT</command> entries into log tables to
+   provide a more permanent record of those updates.  </para>
+   </listitem>
+
+   <listitem><para> Replication </para> 
+
+   <para> The <application>RServ</application> replication system uses
+   <command>AFTER</command> triggers to track which rows have changed on the
+   <quote>master</quote> system and therefore need to be copied over to
+   <quote>slave</quote> systems.</para>
+
+   <para> <command> 
+     CREATE TRIGGER "_rserv_trigger_t_" AFTER INSERT OR DELETE OR UPDATE ON "my_table"  
+        FOR EACH ROW EXECUTE PROCEDURE "_rserv_log_" ('10');
+   </command></para>
+   </listitem>
+
+   </itemizedlist>
+
+   <para> Notice that there are strong parallels between what can be
+   accomplished using triggers and stored procedures, particularly in
+   regards to data validation.  </para>
+   
+  </sect1>
 
   <sect1 id="tutorial-conclusion">
    <title>Conclusion</title>
