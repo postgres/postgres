@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Oct 11 13:54:56 EDT 2002</P>
+    <P>Last updated: Sun Oct 13 22:49:56 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -22,15 +22,14 @@
 
     <P>The most recent version of this document can be viewed at <A
     href=
-    "http://www.Postgresql.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</A>.</P>
+    "http://www.PostgreSQL.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</A>.</P>
 
     <P>Platform-specific questions are answered at <A href=
     "http://www.PostgreSQL.org/users-lounge/docs/faq.html">http://www.PostgreSQL.org/users-lounge/docs/faq.html</A>.</P>
     <HR>
 
     <H2 align="center">General Questions</H2>
-    <A href="#1.1">1.1</A>) What is PostgreSQL? How is it
-    pronounced?<BR>
+    <A href="#1.1">1.1</A>) What is PostgreSQL? How is it pronounced?<BR>
      <A href="#1.2">1.2</A>) What is the copyright on PostgreSQL?<BR>
      <A href="#1.3">1.3</A>) What Unix platforms does PostgreSQL run
     on?<BR>
@@ -161,7 +160,7 @@
 
     <H2 align="center">General Questions</H2>
 
-    <H4><A name="1.1">1.1</A>) What is PostgreSQL?</H4>
+    <H4><A name="1.1">1.1</A>) What is PostgreSQL? How is it pronounced?</H4>
 
     <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>.</P>
 
@@ -172,12 +171,12 @@
     extended subset of <SMALL>SQL</SMALL>. PostgreSQL is free and the
     complete source is available.</P>
 
-    <P>PostgreSQL development is performed by a team of Internet
+    <P>PostgreSQL development is performed by a team of
     developers who all subscribe to the PostgreSQL development mailing
     list. The current coordinator is Marc G. Fournier (<A href=
     "mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A>). (See
-    below on how to join). This team is now responsible for all
-    development of PostgreSQL.</P>
+    section <a href="#1.6">1.6</a> on how to join). This team is now 
+    responsible for all development of PostgreSQL.</P>
 
     <P>The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen.
     Many others have contributed to the porting, testing, debugging,
@@ -239,10 +238,10 @@
     <P><STRONG>Client</STRONG></P>
 
     <P>It is possible to compile the <I>libpq</I> C library, psql, and
-    other interfaces and binaries to run on MS Windows platforms. In
-    this case, the client is running on MS Windows, and communicates
+    other interfaces and client applications to run on MS Windows platforms.
+    In this case, the client is running on MS Windows, and communicates
     via TCP/IP to a server running on one of our supported Unix
-    platforms. A file <I>win31.mak</I> is included in the distribution
+    platforms. A file <I>win32.mak</I> is included in the distribution
     for making a Win32 <I>libpq</I> library and <I>psql</I>. PostgreSQL
     also communicates with <SMALL>ODBC</SMALL> clients.</P>
 
@@ -250,10 +249,11 @@
 
     <P>The database server can run on Windows NT and Win2k using
     Cygwin, the Cygnus Unix/NT porting library. See
-    <I>pgsql/doc/FAQ_MSWIN</I> in the distribution or the <A href=
-    "http://www.postgresql.org/docs/faq-mswin.html">MS Windows FAQ</A>
-    on our web site. We have no plan to do a native port to any
-    Microsoft platform.</P>
+    <I>pgsql/doc/FAQ_MSWIN</I> in the distribution or the MS Windows FAQ
+    at <A href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</A>.</P>
+
+    <p>A native port to some Microsoft platforms is currently being worked
+    upon.</p>
 
     <H4><A name="1.5">1.5</A>) Where can I get PostgreSQL?</H4>
 
@@ -318,7 +318,7 @@
     '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
     <P>A list of commercial support companies is available at <A href=
-    "http://www.postgresql.org/users-lounge/commercial-support.html">http://www.postgresql.org/users-lounge/commercial-support.html</A>.</P>
+    "http://www.PostgreSQL.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</A>.</P>
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
 
@@ -339,10 +339,10 @@
     "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</A>.
     There is a list of PostgreSQL books available for purchase at <A
     href=
-    "http://www.postgresql.org/books/">http://www.postgresql.org/books/</A>.
+    "http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</A>.
     There is also a collection of PostgreSQL technical articles at <A
     href=
-    "http://techdocs.postgresql.org/">http://techdocs.postgresql.org/</A>.</P>
+    "http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</A>.</P>
 
     <P><I>psql</I> has some nice \d commands to show information about
     types, operators, functions, aggregates, etc.</P>
@@ -402,10 +402,10 @@
 
     <H4><A name="1.13">1.13</A>) How do I submit a bug report?</H4>
 
-    <P>Please visit the <A href=
-    "http://www.postgresql.org/bugs/bugs.php">PostgreSQL BugTool</A>
-    page, which gives guidelines and directions on how to submit a
-    bug.</P>
+    <P>Please visit the PostgreSQL BugTool page at <A href=
+    "http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</A>,
+    which gives guidelines and directions on how to submit a
+    bug report.</P>
 
     <P>Also check out our ftp site <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A> to
@@ -460,14 +460,14 @@
 
       <DT><B>Support</B></DT>
 
-      <DD>Our mailing list provides a large group of developers and
-      users to help resolve any problems encountered. While we can not
+      <DD>Our mailing lists provide contact with a large group of developers
+      and users to help resolve any problems encountered. While we cannot
       guarantee a fix, commercial <SMALL>DBMS</SMALL>s do not always
       supply a fix either. Direct access to developers, the user
       community, manuals, and the source code often make PostgreSQL
       support superior to other <SMALL>DBMS</SMALL>s. There is
       commercial per-incident support available for those who need it.
-      (See <A href="#1.6">support FAQ item</A>.)<BR>
+      (See <A href="#1.6">FAQ section 1.6</A>.)<BR>
       <BR>
       </DD>
 
@@ -484,7 +484,7 @@
     PostgreSQL?</H4>
 
     <P>PostgreSQL has had a first-class infrastructure since we started
-    six years ago. This is all thanks to Marc Fournier, who has created
+    in 1994. This is all thanks to Marc Fournier, who has created
     and managed this infrastructure over the years.</P>
 
     <P>Quality infrastructure is very important to an open-source
@@ -494,9 +494,7 @@
     <P>Of course, this infrastructure is not cheap. There are a variety
     of monthly and one-time expenses that are required to keep it
     going. If you or your company has money it can donate to help fund
-    this effort, please go to <A href=
-    "https://store.pgsql.com/shopping/index.php?id=1">
-    https://store.pgsql.com/shopping/index.php?id=1</A>
+    this effort, please go to <A href="http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</A>
     and make a donation.</P>
 
     <P>Although the web page mentions PostgreSQL, Inc, the
@@ -538,28 +536,23 @@
     <P>A nice introduction to Database-backed Web pages can be seen at:
     <A href="http://www.webreview.com">http://www.webreview.com</A></P>
 
-    <P>There is also one at <A href=
-    "http://www.phone.net/home/mwm/hotlist/">http://www.phone.net/home/mwm/hotlist/.</A></P>
-
     <P>For Web integration, PHP is an excellent interface. It is at <A
     href="http://www.php.net">http://www.php.net</A>.</P>
 
-    <P>For complex cases, many use the Perl interface and CGI.pm.</P>
+    <P>For complex cases, many use the Perl interface and CGI.pm or mod_perl.</P>
 
     <H4><A name="2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface? A report generator? An embedded query language
     interface?</H4>
 
-    <P>We have a nice graphical user interface called <I>pgaccess</I>,
-    which is shipped as part of the distribution. <I>pgaccess</I> also
-    has a report generator. The Web page is <A href=
-    "http://www.flex.ro/pgaccess">http://www.flex.ro/pgaccess</A></P>
+    <P>We have a nice graphical user interface called PgAccess, which is
+    shipped as part of the distribution. PgAccess also has a report
+    generator. The Web page is <A href="http://www.pgaccess.org/">http://www.pgaccess.org/</A>.</P>
 
     <P>We also include <I>ecpg</I>, which is an embedded SQL query
     language interface for C.</P>
 
-    <H4><A name="2.4">2.4</A>) What languages are available to
-    communicate with PostgreSQL?</H4>
+    <H4><A name="2.4">2.4</A>) What languages are able to communicate with PostgreSQL?</H4>
 
     <P>We have:</P>
 
@@ -572,7 +565,7 @@
 
       <LI>Java (jdbc)</LI>
 
-      <LI>Perl (perl5)</LI>
+      <LI>Perl (DBD::Pg)</LI>
 
       <LI>ODBC (odbc)</LI>
 
@@ -582,12 +575,10 @@
 
       <LI>C Easy API (libpgeasy)</LI>
 
-      <LI>Embedded <SMALL>HTML</SMALL> (<A href=
-      "http://www.php.net">PHP from http://www.php.net</A>)</LI>
+      <LI>PHP ('pg_' functions, Pear::DB)</LI>
     </UL>
-    <P>Additional interfaces are available at <a 
-    href="http://www.postgresql.org/interfaces.html">
-    http://www.postgresql.org/interfaces.html.</A>
+    <P>Additional interfaces are available at 
+    <a href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/interfaces.html</A>.
     </P>
     <HR>
 
@@ -774,7 +765,7 @@
     the MaxBackendId constant in
     <I>include/storage/sinvaladt.h</I>.</P>
 
-    <H4><A name="3.9">3.9</A>) What are the <I>pg_sorttempNNN.NN</I>
+    <H4><A name="3.9">3.9</A>) What are the <I>pg_tempNNN.NN</I>
     files in my database directory?</H4>
 
     <P>They are temporary files generated by the query executor. For
@@ -793,16 +784,16 @@
 
     <P>The PostgreSQL team makes only small changes between minor releases,
     so upgrading from 7.2 to 7.2.1 does not require a dump and restore.
-    However, major releases often change the internal format of system
-    tables and data files.  These changes are often complex, so we don't
-    maintain backward compatability for data files.  A dump outputs data
-    in a generic format that can then be loaded in using the new internal
-    format.
+    However, major releases (e.g. from 7.2 to 7.3) often change the internal
+    format of system tables and data files. These changes are often complex,
+    so we don't maintain backward compatability for data files. A dump outputs
+    data in a generic format that can then be loaded in using the new internal
+    format.</P>
 
-    <P>In releases where the on-disk format does not change, the
+    <p>In releases where the on-disk format does not change, the
     <i>pg_upgrade</i> script can be used to upgrade without a dump/restore.
     The release notes mention whether <i>pg_upgrade</i> is available for the
-    release.
+    release.</p>
 
     <HR>
 
@@ -821,7 +812,7 @@
     <SMALL>SELECT</SMALL> ... <SMALL>LIMIT</SMALL>....</P>
 
     <P>The entire query may have to be evaluated, even if you only want
-    the first few rows. Consider a query that has an <SMALL>ORDER
+    the first few rows. Consider using a query that has an <SMALL>ORDER
     BY.</SMALL> If there is an index that matches the <SMALL>ORDER
     BY</SMALL>, PostgreSQL may be able to evaluate only the first few
     records requested, or the entire query may have to be evaluated
@@ -840,8 +831,8 @@
     <H4><A name="4.4">4.4</A>) How do you remove a column from a
     table?</H4>
 
-    <P>We do not support <SMALL>ALTER TABLE DROP COLUMN,</SMALL> but do
-    this:</P>
+    <P>Prior to version 7.3, <SMALL>ALTER TABLE DROP COLUMN</SMALL> is not supported.
+    You can do this instead:</P>
 <PRE>
     BEGIN;
     LOCK TABLE old_table;
@@ -892,7 +883,7 @@
     be estimated as 6.4 MB:</P>
 <PRE>
     36 bytes: each row header (approximate)
-    24 bytes: one int field and one text filed
+    24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
     64 bytes per row
@@ -957,7 +948,7 @@
     SELECT col
     FROM tab
     ORDER BY col [ DESC ]
-    LIMIT 1
+    LIMIT 1;
 </PRE>
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
@@ -972,10 +963,10 @@
     </UL>
     <LI>The search string can not start with a character class,
     e.g. [a-e].</LI>
-    <LI>Case-insensitive searches like <SMALL>ILIKE</SMALL> and
-    <I>~*</I> can not be used.  Instead, use functional
-    indexes, which are described later in this FAQ.</LI>
-    <LI>The default <I>C</I> local must be used during
+    <LI>Case-insensitive searches such as <SMALL>ILIKE</SMALL> and
+    <I>~*</I> do not utilise indexes. Instead, use functional
+    indexes, which are described in section <a href="#4.12">4.12</a>.</LI>
+    <LI>The default <I>C</I> locale must be used during
     <i>initdb.</i></LI>
     </UL>
     <P>
@@ -1032,13 +1023,13 @@
 <PRE>
     SELECT *
     FROM tab
-    WHERE lower(col) = 'abc'
+    WHERE LOWER(col) = 'abc';
 </PRE>
 
     This will not use an standard index. However, if you create a
     functional index, it will be used: 
 <PRE>
-    CREATE INDEX tabindex on tab (lower(col));
+    CREATE INDEX tabindex ON tab (LOWER(col));
 </PRE>
 
     <H4><A name="4.13">4.13</A>) In a query, how do I detect if a field
@@ -1053,8 +1044,8 @@
 Type            Internal Name   Notes
 --------------------------------------------------
 "char"          char            1 character
-CHAR(#)         bpchar          blank padded to the specified fixed length
-VARCHAR(#)      varchar         size specifies maximum length, no padding
+CHAR(n)         bpchar          blank padded to the specified fixed length
+VARCHAR(n)      varchar         size specifies maximum length, no padding
 TEXT            text            no specific upper limit on length
 BYTEA           bytea           variable-length byte array (null-byte safe)
 </PRE>
@@ -1069,8 +1060,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     stored out-of-line by <SMALL>TOAST</SMALL>, so the space on disk
     might also be less than expected.</P>
 
-    <P><SMALL>CHAR()</SMALL> is best when storing strings that are
-    usually the same length. <SMALL>VARCHAR()</SMALL> is best when
+    <P><SMALL>CHAR(n)</SMALL> is best when storing strings that are
+    usually the same length. <SMALL>VARCHAR(n)</SMALL> is best when
     storing variable-length strings but it limits how long a string can
     be. <SMALL>TEXT</SMALL> is for strings of unlimited length, maximum
     1 gigabyte. <SMALL>BYTEA</SMALL> is for storing binary data,
@@ -1111,11 +1102,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <P>One approach is to retrieve the next <SMALL>SERIAL</SMALL> value
     from the sequence object with the <I>nextval()</I> function
     <I>before</I> inserting and then insert it explicitly. Using the
-    example table in <A href="#4.15.1">4.15.1</A>, that might look like
-    this in Perl:</P>
+    example table in <A href="#4.15.1">4.15.1</A>, an example in a
+    pseudo-language would look like this:</P>
 <PRE>
-    new_id = output of "SELECT nextval('person_id_seq')"
-    INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
+    new_id = execute("SELECT nextval('person_id_seq')");
+    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
 </PRE>
 
     You would then also have the new value stored in
@@ -1124,14 +1115,14 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     automatically created <SMALL>SEQUENCE</SMALL> object will be named
     &lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I>, where
     <I>table</I> and <I>serialcolumn</I> are the names of your table
-    and your <SMALL>SERIAL</SMALL> column, respectively. 
+    and your <SMALL>SERIAL</SMALL> column, respectively.
 
     <P>Alternatively, you could retrieve the assigned
     <SMALL>SERIAL</SMALL> value with the <I>currval</I>() function
     <I>after</I> it was inserted by default, e.g.,</P>
 <PRE>
-    INSERT INTO person (name) VALUES ('Blaise Pascal');
-    new_id = output of "SELECT currval('person_id_seq')";
+    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+    new_id = execute("SELECT currval('person_id_seq')");
 </PRE>
 
     Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
@@ -1139,12 +1130,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     default value, though this is probably the least portable approach.
     In Perl, using DBI with Edmund Mergl's DBD::Pg module, the oid
     value is made available via <I>$sth-&gt;{pg_oid_status}</I> after
-    <I>$sth-&gt;execute()</I>. 
+    <I>$sth-&gt;execute()</I>.
 
     <H4><A name="4.15.3">4.15.3</A>) Don't <I>currval()</I> and
     <I>nextval()</I> lead to a race condition with other users?</H4>
 
-    <P>No. Currval() returns the current value assigned by your
+    <P>No. <i>currval</i>() returns the current value assigned by your
     backend, not by all users.</P>
 
     <H4><A name="4.15.4">4.15.4</A>) Why aren't my sequence numbers
@@ -1163,7 +1154,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     Every row that is created in PostgreSQL gets a unique
     <SMALL>OID</SMALL>. All <SMALL>OID</SMALL>s generated during
     <I>initdb</I> are less than 16384 (from
-    <I>backend/access/transam.h</I>). All user-created
+    <I>include/access/transam.h</I>). All user-created
     <SMALL>OID</SMALL>s are equal to or greater than this. By default,
     all these <SMALL>OID</SMALL>s are unique not only within a table or
     database, but unique within the entire PostgreSQL installation.</P>
@@ -1186,12 +1177,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
         COPY new TO '/tmp/pgtable';
         DELETE FROM new;
         COPY new WITH OIDS FROM '/tmp/pgtable';
+</PRE>
 <!--
     CREATE TABLE new_table (mycol int);
     INSERT INTO new_table (oid, mycol) SELECT oid, mycol FROM old_table;
 -->
-</PRE>
-
     <P>O<SMALL>ID</SMALL>s are stored as 4-byte integers, and will
     overflow at 4 billion. No one has reported this ever happening, and
     we plan to have the limit removed before anyone does.</P>
@@ -1228,7 +1218,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     </UL>
 
     <P>A list of general database terms can be found at: <A href=
-    "http://www.comptechnews.com/~reaster/dbdesign.html">http://www.comptechnews.com/~reaster/dbdesign.html</A></P>
+    "http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</A></P>
 
     <H4><A name="4.18">4.18</A>) Why do I get the error <I>"ERROR:
     Memory exhausted in AllocSetAlloc()"</I>?</H4>
@@ -1247,12 +1237,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     and all subprocesses created after the command is run. If you are
     having a problem with the <SMALL>SQL</SMALL> client because the
     backend is returning too much data, try it before starting the
-    client. 
+    client.
 
     <H4><A name="4.19">4.19</A>) How do I tell what PostgreSQL version
     I am running?</H4>
 
-    <P>From <I>psql</I>, type <CODE>select version();</CODE></P>
+    <P>From <I>psql</I>, type <CODE>SELECT version();</CODE></P>
 
     <H4><A name="4.20">4.20</A>) Why does my large-object operations
     get <I>"invalid large obj descriptor"</I>?</H4>
@@ -1288,22 +1278,18 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     returns many rows, <CODE><SMALL>IN</SMALL></CODE> is fastest.  To
     speed up other queries, replace <CODE>IN</CODE> with
     <CODE>EXISTS</CODE>:</P>
-<PRE>
-<CODE>SELECT *
+<PRE>    SELECT *
     FROM tab
-    WHERE col IN (SELECT subcol FROM subtab)
-</CODE>
+    WHERE col IN (SELECT subcol FROM subtab);
 </PRE>
-    to: 
-<PRE>
-<CODE>SELECT *
+    to:
+<PRE>    SELECT *
     FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col)
-</CODE>
+    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 </PRE>
 
     For this to be fast, <CODE>subcol</CODE> should be an indexed column.
-    We hope to fix this limitation in a future release. 
+    We hope to fix this limitation in a future release.
 
     <H4><A name="4.23">4.23</A>) How do I perform an outer join?</H4>
 
@@ -1362,8 +1348,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <P>You can return result sets from PL/pgSQL functions using
     <I>refcursors</I>. See <A href=
-    "http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html">
-    http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,</A>
+    "http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html">
+    http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</A>,
     section 23.7.3.3.</P>
 
     <H4><A name="4.26">4.26</A>) Why can't I reliably create/drop
@@ -1381,13 +1367,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <P>There are several master/slave replication options available.
     These allow only the master to make database changes and the slave
     can only do database reads. The bottom of <a
-    href="http://gborg.postgresql.org/genpage?replication_research">
-    http://gborg.postgresql.org/genpage?replication_research</a> lists
+    href="http://gborg.PostgreSQL.org/genpage?replication_research">
+    http://gborg.PostgreSQL.org/genpage?replication_research</a> lists
     them. A multi-master replication solution is being worked on at <a
-    href="http://gborg.postgresql.org/project/pgreplication/projdisplay.
-    php">http://gborg.postgresql.org/project/pgreplication/projdisplay.php</a>.</P>
+    href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>.</P>
 
-    <H4><A name="4.27">4.27</A>) What encryption options are available?
+    <H4><A name="4.28">4.28</A>) What encryption options are available?
     </H4>
     <UL>
     <LI><I>/contrib/pgcrypto</I> contains many encryption functions for
@@ -1395,8 +1380,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <LI>The only way to encrypt transmission from the client to the
     server is by using <I>hostssl</I> in <I>pg_hba.conf</I>.</LI>
     <LI>Database user passwords are automatically encrypted when stored
-    in version 7.3. In previous versions, you must enable
-    <I>password_encryption</I> in <I>postgresql.conf</I>.</LI>
+    in version 7.3. In previous versions, you must enable the option
+    <i>PASSWORD_ENCRYPTION</i> in <i>postgresql.conf</i>.</LI>
     <LI>The server can run using an encrypted file system.</LI>
     </UL>
 

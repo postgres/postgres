@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 11 13:54:56 EDT 2002
+   Last updated: Sun Oct 13 22:49:56 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -112,7 +112,7 @@
    
                              General Questions
                                       
-    1.1) What is PostgreSQL?
+    1.1) What is PostgreSQL? How is it pronounced?
     
    PostgreSQL is pronounced Post-Gres-Q-L.
    
@@ -122,11 +122,11 @@
    replaces the PostQuel query language with an extended subset of SQL.
    PostgreSQL is free and the complete source is available.
    
-   PostgreSQL development is performed by a team of Internet developers
-   who all subscribe to the PostgreSQL development mailing list. The
-   current coordinator is Marc G. Fournier (scrappy@PostgreSQL.org). (See
-   below on how to join). This team is now responsible for all
-   development of PostgreSQL.
+   PostgreSQL development is performed by a team of developers who all
+   subscribe to the PostgreSQL development mailing list. The current
+   coordinator is Marc G. Fournier (scrappy@PostgreSQL.org). (See section
+   1.6 on how to join). This team is now responsible for all development
+   of PostgreSQL.
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
    others have contributed to the porting, testing, debugging, and
@@ -183,18 +183,22 @@
    Client
    
    It is possible to compile the libpq C library, psql, and other
-   interfaces and binaries to run on MS Windows platforms. In this case,
-   the client is running on MS Windows, and communicates via TCP/IP to a
-   server running on one of our supported Unix platforms. A file
-   win31.mak is included in the distribution for making a Win32 libpq
-   library and psql. PostgreSQL also communicates with ODBC clients.
+   interfaces and client applications to run on MS Windows platforms. In
+   this case, the client is running on MS Windows, and communicates via
+   TCP/IP to a server running on one of our supported Unix platforms. A
+   file win32.mak is included in the distribution for making a Win32
+   libpq library and psql. PostgreSQL also communicates with ODBC
+   clients.
    
    Server
    
    The database server can run on Windows NT and Win2k using Cygwin, the
    Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
-   distribution or the MS Windows FAQ on our web site. We have no plan to
-   do a native port to any Microsoft platform.
+   distribution or the MS Windows FAQ at
+   http://www.PostgreSQL.org/docs/faq-mswin.html.
+   
+   A native port to some Microsoft platforms is currently being worked
+   upon.
    
     1.5) Where can I get PostgreSQL?
     
@@ -240,7 +244,7 @@
    Unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    A list of commercial support companies is available at
-   http://www.postgresql.org/users-lounge/commercial-support.html.
+   http://www.PostgreSQL.org/users-lounge/commercial-support.html.
    
     1.7) What is the latest release?
     
@@ -258,9 +262,9 @@
    There are two PostgreSQL books available online at
    http://www.PostgreSQL.org/docs/awbook.html and
    http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
-   books available for purchase at http://www.postgresql.org/books/.
+   books available for purchase at http://www.ca.PostgreSQL.org/books/.
    There is also a collection of PostgreSQL technical articles at
-   http://techdocs.postgresql.org/.
+   http://techdocs.PostgreSQL.org/.
    
    psql has some nice \d commands to show information about types,
    operators, functions, aggregates, etc.
@@ -307,8 +311,9 @@
    
     1.13) How do I submit a bug report?
     
-   Please visit the PostgreSQL BugTool page, which gives guidelines and
-   directions on how to submit a bug.
+   Please visit the PostgreSQL BugTool page at
+   http://www.PostgreSQL.org/bugs/bugs.php, which gives guidelines and
+   directions on how to submit a bug report.
    
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
    there is a more recent PostgreSQL version or patches.
@@ -346,14 +351,14 @@
           compare favorably to other database software in this area.
           
    Support
-          Our mailing list provides a large group of developers and users
-          to help resolve any problems encountered. While we can not
-          guarantee a fix, commercial DBMSs do not always supply a fix
-          either. Direct access to developers, the user community,
-          manuals, and the source code often make PostgreSQL support
-          superior to other DBMSs. There is commercial per-incident
-          support available for those who need it. (See support FAQ
-          item.)
+          Our mailing lists provide contact with a large group of
+          developers and users to help resolve any problems encountered.
+          While we cannot guarantee a fix, commercial DBMSs do not always
+          supply a fix either. Direct access to developers, the user
+          community, manuals, and the source code often make PostgreSQL
+          support superior to other DBMSs. There is commercial
+          per-incident support available for those who need it. (See FAQ
+          section 1.6.)
           
    Price
           We are free for all use, both commercial and non-commercial.
@@ -362,9 +367,9 @@
           
     1.15) How can I financially assist PostgreSQL?
     
-   PostgreSQL has had a first-class infrastructure since we started six
-   years ago. This is all thanks to Marc Fournier, who has created and
-   managed this infrastructure over the years.
+   PostgreSQL has had a first-class infrastructure since we started in
+   1994. This is all thanks to Marc Fournier, who has created and managed
+   this infrastructure over the years.
    
    Quality infrastructure is very important to an open-source project. It
    prevents disruptions that can greatly delay forward movement of the
@@ -373,8 +378,7 @@
    Of course, this infrastructure is not cheap. There are a variety of
    monthly and one-time expenses that are required to keep it going. If
    you or your company has money it can donate to help fund this effort,
-   please go to https://store.pgsql.com/shopping/index.php?id=1 and make
-   a donation.
+   please go to http://store.pgsql.com/shopping/ and make a donation.
    
    Although the web page mentions PostgreSQL, Inc, the "contributions"
    item is solely to support the PostgreSQL project and does not fund any
@@ -407,39 +411,37 @@
    A nice introduction to Database-backed Web pages can be seen at:
    http://www.webreview.com
    
-   There is also one at http://www.phone.net/home/mwm/hotlist/.
-   
    For Web integration, PHP is an excellent interface. It is at
    http://www.php.net.
    
-   For complex cases, many use the Perl interface and CGI.pm.
+   For complex cases, many use the Perl interface and CGI.pm or mod_perl.
    
     2.3) Does PostgreSQL have a graphical user interface? A report generator?
     An embedded query language interface?
     
-   We have a nice graphical user interface called pgaccess, which is
-   shipped as part of the distribution. pgaccess also has a report
-   generator. The Web page is http://www.flex.ro/pgaccess
+   We have a nice graphical user interface called PgAccess, which is
+   shipped as part of the distribution. PgAccess also has a report
+   generator. The Web page is http://www.pgaccess.org/.
    
    We also include ecpg, which is an embedded SQL query language
    interface for C.
    
-    2.4) What languages are available to communicate with PostgreSQL?
+    2.4) What languages are able to communicate with PostgreSQL?
     
    We have:
      * C (libpq)
      * C++ (libpq++)
      * Embedded C (ecpg)
      * Java (jdbc)
-     * Perl (perl5)
+     * Perl (DBD::Pg)
      * ODBC (odbc)
      * Python (PyGreSQL)
      * TCL (libpgtcl)
      * C Easy API (libpgeasy)
-     * Embedded HTML (PHP from http://www.php.net)
+     * PHP ('pg_' functions, Pear::DB)
        
    Additional interfaces are available at
-   http://www.postgresql.org/interfaces.html.
+   http://www.PostgreSQL.org/interfaces.html.
      _________________________________________________________________
    
                           Administrative Questions
@@ -594,7 +596,7 @@
    was 64, and changing it required a rebuild after altering the
    MaxBackendId constant in include/storage/sinvaladt.h.
    
-    3.9) What are the pg_sorttempNNN.NN files in my database directory?
+    3.9) What are the pg_tempNNN.NN files in my database directory?
     
    They are temporary files generated by the query executor. For example,
    if a sort needs to be done to satisfy an ORDER BY, and the sort
@@ -610,11 +612,11 @@
     
    The PostgreSQL team makes only small changes between minor releases,
    so upgrading from 7.2 to 7.2.1 does not require a dump and restore.
-   However, major releases often change the internal format of system
-   tables and data files. These changes are often complex, so we don't
-   maintain backward compatability for data files. A dump outputs data in
-   a generic format that can then be loaded in using the new internal
-   format.
+   However, major releases (e.g. from 7.2 to 7.3) often change the
+   internal format of system tables and data files. These changes are
+   often complex, so we don't maintain backward compatability for data
+   files. A dump outputs data in a generic format that can then be loaded
+   in using the new internal format.
    
    In releases where the on-disk format does not change, the pg_upgrade
    script can be used to upgrade without a dump/restore. The release
@@ -632,10 +634,10 @@
    See the FETCH manual page, or use SELECT ... LIMIT....
    
    The entire query may have to be evaluated, even if you only want the
-   first few rows. Consider a query that has an ORDER BY. If there is an
-   index that matches the ORDER BY, PostgreSQL may be able to evaluate
-   only the first few records requested, or the entire query may have to
-   be evaluated until the desired rows have been generated.
+   first few rows. Consider using a query that has an ORDER BY. If there
+   is an index that matches the ORDER BY, PostgreSQL may be able to
+   evaluate only the first few records requested, or the entire query may
+   have to be evaluated until the desired rows have been generated.
    
     4.3) How do I get a list of tables or other things I can see in psql?
     
@@ -647,7 +649,8 @@
    
     4.4) How do you remove a column from a table?
     
-   We do not support ALTER TABLE DROP COLUMN, but do this:
+   Prior to version 7.3, ALTER TABLE DROP COLUMN is not supported. You
+   can do this instead:
     BEGIN;
     LOCK TABLE old_table;
     SELECT ...  -- select all columns but the one you want to remove
@@ -691,7 +694,7 @@
    PostgreSQL database file containing this data can be estimated as 6.4
    MB:
     36 bytes: each row header (approximate)
-    24 bytes: one int field and one text filed
+    24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
     64 bytes per row
@@ -750,7 +753,7 @@
     SELECT col
     FROM tab
     ORDER BY col [ DESC ]
-    LIMIT 1
+    LIMIT 1;
 
    When using wild-card operators such as LIKE or ~, indexes can only be
    used in certain circumstances:
@@ -762,11 +765,11 @@
        
      The search string can not start with a character class, e.g. [a-e].
    
-     Case-insensitive searches like ILIKE and ~* can not be used.
-   Instead, use functional indexes, which are described later in this
-   FAQ.
+     Case-insensitive searches such as ILIKE and ~* do not utilise
+   indexes. Instead, use functional indexes, which are described in
+   section 4.12.
    
-     The default C local must be used during initdb.
+     The default C locale must be used during initdb.
    
     4.9) How do I see how the query optimizer is evaluating my query?
     
@@ -812,11 +815,11 @@
    Case-insensitive equality comparisons are normally expressed as:
     SELECT *
     FROM tab
-    WHERE lower(col) = 'abc'
+    WHERE LOWER(col) = 'abc';
 
    This will not use an standard index. However, if you create a
    functional index, it will be used:
-    CREATE INDEX tabindex on tab (lower(col));
+    CREATE INDEX tabindex ON tab (LOWER(col));
 
     4.13) In a query, how do I detect if a field is NULL?
     
@@ -827,8 +830,8 @@
 Type            Internal Name   Notes
 --------------------------------------------------
 "char"          char            1 character
-CHAR(#)         bpchar          blank padded to the specified fixed length
-VARCHAR(#)      varchar         size specifies maximum length, no padding
+CHAR(n)         bpchar          blank padded to the specified fixed length
+VARCHAR(n)      varchar         size specifies maximum length, no padding
 TEXT            text            no specific upper limit on length
 BYTEA           bytea           variable-length byte array (null-byte safe)
 
@@ -841,8 +844,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    data types are also subject to compression or being stored out-of-line
    by TOAST, so the space on disk might also be less than expected.
    
-   CHAR() is best when storing strings that are usually the same length.
-   VARCHAR() is best when storing variable-length strings but it limits
+   CHAR(n) is best when storing strings that are usually the same length.
+   VARCHAR(n) is best when storing variable-length strings but it limits
    how long a string can be. TEXT is for strings of unlimited length,
    maximum 1 gigabyte. BYTEA is for storing binary data, particularly
    values that include NULL bytes.
@@ -873,10 +876,10 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     
    One approach is to retrieve the next SERIAL value from the sequence
    object with the nextval() function before inserting and then insert it
-   explicitly. Using the example table in 4.15.1, that might look like
-   this in Perl:
-    new_id = output of "SELECT nextval('person_id_seq')"
-    INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
+   explicitly. Using the example table in 4.15.1, an example in a
+   pseudo-language would look like this:
+    new_id = execute("SELECT nextval('person_id_seq')");
+    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
 
    You would then also have the new value stored in new_id for use in
    other queries (e.g., as a foreign key to the person table). Note that
@@ -886,8 +889,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    
    Alternatively, you could retrieve the assigned SERIAL value with the
    currval() function after it was inserted by default, e.g.,
-    INSERT INTO person (name) VALUES ('Blaise Pascal');
-    new_id = output of "SELECT currval('person_id_seq')";
+    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+    new_id = execute("SELECT currval('person_id_seq')");
 
    Finally, you could use the OID returned from the INSERT statement to
    look up the default value, though this is probably the least portable
@@ -898,7 +901,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     4.15.3) Don't currval() and nextval() lead to a race condition with other
     users?
     
-   No. Currval() returns the current value assigned by your backend, not
+   No. currval() returns the current value assigned by your backend, not
    by all users.
    
     4.15.4) Why aren't my sequence numbers reused on transaction abort? Why are
@@ -912,7 +915,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     
    OIDs are PostgreSQL's answer to unique row ids. Every row that is
    created in PostgreSQL gets a unique OID. All OIDs generated during
-   initdb are less than 16384 (from backend/access/transam.h). All
+   initdb are less than 16384 (from include/access/transam.h). All
    user-created OIDs are equal to or greater than this. By default, all
    these OIDs are unique not only within a table or database, but unique
    within the entire PostgreSQL installation.
@@ -956,7 +959,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
      * range variable, table name, table alias
        
    A list of general database terms can be found at:
-   http://www.comptechnews.com/~reaster/dbdesign.html
+   http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
+   /glossary.html
    
     4.18) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
     
@@ -975,7 +979,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    
     4.19) How do I tell what PostgreSQL version I am running?
     
-   From psql, type select version();
+   From psql, type SELECT version();
    
     4.20) Why does my large-object operations get "invalid large obj
     descriptor"?
@@ -1004,14 +1008,14 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    If the subquery returns only a few rows and the outer query returns
    many rows, IN is fastest. To speed up other queries, replace IN with
    EXISTS:
-SELECT *
+    SELECT *
     FROM tab
-    WHERE col IN (SELECT subcol FROM subtab)
+    WHERE col IN (SELECT subcol FROM subtab);
 
    to:
-SELECT *
+    SELECT *
     FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col)
+    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 
    For this to be fast, subcol should be an indexed column. We hope to
    fix this limitation in a future release.
@@ -1059,8 +1063,7 @@ SELECT *
     4.25) How do I return multiple rows or columns from a function?
     
    You can return result sets from PL/pgSQL functions using refcursors.
-   See
-   http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,
+   See http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html,
    section 23.7.3.3.
    
     4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
@@ -1079,19 +1082,19 @@ SELECT *
    There are several master/slave replication options available. These
    allow only the master to make database changes and the slave can only
    do database reads. The bottom of
-   http://gborg.postgresql.org/genpage?replication_research lists them. A
+   http://gborg.PostgreSQL.org/genpage?replication_research lists them. A
    multi-master replication solution is being worked on at
-   http://gborg.postgresql.org/project/pgreplication/projdisplay.php.
+   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
    
-    4.27) What encryption options are available?
+    4.28) What encryption options are available?
     
      * /contrib/pgcrypto contains many encryption functions for use in
        SQL queries.
      * The only way to encrypt transmission from the client to the server
        is by using hostssl in pg_hba.conf.
      * Database user passwords are automatically encrypted when stored in
-       version 7.3. In previous versions, you must enable
-       password_encryption in postgresql.conf.
+       version 7.3. In previous versions, you must enable the option
+       PASSWORD_ENCRYPTION in postgresql.conf.
      * The server can run using an encrypted file system.
      _________________________________________________________________
    
