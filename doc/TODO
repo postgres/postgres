@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 24 18:55:23 EST 2001
+Last updated:		Wed Jan 24 22:50:01 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -170,7 +170,7 @@ COMMANDS
 * -Allow ORDER BY...LIMIT in INSERT INTO ... SELECT (Tom)
 * -Allow ESCAPE '\' at the end of LIKE for ANSI compliance (Thomas)
 * -Rewrite the LIKE handling by rewriting the user string with the 
-  supplied ESCAPE [like]
+  supplied ESCAPE
 * Allow RULE recompilation
 * -Support UNION/INTERSECT/EXCEPT in sub-selects
 * -Allow DELETE and UPDATE to use inheritance
