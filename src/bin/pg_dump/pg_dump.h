@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.83 2002/04/24 02:44:19 momjian Exp $
+ * $Id: pg_dump.h,v 1.84 2002/04/24 22:39:49 petere Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -148,8 +148,9 @@ typedef struct _indInfo
 	char	   *indrelname;		/* name of the indexed table */
 	char	   *indexdef;		/* index definitional command */
 	char	   *indisprimary;	/* is this a PK index? */
-	char	   *indkey[INDEX_MAX_KEYS]; /* attribute numbers of the key
-										 * attributes */
+	int			indnkeys;		/* number of keys in index */
+	char	  **indkey;			/* attribute numbers of the key
+								 * attributes */
 } IndInfo;
 
 typedef struct _aggInfo

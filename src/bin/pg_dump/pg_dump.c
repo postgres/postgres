@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.254 2002/04/24 02:44:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.255 2002/04/24 22:39:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1802,10 +1802,12 @@ clearIndInfo(IndInfo *ind, int numIndexes)
 			free(ind[i].indexdef);
 		if (ind[i].indisprimary)
 			free(ind[i].indisprimary);
-		for (a = 0; a < INDEX_MAX_KEYS; ++a)
+		if (ind[i].indkey)
 		{
-			if (ind[i].indkey[a])
-				free(ind[i].indkey[a]);
+			for (a = 0; a < ind[i].indnkeys; ++a)
+				if (ind[i].indkey[a])
+					free(ind[i].indkey[a]);
+			free(ind[i].indkey);
 		}
 	}
 	free(ind);
@@ -3020,6 +3022,7 @@ getIndexes(int *numIndexes)
 	int			i_indrelname;
 	int			i_indexdef;
 	int			i_indisprimary;
+	int			i_indnkeys;
 	int			i_indkey;
 
 	/*
@@ -3033,11 +3036,14 @@ getIndexes(int *numIndexes)
 	appendPQExpBuffer(query,
 					  "SELECT i.indexrelid as indexreloid, "
 					  "i.indrelid as indreloid, "
-				 "t1.relname as indexrelname, t2.relname as indrelname, "
+					  "t1.relname as indexrelname, t2.relname as indrelname, "
 					  "pg_get_indexdef(i.indexrelid) as indexdef, "
-					  "i.indisprimary, i.indkey "
-					  "from pg_index i, pg_class t1, pg_class t2 "
-				   "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
+					  "i.indisprimary, i.indkey, "
+					  "CASE WHEN regproctooid(i.indproc) <> 0 "
+					  "  THEN (SELECT pronargs FROM pg_proc WHERE pg_proc.oid = regproctooid(i.indproc)) "
+					  "  ELSE t1.relnatts END as indnkeys "
+					  "FROM pg_index i, pg_class t1, pg_class t2 "
+					  "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 					  "and i.indexrelid > '%u'::oid "
 					  "and t2.relname !~ '^pg_' ",
 					  g_last_builtin_oid);
@@ -3067,6 +3073,7 @@ getIndexes(int *numIndexes)
 	i_indrelname = PQfnumber(res, "indrelname");
 	i_indexdef = PQfnumber(res, "indexdef");
 	i_indisprimary = PQfnumber(res, "indisprimary");
+	i_indnkeys = PQfnumber(res, "indnkeys");
 	i_indkey = PQfnumber(res, "indkey");
 
 	for (i = 0; i < ntups; i++)
@@ -3077,9 +3084,11 @@ getIndexes(int *numIndexes)
 		indinfo[i].indrelname = strdup(PQgetvalue(res, i, i_indrelname));
 		indinfo[i].indexdef = strdup(PQgetvalue(res, i, i_indexdef));
 		indinfo[i].indisprimary = strdup(PQgetvalue(res, i, i_indisprimary));
+		indinfo[i].indnkeys = atoi(PQgetvalue(res, i, i_indnkeys));
+		indinfo[i].indkey = malloc(indinfo[i].indnkeys * sizeof(indinfo[i].indkey[0]));
 		parseNumericArray(PQgetvalue(res, i, i_indkey),
 						  indinfo[i].indkey,
-						  INDEX_MAX_KEYS);
+						  indinfo[i].indnkeys);
 	}
 	PQclear(res);
 
@@ -3577,7 +3586,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	PQExpBuffer delqry = createPQExpBuffer();
 	PQExpBuffer fnlist = createPQExpBuffer();
 	PQExpBuffer asPart = createPQExpBuffer();
-	char		func_lang[NAMEDATALEN + 1];
+	char	   *func_lang = NULL;
 	PGresult   *res;
 	int			nlangs;
 	int			j;
@@ -3638,7 +3647,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 		}
 	}
 
-	strcpy(func_lang, PQgetvalue(res, 0, i_lanname));
+	func_lang = strdup(PQgetvalue(res, 0, i_lanname));
 
 	PQclear(res);
 
@@ -3749,6 +3758,7 @@ done:
 	destroyPQExpBuffer(delqry);
 	destroyPQExpBuffer(fnlist);
 	destroyPQExpBuffer(asPart);
+	free(func_lang);
 }
 
 /*
@@ -4515,7 +4525,7 @@ getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
 	appendPQExpBuffer(pkBuf, "Constraint %s Primary Key (",
 					  tblInfo->primary_key_name);
 
-	for (k = 0; k < INDEX_MAX_KEYS; k++)
+	for (k = 0; k < indInfo->indnkeys; k++)
 	{
 		int			indkey;
 		const char *attname;
