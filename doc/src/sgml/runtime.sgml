@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.61 2001/05/03 17:28:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.62 2001/05/04 02:54:33 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1636,6 +1636,7 @@ options "SYSPTSIZE=16"
         </para>
        </formalpara>
 
+        <para>
         Set the values you want in your kernel config file, e.g.:
 <programlisting>
 options "SEMMNI=40"
