@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.59 1999/10/31 19:50:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.60 1999/11/02 00:05:29 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -145,10 +145,10 @@ endif
 #
 USE_TCL= @USE_TCL@
 USE_TK= @USE_TK@
-WISH= @wish@
+WISH= @WISH@
 
 USE_PERL= @USE_PERL@
-PERL=perl
+PERL= perl
 
 #
 # enable native odbc driver support
