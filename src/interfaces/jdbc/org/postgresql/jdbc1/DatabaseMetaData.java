@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.45 2002/06/06 14:47:52 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.46 2002/06/11 02:55:16 barry Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -1731,7 +1731,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			String relKind;
 			switch (r.getBytes(3)[0])
 			{
-				case (byte) 'r':
+				case (byte) 'r':                                        
 					if ( r.getString(1).startsWith("pg_") )
                                         {
                                                 relKind = "SYSTEM TABLE";
@@ -2108,7 +2108,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		{
 			byte[][] tuple = new byte[8][0];
 			tuple[0] = tuple[1] = "".getBytes();
-			DriverManager.println("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
 
 			// For now, don't add to the result as relacl needs to be processed.
 			//v.addElement(tuple);

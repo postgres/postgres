@@ -1,5 +1,6 @@
 package org.postgresql.util;
 
+import org.postgresql.Driver;
 import java.io.*;
 import java.lang.*;
 import java.lang.reflect.*;
@@ -128,14 +129,14 @@ public class Serialize
 		try
 		{
 			conn = c;
-			DriverManager.println("Serialize: initializing instance for type: " + type);
+			if (Driver.logDebug) Driver.debug("Serialize: initializing instance for type: " + type);
 			tableName = toPostgreSQL(type);
 			className = type;
 			ourClass = Class.forName(className);
 		}
 		catch (ClassNotFoundException cnfe)
 		{
-			DriverManager.println("Serialize: " + className + " java class not found");
+			if (Driver.logDebug) Driver.debug("Serialize: " + className + " java class not found");
 			throw new PSQLException("postgresql.serial.noclass", type);
 		}
 
@@ -147,14 +148,14 @@ public class Serialize
 			if (rs.next())
 			{
 				status = true;
-				DriverManager.println("Serialize: " + tableName + " table found");
+				if (Driver.logDebug) Driver.debug("Serialize: " + tableName + " table found");
 			}
 			rs.close();
 		}
 		// This should never occur, as org.postgresql has it's own internal checks
 		if (!status)
 		{
-			DriverManager.println("Serialize: " + tableName + " table not found");
+			if (Driver.logDebug) Driver.debug("Serialize: " + tableName + " table not found");
 			throw new PSQLException("postgresql.serial.table", type);
 		}
 		// Finally cache the fields within the table
@@ -186,9 +187,9 @@ public class Serialize
 	{
 		try
 		{
-			DriverManager.println("Serialize.fetch: " + "attempting to instantiate object of type: " + ourClass.getName() );
+			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + "attempting to instantiate object of type: " + ourClass.getName() );
 			Object obj = ourClass.newInstance();
-			DriverManager.println("Serialize.fetch: " + "instantiated object of type: " + ourClass.getName() );
+			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + "instantiated object of type: " + ourClass.getName() );
 
 			// NB: we use java.lang.reflect here to prevent confusion with
 			// the org.postgresql.Field
@@ -219,7 +220,7 @@ public class Serialize
 			sb.append(" where oid=");
 			sb.append(oid);
 
-			DriverManager.println("Serialize.fetch: " + sb.toString());
+			if (Driver.logDebug) Driver.debug("Serialize.fetch: " + sb.toString());
 			ResultSet rs = conn.ExecSQL(sb.toString());
 
 			if (rs != null)
@@ -388,7 +389,7 @@ public class Serialize
 				sb.append(')');
 			}
 
-			DriverManager.println("Serialize.store: " + sb.toString() );
+			if (Driver.logDebug) Driver.debug("Serialize.store: " + sb.toString() );
 			org.postgresql.ResultSet rs = (org.postgresql.ResultSet) conn.ExecSQL(sb.toString());
 
 			// fetch the OID for returning
@@ -495,13 +496,13 @@ public class Serialize
 		ResultSet rs = con.ExecSQL("select relname from pg_class where relname = '" + tableName + "'");
 		if ( rs.next() )
 		{
-			DriverManager.println("Serialize.create: table " + tableName + " exists, skipping");
+			if (Driver.logDebug) Driver.debug("Serialize.create: table " + tableName + " exists, skipping");
 			rs.close();
 			return;
 		}
 
 		// else table not found, so create it
-		DriverManager.println("Serialize.create: table " + tableName + " not found, creating" );
+		if (Driver.logDebug) Driver.debug("Serialize.create: table " + tableName + " not found, creating" );
 		// No entries returned, so the table doesn't exist
 
 		StringBuffer sb = new StringBuffer("create table ");
@@ -547,7 +548,7 @@ public class Serialize
 		sb.append(")");
 
 		// Now create the table
-		DriverManager.println("Serialize.create: " + sb );
+		if (Driver.logDebug) Driver.debug("Serialize.create: " + sb );
 		con.ExecSQL(sb.toString());
 	}
 

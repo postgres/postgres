@@ -1,5 +1,6 @@
 package org.postgresql.largeobject;
 
+import org.postgresql.Driver;
 import java.io.*;
 import java.lang.*;
 import java.net.*;
@@ -117,7 +118,7 @@ public class LargeObjectManager
 
 		fp.addFunctions(res);
 		res.close();
-		DriverManager.println("Large Object initialised");
+		if (Driver.logDebug) Driver.debug("Large Object initialised");
 	}
 
 	/*

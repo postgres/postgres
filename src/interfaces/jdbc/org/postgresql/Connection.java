@@ -12,7 +12,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.47 2002/05/17 01:19:19 tgl Exp $
+ * $Id: Connection.java,v 1.48 2002/06/11 02:55:15 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -161,6 +161,27 @@ public abstract class Connection
                         compatible = info.getProperty("compatible");
                 }
 
+                //Read loglevel arg and set the loglevel based on this value
+                //in addition to setting the log level enable output to 
+                //standard out if no other printwriter is set
+                String l_logLevelProp = info.getProperty("loglevel","0");
+                int l_logLevel = 0;
+                try {
+		    l_logLevel = Integer.parseInt(l_logLevelProp);
+                    if (l_logLevel > Driver.DEBUG || l_logLevel < Driver.INFO) {
+                        l_logLevel = 0;
+		    }
+		} catch (Exception l_e) {
+                    //invalid value for loglevel ignore
+		}
+                if (l_logLevel > 0) {
+                    Driver.setLogLevel(l_logLevel);
+                    enableDriverManagerLogging();
+		}
+
+                //Print out the driver version number
+                if (Driver.logInfo) Driver.info(Driver.getVersion());
+
                 // Now make the initial connection
                 try
                 {
@@ -217,7 +238,7 @@ public abstract class Connection
                                                         rst[0] = (byte)pg_stream.ReceiveChar();
                                                         rst[1] = (byte)pg_stream.ReceiveChar();
                                                         salt = new String(rst, 0, 2);
-                                                        Driver.debug("Crypt salt=" + salt);
+                                                        if (Driver.logDebug) Driver.debug("Crypt salt=" + salt);
                                                 }
 
                                                 // Or get the md5 password salt if there is one
@@ -229,7 +250,7 @@ public abstract class Connection
                                                         rst[2] = (byte)pg_stream.ReceiveChar();
                                                         rst[3] = (byte)pg_stream.ReceiveChar();
                                                         salt = new String(rst, 0, 4);
-                                                        Driver.debug("MD5 salt=" + salt);
+                                                        if (Driver.logDebug) Driver.debug("MD5 salt=" + salt);
                                                 }
 
                                                 // now send the auth packet
@@ -239,15 +260,15 @@ public abstract class Connection
                                                                 break;
 
                                                         case AUTH_REQ_KRB4:
-                                                                Driver.debug("postgresql: KRB4");
+                                                                if (Driver.logDebug) Driver.debug("postgresql: KRB4");
                                                                 throw new PSQLException("postgresql.con.kerb4");
 
                                                         case AUTH_REQ_KRB5:
-                                                                Driver.debug("postgresql: KRB5");
+                                                                if (Driver.logDebug) Driver.debug("postgresql: KRB5");
                                                                 throw new PSQLException("postgresql.con.kerb5");
 
                                                         case AUTH_REQ_PASSWORD:
-                                                                Driver.debug("postgresql: PASSWORD");
+                                                                if (Driver.logDebug) Driver.debug("postgresql: PASSWORD");
                                                                 pg_stream.SendInteger(5 + password.length(), 4);
                                                                 pg_stream.Send(password.getBytes());
                                                                 pg_stream.SendInteger(0, 1);
@@ -255,7 +276,7 @@ public abstract class Connection
                                                                 break;
 
                                                         case AUTH_REQ_CRYPT:
-                                                                Driver.debug("postgresql: CRYPT");
+                                                                if (Driver.logDebug) Driver.debug("postgresql: CRYPT");
                                                                 String crypted = UnixCrypt.crypt(salt, password);
                                                                 pg_stream.SendInteger(5 + crypted.length(), 4);
                                                                 pg_stream.Send(crypted.getBytes());
@@ -264,7 +285,7 @@ public abstract class Connection
                                                                 break;
 
                                                         case AUTH_REQ_MD5:
-                                                                Driver.debug("postgresql: MD5");
+                                                                if (Driver.logDebug) Driver.debug("postgresql: MD5");
                                                                 byte[] digest = MD5Digest.encode(PG_USER, password, salt);
                                                                 pg_stream.SendInteger(5 + digest.length, 4);
                                                                 pg_stream.Send(digest);
@@ -1211,5 +1232,15 @@ public abstract class Connection
                 }
                 return pgType;
         }
+
+        //Because the get/setLogStream methods are deprecated in JDBC2
+        //we use them for JDBC1 here and override this method in the jdbc2
+        //version of this class
+        protected void enableDriverManagerLogging() {
+            if (DriverManager.getLogStream() == null) {
+                DriverManager.setLogStream(System.out);
+	    }
+	}
+
 }
 

@@ -1,5 +1,6 @@
 package org.postgresql.fastpath;
 
+import org.postgresql.Driver;
 import java.io.*;
 import java.lang.*;
 import java.net.*;
@@ -44,7 +45,6 @@ public class Fastpath
         {
                 this.conn = conn;
                 this.stream = stream;
-                //DriverManager.println("Fastpath initialised");
         }
 
         /*
@@ -174,7 +174,7 @@ public class Fastpath
          */
         public Object fastpath(String name, boolean resulttype, FastpathArg[] args) throws SQLException
         {
-                //DriverManager.println("Fastpath: calling "+name);
+                if (Driver.logDebug) Driver.debug("Fastpath: calling "+name);
                 return fastpath(getID(name), resulttype, args);
         }
 

@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: Connection.java,v 1.18 2002/03/26 05:52:50 barry Exp $
+ * $Id: Connection.java,v 1.19 2002/06/11 02:55:16 barry Exp $
  *
  * A Connection represents a session with a specific database.	Within the
  * context of a Connection, SQL statements are executed and results are
@@ -318,6 +318,14 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
                                                                                                 Types.ARRAY
                                                                                         };
 
+        //Because the get/setLogStream methods are deprecated in JDBC2
+        //we use the get/setLogWriter methods here for JDBC2 by overriding
+        //the base version of this method
+        protected void enableDriverManagerLogging() {
+            if (DriverManager.getLogWriter() == null) {
+                DriverManager.setLogWriter(new PrintWriter(System.out));
+	    }
+	}
 
 }
 

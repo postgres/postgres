@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.54 2002/06/06 14:47:52 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.55 2002/06/11 02:55:16 barry Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -62,7 +62,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean allProceduresAreCallable() throws SQLException
 	{
-		Driver.debug("allProceduresAreCallable");
+		if (Driver.logDebug) Driver.debug("allProceduresAreCallable");
 		return true;		// For now...
 	}
 
@@ -75,7 +75,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean allTablesAreSelectable() throws SQLException
 	{
-		Driver.debug("allTablesAreSelectable");
+		if (Driver.logDebug) Driver.debug("allTablesAreSelectable");
 		return true;		// For now...
 	}
 
@@ -88,7 +88,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public String getURL() throws SQLException
 	{
 		String url = connection.getURL();
-		Driver.debug("getURL " + url);
+		if (Driver.logDebug) Driver.debug("getURL " + url);
 		return url;
 	}
 
@@ -101,7 +101,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public String getUserName() throws SQLException
 	{
 		String userName = connection.getUserName();
-		Driver.debug("getUserName " + userName);
+		if (Driver.logDebug) Driver.debug("getUserName " + userName);
 		return userName;
 	}
 
@@ -114,7 +114,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean isReadOnly() throws SQLException
 	{
 		boolean isReadOnly = connection.isReadOnly();
-		Driver.debug("isReadOnly " + isReadOnly);
+		if (Driver.logDebug) Driver.debug("isReadOnly " + isReadOnly);
 		return isReadOnly;
 	}
 
@@ -127,7 +127,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean nullsAreSortedHigh() throws SQLException
 	{
 		boolean nullSortedHigh = connection.haveMinimumServerVersion("7.2");
-		Driver.debug("nullsAreSortedHigh " + nullSortedHigh);
+		if (Driver.logDebug) Driver.debug("nullsAreSortedHigh " + nullSortedHigh);
 		return nullSortedHigh;
 	}
 
@@ -139,7 +139,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullsAreSortedLow() throws SQLException
 	{
-		Driver.debug("nullsAreSortedLow false");
+		if (Driver.logDebug) Driver.debug("nullsAreSortedLow false");
 		return false;
 	}
 
@@ -151,7 +151,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullsAreSortedAtStart() throws SQLException
 	{
-		Driver.debug("nullsAreSortedAtStart false");
+		if (Driver.logDebug) Driver.debug("nullsAreSortedAtStart false");
 		return false;
 	}
 
@@ -164,7 +164,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean nullsAreSortedAtEnd() throws SQLException
 	{
 		boolean nullsAreSortedAtEnd = ! connection.haveMinimumServerVersion("7.2");
-		Driver.debug("nullsAreSortedAtEnd " + nullsAreSortedAtEnd);
+		if (Driver.logDebug) Driver.debug("nullsAreSortedAtEnd " + nullsAreSortedAtEnd);
 		return nullsAreSortedAtEnd;
 	}
 
@@ -177,7 +177,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getDatabaseProductName() throws SQLException
 	{
-		Driver.debug("getDatabaseProductName PostgresSQL");
+		if (Driver.logDebug) Driver.debug("getDatabaseProductName PostgresSQL");
 		return "PostgreSQL";
 	}
 
@@ -190,7 +190,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public String getDatabaseProductVersion() throws SQLException
 	{
 		String versionNumber = connection.getDBVersionNumber();
-		Driver.debug("getDatabaseProductVersion " + versionNumber);
+		if (Driver.logDebug) Driver.debug("getDatabaseProductVersion " + versionNumber);
 		return versionNumber;
 	}
 
@@ -204,7 +204,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public String getDriverName() throws SQLException
 	{
 		String driverName = "PostgreSQL Native Driver";
-		Driver.debug("getDriverName" + driverName);
+		if (Driver.logDebug) Driver.debug("getDriverName" + driverName);
 		return driverName;
 	}
 
@@ -218,7 +218,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public String getDriverVersion() throws SQLException
 	{
 		String driverVersion = connection.this_driver.getVersion();
-		Driver.debug("getDriverVersion " + driverVersion);
+		if (Driver.logDebug) Driver.debug("getDriverVersion " + driverVersion);
 		return driverVersion;
 	}
 
@@ -230,7 +230,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public int getDriverMajorVersion()
 	{
 		int majorVersion = connection.this_driver.getMajorVersion();
-		Driver.debug("getMajorVersion " + majorVersion);
+		if (Driver.logDebug) Driver.debug("getMajorVersion " + majorVersion);
 		return majorVersion;
 	}
 
@@ -242,7 +242,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public int getDriverMinorVersion()
 	{
 		int minorVersion = connection.this_driver.getMinorVersion();
-		Driver.debug("getMinorVersion " + minorVersion);
+		if (Driver.logDebug) Driver.debug("getMinorVersion " + minorVersion);
 		return minorVersion;
 	}
 
@@ -255,7 +255,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean usesLocalFiles() throws SQLException
 	{
-		Driver.debug("usesLocalFiles " + false);
+		if (Driver.logDebug) Driver.debug("usesLocalFiles " + false);
 		return false;
 	}
 
@@ -268,7 +268,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean usesLocalFilePerTable() throws SQLException
 	{
-		Driver.debug("usesLocalFilePerTable " + false);
+		if (Driver.logDebug) Driver.debug("usesLocalFilePerTable " + false);
 		return false;
 	}
 
@@ -286,7 +286,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMixedCaseIdentifiers() throws SQLException
 	{
-		Driver.debug("supportsMixedCaseIdentifiers " + false);
+		if (Driver.logDebug) Driver.debug("supportsMixedCaseIdentifiers " + false);
 		return false;
 	}
 
@@ -298,7 +298,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesUpperCaseIdentifiers() throws SQLException
 	{
-		Driver.debug("storesUpperCaseIdentifiers " + false);
+		if (Driver.logDebug) Driver.debug("storesUpperCaseIdentifiers " + false);
 		return false;
 	}
 
@@ -310,7 +310,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesLowerCaseIdentifiers() throws SQLException
 	{
-		Driver.debug("storesLowerCaseIdentifiers " + true);
+		if (Driver.logDebug) Driver.debug("storesLowerCaseIdentifiers " + true);
 		return true;
 	}
 
@@ -322,7 +322,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesMixedCaseIdentifiers() throws SQLException
 	{
-		Driver.debug("storesMixedCaseIdentifiers " + false);
+		if (Driver.logDebug) Driver.debug("storesMixedCaseIdentifiers " + false);
 		return false;
 	}
 
@@ -336,7 +336,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException
 	{
-		Driver.debug("supportsMixedCaseQuotedIdentifiers " + true);
+		if (Driver.logDebug) Driver.debug("supportsMixedCaseQuotedIdentifiers " + true);
 		return true;
 	}
 
@@ -348,7 +348,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesUpperCaseQuotedIdentifiers() throws SQLException
 	{
-		Driver.debug("storesUpperCaseQuotedIdentifiers " + false);
+		if (Driver.logDebug) Driver.debug("storesUpperCaseQuotedIdentifiers " + false);
 		return false;
 	}
 
@@ -360,7 +360,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesLowerCaseQuotedIdentifiers() throws SQLException
 	{
-		Driver.debug("storesLowerCaseQuotedIdentifiers " + false);
+		if (Driver.logDebug) Driver.debug("storesLowerCaseQuotedIdentifiers " + false);
 		return false;
 	}
 
@@ -372,7 +372,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesMixedCaseQuotedIdentifiers() throws SQLException
 	{
-		Driver.debug("storesMixedCaseQuotedIdentifiers " + false);
+		if (Driver.logDebug) Driver.debug("storesMixedCaseQuotedIdentifiers " + false);
 		return false;
 	}
 
@@ -386,7 +386,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getIdentifierQuoteString() throws SQLException
 	{
-		Driver.debug("getIdentifierQuoteString \"" );
+		if (Driver.logDebug) Driver.debug("getIdentifierQuoteString \"" );
 		return "\"";
 	}
 
@@ -408,35 +408,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSQLKeywords() throws SQLException
 	{
-		Driver.debug("getSQLKeyWords");
+		if (Driver.logDebug) Driver.debug("getSQLKeyWords");
 		return "abort,acl,add,aggregate,append,archive,arch_store,backward,binary,change,cluster,copy,database,delimiters,do,extend,explain,forward,heavy,index,inherits,isnull,light,listen,load,merge,nothing,notify,notnull,oids,purge,rename,replace,retrieve,returns,rule,recipe,setof,stdin,stdout,store,vacuum,verbose,version";
 	}
 
 	public String getNumericFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
-		Driver.debug("getNumericFunctions");
+		if (Driver.logDebug) Driver.debug("getNumericFunctions");
 		return "";
 	}
 
 	public String getStringFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
-		Driver.debug("getStringFunctions");
+		if (Driver.logDebug) Driver.debug("getStringFunctions");
 		return "";
 	}
 
 	public String getSystemFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
-		Driver.debug("getSystemFunctions");
+		if (Driver.logDebug) Driver.debug("getSystemFunctions");
 		return "";
 	}
 
 	public String getTimeDateFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
-		Driver.debug("getTimeDateFunctions");
+		if (Driver.logDebug) Driver.debug("getTimeDateFunctions");
 		return "";
 	}
 
@@ -449,7 +449,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSearchStringEscape() throws SQLException
 	{
-		Driver.debug("getSearchStringEscape");
+		if (Driver.logDebug) Driver.debug("getSearchStringEscape");
 		return "\\";
 	}
 
@@ -466,7 +466,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getExtraNameCharacters() throws SQLException
 	{
-		Driver.debug("getExtraNameCharacters");
+		if (Driver.logDebug) Driver.debug("getExtraNameCharacters");
 		return "";
 	}
 
@@ -479,7 +479,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsAlterTableWithAddColumn() throws SQLException
 	{
-		Driver.debug("supportsAlterTableWithAddColumn " + true);
+		if (Driver.logDebug) Driver.debug("supportsAlterTableWithAddColumn " + true);
 		return true;
 	}
 
@@ -492,7 +492,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsAlterTableWithDropColumn() throws SQLException
 	{
-		Driver.debug("supportsAlterTableWithDropColumn " + false);
+		if (Driver.logDebug) Driver.debug("supportsAlterTableWithDropColumn " + false);
 		return false;
 	}
 
@@ -516,7 +516,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsColumnAliasing() throws SQLException
 	{
-		Driver.debug("supportsColumnAliasing " + true);
+		if (Driver.logDebug) Driver.debug("supportsColumnAliasing " + true);
 		return true;
 	}
 
@@ -529,21 +529,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullPlusNonNullIsNull() throws SQLException
 	{
-		Driver.debug("nullPlusNonNullIsNull " + true);
+		if (Driver.logDebug) Driver.debug("nullPlusNonNullIsNull " + true);
 		return true;
 	}
 
 	public boolean supportsConvert() throws SQLException
 	{
 		// XXX-Not Implemented
-		Driver.debug("supportsConvert " + false);
+		if (Driver.logDebug) Driver.debug("supportsConvert " + false);
 		return false;
 	}
 
 	public boolean supportsConvert(int fromType, int toType) throws SQLException
 	{
 		// XXX-Not Implemented
-		Driver.debug("supportsConvert " + false);
+		if (Driver.logDebug) Driver.debug("supportsConvert " + false);
 		return false;
 	}
 
@@ -556,7 +556,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsTableCorrelationNames() throws SQLException
 	{
-		Driver.debug("supportsTableCorrelationNames " + true);
+		if (Driver.logDebug) Driver.debug("supportsTableCorrelationNames " + true);
 		return true;
 	}
 
@@ -569,7 +569,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsDifferentTableCorrelationNames() throws SQLException
 	{
-		Driver.debug("supportsDifferentTableCorrelationNames " + false);
+		if (Driver.logDebug) Driver.debug("supportsDifferentTableCorrelationNames " + false);
 		return false;
 	}
 
@@ -583,7 +583,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsExpressionsInOrderBy() throws SQLException
 	{
-		Driver.debug("supportsExpressionsInOrderBy " + true);
+		if (Driver.logDebug) Driver.debug("supportsExpressionsInOrderBy " + true);
 		return true;
 	}
 
@@ -596,7 +596,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsOrderByUnrelated() throws SQLException
 	{
 		boolean supportsOrderByUnrelated = connection.haveMinimumServerVersion("6.4");
-		Driver.debug("supportsOrderByUnrelated " + supportsOrderByUnrelated);
+		if (Driver.logDebug) Driver.debug("supportsOrderByUnrelated " + supportsOrderByUnrelated);
 		return supportsOrderByUnrelated;
 	}
 
@@ -609,7 +609,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsGroupBy() throws SQLException
 	{
-		Driver.debug("supportsGroupBy " + true);
+		if (Driver.logDebug) Driver.debug("supportsGroupBy " + true);
 		return true;
 	}
 
@@ -622,7 +622,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsGroupByUnrelated() throws SQLException
 	{
 		boolean supportsGroupByUnrelated = connection.haveMinimumServerVersion("6.4");
-		Driver.debug("supportsGroupByUnrelated " + supportsGroupByUnrelated);
+		if (Driver.logDebug) Driver.debug("supportsGroupByUnrelated " + supportsGroupByUnrelated);
 		return supportsGroupByUnrelated;
 	}
 
@@ -639,7 +639,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsGroupByBeyondSelect() throws SQLException
 	{
 		boolean supportsGroupByBeyondSelect = connection.haveMinimumServerVersion("6.4");
-		Driver.debug("supportsGroupByUnrelated " + supportsGroupByBeyondSelect);
+		if (Driver.logDebug) Driver.debug("supportsGroupByUnrelated " + supportsGroupByBeyondSelect);
 		return supportsGroupByBeyondSelect;
 	}
 
@@ -653,7 +653,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsLikeEscapeClause() throws SQLException
 	{
 		boolean supportsLikeEscapeClause = connection.haveMinimumServerVersion("7.1");
-		Driver.debug("supportsLikeEscapeClause " + supportsLikeEscapeClause);
+		if (Driver.logDebug) Driver.debug("supportsLikeEscapeClause " + supportsLikeEscapeClause);
 		return supportsLikeEscapeClause;
 	}
 
@@ -667,7 +667,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMultipleResultSets() throws SQLException
 	{
-		Driver.debug("supportsMultipleResultSets " + false);
+		if (Driver.logDebug) Driver.debug("supportsMultipleResultSets " + false);
 		return false;
 	}
 
@@ -681,7 +681,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMultipleTransactions() throws SQLException
 	{
-		Driver.debug("supportsMultipleTransactions " + true);
+		if (Driver.logDebug) Driver.debug("supportsMultipleTransactions " + true);
 		return true;
 	}
 
@@ -697,7 +697,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsNonNullableColumns() throws SQLException
 	{
-		Driver.debug("supportsNonNullableColumns true");
+		if (Driver.logDebug) Driver.debug("supportsNonNullableColumns true");
 		return true;
 	}
 
@@ -715,7 +715,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMinimumSQLGrammar() throws SQLException
 	{
-		Driver.debug("supportsMinimumSQLGrammar TRUE");
+		if (Driver.logDebug) Driver.debug("supportsMinimumSQLGrammar TRUE");
 		return true;
 	}
 
@@ -728,7 +728,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCoreSQLGrammar() throws SQLException
 	{
-		Driver.debug("supportsCoreSQLGrammar FALSE ");
+		if (Driver.logDebug) Driver.debug("supportsCoreSQLGrammar FALSE ");
 		return false;
 	}
 
@@ -742,7 +742,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsExtendedSQLGrammar() throws SQLException
 	{
-		Driver.debug("supportsExtendedSQLGrammar FALSE");
+		if (Driver.logDebug) Driver.debug("supportsExtendedSQLGrammar FALSE");
 		return false;
 	}
 
@@ -761,7 +761,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsANSI92EntryLevelSQL() throws SQLException
 	{
 		boolean schemas = connection.haveMinimumServerVersion("7.3");
-		Driver.debug("supportsANSI92EntryLevelSQL " + schemas);
+		if (Driver.logDebug) Driver.debug("supportsANSI92EntryLevelSQL " + schemas);
 		return schemas;
 
 	}
@@ -775,7 +775,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsANSI92IntermediateSQL() throws SQLException
 	{
-		Driver.debug("supportsANSI92IntermediateSQL false ");
+		if (Driver.logDebug) Driver.debug("supportsANSI92IntermediateSQL false ");
 		return false;
 	}
 
@@ -787,7 +787,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsANSI92FullSQL() throws SQLException
 	{
-		Driver.debug("supportsANSI92FullSQL false ");
+		if (Driver.logDebug) Driver.debug("supportsANSI92FullSQL false ");
 		return false;
 	}
 
@@ -800,7 +800,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsIntegrityEnhancementFacility() throws SQLException
 	{
-		Driver.debug("supportsIntegrityEnhancementFacility false ");
+		if (Driver.logDebug) Driver.debug("supportsIntegrityEnhancementFacility false ");
 		return false;
 	}
 
@@ -813,7 +813,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsOuterJoins() throws SQLException
 	{
 		boolean supportsOuterJoins = connection.haveMinimumServerVersion("7.1");
-		Driver.debug("supportsOuterJoins " + supportsOuterJoins);
+		if (Driver.logDebug) Driver.debug("supportsOuterJoins " + supportsOuterJoins);
 		return supportsOuterJoins;
 	}
 
@@ -826,7 +826,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsFullOuterJoins() throws SQLException
 	{
 		boolean supportsFullOuterJoins = connection.haveMinimumServerVersion("7.1");
-		Driver.debug("supportsFullOuterJoins " + supportsFullOuterJoins);
+		if (Driver.logDebug) Driver.debug("supportsFullOuterJoins " + supportsFullOuterJoins);
 		return supportsFullOuterJoins;
 	}
 
@@ -839,7 +839,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	public boolean supportsLimitedOuterJoins() throws SQLException
 	{
 		boolean supportsLimitedOuterJoins = connection.haveMinimumServerVersion("7.1");
-		Driver.debug("supportsFullOuterJoins " + supportsLimitedOuterJoins);
+		if (Driver.logDebug) Driver.debug("supportsFullOuterJoins " + supportsLimitedOuterJoins);
 		return supportsLimitedOuterJoins;
 	}
 
@@ -853,7 +853,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSchemaTerm() throws SQLException
 	{
-		Driver.debug("getSchemaTerm schema");
+		if (Driver.logDebug) Driver.debug("getSchemaTerm schema");
 		return "schema";
 	}
 
@@ -866,7 +866,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getProcedureTerm() throws SQLException
 	{
-		Driver.debug("getProcedureTerm function ");
+		if (Driver.logDebug) Driver.debug("getProcedureTerm function ");
 		return "function";
 	}
 
@@ -878,7 +878,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getCatalogTerm() throws SQLException
 	{
-		Driver.debug("getCatalogTerm database ");
+		if (Driver.logDebug) Driver.debug("getCatalogTerm database ");
 		return "database";
 	}
 
@@ -893,7 +893,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	{
 		// return true here; we return false for every other catalog function
 		// so it won't matter what we return here D.C.
-		Driver.debug("isCatalogAtStart not implemented");
+		if (Driver.logDebug) Driver.debug("isCatalogAtStart not implemented");
 		return true;
 	}
 
@@ -907,7 +907,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	{
 		// Give them something to work with here
 		// everything else returns false so it won't matter what we return here D.C.
-		Driver.debug("getCatalogSeparator not implemented ");
+		if (Driver.logDebug) Driver.debug("getCatalogSeparator not implemented ");
 		return ".";
 	}
 
@@ -919,7 +919,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInDataManipulation() throws SQLException
 	{
-		Driver.debug("supportsSchemasInDataManipulation false");
+		if (Driver.logDebug) Driver.debug("supportsSchemasInDataManipulation false");
 		return false;
 	}
 
@@ -931,7 +931,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInProcedureCalls() throws SQLException
 	{
-		Driver.debug("supportsSchemasInProcedureCalls false");
+		if (Driver.logDebug) Driver.debug("supportsSchemasInProcedureCalls false");
 		return false;
 	}
 
@@ -945,7 +945,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	{
 		boolean schemas = connection.haveMinimumServerVersion("7.3");
 
-		Driver.debug("supportsSchemasInTableDefinitions " + schemas);
+		if (Driver.logDebug) Driver.debug("supportsSchemasInTableDefinitions " + schemas);
 		return schemas;
 	}
 
@@ -957,7 +957,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInIndexDefinitions() throws SQLException
 	{
-		Driver.debug("supportsSchemasInIndexDefinitions false");
+		if (Driver.logDebug) Driver.debug("supportsSchemasInIndexDefinitions false");
 		return false;
 	}
 
@@ -969,7 +969,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException
 	{
-		Driver.debug("supportsSchemasInPrivilegeDefinitions false");
+		if (Driver.logDebug) Driver.debug("supportsSchemasInPrivilegeDefinitions false");
 		return false;
 	}
 
@@ -981,7 +981,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInDataManipulation() throws SQLException
 	{
-		Driver.debug("supportsCatalogsInDataManipulation false");
+		if (Driver.logDebug) Driver.debug("supportsCatalogsInDataManipulation false");
 		return false;
 	}
 
@@ -993,7 +993,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInProcedureCalls() throws SQLException
 	{
-		Driver.debug("supportsCatalogsInDataManipulation false");
+		if (Driver.logDebug) Driver.debug("supportsCatalogsInDataManipulation false");
 		return false;
 	}
 
@@ -1005,7 +1005,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInTableDefinitions() throws SQLException
 	{
-		Driver.debug("supportsCatalogsInTableDefinitions false");
+		if (Driver.logDebug) Driver.debug("supportsCatalogsInTableDefinitions false");
 		return false;
 	}
 
@@ -1017,7 +1017,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInIndexDefinitions() throws SQLException
 	{
-		Driver.debug("supportsCatalogsInIndexDefinitions false");
+		if (Driver.logDebug) Driver.debug("supportsCatalogsInIndexDefinitions false");
 		return false;
 	}
 
@@ -1029,7 +1029,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException
 	{
-		Driver.debug("supportsCatalogsInPrivilegeDefinitions false");
+		if (Driver.logDebug) Driver.debug("supportsCatalogsInPrivilegeDefinitions false");
 		return false;
 	}
 
@@ -1042,7 +1042,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsPositionedDelete() throws SQLException
 	{
-		Driver.debug("supportsPositionedDelete false");
+		if (Driver.logDebug) Driver.debug("supportsPositionedDelete false");
 		return false;			// For now...
 	}
 
@@ -1054,7 +1054,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsPositionedUpdate() throws SQLException
 	{
-		Driver.debug("supportsPositionedUpdate false");
+		if (Driver.logDebug) Driver.debug("supportsPositionedUpdate false");
 		return false;			// For now...
 	}
 
@@ -2212,7 +2212,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		{
 			byte[][] tuple = new byte[8][0];
 			tuple[0] = tuple[1] = "".getBytes();
-			DriverManager.println("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
+			if (Driver.logDebug) Driver.debug("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
 
 			// For now, don't add to the result as relacl needs to be processed.
 			//v.addElement(tuple);
@@ -2275,7 +2275,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		{
 			byte[][] tuple = new byte[8][0];
 			tuple[0] = tuple[1] = "".getBytes();
-			DriverManager.println("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
+			if (Driver.logDebug) Driver.debug("relname=\"" + r.getString(1) + "\" relacl=\"" + r.getString(2) + "\"");
 
 			// For now, don't add to the result as relacl needs to be processed.
 			//v.addElement(tuple);
