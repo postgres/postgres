@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.13 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.14 2003/08/04 15:28:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ s_lock_stuck(volatile slock_t *lock, const char *file, int line)
 {
 #if defined(S_LOCK_TEST)
 	fprintf(stderr,
-			"\nFATAL: stuck spinlock (%p) detected at %s:%d.\n",
+			"\nStuck spinlock (%p) detected at %s:%d.\n",
 			lock, file, line);
 	abort();
 #else
@@ -209,20 +209,20 @@ tas_dummy()						/* really means: extern int tas(slock_t
 #if defined(S_LOCK_TEST)
 
 /*
- * test program for verifying a port.
+ * test program for verifying a port's spinlock support.
  */
 
 volatile slock_t test_lock;
 
-void
+int
 main()
 {
 	S_INIT_LOCK(&test_lock);
 
 	if (!S_LOCK_FREE(&test_lock))
 	{
-		printf("S_LOCK_TEST: failed, lock not initialized.\n");
-		exit(1);
+		printf("S_LOCK_TEST: failed, lock not initialized\n");
+		return 1;
 	}
 
 	S_LOCK(&test_lock);
@@ -230,16 +230,34 @@ main()
 	if (S_LOCK_FREE(&test_lock))
 	{
 		printf("S_LOCK_TEST: failed, lock not locked\n");
-		exit(2);
+		return 1;
 	}
 
-	printf("S_LOCK_TEST: this will hang for a few minutes and then abort\n");
+	S_UNLOCK(&test_lock);
+
+	if (!S_LOCK_FREE(&test_lock))
+	{
+		printf("S_LOCK_TEST: failed, lock not unlocked\n");
+		return 1;
+	}
+
+	S_LOCK(&test_lock);
+
+	if (S_LOCK_FREE(&test_lock))
+	{
+		printf("S_LOCK_TEST: failed, lock not re-locked\n");
+		return 1;
+	}
+
+	printf("S_LOCK_TEST: this will hang for a minute or so and then abort\n");
 	printf("             with a 'stuck spinlock' message if S_LOCK()\n");
 	printf("             and TAS() are working.\n");
+	fflush(stdout);
+
 	s_lock(&test_lock, __FILE__, __LINE__);
 
-	printf("S_LOCK_TEST: failed, lock not locked~\n");
-	exit(3);
+	printf("S_LOCK_TEST: failed, lock not locked\n");
+	return 1;
 }
 
 #endif   /* S_LOCK_TEST */
