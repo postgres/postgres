@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.9 2001/03/22 03:59:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.10 2001/09/17 02:30:54 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ vacuumlo(char *database, int verbose)
 	strcat(buf, "WHERE a.attnum > 0 ");
 	strcat(buf, "      AND a.attrelid = c.oid ");
 	strcat(buf, "      AND a.atttypid = t.oid ");
-	strcat(buf, "      AND t.typname = 'oid' ");
+	strcat(buf, "      AND t.typname in ('oid', 'lo') ");
 	strcat(buf, "      AND c.relkind = 'r'");
 	strcat(buf, "      AND c.relname NOT LIKE 'pg_%'");
 	res = PQexec(conn, buf);
