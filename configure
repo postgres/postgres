@@ -13292,7 +13292,7 @@ See the comment at the top of src/port/thread.c for more information.
 fi
 else
 # do not use values from template file
-THREAD_CFLAGS=
+THREAD_CPPFLAGS=
 THREAD_LIBS=
 fi
 
@@ -13312,7 +13312,7 @@ fi
 if test "$enable_thread_safety" = yes -a "$NEED_REENTRANT_FUNCS" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
-CFLAGS="$CFLAGS $THREAD_CFLAGS"
+CFLAGS="$CFLAGS $THREAD_CPPFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 
 
@@ -18211,7 +18211,7 @@ s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HAVE_IPV6@,$HAVE_IPV6,;t t
-s,@THREAD_CFLAGS@,$THREAD_CFLAGS,;t t
+s,@THREAD_CPPFLAGS@,$THREAD_CPPFLAGS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t
 s,@MSGFMT@,$MSGFMT,;t t

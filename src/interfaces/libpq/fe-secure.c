@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.30 2003/09/05 02:08:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.31 2003/09/27 15:32:48 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -469,7 +469,13 @@ verify_peer(PGconn *conn)
 		struct hostent hpstr;
 		char		buf[BUFSIZ];
 		int			herrno = 0;
-
+		
+		/*
+		 *	Currently, pqGethostbyname() is used only on platforms that
+		 *	don't have getaddrinfo().  If you enable this function,
+		 *	you should convert the pqGethostbyname() function call to
+		 *	use getaddrinfo().
+		 */
 		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
 						&h, &herrno);
 	}

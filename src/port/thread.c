@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.8 2003/09/15 02:30:29 momjian Exp $
+ * $Id: thread.c,v 1.9 2003/09/27 15:32:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,9 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 /*
  * Wrapper around gethostbyname() or gethostbyname_r() to mimic
  * POSIX gethostbyname_r() behaviour, if it is not available or required.
+ * This function is called _only_ by our getaddinfo() portability function.
  */
+#ifndef HAVE_GETADDRINFO
 int
 pqGethostbyname(const char *name,
 				struct hostent *resultbuf,
@@ -213,7 +215,7 @@ pqGethostbyname(const char *name,
 		for (i = 0; (*result)->h_aliases[i]; i++, pointers++)
 			len += (*result)->h_length;
 
-		if (MAXALIGN(len) + pointers * sizeof(char *) + strlen((*result)->h_name) + 1 <= buflen)
+		if (pointers * sizeof(char *) + MAXALIGN(len) + strlen((*result)->h_name) + 1 <= buflen)
 		{
 			memcpy(resultbuf, *result, sizeof(struct hostent));
 
@@ -242,6 +244,7 @@ pqGethostbyname(const char *name,
 			pbuffer++;
 
 			/* Place at end for cleaner alignment */			
+			buffer = MAXALIGN(buffer);
 			strcpy(buffer, (*result)->h_name);
 			resultbuf->h_name = buffer;
 			buffer += strlen(resultbuf->h_name) + 1;
@@ -269,3 +272,4 @@ pqGethostbyname(const char *name,
 		return -1;
 #endif
 }
+#endif

@@ -1,0 +1,8 @@
+This program should be run by developers wishing to enable threading on
+new platforms.
+
+Run thread_test program to determine if your native libc functions are
+thread-safe, or if we should use *_r functions or thread locking.
+
+Make sure you have added any needed 'THREAD_CPPFLAGS' and 'THREAD_LIBS'
+defines to your template/${port} file before compiling this program.

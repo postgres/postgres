@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/tools/Attic/test_thread_funcs.c,v 1.3 2003/09/03 22:34:08 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/tools/thread/Attic/thread_test.c,v 1.1 2003/09/27 15:32:48 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -16,9 +16,6 @@
  *	memory pointer within the same thread, then, assuming it does, tests
  *	to see if the pointers are different for different threads.  If they
  *	are, the function is thread-safe.
- *
- *	This program must be compiled with the thread flags required by your
- *	operating system.  See src/template for the appropriate flags, if any.
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +34,10 @@
 void func_call_1(void);
 void func_call_2(void);
 
+#ifndef HAVE_GETADDRINFO
 struct hostent *hostent_p1;
 struct hostent *hostent_p2;
+#endif
 
 struct passwd *passwd_p1;
 struct passwd *passwd_p2;
@@ -57,24 +56,47 @@ int main(int argc, char *argv[])
 			return 1;
 	}
 
+	printf("\
+Make sure you have added any needed 'THREAD_CPPFLAGS' and 'THREAD_LIBS'\n\
+defines to your template/${port} file before compiling this program.\n\n"
+);
 	pthread_create(&thread1, NULL, (void * (*)(void *)) func_call_1, NULL);
 	pthread_create(&thread2, NULL, (void * (*)(void *)) func_call_2, NULL);
 	pthread_join(thread1, NULL);
 	pthread_join(thread2, NULL);
 
+#ifndef HAVE_GETADDRINFO
 	if (hostent_p1 == hostent_p2)
 		printf("Your gethostbyname() is _not_ thread-safe\n");
+#endif
 	if (passwd_p1 == passwd_p2)
 		printf("Your getpwuid() is _not_ thread-safe\n");
 	if (strerror_p1 == strerror_p2)
 		printf("Your strerror() is _not_ thread-safe\n");
 
-	if (hostent_p1 != hostent_p2 &&
+	if (
+#ifndef HAVE_GETADDRINFO
+		hostent_p1 != hostent_p2 &&
+#endif
 		passwd_p1 != passwd_p2 &&
 		strerror_p1 != strerror_p2)
-		printf("Your functions are all thread-safe\n");
+	{
+		printf("All your non-*_r functions are thread-safe.\n");
+		printf("Add this to your template/${port} file:\n\n");
+		printf("\
+SUPPORTS_THREADS=yes\n\
+NEED_REENTRANT_FUNCS=no\n"
+			  );
+	}
 	else
-		printf("Your functions are _not_ all thread-safe\n");
+	{
+		printf("Not all non-*_r functions are thread-safe.\n");
+		printf("Add this to your template/${port} file:\n\n");
+		printf("\
+SUPPORTS_THREADS=yes\n\
+NEED_REENTRANT_FUNCS=yes\n"
+			  );
+	}
 
 	return 0;
 }
@@ -82,6 +104,7 @@ int main(int argc, char *argv[])
 void func_call_1(void) {
 	void *p;
 
+#ifndef HAVE_GETADDRINFO
 	hostent_p1 = gethostbyname("yahoo.com");
 	p = gethostbyname("slashdot.org");
 	if (hostent_p1 != p)
@@ -89,6 +112,7 @@ void func_call_1(void) {
 		printf("Your gethostbyname() changes the static memory area between calls\n");
 		hostent_p1 = NULL;	/* force thread-safe failure report */
 	}
+#endif
 
 	passwd_p1 = getpwuid(0);
 	p = getpwuid(1);
@@ -109,6 +133,7 @@ void func_call_1(void) {
 void func_call_2(void) {
 	void *p;
 
+#ifndef HAVE_GETADDRINFO
 	hostent_p2 = gethostbyname("google.com");
 	p = gethostbyname("postgresql.org");
 	if (hostent_p2 != p)
@@ -116,6 +141,7 @@ void func_call_2(void) {
 		printf("Your gethostbyname() changes the static memory area between calls\n");
 		hostent_p2 = NULL;	/* force thread-safe failure report */
 	}
+#endif
 
 	passwd_p2 = getpwuid(2);
 	p = getpwuid(3);
