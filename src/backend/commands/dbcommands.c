@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.50 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.51 2000/03/15 06:50:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,27 +63,24 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	char	   *loc;
 	int4		user_id;
     bool        use_super, use_createdb;
-
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
     TupleDesc   pg_database_dsc;
-
     Datum       new_record[Natts_pg_database];
     char        new_record_nulls[Natts_pg_database] = { ' ', ' ', ' ', ' ' };
 
-
     if (!get_user_info(GetPgUserName(), &user_id, &use_super, &use_createdb))
-        elog(ERROR, "Current user name is invalid.");
+        elog(ERROR, "Current user name is invalid");
 
     if (!use_createdb && !use_super)
-        elog(ERROR, "CREATE DATABASE: Permission denied.");
+        elog(ERROR, "CREATE DATABASE: Permission denied");
 
     if (get_db_info(dbname, NULL, NULL, NULL))
-        elog(ERROR, "CREATE DATABASE: Database \"%s\" already exists.", dbname);
+        elog(ERROR, "CREATE DATABASE: Database \"%s\" already exists", dbname);
 
-	/* close virtual file descriptors so the kernel has more available for
-       the system() calls */
-	closeAllVfds();
+    /* don't call this in a transaction block */
+	if (IsTransactionBlock())
+        elog(ERROR, "CREATE DATABASE: May not be called in a transaction block");
 
 	/* Generate directory name for the new database */
     if (dbpath == NULL)
@@ -95,13 +92,11 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 		elog(ERROR,
              "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
-             "path isn't permitted for databases.", dbpath);
+             "path isn't permitted for databases", dbpath);
 
-    /* don't call this in a transaction block */
-	if (IsTransactionBlock())
-        elog(ERROR, "CREATE DATABASE: May not be called in a transaction block.");
-    else            
-		BeginTransactionBlock();
+	/* close virtual file descriptors so the kernel has more available for
+       the system() calls */
+	closeAllVfds();
 
     /*
      * Insert a new tuple into pg_database
@@ -142,7 +137,6 @@ createdb(const char *dbname, const char *dbpath, int encoding)
     /* Copy the template database to the new location */
 
 	if (mkdir(loc, S_IRWXU) != 0) {
-		UserAbortTransactionBlock();
 		elog(ERROR, "CREATE DATABASE: Unable to create database directory '%s': %s", loc, strerror(errno));
     }
 
@@ -152,15 +146,11 @@ createdb(const char *dbname, const char *dbpath, int encoding)
         int ret;
         snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
         ret = system(buf);
-		UserAbortTransactionBlock();
         if (ret == 0)
-            elog(ERROR, "CREATE DATABASE: Could not initialize database directory.");
+            elog(ERROR, "CREATE DATABASE: Could not initialize database directory");
         else
-            elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well.");
+            elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
     }
-
-	if (IsTransactionBlock())
-		EndTransactionBlock();
 }
 
 
@@ -178,7 +168,6 @@ dropdb(const char *dbname)
 	char	   *path,
 				dbpath[MAXPGPATH],
 				buf[MAXPGPATH + 100];
-
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
 	ScanKeyData	key;
@@ -187,36 +176,33 @@ dropdb(const char *dbname)
     AssertArg(dbname);
 
 	if (strcmp(dbname, "template1") == 0)
-		elog(ERROR, "DROP DATABASE: May not be executed on the template database.");
+		elog(ERROR, "DROP DATABASE: May not be executed on the template1 database");
 
 	if (strcmp(dbname, DatabaseName) == 0)
-		elog(ERROR, "DROP DATABASE: Cannot be executed on the currently open database.");
+		elog(ERROR, "DROP DATABASE: Cannot be executed on the currently open database");
+
+	if (IsTransactionBlock())
+        elog(ERROR, "DROP DATABASE: May not be called in a transaction block");
 
     if (!get_user_info(GetPgUserName(), &user_id, &use_super, NULL))
-        elog(ERROR, "Current user name is invalid.");
+        elog(ERROR, "Current user name is invalid");
 
     if (!get_db_info(dbname, dbpath, &db_id, &db_owner))
-        elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist.", dbname);
+        elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist", dbname);
 
     if (user_id != db_owner && !use_super)
-        elog(ERROR, "DROP DATABASE: Permission denied.");
-
-	/* close virtual file descriptors so the kernel has more available for
-       the system() calls */
-	closeAllVfds();
+        elog(ERROR, "DROP DATABASE: Permission denied");
 
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
 		elog(ERROR,
              "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
-             "path isn't permitted for databases.", path);
+             "path isn't permitted for databases", path);
 
-    /* don't call this in a transaction block */
-	if (IsTransactionBlock())
-        elog(ERROR, "DROP DATABASE: May not be called in a transaction block.");
-    else            
-		BeginTransactionBlock();
+	/* close virtual file descriptors so the kernel has more available for
+       the system() calls */
+	closeAllVfds();
 
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure
@@ -234,8 +220,7 @@ dropdb(const char *dbname)
 	 */
 	if (DatabaseHasActiveBackends(db_id)) {
 		heap_close(pgdbrel, AccessExclusiveLock);
-        UserAbortTransactionBlock();
-		elog(ERROR, "DROP DATABASE: Database \"%s\" is being accessed by other users.", dbname);
+		elog(ERROR, "DROP DATABASE: Database \"%s\" is being accessed by other users", dbname);
     }
 
 	/*
@@ -250,10 +235,9 @@ dropdb(const char *dbname)
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pgdbrel, AccessExclusiveLock);
-        UserAbortTransactionBlock();
         /* This error should never come up since the existence of the
            database is checked earlier */
-		elog(ERROR, "DROP DATABASE: Database \"%s\" doesn't exist despite earlier reports to the contrary.",
+		elog(ERROR, "DROP DATABASE: Database \"%s\" doesn't exist despite earlier reports to the contrary",
 			 dbname);
 	}
 
@@ -282,11 +266,8 @@ dropdb(const char *dbname)
 	 * Remove the database's subdirectory and everything in it.
 	 */
 	snprintf(buf, sizeof(buf), "rm -rf '%s'", path);
-	if (system(buf)!=0)
-        elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed.", path);
-
-	if (IsTransactionBlock())
-		EndTransactionBlock();
+	if (system(buf) != 0)
+        elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed", path);
 }
 
 
