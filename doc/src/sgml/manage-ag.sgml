@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.32 2004/08/07 19:02:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.33 2004/08/07 19:14:45 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -75,8 +75,7 @@ $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.32 2004/08/07 19:02:43 tgl Ex
 
   <para>
    Databases are created with the SQL command
-   <xref linkend="sql-createdatabase"
-   endterm="sql-createdatabase-title">:<indexterm><primary>CREATE
+   <xref linkend="sql-createdatabase">:<indexterm><primary>CREATE
    DATABASE</></>
 <synopsis>
 CREATE DATABASE <replaceable>name</>;
@@ -302,8 +301,7 @@ ALTER DATABASE mydb SET geqo TO off;
 
   <para>
    Databases are destroyed with the command 
-   <xref linkend="sql-dropdatabase"
-   endterm="sql-dropdatabase-title">:<indexterm><primary>DROP DATABASE</></>
+   <xref linkend="sql-dropdatabase">:<indexterm><primary>DROP DATABASE</></>
 <synopsis>
 DROP DATABASE <replaceable>name</>;
 </synopsis>
@@ -363,9 +361,8 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    </para>
 
    <para>
-    To define a tablespace, use the <xref linkend="sql-createtablespace"
-    endterm="sql-createtablespace-title"> command, for
-    example:<indexterm><primary>CREATE TABLESPACE</></>
+    To define a tablespace, use the <xref linkend="sql-createtablespace">
+    command, for example:<indexterm><primary>CREATE TABLESPACE</></>
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
 </programlisting>
