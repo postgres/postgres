@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125.2.1 2002/02/26 23:48:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125.2.2 2002/09/30 19:55:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,7 +775,7 @@ ProcessUtility(Node *parsetree,
 			{
 				if (!superuser())
 					elog(ERROR, "permission denied");
-				CreateCheckPoint(false);
+				CreateCheckPoint(false, false);
 			}
 			break;
 

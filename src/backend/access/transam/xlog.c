@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.86.2.1 2002/03/15 19:20:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.86.2.2 2002/09/30 19:55:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2737,7 +2737,7 @@ StartupXLOG(void)
 		 * checkpoint to become prevCheckPoint...
 		 */
 		ControlFile->checkPoint = checkPointLoc;
-		CreateCheckPoint(true);
+		CreateCheckPoint(true, true);
 		XLogCloseRelationCache();
 	}
 
@@ -2894,7 +2894,7 @@ ShutdownXLOG(void)
 
 	CritSectionCount++;
 	CreateDummyCaches();
-	CreateCheckPoint(true);
+	CreateCheckPoint(true, true);
 	ShutdownCLOG();
 	CritSectionCount--;
 
@@ -2905,7 +2905,7 @@ ShutdownXLOG(void)
  * Perform a checkpoint --- either during shutdown, or on-the-fly
  */
 void
-CreateCheckPoint(bool shutdown)
+CreateCheckPoint(bool shutdown, bool force)
 {
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
@@ -2962,7 +2962,7 @@ CreateCheckPoint(bool shutdown)
 	 * match the end of the last checkpoint record, and its redo pointer
 	 * must point to itself.
 	 */
-	if (!shutdown)
+	if (!shutdown && !force)
 	{
 		XLogRecPtr	curInsert;
 
