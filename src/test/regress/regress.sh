@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.55 2000/10/07 14:55:16 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.56 2000/11/11 19:56:20 thomas Exp $
 #
 if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
@@ -66,7 +66,7 @@ if [ -d ./obj ]; then
 	cd ./obj
 fi
 
-mkdir results
+[ -d results ] || mkdir results
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
