@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.25 2002/04/21 19:48:31 thomas Exp $
+ * $Id: timestamp.h,v 1.26 2002/04/23 15:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <limits.h>
 #include <float.h>
 
-#include "c.h"
 #include "fmgr.h"
 #ifdef HAVE_INT64_TIMESTAMP
 #include "utils/int8.h"
@@ -31,7 +30,7 @@
  *	relative to an absolute time.
  *
  * Note that Postgres uses "time interval" to mean a bounded interval,
- *	consisting of a beginning and ending time, not a time span - thomas 97/03/20
+ * consisting of a beginning and ending time, not a time span - thomas 97/03/20
  */
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -56,10 +55,12 @@ typedef struct
 /*
  * Macros for fmgr-callable functions.
  *
- * For Timestamp, we make use of the same support routines as for float8.
- * Therefore Timestamp is pass-by-reference if and only if float8 is!
+ * For Timestamp, we make use of the same support routines as for int64
+ * or float8.  Therefore Timestamp is pass-by-reference if and only if
+ * int64 or float8 is!
  */
 #ifdef HAVE_INT64_TIMESTAMP
+
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetInt64(X))
 #define DatumGetTimestampTz(X)	((TimestampTz) DatumGetInt64(X))
 #define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
@@ -80,6 +81,7 @@ typedef struct
 #define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
 
 #else
+
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
 #define DatumGetTimestampTz(X)	((TimestampTz) DatumGetFloat8(X))
 #define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
@@ -103,7 +105,9 @@ typedef struct
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
 #endif
-#endif
+
+#endif /* HAVE_INT64_TIMESTAMP */
+
 
 #define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
 #define TIMESTAMP_IS_NOBEGIN(j) ((j) == DT_NOBEGIN)
@@ -118,15 +122,16 @@ typedef struct
 #define MAX_INTERVAL_PRECISION 6
 
 #ifdef HAVE_INT64_TIMESTAMP
+
 typedef int32 fsec_t;
 
-#define SECONDS_TO_TIMESTAMP(x) (INT64CONST(x000000))
 #else
+
 typedef double fsec_t;
 
-#define SECONDS_TO_TIMESTAMP(x) (xe0)
 #define TIME_PREC_INV 1000000.0
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
+
 #endif
 
 

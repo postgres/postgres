@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.32 2002/04/21 19:48:31 thomas Exp $
+ * $Id: int8.h,v 1.33 2002/04/23 15:45:30 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -20,19 +20,13 @@
 #ifndef INT8_H
 #define INT8_H
 
-#include "c.h"
 #include "fmgr.h"
+
 
 /* this should be set in pg_config.h, but just in case it wasn't: */
 #ifndef INT64_FORMAT
 #warning "Broken pg_config.h should have defined INT64_FORMAT"
 #define INT64_FORMAT "%ld"
-#endif
-
-#ifdef HAVE_LL_CONSTANTS
-#define INT64CONST(x)  ((int64) x##LL)
-#else
-#define INT64CONST(x)  ((int64) x)
 #endif
 
 extern Datum int8in(PG_FUNCTION_ARGS);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.116 2002/04/21 19:48:18 thomas Exp $
+ * $Id: c.h,v 1.117 2002/04/23 15:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,6 +302,17 @@ typedef unsigned long int uint64;
 
 #endif /* not HAVE_LONG_INT_64 and not HAVE_LONG_LONG_INT_64 */
 
+/* Decide if we need to decorate 64-bit constants */
+#ifdef HAVE_LL_CONSTANTS
+#define INT64CONST(x)  ((int64) x##LL)
+#define UINT64CONST(x) ((uint64) x##LL)
+#else
+#define INT64CONST(x)  ((int64) x)
+#define UINT64CONST(x) ((uint64) x)
+#endif
+
+
+/* Select timestamp representation (float8 or int64) */
 #if defined(USE_INTEGER_DATETIMES) && !defined(INT64_IS_BUSTED)
 #define HAVE_INT64_TIMESTAMP
 #endif

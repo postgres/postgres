@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.18 2002/04/21 19:48:31 thomas Exp $
+ * $Id: date.h,v 1.19 2002/04/23 15:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DATE_H
 #define DATE_H
 
-#include "c.h"
 #include "fmgr.h"
 
 

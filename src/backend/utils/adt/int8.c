@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.38 2002/04/21 19:48:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.39 2002/04/23 15:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,17 +21,6 @@
 
 #include "utils/int8.h"
 
-/* this should be set in pg_config.h, but just in case it wasn't: */
-#ifndef INT64_FORMAT
-#warning "Broken pg_config.h should have defined INT64_FORMAT"
-#define INT64_FORMAT "%ld"
-#endif
-
-#ifdef HAVE_LL_CONSTANTS
-#define INT64CONST(x)  ((int64) x##LL)
-#else
-#define INT64CONST(x)  ((int64) x)
-#endif
 
 #define MAXINT8LEN		25
 
