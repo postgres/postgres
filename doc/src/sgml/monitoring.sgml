@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.1 2001/10/16 23:57:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.2 2001/10/19 00:46:51 tgl Exp $
 -->
 
 <chapter id="monitoring">
@@ -37,7 +37,7 @@ $ ps auxww | grep ^postgres
 postgres   960  0.0  1.1  6104 1480 pts/1    SN   13:17   0:00 postmaster -i
 postgres   963  0.0  1.1  7084 1472 pts/1    SN   13:17   0:00 postgres: stats buffer process   
 postgres   965  0.0  1.1  6152 1512 pts/1    SN   13:17   0:00 postgres: stats collector process   
-postgres   998  0.0  2.3  6532 2992 pts/1    SN   13:18   0:00 postgres: tgl runbug [127.0.0.1] idle
+postgres   998  0.0  2.3  6532 2992 pts/1    SN   13:18   0:00 postgres: tgl runbug 127.0.0.1 idle
 postgres  1003  0.0  2.4  6532 3128 pts/1    SN   13:19   0:00 postgres: tgl regression [local] SELECT waiting
 postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl regression [local] idle in transaction
 </screen>
@@ -54,7 +54,7 @@ postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl reg
    process sets its command line display in the form
 
 <screen>
-postgres: <replaceable>user</> <replaceable>database</> [<replaceable>host</>] <replaceable>activity</>
+postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <replaceable>activity</>
 </screen>
 
   The user, database, and connection source host items remain the same for
