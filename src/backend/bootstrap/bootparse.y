@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.42 2002/03/31 06:26:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.43 2002/04/01 14:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,6 +259,7 @@ Boot_DeclareUniqueIndexStmt:
 
 Boot_BuildIndsStmt:
 		  XBUILD INDICES		{ build_indices(); }
+		;
 
 
 boot_index_params:
@@ -274,6 +275,7 @@ boot_index_param:
 					n->class = LexIDStr($2);
 					$$ = n;
 				}
+		;
 
 optbootstrap:
 			XBOOTSTRAP	{ $$ = 1; }
