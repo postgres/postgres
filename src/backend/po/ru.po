@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.24 2004/09/20 08:15:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.25 2004/09/27 20:28:15 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - September 14, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - September 24, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,13 +15,15 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-09-14 01:18+0100\n"
-"PO-Revision-Date: 2004-09-20 03:22-0500\n"
+"POT-Creation-Date: 2004-09-20 13:10+0100\n"
+"PO-Revision-Date: 2004-09-24 18:31-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
 
 #: access/common/indextuple.c:57
 #, c-format
@@ -176,8 +178,8 @@ msgid "could not access status of transaction %u"
 msgstr "статус транзакции %u не доступен"
 
 #: access/transam/slru.c:612
-#: libpq/hba.c:826
-#: libpq/hba.c:850
+#: libpq/hba.c:831
+#: libpq/hba.c:855
 #: storage/smgr/smgr.c:278
 #: utils/error/elog.c:877
 #: utils/init/miscinit.c:726
@@ -1584,7 +1586,7 @@ msgstr "кодировка назначения \"%s\" не существует"
 #: commands/conversioncmds.c:151
 #, c-format
 msgid "conversion \"%s\" already exists in schema \"%s\""
-msgstr ""
+msgstr "преобразование \"%s\" уже существует в схеме \"%s\""
 
 #: commands/comment.c:316
 #: commands/sequence.c:779
@@ -1673,7 +1675,7 @@ msgstr "триггер \"%s\" для таблицы \"%s\" не существует"
 #: commands/comment.c:894
 #, c-format
 msgid "table \"%s\" has multiple constraints named \"%s\""
-msgstr ""
+msgstr "таблица \"%s\" содержит более одного констрейнта с именем \"%s\""
 
 #: commands/comment.c:906
 #, c-format
@@ -1730,7 +1732,7 @@ msgstr "доступ запрещён по созданию базы"
 
 #: commands/dbcommands.c:192
 msgid "must be superuser to create database for another user"
-msgstr ""
+msgstr "нужно быть администратором чтобы создавать базы для других пользователей"
 
 #: commands/dbcommands.c:203
 msgid "cannot use an alternative location on this platform"
@@ -1756,7 +1758,7 @@ msgstr "доступ запрещён по копированию базы \"%s\""
 #: commands/dbcommands.c:263
 #, c-format
 msgid "source database \"%s\" is being accessed by other users"
-msgstr ""
+msgstr "исходная база \"%s\" находится в пользовании другими пользователями"
 
 #: commands/dbcommands.c:274
 #, c-format
@@ -1767,7 +1769,7 @@ msgstr "неверная кодировка сервера: %d"
 #: commands/dbcommands.c:308
 #: commands/dbcommands.c:312
 msgid "database path may not contain single quotes"
-msgstr ""
+msgstr "путь к базе не должен содержать одиночных кавычек"
 
 #: commands/dbcommands.c:337
 #, c-format
@@ -1800,7 +1802,7 @@ msgstr "Системная команда с ошибкой: %s"
 #: commands/dbcommands.c:377
 #: commands/dbcommands.c:962
 msgid "Look in the postmaster's stderr log for more information."
-msgstr ""
+msgstr "Просмотрите stderr-журнал postmaster'а для подробностей."
 
 #: commands/dbcommands.c:375
 #: commands/dbcommands.c:388
@@ -1819,7 +1821,7 @@ msgstr "нельзя удалить базу-шаблон"
 #: commands/dbcommands.c:643
 #, c-format
 msgid "database \"%s\" is being accessed by other users"
-msgstr ""
+msgstr "база \"%s\" находится в пользовании другими пользователями"
 
 #: commands/dbcommands.c:634
 msgid "current database may not be renamed"
@@ -1840,16 +1842,16 @@ msgstr ""
 #: commands/dbcommands.c:900
 #, c-format
 msgid "postmaster environment variable \"%s\" not found"
-msgstr ""
+msgstr "переменная окружения postmaster'а \"%s\" не найдена"
 
 #: commands/dbcommands.c:905
 #, c-format
 msgid "postmaster environment variable \"%s\" must be absolute path"
-msgstr ""
+msgstr "переменная окружения postmaster'а \"%s\" должна содержать абсолютный путь"
 
 #: commands/dbcommands.c:914
 msgid "alternative path is too long"
-msgstr ""
+msgstr "альтернативный путь слишком длинный"
 
 #: commands/dbcommands.c:945
 #, c-format
@@ -1866,7 +1868,7 @@ msgstr "не получилось удалить директорию баз данных \"%s\""
 #: commands/copy.c:238
 #: commands/copy.c:248
 msgid "COPY BINARY is not supported to stdout or from stdin"
-msgstr ""
+msgstr "COPY BINARY не поддерживается для стандартного вывода (stdout) или ввода (stdin)"
 
 #: commands/copy.c:301
 #, c-format
@@ -1875,7 +1877,7 @@ msgstr "не получилось записать в файл COPY: %m"
 
 #: commands/copy.c:309
 msgid "connection lost during COPY to stdout"
-msgstr ""
+msgstr "подсоединение потеряно во время COPY в стандартный вывод (stdout)"
 
 #: commands/copy.c:392
 #: commands/copy.c:410
@@ -1886,25 +1888,25 @@ msgstr ""
 #: tcop/postgres.c:281
 #: tcop/postgres.c:304
 msgid "unexpected EOF on client connection"
-msgstr ""
+msgstr "неожиданный конец файла (EOF) при подсоединении клиента"
 
 #: commands/copy.c:426
 #, c-format
 msgid "COPY from stdin failed: %s"
-msgstr ""
+msgstr "ошибка при COPY из стандартного ввода (stdin): %s"
 
 #: commands/copy.c:441
 #, c-format
 msgid "unexpected message type 0x%02X during COPY from stdin"
-msgstr ""
+msgstr "неожиданный тип сообщения 0x%02X при COPY из стандартного ввода (stdin)"
 
 #: commands/copy.c:735
 msgid "cannot specify DELIMITER in BINARY mode"
-msgstr ""
+msgstr "нельзя указывать DELIMITER в режиме BINARY"
 
 #: commands/copy.c:740
 msgid "cannot specify NULL in BINARY mode"
-msgstr ""
+msgstr "нельзя указывать NULL в режиме BINARY"
 
 #: commands/copy.c:758
 #: executor/execMain.c:483
@@ -1922,7 +1924,7 @@ msgstr ""
 
 #: commands/copy.c:779
 msgid "COPY delimiter must be a single character"
-msgstr ""
+msgstr "разделитель в COPY должен быть одним символом"
 
 #: commands/copy.c:787
 #, c-format
@@ -3731,14 +3733,14 @@ msgstr ""
 msgid "could not read from hash-join temporary file: %m"
 msgstr ""
 
-#: executor/nodeHashjoin.c:629
-#: executor/nodeHashjoin.c:636
+#: executor/nodeHashjoin.c:631
+#: executor/nodeHashjoin.c:638
 #, c-format
 msgid "could not rewind hash-join temporary file: %m"
 msgstr ""
 
-#: executor/nodeHashjoin.c:687
-#: executor/nodeHashjoin.c:692
+#: executor/nodeHashjoin.c:689
+#: executor/nodeHashjoin.c:694
 #, c-format
 msgid "could not write to hash-join temporary file: %m"
 msgstr ""
@@ -4056,91 +4058,91 @@ msgstr ""
 msgid "authentication file token too long, skipping: \"%s\""
 msgstr ""
 
-#: libpq/hba.c:265
+#: libpq/hba.c:268
 #, c-format
 msgid "could not open secondary authentication file \"@%s\" as \"%s\": %m"
 msgstr ""
 
-#: libpq/hba.c:674
+#: libpq/hba.c:679
 #, c-format
 msgid "invalid IP address \"%s\" in pg_hba.conf file: %s"
 msgstr ""
 
-#: libpq/hba.c:768
+#: libpq/hba.c:773
 #, c-format
 msgid "invalid entry in pg_hba.conf file at line %d, token \"%s\""
 msgstr ""
 
-#: libpq/hba.c:773
+#: libpq/hba.c:778
 #, c-format
 msgid "missing field in pg_hba.conf file at end of line %d"
 msgstr ""
 
 #: guc-file.l:164
-#: libpq/hba.c:969
+#: libpq/hba.c:974
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "не получилось открыть файл конфигурации \"%s\": %m"
 
-#: libpq/hba.c:1031
+#: libpq/hba.c:1036
 #, c-format
 msgid "invalid entry in pg_ident.conf file at line %d, token \"%s\""
 msgstr ""
 
-#: libpq/hba.c:1036
+#: libpq/hba.c:1041
 #, c-format
 msgid "missing entry in pg_ident.conf file at end of line %d"
 msgstr ""
 
-#: libpq/hba.c:1068
+#: libpq/hba.c:1073
 msgid "cannot use Ident authentication without usermap field"
 msgstr ""
 
-#: libpq/hba.c:1116
+#: libpq/hba.c:1121
 #, c-format
 msgid "could not open Ident usermap file \"%s\": %m"
 msgstr ""
 
-#: libpq/hba.c:1287
+#: libpq/hba.c:1292
 #, c-format
 msgid "could not create socket for Ident connection: %m"
 msgstr "не получилось создать сокет для Ident-подсоединения: %m"
 
-#: libpq/hba.c:1303
+#: libpq/hba.c:1308
 #, c-format
 msgid "could not bind to local address \"%s\": %m"
 msgstr ""
 
-#: libpq/hba.c:1315
+#: libpq/hba.c:1320
 #, c-format
 msgid "could not connect to Ident server at address \"%s\", port %s: %m"
 msgstr "не получилось подсоединиться к Ident-серверу с адресом \"%s\", порт %s: %m"
 
-#: libpq/hba.c:1335
+#: libpq/hba.c:1340
 #, c-format
 msgid "could not send query to Ident server at address \"%s\", port %s: %m"
 msgstr "не получилось отправить запрос к Ident-серверу с адресом \"%s\", порт %s: %m"
 
-#: libpq/hba.c:1350
+#: libpq/hba.c:1355
 #, c-format
 msgid "could not receive response from Ident server at address \"%s\", port %s: %m"
 msgstr ""
 
-#: libpq/hba.c:1391
-#: libpq/hba.c:1422
-#: libpq/hba.c:1490
+#: libpq/hba.c:1396
+#: libpq/hba.c:1427
+#: libpq/hba.c:1495
 #, c-format
 msgid "could not get peer credentials: %m"
 msgstr ""
 
-#: libpq/hba.c:1400
-#: libpq/hba.c:1431
-#: libpq/hba.c:1501
+#: libpq/hba.c:1405
+#: libpq/hba.c:1436
+#: libpq/hba.c:1506
 #, c-format
 msgid "local user with ID %d does not exist"
 msgstr "локальный пользователь с ID %d не существует"
 
-#: libpq/hba.c:1513
+#: libpq/hba.c:1518
 msgid "Ident authentication is not supported on local connections on this platform"
 msgstr ""
 
@@ -7375,7 +7377,7 @@ msgstr ""
 
 #: utils/adt/int.c:126
 msgid "int2vector has too many elements"
-msgstr ""
+msgstr "int2vector содержит слишком много элементов"
 
 #: utils/adt/int8.c:88
 #: utils/adt/int8.c:116
@@ -8157,22 +8159,22 @@ msgstr "неверное ID пользователя: %d"
 #: utils/init/miscinit.c:494
 #, c-format
 msgid "could not create lock file \"%s\": %m"
-msgstr ""
+msgstr "не удалось создать файл блокировки \"%s\": %m"
 
 #: utils/init/miscinit.c:508
 #, c-format
 msgid "could not open lock file \"%s\": %m"
-msgstr ""
+msgstr "не удалось открыть файл блокировки \"%s\": %m"
 
 #: utils/init/miscinit.c:514
 #, c-format
 msgid "could not read lock file \"%s\": %m"
-msgstr ""
+msgstr "не удалось считать файл блокировки \"%s\": %m"
 
 #: utils/init/miscinit.c:545
 #, c-format
 msgid "lock file \"%s\" already exists"
-msgstr ""
+msgstr "файл блокировки \"%s\" уже существует"
 
 #: utils/init/miscinit.c:548
 #, c-format
@@ -8197,7 +8199,7 @@ msgstr ""
 #: utils/init/miscinit.c:600
 #, c-format
 msgid "could not remove old lock file \"%s\": %m"
-msgstr ""
+msgstr "не удалось удалить старый файл блокировки \"%s\": %m"
 
 #: utils/init/miscinit.c:602
 msgid "The file seems accidentally left over, but it could not be removed. Please remove the file by hand and try again."
@@ -8206,7 +8208,7 @@ msgstr ""
 #: utils/init/miscinit.c:624
 #, c-format
 msgid "could not write lock file \"%s\": %m"
-msgstr ""
+msgstr "не удалось записать файл блокировки \"%s\": %m"
 
 #: utils/init/miscinit.c:735
 #: utils/misc/guc.c:3911
@@ -8241,7 +8243,7 @@ msgstr "Директория данных была инициализирована с помощью PostgreSQL, версии %ld
 
 #: utils/init/miscinit.c:887
 msgid "invalid list syntax for parameter \"preload_libraries\""
-msgstr ""
+msgstr "неверный синтаксис для параметра \"preload_libraries\""
 
 #: utils/init/miscinit.c:932
 #, c-format
