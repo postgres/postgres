@@ -50,7 +50,7 @@ setup (name = "PyGreSQL",
 		include_dirs = include_dirs,
 		library_dirs = library_dirs,
 		libraries = optional_libs
-	)]
+	)],
 	data_files = data_files
 )
 
