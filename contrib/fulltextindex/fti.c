@@ -70,9 +70,11 @@ bool new_tuple = false;
 
 /* THIS LIST MUST BE IN SORTED ORDER, A BINARY SEARCH IS USED!!!! */
 char *StopWords[] = { 		/* list of words to skip in indexing */
+#ifdef SAMPLE_STOP_WORDS
 	"no"
 	"the",
 	"yes",
+#endif
 };
 
 /* stuff for caching query-plans, stolen from contrib/spi/\*.c */
@@ -331,6 +333,9 @@ is_stopword(char *text)
 	StopLow = &StopWords[0];		/* initialize stuff for binary search */
 	StopHigh = endof(StopWords);
 
+	if (lengthof(StopWords) == 0)
+		return false;
+		
     while (StopLow <= StopHigh)
     {
         StopMiddle = StopLow + (StopHigh - StopLow) / 2;

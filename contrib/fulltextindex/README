@@ -27,6 +27,9 @@ the fti-table and the orig-table, we can get the actual rows we want
 (this can also be done by using subselects, and maybe there're other
 ways too).
 
+The trigger code also allows an array called StopWords, that prevents
+certain words from being indexed.
+
 As an example we take the previous query, where we assume we have all
 sub-strings in the table 'cds-fti':
 
