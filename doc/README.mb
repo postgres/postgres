@@ -1,4 +1,4 @@
-postgresql 6.4 multi-byte (MB) support README	  Jul 22 1998
+postgresql 6.4 multi-byte (MB) support README	  Dec 16 1998
 
 						Tatsuo Ishii
 						t-ishii@sra.co.jp
@@ -11,7 +11,7 @@ multi-byte character sets such as EUC(Extended Unix Code), Unicode and
 Mule internal code. With the MB enabled you can use multi-byte
 character sets in regexp ,LIKE and some functions. The encoding system
 chosen is determined when initializing your PostgreSQL installation
-using initdb(1). Note that this can be overrided when creating a
+using initdb(1). Note that this can be overridden when creating a
 database using createdb(1) or create database SQL command. So you
 could have multiple databases with different encoding system.
 
@@ -23,16 +23,13 @@ me know if you find any problem while using 8-bit characters)
 
 1. How to use
 
-create src/Makefile.custom with a line including:
-
-	MB=encoding_system
-
-or run configure with the mb option:
+run configure with the mb option:
 
 	% configure --with-mb=encoding_system
 
 where encoding_system is one of:
 
+	SQL_ASCII		ASCII
 	EUC_JP			Japanese EUC
 	EUC_CN			Chinese EUC
 	EUC_KR			Korean EUC
@@ -46,11 +43,6 @@ where encoding_system is one of:
 	LATIN5			ISO 8859-5 English and some European languages
 
 Example:
-
-	% cat Makefile.custom
-	MB=EUC_JP
-
-	or
 
 	% configure --with-mb=EUC_JP
 
@@ -78,6 +70,31 @@ another way to accomplish this is to use a SQL command:
 
 	CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
 
+The encoding for a database is represented as "encoding" column in the
+pg_database system catalog.
+
+	datname      |datdba|encoding|datpath      
+	-------------+------+--------+-------------
+	template1    |  1739|       1|template1    
+	postgres     |  1739|       0|postgres     
+	euc_jp       |  1739|       1|euc_jp       
+	euc_kr       |  1739|       3|euc_kr       
+	euc_cn       |  1739|       2|euc_cn       
+	unicode      |  1739|       5|unicode      
+	mule_internal|  1739|       6|mule_internal
+
+A number in the encoding column is "encoding id" and can be translated
+to the encoding name using pg_encoding command.
+
+	$ pg_encoding 1
+	EUC_JP
+
+If an argument to pg_encoding is not a number, then it is regarded as
+an encoding name and pg_encoding will return the encoding id.
+
+	$ pg_encoding EUC_JP
+	1
+
 3. PGCLIENTENCODING
 
 If an environment variable PGCLIENTENCODING is defined on the
@@ -90,6 +107,7 @@ backend would be translated to SJIS of course.
 
 Supported encodings for PGCLIENTENCODING are:
 
+	SQL_ASCII		ASCII
 	EUC_JP			Japanese EUC
 	SJIS			Yet another Japanese encoding
 	EUC_CN			Chinese EUC
@@ -150,6 +168,13 @@ Unicode: http://www.unicode.org/
 	UTF-8 is defined here.
 
 5. History
+
+Dec 15, 1998
+	* Bugs related to SQL_ASCII support fixed
+
+Nov 5, 1998
+	* 6.4 release. In this version, pg_database has "encoding"
+	  column that represents the database encoding
 
 Jul 22, 1998
 	* determine encoding at initdb/createdb rather than compile time
