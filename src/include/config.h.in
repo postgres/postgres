@@ -22,6 +22,15 @@
 #define MAXBACKENDS	(DEF_MAXBACKENDS > 1024 ? DEF_MAXBACKENDS : 1024)
 
 /*
+ * Default number of buffers in shared buffer pool (each of size BLCKSZ).
+ * This is just the default setting for the postmaster's -B switch.
+ * Perhaps it ought to be configurable from a configure switch.
+ * NOTE: default setting corresponds to the minimum number of buffers
+ * that postmaster.c will allow for the default MaxBackends value.
+ */
+#define DEF_NBUFFERS (DEF_MAXBACKENDS > 8 ? DEF_MAXBACKENDS * 2 : 16)
+
+/*
  * Size of a disk block --- currently, this limits the size of a tuple.
  * You can set it bigger if you need bigger tuples.
  */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.23 1999/05/25 16:10:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.24 1999/06/12 22:17:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ long	   *CurTraceBuf;
 #endif	 /* BMTRACE */
 int			ShowPinTrace = 0;
 
-int			NBuffers = NDBUFS;	/* NDBUFS defined in miscadmin.h */
+int			NBuffers = DEF_NBUFFERS;	/* default is set in config.h */
 int			Data_Descriptors;
 int			Free_List_Descriptor;
 int			Lookup_List_Descriptor;

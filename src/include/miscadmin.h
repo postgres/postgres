@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.39 1999/05/25 16:13:23 momjian Exp $
+ * $Id: miscadmin.h,v 1.40 1999/06/12 22:17:23 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -101,12 +101,6 @@ extern Oid	LastOidProcessed;	/* for query rewrite */
 
 /* #define MAX_QUERY_SIZE	 (BLCKSZ*2) */
 #define MAX_PARSE_BUFFER MAX_QUERY_SIZE
-
-/*
- *		default number of buffers in buffer pool
- *
- */
-#define NDBUFS 64
 
 /*****************************************************************************
  *	  pdir.h --																 *
