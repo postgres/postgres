@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.20 1998/08/22 04:24:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.21 1998/09/10 04:59:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ LIBPQ			= -L$(SRCDIR)/interfaces/libpq -lpq
 
 ifeq ($(PORTNAME), linux)
   install-shlib-dep	:= install-shlib
-  shlib		:= libpgtcl.so.1
+  shlib			:= libpgtcl.so.1
   CFLAGS		+= $(CFLAGS_SL)
   LDFLAGS_SL		= -shared
 endif
@@ -51,40 +51,49 @@ endif
 
 ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
-    shlib		:= libpgtcl.o
-    LD			:= shlicc
-    LDFLAGS_SL		+= -O -r
-    CFLAGS		+= $(CFLAGS_SL)
+    ifeq ($(LDSUFFIX), .so)
+      install-shlib-dep	:= install-shlib
+      shlib		:= libpgtcl.so
+      LD		:= shlicc
+      LDFLAGS_SL	+= -O -shared
+      CFLAGS		+= $(CFLAGS_SL)
+    endif
+    ifeq ($(LDSUFFIX), .o)
+      install-shlib-dep	:= install-shlib
+      shlib		:= libpgtcl.o
+      LD		:= shlicc
+      LDFLAGS_SL	+= -O -r
+      CFLAGS		+= $(CFLAGS_SL)
+    endif
   endif
 endif
 
 ifeq ($(PORTNAME), solaris)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text
+  LDFLAGS_SL		:= -G -z text
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), unixware)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text
+  LDFLAGS_SL		:= -G -z text
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text
+  LDFLAGS_SL		:= -G -z text
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), hpux)
-  install-shlib-dep := install-shlib
-  shlib := libpgtcl.sl
-  LDFLAGS_SL = -b
-  CFLAGS += $(CFLAGS_SL)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpgtcl.sl
+  LDFLAGS_SL		:= -b
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o

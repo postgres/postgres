@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.27 1998/08/22 04:24:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.28 1998/09/10 04:59:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,57 +41,66 @@ shlib :=
 install-shlib-dep :=
 
 ifeq ($(PORTNAME), linux)
-  install-shlib-dep := install-shlib
-  shlib := libpq.so.$(SO_MAJOR_VERSION)
-  LDFLAGS_SL = -shared -soname libpq.so.$(SO_MAJOR_VERSION)
-  CFLAGS += $(CFLAGS_SL)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpq.so.$(SO_MAJOR_VERSION)
+  LDFLAGS_SL		:= -shared -soname libpq.so.$(SO_MAJOR_VERSION)
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
-    install-shlib-dep := install-shlib
-    shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL = -x -Bshareable -Bforcearchive
-    CFLAGS += $(CFLAGS_SL)
+    install-shlib-dep	:= install-shlib
+    shlib		:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL		:= -x -Bshareable -Bforcearchive
+    CFLAGS		+= $(CFLAGS_SL)
   endif
 endif
 
 ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
-    install-shlib-dep := install-shlib
-    shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LD=shlicc
-    LDFLAGS_SL = -r -O
-    CFLAGS += $(CFLAGS_SL)
+    ifeq ($(LDSUFFIX), .so)
+      install-shlib-dep := install-shlib
+      shlib		:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LD		:= shlicc
+      LDFLAGS_SL	+= -O -shared
+      CFLAGS		+= $(CFLAGS_SL)
+    endif
+    ifeq ($(LDSUFFIX), .o)
+      install-shlib-dep	:= install-shlib
+      shlib		:= libpq.o.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LD		:=shlicc
+      LDFLAGS_SL 	+= -O -r
+      CFLAGS		+= $(CFLAGS_SL)
+    endif
   endif
 endif
 
 ifeq ($(PORTNAME), solaris)
-  install-shlib-dep := install-shlib
-  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -G -z text
-  CFLAGS += $(CFLAGS_SL)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL		:= -G -z text
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), unixware)
-  install-shlib-dep := install-shlib
-  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -G -z text
-  CFLAGS += $(CFLAGS_SL)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL		:= -G -z text
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
-  install-shlib-dep := install-shlib
-  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -G -z text
-  CFLAGS += $(CFLAGS_SL)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL		:= -G -z text
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), hpux)
-  install-shlib-dep := install-shlib
-  shlib := libpq.sl
-  LDFLAGS_SL = -b
-  CFLAGS += $(CFLAGS_SL)
+  install-shlib-dep	:= install-shlib
+  shlib			:= libpq.sl
+  LDFLAGS_SL		:= -b
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 all: libpq.a $(shlib)
