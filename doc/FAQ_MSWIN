@@ -1,7 +1,7 @@
 How to install PostgreSQL on Windows
 ====================================
 
-$Date: 2003/11/28 20:22:18 $
+$Date: 2004/07/20 22:56:40 $
 
 PostgreSQL requires the appropriate subset of Cygwin DLLs to be
 installed in order that it functions under Windows.
@@ -28,8 +28,8 @@ adjust these instructions accordingly.
 3.  Once the download and install process is complete, open a Cygwin
     shell and do the following for a basic installation:
 
-    3a.  Start ipc-daemon2 for shared memory support.  To do this,
-         enter the command "ipc-daemon2 &".  This program
+    3a.  Start cygserver for shared memory support.  To do this,
+         enter the command "/usr/sbin/cygserver &".  This program
          needs to be running anytime you start the PostgreSQL server
          (postmaster) or initialize a database (initdb).
 
@@ -53,7 +53,7 @@ adjust these instructions accordingly.
 
 4.  You are now running a PostgreSQL server on your Windows machine.
 
-5.  It is possible to install ipc-daemon2 and the postmaster as
+5.  It is possible to install cygserver and the postmaster as
     Windows NT services.  For information on how to do this, please
     refer to the README document included with Cygwin PostgreSQL.  It
     is installed in the /usr/share/doc/Cygwin directory.
@@ -94,5 +94,9 @@ Known issues
        make MAX_CONNECTIONS=5 check
 
     (On some systems you can have up to about 10 simultaneous connections).
+
+3.  The default cygserver configuration may need to be changed (e.g.,
+    increase SEMMNS) to prevent PostgreSQL from failing due to a lack of
+    system resources.
 
 Problem reports can be sent to pgsql-cygwin@postgresql.org.
