@@ -7,18 +7,24 @@
 #
 # This file controls: which hosts are allowed to connect, how clients
 # are authenticated, which PostgreSQL user names they can use, which
-# databases they can access.  Records take one of three forms:
+# databases they can access.  Records take one of five forms:
 #
 # local    DATABASE  USER  METHOD  [OPTION]
-# host     DATABASE  USER  IP-ADDRESS  IP-MASK  METHOD  [OPTION]
-# hostssl  DATABASE  USER  IP-ADDRESS  IP-MASK  METHOD  [OPTION]
+# host     DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
+# hostssl  DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
+# host     DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
+# hostssl  DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
 #
 # (The uppercase quantities should be replaced by actual values.)
 # DATABASE can be "all", "sameuser", "samegroup", a database name (or
 # a comma-separated list thereof), or a file name prefixed with "@".
 # USER can be "all", an actual user name or a group name prefixed with
 # "+" or a list containing either.  IP-ADDRESS and IP-MASK specify the
-# set of hosts the record matches.  METHOD can be "trust", "reject",
+# set of hosts the record matches.  CIDR-MASK is an integer between 0
+# and 32 (IPv6) or 128(IPv6) inclusive, that specifies the number of
+# significant bits in the mask, so an IPv4 CIDR-MASK of 8 is equivalent
+# to an IP-MASK of 255.0.0.0, and an IPv6 CIDR-MASK of 64 is equivalent
+# to an IP-MASK of ffff:ffff:ffff:ffff::. METHOD can be "trust", "reject",
 # "md5", "crypt", "password", "krb4", "krb5", "ident", or "pam".  Note
 # that "password" uses clear-text passwords; "md5" is preferred for
 # encrypted passwords.  OPTION is the ident map or the name of the PAM
