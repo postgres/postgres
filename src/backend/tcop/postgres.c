@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.132 1999/10/08 04:28:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.133 1999/10/08 05:27:14 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1023,19 +1023,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				if (DebugLvl >= 2)
 					DebugPrintQuery = true;
 				if (DebugLvl >= 3)
-					DebugPrintQuery = true ;
-				if (DebugLvl >= 4)
-				{
 					DebugPrintParse = true;
+				if (DebugLvl >= 4)
 					DebugPrintPlan = true;
-					DebugPrintRewrittenParsetree = true;
-				}
 				if (DebugLvl >= 5)
-				{
-					DebugPPrintParse = true;
-					DebugPPrintPlan = true;
 					DebugPPrintRewrittenParsetree = true;
-				}
 				break;
 
 			case 'E':
@@ -1508,7 +1500,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.132 $ $Date: 1999/10/08 04:28:45 $\n");
+		puts("$Revision: 1.133 $ $Date: 1999/10/08 05:27:14 $\n");
 	}
 
 	/*
