@@ -9,12 +9,12 @@
  *	signals that the backend can recognize.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/kill.c,v 1.1 2004/05/27 13:08:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/kill.c,v 1.2 2004/06/24 18:53:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "c.h"
 
 #ifdef WIN32
 /* signal sending */

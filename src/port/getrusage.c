@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.4 2003/11/29 19:52:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.5 2004/06/24 18:53:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "postgres.h"
+#include "c.h"
 #include "rusagestub.h"
 
 /* This code works on:
