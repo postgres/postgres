@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.7 2002/09/23 21:10:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.8 2002/09/23 23:20:38 tgl Exp $ -->
 
 <chapter id="pygresql">
  <title><application>PyGreSQL</application> - <application>Python</application> Interface</title>
@@ -4094,7 +4094,7 @@ seek(<parameter>offset</parameter>, <parameter>whence</parameter>)
       <para>
         <function>seek()</function> method allows to move the cursor position
         in the large object. The whence parameter can be obtained by OR-ing the constants defined in the 
-        <literal>pg</literal> module (<literal>SEEK_SET</>, <>SEEK_CUR</>, <>SEEK_END</literal>).
+        <literal>pg</literal> module (<literal>SEEK_SET</>, <literal>SEEK_CUR</>, <literal>SEEK_END</literal>).
       </para>
     </refsect1>
 
