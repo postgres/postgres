@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.63 2003/07/27 04:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.64 2003/07/30 19:48:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,7 +316,7 @@ numeric_in(PG_FUNCTION_ARGS)
 	/*
 	 * Check for NaN
 	 */
-	if (strcmp(str, "NaN") == 0)
+	if (strcasecmp(str, "NaN") == 0)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
@@ -1239,34 +1239,15 @@ numeric_smaller(PG_FUNCTION_ARGS)
 {
 	Numeric		num1 = PG_GETARG_NUMERIC(0);
 	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	NumericVar	arg1;
-	NumericVar	arg2;
-	Numeric		res;
 
 	/*
-	 * Handle NaN
+	 * Use cmp_numerics so that this will agree with the comparison
+	 * operators, particularly as regards comparisons involving NaN.
 	 */
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		PG_RETURN_NUMERIC(make_result(&const_nan));
-
-	/*
-	 * Unpack the values, and decide which is the smaller one
-	 */
-	init_var(&arg1);
-	init_var(&arg2);
-
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
-
-	if (cmp_var(&arg1, &arg2) <= 0)
-		res = make_result(&arg1);
+	if (cmp_numerics(num1, num2) < 0)
+		PG_RETURN_NUMERIC(num1);
 	else
-		res = make_result(&arg2);
-
-	free_var(&arg1);
-	free_var(&arg2);
-
-	PG_RETURN_NUMERIC(res);
+		PG_RETURN_NUMERIC(num2);
 }
 
 
@@ -1280,34 +1261,15 @@ numeric_larger(PG_FUNCTION_ARGS)
 {
 	Numeric		num1 = PG_GETARG_NUMERIC(0);
 	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	NumericVar	arg1;
-	NumericVar	arg2;
-	Numeric		res;
 
 	/*
-	 * Handle NaN
+	 * Use cmp_numerics so that this will agree with the comparison
+	 * operators, particularly as regards comparisons involving NaN.
 	 */
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		PG_RETURN_NUMERIC(make_result(&const_nan));
-
-	/*
-	 * Unpack the values, and decide which is the larger one
-	 */
-	init_var(&arg1);
-	init_var(&arg2);
-
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
-
-	if (cmp_var(&arg1, &arg2) >= 0)
-		res = make_result(&arg1);
+	if (cmp_numerics(num1, num2) > 0)
+		PG_RETURN_NUMERIC(num1);
 	else
-		res = make_result(&arg2);
-
-	free_var(&arg1);
-	free_var(&arg2);
-
-	PG_RETURN_NUMERIC(res);
+		PG_RETURN_NUMERIC(num2);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.90 2003/07/27 04:53:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.91 2003/07/30 19:48:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,8 @@ int		extra_float_digits = 0;	/* Added to DBL_DIG or FLT_DIG */
 
 static void CheckFloat4Val(double val);
 static void CheckFloat8Val(double val);
+static int float4_cmp_internal(float4 a, float4 b);
+static int float8_cmp_internal(float8 a, float8 b);
 
 
 /*
@@ -413,7 +415,10 @@ float4larger(PG_FUNCTION_ARGS)
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 	float4		result;
 
-	result = ((arg1 > arg2) ? arg1 : arg2);
+	if (float4_cmp_internal(arg1, arg2) > 0)
+		result = arg1;
+	else
+		result = arg2;
 	PG_RETURN_FLOAT4(result);
 }
 
@@ -424,7 +429,10 @@ float4smaller(PG_FUNCTION_ARGS)
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 	float4		result;
 
-	result = ((arg1 < arg2) ? arg1 : arg2);
+	if (float4_cmp_internal(arg1, arg2) < 0)
+		result = arg1;
+	else
+		result = arg2;
 	PG_RETURN_FLOAT4(result);
 }
 
@@ -480,8 +488,10 @@ float8larger(PG_FUNCTION_ARGS)
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 	float8		result;
 
-	result = ((arg1 > arg2) ? arg1 : arg2);
-
+	if (float8_cmp_internal(arg1, arg2) > 0)
+		result = arg1;
+	else
+		result = arg2;
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -492,8 +502,10 @@ float8smaller(PG_FUNCTION_ARGS)
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 	float8		result;
 
-	result = ((arg1 < arg2) ? arg1 : arg2);
-
+	if (float8_cmp_internal(arg1, arg2) < 0)
+		result = arg1;
+	else
+		result = arg2;
 	PG_RETURN_FLOAT8(result);
 }
 
