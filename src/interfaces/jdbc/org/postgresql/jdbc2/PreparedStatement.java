@@ -41,8 +41,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 
         // We use ThreadLocal for SimpleDateFormat's because they are not that
         // thread safe, so each calling thread has its own object.
-        private ThreadLocal tl_df   = new ThreadLocal(); // setDate() SimpleDateFormat
-        private ThreadLocal tl_tsdf = new ThreadLocal(); // setTimestamp() SimpleDateFormat
+        private static ThreadLocal tl_df   = new ThreadLocal(); // setDate() SimpleDateFormat
+        private static ThreadLocal tl_tsdf = new ThreadLocal(); // setTimestamp() SimpleDateFormat
 
 	/**
 	 * Constructor for the PreparedStatement class.
@@ -64,6 +64,15 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 
 		this.sql = sql;
 		this.connection = connection;
+	
+		// might just as well create it here, so we don't take the hit later
+
+            	SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
+            	tl_df.set(df);
+		
+            	df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            	tl_tsdf.set(df);
+          
 		for (i = 0; i < sql.length(); ++i)
 		{
 			int c = sql.charAt(i);
@@ -89,10 +98,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
         /**
          * New in 7.1 - overides Statement.close() to dispose of a few local objects
          */
-        public void close() throws SQLException {
+        public void close() throws SQLException
+	 {
           // free the ThreadLocal caches
           tl_df.set(null);
-
+	  tl_tsdf.set(null);
           super.close();
         }
 
@@ -333,10 +343,6 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
           SimpleDateFormat df = (SimpleDateFormat) tl_df.get();
-          if(df==null) {
-            df = new SimpleDateFormat("''yyyy-MM-dd''");
-            tl_df.set(df);
-          }
 
 	  set(parameterIndex, df.format(x));
 
@@ -376,10 +382,6 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
         {
           SimpleDateFormat df = (SimpleDateFormat) tl_tsdf.get();
-          if(df==null) {
-            df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            tl_tsdf.set(df);
-          }
           df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
           // Use the shared StringBuffer
