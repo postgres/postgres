@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.76 1999/03/03 00:02:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.77 1999/04/19 01:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,7 +470,10 @@ _copyAgg(Agg *from)
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	newnode->aggs = get_agg_tlist_references(newnode);
+	/* Cannot copy agg list; it must be rebuilt to point to subnodes of
+	 * new node.
+	 */ 
+	set_agg_tlist_references(newnode);
 
 	return newnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.40 1999/02/15 01:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.41 1999/04/19 01:43:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,32 +695,48 @@ OperandIsInner(Node *opnd, int inner_relid)
 
 /*---------------------------------------------------------
  *
- * get_agg_tlist_references -
- *	  generates the target list of an Agg node so that it points to
+ * set_agg_tlist_references -
+ *	  This routine has several responsibilities:
+ *	* Update the target list of an Agg node so that it points to
  *	  the tuples returned by its left tree subplan.
+ *	* If there is a qual list (from a HAVING clause), similarly update
+ *	  vars in it to point to the subplan target list.
+ *	* Generate the aggNode->aggs list of Aggref nodes contained in the Agg.
  *
- *	We now also generate a linked list of Aggref pointers for Agg.
- *
+ * The return value is TRUE if all qual clauses include Aggrefs, or FALSE
+ * if any do not (caller may choose to raise an error condition).
  */
-List *
-get_agg_tlist_references(Agg *aggNode)
+bool
+set_agg_tlist_references(Agg *aggNode)
 {
-	List	   *aggTargetList;
 	List	   *subplanTargetList;
 	List	   *tl;
-	List	   *aggreg_list = NIL;
+	List	   *ql;
+	bool		all_quals_ok;
 
-	aggTargetList = aggNode->plan.targetlist;
 	subplanTargetList = aggNode->plan.lefttree->targetlist;
+	aggNode->aggs = NIL;
 
-	foreach(tl, aggTargetList)
+	foreach(tl, aggNode->plan.targetlist)
 	{
 		TargetEntry *tle = lfirst(tl);
 
-		aggreg_list = nconc(
-		  replace_agg_clause(tle->expr, subplanTargetList), aggreg_list);
+		aggNode->aggs = nconc(replace_agg_clause(tle->expr, subplanTargetList),
+							  aggNode->aggs);
 	}
-	return aggreg_list;
+
+	all_quals_ok = true;
+	foreach(ql, aggNode->plan.qual)
+	{
+		Node *qual = lfirst(ql);
+		List *qualaggs = replace_agg_clause(qual, subplanTargetList);
+		if (qualaggs == NIL)
+			all_quals_ok = false; /* this qual clause has no agg functions! */
+		else
+			aggNode->aggs = nconc(qualaggs, aggNode->aggs);
+	}
+
+	return all_quals_ok;
 }
 
 static List *
@@ -740,30 +756,49 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 
 		/*
 		 * Change the varno & varattno fields of the var node.
+		 * Note we assume match_varid() will succeed ...
 		 *
 		 */
 		((Var *) clause)->varattno = subplanVar->resdom->resno;
 
 		return NIL;
 	}
-	else if (is_funcclause(clause))
+	else if (is_subplan(clause))
 	{
+		SubLink *sublink = ((SubPlan *) ((Expr *) clause)->oper)->sublink;
 
 		/*
-		 * This is a function. Recursively call this routine for its
-		 * arguments...
+		 * Only the lefthand side of the sublink should be checked for
+		 * aggregates to be attached to the aggs list
+		 */
+		foreach(t, sublink->lefthand)
+			agg_list = nconc(replace_agg_clause(lfirst(t), subplanTargetList),
+							 agg_list);
+		/* The first argument of ...->oper has also to be checked */
+		foreach(t, sublink->oper)
+			agg_list = nconc(replace_agg_clause(lfirst(t), subplanTargetList),
+							 agg_list);
+		return agg_list;
+	}
+	else if (IsA(clause, Expr))
+	{
+		/*
+		 * Recursively scan the arguments of an expression.
+		 * NOTE: this must come after is_subplan() case since
+		 * subplan is a kind of Expr node.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 		{
-			agg_list = nconc(agg_list,
-					   replace_agg_clause(lfirst(t), subplanTargetList));
+			agg_list = nconc(replace_agg_clause(lfirst(t), subplanTargetList),
+							 agg_list);
 		}
 		return agg_list;
 	}
 	else if (IsA(clause, Aggref))
 	{
 		return lcons(clause,
-					 replace_agg_clause(((Aggref *) clause)->target, subplanTargetList));
+					 replace_agg_clause(((Aggref *) clause)->target,
+										subplanTargetList));
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -774,53 +809,30 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		 * expression and its index expression...
 		 */
 		foreach(t, aref->refupperindexpr)
-		{
-			agg_list = nconc(agg_list,
-					   replace_agg_clause(lfirst(t), subplanTargetList));
-		}
+			agg_list = nconc(replace_agg_clause(lfirst(t), subplanTargetList),
+							 agg_list);
 		foreach(t, aref->reflowerindexpr)
-		{
-			agg_list = nconc(agg_list,
-					   replace_agg_clause(lfirst(t), subplanTargetList));
-		}
-		agg_list = nconc(agg_list,
-				   replace_agg_clause(aref->refexpr, subplanTargetList));
-		agg_list = nconc(agg_list,
-			  replace_agg_clause(aref->refassgnexpr, subplanTargetList));
-
+			agg_list = nconc(replace_agg_clause(lfirst(t), subplanTargetList),
+							 agg_list);
+		agg_list = nconc(replace_agg_clause(aref->refexpr, subplanTargetList),
+						 agg_list);
+		agg_list = nconc(replace_agg_clause(aref->refassgnexpr,
+											subplanTargetList),
+						 agg_list);
 		return agg_list;
 	}
-	else if (is_opclause(clause))
-	{
-
-		/*
-		 * This is an operator. Recursively call this routine for both its
-		 * left and right operands
-		 */
-		Node	   *left = (Node *) get_leftop((Expr *) clause);
-		Node	   *right = (Node *) get_rightop((Expr *) clause);
-
-		if (left != (Node *) NULL)
-			agg_list = nconc(agg_list,
-							 replace_agg_clause(left, subplanTargetList));
-		if (right != (Node *) NULL)
-			agg_list = nconc(agg_list,
-						   replace_agg_clause(right, subplanTargetList));
-
-		return agg_list;
-	}
-	else if (IsA(clause, Param) ||IsA(clause, Const))
+	else if (IsA(clause, Param) || IsA(clause, Const))
 	{
 		/* do nothing! */
 		return NIL;
 	}
 	else
 	{
-
 		/*
 		 * Ooops! we can not handle that!
 		 */
-		elog(ERROR, "replace_agg_clause: Can not handle this tlist!\n");
+		elog(ERROR, "replace_agg_clause: Cannot handle node type %d",
+			 nodeTag(clause));
 		return NIL;
 	}
 }
@@ -911,33 +923,31 @@ del_agg_clause(Node *clause)
 	return NULL;
 }
 
-/***S*H***/
-/* check_having_qual_for_vars takes the the havingQual and the actual targetlist as arguments
- * and recursively scans the havingQual for attributes that are not included in the targetlist
- * yet. Attributes contained in the havingQual but not in the targetlist show up with queries
- * like:
- * SELECT sid
- * FROM part
- * GROUP BY sid
- * HAVING MIN(pid) > 1;  (pid is used but never selected for!!!).
- * To be able to handle queries like that correctly we have to extend the actual targetlist
- *	(which will be the one used for the GROUP node later on) by these attributes. */
+/*
+ * check_having_qual_for_vars takes the havingQual and the actual targetlist
+ * as arguments and recursively scans the havingQual for attributes that are
+ * not included in the targetlist yet.  This will occur with queries like:
+ *
+ * SELECT sid FROM part GROUP BY sid HAVING MIN(pid) > 1;
+ *
+ * To be able to handle queries like that correctly we have to extend the
+ * actual targetlist (which will be the one used for the GROUP node later on)
+ * by these attributes.  The return value is the extended targetlist.
+ */
 List *
 check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 {
 	List	   *t;
 
-
 	if (IsA(clause, Var))
 	{
 		RelOptInfo	tmp_rel;
 
-
-		tmp_rel.targetlist = targetlist_so_far;
-
 		/*
 		 * Ha! A Var node!
 		 */
+
+		tmp_rel.targetlist = targetlist_so_far;
 
 		/* Check if the VAR is already contained in the targetlist */
 		if (tlist_member((Var *) clause, (List *) targetlist_so_far) == NULL)
@@ -945,14 +955,10 @@ check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 
 		return tmp_rel.targetlist;
 	}
-
-	else if (is_funcclause(clause) || not_clause(clause) ||
-			 or_clause(clause) || and_clause(clause))
+	else if (IsA(clause, Expr) && ! is_subplan(clause))
 	{
-
 		/*
-		 * This is a function. Recursively call this routine for its
-		 * arguments...
+		 * Recursively scan the arguments of an expression.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 			targetlist_so_far = check_having_qual_for_vars(lfirst(t), targetlist_so_far);
@@ -980,125 +986,105 @@ check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 
 		return targetlist_so_far;
 	}
-	else if (is_opclause(clause))
-	{
-
-		/*
-		 * This is an operator. Recursively call this routine for both its
-		 * left and right operands
-		 */
-		Node	   *left = (Node *) get_leftop((Expr *) clause);
-		Node	   *right = (Node *) get_rightop((Expr *) clause);
-
-		if (left != (Node *) NULL)
-			targetlist_so_far = check_having_qual_for_vars(left, targetlist_so_far);
-		if (right != (Node *) NULL)
-			targetlist_so_far = check_having_qual_for_vars(right, targetlist_so_far);
-
-		return targetlist_so_far;
-	}
-	else if (IsA(clause, Param) ||IsA(clause, Const))
+	else if (IsA(clause, Param) || IsA(clause, Const))
 	{
 		/* do nothing! */
 		return targetlist_so_far;
 	}
-
 	/*
 	 * If we get to a sublink, then we only have to check the lefthand
-	 * side of the expression to see if there are any additional VARs
+	 * side of the expression to see if there are any additional VARs.
+	 * QUESTION: can this code actually be hit?
 	 */
 	else if (IsA(clause, SubLink))
 	{
-		foreach(t, ((List *) ((SubLink *) clause)->lefthand))
+		foreach(t, ((SubLink *) clause)->lefthand)
 			targetlist_so_far = check_having_qual_for_vars(lfirst(t), targetlist_so_far);
 		return targetlist_so_far;
 	}
 	else
 	{
-
 		/*
 		 * Ooops! we can not handle that!
 		 */
-		elog(ERROR, "check_having_qual_for_vars: Can not handle this having_qual! %d\n",
+		elog(ERROR, "check_having_qual_for_vars: Cannot handle node type %d",
 			 nodeTag(clause));
 		return NIL;
 	}
 }
 
-/* check_having_qual_for_aggs takes the havingQual, the targetlist and the groupClause
- * as arguments and scans the havingQual recursively for aggregates. If an aggregate is
- * found it is attached to a list and returned by the function. (All the returned lists
- * are concenated to result_plan->aggs in planner.c:union_planner() */
-List *
-check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupClause)
+/*
+ * check_having_for_ungrouped_vars takes the havingQual and the list of
+ * GROUP BY clauses and checks for subplans in the havingQual that are being
+ * passed ungrouped variables as parameters.  In other contexts, ungrouped
+ * vars in the havingQual will be detected by the parser (see parse_agg.c,
+ * exprIsAggOrGroupCol()).  But that routine currently does not check subplans,
+ * because the necessary info is not computed until the planner runs.
+ * This ought to be cleaned up someday.
+ *
+ * NOTE: the havingClause has been cnf-ified, so AND subclauses have been
+ * turned into a plain List.  Thus, this routine has to cope with List nodes
+ * where the routine above does not...
+ */
+
+void
+check_having_for_ungrouped_vars(Node *clause, List *groupClause)
 {
-	List	   *t,
-			   *l1;
-	List	   *agg_list = NIL;
-
-	int			contained_in_group_clause = 0;
-
+	List	   *t;
 
 	if (IsA(clause, Var))
 	{
-		TargetEntry *subplanVar;
-
-		/*
-		 * Ha! A Var node!
+		/* Ignore vars elsewhere in the having clause, since the
+		 * parser already checked 'em.
 		 */
-		subplanVar = match_varid((Var *) clause, subplanTargetList);
-
-		/*
-		 * Change the varno & varattno fields of the var node to point to
-		 * the resdom->resno fields of the subplan (lefttree)
-		 */
-		((Var *) clause)->varattno = subplanVar->resdom->resno;
-
-		return NIL;
-
 	}
-	/***S*H***/
-	else if (is_funcclause(clause) || not_clause(clause) ||
-			 or_clause(clause) || and_clause(clause))
+	else if (is_subplan(clause))
 	{
-		int			new_length = 0,
-					old_length = 0;
-
 		/*
-		 * This is a function. Recursively call this routine for its
-		 * arguments... (i.e. for AND, OR, ... clauses!)
+		 * The args list of the subplan node represents attributes from outside
+		 * passed into the sublink.
 		 */
 		foreach(t, ((Expr *) clause)->args)
 		{
-			old_length = length((List *) agg_list);
+			bool contained_in_group_clause = false;
+			List	   *gl;
 
-			agg_list = nconc(agg_list,
-				 check_having_qual_for_aggs(lfirst(t), subplanTargetList,
-											groupClause));
-
-			/*
-			 * The arguments of OR or AND clauses are comparisons or
-			 * relations and because we are in the havingQual there must
-			 * be at least one operand using an aggregate function. If so,
-			 * we will find it and the length of the agg_list will be
-			 * increased after the above call to
-			 * check_having_qual_for_aggs. If there are no aggregates
-			 * used, the query could have been formulated using the
-			 * 'where' clause
-			 */
-			if (((new_length = length((List *) agg_list)) == old_length) || (new_length == 0))
+			foreach(gl, groupClause)
 			{
-				elog(ERROR, "This could have been done in a where clause!!");
-				return NIL;
+				if (var_equal(lfirst(t),
+							  get_expr(((GroupClause *) lfirst(gl))->entry)))
+				{
+					contained_in_group_clause = true;
+					break;
+				}
 			}
+
+			if (!contained_in_group_clause)
+				elog(ERROR, "Sub-SELECT in HAVING clause must use only GROUPed attributes from outer SELECT");
 		}
-		return agg_list;
+	}
+	else if (IsA(clause, Expr))
+	{
+		/*
+		 * Recursively scan the arguments of an expression.
+		 * NOTE: this must come after is_subplan() case since
+		 * subplan is a kind of Expr node.
+		 */
+		foreach(t, ((Expr *) clause)->args)
+			check_having_for_ungrouped_vars(lfirst(t), groupClause);
+	}
+	else if (IsA(clause, List))
+	{
+		/*
+		 * Recursively scan AND subclauses (see NOTE above).
+		 */
+		foreach(t, ((List *) clause))
+			check_having_for_ungrouped_vars(lfirst(t), groupClause);
 	}
 	else if (IsA(clause, Aggref))
 	{
-		return lcons(clause,
-					 check_having_qual_for_aggs(((Aggref *) clause)->target, subplanTargetList,
-												groupClause));
+			check_having_for_ungrouped_vars(((Aggref *) clause)->target,
+											groupClause);
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -1109,130 +1095,22 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 		 * expression and its index expression...
 		 */
 		foreach(t, aref->refupperindexpr)
-		{
-			agg_list = nconc(agg_list,
-				 check_having_qual_for_aggs(lfirst(t), subplanTargetList,
-											groupClause));
-		}
+			check_having_for_ungrouped_vars(lfirst(t), groupClause);
 		foreach(t, aref->reflowerindexpr)
-		{
-			agg_list = nconc(agg_list,
-				 check_having_qual_for_aggs(lfirst(t), subplanTargetList,
-											groupClause));
-		}
-		agg_list = nconc(agg_list,
-			 check_having_qual_for_aggs(aref->refexpr, subplanTargetList,
-										groupClause));
-		agg_list = nconc(agg_list,
-		check_having_qual_for_aggs(aref->refassgnexpr, subplanTargetList,
-								   groupClause));
-
-		return agg_list;
+			check_having_for_ungrouped_vars(lfirst(t), groupClause);
+		check_having_for_ungrouped_vars(aref->refexpr, groupClause);
+		check_having_for_ungrouped_vars(aref->refassgnexpr, groupClause);
 	}
-	else if (is_opclause(clause))
-	{
-
-		/*
-		 * This is an operator. Recursively call this routine for both its
-		 * left and right operands
-		 */
-		Node	   *left = (Node *) get_leftop((Expr *) clause);
-		Node	   *right = (Node *) get_rightop((Expr *) clause);
-
-		if (left != (Node *) NULL)
-			agg_list = nconc(agg_list,
-					  check_having_qual_for_aggs(left, subplanTargetList,
-												 groupClause));
-		if (right != (Node *) NULL)
-			agg_list = nconc(agg_list,
-					 check_having_qual_for_aggs(right, subplanTargetList,
-												groupClause));
-
-		return agg_list;
-	}
-	else if (IsA(clause, Param) ||IsA(clause, Const))
+	else if (IsA(clause, Param) || IsA(clause, Const))
 	{
 		/* do nothing! */
-		return NIL;
-	}
-
-	/*
-	 * This is for Sublinks which show up as EXPR nodes. All the other
-	 * EXPR nodes (funcclauses, and_clauses, or_clauses) were caught above
-	 */
-	else if (IsA(clause, Expr))
-	{
-
-		/*
-		 * Only the lefthand side of the sublink has to be checked for
-		 * aggregates to be attached to result_plan->aggs (see
-		 * planner.c:union_planner() )
-		 */
-		foreach(t, ((List *) ((SubLink *) ((SubPlan *)
-						   ((Expr *) clause)->oper)->sublink)->lefthand))
-		{
-			agg_list = nconc(agg_list,
-					  check_having_qual_for_aggs(lfirst(t),
-										subplanTargetList, groupClause));
-		}
-
-		/* The first argument of ...->oper has also to be checked */
-		{
-			List	   *tmp_ptr;
-
-			foreach(tmp_ptr, ((SubLink *) ((SubPlan *)
-								((Expr *) clause)->oper)->sublink)->oper)
-			{
-				agg_list = nconc(agg_list,
-						 check_having_qual_for_aggs((Node *) lfirst(((Expr *)
-												 lfirst(tmp_ptr))->args),
-										subplanTargetList, groupClause));
-			}
-		}
-
-		/*
-		 * All arguments to the Sublink node are attributes from outside
-		 * used within the sublink. Here we have to check that only
-		 * attributes that is grouped for are used!
-		 */
-		foreach(t, ((Expr *) clause)->args)
-		{
-			contained_in_group_clause = 0;
-
-			foreach(l1, groupClause)
-			{
-				if (tlist_member(lfirst(t), lcons(((GroupClause *) lfirst(l1))->entry, NIL)) !=
-					NULL)
-					contained_in_group_clause = 1;
-			}
-
-			/*
-			 * If the use of the attribute is allowed (i.e. it is in the
-			 * groupClause) we have to adjust the varnos and varattnos
-			 */
-			if (contained_in_group_clause)
-			{
-				agg_list = nconc(agg_list,
-						  		 check_having_qual_for_aggs(lfirst(t),
-										subplanTargetList, groupClause));
-			}
-			else
-			{
-				elog(ERROR, "You must group by the attribute used from outside!");
-				return NIL;
-			}
-		}
-		return agg_list;
 	}
 	else
 	{
 		/*
 		 * Ooops! we can not handle that!
 		 */
-		elog(ERROR, "check_having_qual_for_aggs: Can not handle this having_qual! %d\n",
+		elog(ERROR, "check_having_for_ungrouped_vars: Cannot handle node type %d",
 			 nodeTag(clause));
-		return NIL;
 	}
 }
-
- /***S*H***//* End */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.22 1999/02/14 04:56:58 momjian Exp $
+ * $Id: planmain.h,v 1.23 1999/04/19 01:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +54,10 @@ extern List *join_references(List *clauses, List *outer_tlist,
 							 List *inner_tlist);
 extern List *index_outerjoin_references(List *inner_indxqual,
 						   List *outer_tlist, Index inner_relid);
-extern List *get_agg_tlist_references(Agg *aggNode);
-extern void set_agg_agglist_references(Agg *aggNode);
+extern bool set_agg_tlist_references(Agg *aggNode);
 extern void del_agg_tlist_references(List *tlist);
-extern List *check_having_qual_for_aggs(Node *clause,
-						   List *subplanTargetList, List *groupClause);
 extern List *check_having_qual_for_vars(Node *clause, List *targetlist_so_far);
+extern void check_having_for_ungrouped_vars(Node *clause, List *groupClause);
 extern void transformKeySetQuery(Query *origNode);
 
 #endif	 /* PLANMAIN_H */
