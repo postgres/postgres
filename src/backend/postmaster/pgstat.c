@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.42 2003/08/04 00:43:21 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.43 2003/08/12 16:21:18 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -156,7 +156,8 @@ pgstat_init(void)
 	/*
 	 * Force start of collector daemon if something to collect
 	 */
-	if (pgstat_collect_querystring || pgstat_collect_tuplelevel ||
+	if (pgstat_collect_querystring ||
+		pgstat_collect_tuplelevel ||
 		pgstat_collect_blocklevel)
 		pgstat_collect_startcollector = true;
 
@@ -536,15 +537,16 @@ void
 pgstat_report_tabstat(void)
 {
 	int			i;
-	int			n;
-	int			len;
 
-	if (!pgstat_collect_querystring && !pgstat_collect_tuplelevel &&
-		!pgstat_collect_blocklevel)
+	if (pgStatSock < 0 ||
+		!(pgstat_collect_querystring ||
+		  pgstat_collect_tuplelevel ||
+		  pgstat_collect_blocklevel))
+	{
+		/* Not reporting stats, so just flush whatever we have */
+		pgStatTabstatUsed = 0;
 		return;
-
-	if (pgStatSock < 0)
-		return;
+	}
 
 	/*
 	 * For each message buffer used during the last query set the header
@@ -552,18 +554,21 @@ pgstat_report_tabstat(void)
 	 */
 	for (i = 0; i < pgStatTabstatUsed; i++)
 	{
-		n = pgStatTabstatMessages[i]->m_nentries;
+		PgStat_MsgTabstat *tsmsg = pgStatTabstatMessages[i];
+		int			n;
+		int			len;
+
+		n = tsmsg->m_nentries;
 		len = offsetof(PgStat_MsgTabstat, m_entry[0]) +
 			n * sizeof(PgStat_TableEntry);
 
-		pgStatTabstatMessages[i]->m_xact_commit = pgStatXactCommit;
-		pgStatTabstatMessages[i]->m_xact_rollback = pgStatXactRollback;
+		tsmsg->m_xact_commit = pgStatXactCommit;
+		tsmsg->m_xact_rollback = pgStatXactRollback;
 		pgStatXactCommit = 0;
 		pgStatXactRollback = 0;
 
-		pgstat_setheader(&pgStatTabstatMessages[i]->m_hdr,
-						 PGSTAT_MTYPE_TABSTAT);
-		pgstat_send(pgStatTabstatMessages[i], len);
+		pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
+		pgstat_send(tsmsg, len);
 	}
 
 	pgStatTabstatUsed = 0;
@@ -802,6 +807,53 @@ pgstat_ping(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
+/*
+ * Create or enlarge the pgStatTabstatMessages array
+ */
+static bool
+more_tabstat_space(void)
+{
+	PgStat_MsgTabstat *newMessages;
+	PgStat_MsgTabstat **msgArray;
+	int			newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
+	int			i;
+
+	/* Create (another) quantum of message buffers */
+	newMessages = (PgStat_MsgTabstat *)
+		malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+	if (newMessages == NULL)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+		return false;
+	}
+
+	/* Create or enlarge the pointer array */
+	if (pgStatTabstatMessages == NULL)
+		msgArray = (PgStat_MsgTabstat **)
+			malloc(sizeof(PgStat_MsgTabstat *) * newAlloc);
+	else
+		msgArray = (PgStat_MsgTabstat **)
+			realloc(pgStatTabstatMessages,
+					sizeof(PgStat_MsgTabstat *) * newAlloc);
+	if (msgArray == NULL)
+	{
+		free(newMessages);
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+		return false;
+	}
+
+	MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+	for (i = 0; i < TABSTAT_QUANTUM; i++)
+		msgArray[pgStatTabstatAlloc + i] = newMessages++;
+	pgStatTabstatMessages = msgArray;
+	pgStatTabstatAlloc = newAlloc;
+
+	return true;
+}
 
 /* ----------
  * pgstat_initstats() -
@@ -815,8 +867,9 @@ pgstat_ping(void)
 void
 pgstat_initstats(PgStat_Info *stats, Relation rel)
 {
-	PgStat_TableEntry *useent;
 	Oid			rel_id = rel->rd_id;
+	PgStat_TableEntry *useent;
+	PgStat_MsgTabstat *tsmsg;
 	int			mb;
 	int			i;
 
@@ -828,44 +881,12 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	stats->heap_scan_counted = FALSE;
 	stats->index_scan_counted = FALSE;
 
-	if (pgStatSock < 0)
+	if (pgStatSock < 0 ||
+		!(pgstat_collect_tuplelevel ||
+		  pgstat_collect_blocklevel))
 	{
 		stats->no_stats = TRUE;
 		return;
-	}
-
-	/*
-	 * On the first of all calls create some message buffers.
-	 */
-	if (pgStatTabstatMessages == NULL)
-	{
-		PgStat_MsgTabstat *newMessages;
-		PgStat_MsgTabstat **msgArray;
-
-		newMessages = (PgStat_MsgTabstat *)
-			malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
-		if (newMessages == NULL)
-		{
-			ereport(LOG,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-			return;
-		}
-		msgArray = (PgStat_MsgTabstat **)
-			malloc(sizeof(PgStat_MsgTabstat *) * TABSTAT_QUANTUM);
-		if (msgArray == NULL)
-		{
-			free(newMessages);
-			ereport(LOG,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-			return;
-		}
-		MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
-		for (i = 0; i < TABSTAT_QUANTUM; i++)
-			msgArray[i] = newMessages++;
-		pgStatTabstatMessages = msgArray;
-		pgStatTabstatAlloc = TABSTAT_QUANTUM;
 	}
 
 	/*
@@ -873,24 +894,26 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	 */
 	for (mb = 0; mb < pgStatTabstatUsed; mb++)
 	{
-		for (i = 0; i < pgStatTabstatMessages[mb]->m_nentries; i++)
+		tsmsg = pgStatTabstatMessages[mb];
+
+		for (i = tsmsg->m_nentries; --i >= 0; )
 		{
-			if (pgStatTabstatMessages[mb]->m_entry[i].t_id == rel_id)
+			if (tsmsg->m_entry[i].t_id == rel_id)
 			{
-				stats->tabentry = (void *) &(pgStatTabstatMessages[mb]->m_entry[i]);
+				stats->tabentry = (void *) &(tsmsg->m_entry[i]);
 				return;
 			}
 		}
 
-		if (pgStatTabstatMessages[mb]->m_nentries >= PGSTAT_NUM_TABENTRIES)
+		if (tsmsg->m_nentries >= PGSTAT_NUM_TABENTRIES)
 			continue;
 
 		/*
 		 * Not found, but found a message buffer with an empty slot
 		 * instead. Fine, let's use this one.
 		 */
-		i = pgStatTabstatMessages[mb]->m_nentries++;
-		useent = &pgStatTabstatMessages[mb]->m_entry[i];
+		i = tsmsg->m_nentries++;
+		useent = &tsmsg->m_entry[i];
 		MemSet(useent, 0, sizeof(PgStat_TableEntry));
 		useent->t_id = rel_id;
 		stats->tabentry = (void *) useent;
@@ -902,43 +925,21 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	 */
 	if (pgStatTabstatUsed >= pgStatTabstatAlloc)
 	{
-		int			newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
-		PgStat_MsgTabstat *newMessages;
-		PgStat_MsgTabstat **msgArray;
-
-		newMessages = (PgStat_MsgTabstat *)
-			malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
-		if (newMessages == NULL)
+		if (!more_tabstat_space())
 		{
-			ereport(LOG,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
+			stats->no_stats = TRUE;
 			return;
 		}
-		msgArray = (PgStat_MsgTabstat **)
-			realloc(pgStatTabstatMessages,
-					sizeof(PgStat_MsgTabstat *) * newAlloc);
-		if (msgArray == NULL)
-		{
-			free(newMessages);
-			ereport(LOG,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-			return;
-		}
-		MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
-		for (i = 0; i < TABSTAT_QUANTUM; i++)
-			msgArray[pgStatTabstatAlloc + i] = newMessages++;
-		pgStatTabstatMessages = msgArray;
-		pgStatTabstatAlloc = newAlloc;
+		Assert(pgStatTabstatUsed < pgStatTabstatAlloc);
 	}
 
 	/*
 	 * Use the first entry of the next message buffer.
 	 */
 	mb = pgStatTabstatUsed++;
-	pgStatTabstatMessages[mb]->m_nentries = 1;
-	useent = &pgStatTabstatMessages[mb]->m_entry[0];
+	tsmsg = pgStatTabstatMessages[mb];
+	tsmsg->m_nentries = 1;
+	useent = &tsmsg->m_entry[0];
 	MemSet(useent, 0, sizeof(PgStat_TableEntry));
 	useent->t_id = rel_id;
 	stats->tabentry = (void *) useent;
@@ -954,8 +955,9 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 void
 pgstat_count_xact_commit(void)
 {
-	if (!pgstat_collect_querystring && !pgstat_collect_tuplelevel &&
-		!pgstat_collect_blocklevel)
+	if (!(pgstat_collect_querystring ||
+		  pgstat_collect_tuplelevel ||
+		  pgstat_collect_blocklevel))
 		return;
 
 	pgStatXactCommit++;
@@ -965,13 +967,15 @@ pgstat_count_xact_commit(void)
 	 * message buffer used without slots, causing the next report to tell
 	 * new xact-counters.
 	 */
-	if (pgStatTabstatAlloc > 0)
+	if (pgStatTabstatAlloc == 0)
 	{
-		if (pgStatTabstatUsed == 0)
-		{
-			pgStatTabstatUsed++;
-			pgStatTabstatMessages[0]->m_nentries = 0;
-		}
+		if (!more_tabstat_space())
+			return;
+	}
+	if (pgStatTabstatUsed == 0)
+	{
+		pgStatTabstatUsed++;
+		pgStatTabstatMessages[0]->m_nentries = 0;
 	}
 }
 
@@ -985,8 +989,9 @@ pgstat_count_xact_commit(void)
 void
 pgstat_count_xact_rollback(void)
 {
-	if (!pgstat_collect_querystring && !pgstat_collect_tuplelevel &&
-		!pgstat_collect_blocklevel)
+	if (!(pgstat_collect_querystring ||
+		  pgstat_collect_tuplelevel ||
+		  pgstat_collect_blocklevel))
 		return;
 
 	pgStatXactRollback++;
@@ -996,13 +1001,15 @@ pgstat_count_xact_rollback(void)
 	 * message buffer used without slots, causing the next report to tell
 	 * new xact-counters.
 	 */
-	if (pgStatTabstatAlloc > 0)
+	if (pgStatTabstatAlloc == 0)
 	{
-		if (pgStatTabstatUsed == 0)
-		{
-			pgStatTabstatUsed++;
-			pgStatTabstatMessages[0]->m_nentries = 0;
-		}
+		if (!more_tabstat_space())
+			return;
+	}
+	if (pgStatTabstatUsed == 0)
+	{
+		pgStatTabstatUsed++;
+		pgStatTabstatMessages[0]->m_nentries = 0;
 	}
 }
 
