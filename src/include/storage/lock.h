@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.22 1999/02/19 06:06:35 tgl Exp $
+ * $Id: lock.h,v 1.23 1999/02/21 01:41:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,14 +28,14 @@ typedef int MASK;
 /* ----------------------
  * The following defines are used to estimate how much shared
  * memory the lock manager is going to require.
+ * See LockShmemSize() in lock.c.
  *
- * MAXBACKENDS - The max number of concurrently running backends (config.h)
  * NLOCKS_PER_XACT - The number of unique locks acquired in a transaction
  * NLOCKENTS - The maximum number of lock entries in the lock table.
  * ----------------------
  */
-#define NLOCKS_PER_XACT	40
-#define NLOCKENTS		(NLOCKS_PER_XACT*MAXBACKENDS)
+#define NLOCKS_PER_XACT			40
+#define NLOCKENTS(maxBackends)	(NLOCKS_PER_XACT*(maxBackends))
 
 typedef int LOCKMODE;
 typedef int LOCKMETHOD;
@@ -242,7 +242,7 @@ extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			LOCKMODE lockmode);
 extern void GrantLock(LOCK *lock, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue);
-extern int	LockShmemSize(void);
+extern int	LockShmemSize(int maxBackends);
 extern bool LockingDisabled(void);
 extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock,
 			  bool skip_check);

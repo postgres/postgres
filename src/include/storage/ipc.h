@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.33 1999/02/19 06:06:33 tgl Exp $
+ * $Id: ipc.h,v 1.34 1999/02/21 01:41:47 tgl Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -96,7 +96,6 @@ extern void AttachSLockMemory(IPCKey key);
 
 #ifdef HAS_TEST_AND_SET
 
-#define NSLOCKS			2048
 #define NOLOCK			0
 #define SHAREDLOCK		1
 #define EXCLUSIVELOCK	2

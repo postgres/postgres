@@ -31,7 +31,7 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-pgport=<portnum> change default startup port "
 ac_help="$ac_help
-  --with-maxbackends=<n>  set maximum number of server processes "
+  --with-maxbackends=<n>  set default maximum number of server processes "
 ac_help="$ac_help
   --with-tcl              build Tcl interfaces and pgtclsh "
 ac_help="$ac_help
@@ -879,18 +879,18 @@ EOF
 fi
 
 
-echo $ac_n "checking setting MAXBACKENDS""... $ac_c" 1>&6
-echo "configure:884: checking setting MAXBACKENDS" >&5
+echo $ac_n "checking setting DEF_MAXBACKENDS""... $ac_c" 1>&6
+echo "configure:884: checking setting DEF_MAXBACKENDS" >&5
 # Check whether --with-maxbackends or --without-maxbackends was given.
 if test "${with_maxbackends+set}" = set; then
   withval="$with_maxbackends"
   cat >> confdefs.h <<EOF
-#define MAXBACKENDS ${withval}
+#define DEF_MAXBACKENDS ${withval}
 EOF
  echo "$ac_t""$with_maxbackends" 1>&6
 else
   cat >> confdefs.h <<EOF
-#define MAXBACKENDS 64
+#define DEF_MAXBACKENDS 64
 EOF
  echo "$ac_t""64" 1>&6
 

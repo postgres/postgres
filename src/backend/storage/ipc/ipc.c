@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.35 1999/02/13 23:18:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.36 1999/02/21 01:41:44 tgl Exp $
  *
  * NOTES
  *
@@ -677,9 +677,10 @@ struct ipcdummy
 	SLock	   *free;
 	int			unused;
 	slock_t		memlock;
-	SLock		slocks[NSLOCKS];
+	SLock		slocks[MAX_SPINS + 1];
 };
-static int	SLockMemorySize = sizeof(struct ipcdummy);
+
+#define	SLOCKMEMORYSIZE		sizeof(struct ipcdummy)
 
 void
 CreateAndInitSLockMemory(IPCKey key)
@@ -688,7 +689,7 @@ CreateAndInitSLockMemory(IPCKey key)
 	SLock	   *slckP;
 
 	SLockMemoryId = IpcMemoryCreate(key,
-									SLockMemorySize,
+									SLOCKMEMORYSIZE,
 									0700);
 	AttachSLockMemory(key);
 	*FreeSLockPP = NULL;
@@ -713,7 +714,7 @@ AttachSLockMemory(IPCKey key)
 	struct ipcdummy *slockM;
 
 	if (SLockMemoryId == -1)
-		SLockMemoryId = IpcMemoryIdGet(key, SLockMemorySize);
+		SLockMemoryId = IpcMemoryIdGet(key, SLOCKMEMORYSIZE);
 	if (SLockMemoryId == -1)
 		elog(FATAL, "SLockMemory not in shared memory");
 	slockM = (struct ipcdummy *) IpcMemoryAttach(SLockMemoryId);

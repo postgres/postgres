@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.102 1999/02/19 06:06:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.103 1999/02/21 01:41:43 tgl Exp $
  *
  * NOTES
  *
@@ -162,14 +162,15 @@ static IpcMemoryKey ipc_key;
   * adding to this.
   */
 
-static int	MaxBackends = MAXBACKENDS;
+static int	MaxBackends = DEF_MAXBACKENDS;
 
  /* 
-  * MaxBackends is the actual soft limit on the number of backends
-  * we will start.  It defaults to the hard limit established at compilation
-  * time, but can be readjusted with postmaster's xxx switch.
-  * One reason to reduce MaxBackends is to allow startup under a kernel
-  * that won't let us get MAXBACKENDS semaphores!
+  * MaxBackends is the actual limit on the number of backends we will start.
+  * The default is established by configure, but it can be readjusted 
+  * from 1..MAXBACKENDS with the postmaster -N switch.
+  * Note that a larger MaxBackends value will increase the size of the
+  * shared memory area as well as cause the postmaster to grab more
+  * kernel semaphores, even if you never actually use that many backends.
   */
 
 static int	NextBackendTag = MAXINT;		/* XXX why count down not up? */
@@ -641,8 +642,8 @@ usage(const char *progname)
 	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
 	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
-	fprintf(stderr, "\t-N nprocs\tset max number of backend servers (1..%d)\n",
-			MAXBACKENDS);
+	fprintf(stderr, "\t-N nprocs\tset max number of backends (1..%d, default %d)\n",
+			MAXBACKENDS, DEF_MAXBACKENDS);
 	fprintf(stderr, "\t-n \t\tdon't reinitialize shared memory after abnormal exit\n");
 	fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
 	fprintf(stderr, "\t-p port\tspecify port for postmaster to listen on\n");

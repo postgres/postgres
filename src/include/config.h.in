@@ -9,10 +9,17 @@
 #define CONFIG_H
 
 /*
- * Maximum number of backend server processes per postmaster.
+ * Default runtime limit on number of backend server processes per postmaster;
+ * this is just the default setting for the postmaster's -N switch.
  * (Actual value is set by configure script.)
  */
-#undef MAXBACKENDS
+#undef DEF_MAXBACKENDS
+
+/*
+ * Hard limit on number of backend server processes per postmaster.
+ * Increasing this costs about 32 bytes per process slot as of v 6.5.
+ */
+#define MAXBACKENDS	(DEF_MAXBACKENDS > 1024 ? DEF_MAXBACKENDS : 1024)
 
 /*
  * Size of a disk block --- currently, this limits the size of a tuple.

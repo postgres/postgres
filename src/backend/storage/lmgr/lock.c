@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.42 1999/02/19 06:06:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.43 1999/02/21 01:41:46 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1478,36 +1478,37 @@ next_item:
 }
 
 int
-LockShmemSize()
+LockShmemSize(int maxBackends)
 {
 	int			size = 0;
+	int			nLockEnts = NLOCKENTS(maxBackends);
 	int			nLockBuckets,
 				nLockSegs;
 	int			nXidBuckets,
 				nXidSegs;
 
-	nLockBuckets = 1 << (int) my_log2((NLOCKENTS - 1) / DEF_FFACTOR + 1);
+	nLockBuckets = 1 << (int) my_log2((nLockEnts - 1) / DEF_FFACTOR + 1);
 	nLockSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
 
 	nXidBuckets = 1 << (int) my_log2((NLOCKS_PER_XACT - 1) / DEF_FFACTOR + 1);
 	nXidSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
 
-	size += MAXALIGN(MAXBACKENDS * sizeof(PROC)); /* each MyProc */
-	size += MAXALIGN(MAXBACKENDS * sizeof(LOCKMETHODCTL));		/* each
+	size += MAXALIGN(maxBackends * sizeof(PROC)); /* each MyProc */
+	size += MAXALIGN(maxBackends * sizeof(LOCKMETHODCTL));		/* each
 																 * lockMethodTable->ctl */
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 
-	size += MAXALIGN(my_log2(NLOCKENTS) * sizeof(void *));
+	size += MAXALIGN(my_log2(nLockEnts) * sizeof(void *));
 	size += MAXALIGN(sizeof(HHDR));
 	size += nLockSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += NLOCKENTS *			/* XXX not multiple of BUCKET_ALLOC_INCR? */
+	size += nLockEnts *			/* XXX not multiple of BUCKET_ALLOC_INCR? */
 		(MAXALIGN(sizeof(BUCKET_INDEX)) +
 		 MAXALIGN(sizeof(LOCK)));		/* contains hash key */
 
-	size += MAXALIGN(my_log2(MAXBACKENDS) * sizeof(void *));
+	size += MAXALIGN(my_log2(maxBackends) * sizeof(void *));
 	size += MAXALIGN(sizeof(HHDR));
 	size += nXidSegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-	size += MAXBACKENDS *		/* XXX not multiple of BUCKET_ALLOC_INCR? */
+	size += maxBackends *		/* XXX not multiple of BUCKET_ALLOC_INCR? */
 		(MAXALIGN(sizeof(BUCKET_INDEX)) +
 		 MAXALIGN(sizeof(XIDLookupEnt)));		/* contains hash key */
 
@@ -1673,8 +1674,8 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 							break;
 					if (j >= nprocs && lock != findlock)
 					{
+						Assert(nprocs < MAXBACKENDS);
 						checked_procs[nprocs++] = proc;
-						Assert(nprocs <= MAXBACKENDS);
 
 						/*
 						 * For non-MyProc entries, we are looking only
