@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Apr 18 13:25:20 EDT 2002
+Last updated:		Tue Apr 23 12:55:58 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -305,7 +305,8 @@ REFERENTIAL INTEGRITY
 * Implement dirty reads and use them in RI triggers
 * Make triggers refer to columns by number, not name
 * Enforce referential integrity for system tables
-* Allow user to control trigger firing order
+* -Allow user to control trigger firing order
+* Add ALTER TRIGGER ... RENAME
 * Change foreign key constraint for array -> element to mean element
   in array
 * Fix foreign key constraints to not error on intermediate db states (Stephan)
