@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.69 2000/10/08 03:53:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.70 2000/10/21 15:55:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@ char	   *Name_pg_inherits_indices[Num_pg_inherits_indices] =
 {InheritsRelidSeqnoIndex};
 char	   *Name_pg_language_indices[Num_pg_language_indices] =
 {LanguageOidIndex, LanguageNameIndex};
+char	   *Name_pg_largeobject_indices[Num_pg_largeobject_indices] =
+{LargeobjectLOIdIndex, LargeobjectLOIdPNIndex};
 char	   *Name_pg_listener_indices[Num_pg_listener_indices] =
 {ListenerPidRelnameIndex};
 char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =

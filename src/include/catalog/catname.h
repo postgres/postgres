@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.14 2000/10/08 03:53:15 momjian Exp $
+ * $Id: catname.h,v 1.15 2000/10/21 15:55:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #define  InheritsRelationName "pg_inherits"
 #define  InheritancePrecidenceListRelationName "pg_ipl"
 #define  LanguageRelationName "pg_language"
+#define  LargeobjectRelationName "pg_largeobject"
 #define  ListenerRelationName "pg_listener"
 #define  LogRelationName "pg_log"
 #define  OperatorClassRelationName "pg_opclass"
