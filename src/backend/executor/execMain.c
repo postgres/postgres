@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.28 1997/10/25 01:09:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.29 1997/11/05 21:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,14 +88,11 @@ static int	queryLimit = ALL_TUPLES;
 #undef ALL_TUPLES
 #define ALL_TUPLES queryLimit
 
-#ifdef NOT_USED
 int
 ExecutorLimit(int limit)
 {
 	return queryLimit = limit;
 }
-
-#endif
 #endif
 
 /* ----------------------------------------------------------------
