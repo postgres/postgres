@@ -6,7 +6,7 @@
 # programming.  'make install-all-headers' installs the whole contents
 # of src/include.
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.6 2001/02/10 02:31:28 tgl Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.7 2001/02/20 20:37:13 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ all: $(HEADERS)
 
 # Install only selected headers
 
-install: all installdirs
+install: all installdirs remove-old-headers
 	for file in $(srcdir_headers); do \
 	  $(INSTALL_DATA) $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file || exit; \
 	done
@@ -62,6 +62,24 @@ install-all-headers: all install-all-dirs
 
 install-all-dirs:
 	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir)/, $(SUBDIRS))
+
+
+# Pre-7.1 Postgres installed some headers that are no longer installed by
+# default.  If we see these headers in the target directory, zap them to
+# avoid cross-version compile problems.  However, don't zap them if they
+# match current sources (that means the user did install-all-headers).
+
+remove-old-headers:
+	for file in fmgr.h postgres.h access/attnum.h commands/trigger.h \
+		executor/spi.h utils/elog.h utils/geo_decls.h utils/mcxt.h \
+		utils/palloc.h; do \
+		if cmp -s $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file; \
+		then \
+			: ; \
+		else \
+			rm -f $(DESTDIR)$(includedir)/$$file; \
+		fi \
+	done
 
 
 # This isn't a complete uninstall, but rm'ing everything under
