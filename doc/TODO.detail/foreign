@@ -1,0 +1,416 @@
+From fjoe@iclub.nsu.ru Tue Jan 23 03:38:45 2001
+Received: from mx.nsu.ru (root@mx.nsu.ru [193.124.215.71])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA14458
+	for <pgman@candle.pha.pa.us>; Tue, 23 Jan 2001 03:38:24 -0500 (EST)
+Received: from iclub.nsu.ru (root@iclub.nsu.ru [193.124.222.66])
+	by mx.nsu.ru (8.9.1/8.9.0) with ESMTP id OAA29153;
+	Tue, 23 Jan 2001 14:31:27 +0600 (NOVT)
+Received: from localhost (fjoe@localhost)
+	by iclub.nsu.ru (8.11.1/8.11.1) with ESMTP id f0N8VOr15273;
+	Tue, 23 Jan 2001 14:31:25 +0600 (NS)
+	(envelope-from fjoe@iclub.nsu.ru)
+Date: Tue, 23 Jan 2001 14:31:24 +0600 (NS)
+From: Max Khon <fjoe@iclub.nsu.ru>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Bug in FOREIGN KEY
+In-Reply-To: <200101230416.XAA04293@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.0101231429310.12474-100000@iclub.nsu.ru>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: RO
+
+hi, there!
+
+On Mon, 22 Jan 2001, Bruce Momjian wrote:
+
+> 
+> > This problem with foreign keys has been reported to me, and I have confirmed
+> > the bug exists in current sources.  The DELETE should succeed:
+> > 
+> > ---------------------------------------------------------------------------
+> > 
+> > CREATE TABLE primarytest2 (
+> >                            col1 INTEGER, 
+> >                            col2 INTEGER, 
+> >                            PRIMARY KEY(col1, col2)
+> >                           );
+> > 
+> > CREATE TABLE foreigntest2 (col3 INTEGER, 
+> >                            col4 INTEGER,
+> >                            FOREIGN KEY (col3, col4) REFERENCES primarytest2
+> >                          );
+> > test=> BEGIN;
+> > BEGIN
+> > test=> INSERT INTO primarytest2 VALUES (5,5);
+> > INSERT 27618 1
+> > test=> DELETE FROM primarytest2 WHERE col1 = 5 AND col2 = 5;
+> > ERROR:  triggered data change violation on relation "primarytest2"
+
+I have another (slightly different) example:
+--- cut here ---
+test=> CREATE TABLE pr(obj_id int PRIMARY KEY);
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pr_pkey' for
+table 'pr'
+CREATE
+test=> CREATE TABLE fr(obj_id int REFERENCES pr ON DELETE CASCADE);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY
+check(s)
+CREATE
+test=> BEGIN;
+BEGIN
+test=> INSERT INTO pr (obj_id) VALUES (1);
+INSERT 200539 1
+test=> INSERT INTO fr (obj_id) SELECT obj_id FROM pr;
+INSERT 200540 1
+test=> DELETE FROM fr;
+ERROR:  triggered data change violation on relation "fr"
+test=> 
+--- cut here ---
+
+we are running postgresql 7.1 beta3
+
+/fjoe
+
+
+From sszabo@megazone23.bigpanda.com Tue Jan 23 13:41:55 2001
+Received: from megazone23.bigpanda.com (rfx-64-6-210-138.users.reflexcom.com [64.6.210.138])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA19924
+	for <pgman@candle.pha.pa.us>; Tue, 23 Jan 2001 13:41:54 -0500 (EST)
+Received: from localhost (sszabo@localhost)
+	by megazone23.bigpanda.com (8.11.1/8.11.1) with ESMTP id f0NIfLa41018;
+	Tue, 23 Jan 2001 10:41:21 -0800 (PST)
+Date: Tue, 23 Jan 2001 10:41:21 -0800 (PST)
+From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Jan Wieck <janwieck@Yahoo.com>, Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Bug in FOREIGN KEY
+In-Reply-To: <200101230417.XAA04332@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.0101231031290.40955-100000@megazone23.bigpanda.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: RO
+
+
+> >     Think  I misinterpreted the SQL3 specs WR to this detail. The
+> >     checks must be made per statement,  not  at  the  transaction
+> >     level.  I'll  try  to fix it, but we need to define what will
+> >     happen with referential actions in the  case  of  conflicting
+> >     actions on the same key - there are some possible conflicts:
+> > 
+> >     1.  DEFERRED ON DELETE NO ACTION or RESTRICT
+> > 
+> >         Do  the referencing rows reference to the new PK row with
+> >         the  same  key  now,  or  is  this  still  a   constraint
+> >         violation?  I  would say it's not, because the constraint
+> >         condition is satisfied at the end of the transaction. How
+> >         do other databases behave?
+> > 
+> >     2.  DEFERRED ON DELETE CASCADE, SET NULL or SET DEFAULT
+> > 
+> >         Again  I'd  say  that  the  action  should  be suppressed
+> >         because a matching PK row is present at transaction end -
+> >         it's  not  the same old row, but the constraint itself is
+> >         still satisfied.
+
+I'm not actually sure on the cascade, set null and set default.  The
+way they are written seems to imply to me that it's based on the state
+of the database before/after the command in question as opposed to the
+deferred state of the database because of the stuff about updating the
+state of partially matching rows immediately after the delete/update of
+the row which wouldn't really make sense when deferred.  Does anyone know
+what other systems do with a case something like this all in a
+transaction:
+
+create table a (a int primary key);
+create table b (b int references a match full on update cascade
+		 on delete cascade deferrable initially deferred);
+insert into a values (1);
+insert into a values (2);
+insert into b values (1);
+delete from a where a=1;
+select * from b;
+commit;
+
+
+From pgsql-hackers-owner+M3901@postgresql.org Fri Jan 26 17:00:24 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA10576
+	for <pgman@candle.pha.pa.us>; Fri, 26 Jan 2001 17:00:24 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0QLtVq53019;
+	Fri, 26 Jan 2001 16:55:31 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3901@postgresql.org)
+Received: from smtp1b.mail.yahoo.com (smtp3.mail.yahoo.com [128.11.68.135])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0QLqmq52691
+	for <pgsql-hackers@postgresql.org>; Fri, 26 Jan 2001 16:52:48 -0500 (EST)
+	(envelope-from janwieck@yahoo.com)
+Received: from j13.us.greatbridge.com (HELO jupiter.greatbridge.com) (216.54.52.153)
+  by smtp.mail.vip.suc.yahoo.com with SMTP; 26 Jan 2001 22:49:57 -0000
+X-Apparently-From: <janwieck@yahoo.com>
+Received: (from janwieck@localhost)
+	by jupiter.greatbridge.com (8.9.3/8.9.3) id RAA04701;
+	Fri, 26 Jan 2001 17:02:32 -0500
+From: Jan Wieck <janwieck@Yahoo.com>
+Message-Id: <200101262202.RAA04701@jupiter.greatbridge.com>
+Subject: Re: [HACKERS] Bug in FOREIGN KEY
+In-Reply-To: <200101262110.QAA06902@candle.pha.pa.us> from Bruce Momjian at "Jan
+	26, 2001 04:10:22 pm"
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Date: Fri, 26 Jan 2001 17:02:32 -0500 (EST)
+CC: Jan Wieck <janwieck@Yahoo.com>, Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL68 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: RO
+
+Bruce Momjian wrote:
+> Here is another bug:
+>
+> test=> begin;
+> BEGIN
+> test=> INSERT INTO primarytest2 VALUES (5,5);
+> INSERT 18757 1
+> test=> UPDATE primarytest2 SET col2=1 WHERE col1 = 5 AND col2 = 5;
+> ERROR:  deferredTriggerGetPreviousEvent: event for tuple (0,10) not
+> found
+
+    Schema?
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#================================================== JanWieck@Yahoo.com #
+
+
+
+_________________________________________________________
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com
+
+
+From pgsql-hackers-owner+M3864@postgresql.org Fri Jan 26 10:07:36 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA17732
+	for <pgman@candle.pha.pa.us>; Fri, 26 Jan 2001 10:07:35 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0QF3lq12782;
+	Fri, 26 Jan 2001 10:03:47 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3864@postgresql.org)
+Received: from mailout00.sul.t-online.com (mailout00.sul.t-online.com [194.25.134.16])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0QF0Yq12614
+	for <pgsql-hackers@postgresql.org>; Fri, 26 Jan 2001 10:00:34 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd01.sul.t-online.com 
+	by mailout00.sul.t-online.com with smtp 
+	id 14MALp-0006Im-00; Fri, 26 Jan 2001 15:59:45 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.73]) by fmrl01.sul.t-online.com
+	with esmtp id 14MALQ-1Z0gkaC; Fri, 26 Jan 2001 15:59:20 +0100
+Date: Fri, 26 Jan 2001 16:07:27 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Open 7.1 items
+In-Reply-To: <3A70FA87.933B3D51@tpf.co.jp>
+Message-ID: <Pine.LNX.4.30.0101261604030.769-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: RO
+
+Hiroshi Inoue writes:
+
+> What does this item mean ?
+> Is it the following ?
+>
+> 	begin;
+> 	insert into pk (id) values (1);
+> 	update(delete from) pk where id=1;
+> 	ERROR:  triggered data change violation on relation pk"
+>
+> If so, isn't it a simple bug ?
+
+Depends on the definition of "bug".  It's not spec compliant and it's not
+documented and it's annoying.  But it's been like this for a year and the
+issue is well known and can normally be avoided.  It looks like a
+documentation to-do to me.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+From pgsql-hackers-owner+M3876@postgresql.org Fri Jan 26 13:07:10 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA26086
+	for <pgman@candle.pha.pa.us>; Fri, 26 Jan 2001 13:07:09 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0QI4Vq30248;
+	Fri, 26 Jan 2001 13:04:31 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3876@postgresql.org)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0QI3Aq30098
+	for <pgsql-hackers@postgreSQL.org>; Fri, 26 Jan 2001 13:03:11 -0500 (EST)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2653.19)
+	id <D49FAF71>; Fri, 26 Jan 2001 09:41:23 -0800
+Message-ID: <8F4C99C66D04D4118F580090272A7A234D32C1@sectorbase1.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'Jan Wieck'" <janwieck@Yahoo.com>,
+        PostgreSQL HACKERS
+  <pgsql-hackers@postgresql.org>,
+        Bruce Momjian <root@candle.pha.pa.us>
+Subject: RE: [HACKERS] Open 7.1 items
+Date: Fri, 26 Jan 2001 10:02:59 -0800
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: RO
+
+> > FOREIGN KEY INSERT & UPDATE/DELETE in transaction "change violation"
+> 
+>     A well known issue, and I've asked multiple times how exactly
+>     we want to define the behaviour for deferred constraints.  Do
+>     foreign keys reference just to a key value and are happy with
+>     it's existance, or do they refer to a particular row?
+
+I think first. The last is closer to OODBMS world, not to [O]RDBMS one.
+
+>     Consider you have a deferred "ON DELETE  CASCADE"  constraint
+>     and  do  a  DELETE, INSERT of a PK. Do the FK rows need to be
+>     deleted or not?
+
+Good example. I think FK should not be deleted. If someone really
+want to delete "old" FK then he can do 
+
+DELETE PK;
+SET CONSTRAINT ... IMMEDIATE; -- FK need to be deleted here
+INSERT PK;
+
+>     Consider you have a deferred "ON  DELETE  RESTRICT"  and  "ON
+>     UPDATE  CASCADE" constraint. If you DELETE PK1 and UPDATE PK2
+>     to PK1, the FK2 rows need to follow, but does PK2 inherit all
+>     FK1 rows now so it's the master of both groups?
+
+Yes. Again one can use SET CONSTRAINT to achieve desirable results.
+It seems that SET CONSTRAINT was designed for these purposes - ie
+for better flexibility.
+
+Though, it would be better to look how other DBes handle all these
+cases -:)
+
+Vadim
+
+From janwieck@yahoo.com Fri Jan 26 12:20:27 2001
+Received: from smtp6.mail.yahoo.com (smtp6.mail.yahoo.com [128.11.69.103])
+	by candle.pha.pa.us (8.9.0/8.9.0) with SMTP id MAA22158
+	for <root@candle.pha.pa.us>; Fri, 26 Jan 2001 12:20:27 -0500 (EST)
+Received: from j13.us.greatbridge.com (HELO jupiter.greatbridge.com) (216.54.52.153)
+  by smtp.mail.vip.suc.yahoo.com with SMTP; 26 Jan 2001 17:20:26 -0000
+X-Apparently-From: <janwieck@yahoo.com>
+Received: (from janwieck@localhost)
+	by jupiter.greatbridge.com (8.9.3/8.9.3) id MAA03196;
+	Fri, 26 Jan 2001 12:30:05 -0500
+From: Jan Wieck <janwieck@yahoo.com>
+Message-Id: <200101261730.MAA03196@jupiter.greatbridge.com>
+Subject: Re: [HACKERS] Open 7.1 items
+To: PostgreSQL HACKERS <pgsql-hackers@postgreSQL.org>,
+        Bruce Momjian <root@candle.pha.pa.us>
+Date: Fri, 26 Jan 2001 12:30:05 -0500 (EST)
+X-Mailer: ELM [version 2.4ME+ PL68 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Status: RO
+
+Bruce Momjian wrote:
+> Here are my open 7.1 items.  Thanks for shrinking the list so far.
+>
+> ---------------------------------------------------------------------------
+>
+> FreeBSD locale bug
+> Reorder INSERT firing in rules
+
+    I  don't  recall  why this is wanted. AFAIK there's no reason
+    NOT to do so, except for the actual state of beeing  far  too
+    close to a release candidate.
+
+> Philip Warner UPDATE crash
+> JDBC LargeObject short read return value missing
+> SELECT cash_out(1) crashes all backends
+> LAZY VACUUM
+> FOREIGN KEY INSERT & UPDATE/DELETE in transaction "change violation"
+
+    A well known issue, and I've asked multiple times how exactly
+    we want to define the behaviour for deferred constraints.  Do
+    foreign keys reference just to a key value and are happy with
+    it's existance, or do they refer to a particular row?
+
+    Consider you have a deferred "ON DELETE  CASCADE"  constraint
+    and  do  a  DELETE, INSERT of a PK. Do the FK rows need to be
+    deleted or not?
+
+    Consider you have a deferred "ON  DELETE  RESTRICT"  and  "ON
+    UPDATE  CASCADE" constraint. If you DELETE PK1 and UPDATE PK2
+    to PK1, the FK2 rows need to follow, but does PK2 inherit all
+    FK1 rows now so it's the master of both groups?
+
+    These  are  only two possible combinations. There are many to
+    think of.  As said, I've asked before, but noone  voted  yet.
+    Move  the item to 7.2 anyway, because changing this behaviour
+    would require massive changes in the trigger queue *and*  the
+    generic  RI triggers, which cannot be tested enough any more.
+
+
+Jan
+
+> Usernames limited in length
+> Does pg_dump preserve COMMENTs?
+> Failure of nested cursors in JDBC
+> JDBC setMaxRows() is global variable affecting other objects
+> Does JDBC Makefile need current dir?
+> Fix for pg_dump of bad system tables
+> Steve Howe failure query with rules
+> ODBC/JDBC not disconnecting properly?
+> Magnus Hagander ODBC issues?
+> Merge MySQL/PgSQL translation scripts
+> Fix ipcclean on Linux
+> Merge global and template BKI files?
+>
+>
+> --
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+>
+
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#================================================== JanWieck@Yahoo.com #
+
+
+_________________________________________________________
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com
+
+
