@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep 29 17:41:25 EDT 2003
+Last updated:		Sat Oct  4 14:19:54 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -388,7 +388,8 @@ Cache
 * Make blind writes go through the file descriptor cache
 * Cache last known per-tuple offsets to speed long tuple access
 * Automatically place fixed-width, NOT NULL columns first in a table
-* Consider using MVCC to cache count(*) queries with no WHERE clause
+* Use a fixed row count and a +/- count with MVCC visibility rules 
+  to allow fast COUNT(*) queries with no WHERE clause(?)
 
 
 Vacuum
@@ -501,7 +502,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1141 2003/09/29 21:41:29 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1141 2003/09/29 21:41:29 momjian Exp $
+* Change CVS $Id: TODO,v 1.1142 2003/10/04 18:19:57 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1142 2003/10/04 18:19:57 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
