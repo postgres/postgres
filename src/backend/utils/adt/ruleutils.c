@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18.2.3 1999/09/05 22:55:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18.2.4 1999/11/01 14:35:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -968,6 +968,8 @@ get_select_query_def(Query *query, QryHier *qh)
 				strcat(buf, "\"");
 				strcat(buf, rte->relname);
 				strcat(buf, "\"");
+				if (rte->inh)
+					strcat(buf, "*");
 				if (strcmp(rte->relname, rte->refname) != 0)
 				{
 					strcat(buf, " \"");
