@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Oct 17 23:26:56 EDT 2004
+Last updated:		Mon Oct 18 12:13:19 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -105,15 +105,15 @@ Administration
 * Improve replication solutions
 	o Automatic failover
 
-	The proper solution to this will probably the use of a master/slave
-	replication solution like Sloney and a connection pooling tool like
-	pgpool.
+	  The proper solution to this will probably the use of a master/slave
+	  replication solution like Sloney and a connection pooling tool like
+	  pgpool.
 
 	o Load balancing
 
-	You can use any of the master/slave replication servers to use a
-	standby server for data warehousing. To allow read/write queries to
-	multiple servers, you need multi-master replication like pgcluster.
+	  You can use any of the master/slave replication servers to use a
+	  standby server for data warehousing. To allow read/write queries to
+	  multiple servers, you need multi-master replication like pgcluster.
 
 	o Allow replication over unreliable or non-persistent links
 
@@ -163,14 +163,14 @@ Data Types
 	o Improve vacuum of large objects, like /contrib/vacuumlo (?)
 	o Add security checking for large objects
 
-	Currently large objects entries do not have owners. Permissions can
-	only be set at the pg_largeobject table level.
+	  Currently large objects entries do not have owners. Permissions can
+	  only be set at the pg_largeobject table level.
 
 	o Auto-delete large objects when referencing row is deleted
 
 	o Allow read/write into TOAST values like large objects
 
-	This requires the TOAST column to be stored EXTERNAL.
+	  This requires the TOAST column to be stored EXTERNAL.
 
 
 Multi-Language Support
@@ -356,34 +356,34 @@ Commands
 	o Allow ALTER TABLESPACE to move to different directories
 	o Allow databases and schemas to be moved to different tablespaces
 
-	One complexity is whether moving a schema should move all existing
-	schema objects or just define the location for future object creation.
+	  One complexity is whether moving a schema should move all existing
+	  schema objects or just define the location for future object creation.
 
 	o Allow moving system tables to other tablespaces, where possible
 
-	Currently non-global system tables must be in the default database
-	schema. Global system tables can never be moved.
+	  Currently non-global system tables must be in the default database
+	  schema. Global system tables can never be moved.
 
 
 * CLUSTER
 	o Automatically maintain clustering on a table
 
-	This might require some background daemon to maintain clustering
-	during periods of low usage. It might also require tables to be only
-	paritally filled for easier reorganization.  Another idea would
-        be to create a merged heap/index data file so an index lookup would
-	automatically access the heap data too.
+	  This might require some background daemon to maintain clustering
+	  during periods of low usage. It might also require tables to be only
+	  paritally filled for easier reorganization.  Another idea would
+          be to create a merged heap/index data file so an index lookup would
+	  automatically access the heap data too.
 
 	o Add default clustering to system tables
 
-	To do this, determine the ideal cluster index for each system
-	table and set the cluster setting during initdb.
+	  To do this, determine the ideal cluster index for each system
+	  table and set the cluster setting during initdb.
 
 * COPY
 	o Allow COPY to report error lines and continue
 	
-	This requires the use of a savepoint before each COPY line is
-	processed, with ROLLBACK on COPY failure.
+	  This requires the use of a savepoint before each COPY line is
+	  processed, with ROLLBACK on COPY failure.
 
 	o Allow COPY to understand \x as a hex byte
 	o Have COPY return the number of rows loaded/unloaded (?)
@@ -392,51 +392,51 @@ Commands
 * CURSOR
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor
 	
-	This requires using the row ctid to map cursor rows back to the
-	original heap row. This become more complicated if WITH HOLD cursors
-	are to be supported because WITH HOLD cursors have a copy of the row
-	and no FOR UPDATE lock.
+	  This requires using the row ctid to map cursor rows back to the
+	  original heap row. This become more complicated if WITH HOLD cursors
+	  are to be supported because WITH HOLD cursors have a copy of the row
+	  and no FOR UPDATE lock.
 
 	o Prevent DROP TABLE from dropping a row referenced by its own open
 	  cursor (?)
 
 	o Allow pooled connections to list all open WITH HOLD cursors
 
-	Because WITH HOLD cursors exist outside transactions, this allows
-	them to be listed so they can be closed.
+	  Because WITH HOLD cursors exist outside transactions, this allows
+	  them to be listed so they can be closed.
 
 * INSERT
 	o Allow INSERT/UPDATE of the system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
 	o Allow INSERT/UPDATE ... RETURNING new.col or old.col
 	
-	This is useful for returning the auto-generated key for an INSERT.
-	One complication is how to handle rules that run as part of
-	the insert.
+	  This is useful for returning the auto-generated key for an INSERT.
+	  One complication is how to handle rules that run as part of
+	  the insert.
 
 * SHOW/SET
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SET PATH for schemas (?)
 
-	This is basically the same as SET search_path.
+	  This is basically the same as SET search_path.
 	 
 	o Prevent conflicting SET options from being set
 
-	This requires a checking function to be called after the server
-	configuration file is read.
+	  This requires a checking function to be called after the server
+	  configuration file is read.
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions (?)
 
-	Currently only constants are supported.
+	  Currently only constants are supported.
 
 	o Change PL/PgSQL to use palloc() instead of malloc()
 	o Handle references to temporary tables that are created, destroyed, 
 	  then recreated during a session, and EXECUTE is not used
 	  
-	This requires the cached PL/PgSQL byte code to be invalidated when
-	an object referenced in the function is changed.
+	  This requires the cached PL/PgSQL byte code to be invalidated when
+	  an object referenced in the function is changed.
 
 	o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 	o Improve PL/PgSQL exception handling using savepoints
@@ -509,8 +509,8 @@ Clients
 * ECPG (?)
 	o Docs
 
-	Document differences between ecpg and the SQL standard and
-	information about the Informix-compatibility module.
+	  Document differences between ecpg and the SQL standard and
+	  information about the Informix-compatibility module.
 
 	o Solve cardinality > 1 for input descriptors / variables (?)
 	o Improve error handling (?)
