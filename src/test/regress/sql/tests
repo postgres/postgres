@@ -27,6 +27,7 @@ reltime
 abstime
 tinterval
 horology
+comments
 create_function_1
 create_type
 create_table
