@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.109 2002/04/21 19:48:13 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.110 2002/04/25 02:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1991,6 +1991,11 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case NUMERICOID:
 		case OIDOID:
 		case REGPROCOID:
+		case REGPROCEDUREOID:
+		case REGOPEROID:
+		case REGOPERATOROID:
+		case REGCLASSOID:
+		case REGTYPEOID:
 			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
 			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
 			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
@@ -2088,6 +2093,11 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 												   value));
 		case OIDOID:
 		case REGPROCOID:
+		case REGPROCEDUREOID:
+		case REGOPEROID:
+		case REGOPERATOROID:
+		case REGCLASSOID:
+		case REGTYPEOID:
 			/* we can treat OIDs as integers... */
 			return (double) DatumGetObjectId(value);
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.9 2002/04/17 20:57:56 tgl Exp $
+ * $Id: namespace.h,v 1.10 2002/04/25 02:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
  *	found by namespace lookup.  Each function/operator is identified
  *	by OID and by argument types; the list must be pruned by type
  *	resolution rules that are embodied in the parser, not here.
- *	The number of arguments is assumed to be known a priori.
  */
 typedef struct _FuncCandidateList
 {
 	struct _FuncCandidateList *next;
 	int			pathpos;		/* for internal use of namespace lookup */
 	Oid			oid;			/* the function or operator's OID */
+	int			nargs;			/* number of arg types returned */
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
 } *FuncCandidateList;			/* VARIABLE LENGTH STRUCT */
 

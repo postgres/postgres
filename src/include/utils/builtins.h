@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.178 2002/04/24 02:12:53 momjian Exp $
+ * $Id: builtins.h,v 1.179 2002/04/25 02:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,10 +329,16 @@ extern Datum texticregexne(PG_FUNCTION_ARGS);
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);
 extern Datum regprocout(PG_FUNCTION_ARGS);
-extern Datum regproctooid(PG_FUNCTION_ARGS);
-
-/* define macro to replace mixed-case function call - tgl 97/04/27 */
-#define RegprocToOid(rp) ((Oid) (rp))
+extern Datum regprocedurein(PG_FUNCTION_ARGS);
+extern Datum regprocedureout(PG_FUNCTION_ARGS);
+extern Datum regoperin(PG_FUNCTION_ARGS);
+extern Datum regoperout(PG_FUNCTION_ARGS);
+extern Datum regoperatorin(PG_FUNCTION_ARGS);
+extern Datum regoperatorout(PG_FUNCTION_ARGS);
+extern Datum regclassin(PG_FUNCTION_ARGS);
+extern Datum regclassout(PG_FUNCTION_ARGS);
+extern Datum regtypein(PG_FUNCTION_ARGS);
+extern Datum regtypeout(PG_FUNCTION_ARGS);
 
 /* ruleutils.c */
 extern Datum pg_get_ruledef(PG_FUNCTION_ARGS);
@@ -349,6 +355,9 @@ extern List *deparse_context_for_plan(int outer_varno, Node *outercontext,
 extern Node *deparse_context_for_relation(const char *aliasname, Oid relid);
 extern Node *deparse_context_for_subplan(const char *name, List *tlist,
 										 List *rtable);
+extern const char *quote_identifier(const char *ident);
+extern char *quote_qualified_identifier(const char *namespace,
+										const char *ident);
 
 /* tid.c */
 extern void setLastTid(const ItemPointer tid);

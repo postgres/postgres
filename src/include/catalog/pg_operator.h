@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.103 2002/04/21 19:48:23 thomas Exp $
+ * $Id: pg_operator.h,v 1.104 2002/04/25 02:56:56 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -846,6 +846,33 @@ DATA(insert OID = 2065 (  ">="	   PGNSP PGUID 0 b t f 1114 1114	 16 2063 2062 0 
 DATA(insert OID = 2066 (  "+"	   PGNSP PGUID 0 b t f 1114 1186 1114    0	0 0 0 0 0 timestamp_pl_span - - ));
 DATA(insert OID = 2067 (  "-"	   PGNSP PGUID 0 b t f 1114 1114 1186    0	0 0 0 0 0 timestamp_mi - - ));
 DATA(insert OID = 2068 (  "-"	   PGNSP PGUID 0 b t f 1114 1186 1114    0	0 0 0 0 0 timestamp_mi_span - - ));
+
+/* array equality operators */
+DATA(insert OID = 2222 (  "="	   PGNSP PGUID 0 b t f  2207	2207  16  2222 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2223 (  "="	   PGNSP PGUID 0 b t f  2208	2208  16  2223 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2224 (  "="	   PGNSP PGUID 0 b t f  2209	2209  16  2224 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2225 (  "="	   PGNSP PGUID 0 b t f  2210	2210  16  2225 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2226 (  "="	   PGNSP PGUID 0 b t f  2211	2211  16  2226 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+
+DATA(insert OID = 2227 (  "="	   PGNSP PGUID 0 b t f   629	 629  16  2227 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2228 (  "="	   PGNSP PGUID 0 b t f   651	 651  16  2228 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2229 (  "="	   PGNSP PGUID 0 b t f   719	 719  16  2229 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2230 (  "="	   PGNSP PGUID 0 b t f   791	 791  16  2230 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2231 (  "="	   PGNSP PGUID 0 b t f  1014	1014  16  2231 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2232 (  "="	   PGNSP PGUID 0 b t f  1015	1015  16  2232 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2233 (  "="	   PGNSP PGUID 0 b t f  1016	1016  16  2233 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2234 (  "="	   PGNSP PGUID 0 b t f  1040	1040  16  2234 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2235 (  "="	   PGNSP PGUID 0 b t f  1041	1041  16  2235 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2236 (  "="	   PGNSP PGUID 0 b t f  1115	1115  16  2236 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2237 (  "="	   PGNSP PGUID 0 b t f  1182	1182  16  2237 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2238 (  "="	   PGNSP PGUID 0 b t f  1183	1183  16  2238 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2239 (  "="	   PGNSP PGUID 0 b t f  1185	1185  16  2239 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2240 (  "="	   PGNSP PGUID 0 b t f  1187	1187  16  2240 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2241 (  "="	   PGNSP PGUID 0 b t f  1231	1231  16  2241 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2242 (  "="	   PGNSP PGUID 0 b t f  1270	1270  16  2242 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2243 (  "="	   PGNSP PGUID 0 b t f  1561	1561  16  2243 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2244 (  "="	   PGNSP PGUID 0 b t f  1563	1563  16  2244 0  0	0   0   0 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 2245 (  "="	   PGNSP PGUID 0 b t f  2201	2201  16  2245 0  0	0   0   0 array_eq eqsel eqjoinsel ));
 
 
 /*

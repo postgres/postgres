@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.20 2002/04/24 02:12:53 momjian Exp $
+ * $Id: fmgr.h,v 1.21 2002/04/25 02:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,6 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 /* DatumGetFoo macros for varlena types will typically look like this: */
 #define DatumGetByteaP(X)			((bytea *) PG_DETOAST_DATUM(X))
 #define DatumGetTextP(X)			((text *) PG_DETOAST_DATUM(X))
-#define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define DatumGetBpCharP(X)			((BpChar *) PG_DETOAST_DATUM(X))
 #define DatumGetVarCharP(X)			((VarChar *) PG_DETOAST_DATUM(X))
 /* And we also offer variants that return an OK-to-write copy */
@@ -201,7 +200,6 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 /* GETARG macros for varlena types will typically look like this: */
 #define PG_GETARG_BYTEA_P(n)		DatumGetByteaP(PG_GETARG_DATUM(n))
 #define PG_GETARG_TEXT_P(n)			DatumGetTextP(PG_GETARG_DATUM(n))
-#define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
 #define PG_GETARG_BPCHAR_P(n)		DatumGetBpCharP(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARCHAR_P(n)		DatumGetVarCharP(PG_GETARG_DATUM(n))
 /* And we also offer variants that return an OK-to-write copy */
@@ -241,7 +239,6 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 /* RETURN macros for other pass-by-ref types will typically look like this: */
 #define PG_RETURN_BYTEA_P(x)   PG_RETURN_POINTER(x)
 #define PG_RETURN_TEXT_P(x)    PG_RETURN_POINTER(x)
-#define PG_RETURN_UNKNOWN_P(x) PG_RETURN_POINTER(x)
 #define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
 #define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
 

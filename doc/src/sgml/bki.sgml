@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.10 2002/03/22 19:20:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.11 2002/04/25 02:56:55 tgl Exp $
  -->
 
 <chapter id="bki">
@@ -122,7 +122,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.10 2002/03/22 19:20:02 petere 
       storage.  The following types are allowed: <type>bool</type>,
       <type>bytea</type>, <type>char</type> (1 byte),
       <type>name</type>, <type>int2</type>, <type>int2vector</type>,
-      <type>int4</type>, <type>regproc</type>, <type>text</type>,
+      <type>int4</type>, <type>regproc</type>, <type>regclass</type>,
+      <type>regtype</type>, <type>text</type>,
       <type>oid</type>, <type>tid</type>, <type>xid</type>,
       <type>cid</type>, <type>oidvector</type>, <type>smgr</type>,
       <type>_int4</type> (array), <type>_aclitem</type> (array).

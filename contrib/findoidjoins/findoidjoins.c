@@ -39,7 +39,9 @@ main(int argc, char **argv)
 		WHERE a.attnum > 0 AND \
 			  relkind = 'r' AND \
 			  (typname = 'oid' OR \
-			   typname = 'regproc') AND \
+			   typname = 'regproc' OR \
+			   typname = 'regclass' OR \
+			   typname = 'regtype') AND \
 			  a.attrelid = c.oid AND \
 			  a.atttypid = t.oid \
 		ORDER BY 2, a.attnum ; \
@@ -77,7 +79,7 @@ main(int argc, char **argv)
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*)::int4 \
 						FROM \"%s\" t1, \"%s\" t2 \
-					WHERE RegprocToOid(t1.\"%s\") = t2.oid ",
+					WHERE t1.\"%s\"::oid = t2.oid ",
 						relname, relname2, attname);
 
 			doquery(query);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.70 2002/04/11 20:00:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.71 2002/04/25 02:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		if (!con->constisnull)
 		{
-			/* We know the source constant is really of type 'text' */
-			char	   *val = DatumGetCString(DirectFunctionCall1(textout,
+			char	   *val = DatumGetCString(DirectFunctionCall1(unknownout,
 													   con->constvalue));
 
 			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
@@ -477,6 +476,11 @@ TypeCategory(Oid inType)
 
 		case (OIDOID):
 		case (REGPROCOID):
+		case (REGPROCEDUREOID):
+		case (REGOPEROID):
+		case (REGOPERATOROID):
+		case (REGCLASSOID):
+		case (REGTYPEOID):
 		case (INT2OID):
 		case (INT4OID):
 		case (INT8OID):
@@ -540,38 +544,72 @@ TypeCategory(Oid inType)
  * to allow for better type extensibility.
  */
 
+#define TypeIsTextGroup(t) \
+		((t) == TEXTOID || \
+		 (t) == BPCHAROID || \
+		 (t) == VARCHAROID)
+
+/* Notice OidGroup is a subset of Int4GroupA */
+#define TypeIsOidGroup(t) \
+		((t) == OIDOID || \
+		 (t) == REGPROCOID || \
+		 (t) == REGPROCEDUREOID || \
+		 (t) == REGOPEROID || \
+		 (t) == REGOPERATOROID || \
+		 (t) == REGCLASSOID || \
+		 (t) == REGTYPEOID)
+
 /*
- * This macro describes hard-coded knowledge of binary compatibility
- * for built-in types.
+ * INT4 is binary-compatible with many types, but we don't want to allow
+ * implicit coercion directly between, say, OID and AbsTime.  So we subdivide
+ * the categories.
  */
-#define IS_BINARY_COMPATIBLE(a,b) \
-		  (((a) == BPCHAROID && (b) == TEXTOID) \
-		|| ((a) == BPCHAROID && (b) == VARCHAROID) \
-		|| ((a) == VARCHAROID && (b) == TEXTOID) \
-		|| ((a) == VARCHAROID && (b) == BPCHAROID) \
-		|| ((a) == TEXTOID && (b) == BPCHAROID) \
-		|| ((a) == TEXTOID && (b) == VARCHAROID) \
-		|| ((a) == OIDOID && (b) == INT4OID) \
-		|| ((a) == OIDOID && (b) == REGPROCOID) \
-		|| ((a) == INT4OID && (b) == OIDOID) \
-		|| ((a) == INT4OID && (b) == REGPROCOID) \
-		|| ((a) == REGPROCOID && (b) == OIDOID) \
-		|| ((a) == REGPROCOID && (b) == INT4OID) \
-		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
-		|| ((a) == INT4OID && (b) == ABSTIMEOID) \
-		|| ((a) == RELTIMEOID && (b) == INT4OID) \
-		|| ((a) == INT4OID && (b) == RELTIMEOID) \
-		|| ((a) == INETOID && (b) == CIDROID) \
-		|| ((a) == CIDROID && (b) == INETOID) \
-		|| ((a) == BITOID && (b) == VARBITOID) \
-		|| ((a) == VARBITOID && (b) == BITOID))
+#define TypeIsInt4GroupA(t) \
+		((t) == INT4OID || \
+		 TypeIsOidGroup(t))
+
+#define TypeIsInt4GroupB(t) \
+		((t) == INT4OID || \
+		 (t) == ABSTIMEOID)
+
+#define TypeIsInt4GroupC(t) \
+		((t) == INT4OID || \
+		 (t) == RELTIMEOID)
+
+#define TypeIsInetGroup(t) \
+		((t) == INETOID || \
+		 (t) == CIDROID)
+
+#define TypeIsBitGroup(t) \
+		((t) == BITOID || \
+		 (t) == VARBITOID)
+
+
+static bool
+DirectlyBinaryCompatible(Oid type1, Oid type2)
+{
+	if (type1 == type2)
+		return true;
+	if (TypeIsTextGroup(type1) && TypeIsTextGroup(type2))
+		return true;
+	if (TypeIsInt4GroupA(type1) && TypeIsInt4GroupA(type2))
+		return true;
+	if (TypeIsInt4GroupB(type1) && TypeIsInt4GroupB(type2))
+		return true;
+	if (TypeIsInt4GroupC(type1) && TypeIsInt4GroupC(type2))
+		return true;
+	if (TypeIsInetGroup(type1) && TypeIsInetGroup(type2))
+		return true;
+	if (TypeIsBitGroup(type1) && TypeIsBitGroup(type2))
+		return true;
+	return false;
+}
+
 
 bool
 IsBinaryCompatible(Oid type1, Oid type2)
 {
-	if (type1 == type2)
-		return true;
-	if (IS_BINARY_COMPATIBLE(type1, type2))
+	if (DirectlyBinaryCompatible(type1, type2))
 		return true;
 	/*
 	 * Perhaps the types are domains; if so, look at their base types
@@ -580,9 +618,7 @@ IsBinaryCompatible(Oid type1, Oid type2)
 		type1 = getBaseType(type1);
 	if (OidIsValid(type2))
 		type2 = getBaseType(type2);
-	if (type1 == type2)
-		return true;
-	if (IS_BINARY_COMPATIBLE(type1, type2))
+	if (DirectlyBinaryCompatible(type1, type2))
 		return true;
 	return false;
 }
@@ -627,7 +663,7 @@ PreferredType(CATEGORY category, Oid type)
 			break;
 
 		case (NUMERIC_TYPE):
-			if (type == OIDOID)
+			if (TypeIsOidGroup(type))
 				result = OIDOID;
 			else if (type == NUMERICOID)
 				result = NUMERICOID;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.66 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.67 2002/04/25 02:56:55 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -138,7 +138,7 @@ OperatorGet(const char *operatorName,
 						 ObjectIdGetDatum(operatorNamespace));
 	if (HeapTupleIsValid(tup))
 	{
-		regproc		oprcode = ((Form_pg_operator) GETSTRUCT(tup))->oprcode;
+		RegProcedure oprcode = ((Form_pg_operator) GETSTRUCT(tup))->oprcode;
 
 		operatorObjectId = tup->t_data->t_oid;
 		*defined = RegProcedureIsValid(oprcode);
@@ -168,7 +168,7 @@ OperatorLookup(List *operatorName,
 			   bool *defined)
 {
 	Oid			operatorObjectId;
-	regproc		oprcode;
+	RegProcedure oprcode;
 
 	operatorObjectId = LookupOperName(operatorName, leftObjectId,
 									  rightObjectId);

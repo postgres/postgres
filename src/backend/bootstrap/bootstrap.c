@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.125 2002/03/26 19:15:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.126 2002/04/25 02:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,12 +109,14 @@ static struct typinfo Procid[] = {
 	{"int2vector", INT2VECTOROID, 0, INDEX_MAX_KEYS * 2, F_INT2VECTORIN, F_INT2VECTOROUT},
 	{"int4", INT4OID, 0, 4, F_INT4IN, F_INT4OUT},
 	{"regproc", REGPROCOID, 0, 4, F_REGPROCIN, F_REGPROCOUT},
+	{"regclass", REGCLASSOID, 0, 4, F_REGCLASSIN, F_REGCLASSOUT},
+	{"regtype", REGTYPEOID, 0, 4, F_REGTYPEIN, F_REGTYPEOUT},
 	{"text", TEXTOID, 0, -1, F_TEXTIN, F_TEXTOUT},
 	{"oid", OIDOID, 0, 4, F_OIDIN, F_OIDOUT},
 	{"tid", TIDOID, 0, 6, F_TIDIN, F_TIDOUT},
 	{"xid", XIDOID, 0, 4, F_XIDIN, F_XIDOUT},
 	{"cid", CIDOID, 0, 4, F_CIDIN, F_CIDOUT},
-	{"oidvector", 30, 0, INDEX_MAX_KEYS * 4, F_OIDVECTORIN, F_OIDVECTOROUT},
+	{"oidvector", OIDVECTOROID, 0, INDEX_MAX_KEYS * 4, F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"smgr", 210, 0, 2, F_SMGRIN, F_SMGROUT},
 	{"_int4", 1007, INT4OID, -1, F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}
@@ -600,7 +602,7 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
-		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;;
+		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
 		attrtypes[attnum]->attalign = Ap->am_typ.typalign;
 	}
 	else
@@ -610,28 +612,37 @@ DefineAttr(char *name, char *type, int attnum)
 		elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
-		attrtypes[attnum]->attstorage = 'p';
 
 		/*
 		 * Cheat like mad to fill in these items from the length only.
-		 * This only has to work for types used in the system catalogs...
+		 * This only has to work for types that appear in Procid[].
 		 */
 		switch (attlen)
 		{
 			case 1:
 				attrtypes[attnum]->attbyval = true;
+				attrtypes[attnum]->attstorage = 'p';
 				attrtypes[attnum]->attalign = 'c';
 				break;
 			case 2:
 				attrtypes[attnum]->attbyval = true;
+				attrtypes[attnum]->attstorage = 'p';
 				attrtypes[attnum]->attalign = 's';
 				break;
 			case 4:
 				attrtypes[attnum]->attbyval = true;
+				attrtypes[attnum]->attstorage = 'p';
+				attrtypes[attnum]->attalign = 'i';
+				break;
+			case -1:
+				attrtypes[attnum]->attbyval = false;
+				attrtypes[attnum]->attstorage = 'x';
 				attrtypes[attnum]->attalign = 'i';
 				break;
 			default:
+				/* TID and fixed-length arrays, such as oidvector */
 				attrtypes[attnum]->attbyval = false;
+				attrtypes[attnum]->attstorage = 'p';
 				attrtypes[attnum]->attalign = 'i';
 				break;
 		}
@@ -803,6 +814,13 @@ cleanup()
 
 /* ----------------
  *		gettype
+ *
+ * NB: this is really ugly; it will return an integer index into Procid[],
+ * and not an OID at all, until the first reference to a type not known in
+ * Procid[].  At that point it will read and cache pg_type in the Typ array,
+ * and subsequently return a real OID (and set the global pointer Ap to
+ * point at the found row in Typ).  So caller must check whether Typ is
+ * still NULL to determine what the return value is!
  * ----------------
  */
 static Oid
@@ -827,7 +845,7 @@ gettype(char *type)
 	}
 	else
 	{
-		for (i = 0; i <= n_types; i++)
+		for (i = 0; i < n_types; i++)
 		{
 			if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0)
 				return i;

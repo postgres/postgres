@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.84 2002/04/24 02:12:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.85 2002/04/25 02:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,13 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
+
+
+typedef struct varlena unknown;
+
+#define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
+#define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
+#define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
 static int	text_cmp(text *arg1, text *arg2);
 

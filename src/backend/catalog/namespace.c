@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.11 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.12 2002/04/25 02:56:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,9 +365,12 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
  *		Given a possibly-qualified function name and argument count,
  *		retrieve a list of the possible matches.
  *
+ * If nargs is -1, we return all functions matching the given name,
+ * regardless of argument count.
+ *
  * We search a single namespace if the function name is qualified, else
  * all namespaces in the search path.  The return list will never contain
- * multiple entries with identical argument types --- in the multiple-
+ * multiple entries with identical argument lists --- in the multiple-
  * namespace case, we arrange for entries in earlier namespaces to mask
  * identical entries in later namespaces.
  */
@@ -423,11 +426,16 @@ FuncnameGetCandidates(List *names, int nargs)
 		namespaceId = InvalidOid;
 	}
 
-	/* Search syscache by name and nargs only */
-	catlist = SearchSysCacheList(PROCNAMENSP, 2,
-								 CStringGetDatum(funcname),
-								 Int16GetDatum(nargs),
-								 0, 0);
+	/* Search syscache by name and (optionally) nargs only */
+	if (nargs >= 0)
+		catlist = SearchSysCacheList(PROCNAMENSP, 2,
+									 CStringGetDatum(funcname),
+									 Int16GetDatum(nargs),
+									 0, 0);
+	else
+		catlist = SearchSysCacheList(PROCNAMENSP, 1,
+									 CStringGetDatum(funcname),
+									 0, 0, 0);
 
 	for (i = 0; i < catlist->n_members; i++)
 	{
@@ -435,6 +443,8 @@ FuncnameGetCandidates(List *names, int nargs)
 		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
 		int			pathpos = 0;
 		FuncCandidateList newResult;
+
+		nargs = procform->pronargs;
 
 		if (OidIsValid(namespaceId))
 		{
@@ -478,7 +488,8 @@ FuncnameGetCandidates(List *names, int nargs)
 
 				if (catlist->ordered)
 				{
-					if (memcmp(procform->proargtypes, resultList->args,
+					if (nargs == resultList->nargs &&
+						memcmp(procform->proargtypes, resultList->args,
 							   nargs * sizeof(Oid)) == 0)
 						prevResult = resultList;
 					else
@@ -490,7 +501,8 @@ FuncnameGetCandidates(List *names, int nargs)
 						 prevResult;
 						 prevResult = prevResult->next)
 					{
-						if (memcmp(procform->proargtypes, prevResult->args,
+						if (nargs == prevResult->nargs &&
+							memcmp(procform->proargtypes, prevResult->args,
 								   nargs * sizeof(Oid)) == 0)
 							break;
 					}
@@ -517,6 +529,7 @@ FuncnameGetCandidates(List *names, int nargs)
 				   + nargs * sizeof(Oid));
 		newResult->pathpos = pathpos;
 		newResult->oid = proctup->t_data->t_oid;
+		newResult->nargs = nargs;
 		memcpy(newResult->args, procform->proargtypes, nargs * sizeof(Oid));
 
 		newResult->next = resultList;
@@ -533,14 +546,17 @@ FuncnameGetCandidates(List *names, int nargs)
  *		Given a possibly-qualified operator name and operator kind,
  *		retrieve a list of the possible matches.
  *
+ * If oprkind is '\0', we return all operators matching the given name,
+ * regardless of arguments.
+ *
  * We search a single namespace if the operator name is qualified, else
  * all namespaces in the search path.  The return list will never contain
- * multiple entries with identical argument types --- in the multiple-
+ * multiple entries with identical argument lists --- in the multiple-
  * namespace case, we arrange for entries in earlier namespaces to mask
  * identical entries in later namespaces.
  *
  * The returned items always have two args[] entries --- one or the other
- * will be InvalidOid for a prefix or postfix oprkind.
+ * will be InvalidOid for a prefix or postfix oprkind.  nargs is 2, too.
  */
 FuncCandidateList
 OpernameGetCandidates(List *names, char oprkind)
@@ -606,8 +622,8 @@ OpernameGetCandidates(List *names, char oprkind)
 		int			pathpos = 0;
 		FuncCandidateList newResult;
 
-		/* Ignore operators of wrong kind */
-		if (operform->oprkind != oprkind)
+		/* Ignore operators of wrong kind, if specific kind requested */
+		if (oprkind && operform->oprkind != oprkind)
 			continue;
 
 		if (OidIsValid(namespaceId))
@@ -690,6 +706,7 @@ OpernameGetCandidates(List *names, char oprkind)
 			palloc(sizeof(struct _FuncCandidateList) + sizeof(Oid));
 		newResult->pathpos = pathpos;
 		newResult->oid = opertup->t_data->t_oid;
+		newResult->nargs = 2;
 		newResult->args[0] = operform->oprleft;
 		newResult->args[1] = operform->oprright;
 		newResult->next = resultList;

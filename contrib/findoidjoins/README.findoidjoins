@@ -1,10 +1,10 @@
 
    			      findoidjoins
 
-This program scans a database, and prints oid fields (also regproc fields)
-and the tables they join to.  CAUTION: it is ver-r-r-y slow on a large
-database, or even a not-so-large one.  We don't really recommend running
-it on anything but an empty database, such as template1.
+This program scans a database, and prints oid fields (also regproc, regclass
+and regtype fields) and the tables they join to.  CAUTION: it is ver-r-r-y
+slow on a large database, or even a not-so-large one.  We don't really
+recommend running it on anything but an empty database, such as template1.
 
 Uses pgeasy library.
 

@@ -14,11 +14,6 @@
 --
 -- NB: run this test earlier than the create_operator test, because
 -- that test creates some bogus operators...
---
--- NOTE hardwired assumptions about standard types:
---                type bool has OID 16
---                type float8 has OID 701
---
 
 -- **************** pg_proc ****************
 
@@ -29,7 +24,7 @@
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE (p1.prolang = 0 OR p1.prorettype = 0 OR
-    p1.pronargs < 0 OR p1.pronargs > 9)
+       p1.pronargs < 0 OR p1.pronargs > 16)
 	AND p1.proname !~ '^pl[^_]+_call_handler$'
 	AND p1.proname !~ '^RI_FKey_'
 	AND p1.proname !~ 'costestimate$'
@@ -158,7 +153,7 @@ WHERE p1.proimplicit AND
                  t.typname = p1.proname) OR
      NOT ((p1.pronargs = 1 AND p1.proargtypes[0] != prorettype) OR
           (p1.pronargs = 2 AND p1.proargtypes[0] = prorettype AND
-           p1.proargtypes[1] = 23)));
+           p1.proargtypes[1] = 'int4'::regtype)));
 
 -- **************** pg_operator ****************
 
@@ -216,8 +211,8 @@ WHERE p1.oprnegate = p2.oid AND
     (p1.oprkind != p2.oprkind OR
      p1.oprleft != p2.oprleft OR
      p1.oprright != p2.oprright OR
-     p1.oprresult != 16 OR
-     p2.oprresult != 16 OR
+     p1.oprresult != 'bool'::regtype OR
+     p2.oprresult != 'bool'::regtype OR
      p1.oid != p2.oprnegate OR
      p1.oid = p2.oid);
 
@@ -233,8 +228,8 @@ WHERE p1.oprlsortop = p2.oid AND
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprleft != p2.oprleft OR
      p1.oprleft != p2.oprright OR
-     p1.oprresult != 16 OR
-     p2.oprresult != 16 OR
+     p1.oprresult != 'bool'::regtype OR
+     p2.oprresult != 'bool'::regtype OR
      p1.oprrsortop = 0);
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
@@ -244,8 +239,8 @@ WHERE p1.oprrsortop = p2.oid AND
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprright != p2.oprleft OR
      p1.oprright != p2.oprright OR
-     p1.oprresult != 16 OR
-     p2.oprresult != 16 OR
+     p1.oprresult != 'bool'::regtype OR
+     p2.oprresult != 'bool'::regtype OR
      p1.oprlsortop = 0);
 
 -- A mergejoinable = operator must have a commutator (usually itself)
@@ -300,8 +295,8 @@ WHERE p1.oprlsortop != p1.oprrsortop AND
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
 WHERE p1.oprcanhash AND NOT
-    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprleft = p1.oprright AND
-     p1.oprname = '=' AND p1.oprcom = p1.oid);
+    (p1.oprkind = 'b' AND p1.oprresult = 'bool'::regtype AND
+     p1.oprleft = p1.oprright AND p1.oprname = '=' AND p1.oprcom = p1.oid);
 
 -- In 6.5 we accepted hashable array equality operators when the array element
 -- type is hashable.  However, what we actually need to make hashjoin work on
@@ -372,11 +367,11 @@ WHERE p1.oprcode = p2.oid AND
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprrest = p2.oid AND
-    (p1.oprresult != 16 OR
-     p2.prorettype != 701 OR p2.proretset OR
+    (p1.oprresult != 'bool'::regtype OR
+     p2.prorettype != 'float8'::regtype OR p2.proretset OR
      p2.pronargs != 4 OR
-     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 26 OR
-     p2.proargtypes[2] != 0 OR p2.proargtypes[3] != 23);
+     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 'oid'::regtype OR
+     p2.proargtypes[2] != 0 OR p2.proargtypes[3] != 'int4'::regtype);
 
 -- If oprjoin is set, the operator must be a binary boolean op,
 -- and it must link to a proc with the right signature
@@ -386,10 +381,10 @@ WHERE p1.oprrest = p2.oid AND
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprjoin = p2.oid AND
-    (p1.oprkind != 'b' OR p1.oprresult != 16 OR
-     p2.prorettype != 701 OR p2.proretset OR
+    (p1.oprkind != 'b' OR p1.oprresult != 'bool'::regtype OR
+     p2.prorettype != 'float8'::regtype OR p2.proretset OR
      p2.pronargs != 3 OR
-     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 'oid'::regtype OR
      p2.proargtypes[2] != 0);
 
 -- **************** pg_aggregate ****************
@@ -507,7 +502,8 @@ WHERE p2.opcamid = p1.oid AND
 SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
-    (p2.oprkind != 'b' OR p2.oprresult != 16 OR p2.oprleft != p2.oprright);
+    (p2.oprkind != 'b' OR p2.oprresult != 'bool'::regtype OR
+     p2.oprleft != p2.oprright);
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable

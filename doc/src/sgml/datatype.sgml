@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.89 2002/04/21 18:58:00 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.90 2002/04/25 02:56:55 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -170,12 +170,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.89 2002/04/21 18:58:00 th
        <entry><type>decimal [ (<replaceable>p</replaceable>,
 	 <replaceable>s</replaceable>) ]</type></entry>
        <entry>exact numeric with selectable precision</entry>
-      </row>
-
-      <row>
-       <entry><type>oid</type></entry>
-       <entry></entry>
-       <entry>object identifier</entry>
       </row>
 
       <row>
@@ -2891,6 +2885,165 @@ ERROR:  bit string length does not match type bit(3)
 SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
 </programlisting>
    </example>
+
+  </sect1>
+
+  <sect1 id="datatype-oid">
+   <title>Object Identifier Types</title>
+
+   <indexterm zone="datatype-oid">
+    <primary>object identifier</primary>
+    <secondary>data type</secondary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>oid</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regproc</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regprocedure</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regoper</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regoperator</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regclass</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regtype</primary>
+   </indexterm>
+
+   <para>
+    Object identifiers (OIDs) are used internally by
+    <productname>PostgreSQL</productname> as primary keys for various system
+    tables.  Also, an OID system column is added to user-created tables
+    (unless <literal>WITHOUT OIDS</> is specified at table creation time).
+    Type <type>oid</> represents an object identifier.  There are also
+    several aliases for <type>oid</>: <type>regproc</>, <type>regprocedure</>,
+    <type>regoper</>, <type>regoperator</>, <type>regclass</>,
+    and <type>regtype</>.
+   </para>
+
+   <para>
+    The <type>oid</> type is currently implemented as an unsigned four-byte
+    integer.
+    Therefore, it is not large enough to provide database-wide uniqueness
+    in large databases, or even in large individual tables.  So, using a
+    user-created table's OID column as a primary key is discouraged.
+    OIDs are best used only for references to system tables.
+   </para>
+
+   <para>
+    The <type>oid</> type itself has few operations beyond comparison
+    (which is implemented as unsigned comparison).  It can be cast to
+    integer, however, and then manipulated using the standard integer
+    operators.  (Beware of possible signed-versus-unsigned confusion
+    if you do this.)
+   </para>
+
+   <para>
+    The  <type>oid</> alias types have no operations of their own except
+    for specialized input and output routines.  These routines are able
+    to accept and display symbolic names for system objects, rather than
+    the raw numeric value that type <type>oid</> would use.  The alias
+    types allow simplified lookup of OID values for objects: for example,
+    one may write <literal>'mytable'::regclass</> to get the OID of table
+    <literal>mytable</>, rather than <literal>SELECT oid FROM pg_class WHERE
+    relname = 'mytable'</>.  (In reality, a much more complicated SELECT would
+    be needed to deal with selecting the right OID when there are multiple
+    tables named <literal>mytable</> in different schemas.)
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Object Identifier Types</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Type name</entry>
+	<entry>References</entry>
+	<entry>Description</entry>
+	<entry>Examples</entry>
+       </row>
+      </thead>
+
+      <tbody>
+
+       <row>
+	<entry><type>oid</></entry>
+	<entry>any</entry>
+	<entry>Numeric object identifier</entry>
+	<entry>564182</entry>
+       </row>
+
+       <row>
+	<entry><type>regproc</></entry>
+	<entry>pg_proc</entry>
+	<entry>Function name</entry>
+	<entry>sum</entry>
+       </row>
+
+       <row>
+	<entry><type>regprocedure</></entry>
+	<entry>pg_proc</entry>
+	<entry>Function with argument types</entry>
+	<entry>sum(int4)</entry>
+       </row>
+
+       <row>
+	<entry><type>regoper</></entry>
+	<entry>pg_operator</entry>
+	<entry>Operator name</entry>
+	<entry>+</entry>
+       </row>
+
+       <row>
+	<entry><type>regoperator</></entry>
+	<entry>pg_operator</entry>
+	<entry>Operator with argument types</entry>
+	<entry>*(integer,integer)  -(NONE,integer)</entry>
+       </row>
+
+       <row>
+	<entry><type>regclass</></entry>
+	<entry>pg_class</entry>
+	<entry>Relation name</entry>
+	<entry>pg_type</entry>
+       </row>
+
+       <row>
+	<entry><type>regtype</></entry>
+	<entry>pg_type</entry>
+	<entry>Type name</entry>
+	<entry>integer</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    All of the alias types accept schema-qualified names, and will
+    display schema-qualified names on output if the object would not
+    be found in the current search path without being qualified.
+    The <type>regproc</> and <type>regoper</> alias types will only
+    accept input names that are unique (not overloaded), so they are
+    of limited use; for most uses <type>regprocedure</> or
+    <type>regoperator</> is more appropriate.  For <type>regoperator</>,
+    unary operators are identified by writing NONE for the unused
+    operand.
+   </para>
 
   </sect1>
 

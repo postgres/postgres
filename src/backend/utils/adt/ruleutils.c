@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.98 2002/04/19 23:13:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.99 2002/04/25 02:56:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -123,7 +123,7 @@ static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
-				deparse_context *context, bool toplevel);
+							deparse_context *context);
 static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
@@ -142,7 +142,6 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
-static char *quote_identifier(char *ident);
 static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
@@ -1109,7 +1108,7 @@ get_select_query_def(Query *query, deparse_context *context)
 	 */
 	if (query->setOperations)
 	{
-		get_setop_query(query->setOperations, query, context, true);
+		get_setop_query(query->setOperations, query, context);
 		/* ORDER BY clauses must be simple in this case */
 		force_colno = true;
 	}
@@ -1266,8 +1265,7 @@ get_basic_select_query(Query *query, deparse_context *context)
 }
 
 static void
-get_setop_query(Node *setOp, Query *query, deparse_context *context,
-				bool toplevel)
+get_setop_query(Node *setOp, Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 
@@ -1284,33 +1282,29 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
-		/*
-		 * Must suppress parens at top level of a setop tree because of
-		 * grammar limitations...
-		 */
-		if (!toplevel)
-			appendStringInfo(buf, "(");
-		get_setop_query(op->larg, query, context, false);
+		appendStringInfo(buf, "((");
+		get_setop_query(op->larg, query, context);
 		switch (op->op)
 		{
 			case SETOP_UNION:
-				appendStringInfo(buf, " UNION ");
+				appendStringInfo(buf, ") UNION ");
 				break;
 			case SETOP_INTERSECT:
-				appendStringInfo(buf, " INTERSECT ");
+				appendStringInfo(buf, ") INTERSECT ");
 				break;
 			case SETOP_EXCEPT:
-				appendStringInfo(buf, " EXCEPT ");
+				appendStringInfo(buf, ") EXCEPT ");
 				break;
 			default:
 				elog(ERROR, "get_setop_query: unexpected set op %d",
 					 (int) op->op);
 		}
 		if (op->all)
-			appendStringInfo(buf, "ALL ");
-		get_setop_query(op->rarg, query, context, false);
-		if (!toplevel)
-			appendStringInfo(buf, ")");
+			appendStringInfo(buf, "ALL (");
+		else
+			appendStringInfo(buf, "(");
+		get_setop_query(op->rarg, query, context);
+		appendStringInfo(buf, "))");
 	}
 	else
 	{
@@ -2585,8 +2579,8 @@ tleIsArrayAssign(TargetEntry *tle)
  * space-wasteful but well worth it for notational simplicity.
  * ----------
  */
-static char *
-quote_identifier(char *ident)
+const char *
+quote_identifier(const char *ident)
 {
 	/*
 	 * Can avoid quoting if ident starts with a lowercase letter and
@@ -2603,7 +2597,7 @@ quote_identifier(char *ident)
 	safe = (ident[0] >= 'a' && ident[0] <= 'z');
 	if (safe)
 	{
-		char	   *ptr;
+		const char *ptr;
 
 		for (ptr = ident + 1; *ptr; ptr++)
 		{
@@ -2628,7 +2622,7 @@ quote_identifier(char *ident)
 		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
 		 * that's fine, since we already know we have all-lower-case.
 		 */
-		if (ScanKeywordLookup(ident) != NULL)
+		if (ScanKeywordLookup((char *) ident) != NULL)
 			safe = false;
 	}
 
@@ -2638,6 +2632,26 @@ quote_identifier(char *ident)
 	result = (char *) palloc(strlen(ident) + 2 + 1);
 	sprintf(result, "\"%s\"", ident);
 	return result;
+}
+
+/* ----------
+ * quote_qualified_identifier	- Quote a possibly-qualified identifier
+ *
+ * Return a name of the form namespace.ident, or just ident if namespace
+ * is NULL, quoting each component if necessary.  The result is palloc'd.
+ * ----------
+ */
+char *
+quote_qualified_identifier(const char *namespace,
+						   const char *ident)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+	if (namespace)
+		appendStringInfo(&buf, "%s.", quote_identifier(namespace));
+	appendStringInfo(&buf, "%s", quote_identifier(ident));
+	return buf.data;
 }
 
 /* ----------

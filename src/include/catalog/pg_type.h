@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.121 2002/04/24 02:12:53 momjian Exp $
+ * $Id: pg_type.h,v 1.122 2002/04/25 02:56:56 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -274,7 +274,7 @@ DATA(insert OID = 23 (	int4	   PGNSP PGUID  4  10 t b t \054 0   0 int4in int4ou
 DESCR("-2 billion to 2 billion integer, 4-byte storage");
 #define INT4OID			23
 
-DATA(insert OID = 24 (	regproc    PGNSP PGUID  4  16 t b t \054 0   0 regprocin regprocout regprocin regprocout i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 24 (	regproc    PGNSP PGUID  4  -1 t b t \054 0   0 regprocin regprocout regprocin regprocout i p f 0 -1 0 _null_ _null_ ));
 DESCR("registered procedure");
 #define REGPROCOID		24
 
@@ -444,7 +444,7 @@ DESCR("hh:mm:ss, ANSI SQL time");
 DATA(insert OID = 1114 ( timestamp	 PGNSP PGUID	8  47 f b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out d p f 0 -1 0 _null_ _null_ ));
 DESCR("date and time");
 #define TIMESTAMPOID	1114
-DATA(insert OID = 1115 ( _timestamp  PGNSP PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1115 ( _timestamp  PGNSP PGUID	-1 -1 f b t \054 0	1114 array_in array_out array_in array_out d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1182 ( _date		 PGNSP PGUID	-1 -1 f b t \054 0	1082 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1183 ( _time		 PGNSP PGUID	-1 -1 f b t \054 0	1083 array_in array_out array_in array_out d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1184 ( timestamptz PGNSP PGUID	8  47 f b t \054 0	0 timestamptz_in timestamptz_out timestamptz_in timestamptz_out d p f 0 -1 0 _null_ _null_ ));
@@ -484,8 +484,34 @@ DATA(insert OID = 1790 ( refcursor	   PGNSP PGUID -1  -1 f b t \054 0  0 textin 
 DESCR("reference cursor (portal name)");
 #define REFCURSOROID	1790
 
-/* OIDS 2000 - 2099 */
-DATA(insert OID = 2019 ( _refcursor	   PGNSP PGUID -1  -1 f b t \054 0 1790 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
+/* OIDS 2200 - 2299 */
+DATA(insert OID = 2201 ( _refcursor	   PGNSP PGUID -1  -1 f b t \054 0 1790 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
+
+DATA(insert OID = 2202 ( regprocedure  PGNSP PGUID  4  -1 t b t \054 0   0 regprocedurein regprocedureout regprocedurein regprocedureout i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered procedure (with args)");
+#define REGPROCEDUREOID	2202
+
+DATA(insert OID = 2203 ( regoper       PGNSP PGUID  4  -1 t b t \054 0   0 regoperin regoperout regoperin regoperout i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered operator");
+#define REGOPEROID		2203
+
+DATA(insert OID = 2204 ( regoperator   PGNSP PGUID  4  -1 t b t \054 0   0 regoperatorin regoperatorout regoperatorin regoperatorout i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered operator (with args)");
+#define REGOPERATOROID	2204
+
+DATA(insert OID = 2205 ( regclass      PGNSP PGUID  4  -1 t b t \054 0   0 regclassin regclassout regclassin regclassout i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered class");
+#define REGCLASSOID		2205
+
+DATA(insert OID = 2206 ( regtype       PGNSP PGUID  4  -1 t b t \054 0   0 regtypein regtypeout regtypein regtypeout i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered type");
+#define REGTYPEOID		2206
+
+DATA(insert OID = 2207 ( _regprocedure PGNSP PGUID -1  -1 f b t \054 0 2202 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2208 ( _regoper      PGNSP PGUID -1  -1 f b t \054 0 2203 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2209 ( _regoperator  PGNSP PGUID -1  -1 f b t \054 0 2204 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2210 ( _regclass     PGNSP PGUID -1  -1 f b t \054 0 2205 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2211 ( _regtype      PGNSP PGUID -1  -1 f b t \054 0 2206 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
 
 
 /*

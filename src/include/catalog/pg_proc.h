@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.232 2002/04/24 05:22:20 momjian Exp $
+ * $Id: pg_proc.h,v 1.233 2002/04/25 02:56:56 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1216,8 +1216,6 @@ DESCR("closest point to line on box");
 
 DATA(insert OID = 964 (  lo_unlink		   PGNSP PGUID 12 f t f t f v 1  23 "26" 100 0 0 100  lo_unlink - _null_ ));
 DESCR("large object unlink(delete)");
-DATA(insert OID = 972 (  regproctooid	   PGNSP PGUID 12 f t f t f i 1  26 "24" 100 0 0 100  regproctooid - _null_ ));
-DESCR("get oid for regproc");
 
 DATA(insert OID = 973 (  path_inter		   PGNSP PGUID 12 f t f t f i 2  16 "602 602" 100 0 0 100  path_inter - _null_ ));
 DESCR("paths intersect?");
@@ -2928,6 +2926,28 @@ DATA(insert OID = 2156 (  stddev			PGNSP PGUID 12 t t f f f i 1 1700 "21" 100 0 
 DATA(insert OID = 2157 (  stddev			PGNSP PGUID 12 t t f f f i 1 701 "700" 100 0 0 100  aggregate_dummy - _null_ ));
 DATA(insert OID = 2158 (  stddev			PGNSP PGUID 12 t t f f f i 1 701 "701" 100 0 0 100  aggregate_dummy - _null_ ));
 DATA(insert OID = 2159 (  stddev			PGNSP PGUID 12 t t f f f i 1 1700 "1700" 100 0 0 100  aggregate_dummy - _null_ ));
+
+
+DATA(insert OID = 2212 (  regprocedurein	PGNSP PGUID 12 f t f t f s 1 2202 "0" 100 0 0 100	regprocedurein - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2213 (  regprocedureout	PGNSP PGUID 12 f t f t f s 1   23 "0" 100 0 0 100	regprocedureout - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2214 (  regoperin			PGNSP PGUID 12 f t f t f s 1 2203 "0" 100 0 0 100	regoperin - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2215 (  regoperout		PGNSP PGUID 12 f t f t f s 1   23 "0" 100 0 0 100	regoperout - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2216 (  regoperatorin		PGNSP PGUID 12 f t f t f s 1 2204 "0" 100 0 0 100	regoperatorin - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2217 (  regoperatorout	PGNSP PGUID 12 f t f t f s 1   23 "0" 100 0 0 100	regoperatorout - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2218 (  regclassin		PGNSP PGUID 12 f t f t f s 1 2205 "0" 100 0 0 100	regclassin - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2219 (  regclassout		PGNSP PGUID 12 f t f t f s 1   23 "0" 100 0 0 100	regclassout - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2220 (  regtypein			PGNSP PGUID 12 f t f t f s 1 2206 "0" 100 0 0 100	regtypein - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2221 (  regtypeout		PGNSP PGUID 12 f t f t f s 1   23 "0" 100 0 0 100	regtypeout - _null_ ));
+DESCR("(internal)");
 
 
 /*
