@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "c.h"
+#include "postgres_fe.h"
 #include "extern.h"
 #include "pgtypes_error.h"
 

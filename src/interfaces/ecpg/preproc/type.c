@@ -314,7 +314,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * bounds
 				 */
 				if (((atoi(arrsize) > 0) || 
-				     (atoi(arrsize) == 0) && strcmp(arrsize, "0") != 0) &&
+				     (atoi(arrsize) == 0 && strcmp(arrsize, "0") != 0)) &&
 				      siz == NULL)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 				else
@@ -380,7 +380,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * bounds
 				 */
 				if (((atoi(arrsize) > 0) || 
-				     (atoi(arrsize) == 0) && strcmp(arrsize, "0") != 0) &&
+				     (atoi(arrsize) == 0 && strcmp(arrsize, "0") != 0)) &&
 				      siz == NULL)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 				else
