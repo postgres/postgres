@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.1 1999/10/26 03:48:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.2 1999/10/26 03:53:35 momjian Exp $
 Postgres documentation
 -->
 
@@ -103,6 +103,7 @@ COMMENT
     easily retrieved with <application>psql's</application>
     <emphasize>\dd</emphasize> command.
     To remove a comment, use <literal>''</literal>.
+    Comments are automatically dropped when the object is dropped.
   </para>
  </refsect1>
 
@@ -111,10 +112,29 @@ COMMENT
    Usage
   </title>
   <para>
-   comment the table <literal>mytable</literal>:
+   Comment the table <literal>mytable</literal>:
 
    <programlisting>
 COMMENT ON mytable IS 'This is my table.';
+   </programlisting>
+  </para>
+
+  <para>
+   Some more examples:
+
+   <programlisting>
+COMMENT ON DATABASE my_database IS 'Development Database';
+COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
+COMMENT ON RULE my_rule IS 'Logs UPDATES of employee records';
+COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
+COMMENT ON TABLE my_table IS 'Employee Information';
+COMMENT ON TYPE my_type IS 'Complex Number support';
+COMMENT ON VIEW my_view IS 'View of departmental costs';
+COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
+COMMENT ON AGGREGATE my_aggregate float8 IS 'Computes sample variance';
+COMMENT ON FUNCTION my_function (datetime) IS 'Returns Roman Numeral';
+COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two text';
+COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
    </programlisting>
   </para>
  </refsect1>
