@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.207 2001/02/18 04:28:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.208 2001/02/24 02:04:51 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1537,7 +1537,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		if (errs || argc != optind || DBName == NULL)
 		{
 			fprintf(stderr, "%s: invalid command line arguments\nTry -? for help.\n", argv[0]);
-			proc_exit(1);
+			proc_exit(0);		/* not 1, that causes system-wide restart... */
 		}
 		pq_init();				/* initialize libpq at backend startup */
 		whereToSendOutput = Remote;
@@ -1680,7 +1680,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.207 $ $Date: 2001/02/18 04:28:31 $\n");
+		puts("$Revision: 1.208 $ $Date: 2001/02/24 02:04:51 $\n");
 	}
 
 	/*
