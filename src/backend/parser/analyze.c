@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.171 2000/12/06 23:55:19 tgl Exp $
+ *	$Id: analyze.c,v 1.172 2000/12/07 01:12:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2503,6 +2503,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 	return qry;
 }
 
+/* exported so planner can check again after rewriting, query pullup, etc */
 void
 CheckSelectForUpdate(Query *qry)
 {
@@ -2519,7 +2520,7 @@ CheckSelectForUpdate(Query *qry)
 static void
 transformForUpdate(Query *qry, List *forUpdate)
 {
-	List	   *rowMarks = NIL;
+	List	   *rowMarks = qry->rowMarks;
 	List	   *l;
 	List	   *rt;
 	Index		i;
@@ -2542,7 +2543,8 @@ transformForUpdate(Query *qry, List *forUpdate)
 			}
 			else
 			{
-				rowMarks = lappendi(rowMarks, i);
+				if (!intMember(i, rowMarks)) /* avoid duplicates */
+					rowMarks = lappendi(rowMarks, i);
 				rte->checkForWrite = true;
 			}
 		}
