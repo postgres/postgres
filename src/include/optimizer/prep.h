@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.22 2000/06/08 22:37:51 momjian Exp $
+ * $Id: prep.h,v 1.23 2000/06/20 04:22:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,10 @@ extern List *preprocess_targetlist(List *tlist, int command_type,
  * prototypes for prepunion.c
  */
 extern List *find_all_inheritors(Oid parentrel);
-extern int	first_inherit_rt_entry(List *rangetable);
-extern Append *plan_union_queries(Query *parse);
-extern Append *plan_inherit_queries(Query *parse, List *tlist, Index rt_index);
+extern bool find_inheritable_rt_entry(List *rangetable,
+									  Index *rt_index, List **inheritors);
+extern Plan *plan_inherit_queries(Query *root, List *tlist,
+								  Index rt_index, List *inheritors);
+extern Plan *plan_union_queries(Query *parse);
 
 #endif	 /* PREP_H */

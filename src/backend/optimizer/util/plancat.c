@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.57 2000/06/17 21:48:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.58 2000/06/20 04:22:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,6 +261,11 @@ join_selectivity(Oid functionObjectId,
  *
  * Returns an integer list containing the OIDs of all relations which
  * inherit *directly* from the relation with OID 'inhparent'.
+ *
+ * XXX might be a good idea to create an index on pg_inherits' inhparent
+ * field, so that we can use an indexscan instead of sequential scan here.
+ * However, in typical databases pg_inherits won't have enough entries to
+ * justify an indexscan...
  */
 List *
 find_inheritance_children(Oid inhparent)
@@ -269,11 +274,18 @@ find_inheritance_children(Oid inhparent)
 		{0, Anum_pg_inherits_inhparent, F_OIDEQ}
 	};
 
-	HeapTuple	inheritsTuple;
+	List	   *list = NIL;
 	Relation	relation;
 	HeapScanDesc scan;
-	List	   *list = NIL;
+	HeapTuple	inheritsTuple;
 	Oid			inhrelid;
+
+	/*
+	 * Can skip the scan if pg_class shows the relation has never had
+	 * a subclass.
+	 */
+	if (! has_subclass(inhparent))
+		return NIL;
 
 	fmgr_info(F_OIDEQ, &key[0].sk_func);
 	key[0].sk_nargs = key[0].sk_func.fn_nargs;
@@ -292,14 +304,16 @@ find_inheritance_children(Oid inhparent)
 }
 
 /*
- * has_subclass -
+ * has_subclass
+ *
  * In the current implementation, has_subclass returns whether a 
  * particular class *might* have a subclass. It will not return the
  * correct result if a class had a subclass which was later dropped.
- * This is because relhassubclass in pg_class is not updated,
- * possibly because of efficiency and/or concurrency concerns.
- * Currently has_subclass is only used as an efficiency hack, so this
- * is ok.
+ * This is because relhassubclass in pg_class is not updated when a
+ * subclass is dropped, primarily because of concurrency concerns.
+ *
+ * Currently has_subclass is only used as an efficiency hack to skip
+ * unnecessary inheritance searches, so this is OK.
  */
 bool
 has_subclass(Oid relationId)

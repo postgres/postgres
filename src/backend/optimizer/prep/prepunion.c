@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.50 2000/05/30 00:49:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.51 2000/06/20 04:22:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,15 +33,12 @@ typedef struct
 	Oid			new_relid;
 } fix_parsetree_attnums_context;
 
-static List *plan_inherit_query(Relids relids, Index rt_index,
-				   RangeTblEntry *rt_entry, Query *parse, List *tlist,
-				   List **union_rtentriesPtr);
-static RangeTblEntry *new_rangetable_entry(Oid new_relid,
-					 RangeTblEntry *old_entry);
 static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
 static bool fix_parsetree_attnums_walker(Node *node,
 							 fix_parsetree_attnums_context *context);
+static RangeTblEntry *new_rangetable_entry(Oid new_relid,
+					 RangeTblEntry *old_entry);
 static Append *make_append(List *appendplans, List *unionrtables,
 			Index rt_index,
 			List *inheritrtable, List *tlist);
@@ -52,9 +49,13 @@ static Append *make_append(List *appendplans, List *unionrtables,
  *
  *	  Plans the queries for a given UNION.
  *
- * Returns a list containing a list of plans and a list of rangetables
+ * Returns an Append plan that combines the results of the unioned queries.
+ * Note that Append output is correct for UNION ALL, but caller still needs
+ * to take care of sort/unique processing if it's a plain UNION.  We set or
+ * clear the Query's fields so that the right things will happen back in
+ * union_planner.  (This control structure is an unholy mess...)
  */
-Append *
+Plan *
 plan_union_queries(Query *parse)
 {
 	List	   *union_plans = NIL,
@@ -242,23 +243,23 @@ plan_union_queries(Query *parse)
 	parse->havingQual = NULL;
 	parse->hasAggs = false;
 
-	return make_append(union_plans,
-					   union_rts,
-					   0,
-					   NULL,
-					   parse->targetList);
+	return (Plan *) make_append(union_plans,
+								union_rts,
+								0,
+								NIL,
+								parse->targetList);
 }
 
 
 /*
  * plan_inherit_queries
- *
  *	  Plans the queries for an inheritance tree rooted at a parent relation.
  *
  * Inputs:
- *	parse = parent parse tree
+ *	root = parent parse tree
  *	tlist = target list for inheritance subqueries (not same as parent's!)
  *	rt_index = rangetable index for current inheritance item
+ *	inheritors = list of OIDs of the target rel plus all its descendants
  *
  * Returns an APPEND node that forms the result of performing the given
  * query for each member relation of the inheritance group.
@@ -268,54 +269,22 @@ plan_union_queries(Query *parse)
  * operations just once above the APPEND node.	The given tlist has been
  * modified appropriately to remove group/aggregate expressions, but the
  * Query node still has the relevant fields set.  We remove them in the
- * copies used for subplans (see plan_inherit_query).
+ * copies used for subplans.
  *
  * NOTE: this can be invoked recursively if more than one inheritance wildcard
  * is present.	At each level of recursion, the first wildcard remaining in
  * the rangetable is expanded.
+ *
+ * NOTE: don't bother optimizing this routine for the case that the target
+ * rel has no children.  We won't get here unless find_inheritable_rt_entry
+ * found at least two members in the inheritance group, so an APPEND is
+ * certainly necessary.
  */
-Append *
-plan_inherit_queries(Query *parse, List *tlist, Index rt_index)
+Plan *
+plan_inherit_queries(Query *root, List *tlist,
+					 Index rt_index, List *inheritors)
 {
-	List	   *rangetable = parse->rtable;
-	RangeTblEntry *rt_entry = rt_fetch(rt_index, rangetable);
-	List	   *inheritrtable = NIL;
-	List	   *union_relids;
-	List	   *union_plans;
-
-	/* Make a list of the target relid plus all its descendants */
-	union_relids = find_all_inheritors(rt_entry->relid);
-
-	/*
-	 * Remove the flag for this relation, since we're about to handle it.
-	 * XXX destructive change to parent parse tree, but necessary to
-	 * prevent infinite recursion.
-	 */
-	rt_entry->inh = false;
-
-	union_plans = plan_inherit_query(union_relids, rt_index, rt_entry,
-									 parse, tlist, &inheritrtable);
-
-	return make_append(union_plans,
-					   NULL,
-					   rt_index,
-					   inheritrtable,
-					   ((Plan *) lfirst(union_plans))->targetlist);
-}
-
-/*
- * plan_inherit_query
- *	  Returns a list of plans for 'relids', plus a list of range table entries
- *	  in *union_rtentriesPtr.
- */
-static List *
-plan_inherit_query(Relids relids,
-				   Index rt_index,
-				   RangeTblEntry *rt_entry,
-				   Query *root,
-				   List *tlist,
-				   List **union_rtentriesPtr)
-{
+	RangeTblEntry *rt_entry = rt_fetch(rt_index, root->rtable);
 	List	   *union_plans = NIL;
 	List	   *union_rtentries = NIL;
 	List	   *save_tlist = root->targetList;
@@ -325,7 +294,8 @@ plan_inherit_query(Relids relids,
 	/*
 	 * Avoid making copies of the root's tlist, which we aren't going to
 	 * use anyway (we are going to make copies of the passed tlist,
-	 * instead).
+	 * instead).  This is purely a space-saving hack.  Note we restore
+	 * the root's tlist before exiting.
 	 */
 	root->targetList = NIL;
 
@@ -339,19 +309,22 @@ plan_inherit_query(Relids relids,
 	else
 		tuple_fraction = -1.0;	/* default behavior is OK (I think) */
 
-	foreach(i, relids)
+	foreach(i, inheritors)
 	{
-		int			relid = lfirsti(i);
+		Oid			relid = lfirsti(i);
 
 		/*
 		 * Make a modifiable copy of the original query, and replace the
-		 * target rangetable entry with a new one identifying this child
-		 * table.
+		 * target rangetable entry in it with a new one identifying this
+		 * child table.  The new rtentry is marked inh = false --- this
+		 * is essential to prevent infinite recursion when the subquery
+		 * is rescanned by find_inheritable_rt_entry!
 		 */
 		Query	   *new_root = copyObject(root);
 		RangeTblEntry *new_rt_entry = new_rangetable_entry(relid,
 														   rt_entry);
 
+		new_rt_entry->inh = false;
 		rt_store(rt_index, new_root->rtable, new_rt_entry);
 
 		/*
@@ -368,6 +341,8 @@ plan_inherit_query(Relids relids,
 		new_root->sortClause = NIL;
 		new_root->groupClause = NIL;
 		new_root->havingQual = NULL;
+		new_root->limitOffset = NULL;	/* LIMIT's probably unsafe too */
+		new_root->limitCount = NULL;
 		new_root->hasAggs = false;		/* shouldn't be any left ... */
 
 		/*
@@ -383,15 +358,24 @@ plan_inherit_query(Relids relids,
 							  relid,
 							  new_root);
 
+		/*
+		 * Plan the subquery by recursively calling union_planner().
+		 * Add plan and child rtentry to lists for APPEND.
+		 */
 		union_plans = lappend(union_plans,
 							  union_planner(new_root, tuple_fraction));
 		union_rtentries = lappend(union_rtentries, new_rt_entry);
 	}
 
+	/* Restore root's tlist */
 	root->targetList = save_tlist;
 
-	*union_rtentriesPtr = union_rtentries;
-	return union_plans;
+	/* Construct the finished Append plan. */
+	return (Plan *) make_append(union_plans,
+								NIL,
+								rt_index,
+								union_rtentries,
+								((Plan *) lfirst(union_plans))->targetlist);
 }
 
 /*
@@ -420,10 +404,11 @@ find_all_inheritors(Oid parentrel)
 		currentchildren = find_inheritance_children(currentrel);
 
 		/*
-		 * Add to the queue only those children not already seen. This
-		 * could probably be simplified to a plain nconc, because our
-		 * inheritance relationships should always be a strict tree, no?
-		 * Should never find any matches, ISTM...
+		 * Add to the queue only those children not already seen.
+		 * This avoids making duplicate entries in case of multiple
+		 * inheritance paths from the same parent.  (It'll also keep
+		 * us from getting into an infinite loop, though theoretically
+		 * there can't be any cycles in the inheritance graph anyway.)
 		 */
 		currentchildren = set_differencei(currentchildren, examined_relids);
 		unexamined_relids = LispUnioni(unexamined_relids, currentchildren);
@@ -433,29 +418,71 @@ find_all_inheritors(Oid parentrel)
 }
 
 /*
- * first_inherit_rt_entry -
+ * find_inheritable_rt_entry -
  *		Given a rangetable, find the first rangetable entry that represents
  *		an inheritance set.
  *
- *		Returns a rangetable index (1..n).
- *		Returns -1 if no matches
+ *		If successful, set *rt_index to the index (1..n) of the entry,
+ *		set *inheritors to a list of the relation OIDs of the set,
+ *		and return TRUE.
+ *
+ *		If there is no entry that requires inheritance processing,
+ *		return FALSE.
+ *
+ * NOTE: We return the inheritors list so that plan_inherit_queries doesn't
+ * have to compute it again.
+ *
+ * NOTE: We clear the inh flag in any entries that have it set but turn
+ * out not to have any actual inheritance children.  This is an efficiency
+ * hack to avoid having to repeat the inheritance checks if the list is
+ * scanned again (as will happen during expansion of any subsequent entry
+ * that does have inheritance children).  Although modifying the input
+ * rangetable in-place may seem uncool, there's no reason not to do it,
+ * since any re-examination of the entry would just come to the same
+ * conclusion that the table has no children.
  */
-int
-first_inherit_rt_entry(List *rangetable)
+bool
+find_inheritable_rt_entry(List *rangetable,
+						  Index *rt_index,
+						  List **inheritors)
 {
-	int			count = 0;
+	Index		count = 0;
 	List	   *temp;
 
 	foreach(temp, rangetable)
 	{
-		RangeTblEntry *rt_entry = lfirst(temp);
+		RangeTblEntry  *rt_entry = (RangeTblEntry *) lfirst(temp);
+		List		   *inhs;
 
 		count++;
-		if (rt_entry->inh)
-			return count;
+		/* Ignore non-inheritable RT entries */
+		if (! rt_entry->inh)
+			continue;
+		/* Fast path for common case of childless table */
+		if (! has_subclass(rt_entry->relid))
+		{
+			rt_entry->inh = false;
+			continue;
+		}
+		/* Scan for all members of inheritance set */
+		inhs = find_all_inheritors(rt_entry->relid);
+		/*
+		 * Check that there's at least one descendant, else treat as
+		 * no-child case.  This could happen despite above has_subclass()
+		 * check, if table once had a child but no longer does.
+		 */
+		if (lnext(inhs) == NIL)
+		{
+			rt_entry->inh = false;
+			continue;
+		}
+		/* OK, found our boy */
+		*rt_index = count;
+		*inheritors = inhs;
+		return true;
 	}
 
-	return -1;
+	return false;
 }
 
 /*
@@ -483,7 +510,7 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
  *	  'new_relid'.
  *
  * The parsetree is MODIFIED IN PLACE.	This is OK only because
- * plan_inherit_query made a copy of the tree for us to hack upon.
+ * plan_inherit_queries made a copy of the tree for us to hack upon.
  */
 static void
 fix_parsetree_attnums(Index rt_index,

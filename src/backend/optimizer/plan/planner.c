@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.84 2000/06/18 22:44:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.85 2000/06/20 04:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,8 @@ planner(Query *parse)
  * Basically, this routine does the stuff that should only be done once
  * per Query object.  It then calls union_planner, which may be called
  * recursively on the same Query node in order to handle UNIONs and/or
- * inheritance.  subquery_planner is called recursively from subselect.c.
+ * inheritance.  subquery_planner is called recursively from subselect.c
+ * to handle sub-Query nodes found within the query's expressions.
  *
  * prepunion.c uses an unholy combination of calling union_planner when
  * recursing on the primary Query node, or subquery_planner when recursing
@@ -107,10 +108,6 @@ planner(Query *parse)
 Plan *
 subquery_planner(Query *parse, double tuple_fraction)
 {
-    List       *l;
-	List	   *rangetable = parse->rtable;
-    RangeTblEntry *rangeTblEntry;
-
 	/*
 	 * A HAVING clause without aggregates is equivalent to a WHERE clause
 	 * (except it can only refer to grouped fields).  If there are no aggs
@@ -141,18 +138,6 @@ subquery_planner(Query *parse, double tuple_fraction)
 		eval_const_expressions((Node *) parse->targetList);
 	parse->qual = eval_const_expressions(parse->qual);
 	parse->havingQual = eval_const_expressions(parse->havingQual);
-
-    /*
-     * If the query is going to look for subclasses, but no subclasses
-     * actually exist, then we can optimise away the union that would
-     * otherwise happen and thus save some time.
-    */
-    foreach(l, rangetable)
-        {
-           rangeTblEntry  = (RangeTblEntry *)lfirst(l);
-           if (rangeTblEntry->inh && !has_subclass(rangeTblEntry->relid))
-             rangeTblEntry->inh = FALSE;
-        }
 
 	/*
 	 * Canonicalize the qual, and convert it to implicit-AND format.
@@ -257,10 +242,11 @@ union_planner(Query *parse,
 	List	   *group_pathkeys;
 	List	   *sort_pathkeys;
 	Index		rt_index;
+	List	   *inheritors;
 
 	if (parse->unionClause)
 	{
-		result_plan = (Plan *) plan_union_queries(parse);
+		result_plan = plan_union_queries(parse);
 		/* XXX do we need to do this? bjm 12/19/97 */
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
@@ -269,9 +255,8 @@ union_planner(Query *parse,
 
 		/*
 		 * We leave current_pathkeys NIL indicating we do not know sort
-		 * order. Actually, for a normal UNION we have done an explicit
-		 * sort; ought to change interface to plan_union_queries to pass
-		 * that info back!
+		 * order.  This is correct for the appended-together subplan
+		 * results, even if the subplans themselves produced sorted results.
 		 */
 
 		/*
@@ -283,7 +268,8 @@ union_planner(Query *parse,
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
 													  tlist);
 	}
-	else if ((rt_index = first_inherit_rt_entry(rangetable)) != -1)
+	else if (find_inheritable_rt_entry(rangetable,
+									   &rt_index, &inheritors))
 	{
 		List	   *sub_tlist;
 
@@ -296,8 +282,8 @@ union_planner(Query *parse,
 		/*
 		 * Recursively plan the subqueries needed for inheritance
 		 */
-		result_plan = (Plan *) plan_inherit_queries(parse, sub_tlist,
-													rt_index);
+		result_plan = plan_inherit_queries(parse, sub_tlist,
+										   rt_index, inheritors);
 
 		/*
 		 * Fix up outer target list.  NOTE: unlike the case for
