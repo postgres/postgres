@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.46 1999/10/07 04:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.47 1999/10/22 11:51:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,8 @@
 static char *clauseText[] = {"ORDER", "GROUP"};
 
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
-										List *tlist, int clause);
+										List *tlist, int clause,
+										char *uniqFlag);
 static void parseFromClause(ParseState *pstate, List *frmList, Node **qual);
 static char	*transformTableEntry(ParseState *pstate, RangeVar *r);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
@@ -363,7 +364,8 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
  * clause	identifies clause type for error messages.
  */
 static TargetEntry *
-findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
+findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause,
+					char *uniqueFlag)
 {
 	TargetEntry *target_result = NULL;
 	List	   *tl;
@@ -462,6 +464,10 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * the end of the target list.	 This target is set to be  resjunk =
 	 * TRUE so that it will not be projected into the final tuple.
 	 */
+	if(clause == ORDER_CLAUSE && uniqueFlag) {
+		elog(ERROR, "ORDER BY columns must appear in SELECT DISTINCT target list");
+	}
+
 	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
 	lappend(tlist, target_result);
 
@@ -485,7 +491,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		TargetEntry *tle;
 
 		tle = findTargetlistEntry(pstate, lfirst(gl),
-								  targetlist, GROUP_CLAUSE);
+								  targetlist, GROUP_CLAUSE, NULL);
 
 		/* avoid making duplicate grouplist entries */
 		if (! exprIsInSortList(tle->expr, glist, targetlist))
@@ -527,7 +533,7 @@ transformSortClause(ParseState *pstate,
 		TargetEntry	   *tle;
 
 		tle = findTargetlistEntry(pstate, sortby->node,
-								  targetlist, ORDER_CLAUSE);
+								  targetlist, ORDER_CLAUSE, uniqueFlag);
 
 		sortlist = addTargetToSortList(tle, sortlist, targetlist,
 									   sortby->useOp);
