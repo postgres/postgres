@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.24 2000/07/28 05:07:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.25 2000/10/24 20:14:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,6 +591,68 @@ int48div(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(val1 / val2);
 }
 
+/* Binary arithmetics
+ *
+ *		int8and		- returns arg1 & arg2
+ *		int8or		- returns arg1 | arg2
+ *		int8xor		- returns arg1 # arg2
+ *		int8not		- returns ~arg1
+ *		int8shl		- returns arg1 << arg2
+ *		int8shr		- returns arg1 >> arg2
+ */
+
+Datum
+int8and(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+
+	PG_RETURN_INT64(arg1 & arg2);
+}
+
+Datum
+int8or(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+
+	PG_RETURN_INT64(arg1 | arg2);
+}
+
+Datum
+int8xor(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+
+	PG_RETURN_INT64(arg1 ^ arg2);
+}
+
+Datum
+int8not(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+
+	PG_RETURN_INT64(~arg1);
+}
+
+Datum
+int8shl(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT64(arg1 << arg2);
+}
+
+Datum
+int8shr(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT64(arg1 >> arg2);
+}
 
 /*----------------------------------------------------------
  *	Conversion operators.

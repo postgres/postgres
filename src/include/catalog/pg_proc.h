@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.169 2000/10/11 15:31:13 pjw Exp $
+ * $Id: pg_proc.h,v 1.170 2000/10/24 20:15:45 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2513,6 +2513,44 @@ DESCR("less-than-or-equal");
 DATA(insert OID = 1861 (  int82ge		   PGUID 12 f t t t 2 f 16 "20 21" 100 0 0 100  int82ge - ));
 DESCR("greater-than-or-equal");
 
+DATA(insert OID = 1892 (  int2and		   PGUID 12 f t t t 2 f 21 "21 21" 100 0 0 100  int2and - ));
+DESCR("binary and");
+DATA(insert OID = 1893 (  int2or		   PGUID 12 f t t t 2 f 21 "21 21" 100 0 0 100  int2or - ));
+DESCR("binary or");
+DATA(insert OID = 1894 (  int2xor		   PGUID 12 f t t t 2 f 21 "21 21" 100 0 0 100  int2xor - ));
+DESCR("binary xor");
+DATA(insert OID = 1895 (  int2not		   PGUID 12 f t t t 1 f 21 "21" 100 0 0 100  int2not - ));
+DESCR("binary not");
+DATA(insert OID = 1896 (  int2shl		   PGUID 12 f t t t 2 f 21 "21 23" 100 0 0 100  int2shl - ));
+DESCR("binary shift left");
+DATA(insert OID = 1897 (  int2shr		   PGUID 12 f t t t 2 f 21 "21 23" 100 0 0 100  int2shr - ));
+DESCR("binary shift right");
+
+DATA(insert OID = 1898 (  int4and		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4and - ));
+DESCR("binary and");
+DATA(insert OID = 1899 (  int4or		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4or - ));
+DESCR("binary or");
+DATA(insert OID = 1900 (  int4xor		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4xor - ));
+DESCR("binary xor");
+DATA(insert OID = 1901 (  int4not		   PGUID 12 f t t t 1 f 23 "23" 100 0 0 100  int4not - ));
+DESCR("binary not");
+DATA(insert OID = 1902 (  int4shl		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4shl - ));
+DESCR("binary shift left");
+DATA(insert OID = 1903 (  int4shr		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4shr - ));
+DESCR("binary shift right");
+
+DATA(insert OID = 1904 (  int8and		   PGUID 12 f t t t 2 f 20 "20 20" 100 0 0 100  int8and - ));
+DESCR("binary and");
+DATA(insert OID = 1905 (  int8or		   PGUID 12 f t t t 2 f 20 "20 20" 100 0 0 100  int8or - ));
+DESCR("binary or");
+DATA(insert OID = 1906 (  int8xor		   PGUID 12 f t t t 2 f 20 "20 20" 100 0 0 100  int8xor - ));
+DESCR("binary xor");
+DATA(insert OID = 1907 (  int8not		   PGUID 12 f t t t 1 f 20 "20" 100 0 0 100  int8not - ));
+DESCR("binary not");
+DATA(insert OID = 1908 (  int8shl		   PGUID 12 f t t t 2 f 20 "20 23" 100 0 0 100  int8shl - ));
+DESCR("binary shift left");
+DATA(insert OID = 1909 (  int8shr		   PGUID 12 f t t t 2 f 20 "20 23" 100 0 0 100  int8shr - ));
+DESCR("binary shift right");
 
 /*
  * prototypes for functions pg_proc.c

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.139 2000/09/25 16:36:36 tgl Exp $
+ * $Id: builtins.h,v 1.140 2000/10/24 20:16:47 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,19 @@ extern Datum int2larger(PG_FUNCTION_ARGS);
 extern Datum int2smaller(PG_FUNCTION_ARGS);
 extern Datum int4larger(PG_FUNCTION_ARGS);
 extern Datum int4smaller(PG_FUNCTION_ARGS);
+
+extern Datum int4and(PG_FUNCTION_ARGS);
+extern Datum int4or(PG_FUNCTION_ARGS);
+extern Datum int4xor(PG_FUNCTION_ARGS);
+extern Datum int4not(PG_FUNCTION_ARGS);
+extern Datum int4shl(PG_FUNCTION_ARGS);
+extern Datum int4shr(PG_FUNCTION_ARGS);
+extern Datum int2and(PG_FUNCTION_ARGS);
+extern Datum int2or(PG_FUNCTION_ARGS);
+extern Datum int2xor(PG_FUNCTION_ARGS);
+extern Datum int2not(PG_FUNCTION_ARGS);
+extern Datum int2shl(PG_FUNCTION_ARGS);
+extern Datum int2shr(PG_FUNCTION_ARGS);
 
 /* name.c */
 extern Datum namein(PG_FUNCTION_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.42 2000/08/01 18:29:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.43 2000/10/24 20:14:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,3 +843,121 @@ int4smaller(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32((arg1 < arg2) ? arg1 : arg2);
 }
+
+/* Binary arithmetics
+ *
+ *		int[24]and		- returns arg1 & arg2
+ *		int[24]or		- returns arg1 | arg2
+ *		int[24]xor		- returns arg1 # arg2
+ *		int[24]not		- returns ~arg1
+ *		int[24]shl		- returns arg1 << arg2
+ *		int[24]shr		- returns arg1 >> arg2
+ */
+
+Datum
+int4and(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 & arg2);
+}
+
+Datum
+int4or(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 | arg2);
+}
+
+Datum
+int4xor(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 ^ arg2);
+}
+
+Datum
+int4shl(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 << arg2);
+}
+
+Datum
+int4shr(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 >> arg2);
+}
+
+Datum
+int4not(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+
+	PG_RETURN_INT32(~arg1);
+}
+
+Datum
+int2and(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 & arg2);
+}
+
+Datum
+int2or(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 | arg2);
+}
+
+Datum
+int2xor(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 ^ arg2);
+}
+
+Datum
+int2not(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+
+	PG_RETURN_INT16(~arg1);
+}
+
+
+Datum
+int2shl(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT16(arg1 << arg2);
+}
+
+Datum
+int2shr(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT16(arg1 >> arg2);
+}
+
