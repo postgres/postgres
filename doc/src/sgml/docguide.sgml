@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.14 1999/01/07 03:01:27 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.15 1999/05/27 15:49:07 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
 $Log: docguide.sgml,v $
+Revision 1.15  1999/05/27 15:49:07  thomas
+Markup fixes.
+Update for v6.5 release.
+
 Revision 1.14  1999/01/07 03:01:27  thomas
 Fix column formatting for a table. No content changes.
 
@@ -42,155 +46,155 @@ Include working list of all documentation sources, with current status
 
 -->
 
-<appendix label="A" Id="docguide">
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Thomas</firstname>
-<surname>Lockhart</surname>
-</author>
-<author>
-<firstname>Tom Ivar</firstname>
-<surname>Helbekkmo</surname>
-</author>
-</authorgroup>
-<date>1998-04-28</date>
-</docinfo>
+<appendix label="DG2" id="docguide">
+ <docinfo>
+  <authorgroup>
+   <author>
+    <firstname>Thomas</firstname>
+    <surname>Lockhart</surname>
+   </author>
+   <author>
+    <firstname>Tom Ivar</firstname>
+    <surname>Helbekkmo</surname>
+   </author>
+  </authorgroup>
+  <date>1999-05-27</date>
+ </docinfo>
 
-<title>Documentation</title>
+ <title>Documentation</title>
 
-<para>
-The purpose of documentation is to make <productname>Postgres</productname>
-easier to learn, use, and develop.
-The documentation set should describe the <productname>Postgres</productname>
-system, language, and interfaces.
-It should be able to answer
-common questions and to allow a user to find those answers on his own
-without resorting to mailing list support.
-</para>
+ <para>
+  The purpose of documentation is to make <productname>Postgres</productname>
+  easier to learn, use, and develop.
+  The documentation set should describe the <productname>Postgres</productname>
+  system, language, and interfaces.
+  It should be able to answer
+  common questions and to allow a user to find those answers on his own
+  without resorting to mailing list support.
+ </para>
 
-<sect1>
-<title>Documentation Roadmap</title>
+ <sect1>
+  <title>Documentation Roadmap</title>
 
-<para>
-<productname>Postgres</productname> has four primary documentation
-formats:
+  <para>
+   <productname>Postgres</productname> has four primary documentation
+   formats:
 
-<itemizedlist>
-<listitem><para>
-Plain text for pre-installation information.
-</para></listitem>
-<listitem><para>
-<acronym>HTML</acronym>, for on-line browsing and reference.
-</para></listitem>
-<listitem><para>
-Hardcopy, for in-depth reading and reference.
-</para></listitem>
-<listitem><para>
-<acronym>man pages</acronym>, for quick reference.
-</para></listitem>
-</itemizedlist>
-</para>
+   <itemizedlist>
+    <listitem><para>
+      Plain text for pre-installation information.
+     </para></listitem>
+    <listitem><para>
+      <acronym>HTML</acronym>, for on-line browsing and reference.
+     </para></listitem>
+    <listitem><para>
+      Hardcopy, for in-depth reading and reference.
+     </para></listitem>
+    <listitem><para>
+      <acronym>man pages</acronym>, for quick reference.
+     </para></listitem>
+   </itemizedlist>
+  </para>
 
-<para>
-<table tocentry="1">
-<title><ProductName>Postgres</ProductName> Documentation Products</title>
-<tgroup cols="2">
-<thead>
-<row>
-<entry>
-File
-</entry>
-<entry>
-Description
-</entry>
-</row>
-</thead>
+  <para>
+   <table tocentry="1">
+    <title><productname>Postgres</productname> Documentation Products</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>
+	File
+       </entry>
+       <entry>
+	Description
+       </entry>
+      </row>
+     </thead>
 
-<tbody>
-<row><entry> ./COPYRIGHT	</entry><entry>	Copyright notice	</entry></row>
-<row><entry> ./INSTALL	</entry><entry> Installation instructions (text from sgml->rtf->text)	</entry></row>
-<row><entry> ./README	</entry><entry> Introductory info	</entry></row>
-<row><entry> ./register.txt	</entry><entry>	Registration message during make	</entry></row>
-<row><entry> ./doc/bug.template	</entry><entry>	Bug report template	</entry></row>
-<row><entry> ./doc/postgres.tar.gz	</entry><entry>	Integrated docs (<acronym>HTML</acronym>)	</entry></row>
-<row><entry> ./doc/programmer.ps.gz	</entry><entry>	Programmer's Guide (Postscript)	</entry></row>
-<row><entry> ./doc/programmer.tar.gz	</entry><entry>	Programmer's Guide (<acronym>HTML</acronym>)	</entry></row>
-<row><entry> ./doc/reference.ps.gz	</entry><entry>	Reference Manual (Postscript)	</entry></row>
-<row><entry> ./doc/reference.tar.gz	</entry><entry>	Reference Manual (<acronym>HTML</acronym>)	</entry></row>
-<row><entry> ./doc/tutorial.ps.gz	</entry><entry>	Introduction (Postscript)	</entry></row>
-<row><entry> ./doc/tutorial.tar.gz	</entry><entry>	Introduction (<acronym>HTML</acronym>)	</entry></row>
-<row><entry> ./doc/user.ps.gz	</entry><entry>	User's Guide (Postscript)	</entry></row>
-<row><entry> ./doc/user.tar.gz	</entry><entry>	User's Guide (<acronym>HTML</acronym>)	</entry></row>
-</tbody>
-</tgroup>
-</table>
-</para>
+     <tbody>
+      <row><entry>./COPYRIGHT</entry><entry>Copyright notice</entry></row>
+      <row><entry>./INSTALL</entry><entry>Installation instructions (text from sgml->rtf->text)</entry></row>
+      <row><entry>./README</entry><entry>Introductory info</entry></row>
+      <row><entry>./register.txt</entry><entry>Registration message during make</entry></row>
+      <row><entry>./doc/bug.template</entry><entry>Bug report template</entry></row>
+      <row><entry>./doc/postgres.tar.gz</entry><entry>Integrated docs (<acronym>HTML</acronym>)</entry></row>
+      <row><entry>./doc/programmer.ps.gz</entry><entry>Programmer's Guide (Postscript)</entry></row>
+      <row><entry>./doc/programmer.tar.gz</entry><entry>Programmer's Guide (<acronym>HTML</acronym>)</entry></row>
+      <row><entry>./doc/reference.ps.gz</entry><entry>Reference Manual (Postscript)</entry></row>
+      <row><entry>./doc/reference.tar.gz</entry><entry>Reference Manual (<acronym>HTML</acronym>)</entry></row>
+      <row><entry>./doc/tutorial.ps.gz</entry><entry>Introduction (Postscript)</entry></row>
+      <row><entry>./doc/tutorial.tar.gz</entry><entry>Introduction (<acronym>HTML</acronym>)</entry></row>
+      <row><entry>./doc/user.ps.gz</entry><entry>User's Guide (Postscript)</entry></row>
+      <row><entry>./doc/user.tar.gz</entry><entry>User's Guide (<acronym>HTML</acronym>)</entry></row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
 
-<para>
-There are man pages available for installation, as well as a large number
-of plain-text README-type files throughout the <productname>Postgres</productname>
-source tree.
-</para>
-</sect1>
+  <para>
+   There are man pages available for installation, as well as a large number
+   of plain-text README-type files throughout the <productname>Postgres</productname>
+   source tree.
+  </para>
+ </sect1>
 
-<sect1>
-<title>The Documentation Project</title>
+ <sect1>
+  <title>The Documentation Project</title>
 
-<para>
-Packaged documentation is available in both
-<acronym>HTML</acronym> and <firstterm>Postscript</firstterm>
-formats. These are available as part of the standard
-<productname>Postgres</productname> installation. We discuss here
-working with the documentation sources and generating documentation
-packages.
-</para>
+  <para>
+   Packaged documentation is available in both
+   <acronym>HTML</acronym> and <firstterm>Postscript</firstterm>
+   formats. These are available as part of the standard
+   <productname>Postgres</productname> installation. We discuss here
+   working with the documentation sources and generating documentation
+   packages.
+  </para>
 
-<para>
-The purpose of <productname>DocBook</productname> <acronym>SGML</acronym>
- is to allow an author to
-specify the structure and content of a document (e.g. using the
-<productname>DocBook</productname> <acronym>DTD</acronym>),  and to
-have a document style define how that content is rendered into a
-final form (e.g. using Norm Walsh's 
-<productname>Modular Style Sheets</productname>).</para>
+  <para>
+   The documentation sources are written using <acronym>SGML</acronym>
+   markup of plain text files.
+   The purpose of <productname>DocBook</productname> <acronym>SGML</acronym>
+   is to allow an author to
+   specify the structure and content of a technical document (using the
+   <productname>DocBook</productname> <acronym>DTD</acronym>),  and to
+   have a document style define how that content is rendered into a
+   final form (e.g. using Norm Walsh's 
+   <productname>Modular Style Sheets</productname>).</para>
 
+  <para>
+   See
+   <ulink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">Introduction to DocBook</ulink>
+   for a nice "quickstart" summary of DocBook features.
+   <ulink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/"> DocBook Elements</ulink>
+   provides a powerful cross-reference for features of
+   <productname>DocBook</productname>.
+  </para>
 
-<para>
-See <ulink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">
-Introduction to DocBook</ulink> for a nice "quickstart" summary of
-DocBook features.
-<ulink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/"> DocBook Elements</ulink>
-provides a powerful cross-reference for features of
-<productname>DocBook</productname>.
-</para>
+  <para>
+   This documentation set is constructed using several tools, including
+   James Clark's 
+   <ulink url="http://www.jclark.com/jade/"> <productname>jade</productname></ulink>
+   and Norm Walsh's 
+   <ulink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ulink>.
+  </para>
 
-<para>
-This documentation set is constructed using several tools, including
-James Clark's 
-<ulink url="http://www.jclark.com/jade/"> <productname>jade</productname></ulink>
- and Norm Walsh's 
-<ulink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ulink>.
-</para>
+  <para>
+   Currently, hardcopy is produced by importing
+   <firstterm>Rich Text Format</firstterm> (<acronym>RTF</acronym>) output from
+   <application>jade</application> into
+   <productname>ApplixWare</productname> for minor formatting fixups, then
+   exporting as a Postscript file.</para>
 
-<para>
-Currently, hardcopy is produced by importing <firstterm>Rich Text
-Format</firstterm> (<acronym>RTF</acronym>) output from
-<application>jade</application> into
-<productname>ApplixWare</productname> for minor formatting fixups then
-exporting as a Postscript file.</para>
+  <para>
+   <ulink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/">
+    <productname>TeX</productname></ulink> is a supported format for
+   <application>jade</application> output, but was not used at this time
+   for several reasons, including the inability to make minor format
+   fixes before committing to hardcopy and generally inadequate table
+   support in the <productname>TeX</productname>
+   stylesheets.</para>
 
-
-<para>
-<ulink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/">
-<productname>TeX</productname></ulink> is a supported format for
-<application>jade</application> output, but was not used at this time
-for several reasons, including the inability to make minor format
-fixes before committing to hardcopy and generally inadequate table
-support in the <productname>TeX</productname>
-stylesheets.</para>
-
-</sect1>
+ </sect1>
 
 <sect1>
 <title>Documentation Sources</title>
@@ -352,7 +356,7 @@ Too much tabular info and not very helpful in hardcopy.
 
 <para>
 <table tocentry="1">
-<title><ProductName>Postgres</ProductName> Documentation Sources</title>
+<title><productname>Postgres</productname> Documentation Sources</title>
 <tgroup cols="3">
 <thead>
 <row>
@@ -526,7 +530,7 @@ Status
 
 <para>
 <table tocentry="1">
-<title><ProductName>Postgres</ProductName> Documentation Sources</title>
+<title><productname>Postgres</productname> Documentation Sources</title>
 <tgroup cols="3">
 <thead>
 <row>
@@ -964,138 +968,141 @@ by typing
 </programlisting>
 </para></sect1>
 
-<sect1>
-<title>Hardcopy Generation for v6.4</title>
+ <sect1>
+  <title>Hardcopy Generation for v6.5</title>
 
-<para>
-The hardcopy Postscript documentation is generated by converting the
-<acronym>SGML</acronym> source code to <acronym>RTF</acronym>, then
-importing into <productname>ApplixWare-4.4.1</productname>. 
-After a little cleanup (see the following
-section) the output is "printed" to a postscript file.
-</para>
+  <para>
+   The hardcopy Postscript documentation is generated by converting the
+   <acronym>SGML</acronym> source code to <acronym>RTF</acronym>, then
+   importing into <productname>ApplixWare-4.4.1</productname>. 
+   After a little cleanup (see the following
+   section) the output is "printed" to a postscript file.
+  </para>
 
-<para>
-Some figures were redrawn to avoid having bitmap
-<acronym>GIF</acronym> files in the hardcopy documentation. One
-figure, of the system catalogs, was sufficiently complex that there
-was  not time to redraw it. It was converted to fit using the
-following commands:
+<!--
+  <para>
+   Some figures were redrawn to avoid having bitmap
+   <acronym>GIF</acronym> files in the hardcopy documentation. One
+   figure, of the system catalogs, was sufficiently complex that there
+   was  not time to redraw it. It was converted to fit using the
+   following commands:
 
-<programlisting>
+   <programlisting>
 % convert -monochrome -v -geometry 500x500'>' catalogs.ps catalogs.gif
 % convert -v -crop 400x500 catalogs.gif catalogs-cropped.gif
-</programlisting>
+   </programlisting>
 
-</para>
+  </para>
+-->
 
-<sect2>
-<title><acronym>RTF</acronym> Cleanup Procedure</title>
+  <sect2>
+   <title><acronym>RTF</acronym> Cleanup Procedure</title>
 
-<para>
-Several items must be addressed in generating Postscript
-hardcopy:</para>
+   <para>
+    Several items must be addressed in generating Postscript
+    hardcopy:</para>
 
-<procedure>
-<title>Applixware <acronym>RTF</acronym> Cleanup</title>
+   <procedure>
+    <title>Applixware <acronym>RTF</acronym> Cleanup</title>
 
-<para>
-Applixware does not seem to do a complete job of importing <acronym>RTF</acronym>
-generated by jade/MSS. In particular, all text is given the
-<quote>Header1</quote> style attribute label, although the text
-formatting itself is acceptable. Also, the Table of Contents page
-numbers do not refer to the section listed in the table, but rather
-refer to the page of the ToC itself.</para>
+    <para>
+     Applixware does not seem to do a complete job of importing <acronym>RTF</acronym>
+     generated by jade/MSS. In particular, all text is given the
+     <quote>Header1</quote> style attribute label, although the text
+     formatting itself is acceptable. Also, the Table of Contents page
+     numbers do not refer to the section listed in the table, but rather
+     refer to the page of the ToC itself.</para>
 
-<step performance="required">
-<para>
-Generate the <acronym>RTF</acronym> input by typing
-<programlisting>
+    <step performance="required">
+     <para>
+      Generate the <acronym>RTF</acronym> input by typing
+      <programlisting>
 % cd doc/src/sgml
 % make tutorial.rtf
-</programlisting>
-</para>
-</step>
+      </programlisting>
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Open a new document in <productname>Applix Words</productname> and
-then import the <acronym>RTF</acronym> file.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Open a new document in <productname>Applix Words</productname> and
+      then import the <acronym>RTF</acronym> file.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Print out the existing Table of Contents, to mark up in the following
-few steps.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Print out the existing Table of Contents, to mark up in the following
+      few steps.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Insert figures into the document. Center each figure on the page using
-the centering margins button.</para>
+    <step performance="required">
+     <para>
+      Insert figures into the document. Center each figure on the page using
+      the centering margins button.</para>
 
-<para>
-Not all documents have figures. You can grep the <acronym>SGML</acronym> source files for
-the string <quote>Graphic</quote> to identify those parts of the
-documentation which may have figures. A few figures are replicated in
-various parts of the documentation.
-</para>
-</step>
+     <para>
+      Not all documents have figures.
+      You can grep the <acronym>SGML</acronym> source files for
+      the string <quote>Graphic</quote> to identify those parts of the
+      documentation which may have figures. A few figures are replicated in
+      various parts of the documentation.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Work through the document, adjusting page breaks and table column
-widths.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Work through the document, adjusting page breaks and table column
+      widths.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-If a bibliography is present, Applix Words seems to mark all remaining
-text after the first title as having an underlined attribute. Select
-all remaining text, turn off underlining using the underlining button,
-then explicitly underline each document and book title.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      If a bibliography is present, Applix Words seems to mark all remaining
+      text after the first title as having an underlined attribute. Select
+      all remaining text, turn off underlining using the underlining button,
+      then explicitly underline each document and book title.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Work through the document, marking up the ToC hardcopy with the actual
-page number of each ToC entry.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Work through the document, marking up the ToC hardcopy with the actual
+      page number of each ToC entry.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Replace the right-justified incorrect page numbers in the ToC with
-correct values. This only takes a few minutes per document.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Replace the right-justified incorrect page numbers in the ToC with
+      correct values. This only takes a few minutes per document.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Save the document as native Applix Words format to allow easier last
-minute editing later.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Save the document as native Applix Words format to allow easier last
+      minute editing later.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Export the document to a file in Postscript format.
-</para>
-</step>
+    <step performance="required">
+     <para>
+      Export the document to a file in Postscript format.
+     </para>
+    </step>
 
-<step performance="required">
-<para>
-Compress the Postscript file using <application>gzip</application>.
-Place the compressed file into the <filename>doc</filename> directory.
-</para>
-</step>
-</procedure>
+    <step performance="required">
+     <para>
+      Compress the Postscript file using <application>gzip</application>.
+      Place the compressed file into the <filename>doc</filename> directory.
+     </para>
+    </step>
+   </procedure>
 
-</sect2>
+  </sect2>
 </sect1>
 
 <sect1>
@@ -1660,7 +1667,7 @@ Run <productname>texhash</productname> to update the tex database.
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.24 1999/05/26 17:30:29 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.25 1999/05/27 15:49:08 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.25  1999/05/27 15:49:08  thomas
+Markup fixes.
+Update for v6.5 release.
+
 Revision 1.24  1999/05/26 17:30:29  thomas
 Add chapters on CVS access, MVCC, SQL theory to the docs.
 Add an appendix with more details on date/time attributes and handling.
@@ -126,6 +130,7 @@ Move SQL reference pages up into the User's Guide.
 <!entity install  SYSTEM "install.sgml">
 <!entity installw SYSTEM "install-win32.sgml">
 <!entity intro-ag SYSTEM "intro-ag.sgml">
+<!entity layout   SYSTEM "layout.sgml">
 <!entity ports    SYSTEM "ports.sgml">
 <!entity runtime  SYSTEM "runtime.sgml">
 <!entity recovery SYSTEM "recovery.sgml">
@@ -291,6 +296,7 @@ Your name here...
    &intro-ag;
    &ports;
    &config;
+   &layout;
    &install;
    &installw;
    &runtime;

@@ -19,10 +19,10 @@
     Unlike most other database systems which use locks for concurrency control,
     <productname>Postgres</productname>
     maintains data consistency by using a multiversion model. 
-    This means that while querying database each transaction sees
+    This means that while querying a database each transaction sees
     a snapshot of data (a <firstterm>database version</firstterm>)
     as it was some
-    time ago, regardless of the current state of data queried.
+    time ago, regardless of the current state of the underlying data.
     This protects the transaction from viewing inconsistent data that
     could be caused by (other) concurrent transaction updates on the same
     data rows, providing <firstterm>transaction isolation</firstterm>
@@ -87,81 +87,88 @@
    </para>
 
    <para>
-    Accordingly, the four isolation levels are defined to be:
+    The four isolation levels and the corresponding behaviors are described below.
 
-    <segmentedlist>
-     <segtitle>
-      Isolation Level
-     </segtitle>
-     <segtitle>
-      Dirty Read
-     </segtitle>
-     <segtitle>
-      Non-Repeatable Read
-     </segtitle>
-     <segtitle>
-      Phantom Read
-     </segtitle>
-     <seglistitem>
-      <seg>
-       Read uncommitted
-      </seg>
-      <seg>
-       Possible
-      </seg>
-      <seg>
-       Possible
-      </seg>
-      <seg>
-       Possible
-      </seg>
-     </seglistitem>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Isolation Levels</title>
+     <titleabbrev>Isolation Levels</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>
+	 Dirty Read
+	</entry>
+	<entry>
+	 Non-Repeatable Read
+	</entry>
+	<entry>
+	 Phantom Read
+	</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>
+	 Read uncommitted
+	</entry>
+	<entry>
+	 Possible
+	</entry>
+	<entry>
+	 Possible
+	</entry>
+	<entry>
+	 Possible
+	</entry>
+       </row>
 
-     <seglistitem>
-      <seg>
-       Read committed
-      </seg>
-      <seg>
-       Not possible
-      </seg>
-      <seg>
-       Possible
-      </seg>
-      <seg>
-       Possible
-      </seg>
-     </seglistitem>
+       <row>
+	<entry>
+	 Read committed
+	</entry>
+	<entry>
+	 Not possible
+	</entry>
+	<entry>
+	 Possible
+	</entry>
+	<entry>
+	 Possible
+	</entry>
+       </row>
 
-     <seglistitem>
-      <seg>
-       Repeatable read
-      </seg>
-      <seg>
-       Not possible
-      </seg>
-      <seg>
-       Not possible
-      </seg>
-      <seg>
-       Possible
-      </seg>
-     </seglistitem>
+       <row>
+	<entry>
+	 Repeatable read
+	</entry>
+	<entry>
+	 Not possible
+	</entry>
+	<entry>
+	 Not possible
+	</entry>
+	<entry>
+	 Possible
+	</entry>
+       </row>
 
-     <seglistitem>
-      <seg>
-       Serializable
-      </seg>
-      <seg>
-       Not possible
-      </seg>
-      <seg>
-       Not possible
-      </seg>
-      <seg>
-       Not possible
-      </seg>
-     </seglistitem>
-    </segmentedlist>
+       <row>
+	<entry>
+	 Serializable
+	</entry>
+	<entry>
+	 Not possible
+	</entry>
+	<entry>
+	 Not possible
+	</entry>
+	<entry>
+	 Not possible
+	</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
 
     <productname>Postgres</productname>
     offers the read committed and serializable isolation levels.
@@ -172,7 +179,8 @@
    <title>Read Committed Isolation Level</title>
 
    <para>
-    This is the default isolation level in <productname>Postgres</productname>. 
+    <firstterm>Read Committed</firstterm>
+    is the default isolation level in <productname>Postgres</productname>. 
     When a transaction runs on this isolation level, a query sees only
     data committed before the query began and never sees either dirty data or
     concurrent transaction changes committed during query execution.
@@ -196,7 +204,8 @@
    </para>
 
    <para>
-    Note that the results of execution of SELECT or INSERT (with a query) 
+    Note that the results of execution of <command>SELECT</command>
+    or <command>INSERT</command> (with a query) 
     statements will not be affected by concurrent transactions.
    </para>
   </sect1>
@@ -205,8 +214,9 @@
    <title>Serializable Isolation Level</title>
 
    <para>
-    This level provides the highest transaction isolation. When a
-    transaction is on the <firstterm>serializable</firstterm> level,
+    <firstterm>Serializable</firstterm> provides the highest transaction isolation.
+    When a
+    transaction is on the serializable level,
     a query sees only data
     committed before the transaction began and never see either dirty data
     or concurrent transaction changes committed during transaction
@@ -216,8 +226,9 @@
    </para>
 
    <para>
-    If a row returned by query while executing
-    <command>UPDATE</command>/<command>DELETE</command>/<command>SELECT FOR UPDATE</command>
+    If a row returned by query while executing a
+    <command>UPDATE</command>
+    (or <command>DELETE</command> or <command>SELECT FOR UPDATE</command>)
     statement is being updated by
     a concurrent uncommitted transaction then the second transaction
     that tries to update this row will wait for the other transaction to
@@ -394,8 +405,8 @@ ERROR:  Can't serialize access due to concurrent update
 
 	 <note>
 	  <para>
-	   Note that only AccessExclusiveLock blocks <command>SELECT</command> (without FOR
-	   UPDATE) statement.
+	   Only AccessExclusiveLock blocks <command>SELECT</command> (without
+	   <option>FOR UPDATE</option>) statement.
 	  </para>
 	 </note>
 	</para>
@@ -409,11 +420,11 @@ ERROR:  Can't serialize access due to concurrent update
     <title>Row-level locks</title>
 
     <para>
-     These locks are acquired by means of modification of internal
-     fields of row being updated/deleted/marked for update.
+     These locks are acquired when internal
+     fields of a row are being updated (or deleted or marked for update).
      <productname>Postgres</productname>
      doesn't remember any information about modified rows in memory and
-     so hasn't limit for locked rows without lock escalation.
+     so has no limit to the number of rows locked without lock escalation.
     </para>
 
     <para>
@@ -434,7 +445,8 @@ ERROR:  Can't serialize access due to concurrent update
    <para>
     Though <productname>Postgres</productname>
     provides unblocking read/write access to table
-    data, it is not the case for all index access methods implemented
+    data, unblocked read/write access is not provided for every
+    index access methods implemented
     in <productname>Postgres</productname>.
    </para>
 
@@ -448,7 +460,7 @@ ERROR:  Can't serialize access due to concurrent update
       </term>
       <listitem>
        <para>
-	Share/exclusive INDEX-level locks are used for read/write access.
+	Share/exclusive index-level locks are used for read/write access.
 	Locks are released after statement is done.
        </para>
       </listitem>
@@ -460,7 +472,7 @@ ERROR:  Can't serialize access due to concurrent update
       </term>
       <listitem>
        <para>
-	Share/exclusive PAGE-level locks are used for read/write access.
+	Share/exclusive page-level locks are used for read/write access.
 	Locks are released after page is processed.
        </para>
 
@@ -477,13 +489,13 @@ ERROR:  Can't serialize access due to concurrent update
       </term>
       <listitem>
        <para>
-	Short-term share/exclusive PAGE-level latches are used for
+	Short-term share/exclusive page-level latches are used for
 	read/write access. Latches are released immediately after the index
 	tuple is inserted/fetched.
        </para>
 
        <para>
-	Btree indices provide highest concurrency without deadlock
+	Btree indices provide the highest concurrency without deadlock
 	conditions.
        </para>
       </listitem>
@@ -503,8 +515,8 @@ ERROR:  Can't serialize access due to concurrent update
     by <command>SELECT</command> it doesn't mean that this row really
     exists at the time it is returned (i.e. sometime after the
     statement or transaction began) nor
-    that the row is protected from deletion/updation by concurrent
-    transactions before the current transaction commit or rollback. 
+    that the row is protected from deletion or update by concurrent
+    transactions before the current transaction does a commit or rollback. 
    </para>
 
    <para>
