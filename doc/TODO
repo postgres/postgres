@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Mar  5 22:14:41 EST 2002
+Last updated:		Thu Mar  7 20:29:53 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -125,7 +125,7 @@ VIEWS / RULES
 * Move psql backslash information into views
 * Allow RULE recompilation
 * Remove brackets as multi-statement rule grouping, must use parens
-
+* Prevent aggregates from being used in rule WHERE clauses
 
 INDEXES
 -------
