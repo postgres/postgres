@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.32 2001/01/06 11:58:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.33 2001/01/08 22:07:47 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -568,9 +568,22 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
        <term>oid</term>
        <listitem>
 	<para>
-	 stands for the unique identifier of an instance which is added by
-	 Postgres to all instances automatically. OIDs are not reused and are
-	 32-bit quantities.
+	 The unique identifier (object ID) of a row.  This is a serial number
+	 that is added by Postgres to all rows automatically. OIDs are not
+	 reused and are 32-bit quantities.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>tableoid</term>
+       <listitem>
+	<para>
+	 The OID of the table containing this row.  This attribute is
+	 particularly handy for queries that select from inheritance
+	 hierarchies, since without it, it's difficult to tell which
+	 individual table a row came from.  The tableoid can be joined
+	 against the OID attribute of pg_class to obtain the table name.
 	</para>
        </listitem>
       </varlistentry>
@@ -579,16 +592,9 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
        <term>xmin</term>
        <listitem>
 	<para>
-	 The identity of the inserting transaction.
-	</para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-      <term>xmax</term>
-       <listitem>
-	<para>
-	 The identity of the deleting transaction.
+	 The identity (transaction ID) of the inserting transaction for
+	 this tuple.  (Note: a tuple is an individual state of a row;
+	 each UPDATE of a row creates a new tuple for the same logical row.)
 	</para>
        </listitem>
       </varlistentry>
@@ -597,7 +603,19 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       <term>cmin</term>
        <listitem>
 	<para>
-	 The command identifier within the inserting transaction.
+	 The command identifier (starting at zero) within the inserting
+	 transaction.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>xmax</term>
+       <listitem>
+	<para>
+	 The identity (transaction ID) of the deleting transaction,
+	 or zero for an undeleted tuple.  In practice, this is never nonzero
+	 for a visible tuple.
 	</para>
        </listitem>
       </varlistentry>
@@ -606,7 +624,24 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       <term>cmax</term>
        <listitem>
 	<para>
-	 The command identifier within the deleting transaction.
+	 The command identifier within the deleting transaction, or zero.
+	 Again, this is never nonzero for a visible tuple.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>ctid</term>
+       <listitem>
+	<para>
+	 The tuple ID of the tuple within its table.  This is a pair
+	 (block number, tuple index within block) that identifies the
+	 physical location of the tuple.  Note that although the ctid
+	 can be used to locate the tuple very quickly, a row's ctid
+	 will change each time it is updated or moved by VACUUM.
+	 Therefore ctid is useless as a long-term row identifier.
+	 The OID, or even better a user-defined serial number, should
+	 be used to identify logical rows.
 	</para>
        </listitem>
       </varlistentry>
