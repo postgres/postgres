@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.10 1997/03/26 03:01:29 vadim Exp $
+ * $Id: psqlHelp.h,v 1.11 1997/04/02 04:18:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static struct _helpStruct QL_HELP[] = {
       "copy [binary] <class_name> [with oids]\n\t{to|from} {<filename>|stdin|stdout} [using delimiters <delim>];"},
   { "create",   
       "Please more be specific:",
-      "\tcreate aggregate\n\tcreate database\n\tcreate function\n\tcreate index\n\tcreate operator\n\tcreate rule\n\tcreate table\n\tcreate type\n\tcreate view"},
+      "\tcreate aggregate\n\tcreate database\n\tcreate function\n\tcreate index\n\tcreate operator\n\tcreate rule\n\tcreate sequence\n\tcreate table\n\tcreate type\n\tcreate view"},
   { "create aggregate",
       "define an aggregate function",
       "create aggregate <agg_name> [as] (basetype = <data_type>, \n\t[sfunc1 = <sfunc_1>, stype1 = <sfunc1_return_type>]\n\t[sfunc2 = <sfunc_2>, stype2 = <sfunc2_return_type>]\n\t[,finalfunc = <final-function>]\n\t[,initcond1 = <initial-cond1>][,initcond2 = <initial-cond2>]);"},
@@ -71,6 +71,9 @@ static struct _helpStruct QL_HELP[] = {
   { "create rule",
       "define a new rule",
       "create rule <rule_name> as on\n\t[select|update|delete|insert]\n\tto <object> [where <qual>]\n\tdo [instead] [<action>|nothing| [<actions>]];"},
+  { "create sequence",
+      "create a new sequence number generator",
+      "create sequence <sequence_name>\n\t[increment <NUMBER>]\n\t[start <NUMBER>]\n\t[minvalue <NUMBER>]\n\t[maxvalue <NUMBER>]\n\t[cache <NUMBER>]\n\t[cycle];"},
   { "create table",
       "create a new table",
       "create table <class_name> ( <attr1> <type1>,... <attrN> <typeN>)\n\t[inherits (<class_name1>,...<class_nameN>\n\tarchive=<archive_mode>\n\tstore=<smgr_name>\n\tarch_store=<smgr_name>];"},
@@ -88,7 +91,7 @@ static struct _helpStruct QL_HELP[] = {
       "delete from <class_name> [where <qual>];"},
   { "drop",   
       "Please more be specific:",
-      "\tdrop aggregate\n\tdrop database\n\tdrop function\n\tdrop index\n\tdrop operator\n\tdrop rule\n\tdrop table\n\tdrop type\n\tdrop view"},
+      "\tdrop aggregate\n\tdrop database\n\tdrop function\n\tdrop index\n\tdrop operator\n\tdrop rule\n\tdrop sequence\n\tdrop table\n\tdrop type\n\tdrop view"},
   { "drop aggregate",
       "remove an aggregate function",
       "drop aggregate <agg_name>;"},
@@ -110,6 +113,9 @@ static struct _helpStruct QL_HELP[] = {
   { "drop table", 
       "remove a table", 
       "drop table <class_name>[,...<class_nameN];"},
+  { "drop sequence", 
+      "remove a sequence number generator", 
+      "drop sequence <sequence_name>[,...<sequence_nameN];"},
   { "drop type",
       "remove a user-defined base type",
       "drop type <typename>;"},
