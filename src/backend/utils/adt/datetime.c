@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.98 2003/01/16 00:26:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.99 2003/01/29 01:08:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,14 +667,13 @@ TrimTrailingZeros(char *str)
 	}
 #endif
 
-	/* chop off trailing zeros... */
+	/* chop off trailing zeros... but leave at least 2 fractional digits */
 	while ((*(str + len - 1) == '0')
 		   && (*(str + len - 3) != '.'))
 	{
 		len--;
 		*(str + len) = '\0';
 	}
-	return;
 }
 
 
@@ -3145,33 +3144,22 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 int
 EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
-#ifndef HAVE_INT64_TIMESTAMP
-	fsec_t		sec;
-#endif
-
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 24))
 		return -1;
-
-#ifndef HAVE_INT64_TIMESTAMP
-	sec = (tm->tm_sec + fsec);
-#endif
 
 	sprintf(str, "%02d:%02d", tm->tm_hour, tm->tm_min);
 
 	/*
-	 * If we have fractional seconds, then include a decimal point We will
-	 * do up to 6 fractional digits, and we have rounded any inputs to
-	 * eliminate anything to the right of 6 digits anyway. If there are no
-	 * fractional seconds, then do not bother printing a decimal point at
-	 * all. - thomas 2001-09-29
+	 * Print fractional seconds if any.  The field widths here should be
+	 * at least equal to the larger of MAX_TIME_PRECISION and
+	 * MAX_TIMESTAMP_PRECISION.
 	 */
 	if (fsec != 0)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-		sprintf((str + strlen(str)), ".%06d", fsec);
+		sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
 #else
-		sprintf((str + strlen(str)), ":%013.10f", sec);
+		sprintf((str + strlen(str)), ":%013.10f", tm->tm_sec + fsec);
 #endif
 		/* chop off trailing pairs of zeros... */
 		while ((strcmp((str + strlen(str) - 2), "00") == 0)
@@ -3179,11 +3167,7 @@ EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 			*(str + strlen(str) - 2) = '\0';
 	}
 	else
-#ifdef HAVE_INT64_TIMESTAMP
 		sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-#else
-		sprintf((str + strlen(str)), ":%02.0f", sec);
-#endif
 
 	if (tzp != NULL)
 	{
@@ -3217,19 +3201,11 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				hour,
 				min;
 
-#ifndef HAVE_INT64_TIMESTAMP
-	fsec_t		sec;
-#endif
-
 	/*
 	 * Why are we checking only the month field? Change this to an
 	 * assert... if ((tm->tm_mon < 1) || (tm->tm_mon > 12)) return -1;
 	 */
 	Assert((tm->tm_mon >= 1) && (tm->tm_mon <= 12));
-
-#ifndef HAVE_INT64_TIMESTAMP
-	sec = (tm->tm_sec + fsec);
-#endif
 
 	switch (style)
 	{
@@ -3241,21 +3217,20 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal point
-			 * We will do up to 6 fractional digits, and we have rounded
-			 * any inputs to eliminate anything to the right of 6 digits
-			 * anyway. If there are no fractional seconds, then do not
-			 * bother printing a decimal point at all. - thomas 2001-09-29
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 *
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-				sprintf((str + strlen(str)), ".%06d", fsec);
+				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
-				sprintf((str + strlen(str)), ":%013.10f", sec);
+				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
 #endif
 				TrimTrailingZeros(str);
 			}
@@ -3292,21 +3267,20 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal point
-			 * We will do up to 6 fractional digits, and we have rounded
-			 * any inputs to eliminate anything to the right of 6 digits
-			 * anyway. If there are no fractional seconds, then do not
-			 * bother printing a decimal point at all. - thomas 2001-09-29
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 *
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-				sprintf((str + strlen(str)), ".%06d", fsec);
+				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
-				sprintf((str + strlen(str)), ":%013.10f", sec);
+				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
 #endif
 				TrimTrailingZeros(str);
 			}
@@ -3339,21 +3313,20 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal point
-			 * We will do up to 6 fractional digits, and we have rounded
-			 * any inputs to eliminate anything to the right of 6 digits
-			 * anyway. If there are no fractional seconds, then do not
-			 * bother printing a decimal point at all. - thomas 2001-09-29
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 *
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-				sprintf((str + strlen(str)), ".%06d", fsec);
+				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
-				sprintf((str + strlen(str)), ":%013.10f", sec);
+				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
 #endif
 				TrimTrailingZeros(str);
 			}
@@ -3394,21 +3367,20 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal point
-			 * We will do up to 6 fractional digits, and we have rounded
-			 * any inputs to eliminate anything to the right of 6 digits
-			 * anyway. If there are no fractional seconds, then do not
-			 * bother printing a decimal point at all. - thomas 2001-09-29
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
+			 *
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-				sprintf((str + strlen(str)), ".%06d", fsec);
+				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
 #else
 			if ((fsec != 0) && (tm->tm_year > 0))
 			{
-				sprintf((str + strlen(str)), ":%013.10f", sec);
+				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
 #endif
 				TrimTrailingZeros(str);
 			}

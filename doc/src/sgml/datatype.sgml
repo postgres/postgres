@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.111 2003/01/15 18:01:04 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.112 2003/01/29 01:08:42 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1297,8 +1297,7 @@ SELECT b, char_length(b) FROM test2;
     fractional digits retained in the seconds field. By default, there
     is no explicit bound on precision.  The allowed range of
     <replaceable>p</replaceable> is from 0 to 6 for the
-    <type>timestamp</type> and <type>interval</type> types, 0 to 13
-    for the <type>time</type> types.
+    <type>timestamp</type> and <type>interval</type> types.
    </para>
 
    <note>
@@ -1313,6 +1312,12 @@ SELECT b, char_length(b) FROM test2;
     values.
    </para>
    </note>
+
+   <para>
+    For the <type>time</type> types, the allowed range of
+    <replaceable>p</replaceable> is from 0 to 6 when eight-byte integer
+    storage is used, or from 0 to 10 when floating-point storage is used.
+   </para>
 
    <para>
     Time zones, and time-zone conventions, are influenced by
@@ -1485,7 +1490,7 @@ SELECT b, char_length(b) FROM test2;
      <para>
       The <type>time</type> type can be specified as <type>time</type> or
       as <type>time without time zone</type>. The optional precision
-      <replaceable>p</replaceable> should be between 0 and 13, and
+      <replaceable>p</replaceable> should be between 0 and 6, and
       defaults to the precision of the input time literal.
      </para>
 
