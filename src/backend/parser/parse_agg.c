@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.2 1997/11/26 01:11:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.3 1997/11/26 03:42:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,10 @@
 #include "parser/parse_node.h"
 #include "parser/parse_target.h"
 #include "utils/syscache.h"
+
+static bool contain_agg_clause(Node *clause);
+static bool exprIsAggOrGroupCol(Node *expr, List *groupClause);
+static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause);
 
 /*
  * AddAggToParseState -
@@ -93,7 +97,7 @@ finalizeAggregates(ParseState *pstate, Query *qry)
  *
  *	  Returns true if any aggregate found.
  */
-bool
+static bool
 contain_agg_clause(Node *clause)
 {
 	if (clause == NULL)
@@ -151,7 +155,7 @@ contain_agg_clause(Node *clause)
  * exprIsAggOrGroupCol -
  *	  returns true if the expression does not contain non-group columns.
  */
-bool
+static bool
 exprIsAggOrGroupCol(Node *expr, List *groupClause)
 {
 	List	   *gl;
@@ -185,7 +189,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
  * tleIsAggOrGroupCol -
  *	  returns true if the TargetEntry is Agg or GroupCol.
  */
-bool
+static bool
 tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 {
 	Node	   *expr = tle->expr;

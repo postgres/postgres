@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.2 1997/11/26 01:11:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.3 1997/11/26 03:42:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,62 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 
+static TargetEntry *find_targetlist_entry(ParseState *pstate,
+			SortGroupBy *sortgroupby, List *tlist);
+static void parseFromClause(ParseState *pstate, List *frmList);
+
+/*
+ * makeRangeTable -
+ *	  make a range table with the specified relation (optional) and the
+ *	  from-clause.
+ */
+void
+makeRangeTable(ParseState *pstate, char *relname, List *frmList)
+{
+	RangeTblEntry *rte;
+
+	parseFromClause(pstate, frmList);
+
+	if (relname == NULL)
+		return;
+
+	if (refnameRangeTablePosn(pstate->p_rtable, relname) < 1)
+		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
+	else
+		rte = refnameRangeTableEntry(pstate->p_rtable, relname);
+
+	pstate->p_target_rangetblentry = rte;
+	Assert(pstate->p_target_relation == NULL);
+	pstate->p_target_relation = heap_open(rte->relid);
+	Assert(pstate->p_target_relation != NULL);
+	/* will close relation later */
+}
+
+/*
+ * transformWhereClause -
+ *	  transforms the qualification and make sure it is of type Boolean
+ *
+ */
+Node *
+transformWhereClause(ParseState *pstate, Node *a_expr)
+{
+	Node	   *qual;
+
+	if (a_expr == NULL)
+		return (Node *) NULL;	/* no qualifiers */
+
+	pstate->p_in_where_clause = true;
+	qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
+	pstate->p_in_where_clause = false;
+	if (exprType(qual) != BOOLOID)
+	{
+		elog(WARN,
+			 "where clause must return type bool, not %s",
+			 typeidTypeName(exprType(qual)));
+	}
+	return qual;
+}
+
 /*
  * parseFromClause -
  *	  turns the table references specified in the from-clause into a
@@ -34,7 +90,7 @@
  *	  also allow that in our POST-SQL)
  *
  */
-void
+static void
 parseFromClause(ParseState *pstate, List *frmList)
 {
 	List	   *fl;
@@ -66,76 +122,12 @@ parseFromClause(ParseState *pstate, List *frmList)
 }
 
 /*
- * makeRangeTable -
- *	  make a range table with the specified relation (optional) and the
- *	  from-clause.
- */
-void
-makeRangeTable(ParseState *pstate, char *relname, List *frmList)
-{
-	RangeTblEntry *rte;
-
-	parseFromClause(pstate, frmList);
-
-	if (relname == NULL)
-		return;
-
-	if (refnameRangeTablePosn(pstate->p_rtable, relname) < 1)
-		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
-	else
-		rte = refnameRangeTableEntry(pstate->p_rtable, relname);
-
-	pstate->p_target_rangetblentry = rte;
-	Assert(pstate->p_target_relation == NULL);
-	pstate->p_target_relation = heap_open(rte->relid);
-	Assert(pstate->p_target_relation != NULL);
-	/* will close relation later */
-}
-
-/*****************************************************************************
- *
- * Where Clause
- *
- *****************************************************************************/
-
-/*
- * transformWhereClause -
- *	  transforms the qualification and make sure it is of type Boolean
- *
- */
-Node *
-transformWhereClause(ParseState *pstate, Node *a_expr)
-{
-	Node	   *qual;
-
-	if (a_expr == NULL)
-		return (Node *) NULL;	/* no qualifiers */
-
-	pstate->p_in_where_clause = true;
-	qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
-	pstate->p_in_where_clause = false;
-	if (exprType(qual) != BOOLOID)
-	{
-		elog(WARN,
-			 "where clause must return type bool, not %s",
-			 typeidTypeName(exprType(qual)));
-	}
-	return qual;
-}
-
-/*****************************************************************************
- *
- * Sort Clause
- *
- *****************************************************************************/
-
-/*
  *	find_targetlist_entry -
  *	  returns the Resdom in the target list matching the specified varname
  *	  and range
  *
  */
-TargetEntry *
+static TargetEntry *
 find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 {
 	List	   *i;

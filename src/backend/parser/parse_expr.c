@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.2 1997/11/26 01:11:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.3 1997/11/26 03:42:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "nodes/params.h"
 #include "nodes/relation.h"
 #include "parse.h"
+#include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_node.h"
@@ -29,7 +30,7 @@
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
 
-Oid param_type(int t); /* from gram.y */
+static Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
 
 /*
  * transformExpr -
@@ -397,7 +398,7 @@ handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno)
 	return (retval);
 }
 
-Node	   *
+static Node	   *
 parser_typecast(Value *expr, TypeName *typename, int typlen)
 {
 	/* check for passing non-ints */

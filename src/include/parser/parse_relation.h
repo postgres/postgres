@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.2 1997/11/26 01:14:08 momjian Exp $
+ * $Id: parse_relation.h,v 1.3 1997/11/26 03:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,5 @@ extern Oid attnameTypeId(Oid relid, char *attrname);
 extern Oid attnumTypeId(Relation rd, int attid);
 extern void handleTargetColname(ParseState *pstate, char **resname,
 					char *refname, char *colname);
-extern void checkTargetTypes(ParseState *pstate, char *target_colname,
-				 char *refname, char *colname);
 
 #endif							/* PARSE_RANGE_H */

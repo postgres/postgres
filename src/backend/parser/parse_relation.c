@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.2 1997/11/26 01:11:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.3 1997/11/26 03:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,9 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+
+static void checkTargetTypes(ParseState *pstate, char *target_colname,
+				 char *refname, char *colname);
 
 struct
 {
@@ -415,7 +418,7 @@ handleTargetColname(ParseState *pstate, char **resname,
  * checkTargetTypes -
  *	  checks value and target column types
  */
-void
+static void
 checkTargetTypes(ParseState *pstate, char *target_colname,
 				 char *refname, char *colname)
 {

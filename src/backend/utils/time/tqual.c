@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.11 1997/11/24 05:09:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.12 1997/11/26 03:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/tqual.h"
+
+static bool heapisoverride(void);
 
 extern bool PostgresIsInitialized;
 
@@ -49,8 +51,7 @@ setheapoverride(bool on)
 	}
 }
 
-/* static */
-bool
+static bool
 heapisoverride()
 {
 	if (!TransactionIdIsValid(HeapSpecialTransactionId))

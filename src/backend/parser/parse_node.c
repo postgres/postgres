@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.2 1997/11/26 01:11:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.3 1997/11/26 03:42:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,12 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+
+static void disallow_setop(char *op, Type optype, Node *operand);
+static Node *make_operand(char *opname,
+			 Node *tree,
+			 Oid orig_typeId,
+			 Oid true_typeId);
 
 /*
  * make_parsestate() --
@@ -56,7 +62,7 @@ make_parsestate(void)
 	return (pstate);
 }
 
-Node *
+static Node *
 make_operand(char *opname,
 			 Node *tree,
 			 Oid orig_typeId,
@@ -110,7 +116,7 @@ make_operand(char *opname,
 }
 
 
-void
+static void
 disallow_setop(char *op, Type optype, Node *operand)
 {
 	if (operand == NULL)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.2 1997/11/26 01:11:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.3 1997/11/26 03:42:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,37 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+static Node *ParseComplexProjection(ParseState *pstate,
+						   char *funcname,
+						   Node *first_arg,
+						   bool *attisset);
+static Oid ** argtype_inherit(int nargs, Oid *oid_array);
+static bool can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids);
+static int find_inheritors(Oid relid, Oid **supervec);
+static CandidateList func_get_candidates(char *funcname, int nargs);
+static bool func_get_detail(char *funcname,
+					int nargs,
+					Oid *oid_array,
+					Oid *funcid,	/* return value */
+					Oid *rettype,	/* return value */
+					bool *retset,	/* return value */
+					Oid **true_typeids);
+static Oid * func_select_candidate(int nargs,
+						  Oid *input_typeids,
+						  CandidateList candidates);
+static Oid funcid_get_rettype(Oid funcid);
+static Oid **gen_cross_product(InhPaths *arginh, int nargs);
+static void make_arguments(int nargs,
+				   List *fargs,
+				   Oid *input_typeids,
+				   Oid *function_typeids);
+static int match_argtypes(int nargs,
+				   Oid *input_typeids,
+				   CandidateList function_typeids,
+				   CandidateList *candidates);
+static List *setup_tlist(char *attname, Oid relid);
+static List *setup_base_tlist(Oid typeid);
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
 
@@ -400,7 +431,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	return (retval);
 }
 
-Oid
+static Oid
 funcid_get_rettype(Oid funcid)
 {
 	HeapTuple	func_tuple = NULL;
@@ -422,7 +453,7 @@ funcid_get_rettype(Oid funcid)
  * get a list of all argument type vectors for which a function named
  * funcname taking nargs arguments exists
  */
-CandidateList
+static CandidateList
 func_get_candidates(char *funcname, int nargs)
 {
 	Relation	heapRelation;
@@ -500,7 +531,7 @@ func_get_candidates(char *funcname, int nargs)
 /*
  * can input_typeids be coerced to func_typeids?
  */
-bool
+static bool
 can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids)
 {
 	int			i;
@@ -539,7 +570,7 @@ can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids)
  * that match the input typeids (either exactly or by coercion), and
  * return the number of such arrays
  */
-int
+static int
 match_argtypes(int nargs,
 			   Oid *input_typeids,
 			   CandidateList function_typeids,
@@ -577,7 +608,7 @@ match_argtypes(int nargs,
  * returns the selected argtype array if the conflict can be resolved,
  * otherwise returns NULL
  */
-Oid *
+static Oid *
 func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  CandidateList candidates)
@@ -586,7 +617,7 @@ func_select_candidate(int nargs,
 	return (NULL);
 }
 
-bool
+static bool
 func_get_detail(char *funcname,
 				int nargs,
 				Oid *oid_array,
@@ -731,7 +762,7 @@ func_get_detail(char *funcname,
  *		not defined.  There are lots of these (mostly builtins) in the
  *		catalogs.
  */
-Oid **
+static Oid **
 argtype_inherit(int nargs, Oid *oid_array)
 {
 	Oid			relid;
@@ -745,7 +776,7 @@ argtype_inherit(int nargs, Oid *oid_array)
 			arginh[i].self = oid_array[i];
 			if ((relid = typeidTypeRelid(oid_array[i])) != InvalidOid)
 			{
-				arginh[i].nsupers = findsupers(relid, &(arginh[i].supervec));
+				arginh[i].nsupers = find_inheritors(relid, &(arginh[i].supervec));
 			}
 			else
 			{
@@ -762,10 +793,10 @@ argtype_inherit(int nargs, Oid *oid_array)
 	}
 
 	/* return an ordered cross-product of the classes involved */
-	return (genxprod(arginh, nargs));
+	return (gen_cross_product(arginh, nargs));
 }
 
-int findsupers(Oid relid, Oid **supervec)
+static int find_inheritors(Oid relid, Oid **supervec)
 {
 	Oid		   *relidvec;
 	Relation	inhrel;
@@ -885,8 +916,8 @@ int findsupers(Oid relid, Oid **supervec)
 	return (nvisited);
 }
 
-Oid **
-genxprod(InhPaths *arginh, int nargs)
+static Oid **
+gen_cross_product(InhPaths *arginh, int nargs)
 {
 	int			nanswers;
 	Oid		  **result,
@@ -946,7 +977,7 @@ genxprod(InhPaths *arginh, int nargs)
  **   Given the number and types of arguments to a function, and the
  **   actual arguments and argument types, do the necessary typecasting.
  */
-void
+static void
 make_arguments(int nargs,
 			   List *fargs,
 			   Oid *input_typeids,
@@ -987,7 +1018,7 @@ make_arguments(int nargs,
  **		on a tuple parameter or return value.  Due to a bug in 4.0,
  **		it's not possible to refer to system attributes in this case.
  */
-List *
+static List *
 setup_tlist(char *attname, Oid relid)
 {
 	TargetEntry *tle;
@@ -1021,7 +1052,7 @@ setup_tlist(char *attname, Oid relid)
  **		Build a tlist that extracts a base type from the tuple
  **		returned by the executor.
  */
-List *
+static List *
 setup_base_tlist(Oid typeid)
 {
 	TargetEntry *tle;
@@ -1048,7 +1079,7 @@ setup_base_tlist(Oid typeid)
  *	  handles function calls with a single argument that is of complex type.
  *	  This routine returns NULL if it can't handle the projection (eg. sets).
  */
-Node *
+static Node *
 ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
 					   Node *first_arg,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.2 1997/11/26 01:14:07 momjian Exp $
+ * $Id: parse_oper.h,v 1.3 1997/11/26 03:43:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,21 +20,8 @@ typedef HeapTuple Operator;
 
 extern Oid any_ordering_op(int restype);
 extern Oid oprid(Operator op);
-extern int binary_oper_get_candidates(char *opname,
-						   Oid leftTypeId,
-						   Oid rightTypeId,
-						   CandidateList *candidates);
-extern bool equivalentOpersAfterPromotion(CandidateList candidates);
-extern CandidateList binary_oper_select_candidate(Oid arg1,
-							 Oid arg2,
-							 CandidateList candidates);
 extern Operator oper(char *op, Oid arg1, Oid arg2, bool noWarnings);
-extern int unary_oper_get_candidates(char *op,
-						  Oid typeId,
-						  CandidateList *candidates,
-						  char rightleft);
 extern Operator right_oper(char *op, Oid arg);
 extern Operator left_oper(char *op, Oid arg);
-extern void op_error(char *op, Oid arg1, Oid arg2);
 
 #endif							/* PARSE_OPER_H */

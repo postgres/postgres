@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.2 1997/11/26 01:11:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.3 1997/11/26 03:42:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,13 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
+
+static List *expandAllTables(ParseState *pstate);
+static char *figureColname(Node *expr, Node *resval);
+static TargetEntry *make_targetlist_expr(ParseState *pstate,
+					 char *colname,
+					 Node *expr,
+					 List *arrayRef);
 
 /*
  * transformTargetList -
@@ -310,7 +317,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
  *
  * arrayRef is a list of transformed A_Indices
  */
-TargetEntry *
+static TargetEntry *
 make_targetlist_expr(ParseState *pstate,
 					 char *colname,
 					 Node *expr,
@@ -568,7 +575,7 @@ makeTargetNames(ParseState *pstate, List *cols)
  *	  turns '*' (in the target list) into a list of attributes
  *	   (of all relations in the range table)
  */
-List *
+static List *
 expandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
@@ -633,7 +640,7 @@ expandAllTables(ParseState *pstate)
  *	  list, we have to guess.
  *
  */
-char *
+static char *
 figureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))

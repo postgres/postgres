@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.2 1997/11/26 01:11:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.3 1997/11/26 03:42:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,21 @@
 #include "storage/bufmgr.h"
 #include "utils/syscache.h"
 
+static int binary_oper_get_candidates(char *opname,
+						   Oid leftTypeId,
+						   Oid rightTypeId,
+						   CandidateList *candidates);
+static CandidateList binary_oper_select_candidate(Oid arg1,
+							 Oid arg2,
+							 CandidateList candidates);
+static bool equivalentOpersAfterPromotion(CandidateList candidates);
+static void op_error(char *op, Oid arg1, Oid arg2);
+static int unary_oper_get_candidates(char *op,
+						  Oid typeId,
+						  CandidateList *candidates,
+						  char rightleft);
+
+							 
 Oid
 any_ordering_op(int restype)
 {
@@ -51,7 +66,7 @@ oprid(Operator op)
  *	opname exists, such that leftTypeId can be coerced to arg1 and
  *	rightTypeId can be coerced to arg2
  */
-int
+static int
 binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
@@ -149,7 +164,7 @@ binary_oper_get_candidates(char *opname,
  *	  the all the candidates operate on the same data types after
  *	  promotion (int2, int4, float4 -> float8).
  */
-bool
+static bool
 equivalentOpersAfterPromotion(CandidateList candidates)
 {
 	CandidateList result;
@@ -223,7 +238,7 @@ equivalentOpersAfterPromotion(CandidateList candidates)
  *	given a choice of argument type pairs for a binary operator,
  *	try to choose a default pair
  */
-CandidateList
+static CandidateList
 binary_oper_select_candidate(Oid arg1,
 							 Oid arg2,
 							 CandidateList candidates)
@@ -366,7 +381,7 @@ oper(char *op, Oid arg1, Oid arg2, bool noWarnings)
  *	a right/left unary operator named opname exists,
  *	such that typeId can be coerced to it
  */
-int
+static int
 unary_oper_get_candidates(char *op,
 						  Oid typeId,
 						  CandidateList *candidates,
@@ -548,7 +563,7 @@ outstr(char *typename,			/* Name of type of value */
  * Give a somewhat useful error message when the operator for two types
  * is not found.
  */
-void
+static void
 op_error(char *op, Oid arg1, Oid arg2)
 {
 	Type		tp1 = NULL,
