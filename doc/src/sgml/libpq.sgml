@@ -629,63 +629,6 @@ int PQbackendPID(const PGconn *conn);
        server host, not the local host!
       </para>
      </listitem>
-
-     <listitem>
-      <para>
-       <function>PQsetenvStart</function>
-       <function>PQsetenvPoll</function>
-       <function>PQsetenvAbort</function>
-       Perform an environment negotiation.
-       <synopsis>
-PGsetenvHandle *PQsetenvStart(PGconn *conn)
-       </synopsis>
-
-       <synopsis>
-PostgresPollingStatusType *PQsetenvPoll(PGsetenvHandle handle)
-       </synopsis>
-       <synopsis>
-void PQsetenvAbort(PGsetenvHandle handle)
-       </synopsis>
-       These two routines can be used to re-perform the environment negotiation
-       that occurs during the opening of a connection to a database
-       server. I have
-       no idea why this might be useful (XXX anyone?) but it might prove useful
-       for users to be able to reconfigure their character encodings 
-       on-the-fly, for example.
-      </para>
-      <para>
-       These functions will not block, subject to the restrictions applied to
-       PQconnectStart and PQconnectPoll.
-      </para>
-      <para>
-       To begin, call handle=PQsetenvStart(conn), where conn is an open connection
-       to the database server. If handle is NULL, then libpq has been unable to
-       allocate a new PGsetenvHandle structure. Otherwise, a valid handle is
-       returned. This handle is intended to be opaque - you may only use it to
-       call other functions in libpq (PQsetenvPoll, for example).
-      </para>
-      <para>
-       Poll the procedure using PQsetenvPoll, in exactly the same way as you would
-       create a connection using PQconnectPoll.
-      </para>
-
-      <para>
-       The procedure may be aborted at any time by calling PQsetenvAbort(handle).
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <function>PQsetenv</function>
-       Perform an environment negotiation.
-       <synopsis>
-int PQsetenv(PGconn *conn)
-       </synopsis>
-       This function performs the same duties as PQsetenvStart and
-       PQsetenvPoll, but
-       blocks to do so. It returns 1 on success and 0 on failure.
-      </para>
-     </listitem>
     </itemizedlist>
    </para>
   </sect1>

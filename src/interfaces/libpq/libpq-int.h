@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.21 2000/03/14 23:59:23 tgl Exp $
+ * $Id: libpq-int.h,v 1.22 2000/03/24 01:39:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,6 +164,17 @@ typedef enum
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
 } PGAsyncStatusType;
 
+/* PGSetenvStatusType defines the state of the PQSetenv state machine */
+typedef enum
+{
+	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
+	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete  */
+	/* these next two are only used in MULTIBYTE mode */
+	SETENV_STATE_ENCODINGS_SEND, /* About to send an "encodings" query */
+	SETENV_STATE_ENCODINGS_WAIT, /* Waiting for query to complete      */
+	SETENV_STATE_IDLE
+} PGSetenvStatusType;
+
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
 {
@@ -244,8 +255,9 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
 
-	/* Handle for setenv request.  Used during connection only. */
-	PGsetenvHandle setenv_handle;
+	/* Status for sending environment info.  Used during PQSetenv only. */
+	PGSetenvStatusType	setenv_state;
+	const struct EnvironmentOptions *next_eo;
 
 #ifdef USE_SSL
 	bool allow_ssl_try;			/* Allowed to try SSL negotiation */
