@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Oct 13 01:26:55 EDT 2001
+   Last updated: Sun Oct 14 19:27:20 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -826,10 +826,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
    object with the nextval() function before inserting and then insert it
    explicitly. Using the example table in 4.16.1, that might look like
    this in Perl:
-    $sql = "SELECT nextval('person_id_seq')";
-    $newSerialID = ($conn->selectrow_array($sql))[0];
-    INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
-    $res = $dbh->do($sql);
+    new_id = output of "SELECT nextval('person_id_seq')"
+    INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
 
    You would then also have the new value stored in $newSerialID for use
    in other queries (e.g., as a foreign key to the person table). Note
@@ -840,9 +838,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
    Alternatively, you could retrieve the assigned SERIAL value with the
    currval() function after it was inserted by default, e.g.,
     INSERT INTO person (name) VALUES ('Blaise Pascal');
-    $res = $conn->do($sql);
-    $sql = "SELECT currval('person_id_seq')";
-    $newSerialID = ($conn->selectrow_array($sql))[0];
+    new_id = output of "SELECT currval('person_id_seq')";
 
    Finally, you could use the OID returned from the INSERT statement to
    look up the default value, though this is probably the least portable

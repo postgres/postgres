@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Oct 13 01:26:55 EDT 2001</P>
+    <P>Last updated: Sun Oct 14 19:27:20 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1050,10 +1050,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
     example table in <A href="#4.16.1">4.16.1</A>, that might look like
     this in Perl:</P>
 <PRE>
-    $sql = "SELECT nextval('person_id_seq')";
-    $newSerialID = ($conn->selectrow_array($sql))[0];
-    INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
-    $res = $dbh->do($sql);
+    new_id = output of "SELECT nextval('person_id_seq')"
+    INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
 </PRE>
     You would then also have the new value stored in
     <CODE>$newSerialID</CODE> for use in other queries (e.g., as a
@@ -1068,9 +1066,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <I>after</I> it was inserted by default, e.g.,</P>
 <PRE>
     INSERT INTO person (name) VALUES ('Blaise Pascal');
-    $res = $conn->do($sql);
-    $sql = "SELECT currval('person_id_seq')";
-    $newSerialID = ($conn->selectrow_array($sql))[0];
+    new_id = output of "SELECT currval('person_id_seq')";
 </PRE>
     Finally, you could use the <A href="#4.17"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
