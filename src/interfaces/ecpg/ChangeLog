@@ -674,3 +674,14 @@ Thu Oct  7 15:12:58 CEST 1999
 	- Set ecpg version to 2.6.6
 	- Set library version to 3.0.4
 
+Tue Oct 12 07:26:50 CEST 1999
+
+	- Simplified C part of parser.
+
+Fri Oct 15 17:05:25 CEST 1999
+
+	- Synced preproc.y with gram.y.
+	- Synced pgc.l with scan.l.
+        - Synced keyword.c.
+	- Finished C parser changes, so initializers are correctly parsed.
+	- Set ecpg version to 2.6.7

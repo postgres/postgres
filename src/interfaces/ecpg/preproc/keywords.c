@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.18 1999/10/08 11:05:02 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.19 1999/10/15 19:02:08 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"coalesce", COALESCE},
 	{"collate", COLLATE},
 	{"column", COLUMN},
+	{"comment", COMMENT},
 	{"commit", COMMIT},
 	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},

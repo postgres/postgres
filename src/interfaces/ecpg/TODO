@@ -13,8 +13,13 @@ support for dynamic SQL with unknown number of variables with DESCRIPTORS
 
 The line numbering is not exact.
 
+What happens to the output variable during read if there was an
+indicator-error? 
+
+Add a semantic check level, e.g. check if a table really exists.
+
 Missing statements:
- - exec slq ifdef
+ - exec sql ifdef
  - exec sql allocate
  - exec sql deallocate
  - SQLSTATE

@@ -1,3 +1,4 @@
+
 /* This is a modified version of src/backend/parser/scan.l */
 %{
 #include <ctype.h>
@@ -90,6 +91,10 @@ xhstop			{quote}
 xhinside		[^']*
 xhcat			{quote}{space}*\n{space}*{quote}
 
+/* C version of hex number 
+ */
+xch			0[xX][0-9A-Fa-f]*
+
 /* Extended quote
  * xqdouble implements SQL92 embedded quote
  * xqcat allows strings to cross input lines
@@ -150,10 +155,10 @@ real			(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digi
 
 param			\${integer}
 
-comment			("--"|"//").*\n
+comment			("--"|"//").*
 ccomment		"//".*\n
 
-space			[ \t\n\f]
+space			[ \t\n\r\f]
 other			.
 
 /* some stuff needed for ecpg */
@@ -242,7 +247,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <xq>{xqstop}	{
 					BEGIN(SQL);
-					/* yylval.str = mm_strdup(scanstr(literal));*/
 					yylval.str = mm_strdup(literal);
 					return SCONST;
 				}
@@ -319,13 +323,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					if (*endptr != '\0' || errno == ERANGE)
 					{
 						errno = 0;
-#if 0
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							yyerror("ERROR: Bad integer input");
-						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return FCONST;
-#endif
 						yylval.str = mm_strdup((char*)yytext);
                                                 return SCONST;
 					}
@@ -414,6 +411,19 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <SQL>{other}			{ return yytext[0]; }
 <C>{exec}{space}*{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
+<C>{xch}			{
+					char* endptr;
+
+					errno = 0;
+					yylval.ival = strtol((char *)yytext,&endptr,16);
+					if (*endptr != '\0' || errno == ERANGE)
+					{
+						errno = 0;
+						yylval.str = mm_strdup((char*)yytext);
+                                                return SCONST;
+					}
+					return ICONST;
+				}
 <C>{cppline}			{
 					yylval.str = mm_strdup((char*)yytext);
 					return(CPP_LINE);
@@ -470,7 +480,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <C>\[			{ return('['); }
 <C>\]			{ return(']'); }
 <C>\=			{ return('='); }
-<C>{other}			{ return S_ANYTHING; }
+<C>{other}		{ return S_ANYTHING; }
 <C>{exec}{space}{sql}{space}{define}	{BEGIN(def_ident);}
 <def_ident>{space}	{}
 <def_ident>{identifier}	{

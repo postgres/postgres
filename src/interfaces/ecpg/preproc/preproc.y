@@ -724,7 +724,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
  */
 %token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
 		BACKWARD, BEFORE, BINARY,
-		CACHE, CLUSTER, COPY, CREATEDB, CREATEUSER, CYCLE,
+		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
                 DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
                 FORWARD, FUNCTION, HANDLER,
@@ -785,7 +785,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
 %type  <str>    file_name AexprConst ParamNo TypeId
-%type  <str>	in_expr_nodes a_expr b_expr TruncateStmt
+%type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from
 %type  <str>	trim_list in_expr substr_for attr attrs
@@ -839,15 +839,15 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	constraints_set_mode
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen opt_using
-%type  <str>	indicator ECPGExecute ecpg_expr dotext ECPGPrepare
-%type  <str>    storage_clause opt_initializer vartext c_anything blockstart
-%type  <str>    blockend variable_list variable var_anything do_anything
+%type  <str>	indicator ECPGExecute ecpg_expr ECPGPrepare
+%type  <str>    storage_clause opt_initializer c_anything blockstart
+%type  <str>    blockend variable_list variable c_thing c_term
 %type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
 %type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
-%type  <str>	connection_object opt_server opt_port c_thing opt_reference
+%type  <str>	connection_object opt_server opt_port c_stuff opt_reference
 %type  <str>    user_name opt_user char_variable ora_user ident
-%type  <str>    db_prefix server opt_options opt_connection_name
-%type  <str>	ECPGSetConnection c_line cpp_line s_enum ECPGTypedef
+%type  <str>    db_prefix server opt_options opt_connection_name c_list
+%type  <str>	ECPGSetConnection cpp_line s_enum ECPGTypedef c_args
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
 %type  <str>	sql_declaration sql_variable_list sql_variable opt_at
@@ -882,6 +882,7 @@ opt_at:	SQL_AT connection_target	{ connection = $2; }
 stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| AlterUserStmt		{ output_statement($1, 0); }
 		| ClosePortalStmt	{ output_statement($1, 0); }
+		| CommentStmt		{ output_statement($1, 0); }
 		| CopyStmt		{ output_statement($1, 0); }
 		| CreateStmt		{ output_statement($1, 0); }
 		| CreateAsStmt		{ output_statement($1, 0); }
@@ -1892,7 +1893,23 @@ opt_portal_name:  IN name		{ $$ = cat2_str(make1_str("in"), $2); }
 		| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
 
-
+/*****************************************************************************
+ *
+ *             QUERY:
+ *                     comment on [ table <relname> | column <relname>.<attribu
+ *                                is 'text'
+ *
+ *****************************************************************************/
+CommentStmt:    COMMENT ON COLUMN relation_name '.' attr_name IS Sconst
+                        {
+				cat2_str(cat5_str(make1_str("comment on column"), $4, make1_str(","), $6, make1_str("is")), $8);
+                        }
+                | COMMENT ON TABLE relation_name IS Sconst
+                        {
+                                cat4_str(make1_str("comment on table"), $4, make1_str("is"), $6);
+			}
+			;
+			
 /*****************************************************************************
  *
  *		QUERY:
@@ -4195,6 +4212,7 @@ ColId:  ident					{ $$ = $1; }
 		| BACKWARD			{ $$ = make1_str("backward"); }
 		| BEFORE			{ $$ = make1_str("before"); }
 		| CACHE				{ $$ = make1_str("cache"); }
+		| COMMENT			{ $$ = make1_str("comment"); } 
 		| COMMITTED			{ $$ = make1_str("committed"); }
 		| CONSTRAINTS			{ $$ = make1_str("constraints"); }
 		| CREATEDB			{ $$ = make1_str("createdb"); }
@@ -4265,6 +4283,7 @@ ColId:  ident					{ $$ = $1; }
 		| TIMEZONE_HOUR                 { $$ = make1_str("timezone_hour"); }
                 | TIMEZONE_MINUTE               { $$ = make1_str("timezone_minute"); }
 		| TRIGGER			{ $$ = make1_str("trigger"); }
+		| TRUNCATE			{ $$ = make1_str("truncate"); }
 		| TRUSTED			{ $$ = make1_str("trusted"); }
 		| TYPE_P			{ $$ = make1_str("type"); }
 		| VALID				{ $$ = make1_str("valid"); }
@@ -4673,8 +4692,7 @@ type: simple_type
 		{
 			$$.type_str = $1;
 			$$.type_enum = ECPGt_int;
-		
-	$$.type_dimension = -1;
+			$$.type_dimension = -1;
   			$$.type_index = -1;
 		}
 	| symbol
@@ -4689,7 +4707,7 @@ type: simple_type
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 
-enum_type: s_enum '{' c_line '}'
+enum_type: s_enum '{' c_list '}'
 	{
 		$$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
 	}
@@ -4828,7 +4846,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 		}
 
 opt_initializer: /* empty */		{ $$ = make1_str(""); }
-	| '=' vartext			{ $$ = make2_str(make1_str("="), $2); }
+	| '=' c_term			{ $$ = make2_str(make1_str("="), $2); }
 
 opt_pointer: /* empty */	{ $$ = make1_str(""); }
 	| '*'			{ $$ = make1_str("*"); }
@@ -5367,7 +5385,7 @@ action : SQL_CONTINUE {
         $<action>$.command = strdup($3);
 	$<action>$.str = cat2_str(make1_str("goto "), $3);
 }
-       | DO name '(' dotext ')' {
+       | DO name '(' c_args ')' {
 	$<action>$.code = W_DO;
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
 	$<action>$.str = cat2_str(make1_str("do"), mm_strdup($<action>$.command));
@@ -5377,7 +5395,7 @@ action : SQL_CONTINUE {
         $<action>$.command = NULL;
         $<action>$.str = make1_str("break");
 }
-       | SQL_CALL name '(' dotext ')' {
+       | SQL_CALL name '(' c_args ')' {
 	$<action>$.code = W_DO;
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
 	$<action>$.str = cat2_str(make1_str("call"), mm_strdup($<action>$.command));
@@ -5726,11 +5744,8 @@ into_list : coutputvariable | into_list ',' coutputvariable;
 
 ecpgstart: SQL_START { reset_variables();}
 
-dotext: /* empty */		{ $$ = make1_str(""); }
-	| dotext do_anything	{ $$ = make2_str($1, $2); }
-
-vartext: var_anything		{ $$ = $1; }
-        | vartext var_anything { $$ = make2_str($1, $2); }
+c_args: /* empty */		{ $$ = make1_str(""); }
+	| c_list		{ $$ = $1; }
 
 coutputvariable : cvariable indicator {
 		add_variable(&argsresult, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
@@ -5754,6 +5769,7 @@ indicator: /* empty */			{ $$ = NULL; }
 
 ident: IDENT	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); };
+
 /*
  * C stuff
  */
@@ -5762,13 +5778,27 @@ symbol: IDENT	{ $$ = $1; }
 
 cpp_line: CPP_LINE	{ $$ = $1; }
 
-c_line: c_anything { $$ = $1; }
-	| c_line c_anything
-		{
-			$$ = make2_str($1, $2);
-		}
+c_stuff: c_anything 	{ $$ = $1; }
+	| c_stuff c_anything
+			{
+				$$ = cat2_str($1, $2);
+			}
+	| c_stuff '(' c_stuff ')'
+			{
+				$$ = cat4_str($1, make1_str("("), $3, make1_str(")"));
+			}
 
-c_thing: c_anything | ';' { $$ = make1_str(";"); }
+c_list: c_term			{ $$ = $1; }
+	| c_term ',' c_list	{ $$ = make3_str($1, make1_str(","), $3); }
+
+c_term:  c_stuff 		{ $$ = $1; }
+	| '{' c_list '}'	{ $$ = make3_str(make1_str("{"), $2, make1_str("}")); }
+
+c_thing:	c_anything	{ $$ = $1; }
+	|	'('		{ $$ = make1_str("("); }
+	|	')'		{ $$ = make1_str(")"); }
+	|	','		{ $$ = make1_str(","); }
+	|	';'		{ $$ = make1_str(";"); }
 
 c_anything:  IDENT 	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
@@ -5800,22 +5830,9 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| S_ANYTHING	{ $$ = make_name(); }
         | '['		{ $$ = make1_str("["); }
 	| ']'		{ $$ = make1_str("]"); }
-	| '('		{ $$ = make1_str("("); }
-	| ')'		{ $$ = make1_str(")"); }
+/*        | '('		{ $$ = make1_str("("); }
+	| ')'		{ $$ = make1_str(")"); }*/
 	| '='		{ $$ = make1_str("="); }
-	| ','		{ $$ = make1_str(","); }
-
-do_anything: IDENT	{ $$ = $1; }
-        | CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\""));}
-        | Iconst        { $$ = $1; }
-	| Fconst	{ $$ = $1; }
-	| ','		{ $$ = make1_str(","); }
-
-var_anything: IDENT 		{ $$ = $1; }
-	| CSTRING       	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
-	| Iconst		{ $$ = $1; }
-	| Fconst		{ $$ = $1; }
-	| '{' c_line '}'	{ $$ = make3_str(make1_str("{"), $2, make1_str("}")); }
 
 blockstart : '{' {
     braces_open++;
