@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.1.1.1 1996/07/09 06:21:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.2 1996/11/03 04:57:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,10 +24,12 @@
  * 	semaphore has been acquired by the caller.
  */
 #include <stdio.h>
+
+#include "postgres.h"
+
 #include "storage/bufmgr.h"
 #include "storage/buf_internals.h"	/* where declarations go */
 #include "storage/spin.h"
-#include "utils/elog.h"
 
 
 static BufferDesc 	*SharedFreeList;

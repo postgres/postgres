@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.1.1.1 1996/07/09 06:21:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.2 1996/11/03 04:57:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
+
+#include "postgres.h"
 
 /* declarations split between these three files */
 #include "storage/buf.h"
@@ -38,7 +40,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
-#include "utils/elog.h"
 #include "utils/memutils.h"
 #include "executor/execdebug.h"	/* for NDirectFileRead */
 #include "catalog/catalog.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.3 1996/09/19 19:50:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.4 1996/11/03 04:57:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@
 #include <math.h>
 #include <signal.h>
 
+#include "postgres.h"
+
 /* declarations split between these three files */
 #include "storage/buf.h"
 #include "storage/buf_internals.h"
@@ -65,7 +67,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "executor/execdebug.h"	/* for NDirectFileRead */

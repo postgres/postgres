@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.2 1996/07/30 07:47:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.3 1996/11/03 04:56:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,14 @@
  *  All routines in this file assume buffer manager spinlock is
  *  held by their caller.
  */
+
+#include "postgres.h"
+
 #include "storage/bufmgr.h"
 #include "storage/buf_internals.h"	/* where the declarations go */
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "utils/hsearch.h"
-#include "utils/elog.h"
 
 static HTAB *SharedBufHash;
 
