@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.249 2002/02/27 19:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.250 2002/02/27 23:16:07 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -860,6 +860,22 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 								 * parsetree */
 
 		/*
+		 * If this is the last parsetree of the query string, close down
+		 * transaction statement before reporting command-complete.  This is
+		 * so that any end-of-transaction errors are reported before the
+		 * command-complete message is issued, to avoid confusing clients
+		 * who will expect either a command-complete message or an error,
+		 * not one and then the other.  But for compatibility with
+		 * historical Postgres behavior, we do not force a transaction
+		 * boundary between queries appearing in a single query string.
+		 */
+		if (lnext(parsetree_item) == NIL && xact_started)
+		{
+			finish_xact_command();
+			xact_started = false;
+		}
+
+		/*
 		 * It is possible that the original query was removed due to
 		 * a DO INSTEAD rewrite rule.  In that case we will still have
 		 * the default completion tag, which is fine for most purposes,
@@ -878,13 +894,15 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 		 * Tell client that we're done with this query.  Note we emit
 		 * exactly one EndCommand report for each raw parsetree, thus
 		 * one for each SQL command the client sent, regardless of
-		 * rewriting.
+		 * rewriting.  (But a command aborted by error will not send
+		 * an EndCommand report at all.)
 		 */
 		EndCommand(commandTag, dest);
 	}							/* end loop over parsetrees */
 
 	/*
 	 * Close down transaction statement, if one is open.
+	 * (Note that this will only happen if the querystring was empty.)
 	 */
 	if (xact_started)
 		finish_xact_command();
@@ -1689,7 +1707,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.249 $ $Date: 2002/02/27 19:35:12 $\n");
+		puts("$Revision: 1.250 $ $Date: 2002/02/27 23:16:07 $\n");
 	}
 
 	/*
