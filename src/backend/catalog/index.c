@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.37 1998/02/07 06:10:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.38 1998/02/07 21:41:48 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -315,6 +315,8 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	funcTupDesc->attrs[0]->atttypid = retType;
 	funcTupDesc->attrs[0]->attnum = 1;
 	funcTupDesc->attrs[0]->attbyval = ((TypeTupleForm) GETSTRUCT(tuple))->typbyval;
+	funcTupDesc->attrs[0]->attcacheoff = -1;
+	funcTupDesc->attrs[0]->atttypmod = -1;
 
 	/*
 	 * make the attributes name the same as the functions
@@ -433,10 +435,10 @@ ConstructTupleDescriptor(Oid heapoid,
 		memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
 
 		((AttributeTupleForm) to)->attnum = i + 1;
-		((AttributeTupleForm) to)->attcacheoff = -1;
 
 		((AttributeTupleForm) to)->attnotnull = false;
 		((AttributeTupleForm) to)->atthasdef = false;
+		((AttributeTupleForm) to)->attcacheoff = -1;
 		((AttributeTupleForm) to)->atttypmod = -1;
 
 		/*
